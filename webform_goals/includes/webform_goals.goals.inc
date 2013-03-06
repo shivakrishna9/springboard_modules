@@ -20,6 +20,7 @@ function webform_goals_single_context_fields(&$form, $goal = array()) {
     '#title' => '',
     '#empty_option' => t('-- select --'),
     '#empty_value' => 0,
+    '#required' => TRUE,
     '#description' => t('Select the form that will contribute to this goal.'),
     '#options' => _webform_goals_list_webforms(),
     '#default_value' => !empty($goal['extra']['selected_form_id']) ? $goal['extra']['selected_form_id'] : 0,
@@ -38,6 +39,7 @@ function webform_goals_group_context_fields(&$form, $goal = array()) {
     '#title' => '',
     '#empty_option' => t('-- select --'),
     '#empty_value' => 0,
+    '#required' => TRUE,
     '#description' => t('This goal will be assigned to all nodes of the type you select.'),
     '#options' => _webform_goals_get_webform_node_types(),
     '#default_value' => !empty($goal['extra']['selected_node_type']) ? $goal['extra']['selected_node_type'] : 0,
@@ -167,14 +169,14 @@ function webform_goals_webform_goals_track_metric($goal, $params = array()) {
   if ($goal['metric'] === 'submission_count') {
     if ($goal['context'] == 'single') {
       $data['count'] = _webform_goals_count_submissions($goal['extra']['selected_form_id'], $goal['start_date'], $goal['end_date']);
-      $data['progress'] = ($data['count'] / $goal['target_value']) * 100;
+
     }
     // TODO: add case for global with provided nid.
     else {
       // TODO: calculate submissions across group.
       $data['count'] = _webform_goals_total_submissions($goal['extra']['selected_node_type']);
-      $data['progress'] = ($data['count'] / $goal['target_value']) * 100;
     }
+    webform_goals_calculate_progress($data, $goal);
     return $data;
   }
 
@@ -186,8 +188,8 @@ function webform_goals_webform_goals_track_metric($goal, $params = array()) {
     }
     else {
       $data['count'] = _webform_goals_total_component_values($goal['extra']['selected_form_id'], $goal['extra']['custom_field_selection'], $goal['start_date'], $goal['end_date']);
-      $data['progress'] = ($data['count'] / $goal['target_value']) * 100;
     }
+    webform_goals_calculate_progress($data, $goal);
     return $data;
   }
 }

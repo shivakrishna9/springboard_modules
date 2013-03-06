@@ -25,16 +25,17 @@ function webform_goals_admin_list($form, $form_state = array()) {
     $row[] = $selected_metric['name'];
     $row[] = $goal['target_value']; //TODO: for single context add link to parent node or node title
     $row[] = $data['count']; // TODO amount: circle back once metrics tracking code is in play.
-    $row[] = $data['progress'] . '%';
+    $row[] = $data['percent'] . '%';
     $row[] = webform_goals_goal_status($goal);
     $row[] = _webform_goals_actions($goal);
     $rows[] = $row;
   }
 
+  /*
   $form['goal_filters'] = array(
     '#type' => 'fieldset',
     '#title' => t('Filters'),
-  );
+  );*/
   // TODO: add filtering?
   $header = array(
     t('Name'),

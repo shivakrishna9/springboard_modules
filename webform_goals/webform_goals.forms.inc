@@ -28,6 +28,7 @@ function webform_goals_add($form, $form_state, $goal = array()) {
   $selected_context = _webform_goals_get_selected_context($form_state, $goal);
   $metrics = webform_goals_list_metrics($selected_context, $form_state, $goal);
   $selected_metric = _webform_goals_get_selected_metric($selected_context, $form_state, $goal);
+  $selected_bar = _webform_goals_get_selected_bar($form_state, $goal);
   //$selected_metric = !empty($form_state['values']['metrics']) ? $metrics[$form_state['values']['metrics']] : $metrics['submission_count'];
   foreach ($contexts as $key => $context) {
     $context_options[$key] = $context['name'];
@@ -159,13 +160,13 @@ function webform_goals_add($form, $form_state, $goal = array()) {
     $form['goal_wrapper']['starter_message']['#attributes'] = array('placeholder' => t('Enter your personal starter message here.'));
   }
   $form['goal_wrapper']['starter_message']['token_tree'] = array(
-	  '#type' => 'fieldset',
-	  '#title' => t('Replacement patterns'),
-	  '#collapsible' => TRUE,
-	  '#collapsed' => TRUE,
-	  '#description' => theme('token_tree', array('token_types' => array('webform_goal'))),
-	  '#weight' => 10,
-	);
+    '#type' => 'fieldset',
+    '#title' => t('Replacement patterns'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#description' => theme('token_tree', array('token_types' => array('webform_goal'))),
+    '#weight' => 10,
+  );
 
   // goal timeframe fieldset & date select fields
   $form['timeframe'] = array(
@@ -197,22 +198,45 @@ function webform_goals_add($form, $form_state, $goal = array()) {
   );
   // configurable goal template, start with "default" template.
   $form['template'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Display'),
+  );
+  $form['template']['progress_bar'] = array(
+    '#type' => 'select',
+    '#title' => t('Progress bar style'),
+    '#options' => _webform_goals_progress_bar_options(),
+    '#default_value' => $selected_bar,
+    '#ajax' => array(
+      'callback' => 'webform_goals_progress_bar_callback',
+      'wrapper' => 'display-progress-demo',
+      'method' => 'replace',
+      'effect' => 'fade',
+    ),
+  );
+
+  $form['template']['progress_bar_demo'] = array(
+    '#type' => 'markup',
+    '#markup' => isset($selected_bar) ? webform_goals_render_progress_bar($selected_bar, 75) : '',
+    '#prefix' => '<div id="display-progress-demo" style="width:450px">',
+    '#suffix' => '</div>',
+  );
+  $form['template']['template'] = array(
     '#type' => 'text_format',
     '#title' => t('Goal template'),
     '#description' => t(''),
     '#default_value' => !empty($goal['template']) ? $goal['template'] : theme('webform_goals_default_template'), //TODO: theme function to output default template
   );
   if (!empty($goal['template_format'])) {
-    $form['template']['#format'] = $goal['template_format'];
+    $form['template']['template']['#format'] = $goal['template_format'];
   }
-   $form['template']['token_tree'] = array(
-	  '#type' => 'fieldset',
-	  '#title' => t('Replacement patterns'),
-	  '#collapsible' => TRUE,
-	  '#collapsed' => TRUE,
-	  '#description' => theme('token_tree', array('token_types' => array('webform_goal'))),
-	  '#weight' => 10,
-	);
+   $form['template']['template']['token_tree'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Replacement patterns'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#description' => theme('token_tree', array('token_types' => array('webform_goal'))),
+    '#weight' => 10,
+  );
   // Add token UI for goal tokens.
   $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
   $form['#validate'][] = 'webform_goals_add_validate';
@@ -223,9 +247,21 @@ function webform_goals_add($form, $form_state, $goal = array()) {
 
 
 function webform_goals_add_validate(&$form, &$form_state) {
+  // validate display threshold
+  $display = !(empty($form_state['values']['display_threshold'])) ? $form_state['values']['display_threshold'] : 0;
+  $target = $form_state['values']['target_value'];
+  if ($display && $display >= $target) {
+    form_set_error('display_threshold', t('Display threshold settings should be less than the goal target.'));
+  }
 
+  // validate start/end dates
+  $start_date = !empty($form_state['values']['start_date']) ? strtotime($form_state['values']['start_date']) : 0;
+  $end_date =  !empty($form_state['values']['end_date']) ? strtotime($form_state['values']['end_date']) : 0;
+
+  if ($end_date && $start_date > $end_date) {
+    form_set_error('end_date', t('End date should not be before start date.'));
+  }
 }
-
 /**
  * Submission handler for goal add/edit form.
  */
@@ -289,7 +325,7 @@ function webform_goals_context_callback($form, $form_state) {
     '#commands' => array(
       ajax_command_replace('#context-description', render($form['context_container']['context_description'])),
       ajax_command_replace("#context-options", render($form['context_container']['options_wrapper'])),
-      ajax_command_replace("#context-metrics", theme_status_messages() . render($form['metrics_wrapper']))
+      ajax_command_replace("#context-metrics", trender($form['metrics_wrapper']))
     )
   );
 }
@@ -301,7 +337,7 @@ function webform_goals_extra_callback($form, $form_state) {
   return array(
     '#type' => 'ajax',
     '#commands' => array(
-      ajax_command_replace("#context-metrics", theme_status_messages() . render($form['metrics_wrapper']))
+      ajax_command_replace("#context-metrics", render($form['metrics_wrapper']))
     )
   );
 }
@@ -314,8 +350,17 @@ function webform_goals_metrics_callback($form, $form_state) {
     '#commands' => array(
       ajax_command_replace('#context-metrics', render($form['metrics_wrapper'])),
       ajax_command_replace("#options-goal-settings", render($form['goal_wrapper'])),
-      ajax_command_replace('#context-seed', theme_status_messages() . render($form['seed_wrapper'])),
+      ajax_command_replace('#context-seed', render($form['seed_wrapper'])),
     )
+  );
+}
+
+function webform_goals_progress_bar_callback($form, $form_state) {
+  return array(
+    '#type' => 'ajax',
+    '#commands' => array(
+      ajax_command_replace('#display-progress-demo', render($form['template']['progress_bar_demo'])),
+    ),
   );
 }
 
@@ -360,10 +405,37 @@ function webform_goals_delete($form, $form_state, $goal = array()) {
   return $form;
 }
 
-function webform_goals_delete_submit($form, $form_state) {
+function webform_goals_delete_submit($form, &$form_state) {
   if (is_numeric($form_state['values']['gid']) && $form_state['values']['gid']) {
-    db_query('DELETE FROM {webform_goals WHERE gid = :gid', array(':gid' => $form_state['values']['gid']));
+    webform_goals_delete_goal($form_state['values']['gid']);
     drupal_set_message('Goal has been deleted');
-    drupal_goto('admin/config/content/webform_goals');
   }
+  $form_state['redirect'] = array('admin/config/content/webform_goals');
+}
+
+function _webform_goals_progress_bar_options() {
+  $options = array(
+    'flat_ui' => t('Flat UI'),
+    'twitter_basic' => t('Twitter basic'),
+    'twitter_striped' => t('Twitter striped'),
+  );
+  drupal_alter('webform_goals_progress_bar_options', $options);
+  return $options;
+}
+
+// figure out where this should live.
+function webform_goals_render_progress_bar($bar_type, $goal_progress) {
+  $output = '';
+  switch ($bar_type) {
+    case 'flat_ui':
+      $output = theme('webform_goals_flat_ui_progress_bar', array('goal_progress' => $goal_progress));
+      break;
+    case 'twitter_basic':
+      $output = theme('webform_goals_twitter_progress_bar', array('goal_progress' => $goal_progress));
+      break;
+    case 'twitter_striped':
+      $output = theme('webform_goals_twitter_striped_progress_bar', array('goal_progress' => $goal_progress));
+      break;
+  }
+  return $output;
 }

@@ -115,6 +115,7 @@ function webform_goal_load($gid) {
       start_date,
       end_date,
       auto_expire,
+      progress_bar,
       template,
       template_format,
       extra
@@ -161,6 +162,30 @@ function webform_goal_load_multiple($nid = FALSE) {
     }
   }
   return $nid ? $goals[$nid] : $goals;
+}
+
+/**
+ *
+ * @param type $gid
+ * @return type
+ */
+function webform_goals_delete_goal($gid) {
+  require_once('includes/webform_goals.files.inc');
+  db_query('
+    DELETE FROM {webform_goals
+    WHERE gid = :gid
+  ', array(':gid' => $gid));
+
+  db_query('
+    DELETE FROM {webform_goals_node}
+    WHERE gid = :gid
+  ', array(':gid' => $gid));
+
+  $path = _webform_goals_base_path();
+  $uri = $path . '/template-' . $gid . '.txt';
+
+  file_unmanaged_delete($uri);
+
 }
 
 function webform_goals_widget_load($gid) {
@@ -258,8 +283,28 @@ function webform_goals_token_info() {
     'description' => t('Goal progress calculation ends on this date.'),
   );
   $info['tokens']['webform_goal']['progress-raw'] = array(
-    'name' => t('Goal progress raw'),
-    'description' => t('Unfortmatted percentage of goal currently met.'),
+    'name' => t('Total progress'),
+    'description' => t('Unfortmatted total progress.'),
+  );
+  $info['tokens']['webform_goal']['progress-percent'] = array(
+    'name' => t('Percent of goal met'),
+    'description' => t('Goal progress formatted as a percentage of goal target.'),
+  );
+  $info['tokens']['webform_goal']['progress-percent-capped'] = array(
+    'name' => t('Percent of goal met, capped at 100'),
+    'description' => t('Goal progress percentage, will not exceed 100. Useful for setting widths on progress bars'),
+  );
+   $info['tokens']['webform_goal']['progress-remaining-raw'] = array(
+    'name' => t('Total of goal remaining.'),
+    'description' => t('Unfortmatted total progress remaining.'),
+  );
+  $info['tokens']['webform_goal']['progress-remaining-percent'] = array(
+    'name' => t('Percent of goal remaining'),
+    'description' => t('Percent of goal remaining.'),
+  );
+  $info['tokens']['webform_goal']['progress-remaining-percent-capped'] = array(
+    'name' => t('Percent of goal met, capped at 100'),
+    'description' => t('Percent of goal remaining, negative numbers not allowed. Useful for setting widths on progress bars'),
   );
   $info['tokens']['webform_goal']['progress-bar'] = array(
     'name' => t('CSS driven progress bar'),
@@ -306,18 +351,36 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
           $replacements[$token] = date('m-d-Y', $goal['end_date']);
           break;
         case 'progress-raw':
-          $replacements[$token] = $goal_progress['progress'];
+          $replacements[$token] = $goal_progress['count'];
+          break;
+        case 'progress-percent':
+          $replacements[$token] = $goal_progress['percent'];
+          break;
+        case 'progress-percent-capped':
+          $replacements[$token] = ($goal_progress['percent'] > 100) ? 100 : $goal_progress['percent'];
+          break;
+        case 'progress-remaining-raw':
+          $replacements[$token] = $goal_progress['remaining'];
+          break;
+        case 'progress-remaining-percent':
+          $replacements[$token] = $goal_progress['percent_remaining'];
+          break;
+        case 'progress-remaining-percent-capped':
+          $replacements[$token] = ($goal_progress['percent_remaining'] < 0) ? 0 : $goal_progress['percent_remaining'];
           break;
         case 'progress-bar':
-          $replacements[$token] = theme('webform_goals_progress_bar', array('goal_id' => $goal['gid'], 'goal_progress' => $goal_progress['progress']));
+          // cap at 100 so we don't blow out our CSS widths.
+          $progress = ($goal_progress['percent'] > 100) ? 100 : $goal_progress['percent'];
+          $replacements[$token] = theme('webform_goals_progress_bar', array('goal_id' => $goal['gid'], 'goal_progress' => $progress));
           break;
         case 'starter-message':
           $replacements[$token] = check_markup($goal['starter_message'], $goal['starter_message_format']);
           break;
         case 'progress-starter':
           $output = '';
-          if ($goal_progress['progress'] >= $data['webform_goal']['display_threshold']) {
-            $output = theme('webform_goals_progress_bar', $goal['gid'], $goal_progress['progress']);
+          if ($goal_progress['count'] >= $data['webform_goal']['display_threshold']) {
+            $percent_capped = ($goal_progress['percent'] > 100) ? 100 : $goal_progress['percent'];
+            $output = theme('webform_goals_progress_bar', array('goal_id' => $goal['gid'], 'goal_progress' => $percent_capped));
           }
           elseif (!empty($goal['starter_message'])) {
             $output = check_markup($goal['starter_message'], $goal['starter_message_format']);
@@ -346,13 +409,11 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
 function webform_goals_update_widget($args, $update = array()) {
   require_once('includes/webform_goals.files.inc');
   $goal = $args['webform_goal'];
-  $nid = !empty($args['nid']) ? $args['nid'] : 0;
   $settings = array(
     'gid' => $goal['gid'],
-    'widget' => theme('webform_goals_widget', $goal),
+    'widget' => theme('webform_goals_widget', $args),
   );
   _webform_goals_file_insert($goal, $settings['widget']);
-  drupal_write_record('webform_goals_widget', $settings, $update);
 }
 
 /**
@@ -420,6 +481,24 @@ function webform_goals_theme($existing, $type, $theme, $path) {
         'goal_progress' => NULL,
       ),
       'template' => 'templates/webform_goals.progress_bar',
+    ),
+    'webform_goals_flat_ui_progress_bar' => array(
+      'variables' => array(
+        'goal_progress' => NULL,
+      ),
+      'template' => 'templates/progress_bars/webform_goals.progress_bar_flat_ui',
+    ),
+    'webform_goals_twitter_progress_bar' => array(
+      'variables' => array(
+        'goal_progress' => NULL,
+      ),
+      'template' => 'templates/progress_bars/webform_goals.progress_bar_twitter',
+    ),
+    'webform_goals_twitter_striped_progress_bar' => array(
+      'variables' => array(
+        'goal_progress' => NULL,
+      ),
+      'template' => 'templates/progress_bars/webform_goals.progress_bar_twitter_striped',
     ),
   );
 }
@@ -532,6 +611,20 @@ function _webform_goals_get_selected_metric($selected_context, $form_state, $goa
 }
 
 /**
+ *
+ */
+function _webform_goals_get_selected_bar($form_state, $goal) {
+  $bar = 'flat_ui';
+  if (!empty($form_state['values']['progress_bar'])) {
+    $bar = $form_state['values']['progress_bar'];
+  }
+  elseif (!empty($goal['progress_bar'])) {
+    $bar = $goal['progress_bar'];
+  }
+  return $bar;
+}
+
+/**
  * Retrieve an array of goals that are tracking a given node.
  */
 function webform_goals_get_goals_by_nid($nid) {
@@ -589,4 +682,20 @@ function _webform_goals_flag_goal_updates($gids = array()) {
       SET update_on_cron = 1
       WHERE gid IN (:gids)', array(':gids' => $gids));
   }
+}
+
+/**
+ * Calculate goal completion percentage, remaining and remaining percentage
+ *
+ * @param array $data
+ * An associative array containing the following data:
+ *   'count' => the total goal progress count.
+ *
+ * @param array $goal
+ * Goal array.
+ */
+function webform_goals_calculate_progress(&$data, $goal) {
+  $data['percent'] = round(($data['count'] / $goal['target_value']) * 100, 1);
+  $data['remaining'] = $goal['target_value'] - $data['count'];
+  $data['percent_remaining'] = round(($data['remaining'] / $goal['target_value']) * 100, 1);
 }

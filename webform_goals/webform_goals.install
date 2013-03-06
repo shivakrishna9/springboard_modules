@@ -136,6 +136,10 @@ function webform_goals_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      'progress_bar' => array(
+        'type' => 'varchar',
+        'length' => '40',
+      ),
       'template' => array(
         'description' => 'goal template markup',
         'type' => 'text',

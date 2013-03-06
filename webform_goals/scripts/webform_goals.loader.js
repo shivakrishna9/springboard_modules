@@ -3,14 +3,15 @@ jQuery(document).ready(function() {
   items = jQuery('.wg-goal').map(function(){
     ids.push(jQuery(this).data('gid'));
   });
-  
+
   goal_ids = ids.join(',');
   jQuery.ajax({
     dataType: 'jsonp',
     data: 'goal_ids=' + goal_ids,
     jsonp: 'jsonp_callback',
     // replace this url with the correct path for your site.
-    url: 'http://<your domain here>/<path to weform goals>/webform_goals/webform_goals.jsonp.php',
+    // example: http://example.com/sites/default/files/webform_goals/webform_goals.jsonp.php
+    url: 'http://<domain name>/<path to files folder>/webform_goals/webform_goals.jsonp.php',
     success: function (data) {
       // unpack data and place accordingly.
       //  data format:
@@ -36,7 +37,7 @@ jQuery(document).ready(function() {
              });
            }
          }
-        });  
+        });
       }
     },
   });

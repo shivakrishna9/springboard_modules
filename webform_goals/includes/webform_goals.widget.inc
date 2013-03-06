@@ -9,7 +9,7 @@
  */
 function webform_goals_rebuild_widgets() {
   $updated_goals = array();
-  $update_limit = variable_get('webform_goals_widget_update_limit');
+  $update_limit = variable_get('webform_goals_widget_update_limit', 50);
   $results = db_query_range('
     SELECT
       *
@@ -19,7 +19,10 @@ function webform_goals_rebuild_widgets() {
   ', 0, $update_limit);
   while ($goal = $results->fetchAssoc()) {
     $goal['extra'] = unserialize($goal['extra']);
-    webform_goals_update_widget($goal, 'gid');
+    $args = array(
+      'webform_goal' => $goal,
+    );
+    webform_goals_update_widget($args, 'gid');
     $updated_goals[] = $goal['gid'];
   }
   db_query('
@@ -34,6 +37,8 @@ function webform_goals_rebuild_widgets() {
 function webform_goals_widget_display_embed($goal) {
   ctools_include('modal');
   ctools_include('ajax');
-  $output = theme('webform_goals_widget_loader', array('goal_id' => $goal['gid']));
+  $embed = theme('webform_goals_widget_loader', $goal);
+  $output = '<p>' . t('copy and paste this code to embed your goal') . '</p>';
+  $output .= '<pre><code>' . htmlentities($embed) . '</code></pre>';
   return ctools_modal_render('Embeddable', $output);
 }
