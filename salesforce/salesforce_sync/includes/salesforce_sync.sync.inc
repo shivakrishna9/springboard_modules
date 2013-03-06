@@ -236,6 +236,10 @@ class SalesforceSync {
         else {
           $this->failItem($item, $error_message, $result);
         }
+        // Invokes hook_salesforce_sync_complete_item().
+        // Provided as a last, final say on the item life cycle after delete
+        // from the queue and the like.
+        module_invoke_all('salesforce_sync_complete_item', $item, $result);
       }
     }
     catch (Exception $error) {

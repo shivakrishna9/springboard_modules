@@ -427,15 +427,17 @@ function fundraiser_sustainers_node_delete($node) {
 }
 
 /**
- * Implements hook_salesforce_sync_pass_item().
+ * Implements hook_salesforce_sync_complete_item().
  * Acts when the queue returns a success.
  */
-function fundraiser_sustainers_salesforce_sync_pass_item($item, $result) {
-  if (isset($item->module) && isset($item->object_type) && isset($item->drupal_id)) {
-    if ($item->module == 'fundraiser_sustainers' && $item->object_type == 'npe03__Recurring_Donation__c') {
-      $donation = fundraiser_donation_get_donation($item->drupal_id, TRUE);
-      salesforce_genmap_send_object_to_queue('fundraiser_sustainers', 'update',
-        $donation->node, $donation->did, $donation, 'recurring_donation');
+function fundraiser_sustainers_salesforce_sync_complete_item($item, $result) {
+  if ($result->success) {
+    if ($item->operation == 'CREATE') {
+      if ($item->module == 'fundraiser_sustainers' && $item->object_type == 'npe03__Recurring_Donation__c') {
+        $donation = fundraiser_donation_get_donation($item->drupal_id, TRUE);
+        salesforce_genmap_send_object_to_queue('fundraiser_sustainers', 'update',
+          $donation->node, $donation->did, $donation, 'recurring_donation');
+      }
     }
   }
 }
