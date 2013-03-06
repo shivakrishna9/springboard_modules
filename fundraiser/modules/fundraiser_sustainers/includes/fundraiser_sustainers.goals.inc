@@ -42,13 +42,11 @@ function fundraiser_sustainers_webform_goals_list_metrics($selected_context, $fo
 function fundraiser_sustainers_webform_goals_track_metric($goal, $params = array()) {
   $data = array(
     'count' => '',
-    'progress' => 0
   );
 
   if ($goal['metric'] === 'fundraiser_sustainer_count') {
     if (!empty($goal['extra']['selected_form_id'])) {
       $data['count'] = _fundraiser_sustainers_get_total_sustainers_by_nid($goal['extra']['selected_form_id'], $goal['start_date'], $goal['end_date']);
-      $data['progress'] = ($data['count'] / $goal['target_value']) * 100;
     }
     // group goal handling. since we have multiple nodes we query the db for each.
     // Bet the database loves this. Can this be improved?
@@ -62,10 +60,9 @@ function fundraiser_sustainers_webform_goals_track_metric($goal, $params = array
             $data['count'] += $sustainers;
           }
         }
-        $data['progress'] = ($data['count'] / $goal['target_value']) * 100;
       }
     }
-
+    webform_goals_calculate_progress($data, $goal);
     return $data;
   }
 }

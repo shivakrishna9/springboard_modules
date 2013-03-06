@@ -283,6 +283,7 @@ function webform_goals_add_submit($form, &$form_state) {
     'end_date' => !empty($form_state['values']['end_date']) ? strtotime($form_state['values']['end_date']) : 0,
     'template' => $form_state['values']['template']['value'],
     'template_format' => $form_state['values']['template']['format'],
+    'progress_bar' => $form_state['values']['progress_bar'],
   );
 
   $settings = module_invoke_all('webform_goals_save_goal', $settings, $form_state);

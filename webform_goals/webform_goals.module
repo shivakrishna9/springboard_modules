@@ -341,7 +341,7 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
         $replacements[$tokens[$standard]]= $data['webform_goal'][$standard];
       }
     }
-
+    dsm($goal, 'goal');
     foreach($tokens as $key => $token) {
       switch ($key) {
         case 'start_date':
@@ -370,8 +370,9 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
           break;
         case 'progress-bar':
           // cap at 100 so we don't blow out our CSS widths.
-          $progress = ($goal_progress['percent'] > 100) ? 100 : $goal_progress['percent'];
-          $replacements[$token] = theme('webform_goals_progress_bar', array('goal_id' => $goal['gid'], 'goal_progress' => $progress));
+          $percent_capped = ($goal_progress['percent'] > 100) ? 100 : $goal_progress['percent'];
+          //$replacements[$token] = theme('webform_goals_progress_bar', array('goal_id' => $goal['gid'], 'goal_progress' => $progress));
+          $replacements[$token] = webform_goals_render_progress_bar($goal['progress_bar'], $percent_capped);
           break;
         case 'starter-message':
           $replacements[$token] = check_markup($goal['starter_message'], $goal['starter_message_format']);
@@ -380,7 +381,8 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
           $output = '';
           if ($goal_progress['count'] >= $data['webform_goal']['display_threshold']) {
             $percent_capped = ($goal_progress['percent'] > 100) ? 100 : $goal_progress['percent'];
-            $output = theme('webform_goals_progress_bar', array('goal_id' => $goal['gid'], 'goal_progress' => $percent_capped));
+            //$output = theme('webform_goals_progress_bar', array('goal_id' => $goal['gid'], 'goal_progress' => $percent_capped));
+            $output = webform_goals_render_progress_bar($goal['progress_bar'], $percent_capped);
           }
           elseif (!empty($goal['starter_message'])) {
             $output = check_markup($goal['starter_message'], $goal['starter_message_format']);
@@ -511,6 +513,7 @@ function webform_goals_theme($existing, $type, $theme, $path) {
  */
 function theme_webform_goals_widget($args) { //$goal) {
   $goal = $args['webform_goal'];
+  dsm($goal, 'theme goal');
   $nid = isset($goal['extra']['selected_form_id']) ? $goal['extra']['selected_form_id'] : 0;
   $template = token_replace($goal['template'], array('webform_goal' => $goal, 'nid' => $nid));
   $template_filtered = check_markup($template, $goal['template_format']);

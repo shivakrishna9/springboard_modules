@@ -12,6 +12,7 @@ function webform_goals_admin_list($form, $form_state = array()) {
     $selected_context = _webform_goals_get_selected_context($form_state, $goal);
     $selected_metric = _webform_goals_get_selected_metric($selected_context, $form_state, $goal);
     $data = webform_goals_track_metric($goal);
+    
     if ($selected_context['id'] == 'single') {
       $node = node_load($goal['extra']['selected_form_id']);
       $selected_context['name'] .= ' : ' . l($node->title, 'node/' . $node->nid);

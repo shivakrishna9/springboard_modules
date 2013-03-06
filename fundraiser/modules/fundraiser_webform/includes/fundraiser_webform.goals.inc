@@ -48,13 +48,11 @@ function fundraiser_webform_webform_goals_list_metrics($selected_context, $form_
 function fundraiser_webform_webform_goals_track_metric($goal, $params = array()) {
   $data = array(
     'count' => '',
-    'progress' => 0
   );
   if ($goal['metric'] === 'fundraiser_donation_amount') {
 
     if (!empty($goal['extra']['selected_form_id'])) {
       $data['count'] = fundraiser_get_total_donations_by_nid($goal['extra']['selected_form_id'], $goal['start_date'], $goal['end_date']);
-      $data['progress'] = ($data['count'] / $goal['target_value']) * 100;
     }
     // Bet the database loves this.
     elseif (!empty($goal['extra']['selected_node_type'])) {
@@ -67,9 +65,9 @@ function fundraiser_webform_webform_goals_track_metric($goal, $params = array())
           }
         }
         $data['count'] = number_format((float) $data['count'], 2); // Alligator wrestling to keep format identical with single values.
-        $data['progress'] = ($data['count'] / $goal['target_value']) * 100;
       }
     }
+    webform_goals_calculate_progress($data, $goal);
     return $data;
   }
 }
