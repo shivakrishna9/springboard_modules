@@ -73,22 +73,22 @@ function salesforce_genmap_menu() {
     );
   }
   // Admin interface.
-  $items['admin/config/salesforce'] = array(
-    'title' => 'Salesforce',
-    'description' => 'Salesforce settings.',
-    'position' => 'right',
-    'page callback' => 'system_admin_menu_block_page',
-    'access arguments' => array('access administration pages'),
-    'file' => 'system.admin.inc',
-  );
-  $items['admin/config/salesforce/salesforce-generic'] = array(
-    'title' => 'Salesforce generic',
-    'page callback' => 'salesforce_genmap_admin_page',
-    'description' => 'Configure how the Salesforce integration will work with generic objects.',
-    'access arguments' => array('administer salesforce'),
-    'type' => MENU_NORMAL_ITEM,
-    'file' => 'includes/salesforce_genmap.queue.inc',
-  );
+  //$items['admin/config/salesforce'] = array(
+  //  'title' => 'Salesforce',
+  //  'description' => 'Salesforce settings.',
+  //  'position' => 'right',
+  //  'page callback' => 'system_admin_menu_block_page',
+  //  'access arguments' => array('access administration pages'),
+  //  'file' => 'system.admin.inc',
+  //);
+  //$items['admin/config/salesforce/salesforce-generic'] = array(
+  //  'title' => 'Salesforce generic',
+  //  'page callback' => 'salesforce_genmap_admin_page',
+  //  'description' => 'Configure how the Salesforce integration will work with generic objects.',
+  //  'access arguments' => array('administer salesforce'),
+  //  'type' => MENU_NORMAL_ITEM,
+  //  'file' => 'includes/salesforce_genmap.queue.inc',
+  //);
   return $items;
 }
 
