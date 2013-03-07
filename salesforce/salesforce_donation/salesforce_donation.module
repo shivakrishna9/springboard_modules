@@ -520,6 +520,14 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
       }
     }
   }
+  elseif (module_exists('fundraiser_webform') && $node->nid == -1) {
+    // If node is -1, then we're working with default.
+    // We go with the CC defaults, anything else can be added by other modules on drupal_alter.
+    $fields['salesforce_donation_map']['#fields']['cid'] = t('Campaign ID') . ' (' . t('Default webform field') . ')';
+    $fields['salesforce_donation_map']['#fields']['ms'] = t('Market Source') . ' (' . t('Default webform field') . ')';
+    $fields['salesforce_donation_map']['#fields']['referrer'] = t('Referrer') . ' (' . t('Default webform field') . ')';
+    $fields['salesforce_donation_map']['#fields']['initial_referrer'] = t('Initial Referrer') . ' (' . t('Default webform field') . ')';
+  }
 
   // Node fields.
   $fields['salesforce_node_map'] = array(
