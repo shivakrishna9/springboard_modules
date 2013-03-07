@@ -1222,7 +1222,6 @@ function webform_user_theme_registry_alter(&$theme_registry) {
     $theme_registry['webform_components_form']['function'] = 'theme_webform_user_webform_components_form';
     $theme_registry['webform_components_form']['theme_path'] = drupal_get_path('module', 'webform_user');
     $theme_registry['webform_components_form']['includes'] = array();
-    drupal_set_message('override performed');
   }
 }
 

@@ -36,6 +36,10 @@ class WebformUserIntegratedTestSetup extends DrupalWebTestCase {
       'edit all webform submissions',
       'delete all webform submissions',
       'administer users',
+      'administer user map',
+      'alter webform components',
+      'configure webform settings',
+      'configure webform emails',
     );
 
     foreach ($permissions as $user_key => $role_permissions) {
@@ -132,6 +136,41 @@ class WebformUserIntegratedTestCase extends WebformUserIntegratedTestSetup {
     $this->assertTrue($this->webformUserComponentExists(1, 'first_name'), t('First name webform component created as textfield.'));
     $this->assertTrue($this->webformUserComponentExists(1, 'last_name'), t('Last name webform component created as textfield.'));
     $this->assertTrue($this->webformUserComponentExists(1, 'state'), t('State webform component created as select list.'));
+
+    // Confirm editor cannot access paths secured by new permissions.
+    $this->drupalGet('node/1/webform');
+    // component add form secured
+    $this->assertNoFieldById('edit-add-name', '', t('Add component name field secured.'));
+    $this->assertNoFieldById('edit-add-add', '', t('Add component submit button secured.'));
+    // edit/clone/delete links secured
+    $this->assertNoLinkByHref('node/1/webform/components/1', 0, t('Component edit link secured.'));
+    $this->assertNoLinkByHref('node/1/webform/components/1/clone', 0, t('Component clone link secured.'));
+    $this->assertNoLinkByHref('node/1/webform/components/1/delete', 0, t('Component delete link secured.'));
+    // form settings
+    $this->assertNoLinkByHref('node/1/webform/configure', 0, t('Webform configuration tab secured.'));
+    // emails
+    $this->assertNoLinkByHref('node/1/webform/emails', 0, t('Email configuration tab secured.'));
+    // user map
+    $this->assertNoLinkByHref('node/1/webform/user_mapping', 0, t('User map tab secured.'));
+
+
+    // confirm admin can access all configuration screens & options
+    $this->drupalLogout();
+    $this->drupalLogin($this->users['admin']);
+    $this->drupalGet('node/1/webform');
+    // component add form
+    $this->assertFieldById('edit-add-name', '', t('Add component name field available.'));
+    $this->assertFieldById('edit-add-add', '', t('Add component submit button available.'));
+    // edit/clone/delete links
+    $this->assertLinkByHref('node/1/webform/components/1', 0, t('Component edit link available.'));
+    $this->assertLinkByHref('node/1/webform/components/1/clone', 0, t('Component clone link available.'));
+    $this->assertLinkByHref('node/1/webform/components/1/delete', 0, t('Component delete link available.'));
+    // form settings
+    $this->assertLinkByHref('node/1/webform/configure', 0, t('Webform configuration tab available.'));
+    // emails
+    $this->assertLinkByHref('node/1/webform/emails', 0, t('Email configuration tab available.'));
+    // user map
+    $this->assertLinkByHref('node/1/webform/user_mapping', 0, t('User map tab available.'));
 
     // Submit form anonymously.
     $this->drupalLogout();
