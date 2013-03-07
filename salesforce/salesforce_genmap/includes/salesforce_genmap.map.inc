@@ -125,6 +125,9 @@ function salesforce_genmap_map_form($form, &$form_state, $node, $module) {
 
   // Get the fields to map for this module.
   $fields = module_invoke($module, 'salesforce_genmap_map_field_info', $node);
+  // Allow for altering the field set.
+  drupal_alter('salesforce_genmap_map_field_info', $fields, $node, $module);
+  // Make the form for each field.
   foreach ($fields as $category => $category_info) {
     $map_row_class_name = 'salesforce-' . $category_info['#type'] . '-map-field';
     // Add the map from Drupal object fields to Salesforce fields.
