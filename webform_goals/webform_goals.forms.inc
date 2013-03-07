@@ -216,7 +216,7 @@ function webform_goals_add($form, $form_state, $goal = array()) {
 
   $form['template']['progress_bar_demo'] = array(
     '#type' => 'markup',
-    '#markup' => isset($selected_bar) ? webform_goals_render_progress_bar($selected_bar, 75) : '',
+    '#markup' => isset($selected_bar) ? webform_goals_render_progress_bar($selected_bar, 75, 1) : '',
     '#prefix' => '<div id="display-progress-demo" style="width:450px">',
     '#suffix' => '</div>',
   );
@@ -400,7 +400,10 @@ function webform_goals_delete($form, $form_state, $goal = array()) {
     '#value' => t('Delete'),
   );
   $form['actions']['cancel'] = array(
-    '#markup' => l(t('Cancel'), 'foo/bar'),
+    '#type'   => 'submit',
+    '#value'  => t('Cancel'),
+    '#submit' => array('_webform_goals_form_cancel'),
+    '#limit_validation_errors' => array(),
   );
   $form['#submit'][] = 'webform_goals_delete_submit';
   return $form;
@@ -414,18 +417,23 @@ function webform_goals_delete_submit($form, &$form_state) {
   $form_state['redirect'] = array('admin/config/content/webform_goals');
 }
 
+function _webform_goals_form_cancel($form, &$form_state) {
+  drupal_goto('admin/config/content/webform_goals');
+}
+
 function _webform_goals_progress_bar_options() {
   $options = array(
     'flat_ui' => t('Flat UI'),
     'twitter_basic' => t('Twitter basic'),
     'twitter_striped' => t('Twitter striped'),
+    'animated' => t('Animated'),
   );
   drupal_alter('webform_goals_progress_bar_options', $options);
   return $options;
 }
 
 // figure out where this should live.
-function webform_goals_render_progress_bar($bar_type, $goal_progress) {
+function webform_goals_render_progress_bar($bar_type, $goal_progress, $drupal = FALSE) {
   $output = '';
   switch ($bar_type) {
     case 'flat_ui':
@@ -436,6 +444,9 @@ function webform_goals_render_progress_bar($bar_type, $goal_progress) {
       break;
     case 'twitter_striped':
       $output = theme('webform_goals_twitter_striped_progress_bar', array('goal_progress' => $goal_progress));
+      break;
+    case 'animated':
+      $output = theme('webform_goals_animated_progress_bar', array('goal_progress' => $goal_progress, 'drupal' => $drupal));
       break;
   }
   return $output;

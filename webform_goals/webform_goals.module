@@ -501,6 +501,13 @@ function webform_goals_theme($existing, $type, $theme, $path) {
       ),
       'template' => 'templates/progress_bars/webform_goals.progress_bar_twitter_striped',
     ),
+    'webform_goals_animated_progress_bar' => array(
+      'variables' => array(
+        'goal_progress' => NULL,
+        'drupal' => NULL,
+      ),
+      'template' => 'templates/progress_bars/webform_goals.progress_bar_animated',
+    ),
   );
 }
 
