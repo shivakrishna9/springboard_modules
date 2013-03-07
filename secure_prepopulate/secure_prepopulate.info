@@ -5,6 +5,7 @@ core = 7.x
 package = Webform Extra
 dependencies[] = webform
 version =  7.x-3.0-dev
+configure = 'admin/config/system/secure-prepopulate'
 
 files[] = secure_prepopulate.admin.inc
 files[] = secure_prepopulate.install

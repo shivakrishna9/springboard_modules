@@ -326,7 +326,7 @@ function webform_goals_context_callback($form, $form_state) {
     '#commands' => array(
       ajax_command_replace('#context-description', render($form['context_container']['context_description'])),
       ajax_command_replace("#context-options", render($form['context_container']['options_wrapper'])),
-      ajax_command_replace("#context-metrics", trender($form['metrics_wrapper']))
+      ajax_command_replace("#context-metrics", render($form['metrics_wrapper']))
     )
   );
 }
