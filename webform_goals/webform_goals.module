@@ -237,13 +237,7 @@ function _webform_goals_field_list($nid) {
  *  );
  */
 function webform_goals_track_metric($goal) {
-
   $data = module_invoke_all('webform_goals_track_metric', $goal);
-  // apply seed
-  if (!empty($goal['seed'])) {
-    $data['count'] +=  $goal['seed'];
-    $data['progress'] = ($data['count'] / $goal['target_value']) * 100;
-  }
   return $data;
 }
 
@@ -703,7 +697,12 @@ function _webform_goals_flag_goal_updates($gids = array()) {
  * Goal array.
  */
 function webform_goals_calculate_progress(&$data, $goal) {
+  // apply seed
+  if (!empty($goal['seed'])) {
+    $data['count'] += $goal['seed'];
+  }
   $data['percent'] = round(($data['count'] / $goal['target_value']) * 100, 1);
   $data['remaining'] = $goal['target_value'] - $data['count'];
   $data['percent_remaining'] = round(($data['remaining'] / $goal['target_value']) * 100, 1);
+
 }
