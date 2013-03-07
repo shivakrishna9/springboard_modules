@@ -341,7 +341,6 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
         $replacements[$tokens[$standard]]= $data['webform_goal'][$standard];
       }
     }
-    dsm($goal, 'goal');
     foreach($tokens as $key => $token) {
       switch ($key) {
         case 'start_date':
@@ -513,7 +512,6 @@ function webform_goals_theme($existing, $type, $theme, $path) {
  */
 function theme_webform_goals_widget($args) { //$goal) {
   $goal = $args['webform_goal'];
-  dsm($goal, 'theme goal');
   $nid = isset($goal['extra']['selected_form_id']) ? $goal['extra']['selected_form_id'] : 0;
   $template = token_replace($goal['template'], array('webform_goal' => $goal, 'nid' => $nid));
   $template_filtered = check_markup($template, $goal['template_format']);
