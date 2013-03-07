@@ -30,7 +30,7 @@ function salesforce_donation_permission() {
  * Implements hook_menu().
  */
 function salesforce_donation_menu() {
-  $items['admin/config/salesforce/salesforce-donation'] = array(
+  $items['admin/config/services/salesforce-donation'] = array(
     'title' => 'Salesforce donation',
     'description' => 'Configure how the Salesforce integration will work with donation objects.',
     'page callback' => 'drupal_get_form',
@@ -465,7 +465,6 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
   // So we need to check for all type that MAY be configured at any point based
   // on available methods. Methods are defined within the associated active
   // gateways. So, we looks up each form and field per form.
-  // If node is -1, then we're working with default. No webform comps.
   if (module_exists('fundraiser_webform') && $node->nid != -1) {
     // Find the payment methods component.
     $payment_method_component = _fundraiser_webform_get_component_by_nid_key($node->nid, array('payment_method'));
@@ -494,6 +493,13 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
         $fields['salesforce_donation_map']['#fields'][$field_key] = $field_title . ' (' . t('Payment field') . ')';
       }
     }
+  }
+  elseif (module_exists('fundraiser_webform') && $node->nid == -1) {
+    // If node is -1, then we're working with default.
+    // We go with the CC defaults, anything else can be added by other modules on drupal_alter.
+    $fields['salesforce_donation_map']['#fields']['card_number'] = t('Credit card number') . ' (' . t('Default payment field') . ')';
+    $fields['salesforce_donation_map']['#fields']['card_expiration_month'] = t('Expiration month') . ' (' . t('Default payment field') . ')';
+    $fields['salesforce_donation_map']['#fields']['card_expiration_year'] = t('Expiration year') . ' (' . t('Default payment field') . ')';
   }
 
   // Webform component fields.
