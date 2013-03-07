@@ -1131,7 +1131,9 @@ function fundraiser_validate_form_fields($form, $form_state, $submission_fields,
         $submission_fields, $submission_fields[$child]);
       if (isset($error_message) && !empty($error_message)) {
         // Set the error.
-        form_set_error($child, $error_message); // Coder: This is ok.
+        $this_field = _fundraiser_get_form_field($form, 'other_amount');
+        $parents = implode('][', $this_field['#parents']);
+        form_set_error($parents, $error_message); // Coder: This is ok.
         $errors = TRUE;
       }
     }
