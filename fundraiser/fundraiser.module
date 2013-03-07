@@ -1002,18 +1002,21 @@ function _fundraiser_other_amount_field_create($fundraiser, $field) {
 function _fundraiser_other_amount_field_validate($form, $form_state, $submission_fields, $value) {
 	// Check for confusing selection.
 	if (!empty($submission_fields['amount']) && $submission_fields['amount'] != "other" && !empty($submission_fields['other_amount'])) {
-    return t('You have entered a custom amount and selected a set amount. Please clarify which amount you ' .
-      'intend to give, if you want to give the amount that appears in the other box, please select Other from ' .
-      'the radio buttons.');
+    return array(
+      'amount' => t('You have entered a custom amount and selected a set amount. Please clarify which amount you ' .
+        'intend to give, if you want to give the amount that appears in the other box, please select Other from ' .
+        'the radio buttons.'),
+      'other_amount' => '',
+      );
 	}
   $value = $submission_fields['amount'];
   // Look for other amount if set.
-  if ($submission_fields['amount'] == "other") {
+  if ($submission_fields['amount'] == 'other') {
     $value = $submission_fields['other_amount'];
   }
   // Check for valid value.
   if (!preg_match('/^\d*(\.\d*)?$/', $value)) {
-    return t('Donation amount must be in a valid number format. No commas and only one decimal point.');
+    return array('other_amount' => t('Donation amount must be in a valid number format. No commas and only one decimal point.'));
   }
   // Check for minimum amount.
   $fundraiser = _fundraiser_get_fundraiser_by_nid($form['#node']->nid);
@@ -1021,8 +1024,8 @@ function _fundraiser_other_amount_field_validate($form, $form_state, $submission
     $fundraiser->minimum_donation_amount :  variable_get('fundraiser_default_minimum', 10.00);
   $minimum_donation_amount = number_format($minimum_donation_amount, 2);
   if ($value < $minimum_donation_amount) {
-    return t('Your donation amount must be greater than or equal to @min_amount.',
-      array('@min_amount' => $minimum_donation_amount));
+    return array('other_amount' => t('Your donation amount must be greater than or equal to @min_amount.',
+      array('@min_amount' => $minimum_donation_amount)));
   }
 }
 
@@ -1031,7 +1034,7 @@ function _fundraiser_other_amount_field_validate($form, $form_state, $submission
  */
 function _fundraiser_email_field_validate($form, $form_state, $submission_fields,  $value) {
   if (!_fundraiser_validate_email($value)) {
-    return t('You must enter a valid email address.');
+    return array('mail' => t('You must enter a valid email address.'));
   }
 }
 
@@ -1127,14 +1130,16 @@ function fundraiser_validate_form_fields($form, $form_state, $submission_fields,
     // And the additional validate callback exists.
     if (isset($submission_fields[$child]) && isset($field_info[$child]['#validate_callback'])
       && function_exists($field_info[$child]['#validate_callback'])) {
-      $error_message = call_user_func($field_info[$child]['#validate_callback'], $form, $form_state,
+      $error_messages = call_user_func($field_info[$child]['#validate_callback'], $form, $form_state,
         $submission_fields, $submission_fields[$child]);
-      if (isset($error_message) && !empty($error_message)) {
-        // Set the error.
-        $this_field = _fundraiser_get_form_field($form, $child);
-        $parents = implode('][', $this_field['#parents']);
-        form_set_error($parents, $error_message); // Coder: This is ok.
-        $errors = TRUE;
+      if (isset($error_messages) && !empty($error_messages)) {
+        foreach ($error_messages as $form_field => $error_message) {
+          // Set the error.
+          $this_field = _fundraiser_get_form_field($form, $form_field);
+          $parents = implode('][', $this_field['#parents']);
+          form_set_error($parents, $error_message); // Coder: This is ok.
+          $errors = TRUE;
+        }
       }
     }
     // Recurse down.
