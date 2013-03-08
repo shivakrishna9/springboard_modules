@@ -1,5 +1,9 @@
 CHANGELOG
 ---------
+2013-03-08  Allen Freeman  <allen.freeman@jacksonriver.com>
+
+  * webform_user.module (webform_user_access): added access check for user.
+
 2013-02-05  Allen Freeman  <allen.freeman@jacksonriver.com>
 
   * webform_user.module (theme_webform_user_mapping_form): added code to support additional "mandatory" column in mapping form display.
