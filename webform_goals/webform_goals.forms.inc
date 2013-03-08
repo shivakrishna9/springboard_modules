@@ -9,7 +9,6 @@
  */
 function webform_goals_add($form, $form_state, $goal = array()) {
 
-  drupal_add_css(drupal_get_path('module', 'webform_goals') . '/styles/webform_goals.admin.css');
   ctools_include('plugins');
 
   if (!empty($goal['gid'])) {
@@ -426,7 +425,7 @@ function _webform_goals_progress_bar_options() {
     'flat_ui' => t('Flat UI'),
     'twitter_basic' => t('Twitter basic'),
     'twitter_striped' => t('Twitter striped'),
-    'animated' => t('Animated'),
+    // 'animated' => t('Animated'), // Drupal strips script sent via jsonp so this doesn't work locally.
   );
   drupal_alter('webform_goals_progress_bar_options', $options);
   return $options;
