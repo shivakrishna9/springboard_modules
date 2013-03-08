@@ -7,8 +7,16 @@ $goal_ids = $_GET['goal_ids'];
 $ids = explode(',', $goal_ids);
 $data = array();
 foreach ($ids as $id) {
-  // TODO: add configurable code to explicitly declare file directory path.
-  // this prevents having to move this file to the webform_goals file subdirectory.
+
+  /* uncomment the line below and set the directory to the
+   * absolute path to the webform goals subdirectory in
+   * your site's files folder.
+   *
+   * Example:
+   *
+   * chdir('/var/www/sites/default/files/webform_goals');
+   */
+  // chdir('ABSOLUTE/PATH/TO/files/webform_goals');
   $filename = 'template-' . (int) $id . '.txt';
   if (file_exists($filename)) {
     $file = file_get_contents($filename);
