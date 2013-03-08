@@ -394,7 +394,7 @@ function webform_user_user_map_create($nid, $components) {
  * Provides access to the mapping tabs if node has webform_user enabled form.
  */
 function _webform_user_mapping_form_access($node) {
-  return $node->is_webform_user;
+  return $node->is_webform_user && node_access('update', $node);
 }
 
 /**
