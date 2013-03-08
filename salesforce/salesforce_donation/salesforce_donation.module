@@ -257,7 +257,7 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
     }
     if (isset($map->field_map['salesforce_donation_map']['gateway'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['gateway'];
-      $fields[$sf_field] = $donation->gateway['id'];
+      $fields[$sf_field] = isset($donation->gateway['id']) ? $donation->gateway['id'] : '';
     }
     if (isset($map->field_map['salesforce_donation_map']['txn_id'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['txn_id'];
