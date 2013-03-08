@@ -460,6 +460,18 @@ function springboard_springboard_dashboard_panes() {
     'content' => _springboard_sf_status(),
     'weight' => 0,
   );
+  $panes['springboard_recent_donation_forms'] = array(
+    'label' => 'Recent Donation Forms',
+    'description' => t('Configuration and submissions summary for recently created or updated springboard donation forms.'),
+    'content' => module_exists('views') ? views_embed_view('sbv_forms', 'block_1') : t('Please enable the Views module to improve your Springboard experience.'),
+    'weight' => 1,
+  );
+  $panes['springboard_recent_forms'] = array(
+    'label' => 'Recent Forms',
+    'description' => t('Configuration and submissions summary for recently created or updated springboard forms.'),
+    'content' => module_exists('views') ? views_embed_view('sbv_forms', 'block') : t('Please enable the Views module to improve your Springboard experience.'),
+    'weight' => 2,
+  );
   return $panes;
 }
 

@@ -9,6 +9,175 @@
  */
 function springboard_views_views_default_views() {
   /**
+   * View sbv_forms
+   */
+ $view = new view();
+ $view->name = 'sbv_forms';
+ $view->description = '';
+ $view->tag = 'springboard_views';
+ $view->base_table = 'node';
+ $view->human_name = 'sbv_forms';
+ $view->core = 7;
+ $view->api_version = '3.0';
+ $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+ 
+ /* Display: Master */
+ $handler = $view->new_display('default', 'Master', 'default');
+ $handler->display->display_options['title'] = 'Recent Forms';
+ $handler->display->display_options['use_more_always'] = FALSE;
+ $handler->display->display_options['access']['type'] = 'perm';
+ $handler->display->display_options['cache']['type'] = 'none';
+ $handler->display->display_options['query']['type'] = 'views_query';
+ $handler->display->display_options['exposed_form']['type'] = 'basic';
+ $handler->display->display_options['pager']['type'] = 'mini';
+ $handler->display->display_options['pager']['options']['items_per_page'] = '5';
+ $handler->display->display_options['pager']['options']['offset'] = '0';
+ $handler->display->display_options['pager']['options']['id'] = '0';
+ $handler->display->display_options['pager']['options']['quantity'] = '9';
+ $handler->display->display_options['style_plugin'] = 'table';
+ $handler->display->display_options['style_options']['columns'] = array(
+   'title' => 'title',
+   'nid' => 'nid',
+   'webform_submission_count_node' => 'webform_submission_count_node',
+   'view_node' => 'view_node',
+   'link_to_revision' => 'view_node',
+   'webform_edit' => 'view_node',
+   'path' => 'path',
+   'nothing' => 'view_node',
+ );
+ $handler->display->display_options['style_options']['default'] = '-1';
+ $handler->display->display_options['style_options']['info'] = array(
+   'title' => array(
+     'sortable' => 0,
+     'default_sort_order' => 'asc',
+     'align' => '',
+     'separator' => '',
+     'empty_column' => 0,
+   ),
+   'nid' => array(
+     'sortable' => 0,
+     'default_sort_order' => 'asc',
+     'align' => '',
+     'separator' => '',
+     'empty_column' => 0,
+   ),
+   'webform_submission_count_node' => array(
+     'align' => '',
+     'separator' => '',
+     'empty_column' => 0,
+   ),
+   'view_node' => array(
+     'align' => '',
+     'separator' => ' ',
+     'empty_column' => 0,
+   ),
+   'link_to_revision' => array(
+     'align' => '',
+     'separator' => '',
+     'empty_column' => 0,
+   ),
+   'webform_edit' => array(
+     'align' => '',
+     'separator' => '',
+     'empty_column' => 0,
+   ),
+   'path' => array(
+     'align' => '',
+     'separator' => '',
+     'empty_column' => 0,
+   ),
+   'nothing' => array(
+     'align' => '',
+     'separator' => '',
+     'empty_column' => 0,
+   ),
+ );
+ /* Field: Content: Title */
+ $handler->display->display_options['fields']['title']['id'] = 'title';
+ $handler->display->display_options['fields']['title']['table'] = 'node';
+ $handler->display->display_options['fields']['title']['field'] = 'title';
+ $handler->display->display_options['fields']['title']['label'] = 'Form Name';
+ $handler->display->display_options['fields']['title']['alter']['word_boundary'] = FALSE;
+ $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
+ $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
+ $handler->display->display_options['fields']['title']['link_to_node'] = FALSE;
+ /* Field: Content: Nid */
+ $handler->display->display_options['fields']['nid']['id'] = 'nid';
+ $handler->display->display_options['fields']['nid']['table'] = 'node';
+ $handler->display->display_options['fields']['nid']['field'] = 'nid';
+ $handler->display->display_options['fields']['nid']['label'] = 'Form ID';
+ $handler->display->display_options['fields']['nid']['element_label_colon'] = FALSE;
+ /* Field: Webform: Webform submission count */
+ $handler->display->display_options['fields']['webform_submission_count_node']['id'] = 'webform_submission_count_node';
+ $handler->display->display_options['fields']['webform_submission_count_node']['table'] = 'node';
+ $handler->display->display_options['fields']['webform_submission_count_node']['field'] = 'webform_submission_count_node';
+ $handler->display->display_options['fields']['webform_submission_count_node']['label'] = 'Submissions';
+ $handler->display->display_options['fields']['webform_submission_count_node']['element_label_colon'] = FALSE;
+ /* Field: Content: Link */
+ $handler->display->display_options['fields']['view_node']['id'] = 'view_node';
+ $handler->display->display_options['fields']['view_node']['table'] = 'views_entity_node';
+ $handler->display->display_options['fields']['view_node']['field'] = 'view_node';
+ $handler->display->display_options['fields']['view_node']['label'] = 'Action';
+ $handler->display->display_options['fields']['view_node']['element_label_colon'] = FALSE;
+ $handler->display->display_options['fields']['view_node']['text'] = 'view';
+ /* Field: Webform: Webform edit link */
+ $handler->display->display_options['fields']['webform_edit']['id'] = 'webform_edit';
+ $handler->display->display_options['fields']['webform_edit']['table'] = 'node';
+ $handler->display->display_options['fields']['webform_edit']['field'] = 'webform_edit';
+ $handler->display->display_options['fields']['webform_edit']['label'] = '';
+ $handler->display->display_options['fields']['webform_edit']['element_label_colon'] = FALSE;
+ $handler->display->display_options['fields']['webform_edit']['text'] = 'edit';
+ /* Field: Global: Custom text */
+ $handler->display->display_options['fields']['nothing']['id'] = 'nothing';
+ $handler->display->display_options['fields']['nothing']['table'] = 'views';
+ $handler->display->display_options['fields']['nothing']['field'] = 'nothing';
+ $handler->display->display_options['fields']['nothing']['label'] = '';
+ $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="[path]/revisions">revisions</a>';
+ $handler->display->display_options['fields']['nothing']['element_label_colon'] = FALSE;
+ /* Field: Content: Path */
+ $handler->display->display_options['fields']['path']['id'] = 'path';
+ $handler->display->display_options['fields']['path']['table'] = 'node';
+ $handler->display->display_options['fields']['path']['field'] = 'path';
+ $handler->display->display_options['fields']['path']['exclude'] = TRUE;
+ /* Sort criterion: Content revision: Updated date */
+ $handler->display->display_options['sorts']['timestamp']['id'] = 'timestamp';
+ $handler->display->display_options['sorts']['timestamp']['table'] = 'node_revision';
+ $handler->display->display_options['sorts']['timestamp']['field'] = 'timestamp';
+ $handler->display->display_options['sorts']['timestamp']['order'] = 'DESC';
+ /* Sort criterion: Content: Post date */
+ $handler->display->display_options['sorts']['created']['id'] = 'created';
+ $handler->display->display_options['sorts']['created']['table'] = 'node';
+ $handler->display->display_options['sorts']['created']['field'] = 'created';
+ $handler->display->display_options['sorts']['created']['order'] = 'DESC';
+ /* Filter criterion: Content: Type */
+ $handler->display->display_options['filters']['type']['id'] = 'type';
+ $handler->display->display_options['filters']['type']['table'] = 'node';
+ $handler->display->display_options['filters']['type']['field'] = 'type';
+ $handler->display->display_options['filters']['type']['value'] = array(
+   'webform' => 'webform',
+ );
+ 
+ /* Display: Springboard Recent Forms */
+ $handler = $view->new_display('block', 'Springboard Recent Forms', 'block');
+ $handler->display->display_options['display_description'] = 'View configuration and submission information about Springboard forms.';
+ $handler->display->display_options['defaults']['hide_admin_links'] = FALSE;
+ 
+ /* Display: Springboard Recent Donation Forms */
+ $handler = $view->new_display('block', 'Springboard Recent Donation Forms', 'block_1');
+ $handler->display->display_options['display_description'] = 'View configuration and submission information about Springboard forms.';
+ $handler->display->display_options['defaults']['hide_admin_links'] = FALSE;
+ $handler->display->display_options['defaults']['filter_groups'] = FALSE;
+ $handler->display->display_options['defaults']['filters'] = FALSE;
+ /* Filter criterion: Content: Type */
+ $handler->display->display_options['filters']['type']['id'] = 'type';
+ $handler->display->display_options['filters']['type']['table'] = 'node';
+ $handler->display->display_options['filters']['type']['field'] = 'type';
+ $handler->display->display_options['filters']['type']['value'] = array(
+   'donation_form' => 'donation_form',
+ );
+ $views[$view->name] = $view;
+  
+  /**
    * View 'sbv_batch'
    */
   $view = new view;
