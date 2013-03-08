@@ -49,6 +49,39 @@ function market_source_init() {
 }
 
 /**
+ * Implements hook_salesforce_genmap_map_fields_alter().
+ */
+function market_source_salesforce_genmap_map_fields_alter(&$fields, $context) {
+  if (variable_get('market_source_validate_sf_campaigns', 0)) {
+    // Alter donations based on recurring status.
+    if ($context['module'] == 'salesforce_donation' || $context['module'] == 'webform') {
+      $submission = $context['object'];
+      $map = $context['map'];
+      // Check the salesforce donation map.
+      if (isset($map->field_map['salesforce_webform_map']['cid'])) {
+        $sf_field = $map->field_map['salesforce_webform_map']['cid'];
+        if (!empty($submission->data['cid']) && _market_source_validate_cid($submission->data['cid'])) {
+          $fields[$sf_field] = $submission->data['cid'];
+        }
+        else {
+          unset($fields[$sf_field]);
+        }
+      }
+      // Check the webform.inc map.
+      if (isset($map->field_map['webform_map']['cid'])) {
+        $sf_field = $map->field_map['webform_map']['cid'];
+        if (!empty($submission->data['cid']) && _market_source_validate_cid($submission->data['cid'])) {
+          $fields[$sf_field] = $submission->data['cid'];
+        }
+        else {
+          unset($fields[$sf_field]);
+        }
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_theme().
  */
 function market_source_theme($existing, $type, $theme, $path) {
