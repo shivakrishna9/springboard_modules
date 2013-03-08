@@ -388,7 +388,7 @@ function page_wrappers_og_ajax_callback($form, $form_state) {
 function page_wrappers_file_insert($file) {
 
   //add timestamps to files and rename js files, do not do this on clone process
-  if (arg(2) != 'clone' && ($file->source == 'field_js_file_und_0' || $file->source == 'field_css_file_und_0')) {
+  if (arg(2) != 'clone' && isset($file->source) && ($file->source == 'field_js_file_und_0' || $file->source == 'field_css_file_und_0')) {
 
     $dir = drupal_dirname($file->uri);
     $filename = _page_wrappers_add_timestamp($file->filename);
