@@ -426,7 +426,7 @@ function _webform_goals_progress_bar_options() {
     'flat_ui' => t('Flat UI'),
     'twitter_basic' => t('Twitter basic'),
     'twitter_striped' => t('Twitter striped'),
-    'animated' => t('Animated'),
+    // 'animated' => t('Animated'), // Drupal strips script sent via jsonp so this doesn't work locally.
   );
   drupal_alter('webform_goals_progress_bar_options', $options);
   return $options;

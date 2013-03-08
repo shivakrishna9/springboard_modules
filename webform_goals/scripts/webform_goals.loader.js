@@ -5,13 +5,14 @@ jQuery(document).ready(function() {
   });
 
   goal_ids = ids.join(',');
+  if (goal_ids) {
   jQuery.ajax({
     dataType: 'jsonp',
     data: 'goal_ids=' + goal_ids,
     jsonp: 'jsonp_callback',
     // replace this url with the correct path for your site.
     // example: http://example.com/sites/default/files/webform_goals/webform_goals.jsonp.php
-    url: 'http://<domain name>/<path to files folder>/webform_goals/webform_goals.jsonp.php',
+    url: 'http://DOMAIN/PATH/TO/files/webform_goals/webform_goals.jsonp.php',
     success: function (data) {
       // unpack data and place accordingly.
       //  data format:
@@ -41,5 +42,6 @@ jQuery(document).ready(function() {
       }
     },
   });
+  }
 });
 

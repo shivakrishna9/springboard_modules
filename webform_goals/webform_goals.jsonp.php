@@ -5,7 +5,7 @@
  */
 $goal_ids = $_GET['goal_ids'];
 $ids = explode(',', $goal_ids);
-$data['status'] = 'success';
+$data = array();
 foreach ($ids as $id) {
   $filename = 'template-' . (int) $id . '.txt';
   if (file_exists($filename)) {
@@ -13,12 +13,10 @@ foreach ($ids as $id) {
     $data[$id] =  unserialize($file);
     $data['status'] = 'success';
   }
-  else {
-    $data = array(
-      'status' => 'fail',
-      'data' => 'null',
-    );
-  }
+}
+if (empty($data['status'])) {
+  $data['status'] = 'fail';
+  $data['data'] = 'null';
 }
 $data = json_encode($data);
 echo $_GET['jsonp_callback'] . '(' . print_r($data, TRUE) . ');';

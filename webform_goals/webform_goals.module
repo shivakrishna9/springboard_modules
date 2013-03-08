@@ -7,6 +7,10 @@
 require_once('includes/webform_goals.goals.inc');
 
 /**
+ *
+ */
+
+/**
  * Implements hook_menu().
  */
 function webform_goals_menu() {
@@ -514,9 +518,9 @@ function webform_goals_theme($existing, $type, $theme, $path) {
 function theme_webform_goals_widget($args) { //$goal) {
   $goal = $args['webform_goal'];
   $nid = isset($goal['extra']['selected_form_id']) ? $goal['extra']['selected_form_id'] : 0;
-  $template = token_replace($goal['template'], array('webform_goal' => $goal, 'nid' => $nid));
-  $template_filtered = check_markup($template, $goal['template_format']);
-  $data['markup'] = $template_filtered;
+  $template = token_replace(check_markup($goal['template'], $goal['template_format']), array('webform_goal' => $goal, 'nid' => $nid));
+  //$template_filtered = $template, $goal['template_format'];
+  $data['markup'] = $template;
   $data['tokens'] = _webform_goals_pack_tokens($goal, $nid);
   return serialize($data);
 }
