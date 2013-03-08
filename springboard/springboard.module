@@ -574,7 +574,7 @@ function _springboard_form_performance() {
       $forms[$donation_form->nid]['load_time'] = '<span class="' . springboard_set_dashboard_class(0, 0, 'max') . '">N/A</span>';
       // If the fundraiser information is available for tracking data, update it.
       if (module_exists('fundraiser')) {
-        $access_results = db_query('SELECT * FROM {fundraiser_tracking} WHERE nid = :nid', array(':nid' => $donation_form->nid))->fetchObject();
+        $access_results = db_query("SELECT * FROM {fundraiser_tracking} WHERE nid = :nid", array(':nid' => $donation_form->nid))->fetchObject();
         if ($access_results) {
           $conversion = _springboard_percentage($access_results->conversions, $access_results->pageviews);
           $conversion_threshold =  variable_get('springboard_conversion_threshold', 0);
@@ -589,7 +589,7 @@ function _springboard_form_performance() {
           $forms[$donation_form->nid]['gateway_failure'] =  '<span class="' . springboard_set_dashboard_class($gateway_failure_threshold, $gateway_failure, 'max') . '">'
             . $gateway_failure . '</span>';
           if (module_exists('statistics')) {
-            $load_time = db_result(db_query('SELECT timer FROM {accesslog} WHERE path = CONCAT("node/", %d) ORDER BY aid desc', $donation_form->nid)) . 'ms';
+            $load_time = db_query("SELECT timer FROM {accesslog} WHERE path = CONCAT('node/', :nid) ORDER BY aid desc", array(':nid' => $donation_form->nid))->fetchField() . 'ms';
             $load_time_threshold = variable_get('springboard_load_time_threshold', 0);
             $forms[$donation_form->nid]['load_time'] = '<span class="' . springboard_set_dashboard_class($load_time_threshold, $load_time, 'max') . '">'
               . $load_time . '</span>';
