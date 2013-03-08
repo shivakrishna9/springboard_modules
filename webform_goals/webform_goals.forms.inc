@@ -9,7 +9,6 @@
  */
 function webform_goals_add($form, $form_state, $goal = array()) {
 
-  drupal_add_css(drupal_get_path('module', 'webform_goals') . '/styles/webform_goals.admin.css');
   ctools_include('plugins');
 
   if (!empty($goal['gid'])) {
