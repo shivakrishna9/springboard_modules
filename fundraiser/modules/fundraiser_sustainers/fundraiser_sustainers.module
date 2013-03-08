@@ -1202,6 +1202,7 @@ function fundraiser_sustainers_cancel_form($form, &$form_state, $donation) {
     '#cols' => 70,
     '#rows' => 3,
     '#resizable' => FALSE,
+    '#required' => TRUE,
   );
   $form['submit'] = array(
     '#type' => 'submit',
