@@ -5,7 +5,7 @@
     items = jQuery('.wg-goal').map(function(){
       ids.push(jQuery(this).data('gid'));
     });
-
+    // TODO: add site namespacing so goals can be shared to external Drupal sites that have this module installed.
     goal_ids = ids.join(',');
     if (goal_ids) {
     jQuery.ajax({
