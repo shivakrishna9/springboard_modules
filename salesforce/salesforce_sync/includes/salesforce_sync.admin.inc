@@ -37,7 +37,7 @@ function salesforce_sync_admin_form($form, &$form_state) {
       Salesforce in a single batch.'),
     '#type' => 'textfield',
     '#size' => 6,
-    '#default_value' => _sfq_get_value('max_batch_size', $form_state),
+    '#default_value' => _sfs_get_value('max_batch_size', $form_state),
   );
 
   // Variable salesforce_sync_max_batch_size.
@@ -47,7 +47,7 @@ function salesforce_sync_admin_form($form, &$form_state) {
     '#description' => t('The maximum number of characters a query to Salesforce can be.  If a query exceeds this limit it will be automatically broken up into multiple smaller lengthed queries.'),
     '#type' => 'textfield',
     '#size' => 6,
-    '#default_value' => _sfq_get_value('max_query_length', $form_state),
+    '#default_value' => _sfs_get_value('max_query_length', $form_state),
   );
 
   // Save.
@@ -99,7 +99,7 @@ function salesforce_sync_admin_form_submit($form, &$form_state) {
     switch ($var) {
       case 'max_batch_size':
       case 'max_query_length':
-        $converted_value = _sfq_get_value($var, $form_state);
+        $converted_value = _sfs_get_value($var, $form_state);
         variable_set('salesforce_sync_' . $var, $converted_value);
         break;
     }
@@ -110,7 +110,7 @@ function salesforce_sync_admin_form_submit($form, &$form_state) {
 /**
  * Helper function to find the value for the given field for the current state.
  */
-function _sfq_get_value($field, $form_state) {
+function _sfs_get_value($field, $form_state) {
   $value = NULL;
   if (isset($form_state['input'][$field])) {
     $value = $form_state['input'][$field];
