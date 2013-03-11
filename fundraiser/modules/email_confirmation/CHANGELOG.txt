@@ -1,3 +1,7 @@
+2013-03-11   Jeremy Isett  <jeremy.isett@jacksonriver.com>
+
+ * email_confirmation.js: Changing the form's action attribute on page load to target the preview modal
+ 
 2012-10-30   Allen Freeman  <allen.freeman@jacksonriver.com>
 
  * email_confirmation.module, email_confirmation_template_list(): added optional og permissions checking. If a user doesn't otherwise have permission, but has it via OG they get the template.
