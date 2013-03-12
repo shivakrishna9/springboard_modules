@@ -62,6 +62,9 @@ function fundraiser_sustainers_webform_goals_track_metric($goal, $params = array
         }
       }
     }
+    if (empty($data['count'])) {
+      $data['count'] = 0;
+    }
     webform_goals_calculate_progress($data, $goal);
     return $data;
   }

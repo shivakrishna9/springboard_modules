@@ -10,3 +10,6 @@ dependencies[] = webform
 dependencies[] = token
 dependencies[] = date_api
 dependencies[] = ctools
+
+// tests
+files[] = tests/webform_goals.test

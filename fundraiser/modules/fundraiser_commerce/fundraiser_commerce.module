@@ -1387,22 +1387,22 @@ function _fundraiser_commerce_decrypt($input) {
  * Implements hook_fundraiser_get_total_donations_by_nid().
  */
 function fundraiser_commerce_fundraiser_get_total_donations_by_nid($nid, $start = FALSE, $end = FALSE) {
-  static $totals = array();
-  if (empty($totals[$nid])) {
-    $query = db_select('field_data_commerce_order_total', 'f');
-    $query->join('commerce_order', 'c', 'c.order_id = f.entity_id');
-    $query->join('fundraiser_donation', 'fd', 'fd.did = c.order_id');
-    $query->addExpression('SUM(f.commerce_order_total_amount)', 'total');
-    $query->condition('fd.nid', $nid, '=');
-    $query->condition('c.status', 'payment_received', '=');
-    if ($start) {
-      $query->condition('o.created', $start, '>=');
-    }
-    if ($end) {
-      $query->condition('o.created', $end, '<=');
-    }
-    $data = $query->execute()->fetchField();
-    $totals[$nid] = $data * .01; // convert from pennies.
+  // Since more than one goal may target this nid with differing date ranges we
+  // can't cache this.
+
+  $query = db_select('field_data_commerce_order_total', 'f');
+  $query->join('commerce_order', 'c', 'c.order_id = f.entity_id');
+  $query->join('fundraiser_donation', 'fd', 'fd.did = c.order_id');
+  $query->addExpression('SUM(f.commerce_order_total_amount)', 'total');
+  $query->condition('fd.nid', $nid, '=');
+  $query->condition('c.status', 'payment_received', '=');
+  if ($start) {
+    $query->condition('c.created', $start, '>=');
   }
+  if ($end) {
+    $query->condition('c.created', $end, '<=');
+  }
+  $data = $query->execute()->fetchField();
+  $totals[$nid] = $data * .01; // convert from pennies.
   return $totals[$nid];
 }
