@@ -3,19 +3,15 @@
  * @file
  * Test interaction between user accounts and webform fields.
  */
-class WebformGoalsIntegratedTestSetup extends DrupalWebTestCase {
+class WebformUserIntegratedTestSetup extends DrupalWebTestCase {
 
   /**
    * Implements setUp().
    */
   function setUp() {
-    parent::setUp('webform_user', 'webform_goals');
+    parent::setUp('webform_goals');
 
-    // Set up webform goals.
-    $this->configureWebformGoals();
 
-    // Set up a user profile.
-    $this->createProfileFields();
 
     // Create user accounts.
 
@@ -30,7 +26,6 @@ class WebformGoalsIntegratedTestSetup extends DrupalWebTestCase {
     $permissions['admin'] = array(
       'access content',
       'administer nodes',
-      'administer site configuration',
       'create webform content',
       'edit any webform content',
       'access all webform results',
@@ -47,62 +42,6 @@ class WebformGoalsIntegratedTestSetup extends DrupalWebTestCase {
       $this->users[$user_key] = $this->drupalCreateUser($role_permissions);
     }
   }
-
-  function configureWebformGoals() {
-    // Configure webform_user
-    // admin/config/content/webform_goals/settings
-    // TODO: set goal update max. 
-  }
-
-  function createProfileFields() {
-    // Create some text profile fields
-    $field_name = 'first_name';
-    $field = array(
-      'field_name' => $field_name,
-      'type' => 'text',
-      'cardinality' => 1,
-    );
-    field_create_field($field);
-    $instance = array(
-      'field_name' => $field_name,
-      'label' => 'First name',
-      'entity_type' => 'user',
-      'bundle' => 'user',
-    );
-    field_create_instance($instance);
-
-    $field_name = 'last_name';
-    $field = array(
-      'field_name' => $field_name,
-      'type' => 'text',
-      'cardinality' => 1,
-    );
-    field_create_field($field);
-    $instance = array(
-      'field_name' => $field_name,
-      'label' => 'Last name',
-      'entity_type' => 'user',
-      'bundle' => 'user',
-    );
-    field_create_instance($instance);
-
-    $field_name = 'state';
-    $field = array(
-      'field_name' => $field_name,
-      'type' => 'list_text',
-      'settings' => array('allowed_values' => drupal_map_assoc(array('NY','DC','MD'))),
-    );
-    field_create_field($field);
-
-    $instance = array(
-      'field_name' => $field_name,
-      'label' => 'State',
-      'entity_type' => 'user',
-      'bundle' => 'user',
-    );
-    field_create_instance($instance);
-
-  }
 }
 
 /**
@@ -116,116 +55,27 @@ class WebformGoalsIntegratedTestCase extends WebformGoalsIntegratedTestSetup {
   public static function getInfo() {
     return array(
       'name' => t('Webform Goals'),
-      'description' => t('Checks webform goals creation, tracking & display.'),
-      'group' => t('Webform Goals'),
+      'description' => t('Checks goals UI & Display.'),
+      'group' => t('Webform User'),
     );
   }
 
   // Confirm UI elements on webform node create form.
   function testWebformGoalsUI() {
-
-    $this->drupalLogin($this->users['admin']);
+    // Log in our editor.
+    $this->drupalLogin($this->users['editor']);
     $edit = array(
       'title' => t('Test Webform Goals'),
       'body[und][0][value]' => 'test',
-      'is_webform_user' => 1,
     );
     $this->drupalPost('node/add/webform', $edit, t('Save'));
 
-    // goal creation
-    $edit = $this->webformGoalsGoalDefinitions('single_submissions'];
-    $this->drupalGet('admin/config/content/webform_goals/add', $edit, t('Save'));
+    // TODO: add component.
 
-    $this->drupalGet('admin/config/content/webform_goals');
-    $this->assertText('Single number of submissions', t('Single submissions goal created'));
-    $this->assertLinkByHref('node/1', t('Node link present in goal display');
-    $this->assertLinkByHref('admin/config/content/webform_goals/1/edit', t('Goal edit link present'));
-    $this->assertLinkByHref('admin/config/content/webform_goals/1/delete', t('Goal delete link present'));
-  } $this->assertLinkByHref('webform_goals/1/embed', t('Goal embed modal present'));
+    // TODO: webform created, make goals.
 
-
-  /**
-   * Utility function, checks to see if a component exists for a given webform.
-   */
-  function webformGoalsComponentExists($nid, $form_key) {
-    return (bool) db_query('SELECT cid FROM {webform_component} WHERE form_key = :form_key AND nid=:nid',
-      array(':form_key' => $form_key, ':nid' => $nid))->fetchField();
   }
 
-  /**
-   * Utility function, goal configuration storage.
-   */
-  function webformGoalsGoalDefinitions($goal) {
-    $goals['single_submissions'] = array(
-      'name' => 'Single number of submissions',
-      'context' => 'single',
-      'select_form_id' => 1,
-      'metric' => 'submission_count',
-      'target_value' => 100,
-      'seed' => 20,
-      'display_threshold' => 0,
-      'starter_message[value]' => '',
-      'starter_message[format]' => '',
-      'start_date[month]' => '',
-      'start_date[day]' => '',
-      'start_date[year]' => '',
-      'end_date[month]' => '',
-      'end_date[day]' => '',
-      'end_date[year]' => '',
-      'auto_expire' => FALSE,
-      'progress_bar' => 'flat_ui',
-      'template[value]' => '',
-      'template[format]' => '',
-    );
-    $goals['single_custom'] = array(
-      'name' => 'Single custom field total',
-      'context' => 'single',
-      'select_form_id' => 1,
-      'metric' => 'custom_field',
-      'custom_field_selection' => '', // Component CID.
-      'target_value' => 100,
-      'seed' => 20,
-      'display_threshold' => 0,
-      'starter_message[value]' => '',
-      'starter_message[format]' => '',
-      'start_date[month]' => '',
-      'start_date[day]' => '',
-      'start_date[year]' => '',
-      'end_date[month]' => '',
-      'end_date[day]' => '',
-      'end_date[year]' => '',
-      'auto_expire' => FALSE,
-      'progress_bar' => 'flat_ui',
-      'template[value]' => '',
-      'template[format]' => '',
-    );
-    $goals['group_submissions'] = array(
-      'name' => 'Group number of submissions',
-      'context' => 'single',
-      'select_form_id' => 1,
-      'metric' => 'submission_count',
-      'target_value' => 100,
-      'seed' => 20,
-      'display_threshold' => 0,
-      'starter_message[value]' => '',
-      'starter_message[format]' => '',
-      'start_date[month]' => '',
-      'start_date[day]' => '',
-      'start_date[year]' => '',
-      'end_date[month]' => '',
-      'end_date[day]' => '',
-      'end_date[year]' => '',
-      'auto_expire' => FALSE,
-      'progress_bar' => 'flat_ui',
-      'template[value]' => '',
-      'template[format]' => '',
-
-    );
-    $this->drupalGet('admin/config/content/webform_goals/add');
-
-    );
-    return $goals[$goal];
-  }
 }
 
 /**
@@ -238,34 +88,21 @@ class WebformGoalsUnitTestCase extends WebformGoalsIntegratedTestSetup {
    */
   public static function getInfo() {
     return array(
-      'name' => t('Webform Goals Unit Tests'),
+      'name' => t('Webform Goals Unit Cases'),
       'description' => t('Individually tests specific functions.'),
-      'group' => t('Webform Goals'),
+      'group' => t('Webform User'),
     );
   }
 
-  // TODO: test goal progress calculation
-  $values = array(
-    'data' => array(
-      'count' => 10,
-    ),
-    'goal' => array(
-      'target_value' => 100,
-      'seed' => 20,
-    ),
-    'expected' => array(
-      'percent' => 20,
-      'remaining' => 80,
-      'percent_remaining' => 80,
-    ),
-  );
-  $data = webform_goals_calculate_progress($values['data'], $values['goal']);
-
-  $this->assertTrue($data['percent'] == 20, t('Progress percentage calculated correctly.'));
-  $this->assertTrue($data['remaining'] == 80, t('Remaining progress calculated correctly.'));
-  $this->assertTrue($data['percent_remaining'] == 80, t('Remaining percent calculated correctly.'));
+  /**
+   * Unit test helper functions.
+   */
+  function testWebformGoalsHelperFunctions() {
+    // TODO: test goal progress calculations
+    // TODO: test token replacement
+  }
 
 }
 
 
-}
+
