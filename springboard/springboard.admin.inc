@@ -409,6 +409,48 @@ function springboard_admin_config_profile(&$form, $form_state) {
     ),
   );
   $profile_fields[] = array(
+    'label' => t('Search Engine'),
+    'field_name' => 'search_engine',
+    'type' => 'text',
+    'widget' => array(
+      'type' => 'text_textfield',
+    ),
+    'display' => array(
+      'default' => array(
+        'label' => 'hidden',
+        'type' => 'hidden',
+      ),
+    ),
+  );
+  $profile_fields[] = array(
+    'label' => t('Search String'),
+    'field_name' => 'search_string',
+    'type' => 'text',
+    'widget' => array(
+      'type' => 'text_textfield',
+    ),
+    'display' => array(
+      'default' => array(
+        'label' => 'hidden',
+        'type' => 'hidden',
+      ),
+    ),
+  );
+  $profile_fields[] = array(
+    'label' => t('User Agent'),
+    'field_name' => 'user_agent',
+    'type' => 'text',
+    'widget' => array(
+      'type' => 'text_textfield',
+    ),
+    'display' => array(
+      'default' => array(
+        'label' => 'hidden',
+        'type' => 'hidden',
+      ),
+    ),
+  );
+  $profile_fields[] = array(
     'label' => t('Salesforce Account Id'),
     'field_name' => 'profile_salesforce_account_id',
     'type' => 'text',
@@ -468,7 +510,10 @@ function springboard_admin_config_profile(&$form, $form_state) {
     'profile_cid' => 'cid',
     'profile_ms' => 'ms',
     'profile_referrer' => 'referrer',
-    'profile_initial_referrer' => 'initial_referrer')
+    'profile_initial_referrer' => 'initial_referrer',
+    'profile_search_engine' => 'search_engine',
+    'profile_search_string' => 'search_string',
+    'profile_user_agent' => 'user_agent')
   );
 }
 
