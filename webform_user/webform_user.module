@@ -482,6 +482,8 @@ function webform_user_mapping_form($form, $form_state, $node) {
   foreach ($fields as $field) {
     $options[$field['name']] = $field['title'];
   }
+  // we like alphabetized dropdowns.
+  asort($options);
   $form['mapping'] = array(
     '#prefix' => '<div id="fields">',
     '#suffix' => '</div>',
