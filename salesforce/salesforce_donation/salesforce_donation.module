@@ -527,6 +527,9 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
     $fields['salesforce_webform_map']['#fields']['ms'] = t('Market Source') . ' (' . t('Default webform field') . ')';
     $fields['salesforce_webform_map']['#fields']['referrer'] = t('Referrer') . ' (' . t('Default webform field') . ')';
     $fields['salesforce_webform_map']['#fields']['initial_referrer'] = t('Initial Referrer') . ' (' . t('Default webform field') . ')';
+    $fields['salesforce_webform_map']['#fields']['search_engine'] = t('Search Engine') . ' (' . t('Default webform field') . ')';
+    $fields['salesforce_webform_map']['#fields']['search_string'] = t('Search String') . ' (' . t('Default webform field') . ')';
+    $fields['salesforce_webform_map']['#fields']['user_agent'] = t('User Agent') . ' (' . t('Default webform field') . ')';
   }
 
   // Node fields.

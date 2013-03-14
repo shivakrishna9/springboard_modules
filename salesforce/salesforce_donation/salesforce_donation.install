@@ -54,6 +54,9 @@ function salesforce_donation_install() {
       'ms' => 'Market_Source__c',
       'referrer' => 'Referrer__c',
       'initial_referrer' => 'Initial_Referrer__c',
+      'search_engine' => 'Search_Engine__c',
+      'search_string' => 'Search_String__c',
+      'user_agent' => 'User_Agent__c',
     ),
     'salesforce_node_map' => array(
       'title' => 'Donation_Form_Name__c',
