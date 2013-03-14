@@ -143,6 +143,8 @@ function theme_fundraiser_form_payment_methods($variables) {
       'class' => array('draggable'),
     );
   }
-  drupal_add_tabledrag('fundraiser-webform-payment-methods', 'order', 'sibling', 'fundraiser-webform-payment-methods-weight');
-  return theme('table', array('rows' => $rows, 'header' => $header, 'attributes' => array('id' => 'fundraiser-webform-payment-methods')));
+  if (count($rows) > 1) {
+    drupal_add_tabledrag('fundraiser-payment-methods', 'order', 'sibling', 'fundraiser-payment-methods-weight');
+  }
+  return theme('table', array('rows' => $rows, 'header' => $header, 'attributes' => array('id' => 'fundraiser-payment-methods')));
 }
