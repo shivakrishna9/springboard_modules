@@ -521,6 +521,12 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
     }
   }
   elseif (module_exists('fundraiser_webform') && module_exists('market_source') && $node->nid == -1) {
+    $fields['salesforce_webform_map'] = array(
+      '#type' => 'webform',
+      '#label' => t('Webform Component'),
+      '#dedupe' => FALSE,
+      '#fields' => array(),
+    );
     // If node is -1, then we're working with default.
     // We go with the CC defaults, anything else can be added by other modules on drupal_alter.
     $fields['salesforce_webform_map']['#fields']['cid'] = t('Campaign ID') . ' (' . t('Default webform field') . ')';
