@@ -486,12 +486,14 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
         $all_payment_methods[$type][] = $gateway;
       }
     }
-    $field_payment_methods = !empty($component['extra']['payment_methods']) ? $component['extra']['payment_methods'] : array();
+    // Order the gateways by the configured weight of the fields
+    $field_payment_methods = !empty($node->gateways) ? $node->gateways : array();
     foreach (array_keys($all_payment_methods) as $method_key) {
       $all_payment_methods[$method_key]['weight'] = isset($field_payment_methods[$method_key]['weight']) ? $field_payment_methods[$method_key]['weight'] : 0;
     }
     // Sort all payment methods by weight.
     uasort($all_payment_methods, '_fundraiser_payment_method_weight_compare');
+    $method_count = count($all_payment_methods);
     // Loop through each method, comparing to those set on this node.
     foreach ($all_payment_methods as $method_key => $method) {
       // Remove the weight value
@@ -519,29 +521,34 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
       $fieldset[$method_key]['id'] = array(
         '#type' => 'select',
         '#title' => t('Payment Processor'),
+        '#description' => t('The payment processor for this payment method.'),
         '#options' => $processor_options,
         '#default_value' => isset($field_method_settings['id']) ? $field_method_settings['id'] : NULL,
       );
-      $fieldset[$method_key]['label'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Label'),
-        '#size' => 20,
-        '#default_value' => isset($field_method_settings['label']) ? $field_method_settings['label'] : NULL,
-      );
-      $fieldset[$method_key]['weight'] = array(
-        '#type' => 'weight',
-        '#title' => t('Weight'),
-        '#delta' => 25,
-        '#default_value' => isset($field_method_settings['weight']) ? $field_method_settings['weight'] : 0,
-        '#attributes' => array('class' => array('fundraiser-payment-methods-weight')),
-      );
-      $fieldset[$method_key]['_default'] = array(
-        '#type' => 'radio',
-        '#title' => t('Default'),
-        '#default_value' => !empty($field_method_settings['default']) ? $method_key : NULL,
-        '#return_value' => $method_key,
-        '#parents' => array('gateways', '_default'),
-      );
+      // include these fields if there is more than one payment method
+      if ($method_count > 1) {
+        $fieldset[$method_key]['label'] = array(
+          '#type' => 'textfield',
+          '#description' => t('The label displayed for this payment method. Required when multiple payment methods are enabled.'),
+          '#title' => t('Label'),
+          '#size' => 20,
+          '#default_value' => isset($field_method_settings['label']) ? $field_method_settings['label'] : NULL,
+        );
+        $fieldset[$method_key]['weight'] = array(
+          '#type' => 'weight',
+          '#title' => t('Weight'),
+          '#delta' => 25,
+          '#default_value' => isset($field_method_settings['weight']) ? $field_method_settings['weight'] : 0,
+          '#attributes' => array('class' => array('fundraiser-payment-methods-weight')),
+        );
+        $fieldset[$method_key]['_default'] = array(
+          '#type' => 'radio',
+          '#title' => t('Default'),
+          '#default_value' => !empty($field_method_settings['default']) ? $method_key : NULL,
+          '#return_value' => $method_key,
+          '#parents' => array('gateways', '_default'),
+        );
+      }
     }
     $form['fundraiser_settings']['gateways'] = $fieldset;
     // add a validate callback.
@@ -684,8 +691,8 @@ function _fundraiser_form_payment_method_validate($form, &$form_state) {
       if (empty($enabled_method['id'])) {
         form_set_error('gateways][' . $method .'][id', t('All enabled payment methods must select a gateway.'));
       }
-      if (empty($enabled_method['label'])) {
-        form_set_error('gateways][' . $method .'][label', t('All enabled payment methods must set a label.'));
+      if (count($enabled_methods) > 1 && empty($enabled_method['label'])) {
+        form_set_error('gateways][' . $method .'][label', t('Please enter a label for the %method gateway.', array('%method' => $method)));
       }
     }
     // Check that a default has been set.
