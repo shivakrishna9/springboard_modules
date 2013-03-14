@@ -94,7 +94,7 @@ function salesforce_queue_entity_info() {
       'fieldable' => FALSE,
       'exportable' => FALSE,
       'module' => 'salesforce_queue',
-      'deletion callback' => 'salesforce_queue_item_entity_delete',
+      'deletion callback' => '_salesforce_queue_item_entity_delete',
     ),
   );
 }
@@ -277,7 +277,7 @@ function salesforce_queue_salesforce_sync_fail_item($item, $result) {
 /**
  * Delete function for the queue item entity.
  */
-function salesforce_queue_item_entity_delete($item_id) {
+function _salesforce_queue_item_entity_delete($item_id) {
   $items = entity_load('salesforce_queue_item', array($item_id));
   if (!empty($items[$item_id])) {
     $queue = salesforce_queue_load();
