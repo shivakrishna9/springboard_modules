@@ -486,12 +486,10 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
         $all_payment_methods[$type][] = $gateway;
       }
     }
-    // Order the gateways by the configured weight of the fields
-    $field_payment_methods = !empty($node->gateways) ? $node->gateways : array();
+    // Sort all payment methods by the configured weight of the fields
     foreach (array_keys($all_payment_methods) as $method_key) {
-      $all_payment_methods[$method_key]['weight'] = isset($field_payment_methods[$method_key]['weight']) ? $field_payment_methods[$method_key]['weight'] : 0;
+      $all_payment_methods[$method_key]['weight'] = !empty($node->gateways[$method_key]['weight']) ? $node->gateways[$method_key]['weight'] : 0;
     }
-    // Sort all payment methods by weight.
     uasort($all_payment_methods, '_fundraiser_payment_method_weight_compare');
     $method_count = count($all_payment_methods);
     // Loop through each method, comparing to those set on this node.
