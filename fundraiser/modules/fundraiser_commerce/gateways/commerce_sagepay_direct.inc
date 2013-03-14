@@ -29,6 +29,7 @@ function commerce_sagepay_direct_fundraiser_commerce_form($payment_method) {
     '#title' => t('Credit card number'),
     '#size' => 20,
     '#required' => TRUE,
+    '#salesforce_label' => t('Credit card last 4'),
   );
   $form['expiration_date']['#theme'] = 'fundraiser_credit_card_expiration_date';
   $months[1] = 'January';
@@ -67,6 +68,7 @@ function commerce_sagepay_direct_fundraiser_commerce_form($payment_method) {
     '#title' => t('CVV'),
     '#size' => 6,
     '#required' => TRUE,
+    '#salesforce_mappable' => FALSE,
   );
   return $form;
 }
