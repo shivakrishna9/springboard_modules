@@ -990,9 +990,6 @@ function fundraiser_node_type_form_submit(&$form, &$form_state) {
   if ($form_state['values']['fundraiser']) {
     fundraiser_webform_types_primary($form_state['values']['type'], 'insert');
   }
-  else {
-    fundraiser_webform_types_primary($form_state['values']['type'], 'delete');
-  }
 }
 
 /**
@@ -3155,19 +3152,6 @@ function fundraiser_webform_types_primary($type, $op) {
       }
       break;
 
-    case 'delete':
-      if (in_array($type, $types)) {
-        $index = array_search($type, $types);
-        unset($types[$index]);
-        variable_set('webform_node_types', $types);
-      }
-
-      if (in_array($type, $primary_types)) {
-        $index = array_search($type, $primary_types);
-        unset($primary_types[$index]);
-        variable_set('webform_node_types_primary', $primary_types);
-      }
-      break;
   }
 }
 
