@@ -806,6 +806,8 @@ class SalesforceSync {
   /**
    * Helper method to fetch records from Salesforce based on values of a field.
    *
+   * @param string $object_type
+   *   The type of object of the desired records, such as 'Account' or 'User'.
    * @param array $fields
    *   Array of field names of the records to return.
    * @param string $key_field
