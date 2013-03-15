@@ -206,15 +206,6 @@ function salesforce_donation_fundraiser_donation_refund_success($donation) {
 }
 
 /**
- * Implements hook_salesforce_genmap_map_help().
- */
-function salesforce_donation_salesforce_genmap_map_help() {
-  return array(
-    'salesforce_donation' => t('Salesforce donation provides a way to map donation values to Salesforce objects.'),
-  );
-}
-
-/**
  * Implements hook_salesforce_genmap_info().
  */
 function salesforce_donation_salesforce_genmap_info() {

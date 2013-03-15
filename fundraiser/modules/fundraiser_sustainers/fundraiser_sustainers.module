@@ -388,16 +388,6 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
 }
 
 /**
- * Implements hook_salesforce_genmap_map_help().
- */
-function fundraiser_sustainers_salesforce_genmap_map_help() {
-  return array(
-    'fundraiser_sustainers' => t('Fundraiser sustainers includes Salesforce integration, there is no need ' .
-      'to map fields (all recurring donation objects are the same), so no admin interface is provided.'),
-  );
-}
-
-/**
  * Implements hook_node_insert().
  * Insert a copy of the default map when a Fundraiser node is created.
  */

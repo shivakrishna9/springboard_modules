@@ -8,29 +8,6 @@
 /**
  * Page callback to render the mapping page.
  */
-function salesforce_genmap_map($node) {
-  $build = array();
-  $build['content'] = array(
-    'page_description' => array(
-      '#id' => 'salesforce-map-helptext-page',
-      '#type' => 'markup',
-      '#markup' => '<p>' . t('Handle the maps for Salesforce maps associated with this node.') . '</p>',
-    ),
-  );
-  $helps = module_invoke_all('salesforce_genmap_map_help');
-  foreach ($helps as $index => $help) {
-    $build['content']['additional_help_' . $index] = array(
-      '#id' => 'salesforce-map-helptext-' . $index . '-page',
-      '#type' => 'markup',
-      '#markup' => '<p>' . $help . '</p>',
-    );
-  }
-  return $build;
-}
-
-/**
- * Page callback to render the mapping page.
- */
 function salesforce_genmap_map_page($node, $module) {
   $build = array();
   $build['content'] = array(
