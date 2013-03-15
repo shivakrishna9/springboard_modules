@@ -527,6 +527,7 @@ function _sfw_salesforce_object_list(Salesforce $sfapi) {
     }
   }
 
+  asort($objects_list);
   return $objects_list;
 }
 
@@ -549,6 +550,7 @@ function _sfw_salesforce_record_type_list(Salesforce $sfapi, $sf_object) {
       $record_type_list[$record_type['recordTypeId']] = $record_type['name'];
     }
   }
+  asort($record_type_list);
   return $record_type_list;
 }
 
@@ -595,6 +597,7 @@ function _sfw_salesforce_field_list(Salesforce $sfapi, $sf_object) {
       $field_list[$field['name']] = $field['label'];
     }
   }
+  asort($field_list);
   return $field_list;
 }
 

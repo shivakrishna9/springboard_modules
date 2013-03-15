@@ -45,6 +45,7 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
     $entity_fields = call_user_func($property_info['options_callback'], $entity_type);
     unset($entity_fields['']);
     $sf_fields = _sfm_get_salesforce_field_options($salesforce_object_type, $form_state);
+    asort($sf_fields);
     $dedupe_isset = FALSE;
     foreach ($entity_fields as $drupal_field_name => $drupal_field_label) {
       $delta = $drupal_field_name;
