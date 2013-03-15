@@ -39,10 +39,12 @@ function salesforce_genmap_entity_info() {
  * Implements hook_menu().
  */
 function salesforce_genmap_menu() {
+  $items = array();
+
   // Gather modules that provide mapping support for generic objects.
   $modules = salesforce_genmap_info();
   // Here we have some math to this.
-  // If there is only one module to offer a map, then we offer that map at 
+  // If there is only one module to offer a map, then we offer that map at
   // top level, if not, then we grab the first map as our default.
   if (count($modules) < 2) {
     foreach ($modules as $module => $info) {
