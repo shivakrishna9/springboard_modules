@@ -103,7 +103,7 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
     $this->assertFieldByName('field_map[webform_map][email][sf_field]', 'Email', 'email saved and refreshed on form.');
     $this->assertFieldByName('field_map[salesforce_node_map][nid][sf_field]', 'ReportsToId', 'nid saved and refreshed on form.');
     $this->assertFieldByName('field_map[salesforce_node_map][title][sf_field]', 'Department', 'node title saved and refreshed on form.');
-    $this->assertFieldByName('field_map[salesforce_submission_map][sid][sf_field]', 'OwnerId', 'submiddion id saved and refreshed on form.');
+    $this->assertFieldByName('field_map[salesforce_submission_map][sid][sf_field]', 'OwnerId', 'submission id saved and refreshed on form.');
     $this->assertFieldByName('field_map[salesforce_submission_map][date][sf_field]', 'Jigsaw', 'submission title saved and refreshed on form.');
     $this->assertFieldChecked('edit-map-config-sync-options-insert', 'Sync on insert saved and selected.');
     $this->assertNoFieldChecked('edit-map-config-sync-options-update', 'Sync on update saved and not selected.');
@@ -129,7 +129,7 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
     $this->assertFieldByName('field_map[webform_map][email][sf_field]', 'Email', 'email refreshed on form.');
     $this->assertFieldByName('field_map[salesforce_node_map][nid][sf_field]', 'ReportsToId', 'nid refreshed on form.');
     $this->assertFieldByName('field_map[salesforce_node_map][title][sf_field]', 'Department', 'node title refreshed on form.');
-    $this->assertFieldByName('field_map[salesforce_submission_map][sid][sf_field]', 'OwnerId', 'submiddion id refreshed on form.');
+    $this->assertFieldByName('field_map[salesforce_submission_map][sid][sf_field]', 'OwnerId', 'submission id refreshed on form.');
     $this->assertFieldByName('field_map[salesforce_submission_map][date][sf_field]', 'Jigsaw', 'submission title refreshed on form.');
 
     // Unmap the webform from Salesforce.
