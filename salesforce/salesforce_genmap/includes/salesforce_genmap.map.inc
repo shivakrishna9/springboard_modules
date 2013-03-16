@@ -80,7 +80,7 @@ function salesforce_genmap_map_form($form, &$form_state, $node, $module) {
   }
 
   // The type of record of the chosen Salesforce Object.
-  $sf_records = _sfw_salesforce_record_type_list($sfapi, $sf_object);
+  $sf_records = _sfw_salesforce_record_type_list($sfapi, $sf_object, FALSE);
   if (count($sf_records) > 1) {
     $form['salesforce_object_info']['salesforce_record_type'] = array(
       '#id' => 'salesforce-record-type',
@@ -500,13 +500,16 @@ function _sfw_generate_form_table(&$form) {
  *   Array of Salesforce objects keyed by the object's name and the label as the
  *   value
  */
-function _sfw_salesforce_object_list(Salesforce $sfapi) {
+function _sfw_salesforce_object_list(Salesforce $sfapi, $include_select = TRUE) {
   // Salesforce module v4 filters down to updatable and triggerable so it is
   // easier to visually consume the list.
   $objects_info = $sfapi->objects(array('updateable' => TRUE, 'triggerable' => TRUE));
 
-  $objects_list = array();
   $dupes = array();
+  $objects_list = array();
+  if ($include_select) {
+    $objects_list[NULL] = '- ' . t('Select object type') . ' -';
+  }
   foreach ($objects_info as $object) {
     // Some objects have the same label, which just makes things confusing
     // I could make only subsequent duplicates unique, but I figure that users
@@ -542,9 +545,12 @@ function _sfw_salesforce_object_list(Salesforce $sfapi) {
  * @return Array
  *   Array of record types of the given Salesforce object
  */
-function _sfw_salesforce_record_type_list(Salesforce $sfapi, $sf_object) {
+function _sfw_salesforce_record_type_list(Salesforce $sfapi, $sf_object, $include_select = TRUE) {
   $object_info = $sfapi->objectDescribe($sf_object);
   $record_type_list = array();
+  if ($include_select) {
+    $record_type_list[NULL] = '- ' . t('Select record type') . ' -';
+  }
   foreach ($object_info['recordTypeInfos'] as $record_type) {
     if ($record_type['name'] != 'Master' && $record_type['available'] == TRUE) {
       $record_type_list[$record_type['recordTypeId']] = $record_type['name'];
@@ -586,11 +592,12 @@ function _sfw_salesforce_default_record_type($sf_object) {
  * @return Array
  *   Array of fields on the given Salesforce object
  */
-function _sfw_salesforce_field_list(Salesforce $sfapi, $sf_object) {
+function _sfw_salesforce_field_list(Salesforce $sfapi, $sf_object, $include_select = TRUE) {
   $object_info = $sfapi->objectDescribe($sf_object);
-  $field_list = array(
-    NULL => '-',
-  );
+  $field_list = array();
+  if ($include_select) {
+    $field_list[NULL] = '- ' . t('Select field') . ' -';
+  }
   foreach ($object_info['fields'] as $field) {
     // Filter out fields that can't be altered.
     if ($field['updateable'] || $field['createable']) {
