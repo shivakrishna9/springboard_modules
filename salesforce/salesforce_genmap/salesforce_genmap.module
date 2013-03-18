@@ -109,6 +109,26 @@ function salesforce_genmap_permission() {
       'description' => t('Configure the mapping of Salesforce objects.'),
     ),
   );
+
+  // Add the permission to configure a map to delete on sync only if this site
+  // is configured to allow this configuration setting at all.  Since deleting
+  // records is so risky, we would prefer to not have the ability at all.
+  // However, there can be a usecase for it.  Instead of custom coding a use
+  // case, we will allow the ability to enable that feature on a site-by-site
+  // basis.  Otherwise, the feature is 100% hidden.
+  if (variable_get('salesforce_genmap_allow_delete_sync', FALSE)) {
+    $modules = salesforce_genmap_info();
+    foreach ($modules as $module => $info) {
+      $perm = 'configure ' . $module . ' delete sync';
+      $permissions[$perm] = array(
+        'title' => t('Configure a !module map to sync deleted records',
+          array('!module' => $module)),
+        'description' => t('Allow the configuration for a map to automatically delete its associated record from Salesforce when it is deleted from Drupal.'),
+      );
+    }
+  }
+
+  // Allow the modules this module extends to declare their own permissions.
   $extended_modules = _salesforce_genmap_get_extended_modules_list();
   foreach ($extended_modules as $module) {
     $module_perms = module_invoke($module, 'salesforce_genmap_permission');
@@ -152,6 +172,14 @@ function salesforce_genmap_node_delete($node) {
  *   Optional.  Delta of the item to be queued.
  */
 function salesforce_genmap_send_object_to_queue($module, $op, $node, $oid, $drupal_object, $delta = NULL) {
+  if (!variable_get('salesforce_genmap_allow_delete_sync', FALSE) && in_array($op, array('delete', 'DELETE'))) {
+    // Do not queue DELETE if site has disallowed delete trigger.  This is a
+    // failsafe in case someone had bypassed the configuration form's validation
+    // (such as manually constructing the configuration).  The goal is not to
+    // prevent any sort of deletion of records but rather to prevent the
+    // deletion of records on a triggered event.
+    return;
+  }
   $map = salesforce_genmap_load_map($node->nid, $module);
   if (!empty($map) && !empty($map->sync_options[$op])) {
     $sobject = salesforce_genmap_map_object($module, $drupal_object, $map, $node, $op);

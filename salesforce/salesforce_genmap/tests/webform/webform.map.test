@@ -64,7 +64,7 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
     // Verify default settings for Sync config.
     $this->assertFieldChecked('edit-map-config-sync-options-insert', 'Sync on insert selected.');
     $this->assertFieldChecked('edit-map-config-sync-options-update', 'Sync on update selected.');
-    $this->assertFieldChecked('edit-map-config-sync-options-delete', 'Sync on delete selected.');
+    $this->assertNoFieldByName('map_config[sync_options][delete]', '', 'Delete sync config option is hidden as expected.');
 
     // Fill out a couple mappings with the same webform field.
     // Validation will reject this.
@@ -91,7 +91,6 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
     $edit = $this->_swfEdit;
     $edit['salesforce_dedupe_field'] = 'Email';
     $edit['map_config[sync_options][update]'] = FALSE;
-    $edit['map_config[sync_options][delete]'] = FALSE;
 
     // Save the form and verify the form reloaded correctly.
     $this->drupalPost(NULL, $edit, 'Save');
@@ -107,7 +106,6 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
     $this->assertFieldByName('field_map[salesforce_submission_map][date][sf_field]', 'Jigsaw', 'submission title saved and refreshed on form.');
     $this->assertFieldChecked('edit-map-config-sync-options-insert', 'Sync on insert saved and selected.');
     $this->assertNoFieldChecked('edit-map-config-sync-options-update', 'Sync on update saved and not selected.');
-    $this->assertNoFieldChecked('edit-map-config-sync-options-delete', 'Sync on delete saved and not selected.');
 
     // Change the object type to change the entire form.
     $edit = array(

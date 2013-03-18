@@ -218,9 +218,14 @@ function salesforce_genmap_map_form($form, &$form_state, $node, $module) {
     '#options' => array(
       'insert' => t('New submissions'),
       'update' => t('Modified submissions'),
-      'delete' => t('Deleted submissions'),
     ),
   );
+
+  // Add the option to configure a map to delete on sync only if this site is
+  // configured to allow this configuration setting and the user has access.
+  if (variable_get('salesforce_genmap_allow_delete_sync', FALSE) && user_access('configure ' . $module . ' delete sync')) {
+    $form['map_config']['sync_options']['#options']['delete'] = t('Deleted submissions');
+  }
 
   // Buttons buttons buttons.
   $form['submit'] = array(
@@ -265,6 +270,14 @@ function salesforce_genmap_map_form_validate($form, &$form_state) {
   if (!isset($form_state['input']['field_map'])) {
     // There is nothing to check.
     return;
+  }
+
+  // Prevent the user from mistakenly bypassing the restriction for configuring
+  // delete on sync.
+  if (in_array('delete', $form_state['input']['map_config']['sync_options']) && !user_access('configure ' . $form['#module'] . ' delete sync')) {
+    unset($form_state['input']['map_config']['sync_options']['delete']);
+    $error_text = t('You do not have permission to configure a !module map to sync on delete.', array('!module' => $form['#module']));
+    form_set_error('map_config][sync_options][delete', $error_text);
   }
 
   // No Salesforce field can be used twice.
@@ -383,11 +396,11 @@ function _sfw_default_value($form, $form_state, $field, $group = NULL, $drupal_f
   // Salesforce object, record and dedupe field value.
   if (empty($group) || $group == 'salesforce_object_info' || $group == 'map_config') {
     if ($field == 'sync_options' && empty($map['sync_options'])) {
-      // Make all the default value.
+      // Make only insert and update default.  Delete should not be default
+      // because it is too dangerous to be deleting records in Salesforce.
       return array(
         'insert',
         'update',
-        'delete',
       );
     }
     elseif (isset($map[$field])) {
