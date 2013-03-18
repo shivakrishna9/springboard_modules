@@ -244,6 +244,16 @@ function salesforce_genmap_map_form($form, &$form_state, $node, $module) {
     );
   }
 
+  // Add CSS after build to avoid validation errs.
+  $form['#after_build'][] = 'salesforce_genmap_map_form_after_build';
+  return $form;
+}
+
+/**
+ * After build callback to add CSS.
+ */
+function salesforce_genmap_map_form_after_build($form, &$form_state) {
+  drupal_add_css(drupal_get_path('module', 'salesforce_genmap') . '/css/salesforce_genmap.css');
   return $form;
 }
 
@@ -498,6 +508,7 @@ function _sfw_generate_form_table(&$form) {
       // The magic is right here.  You need to pass the field data by reference
       // to the table rendering in order for the fields to function properly.
       $form['#rows'][$row_num][$column]['data'] = &$form[$row_num][$column];
+      $form['#rows'][$row_num][$column]['class'] = array('salesforce-table-field', 'salesforce-table-field-'.$column);
     }
   }
   unset($form['#row_storage']);
