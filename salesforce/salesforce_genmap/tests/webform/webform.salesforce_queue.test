@@ -128,7 +128,7 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
     // Enable ability to set a DELETE sync option and set option on map.
     $this->enableDeleteSync('webform');
     $webform_edit = array('map_config[sync_options][delete]' => TRUE);
-    $this->drupalPost('node/' . $this->webform1->nid . '/salesforce/webform', $webform_edit, 'Save');
+    $this->drupalPost($this->webformPath('salesforce_map', $this->webform1->nid), $webform_edit, 'Save');
     $this->assertText('The map was saved successfully.', 'The DELETE sync option was saved.');
 
     // Create a new webform submission and send it to Salesforce.
@@ -138,7 +138,7 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
     $processor->process();
 
     // Delete the submission, it should end up queued as DELETE.
-    $edit_path = 'node/' . $this->webform1->nid . '/submission/' . ($item['drupal_id'] + 1) . '/delete';
+    $edit_path = $this->webformPath('delete_submission', $this->webform1->nid, ($item['drupal_id'] + 1));
     $this->drupalPost($edit_path, array(), 'Delete');
     $this->assertText('Submission deleted', 'There was not an obvious error submitting DELETE.');
     $item = $this->fetchQueueItem();
