@@ -97,7 +97,7 @@ function fundraiser_sustainers_install() {
     // But if fundraiser has flagged that it's done porting data, we can drop it.
     if (variable_get('fundraiser_port_recurring_done', FALSE)) {
       db_drop_table('fundraiser_recurring');
-      variable_det('fundraiser_port_recurring_done');
+      variable_del('fundraiser_port_recurring_done');
     }
   }
 }

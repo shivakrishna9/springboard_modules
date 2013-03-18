@@ -100,7 +100,19 @@ function salesforce_npsp_salesforce_queue_postprocess_batch($batch, $results, $q
  */
 function salesforce_npsp_get_contact_account_ids($sfids) {
   $sync = new SalesforceSync();
-  return $sync->fetchByIds('Contact', array('AccountId'), $sfids);
+  $drupal_ids = array_keys($sfids);
+  $account_ids = array();
+
+  // Retrieve the account id for each contact.
+  $response = $sync->fetchByIds('Contact', array('AccountId'), $sfids);
+
+  // Associate the account id with each Drupal user id.
+  $count = count($sfids);
+  for ($i = 0; $i < $count; $i++) {
+    $account_ids[$drupal_ids[$i]] = $response[$i]->fields->AccountId;
+  }
+
+  return $account_ids;
 }
 
 /**
