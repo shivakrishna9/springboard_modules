@@ -507,6 +507,10 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
         '#type' => 'checkbox',
         '#default_value' => isset($field_method_settings['status']) ? $field_method_settings['status'] : 0,
       );
+      // Add auto check.
+      if ($method_count == 1) {
+        $fieldset[$method_key]['status']['#default_value'] = TRUE;
+      }
       $fieldset[$method_key]['_status'] = array(
         '#type' => 'markup',
         '#title' => t('Method'),
@@ -523,7 +527,12 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
         '#options' => $processor_options,
         '#default_value' => isset($field_method_settings['id']) ? $field_method_settings['id'] : NULL,
       );
-      // include these fields if there is more than one payment method
+      // Add auto select.
+      if ($method_count == 1) {
+        $keys = array_keys($processor_options);
+        $fieldset[$method_key]['id']['#default_value'] = $keys[1];
+      }
+      // Include these fields if there is more than one payment method.
       if ($method_count > 1) {
         $fieldset[$method_key]['label'] = array(
           '#type' => 'textfield',
