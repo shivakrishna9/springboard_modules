@@ -528,7 +528,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
         '#default_value' => isset($field_method_settings['id']) ? $field_method_settings['id'] : NULL,
       );
       // Add auto select.
-      if ($method_count == 1) {
+      if ($method_count == 1 && count($processor_options) == 2) {
         $keys = array_keys($processor_options);
         $fieldset[$method_key]['id']['#default_value'] = $keys[1];
       }
