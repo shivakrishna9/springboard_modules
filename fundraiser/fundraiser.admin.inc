@@ -43,6 +43,12 @@ function fundraiser_admin_settings($form, &$form_state) {
     '#default_value' => variable_get('fundraiser_default_amounts', '10|$10' . "\n" . '20|$20' . "\n" . '50|$50' . "\n" . '100|$100'),
     '#description' => t('Enter the default donation amounts that will be used on new donation forms.'),
   );
+  $form['fundraiser']['fundraiser_default_other'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Use other amount by default'),
+    '#default_value' => variable_get('fundraiser_default_other', TRUE),
+    '#description' => t('Check this box to automatically configure donation forms to use the other amount.'),
+  );
   $form['fundraiser']['fundraiser_receipt_bcc'] = array(
     '#type' => 'textfield',
     '#title' => t('Donation receipt bcc email address'),
