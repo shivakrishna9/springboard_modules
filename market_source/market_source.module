@@ -141,7 +141,7 @@ function market_source_form_alter(&$form, &$form_state, $form_id) {
         $campaigns = market_source_get_campaigns();
         if (is_array($campaigns)) {
           $form['value']['#type'] = 'select';
-          $form['value']['#options'] = $campaigns;
+          $form['value']['#options'] = array_combine($campaigns, $campaigns);
         }
       }
     }
@@ -640,7 +640,7 @@ function market_source_get_campaigns() {
     $found_campaigns = $sync->fetchRecords('Campaign', array('Id', 'Name'));
     // Return a list of Campaign ids.
     foreach ($found_campaigns as $found_campaign) {
-      $campaigns[] = $found_campaigns->Id;
+      $campaigns[] = $found_campaign->Id;
     }
   }
   return $campaigns;
