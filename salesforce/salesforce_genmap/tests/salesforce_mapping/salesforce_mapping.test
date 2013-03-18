@@ -86,12 +86,9 @@ class SalesforceMappingAlterTestCase extends SalesforceMappingTestCase {
         'sync_triggers' => array(
           '1' => TRUE,
           '2' => TRUE,
-          '4' => TRUE,
           '8' => TRUE,
           '16' => TRUE,
-          '32' => TRUE,
         ),
-        'push_async' => TRUE,
       );
     }
 
@@ -147,5 +144,34 @@ class SalesforceMappingAlterTestCase extends SalesforceMappingTestCase {
     $this->assertRaw('id="salesforce-mapping-overview-form"', 'Redirected to the mappings overview table.');
     $this->assertRaw('(Machine name: ' . $machine_name . ')', 'New map successfully appears on overview page.');
     $this->assertLink($label, 0, 'Link to edit new map appears.');
+  }
+
+  /**
+   * Helper to enable the ability to delete during a sync trigger.
+   *
+   * @param string $module
+   *   Name of the module to enable syncing for.
+   *
+   * @return int
+   *   Id of the role that has the permission to configure delete syncing.
+   */
+  public function enableDeleteSync($module) {
+    variable_set('salesforce_genmap_allow_delete_sync', TRUE);
+    drupal_static_reset();
+    cache_clear_all();
+    $rid = $this->drupalCreateRole(array('configure ' . $module . ' delete sync'));
+    $roles = $this->admin_user->roles;
+    $roles[$rid] = $rid;
+    user_save($this->admin_user, array('roles' => $roles));
+    return $rid;
+  }
+
+  /**
+   * Helper to disable the ability to delete during a sync trigger.
+   */
+  public function disableDeleteSync() {
+    variable_set('salesforce_genmap_allow_delete_sync', FALSE);
+    drupal_static_reset();
+    cache_clear_all();
   }
 }

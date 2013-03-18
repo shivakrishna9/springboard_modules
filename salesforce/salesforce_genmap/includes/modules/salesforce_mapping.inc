@@ -6,6 +6,21 @@
  */
 
 /**
+ * Implements hook_salesforce_genmap_permission().
+ */
+function salesforce_mapping_salesforce_genmap_permission() {
+  $permissions = array();
+  if (variable_get('salesforce_genmap_allow_delete_sync', FALSE)) {
+    $permissions['configure salesforce_mapping delete sync'] = array(
+      'title' => t('Configure a !module map to sync deleted records',
+        array('!module' => 'salesforce_mapping')),
+      'description' => t('Allow the configuration for a map to automatically delete its associated record from Salesforce when it is deleted from Drupal.'),
+    );
+  }
+  return $permissions;
+}
+
+/**
  * @name salesforce_mapping_alter_form Modifications to the mapping form
  * @{
  */
@@ -45,6 +60,7 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
     $entity_fields = call_user_func($property_info['options_callback'], $entity_type);
     unset($entity_fields['']);
     $sf_fields = _sfm_get_salesforce_field_options($salesforce_object_type, $form_state);
+    asort($sf_fields);
     $dedupe_isset = FALSE;
     foreach ($entity_fields as $drupal_field_name => $drupal_field_label) {
       $delta = $drupal_field_name;
@@ -199,10 +215,30 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
     unset($form['salesforce_field_mappings_wrapper']['salesforce_add_field']);
   }
 
+  // Add the option to configure a map to delete on sync only if this site is
+  // configured to allow this configuration setting and the user has access.
+  if (!variable_get('salesforce_genmap_allow_delete_sync', FALSE) || !user_access('configure salesforce_mapping delete sync')) {
+    unset($form['sync_triggers']['#options'][SALESFORCE_MAPPING_SYNC_DRUPAL_DELETE]);
+    unset($form['sync_triggers']['#options'][SALESFORCE_MAPPING_SYNC_SF_DELETE]);
+    foreach ($form['sync_triggers']['#default_value'] as $key => $value) {
+      if (in_array($value, array(SALESFORCE_MAPPING_SYNC_DRUPAL_DELETE, SALESFORCE_MAPPING_SYNC_SF_DELETE))) {
+        unset($form['sync_triggers']['#default_value'][$key]);
+      }
+    }
+  }
+
+  // We do not use these options, so hide them.
+  $form['push_async']['#access'] = FALSE;
+  $form['push_batch']['#access'] = FALSE;
+
   // The need to manipulate the form causes a need to manipulate the storage
   // of data. Appending a "prevalidate" callback to shift around all of the data
   // so the original validation callback will function properly.
   array_unshift($form['#validate'], 'salesforce_mapping_form_prevalidate');
+
+  // And add our own normal validate hook.
+  // Making it separate from prevalidate so the difference in tasks is clear.
+  $form['#validate'][] = 'salesforce_mapping_form_alter_validate';
 
   // Same as with the need for a "prevalidate" callback, calling another submit
   // callback to add back in the additional data we need that the original
@@ -214,6 +250,19 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
  * Prevalidation callback for the altered mapping form.
  */
 function salesforce_mapping_form_prevalidate($form, &$form_state) {
+  // Add the DELETE sync option values back in.
+  if (!variable_get('salesforce_genmap_allow_delete_sync', FALSE)) {
+    // Automatically set it FALSE.
+    $form_state['values']['sync_triggers'][SALESFORCE_MAPPING_SYNC_DRUPAL_DELETE] = FALSE;
+    $form_state['values']['sync_triggers'][SALESFORCE_MAPPING_SYNC_SF_DELETE] = FALSE;
+  }
+  elseif (!user_access('configure salesforce_mapping delete sync')) {
+    // Set the value to the original configuration's value.
+    $form_state['values']['sync_triggers'][SALESFORCE_MAPPING_SYNC_DRUPAL_DELETE] = ($form['salesforce_mapping']->sync_trigger[SALESFORCE_MAPPING_SYNC_DRUPAL_DELETE] & SALESFORCE_MAPPING_SYNC_DRUPAL_DELETE);
+    $form_state['values']['sync_triggers'][SALESFORCE_MAPPING_SYNC_SF_DELETE] = ($form['salesforce_mapping']->sync_trigger[SALESFORCE_MAPPING_SYNC_SF_DELETE] & SALESFORCE_MAPPING_SYNC_SF_DELETE);
+  }
+
+  // Update the field maps.
   $field_maps = &$form_state['values']['salesforce_field_mappings'];
   if (!is_array($field_maps)) {
     return;
@@ -238,6 +287,25 @@ function salesforce_mapping_form_prevalidate($form, &$form_state) {
         $field_maps[] = $field_map;
       }
       unset($field_maps[$delta]);
+    }
+  }
+}
+
+/**
+ * Validate callback for salesforce_mapping_form().
+ */
+function salesforce_mapping_form_alter_validate($form, &$form_state) {
+  // Prevent the user from mistakenly bypassing the restriction for configuring
+  // delete on sync.
+  $sync_options = $form_state['values']['sync_triggers'];
+  $error_text = t('You do not have permission to configure a !module map to sync on delete.', array('!module' => 'salesforce_mapping'));
+  if ((in_array(SALESFORCE_MAPPING_SYNC_DRUPAL_DELETE, $sync_options) || in_array(SALESFORCE_MAPPING_SYNC_SF_DELETE, $sync_options)) && !user_access('configure salesforce_mapping delete sync')) {
+    // Remove the values from form state to minimize possible user frustration.
+    foreach ($sync_options as $key => $value) {
+      if (in_array($value, array(SALESFORCE_MAPPING_SYNC_DRUPAL_DELETE, SALESFORCE_MAPPING_SYNC_SF_DELETE))) {
+        unset($form_state['values']['sync_triggers'][$key]);
+        form_set_error('sync_triggers][' . $value, $error_text);
+      }
     }
   }
 }
@@ -332,6 +400,15 @@ function salesforce_genmap_entity_delete($entity, $entity_type) {
  *   queued, or if the item was not supposed to be queued.
  */
 function salesforce_mapping_send_entity_to_queue($entity, $entity_type, $op) {
+  if (!variable_get('salesforce_genmap_allow_delete_sync', FALSE) && $op == 'DELETE') {
+    // Do not queue DELETE if site has disallowed delete trigger.  This is a
+    // failsafe in case someone had bypassed the configuration form's validation
+    // (such as manually constructing the configuration).  The goal is not to
+    // prevent any sort of deletion of records but rather to prevent the
+    // deletion of records on a triggered event.
+    return FALSE;
+  }
+
   // Information specific to this entity.
   list($entity_id, , $bundle) = entity_extract_ids($entity_type, $entity);
 

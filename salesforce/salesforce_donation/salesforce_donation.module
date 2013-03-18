@@ -206,15 +206,6 @@ function salesforce_donation_fundraiser_donation_refund_success($donation) {
 }
 
 /**
- * Implements hook_salesforce_genmap_map_help().
- */
-function salesforce_donation_salesforce_genmap_map_help() {
-  return array(
-    'salesforce_donation' => t('Salesforce donation provides a way to map donation values to Salesforce objects.'),
-  );
-}
-
-/**
  * Implements hook_salesforce_genmap_info().
  */
 function salesforce_donation_salesforce_genmap_info() {
@@ -497,7 +488,7 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
   elseif (module_exists('fundraiser_webform') && $node->nid == -1) {
     // If node is -1, then we're working with default.
     // We go with the CC defaults, anything else can be added by other modules on drupal_alter.
-    $fields['salesforce_donation_map']['#fields']['card_number'] = t('Credit card number') . ' (' . t('Default payment field') . ')';
+    $fields['salesforce_donation_map']['#fields']['card_number'] =  t('Credit card last 4') . ' (' . t('Default payment field') . ')';
     $fields['salesforce_donation_map']['#fields']['card_expiration_month'] = t('Expiration month') . ' (' . t('Default payment field') . ')';
     $fields['salesforce_donation_map']['#fields']['card_expiration_year'] = t('Expiration year') . ' (' . t('Default payment field') . ')';
   }
@@ -521,12 +512,21 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
     }
   }
   elseif (module_exists('fundraiser_webform') && module_exists('market_source') && $node->nid == -1) {
+    $fields['salesforce_webform_map'] = array(
+      '#type' => 'webform',
+      '#label' => t('Webform Component'),
+      '#dedupe' => FALSE,
+      '#fields' => array(),
+    );
     // If node is -1, then we're working with default.
     // We go with the CC defaults, anything else can be added by other modules on drupal_alter.
     $fields['salesforce_webform_map']['#fields']['cid'] = t('Campaign ID') . ' (' . t('Default webform field') . ')';
     $fields['salesforce_webform_map']['#fields']['ms'] = t('Market Source') . ' (' . t('Default webform field') . ')';
     $fields['salesforce_webform_map']['#fields']['referrer'] = t('Referrer') . ' (' . t('Default webform field') . ')';
     $fields['salesforce_webform_map']['#fields']['initial_referrer'] = t('Initial Referrer') . ' (' . t('Default webform field') . ')';
+    $fields['salesforce_webform_map']['#fields']['search_engine'] = t('Search Engine') . ' (' . t('Default webform field') . ')';
+    $fields['salesforce_webform_map']['#fields']['search_string'] = t('Search String') . ' (' . t('Default webform field') . ')';
+    $fields['salesforce_webform_map']['#fields']['user_agent'] = t('User Agent') . ' (' . t('Default webform field') . ')';
   }
 
   // Node fields.
@@ -572,7 +572,12 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
 function _salesforce_donation_get_form_fields($form, $fields = array()) {
   foreach (element_children($form) as $field_name) {
     if (isset($form[$field_name]['#type']) && $form[$field_name]['#type'] != 'fieldset') {
-      $fields[$field_name] = isset($form[$field_name]['#title']) ? $form[$field_name]['#title'] : $field_name;
+      $mappable = isset($form[$field_name]['#salesforce_mappable']) ? $form[$field_name]['#salesforce_mappable'] : TRUE;
+      if ($mappable) {
+        $label = isset($form[$field_name]['#title']) ? $form[$field_name]['#title'] : $field_name;
+        $label = isset($form[$field_name]['#salesforce_label']) ? $form[$field_name]['#salesforce_label'] : $label;
+        $fields[$field_name] = $label;
+      }
     }
     else {
       $fields = _salesforce_donation_get_form_fields($form[$field_name], $fields);

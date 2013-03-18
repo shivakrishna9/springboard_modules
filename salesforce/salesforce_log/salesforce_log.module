@@ -26,7 +26,7 @@ function salesforce_log_entity_info() {
       'fieldable' => FALSE,
       'exportable' => FALSE,
       'module' => 'salesforce_log',
-      'deletion callback' => 'salesforce_log_item_entity_delete',
+      'deletion callback' => '_salesforce_log_item_entity_delete',
     ),
   );
 }
@@ -204,7 +204,7 @@ function _salesforce_log_prepare_item_record($item) {
 /**
  * Delete function for the log item entity.
  */
-function salesforce_log_item_entity_delete($lid) {
+function _salesforce_log_item_entity_delete($lid) {
   db_delete('salesforce_log_item')
     ->condition('lid', $lid)
     ->execute();

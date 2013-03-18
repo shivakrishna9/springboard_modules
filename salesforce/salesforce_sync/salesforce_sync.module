@@ -74,6 +74,9 @@ define('SALESFORCE_SYNC_ITEM_FAIL_UNDELETE', 'Item failed to be undeleted.');
 // The entire batch failed to be processed due to some error with Salesforce.
 define('SALESFORCE_SYNC_ITEM_FAIL_BATCH', 'Batch caused Salesforce to throw exception.');
 
+// The batch failed to be processed because we could not get a connection.
+define('SALESFORCE_SYNC_ITEM_FAIL_SOAP', 'A connection to Salesforce could not be established.');
+
 /**
  * @} salesforce_sync_item_fail_responces
  */

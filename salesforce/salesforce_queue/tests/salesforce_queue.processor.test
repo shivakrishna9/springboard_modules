@@ -80,10 +80,8 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     // Connect to Salesforce.
     // All this extra stuff is special for simpletest to connect to SOAP due to
     // the access token being stored in the session.
-    $sfapi = $this->salesforceConnect();
     $this->processor->setSalesforceApi($this->salesforceConnect());
-    $soap = new SalesforceSoapPartner($sfapi);
-    $this->processor->setSalesforceSoap($soap);
+    $this->processor->setSalesforceSoap();
     $this->assertEqual(SALESFORCE_QUEUE_PROCESS_COMPLETE, $this->processor->process(), 'Able to claim items and move through processing.');
 
     // Take all of the items we created and try to create them again.  They will
@@ -250,10 +248,8 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     // Set up the processor's Salesforce connection.
     // This is special for simpletest due to the access token being stored in
     // the session.
-    $sfapi = $this->salesforceConnect();
-    $this->processor->setSalesforceApi($sfapi);
-    $soap = new SalesforceSoapPartner($sfapi);
-    $this->processor->setSalesforceSoap($soap);
+    $this->processor->setSalesforceApi($this->salesforceConnect());
+    $this->processor->setSalesforceSoap();
 
     // Create a bunch of items to work with and process 'em.
     $this->createQueueItems($this->queue, 50, array('CREATE'));
@@ -407,10 +403,8 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     // Set up the processor's Salesforce connection.
     // This is special for simpletest due to the access token being stored in
     // the session.
-    $sfapi = $this->salesforceConnect();
-    $this->processor->setSalesforceApi($sfapi);
-    $soap = new SalesforceSoapPartner($sfapi);
-    $this->processor->setSalesforceSoap($soap);
+    $this->processor->setSalesforceApi($this->salesforceConnect());
+    $this->processor->setSalesforceSoap();
 
     // Create a bunch of items to work with and process 'em.
     $create_quantity_1 = 100;
@@ -578,9 +572,8 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     $updated_fields = array();
     $salesforce_record_count = 0;
     foreach ($fetch_update_records as $object_type => $data) {
-      $fields = implode(', ', $data['fields']);
       try {
-        $response = $soap->retrieve($fields, $object_type, $data['ids']);
+        $response = $this->processor->salesforceSync->fetchByIds($object_type, $data['fields'], $data['ids']);
         foreach ($response as $record) {
           $salesforce_record_count++;
           unset($record->fields->Id);

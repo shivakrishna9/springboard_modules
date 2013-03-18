@@ -53,7 +53,10 @@ define('SALESFORCE_QUEUE_PROCESS_FAIL_LEASE_EXPIRED', -2);
 define('SALESFORCE_QUEUE_PROCESS_FAIL_NO_VALID_ITEMS', -3);
 
 // Cannnot connect to Salesforce.
-define('SALESFORCE_QUEUE_PROCESS_FAIL_CONNECT', -9);
+define('SALESFORCE_QUEUE_PROCESS_FAIL_CONNECT', -8);
+
+// Cannnot create a valid soap connection.
+define('SALESFORCE_QUEUE_PROCESS_FAIL_SOAP', -9);
 
 // Items cannot be claimed for an unknown reason.
 define('SALESFORCE_QUEUE_PROCESS_FAIL_CLAIM_ITEMS', -10);
@@ -94,7 +97,7 @@ function salesforce_queue_entity_info() {
       'fieldable' => FALSE,
       'exportable' => FALSE,
       'module' => 'salesforce_queue',
-      'deletion callback' => 'salesforce_queue_item_entity_delete',
+      'deletion callback' => '_salesforce_queue_item_entity_delete',
     ),
   );
 }
@@ -232,7 +235,7 @@ function salesforce_queue_cron() {
   // Limit the running of the processor to a configured frequency.
   $cron_frequency = variable_get('salesforce_queue_cron_frequency', SALESFORCE_QUEUE_CRON_FREQUENCY_DEFAULT);
   $cron_last = variable_get('salesforce_queue_cron_last', 0);
-  if (($cron_last + $cron_frequency) < REQUEST_TIME) {
+  if (($cron_last + $cron_frequency) < REQUEST_TIME && salesforce_get_api()->isAuthorized()) {
     salesforce_queue_process_queue();
     // Set cron_last after process has completed.
     variable_set('salesforce_queue_cron_last', time());
@@ -277,7 +280,7 @@ function salesforce_queue_salesforce_sync_fail_item($item, $result) {
 /**
  * Delete function for the queue item entity.
  */
-function salesforce_queue_item_entity_delete($item_id) {
+function _salesforce_queue_item_entity_delete($item_id) {
   $items = entity_load('salesforce_queue_item', array($item_id));
   if (!empty($items[$item_id])) {
     $queue = salesforce_queue_load();

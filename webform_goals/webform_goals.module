@@ -470,7 +470,7 @@ function webform_goals_theme($existing, $type, $theme, $path) {
     ),
     'webform_goals_widget_loader' => array(
       'variables' => array(
-        'goal_id' => NULL,
+        'goal' => NULL,
       ),
       'template' => 'templates/webform_goals.widget_loader',
     ),

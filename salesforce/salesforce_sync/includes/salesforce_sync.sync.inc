@@ -15,14 +15,14 @@ class SalesforceSync {
    *
    * @var Salesforce
    */
-  protected $sfapi;
+  public $sfapi;
 
   /**
    * SalesforceSoapPartner object to connect to Salesforce via SOAP.
    *
    * @var SalesforceSoapPartner
    */
-  protected $soap;
+  public $soap;
 
   /**
    * SalesforceSyncTokenScanner object used to do token replacements in batches.
@@ -70,8 +70,8 @@ class SalesforceSync {
    *   will be used.
    */
   public function __construct(Salesforce $sfapi = NULL, SalesforceSoapPartner $soap = NULL) {
-    $this->sfapi = is_null($sfapi) ? salesforce_get_api() : $sfapi;
-    $this->soap = is_null($soap) ? new SalesforceSoapPartner($this->sfapi) : $soap;
+    $this->setSalesforceApi($sfapi);
+    $this->setSalesforceSoap($soap);
     $this->maxQueryLength = variable_get('salesforce_sync_max_query_length', SALESFORCE_SYNC_MAX_QUERY_LENGTH_DEFAULT);
     $this->maxBatchSize = variable_get('salesforce_sync_max_batch_size', SALESFORCE_SYNC_MAX_BATCH_SIZE_DEFAULT);
     $this->tokenScanner = new SalesforceSyncTokenScanner($this->getProcessedItemIds());
@@ -174,6 +174,14 @@ class SalesforceSync {
    */
   public function sendBatch($batch) {
     $this->sendBatchPrepare($batch);
+
+    // Soap connection to Salesforce could never be established.
+    if (!is_object($this->soap)) {
+      $this->failBatch($batch, SALESFORCE_SYNC_ITEM_FAIL_SOAP);
+      return FALSE;
+    }
+
+    // Send away.
     try {
       switch ($batch['operation']) {
         case 'CREATE':
@@ -304,6 +312,10 @@ class SalesforceSync {
     if (isset($batch['batch_prepared']) && $batch['batch_prepared']) {
       // No use continuing if this batch is already prepared.
       return;
+    }
+    // Last attempt to see if there is hope of getting a connection.
+    if (!is_object($this->soap)) {
+      $this->setSalesforceSoap();
     }
     $this->batchReplaceTokens($batch);
     $this->batchConvertToSalesforceFormat($batch);
@@ -794,6 +806,8 @@ class SalesforceSync {
   /**
    * Helper method to fetch records from Salesforce based on values of a field.
    *
+   * @param string $object_type
+   *   The type of object of the desired records, such as 'Account' or 'User'.
    * @param array $fields
    *   Array of field names of the records to return.
    * @param string $key_field
@@ -805,31 +819,48 @@ class SalesforceSync {
    *   Array of Salesforce objects for reach found record.
    */
   public function fetchByField($object_type, $fields, $key_field, $key_field_values) {
-    $key_field_values_string = "'" . implode("', '", $key_field_values) . "'";
-    $query_part_1 = "SELECT Id, $key_field FROM $object_type WHERE $key_field IN ";
-    $query = $query_part_1 . "($key_field_values_string)";
+    $conditions = array(
+      array(
+        'field' => $key_field,
+        'op' => 'IN',
+        'value' => $key_field_values,
+      ),
+    );
+    return $this->fetchRecords($object_type, $fields, $conditions);
+  }
 
-    // Verify the query string does not exceed maxQueryLength.  If it does,
-    // chunk up the $key_field_values until it does not.  Salesforce cannot
-    // handle it when the query is too long.
-    $queries = array($query);
-    if (strlen($query) > $this->maxQueryLength) {
-      $count = count($key_field_values);
-      $split = 2;
-      while (strlen($query) > $this->maxQueryLength) {
-        $chunk_size = $count / $split;
-        $chunks = array_chunk($key_field_values, $chunk_size);
-        $chunk = array_shift($chunks);
-        $key_field_values_string = "'" . implode("', '", $chunk) . "'";
-        $query = $query_part_1 . "($key_field_values_string)";
-        $split++;
-      }
-      $queries = array($query);
-      foreach ($chunks as $chunk) {
-        $key_field_values_string = "'" . implode("', '", $chunk) . "'";
-        $queries[] = $query_part_1 . "($key_field_values_string)";
-      }
-    }
+  /**
+   * Helper to fetch records from Salesforce based on custom conditions.
+   *
+   * This of course will have its limitations and can handle only simple
+   * queries, but the hope is it will save time in more routine instances.  All
+   * conditions are joined by AND.
+   *
+   * @param string $object_type
+   *   The type of object of the desired records, such as 'Account' or 'User'.
+   * @param array $fields
+   *   Array of field names of the records to return.
+   * @param array $conditions
+   *   Array of SQL conditions.  Each value can be a string of a complete
+   *   statement, or can be an array with 'field', 'op' and 'value' keys.  The
+   *   'value' key may also be an array which will be automatically converted
+   *   into a string.  Example:
+   *   <code>
+   *     $conditions = array(
+   *       array(
+   *         'field' => 'email',
+   *         'op' => 'IN',
+   *         'value' => array(
+   *           'john.doe@example.com',
+   *           'jane.doe@example.com',
+   *         ),
+   *       ),
+   *       'CreatedDate > 2012-01-01 00:00:00',
+   *     );
+   *   </code>
+   */
+  public function fetchRecords($object_type, array $fields, array $conditions = array()) {
+    $queries = $this->buildQueries($object_type, $conditions);
 
     // Partner API requests are formatted incorrectly, so we are reciving the Id
     // as an array, and the fields are not retreived in a structured format.
@@ -855,6 +886,116 @@ class SalesforceSync {
     }
 
     return $this->fetchByIds($object_type, $fields, $ids);
+  }
+
+  /**
+   * Helper to build a Salesforce query that will not exceed 10,000 characters.
+   *
+   * This of course will have its limitations and can handle only simple
+   * queries, but the hope is it will save time in more routine instances.  All
+   * conditions are joined by AND.
+   *
+   * @param string $object_type
+   *   The type of object of the desired records, such as 'Account' or 'User'.
+   * @param array $conditions
+   *   Array of SQL conditions.  Each value can be a string of a complete
+   *   statement, or can be an array with 'field', 'op' and 'value' keys.  The
+   *   'value' key may also be an array which will be automatically converted
+   *   into a string.  Example:
+   *   <code>
+   *     $conditions = array(
+   *       array(
+   *         'field' => 'email',
+   *         'op' => 'IN',
+   *         'value' => array(
+   *           'john.doe@example.com',
+   *           'jane.doe@example.com',
+   *         ),
+   *       ),
+   *       'CreatedDate > 2012-01-01 00:00:00',
+   *     );
+   *   </code>
+   * @param int $query_splits
+   *   The number of times the query should be split up.  This is done in an
+   *   attempt to lower its character count so it does not exceed 10,000
+   *   characters.  You would not need to set this value yourself, let the
+   *   function set it automatically.
+   */
+  protected function buildQueries($object_type, array $conditions, $query_splits = 0) {
+    $queries = array();
+
+    // Build the first part of the query.  We will be stubbing out the same
+    // number of queries as $query_splits there are (counting base 0).
+    $select_sql = 'SELECT Id FROM ' . $object_type;
+    $i = $query_splits;
+    while ($i >= 0) {
+      $queries[$i] = $select_sql;
+      $i--;
+    }
+
+    // Build the WHERE part of the query.
+    foreach ($conditions as $key => $condition) {
+      // Handle cases where the condition is provided to us as a 'field', 'op',
+      // 'value' array.
+      if (is_array($condition) && isset($condition['op']) && isset($condition['field']) && isset($condition['value'])) {
+        $op = $condition['op'];
+        $field = $condition['field'];
+        // The value can be provided as an array and we'll convert it to a
+        // string automatically.
+        if ($query_splits == 0 || is_string($condition['value'])) {
+          if (is_array($condition['value'])) {
+            $value = " ('" . implode("', '", $condition['value']) . "')";
+          }
+          else {
+            $value = $condition['value'];
+          }
+
+          // Append the condition to each query.
+          $i = $query_splits;
+          while ($i >= 0) {
+            $queries[$i] .= ($key == 0 ? ' WHERE' : ' AND');
+            $queries[$i] .= ' ' . $field . ' ' . $op . ' ' . $value;
+            $i--;
+          }
+        }
+        // If the query needs to be split up, this is where it is done.  We will
+        // divide the values of the array into the number of splits requested.
+        elseif ($query_splits > 0 && is_array($condition['value'])) {
+          $chunk_size = count($condition['value']) / ($query_splits + 1);
+          if ($chunk_size <= ($query_splits + 2)) {
+            // This query is hopeless, forget about it.
+            watchdog('salesforce_sync', 'Query to Salesforce exceeded 10,000 characters.', array(), WATCHDOG_ALERT);
+            return array();
+          }
+          $value_chunks = array_chunk($condition['value'], $chunk_size);
+          foreach ($value_chunks as $i => $value_chunk) {
+            $value = " ('" . implode("', '", $value_chunk) . "')";
+            $queries[$i] .= ($key == 0 ? ' WHERE' : ' AND');
+            $queries[$i] .= ' ' . $field . ' ' . $op . ' ' . $value;
+          }
+        }
+      }
+      // Plain old strings can be passed straight on through to the query.
+      elseif (is_string($condition)) {
+        $i = $query_splits;
+        while ($i >= 0) {
+          $queries[$i] .= ($key == 0 ? ' WHERE' : ' AND');
+          $queries[$i] .= ' ' . $condition;
+          $i--;
+        }
+      }
+      else {
+        // WTF why did you pass something else? No, I can't handle it.
+      }
+    }
+
+    if (strlen($queries[0]) > $this->maxQueryLength) {
+      $query_splits++;
+      $this->buildQueries($object_type, $conditions, $query_splits);
+    }
+    else {
+      return $queries;
+    }
   }
 
   /**
@@ -889,15 +1030,62 @@ class SalesforceSync {
   /**
    * Helper to externally set the Salesforce API. Used for simpletests.
    */
-  public function setSalesforceApi(Salesforce $sfapi) {
+  public function setSalesforceApi(Salesforce $sfapi = NULL) {
+    // Reload the api if the current one isn't authorized. This extra check is
+    // for simpletests and drush.
+    $sfapi = (!is_object($sfapi) || !$sfapi->isAuthorized()) ? salesforce_get_api() : $sfapi;
+    if (!$sfapi->isAuthorized()) {
+      watchdog('salesforce', '!id SalesforceSync received a non-authorized '
+        . 'SalesforceAPI.',
+        array('!id' => '[sync-05]'), WATCHDOG_NOTICE);
+      $sfapi = NULL;
+    }
     $this->sfapi = $sfapi;
+    return $sfapi;
   }
 
   /**
    * Helper to externally set the Salesforce SOAP Partner. Used for simpletests.
    */
-  public function setSalesforceSoap($soap) {
+  public function setSalesforceSoap(SalesforceSoapPartner $soap = NULL) {
+    // Create a SalesforceSoapPartner if we weren't provided one.
+    if (!is_object($soap)) {
+      // Create SalesforceApi if it hasn't be created yet.
+      if (!is_object($this->sfapi)) {
+        $this->setSalesforceApi();
+      }
+      // Do not create soap if we cannot get sfapi functioning.
+      if (is_object($this->sfapi)) {
+        $soap = new SalesforceSoapPartner($this->sfapi);
+      }
+      else {
+        $soap = NULL;
+        $message = 'SalesforceAPI is not authorized.';
+      }
+    }
+
+    // If a SalesforceSoapPartner has been created, test the connection.
+    if (is_object($soap)) {
+      try {
+        $soap->getUserInfo();
+      }
+      catch (Exception $e) {
+        $soap = NULL;
+        $message = '(' . $e->faultcode . ') ' . $e->getMessage();
+      }
+    }
+
+    // Send a fail message.
+    if (!is_object($soap)) {
+      watchdog('salesforce', '!id SalesforceSync received an unusable '
+        . 'SalesforceSoapPartner: !message',
+        array(
+          '!id' => '[sync-06]',
+          '!message' => $message,
+        ), WATCHDOG_NOTICE);
+    }
     $this->soap = $soap;
+    return $soap;
   }
 
   /**

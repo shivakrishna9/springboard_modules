@@ -53,24 +53,18 @@ class SalesforceMappingAlterMapTestCase extends SalesforceMappingAlterTestCase {
     $this->assertFieldById('edit-salesforce-object-type', '', 'Salesforce object type field exists.');
     $this->assertFieldById('edit-sync-triggers-1', '', 'Action triggers checkboxes exist.');
     $this->assertFieldById('edit-sync-triggers-2', '', 'Action triggers checkboxes exist.');
-    $this->assertFieldById('edit-sync-triggers-4', '', 'Action triggers checkboxes exist.');
     $this->assertFieldById('edit-sync-triggers-8', '', 'Action triggers checkboxes exist.');
     $this->assertFieldById('edit-sync-triggers-16', '', 'Action triggers checkboxes exist.');
-    $this->assertFieldById('edit-sync-triggers-32', '', 'Action triggers checkboxes exist.');
-    $this->assertFieldById('edit-push-async', '', 'Push async checkbox exists.');
-    $this->assertFieldById('edit-push-batch', '', 'Push batch checkbox exists.');
+    $this->assertNoFieldById('edit-push-async', '', 'Push async checkbox is hidden.');
+    $this->assertNoFieldById('edit-push-batch', '', 'Push batch checkbox is hidden.');
 
     // Verify default values.
     $this->assertOptionSelected('edit-drupal-entity-type', '', 'Drupal entity type field has correct default value.');
     $this->assertOptionSelected('edit-salesforce-object-type', '', 'Salesforce object type field has correct default value.');
     $this->assertNoFieldChecked('edit-sync-triggers-1', 'Trigger on Drupal entity create field has correct default value.');
     $this->assertNoFieldChecked('edit-sync-triggers-2', 'Trigger on Drupal entity create field has correct default value.');
-    $this->assertNoFieldChecked('edit-sync-triggers-4', 'Trigger on Drupal entity create field has correct default value.');
     $this->assertNoFieldChecked('edit-sync-triggers-8', 'Trigger on Drupal entity create field has correct default value.');
     $this->assertNoFieldChecked('edit-sync-triggers-16', 'Trigger on Drupal entity create field has correct default value.');
-    $this->assertNoFieldChecked('edit-sync-triggers-32', 'Trigger on Drupal entity create field has correct default value.');
-    $this->assertNoFieldChecked('edit-push-async', 'Push async field has correct default value.');
-    $this->assertNoFieldChecked('edit-push-batch', 'Push batch field has correct default value.');
 
     $edit = array();
 
@@ -213,12 +207,8 @@ class SalesforceMappingAlterMapTestCase extends SalesforceMappingAlterTestCase {
     $this->assertFieldByname('key', 'mail', 'Key has correct value.');
     $this->assertFieldChecked('edit-sync-triggers-1', 'Trigger on Drupal entity create field has correct value.');
     $this->assertFieldChecked('edit-sync-triggers-2', 'Trigger on Drupal entity update field has correct value.');
-    $this->assertFieldChecked('edit-sync-triggers-4', 'Trigger on Drupal entity delete field has correct value.');
     $this->assertFieldChecked('edit-sync-triggers-8', 'Trigger on Salesforce object create field has correct value.');
     $this->assertFieldChecked('edit-sync-triggers-16', 'Trigger on Salesforce object update field has correct value.');
-    $this->assertFieldChecked('edit-sync-triggers-32', 'Trigger on Salesforce object delete field has correct value.');
-    $this->assertFieldChecked('edit-push-async', 'Push async field has correct value.');
-    $this->assertNoFieldChecked('edit-push-batch', 'Push batch field has correct value.');
 
     // Modify rows.
     $edit = array();
@@ -232,8 +222,8 @@ class SalesforceMappingAlterMapTestCase extends SalesforceMappingAlterTestCase {
     $edit['salesforce_field_mappings[uid][sf_drupal]'] = SALESFORCE_SYNC_RULE_NEVER;
     $edit['salesforce_field_mappings[uid][drupal_sf]'] = SALESFORCE_SYNC_RULE_ALWAYS;
     $edit['salesforce_field_mappings[created][drupal_sf]'] = SALESFORCE_SYNC_RULE_BLANK;
-    $edit['sync_triggers[4]'] = FALSE;
-    $edit['sync_triggers[32]'] = FALSE;
+    $edit['sync_triggers[2]'] = FALSE;
+    $edit['sync_triggers[16]'] = FALSE;
 
     // Save, verify field alterations remained.
     $this->drupalPost(NULL, $edit, 'Save mapping');
@@ -258,13 +248,9 @@ class SalesforceMappingAlterMapTestCase extends SalesforceMappingAlterTestCase {
     $this->assertFieldByName('salesforce_field_mappings[created][drupal_sf]', SALESFORCE_SYNC_RULE_BLANK, 'Created export sync rule has correct value.');
     $this->assertFieldByname('key', 'uid', 'Key has correct value.');
     $this->assertFieldChecked('edit-sync-triggers-1', 'Trigger on Drupal entity create field has correct value.');
-    $this->assertFieldChecked('edit-sync-triggers-2', 'Trigger on Drupal entity update field has correct value.');
-    $this->assertNoFieldChecked('edit-sync-triggers-4', 'Trigger on Drupal entity delete field has correct value.');
+    $this->assertNoFieldChecked('edit-sync-triggers-2', 'Trigger on Drupal entity update field has correct value.');
     $this->assertFieldChecked('edit-sync-triggers-8', 'Trigger on Salesforce object create field has correct value.');
-    $this->assertFieldChecked('edit-sync-triggers-16', 'Trigger on Salesforce object update field has correct value.');
-    $this->assertNoFieldChecked('edit-sync-triggers-32', 'Trigger on Salesforce object delete field has correct value.');
-    $this->assertFieldChecked('edit-push-async', 'Push async field has correct value.');
-    $this->assertNoFieldChecked('edit-push-batch', 'Push batch field has correct value.');
+    $this->assertNoFieldChecked('edit-sync-triggers-16', 'Trigger on Salesforce object update field has correct value.');
   }
 
   /**

@@ -135,6 +135,16 @@ function market_source_form_alter(&$form, &$form_state, $form_id) {
       $form['form_key']['#access'] = FALSE;
       $form['form_key']['#value'] = $form['form_key']['#default_value'];
     }
+    // Now that keys are preserved, check for the campaign id.
+    if ($form_key == 'cid') {
+      if (module_exists('salesforce_sync')) {
+        $campaigns = market_source_get_campaigns();
+        if (is_array($campaigns)) {
+          $form['value']['#type'] = 'select';
+          $form['value']['#options'] = array_combine($campaigns, $campaigns);
+        }
+      }
+    }
   }
   elseif ($form_id == 'user_register') {
     // Add an #after_build callback for user registration form.
@@ -398,7 +408,7 @@ function _market_source_validate_cid($val) {
     if (preg_match('/^[a-zA-Z0-9_+-]+$/', $val)) {
       if (drupal_strlen($val) <= MARKET_SOURCE_CID_MAX_LENGTH) {
         if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
-          $campaigns = salesforce_management_api_get_campaigns();
+          $campaigns = market_source_get_campaigns();
           if (is_array($campaigns) && array_key_exists($val, $campaigns)) {
             $retval = TRUE;
           }
@@ -618,4 +628,20 @@ function _market_source_update_component($nid, $field_key, $field, $pid = 0, $we
       $child_weight++;
     }
   }
+}
+
+/**
+ * Helper function, retrieve a set of available campaigns.
+ */
+function market_source_get_campaigns() {
+  static $campaigns = array();
+  if (empty($campaigns) && module_exists('salesforce_sync')) {
+    $sync = new SalesforceSync();
+    $found_campaigns = $sync->fetchRecords('Campaign', array('Id', 'Name'));
+    // Return a list of Campaign ids.
+    foreach ($found_campaigns as $found_campaign) {
+      $campaigns[] = $found_campaign->Id;
+    }
+  }
+  return $campaigns;
 }

@@ -1,7 +1,7 @@
 <h5>For use on external sites be sure to include the widget loader script:</h5>
 <pre><code>
 
-&lt;script type="text/javascript" src="http://- path to modules folder -/webform_goals/scripts/webform_goals.loader.js"&gt;&lt;script&gt;
+&lt;script type="text/javascript" src="<?php print url(drupal_get_path('module', 'webform_goals'), array('absolute' => TRUE)); ?>/webform_goals/scripts/webform_goals.loader.js"&gt;&lt;/script&gt;
 
 </code></pre>
 
@@ -9,15 +9,15 @@
 <p>Display the standard goal template</p>
 <pre><code>
 
-&lt;div class="wg-goal" data-gid="<?php print $goal_id; ?>"&gt;&lt;/div&gt;
+&lt;div class="wg-goal" data-gid="<?php print $goal['gid']; ?>"&gt;&lt;/div&gt;
 
 </code></pre>
 
 <h5>Custom template:</h5>
 <p>Custom templates let you use goal tokens to build custom goal widget displays on the fly.</p>
 <pre><code>
-<?php print htmlentities('
-<div class="wg-goal" data-gid="<?php print $goal_id; ?>">
+
+&lt;div class="wg-goal" data-gid="<?php print $goal['gid']; ?>"&gt;
   You may place custom text here. Goal data, including progress bar
   can be referenced here using the standard goal tokens:
   [webform_goal:name] - goal name
@@ -36,6 +36,5 @@
   [webform_goal:progress-remaining-percent] - percentage of goal total unmet
   [webform_goal:progress-remaining-percent-capped] - percent of goal unmet, capped at 0 (useful for css)
   [webform_goal:progress-starter]
-</div>
-'); ?>
+&lt;/div&gt;
 </code></pre>

@@ -39,56 +39,51 @@ function salesforce_genmap_entity_info() {
  * Implements hook_menu().
  */
 function salesforce_genmap_menu() {
+  $items = array();
+
   // Gather modules that provide mapping support for generic objects.
   $modules = salesforce_genmap_info();
-  // Returns an array, keyed by supporting module.
-  $items['node/%node/salesforce'] = array(
-    'title' => 'Salesforce maps',
-    'page callback' => 'salesforce_genmap_map',
-    'page arguments' => array(1),
-    'access callback' => 'user_access',
-    'access arguments' => array('map salesforce objects'),
-    'type' => MENU_LOCAL_TASK,
-    'file' => 'includes/salesforce_genmap.map.inc',
-  );
-  $items['node/%node/salesforce/salesforce'] = array(
-    'title' => 'Salesforce maps',
-    'page callback' => 'salesforce_genmap_map',
-    'page arguments' => array(1),
-    'access callback' => 'user_access',
-    'access arguments' => array('map salesforce objects'),
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'file' => 'includes/salesforce_genmap.map.inc',
-    'weight' => 100,
-  );
-  foreach ($modules as $module => $info) {
-    $items['node/%node/salesforce/' . $module] = array(
-      'title' => $info['label'] . ' map',
+  // Here we have some math to this.
+  // If there is only one module to offer a map, then we offer that map at
+  // top level, if not, then we grab the first map as our default.
+  if (count($modules) < 2) {
+    foreach ($modules as $module => $info) {
+      $items['node/%node/salesforce_' . $module] = array(
+        'title' => $info['label'] . ' map',
+        'page callback' => 'salesforce_genmap_map_page',
+        'page arguments' => array(1, $module),
+        'access callback' => $info['access callback'],
+        'access arguments' => array(1, $module),
+        'type' => MENU_LOCAL_TASK,
+        'file' => 'includes/salesforce_genmap.map.inc',
+      );
+    }
+  }
+  else {
+    // Returns an array, keyed by supporting module.
+    $first = '';
+    foreach ($modules as $module => $info) {
+      $items['node/%node/salesforce/' . $module] = array(
+        'title' => $info['label'] . ' map',
+        'page callback' => 'salesforce_genmap_map_page',
+        'page arguments' => array(1, 3),
+        'access callback' => $info['access callback'],
+        'access arguments' => array(1, 3),
+        'type' => empty($first) ? MENU_DEFAULT_LOCAL_TASK : MENU_LOCAL_TASK,
+        'file' => 'includes/salesforce_genmap.map.inc',
+      );
+      $first = $module;
+    }
+    $items['node/%node/salesforce'] = array(
+      'title' => 'Salesforce maps',
       'page callback' => 'salesforce_genmap_map_page',
-      'page arguments' => array(1, 3),
+      'page arguments' => array(1, $first),
       'access callback' => $info['access callback'],
-      'access arguments' => array(1, 3),
+      'access arguments' => array(1, $first),
       'type' => MENU_LOCAL_TASK,
       'file' => 'includes/salesforce_genmap.map.inc',
     );
   }
-  // Admin interface.
-  //$items['admin/config/salesforce'] = array(
-  //  'title' => 'Salesforce',
-  //  'description' => 'Salesforce settings.',
-  //  'position' => 'right',
-  //  'page callback' => 'system_admin_menu_block_page',
-  //  'access arguments' => array('access administration pages'),
-  //  'file' => 'system.admin.inc',
-  //);
-  //$items['admin/config/salesforce/salesforce-generic'] = array(
-  //  'title' => 'Salesforce generic',
-  //  'page callback' => 'salesforce_genmap_admin_page',
-  //  'description' => 'Configure how the Salesforce integration will work with generic objects.',
-  //  'access arguments' => array('administer salesforce'),
-  //  'type' => MENU_NORMAL_ITEM,
-  //  'file' => 'includes/salesforce_genmap.queue.inc',
-  //);
   return $items;
 }
 
@@ -114,6 +109,26 @@ function salesforce_genmap_permission() {
       'description' => t('Configure the mapping of Salesforce objects.'),
     ),
   );
+
+  // Add the permission to configure a map to delete on sync only if this site
+  // is configured to allow this configuration setting at all.  Since deleting
+  // records is so risky, we would prefer to not have the ability at all.
+  // However, there can be a usecase for it.  Instead of custom coding a use
+  // case, we will allow the ability to enable that feature on a site-by-site
+  // basis.  Otherwise, the feature is 100% hidden.
+  if (variable_get('salesforce_genmap_allow_delete_sync', FALSE)) {
+    $modules = salesforce_genmap_info();
+    foreach ($modules as $module => $info) {
+      $perm = 'configure ' . $module . ' delete sync';
+      $permissions[$perm] = array(
+        'title' => t('Configure a !module map to sync deleted records',
+          array('!module' => $module)),
+        'description' => t('Allow the configuration for a map to automatically delete its associated record from Salesforce when it is deleted from Drupal.'),
+      );
+    }
+  }
+
+  // Allow the modules this module extends to declare their own permissions.
   $extended_modules = _salesforce_genmap_get_extended_modules_list();
   foreach ($extended_modules as $module) {
     $module_perms = module_invoke($module, 'salesforce_genmap_permission');
@@ -157,6 +172,14 @@ function salesforce_genmap_node_delete($node) {
  *   Optional.  Delta of the item to be queued.
  */
 function salesforce_genmap_send_object_to_queue($module, $op, $node, $oid, $drupal_object, $delta = NULL) {
+  if (!variable_get('salesforce_genmap_allow_delete_sync', FALSE) && in_array($op, array('delete', 'DELETE'))) {
+    // Do not queue DELETE if site has disallowed delete trigger.  This is a
+    // failsafe in case someone had bypassed the configuration form's validation
+    // (such as manually constructing the configuration).  The goal is not to
+    // prevent any sort of deletion of records but rather to prevent the
+    // deletion of records on a triggered event.
+    return;
+  }
   $map = salesforce_genmap_load_map($node->nid, $module);
   if (!empty($map) && !empty($map->sync_options[$op])) {
     $sobject = salesforce_genmap_map_object($module, $drupal_object, $map, $node, $op);
