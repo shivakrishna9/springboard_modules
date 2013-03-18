@@ -19,7 +19,7 @@ function market_source_admin_settings_form($form, &$form_state) {
     '#description' => t('Select a default campaign for your donation forms.'),
     '#default_value' => variable_get('market_source_default_campaign', 'default_ms'),
   );
-  if (module_exists('salesforce_management_api')) {
+  if (module_exists('salesforce_sync')) {
     $form['market_source_validate_sf_campaigns'] = array(
       '#title' => t('Validate Salesforce Campaigns'),
       '#type' => 'checkbox',
