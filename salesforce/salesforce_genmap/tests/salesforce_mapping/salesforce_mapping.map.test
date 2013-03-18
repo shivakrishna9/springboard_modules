@@ -55,8 +55,8 @@ class SalesforceMappingAlterMapTestCase extends SalesforceMappingAlterTestCase {
     $this->assertFieldById('edit-sync-triggers-2', '', 'Action triggers checkboxes exist.');
     $this->assertFieldById('edit-sync-triggers-8', '', 'Action triggers checkboxes exist.');
     $this->assertFieldById('edit-sync-triggers-16', '', 'Action triggers checkboxes exist.');
-    $this->assertFieldById('edit-push-async', '', 'Push async checkbox exists.');
-    $this->assertFieldById('edit-push-batch', '', 'Push batch checkbox exists.');
+    $this->assertNoFieldById('edit-push-async', '', 'Push async checkbox is hidden.');
+    $this->assertNoFieldById('edit-push-batch', '', 'Push batch checkbox is hidden.');
 
     // Verify default values.
     $this->assertOptionSelected('edit-drupal-entity-type', '', 'Drupal entity type field has correct default value.');
@@ -65,8 +65,6 @@ class SalesforceMappingAlterMapTestCase extends SalesforceMappingAlterTestCase {
     $this->assertNoFieldChecked('edit-sync-triggers-2', 'Trigger on Drupal entity create field has correct default value.');
     $this->assertNoFieldChecked('edit-sync-triggers-8', 'Trigger on Drupal entity create field has correct default value.');
     $this->assertNoFieldChecked('edit-sync-triggers-16', 'Trigger on Drupal entity create field has correct default value.');
-    $this->assertNoFieldChecked('edit-push-async', 'Push async field has correct default value.');
-    $this->assertNoFieldChecked('edit-push-batch', 'Push batch field has correct default value.');
 
     $edit = array();
 
@@ -211,8 +209,6 @@ class SalesforceMappingAlterMapTestCase extends SalesforceMappingAlterTestCase {
     $this->assertFieldChecked('edit-sync-triggers-2', 'Trigger on Drupal entity update field has correct value.');
     $this->assertFieldChecked('edit-sync-triggers-8', 'Trigger on Salesforce object create field has correct value.');
     $this->assertFieldChecked('edit-sync-triggers-16', 'Trigger on Salesforce object update field has correct value.');
-    $this->assertFieldChecked('edit-push-async', 'Push async field has correct value.');
-    $this->assertNoFieldChecked('edit-push-batch', 'Push batch field has correct value.');
 
     // Modify rows.
     $edit = array();
@@ -255,8 +251,6 @@ class SalesforceMappingAlterMapTestCase extends SalesforceMappingAlterTestCase {
     $this->assertNoFieldChecked('edit-sync-triggers-2', 'Trigger on Drupal entity update field has correct value.');
     $this->assertFieldChecked('edit-sync-triggers-8', 'Trigger on Salesforce object create field has correct value.');
     $this->assertNoFieldChecked('edit-sync-triggers-16', 'Trigger on Salesforce object update field has correct value.');
-    $this->assertFieldChecked('edit-push-async', 'Push async field has correct value.');
-    $this->assertNoFieldChecked('edit-push-batch', 'Push batch field has correct value.');
   }
 
   /**

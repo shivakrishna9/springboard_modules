@@ -89,7 +89,6 @@ class SalesforceMappingAlterTestCase extends SalesforceMappingTestCase {
           '8' => TRUE,
           '16' => TRUE,
         ),
-        'push_async' => TRUE,
       );
     }
 

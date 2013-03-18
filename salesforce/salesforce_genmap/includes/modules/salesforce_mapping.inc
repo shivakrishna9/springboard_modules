@@ -227,6 +227,10 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
     }
   }
 
+  // We do not use these options, so hide them.
+  $form['push_async']['#access'] = FALSE;
+  $form['push_batch']['#access'] = FALSE;
+
   // The need to manipulate the form causes a need to manipulate the storage
   // of data. Appending a "prevalidate" callback to shift around all of the data
   // so the original validation callback will function properly.
