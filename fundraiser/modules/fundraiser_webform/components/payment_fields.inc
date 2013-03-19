@@ -82,7 +82,7 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
       if (isset($gateway_info['form callback'])) {
         $form_func = $gateway_info['form callback'];
         if (function_exists($form_func)) {
-          $element[$payment_method] += $form_func($payment_method);
+          $element[$payment_method] += $form_func($payment_method, $config);
         }
       }
       // Allow other modules to alter the fields before adding to form.
