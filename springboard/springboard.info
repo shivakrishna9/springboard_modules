@@ -1,4 +1,3 @@
-; $Id$
 name = Springboard
 description = Provides an admin interface for the suite of Springboard modules
 core = 7.x

@@ -43,13 +43,13 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
   public function testMappingForm() {
     // Form throws message if it cannot connect to Salesforce.
     $webform = $this->createWebform();
-    $this->drupalGet('node/' . $webform->nid . '/salesforce/webform');
+    $this->drupalGet($this->webformPath('salesforce_map', $webform->nid));
     $this->assertNoText('You are not authorized to access this page.', 'You have access to the mapping page.');
     $this->assertText('Cannot connect to Salesforce', 'Message appears when Salesforce is not connected.');
 
     // Form displays only the object type select after connecting to Salesforce.
     $this->salesforceConnect();
-    $this->drupalGet('node/' . $webform->nid . '/salesforce/webform');
+    $this->drupalGet($this->webformPath('salesforce_map', $webform->nid));
     $this->assertFieldByName('salesforce_object_info[salesforce_object_type]', '', 'Salesforce object type field exists.');
     $this->assertNoFieldByName('salesforce_object_info[salesforce_record_type]', '', 'Salesforce record type is hidden as expected.');
     $this->assertNoFieldByName('field_map[salesforce_node_map][nid][sf_field]', '', 'Node id mapping is hidden as expected.');

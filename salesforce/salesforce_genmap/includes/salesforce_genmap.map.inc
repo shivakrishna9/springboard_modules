@@ -508,7 +508,7 @@ function _sfw_generate_form_table(&$form) {
       // The magic is right here.  You need to pass the field data by reference
       // to the table rendering in order for the fields to function properly.
       $form['#rows'][$row_num][$column]['data'] = &$form[$row_num][$column];
-      $form['#rows'][$row_num][$column]['class'] = array('salesforce-table-field', 'salesforce-table-field-'.$column);
+      $form['#rows'][$row_num][$column]['class'] = array('salesforce-table-field', 'salesforce-table-field-' . $column);
     }
   }
   unset($form['#row_storage']);
