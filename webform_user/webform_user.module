@@ -825,6 +825,7 @@ function _webform_user_create_webform_components(&$node) {
         }
         else {
           $fieldset_id = webform_component_insert($fieldset_lookup[ $field['category_key'] ]);
+          $fieldset_created[ $field['category_key'] ] = $fieldset_id; // Save the created id.
         }
       }
       /**
