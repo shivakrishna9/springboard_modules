@@ -70,11 +70,11 @@ class SalesforceSync {
    *   will be used.
    */
   public function __construct(Salesforce $sfapi = NULL, SalesforceSoapPartner $soap = NULL) {
-    $this->setSalesforceApi($sfapi);
-    $this->setSalesforceSoap($soap);
     $this->maxQueryLength = variable_get('salesforce_sync_max_query_length', SALESFORCE_SYNC_MAX_QUERY_LENGTH_DEFAULT);
     $this->maxBatchSize = variable_get('salesforce_sync_max_batch_size', SALESFORCE_SYNC_MAX_BATCH_SIZE_DEFAULT);
     $this->tokenScanner = new SalesforceSyncTokenScanner($this->getProcessedItemIds());
+    $this->setSalesforceApi($sfapi);
+    $this->setSalesforceSoap($soap);
   }
 
   /**
@@ -874,8 +874,28 @@ class SalesforceSync {
       try {
         $response = $this->soap->query($query);
         if ($response->size > 0) {
-          foreach ($response->records as $record) {
-            $ids[] = $record->Id[0];
+          $more = TRUE;
+          while ($more) {
+            foreach ($response->records as $record) {
+              $ids[] = $record->Id[0];
+            }
+
+            // Salesforce will only return a maximum number of records at a
+            // time, which we are automatically restricting to be
+            // SALESFORCE_SYNC_MAX_BATCH_SIZE.  We'll use queryMore() to
+            // continue to pull down more records until we retreive all of them.
+            if (empty($response->done)) {
+              try {
+                $response = $this->soap->queryMore($response->queryLocator);
+              }
+              catch (Exception $error) {
+                // Log message for later investigation.
+                watchdog('salesforce_queue', 'Could not fetch records by fields: !message', array('!message' => $error->getMessage()), WATCHDOG_DEBUG);
+              }
+            }
+            else {
+              $more = FALSE;
+            }
           }
         }
       }
@@ -1075,8 +1095,15 @@ class SalesforceSync {
       }
     }
 
+    // Set soap options.
+    if (is_object($soap)) {
+      // Queries return same number as batch sizes.
+      $sync_options = new QueryOptions($this->maxBatchSize);
+      $soap->setQueryOptions($sync_options);
+    }
+
     // Send a fail message.
-    if (!is_object($soap)) {
+    else {
       watchdog('salesforce', '!id SalesforceSync received an unusable '
         . 'SalesforceSoapPartner: !message',
         array(
@@ -1084,6 +1111,7 @@ class SalesforceSync {
           '!message' => $message,
         ), WATCHDOG_NOTICE);
     }
+
     $this->soap = $soap;
     return $soap;
   }
