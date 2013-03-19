@@ -308,6 +308,39 @@ function salesforce_mapping_form_alter_validate($form, &$form_state) {
       }
     }
   }
+
+  // No Salesforce field can be used twice.
+  $error_text = t('Multiple Drupal fields cannot be mapped to the same Salesforce fields.');
+  $sf_fields = array();
+  if (isset($form_state['values']['salesforce_field_mappings']) && is_array($form_state['values']['salesforce_field_mappings'])) {
+    foreach ($form_state['values']['salesforce_field_mappings'] as $key => $values) {
+      $sf_field = $values['salesforce_field'];
+      if (!empty($sf_field)) {
+        $drupal_field = $values['drupal_field']['fieldmap_value'];
+        $sf_fields[$sf_field][$drupal_field] = $drupal_field;
+      }
+    }
+  }
+  foreach ($sf_fields as $sf_field => $drupal_fields) {
+    $count = count($drupal_fields);
+    $drupal_fields_text = '"' . implode('", "', $drupal_fields) . '"';
+    if ($count > 1) {
+      if ($count > 2) {
+        $error_text = t('The Drupal fields, !drupal_fields, cannot all be mapped to the "!sf_field" Salesforce field.',
+          array('!drupal_fields' => $drupal_fields_text, '!sf_field' => $sf_field));
+      }
+      else {
+        $error_text = t('The Drupal fields, !drupal_fields, cannot both be mapped to the "!sf_field" Salesforce field.',
+          array('!drupal_fields' => $drupal_fields_text, '!sf_field' => $sf_field));
+      }
+      $i = 1;
+      foreach ($drupal_fields as $drupal_field) {
+        $message = $i === 1 ? $error_text : '';
+        form_set_error('salesforce_field_mappings][' . $drupal_field . '][salesforce_field', $message);
+        $i++;
+      }
+    }
+  }
 }
 
 /**
