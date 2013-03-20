@@ -191,7 +191,7 @@ function fundraiser_webform_webform_submission_presave($node, &$submission) {
     $results = _fundraiser_webform_get_components_by_keys($node->nid, array('payment_fields'));
     foreach ($results as $result) {
       // Set sensitive info to NULL.
-      $submission->data[$result->cid]['value'][0] = NULL;
+      $submission->data[$result->cid] = array('value' => array(0 => NULL));
     }
   }
 }
