@@ -72,6 +72,7 @@ class SalesforceSync {
   public function __construct(Salesforce $sfapi = NULL, SalesforceSoapPartner $soap = NULL) {
     $this->maxQueryLength = variable_get('salesforce_sync_max_query_length', SALESFORCE_SYNC_MAX_QUERY_LENGTH_DEFAULT);
     $this->maxBatchSize = variable_get('salesforce_sync_max_batch_size', SALESFORCE_SYNC_MAX_BATCH_SIZE_DEFAULT);
+    $this->maxRetrieveSize = variable_get('salesforce_sync_max_retrieve_size', SALESFORCE_SYNC_MAX_RETRIEVE_SIZE_DEFAULT);
     $this->tokenScanner = new SalesforceSyncTokenScanner($this->getProcessedItemIds());
     $this->setSalesforceApi($sfapi);
     $this->setSalesforceSoap($soap);
@@ -792,15 +793,28 @@ class SalesforceSync {
     // Ids need to be an unassociated array or Salesforce will reject it.
     $ids = array_values($ids);
 
-    try {
-      $response = $this->soap->retrieve($fields, $object_type, $ids);
+    // Salesforce's maximum is 2000 records, or else it will give you nothing.
+    // Chunk up the provided ids to make sure no single call exceeds 2000.
+    $responses = array();
+    $id_chunks = array_chunk($ids, $this->maxRetrieveSize);
+    foreach ($id_chunks as $id_chunk) {
+      try {
+        $response = $this->soap->retrieve($fields, $object_type, $id_chunk);
+        if (is_array($response)) {
+          $responses = array_merge($responses, $response);
+        }
+        else {
+          // Log message for later investigation.
+          watchdog('salesforce_sync', "Fetch by Id returned incompatible results.\n\n!!response", array('!response' => print_r($response)), WATCHDOG_NOTICE);
+        }
+      }
+      catch (Exception $error) {
+        // Log message for later investigation.
+        watchdog('salesforce_queue', 'Could not fetch records by Ids: !message', array('!message' => $error->getMessage()), WATCHDOG_DEBUG);
+      }
     }
-    catch (Exception $error) {
-      // Log message for later investigation.
-      watchdog('salesforce_queue', 'Could not fetch records by Ids: !message', array('!message' => $error->getMessage()), WATCHDOG_DEBUG);
-      $response = array();
-    }
-    return $response;
+
+    return $responses;
   }
 
   /**
