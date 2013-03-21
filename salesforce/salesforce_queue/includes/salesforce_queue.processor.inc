@@ -99,8 +99,8 @@ class SalesforceQueueProcessor {
    * @return SalesforceQueueProcessor
    *   A processor for the given queue
    */
-  public static function get($queue = NULL) {
-    $queue = empty($queue) ? salesforce_queue_load() : $queue;
+  public static function get(SalesforceQueue $queue = NULL) {
+    $queue = is_null($queue) ? salesforce_queue_load() : $queue;
     $processor = new SalesforceQueueProcessor($queue);
     return $processor;
   }
