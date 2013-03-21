@@ -524,21 +524,29 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
   if (!empty($payment_method_field['extra']['payment_methods'])) {
     $payment_methods = array_filter($payment_method_field['extra']['payment_methods'], '_fundraiser_webform_payment_method_array_filter_enabled');
   }
-  // Loop through the payment methods and add fields for each type.
+
+  // Loop through the payment methods to allow the gateway to validate the submission
   foreach ($payment_methods as $payment_method => $config) {
-    // Find the given gateway idea for this, pull from _fundraiser_gateway_info($gateway_id) for fields.
-    // TODO there may be a cleaner way to do this.
+    // Load the gateway for this payment method
     $gateway_info = _fundraiser_gateway_info($config['id']);
-    // Check against the gateway config for this donation for a submission cleanup.
-    if (isset($submission_fields['payment_method'])) {
-      if ( in_array($submission_fields['payment_method'], $gateway_info['payment_method']) && isset($gateway_info['cleanup callback'])) {
-        $validate_cleanup_func = $gateway_info['cleanup callback'];
-        if (function_exists($validate_cleanup_func)) {
-          $submission_fields = $validate_cleanup_func($submission_fields);
-        }
+    // For the selected payment method run the submission through the gateway's validate callback
+    if (isset($submission_fields['payment_method']) && $submission_fields['payment_method'] == $payment_method) {
+      // Allow the gateway to cleanup the submission before validation
+      if (isset($gateway_info['cleanup callback']) && function_exists($gateway_info['cleanup callback'])) {
+        $submission_fields = $gateway_info['cleanup callback']($submission_fields);
+      }
+      // Call the gateways validation function
+      if (isset($gateway_info['validate callback']) && function_exists($gateway_info['validate callback'])) {
+        $payment_fields = fundraiser_webform_fundraiser_get_form_field($form, 'payment_fields');
+        $submission_fields = $gateway_info['validate callback']($submission_fields, $payment_fields);
       }
     }
+    // Remove unselected payment fields from the values
+    else {
+      unset($submission_fields['payment_fields'][$payment_method]);
+    }
   }
+
   // Check error validation.
   $errors = fundraiser_validate_form_fields($form, $form_state, $submission_fields); // From fundraiser.module.
 
@@ -561,7 +569,12 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
 
     $message .= "\n\nSubmitted Values:\n\n";
     foreach ($submission_fields as $key => $value) {
-      $message .= $key . ': ' . $value . "\n";
+      if (is_array($value)) {
+        $message .= $key . ': ' . print_r($value, 1) . "\n";
+      }
+      else {
+        $message .= $key . ': ' . $value . "\n";
+      }
       watchdog('fundraiser_webform', $message, NULL, WATCHDOG_DEBUG, NULL);
     }
     // Provide data to fundraiser about the node that failed to validate.
@@ -587,20 +600,23 @@ function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $dona
   if (!empty($payment_method_field['extra']['payment_methods'])) {
     $payment_methods = array_filter($payment_method_field['extra']['payment_methods'], '_fundraiser_webform_payment_method_array_filter_enabled');
   }
-  // Loop through the payment methods and add fields for each type.
+
+  // Loop through the payment methods to allow the gateway to cleanup the submission
   foreach ($payment_methods as $payment_method => $config) {
-    // Find the given gateway idea for this, pull from _fundraiser_gateway_info($gateway_id) for fields.
+    // Load the gateway for this payment method
     $gateway_info = _fundraiser_gateway_info($config['id']);
-    // Check against the gateway config for this donation for a submission cleanup.
-    if (isset($submission_fields['payment_method'])) {
-      if (in_array($submission_fields['payment_method'], $gateway_info['payment_method']) && isset($gateway_info['cleanup callback'])) {
-        $submit_cleanup_func = $gateway_info['cleanup callback'];
-        if (function_exists($submit_cleanup_func)) {
-          $submission_fields = $submit_cleanup_func($submission_fields);
-        }
+    // For the selected payment method run the submission through the gateway's cleanup callback
+    if (isset($submission_fields['payment_method']) && $submission_fields['payment_method'] == $payment_method) {
+      if (isset($gateway_info['cleanup callback']) && function_exists($gateway_info['cleanup callback'])) {
+        $submission_fields = $gateway_info['cleanup callback']($submission_fields);
       }
     }
+    // Remove unselected payment fields from the values
+    else {
+      unset($submission_fields['payment_fields'][$payment_method]);
+    }
   }
+
   // Add submission to the donation.
   $donation->donation = $submission_fields;
   $donation->sid = $form_state['values']['details']['sid'];
