@@ -110,7 +110,10 @@ class SalesforceSync {
           // would most likely have this sync rule, and 2) When syncing with
           // Drupal unknown effects may occur when an expected field has no
           // value.
-          if (isset($consumer_fields[$field]) && strlen($consumer_fields[$field]) > 0) {
+          if (isset($consumer_fields[$field]) && (
+               (is_int($consumer_fields[$field]) && is_numeric($consumer_fields[$field])) ||
+               (!is_int($consumer_fields[$field]) && !empty($consumer_fields[$field]))
+             )) {
             $item_fields[$field] = $consumer_fields[$field];
           }
           break;
@@ -118,7 +121,10 @@ class SalesforceSync {
         case SALESFORCE_SYNC_RULE_APPEND:
           // When the source version is not blank, add value from source to the
           // begining of the target's value.
-          if (isset($consumer_fields[$field]) && !empty($consumer_fields[$field])) {
+          if (isset($consumer_fields[$field]) && (
+               (is_int($consumer_fields[$field]) && is_numeric($consumer_fields[$field])) ||
+               (!is_int($consumer_fields[$field]) && !empty($consumer_fields[$field]))
+             )) {
             $joined_value = $consumer_fields[$field] . ' ' . $item_fields[$field];
             $item_fields[$field] = $joined_value;
           }
