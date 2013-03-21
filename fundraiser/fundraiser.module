@@ -1618,9 +1618,14 @@ function fundraiser_donation_create($donation) {
     'nid' => $donation->nid, // Fundraiser node id.
     'uid' => $donation->uid,  // Submission user id.
     'sid' => $donation->sid,  // Submission id.
+    'status' => $donation->status,
+    'amount' => $donation->donation['amount'],
+    'currency' => $donation->donation['currency'],
     'gateway' => $donation->gateway,
     'txn_id' => '',
     'form_url' => $form_url,
+    'created' => REQUEST_TIME,
+    'changed' => REQUEST_TIME,
   );
   _fundraiser_create_donation($donation_record);
   // Add a comment.
@@ -1654,8 +1659,14 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
   if (isset($donation->sid) && !empty($donation->sid)) {
     $donation_record['sid'] = $donation->sid;
   }
-  if (isset($donation->sid) && !empty($donation->sid)) {
-    $donation_record['sid'] = $donation->sid;
+  if (isset($donation->status) && !empty($donation->status)) {
+    $donation_record['status'] = $donation->status;
+  }
+  if (isset($donation->amount) && !empty($donation->amount)) {
+    $donation_record['amount'] = $donation->amount;
+  }
+  if (isset($donation->currency) && !empty($donation->currency)) {
+    $donation_record['currency'] = $donation->currency;
   }
   if (isset($donation->gateway) && !empty($donation->gateway) && is_string($donation->gateway)) {
     $donation_record['gateway'] = $donation->gateway;
@@ -1666,6 +1677,7 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
   if (isset($donation->form_url) && !empty($donation->form_url)) {
     $donation_record['form_url'] = $donation->form_url;
   }
+  $donation_record['changed'] = REQUEST_TIME;
   _fundraiser_update_donation($donation_record);
   // Refresh the cache. No need to change the donation object passed in, but stored values should be zapped.
   fundraiser_donation_get_donation($donation->did, TRUE);
@@ -1888,7 +1900,12 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
   $donation->uid = $donation_record->uid;
   $donation->user = user_load($donation_record->uid);
   $donation->sid = $donation_record->sid;
-  $donation->form_url = $donation_record->form_url;
+  // Additional fields.
+  $donation->status = $donation_record->status;
+  $donation->amount = $donation_record->amount;
+  $donation->currency = $donation_record->currency;
+  $donation->created = $donation_record->created;
+  $donation->changed = $donation_record->changed;
 
   // Grab gateway information and replace it in the node too if found.
   $gateway = _fundraiser_get_donation_gateway($did);
@@ -1897,6 +1914,7 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
   }
   // Grab the transaction id if it exists, add it here.
   $donation->txn_id = isset($donation_record->txn_id) ? $donation_record->txn_id : '';
+  $donation->form_url = $donation_record->form_url;
 
   $refunds = _fundraiser_get_refund_by_did($did);
   $refund_summary = array();

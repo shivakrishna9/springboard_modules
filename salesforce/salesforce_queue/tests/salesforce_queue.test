@@ -172,6 +172,7 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
     }
 
     $i = 0;
+    $items = array();
     while ($i < $num) {
       $i++;
 
@@ -252,8 +253,58 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
       $data['sobject'] = $sobject;
 
       // Create the queue item.
+      $items[] = $data;
       $result = $queue->createItem($data);
       $this->assertTrue($result, 'Created a queue item.');
+    }
+    return $items;
+  }
+
+  /**
+   * Helper to remove the sent set of items from Salesforce.
+   *
+   * Useful if you do not have direct access to the SalesforceSync object.
+   *
+   * @param array $queue_items
+   *   Array of items that would be used to be send to the queue.  It is the
+   *   output of createQueueItems().
+   */
+  public function deleteItemsFromSalesforce($queue_items) {
+    $conditions = array();
+    foreach ($queue_items as $queue_item) {
+      $object_type = $queue_item['object_type'];
+      $field = ($object_type == 'Contact') ? 'LastName' : 'Name';
+      $conditions[$object_type]['field'] = $field;
+      $conditions[$object_type]['op'] = 'IN';
+      $field_value = $queue_item['sobject']->fields[$field];
+      $conditions[$object_type]['value'][$field_value] = $field_value;
+    }
+    $batch = array(
+      'operation' => 'DELETE',
+      'items' => array(),
+      'ids' => array(),
+    );
+    $sync = new SalesforceSync();
+    foreach ($conditions as $object_type => $condition) {
+      $records = $sync->fetchRecords($object_type, array('Id'), array($condition));
+      foreach ($records as $record) {
+        $record->fields = array();
+        $item = new stdClass();
+        $item->object_type = $record->type;
+        $item->operation = 'DELETE';
+        $item->sobject = $record;
+        $batch['items'][] = $item;
+        $batch['ids'][] = $record->Id;
+      }
+    }
+    $results = $sync->sendBatch($batch);
+    if (is_array($results)) {
+      foreach ($results as $result) {
+        $this->assertTrue($result->success, 'Deleting test item from Salesforce successful.');
+      }
+    }
+    else {
+      $this->fail('Could not send batch to delete test items from Salesforce.');
     }
   }
 }

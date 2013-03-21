@@ -790,7 +790,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
 
     // Add item to queue and ensure it is there.
     $queue = salesforce_queue_load();
-    $this->createQueueItems($queue, 1, array('CREATE'), array('Opportunity'));
+    $queue_items = $this->createQueueItems($queue, 1, array('CREATE'), array('Opportunity'));
     $this->assertEqual(1, $queue->numberOfItems(), 'Count 1 item after creating one item.');
     $items = $queue->claimBatch();
     $queue->releaseBatch($items[0]->leaseKey);
@@ -804,5 +804,8 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
 
     // Delete the variable to put us back to normal.
     variable_del('salesforce_queue_cron_frequency');
+
+    // Remove the created items from Salesforce.
+    $this->deleteItemsFromSalesforce($queue_items);
   }
 }

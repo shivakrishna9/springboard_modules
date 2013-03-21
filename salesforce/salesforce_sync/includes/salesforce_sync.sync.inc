@@ -70,11 +70,12 @@ class SalesforceSync {
    *   will be used.
    */
   public function __construct(Salesforce $sfapi = NULL, SalesforceSoapPartner $soap = NULL) {
-    $this->setSalesforceApi($sfapi);
-    $this->setSalesforceSoap($soap);
     $this->maxQueryLength = variable_get('salesforce_sync_max_query_length', SALESFORCE_SYNC_MAX_QUERY_LENGTH_DEFAULT);
     $this->maxBatchSize = variable_get('salesforce_sync_max_batch_size', SALESFORCE_SYNC_MAX_BATCH_SIZE_DEFAULT);
+    $this->maxRetrieveSize = variable_get('salesforce_sync_max_retrieve_size', SALESFORCE_SYNC_MAX_RETRIEVE_SIZE_DEFAULT);
     $this->tokenScanner = new SalesforceSyncTokenScanner($this->getProcessedItemIds());
+    $this->setSalesforceApi($sfapi);
+    $this->setSalesforceSoap($soap);
   }
 
   /**
@@ -109,7 +110,10 @@ class SalesforceSync {
           // would most likely have this sync rule, and 2) When syncing with
           // Drupal unknown effects may occur when an expected field has no
           // value.
-          if (isset($consumer_fields[$field]) && strlen($consumer_fields[$field]) > 0) {
+          if (isset($consumer_fields[$field]) && (
+               (is_int($consumer_fields[$field]) && is_numeric($consumer_fields[$field])) ||
+               (!is_int($consumer_fields[$field]) && !empty($consumer_fields[$field]))
+             )) {
             $item_fields[$field] = $consumer_fields[$field];
           }
           break;
@@ -117,7 +121,10 @@ class SalesforceSync {
         case SALESFORCE_SYNC_RULE_APPEND:
           // When the source version is not blank, add value from source to the
           // begining of the target's value.
-          if (isset($consumer_fields[$field]) && !empty($consumer_fields[$field])) {
+          if (isset($consumer_fields[$field]) && (
+               (is_int($consumer_fields[$field]) && is_numeric($consumer_fields[$field])) ||
+               (!is_int($consumer_fields[$field]) && !empty($consumer_fields[$field]))
+             )) {
             $joined_value = $consumer_fields[$field] . ' ' . $item_fields[$field];
             $item_fields[$field] = $joined_value;
           }
@@ -792,15 +799,28 @@ class SalesforceSync {
     // Ids need to be an unassociated array or Salesforce will reject it.
     $ids = array_values($ids);
 
-    try {
-      $response = $this->soap->retrieve($fields, $object_type, $ids);
+    // Salesforce's maximum is 2000 records, or else it will give you nothing.
+    // Chunk up the provided ids to make sure no single call exceeds 2000.
+    $responses = array();
+    $id_chunks = array_chunk($ids, $this->maxRetrieveSize);
+    foreach ($id_chunks as $id_chunk) {
+      try {
+        $response = $this->soap->retrieve($fields, $object_type, $id_chunk);
+        if (is_array($response)) {
+          $responses = array_merge($responses, $response);
+        }
+        else {
+          // Log message for later investigation.
+          watchdog('salesforce_sync', "Fetch by Id returned incompatible results.\n\n!!response", array('!response' => print_r($response)), WATCHDOG_NOTICE);
+        }
+      }
+      catch (Exception $error) {
+        // Log message for later investigation.
+        watchdog('salesforce_queue', 'Could not fetch records by Ids: !message', array('!message' => $error->getMessage()), WATCHDOG_DEBUG);
+      }
     }
-    catch (Exception $error) {
-      // Log message for later investigation.
-      watchdog('salesforce_queue', 'Could not fetch records by Ids: !message', array('!message' => $error->getMessage()), WATCHDOG_DEBUG);
-      $response = array();
-    }
-    return $response;
+
+    return $responses;
   }
 
   /**
@@ -874,8 +894,28 @@ class SalesforceSync {
       try {
         $response = $this->soap->query($query);
         if ($response->size > 0) {
-          foreach ($response->records as $record) {
-            $ids[] = $record->Id[0];
+          $more = TRUE;
+          while ($more) {
+            foreach ($response->records as $record) {
+              $ids[] = $record->Id[0];
+            }
+
+            // Salesforce will only return a maximum number of records at a
+            // time, which we are automatically restricting to be
+            // SALESFORCE_SYNC_MAX_BATCH_SIZE.  We'll use queryMore() to
+            // continue to pull down more records until we retreive all of them.
+            if (empty($response->done)) {
+              try {
+                $response = $this->soap->queryMore($response->queryLocator);
+              }
+              catch (Exception $error) {
+                // Log message for later investigation.
+                watchdog('salesforce_queue', 'Could not fetch records by fields: !message', array('!message' => $error->getMessage()), WATCHDOG_DEBUG);
+              }
+            }
+            else {
+              $more = FALSE;
+            }
           }
         }
       }
@@ -1075,8 +1115,15 @@ class SalesforceSync {
       }
     }
 
+    // Set soap options.
+    if (is_object($soap)) {
+      // Queries return same number as batch sizes.
+      $sync_options = new QueryOptions($this->maxBatchSize);
+      $soap->setQueryOptions($sync_options);
+    }
+
     // Send a fail message.
-    if (!is_object($soap)) {
+    else {
       watchdog('salesforce', '!id SalesforceSync received an unusable '
         . 'SalesforceSoapPartner: !message',
         array(
@@ -1084,6 +1131,7 @@ class SalesforceSync {
           '!message' => $message,
         ), WATCHDOG_NOTICE);
     }
+
     $this->soap = $soap;
     return $soap;
   }
