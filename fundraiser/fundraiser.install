@@ -319,7 +319,62 @@ function fundraiser_update_7000() {
   db_drop_index('fundraiser_refund', 'refund_order_id');
   db_change_field('fundraiser_refund', 'order_id', 'did', $did_field);
   db_add_index('fundraiser_refund', 'refund_did', array('did'));
-  
+
   // Drop the gateway field on fundraisers.
   db_drop_field('fundraiser', 'gateway');
+}
+
+/**
+ * D7 update hook - added for ease during QA testing.
+ */
+function fundraiser_update_7001() {
+  $new_fields = array(
+    'status' => array(
+      'description' => 'The status of the donation in the charge system.',
+      'type' => 'varchar',
+      'length' => '255',
+      'default' => 'no_status',
+      'not null' => TRUE,
+    ),
+    'amount' => array(
+      'description' => 'The amount of the donation in the charge system.',
+      'type' => 'float',
+      'not null' => TRUE,
+      'default' => 0,
+    ),
+    'currency' => array(
+      'description' => 'The currency type of the donation in the charge system.',
+      'type' => 'varchar',
+      'length' => '10',
+      'default' => 'USD',
+      'not null' => TRUE,
+    ),
+    'created' => array(
+      'description' => 'The Unix timestamp when the donation was created.',
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+    ),
+    'changed' => array(
+      'description' => 'The Unix timestamp when the donation was most recently updated.',
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+    ),
+  );
+  foreach ($new_fields as $fieldname => $new_field) {
+    db_add_field('fundraiser_donation', $fieldname, $new_field);
+  }
+  $new_fields = array(
+    'currency' => array(
+      'description' => 'The currency type of the refund in the charge system.',
+      'type' => 'varchar',
+      'length' => '25',
+      'default' => 'USD',
+      'not null' => TRUE,
+    ),
+  );
+  foreach ($new_fields as $fieldname => $new_field) {
+    db_add_field('fundraiser_refund', $fieldname, $new_field);
+  }
 }
