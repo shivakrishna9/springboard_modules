@@ -322,8 +322,16 @@ function fundraiser_commerce_fundraiser_field_info_alter(&$fields) {
  * Validation callback for field payment_fields.
  */
 function _fundraiser_commerce_payment_fields_validate($form, $form_state, $submission_fields, $value) {
-  // TODO this should probably be driven down to the gateway level.
   $payment_method = $submission_fields['payment_method'];
+  $payment_method_component = _fundraiser_webform_get_component_by_nid_key($form['#node']->nid, array('payment_method'));
+  $payment_method_field = $form['#node']->webform['components'][$payment_method_component->cid];
+  $gateway_info = _fundraiser_gateway_info($payment_method_field['extra']['payment_methods'][$payment_method]['id']);
+  // If the payment method has its own validate function don't validate here
+  if (isset($gateway_info['validate callback'])) {
+    return;
+  }
+
+  // TODO this should probably be driven down to the gateway level.
   if ($payment_method == 'credit') {
     module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card'); // Include the file with the validation info.
     $number = $value['credit']['card_number'];
