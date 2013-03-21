@@ -282,7 +282,7 @@ function springboard_theme($existing, $type, $theme, $path) {
       'template' => drupal_get_path('theme', $theme) . '/templates/springboard-logo',
     ),
     'springboard_sf_status' => array(
-      'variables' => array('status' => '', 'updated_time' => '', 'batch_status' => ''),
+      'variables' => array('status' => '', 'batch_status' => ''),
       'template' => drupal_get_path('theme', $theme) . '/templates/springboard-sf-status',
     ),
     'springboard_jump' => array(
@@ -460,16 +460,17 @@ function springboard_springboard_dashboard_panes() {
     'content' => _springboard_sf_status(),
     'weight' => 0,
   );
+  GLOBAL $base_url;
   $panes['springboard_recent_donation_forms'] = array(
-    'label' => 'Recent Donation Forms',
+    'label' => t('Recent Donation Forms'),
     'description' => t('Configuration and submissions summary for recently created or updated springboard donation forms.'),
-    'content' => module_exists('views') ? views_embed_view('sbv_forms', 'block_1') : t('Please enable the Views module to improve your Springboard experience.'),
+    'content' => '<h2>'. 'Recent Forms ' . (module_exists('webform') ? l(t('Create donation form'), $base_url.'/node/add/donation-form', array('attributes' => array('class' => 'button'))) : '' ) . '</h2><div class="springboard-pane" id="springboard-recent-donation-forms">' . (module_exists('views') ? views_embed_view('sbv_forms', 'block_1') : t('Please enable the Views module to improve your Springboard experience.')).'</div>',
     'weight' => 1,
   );
   $panes['springboard_recent_forms'] = array(
     'label' => 'Recent Forms',
     'description' => t('Configuration and submissions summary for recently created or updated springboard forms.'),
-    'content' => module_exists('views') ? views_embed_view('sbv_forms', 'block') : t('Please enable the Views module to improve your Springboard experience.'),
+    'content' => '<h2>'. 'Recent Donation Forms ' .(module_exists('fundraiser') ? l(t('Create form'), $base_url.'/node/add/webform', array('attributes' => array('class' => 'button'))) : '')  . '</h2><div class="springboard-pane" id="springboard-recent-forms">' . (module_exists('views') ? views_embed_view('sbv_forms', 'block') : t('Please enable the Views module to improve your Springboard experience.')).'</div>',
     'weight' => 2,
   );
   return $panes;
@@ -483,23 +484,26 @@ function _springboard_sf_status() {
   if (module_exists('salesforce')) {
     // Call on the module to get the current connection status
     $status = salesforce_get_api();
-    // WSDL update
-    $updated_time = variable_get('salesforce_api_wsdl_updated', 0);
     // Latest batch # total items :: success :: fail.
-    $batch_status = t('Batch info unavailable, please install Queue API.');
-    if (module_exists('queue_api')) {
-      $batch = db_fetch_object(db_query('SELECT * FROM {sf_batch} ORDER BY id DESC LIMIT 1'));
+    $batch_status = t('Batch info unavailable, please install Salesforce Log.');
+    if (module_exists('salesforce_log')) {
+      $query = db_select('salesforce_log_batch', 'sflog')
+        ->fields('sflog')
+        ->orderBy('bid', 'DESC')
+        ->range(0,1)
+        ->execute();
+      $batch = $query->fetchObject();  
       if ($batch) {
         $batch_status = t('Batch # @id - @record_count::<span class="successes">@success_count</span>::' .
           '<span class="failures">@fail_count</span>',
-          array('@id' => $batch->id, '@record_count' => $batch->record_count, '@success_count' => $batch->success_count,
-          '@fail_count' => $batch->failure_count));
+          array('@id' => $batch->bid, '@record_count' => $batch->count, '@success_count' => $batch->successes,
+          '@fail_count' => $batch->failures));
       }
       else {
         $batch_status = t('No batches processed yet.');
       }
     }
-    return theme('springboard_sf_status', array('status' => $status, 'updated_time' => $updated_time, 'batch_status' => $batch_status));
+    return theme('springboard_sf_status', array('status' => $status, 'batch_status' => $batch_status));
   }
   return 'status';
 }

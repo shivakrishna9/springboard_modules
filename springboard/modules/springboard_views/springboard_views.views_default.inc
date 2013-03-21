@@ -28,6 +28,7 @@ function springboard_views_views_default_views() {
  $handler->display->display_options['access']['type'] = 'perm';
  $handler->display->display_options['cache']['type'] = 'none';
  $handler->display->display_options['query']['type'] = 'views_query';
+ $handler->display->display_options['query']['options']['distinct'] = TRUE;
  $handler->display->display_options['exposed_form']['type'] = 'basic';
  $handler->display->display_options['pager']['type'] = 'mini';
  $handler->display->display_options['pager']['options']['items_per_page'] = '5';
@@ -107,6 +108,25 @@ function springboard_views_views_default_views() {
  $handler->display->display_options['fields']['nid']['field'] = 'nid';
  $handler->display->display_options['fields']['nid']['label'] = 'Form ID';
  $handler->display->display_options['fields']['nid']['element_label_colon'] = FALSE;
+ /* Field: Webform: Webform Hidden Components */
+ $handler->display->display_options['fields']['value']['id'] = 'value';
+ $handler->display->display_options['fields']['value']['table'] = 'webform_component';
+ $handler->display->display_options['fields']['value']['field'] = 'value';
+ $handler->display->display_options['fields']['value']['label'] = 'Market Source';
+ $handler->display->display_options['fields']['value']['element_label_colon'] = FALSE;
+ $handler->display->display_options['fields']['value']['webform_component_options'] = 'ms';
+ /* Field: Webform: Webform Hidden Components */
+ $handler->display->display_options['fields']['value_1']['id'] = 'value_1';
+ $handler->display->display_options['fields']['value_1']['table'] = 'webform_component';
+ $handler->display->display_options['fields']['value_1']['field'] = 'value';
+ $handler->display->display_options['fields']['value_1']['label'] = 'Campaign';
+ $handler->display->display_options['fields']['value_1']['element_label_colon'] = FALSE;
+ $handler->display->display_options['fields']['value_1']['webform_component_options'] = 'cid';
+ /* Field: Content: Path */
+ $handler->display->display_options['fields']['path']['id'] = 'path';
+ $handler->display->display_options['fields']['path']['table'] = 'node';
+ $handler->display->display_options['fields']['path']['field'] = 'path';
+ $handler->display->display_options['fields']['path']['exclude'] = TRUE;
  /* Field: Webform: Webform submission count */
  $handler->display->display_options['fields']['webform_submission_count_node']['id'] = 'webform_submission_count_node';
  $handler->display->display_options['fields']['webform_submission_count_node']['table'] = 'node';
@@ -134,11 +154,6 @@ function springboard_views_views_default_views() {
  $handler->display->display_options['fields']['nothing']['label'] = '';
  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="[path]/revisions">revisions</a>';
  $handler->display->display_options['fields']['nothing']['element_label_colon'] = FALSE;
- /* Field: Content: Path */
- $handler->display->display_options['fields']['path']['id'] = 'path';
- $handler->display->display_options['fields']['path']['table'] = 'node';
- $handler->display->display_options['fields']['path']['field'] = 'path';
- $handler->display->display_options['fields']['path']['exclude'] = TRUE;
  /* Sort criterion: Content revision: Updated date */
  $handler->display->display_options['sorts']['timestamp']['id'] = 'timestamp';
  $handler->display->display_options['sorts']['timestamp']['table'] = 'node_revision';
@@ -175,6 +190,7 @@ function springboard_views_views_default_views() {
  $handler->display->display_options['filters']['type']['value'] = array(
    'donation_form' => 'donation_form',
  );
+ 
  $views[$view->name] = $view;
   
   /**
