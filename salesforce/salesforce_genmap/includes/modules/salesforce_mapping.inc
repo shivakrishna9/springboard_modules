@@ -536,7 +536,7 @@ function salesforce_mapping_map_entity($entity, $entity_type, $map) {
     $fieldmap_type = salesforce_mapping_get_fieldmap_types($drupal_field_type);
     $value = call_user_func($fieldmap_type['push_value_callback'], $field_map, $entity_wrapper);
     $fields[$sf_field] = $value;
-    $sync_rules[$sf_field] = isset($field_map['drupal_sf']) ? isset($field_map['drupal_sf']) : SALESFORCE_SYNC_RULE_ALWAYS;
+    $sync_rules[$sf_field] = isset($field_map['drupal_sf']) ? $field_map['drupal_sf'] : SALESFORCE_SYNC_RULE_ALWAYS;
   }
 
   $sobject = new stdClass();
