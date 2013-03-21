@@ -108,6 +108,26 @@ function fundraiser_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
+      'status' => array(
+        'description' => 'The status of the donation in the charge system.',
+        'type' => 'varchar',
+        'length' => '255',
+        'default' => 'no_status',
+        'not null' => TRUE,
+      ),
+      'amount' => array(
+        'description' => 'The amount of the donation in the charge system.',
+        'type' => 'float',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'currency' => array(
+        'description' => 'The currency type of the donation in the charge system.',
+        'type' => 'varchar',
+        'length' => '10',
+        'default' => 'USD',
+        'not null' => TRUE,
+      ),
       'gateway' => array(
         'description' => 'The payment gateway the donation form uses to process credit cards.',
         'type' => 'varchar',
@@ -125,6 +145,18 @@ function fundraiser_schema() {
         'type' => 'varchar',
         'length' => '255',
         'not null' => FALSE,
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the donation was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'description' => 'The Unix timestamp when the donation was most recently updated.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
       ),
       //TODO add transaction information here with the gateway.
     ),
@@ -153,6 +185,13 @@ function fundraiser_schema() {
         'description' => 'Amount of the refund (positive)',
         'type' => 'float',
         'not null' => FALSE,
+      ),
+      'currency' => array(
+        'description' => 'The currency type of the refund in the charge system.',
+        'type' => 'varchar',
+        'length' => '25',
+        'default' => 'USD',
+        'not null' => TRUE,
       ),
       'txn_id' => array(
         'description' => 'Transaction ID of the refund',

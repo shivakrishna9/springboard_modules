@@ -647,6 +647,7 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   $donation->did = $order->order_id;
   // Set the order status to fundraiser_commerce's status.
   _fundraiser_commerce_update_order_status('pending_future_payment', $donation->did);
+  $donation->status = 'pending_future_payment';
   $donation->status_label = _fundraiser_commerce_get_label_by_status('pending_future_payment');
   $donation->status_charged = _fundraiser_commerce_get_charged_by_status('pending_future_payment');
 }
@@ -1169,6 +1170,7 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
 function fundraiser_commerce_fundraiser_donation_success($donation) {
   // Mark as complete.
   _fundraiser_commerce_update_order_status('payment_received', $donation->did);
+  $donation->status = 'payment_received';
   $donation->status_label = _fundraiser_commerce_get_label_by_status('payment_received');
   $donation->status_charged = _fundraiser_commerce_get_charged_by_status('payment_received');
 }
@@ -1179,6 +1181,7 @@ function fundraiser_commerce_fundraiser_donation_success($donation) {
 function fundraiser_commerce_fundraiser_donation_decline($donation) {
   // Mark the sale in commerce as failed.
   _fundraiser_commerce_update_order_status('failed', $donation->did);
+  $donation->status = 'failed';
   $donation->status_label = _fundraiser_commerce_get_label_by_status('failed');
   $donation->status_charged = _fundraiser_commerce_get_charged_by_status('failed');
 }
@@ -1196,6 +1199,7 @@ function fundraiser_commerce_fundraiser_donation_exception($donation) {
 function fundraiser_commerce_fundraiser_donation_cancel($donation) {
   // Mark the sale in commerce as canceled.
   _fundraiser_commerce_update_order_status('canceled', $donation->did);
+  $donation->status = 'canceled';
   $donation->status_label = _fundraiser_commerce_get_label_by_status('canceled');
   $donation->status_charged = _fundraiser_commerce_get_charged_by_status('canceled');
 }
@@ -1206,6 +1210,7 @@ function fundraiser_commerce_fundraiser_donation_cancel($donation) {
 function fundraiser_commerce_fundraiser_donation_delete($donation) {
   // Mark the sale in commerce as canceled.
   _fundraiser_commerce_update_order_status('canceled', $donation->did);
+  $donation->status = 'canceled';
   $donation->status_label = _fundraiser_commerce_get_label_by_status('canceled');
   $donation->status_charged = _fundraiser_commerce_get_charged_by_status('canceled');
 }
