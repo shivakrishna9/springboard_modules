@@ -72,7 +72,7 @@ function salesforce_genmap_menu() {
         'type' => empty($first) ? MENU_DEFAULT_LOCAL_TASK : MENU_LOCAL_TASK,
         'file' => 'includes/salesforce_genmap.map.inc',
       );
-      $first = $module;
+      $first = empty($first) ? $module : $first;
     }
     $items['node/%node/salesforce'] = array(
       'title' => 'Salesforce maps',
