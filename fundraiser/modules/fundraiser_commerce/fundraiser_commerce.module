@@ -712,10 +712,10 @@ function fundraiser_commerce_fundraiser_donation_after_process($donation) {
     $donation->uid = $order->uid;
     $donation->user = user_load($order->uid);
     // Add the status data.
-    $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
-    if (!empty($order->order_status)) {
-      $donation->status_label = _fundraiser_commerce_get_label_by_status($order->order_status);
-      $donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->order_status);
+    $donation->status = $donation->status_label = isset($order->status) ? $order->status : 'unknown';
+    if (!empty($order->status)) {
+      $donation->status_label = _fundraiser_commerce_get_label_by_status($order->status);
+      $donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->status);
     }
   }
 }
@@ -1143,10 +1143,10 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
   commerce_order_save($order);
 
   // Add the status data.
-  $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
-  if (!empty($order->order_status)) {
-    $donation->status_label = _fundraiser_commerce_get_label_by_status($order->order_status);
-    $donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->order_status);
+  $donation->status = $donation->status_label = isset($order->status) ? $order->status : 'unknown';
+  if (!empty($order->status)) {
+    $donation->status_label = _fundraiser_commerce_get_label_by_status($order->status);
+    $donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->status);
   }
 
   // Update the gateway's stored data.
