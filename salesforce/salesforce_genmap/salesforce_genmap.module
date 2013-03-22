@@ -49,7 +49,7 @@ function salesforce_genmap_menu() {
   if (count($modules) < 2) {
     foreach ($modules as $module => $info) {
       $items['node/%node/salesforce_' . $module] = array(
-        'title' => $info['label'] . ' map',
+        'title' => 'Salesforce maps',
         'page callback' => 'salesforce_genmap_map_page',
         'page arguments' => array(1, $module),
         'access callback' => $info['access callback'],
@@ -61,7 +61,10 @@ function salesforce_genmap_menu() {
   }
   else {
     // Returns an array, keyed by supporting module.
-    $first = '';
+    // If webform is available as mapping, prefer that for top menu
+    // Else fall back on first
+    $first = !empty($modules['webform']) ? 'webform' : '';
+    // For each available module, make a sub menu.
     foreach ($modules as $module => $info) {
       $items['node/%node/salesforce/' . $module] = array(
         'title' => $info['label'] . ' map',
@@ -74,11 +77,13 @@ function salesforce_genmap_menu() {
       );
       $first = empty($first) ? $module : $first;
     }
+    // Set one of them to be the top menu
+    // Preferrably webform, as that's an always ok option.
     $items['node/%node/salesforce'] = array(
       'title' => 'Salesforce maps',
       'page callback' => 'salesforce_genmap_map_page',
       'page arguments' => array(1, $first),
-      'access callback' => $info['access callback'],
+      'access callback' => $modules[$first]['access callback'],
       'access arguments' => array(1, $first),
       'type' => MENU_LOCAL_TASK,
       'file' => 'includes/salesforce_genmap.map.inc',

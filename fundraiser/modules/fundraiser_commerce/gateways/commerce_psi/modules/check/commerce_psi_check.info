@@ -1,0 +1,5 @@
+name = Payment Solutions, Inc. Check API
+description = Implements Payment Solutions, Inc. check (EFT) payment API for use with Drupal Commerce.
+package = Commerce (contrib)
+dependencies[] = commerce_psi
+core = 7.x

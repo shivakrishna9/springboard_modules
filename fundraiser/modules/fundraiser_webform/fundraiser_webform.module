@@ -540,6 +540,10 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
         $payment_fields = fundraiser_webform_fundraiser_get_form_field($form, 'payment_fields');
         $submission_fields = $gateway_info['validate callback']($submission_fields, $payment_fields);
       }
+      // Store the scrub callback for later if this form has errors
+      if (isset($gateway_info['scrub callback']) && function_exists($gateway_info['scrub callback'])) {
+        $scrub_callback = $gateway_info['scrub callback'];
+      }
     }
     // Remove unselected payment fields from the values
     else {
@@ -551,7 +555,7 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
   $errors = fundraiser_validate_form_fields($form, $form_state, $submission_fields); // From fundraiser.module.
 
   // Create watchdog entry on validation errors.
-  if ($errors) {
+  if (form_get_errors() || $errors) {
     $message = "The following donation form fields failed local validation:\n\n";
     $check_errors = form_get_errors();
     $validation_errors = is_array($check_errors) ? array_keys($check_errors) : array();
@@ -560,12 +564,10 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
       $message .= array_pop($keys) . "\n";
     }
 
-    // SCRUB DATA. We do not want to save these in the error watchdog message.
-    // We can be sure these fields are in the set, since they're declared in fundraiser.
-    $submission_fields['payment_fields']['credit']['card_number'] = substr_replace($submission_fields['payment_fields']['credit']['card_number'],
-      str_repeat('*', drupal_strlen($submission_fields['payment_fields']['credit']['card_number'])), 0);
-    $submission_fields['payment_fields']['credit']['card_cvv'] = substr_replace($submission_fields['payment_fields']['credit']['card_cvv'],
-      str_repeat('*', drupal_strlen($submission_fields['payment_fields']['credit']['card_cvv'])), 0);
+    if (!empty($scrub_callback)) {
+      // SCRUB DATA. We do not want to save sensitive payment data in the error watchdog message.
+      $submission_fields['payment_fields'] = $scrub_callback($submission_fields['payment_method'], $submission_fields['payment_fields']);
+    }
 
     $message .= "\n\nSubmitted Values:\n\n";
     foreach ($submission_fields as $key => $value) {
