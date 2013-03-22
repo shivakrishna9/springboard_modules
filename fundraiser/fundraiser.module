@@ -1391,67 +1391,75 @@ function _fundraiser_refund($form, &$form_state, $did) {
     '#collapsible' => FALSE,
     '#collapsed' => FALSE,
   );
-
   // Only show the refund form if the payment was made through a payment gateway that can handle refunds
-  $gateway = $donation->gateway; // Set during fundraiser_donation_get_donation().
-  $can_refund = isset($gateway['refund_function']) ? $gateway['refund_function'] : NULL;
-  if (!$can_refund || !isset($donation->payment)) {
-    // They've made a payment, but it cannot be refunded
-    if (isset($donation->payment)) {
-      $no_refund_text = t('Refunds cannot be made on this order. The payment was made on a payment gateway that does not support refunds.');
-    }
-    // They have NOT made any payment yet, so there's nothing to refund
-    else {
-      $no_refund_text = t('No payments have been processed on this order, so no refunds can be made yet.');
-      // Even once the payment is made, they won't be able to refund it
-      if (!$can_refund) {
-        $no_refund_text .= ' ' . t('However, because this order was made on a payment gateway that does not support refunds, you will not be able to ' .
-          'make refunds after payments are processed on this order.');
+  if (isset($donation->gateway)) {  // Set during fundraiser_donation_get_donation().
+    $gateway = $donation->gateway;
+    $can_refund = isset($gateway['refund_function']) ? $gateway['refund_function'] : NULL;
+    if (!$can_refund || !isset($donation->payment)) {
+      // They've made a payment, but it cannot be refunded
+      if (isset($donation->payment)) {
+        $no_refund_text = t('Refunds cannot be made on this order. The payment was made on a payment gateway that does not support refunds.');
       }
+      // They have NOT made any payment yet, so there's nothing to refund
+      else {
+        $no_refund_text = t('No payments have been processed on this order, so no refunds can be made yet.');
+        // Even once the payment is made, they won't be able to refund it
+        if (!$can_refund) {
+          $no_refund_text .= ' ' . t('However, because this order was made on a payment gateway that does not support refunds, you will not be able to ' .
+            'make refunds after payments are processed on this order.');
+        }
+      }
+      $form['refund_options']['no_refund_explanation'] = array(
+        '#markup' => $no_refund_text,
+        '#prefix' => '<strong>',
+        '#suffix' => '</strong>',
+      );
     }
+    // Provide refund options
+    else {
+      $able_to_refund = $donation->donation['amount'] - $donation->payment['refunded_total'];
+      $form['refund_options']['full_refund'] = array(
+        '#type' => 'radio',
+        '#title' => t('Full Refund (%amount)', array('%amount' => $able_to_refund)),
+        '#return_value' => 'full',
+        '#parents' => array('refund_type'),
+      );
+      $form['refund_options']['partial_refund'] = array(
+        '#type' => 'radio',
+        '#title' => t('Partial Refund'),
+        '#return_value' => 'partial',
+        '#parents' => array('refund_type'),
+      );
+      $form['refund_options']['amount'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Amount to Refund'),
+        '#size' => 40,
+        '#maxlength' => 255,
+      );
+      $form['refund_options']['refund_notes'] = array(
+        '#type' => 'textarea',
+        '#title' => t('Refund Notes'),
+        '#description' => t('Please provide reference information about this refund (Requestor, reason, etc.)'),
+        '#cols' => 60,
+        '#rows' => 5,
+        '#required' => TRUE,
+      );
+      $form['refund_options']['issue_refund'] = array(
+        '#type' => 'submit',
+        '#value' => t('Issue Refund'),
+        '#required' => TRUE,
+      );
+      $form['total_paid'] = array(
+        '#type' => 'hidden',
+        '#value' => number_format($able_to_refund, 2),
+      );
+    }
+  }
+  else {
     $form['refund_options']['no_refund_explanation'] = array(
-      '#value' => $no_refund_text,
+      '#markup' => t('The gateway for this refund is no longer available. A refund cannot be offered on this transaction.'),
       '#prefix' => '<strong>',
       '#suffix' => '</strong>',
-    );
-  }
-  // Provide refund options
-  else {
-    $able_to_refund = $donation->donation['amount'] - $donation->payment['refunded_total'];
-    $form['refund_options']['full_refund'] = array(
-      '#type' => 'radio',
-      '#title' => t('Full Refund (%amount)', array('%amount' => $able_to_refund)),
-      '#return_value' => 'full',
-      '#parents' => array('refund_type'),
-    );
-    $form['refund_options']['partial_refund'] = array(
-      '#type' => 'radio',
-      '#title' => t('Partial Refund'),
-      '#return_value' => 'partial',
-      '#parents' => array('refund_type'),
-    );
-    $form['refund_options']['amount'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Amount to Refund'),
-      '#size' => 40,
-      '#maxlength' => 255,
-    );
-    $form['refund_options']['refund_notes'] = array(
-      '#type' => 'textarea',
-      '#title' => t('Refund Notes'),
-      '#description' => t('Please provide reference information about this refund (Requestor, reason, etc.)'),
-      '#cols' => 60,
-      '#rows' => 5,
-      '#required' => TRUE,
-    );
-    $form['refund_options']['issue_refund'] = array(
-      '#type' => 'submit',
-      '#value' => t('Issue Refund'),
-      '#required' => TRUE,
-    );
-    $form['total_paid'] = array(
-      '#type' => 'hidden',
-      '#value' => number_format($able_to_refund, 2),
     );
   }
   return $form;
@@ -1463,7 +1471,6 @@ function _fundraiser_refund($form, &$form_state, $did) {
 function _fundraiser_refund_validate($form, &$form_state) {
   // Get the donation.
   $donation = $form['#donation'];
-
   // Make sure they chose a refund type
   if (empty($form_state['values']['refund_type'])) {
     form_set_error('refund_type', t('Choose a refund type.'));
@@ -1495,10 +1502,8 @@ function _fundraiser_refund_validate($form, &$form_state) {
 function _fundraiser_refund_submit($form, &$form_state) {
   // Get the donation.
   $donation = $form['#donation'];
-
   // Determine how much has been paid, less previous refunds
   $able_to_refund = $donation->donation['amount'] - $donation->payment['refunded_total'];
-
   // Partial refund
   if ($form_state['values']['refund_type'] != 'full') {
     $new_order_status = 'partially_refunded';
@@ -2043,6 +2048,7 @@ function _fundraiser_gateway_info($id = NULL) {
         return $gateway;
       }
     }
+    return array();
   }
   return (array) $gateways;
 }
