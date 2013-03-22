@@ -1386,8 +1386,9 @@ function _fundraiser_refund($form, &$form_state, $did) {
   $form['refund_options'] = array(
     '#type' => 'fieldset',
     '#title' => t('Refund Options'),
-    '#description' => t('Note that refunds can only be applied to payments that have been settled in the payment processor. This typically ' .
-     'happens every night; if the payment was made today, you will probably need to wait until tomorrow to issue a refund.'),
+    '#description' => t('Note that refunds can only be applied to payments that have been settled ' .
+     'in the payment processor. This typically happens every night; if the payment was made today, ' .
+     'you will probably need to wait until tomorrow to issue a refund.'),
     '#collapsible' => FALSE,
     '#collapsed' => FALSE,
   );
@@ -1398,15 +1399,17 @@ function _fundraiser_refund($form, &$form_state, $did) {
     if (!$can_refund || !isset($donation->payment)) {
       // They've made a payment, but it cannot be refunded
       if (isset($donation->payment)) {
-        $no_refund_text = t('Refunds cannot be made on this order. The payment was made on a payment gateway that does not support refunds.');
+        $no_refund_text = t('Refunds cannot be made on this order. The payment was made on a payment ' .
+         'gateway that does not support refunds.');
       }
       // They have NOT made any payment yet, so there's nothing to refund
       else {
         $no_refund_text = t('No payments have been processed on this order, so no refunds can be made yet.');
         // Even once the payment is made, they won't be able to refund it
         if (!$can_refund) {
-          $no_refund_text .= ' ' . t('However, because this order was made on a payment gateway that does not support refunds, you will not be able to ' .
-            'make refunds after payments are processed on this order.');
+          $no_refund_text .= ' ' . t('However, because this order was made on a payment gateway that ' .
+            'does not support refunds, you will not be able to make refunds after payments are processed ' .
+            'on this order.');
         }
       }
       $form['refund_options']['no_refund_explanation'] = array(
@@ -1418,23 +1421,26 @@ function _fundraiser_refund($form, &$form_state, $did) {
     // Provide refund options
     else {
       $able_to_refund = $donation->donation['amount'] - $donation->payment['refunded_total'];
-      $form['refund_options']['full_refund'] = array(
-        '#type' => 'radio',
-        '#title' => t('Full Refund (%amount)', array('%amount' => $able_to_refund)),
-        '#return_value' => 'full',
-        '#parents' => array('refund_type'),
-      );
-      $form['refund_options']['partial_refund'] = array(
-        '#type' => 'radio',
-        '#title' => t('Partial Refund'),
-        '#return_value' => 'partial',
-        '#parents' => array('refund_type'),
+      $form['refund_options']['refund_type'] = array(
+        '#title' => t('Refund options'),
+        '#type' => 'radios',
+        '#options' => array(
+          'full' => t('Full Refund ( %amount )', array('%amount' => $able_to_refund . ' ' . $donation->currency )),
+          'partial' => t('Partial Refund'),
+        ),
+        '#default_value' => isset($form_state['input']['refund_type']) ? $form_state['input']['refund_type'] : 'full',
       );
       $form['refund_options']['amount'] = array(
         '#type' => 'textfield',
         '#title' => t('Amount to Refund'),
         '#size' => 40,
         '#maxlength' => 255,
+        '#states' => array(
+          'visible' => array(
+            ':input[name="refund_type"]' => array('value' => 'partial'),
+          ),
+        ),
+        '#required' => TRUE,
       );
       $form['refund_options']['refund_notes'] = array(
         '#type' => 'textarea',
@@ -1469,17 +1475,19 @@ function _fundraiser_refund($form, &$form_state, $did) {
  * Validate the form
  */
 function _fundraiser_refund_validate($form, &$form_state) {
+  // Dunno why, but values isn't picking it up.
+  $form_state['values'] = isset($form_state['input']) ? $form_state['input'] : $form_state['values'];
   // Get the donation.
   $donation = $form['#donation'];
-  // Make sure they chose a refund type
-  if (empty($form_state['values']['refund_type'])) {
-    form_set_error('refund_type', t('Choose a refund type.'));
-  }
   // If it isn't a full refund, make sure they entered a valid value
-  elseif ($form_state['values']['refund_type'] != 'full') {
+  $refund_type = $form_state['values']['refund_type'];
+  if (empty($refund_type)) {
+    form_set_error('refund_type', t('Select a type for the refund.'));
+  }
+  if ($refund_type != 'full') {
     $amount = (float) $form_state['values']['amount'];
     if ($amount <= 0) {
-      form_set_error('amount', t('Enter a refund amount.'));
+      form_set_error('amount', t('Enter a positive numerical refund amount.'));
     }
     else {
       // Determine how much has been paid, less previous refunds
@@ -1493,6 +1501,10 @@ function _fundraiser_refund_validate($form, &$form_state) {
           'more than that can be refunded.', array('@paid' => $able_to_refund)));
       }
     }
+  }
+  $refund_notes = $form_state['values']['refund_notes'];
+  if (empty($refund_notes)) {
+    form_set_error('refund_notes', t('Enter a reason for the refund.'));
   }
 }
 
