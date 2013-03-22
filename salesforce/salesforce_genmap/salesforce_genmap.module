@@ -83,7 +83,7 @@ function salesforce_genmap_menu() {
       'title' => 'Salesforce maps',
       'page callback' => 'salesforce_genmap_map_page',
       'page arguments' => array(1, $first),
-      'access callback' => $info['access callback'],
+      'access callback' => $modules[$first]['access callback'],
       'access arguments' => array(1, $first),
       'type' => MENU_LOCAL_TASK,
       'file' => 'includes/salesforce_genmap.map.inc',
