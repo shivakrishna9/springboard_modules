@@ -49,7 +49,7 @@ function salesforce_genmap_menu() {
   if (count($modules) < 2) {
     foreach ($modules as $module => $info) {
       $items['node/%node/salesforce_' . $module] = array(
-        'title' => $info['label'] . ' map',
+        'title' => 'Salesforce maps',
         'page callback' => 'salesforce_genmap_map_page',
         'page arguments' => array(1, $module),
         'access callback' => $info['access callback'],
