@@ -60,7 +60,6 @@ function commerce_psi_credit_settings_form($settings = array()) {
   $form['card_types'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Limit accepted credit cards to the following types'),
-    '#description' => t('American Express is not available in the UK. Only MasterCard and Visa are available in Canada. If you enable Maestro or Solo, you must use GBP as your currency code.'),
     '#options' => array_intersect_key(commerce_payment_credit_card_types(), drupal_map_assoc(array('visa', 'mastercard', 'amex', 'discover'))),
     '#default_value' => $settings['card_types'],
     '#required' => TRUE,
