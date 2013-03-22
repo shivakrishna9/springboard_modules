@@ -60,21 +60,19 @@ function market_source_salesforce_genmap_map_fields_alter(&$fields, $context) {
       // Check the salesforce donation map.
       if (isset($map->field_map['salesforce_webform_map']['cid'])) {
         $sf_field = $map->field_map['salesforce_webform_map']['cid'];
-        if (!empty($submission->data['cid']) && _market_source_validate_cid($submission->data['cid'])) {
-          $fields[$sf_field] = $submission->data['cid'];
-        }
-        else {
-          unset($fields[$sf_field]);
+        if (!empty($fields[$sf_field])) {
+          if (!_market_source_validate_cid($fields[$sf_field])) {
+            unset($fields[$sf_field]);
+          }
         }
       }
       // Check the webform.inc map.
       if (isset($map->field_map['webform_map']['cid'])) {
         $sf_field = $map->field_map['webform_map']['cid'];
-        if (!empty($submission->data['cid']) && _market_source_validate_cid($submission->data['cid'])) {
-          $fields[$sf_field] = $submission->data['cid'];
-        }
-        else {
-          unset($fields[$sf_field]);
+        if (!empty($fields[$sf_field])) {
+          if (!_market_source_validate_cid($fields[$sf_field])) {
+            unset($fields[$sf_field]);
+          }
         }
       }
     }
@@ -200,21 +198,6 @@ function market_source_user_register_after_build($form, &$form_state) {
 }
 
 /**
- * Campaign ID validation callback for user registration form.
- */
-function market_source_user_register_cid_validate($form, &$form_state) {
-  // If campaign validation is enabled, validate.
-  if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
-    $cid_element = &_market_source_form_find_element($form, 'cid');
-    $cid = &_market_source_form_find_element($form_state['values'], 'cid');
-    if (!empty($cid) && !_market_source_validate_cid($cid)) {
-      // Set the cid to the form's default cid.
-      form_set_value($cid_element, '', $form_state);
-    }
-  }
-}
-
-/**
  * #after_build callback for all webforms.
  */
 function market_source_webform_after_build($form, &$form_state) {
@@ -251,21 +234,6 @@ function market_source_webform_after_build($form, &$form_state) {
 }
 
 /**
- * Campaign ID validation callback for webforms.
- */
-function market_source_webform_cid_validate($form, &$form_state) {
-  // If campaign validation is enabled, validate.
-  if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
-    $cid_element = &_market_source_form_find_element($form, 'cid');
-    $cid = &_market_source_form_find_element($form_state['values'], 'cid');
-    if (!empty($cid) && !_market_source_validate_cid($cid)) {
-      // Set the cid to the form's default cid.
-      form_set_value($cid_element, '', $form_state);
-    }
-  }
-}
-
-/**
  * #after_build callback for generic forms.
  */
 function market_source_generic_form_after_build($form, &$form_state) {
@@ -286,6 +254,36 @@ function market_source_generic_form_after_build($form, &$form_state) {
   drupal_add_js(array('market_source' => $settings), 'setting');
   // Mandatory return value for #after_build callbacks.
   return $form;
+}
+
+/**
+ * Campaign ID validation callback for user registration form.
+ */
+function market_source_user_register_cid_validate($form, &$form_state) {
+  // If campaign validation is enabled, validate.
+  if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
+    $cid_element = &_market_source_form_find_element($form, 'cid');
+    $cid = &_market_source_form_find_element($form_state['values'], 'cid');
+    if (!empty($cid) && !_market_source_validate_cid($cid)) {
+      // Set the cid to the form's default cid.
+      form_set_value($cid_element, '', $form_state);
+    }
+  }
+}
+
+/**
+ * Campaign ID validation callback for webforms.
+ */
+function market_source_webform_cid_validate($form, &$form_state) {
+  // If campaign validation is enabled, validate.
+  if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
+    $cid_element = &_market_source_form_find_element($form, 'cid');
+    $cid = &_market_source_form_find_element($form_state['values'], 'cid');
+    if (!empty($cid) && !_market_source_validate_cid($cid)) {
+      // Set the cid to the form's default cid.
+      form_set_value($cid_element, '', $form_state);
+    }
+  }
 }
 
 /**
@@ -409,7 +407,7 @@ function _market_source_validate_cid($val) {
       if (drupal_strlen($val) <= MARKET_SOURCE_VALUE_MAXLENGTH) {
         if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
           $campaigns = market_source_get_campaigns();
-          if (is_array($campaigns) && array_key_exists($val, $campaigns)) {
+          if (is_array($campaigns) && in_array($val, $campaigns)) {
             $retval = TRUE;
           }
         }
