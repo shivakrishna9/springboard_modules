@@ -564,8 +564,10 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
       $message .= array_pop($keys) . "\n";
     }
 
-    // SCRUB DATA. We do not want to save these in the error watchdog message.
-    $submission_fields['payment_fields'] = $scrub_callback($submission_fields['payment_method'], $submission_fields['payment_fields']);
+    if (!empty($scrub_callback)) {
+      // SCRUB DATA. We do not want to save sensitive payment data in the error watchdog message.
+      $submission_fields['payment_fields'] = $scrub_callback($submission_fields['payment_method'], $submission_fields['payment_fields']);
+    }
 
     $message .= "\n\nSubmitted Values:\n\n";
     foreach ($submission_fields as $key => $value) {
