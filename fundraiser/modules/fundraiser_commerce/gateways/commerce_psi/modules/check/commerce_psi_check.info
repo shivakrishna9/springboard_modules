@@ -1,0 +1,5 @@
+name = Payment Services, Inc. Check API
+description = Implements Payment Services, Inc. check payment API for use with Drupal Commerce.
+package = Commerce (contrib)
+dependencies[] = commerce_psi
+core = 7.x

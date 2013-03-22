@@ -1,0 +1,5 @@
+name = Payment Services, Inc. Credit API
+description = Implements Payment Services, Inc. credit payment API for use with Drupal Commerce.
+package = Commerce (contrib)
+dependencies[] = commerce_psi
+core = 7.x
