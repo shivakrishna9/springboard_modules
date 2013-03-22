@@ -90,7 +90,18 @@ function salesforce_donation_settings($form, &$form_state) {
   $form_state['build_info']['args'][0] = $node;
   $form += salesforce_genmap_map_form($form, $form_state, $node, 'salesforce_donation');
   $form['salesforce_object_info']['#description'] = t('Provide a default map for Salesforce donations.');
+  // Swap out the afterbuild function to avoid errs from failed include file.
+  $form['#after_build'] = array_diff($form['#after_build'], array('salesforce_genmap_map_form_after_build'));
+  $form['#after_build'][] = 'salesforce_donation_map_form_after_build';
   return $form;
+}
+
+/**
+ * After build callback to add CSS.
+ */
+function salesforce_donation_map_form_after_build($form, &$form_state) {
+  module_load_include('inc', 'salesforce_genmap', 'includes/salesforce_genmap.map');
+  return salesforce_genmap_map_form_after_build($form, $form_state);
 }
 
 /**
