@@ -52,7 +52,7 @@ function market_source_init() {
  * Implements hook_salesforce_genmap_map_fields_alter().
  */
 function market_source_salesforce_genmap_map_fields_alter(&$fields, $context) {
-  if (variable_get('market_source_validate_sf_campaigns', 0)) {
+  if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
     // Alter donations based on recurring status.
     if ($context['module'] == 'salesforce_donation' || $context['module'] == 'webform') {
       $submission = $context['object'];
@@ -136,12 +136,14 @@ function market_source_form_alter(&$form, &$form_state, $form_id) {
       $form['form_key']['#value'] = $form['form_key']['#default_value'];
     }
     // Now that keys are preserved, check for the campaign id.
-    if ($form_key == 'cid') {
-      if (module_exists('salesforce_sync')) {
-        $campaigns = market_source_get_campaigns();
-        if (is_array($campaigns)) {
-          $form['value']['#type'] = 'select';
-          $form['value']['#options'] = array_combine($campaigns, $campaigns);
+    if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
+      if ($form_key == 'cid') {
+        if (module_exists('salesforce_sync')) {
+          $campaigns = market_source_get_campaigns();
+          if (is_array($campaigns)) {
+            $form['value']['#type'] = 'select';
+            $form['value']['#options'] = array_combine($campaigns, $campaigns);
+          }
         }
       }
     }
@@ -203,10 +205,11 @@ function market_source_user_register_after_build($form, &$form_state) {
 function market_source_user_register_cid_validate($form, &$form_state) {
   // If campaign validation is enabled, validate.
   if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
-    $cid = &_market_source_form_find_element($form_state['values'], 'profile_cid');
+    $cid_element = &_market_source_form_find_element($form, 'cid');
+    $cid = &_market_source_form_find_element($form_state['values'], 'cid');
     if (!empty($cid) && !_market_source_validate_cid($cid)) {
-      // Set the cid to empty.
-      $cid = '';
+      // Set the cid to the form's default cid.
+      form_set_value($cid_element, '', $form_state);
     }
   }
 }
@@ -256,12 +259,8 @@ function market_source_webform_cid_validate($form, &$form_state) {
     $cid_element = &_market_source_form_find_element($form, 'cid');
     $cid = &_market_source_form_find_element($form_state['values'], 'cid');
     if (!empty($cid) && !_market_source_validate_cid($cid)) {
-      // Find the component in the webform components list.
-      $cid_component = &_market_source_webform_find_component($form['#node']->webform['components'], 'cid');
-      if ($cid_component && !empty($cid_component['value'])) {
-        // Set the cid to the form's default cid.
-        form_set_value($cid_element, $cid_component['value'], $form_state);
-      }
+      // Set the cid to the form's default cid.
+      form_set_value($cid_element, '', $form_state);
     }
   }
 }
@@ -295,10 +294,11 @@ function market_source_generic_form_after_build($form, &$form_state) {
 function market_source_generic_form_cid_validate($form, &$form_state) {
   // If campaign validation is enabled, validate.
   if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
+    $cid_element = &_market_source_form_find_element($form, 'cid');
     $cid = &_market_source_form_find_element($form_state['values'], 'cid');
     if (!empty($cid) && !_market_source_validate_cid($cid)) {
       // Set the cid to empty.
-      $cid = '';
+      form_set_value($cid_element, '', $form_state);
     }
   }
 }
@@ -406,7 +406,7 @@ function _market_source_validate_cid($val) {
   $val = trim($val);
   if (!empty($val)) {
     if (preg_match('/^[a-zA-Z0-9_+-]+$/', $val)) {
-      if (drupal_strlen($val) <= MARKET_SOURCE_CID_MAX_LENGTH) {
+      if (drupal_strlen($val) <= MARKET_SOURCE_VALUE_MAXLENGTH) {
         if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
           $campaigns = market_source_get_campaigns();
           if (is_array($campaigns) && array_key_exists($val, $campaigns)) {
