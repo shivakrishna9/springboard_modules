@@ -42,17 +42,20 @@ function commerce_psi_check_settings_form($settings = array()) {
     '#type' => 'textfield',
     '#title' => t('Username'),
     '#default_value' => $settings['account_username'],
+    '#required' => TRUE,
   );
   $form['account_password'] = array(
     '#type' => 'textfield',
     '#title' => t('Password'),
     '#default_value' => _commerce_psi_decrypt($settings['account_password']),
     '#value_callback' => '_commerce_psi_encrypt_settings_password',
+    '#required' => TRUE,
   );
   $form['account_ip'] = array(
     '#type' => 'textfield',
     '#title' => t('IP Address'),
     '#default_value' => $settings['account_ip'],
+    '#required' => TRUE,
   );
   $form['log'] = array(
     '#type' => 'checkboxes',
