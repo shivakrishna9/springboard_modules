@@ -31,6 +31,55 @@ function fundraiser_commerce_menu() {
 }
 
 /**
+ * Implements hook_menu_alter().
+ */
+function fundraiser_commerce_menu_alter(&$items) {
+  foreach ($items as $path => $item) {
+    if (strpos($path, 'admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/') !== FALSE) {
+      // If not view or delete, strip it out to be replaced with our form Refund.
+      if (($path != 'admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/view') &&
+        ($path != 'admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/delete')) {
+        unset($items[$path]);
+      }
+    }
+  }
+  $items['admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/refund'] = array(
+    'title' => 'Refund', 
+    'page callback' => 'drupal_get_form', 
+    'page arguments' => array('fundraiser_commerce_refund_form', 3, 5), 
+    'access callback' => 'fundraiser_commerce_refund_form_access', 
+    'access arguments' => array(3, 5), 
+    'type' => MENU_DEFAULT_LOCAL_TASK, 
+    'context' => MENU_CONTEXT_INLINE, 
+  );
+}
+
+/**
+ * Menu access for refund operation.
+ */
+function fundraiser_commerce_refund_form_access($order, $transaction) {
+  // Return FALSE if the transaction doesn't have a
+  // success status or has an amount of 0 or less.
+  if ($transaction->status != 'success' || $transaction->amount <= 0) {
+    return FALSE;
+  }
+  // Return FALSE if it is more than 120 days past the original capture.
+  if (time() - $transaction->created > 86400 * 120) {
+    return FALSE;
+  }
+  // Allow access if the user can update this transaction.
+  return commerce_payment_transaction_access('update', $transaction);
+}
+
+/**
+ * Form callback, override Commerce provided refund forms with our own.
+ * This is just a wrapper, to get the rest of the goodies in place.
+ */
+function fundraiser_commerce_refund_form($form, &$form_state, $order, $transaction) {
+  return drupal_get_form('_fundraiser_refund', $order->order_id);
+}
+
+/**
  * Implements hook_entity_view().
  */
 function fundraiser_commerce_entity_view($entity, $type, $view_mode, $langcode) {
@@ -84,12 +133,6 @@ function fundraiser_commerce_commerce_line_item_type_info() {
   );
   return $line_item_types;
 }
-
-/**
- * Implements hook_LINE_ITEM_BASE_configuration().
- * This function is called by the line item module when it is enabled or this module is enabled.
- */
-// function commerce_donation_line_item_configuration($line_item_type) {}
 
 /**
  * Implements hook_LINE_ITEM_BASE_title().
@@ -243,7 +286,7 @@ function fundraiser_commerce_fundraiser_gateway_info() {
       $this_gateway['allow_recurring'] = array_diff($this_gateway['allow_recurring'], $this_gateway['offsite_processing']);
       // Save the original data declared.
       $this_gateway['gateway_details'] = $method_instance;
-      $fundraiser_gateways[] = $this_gateway;
+      $fundraiser_gateways[ $this_gateway['id'] ] = $this_gateway;
     }
   }
   return $fundraiser_gateways;
