@@ -1398,9 +1398,13 @@ function _fundraiser_refund($form, &$form_state, $did) {
     if (!empty($donation->gateway['allow_refund']) && in_array($donation->donation['payment_method'], $donation->gateway['allow_refund'])) {
       $can_refund = TRUE;
     }
-    if (!$can_refund || !isset($donation->payment)) {
+    $able_to_refund = $donation->donation['amount'] - $donation->payment['refunded_total'];
+    if (!$can_refund || !isset($donation->payment) || $able_to_refund <= 0) {
       // They've made a payment, but it cannot be refunded
-      if (isset($donation->payment)) {
+      if ($able_to_refund <= 0) {
+        $no_refund_text = t('As many refunds as can be made on this donation have been made.');
+      }
+      elseif (isset($donation->payment)) {
         $no_refund_text = t('Refunds cannot be made on this order. The payment was made on a payment ' .
          'gateway that does not support refunds.');
       }
@@ -1422,7 +1426,6 @@ function _fundraiser_refund($form, &$form_state, $did) {
     }
     // Provide refund options
     else {
-      $able_to_refund = $donation->donation['amount'] - $donation->payment['refunded_total'];
       $form['refund_options']['refund_type'] = array(
         '#title' => t('Refund options'),
         '#type' => 'radios',
@@ -1545,7 +1548,7 @@ function _fundraiser_refund_submit($form, &$form_state) {
   unset($refund->txn_id);
   unset($refund->form_url);
   $refund->gateway = $refund->gateway['id'];
-  $refund->donation['refund_amount'] = $amount;
+  $refund->amount = $refund->donation['refund_amount'] = $amount;
   $refund->donation['refund_reason'] = $form_state['values']['refund_notes'];
   $refund->refund_status = $new_status;
   fundraiser_donation_create($refund);
@@ -1933,6 +1936,7 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
   $donation->txn_id = isset($donation_record->txn_id) ? $donation_record->txn_id : '';
   $donation->form_url = $donation_record->form_url;
 
+  // Grab refund information for the donation.
   $refunds = _fundraiser_get_refund_by_did($did);
   $refund_summary = array();
   $refunded_total = 0;
@@ -1947,6 +1951,17 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
   }
   $donation->payment['refunded_summary'] = !empty($refund_summary) ? theme('item_list', array('items' => $refund_summary)) : t('No refunds have been made.');
   $donation->payment['refunded_total'] = $refunded_total;
+
+  // And if this donation is itself representing a refund, grab that too!
+  $donation->refund = FALSE;
+  $refunded = _fundraiser_get_refund_by_receipt_id($did);
+  foreach ($refunded as $refund) {
+    $donation->refund['refunded_donation'] = $refund->did;
+    $donation->refund['amount'] = $refund->amount;
+    $donation->refund['currency'] = $refund->currency;
+    $donation->refund['txn_id'] = $refund->txn_id;
+    $donation->refund['reason'] = $refund->reason;
+  }
 
   // Call hooks to re-create the donation info.
   // The glue modules handle everything else once handed fundraisers info.
@@ -2365,6 +2380,15 @@ function _fundraiser_get_refund_by_did($did) {
   return db_query('SELECT * FROM {fundraiser_refund} ' .
     'WHERE did = :did',
     array(':did' => $did))->fetchAll();
+}
+
+/**
+ * DB function for fundraiser_refund.
+ */
+function _fundraiser_get_refund_by_receipt_id($receipt_id) {
+  return db_query('SELECT * FROM {fundraiser_refund} ' .
+    'WHERE receipt_id = :receipt_id',
+    array(':receipt_id' => $receipt_id))->fetchAll();
 }
 
 /**
