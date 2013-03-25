@@ -12,12 +12,14 @@ function commerce_authnet_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     'payment_method' => array('credit'),
     'allow_recurring' => array('credit'),
+    'allow_refund' => array('credit'),
     'form callback' => 'commerce_authnet_fundraiser_commerce_form',
     'cleanup callback' => 'commerce_authnet_fundraiser_commerce_cleanup',
     'scrub callback' => 'commerce_authnet_fundraiser_commerce_scrub',
     'expire callback' => 'commerce_authnet_fundraiser_commerce_expire',
     'charge callback' => 'commerce_authnet_fundraiser_commerce_charge',
     'update callback' => 'commerce_authnet_fundraiser_commerce_update',
+    'refund callback' => 'commerce_authnet_fundraiser_commerce_refund',
   );
 }
 
@@ -354,4 +356,32 @@ function _commerce_authnet_fundraiser_commerce_authnet_cim_cardonfile_update($fo
   // Fetch the response from the API server and let Card on File know if the update was successful.
   $xml_response = commerce_authnet_cim_request($payment_method, 'updateCustomerPaymentProfileRequest', $api_request_data);
   return (string) $xml_response->messages->message->code == 'I00001';
+}
+
+/**
+ * Refund callback for authnet, wraps the admin form used for refund with our own system.
+ */
+function commerce_authnet_fundraiser_commerce_refund($payment_method, $refund) {
+  // Retrieve data.
+  $order = commerce_order_load($refund->did);
+  $refunding_order = commerce_order_load($refund->refunded_donation_did);
+  $transactions = commerce_payment_transaction_load_multiple(array(), $conditions = array('order_id' => $refunding_order->order_id));
+  $transaction = array_shift($transactions); // The first one is the original donation.
+
+  $form = array();
+  $form_state = array();
+  // Set up the values needed for the transaction to go through.
+  $form_state['transaction'] = $transaction;
+  $form_state['values']['amount'] = $refund->donation['amount'];
+  $form_state['order'] = $refunding_order;
+  $form_state['payment_method'] = commerce_payment_method_instance_load($transaction->instance_id);
+  // Submit the donation form.
+  module_load_include('inc', 'commerce_authnet', '/includes/commerce_authnet.admin');
+  $result = commerce_authnet_aim_credit_form_submit($form, &$form_state);
+  // At this point the card has been saved on the user profile.
+  $success = FALSE;
+  if ($result !== FALSE) {
+    $success = TRUE;
+  }
+  return $success;
 }

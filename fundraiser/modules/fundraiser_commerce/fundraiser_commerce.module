@@ -228,6 +228,11 @@ function fundraiser_commerce_commerce_order_status_info() {
       'title' => 'Failed',
       'state' => 'canceled',
     ),
+    'failed_refund' => array(
+      'name' => 'failed_refund',
+      'title' => 'Failed refund',
+      'state' => 'canceled',
+    ),
     'refunded' => array(
       'name' => 'refunded',
       'title' => 'Refunded',
@@ -268,7 +273,6 @@ function fundraiser_commerce_fundraiser_gateway_info() {
       $this_gateway['module_name'] = t('Commerce');
       $this_gateway['title'] = $rule_config->label;
       $this_gateway['description'] = $method_instance['description'];
-      $this_gateway['refund_function'] = $method_instance['callbacks']['submit_form_submit'];
       // Gather additional details per our specific implementation.
       // Re: type of fieldset, and available recurring features.
       // By including the plugin code here, we insure that all available functions are available for all other code.
@@ -281,6 +285,9 @@ function fundraiser_commerce_fundraiser_gateway_info() {
       }
       if (empty($this_gateway['offsite_processing'])) {
         $this_gateway['offsite_processing'] = array();
+      }
+      if (empty($this_gateway['allow_refund'])) {
+        $this_gateway['allow_refund'] = array();
       }
       // Error check, disallow members of recurring that are in processing.
       $this_gateway['allow_recurring'] = array_diff($this_gateway['allow_recurring'], $this_gateway['offsite_processing']);
@@ -712,11 +719,11 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
 function fundraiser_commerce_fundraiser_donation_process($donation) {
   // Grab the gateway configuration from fundraisers data.
   $info = _fundraiser_get_donation_gateway($donation->did);
+  $method_instance = commerce_payment_method_instance_load($info['id']); // From commerce_payment.module.
   // Choose which of two ways to process this.
   if (in_array($donation->donation['payment_method'], $info['offsite_processing'])) {
     // If external processing, we cannot execute a recurring charge against it. So we're ok.
     // Load up additional data as needed for this donation, from Fundraiser and Commerce.
-    $method_instance = commerce_payment_method_instance_load($info['id']); // From commerce_payment.module.
     // If the function to build the redirect form exists.
     if (empty($info['redirect callback'])) {
       // Alert the administrator that the module does not provide a required form.
@@ -742,7 +749,7 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
       // We can't find the gateway and we should tell someone about it.
       watchdog('fundraiser', 'Cannot determine the payment gateway for donation @id. Node id of donation form is @nid',
         array('@id' => $donation->did, '@nid' => $donation->nid), WATCHDOG_CRITICAL);
-      watchdog('fundraiser_commerce', 'Charge function :function is empty.', array(':function' => $charge_function));
+      watchdog('fundraiser_commerce', 'Charge function :function is empty.', array(':function' => $info['charge callback']));
       $donation->result = array('success' => FALSE, 'message' => 'Cannot determine the payment gateway for this donation.');
       return; // Return the failure.
     }
@@ -1267,10 +1274,74 @@ function fundraiser_commerce_fundraiser_donation_delete($donation) {
 }
 
 /**
- * Implements hook_fundraiser_donation_refund().
+ * Implements hook_fundraiser_refund_process().
  */
-function fundraiser_commerce_fundraiser_donation_refund($donation) {
-  fundraiser_commerce_fundraiser_donation_process($donation);
+function fundraiser_commerce_fundraiser_refund_process($refund) {
+  // Grab the gateway configuration from fundraisers data.
+  $info = _fundraiser_get_donation_gateway($refund->did);
+  $method_instance = commerce_payment_method_instance_load($info['id']); // From commerce_payment.module.
+  // This gets us: The payment method instance object with the addition of the settings array. Settings are per Rule.
+  // Choose which of two ways to process this.
+  if (in_array($refund->donation['payment_method'], $info['offsite_processing'])) {
+    // If external processing, we cannot execute a refund charge against it.
+    drupal_set_message(t('The %title payment method indicates it is offsite processing, and cannot be refunded through this interface.',
+      array('%title' => $method_instance['title'])), 'error');
+  }
+  else {
+    if (empty($info['refund callback'])) {
+      // Alert the administrator that the module does not provide a required form.
+      drupal_set_message(t('The %title payment method does not provide a gateway refund function.',
+        array('%title' => $method_instance['title'])), 'error');
+      // We can't find the gateway and we should tell someone about it.
+      watchdog('fundraiser', 'Cannot determine the payment gateway for refund @id. Node id of refund form is @nid',
+        array('@id' => $refund->did, '@nid' => $refund->nid), WATCHDOG_CRITICAL);
+      watchdog('fundraiser_commerce', 'Refund function :function is empty.', array(':function' => $info['refund callback']));
+      $donation->result = array('success' => FALSE, 'message' => 'Cannot determine the payment gateway for this refund.');
+      return; // Return the failure.
+    }
+  }
+    // And process.
+  // Now execute the custom charge, keeping in mind for Commerce, the charge function is a submit handler.
+  if (isset($info['refund callback']) && function_exists($info['refund callback'])) {
+    $refund_function = $info['refund callback'];
+    $success = $refund_function($method_instance, $refund);
+  }
+  // Update the donation and order data and result values based on the success.
+  _fundraiser_commerce_update_donation_result_data($refund, $success);
+  // Finish up any last cleanup for this transaction.
+  if (isset($refund->result['success']) && $refund->result['success']) {
+    // Set the values donation needs for the rest of the system.
+    $order = commerce_order_load($refund->did);
+    // Add the status data.
+    $refund->status = $refund->status_label = isset($order->status) ? $order->status : 'unknown';
+    if (!empty($order->status)) {
+      $refund->status_label = _fundraiser_commerce_get_label_by_status($order->status);
+      $refund->status_charged = _fundraiser_commerce_get_charged_by_status($order->status);
+    }
+  }
+}
+
+/**
+ * Implements hook_fundraiser_donation_refund_success().
+ */
+function fundraiser_commerce_fundraiser_donation_refund_success($refund) {
+  // Mark as complete.
+  _fundraiser_commerce_update_order_status($refund->refund_status, $refund->refunded_donation_did);
+  _fundraiser_commerce_update_order_status($refund->refund_status, $refund->did);
+  $refund->status = $refund->refund_status;
+  $refund->status_label = _fundraiser_commerce_get_label_by_status($refund->refund_status);
+  $refund->status_charged = _fundraiser_commerce_get_charged_by_status($refund->refund_status);
+}
+
+/**
+ * Implements hook_fundraiser_donation_refund_decline().
+ */
+function fundraiser_commerce_fundraiser_donation_refund_decline($refund) {
+  // Mark as failed to refund.
+  _fundraiser_commerce_update_order_status('failed_refund', $donation->did);
+  $donation->status = 'failed_refund';
+  $donation->status_label = _fundraiser_commerce_get_label_by_status('failed_refund');
+  $donation->status_charged = _fundraiser_commerce_get_charged_by_status('failed_refund');
 }
 
 /**

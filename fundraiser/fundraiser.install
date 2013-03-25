@@ -172,12 +172,12 @@ function fundraiser_schema() {
         'not null' => TRUE,
       ),
       'did' => array(
-        'description' => 'Donation ID the refund applies to',
+        'description' => 'Donation ID, for the donation record being refunded',
         'type' => 'int',
         'not null' => TRUE,
       ),
       'receipt_id' => array(
-        'description' => 'Donation ID of the payment',
+        'description' => 'Donation ID, for the refund record for this given refund',
         'type' => 'int',
         'not null' => TRUE,
       ),
