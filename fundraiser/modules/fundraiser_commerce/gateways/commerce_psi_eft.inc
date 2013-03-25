@@ -33,7 +33,7 @@ function commerce_psi_eft_fundraiser_commerce_submit_form($payment_method, $conf
   $form = commerce_psi_eft_submit_form($method_instance);
   // Remove the required flag for the fields
   foreach (element_children($form['bank_account']) as $field_name) {
-    $form['bank account'][$field_name]['#required'] = FALSE;
+    $form['bank_account'][$field_name]['#required'] = FALSE;
   }
   return $form['bank_account'];
 }
