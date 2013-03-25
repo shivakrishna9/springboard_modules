@@ -88,17 +88,21 @@ function form_layouts_form_alter(&$form, $form_state, $form_id) {
 
     if (fundraiser_is_donation_type($node->type)) {
       $theme = _form_layouts_theme_template($node->nid);
-      $form['#theme'] = array($theme . '_' . $node->nid, $theme);
+      // Note: $theme will be empty if -none- is selected for the form layout.
+      if (!empty($theme)) {
+        $form['#theme'] = array($theme . '_' . $node->nid, $theme);
+      }
     }
   }
-
   // add a dropdown for the user to pick the layout
-  if (fundraiser_is_donation_edit_form($form_id, $form)) {
+  elseif (fundraiser_is_donation_edit_form($form_id, $form)) {
     $nid = $form['#node']->nid;
 
     // get the available template files and doctor it up for a select list
     $files = _form_layouts_template_list();
-    $options = array();
+    // Allow for -none- as an option so that it falls back on
+    // webform-form.tpl.php suggestions.
+    $options = array(NULL => '- ' . t('none') . ' -');
     foreach ($files as $file) {
       $options[$file['theme']] = $file['name'];
     }
