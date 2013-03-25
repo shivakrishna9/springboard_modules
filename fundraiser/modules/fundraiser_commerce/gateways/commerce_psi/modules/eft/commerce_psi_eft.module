@@ -3,15 +3,15 @@
 /**
  * Implements hook_commerce_payment_method_info().
  */
-function commerce_psi_check_commerce_payment_method_info() {
+function commerce_psi_eft_commerce_payment_method_info() {
   $payment_methods = array();
 
-  $payment_methods['psi_check'] = array(
-    'base' => 'commerce_psi_check',
-    'title' => t('Payment Solutions Inc. - Check (EFT)'),
-    'short_title' => t('PSI Check'),
-    'display_title' => t('Check'),
-    'description' => t('Payment Solutions Inc. Check - Electronic Funds Transfer.'),
+  $payment_methods['psi_eft'] = array(
+    'base' => 'commerce_psi_eft',
+    'title' => t('Payment Solutions Inc. - EFT'),
+    'short_title' => t('PSI EFT'),
+    'display_title' => t('Electronic Funds Transfer'),
+    'description' => t('Payment Solutions Inc. - Electronic Funds Transfer.'),
   );
 
   return $payment_methods;
@@ -20,7 +20,7 @@ function commerce_psi_check_commerce_payment_method_info() {
 /**
  * Returns the default settings for the Payment Solutions Inc. payment method.
  */
-function commerce_psi_check_default_settings() {
+function commerce_psi_eft_default_settings() {
   return array(
     'account_username' => '',
     'account_password' => '',
@@ -32,27 +32,30 @@ function commerce_psi_check_default_settings() {
 /**
  * Payment method callback: settings form.
  */
-function commerce_psi_check_settings_form($settings = array()) {
+function commerce_psi_eft_settings_form($settings = array()) {
   $form = array();
 
   // Merge default settings into the stored settings array.
-  $settings = (array) $settings + commerce_psi_credit_default_settings();
+  $settings = (array) $settings + commerce_psi_eft_default_settings();
 
   $form['account_username'] = array(
     '#type' => 'textfield',
     '#title' => t('Username'),
     '#default_value' => $settings['account_username'],
+    '#required' => TRUE,
   );
   $form['account_password'] = array(
     '#type' => 'textfield',
     '#title' => t('Password'),
     '#default_value' => _commerce_psi_decrypt($settings['account_password']),
     '#value_callback' => '_commerce_psi_encrypt_settings_password',
+    '#required' => TRUE,
   );
   $form['account_ip'] = array(
     '#type' => 'textfield',
     '#title' => t('IP Address'),
     '#default_value' => $settings['account_ip'],
+    '#required' => TRUE,
   );
   $form['log'] = array(
     '#type' => 'checkboxes',
@@ -69,7 +72,7 @@ function commerce_psi_check_settings_form($settings = array()) {
 /**
  * Payment method callback: checkout form.
  */
-function commerce_psi_check_submit_form($payment_method, $pane_values = array(), $checkout_pane = NULL, $order = NULL) {
+function commerce_psi_eft_submit_form($payment_method, $pane_values = array(), $checkout_pane = NULL, $order = NULL) {
   $form = array();
   $form['bank_account']['bank_name'] = array(
     '#type' => 'textfield',
@@ -107,7 +110,7 @@ function commerce_psi_check_submit_form($payment_method, $pane_values = array(),
 /**
  * Payment method callback: checkout form validation.
  */
-function commerce_psi_check_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
+function commerce_psi_eft_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
   $prefix = implode('][', $form_parents) . '][';
   // Validate the account number fields
   if (!ctype_digit($pane_values['bank_account']['routing_number']) || strlen($pane_values['bank_account']['routing_number']) > 9) {
@@ -127,7 +130,7 @@ function commerce_psi_check_submit_form_validate($payment_method, $pane_form, $p
 /**
  * Payment method callback: checkout form submission.
  */
-function commerce_psi_check_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
+function commerce_psi_eft_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
   // Build a name-value pair array for this transaction.
   $nvp['Amount'] = commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']);
@@ -170,7 +173,7 @@ function commerce_psi_check_submit_form_submit($payment_method, $pane_form, $pan
   $nvp['SourceCode'] = $order->order_number;
 
   // Prepare a transaction object
-  $transaction = commerce_payment_transaction_new('psi_check', $order->order_id);
+  $transaction = commerce_payment_transaction_new('psi_eft', $order->order_id);
   $transaction->instance_id = $payment_method['instance_id'];
   $transaction->amount = $charge['amount'];
   $transaction->currency_code = $charge['currency_code'];
