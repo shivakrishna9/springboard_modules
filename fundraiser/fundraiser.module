@@ -1394,11 +1394,17 @@ function _fundraiser_refund($form, &$form_state, $did) {
   );
   // Only show the refund form if the payment was made through a payment gateway that can handle refunds
   if (isset($donation->gateway)) {  // Set during fundraiser_donation_get_donation().
-    $gateway = $donation->gateway;
-    $can_refund = isset($gateway['refund_function']) ? $gateway['refund_function'] : NULL;
-    if (!$can_refund || !isset($donation->payment)) {
+    $can_refund = FALSE;
+    if (!empty($donation->gateway['allow_refund']) && in_array($donation->donation['payment_method'], $donation->gateway['allow_refund'])) {
+      $can_refund = TRUE;
+    }
+    $able_to_refund = $donation->donation['amount'] - $donation->payment['refunded_total'];
+    if (!$can_refund || !isset($donation->payment) || $able_to_refund <= 0) {
       // They've made a payment, but it cannot be refunded
-      if (isset($donation->payment)) {
+      if ($able_to_refund <= 0) {
+        $no_refund_text = t('As many refunds as can be made on this donation have been made.');
+      }
+      elseif (isset($donation->payment)) {
         $no_refund_text = t('Refunds cannot be made on this order. The payment was made on a payment ' .
          'gateway that does not support refunds.');
       }
@@ -1420,7 +1426,6 @@ function _fundraiser_refund($form, &$form_state, $did) {
     }
     // Provide refund options
     else {
-      $able_to_refund = $donation->donation['amount'] - $donation->payment['refunded_total'];
       $form['refund_options']['refund_type'] = array(
         '#title' => t('Refund options'),
         '#type' => 'radios',
@@ -1504,7 +1509,7 @@ function _fundraiser_refund_validate($form, &$form_state) {
   }
   $refund_notes = $form_state['values']['refund_notes'];
   if (empty($refund_notes)) {
-    form_set_error('refund_notes', t('Enter a reason for the refund.'));
+    form_set_error('refund_notes', t('Please enter a reason for the refund.'));
   }
 }
 
@@ -1518,19 +1523,19 @@ function _fundraiser_refund_submit($form, &$form_state) {
   $able_to_refund = $donation->donation['amount'] - $donation->payment['refunded_total'];
   // Partial refund
   if ($form_state['values']['refund_type'] != 'full') {
-    $new_order_status = 'partially_refunded';
     $amount = (float) $form_state['values']['amount'];
+    $new_status = 'partially_refunded';
     // Can't refund more than they've paid
     // Use >= so that the status is set properly if they choose Partial Refund.
     if ($amount >= $able_to_refund) {
       $amount = $able_to_refund;
-      $new_order_status = 'refunded';
+      $new_status = 'refunded';
     }
   }
   // Full refund
   else {
-    $new_order_status = 'refunded';
     $amount = $able_to_refund;
+    $new_status = 'refunded';
   }
 
   // Make the charge amount negative
@@ -1540,8 +1545,12 @@ function _fundraiser_refund_submit($form, &$form_state) {
   // A refunded donation is simply another donation with a reverse charge on it.
   $refund->refunded_donation_did = $refund->did;
   unset($refund->did);
-  $donation->donation['refund_amount'] = $amount;
-  $donation->donation['refund_reason'] = $form_state['values']['refund_notes'];
+  unset($refund->txn_id);
+  unset($refund->form_url);
+  $refund->gateway = $refund->gateway['id'];
+  $refund->amount = $refund->donation['refund_amount'] = $amount;
+  $refund->donation['refund_reason'] = $form_state['values']['refund_notes'];
+  $refund->refund_status = $new_status;
   fundraiser_donation_create($refund);
   // The created donation information should be at at $donation->donation, ready to process.
   fundraiser_donation_refund($refund);
@@ -1585,14 +1594,14 @@ function fundraiser_donation_comment($donation, $comment, $variables = array(), 
 function fundraiser_donation_information_table($did) {
   $rows = array();
   $donation = fundraiser_donation_get_donation($did);
-  $rows[] = array('Fundraiser user', t('#@uid - !name',
+  $rows[] = array('Fundraiser user', t('User #@uid - !name',
     array('@uid' => $donation->uid, '!name' => l($donation->user->name, 'user/' . $donation->user->uid))));
   if (isset($donation->node->nid)) {
-    $rows[] = array('Fundraiser node', t('#@nid - !title',
+    $rows[] = array('Fundraiser node', t('Node #@nid - !title',
       array('@nid' => $donation->nid, '!title' => l($donation->node->title, 'node/' . $donation->node->nid))));
   }
   else {
-    $rows[] = array('Fundraiser node', t('#@nid - !title',
+    $rows[] = array('Fundraiser node', t('Node #@nid - !title',
       array('@nid' => '---', '!title' => t('No fundraiser node found.'))));
   }
   $variables = array('header' => array(), 'rows' => $rows);
@@ -1854,19 +1863,13 @@ function fundraiser_donation_refund($refund) {
     || !is_numeric($refund->donation['refund_amount'])) {
     return; // Not a valid amount to refund.
   }
-  // Grab the gateway from the fundraiser configured gateway.
-  $info = _fundraiser_gateway_info($refund->gateway['id']);
-  // Check for the charge function to be defined.
-  $refund_function = isset($info['refund_function']) ? $info['refund_function'] : '';
-  if (empty($refund_function)) {
-    // We can't find the gateway and we should tell someone about it.
-    watchdog('fundraiser', 'Cannot determine the payment gateway for donation @id. Node id of donation form is @nid',
-      array('@id' => $refund->did, '@nid' => $refund->nid), WATCHDOG_CRITICAL);
-    $result = array('success' => FALSE);
-  }
-  else {
-    module_invoke_all('fundraiser_donation_refund', $refund);
-  }
+  // Pass this down to the processing module.
+  module_invoke_all('fundraiser_refund_process', $refund);
+  // And save the refund as it is at this stage since it was created.
+  // This makes sure that any changes made stay in place.
+  fundraiser_donation_update($refund, FALSE);
+  // Respond after the update of a donation.
+  module_invoke_all('fundraiser_refund_post_process', $refund);
 }
 
 /**
@@ -1875,8 +1878,8 @@ function fundraiser_donation_refund($refund) {
 function fundraiser_donation_refund_success($refund) {
   // Save refund data for fundraiser.
   $record = new stdClass();
-  $record->did = $refund->refunded_donation_did;
-  $record->receipt_id = $refund->did;
+  $record->did = $refund->refunded_donation_did; // Referenced donation
+  $record->receipt_id = $refund->did; // This refund id
   $record->amount = $refund->donation['refund_amount'];
   $record->txn_id = isset($refund->result['data']['txn_id']) ? $refund->result['data']['txn_id'] : ''; 
   $record->reason = $refund->donation['refund_reason'];
@@ -1885,6 +1888,7 @@ function fundraiser_donation_refund_success($refund) {
   drupal_set_message(t('Refund has been issued.'), 'status');
   // Allow other modules to respond to the refund success. Such as SF modules.
   module_invoke_all('fundraiser_donation_refund_success', $refund);
+  fundraiser_donation_update($refund, FALSE);
 }
 
 /**
@@ -1896,6 +1900,7 @@ function fundraiser_donation_refund_decline($refund) {
   drupal_set_message($refund->result['message']);
   // Allow other modules to respond to the refund decline.
   module_invoke_all('fundraiser_donation_refund_decline', $refund);
+  fundraiser_donation_update($refund, FALSE);
 }
 
 /**
@@ -1933,6 +1938,7 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
   $donation->txn_id = isset($donation_record->txn_id) ? $donation_record->txn_id : '';
   $donation->form_url = $donation_record->form_url;
 
+  // Grab refund information for the donation.
   $refunds = _fundraiser_get_refund_by_did($did);
   $refund_summary = array();
   $refunded_total = 0;
@@ -1947,6 +1953,17 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
   }
   $donation->payment['refunded_summary'] = !empty($refund_summary) ? theme('item_list', array('items' => $refund_summary)) : t('No refunds have been made.');
   $donation->payment['refunded_total'] = $refunded_total;
+
+  // And if this donation is itself representing a refund, grab that too!
+  $donation->refund = FALSE;
+  $refunded = _fundraiser_get_refund_by_receipt_id($did);
+  foreach ($refunded as $refund) {
+    $donation->refund['refunded_donation'] = $refund->did;
+    $donation->refund['amount'] = $refund->amount;
+    $donation->refund['currency'] = $refund->currency;
+    $donation->refund['txn_id'] = $refund->txn_id;
+    $donation->refund['reason'] = $refund->reason;
+  }
 
   // Call hooks to re-create the donation info.
   // The glue modules handle everything else once handed fundraisers info.
@@ -2365,6 +2382,15 @@ function _fundraiser_get_refund_by_did($did) {
   return db_query('SELECT * FROM {fundraiser_refund} ' .
     'WHERE did = :did',
     array(':did' => $did))->fetchAll();
+}
+
+/**
+ * DB function for fundraiser_refund.
+ */
+function _fundraiser_get_refund_by_receipt_id($receipt_id) {
+  return db_query('SELECT * FROM {fundraiser_refund} ' .
+    'WHERE receipt_id = :receipt_id',
+    array(':receipt_id' => $receipt_id))->fetchAll();
 }
 
 /**

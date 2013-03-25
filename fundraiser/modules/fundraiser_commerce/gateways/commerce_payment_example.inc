@@ -12,11 +12,13 @@ function commerce_payment_example_fundraiser_commerce_fundraiser_gateway_info() 
   return array(
     'payment_method' => array('credit'),
     'allow_recurring' => array('credit'),
+    'allow_refund' => array('credit'),
     'form callback' => 'commerce_payment_example_fundraiser_commerce_form',
     'cleanup callback' => 'commerce_payment_example_fundraiser_commerce_cleanup',
     'scrub callback' => 'commerce_payment_example_fundraiser_commerce_scrub',
     'expire callback' => 'commerce_payment_example_fundraiser_commerce_expire',
     'charge callback' => 'commerce_payment_example_fundraiser_commerce_charge',
+    'refund callback' => 'commerce_payment_example_fundraiser_commerce_refund',
   );
 }
 
@@ -141,4 +143,12 @@ function commerce_payment_example_fundraiser_commerce_charge($payment_method, $d
     commerce_payment_example_transaction($payment_method, $order, $charge, $name);
   }
   return $success;
+}
+
+
+/**
+ * Callback function, refund the gateway.
+ */
+function commerce_payment_example_fundraiser_commerce_refund($payment_method, $donation) {
+  return TRUE;
 }
