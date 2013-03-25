@@ -1888,6 +1888,7 @@ function fundraiser_donation_refund_success($refund) {
   drupal_set_message(t('Refund has been issued.'), 'status');
   // Allow other modules to respond to the refund success. Such as SF modules.
   module_invoke_all('fundraiser_donation_refund_success', $refund);
+  fundraiser_donation_update($refund, FALSE);
 }
 
 /**
@@ -1899,6 +1900,7 @@ function fundraiser_donation_refund_decline($refund) {
   drupal_set_message($refund->result['message']);
   // Allow other modules to respond to the refund decline.
   module_invoke_all('fundraiser_donation_refund_decline', $refund);
+  fundraiser_donation_update($refund, FALSE);
 }
 
 /**
