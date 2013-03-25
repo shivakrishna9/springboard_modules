@@ -200,20 +200,11 @@ function salesforce_donation_fundraiser_donation_success($donation) {
 /**
  * Implements hook_fundraiser_donation_refund_success().
  */
-function salesforce_donation_fundraiser_donation_refund_success($donation) {
+function salesforce_donation_fundraiser_donation_refund_success($refund) {
   // Reload donation to be sure to get everything we need from submission table then send to queue.
-  $donation = fundraiser_donation_get_donation($donation->did, TRUE);
-  // Since this is called at the end of a standalone processing,
-  // or after a recurring donation is processed we need to tweak things a little.
-  if ($donation->donation['recurs_monthly'] == TRUE && $donation->status_charged == 1
-    && !empty($donation->master_did) && $donation->did != $donation->master_did) {
-    // This is part of a recurring set, already sent up once - update now.
-    salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
-  }
-  else {
-    // This is standalone, or the first in a recurring set.
-    salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $donation->node, $donation->did, $donation, 'donation');
-  }
+  $refund = fundraiser_donation_get_donation($refund->did, TRUE);
+  // This is standalone, or the first in a recurring set.
+  salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $refund->node, $refund->did, $refund, 'donation');
 }
 
 /**
@@ -408,6 +399,13 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
       $fields[$sf_field] = REQUEST_TIME;
     }
   }
+  // Detect refund, if this is a donation object representing a refund:
+  if (!empty($donation->refund) && $donation->refund != FALSE) {
+    $fields['StageName'] = 'Refunded';
+    $fields['Cancellation_Reason__c'] = $donation->refund['reason'];
+    $fields['Parent_Donation__c'] = '[Opportunity:donation:' . $donation->refund['refunded_donation'] . ']';
+    $fields['Probability'] = 0;
+  } 
   return $fields;
 }
 
