@@ -14,7 +14,7 @@ function fundraiser_sustainers_webform_goals_list_metrics($selected_context, $fo
     if ($is_fundraiser_goal) {
       $metrics['fundraiser_sustainer_count'] = array(
         'id' => 'fundraiser_sustainer_count',
-        'name' => t('Number of sustainer coversions'),
+        'name' => t('Number of sustainer conversions'),
         'description' => t('Goal progress will be calculated based on the number of sustainer conversions.'),
         'form_text' => array(
           'target_value' => array(
