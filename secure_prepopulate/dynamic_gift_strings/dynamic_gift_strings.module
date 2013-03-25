@@ -97,7 +97,7 @@ function dynamic_gift_strings_form_alter(&$form, &$form_state, $form_id) {
  * Form validation function form dynamic gift string settings.
  */
 function dynamic_gift_strings_settings_validate(&$form, &$form_state) {
-  if (!valid_email_address($form_state['values']['dynamic_gift_strings_alert_email'])) {
+  if (!empty($form_state['values']['dynamic_gift_strings_send_alert']) && !valid_email_address($form_state['values']['dynamic_gift_strings_alert_email'])) {
     form_set_error('dynamic_gift_strings_alert_email', 'Alert email must be a valid email address.');
   }
 }
