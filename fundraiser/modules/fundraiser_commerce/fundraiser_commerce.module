@@ -100,6 +100,23 @@ function fundraiser_commerce_entity_view($entity, $type, $view_mode, $langcode) 
 }
 
 /**
+ * Implements fundraiser_donation_information_table_alter().
+ */
+function fundraiser_commerce_fundraiser_donation_information_table_alter(&$variables, $donation) {
+  // Add refund information to the display table.
+  if (!empty($donation->refund) && $donation->refund != FALSE) {
+    $refunded_donation = fundraiser_donation_get_donation($donation->refund['refunded_donation']);
+    $variables['rows'][] = array('Refund for donation', t('Donation #!did on Form #@nid - !title',
+      array(
+        '!did' => l($refunded_donation->did, 'admin/commerce/orders/' . $refunded_donation->did . '/view'),
+        '@nid' => $refunded_donation->nid, 
+        '!title' => l($refunded_donation->node->title, 'node/' . $refunded_donation->node->nid)
+      )
+    ));
+  }
+}
+
+/**
  * Implements hook_form_FORM_ID_alter().
  * Adds the admin form to fundraiser's admin form.
  */

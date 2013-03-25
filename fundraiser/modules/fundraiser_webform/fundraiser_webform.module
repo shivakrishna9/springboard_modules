@@ -142,12 +142,12 @@ function fundraiser_webform_fundraiser_donation_information_table_alter(&$variab
   // Add submission information to the display table.
   if ($donation->sid > 0) {
     if (isset($donation->node->nid)) {
-      $variables['rows'][] = array('Fundraiser submission', t('#@sid - !title',
+      $variables['rows'][] = array('Fundraiser submission', t('Submission #@sid - !title',
         array('@sid' => $donation->sid, '!title' => l(t('View submission'),
           'node/' . $donation->node->nid . '/submission/' . $donation->sid))));
     }
     else {
-      $variables['rows'][] = array('Fundraiser submission', t('#@sid - !title',
+      $variables['rows'][] = array('Fundraiser submission', t('Submission #@sid - !title',
         array('@sid' => $donation->sid, '!title' => t('No fundraiser node found.'))));
     }
   }
