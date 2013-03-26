@@ -1,0 +1,6 @@
+; $Id$
+name = Salesforce Add to All
+description = Allows you to add a new mapping to all Salesforce maps of a specific type.
+dependencies[] = salesforce_management_api
+package = Jackson River Springboard
+core = 6.x

@@ -1,0 +1,108 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * TODO: Enter file description here.
+ */
+
+/**
+ * Implementation of hook_perm()
+ */
+function salesforce_addtoall_perm() {
+  return array('add salesforce mapping to any mapping type');
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function salesforce_addtoall_form_sf_donation_mapping_form_alter(&$form, &$form_state) {
+  if (user_access('add salesforce mapping to any mapping type')) {
+    $form['addtoall'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Add to all'),
+      '#weight' => 10,
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#description' => t('Select the mapping below to add this salesforce mapping to all donation mappings.'),
+    );
+    $mapping = array('' => t('-- none --'));
+    $base_map = db_fetch_object(db_query('SELECT * FROM {fundraiser_salesforce_map} m ' .
+      'WHERE m.nid = %d', $form['nid']['#value']));
+    $base_fields_map = unserialize($base_map->fields);
+    $base_fields_map = array_flip($base_fields_map);
+    foreach ($base_fields_map as $key => $field) {
+      $mapping[$key] = $key . ' to ' . $field;
+    }
+    $form['addtoall']['addtoall_mapping'] = array(
+      '#title' => t('Select mapping'),
+      '#type' => 'select',
+      '#options' => $mapping,
+    );
+    $form['addtoall']['addtoall_add'] = array(
+      '#value' => t('Add mapping to all donation maps'),
+      '#type' => 'submit',
+      '#submit' => array('salesforce_addtoall_form_sf_donation_mapping_form_alter_submit'),
+    );
+  }
+}
+
+/**
+ * Submit handler for salesforce_addtoall_form_sf_donation_mapping_form_alter().
+ */
+function salesforce_addtoall_form_sf_donation_mapping_form_alter_submit($form, &$form_state) {
+  if (user_access('add salesforce mapping to any mapping type')) {
+    $base_nid = $form['nid']['#value'];
+    $base_map = db_fetch_object(db_query('SELECT * FROM {fundraiser_salesforce_map} m ' .
+      'WHERE m.nid = %d', $base_nid));
+    $base_fields_map = unserialize($base_map->fields);
+    $base_fields_map = array_flip($base_fields_map);
+    $mapping_key = $form_state['values']['addtoall']['addtoall_mapping'];
+    if (!empty($mapping_key) && !empty($base_fields_map[$mapping_key])) {
+      $new_mapping = array($mapping_key => $base_fields_map[$mapping_key]);
+      $maps = db_query('SELECT * FROM {fundraiser_salesforce_map} m ' .
+        'WHERE m.salesforce = %d', $base_map->salesforce);
+      while ($map = db_fetch_object($maps)) {
+        $fields_map = unserialize($map->fields);
+        $fields_map = array_flip($fields_map);
+        if (!isset($fields_map[$mapping_key]) || empty($fields_map[$mapping_key])) {
+          $fields_map = array_merge($fields_map, $new_mapping);
+          $fields_map = array_flip($fields_map);
+          $map->fields = serialize($fields_map);
+          // Remove old Salesforce mappings
+          db_query('DELETE FROM {fundraiser_salesforce_map} WHERE nid = %d', $map->nid);    
+          // Save the modified mapping
+          db_query('INSERT INTO {fundraiser_salesforce_map} ' .
+            '(nid, single_recordtype_id, recurring_recordtype_id, fields, salesforce) VALUES ' .
+            '(%d, \'%s\', \'%s\', \'%s\', \'%s\')',
+            $map->nid, $map->single_recordtype_id, $map->recurring_recordtype_id, $map->fields, $map->salesforce);
+          $node = node_load($map->nid);
+          drupal_set_message(t('Salesforce mapping for !title has been updated.',
+            array('!title' => l($node->title, 'node/'. $node->nid) )));
+        }
+      }
+    }
+  }
+}
+
+/*
+// Stubbed out for later, supporting other map types.
+function salesforce_addtoall_menu() {
+  $items['admin/settings/salesforce-add-to-all'] = array(
+    'title' => 'Salesforce add-to-all',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('salesforce_addtoall_settings'),
+    'access arguments' => array('add salesforce mapping to any mapping type'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+function salesforce_addtoall_settings($form, &$form_state) {
+  $form['#submit'][] = 'salesforce_addtoall_settings_submit';
+}
+
+function salesforce_addtoall_settings_submit($form, &$form_state) {
+}
+*/
+ 
