@@ -5,6 +5,9 @@
  * Manages webform to Salesforce mappings.
  */
 
+/**
+ * Implements hook_install().
+ */
 function salesforce_donation_install() {
   // Create default SF map insert into table.
   $map = array();
@@ -25,7 +28,6 @@ function salesforce_donation_install() {
     }
   }
   $map->salesforce_record_type = $object_type;
-  //$map->salesforce_dedupe_field = 'Order_ID__c';
   $map->field_map = array(
     'salesforce_donation_map' => array(
       'did' => 'Order_ID__c',

@@ -61,8 +61,8 @@ function salesforce_genmap_menu() {
   }
   else {
     // Returns an array, keyed by supporting module.
-    // If webform is available as mapping, prefer that for top menu
-    // Else fall back on first
+    // If webform is available as mapping, prefer that for top menu Else fall
+    // back on first.
     $first = !empty($modules['webform']) ? 'webform' : '';
     // For each available module, make a sub menu.
     foreach ($modules as $module => $info) {
