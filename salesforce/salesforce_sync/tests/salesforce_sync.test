@@ -5,10 +5,12 @@
  * Simpletests for salesforce_sync
  */
 
+module_load_include('test', 'salesforce', 'tests/salesforce');
+
 /**
  * Tests basic set up for syncing data between Salesforce and Drupal.
  */
-class SalesforceSyncTestCase extends DrupalWebTestCase {
+class SalesforceSyncTestCase extends SalesforceTestCase {
 
   /**
    * List of all operations.
@@ -36,30 +38,22 @@ class SalesforceSyncTestCase extends DrupalWebTestCase {
   /**
    * Implementation of setUp().
    */
-  public function setUp($modules = array()) {
-    $modules = $modules + array(
+  public function setUp($modules = array(), $permissions = array()) {
+    $modules = array_merge($modules, array(
       'entity',
       'libraries',
-      'salesforce',
       'salesforce_soap',
       'salesforce_sync',
-    );
-    parent::setUp($modules);
-
-    // Create an admin user.
-    $permissions = array(
+    ));
+    $permissions = array_merge($permissions, array(
       'access content',
       'administer site configuration',
       'administer content types',
       'administer nodes',
       'administer users',
-      'administer salesforce',
       'administer salesforce sync',
-    );
-    $this->admin_user = $this->drupalCreateUser($permissions);
-    // Don't forget, need to pass --uri in drush command in order for logging
-    // in to work.
-    $this->drupalLogin($this->admin_user);
+    ));
+    parent::setUp($modules, $permissions);
 
     // Provide a list of sync rules.
     $this->sync_rules = array(
@@ -74,38 +68,7 @@ class SalesforceSyncTestCase extends DrupalWebTestCase {
    * Implementation of tearDown().
    */
   public function tearDown() {
-    user_cancel(array(), $this->admin_user->uid, 'user_cancel_delete');
     parent::tearDown();
-  }
-
-  /**
-   * Grabs the Salesforce connection info from the live db and authenticates.
-   *
-   * @return Object
-   *   Salesforce Object
-   */
-  public function salesforceConnect() {
-    // Steal the Salesforce configuration from the live database.
-    global $db_prefix;
-    $table = empty($db_prefix) ? 'variable' : $db_prefix . '_variable';
-    $sql = "SELECT * FROM $table v WHERE v.name LIKE 'salesforce_%'";
-    $result = db_query($sql);
-    foreach ($result as $record) {
-      if (!strstr($record->name, 'salesforce_queue')) {
-        variable_set($record->name, unserialize($record->value));
-      }
-    }
-
-    // Test the connection.
-    $salesforce = salesforce_get_api();
-    $this->assertTrue($salesforce->isAuthorized(), 'Connected to Salesforce');
-
-    // Make a call to Salesforce that will do nothing just so we can get an
-    // access token into our session.  This is dumb, but I can't think of any
-    // other way to get an access token.
-    $salesforce->apiCall('');
-
-    return $salesforce;
   }
 
   /**
