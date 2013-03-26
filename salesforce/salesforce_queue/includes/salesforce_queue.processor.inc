@@ -144,8 +144,8 @@ class SalesforceQueueProcessor {
       $sfapi_passed = TRUE;
       if (!is_object($this->salesforceSync->sfapi)) {
         $sfapi_passed = FALSE;
-        watchdog('salesforce_queue', 'Could not process SalesforceQueue because '
-          . 'I cannot connect to Salesforce.', array(), WATCHDOG_ALERT);
+        watchdog('salesforce', '[!id] QueueProcessor failed: Cannot connect to Salesforce.',
+          array('!id' => 'queue-03'), WATCHDOG_ALERT);
         $this->endStatus = SALESFORCE_QUEUE_PROCESS_FAIL_CONNECT;
       }
 
@@ -156,9 +156,8 @@ class SalesforceQueueProcessor {
         $soap_passed = TRUE;
         if (!is_object($this->salesforceSync->soap)) {
           $soap_passed = FALSE;
-          watchdog('salesforce', '!id QueueProcessor failed, cannot use SOAP '
-            . 'connection.',
-            array('!id' => '[queue-04'), WATCHDOG_ALERT);
+          watchdog('salesforce', '[!id] QueueProcessor failed: Cannot use SOAP connection.',
+            array('!id' => 'queue-04'), WATCHDOG_ALERT);
           $this->endStatus = SALESFORCE_QUEUE_PROCESS_FAIL_SOAP;
         }
       }
@@ -175,6 +174,11 @@ class SalesforceQueueProcessor {
           // If there were items in the queue, but no batches, then that means
           // no claimed items were valid.
           $this->endStatus = SALESFORCE_QUEUE_PROCESS_FAIL_NO_VALID_ITEMS;
+
+          // Send an error to admin that there were no valid items in the queue
+          // to process.
+          watchdog('salesforce', '[!id] QueueProcessor ran but only invalid items found.',
+            array('!id' => 'queue-05'), WATCHDOG_NOTICE);
         }
         else {
           $this->processBatches();
@@ -220,27 +224,26 @@ class SalesforceQueueProcessor {
           // to some sort of conflict with server resources or connections with
           // Salesforce, or the configuration settings about how much to process
           // or even how often we're trying to run this process.
-          $message = 'SalesforceQueueProcess was run, but could not claim '
-            . 'items because the queue was leased. This could be a minor issue '
-            . 'or more severe issue so it would warrant you looking into this.';
-          $severity = WATCHDOG_ERROR;
+          $message = '[!id] QueueProcessor claimed no items: Queue leased';
+          $severity = WATCHDOG_NOTICE;
+          $log_id = 'queue-06';
           $this->endStatus = SALESFORCE_QUEUE_PROCESS_FAIL_QUEUE_LEASED;
         }
         elseif ($this->queue->numberOfItems(TRUE) < 1) {
           // No items are in the queue.  Pretty minor issue.
-          $message = 'SalesforceQueueProcess was run, but no items were found '
-            . 'in the queue to process.  Not much for you to worry about.';
+          $message = '[!id] QueueProcessor found no items in queue';
           $severity = WATCHDOG_DEBUG;
+          $log_id = 'queue-07';
           $this->endStatus = SALESFORCE_QUEUE_PROCESS_NO_ITEMS;
         }
         else {
           // If we get here, then we're really clueless as to what is going on.
-          $message = 'SalesforceQueueProcess was run, but we could not claim '
-            . 'items for an unknown reason.  Eeps.';
+          $message = '[!id] QueueProcessor claimed no items: Reason unknown.  Eeps.';
           $severity = WATCHDOG_ALERT;
+          $log_id = 'queue-08';
           $this->endStatus = SALESFORCE_QUEUE_PROCESS_FAIL_CLAIM_ITEMS;
         }
-        watchdog('salesforce_queue', $message, array(), $severity);
+        watchdog('salesforce', $message, array('!id' => $log_id), $severity);
       }
       else {
         $this->leaseKey = $items[0]->leaseKey;

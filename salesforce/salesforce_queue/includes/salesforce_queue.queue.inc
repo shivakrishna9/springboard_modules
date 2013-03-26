@@ -130,6 +130,11 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
     // Insert this baby.
     $data['sobject'] = json_encode($data['sobject']);
     $result = drupal_write_record('salesforce_queue', $data, $keys);
+    if (!$result) {
+      // Send an error to admin that we couldn't save to the queue.
+      watchdog('salesforce', '[!id] The submitted item could not be added to the queue.',
+        array('!id' => 'queue-01'), WATCHDOG_CRITICAL);
+    }
 
     // Invoke hook_salesforce_queue_create_item().
     module_invoke_all('salesforce_queue_create_item', $data, $result);
@@ -349,7 +354,10 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
       }
     }
     else {
-      // @TODO log message
+      // Send a warning that there was an attempt to claim items when the queue
+      // was leased.
+      watchdog('salesforce', '[!id] A claim was attempted on a leased queue.',
+        array('!id' => 'queue-02'), WATCHDOG_DEBUG);
     }
     return empty($items) ? FALSE : $items;
   }

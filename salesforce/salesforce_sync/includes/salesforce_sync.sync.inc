@@ -258,8 +258,6 @@ class SalesforceSync {
       }
     }
     catch (Exception $error) {
-      // Log message for later investigation.
-      watchdog('salesforce_queue', 'Could not send batch !op: !message', array('!message' => $error->getMessage(), '!op' => $batch['operation']), WATCHDOG_DEBUG);
       $results = FALSE;
       $this->failBatch($batch, SALESFORCE_SYNC_ITEM_FAIL_BATCH, $error);
     }
@@ -747,6 +745,19 @@ class SalesforceSync {
    *   exception caught when call failed.
    */
   public function failItem($item, $message, $result = NULL) {
+    // Send an error to admin that the item failed.
+    // With many cases of Salesforce being helpful and deleting things for you,
+    // there is no need to get too alarmed if an item failed to be deleted.
+    $msg_id = $item->operation == 'DELETE' ? 'sync-02' : 'sync-01';
+    $severity = $item->operation == 'DELETE' ? WATCHDOG_INFO : WATCHDOG_WARNING;
+    watchdog('salesforce', '[!id] Sync failed: !item_id (!message) !result',
+      array(
+        '!id' => $msg_id,
+        '!item_id' => (isset($item->item_id) ? '#' . $item->item_id : 'N/A'),
+        '!message' => $message,
+        '!result' => is_object($result) && method_exists($result, 'getMessage') ? $result->getMessage() : '',
+      ), $severity);
+
     // Invokes hook_salesforce_sync_fail_item().
     module_invoke_all('salesforce_sync_fail_item', $item, $message, $result);
   }
@@ -760,6 +771,15 @@ class SalesforceSync {
    *   Error caught when the call to Salesforce failed.
    */
   public function failBatch($batch, $message, $result = NULL) {
+    // Send an error to admin that the batch failed.
+    watchdog('salesforce', '[!id] Batch failed: (!message) !result',
+      array(
+        '!id' => 'sync-03',
+        '!message' => $message,
+        '!result' => is_object($result) && method_exists($result, 'getMessage') ? $result->getMessage() : '',
+      ), WATCHDOG_ERROR);
+
+    // Fail each item.
     foreach ($batch['items'] as $item) {
       $this->failItem($item, $message, $result);
     }
@@ -816,12 +836,20 @@ class SalesforceSync {
         }
         else {
           // Log message for later investigation.
-          watchdog('salesforce_sync', "Fetch by Id returned incompatible results.\n\n!!response", array('!response' => print_r($response)), WATCHDOG_NOTICE);
+          watchdog('salesforce', "[!id] Fetch records by Id returned bad results.\n\n!!response",
+            array(
+              '!id' => 'sync-05',
+              '!response' => print_r($response),
+            ), WATCHDOG_NOTICE);
         }
       }
       catch (Exception $error) {
         // Log message for later investigation.
-        watchdog('salesforce_queue', 'Could not fetch records by Ids: !message', array('!message' => $error->getMessage()), WATCHDOG_DEBUG);
+        watchdog('salesforce', '[!id] Fetch records by Id failed: !message',
+          array(
+            '!id' => 'sync-04',
+            '!message' => $error->getMessage(),
+          ), WATCHDOG_DEBUG);
       }
     }
 
@@ -915,7 +943,11 @@ class SalesforceSync {
               }
               catch (Exception $error) {
                 // Log message for later investigation.
-                watchdog('salesforce_queue', 'Could not fetch records by fields: !message', array('!message' => $error->getMessage()), WATCHDOG_DEBUG);
+                watchdog('salesforce', '[!id] Salesforce queryMore failed: !message',
+                  array(
+                    '!id' => 'sync-07',
+                    '!message' => $error->getMessage(),
+                  ), WATCHDOG_DEBUG);
               }
             }
             else {
@@ -926,7 +958,11 @@ class SalesforceSync {
       }
       catch (Exception $error) {
         // Log message for later investigation.
-        watchdog('salesforce_queue', 'Could not fetch records by fields: !message', array('!message' => $error->getMessage()), WATCHDOG_DEBUG);
+        watchdog('salesforce', '[!id] Salesforce query failed: !message',
+          array(
+            '!id' => 'sync-06',
+            '!message' => $error->getMessage(),
+          ), WATCHDOG_DEBUG);
       }
     }
 
@@ -1009,7 +1045,10 @@ class SalesforceSync {
           $chunk_size = count($condition['value']) / ($query_splits + 1);
           if ($chunk_size <= ($query_splits + 2)) {
             // This query is hopeless, forget about it.
-            watchdog('salesforce_sync', 'Query to Salesforce exceeded 10,000 characters.', array(), WATCHDOG_ALERT);
+            watchdog('salesforce_sync', '[!id] Query to Salesforce exceeded 10,000 characters.',
+              array(
+                '!id' => 'sync-08',
+              ), WATCHDOG_ALERT);
             return array();
           }
           $value_chunks = array_chunk($condition['value'], $chunk_size);
@@ -1080,9 +1119,10 @@ class SalesforceSync {
     // for simpletests and drush.
     $sfapi = (!is_object($sfapi) || !$sfapi->isAuthorized()) ? salesforce_get_api() : $sfapi;
     if (!$sfapi->isAuthorized()) {
-      watchdog('salesforce', '!id SalesforceSync received a non-authorized '
-        . 'SalesforceAPI.',
-        array('!id' => '[sync-05]'), WATCHDOG_NOTICE);
+      watchdog('salesforce', '[!id] SalesforceAPI is not authorized',
+        array(
+          '!id' => 'sync-10',
+        ), WATCHDOG_NOTICE);
       $sfapi = NULL;
     }
     $this->sfapi = $sfapi;
@@ -1129,10 +1169,9 @@ class SalesforceSync {
 
     // Send a fail message.
     else {
-      watchdog('salesforce', '!id SalesforceSync received an unusable '
-        . 'SalesforceSoapPartner: !message',
+      watchdog('salesforce', '[!id] SalesforceSoapPartner cannot be used: !message',
         array(
-          '!id' => '[sync-06]',
+          '!id' => 'sync-11',
           '!message' => $message,
         ), WATCHDOG_NOTICE);
     }

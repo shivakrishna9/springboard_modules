@@ -54,6 +54,9 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     // Remove the items we created in our Salesforce instance.
     $this->processor->deleteNewSfRecords();
 
+    // Empty the queue.
+    $this->queue->deleteQueue();
+
     parent::tearDown();
   }
 
@@ -65,7 +68,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     $this->assertEqual(SALESFORCE_QUEUE_PROCESS_NO_ITEMS, $this->processor->process(), 'Notified that the queue is empty.');
 
     // Create queue items.
-    $this->createQueueItems($this->queue, 10, array('CREATE', 'UPSERT'), array('Opportunity'));
+    $this->createQueueItems($this->queue, 3, array('CREATE', 'UPSERT'), array('Opportunity'));
 
     // Going to lock the queue by another process and have it fail from a locked
     // queue.
@@ -75,6 +78,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     // Release the claim and try again.
     // Since we haven't connected to Salesforce, processing will fail.
     $this->queue->releaseBatch('', TRUE);
+    watchdog('salesforce', 'NOTE (1) "queue-03" error to follow.', NULL, WATCHDOG_WARNING);
     $this->assertEqual(SALESFORCE_QUEUE_PROCESS_FAIL_CONNECT, $this->processor->process(), 'Received error for not being able to connect to Salesforce.');
 
     // Connect to Salesforce.
@@ -98,6 +102,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
       );
       $this->queue->createItem($data);
     }
+    watchdog('salesforce', 'NOTE (3) "Item failed validation" warnings to follow.', NULL, WATCHDOG_WARNING);
     $this->assertEqual(SALESFORCE_QUEUE_PROCESS_FAIL_NO_VALID_ITEMS, $this->processor->process(), 'Sending duplicate items to Salesforce as CREATE returned no valid items.');
   }
 
@@ -251,8 +256,13 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     $this->processor->setSalesforceApi($this->salesforceConnect());
     $this->processor->setSalesforceSoap();
 
-    // Create a bunch of items to work with and process 'em.
-    $this->createQueueItems($this->queue, 50, array('CREATE'));
+    $base_queue_items = 25;
+
+    // Create a bunch of items to work with and process 'em.  Using this method
+    // to ensure items of each object type are created.  Skipping Opportunities
+    // for now, since they will fail creation.
+    $this->createQueueItems($this->queue, $base_queue_items, array('CREATE'), array('Opportunity', 'Account'));
+    $this->createQueueItems($this->queue, $base_queue_items, array('CREATE'), array('Contact', 'Opportunity'));
     $this->processor->claimItems();
     $records = array();
     $batches = $this->processor->createBatches();
@@ -264,23 +274,19 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
         $item = $batch['items'][$key];
         $object_type = $item->object_type;
         if (!empty($result->id)) {
-          $sf_items[] = $result->id;
+          $sf_items[$result->id] = $result->id;
           $item->sobject->Id = $result->id;
-          $records[$object_type][] = $item;
+          $records[$object_type][$result->id] = $item;
         }
-        // All opportunities will fail because the AccountId field is invalid.
-        if ($object_type == 'Opportunity') {
-          $this->assertFalse($result->success, 'Opportunity item failed as expected.');
-        }
-        // The others types should have been created.
-        else {
-          $this->assertTrue($result->success, $object_type . ' item succeeded as expected.');
-        }
+        $this->assertTrue($result->success, $object_type . ' item succeeded as expected.');
       }
     }
 
-    // Queue more new items and UPSERT items.
-    $this->createQueueItems($this->queue, 25, array('CREATE', 'UPSERT'));
+    // Queue more new items and UPSERT items.  Using this method to ensure items
+    // of each object type are created.
+    $this->createQueueItems($this->queue, ($base_queue_items * 2), array('CREATE', 'UPSERT'), array('Account', 'Contact'));
+    $this->createQueueItems($this->queue, $base_queue_items, array('CREATE', 'UPSERT'), array('Opportunity', 'Account'));
+    $this->createQueueItems($this->queue, $base_queue_items, array('CREATE', 'UPSERT'), array('Contact', 'Opportunity'));
 
     // Take the items we created and queue them up for UPSERT if they have a
     // dedupe field set. The other half of the items have a 50% chance of being
@@ -751,6 +757,10 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
    * Test for hook_salesforce_queue_process_fail_item().
    */
   public function testProcessFailItem() {
+    // Send watchdog messages to inform those who run tests which messages are
+    // valid and which are not.
+    watchdog('salesforce', 'NOTE (3) "Item failed CREATE" warnings to follow.', NULL, WATCHDOG_WARNING);
+
     $this->salesforceConnect();
 
     // Queue up an Opportunity which will automatically fail.
@@ -767,8 +777,8 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
 
     // Do this until we hit maximum retries and make sure it is placed in the
     // fail queue.
-    $max_retries = variable_get('salesforce_queue_max_retries', 5);
-    while ($max_retries > $record->retries) {
+    variable_set('salesforce_queue_max_retries', 2);
+    while (2 > $record->retries) {
       salesforce_queue_process_queue();
       $record = $queue->getItem($item->drupal_id, $item->module, $item->delta, $item->object_type);
     }
