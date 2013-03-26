@@ -153,52 +153,54 @@ class SalesforceSyncTestCase extends SalesforceTestCase {
 
       // Create base item.
       $ops_rand = array_rand($ops);
-      $operation = $ops[$ops_rand];
-      $object_rand = array_rand($objects);
-      $object_type = $objects[$object_rand]['type'];
-      $record_rand = empty($objects[$object_rand]['records']) ? NULL : array_rand($objects[$object_rand]['records']);
-      $record_type = is_null($record_rand) ? NULL : $objects[$object_rand]['records'][$record_rand];
-      $item = new SalesforceSyncItem($object_type, $operation);
+      $item = new SalesforceSyncItem();
+      $item->drupal_id = rand(1, $num * 100);
+      $item->module = $this->randomName();
+      $item->delta = rand(0, 1) ? $this->randomName() : rand(1, $num * 100);
+      $item->operation = $ops[$ops_rand];
 
       // Create the Salesforce object.
-      $fields = array();
+      $object_rand = array_rand($objects);
+      $record_rand = empty($objects[$object_rand]['records']) ? NULL : array_rand($objects[$object_rand]['records']);
+      $sobject = new SalesforceObject($objects[$object_rand]['type'], array());
+      $sobject->record = is_null($record_rand) ? NULL : $objects[$object_rand]['records'][$record_rand];
+      $sobject->fields = array();
       foreach ($objects[$object_rand]['fields'] as $field => $can_dedupe) {
         if ($field == 'Email') {
-          $fields[$field] = strtolower($this->randomName()) . '@' . strtolower($this->randomName()) . '.com';
+          $sobject->fields[$field] = strtolower($this->randomName()) . '@' . strtolower($this->randomName()) . '.com';
         }
         elseif ($field == 'Amount') {
-          $fields[$field] = rand(1, 10000);
+          $sobject->fields[$field] = rand(1, 10000);
         }
         elseif ($field == 'CloseDate') {
-          $fields[$field] = date('c', REQUEST_TIME);
+          $sobject->fields[$field] = date('c', REQUEST_TIME);
         }
         else {
-          $fields[$field] = $this->randomName();
+          $sobject->fields[$field] = $this->randomName();
         }
 
         // If this field can be used for dedupe, give it a 50% chance of it
         // being set.  Unless, of course, the operation is UPSERT, then it needs
         // to be set.
-        if ($can_dedupe && (rand(0, 1) || $operation == 'UPSERT')) {
+        if ($can_dedupe && (rand(0, 1) || $item->operation == 'UPSERT')) {
           $item->dedupe_field = $field;
         }
       }
-      $sobject = new SalesforceObject($object_type, $fields, $record_type);
 
       // If the operation is UPSERT, and there is no dedupe field, change the
       // operation to CREATE.
-      if ($operation == 'UPSERT' && empty($item->dedupe_field)) {
+      if ($item->operation == 'UPSERT' && empty($item->dedupe_field)) {
         $item->operation = 'CREATE';
       }
 
       // If the operation is UPDATE or DELETE add in a fake Id field.
-      if ($operation == 'UPDATE' || $operation == 'DELETE') {
+      if ($item->operation == 'UPDATE' || $item->operation == 'DELETE') {
         $sobject->Id = $this->randomName();
       }
 
       // If the operation is UPDATE or UPSERT add in fake sync rules for a
       // random quantity of the number of fields.
-      if ($operation == 'UPDATE' || $operation == 'UPSERT') {
+      if ($item->operation == 'UPDATE' || $item->operation == 'UPSERT') {
         $item->sync_rules = array();
         $fields = array_keys($sobject->fields);
         shuffle($fields);
@@ -219,6 +221,8 @@ class SalesforceSyncTestCase extends SalesforceTestCase {
         }
       }
 
+      // Finalize.
+      $item->object_type = $sobject->type;
       $item->sobject = $sobject;
       $items[] = $item;
     }
@@ -263,5 +267,53 @@ class SalesforceSyncTestCase extends SalesforceTestCase {
       }
     }
     return $batches;
+  }
+
+  /**
+   * Helper to remove the sent set of items from Salesforce.
+   *
+   * Useful if you do not have direct access to the SalesforceSync object.
+   *
+   * @param array $queue_items
+   *   Array of items that would be used to be send to the queue.  It is the
+   *   output of createQueueItems().
+   */
+  public function deleteItemsFromSalesforce($queue_items) {
+    $conditions = array();
+    foreach ($queue_items as $queue_item) {
+      $object_type = $queue_item['object_type'];
+      $field = ($object_type == 'Contact') ? 'LastName' : 'Name';
+      $conditions[$object_type]['field'] = $field;
+      $conditions[$object_type]['op'] = 'IN';
+      $field_value = $queue_item['sobject']->fields[$field];
+      $conditions[$object_type]['value'][$field_value] = $field_value;
+    }
+    $batch = array(
+      'operation' => 'DELETE',
+      'items' => array(),
+      'ids' => array(),
+    );
+    $sync = new SalesforceSync();
+    foreach ($conditions as $object_type => $condition) {
+      $records = $sync->fetchRecords($object_type, array('Id'), array($condition));
+      foreach ($records as $record) {
+        $record->fields = array();
+        $item = new stdClass();
+        $item->object_type = $record->type;
+        $item->operation = 'DELETE';
+        $item->sobject = $record;
+        $batch['items'][] = $item;
+        $batch['ids'][] = $record->Id;
+      }
+    }
+    $results = $sync->sendBatch($batch);
+    if (is_array($results)) {
+      foreach ($results as $result) {
+        $this->assertTrue($result->success, 'Deleting test item from Salesforce successful.');
+      }
+    }
+    else {
+      $this->fail('Could not send batch to delete test items from Salesforce.');
+    }
   }
 }

@@ -27,11 +27,11 @@ class SalesforceQueueAdminTestCase extends SalesforceQueueTestCase {
   /**
    * Implementation of setUp().
    */
-  public function setUp($modules = array()) {
-    parent::setUp($modules);
+  public function setUp($modules = array(), $permissions = array()) {
+    parent::setUp($modules, $permissions);
 
     // Path to config page.
-    $this->path = 'admin/config/services/salesforce/salesforce-sync/salesforce-queue';
+    $this->queueAdminPath = 'admin/config/services/salesforce/salesforce-sync/salesforce-queue';
 
     // Connect to Salesforce.
     $this->salesforceConnect();
@@ -48,7 +48,7 @@ class SalesforceQueueAdminTestCase extends SalesforceQueueTestCase {
    * Tests that the form renders properly.
    */
   public function testAdminForm() {
-    $this->drupalGet($this->path);
+    $this->drupalGet($this->queueAdminPath);
 
     // Ensure each field is there with the correct default value.
     $this->assertFieldByName('lease_time', '', 'Lease Time field exists.');
@@ -70,7 +70,7 @@ class SalesforceQueueAdminTestCase extends SalesforceQueueTestCase {
     // The tracked queues option is hidden by default.  Lets show it and check
     // if its default values are correct.
     variable_set('salesforce_queue_tracked_queues_show_config', TRUE);
-    $this->drupalGet($this->path);
+    $this->drupalGet($this->queueAdminPath);
     $this->assertText('Tracked Queues of the Multi-Queue Processor', 'Tracked queues field showed up after enabling it.');
     $this->assertFieldById('edit-tracked-queues-fail', '', 'Fail queue showed up for tracked queues.');
     $this->assertNoFieldChecked('edit-tracked-queues-fail', 'Fail queue is not checked by default.');
@@ -89,7 +89,7 @@ class SalesforceQueueAdminTestCase extends SalesforceQueueTestCase {
     variable_set('salesforce_queue_foo_lease_expire', 3600);
     $bar_queue = salesforce_queue_load('bar');
     $this->createQueueItems($bar_queue);
-    $this->drupalGet($this->path);
+    $this->drupalGet($this->queueAdminPath);
     $this->assertFieldById('edit-tracked-queues-foo', '', 'Foo queue showed up for tracked queues.');
     $this->assertNoFieldChecked('edit-tracked-queues-foo', 'Foo queue is not checked by default.');
     $this->assertFieldById('edit-tracked-queues-bar', '', 'Bar queue showed up for tracked queues.');
@@ -110,16 +110,16 @@ class SalesforceQueueAdminTestCase extends SalesforceQueueTestCase {
     );
     foreach ($fields as $field) {
       // Is numeric.
-      $this->drupalGet($this->path);
+      $this->drupalGet($this->queueAdminPath);
       $edit = array($field => 'abc');
-      $this->drupalPost($this->path, $edit, 'Save');
+      $this->drupalPost($this->queueAdminPath, $edit, 'Save');
       $this->assertText('must be numeric', $field . ' field fails validation when value is not numeric.');
       $this->assertNoText('Your settings have been saved.', 'Form does not save when ' . $field . ' field fails numeric validation.');
 
       // Is a positive value.
-      $this->drupalGet($this->path);
+      $this->drupalGet($this->queueAdminPath);
       $edit = array($field => -5);
-      $this->drupalPost($this->path, $edit, 'Save');
+      $this->drupalPost($this->queueAdminPath, $edit, 'Save');
       $this->assertText('must be a positive number', $field . ' field fails validation when value is not a positive number.');
       $this->assertNoText('Your settings have been saved.', 'Form does not save when ' . $field . ' field fails positive value validation.');
     }
@@ -129,7 +129,7 @@ class SalesforceQueueAdminTestCase extends SalesforceQueueTestCase {
    * Tests that form submissions are performed and values are saved properly.
    */
   public function testAdminFormSubmit() {
-    $this->drupalGet($this->path);
+    $this->drupalGet($this->queueAdminPath);
 
     // Make the tracked queues and extra queues show up.
     variable_set('salesforce_queue_tracked_queues_show_config', TRUE);
@@ -151,7 +151,7 @@ class SalesforceQueueAdminTestCase extends SalesforceQueueTestCase {
     );
 
     // Cancel and make sure no values were changed.
-    $this->drupalPost($this->path, $edit, 'Cancel');
+    $this->drupalPost($this->queueAdminPath, $edit, 'Cancel');
     $this->assertText('The form has been reset to its original values', 'Cancelling the form posted correctly.');
     $this->assertFieldByName('lease_time', 60, 'Lease Time value did not change after cancelling form.');
     $this->assertEqual(NULL, variable_get('salesforce_queue_lease_time', NULL), 'Lease Time value did not save after cancelling form.');
@@ -169,7 +169,7 @@ class SalesforceQueueAdminTestCase extends SalesforceQueueTestCase {
     $this->assertEqual(NULL, variable_get('salesforce_queue_tracked_queues', NULL), 'Tracked Queues did not save after cancelling form.');
 
     // Save and make sure the values were changed.
-    $this->drupalPost($this->path, $edit, 'Save');
+    $this->drupalPost($this->queueAdminPath, $edit, 'Save');
     $this->assertText('Your settings have been saved', 'Saving the form posted correctly.');
     $this->assertFieldByName('lease_time', 11, 'Lease Time value changed after saving form.');
     $this->assertEqual(660, variable_get('salesforce_queue_lease_time', NULL), 'Lease Time value saved after saving form.');
@@ -191,15 +191,15 @@ class SalesforceQueueAdminTestCase extends SalesforceQueueTestCase {
     // they still show up on the form since they are selected.
     variable_del('salesforce_queue_foo_lease_expire');
     $bar_queue->deleteQueue();
-    $this->drupalGet($this->path);
+    $this->drupalGet($this->queueAdminPath);
     $this->assertFieldById('edit-tracked-queues-foo', '', 'Foo queue showed up for tracked queues.');
     $this->assertFieldById('edit-tracked-queues-bar', '', 'Bar queue showed up for tracked queues.');
 
     // If I uncheck them they'll disappear.
     $edit['tracked_queues[foo]'] = FALSE;
     $edit['tracked_queues[bar]'] = FALSE;
-    $this->drupalPost($this->path, $edit, 'Save');
-    $this->drupalGet($this->path);
+    $this->drupalPost($this->queueAdminPath, $edit, 'Save');
+    $this->drupalGet($this->queueAdminPath);
     $this->assertNoFieldById('edit-tracked-queues-foo', '', 'Foo queue disappeared for tracked queues.');
     $this->assertNoFieldById('edit-tracked-queues-bar', '', 'Bar queue disappeared for tracked queues.');
 
@@ -211,7 +211,7 @@ class SalesforceQueueAdminTestCase extends SalesforceQueueTestCase {
     $this->assertTrue(is_array($current_order), 'Object order was saved.');
     if (is_array($current_order)) {
       $edit = array('object_order[Event][weight]' => -10);
-      $this->drupalPost($this->path, $edit, 'Save');
+      $this->drupalPost($this->queueAdminPath, $edit, 'Save');
       $new_order = variable_get('salesforce_queue_object_order', NULL);
       $this->assertEqual('Event', array_shift($new_order), 'Event is the first item in the array.');
       $this->assertEqual(array_shift($new_order), array_shift($current_order), 'The first item of the old order is the second item of the new order.');
