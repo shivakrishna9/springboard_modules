@@ -5,12 +5,12 @@
  * Simple tests for salesforce_genmap
  */
 
-module_load_include('test', 'salesforce', 'tests/salesforce');
+module_load_include('test', 'salesforce_mapping', 'tests/salesforce_mapping');
 
 /**
  * Tests basic set up for mapping salesforce objects to webforms.
  */
-class SalesforceGenmapTestCase extends SalesforceTestCase {
+class SalesforceGenmapTestCase extends SalesforceMappingTestCase {
 
   /**
    * Implementation of getInfo().
@@ -28,8 +28,6 @@ class SalesforceGenmapTestCase extends SalesforceTestCase {
    */
   public function setUp($modules = array(), $permissions = array()) {
     $modules = array_merge($modules, array(
-      'entity',
-      'salesforce_mapping',
       'salesforce_genmap',
     ));
 
