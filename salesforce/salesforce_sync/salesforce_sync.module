@@ -60,25 +60,25 @@ define('SALESFORCE_SYNC_MAX_RETRIEVE_SIZE_DEFAULT', 2000);
  */
 
 // Item failed when it was attempted to be created in Salesforce.
-define('SALESFORCE_SYNC_ITEM_FAIL_CREATE', 'Item failed to be created.');
+define('SALESFORCE_SYNC_ITEM_FAIL_CREATE', 'Item failed CREATE.');
 
 // Item failed when it attempted an upsert in Salesforce.
-define('SALESFORCE_SYNC_ITEM_FAIL_UPSERT', 'Item failed to be upserted.');
+define('SALESFORCE_SYNC_ITEM_FAIL_UPSERT', 'Item failed UPSERT.');
 
 // Item failed when it attempted an update in Salesforce.
-define('SALESFORCE_SYNC_ITEM_FAIL_UPDATE', 'Item failed to be updated.');
+define('SALESFORCE_SYNC_ITEM_FAIL_UPDATE', 'Item failed UPDATE.');
 
 // Item failed when it was attempted to be deleted in Salesforce.
-define('SALESFORCE_SYNC_ITEM_FAIL_DELETE', 'Item failed to be deleted.');
+define('SALESFORCE_SYNC_ITEM_FAIL_DELETE', 'Item failed DELETE.');
 
 // Item failed when it was attempted to be undeleted in Salesforce.
-define('SALESFORCE_SYNC_ITEM_FAIL_UNDELETE', 'Item failed to be undeleted.');
+define('SALESFORCE_SYNC_ITEM_FAIL_UNDELETE', 'Item failed UNDELETE.');
 
 // The entire batch failed to be processed due to some error with Salesforce.
-define('SALESFORCE_SYNC_ITEM_FAIL_BATCH', 'Batch caused Salesforce to throw exception.');
+define('SALESFORCE_SYNC_ITEM_FAIL_BATCH', 'Batch threw exception.');
 
 // The batch failed to be processed because we could not get a connection.
-define('SALESFORCE_SYNC_ITEM_FAIL_SOAP', 'A connection to Salesforce could not be established.');
+define('SALESFORCE_SYNC_ITEM_FAIL_SOAP', 'SOAP not established.');
 
 /**
  * @} salesforce_sync_item_fail_responces
