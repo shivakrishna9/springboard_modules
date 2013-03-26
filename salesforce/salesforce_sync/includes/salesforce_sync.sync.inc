@@ -714,7 +714,7 @@ class SalesforceSync {
 
     // Keep a log of newly created items.
     if ($item->operation == 'CREATE' || $item->operation == 'UPSERT') {
-      $this->newSfRecords[] = $item;
+      $this->newSfRecords[$result->id] = $item;
     }
 
     // Keep a log of all items processed.
@@ -724,6 +724,11 @@ class SalesforceSync {
       // Pass the item to the token scanner's internal cache so it doesn't
       // have to go to the db as often.
       $this->tokenScanner->addItemToTokenCache($item, $result->id);
+    }
+
+    // Remove deleted items from the new records since it is not in Salesforce.
+    if ($item->operation == 'DELETE' && isset($this->newSfRecords[$result->id])) {
+      unset($this->newSfRecords[$result->id]);
     }
 
     // Invokes hook_salesforce_sync_pass_item().
