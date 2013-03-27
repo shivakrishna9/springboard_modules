@@ -32,12 +32,16 @@ class SalesforceMappingAlterTestCase extends SalesforceMappingTestCase {
       'salesforce_genmap',
     ));
     parent::setUp($modules, $permissions);
+
+    // Enable the 'append' sync rule so the tests can test its functionality.
+    variable_set('salesforce_genmap_disable_sync_rule_append', FALSE);
   }
 
   /**
    * Implementation of tearDown().
    */
   public function tearDown() {
+    variable_del('salesforce_genmap_disable_sync_rule_append');
     parent::tearDown();
   }
 

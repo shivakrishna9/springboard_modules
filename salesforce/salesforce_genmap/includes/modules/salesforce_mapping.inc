@@ -748,6 +748,14 @@ function _sfm_datatype_can_sync($entity_type, $drupal_field, $salesforce_object_
     return TRUE;
   }
 
+  // The 'append' sync rule always fails because Springboard is choosing to
+  // disable this feature.  The variable is added so that the append
+  // functionality can still be tested, and in an edge case scenario, reenabled
+  // on a case-by-case basis if required.
+  if ($sync_rule == SALESFORCE_SYNC_RULE_APPEND && variable_get('salesforce_genmap_disable_sync_rule_append', TRUE)) {
+    return FALSE;
+  }
+
   // Find the datatype for the Drupal field.
   if (isset($form_state['sfm_storage']) && isset($form_state['sfm_storage']['drupal_datatype']) && isset($form_state['sfm_storage']['drupal_datatype'][$entity_type]) && isset($form_state['sfm_storage']['drupal_datatype'][$entity_type][$drupal_field])) {
     $drupal_datatype = $form_state['sfm_storage']['drupal_datatype'][$entity_type][$drupal_field];
@@ -811,6 +819,9 @@ function _sfm_datatype_can_sync($entity_type, $drupal_field, $salesforce_object_
     // with this set.
     $sync_restrictions = array(
       SALESFORCE_SYNC_RULE_ALWAYS => array(),
+      // Although 'append' returned FALSE in the begining, leaving the logic
+      // here so it can be reenabled rather easily.  It also serves as an
+      // example of syncing with only text data types.
       SALESFORCE_SYNC_RULE_APPEND => array(
         'drupal' => array(
           'text',
