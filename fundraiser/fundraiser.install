@@ -378,3 +378,20 @@ function fundraiser_update_7001() {
     db_add_field('fundraiser_refund', $fieldname, $new_field);
   }
 }
+
+/**
+ * D7 update hook - added for ease during QA testing.
+ */
+function fundraiser_update_7002() {
+  $new_fields = array(
+    'form_url' => array(
+      'description' => 'The full url of the donation form that the order was created from.',
+      'type' => 'varchar',
+      'length' => '255',
+      'not null' => FALSE,
+    ),
+  );
+  foreach ($new_fields as $fieldname => $new_field) {
+    db_add_field('fundraiser_donation', $fieldname, $new_field);
+  }
+}
