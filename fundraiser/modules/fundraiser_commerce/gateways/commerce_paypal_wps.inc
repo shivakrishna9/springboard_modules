@@ -14,6 +14,7 @@ function commerce_paypal_wps_fundraiser_commerce_fundraiser_gateway_info() {
     'offsite_processing' => array('paypal'),
     'form callback' => 'commerce_paypal_wps_fundraiser_commerce_form',
     'redirect callback' => 'commerce_paypal_wps_fundraiser_commerce_redirect',
+    'scrub callback' => 'commerce_paypal_wps_fundraiser_commerce_scrub',
     // Validation callback is commerce_paypal_wps_fundraiser_commerce_redirect_validate
     // Submit callback is commerce_paypal_wps_fundraiser_commerce_redirect_submit
   );
@@ -47,6 +48,14 @@ function commerce_paypal_wps_fundraiser_commerce_redirect_validate($method_insta
     $success = TRUE;
   }
   return $success;
+}
+
+/**
+ * Callback function, scrub the data before saving.
+ */
+function commerce_paypal_wps_fundraiser_commerce_scrub($payment_method, $submission_fields) {
+  // Nothing to store for paypal
+  return array();
 }
 
 /**
