@@ -13,14 +13,14 @@ function email_wrappers_perm() {
 }
 
 function email_wrappers_menu() {
-
-  $items['admin/content/email-wrappers'] = array(
+// TODO: replace this menu item with a View.
+ /* $items['admin/content/email-wrappers'] = array(
     'title' => 'Confirmation Email Templates',
     'description' => '',
-    'page callback' => 'email_confirmation_template_list',
+    'page callback' => 'email_wrappers_template_list',
     'access arguments' => array('administer content'),
     'type' => MENU_NORMAL_ITEM,
-  );
+  ); */
   $items['admin/config/system/email-wrappers'] = array(
     'title' => 'Confirmation settings',
     'description' => 'Administer email confirmation settings.',
@@ -45,7 +45,8 @@ function email_wrappers_menu() {
 
 // Modal display window for email preview. At some point this should be converted to one or more theme functions/templates.
 function email_wrappers_preview_modal() {
-
+    ctools_include('ajax');
+    ctools_include('modal');
     module_load_include('inc', 'ctools', 'includes/modal');
     $title = 'Template Preview';
     $values = $_POST['template_wrapper'];
@@ -242,7 +243,6 @@ function email_wrappers_email_validate_callback(&$form, &$form_state) {
  * Submit callback for webform email edit form.
  */
 function email_wrappers_email_submit_callback($form, $form_state) {
-
   $values = $form_state['values'];
 
   // If any information has been added to "extra" by other modules, it is saved at this time. This approach
@@ -250,12 +250,14 @@ function email_wrappers_email_submit_callback($form, $form_state) {
   // join across a bunch of lookup tables to get all the settings for a given mail.
   if (is_numeric($values['email_wrappers_email_template']) && $values['email_wrappers_email_template'] > 0) {
     $settings = array(
+      'nid' => $values['node']->nid,
+      'eid' => $values['eid'],
       'tid' => $values['email_wrappers_email_template'],
-      'bcc' => $values['email_wrappers_bcc'],
+      'bcc_email' => implode(',', $values['email_wrappers_bcc']),
       'html_message' => $values['email_wrappers_html_message'],
       'html_message_format' => '',
       'text_message' => $values['email_wrappers_text_message'],
-      'extra' => serialize($form_state['extra']),
+      'extra' => !empty($form_state['extra']) ? serialize($form_state['extra']) : serialize(array()),
     );
     email_wrappers_delete_settings($values['node']->nid, $values['eid']);
     email_wrappers_save_settings($values['node']->nid, $values['eid'], $settings);
@@ -306,17 +308,7 @@ function email_wrappers_delete_settings($nid, $eid) {
  * text_message: text-only version of the email message body.
  */
 function email_wrappers_save_settings($nid, $eid, array $settings) {
-  db_insert('email_wrappers_webform')
-    ->fields(array(
-      'nid' => $nid,
-      'eid' => $eid,
-      'tid' => $settings['tid'],
-   //   'bcc' => $settings['bcc'],
-      'html_message' => $settings['html_message'],
-      'text_message' => $settings['text_message'],
-      'extra' => $settings['extra'],
-    ))
-    ->execute();
+  drupal_write_record('email_wrappers_webform', $settings);
 }
 
 
@@ -612,12 +604,17 @@ function email_wrappers_load_defaults_from_template($nid) {
   $text_template = field_get_items('node', $node, 'email_wrapper_text_template');
   $text_message = field_get_items('node', $node, 'email_wrapper_text_message');
 
+  // BCC gets special handling as it's the only field that may have multiple values.
+  foreach ($bcc_email as $bcc) {
+    $bcc_addresses[] = $bcc['value'];
+  }
+
   return array(
     'subject' => $subject[0]['value'],
     'from_name' => $from_name[0]['value'],
     'from_mail' => $from_mail[0]['value'],
     'reply_to_email' => $reply_to_email[0]['value'],
-    'bcc_email' => $bcc_email[0]['value'],
+    'bcc_email' => $bcc_addresses,
     'html_template' => $html_template[0]['value'],
     'html_message' => $html_message[0]['value'],
     'text_template' => $text_template[0]['value'],
@@ -674,10 +671,10 @@ function email_wrappers_email_ajax($form, $form_state) {
 
 
 /**
- *
+ * Generate modal preview.
  */
 function _email_wrappers_preview($op, $message, $nid) {
-//$object = _email_confirmation_test_object();
+
   $output = '';
   switch ($op) {
     case 'html':
