@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Definition of salesforce_log_handler_field_drupal_id.
+ * Definition of SalesforceLogHandlerFieldDrupalId.
  */
 
 /**
@@ -10,7 +10,7 @@
  *
  * @ingroup views_filter_handlers
  */
-class salesforce_log_handler_field_drupal_id extends views_handler_field_numeric {
+class SalesforceLogHandlerFieldDrupalId extends views_handler_field_numeric {
 
   /**
    * Render link to Drupal item.

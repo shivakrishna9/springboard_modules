@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Definition of salesforce_log_handler_filter_object_type.
+ * Definition of SalesforceLogHandlerFilterObjectType.
  */
 
 /**
@@ -10,12 +10,12 @@
  *
  * @ingroup views_filter_handlers
  */
-class salesforce_log_handler_filter_object_type extends views_handler_filter_in_operator {
+class SalesforceLogHandlerFilterObjectType extends views_handler_filter_in_operator {
 
   /**
    * List of possible Salesforce object types.
    */
-  public function get_value_options() {
+  public function getValueOptions() {
     $result = db_query("SELECT distinct(object_type) FROM " . $this->view->base_table);
     if ($result->rowCount()) {
       foreach ($result as $record) {
@@ -26,4 +26,11 @@ class salesforce_log_handler_filter_object_type extends views_handler_filter_in_
       $this->value_options = array(0 => 'No object types found');
     }
   }
+
+  // Ignnore required method names that do not pass coding standards
+  // @codingStandardsIgnoreStart
+  public function get_value_options() {
+    $this->getValueOptions();
+  }
+  // @codingStandardsIgnoreEnd
 }

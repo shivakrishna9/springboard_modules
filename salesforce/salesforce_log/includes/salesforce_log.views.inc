@@ -154,7 +154,7 @@ function salesforce_log_views_data() {
       'handler' => 'views_handler_sort',
     ),
     'filter' => array(
-      'handler' => 'salesforce_log_handler_filter_module',
+      'handler' => 'SalesforceLogHandlerFilterModule',
     ),
   );
 
@@ -186,7 +186,7 @@ function salesforce_log_views_data() {
       'handler' => 'views_handler_sort',
     ),
     'filter' => array(
-      'handler' => 'salesforce_log_handler_filter_object_type',
+      'handler' => 'SalesforceLogHandlerFilterObjectType',
     ),
   );
 
@@ -202,7 +202,7 @@ function salesforce_log_views_data() {
       'handler' => 'views_handler_sort',
     ),
     'filter' => array(
-      'handler' => 'salesforce_log_handler_filter_operation',
+      'handler' => 'SalesforceLogHandlerFilterOperation',
     ),
   );
 
@@ -311,7 +311,7 @@ function salesforce_log_views_data() {
     'title' => t('Drupal ID'),
     'help' => t('The Drupal ID of this item.'),
     'field' => array(
-      'handler' => 'salesforce_log_handler_field_drupal_id',
+      'handler' => 'SalesforceLogHandlerFieldDrupalId',
       'click sortable' => TRUE,
     ),
     'argument' => array(
@@ -338,7 +338,7 @@ function salesforce_log_views_data() {
       'handler' => 'views_handler_sort',
     ),
     'filter' => array(
-      'handler' => 'salesforce_log_handler_filter_module',
+      'handler' => 'SalesforceLogHandlerFilterModule',
     ),
   );
 
@@ -370,7 +370,7 @@ function salesforce_log_views_data() {
       'handler' => 'views_handler_sort',
     ),
     'filter' => array(
-      'handler' => 'salesforce_log_handler_filter_queue',
+      'handler' => 'SalesforceLogHandlerFilterQueue',
     ),
   );
 
@@ -406,7 +406,7 @@ function salesforce_log_views_data() {
       'handler' => 'views_handler_sort',
     ),
     'filter' => array(
-      'handler' => 'salesforce_log_handler_filter_object_type',
+      'handler' => 'SalesforceLogHandlerFilterObjectType',
     ),
   );
 
@@ -422,7 +422,7 @@ function salesforce_log_views_data() {
       'handler' => 'views_handler_sort',
     ),
     'filter' => array(
-      'handler' => 'salesforce_log_handler_filter_operation',
+      'handler' => 'SalesforceLogHandlerFilterOperation',
     ),
   );
 
@@ -431,7 +431,7 @@ function salesforce_log_views_data() {
     'title' => t('Salesforce sObject'),
     'help' => t('The Salesforce sObject in json format.'),
     'field' => array(
-      'handler' => 'salesforce_log_handler_field_sobject',
+      'handler' => 'SalesforceLogHandlerFieldSobject',
       'click sortable' => FALSE,
     ),
     'sort' => array(
@@ -562,7 +562,7 @@ function salesforce_log_views_data() {
     'title' => t('Drupal ID'),
     'help' => t('The Drupal ID of this item.'),
     'field' => array(
-      'handler' => 'salesforce_log_handler_field_drupal_id',
+      'handler' => 'SalesforceLogHandlerFieldDrupalId',
       'click sortable' => TRUE,
     ),
     'argument' => array(
@@ -589,7 +589,7 @@ function salesforce_log_views_data() {
       'handler' => 'views_handler_sort',
     ),
     'filter' => array(
-      'handler' => 'salesforce_log_handler_filter_module',
+      'handler' => 'SalesforceLogHandlerFilterModule',
     ),
   );
 
@@ -621,7 +621,7 @@ function salesforce_log_views_data() {
       'handler' => 'views_handler_sort',
     ),
     'filter' => array(
-      'handler' => 'salesforce_log_handler_filter_object_type',
+      'handler' => 'SalesforceLogHandlerFilterObjectType',
     ),
   );
 
@@ -637,7 +637,7 @@ function salesforce_log_views_data() {
       'handler' => 'views_handler_sort',
     ),
     'filter' => array(
-      'handler' => 'salesforce_log_handler_filter_operation',
+      'handler' => 'SalesforceLogHandlerFilterOperation',
     ),
   );
 
@@ -662,7 +662,7 @@ function salesforce_log_views_data() {
     'title' => t('Salesforce sObject'),
     'help' => t('The Salesforce sObject in json format.'),
     'field' => array(
-      'handler' => 'salesforce_log_handler_field_sobject',
+      'handler' => 'SalesforceLogHandlerFieldSobject',
       'click sortable' => FALSE,
     ),
     'sort' => array(
@@ -701,7 +701,7 @@ function salesforce_log_views_data() {
       'handler' => 'views_handler_sort',
     ),
     'filter' => array(
-      'handler' => 'salesforce_log_handler_filter_queue',
+      'handler' => 'SalesforceLogHandlerFilterQueue',
     ),
   );
 

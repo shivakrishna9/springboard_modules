@@ -377,7 +377,7 @@ function commerce_authnet_fundraiser_commerce_refund($payment_method, $refund) {
   $form_state['payment_method'] = commerce_payment_method_instance_load($transaction->instance_id);
   // Submit the donation form.
   module_load_include('inc', 'commerce_authnet', '/includes/commerce_authnet.admin');
-  $result = commerce_authnet_aim_credit_form_submit($form, &$form_state);
+  $result = commerce_authnet_aim_credit_form_submit($form, $form_state);
   // At this point the card has been saved on the user profile.
   $success = FALSE;
   if ($result !== FALSE) {

@@ -49,9 +49,10 @@ function salesforce_donation_settings($form, &$form_state) {
   $form['sf_donation_stages'] = array(
     '#type' => 'fieldset',
     '#title' => t('Map Salesforce Stages to Donation States'),
-    '#description' => t('Donations in particular states can be mapped to specific Salesforce stages. ' .
-      'By default donations that have been successfully processed are mapped to Stage Posted. If ' .
-      'those settings are all you need, then you do not need to map additional stages.'),
+    '#description' => t('Donations in particular states can be mapped to
+      specific Salesforce stages. By default donations that have been
+      successfully processed are mapped to Stage Posted. If those settings are
+      all you need, then you do not need to map additional stages.'),
   );
   $stages = array(
     'Posted',
@@ -64,7 +65,8 @@ function salesforce_donation_settings($form, &$form_state) {
   if (empty($available_statuses)) {
     $available_statuses = array();
   }
-  array_unshift($available_statuses, '-- Not mapped --'); // Add at index 0.
+  // Add at index 0.
+  array_unshift($available_statuses, '-- Not mapped --');
   $mapped_stages = variable_get('salesforce_donation_mapped_stages', array());
   foreach ($stages as $stage) {
     $form['sf_donation_stages']['sf_donation_' . $stage] = array(
@@ -81,10 +83,10 @@ function salesforce_donation_settings($form, &$form_state) {
   );
 
   // Build a default fieldmap.
-  // NID is dummy value, no real node here.
-  // Maps are saved/mapped per nid x module handlers (here salesforce_donation).
-  // So to pull the default back out, we just pull -1 nid for this module.
-  // Since, otherwise this operates as 'normal', we shouldn't have to tweak the form mmuch.
+  // NID is dummy value, no real node here. Maps are saved/mapped per
+  // nid x module handlers (here salesforce_donation). So to pull the default
+  // back out, we just pull -1 nid for this module. Since, otherwise this
+  // operates as 'normal', we shouldn't have to tweak the form mmuch.
   $node->nid = -1;
   module_load_include('inc', 'salesforce_genmap', 'includes/salesforce_genmap.map');
   $form_state['build_info']['args'][0] = $node;
@@ -141,6 +143,7 @@ function salesforce_donation_settings_submit($form, &$form_state) {
 
 /**
  * Implements hook_node_insert().
+ *
  * Insert a copy of the default map when a Fundraiser node is created.
  */
 function salesforce_donation_node_insert($node) {
@@ -159,6 +162,7 @@ function salesforce_donation_node_insert($node) {
 
 /**
  * Implements hook_node_delete().
+ *
  * Insert a copy of the default map when a Fundraiser node is created.
  */
 function salesforce_donation_node_delete($node) {
@@ -182,10 +186,11 @@ function salesforce_donation_node_delete($node) {
  * Implements hook_fundraiser_donation_success().
  */
 function salesforce_donation_fundraiser_donation_success($donation) {
-  // Reload donation to be sure to get everything we need from submission table then send to queue.
+  // Reload donation to be sure to get everything we need from submission table
+  // then send to queue.
   $donation = fundraiser_donation_get_donation($donation->did, TRUE);
-  // Since this is called at the end of a standalone processing,
-  // or after a recurring donation is processed: upsert
+  // Since this is called at the end of a standalone processing, or after a
+  // recurring donation is processed: upsert.
   if ($donation->donation['recurs_monthly'] == TRUE && $donation->status_charged == 1
     && !empty($donation->master_did) && $donation->did != $donation->master_did) {
     // This is part of a recurring set, already sent up once - update now.
@@ -201,7 +206,8 @@ function salesforce_donation_fundraiser_donation_success($donation) {
  * Implements hook_fundraiser_donation_refund_success().
  */
 function salesforce_donation_fundraiser_donation_refund_success($refund) {
-  // Reload donation to be sure to get everything we need from submission table then send to queue.
+  // Reload donation to be sure to get everything we need from submission table
+  // then send to queue.
   $refund = fundraiser_donation_get_donation($refund->did, TRUE);
   // This is standalone, or the first in a recurring set.
   salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $refund->node, $refund->did, $refund, 'donation');
@@ -319,8 +325,11 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
         $date = strtotime('now');
       }
       $fields[$sf_field] = t('Donation - !first !last (!date)',
-        array('!first' => $donation->donation['first_name'], '!last' => $donation->donation['last_name'],
-        '!date' => gmdate('Y-m-d H:i:s\Z', $date)));
+        array(
+          '!first' => $donation->donation['first_name'],
+          '!last' => $donation->donation['last_name'],
+          '!date' => gmdate('Y-m-d H:i:s\Z', $date),
+        ));
     }
   }
 
@@ -405,7 +414,7 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
     $fields['Cancellation_Reason__c'] = $donation->refund['reason'];
     $fields['Parent_Donation__c'] = '[Opportunity:donation:' . $donation->refund['refunded_donation'] . ']';
     $fields['Probability'] = 0;
-  } 
+  }
   return $fields;
 }
 
@@ -496,8 +505,9 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
   }
   elseif (module_exists('fundraiser_webform') && $node->nid == -1) {
     // If node is -1, then we're working with default.
-    // We go with the CC defaults, anything else can be added by other modules on drupal_alter.
-    $fields['salesforce_donation_map']['#fields']['card_number'] =  t('Credit card last 4') . ' (' . t('Default payment field') . ')';
+    // We go with the CC defaults, anything else can be added by other modules
+    // on drupal_alter.
+    $fields['salesforce_donation_map']['#fields']['card_number'] = t('Credit card last 4') . ' (' . t('Default payment field') . ')';
     $fields['salesforce_donation_map']['#fields']['card_expiration_month'] = t('Expiration month') . ' (' . t('Default payment field') . ')';
     $fields['salesforce_donation_map']['#fields']['card_expiration_year'] = t('Expiration year') . ' (' . t('Default payment field') . ')';
   }
@@ -528,7 +538,8 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
       '#fields' => array(),
     );
     // If node is -1, then we're working with default.
-    // We go with the CC defaults, anything else can be added by other modules on drupal_alter.
+    // We go with the CC defaults, anything else can be added by other modules
+    // on drupal_alter.
     $fields['salesforce_webform_map']['#fields']['cid'] = t('Campaign ID') . ' (' . t('Default webform field') . ')';
     $fields['salesforce_webform_map']['#fields']['ms'] = t('Market Source') . ' (' . t('Default webform field') . ')';
     $fields['salesforce_webform_map']['#fields']['referrer'] = t('Referrer') . ' (' . t('Default webform field') . ')';
@@ -639,10 +650,12 @@ function salesforce_donation_entity_update($entity, $type) {
   if ($type == 'salesforce_genmap_map' && $entity->map_handler == 'salesforce_donation') {
     $queue = salesforce_queue_load();
     $query = db_select('salesforce_queue', 'q');
-    $query->join('fundraiser_donation', 'fd', 'q.drupal_id = fd.did'); // Map dids, to drupal id to get access to donation nids.
+    // Map dids, to drupal id to get access to donation nids.
+    $query->join('fundraiser_donation', 'fd', 'q.drupal_id = fd.did');
     $query->fields('q')
       ->condition('q.module', 'salesforce_donation')
-      ->condition('fd.nid', $entity->nid) // Limit to the donation nids matching this node.
+      // Limit to the donation nids matching this node.
+      ->condition('fd.nid', $entity->nid)
       ->condition('q.object_type', $entity->salesforce_object_type);
     $result = $query->execute();
     foreach ($result as $item) {
