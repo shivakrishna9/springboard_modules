@@ -17,6 +17,7 @@ function commerce_authnet_fundraiser_commerce_fundraiser_gateway_info() {
     'cleanup callback' => 'commerce_authnet_fundraiser_commerce_cleanup',
     'scrub callback' => 'commerce_authnet_fundraiser_commerce_scrub',
     'expire callback' => 'commerce_authnet_fundraiser_commerce_expire',
+    'validate callback' => 'commerce_authnet_fundraiser_commerce_validate',
     'charge callback' => 'commerce_authnet_fundraiser_commerce_charge',
     'update callback' => 'commerce_authnet_fundraiser_commerce_update',
     'refund callback' => 'commerce_authnet_fundraiser_commerce_refund',
@@ -44,7 +45,7 @@ function commerce_authnet_fundraiser_commerce_cleanup($submission_fields) {
  */
 function commerce_authnet_fundraiser_commerce_scrub($payment_method, $submission_fields) {
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
-  return _fundraiser_commerce_credit_card_expire($submission_fields);
+  return _fundraiser_commerce_credit_card_scrub($payment_method, $submission_fields);
 }
 
 /**
@@ -52,7 +53,7 @@ function commerce_authnet_fundraiser_commerce_scrub($payment_method, $submission
  */
 function commerce_authnet_fundraiser_commerce_expire($submission_fields) {
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
-  return _fundraiser_commerce_credit_card_scrub($payment_method, $submission_fields);
+  return _fundraiser_commerce_credit_card_expire($submission_fields);
 }
 
 /**
