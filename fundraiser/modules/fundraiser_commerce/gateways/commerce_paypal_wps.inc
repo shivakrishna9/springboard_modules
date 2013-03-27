@@ -23,11 +23,16 @@ function commerce_paypal_wps_fundraiser_commerce_fundraiser_gateway_info() {
 /**
  * Callback function, use this form for the given gateway.
  */
-function commerce_paypal_wps_fundraiser_commerce_form($payment_method) {
-  $form['paypal_email'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Paypal email'),
-  );
+function commerce_paypal_wps_fundraiser_commerce_form($payment_method, $config) {
+  $method_instance = commerce_payment_method_instance_load($config['id']);
+  $form = array();
+
+  if (!empty($method_instance['settings']['show_payment_instructions'])) {
+    $form['paypal_wps_information'] = array(
+      '#markup' => '<span class="commerce-paypal-wps-info">' . t('After submitting the form you will be taken to PayPal to enter your payment details.') . '</span>',
+    );
+  }
+
   return $form;
 }
 
