@@ -282,7 +282,7 @@ function springboard_theme($existing, $type, $theme, $path) {
       'template' => drupal_get_path('theme', $theme) . '/templates/springboard-logo',
     ),
     'springboard_sf_status' => array(
-      'variables' => array('status' => '', 'batch_status' => ''),
+      'variables' => array('status' => '', 'batch_status' => '', 'queue' => ''),
       'template' => drupal_get_path('theme', $theme) . '/templates/springboard-sf-status',
     ),
     'springboard_jump' => array(
@@ -483,7 +483,14 @@ function _springboard_sf_status() {
   $output = '';
   if (module_exists('salesforce')) {
     // Call on the module to get the current connection status
-    $status = salesforce_get_api();
+    $sf = salesforce_get_api();
+      $status = FALSE;
+    if ($sf->isAuthorized()) {
+      $status = TRUE;
+    } else {
+      $status = FALSE;
+    }
+    //$status = $sf->isAuthorized() ? TRUE : FALSE;
     // Latest batch # total items :: success :: fail.
     $batch_status = t('Batch info unavailable, please install Salesforce Log.');
     if (module_exists('salesforce_log')) {
@@ -503,9 +510,24 @@ function _springboard_sf_status() {
         $batch_status = t('No batches processed yet.');
       }
     }
-    return theme('springboard_sf_status', array('status' => $status, 'batch_status' => $batch_status));
+    $queue = module_exists('salesforce_queue') && $status ? drupal_get_form('springboard_dashboard_queue') : '';
+    return theme('springboard_sf_status', array('status' => $status, 'batch_status' => $batch_status, 'queue' => $queue));
   }
   return 'status';
+}
+
+/**
+ * Salesforce dashboard queue processor button 
+ */
+function springboard_dashboard_queue() {
+  $form = array();
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+    '#prefix' => t('Run Springboard Sync'),
+    '#submit' => array('salesforce_queue_process_queue'),    
+  );
+  return $form;
 }
 
 /**
