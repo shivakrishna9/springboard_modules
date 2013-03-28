@@ -441,11 +441,13 @@ function sf_user_user($op, &$edit, &$account, $category = NULL) {
       if (empty($account->salesforce['sfid'])) {
         $action = 'upsert';
       }
+      _sf_user_validate_utf8($account);
       sf_queue_insert($account->uid, 'user', $action);
       break;
 
       // insert
     case 'insert':
+      _sf_user_validate_utf8($account);
       sf_queue_insert($account->uid, 'user', 'upsert');
       break;
 
@@ -797,3 +799,56 @@ function salesforce_management_api_import_fieldmap_control_user(&$user, $rule, $
       break;
   }
 }
+
+/**
+ * Validate user account for utf-8 characters incompatible with SOAP.
+ */
+function _sf_user_validate_utf8($account) {
+  $temp = (array) $account;
+  foreach ($temp as $key => $value) {
+    if (!is_array($value)) {
+      $temp[$key] = _sf_user_strip_invalid_xml_chars($value);
+    }
+  }
+  if ($account !== (object) $temp) {
+    drupal_set_message('Prophelactic save detected', 'error');
+    user_save($account);
+  }
+}
+
+ /**
+  * Removes invalid XML characters by examining each character
+  * in a string.
+  */
+ function _sf_user_strip_invalid_xml_chars($in) {
+
+    $out = ""; // Used to hold the output.
+    $current; // Used to reference the current character.
+
+    if (empty($in)) {
+      return "";
+    }
+
+    $length = strlen($in);
+
+    for ($i = 0; $i < $length; $i++) {
+
+      $current = ord($in{$i});
+
+      if (($current == 0x9) || ($current == 0xA) || ($current == 0xD) ||
+        (($current >= 0x20) && ($current <= 0xD7FF)) ||
+        (($current >= 0xE000) && ($current <= 0xFFFD)) ||
+        (($current >= 0x10000) && ($current <= 0x10FFFF))) {
+          $out .= chr($current);
+      }
+      else {
+        drupal_set_message('bs character detected and replaced: 0x' . dechex($current)); 
+        $out .= " ";
+      }
+
+    }
+
+    return $out;
+
+  }
+
