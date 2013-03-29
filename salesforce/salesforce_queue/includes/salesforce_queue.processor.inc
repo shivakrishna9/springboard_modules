@@ -597,7 +597,9 @@ class SalesforceQueueProcessor {
     while ($count > 0) {
       $count--;
       $result = $this->processBatch();
-      $results = array_merge($results, $result);
+      if (is_array($result)) {
+        $results = array_merge($results, $result);
+      }
     }
     return $results;
   }

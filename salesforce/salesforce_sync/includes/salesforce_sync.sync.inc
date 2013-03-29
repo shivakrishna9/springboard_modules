@@ -819,7 +819,7 @@ class SalesforceSync {
    *   record is returned.  Otherwise, receive FALSE.
    */
   public function fetchByIds($object_type, $fields, $ids) {
-    if (empty($ids)) {
+    if (empty($ids) || empty($ids)) {
       // If there are no Ids to fetch, there is no point wasting an API call.
       return array();
     }

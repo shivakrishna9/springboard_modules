@@ -487,6 +487,9 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *   TRUE if the item is in the queue, FALSE if the item is not
    */
   public function itemInQueue($data) {
+    if (!$this->isValidItem($data)) {
+      return FALSE;
+    }
     $count = db_select('salesforce_queue', 'q')
       ->fields('q', array('item_id'))
       ->condition('drupal_id', $data['drupal_id'])
@@ -529,5 +532,26 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
       ->fetchObject();
     $item = $this->unfoldItem($item);
     return $item;
+  }
+
+  /**
+   * Helper to check if a given array or object is valid queue data.
+   */
+  protected function isValidItem($item) {
+    $data = is_object($item) ? (array) $item : $item;
+    $required = array(
+      'drupal_id',
+      'module',
+      'delta',
+      'object_type',
+      'operation',
+      'sobject',
+    );
+    $provided = array_keys($data);
+    if (count(array_intersect($required, $provided)) < 6) {
+      // When it doesn't have all of the required fields, it is not valid.
+      return FALSE;
+    }
+    return TRUE;
   }
 }

@@ -129,8 +129,10 @@ function salesforce_log_salesforce_queue_batch_alter(&$batch, $queue, $processor
 function salesforce_log_salesforce_sync_fail_item($item, $message, $result) {
   $record = _salesforce_log_prepare_item_record($item);
   $record->status = 'failed';
-  $record->error_code = !empty($result->faultcode) ? $result->faultcode : $result->errors[0]->statusCode;
-  $record->message = !empty($result->faultstring) ? $result->faultstring : $result->errors[0]->message;
+  if (is_object($result)) {
+    $record->error_code = !empty($result->faultcode) ? $result->faultcode : $result->errors[0]->statusCode;
+    $record->message = !empty($result->faultstring) ? $result->faultstring : $result->errors[0]->message;
+  }
   $primary_keys = isset($record->lid) ? array('lid') : array();
   drupal_write_record('salesforce_log_item', $record, $primary_keys);
 }
@@ -181,15 +183,15 @@ function _salesforce_log_array_filter_batch_successes($result) {
 function _salesforce_log_prepare_item_record($item) {
   $record = new stdClass();
   // Values from the queue.
-  $record->item_id = $item->item_id;
-  $record->drupal_id = $item->drupal_id;
-  $record->module = $item->module;
-  $record->delta = $item->delta;
+  $record->item_id = isset($item->item_id) ? $item->item_id : 0;
+  $record->drupal_id = isset($item->drupal_id) ? $item->drupal_id : 0;
+  $record->module = isset($item->module) ? $item->module : '';
+  $record->delta = isset($item->delta) ? $item->delta : '';
   $record->object_type = $item->object_type;
   $record->operation = $item->operation;
-  $record->dedupe_field = $item->dedupe_field;
-  $record->retries = $item->retries;
-  $record->queue = $item->queue;
+  $record->dedupe_field = isset($item->dedupe_field) ? $item->dedupe_field : NULL;
+  $record->retries = isset($item->retries) ? $item->retries : 0;
+  $record->queue = isset($item->queue) ? $item->queue : '';
   $record->sobject = json_encode($item->sobject);
 
   // Values from the log process.
