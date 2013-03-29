@@ -182,6 +182,24 @@ function salesforce_queue_action_info() {
 }
 
 /**
+ * Implements hook_salesforce_log_info().
+ */
+function salesforce_queue_salesforce_log_info() {
+  return array(
+    'watchdog' => array(
+      'queue-01' => t('Item failed to be added to queue'),
+      'queue-02' => t('Claim items failed, queue is leased'),
+      'queue-03' => t('QueueProcessor failed: Salesforce not authorized'),
+      'queue-04' => t('QueueProcessor Failed: SalesforceSoapPartner unusable'),
+      'queue-05' => t('QueueProcessor found only invalid items'),
+      'queue-06' => t('QueueProcessor claimed no items: Queue is leased'),
+      'queue-07' => t('QueueProcessor found no items'),
+      'queue-08' => t("QueueProcessor claimed no items: Reason unknown"),
+    ),
+  );
+}
+
+/**
  * Wrapper to load a SalesforceQueue object.
  *
  * @param string $queue_name

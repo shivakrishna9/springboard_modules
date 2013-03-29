@@ -101,8 +101,15 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *   returns SAVED_NEW or SAVED_UPDATED, depending on the operation performed.
    */
   public function createItem($data) {
-    $keys = array();
+    // Abort if we did not receive a valid item that can be queued.
+    if (!$this->isValidItem($data)) {
+      // Send an error to admin that we couldn't save to the queue.
+      watchdog('salesforce', '[!id] Submitted item could not be queued.',
+        array('!id' => 'queue-01'), WATCHDOG_CRITICAL);
+      return FALSE;
+    }
 
+    $keys = array();
     if ($this->itemInQueue($data)) {
       // If this item is in the queue, replace the original.
       // With drupal_write_record, replacement is just a matter of filling in
@@ -349,7 +356,10 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
       }
     }
     else {
-      // @TODO log message
+      // Send a warning that there was an attempt to claim items when the queue
+      // was leased.
+      watchdog('salesforce', '[!id] A claim was attempted on a leased queue.',
+        array('!id' => 'queue-02'), WATCHDOG_DEBUG);
     }
     return empty($items) ? FALSE : $items;
   }
@@ -479,6 +489,9 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *   TRUE if the item is in the queue, FALSE if the item is not
    */
   public function itemInQueue($data) {
+    if (!$this->isValidItem($data)) {
+      return FALSE;
+    }
     $count = db_select('salesforce_queue', 'q')
       ->fields('q', array('item_id'))
       ->condition('drupal_id', $data['drupal_id'])
@@ -521,5 +534,26 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
       ->fetchObject();
     $item = $this->unfoldItem($item);
     return $item;
+  }
+
+  /**
+   * Helper to check if a given array or object is valid queue data.
+   */
+  protected function isValidItem($item) {
+    $data = is_object($item) ? (array) $item : $item;
+    $required = array(
+      'drupal_id',
+      'module',
+      'delta',
+      'object_type',
+      'operation',
+      'sobject',
+    );
+    $provided = array_keys($data);
+    if (count(array_intersect($required, $provided)) < 6) {
+      // When it doesn't have all of the required fields, it is not valid.
+      return FALSE;
+    }
+    return TRUE;
   }
 }

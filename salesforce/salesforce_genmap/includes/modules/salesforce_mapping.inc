@@ -501,8 +501,10 @@ function salesforce_mapping_send_entity_to_queue($entity, $entity_type, $op) {
   $queue = salesforce_queue_load();
   $result = $queue->createItem($item);
   if (!$result) {
-    // @TODO Send an error to admin that submission didn't go to queue
-    drupal_set_message(t('The submission was not sent to Salesforce.'), 'error');
+    // salesforce_set_message() is a wrapper for drupal_set_message() that will
+    // restrict this message to appear only to those with the
+    // 'administer salesforce' permission.
+    salesforce_set_message(t('The submission was not sent to Salesforce.'), 'error');
   }
 }
 
