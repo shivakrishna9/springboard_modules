@@ -1010,11 +1010,12 @@ class SalesforceSync {
    */
   protected function buildQueries($object_type, array $conditions, $query_splits = 0) {
     $queries = array();
+    $query_count = $query_splits;
 
     // Build the first part of the query.  We will be stubbing out the same
     // number of queries as $query_splits there are (counting base 0).
     $select_sql = 'SELECT Id FROM ' . $object_type;
-    $i = $query_splits;
+    $i = $query_count;
     while ($i >= 0) {
       $queries[$i] = $select_sql;
       $i--;
@@ -1038,7 +1039,7 @@ class SalesforceSync {
           }
 
           // Append the condition to each query.
-          $i = $query_splits;
+          $i = $query_count;
           while ($i >= 0) {
             $queries[$i] .= ($key == 0 ? ' WHERE' : ' AND');
             $queries[$i] .= ' ' . $field . ' ' . $op . ' ' . $value;
@@ -1049,25 +1050,22 @@ class SalesforceSync {
         // divide the values of the array into the number of splits requested.
         elseif ($query_splits > 0 && is_array($condition['value'])) {
           $chunk_size = count($condition['value']) / ($query_splits + 1);
-          if ($chunk_size <= ($query_splits + 2)) {
-            // This query is hopeless, forget about it.
-            watchdog('salesforce_sync', '[!id] Query to Salesforce exceeded 10,000 characters.',
-              array(
-                '!id' => 'sync-08',
-              ), WATCHDOG_ALERT);
-            return array();
-          }
           $value_chunks = array_chunk($condition['value'], $chunk_size);
-          foreach ($value_chunks as $i => $value_chunk) {
+          $new_queries = array();
+          foreach ($value_chunks as $value_chunk) {
             $value = " ('" . implode("', '", $value_chunk) . "')";
-            $queries[$i] .= ($key == 0 ? ' WHERE' : ' AND');
-            $queries[$i] .= ' ' . $field . ' ' . $op . ' ' . $value;
+            $operation = $field . ' ' . $op . ' ' . $value;
+            foreach ($queries as $i => $query) {
+              $new_queries[] = $query . ($key == 0 ? ' WHERE' : ' AND') . ' ' . $operation;
+            }
           }
+          $query_count = count($new_queries);
+          $queries = $new_queries;
         }
       }
       // Plain old strings can be passed straight on through to the query.
       elseif (is_string($condition)) {
-        $i = $query_splits;
+        $i = $query_count;
         while ($i >= 0) {
           $queries[$i] .= ($key == 0 ? ' WHERE' : ' AND');
           $queries[$i] .= ' ' . $condition;
@@ -1080,8 +1078,20 @@ class SalesforceSync {
     }
 
     if (strlen($queries[0]) > $this->maxQueryLength) {
-      $query_splits++;
-      $this->buildQueries($object_type, $conditions, $query_splits);
+      // 3 tries is enough.  After that, give up.
+      if ($query_splits < 2) {
+        $query_splits++;
+        return $this->buildQueries($object_type, $conditions, $query_splits);
+      }
+      else {
+        // This query is hopeless, forget about it.
+        watchdog('salesforce', '[!id] Query to Salesforce exceeded limit of !char_limit characters.',
+          array(
+            '!id' => 'sync-08',
+            '!char_limit' => $this->maxQueryLength,
+          ), WATCHDOG_ALERT);
+        return array();
+      }
     }
     else {
       return $queries;
