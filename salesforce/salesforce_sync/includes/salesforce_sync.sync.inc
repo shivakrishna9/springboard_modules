@@ -323,6 +323,7 @@ class SalesforceSync {
       $this->setSalesforceSoap();
     }
     $this->batchReplaceTokens($batch);
+    $this->batchRemoveBadTokens($batch);
     $this->batchConvertToSalesforceFormat($batch);
     $this->batchApplySalesforceSyncRules($batch);
     $batch['batch_prepared'] = TRUE;
@@ -352,6 +353,44 @@ class SalesforceSync {
    */
   public function batchReplaceTokens(&$batch) {
     $this->tokenScanner->batchTokenReplace($batch);
+  }
+
+  /**
+   * Remove items from batches that have bad tokens.
+   *
+   * Uses a SalesforceSyncTokenScanner instance to search for and replace
+   * relationship tokens in a batch of items.
+   *
+   * @param array $batch
+   *   An array of instructions to send to Salesforce.  The array is structured
+   *   as follows:
+   *   <code>
+   *     $batch = array(
+   *       'operation' => 'UPSERT',
+   *       'dedupe_field' => 'Email',
+   *       'items' => array(
+   *         array of items...
+   *       ),
+   *       'sobjects' => array(
+   *         array of sobjects...
+   *       ),
+   *     );
+   *   </code>
+   */
+  public function batchRemoveBadTokens(&$batch) {
+    if (!isset($batch['sobjects'])) {
+      // Some batches do not have sobjects, such as delete.
+      return;
+    }
+    foreach ($batch['sobjects'] as $index => $sobject) {
+      if (isset($sobject->tokens_replaced ) && $sobject->tokens_replaced == FALSE) {
+        // Fail the item
+        $this->failItem($batch['items'][$index], SALESFORCE_SYNC_ITEM_FAIL_TOKEN);
+        // Unset the object, and the item.
+        unset($batch['sobjects'][$index]);
+        unset($batch['items'][$index]);
+      }
+    }
   }
 
   /**
