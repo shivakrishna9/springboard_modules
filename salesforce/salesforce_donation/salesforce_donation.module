@@ -208,8 +208,8 @@ function salesforce_donation_fundraiser_donation_success($donation) {
 function salesforce_donation_fundraiser_refund_success($refund) {
   // Reload donation to be sure to get everything we need from submission table
   // then send to queue.
-  $donation->is_refund = TRUE;
   $donation = fundraiser_donation_get_donation($refund->did, TRUE);
+  $donation->is_refund = TRUE;
   // This is standalone, or the first in a recurring set.
   salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $donation->node, $donation->did, $donation, 'donation');
 }
@@ -410,7 +410,7 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
     }
   }
   // Detect refund, if this is a donation object representing a refund:
-  if (!empty($donation->is_refund) && $donation->is_refund != FALSE) {
+  if (!empty($donation->is_refund) && $donation->is_refund == TRUE) {
     if (is_array($donation->refunds)) {
       // Get the latest reason and amount.
       foreach ($donation->refunds as $refund) {
