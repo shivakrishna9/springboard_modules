@@ -1339,6 +1339,8 @@ function fundraiser_commerce_fundraiser_refund_process($refund) {
       $donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->status);
     }
     $refund->donation = $donation;
+    $refund->receipt_id = $donation->result['data']['remote_id'];
+    $refund->txn_id = $donation->result['data']['txn_id'];
   }
 }
 
