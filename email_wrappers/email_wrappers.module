@@ -387,7 +387,7 @@ function email_wrappers_mail_alter(&$message) {
       //
       // Note: other modules may set extra['send_on_submission'] to FALSE to defer sending an email.
 
-      if (isset($extra['send_on_submission']) && $extra['send_on_submission'] === TRUE) {
+      if (!isset($extra['send_on_submission']) || $extra['send_on_submission'] === TRUE) {
         drupal_mail('email_wrappers', 'wf_submission', $message['to'], user_preferred_language($account), $params);
       }
       else {
