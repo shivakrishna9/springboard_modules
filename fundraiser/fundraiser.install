@@ -165,7 +165,7 @@ function fundraiser_schema() {
   $schema['fundraiser_refund'] = array(
     'description' => 'Stores information about refunds made on donations',
     'fields' => array(
-      'refund_id' => array(
+      'rid' => array(
         'description' => 'Primary key: refund ID',
         'type' => 'serial',
         'unsigned' => TRUE,
@@ -179,6 +179,13 @@ function fundraiser_schema() {
       'receipt_id' => array(
         'description' => 'Donation ID, for the refund record for this given refund',
         'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'status' => array(
+        'description' => 'The status of the donation in the charge system.',
+        'type' => 'varchar',
+        'length' => '255',
+        'default' => 'no_status',
         'not null' => TRUE,
       ),
       'amount' => array(
@@ -217,8 +224,7 @@ function fundraiser_schema() {
         'default' => 0,
       ),
     ),
-    'primary key' => array('refund_id'),
-    'indexes' => array('refund_did' => array('did')),
+    'primary key' => array('rid'),
   );
   $schema['fundraiser_tracking'] = array(
     'description' => 'Store conversion & pageview information for donation forms.',

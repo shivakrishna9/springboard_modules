@@ -1704,6 +1704,21 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
     '#collapsible' => FALSE,
     '#collapsed' => FALSE,
   );
+  $refund_summary = array();
+  $refunded_total = 0;
+  if (is_array($donation->refunds)) {
+    foreach ($donation->refunds as $refund) {
+      $refunded_total += abs($refund->amount);
+      $refund_summary[] = t('Refund #%id for $%amount on %date.',
+        array('%id' => $refund->did, '%amount' => abs($refund->amount),
+          '%date' => date('m/d/y', isset($refund->created) ? $refund->created : 0)
+        )
+      ); //TODO fix up value display for international.
+    }
+    $refund_summary = !empty($refund_summary) ? theme('item_list', array('items' => $refund_summary)) : t('No refunds have been made.');
+    $refunded_total = $refunded_total;
+  }
+  // Display form.
   if ($donation->refunds == FALSE) {
     $form['payment_summary']['no_payments'] = array(
       '#type' => 'item',
@@ -1712,37 +1727,23 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
       '#suffix' => '</div>',
     );
   }
-  else {
-    $refund_summary = array();
-    $refunded_total = 0;
-    foreach ($donation->refunds as $refund) {
-      $refunded_total += abs($refund->amount);
-      $refund_summary[] = t('Refund #%id for $%amount on %date.',
-        array('%id' => $refund->did, '%amount' => abs($refund->amount),
-          '%date' => date('m/d/y', $refund->created))); //TODO fix up value display for international.
-    }
-    $refund_summary = !empty($refund_summary) ? theme('item_list', array('items' => $refund_summary)) : t('No refunds have been made.');
-    $refunded_total = $refunded_total;
-    
-    $form['payment_summary']['payment_total'] = array(
+  $form['payment_summary']['payment_total'] = array(
+    '#type' => 'item',
+    '#title' => t('Payment Total'),
+    '#markup' => $donation->donation['amount'],
+  );
+  $form['payment_summary']['refunded_total'] = array(
+    '#type' => 'item',
+    '#title' => t('Refunded Total'),
+    '#markup' => $refunded_total,
+  );
+  if (!empty($refund_summary)) {
+    $form['payment_summary']['refunded_summary'] = array(
       '#type' => 'item',
-      '#title' => t('Payment Total'),
-      '#markup' => $donation->donation['amount'],
+      '#title' => t('Previously Refunded'),
+      '#markup' => $refund_summary,
     );
-    $form['payment_summary']['refunded_total'] = array(
-      '#type' => 'item',
-      '#title' => t('Refunded Total'),
-      '#markup' => $refunded_total,
-    );
-    if (!empty($refund_summary)) {
-      $form['payment_summary']['refunded_summary'] = array(
-        '#type' => 'item',
-        '#title' => t('Previously Refunded'),
-        '#markup' => $refund_summary,
-      );
-    }
   }
-
   // Form for submitting a refund.
   $form['refund_options'] = array(
     '#type' => 'fieldset',
@@ -1910,8 +1911,9 @@ function _fundraiser_refund_form_submit($form, &$form_state) {
   $refund->amount = $amount;
   $refund->currency = $donation->currency;
   $refund->reason = $form_state['values']['refund_notes'];
-  fundraiser_refund_create($refund);
+  $refund = fundraiser_refund_create($refund);
   // Then process it.
+  $refund->new_status = $new_status;
   fundraiser_refund_process($refund);
   // At this point $donation->result is set and responses can be handled.
   if (!isset($refund->result['message'])) {
@@ -1958,22 +1960,18 @@ function fundraiser_refund_get_refunds_by_did($did, $refresh = FALSE) {
 function fundraiser_refund_create($refund) {
   // Call hooks to create the donation. The glue module handles everything else once handed fundraisers info.
   module_invoke_all('fundraiser_refund_create', $refund);
+  $refund->receipt_id = 'no_receipt';
+  $refund->status = 'unknown';
+  $refund->txn_id = '';
+  $refund->created = REQUEST_TIME;
+  $refund->changed = REQUEST_TIME;
   // Create the record
-  $refund_record = array(
-    'did' => $refund->did,
-    'receipt_id' => '',
-    'amount' => $refund->amount,
-    'currency' => $refund->currency,
-    'txn_id' => '',
-    'reason' => $refund->reason,
-    'created' => REQUEST_TIME,
-    'changed' => REQUEST_TIME,
-  );
-  _fundraiser_create_refund($refund_record);
+  $refund = _fundraiser_create_refund($refund);
   // Refresh the cache. No need to change the donation object passed in, but stored values should be zapped.
-  fundraiser_refund_get_refund($refund->rid, TRUE);
+  $refund = fundraiser_refund_get_refund($refund->rid, TRUE);
   // Respond after the update of a donation.
   module_invoke_all('fundraiser_refund_post_create', $refund);
+  return $refund;
 }
 
 /**
@@ -1982,9 +1980,11 @@ function fundraiser_refund_create($refund) {
 function fundraiser_refund_update($refund) {
   // Call hooks to create the donation. The glue module handles everything else once handed fundraisers info.
   module_invoke_all('fundraiser_refund_update', $refund);
-  _fundraiser_update_refund($refund);
+  $refund->receipt_id = isset($refund->receipt_id) ? $refund->receipt_id : 'no_receipt';
+  $refund->changed = REQUEST_TIME;
+  $refund = _fundraiser_update_refund($refund);
   // Refresh the cache. No need to change the donation object passed in, but stored values should be zapped.
-  fundraiser_refund_get_refund($refund->rid, TRUE);
+  $refund = fundraiser_refund_get_refund($refund->rid, TRUE);
   // Respond after the update of a donation.
   module_invoke_all('fundraiser_refund_post_update', $refund);
 }
@@ -1998,7 +1998,7 @@ function fundraiser_refund_process($refund) {
   // And save the refund as it is at this stage since it was created.
   // This makes sure that any changes made stay in place.
   fundraiser_refund_update($refund, FALSE);
-  if (!empty($refund->donation) {
+  if (!empty($refund->donation)) {
     fundraiser_donation_update($refund->donation, FALSE);
   }
   // Respond after the update of a donation.
@@ -2012,8 +2012,8 @@ function fundraiser_refund_success($refund) {
   drupal_set_message(t('Refund has been issued.'));
   // Allow other modules to respond to the refund success. Such as SF modules.
   module_invoke_all('fundraiser_refund_success', $refund);
-  _fundraiser_update_refund($refund, FALSE);
-  if (!empty($refund->donation) {
+  fundraiser_refund_update($refund, FALSE);
+  if (!empty($refund->donation)) {
     fundraiser_donation_update($refund->donation, FALSE);
   }
 }
@@ -2027,8 +2027,8 @@ function fundraiser_refund_decline($refund) {
   drupal_set_message($refund->result['message'], 'error');
   // Allow other modules to respond to the refund decline.
   module_invoke_all('fundraiser_refund_decline', $refund);
-  _fundraiser_update_refund($refund, FALSE);
-  if (!empty($refund->donation) {
+  fundraiser_refund_update($refund, FALSE);
+  if (!empty($refund->donation)) {
     fundraiser_donation_update($refund->donation, FALSE);
   }
 }
@@ -2044,18 +2044,12 @@ function fundraiser_refund_get_refund($rid, $refresh = FALSE) {
   }
   // If refreshing, or first load, pull all data from database.
   $refund = (object) array();
-  $refund->rid = $refund->refund_id = $rid;
+  $refund->rid = $rid;
   // Grab basic data from our own systems.
   $refund_record = _fundraiser_get_refund_by_rid($rid);
-  $refund->did = $refund_record->did;
-  $refund->receipt_id = $refund_record->receipt_id;
-  $refund->amount = $refund_record->amount;
-  $refund->currency = $refund_record->currency;
-  $refund->txn_id = $refund_record->txn_id;
-  $refund->reason = $refund_record->reason;
   // Store the refund information into the cache.
-  $refunds[$rid] = $refund;
-  return $refund;
+  $refunds[$rid] = $refund_record;
+  return $refund_record;
 }
 
 /**
@@ -2412,16 +2406,16 @@ function _fundraiser_create_refund($refund) {
   $refund = (array) $refund;
   // Check for old data.
   $refund_data = FALSE;
-  if (isset($refund['refund_id'])) {
-    $refund_data = _fundraiser_get_refund_by_rid($refund['refund_id']);
+  if (isset($refund['rid'])) {
+    $refund_data = _fundraiser_get_refund_by_rid($refund['rid']);
   }
   if (!$refund_data) {
-    $record = $refund;
-    drupal_write_record('fundraiser_refund', $record);
+    drupal_write_record('fundraiser_refund', $refund);
   }
   else {
-    _fundraiser_update_refund($refund);
+    $refund = _fundraiser_update_refund($refund);
   }
+  return (object) $refund;
 }
 
 /**
@@ -2429,7 +2423,7 @@ function _fundraiser_create_refund($refund) {
  */
 function _fundraiser_get_refund_by_rid($rid) {
   return db_query('SELECT * FROM {fundraiser_refund} ' .
-    'WHERE refund_id = :rid',
+    'WHERE rid = :rid',
     array(':rid' => $rid))->fetchObject();
 }
 
@@ -2441,23 +2435,24 @@ function _fundraiser_update_refund($refund) {
   $refund = (array) $refund;
   // Check for old data.
   $refund_data = FALSE;
-  if (isset($refund['refund_id'])) {
-    $refund_data = _fundraiser_get_refund_by_rid($refund['refund_id']);
+  if (isset($refund['rid'])) {
+    $refund_data = _fundraiser_get_refund_by_rid($refund['rid']);
   }
   if (!$refund_data) {
-    _fundraiser_create_refund($refund);
+    $refund = _fundraiser_create_refund($refund);
   }
   else {
     $record = array_merge((array) $refund_data, $refund); // Merge data together so we get everything in the record.
-    drupal_write_record('fundraiser_refund', $refund, 'refund_id');
+    drupal_write_record('fundraiser_refund', $refund, 'rid');
   }
+  return (object) $refund;
 }
 
 /**
  * CRUD style DB function for fundraiser_refund.
  */
 function _fundraiser_delete_refund($rid) {
-  db_delete('fundraiser_refund')->condition('refund_id', $rid)->execute();
+  db_delete('fundraiser_refund')->condition('rid', $rid)->execute();
 }
 
 /**
@@ -2512,8 +2507,8 @@ function _fundraiser_create_tracking($tracking) {
       'gateway_failures' => 0,
       'latest_load_time' => 0,
     );
-    $record = array_merge($record, $tracking);
-    drupal_write_record('fundraiser_tracking', $record);
+    $tracking = array_merge($record, $tracking);
+    drupal_write_record('fundraiser_tracking', $tracking);
   }
   else {
     _fundraiser_update_tracking($tracking);
