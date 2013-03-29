@@ -131,7 +131,8 @@ function salesforce_log_salesforce_sync_fail_item($item, $message, $result) {
   $record->status = 'failed';
   $record->error_code = !empty($result->faultcode) ? $result->faultcode : $result->errors[0]->statusCode;
   $record->message = !empty($result->faultstring) ? $result->faultstring : $result->errors[0]->message;
-  drupal_write_record('salesforce_log_item', $record, array('lid'));
+  $primary_keys = isset($record->lid) ? array('lid') : array();
+  drupal_write_record('salesforce_log_item', $record, $primary_keys);
 }
 
 /**
@@ -141,7 +142,8 @@ function salesforce_log_salesforce_sync_pass_item($item, $result) {
   $record = _salesforce_log_prepare_item_record($item);
   $record->status = 'synced';
   $record->sfid = $result->id;
-  drupal_write_record('salesforce_log_item', $record, array('lid'));
+  $primary_keys = isset($record->lid) ? array('lid') : array();
+  drupal_write_record('salesforce_log_item', $record, $primary_keys);
 }
 
 /**
