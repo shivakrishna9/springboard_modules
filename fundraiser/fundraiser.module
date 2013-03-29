@@ -1664,7 +1664,7 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
   $donation->form_url = $donation_record->form_url;
   // And has refund grab them too
   $donation->refunds = FALSE;
-  $donation->refunds = fundraiser_refund_get_refunds_by_did($did);
+  $donation->refunds = fundraiser_refund_get_refunds_by_did($did, TRUE);
   // Call hooks to re-create the donation info.
   // The glue modules handle everything else once handed fundraisers info.
   module_invoke_all('fundraiser_donation_get_donation', $donation);
