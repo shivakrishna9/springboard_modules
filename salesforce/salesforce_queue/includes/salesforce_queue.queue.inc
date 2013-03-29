@@ -101,8 +101,15 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *   returns SAVED_NEW or SAVED_UPDATED, depending on the operation performed.
    */
   public function createItem($data) {
-    $keys = array();
+    // Abort if we did not receive a valid item that can be queued.
+    if (!$this->isValidItem($data)) {
+      // Send an error to admin that we couldn't save to the queue.
+      watchdog('salesforce', '[!id] Submitted item could not be queued.',
+        array('!id' => 'queue-01'), WATCHDOG_CRITICAL);
+      return FALSE;
+    }
 
+    $keys = array();
     if ($this->itemInQueue($data)) {
       // If this item is in the queue, replace the original.
       // With drupal_write_record, replacement is just a matter of filling in
@@ -130,11 +137,6 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
     // Insert this baby.
     $data['sobject'] = json_encode($data['sobject']);
     $result = drupal_write_record('salesforce_queue', $data, $keys);
-    if (!$result) {
-      // Send an error to admin that we couldn't save to the queue.
-      watchdog('salesforce', '[!id] The submitted item could not be added to the queue.',
-        array('!id' => 'queue-01'), WATCHDOG_CRITICAL);
-    }
 
     // Invoke hook_salesforce_queue_create_item().
     module_invoke_all('salesforce_queue_create_item', $data, $result);

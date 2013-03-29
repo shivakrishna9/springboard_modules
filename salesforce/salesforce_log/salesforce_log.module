@@ -213,3 +213,160 @@ function _salesforce_log_item_entity_delete($lid) {
     ->condition('lid', $lid)
     ->execute();
 }
+
+/**
+ * Helper to return a list of handler modules, or information on a specific one.
+ */
+function salesforce_log_info($module = NULL) {
+  static $modules;
+  if (empty($modules)) {
+    // Gather modules that provide mapping support for generic objects.
+    $modules = module_invoke_all('salesforce_log_info');
+    drupal_alter('salesforce_log_info', $modules);
+  }
+  if (is_null($module)) {
+    return $modules;
+  }
+  return isset($modules[$module]) ? $modules[$module] : array();
+}
+
+/**
+ * Implements hook_salesforce_log_info().
+ */
+function salesforce_log_salesforce_log_info() {
+  return array(
+    'watchdog' => array(
+      'log-00' => t('Any log message about Salesforce'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_token_info().
+ */
+function salesforce_log_token_info() {
+  // Tokens taken from logging_alerts/watchdog_rules module.
+  $type = array(
+    'name' => t('Watchdog tokens'),
+    'description' => t('Watchdog tokens'),
+    'needs-data' => 'watchdog',
+  );
+  $watchdog['ip'] = array(
+    'name' => t("Watchdog ip"),
+    'description' => t('The IP address where the request for the page came from.'),
+  );
+  $watchdog['link'] = array(
+    'name' => t("Watchdog link"),
+    'description' => t('An informational link provided by the module calling watchdog.'),
+  );
+  $watchdog['message'] = array(
+    'name' => t("Watchdog message"),
+    'description' => t('The text of the message to be logged.'),
+  );
+  $watchdog['referer'] = array(
+    'name' => t("Watchdog referer"),
+    'description' => t('The page that referred the user to the page where the event occurred.'),
+  );
+  $watchdog['request_uri'] = array(
+    'name' => t("Watchdog request URI"),
+    'description' => t('The request URI for the page the event happened in.'),
+  );
+  $watchdog['severity'] = array(
+    'name' => t("Watchdog severity"),
+    'description' => t('The degree of severity of the event.'),
+  );
+  $watchdog['timestamp'] = array(
+    'name' => t("Watchdog timestamp"),
+    'description' => t('The UNIX timetamp of the date/time the event occurred.'),
+  );
+
+  return array(
+    'types' => array('watchdog' => $type),
+    'tokens' => array('watchdog' => $watchdog),
+  );
+}
+
+/**
+ * Implements hook_tokens().
+ */
+function salesforce_log_tokens($type, $object = NULL, $options = array()) {
+  // Tokens taken from logging_alerts/watchdog_rules module.
+  $tokens = array();
+  if ($type == 'watchdog' || $type == 'all') {
+    $tokens = array(
+      'ip' => $object['ip'],
+      'link' => $object['link'],
+      'message' => $object['message'],
+      'request_uri' => $object['request_uri'],
+      'referer' => $object['referer'],
+      'severity' => $object['severity'],
+      'timestamp' => $object['timestamp'],
+    );
+    return $tokens;
+  }
+}
+
+/**
+ * Implements hook_trigger_info().
+ */
+function salesforce_log_trigger_info() {
+  $triggers = array();
+  $module_info = salesforce_log_info();
+  foreach ($module_info['watchdog'] as $id => $label) {
+    $triggers['salesforce_log-' . $id] = array(
+      'label' => $label,
+    );
+  }
+  return array(
+    'salesforce_log' => $triggers,
+  );
+}
+
+/**
+ * Implements hook_watchdog().
+ */
+function salesforce_log_watchdog($watchdog_message) {
+  $msg = &$watchdog_message;
+  // Execute that an event as occured when a Salesforce message comes through
+  // and the rules and trigger modules are enabled.
+  if ($watchdog_message['type'] == 'salesforce' && (module_exists('rules') || module_exists('trigger'))) {
+    // The 'Any Salesforce message' event is always included.
+    $ids = array('salesforce_log-log-00');
+    if (isset($watchdog_message['variables']['!id'])) {
+      $ids[] = 'salesforce_log-' . $watchdog_message['variables']['!id'];
+    }
+    global $user;
+    foreach ($ids as $id) {
+      // Support the rules module.
+      if (module_exists('rules')) {
+        rules_invoke_event($id,
+          (!empty($msg['ip']) ? $msg['ip'] : ''),
+          (!empty($msg['link']) ? $msg['link'] : ''),
+          (!empty($msg['message']) ? $msg['message'] : ''),
+          (!empty($msg['referer']) ? $msg['referer'] : ''),
+          (!empty($msg['request_uri']) ? $msg['request_uri'] : ''),
+          (!empty($msg['severity']) ? $msg['severity'] : 7),
+          (!empty($msg['timestamp']) ? $msg['timestamp'] : 0),
+          (!empty($msg['uid']) ? $msg['uid'] : 0),
+          (!empty($msg['user']) ? $msg['user'] : $user)
+        );
+      }
+      // Support the trigger module.
+      // The rules module is much more robust, however, it is also much more
+      // combersome.  Having trigger as a fallback allows for critical messages
+      // to continue to get through if the rules module needs to be throttled
+      // during high load.
+      if (module_exists('trigger')) {
+        global $user;
+        foreach ($ids as $id) {
+          $aids = trigger_get_assigned_actions($id);
+          $context = array(
+            'hook' => 'watchdog',
+            'user' => $user,
+          );
+          actions_do(array_keys($aids), $watchdog_message, $context);
+        }
+      }
+    }
+  }
+}

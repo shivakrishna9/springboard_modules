@@ -270,6 +270,26 @@ function salesforce_sync_delete_map($record) {
 }
 
 /**
+ * Implements hook_salesforce_log_info().
+ */
+function salesforce_sync_salesforce_log_info() {
+  return array(
+    'watchdog' => array(
+      'sync-01' => t('Item failed to sync'),
+      'sync-02' => t('Item failed to delete'),
+      'sync-03' => t('Batch failed to sync'),
+      'sync-04' => t('Fetch records by Id failed'),
+      'sync-05' => t('Fetch records by Id gave bad results'),
+      'sync-06' => t('Salesforce query failed'),
+      'sync-07' => t('Salesforce query could not fetch all'),
+      'sync-08' => t('Query cannot be shortened under max length'),
+      'sync-10' => t('SalesforceAPI is unauthorized'),
+      'sync-11' => t('SalesforceSoapPartner is unusable'),
+    ),
+  );
+}
+
+/**
  * Helper to grab the record id of a map.
  */
 function _salesforce_sync_get_rmid($item) {

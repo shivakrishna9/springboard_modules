@@ -17,3 +17,5 @@ files[] = includes/salesforce_log_handler_filter_module.inc
 files[] = includes/salesforce_log_handler_filter_object_type.inc
 files[] = includes/salesforce_log_handler_field_sobject.inc
 files[] = includes/salesforce_log_handler_field_drupal_id.inc
+files[] = tests/salesforce_log.rules.test
+files[] = tests/salesforce_log.test
