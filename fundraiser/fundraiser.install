@@ -413,3 +413,50 @@ function fundraiser_update_7002() {
     db_add_field('fundraiser_donation', $fieldname, $new_field);
   }
 }
+
+/**
+ * D7 update hook - added for ease during QA testing.
+ */
+function fundraiser_update_7003() {
+  $new_fields = array(
+    'rid' => array(
+      'description' => 'Primary key: refund ID',
+      'type' => 'serial',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+    ),
+    'status' => array(
+      'description' => 'The status of the donation in the charge system.',
+      'type' => 'varchar',
+      'length' => '255',
+      'default' => 'no_status',
+      'not null' => TRUE,
+    ),
+    'created' => array(
+      'description' => 'The Unix timestamp when the donation was created.',
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+    ),
+    'changed' => array(
+      'description' => 'The Unix timestamp when the donation was most recently updated.',
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+    ),
+  );
+  foreach ($new_fields as $fieldname => $new_field) {
+    db_add_field('fundraiser_refund', $fieldname, $new_field);
+  }
+  db_drop_primary_key('fundraiser_refund');
+  $new_fields = array(
+    'rid' => array(
+      'description' => 'Primary key: refund ID',
+      'type' => 'serial',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+    ),
+  );
+  db_change_field('fundraiser_refund', 'rid', 'rid', $new_fields['rid'], array('primary key' => array('rid')));
+  db_drop_field('fundraiser_refund', 'refund_id');
+}
