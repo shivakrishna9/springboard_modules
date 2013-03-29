@@ -90,7 +90,7 @@ class SalesforceSyncTestCase extends SalesforceTestCase {
         'fields' => array(
           'Name' => FALSE,
           'Type' => FALSE,
-          'AccountNumber' => FALSE,
+          'Industry' => FALSE,
         ),
       ),
       'Contact' => array(
