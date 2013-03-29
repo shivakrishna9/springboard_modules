@@ -804,15 +804,51 @@ function salesforce_management_api_import_fieldmap_control_user(&$user, $rule, $
  * Validate user account for utf-8 characters incompatible with SOAP.
  */
 function _sf_user_validate_utf8($account) {
-  $temp = (array) $account;
-  foreach ($temp as $key => $value) {
-    if (!is_array($value)) {
-      $temp[$key] = _sf_user_strip_invalid_xml_chars($value);
+  $account_temp = $account;
+
+  // Building some helper arrays for dealing with user profile fields
+  // Due to some odd behavior on the part of profile module when
+  // dealing with hidden profile fields we need to explicitly
+  // save profile field changes in addition to updating the
+  // user record via user_save().
+  if (module_exists('profile')) {
+    $cat_array = profile_categories();
+    $fields = $cat_array;
+
+    foreach ($cat_array as $cat) {
+      $category_name = $cat['name'];
+      $results = _sf_user_profile_get_fields_by_Cat($category_name);
+      foreach ($results as $field) {
+        $field_name = $field['name'];
+        $profile_fields[$field_name] = $category_name;
+        $categories[$category_name][$field_name] = isset($account->$field_name) ? $account->field_name : '';        
+      }
     }
   }
-  if ($account !== (object) $temp) {
-    drupal_set_message('Prophelactic save detected', 'error');
+
+  $save = FALSE;
+  foreach ((array) $account_temp as $key => $value) {
+    if (!is_array($value)) {
+      $new_value = _sf_user_strip_invalid_xml_chars($value);
+      if ($new_value !== $value) {
+        // change detected, update account object and prep
+        // profile fields for save
+        $account->$key == $new_value;
+        $category == $profile_fields[$key];
+        $categories[$category][$key] = $new_value;
+        $save = TRUE;        
+      }
+    }
+  }
+  // one or more bogus characters was filtered, we need to re-save
+  // the user object and it's profile fields.
+  if ($save) {
     user_save($account);
+    // Erring on the side of caution here and explicitly saving
+    // each profile category in addition to running user_save().
+    foreach ($categories as $category => $edit) {
+      _sf_user_update_profile_fields($edit, $account, $category);
+    }
   }
 }
 
@@ -820,35 +856,67 @@ function _sf_user_validate_utf8($account) {
   * Removes invalid XML characters by examining each character
   * in a string.
   */
- function _sf_user_strip_invalid_xml_chars($in) {
+function _sf_user_strip_invalid_xml_chars($in) {
+  $out = ""; // Used to hold the output.
+  $current; // Used to reference the current character.
 
-    $out = ""; // Used to hold the output.
-    $current; // Used to reference the current character.
+  if (empty($in)) {
+    return "";
+  }
 
-    if (empty($in)) {
-      return "";
+  $length = strlen($in);
+
+  for ($i = 0; $i < $length; $i++) {
+
+    $current = ord($in{$i});
+
+   // character whitelist
+    if (($current == 0x9) || ($current == 0xA) || ($current == 0xD) ||
+      (($current >= 0x20) && ($current <= 0xD7FF)) ||
+      (($current >= 0xE000) && ($current <= 0xFFFD)) ||
+      (($current >= 0x10000) && ($current <= 0x10FFFF))) {
+        $out .= chr($current);
     }
-
-    $length = strlen($in);
-
-    for ($i = 0; $i < $length; $i++) {
-
-      $current = ord($in{$i});
-
-      if (($current == 0x9) || ($current == 0xA) || ($current == 0xD) ||
-        (($current >= 0x20) && ($current <= 0xD7FF)) ||
-        (($current >= 0xE000) && ($current <= 0xFFFD)) ||
-        (($current >= 0x10000) && ($current <= 0x10FFFF))) {
-          $out .= chr($current);
-      }
-      else {
-        drupal_set_message('bs character detected and replaced: 0x' . dechex($current)); 
-        $out .= " ";
-      }
-
+    else {
+      // overwrite bogus character with a space.
+      $out .= " ";
     }
-
-    return $out;
 
   }
+
+  return $out;
+
+}
+
+/**
+ * Save profile fields by category without any of profile.module's documented weirdness.
+ */
+function _sf_user_update_profile_fields(&$edit, $user, $category) {
+  $result = _sf_user_profile_get_fields_by_cat($category);
+  while ($field = db_fetch_object($result)) {
+    if (array_key_exists($field->name, $edit)) {
+
+      if (_profile_field_serialize($field->type)) {
+        $edit[$field->name] = serialize($edit[$field->name]);
+      }
+      db_query("DELETE FROM {profile_values} WHERE fid = %d AND uid = %d", $field->fid, $user->uid);
+      db_query("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, '%s')", $field->fid, $user->uid, $edit[$field->name]);
+      // Mark field as handled (prevents saving to user->data).
+      $edit[$field->name] = NULL;
+    }
+  }
+}
+
+/**
+ * Version of _profile_get_fields that includes hidden profile fields by default
+ */
+function _sf_user_profile_get_fields_by_cat($category) {
+  $fields = array();
+  $sql = "SELECT * FROM {profile_fields} WHERE LOWER(category) = LOWER('%s') ORDER BY category, weight";
+  $results =  db_query($sql, $category);
+  while ($result = db_fetch_array($results)) {
+    $fields[] = $result;
+  }
+  return $fields;
+}
 
