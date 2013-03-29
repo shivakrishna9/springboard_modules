@@ -506,7 +506,13 @@ class SalesforceSync {
     // Find the data types of all the Salesforce fields and store it in a means
     // so that we can attempt to reduce the number of times we have to search
     // for this information.
-    $sfapi = salesforce_get_api();
+    $sfapi = $this->sfapi;
+    if (!is_object($sfapi)) {
+      // Skip if we do not have a valid Salesforce connection.  Do not mark the
+      // item has having been converted in case the connection gets repaired
+      // leter in the process.
+      return;
+    }
     $sfobject = $sfapi->objectDescribe($item->object_type);
     $field_datatypes = &drupal_static(__FUNCTION__);
     $field_missing = FALSE;
