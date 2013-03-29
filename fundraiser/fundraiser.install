@@ -204,6 +204,18 @@ function fundraiser_schema() {
         'type' => 'text',
         'not null' => FALSE,
       ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the donation was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'description' => 'The Unix timestamp when the donation was most recently updated.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
     ),
     'primary key' => array('refund_id'),
     'indexes' => array('refund_did' => array('did')),

@@ -283,8 +283,7 @@ function _commerce_authnet_fundraiser_commerce_authnet_cim_cardonfile_update($fo
  */
 function commerce_authnet_fundraiser_commerce_refund($payment_method, $refund) {
   // Retrieve data.
-  $order = commerce_order_load($refund->did);
-  $refunding_order = commerce_order_load($refund->refunded_donation_did);
+  $refunding_order = commerce_order_load($refund->did);
   $transactions = commerce_payment_transaction_load_multiple(array(), $conditions = array('order_id' => $refunding_order->order_id));
   $transaction = array_shift($transactions); // The first one is the original donation.
 
@@ -292,7 +291,7 @@ function commerce_authnet_fundraiser_commerce_refund($payment_method, $refund) {
   $form_state = array();
   // Set up the values needed for the transaction to go through.
   $form_state['transaction'] = $transaction;
-  $form_state['values']['amount'] = $refund->donation['amount'];
+  $form_state['values']['amount'] = $refund->amount;
   $form_state['order'] = $refunding_order;
   $form_state['payment_method'] = commerce_payment_method_instance_load($transaction->instance_id);
   // Submit the donation form.

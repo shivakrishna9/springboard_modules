@@ -149,6 +149,6 @@ function commerce_payment_example_fundraiser_commerce_charge($payment_method, $d
 /**
  * Callback function, refund the gateway.
  */
-function commerce_payment_example_fundraiser_commerce_refund($payment_method, $donation) {
+function commerce_payment_example_fundraiser_commerce_refund($payment_method, $refund) {
   return TRUE;
 }

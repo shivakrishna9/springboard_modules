@@ -76,7 +76,7 @@ function fundraiser_commerce_refund_form_access($order, $transaction) {
  * This is just a wrapper, to get the rest of the goodies in place.
  */
 function fundraiser_commerce_refund_form($form, &$form_state, $order, $transaction) {
-  return drupal_get_form('_fundraiser_refund', $order->order_id);
+  return drupal_get_form('_fundraiser_refund_form', $order->order_id);
 }
 
 /**
@@ -1295,11 +1295,12 @@ function fundraiser_commerce_fundraiser_donation_delete($donation) {
  */
 function fundraiser_commerce_fundraiser_refund_process($refund) {
   // Grab the gateway configuration from fundraisers data.
+  $refund->donation = fundraiser_donation_get_donation($refund->did);
   $info = _fundraiser_get_donation_gateway($refund->did);
   $method_instance = commerce_payment_method_instance_load($info['id']); // From commerce_payment.module.
   // This gets us: The payment method instance object with the addition of the settings array. Settings are per Rule.
   // Choose which of two ways to process this.
-  if (in_array($refund->donation['payment_method'], $info['offsite_processing'])) {
+  if (in_array($refund->donation->donation['payment_method'], $info['offsite_processing'])) {
     // If external processing, we cannot execute a refund charge against it.
     drupal_set_message(t('The %title payment method indicates it is offsite processing, and cannot be refunded through this interface.',
       array('%title' => $method_instance['title'])), 'error');
@@ -1311,7 +1312,7 @@ function fundraiser_commerce_fundraiser_refund_process($refund) {
         array('%title' => $method_instance['title'])), 'error');
       // We can't find the gateway and we should tell someone about it.
       watchdog('fundraiser', 'Cannot determine the payment gateway for refund @id. Node id of refund form is @nid',
-        array('@id' => $refund->did, '@nid' => $refund->nid), WATCHDOG_CRITICAL);
+        array('@id' => $refund->did, '@nid' => $refund->donation->nid), WATCHDOG_CRITICAL);
       watchdog('fundraiser_commerce', 'Refund function :function is empty.', array(':function' => $info['refund callback']));
       $donation->result = array('success' => FALSE, 'message' => 'Cannot determine the payment gateway for this refund.');
       return; // Return the failure.
@@ -1324,16 +1325,16 @@ function fundraiser_commerce_fundraiser_refund_process($refund) {
     $success = $refund_function($method_instance, $refund);
   }
   // Update the donation and order data and result values based on the success.
-  _fundraiser_commerce_update_donation_result_data($refund, $success);
+  _fundraiser_commerce_update_donation_result_data($refund->donation, $success);
   // Finish up any last cleanup for this transaction.
-  if (isset($refund->result['success']) && $refund->result['success']) {
+  if (isset($refund->donation->result['success']) && $refund->donation->result['success']) {
     // Set the values donation needs for the rest of the system.
     $order = commerce_order_load($refund->did);
     // Add the status data.
-    $refund->status = $refund->status_label = isset($order->status) ? $order->status : 'unknown';
+    $refund->donation->status = $refund->donation->status_label = isset($order->status) ? $order->status : 'unknown';
     if (!empty($order->status)) {
-      $refund->status_label = _fundraiser_commerce_get_label_by_status($order->status);
-      $refund->status_charged = _fundraiser_commerce_get_charged_by_status($order->status);
+      $refund->donation->status_label = _fundraiser_commerce_get_label_by_status($order->status);
+      $refund->donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->status);
     }
   }
 }
@@ -1343,11 +1344,10 @@ function fundraiser_commerce_fundraiser_refund_process($refund) {
  */
 function fundraiser_commerce_fundraiser_donation_refund_success($refund) {
   // Mark as complete.
-  _fundraiser_commerce_update_order_status($refund->refund_status, $refund->refunded_donation_did);
-  _fundraiser_commerce_update_order_status($refund->refund_status, $refund->did);
-  $refund->status = $refund->refund_status;
-  $refund->status_label = _fundraiser_commerce_get_label_by_status($refund->refund_status);
-  $refund->status_charged = _fundraiser_commerce_get_charged_by_status($refund->refund_status);
+  _fundraiser_commerce_update_order_status($refund->donation->refund_status, $refund->did);
+  $refund->donation->status = $refund->donation->refund_status;
+  $refund->donation->status_label = _fundraiser_commerce_get_label_by_status($refund->donation->refund_status);
+  $refund->donation->status_charged = _fundraiser_commerce_get_charged_by_status($refund->donation->refund_status);
 }
 
 /**
@@ -1355,10 +1355,10 @@ function fundraiser_commerce_fundraiser_donation_refund_success($refund) {
  */
 function fundraiser_commerce_fundraiser_donation_refund_decline($refund) {
   // Mark as failed to refund.
-  _fundraiser_commerce_update_order_status('failed_refund', $donation->did);
-  $donation->status = 'failed_refund';
-  $donation->status_label = _fundraiser_commerce_get_label_by_status('failed_refund');
-  $donation->status_charged = _fundraiser_commerce_get_charged_by_status('failed_refund');
+  _fundraiser_commerce_update_order_status('failed_refund', $refund->did);
+  $refund->donation->status = 'failed_refund';
+  $refund->donation->status_label = _fundraiser_commerce_get_label_by_status('failed_refund');
+  $refund->donation->status_charged = _fundraiser_commerce_get_charged_by_status('failed_refund');
 }
 
 /**
