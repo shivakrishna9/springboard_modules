@@ -3,6 +3,6 @@ description = Provides an admin interface for the suite of Springboard modules
 core = 7.x
 package = Jackson River Springboard
 configure = admin/springboard
-version =  7.x-3.0-dev
+version =  7.x-4.x-dev
 dependencies[] = ctools
 files[] = springboard.admin.inc

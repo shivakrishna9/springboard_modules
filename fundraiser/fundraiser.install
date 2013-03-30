@@ -274,7 +274,7 @@ function fundraiser_schema() {
  * Implements hook_update_last_removed().
  */
 function fundraiser_update_last_removed() {
-  // We've removed versions of this module prior to 7.x-3.x.
+  // We've removed versions of this module prior to 7.x-4.x.
   // The next update function is fundraiser_update_7000().
   return 6309;
 }
