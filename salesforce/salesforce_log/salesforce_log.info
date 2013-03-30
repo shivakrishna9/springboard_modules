@@ -2,6 +2,7 @@ name = Salesforce Log
 description =  Log batch processing of Salesforce data.
 package = Salesforce
 core = 7.x
+version = 7.x-4.x-dev
 
 dependencies[] = salesforce_queue
 dependencies[] = salesforce_sync
