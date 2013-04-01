@@ -425,6 +425,10 @@ function fundraiser_update_7003() {
       'unsigned' => TRUE,
       'not null' => TRUE,
     ),
+  );
+  db_change_field('fundraiser_refund', 'refund_id', 'rid', $new_fields['rid']);
+
+  $new_fields = array(
     'status' => array(
       'description' => 'The status of the refund in the charge system.',
       'type' => 'varchar',
@@ -448,13 +452,4 @@ function fundraiser_update_7003() {
   foreach ($new_fields as $fieldname => $new_field) {
     db_add_field('fundraiser_refund', $fieldname, $new_field);
   }
-  $new_fields = array(
-    'rid' => array(
-      'description' => 'Primary key: refund ID',
-      'type' => 'serial',
-      'unsigned' => TRUE,
-      'not null' => TRUE,
-    ),
-  );
-  db_change_field('fundraiser_refund', 'refund_id', 'rid', $new_fields['rid']);
 }
