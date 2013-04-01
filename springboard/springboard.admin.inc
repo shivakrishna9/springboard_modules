@@ -229,8 +229,13 @@ function springboard_admin_config_modules($form, $form_state) {
       $modules[] = 'salesforce_npsp';
     }
   }
-  module_enable($modules);
-  drupal_set_message(t('Modules %modules have been enabled.', array('%modules' =>implode(', ', $modules))));
+  $return = module_enable($modules, TRUE);
+  if ($return) {
+    drupal_set_message(t('Modules %modules have been enabled.', array('%modules' =>implode(', ', $modules))));
+  }
+  else {
+    drupal_set_message(t('An error was encountered while installing %modules.', array('%modules' =>implode(', ', $modules))), 'error');
+  }
 }
 
 /**
@@ -246,6 +251,7 @@ function springboard_admin_config_springboard($form, $form_state) {
     }
     variable_set('springboard_enabled_panes', $default_enabled_panes);
   }
+  drupal_set_message(t('Springboard panels have been configured'));
 }
 
 /**
@@ -254,6 +260,7 @@ function springboard_admin_config_springboard($form, $form_state) {
 function springboard_admin_config_ubercart($form, $form_state) {
   // Enable the test payment gateway by default.
   variable_set('uc_pg_test_gateway_enabled', 1);
+  drupal_set_message(t('ubercart has been configured'));
 }
 
 /**
@@ -261,6 +268,7 @@ function springboard_admin_config_ubercart($form, $form_state) {
  */
 function springboard_admin_config_commerce($form, $form_state) {
   // Add things as we need to.
+  drupal_set_message(t('Commerce has been configured'));
 }
 
 /**
@@ -273,6 +281,7 @@ function springboard_admin_config_salesforce($form, $form_state) {
   variable_set('salesforce_consumer_key', $form_state['values']['sf_key']);
   variable_set('salesforce_consumer_secret', $form_state['values']['sf_secret']);
   // To do, set oauth up.
+  drupal_set_message(t('Salesforce has been configured'));
 }
 
 /**
@@ -527,6 +536,8 @@ function springboard_admin_config_profile($form, $form_state) {
     $instance = array_merge($profile_field, $instance);
     field_create_instance($instance);
   }
+  drupal_set_message(t('Profiles have been configured'));
+
   // Set the default fundraiser to webform user profile handling settings.
   variable_set('fundraiser_webform_to_user_map', array(
     'mail' => 'mail',
@@ -551,6 +562,7 @@ function springboard_admin_config_profile($form, $form_state) {
     'springboard_user_agent' => 'user_agent',
     )
   );
+  drupal_set_message(t('Profile mapping has been configured'));
 }
 
 /**
