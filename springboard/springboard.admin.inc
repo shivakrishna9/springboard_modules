@@ -156,38 +156,44 @@ function springboard_admin_settings_validate(&$form, $form_state) {
  * Submit handler for the springboard configuration button.
  */
 function springboard_admin_config(&$form, $form_state) {
-  variable_del('springboard_needs_config');
-  drupal_set_message(t('Please see the !help page for additional help configuring Springboard.',
-    array('!help' => l(t('Help'), 'admin/springboard/help'))));
-  // This is where what used to be profile configuration in D6 went.
-  // We dropped the profile support since it was, honestly, more hinderence than harm.
-  // We would rather the Springboard suite be useful for all default profiles.
-  springboard_admin_config_modules($form, $form_state);
-  // Clear all caches.
-  drupal_flush_all_caches();
-  // Set up module specific configurations.
-  springboard_admin_config_springboard($form, $form_state);
-  if ($form_state['values']['order_handling'] == 'ubercart') {
-    springboard_admin_config_ubercart($form, $form_state);
+  if (variable_get('springboard_needs_config', FALSE)) {
+   set_time_limit(300);
+    variable_del('springboard_needs_config');
+    drupal_set_message(t('Please see the !help page for additional help configuring Springboard.',
+      array('!help' => l(t('Help'), 'admin/springboard/help'))));
+    // This is where what used to be profile configuration in D6 went.
+    // We dropped the profile support since it was, honestly, more hinderence than harm.
+    // We would rather the Springboard suite be useful for all default profiles.
+    springboard_admin_config_modules($form, $form_state);
+    // Clear all caches.
+    drupal_flush_all_caches();
+    set_time_limit(300);
+    // Set up module specific configurations.
+    springboard_admin_config_springboard($form, $form_state);
+    if ($form_state['values']['order_handling'] == 'ubercart') {
+      springboard_admin_config_ubercart($form, $form_state);
+    }
+    else {
+      springboard_admin_config_commerce($form, $form_state);
+    }
+    if ($form_state['values']['sf_enable']) {
+      springboard_admin_config_salesforce($form, $form_state);
+    }
+    // Configure user profiles
+    springboard_admin_config_profile($form, $form_state);
+    // Configure a default fundraiser type
+    springboard_admin_config_donation_form_type($form, $form_state);
+    set_time_limit(300);
+    // Create an example form.
+    $email_nid = springboard_admin_config_email_wrapper_add($form, $form_state);
+    springboard_admin_config_donation_form_add($form, $form_state, $email_nid);
+    // Clear all caches one last time.
+    drupal_flush_all_caches();
+    menu_rebuild();
   }
   else {
-    springboard_admin_config_commerce($form, $form_state);
+    drupal_set_message(t('Springboard default configuration has already been set up.'));
   }
-  if ($form_state['values']['sf_enable']) {
-    springboard_admin_config_salesforce($form, $form_state);
-  }
-  // Configure user profiles
-  springboard_admin_config_profile($form, $form_state);
-  // Configure a default fundraiser type
-  springboard_admin_config_donation_form_type($form, $form_state);
-  // Clear all caches.
-  drupal_flush_all_caches();
-  // Create an example form.
-  $email_nid = springboard_admin_config_email_wrapper_add($form, $form_state);
-  springboard_admin_config_donation_form_add($form, $form_state, $email_nid);
-  // Clear all caches one last time.
-  drupal_flush_all_caches();
-  menu_rebuild();
 }
 
 /**
@@ -260,7 +266,7 @@ function springboard_admin_config_springboard($form, $form_state) {
 function springboard_admin_config_ubercart($form, $form_state) {
   // Enable the test payment gateway by default.
   variable_set('uc_pg_test_gateway_enabled', 1);
-  drupal_set_message(t('ubercart has been configured'));
+  drupal_set_message(t('Ubercart has been configured'));
 }
 
 /**
@@ -282,6 +288,7 @@ function springboard_admin_config_salesforce($form, $form_state) {
   variable_set('salesforce_consumer_secret', $form_state['values']['sf_secret']);
   // To do, set oauth up.
   drupal_set_message(t('Salesforce has been configured'));
+  drupal_set_message(t('You will need to authorize these settings under the Salesforce admin settings.'));
 }
 
 /**
@@ -294,7 +301,7 @@ function springboard_admin_config_profile($form, $form_state) {
   $profile_fields = array();
   $profile_fields[] = array(
     'label' => t('First name'),
-    'field_name' => 'springboard_first_name',
+    'field_name' => 'sbp_first_name',
     'type' => 'text',
     'widget' => array(
       'type' => 'text_textfield',
@@ -302,7 +309,7 @@ function springboard_admin_config_profile($form, $form_state) {
   );
   $profile_fields[] = array(
     'label' => t('Last name'),
-    'field_name' => 'springboard_last_name',
+    'field_name' => 'sbp_last_name',
     'type' => 'text',
     'widget' => array(
       'type' => 'text_textfield',
@@ -310,7 +317,7 @@ function springboard_admin_config_profile($form, $form_state) {
   );
   $profile_fields[] = array(
     'label' => t('Address'),
-    'field_name' => 'springboard_address',
+    'field_name' => 'sbp_address',
     'type' => 'text',
     'widget' => array(
       'type' => 'text_textfield',
@@ -318,7 +325,7 @@ function springboard_admin_config_profile($form, $form_state) {
   );
   $profile_fields[] = array(
     'label' => t('Address Line 2'),
-    'field_name' => 'springboard_address_line_2',
+    'field_name' => 'sbp_address_line_2',
     'type' => 'text',
     'widget' => array(
       'type' => 'text_textfield',
@@ -326,7 +333,7 @@ function springboard_admin_config_profile($form, $form_state) {
   ); 
   $profile_fields[] = array(
     'label' => t('City'),
-    'field_name' => 'springboard_city',
+    'field_name' => 'sbp_city',
     'type' => 'text',
     'widget' => array(
       'type' => 'text_textfield',
@@ -342,7 +349,7 @@ function springboard_admin_config_profile($form, $form_state) {
     }
     $profile_fields[] = array(
       'label' => t('State/Province'),
-      'field_name' => 'springboard_state',
+      'field_name' => 'sbp_state',
       'type' => 'list_text',
       'widget' => array(
         'type' => 'options_select',
@@ -360,7 +367,7 @@ function springboard_admin_config_profile($form, $form_state) {
     // For Commerce or others for now.
     $profile_fields[] = array(
       'label' => t('State/Province'),
-      'field_name' => 'springboard_state',
+      'field_name' => 'sbp_state',
       'type' => 'list_text',
       'widget' => array(
         'type' => 'options_select',
@@ -372,7 +379,7 @@ function springboard_admin_config_profile($form, $form_state) {
     // For Commerce or others for now.
     $profile_fields[] = array(
       'label' => t('State/Province'),
-      'field_name' => 'springboard_state',
+      'field_name' => 'sbp_state',
       'type' => 'text',
       'widget' => array(
         'type' => 'text_textfield',
@@ -381,7 +388,7 @@ function springboard_admin_config_profile($form, $form_state) {
   }
   $profile_fields[] = array(
     'label' => t('Postal Code'),
-    'field_name' => 'springboard_zip',
+    'field_name' => 'sbp_zip',
     'type' => 'text',
     'widget' => array(
       'type' => 'text_textfield',
@@ -389,7 +396,7 @@ function springboard_admin_config_profile($form, $form_state) {
   );
   $profile_fields[] = array(
     'label' => t('Country'),
-    'field_name' => 'springboard_country',
+    'field_name' => 'sbp_country',
     'type' => 'text',
     'widget' => array(
       'type' => 'text_textfield',
@@ -397,7 +404,7 @@ function springboard_admin_config_profile($form, $form_state) {
   );
   $profile_fields[] = array(
     'label' => t('Campaign ID'),
-    'field_name' => 'springboard_cid',
+    'field_name' => 'sbp_cid',
     'type' => 'text',
     'widget' => array(
       'type' => 'text_textfield',
@@ -411,7 +418,7 @@ function springboard_admin_config_profile($form, $form_state) {
   );
   $profile_fields[] = array(
     'label' => t('Market Source'),
-    'field_name' => 'springboard_ms',
+    'field_name' => 'sbp_ms',
     'type' => 'text',
     'widget' => array(
       'type' => 'text_textfield',
@@ -425,7 +432,7 @@ function springboard_admin_config_profile($form, $form_state) {
   );
   $profile_fields[] = array(
     'label' => t('Referrer'),
-    'field_name' => 'springboard_referrer',
+    'field_name' => 'sbp_referrer',
     'type' => 'text',
     'widget' => array(
       'type' => 'text_textfield',
@@ -439,7 +446,7 @@ function springboard_admin_config_profile($form, $form_state) {
   );
   $profile_fields[] = array(
     'label' => t('Initial Referrer'),
-    'field_name' => 'springboard_initial_referrer',
+    'field_name' => 'sbp_initial_referrer',
     'type' => 'text',
     'widget' => array(
       'type' => 'text_textfield',
@@ -453,7 +460,7 @@ function springboard_admin_config_profile($form, $form_state) {
   );
   $profile_fields[] = array(
     'label' => t('Search Engine'),
-    'field_name' => 'springboard_search_engine',
+    'field_name' => 'sbp_search_engine',
     'type' => 'text',
     'widget' => array(
       'type' => 'text_textfield',
@@ -467,7 +474,7 @@ function springboard_admin_config_profile($form, $form_state) {
   );
   $profile_fields[] = array(
     'label' => t('Search String'),
-    'field_name' => 'springboard_search_string',
+    'field_name' => 'sbp_search_string',
     'type' => 'text',
     'widget' => array(
       'type' => 'text_textfield',
@@ -481,7 +488,7 @@ function springboard_admin_config_profile($form, $form_state) {
   );
   $profile_fields[] = array(
     'label' => t('User Agent'),
-    'field_name' => 'springboard_user_agent',
+    'field_name' => 'sbp_user_agent',
     'type' => 'text',
     'widget' => array(
       'type' => 'text_textfield',
@@ -495,7 +502,7 @@ function springboard_admin_config_profile($form, $form_state) {
   );
   $profile_fields[] = array(
     'label' => t('Salesforce Account Id'),
-    'field_name' => 'springboard_salesforce_account_id',
+    'field_name' => 'sbp_salesforce_account_id',
     'type' => 'text',
     'widget' => array(
       'type' => 'text_textfield',
@@ -509,7 +516,7 @@ function springboard_admin_config_profile($form, $form_state) {
   );
   $profile_fields[] = array(
     'label' => t('Salesforce Contact Id'),
-    'field_name' => 'springboard_salesforce_contact_id',
+    'field_name' => 'sbp_salesforce_contact_id',
     'type' => 'text',
     'widget' => array(
       'type' => 'text_textfield',
@@ -541,25 +548,25 @@ function springboard_admin_config_profile($form, $form_state) {
   // Set the default fundraiser to webform user profile handling settings.
   variable_set('fundraiser_webform_to_user_map', array(
     'mail' => 'mail',
-    'springboard_first_name' => 'first_name',
-    'springboard_last_name' => 'last_name',
-    'springboard_address' => 'address',
-    'springboard_address_line_2' => 'address_line_2',
-    'springboard_city' => 'city',
-    'springboard_state' => 'state',
-    'springboard_zip' => 'zip',
-    'springboard_country' => 'country',
+    'sbp_first_name' => 'first_name',
+    'sbp_last_name' => 'last_name',
+    'sbp_address' => 'address',
+    'sbp_address_line_2' => 'address_line_2',
+    'sbp_city' => 'city',
+    'sbp_state' => 'state',
+    'sbp_zip' => 'zip',
+    'sbp_country' => 'country',
     )
   );
   // And the same for market source
   variable_set('market_source_to_user_map', array(
-    'springboard_cid' => 'cid',
-    'springboard_ms' => 'ms',
-    'springboard_referrer' => 'referrer',
-    'springboard_initial_referrer' => 'initial_referrer',
-    'springboard_search_engine' => 'search_engine',
-    'springboard_search_string' => 'search_string',
-    'springboard_user_agent' => 'user_agent',
+    'sbp_cid' => 'cid',
+    'sbp_ms' => 'ms',
+    'sbp_referrer' => 'referrer',
+    'sbp_initial_referrer' => 'initial_referrer',
+    'sbp_search_engine' => 'search_engine',
+    'sbp_search_string' => 'search_string',
+    'sbp_user_agent' => 'user_agent',
     )
   );
   drupal_set_message(t('Profile mapping has been configured'));
@@ -713,7 +720,6 @@ function springboard_admin_config_donation_form_add($form, $form_state, $email_n
     'gravida eget, porta at, wisi. Nam non lacus vitae ipsum viverra pretium. Phasellus massa. Fusce magna sem, gravida ' .
     'in, feugiat ac, molestie eget, wisi.';
   $node->body['LANGUAGE_NONE'][0]['format'] = 'filtered_html';
-  $node->confirmation_page_title = 'Thank you for your donation!';
   $node->webform = array(
       'confirmation' => 'Thank you [donation:first_name] [donation:last_name] for your donation of [donation:amount] USD.' . "\n" .
       "\n" .
@@ -755,9 +761,16 @@ function springboard_admin_config_donation_form_add($form, $form_state, $email_n
       'from_address' => 'example-from@example.com',
       'html' => 0,
       'attachments' => 0,
+      'excluded_components' => array(),
     );
   }
-  $node->gateways = 'commerce_payment_example|commerce_payment_commerce_payment_example';
+  $node->gateways = array(
+    'credit' => array(
+      'status' => 1,
+      'method' => 'credit',
+      'id' => 'commerce_payment_example|commerce_payment_commerce_payment_example'
+    ),
+  );
   $node->amount_wrapper = array(
     'donation_amounts' => array(
       '0' => array(
@@ -790,14 +803,21 @@ function springboard_admin_config_donation_form_add($form, $form_state, $email_n
   $node = node_load($node->nid);
   // Save confirmation details.
   $confirmation['nid'] = $node->nid;
-  $confirmation['confirmation_page_title'] = $node->confirmation_page_title;
+  $confirmation['confirmation_page_title'] = 'Thank you for your donation!';
+  _webform_confirmations_update($confirmation);
   // Save email wrapper details.
+  $eid = -1;
+  foreach ($node->webform['components'] as $component) {
+    if ($component['form_key'] == 'mail') {
+      $eid = $component['cid'];
+    }
+  }
   if ($email_nid != NULL) {
     $settings = array(
     'nid' => $node->nid,
-    'eid' => $node->webform['emails'][1]['eid'],
+    'eid' => $eid,
     'tid' => $email_nid,
-    'bcc_email' => implode(',', $values['email_wrappers_bcc']),
+    'bcc_email' => '',
     'html_message' => 'Thank you [donation:first_name] [donation:last_name] for your donation of [donation:amount] USD.' . "\n" .
       "\n" .
       'The email address we have for you is: [donation:mail]' . "\n" .
@@ -812,7 +832,7 @@ function springboard_admin_config_donation_form_add($form, $form_state, $email_n
     'extra' => array(),
     );
   }
-  _webform_confirmations_update($confirmation);
+  node_save($node);
   drupal_set_message(t('An example donation form has been created.'));
 }
 
