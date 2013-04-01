@@ -659,13 +659,14 @@ function _fundraiser_form_payment_method_config_fieldset($gateways, $configurati
     unset($method['weight']);
     $field_method_settings = isset($configuration[$method_key]) ? $configuration[$method_key] : array();
     // Build the #options array for the payment processors supporting this payment method.
-    $processor_options = array(NULL => '- ' . t('select') . ' -');
+    $processor_options = array();
     foreach (element_children($method) as $key) {
       $processor_options[ $method[$key]['id'] ] = $method[$key]['title'];
     }
     $fieldset[$method_key] = array('#tree' => TRUE);
     $fieldset[$method_key]['status'] = array(
       '#type' => 'checkbox',
+      '#title' => t('Enable'),
       '#default_value' => isset($field_method_settings['status']) ? $field_method_settings['status'] : 0,
     );
     // Add auto check.
@@ -688,11 +689,6 @@ function _fundraiser_form_payment_method_config_fieldset($gateways, $configurati
       '#options' => $processor_options,
       '#default_value' => isset($field_method_settings['id']) ? $field_method_settings['id'] : NULL,
     );
-    // Add auto select.
-    if ($method_count == 1 && count($processor_options) == 2) {
-      $keys = array_keys($processor_options);
-      $fieldset[$method_key]['id']['#default_value'] = $keys[1];
-    }
     // Include these fields if there is more than one payment method.
     if ($method_count > 1) {
       $fieldset[$method_key]['label'] = array(
