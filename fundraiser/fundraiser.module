@@ -501,84 +501,8 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
       '#tree' => TRUE,
       '#theme' => 'fundraiser_form_payment_methods',
     );
-    foreach($gateways as $gateway) {
-      $types = isset($gateway['payment_method']) ? $gateway['payment_method'] : array();
-      foreach ($types as $type) {
-        $all_payment_methods[$type][] = $gateway;
-      }
-    }
-    // Sort all payment methods by the configured weight of the fields
-    foreach (array_keys($all_payment_methods) as $method_key) {
-      $all_payment_methods[$method_key]['weight'] = !empty($node->gateways[$method_key]['weight']) ? $node->gateways[$method_key]['weight'] : 0;
-    }
-    uasort($all_payment_methods, '_fundraiser_payment_method_weight_compare');
-    $method_count = count($all_payment_methods);
-    // Loop through each method, comparing to those set on this node.
-    foreach ($all_payment_methods as $method_key => $method) {
-      // Remove the weight value
-      unset($method['weight']);
-      $field_method_settings = isset($node->gateways[$method_key]) ? $node->gateways[$method_key] : array();
-      // Build the #options array for the payment processors supporting this payment method.
-      $processor_options = array(NULL => '- ' . t('select') . ' -');
-      foreach (element_children($method) as $key) {
-        $processor_options[ $method[$key]['id'] ] = $method[$key]['title'];
-      }
-      $fieldset[$method_key] = array('#tree' => TRUE);
-      $fieldset[$method_key]['status'] = array(
-        '#type' => 'checkbox',
-        '#default_value' => isset($field_method_settings['status']) ? $field_method_settings['status'] : 0,
-      );
-      // Add auto check.
-      if ($method_count == 1) {
-        $fieldset[$method_key]['status']['#default_value'] = TRUE;
-      }
-      $fieldset[$method_key]['_status'] = array(
-        '#type' => 'markup',
-        '#title' => t('Method'),
-        '#markup' => $method_key, // Could use a pretty name here
-      );
-      $fieldset[$method_key]['method'] = array(
-        '#type' => 'value',
-        '#value' => $method_key,
-      );
-      $fieldset[$method_key]['id'] = array(
-        '#type' => 'select',
-        '#title' => t('Payment Processor'),
-        '#description' => t('The payment processor for this payment method.'),
-        '#options' => $processor_options,
-        '#default_value' => isset($field_method_settings['id']) ? $field_method_settings['id'] : NULL,
-      );
-      // Add auto select.
-      if ($method_count == 1 && count($processor_options) == 2) {
-        $keys = array_keys($processor_options);
-        $fieldset[$method_key]['id']['#default_value'] = $keys[1];
-      }
-      // Include these fields if there is more than one payment method.
-      if ($method_count > 1) {
-        $fieldset[$method_key]['label'] = array(
-          '#type' => 'textfield',
-          '#description' => t('The label displayed for this payment method. Required when multiple payment methods are enabled.'),
-          '#title' => t('Label'),
-          '#size' => 20,
-          '#default_value' => isset($field_method_settings['label']) ? $field_method_settings['label'] : NULL,
-        );
-        $fieldset[$method_key]['weight'] = array(
-          '#type' => 'weight',
-          '#title' => t('Weight'),
-          '#delta' => 25,
-          '#default_value' => isset($field_method_settings['weight']) ? $field_method_settings['weight'] : 0,
-          '#attributes' => array('class' => array('fundraiser-payment-methods-weight')),
-        );
-        $fieldset[$method_key]['_default'] = array(
-          '#type' => 'radio',
-          '#title' => t('Default'),
-          '#default_value' => !empty($field_method_settings['default']) ? $method_key : NULL,
-          '#return_value' => $method_key,
-          '#parents' => array('gateways', '_default'),
-        );
-      }
-    }
-    $form['fundraiser_settings']['gateways'] = $fieldset;
+    $configuration = !empty($node->gateways) ? $node->gateways : variable_get('fundraiser_payment_method_config_defaults', array());
+    $form['fundraiser_settings']['gateways'] = _fundraiser_form_payment_method_config_fieldset($gateways, $configuration, $fieldset, 'gateways');
     // add a validate callback.
     $form['#validate'][] = '_fundraiser_form_payment_method_validate';
   }
@@ -697,6 +621,104 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     '#value' => isset($node->receipt_email_message) ? $node->receipt_email_message : '',
   );
   //$form['#after_build'][] = '_fundraiser_validation_includes';
+}
+
+/**
+ * Creates the options for the payment method configuration form
+ *
+ * @param $gateways Array
+ *    Array of gateways for this site
+ * @param $configuration Array
+ *    An array of values usually from the field configuration
+ * @param $fieldset Array
+ *    Formapi fieldset
+ * @param $name String
+ *    Name of the fieldset
+ *
+ * @return Array
+ *    An array of fields to display on a payment method configuration form
+ */
+function _fundraiser_form_payment_method_config_fieldset($gateways, $configuration, $fieldset, $name) {
+  // Create an array of gateways by the type of available payment methods
+  foreach($gateways as $gateway) {
+    $types = isset($gateway['payment_method']) ? $gateway['payment_method'] : array();
+    foreach ($types as $type) {
+      $all_payment_methods[$type][] = $gateway;
+    }
+  }
+
+  // Sort all payment methods by the configured weight of the fields
+  foreach (array_keys($all_payment_methods) as $method_key) {
+    $all_payment_methods[$method_key]['weight'] = !empty($configuration[$method_key]['weight']) ? $configuration[$method_key]['weight'] : 0;
+  }
+  uasort($all_payment_methods, '_fundraiser_payment_method_weight_compare');
+  $method_count = count($all_payment_methods);
+  // Loop through each method, comparing to those set on this node.
+  foreach ($all_payment_methods as $method_key => $method) {
+    // Remove the weight value
+    unset($method['weight']);
+    $field_method_settings = isset($configuration[$method_key]) ? $configuration[$method_key] : array();
+    // Build the #options array for the payment processors supporting this payment method.
+    $processor_options = array(NULL => '- ' . t('select') . ' -');
+    foreach (element_children($method) as $key) {
+      $processor_options[ $method[$key]['id'] ] = $method[$key]['title'];
+    }
+    $fieldset[$method_key] = array('#tree' => TRUE);
+    $fieldset[$method_key]['status'] = array(
+      '#type' => 'checkbox',
+      '#default_value' => isset($field_method_settings['status']) ? $field_method_settings['status'] : 0,
+    );
+    // Add auto check.
+    if ($method_count == 1) {
+      $fieldset[$method_key]['status']['#default_value'] = TRUE;
+    }
+    $fieldset[$method_key]['_status'] = array(
+      '#type' => 'markup',
+      '#title' => t('Method'),
+      '#markup' => $method_key, // Could use a pretty name here
+    );
+    $fieldset[$method_key]['method'] = array(
+      '#type' => 'value',
+      '#value' => $method_key,
+    );
+    $fieldset[$method_key]['id'] = array(
+      '#type' => 'select',
+      '#title' => t('Payment Processor'),
+      '#description' => t('The payment processor for this payment method.'),
+      '#options' => $processor_options,
+      '#default_value' => isset($field_method_settings['id']) ? $field_method_settings['id'] : NULL,
+    );
+    // Add auto select.
+    if ($method_count == 1 && count($processor_options) == 2) {
+      $keys = array_keys($processor_options);
+      $fieldset[$method_key]['id']['#default_value'] = $keys[1];
+    }
+    // Include these fields if there is more than one payment method.
+    if ($method_count > 1) {
+      $fieldset[$method_key]['label'] = array(
+        '#type' => 'textfield',
+        '#description' => t('The label displayed for this payment method. Required when multiple payment methods are enabled.'),
+        '#title' => t('Label'),
+        '#size' => 20,
+        '#default_value' => isset($field_method_settings['label']) ? $field_method_settings['label'] : NULL,
+      );
+      $fieldset[$method_key]['weight'] = array(
+        '#type' => 'weight',
+        '#title' => t('Weight'),
+        '#delta' => 25,
+        '#default_value' => isset($field_method_settings['weight']) ? $field_method_settings['weight'] : 0,
+        '#attributes' => array('class' => array('fundraiser-payment-methods-weight')),
+      );
+      $fieldset[$method_key]['_default'] = array(
+        '#type' => 'radio',
+        '#title' => t('Default'),
+        '#default_value' => !empty($field_method_settings['default']) ? $method_key : NULL,
+        '#return_value' => $method_key,
+        '#parents' => array($name, '_default'),
+      );
+    }
+  }
+  return $fieldset;
 }
 
 /**
