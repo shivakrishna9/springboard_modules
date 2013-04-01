@@ -343,10 +343,10 @@ function springboard_admin_config_profile($form, $form_state) {
   if ($form_state['values']['order_handling'] == 'ubercart') {
     // Default options loaded from {uc_zones} On the assumption we are using Ubercart here.
     // Load State/Province options from {uc_zones}, UC default is zone codes for US & Canada.
-    $countries = fundraiser_ubercart_get_countries();
+    $countries_set = fundraiser_ubercart_get_countries();
     $zones = '';
-    foreach ($countries->zones as $zone) {
-       $zones .= $zone->zone_id . '|' . $zone->zone_name . "\n";
+    foreach ($countries_set->zones as $zone) {
+       $zones[$zone->zone_id] = $zone->zone_name;
     }
     $profile_fields[] = array(
       'label' => t('State/Province'),
@@ -360,10 +360,10 @@ function springboard_admin_config_profile($form, $form_state) {
   }
   elseif ($form_state['values']['order_handling'] == 'commerce') {
     // Commerce does not store countries in a database, it relies instead on locale.inc
-    $countries = fundraiser_commerce_get_countries();
+    $countries_set = fundraiser_commerce_get_countries();
     $zones = '';
-    foreach ($countries->zones as $zone) {
-       $zones .= $zone->zone_id . '|' . $zone->zone_name . "\n";
+    foreach ($countries_set->zones as $zone) {
+       $zones[$zone->zone_id] = $zone->zone_name;
     }
     // For Commerce or others for now.
     $profile_fields[] = array(
@@ -395,14 +395,52 @@ function springboard_admin_config_profile($form, $form_state) {
       'type' => 'text_textfield',
     ),
   );
-  $profile_fields[] = array(
-    'label' => t('Country'),
-    'field_name' => 'sbp_country',
-    'type' => 'text',
-    'widget' => array(
-      'type' => 'text_textfield',
-    ),
-  );
+  if ($form_state['values']['order_handling'] == 'ubercart') {
+    // Default options loaded from {uc_zones} On the assumption we are using Ubercart here.
+    // Load State/Province options from {uc_zones}, UC default is zone codes for US & Canada.
+    $countries_set = fundraiser_ubercart_get_countries();
+    $countries = '';
+    foreach ($countries_set->countries as $country) {
+       $countries[$country->country_id] = $country->country_name;
+    }
+    $profile_fields[] = array(
+      'label' => t('Country'),
+      'field_name' => 'sbp_country',
+      'type' => 'list_text',
+      'widget' => array(
+        'type' => 'options_select',
+      ),
+      'settings' => array('allowed_values' => $countries),
+    );
+  }
+  elseif ($form_state['values']['order_handling'] == 'commerce') {
+    // Commerce does not store countries in a database, it relies instead on locale.inc
+    $countries_set = fundraiser_commerce_get_countries();
+    $countries = '';
+    foreach ($countries_set->countries as $country) {
+       $countries[$country->country_id] = $country->country_name;
+    }
+    // For Commerce or others for now.
+    $profile_fields[] = array(
+      'label' => t('Country'),
+      'field_name' => 'sbp_country',
+      'type' => 'list_text',
+      'widget' => array(
+        'type' => 'options_select',
+      ),
+      'settings' => array('allowed_values' => $countries),
+    );
+  }
+  else {
+    $profile_fields[] = array(
+      'label' => t('Country'),
+      'field_name' => 'sbp_country',
+      'type' => 'text',
+      'widget' => array(
+        'type' => 'text_textfield',
+      ),
+    );
+  }
   $profile_fields[] = array(
     'label' => t('Campaign ID'),
     'field_name' => 'sbp_cid',
@@ -535,6 +573,7 @@ function springboard_admin_config_profile($form, $form_state) {
       'field_name' => $profile_field['field_name'],
       'cardinality' => 1,
       'type' => $profile_field['type'],
+      'settings' => isset($profile_field['settings']) ? $profile_field['settings'] : array(),
     );
     field_create_field($field);
     $instance = array(
