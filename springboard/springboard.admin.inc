@@ -238,6 +238,9 @@ function springboard_admin_config_modules($form, $form_state) {
   $return = module_enable($modules, TRUE);
   if ($return) {
     drupal_set_message(t('Modules %modules have been enabled.', array('%modules' =>implode(', ', $modules))));
+    $modules = array('comment');
+    module_disable($modules, TRUE);
+    drupal_set_message(t('Modules %modules have been disabled.', array('%modules' =>implode(', ', $modules))));
   }
   else {
     drupal_set_message(t('An error was encountered while installing %modules.', array('%modules' =>implode(', ', $modules))), 'error');
@@ -248,15 +251,13 @@ function springboard_admin_config_modules($form, $form_state) {
  * Configure Springboard iteself.
  */
 function springboard_admin_config_springboard($form, $form_state) {
+  $panes = module_invoke_all('springboard_dashboard_panes');
   $default_enabled_panes = array();
   drupal_alter('springboard_dashboard_panes', $panes);
-  if (is_array($panes)) {
-    foreach ($panes as $name => $info) {
-      $panes[$name] = $info['label'];
-      $default_enabled_panes[$name] = $name;
-    }
-    variable_set('springboard_enabled_panes', $default_enabled_panes);
+  foreach ($panes as $name => $info) {
+    $default_enabled_panes[$name] = $name;
   }
+  variable_set('springboard_enabled_panes', $default_enabled_panes);
   drupal_set_message(t('Springboard panels have been configured'));
 }
 

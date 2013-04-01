@@ -194,18 +194,6 @@ function springboard_menu_alter(&$items) {
   }
   // Add menus under salesforce.
   if (module_exists('salesforce')) {
-    // Salesforce settings
-    $items['admin/springboard/salesforce/salesforce'] = $items['admin/config/services/salesforce'];
-    $items['admin/springboard/salesforce/salesforce']['type'] = MENU_LOCAL_TASK;
-    $items['admin/springboard/salesforce/salesforce']['title'] = $items['admin/config/services/salesforce']['title'] . ' settings';
-    $items['admin/springboard/salesforce/salesforce']['access arguments'] = array('administer springboard');
-    unset($items['admin/springboard/salesforce/salesforce']['access callback']);
-    // Update WSDL.
-    $items['admin/springboard/salesforce/salesforce-sync'] = $items['admin/config/services/salesforce/salesforce-sync'];
-    $items['admin/springboard/salesforce/salesforce-sync']['type'] = MENU_LOCAL_TASK;
-    $items['admin/springboard/salesforce/salesforce-sync']['title'] = 'Salesforce ' . $items['admin/config/services/salesforce/salesforce-sync']['title'];
-    $items['admin/springboard/salesforce/salesforce-sync']['access arguments'] = array('administer springboard');
-    unset($items['admin/springboard/salesforce/salesforce-sync']['access callback']);
     // Donation settings.
     $items['admin/springboard/salesforce/salesforce-donation'] = $items['admin/config/services/salesforce-donation'];
     $items['admin/springboard/salesforce/salesforce-donation']['type'] = MENU_LOCAL_TASK;
@@ -218,13 +206,21 @@ function springboard_menu_alter(&$items) {
     $items['admin/springboard/salesforce/salesforce-queue']['title'] = 'Salesforce ' . $items['admin/config/services/salesforce/salesforce-sync/salesforce-queue']['title'];
     $items['admin/springboard/salesforce/salesforce-queue']['access arguments'] = array('administer springboard');
     unset($items['admin/springboard/salesforce/salesforce-queue']['access callback']);
+    // Sync.
+    $items['admin/springboard/salesforce/salesforce-sync'] = $items['admin/config/services/salesforce/salesforce-sync'];
+    $items['admin/springboard/salesforce/salesforce-sync']['type'] = MENU_LOCAL_TASK;
+    $items['admin/springboard/salesforce/salesforce-sync']['title'] = 'Salesforce ' . $items['admin/config/services/salesforce/salesforce-sync']['title'];
+    $items['admin/springboard/salesforce/salesforce-sync']['access arguments'] = array('administer springboard');
+    unset($items['admin/springboard/salesforce/salesforce-sync']['access callback']);
+    // Salesforce settings
+    $items['admin/springboard/salesforce/salesforce'] = $items['admin/config/services/salesforce'];
+    $items['admin/springboard/salesforce/salesforce']['type'] = MENU_LOCAL_TASK;
+    $items['admin/springboard/salesforce/salesforce']['title'] = $items['admin/config/services/salesforce']['title'] . ' settings';
+    $items['admin/springboard/salesforce/salesforce']['access arguments'] = array('administer springboard');
+    $items['admin/springboard/salesforce/salesforce']['weight'] = 100; 
+    unset($items['admin/springboard/salesforce/salesforce']['access callback']);
   }
   // Add menus under settings.
-  $items['admin/springboard/settings/springboard'] = $items['admin/config/system/springboard'];
-  $items['admin/springboard/settings/springboard']['type'] = MENU_LOCAL_TASK;
-  $items['admin/springboard/settings/springboard']['access arguments'] = array('administer springboard');
-  $items['admin/springboard/settings/springboard']['title'] = 'Springboard';
-
   if (module_exists('fundraiser')) {
     $items['admin/springboard/settings/fundraiser'] = $items['admin/config/system/fundraiser'];
     $items['admin/springboard/settings/fundraiser']['type'] = MENU_LOCAL_TASK;
@@ -267,6 +263,11 @@ function springboard_menu_alter(&$items) {
     $items['admin/springboard/settings/gateways-add']['type'] = MENU_LOCAL_TASK;
     $items['admin/springboard/settings/gateways-add']['access arguments'] = array('administer springboard');
   }
+  $items['admin/springboard/settings/springboard'] = $items['admin/config/system/springboard'];
+  $items['admin/springboard/settings/springboard']['type'] = MENU_LOCAL_TASK;
+  $items['admin/springboard/settings/springboard']['access arguments'] = array('administer springboard');
+  $items['admin/springboard/settings/springboard']['title'] = 'Springboard';
+  $items['admin/springboard/salesforce/salesforce']['weight'] = 100;
 }
 
 /**
