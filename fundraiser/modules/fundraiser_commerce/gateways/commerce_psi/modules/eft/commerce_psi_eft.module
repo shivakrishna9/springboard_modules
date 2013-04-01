@@ -212,6 +212,7 @@ function commerce_psi_eft_submit_form_submit($payment_method, $pane_form, $pane_
   }
 
   $transaction->payload[REQUEST_TIME] = $response;
+  $transaction->remote_id = $response->ClientTransactionId;
 
   // Mark as success if we get back a 1 or 4
   if (in_array((int) $response->ResponseCode, array(1, 4))) {
