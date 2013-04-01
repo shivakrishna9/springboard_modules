@@ -61,12 +61,10 @@ function springboard_admin_settings() {
     $form['springboard_config']['settings']['sf']['sf_key'] = array(
       '#title' => t('Salesforce consumer key'),
       '#type' => 'textfield',
-      '#required' => TRUE,
     );
     $form['springboard_config']['settings']['sf']['sf_secret'] = array(
       '#title' => t('Salesforce consumer secret'),
       '#type' => 'textfield',
-      '#required' => TRUE,
     );
     $form['springboard_config']['configure'] = array(
       '#type' => 'submit',
