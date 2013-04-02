@@ -182,6 +182,11 @@ class SalesforceSync {
   public function sendBatch($batch) {
     $this->sendBatchPrepare($batch);
 
+    // If all items failed tokenization it is possible that the batch as a whole will fail.
+    if (isset($batch['sobjects']) && empty($this->sobjects)) {
+      $this->failBatch($batch, SALESFORCE_SYNC_ITEM_FAIL_TOKEN_BATCH);
+      return FALSE;
+    }
     // Soap connection to Salesforce could never be established.
     if (!is_object($this->soap)) {
       $this->failBatch($batch, SALESFORCE_SYNC_ITEM_FAIL_SOAP);
@@ -228,33 +233,35 @@ class SalesforceSync {
 
       // Process results.
       $items = isset($batch['items']) ? $batch['items'] : (isset($batch['sobjects']) ? $batch['sobjects'] : array());
-      foreach ($results as $key => $result) {
-        // Since we pass an item to others to trigger actions based on its
-        // success, we should make sure we send the same type and structure of
-        // item.
-        if (isset($items[$key]) && isset($items[$key]->sobject)) {
-          $item = $items[$key];
+      if (is_array($results)) { // If all items failed token checks, this could be empty.
+        foreach ($results as $key => $result) {
+          // Since we pass an item to others to trigger actions based on its
+          // success, we should make sure we send the same type and structure of
+          // item.
+          if (isset($items[$key]) && isset($items[$key]->sobject)) {
+            $item = $items[$key];
+          }
+          elseif (isset($items[$key])) {
+            $sobject = $items[$key];
+            $dedupe_field = isset($batch['dedupe_field']) ? $batch['dedupe_field'] : NULL;
+            $item = new SalesforceSyncItem($sobject->type, $batch['operation'], array(), $dedupe_field);
+            $item->sobject = $sobject;
+          }
+          else {
+            $item = new SalesforceSyncItem();
+            $item->sobject->Id = $result->Id;
+          }
+          if ($result->success) {
+            $this->passItem($item, $result);
+          }
+          else {
+            $this->failItem($item, $error_message, $result);
+          }
+          // Invokes hook_salesforce_sync_complete_item().
+          // Provided as a last, final say on the item life cycle after delete
+          // from the queue and the like.
+          module_invoke_all('salesforce_sync_complete_item', $item, $result);
         }
-        elseif (isset($items[$key])) {
-          $sobject = $items[$key];
-          $dedupe_field = isset($batch['dedupe_field']) ? $batch['dedupe_field'] : NULL;
-          $item = new SalesforceSyncItem($sobject->type, $batch['operation'], array(), $dedupe_field);
-          $item->sobject = $sobject;
-        }
-        else {
-          $item = new SalesforceSyncItem();
-          $item->sobject->Id = $result->Id;
-        }
-        if ($result->success) {
-          $this->passItem($item, $result);
-        }
-        else {
-          $this->failItem($item, $error_message, $result);
-        }
-        // Invokes hook_salesforce_sync_complete_item().
-        // Provided as a last, final say on the item life cycle after delete
-        // from the queue and the like.
-        module_invoke_all('salesforce_sync_complete_item', $item, $result);
       }
     }
     catch (Exception $error) {

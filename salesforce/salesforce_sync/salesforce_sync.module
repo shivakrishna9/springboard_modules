@@ -81,6 +81,9 @@ define('SALESFORCE_SYNC_ITEM_FAIL_BATCH', 'Batch threw exception.');
 define('SALESFORCE_SYNC_ITEM_FAIL_SOAP', 'SOAP not established.');
 
 // The batch failed to be processed because we could not get a connection.
+define('SALESFORCE_SYNC_ITEM_FAIL_TOKEN_BATCH', 'No items ready to sync in the batch.');
+
+// The batch failed to be processed because we could not get a connection.
 define('SALESFORCE_SYNC_ITEM_FAIL_TOKEN', 'Item failed due to bad token.');
 
 /**
