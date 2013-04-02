@@ -226,11 +226,13 @@ function commerce_psi_eft_submit_form_submit($payment_method, $pane_form, $pane_
   $transaction->remote_status = $response->Approved;
 
   // Build the response message.
-  $message = array(
-    '<b>' . ($success ? t('APPROVED') : t('FAILED')) . ':</b> ' . check_plain($response->ResponseMessage),
+  $transaction->message = '<b>!status:</b> !response_message Response code: !response_code; Reason code: !reason_code';
+  $transaction->message_variables = array(
+    '!status' => $success ? t('APPROVED') : t('FAILED'),
+    '!response_message' => check_plain($response->ResponseMessage),
+    '!response_code' => $response->ResponseCode,
+    '!reason_code' => $response->ReasonCode,
   );
-
-  $transaction->message = implode('<br />', $message);
 
   // Save the transaction information.
   commerce_payment_transaction_save($transaction);
