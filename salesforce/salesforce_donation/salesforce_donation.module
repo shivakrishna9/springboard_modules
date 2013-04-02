@@ -215,6 +215,21 @@ function salesforce_donation_fundraiser_refund_success($refund) {
 }
 
 /**
+ * Implements hook_salesforce_genmap_map_item_alter().
+ */
+function salesforce_donation_salesforce_genmap_map_item_alter(&$item, $donation) {
+  // Modify the recurring donation object with the corrected item
+  if ($item['module'] == 'salesforce_donation' && $item['delta'] == 'donation' && $item['operation'] == 'insert') {
+    if (isset($donation->is_refund) && $donation->is_refund == TRUE) {
+      // Remove the dedupe field from item. This will force a create.
+      if (!empty($item['dedupe_field'])) {
+        $item['dedupe_field'] = '';
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_salesforce_genmap_info().
  */
 function salesforce_donation_salesforce_genmap_info() {
