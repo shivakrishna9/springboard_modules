@@ -118,6 +118,16 @@ function springboard_menu() {
       'type' => MENU_LOCAL_TASK,
     );
   }
+  // Add logging task.
+  if (module_exists('salesforce_log')) {
+    $items['admin/springboard/salesforce-log'] = array(
+      'title' => 'Salesforce Logs',
+      'description' => 'View Salesforce logs.',
+      'page callback' => 'springboard_admin',
+      'access arguments' => array('administer springboard'),
+      'type' => MENU_LOCAL_TASK,
+    );
+  }
   // Provide settings tabs for easy access to various sub modules under this tab.
   $items['admin/springboard/settings'] = array(
     'title' => 'Settings',
@@ -212,6 +222,12 @@ function springboard_menu_alter(&$items) {
     $items['admin/springboard/salesforce/salesforce-sync']['title'] = 'Salesforce ' . $items['admin/config/services/salesforce/salesforce-sync']['title'];
     $items['admin/springboard/salesforce/salesforce-sync']['access arguments'] = array('administer springboard');
     unset($items['admin/springboard/salesforce/salesforce-sync']['access callback']);
+    // Default mappings.
+    $items['admin/springboard/salesforce/salesforce-mappings'] = $items['admin/structure/salesforce/mappings'];
+    $items['admin/springboard/salesforce/salesforce-mappings']['type'] = MENU_LOCAL_TASK;
+    $items['admin/springboard/salesforce/salesforce-mappings']['title'] = $items['admin/structure/salesforce/mappings']['title'];
+    $items['admin/springboard/salesforce/salesforce-mappings']['access arguments'] = array('administer springboard');
+    unset($items['admin/springboard/salesforce/salesforce-mappings']['access callback']);
     // Salesforce settings
     $items['admin/springboard/salesforce/salesforce'] = $items['admin/config/services/salesforce'];
     $items['admin/springboard/salesforce/salesforce']['type'] = MENU_LOCAL_TASK;
@@ -219,6 +235,45 @@ function springboard_menu_alter(&$items) {
     $items['admin/springboard/salesforce/salesforce']['access arguments'] = array('administer springboard');
     $items['admin/springboard/salesforce/salesforce']['weight'] = 100; 
     unset($items['admin/springboard/salesforce/salesforce']['access callback']);
+  }
+  // Add menus under salesforce. This only works if Views runs before this hook. Module weights is an issue here.
+  if (module_exists('salesforce_log')) {
+    // Grab the views path if views hasn't added it's menus yet to get the ones we want.
+    if (empty($items['admin/reports/salesforce/batch']) && function_exists('views_menu_alter')) {
+      $views_paths = array();
+      views_menu_alter($views_paths);
+      if (isset($views_paths['admin/reports/salesforce/batch'])) {
+        $items['admin/reports/salesforce/batch'] = $views_paths['admin/reports/salesforce/batch'];
+      }
+      if (isset($views_paths['admin/reports/salesforce/item'])) {
+        $items['admin/reports/salesforce/item'] = $views_paths['admin/reports/salesforce/item'];
+      }
+      if (isset($views_paths['admin/reports/salesforce/queue'])) {
+        $items['admin/reports/salesforce/queue'] = $views_paths['admin/reports/salesforce/queue'];
+      }
+    }
+    // And try again.
+    if (!empty($items['admin/reports/salesforce/batch'])) {
+      // Salesforce settings
+      $items['admin/springboard/salesforce-log/batch'] = $items['admin/reports/salesforce/batch'];
+      $items['admin/springboard/salesforce-log/batch']['type'] = MENU_LOCAL_TASK;
+      $items['admin/springboard/salesforce-log/batch']['title'] = $items['admin/reports/salesforce/batch']['title'];
+      $items['admin/springboard/salesforce-log/batch']['access arguments'] = array('administer springboard');
+      unset($items['admin/springboard/salesforce-log/batch']['access callback']);
+      // Salesforce settings
+      $items['admin/springboard/salesforce-log/item'] = $items['admin/reports/salesforce/item'];
+      $items['admin/springboard/salesforce-log/item']['type'] = MENU_LOCAL_TASK;
+      $items['admin/springboard/salesforce-log/item']['title'] = $items['admin/reports/salesforce/item']['title'];
+      $items['admin/springboard/salesforce-log/item']['access arguments'] = array('administer springboard');
+      unset($items['admin/springboard/salesforce-log/item']['access callback']);
+      // Salesforce settings
+      $items['admin/springboard/salesforce-log/queue'] = $items['admin/reports/salesforce/queue'];
+      $items['admin/springboard/salesforce-log/queue']['type'] = MENU_LOCAL_TASK;
+      $items['admin/springboard/salesforce-log/queue']['title'] = $items['admin/reports/salesforce/queue']['title'];
+      $items['admin/springboard/salesforce-log/queue']['access arguments'] = array('administer springboard');
+      $items['admin/springboard/salesforce-log/queue']['weight'] = 100; 
+      unset($items['admin/springboard/salesforce-log/queue']['access callback']);
+    }
   }
   // Add menus under settings.
   if (module_exists('fundraiser')) {
