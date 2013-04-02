@@ -190,6 +190,8 @@ function springboard_admin_config(&$form, $form_state) {
     // Clear all caches one last time.
     drupal_flush_all_caches();
     menu_rebuild();
+    drupal_set_message(t('Please be sure to set up the Encypt key path at !link',
+      array('!link' => l('Encrypt settings', 'admin/config/system/encrypt'))));
   }
   else {
     drupal_set_message(t('Springboard default configuration has already been set up.'));
@@ -287,8 +289,8 @@ function springboard_admin_config_salesforce($form, $form_state) {
   // Set keys and secrets
   variable_set('salesforce_consumer_key', $form_state['values']['sf_key']);
   variable_set('salesforce_consumer_secret', $form_state['values']['sf_secret']);
-  // To do, set oauth up.
   drupal_set_message(t('Salesforce has been configured'));
+  // To do, set oauth up. THIS IS CRITICAL TO DO.
   drupal_set_message(t('You will need to authorize these settings under the Salesforce admin settings.'));
 }
 
@@ -872,7 +874,17 @@ function springboard_admin_config_donation_form_add($form, $form_state, $email_n
     'extra' => array(),
     );
   }
+  // One last save.
   node_save($node);
+  // Make sure the donation maps are moved over to be ready when/if SF is authenticated.
+  if ($form_state['values']['sf_donation']) {
+    db_query('INSERT INTO {salesforce_genmap_map} (nid, map_handler, salesforce_object_type, salesforce_record_type, salesforce_dedupe_field, ' .
+        'field_map, sync_options, created, updated, locked, status, module) ' .
+      'SELECT ' . $node->nid . ', m2.map_handler, m2.salesforce_object_type, m2.salesforce_record_type, m2.salesforce_dedupe_field, m2.field_map, ' .
+        ' m2.sync_options, m2.created, m2.updated, m2.locked, m2.status, m2.module '.
+      'FROM {salesforce_genmap_map} m2 ' .
+      'WHERE m2.nid = -1 AND map_handler IN ("salesforce_donation", "fundraiser_sustainers") ');
+  }
   drupal_set_message(t('An example donation form has been created.'));
 }
 
