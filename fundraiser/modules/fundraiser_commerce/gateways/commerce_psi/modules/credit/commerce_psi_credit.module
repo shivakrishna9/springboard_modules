@@ -105,13 +105,11 @@ function commerce_psi_credit_submit_form($payment_method, $pane_values = array()
  */
 function commerce_psi_credit_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
   // Determine the credit card type if possible for use in later code.
-  if (!empty($pane_values['credit_card']['number'])) {
-    module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
-    $card_type = commerce_payment_validate_credit_card_type($pane_values['credit_card']['number'], array_keys(commerce_payment_credit_card_types()));
-    $all_types = commerce_payment_credit_card_types();
-    // PSI api uses the pretty name for the card type
-    $pretty_card_type = $all_types[$card_type];
-  }
+  module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+  $card_type = commerce_payment_validate_credit_card_type($pane_values['credit_card']['number'], array_keys(commerce_payment_credit_card_types()));
+  $all_types = commerce_payment_credit_card_types();
+  // PSI api uses the pretty name for the card type
+  $pretty_card_type = !empty($all_types[$card_type]) ? $all_types[$card_type] : NULL;
 
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
   // Build a name-value pair array for this transaction.
@@ -210,15 +208,18 @@ function commerce_psi_credit_submit_form_submit($payment_method, $pane_form, $pa
   $transaction->remote_status = $response->Approved;
 
   // Build the response message.
-  $message = array(
-    '<b>' . ($success ? t('APPROVED') : t('FAILED')) . ':</b> ' . check_plain($response->ResponseMessage),
+  $transaction->message = '<b>!status:</b> !response_message Response code: !response_code; Reason code: !reason_code';
+  $transaction->message_variables = array(
+    '!status' => $success ? t('APPROVED') : t('FAILED'),
+    '!response_message' => check_plain($response->ResponseMessage),
+    '!response_code' => $response->ResponseCode,
+    '!reason_code' => $response->ReasonCode,
   );
 
   if ($success) {
-    $message[] =' Authorization code: ' . $response->AuthorizationCode;
+    $transaction->message .= '; Authorization code: ' . !auth_code;
+    $transaction->message_variables['!auth_code'] = $response->AuthorizationCode;
   }
-
-  $transaction->message = implode('<br />', $message);
 
   // Save the transaction information.
   commerce_payment_transaction_save($transaction);

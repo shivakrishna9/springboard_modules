@@ -253,7 +253,7 @@ function email_wrappers_email_submit_callback($form, $form_state) {
       'nid' => $values['node']->nid,
       'eid' => $values['eid'],
       'tid' => $values['email_wrappers_email_template'],
-      'bcc_email' => implode(',', $values['email_wrappers_bcc']),
+      'bcc_email' => is_array($values['email_wrappers_bcc']) ? implode(',', $values['email_wrappers_bcc']): $values['email_wrappers_bcc'],
       'html_message' => $values['email_wrappers_html_message'],
       'html_message_format' => '',
       'text_message' => $values['email_wrappers_text_message'],
