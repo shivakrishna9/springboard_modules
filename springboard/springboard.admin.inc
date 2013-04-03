@@ -9,7 +9,8 @@
  */
 function springboard_admin_settings() {
   $form = array();
-  if (variable_get('springboard_needs_config', FALSE)) {
+ // if (variable_get('springboard_needs_config', FALSE)) {
+ if (1) {
     $form['springboard_config'] = array(
       '#type' => 'fieldset',
       '#title' => t('Configure Springboard'),
@@ -54,9 +55,7 @@ function springboard_admin_settings() {
     );
     $form['springboard_config']['settings']['sf']['sf_help'] = array(
       '#type' => 'item',
-      '#markup' => t('Authorize this website to communicate with Salesforce by entering the consumer key and ' .
-        'secret from a remote application. Clicking authorize will redirect you to Salesforce where you will be ' .
-        'asked to grant access.'),
+      '#markup' => t('You will need to authorize this website after setup to complete the connection to Salesforce.'),
     );
     $form['springboard_config']['settings']['sf']['sf_key'] = array(
       '#title' => t('Salesforce consumer key'),
