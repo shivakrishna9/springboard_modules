@@ -183,7 +183,7 @@ class SalesforceSync {
     $this->sendBatchPrepare($batch);
 
     // If all items failed tokenization it is possible that the batch as a whole will fail.
-    if (isset($batch['sobjects']) && empty($this->sobjects)) {
+    if (isset($batch['sobjects']) && empty($batch['sobjects'])) {
       $this->failBatch($batch, SALESFORCE_SYNC_ITEM_FAIL_TOKEN_BATCH);
       return FALSE;
     }
