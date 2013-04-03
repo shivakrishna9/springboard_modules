@@ -285,8 +285,12 @@ function springboard_admin_config_salesforce($form, $form_state) {
   // Market source auto checks campaigns.
   variable_set('market_source_validate_sf_campaigns', TRUE);
   // Set keys and secrets
-  variable_set('salesforce_consumer_key', $form_state['values']['sf_key']);
-  variable_set('salesforce_consumer_secret', $form_state['values']['sf_secret']);
+  if (!empty($form_state['values']['sf_key'])) {
+    variable_set('salesforce_consumer_key', $form_state['values']['sf_key']);
+  }
+  if (!empty($form_state['values']['sf_secret'])) {
+    variable_set('salesforce_consumer_secret', $form_state['values']['sf_secret']);
+  }
   drupal_set_message(t('Salesforce has been configured'));
   // To do, set oauth up. THIS IS CRITICAL TO DO.
   drupal_set_message(t('You will need to authorize these settings under the Salesforce admin settings.'));
