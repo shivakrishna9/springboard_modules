@@ -274,6 +274,10 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
       $sf_field = $map->field_map['salesforce_donation_map']['gateway'];
       $fields[$sf_field] = isset($donation->gateway['id']) ? $donation->gateway['id'] : '';
     }
+    if (isset($map->field_map['salesforce_donation_map']['gateway_name'])) {
+      $sf_field = $map->field_map['salesforce_donation_map']['gateway_name'];
+      $fields[$sf_field] = isset($donation->gateway['title']) ? $donation->gateway['title'] : '';
+    }
     if (isset($map->field_map['salesforce_donation_map']['txn_id'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['txn_id'];
       $fields[$sf_field] = $donation->txn_id;
@@ -467,6 +471,7 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
     '#fields' => array(
       'did' => t('Donation ID'),
       'gateway' => t('Gateway ID'),
+      'gateway_name' => t('Gateway Name'),
       'txn_id' => t('Transaction ID'),
       'status' => t('Payment Status'),
     ),
