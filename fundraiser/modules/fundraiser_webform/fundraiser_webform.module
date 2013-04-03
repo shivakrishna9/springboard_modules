@@ -208,7 +208,7 @@ function fundraiser_webform_form_webform_component_delete_form_alter(&$form, &$f
   // Make sure we are dealing with a donation form.
   if (fundraiser_is_donation_type($form['node']['#value']->type)) { // From fundraiser.module.
     // Check vs. required fields to make sure we can't delete them.
-    $required_fields = _fundraiser_get_field_keys();
+    $required_fields = array_keys(_fundraiser_webform_get_nonfieldset_keys());
     $cid = $form['component']['#value']['cid'];
     $component = $form['node']['#value']->webform['components'][$cid];
     // Check to see if the form_key is in our required fields array
@@ -409,53 +409,70 @@ function fundraiser_webform_form_alter(&$form, &$form_state, $form_id) {
  */
 function fundraiser_webform_submission_display(&$form, &$form_state) {
   // Set up a view only display of the donation amount.
-  if ('other' != $form['submitted']['donation']['amount']['#default_value']) {
-    $amount = $form['submitted']['donation']['amount']['#default_value'];
+  $amount_field = _fundraiser_get_form_field($form, 'amount');
+  if ('other' != $amount_field['#default_value']) {
+    $amount = $amount_field['#default_value'];
   }
   else {
-    $amount = $form['submitted']['donation']['other_amount']['#default_value'];
+    $other_amount_field = _fundraiser_get_form_field($form, 'other_amount');
+    $amount = $other_amount_field['#default_value'];
   }
-  // Add new fields.
-  $form['submitted']['donation']['display_amount'] = array(
+  // Add new fields display.
+  $form['submitted']['donation_info'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Donation Information'),
+  );
+  $form['submitted']['donation_info']['display_amount'] = array(
     '#markup' => '<div class="form-item"><label>' . t('Donation Amount') .
       ':</label>' . '$' . number_format($amount, 2) . '</div>', // TODO this should be updated for an international audience.
   );
   // Show whether or not it's a recurring donation.
-  if (isset($form['submitted']['credit_card_information']['recurs_monthly'])) {
+  $recurs_monthly_field = _fundraiser_get_form_field($form, 'recurs_monthly');
+  if (isset($recurs_monthly_field)) {
     $recurs = t('No');
-    if (isset($form['submitted']['credit_card_information']['recurs_monthly']['#default_value'][0])
-      && ($form['submitted']['credit_card_information']['recurs_monthly']['#default_value'][0] == 'recurs')) {
+    if (isset($recurs_monthly_field['#default_value'][0])
+      && ($recurs_monthly_field['#default_value'][0] == 'recurs')) {
       $recurs = t('Yes');
     }
-    $form['submitted']['donation']['recurring'] = array(
+    $form['submitted']['donation_info']['recurring'] = array(
       '#markup' => '<div class="form-item"><label>' . t('Recurring Donation?') .
-        ':</label>' . $recurs . '</div>',
+        '</label>' . $recurs . '</div>',
     );
   }
   // Clean up the donor info section - replace the form fields with read only info
-  $form['submitted']['donor_information']['#title'] = t('Donor Information');
-  $form['submitted']['donor_information']['first_name_readonly'] = array(
+  $first_name_field = _fundraiser_get_form_field($form, 'first_name');
+  $form['submitted']['donation_info']['first_name_readonly'] = array(
     '#markup' => '<div class="form-item"><label>' . t('First Name') . ':</label>' .
-      $form['submitted']['donor_information']['first_name']['#default_value'] . '</div>',
+      $first_name_field['#default_value'] . '</div>',
   );
-  $form['submitted']['donor_information']['last_name_readonly'] = array(
+  $last_name_field = _fundraiser_get_form_field($form, 'last_name');
+  $form['submitted']['donation_info']['last_name_readonly'] = array(
     '#markup' => '<div class="form-item"><label>' . t('Last Name') . ':</label>' .
-      $form['submitted']['donor_information']['last_name']['#default_value'] . '</div>',
+      $last_name_field['#default_value'] . '</div>',
   );
-  $form['submitted']['donor_information']['email_readonly'] = array(
+  $mail_field = _fundraiser_get_form_field($form, 'mail');
+  $form['submitted']['donation_info']['email_readonly'] = array(
     '#markup' => '<div class="form-item"><label>' . t('Email') . ':</label>' .
-      $form['submitted']['donor_information']['mail']['#default_value'] . '</div>',
+      $mail_field['#default_value'] . '</div>',
   );
-  $form['submitted']['donor_information']['first_name']['#prefix'] =
-    $form['submitted']['donor_information']['last_name']['#prefix'] =
-      $form['submitted']['donor_information']['mail']['#prefix'] = '<div style="display:none">';
-  $form['submitted']['donor_information']['first_name']['#suffix'] =
-    $form['submitted']['donor_information']['last_name']['#suffix'] =
-      $form['submitted']['donor_information']['mail']['#suffix'] = '</div>';
+  // Unset things.
+  $donation_field = _fundraiser_get_form_field($form, 'donation');
+  $payment_information_field = _fundraiser_get_form_field($form, 'payment_information');
+  $payment_method_field = _fundraiser_get_form_field($form, 'payment_method');
+  $payment_fields_field = _fundraiser_get_form_field($form, 'payment_fields');
+  $first_name_field['#access'] = $last_name_field['#access'] = $mail_field['#access'] = FALSE;
+  $amount_field['#access'] = $other_amount_field['#access'] = $donation_field['#access'] = FALSE;
+  $payment_information_field['#access'] = $payment_method_field['#access'] =  $payment_fields_field['#access'] = FALSE;
   // Remove sections no one really needs to see here.
-  unset($form['submitted']['donation']['amount']);
-  unset($form['submitted']['donation']['other_amount']);
-  unset($form['submitted']['credit_card_information']);
+  $form = _fundraiser_update_form_field($form, 'first_name', $first_name_field);
+  $form = _fundraiser_update_form_field($form, 'last_name', $last_name_field);
+  $form = _fundraiser_update_form_field($form, 'mail', $mail_field);
+  $form = _fundraiser_update_form_field($form, 'amount', $amount_field);
+  $form = _fundraiser_update_form_field($form, 'other_amount', $other_amount_field);
+  $form = _fundraiser_update_form_field($form, 'donation', $other_amount_field);
+  $form = _fundraiser_update_form_field($form, 'payment_information', $payment_information_field);
+  $form = _fundraiser_update_form_field($form, 'payment_method', $payment_method_field);
+  $form = _fundraiser_update_form_field($form, 'payment_fields', $payment_fields_field);
 }
 
 /**
