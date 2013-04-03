@@ -217,7 +217,7 @@ function commerce_psi_credit_submit_form_submit($payment_method, $pane_form, $pa
   );
 
   if ($success) {
-    $transaction->message .= '; Authorization code: ' . !auth_code;
+    $transaction->message .= '; Authorization code: !auth_code';
     $transaction->message_variables['!auth_code'] = $response->AuthorizationCode;
   }
 
