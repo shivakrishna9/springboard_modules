@@ -179,9 +179,8 @@ function fundraiser_schema() {
       'receipt_id' => array(
         'description' => 'Remote ID for the given credit transaction',
         'type' => 'varchar',
-        'length' => '25',
-        'default' => 'USD',
-        'not null' => TRUE,
+        'length' => '55',
+        'not null' => FALSE,
       ),
       'status' => array(
         'description' => 'The status of the refund in the charge system.',
@@ -464,9 +463,8 @@ function fundraiser_update_7004() {
     'receipt_id' => array(
       'description' => 'Remote ID for the given credit transaction',
       'type' => 'varchar',
-      'length' => '25',
-      'default' => 'USD',
-      'not null' => TRUE,
+      'length' => '55',
+      'not null' => FALSE,
     ),
   );
   db_change_field('fundraiser_refund', 'receipt_id', 'receipt_id', $new_fields['receipt_id']);
