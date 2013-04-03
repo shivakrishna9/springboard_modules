@@ -263,6 +263,7 @@ function salesforce_donation_salesforce_genmap_info_alter(&$items) {
  *   A set of fields mapped to value.
  */
 function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, Entity $map, $node, $op) {
+    dpm('here');
   $fields = array();
   // Donation properties map.
   if (isset($map->field_map['salesforce_donation_map'])) {
@@ -372,6 +373,7 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
   // So we need to check for all type that MAY be configured at any point based
   // on available methods. Methods are defined within the associated active
   // gateways.
+  dpm($donation->donation, '$donation->donation');
   foreach ($donation->donation['payment_fields'] as $payment_method => $payment_fields) {
     foreach ($payment_fields as $key => $value) {
       if (isset($map->field_map['salesforce_donation_map'][$key])) {
@@ -527,7 +529,7 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
       if (isset($gateway_info['form callback'])) {
         $form_func = $gateway_info['form callback'];
         if (function_exists($form_func)) {
-          $gateway_form = $form_func($payment_method);
+          $gateway_form = $form_func($payment_method, $config);
         }
       }
       // Note: fields can be nested down.
