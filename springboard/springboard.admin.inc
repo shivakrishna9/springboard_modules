@@ -203,6 +203,7 @@ function springboard_admin_config_modules($form, $form_state) {
   // Springboard custom.
   // Enable does recursion so we don't need to dig deeper.
   $modules = array(
+    'field_ui',
     'fundraiser',
     'fundraiser_webform',
     'fundraiser_sustainers',
