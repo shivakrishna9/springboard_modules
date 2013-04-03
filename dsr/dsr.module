@@ -282,7 +282,6 @@ function _dsr_discrepancy_links($discrepancies, $start_date, $end_date) {
  */
 function dsr_get_refunded_donations($start_date, $end_date) {
   $soql = rawurlencode(sprintf(variable_get('dsr_refunded_select_s', ''), $start_date, $end_date));
-  drupal_set_message('refunded report soql:' . $soql);
   return _dsr_run_soql_opportunity_select($soql);
 }
 
@@ -458,7 +457,7 @@ function _dsr_run_soql_opportunity_select($soql) {
 
     if ($query['records']) {
       foreach ($query['records'] as $record) {
-        $donations[$record['Order_ID_c']] = $record;
+        $donations[$record['Order_ID__c']] = $record;
       }
     }
   }
