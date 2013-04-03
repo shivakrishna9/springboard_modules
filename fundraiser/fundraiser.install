@@ -178,7 +178,9 @@ function fundraiser_schema() {
       ),
       'receipt_id' => array(
         'description' => 'Remote ID for the given credit transaction',
-        'type' => 'int',
+        'type' => 'varchar',
+        'length' => '25',
+        'default' => 'USD',
         'not null' => TRUE,
       ),
       'status' => array(
@@ -452,4 +454,20 @@ function fundraiser_update_7003() {
   foreach ($new_fields as $fieldname => $new_field) {
     db_add_field('fundraiser_refund', $fieldname, $new_field);
   }
+}
+
+/**
+ * D7 update hook - added for ease during QA testing.
+ */
+function fundraiser_update_7004() {
+  $new_fields = array(
+    'receipt_id' => array(
+      'description' => 'Remote ID for the given credit transaction',
+      'type' => 'varchar',
+      'length' => '25',
+      'default' => 'USD',
+      'not null' => TRUE,
+    ),
+  );
+  db_change_field('fundraiser_refund', 'receipt_id', 'receipt_id', $new_fields['receipt_id']);
 }
