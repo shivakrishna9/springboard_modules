@@ -9,8 +9,7 @@
  */
 function springboard_admin_settings() {
   $form = array();
- // if (variable_get('springboard_needs_config', FALSE)) {
- if (1) {
+  if (variable_get('springboard_needs_config', FALSE)) {
     $form['springboard_config'] = array(
       '#type' => 'fieldset',
       '#title' => t('Configure Springboard'),
@@ -877,12 +876,22 @@ function springboard_admin_config_donation_form_add($form, $form_state, $email_n
   node_save($node);
   // Make sure the donation maps are moved over to be ready when/if SF is authenticated.
   if ($form_state['values']['sf_donation']) {
-    db_query('INSERT INTO {salesforce_genmap_map} (nid, map_handler, salesforce_object_type, salesforce_record_type, salesforce_dedupe_field, ' .
-        'field_map, sync_options, created, updated, locked, status, module) ' .
-      'SELECT ' . $node->nid . ', m2.map_handler, m2.salesforce_object_type, m2.salesforce_record_type, m2.salesforce_dedupe_field, m2.field_map, ' .
-        ' m2.sync_options, m2.created, m2.updated, m2.locked, m2.status, m2.module '.
-      'FROM {salesforce_genmap_map} m2 ' .
-      'WHERE m2.nid = -1 AND map_handler IN ("salesforce_donation", "fundraiser_sustainers") ');
+    // Add default map for donation.
+    $map = salesforce_genmap_load_map(-1, 'salesforce_donation');
+    if (!empty($map)) {
+      // Copy the map to the node.
+      unset($map->mid);
+      $map->nid = $node->nid;
+      salesforce_genmap_save_map($map, 'salesforce_donation');
+    }
+    // Add default map for sustainers.
+    $map = salesforce_genmap_load_map(-1, 'fundraiser_sustainers');
+    if (!empty($map)) {
+      // Copy the map to the node.
+      unset($map->mid);
+      $map->nid = $node->nid;
+      salesforce_genmap_save_map($map, 'fundraiser_sustainers');
+    }
   }
   drupal_set_message(t('An example donation form has been created.'));
 }
