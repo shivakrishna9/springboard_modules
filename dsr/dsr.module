@@ -282,7 +282,6 @@ function _dsr_discrepancy_links($discrepancies, $start_date, $end_date) {
  */
 function dsr_get_refunded_donations($start_date, $end_date) {
   $soql = rawurlencode(sprintf(variable_get('dsr_refunded_select_s', ''), $start_date, $end_date));
-  drupal_set_message('refunded report soql:' . $soql);
   return _dsr_run_soql_opportunity_select($soql);
 }
 
@@ -458,7 +457,7 @@ function _dsr_run_soql_opportunity_select($soql) {
 
     if ($query['records']) {
       foreach ($query['records'] as $record) {
-        $donations[$record['Order_ID_c']] = $record;
+        $donations[$record['Order_ID__c']] = $record;
       }
     }
   }
@@ -478,25 +477,24 @@ function _dsr_parse_aggregate_result($response) {
     'total_amount' => 0,
     'total_count' => 0,
   );
-
   if ($response['totalSize'] >= 1) {
 
     foreach ($response['records'] as $record) {
       // workaround for different responses provided by Salesforce depending on PHP version
       // TODO: recheck this once results are in, odds are excellent record is not an object.
-      $use_indices = FALSE;
+    /*  $use_indices = FALSE;
       $keys = array_keys($record->any);
       if (is_numeric($keys[0])) {
         $use_indices = TRUE;
-      }
+      }*/
 
-      $type = $use_indices ? strip_tags($record->any[2]) : strip_tags($record->any[0]);
-      $results['types'][$type] = array(
-        'total_amount' => $use_indices ? $record->any[0] : $record->any['total_amount'],
-        'total_count' => $use_indices ? $record->any[1] : $record->any['total_count'],
+      //$type = $use_indices ? strip_tags($record->any[2]) : strip_tags($record->any[0]);
+      $results['types'][$record['record_type']] = array(
+        'total_amount' => $record['total_amount'], //$use_indices ? $record->any[0] : $record->any['total_amount'],
+        'total_count' => $record['total_count'], //$use_indices ? $record->any[1] : $record->any['total_count'],
       );
-      $results['total_amount'] += $use_indices ? $record->any[0] : $record->any['total_amount'];
-      $results['total_count'] += $use_indices ? $record->any[1] : $record->any['total_count'];
+      $results['total_amount'] += $record['total_amount']; //$use_indices ? $record->any[0] : $record->any['total_amount'];
+      $results['total_count'] += $record['total_count']; //$use_indices ? $record->any[1] : $record->any['total_count'];
     }
 
     // ditch extra precision on floats, also pads missing precision with 0's

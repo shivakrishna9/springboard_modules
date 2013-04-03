@@ -129,21 +129,22 @@ function page_wrappers_css_alter(&$css) {
   //if this is a node that has a wrapper assigned remove most of the style sheets
   if (isset($node) &&_page_wrappers_enabled_type($node, TRUE) && isset($node->wrapper)) {
     $wrapper_node = node_load($node->wrapper);
-    if (isset($wrapper_node->field_css_file['und']) && !empty($wrapper_node->field_css_file['und'][0]['fid'])) {
-      //create an array of stylesheets to keep
-      $keep = array(
-        $wrapper_node->field_css_file['und'][0]['uri'],
-        drupal_get_path('module', 'system') . '/system.base.css',
-        drupal_get_path('module', 'system') . '/system.menus.css',
-        drupal_get_path('module', 'system') . '/system.messages.css',
-        drupal_get_path('module', 'overlay') . '/overlay-parent.css',
-        drupal_get_path('module', 'toolbar') . '/toolbar.css',
-        drupal_get_path('module', 'shortcut') . '/shortcut.css',
-      );
-      foreach ($css as $path => $info) {
-        if (!in_array($path, $keep)) {
-          unset($css[$path]);
-        }
+    // create an array of stylesheets to keep
+    $keep = array(
+      drupal_get_path('module', 'system') . '/system.base.css',
+      drupal_get_path('module', 'system') . '/system.menus.css',
+      drupal_get_path('module', 'system') . '/system.messages.css',
+      drupal_get_path('module', 'overlay') . '/overlay-parent.css',
+      drupal_get_path('module', 'toolbar') . '/toolbar.css',
+      drupal_get_path('module', 'shortcut') . '/shortcut.css',
+    );
+    // if a stylesheet has been added to the wrapper, include it.
+    if (!empty($wrapper_node->field_css_file['und'][0]['uri'])) {
+      $keep[] = $wrapper_node->field_css_file['und'][0]['uri'];
+    }
+    foreach ($css as $path => $info) {
+      if (!in_array($path, $keep)) {
+        unset($css[$path]);
       }
     }
   }

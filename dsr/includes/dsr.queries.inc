@@ -50,8 +50,6 @@ function dsr_select($status, $start, $end) {
  * returns an array of orders matching the select criteria
  */
 function dsr_get_orders($status, $start_date, $end_date) {
-  drupal_set_message('start date:' . $start_date);
-  drupal_set_message('end date:' . $end_date);
   $results = db_query('
     SELECT
       f.did,
@@ -128,7 +126,6 @@ function dsr_salesforce_aggregate($status, $start_date, $end_date) {
  *   The field to use as the key if you want an associative array returned.
  */
 function dsr_soql_select($soql, $key_field = NULL) {
-  drupal_set_message('soql select');
   $records = array();
   $continue = TRUE;
 
