@@ -182,7 +182,8 @@ class SalesforceSync {
   public function sendBatch($batch) {
     $this->sendBatchPrepare($batch);
 
-    // If all items failed tokenization it is possible that the batch as a whole will fail.
+    // If all items failed tokenization it is possible that the batch as a whole
+    // will fail.
     if (isset($batch['sobjects']) && empty($batch['sobjects'])) {
       $this->failBatch($batch, SALESFORCE_SYNC_ITEM_FAIL_TOKEN_BATCH);
       return FALSE;
@@ -233,7 +234,8 @@ class SalesforceSync {
 
       // Process results.
       $items = isset($batch['items']) ? $batch['items'] : (isset($batch['sobjects']) ? $batch['sobjects'] : array());
-      if (is_array($results)) { // If all items failed token checks, this could be empty.
+      // If all items failed token checks, $results could be empty.
+      if (is_array($results)) {
         foreach ($results as $key => $result) {
           // Since we pass an item to others to trigger actions based on its
           // success, we should make sure we send the same type and structure of
@@ -390,8 +392,8 @@ class SalesforceSync {
       return;
     }
     foreach ($batch['sobjects'] as $index => $sobject) {
-      if (isset($sobject->tokens_replaced ) && $sobject->tokens_replaced == FALSE) {
-        // Fail the item
+      if (isset($sobject->tokens_replaced) && $sobject->tokens_replaced == FALSE) {
+        // Fail the item.
         $this->failItem($batch['items'][$index], SALESFORCE_SYNC_ITEM_FAIL_TOKEN);
         // Unset the object, and the item.
         unset($batch['sobjects'][$index]);
