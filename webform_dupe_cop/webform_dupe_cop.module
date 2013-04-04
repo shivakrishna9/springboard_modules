@@ -35,7 +35,10 @@ function webform_dupe_cop_permission() {
  * Implements hook_form_alter().
  */
 function webform_dupe_cop_form_alter(&$form, &$form_state, $form_id) {
-  if (strpos($form_id, 'webform_client_form_') === 0) {
+  // We want to run this on webform forms, but not on the submission edit form (after the fact).
+  // Of course, they both use the same form id.
+  // So we need to check the args for submission or not.
+  if (strpos($form_id, 'webform_client_form_') === 0 && arg(2) != 'submission') {
     $form['#validate'][] = 'webform_dupe_cop_client_form_validate';
     $form['#submit'][] = 'webform_dupe_cop_client_form_submit';
   }
