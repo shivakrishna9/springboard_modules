@@ -5,4 +5,4 @@ core = 7.x
 
 dependencies[] = salesforce_queue
 
-configure = admin/config/services/salesforce/salesforce-namespace
+configure = admin/config/salesforce/salesforce-namespace

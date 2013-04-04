@@ -19,4 +19,4 @@ dependencies[] = entity
 dependencies[] = salesforce
 dependencies[] = salesforce_soap
 
-configure = admin/config/services/salesforce/salesforce-sync
+configure = admin/config/salesforce/salesforce-sync

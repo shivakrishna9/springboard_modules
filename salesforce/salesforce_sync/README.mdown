@@ -16,7 +16,7 @@ instructions to `salesforce_sync`.
 
 ## Configuration
 
-Config page: admin/config/services/salesforce/salesforce-sync
+Config page: admin/config/salesforce/salesforce-sync
 
 This configuration page provides options for `salesforce_sync` and any other
 module that is used to support syncing with Salesforce, such as

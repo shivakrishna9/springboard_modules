@@ -31,7 +31,7 @@ class SalesforceSyncAdminTestCase extends SalesforceSyncTestCase {
     parent::setUp($modules);
 
     // Path to config page.
-    $this->path = 'admin/config/services/salesforce/salesforce-sync/config';
+    $this->path = 'admin/config/salesforce/salesforce-sync/config';
 
     // Connect to Salesforce.
     $this->salesforceConnect();

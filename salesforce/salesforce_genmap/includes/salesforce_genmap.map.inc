@@ -33,7 +33,7 @@ function salesforce_genmap_map_form($form, &$form_state, $node, $module) {
     return array(
       'no_sfapi' => array(
         '#markup' => '<p>' . t('Cannot connect to Salesforce, preventing the ability to map Salesforce objects.  !ConfigureSalesforce',
-                array('!ConfigureSalesforce' => l(t('Configure Salesforce'), 'admin/config/services/salesforce'))) . '</p>',
+                array('!ConfigureSalesforce' => l(t('Configure Salesforce'), 'admin/config/salesforce/authorize'))) . '</p>',
         '#prefix' => '<div class="salesforce-map-error salesforce-map-error-salesforce">',
         '#suffix' => '</div>',
       ),

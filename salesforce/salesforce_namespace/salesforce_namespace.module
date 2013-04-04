@@ -10,7 +10,7 @@
  * Implements hook_menu().
  */
 function salesforce_namespace_menu() {
-  $items['admin/config/services/salesforce/salesforce-namespace'] = array(
+  $items['admin/config/salesforce/salesforce-namespace'] = array(
     'title' => 'Namespace',
     'description' => 'Configuration settings for the Salesforce namespace module.',
     'page callback' => 'drupal_get_form',

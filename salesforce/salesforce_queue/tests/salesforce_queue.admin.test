@@ -31,7 +31,7 @@ class SalesforceQueueAdminTestCase extends SalesforceQueueTestCase {
     parent::setUp($modules, $permissions);
 
     // Path to config page.
-    $this->queueAdminPath = 'admin/config/services/salesforce/salesforce-sync/salesforce-queue';
+    $this->queueAdminPath = 'admin/config/salesforce/salesforce-queue';
 
     // Connect to Salesforce.
     $this->salesforceConnect();

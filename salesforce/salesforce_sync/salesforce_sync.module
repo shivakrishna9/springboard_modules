@@ -116,7 +116,7 @@ function salesforce_sync_entity_info() {
  * Implements hook_menu().
  */
 function salesforce_sync_menu() {
-  $items['admin/config/services/salesforce/salesforce-sync'] = array(
+  $items['admin/config/salesforce/salesforce-sync'] = array(
     'title' => 'Syncing',
     'description' => 'Configuration settings for syncing with Salesforce.',
     'page callback' => 'salesforce_sync_admin_page',
@@ -124,10 +124,10 @@ function salesforce_sync_menu() {
     'type' => MENU_LOCAL_TASK,
     'file' => 'includes/salesforce_sync.admin.inc',
   );
-  $items['admin/config/services/salesforce/salesforce-sync/config'] = $items['admin/config/services/salesforce/salesforce-sync'];
-  $items['admin/config/services/salesforce/salesforce-sync/config']['title'] = 'Sync';
-  $items['admin/config/services/salesforce/salesforce-sync/config']['type'] = MENU_DEFAULT_LOCAL_TASK;
-  $items['admin/config/services/salesforce/salesforce-sync/config']['weight'] = -10;
+  $items['admin/config/salesforce/salesforce-sync/config'] = $items['admin/config/salesforce/salesforce-sync'];
+  $items['admin/config/salesforce/salesforce-sync/config']['title'] = 'Sync';
+  $items['admin/config/salesforce/salesforce-sync/config']['type'] = MENU_DEFAULT_LOCAL_TASK;
+  $items['admin/config/salesforce/salesforce-sync/config']['weight'] = -10;
 
   return $items;
 }

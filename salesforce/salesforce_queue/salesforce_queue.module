@@ -106,7 +106,7 @@ function salesforce_queue_entity_info() {
  * Implements hook_menu().
  */
 function salesforce_queue_menu() {
-  $items['admin/config/services/salesforce/salesforce-sync/salesforce-queue'] = array(
+  $items['admin/config/salesforce/salesforce-queue'] = array(
     'title' => 'Queue',
     'description' => 'Configuration settings for the Salesforce queue.',
     'page callback' => 'salesforce_queue_admin_page',
@@ -115,7 +115,7 @@ function salesforce_queue_menu() {
     'file' => 'includes/salesforce_queue.admin.inc',
   );
 
-  $items['admin/config/services/salesforce/salesforce-sync/salesforce-queue-object-verify'] = array(
+  $items['admin/config/salesforce/salesforce-queue-object-verify'] = array(
     'title' => 'Debug',
     'description' => 'Utility for verifying the format of Salesforce objects.',
     'page callback' => 'drupal_get_form',

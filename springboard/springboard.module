@@ -202,40 +202,6 @@ function springboard_menu_alter(&$items) {
     $items['admin/springboard/forms/webforms']['weight'] = 100; 
     unset($items['admin/springboard/forms/webforms']['access callback']);
   }
-  // Add menus under salesforce.
-  if (module_exists('salesforce')) {
-    // Donation settings.
-    $items['admin/springboard/salesforce/salesforce-donation'] = $items['admin/config/services/salesforce-donation'];
-    $items['admin/springboard/salesforce/salesforce-donation']['type'] = MENU_LOCAL_TASK;
-    $items['admin/springboard/salesforce/salesforce-donation']['title'] = $items['admin/config/services/salesforce-donation']['title'];
-    $items['admin/springboard/salesforce/salesforce-donation']['access arguments'] = array('administer springboard');
-    unset($items['admin/springboard/salesforce/salesforce-donation']['access callback']);
-    // Queue settings.
-    $items['admin/springboard/salesforce/salesforce-queue'] = $items['admin/config/services/salesforce/salesforce-sync/salesforce-queue'];
-    $items['admin/springboard/salesforce/salesforce-queue']['type'] = MENU_LOCAL_TASK;
-    $items['admin/springboard/salesforce/salesforce-queue']['title'] = 'Salesforce ' . $items['admin/config/services/salesforce/salesforce-sync/salesforce-queue']['title'];
-    $items['admin/springboard/salesforce/salesforce-queue']['access arguments'] = array('administer springboard');
-    unset($items['admin/springboard/salesforce/salesforce-queue']['access callback']);
-    // Sync.
-    $items['admin/springboard/salesforce/salesforce-sync'] = $items['admin/config/services/salesforce/salesforce-sync'];
-    $items['admin/springboard/salesforce/salesforce-sync']['type'] = MENU_LOCAL_TASK;
-    $items['admin/springboard/salesforce/salesforce-sync']['title'] = 'Salesforce ' . $items['admin/config/services/salesforce/salesforce-sync']['title'];
-    $items['admin/springboard/salesforce/salesforce-sync']['access arguments'] = array('administer springboard');
-    unset($items['admin/springboard/salesforce/salesforce-sync']['access callback']);
-    // Default mappings.
-    $items['admin/springboard/salesforce/salesforce-mappings'] = $items['admin/structure/salesforce/mappings'];
-    $items['admin/springboard/salesforce/salesforce-mappings']['type'] = MENU_LOCAL_TASK;
-    $items['admin/springboard/salesforce/salesforce-mappings']['title'] = $items['admin/structure/salesforce/mappings']['title'];
-    $items['admin/springboard/salesforce/salesforce-mappings']['access arguments'] = array('administer springboard');
-    unset($items['admin/springboard/salesforce/salesforce-mappings']['access callback']);
-    // Salesforce settings
-    $items['admin/springboard/salesforce/salesforce'] = $items['admin/config/services/salesforce'];
-    $items['admin/springboard/salesforce/salesforce']['type'] = MENU_LOCAL_TASK;
-    $items['admin/springboard/salesforce/salesforce']['title'] = $items['admin/config/services/salesforce']['title'] . ' settings';
-    $items['admin/springboard/salesforce/salesforce']['access arguments'] = array('administer springboard');
-    $items['admin/springboard/salesforce/salesforce']['weight'] = 100; 
-    unset($items['admin/springboard/salesforce/salesforce']['access callback']);
-  }
   // Add menus under salesforce. This only works if Views runs before this hook. Module weights is an issue here.
   if (module_exists('salesforce_log')) {
     // Grab the views path if views hasn't added it's menus yet to get the ones we want.

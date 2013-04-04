@@ -67,7 +67,7 @@ added to the tracked queues list on the Salesforce Queue configuration page.
 
 ## Configuration
 
-Config page: admin/config/services/salesforce/salesforce-sync/salesforce-queue
+Config page: admin/config/salesforce/salesforce-queue
 
   * **Maximum items to process:** The maximum number of items to claim from the
     queue and process in one thread.  Defaults to 1000.  Change this value if
