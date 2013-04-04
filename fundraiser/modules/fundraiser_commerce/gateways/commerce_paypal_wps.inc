@@ -40,7 +40,32 @@ function commerce_paypal_wps_fundraiser_commerce_form($payment_method, $config) 
  * Callback function, handle the redirect form.
  */
 function commerce_paypal_wps_fundraiser_commerce_redirect($method_instance, $donation, $order, $settings) {
-  return drupal_get_form('commerce_paypal_wps_order_form', $order, $method_instance['settings'] + $settings);
+  $form = drupal_get_form('commerce_paypal_wps_order_form', $order, $method_instance['settings'] + $settings);
+
+  // Pass these fields to prepopulate the paypal fields: https://www.paypal.com/cgi-bin/webscr?cmd=_pdn_xclick_prepopulate_outside
+  $paypal_fields = array(
+    'mail' => 'email',
+    'first_name',
+    'last_name',
+    'address' => 'address1',
+    'address_line_2' => 'address2',
+    'city',
+    'state',
+    'zip',
+  );
+  // Pull the data from the donation object
+  foreach ($paypal_fields as $key => $value) {
+    // If the key is a string use it as the donation array key
+    $donor_key = is_string($key) ? $key : $value;
+    if (!empty($donation->donation[$donor_key])) {
+      $form[$value] = array(
+        '#type' => 'hidden',
+        '#value' => $donation->donation[$donor_key],
+      );
+    }
+  }
+
+  return $form;
 }
 
 /**

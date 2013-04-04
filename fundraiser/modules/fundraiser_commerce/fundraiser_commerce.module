@@ -890,11 +890,11 @@ function _fundraiser_commerce_fundraiser_donation_process_external_form($form, $
       $form = $redirect_function($method_instance, $donation, $order, $settings);
 
       // If the payment method has the 'offsite_autoredirect' option enabled, add the redirection behavior.
-      //if (!empty($payment_method['offsite_autoredirect'])) {
-      //  $form['#attached']['js'][] = drupal_get_path('module', 'commerce_payment') . '/commerce_payment.js';
-      //  $form['help']['#markup'] = '<div class="checkout-help">' . t('Please wait while you are redirected to the payment server. ' .
-      //    'If nothing happens within 10 seconds, please click on the button below.') . '</div>';
-      //}
+      if (!empty($method_instance['offsite_autoredirect'])) {
+        $form['#attached']['js'][] = drupal_get_path('module', 'commerce_payment') . '/commerce_payment.js';
+        $form['help']['#markup'] = '<div class="checkout-help">' . t('Please wait while you are redirected to the payment server. ' .
+          'If nothing happens within 10 seconds, please click on the button below.') . '</div>';
+      }
 
       $form['#prefix'] = '<div class="payment-redirect-form">';
       $form['#suffix'] = '</div>';
