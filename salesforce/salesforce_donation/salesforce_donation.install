@@ -31,7 +31,7 @@ function salesforce_donation_install() {
   $map->field_map = array(
     'salesforce_donation_map' => array(
       'did' => 'Order_ID__c',
-      'gateway' => 'Payment_Gateway__c',
+      'gateway_name' => 'Payment_Gateway__c',
       'txn_id' => 'Gateway_Reference__c',
       'close_date' => 'CloseDate',
       'transaction_date' => 'Transaction_Date_Time__c',
