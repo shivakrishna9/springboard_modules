@@ -111,11 +111,15 @@ function salesforce_queue_menu() {
     'description' => 'Configuration settings for the Salesforce queue.',
     'page callback' => 'salesforce_queue_admin_page',
     'access arguments' => array('administer salesforce queue'),
-    'type' => MENU_LOCAL_TASK,
+    'type' => MENU_NORMAL_ITEM,
     'file' => 'includes/salesforce_queue.admin.inc',
   );
+  $items['admin/config/salesforce/salesforce-queue/config'] = $items['admin/config/salesforce/salesforce-queue'];
+  $items['admin/config/salesforce/salesforce-queue/config']['title'] = 'Config';
+  $items['admin/config/salesforce/salesforce-queue/config']['type'] = MENU_DEFAULT_LOCAL_TASK;
+  $items['admin/config/salesforce/salesforce-queue/config']['weight'] = -10;
 
-  $items['admin/config/salesforce/salesforce-queue-object-verify'] = array(
+  $items['admin/config/salesforce/salesforce-queue/object-verify'] = array(
     'title' => 'Debug',
     'description' => 'Utility for verifying the format of Salesforce objects.',
     'page callback' => 'drupal_get_form',

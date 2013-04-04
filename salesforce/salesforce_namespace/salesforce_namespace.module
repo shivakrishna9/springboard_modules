@@ -16,7 +16,7 @@ function salesforce_namespace_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('salesforce_namespace_settings'),
     'access arguments' => array('administer salesforce namespace'),
-    'type' => MENU_LOCAL_TASK,
+    'type' => MENU_NORMAL_ITEM,
     'file' => 'includes/salesforce_namespace.admin.inc',
   );
 

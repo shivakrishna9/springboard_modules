@@ -53,7 +53,7 @@ function salesforce_log_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('salesforce_log_settings'),
     'access arguments' => array('view salesforce batch logs'),
-    'type' => MENU_LOCAL_TASK,
+    'type' => MENU_NORMAL_ITEM,
     'file' => 'includes/salesforce_log.admin.inc',
   );
 
