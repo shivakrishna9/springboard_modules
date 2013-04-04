@@ -117,7 +117,7 @@ function salesforce_sync_entity_info() {
  */
 function salesforce_sync_menu() {
   $items['admin/config/salesforce/salesforce-sync'] = array(
-    'title' => 'Syncing',
+    'title' => 'Synchronize',
     'description' => 'Configuration settings for syncing with Salesforce.',
     'page callback' => 'salesforce_sync_admin_page',
     'access arguments' => array('administer salesforce sync'),

@@ -31,7 +31,7 @@ function salesforce_donation_permission() {
  */
 function salesforce_donation_menu() {
   $items['admin/config/salesforce/salesforce-donation'] = array(
-    'title' => 'Salesforce donation',
+    'title' => 'Donation',
     'description' => 'Configure how the Salesforce integration will work with donation objects.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('salesforce_donation_settings'),

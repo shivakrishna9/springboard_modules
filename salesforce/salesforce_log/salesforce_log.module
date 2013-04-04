@@ -48,7 +48,7 @@ function salesforce_log_menu() {
 
   // Settings form.
   $items['admin/config/salesforce/salesforce-log'] = array(
-    'title' => 'Log',
+    'title' => 'Logging',
     'description' => 'Configuration settings for the Salesforce batch log.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('salesforce_log_settings'),
