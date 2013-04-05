@@ -585,6 +585,16 @@ class SalesforceSync {
     // Perform the actual conversion.
     foreach ($item->sobject->fields as $field_name => $value) {
       switch ($field_datatypes[$field_name]) {
+        case 'boolean':
+          // Convert any value that evaluates to TRUE as 1
+          if ($value) {
+            $item->sobject->fields[$field_name] = 1;
+          }
+          else {
+            $item->sobject->fields[$field_name] = 0;
+          }
+          break;
+
         case 'datetime':
           // Salesforce requires ISO 8601 format for dates.
           $item->sobject->fields[$field_name] = date('c', strtotime($value));

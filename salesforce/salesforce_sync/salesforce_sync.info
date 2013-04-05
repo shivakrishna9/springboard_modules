@@ -14,6 +14,7 @@ files[] = tests/salesforce_sync.sync.test
 files[] = tests/salesforce_sync.test
 files[] = tests/salesforce_sync.token.test
 files[] = tests/salesforce_sync.sync_token.test
+files[] = tests/salesforce_sync.formats.test
 
 dependencies[] = entity
 dependencies[] = salesforce
