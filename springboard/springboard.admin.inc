@@ -214,6 +214,7 @@ function springboard_admin_config_modules($form, $form_state) {
     'email_wrappers',
     'springboard_views',
     'springboard_version',
+    'node_clone',
   );
   if ($form_state['values']['order_handling'] == 'ubercart') {
     $modules[] = 'fundraiser_ubercart';
@@ -222,7 +223,12 @@ function springboard_admin_config_modules($form, $form_state) {
   }
   else {
     $modules[] = 'fundraiser_commerce';
+    $modules[] = 'commerce_ui';
+    $modules[] = 'commerce_payment_ui';
     $modules[] = 'commerce_payment_example';
+    $modules[] = 'commerce_authnet';
+    $modules[] = 'commerce_paypal';
+    $modules[] = 'commerce_cardonfile';
   }
   // Optional Salesforce modules.
   if ($form_state['values']['sf_enable']) {
@@ -239,7 +245,7 @@ function springboard_admin_config_modules($form, $form_state) {
   $return = module_enable($modules, TRUE);
   if ($return) {
     drupal_set_message(t('Modules %modules have been enabled.', array('%modules' =>implode(', ', $modules))));
-    $modules = array('comment');
+    $modules = array('comment', 'overlay');
     module_disable($modules, TRUE);
     drupal_set_message(t('Modules %modules have been disabled.', array('%modules' =>implode(', ', $modules))));
   }
