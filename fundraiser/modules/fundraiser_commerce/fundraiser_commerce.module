@@ -389,6 +389,9 @@ function fundraiser_commerce_fundraiser_field_info_alter(&$fields) {
  * Validation callback for field payment_fields.
  */
 function _fundraiser_commerce_payment_fields_validate($form, $form_state, $submission_fields, $value) {
+  if (empty($form['#node'])) {
+    $form['#node'] = $form['#donation']->node;
+  }
   $payment_method = $submission_fields['payment_method'];
   $payment_method_component = _fundraiser_webform_get_component_by_nid_key($form['#node']->nid, array('payment_method'));
   $payment_method_field = $form['#node']->webform['components'][$payment_method_component->cid];
