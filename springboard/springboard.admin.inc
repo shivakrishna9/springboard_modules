@@ -214,7 +214,7 @@ function springboard_admin_config_modules($form, $form_state) {
     'email_wrappers',
     'springboard_views',
     'springboard_version',
-//    'clone', // Temp comment out, pending add to build script. Node clone support.
+    'clone', // Temp comment out, pending add to build script. Node clone support.
   );
   if ($form_state['values']['order_handling'] == 'ubercart') {
     $modules[] = 'fundraiser_ubercart';
@@ -242,16 +242,18 @@ function springboard_admin_config_modules($form, $form_state) {
       $modules[] = 'salesforce_npsp';
     }
   }
-  $return = module_enable($modules, TRUE);
-  if ($return) {
-    drupal_set_message(t('Modules %modules have been enabled.', array('%modules' =>implode(', ', $modules))));
-    $modules = array('comment', 'overlay');
-    module_disable($modules, TRUE);
-    drupal_set_message(t('Modules %modules have been disabled.', array('%modules' =>implode(', ', $modules))));
+  foreach ($modules as $module) {
+    $return = module_enable(array($module), TRUE);
+    if ($return) {
+      drupal_set_message(t('Module %modules has been enabled.', array('%modules' => $module)));
+    }
+    else {
+      drupal_set_message(t('An error was encountered while installing %modules.', array('%modules' => $module)), 'error');
+    }
   }
-  else {
-    drupal_set_message(t('An error was encountered while installing %modules.', array('%modules' =>implode(', ', $modules))), 'error');
-  }
+  $modules = array('comment', 'overlay');
+  module_disable($modules, TRUE);
+  drupal_set_message(t('Modules %modules have been disabled.', array('%modules' =>implode(', ', $modules))));
 }
 
 /**
