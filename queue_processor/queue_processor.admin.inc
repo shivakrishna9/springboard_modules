@@ -164,7 +164,12 @@ function queue_processor_admin_settings() {
     '#description' => t('If this option is enabled all fundraiser related cron tasks will be removed from the standard cron run. These tasks will need to be cronned separately via sitename/queue_processor_cron'),
     '#default_value' => variable_get('queue_processor_standalone_cron_enabled', 0),
   );
-
+   $form['queue_processor_cron']['queue_processor_lock_expiration_time'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Table lock time in seconds'),
+    '#description' => t('To prevent duplicate entries in Salesforce queue processor locks tables when processing the queue if standalone cron is enabled. For most sites the defualt (30 seconds) should be sufficient, however this number can be increased if problems are detected with multiple queue processing being run.'),
+    '#default_value' => variable_get('queue_processor_lock_expiration_time', 30),
+  );
   $form['queue_processor_validation'] = array(
     '#type' => 'fieldset',
     '#title' => t('Validation settings'),
