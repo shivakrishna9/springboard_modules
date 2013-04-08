@@ -1,4 +1,3 @@
-; $Id$
 name = Advanced Webform Confirmations
 description = Provides additional features to webform confirmation pages, titles and tokens.
 core = 7.x

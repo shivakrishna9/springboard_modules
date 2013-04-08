@@ -1,4 +1,3 @@
-; $Id$
 name = Secure Pre-populate
 description = Uses an encrypted url string to pre-populate form fields.
 core = 7.x

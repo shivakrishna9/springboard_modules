@@ -1,4 +1,3 @@
-; $Id$
 name = Springboard API
 description = Provides an integration API for donations and petitions.
 core = 6.x
