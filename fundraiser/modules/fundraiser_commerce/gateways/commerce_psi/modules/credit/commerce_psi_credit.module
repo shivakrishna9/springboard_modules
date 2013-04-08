@@ -153,18 +153,7 @@ function commerce_psi_credit_submit_form_submit($payment_method, $pane_form, $pa
   $nvp['ProcessDateTime'] = date('c');
   $nvp['ProgramCode'] = 'Web';
   $nvp['SourceCode'] = $order->order_number;
-
-  // Prepare a transaction object
-  $transaction = commerce_payment_transaction_new('psi_credit', $order->order_id);
-  $transaction->instance_id = $payment_method['instance_id'];
-  $transaction->amount = $charge['amount'];
-  $transaction->currency_code = $charge['currency_code'];
-  $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
-
-  // Save the transaction information now since we need a transaction id to pass to PSI
-  commerce_payment_transaction_save($transaction);
-
-  $nvp['ClientTransactionId'] = $transaction->transaction_id;
+  $nvp['ClientTransactionId'] = $order->order_id;
 
   // Log the request if specified.
   if ($payment_method['settings']['log']['request'] == 'request') {
@@ -180,6 +169,13 @@ function commerce_psi_credit_submit_form_submit($payment_method, $pane_form, $pa
 
     watchdog('commerce_psi', 'PSI request: !param', array('!param' => '<pre>' . check_plain(print_r($log_nvp, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
   }
+
+  // Prepare a transaction object
+  $transaction = commerce_payment_transaction_new('psi_credit', $order->order_id);
+  $transaction->instance_id = $payment_method['instance_id'];
+  $transaction->amount = $charge['amount'];
+  $transaction->currency_code = $charge['currency_code'];
+  $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
 
   // Submit the request to PSI
   $response = _commerce_psi_request($payment_method, $nvp);
