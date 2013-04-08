@@ -63,28 +63,3 @@ function secure_prepopulate_schema() {
   );
   return $schema;
 }
-
-/**
- * Implements hook_update_N
- *
- */
-
-/**
- * Add synonyms table.
- */
-function secure_prepopulate_update_7001() {
-  $table = array(
-    'fields' => array(
-      'token_key' => array(
-        'type' => 'varchar',
-        'length' => 40,
-        'not null' => FALSE,
-      ),
-      'synonyms' => array(
-        'type' => 'text',
-      ),
-    ),
-    'primary key' => array('token_key'),
-  );
-  db_create_table('secure_prepopulate_synonyms', $table);
-}
