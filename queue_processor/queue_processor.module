@@ -156,7 +156,7 @@ function queue_processor_standalone_cron() {
     watchdog('queue_processor_cron', t('Standalone cron run.'));
     $lock_expiration_time = variable_get('queue_processor_lock_expiration_time', 30);
     // Acquire an excluse lock on the process
-    if (lock_acquire('queue_processor_standalone_cron'), $lock_expiration_time) {
+    if (lock_acquire('queue_processor_standalone_cron', $lock_expiration_time)) {
       queue_processor_process();
       watchdog('queue_processor_cron', 'Queue processor cron run completed.', array(), WATCHDOG_NOTICE);
       lock_release('queue_processor_standalone_cron');
