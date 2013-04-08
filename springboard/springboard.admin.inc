@@ -9,8 +9,7 @@
  */
 function springboard_admin_settings() {
   $form = array();
-//  if (variable_get('springboard_needs_config', FALSE)) {
-  if (1) {
+  if (variable_get('springboard_needs_config', FALSE)) {
     $form['springboard_config'] = array(
       '#type' => 'fieldset',
       '#title' => t('Configure Springboard'),
@@ -155,8 +154,7 @@ function springboard_admin_settings_validate(&$form, $form_state) {
  * Submit handler for the springboard configuration button.
  */
 function springboard_admin_config(&$form, $form_state) {
-  //if (variable_get('springboard_needs_config', FALSE)) {
-  if (1) {
+  if (variable_get('springboard_needs_config', FALSE)) {
    set_time_limit(300);
     variable_del('springboard_needs_config');
     drupal_set_message(t('Please see the !help page for additional help configuring Springboard.',
@@ -168,7 +166,6 @@ function springboard_admin_config(&$form, $form_state) {
     // Clear all caches.
     drupal_flush_all_caches();
     set_time_limit(300);
-/*
     // Set up module specific configurations.
     springboard_admin_config_springboard($form, $form_state);
     if ($form_state['values']['order_handling'] == 'ubercart') {
@@ -193,7 +190,6 @@ function springboard_admin_config(&$form, $form_state) {
     menu_rebuild();
     drupal_set_message(t('Please be sure to set up the Encypt key path at !link',
       array('!link' => l('Encrypt settings', 'admin/config/system/encrypt'))));
-*/
   }
   else {
     drupal_set_message(t('Springboard default configuration has already been set up.'));
