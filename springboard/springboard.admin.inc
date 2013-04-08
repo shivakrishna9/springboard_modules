@@ -1798,6 +1798,7 @@ function springboard_admin_config_donation_form_type($form, $form_state) {
  */
 
 function springboard_admin_config_email_wrapper_add($form, $form_state) {
+  $node = new stdClass();
   $node->is_new = 1;
   $node->type = 'email_wrapper';
   $node->language = LANGUAGE_NONE;
@@ -1875,6 +1876,7 @@ function springboard_admin_config_email_wrapper_add($form, $form_state) {
  * Create an example Fundraiser form.
  */
 function springboard_admin_config_donation_form_add($form, $form_state, $email_nid = NULL) {
+  $node = new stdClass();
   $node->is_new = 1;
   $node->type = 'donation_form';
   $node->language = LANGUAGE_NONE;

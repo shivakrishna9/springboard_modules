@@ -556,7 +556,8 @@ function _springboard_jump() {
         $targets[url('node/add/' . $type)] = 'Create ' . node_type_get_name($type);
       }
     }
-    $menu = drupal_render(drupal_get_form('ctools_jump_menu', $targets, array()));
+    $form = drupal_get_form('ctools_jump_menu', $targets, array());
+    $menu = drupal_render($form);
     return theme('springboard_jump', array('menu' => $menu));
   }
   return '';
