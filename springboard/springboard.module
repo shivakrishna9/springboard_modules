@@ -517,7 +517,7 @@ function _springboard_sf_status() {
 }
 
 /**
- * Salesforce dashboard queue processor button 
+ * Springboard dashboard queue processor button 
  */
 function springboard_dashboard_queue() {
   $form = array();
@@ -525,9 +525,16 @@ function springboard_dashboard_queue() {
     '#type' => 'submit',
     '#value' => t('Submit'),
     '#prefix' => t('Run Springboard Sync'),
-    '#submit' => array('salesforce_queue_process_queue'),    
+    '#submit' => array('springboard_dashboard_queue_submit'),    
   );
   return $form;
+}
+
+/**
+ * Submit handler for Springboard dashboard queue processor button
+ */
+function springboard_dashboard_queue_submit(&$form_state) {
+  salesforce_queue_process_queue();
 }
 
 /**
