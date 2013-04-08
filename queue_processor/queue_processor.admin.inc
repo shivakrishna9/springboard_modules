@@ -274,6 +274,7 @@ function queue_processor_admin_settings_submit($form, &$form_state) {
   variable_set('queue_processor_valid_booleans', $form_state['values']['queue_processor_valid_booleans']);
   variable_set('queue_processor_sf_batch_row_limit', $form_state['values']['queue_processor_sf_batch_row_limit']);
   variable_set('queue_processor_sf_batch_error_row_limit', $form_state['values']['queue_processor_sf_batch_error_row_limit']);
+  variable_set('queue_processor_lock_expiration_time', $form_state['values']['queue_processor_lock_expiration_time']);
 
   // save batch sizes per type
   $processing_order = variable_get('queue_processing_order', array('user', 'donation', 'webform', 'node'));
