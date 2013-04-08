@@ -433,6 +433,13 @@ function salesforce_genmap_entity_delete($entity, $entity_type) {
  *   queued, or if the item was not supposed to be queued.
  */
 function salesforce_mapping_send_entity_to_queue($entity, $entity_type, $op) {
+  $sfapi = salesforce_get_api();
+  if (!$sfapi->isAuthorized()) {
+    // If there isn't a valid connection to Salesforce, lets not start queueing
+    // items.
+    return FALSE;
+  }
+
   if (!variable_get('salesforce_genmap_allow_delete_sync', FALSE) && $op == 'DELETE') {
     // Do not queue DELETE if site has disallowed delete trigger.  This is a
     // failsafe in case someone had bypassed the configuration form's validation

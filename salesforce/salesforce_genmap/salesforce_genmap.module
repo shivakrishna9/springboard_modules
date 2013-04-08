@@ -177,6 +177,13 @@ function salesforce_genmap_node_delete($node) {
  *   Optional.  Delta of the item to be queued.
  */
 function salesforce_genmap_send_object_to_queue($module, $op, $node, $oid, $drupal_object, $delta = NULL) {
+  $sfapi = salesforce_get_api();
+  if (!$sfapi->isAuthorized()) {
+    // If there isn't a valid connection to Salesforce, lets not start queueing
+    // items.
+    return FALSE;
+  }
+
   if (!variable_get('salesforce_genmap_allow_delete_sync', FALSE) && in_array($op, array('delete', 'DELETE'))) {
     // Do not queue DELETE if site has disallowed delete trigger.  This is a
     // failsafe in case someone had bypassed the configuration form's validation
