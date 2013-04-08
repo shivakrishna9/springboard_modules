@@ -89,7 +89,7 @@ class SalesforceSyncFormatsTestCase extends SalesforceQueueTestCase {
     $campaign->record = NULL;
     $campaign->fields = array(
       'Name' => 'Campaign Name',
-      'IsActive' => $active
+      'IsActive' => $active,
     );
 
     $queue_item = array(
