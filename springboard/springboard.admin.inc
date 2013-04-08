@@ -228,7 +228,7 @@ function springboard_admin_config_modules($form, $form_state) {
     $modules[] = 'commerce_payment_example';
     $modules[] = 'commerce_authnet';
     $modules[] = 'commerce_paypal';
-    $modules[] = 'commerce_cardonfile';
+//    $modules[] = 'commerce_cardonfile'; // Tmp comment out pending cardonfile install bug fix
   }
   // Optional Salesforce modules.
   if ($form_state['values']['sf_enable']) {
