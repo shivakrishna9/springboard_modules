@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file 
+ * @file
  * Install/uninstall/update functions for the Capwiz Connect JS module.
  */
 
@@ -10,7 +10,7 @@
  */
 function capwiz_connect_js_schema() {
   $schema = array();
-  
+
   $schema['capwiz_connect_js_alerts'] = array(
     'description' => 'Contains options for alerts handled by the Capwiz JS Solution',
     'fields' => array(

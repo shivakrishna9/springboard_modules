@@ -9,12 +9,12 @@
       if (parts[1] == 'node' && parts[3] == 'webform') {
         var token = window.showModalDialog("/webform/confirmation-token-list/"+parts[2],null,"dialogWidth:450px;dialogHeight:320px;center:yes; resizable: yes; help: no");
         if (token != false && token != null) {
-          editor.insertHtml(token);    
+          editor.insertHtml(token);
         }
       }
       else {
         alert('This only works for webform confirmations');
-      }  
+      }
     }
   },
 
@@ -36,7 +36,7 @@
     init: function (editor) {
       // Create a new CKEditor style to add <pre> tags.
       //var buttonName = b;
-      
+
 
       // Add the command and the button to the editor.
       editor.addCommand(buttonName, callback);

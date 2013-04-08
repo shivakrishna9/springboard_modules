@@ -49,7 +49,7 @@ class PsiClient {
 
   /**
    * Returns the authentication array for the current connection
-   * 
+   *
    * This must be included with every request
    */
   public function currentAuthentication() {
@@ -94,10 +94,10 @@ class PsiClient {
 
   /**
    * Send a credit card request
-   * 
+   *
    * @param $payment_details Array
    *   An array of values to pass to the PSI API
-   * 
+   *
    * @return Object
    *   The resulting data from the request
    */
@@ -110,7 +110,7 @@ class PsiClient {
     try {
       $response = $this->soapclient->SendCreditCardPayment($params);
     }
-    catch (Exception $ex) { 
+    catch (Exception $ex) {
       watchdog('psi_commerce', 'The PSI Commerce account @title failed to process an order: @error',
         array(
           '@title' => $this->getAccountSetting('title'),
@@ -126,10 +126,10 @@ class PsiClient {
 
   /**
    * Send a credit card request
-   * 
+   *
    * @param $payment_details Array
    *   An array of values to pass to the PSI API
-   * 
+   *
    * @return Object
    *   The resulting data from the request
    */
@@ -142,7 +142,7 @@ class PsiClient {
     try {
       $response = $this->soapclient->SendEftPayment($params);
     }
-    catch (Exception $ex) { 
+    catch (Exception $ex) {
       watchdog('psi_commerce', 'The PSI Commerce account @title failed to process an order: @error',
         array(
           '@title' => $this->getAccountSetting('title'),

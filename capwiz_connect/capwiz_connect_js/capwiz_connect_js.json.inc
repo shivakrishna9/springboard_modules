@@ -7,9 +7,9 @@
 
 /**
  * Callback for the decryption of the form values
- * 
+ *
  * Uses the secure prepopulate module to decrypt a string containing personal address information
- * 
+ *
  * @return
  *    JSON output containing the unecnrypted personal address information
  */
@@ -17,16 +17,16 @@ function capwiz_connect_js_decrypt() {
   $key = variable_get('secure_prepopulate_key', '') ? decrypt(variable_get('secure_prepopulate_key', '')) : '';
   $iv = variable_get('secure_prepopulate_iv', '') ? decrypt(variable_get('secure_prepopulate_iv', '')) : '';
   $fields = array();
-  
+
   $af = $_GET['af'];
   // first, check to see if the query string has already been used
   if (!secure_prepopulate_is_expired($af)) {
     $qs = _secure_prepopulate_decrypt($af, $key, $iv);
     // expire the query string
     secure_prepopulate_expire($af);
-  
+
     $segments = explode('&', $qs);
-  
+
     // loop over each field in the segement and extract the key/value pairs
     if (count($segments)) {
       foreach ($segments as $segment) {
@@ -37,7 +37,7 @@ function capwiz_connect_js_decrypt() {
   }
 
   $a = array('fieldValues' => $fields);
-  
+
   header('Content-Type: text/javascript; charset=utf8');
   header('Access-Control-Allow-Origin: *');
   header('Access-Control-Max-Age: 3628800');
@@ -50,7 +50,7 @@ function capwiz_connect_js_decrypt() {
 
 /**
  * Callback for the confirmation page
- * 
+ *
  * @return
  *    JSON output containing the redirect page
  */

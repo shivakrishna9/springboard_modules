@@ -2,14 +2,14 @@
 
 /**
  * Send a request to the PSI API
- * 
+ *
  * @param $payment_method Array
  *    Fully loaded commerce payment method
  * @param $nvp Array
  *    Array of values to send with the request
  * @param $type String
  *    Type of request, can be check or credit, defaults to credit
- * 
+ *
  * @return $object
  *    The response object from PSI
  */
@@ -25,10 +25,10 @@ function _commerce_psi_request($payment_method, $nvp, $type = 'credit') {
 
 /**
  * Construct an array of values for the donor
- * 
+ *
  * @param $order Object
  *    Commerce order
- * 
+ *
  * @return Array
  *    An array ready to be submitted to the PSI API
  */

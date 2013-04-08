@@ -61,7 +61,7 @@ the cache if the include file is not loading properly.
 ### Webform
 
 Webform mapping takes the standard recommended route as described under 'How to map a
-custom data object'. It implements hook_salesforce_genmap_map_fields(), 
+custom data object'. It implements hook_salesforce_genmap_map_fields(),
 salesforce_donation_salesforce_genmap_info(), and
 salesforce_donation_salesforce_genmap_map_field_info().
 

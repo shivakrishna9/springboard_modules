@@ -19,7 +19,7 @@ function _springboard_version_hash_modules() {
   foreach ($springboard_tracked as $module => $version) {
     $hashes .= $module . '=' . _springboard_version_hash_module($module) . "\n";
   }
-  
+
   // Write hashes to file.
   $directory = file_default_scheme() . '://springboard_version';
   file_prepare_directory($directory, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);

@@ -15,6 +15,6 @@
   <p><?php print isset($variables['batch_status']) ? $variables['batch_status'] : ''; ?></p>
   <div id="springboard-sync"><span>Run Springboard Sync</span>
   <?php print l('<img src="' . base_path() . drupal_get_path('module', 'springboard') . '/images/sync.png">',
-    'springboard_sync', array('attributes' => array('class' => 'anchor-class'), 'html' => TRUE)); ?> 
+    'springboard_sync', array('attributes' => array('class' => 'anchor-class'), 'html' => TRUE)); ?>
   </div>
 </div>

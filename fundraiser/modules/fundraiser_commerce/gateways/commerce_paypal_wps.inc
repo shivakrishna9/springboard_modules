@@ -92,7 +92,7 @@ function commerce_paypal_wps_fundraiser_commerce_scrub($payment_method, $submiss
  * Callback function, submit after redirect.
  */
 function commerce_paypal_wps_fundraiser_commerce_redirect_submit($method_instance, $donation, $order) {
-  // IMPORTANT: Transaction handling for Paypal is handled on a differnt URL, when Paypal returns the IPN tracsaction ID. 
+  // IMPORTANT: Transaction handling for Paypal is handled on a differnt URL, when Paypal returns the IPN tracsaction ID.
   // Therefore no additional transaction work occurs here.
   return TRUE;
 }

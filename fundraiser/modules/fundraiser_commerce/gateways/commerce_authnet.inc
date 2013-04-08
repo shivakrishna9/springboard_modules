@@ -176,7 +176,7 @@ function commerce_authnet_fundraiser_commerce_update($payment_method, $donation)
   }
   // Donation card data.
   $additional_data = array(
-  'card_number' => isset($donation->donation['payment_fields']['credit']['card_number']) ? 
+  'card_number' => isset($donation->donation['payment_fields']['credit']['card_number']) ?
     $donation->donation['payment_fields']['credit']['card_number'] : '',
   'card_exp_month' => isset($donation->donation['payment_fields']['credit']['card_expiration_month']) ?
     $donation->donation['payment_fields']['credit']['card_expiration_month'] : '',
@@ -189,7 +189,7 @@ function commerce_authnet_fundraiser_commerce_update($payment_method, $donation)
   }
   // Set additional values.
   $form['credit_card']['number']['#default_value'] = '';
-  $form_state['values']['credit_card']['number'] = isset($donation->donation['payment_fields']['credit']['card_number']) ? 
+  $form_state['values']['credit_card']['number'] = isset($donation->donation['payment_fields']['credit']['card_number']) ?
     $donation->donation['payment_fields']['credit']['card_number'] : '';
   $form_state['values']['credit_card']['owner'] = isset($donation->donation['first_name']) ? $donation->donation['first_name'] : '';
   $form_state['values']['credit_card']['owner'] .= isset($donation->donation['last_name']) ? ' ' . $donation->donation['last_name'] : '';

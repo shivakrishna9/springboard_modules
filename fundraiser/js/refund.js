@@ -15,4 +15,4 @@ Drupal.behaviors.enableAmountForPartialRefund = {
   });
 
   })(jQuery); }
-} 
+}

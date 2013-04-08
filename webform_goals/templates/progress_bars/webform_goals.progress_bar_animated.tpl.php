@@ -15,7 +15,7 @@ $(function() {
       barperc = Math.round(dataperc*5.56);
     t.find('.bar').animate({width:barperc}, dataperc*25);
     t.find('.label').append('<div class="perc"></div>');
-                
+
     function perc() {
       var length = t.find('.bar').css('width'),
         perc = Math.round(parseInt(length)/5.56),
@@ -24,10 +24,10 @@ $(function() {
       t.find('.perc').text(perc+'%');
     }
     perc();
-    setInterval(perc, 0); 
+    setInterval(perc, 0);
   });
 });
-      
+
 
 
     }
@@ -56,7 +56,7 @@ $(function() {
       t.find('.perc').text(perc+'%');
     }
     perc();
-    setInterval(perc, 0); 
+    setInterval(perc, 0);
   });
 });
 <?php
@@ -227,7 +227,7 @@ $(function() {
   top:0;
   left:0;
 }
-</style> 
+</style>
 
  <div class="progressbar" data-perc="50">
   <div class="bar color4"><span></span></div>

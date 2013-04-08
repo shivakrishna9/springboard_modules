@@ -3,17 +3,17 @@
  * @file
  * CapwizConnect class. Encapsualtes functions to interact with Capwiz Connect API
  */
- 
+
 class CapizConnect {
   public static $base_url = 'https://connect.capwiz.com/api/';
 
   private $connected = FALSE;
   private $account_details;
   private $last_error;
-  
+
   private $client_id;
   private $session_id;
-  
+
   private $last_user_offset = 0;
   private $last_action_offset = 0;
 
@@ -22,16 +22,16 @@ class CapizConnect {
   public static $STAT_UPDATE_FAIL = 2;
   public static $STAT_CREATE_OK = 4;
   public static $STAT_CREATE_FAIL = 8;
-  
+
   // Status value when saving actions
   public static $STAT_DUPLICATE_MESSAGE = 16;
-  
+
   /**
    * Create a single instance of CapizConnect.
    */
   public static function instance($account_details) {
     static $instances = array();
-    
+
     if ($account_details->id > 0) {
       if (!isset($instances[$account_details->id])) {
         $instances[$account_details->id] = new CapizConnect($account_details);
@@ -40,8 +40,8 @@ class CapizConnect {
     }
     return NULL;
   }
-  
-  
+
+
   /**
    * Protect constructor.
    */
@@ -49,20 +49,20 @@ class CapizConnect {
     $this->account_details = $account_details;
     $this->authenticate();
   }
-  
+
   public function isConnected() {
     return $this->connected;
   }
-  
-  
+
+
   /**
    * Get the text of the last error, so that it can be shown to the user
    */
   public function getLastError() {
     return $this->last_error;
   }
-  
-  
+
+
   /**
    * Authenticate with the API. Called from the constructor
    */
@@ -71,11 +71,11 @@ class CapizConnect {
     if ($this->connected) {
       return $this->connected;
     }
-    
+
     $session_id_cache_id = 'capwiz_session_id_' . $this->account_details->id;
     $client_id_cache_id = 'capwiz_cache_id_' . $this->account_details->id;
     $this->connected = FALSE;
-    
+
     // Check if a session ID has already been retrieved in a previous authentication
     // call. Session IDs are good for four hours.
     $cached_session_id = cache_get($session_id_cache_id);
@@ -92,9 +92,9 @@ class CapizConnect {
         'password' => decrypt($this->account_details->user_password, array('base64' => TRUE)),
       );
       $url = url(self::$base_url . 'auth/v1/authenticate', array('query' => $query_params));
-      
+
       $auth_response = drupal_http_request($url);
-      
+
       // If the authentication was successfull
       if ($auth_response->code == 200) {
         $response_data = json_decode($auth_response->data);
@@ -103,7 +103,7 @@ class CapizConnect {
           $this->session_id = $response_data->id;
           $this->connected = TRUE;
           $this->last_error = t('Connected successfully');
-          
+
           // Cache the session ID. Session IDs are good for a few hours, but to
           // make sure that we don't try to use a session ID after it has expired
           // (at this writing, there is a bug on their end related to this), only
@@ -130,24 +130,24 @@ class CapizConnect {
             break;
           default:
             $this->last_error = 'Unknown error during authentication. Response code: ' . $auth_response->code;
-            break;            
+            break;
         }
         watchdog('capwiz_connect', 'There was an error authenticating with Capwiz Connect for account %account_name: %error.', array('%account_name' => $this->account_details->display_name, '%error' => $this->last_error), WATCHDOG_ERROR);
       }
     }
-    
+
     return $this->connected;
   }
-  
-  
-  
+
+
+
   /***********************************************
    * User functions
    */
-   
+
   /**
    * Query users. If a timestamp is given, only return users updated since then.
-   * 
+   *
    * @param $updated_since
    *   Timestamp. If given, only users updated since that time will be returned.
    * @param $start
@@ -160,10 +160,10 @@ class CapizConnect {
     if (!$this->connected) {
       return FALSE;
     }
-    
+
     $query_params = array();
     $query_params['sessionId'] = $this->session_id;
-    
+
     // Specify that what officials we want in the result set.
     // From https://connect.capwiz.com/documentation/lookup/v1/index.html:
     //   PR  President
@@ -173,13 +173,13 @@ class CapizConnect {
     //   SL  State Legislator
     //   SE  State Executive (including the Governor, Lt. Governor, etc...)
     $query_params['officialTypes'] = 'NS,NH,G';
-      
+
     // If requesting users updated since some timestamp
     if ($updated_since > 0) {
       // Date must be in ISO 8601 format
       $query_params['updatedSince'] = date('c', $updated_since);
     }
-    
+
     // If requesting a second (or third or fourth or...) batch of users, start at
     // some point in the result set.
     $query_params['start'] = (int)$start;
@@ -187,18 +187,18 @@ class CapizConnect {
     if ($batch_size > 0) {
       $query_params['end'] = $query_params['start'] + $batch_size;
     }
-    
+
     $url = url(self::$base_url . 'users/v1/client/' . $this->client_id . '/users', array('query' => $query_params));
-    
+
     $user_response = drupal_http_request($url);
-    
+
     // If the query was successfull
     if ($user_response->code == 200) {
       $response_data = json_decode($user_response->data);
       if ($response_data) {
         $this->last_error = t('Users queried successfully');
         $users = $response_data->users;
-        
+
         // Sanity check each user to ensure data will not cause errors
         foreach ($users as $user) {
           if (empty($user->id) || empty($user->emails[0]->address)) {
@@ -219,7 +219,7 @@ class CapizConnect {
           // it starts over
           $this->last_user_offset = 0;
         }
-        
+
         return $users;
       }
       else {
@@ -234,15 +234,15 @@ class CapizConnect {
           break;
         default:
           $this->last_error = 'Unknown error while attempting to query users. Response code: ' . $user_response->code;
-          break;            
+          break;
       }
       watchdog('capwiz_connect', 'There was an error querying users with Capwiz Connect for account %account_name: %error.', array('%account_name' => $this->account_details->display_name, '%error' => $this->last_error), WATCHDOG_ERROR);
     }
-    
+
     return FALSE;
   }
-  
-  
+
+
   /**
    * Return whether or not there are more users to collect from the API
    */
@@ -250,7 +250,7 @@ class CapizConnect {
     return ($this->last_user_offset > 0);
   }
 
-  
+
   /**
    * Get a single user by email
    */
@@ -258,14 +258,14 @@ class CapizConnect {
     if (!$this->connected) {
       return FALSE;
     }
-    
+
     $query_params = array();
     $query_params['sessionId'] = $this->session_id;
-    
+
     $url = url(self::$base_url . 'users/v1/client/' . $this->client_id . '/user/email/' . $email, array('query' => $query_params));
-    
+
     $user_response = drupal_http_request($url);
-    
+
     // If the query was successfull
     if ($user_response->code == 200) {
       $response_data = json_decode($user_response->data);
@@ -288,15 +288,15 @@ class CapizConnect {
           break;
         default:
           $this->last_error = 'Unknown error while attempting to query users. Response code: ' . $user_response->code;
-          break;            
+          break;
       }
       watchdog('capwiz_connect', 'There was an error finding user by email (%email) with Capwiz Connect for account %account_name: %error.', array('%email' => $email, '%account_name' => $this->account_details->display_name, '%error' => $this->last_error), WATCHDOG_ERROR);
     }
-    
+
     return FALSE;
   }
-  
-  
+
+
   /**
    * Get custom user fields from Capwiz
    */
@@ -304,14 +304,14 @@ class CapizConnect {
     if (!$this->connected) {
       return FALSE;
     }
-    
+
     $query_params = array();
     $query_params['sessionId'] = $this->session_id;
-    
+
     $url = url(self::$base_url . 'users/v1/client/' . $this->client_id . '/customFields', array('query' => $query_params));
-    
+
     $fields_response = drupal_http_request($url);
-    
+
     // If the query was successfull
     if ($fields_response->code == 200) {
       $fields = json_decode($fields_response->data);
@@ -339,14 +339,14 @@ class CapizConnect {
       }
       watchdog('capwiz_connect', 'There was an error while trying to get custom fields for users with Capwiz Connect for account %account_name: %error.', array('%account_name' => $this->account_details->display_name, '%error' => $this->last_error), WATCHDOG_ERROR);
     }
-    
+
     return FALSE;
   }
-  
-  
+
+
   /**
    * Get the definition of a specific user field
-   * 
+   *
    * @param $field_name
    *   Key of the custom field, matching to the field->name value
    */
@@ -359,9 +359,9 @@ class CapizConnect {
     }
     return NULL;
   }
-  
-  
-  
+
+
+
   /**
    * Sync a batch of users down from Capwiz
    */
@@ -370,7 +370,7 @@ class CapizConnect {
     // completes the full user sync. Subtract five minutes to ensure that no one
     // falls through the cracks between batches
     $batch_start_time = REQUEST_TIME - 1800;
-    
+
     // Query for users that have been updated since the last time
     $sync_since = $this->account_details->user_sync_since;
     $start_offset = $this->account_details->user_sync_offset;
@@ -390,7 +390,7 @@ class CapizConnect {
         self::$STAT_UPDATE_OK => 0,
         self::$STAT_CREATE_FAIL => 0,
         self::$STAT_UPDATE_FAIL => 0,
-      );   
+      );
 
       // Loop over the returned users and save them to the DB
       foreach ($users as $user) {
@@ -426,7 +426,7 @@ class CapizConnect {
       );
       watchdog('capwiz_connect', $message, $message_vars);
     }
- 
+
     // We have no more items to import, reset the settings
     if (!$this->hasMoreUsers()) {
       $time_set = $batch_start_time;
@@ -435,7 +435,7 @@ class CapizConnect {
     // We have more items the time remains the same and the offset gets updated
     else {
       $time_set = $this->account_details->user_sync_since;
-      $offset_set = $this->last_user_offset;      
+      $offset_set = $this->last_user_offset;
     }
 
     // Update the settings
@@ -444,25 +444,25 @@ class CapizConnect {
       ->condition ('id', $this->account_details->id)
       ->execute();
   }
-  
+
   /**
    * Local method to save a Capwiz user as a Drupal user and add the user to
    * the Salesforce processing queue
-   * 
+   *
    * @param $user
    *   Object representing a user that was pulled over from Capwiz
-   * 
+   *
    * @return int
    *   Returns a status matching a static $STAT_* variable from this class
    */
   private function saveUser($user) {
     $return_value = 0;
-    
+
     $capwiz_user_id = $user->id;
-    
+
     $email = $user->emails[0]->address;
     $existing_profile_values = array();
-    
+
     if (!empty($email)) {
       $drupal_account = user_load_by_mail($email);
       if ($drupal_account) {
@@ -518,14 +518,14 @@ class CapizConnect {
         case 'capwiz_user_id':
           $value = $capwiz_user_id;
           break;
-        
+
         // Salutation
         case 'honorificId':
           if ($user->honorific) {
             $value = $user->honorific->name;
           }
           break;
-          
+
         // Street address
         case 'street1':
         case 'street2':
@@ -546,7 +546,7 @@ class CapizConnect {
             $value = $user->addresses[0]->postCodePlus;
           }
           break;
-          
+
         // Type of address
         case 'addressType':
           $address_field = $this->getSpecificCustomUserField('addressType');
@@ -555,17 +555,17 @@ class CapizConnect {
             $value = $address_field->options[$address_type_id]->label;
           }
           break;
-        
+
         // Affiliation of form
         case 'form_affiliation':
           $value = $this->account_details->form_affiliation;
           break;
-      
+
         // National District
         case 'nationalDistrict':
           $value = $user->districtInfo->national;
           break;
-        
+
         // State districts
         case 'stateDistrictUpper':
           if (is_array($user->districtInfo->stateUpper)) {
@@ -577,15 +577,15 @@ class CapizConnect {
             $value = implode(',', $user->districtInfo->stateLower);
           }
           break;
-        
+
         // Federal senators
         case 'fed_senator_1':
           $value = $legislators['National']['Senate'][0]['name'];
-          break;          
+          break;
         case 'fed_senator_2':
           $value = $legislators['National']['Senate'][1]['name'];
           break;
-      
+
         // Federal senator phone numbers
         case 'fed_senator_1_phone':
           $value = $legislators['National']['Senate'][0]['phone'];
@@ -593,7 +593,7 @@ class CapizConnect {
         case 'fed_senator_2_phone':
           $value = $legislators['National']['Senate'][1]['phone'];
           break;
-        
+
         // Federal senator email
         case 'fed_senator_1_email':
           $value = $legislators['National']['Senate'][0]['email'];
@@ -601,11 +601,11 @@ class CapizConnect {
         case 'fed_senator_2_email':
           $value = $legislators['National']['Senate'][1]['email'];
           break;
-        
+
         // Federal rep
         case 'fed_rep':
           $value = $legislators['National']['House'][0]['name'];
-          break;        
+          break;
         // Federal rep phone number
         case 'fed_rep_phone':
           $value = $legislators['National']['House'][0]['phone'];
@@ -614,7 +614,7 @@ class CapizConnect {
         case 'fed_rep_email':
           $value = $legislators['National']['House'][0]['email'];
           break;
-          
+
         // Governor fields
         case 'governor':
           $value = $legislators['State']['Governor'][0]['name'];
@@ -625,15 +625,15 @@ class CapizConnect {
         case 'governor_email':
           $value = $legislators['State']['Governor'][0]['email'];
           break;
-          
-      
+
+
         // Every other field. Just load the field from the object
         default:
           if ($user->{$field_key}) {
             $value = $user->{$field_key};
           }
       }
-      
+
       // Save the value
       // If it's a profile field
       if ((int)$target_field > 0) {
@@ -651,23 +651,23 @@ class CapizConnect {
       }
       // Not a profile field, but a regular user field
       else {
-      }      
+      }
     }
 
     module_invoke_all('capwiz_connect_save_user', $user, $drupal_account);
 
     return $return_value;
   }
-  
-  
-  
+
+
+
   /***********************************************
    * Action functions
    */
-   
+
   /**
    * Query actions. If a timestamp is given, only return items updated since then
-   * 
+   *
    * @param $updated_since
    *   Timestamp. If given, only actions updated since that time will be returned.
    */
@@ -675,17 +675,17 @@ class CapizConnect {
     if (!$this->connected) {
       return FALSE;
     }
-    
+
     $query_params = array();
     // Only for dev testing
     $query_params['sessionId'] = $this->session_id;
-    
+
     // If requesting actions updated since some timestamp
     if ($updated_since > 0) {
       // Date must be in ISO 8601 format
       $query_params['minDate'] = date('c', $updated_since);
     }
-    
+
     // If requesting a second (or third or fourth or...) batch of actions,
     // start at some point in the result set.
     $query_params['start'] = (int)$start;
@@ -695,16 +695,16 @@ class CapizConnect {
     }
 
     $url = url(self::$base_url . 'activity/v1/client/' . $this->client_id . '/events', array('query' => $query_params));
-    
+
     $action_response = drupal_http_request($url);
-    
+
     // If the query was successfull
     if ($action_response->code == 200) {
       $response_data = json_decode($action_response->data);
       if ($response_data) {
         $this->last_error = t('Actions queried successfully');
         $actions = $response_data->events;
-        
+
         // Sanity check each action to ensure data will not cause errors
         foreach ($actions as $action) {
           if (empty($action->alertId) || empty($action->messageId) || empty($action->emailAddress)) {
@@ -717,10 +717,10 @@ class CapizConnect {
         $last_action = end($actions);
         $this->last_action_offset = !empty($last_action->offset) ? $last_action->offset : 0;
         reset($actions);
-        
-        $this->more_data = ($response_data->moreData == 'true') ? TRUE : FALSE; 
 
-        return $actions;      
+        $this->more_data = ($response_data->moreData == 'true') ? TRUE : FALSE;
+
+        return $actions;
       }
       else {
         watchdog('capwiz_connect', 'There was an error querying actions with Capwiz Connect for account %account_name. Response: %error.', array('%account_name' => $this->account_details->display_name, '%error' => print_r($auth_response->data, TRUE)), WATCHDOG_ERROR);
@@ -734,23 +734,23 @@ class CapizConnect {
           break;
         default:
           $this->last_error = 'Unknown error while attempting to query actions. Response code: ' . $action_response->code;
-          break;            
+          break;
       }
       watchdog('capwiz_connect', 'There was an error querying actions with Capwiz Connect for account %account_name: %error.', array('%account_name' => $this->account_details->display_name, '%error' => $this->last_error), WATCHDOG_ERROR);
     }
-    
+
     return FALSE;
   }
-  
-  
+
+
   /**
    * Return whether or not there are more actions to collect from the API
    */
   public function hasMoreActions() {
     return $this->more_data;
   }
-  
-  
+
+
   /**
    * Sync a batch of action from Capwiz
    */
@@ -759,20 +759,20 @@ class CapizConnect {
     // batch completes the full action sync. Subtract five minutes to ensure
     // that no actions falls through the cracks between batches
     $batch_start_time = REQUEST_TIME - 1800;
-    
+
     // Query for actions that have been updated since the last time
     $sync_since = $this->account_details->action_sync_since;
     // Add one to the offset to keep from importing the last action
     $start_offset = $this->account_details->action_sync_offset+1;
     $batch_size = variable_get('capwiz_connect_action_batch_size', 100);
     $actions = $this->queryActions($sync_since, $start_offset, $batch_size);
-    
+
     // If $actions is FALSE, there was an error connecting or querying actions,
     // and a message will be logged to the watchdo
     if ($actions === FALSE) {
       return;
     }
-    
+
 
     if (is_array($actions) && !empty($actions)) {
       // Prep an array to keep track of added/updated users
@@ -783,13 +783,13 @@ class CapizConnect {
         self::$STAT_UPDATE_FAIL => 0,
         self::$STAT_DUPLICATE_MESSAGE => 0,
       );
-        
+
       // Loop over the returned users and save them to the DB
       foreach ($actions as $action) {
         $save_stat = $this->saveAction($action);
         $save_counts[$save_stat]++;
       }
-      
+
       // Log stats for users collected for this account
       $severity = WATCHDOG_INFO;
       $message = "Updated actions for %account_name. Created: %created. Ignored existing: %existing.";
@@ -831,7 +831,7 @@ class CapizConnect {
     // We have more items the time remains the same and the offset gets updated
     else {
       $time_set = $this->account_details->action_sync_since;
-      $offset_set = $this->last_action_offset;      
+      $offset_set = $this->last_action_offset;
     }
 
     // Update the settings
@@ -840,13 +840,13 @@ class CapizConnect {
       ->condition ('id', $this->account_details->id)
       ->execute();
   }
-  
+
   /**
    * Local method to save an action
-   * 
+   *
    * @param $action
    *   Object representing an action that was pulled over from Capwiz
-   * 
+   *
    * @return int
    *   Returns a status matching a static $STAT_* variable from this class
    */
@@ -885,19 +885,19 @@ class CapizConnect {
         $return_value = self::$STAT_CREATE_FAIL;
       }
     }
-    
+
     // Insert the action into the Salesforce processing queue
     if ($record['id']) {
       //sf_queue_insert($record['id'], 'capwiz_connect_action', 'upsert');
     }
-    
+
     return $return_value;
   }
-  
+
   /***********************************************
    * Alert functions
    */
-   
+
   /**
    * Query for alerts
    */
@@ -919,7 +919,7 @@ class CapizConnect {
     }
     return $response_data;
   }
-  
+
   /**
    * Query an alert
    */

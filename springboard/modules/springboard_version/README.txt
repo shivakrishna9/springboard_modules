@@ -11,13 +11,13 @@ INTRODUCTION
 ------------
 
 Springboard version provides insight into the expected versions of Springboard
-modules for any given Springboard installation. As Springboard advances, if 
+modules for any given Springboard installation. As Springboard advances, if
 minimum requirements for versions of modules change this system will alert you.
 
 INSTALLATION
 ------------
 
-1. Copy this directory to your sites/SITENAME/modules directory. 
+1. Copy this directory to your sites/SITENAME/modules directory.
 
 2. Enable the module.
 
@@ -32,7 +32,7 @@ so then the entry for webform in the data file will be:
 
 webform = 6.x-3.18
 
-We track these versions in a central Springboard file to allow us to note 
+We track these versions in a central Springboard file to allow us to note
 compatibility requirements for non-Springboard modules. As a Springboard module
 is updated, especially if the update would make it incompatible with previous
 versions of Springboard, be sure to note the updated file in this system.

@@ -256,7 +256,7 @@ function _springboard_version_hash_module($module) {
  * Helper function, recursive MD5 generation.
  */
 function _springboard_version_hash_path($path) {
-  if (is_dir($path)) { 
+  if (is_dir($path)) {
     $file_hashes = array();
     $dir = opendir($path);
     while (($entry = readdir($dir)) !== false) {

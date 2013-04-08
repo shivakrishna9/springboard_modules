@@ -120,7 +120,7 @@ function commerce_psi_credit_submit_form_submit($payment_method, $pane_form, $pa
     'ExpMonth' => $pane_values['credit_card']['exp_month'],
     'ExpYear'=> $pane_values['credit_card']['exp_year'],
     'Type' => $pretty_card_type,
-  );  
+  );
 
   if (isset($pane_values['credit_card']['code'])) {
     $nvp['CreditCard']['Cvv'] = $pane_values['credit_card']['code'];

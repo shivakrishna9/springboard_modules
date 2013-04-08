@@ -199,7 +199,7 @@ function springboard_menu_alter(&$items) {
     $items['admin/springboard/forms/webforms']['type'] = MENU_LOCAL_TASK;
     $items['admin/springboard/forms/webforms']['access arguments'] = array('administer springboard');
     $items['admin/springboard/forms/webforms']['title'] = 'View ' . $items['admin/content/webform']['title'];
-    $items['admin/springboard/forms/webforms']['weight'] = 100; 
+    $items['admin/springboard/forms/webforms']['weight'] = 100;
     unset($items['admin/springboard/forms/webforms']['access callback']);
   }
   // Add menus under salesforce. This only works if Views runs before this hook. Module weights is an issue here.
@@ -237,7 +237,7 @@ function springboard_menu_alter(&$items) {
       $items['admin/springboard/salesforce-log/queue']['type'] = MENU_LOCAL_TASK;
       $items['admin/springboard/salesforce-log/queue']['title'] = $items['admin/reports/salesforce/queue']['title'];
       $items['admin/springboard/salesforce-log/queue']['access arguments'] = array('administer springboard');
-      $items['admin/springboard/salesforce-log/queue']['weight'] = 100; 
+      $items['admin/springboard/salesforce-log/queue']['weight'] = 100;
       unset($items['admin/springboard/salesforce-log/queue']['access callback']);
     }
   }
@@ -347,7 +347,7 @@ function springboard_admin() {
   foreach ($panes as $pane_key => $pane) {
     if (isset($enabled_panes[$pane_key]) && !empty($pane['content'])) {
       $content .= $pane['content'];
-    }  
+    }
   }
   $content .= '</div>';
   return $content;

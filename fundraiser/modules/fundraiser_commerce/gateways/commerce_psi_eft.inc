@@ -22,7 +22,7 @@ function commerce_psi_eft_fundraiser_commerce_fundraiser_gateway_info() {
 
 /**
  * Returns the form fields for this method
- * 
+ *
  * @param $payment_method String
  *    Credit, bank account, paypal, etc
  * @param $config Array
@@ -66,7 +66,7 @@ function commerce_psi_eft_fundraiser_commerce_validate($submission_fields, $paym
 
 /**
  * Submit the donation values to the PSI credit charge handler
- * 
+ *
  * @param $method_instance Array
  *    Commerce loaded method instance
  * @param $donation Object

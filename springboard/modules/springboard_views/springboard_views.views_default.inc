@@ -1651,7 +1651,7 @@ function springboard_views_views_default_views() {
   $view->core = 7;
   $view->api_version = '3.0';
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
-  
+
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');
   $handler->display->display_options['title'] = 'Donations';
@@ -1924,7 +1924,7 @@ function springboard_views_views_default_views() {
     1 => 0,
     3 => 0,
   );
-  
+
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');
   $handler->display->display_options['defaults']['hide_admin_links'] = FALSE;

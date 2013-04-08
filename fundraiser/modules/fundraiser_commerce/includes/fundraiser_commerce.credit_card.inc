@@ -7,7 +7,7 @@
 
 /**
  * Returns a set of credit card form elements
- * 
+ *
  * @return Array
  *    Form elements ready to be included on donation form
  */
@@ -64,10 +64,10 @@ function _fundraiser_commerce_credit_card_form() {
 
 /**
  * Remove or change values of sensitive data from the submitted data
- * 
+ *
  * @param $submission_fields Array
  *    Values from the submitted form
- * 
+ *
  * @return Array
  *    The updated submission_fields array
  */
@@ -88,7 +88,7 @@ function _fundraiser_commerce_credit_card_cleanup($submission_fields) {
 
 /**
  * Return the credit card expiration dates
- * 
+ *
  * @param $submission_fields Array
  *    Values from the submitted form
  */
@@ -135,10 +135,10 @@ function _fundraiser_commerce_credit_card_validate($submission_fields, $form_par
 
 /**
  * Return the credit card expiration dates
- * 
+ *
  * @param $submission_fields Array
  *    Values from the submitted form
- * 
+ *
  * @return Array
  *    Expiration dates
  */
@@ -155,12 +155,12 @@ function _fundraiser_commerce_credit_card_expire($submission_fields) {
 
 /**
  * Scrub the data
- * 
+ *
  * @param $payment_method String
  *    Credit, check, paypal, etc
  * @param $fields Array
  *    Values for the credit card
- * 
+ *
  * @return Array
  *    The updated fields values
  */
@@ -178,17 +178,17 @@ function _fundraiser_commerce_credit_card_scrub($payment_method, $fields) {
 
 /**
  * Returns the pane values for commerce from the fundraiser credit card form
- * 
+ *
  * @param $donation Object
  *    Fundraiser donation object
- * 
+ *
  * @return Array
  *    Values ready to be passed to the commerce payment processor
  */
 function _fundraiser_commerce_credit_card_pane_values($donation) {
   return array(
     'credit_card' => array(
-      'number' => isset($donation->donation['payment_fields']['credit']['card_number']) ? 
+      'number' => isset($donation->donation['payment_fields']['credit']['card_number']) ?
         $donation->donation['payment_fields']['credit']['card_number'] : '',
       'exp_month' => isset($donation->donation['payment_fields']['credit']['card_expiration_month']) ?
         $donation->donation['payment_fields']['credit']['card_expiration_month'] : '',

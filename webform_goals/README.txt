@@ -1,7 +1,7 @@
 === ABOUT ===
 
 The Webform Goals module lets you set and track goals on your
-site webforms. 
+site webforms.
 
 
 === INSTALLATION ===
@@ -49,7 +49,7 @@ If goal display is not working either locally or on a 3rd party website you shou
   in the files directory.
 
 * Confirm any loader scripts in use have been updated with the correct URL for the
-jsonp loader. 
+jsonp loader.
 
 
 

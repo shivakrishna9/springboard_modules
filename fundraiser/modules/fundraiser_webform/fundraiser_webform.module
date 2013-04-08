@@ -34,7 +34,7 @@ function fundraiser_webform_admin_content() {
   foreach ($webform_types as $webform_type) {
     if (!isset($donation_types[$webform_type]) || $donation_types[$webform_type] !== 1) {
       $types[] = $webform_type;
-    } 
+    }
   }
   $nodes = array();
   if ($types) {
@@ -112,7 +112,7 @@ function fundraiser_webform_webform_confirmations_token_replace_alter(&$tokens, 
 /**
  * Implements hook_confirmation_page_tokens().
  *
- * 
+ *
  */
 function fundraiser_webform_confirmation_page_tokens($node_type) {
   static $token_list = array();
@@ -122,7 +122,7 @@ function fundraiser_webform_confirmation_page_tokens($node_type) {
       foreach ($tokens as $key => $value) {
         if (isset($value['children'])) {
           foreach ($value['children'] as $child_key => $child_value) {
-            $type = $value['type'] == 'user' ? 'Donating User' : 'Fundraiser Node';  
+            $type = $value['type'] == 'user' ? 'Donating User' : 'Fundraiser Node';
             $token_list[$type][$child_key] = $child_value['name'] . ' -- ' . $child_value['description'];
           }
         }
@@ -295,7 +295,7 @@ function fundraiser_webform_form_fundraiser_admin_settings_alter(&$form, &$form_
     );
     $options = array('0' => t('--Not handled by Fundraiser--'));
     foreach ($fundraiser_fields as $field_key => $fundraiser_field) {
-      $options[$field_key] = $fundraiser_field['#title'];      
+      $options[$field_key] = $fundraiser_field['#title'];
     }
     // Now we just need to note which of these fields map to which fundraiser fields.
     foreach ($profile_fields as $profile_field) {
@@ -995,7 +995,7 @@ function _fundraiser_webform_get_nonfieldset_keys($field_info = NULL, $fields = 
   $children = element_children($field_info);
   foreach ($children as $child) {
     // If this child is a defined field, but not a fieldset, add it.
-    if (isset($field_info[$child]['#title']) && $field_info[$child]['#type'] != 'fieldset') {  
+    if (isset($field_info[$child]['#title']) && $field_info[$child]['#type'] != 'fieldset') {
       $fields[$child] = $field_info[$child];
     }
     if (is_array($field_info[$child]) && !empty($field_info[$child])) {

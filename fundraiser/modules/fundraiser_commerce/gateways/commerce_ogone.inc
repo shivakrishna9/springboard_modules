@@ -157,7 +157,7 @@ function commerce_ogone_fundraiser_commerce_redirect_validate($method_instance, 
  * Callback function, submit results on return from redirection form.
  */
 function commerce_ogone_fundraiser_commerce_redirect_submit($method_instance, $donation, $order) {
-  // IMPORTANT: Transaction handling for Paypal is handled on a differnt URL, when Paypal returns the IPN tracsaction ID. 
+  // IMPORTANT: Transaction handling for Paypal is handled on a differnt URL, when Paypal returns the IPN tracsaction ID.
   // Therefore no additional transaction work occurs here.
   return TRUE;
 }

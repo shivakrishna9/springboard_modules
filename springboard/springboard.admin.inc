@@ -1466,7 +1466,7 @@ function springboard_admin_config_profile($form, $form_state) {
     'widget' => array(
       'type' => 'text_textfield',
     ),
-  ); 
+  );
   $profile_fields[] = array(
     'label' => t('City'),
     'field_name' => 'sbp_city',

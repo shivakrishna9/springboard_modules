@@ -7,7 +7,7 @@
 
 /**
  * Implements of hook_form_alter()
- * 
+ *
  * Here to ensure this inc file gets loaded for form_id_alter below
  */
 function capwiz_connect_js_form_alter(&$form, &$form_state, $form_id){
@@ -15,7 +15,7 @@ function capwiz_connect_js_form_alter(&$form, &$form_state, $form_id){
 
 /**
  * Implements hook_form_id_alter().
- * 
+ *
  * Add our settings to the main capwiz connect settings form
  */
 function capwiz_connect_js_form_capwiz_connect_settings_alter(&$form, &$form_state, $form_id) {
@@ -27,7 +27,7 @@ function capwiz_connect_js_form_capwiz_connect_settings_alter(&$form, &$form_sta
       $options[$account->id] = check_plain($account->display_name);
     }
   }
-  
+
   $form['capwiz_connect_js'] = array(
     '#type' => 'fieldset',
     '#title' => t('Capwiz Connect JS'),
@@ -48,13 +48,13 @@ function capwiz_connect_js_form_capwiz_connect_settings_alter(&$form, &$form_sta
     '#title' => t('Account\'s Internal Name'),
     '#description' => t('The account name used by capwiz, used to load up the correct alerts on th.'),
     '#default_value' => variable_get('capwiz_connect_js_account_internal_name', ''),
-  ); 
+  );
 }
 
 /**
  * Implements hook_form_form_id_alter().
- * 
- * Add the mappings for the data from our tables 
+ *
+ * Add the mappings for the data from our tables
  */
 function capwiz_connect_js_form_capwiz_connect_account_user_mapping_alter(&$form, &$form_state, $form_id) {
   // If this is not the action mapping form or we don't have an object do nothing
@@ -83,7 +83,7 @@ function capwiz_connect_js_form_capwiz_connect_account_user_mapping_alter(&$form
   $qs_keys = _market_source_build_qs_keys();
 
   foreach (array_keys($qs_keys) as $key) {
-      
+
     // Capwiz field
     $form['map']['user_field'][$key] = array(
       '#type' => 'item',
@@ -101,7 +101,7 @@ function capwiz_connect_js_form_capwiz_connect_account_user_mapping_alter(&$form
       '#default_value' => (isset($account->mapping_user['business'][$key])) ? $account->mapping_user['business'][$key] : '',
       '#options' => array(
         '' => '',
-        'blank' => t('Overwrite when blank'), 
+        'blank' => t('Overwrite when blank'),
         'append' => t('Append'),
         'always' => t('Always overwrite'),
         'never' => t('Never overwrite'),
@@ -112,8 +112,8 @@ function capwiz_connect_js_form_capwiz_connect_account_user_mapping_alter(&$form
 
 /**
  * Implements hook_form_form_id_alter().
- * 
- * Add the mappings for the data from our tables 
+ *
+ * Add the mappings for the data from our tables
  */
 function capwiz_connect_js_form_capwiz_connect_account_action_mapping_alter(&$form, &$form_state) {
   // If this is not the action mapping form or we don't have an object do nothing
@@ -168,7 +168,7 @@ function capwiz_connect_js_alert_list_form($form, &$form_state) {
     'id' => array(
       'data' => t('Alert ID'),
       'field' => 'ca.capwiz_alert_id',
-    ), 
+    ),
     'redirect' => t('Redirect'),
   );
   $header['operations'] = array('data' => t('Operations'));
@@ -196,15 +196,15 @@ function capwiz_connect_js_alert_list_form($form, &$form_state) {
     );
 
     $operations['edit'] = array(
-      'title' => t('edit'), 
+      'title' => t('edit'),
       'href' => CAPWIZ_CONNECT_ADMIN_URL . '/alerts/' . $id . '/edit'
     );
 
     // Render an unordered list of operations links.
     $options[$id]['operations'] = array(
       'data' => array(
-        '#theme' => 'links', 
-        '#links' => $operations, 
+        '#theme' => 'links',
+        '#links' => $operations,
         '#attributes' => array('class' => array('links', 'inline')),
       ),
     );
@@ -219,8 +219,8 @@ function capwiz_connect_js_alert_list_form($form, &$form_state) {
   );
 
   $form['existing_alerts']['operation'] = array(
-    '#type' => 'select', 
-    '#title' => t('Operation'), 
+    '#type' => 'select',
+    '#title' => t('Operation'),
     '#options' => array(
       '' => '-Select-',
       'delete' => t('Delete'),
@@ -245,9 +245,9 @@ function capwiz_connect_js_alert_list_form($form, &$form_state) {
 
   if (user_access('manage capwiz js alerts')) {
     $form['existing_alerts']['alert_table'] = array(
-      '#type' => 'tableselect', 
-      '#header' => $header, 
-      '#options' => $options, 
+      '#type' => 'tableselect',
+      '#header' => $header,
+      '#options' => $options,
       '#empty' => t('No content available.'),
     );
   }
@@ -255,9 +255,9 @@ function capwiz_connect_js_alert_list_form($form, &$form_state) {
   $form['existing_alerts']['pager'] = array('#markup' => theme('pager'));
 
   $form['existing_alerts']['submit'] = array(
-    '#type' => 'submit', 
-    '#value' => t('Update'), 
-    //'#validate' => array('node_admin_nodes_validate'), 
+    '#type' => 'submit',
+    '#value' => t('Update'),
+    //'#validate' => array('node_admin_nodes_validate'),
     //'#submit' => array('node_admin_nodes_submit'),
   );
 
@@ -312,7 +312,7 @@ function capwiz_connect_js_alert_list_form_submit($form, &$form_state) {
 }
 
 /**
- * Form for adding or editing an alert 
+ * Form for adding or editing an alert
  */
 function capwiz_connect_js_alert_addoredit_form($form, &$form_state, $action, $id = NULL) {
   $form = array();
@@ -348,9 +348,9 @@ function capwiz_connect_js_alert_addoredit_form($form, &$form_state, $action, $i
         if ($connection) {
           $capwiz_form = $connection->queryAlert($querystring['alertid']);
         }
-        // If this alert is active in capwiz and has not already been setup then list        
+        // If this alert is active in capwiz and has not already been setup then list
         if (!empty($capwiz_form->alert->id) && !(bool) db_query('SELECT capwiz_alert_id FROM {capwiz_connect_js_alerts} WHERE capwiz_alert_id = :id', array(':id' => $querystring['alertid']))->fetchField()) {
-          $options[$querystring['alertid']] = (string) $item->title;  
+          $options[$querystring['alertid']] = (string) $item->title;
         }
       }
     }
@@ -363,7 +363,7 @@ function capwiz_connect_js_alert_addoredit_form($form, &$form_state, $action, $i
         '#description' => t('Select the alert.'),
       );
     }
- 
+
     // Provide a field to manually enter the Alert ID
     $form['manual_alert'] = array(
       '#type' => 'fieldset',
@@ -403,7 +403,7 @@ function capwiz_connect_js_alert_addoredit_form($form, &$form_state, $action, $i
 }
 
 /**
- * Submit handler for the alert add/edit form 
+ * Submit handler for the alert add/edit form
  */
 function capwiz_connect_js_alert_addoredit_form_submit($form, &$form_state) {
   // If an alert ID has been passed through the URL then use that
@@ -414,7 +414,7 @@ function capwiz_connect_js_alert_addoredit_form_submit($form, &$form_state) {
   else {
     $alert_id = $form_state['values']['capwiz_alert_id_manual'] ? $form_state['values']['capwiz_alert_id_manual'] : $form_state['values']['capwiz_alert_id_select'];
   }
-  
+
   if (!$alert_id) {
     form_set_error('', 'No alert id was set.');
     return;

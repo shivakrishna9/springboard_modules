@@ -60,7 +60,7 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
     );
     drupal_write_record('webform_component', $defaults);
     // Now that we have a component on record we can test all the DB stuff against it.
-    
+
     // Test getting unserialized extra.
     $retrieved = _fundraiser_webform_get_extra_by_key($defaults['nid'], 'key_id');
     $this->assertEqual($retrieved, array('Extra data'), '_fundraiser_webform_get_extra_by_key() returned the correct unserialized result.', 'testFundraiserWebformDBFunctions');
@@ -200,7 +200,7 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
     $retrieved = _fundraiser_webform_walk_component_hierarchy(1, $results[4]->cid);
     $expected = array('key_one', 'key_four', 'key_five');
     $this->assertEqual($retrieved, $expected, '_fundraiser_webform_walk_component_hierarchy() got correct path from nested fields.', 'testFundraiserWebformComponentFunctions');
-    
+
     $fields['key_six'] = array(
       '#title' => 'Key Six New Name',
       '#type' => 'textfield',
@@ -467,7 +467,7 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
         'recurs_monthly' => array(),
         'card_expiration_month' => 8,
         'card_expiration_year' => 2012,
-      ), 
+      ),
     );
     $results = _fundraiser_webform_submission_flatten($node->nid, $submit_tree);
     // Also tests _fundraiser_webform_get_components_by_nid().

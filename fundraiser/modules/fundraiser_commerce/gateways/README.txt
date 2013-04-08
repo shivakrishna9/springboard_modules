@@ -1,6 +1,6 @@
 Payment gateways supported by Fundraiser Commerce
 
-commerce_payment_example - 
+commerce_payment_example -
 Ships with Commerce, is the example gateway.
 
 commerce_authnet - http://drupal.org/project/commerce_authnet
@@ -16,7 +16,7 @@ commerce_no_payment - http://drupal.org/project/commerce_no_payment
 This payment module adds a "No payment required" payment method (for free stuff).
 
 commerce_ogone - http://drupal.org/project/commerce_ogone
-Ogone integration for the Drupal Commerce payment and checkout system. 
+Ogone integration for the Drupal Commerce payment and checkout system.
 THIS SUPPORT IS NOT COMPLETED YET.
 
 commerce_paypal - http://drupal.org/project/commerce_paypal

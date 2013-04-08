@@ -207,7 +207,7 @@ function springboard_api_load($kid) {
 }
 
 /**
- * 
+ *
  */
 function _springboard_api_access($perm) {
   global $user;
@@ -216,10 +216,10 @@ function _springboard_api_access($perm) {
 
 /**
  * Format admin UI links for api keysets.
- * 
+ *
  * @param $kid
  * Int, keyset id.
- * 
+ *
  * @return
  * Returns preformatted edit/delete links.
  */
@@ -233,11 +233,11 @@ function _springboard_api_links($kid) {
 
 /**
  * Title callback for keyset edit/delete forms
- * 
+ *
  * @param $kid
  * Int, keyset it.
- * 
- * @return 
+ *
+ * @return
  * Returns translated app name for current keyset.
  */
 function _springboard_api_keyset_title($kid) {
@@ -245,7 +245,7 @@ function _springboard_api_keyset_title($kid) {
 }
 
 /**
- * 
+ *
  */
 function _springboard_api_validate_transaction($resource, $timestamp, $pubkey, $checksum) {
 $data = array();

@@ -322,7 +322,7 @@ function _market_source_build_qs_keys() {
     foreach ($custom_fields as $custom_field) {
       $field_settings[ $custom_field['key'] ] = $custom_field;
     }
-    
+
     // create keys with null values and persistence settings
     $ms_keys = _market_source_get_field_keys();
     if (is_array($ms_keys)) {
