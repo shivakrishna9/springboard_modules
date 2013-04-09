@@ -108,8 +108,8 @@ function springboard_menu() {
       'type' => MENU_NORMAL_ITEM,
     );
   }
-  // Forms sub-menu
-  if (module_exists('salesforce_api')) {
+  // Salesforce sub-menu
+  if (module_exists('salesforce')) {
     $items['admin/springboard/salesforce'] = array(
       'title' => 'Salesforce',
       'description' => 'Manage Salesforce configurations.',
@@ -144,20 +144,6 @@ function springboard_menu() {
     'access arguments' => array('administer springboard'),
     'type' => MENU_LOCAL_TASK,
     'weight' => 50,
-  );
-  // Callback for the Springboard sync button.
-  $items['springboard_sync'] = array(
-    'title' => 'Syncronize',
-    'page callback' => '_springboard_syncronize',
-    'access arguments' => array('administer springboard'),
-    'type' => MENU_CALLBACK,
-  );
-  // Callback for the additional details modals in the fundraiser report panel.
-  $items['springboard_report_modal'] = array(
-    'title' => 'Syncronize',
-    'page callback' => '_springboard_form_report',
-    'access arguments' => array('administer springboard'),
-    'type' => MENU_CALLBACK,
   );
   return $items;
 }
@@ -296,29 +282,13 @@ function springboard_menu_alter(&$items) {
  */
 function springboard_theme($existing, $type, $theme, $path) {
   return array(
-    'springboard_logo' => array(
-      'variables' => array('logo' => ''),
-      'template' => drupal_get_path('theme', $theme) . '/templates/springboard-logo',
-    ),
     'springboard_sf_status' => array(
       'variables' => array('status' => '', 'batch_status' => '', 'queue' => ''),
       'template' => drupal_get_path('theme', $theme) . '/templates/springboard-sf-status',
     ),
-    'springboard_jump' => array(
-      'variables' => array('menu' => ''),
-      'template' => drupal_get_path('theme', $theme) . '/templates/springboard-jump',
-    ),
-    'springboard_form_performance' => array(
-      'variables' => array('form_table' => ''),
-      'template' => drupal_get_path('theme', $theme) . '/templates/springboard-form-performance',
-    ),
     'springboard_help' => array(
       'variables' => array('help_array' => array()),
       'template' => drupal_get_path('theme', $theme) . '/templates/springboard-help',
-    ),
-    'springboard_form_report' => array(
-      'variables' => array('access_results' => '', 'nid' => '', 'total_donations' => ''),
-      'template' => drupal_get_path('theme', $theme) . '/templates/springboard-form-report',
     ),
   );
 }
@@ -329,79 +299,18 @@ function springboard_theme($existing, $type, $theme, $path) {
 function springboard_admin() {
   // Add our CSS for display.
   drupal_add_css(drupal_get_path('module', 'springboard') . '/css/springboard.css', 'module');
-  $content = '';
-  // Show form to configure defaults for Salesforce if values haven't already been set.
-  // If we already set this, then short circuit to avoid further efforts.
-  if (module_exists('salesforce_api') && variable_get('springboard_salesforce_enabled', FALSE) == FALSE) {
-    module_load_include('inc', 'salesforce_api', 'salesforce_api.admin');
-    $content .= '<div class="springboard-welcome">';
-    $content .= drupal_render(drupal_get_form('salesforce_api_settings_form'));
-    $content .= drupal_render(drupal_get_form('salesforce_api_update_wsdl_form'));
-    $content .= '</div>';
-  }
-  $content .= '<div class="springboard-dashboard dashboard">';
+  $content = '<div class="springboard-dashboard dashboard">';
   // Load the enabled panes for the dashboard.
   $panes = module_invoke_all('springboard_dashboard_panes');
   drupal_alter('springboard_dashboard_panes', $panes);
   $enabled_panes = variable_get('springboard_enabled_panes', array());
   foreach ($panes as $pane_key => $pane) {
-    if (isset($enabled_panes[$pane_key]) && !empty($pane['content'])) {
+    if (!empty($pane['content']) && !empty($enabled_panes[$pane_key])) {
       $content .= $pane['content'];
     }
   }
   $content .= '</div>';
   return $content;
-}
-
-/**
- * Form alter, springboard's standard settings form.
- */
-function springboard_form_salesforce_api_settings_form_alter(&$form, &$form_state, $form_id) {
-/*
-TODO come back to this, if this even exists by the time we're done with integration.
-  // Check the default campaign.
-  if (module_exists('sf_donation')) {
-    $default_campaign = variable_get('sf_donation_default_campaign', '');
-    if (isset($default_campaign) && !empty($default_campaign)) {
-      $form['default_campaign'] = array(
-        '#type' => 'markup',
-        '#prefix' => '<h3>' . t('Default campaign') . '</h3><p class="default_campaign_message">',
-        '#suffix' => '</p>',
-        '#value' => t('The %campaign campaign has been selected as default.', array('%campaign' => $default_campaign)),
-      );
-    }
-    else {
-      $form['default_campaign'] = array(
-        '#type' => 'markup',
-        '#prefix' => '<h3>' . t('Default campaign') . '</h3><p class="default_campaign_message">',
-        '#suffix' => '</p>',
-        '#value' => t('Springboard needs to know which Salesforce campaign to use as a default.'),
-      );
-    }
-  }
-*/
-  $form['#submit'][] = 'springboard_salesforce_api_test_connection';
-}
-
-/**
- * Form alter, springboard's standard settings form.
- */
-function springboard_form_salesforce_api_update_wsdl_form_alter(&$form, &$form_state, $form_id) {
-  $form['#submit'][] = 'springboard_salesforce_api_test_connection';
-}
-
-/**
- * Submit handler, springboard's standard settings form.
- */
-function springboard_salesforce_api_test_connection(&$form, &$form_state) {
-  // Check that we have a working connection, and if we do we don't need to show the message anymore.
-  $sf = salesforce_api_connect();
-  if (isset($sf) && is_object($sf)) {
-    variable_set('springboard_salesforce_enabled', TRUE);
-  }
-  else {
-    variable_set('springboard_salesforce_enabled', FALSE);
-  }
 }
 
 /**
@@ -430,66 +339,36 @@ function springboard_springboard_help() {
 }
 
 /**
- * Menu callback. Syncronization callback for Springboard Sync button.
- */
-function _springboard_syncronize() {
-  if (module_exists('queue_processor')) {
-    module_load_include('module', 'queue_processor');
-    queue_processor_process();
-    drupal_set_message(t('Salesforce queues have been processed.'));
-  }
-  drupal_goto('admin/springboard');
-}
-
-/**
- * Menu callback. Report callback for Springboard info button.
- */
-function _springboard_form_report($nid = '') {
-  // Short circuit if no legit data found.
-  if (empty($nid) || !module_exists('fundraiser')) {
-    ctools_modal_render('', '');
-  }
-  ctools_include('ajax');
-  ctools_include('modal');
-  // Grab data from fundraiser tracker data.
-  if (is_numeric($nid)) {
-    $access_results = db_query('SELECT ft.pageviews, ft.conversions, ft.local_failures, ft.gateway_failures, f.internal_name FROM {fundraiser} f ' .
-      'INNER JOIN {fundraiser_tracking} ft ON f.nid = ft.nid WHERE f.nid = :nid', array(':nid' => $nid))->fetchObject();
-  }
-// TODO correct this for new structures.
-//  $total_donations = db_query('SELECT sum(uc.order_total) FROM {uc_orders} uc
-//        INNER JOIN {fundraiser_webform_donation} f ON f.did = uc.order_id
-//        WHERE f.webform_nid = :nid AND uc.order_status = "payment_received"',
-//        array(':nid' => $nid))->fetchObject();
-//  $total_donations = round($total_donations) . '.00';
-  $total_donations = 'TBD';
-  $total_donations = $total_donations ? $total_donations : '0.00';
-  $output = theme('springboard_form_report',
-    array('access_results' => $access_results, 'nid' => $nid, 'total_donations' => $total_donations));
-  ctools_modal_render($access_results->internal_name, $output);
-}
-
-/**
  * Implements hook_springboard_dashboard_panes().
  */
 function springboard_springboard_dashboard_panes() {
   $panes['springboard_sf_status'] = array(
-    'label' => 'Salesforce connection status',
+    'label' => t('Salesforce connection status'),
     'description' => t('Salesforce connection status'),
     'content' => _springboard_sf_status(),
     'weight' => 0,
   );
-  GLOBAL $base_url;
+  global $base_url;
   $panes['springboard_recent_donation_forms'] = array(
-    'label' => t('Recent Donation Forms'),
+    'label' => t('Recent donation forms'),
     'description' => t('Configuration and submissions summary for recently created or updated springboard donation forms.'),
-    'content' => '<h2>'. 'Recent Forms ' . (module_exists('webform') ? l(t('Create donation form'), $base_url.'/node/add/donation-form', array('attributes' => array('class' => 'button'))) : '' ) . '</h2><div class="springboard-pane" id="springboard-recent-donation-forms">' . (module_exists('views') ? views_embed_view('sbv_forms', 'block_1') : t('Please enable the Views module to improve your Springboard experience.')).'</div>',
+    'content' => '<h2>' . t('Recent donation forms ') .
+      (module_exists('webform') ? l(t('Create donation form'), $base_url.'/node/add/donation-form', array('attributes' => array('class' => 'button'))) : '' ) .
+      '</h2>' .
+      '<div class="springboard-pane" id="springboard-recent-donation-forms">' .
+      (module_exists('views') ? views_embed_view('sbv_forms', 'block_1') : t('Please enable the Views module to improve your Springboard experience.')) .
+      '</div>',
     'weight' => 1,
   );
   $panes['springboard_recent_forms'] = array(
-    'label' => 'Recent Forms',
+    'label' => t('Recent forms'),
     'description' => t('Configuration and submissions summary for recently created or updated springboard forms.'),
-    'content' => '<h2>'. 'Recent Donation Forms ' .(module_exists('fundraiser') ? l(t('Create form'), $base_url.'/node/add/webform', array('attributes' => array('class' => 'button'))) : '')  . '</h2><div class="springboard-pane" id="springboard-recent-forms">' . (module_exists('views') ? views_embed_view('sbv_forms', 'block') : t('Please enable the Views module to improve your Springboard experience.')).'</div>',
+    'content' => '<h2>' . t('Recent forms ') .
+      (module_exists('fundraiser') ? l(t('Create form'), $base_url.'/node/add/webform', array('attributes' => array('class' => 'button'))) : '')  .
+      '</h2>' .
+      '<div class="springboard-pane" id="springboard-recent-forms">' .
+      (module_exists('views') ? views_embed_view('sbv_forms', 'block') : t('Please enable the Views module to improve your Springboard experience.')) .
+      '</div>',
     'weight' => 2,
   );
   return $panes;
@@ -503,13 +382,12 @@ function _springboard_sf_status() {
   if (module_exists('salesforce')) {
     // Call on the module to get the current connection status
     $sf = salesforce_get_api();
-      $status = FALSE;
+    $status = FALSE;
     if ($sf->isAuthorized()) {
       $status = TRUE;
     } else {
       $status = FALSE;
     }
-    //$status = $sf->isAuthorized() ? TRUE : FALSE;
     // Latest batch # total items :: success :: fail.
     $batch_status = t('Batch info unavailable, please install Salesforce Log.');
     if (module_exists('salesforce_log')) {
@@ -529,7 +407,7 @@ function _springboard_sf_status() {
         $batch_status = t('No batches processed yet.');
       }
     }
-    $queue = module_exists('salesforce_queue') && $status ? drupal_get_form('springboard_dashboard_queue') : '';
+    $queue = (module_exists('salesforce_queue') && $status) ? drupal_get_form('springboard_dashboard_queue') : '';
     return theme('springboard_sf_status', array('status' => $status, 'batch_status' => $batch_status, 'queue' => $queue));
   }
   return 'status';
@@ -554,74 +432,6 @@ function springboard_dashboard_queue() {
  */
 function springboard_dashboard_queue_submit(&$form_state) {
   salesforce_queue_process_queue();
-}
-
-/**
- * Hook callback. For the Springboard fundraiser performance pane.
- */
-
-function _springboard_form_performance() {
-  // Include the ctool features for htemodal windows.
-  module_load_include('inc', 'ctools', 'includes/ajax');
-  ctools_include('modal');
-  ctools_modal_add_js();
-  // Set headers.
-  $headers = array('Internal Form Name', 'Conversion %', 'Local Failure', 'Gateway Failure', 'Load Time');
-  // TODO: add code to find and display form layout if/when this becomes available.
-  $forms = array();
-  if (module_exists('fundraiser')) {
-    // Given the scattered nature of this data I predict this page is going to perform poorly.
-    $query = db_select('node', 'n');
-      $query->innerJoin('fundraiser', 'f', 'f.nid = n.nid');
-      $query->fields('n', array('nid'))
-        ->fields('f', array('internal_name'))
-        ->range(0, 10);
-    $results = $query->execute();
-    // Loop over each donation form.
-    foreach ($results as $donation_form) {
-      $forms[$donation_form->nid]['internal_name'] = ' ' . l('<img src="' . base_path() . drupal_get_path('module', 'springboard') . '/images/icon-hidepane.png">',
-      'springboard_report_modal/' . $donation_form->nid, array('attributes' => array('class' => 'ctools-use-modal'), 'html' => TRUE));
-      $forms[$donation_form->nid]['internal_name'] .= ' ' . $donation_form->internal_name;
-      $forms[$donation_form->nid]['conversion'] = '<span class="' . springboard_set_dashboard_class(0, 0, 'max') . '">N/A</span>';
-      $forms[$donation_form->nid]['local_failure'] = '<span class="' . springboard_set_dashboard_class(0, 0, 'max') . '">N/A</span>';
-      $forms[$donation_form->nid]['gateway_failure'] = '<span class="' . springboard_set_dashboard_class(0, 0, 'max') . '">N/A</span>';
-      $forms[$donation_form->nid]['load_time'] = '<span class="' . springboard_set_dashboard_class(0, 0, 'max') . '">N/A</span>';
-      // If the fundraiser information is available for tracking data, update it.
-      if (module_exists('fundraiser')) {
-        $access_results = db_query("SELECT * FROM {fundraiser_tracking} WHERE nid = :nid", array(':nid' => $donation_form->nid))->fetchObject();
-        if ($access_results) {
-          $conversion = _springboard_percentage($access_results->conversions, $access_results->pageviews);
-          $conversion_threshold =  variable_get('springboard_conversion_threshold', 0);
-          $forms[$donation_form->nid]['conversion'] = '<span class="' . springboard_set_dashboard_class($conversion_threshold, $conversion, 'min') . '">'
-            . $conversion . '</span>';
-          $local_failure = _springboard_percentage($access_results->local_failures, $access_results->pageviews);
-          $local_failure_threshold = variable_get('springboard_local_failure_threshold', 0);
-          $forms[$donation_form->nid]['local_failure'] =  '<span class="' . springboard_set_dashboard_class($local_failure_threshold, $local_failure, 'max') . '">'
-            . $local_failure . '</span>';
-          $gateway_failure = _springboard_percentage($access_results->gateway_failures, $access_results->pageviews);
-          $gateway_failure_threshold = variable_get('springboard_gateway_failure_threshold', 0);
-          $forms[$donation_form->nid]['gateway_failure'] =  '<span class="' . springboard_set_dashboard_class($gateway_failure_threshold, $gateway_failure, 'max') . '">'
-            . $gateway_failure . '</span>';
-          if (module_exists('statistics')) {
-            $load_time = db_query("SELECT timer FROM {accesslog} WHERE path = CONCAT('node/', :nid) ORDER BY aid desc", array(':nid' => $donation_form->nid))->fetchField() . 'ms';
-            $load_time_threshold = variable_get('springboard_load_time_threshold', 0);
-            $forms[$donation_form->nid]['load_time'] = '<span class="' . springboard_set_dashboard_class($load_time_threshold, $load_time, 'max') . '">'
-              . $load_time . '</span>';
-          }
-        }
-      }
-    }
-  }
-  // Sort the forms by conversion rate.
-  usort($forms, '_springboard_sort_by_conversion');
-  // Create table for display.
-  $rows = array();
-  foreach ($forms as $form) {
-    $rows[] = array($form['internal_name'], $form['conversion'], $form['local_failure'], $form['gateway_failure'], $form['load_time']);
-  }
-  // Theme it.
-  $form_table = theme('table', array('headers' => $headers, 'rows' => $rows));
-  return theme('springboard_form_performance', array('form_table' => $form_table));
 }
 
 /**

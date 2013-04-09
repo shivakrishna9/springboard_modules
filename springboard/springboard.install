@@ -14,3 +14,18 @@ function springboard_install() {
   drupal_set_message(st('The Springboard module was successfully enabled. !link',
     array('!link' => l(st('Please configure Springboard now.'), 'admin/springboard/settings/springboard'))));
 }
+
+/**
+ * Implements hook_update_N().
+ * Uninstall the table in favor of hook based panes.
+ */
+function springboard_update_7000() {
+  // If we used to be a Springboard profile install, switch to standard.
+  if (variable_get('install_profile', '') == 'springboard') {
+    variable_set('install_profile', 'standard');
+  }
+  // Drop the old pane table if it exists, we're moving to hooks.
+  if (db_table_exists('springboard_sf_status')) {
+    db_drop_table('springboard_sf_status');
+  }
+}

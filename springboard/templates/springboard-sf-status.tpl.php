@@ -10,7 +10,8 @@
  */
 ?>
 <div class="springboard-pane" id="salesforce-status-pane">
-  <p><?php print $variables['status'] ? '<span class="sf-connected">' . t('Salesforce connected') . '</span>' : '<span class="sf-notconncected">' . t('Salesforce not connected ') . l(t('Update authentication'), 'admin/config/services/salesforce') . '</span>'; ?></p>
+  <p><?php print $variables['status'] ? '<span class="sf-connected">' . t('Salesforce connected') . '</span>' : '<span class="sf-notconncected">' .
+    t('Salesforce not connected ') . l(t('Update authentication'), 'admin/config/services/salesforce') . '</span>'; ?></p>
   <p><?php print isset($variables['batch_status']) ? $variables['batch_status'] : ''; ?></p>
-  <?php print render($queue); ?>
+  <p><?php print render($queue); ?></p>
 </div>
