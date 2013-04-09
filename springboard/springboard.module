@@ -109,7 +109,7 @@ function springboard_menu() {
     );
   }
   // Forms sub-menu
-  if (module_exists('salesforce')) {
+  if (module_exists('salesforce_api')) {
     $items['admin/springboard/salesforce'] = array(
       'title' => 'Salesforce',
       'description' => 'Manage Salesforce configurations.',
@@ -301,7 +301,7 @@ function springboard_theme($existing, $type, $theme, $path) {
       'template' => drupal_get_path('theme', $theme) . '/templates/springboard-logo',
     ),
     'springboard_sf_status' => array(
-      'variables' => array('status' => '', 'updated_time' => '', 'batch_status' => ''),
+      'variables' => array('status' => '', 'batch_status' => '', 'queue' => ''),
       'template' => drupal_get_path('theme', $theme) . '/templates/springboard-sf-status',
     ),
     'springboard_jump' => array(
@@ -473,45 +473,26 @@ function _springboard_form_report($nid = '') {
  * Implements hook_springboard_dashboard_panes().
  */
 function springboard_springboard_dashboard_panes() {
-  $panes['springboard_logo'] = array(
-    'label' => 'Springboard logo',
-    'description' => t('Springboard logo'),
-    'content' => _springboard_logo(),
-    'weight' => -1,
-  );
   $panes['springboard_sf_status'] = array(
     'label' => 'Salesforce connection status',
     'description' => t('Salesforce connection status'),
     'content' => _springboard_sf_status(),
     'weight' => 0,
   );
-  $panes['springboard_jump'] = array(
-    'label' => 'Springboard jump menu',
-    'description' => t('Springboard jump menu'),
-    'content' => _springboard_jump(),
+  GLOBAL $base_url;
+  $panes['springboard_recent_donation_forms'] = array(
+    'label' => t('Recent Donation Forms'),
+    'description' => t('Configuration and submissions summary for recently created or updated springboard donation forms.'),
+    'content' => '<h2>'. 'Recent Forms ' . (module_exists('webform') ? l(t('Create donation form'), $base_url.'/node/add/donation-form', array('attributes' => array('class' => 'button'))) : '' ) . '</h2><div class="springboard-pane" id="springboard-recent-donation-forms">' . (module_exists('views') ? views_embed_view('sbv_forms', 'block_1') : t('Please enable the Views module to improve your Springboard experience.')).'</div>',
     'weight' => 1,
   );
-  $panes['springboard_fundraiser_performance'] = array(
-    'label' => 'Fundraiser performance',
-    'description' => t('Fundraiser performance'),
-    'content' => _springboard_form_performance(),
+  $panes['springboard_recent_forms'] = array(
+    'label' => 'Recent Forms',
+    'description' => t('Configuration and submissions summary for recently created or updated springboard forms.'),
+    'content' => '<h2>'. 'Recent Donation Forms ' .(module_exists('fundraiser') ? l(t('Create form'), $base_url.'/node/add/webform', array('attributes' => array('class' => 'button'))) : '')  . '</h2><div class="springboard-pane" id="springboard-recent-forms">' . (module_exists('views') ? views_embed_view('sbv_forms', 'block') : t('Please enable the Views module to improve your Springboard experience.')).'</div>',
     'weight' => 2,
   );
   return $panes;
-}
-
-/**
- * Hook callback. For the Springboard logo pane.
- */
-function _springboard_logo() {
-  $theme = variable_get('theme_default', '0');
-  if (theme_get_setting('default_logo', $theme) == 1) {
-    $logo = '<img src="' . base_path() . drupal_get_path('theme', $theme) . '/logo.png" width="150" alt="Site logo" />';
-  }
-  else {
-    $logo =  '<img src="' . base_path() . theme_get_setting('logo_path', $theme) . '" width="150" alt="Site logo" />';
-  }
-  return theme('springboard_logo', array('logo' => $logo));
 }
 
 /**
@@ -519,53 +500,66 @@ function _springboard_logo() {
  */
 function _springboard_sf_status() {
   $output = '';
-  if (module_exists('salesforce_api')) {
+  if (module_exists('salesforce')) {
     // Call on the module to get the current connection status
-    $status = salesforce_api_connect();
-    // WSDL update
-    $updated_time = variable_get('salesforce_api_wsdl_updated', 0);
+    $sf = salesforce_get_api();
+      $status = FALSE;
+    if ($sf->isAuthorized()) {
+      $status = TRUE;
+    } else {
+      $status = FALSE;
+    }
+    //$status = $sf->isAuthorized() ? TRUE : FALSE;
     // Latest batch # total items :: success :: fail.
-    $batch_status = t('Batch info unavailable, please install Queue API.');
-    if (module_exists('queue_api')) {
-      $batch = db_fetch_object(db_query('SELECT * FROM {sf_batch} ORDER BY id DESC LIMIT 1'));
+    $batch_status = t('Batch info unavailable, please install Salesforce Log.');
+    if (module_exists('salesforce_log')) {
+      $query = db_select('salesforce_log_batch', 'sflog')
+        ->fields('sflog')
+        ->orderBy('bid', 'DESC')
+        ->range(0,1)
+        ->execute();
+      $batch = $query->fetchObject();  
       if ($batch) {
         $batch_status = t('Batch # @id - @record_count::<span class="successes">@success_count</span>::' .
           '<span class="failures">@fail_count</span>',
-          array('@id' => $batch->id, '@record_count' => $batch->record_count, '@success_count' => $batch->success_count,
-          '@fail_count' => $batch->failure_count));
+          array('@id' => $batch->bid, '@record_count' => $batch->count, '@success_count' => $batch->successes,
+          '@fail_count' => $batch->failures));
       }
       else {
         $batch_status = t('No batches processed yet.');
       }
     }
-    return theme('springboard_sf_status', array('status' => $status, 'updated_time' => $updated_time, 'batch_status' => $batch_status));
+    $queue = module_exists('salesforce_queue') && $status ? drupal_get_form('springboard_dashboard_queue') : '';
+    return theme('springboard_sf_status', array('status' => $status, 'batch_status' => $batch_status, 'queue' => $queue));
   }
-  return '';
+  return 'status';
 }
 
 /**
- * Hook callback. For the Springboard Quick Jump pane.
+ * Springboard dashboard queue processor button 
  */
-function _springboard_jump() {
-  if (module_exists('fundraiser')) {
-    ctools_include('jump-menu');
-    $targets = array();
-    $types = fundraiser_get_donation_types();
-    foreach ($types as $type => $enabled) {
-      if ($enabled && node_access('create', $type)) {
-        $targets[url('node/add/' . $type)] = 'Create ' . node_type_get_name($type);
-      }
-    }
-    $form = drupal_get_form('ctools_jump_menu', $targets, array());
-    $menu = drupal_render($form);
-    return theme('springboard_jump', array('menu' => $menu));
-  }
-  return '';
+function springboard_dashboard_queue() {
+  $form = array();
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+    '#prefix' => t('Run Springboard Sync'),
+    '#submit' => array('springboard_dashboard_queue_submit'),    
+  );
+  return $form;
+}
+
+/**
+ * Submit handler for Springboard dashboard queue processor button
+ */
+function springboard_dashboard_queue_submit(&$form_state) {
+  salesforce_queue_process_queue();
 }
 
 /**
  * Hook callback. For the Springboard fundraiser performance pane.
  */
+
 function _springboard_form_performance() {
   // Include the ctool features for htemodal windows.
   module_load_include('inc', 'ctools', 'includes/ajax');

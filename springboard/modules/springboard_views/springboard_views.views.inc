@@ -19,6 +19,9 @@ function springboard_views_views_handlers() {
       'queue_api_handler_field_batch_id' => array(
         'parent' => 'views_handler_field',
       ),
+      'springboard_webform_hidden_component_values' => array(
+        'parent' => 'views_handler_field'
+      ),
     ),
   );
 }
@@ -28,6 +31,40 @@ function springboard_views_views_handlers() {
  */
 function springboard_views_views_data() {
   $data = _springboard_views_invoke_all('views_data');
+  
+  // Add Views table information for Webform hidden components
+  $data['webform_component']['table']['group'] = t('Webform');
+  $data['webform_component']['table']['base'] = array(
+    'field' => 'nid',
+    'title' => t('Webform components'),
+    'help' => t('Webform component values'),
+  );
+  $data['webform_component']['table']['join'] = array(
+    'node' => array(
+      'type' => 'INNER',
+      'left_field' => 'nid',
+      'field' => 'nid'
+    ),
+    'webform_submissions' => array(
+      'left_field' => 'nid',
+      'field' => 'nid'
+    ),
+  );
+  $data['webform_component']['value'] = array(
+    'title' => t('Webform Hidden Components'),
+    'help' => t('Display default values of webform hidden components.'),
+    'relationship' => array (
+      'base' => 'node',
+      'field' => 'nid',
+      'handler' => 'views_handler_relationship',
+      'label' => t('Webform node'),
+    ),
+    'field' => array(
+      'handler' => 'springboard_webform_hidden_component_values',
+      'click sortable' => TRUE,
+    ),
+  );
+
   return $data;
 }
 
