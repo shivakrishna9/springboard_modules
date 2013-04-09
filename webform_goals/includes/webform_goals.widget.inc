@@ -37,8 +37,8 @@ function webform_goals_rebuild_widgets() {
 function webform_goals_widget_display_embed($goal) {
   ctools_include('modal');
   ctools_include('ajax');
-  $embed = theme('webform_goals_widget_loader', $goal);
+  $embed = theme('webform_goals_widget_loader', array('goal' => $goal));
   $output = '<p>' . t('copy and paste this code to embed your goal') . '</p>';
-  $output .= '<pre><code>' . htmlentities($embed) . '</code></pre>';
+  $output .= $embed;
   return ctools_modal_render('Embeddable', $output);
 }

@@ -12,11 +12,13 @@ function commerce_payment_example_fundraiser_commerce_fundraiser_gateway_info() 
   return array(
     'payment_method' => array('credit'),
     'allow_recurring' => array('credit'),
+    'allow_refund' => array('credit'),
     'form callback' => 'commerce_payment_example_fundraiser_commerce_form',
     'cleanup callback' => 'commerce_payment_example_fundraiser_commerce_cleanup',
     'scrub callback' => 'commerce_payment_example_fundraiser_commerce_scrub',
     'expire callback' => 'commerce_payment_example_fundraiser_commerce_expire',
     'charge callback' => 'commerce_payment_example_fundraiser_commerce_charge',
+    'refund callback' => 'commerce_payment_example_fundraiser_commerce_refund',
   );
 }
 
@@ -30,6 +32,7 @@ function commerce_payment_example_fundraiser_commerce_form($payment_method) {
     '#title' => t('Credit card number'),
     '#size' => 20,
     '#required' => TRUE,
+    '#salesforce_label' => t('Credit card last 4'),
   );
   $form['expiration_date']['#theme'] = 'fundraiser_credit_card_expiration_date';
   $months[1] = 'January';
@@ -68,6 +71,7 @@ function commerce_payment_example_fundraiser_commerce_form($payment_method) {
     '#title' => t('CVV'),
     '#size' => 6,
     '#required' => TRUE,
+    '#salesforce_mappable' => FALSE,
   );
   return $form;
 }
@@ -139,4 +143,30 @@ function commerce_payment_example_fundraiser_commerce_charge($payment_method, $d
     commerce_payment_example_transaction($payment_method, $order, $charge, $name);
   }
   return $success;
+}
+
+
+/**
+ * Callback function, refund the gateway.
+ */
+function commerce_payment_example_fundraiser_commerce_refund($payment_method, $refund) {
+  // Retrieve data.
+  $order = commerce_order_load($refund->did);
+  $transactions = commerce_payment_transaction_load_multiple(array(), $conditions = array('order_id' => $order->order_id));
+  $transaction = array_shift($transactions); // The first one is the original donation.
+  $payment_method = commerce_payment_method_instance_load($transaction->instance_id);
+  // Create a new transaction to record the credit.
+  $credit_transaction = commerce_payment_transaction_new('commerce_payment_example', $order->order_id);
+  $credit_transaction->instance_id = $payment_method['instance_id'];
+  $credit_transaction->remote_id = 'remote_id';
+  $credit_amount = commerce_currency_decimal_to_amount($refund->amount, $transaction->currency_code);
+  $credit_transaction->amount = $credit_amount * -1;
+  $credit_transaction->currency_code = $transaction->currency_code;
+  $credit_transaction->payload[REQUEST_TIME] = 'success';
+  $credit_transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+  $credit_transaction->remote_status = 'remote_success';
+  $credit_transaction->message = t('Credited back.');
+  // Save the credit transaction.
+  commerce_payment_transaction_save($credit_transaction);
+  return TRUE;
 }

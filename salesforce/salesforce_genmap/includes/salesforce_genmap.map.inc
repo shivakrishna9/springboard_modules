@@ -8,29 +8,6 @@
 /**
  * Page callback to render the mapping page.
  */
-function salesforce_genmap_map($node) {
-  $build = array();
-  $build['content'] = array(
-    'page_description' => array(
-      '#id' => 'salesforce-map-helptext-page',
-      '#type' => 'markup',
-      '#markup' => '<p>' . t('Handle the maps for Salesforce maps associated with this node.') . '</p>',
-    ),
-  );
-  $helps = module_invoke_all('salesforce_genmap_map_help');
-  foreach ($helps as $index => $help) {
-    $build['content']['additional_help_' . $index] = array(
-      '#id' => 'salesforce-map-helptext-' . $index . '-page',
-      '#type' => 'markup',
-      '#markup' => '<p>' . $help . '</p>',
-    );
-  }
-  return $build;
-}
-
-/**
- * Page callback to render the mapping page.
- */
 function salesforce_genmap_map_page($node, $module) {
   $build = array();
   $build['content'] = array(
@@ -56,7 +33,7 @@ function salesforce_genmap_map_form($form, &$form_state, $node, $module) {
     return array(
       'no_sfapi' => array(
         '#markup' => '<p>' . t('Cannot connect to Salesforce, preventing the ability to map Salesforce objects.  !ConfigureSalesforce',
-                array('!ConfigureSalesforce' => l(t('Configure Salesforce'), 'admin/config/services/salesforce'))) . '</p>',
+                array('!ConfigureSalesforce' => l(t('Configure Salesforce'), 'admin/config/salesforce/authorize'))) . '</p>',
         '#prefix' => '<div class="salesforce-map-error salesforce-map-error-salesforce">',
         '#suffix' => '</div>',
       ),
@@ -103,7 +80,7 @@ function salesforce_genmap_map_form($form, &$form_state, $node, $module) {
   }
 
   // The type of record of the chosen Salesforce Object.
-  $sf_records = _sfw_salesforce_record_type_list($sfapi, $sf_object);
+  $sf_records = _sfw_salesforce_record_type_list($sfapi, $sf_object, FALSE);
   if (count($sf_records) > 1) {
     $form['salesforce_object_info']['salesforce_record_type'] = array(
       '#id' => 'salesforce-record-type',
@@ -241,9 +218,14 @@ function salesforce_genmap_map_form($form, &$form_state, $node, $module) {
     '#options' => array(
       'insert' => t('New submissions'),
       'update' => t('Modified submissions'),
-      'delete' => t('Deleted submissions'),
     ),
   );
+
+  // Add the option to configure a map to delete on sync only if this site is
+  // configured to allow this configuration setting and the user has access.
+  if (variable_get('salesforce_genmap_allow_delete_sync', FALSE) && user_access('configure ' . $module . ' delete sync')) {
+    $form['map_config']['sync_options']['#options']['delete'] = t('Deleted submissions');
+  }
 
   // Buttons buttons buttons.
   $form['submit'] = array(
@@ -262,6 +244,16 @@ function salesforce_genmap_map_form($form, &$form_state, $node, $module) {
     );
   }
 
+  // Add CSS after build to avoid validation errs.
+  $form['#after_build'][] = 'salesforce_genmap_map_form_after_build';
+  return $form;
+}
+
+/**
+ * After build callback to add CSS.
+ */
+function salesforce_genmap_map_form_after_build($form, &$form_state) {
+  drupal_add_css(drupal_get_path('module', 'salesforce_genmap') . '/css/salesforce_genmap.css');
   return $form;
 }
 
@@ -288,6 +280,14 @@ function salesforce_genmap_map_form_validate($form, &$form_state) {
   if (!isset($form_state['input']['field_map'])) {
     // There is nothing to check.
     return;
+  }
+
+  // Prevent the user from mistakenly bypassing the restriction for configuring
+  // delete on sync.
+  if (in_array('delete', $form_state['input']['map_config']['sync_options']) && !user_access('configure ' . $form['#module'] . ' delete sync')) {
+    unset($form_state['input']['map_config']['sync_options']['delete']);
+    $error_text = t('You do not have permission to configure a !module map to sync on delete.', array('!module' => $form['#module']));
+    form_set_error('map_config][sync_options][delete', $error_text);
   }
 
   // No Salesforce field can be used twice.
@@ -406,11 +406,11 @@ function _sfw_default_value($form, $form_state, $field, $group = NULL, $drupal_f
   // Salesforce object, record and dedupe field value.
   if (empty($group) || $group == 'salesforce_object_info' || $group == 'map_config') {
     if ($field == 'sync_options' && empty($map['sync_options'])) {
-      // Make all the default value.
+      // Make only insert and update default.  Delete should not be default
+      // because it is too dangerous to be deleting records in Salesforce.
       return array(
         'insert',
         'update',
-        'delete',
       );
     }
     elseif (isset($map[$field])) {
@@ -508,6 +508,7 @@ function _sfw_generate_form_table(&$form) {
       // The magic is right here.  You need to pass the field data by reference
       // to the table rendering in order for the fields to function properly.
       $form['#rows'][$row_num][$column]['data'] = &$form[$row_num][$column];
+      $form['#rows'][$row_num][$column]['class'] = array('salesforce-table-field', 'salesforce-table-field-' . $column);
     }
   }
   unset($form['#row_storage']);
@@ -523,13 +524,16 @@ function _sfw_generate_form_table(&$form) {
  *   Array of Salesforce objects keyed by the object's name and the label as the
  *   value
  */
-function _sfw_salesforce_object_list(Salesforce $sfapi) {
+function _sfw_salesforce_object_list(Salesforce $sfapi, $include_select = TRUE) {
   // Salesforce module v4 filters down to updatable and triggerable so it is
   // easier to visually consume the list.
   $objects_info = $sfapi->objects(array('updateable' => TRUE, 'triggerable' => TRUE));
 
-  $objects_list = array();
   $dupes = array();
+  $objects_list = array();
+  if ($include_select) {
+    $objects_list[NULL] = '- ' . t('Select object type') . ' -';
+  }
   foreach ($objects_info as $object) {
     // Some objects have the same label, which just makes things confusing
     // I could make only subsequent duplicates unique, but I figure that users
@@ -550,6 +554,7 @@ function _sfw_salesforce_object_list(Salesforce $sfapi) {
     }
   }
 
+  asort($objects_list);
   return $objects_list;
 }
 
@@ -564,14 +569,18 @@ function _sfw_salesforce_object_list(Salesforce $sfapi) {
  * @return Array
  *   Array of record types of the given Salesforce object
  */
-function _sfw_salesforce_record_type_list(Salesforce $sfapi, $sf_object) {
+function _sfw_salesforce_record_type_list(Salesforce $sfapi, $sf_object, $include_select = TRUE) {
   $object_info = $sfapi->objectDescribe($sf_object);
   $record_type_list = array();
+  if ($include_select) {
+    $record_type_list[NULL] = '- ' . t('Select record type') . ' -';
+  }
   foreach ($object_info['recordTypeInfos'] as $record_type) {
     if ($record_type['name'] != 'Master' && $record_type['available'] == TRUE) {
       $record_type_list[$record_type['recordTypeId']] = $record_type['name'];
     }
   }
+  asort($record_type_list);
   return $record_type_list;
 }
 
@@ -607,17 +616,19 @@ function _sfw_salesforce_default_record_type($sf_object) {
  * @return Array
  *   Array of fields on the given Salesforce object
  */
-function _sfw_salesforce_field_list(Salesforce $sfapi, $sf_object) {
+function _sfw_salesforce_field_list(Salesforce $sfapi, $sf_object, $include_select = TRUE) {
   $object_info = $sfapi->objectDescribe($sf_object);
-  $field_list = array(
-    NULL => '-',
-  );
+  $field_list = array();
+  if ($include_select) {
+    $field_list[NULL] = '- ' . t('Select field') . ' -';
+  }
   foreach ($object_info['fields'] as $field) {
     // Filter out fields that can't be altered.
     if ($field['updateable'] || $field['createable']) {
       $field_list[$field['name']] = $field['label'];
     }
   }
+  asort($field_list);
   return $field_list;
 }
 

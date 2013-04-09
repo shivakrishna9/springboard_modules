@@ -174,7 +174,7 @@ function webform_goals_webform_goals_track_metric($goal, $params = array()) {
     // TODO: add case for global with provided nid.
     else {
       // TODO: calculate submissions across group.
-      $data['count'] = _webform_goals_total_submissions($goal['extra']['selected_node_type']);
+      $data['count'] = _webform_goals_total_submissions($goal['extra']['selected_node_type'], $goal['start_date'], $goal['end_date']);
     }
     webform_goals_calculate_progress($data, $goal);
     return $data;
@@ -255,7 +255,8 @@ function _webform_goals_total_component_values($nid, $form_key, $start = FALSE, 
   if ($end) {
     $query->condition('ws.submitted', $end, '<=');
   }
-  return $query->execute()->fetchField();
+  $result = $query->execute()->fetchField();
+  return $result ? $result : 0;
 }
 
 function _webform_goals_get_webform_node_types() {

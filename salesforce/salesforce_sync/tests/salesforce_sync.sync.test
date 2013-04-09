@@ -31,9 +31,7 @@ class SalesforceSyncSyncTestCase extends SalesforceSyncTestCase {
 
     // Set up the processor's Salesforce connection. This is special for
     // simpletest due to the access token being stored in the session.
-    $sfapi = $this->salesforceConnect();
-    $soap = new SalesforceSoapPartner($sfapi);
-    $this->salesforceSync = new SalesforceSync($sfapi, $soap);
+    $this->salesforceSync = new SalesforceSync($this->salesforceConnect());
   }
 
   /**
@@ -502,8 +500,12 @@ class SalesforceSyncSyncTestCase extends SalesforceSyncTestCase {
    * Test for SalesforceSync::sendBatch(), focusing on operations.
    */
   public function testSendBatchOperations() {
-    // Create a bunch of items to work with and send 'em.
-    $items = $this->createItems(50, array('CREATE'));
+    $base_item_count = 25;
+
+    // Create a bunch of items to work with and send 'em.  Skip Opportunities
+    // because they will fail initial creation.
+    $items = $this->createItems($base_item_count, array('CREATE'), array('Opportunity', 'Account'));
+    $items = array_merge($this->createItems($base_item_count, array('CREATE'), array('Contact', 'Opportunity')), $items);
     $batches = $this->createBatches($items);
     $records = array();
     $sf_items = array();
@@ -528,8 +530,11 @@ class SalesforceSyncSyncTestCase extends SalesforceSyncTestCase {
       }
     }
 
-    // Queue more new items and UPSERT items.
-    $items = $this->createItems(25, array('CREATE', 'UPSERT'));
+    // Queue more new items and UPSERT items.  Increase the amount of
+    // Opportunities since we skipped them earlier.
+    $items = $this->createItems(($base_item_count * 2), array('CREATE', 'UPSERT'), array('Account', 'Contact'));
+    $items = array_merge($this->createItems($base_item_count, array('CREATE', 'UPSERT'), array('Opportunity', 'Account')), $items);
+    $items = array_merge($this->createItems($base_item_count, array('CREATE', 'UPSERT'), array('Contact', 'Opportunity')), $items);
 
     // Take the items we created and queue them up for UPSERT if they have a
     // dedupe field set. The other half of the items have a 50% chance of being

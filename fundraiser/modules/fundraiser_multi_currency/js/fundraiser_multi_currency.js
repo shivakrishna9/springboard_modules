@@ -31,7 +31,7 @@ Drupal.behaviors.currencySwitcher =  {
         // Update the previous currency val so we know what to replace next time
         Drupal.settings.fundraiser_multi_currency.original = newCode;
         currentCode = newCode;
-      }    
+      }
     });
 
   })(jQuery); }

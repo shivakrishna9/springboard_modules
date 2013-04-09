@@ -15,14 +15,14 @@ class SalesforceSync {
    *
    * @var Salesforce
    */
-  protected $sfapi;
+  public $sfapi;
 
   /**
    * SalesforceSoapPartner object to connect to Salesforce via SOAP.
    *
    * @var SalesforceSoapPartner
    */
-  protected $soap;
+  public $soap;
 
   /**
    * SalesforceSyncTokenScanner object used to do token replacements in batches.
@@ -70,11 +70,12 @@ class SalesforceSync {
    *   will be used.
    */
   public function __construct(Salesforce $sfapi = NULL, SalesforceSoapPartner $soap = NULL) {
-    $this->sfapi = is_null($sfapi) ? salesforce_get_api() : $sfapi;
-    $this->soap = is_null($soap) ? new SalesforceSoapPartner($this->sfapi) : $soap;
     $this->maxQueryLength = variable_get('salesforce_sync_max_query_length', SALESFORCE_SYNC_MAX_QUERY_LENGTH_DEFAULT);
     $this->maxBatchSize = variable_get('salesforce_sync_max_batch_size', SALESFORCE_SYNC_MAX_BATCH_SIZE_DEFAULT);
+    $this->maxRetrieveSize = variable_get('salesforce_sync_max_retrieve_size', SALESFORCE_SYNC_MAX_RETRIEVE_SIZE_DEFAULT);
     $this->tokenScanner = new SalesforceSyncTokenScanner($this->getProcessedItemIds());
+    $this->setSalesforceApi($sfapi);
+    $this->setSalesforceSoap($soap);
   }
 
   /**
@@ -109,7 +110,10 @@ class SalesforceSync {
           // would most likely have this sync rule, and 2) When syncing with
           // Drupal unknown effects may occur when an expected field has no
           // value.
-          if (isset($consumer_fields[$field]) && strlen($consumer_fields[$field]) > 0) {
+          if (isset($consumer_fields[$field]) && (
+               (is_int($consumer_fields[$field]) && is_numeric($consumer_fields[$field])) ||
+               (!is_int($consumer_fields[$field]) && !empty($consumer_fields[$field]))
+             )) {
             $item_fields[$field] = $consumer_fields[$field];
           }
           break;
@@ -117,7 +121,10 @@ class SalesforceSync {
         case SALESFORCE_SYNC_RULE_APPEND:
           // When the source version is not blank, add value from source to the
           // begining of the target's value.
-          if (isset($consumer_fields[$field]) && !empty($consumer_fields[$field])) {
+          if (isset($consumer_fields[$field]) && (
+               (is_int($consumer_fields[$field]) && is_numeric($consumer_fields[$field])) ||
+               (!is_int($consumer_fields[$field]) && !empty($consumer_fields[$field]))
+             )) {
             $joined_value = $consumer_fields[$field] . ' ' . $item_fields[$field];
             $item_fields[$field] = $joined_value;
           }
@@ -174,6 +181,20 @@ class SalesforceSync {
    */
   public function sendBatch($batch) {
     $this->sendBatchPrepare($batch);
+
+    // If all items failed tokenization it is possible that the batch as a whole
+    // will fail.
+    if (isset($batch['sobjects']) && empty($batch['sobjects'])) {
+      $this->failBatch($batch, SALESFORCE_SYNC_ITEM_FAIL_TOKEN_BATCH);
+      return FALSE;
+    }
+    // Soap connection to Salesforce could never be established.
+    if (!is_object($this->soap)) {
+      $this->failBatch($batch, SALESFORCE_SYNC_ITEM_FAIL_SOAP);
+      return FALSE;
+    }
+
+    // Send away.
     try {
       switch ($batch['operation']) {
         case 'CREATE':
@@ -213,38 +234,39 @@ class SalesforceSync {
 
       // Process results.
       $items = isset($batch['items']) ? $batch['items'] : (isset($batch['sobjects']) ? $batch['sobjects'] : array());
-      foreach ($results as $key => $result) {
-        // Since we pass an item to others to trigger actions based on its
-        // success, we should make sure we send the same type and structure of
-        // item.
-        if (isset($items[$key]) && isset($items[$key]->sobject)) {
-          $item = $items[$key];
+      // If all items failed token checks, $results could be empty.
+      if (is_array($results)) {
+        foreach ($results as $key => $result) {
+          // Since we pass an item to others to trigger actions based on its
+          // success, we should make sure we send the same type and structure of
+          // item.
+          if (isset($items[$key]) && isset($items[$key]->sobject)) {
+            $item = $items[$key];
+          }
+          elseif (isset($items[$key])) {
+            $sobject = $items[$key];
+            $dedupe_field = isset($batch['dedupe_field']) ? $batch['dedupe_field'] : NULL;
+            $item = new SalesforceSyncItem($sobject->type, $batch['operation'], array(), $dedupe_field);
+            $item->sobject = $sobject;
+          }
+          else {
+            $item = new SalesforceSyncItem();
+            $item->sobject->Id = $result->Id;
+          }
+          if ($result->success) {
+            $this->passItem($item, $result);
+          }
+          else {
+            $this->failItem($item, $error_message, $result);
+          }
+          // Invokes hook_salesforce_sync_complete_item().
+          // Provided as a last, final say on the item life cycle after delete
+          // from the queue and the like.
+          module_invoke_all('salesforce_sync_complete_item', $item, $result);
         }
-        elseif (isset($items[$key])) {
-          $sobject = $items[$key];
-          $dedupe_field = isset($batch['dedupe_field']) ? $batch['dedupe_field'] : NULL;
-          $item = new SalesforceSyncItem($sobject->type, $batch['operation'], array(), $dedupe_field);
-          $item->sobject = $sobject;
-        }
-        else {
-          $item = new SalesforceSyncItem();
-          $item->sobject->Id = $result->Id;
-        }
-        if ($result->success) {
-          $this->passItem($item, $result);
-        }
-        else {
-          $this->failItem($item, $error_message, $result);
-        }
-        // Invokes hook_salesforce_sync_complete_item().
-        // Provided as a last, final say on the item life cycle after delete
-        // from the queue and the like.
-        module_invoke_all('salesforce_sync_complete_item', $item, $result);
       }
     }
     catch (Exception $error) {
-      // Log message for later investigation.
-      watchdog('salesforce_queue', 'Could not send batch !op: !message', array('!message' => $error->getMessage(), '!op' => $batch['operation']), WATCHDOG_DEBUG);
       $results = FALSE;
       $this->failBatch($batch, SALESFORCE_SYNC_ITEM_FAIL_BATCH, $error);
     }
@@ -305,7 +327,12 @@ class SalesforceSync {
       // No use continuing if this batch is already prepared.
       return;
     }
+    // Last attempt to see if there is hope of getting a connection.
+    if (!is_object($this->soap)) {
+      $this->setSalesforceSoap();
+    }
     $this->batchReplaceTokens($batch);
+    $this->batchRemoveBadTokens($batch);
     $this->batchConvertToSalesforceFormat($batch);
     $this->batchApplySalesforceSyncRules($batch);
     $batch['batch_prepared'] = TRUE;
@@ -335,6 +362,44 @@ class SalesforceSync {
    */
   public function batchReplaceTokens(&$batch) {
     $this->tokenScanner->batchTokenReplace($batch);
+  }
+
+  /**
+   * Remove items from batches that have bad tokens.
+   *
+   * Uses a SalesforceSyncTokenScanner instance to search for and replace
+   * relationship tokens in a batch of items.
+   *
+   * @param array $batch
+   *   An array of instructions to send to Salesforce.  The array is structured
+   *   as follows:
+   *   <code>
+   *     $batch = array(
+   *       'operation' => 'UPSERT',
+   *       'dedupe_field' => 'Email',
+   *       'items' => array(
+   *         array of items...
+   *       ),
+   *       'sobjects' => array(
+   *         array of sobjects...
+   *       ),
+   *     );
+   *   </code>
+   */
+  public function batchRemoveBadTokens(&$batch) {
+    if (!isset($batch['sobjects'])) {
+      // Some batches do not have sobjects, such as delete.
+      return;
+    }
+    foreach ($batch['sobjects'] as $index => $sobject) {
+      if (isset($sobject->tokens_replaced) && $sobject->tokens_replaced == FALSE) {
+        // Fail the item.
+        $this->failItem($batch['items'][$index], SALESFORCE_SYNC_ITEM_FAIL_TOKEN);
+        // Unset the object, and the item.
+        unset($batch['sobjects'][$index]);
+        unset($batch['items'][$index]);
+      }
+    }
   }
 
   /**
@@ -489,7 +554,13 @@ class SalesforceSync {
     // Find the data types of all the Salesforce fields and store it in a means
     // so that we can attempt to reduce the number of times we have to search
     // for this information.
-    $sfapi = salesforce_get_api();
+    $sfapi = $this->sfapi;
+    if (!is_object($sfapi)) {
+      // Skip if we do not have a valid Salesforce connection.  Do not mark the
+      // item has having been converted in case the connection gets repaired
+      // leter in the process.
+      return;
+    }
     $sfobject = $sfapi->objectDescribe($item->object_type);
     $field_datatypes = &drupal_static(__FUNCTION__);
     $field_missing = FALSE;
@@ -514,6 +585,16 @@ class SalesforceSync {
     // Perform the actual conversion.
     foreach ($item->sobject->fields as $field_name => $value) {
       switch ($field_datatypes[$field_name]) {
+        case 'boolean':
+          // Convert any value that evaluates to TRUE as 1
+          if ($value) {
+            $item->sobject->fields[$field_name] = 1;
+          }
+          else {
+            $item->sobject->fields[$field_name] = 0;
+          }
+          break;
+
         case 'datetime':
           // Salesforce requires ISO 8601 format for dates.
           $item->sobject->fields[$field_name] = date('c', strtotime($value));
@@ -695,7 +776,7 @@ class SalesforceSync {
 
     // Keep a log of newly created items.
     if ($item->operation == 'CREATE' || $item->operation == 'UPSERT') {
-      $this->newSfRecords[] = $item;
+      $this->newSfRecords[$result->id] = $item;
     }
 
     // Keep a log of all items processed.
@@ -705,6 +786,11 @@ class SalesforceSync {
       // Pass the item to the token scanner's internal cache so it doesn't
       // have to go to the db as often.
       $this->tokenScanner->addItemToTokenCache($item, $result->id);
+    }
+
+    // Remove deleted items from the new records since it is not in Salesforce.
+    if ($item->operation == 'DELETE' && isset($this->newSfRecords[$result->id])) {
+      unset($this->newSfRecords[$result->id]);
     }
 
     // Invokes hook_salesforce_sync_pass_item().
@@ -723,6 +809,19 @@ class SalesforceSync {
    *   exception caught when call failed.
    */
   public function failItem($item, $message, $result = NULL) {
+    // Send an error to admin that the item failed.
+    // With many cases of Salesforce being helpful and deleting things for you,
+    // there is no need to get too alarmed if an item failed to be deleted.
+    $msg_id = $item->operation == 'DELETE' ? 'sync-02' : 'sync-01';
+    $severity = $item->operation == 'DELETE' ? WATCHDOG_INFO : WATCHDOG_WARNING;
+    watchdog('salesforce', '[!id] Sync failed: !item_id (!message) !result',
+      array(
+        '!id' => $msg_id,
+        '!item_id' => (isset($item->item_id) ? '#' . $item->item_id : 'N/A'),
+        '!message' => $message,
+        '!result' => is_object($result) && method_exists($result, 'getMessage') ? $result->getMessage() : '',
+      ), $severity);
+
     // Invokes hook_salesforce_sync_fail_item().
     module_invoke_all('salesforce_sync_fail_item', $item, $message, $result);
   }
@@ -736,6 +835,15 @@ class SalesforceSync {
    *   Error caught when the call to Salesforce failed.
    */
   public function failBatch($batch, $message, $result = NULL) {
+    // Send an error to admin that the batch failed.
+    watchdog('salesforce', '[!id] Batch failed: (!message) !result',
+      array(
+        '!id' => 'sync-03',
+        '!message' => $message,
+        '!result' => is_object($result) && method_exists($result, 'getMessage') ? $result->getMessage() : '',
+      ), WATCHDOG_ERROR);
+
+    // Fail each item.
     foreach ($batch['items'] as $item) {
       $this->failItem($item, $message, $result);
     }
@@ -769,7 +877,7 @@ class SalesforceSync {
    *   record is returned.  Otherwise, receive FALSE.
    */
   public function fetchByIds($object_type, $fields, $ids) {
-    if (empty($ids)) {
+    if (empty($ids) || empty($ids)) {
       // If there are no Ids to fetch, there is no point wasting an API call.
       return array();
     }
@@ -780,20 +888,43 @@ class SalesforceSync {
     // Ids need to be an unassociated array or Salesforce will reject it.
     $ids = array_values($ids);
 
-    try {
-      $response = $this->soap->retrieve($fields, $object_type, $ids);
+    // Salesforce's maximum is 2000 records, or else it will give you nothing.
+    // Chunk up the provided ids to make sure no single call exceeds 2000.
+    $responses = array();
+    $id_chunks = array_chunk($ids, $this->maxRetrieveSize);
+    foreach ($id_chunks as $id_chunk) {
+      try {
+        $response = $this->soap->retrieve($fields, $object_type, $id_chunk);
+        if (is_array($response)) {
+          $responses = array_merge($responses, $response);
+        }
+        else {
+          // Log message for later investigation.
+          watchdog('salesforce', "[!id] Fetch records by Id returned bad results.\n\n!!response",
+            array(
+              '!id' => 'sync-05',
+              '!response' => print_r($response),
+            ), WATCHDOG_NOTICE);
+        }
+      }
+      catch (Exception $error) {
+        // Log message for later investigation.
+        watchdog('salesforce', '[!id] Fetch records by Id failed: !message',
+          array(
+            '!id' => 'sync-04',
+            '!message' => $error->getMessage(),
+          ), WATCHDOG_DEBUG);
+      }
     }
-    catch (Exception $error) {
-      // Log message for later investigation.
-      watchdog('salesforce_queue', 'Could not fetch records by Ids: !message', array('!message' => $error->getMessage()), WATCHDOG_DEBUG);
-      $response = array();
-    }
-    return $response;
+
+    return $responses;
   }
 
   /**
    * Helper method to fetch records from Salesforce based on values of a field.
    *
+   * @param string $object_type
+   *   The type of object of the desired records, such as 'Account' or 'User'.
    * @param array $fields
    *   Array of field names of the records to return.
    * @param string $key_field
@@ -805,31 +936,48 @@ class SalesforceSync {
    *   Array of Salesforce objects for reach found record.
    */
   public function fetchByField($object_type, $fields, $key_field, $key_field_values) {
-    $key_field_values_string = "'" . implode("', '", $key_field_values) . "'";
-    $query_part_1 = "SELECT Id, $key_field FROM $object_type WHERE $key_field IN ";
-    $query = $query_part_1 . "($key_field_values_string)";
+    $conditions = array(
+      array(
+        'field' => $key_field,
+        'op' => 'IN',
+        'value' => $key_field_values,
+      ),
+    );
+    return $this->fetchRecords($object_type, $fields, $conditions);
+  }
 
-    // Verify the query string does not exceed maxQueryLength.  If it does,
-    // chunk up the $key_field_values until it does not.  Salesforce cannot
-    // handle it when the query is too long.
-    $queries = array($query);
-    if (strlen($query) > $this->maxQueryLength) {
-      $count = count($key_field_values);
-      $split = 2;
-      while (strlen($query) > $this->maxQueryLength) {
-        $chunk_size = $count / $split;
-        $chunks = array_chunk($key_field_values, $chunk_size);
-        $chunk = array_shift($chunks);
-        $key_field_values_string = "'" . implode("', '", $chunk) . "'";
-        $query = $query_part_1 . "($key_field_values_string)";
-        $split++;
-      }
-      $queries = array($query);
-      foreach ($chunks as $chunk) {
-        $key_field_values_string = "'" . implode("', '", $chunk) . "'";
-        $queries[] = $query_part_1 . "($key_field_values_string)";
-      }
-    }
+  /**
+   * Helper to fetch records from Salesforce based on custom conditions.
+   *
+   * This of course will have its limitations and can handle only simple
+   * queries, but the hope is it will save time in more routine instances.  All
+   * conditions are joined by AND.
+   *
+   * @param string $object_type
+   *   The type of object of the desired records, such as 'Account' or 'User'.
+   * @param array $fields
+   *   Array of field names of the records to return.
+   * @param array $conditions
+   *   Array of SQL conditions.  Each value can be a string of a complete
+   *   statement, or can be an array with 'field', 'op' and 'value' keys.  The
+   *   'value' key may also be an array which will be automatically converted
+   *   into a string.  Example:
+   *   <code>
+   *     $conditions = array(
+   *       array(
+   *         'field' => 'email',
+   *         'op' => 'IN',
+   *         'value' => array(
+   *           'john.doe@example.com',
+   *           'jane.doe@example.com',
+   *         ),
+   *       ),
+   *       'CreatedDate > 2012-01-01 00:00:00',
+   *     );
+   *   </code>
+   */
+  public function fetchRecords($object_type, array $fields, array $conditions = array()) {
+    $queries = $this->buildQueries($object_type, $conditions);
 
     // Partner API requests are formatted incorrectly, so we are reciving the Id
     // as an array, and the fields are not retreived in a structured format.
@@ -843,18 +991,169 @@ class SalesforceSync {
       try {
         $response = $this->soap->query($query);
         if ($response->size > 0) {
-          foreach ($response->records as $record) {
-            $ids[] = $record->Id[0];
+          $more = TRUE;
+          while ($more) {
+            foreach ($response->records as $record) {
+              $ids[] = $record->Id[0];
+            }
+
+            // Salesforce will only return a maximum number of records at a
+            // time, which we are automatically restricting to be
+            // SALESFORCE_SYNC_MAX_BATCH_SIZE.  We'll use queryMore() to
+            // continue to pull down more records until we retreive all of them.
+            if (empty($response->done)) {
+              try {
+                $response = $this->soap->queryMore($response->queryLocator);
+              }
+              catch (Exception $error) {
+                // Log message for later investigation.
+                watchdog('salesforce', '[!id] Salesforce queryMore failed: !message',
+                  array(
+                    '!id' => 'sync-07',
+                    '!message' => $error->getMessage(),
+                  ), WATCHDOG_DEBUG);
+              }
+            }
+            else {
+              $more = FALSE;
+            }
           }
         }
       }
       catch (Exception $error) {
         // Log message for later investigation.
-        watchdog('salesforce_queue', 'Could not fetch records by fields: !message', array('!message' => $error->getMessage()), WATCHDOG_DEBUG);
+        watchdog('salesforce', '[!id] Salesforce query failed: !message',
+          array(
+            '!id' => 'sync-06',
+            '!message' => $error->getMessage(),
+          ), WATCHDOG_DEBUG);
       }
     }
 
     return $this->fetchByIds($object_type, $fields, $ids);
+  }
+
+  /**
+   * Helper to build a Salesforce query that will not exceed 10,000 characters.
+   *
+   * This of course will have its limitations and can handle only simple
+   * queries, but the hope is it will save time in more routine instances.  All
+   * conditions are joined by AND.
+   *
+   * @param string $object_type
+   *   The type of object of the desired records, such as 'Account' or 'User'.
+   * @param array $conditions
+   *   Array of SQL conditions.  Each value can be a string of a complete
+   *   statement, or can be an array with 'field', 'op' and 'value' keys.  The
+   *   'value' key may also be an array which will be automatically converted
+   *   into a string.  Example:
+   *   <code>
+   *     $conditions = array(
+   *       array(
+   *         'field' => 'email',
+   *         'op' => 'IN',
+   *         'value' => array(
+   *           'john.doe@example.com',
+   *           'jane.doe@example.com',
+   *         ),
+   *       ),
+   *       'CreatedDate > 2012-01-01 00:00:00',
+   *     );
+   *   </code>
+   * @param int $query_splits
+   *   The number of times the query should be split up.  This is done in an
+   *   attempt to lower its character count so it does not exceed 10,000
+   *   characters.  You would not need to set this value yourself, let the
+   *   function set it automatically.
+   */
+  protected function buildQueries($object_type, array $conditions, $query_splits = 0) {
+    $queries = array();
+    $query_count = $query_splits;
+
+    // Build the first part of the query.  We will be stubbing out the same
+    // number of queries as $query_splits there are (counting base 0).
+    $select_sql = 'SELECT Id FROM ' . $object_type;
+    $i = $query_count;
+    while ($i >= 0) {
+      $queries[$i] = $select_sql;
+      $i--;
+    }
+
+    // Build the WHERE part of the query.
+    foreach ($conditions as $key => $condition) {
+      // Handle cases where the condition is provided to us as a 'field', 'op',
+      // 'value' array.
+      if (is_array($condition) && isset($condition['op']) && isset($condition['field']) && isset($condition['value'])) {
+        $op = $condition['op'];
+        $field = $condition['field'];
+        // The value can be provided as an array and we'll convert it to a
+        // string automatically.
+        if ($query_splits == 0 || is_string($condition['value'])) {
+          if (is_array($condition['value'])) {
+            $value = " ('" . implode("', '", $condition['value']) . "')";
+          }
+          else {
+            $value = $condition['value'];
+          }
+
+          // Append the condition to each query.
+          $i = $query_count;
+          while ($i >= 0) {
+            $queries[$i] .= ($key == 0 ? ' WHERE' : ' AND');
+            $queries[$i] .= ' ' . $field . ' ' . $op . ' ' . $value;
+            $i--;
+          }
+        }
+        // If the query needs to be split up, this is where it is done.  We will
+        // divide the values of the array into the number of splits requested.
+        elseif ($query_splits > 0 && is_array($condition['value'])) {
+          $chunk_size = count($condition['value']) / ($query_splits + 1);
+          $value_chunks = array_chunk($condition['value'], $chunk_size);
+          $new_queries = array();
+          foreach ($value_chunks as $value_chunk) {
+            $value = " ('" . implode("', '", $value_chunk) . "')";
+            $operation = $field . ' ' . $op . ' ' . $value;
+            foreach ($queries as $i => $query) {
+              $new_queries[] = $query . ($key == 0 ? ' WHERE' : ' AND') . ' ' . $operation;
+            }
+          }
+          $query_count = count($new_queries);
+          $queries = $new_queries;
+        }
+      }
+      // Plain old strings can be passed straight on through to the query.
+      elseif (is_string($condition)) {
+        $i = $query_count;
+        while ($i >= 0) {
+          $queries[$i] .= ($key == 0 ? ' WHERE' : ' AND');
+          $queries[$i] .= ' ' . $condition;
+          $i--;
+        }
+      }
+      else {
+        // WTF why did you pass something else? No, I can't handle it.
+      }
+    }
+
+    if (strlen($queries[0]) > $this->maxQueryLength) {
+      // 3 tries is enough.  After that, give up.
+      if ($query_splits < 2) {
+        $query_splits++;
+        return $this->buildQueries($object_type, $conditions, $query_splits);
+      }
+      else {
+        // This query is hopeless, forget about it.
+        watchdog('salesforce', '[!id] Query to Salesforce exceeded limit of !char_limit characters.',
+          array(
+            '!id' => 'sync-08',
+            '!char_limit' => $this->maxQueryLength,
+          ), WATCHDOG_ALERT);
+        return array();
+      }
+    }
+    else {
+      return $queries;
+    }
   }
 
   /**
@@ -889,15 +1188,70 @@ class SalesforceSync {
   /**
    * Helper to externally set the Salesforce API. Used for simpletests.
    */
-  public function setSalesforceApi(Salesforce $sfapi) {
+  public function setSalesforceApi(Salesforce $sfapi = NULL) {
+    // Reload the api if the current one isn't authorized. This extra check is
+    // for simpletests and drush.
+    $sfapi = (!is_object($sfapi) || !$sfapi->isAuthorized()) ? salesforce_get_api() : $sfapi;
+    if (!$sfapi->isAuthorized()) {
+      watchdog('salesforce', '[!id] SalesforceAPI is not authorized',
+        array(
+          '!id' => 'sync-10',
+        ), WATCHDOG_NOTICE);
+      $sfapi = NULL;
+    }
     $this->sfapi = $sfapi;
+    return $sfapi;
   }
 
   /**
    * Helper to externally set the Salesforce SOAP Partner. Used for simpletests.
    */
-  public function setSalesforceSoap($soap) {
+  public function setSalesforceSoap(SalesforceSoapPartner $soap = NULL) {
+    // Create a SalesforceSoapPartner if we weren't provided one.
+    if (!is_object($soap)) {
+      // Create SalesforceApi if it hasn't be created yet.
+      if (!is_object($this->sfapi)) {
+        $this->setSalesforceApi();
+      }
+      // Do not create soap if we cannot get sfapi functioning.
+      if (is_object($this->sfapi)) {
+        $soap = new SalesforceSoapPartner($this->sfapi);
+      }
+      else {
+        $soap = NULL;
+        $message = 'SalesforceAPI is not authorized.';
+      }
+    }
+
+    // If a SalesforceSoapPartner has been created, test the connection.
+    if (is_object($soap)) {
+      try {
+        $soap->getUserInfo();
+      }
+      catch (Exception $e) {
+        $soap = NULL;
+        $message = '(' . $e->faultcode . ') ' . $e->getMessage();
+      }
+    }
+
+    // Set soap options.
+    if (is_object($soap)) {
+      // Queries return same number as batch sizes.
+      $sync_options = new QueryOptions($this->maxBatchSize);
+      $soap->setQueryOptions($sync_options);
+    }
+
+    // Send a fail message.
+    else {
+      watchdog('salesforce', '[!id] SalesforceSoapPartner cannot be used: !message',
+        array(
+          '!id' => 'sync-11',
+          '!message' => $message,
+        ), WATCHDOG_NOTICE);
+    }
+
     $this->soap = $soap;
+    return $soap;
   }
 
   /**

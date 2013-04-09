@@ -1,9 +1,0 @@
-div#share_button {
-  font-family:arial,helvetica,sans-serif; font-size:12px;
-  border:0px;
-  padding:0px;
-  width:84px; height:26px;
-  text-align:center;
-  background-image:url('../icons/fb-share.png');
-  cursor:pointer;
-}

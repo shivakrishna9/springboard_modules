@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Definition of salesforce_log_handler_field_sobject.
+ * Definition of SalesforceLogHandlerFieldSobject.
  */
 
 /**
@@ -10,7 +10,7 @@
  *
  * @ingroup views_filter_handlers
  */
-class salesforce_log_handler_field_sobject extends views_handler_field {
+class SalesforceLogHandlerFieldSobject extends views_handler_field {
 
   /**
    * Render sObject.

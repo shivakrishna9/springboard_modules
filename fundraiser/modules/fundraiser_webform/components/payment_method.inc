@@ -4,7 +4,7 @@
  * @file
  * Webform module payment_method component.
  */
- 
+
 // Payment methods element depends on functions provided by select.
 webform_component_include('select');
 
@@ -64,8 +64,8 @@ function _webform_edit_payment_method($component) {
   // Get all available payment methods.
   $temp_gateways = _fundraiser_gateway_info();
   if (empty($temp_gateways)) {
-    $form['no_gateways_notice']['#markup'] = '<div>' . t('There are no gateways configured. Please create some gateways in the store configuration.') . '</div>'; 
-    return $form; 
+    $form['no_gateways_notice']['#markup'] = '<div>' . t('There are no gateways configured. Please create some gateways in the store configuration.') . '</div>';
+    return $form;
   }
   foreach($temp_gateways as $temp_gateway) {
     $types = isset($temp_gateway['payment_method']) ? $temp_gateway['payment_method'] : array();
@@ -89,7 +89,7 @@ function _webform_edit_payment_method($component) {
     // Build the #options array for the payment processors supporting this payment method.
     $processor_options = array(NULL => '- ' . t('select') . ' -');
     foreach (element_children($method) as $key) {
-      $processor_options[ $method[$key]['module_name'] ][ $method[$key]['id'] ] = $method[$key]['title'];
+      $processor_options[ $method[$key]['id'] ] = $method[$key]['title'];
     }
     $fieldset[$method_key] = array('#tree' => TRUE);
     $fieldset[$method_key]['status'] = array(

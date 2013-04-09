@@ -3,9 +3,13 @@ description = Assign and track goals on forms and questionnaires.
 core = 7.x
 package = Webform
 configure = admin/config/content/webform_goals
-version = "7.x-4.1"
+scripts[] = scripts/webform_goals.drupal_loader.js
+version = "7.x-4.x-dev"
 project = "webform"
 dependencies[] = webform
 dependencies[] = token
 dependencies[] = date_api
 dependencies[] = ctools
+
+// tests
+files[] = tests/webform_goals.test

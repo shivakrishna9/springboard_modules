@@ -406,7 +406,7 @@ function webform_user_webform_submit($form, &$form_state) {
     // Or if we found an account matching the email.
     elseif (isset($account->uid) && $form_state['redirect']) {
       // Update the existing user account.
-      _webform_user_save_profile_map($account->uid, $map);  
+      _webform_user_save_profile_map($account->uid, $map);
       $submission = webform_get_submission($node->nid, $form_state['values']['details']['sid']);
       $submission->uid = $account->uid;
       webform_submission_update($node, $submission);
@@ -482,6 +482,8 @@ function webform_user_mapping_form($form, $form_state, $node) {
   foreach ($fields as $field) {
     $options[$field['name']] = $field['title'];
   }
+  // we like alphabetized dropdowns.
+  asort($options);
   $form['mapping'] = array(
     '#prefix' => '<div id="fields">',
     '#suffix' => '</div>',
@@ -823,6 +825,7 @@ function _webform_user_create_webform_components(&$node) {
         }
         else {
           $fieldset_id = webform_component_insert($fieldset_lookup[ $field['category_key'] ]);
+          $fieldset_created[ $field['category_key'] ] = $fieldset_id; // Save the created id.
         }
       }
       /**

@@ -177,7 +177,7 @@ function capwiz_connect_menu() {
 function capwiz_connect_permission() {
   return array(
     'administer capwiz_connect' => array(
-      'title' => t('Administer'), 
+      'title' => t('Administer'),
       'description' => t('Add/edit capwiz accounts for this site. Configure sync settings.'),
     ),
   );
@@ -208,13 +208,13 @@ function capwiz_connect_legislative_update_start() {
     $server_instance = _capwiz_connect_parse_server_instance($sf->client->getLocation());
     $session_id = $sf->client->getSessionId();
     $url = sprintf('https://%s.salesforce.com/services/apexrest/LegislativeUpdate', $server_instance);
-    
-    // use curl to request the service endpoint 
+
+    // use curl to request the service endpoint
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
     curl_setopt($ch, CURLOPT_HTTPHEADER, array(sprintf('Authorization: OAuth %s', $session_id)));
     curl_setopt($ch, CURLOPT_HEADER, 0);
-    
+
     // run curl
     try {
       $job = json_decode(curl_exec($ch)); // successful call should return the job id of the batch as a string
@@ -376,7 +376,7 @@ function capwiz_connect_queue_preprocess_batch_alter(&$batch) {
         foreach ($batch['records'] as $record) {
           $map = _capwiz_connect_sf_load_action_details($record->oid);
           if (is_array($record->object)) {
-            $record->object = array_merge($record->object, $map['fields']);  
+            $record->object = array_merge($record->object, $map['fields']);
           }
           else {
             $record->object = $map['fields'];
@@ -387,20 +387,20 @@ function capwiz_connect_queue_preprocess_batch_alter(&$batch) {
           }
         }
         break;
-        
+
       case 'delete':
-      
+
         break;
     }
   }
 }
 
 /**
- * Load field mapping for an action object to be passed to Salesforce queue processor. 
+ * Load field mapping for an action object to be passed to Salesforce queue processor.
  */
 function _capwiz_connect_sf_load_action_details($oid) {
   static $sf_field_map;
-  
+
   // If there is an error building the mapping, or the data is incomplete, a generic
   // version of the mapping array should be returned to prevent errors higher up in
   // the stack.
@@ -415,11 +415,11 @@ function _capwiz_connect_sf_load_action_details($oid) {
   if ($object) {
     $account_id = $object->capwiz_account_id;
   }
-  
+
   if (!($account_id > 0)) {
     return $blank_return_array;
   }
-  
+
   // Load the Salesforce field map for this Capwiz account, if we have not already
   if (!$sf_field_map[$account_id]) {
     $drupal = 'capwiz_connect:' . $account_id . ':action';
@@ -431,14 +431,14 @@ function _capwiz_connect_sf_load_action_details($oid) {
     $sf_field_map[$account_id]['object'] = $data->salesforce;
     $sf_field_map[$account_id]['recordtype_id'] = $data->recordtype_id;
   }
-  
+
   $map_details = $sf_field_map[$account_id];
-  
+
   // If no map is found for this account and type, bail out
   if (!$map_details['map']) {
     return $blank_return_array;
   }
-  
+
   // Prep map array
   $salesforce_map = array(
     'object' => $map_details['object'],
@@ -447,12 +447,12 @@ function _capwiz_connect_sf_load_action_details($oid) {
   if (!empty($map_details['recordtype_id'])) {
     $salesforce_map['fields']['RecordTypeId'] = $map_details['recordtype_id'];
   }
-  
-  
+
+
   // Loop over the mapped fields, and for each that has value on this object, set
   // it in the mapped fields. For any fields that have multiple values, they
   // should be separated with semi-colons (though this is not in use here yet).
-  // 
+  //
   // Note that some of the fields handled here are specific to users or to actions.
   // Such fields will not be available for mapping to the other object type.
   foreach ($map_details['map'] as $capwiz_field_name => $sf_field_name) {
@@ -464,13 +464,13 @@ function _capwiz_connect_sf_load_action_details($oid) {
           $salesforce_map['fields'][$sf_field_name] = $object->data->emailAddress;
         }
         break;
-      
+
       // Affiliation of form
       case 'form_affiliation':
         $account = capwiz_connect_account_load($account_id);
         $salesforce_map['fields'][$sf_field_name] = $account->form_affiliation;
         break;
-      
+
       // Action timestamp
       case 'action_timestamp':
         if ($object->data->dtAction) {
@@ -478,8 +478,8 @@ function _capwiz_connect_sf_load_action_details($oid) {
           $salesforce_map['fields'][$sf_field_name] = strtotime($object->data->dtAction);
         }
         break;
-        
-      // Capwiz User in Salesforce. Only on Actions. 
+
+      // Capwiz User in Salesforce. Only on Actions.
       case 'sf_userid':
         if ($object->data->emailAddress) {
           // Load the Salesforce ID for the user
@@ -489,13 +489,13 @@ function _capwiz_connect_sf_load_action_details($oid) {
           }
         }
         break;
-      
+
       // Every other field. Just load the field from the object
       default:
         $salesforce_map['fields'][$sf_field_name] = $object->data->{$capwiz_field_name};
     }
   }
-    
+
   return $salesforce_map;
 }
 
@@ -510,18 +510,18 @@ function capwiz_connect_queue_fieldmap_assignment_alter(&$data) {
     if ($object) {
       $account_id = $object->capwiz_account_id;
     }
-    
+
     if (!($account_id > 0)) {
       return;
     }
-    
+
     // Load the field map for the Account the user came in from
     $drupal = 'capwiz_connect:' . $account_id . ':action';
-    $result = db_query("SELECT fieldmap, dedupe_key FROM {salesforce_management_field_map} WHERE drupal = '%s'", $drupal);    
-    
+    $result = db_query("SELECT fieldmap, dedupe_key FROM {salesforce_management_field_map} WHERE drupal = '%s'", $drupal);
+
     $fieldmap = db_fetch_array($result);
     $data->fieldmap = $fieldmap['fieldmap'];
-    
+
     $result = db_fetch_array(db_query("SELECT sfid FROM {salesforce_management_object_map} WHERE oid = '%s' AND drupal_type = '%s'", $data->oid, $data->type));
     // check the action. by default users go into the queue as upsert, but if the
     // mapping has no dedupe key defined, revert to create

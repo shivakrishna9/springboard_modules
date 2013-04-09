@@ -123,6 +123,20 @@ function hook_salesforce_queue_process_batch_alter(&$batch, SalesforceQueue $que
 }
 
 /**
+ * Allows one final chance to alter the batch before it is sent to Salesforce.
+ *
+ * @param array $batch
+ *   Array of instructions that are used to formulate the API call to Salesforce
+ * @param SalesforceQueue $queue
+ *   SalesforceQueue object
+ * @param SalesforceQueueProcessor $processor
+ *   SalesforceQueueProcessor object
+ */
+function hook_salesforce_queue_finalize_batch(&$batch, SalesforceQueue $queue, SalesforceQueueProcessor $processor) {
+
+}
+
+/**
  * Fire off behavior after a batch is processed.
  *
  * @param array $batch

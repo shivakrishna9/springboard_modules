@@ -3,7 +3,7 @@ index 2246c2d..7a9e8af 100644
 --- a/commerce_authnet.module
 +++ b/commerce_authnet.module
 @@ -377,10 +377,12 @@ function commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $p
- 
+
    // Build a description for the order.
    $description = array();
 -
@@ -18,4 +18,4 @@ index 2246c2d..7a9e8af 100644
 +      }
      }
    }
- 
+

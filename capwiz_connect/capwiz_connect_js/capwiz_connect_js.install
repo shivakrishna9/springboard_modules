@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file 
+ * @file
  * Install/uninstall/update functions for the Capwiz Connect JS module.
  */
 
@@ -10,7 +10,7 @@
  */
 function capwiz_connect_js_schema() {
   $schema = array();
-  
+
   $schema['capwiz_connect_js_alerts'] = array(
     'description' => 'Contains options for alerts handled by the Capwiz JS Solution',
     'fields' => array(
@@ -81,7 +81,9 @@ function capwiz_connect_js_schema() {
   return $schema;
 }
 
-// Set the weight 1 heavier then capwiz_connect module
-function capwiz_connect_js_update_6301(&$sandbox) {
-  return t('This update was removed.');
+/**
+ * Implements hook_update_last_removed().
+ */
+function capwiz_connect_js_update_last_removed() {
+  return 6301;
 }

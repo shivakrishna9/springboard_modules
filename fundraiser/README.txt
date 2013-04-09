@@ -17,7 +17,7 @@ INSTALLATION
 
 1. Unzip and copy this directory to your sites/SITENAME/modules directory.
 
-2. Fundraiser reporting utilizes MySQL views. So the database user will 
+2. Fundraiser reporting utilizes MySQL views. So the database user will
    need 'CREATE VIEW' privileges
 
 3. Enable the module. 

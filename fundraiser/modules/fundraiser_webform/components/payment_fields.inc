@@ -52,11 +52,16 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
     $payment_methods = array_filter($payment_method_field['extra']['payment_methods'], '_fundraiser_webform_payment_method_array_filter_enabled');
   }
   if (!empty($payment_methods)) {
+    $element['#type'] = 'container';
+    $element['#title'] = '';
+    $element['#title_display'] = '';
     // Loop through the payment methods and add fields for each type.
     foreach ($payment_methods as $payment_method => $config) {
       // Setup the fieldset
       $element[$payment_method] = array(
         '#type' => 'fieldset',
+        //'#title' => '',
+        //'#title_display' => 0,
         '#attributes' => array(
           'class' => array('fundraiser-payment-fields'),
         ),
@@ -77,7 +82,7 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
       if (isset($gateway_info['form callback'])) {
         $form_func = $gateway_info['form callback'];
         if (function_exists($form_func)) {
-          $element[$payment_method] += $form_func($payment_method);
+          $element[$payment_method] += $form_func($payment_method, $config);
         }
       }
       // Allow other modules to alter the fields before adding to form.

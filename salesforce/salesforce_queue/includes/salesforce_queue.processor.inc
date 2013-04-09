@@ -29,7 +29,7 @@ class SalesforceQueueProcessor {
    *
    * @var SalesforceSync
    */
-  protected $salesforceSync;
+  public $salesforceSync;
 
   /**
    * Batch of items from the queue that need to be processed.
@@ -83,20 +83,6 @@ class SalesforceQueueProcessor {
   protected $maxBatchSize = 200;
 
   /**
-   * Salesforce object to connect with
-   *
-   * @var Salesforce
-   */
-  protected $sfapi;
-
-  /**
-   * SalesforceSoapPartner object to connect to Salesforce via SOAP.
-   *
-   * @var SalesforceSoapPartner
-   */
-  protected $soap;
-
-  /**
    * Defines a default response to the end of the processing.
    *
    * @var int
@@ -113,8 +99,8 @@ class SalesforceQueueProcessor {
    * @return SalesforceQueueProcessor
    *   A processor for the given queue
    */
-  public static function get($queue = NULL) {
-    $queue = empty($queue) ? salesforce_queue_load() : $queue;
+  public static function get(SalesforceQueue $queue = NULL) {
+    $queue = is_null($queue) ? salesforce_queue_load() : $queue;
     $processor = new SalesforceQueueProcessor($queue);
     return $processor;
   }
@@ -128,9 +114,9 @@ class SalesforceQueueProcessor {
   public function __construct(SalesforceQueue $queue) {
     $this->queue = $queue;
     $this->queueName = $queue->queueName;
-    $this->sfapi = salesforce_get_api();
-    $this->soap = new SalesforceSoapPartner($this->sfapi);
-    $this->salesforceSync = new SalesforceSync($this->sfapi, $this->soap);
+    $this->salesforceSync = new SalesforceSync();
+    $this->setSalesforceApi();
+    $this->setSalesforceSoap();
     $this->maxItems = variable_get('salesforce_queue_max_items', SALESFORCE_QUEUE_MAX_ITEMS_DEFAULT);
     $this->leaseTime = variable_get('salesforce_queue_lease_time', SALESFORCE_QUEUE_LEASE_TIME_DEFAULT);
     $this->maxBatchSize = variable_get('salesforce_sync_max_batch_size', SALESFORCE_SYNC_MAX_BATCH_SIZE_DEFAULT);
@@ -152,18 +138,32 @@ class SalesforceQueueProcessor {
     $this->claimItems();
     if (!empty($this->items)) {
       // Check Salesforce connection.
-      // This extra check is for simpletests and drushwhich require a specific
+      // This extra check is for simpletests and drush which require a specific
       // $sfapi in certain instances.
-      $this->sfapi = $this->sfapi->isAuthorized() ? $this->sfapi : salesforce_get_api();
-      if (!$this->sfapi->isAuthorized()) {
-        // Cannot connect to Salesforce.
-        watchdog('salesforce_queue', 'Could not process SalesforceQueue because '
-          . 'I cannot connect to Salesforce.', array(), WATCHDOG_ALERT);
+      $this->setSalesforceApi();
+      $sfapi_passed = TRUE;
+      if (!is_object($this->salesforceSync->sfapi)) {
+        $sfapi_passed = FALSE;
+        watchdog('salesforce', '[!id] QueueProcessor failed: Cannot connect to Salesforce.',
+          array('!id' => 'queue-03'), WATCHDOG_ALERT);
         $this->endStatus = SALESFORCE_QUEUE_PROCESS_FAIL_CONNECT;
       }
 
-      // Continue only if there is a Salesforce connection.
-      else {
+      // After Salesforce connection is successful, test the soap connection.
+      $soap_passed = FALSE;
+      if ($sfapi_passed) {
+        $this->setSalesforceSoap();
+        $soap_passed = TRUE;
+        if (!is_object($this->salesforceSync->soap)) {
+          $soap_passed = FALSE;
+          watchdog('salesforce', '[!id] QueueProcessor failed: Cannot use SOAP connection.',
+            array('!id' => 'queue-04'), WATCHDOG_ALERT);
+          $this->endStatus = SALESFORCE_QUEUE_PROCESS_FAIL_SOAP;
+        }
+      }
+
+      // Continue only if there is a verified connection to Salesforce.
+      if ($soap_passed) {
         // Invokes hook_salesforce_queue_process_items_alter().
         drupal_alter('salesforce_queue_process_items', $this->items, $this->queue);
 
@@ -174,6 +174,11 @@ class SalesforceQueueProcessor {
           // If there were items in the queue, but no batches, then that means
           // no claimed items were valid.
           $this->endStatus = SALESFORCE_QUEUE_PROCESS_FAIL_NO_VALID_ITEMS;
+
+          // Send an error to admin that there were no valid items in the queue
+          // to process.
+          watchdog('salesforce', '[!id] QueueProcessor ran but only invalid items found.',
+            array('!id' => 'queue-05'), WATCHDOG_NOTICE);
         }
         else {
           $this->processBatches();
@@ -219,27 +224,26 @@ class SalesforceQueueProcessor {
           // to some sort of conflict with server resources or connections with
           // Salesforce, or the configuration settings about how much to process
           // or even how often we're trying to run this process.
-          $message = 'SalesforceQueueProcess was run, but could not claim '
-            . 'items because the queue was leased. This could be a minor issue '
-            . 'or more severe issue so it would warrant you looking into this.';
-          $severity = WATCHDOG_ERROR;
+          $message = '[!id] QueueProcessor claimed no items: Queue leased';
+          $severity = WATCHDOG_NOTICE;
+          $log_id = 'queue-06';
           $this->endStatus = SALESFORCE_QUEUE_PROCESS_FAIL_QUEUE_LEASED;
         }
         elseif ($this->queue->numberOfItems(TRUE) < 1) {
           // No items are in the queue.  Pretty minor issue.
-          $message = 'SalesforceQueueProcess was run, but no items were found '
-            . 'in the queue to process.  Not much for you to worry about.';
+          $message = '[!id] QueueProcessor found no items in queue';
           $severity = WATCHDOG_DEBUG;
+          $log_id = 'queue-07';
           $this->endStatus = SALESFORCE_QUEUE_PROCESS_NO_ITEMS;
         }
         else {
           // If we get here, then we're really clueless as to what is going on.
-          $message = 'SalesforceQueueProcess was run, but we could not claim '
-            . 'items for an unknown reason.  Eeps.';
+          $message = '[!id] QueueProcessor claimed no items: Reason unknown.  Eeps.';
           $severity = WATCHDOG_ALERT;
+          $log_id = 'queue-08';
           $this->endStatus = SALESFORCE_QUEUE_PROCESS_FAIL_CLAIM_ITEMS;
         }
-        watchdog('salesforce_queue', $message, array(), $severity);
+        watchdog('salesforce', $message, array('!id' => $log_id), $severity);
       }
       else {
         $this->leaseKey = $items[0]->leaseKey;
@@ -593,7 +597,9 @@ class SalesforceQueueProcessor {
     while ($count > 0) {
       $count--;
       $result = $this->processBatch();
-      $results = array_merge($results, $result);
+      if (is_array($result)) {
+        $results = array_merge($results, $result);
+      }
     }
     return $results;
   }
@@ -618,6 +624,9 @@ class SalesforceQueueProcessor {
     // delay between checking and sending.  This is to ensure the minimal risk
     // of two overlapping writes to Salesforce.
     $this->salesforceSync->sendBatchPrepare($batch);
+
+    // Invokes hook_salesforce_queue_finalize_batch(). Last chance.
+    module_invoke_all('salesforce_queue_finalize_batch', $batch, $this->queue, $this);
 
     // Make sure we have enough time to send these items to Salesforce before
     // our lease expires. We do not want to risk the chance of items getting
@@ -680,16 +689,14 @@ class SalesforceQueueProcessor {
   /**
    * Helper to externally set the Salesforce API. Used for simpletests.
    */
-  public function setSalesforceApi(Salesforce $sfapi) {
-    $this->sfapi = $sfapi;
+  public function setSalesforceApi(Salesforce $sfapi = NULL) {
     $this->salesforceSync->setSalesforceApi($sfapi);
   }
 
   /**
    * Helper to externally set the Salesforce SOAP Partner. Used for simpletests.
    */
-  public function setSalesforceSoap($soap) {
-    $this->soap = $soap;
+  public function setSalesforceSoap(SalesforceSoapPartner $soap = NULL) {
     $this->salesforceSync->setSalesforceSoap($soap);
   }
 
@@ -697,6 +704,6 @@ class SalesforceQueueProcessor {
    * Helper to remove newly created items from Salesforce. Used for simpletests.
    */
   public function deleteNewSfRecords() {
-    $this->salesforceSync->deleteNewSfRecords();
+    return $this->salesforceSync->deleteNewSfRecords();
   }
 }

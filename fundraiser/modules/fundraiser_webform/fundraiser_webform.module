@@ -34,7 +34,7 @@ function fundraiser_webform_admin_content() {
   foreach ($webform_types as $webform_type) {
     if (!isset($donation_types[$webform_type]) || $donation_types[$webform_type] !== 1) {
       $types[] = $webform_type;
-    } 
+    }
   }
   $nodes = array();
   if ($types) {
@@ -112,7 +112,7 @@ function fundraiser_webform_webform_confirmations_token_replace_alter(&$tokens, 
 /**
  * Implements hook_confirmation_page_tokens().
  *
- * 
+ *
  */
 function fundraiser_webform_confirmation_page_tokens($node_type) {
   static $token_list = array();
@@ -122,7 +122,7 @@ function fundraiser_webform_confirmation_page_tokens($node_type) {
       foreach ($tokens as $key => $value) {
         if (isset($value['children'])) {
           foreach ($value['children'] as $child_key => $child_value) {
-            $type = $value['type'] == 'user' ? 'Donating User' : 'Fundraiser Node';  
+            $type = $value['type'] == 'user' ? 'Donating User' : 'Fundraiser Node';
             $token_list[$type][$child_key] = $child_value['name'] . ' -- ' . $child_value['description'];
           }
         }
@@ -142,12 +142,12 @@ function fundraiser_webform_fundraiser_donation_information_table_alter(&$variab
   // Add submission information to the display table.
   if ($donation->sid > 0) {
     if (isset($donation->node->nid)) {
-      $variables['rows'][] = array('Fundraiser submission', t('#@sid - !title',
+      $variables['rows'][] = array('Fundraiser submission', t('Submission #@sid - !title',
         array('@sid' => $donation->sid, '!title' => l(t('View submission'),
           'node/' . $donation->node->nid . '/submission/' . $donation->sid))));
     }
     else {
-      $variables['rows'][] = array('Fundraiser submission', t('#@sid - !title',
+      $variables['rows'][] = array('Fundraiser submission', t('Submission #@sid - !title',
         array('@sid' => $donation->sid, '!title' => t('No fundraiser node found.'))));
     }
   }
@@ -191,7 +191,7 @@ function fundraiser_webform_webform_submission_presave($node, &$submission) {
     $results = _fundraiser_webform_get_components_by_keys($node->nid, array('payment_fields'));
     foreach ($results as $result) {
       // Set sensitive info to NULL.
-      $submission->data[$result->cid]['value'][0] = NULL;
+      $submission->data[$result->cid] = array('value' => array(0 => NULL));
     }
   }
 }
@@ -208,7 +208,7 @@ function fundraiser_webform_form_webform_component_delete_form_alter(&$form, &$f
   // Make sure we are dealing with a donation form.
   if (fundraiser_is_donation_type($form['node']['#value']->type)) { // From fundraiser.module.
     // Check vs. required fields to make sure we can't delete them.
-    $required_fields = _fundraiser_get_field_keys();
+    $required_fields = array_keys(_fundraiser_webform_get_nonfieldset_keys());
     $cid = $form['component']['#value']['cid'];
     $component = $form['node']['#value']->webform['components'][$cid];
     // Check to see if the form_key is in our required fields array
@@ -295,7 +295,7 @@ function fundraiser_webform_form_fundraiser_admin_settings_alter(&$form, &$form_
     );
     $options = array('0' => t('--Not handled by Fundraiser--'));
     foreach ($fundraiser_fields as $field_key => $fundraiser_field) {
-      $options[$field_key] = $fundraiser_field['#title'];      
+      $options[$field_key] = $fundraiser_field['#title'];
     }
     // Now we just need to note which of these fields map to which fundraiser fields.
     foreach ($profile_fields as $profile_field) {
@@ -409,53 +409,70 @@ function fundraiser_webform_form_alter(&$form, &$form_state, $form_id) {
  */
 function fundraiser_webform_submission_display(&$form, &$form_state) {
   // Set up a view only display of the donation amount.
-  if ('other' != $form['submitted']['donation']['amount']['#default_value']) {
-    $amount = $form['submitted']['donation']['amount']['#default_value'];
+  $amount_field = _fundraiser_get_form_field($form, 'amount');
+  if ('other' != $amount_field['#default_value']) {
+    $amount = $amount_field['#default_value'];
   }
   else {
-    $amount = $form['submitted']['donation']['other_amount']['#default_value'];
+    $other_amount_field = _fundraiser_get_form_field($form, 'other_amount');
+    $amount = $other_amount_field['#default_value'];
   }
-  // Add new fields.
-  $form['submitted']['donation']['display_amount'] = array(
+  // Add new fields display.
+  $form['submitted']['donation_info'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Donation Information'),
+  );
+  $form['submitted']['donation_info']['display_amount'] = array(
     '#markup' => '<div class="form-item"><label>' . t('Donation Amount') .
       ':</label>' . '$' . number_format($amount, 2) . '</div>', // TODO this should be updated for an international audience.
   );
   // Show whether or not it's a recurring donation.
-  if (isset($form['submitted']['credit_card_information']['recurs_monthly'])) {
+  $recurs_monthly_field = _fundraiser_get_form_field($form, 'recurs_monthly');
+  if (isset($recurs_monthly_field)) {
     $recurs = t('No');
-    if (isset($form['submitted']['credit_card_information']['recurs_monthly']['#default_value'][0])
-      && ($form['submitted']['credit_card_information']['recurs_monthly']['#default_value'][0] == 'recurs')) {
+    if (isset($recurs_monthly_field['#default_value'][0])
+      && ($recurs_monthly_field['#default_value'][0] == 'recurs')) {
       $recurs = t('Yes');
     }
-    $form['submitted']['donation']['recurring'] = array(
+    $form['submitted']['donation_info']['recurring'] = array(
       '#markup' => '<div class="form-item"><label>' . t('Recurring Donation?') .
-        ':</label>' . $recurs . '</div>',
+        '</label>' . $recurs . '</div>',
     );
   }
   // Clean up the donor info section - replace the form fields with read only info
-  $form['submitted']['donor_information']['#title'] = t('Donor Information');
-  $form['submitted']['donor_information']['first_name_readonly'] = array(
+  $first_name_field = _fundraiser_get_form_field($form, 'first_name');
+  $form['submitted']['donation_info']['first_name_readonly'] = array(
     '#markup' => '<div class="form-item"><label>' . t('First Name') . ':</label>' .
-      $form['submitted']['donor_information']['first_name']['#default_value'] . '</div>',
+      $first_name_field['#default_value'] . '</div>',
   );
-  $form['submitted']['donor_information']['last_name_readonly'] = array(
+  $last_name_field = _fundraiser_get_form_field($form, 'last_name');
+  $form['submitted']['donation_info']['last_name_readonly'] = array(
     '#markup' => '<div class="form-item"><label>' . t('Last Name') . ':</label>' .
-      $form['submitted']['donor_information']['last_name']['#default_value'] . '</div>',
+      $last_name_field['#default_value'] . '</div>',
   );
-  $form['submitted']['donor_information']['email_readonly'] = array(
+  $mail_field = _fundraiser_get_form_field($form, 'mail');
+  $form['submitted']['donation_info']['email_readonly'] = array(
     '#markup' => '<div class="form-item"><label>' . t('Email') . ':</label>' .
-      $form['submitted']['donor_information']['mail']['#default_value'] . '</div>',
+      $mail_field['#default_value'] . '</div>',
   );
-  $form['submitted']['donor_information']['first_name']['#prefix'] =
-    $form['submitted']['donor_information']['last_name']['#prefix'] =
-      $form['submitted']['donor_information']['mail']['#prefix'] = '<div style="display:none">';
-  $form['submitted']['donor_information']['first_name']['#suffix'] =
-    $form['submitted']['donor_information']['last_name']['#suffix'] =
-      $form['submitted']['donor_information']['mail']['#suffix'] = '</div>';
+  // Unset things.
+  $donation_field = _fundraiser_get_form_field($form, 'donation');
+  $payment_information_field = _fundraiser_get_form_field($form, 'payment_information');
+  $payment_method_field = _fundraiser_get_form_field($form, 'payment_method');
+  $payment_fields_field = _fundraiser_get_form_field($form, 'payment_fields');
+  $first_name_field['#access'] = $last_name_field['#access'] = $mail_field['#access'] = FALSE;
+  $amount_field['#access'] = $other_amount_field['#access'] = $donation_field['#access'] = FALSE;
+  $payment_information_field['#access'] = $payment_method_field['#access'] =  $payment_fields_field['#access'] = FALSE;
   // Remove sections no one really needs to see here.
-  unset($form['submitted']['donation']['amount']);
-  unset($form['submitted']['donation']['other_amount']);
-  unset($form['submitted']['credit_card_information']);
+  $form = _fundraiser_update_form_field($form, 'first_name', $first_name_field);
+  $form = _fundraiser_update_form_field($form, 'last_name', $last_name_field);
+  $form = _fundraiser_update_form_field($form, 'mail', $mail_field);
+  $form = _fundraiser_update_form_field($form, 'amount', $amount_field);
+  $form = _fundraiser_update_form_field($form, 'other_amount', $other_amount_field);
+  $form = _fundraiser_update_form_field($form, 'donation', $other_amount_field);
+  $form = _fundraiser_update_form_field($form, 'payment_information', $payment_information_field);
+  $form = _fundraiser_update_form_field($form, 'payment_method', $payment_method_field);
+  $form = _fundraiser_update_form_field($form, 'payment_fields', $payment_fields_field);
 }
 
 /**
@@ -524,26 +541,38 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
   if (!empty($payment_method_field['extra']['payment_methods'])) {
     $payment_methods = array_filter($payment_method_field['extra']['payment_methods'], '_fundraiser_webform_payment_method_array_filter_enabled');
   }
-  // Loop through the payment methods and add fields for each type.
+
+  // Loop through the payment methods to allow the gateway to validate the submission
   foreach ($payment_methods as $payment_method => $config) {
-    // Find the given gateway idea for this, pull from _fundraiser_gateway_info($gateway_id) for fields.
-    // TODO there may be a cleaner way to do this.
+    // Load the gateway for this payment method
     $gateway_info = _fundraiser_gateway_info($config['id']);
-    // Check against the gateway config for this donation for a submission cleanup.
-    if (isset($submission_fields['payment_method'])) {
-      if ( in_array($submission_fields['payment_method'], $gateway_info['payment_method']) && isset($gateway_info['cleanup callback'])) {
-        $validate_cleanup_func = $gateway_info['cleanup callback'];
-        if (function_exists($validate_cleanup_func)) {
-          $submission_fields = $validate_cleanup_func($submission_fields);
-        }
+    // For the selected payment method run the submission through the gateway's validate callback
+    if (isset($submission_fields['payment_method']) && $submission_fields['payment_method'] == $payment_method) {
+      // Allow the gateway to cleanup the submission before validation
+      if (isset($gateway_info['cleanup callback']) && function_exists($gateway_info['cleanup callback'])) {
+        $submission_fields = $gateway_info['cleanup callback']($submission_fields);
+      }
+      // Call the gateways validation function
+      if (isset($gateway_info['validate callback']) && function_exists($gateway_info['validate callback'])) {
+        $payment_fields = fundraiser_webform_fundraiser_get_form_field($form, 'payment_fields');
+        $submission_fields = $gateway_info['validate callback']($submission_fields, $payment_fields);
+      }
+      // Store the scrub callback for later if this form has errors
+      if (isset($gateway_info['scrub callback']) && function_exists($gateway_info['scrub callback'])) {
+        $scrub_callback = $gateway_info['scrub callback'];
       }
     }
+    // Remove unselected payment fields from the values
+    else {
+      unset($submission_fields['payment_fields'][$payment_method]);
+    }
   }
+
   // Check error validation.
   $errors = fundraiser_validate_form_fields($form, $form_state, $submission_fields); // From fundraiser.module.
 
   // Create watchdog entry on validation errors.
-  if ($errors) {
+  if (form_get_errors() || $errors) {
     $message = "The following donation form fields failed local validation:\n\n";
     $check_errors = form_get_errors();
     $validation_errors = is_array($check_errors) ? array_keys($check_errors) : array();
@@ -552,16 +581,19 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
       $message .= array_pop($keys) . "\n";
     }
 
-    // SCRUB DATA. We do not want to save these in the error watchdog message.
-    // We can be sure these fields are in the set, since they're declared in fundraiser.
-    $submission_fields['payment_fields']['credit']['card_number'] = substr_replace($submission_fields['payment_fields']['credit']['card_number'],
-      str_repeat('*', drupal_strlen($submission_fields['payment_fields']['credit']['card_number'])), 0);
-    $submission_fields['payment_fields']['credit']['card_cvv'] = substr_replace($submission_fields['payment_fields']['credit']['card_cvv'],
-      str_repeat('*', drupal_strlen($submission_fields['payment_fields']['credit']['card_cvv'])), 0);
+    if (!empty($scrub_callback)) {
+      // SCRUB DATA. We do not want to save sensitive payment data in the error watchdog message.
+      $submission_fields['payment_fields'] = $scrub_callback($submission_fields['payment_method'], $submission_fields['payment_fields']);
+    }
 
     $message .= "\n\nSubmitted Values:\n\n";
     foreach ($submission_fields as $key => $value) {
-      $message .= $key . ': ' . $value . "\n";
+      if (is_array($value)) {
+        $message .= $key . ': ' . print_r($value, 1) . "\n";
+      }
+      else {
+        $message .= $key . ': ' . $value . "\n";
+      }
       watchdog('fundraiser_webform', $message, NULL, WATCHDOG_DEBUG, NULL);
     }
     // Provide data to fundraiser about the node that failed to validate.
@@ -587,20 +619,23 @@ function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $dona
   if (!empty($payment_method_field['extra']['payment_methods'])) {
     $payment_methods = array_filter($payment_method_field['extra']['payment_methods'], '_fundraiser_webform_payment_method_array_filter_enabled');
   }
-  // Loop through the payment methods and add fields for each type.
+
+  // Loop through the payment methods to allow the gateway to cleanup the submission
   foreach ($payment_methods as $payment_method => $config) {
-    // Find the given gateway idea for this, pull from _fundraiser_gateway_info($gateway_id) for fields.
+    // Load the gateway for this payment method
     $gateway_info = _fundraiser_gateway_info($config['id']);
-    // Check against the gateway config for this donation for a submission cleanup.
-    if (isset($submission_fields['payment_method'])) {
-      if (in_array($submission_fields['payment_method'], $gateway_info['payment_method']) && isset($gateway_info['cleanup callback'])) {
-        $submit_cleanup_func = $gateway_info['cleanup callback'];
-        if (function_exists($submit_cleanup_func)) {
-          $submission_fields = $submit_cleanup_func($submission_fields);
-        }
+    // For the selected payment method run the submission through the gateway's cleanup callback
+    if (isset($submission_fields['payment_method']) && $submission_fields['payment_method'] == $payment_method) {
+      if (isset($gateway_info['cleanup callback']) && function_exists($gateway_info['cleanup callback'])) {
+        $submission_fields = $gateway_info['cleanup callback']($submission_fields);
       }
     }
+    // Remove unselected payment fields from the values
+    else {
+      unset($submission_fields['payment_fields'][$payment_method]);
+    }
   }
+
   // Add submission to the donation.
   $donation->donation = $submission_fields;
   $donation->sid = $form_state['values']['details']['sid'];
@@ -793,6 +828,7 @@ function _fundraiser_webform_parse_components($nid, $components, $reset = FALSE)
  */
 function _fundraiser_webform_parse_component($nid, $form_key, $reset = FALSE) {
   $results = _fundraiser_webform_get_components_by_keys($nid, array($form_key));
+  $cid = -1;
   foreach ($results as $result) {
     $cid = $result->cid;
   }
@@ -959,7 +995,7 @@ function _fundraiser_webform_get_nonfieldset_keys($field_info = NULL, $fields = 
   $children = element_children($field_info);
   foreach ($children as $child) {
     // If this child is a defined field, but not a fieldset, add it.
-    if (isset($field_info[$child]['#title']) && $field_info[$child]['#type'] != 'fieldset') {  
+    if (isset($field_info[$child]['#title']) && $field_info[$child]['#type'] != 'fieldset') {
       $fields[$child] = $field_info[$child];
     }
     if (is_array($field_info[$child]) && !empty($field_info[$child])) {

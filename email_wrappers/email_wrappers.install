@@ -162,127 +162,6 @@ $schema['email_wrappers_webform'] = array(
 }
 
 /**
- * Implements hook_update().
- */
-function email_wrappers_update_7001() {
-  require_once(DRUPAL_ROOT . "/sites/all/modules/webform/includes/webform.emails.inc");
-  if (!function_exists('webform_email_insert')) {
-    $ret[] = 'Unable to locate webform module';
-    return $ret;
-  }
-  $ret = array();
-  // if email_confirmations.module was installed prior to migration, if not we bail.
-  $ec_exists = db_table_exists('fundraiser_confirmations');
-  if (!$ec_exists) {
-    $ret[] = 'email confirmation not found';
-    return $ret;
-  }
-  $ret[] = 'email confirmation found, migrating';
-
-  // get nodes
-  $results = db_query('
-    SELECT
-      c.nid,
-      c.field_confirmation_from_email_email as from_mail,
-      c.field_confirmation_from_name_value as from_name,
-      cf.field_confirmation_bcc_email as bcc_email,
-      nr.body_value as html_template,
-      nr.body_format as html_template_format,
-      c.field_confirmation_html_message_value as html_message,
-      c.field_confirmation_html_message_format as html_message_format,
-      c.field_confirmation_subject_value as subject,
-      c.field_confirmation_text_value as text_template,
-      c.field_confirmation_text_message_value as text_message
-    FROM {content_type_confirmation_template} c
-    INNER JOIN {field_revision_body} nr
-      ON nr.entity_id = c.nid
-    LEFT JOIN {content_field_confirmation_bcc} cf
-      ON cf.nid = c.nid
-  ');
-  while ($confirmation = $results->fetchAssoc()) {
-    $nid = $confirmation['nid'];
-    // populate field tables.
-    // from email
-    _email_wrappers_update_field_value('email_wrapper_from_email', $nid, $confirmation['from_mail']);
-    _email_wrappers_update_field_value('email_wrapper_reply_email', $nid, $confirmation['from_mail']);
-    // reply to email
-    // from name
-    _email_wrappers_update_field_value('email_wrapper_from_name', $nid, $confirmation['from_name']);
-    // bcc
-    _email_wrappers_update_field_value('email_wrapper_bcc_email', $nid, $confirmation['bcc_email']);
-    // subject email_wrapper_subject
-    _email_wrappers_update_field_value('email_wrapper_subject', $nid, $confirmation['subject']);
-    // html template email_wrapper_html_template
-    _email_wrappers_update_field_value('email_wrapper_html_template', $nid, $confirmation['html_template'], 0, $confirmation['html_template_format']);
-    // html message email_wrapper_html_message
-    _email_wrappers_update_field_value('email_wrapper_html_message', $nid, $confirmation['html_message'], 0, $confirmation['html_message_format']);
-    // text template email_wrapper_text_template
-    _email_wrappers_update_field_value('email_wrapper_text_template', $nid, $confirmation['text_template']);
-    // text message email_wrapper_text_message
-    _email_wrappers_update_field_value('email_wrapper_text_message', $nid, $confirmation['text_message']);
-
-    // change node type in {node}
-    db_query("UPDATE {node} SET type = :type WHERE nid = :nid", array(':type' => 'email_wrapper', ':nid' => $nid));
-  }
-
-
-  // copy data from {fundraiser_confirmations} to {email_wrappers}.
-  $results = db_select('fundraiser_confirmations', 'f')
-    ->fields('f', array(
-      'nid',
-      'tid',
-      'subject',
-      'from_name',
-      'reply_to_email',
-      'bcc_email',
-      'html_message',
-      'html_message_format',
-      'text_message',
-    ))
-    ->execute();
-
-  while ($confirmation = $results->fetchAssoc()) {
-    // get email component cid for the webform in question
-    $nid = $confirmation['nid'];
-    $component_cid = db_query("SELECT cid FROM {webform_component} WHERE nid = :nid AND form_key IN (:keys)", array(':nid' => $nid, ':keys' => array('mail','email')))->fetchColumn();
-    // insert into {webform_emails}, capture eid
-    $email = array(
-      'nid' => $confirmation['nid'],
-      'eid' => '',
-      'email' => $component_cid,
-      'subject' => $confirmation['subject'],
-      'from_name' => $confirmation['from_name'],
-      'from_address' => $confirmation['reply_to_email'],
-      'template' => '',
-      'excluded_components' => '',
-      'html' => 0,
-      'attachments' => 0,
-    );
-    $eid = webform_email_insert($email);
-    $eid = $eid ? $eid : 0;
-    // insert into {email_wrappers_webform}
-    db_insert('email_wrappers_webform')
-      ->fields(array(
-        'nid' => $confirmation['nid'],
-        'eid' => $eid,
-        'tid' => $confirmation['tid'],
-        'html_message' => $confirmation['html_message'],
-        'html_message_format' => $confirmation['html_message_format'],
-        'text_message' => $confirmation['text_message'],
-        'bcc_email' => $confirmation['bcc_email'],
-      ))
-      ->execute();
-  }
-
-  // move settings data from variable emaiL_confirmation_og_filter to email_wrapper_og_filter
-  $og_filter = variable_get('email_confirmation_og_filter');
-  variable_set('email_wrapper_og_filter', $og_filter);
-  variable_del('email_confirmation_og_filter');
-
-  // TODO: delete original email confirmation tables.
-}
-
-/**
  * Create required fields and associate them with the "Email Template" content type.
  */
 function _email_wrappers_create_fields() {
@@ -497,7 +376,6 @@ function _email_wrappers_create_fields() {
 
 }
 
-
 function _email_wrappers_delete_fields() {
   $fields = array(
     'email_wrapper_from_name',
@@ -517,32 +395,9 @@ function _email_wrappers_delete_fields() {
   drupal_set_message('Email Wrapper fields deleted.');
 }
 
-
 function _email_wrappers_delete_nodes() {
  require_once('email_wrappers.module');
  $nids = email_wrappers_get_nodes();
  node_delete_multiple($nids);
  drupal_set_message('Email Wrappers have been deleted.');
-}
-
-
-function _email_wrappers_update_field_value($field_name, $nid, $value, $delta = 0, $format = NULL) {
-  $fields = array(
-    'entity_type' => 'node',
-    'bundle' => 'email_wrapper',
-    'deleted' => 0,
-    'entity_id' => $nid,
-    'revision_id' => $nid,
-    'language' => 'und',
-    'delta' => $delta,
-    $field_name . '_value' => $value,
-    $field_name . '_format'  => $format,
-  );
-  db_insert("field_data_$field_name")
-    ->fields($fields)
-    ->execute();
-
-  db_insert("field_revision_$field_name")
-    ->fields($fields)
-    ->execute();
 }

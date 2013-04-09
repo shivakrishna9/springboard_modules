@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Definition of salesforce_log_handler_filter_queue.
+ * Definition of SalesforceLogHandlerFilterQueue.
  */
 
 /**
@@ -10,12 +10,19 @@
  *
  * @ingroup views_filter_handlers
  */
-class salesforce_log_handler_filter_queue extends views_handler_filter_in_operator {
+class SalesforceLogHandlerFilterQueue extends views_handler_filter_in_operator {
 
   /**
    * List of possible queues.
    */
-  public function get_value_options() {
+  public function getValueOptions() {
     $this->value_options = salesforce_queue_get_queue_names();
   }
+
+  // Ignnore required method names that do not pass coding standards
+  // @codingStandardsIgnoreStart
+  public function get_value_options() {
+    $this->getValueOptions();
+  }
+  // @codingStandardsIgnoreEnd
 }

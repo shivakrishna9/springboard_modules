@@ -99,28 +99,20 @@ function salesforce_npsp_salesforce_queue_postprocess_batch($batch, $results, $q
  *   An array in the format of uid => accountid.
  */
 function salesforce_npsp_get_contact_account_ids($sfids) {
-  $account_ids = array();
-  $contact_ids = array_values($sfids);
+  $sync = new SalesforceSync();
   $drupal_ids = array_keys($sfids);
+  $account_ids = array();
 
-  try {
-    $soap = new SalesforceSoapPartner(salesforce_get_api());
-    $response = $soap->retrieve('AccountId', 'Contact', $contact_ids);
-    $count = count($sfids);
+  // Retrieve the account id for each contact.
+  $response = $sync->fetchByIds('Contact', array('AccountId'), $sfids);
 
-    for ($i = 0; $i < $count; $i++) {
-      $account_ids[$drupal_ids[$i]] = $response[$i]->fields->AccountId;
-    }
-
-    return $account_ids;
+  // Associate the account id with each Drupal user id.
+  $count = count($sfids);
+  for ($i = 0; $i < $count; $i++) {
+    $account_ids[$drupal_ids[$i]] = $response[$i]->fields->AccountId;
   }
-  catch (Exception $e) {
-    // Make a watchdog entry.
-    // @TODO: Make this more robust such as making a record of all that
-    // failed so they can be tried again later.
-    watchdog('salesforce_npsp', 'Retrieval of account ids for a batch has failed. The error caught was: !error.',
-      array('!error' => $e->getMessage()));
-  }
+
+  return $account_ids;
 }
 
 /**

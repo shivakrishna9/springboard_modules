@@ -41,6 +41,7 @@ function commerce_ogone_fundraiser_commerce_form($payment_method) {
         '#title' => t('Credit card number'),
         '#size' => 20,
         '#required' => TRUE,
+        '#salesforce_label' => t('Credit card last 4'),
       );
       $form['expiration_date']['#theme'] = 'fundraiser_credit_card_expiration_date';
       $months[1] = 'January';
@@ -79,6 +80,7 @@ function commerce_ogone_fundraiser_commerce_form($payment_method) {
         '#title' => t('CVV'),
         '#size' => 6,
         '#required' => TRUE,
+        '#salesforce_mappable' => FALSE,
       );
     break;
   }
@@ -155,7 +157,7 @@ function commerce_ogone_fundraiser_commerce_redirect_validate($method_instance, 
  * Callback function, submit results on return from redirection form.
  */
 function commerce_ogone_fundraiser_commerce_redirect_submit($method_instance, $donation, $order) {
-  // IMPORTANT: Transaction handling for Paypal is handled on a differnt URL, when Paypal returns the IPN tracsaction ID. 
+  // IMPORTANT: Transaction handling for Paypal is handled on a differnt URL, when Paypal returns the IPN tracsaction ID.
   // Therefore no additional transaction work occurs here.
   return TRUE;
 }

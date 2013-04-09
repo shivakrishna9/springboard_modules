@@ -12,12 +12,15 @@ function commerce_authnet_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     'payment_method' => array('credit'),
     'allow_recurring' => array('credit'),
+    'allow_refund' => array('credit'),
     'form callback' => 'commerce_authnet_fundraiser_commerce_form',
     'cleanup callback' => 'commerce_authnet_fundraiser_commerce_cleanup',
     'scrub callback' => 'commerce_authnet_fundraiser_commerce_scrub',
     'expire callback' => 'commerce_authnet_fundraiser_commerce_expire',
+    'validate callback' => 'commerce_authnet_fundraiser_commerce_validate',
     'charge callback' => 'commerce_authnet_fundraiser_commerce_charge',
     'update callback' => 'commerce_authnet_fundraiser_commerce_update',
+    'refund callback' => 'commerce_authnet_fundraiser_commerce_refund',
   );
 }
 
@@ -25,99 +28,42 @@ function commerce_authnet_fundraiser_commerce_fundraiser_gateway_info() {
  * Callback function, use this form for the given gateway.
  */
 function commerce_authnet_fundraiser_commerce_form($payment_method) {
-  // Move expiration date values up in the array. ONLY relevant for the default credit card fields.
-  $form['card_number'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Credit card number'),
-    '#size' => 20,
-    '#required' => TRUE,
-  );
-  $form['expiration_date']['#theme'] = 'fundraiser_credit_card_expiration_date';
-  $months[1] = 'January';
-  $months[2] = 'February';
-  $months[3] = 'March';
-  $months[4] = 'April';
-  $months[5] = 'May';
-  $months[6] = 'June';
-  $months[7] = 'July';
-  $months[8] = 'August';
-  $months[9] = 'September';
-  $months[10] = 'October';
-  $months[11] = 'November';
-  $months[12] = 'December';
-  $form['expiration_date']['card_expiration_month'] = array(
-    '#type' => 'select',
-    '#options' => $months,
-    '#title' => t('Expiration month'),
-    '#default_value' => date('n'),
-    '#required' => TRUE,
-  );
-  $this_year = date('Y');
-  $years[$this_year] = $this_year;
-  for ($i = 1; $i <= 15; $i++) {
-    $years[$this_year + $i] = $this_year + $i;
-  }
-  $form['expiration_date']['card_expiration_year'] = array(
-    '#type' => 'select',
-    '#options' => $years,
-    '#title' => t('Expiration year'),
-    '#default_value' => date('Y'),
-    '#required' => TRUE,
-  );
-  $form['card_cvv'] = array(
-    '#type' => 'textfield',
-    '#title' => t('CVV'),
-    '#size' => 6,
-    '#required' => TRUE,
-  );
-  return $form;
+  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+  return _fundraiser_commerce_credit_card_form();
 }
 
 /**
  * Callback function, clean up the submission results after submission before they are returned to fundraiser.
  */
 function commerce_authnet_fundraiser_commerce_cleanup($submission_fields) {
-  if (isset($submission_fields['payment_fields']['credit']['expiration_date'])) {
-    if (isset($submission_fields['payment_fields']['credit']['expiration_date']['card_expiration_month'])) {
-      $submission_fields['payment_fields']['credit']['card_expiration_month'] =
-        $submission_fields['payment_fields']['credit']['expiration_date']['card_expiration_month'];
-    }
-    if (isset($submission_fields['payment_fields']['credit']['expiration_date']['card_expiration_year'])) {
-      $submission_fields['payment_fields']['credit']['card_expiration_year'] =
-        $submission_fields['payment_fields']['credit']['expiration_date']['card_expiration_year'];
-    }
-    unset($submission_fields['payment_fields']['credit']['expiration_date']);
-  }
-  return $submission_fields;
+  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+  return _fundraiser_commerce_credit_card_cleanup($submission_fields);
 }
 
 /**
  * Callback function, scrub the data before saving.
  */
-function commerce_authnet_fundraiser_commerce_scrub($payment_method, $fields) {
-  // Scrub sensitive donation fields if they exists.
-  if (isset($fields['credit']['card_number'])) {
-    $fields['credit']['card_number'] = substr(
-      $fields['credit']['card_number'], -4);
-  }
-  if (isset($fields['credit']['card_cvv'])) {
-    $fields['credit']['card_cvv'] = '';
-  }
-  return $fields;
+function commerce_authnet_fundraiser_commerce_scrub($payment_method, $submission_fields) {
+  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+  return _fundraiser_commerce_credit_card_scrub($payment_method, $submission_fields);
 }
 
 /**
  * Callback function, return the user entered experation dates for this submission.
  */
 function commerce_authnet_fundraiser_commerce_expire($submission_fields) {
-  $expires = array();
-  if (isset($submission_fields['payment_fields']['credit']['card_expiration_month'])) {
-    $expires['month'] = $submission_fields['payment_fields']['credit']['card_expiration_month'];
-  }
-  if (isset($submission_fields['payment_fields']['credit']['card_expiration_year'])) {
-    $expires['year'] = $submission_fields['payment_fields']['credit']['card_expiration_year'];
-  }
-  return $expires;
+  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+  return _fundraiser_commerce_credit_card_expire($submission_fields);
+}
+
+/**
+ * Validate the submitted values with the commerce validate function
+ */
+function commerce_authnet_fundraiser_commerce_validate($submission_fields, $payment_fields) {
+  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+  $form_parents = array_merge($payment_fields['#parents'], array('credit'));
+  _fundraiser_commerce_credit_card_validate($submission_fields, $form_parents);
+  return $submission_fields;
 }
 
 /**
@@ -149,18 +95,7 @@ function _commerce_authnet_fundraiser_commerce_charge_without_cim($payment_metho
   $charge = $order->commerce_order_total[LANGUAGE_NONE][0];
   // Call to commerce_authnet_aim_submit_form_submit() based on instance callbacks.
   $pane_form = array(); // Not actually used anywhere in this system, so ignore it.
-  $pane_values = array(
-    'credit_card' => array(
-      'number' => isset($donation->donation['payment_fields']['credit']['card_number']) ? 
-        $donation->donation['payment_fields']['credit']['card_number'] : '',
-      'exp_month' => isset($donation->donation['payment_fields']['credit']['card_expiration_month']) ?
-        $donation->donation['payment_fields']['credit']['card_expiration_month'] : '',
-      'exp_year' => isset($donation->donation['payment_fields']['credit']['card_expiration_year']) ?
-        $donation->donation['payment_fields']['credit']['card_expiration_year'] : '',
-      'code' => isset($donation->donation['payment_fields']['credit']['card_cvv']) ?
-        $donation->donation['payment_fields']['credit']['card_cvv'] : '',
-    ),
-  );
+  $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
   $payment_method['settings']['cim_cardonfile'] = FALSE;
   // Execute call to commerce_authnet, without CIM enabled (in case card on file is turned on).
   $result = commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge);
@@ -181,18 +116,7 @@ function _commerce_authnet_fundraiser_commerce_charge_with_cim($payment_method, 
   $charge = $order->commerce_order_total[LANGUAGE_NONE][0];
   // Call to commerce_authnet_aim_submit_form_submit() based on instance callbacks.
   $pane_form = array(); // Not actually used anywhere in this system, so ignore it.
-  $pane_values = array(
-    'credit_card' => array(
-      'number' => isset($donation->donation['payment_fields']['credit']['card_number']) ? 
-        $donation->donation['payment_fields']['credit']['card_number'] : '',
-      'exp_month' => isset($donation->donation['payment_fields']['credit']['card_expiration_month']) ?
-        $donation->donation['payment_fields']['credit']['card_expiration_month'] : '',
-      'exp_year' => isset($donation->donation['payment_fields']['credit']['card_expiration_year']) ?
-        $donation->donation['payment_fields']['credit']['card_expiration_year'] : '',
-      'code' => isset($donation->donation['payment_fields']['credit']['card_cvv']) ?
-        $donation->donation['payment_fields']['credit']['card_cvv'] : '',
-    ),
-  );
+  $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
   if (strlen($pane_values['credit_card']['exp_month']) == 1) {
     $pane_values['credit_card']['exp_month'] = '0' . $pane_values['credit_card']['exp_month'];
   }
@@ -252,7 +176,7 @@ function commerce_authnet_fundraiser_commerce_update($payment_method, $donation)
   }
   // Donation card data.
   $additional_data = array(
-  'card_number' => isset($donation->donation['payment_fields']['credit']['card_number']) ? 
+  'card_number' => isset($donation->donation['payment_fields']['credit']['card_number']) ?
     $donation->donation['payment_fields']['credit']['card_number'] : '',
   'card_exp_month' => isset($donation->donation['payment_fields']['credit']['card_expiration_month']) ?
     $donation->donation['payment_fields']['credit']['card_expiration_month'] : '',
@@ -265,7 +189,7 @@ function commerce_authnet_fundraiser_commerce_update($payment_method, $donation)
   }
   // Set additional values.
   $form['credit_card']['number']['#default_value'] = '';
-  $form_state['values']['credit_card']['number'] = isset($donation->donation['payment_fields']['credit']['card_number']) ? 
+  $form_state['values']['credit_card']['number'] = isset($donation->donation['payment_fields']['credit']['card_number']) ?
     $donation->donation['payment_fields']['credit']['card_number'] : '';
   $form_state['values']['credit_card']['owner'] = isset($donation->donation['first_name']) ? $donation->donation['first_name'] : '';
   $form_state['values']['credit_card']['owner'] .= isset($donation->donation['last_name']) ? ' ' . $donation->donation['last_name'] : '';
@@ -352,4 +276,31 @@ function _commerce_authnet_fundraiser_commerce_authnet_cim_cardonfile_update($fo
   // Fetch the response from the API server and let Card on File know if the update was successful.
   $xml_response = commerce_authnet_cim_request($payment_method, 'updateCustomerPaymentProfileRequest', $api_request_data);
   return (string) $xml_response->messages->message->code == 'I00001';
+}
+
+/**
+ * Refund callback for authnet, wraps the admin form used for refund with our own system.
+ */
+function commerce_authnet_fundraiser_commerce_refund($payment_method, $refund) {
+  // Retrieve data.
+  $refunding_order = commerce_order_load($refund->did);
+  $transactions = commerce_payment_transaction_load_multiple(array(), $conditions = array('order_id' => $refunding_order->order_id));
+  $transaction = array_shift($transactions); // The first one is the original donation.
+
+  $form = array();
+  $form_state = array();
+  // Set up the values needed for the transaction to go through.
+  $form_state['transaction'] = $transaction;
+  $form_state['values']['amount'] = $refund->amount;
+  $form_state['order'] = $refunding_order;
+  $form_state['payment_method'] = commerce_payment_method_instance_load($transaction->instance_id);
+  // Submit the donation form.
+  module_load_include('inc', 'commerce_authnet', '/includes/commerce_authnet.admin');
+  $result = commerce_authnet_aim_credit_form_submit($form, $form_state);
+  // At this point the card has been saved on the user profile.
+  $success = FALSE;
+  if ($result !== FALSE) {
+    $success = TRUE;
+  }
+  return $success;
 }

@@ -3,7 +3,7 @@
  * @file
  * Install and uninstall functions for Capwiz Connect
  */
- 
+
 /**
  * Implements hook_enable().
  */
@@ -21,8 +21,8 @@ function capwiz_connect_uninstall() {
   variable_del('capwiz_connect_standalone_cron_enabled');
 
   // Remove Salesforce field mapping
-  $drupal = 'capwiz_connect:%';  
-  db_query("DELETE FROM {salesforce_management_field_map} WHERE drupal LIKE '%s'", $drupal);  
+  $drupal = 'capwiz_connect:%';
+  db_query("DELETE FROM {salesforce_management_field_map} WHERE drupal LIKE '%s'", $drupal);
 }
 
 /**
@@ -38,7 +38,7 @@ function capwiz_connect_disable() {
  */
 function capwiz_connect_schema() {
   $schema = array();
-  
+
   $schema['capwiz_connect_accounts'] = array(
     'description' => 'Contains the Capwiz accounts that will be synced',
     'fields' => array(
@@ -94,7 +94,7 @@ function capwiz_connect_schema() {
     ),
     'primary key' => array('id'),
   );
-  
+
 
   $schema['capwiz_connect_actions'] = array(
     'description' => 'Store action data from Capwiz',
@@ -145,7 +145,7 @@ function capwiz_connect_schema() {
       'capwiz_user_id' => array('capwiz_user_id'),
     ),
   );
-  
+
   return $schema;
 }
 

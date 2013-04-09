@@ -5,6 +5,9 @@
  * Manages webform to Salesforce mappings.
  */
 
+/**
+ * Implements hook_install().
+ */
 function salesforce_donation_install() {
   // Create default SF map insert into table.
   $map = array();
@@ -25,11 +28,10 @@ function salesforce_donation_install() {
     }
   }
   $map->salesforce_record_type = $object_type;
-  //$map->salesforce_dedupe_field = 'Order_ID__c';
   $map->field_map = array(
     'salesforce_donation_map' => array(
       'did' => 'Order_ID__c',
-      'gateway' => 'Payment_Gateway__c',
+      'gateway_name' => 'Payment_Gateway__c',
       'txn_id' => 'Gateway_Reference__c',
       'close_date' => 'CloseDate',
       'transaction_date' => 'Transaction_Date_Time__c',
@@ -54,6 +56,9 @@ function salesforce_donation_install() {
       'ms' => 'Market_Source__c',
       'referrer' => 'Referrer__c',
       'initial_referrer' => 'Initial_Referrer__c',
+      'search_engine' => 'Search_Engine__c',
+      'search_string' => 'Search_String__c',
+      'user_agent' => 'User_Agent__c',
     ),
     'salesforce_node_map' => array(
       'title' => 'Donation_Form_Name__c',

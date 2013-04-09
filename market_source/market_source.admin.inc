@@ -19,7 +19,7 @@ function market_source_admin_settings_form($form, &$form_state) {
     '#description' => t('Select a default campaign for your donation forms.'),
     '#default_value' => variable_get('market_source_default_campaign', 'default_ms'),
   );
-  if (module_exists('salesforce_management_api')) {
+  if (module_exists('salesforce_sync')) {
     $form['market_source_validate_sf_campaigns'] = array(
       '#title' => t('Validate Salesforce Campaigns'),
       '#type' => 'checkbox',
@@ -45,7 +45,7 @@ function market_source_admin_settings_form($form, &$form_state) {
       'registration form. Enter the internal Drupal form ID, one per line.'),
     '#default_value' => implode("\n", $additional_forms),
   );
-  
+
   // Default global field settings.
   $form['market_source_default_fields'] = array(
     '#type' => 'fieldset',
@@ -60,16 +60,16 @@ function market_source_admin_settings_form($form, &$form_state) {
     '#suffix' => '</div>',
     '#theme' => 'market_source_admin_global_fields_table',
   );
-  
+
   // Get current settings for these fields.
   if (!isset($form_state['values']['market_source_default_fields']['default_fields_wrapper'])) {
     $form_state['values']['market_source_default_fields']['default_fields_wrapper'] = variable_get('market_source_default_fields', NULL);
   }
   //set up fields to loop through
   $default_fields_list = array(
-    'market_source' => t('Market Source'), 
-    'campaign' => t('Campaign ID'), 
-    'referrer' => t('Referrer'), 
+    'market_source' => t('Market Source'),
+    'campaign' => t('Campaign ID'),
+    'referrer' => t('Referrer'),
     'initial_referrer' => t('Initial Referrer'),
     'search_engine' => t('Search Engine'),
     'search_string' => t('Search String'),
@@ -77,7 +77,7 @@ function market_source_admin_settings_form($form, &$form_state) {
   );
   //shortcut
   $default_fields_values = &$form_state['values']['market_source_default_fields']['default_fields_wrapper'];
-  
+
   foreach($default_fields_list as $key=>$field_name) {
     $form['market_source_default_fields']['default_fields_wrapper'][$key] = array(
       'persistence' => array(
@@ -99,7 +99,7 @@ function market_source_admin_settings_form($form, &$form_state) {
       ),
     );
   }
-  
+
   // Custom global fields.
   $form['market_source_global_fields'] = array(
     '#type' => 'fieldset',
@@ -206,7 +206,7 @@ function market_source_admin_settings_form($form, &$form_state) {
     );
     $options = array('0' => t('--Not handled by Market Source--'));
     foreach ($ms_fields as $field_key => $ms_field) {
-      $options[$field_key] = $ms_field['#title'];      
+      $options[$field_key] = $ms_field['#title'];
     }
     // Now we just need to note which of these fields map to which fundraiser fields.
     foreach ($profile_fields as $profile_field) {
@@ -374,7 +374,7 @@ function _market_source_get_nonfieldset_keys($field_info = NULL, $fields = array
   $children = element_children($field_info);
   foreach ($children as $child) {
     // If this child is a defined field, but not a fieldset, add it.
-    if (isset($field_info[$child]['#title']) && $field_info[$child]['#type'] != 'fieldset') {  
+    if (isset($field_info[$child]['#title']) && $field_info[$child]['#type'] != 'fieldset') {
       $fields[$child] = $field_info[$child];
     }
     if (is_array($field_info[$child]) && !empty($field_info[$child])) {

@@ -6,6 +6,21 @@
  */
 
 /**
+ * Implements hook_salesforce_genmap_permission().
+ */
+function salesforce_mapping_salesforce_genmap_permission() {
+  $permissions = array();
+  if (variable_get('salesforce_genmap_allow_delete_sync', FALSE)) {
+    $permissions['configure salesforce_mapping delete sync'] = array(
+      'title' => t('Configure a !module map to sync deleted records',
+        array('!module' => 'salesforce_mapping')),
+      'description' => t('Allow the configuration for a map to automatically delete its associated record from Salesforce when it is deleted from Drupal.'),
+    );
+  }
+  return $permissions;
+}
+
+/**
  * @name salesforce_mapping_alter_form Modifications to the mapping form
  * @{
  */
@@ -45,6 +60,7 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
     $entity_fields = call_user_func($property_info['options_callback'], $entity_type);
     unset($entity_fields['']);
     $sf_fields = _sfm_get_salesforce_field_options($salesforce_object_type, $form_state);
+    asort($sf_fields);
     $dedupe_isset = FALSE;
     foreach ($entity_fields as $drupal_field_name => $drupal_field_label) {
       $delta = $drupal_field_name;
@@ -199,10 +215,30 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
     unset($form['salesforce_field_mappings_wrapper']['salesforce_add_field']);
   }
 
+  // Add the option to configure a map to delete on sync only if this site is
+  // configured to allow this configuration setting and the user has access.
+  if (!variable_get('salesforce_genmap_allow_delete_sync', FALSE) || !user_access('configure salesforce_mapping delete sync')) {
+    unset($form['sync_triggers']['#options'][SALESFORCE_MAPPING_SYNC_DRUPAL_DELETE]);
+    unset($form['sync_triggers']['#options'][SALESFORCE_MAPPING_SYNC_SF_DELETE]);
+    foreach ($form['sync_triggers']['#default_value'] as $key => $value) {
+      if (in_array($value, array(SALESFORCE_MAPPING_SYNC_DRUPAL_DELETE, SALESFORCE_MAPPING_SYNC_SF_DELETE))) {
+        unset($form['sync_triggers']['#default_value'][$key]);
+      }
+    }
+  }
+
+  // We do not use these options, so hide them.
+  $form['push_async']['#access'] = FALSE;
+  $form['push_batch']['#access'] = FALSE;
+
   // The need to manipulate the form causes a need to manipulate the storage
   // of data. Appending a "prevalidate" callback to shift around all of the data
   // so the original validation callback will function properly.
   array_unshift($form['#validate'], 'salesforce_mapping_form_prevalidate');
+
+  // And add our own normal validate hook.
+  // Making it separate from prevalidate so the difference in tasks is clear.
+  $form['#validate'][] = 'salesforce_mapping_form_alter_validate';
 
   // Same as with the need for a "prevalidate" callback, calling another submit
   // callback to add back in the additional data we need that the original
@@ -214,6 +250,19 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
  * Prevalidation callback for the altered mapping form.
  */
 function salesforce_mapping_form_prevalidate($form, &$form_state) {
+  // Add the DELETE sync option values back in.
+  if (!variable_get('salesforce_genmap_allow_delete_sync', FALSE)) {
+    // Automatically set it FALSE.
+    $form_state['values']['sync_triggers'][SALESFORCE_MAPPING_SYNC_DRUPAL_DELETE] = FALSE;
+    $form_state['values']['sync_triggers'][SALESFORCE_MAPPING_SYNC_SF_DELETE] = FALSE;
+  }
+  elseif (!user_access('configure salesforce_mapping delete sync')) {
+    // Set the value to the original configuration's value.
+    $form_state['values']['sync_triggers'][SALESFORCE_MAPPING_SYNC_DRUPAL_DELETE] = ($form['salesforce_mapping']->sync_trigger[SALESFORCE_MAPPING_SYNC_DRUPAL_DELETE] & SALESFORCE_MAPPING_SYNC_DRUPAL_DELETE);
+    $form_state['values']['sync_triggers'][SALESFORCE_MAPPING_SYNC_SF_DELETE] = ($form['salesforce_mapping']->sync_trigger[SALESFORCE_MAPPING_SYNC_SF_DELETE] & SALESFORCE_MAPPING_SYNC_SF_DELETE);
+  }
+
+  // Update the field maps.
   $field_maps = &$form_state['values']['salesforce_field_mappings'];
   if (!is_array($field_maps)) {
     return;
@@ -238,6 +287,58 @@ function salesforce_mapping_form_prevalidate($form, &$form_state) {
         $field_maps[] = $field_map;
       }
       unset($field_maps[$delta]);
+    }
+  }
+}
+
+/**
+ * Validate callback for salesforce_mapping_form().
+ */
+function salesforce_mapping_form_alter_validate($form, &$form_state) {
+  // Prevent the user from mistakenly bypassing the restriction for configuring
+  // delete on sync.
+  $sync_options = $form_state['values']['sync_triggers'];
+  $error_text = t('You do not have permission to configure a !module map to sync on delete.', array('!module' => 'salesforce_mapping'));
+  if ((in_array(SALESFORCE_MAPPING_SYNC_DRUPAL_DELETE, $sync_options) || in_array(SALESFORCE_MAPPING_SYNC_SF_DELETE, $sync_options)) && !user_access('configure salesforce_mapping delete sync')) {
+    // Remove the values from form state to minimize possible user frustration.
+    foreach ($sync_options as $key => $value) {
+      if (in_array($value, array(SALESFORCE_MAPPING_SYNC_DRUPAL_DELETE, SALESFORCE_MAPPING_SYNC_SF_DELETE))) {
+        unset($form_state['values']['sync_triggers'][$key]);
+        form_set_error('sync_triggers][' . $value, $error_text);
+      }
+    }
+  }
+
+  // No Salesforce field can be used twice.
+  $error_text = t('Multiple Drupal fields cannot be mapped to the same Salesforce fields.');
+  $sf_fields = array();
+  if (isset($form_state['values']['salesforce_field_mappings']) && is_array($form_state['values']['salesforce_field_mappings'])) {
+    foreach ($form_state['values']['salesforce_field_mappings'] as $key => $values) {
+      $sf_field = $values['salesforce_field'];
+      if (!empty($sf_field)) {
+        $drupal_field = $values['drupal_field']['fieldmap_value'];
+        $sf_fields[$sf_field][$drupal_field] = $drupal_field;
+      }
+    }
+  }
+  foreach ($sf_fields as $sf_field => $drupal_fields) {
+    $count = count($drupal_fields);
+    $drupal_fields_text = '"' . implode('", "', $drupal_fields) . '"';
+    if ($count > 1) {
+      if ($count > 2) {
+        $error_text = t('The Drupal fields, !drupal_fields, cannot all be mapped to the "!sf_field" Salesforce field.',
+          array('!drupal_fields' => $drupal_fields_text, '!sf_field' => $sf_field));
+      }
+      else {
+        $error_text = t('The Drupal fields, !drupal_fields, cannot both be mapped to the "!sf_field" Salesforce field.',
+          array('!drupal_fields' => $drupal_fields_text, '!sf_field' => $sf_field));
+      }
+      $i = 1;
+      foreach ($drupal_fields as $drupal_field) {
+        $message = $i === 1 ? $error_text : '';
+        form_set_error('salesforce_field_mappings][' . $drupal_field . '][salesforce_field', $message);
+        $i++;
+      }
     }
   }
 }
@@ -332,6 +433,22 @@ function salesforce_genmap_entity_delete($entity, $entity_type) {
  *   queued, or if the item was not supposed to be queued.
  */
 function salesforce_mapping_send_entity_to_queue($entity, $entity_type, $op) {
+  $sfapi = salesforce_get_api();
+  if (!$sfapi->isAuthorized()) {
+    // If there isn't a valid connection to Salesforce, lets not start queueing
+    // items.
+    return FALSE;
+  }
+
+  if (!variable_get('salesforce_genmap_allow_delete_sync', FALSE) && $op == 'DELETE') {
+    // Do not queue DELETE if site has disallowed delete trigger.  This is a
+    // failsafe in case someone had bypassed the configuration form's validation
+    // (such as manually constructing the configuration).  The goal is not to
+    // prevent any sort of deletion of records but rather to prevent the
+    // deletion of records on a triggered event.
+    return FALSE;
+  }
+
   // Information specific to this entity.
   list($entity_id, , $bundle) = entity_extract_ids($entity_type, $entity);
 
@@ -391,8 +508,10 @@ function salesforce_mapping_send_entity_to_queue($entity, $entity_type, $op) {
   $queue = salesforce_queue_load();
   $result = $queue->createItem($item);
   if (!$result) {
-    // @TODO Send an error to admin that submission didn't go to queue
-    drupal_set_message(t('The submission was not sent to Salesforce.'), 'error');
+    // salesforce_set_message() is a wrapper for drupal_set_message() that will
+    // restrict this message to appear only to those with the
+    // 'administer salesforce' permission.
+    salesforce_set_message(t('The submission was not sent to Salesforce.'), 'error');
   }
 }
 
@@ -426,7 +545,7 @@ function salesforce_mapping_map_entity($entity, $entity_type, $map) {
     $fieldmap_type = salesforce_mapping_get_fieldmap_types($drupal_field_type);
     $value = call_user_func($fieldmap_type['push_value_callback'], $field_map, $entity_wrapper);
     $fields[$sf_field] = $value;
-    $sync_rules[$sf_field] = isset($field_map['drupal_sf']) ? isset($field_map['drupal_sf']) : SALESFORCE_SYNC_RULE_ALWAYS;
+    $sync_rules[$sf_field] = isset($field_map['drupal_sf']) ? $field_map['drupal_sf'] : SALESFORCE_SYNC_RULE_ALWAYS;
   }
 
   $sobject = new stdClass();
@@ -638,6 +757,14 @@ function _sfm_datatype_can_sync($entity_type, $drupal_field, $salesforce_object_
     return TRUE;
   }
 
+  // The 'append' sync rule always fails because Springboard is choosing to
+  // disable this feature.  The variable is added so that the append
+  // functionality can still be tested, and in an edge case scenario, reenabled
+  // on a case-by-case basis if required.
+  if ($sync_rule == SALESFORCE_SYNC_RULE_APPEND && variable_get('salesforce_genmap_disable_sync_rule_append', TRUE)) {
+    return FALSE;
+  }
+
   // Find the datatype for the Drupal field.
   if (isset($form_state['sfm_storage']) && isset($form_state['sfm_storage']['drupal_datatype']) && isset($form_state['sfm_storage']['drupal_datatype'][$entity_type]) && isset($form_state['sfm_storage']['drupal_datatype'][$entity_type][$drupal_field])) {
     $drupal_datatype = $form_state['sfm_storage']['drupal_datatype'][$entity_type][$drupal_field];
@@ -701,6 +828,9 @@ function _sfm_datatype_can_sync($entity_type, $drupal_field, $salesforce_object_
     // with this set.
     $sync_restrictions = array(
       SALESFORCE_SYNC_RULE_ALWAYS => array(),
+      // Although 'append' returned FALSE in the begining, leaving the logic
+      // here so it can be reenabled rather easily.  It also serves as an
+      // example of syncing with only text data types.
       SALESFORCE_SYNC_RULE_APPEND => array(
         'drupal' => array(
           'text',

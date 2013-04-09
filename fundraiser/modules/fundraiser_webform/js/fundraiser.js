@@ -60,4 +60,4 @@ Drupal.behaviors.fundraiserCheckCode = {
   });
 
   })(jQuery); }
-} 
+}

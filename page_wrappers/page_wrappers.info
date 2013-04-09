@@ -1,7 +1,7 @@
 core = "7.x"
 description = "Allows users to create page templates that can then be assigned to nodes."
 name = "Page Wrappers"
-version =  7.x-3.0-dev
+version =  7.x-4.x-dev
 package = "Jackson River Springboard - extras"
 
 configure = admin/config/content/page-wrappers

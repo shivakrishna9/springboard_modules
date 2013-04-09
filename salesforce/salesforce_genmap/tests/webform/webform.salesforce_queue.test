@@ -66,7 +66,7 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
 
     // Create a new submission.  The webform2 map has already been configured
     // with a dedupe field so this should end up queued as an UPSERT.
-    $this->drupalPost('node/' . $this->webform2->nid, $edit, 'Submit');
+    $this->drupalPost($this->webformPath('submission', $this->webform2->nid), $edit, 'Submit');
     $this->assertText('your submission has been received', 'There was not an obvious error submitting UPSERT.');
     $item = $this->fetchQueueItem();
     $this->compareSubmissionQueueItem($edit, $item, 'UPSERT');
@@ -77,7 +77,7 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
     // item after this test in order to test having the item while still in the
     // queue.
     $edit['submitted[email]'] = 'webform1@email.com';
-    $this->drupalPost('node/' . $this->webform1->nid, $edit, 'Submit');
+    $this->drupalPost($this->webformPath('submission', $this->webform1->nid), $edit, 'Submit');
     $this->assertText('your submission has been received', 'There was not an obvious error submitting CREATE.');
     $item = $this->fetchQueueItem();
     $this->compareSubmissionQueueItem($edit, $item, 'CREATE');
@@ -86,7 +86,7 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
     // not processed and sent to Salesforce, this should end up queued as
     // CREATE.
     $edit['submitted[email]'] = 'webform1.update1@email.com';
-    $edit_path = 'node/' . $this->webform1->nid . '/submission/' . $item['drupal_id'] . '/edit';
+    $edit_path = $this->webformPath('edit_submission', $this->webform1->nid, $item['drupal_id']);
     $this->drupalPost($edit_path, $edit, 'Submit');
     $this->assertText('Submission updated', 'There was not an obvious error submitting UPDATE.');
     $item = $this->fetchQueueItem();
@@ -116,8 +116,29 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
     $this->compareSubmissionQueueItem($edit, $item, 'UPDATE');
     $this->deleteQueueItem($item);
 
-    // Delete the submission and it should end up queued as DELETE.
-    $edit_path = 'node/' . $this->webform1->nid . '/submission/' . $item['drupal_id'] . '/delete';
+    // Delete the submission and no queue item should be created because DELETE
+    // sync option is disabled by default.
+    $edit_path = $this->webformPath('delete_submission', $this->webform1->nid, $item['drupal_id']);
+    $this->drupalPost($edit_path, array(), 'Delete');
+    $this->assertText('Submission deleted', 'There was not an obvious error submitting DELETE.');
+    $queue = salesforce_queue_load();
+    $queue_count = $queue->numberOfItems();
+    $this->assertTrue(empty($queue_count), 'No queue item created because site has disabled queuing DELETE.');
+
+    // Enable ability to set a DELETE sync option and set option on map.
+    $this->enableDeleteSync('webform');
+    $webform_edit = array('map_config[sync_options][delete]' => TRUE);
+    $this->drupalPost($this->webformPath('salesforce_map', $this->webform1->nid), $webform_edit, 'Save');
+    $this->assertText('The map was saved successfully.', 'The DELETE sync option was saved.');
+
+    // Create a new webform submission and send it to Salesforce.
+    $edit['submitted[email]'] = 'webform1.sub2@email.com';
+    $this->drupalPost($this->webformPath('submission', $this->webform1->nid), $edit, 'Submit');
+    $this->assertText('your submission has been received', 'There was not an obvious error submitting CREATE.');
+    $processor->process();
+
+    // Delete the submission, it should end up queued as DELETE.
+    $edit_path = $this->webformPath('delete_submission', $this->webform1->nid, ($item['drupal_id'] + 1));
     $this->drupalPost($edit_path, array(), 'Delete');
     $this->assertText('Submission deleted', 'There was not an obvious error submitting DELETE.');
     $item = $this->fetchQueueItem();
@@ -126,10 +147,10 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
 
     // Go back to the webform with the dedupe field.  Create and modify an item.
     // This should end up queued as UPSERT.
-    $this->drupalPost('node/' . $this->webform2->nid, $edit, 'Submit');
+    $this->drupalPost($this->webformPath('submission', $this->webform2->nid), $edit, 'Submit');
     $this->assertText('your submission has been received', 'There was not an obvious error submitting UPSERT.');
     $item = $this->fetchQueueItem();
-    $edit_path = 'node/' . $this->webform2->nid . '/submission/' . $item['drupal_id'] . '/edit';
+    $edit_path = $this->webformPath('edit_submission', $this->webform2->nid, $item['drupal_id']);
     $edit['submitted[email]'] = 'webform2.update1@email.com';
     $this->drupalPost($edit_path, $edit, 'Submit');
     $this->assertText('Submission updated', 'There was not an obvious error submitting UPDATE.');
@@ -177,8 +198,7 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
     // Set up a webform.
     $this->salesforceConnect();
     $webform = $this->createWebform();
-    $path = 'node/' . $webform->nid;
-    $this->drupalGet($path . '/salesforce/webform');
+    $this->drupalGet($this->webformPath('salesforce_map', $webform->nid));
     $this->drupalPostAjax(NULL, array('salesforce_object_info[salesforce_object_type]' => 'Contact'), 'salesforce_object_info[salesforce_object_type]');
     $this->drupalPost(NULL, array(), 'Save');
 
@@ -190,6 +210,14 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
       'submitted[email]' => 'example@email.com',
     );
     $combinations = array(
+      array(
+        'map_config[sync_options][insert]' => TRUE,
+        'map_config[sync_options][update]' => FALSE,
+      ),
+      array(
+        'map_config[sync_options][insert]' => FALSE,
+        'map_config[sync_options][update]' => TRUE,
+      ),
       array(
         'map_config[sync_options][insert]' => TRUE,
         'map_config[sync_options][update]' => FALSE,
@@ -223,11 +251,21 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
     );
     $queue = salesforce_queue_load();
     foreach ($combinations as $sync_config) {
-      $this->drupalGet($path . '/salesforce/webform');
+      if (isset($sync_config['map_config[sync_options][delete]'])) {
+        // Set up ability to configure DELETE on sync.
+        $this->enableDeleteSync('webform');
+      }
+      else {
+        // Disable ability to configure DELETE on sync.
+        $this->disableDeleteSync();
+      }
+
+      // Set the sync config options for this loop.
+      $this->drupalGet($this->webformPath('salesforce_map', $webform->nid));
       $this->drupalPost(NULL, $sync_config, 'Save');
 
       // Create submission.
-      $this->drupalGet($path);
+      $this->drupalGet($this->webformPath('submission', $webform->nid));
       $this->drupalPost(NULL, $edit, 'Submit');
       $queue_item = $queue->claimItem();
       if ($sync_config['map_config[sync_options][insert]']) {
@@ -246,7 +284,7 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
       $sid = $matches[1];
 
       // Update submission.
-      $this->drupalGet($path . '/submission/' . $sid . '/edit');
+      $this->drupalGet($this->webformPath('edit_submission', $webform->nid, $sid));
       $this->drupalPost(NULL, array(), 'Submit');
       $queue_item = $queue->claimItem();
       if ($sync_config['map_config[sync_options][update]']) {
@@ -260,17 +298,22 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
       }
 
       // Delete submission.
-      $this->drupalGet($path . '/submission/' . $sid . '/delete');
+      $this->drupalGet($this->webformPath('delete_submission', $webform->nid, $sid));
       $this->drupalPost(NULL, array(), 'Delete');
       $queue_item = $queue->claimItem();
-      if ($sync_config['map_config[sync_options][delete]']) {
-        $this->assertTrue(is_object($queue_item), 'Submission configured to sync on delete was not sent to queue.');
-        // Simulate processed item.
-        $queue->releaseItem($queue_item);
-        $queue->deleteItem($queue_item);
+      if (variable_get('salesforce_genmap_allow_delete_sync', FALSE)) {
+        if ($sync_config['map_config[sync_options][delete]']) {
+          $this->assertTrue(is_object($queue_item), 'Submission configured to sync on delete was not sent to queue.');
+          // Simulate processed item.
+          $queue->releaseItem($queue_item);
+          $queue->deleteItem($queue_item);
+        }
+        else {
+          $this->assertFalse($queue_item, 'Submission not configured to sync on delete was sent to the queue.');
+        }
       }
       else {
-        $this->assertFalse($queue_item, 'Submission not configured to sync on delete was sent to the queue.');
+        $this->assertTrue(empty($queue_item), 'Delete not queued when delete sync is disallowed.');
       }
     }
   }
@@ -289,7 +332,7 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
         'submitted[last_name]' => $this->randomName(),
         'submitted[email]' => $this->randomName() . '@email.com',
       );
-      $this->drupalGet('node/' . $this->webform2->nid);
+      $this->drupalGet($this->webformPath('submission', $this->webform2->nid));
       $this->drupalPost(NULL, $edit, 'Submit');
       $this->assertText('your submission has been received', 'There was not an obvious error making a submission.');
     }
@@ -302,7 +345,7 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
 
     // Update the map.
     $edit = array('salesforce_dedupe_field' => 'none');
-    $this->drupalGet('node/' . $this->webform2->nid . '/salesforce/webform');
+    $this->drupalGet($this->webformPath('salesforce_map', $this->webform2->nid));
     $this->drupalPost(NULL, $edit, 'Save');
     $this->assertText('The map was saved successfully.', 'Saving posted correctly.');
 

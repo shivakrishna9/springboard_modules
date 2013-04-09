@@ -25,7 +25,7 @@
       $('#edit-submit').mouseover(function() {
         // This shouldn't be necessary.
         $parent_form.setAttribute('action', $old_action);
-    
+
       });
     }
   };

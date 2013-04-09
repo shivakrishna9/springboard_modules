@@ -110,7 +110,7 @@ class SalesforceWebformTestCase extends SalesforceGenmapTestCase {
    */
   public function mapWebform($nid, $dedupe = FALSE) {
     $this->salesforceConnect();
-    $this->drupalGet('node/' . $nid . '/salesforce/webform');
+    $this->drupalGet($this->webformPath('salesforce_map', $nid));
 
     // AJAX select the object type so the mapping fields show up.
     $edit = array(
@@ -179,5 +179,77 @@ class SalesforceWebformTestCase extends SalesforceGenmapTestCase {
     else {
       // No need to do an drupalPostAjax.
     }
+  }
+
+  /**
+   * Helper to enable the ability to delete during a sync trigger.
+   *
+   * @param string $module
+   *   Name of the module to enable syncing for.
+   *
+   * @return int
+   *   Id of the role that has the permission to configure delete syncing.
+   */
+  public function enableDeleteSync($module) {
+    variable_set('salesforce_genmap_allow_delete_sync', TRUE);
+    drupal_static_reset();
+    cache_clear_all();
+    $rid = $this->drupalCreateRole(array('configure ' . $module . ' delete sync'));
+    $roles = $this->admin_user->roles;
+    $roles[$rid] = $rid;
+    user_save($this->admin_user, array('roles' => $roles));
+    return $rid;
+  }
+
+  /**
+   * Helper to disable the ability to delete during a sync trigger.
+   */
+  public function disableDeleteSync() {
+    variable_set('salesforce_genmap_allow_delete_sync', FALSE);
+    drupal_static_reset();
+    cache_clear_all();
+  }
+
+  /**
+   * Helper to generate paths to various webform-related pages.
+   *
+   * The goal is to centralize the declaration of these paths to make it easier
+   * to alter them when nessisary.
+   *
+   * @param string $type
+   *   The page of the path to retreive.
+   *     - salesforce_map: Salesforce webform mapping page
+   *     - submission: Submission form of the webform.  Node view of the node.
+   *     - edit_submission: Edit form of the given submission.
+   *     - delete_submission: Delete page for the given submission.
+   * @param int $arg1
+   *   First argument to supply.  Currently always the node id of the webform.
+   * @param int $arg2
+   *   Second argument to apply.  Currently always the submission id of the
+   *   submission to manipulate.
+   *
+   * @return string
+   *   The requested path.
+   */
+  public function webformPath($type, $arg1 = NULL, $arg2 = NULL) {
+    switch ($type) {
+      case 'salesforce_map':
+        if (module_exists('salesforce_donation')) {
+          return 'node/' . $arg1 . '/salesforce/webform';
+        }
+        else {
+          return 'node/' . $arg1 . '/salesforce_webform';
+        }
+
+      case 'submission':
+        return 'node/' . $arg1;
+
+      case 'edit_submission':
+        return 'node/' . $arg1 . '/submission/' . $arg2 . '/edit';
+
+      case 'delete_submission':
+        return 'node/' . $arg1 . '/submission/' . $arg2 . '/delete';
+    }
+    return '';
   }
 }

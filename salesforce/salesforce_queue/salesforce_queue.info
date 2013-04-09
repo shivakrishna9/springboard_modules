@@ -2,6 +2,7 @@ name = Salesforce Queue
 description = Batch processing for Salesforce integration.
 package = Salesforce
 core = 7.x
+version = 7.x-3.x-dev
 
 files[] = includes/salesforce_queue.processor.inc
 files[] = includes/salesforce_queue.queue.inc
@@ -17,4 +18,4 @@ dependencies[] = salesforce
 dependencies[] = salesforce_soap
 dependencies[] = salesforce_sync
 
-configure = admin/config/services/salesforce/salesforce-sync/salesforce-queue
+configure = admin/config/salesforce/salesforce-queue

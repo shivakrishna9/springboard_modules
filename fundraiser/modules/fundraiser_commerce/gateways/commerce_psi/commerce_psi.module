@@ -1,0 +1,94 @@
+<?php
+
+/**
+ * Send a request to the PSI API
+ *
+ * @param $payment_method Array
+ *    Fully loaded commerce payment method
+ * @param $nvp Array
+ *    Array of values to send with the request
+ * @param $type String
+ *    Type of request, can be check or credit, defaults to credit
+ *
+ * @return $object
+ *    The response object from PSI
+ */
+function _commerce_psi_request($payment_method, $nvp, $type = 'credit') {
+  $account_details = $payment_method['settings'];
+  $account_details['account_password'] = _commerce_psi_decrypt($payment_method['settings']['account_password']);
+  $account_details['title'] = $payment_method['title'];
+  $client = new PsiClient($account_details);
+  if (!empty($client)) {
+    return $client->{$type . 'Request'}($nvp);
+  }
+}
+
+/**
+ * Construct an array of values for the donor
+ *
+ * @param $order Object
+ *    Commerce order
+ *
+ * @return Array
+ *    An array ready to be submitted to the PSI API
+ */
+function _commerce_psi_build_donor($order) {
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+  // If there's no billing address return nothing
+  if (!$order_wrapper->commerce_customer_billing->value()) {
+    return NULL;
+  }
+  $billing_address = $order_wrapper->commerce_customer_billing->commerce_customer_address->value();
+  $donor = array();
+
+  if (empty($billing_address['first_name'])) {
+    $name_parts = explode(' ', $billing_address['name_line']);
+    $donor['FirstName'] = drupal_substr(array_shift($name_parts), 0, 30);
+    $donor['LastName'] = drupal_substr(implode(' ', $name_parts), 0, 30);
+  }
+  else {
+    $donor['FirstName'] = drupal_substr($billing_address['first_name'], 0, 30);
+    $donor['LastName'] = drupal_substr($billing_address['last_name'], 0, 30);
+  }
+
+  $donor += array(
+    // Customer Information
+    'Email' => drupal_substr($order->mail, 0, 80),
+    'DonorId' => drupal_substr($order->uid, 0, 20),
+    // Customer Billing Address
+    'Title' => !empty($billing_address['title']) ? drupal_substr($billing_address['title'], 0, 20) : '',
+    'Address1' => drupal_substr($billing_address['thoroughfare'], 0, 50),
+    'Address2' => drupal_substr($billing_address['premise'], 0, 50),
+    'City' => drupal_substr($billing_address['locality'], 0, 30),
+    'StateProvince' => drupal_substr($billing_address['administrative_area'], 0, 50),
+    'PostalCode' => drupal_substr($billing_address['postal_code'], 0, 20),
+    'Country' => drupal_substr($billing_address['country'], 0, 30),
+    'Phone' => !empty($billing_address['phone']) ? drupal_substr($billing_address['phone'], 0 , 20) : 'N/A',
+    'SendEmail' => FALSE,
+  );
+
+  return $donor;
+}
+
+/**
+ * Encrypt the password of the accounts
+ */
+function _commerce_psi_encrypt_settings_password($element, $input = FALSE, $form_state) {
+  if (!empty($input)) {
+    return _commerce_psi_encrypt($input);
+  }
+}
+
+/**
+ * Helper function, wrapper for encrypt function.
+ */
+function _commerce_psi_encrypt($input) {
+  return encrypt($input);
+}
+
+/**
+ * Helper function, wrapper for decrypt function.
+ */
+function _commerce_psi_decrypt($input) {
+  return decrypt($input);
+}

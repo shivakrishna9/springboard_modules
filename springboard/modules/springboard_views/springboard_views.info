@@ -1,4 +1,5 @@
 core = 7.x
+version = 7.x-4.x-dev
 description = "Adds views integration for Springboard."
 name = "Springboard Views"
 package = "Jackson River Springboard"

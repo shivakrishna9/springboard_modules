@@ -93,6 +93,7 @@ class SalesforceSyncTokenScanner {
         // What do we do here? No token found, bummer! This will cause the
         // object to fail.
         $object->fields[$field] = $token;
+        $object->tokens_replaced = FALSE;
       }
     }
   }

@@ -41,7 +41,7 @@ function capwiz_connect_js_menu() {
     'type' => MENU_CALLBACK,
     'weight' => 1,
   );
-  
+
   $items[CAPWIZ_CONNECT_ADMIN_URL . '/alerts/%/edit'] = array(
     'title' => 'Edit Alert',
     'description' => 'Edit an alert for tracking and redirect settings.',
@@ -59,14 +59,14 @@ function capwiz_connect_js_menu() {
 /**
  * Implements hook_permission().
  */
-function capwiz_connect_js_permission() {  
+function capwiz_connect_js_permission() {
   return array(
     'add capwiz js alerts' => array(
-      'title' => t('Add alerts'), 
+      'title' => t('Add alerts'),
       'description' => t('Configure new Capwiz alerts.'),
     ),
     'manage capwiz js alerts' => array(
-      'title' => t('Manage alerts'), 
+      'title' => t('Manage alerts'),
       'description' => t('Manage existing alerts.'),
     ),
   );
@@ -74,7 +74,7 @@ function capwiz_connect_js_permission() {
 
 /**
  * Implements hook_hook_info_alter()
- * 
+ *
  * Ensures the capwiz_connect_js.admin.inc file will get loaded for form alter functionaliy
  */
 function capwiz_connect_js_hook_info_alter(&$hooks) {
@@ -180,14 +180,14 @@ function capwiz_connect_js_capwiz_connect_save_user($user, $drupal_account) {
 
 /**
  * Implementation of hook_queue_preprocess_batch_alter().
- * 
- * Add data captured by the 
+ *
+ * Add data captured by the
  */
 function capwiz_connect_js_queue_preprocess_batch_alter(&$batch) {
   static $map = array();
 
   if ($batch['type'] != 'capwiz_connect_action') {
-    return;   
+    return;
   }
 
   foreach ($batch['records'] as $record) {
@@ -237,13 +237,13 @@ function capwiz_connect_js_queue_preprocess_batch_alter(&$batch) {
 
 /**
  * Map the values that come from the capwiz form to values for the action or user
- * 
+ *
  * @param String
  *    The capwiz object to work with, either an action or a user
  * @param Array
  *    The full array of data returned from the capwiz form
  * @return Object
- *    An object of values depending on the type 
+ *    An object of values depending on the type
  */
 function _capwiz_connect_js_field_maps($type, $data) {
   // An array of field names from the capwiz form mapped to the type of data used for actions or users.
@@ -328,7 +328,7 @@ function _capwiz_connect_js_field_maps($type, $data) {
 
 function _capwiz_connect_js_preg_array_keys($field, $array) {
   $pattern = '/' . str_replace('%int', '[0-9]+', $field) . '/';
-  $keys = array_keys($array);    
+  $keys = array_keys($array);
   $matches = preg_grep($pattern, $keys);
   return reset($matches);
 }

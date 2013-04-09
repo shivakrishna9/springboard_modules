@@ -84,9 +84,8 @@ function _fundraiser_multi_currency_insert_defaults() {
 }
 
 /**
- * Implements hook_update_N().
- * Load defaults into the db for sites that don't already have them.
+ * Implements hook_update_last_removed().
  */
-function fundraiser_multi_currency_update_6001() {
-  _fundraiser_multi_currency_insert_defaults();
+function fundraiser_multi_currency_update_last_removed() {
+  return 6001;
 }

@@ -7,7 +7,7 @@ function springboard_api_list_webforms($pubkey, $timestamp, $checksum, $page, $p
   unset($_SESSION['messages']);
   $data = array();
   $valid = _springboard_api_validate_transaction('index', $timestamp, $pubkey, $checksum);
-  
+
   if ($valid) {
     $webform_node_types = implode("','", variable_get('webform_node_types', ''));
     $sql = sprintf("SELECT nid, title, type FROM {node} WHERE type IN ('%s') LIMIT %d, %d", $webform_node_types, $page, $pagesize);
@@ -28,7 +28,7 @@ function springboard_api_list_webforms($pubkey, $timestamp, $checksum, $page, $p
  *
  * @param $nid
  * Node id of the requested webform.
- * 
+ *
  * @return
  * Returns an array of field definitions for the requested webform.
  */
@@ -47,7 +47,7 @@ function springboard_api_get_webform($pubkey, $timestamp, $checksum, $nid) {
     $webform_node_types = variable_get('webform_node_types', '');
     $node = node_load(array('nid' => $nid));
 
-    
+
     if (!is_numeric($nid) || $nid == 0) {
       watchdog('springboard_api', t('Error: nid missing or invalid'), array(), WATCHDOG_ERROR);
       services_error('Error: webform id missing or invalid', 400, t('The webform id is either missing or invalid (not an integer).'));
@@ -66,8 +66,8 @@ function springboard_api_get_webform($pubkey, $timestamp, $checksum, $nid) {
     $webform['nid'] = $node->nid;
     $webform['type'] = $node->type;
     $webform['title'] = $node->title;
-    
-  
+
+
     $webform['components'] = _springboard_api_get_webform_components($node->nid);
     $user = $cache_user;
     return $webform;
@@ -79,7 +79,7 @@ function springboard_api_get_webform($pubkey, $timestamp, $checksum, $nid) {
 }
 
 /**
- * Process a donation submitted via the API. 
+ * Process a donation submitted via the API.
  *
  * @param $submission
  * Array of webform values.
@@ -87,7 +87,7 @@ function springboard_api_get_webform($pubkey, $timestamp, $checksum, $nid) {
 function springboard_api_submit_webform($submission) {
   unset($_SESSION['messages']);
   $valid = _springboard_api_validate_transaction('submit', $submission['time'], $submission['pubkey'], $submission['checksum']);
-  
+
   if ($valid) {
 
     springboard_api_validate_donation($submission);
@@ -106,7 +106,7 @@ function springboard_api_submit_webform($submission) {
         'submit' => 'Submit',
         'form_id' => 'webform_client_form_' . $submission['webform_nid'],
         'process_input' => 1,
-      ),  
+      ),
     );
 
     $results = db_query('
@@ -116,9 +116,9 @@ function springboard_api_submit_webform($submission) {
         wc.type,
         wc.extra,
         wc2.form_key as parent_key
-      FROM {webform_component} wc 
+      FROM {webform_component} wc
       LEFT JOIN {webform_component} wc2
-        ON wc2.cid = wc.pid 
+        ON wc2.cid = wc.pid
         AND wc2.nid = %d
       WHERE wc.nid = %d
       ORDER BY parent_key', $submission['webform_id'], $submission['webform_id']);
@@ -158,7 +158,7 @@ function springboard_api_submit_webform($submission) {
             $save[$field->form_key] = $submission[$field->form_key];
           }
           else {
-          
+
           $save[$field->form_key] = array();
           $submission[$field->form_key] = explode(',', $submission[$field->form_key]);
 
@@ -173,13 +173,13 @@ function springboard_api_submit_webform($submission) {
               $item = preg_replace('/\|.*$/', '', $item);
 
               if (in_array($item, $submission[$field->form_key])) {
-                $save[$field->form_key][$item] = $item; 
+                $save[$field->form_key][$item] = $item;
               }
               else {
                 $save[$field->form_key][$item] = '';
               }
             }
-          
+
             foreach ($submission[$field->form_key] as $item) {
               $item = trim($item);
               $save[$field->form_key][$item] = $item;
@@ -222,7 +222,7 @@ function springboard_api_submit_webform($submission) {
 
 /**
  * Validate donation array for required values.
- * 
+ *
  * @param $donation
  * Keyed array of submitted donation values.
  *
@@ -230,23 +230,23 @@ function springboard_api_submit_webform($submission) {
 function springboard_api_validate_donation($donation = array()) {
    unset($_SESSION['messages']);
    $node_type = db_result(db_query('SELECT type FROM {node} WHERE nid = %d', $donation['webform_id']));
-   
+
   // TODO: replace this with a function call that ascertains required fields for this webform.
   $results = db_query('SELECT form_key FROM {webform_component} WHERE nid=%d AND mandatory = 1', $donation['webform_id']);
   $donation_keys = array_keys($donation);
   while ($form_key = db_result($results)) {
 
     if(!in_array($form_key, $donation_keys)) {
-   
+
       $missing_fields[] = $form_key;
     }
   }
   unset($form_key);
-  
+
   if(count($missing_fields)) {
     drupal_set_message(t('The following required fields where missing values: !values', array('!values' => implode(', ', $missing_fields))));
   }
-  
+
   $results = db_query('SELECT form_key FROM {webform_component} WHERE type = "date" AND nid=%d', $donation['webform_id']);
   while ($form_key = db_result($results)) {
     $date = explode('/', $donation[$form_key]);
@@ -263,7 +263,7 @@ function springboard_api_validate_donation($donation = array()) {
 }
 
 /**
- * 
+ *
  */
 function _springboard_api_list_order_ids() {
   $results = db_query('SELECT fwo.order_id FROM {springboard_webform_order} fwo UNION SELECT fr.order_id FROM {springboard_recurring} fr');
@@ -275,27 +275,27 @@ function _springboard_api_list_order_ids() {
 
 /**
  * Return an array of webform components for a given node.
- * 
+ *
  * @param $nid
  * Node ID
- * 
+ *
  * @return
  * Returns an array containing data from {webform_component}
  */
 function _springboard_api_get_webform_components($nid) {
-  $results = db_query('SELECT 
+  $results = db_query('SELECT
       form_key as field_id,
       name,
       type,
       value as default_value,
       mandatory as required,
       extra as details
-    FROM {webform_component} 
+    FROM {webform_component}
     WHERE nid = %d', $nid);
   while ($field = db_fetch_array($results)) {
 
     $field['details'] = unserialize($field['details']);
-    
+
     if ($field['type'] == 'select') {
       $items = array();
       $items_raw = explode("\n", $field['details']['items']);

@@ -45,6 +45,9 @@ define('SALESFORCE_SYNC_MAX_QUERY_LENGTH_DEFAULT', 10000);
 // The maximum amount of items that can be sent to Salesforce in one call.
 define('SALESFORCE_SYNC_MAX_BATCH_SIZE_DEFAULT', 200);
 
+// The maximum records that can be fetched from Salesforce in one call.
+define('SALESFORCE_SYNC_MAX_RETRIEVE_SIZE_DEFAULT', 2000);
+
 /**
  * @}
  */
@@ -57,22 +60,31 @@ define('SALESFORCE_SYNC_MAX_BATCH_SIZE_DEFAULT', 200);
  */
 
 // Item failed when it was attempted to be created in Salesforce.
-define('SALESFORCE_SYNC_ITEM_FAIL_CREATE', 'Item failed to be created.');
+define('SALESFORCE_SYNC_ITEM_FAIL_CREATE', 'Item failed CREATE.');
 
 // Item failed when it attempted an upsert in Salesforce.
-define('SALESFORCE_SYNC_ITEM_FAIL_UPSERT', 'Item failed to be upserted.');
+define('SALESFORCE_SYNC_ITEM_FAIL_UPSERT', 'Item failed UPSERT.');
 
 // Item failed when it attempted an update in Salesforce.
-define('SALESFORCE_SYNC_ITEM_FAIL_UPDATE', 'Item failed to be updated.');
+define('SALESFORCE_SYNC_ITEM_FAIL_UPDATE', 'Item failed UPDATE.');
 
 // Item failed when it was attempted to be deleted in Salesforce.
-define('SALESFORCE_SYNC_ITEM_FAIL_DELETE', 'Item failed to be deleted.');
+define('SALESFORCE_SYNC_ITEM_FAIL_DELETE', 'Item failed DELETE.');
 
 // Item failed when it was attempted to be undeleted in Salesforce.
-define('SALESFORCE_SYNC_ITEM_FAIL_UNDELETE', 'Item failed to be undeleted.');
+define('SALESFORCE_SYNC_ITEM_FAIL_UNDELETE', 'Item failed UNDELETE.');
 
 // The entire batch failed to be processed due to some error with Salesforce.
-define('SALESFORCE_SYNC_ITEM_FAIL_BATCH', 'Batch caused Salesforce to throw exception.');
+define('SALESFORCE_SYNC_ITEM_FAIL_BATCH', 'Batch threw exception.');
+
+// The batch failed to be processed because we could not get a connection.
+define('SALESFORCE_SYNC_ITEM_FAIL_SOAP', 'SOAP not established.');
+
+// The batch failed to be processed because we could not get a connection.
+define('SALESFORCE_SYNC_ITEM_FAIL_TOKEN_BATCH', 'No items ready to sync in the batch.');
+
+// The batch failed to be processed because we could not get a connection.
+define('SALESFORCE_SYNC_ITEM_FAIL_TOKEN', 'Item failed due to bad token.');
 
 /**
  * @} salesforce_sync_item_fail_responces
@@ -104,19 +116,14 @@ function salesforce_sync_entity_info() {
  * Implements hook_menu().
  */
 function salesforce_sync_menu() {
-  $items['admin/config/services/salesforce/salesforce-sync'] = array(
-    'title' => 'Syncing',
+  $items['admin/config/salesforce/salesforce-sync'] = array(
+    'title' => 'Synchronize',
     'description' => 'Configuration settings for syncing with Salesforce.',
     'page callback' => 'salesforce_sync_admin_page',
     'access arguments' => array('administer salesforce sync'),
-    'type' => MENU_LOCAL_TASK,
+    'type' => MENU_NORMAL_ITEM,
     'file' => 'includes/salesforce_sync.admin.inc',
   );
-  $items['admin/config/services/salesforce/salesforce-sync/config'] = $items['admin/config/services/salesforce/salesforce-sync'];
-  $items['admin/config/services/salesforce/salesforce-sync/config']['title'] = 'Sync';
-  $items['admin/config/services/salesforce/salesforce-sync/config']['type'] = MENU_DEFAULT_LOCAL_TASK;
-  $items['admin/config/services/salesforce/salesforce-sync/config']['weight'] = -10;
-
   return $items;
 }
 
@@ -261,6 +268,26 @@ function salesforce_sync_delete_map($record) {
     }
     return TRUE;
   }
+}
+
+/**
+ * Implements hook_salesforce_log_info().
+ */
+function salesforce_sync_salesforce_log_info() {
+  return array(
+    'watchdog' => array(
+      'sync-01' => t('Item failed to sync'),
+      'sync-02' => t('Item failed to delete'),
+      'sync-03' => t('Batch failed to sync'),
+      'sync-04' => t('Fetch records by Id failed'),
+      'sync-05' => t('Fetch records by Id gave bad results'),
+      'sync-06' => t('Salesforce query failed'),
+      'sync-07' => t('Salesforce query could not fetch all'),
+      'sync-08' => t('Query cannot be shortened under max length'),
+      'sync-10' => t('SalesforceAPI is unauthorized'),
+      'sync-11' => t('SalesforceSoapPartner is unusable'),
+    ),
+  );
 }
 
 /**

@@ -100,7 +100,7 @@ Drupal.behaviors.marketSourceInit = {
       // Set the referrer cookie for backwards compat.
       setCookie('referrer', qs_keys['referrer']['value']);
     }
-    
+
   }).addClass('marketsource-processed');
 
   })(jQuery); }
@@ -126,7 +126,7 @@ Drupal.behaviors.marketSourceFormPopulate = {
 
   // add search engine, search string, and user agent fields to qs_keys
   var qs_keys = Drupal.settings.market_source.qs_keys;
-  if (typeof qs_keys['initial_referrer'] !== 'undefined' && typeof qs_keys['search_engine'] !== 'undefined' 
+  if (typeof qs_keys['initial_referrer'] !== 'undefined' && typeof qs_keys['search_engine'] !== 'undefined'
     && qs_keys['search_engine']['value'] == null
   ) {
     if (/http(s?)\:\/\/www\.google\./.test(qs_keys['initial_referrer']['value'])) {
@@ -182,7 +182,7 @@ Drupal.behaviors.marketSourceFormPopulate = {
   if (typeof qs_keys['user_agent'] !== 'undefined') {
     qs_keys['user_agent']['value'] = navigator.userAgent;
   }
-  
+
   // Iterate across all webforms on the page.
   for (var form_id in Drupal.settings.market_source.form_keys) {
     // Iterate across all form keys in this webform.

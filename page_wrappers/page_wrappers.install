@@ -22,7 +22,7 @@ function page_wrappers_uninstall() {
   variable_del('page_wrapper_enabled_node_types');
   _page_wrappers_delete_nodes();
   _page_wrappers_delete_fields();
-  
+
   node_type_delete('page_wrapper');
   field_purge_batch(1000);
 }
@@ -94,7 +94,7 @@ function _page_wrappers_create_fields() {
   }
 
   $fields = array(
-    
+
     // css filefield
     'css_filefield' => array(
       'translatable' => '1',
@@ -146,7 +146,7 @@ function _page_wrappers_create_fields() {
         'bundle' => 'page_wrapper',
       ),
     ),
-    
+
     // javascript filefield
     'js_filefield' => array(
       'field_name' => 'page_wrappers_js',
@@ -192,7 +192,7 @@ function _page_wrappers_create_fields() {
         'bundle' => 'page_wrapper',
       ),
     ),
-    
+
     // html template
     'html_template' => array(
       'field_name' => 'page_wrappers_html_template',
@@ -215,7 +215,7 @@ function _page_wrappers_create_fields() {
       ),
     ),
   );
-  
+
   foreach ($fields as $key => $values) {
     $instance = $values['_instance'];
     unset($values['_instance']);

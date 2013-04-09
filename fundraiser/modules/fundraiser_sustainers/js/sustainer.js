@@ -12,15 +12,15 @@ Drupal.behaviors.fundraiserSustainer = {
     $('#fundraiser-donation-amount-form').submit(function() {
       $('input[type=submit]', this).attr('disabled', 'disabled');
     });
-    
+
     $('#fundraiser-billing-update-form').submit(function() {
       $('input[type=submit]', this).attr('disabled', 'disabled');
     });
-    
+
     $('#fundraiser-cancel-form').submit(function() {
       $('input[type=submit]', this).attr('disabled', 'disabled');
-    }); 
+    });
   });
 
   })(jQuery); }
-} 
+}

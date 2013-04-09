@@ -141,7 +141,7 @@ function form_layouts_form_webform_client_form_alter(&$form, &$form_state, $form
  * Implements hook_form_layouts_info().
  */
 function form_layouts_form_layouts_info() {
-  
+
   $templates['one_column'] = array(
     'name' => t('One column'),
     'theme' => 'one_column',

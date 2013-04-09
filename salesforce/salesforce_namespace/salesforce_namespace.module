@@ -10,13 +10,13 @@
  * Implements hook_menu().
  */
 function salesforce_namespace_menu() {
-  $items['admin/config/services/salesforce/salesforce-namespace'] = array(
-    'title' => 'Namespace',
+  $items['admin/config/salesforce/salesforce-namespace'] = array(
+    'title' => 'Namespacing',
     'description' => 'Configuration settings for the Salesforce namespace module.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('salesforce_namespace_settings'),
     'access arguments' => array('administer salesforce namespace'),
-    'type' => MENU_LOCAL_TASK,
+    'type' => MENU_NORMAL_ITEM,
     'file' => 'includes/salesforce_namespace.admin.inc',
   );
 

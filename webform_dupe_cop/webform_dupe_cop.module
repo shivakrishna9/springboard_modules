@@ -35,7 +35,10 @@ function webform_dupe_cop_permission() {
  * Implements hook_form_alter().
  */
 function webform_dupe_cop_form_alter(&$form, &$form_state, $form_id) {
-  if (strpos($form_id, 'webform_client_form_') === 0) {
+  // We want to run this on webform forms, but not on the submission edit form (after the fact).
+  // Of course, they both use the same form id.
+  // So we need to check the args for submission or not.
+  if (strpos($form_id, 'webform_client_form_') === 0 && arg(2) != 'submission') {
     $form['#validate'][] = 'webform_dupe_cop_client_form_validate';
     $form['#submit'][] = 'webform_dupe_cop_client_form_submit';
   }
@@ -65,13 +68,13 @@ function webform_dupe_cop_client_form_validate($form, &$form_state) {
   // Check for previous submissions within the configured time frame.
   $nid = $form_state['values']['details']['nid'];
   $timespan = trim(variable_get('webform_dupe_cop_timespan', '1 hour'));
-  $minimum_timestamp = ($timespan_hours != '0') ? (strtotime($timespan . ' ago')) : 0;
+  $minimum_timestamp = (isset($timespan_hours) && ($timespan_hours != '0')) ? (strtotime($timespan . ' ago')) : 0;
   $submitted = db_query("SELECT submitted FROM {webform_dupe_cop} wdc
       INNER JOIN {webform_submissions} ws ON ws.sid=wdc.sid
-      WHERE wdc.submission_hash = :wdc.submission_hash
-        AND ws.nid = :ws.nid
-        AND ws.submitted > :ws.submitted",
-    array(':wdc.submission_hash' => $hash, ':ws.nid' => $nid, ':ws.submitted' => $minimum_timestamp)
+      WHERE wdc.submission_hash = :submission_hash
+        AND ws.nid = :nid
+        AND ws.submitted > :submitted",
+    array(':submission_hash' => $hash, ':nid' => $nid, ':submitted' => $minimum_timestamp)
     )->fetchField();
   // If this form has been submitted before.
   if ($submitted) {

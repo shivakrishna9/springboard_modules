@@ -54,6 +54,9 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     // Remove the items we created in our Salesforce instance.
     $this->processor->deleteNewSfRecords();
 
+    // Empty the queue.
+    $this->queue->deleteQueue();
+
     parent::tearDown();
   }
 
@@ -65,7 +68,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     $this->assertEqual(SALESFORCE_QUEUE_PROCESS_NO_ITEMS, $this->processor->process(), 'Notified that the queue is empty.');
 
     // Create queue items.
-    $this->createQueueItems($this->queue, 10, array('CREATE', 'UPSERT'), array('Opportunity'));
+    $this->createQueueItems($this->queue, 3, array('CREATE', 'UPSERT'), array('Opportunity'));
 
     // Going to lock the queue by another process and have it fail from a locked
     // queue.
@@ -75,15 +78,14 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     // Release the claim and try again.
     // Since we haven't connected to Salesforce, processing will fail.
     $this->queue->releaseBatch('', TRUE);
+    watchdog('salesforce', 'NOTE (1) "queue-03" error to follow.', NULL, WATCHDOG_WARNING);
     $this->assertEqual(SALESFORCE_QUEUE_PROCESS_FAIL_CONNECT, $this->processor->process(), 'Received error for not being able to connect to Salesforce.');
 
     // Connect to Salesforce.
     // All this extra stuff is special for simpletest to connect to SOAP due to
     // the access token being stored in the session.
-    $sfapi = $this->salesforceConnect();
     $this->processor->setSalesforceApi($this->salesforceConnect());
-    $soap = new SalesforceSoapPartner($sfapi);
-    $this->processor->setSalesforceSoap($soap);
+    $this->processor->setSalesforceSoap();
     $this->assertEqual(SALESFORCE_QUEUE_PROCESS_COMPLETE, $this->processor->process(), 'Able to claim items and move through processing.');
 
     // Take all of the items we created and try to create them again.  They will
@@ -100,6 +102,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
       );
       $this->queue->createItem($data);
     }
+    watchdog('salesforce', 'NOTE (3) "Item failed validation" warnings to follow.', NULL, WATCHDOG_WARNING);
     $this->assertEqual(SALESFORCE_QUEUE_PROCESS_FAIL_NO_VALID_ITEMS, $this->processor->process(), 'Sending duplicate items to Salesforce as CREATE returned no valid items.');
   }
 
@@ -250,13 +253,16 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     // Set up the processor's Salesforce connection.
     // This is special for simpletest due to the access token being stored in
     // the session.
-    $sfapi = $this->salesforceConnect();
-    $this->processor->setSalesforceApi($sfapi);
-    $soap = new SalesforceSoapPartner($sfapi);
-    $this->processor->setSalesforceSoap($soap);
+    $this->processor->setSalesforceApi($this->salesforceConnect());
+    $this->processor->setSalesforceSoap();
 
-    // Create a bunch of items to work with and process 'em.
-    $this->createQueueItems($this->queue, 50, array('CREATE'));
+    $base_queue_items = 25;
+
+    // Create a bunch of items to work with and process 'em.  Using this method
+    // to ensure items of each object type are created.  Skipping Opportunities
+    // for now, since they will fail creation.
+    $this->createQueueItems($this->queue, $base_queue_items, array('CREATE'), array('Opportunity', 'Account'));
+    $this->createQueueItems($this->queue, $base_queue_items, array('CREATE'), array('Contact', 'Opportunity'));
     $this->processor->claimItems();
     $records = array();
     $batches = $this->processor->createBatches();
@@ -268,23 +274,19 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
         $item = $batch['items'][$key];
         $object_type = $item->object_type;
         if (!empty($result->id)) {
-          $sf_items[] = $result->id;
+          $sf_items[$result->id] = $result->id;
           $item->sobject->Id = $result->id;
-          $records[$object_type][] = $item;
+          $records[$object_type][$result->id] = $item;
         }
-        // All opportunities will fail because the AccountId field is invalid.
-        if ($object_type == 'Opportunity') {
-          $this->assertFalse($result->success, 'Opportunity item failed as expected.');
-        }
-        // The others types should have been created.
-        else {
-          $this->assertTrue($result->success, $object_type . ' item succeeded as expected.');
-        }
+        $this->assertTrue($result->success, $object_type . ' item succeeded as expected.');
       }
     }
 
-    // Queue more new items and UPSERT items.
-    $this->createQueueItems($this->queue, 25, array('CREATE', 'UPSERT'));
+    // Queue more new items and UPSERT items.  Using this method to ensure items
+    // of each object type are created.
+    $this->createQueueItems($this->queue, ($base_queue_items * 2), array('CREATE', 'UPSERT'), array('Account', 'Contact'));
+    $this->createQueueItems($this->queue, $base_queue_items, array('CREATE', 'UPSERT'), array('Opportunity', 'Account'));
+    $this->createQueueItems($this->queue, $base_queue_items, array('CREATE', 'UPSERT'), array('Contact', 'Opportunity'));
 
     // Take the items we created and queue them up for UPSERT if they have a
     // dedupe field set. The other half of the items have a 50% chance of being
@@ -407,10 +409,8 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     // Set up the processor's Salesforce connection.
     // This is special for simpletest due to the access token being stored in
     // the session.
-    $sfapi = $this->salesforceConnect();
-    $this->processor->setSalesforceApi($sfapi);
-    $soap = new SalesforceSoapPartner($sfapi);
-    $this->processor->setSalesforceSoap($soap);
+    $this->processor->setSalesforceApi($this->salesforceConnect());
+    $this->processor->setSalesforceSoap();
 
     // Create a bunch of items to work with and process 'em.
     $create_quantity_1 = 100;
@@ -578,9 +578,8 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     $updated_fields = array();
     $salesforce_record_count = 0;
     foreach ($fetch_update_records as $object_type => $data) {
-      $fields = implode(', ', $data['fields']);
       try {
-        $response = $soap->retrieve($fields, $object_type, $data['ids']);
+        $response = $this->processor->salesforceSync->fetchByIds($object_type, $data['fields'], $data['ids']);
         foreach ($response as $record) {
           $salesforce_record_count++;
           unset($record->fields->Id);
@@ -758,6 +757,10 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
    * Test for hook_salesforce_queue_process_fail_item().
    */
   public function testProcessFailItem() {
+    // Send watchdog messages to inform those who run tests which messages are
+    // valid and which are not.
+    watchdog('salesforce', 'NOTE (3) "Item failed CREATE" warnings to follow.', NULL, WATCHDOG_WARNING);
+
     $this->salesforceConnect();
 
     // Queue up an Opportunity which will automatically fail.
@@ -774,8 +777,8 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
 
     // Do this until we hit maximum retries and make sure it is placed in the
     // fail queue.
-    $max_retries = variable_get('salesforce_queue_max_retries', 5);
-    while ($max_retries > $record->retries) {
+    variable_set('salesforce_queue_max_retries', 2);
+    while (2 > $record->retries) {
       salesforce_queue_process_queue();
       $record = $queue->getItem($item->drupal_id, $item->module, $item->delta, $item->object_type);
     }
@@ -797,7 +800,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
 
     // Add item to queue and ensure it is there.
     $queue = salesforce_queue_load();
-    $this->createQueueItems($queue, 1, array('CREATE'), array('Opportunity'));
+    $queue_items = $this->createQueueItems($queue, 1, array('CREATE'), array('Opportunity'));
     $this->assertEqual(1, $queue->numberOfItems(), 'Count 1 item after creating one item.');
     $items = $queue->claimBatch();
     $queue->releaseBatch($items[0]->leaseKey);
@@ -811,5 +814,8 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
 
     // Delete the variable to put us back to normal.
     variable_del('salesforce_queue_cron_frequency');
+
+    // Remove the created items from Salesforce.
+    $this->deleteItemsFromSalesforce($queue_items);
   }
 }
