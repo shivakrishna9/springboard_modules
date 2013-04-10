@@ -128,11 +128,11 @@ function dynamic_gift_strings_mail($key, &$message, $params) {
   switch ($key) {
     case 'dynamic_gift_strings_alert':
       $message['subject'] = 'Invalid gift string detected';
-      $message['body'] = "The following gift string was passed to donation form node " . $params['nid'] . ":\n\n";
+      $message['body'][] = "The following gift string was passed to donation form node " . $params['nid'] . ":\n";
       foreach ($params['amounts'] as $amount) {
-        $message['body'] .= "- " . $amount . "\n";
+        $message['body'][0] .= "- " . $amount . "\n";
       }
-      $message['body'] .= "\n" . 'Since the gift amounts were not valid they could not be applied to the donation form. ' .
+      $message['body'][] = 'Since the gift amounts were not valid they could not be applied to the donation form. ' .
         'Please double check your configuration.';
       break;
   }
@@ -154,7 +154,7 @@ function _dynamic_gift_strings_parse_amounts($amounts, $show_other, $nid) {
   // format the amounts
   foreach ($amounts as $amount) {
     // first, check to see if the value is numeric. if not, we have some bogus data.
-    if (!is_numeric($amount)) {
+    if (!is_numeric($amount) || $amount == 0) {
       $all_valid = FALSE;
     }
     // if the number has a decimal, retain it. otherwise format without decimals
