@@ -283,7 +283,7 @@ function springboard_menu_alter(&$items) {
 function springboard_theme($existing, $type, $theme, $path) {
   return array(
     'springboard_sf_status' => array(
-      'variables' => array('status' => '', 'batch_status' => '', 'queue' => ''),
+      'variables' => array('status' => '', 'identity' => array(), 'batch_status' => '', 'queue' => ''),
       'template' => drupal_get_path('theme', $theme) . '/templates/springboard-sf-status',
     ),
     'springboard_help' => array(
@@ -380,11 +380,13 @@ function springboard_springboard_dashboard_panes() {
 function _springboard_sf_status() {
   $output = '';
   if (module_exists('salesforce')) {
+    $identity = array();
     // Call on the module to get the current connection status
     $sf = salesforce_get_api();
     $status = FALSE;
     if ($sf->isAuthorized()) {
       $status = TRUE;
+      $identity = $sf->getIdentity();
     } else {
       $status = FALSE;
     }
@@ -396,7 +398,7 @@ function _springboard_sf_status() {
         ->orderBy('bid', 'DESC')
         ->range(0,1)
         ->execute();
-      $batch = $query->fetchObject();  
+      $batch = $query->fetchObject();
       if ($batch) {
         $batch_status = t('Batch # @id - @record_count::<span class="successes">@success_count</span>::' .
           '<span class="failures">@fail_count</span>',
@@ -408,13 +410,13 @@ function _springboard_sf_status() {
       }
     }
     $queue = (module_exists('salesforce_queue') && $status) ? drupal_get_form('springboard_dashboard_queue') : '';
-    return theme('springboard_sf_status', array('status' => $status, 'batch_status' => $batch_status, 'queue' => $queue));
+    return theme('springboard_sf_status', array('status' => $status, 'identity' => $identity, 'batch_status' => $batch_status, 'queue' => $queue));
   }
   return 'status';
 }
 
 /**
- * Springboard dashboard queue processor button 
+ * Springboard dashboard queue processor button
  */
 function springboard_dashboard_queue() {
   $form = array();
@@ -422,7 +424,7 @@ function springboard_dashboard_queue() {
     '#type' => 'submit',
     '#value' => t('Submit'),
     '#prefix' => t('Run Springboard Sync'),
-    '#submit' => array('springboard_dashboard_queue_submit'),    
+    '#submit' => array('springboard_dashboard_queue_submit'),
   );
   return $form;
 }
