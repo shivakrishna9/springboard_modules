@@ -12,13 +12,13 @@ function secure_prepopulate_admin_settings($form, &$form_state) {
   $form['secure_prepopulate_key'] = array(
     '#type' => 'textfield',
     '#title' => t('Encryption key'),
-    '#description' => t('To use 128 bit encryption enter a 16 byte (128 bit) AES key. 256 bit encryption requires a 32 byte key (256 bits).'),
+    '#description' => t('To use 128 bit encryption enter a 16 character (128 bit) AES key. 256 bit encryption requires a 32 character key (256 bits).'),
     '#default_value' => variable_get('secure_prepopulate_key', ''),
   );
   $form['secure_prepopulate_iv'] = array(
     '#type' => 'textfield',
     '#title' => t('Initialization vector'),
-    '#description' => t('A 16 byte initialization vector. The initialization vector (IV) is a fixed-size input to a cryptographic primitive ' .
+    '#description' => t('A 16 character (128 bit) initialization vector. The initialization vector (IV) is a fixed-size input to a cryptographic primitive ' .
       'that is typically required to be random or pseudorandom.'),
     '#default_value' => variable_get('secure_prepopulate_iv', ''),
   );
