@@ -20,7 +20,7 @@ role :sbqa, 'sb4qa.com', {
 set :deploy_via, :remote_cache
 set :copy_exclude, [".git", ".DS_Store"]
 set :scm, :git
-set :branch, "7.x-3.0-qa"
+set :branch, "7.x-4.x"
 set :deploy_to, "/var/www/#{application}"
 set :use_sudo, false
 set :keep_releases, 3
