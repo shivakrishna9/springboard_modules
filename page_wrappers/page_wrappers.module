@@ -139,8 +139,8 @@ function page_wrappers_css_alter(&$css) {
       drupal_get_path('module', 'shortcut') . '/shortcut.css',
     );
     // if a stylesheet has been added to the wrapper, include it.
-    if (!empty($wrapper_node->field_css_file['und'][0]['uri'])) {
-      $keep[] = $wrapper_node->field_css_file['und'][0]['uri'];
+    if (!empty($wrapper_node->page_wrappers_css['und'][0]['uri'])) {
+      $keep[] = $wrapper_node->page_wrappers_css['und'][0]['uri'];
     }
     foreach ($css as $path => $info) {
       if (!in_array($path, $keep)) {
