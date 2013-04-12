@@ -1,0 +1,253 @@
+<?php
+/**
+ * @file fundraiser_upsell.module
+ * Core module file
+ */
+
+// Include the nodeapi functions
+module_load_include('inc', 'fundraiser_upsell', 'includes/fundraiser_upsell.nodeapi');
+// Include the helper functions
+module_load_include('inc', 'fundraiser_upsell', 'includes/fundraiser_upsell.helpers');
+
+/**
+ * Implements hook_menu().
+ */
+function fundraiser_upsell_menu() {
+  $items = array();
+  $items['admin/springboard/settings/fundraiser/fundraiser_upsell'] = array(
+    'title' => 'Sustainer upsell settings',
+    'description' => 'Administer fundraiser upsell settings.',
+    'access arguments' => array('administer fundraiser upsells'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_upsell_admin_settings_form'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'includes/fundraiser_upsell.admin.inc',
+  );
+  $items['admin/springboard/settings/fundraiser/fundraiser_upsell/general'] = array(
+    'title' => 'General settings',
+    'description' => 'Administer fundraiser upsell settings.',
+    'access arguments' => array('administer fundraiser upsells'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_upsell_admin_settings_form'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'file' => 'includes/fundraiser_upsell.admin.inc',
+  );
+  $items['admin/springboard/settings/fundraiser/fundraiser_upsell/thank-you'] = array(
+    'title' => 'Thank you settings',
+    'description' => 'Administer fundraiser upsell "thank you" settings.',
+    'access arguments' => array('administer fundraiser upsells'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_upsell_admin_thank_you_settings'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'includes/fundraiser_upsell.admin.inc',
+  );
+  // Give admins an easy way to preview the upsell & thank you content
+  $items['node/%node/upsell'] = array(
+    'title' => 'Upsell preview',
+    'type' => MENU_LOCAL_TASK,
+    'page callback' => '_fundraiser_upsell_content_preview',
+    'page arguments' => array(1),
+    'access callback' => '_fundraiser_upsell_preview_check',
+    'access arguments' => array(1),
+  );
+  // Callback to process the modal upsell form
+  // Requires arguments for order_id and amount
+  // @TODO: modify this to use tokenization to avoid XSS
+  $items['upsell/%/%'] = array(
+    'title' => 'Upsell preview',
+    'type' => MENU_CALLBACK,
+    'page callback' => '_fundraiser_upsell_content_preview',
+    'page arguments' => array(1,2,3),
+    'access arguments' => array('access content'),
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function fundraiser_upsell_permission() {
+  return array(
+    'administer fundraiser upsells' => array(
+      'title' => t('Administer fundraiser upsell feature'),
+      'description' => t('Perform administration tasks for fundraiser upsell.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_form_alter().
+ * Inject the upsell settings form into donation edit forms and modify the 
+ * donation forms to process the upsell if necessary.
+ */
+function fundraiser_upsell_form_alter(&$form, &$form_state, $form_id) {
+  // Only check nodes that are donation types
+  if (!empty($form['#node']) && fundraiser_is_donation_type($form['#node']->type)) {
+    // Inject the Upsell settings into the node form
+    if (!empty($form['#node_edit_form'])) {
+      fundraiser_upsell_node_settings($form, $form_state, $form['#node']);
+    }
+    // Modify donation forms with an active upsell option if the user
+    if ($form['#node']->fundraiser_upsell_enabled && _fundraiser_upsell_check_cookies()) {
+      $form['#submit'][] = 'fundraiser_upsell_webform_submit';
+    }
+  }
+}
+
+/**
+ * Form for injecting into the node edit page
+ */
+function fundraiser_upsell_node_settings(&$form, $form_state, $node) {
+  $form['fundraiser_upsell'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Upsell settings'),
+    '#weight' => -4.96,
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#group' => 'additional_settings',
+  );
+  $form['fundraiser_upsell']['fundraiser_upsell_enabled'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Upsell enabled'),
+    '#default_value' => !empty($node->fundraiser_upsell_enabled) ? $node->fundraiser_upsell_enabled : '',
+  );
+  $form['fundraiser_upsell']['fundraiser_upsell_content'] = array(
+    '#title' => t('Form specific Upsell Content'),
+    '#type' => 'textarea',
+    '#default_value' => !empty($node->fundraiser_upsell_content) ? $node->fundraiser_upsell_content : '',
+    '#description' => t('If no content is given the default will be used.'),
+  );
+  $form['fundraiser_upsell']['modal_theming'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Modal theming'),
+    '#weight' => 5,
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['fundraiser_upsell']['modal_theming']['upsell_class'] = array(
+    '#title' => t('CSS class(es)'),
+    '#type' => 'textfield',
+    '#default_value' => !empty($node->upsell_class) ? $node->upsell_class : '',
+    '#description' => t('Separate multiple classes with a space.'),
+  );
+  $form['fundraiser_upsell']['modal_theming']['modal_width'] = array(
+    '#title' => t('Modal window width (in pixels)'),
+    '#type' => 'textfield',
+    '#size' => 5,
+    '#default_value' => !empty($node->modal_width) ? $node->modal_width : 400,
+    '#description' => t('This will override the site default.'),
+  );
+  $form['fundraiser_upsell']['modal_theming']['modal_height'] = array(
+    '#title' => t('Modal window height (in pixels)'),
+    '#type' => 'textfield',
+    '#size' => 5,
+    '#default_value' => !empty($node->modal_height) ? $node->modal_height : 300,
+    '#description' => t('This will override the site default.'),
+  );
+  $form['#validate'][] = 'fundraiser_upsell_node_settings_validate';
+}
+
+/**
+ * Additional validation for the fundraiser_upsell node settings
+ */
+function fundraiser_upsell_node_settings_validate($form, &$form_state) {
+  $modal_width = $form_state['values']['modal_width'];
+  $modal_height = $form_state['values']['modal_height'];
+  if (empty($modal_width) || !is_numeric($modal_width)) {
+    form_set_error('fundraiser_upsell][modal_theming][modal_width',
+    t('The fundraiser upsell modal width must be numbers only.'));
+  }
+  if (empty($modal_height) || !is_numeric($modal_height)) {
+    form_set_error('fundraiser_upsell][modal_theming][modal_height',
+    t('The fundraiser upsell modal height must be numbers only.'));
+  }
+}
+
+/**
+ * Extra donation form submit function to attach the upsell process
+ */
+function fundraiser_upsell_webform_submit($form, &$form_state) {
+  // Add the upsell nid, sid, & uid to the session data
+  $_SESSION['upsell'] = array(
+    'nid' => $form_state['values']['details']['nid'],
+    'sid' => $form_state['values']['details']['sid'],
+    'uid' => $form_state['values']['details']['uid'],
+  );
+}
+
+/**
+ * Implementation of hook_page_alter().
+ */
+function fundraiser_upsell_page_alter(&$page) {
+  // Check for upsell trigger
+  if (!empty($_SESSION['upsell'])) {
+    // Add the upsell to the page
+    $node = node_load($_SESSION['upsell']['nid']);
+    $upsell = _fundraiser_upsell_content($node, $_SESSION['upsell']['sid']);
+    $page['page_bottom']['message'] = $upsell;
+    // Remove the upsell session data
+    unset($_SESSION['upsell']);
+  }
+}
+
+
+/**
+ * Implements hook_form
+ * @param integer $sid
+ */
+function fundraiser_upsell_donation_form($form, &$form_state, $sid=0) {
+  // Get the default suggested amount based on submitted order
+  $order = _fundraiser_upsell_get_order($sid);
+  if (!empty($sid) && !empty($order) && is_object($order)) {
+    $suggested_amount = _fundraiser_upsell_find_suggested_amount($order->order_total);
+    $order_id = $order->order_id;
+  }
+  // Build the form
+  $form = array();
+  $form['amount'] = array(
+    '#title' => t('Monthly donation'),
+    '#type' => 'textfield',
+    '#size' => 5,
+    // The description will hold the currency symbol - maybe a function later?
+    '#description' => t('$'),
+    '#default_value' => !empty($suggested_amount) ? $suggested_amount : 10,
+  );
+  $form['order_id'] = array(
+    '#type' => 'hidden',
+    '#value' => !empty($order_id) ? $order_id : 0,
+    '#attributes' => array('id' => 'order-id'),
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Yes, Sign Me Up!'),
+  );
+  $form['close'] = array(
+    '#type' => 'button',
+    '#value' => t('No Thanks'),
+  );
+  return $form;
+}
+
+/**
+ * Submission callback function for the upsell form
+ * @param integer $order_id
+ * @param integer $amount
+ * @return array $content
+ */
+function fundraiser_upsell_submit($order_id, $amount) {
+  $content = array('placeholder');
+  // Check that the order is currently a single donation
+  // Check that the current user is the same
+  // Create the recurring donation series
+  // $upsell = fundraiser_upsell_process($order_id, $amount);
+  // Grab and process the thank you content if successful
+  return drupal_json($content);
+}
+
+/**
+ * Convert the single donation into a recurring donation
+ */
+function fundraiser_upsell_process($order_id, $amount) {
+  
+}
+

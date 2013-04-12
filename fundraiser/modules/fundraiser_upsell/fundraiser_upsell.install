@@ -1,0 +1,65 @@
+<?php
+/**
+ * @file fundraiser_upsell.install
+ * Install, update, and uninstall functions for the fundraiser_upsell module.
+ */
+
+/**
+ * Implements of hook_schema().
+ */
+function fundraiser_upsell_schema() {
+
+  $schema['fundraiser_upsell_form_settings'] = array(
+    'description' => 'Stores data for fundraiser_upsell donation form nodes.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The node id.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'fundraiser_upsell_enabled' => array(
+        'description' => 'Upsell enabled for node',
+        'type' => 'int',
+        'length' => '1',
+        'not null' => TRUE,
+      ),
+      'fundraiser_upsell_content' => array(
+        'description' => 'Node specific upsell content',
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
+      'upsell_class' => array(
+        'description' => 'Additional class(es) to pass to the theme.',
+        'type' => 'text',
+      ),
+      'modal_width' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'modal_height' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('nid'),
+  );
+  
+  return $schema;
+}
+
+/**
+ * Implements hook_uninstall()
+ */
+function fundraiser_upsell_uninstall() {
+  variable_del('fundraiser_upsell_brackets');
+  variable_del('fundraiser_upsell_default_content');
+  variable_del('fundraiser_upsell_sf_campaign_id');
+  variable_del('fundraiser_upsell_acceptance_enabled');
+  variable_Set('fundraiser_upsell_acceptance_lifetime');
+  variable_del('fundraiser_upsell_rejection_enabled');
+  variable_Set('fundraiser_upsell_rejection_lifetime');
+  variable_Set('fundraiser_upsell_debug');
+}
