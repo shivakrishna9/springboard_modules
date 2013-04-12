@@ -67,8 +67,8 @@ function _page_wrappers_insert_after_first_element(&$a, $element) {
  */
 function page_wrappers_preprocess_page(&$vars) {
 
-  // get out of here if we're on the edit page
-  if (arg(0) == 'node' && arg(2) == 'edit') {
+  // bail out if we're anywhere other than a node view page or submission confirmation
+  if (arg(0) == 'node' && arg(2) && arg(2) != 'done') {
     return;
   }
 
