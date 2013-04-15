@@ -1,7 +1,9 @@
 <?php
 /**
- * @file fundraiser_upsell.admin.inc
+ * @file
+ * fundraiser_upsell.admin.inc - Admin forms and functions
  */
+
 /**
  * Admin configuration form for the Fundraiser Upsell global settings.
  */
@@ -56,7 +58,7 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
       '#default_value' => isset($brackets[$i]) ? $brackets[$i]['high'] : '',
       '#prefix' => '<div class="upsell_high" style="float: left; margin-right: 3em;">',
       '#suffix' => "</div>",
-    );  
+    );
     $form['fundraiser_upsell_brackets']['brackets']['fundraiser_upsell_brackets_upsell_' . $i] = array(
       '#title' => t('Upsell Value'),
       '#type' => 'textfield',
@@ -106,6 +108,14 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
     '#type' => 'textfield',
     '#default_value' => variable_get('fundraiser_upsell_sf_campaign_id', ''),
   );
+  $form['fundraiser_upsell_thank_you_content'] = array(
+    '#title' => t('Default content for thank you message'),
+    '#type' => 'textarea',
+    '#default_value' => variable_get('fundraiser_upsell_thank_you_content', 'Thank you for your recurring donation!'),
+  );
+  // @TODO : allow WYSIWYG format selection
+  //$form['fundraiser_upsell_thank_you_content']['format'] = filter_form($myfield1['format'], NULL, array('field1_format'));
+  // @TODO : add in the token list
   $form['fundraiser_upsell_acceptance'] = array(
     '#title' => t('Acceptance Cookie'),
     '#type' => 'fieldset',
@@ -142,12 +152,12 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
   );
   // Additional submit handler to package the bracket data into a single variable
   $form['#submit'][] = 'fundraiser_upsell_admin_settings_form_submit';
-  
+
   return system_settings_form($form);
 }
 
 /**
- * Validation handler for the admin upsell config 
+ * Validation handler for the admin upsell config
  */
 function fundraiser_upsell_admin_settings_form_validate($form, &$form_state) {
   $vals = $form_state['values'];

@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * fundraiser_upsell.helpers.inc - Helper & utility functions for fundraiser_upsell
+ */
 
 /**
  * Generate the render array for the upsell form and thank you response
@@ -15,15 +19,15 @@ function _fundraiser_upsell_content($node, $sid) {
   drupal_add_css($path . '/css/fundraiser_upsell.css');
   drupal_add_js($path . '/js/fundraiser_upsell.js');
   drupal_add_js($path . '/js/jquery.blockUI.js');
-  // Get the size and class for the modal 
-  $width = $node->modal_width;
-  $height = $node->modal_height;
+  // Get the size and class for the modal
+  $width = $node->upsell['modal_width'];
+  $height = $node->upsell['modal_height'];
   $upsell_size = 'width:' . $width . 'px;height:' . $height . 'px;';
-  (!empty($node->upsell_class)) ? $upsell_class = $node->upsell_class : $upsell_class = '';
+  (!empty($node->upsell['class'])) ? $upsell_class = $node->upsell['class'] : $upsell_class = '';
   $upsell_class = drupal_html_class($upsell_class);
   // Get the upsell content data
-  if (!empty($node->fundraiser_upsell_content)) {
-    $upsell_header = $node->fundraiser_upsell_content;
+  if (!empty($node->upsell['content'])) {
+    $upsell_header = $node->upsell['content'];
   }
   else {
     $upsell_header = variable_get('fundraiser_upsell_default_content', '');
@@ -61,7 +65,7 @@ function _fundraiser_upsell_content($node, $sid) {
  * A render array for generating the content
  */
 function _fundraiser_upsell_content_preview($node) {
-  // Grab the render array and modify it  
+  // Grab the render array and modify it
   $content = _fundraiser_upsell_content($node, 0);
   $content['message_wrapper']['#prefix'] = 'This is a preview of the upsell and thank you content for this form.';
   $content['message_wrapper']['message_modal']['#attributes']['class'][0] = 'preview';
@@ -71,7 +75,7 @@ function _fundraiser_upsell_content_preview($node) {
     '#attributes' => array(
       'id' => array('message-return'),
     ),
-  );  
+  );
   $content['message_wrapper']['message_return']['content'] = array(
     '#markup' => variable_get('fundraiser_upsell_thank_you_content', 'Thank you!'),
   );
@@ -83,12 +87,27 @@ function _fundraiser_upsell_content_preview($node) {
 }
 
 /**
+ * Process the upsell donaton form from the POSTed ajax callback
+ */
+function _fundraiser_upsell_ajax_process($node) {
+  $data = $_POST;
+  dpm($data);
+  // Check the form token to be sure this is a valid callback
+  if (!drupal_valid_token($data['form_token'], $data['form_id'])) {
+    drupal_json_output(FALSE);
+  }
+  // $content = fundraiser_upsell_upsell_ajax_submit($data);
+  $content = "Thank you for your order";
+  drupal_json_output($content);
+}
+
+/**
  * Determine if we should display the upsell preview for a node
  * @param object $node
  */
 function _fundraiser_upsell_preview_check($node) {
   // Only check nodes that are donation types with upsell enabled
-  if (!empty($node) && fundraiser_is_donation_type($node->type) && $node->fundraiser_upsell_enabled) {
+  if (!empty($node) && fundraiser_is_donation_type($node->type) && $node->upsell['enabled']) {
     // Make sure user has permissions
     if (user_access('administer fundraiser upsells')) {
       return TRUE;
@@ -96,7 +115,6 @@ function _fundraiser_upsell_preview_check($node) {
   }
   return FALSE;
 }
-
 
 /**
  * Check the cookies and settings to see if upsell should be displayed
@@ -108,7 +126,7 @@ function _fundraiser_upsell_check_cookies() {
   $debug = variable_get('fundraiser_upsell_debug', FALSE);
   // No cookies OR debug is on, then we should display the upsell
   if ((!$rejection && !$acceptance) || $debug) {
-    $display = TRUE; 
+    $display = TRUE;
   }
   return $display;
 }
@@ -124,13 +142,29 @@ function _fundraiser_upsell_get_order($sid=NULL) {
     return new stdClass();
   }
   // Otherwise look up and load the order object
-  $order_id = db_query(
-    "SELECT did FROM {fundraiser_donation} WHERE sid = :sid",
+  $donation = db_query("
+    SELECT *
+    FROM {fundraiser_donation} AS fd, {fundraiser_upsell} AS fu
+    WHERE fd.sid = :sid
+    AND fd.nid = fu.nid",
     array(':sid' => $sid)
-    )->fetchField();
-  // @TODO: make sure this works with DC too
-  $order = uc_order_load($order_id);
+    )->fetchAssoc();
+  $order = commerce_order_load($donation['did']);
+  // Add the donation & upsell info
+  $order->upsell = $donation;
   return $order;
+}
+
+/**
+ * Determine if the node has upsell enabled
+ */
+function _fundraiser_upsell_enabled($node) {
+  if (!empty($node->upsell['enabled']) && $node->upsell['enabled']) {
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
 }
 
 /**
@@ -140,24 +174,40 @@ function _fundraiser_upsell_get_order($sid=NULL) {
 function _fundraiser_upsell_find_suggested_amount($amount) {
   $brackets = variable_get("fundraiser_upsell_brackets", array());
   foreach ($brackets AS $i => $bracket) {
-    if (($amount >= $bracket['low']) && ($amountt <= $bracket['high'])) {
-      return $bracket['upsell'];
+    // If the amount is within the brackets, then use this upsell setting
+    if (($amount >= $bracket['low']) && ($amount <= $bracket['high'])) {
+      $upsell = $bracket['upsell'];
+    }
+    // If this is the last loop and we don't have an upsell yet, set it for the highest bracket
+    if ($i == count($brackets) - 1 && empty($upsell)) {
+      $upsell = $bracket['upsell'];
     }
   }
+  return $upsell;
 }
 
-function _fundraiser_upsell_amount_less_than_highest_bracket($amt) {
-  return $amt < _fundraiser_upsell_higest_bracket();
-}
-
-function _fundraiser_upsell_higest_bracket() {
-  $brackets = variable_get("fundraiser_upsell_brackets", array());
-  $highest = 0;
-  foreach ($brackets as $bracket) {
-    if ($bracket['high'] > $highest) {
-      $highest = $bracket['high'];
-    }
-  }
-
-  return $highest;
+/**
+ * If we need to decouple the original order, clone it to a new order_id and set the value to $0
+ * @param object $order
+ * @return object $new_order
+ */
+function _fundraiser_upsell_clone_order($order) {
+  $new_order = $order;
+  // Modify the order
+  $new_order->log = "Cloned from order# $order->order_id";
+  // $new_order->created = '';
+  $new_order->changed = '';
+  $new_order->revision_id = NULL;
+  unset($new_order->revision_uid);
+  unset($new_order->revision_timestamp);
+  unset($new_order->revision_hostname);
+  $new_order->order_id = NULL;
+  $new_order->order_number = NULL;
+  $new_order->in_new = TRUE;
+  $new_order->commerce_order_total['und'][0]['amount'] = 0;
+  $new_order->commerce_order_total['und'][0]['data']['components'][0]['price']['amount'] = 0;
+  // Create new order
+  // commerce_order_save($new_order);
+  // Copy the new order to fundraiser
+  return $new_order;
 }

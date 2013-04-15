@@ -21,11 +21,8 @@
         // Stop the default form submit
         e.preventDefault();
         // Grab the values
-        // @TODO: change this to POST data to tokenized string for XSS security
         var sendData = $(this).serialize();
-        amount = $('#fundraiser-upsell-donation-form #edit-amount').val();
-        orderid = $('#fundraiser-upsell-donation-form #order-id').val();
-        path = '/upsell/' + orderid + '/' + amount;
+        path = $(this).attr('action');
         // update the block message 
         $.blockUI({ 
           message: "<h1>Processing your sustainer gift... </h1>",
@@ -38,13 +35,28 @@
             top: '10em'
           }
         });
-        $.ajax({ 
+        $.ajax({
+          type: 'post',
           url: path,
           cache: false,
-          complete: function() {
-            // @TODO: Have this replace the modal with the thank you message
+          data: sendData,
+          complete: function(response) {
+            // @TODO: fix this
+            // update the block message 
+            $.blockUI({ 
+              message: response,
+              centerY : 0,
+              timeout: 3000,
+              css: {
+                width: modalWidth,
+                height: modalHeight,
+                textAlign: 'left',
+                padding: '1em',
+                top: '10em'
+              }
+            });
             // unblock when remote call returns
-            $.unblockUI();
+            // $.unblockUI();
           }
         });
       });

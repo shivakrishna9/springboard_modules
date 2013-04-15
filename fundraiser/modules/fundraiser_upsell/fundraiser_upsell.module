@@ -1,7 +1,7 @@
 <?php
 /**
- * @file fundraiser_upsell.module
- * Core module file
+ * @file
+ * fundraiser_upsell.module - Core module file
  */
 
 // Include the nodeapi functions
@@ -50,14 +50,13 @@ function fundraiser_upsell_menu() {
     'access callback' => '_fundraiser_upsell_preview_check',
     'access arguments' => array(1),
   );
-  // Callback to process the modal upsell form
-  // Requires arguments for order_id and amount
-  // @TODO: modify this to use tokenization to avoid XSS
-  $items['upsell/%/%'] = array(
-    'title' => 'Upsell preview',
+  // Callback to process the POSTed modal upsell form
+  $items['node/%node/upsell/process'] = array(
+    'title' => 'Process upsell form',
+    'description' => 'Ajax callback to process the fundraiser upsell donation form',
     'type' => MENU_CALLBACK,
-    'page callback' => '_fundraiser_upsell_content_preview',
-    'page arguments' => array(1,2,3),
+    'page callback' => '_fundraiser_upsell_ajax_process',
+    'page arguments' => array(1),
     'access arguments' => array('access content'),
   );
   return $items;
@@ -77,18 +76,18 @@ function fundraiser_upsell_permission() {
 
 /**
  * Implements hook_form_alter().
- * Inject the upsell settings form into donation edit forms and modify the 
+ * Inject the upsell settings form into donation edit forms and modify the
  * donation forms to process the upsell if necessary.
  */
 function fundraiser_upsell_form_alter(&$form, &$form_state, $form_id) {
   // Only check nodes that are donation types
   if (!empty($form['#node']) && fundraiser_is_donation_type($form['#node']->type)) {
-    // Inject the Upsell settings into the node form
+    // Edit form - inject the Upsell settings into the node form
     if (!empty($form['#node_edit_form'])) {
       fundraiser_upsell_node_settings($form, $form_state, $form['#node']);
     }
-    // Modify donation forms with an active upsell option if the user
-    if ($form['#node']->fundraiser_upsell_enabled && _fundraiser_upsell_check_cookies()) {
+    // View form - add the upsell submit function unless blocked by cookies
+    elseif (_fundraiser_upsell_enabled($form['#node']) && _fundraiser_upsell_check_cookies()) {
       $form['#submit'][] = 'fundraiser_upsell_webform_submit';
     }
   }
@@ -101,20 +100,20 @@ function fundraiser_upsell_node_settings(&$form, $form_state, $node) {
   $form['fundraiser_upsell'] = array(
     '#type' => 'fieldset',
     '#title' => t('Upsell settings'),
-    '#weight' => -4.96,
+    '#weight' => -4,
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
     '#group' => 'additional_settings',
   );
-  $form['fundraiser_upsell']['fundraiser_upsell_enabled'] = array(
+  $form['fundraiser_upsell']['upsell_enabled'] = array(
     '#type' => 'checkbox',
     '#title' => t('Upsell enabled'),
-    '#default_value' => !empty($node->fundraiser_upsell_enabled) ? $node->fundraiser_upsell_enabled : '',
+    '#default_value' => !empty($node->upsell['enabled']) ? $node->upsell['enabled'] : '',
   );
-  $form['fundraiser_upsell']['fundraiser_upsell_content'] = array(
+  $form['fundraiser_upsell']['upsell_content'] = array(
     '#title' => t('Form specific Upsell Content'),
     '#type' => 'textarea',
-    '#default_value' => !empty($node->fundraiser_upsell_content) ? $node->fundraiser_upsell_content : '',
+    '#default_value' => !empty($node->upsell['content']) ? $node->upsell['content'] : '',
     '#description' => t('If no content is given the default will be used.'),
   );
   $form['fundraiser_upsell']['modal_theming'] = array(
@@ -127,40 +126,77 @@ function fundraiser_upsell_node_settings(&$form, $form_state, $node) {
   $form['fundraiser_upsell']['modal_theming']['upsell_class'] = array(
     '#title' => t('CSS class(es)'),
     '#type' => 'textfield',
-    '#default_value' => !empty($node->upsell_class) ? $node->upsell_class : '',
+    '#default_value' => !empty($node->upsell['class']) ? $node->upsell['class'] : '',
     '#description' => t('Separate multiple classes with a space.'),
   );
-  $form['fundraiser_upsell']['modal_theming']['modal_width'] = array(
+  $form['fundraiser_upsell']['modal_theming']['upsell_modal_width'] = array(
     '#title' => t('Modal window width (in pixels)'),
     '#type' => 'textfield',
     '#size' => 5,
-    '#default_value' => !empty($node->modal_width) ? $node->modal_width : 400,
+    '#default_value' => !empty($node->upsell['modal_width']) ? $node->upsell['modal_width'] : 400,
     '#description' => t('This will override the site default.'),
   );
-  $form['fundraiser_upsell']['modal_theming']['modal_height'] = array(
+  $form['fundraiser_upsell']['modal_theming']['upsell_modal_height'] = array(
     '#title' => t('Modal window height (in pixels)'),
     '#type' => 'textfield',
     '#size' => 5,
-    '#default_value' => !empty($node->modal_height) ? $node->modal_height : 300,
+    '#default_value' => !empty($node->upsell['modal_height']) ? $node->upsell['modal_height'] : 300,
     '#description' => t('This will override the site default.'),
   );
-  $form['#validate'][] = 'fundraiser_upsell_node_settings_validate';
+  $form['fundraiser_upsell']['additional_options'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Additional options'),
+    '#weight' => 10,
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['fundraiser_upsell']['additional_options']['upsell_decoupled'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Decouple recurring donations'),
+    '#default_value' => !empty($node->upsell['decoupled']) ? $node->upsell['decoupled'] : '',
+    '#description' => t('By default, the upsell recurring donations use this donation
+    as the first one. If this is checked, it will instead start a new series of
+    recurring donations with a blank first donation.'),
+  );
+  $form['fundraiser_upsell']['additional_options']['upsell_campaign_id'] = array(
+    '#title' => t('Sustainer Salesforce Campaign ID'),
+    '#type' => 'textfield',
+    '#default_value' => !empty($node->upsell['campaign_id']) ? $node->upsell['campaign_id'] : variable_get('fundraiser_upsell_sf_campaign_id', ''),
+    '#description' => t('Set the campaign id to be used for the upsell form.'),
+  );
+  $form['#validate'][] = 'fundraiser_upsell_node_form_validate';
+  $form['#submit'][] = 'fundraiser_upsell_node_form_submit';
 }
 
 /**
  * Additional validation for the fundraiser_upsell node settings
  */
-function fundraiser_upsell_node_settings_validate($form, &$form_state) {
-  $modal_width = $form_state['values']['modal_width'];
-  $modal_height = $form_state['values']['modal_height'];
+function fundraiser_upsell_node_form_validate($form, &$form_state) {
+  $modal_width = $form_state['values']['upsell_modal_width'];
+  $modal_height = $form_state['values']['upsell_modal_height'];
   if (empty($modal_width) || !is_numeric($modal_width)) {
-    form_set_error('fundraiser_upsell][modal_theming][modal_width',
+    form_set_error('fundraiser_upsell][modal_theming][upsell_modal_width',
     t('The fundraiser upsell modal width must be numbers only.'));
   }
   if (empty($modal_height) || !is_numeric($modal_height)) {
-    form_set_error('fundraiser_upsell][modal_theming][modal_height',
+    form_set_error('fundraiser_upsell][modal_theming][upsell_modal_height',
     t('The fundraiser upsell modal height must be numbers only.'));
   }
+}
+
+/**
+ * Additional submit function to move the upsell settings into an array
+ */
+function fundraiser_upsell_node_form_submit($form, &$form_state) {
+  $form_state['values']['upsell'] = array(
+    'enabled' => $form_state['values']['upsell_enabled'],
+    'content' => $form_state['values']['upsell_content'],
+    'class' => $form_state['values']['upsell_class'],
+    'modal_width' => $form_state['values']['upsell_modal_width'],
+    'modal_height' => $form_state['values']['upsell_modal_height'],
+    'decoupled' => $form_state['values']['upsell_decoupled'],
+    'campaign_id' => $form_state['values']['upsell_campaign_id']
+  );
 }
 
 /**
@@ -176,7 +212,7 @@ function fundraiser_upsell_webform_submit($form, &$form_state) {
 }
 
 /**
- * Implementation of hook_page_alter().
+ * Implements hook_page_alter().
  */
 function fundraiser_upsell_page_alter(&$page) {
   // Check for upsell trigger
@@ -192,16 +228,22 @@ function fundraiser_upsell_page_alter(&$page) {
 
 
 /**
- * Implements hook_form
+ * Upsell donation form
  * @param integer $sid
  */
 function fundraiser_upsell_donation_form($form, &$form_state, $sid=0) {
   // Get the default suggested amount based on submitted order
   $order = _fundraiser_upsell_get_order($sid);
   if (!empty($sid) && !empty($order) && is_object($order)) {
-    $suggested_amount = _fundraiser_upsell_find_suggested_amount($order->order_total);
-    $order_id = $order->order_id;
+    $order_total = round($order->commerce_order_total['und'][0]['amount']/100);
+    $suggested_amount = _fundraiser_upsell_find_suggested_amount($order_total);
   }
+  // Set default values
+  $suggested_amount = !empty($suggested_amount) ? $suggested_amount : 10;
+  $order_id = !empty($order->order_id) ? $order->order_id : 0;
+  $decouple = !empty($order->upsell['decouple']) ? $order->upsell['decouple'] : 0;
+  $campaign_id = !empty($order->upsell['campaign_id']) ? $order->upsell['campaign_id'] : variable_get('fundraiser_upsell_sf_campaign_id', '');
+  $nid = !empty($order->upsell['nid']) ? $order->upsell['nid'] : arg(1);
   // Build the form
   $form = array();
   $form['amount'] = array(
@@ -210,12 +252,19 @@ function fundraiser_upsell_donation_form($form, &$form_state, $sid=0) {
     '#size' => 5,
     // The description will hold the currency symbol - maybe a function later?
     '#description' => t('$'),
-    '#default_value' => !empty($suggested_amount) ? $suggested_amount : 10,
+    '#default_value' => $suggested_amount,
   );
   $form['order_id'] = array(
     '#type' => 'hidden',
-    '#value' => !empty($order_id) ? $order_id : 0,
-    '#attributes' => array('id' => 'order-id'),
+    '#value' => $order_id,
+  );
+  $form['decouple'] = array(
+    '#type' => 'hidden',
+    '#value' => $decouple,
+  );
+  $form['campaign_id'] = array(
+    '#type' => 'hidden',
+    '#value' => $campaign_id,
   );
   $form['submit'] = array(
     '#type' => 'submit',
@@ -225,29 +274,59 @@ function fundraiser_upsell_donation_form($form, &$form_state, $sid=0) {
     '#type' => 'button',
     '#value' => t('No Thanks'),
   );
+  $form['#action'] = url('node/' . $nid . '/upsell/process');
   return $form;
 }
 
 /**
  * Submission callback function for the upsell form
- * @param integer $order_id
- * @param integer $amount
- * @return array $content
+ * @param array $data - the submitted upsell form data
+ * @return array $content - thank you content
  */
-function fundraiser_upsell_submit($order_id, $amount) {
-  $content = array('placeholder');
-  // Check that the order is currently a single donation
-  // Check that the current user is the same
+function fundraiser_upsell_upsell_ajax_submit($data) {
+  // Set the default values
+  global $user;
+  $amount = $data['amount'];
+  $decouple = $data['decouple'];
+  $campaign_id = $data['campaign_id'];
+  $order = commerce_load_order($data['order_id']);
+  $is_recurring = db_query("
+    SELECT COUNT(master_did)
+    FROM {fundraiser_sustainers}
+    WHERE master_did = :master_did",
+    array(':master_did' => $order->order_id)
+    )->fetchField();
+  $same_user = ($user->uid == $order->uid) ? TRUE : FALSE;
+  // If either this is a different user or the donation is already recurring, then stop
+  if (!$same_user || $is_recurring) {
+    return FALSE;
+  }
+
+  // Decouple if needed
+  if ($decouple) {
+    $order = _fundraiser_upsell_clone_order($order);
+  }
   // Create the recurring donation series
-  // $upsell = fundraiser_upsell_process($order_id, $amount);
+  fundraiser_upsell_create_recurring($order, $amount);
   // Grab and process the thank you content if successful
-  return drupal_json($content);
+  $content = variable_get('fundraiser_upsell_thank_you_content', 'Thank you for your recurring donation!');
+  return $content;
 }
 
 /**
  * Convert the single donation into a recurring donation
+ * @param object $order - the master order
+ * @param float $amount - the decimal amount for recurring donations
+ * @return boolean
  */
-function fundraiser_upsell_process($order_id, $amount) {
-  
+function fundraiser_upsell_create_recurring($order, $amount) {
+  // Set the fundraiser recurring acceptance cookie
+  // setcookie('fundraiser_upsell_acceptance', 1, REQUEST_TIME + 3600 * 24 * variable_get('fundraiser_upsell_acceptance_lifetime', 0), "/");
+  // _fundraiser_upsell_thankyou_mail();
+  // watchdog('fundraiser_upsell', 'Upsell notice sent to @mail', array('@mail' => $user->mail), NULL, WATCHDOG_INFO);
+
+  // Prepare and send the fundraiser upsell success email
+  // Set watchdog message if unsuccessful
+  return TRUE;
 }
 
