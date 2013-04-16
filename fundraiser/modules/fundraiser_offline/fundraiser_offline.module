@@ -191,8 +191,8 @@ function fundraiser_offline_fundraiser_field_info_alter(&$fields) {
   // So this tweak is Only in effect for so long as the page is generated and processed.
   if (_fundraiser_offline_is_offline()) {
     drupal_set_message(t('This donation form is in offline mode.'));
-    unset($fields['donor_information']['mail']['#validate_callback']);
-    unset($fields['credit_card_information']['card_cvv']['#validate_callback']);
+    $fields = array('mail', 'card_cvv');
+    _fundraiser_offline_form_not_validate($form, $fields);
   }
   return $fields;
 }
@@ -332,9 +332,9 @@ function _fundraiser_offline_generate_email() {
  */
 function _fundraiser_offline_form_not_required(&$form, $fields) {
   foreach ($fields as $field_name) {
-    $field = fundraiser_get_form_field('fundraiser_multi_currency', $form, $field_name);
+    $field = fundraiser_get_form_field('fundraiser_offline', $form, $field_name);
     $field['#required'] = FALSE;
-    $form = fundraiser_update_form_field('fundraiser_multi_currency', $form, $field_name, $field);
+    $form = fundraiser_update_form_field('fundraiser_offline', $form, $field_name, $field);
   }
 }
 
@@ -343,9 +343,20 @@ function _fundraiser_offline_form_not_required(&$form, $fields) {
  */
 function _fundraiser_offline_form_not_hidden(&$form, $fields) {
   foreach ($fields as $field_name) {
-    $field = fundraiser_get_form_field('fundraiser_multi_currency', $form, $field_name);
+    $field = fundraiser_get_form_field('fundraiser_offline', $form, $field_name);
     $field['#type'] = 'textfield';
-    $form = fundraiser_update_form_field('fundraiser_multi_currency', $form, $field_name, $field);
+    $form = fundraiser_update_form_field('fundraiser_offline', $form, $field_name, $field);
+  }
+}
+
+/**
+ * Helper function, given a donation form and field list make the listed fields not validate.
+ */
+function _fundraiser_offline_form_not_validate(&$form, $fields) {
+  foreach ($fields as $field_name) {
+    $field = fundraiser_get_form_field('fundraiser_offline', $form, $field_name);
+    unset($field['#validate_callback']);
+    $form = fundraiser_update_form_field('fundraiser_offline', $form, $field_name, $field);
   }
 }
 
