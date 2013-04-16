@@ -54,12 +54,12 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
       ),
     );
 
-    $salesforce_object_type = _sfm_alter_get_default_value('salesforce_object_type', $form_state);
+    $salesforce_object_type = _salesforce_mapping_alter_get_default_value('salesforce_object_type', $form_state);
     $property_info = salesforce_mapping_get_fieldmap_types('property');
-    $entity_type = _sfm_alter_get_default_value('drupal_entity_type', $form_state);
+    $entity_type = _salesforce_mapping_alter_get_default_value('drupal_entity_type', $form_state);
     $entity_fields = call_user_func($property_info['options_callback'], $entity_type);
     unset($entity_fields['']);
-    $sf_fields = _sfm_get_salesforce_field_options($salesforce_object_type, $form_state);
+    $sf_fields = _salesforce_mapping_get_salesforce_field_options($salesforce_object_type, $form_state);
     asort($sf_fields);
     $dedupe_isset = FALSE;
     foreach ($entity_fields as $drupal_field_name => $drupal_field_label) {
@@ -104,7 +104,7 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
 
       // This is the same as the original but simplified since it is referencing
       // solely the property Drupal fieldmap type.
-      $salesforce_field = _sfm_alter_get_default_value('salesforce_field', $form_state, $delta);
+      $salesforce_field = _salesforce_mapping_alter_get_default_value('salesforce_field', $form_state, $delta);
       $row['salesforce_field'] = array(
         '#id' => 'edit-salesforce-field-' . $delta,
         '#type' => 'select',
@@ -118,8 +118,8 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
       );
 
       // Same as original.
-      if (_sfm_salesforce_field_can_idlookup($salesforce_field, $salesforce_object_type, $form_state)) {
-        $key_default_value = _sfm_alter_get_default_value('key', $form_state, $delta);
+      if (_salesforce_mapping_salesforce_field_can_idlookup($salesforce_field, $salesforce_object_type, $form_state)) {
+        $key_default_value = _salesforce_mapping_alter_get_default_value('key', $form_state, $delta);
         if ($key_default_value) {
           $dedupe_isset = TRUE;
         }
@@ -154,10 +154,10 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
         $row['drupal_sf'] += $row['sf_drupal'] += array(
           '#type' => 'radios',
         );
-        $drupal_sf_value = _sfm_alter_get_default_value('drupal_sf', $form_state, $delta);
-        $sf_drupal_value = _sfm_alter_get_default_value('sf_drupal', $form_state, $delta);
-        $row['drupal_sf']['#options'] = _sfm_get_sync_rule_options($entity_type, $drupal_field_name, $salesforce_object_type, $salesforce_field, 'drupal_sf', $form_state);
-        $row['sf_drupal']['#options'] = _sfm_get_sync_rule_options($entity_type, $drupal_field_name, $salesforce_object_type, $salesforce_field, 'sf_drupal', $form_state);
+        $drupal_sf_value = _salesforce_mapping_alter_get_default_value('drupal_sf', $form_state, $delta);
+        $sf_drupal_value = _salesforce_mapping_alter_get_default_value('sf_drupal', $form_state, $delta);
+        $row['drupal_sf']['#options'] = _salesforce_mapping_get_sync_rule_options($entity_type, $drupal_field_name, $salesforce_object_type, $salesforce_field, 'drupal_sf', $form_state);
+        $row['sf_drupal']['#options'] = _salesforce_mapping_get_sync_rule_options($entity_type, $drupal_field_name, $salesforce_object_type, $salesforce_field, 'sf_drupal', $form_state);
         // Must verify the default value is in the options before setting it or
         // receive a illegal action error.
         if (array_key_exists($drupal_sf_value, $row['drupal_sf']['#options'])) {
@@ -267,7 +267,7 @@ function salesforce_mapping_form_prevalidate($form, &$form_state) {
   if (!is_array($field_maps)) {
     return;
   }
-  $key = _sfm_alter_get_default_value('key', $form_state);
+  $key = _salesforce_mapping_alter_get_default_value('key', $form_state);
   foreach ($field_maps as $delta => $field_map) {
     // Two rows need to be created for every one row submitted.  The one that is
     // shown to the user is the "Drupal to Salesforce" configuration, and the
@@ -350,13 +350,13 @@ function salesforce_mapping_form_alter_submit($form, &$form_state) {
   // The original callback, salesforce_mapping_form_submit(), saved the entity
   // and removed our additional data in the process so we'll have to reload it
   // and save it again adding in our new values.
-  $machine_name = _sfm_alter_get_default_value('name', $form_state);
+  $machine_name = _salesforce_mapping_alter_get_default_value('name', $form_state);
   $mapping = salesforce_mapping_load($machine_name);
-  $key = _sfm_alter_get_default_value('key', $form_state);
+  $key = _salesforce_mapping_alter_get_default_value('key', $form_state);
   foreach ($mapping->field_mappings as $delta => $field_map) {
     $mapping->field_mappings[$delta]['key'] = ($key == $field_map['drupal_field']['fieldmap_value']);
-    $mapping->field_mappings[$delta]['drupal_sf'] = _sfm_alter_get_default_value('drupal_sf', $form_state, $field_map['drupal_field']['fieldmap_value']);
-    $mapping->field_mappings[$delta]['sf_drupal'] = _sfm_alter_get_default_value('sf_drupal', $form_state, $field_map['drupal_field']['fieldmap_value']);
+    $mapping->field_mappings[$delta]['drupal_sf'] = _salesforce_mapping_alter_get_default_value('drupal_sf', $form_state, $field_map['drupal_field']['fieldmap_value']);
+    $mapping->field_mappings[$delta]['sf_drupal'] = _salesforce_mapping_alter_get_default_value('sf_drupal', $form_state, $field_map['drupal_field']['fieldmap_value']);
   }
   $mapping->save();
 
@@ -610,7 +610,7 @@ function salesforce_mapping_dequeue_entity($entity, $entity_type) {
  */
 
 /**
- * Wrapper for _sfm_get_default_value() to compensate for delta differences.
+ * Wrapper for *_get_default_value() to compensate for delta differences.
  *
  * @param string $field
  *   Name of the field who's value to retreive.
@@ -622,8 +622,8 @@ function salesforce_mapping_dequeue_entity($entity, $entity_type) {
  * @return mixed
  *   Value of the field that is appropriate for #default_value.
  */
-function _sfm_alter_get_default_value($field, &$form_state, $delta = NULL) {
-  $value = _sfm_get_default_value($field, $form_state, $delta);
+function _salesforce_mapping_alter_get_default_value($field, &$form_state, $delta = NULL) {
+  $value = _salesforce_mapping_get_default_value($field, $form_state, $delta);
 
   // The delta between stored mapping and the form input mapping are
   // incompatible so we'll figure out what the mapping's delta is and check the
@@ -641,7 +641,7 @@ function _sfm_alter_get_default_value($field, &$form_state, $delta = NULL) {
         }
       }
       if (!is_null($map_delta)) {
-        $value = _sfm_get_default_value($field, $form_state, $map_delta);
+        $value = _salesforce_mapping_get_default_value($field, $form_state, $map_delta);
       }
     }
   }
@@ -665,14 +665,14 @@ function _sfm_alter_get_default_value($field, &$form_state, $delta = NULL) {
  * @return bool
  *   TRUE if the field can be used as an idLookup, otherwise FALSE.
  */
-function _sfm_salesforce_field_can_idlookup($field, $salesforce_object_type, $form_state) {
+function _salesforce_mapping_salesforce_field_can_idlookup($field, $salesforce_object_type, $form_state) {
   if (empty($field) || empty($salesforce_object_type)) {
     return FALSE;
   }
   if (isset($form_state['sfm_storage']) && isset($form_state['sfm_storage']['idlookup']) && isset($form_state['sfm_storage']['idlookup'][$salesforce_object_type]) && isset($form_state['sfm_storage']['idlookup'][$salesforce_object_type][$field])) {
     return $form_state['sfm_storage']['idlookup'][$salesforce_object_type][$field];
   }
-  $sfobject = _sfm_get_salesforce_object($salesforce_object_type, $form_state);
+  $sfobject = _salesforce_mapping_get_salesforce_object($salesforce_object_type, $form_state);
   foreach ($sfobject['fields'] as $field_info) {
     $form_state['sfm_storage']['idlookup'][$salesforce_object_type][$field] = $field_info['idLookup'];
     if ($field_info['name'] == $field) {
@@ -701,7 +701,7 @@ function _sfm_salesforce_field_can_idlookup($field, $salesforce_object_type, $fo
  * @return array
  *   Array of sync rule options that can be used for #options in a form.
  */
-function _sfm_get_sync_rule_options($entity_type, $drupal_field, $salesforce_object_type, $salesforce_field, $direction, $form_state) {
+function _salesforce_mapping_get_sync_rule_options($entity_type, $drupal_field, $salesforce_object_type, $salesforce_field, $direction, $form_state) {
   $options = array(
     SALESFORCE_SYNC_RULE_NEVER => t('Never'),
     SALESFORCE_SYNC_RULE_BLANK => t('When blank'),
@@ -711,7 +711,7 @@ function _sfm_get_sync_rule_options($entity_type, $drupal_field, $salesforce_obj
 
   $allowed_options = array();
   foreach ($options as $sync_rule => $label) {
-    $allowed = _sfm_datatype_can_sync($entity_type, $drupal_field, $salesforce_object_type, $salesforce_field, $direction, $sync_rule, $form_state);
+    $allowed = _salesforce_mapping_datatype_can_sync($entity_type, $drupal_field, $salesforce_object_type, $salesforce_field, $direction, $sync_rule, $form_state);
     if ($allowed) {
       $allowed_options[$sync_rule] = $label;
     }
@@ -743,7 +743,7 @@ function _sfm_get_sync_rule_options($entity_type, $drupal_field, $salesforce_obj
  * @return boolean
  *   TRUE if they can sync and FALSE if they cannot.
  */
-function _sfm_datatype_can_sync($entity_type, $drupal_field, $salesforce_object_type, $salesforce_field, $direction, $sync_rule, &$form_state) {
+function _salesforce_mapping_datatype_can_sync($entity_type, $drupal_field, $salesforce_object_type, $salesforce_field, $direction, $sync_rule, &$form_state) {
   // We're being lenient here because we can very likely be passing no values in
   // the form because the user hasn't yet selected a value for some of these
   // vars.
@@ -781,7 +781,7 @@ function _sfm_datatype_can_sync($entity_type, $drupal_field, $salesforce_object_
     $salesforce_datatype = $form_state['sfm_storage']['salesforce_datatype'][$salesforce_object_type][$salesforce_field];
   }
   else {
-    $sfobject = _sfm_get_salesforce_object($salesforce_object_type, $form_state);
+    $sfobject = _salesforce_mapping_get_salesforce_object($salesforce_object_type, $form_state);
     foreach ($sfobject['fields'] as $field_info) {
       $form_state['sfm_storage']['salesforce_datatype'][$salesforce_object_type][$field_info['name']] = $field_info['type'];
       if ($field_info['name'] == $salesforce_field) {
