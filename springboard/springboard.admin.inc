@@ -221,11 +221,14 @@ function springboard_admin_config_modules($form, $form_state) {
   }
   else {
     $modules[] = 'fundraiser_commerce';
+    $modules[] = 'commerce_product'; // To remove when dependancies in commerce_authnet, commerce_payment resolved.
+    $modules[] = 'commerce_product_reference'; // To remove when dependancies in commerce_authnet, commerce_payment resolved.
     $modules[] = 'commerce_ui';
     $modules[] = 'commerce_payment_ui';
     $modules[] = 'commerce_payment_example';
     $modules[] = 'commerce_authnet';
     $modules[] = 'commerce_paypal';
+    $modules[] = 'commerce_paypal_wps';
 //    $modules[] = 'commerce_cardonfile'; // Temp comment out pending cardonfile install bug fix
   }
   // Optional Salesforce modules.
