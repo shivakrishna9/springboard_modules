@@ -1877,6 +1877,10 @@ function springboard_admin_config_email_wrapper_add($form, $form_state) {
  * Create an example Fundraiser form.
  */
 function springboard_admin_config_donation_form_add($form, $form_state, $email_nid = NULL) {
+  // Refresh field information defs. So that what was picked up if anything
+  // earlier during module activation, is now configured right. Avoid static cache issues.
+  $fields = fundraiser_field_info(TRUE);
+  // Create the node.
   $node = new stdClass();
   $node->is_new = 1;
   $node->type = 'donation_form';
