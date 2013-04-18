@@ -284,7 +284,7 @@ function email_wrappers_update_7001() {
 
 // Unpublish existing nodes
 function email_wrappers_update_7002() {
-
+  variable_set('node_options_email_wrapper', array());
   $results = db_select('node', 'n')
   ->fields('n', array('nid'))
   ->condition('type', 'email_wrapper')
