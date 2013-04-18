@@ -138,9 +138,13 @@ function market_source_form_alter(&$form, &$form_state, $form_id) {
       if ($form_key == 'cid') {
         if (module_exists('salesforce_sync')) {
           $campaigns = market_source_get_campaigns();
+          $select_options = array();
+          foreach ($campaigns as $campaign_id => $campaign) {
+            $select_options[$campaign_id] = $campaign['name'] . ' (' . $campaign_id . ')';
+          }
           if (is_array($campaigns)) {
             $form['value']['#type'] = 'select';
-            $form['value']['#options'] = array_combine($campaigns, $campaigns);
+            $form['value']['#options'] = $select_options;
           }
         }
       }
@@ -406,7 +410,7 @@ function _market_source_validate_cid($val) {
     if (preg_match('/^[a-zA-Z0-9_+-]+$/', $val)) {
       if (drupal_strlen($val) <= MARKET_SOURCE_VALUE_MAXLENGTH) {
         if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
-          $campaigns = market_source_get_campaigns();
+          $campaigns = array_keys( market_source_get_campaigns() );
           if (is_array($campaigns) && in_array($val, $campaigns)) {
             $retval = TRUE;
           }
@@ -638,7 +642,10 @@ function market_source_get_campaigns() {
     $found_campaigns = $sync->fetchRecords('Campaign', array('Id', 'Name'));
     // Return a list of Campaign ids.
     foreach ($found_campaigns as $found_campaign) {
-      $campaigns[] = $found_campaign->Id;
+      $campaigns[$found_campaign->Id] = array(
+        'id' =>  $found_campaign->Id,
+        'name' =>  $found_campaign->Name,
+      );
     }
   }
   return $campaigns;

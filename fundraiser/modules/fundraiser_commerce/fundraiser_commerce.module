@@ -1525,14 +1525,36 @@ function _fundraiser_commerce_get_charged_by_status($status) {
  * Helper function, wrapper for encrypt function.
  */
 function _fundraiser_commerce_encrypt($input) {
-  return encrypt($input);
+  if (module_exists('encrypt')) {
+    module_load_install('encrypt');
+    $requirements = encrypt_requirements('runtime');
+    if ($requirements['encrypt_keys']['severity'] == REQUIREMENT_ERROR) {
+      drupal_set_message(t('A problem was found with your secure key.') . ' ' .
+        $requirements['encrypt_keys']['value'],  'warning');
+    }
+    else {
+      return encrypt($input);
+    }
+  }
+  return $input;
 }
 
 /**
  * Helper function, wrapper for decrypt function.
  */
 function _fundraiser_commerce_decrypt($input) {
-  return decrypt($input);
+  if (module_exists('encrypt')) {
+    module_load_install('encrypt');
+    $requirements = encrypt_requirements('runtime');
+    if ($requirements['encrypt_keys']['severity'] == REQUIREMENT_ERROR) {
+      drupal_set_message(t('A problem was found with your secure key.') . ' ' .
+        $requirements['encrypt_keys']['value'],  'warning');
+    }
+    else {
+      return decrypt($input);
+    }
+  }
+  return $input;
 }
 
 /**
