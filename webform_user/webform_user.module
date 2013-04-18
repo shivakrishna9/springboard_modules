@@ -334,7 +334,7 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
       foreach ($map as $webform_field => $profile_field) {
         if (array_key_exists($webform_field, $component_hierarchy)) {
           $form_field =& _webform_user_find_field($form, $component_hierarchy[$webform_field]);
-          if (empty($form_field['#default_value']) && isset($user_data->$profile_field)) {
+          if (isset($user_data->$profile_field)) {
             // Figure out what the value is.
             $profile_value = is_array($user_data->$profile_field) ? '1' : 0;
             if (is_array($user_data->$profile_field)) {
