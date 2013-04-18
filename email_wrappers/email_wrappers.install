@@ -282,6 +282,21 @@ function email_wrappers_update_7001() {
   // TODO: delete original email confirmation tables.
 }
 
+// Unpublish existing nodes
+function email_wrappers_update_7002() {
+
+  $results = db_select('node', 'n')
+  ->fields('n', array('nid'))
+  ->condition('type', 'email_wrapper')
+  ->execute();
+  while($nid = $results->fetchField()) {
+    $node = node_load($nid);
+    $node->status = 0;
+    $node->promote = 0;
+    node_save($node);
+  }
+}
+
 /**
  * Create required fields and associate them with the "Email Template" content type.
  */
@@ -297,10 +312,15 @@ function _email_wrappers_create_fields() {
       'custom' => 1,
       'modified' => 1,
       'locked' => 0,
+      'status' => 0,
       'title_label' => st('Internal Title'),
     );
     $type = node_type_set_defaults($type);
     node_type_save($type);
+
+    // because default publishing options live in {variable}, not {node_type}
+    // and can't be set through node_type_set_defaults(). Awesome. :P
+    variable_set('node_options_email_wrapper', array());
   }
 
   // implement fields. "_instance" defines the instance settings used
