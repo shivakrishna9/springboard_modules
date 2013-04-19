@@ -396,9 +396,10 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
           break;
         case 'target':
           $replacements[$token] = $data['webform_goal']['target_value'];
-          break;http://www.smbc-comics.com/index.php?db=comics&id=2887#comic
+          break;
         case 'total':
           $replacements[$token] = $goal_progress['count'];
+          break;
       }
     }
     return $replacements;
