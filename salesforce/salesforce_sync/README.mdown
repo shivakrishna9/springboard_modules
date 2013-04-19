@@ -292,22 +292,3 @@ Salesforce.
   );
   $records = $salesforce_sync->fetchByField('Contact', $fields, 'Email', $key_field_values);
 ```
-
-
-## Patch
-
-This patch to the `salesforce` module is required in order for `salesforce_sync`
-to work properly.
-
-_Patch is automatically applied when a `springboard` instance is built using
-[Springboard Build](https://github.com/JacksonRiver/Springboard-Build)._
-
-**Fix SOAP Identity:**
-  * http://drupal.org/files/salesforce-add-identity_0_10.patch
-
-The `salesforce_soap` module has a bug that prevents the ability to use the
-UPSERT operation.  Another bug is caused by separate timeouts between the OAuth
-connection and the SOAP authentication, where the SOAP authentication will
-expire much sooner than the OAuth connection, and currently the
-`salesforce_soap` module provides no way to reestablish a SOAP authentication
-when that occurs.  The following patch fixes these problems.
