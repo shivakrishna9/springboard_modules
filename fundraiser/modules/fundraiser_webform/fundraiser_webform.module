@@ -953,7 +953,17 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
       if ($allow_update) {
         $component['pid'] = $orig_field->pid; // Keep the original parentage, could be set by user.
         $component['name'] = $orig_field->name; // Keep the original name, could be set by user.
-        $component['value'] = $orig_field->value; // Keep the original value, could be set by user.
+        if ($component['form_key'] != 'amount') {
+          $component['value'] = $orig_field->value; // Keep the original value, could be set by user.
+        }
+        else {
+          // Amount is the only exception, IIF the orig is no longer present as an amount.
+          $amounts = array_keys($fundraiser->donation_amounts);
+          if (in_array($orig_field->value, $amounts)) {
+            $component['value'] = $orig_field->value; // Keep the original value, could be set by user.
+          }
+          // Else, leave at the 'new' least.
+        }
         $component = array_merge((array) $orig_field, (array) $component);
         webform_component_update($component);
       }
