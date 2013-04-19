@@ -693,21 +693,24 @@ function fundraiser_webform_fundraiser_get_fundraiser_alter($fundraiser) {
  */
 function fundraiser_webform_fundraiser_create_fundraiser_alter($fundraiser) {
   // Construct an array of donation amounts.
-  $donation_amounts = array();
-  if (isset($fundraiser->donation_amounts)) {
-    $amount_sets = explode(',', $fundraiser->donation_amounts);
-    $amount_sets = array_unique($amount_sets);
-    foreach ($amount_sets as $amount_set) {
-      $amount_set = explode('|', $amount_set);
-      if (count($amount_set) == 2) {
-        $donation_amounts[$amount_set[0]] = $amount_set[1];
+  // If this is a clone, we want to rely entirely on webform to provide fields.
+  if (!isset($fundraiser->clone_from_original_nid)) {
+    $donation_amounts = array();
+    if (isset($fundraiser->donation_amounts)) {
+      $amount_sets = explode(',', $fundraiser->donation_amounts);
+      $amount_sets = array_unique($amount_sets);
+      foreach ($amount_sets as $amount_set) {
+        $amount_set = explode('|', $amount_set);
+        if (count($amount_set) == 2) {
+          $donation_amounts[$amount_set[0]] = $amount_set[1];
+        }
       }
+      ksort($donation_amounts, SORT_NUMERIC);
     }
-    ksort($donation_amounts, SORT_NUMERIC);
+    $fundraiser->donation_amounts = $donation_amounts;
+    // Create the components for the fundraiser, amount and otherwise.
+    _fundraiser_webform_update_components($fundraiser);
   }
-  $fundraiser->donation_amounts = $donation_amounts;
-  // Create the components for the fundraiser, amount and otherwise.
-  _fundraiser_webform_update_components($fundraiser);
 }
 
 /**
