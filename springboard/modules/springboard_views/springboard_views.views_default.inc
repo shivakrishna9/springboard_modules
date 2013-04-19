@@ -38,7 +38,6 @@ function springboard_views_views_default_views() {
  $handler->display->display_options['style_plugin'] = 'table';
  $handler->display->display_options['style_options']['columns'] = array(
    'title' => 'title',
-   'internal_name' => 'internal_name',
    'nid' => 'nid',
    'value' => 'value',
    'value_1' => 'value_1',
@@ -46,20 +45,13 @@ function springboard_views_views_default_views() {
    'webform_submission_count_node' => 'webform_submission_count_node',
    'changed' => 'changed',
    'view_node' => 'view_node',
-   'webform_edit' => 'view_node',
+   'edit_node' => 'view_node',
    'nothing' => 'view_node',
    'clone_node' => 'view_node',
  );
  $handler->display->display_options['style_options']['default'] = '-1';
  $handler->display->display_options['style_options']['info'] = array(
    'title' => array(
-     'sortable' => 1,
-     'default_sort_order' => 'asc',
-     'align' => '',
-     'separator' => '',
-     'empty_column' => 0,
-   ),
-   'internal_name' => array(
      'sortable' => 1,
      'default_sort_order' => 'asc',
      'align' => '',
@@ -109,7 +101,7 @@ function springboard_views_views_default_views() {
      'separator' => ' ',
      'empty_column' => 0,
    ),
-   'webform_edit' => array(
+   'edit_node' => array(
      'align' => '',
      'separator' => '',
      'empty_column' => 0,
@@ -275,13 +267,13 @@ function springboard_views_views_default_views() {
  $handler->display->display_options['fields']['view_node']['label'] = 'Action';
  $handler->display->display_options['fields']['view_node']['element_label_colon'] = FALSE;
  $handler->display->display_options['fields']['view_node']['text'] = 'view';
- /* Field: Webform: Webform edit link */
- $handler->display->display_options['fields']['webform_edit']['id'] = 'webform_edit';
- $handler->display->display_options['fields']['webform_edit']['table'] = 'node';
- $handler->display->display_options['fields']['webform_edit']['field'] = 'webform_edit';
- $handler->display->display_options['fields']['webform_edit']['label'] = '';
- $handler->display->display_options['fields']['webform_edit']['element_label_colon'] = FALSE;
- $handler->display->display_options['fields']['webform_edit']['text'] = 'edit';
+ /* Field: Content: Edit link */
+ $handler->display->display_options['fields']['edit_node']['id'] = 'edit_node';
+ $handler->display->display_options['fields']['edit_node']['table'] = 'views_entity_node';
+ $handler->display->display_options['fields']['edit_node']['field'] = 'edit_node';
+ $handler->display->display_options['fields']['edit_node']['label'] = '';
+ $handler->display->display_options['fields']['edit_node']['element_label_colon'] = FALSE;
+ $handler->display->display_options['fields']['edit_node']['text'] = 'edit';
  /* Field: Global: Custom text */
  $handler->display->display_options['fields']['nothing']['id'] = 'nothing';
  $handler->display->display_options['fields']['nothing']['table'] = 'views';
@@ -289,13 +281,12 @@ function springboard_views_views_default_views() {
  $handler->display->display_options['fields']['nothing']['label'] = '';
  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="[path]/revisions">revisions</a>';
  $handler->display->display_options['fields']['nothing']['element_label_colon'] = FALSE;
- /* Field: Content: Clone link */
+ /* Field: Broken/missing handler */
  $handler->display->display_options['fields']['clone_node']['id'] = 'clone_node';
  $handler->display->display_options['fields']['clone_node']['table'] = 'node';
  $handler->display->display_options['fields']['clone_node']['field'] = 'clone_node';
  $handler->display->display_options['fields']['clone_node']['label'] = '';
  $handler->display->display_options['fields']['clone_node']['element_label_colon'] = FALSE;
- $handler->display->display_options['fields']['clone_node']['text'] = 'clone';
  
  /* Display: Springboard Recent Donation Forms */
  $handler = $view->new_display('block', 'Springboard Recent Donation Forms', 'block_1');
@@ -361,13 +352,13 @@ function springboard_views_views_default_views() {
  $handler->display->display_options['fields']['view_node']['label'] = 'Action';
  $handler->display->display_options['fields']['view_node']['element_label_colon'] = FALSE;
  $handler->display->display_options['fields']['view_node']['text'] = 'view';
- /* Field: Webform: Webform edit link */
- $handler->display->display_options['fields']['webform_edit']['id'] = 'webform_edit';
- $handler->display->display_options['fields']['webform_edit']['table'] = 'node';
- $handler->display->display_options['fields']['webform_edit']['field'] = 'webform_edit';
- $handler->display->display_options['fields']['webform_edit']['label'] = '';
- $handler->display->display_options['fields']['webform_edit']['element_label_colon'] = FALSE;
- $handler->display->display_options['fields']['webform_edit']['text'] = 'edit';
+ /* Field: Content: Edit link */
+ $handler->display->display_options['fields']['edit_node']['id'] = 'edit_node';
+ $handler->display->display_options['fields']['edit_node']['table'] = 'views_entity_node';
+ $handler->display->display_options['fields']['edit_node']['field'] = 'edit_node';
+ $handler->display->display_options['fields']['edit_node']['label'] = '';
+ $handler->display->display_options['fields']['edit_node']['element_label_colon'] = FALSE;
+ $handler->display->display_options['fields']['edit_node']['text'] = 'edit';
  /* Field: Global: Custom text */
  $handler->display->display_options['fields']['nothing']['id'] = 'nothing';
  $handler->display->display_options['fields']['nothing']['table'] = 'views';
@@ -375,13 +366,12 @@ function springboard_views_views_default_views() {
  $handler->display->display_options['fields']['nothing']['label'] = '';
  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="[path]/revisions">revisions</a>';
  $handler->display->display_options['fields']['nothing']['element_label_colon'] = FALSE;
- /* Field: Content: Clone link */
+ /* Field: Broken/missing handler */
  $handler->display->display_options['fields']['clone_node']['id'] = 'clone_node';
  $handler->display->display_options['fields']['clone_node']['table'] = 'node';
  $handler->display->display_options['fields']['clone_node']['field'] = 'clone_node';
  $handler->display->display_options['fields']['clone_node']['label'] = '';
  $handler->display->display_options['fields']['clone_node']['element_label_colon'] = FALSE;
- $handler->display->display_options['fields']['clone_node']['text'] = 'clone';
  $handler->display->display_options['defaults']['filter_groups'] = FALSE;
  $handler->display->display_options['defaults']['filters'] = FALSE;
  /* Filter criterion: Content: Type */
@@ -391,7 +381,7 @@ function springboard_views_views_default_views() {
  $handler->display->display_options['filters']['type']['value'] = array(
    'donation_form' => 'donation_form',
  );
- 
+
  $views[$view->name] = $view;
   
   /**

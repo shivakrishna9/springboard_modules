@@ -19,10 +19,6 @@ function salesforce_donation_permission() {
       'title' => t('Map Salesforce objects to donations'),
       'description' => t('Configure the mapping of Salesforce objects with fundraisers so donations can sync with Salesforce.'),
     ),
-    'map salesforce to webform on donation' => array(
-      'title' => t('Map Salesforce objects to webform on Donations'),
-      'description' => t('Advanced user setting: map donations and webform on the same node for Salesforce sync.'),
-    ),
   );
 }
 
@@ -250,8 +246,8 @@ function salesforce_donation_salesforce_genmap_info() {
  */
 function salesforce_donation_salesforce_genmap_info_alter(&$items) {
   // If salesforce_webform exists.
-  if (module_exists('salesforce_webform')) {
-    $items['salesforce_webform']['access callback'] = 'salesforce_donation_webform_map_page_access';
+  if (module_exists('fundraiser_webform')) {
+    $items['webform']['access callback'] = 'salesforce_donation_webform_map_page_access';
   }
 }
 
@@ -651,7 +647,7 @@ function _salesforce_donation_get_form_fields($form, $fields = array()) {
 /**
  * Access callback to reach the mapping page.
  */
-function salesforce_donation_map_page_access($node) {
+function salesforce_donation_map_page_access($node, $module) {
   if ($node !== FALSE
     && fundraiser_is_donation_type($node->type)
     && user_access('map salesforce to donation')
@@ -667,16 +663,14 @@ function salesforce_donation_map_page_access($node) {
  * This avoids a complicated UI, so only let trained users use these two systems
  * together.
  */
-function salesforce_donation_webform_map_page_access($node) {
-  // %webform_menu returns FALSE if not valid.
+function salesforce_donation_webform_map_page_access($node, $module) {
+  $access = webform_map_page_access($node, $module);
   if ($node !== FALSE
     && fundraiser_is_donation_type($node->type)
-    && user_access('map salesforce to webform')
-    && user_access('map salesforce to webform on donation')
     ) {
-    return TRUE;
+    return FALSE;
   }
-  return FALSE;
+  return $access;
 }
 
 /**
