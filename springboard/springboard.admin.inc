@@ -1797,7 +1797,6 @@ function springboard_admin_config_donation_form_type($form, $form_state) {
 /**
  * Create an example Email Wrapper.
  */
-
 function springboard_admin_config_email_wrapper_add($form, $form_state) {
   $node = new stdClass();
   $node->is_new = 1;
@@ -1805,8 +1804,8 @@ function springboard_admin_config_email_wrapper_add($form, $form_state) {
   $node->language = LANGUAGE_NONE;
   $node->uid = 1;
   $node->title ='Example Email Wrapper';
-  $node->status = 1;
-  $node->promote = 1;
+  $node->status = 0;
+  $node->promote = 0;
   $node->email_wrapper_from_name[LANGUAGE_NONE][0] = array(
     'value' => 'Springboard',
     'format' => '',
