@@ -395,7 +395,11 @@ function fundraiser_sustainers_node_insert($node) {
   // If node is a donation type.
   if (fundraiser_is_donation_type($node->type) && function_exists('salesforce_genmap_load_map')) {
     // And if we have a default map.
-    $map = salesforce_genmap_load_map(-1, 'fundraiser_sustainers');
+    $nid = -1;
+    if (!empty($node->clone_from_original_nid)) {
+      $nid = $node->clone_from_original_nid;
+    }
+    $map = salesforce_genmap_load_map($nid, 'fundraiser_sustainers');
     if (!empty($map)) {
       // Copy the map to the node.
       unset($map->mid);

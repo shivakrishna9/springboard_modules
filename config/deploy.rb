@@ -9,10 +9,6 @@ role :jrdev, 'jacksonriverdev.com', {
   :user => 'admin'
 }
 
-role :aspca_varnish, 'aspca-varnish.jacksonriverdev.com', {
-  :user => 'ec2-user'
-}
-
 role :sbqa, 'sb4qa.com', {
   :user => 'admin'
 }

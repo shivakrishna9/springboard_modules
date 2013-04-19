@@ -61,8 +61,20 @@ function salesforce_genmap_menu() {
   }
   else {
     // Returns an array, keyed by supporting module.
-    // If webform is available as mapping, prefer that for top menu Else fall
-    // back on first.
+    // Set a top menu
+    $items['node/%node/salesforce'] = array(
+      'title' => 'Salesforce maps',
+      'page callback' => 'salesforce_help_page',
+      'access arguments' => array('map salesforce objects'),
+      'type' => MENU_LOCAL_TASK,
+    );
+    $items['node/%node/salesforce/salesforce'] = array(
+      'title' => 'Salesforce maps',
+      'page callback' => 'salesforce_help_page',
+      'access arguments' => array('map salesforce objects'),
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'weight' => 100,
+    );
     $first = !empty($modules['webform']) ? 'webform' : '';
     // For each available module, make a sub menu.
     foreach ($modules as $module => $info) {
@@ -72,24 +84,42 @@ function salesforce_genmap_menu() {
         'page arguments' => array(1, 3),
         'access callback' => $info['access callback'],
         'access arguments' => array(1, 3),
-        'type' => empty($first) ? MENU_DEFAULT_LOCAL_TASK : MENU_LOCAL_TASK,
+        'type' => MENU_LOCAL_TASK,
         'file' => 'includes/salesforce_genmap.map.inc',
       );
       $first = empty($first) ? $module : $first;
     }
-    // Set one of them to be the top menu
-    // Preferrably webform, as that's an always ok option.
-    $items['node/%node/salesforce'] = array(
-      'title' => 'Salesforce maps',
-      'page callback' => 'salesforce_genmap_map_page',
-      'page arguments' => array(1, $first),
-      'access callback' => $modules[$first]['access callback'],
-      'access arguments' => array(1, $first),
-      'type' => MENU_LOCAL_TASK,
-      'file' => 'includes/salesforce_genmap.map.inc',
-    );
   }
   return $items;
+}
+
+/**
+ * Menu placeholder page for situations where we don't have a sharable root.
+ * Since webform is not always a map we want to display, we need a central other root.
+ */
+function salesforce_help_page() {
+  $build = array();
+  $build['content'] = array(
+    'page_description' => array(
+      '#id' => 'salesforce-map-helptext-page',
+      '#type' => 'markup',
+      '#markup' => '<p>' . t('Map which values should be sent to your Salesforce organization.') . '</p>',
+      '#prefix' => '<div class="salesforce-map-helptext">',
+      '#suffix' => '</div>',
+    ),
+  );
+  $sfapi = salesforce_get_api();
+  if (!$sfapi->isAuthorized()) {
+    $build['content']['salesforce_genmap_connect'] = array(
+      'no_sfapi' => array(
+        '#markup' => '<p>' . t('Cannot connect to Salesforce, preventing the ability to map Salesforce objects.  !ConfigureSalesforce',
+                array('!ConfigureSalesforce' => l(t('Configure Salesforce'), 'admin/config/salesforce/authorize'))) . '</p>',
+        '#prefix' => '<div class="salesforce-map-error salesforce-map-error-salesforce">',
+        '#suffix' => '</div>',
+      ),
+    );
+  }
+  return $build;
 }
 
 /**
@@ -128,7 +158,8 @@ function salesforce_genmap_permission() {
       $permissions[$perm] = array(
         'title' => t('Configure a !module map to sync deleted records',
           array('!module' => $module)),
-        'description' => t('Allow the configuration for a map to automatically delete its associated record from Salesforce when it is deleted from Drupal.'),
+        'description' => t('Allow the configuration for a map to automatically delete its ' .
+          'associated record from Salesforce when it is deleted from Drupal.'),
       );
     }
   }

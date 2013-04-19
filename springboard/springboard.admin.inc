@@ -221,11 +221,14 @@ function springboard_admin_config_modules($form, $form_state) {
   }
   else {
     $modules[] = 'fundraiser_commerce';
+    $modules[] = 'commerce_product'; // To remove when dependancies in commerce_authnet, commerce_payment resolved.
+    $modules[] = 'commerce_product_reference'; // To remove when dependancies in commerce_authnet, commerce_payment resolved.
     $modules[] = 'commerce_ui';
     $modules[] = 'commerce_payment_ui';
     $modules[] = 'commerce_payment_example';
     $modules[] = 'commerce_authnet';
     $modules[] = 'commerce_paypal';
+    $modules[] = 'commerce_paypal_wps';
 //    $modules[] = 'commerce_cardonfile'; // Temp comment out pending cardonfile install bug fix
   }
   // Optional Salesforce modules.
@@ -1874,6 +1877,10 @@ function springboard_admin_config_email_wrapper_add($form, $form_state) {
  * Create an example Fundraiser form.
  */
 function springboard_admin_config_donation_form_add($form, $form_state, $email_nid = NULL) {
+  // Refresh field information defs. So that what was picked up if anything
+  // earlier during module activation, is now configured right. Avoid static cache issues.
+  $fields = fundraiser_field_info(TRUE);
+  // Create the node.
   $node = new stdClass();
   $node->is_new = 1;
   $node->type = 'donation_form';

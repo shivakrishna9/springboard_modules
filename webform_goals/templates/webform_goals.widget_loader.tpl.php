@@ -1,7 +1,7 @@
 <h5>For use on external sites be sure to include the widget loader script:</h5>
 <pre><code>
 
-&lt;script type="text/javascript" src="<?php print url(drupal_get_path('module', 'webform_goals'), array('absolute' => TRUE)); ?>/webform_goals/scripts/webform_goals.loader.js"&gt;&lt;/script&gt;
+&lt;script type="text/javascript" src="<?php print url(file_create_url(file_default_scheme() . '://'), array('absolute' => TRUE)); ?>/webform_goals/webform_goals.loader.js"&gt;&lt;/script&gt;
 
 </code></pre>
 
