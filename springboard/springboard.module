@@ -166,7 +166,7 @@ function springboard_menu_alter(&$items) {
       $items['admin/springboard/forms/donations'] = $views_paths['admin/content/donation-forms'];
       $items['admin/springboard/forms/donations']['type'] = MENU_NORMAL_ITEM;
       $items['admin/springboard/forms/donations']['access arguments'] = array('administer springboard');
-      $items['admin/springboard/forms/donations']['title'] = 'View Donations';
+      $items['admin/springboard/forms/donations']['title'] = 'View Donation Forms';
       $items['admin/springboard/forms/donations']['weight'] = 4;
       unset($items['admin/springboard/forms/donations']['access callback']);
     }
