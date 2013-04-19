@@ -91,14 +91,13 @@ function _fundraiser_upsell_content_preview($node) {
  */
 function _fundraiser_upsell_ajax_process($node) {
   $data = $_POST;
-  dpm($data);
   // Check the form token to be sure this is a valid callback
   if (!drupal_valid_token($data['form_token'], $data['form_id'])) {
-    drupal_json_output(FALSE);
+    return drupal_json_output(false);
   }
   // $content = fundraiser_upsell_upsell_ajax_submit($data);
-  $content = "Thank you for your order";
-  drupal_json_output($content);
+  $content = array ('content' => 'Thank you for your order');
+  return drupal_json_output($content);
 }
 
 /**

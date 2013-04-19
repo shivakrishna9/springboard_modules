@@ -23,28 +23,19 @@
         // Grab the values
         var sendData = $(this).serialize();
         path = $(this).attr('action');
-        // update the block message 
-        $.blockUI({ 
-          message: "<h1>Processing your sustainer gift... </h1>",
-          centerY : 0,
-          css: {
-            width: modalWidth,
-            height: modalHeight,
-            textAlign: 'left',
-            padding: '1em',
-            top: '10em'
-          }
-        });
+        // Update the block message 
+        $('#message-modal').html('<h1>Processing your sustainer gift... </h1>');
+        // Post the form and process
         $.ajax({
           type: 'post',
           url: path,
           cache: false,
           data: sendData,
-          complete: function(response) {
-            // @TODO: fix this
-            // update the block message 
-            $.blockUI({ 
-              message: response,
+          dataType: 'json',
+          complete: function(data) {
+            var returnContent = JSON.parse(data.response);
+            $.blockUI({
+              message: returnContent['content'],
               centerY : 0,
               timeout: 3000,
               css: {

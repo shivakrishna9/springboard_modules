@@ -103,6 +103,7 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
     '#maxlength' => 256,
     '#default_value' => variable_get('fundraiser_upsell_default_content_disclaimer', $default_disclaimer),
   );
+  // @TODO: make this a select list populated by SF cache
   $form['fundraiser_upsell_sf_campaign_id'] = array(
     '#title' => t('Sustainer Salesforce Campaign ID'),
     '#type' => 'textfield',

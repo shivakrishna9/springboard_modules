@@ -158,6 +158,7 @@ function fundraiser_upsell_node_settings(&$form, $form_state, $node) {
     as the first one. If this is checked, it will instead start a new series of
     recurring donations with a blank first donation.'),
   );
+  // @TODO: make this a select list populated by SF cache?
   $form['fundraiser_upsell']['additional_options']['upsell_campaign_id'] = array(
     '#title' => t('Sustainer Salesforce Campaign ID'),
     '#type' => 'textfield',
