@@ -346,6 +346,13 @@ function fundraiser_webform_webform_user_profile_fields_alter(&$fields, $node) {
       }
     }
   }
+  // For ALL webform submissions.
+  // Additional user profile fields to not allow mapping. By explicit names.
+  foreach ($fields as $index => $profile_field) {
+    if (in_array($profile_field['name'], array('sbp_salesforce_account_id', 'sbp_salesforce_contact_id'))) {
+      unset($fields[$index]);
+    }
+  }
 }
 
 /**
