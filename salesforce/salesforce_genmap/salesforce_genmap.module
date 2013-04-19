@@ -61,7 +61,7 @@ function salesforce_genmap_menu() {
   }
   else {
     // Returns an array, keyed by supporting module.
-    // Set a top menu
+    // Set a top menu.
     $items['node/%node/salesforce'] = array(
       'title' => 'Salesforce maps',
       'page callback' => 'salesforce_help_page',
@@ -95,7 +95,9 @@ function salesforce_genmap_menu() {
 
 /**
  * Menu placeholder page for situations where we don't have a sharable root.
- * Since webform is not always a map we want to display, we need a central other root.
+ *
+ * Since webform is not always a map we want to display, we need a central other
+ * root.
  */
 function salesforce_help_page() {
   $build = array();
@@ -158,8 +160,7 @@ function salesforce_genmap_permission() {
       $permissions[$perm] = array(
         'title' => t('Configure a !module map to sync deleted records',
           array('!module' => $module)),
-        'description' => t('Allow the configuration for a map to automatically delete its ' .
-          'associated record from Salesforce when it is deleted from Drupal.'),
+        'description' => t('Allow the configuration for a map to automatically delete its associated record from Salesforce when it is deleted from Drupal.'),
       );
     }
   }
