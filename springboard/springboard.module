@@ -26,255 +26,307 @@ function springboard_permission() {
  */
 function springboard_menu() {
   $items = array();
-  // Admin settings for dashboard display.
-  $items['admin/config/system/springboard'] = array(
+  
+  // Springboard task list.
+  $items['admin/springboard'] = array(
     'title' => 'Springboard',
-    'description' => 'Configurations for the Springboard system.',
+    'description' => 'Configure and administer Springboard.',
+    'page callback' => 'system_admin_menu_block_page',
+    'module' => 'system',
+    'file path' => drupal_get_path('module', 'system'),
+    'file' => 'system.admin.inc',
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  
+  // Springboard dashboard.
+  $items['admin/springboard/dashboard'] = array(
+    'title' => 'Dashboard',
+    'description' => 'Access reports and site maintenance tasks.',
+    'access arguments' => array('access springboard dashboard'),
+    'page callback' => 'springboard_admin_dashboard',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => -5,
+  );
+  // Springboard forms admin.
+  $items['admin/springboard/forms'] = array(
+    'title' => 'Forms',
+    'description' => 'Create, edit and analyze Springboard forms.',
+    'page callback' => 'system_admin_menu_block_page',
+    'module' => 'system',
+    'file path' => drupal_get_path('module', 'system'),
+    'file' => 'system.admin.inc',
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+    'weight' => -4,
+  );
+  // Springboard reports admin.
+  $items['admin/springboard/reports'] = array(
+    'title' => 'Reports',
+    'description' => 'View Sprinboard-related reports.',
+    'page callback' => 'system_admin_menu_block_page',
+    'module' => 'system',
+    'file path' => drupal_get_path('module', 'system'),
+    'file' => 'system.admin.inc',
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+    'weight' => -3,
+  );
+  // Springboard settings list.
+  $items['admin/springboard/settings'] = array(
+    'title' => 'Settings',
+    'description' => 'Configure Springboard modules.',
+    'page callback' => 'system_admin_menu_block_page',
+    'module' => 'system',
+    'file path' => drupal_get_path('module', 'system'),
+    'file' => 'system.admin.inc',
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => -2,
+  );
+  // Springboard dashboard settings.
+  $items['admin/springboard/settings/springboard'] = array(
+    'title' => 'Springboard',
+    'description' => 'Configure Springboard.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('springboard_admin_settings'),
     'access arguments' => array('administer springboard'),
-    'type' => MENU_NORMAL_ITEM,
     'file' => 'springboard.admin.inc',
-  );
-  // Springboard interface.
-  $items['admin/springboard'] = array(
-    'title' => 'Springboard',
-    'description' => 'Access reports and site maintenance tasks.',
-    'access arguments' => array('administer springboard'),
-    'page callback' => 'springboard_admin',
-    'type' => MENU_NORMAL_ITEM,
-  );
-  $items['admin/springboard/springboard'] = array(
-    'title' => 'Springboard',
-    'description' => 'Access reports and site maintenance tasks.',
-    'access arguments' => array('administer springboard'),
-    'page callback' => 'springboard_admin',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'weight' => -1,
-  );
-  // Forms sub-menu
-  if (module_exists('fundraiser') || module_exists('webform')) {
-    $items['admin/springboard/forms'] = array(
-      'title' => 'Forms',
-      'description' => 'Manage your donation forms and other webforms.',
-      'page callback' => 'springboard_admin',
-      'access arguments' => array('administer springboard'),
-      'type' => MENU_LOCAL_TASK,
-    );
-  }
-  // Reports submenu
-  if (module_exists('queue_processor')) {
-    $items['admin/springboard/reports'] = array(
-      'title' => 'Reports',
-      'description' => 'Access reports on donations and Salesforce activity.',
-      'page callback' => 'springboard_admin',
-      'access arguments' => array('administer springboard'),
-      'type' => MENU_LOCAL_TASK,
-    );
-    $items['admin/springboard/reports/batch'] = array(
-      'title' => 'Batch History',
-      'description' => 'View the batch history report.',
-      'weight' => -10,
-      'page callback' => 'drupal_goto',
-      'page arguments' => array('admin/reports/salesforce/batch'),
-      'access arguments' => array('administer springboard'),
-      'type' => MENU_NORMAL_ITEM,
-    );
-    $items['admin/springboard/reports/queued'] = array(
-      'title' => 'Queued Items',
-      'description' => 'Report on items currently queued for processing.',
-      'weight' => -9,
-      'page callback' => 'drupal_goto',
-      'page arguments' => array('admin/reports/salesforce/current'),
-      'access arguments' => array('administer springboard'),
-      'type' => MENU_NORMAL_ITEM,
-    );
-    $items['admin/springboard/reports/retries'] = array(
-      'title' => 'Retries',
-      'description' => 'Report on queued items that didn\'t go through the first time.',
-      'weight' => -8,
-      'page callback' => 'drupal_goto',
-      'page arguments' => array('admin/reports/salesforce/retries'),
-      'access arguments' => array('administer springboard'),
-      'type' => MENU_NORMAL_ITEM,
-    );
-    $items['admin/springboard/reports/failures'] = array(
-      'title' => 'Permanent Failures',
-      'description' => 'Report on permanently failed transactions.',
-      'weight' => -7,
-      'page callback' => 'drupal_goto',
-      'page arguments' => array('admin/reports/salesforce/permanent-failures'),
-      'access arguments' => array('administer springboard'),
-      'type' => MENU_NORMAL_ITEM,
-    );
-  }
-  // Salesforce sub-menu
-  if (module_exists('salesforce')) {
-    $items['admin/springboard/salesforce'] = array(
-      'title' => 'Salesforce',
-      'description' => 'Manage Salesforce configurations.',
-      'page callback' => 'springboard_admin',
-      'access arguments' => array('administer springboard'),
-      'type' => MENU_LOCAL_TASK,
-    );
-  }
-  // Add logging task.
-  if (module_exists('salesforce_log')) {
-    $items['admin/springboard/salesforce-log'] = array(
-      'title' => 'Salesforce Logs',
-      'description' => 'View Salesforce logs.',
-      'page callback' => 'springboard_admin',
-      'access arguments' => array('administer springboard'),
-      'type' => MENU_LOCAL_TASK,
-    );
-  }
-  // Provide settings tabs for easy access to various sub modules under this tab.
-  $items['admin/springboard/settings'] = array(
-    'title' => 'Settings',
-    'description' => 'Manage Springboard settings.',
-    'page callback' => 'springboard_admin',
-    'access arguments' => array('administer springboard'),
     'type' => MENU_LOCAL_TASK,
+    'weight' => 7
   );
-  // Help tab.
+  // Springboard Help
   $items['admin/springboard/help'] = array(
     'title' => 'Help',
-    'description' => 'Future home of Springboard help documentation.',
+    'description' => 'Get help using Springboard.',
     'page callback' => 'springboard_help_page',
     'access arguments' => array('administer springboard'),
     'type' => MENU_LOCAL_TASK,
-    'weight' => 50,
+    'weight' => 99,
   );
+
   return $items;
 }
 
 /**
  * Implements hook_menu().
- * Add sub menus for the settings page per active Springboard module.
+ * Build Springboard admin menu from existing modules' paths.
  */
 function springboard_menu_alter(&$items) {
-  // Add menus under forms.
+  // Load Views' paths for later reference.
+  $views_paths = array();
+  views_menu_alter($views_paths);
+
+  // Add menu items from dsr.
+  if (module_exists('dsr')) {
+    // DSR reports
+    $items['admin/springboard/reports/dsr'] = $items['admin/reports/dsr'];
+    $items['admin/springboard/reports/dsr']['type'] = MENU_NORMAL_ITEM;
+    $items['admin/springboard/reports/dsr']['access arguments'] = array('administer springboard');
+    $items['admin/springboard/reports/dsr']['title'] = 'Reconcilliation report';
+    $items['admin/springboard/reports/dsr']['weight'] = 5;
+
+    // DSR settings
+    $items['admin/springboard/settings/dsr'] = $items['admin/config/system/dsr'];
+    $items['admin/springboard/settings/dsr']['type'] = MENU_NORMAL_ITEM;
+    $items['admin/springboard/settings/dsr']['access arguments'] = array('administer springboard');
+    $items['admin/springboard/settings/dsr']['title'] = 'Reconciliation';
+    $items['admin/springboard/settings/dsr']['weight'] = 10;
+  }
+
+  // Add menu items from email_wrappers.
+  if (module_exists('email_wrappers')) {
+    // Email Wrappers settings
+    $items['admin/springboard/settings/email-wrappers'] = $items['admin/config/system/email-wrappers'];
+    $items['admin/springboard/settings/email-wrappers']['type'] = MENU_NORMAL_ITEM;
+    $items['admin/springboard/settings/email-wrappers']['access arguments'] = array('administer springboard');
+    $items['admin/springboard/settings/email-wrappers']['title'] = 'Email Confirmations';
+    $items['admin/springboard/settings/email-wrappers']['weight'] = 11;
+  }
+
+  // Add menu items from fundraiser.
   $types_added = array();
   if (module_exists('fundraiser')) {
+    //dynamically generate links to create fundraiser forms
     $types = fundraiser_get_donation_types();
     foreach ($types as $type => $status) {
       if (isset($status) && $status == 1) {
         $types_added[] = $type;
         $type = str_replace('_', '-', $type);
-        $items['admin/springboard/forms/' . $type] = $items['node/add/' . $type];
-        $items['admin/springboard/forms/' . $type]['type'] = MENU_LOCAL_TASK;
-        $items['admin/springboard/forms/' . $type]['access arguments'] = array('administer springboard');
-        $items['admin/springboard/forms/' . $type]['title'] = 'Add ' . $items['node/add/' . $type]['title'];
-        unset($items['admin/springboard/forms/' . $type]['access callback']);
+        $items['admin/springboard/forms/create-' . $type] = $items['node/add/' . $type];
+        $items['admin/springboard/forms/create-' . $type]['type'] = MENU_NORMAL_ITEM;
+        $items['admin/springboard/forms/create-' . $type]['access arguments'] = array('administer springboard');
+        $items['admin/springboard/forms/create-' . $type]['title'] = 'Add ' . $items['node/add/' . $type]['title'];
+        unset($items['admin/springboard/forms/create-' . $type]['access callback']);
       }
     }
+
+    // View Donation forms
+    if (isset($views_paths['admin/content/donation-forms'])) {
+      $items['admin/springboard/forms/donations'] = $views_paths['admin/content/donation-forms'];
+      $items['admin/springboard/forms/donations']['type'] = MENU_NORMAL_ITEM;
+      $items['admin/springboard/forms/donations']['access arguments'] = array('administer springboard');
+      $items['admin/springboard/forms/donations']['title'] = 'View Donations';
+      $items['admin/springboard/forms/donations']['weight'] = 4;
+      unset($items['admin/springboard/forms/donations']['access callback']);
+    }
+
+    // Fundraiser settings
+    $items['admin/springboard/settings/fundraiser'] = $items['admin/config/system/fundraiser'];
+    $items['admin/springboard/settings/fundraiser']['type'] = MENU_NORMAL_ITEM;
+    $items['admin/springboard/settings/fundraiser']['access arguments'] = array('administer springboard');
+    $items['admin/springboard/settings/fundraiser']['title'] = 'Fundraiser';
+    $items['admin/springboard/settings/fundraiser']['weight'] = 3;
   }
+
+  // Add menu items for fundraiser_sustainers
+  if (module_exists('fundraiser_sustainers')) {
+    // Fundraiser cron
+    $items['admin/springboard/fundraiser_cron'] = array(
+      'title' => 'Fundraiser Cron',
+      'description' => 'Run the Fundraiser cron.',
+      'page callback' => 'fundraiser_sustainers_standalone_cron',
+      'module' => 'fundraiser_sustainers',
+      'file path' => drupal_get_path('module', 'fundraiser_sustainers'),
+      'file' => 'fundraiser_sustainers.module',
+      'access arguments' => array('administer springboard'),
+      'type' => MENU_NORMAL_ITEM,
+      'weight' => 98,
+    );
+  }
+
+  // Add menu items from market_source.
+  if (module_exists('market_source')) {
+    $items['admin/springboard/settings/market-source'] = $items['admin/config/search/market-source'];
+    $items['admin/springboard/settings/market-source']['type'] = MENU_NORMAL_ITEM;
+    $items['admin/springboard/settings/market-source']['access arguments'] = array('administer springboard');
+    $items['admin/springboard/settings/market-source']['weight'] = 2;
+  }
+
+  // Add menu items from page_wrappers.
+  if (module_exists('page_wrappers')) {
+    $items['admin/springboard/settings/page-wrappers'] = $items['admin/config/content/page-wrappers'];
+    $items['admin/springboard/settings/page-wrappers']['type'] = MENU_NORMAL_ITEM;
+    $items['admin/springboard/settings/page-wrappers']['access arguments'] = array('administer springboard');
+    $items['admin/springboard/settings/page-wrappers']['title'] = 'Page Wrappers';
+    $items['admin/springboard/settings/page-wrappers']['weight'] = 4;
+  }
+
+  // Add menu items from Salesforce.
+  if (module_exists('salesforce')) {
+    $items['admin/springboard/settings/salesforce'] = $items['admin/config/salesforce/authorize'];
+    $items['admin/springboard/settings/salesforce']['type'] = MENU_NORMAL_ITEM;
+    $items['admin/springboard/settings/salesforce']['access arguments'] = array('administer springboard');
+    $items['admin/springboard/settings/salesforce']['title'] = 'Salesforce Admin';
+    $items['admin/springboard/settings/salesforce']['weight'] = 8;
+  }
+
+  // Add menu items from salesforce_donation.
+  if (module_exists('salesforce_donation')) {
+    $items['admin/springboard/settings/salesforce-donation'] = $items['admin/config/salesforce/salesforce-donation'];
+    $items['admin/springboard/settings/salesforce-donation']['type'] = MENU_NORMAL_ITEM;
+    $items['admin/springboard/settings/salesforce-donation']['access arguments'] = array('administer springboard');
+    $items['admin/springboard/settings/salesforce-donation']['title'] = 'Donation';
+    $items['admin/springboard/settings/salesforce-donation']['weight'] = 9;
+  }
+
+  // Add menu items from salesforce_log.
+  if (module_exists('salesforce_log')) {
+
+      // Salesforce batch history
+      if (isset($views_paths['admin/reports/salesforce/batch'])) {
+        $items['admin/springboard/reports/history'] = $views_paths['admin/reports/salesforce/batch'];
+        $items['admin/springboard/reports/history']['type'] = MENU_NORMAL_ITEM;
+        $items['admin/springboard/reports/history']['title'] = 'Batch History Report';
+        $items['admin/springboard/reports/history']['access arguments'] = array('administer springboard');
+        $items['admin/springboard/reports/history']['weight'] = 1;
+        unset($items['admin/springboard/reports/history']['access callback']);
+      }
+
+      // Salesforce queues
+      if (isset($views_paths['admin/reports/salesforce/queue'])) {
+        // Salesforce current queue
+        $items['admin/springboard/reports/queue'] = $views_paths['admin/reports/salesforce/queue'];
+        $items['admin/springboard/reports/queue']['type'] = MENU_NORMAL_ITEM;
+        $items['admin/springboard/reports/queue']['title'] = 'Currently Queued Items';
+        $items['admin/springboard/reports/queue']['access arguments'] = array('administer springboard');
+        $items['admin/springboard/reports/queue']['options'] = array('query' => array('queue' => 'new'));
+        $items['admin/springboard/reports/queue']['weight'] = 2;
+        unset($items['admin/springboard/reports/queue']['access callback']);
+
+        // Salesforce retry queue
+        $items['admin/springboard/reports/queue-retry'] = $items['admin/springboard/reports/queue'];
+        $items['admin/springboard/reports/queue-retry']['title'] = 'Retry Queue';
+        $items['admin/springboard/reports/queue-retry']['options'] = array('query' => array('queue' => 'retry'));
+        $items['admin/springboard/reports/queue-retry']['weight'] = 3;
+
+        // Salesforce permanent failures queue
+        $items['admin/springboard/reports/queue-fail'] = $items['admin/springboard/reports/queue'];
+        $items['admin/springboard/reports/queue-fail']['title'] = 'Permanent Failure Queue';
+        $items['admin/springboard/reports/queue-fail']['options'] = array('query' => array('queue' => 'fail'));
+        $items['admin/springboard/reports/queue-fail']['weight'] = 4;
+      }
+  }
+
+  // Add menu items from salesforce_mapping.
+  if (module_exists('salesforce_mapping')) {
+    $items['admin/springboard/settings/mappings'] = $items['admin/structure/salesforce/mappings'];
+    $items['admin/springboard/settings/mappings']['type'] = MENU_NORMAL_ITEM;
+    $items['admin/springboard/settings/mappings']['access arguments'] = array('administer springboard');
+    $items['admin/springboard/settings/mappings']['title'] = 'Salesforce Fieldmaps';
+    $items['admin/springboard/settings/mappings']['weight'] = 1;
+    unset($items['admin/springboard/settings/mappings']['access callback']);
+  }
+
+  // Add menu items from secure_prepopulate.
+  if (module_exists('secure_prepopulate')) {
+    $items['admin/springboard/settings/secure-prepopulate'] = $items['admin/config/system/secure-prepopulate'];
+    $items['admin/springboard/settings/secure-prepopulate']['type'] = MENU_NORMAL_ITEM;
+    $items['admin/springboard/settings/secure-prepopulate']['access arguments'] = array('administer springboard');
+    $items['admin/springboard/settings/secure-prepopulate']['weight'] = 5;
+  }
+
+  // Add menu items from webform.
   if (module_exists('webform')) {
+    //dynamically generate links to create non-fundraiser forms
     $types = webform_variable_get('webform_node_types');
     foreach ($types as $type) {
       if (!in_array($type, $types_added) && isset($items['node/add/' . $type])) {
         $type = str_replace('_', '-', $type);
-        $items['admin/springboard/forms/' . $type] = $items['node/add/' . $type];
-        $items['admin/springboard/forms/' . $type]['type'] = MENU_LOCAL_TASK;
-        $items['admin/springboard/forms/' . $type]['access arguments'] = array('administer springboard');
-        $items['admin/springboard/forms/' . $type]['title'] = 'Add ' . $items['node/add/' . $type]['title'];
-        unset($items['admin/springboard/forms/' . $type]['access callback']);
+        $items['admin/springboard/forms/create-' . $type] = $items['node/add/' . $type];
+        $items['admin/springboard/forms/create-' . $type]['type'] = MENU_NORMAL_ITEM;
+        $items['admin/springboard/forms/create-' . $type]['access arguments'] = array('administer springboard');
+        $items['admin/springboard/forms/create-' . $type]['title'] = 'Add ' . $items['node/add/' . $type]['title'];
+        unset($items['admin/springboard/forms/create-' . $type]['access callback']);
       }
     }
+
+    // Administer webform content
     $items['admin/springboard/forms/webforms'] = $items['admin/content/webform'];
-    $items['admin/springboard/forms/webforms']['type'] = MENU_LOCAL_TASK;
+    $items['admin/springboard/forms/webforms']['type'] = MENU_NORMAL_ITEM;
     $items['admin/springboard/forms/webforms']['access arguments'] = array('administer springboard');
     $items['admin/springboard/forms/webforms']['title'] = 'View ' . $items['admin/content/webform']['title'];
     $items['admin/springboard/forms/webforms']['weight'] = 100;
     unset($items['admin/springboard/forms/webforms']['access callback']);
-  }
-  // Add menus under salesforce. This only works if Views runs before this hook. Module weights is an issue here.
-  if (module_exists('salesforce_log')) {
-    // Grab the views path if views hasn't added it's menus yet to get the ones we want.
-    if (empty($items['admin/reports/salesforce/batch']) && function_exists('views_menu_alter')) {
-      $views_paths = array();
-      views_menu_alter($views_paths);
-      if (isset($views_paths['admin/reports/salesforce/batch'])) {
-        $items['admin/reports/salesforce/batch'] = $views_paths['admin/reports/salesforce/batch'];
-      }
-      if (isset($views_paths['admin/reports/salesforce/item'])) {
-        $items['admin/reports/salesforce/item'] = $views_paths['admin/reports/salesforce/item'];
-      }
-      if (isset($views_paths['admin/reports/salesforce/queue'])) {
-        $items['admin/reports/salesforce/queue'] = $views_paths['admin/reports/salesforce/queue'];
-      }
-    }
-    // And try again.
-    if (!empty($items['admin/reports/salesforce/batch'])) {
-      // Salesforce settings
-      $items['admin/springboard/salesforce-log/batch'] = $items['admin/reports/salesforce/batch'];
-      $items['admin/springboard/salesforce-log/batch']['type'] = MENU_LOCAL_TASK;
-      $items['admin/springboard/salesforce-log/batch']['title'] = $items['admin/reports/salesforce/batch']['title'];
-      $items['admin/springboard/salesforce-log/batch']['access arguments'] = array('administer springboard');
-      unset($items['admin/springboard/salesforce-log/batch']['access callback']);
-      // Salesforce settings
-      $items['admin/springboard/salesforce-log/item'] = $items['admin/reports/salesforce/item'];
-      $items['admin/springboard/salesforce-log/item']['type'] = MENU_LOCAL_TASK;
-      $items['admin/springboard/salesforce-log/item']['title'] = $items['admin/reports/salesforce/item']['title'];
-      $items['admin/springboard/salesforce-log/item']['access arguments'] = array('administer springboard');
-      unset($items['admin/springboard/salesforce-log/item']['access callback']);
-      // Salesforce settings
-      $items['admin/springboard/salesforce-log/queue'] = $items['admin/reports/salesforce/queue'];
-      $items['admin/springboard/salesforce-log/queue']['type'] = MENU_LOCAL_TASK;
-      $items['admin/springboard/salesforce-log/queue']['title'] = $items['admin/reports/salesforce/queue']['title'];
-      $items['admin/springboard/salesforce-log/queue']['access arguments'] = array('administer springboard');
-      $items['admin/springboard/salesforce-log/queue']['weight'] = 100;
-      unset($items['admin/springboard/salesforce-log/queue']['access callback']);
-    }
-  }
-  // Add menus under settings.
-  if (module_exists('fundraiser')) {
-    $items['admin/springboard/settings/fundraiser'] = $items['admin/config/system/fundraiser'];
-    $items['admin/springboard/settings/fundraiser']['type'] = MENU_LOCAL_TASK;
-    $items['admin/springboard/settings/fundraiser']['access arguments'] = array('administer springboard');
-    $items['admin/springboard/settings/fundraiser']['title'] = 'Fundraiser';
-  }
-  if (module_exists('market_source')) {
-    $items['admin/springboard/settings/market-source'] = $items['admin/config/search/market-source'];
-    $items['admin/springboard/settings/market-source']['type'] = MENU_LOCAL_TASK;
-    $items['admin/springboard/settings/market-source']['access arguments'] = array('administer springboard');
-  }
-  if (module_exists('webform')) {
+
+    // Webform settings
     $items['admin/springboard/settings/webform'] = $items['admin/config/content/webform'];
-    $items['admin/springboard/settings/webform']['type'] = MENU_LOCAL_TASK;
+    $items['admin/springboard/settings/webform']['type'] = MENU_NORMAL_ITEM;
     $items['admin/springboard/settings/webform']['access arguments'] = array('administer springboard');
     $items['admin/springboard/settings/webform']['title'] = 'Webform';
+    $items['admin/springboard/settings/webform']['weight'] = 6;
+    unset($items['admin/springboard/settings/webform']['access callback']);
   }
-  if (module_exists('webform_ab')) {
-    $items['admin/springboard/settings/webform-ab'] = $items['admin/config/content/webform_ab'];
-    $items['admin/springboard/settings/webform-ab']['type'] = MENU_LOCAL_TASK;
-    $items['admin/springboard/settings/webform-ab']['access arguments'] = array('administer springboard');
+
+  // Add menu items from webform_dupe_cop.
+  if (module_exists('webform_dupe_cop')) {
+    $items['admin/springboard/settings/webform-dupe'] = $items['admin/config/webform/webform-dupe-cop'];
+    $items['admin/springboard/settings/webform-dupe']['type'] = MENU_NORMAL_ITEM;
+    $items['admin/springboard/settings/webform-dupe']['access arguments'] = array('administer springboard');
+    $items['admin/springboard/settings/webform-dupe']['title'] = 'Webform Dupe';
+    $items['admin/springboard/settings/webform-dupe']['weight'] = 12;
   }
-  if (module_exists('secure_prepopulate')) {
-    $items['admin/springboard/settings/secure-prepopulate'] = $items['admin/config/system/secure-prepopulate'];
-    $items['admin/springboard/settings/secure-prepopulate']['type'] = MENU_LOCAL_TASK;
-    $items['admin/springboard/settings/secure-prepopulate']['access arguments'] = array('administer springboard');
-  }
-  if (module_exists('email_wrappers')) {
-    $items['admin/springboard/settings/email-wrappers'] = $items['admin/config/system/email-wrappers'];
-    $items['admin/springboard/settings/email-wrappers']['type'] = MENU_LOCAL_TASK;
-    $items['admin/springboard/settings/email-wrappers']['access arguments'] = array('administer springboard');
-    $items['admin/springboard/settings/email-wrappers']['title'] = 'Email wrappers';
-  }
-  if (module_exists('gateway_manager')) {
-    $items['admin/springboard/settings/gateways'] = $items['admin/config/system/fundraiser/gateways'];
-    $items['admin/springboard/settings/gateways']['type'] = MENU_LOCAL_TASK;
-    $items['admin/springboard/settings/gateways']['access arguments'] = array('administer springboard');
-    $items['admin/springboard/settings/gateways-add'] = $items['admin/config/system/fundraiser/gateways/add'];
-    $items['admin/springboard/settings/gateways-add']['title'] = t('Add gateway');
-    $items['admin/springboard/settings/gateways-add']['type'] = MENU_LOCAL_TASK;
-    $items['admin/springboard/settings/gateways-add']['access arguments'] = array('administer springboard');
-  }
-  $items['admin/springboard/settings/springboard'] = $items['admin/config/system/springboard'];
-  $items['admin/springboard/settings/springboard']['type'] = MENU_LOCAL_TASK;
-  $items['admin/springboard/settings/springboard']['access arguments'] = array('administer springboard');
-  $items['admin/springboard/settings/springboard']['title'] = 'Springboard';
-  $items['admin/springboard/salesforce/salesforce']['weight'] = 100;
+
 }
 
 /**
@@ -296,7 +348,7 @@ function springboard_theme($existing, $type, $theme, $path) {
 /**
  * Menu callback. Springboard dashboard page.
  */
-function springboard_admin() {
+function springboard_admin_dashboard() {
   // Add our CSS for display.
   drupal_add_css(drupal_get_path('module', 'springboard') . '/css/springboard.css', 'module');
   $content = '<div class="springboard-dashboard dashboard">';
