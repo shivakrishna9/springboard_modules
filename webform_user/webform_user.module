@@ -848,7 +848,7 @@ function _webform_user_create_webform_components(&$node) {
 
       // Transform the component array for certain field types.
       // TODO handle:
-      // 'taxonomy_term_reference', 'image'
+      // 'taxonomy_term_reference'
       switch ($item['type']) {
         case 'checkbox':
         // From list_field_info().
@@ -900,9 +900,15 @@ function _webform_user_create_webform_components(&$node) {
           break;
         // Special no-equilivent types.
         case 'image':
-          // There is no webform image field.
-          //$item['type'] = 'hidden';
-          //$item['extra']['private'] = 0;
+          // There is no webform image field, so we don't map this at all.
+          drupal_set_message(t('Webform does not support Image fields, the Image field %name has not been added to this webform.',
+            array('%name' => $field['title'])));
+          $item = array();
+          break;
+        case 'file':
+          // There is no webform file field, so we don't map this at all.
+          drupal_set_message(t('Webform does not support File fields, the File field %name has not been added to this webform.',
+            array('%name' => $field['title'])));
           $item = array();
           break;
       }
