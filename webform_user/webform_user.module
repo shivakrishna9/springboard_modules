@@ -714,14 +714,36 @@ function _webform_user_add_webform_defaults(&$node, &$user) {
 }
 
 /**
+ * Query for all the component types for a given node ID. Statically cached to
+ * reduce duplicate queries.
+ *
+ * @param $nid
+ *   Webform node ID.
+ * @param $form_key = NULL
+ *   Optionally filter results by a single form key.
+ * @return
+ *   The component type of a single form key if $form_key is set, or all
+ *   component types for the webform node.
+ */
+function _webform_user_webform_component_types($nid, $form_key = NULL) {
+  $component_types = &drupal_static(__FUNCTION__);
+  if (empty($component_types) && !empty($nid)) {
+    $result = db_query("SELECT form_key, type FROM {webform_component} WHERE nid = :nid", array(':nid' => $nid));
+    $component_types = $result->fetchAllKeyed();
+  }
+  if (isset($form_key)) {
+    return isset($component_types[$form_key]) ? $component_types[$form_key] : NULL;
+  }
+  return $component_types;
+}
+
+/**
  * Flatten a submission tree into a flat list. Note: date values are not flattened.
  */
 function _webform_user_flatten_tree($tree, $nid = NULL) {
   $items = array();
   foreach ($tree as $key => $val) {
-    $results = db_query('SELECT type FROM {webform_component} WHERE nid = :nid AND form_key = :form_key',
-      array(':nid' => $nid, ':form_key' => $key));
-    $type = $results->fetchColumn();
+    $type = _webform_user_webform_component_types($nid, $key);
     if (is_array($val)) {
       // If it's a date, don't flatten the value.
       if ($type == 'date') {
