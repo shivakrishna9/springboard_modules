@@ -601,8 +601,9 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
       else {
         $message .= $key . ': ' . $value . "\n";
       }
-      watchdog('fundraiser_webform', $message, NULL, WATCHDOG_DEBUG, NULL);
     }
+    watchdog('fundraiser_webform', $message, NULL, WATCHDOG_DEBUG, NULL);
+
     // Provide data to fundraiser about the node that failed to validate.
     $errors = array();
     $errors['nid'] = $form_state['values']['details']['nid'];
