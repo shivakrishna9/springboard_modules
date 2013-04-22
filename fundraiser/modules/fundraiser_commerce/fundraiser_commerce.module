@@ -1424,25 +1424,41 @@ function _fundraiser_commerce_get_cc_type($cardnumber) {
  * Helper function, gather commerces country information into a central location.
  */
 function fundraiser_commerce_get_countries() {
-  $countries = array();
-  $zones = array();
-  $return_data = new stdClass();
-  // Gather an array of countries.
-  $found_countries = _fundraiser_commerce_get_countries();
-  foreach ($found_countries as $found_country) {
-    // First load up id, name, iso code 2, iso code 3, and version from commerce.
-    $countries[$found_country->country_id] = $found_country;
-    $countries[$found_country->country_id]->zones = array();
-    $found_zones = _fundraiser_commerce_get_zone_by_country($found_country->country_id);
-    foreach ($found_zones as $found_zone) {
-      // For each zone load up, zone_id, zone country_id, zone, code, zone_name.
-      // Store in the country and zone arrays.
-      $countries[$found_country->country_id]->zones[$found_zone->zone_id] = $found_zone;
-      $zones[$found_zone->zone_id] = $found_zone;
+  $return_data = &drupal_static(__FUNCTION__);
+  if (empty($return_data)) {
+    $return_data = new stdClass();
+
+    // Try hitting cache first.
+    $cache = cache_get(__FUNCTION__);
+    if (isset($cache) && !empty($cache->data)) {
+      // cache_get() was a hit, so add to static cache.
+      $return_data = $cache->data;
+    }
+    else {
+      // cache_get() was a miss, so generate the data.
+      $countries = array();
+      $zones = array();
+      // Gather an array of countries.
+      $found_countries = _fundraiser_commerce_get_countries();
+      foreach ($found_countries as $found_country) {
+        // First load up id, name, iso code 2, iso code 3, and version from commerce.
+        $countries[$found_country->country_id] = $found_country;
+        $countries[$found_country->country_id]->zones = array();
+        $found_zones = _fundraiser_commerce_get_zone_by_country($found_country->country_id);
+        foreach ($found_zones as $found_zone) {
+          // For each zone load up, zone_id, zone country_id, zone, code, zone_name.
+          // Store in the country and zone arrays.
+          $countries[$found_country->country_id]->zones[$found_zone->zone_id] = $found_zone;
+          $zones[$found_zone->zone_id] = $found_zone;
+        }
+      }
+      $return_data->countries = $countries;
+      $return_data->zones = $zones;
+
+      // Save into cache.
+      cache_set(__FUNCTION__, $return_data);
     }
   }
-  $return_data->countries = $countries;
-  $return_data->zones = $zones;
   return $return_data;
 }
 
