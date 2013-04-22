@@ -26,7 +26,7 @@ function springboard_permission() {
  */
 function springboard_menu() {
   $items = array();
-  
+
   // Springboard task list.
   $items['admin/springboard'] = array(
     'title' => 'Springboard',
@@ -38,7 +38,7 @@ function springboard_menu() {
     'access arguments' => array('administer springboard'),
     'type' => MENU_NORMAL_ITEM,
   );
-  
+
   // Springboard dashboard.
   $items['admin/springboard/dashboard'] = array(
     'title' => 'Dashboard',
@@ -63,7 +63,7 @@ function springboard_menu() {
   // Springboard reports admin.
   $items['admin/springboard/reports'] = array(
     'title' => 'Reports',
-    'description' => 'View Sprinboard-related reports.',
+    'description' => 'View Springboard-related reports.',
     'page callback' => 'system_admin_menu_block_page',
     'module' => 'system',
     'file path' => drupal_get_path('module', 'system'),
