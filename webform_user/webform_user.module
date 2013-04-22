@@ -334,7 +334,7 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
       foreach ($map as $webform_field => $profile_field) {
         if (array_key_exists($webform_field, $component_hierarchy)) {
           $form_field =& _webform_user_find_field($form, $component_hierarchy[$webform_field]);
-          if (empty($form_field['#default_value']) && isset($user_data->$profile_field)) {
+          if (isset($user_data->$profile_field)) {
             // Figure out what the value is.
             $profile_value = is_array($user_data->$profile_field) ? '1' : 0;
             if (is_array($user_data->$profile_field)) {
@@ -714,14 +714,36 @@ function _webform_user_add_webform_defaults(&$node, &$user) {
 }
 
 /**
+ * Query for all the component types for a given node ID. Statically cached to
+ * reduce duplicate queries.
+ *
+ * @param $nid
+ *   Webform node ID.
+ * @param $form_key = NULL
+ *   Optionally filter results by a single form key.
+ * @return
+ *   The component type of a single form key if $form_key is set, or all
+ *   component types for the webform node.
+ */
+function _webform_user_webform_component_types($nid, $form_key = NULL) {
+  $component_types = &drupal_static(__FUNCTION__);
+  if (empty($component_types) && !empty($nid)) {
+    $result = db_query("SELECT form_key, type FROM {webform_component} WHERE nid = :nid", array(':nid' => $nid));
+    $component_types = $result->fetchAllKeyed();
+  }
+  if (isset($form_key)) {
+    return isset($component_types[$form_key]) ? $component_types[$form_key] : NULL;
+  }
+  return $component_types;
+}
+
+/**
  * Flatten a submission tree into a flat list. Note: date values are not flattened.
  */
 function _webform_user_flatten_tree($tree, $nid = NULL) {
   $items = array();
   foreach ($tree as $key => $val) {
-    $results = db_query('SELECT type FROM {webform_component} WHERE nid = :nid AND form_key = :form_key',
-      array(':nid' => $nid, ':form_key' => $key));
-    $type = $results->fetchColumn();
+    $type = _webform_user_webform_component_types($nid, $key);
     if (is_array($val)) {
       // If it's a date, don't flatten the value.
       if ($type == 'date') {
@@ -848,7 +870,7 @@ function _webform_user_create_webform_components(&$node) {
 
       // Transform the component array for certain field types.
       // TODO handle:
-      // 'taxonomy_term_reference', 'image'
+      // 'taxonomy_term_reference'
       switch ($item['type']) {
         case 'checkbox':
         // From list_field_info().
@@ -900,9 +922,15 @@ function _webform_user_create_webform_components(&$node) {
           break;
         // Special no-equilivent types.
         case 'image':
-          // There is no webform image field.
-          //$item['type'] = 'hidden';
-          //$item['extra']['private'] = 0;
+          // There is no webform image field, so we don't map this at all.
+          drupal_set_message(t('Webform does not support Image fields, the Image field %name has not been added to this webform.',
+            array('%name' => $field['title'])));
+          $item = array();
+          break;
+        case 'file':
+          // There is no webform file field, so we don't map this at all.
+          drupal_set_message(t('Webform does not support File fields, the File field %name has not been added to this webform.',
+            array('%name' => $field['title'])));
           $item = array();
           break;
       }

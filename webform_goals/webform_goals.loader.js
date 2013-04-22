@@ -10,9 +10,7 @@ jQuery(document).ready(function() {
     dataType: 'jsonp',
     data: 'goal_ids=' + goal_ids,
     jsonp: 'jsonp_callback',
-    // replace this url with the correct path for your site.
-    // example: http://example.com/sites/all/modules/springboard_modules/webform_goals/webform_goals.jsonp.php
-    url: 'http://DOMAIN/PATH/TO/webform_goals/webform_goals.jsonp.php',
+    url: 'http://DOMAIN/PATH/TO/FILES/webform_goals/webform_goals.jsonp.php',
     success: function (data) {
       // unpack data and place accordingly.
       //  data format:

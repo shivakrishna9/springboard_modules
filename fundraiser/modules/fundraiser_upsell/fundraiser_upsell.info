@@ -1,0 +1,7 @@
+name = Fundraiser Sustainer Upsell
+description = Upsell modal for converting a donation to a recurring donation.
+core = 7.x
+package = Jackson River Springboard - extras
+dependencies[] = fundraiser
+dependencies[] = fundraiser_sustainers
+version =  7.x-3.0-dev

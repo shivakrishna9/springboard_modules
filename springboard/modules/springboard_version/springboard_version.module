@@ -23,12 +23,12 @@ function springboard_version_permission() {
  */
 function springboard_version_menu() {
   $items = array();
-  $items['admin/springboard/reports/version'] = array(
+  $items['admin/springboard/version'] = array(
     'title' => 'Springboard version',
     'description' => 'Access Springboard version report.',
     'access arguments' => array('access springboard version'),
     'page callback' => 'springboard_version_report',
-    'type' => MENU_NORMAL_ITEM,
+    'type' => MENU_LOCAL_TASK,
   );
   return $items;
 }

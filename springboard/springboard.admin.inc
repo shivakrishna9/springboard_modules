@@ -1797,7 +1797,6 @@ function springboard_admin_config_donation_form_type($form, $form_state) {
 /**
  * Create an example Email Wrapper.
  */
-
 function springboard_admin_config_email_wrapper_add($form, $form_state) {
   $node = new stdClass();
   $node->is_new = 1;
@@ -1805,8 +1804,8 @@ function springboard_admin_config_email_wrapper_add($form, $form_state) {
   $node->language = LANGUAGE_NONE;
   $node->uid = 1;
   $node->title ='Example Email Wrapper';
-  $node->status = 1;
-  $node->promote = 1;
+  $node->status = 0;
+  $node->promote = 0;
   $node->email_wrapper_from_name[LANGUAGE_NONE][0] = array(
     'value' => 'Springboard',
     'format' => '',
@@ -1877,6 +1876,10 @@ function springboard_admin_config_email_wrapper_add($form, $form_state) {
  * Create an example Fundraiser form.
  */
 function springboard_admin_config_donation_form_add($form, $form_state, $email_nid = NULL) {
+  // Refresh field information defs. So that what was picked up if anything
+  // earlier during module activation, is now configured right. Avoid static cache issues.
+  $fields = fundraiser_field_info(TRUE);
+  // Create the node.
   $node = new stdClass();
   $node->is_new = 1;
   $node->type = 'donation_form';

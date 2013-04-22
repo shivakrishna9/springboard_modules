@@ -7,8 +7,16 @@
 require_once('includes/webform_goals.goals.inc');
 
 /**
+ * Implements hook_init().
  *
+ * Add goal replacement script and associated js settings.
  */
+function webform_goals_init() {
+  $base_uri = file_default_scheme() . '://';
+  $file_system_base_url = file_create_url($base_uri);
+  $loader_url = $file_system_base_url . 'webform_goals/webform_goals.jsonp.php';
+  drupal_add_js(array('webform_goals' => array('loader_url' => $loader_url)), 'setting');
+}
 
 /**
  * Implements hook_menu().
@@ -388,9 +396,10 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
           break;
         case 'target':
           $replacements[$token] = $data['webform_goal']['target_value'];
-          break;http://www.smbc-comics.com/index.php?db=comics&id=2887#comic
+          break;
         case 'total':
           $replacements[$token] = $goal_progress['count'];
+          break;
       }
     }
     return $replacements;
