@@ -139,7 +139,8 @@ function page_wrappers_css_alter(&$css) {
   if (!empty($assigned_wrapper)) {
     $wrapper_node = node_load($assigned_wrapper['wrapper_nid']);
     $css_files = field_get_items('node', $wrapper_node, 'page_wrappers_css');
-    // If a stylesheet has been added to the wrapper, include it.
+    // If a stylesheet has been added to the wrapper, don't remove it
+    $keep = array();
     if (!empty($css_files)) {
       foreach ($css_files as $css_file) {
         $keep[] = $css_file['uri'];
@@ -499,10 +500,18 @@ function _page_wrappers_assignment_fields($key, $config = array(), $wrappers, $r
       '#attributes' => array('class' => array('page-wrappers-weight')),
     );
   }
-  // Else just add them as values
+  // Else just add them as hidden values
   else {
-    $fields['ruleset']['#value'] = 1;
-    $fields['weight']['#value'] = 0;
+    $fields['ruleset'] = array(
+      '#type' => 'hidden',
+      '#value' => 1,
+      '#parents' => array('page_wrappers', $key, 'ruleset'),
+    );
+    $fields['weight'] = array(
+      '#type' => 'hidden',
+      '#value' => 0,
+      '#parents' => array('page_wrappers', $key, 'weight'),
+    );
   }
 
   return $fields;
@@ -515,17 +524,22 @@ function theme_page_wrappers_node_assignments($variables) {
   $fieldset = $variables['form'];
   $header = array();
   $rows = array();
+  $hidden = '';
   foreach (element_children($fieldset) as $i) {
     $row = array();
     foreach (element_children($fieldset[$i]) as $field) {
       $this_element = $fieldset[$i][$field];
 
-      if ($this_element['#type'] != 'value') {
+      if ($this_element['#type'] != 'hidden') {
         if (!isset($header[$field])) {
           $header[$field] = isset($this_element['#title']) ? $this_element['#title'] : '';
         }
         unset($this_element['#title']);
         $row[$field] = drupal_render($this_element);
+      }
+      else {
+        // Add hidden values to the previous rows
+        $hidden .= drupal_render($this_element);
       }
     }
     $rows[] = array(
@@ -538,7 +552,7 @@ function theme_page_wrappers_node_assignments($variables) {
   if (!empty($fieldset['#has_rulesets'])) {
     drupal_add_tabledrag('page-wrappers-assignments-table', 'order', 'sibling', 'page-wrappers-weight');
   }
-  return theme('table', array('rows' => $rows, 'header' => $header, 'attributes' => array('id' => 'page-wrappers-assignments-table')));
+  return theme('table', array('rows' => $rows, 'header' => $header, 'attributes' => array('id' => 'page-wrappers-assignments-table'))) . $hidden;
 }
 
 /**
@@ -605,11 +619,14 @@ function _page_wrappers_enabled_type($node, $preview = FALSE) {
  */
 function _page_wrappers_available_wrappers() {
   global $user;
+  $wrappers = array();
 
   $result = db_query("SELECT n.title, n.nid FROM {node} n WHERE type = 'page_wrapper'")->fetchAll();
-  $wrappers = array(t('-- Select --'));
-  foreach ($result as $data) {
-    $wrappers[$data->nid] = $data->title;
+  if (!empty($result)) {
+    $wrappers = array(t('-- Select --'));
+    foreach ($result as $data) {
+      $wrappers[$data->nid] = $data->title;
+    }
   }
 
   // Optionally filter available wrappers by organic groups the user is enrolled in.
