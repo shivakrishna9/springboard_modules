@@ -678,7 +678,8 @@ function fundraiser_webform_fundraiser_get_fundraiser_alter($fundraiser) {
   // Add the amount_values for the fundraiser information on load.
   if (is_numeric($fundraiser->nid)) {
     // Grab amounts to pass up to fundraiser to keep values in sync.
-    $amounts = _fundraiser_webform_get_extra_by_key($fundraiser->nid, 'amount');
+    $field = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, 'amount');
+    $amounts = unserialize($field->extra);
     if (isset($amounts['items'])) {
       $amounts = preg_split('/\n/', trim($amounts['items']));
       $amounts = array_unique($amounts);
@@ -687,6 +688,9 @@ function fundraiser_webform_fundraiser_get_fundraiser_alter($fundraiser) {
         $donation_amounts[] = explode('|', $amounts[$i]);
       }
       $fundraiser->donation_amounts = $donation_amounts;
+    }
+    if (!empty($field->value)) {
+      $fundraiser->default_amount = $field->value;
     }
     // Grab payment gateway information.
     $payment_method = _fundraiser_webform_get_extra_by_key($fundraiser->nid, 'payment_method');
@@ -961,16 +965,9 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
       if ($allow_update) {
         $component['pid'] = $orig_field->pid; // Keep the original parentage, could be set by user.
         $component['name'] = $orig_field->name; // Keep the original name, could be set by user.
+        // Amount is the only field we handle differently.
         if ($component['form_key'] != 'amount') {
           $component['value'] = $orig_field->value; // Keep the original value, could be set by user.
-        }
-        else {
-          // Amount is the only exception, IIF the orig is no longer present as an amount.
-          $amounts = array_keys($fundraiser->donation_amounts);
-          if (in_array($orig_field->value, $amounts)) {
-            $component['value'] = $orig_field->value; // Keep the original value, could be set by user.
-          }
-          // Else, leave at the 'new' least.
         }
         $component = array_merge((array) $orig_field, (array) $component);
         webform_component_update($component);

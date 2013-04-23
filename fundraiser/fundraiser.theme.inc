@@ -105,15 +105,14 @@ function theme_fundraiser_credit_card_expiration_date($element) {
  */
 function theme_fundraiser_ask_amounts($element) {
   $element = $element['element'];
-  $header = array( t('Ask amount'), t('Label'), t('Remove when saved') );
-//  $header = array( t('Ask amount'), t('Label'));
+  $header = array( t('Ask amount'), t('Label'), t('Default amount'), t('Remove when saved') );
   $rows = array();
   foreach (element_children($element) as $index) {
     $amount = drupal_render($element[$index]['amount']);
     $label = drupal_render($element[$index]['label']);
+    $default_amount = drupal_render($element[$index]['default_amount']);
     $remove = drupal_render($element[$index]['remove']);
-    $rows[] = array($amount, $label, $remove);
-//    $rows[] = array($amount, $label);
+    $rows[] = array($amount, $label, $default_amount, $remove);
   }
   return theme('table', array('header' => $header, 'rows' => $rows));
 }
