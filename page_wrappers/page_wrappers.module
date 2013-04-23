@@ -45,7 +45,6 @@ function page_wrappers_permission() {
  * Adds page wrapper tpl folder to theme registry.
  */
 function page_wrappers_theme_registry_alter(&$theme_registry) {
-
   $path = variable_get('file_public_path', conf_path() . '/files') . '/page_wrappers/tpl';
   $theme_registry_copy = $theme_registry; // munge on a copy
   _theme_process_registry($theme_registry_copy, 'phptemplate', 'theme_engine', 'pow', $path);
@@ -55,7 +54,6 @@ function page_wrappers_theme_registry_alter(&$theme_registry) {
     _page_wrappers_insert_after_first_element($theme_registry[$h]['theme paths'], $path);
   }
 }
-
 
 /**
  * Helper function for re-ordering arrays (needed by theme_registry_alter)
@@ -76,33 +74,20 @@ function _page_wrappers_insert_after_first_element(&$a, $element) {
  * Replace standard site theme with pagewrapper template for nodes that have page wrappers assigned.
  */
 function page_wrappers_preprocess_page(&$vars) {
-
-  // bail out if we're anywhere other than a node view page or submission confirmation
-  if (arg(0) == 'node' && arg(2) && arg(2) != 'done') {
-    return;
-  }
-
-  //if this is a webform confirmation page add the node variable
-  if (arg(0) == 'node' && arg(2) == 'done') {
-    $vars['node'] = node_load(arg(1));
-  }
-
   $wrapper = NULL;
-  // if the node type has a wrapper use that to 
-  if (isset($vars['node']) && _page_wrappers_enabled_type($vars['node'], TRUE) && !empty($vars['node']->page_wrappers)) {
-    $wrapper = _page_wrappers_assigned_wrapper($vars['node']->page_wrappers, $vars['node']);
+  if ($vars['node'] = _page_wrappers_page_node()) {
+    $wrapper = _page_wrappers_node_assigned_wrapper($vars['node']);
   }
 
   if (!empty($wrapper)) {
     $template = _page_wrappers_template_filename($wrapper['wrapper_nid']);
-
     // make sure template actually exists
     if (_page_wrappers_template_exists($template)) {
       //  add the template suggestion, this is the magic behind the theme layer hijack.
       array_unshift($vars['theme_hook_suggestions'], str_replace(array('-', '.tpl.php'), array('_', ''), $template)); //  replace hyphen with underscore, remove file ext.
 
       // load the wrapper node
-      $wrapper_node = node_load($vars['node']->page_wrappers);
+      $wrapper_node = node_load($wrapper['wrapper_nid']);
 
       // if there's a css file add it; also see this module's hook_css_alter function
       if (isset($wrapper_node->page_wrappers_css) && count($wrapper_node->page_wrappers_css)) {
@@ -128,37 +113,41 @@ function page_wrappers_preprocess_page(&$vars) {
 }
 
 /**
- * Implementation of hook_css_alter().
+ * Implements hook_page_alter
+ */
+function page_wrappers_page_alter(&$page) {
+  if ($node = _page_wrappers_page_node()) {
+    // Find the assigned wrapper
+    if (!empty($node) && !empty($node->page_wrappers)) {
+      $assigned_wrapper = _page_wrappers_node_assigned_wrapper($node);
+    }
+  }
+}
+
+/**
+ * Implements of hook_css_alter().
  */
 function page_wrappers_css_alter(&$css) {
-  // get out of here if we're not on a node page, or if we're on the node edit page
-  if (arg(0) != 'node' || (arg(0) == 'node' && arg(2) == 'edit')) {
-    return;
-  }
-
-  //if this is a node page load it up, also cover webform 'done' page
-  if (arg(0) == 'node' && is_numeric(arg(1)) && (arg(2) == 'done' || !arg(2))) {
-    $node = node_load(arg(1));
-  }
-
-  //if this is a node that has a wrapper assigned remove most of the style sheets
-  if (isset($node) &&_page_wrappers_enabled_type($node, TRUE) && isset($node->page_wrappers)) {
-    $wrapper_node = node_load($node->page_wrappers);
-    // create an array of stylesheets to keep
-    $keep = array(
-      drupal_get_path('module', 'system') . '/system.base.css',
-      drupal_get_path('module', 'system') . '/system.menus.css',
-      drupal_get_path('module', 'system') . '/system.messages.css',
-      drupal_get_path('module', 'overlay') . '/overlay-parent.css',
-      drupal_get_path('module', 'toolbar') . '/toolbar.css',
-      drupal_get_path('module', 'shortcut') . '/shortcut.css',
-    );
-    // if a stylesheet has been added to the wrapper, include it.
-    if (!empty($wrapper_node->page_wrappers_css['und'][0]['uri'])) {
-      $keep[] = $wrapper_node->page_wrappers_css['und'][0]['uri'];
+  if ($node = _page_wrappers_page_node()) {
+    // Find the assigned wrapper
+    if (!empty($node) && !empty($node->page_wrappers)) {
+      $assigned_wrapper = _page_wrappers_node_assigned_wrapper($node);
     }
+  }
+
+  // If this is a node that has a wrapper assigned remove all the theme stylesheets
+  if (!empty($assigned_wrapper)) {
+    $wrapper_node = node_load($assigned_wrapper['wrapper_nid']);
+    $css_files = field_get_items('node', $wrapper_node, 'page_wrappers_css');
+    // If a stylesheet has been added to the wrapper, include it.
+    if (!empty($css_files)) {
+      foreach ($css_files as $css_file) {
+        $keep[] = $css_file['uri'];
+      }
+    }
+    // Loop through the stylesheets removing all except the ones in the keep array and module files
     foreach ($css as $path => $info) {
-      if (!in_array($path, $keep)) {
+      if (!in_array($path, $keep) && (strpos($path, 'modules/') === FALSE)) {
         unset($css[$path]);
       }
     }
@@ -170,22 +159,7 @@ function page_wrappers_css_alter(&$css) {
  */
 
 /**
- * Implements hook_load().
- */
-function page_wrappers_load($nodes) {
-  if (arg(2) != 'clone' && arg(2) != 'delete') {
-    $result = db_query('SELECT nid, template FROM {page_wrappers} WHERE nid IN(:nids)', array(':nids' => array_keys($nodes)));
-    foreach ($result as $record) {
-      $nodes[$record->nid]->wrapper_template = $record->template;
-      // Also add the nid as a wrapper value for previewing
-      $nodes[$record->nid]->wrapper = $record->nid;
-    }
-  }
-}
-
-
-/**
- * Implementation of hook_form().
+ * Implements of hook_form().
  */
 function page_wrappers_form(&$node, &$form_state) {
   $type = node_type_get_type($node);
@@ -202,19 +176,14 @@ function page_wrappers_form(&$node, &$form_state) {
 }
 
 /**
- * Implementation of hook_node_view().
+ * Implements of hook_node_view().
  */
 function page_wrappers_node_view($node, $view_mode) {
   if (($view_mode == 'full') && ($node->type == 'page_wrapper') && node_is_page($node)) {
-     $node->content = array();
-     $node->content['preview'] = array(
-       '#markup' => drupal_render(drupal_get_form('_page_wrapper_preview_form')),
-     );
+     $node->content = array('preview' => drupal_get_form('_page_wrapper_preview_form'));
   }
   return $node;
 }
-
-
 
 /**
  * Implements hook_node_update().
@@ -240,7 +209,7 @@ function page_wrappers_node_update($node) {
       ->condition('nid', $node->nid)
       ->execute();
     foreach ($node->page_wrappers as $wrapper) {
-      if (!empty($wrapper['wrapper'])) {
+      if (!empty($wrapper['wrapper_nid'])) {
         _page_wrappers_assign_wrapper($node->nid, $wrapper);
       }
     }
@@ -252,8 +221,9 @@ function page_wrappers_node_update($node) {
  */
 function page_wrappers_node_insert($node) {
   if (_page_wrappers_enabled_type($node)) {
+    dpm($node);
     foreach ($node->page_wrappers as $wrapper) {
-      if (!empty($wrapper['wrapper'])) {
+      if (!empty($wrapper['wrapper_nid'])) {
         _page_wrappers_assign_wrapper($node->nid, $wrapper);
       }
     }
@@ -281,7 +251,12 @@ function page_wrappers_node_load($nodes, $types) {
   if (in_array('page_wrapper', $types)) {
     foreach ($nodes as $nid => $node) {
       if ($node->type == 'page_wrapper') {
-        $nodes[$nid]->page_wrappers = $nid;
+        $nodes[$nid]->page_wrappers[] = array(
+          'nid' => $nid,
+          'wrapper_nid' => $nid,
+          'ruleset' => 1,
+          'weight' => 0,
+        );
       }
     }
   }
@@ -407,9 +382,9 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
       $weight = 0;
       if (!empty($form['#node']->page_wrappers)) {
         $delta = count($form['#node']->page_wrappers);
-        foreach ($form['#node']->page_wrappers as $delta => $config) {
-          $key = 'pwid:' . $delta;
-          $form['page_wrappers_settings']['page_wrappers'][$delta] = _page_wrappers_assignment_fields($key, $config, $wrappers, $rulesets, $config['weight'], $wrappers_count);
+        foreach ($form['#node']->page_wrappers as $pwid => $config) {
+          $key = 'pwid:' . $pwid;
+          $form['page_wrappers_settings']['page_wrappers'][$key] = _page_wrappers_assignment_fields($key, $config, $wrappers, $rulesets, $config['weight'], $wrappers_count);
           $weight = max($config['weight'], $weight);
         }
       }
@@ -417,24 +392,29 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
       // Add more
       $existing_delta = $delta;
       for ($delta; $delta < $wrappers_count; $delta++) {
+        dpm($delta, '$delta 2');
         $key = 'new:' . ($delta - $existing_delta);
         $weight++;
-        dpm($weight, '$weight');
-        $form['page_wrappers_settings']['page_wrappers'][$delta] = _page_wrappers_assignment_fields($key, array(), $wrappers, $rulesets, $weight, $wrappers_count);
+        $form['page_wrappers_settings']['page_wrappers'][$key] = _page_wrappers_assignment_fields($key, array(), $wrappers, $rulesets, $weight, $wrappers_count);
       }
 
-      $form['page_wrappers_settings']['page_wrappers_more'] = array(
-        '#type' => 'submit',
-        '#value' => t('Add Another'),
-        '#weight' => 1,
-        '#limit_validation_errors' => array(array('page_wrappers')),
-        '#submit' => array('page_wrapper_add_assignment_submit'),
-        '#ajax' => array(
-          'callback' => '_page_wrappers_add_js',
-          'wrapper' => 'page-wrappers-assignments',
-          'effect' => 'fade',
-        ),
-      );
+      // If we have configured rulesets add the add more button
+      if (!empty($rulesets)) {
+        $form['page_wrappers_settings']['page_wrappers_more'] = array(
+          '#type' => 'submit',
+          '#value' => t('Add Another'),
+          '#weight' => 1,
+          '#limit_validation_errors' => array(array('page_wrappers')),
+          '#submit' => array('page_wrapper_add_assignment_submit'),
+          '#ajax' => array(
+            'callback' => '_page_wrappers_add_js',
+            'wrapper' => 'page-wrappers-assignments',
+            'effect' => 'fade',
+          ),
+        );
+        // Add a flag to the page wrapper fieldset that we have rulesets
+        $form['page_wrappers_settings']['page_wrappers']['#has_rulesets'] = TRUE;
+      }
     }
   }
 
@@ -443,7 +423,7 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
     // add some help the body (Template HTML) field
     // TODO: fix language lookup.
     $form['body']['und'][0]['#prefix'] = t('The template should only include the content of the HTML &lt;body&gt; tag. <strong>Do not</strong> include the &lt;html&gt;, &lt;head&gt, or &lt;body&gt  tags in the template.');
-    $form['body']['und'][0]['#prefix'] .= t(' Use the placeholder <strong>[content]</strong> to denote where the body content should be output, and <strong>[title]</strong> where the page title should appear, and <strong>[messages]</strong> where the error messages should appear.');
+    $form['body']['und'][0]['#prefix'] .= t('Use the placeholder <strong>[content]</strong> to denote where the body content should be output, and <strong>[title]</strong> where the page title should appear, and <strong>[messages]</strong> where the error messages should appear.');
   }
 }
 
@@ -454,13 +434,11 @@ function page_wrapper_add_assignment_submit($form, &$form_state) {
   if ($form_state['values']['page_wrappers_more']) {
     $form_state['wrappers_count'] = count($form_state['values']['page_wrappers']) + 1;
   }
-  dpm($form_state['wrappers_count'], '$form_state[wrappers_count]');
   // Renumber the choices. This invalidates the corresponding key/value
   // associations in $form_state['input'], so clear that out
   $form_state['node']->page_wrappers = array_values($form_state['values']['page_wrappers']);
-  unset($form_state['input']['page_wrappers_settings']['page_wrappers']);
+  unset($form_state['input']['page_wrappers']);
   $form_state['rebuild'] = TRUE;
-  dpm($form_state, '$form_state');
 }
 
 function page_wrappers_og_ajax_callback($form, $form_state) {
@@ -486,7 +464,6 @@ function _page_wrappers_add_js($form, $form_state) {
  *   Values to populate the fields
  */
 function _page_wrappers_assignment_fields($key, $config = array(), $wrappers, $rulesets, $weight = 0, $size = 10) {
-  dpm($config , '$config ');
   $fields = array(
     '#tree' => TRUE,
     '#weight' => $weight,
@@ -502,25 +479,33 @@ function _page_wrappers_assignment_fields($key, $config = array(), $wrappers, $r
     '#description' => t('Select the page wrapper to use when displaying this node.'),
     '#parents' => array('page_wrappers', $key, 'wrapper_nid'),
   );
-  $fields['ruleset'] = array(
-    '#type' => 'select',
-    '#title' => t('Ruleset'),
-    '#prefix' => '<div id="page-wrappers-ruleset-options">',
-    '#suffix' => '</div>',
-    '#default_value' => (!empty($config['ruleset'])) ? $config['ruleset'] : '',
-    '#options' => $rulesets,
-    '#description' => t('Select the ruleset for determining if this node should display.'),
-    '#parents' => array('page_wrappers', $key, 'ruleset'),
-  );
-  $fields['weight'] = array(
-    '#type' => 'weight',
-    '#title' => t('Weight'),
-    '#title_display' => 'invisible',
-    '#default_value' => $weight,
-    '#delta' => $size,
-    '#parents' => array('page_wrappers', $key, 'weight'),
-    '#attributes' => array('class' => array('page-wrappers-weight')),
-  );
+  // If we have configured rulesets add the ruleset and weight selects
+  if (!empty($rulesets)) {
+    $fields['ruleset'] = array(
+      '#type' => 'select',
+      '#title' => t('Ruleset'),
+      '#prefix' => '<div id="page-wrappers-ruleset-options">',
+      '#suffix' => '</div>',
+      '#default_value' => (!empty($config['ruleset'])) ? $config['ruleset'] : '',
+      '#options' => $rulesets + array(1 => 'default'),
+      '#description' => t('Select the ruleset for determining the assignment of this page wrapper. Set a page wrapper to be assigned without considerations by choosing the <em>default</em> option.'),
+      '#parents' => array('page_wrappers', $key, 'ruleset'),
+    );
+    $fields['weight'] = array(
+      '#type' => 'weight',
+      '#title' => t('Weight'),
+      '#title_display' => 'invisible',
+      '#default_value' => $weight,
+      '#delta' => $size,
+      '#parents' => array('page_wrappers', $key, 'weight'),
+      '#attributes' => array('class' => array('page-wrappers-weight')),
+    );
+  }
+  // Else just add them as values
+  else {
+    $fields['ruleset']['#value'] = 1;
+    $fields['weight']['#value'] = 0;
+  }
 
   return $fields;
 }
@@ -551,7 +536,10 @@ function theme_page_wrappers_node_assignments($variables) {
     );
   }
 
-  drupal_add_tabledrag('page-wrappers-assignments-table', 'order', 'sibling', 'page-wrappers-weight');
+  // If the add more button is present then add the draggable function
+  if (!empty($fieldset['#has_rulesets'])) {
+    drupal_add_tabledrag('page-wrappers-assignments-table', 'order', 'sibling', 'page-wrappers-weight');
+  }
   return theme('table', array('rows' => $rows, 'header' => $header, 'attributes' => array('id' => 'page-wrappers-assignments-table')));
 }
 
@@ -696,24 +684,64 @@ function _page_wrappers_assign_wrapper($nid, $wrapper) {
  * @param $node Object
  *    Optional, A fully loaded node object
  */
-function _page_wrappers_access_check($wrappers = array(), $node = NULL) {
-  foreach($wrappers as $wrapper) {
+function _page_wrappers_node_assigned_wrapper($node) {
+  // Nothing to do if no page wrappers
+  if (empty($node->page_wrappers)) {
+    return;
+  }
+
+  // If the Ctools module is not installed return the first record
+  if (!module_exists('ctools_access_ruleset')) {
+    return reset($node->page_wrappers);
+  }
+
+  // Cache the results
+  $wrapped = &drupal_static(__FUNCTION__, array());
+
+  // Return a cached result
+  if (isset($wrapped[$node->nid])) {
+    return $wrapped[$node->nid];
+  }
+
+  // Loop through each page wrapper
+  foreach ($node->page_wrappers as $wrapper) {
+    // A 1 signifies this page wrapper is the default
     if ($wrapper['ruleset'] == 1) {
-      return $wrapper;
+      return $wrapped[$node->nid] = $wrapper;
     }
+    // Run the selected ruleset to see if this page wrapper should be selected
     elseif (!empty($wrapper['ruleset'])) {
       ctools_include('context');
       $context = array();
-      if (!empty($node)) {
-        $context = array(ctools_context_create('entity:node', $node));
-      }
+      $context = array(ctools_context_create('entity:node', $node));
       ctools_include('plugins');
       $plugin = ctools_get_plugins('ctools', 'access', 'ruleset:' . $wrapper['ruleset']);
-      dpm($plugin, '$plugin');
       if (ctools_ruleset_ctools_access_check(FALSE, $context, $plugin)) {
-        return $wrapper;
+        return $wrapped[$node->nid] = $wrapper;
       }
     }
+  }
+}
+
+/**
+ * Determine if the current page is a node that could be displayed in a page wrapper
+ * 
+ * @return Object
+ *    A fully loaded node
+ */
+function _page_wrappers_page_node() {
+  // get out of here if we're not on a node page, or if we're on the node edit page
+  if (arg(0) != 'node' || (arg(0) == 'node' && arg(2) == 'edit')) {
+    return;
+  }
+  $node = NULL;
+  //if this is a node page load it up, also cover webform 'done' page
+  if (arg(0) == 'node' && is_numeric(arg(1)) && (arg(2) == 'done' || !arg(2))) {
+    $node = node_load(arg(1));
+  }
+
+  if ($node && _page_wrappers_enabled_type($node, TRUE)) {
+    return $node;   
   }
 }
 
