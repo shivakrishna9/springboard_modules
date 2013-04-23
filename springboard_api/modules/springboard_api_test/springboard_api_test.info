@@ -1,0 +1,5 @@
+name = Springboard API test
+description = Springboard API test for remote tests
+package = Jackson River Springboard
+core = 6.x
+version = 6.x-3.x-dev
