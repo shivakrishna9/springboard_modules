@@ -75,11 +75,17 @@ function _page_wrappers_insert_after_first_element(&$a, $element) {
  */
 function page_wrappers_preprocess_page(&$vars) {
   $wrapper = NULL;
-  if ($vars['node'] = _page_wrappers_page_node()) {
-    $wrapper = _page_wrappers_node_assigned_wrapper($vars['node']);
+  if ($node = _page_wrappers_page_node()) {
+    $wrapper = _page_wrappers_node_assigned_wrapper($node);
   }
 
   if (!empty($wrapper)) {
+    // Some pages may not have a node set, we'll need it for the wrapper template
+    if (!isset($vars['node'])) {
+      $build = node_view_multiple(array($node->nid => $node), 'full');
+      $vars['node'] = $build['nodes'][$node->nid]['#node'];
+    }
+
     $template = _page_wrappers_template_filename($wrapper['wrapper_nid']);
     // make sure template actually exists
     if (_page_wrappers_template_exists($template)) {
@@ -117,10 +123,7 @@ function page_wrappers_preprocess_page(&$vars) {
  */
 function page_wrappers_page_alter(&$page) {
   if ($node = _page_wrappers_page_node()) {
-    // Find the assigned wrapper
-    if (!empty($node) && !empty($node->page_wrappers)) {
-      $assigned_wrapper = _page_wrappers_node_assigned_wrapper($node);
-    }
+    $assigned_wrapper = _page_wrappers_node_assigned_wrapper($node);
   }
 }
 
@@ -129,10 +132,7 @@ function page_wrappers_page_alter(&$page) {
  */
 function page_wrappers_css_alter(&$css) {
   if ($node = _page_wrappers_page_node()) {
-    // Find the assigned wrapper
-    if (!empty($node) && !empty($node->page_wrappers)) {
-      $assigned_wrapper = _page_wrappers_node_assigned_wrapper($node);
-    }
+    $assigned_wrapper = _page_wrappers_node_assigned_wrapper($node);
   }
 
   // If this is a node that has a wrapper assigned remove all the theme stylesheets
@@ -221,7 +221,6 @@ function page_wrappers_node_update($node) {
  */
 function page_wrappers_node_insert($node) {
   if (_page_wrappers_enabled_type($node)) {
-    dpm($node);
     foreach ($node->page_wrappers as $wrapper) {
       if (!empty($wrapper['wrapper_nid'])) {
         _page_wrappers_assign_wrapper($node->nid, $wrapper);
@@ -392,7 +391,6 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
       // Add more
       $existing_delta = $delta;
       for ($delta; $delta < $wrappers_count; $delta++) {
-        dpm($delta, '$delta 2');
         $key = 'new:' . ($delta - $existing_delta);
         $weight++;
         $form['page_wrappers_settings']['page_wrappers'][$key] = _page_wrappers_assignment_fields($key, array(), $wrappers, $rulesets, $weight, $wrappers_count);
@@ -727,7 +725,7 @@ function _page_wrappers_node_assigned_wrapper($node) {
  * Determine if the current page is a node that could be displayed in a page wrapper
  * 
  * @return Object
- *    A fully loaded node
+ *    A fully loaded node if this is a page request for a page wrapper enabled node, else false
  */
 function _page_wrappers_page_node() {
   // get out of here if we're not on a node page, or if we're on the node edit page
@@ -743,6 +741,8 @@ function _page_wrappers_page_node() {
   if ($node && _page_wrappers_enabled_type($node, TRUE)) {
     return $node;   
   }
+
+  return FALSE;
 }
 
 /**
@@ -806,7 +806,6 @@ function _page_wrappers_create_template($node) {
   return FALSE;
 
 }
-
 
 /**
  * Replaces tokens in the template content.
@@ -994,7 +993,6 @@ function _page_wrapper_preview_form() {
 function _page_wrappers_template_filename($nid) {
   return db_query('SELECT template FROM {page_wrappers} WHERE nid = :nid', array(':nid' => $nid))->fetchField();
 }
-
 
 /**
  * Fetch an array of email wrapper node ids.
