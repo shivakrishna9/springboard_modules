@@ -28,7 +28,16 @@ function webform_dupe_cop_settings_form($form, &$form_state) {
     '#title' => t('Message'),
     '#default_value' => variable_get('webform_dupe_cop_message', '%date %time - Dupe detected at %webform_id by %user_id matches ' .
       'a submission submitted at %prev_date %prev_time.'),
-    '#description' => t('Optional. Message  to display on dupe submission. You can use %date, %time, %webform_id, %user_id to substitute ' .
+    '#description' => t('Optional. Message  to display to user on dupe submission. You can use %date, %time, %webform_id, %user_id to substitute ' .
+      'the date and time of the original submission.'),
+  );
+  $form['webform_dupe_cop_watchdog_message'] = array(
+    '#type' => 'textarea',
+    '#rows' => 3,
+    '#title' => t('Message'),
+    '#default_value' => variable_get('webform_dupe_cop_message', '%date %time - Dupe detected at %webform_id by %user_id matches ' .
+      'a submission submitted at %prev_date %prev_time.'),
+    '#description' => t('Optional. Message  to display in logs on dupe submission. You can use %date, %time, %webform_id, %user_id to substitute ' .
       'the date and time of the original submission.'),
   );
   $form['#validate'][] = 'webform_dupe_cop_settings_form_validate';
