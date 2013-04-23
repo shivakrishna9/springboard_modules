@@ -8,8 +8,9 @@
  * Implements hook_menu().
  */
 function webform_dupe_cop_menu() {
-  $items['admin/config/webform/webform-dupe-cop'] = array(
-    'title' => 'Webform dupe prevention settings',
+  $items['admin/config/content/webform-dupe-cop'] = array(
+    'title' => 'Webform dupe cop',
+    'description' => 'Settings for the Webform monitoring system to detect and prevent duplicate submissions.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('webform_dupe_cop_settings_form'),
     'access arguments' => array('manage webform duplicate submission prevention'),
@@ -68,7 +69,7 @@ function webform_dupe_cop_client_form_validate($form, &$form_state) {
   // Check for previous submissions within the configured time frame.
   $nid = $form_state['values']['details']['nid'];
   $timespan = trim(variable_get('webform_dupe_cop_timespan', '1 hour'));
-  $minimum_timestamp = (isset($timespan_hours) && ($timespan_hours != '0')) ? (strtotime($timespan . ' ago')) : 0;
+  $minimum_timestamp = (isset($timespan) && ($timespan != '0')) ? (strtotime($timespan . ' ago')) : 0;
   $submitted = db_query("SELECT submitted FROM {webform_dupe_cop} wdc
       INNER JOIN {webform_submissions} ws ON ws.sid=wdc.sid
       WHERE wdc.submission_hash = :submission_hash
