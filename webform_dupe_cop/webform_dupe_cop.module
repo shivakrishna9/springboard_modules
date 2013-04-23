@@ -106,7 +106,7 @@ function webform_dupe_cop_client_form_validate($form, &$form_state) {
     $message = variable_get('webform_dupe_cop_watchdog_message', '%date %time - Dupe detected at %webform_id by %user_id matches ' .
       'a submission submitted at %prev_date %prev_time.');
     $message .= ' Headers: %headers';
-    watchdog('webform_dupe_cop', $log_message, array(
+    watchdog('webform_dupe_cop', $message, array(
       '%date' => $date,
       '%time' => $time,
       '%webform_id' => $webform_id,
