@@ -25,12 +25,13 @@ function webform_goals_rebuild_widgets() {
     webform_goals_update_widget($args, 'gid');
     $updated_goals[] = $goal['gid'];
   }
-  db_query('
-    UPDATE {webform_goals}
-    SET update_on_cron = 0
-    WHERE gid IN (:gids)
-  ', array(':gids' => $updated_goals));
-;
+  if (count($updated_goals)) {
+    db_query('
+      UPDATE {webform_goals}
+      SET update_on_cron = 0
+      WHERE gid IN (:gids)
+    ', array(':gids' => $updated_goals));
+  }
   return 'goal update complete.';
 }
 
