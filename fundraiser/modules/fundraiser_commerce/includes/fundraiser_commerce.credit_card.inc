@@ -16,6 +16,7 @@ function _fundraiser_commerce_credit_card_form() {
   $form['card_number'] = array(
     '#type' => 'textfield',
     '#title' => t('Credit card number'),
+    '#attributes' => array('class' => array('input-large')),
     '#size' => 20,
     '#fundraiser_commerce_required' => TRUE,
     '#salesforce_label' => t('Credit card last 4'),
@@ -37,6 +38,7 @@ function _fundraiser_commerce_credit_card_form() {
     '#type' => 'select',
     '#options' => $months,
     '#title' => t('Expiration month'),
+    '#attributes' => array('class' => array('input-small')),
     '#default_value' => date('n'),
     '#fundraiser_commerce_required' => TRUE,
   );
@@ -49,6 +51,7 @@ function _fundraiser_commerce_credit_card_form() {
     '#type' => 'select',
     '#options' => $years,
     '#title' => t('Expiration year'),
+    '#attributes' => array('class' => array('input-small')),
     '#default_value' => date('Y'),
     '#fundraiser_commerce_required' => TRUE,
   );
@@ -56,6 +59,7 @@ function _fundraiser_commerce_credit_card_form() {
     '#type' => 'textfield',
     '#title' => t('CVV'),
     '#size' => 6,
+    '#attributes' => array('class' => array('input-small')),
     '#fundraiser_commerce_required' => TRUE,
     '#salesforce_mappable' => FALSE,
   );
