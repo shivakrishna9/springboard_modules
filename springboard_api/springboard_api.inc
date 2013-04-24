@@ -10,7 +10,9 @@ function springboard_api_list_webforms($pubkey, $timestamp, $checksum, $page, $p
   unset($_SESSION['messages']);
   $data = array();
   $error_code = (isset($override_400) && $override_400) ? 200 : 400;
-  $valid = _springboard_api_validate_transaction('index', $timestamp, $pubkey, $checksum);
+  // TODO: replace code below with check on pubkey.
+  $valid = _springboard_api_validate_pubkey($pubkey);
+//  $valid = _springboard_api_validate_transaction('index', $timestamp, $pubkey, $checksum);
 
   if ($valid) {
     $webform_node_types = implode("','", variable_get('webform_node_types', ''));
@@ -47,7 +49,8 @@ function springboard_api_get_webform($pubkey, $timestamp, $checksum, $nid, $over
   $nid = (int) $nid;
   $webform = array();
   $fields = array();
-  $valid = _springboard_api_validate_transaction('retrieve', $timestamp, $pubkey, $checksum);
+  //$valid = _springboard_api_validate_transaction('retrieve', $timestamp, $pubkey, $checksum);
+  $valid = _springboard_api_validate_pubkey($pubkey);
   if ($valid) {
     $cache_user = $user;
     $uid = db_result(db_query("SELECT uid FROM {springboard_api} WHERE pubkey='%s'", $pubkey));
@@ -94,7 +97,14 @@ function springboard_api_get_webform($pubkey, $timestamp, $checksum, $nid, $over
  */
 function springboard_api_submit_webform($submission) {
   unset($_SESSION['messages']);
-  $valid = _springboard_api_validate_transaction('submit', $submission['time'], $submission['key'], $submission['checksum']);
+  $node = node_load(array('nid' => trim($submission['webform_id'])));
+  // Limit full checksum validation to donation form submissions.
+  if (module_exists('fundraiser') && !fundraiser_is_donation_type($node->type)) {
+     $valid = _springboard_api_validate_pubkey($submission['key']);
+  }
+  else {
+    $valid = _springboard_api_validate_transaction('submit', $submission['time'], $submission['key'], $submission['checksum']);
+  }
   $error_code = (isset($submission['override_400']) && $submission['override_400']) ? 200 : 400;
   if ($valid) {
     springboard_api_validate_donation($submission, $error_code);

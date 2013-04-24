@@ -273,7 +273,7 @@ function _springboard_api_keyset_title($kid) {
 }
 
 /**
- *
+ * Validate payload checksum.
  */
 function _springboard_api_validate_transaction($resource, $timestamp, $pubkey, $checksum) {
   $data = array();
@@ -289,4 +289,12 @@ function _springboard_api_validate_transaction($resource, $timestamp, $pubkey, $
   }
 
   return FALSE;
+}
+
+/**
+ * Returns true if pubkey is valid.
+ */
+function _springboard_api_validate_pubkey($pubkey) {
+  $exists = db_result(db_query("SELECT 1 FROM {springboard_api} WHERE pubkey = '%s'", $pubkey));
+  return $exists ? TRUE : FALSE;
 }
