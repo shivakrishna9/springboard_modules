@@ -11,6 +11,7 @@
  * Admin configuration form for page wrappers.
  */
 function page_wrappers_settings_form($form, $form_state) {
+  $form['#attached']['js'][] = drupal_get_path('module', 'page_wrappers') . '/js/page_wrappers.admin.js';
   $types = node_type_get_types();
   unset($types['page_wrapper']);
   $options = array();
@@ -48,7 +49,7 @@ function page_wrappers_settings_form($form, $form_state) {
   $form['page_wrappers_settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('Default Node Configuration'),
-    '#description' => t('Configure the Page Wrapper settings for a new node. To delete a configuration de-select the Page Wrapper.'),
+    '#description' => t('Configure the Page Wrapper settings for a new node.'),
     '#tree' => FALSE,
   );
 
