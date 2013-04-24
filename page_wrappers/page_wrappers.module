@@ -354,16 +354,26 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
 
       $rulesets = _page_wrapper_available_rulesets();
 
+      // If this is a new node use the default configuration
+      if (!empty($form['#node']->nid)) {
+        $configurations = !empty($form_state['node']->page_wrappers) ? $form_state['node']->page_wrappers : array();
+      }
+      else {
+        $configurations = array_values(variable_get('page_wrapper_default_node_config', array()));
+      }
+
+      // Get a count of the wrappers, wrappers_count value is passed from the ajax function
       if (isset($form_state['wrappers_count'])) {
         $wrappers_count = $form_state['wrappers_count'];
       }
       else {
-        $wrappers_count = 1;
+        $wrappers_count = empty($configurations) ? 1 : count($configurations);
       }
 
       $form['page_wrappers_settings'] = array(
         '#type' => 'fieldset',
         '#title' => t('Page wrapper settings'),
+        '#description' => t('Select a Page Wrapper and then the Ruleset to determine when it should appear. To delete a configuration de-select the Page Wrapper.'),
         '#collapsible' => TRUE,
         '#collapsed' => TRUE,
         '#tree' => FALSE,
@@ -376,13 +386,16 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
         '#suffix' => '</div>',
         '#theme' => 'page_wrappers_node_assignments',
       );
+ 
+      // Let the ajax functions know which field group to update
+      $form['#page_wrapper_config_parent'] = 'page_wrappers';
 
       // Add existing wrapper configurations
       $delta = 0;
       $weight = 0;
-      if (!empty($form['#node']->page_wrappers)) {
-        $delta = count($form['#node']->page_wrappers);
-        foreach ($form['#node']->page_wrappers as $pwid => $config) {
+      if (!empty($configurations)) {
+        $delta = count($configurations);
+        foreach ($configurations as $pwid => $config) {
           $key = 'pwid:' . $pwid;
           $form['page_wrappers_settings']['page_wrappers'][$key] = _page_wrappers_assignment_fields($key, $config, $wrappers, $rulesets, $config['weight'], $wrappers_count);
           $weight = max($config['weight'], $weight);
@@ -431,12 +444,12 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
  */
 function page_wrapper_add_assignment_submit($form, &$form_state) {
   if ($form_state['values']['page_wrappers_more']) {
-    $form_state['wrappers_count'] = count($form_state['values']['page_wrappers']) + 1;
+    $form_state['wrappers_count'] = count($form_state['values'][ $form['#page_wrapper_config_parent'] ]) + 1;
   }
   // Renumber the choices. This invalidates the corresponding key/value
   // associations in $form_state['input'], so clear that out
-  $form_state['node']->page_wrappers = array_values($form_state['values']['page_wrappers']);
-  unset($form_state['input']['page_wrappers']);
+  $form_state['node']->page_wrappers = array_values($form_state['values'][ $form['#page_wrapper_config_parent'] ]);
+  unset($form_state['input'][ $form['#page_wrapper_config_parent'] ]);
   $form_state['rebuild'] = TRUE;
 }
 
@@ -453,7 +466,7 @@ function page_wrappers_og_ajax_callback($form, $form_state) {
  * @see page_wrapper_add_assignment_submit()
  */
 function _page_wrappers_add_js($form, $form_state) {
-  return $form['page_wrappers_settings']['page_wrappers'];
+  return $form['page_wrappers_settings'][ $form['#page_wrapper_config_parent'] ];
 }
 
 /**
@@ -462,7 +475,7 @@ function _page_wrappers_add_js($form, $form_state) {
  * @param $wrapper Array
  *   Values to populate the fields
  */
-function _page_wrappers_assignment_fields($key, $config = array(), $wrappers, $rulesets, $weight = 0, $size = 10) {
+function _page_wrappers_assignment_fields($key, $config = array(), $wrappers, $rulesets, $weight = 0, $size = 10, $parent = 'page_wrappers') {
   $fields = array(
     '#tree' => TRUE,
     '#weight' => $weight,
@@ -476,7 +489,7 @@ function _page_wrappers_assignment_fields($key, $config = array(), $wrappers, $r
     '#default_value' => (!empty($config['wrapper_nid'])) ? $config['wrapper_nid'] : '',
     '#options' => $wrappers,
     '#description' => t('Select the page wrapper to use when displaying this node.'),
-    '#parents' => array('page_wrappers', $key, 'wrapper_nid'),
+    '#parents' => array($parent, $key, 'wrapper_nid'),
   );
   // If we have configured rulesets add the ruleset and weight selects
   if (!empty($rulesets)) {
@@ -488,7 +501,7 @@ function _page_wrappers_assignment_fields($key, $config = array(), $wrappers, $r
       '#default_value' => (!empty($config['ruleset'])) ? $config['ruleset'] : '',
       '#options' => $rulesets + array(1 => 'default'),
       '#description' => t('Select the ruleset for determining the assignment of this page wrapper. Set a page wrapper to be assigned without considerations by choosing the <em>default</em> option.'),
-      '#parents' => array('page_wrappers', $key, 'ruleset'),
+      '#parents' => array($parent, $key, 'ruleset'),
     );
     $fields['weight'] = array(
       '#type' => 'weight',
@@ -496,7 +509,7 @@ function _page_wrappers_assignment_fields($key, $config = array(), $wrappers, $r
       '#title_display' => 'invisible',
       '#default_value' => $weight,
       '#delta' => $size,
-      '#parents' => array('page_wrappers', $key, 'weight'),
+      '#parents' => array($parent, $key, 'weight'),
       '#attributes' => array('class' => array('page-wrappers-weight')),
     );
   }
@@ -505,12 +518,12 @@ function _page_wrappers_assignment_fields($key, $config = array(), $wrappers, $r
     $fields['ruleset'] = array(
       '#type' => 'hidden',
       '#value' => 1,
-      '#parents' => array('page_wrappers', $key, 'ruleset'),
+      '#parents' => array($parent, $key, 'ruleset'),
     );
     $fields['weight'] = array(
       '#type' => 'hidden',
       '#value' => 0,
-      '#parents' => array('page_wrappers', $key, 'weight'),
+      '#parents' => array($parent, $key, 'weight'),
     );
   }
 
