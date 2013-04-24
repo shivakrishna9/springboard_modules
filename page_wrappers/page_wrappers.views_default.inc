@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Default views for the page_wrapper module.
+ */
 
 /**
  * Implementation of hook_views_default_views().

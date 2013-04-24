@@ -54,18 +54,33 @@ function page_wrappers_schema() {
     'description' => t('TODO: please describe this table!'),
     'fields' => array(
       'nid' => array(
-        'description' => t('TODO: please describe this field!'),
+        'description' => t('Node nid.'),
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
       ),
       'wrapper_nid' => array(
-        'description' => t('TODO: please describe this field!'),
+        'description' => t('Nid of the Page Wrapper node.'),
         'type' => 'int',
         'not null' => TRUE,
       ),
+      'ruleset' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'description' => 'ID for this ruleset. A 1 signifies this as the default page wrapper',
+        'default' => '1',
+        'not null' => TRUE,
+      ),
+      'weight' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Weight of assignment.',
+      ),
     ),
-    'primary key' => array('nid'),
+    'indexes' => array(
+      'indexes' => array('nid'),
+    ),
   );
 
   return $schema;
@@ -237,12 +252,33 @@ function _page_wrappers_delete_fields() {
     $field = field_info_field($field_name);
     field_delete_field($field);
   }
-  drupal_set_message('Page Wrapper fields deleted.');
+  drupal_set_message(t('Page Wrapper fields deleted.'));
 }
 
 function _page_wrappers_delete_nodes() {
  require_once('page_wrappers.module');
  $nids = page_wrappers_get_nodes();
  node_delete_multiple($nids);
- drupal_set_message('Page Wrappers have been deleted.');
+ drupal_set_message(t('Page Wrappers have been deleted.'));
+}
+
+/**
+ * Remove the primary key and add an index
+ */
+function page_wrappers_update_7001() {
+  db_drop_primary_key('node_page_wrappers');
+  db_add_index('node_page_wrappers', 'wrapped_nid', array('nid'));
+  db_add_field('node_page_wrappers', 'ruleset', array(
+    'type' => 'varchar',
+    'length' => '255',
+    'description' => 'ID for this ruleset.',
+    'default' => '1',
+    'not null' => TRUE,
+  ));
+  db_add_field('node_page_wrappers', 'weight', array(
+    'type' => 'int',
+    'not null' => TRUE,
+    'default' => 0,
+    'description' => 'Weight of assignment.',
+  ));
 }
