@@ -374,7 +374,7 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
       $form['page_wrappers_settings'] = array(
         '#type' => 'fieldset',
         '#title' => t('Page wrapper settings'),
-        '#description' => t('Select a Page Wrapper and then the Ruleset to determine when it should appear.'),
+        '#description' => t('Add, remove and configure page wrappers for this node.'),
         '#collapsible' => TRUE,
         '#collapsed' => TRUE,
         '#tree' => FALSE,
@@ -498,7 +498,7 @@ function _page_wrappers_assignment_fields($key, $config = array(), $wrappers, $r
     '#suffix' => '</div>',
     '#default_value' => (!empty($config['wrapper_nid'])) ? $config['wrapper_nid'] : '',
     '#options' => $wrappers,
-    '#description' => t('Select the page wrapper to use when displaying this node.'),
+    '#description' => t('Select a page wrapper to use when displaying this node.'),
     '#parents' => array($parent, $key, 'wrapper_nid'),
     '#attributes' => array('class' => array('page-wrappers-wrapper-select')),
   );
@@ -511,7 +511,7 @@ function _page_wrappers_assignment_fields($key, $config = array(), $wrappers, $r
       '#suffix' => '</div>',
       '#default_value' => (!empty($config['ruleset'])) ? $config['ruleset'] : '',
       '#options' => $rulesets + array(1 => 'default'),
-      '#description' => t('Select the ruleset for determining the assignment of this page wrapper.') . '<br/>' . 
+      '#description' => t('Select the ruleset for determining the assignment of the page wrapper.') . ' ' .
                         t('Set a page wrapper to be assigned without considerations by choosing the <em>default</em> option.'),
       '#parents' => array($parent, $key, 'ruleset'),
     );
@@ -549,8 +549,8 @@ function theme_page_wrappers_node_assignments($variables) {
   $fieldset = $variables['form'];
   $header = array();
   $rows = array();
+  $descriptions = array();
   $hidden = '';
-  $count = count(element_children($fieldset));
   foreach (element_children($fieldset) as $i) {
     $row = array();
     foreach (element_children($fieldset[$i]) as $field) {
@@ -561,10 +561,14 @@ function theme_page_wrappers_node_assignments($variables) {
           $header[$field] = isset($this_element['#title']) ? $this_element['#title'] : '';
         }
         unset($this_element['#title']);
+        if (!isset($descriptions[$field])) {
+          $descriptions[$field] = isset($this_element['#description']) ? $this_element['#description'] : '';
+        }
+        unset($this_element['#description']);
         $row[$field] = drupal_render($this_element);
       }
       else {
-        // Add hidden values to the previous rows
+        // hidden values added after table below
         $hidden .= drupal_render($this_element);
       }
     }
@@ -580,12 +584,14 @@ function theme_page_wrappers_node_assignments($variables) {
     );
   }
 
+  $rows = array_merge(array('descriptions' => $descriptions), $rows);
+
   // Header row for the operations
   if (!empty($fieldset['#has_rulesets'])) {
     $header[] = '';
   }
 
-  // If the add more button is present then add the draggable function
+  // If there are rulesets then add the draggable function
   if (!empty($fieldset['#has_rulesets'])) {
     drupal_add_tabledrag('page-wrappers-assignments-table', 'order', 'sibling', 'page-wrappers-weight');
   }
