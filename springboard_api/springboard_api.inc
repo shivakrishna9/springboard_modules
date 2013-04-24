@@ -7,6 +7,10 @@
  * Index callback for springboard service.
  */
 function springboard_api_list_webforms($pubkey, $timestamp, $checksum, $page, $pagesize, $override_400 = FALSE) {
+  // BUG: Services isn't passing the configured default values for page and pagesize under certain conditions.
+  if (!$pagesize) {
+    $pagesize = variable_get('fundraiser_webform_index_page_size', 20);
+  }
   unset($_SESSION['messages']);
   $data = array();
   $error_code = (isset($override_400) && $override_400) ? 200 : 400;
@@ -18,7 +22,6 @@ function springboard_api_list_webforms($pubkey, $timestamp, $checksum, $page, $p
     $webform_node_types = implode("','", variable_get('webform_node_types', ''));
     $sql = sprintf("SELECT nid, title, type FROM {node} WHERE type IN ('%s') LIMIT %d, %d", $webform_node_types, $page, $pagesize);
     $results = db_query($sql);
-
     while ($result = db_fetch_object($results)) {
       $webforms[] = array(
         'nid' => $result->nid,
@@ -42,7 +45,7 @@ function springboard_api_list_webforms($pubkey, $timestamp, $checksum, $page, $p
  * @return
  * Returns an array of field definitions for the requested webform.
  */
-function springboard_api_get_webform($pubkey, $timestamp, $checksum, $nid, $override_400 = FALSE) {
+function springboard_api_get_webform($pubkey, $nid, $override_400 = FALSE) {
   global $user;
   $error_code = (isset($submission['override_400']) && $submission['override_400']) ? 200 : 400;
   unset($_SESSION['messages']);
@@ -99,8 +102,8 @@ function springboard_api_submit_webform($submission) {
   unset($_SESSION['messages']);
   $node = node_load(array('nid' => trim($submission['webform_id'])));
   // Limit full checksum validation to donation form submissions.
-  if (module_exists('fundraiser') && !fundraiser_is_donation_type($node->type)) {
-     $valid = _springboard_api_validate_pubkey($submission['key']);
+  if (module_exists('fundraiser') && !fundraiser_is_donation_type($node->type)) { 
+     $valid = _springboard_api_validate_pubkey(trim($submission['key']));
   }
   else {
     $valid = _springboard_api_validate_transaction('submit', $submission['time'], $submission['key'], $submission['checksum']);
@@ -286,7 +289,6 @@ function springboard_api_validate_donation($donation = array(), $error_code) {
   while ($form_key = db_result($results)) {
 
     if (!in_array($form_key, $donation_keys)) {
-
       $missing_fields[] = $form_key;
     }
   }
@@ -307,7 +309,7 @@ function springboard_api_validate_donation($donation = array(), $error_code) {
     }
   }
   if (count($_SESSION['messages'])) {
-    return services_error('Error: one or more required fields are missing.', $error_code, $_SESSION['messages']);
+    return services_error("Error: The following errors were encountered:\n\n" . implode ("\n", $_SESSION['messages']['status']), $error_code, $_SESSION['messages']);
   }
 }
 
