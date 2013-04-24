@@ -119,11 +119,16 @@ function page_wrappers_preprocess_page(&$vars) {
 }
 
 /**
- * Implements hook_page_alter
+ * Implements hook_block_list_alter
+ *
+ * Remove all blocks to save on performance
  */
-function page_wrappers_page_alter(&$page) {
+function page_wrappers_block_list_alter(&$blocks) {
   if ($node = _page_wrappers_page_node()) {
     $assigned_wrapper = _page_wrappers_node_assigned_wrapper($node);
+    if (!empty($assigned_wrapper)) {
+      $blocks = array();
+    }
   }
 }
 
