@@ -71,6 +71,22 @@ function _commerce_psi_build_donor($order) {
 }
 
 /**
+ * Replace tokens in the custom fields
+ */
+function _commerce_psi_token_replace($value, $order) {
+  $token_set = &drupal_static(__FUNCTION__ . $order->order_id, array());
+  if (empty($token_set)) {
+    $token_set['user'] = user_load($order->uid);
+    if (module_exists('fundraiser')) {
+      $donation = fundraiser_donation_get_donation($order->order_id);
+      $token_set['node'] = $donation->node;
+      $token_set['donation'] = $donation;
+    }
+  }
+  return token_replace($value, $token_set);
+}
+
+/**
  * Encrypt the password of the accounts
  */
 function _commerce_psi_encrypt_settings_password($element, $input = FALSE, $form_state) {
