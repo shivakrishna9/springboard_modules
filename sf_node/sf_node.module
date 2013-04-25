@@ -278,6 +278,12 @@ function sf_node_fieldmap_objects($type) {
       foreach (content_types() as $type) {
         // Add each of the fields to the node object definition.
         foreach ((array) $type['fields'] as $field) {
+          $type_key = 'node_' . $type['type'];
+          $field_key = $field['field_name'];
+          $objects[$type_key]['fields'][$field_key] = array(
+            'label' => check_plain($field['widget']['label']),
+            'group' => t('CCK fields'),
+          );
           // Choose a handler based on the type of the CCK field.
           switch ($field['type']) {
             // TODO: Decide if we want to make more specific handlers...
@@ -285,36 +291,41 @@ function sf_node_fieldmap_objects($type) {
             // For example, I might set a handler for text fields that takes
             // the selected input format into account.
             case 'filefield':
-              $export_handler = '_sf_node_export_cck_file';
-              $import_handler = '_sf_node_import_cck_file';
+              $objects[$type_key]['fields'][$field_key]['export'] = '_sf_node_export_cck_file';
+              $objects[$type_key]['fields'][$field_key]['import'] = '_sf_node_import_cck_file';
               break;
             case 'nodereference':
-              $export_handler = '_sf_node_export_cck_nodereference';
-              $import_handler = '_sf_node_import_cck_nodereference';
+              $objects[$type_key]['fields'][$field_key]['export'] = '_sf_node_export_cck_nodereference';
+              $objects[$type_key]['fields'][$field_key]['import'] = '_sf_node_import_cck_nodereference';
+              $objects[$type_key]['fields'][$field_key . '__title'] = array(
+                'label' => t('@label (title only)', array('@label' => $field['widget']['label'])),
+                'group' => t('CCK fields'),
+                'export' => '_sf_node_export_cck_nodereference_title',
+                'import' => '_sf_node_import_cck_nodereference_title',
+              );
               break;
             case 'userreference':
-              $export_handler = '_sf_node_export_cck_userreference';
-              $import_handler = '_sf_node_import_cck_userreference';
+              $objects[$type_key]['fields'][$field_key]['export'] = '_sf_node_export_cck_userreference';
+              $objects[$type_key]['fields'][$field_key]['import'] = '_sf_node_import_cck_userreference';
+              $objects[$type_key]['fields'][$field_key . '__name'] = array(
+                'label' => t('@label (username only)', array('@label' => $field['widget']['label'])),
+                'group' => t('CCK fields'),
+                'export' => '_sf_node_export_cck_userreference_name',
+                'import' => '_sf_node_import_cck_userreference_name',
+              );
               break;
             case 'link':
-              $export_handler = '_sf_node_export_cck_link';
-              $import_handler = '_sf_node_import_cck_link';
+              $objects[$type_key]['fields'][$field_key]['export'] = '_sf_node_export_cck_link';
+              $objects[$type_key]['fields'][$field_key]['import'] = '_sf_node_import_cck_link';
               break;
             default:
-              $export_handler = '_sf_node_export_cck_default';
-              $import_handler = '_sf_node_import_cck_default';
+              $objects[$type_key]['fields'][$field_key]['export'] = '_sf_node_export_cck_default';
+              $objects[$type_key]['fields'][$field_key]['import'] = '_sf_node_import_cck_default';
           }
-
-          $objects['node_' . $type['type']]['fields'][$field['field_name']] = array(
-            'label' => check_plain($field['widget']['label']),
-            'group' => t('CCK fields'),
-            'export' => $export_handler,
-            'import' => $import_handler,
-          );
 
           // If the field was a date field, add the "To" date if enabled.
           if ($field['type'] == 'date' && !empty($field['todate'])) {
-            $objects['node_' . $type['type']]['fields'][$field['field_name'] . '_todate'] = array(
+            $objects[$type_key]['fields'][$field_key . '_todate'] = array(
               'label' => t('@label (to date)', array('@label' => $field['widget']['label'])),
               'group' => t('CCK fields'),
               'export' => '_sf_node_export_cck_todate',
@@ -360,6 +371,32 @@ function _sf_node_import_cck_nodereference(&$node, $key, $value) {
   }
 }
 
+function _sf_node_export_cck_nodereference_title($source, $field) {
+  $field = substr($field, 0, -7); // remove '__title' to get the node field key
+  $data = $source->$field;
+  
+  // look up title of the referenced node
+  $nid = $data[0]['nid'];
+  $title = '';
+  if ($nid) {
+    $title = db_result(db_query("SELECT title FROM {node} WHERE nid=%d;", $nid));
+  }
+  return $title;
+}
+
+function _sf_node_import_cck_nodereference_title(&$node, $key, $value) {
+  $data = $node->$key;
+
+  if (!empty($value)) {
+    // find most recently-saved Drupal node with title matching the string from SF
+    $nid = db_result(db_query("SELECT nid FROM {node} WHERE title LIKE '%s' ORDER BY changed DESC LIMIT 1;", $value));
+    if ($nid) {
+      $data[0]['nid'] = $nid;
+      $node->$key = $data;
+    }
+  }
+}
+
 function _sf_node_export_cck_userreference($source, $field) {
   $data = $source->$field;
 
@@ -384,6 +421,32 @@ function _sf_node_import_cck_userreference(&$node, $key, $value) {
       "SELECT oid FROM {salesforce_management_object_map} WHERE sfid='%s' AND drupal_type='user';",
       $value
     ));
+    if ($uid) {
+      $data[0]['uid'] = $uid;
+      $node->$key = $data;
+    }
+  }
+}
+
+function _sf_node_export_cck_userreference_name($source, $field) {
+  $field = substr($field, 0, -6); // remove '__name' to get the node field key
+  $data = $source->$field;
+  
+  // look username of the referenced user
+  $uid = $data[0]['uid'];
+  $name = '';
+  if ($uid) {
+    $name = db_result(db_query("SELECT name FROM {users} WHERE uid=%d;", $uid));
+  }
+  return $name;
+}
+
+function _sf_node_import_cck_userreference_name(&$node, $key, $value) {
+  $data = $node->$key;
+
+  if (!empty($value)) {
+    // find Drupal user with name matching the string from SF
+    $uid = db_result(db_query("SELECT uid FROM {users} WHERE name LIKE '%s';", $value));
     if ($uid) {
       $data[0]['uid'] = $uid;
       $node->$key = $data;
