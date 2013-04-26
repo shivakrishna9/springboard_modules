@@ -698,7 +698,7 @@ function _springboard_syncronize($op = 'both') {
   }
   if (module_exists('fundraiser') && ($op == 'fundraiser' || $op == 'both')) {
     module_load_include('module', 'fundraiser');
-    fundraiser_process_recurring_donations();
+    _fundraiser_cron_process();
     drupal_set_message('Recurring donations have been processed.');
   }
   drupal_goto('admin/springboard');
