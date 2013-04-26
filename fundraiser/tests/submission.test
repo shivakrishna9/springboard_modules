@@ -154,7 +154,7 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $next_order_id = db_result(db_query("SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = %d ORDER BY next_charge LIMIT 1", $order_id));
     $yesterday = strtotime("-1 day");
     db_query("UPDATE {fundraiser_recurring} SET next_charge = %d WHERE order_id = %d", $yesterday, $next_order_id);
-    fundraiser_process_recurring_donations();
+    _fundraiser_cron_process();
 
     $order = uc_order_load($next_order_id);
     $this->assertEqual($order->order_status, 'payment_received', t('Make sure order status is changed to payment_received when a recurring donation is successfully processed during a cron run.'));
