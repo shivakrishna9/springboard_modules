@@ -11,7 +11,16 @@ class PsiClient {
    */
   public function __construct($account) {
     $this->authenticated = FALSE;
-    $this->wsdl = 'http://68.163.70.218/Services/Payment/PsiWcfService.svc?wsdl';
+
+    // Determine the correct WSDL URL
+    if ($account['txn_mode'] == COMMERCE_PSI_MODE_LIVE) {
+      $this->wsdl = 'https://client.paymentsolutionsinc.net/Services/Payment/PsiWcfService.svc?wsdl';
+    }
+    else {
+      $this->wsdl = 'http://68.163.70.218/Services/Payment/PsiWcfService.svc?wsdl';
+    }
+
+    // Create a new soapclient
     try {
       $this->soapclient = new SoapClient($this->wsdl);
     }

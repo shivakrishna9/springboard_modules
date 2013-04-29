@@ -22,10 +22,10 @@ function commerce_psi_credit_commerce_payment_method_info() {
  */
 function commerce_psi_credit_default_settings() {
   return array(
+    'txn_mode' => COMMERCE_PSI_MODE_TEST,
     'account_username' => '',
     'account_password' => '',
     'account_ip' => '',
-    'cim_cardonfile' => FALSE,
     'log' => array('request' => '0', 'response' => '0'),
     'card_types' => array(),
     'custom_fields' => array(
@@ -46,6 +46,16 @@ function commerce_psi_credit_settings_form($settings = array()) {
   // Merge default settings into the stored settings array.
   $settings = (array) $settings + commerce_psi_credit_default_settings();
 
+  $form['txn_mode'] = array(
+    '#type' => 'radios',
+    '#title' => t('Mode'),
+    '#options' => array(
+      COMMERCE_PSI_MODE_LIVE => 'Live',
+      COMMERCE_PSI_MODE_TEST => 'Test',
+    ),
+    '#default_value' => $settings['txn_mode'],
+    '#required' => TRUE,
+  );
   $form['account_username'] = array(
     '#type' => 'textfield',
     '#title' => t('Username'),
@@ -98,12 +108,16 @@ function commerce_psi_credit_settings_form($settings = array()) {
   );
   $form['custom_fields']['tokens'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Tracking Replacement Tokens'),
-    '#description' => t('The following tokens are available for any of the Item fields.'),
+    '#title' => t('Drupal tokens'),
+    '#description' => t('The following tokens are available for any of the custom fields.'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
-  $token_set = array('donation', 'user', 'node');
+  $token_set = array('user', 'commerce-order');
+  if (module_exists('fundraiser')) {
+    $token_set[] = 'node';
+    $token_set[] = 'donation';
+  }
   $form['custom_fields']['tokens']['token_help'] = array(
     '#type' => 'item',
     '#title' => t('Drupal tokens'),
