@@ -1064,6 +1064,7 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
 
     // handle the donation form itself
     if (fundraiser_is_donation_type($node->type) && arg(2) != 'submission') {
+
       // check to see if the form is being accessed over HTTPS, if not, disable access.
       if (!fundraiser_is_secure() && !variable_get('fundraiser_development_mode', 0)) {
         fundraiser_disable_elements($form);
@@ -2212,7 +2213,7 @@ function fundraiser_extend_future_orders($master_order_id, $exp_month, $exp_year
 
   // Load up the last order since it will have the most recent changes.
   $order = uc_order_load($last_order_id);
-  $gateway = db_result(db_query("SELECT gateway FROM {fundraiser_recurring} WHERE order_id = %d", $last_order_id));
+  $fundraiser_recurring = db_fetch_object(db_query("SELECT gateway, sustainer_key FROM {fundraiser_recurring} WHERE order_id = %d", $last_order_id));
 
   // Get the form URL from the last order (for the fundraiser_recurring table).
   $form_url = !empty($order->products[0]->nid) ? _fundraiser_donation_form_path($order->products[0]->nid) : '';
@@ -2226,7 +2227,7 @@ function fundraiser_extend_future_orders($master_order_id, $exp_month, $exp_year
   $charge_date = $last_charge_date;
   while (($charge_date = strtotime("+1 month", $charge_date)) <= $exp_date_ts) {
     $new_order_id = fundraiser_clone_order($order);
-    db_query("INSERT INTO {fundraiser_recurring} (master_order_id, order_id, next_charge, gateway, form_url) VALUES (%d, %d, '%s', '%s', '%s')", $master_order_id, $new_order_id, $charge_date, $gateway, $form_url);
+    db_query("INSERT INTO {fundraiser_recurring} (master_order_id, order_id, next_charge, gateway, form_url, sustainer_key) VALUES (%d, %d, '%s', '%s', '%s', '%s')", $master_order_id, $new_order_id, $charge_date, $fundraiser_recurring->gateway, $form_url, $fundraiser_recurring->sustainer_key);
     uc_order_comment_save($new_order_id, 0, t('Payment will be processed on !date.', array('!date' => date('n/j/Y', $charge_date))), 'admin');
     // Add these new orders to the queue.
     if (module_exists('sf_donation') && module_exists('queue_api')) {
@@ -2255,6 +2256,7 @@ function fundraiser_clone_order($order) {
  */
 function fundraiser_create_future_orders($order_id, $gateway = NULL, $amount = NULL) {
   global $user;
+  $sustainer_key = fundraiser_get_sustainer_key_value();
 
   // reload the original order so we get any changes that have been made by the payment gateways
   uc_credit_cache('clear');
@@ -2283,7 +2285,7 @@ function fundraiser_create_future_orders($order_id, $gateway = NULL, $amount = N
     $next_charge = strtotime("+$i months");
 
     // make a record of the recurring order
-    db_query("INSERT INTO {fundraiser_recurring} (master_order_id, order_id, next_charge, gateway, form_url) VALUES (%d, %d, '%s', '%s', '%s')", $order_id, $new_id, $next_charge, $gateway, $donation_form_url);
+    db_query("INSERT INTO {fundraiser_recurring} (master_order_id, order_id, next_charge, gateway, form_url, sustainer_key) VALUES (%d, %d, '%s', '%s', '%s', '%s')", $order_id, $new_id, $next_charge, $gateway, $donation_form_url, $sustainer_key);
 
     // add a comment to the order stating when it will be charged
     uc_order_comment_save($new_id, 0, t('Payment will be processed on !date.', array('!date' => date('n/j/Y', $next_charge))), 'admin');
@@ -2295,7 +2297,7 @@ function fundraiser_create_future_orders($order_id, $gateway = NULL, $amount = N
  * Submits recurring donations for payment
  */
 function fundraiser_process_recurring_donations() {
-
+  $sustainer_key = fundraiser_get_sustainer_key_value();
   $successes = 0;
   $fails = 0;
 
@@ -2307,77 +2309,87 @@ function fundraiser_process_recurring_donations() {
 
   // loop over the found orders
   while ($order_info = db_fetch_array($orders_to_process)) {
-    $order_id = $order_info['order_id'];
-    $order = uc_order_load($order_id);
-    $total = $order->order_total;
+    // Make sure the sustainer key stored on the record matches the site's sustainer
+    // key. This is to prevent unauthorize environments from double charging sustainers.
+    if ($order_info['sustainer_key'] == $sustainer_key) {
+      $order_id = $order_info['order_id'];
+      $order = uc_order_load($order_id);
+      $total = $order->order_total;
 
-    // varaible to hold the name of the payment gateway charge function we need to call
-    $charge_function = NULL;
+      // varaible to hold the name of the payment gateway charge function we need to call
+      $charge_function = NULL;
 
-     // get the id of the reference to the customers cc data
-    $ref_id = array_shift(array_keys($order->data['cc_txns']['references']));
-    $data = array(
-      'txn_type' => 'reference_txn',
-      'ref_id' => $ref_id,
-    );
+       // get the id of the reference to the customers cc data
+      $ref_id = array_shift(array_keys($order->data['cc_txns']['references']));
+      $data = array(
+        'txn_type' => 'reference_txn',
+        'ref_id' => $ref_id,
+      );
 
-    $charge_function = _fundraiser_charge_function($order_id, $order->products[0]->nid, $data);
+      $charge_function = _fundraiser_charge_function($order_id, $order->products[0]->nid, $data);
 
-    if (empty($charge_function)) {
-      db_query("UPDATE {fundraiser_recurring} SET lock_id = '0' WHERE order_id = %d", $order_id); // Reset lock back to 0 for retry.
-      watchdog('fundraiser', t('Cannot determine the payment gateway for order !id. Node id of donation form is !nid', array('!id' => $order->order_id, '!nid' => $order->products[0]->nid)), NULL, WATCHDOG_CRITICAL);
-    }
-    else {
-      // process the order
-      $result = $charge_function($order_id, $total, $data);
-      if ($result['success']) {
-        $successes++;
-        uc_payment_enter($order_id, 'fundraiser_recurring', $total, 0, NULL, 'Submitted for payment via cron run.');
-        uc_order_comment_save($order_id, 0, t('Submitted for payment via cron run. Transaction Id: @txn_id', array('@txn_id' => $result['data']['txn_id'])), 'admin');
-        db_query("UPDATE {uc_orders} SET order_status = 'payment_received' WHERE order_id = %d", $order_id);
-        db_query("UPDATE {fundraiser_recurring} SET gateway_resp = 'success', txn_id = '%s', auth_code = '%s' WHERE order_id = %d", $result['data']['txn_id'], $result['data']['auth_code'], $order_id);
-
-        // Send credit card notification email when only a single payment is left
-        if (fundraiser_recurring_payments_remaining($order_info['master_order_id']) == 1) {
-          fundraiser_send_cc_notification($order_info['master_order_id'], $order->uid);
-        }
-
-        // Check for Salesforce Fundraiser module and update order status
-        if (module_exists('sf_donation')) {
-          sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
-        }
+      if (empty($charge_function)) {
+        db_query("UPDATE {fundraiser_recurring} SET lock_id = '0' WHERE order_id = %d", $order_id); // Reset lock back to 0 for retry.
+        watchdog('fundraiser', t('Cannot determine the payment gateway for order !id. Node id of donation form is !nid', array('!id' => $order->order_id, '!nid' => $order->products[0]->nid)), NULL, WATCHDOG_CRITICAL);
       }
       else {
-        $fails++;
-        db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = %d", $order->order_id);
-        db_query("UPDATE {fundraiser_recurring} SET
-          gateway_resp = 'failed',
-          attempts = attempts + 1,
-          next_charge = unix_timestamp(timestampadd(DAY, 1, from_unixtime(next_charge))),
-          lock_id = '0'
-          WHERE order_id = %d", $order_id
-        );
-        // get the number of times this order has been attempted
-        uc_order_comment_save($order_id, 0, t('Submitted for payment via cron run, but failed to charge. Gateway message: !message',
-          array('!message' => $result['message'])), 'admin');
-        $attempt_count = db_result(db_query("SELECT attempts FROM {fundraiser_recurring} WHERE order_id = %d", $order->order_id));
-        if ($attempt_count == 3) {
-          // final attempt. add debug alert
-          watchdog('fundraiser', t('Payment for recurring donation !id has failed 3 times. The order will not be submitted for payment again. Gateway message: !message', array('!id' => $order->order_id, '!message' => $result['message'])), NULL, WATCHDOG_DEBUG);
-          uc_order_comment_save($order_id, 0, t('Payment for this recurring donation has failed 3 times. The order will not be submitted for payment again.'));
-          sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+        // process the order
+        $result = $charge_function($order_id, $total, $data);
+        if ($result['success']) {
+          $successes++;
+          uc_payment_enter($order_id, 'fundraiser_recurring', $total, 0, NULL, 'Submitted for payment via cron run.');
+          uc_order_comment_save($order_id, 0, t('Submitted for payment via cron run. Transaction Id: @txn_id', array('@txn_id' => $result['data']['txn_id'])), 'admin');
+          db_query("UPDATE {uc_orders} SET order_status = 'payment_received' WHERE order_id = %d", $order_id);
+          db_query("UPDATE {fundraiser_recurring} SET gateway_resp = 'success', txn_id = '%s', auth_code = '%s' WHERE order_id = %d", $result['data']['txn_id'], $result['data']['auth_code'], $order_id);
+
+          // Send credit card notification email when only a single payment is left
+          if (fundraiser_recurring_payments_remaining($order_info['master_order_id']) == 1) {
+            fundraiser_send_cc_notification($order_info['master_order_id'], $order->uid);
+          }
+
+          // Check for Salesforce Fundraiser module and update order status
+          if (module_exists('sf_donation')) {
+            sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+          }
         }
         else {
-          // log this failure
-          watchdog('fundraiser', t('Payment for recurring donation !id has failed !attempts times. It will be processed again in 1 day. Gateway message: !message', array('!id' => $order->order_id, '!attempts' => $attempt_count, '!message' => $result['message'])), NULL, WATCHDOG_DEBUG);
-        }
+          $fails++;
+          db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = %d", $order->order_id);
+          db_query("UPDATE {fundraiser_recurring} SET
+            gateway_resp = 'failed',
+            attempts = attempts + 1,
+            next_charge = unix_timestamp(timestampadd(DAY, 1, from_unixtime(next_charge))),
+            lock_id = '0'
+            WHERE order_id = %d", $order_id
+          );
+          // get the number of times this order has been attempted
+          uc_order_comment_save($order_id, 0, t('Submitted for payment via cron run, but failed to charge. Gateway message: !message',
+            array('!message' => $result['message'])), 'admin');
+          $attempt_count = db_result(db_query("SELECT attempts FROM {fundraiser_recurring} WHERE order_id = %d", $order->order_id));
+          if ($attempt_count == 3) {
+            // final attempt. add debug alert
+            watchdog('fundraiser', t('Payment for recurring donation !id has failed 3 times. The order will not be submitted for payment again. Gateway message: !message', array('!id' => $order->order_id, '!message' => $result['message'])), NULL, WATCHDOG_DEBUG);
+            uc_order_comment_save($order_id, 0, t('Payment for this recurring donation has failed 3 times. The order will not be submitted for payment again.'));
+            sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+          }
+          else {
+            // log this failure
+            watchdog('fundraiser', t('Payment for recurring donation !id has failed !attempts times. It will be processed again in 1 day. Gateway message: !message', array('!id' => $order->order_id, '!attempts' => $attempt_count, '!message' => $result['message'])), NULL, WATCHDOG_DEBUG);
+          }
 
-        // fire sustainer payment failure trigger
-        module_invoke_all('fundraiser', 'sustainer_payment_declined', $order);
+          // fire sustainer payment failure trigger
+          module_invoke_all('fundraiser', 'sustainer_payment_declined', $order);
+        }
+        // clear the credit card cache between orders
+        uc_credit_cache('clear');
       }
-      // clear the credit card cache between orders
-      uc_credit_cache('clear');
     }
+    else {
+      // Reset lock
+      db_query("UPDATE {fundraiser_recurring} SET lock_id = '%s' WHERE order_id = %d", '0', $order_info['order_id']);
+      // Log the bad sustainer key check.
+      watchdog('fundraiser', 'Sustainer order id !order_id not processed because of sustainer key mismatch. Key file value (!key_file) did not match record value (!record_value).', array('!order_id' => $order_info['order_id'], '!key_file' => $sustainer_key, '!record_value' => $order_info['sustainer_key']), WATCHDOG_CRITICAL);
+    } // End sustainer key check.
   }
 
   if ($successes > 0 || $fails > 0) {
@@ -2633,33 +2645,45 @@ function fundraiser_webform_select_options_info() {
 function fundraiser_processor_key_match() {
   static $key;
 
+  // Use the statically cached $key variable if available.
   if (!empty($key)) {
-    return ($key == $_SERVER['HTTP_HOST']);
+    return ($key == trim($_SERVER['HTTP_HOST']));
   }
 
+  // Get the key and see if it matches the server's host.
+  $key = fundraiser_get_sustainer_key_value();
+  if (trim($key) == trim($_SERVER['HTTP_HOST'])) {
+    return TRUE;
+  }
+
+  // If we get here key is no good.
+  return FALSE;
+}
+
+/**
+ * Attempts to open and read the contents of the sustainer key file.
+ */
+function fundraiser_get_sustainer_key_value() {
+  $value = FALSE;
   $dir = variable_get('uc_credit_encryption_path', t('Not configured, see below.'));
+
   if (!empty($dir) && $dir !== t('Not configured, see below.')) {
     $filename = rtrim($dir, '/\\') .'/sustainer.key';
 
-    if (file_exists($filename)) {
-      if (!$file = fopen($filename, 'r')) {
-        return FALSE;
-      }
-      $key = fread($file, filesize($filename));
-      if (trim($key) != trim($_SERVER['HTTP_HOST'])) {
-        return FALSE;
-      }
+    if (file_exists($filename) && $file = fopen($filename, 'r')) {
+      $value = trim(fread($file, filesize($filename)));
       fclose($file);
     }
     else {
-      return FALSE;
+      watchdog('fundraiser', 'Unable to read the contents of the sustainer key file @file.', array('@file' => $filename), WATCHDOG_CRITICAL);
     }
   }
   else {
-    return FALSE;
+    watchdog('fundraiser', 'Unable to get the value of the sustainer key file because the file does not exist.', NULL, WATCHDOG_CRITICAL);
   }
 
-  return TRUE;
+  // Return FALSE or the actual value of the key file.
+  return $value;
 }
 
 /**
