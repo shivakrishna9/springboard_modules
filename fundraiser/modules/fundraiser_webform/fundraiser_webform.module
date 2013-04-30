@@ -519,7 +519,7 @@ function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
 
   // And lastly add a user facing message for submit.
   $form['submit']['#suffix'] = '<div class="fundraiser_submit_message">' .
-    theme('image', array('path' =>  drupal_get_path('module', 'fundraiser_webform') . '/images/padlock.gif' )) .
+    theme('image', array('path' =>  drupal_get_path('module', 'fundraiser_webform') . '/images/padlock.png' )) .
     t('By clicking SUBMIT DONATION your credit card will be securely processed.') .
     '</div>';
   $form['#after_build'][] = 'fundraiser_webform_fundraiser_donation_form_after_build';

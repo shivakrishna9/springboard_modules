@@ -22,12 +22,17 @@ function commerce_psi_credit_commerce_payment_method_info() {
  */
 function commerce_psi_credit_default_settings() {
   return array(
+    'txn_mode' => COMMERCE_PSI_MODE_TEST,
     'account_username' => '',
     'account_password' => '',
     'account_ip' => '',
-    'cim_cardonfile' => FALSE,
     'log' => array('request' => '0', 'response' => '0'),
     'card_types' => array(),
+    'custom_fields' => array(
+      'pay_code' => '',
+      'program_code' => '',
+      'source_code' => '',
+    ),
   );
 }
 
@@ -41,6 +46,16 @@ function commerce_psi_credit_settings_form($settings = array()) {
   // Merge default settings into the stored settings array.
   $settings = (array) $settings + commerce_psi_credit_default_settings();
 
+  $form['txn_mode'] = array(
+    '#type' => 'radios',
+    '#title' => t('Mode'),
+    '#options' => array(
+      COMMERCE_PSI_MODE_LIVE => 'Live',
+      COMMERCE_PSI_MODE_TEST => 'Test',
+    ),
+    '#default_value' => $settings['txn_mode'],
+    '#required' => TRUE,
+  );
   $form['account_username'] = array(
     '#type' => 'textfield',
     '#title' => t('Username'),
@@ -66,6 +81,47 @@ function commerce_psi_credit_settings_form($settings = array()) {
     '#options' => array_intersect_key(commerce_payment_credit_card_types(), drupal_map_assoc(array('visa', 'mastercard', 'amex', 'discover'))),
     '#default_value' => $settings['card_types'],
     '#required' => TRUE,
+  );
+  $form['custom_fields'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Custom Fields'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['custom_fields']['pay_code'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Pay Code'),
+    '#description' => t('The unique id value identifying the pay code of the donation. Maximum length of 20.'),
+    '#default_value' => $settings['custom_fields']['pay_code'],
+  );
+  $form['custom_fields']['program_code'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Program Code'),
+    '#description' => t('A unique value indicating the program code for the donation. Maximum length of 12.'),
+    '#default_value' => $settings['custom_fields']['program_code'],
+  );
+  $form['custom_fields']['source_code'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Source Code'),
+    '#description' => t('The unique id value identifying the source of the donation. Maximum length of 12.'),
+    '#default_value' => $settings['custom_fields']['source_code'],
+  );
+  $form['custom_fields']['tokens'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Drupal tokens'),
+    '#description' => t('The following tokens are available for any of the custom fields.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $token_set = array('user', 'commerce-order');
+  if (module_exists('fundraiser')) {
+    $token_set[] = 'node';
+    $token_set[] = 'donation';
+  }
+  $form['custom_fields']['tokens']['token_help'] = array(
+    '#type' => 'item',
+    '#title' => t('Drupal tokens'),
+    '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
   );
   $form['log'] = array(
     '#type' => 'checkboxes',
@@ -149,10 +205,10 @@ function commerce_psi_credit_submit_form_submit($payment_method, $pane_form, $pa
     $nvp['PayType'] = 'Sustainer';
   }
 
-  $nvp['PayCode'] = '123123';
   $nvp['ProcessDateTime'] = date('c');
-  $nvp['ProgramCode'] = 'Web';
-  $nvp['SourceCode'] = $order->order_number;
+  $nvp['PayCode'] = drupal_substr(_commerce_psi_token_replace($payment_method['settings']['custom_fields']['pay_code'], $order), 0, 20);
+  $nvp['ProgramCode'] = drupal_substr(_commerce_psi_token_replace($payment_method['settings']['custom_fields']['program_code'], $order), 0, 12);
+  $nvp['SourceCode'] = drupal_substr(_commerce_psi_token_replace($payment_method['settings']['custom_fields']['source_code'], $order), 0, 12);
   $nvp['ClientTransactionId'] = $order->order_id;
 
   // Log the request if specified.

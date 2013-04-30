@@ -320,7 +320,7 @@ function springboard_menu_alter(&$items) {
 
   // Add menu items from webform_dupe_cop.
   if (module_exists('webform_dupe_cop')) {
-    $items['admin/springboard/settings/webform-dupe'] = $items['admin/config/webform/webform-dupe-cop'];
+    $items['admin/springboard/settings/webform-dupe'] = $items['admin/config/content/webform-dupe-cop'];
     $items['admin/springboard/settings/webform-dupe']['type'] = MENU_NORMAL_ITEM;
     $items['admin/springboard/settings/webform-dupe']['access arguments'] = array('administer springboard');
     $items['admin/springboard/settings/webform-dupe']['title'] = 'Webform Dupe';

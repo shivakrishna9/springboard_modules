@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file
+ * Implements Payment Solutions, Inc. payment services for use in Drupal Commerce.
+ */
+
+// PSI transaction mode definitions:
+define('COMMERCE_PSI_MODE_LIVE', 'live');
+define('COMMERCE_PSI_MODE_TEST', 'test');
 
 /**
  * Send a request to the PSI API
@@ -68,6 +76,23 @@ function _commerce_psi_build_donor($order) {
   );
 
   return $donor;
+}
+
+/**
+ * Replace tokens in the custom fields
+ */
+function _commerce_psi_token_replace($value, $order) {
+  $token_set = &drupal_static(__FUNCTION__ . $order->order_id, array());
+  if (empty($token_set)) {
+    $token_set['user'] = user_load($order->uid);
+    $token_set['commerce-order'] = $order;
+    if (module_exists('fundraiser')) {
+      $donation = fundraiser_donation_get_donation($order->order_id);
+      $token_set['node'] = $donation->node;
+      $token_set['donation'] = $donation;
+    }
+  }
+  return token_replace($value, $token_set);
 }
 
 /**
