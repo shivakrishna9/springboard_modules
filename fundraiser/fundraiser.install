@@ -1218,5 +1218,10 @@ function fundraiser_update_6318(&$sandbox) {
   );
   $ret = array();
   db_add_field($ret, 'fundraiser_recurring', 'sustainer_key', $sustainer_key);
+  // Update the existing donations
+  $sustainer_key = fundraiser_get_sustainer_key_value();
+  if (!empty($sustainer_key)) {
+    $ret[] = update_sql("UPDATE {fundraiser_recurring} SET sustainer_key = '$sustainer_key'");
+  }
   return $ret;
 }
