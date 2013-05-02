@@ -87,6 +87,14 @@ function _fundraiser_commerce_credit_card_cleanup($submission_fields) {
     }
     unset($submission_fields['payment_fields']['credit']['expiration_date']);
   }
+
+  // Add the credit card type if possible
+  if (!empty($submission_fields['payment_fields']['credit']['card_number'])) {
+    module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+    $card_type = commerce_payment_validate_credit_card_type($submission_fields['payment_fields']['credit']['card_number'], array_keys(commerce_payment_credit_card_types()));
+    $all_types = commerce_payment_credit_card_types();
+    $submission_fields['payment_fields']['credit']['card_type'] = !empty($all_types[$card_type]) ? $all_types[$card_type] : NULL;
+  }
   return $submission_fields;
 }
 
@@ -171,12 +179,6 @@ function _fundraiser_commerce_credit_card_expire($submission_fields) {
 function _fundraiser_commerce_credit_card_scrub($payment_method, $fields) {
   // Scrub sensitive donation fields if they exists.
   if (isset($fields['credit']['card_number'])) {
-    // Add the credit card type if possible
-    module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
-    $card_type = commerce_payment_validate_credit_card_type($fields['credit']['card_number'], array_keys(commerce_payment_credit_card_types()));
-    $all_types = commerce_payment_credit_card_types();
-    $fields['credit']['card_type'] = !empty($all_types[$card_type]) ? $all_types[$card_type] : NULL;
-
     // Reduce the credit card number to last four digits
     $fields['credit']['card_number'] = substr(
       $fields['credit']['card_number'], -4);
