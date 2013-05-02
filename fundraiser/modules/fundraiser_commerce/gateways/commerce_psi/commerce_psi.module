@@ -6,6 +6,7 @@
 
 // PSI transaction mode definitions:
 define('COMMERCE_PSI_MODE_LIVE', 'live');
+define('COMMERCE_PSI_MODE_STAGING', 'staging');
 define('COMMERCE_PSI_MODE_TEST', 'test');
 
 /**
