@@ -1,11 +1,8 @@
 (function($) {
   var callback = {
     exec:function(editor) {
-      // get the current location so we can pass in the path
-      //var url = $(location).attr('href');
-      var url = window.location.href;
-      url = url.replace('http://', ''); // strip off http bs
-      var parts = url.split('/');
+      // get the current path as an array
+      var parts = location.pathname.split('/');
       if (parts[1] == 'node' && parts[3] == 'webform') {
         var token = window.showModalDialog("/webform/confirmation-token-list/"+parts[2],null,"dialogWidth:450px;dialogHeight:320px;center:yes; resizable: yes; help: no");
         if (token != false && token != null) {

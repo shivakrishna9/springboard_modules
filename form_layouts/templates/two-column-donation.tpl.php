@@ -22,12 +22,12 @@
  */
 ?>
 <div id="donation-form-column-wrapper">
-  <div id="left">
-    <? print $donation_fieldset; ?>
+  <div id="left" class="span6">
     <? print $donor_information_fieldset; ?>
     <? print $billing_address_fieldset; ?>
   </div>
-  <div id="right">
+  <div id="right" class="span6">
+    <? print $donation_fieldset; ?>
     <? print $credit_card_fieldset; ?>
   </div>
   <div id="donation-form-footer">

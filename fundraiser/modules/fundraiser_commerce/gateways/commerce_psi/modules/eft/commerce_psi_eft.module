@@ -49,6 +49,7 @@ function commerce_psi_eft_settings_form($settings = array()) {
     '#title' => t('Mode'),
     '#options' => array(
       COMMERCE_PSI_MODE_LIVE => 'Live',
+      COMMERCE_PSI_MODE_STAGING => 'Staging',
       COMMERCE_PSI_MODE_TEST => 'Test',
     ),
     '#default_value' => $settings['txn_mode'],

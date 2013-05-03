@@ -141,6 +141,11 @@ function fundraiser_token_info() {
       'description' => t('The expiration year of the card, ' .
         'available only if the user selected a credit card method supporting this token.')
     );
+    $info['tokens']['donation']['card_type'] = array(
+      'name' => t('Card type'),
+      'description' => t('The type of credit card, ' .
+        'available only if the user selected a credit card method supporting this token.')
+    );
   }
   return $info;
 }
@@ -195,6 +200,8 @@ function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) 
         $donation->donation['payment_fields']['credit']['card_expiration_month'] : '';
       $data['card_expiration_year'] = isset($donation->donation['payment_fields']['credit']['card_expiration_year']) ?
         $donation->donation['payment_fields']['credit']['card_expiration_year'] : '';
+      $data['card_type'] = isset($donation->donation['payment_fields']['credit']['card_type']) ?
+        $donation->donation['payment_fields']['credit']['card_type'] : '';
     }
   }
   // Replace the given tokens.
@@ -1248,9 +1255,19 @@ function fundraiser_donation_form(&$form, &$form_state) {
     // We add these first to make sure they're available for the hook call.
     $form['#validate'][] = 'fundraiser_donation_validate';
     $form['#submit'][] = 'fundraiser_donation_submit';
-
+    
     // When confirmations are moved, this goes elsewhere.
-    $form['#submit'][] = 'fundraiser_donation_post_submit';
+    $form['#submit'][] = 'fundraiser_donation_post_submit';   
+    
+    // Add Class to Zipcode field
+    $zip = _fundraiser_get_form_field($form, 'zip');
+    $zip['#attributes']['class'][] = 'input-medium';
+    $form = _fundraiser_update_form_field($form, 'zip', $zip);    
+
+	// Add Class to Donation_other field
+    $other_amount = _fundraiser_get_form_field($form, 'other_amount');
+    $other_amount['#attributes']['class'][] = 'input-medium';
+    $form = _fundraiser_update_form_field($form, 'other_amount', $other_amount);
 
     // Call hook to allow sub modules to add / manipulate the form.
     // NOTE: we are not using module_invoke_all on purpose here.
@@ -1262,7 +1279,14 @@ function fundraiser_donation_form(&$form, &$form_state) {
         $form = array_merge($form, $result);
       }
     }
-  }
+  }  
+}
+
+/**
+ * Implements hook_form_alter()
+ */
+function fundraiser_form_alter(&$form, &$form_state, $form_id) {
+  $form['actions']['submit']['#attributes']['class'][] = 'btn';
 }
 
 /**
