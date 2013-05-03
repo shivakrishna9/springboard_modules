@@ -10,7 +10,18 @@ module_load_include('test', 'fundraiser', 'tests/fundraiser.setup');
 /**
  * Setup and tear down web class. Does nothing else.
  */
-class FundraiserSetup extends FundraiserSetup {
+class FundraiserTest extends FundraiserSetup {
+
+  /**
+   * Implements getInfo(). Declares this test class to fundraiser testing.
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Fundraiser tests',
+      'description' => 'Tests fundraiser behavior.',
+      'group' => 'Springboard',
+    );
+  }
 
   /**
    * Implements setUp().

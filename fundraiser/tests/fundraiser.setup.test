@@ -21,9 +21,9 @@ class FundraiserSetup extends DrupalWebTestCase {
       'fundraiser_webform', // Default testing environment.
       'fundraiser_commerce', // Default testing environment.
       'webform_user',
-      'commerce_product'; // To remove when dependancies in commerce_authnet, commerce_payment resolved.
-      'commerce_product_reference'; // To remove when dependancies in commerce_authnet, commerce_payment resolved.
-      'commerce_payment_example'; // Gateway.
+      'commerce_product', // To remove when dependancies in commerce_authnet, commerce_payment resolved.
+      'commerce_product_reference', // To remove when dependancies in commerce_authnet, commerce_payment resolved.
+      'commerce_payment_example', // Gateway.
     );
     $enable_modules = array_merge($enable_modules, $addtional_modules);
 
