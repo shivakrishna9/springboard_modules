@@ -29,7 +29,7 @@ class FundraiserWebTestSetup extends DrupalWebTestCase {
       'test_gateway',
       'fundraiser',
       'market_source',
-      'fundraiser_ubercart', // Temporary requirements.
+      'fundraiser_commerce', // Temporary requirements.
       'fundraiser_webform' // Temporary requirements.
     );
 
@@ -39,7 +39,7 @@ class FundraiserWebTestSetup extends DrupalWebTestCase {
       drupal_install_modules(array($module));
     }
 
-    // Create ubercart settings.
+    // Create commerce settings.
     $this->setupPayment();
     $this->setupProfileFields();
 
@@ -142,7 +142,7 @@ class FundraiserWebTestCase extends FundraiserWebTestSetup {
   public static function getInfo() {
     return array(
       'name' => 'Fundraiser configuration',
-      'description' => 'Tests the setup and configuration of donation forms using fundraiser_ubercart, fundraiser_webform.',
+      'description' => 'Tests the setup and configuration of donation forms using fundraiser_commerce, fundraiser_webform.',
       'group' => 'Springboard',
     );
   }
