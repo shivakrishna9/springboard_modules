@@ -53,48 +53,59 @@ class FundraiserTest extends FundraiserSetup {
     $fields = fundraiser_field_info(TRUE);
     $field_keys = _fundraiser_get_field_keys($fields); // Return flattened field keys.
     $field_info = _fundraiser_get_field_fields($fields); // Return flattened field info array.
+    $fundraiser = clone $node;
+    $fundraiser->donation_amounts = array(
+      '10' => '$10',
+      '20' => '$20',
+      '50' => '$50',
+      '100' => '$100',
+    );
+    $fundraiser->show_other_amount = TRUE;
+    $fundraiser->minimum_donation_amount = 10;
+    $fundraiser->gateways = serialize($node->gateways); 
     foreach ($field_keys as $field_key) {
       // Tweak the field with a callback as needed per fundraiser's configurations.
       // In case a runtime requirement changes the field info types (as amount for example does).
       if (isset($field_info[$field_key]['#create_callback']) && function_exists($field_info[$field_key]['#create_callback'])) {
-        $field_info[$field_key] = call_user_func($field_info[$field_key]['#create_callback'], $node, $field_info[$field_key]);
+        $field_info[$field_key] = call_user_func($field_info[$field_key]['#create_callback'], $fundraiser, $field_info[$field_key]);
       }
       // Grab the field out of webform configurations, and check values against fundraiser fields expected.
       $exists = in_array($field_key, $keys);
-      $this->assertTrue($exists, t('Field key @field_key was created', array('@field_key' => $field_key)));
-      $this->assertEqual($field_info[$field_key]['type'], $field_info[$field_key]['#type'],
-        t('Field key @field_key is the correct type.', array('@field_key' => $field_key)));
-      $this->assertEqual($field_info[$field_key]['name'], $field_info[$field_key]['#title'],
-        t('Field key @field_key has the correct name.', array('@field_key' => $field_key)));
+      $this->assertTrue($exists, t('Field key @field_key was created.', array('@field_key' => $field_key)), t('Fundraiser'));
+      $this->assertEqual($webform_fields[$field_key]['type'], $field_info[$field_key]['#type'],
+        t('Field key @field_key is the correct type.', array('@field_key' => $field_key)), t('Fundraiser'));
+      $this->assertEqual($webform_fields[$field_key]['name'], $field_info[$field_key]['#title'],
+        t('Field key @field_key has the correct name.', array('@field_key' => $field_key)), t('Fundraiser'));
     }
     // Check correct ask amounts.
     $expected_amount_wrapper = array(
       'donation_amounts' => array(
         '0' => array(
-          'amount' => 10,
-          'label' => '$10',
-          'remove' => 0,
+          '0' => '10',
+          '1' => '$10',
         ),
         '1' => array(
-          'amount' => 20,
-          'label' => '$20',
-          'remove' => 0,
+          '0' => '20',
+          '1' => '$20',
         ),
         '2' => array(
-          'amount' => 50,
-          'label' => '$50',
-          'remove' => 0,
+          '0' => '50',
+          '1' => '$50',
         ),
         '3' => array(
-          'amount' => 100,
-          'label' => '$100',
-          'remove' => 0,
+          '0' => '100',
+          '1' => '$100',
+        ),
+        '4' => array(
+          '0' => 'other',
+          '1' => 'Other',
         ),
       ),
-      'show_other_amount' => 1,
       'minimum_donation_amount' => 10,
     );
-    $this->assertIdentical($node->amount_wrapper, $expected_amount_wrapper, t('The correct amounts were created.'), t('Fundraiser'));
+    $this->assertEqual(serialize($node->donation_amounts), serialize($expected_amount_wrapper['donation_amounts']), t('The correct amounts were created.'), t('Fundraiser'));
+    $this->assertEqual($node->minimum_donation_amount, $expected_amount_wrapper['minimum_donation_amount'], t('The correct minimum amount was created.'), t('Fundraiser'));
+    $this->assertEqual($node->default_amount, $expected_amount_wrapper['donation_amounts'][0][0], t('The correct default amount was created.'), t('Fundraiser'));
     // Check correct payment gateway.
     $expected_payment_gateway =  array(
       'credit' => array(
@@ -107,24 +118,64 @@ class FundraiserTest extends FundraiserSetup {
   }
 
   /**
+   * Test the creation of a fundraiser form node.
+   */
+  function testFundraiserFormSSHAccess() {
+    $node = parent::_fundraiser_setup_create_node();
+    $message = 'The donation form you are trying to access has not been secured properly.';
+    variable_set('fundraiser_development_mode', 0); // TURN OFF DEFAULT MODE.
+
+    // Unset the HTTPS setting.
+    unset($_SERVER['HTTPS']);
+    $result = _fundraiser_is_secure();
+    $this->assertEqual(FALSE, $result, '_fundraiser_is_secure() returned FALSE when HTTPS unset.', t('Fundraiser HTTPS'));
+    $this->drupalGet('node/'. $node->nid);
+    $this->assertText($message, t('Accessing the form shows the correct message text.'), t('Fundraiser HTTPS'));
+
+    // Specifically turn HTTPS off.
+    $_SERVER['HTTPS'] = 'off';
+    $result = _fundraiser_is_secure();
+    $this->assertEqual(FALSE, $result, '_fundraiser_is_secure() returned FALSE when HTTPS set to "off".', t('Fundraiser HTTPS'));
+    $this->drupalGet('node/'. $node->nid);
+    $this->assertText($message, t('Accessing the form shows the correct message text.'), t('Fundraiser HTTPS'));
+
+    // Specifically turn HTTPS on. Your test server should have HTTPS
+    //$_SERVER['HTTPS'] = 'on';
+    //$result = _fundraiser_is_secure();
+    //$this->assertEqual(TRUE, $result, '_fundraiser_is_secure() returned TRUE when HTTPS set to "on".', t('Fundraiser HTTPS'));
+    //$base_url = $GLOBALS['base_url'];
+    //$base_url = str_replace('http://', 'https://', $base_url);
+    //$this->drupalGet($base_url . '/node/'. $node->nid);
+    //$this->assertNoText($message, t('Accessing the form shows the correct message text.'), t('Fundraiser HTTPS'));
+  }
+
+  /**
    * Test the submission of a fundraiser form node.
    */
   function testFundraiserFormSubmissionAnon() {
-    $created_node = parent::_fundraiser_setup_create_node();
+   // $created_node = parent::_fundraiser_setup_create_node();
     // Load the created node, so we get latest data.
-    $node = node_load($created_node->nid);
+   // $node = node_load($created_node->nid);
+   // Check for the defaults to be checked prpoerly
+   // Check that we can submit
+   // Check form validation for fields - email.
+   // Payent field options
+   // order created
+   // Confirmation tokens -> covered elsewhere, check for donation tokens?
+   // Check for SSL enforcement
   }
 
   /**
    * Test the submission of a fundraiser form node.
    */
   function testFundraiserFormSubmissionAuth() {
-    $created_node = parent::_fundraiser_setup_create_node();
-    $created_user = parent::_fundraiser_setup_create_user();
+    //$created_node = parent::_fundraiser_setup_create_node();
+    //$created_user = parent::_fundraiser_setup_create_user();
     // Load the created node, so we get latest data.
-    $node = node_load($created_node->nid);
-    $user = user_load($user->uid);
+    //$node = node_load($created_node->nid);
+    //$user = user_load($user->uid);
     // Login with user.
-    $this->drupalLogin($user);
+    //$this->drupalLogin($user);
+    // Check that the user's values are in the webform
   }
 }
