@@ -461,4 +461,18 @@ class FundraiserSetup extends DrupalWebTestCase {
     return $node;
   }
 
+  /**
+   * Create an example Fundraiser user.
+   */
+  function _fundraiser_setup_create_user($user_configs = '') {
+    $user = array(); // Array of given privs for a standard user. TODO
+    // Merge in configurations, if given.
+    if (!empty($user_configs)) {
+      // Cast both to arrays so we can merge them.
+      $user_configs = (array) $user_configs;
+      $user = array_merge($user, $user_configs);
+    }
+    $user = $this->drupalCreateUser($user);
+    return $user;
+  }
 }

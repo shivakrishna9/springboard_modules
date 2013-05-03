@@ -98,7 +98,22 @@ class FundraiserSetup extends FundraiserSetup {
   /**
    * Test the submission of a fundraiser form node.
    */
-  function testFundraiserFormSubmission() {
-    $node = parent::_fundraiser_setup_create_node();
+  function testFundraiserFormSubmissionAnon() {
+    $created_node = parent::_fundraiser_setup_create_node();
+    // Load the created node, so we get latest data.
+    $node = node_load($created_node->nid);
+  }
+
+  /**
+   * Test the submission of a fundraiser form node.
+   */
+  function testFundraiserFormSubmissionAuth() {
+    $created_node = parent::_fundraiser_setup_create_node();
+    $created_user = parent::_fundraiser_setup_create_user();
+    // Load the created node, so we get latest data.
+    $node = node_load($created_node->nid);
+    $user = user_load($user->uid);
+    // Login with user.
+    $this->drupalLogin($user);
   }
 }
