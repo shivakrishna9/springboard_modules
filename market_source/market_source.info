@@ -1,5 +1,5 @@
-name = Market Source
-description = Provides a way to track which campaigns and market sources drive users to the site.
+name = Source Code (Market Source)
+description = Provides a way to track which campaigns, market sources, etc. drive users to the site.
 core = 7.x
 version = 7.x-4.x-dev
 package = Jackson River Springboard
