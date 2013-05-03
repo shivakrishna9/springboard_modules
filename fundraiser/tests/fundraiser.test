@@ -1,0 +1,104 @@
+<?php
+/**
+ * @file
+ * Fundraiser module web tests, test creating and submitting a form.
+ */
+
+// Include the setup test class.
+module_load_include('test', 'fundraiser', 'tests/fundraiser.setup');
+
+/**
+ * Setup and tear down web class. Does nothing else.
+ */
+class FundraiserSetup extends FundraiserSetup {
+
+  /**
+   * Implements setUp().
+   */
+  function setUp($addtional_modules = array()) {
+    // Call the parent to set all of the base modules up.
+    parent::setUp();
+  }
+
+  /**
+   * Test the creation of a fundraiser form node.
+   */
+  function testFundraiserFormCreation() {
+    $created_node = parent::_fundraiser_setup_create_node();
+    // Load the created node, so we get latest data.
+    $node = node_load($created_node->nid);
+    // Check that the created node is expected, per configurations given in setUp.
+    // Assert that a node is created.
+    $this->assertNotNull($node, t('An object was created.'), t('Fundraiser'));
+    // Assert it's the correct type.
+    $this->assertEqual($node->type, 'donation_form', t('An object of the right type was created.'), t('Fundraiser'));
+    // Check correct fields.
+    $keys = array();
+    $webform_fields = array();
+    foreach ($node->webform['components'] as $cid => $component) {
+      $keys[] = $component['form_key'];
+      $webform_fields[$component['form_key']] = $component;
+    }
+    $fields = fundraiser_field_info(TRUE);
+    $field_keys = _fundraiser_get_field_keys($fields); // Return flattened field keys.
+    $field_info = _fundraiser_get_field_fields($fields); // Return flattened field info array.
+    foreach ($field_keys as $field_key) {
+      // Tweak the field with a callback as needed per fundraiser's configurations.
+      // In case a runtime requirement changes the field info types (as amount for example does).
+      if (isset($field_info[$field_key]['#create_callback']) && function_exists($field_info[$field_key]['#create_callback'])) {
+        $field_info[$field_key] = call_user_func($field_info[$field_key]['#create_callback'], $node, $field_info[$field_key]);
+      }
+      // Grab the field out of webform configurations, and check values against fundraiser fields expected.
+      $exists = in_array($field_key, $keys);
+      $this->assertTrue($exists, t('Field key @field_key was created', array('@field_key' => $field_key)));
+      $this->assertEqual($field_info[$field_key]['type'], $field_info[$field_key]['#type'],
+        t('Field key @field_key is the correct type.', array('@field_key' => $field_key)));
+      $this->assertEqual($field_info[$field_key]['name'], $field_info[$field_key]['#title'],
+        t('Field key @field_key has the correct name.', array('@field_key' => $field_key)));
+    }
+    // Check correct ask amounts.
+    $expected_amount_wrapper = array(
+      'donation_amounts' => array(
+        '0' => array(
+          'amount' => 10,
+          'label' => '$10',
+          'remove' => 0,
+        ),
+        '1' => array(
+          'amount' => 20,
+          'label' => '$20',
+          'remove' => 0,
+        ),
+        '2' => array(
+          'amount' => 50,
+          'label' => '$50',
+          'remove' => 0,
+        ),
+        '3' => array(
+          'amount' => 100,
+          'label' => '$100',
+          'remove' => 0,
+        ),
+      ),
+      'show_other_amount' => 1,
+      'minimum_donation_amount' => 10,
+    );
+    $this->assertIdentical($node->amount_wrapper, $expected_amount_wrapper, t('The correct amounts were created.'), t('Fundraiser'));
+    // Check correct payment gateway.
+    $expected_payment_gateway =  array(
+      'credit' => array(
+        'status' => 1,
+        'method' => 'credit',
+        'id' => 'commerce_payment_example|commerce_payment_commerce_payment_example'
+      ),
+    );
+    $this->assertIdentical($node->gateways, $expected_payment_gateway, t('The correct gateways were created and assigned.'), t('Fundraiser'));
+  }
+
+  /**
+   * Test the submission of a fundraiser form node.
+   */
+  function testFundraiserFormSubmission() {
+    $node = parent::_fundraiser_setup_create_node();
+  }
+}
