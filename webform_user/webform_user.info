@@ -7,4 +7,7 @@ package = Webform Extra
 configure = admin/config/content/webform_user
 dependencies[] = webform
 ;Testing files
-files[] = tests/webform_user.test
+files[] = tests/webform_user.setup.test
+files[] = tests/webform_user.config.test
+files[] = tests/webform_user.submission.test
+files[] = tests/webform_user.confirmation.test
