@@ -31,7 +31,14 @@ Drupal.behaviors.marketSourceInit = {
     /**
      * Sets a cookie.
      */
-    var setCookie = function (name, value) {
+    var setCookie = function (name, value, noOverwrite) {
+      if (noOverwrite) {
+        // make sure this cookie doesn't exist already
+        var cookie = getCookie(name);
+        if (cookie != false && cookie != null && cookie != '') {
+          return;
+        }
+      }
       if (typeof $.cookie !== 'undefined') {
         name = 'market_source__' + name;
         if (typeof Drupal.settings.market_source.cookie_domain !== 'undefined') {
@@ -63,9 +70,9 @@ Drupal.behaviors.marketSourceInit = {
       // Check the querystring for this key.
       if (typeof urlParams[key] !== 'undefined') {
         qs_keys[key]['value'] = urlParams[key];
-        if (qs_keys[key]['persistence'] != false) {
+        if (qs_keys[key]['persistence'] != 'direct') {
           // Save this value as a cookie.
-          setCookie(key, urlParams[key]);
+          setCookie(key, urlParams[key], qs_keys[key]['persistence'] == 'on');
         }
       }
       if (qs_keys[key]['value'] == false || qs_keys[key]['value'] == null || qs_keys[key]['value']  == '') {
