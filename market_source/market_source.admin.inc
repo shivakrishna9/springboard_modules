@@ -79,14 +79,24 @@ function market_source_admin_settings_form($form, &$form_state) {
   $default_fields_values = &$form_state['values']['market_source_default_fields']['default_fields_wrapper'];
 
   foreach($default_fields_list as $key=>$field_name) {
-    $form['market_source_default_fields']['default_fields_wrapper'][$key] = array(
-      'persistence' => array(
+    $persistence_field = ($key == 'referrer' || $key == 'initial_referrer') ?
+      // hidden field to force persistence for referrer fields
+      array(
+        '#type' => 'hidden',
+        '#value' => 0,
+        '#title' => t('Persistent'),  // theme_market_source_admin_global_fields_table() needs this
+      ) :
+      // checkbox for all others
+      array(
         '#type' => 'checkbox',
         '#title' => t('Persistent'),
         '#description' => t('Enables caching of field value per user session.'),
         '#default_value' => isset($default_fields_values[$key]['persistence']) ? $default_fields_values[$key]['persistence'] : TRUE,
         '#size' => 20,
-      ),
+      )
+    ;
+    $form['market_source_default_fields']['default_fields_wrapper'][$key] = array(
+      'persistence' => $persistence_field,
       'name' => array(
         '#type' => 'item',
         '#title' => t('Human-readable field name'),
