@@ -1264,7 +1264,7 @@ function fundraiser_donation_form(&$form, &$form_state) {
     $zip['#attributes']['class'][] = 'input-medium';
     $form = _fundraiser_update_form_field($form, 'zip', $zip);    
 
-	// Add Class to Donation_other field
+    // Add Class to Donation_other field
     $other_amount = _fundraiser_get_form_field($form, 'other_amount');
     $other_amount['#attributes']['class'][] = 'input-medium';
     $form = _fundraiser_update_form_field($form, 'other_amount', $other_amount);
