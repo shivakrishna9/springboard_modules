@@ -83,16 +83,20 @@ function market_source_admin_settings_form($form, &$form_state) {
       // hidden field to force persistence for referrer fields
       array(
         '#type' => 'hidden',
-        '#value' => 0,
+        '#value' => 'direct',
         '#title' => t('Persistent'),  // theme_market_source_admin_global_fields_table() needs this
       ) :
       // checkbox for all others
       array(
-        '#type' => 'checkbox',
-        '#title' => t('Persistent'),
-        '#description' => t('Enables caching of field value per user session.'),
-        '#default_value' => isset($default_fields_values[$key]['persistence']) ? $default_fields_values[$key]['persistence'] : TRUE,
-        '#size' => 20,
+        '#type' => 'radios',
+        '#title' => t('Persistence'),
+        '#description' => t("Keep the first-seen page's query-string value?"),
+        '#default_value' => isset($default_fields_values[$key]['persistence']) ? $default_fields_values[$key]['persistence'] : 'on',
+        '#options' => array(
+          'on' => t('On (first-seen value)'),
+          'off' => t('Off (last-seen value)'),
+          'direct' => t('Direct (value from the form page only)'),
+        ),
       )
     ;
     $form['market_source_default_fields']['default_fields_wrapper'][$key] = array(
@@ -136,11 +140,15 @@ function market_source_admin_settings_form($form, &$form_state) {
   foreach ($custom_field_values as $i => $field_value) {
     $custom_fields[$i] = array();
     $custom_fields[$i]['persistence'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Persistent'),
-      '#description' => t('Enables caching of field value per user session.'),
-      '#default_value' => isset($field_value['persistence']) ? $field_value['persistence'] : TRUE,
-      '#size' => 20,
+      '#type' => 'radios',
+      '#title' => t('Persistence'),
+      '#description' => t("Keep the first-seen page's query-string value?"),
+      '#default_value' => isset($field_value['persistence']) ? $field_value['persistence'] : 'on',
+      '#options' => array(
+        'on' => t('On (first-seen value)'),
+        'off' => t('Off (last-seen value)'),
+        'direct' => t('Direct (value from the form page only)'),
+      ),
     );
     $custom_fields[$i]['name'] = array(
       '#type' => 'textfield',
