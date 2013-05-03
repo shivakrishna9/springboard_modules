@@ -28,7 +28,7 @@ class FundraiserSetup extends DrupalWebTestCase {
     $enable_modules = array_merge($enable_modules, $addtional_modules);
 
     // Call the parent to set all of the base modules up.
-    parent::setUp( $enable_modules );
+    parent::setUp($enable_modules);
 
     // Setup the environment to a default standard.
     _fundraiser_setup_user_profile();
