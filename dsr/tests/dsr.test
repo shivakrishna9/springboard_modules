@@ -1,0 +1,71 @@
+<?php
+
+/**
+ * @file
+ * Simple tests for dsr
+ */
+
+/**
+ * Sets up basic tools for testing DSR.
+ */
+class DsrTestCase extends DrupalWebTestCase {
+
+  /**
+   * Implementation of getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'DSR',
+      'description' => 'Sets up basic tools for testing DSR',
+      'group' => 'DSR',
+    );
+  }
+
+  /**
+   * Implementation of setUp().
+   */
+  public function setUp($modules = array(), $permissions = array()) {
+    $modules = array_merge($modules, array(
+      'entity',
+      'libraries',
+      'token',
+      'fundraiser',
+      'salesforce',
+      'salesforce_soap',
+      'salesforce_sync',
+      'salesforce_queue',
+      'salesforce_mapping',
+      'salesforce_genmap',
+      'salesforce_donation',
+      'dsr',
+    ));
+    parent::setUp($modules);
+
+    $permissions = array_merge($permissions, array(
+      'access content',
+      'administer site configuration',
+      'administer content types',
+      'administer nodes',
+      'administer users',
+      'view dsr reports',
+      'administer dsr',
+    ));
+    $this->admin_user = $this->drupalCreateUser($permissions);
+    $this->drupalLogin($this->admin_user);
+  }
+
+  /**
+   * Implementation of tearDown().
+   */
+  public function tearDown() {
+    user_cancel(array(), $this->admin_user->uid, 'user_cancel_delete');
+    parent::tearDown();
+  }
+
+  /**
+   * Test installation of dependencies.
+   */
+  public function testInstall() {
+    $this->assertTrue(module_exists('dsr'), 'Module was not enabled correctly.');
+  }
+}

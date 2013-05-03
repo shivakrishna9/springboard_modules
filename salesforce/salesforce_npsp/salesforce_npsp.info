@@ -8,3 +8,5 @@ dependencies[] = libraries
 dependencies[] = salesforce
 dependencies[] = salesforce_soap
 dependencies[] = salesforce_sync
+
+files[] = tests/salesforce_npsp.test

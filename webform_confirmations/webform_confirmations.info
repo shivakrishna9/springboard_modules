@@ -5,3 +5,4 @@ version = 7.x-4.x-dev
 package = Webform Extra
 configure = admin/config/content/webform_confirmations
 dependencies[] = webform
+files[] = tests/webform_confirmations.test

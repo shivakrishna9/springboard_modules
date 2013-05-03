@@ -7,4 +7,5 @@ version = 7.x-4.x-dev
 ;dependencies[] = sf_webform
 ;dependencies[] = queue_processor
 dependencies[] = encrypt
+files[] = tests/capwiz_connect.test
 files[] = CapwizConnect.inc

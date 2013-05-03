@@ -10,6 +10,7 @@ dependencies[] = webform
 dependencies[] = ctools
 dependencies[] = system (>=7.17)
 
+files[] = tests/email_wrappers.test
 files[] = email_wrappers.install
 files[] = email_wrappers.module
 files[] = email_wrappers.admin.inc

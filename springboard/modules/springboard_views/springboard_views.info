@@ -10,3 +10,4 @@ files[] = springboard_views.views.inc
 files[] = handlers/fundraiser_handler_field_donation_amounts.inc
 files[] = handlers/queue_api_handler_field_batch_id.inc
 files[] = handlers/springboard_webform_hidden_component_values.inc
+files[] = tests/springboard_views.test

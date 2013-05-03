@@ -5,4 +5,4 @@ package = "Jackson River Springboard - extras"
 configure = admin/springboard/settings/ga
 dependencies[] = googleanalytics
 dependencies[] = webform_confirmations
-
+files[] = tests/springboard_ga.test
