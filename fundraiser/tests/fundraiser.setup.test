@@ -10,7 +10,7 @@
 class FundraiserSetup extends DrupalWebTestCase {
 
   /**
-   * Implemenation of setUp().
+   * Implements setUp().
    */
   function setUp($addtional_modules = array()) {
     // This module sets up the basic fundraiser environment for testing.
@@ -31,10 +31,10 @@ class FundraiserSetup extends DrupalWebTestCase {
     parent::setUp($enable_modules);
 
     // Setup the environment to a default standard.
-    _fundraiser_setup_user_profile();
-    _fundraiser_setup_webform_to_user_map();
-    _fundraiser_setup_create_type();
-    _fundraiser_setup_create_node();
+    $this->_fundraiser_setup_user_profile();
+    $this->_fundraiser_setup_webform_to_user_map();
+    $this->_fundraiser_setup_create_type();
+    // Do not create an additional node, but leave code in place for it.
   }
 
   /**
@@ -354,7 +354,7 @@ class FundraiserSetup extends DrupalWebTestCase {
   /**
    * Create an example Fundraiser node.
    */
-  function _fundraiser_setup_create_node() {
+  function _fundraiser_setup_create_node($node_configs = '') {
     $fields = fundraiser_field_info(TRUE);
     // Create the node.
     $node = new stdClass();
@@ -445,7 +445,20 @@ class FundraiserSetup extends DrupalWebTestCase {
     );
     $node->is_webform_user = 1;
     $node->send_new_user_email = 0;
+
+    // Merge in configurations, if given.
+    if (!empty($node_configs)) {
+      // Cast both to arrays so we can merge them.
+      $node_configs = (array) $node_configs;
+      $node = (array) $node;
+      // Merge.
+      $node = array_merge($node, $node_configs);
+      // Cast back to an object for saving.
+      $node = (object) $node;
+    }
     node_save($node);
+    // Return the created node object.
+    return $node;
   }
 
 }
