@@ -38,7 +38,7 @@ function commerce_sagepay_direct_fundraiser_commerce_cleanup($submission_fields)
 /**
  * Callback function, scrubs the fields for a given payment method.
  */
-function commerce_sagepay_direct_fundraiser_commerce_scrub($payment_method, $fields) {
+function commerce_sagepay_direct_fundraiser_commerce_scrub($payment_method, $submission_fields) {
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
   return _fundraiser_commerce_credit_card_scrub($payment_method, $submission_fields);
 }
