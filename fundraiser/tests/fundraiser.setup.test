@@ -457,6 +457,12 @@ class FundraiserSetup extends DrupalWebTestCase {
       $node = (object) $node;
     }
     node_save($node);
+    if (module_exists('webform_confirmations')) {
+      // Save confirmation details.
+      $confirmation['nid'] = $node->nid;
+      $confirmation['confirmation_page_title'] = 'Thank you for your donation!';
+      _webform_confirmations_update($confirmation);
+    }
     // Return the created node object.
     return $node;
   }

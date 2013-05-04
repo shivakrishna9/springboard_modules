@@ -31,7 +31,7 @@ class FundraiserTest extends FundraiserSetup {
     $additional_modules = array(
       'webform_confirmations', // For token testing.
     );
-    parent::setUp();
+    parent::setUp($additional_modules);
   }
 
   /**
