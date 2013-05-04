@@ -177,29 +177,35 @@ class FundraiserTest extends FundraiserSetup {
     $message = t('Donation was successfully processed.');
     $this->assertText($message, t('An anon. user was able to submit a donation.'),
       t('Fundraiser Submit'));
-    // Check order created
+    // Check user created.
+    $created_user = user_load_by_mail('example@example.com');
+    $this->assertEqual('example@example.com', $created_user->mail, t('The user account #@uid was created with @email.',
+      array('@uid' => $created_user->uid, '@email' => $created_user->mail)), t('Fundraiser Submit'));
+    // Check order created, there should be only 1.
+    $donations = _fundraiser_get_donations();
+    $count = 0;
+    $did = '';
+    foreach ($donations as $donation) {
+      $count++;
+      $did = $donation->did;
+    }
+    $this->assertEqual(1, $count, t('A single donation (#@did) was created.', array('@did' => $did)), t('Fundraiser Submit'));   
     // Confirmation tokens -> covered elsewhere, check for donation tokens though.
     $post = array(
-      'donor_information' => array(
-        'first_name' => 'FIRST NAME',
-        'last_name' => 'LAST NAME',
-        'mail' => 'EMAIL@EXAMPLE.COM',
-      ),
-      'billing_information' => array(
-        'address' => 'ADDRESS ONE',
-        'address_line_2' => 'ADDRESS TWO',
-        'city' => 'CITY',
-        'country' => 'US',
-        'state' => 'CA',
-        'zip' => '12345',
-      ),
+      'submitted[donor_information][first_name]' => 'FIRST NAME',
+      'submitted[donor_information][last_name]' => 'LAST NAME',
+      'submitted[donor_information][mail]' => 'EMAIL_TOKEN@EXAMPLE.COM',
+      'submitted[billing_information][address]' => 'ADDRESS ONE',
+      'submitted[billing_information][address_line_2]' => 'ADDRESS TWO',
+      'submitted[billing_information][city]' => 'CITY',
+      'submitted[billing_information][country]' => 'US',
+      'submitted[billing_information][state]' => 'CA',
+      'submitted[billing_information][zip]' => '12345',
     );
     parent::_fundraiser_setup_post_donation($node->nid, $post);
-    foreach ($post as $top_label => $value_array) {
-      foreach ($value_array as $label => $value) {
-        $this->assertText($value, t('The token value (@value) for @label was successfully displayed.',
-          array('@value' => $value, '@label' => $label)), t('Fundraiser Tokens'));
-      }
+    foreach ($post as $label => $value) {
+      $this->assertText($value, t('The token value (@value) for @label was successfully displayed.',
+        array('@value' => $value, '@label' => $label)), t('Fundraiser Tokens'));
     }
   }
 
@@ -209,13 +215,7 @@ class FundraiserTest extends FundraiserSetup {
   function testFundraiserFormEmailValidation() {
     $node = parent::_fundraiser_setup_create_node();
     // Check various emails fail.
-    $post = array(
-      'donor_information' => array(
-        'first_name' => $this->randomName(5),
-        'last_name' => $this->randomName(5),
-        'mail' => 'BROKEN_EMAIL',
-      ),
-    );
+    $post = array('submitted[donor_information][mail]' => 'BROKEN_EMAIL');
     parent::_fundraiser_setup_post_donation($node->nid, $post);
     $message = t('Please enter a valid email address.');
     $this->assertText($message, t('An invalid email address (BROKEN_EMAIL) was not accepted.'), t('Fundraiser Email'));
@@ -241,13 +241,7 @@ class FundraiserTest extends FundraiserSetup {
     $emails[] = '1Email+add@example.coooooom'; // Too long domain ending.
     $emails[] = '1Email+add@example.c0m'; // Invalid character in domain ending.
     foreach ($emails as $email) {
-      $post = array(
-        'donor_information' => array(
-          'first_name' => $this->randomName(5),
-          'last_name' => $this->randomName(5),
-          'mail' => $email,
-        ),
-      );
+      $post = array('submitted[donor_information][mail]' => $email);
       parent::_fundraiser_setup_post_donation($node->nid, $post);
       $message = t('Please enter a valid email address.');
       $this->assertText($message, t('An invalid email address (@email) was not accepted.',
@@ -268,13 +262,7 @@ class FundraiserTest extends FundraiserSetup {
     $emails[] = '1Email+add@sub-example.cm'; // Minimum length domain ending.
     $emails[] = '1Email+add@sub-example.coooom'; // Maximum length domain ending.
     foreach ($emails as $email) {
-      $post = array(
-        'donor_information' => array(
-          'first_name' => $this->randomName(5),
-          'last_name' => $this->randomName(5),
-          'mail' => $email,
-        ),
-      );
+      $post = array('submitted[donor_information][mail]' => $email);
       parent::_fundraiser_setup_post_donation($node->nid, $post);
       $message = t('Donation was successfully processed.');
       $this->assertText($message, t('A valid email address (@email) was accepted.',
@@ -289,10 +277,8 @@ class FundraiserTest extends FundraiserSetup {
     $node = parent::_fundraiser_setup_create_node();
     // Check various emails fail.
     $post = array(
-      'donation' => array(
-        'amount' => 10,
-        'other_amount' => 20,
-      ),
+      'submitted[donation][amount]' => 10,
+      'submitted[donation][other_amount]' => 20,
     );
     parent::_fundraiser_setup_post_donation($node->nid, $post);
     // Check misconfigured amounts (a # and an other) fails.
@@ -300,21 +286,13 @@ class FundraiserTest extends FundraiserSetup {
     $this->assertText($message, t('Setting both amount and other-amount was not accepted.'),
       t('Fundraiser Amounts'));
     // Check an amount ok.
-    $post = array(
-      'donation' => array(
-        'amount' => 10,
-      ),
-    );
+    $post = array('submitted[donation][amount]' => 10);
     parent::_fundraiser_setup_post_donation($node->nid, $post);
     $message = t('Donation was successfully processed.');
     $this->assertText($message, t('A donation with a set amount was successfully processed.'),
       t('Fundraiser Email'));
     // Check an other ok.
-    $post = array(
-      'donation' => array(
-        'other_amount' => 20,
-      ),
-    );
+    $post = array('submitted[donation][other_amount]' => 20);
     parent::_fundraiser_setup_post_donation($node->nid, $post);
     $message = t('Donation was successfully processed.');
     $this->assertText($message, t('A donation with a set other_amount was successfully processed.'),

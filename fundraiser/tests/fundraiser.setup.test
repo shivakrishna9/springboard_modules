@@ -485,36 +485,22 @@ class FundraiserSetup extends DrupalWebTestCase {
     // Standard post values.
     $month = date('n');
     $year = date('Y');
-    $mail = 'example@example.com';
     $post = array(
-      'donation' => array(
-        'amount' => 10,
-      ),
-      'donor_information' => array(
-        'first_name' => $this->randomName(5),
-        'last_name' => $this->randomName(5),
-        'mail' => $mail,
-      ),
-      'billing_information' => array(
-        'address' => $this->randomName(5),
-        'address_line_2' => $this->randomName(5),
-        'city' => $this->randomName(5),
-        'country' => 'US',
-        'state' => 'NC',
-        'zip' => '11111',
-      ),
-      'payment_information' => array(
-        'payment_fields' => array(
-          'credit' => array(
-            'card_number' => '4111111111111111',
-            'expiration_date' => array(
-              'card_expiration_month' => $month,
-              'card_expiration_year' => $year,
-            ),
-            'card_cvv' => '111',
-          ),
-        ),
-      ),
+      'submitted[donation][amount]' => 10,
+      'submitted[donation][other_amount]' => '',
+      'submitted[donor_information][first_name]' => $this->randomName(5),
+      'submitted[donor_information][last_name]' => $this->randomName(5),
+      'submitted[donor_information][mail]' => 'example@example.com',
+      'submitted[billing_information][address]' => $this->randomName(5),
+      'submitted[billing_information][address_line_2]' => $this->randomName(5),
+      'submitted[billing_information][city]' => $this->randomName(5),
+      'submitted[billing_information][country]' => 'US',
+      'submitted[billing_information][state]' => 'NC',
+      'submitted[billing_information][zip]' => '11111',
+      'submitted[payment_information][payment_fields][credit][card_number]' => '4111111111111111',
+      'submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_month]' => $month,
+      'submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_year]' => $year,
+      'submitted[payment_information][payment_fields][credit][card_cvv]' => '111',
     );
     // Merge in configurations, if given.
     if (!empty($post_config)) {
