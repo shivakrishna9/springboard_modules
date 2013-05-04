@@ -4,3 +4,5 @@ core = 7.x
 package = Jackson River Springboard
 version = 7.x-4.x-dev
 dependencies[] = fundraiser
+;Testing files
+files[] = tests/fundraiser_sustainers.test
