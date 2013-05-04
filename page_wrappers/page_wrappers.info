@@ -6,7 +6,5 @@ package = "Jackson River Springboard - extras"
 
 configure = admin/config/content/page-wrappers
 
-files[] = page_wrappers.install
-files[] = page_wrappers.module
-files[] = page_wrappers.admin.inc
+files[] = tests/page_wrappers.test
 

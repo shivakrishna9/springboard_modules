@@ -715,6 +715,11 @@ function _page_wrappers_available_wrappers() {
  *    Returns an array of Access Rulesets
  */
 function _page_wrapper_available_rulesets() {
+  // If the Ctools Custom rulesets module is not installed return an empty array
+  if (!module_exists('ctools_access_ruleset')) {
+    return array();
+  }
+
   ctools_include('export');
   $items = ctools_export_crud_load_all('ctools_access_ruleset');
   $rulesets = array();
@@ -758,7 +763,7 @@ function _page_wrappers_node_assigned_wrapper($node) {
     return;
   }
 
-  // If the Ctools module is not installed return the first record
+  // If the Ctools Custom rulesets module is not installed return the first record
   if (!module_exists('ctools_access_ruleset')) {
     return reset($node->page_wrappers);
   }
