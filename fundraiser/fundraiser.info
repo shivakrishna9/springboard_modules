@@ -7,4 +7,3 @@ configure = admin/config/system/fundraiser
 dependencies[] = token
 ;Testing files
 files[] = tests/fundraiser.test
-files[] = tests/fundraiser.unit.test
