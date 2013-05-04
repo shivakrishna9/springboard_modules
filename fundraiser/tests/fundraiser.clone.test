@@ -1,0 +1,52 @@
+<?php
+/**
+ * @file
+ * Fundraiser clone tests. Ensures cloning donation forms works as expected.
+ */
+
+// Include the setup test class.
+module_load_include('test', 'fundraiser', 'tests/fundraiser.setup');
+
+/**
+ * Fundraiser cloning test class.
+ */
+class FundraiserCloneTest extends FundraiserSetup {
+
+  /**
+   * Implementation of getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Fundraiser Clone',
+      'description' => 'Tests donation form cloning behaviors.',
+      'group' => 'Fundraiser',
+    );
+  }
+
+  /**
+   * Implementation of setUp().
+   */
+  function setUp() {
+    parent::setUp(array('clone'));
+  }
+
+  /**
+   * Implementation of tearDown().
+   */
+  function tearDown() {
+    parent::tearDown();
+  }
+
+  function testFundraiserCloneForm() {
+    // Create a node to clone.
+    $node = $this->_fundraiser_setup_create_node();
+
+    // create a user with cloning permissions
+    $user = $this->_fundraiser_setup_create_user(array('clone donation form'));
+
+    $this->drupalLogin($user);
+
+    $this->drupalGet('node/1');
+  }
+
+}
