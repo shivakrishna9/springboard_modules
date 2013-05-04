@@ -286,13 +286,19 @@ class FundraiserTest extends FundraiserSetup {
     $this->assertText($message, t('Setting both amount and other-amount was not accepted.'),
       t('Fundraiser Amounts'));
     // Check an amount ok.
-    $post = array('submitted[donation][amount]' => 10);
+    $post = array(
+      'submitted[donation][amount]' => 10,
+      'submitted[donation][other_amount]' => '',
+    );
     parent::_fundraiser_setup_post_donation($node->nid, $post);
     $message = t('Donation was successfully processed.');
     $this->assertText($message, t('A donation with a set amount was successfully processed.'),
       t('Fundraiser Email'));
     // Check an other ok.
-    $post = array('submitted[donation][other_amount]' => 20);
+    $post = array(
+      'submitted[donation][amount]' => 'other',
+      'submitted[donation][other_amount]' => 20,
+    );
     parent::_fundraiser_setup_post_donation($node->nid, $post);
     $message = t('Donation was successfully processed.');
     $this->assertText($message, t('A donation with a set other_amount was successfully processed.'),

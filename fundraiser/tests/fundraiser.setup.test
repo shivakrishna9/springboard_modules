@@ -508,7 +508,7 @@ class FundraiserSetup extends DrupalWebTestCase {
       $post_config = (array) $post_config;
       $post = array_merge($post, $post_config);
     }
-    $this->drupalPost('node/' . $nid, $post, t('Donate'), array(), array(), 'webform_client_form_' . $nid);
+    $this->drupalPost('node/' . $nid, $post, t('Donate'));
   }
 
 }
