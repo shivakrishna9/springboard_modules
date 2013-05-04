@@ -919,6 +919,8 @@ function _webform_user_create_webform_components(&$node) {
         // Special hidden types.
         case 'hidden':
           $item['extra']['private'] = 0; // Allow to be changed by JS.
+          $item['extra']['hidden_type'] = 'hidden'; // Allow to be changed by JS.
+          $item['extra']['conditional_operator'] = '='; // Allow to be changed by JS.
           break;
         // Special no-equilivent types.
         case 'image':
