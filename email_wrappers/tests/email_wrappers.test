@@ -1,0 +1,77 @@
+<?php
+
+/**
+ * @file
+ * Common functions for all the secure prepopulate tests.
+ */
+
+class EmailWrappersTestCase extends DrupalWebTestCase {
+ 
+ public static function getInfo() {
+    return array(
+      'name' => 'Email Wrappers',
+      'description' => 'Email Wrappers functional tests.',
+      'group' => 'Webform Confirmations',
+    );
+  }
+
+  /**
+   * Implementation of setUp().
+   */
+  function setUp() {
+    parent::setUp(array('webform', 'email_wrappers', 'ctools'));
+
+    $this->privileged_user = $this->drupalCreateUser(array(
+      'administer site configuration',
+      'create webform content',
+      'edit own webform content',
+      'access all webform results',
+    ));
+    $this->drupalLogin($this->privileged_user);
+  }
+
+  function testWebformSettings() {
+    //create test webform
+    $this->WebformCreate();
+    // Create email wrapper
+       // confirm preview button
+
+    // Confirm settings UI available on webform email form.
+
+    // configure email template, example ajax testing code available in Salesforce test patch on github
+
+    // Submit webform
+    $this->WebformPost();
+    // Confirm confirmation email is queued for send.
+  }
+  
+  private function WebformCreate() {
+    $edit = array();
+    $edit['title'] = 'Webform Confirmation test webform';
+    $edit["body[und][0][value]"] = $this->randomName(16);
+    $this->drupalPost('node/add/webform', $edit, t('Save'));
+    // test webform is now node 1
+    // add webform component
+    $component = array(
+      'nid' => 1,
+      'cid' => 1,
+      'pid' => 0,
+      'form_key' => 'name',
+      'type' => 'textfield',
+      'value' => '',
+      'extra' => serialize(array(
+        'description' => '', 
+        'private' => '',
+      )),
+      'mandatory' => '',
+    );
+     drupal_write_record('webform_component', $component);  
+  }
+
+  private function WebformPost() {
+    $edit = array();
+    $edit["submitted[name]"] = 'Keyser Soze';
+    $this->drupalPost('node/1', $edit, t('Submit'), array(), array(), 'webform-client-form-1'); 
+  }
+
+}
