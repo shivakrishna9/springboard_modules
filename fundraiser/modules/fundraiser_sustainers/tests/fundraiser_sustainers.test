@@ -1,0 +1,68 @@
+<?php
+/**
+ * @file
+ * Fundraiser sustainer module web tests, test sustainers.
+ */
+
+// Include the setup test class.
+module_load_include('test', 'fundraiser', 'tests/fundraiser.setup');
+
+/**
+ * Setup and tear down web class. Does nothing else.
+ */
+class FundraiserSustainerTest extends FundraiserSetup {
+
+  /**
+   * Implements getInfo(). Declares this test class to fundraiser testing.
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Fundraiser sustainers tests',
+      'description' => 'Tests fundraiser sustainers behavior.',
+      'group' => 'Springboard',
+    );
+  }
+
+  /**
+   * Implements setUp().
+   */
+  function setUp($addtional_modules = array()) {
+    // Call the parent to set all of the base modules up.
+    $additional_modules = array(
+      'fundraiser_sustainers', // For token testing.
+    );
+    parent::setUp($additional_modules);
+    // Setup the sustainer key file.
+  }
+
+  /**
+   * Test the creation of a fundraiser form node.
+   */
+  function testFundraiserSustainerSubmit() {
+    // Create a node.
+    $node = parent::_fundraiser_setup_create_node($node);
+    // Post to the node.
+    $month = date('n', strtotime('+1 year'));
+    $year = date('Y', strtotime('+1 year'));
+    $post['submitted[payment_information][recurs_monthly][recurs]'] = 'recurs';
+    $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_month]'] = $month;
+    $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_year]'] = $year;
+    $post['submitted[donor_information][mail]'] = 'fundraiser_sustainer@example.com';
+    parent::_fundraiser_setup_post_donation($node->nid, $post);
+    // A year out? There should be 12 donations in the system.
+    $donations = _fundraiser_get_donations();
+    $count = 0;
+    $did = '';
+    foreach ($donations as $donation) {
+      $count++;
+      $did = $donation->did;
+    }
+    $this->assertEqual(12, $count, t('12 donations were created.'), t('Fundraiser Sustainers'));
+    // Get the created user.
+    $created_user = user_load_by_mail('fundraiser_sustainer@example.com');
+    $this->assertEqual('fundraiser_sustainer@example.com', $created_user->mail, t('The user account #@uid was created with @email.',
+      array('@uid' => $created_user->uid, '@email' => $created_user->mail)), t('Fundraiser Submit'));
+    // Create a user.
+    $otder_user = parent::_fundraiser_setup_create_user();
+  }
+}
