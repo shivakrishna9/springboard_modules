@@ -206,8 +206,8 @@ function springboard_ga_nodeform_submit($form, &$form_state) {
   }
 }
 
-function springboard_ga_form_alter(&$form, &$form_state, $form_id) {
-  if($form_id == 'donation_form_node_form') {
+function springboard_ga_form_donation_form_node_form_alter(&$form, &$form_state) {
+  if(fundraiser_is_donation_type($form['#node']->type)) {
     if(variable_get('springboard_ga_enabled',0) == 1) {
       if(is_numeric($form_state['build_info']['args'][0]->nid)) {
         $n = node_load($form_state['build_info']['args'][0]->nid);
@@ -428,6 +428,8 @@ function springboard_ga_preprocess_webform_confirmation (&$vars) {
   drupal_alter('webform_confirmations_token_replace', $token_set, $vars['sid']);
   $script = token_replace($script, $token_set);
   $submission = webform_get_submission($vars['node']->nid, $vars['sid']);
+  $GLOBALS['conf']['googleanalytics_codesnippet_before'] .= $script;
+  /*
   // Which version of the tracking library should be used?
   $script .= '(function() {';
   $script .= 'var ga = document.createElement("script");';
@@ -468,6 +470,7 @@ function springboard_ga_preprocess_webform_confirmation (&$vars) {
 
   $scope = variable_get('googleanalytics_js_scope', 'header');
   drupal_add_js($script, array('scope' => $scope, 'type' => 'inline'));
+  */
   // add_js
 }
 
