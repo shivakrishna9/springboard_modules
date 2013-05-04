@@ -26,7 +26,7 @@ class SalesforceLogTestCase extends SalesforceQueueTestCase {
   /**
    * Implementation of setUp().
    */
-  public function setUp($modules = array()) {
+  public function setUp($modules = array(), $permissions = array()) {
     $modules = $modules + array(
       'entity',
       'entity_token',
@@ -42,7 +42,7 @@ class SalesforceLogTestCase extends SalesforceQueueTestCase {
     parent::setUp($modules);
 
     // Create an admin user.
-    $permissions = array(
+    $permissions = $permissions + array(
       'access content',
       'administer site configuration',
       'administer content types',
