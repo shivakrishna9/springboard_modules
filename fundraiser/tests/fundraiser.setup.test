@@ -465,7 +465,9 @@ class FundraiserSetup extends DrupalWebTestCase {
    * Create an example Fundraiser user.
    */
   function _fundraiser_setup_create_user($user_configs = '') {
-    $user = array(); // Array of given privs for a standard user. TODO
+    $user = array(
+      'access content',
+    );
     // Merge in configurations, if given.
     if (!empty($user_configs)) {
       // Cast both to arrays so we can merge them.
@@ -475,4 +477,52 @@ class FundraiserSetup extends DrupalWebTestCase {
     $user = $this->drupalCreateUser($user);
     return $user;
   }
+
+  /**
+   * Create a standard post.
+   */
+  function _fundraiser_setup_post_donation($nid, $post_config = '') {
+    // Standard post values.
+    $month = date('n');
+    $year = date('Y');
+    $mail = 'example@example.com';
+    $post = array(
+      'donation' => array(
+        'amount' => 10,
+      ),
+      'donor_information' => array(
+        'first_name' => $this->randomName(5),
+        'last_name' => $this->randomName(5),
+        'mail' => $mail,
+      ),
+      'billing_information' => array(
+        'address' => $this->randomName(5),
+        'address_line_2' => $this->randomName(5),
+        'city' => $this->randomName(5),
+        'country' => 'US',
+        'state' => 'NC',
+        'zip' => '11111',
+      ),
+      'payment_information' => array(
+        'payment_fields' => array(
+          'credit' => array(
+            'card_number' => '4111111111111111',
+            'expiration_date' => array(
+              'card_expiration_month' => $month,
+              'card_expiration_year' => $year,
+            ),
+            'card_cvv' => '111',
+          ),
+        ),
+      ),
+    );
+    // Merge in configurations, if given.
+    if (!empty($post_config)) {
+      // Cast both to arrays so we can merge them.
+      $post_config = (array) $post_config;
+      $post = array_merge($post, $post_config);
+    }
+    $this->drupalPost('node/' . $nid, $post, t('Donate'), array(), array(), 'webform_client_form_' . $nid);
+  }
+
 }
