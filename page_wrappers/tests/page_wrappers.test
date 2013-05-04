@@ -1,0 +1,73 @@
+<?php
+
+/**
+ * @file
+ * Test suite for Market Source module.
+ */
+
+class PageWrappersTestCase extends DrupalWebTestCase {
+  protected $privileged_user;
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Page Wrappers',
+      'description' => 'Page Wrappers functional tests',
+      'group' => 'Page Wrappers',
+    );
+  }
+
+  public function setUp() {
+    parent::setUp(array('page_wrappers'));
+
+    $this->privileged_user = $this->drupalCreateUser(array(
+      'administer site configuration',
+      'create page content',
+      'edit own page content',
+      'administer page wrappers',
+      'create page_wrapper content',
+      'edit own page_wrapper content',
+      ));
+    $this->drupalLogin($this->privileged_user);
+
+    // configure page wrapper select to display on page edit form
+    variable_set('page_wrapper_enabled_node_types', array('page' => 'page'));
+  }
+
+  public function testPageWrappersNode() {
+    // create page wrapper node
+    $edit = array();
+    $edit['title'] = $this->randomName(8);
+    $edit["page_wrappers_html_template[und][0][value]"] = $this->html_template();
+    $this->drupalPost('node/add/page-wrapper', $edit, t('Save'));
+
+    // confirm template is applied to preview. This also confirms .tpl file was created and that the theme
+    // layer hoodoo that pagewrappers relies on to affect page display is working.
+    $this->drupalGet('node/1');
+    $this->assertText('Test Page Wrapper', t('Page wrapper preview displays expected template content'), 'Page Wrappers Node');
+
+    // Create node and assign page wrapper.
+    $edit = array();
+    $edit['title'] = 'Page Wrappers test page';
+    $edit["body[und][0][value]"] = $this->randomName(16);
+    $edit["page_wrappers[new:0][wrapper_nid]"] = 1;
+    $edit["page_wrappers[new:0][ruleset]"] = 1;
+    $edit["page_wrappers[new:0][weight]"] = 0;
+    $this->drupalPost('node/add/page', $edit, t('Save'));
+
+    // Confirm template is applied to node
+    $this->drupalGet('node/2');
+    $this->assertText('Test Page Wrapper', t('Page wrapper correctly assigned to node content'), 'Page Wrappers Node');
+
+  }
+
+  function html_template() {
+    return "
+Test Page Wrapper
+<p>[messages]</p>
+<p>[title]</p>
+<p>[content]</p>
+     ";
+  }
+
+}
+
