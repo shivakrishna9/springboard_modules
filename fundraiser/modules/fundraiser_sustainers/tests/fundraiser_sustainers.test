@@ -272,6 +272,8 @@ class FundraiserSustainerTest extends FundraiserSetup {
    * Test sustainer key creation.
    */
   function testFundraiserSustainerKey() {
+    // Set the encryption path to avoid errors during get node, etc.
+    variable_set('encrypt_secure_key_path', 'sites/default/files');
     // Create a node.
     $created_user = parent::_fundraiser_setup_create_user();
     $this->drupalLogin($created_user);
@@ -293,6 +295,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
     }
 
     // On initial start, there is no key.
+    variable_set('encrypt_secure_key_path', '');
     $this->drupalGet('user/' . $created_user->uid . '/recurring_overview');
     $this->assertText('A problem was found with your secure key. No path set for key.', t('The key does not exist at install.'),
       t('Fundraiser Sustainer Key'));
@@ -301,7 +304,8 @@ class FundraiserSustainerTest extends FundraiserSetup {
       t('Fundraiser Sustainer Key'));
 
     // Create and place key path.
-    variable_set('encrypt_secure_key_path', t('sites/default/files'));
+    variable_set('encrypt_secure_key_path', 'sites/default/files');
+    $this->drupalGet('user/' . $created_user->uid . '/recurring_overview');
     $this->assertNoText('A problem was found with your secure key. No path set for key.', t('The key does not exist at install.'),
       t('Fundraiser Sustainer Key'));
     $this->drupalGet('user/' . $created_user->uid . '/recurring_overview/' . $master_did);
