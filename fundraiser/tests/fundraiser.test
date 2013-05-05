@@ -308,19 +308,4 @@ class FundraiserTest extends FundraiserSetup {
       t('Fundraiser Email'));
   }
 
-  /**
-   * Test the submission of a fundraiser form node.
-   */
-  function testFundraiserFormSubmissionAuth() {
-   $node = parent::_fundraiser_setup_create_node();
-   $user = parent::_fundraiser_setup_create_user();
-    //$created_node = parent::_fundraiser_setup_create_node();
-    //$created_user = parent::_fundraiser_setup_create_user();
-    // Load the created node, so we get latest data.
-    //$node = node_load($created_node->nid);
-    //$user = user_load($user->uid);
-    // Login with user.
-    //$this->drupalLogin($user);
-    // Check that the user's values are in the webform
-  }
 }
