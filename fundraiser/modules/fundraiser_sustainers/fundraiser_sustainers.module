@@ -1388,7 +1388,7 @@ function fundraiser_sustainers_processor_key_match() {
       if (!$file = fopen($filename, 'r')) {
         return FALSE;
       }
-      $key = fread($file, filesize($filename));
+      $key = filesize($filename) > 0 ? fread($file, filesize($filename)) : '';
       if (trim($key) != trim($_SERVER['HTTP_HOST'])) {
         return FALSE;
       }
