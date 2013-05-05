@@ -403,7 +403,7 @@ function _fundraiser_commerce_payment_fields_validate($form, $form_state, $submi
 
   // TODO this should probably be driven down to the gateway level.
   if ($payment_method == 'credit') {
-    if ($number != '0000000000000000') 
+    if ($number != '0000000000000000') {
       module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card'); // Include the file with the validation info.
       $number = $value['credit']['card_number'];
       $valid = commerce_payment_validate_credit_card_number($number);
