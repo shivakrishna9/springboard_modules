@@ -19,7 +19,7 @@ class FundraiserTest extends FundraiserSetup {
     return array(
       'name' => 'Fundraiser tests',
       'description' => 'Tests fundraiser behavior.',
-      'group' => 'Springboard',
+      'group' => 'Fundraiser',
     );
   }
 

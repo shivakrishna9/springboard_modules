@@ -34,7 +34,7 @@ class FundraiserCommerceUnitTestCase extends FundraiserCommerceUnitTestSetup {
     return array(
       'name' => 'Fundraiser commerce unit tests',
       'description' => 'Tests fundraiser commerce functions as unit tests.',
-      'group' => 'Springboard',
+      'group' => 'Fundraiser',
     );
   }
 

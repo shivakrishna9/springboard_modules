@@ -38,7 +38,7 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
     return array(
       'name' => 'Fundraiser webform unit tests',
       'description' => 'Tests fundraiser webform functions as unit tests.',
-      'group' => 'Springboard',
+      'group' => 'Fundraiser',
     );
   }
 

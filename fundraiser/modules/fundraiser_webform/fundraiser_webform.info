@@ -6,4 +6,4 @@ dependencies[] = webform
 dependencies[] = fundraiser
 version = 7.x-4.x-dev
 ;Testing files
-files[] = tests/fundraiser_webform.unit.test
+;files[] = tests/fundraiser_webform.unit.test
