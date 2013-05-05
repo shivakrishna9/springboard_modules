@@ -26,7 +26,7 @@ class FundraiserTest extends FundraiserSetup {
   /**
    * Implements setUp().
    */
-  function setUp($addtional_modules = array()) {
+  function setUp($additional_modules = array()) {
     // Call the parent to set all of the base modules up.
     $additional_modules = array(
       'webform_confirmations', // For token testing.

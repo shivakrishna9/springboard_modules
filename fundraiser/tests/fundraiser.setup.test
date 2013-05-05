@@ -12,7 +12,7 @@ class FundraiserSetup extends DrupalWebTestCase {
   /**
    * Implements setUp().
    */
-  function setUp($addtional_modules = array()) {
+  function setUp($additional_modules = array()) {
     // This module sets up the basic fundraiser environment for testing.
     // Assumptions: fundraiser_commerce, and fundraiser_webform.
     // Additional modules to be turned on.
@@ -25,7 +25,7 @@ class FundraiserSetup extends DrupalWebTestCase {
       'commerce_product_reference', // To remove when dependancies in commerce_authnet, commerce_payment resolved.
       'commerce_payment_example', // Gateway.
     );
-    $enable_modules = array_merge($enable_modules, $addtional_modules);
+    $enable_modules = array_merge($enable_modules, $additional_modules);
 
     // Call the parent to set all of the base modules up.
     parent::setUp($enable_modules);
