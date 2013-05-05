@@ -5,4 +5,5 @@ package = Jackson River Springboard
 configure = admin/springboard
 version = 7.x-4.x-dev
 dependencies[] = ctools
+files[] = tests/springboard.test
 files[] = springboard.admin.inc

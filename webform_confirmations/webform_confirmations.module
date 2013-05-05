@@ -143,10 +143,13 @@ function webform_confirmations_form_webform_configure_form_alter(&$form, &$form_
     '#title' => t('Drupal tokens'),
     '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
   );
+  $webform_token_help = theme('webform_token_help', array());
+  $webform_token_help = str_replace('%post', '%value', $webform_token_help);
+  $webform_token_help = str_replace('POST ', '', $webform_token_help); 
   $form['submission']['help']['webform_tokens'] = array(
     '#type' => 'item',
     '#title' => t('Webform tokens'),
-    '#description' => theme('webform_token_help', array()),
+    '#description' => $webform_token_help,
   );
   // Tweak display messages.
   $form['submission']['confirmation']['#description'] .= ' ' . t('The message supports Drupal tokens and Webform token replacements. ' .

@@ -1,0 +1,65 @@
+<?php
+
+/**
+ * @file
+ * Simple tests for form_layouts
+ */
+
+/**
+ * Sets up basic tools for testing Form Layouts.
+ */
+class FormLayoutsTestCase extends DrupalWebTestCase {
+
+  /**
+   * Implementation of getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Form Layouts',
+      'description' => 'Sets up basic tools for testing Form Layouts',
+      'group' => 'Form Layouts',
+    );
+  }
+
+  /**
+   * Implementation of setUp().
+   */
+  public function setUp($modules = array(), $permissions = array()) {
+    $modules = array_merge($modules, array(
+      'token',
+      'webform',
+      'fundraiser',
+      'fundraiser_webform',
+      'form_layouts',
+    ));
+    parent::setUp($modules);
+
+    // Create an admin user.
+    $permissions = array_merge($permissions, array(
+      'access content',
+      'administer site configuration',
+      'administer content types',
+      'administer nodes',
+      'administer users',
+    ));
+    $this->admin_user = $this->drupalCreateUser($permissions);
+    $this->drupalLogin($this->admin_user);
+  }
+
+  /**
+   * Implementation of tearDown().
+   */
+  public function tearDown() {
+    user_cancel(array(), $this->admin_user->uid, 'user_cancel_delete');
+    parent::tearDown();
+  }
+
+  /**
+   * Test installation of dependencies.
+   *
+   * Remove this test once tests are added for this module.
+   */
+  public function testInstall() {
+    $this->assertTrue(module_exists('form_layouts'), 'Module was not enabled correctly.');
+  }
+}

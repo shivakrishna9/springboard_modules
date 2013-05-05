@@ -3,3 +3,5 @@ description = Tracks Springboard module dependancies against installed Springboa
 package = Jackson River Springboard
 core = 7.x
 version = 7.x-4.x-dev
+
+files[] = tests/springboard_version.test

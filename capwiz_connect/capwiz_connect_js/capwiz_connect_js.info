@@ -5,3 +5,4 @@ package = "Jackson River Springboard - extras"
 dependencies[] = capwiz_connect
 version = 7.x-4.x-dev
 configure = admin/springboard/capwiz-connect/
+files[] = tests/capwiz_connect_js.test
