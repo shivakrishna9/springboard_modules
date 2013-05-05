@@ -16,17 +16,21 @@ class PageWrappersTestCase extends DrupalWebTestCase {
     );
   }
 
-  public function setUp() {
-    parent::setUp(array('page_wrappers'));
-
-    $this->privileged_user = $this->drupalCreateUser(array(
+  public function setUp($modules = array(), $permissions = array()) {
+    $permissions = array_merge($permissions, array(
       'administer site configuration',
       'create page content',
       'edit own page content',
       'administer page wrappers',
       'create page_wrapper content',
       'edit own page_wrapper content',
-      ));
+    ));
+    $modules = array_merge($modules, array(
+      'page_wrappers'
+    ));
+    parent::setUp($modules);
+
+    $this->privileged_user = $this->drupalCreateUser($permissions);
     $this->drupalLogin($this->privileged_user);
 
     // configure page wrapper select to display on page edit form
@@ -60,12 +64,24 @@ class PageWrappersTestCase extends DrupalWebTestCase {
 
   }
 
-  function html_template() {
+  function testPageWrappersRulesTest() {
+    //Create two page wrappers
+    $edit['title'] = $this->randomName(8);
+    $edit["page_wrappers_html_template[und][0][value]"] = $this->html_template('Ruleset 1');
+    $this->drupalPost('node/add/page-wrapper', $edit, t('Save'));
+
+    $edit['title'] = $this->randomName(8);
+    $edit["page_wrappers_html_template[und][0][value]"] = $this->html_template('Ruleset 2');
+    $this->drupalPost('node/add/page-wrapper', $edit, t('Save'));
+  }
+
+  function html_template($custom_text = '') {
     return "
 Test Page Wrapper
 <p>[messages]</p>
 <p>[title]</p>
 <p>[content]</p>
+<p>$custom_text</p>
      ";
   }
 
