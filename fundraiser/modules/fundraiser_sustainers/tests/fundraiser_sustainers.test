@@ -339,7 +339,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
     // With key setup, advance one charge and check the state afterwards.
 
     // Set the file empty.
-    unlink('sites/default/files/sustainer.key', '');
+    unlink('sites/default/files/sustainer.key');
   }
 
 }
