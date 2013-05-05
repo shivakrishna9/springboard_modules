@@ -183,7 +183,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
     // Reload summary page and confirm it's there.
     $this->drupalGet('user/' . $created_user->uid . '/recurring_overview/' . $master_did);
     $this->assertText('$23.23', t('The donation sequence is made for the correct default amount ($23.23).'), t('Fundraiser Update Amount'));
-    $this->assertText('$23.23', t('The donation sequence is made for the correct default amount ($23.23).'), t('Fundraiser Update Amount')); 
+    $this->assertText('$23.23', t('The donation sequence is made for the correct default amount ($23.23).'), t('Fundraiser Update Amount'));
 
     // Post to update user details.
     $post = array(
@@ -312,10 +312,34 @@ class FundraiserSustainerTest extends FundraiserSetup {
     $this->assertNoText('A problem was found with your secure key. No path set for key.', t('The key does not exist at install.'),
       t('Fundraiser Sustainer Key'));
 
+    // No key set.
+    $this->cronRun();
+    $this->drupalGet('');
+    $this->assertText('The fundraiser sustainer key has not been configured correctly. Recurring donations will not be processed.',
+      t('Cron failed to execute with no key set.'), t('Fundraiser Sustainer Key'));
     // Create and place EMPTY key.
-    //file_put_contents('sites/default/files/sustainer.key', '');
+    file_put_contents('sites/default/files/sustainer.key', '');
+    $this->cronRun();
+    $this->drupalGet('');
+    $this->assertText('The fundraiser sustainer key has not been configured correctly. Recurring donations will not be processed.',
+      t('Cron failed to execute with an empty key set.'), t('Fundraiser Sustainer Key'));
     // Create and place BAD key.
+    file_put_contents('sites/default/files/sustainer.key', 'BADKEY');
+    $this->cronRun();
+    $this->drupalGet('');
+    $this->assertText('The fundraiser sustainer key has not been configured correctly. Recurring donations will not be processed.',
+      t('Cron failed to execute with a bad key set.'), t('Fundraiser Sustainer Key'));
     // Create and place GOOD key.
+    file_put_contents('sites/default/files/sustainer.key', trim($_SERVER['HTTP_HOST']));
+    $this->cronRun();
+    $this->drupalGet('');
+    $this->assertNoText('The fundraiser sustainer key has not been configured correctly. Recurring donations will not be processed.',
+      t('Cron executed with a correct key set.'), t('Fundraiser Sustainer Key'));
+
+    // With key setup, advance one charge and check the state afterwards.
+
+    // Set the file empty.
+    unlink('sites/default/files/sustainer.key', '');
   }
 
 }
