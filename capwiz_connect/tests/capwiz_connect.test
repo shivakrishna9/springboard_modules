@@ -58,6 +58,6 @@ class CapwizConnectTestCase extends DrupalWebTestCase {
    * Remove this test once tests are added for this module.
    */
   public function testInstall() {
-    $this->assertTrue(module_exists('capwiz_connection'), 'Module was not enabled correctly.');
+    $this->assertTrue(module_exists('capwiz_connect'), 'Module was not enabled correctly.');
   }
 }
