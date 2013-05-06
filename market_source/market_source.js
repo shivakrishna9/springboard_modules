@@ -17,6 +17,7 @@ Drupal.behaviors.marketSourceInit = function (context) {
       var parsed,
           regex = /([^&=]+)=?([^&]*)/g,
           decode = function (value) {
+            value = encodeURI(value);
             // Regex for replacing addition symbol with a space
             return decodeURIComponent(value.replace(/\+/g, " "));
           },
