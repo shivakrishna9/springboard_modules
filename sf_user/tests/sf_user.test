@@ -233,4 +233,20 @@ class SalesforceUserTestCase extends DrupalWebTestCase {
     );
     salesforce_management_api_fieldmap_save($map);
   }
+
+  // unit testing _sf_user_strip_invalid_xml_chars();
+  function testSFUserInvalidXMLUnitTest() {
+    $fields = array();
+    // add additional characters as identified.
+    $fields['bogus'] = array(
+      'appended bell:' . chr(0x07),
+      chr(0x10) . 'prepended LF',
+    );
+
+    foreach ($fields['bogus'] as $value) {
+      $filtered = _sf_user_strip_invalid_xml_chars($value);
+      $test = ($filtered !== $value);
+      $this->assertTrue($test, t('Value modified by xml sanitizer: @value', array('@value' => $value)));
+    }
+  }
 }
