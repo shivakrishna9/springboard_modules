@@ -28,7 +28,7 @@ class PsiClient {
       $this->soapclient = new SoapClient($this->wsdl);
     }
     catch (Exception $ex) {
-      watchdog('psi_commerce', 'Payment Services wsdl is not available.',
+      watchdog('commerce_psi', 'Payment Services wsdl is not available.',
         array(),
         WATCHDOG_ERROR);
       return;
@@ -91,7 +91,7 @@ class PsiClient {
       $response = $this->soapclient->Authenticate(array('credentials' => $credentials));
     }
     catch (Exception $ex) {
-      watchdog('psi_commerce', 'The PSI Commerce account @title did not authenticate: @error',
+      watchdog('commerce_psi', 'The PSI Commerce account @title did not authenticate: @error',
         array(
           '@title' => $this->getAccountSetting('title'),
           '@error' => $ex->getMessage(),
@@ -123,7 +123,7 @@ class PsiClient {
       $response = $this->soapclient->SendCreditCardPayment($params);
     }
     catch (Exception $ex) {
-      watchdog('psi_commerce', 'The PSI Commerce account @title failed to process an order: @error',
+      watchdog('commerce_psi', 'The PSI Commerce account @title failed to process an order: @error',
         array(
           '@title' => $this->getAccountSetting('title'),
           '@error' => $ex->getMessage(),
@@ -155,7 +155,7 @@ class PsiClient {
       $response = $this->soapclient->SendEftPayment($params);
     }
     catch (Exception $ex) {
-      watchdog('psi_commerce', 'The PSI Commerce account @title failed to process an order: @error',
+      watchdog('commerce_psi', 'The PSI Commerce account @title failed to process an order: @error',
         array(
           '@title' => $this->getAccountSetting('title'),
           '@error' => $ex->getMessage(),

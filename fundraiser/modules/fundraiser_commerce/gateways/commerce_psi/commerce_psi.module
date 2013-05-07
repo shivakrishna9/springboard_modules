@@ -33,6 +33,119 @@ function _commerce_psi_request($payment_method, $nvp, $type = 'credit') {
 }
 
 /**
+ * Returns the default settings for a Payment Solutions Inc. payment method.
+ */
+function _commerce_psi_default_settings() {
+  return array(
+    'txn_mode' => COMMERCE_PSI_MODE_TEST,
+    'account_username' => '',
+    'account_password' => '',
+    'account_ip' => '',
+    'log' => array('request' => '0', 'response' => '0'),
+    'custom_fields' => array(
+      'pay_code' => '',
+      'program_code' => '',
+      'source_code' => '',
+      'market_source' => '',
+    ),
+  );
+}
+
+/**
+ * Returns the standard fields for a PSI payment configuration form
+ */
+function _commerce_psi_settings_form($settings) {
+  $form = array();
+  $form['txn_mode'] = array(
+    '#type' => 'radios',
+    '#title' => t('Mode'),
+    '#options' => array(
+      COMMERCE_PSI_MODE_LIVE => 'Live',
+      COMMERCE_PSI_MODE_STAGING => 'Staging',
+      COMMERCE_PSI_MODE_TEST => 'Test',
+    ),
+    '#default_value' => $settings['txn_mode'],
+    '#required' => TRUE,
+  );
+  $form['account_username'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Username'),
+    '#default_value' => $settings['account_username'],
+    '#required' => TRUE,
+  );
+  $form['account_password'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Password'),
+    '#default_value' => _commerce_psi_decrypt($settings['account_password']),
+    '#value_callback' => '_commerce_psi_encrypt_settings_password',
+    '#required' => TRUE,
+  );
+  $form['account_ip'] = array(
+    '#type' => 'textfield',
+    '#title' => t('IP Address'),
+    '#default_value' => $settings['account_ip'],
+    '#required' => TRUE,
+  );
+  $form['custom_fields'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Custom Fields'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['custom_fields']['pay_code'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Pay Code'),
+    '#description' => t('The unique id value identifying the pay code of the donation. Maximum length of 20.'),
+    '#default_value' => $settings['custom_fields']['pay_code'],
+  );
+  $form['custom_fields']['program_code'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Program Code'),
+    '#description' => t('A unique value indicating the program code for the donation. Maximum length of 12.'),
+    '#default_value' => $settings['custom_fields']['program_code'],
+  );
+  $form['custom_fields']['source_code'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Source Code'),
+    '#description' => t('The unique id value identifying the source of the donation. Maximum length of 12.'),
+    '#default_value' => $settings['custom_fields']['source_code'],
+  );
+  $form['custom_fields']['market_source'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Market Source'),
+    '#description' => t('A value identifying an additional source of the donation. Maximum length of 100.'),
+    '#default_value' => $settings['custom_fields']['market_source'],
+  );
+  $form['custom_fields']['tokens'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Tracking Replacement Tokens'),
+    '#description' => t('The following tokens are available for any of the custom fields.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $token_set = array('user', 'commerce-order');
+  if (module_exists('fundraiser')) {
+    $token_set[] = 'node';
+    $token_set[] = 'donation';
+  }
+  $form['custom_fields']['tokens']['token_help'] = array(
+    '#type' => 'item',
+    '#title' => t('Drupal tokens'),
+    '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
+  );
+  $form['log'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Log the following messages for debugging'),
+    '#options' => array(
+      'request' => t('API request messages'),
+      'response' => t('API response messages'),
+    ),
+    '#default_value' => $settings['log'],
+  );
+  return $form;
+}
+
+/**
  * Construct an array of values for the donor
  *
  * @param $order Object
