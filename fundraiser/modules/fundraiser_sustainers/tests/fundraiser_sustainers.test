@@ -37,7 +37,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
 
   /**
    * Test the creation of a recurring donation.
-   */
+   *
   function testFundraiserSustainerSubmit() {
     // Create a node.
     $node = parent::_fundraiser_setup_create_node();
@@ -88,10 +88,11 @@ class FundraiserSustainerTest extends FundraiserSetup {
       $count++;
     }
   }
+  */
 
   /**
    * Test the creation of a recurring donation susteiner interface.
-   */
+   *
   function testFundraiserSustainerUI() {
     // Create a node.
     $created_user = parent::_fundraiser_setup_create_user();
@@ -141,10 +142,11 @@ class FundraiserSustainerTest extends FundraiserSetup {
       t('Fundraiser Sustainers UI'));
     $this->assertText('Active', t('The donation sequence is active.'), t('Fundraiser Sustainers UI'));
   }
+  */
 
   /**
    * Test the creation of a recurring donation susteiner interface.
-   */
+   *
   function testFundraiserSustainerUpdate() {
     // Create a node.
     $created_user = parent::_fundraiser_setup_create_user(array('cancel future donations'));
@@ -267,10 +269,73 @@ class FundraiserSustainerTest extends FundraiserSetup {
     $this->assertText('There are no further charges for this recurring donation.', t('The donation update amount forms are not available.'),
       t('Fundraiser Cancel'));
   }
+*/
+
+  function testFundraiserSustainerNoProcessOnMissingKeyStandardCronRun() {
+    // Create a recurring donation to test with.
+    $master_did = $this->fundraiserSustainerCreateRecurringDonation();
+
+    // On initial start, there is no key.
+    variable_set('encrypt_secure_key_path', '');
+
+    // Run cron.
+    $this->cronRun();
+
+    // Reload the page to render drupal messages.
+    $this->drupalGet('');
+
+    // Invalid sustainer key message is displayed.
+    $this->assertText('The fundraiser sustainer key has not been configured correctly. Recurring donations will not be processed.',
+      t('Cron failed to execute with no key set.'), t('Fundraiser Sustainer Key'));
+
+    $sustainers_processed = $this->fundraiserSustainerChargeCount($master_did);
+    debug($sustainers_processed);
+
+    $this->assertEqual(0, $sustainers_processed, 'Number of sustainers processed is 0.');
+  }
+
+  function testFundraiserSustainerNoProcessOnMissingKeyStandaloneCronRun() {
+    // Turn on standalone cron.
+    variable_set('fundraiser_standalone_cron_enabled', 1);
+
+    // Create a recurring donation to test with.
+    $master_did = $this->fundraiserSustainerCreateRecurringDonation();
+
+    // On initial start, there is no key.
+    variable_set('encrypt_secure_key_path', '');
+
+    // Run standalone cron endpoint.
+    $this->drupalGet('fundraiser_cron');
+
+    // Reload the page to render drupal messages.
+    $this->drupalGet('');
+
+    // Invalid sustainer key message is displayed.
+    $this->assertText('The fundraiser sustainer key has not been configured correctly. Recurring donations will not be processed.',
+      t('Cron failed to execute with no key set.'), t('Fundraiser Sustainer Key'));
+  }
+
+  /*
+  function testFundraiserSustainerNoProcessOnKeyMismatch() {
+
+  }
+
+  function testFundraiserSustainerNoProcessOnEnvironmentMismatch() {
+
+  }
+
+  function testFundraiserSustainerProcessOnKeyMatch() {
+
+  }
+
+  function testFundraiserSustainerProcessOnEnvironmentMatch() {
+
+  }
+  */
 
   /**
    * Test sustainer key creation.
-   */
+
   function testFundraiserSustainerKey() {
     // Set the encryption path to avoid errors during get node, etc.
     variable_set('encrypt_secure_key_path', 'sites/default/files');
@@ -337,9 +402,63 @@ class FundraiserSustainerTest extends FundraiserSetup {
       t('Cron executed with a correct key set.'), t('Fundraiser Sustainer Key'));
 
     // With key setup, advance one charge and check the state afterwards.
+    $yesterday = strtotime('-1 day'); // Use yesterday because the cron run happens right after setting this
+    db_update('fundraiser_sustainers')
+      ->fields(array(
+        'next_charge' => $yesterday,
+      ))
+      ->condition('did', 2, '=')
+      ->execute();
+
+    // did 2 should fail because the donation was made before a valid key was put in place
+    $this->cronRun();
+    $this->drupalGet('');
+
+    // query the sustainer record and make sure it didn't process.
+    $donation = db_query('SELECT * FROM {fundraiser_sustainers} WHERE did = :did', array(':did' => '2'))->fetchObject();
+
+    $this->assertEqual('', $donation->sustainer_key, t('Sustainer record has empty sustainer key.'));
+    $this->assertEqual(NULL, $donation->gateway_resp, t('Donation was not submitted to gateway because sustainer key does not match server host.'));
+
 
     // Set the file empty.
     unlink('sites/default/files/sustainer.key');
+  }
+*/
+  private function fundraiserSustainerCreateRecurringDonation() {
+    // Set the encryption path to avoid errors during get node, etc.
+    variable_set('encrypt_secure_key_path', 'sites/default/files');
+    // Create a node.
+    $created_user = parent::_fundraiser_setup_create_user();
+    $this->drupalLogin($created_user);
+    $node = parent::_fundraiser_setup_create_node();
+    // Post to the node.
+    $month = date('n', strtotime('+1 year'));
+    $year = date('Y', strtotime('+1 year'));
+    $post['submitted[payment_information][recurs_monthly][recurs]'] = 'recurs';
+    $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_month]'] = $month;
+    $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_year]'] = $year;
+    $post['submitted[donor_information][mail]'] = $created_user->mail;
+    parent::_fundraiser_setup_post_donation($node->nid, $post);
+    // Get the master did.
+    $donations = _fundraiser_get_donations();
+    $master_did = '';
+    foreach ($donations as $donation) {
+      $master_did = $donation->did;
+      break;
+    }
+
+    return $master_did;
+  }
+
+  private function fundraiserSustainerChargeCount($master_did) {
+    $query = db_select('fundraiser_sustainers', 'f')
+      ->fields('f')
+      ->condition('master_did', $master_did, '=')
+      ->condition('gateway_resp', 'success', '=')
+      ->condition('did', $master_did, '!='); // exclude first order in series
+
+     return $query->countQuery()->execute()->fetchField();
   }
 
 }

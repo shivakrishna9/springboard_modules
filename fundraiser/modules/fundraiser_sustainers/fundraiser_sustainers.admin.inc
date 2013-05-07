@@ -40,7 +40,7 @@ function fundraiser_sustainers_admin() {
  * Display a table of recurring donations for admin users by master donation id.
  */
 function fundraiser_sustainers_admin_view($did) {
-  $headers = array('Master ID', 'Donation ID', 'User', 'Amount', 'Charge Date', 'Status');
+  $headers = array('Master ID', 'Donation ID', 'User', 'Amount', 'Charge Date', 'Sustainer Key', 'Status');
   $rows = array();
   // Get the data.
   $donation = fundraiser_donation_get_donation($did);
@@ -57,6 +57,7 @@ function fundraiser_sustainers_admin_view($did) {
       $row[] = $this_donation->user->name;
       $row[] = '$' . money_format('%i', $this_donation->donation['amount']);
       $row[] = date('m/d/y', $this_donation->recurring->next_charge);
+      $row[] = $this_donation->recurring->sustainer_key;
       $row[] = $this_donation->recurring->gateway_resp;
       $rows[] = $row;
     }

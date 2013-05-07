@@ -455,29 +455,38 @@ function fundraiser_sustainers_process_recurring_donations() {
   $successes = 0;
   $fails = 0;
   $donations = _fundraiser_sustainers_cron_get_recurring();
+  $sustainer_key = fundraiser_sustainers_get_sustainer_key_value();
+
   // Loop over the found orders
   foreach ($donations as $recurring) {
-    // Get the donation information that we need.
-    $donation = fundraiser_donation_get_donation($recurring->did);
-    // Then go through each one of these to charge.
-    // Since we already created the donation (and saved any CC info at that time).
-    // All we need to do is process it and respond afterwards as needed.
-    fundraiser_donation_process($donation);
-    if (!isset($donation->result['message'])) {
-      $donation->result['message'] = '';
-    }
-    // The results should be at $donation->result, ready to respond to the aftermath.
-    if (isset($donation->result['success']) && $donation->result['success']) {
-      fundraiser_donation_success($donation);
-      // Record the success.
-      $successes++;
+    if ($sustainer_key == $recurring->sustainer_key) {
+      // Get the donation information that we need.
+      $donation = fundraiser_donation_get_donation($recurring->did);
+      // Then go through each one of these to charge.
+      // Since we already created the donation (and saved any CC info at that time).
+      // All we need to do is process it and respond afterwards as needed.
+      fundraiser_donation_process($donation);
+      if (!isset($donation->result['message'])) {
+        $donation->result['message'] = '';
+      }
+      // The results should be at $donation->result, ready to respond to the aftermath.
+      if (isset($donation->result['success']) && $donation->result['success']) {
+        fundraiser_donation_success($donation);
+        // Record the success.
+        $successes++;
+      }
+      else {
+        $donation->result['success'] = FALSE;
+        fundraiser_donation_decline($donation);
+        // Record the fail.
+        $fails++;
+      }
     }
     else {
-      $donation->result['success'] = FALSE;
-      fundraiser_donation_decline($donation);
-      // Record the fail.
-      $fails++;
-    }
+      // TODO: Unlock the sustainer record. Currently the lock has not been ported from D6.
+      // Log the bad sustainer key check.
+      watchdog('fundraiser_sustainers', 'Sustainer order id !did not processed because of sustainer key mismatch. Key file value (!key_file) did not match record value (!record_value).', array('!did' => $recurring->did, '!key_file' => $sustainer_key, '!record_value' => $recurring->sustainer_key), WATCHDOG_CRITICAL);
+    } // End sustainer key match for individual donation.
   }
   if ($successes > 0 || $fails > 0) {
     watchdog('fundraiser_sustainers', '!successes recurring donations processed successfully; !fails failed.',
@@ -764,7 +773,7 @@ function fundraiser_sustainers_edit_form($did) {
 
   // Format payment schedule into a data table
   $donation_set = _fundraiser_sustainers_get_donations_recurr_by_member($did);
-  $donations_header = array('Amount', 'Charge Date', 'Processed Status');
+  $donations_header = array('Amount', 'Charge Date', 'Processed Status', 'Sustainer Key');
   if (user_access('fastforward recurring donations')) {
     // Add a button to fastforward this particular donation
     $donations_header[] = t('Advance Charge to Today');
@@ -779,6 +788,7 @@ function fundraiser_sustainers_edit_form($did) {
         $this_donation->status = t('Pending');
       }
       $donations_row['status'] = !empty($this_donation->status_label) ? $this_donation->status_label : $this_donation->status;
+      $donations_row['sustainer_key'] = $this_donation->recurring->sustainer_key;
       if (user_access('fastforward recurring donations')) {
         if (isset($this_donation->status_charged) && !$this_donation->status_charged) {
           // Add a button to fastforward this particular donation
@@ -1122,6 +1132,7 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year) {
   $stop = mktime(0, 0, 0, $month, 1, $year);
   $months = ((idate('Y', $stop) * 12) + idate('m', $stop)) - ((idate('Y', $start) * 12) + idate('m', $start));
   $processed_months = 0;
+  $sustainer_key = fundraiser_sustainers_get_sustainer_key_value();
 
   // Start counting.
   $create_limit = variable_get('fundraiser_sustainers_create_limit', 50);
@@ -1147,6 +1158,7 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year) {
         'master_did' => $donation->did,
         'did' => $new_donation->did,
         'next_charge' => $next_charge,
+        'sustainer_key' => $sustainer_key,
       );
       // Update the recurring table.
       _fundraiser_sustainers_create_recurring($recurring_donation);
@@ -1380,28 +1392,59 @@ function fundraiser_sustainers_processor_key_match() {
   // This is to check that we have everything configured for safe charging.
   // If not, we should throw an issue about it and not try to process stuff.
   // This value is normally set in the glue module for payment.
-  $dir = module_invoke_all('fundraiser_get_credit_encryption_path');
-  $dir = $dir[0];
-  if ($dir && $dir !== t('Not configured, see below.')) {
-    $filename = rtrim($dir, '/\\') . '/sustainer.key';
-    if (file_exists($filename)) {
-      if (!$file = fopen($filename, 'r')) {
-        return FALSE;
-      }
-      $key = filesize($filename) > 0 ? fread($file, filesize($filename)) : '';
-      if (trim($key) != trim($_SERVER['HTTP_HOST'])) {
-        return FALSE;
-      }
+  // Get the key and see if it matches the server's host.
+  $key = fundraiser_sustainers_get_sustainer_key_value();
+  if (trim($key) == trim($_SERVER['HTTP_HOST'])) {
+    return TRUE;
+  }
+
+  // If we get here key is no good.
+  return FALSE;
+}
+
+/**
+ * Attempts to open and read the contents of the sustainer key file.
+ */
+function fundraiser_sustainers_get_sustainer_key_value() {
+  $value = FALSE;
+  $filename = fundraiser_sustainers_sustainer_key_file_exists();
+
+  if ($filename && $file = fopen($filename, 'r')) {
+    $filesize = filesize($filename);
+    if ($filesize > 0) {
+      $value = trim(fread($file, $filesize));
       fclose($file);
     }
     else {
-      return FALSE;
+      watchdog('fundraiser_sustainers', 'Unable to read the contents of the sustainer key file @file.', array('@file' => $filename), WATCHDOG_CRITICAL);
     }
   }
   else {
-    return FALSE;
+    watchdog('fundraiser_sustainers', 'Unable to get the value of the sustainer key file because the file does not exist.', NULL, WATCHDOG_CRITICAL);
   }
-  return TRUE;
+
+  // Return FALSE or the actual value of the key file.
+  return $value;
+}
+
+/**
+ * Determines if the sustainer key file exists in the file system.
+ *
+ * @return
+ *   The filename of of the sustainer key file or FALSE if it doesn't
+ *   exist.
+ */
+function fundraiser_sustainers_sustainer_key_file_exists() {
+  $dir = module_invoke_all('fundraiser_get_credit_encryption_path');
+  $dir = $dir[0];
+  if (!empty($dir) && $dir !== t('Not configured, see below.')) {
+    $filename = rtrim($dir, '/\\') .'/sustainer.key';
+    if (file_exists($filename) && $file = fopen($filename, 'r')) {
+      return $filename;
+    }
+  }
+
+  return FALSE;
 }
 
 /**

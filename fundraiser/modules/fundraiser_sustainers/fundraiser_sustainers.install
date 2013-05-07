@@ -5,6 +5,37 @@
  */
 
 /**
+ * Implements hook_requirements().
+ */
+function fundraiser_sustainers_requirements($phase) {
+  if ($phase == 'runtime') {
+    $requirements['fundraiser_sustainers_key_exists'] = array(
+      'title' => t('Fundraiser sustainer key'),
+      'description' => t('The key file exists in the correct place in the file system.'),
+      'value' => t('Exists'),
+      'severity' => fundraiser_sustainers_sustainer_key_file_exists() ? REQUIREMENT_OK : REQUIREMENT_WARNING,
+      'weight' => '-1000',
+    );
+
+    $key_value = fundraiser_sustainers_get_sustainer_key_value();
+    if (!$key_value) {
+      $key_value = t('NO VALUE SET');
+    }
+    $key_match_for_environment = fundraiser_sustainers_processor_key_match();
+
+    $requirements['fundraiser_sustainers_key_configured'] = array(
+      'title' => t('Fundraiser sustainer key value'),
+      'description' => t('The key file\'s value (' . $key_value . ') matches the current server\'s host name ' . $_SERVER['HTTP_HOST'] . '.'),
+      'value' => t('Yes'),
+      'severity' =>  $key_match_for_environment ? REQUIREMENT_OK : REQUIREMENT_WARNING,
+      'weight' => '-999',
+    );
+
+    return $requirements;
+  }
+}
+
+/**
  * Implements hook_schema().
  */
 function fundraiser_sustainers_schema() {
@@ -71,6 +102,13 @@ function fundraiser_sustainers_schema() {
         'type' => 'varchar',
         'length' => '500',
         'not null' => FALSE,
+      ),
+      'sustainer_key' => array(
+        'description' => 'Value of the sustainer key at the time of record creation.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+        'default' => '',
       ),
     ),
     'primary key' => array('did'),
@@ -170,4 +208,35 @@ function _fundraiser_sustainers_install_default_sf_map() {
     $map->module = 'fundraiser_sustainers';
     salesforce_genmap_save_map($map, 'fundraiser_sustainers');
   }
+}
+
+/**
+ * Update 7001.
+ *
+ * Adds an additional field to fundraiser_sustainers that will store the
+ * value of the sustainer key at the time of donation. This key is then
+ * checked before the sustainer is actually charged to ensure the charge
+ * is taking place in the original environment.
+ */
+function fundraiser_sustainers_update_7001(&$sandbox) {
+  // Add the new column.
+  $sustainer_key = array(
+    'description' => t('Value of the sustainer key at the time of record creation.'),
+    'type' => 'varchar',
+    'length' => '255',
+    'not null' => FALSE,
+    'default' => '',
+  );
+
+  db_add_field('fundraiser_sustainers', 'sustainer_key', $sustainer_key);
+
+  // Read key and update existing sustainer records.
+  $key = fundraiser_sustainers_get_sustainer_key_value();
+
+  $sustainers_updated = db_update('fundraiser_sustainers')
+  ->fields(array(
+    'sustainer_key' => $key,
+  ))
+  ->execute();
+
 }
