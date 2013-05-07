@@ -90,6 +90,7 @@ function commerce_authnet_fundraiser_commerce_charge($payment_method, $donation)
  * Easy mode, submit to Authnet without CIM.
  */
 function _commerce_authnet_fundraiser_commerce_charge_without_cim($payment_method, $donation) {
+  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
   // Translate from donation settings to the correct values for the plugin.
   $order = commerce_order_load($donation->did);
   $charge = $order->commerce_order_total[LANGUAGE_NONE][0];
@@ -111,6 +112,7 @@ function _commerce_authnet_fundraiser_commerce_charge_without_cim($payment_metho
  * from regular CIM. For now those, let's just use CIM to establish the behavior before we replicate.
  */
 function _commerce_authnet_fundraiser_commerce_charge_with_cim($payment_method, $donation) {
+  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
   // Translate from donation settings to the correct values for the plugin.
   $order = commerce_order_load($donation->did);
   $charge = $order->commerce_order_total[LANGUAGE_NONE][0];
