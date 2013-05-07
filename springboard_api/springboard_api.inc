@@ -100,6 +100,7 @@ function springboard_api_get_webform($pubkey, $nid, $override_400 = FALSE) {
  */
 function springboard_api_submit_webform($submission) {
   unset($_SESSION['messages']);
+
   $node = node_load(array('nid' => trim($submission['webform_id'])));
   // Limit full checksum validation to donation form submissions.
   if (module_exists('fundraiser') && !fundraiser_is_donation_type($node->type)) { 
@@ -107,6 +108,12 @@ function springboard_api_submit_webform($submission) {
   }
   else {
     $valid = _springboard_api_validate_transaction('submit', $submission['time'], $submission['key'], $submission['checksum']);
+    if (isset($submission['redirect_url'])) {
+      $redirect_url = $submission['redirect_url'];
+    }
+    if (isset($submission['error_redirect_url'])) {
+      $error_redirect_url = $submission['error_redirect_url'];
+    }
   }
   $error_code = (isset($submission['override_400']) && $submission['override_400']) ? 200 : 400;
   if ($valid) {
@@ -245,11 +252,18 @@ function springboard_api_submit_webform($submission) {
     drupal_execute('webform_client_form_' . $submission->webform_nid, $form_state, $node, $submission, FALSE, FALSE);
     $errors = form_get_errors();
     if (!$errors) {
+      if (isset($submission->redirect_url)) {
+        // redirect session.
+        _springboard_api_redirect($submission->redirect_url);
+      }
       $messages = $_SESSION['messages'];
       $messages[] = 'Submission processed.';
       return $messages;
     }
-    else {
+    else { 
+      if (isset($submission->error_redirect_url)) {
+        _spingboard_api_redirect($submission->error_redirect_url);
+      }
       $formatted_errors = array();
       foreach ($errors as $key => $message) {
         $item = array(
@@ -267,6 +281,9 @@ function springboard_api_submit_webform($submission) {
   }
   else {
     watchdog('springboard_api', t('Invalid submission sent from %ip', array('%ip' => $_SERVER['REMOTE_ADDR'])), array(), WATCHDOG_ERROR);
+    if ($submission->error_redirect_url) {
+      _springboard_api_redirect($error_redirect_url);
+    }
     services_error('Error: Access denied.', $error_code, t('Your submission failed validation.'));
   }
 }
@@ -363,3 +380,14 @@ function _springboard_api_get_webform_components($nid) {
   }
   return $fields;
 }
+
+/**
+ * Redirect browser session instead of returning standard API responses.
+ *
+ * Useful in situations where the API is not being consumed asyncronously.
+ */
+function _springboard_api_redirect($url) {
+  header('Location:' . $url, TRUE);
+  die();
+}
+
