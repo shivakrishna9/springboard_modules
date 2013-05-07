@@ -220,6 +220,32 @@ function springboard_ga_form_node_form_alter(&$form, &$form_state) {
   if(fundraiser_is_donation_type($form['#node']->type)) {
     if(variable_get('springboard_ga_enabled',0) == 1) {
       $n = $form['#node'];
+
+      // If there's nothing set yet, like for a new node use the standard values
+      if (empty($n->springboard_ga)) {
+        $n->springboard_ga = array(
+          'springboard_ga_enabled' => 0,
+          'springboard_ga_trans' => array(
+            'springboard_ga_trans_transaction_id' => variable_get('springboard_ga_trans_transaction_id',''),
+            'springboard_ga_trans_affiliation' => variable_get('springboard_ga_trans_affiliation',''),
+            'springboard_ga_trans_total' => variable_get('springboard_ga_trans_total',''),
+            'springboard_ga_trans_tax' => variable_get('springboard_ga_trans_tax',''),
+            'springboard_ga_trans_shipping' => variable_get('springboard_ga_trans_shipping',''),
+            'springboard_ga_trans_city' => variable_get('springboard_ga_trans_city',''),
+            'springboard_ga_trans_state' => variable_get('springboard_ga_trans_state',''),
+            'springboard_ga_trans_country' => variable_get('springboard_ga_trans_country',''),
+          ),
+          'springboard_ga_item' => array(
+            'springboard_ga_item_order_id' => variable_get('springboard_ga_item_order_id',''),
+            'springboard_ga_item_sku' => variable_get('springboard_ga_item_sku',''),
+            'springboard_ga_item_name' => variable_get('springboard_ga_item_name',''),
+            'springboard_ga_item_category' => variable_get('springboard_ga_item_category',''),
+            'springboard_ga_item_price' => variable_get('springboard_ga_item_price',''),
+            'springboard_ga_item_quantity' => variable_get('springboard_ga_item_quantity',''),
+          ),
+        );
+      };
+
       $form['#submit'][] = 'springboard_ga_nodeform_submit';
       $form['springboard_ga'] = array(
         '#type' => 'fieldset',
