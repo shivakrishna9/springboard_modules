@@ -1,0 +1,57 @@
+<?php
+
+/**
+ * @file
+ * Test suite for Market Source module.
+ */
+
+// Include the setup test class.
+module_load_include('test', 'fundraiser', 'tests/fundraiser.setup'); 
+
+class FundraiserCommerceGatewayTest extends FundraiserSetup {
+  protected $privileged_user;
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Fundraiser Commerce Gateway',
+      'description' => 'Parent class for testing the Fundraiser Commerce Gateways',
+      'group' => 'Springboard',
+    );
+  }
+
+  public function setUp($modules = array(), $permissions = array()) {
+    $modules = array_merge($modules, array(
+      'encrypt'
+    ));
+    parent::setUp($modules);
+    variable_set('encrypt_secure_key_path', DRUPAL_ROOT . '/sites/default/files/keys');
+    variable_set('encrypt_default_method', 'mcrypt_rij_256');
+
+    $permissions = array_merge($permissions, array(
+      'administer site configuration',
+      'administer nodes',
+      'create donation form',
+      'edit any donation form',
+      'configure store',
+      'administer payment methods',
+      'administer payments',
+      'view payments',
+    ));
+    $this->privileged_user = $this->drupalCreateUser($permissions);
+    $this->drupalLogin($this->privileged_user);
+
+    $this->donation_form = $this->_fundraiser_setup_create_node();
+  }
+
+  function _importGatewayRule($config) {
+    $rules_config = rules_import($config);
+    if ($existing_config = rules_config_load($rules_config->name)) {
+      // Copy DB id and remove the new indicator to overwrite the existing record.
+      $rules_config->id = $existing_config->id;
+      unset($rules_config->is_new);
+    }
+    $rules_config->active = 1;
+    $rules_config->save();
+  }
+
+}
