@@ -424,10 +424,11 @@ function springboard_ga_form_node_form_alter(&$form, &$form_state) {
  */
 function springboard_ga_node_load($nodes, $types) {
   $donation_types = fundraiser_get_donation_types();
+
   $nids = array();
   // Loop through the nodes and pull out the nids of the donation forms
   foreach ($nodes as $node) {
-    if (in_array($node->type, $donation_types)) {
+    if ($donation_types[$node->type]) {
       $nids[] = $node->nid;
     }
   }
