@@ -10,7 +10,7 @@ class PageWrappersRulesetTestCase extends PageWrappersTestCase {
 
   public static function getInfo() {
     return array(
-      'name' => 'Page Wrappers Rulset Test',
+      'name' => 'Page Wrappers Ruleset Test',
       'description' => 'Testing the Ctools Custom Access Ruleset Integration.',
       'group' => 'Page Wrappers',
     );
@@ -51,21 +51,31 @@ class PageWrappersRulesetTestCase extends PageWrappersTestCase {
     $edit["page_wrappers[new:0][weight]"] = -1;
     $this->drupalPost(NULL, $edit, 'Add Another');
     $edit = array();
+    // Set the ruleset wrapper
     $edit["page_wrappers[new:0][wrapper_nid]"] = 1;
     $edit["page_wrappers[new:0][ruleset]"] = 'ruleset_test';
     $edit["page_wrappers[new:0][weight]"] = -1;
+    // Set the default wrapper
     $edit["page_wrappers[new:1][wrapper_nid]"] = 2;
     $edit["page_wrappers[new:1][ruleset]"] = 1;
     $edit["page_wrappers[new:1][weight]"] = 1;
     $this->drupalPost(NULL, $edit, t('Save'));
+
+    // Visit the page and confirm we see the default wrapper
     $this->drupalGet('node/3');
     $this->assertText('Ruleset 2', t('The default ruleset configuration selected the appropriate Page Wrapper'), 'Page Wrappers Node');
+
     // Add the test role to our user and visit the page again
     $new_role[$this->page_wrapper_test_rid] = 'page wrapper test';
     $all_roles = $this->privileged_user->roles + $new_role;
     user_save($this->privileged_user, array('roles' => $all_roles));
     $this->drupalGet('node/3');
     $this->assertText('Ruleset 1', t('The user role ruleset configuration selected the appropriate Page Wrapper'), 'Page Wrappers Node');
+
+    // Confirm anonymous user sees the default wrapper
+    $this->drupalLogout();
+    $this->drupalGet('node/3');
+    $this->assertText('Ruleset 2', t('The default ruleset configuration selected the appropriate Page Wrapper for an anonymous user'), 'Page Wrappers Node');
   }
 
   function createRuleset() {
@@ -85,7 +95,7 @@ class PageWrappersRulesetTestCase extends PageWrappersTestCase {
             "name" => "role",
             "settings" => array(
               "rids" => array(
-                0 => 5,
+                0 => ' . $this->page_wrapper_test_rid . ',
               ),
             ),
             "context" => "logged-in-user",
