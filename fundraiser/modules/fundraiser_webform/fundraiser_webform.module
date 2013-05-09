@@ -530,7 +530,7 @@ function fundraiser_webform_fundraiser_donation_form_after_build($form, $form_st
   // Add js and css as needed.
   $base = drupal_get_path('module', 'fundraiser_webform');
   drupal_add_js( $base . '/js/jquery.alphanumeric.js', 'file');
-  drupal_add_js( $base . '/js/fundraiser.js', 'file');
+  drupal_add_js( $base . '/js/donation.js', 'file');
   drupal_add_css( $base . '/css/fundraiser-donation-form.css', 'file');
   return $form;
 }
