@@ -1406,23 +1406,24 @@ function fundraiser_sustainers_processor_key_match() {
  * Attempts to open and read the contents of the sustainer key file.
  */
 function fundraiser_sustainers_get_sustainer_key_value() {
-  $value = FALSE;
-  $filename = fundraiser_sustainers_sustainer_key_file_exists();
-
-  if ($filename && $file = fopen($filename, 'r')) {
-    $filesize = filesize($filename);
-    if ($filesize > 0) {
-      $value = trim(fread($file, $filesize));
-      fclose($file);
+  static $value; // Cache per page load.
+  if (empty($value)) {
+    $value = FALSE;
+    $filename = fundraiser_sustainers_sustainer_key_file_exists();
+    if ($filename && $file = fopen($filename, 'r')) {
+      $filesize = filesize($filename);
+      if ($filesize > 0) {
+        $value = trim(fread($file, $filesize));
+        fclose($file);
+      }
+      else {
+        watchdog('fundraiser_sustainers', 'Unable to read the contents of the sustainer key file @file.', array('@file' => $filename), WATCHDOG_CRITICAL);
+      }
     }
     else {
-      watchdog('fundraiser_sustainers', 'Unable to read the contents of the sustainer key file @file.', array('@file' => $filename), WATCHDOG_CRITICAL);
+      watchdog('fundraiser_sustainers', 'Unable to get the value of the sustainer key file because the file does not exist.', NULL, WATCHDOG_CRITICAL);
     }
   }
-  else {
-    watchdog('fundraiser_sustainers', 'Unable to get the value of the sustainer key file because the file does not exist.', NULL, WATCHDOG_CRITICAL);
-  }
-
   // Return FALSE or the actual value of the key file.
   return $value;
 }
