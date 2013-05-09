@@ -557,3 +557,68 @@ function _springboard_percentage($a, $b) {
     return 'N/A';
   }
 }
+
+/**
+ * Additional universal behaviors.
+ */
+
+/**
+ * Implements hook_form_alter().
+ */
+function springboard_form_alter(&$form, &$form_state, $form_id) {
+  // Alter the webform client form.
+  // Why hook_form_alter and not hook_form_FORM_ID_alter?
+  // Because webform's form id varies: webform_client_form_NID.
+  if (strstr($form_id, 'webform_client_form') !== FALSE) {
+    $user_profiles = _springboard_default_user_profile();
+    // For each user profile, update the field with the given value.
+    foreach ($user_profile_fields as $user_profile_field) {
+      $field_name = $user_profile_field['field_name'];
+      $input_class = isset($user_profile_field['extra']['classes']) ? $user_profile_field['extra']['classes'] : 'input-medium';
+      $field = _springboard_get_form_field($form, $field_name);
+      $field['#attributes']['class'][] = $input_class;
+      $form = _springboard_update_form_field($form, $field_name, $field);  
+    }
+  }
+}
+
+/**
+ * Given a standard form array. Locate a given key and return it.
+ * Recursive.
+ */
+function _springboard_get_form_field($form, $field_key) {
+  // Walks a given form looking for the given key. Returns it when found.
+  foreach (element_children($form) as $child) {
+    if ($child == $field_key) {
+      // Return the found array.
+      return $form[$child];
+    }
+    else {
+      // Check this child for other children.
+      $found = _springboard_get_form_field($form[$child], $field_key);
+      if (!empty($found)) {
+        return $found;
+      }
+    }
+  }
+}
+
+/**
+ * Given a standard form array. Locate a given key and update it.
+ * Recursive.
+ */
+function _springboard_update_form_field($form, $field_key, $new_field) {
+  // Walks a given form looking for the given key. Returns it when found.
+  foreach (element_children($form) as $child) {
+    if ($child == $field_key) {
+      // Update the array.
+      $form[$child] = array_merge($form[$child], $new_field);
+    }
+    else {
+      // Check this child for other children.
+      $form[$child] = _springboard_update_form_field($form[$child], $field_key, $new_field);
+    }
+  }
+  return $form;
+}
+

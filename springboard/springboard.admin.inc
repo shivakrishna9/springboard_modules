@@ -1435,6 +1435,57 @@ function springboard_admin_config_profile($form, $form_state) {
   // See http://drupal.org/node/874026 for discussion re: Profile in D7.
   // By preference we use field API.
   // Add profile fields
+  $profile_fields = _springboard_default_user_profile($form_state['values']['order_handling']);
+  // Create the field on the user for each profile.
+  foreach ($profile_fields as $profile_field) {
+    $field = array(
+      'field_name' => $profile_field['field_name'],
+      'cardinality' => 1,
+      'type' => $profile_field['type'],
+      'settings' => isset($profile_field['settings']) ? $profile_field['settings'] : array(),
+    );
+    field_create_field($field);
+    $instance = array(
+      'entity_type' => 'user',
+      'bundle' => 'user',
+    );
+    $instance = array_merge($profile_field, $instance);
+    field_create_instance($instance);
+  }
+  drupal_set_message(t('Profiles have been configured'));
+
+  // Set the default fundraiser to webform user profile handling settings.
+  variable_set('fundraiser_webform_to_user_map', array(
+    'mail' => 'mail',
+    'sbp_first_name' => 'first_name',
+    'sbp_last_name' => 'last_name',
+    'sbp_address' => 'address',
+    'sbp_address_line_2' => 'address_line_2',
+    'sbp_city' => 'city',
+    'sbp_state' => 'state',
+    'sbp_zip' => 'zip',
+    'sbp_country' => 'country',
+    )
+  );
+  // And the same for market source
+  variable_set('market_source_to_user_map', array(
+    'sbp_cid' => 'cid',
+    'sbp_ms' => 'ms',
+    'sbp_referrer' => 'referrer',
+    'sbp_initial_referrer' => 'initial_referrer',
+    'sbp_search_engine' => 'search_engine',
+    'sbp_search_string' => 'search_string',
+    'sbp_user_agent' => 'user_agent',
+    )
+  );
+  drupal_set_message(t('Profile mapping has been configured'));
+}
+
+/**
+ * Helper function, provide a list of available user profile fields,
+ * including an optional hook to allow other modules to add.
+ */
+function _springboard_default_user_profile($mode = 'commerce') {
   $profile_fields = array();
   $profile_fields[] = array(
     'label' => t('First name'),
@@ -1476,7 +1527,7 @@ function springboard_admin_config_profile($form, $form_state) {
       'type' => 'text_textfield',
     ),
   );
-  if ($form_state['values']['order_handling'] == 'ubercart') {
+  if ($mode == 'ubercart') {
     // Default options loaded from {uc_zones} On the assumption we are using Ubercart here.
     // Load State/Province options from {uc_zones}, UC default is zone codes for US & Canada.
     $countries_set = fundraiser_ubercart_get_countries();
@@ -1494,7 +1545,7 @@ function springboard_admin_config_profile($form, $form_state) {
       'settings' => array('allowed_values' => $zones),
     );
   }
-  elseif ($form_state['values']['order_handling'] == 'commerce') {
+  elseif ($mode == 'commerce') {
     // Commerce does not store countries in a database, it relies instead on locale.inc
     $countries_set = fundraiser_commerce_get_countries();
     $zones = '';
@@ -1703,49 +1754,8 @@ function springboard_admin_config_profile($form, $form_state) {
       ),
     ),
   );
-  // Create the field on the user for each profile.
-  foreach ($profile_fields as $profile_field) {
-    $field = array(
-      'field_name' => $profile_field['field_name'],
-      'cardinality' => 1,
-      'type' => $profile_field['type'],
-      'settings' => isset($profile_field['settings']) ? $profile_field['settings'] : array(),
-    );
-    field_create_field($field);
-    $instance = array(
-      'entity_type' => 'user',
-      'bundle' => 'user',
-    );
-    $instance = array_merge($profile_field, $instance);
-    field_create_instance($instance);
-  }
-  drupal_set_message(t('Profiles have been configured'));
-
-  // Set the default fundraiser to webform user profile handling settings.
-  variable_set('fundraiser_webform_to_user_map', array(
-    'mail' => 'mail',
-    'sbp_first_name' => 'first_name',
-    'sbp_last_name' => 'last_name',
-    'sbp_address' => 'address',
-    'sbp_address_line_2' => 'address_line_2',
-    'sbp_city' => 'city',
-    'sbp_state' => 'state',
-    'sbp_zip' => 'zip',
-    'sbp_country' => 'country',
-    )
-  );
-  // And the same for market source
-  variable_set('market_source_to_user_map', array(
-    'sbp_cid' => 'cid',
-    'sbp_ms' => 'ms',
-    'sbp_referrer' => 'referrer',
-    'sbp_initial_referrer' => 'initial_referrer',
-    'sbp_search_engine' => 'search_engine',
-    'sbp_search_string' => 'search_string',
-    'sbp_user_agent' => 'user_agent',
-    )
-  );
-  drupal_set_message(t('Profile mapping has been configured'));
+  drupal_alter('springboard_default_user_profile', $profile_fields, $mode);
+  return $profile_fields;
 }
 
 /**
