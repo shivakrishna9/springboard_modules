@@ -166,6 +166,23 @@ function _fundraiser_commerce_credit_card_expire($submission_fields) {
 }
 
 /**
+ * Return the credit card expiration dates
+ *
+ * @param $submission_fields Array
+ *    Values from the submitted form
+ *
+ * @return Array
+ *    Expiration dates
+ */
+function _fundraiser_commerce_credit_card_expires_today($submission_fields) {
+  $expires = array(
+    'month' => date('n'),
+    'year' => date('Y'),
+  );
+  return $expires;
+}
+
+/**
  * Scrub the data
  *
  * @param $payment_method String
