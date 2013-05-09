@@ -1008,6 +1008,19 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
   // This allows any other systems to modify the available options with callbacks.
   $form['#calling_module'] = 'fundraiser_sustainers';
   fundraiser_display_form_fields('fundraiser_sustainers', $form, $form_state);
+
+  // Add afterbuild for js, css.
+  $form['#after_build'][] = 'fundraiser_sustainers_billing_update_after_build';
+  return $form;
+}
+
+/**
+ * Afterbuild for the billing form.
+ */
+function fundraiser_sustainers_billing_update_after_build($form, &$form_state) {
+  // Add additional js and css for this form.
+  drupal_add_css(drupal_get_path('module', 'fundraiser') . '/css/fundraiser.css');
+  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/fundraiser.js');
   return $form;
 }
 
