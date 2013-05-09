@@ -1018,9 +1018,7 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
  * Afterbuild for the billing form.
  */
 function fundraiser_sustainers_billing_update_after_build($form, &$form_state) {
-  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/jquery.validate.min.js');
-  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/donation_validation.js');
-  return $form;
+  return fundraiser_donation_form_after_build($form, $form_state);
 }
 
 /**
