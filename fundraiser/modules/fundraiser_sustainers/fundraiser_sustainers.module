@@ -948,7 +948,7 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
     );
     return $form;
   }
-
+  $form['#attributes']['class'][] = 'fundraiser-donation-form';
   $form['master_did'] = array(
     '#type' => 'hidden',
     '#value' => $donation->recurring->master_did,
@@ -1018,9 +1018,8 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
  * Afterbuild for the billing form.
  */
 function fundraiser_sustainers_billing_update_after_build($form, &$form_state) {
-  // Add additional js and css for this form.
-  drupal_add_css(drupal_get_path('module', 'fundraiser') . '/css/fundraiser.css');
-  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/fundraiser.js');
+  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/jquery.validate.min.js');
+  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/donation_validation.js');
   return $form;
 }
 
