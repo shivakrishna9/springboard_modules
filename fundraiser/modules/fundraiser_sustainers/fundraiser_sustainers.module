@@ -788,7 +788,7 @@ function fundraiser_sustainers_edit_form($did) {
         $this_donation->status = t('Pending');
       }
       $donations_row['status'] = !empty($this_donation->status_label) ? $this_donation->status_label : $this_donation->status;
-      $donations_row['sustainer_key'] = $this_donation->recurring->sustainer_key;
+      $donations_row['sustainer_key'] = isset($this_donation->recurring->sustainer_key) ? $this_donation->recurring->sustainer_key : '';
       if (user_access('fastforward recurring donations')) {
         if (isset($this_donation->status_charged) && !$this_donation->status_charged) {
           // Add a button to fastforward this particular donation
