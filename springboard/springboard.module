@@ -572,7 +572,7 @@ function springboard_form_alter(&$form, &$form_state, $form_id) {
   if (strstr($form_id, 'webform_client_form') !== FALSE) {
     // Include the file with the user profile list. TODO for effeciency, move user profile list to .module
     module_load_include('inc', 'springboard', 'springboard.admin');
-    $user_profiles = _springboard_default_user_profile();
+    $user_profile_fields = _springboard_default_user_profile();
     // For each user profile, update the field with the given value.
     foreach ($user_profile_fields as $user_profile_field) {
       $field_name = $user_profile_field['field_name'];

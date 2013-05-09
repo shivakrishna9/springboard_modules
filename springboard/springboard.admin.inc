@@ -1582,7 +1582,7 @@ function _springboard_default_user_profile($mode = 'commerce') {
       'type' => 'text_textfield',
     ),
   );
-  if ($form_state['values']['order_handling'] == 'ubercart') {
+  if ($mode == 'ubercart') {
     // Default options loaded from {uc_zones} On the assumption we are using Ubercart here.
     // Load State/Province options from {uc_zones}, UC default is zone codes for US & Canada.
     $countries_set = fundraiser_ubercart_get_countries();
@@ -1600,7 +1600,7 @@ function _springboard_default_user_profile($mode = 'commerce') {
       'settings' => array('allowed_values' => $countries),
     );
   }
-  elseif ($form_state['values']['order_handling'] == 'commerce') {
+  elseif ($mode == 'commerce') {
     // Commerce does not store countries in a database, it relies instead on locale.inc
     $countries_set = fundraiser_commerce_get_countries();
     $countries = '';
