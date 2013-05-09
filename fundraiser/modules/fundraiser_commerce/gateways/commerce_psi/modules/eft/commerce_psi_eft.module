@@ -162,7 +162,7 @@ function commerce_psi_eft_submit_form_submit($payment_method, $pane_form, $pane_
   $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
 
   // Submit the request to PSI
-  $response = _commerce_psi_request($payment_method, $nvp, 'check');
+  $response = _commerce_psi_request($payment_method, $nvp, 'eft');
 
   // If no response bail out and ask them to try again
   if (empty($response)) {

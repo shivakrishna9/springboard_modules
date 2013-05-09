@@ -10,7 +10,6 @@ class PsiClient {
    * Constructor.
    */
   public function __construct($account) {
-    $this->authenticated = FALSE;
 
     // Determine the correct WSDL URL
     if ($account['txn_mode'] == COMMERCE_PSI_MODE_LIVE) {
@@ -35,21 +34,6 @@ class PsiClient {
     }
 
     $this->account = $account;
-    $this->authenticate();
-  }
-
-  /**
-   * Verify authenticated
-   */
-  public function isAuthenticated() {
-    return $this->authenticated;
-  }
-
-  /**
-   * Return the authcode for this connection
-   */
-  public function getAuthcode() {
-    return $this->authcode;
   }
 
   /**
@@ -60,48 +44,18 @@ class PsiClient {
   }
 
   /**
-   * Returns the authentication array for the current connection
+   * Returns the credentials array
    *
    * This must be included with every request
    */
-  public function currentAuthentication() {
+  public function credentials() {
     return array(
-      'authentication' => array(
-        'AuthenticationCode' => $this->getAuthcode(),
+      'credentials' => array(
+        'UserName' => $this->getAccountSetting('account_username'),
+        'Password' => $this->getAccountSetting('account_password'),
         'SourceIpAddress' => $this->getAccountSetting('account_ip'),
       )
     );
-  }
-
-  /**
-   * Authenticate with the API. Called from the constructor
-   */
-  public function authenticate() {
-    // If this function gets called again after connecting, don't do anything
-    if (!empty($this->authenticated)) {
-      return $this->authenticated;
-    }
-
-    $credentials = array();
-    $credentials['UserName'] = $this->getAccountSetting('account_username');
-    $credentials['Password'] = $this->getAccountSetting('account_password');
-    $credentials['SourceIpAddress'] = $this->getAccountSetting('account_ip');
-
-    try {
-      $response = $this->soapclient->Authenticate(array('credentials' => $credentials));
-    }
-    catch (Exception $ex) {
-      watchdog('commerce_psi', 'The PSI Commerce account @title did not authenticate: @error',
-        array(
-          '@title' => $this->getAccountSetting('title'),
-          '@error' => $ex->getMessage(),
-        ),
-        WATCHDOG_ERROR);
-      return;
-    }
-
-    $this->authcode = $response->AuthenticateResult;
-    $this->authenticated = TRUE;
   }
 
   /**
@@ -114,11 +68,9 @@ class PsiClient {
    *   The resulting data from the request
    */
   public function creditRequest($payment_details) {
-    if (!$this->isAuthenticated()) {
-      return;
-    }
 
-    $params = $this->currentAuthentication() + array('paymentInfo' => $payment_details);
+    $params = $this->credentials() + array('paymentInfo' => $payment_details);
+
     try {
       $response = $this->soapclient->SendCreditCardPayment($params);
     }
@@ -137,7 +89,7 @@ class PsiClient {
   }
 
   /**
-   * Send a credit card request
+   * Send an electronic funds transfer request
    *
    * @param $payment_details Array
    *   An array of values to pass to the PSI API
@@ -145,12 +97,10 @@ class PsiClient {
    * @return Object
    *   The resulting data from the request
    */
-  public function checkRequest($payment_details) {
-    if (!$this->isAuthenticated()) {
-      return;
-    }
+  public function eftRequest($payment_details) {
 
-    $params = $this->currentAuthentication() + array('paymentInfo' => $payment_details);
+    $params = $this->credentials() + array('paymentInfo' => $payment_details);
+
     try {
       $response = $this->soapclient->SendEftPayment($params);
     }
