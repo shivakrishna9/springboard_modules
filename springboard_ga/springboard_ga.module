@@ -26,147 +26,29 @@ function springboard_ga_menu() {
  * Main settings form for the module
  */
 function springboard_ga_settings_form($form, &$form_state)  {
+  $default_settings = _springboard_ga_default_values();
+
   $form['springboard_ga_node_configuration'] = array(
     '#type' => 'checkbox',
     '#title' => 'Enable per node configurations of Google Analytics Tracking for Donations',
     '#default_value' => variable_get('springboard_ga_node_configuration', 0),
   );
+
+  // Add the transaction fields
   $form['springboard_ga_trans'] = array(
     '#type' => 'fieldset',
     '#title' => 'Transaction Defaults',
     '#description' => 'Populate default values for transactions. A token list is available below.'
-  );
-  $form['springboard_ga_trans']['springboard_ga_trans_transaction_id'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Transaction ID'),
-    '#description' => t('Internal unique transaction ID number for this transaction.'),
-    '#max_length' => 100,
-    '#size' => 20,
-    '#required' => TRUE,
-    '#default_value' => variable_get('springboard_ga_trans_transaction_id', '[donation:did]'),
-  );
-  $form['springboard_ga_trans']['springboard_ga_trans_affiliation'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Affiliation'),
-    '#description' => t('Partner or store affiliation.'),
-    '#max_length' => 100,
-    '#size' => 20,
-    '#required' => FALSE,
-    '#default_value' => variable_get('springboard_ga_trans_affiliation', ''),
-  );
-  $form['springboard_ga_trans']['springboard_ga_trans_total'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Total'),
-    '#description' => t('Total dollar amount of the transaction. Does not include tax and shipping and should only be considered the "grand total" if you explicitly include shipping and tax.'),
-    '#max_length' => 100,
-    '#size' => 10,
-    '#required' => TRUE,
-    '#default_value' => variable_get('springboard_ga_trans_total', '[donation:amount]'),
-  );
-  $form['springboard_ga_trans']['springboard_ga_trans_tax'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Tax'),
-    '#description' => t('Tax amount of the transaction.'),
-    '#max_length' => 100,
-    '#size' => 10,
-    '#required' => FALSE,
-    '#default_value' => variable_get('springboard_ga_trans_tax', ''),
-  );
-  $form['springboard_ga_trans']['springboard_ga_trans_shipping'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Shipping'),
-    '#description' => t('Shipping charge for the transaction.'),
-    '#max_length' => 100,
-    '#size' => 10,
-    '#required' => FALSE,
-    '#default_value' => variable_get('springboard_ga_trans_shipping', ''),
-  );
-  $form['springboard_ga_trans']['springboard_ga_trans_city'] = array(
-    '#type' => 'textfield',
-    '#title' => t('City'),
-    '#description' => t('City to associate with transaction.'),
-    '#max_length' => 100,
-    '#size' => 25,
-    '#required' => FALSE,
-    '#default_value' => variable_get('springboard_ga_trans_city', '[donation:city]'),
-  );
-  $form['springboard_ga_trans']['springboard_ga_trans_state'] = array(
-    '#type' => 'textfield',
-    '#title' => t('State'),
-    '#description' => t('State to associate with transaction.'),
-    '#max_length' => 100,
-    '#size' => 25,
-    '#required' => FALSE,
-    '#default_value' => variable_get('springboard_ga_trans_state', '[donation:state]'),
-  );
-  $form['springboard_ga_trans']['springboard_ga_trans_country'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Country'),
-    '#description' => t('Country to associate with transaction.'),
-    '#max_length' => 100,
-    '#size' => 40,
-    '#required' => FALSE,
-    '#default_value' => variable_get('springboard_ga_trans_country', '[donation:country]'),
-  );
+  ) + _springboard_ga_transaction_form_fields($default_settings['springboard_ga_trans']);
+
+  // Add the item fields
   $form['springboard_ga_item'] = array(
     '#type' => 'fieldset',
     '#title' => 'Item Defaults',
     '#description' => 'Populate default values for transactions. A token list is available below.'
-  );
-  $form['springboard_ga_item']['springboard_ga_item_order_id'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Order ID'),
-    '#description' => t('Optional Order ID of the transaction to associate with item.'),
-    '#max_length' => 100,
-    '#size' => 20,
-    '#required' => TRUE,
-    '#default_value' => variable_get('springboard_ga_item_order_id', '[donation:did]'),
-  );
-  $form['springboard_ga_item']['springboard_ga_item_sku'] = array(
-    '#type' => 'textfield',
-    '#title' => t('SKU Code'),
-    '#description' => t("Item's SKU code."),
-    '#max_length' => 100,
-    '#size' => 20,
-    '#required' => TRUE,
-    '#default_value' => variable_get('springboard_ga_item_sku', '[donation:node:nid]'),
-  );
-  $form['springboard_ga_item']['springboard_ga_item_name'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Name'),
-    '#description' => t('Product name. Required to see data in the product detail report.'),
-    '#max_length' => 255,
-    '#size' => 40,
-    '#required' => TRUE,
-    '#default_value' => variable_get('springboard_ga_item_name', '[donation:node:title]'),
-  );
-  $form['springboard_ga_item']['springboard_ga_item_category'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Category'),
-    '#description' => t('Product category.'),
-    '#max_length' => 255,
-    '#size' => 40,
-    '#required' => TRUE,
-    '#default_value' => variable_get('springboard_ga_item_category', 'Donation'),
-  );
-  $form['springboard_ga_item']['springboard_ga_item_price'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Price'),
-    '#description' => t('Product price.'),
-    '#max_length' => 100,
-    '#size' => 10,
-    '#required' => TRUE,
-    '#default_value' => variable_get('springboard_ga_item_price', '[donation:amount]'),
-  );
-  $form['springboard_ga_item']['springboard_ga_item_quantity'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Quantity'),
-    '#description' => t('Product quantity.'),
-    '#max_length' => 100,
-    '#size' => 5,
-    '#required' => TRUE,
-    '#default_value' => variable_get('springboard_ga_item_quantity', '1'),
-  );
+  ) +  _springboard_ga_item_form_fields($default_settings['springboard_ga_item']);
+
+  // Add the token help
   $form['springboard_ga_tokens_message']['tokens'] = array(
     '#type' => 'fieldset',
     '#title' => t('Tracking Replacement Tokens'),
@@ -181,6 +63,63 @@ function springboard_ga_settings_form($form, &$form_state)  {
     '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
   );
   return system_settings_form($form);
+}
+
+/**
+ * Implements hook_form_base_alter
+ *
+ * Add the GA tracking fields to donation form types
+ */
+function springboard_ga_form_node_form_alter(&$form, &$form_state) {
+  if (fundraiser_is_donation_type($form['#node']->type) && variable_get('springboard_ga_node_configuration', 0)) {
+    // If there's nothing set yet, like for a new node use the default values
+    if (empty($form['#node']->springboard_ga)) {
+      $form['#node']->springboard_ga = _springboard_ga_default_values();
+    };
+
+    // Add the submit handler
+    $form['#submit'][] = 'springboard_ga_nodeform_submit';
+
+    $form['springboard_ga'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('E-commerce tracking'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#tree' => TRUE,
+      '#group' => 'additional_settings',
+    );
+    $form['springboard_ga']['springboard_ga_node_configuration'] = array(
+      '#type' => 'checkbox',
+      '#title' => 'Override Default GA Tracking for this Donation Form',
+      '#default_value' => $form['#node']->springboard_ga['springboard_ga_node_configuration'],
+    );
+
+    // Add the transaction fields
+    $form['springboard_ga']['springboard_ga_trans'] = array(
+      '#type' => 'fieldset',
+      '#title' => 'Transaction Defaults',
+      '#description' => 'Populate default values for transactions. A token list is available below.',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    ) +  _springboard_ga_transaction_form_fields($form['#node']->springboard_ga['springboard_ga_trans']);
+
+    // Add the item fields
+    $form['springboard_ga']['springboard_ga_item'] = array(
+      '#type' => 'fieldset',
+      '#title' => 'Item Defaults',
+      '#description' => 'Populate default values for transactions. A token list is available below.',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    ) + _springboard_ga_item_form_fields($form['#node']->springboard_ga['springboard_ga_item']);
+
+    // Add the token help
+    $token_set = array('donation', 'user', 'node');
+    $form['springboard_ga']['springboard_ga_tokens_message']['tokens']['token_help'] = array(
+      '#type' => 'item',
+      '#title' => t('Drupal tokens'),
+      '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
+    );
+  }
 }
 
 /**
@@ -216,192 +155,6 @@ function springboard_ga_nodeform_submit($form, &$form_state) {
 }
 
 /**
- * Implements hook_form_base_alter
- *
- * Add the GA tracking fields to donation form types
- */
-function springboard_ga_form_node_form_alter(&$form, &$form_state) {
-  if (fundraiser_is_donation_type($form['#node']->type)) {
-    if (variable_get('springboard_ga_node_configuration', 0) == 1) {
-      $n = $form['#node'];
-
-      // If there's nothing set yet, like for a new node use the default values
-      if (empty($n->springboard_ga)) {
-        $n->springboard_ga = _springboard_ga_node_default_values();
-      };
-
-      $form['#submit'][] = 'springboard_ga_nodeform_submit';
-      $form['springboard_ga'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('E-commerce tracking'),
-        '#collapsible' => TRUE,
-        '#collapsed' => FALSE,
-        '#tree' => TRUE,
-        '#group' => 'additional_settings',
-      );
-      $form['springboard_ga']['springboard_ga_node_configuration'] = array(
-        '#type' => 'checkbox',
-        '#title' => 'Override Default GA Tracking for this Donation Form',
-        '#default_value' => $n->springboard_ga['springboard_ga_node_configuration'],
-      );
-      $form['springboard_ga']['springboard_ga_trans'] = array(
-        '#type' => 'fieldset',
-        '#title' => 'Transaction Defaults',
-        '#description' => 'Populate default values for transactions. A token list is available below.',
-        '#collapsible' => TRUE,
-        '#collapsed' => TRUE,
-      );
-      $form['springboard_ga']['springboard_ga_trans']['springboard_ga_trans_transaction_id'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Transaction ID'),
-        '#description' => t('Internal unique transaction ID number for this transaction.'),
-        '#max_length' => 100,
-        '#size' => 20,
-        '#required' => FALSE,
-        '#default_value' => $n->springboard_ga['springboard_ga_trans']['springboard_ga_trans_transaction_id'],
-      );
-      $form['springboard_ga']['springboard_ga_trans']['springboard_ga_trans_affiliation'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Affiliation'),
-        '#description' => t('Partner or store affiliation.'),
-        '#max_length' => 100,
-        '#size' => 20,
-        '#required' => FALSE,
-        '#default_value' => $n->springboard_ga['springboard_ga_trans']['springboard_ga_trans_affiliation'],
-      );
-      $form['springboard_ga']['springboard_ga_trans']['springboard_ga_trans_total'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Total'),
-        '#description' => t('Total dollar amount of the transaction. Does not include tax and shipping and should only be considered the "grand total" if you explicitly include shipping and tax.'),
-        '#max_length' => 100,
-        '#size' => 10,
-        '#required' => FALSE,
-        '#default_value' => $n->springboard_ga['springboard_ga_trans']['springboard_ga_trans_total'],
-      );
-      $form['springboard_ga']['springboard_ga_trans']['springboard_ga_trans_tax'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Tax'),
-        '#description' => t('Tax amount of the transaction.'),
-        '#max_length' => 100,
-        '#size' => 10,
-        '#required' => FALSE,
-        '#default_value' => $n->springboard_ga['springboard_ga_trans']['springboard_ga_trans_tax'],
-      );
-      $form['springboard_ga']['springboard_ga_trans']['springboard_ga_trans_shipping'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Shipping'),
-        '#description' => t('Shipping charge for the transaction.'),
-        '#max_length' => 100,
-        '#size' => 10,
-        '#required' => FALSE,
-        '#default_value' => $n->springboard_ga['springboard_ga_trans']['springboard_ga_trans_shipping'],
-      );
-      $form['springboard_ga']['springboard_ga_trans']['springboard_ga_trans_city'] = array(
-        '#type' => 'textfield',
-        '#title' => t('City'),
-        '#description' => t('City to associate with transaction.'),
-        '#max_length' => 100,
-        '#size' => 25,
-        '#required' => FALSE,
-        '#default_value' => $n->springboard_ga['springboard_ga_trans']['springboard_ga_trans_city'],
-      );
-      $form['springboard_ga']['springboard_ga_trans']['springboard_ga_trans_state'] = array(
-        '#type' => 'textfield',
-        '#title' => t('State'),
-        '#description' => t('State to associate with transaction.'),
-        '#max_length' => 100,
-        '#size' => 25,
-        '#required' => FALSE,
-        '#default_value' => $n->springboard_ga['springboard_ga_trans']['springboard_ga_trans_state'],
-      );
-      $form['springboard_ga']['springboard_ga_trans']['springboard_ga_trans_country'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Country'),
-        '#description' => t('Country to associate with transaction.'),
-        '#max_length' => 100,
-        '#size' => 40,
-        '#required' => FALSE,
-        '#default_value' => $n->springboard_ga['springboard_ga_trans']['springboard_ga_trans_country'],
-      );
-      $form['springboard_ga']['springboard_ga_item'] = array(
-        '#type' => 'fieldset',
-        '#title' => 'Item Defaults',
-        '#description' => 'Populate default values for transactions. A token list is available below.',
-        '#collapsible' => TRUE,
-        '#collapsed' => TRUE,
-      );
-      $form['springboard_ga']['springboard_ga_item']['springboard_ga_item_order_id'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Order ID'),
-        '#description' => t('Optional Order ID of the transaction to associate with item.'),
-        '#max_length' => 100,
-        '#size' => 20,
-        '#required' => FALSE,
-        '#default_value' => $n->springboard_ga['springboard_ga_item']['springboard_ga_item_order_id'],
-      );
-      $form['springboard_ga']['springboard_ga_item']['springboard_ga_item_sku'] = array(
-        '#type' => 'textfield',
-        '#title' => t('SKU Code'),
-        '#description' => t("Item's SKU code."),
-        '#max_length' => 100,
-        '#size' => 20,
-        '#required' => FALSE,
-        '#default_value' => $n->springboard_ga['springboard_ga_item']['springboard_ga_item_sku'],
-      );
-      $form['springboard_ga']['springboard_ga_item']['springboard_ga_item_name'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Name'),
-        '#description' => t('Product name. Required to see data in the product detail report.'),
-        '#max_length' => 255,
-        '#size' => 40,
-        '#required' => FALSE,
-        '#default_value' => $n->springboard_ga['springboard_ga_item']['springboard_ga_item_name'],
-      );
-      $form['springboard_ga']['springboard_ga_item']['springboard_ga_item_category'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Category'),
-        '#description' => t('Product category.'),
-        '#max_length' => 255,
-        '#size' => 40,
-        '#required' => FALSE,
-        '#default_value' => $n->springboard_ga['springboard_ga_item']['springboard_ga_item_category'],
-      );
-      $form['springboard_ga']['springboard_ga_item']['springboard_ga_item_price'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Price'),
-        '#description' => t('Product price.'),
-        '#max_length' => 100,
-        '#size' => 10,
-        '#required' => FALSE,
-        '#default_value' => $n->springboard_ga['springboard_ga_item']['springboard_ga_item_price'],
-      );
-      $form['springboard_ga']['springboard_ga_item']['springboard_ga_item_quantity'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Quantity'),
-        '#description' => t('Product quantity.'),
-        '#max_length' => 100,
-        '#size' => 5,
-        '#required' => FALSE,
-        '#default_value' => $n->springboard_ga['springboard_ga_item']['springboard_ga_item_quantity'],
-      );
-      $form['springboard_ga']['springboard_ga_tokens_message']['tokens'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Tracking Replacement Tokens'),
-        '#description' => t('The following tokens are available for any of the Item fields.'),
-        '#collapsible' => TRUE,
-        '#collapsed' => FALSE,
-      );
-      $token_set = array('donation', 'user', 'node');
-      $form['springboard_ga']['springboard_ga_tokens_message']['tokens']['token_help'] = array(
-        '#type' => 'item',
-        '#title' => t('Drupal tokens'),
-        '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
-      );
-    }
-  }
-}
-
-/**
  * Implmements hook_node_load
  *
  * Add the GA Tracking code to the donation form types
@@ -432,7 +185,7 @@ function springboard_ga_node_load($nodes, $types) {
 
       // For donation forms without custom settings use the site-wide ones
       if (empty($nodes[$nid]->springboard_ga)) {
-        $nodes[$nid]->springboard_ga = _springboard_ga_node_default_values();
+        $nodes[$nid]->springboard_ga = _springboard_ga_default_values();
       }
     }
   }
@@ -451,36 +204,179 @@ function springboard_ga_node_delete($node) {
  * Implements hook_preprocess_webform_confirmation
  */
 function springboard_ga_preprocess_webform_confirmation(&$vars) {
-  $script = _springboard_ga_js_build($vars, 'asynch');
-  $token_set = array('node' => node_load($vars['node']->nid));
-  drupal_alter('webform_confirmations_token_replace', $token_set, $vars['sid']);
-  $script = token_replace($script, $token_set);
-  $GLOBALS['conf']['googleanalytics_codesnippet_after'] .= $script;
+  if (fundraiser_is_donation_type($vars['node']->type) && !empty($vars['node']->springboard_ga)) {
+    global $conf;
+    $script = _springboard_ga_js_build($vars['node'], 'asynch');
+    $token_set = array('node' => $vars['node']);
+    drupal_alter('webform_confirmations_token_replace', $token_set, $vars['sid']);
+    $script = token_replace($script, $token_set);
+    $conf['googleanalytics_codesnippet_after'] .= $script;
+  }
+}
+
+/**
+ * Returns fields for setting the default transaction values
+ */
+function _springboard_ga_transaction_form_fields($settings) {
+  $form['springboard_ga_trans_transaction_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Transaction ID'),
+    '#description' => t('Internal unique transaction ID number for this transaction.'),
+    '#max_length' => 100,
+    '#size' => 20,
+    '#required' => TRUE,
+    '#default_value' => $settings['springboard_ga_trans_transaction_id'],
+  );
+  $form['springboard_ga_trans_affiliation'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Affiliation'),
+    '#description' => t('Partner or store affiliation.'),
+    '#max_length' => 100,
+    '#size' => 20,
+    '#required' => FALSE,
+    '#default_value' => $settings['springboard_ga_trans_affiliation'],
+  );
+  $form['springboard_ga_trans_total'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Total'),
+    '#description' => t('Total dollar amount of the transaction. Does not include tax and shipping and should only be considered the "grand total" if you explicitly include shipping and tax.'),
+    '#max_length' => 100,
+    '#size' => 10,
+    '#required' => TRUE,
+    '#default_value' => $settings['springboard_ga_trans_total'],
+  );
+  $form['springboard_ga_trans_tax'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Tax'),
+    '#description' => t('Tax amount of the transaction.'),
+    '#max_length' => 100,
+    '#size' => 10,
+    '#required' => FALSE,
+    '#default_value' => $settings['springboard_ga_trans_tax'],
+  );
+  $form['springboard_ga_trans_shipping'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Shipping'),
+    '#description' => t('Shipping charge for the transaction.'),
+    '#max_length' => 100,
+    '#size' => 10,
+    '#required' => FALSE,
+    '#default_value' => $settings['springboard_ga_trans_shipping'],
+  );
+  $form['springboard_ga_trans_city'] = array(
+    '#type' => 'textfield',
+    '#title' => t('City'),
+    '#description' => t('City to associate with transaction.'),
+    '#max_length' => 100,
+    '#size' => 25,
+    '#required' => FALSE,
+    '#default_value' => $settings['springboard_ga_trans_city'],
+  );
+  $form['springboard_ga_trans_state'] = array(
+    '#type' => 'textfield',
+    '#title' => t('State'),
+    '#description' => t('State to associate with transaction.'),
+    '#max_length' => 100,
+    '#size' => 25,
+    '#required' => FALSE,
+    '#default_value' => $settings['springboard_ga_trans_state'],
+  );
+  $form['springboard_ga_trans_country'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Country'),
+    '#description' => t('Country to associate with transaction.'),
+    '#max_length' => 100,
+    '#size' => 40,
+    '#required' => FALSE,
+    '#default_value' => $settings['springboard_ga_trans_country'],
+  );
+  return $form;
+}
+
+/**
+ * Returns fields for setting the default item values
+ */
+function _springboard_ga_item_form_fields($settings) {
+  $form['springboard_ga_item_order_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Order ID'),
+    '#description' => t('Optional Order ID of the transaction to associate with item.'),
+    '#max_length' => 100,
+    '#size' => 20,
+    '#required' => TRUE,
+    '#default_value' => $settings['springboard_ga_item_order_id'],
+  );
+  $form['springboard_ga_item_sku'] = array(
+    '#type' => 'textfield',
+    '#title' => t('SKU Code'),
+    '#description' => t("Item's SKU code."),
+    '#max_length' => 100,
+    '#size' => 20,
+    '#required' => TRUE,
+    '#default_value' => $settings['springboard_ga_item_sku'],
+  );
+  $form['springboard_ga_item_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Name'),
+    '#description' => t('Product name. Required to see data in the product detail report.'),
+    '#max_length' => 255,
+    '#size' => 40,
+    '#required' => TRUE,
+    '#default_value' => $settings['springboard_ga_item_name'],
+  );
+  $form['springboard_ga_item_category'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Category'),
+    '#description' => t('Product category.'),
+    '#max_length' => 255,
+    '#size' => 40,
+    '#required' => TRUE,
+    '#default_value' => $settings['springboard_ga_item_category'],
+  );
+  $form['springboard_ga_item_price'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Price'),
+    '#description' => t('Product price.'),
+    '#max_length' => 100,
+    '#size' => 10,
+    '#required' => TRUE,
+    '#default_value' => $settings['springboard_ga_item_price'],
+  );
+  $form['springboard_ga_item_quantity'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Quantity'),
+    '#description' => t('Product quantity.'),
+    '#max_length' => 100,
+    '#size' => 5,
+    '#required' => TRUE,
+    '#default_value' => $settings['springboard_ga_item_quantity'],
+  );
+  return $form;
 }
 
 /**
  * Returns the default GA values for a node
  */
-function _springboard_ga_node_default_values() {
+function _springboard_ga_default_values() {
   return array(
     'springboard_ga_node_configuration' => 0,
     'springboard_ga_trans' => array(
-      'springboard_ga_trans_transaction_id' => variable_get('springboard_ga_trans_transaction_id', ''),
+      'springboard_ga_trans_transaction_id' => variable_get('springboard_ga_item_order_id', '[donation:did]'),
       'springboard_ga_trans_affiliation' => variable_get('springboard_ga_trans_affiliation', ''),
-      'springboard_ga_trans_total' => variable_get('springboard_ga_trans_total', ''),
+      'springboard_ga_trans_total' => variable_get('springboard_ga_trans_total', '[donation:amount]'),
       'springboard_ga_trans_tax' => variable_get('springboard_ga_trans_tax', ''),
       'springboard_ga_trans_shipping' => variable_get('springboard_ga_trans_shipping', ''),
-      'springboard_ga_trans_city' => variable_get('springboard_ga_trans_city', ''),
-      'springboard_ga_trans_state' => variable_get('springboard_ga_trans_state', ''),
-      'springboard_ga_trans_country' => variable_get('springboard_ga_trans_country', ''),
+      'springboard_ga_trans_city' => variable_get('springboard_ga_trans_city', '[donation:city]'),
+      'springboard_ga_trans_state' => variable_get('springboard_ga_trans_state', '[donation:state]'),
+      'springboard_ga_trans_country' => variable_get('springboard_ga_trans_country', '[donation:country]'),
     ),
     'springboard_ga_item' => array(
-      'springboard_ga_item_order_id' => variable_get('springboard_ga_item_order_id', ''),
-      'springboard_ga_item_sku' => variable_get('springboard_ga_item_sku', ''),
-      'springboard_ga_item_name' => variable_get('springboard_ga_item_name', ''),
-      'springboard_ga_item_category' => variable_get('springboard_ga_item_category', ''),
-      'springboard_ga_item_price' => variable_get('springboard_ga_item_price', ''),
-      'springboard_ga_item_quantity' => variable_get('springboard_ga_item_quantity', ''),
+      'springboard_ga_item_order_id' => variable_get('springboard_ga_item_order_id', '[donation:did]'),
+      'springboard_ga_item_sku' => variable_get('springboard_ga_item_sku', '[donation:node:nid]'),
+      'springboard_ga_item_name' => variable_get('springboard_ga_item_name', '[donation:node:title]'),
+      'springboard_ga_item_category' => variable_get('springboard_ga_item_category', 'Donation'),
+      'springboard_ga_item_price' => variable_get('springboard_ga_item_price', '[donation:amount]'),
+      'springboard_ga_item_quantity' => variable_get('springboard_ga_item_quantity', '1'),
     ),
   );
 }
@@ -488,10 +384,10 @@ function _springboard_ga_node_default_values() {
 /**
  * Build the JS GA tracking snippets
  */
-function _springboard_ga_js_build(&$vars, $type = 'asynch') {
+function _springboard_ga_js_build($node, $type = 'asynch') {
   if ($type == 'asynch') {
-    $js = "\n" . _springboard_ga_js_add_trans($vars, 'asynch');
-    $js .= "\n" . _springboard_ga_js_add_item($vars, 'asynch');
+    $js = "\n" . _springboard_ga_js_add_trans($node->springboard_ga['springboard_ga_trans'], 'asynch');
+    $js .= "\n" . _springboard_ga_js_add_item($node->springboard_ga['springboard_ga_item'], 'asynch');
     $js .= "\n_gaq.push(['_trackTrans']);\n";
   }
   else {
@@ -500,8 +396,8 @@ function _springboard_ga_js_build(&$vars, $type = 'asynch') {
       var springboard_ga_pageTracker = _gat._getTracker("UA-40474837-1");
       springboard_ga_pageTracker._trackPageview();
 EOS;
-    $js .= "\n" . _springboard_ga_js_add_trans($vars, 'traditional');
-    $js .= "\n" . _springboard_ga_js_add_item($vars, 'traditional');
+    $js .= "\n" . _springboard_ga_js_add_trans($node->springboard_ga['springboard_ga_trans'], 'traditional');
+    $js .= "\n" . _springboard_ga_js_add_item($node->springboard_ga['springboard_ga_item'], 'traditional');
     $js .= <<<EOS
       
       springboard_ga_pageTracker._trackTrans();
@@ -514,15 +410,15 @@ EOS;
 /**
  * Build the transaction tracking code
  */
-function _springboard_ga_js_add_trans(&$vars, $type = 'asynch') {
-  $jsq = '"' . $vars['node']->springboard_ga['springboard_ga_trans']['springboard_ga_trans_transaction_id'] . '",';
-  $jsq .= '"' . $vars['node']->springboard_ga['springboard_ga_trans']['springboard_ga_trans_affiliation'] . '",';
-  $jsq .= '"' . $vars['node']->springboard_ga['springboard_ga_trans']['springboard_ga_trans_total'] . '",';
-  $jsq .= '"' . $vars['node']->springboard_ga['springboard_ga_trans']['springboard_ga_trans_tax'] . '",';
-  $jsq .= '"' . $vars['node']->springboard_ga['springboard_ga_trans']['springboard_ga_trans_shipping'] . '",';
-  $jsq .= '"' . $vars['node']->springboard_ga['springboard_ga_trans']['springboard_ga_trans_city'] . '",';
-  $jsq .= '"' . $vars['node']->springboard_ga['springboard_ga_trans']['springboard_ga_trans_state'] . '",';
-  $jsq .= '"' . $vars['node']->springboard_ga['springboard_ga_trans']['springboard_ga_trans_country'] . '"';
+function _springboard_ga_js_add_trans($values, $type = 'asynch') {
+  $jsq = '"' . $values['springboard_ga_trans_transaction_id'] . '",';
+  $jsq .= '"' . $values['springboard_ga_trans_affiliation'] . '",';
+  $jsq .= '"' . $values['springboard_ga_trans_total'] . '",';
+  $jsq .= '"' . $values['springboard_ga_trans_tax'] . '",';
+  $jsq .= '"' . $values['springboard_ga_trans_shipping'] . '",';
+  $jsq .= '"' . $values['springboard_ga_trans_city'] . '",';
+  $jsq .= '"' . $values['springboard_ga_trans_state'] . '",';
+  $jsq .= '"' . $values['springboard_ga_trans_country'] . '"';
   if ($type == 'asynch') {
     $js = "_gaq.push(['_addTrans',";
     $js .= $jsq;
@@ -539,13 +435,13 @@ function _springboard_ga_js_add_trans(&$vars, $type = 'asynch') {
 /*
  * Build the item tracking code
  */
-function _springboard_ga_js_add_item(&$vars, $type = 'asynch') {
-  $jsq = '"' . $vars['node']->springboard_ga['springboard_ga_item']['springboard_ga_item_order_id'] . '",';
-  $jsq .= '"' . $vars['node']->springboard_ga['springboard_ga_item']['springboard_ga_item_sku'] . '",';
-  $jsq .= '"' . $vars['node']->springboard_ga['springboard_ga_item']['springboard_ga_item_name'] . '",';
-  $jsq .= '"' . $vars['node']->springboard_ga['springboard_ga_item']['springboard_ga_item_category'] . '",';
-  $jsq .= '"' . $vars['node']->springboard_ga['springboard_ga_item']['springboard_ga_item_price'] . '",';
-  $jsq .= '"' . $vars['node']->springboard_ga['springboard_ga_item']['springboard_ga_item_quantity'] . '"';
+function _springboard_ga_js_add_item($values, $type = 'asynch') {
+  $jsq = '"' . $values['springboard_ga_item_order_id'] . '",';
+  $jsq .= '"' . $values['springboard_ga_item_sku'] . '",';
+  $jsq .= '"' . $values['springboard_ga_item_name'] . '",';
+  $jsq .= '"' . $values['springboard_ga_item_category'] . '",';
+  $jsq .= '"' . $values['springboard_ga_item_price'] . '",';
+  $jsq .= '"' . $values['springboard_ga_item_quantity'] . '"';
   if ($type == 'asynch') {
     $js = "_gaq.push(['_addItem',";
     $js .= $jsq;
