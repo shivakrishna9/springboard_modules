@@ -23,14 +23,14 @@
 ?>
 <div id="donation-form-column-wrapper">
   <div id="left" class="span6">
-    <? print $donor_information_fieldset; ?>
-    <? print $billing_address_fieldset; ?>
+    <?php print $donor_information_fieldset; ?>
+    <?php print $billing_address_fieldset; ?>
   </div>
   <div id="right" class="span6">
-    <? print $donation_fieldset; ?>
-    <? print $credit_card_fieldset; ?>
+    <?php print $donation_fieldset; ?>
+    <?php print $credit_card_fieldset; ?>
   </div>
   <div id="donation-form-footer">
-    <? print drupal_render($form); ?>
+    <?php print drupal_render($form); ?>
   </div>
 </div>
