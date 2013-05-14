@@ -15,7 +15,6 @@ function commerce_psi_credit_fundraiser_commerce_fundraiser_gateway_info() {
     'form callback' => 'commerce_psi_credit_fundraiser_commerce_submit_form',
     'cleanup callback' => 'commerce_psi_credit_fundraiser_commerce_cleanup',
     'scrub callback' => 'commerce_psi_credit_fundraiser_commerce_scrub',
-    'expire callback' => 'commerce_psi_credit_fundraiser_commerce_expire',
     'validate callback' => 'commerce_psi_credit_fundraiser_commerce_validate',
     'charge callback' => 'commerce_psi_credit_fundraiser_commerce_charge',
   );
