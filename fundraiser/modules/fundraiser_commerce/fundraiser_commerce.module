@@ -621,6 +621,7 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
     $user = user_load_by_mail( $donation->donation['mail'] );
     if (empty($user->uid)) {
       // If not, create a new user account, and add it to the donation.
+      $donation->donation['mail'] = trim($donation->donation['mail']);
       $fields = array(
         'name' => _fundraiser_commerce_email_to_username($donation->donation['mail']),
         'mail' => $donation->donation['mail'],

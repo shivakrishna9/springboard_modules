@@ -612,7 +612,7 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
  * Implements hook_fundraiser_donation_submit().
  */
 function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $donation) {
-  // Given the set of fields defined in fundraiser, gab results here that match those fields.
+  // Given the set of fields defined in fundraiser, grab results here that match those fields.
   // Since we used the fundraiser_field_info keys to generate our webform components with the same form keys
   // And we prevent those values from being overwritten, we can pass the results as an automatic map between the two.
   // Other modules will have to be more particular.
@@ -642,6 +642,7 @@ function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $dona
   }
 
   // Add submission to the donation.
+  $submission_fields['mail'] = trim($submission_fields['mail']);
   $donation->donation = $submission_fields;
   $donation->sid = $form_state['values']['details']['sid'];
   // Figure out which gateway it is that this selection indicates for this node.
