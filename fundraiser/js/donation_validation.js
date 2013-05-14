@@ -179,6 +179,11 @@
             $(this).next().addClass('spacer');
           }
         });
+        // Implementing our own alert close 
+        // Bootstrap.js uses the .on method, not added until jQuery 1.7
+		$('.close').click(function(){
+          $(this).closest('.alert').fadeOut();
+        });
 
       }); // window.ready
     } // attach.function
