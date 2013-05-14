@@ -392,6 +392,7 @@ function webform_user_webform_submit($form, &$form_state) {
   if ($form_state['values']['op'] == $submit_op && _webform_user_is_webform_user_node($node)) {
     $fields = _webform_user_flatten_tree($form_state['values']['submitted_tree'], $node->nid);
     $map = _webform_user_get_map($form_state['values']['details']['nid'], $fields);
+    $fields['mail'] = trim($fields['mail']);
     $account = user_load_by_mail($fields['mail']); // Return user object or false if no user found.
 
     // We have a uid, so this is an authenticated user, update if this isn't an edit.
