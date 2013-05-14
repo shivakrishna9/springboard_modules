@@ -60,6 +60,13 @@ function fundraiser_schema() {
         'not null' => FALSE,
         'default' => 0,
       ),
+      'ask_for_quantity' => array(
+        'description' => 'Flag to toggle the quantity field on and off.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
       'minimum_donation_amount' => array(
         'description' => 'The minimum donation amount the donation form will accept.',
         'type' => 'numeric',
@@ -343,3 +350,18 @@ function fundraiser_update_7000() {
   db_drop_field('fundraiser', 'gateway');
 }
 
+/**
+ * Add new field to the fundraiser table, for quantity support.
+ */
+function fundraiser_update_7001() {
+  $field = array(
+    'ask_for_quantity' => array(
+      'description' => 'Flag to toggle the quantity field on and off.',
+      'type' => 'int',
+      'size' => 'tiny',
+      'not null' => FALSE,
+      'default' => 0,
+    ),  
+  );
+  db_add_field('fundraiser', 'ask_for_quantity', $field['ask_for_quantity']);
+}

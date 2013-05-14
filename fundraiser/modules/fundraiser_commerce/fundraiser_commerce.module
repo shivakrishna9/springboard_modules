@@ -541,6 +541,16 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
   // So we have the correct decimaled value.
   $donation->donation['amount'] = commerce_currency_amount_to_decimal($order->commerce_order_total[LANGUAGE_NONE][0]['amount'],
     $order->commerce_order_total[LANGUAGE_NONE][0]['currency_code']);
+  $donation->donation['quantity'] = 1;
+  $found = commerce_line_item_load_multiple(array(), array('order_id' => $order->order_id));
+  $line_item_id = -1;
+  foreach($found as $id => $found) {
+    $line_item_id = $id;
+  }
+  if ($line_item_id != -1) {
+    $line_item = commerce_line_item_load($line_item_id);
+    $donation->donation['quantity'] = $line_item->quantity;
+  }
   // Data from profile.
   if (isset($order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'])) {
     $profile = commerce_customer_profile_load($order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id']);

@@ -977,7 +977,8 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
       // So instead, we'll go by only adding new things on new nodes.
       // If the node already exists *and* the field is deleted, we leave it deleted.
       // Otherwise we may be adding something back that was deleted on purpose by user (see empty fieldsets).
-      if (isset($fundraiser->is_new) && $fundraiser->is_new == TRUE) {
+      $allow_update = isset($field['#allow_update']) ? $field['#allow_update'] : 0;
+      if ($allow_update || (isset($fundraiser->is_new) && $fundraiser->is_new == TRUE)) {
         $cid = webform_component_insert($component);
         if (module_exists('webform_user') && _webform_user_is_webform_user_node($fundraiser)) {
           static $mapping;
