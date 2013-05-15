@@ -40,57 +40,76 @@ function salesforce_genmap_entity_info() {
  */
 function salesforce_genmap_menu() {
   $items = array();
-
-  // Gather modules that provide mapping support for generic objects.
-  $modules = salesforce_genmap_info();
-  // Here we have some math to this.
-  // If there is only one module to offer a map, then we offer that map at
-  // top level, if not, then we grab the first map as our default.
-  if (count($modules) < 2) {
-    foreach ($modules as $module => $info) {
-      $items['node/%node/salesforce_' . $module] = array(
-        'title' => 'Salesforce maps',
-        'page callback' => 'salesforce_genmap_map_page',
-        'page arguments' => array(1, $module),
-        'access callback' => $info['access callback'],
-        'access arguments' => array(1, $module),
-        'type' => MENU_LOCAL_TASK,
-        'file' => 'includes/salesforce_genmap.map.inc',
-      );
-    }
-  }
-  else {
-    // Returns an array, keyed by supporting module.
-    // Set a top menu.
-    $items['node/%node/salesforce'] = array(
-      'title' => 'Salesforce maps',
-      'page callback' => 'salesforce_help_page',
-      'access arguments' => array('map salesforce objects'),
-      'type' => MENU_LOCAL_TASK,
-    );
-    $items['node/%node/salesforce/salesforce'] = array(
-      'title' => 'Salesforce maps',
-      'page callback' => 'salesforce_help_page',
-      'access arguments' => array('map salesforce objects'),
-      'type' => MENU_DEFAULT_LOCAL_TASK,
-      'weight' => 100,
-    );
-    $first = !empty($modules['webform']) ? 'webform' : '';
-    // For each available module, make a sub menu.
-    foreach ($modules as $module => $info) {
-      $items['node/%node/salesforce/' . $module] = array(
-        'title' => $info['label'] . ' map',
-        'page callback' => 'salesforce_genmap_map_page',
-        'page arguments' => array(1, 3),
-        'access callback' => $info['access callback'],
-        'access arguments' => array(1, 3),
-        'type' => MENU_LOCAL_TASK,
-        'file' => 'includes/salesforce_genmap.map.inc',
-      );
-      $first = empty($first) ? $module : $first;
-    }
-  }
+  $items['node/%node/salesforce'] = array(
+    'title' => 'Salesforce',
+    'page callback' => '_salesforce_map_redirect',
+    'page arguments' => array(1),
+    'access callback' => '_salesforce_map_redirect_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+  );
   return $items;
+}
+
+/**
+ * Menu redirect per node requirement.
+ */
+function _salesforce_map_redirect_access($node) {
+  // If the user has access.
+  if (user_access('map salesforce objects')) {
+    $modules = salesforce_genmap_info();
+    $supported_modules = array();
+    foreach ($modules as $module => $info) {
+      if (in_array($node->type, $info['supported content types'])) {
+        $access_callback = isset($info['access callback']) ? $info['access callback'] : '';
+        if (isset($info['file'])) {
+          module_load_include('', $module, $info['file']);
+        }
+        if (function_exists($access_callback) && $access_callback($node, $module)) {
+          $supported_modules[$module] = $info;
+        }
+      }
+    }
+    // If any of the available SF mapping modules support this type.
+    foreach ($supported_modules as $supported_module => $info) {
+      return TRUE;
+    }
+  }
+  // Else deny access, it's not supported at all.
+  return FALSE;
+}
+
+/**
+ * Menu redirect per node requirement.
+ */
+function _salesforce_map_redirect($node) {
+  // Gather modules that provide mapping support for generic objects.
+  // Given that our spec is such we want to minimize tree depth in form display,
+  // And the menu system is unable to determine the type of the node before
+  // displaying the links, a redirect at runtime is the only viable solution.
+  // Given a node, determine what, if any types of mapping are available for it.
+  $modules = salesforce_genmap_info();
+  $supported_modules = array();
+  foreach ($modules as $module => $info) {
+    if (in_array($node->type, $info['supported content types'])) {
+      $access_callback = isset($info['access callback']) ? $info['access callback'] : '';
+      if (isset($info['file'])) {
+        module_load_include('', $module, $info['file']);
+      }
+      if (function_exists($access_callback) && $access_callback($node, $module)) {
+        $supported_modules[$module] = $info;
+      }
+    }
+  }
+  // Now we have a list of the supported mapping forms filters by access.
+  // Only serve up the first of the available mappings.
+  // TODO: Find support in the future for more than one mapping at this location,
+  // WITHOUT having to rely on pre-set menus. Since menus are overall ignorant of node-type.
+  module_load_include('inc', 'salesforce_genmap', 'includes/salesforce_genmap.map');
+  foreach ($supported_modules as $supported_module => $info) {
+    return salesforce_genmap_map_page($node, $supported_module);
+  }
+  return t('No Salesforce mapping is available for this content type.');
 }
 
 /**

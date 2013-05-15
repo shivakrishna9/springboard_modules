@@ -233,10 +233,18 @@ function salesforce_donation_salesforce_genmap_map_item_alter(&$item, $donation)
  * Implements hook_salesforce_genmap_info().
  */
 function salesforce_donation_salesforce_genmap_info() {
+  $types = fundraiser_get_donation_types();
+  $donation_types = array();
+  foreach ($types as $type => $is_donation) {
+    if ($is_donation) {
+      $donation_types[] = $type;
+    }
+  }
   $items['salesforce_donation'] = array(
     'type' => 'donation',
     'label' => 'Donation',
     'access callback' => 'salesforce_donation_map_page_access',
+    'supported content types' => $donation_types,
   );
   return $items;
 }
@@ -247,7 +255,17 @@ function salesforce_donation_salesforce_genmap_info() {
 function salesforce_donation_salesforce_genmap_info_alter(&$items) {
   // If salesforce_webform exists.
   if (module_exists('fundraiser_webform')) {
-    $items['webform']['access callback'] = 'salesforce_donation_webform_map_page_access';
+    // Strip out webform module support for donation types.
+    $types = fundraiser_get_donation_types();
+    $donation_types = array();
+    foreach ($types as $type => $is_donation) {
+      if ($is_donation) {
+        $donation_types[] = $type;
+      }
+    }
+    $webform_types = webform_variable_get('webform_node_types');
+    $removed_donation_types = array_diff($webform_types, $donation_types);
+    $items['webform']['supported content types'] = $removed_donation_types;
   }
 }
 
@@ -655,22 +673,6 @@ function salesforce_donation_map_page_access($node, $module) {
     return TRUE;
   }
   return FALSE;
-}
-
-/**
- * Access callback for mapping page for salesforce webforms.
- *
- * This avoids a complicated UI, so only let trained users use these two systems
- * together.
- */
-function salesforce_donation_webform_map_page_access($node, $module) {
-  $access = webform_map_page_access($node, $module);
-  if ($node !== FALSE
-    && fundraiser_is_donation_type($node->type)
-    ) {
-    return FALSE;
-  }
-  return $access;
 }
 
 /**

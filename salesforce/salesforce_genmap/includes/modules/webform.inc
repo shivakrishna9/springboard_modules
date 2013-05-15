@@ -37,10 +37,13 @@ function webform_form_salesforce_genmap_map_form_alter(&$form, &$form_state) {
  * Implements hook_salesforce_genmap_info().
  */
 function webform_salesforce_genmap_info() {
+  $webform_types = webform_variable_get('webform_node_types');
   $items['webform'] = array(
     'type' => 'webform',
     'label' => 'Webform',
     'access callback' => 'webform_map_page_access',
+    'supported content types' => $webform_types,
+    'file' => 'includes/modules/webform.inc',
   );
   return $items;
 }
