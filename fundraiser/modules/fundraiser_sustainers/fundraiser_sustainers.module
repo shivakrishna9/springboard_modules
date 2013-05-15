@@ -1695,17 +1695,36 @@ function _fundraiser_sustainers_get_donations_recurr_processed($master_did) {
 }
 
 /**
- * DB function, get donations ready to be processed.
+ * DB function, get unlocked donations ready to be processed.
+ * Lock them.
  */
 function _fundraiser_sustainers_cron_get_recurring($limit = 1000) {
   $now = strtotime('now');
-  $donations = db_query_range('SELECT * FROM {fundraiser_sustainers} r ' .
-    'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
+  $uni_batch_id = uniqid();
+  // Lock them (faster to lock, then query, than the other way around).
+  // Since large data set returns => delay.
+  $donations = db_query('SELECT r.did FROM {fundraiser_sustainers} r ' .
     'WHERE (r.gateway_resp IS NULL OR r.gateway_resp = \'failed\') ' .
     'AND r.next_charge < :now ' .
     'AND r.attempts < 3 ' . // If already been tried 3 times, Stop Trying.
-    'ORDER BY r.next_charge ASC ', 0, $limit,
-    array(':now' => $now))->fetchAll();
+    'AND r.lock_id = 0 '. // And not locked.
+    'LIMIT 0, ' . $limit,
+    array(':now' => $now)
+  )->fetchAllKeyed(0,0);
+  if (!empty($donations)) {
+    db_query('UPDATE {fundraiser_sustainers} r1 ' .
+      'SET r1.lock_id = :uni_batch_id ' .
+      'WHERE r1.did IN (:donations)',
+      array(':uni_batch_id' => $uni_batch_id, ':donations' => $donations)
+    );
+  };
+  // Grab the locked donations for this batch.
+  $donations = db_query('SELECT * FROM {fundraiser_sustainers} r ' .
+    'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
+    'WHERE r.lock_id = :uni_batch_id ' . // Locked to this unique ID.
+    'ORDER BY r.next_charge ASC',
+    array(':uni_batch_id' => $uni_batch_id))->fetchAll();
+  // Return them.
   return $donations;
 }
 

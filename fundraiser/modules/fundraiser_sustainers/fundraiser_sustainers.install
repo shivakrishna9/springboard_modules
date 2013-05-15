@@ -110,6 +110,13 @@ function fundraiser_sustainers_schema() {
         'not null' => FALSE,
         'default' => '',
       ),
+      'lock_id' => array(
+        'description' => t('Lock id for recurring batches to prevent requeue.'),
+        'type' => 'varchar',
+        'length' => '55',
+        'not null' => FALSE,
+        'default' => '0',
+      ),
     ),
     'primary key' => array('did'),
   );
@@ -227,16 +234,32 @@ function fundraiser_sustainers_update_7001(&$sandbox) {
     'not null' => FALSE,
     'default' => '',
   );
-
   db_add_field('fundraiser_sustainers', 'sustainer_key', $sustainer_key);
-
   // Read key and update existing sustainer records.
   $key = fundraiser_sustainers_get_sustainer_key_value();
-
   $sustainers_updated = db_update('fundraiser_sustainers')
   ->fields(array(
     'sustainer_key' => $key,
   ))
   ->execute();
+}
 
+/**
+ * Update 7002.
+ *
+ * Adds an additional field to fundraiser_sustainers that will store the
+ * value of the lock key at the time of processing recurring donations.
+ * This is to prevent concurrent runs picking up the same donations and re-running them.
+ */
+function fundraiser_sustainers_update_7002(&$sandbox) {
+  $field = array(
+    'lock_id' => array(
+      'description' => t('Lock id for recurring batches to prevent requeue.'),
+      'type' => 'varchar',
+      'length' => '55',
+      'not null' => FALSE,
+      'default' => '0',
+    ),
+  );
+  db_add_field('fundraiser_sustainers', 'lock_id', $field['lock_id']);
 }
