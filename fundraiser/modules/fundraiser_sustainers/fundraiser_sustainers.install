@@ -39,6 +39,25 @@ function fundraiser_sustainers_requirements($phase) {
  * Implements hook_schema().
  */
 function fundraiser_sustainers_schema() {
+  $schema['fundraiser_sustainers_nodes'] = array(
+    'description' => 'Stores additional sustainer information per fundraising node.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'Fundraiser node.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'recurring_setting' => array(
+        'description' => 'The recurring display setting for this node.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => 'user_choice', // user_choice, always, never
+      ),
+    ),
+    'primary key' => array('nid'),
+  );
   $schema['fundraiser_sustainers'] = array(
     'description' => 'Stores information about recurring orders.',
     'fields' => array(
@@ -262,4 +281,33 @@ function fundraiser_sustainers_update_7002(&$sandbox) {
     ),
   );
   db_add_field('fundraiser_sustainers', 'lock_id', $field['lock_id']);
+}
+
+/**
+ * Update 7003.
+ *
+ * Adds an additional table to fundraiser_sustainers that will store the
+ * valueof the recurring option display configuration per node.
+ */
+function fundraiser_sustainers_update_7004(&$sandbox) {
+  $schema['fundraiser_sustainers_nodes'] = array(
+    'description' => 'Stores additional sustainer information per fundraising node.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'Fundraiser node.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'recurring_setting' => array(
+        'description' => 'The recurring display setting for this node.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => 'user_choice', // user_choice, always, never
+      ),
+    ),
+    'primary key' => array('nid'),
+  );
+  db_create_table('fundraiser_sustainers_nodes', $schema['fundraiser_sustainers_nodes']);
 }

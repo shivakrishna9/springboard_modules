@@ -388,12 +388,48 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
 }
 
 /**
+ * Node API Functions. Handle for each case of node operation.
+ */
+
+/**
+ * Implements hook_form_BASE_FORM_ID_alter() for node forms.
+ */
+function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_id) {
+  // If this isn't a fundraiser type, ignore it.
+  if (fundraiser_is_donation_type($form['#node']->type)) {
+    $form['fundraiser_settings']['fundraiser_sustainers'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Fundraiser Recurring Display Settings'),
+      '#desciption' => t('Modify the way the recurring option is displayed on this form, or if it is even available.'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+    );
+    $form['fundraiser_settings']['fundraiser_sustainers']['recurring_setting'] = array(
+      '#type' => 'select',
+      '#title' => t('Display setting'),
+      '#options' => array(
+        'user_choice' => t('Recurring is an option on this form, but users may opt out.'),
+        'always' => t('Recurring is an option on this form, and users cannot opt out.'),
+        'never' => t('Recurring is not an option on this form.'),
+      ),
+      '#default_value' => $form['#node']->recurring_setting,
+    );
+  }
+}
+
+/**
  * Implements hook_node_insert().
  * Insert a copy of the default map when a Fundraiser node is created.
  */
 function fundraiser_sustainers_node_insert($node) {
   // If node is a donation type.
   if (fundraiser_is_donation_type($node->type) && function_exists('salesforce_genmap_load_map')) {
+    $sustainers_node = array(
+      'nid' => $node->nid,
+      'recurring_setting' =>  $node->recurring_setting,
+    );
+    _fundraiser_sustainers_update_sustainers_node($sustainers_node);
+
     // And if we have a default map.
     $nid = -1;
     if (!empty($node->clone_from_original_nid)) {
@@ -410,6 +446,36 @@ function fundraiser_sustainers_node_insert($node) {
 }
 
 /**
+ * Implements hook_node_load().
+ */
+function fundraiser_sustainers_node_load($nodes, $types) {
+  foreach ($nodes as $node) {
+    // If this isn't a fundraiser type, ignore it.
+    if (fundraiser_is_donation_type($node->type)) {
+      // Get the fundraiser information.
+      $fundraiser_sustainers = _fundraiser_sustainers_get_sustainers_node_by_nid($node->nid);
+      // Merge data from fundraiser with node. Default to user_choice if no entry yet.
+      $nodes[$node->nid]->recurring_setting = isset($fundraiser_sustainers->recurring_setting) ?
+        $fundraiser_sustainers->recurring_setting : 'user_choice';
+    }
+  }
+}
+
+/**
+ * Implements hook_node_update().
+ */
+function fundraiser_sustainers_node_update($node) {
+  // If this isn't a fundraiser type, ignore it.
+  if (fundraiser_is_donation_type($node->type)) {
+    $sustainers_node = array(
+      'nid' => $node->nid,
+      'recurring_setting' =>  $node->recurring_setting,
+    );
+    _fundraiser_sustainers_update_sustainers_node($sustainers_node);
+  }
+}
+
+/**
  * Implements hook_node_delete().
  * Insert a copy of the default map when a Fundraiser node is created.
  */
@@ -417,6 +483,7 @@ function fundraiser_sustainers_node_delete($node) {
   // If node is a donation type.
   if (fundraiser_is_donation_type($node->type) && function_exists('salesforce_genmap_delete_map')) {
     salesforce_genmap_delete_map($node->nid, 'fundraiser_sustainers');
+    _fundraiser_sustainers_delete_sustainers_node($node->nid);
   }
 }
 
@@ -485,7 +552,9 @@ function fundraiser_sustainers_process_recurring_donations() {
     else {
       // TODO: Unlock the sustainer record. Currently the lock has not been ported from D6.
       // Log the bad sustainer key check.
-      watchdog('fundraiser_sustainers', 'Sustainer order id !did not processed because of sustainer key mismatch. Key file value (!key_file) did not match record value (!record_value).', array('!did' => $recurring->did, '!key_file' => $sustainer_key, '!record_value' => $recurring->sustainer_key), WATCHDOG_CRITICAL);
+      watchdog('fundraiser_sustainers', 'Sustainer order id !did not processed because of sustainer key mismatch. ' .
+      'Key file value (!key_file) did not match record value (!record_value).',
+      array('!did' => $recurring->did, '!key_file' => $sustainer_key, '!record_value' => $recurring->sustainer_key), WATCHDOG_CRITICAL);
     } // End sustainer key match for individual donation.
   }
   if ($successes > 0 || $fails > 0) {
@@ -569,11 +638,34 @@ function fundraiser_sustainers_fundraiser_field_info() {
       'items' => 'recurs|Yes',
       'multiple' => 'Y',
     ),
+    '#allow_update' => 1,
+    '#create_callback' => '_fundraiser_sustainers_recurs_monthly_field_create',
     '#display_callback' => '_fundraiser_sustainers_recurs_monthly_field_display',
      // Display callback, hide this field if the gateway Currently selected by the user is not supportive of recurring.
   );
   // Add a display callback for the gateways, to make sure the selected one is flagged for gateway support or not.
   return $fields;
+}
+
+/**
+ * Field create callback, adjsut the type of the recurring page shown, based on fundraiser settings.
+ */
+function _fundraiser_sustainers_recurs_monthly_field_create($fundraiser, $field) {
+  // If recurring_settingdon't exist, drop the recurring field.
+  if (empty($fundraiser->recurring_setting) || $fundraiser->recurring_setting == 'never') {
+    return FALSE;
+  }
+  // If the show other options is disallowed, unset it.
+  if ($fundraiser->recurring_setting == 'always') {
+    $field['#type'] = 'hidden';
+    $field['#extra'] = array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    );
+    $field['#value'] = 'recurs';
+  }
+  // Return the field to be created. Aka: user_choice
+  return $field;
 }
 
 /**
@@ -1768,4 +1860,53 @@ function _fundraiser_sustainers_get_total_sustainers_by_nid($nid, $start = FALSE
   }
 
   // TODO: add accompanying query for fundraiser_ubercart
+}
+
+/**
+ * CRUD style DB function for fundraiser_sustainers_sustainers_node.
+ */
+function _fundraiser_sustainers_create_sustainers_node($sustainers_node) {
+  $sustainers_node = (array) $sustainers_node;
+  $sustainers_node_data = FALSE;
+  if (isset($sustainers_node['nid'])) {
+    $sustainers_node_data = _fundraiser_sustainers_get_sustainers_node_by_nid($sustainers_node['nid']);
+  }
+  if (!$sustainers_node_data) {
+    drupal_write_record('fundraiser_sustainers_nodes', $sustainers_node);
+  }
+  else {
+    _fundraiser_sustainers_update_sustainers_node($sustainers_node);
+  }
+}
+
+/**
+ * CRUD style DB function for fundraiser_sustainers_sustainers_node.
+ */
+function _fundraiser_sustainers_get_sustainers_node_by_nid($nid) {
+  return db_query('SELECT * FROM {fundraiser_sustainers_nodes} WHERE nid = :nid', array(':nid' => $nid))->fetchObject();
+}
+
+/**
+ * CRUD style DB function for fundraiser_sustainers_sustainers_node.
+ */
+function _fundraiser_sustainers_update_sustainers_node($sustainers_node) {
+  $sustainers_node = (array) $sustainers_node;
+  $sustainers_node_data = FALSE;
+  if (isset($sustainers_node['nid'])) {
+    $sustainers_node_data = _fundraiser_sustainers_get_sustainers_node_by_nid($sustainers_node['nid']);
+  }
+  if (!$sustainers_node_data) {
+    _fundraiser_sustainers_create_sustainers_node($sustainers_node);
+  }
+  else {
+    $sustainers_node = array_merge((array) $sustainers_node_data, $sustainers_node);
+    drupal_write_record('fundraiser_sustainers_nodes', $sustainers_node, 'nid');
+  }
+}
+
+/**
+ * CRUD style DB function for fundraiser_sustainers_sustainers_node.
+ */
+function _fundraiser_sustainers_delete_sustainers_node($nid) {
+  db_delete('fundraiser_sustainers_nodes')->condition('nid', $nid)->execute();
 }
