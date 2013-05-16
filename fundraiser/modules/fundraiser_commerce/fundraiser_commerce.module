@@ -300,6 +300,9 @@ function fundraiser_commerce_fundraiser_gateway_info() {
       if (empty($this_gateway['allow_recurring'])) {
         $this_gateway['allow_recurring'] = array();
       }
+      if (empty($this_gateway['offsite_recurring'])) {
+        $this_gateway['offsite_recurring'] = array();
+      }
       if (empty($this_gateway['offsite_processing'])) {
         $this_gateway['offsite_processing'] = array();
       }
