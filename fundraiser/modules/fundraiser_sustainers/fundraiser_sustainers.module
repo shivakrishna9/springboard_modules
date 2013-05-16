@@ -1402,35 +1402,43 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
     // If this is in fact a recurring donation, then we act.
     if ($donation->donation['recurs_monthly'] == TRUE) {
       $info = _fundraiser_get_donation_gateway($donation->did);
-      if (_fundraiser_sustainers_supports_recurring($info['allow_recurring'], $donation->donation['payment_method'])) {
-        $donation->recurring->master_did = $donation->did;
-        // Add the master to the recurring table.
-        $recurring_donation = array(
-          'did' => $donation->did,
-          'master_did' => $donation->did,
-          'next_charge' => strtotime('now'),
-          'gateway_resp' => 'success',
-          'attempts' => 1,
-        );
-        // Update the recurring table.
-        _fundraiser_sustainers_create_recurring($recurring_donation);
-        // Load the newly created recurring donation into salesforce.
-        if (function_exists('salesforce_genmap_send_object_to_queue')) {
-          $sf_donation = fundraiser_donation_get_donation($donation->did, TRUE);
-          salesforce_genmap_send_object_to_queue('fundraiser_sustainers', 'insert',
-            $sf_donation->node, $sf_donation->did, $sf_donation, 'recurring_donation');
-        }
-        $info = _fundraiser_get_donation_gateway($donation->did);
-        // This created donation is the master, so passing it in to create the set.
-        // We can't predict the form key for these values, so ask the gateway to provide.
-        if (isset($info['expire callback'])) {
-          $expiration_func = $info['expire callback'];
-          if (function_exists($expiration_func)) {
-            $expires = $expiration_func($donation->donation);
-            if (isset($expires['month']) && isset($expires['year'])) {
-              _fundraiser_sustainers_create_future_orders($donation, $expires['month'], $expires['year']);
+      if (_fundraiser_sustainers_supports_recurring($info['allow_recurring'], $donation->donation['payment_method'])) { // Allows recurring
+        if (!_fundraiser_sustainers_offsite_recurring($info['offline_recurring'], $donation->donation['payment_method'])) { // Is not an offline recurring
+          // Then we do all the creating of offline values, table, SF object, and extra orders.
+          $donation->recurring->master_did = $donation->did;
+          // Add the master to the recurring table.
+          $recurring_donation = array(
+            'did' => $donation->did,
+            'master_did' => $donation->did,
+            'next_charge' => strtotime('now'),
+            'gateway_resp' => 'success',
+            'attempts' => 1,
+          );
+          // Update the recurring table.
+          _fundraiser_sustainers_create_recurring($recurring_donation);
+          // Load the newly created recurring donation into salesforce.
+          if (function_exists('salesforce_genmap_send_object_to_queue')) {
+            $sf_donation = fundraiser_donation_get_donation($donation->did, TRUE);
+            salesforce_genmap_send_object_to_queue('fundraiser_sustainers', 'insert',
+              $sf_donation->node, $sf_donation->did, $sf_donation, 'recurring_donation');
+          }
+          $info = _fundraiser_get_donation_gateway($donation->did);
+          // This created donation is the master, so passing it in to create the set.
+          // We can't predict the form key for these values, so ask the gateway to provide.
+          if (isset($info['expire callback'])) {
+            $expiration_func = $info['expire callback'];
+            if (function_exists($expiration_func)) {
+              $expires = $expiration_func($donation->donation);
+              if (isset($expires['month']) && isset($expires['year'])) {
+                _fundraiser_sustainers_create_future_orders($donation, $expires['month'], $expires['year']);
+              }
             }
           }
+        } else {
+          // ALERT: This gateway does it's own recurring stuff, so we skipped it here.
+          // But we should probably tell someone this was attempted.
+          watchdog('fundraiser_sustainers', 'A offsite recurring donation was created, for master donation id #@nid',
+            array('@nid'=> $donation->nid));
         }
       }
       else {
@@ -1581,6 +1589,16 @@ function _fundraiser_sustainers_send_cc_notification($master_did, $uid) {
  */
 function _fundraiser_sustainers_supports_recurring($allow_recurring, $payment_method) {
   if (isset($allow_recurring) && !empty($allow_recurring) && in_array($payment_method, $allow_recurring)) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Helper function, given a gateway determine if the gateway supports recurring donations.
+ */
+function _fundraiser_sustainers_offsite_recurring($offsite_recurring, $payment_method) {
+  if (isset($offsite_recurring) && !empty($offsite_recurring) && in_array($payment_method, $offsite_recurring)) {
     return TRUE;
   }
   return FALSE;
