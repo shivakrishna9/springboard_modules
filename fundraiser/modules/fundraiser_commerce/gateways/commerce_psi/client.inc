@@ -117,4 +117,36 @@ class PsiClient {
       return $response->SendEftPaymentResult;
     }
   }
+
+  public function TestConnection($message) {
+
+    $params = $this->credentials() + array('message' => $message);
+
+    try {
+      $response = $this->soapclient->TestConnection($message);
+    }
+    catch (Exception $ex) {
+      watchdog('commerce_psi', 'The PSI Commerce account @title failed to process an order: @error',
+        array(
+          '@title' => $this->getAccountSetting('title'),
+          '@error' => $ex->getMessage(),
+        ),
+        WATCHDOG_ERROR);
+    }
+
+    if (!empty($response)) {
+      return (object) array(
+        'AmountApproved' => 10,
+        'Approved' => 1,
+        'AuthorizationCode' => 99999,
+        'ClientTransactionId' => 100073006,
+        'ProcessedDateTime' => '2013-05-17T08:44:53.87475-05:00',
+        'ReasonCode' => 1,
+        'ResponseCode' => 1,
+        'ResponseMessage' => 'This was a test transaction.',
+        'ResponseTime' => '2343.75',
+        'TransactionId' => 123123123,
+      ); 
+    }
+  }
 }
