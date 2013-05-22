@@ -165,6 +165,7 @@ function gm_authorizenet_settings_form($config = array()) {
   );
 
   $available_fields = array(
+    '', // Nothing.
     // Normal overrides.
     'x_company',            // Up to 50 characters (no symbols)
     'x_ship_to_company',    // Up to 50 characters (no symbols)
