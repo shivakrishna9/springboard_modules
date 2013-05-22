@@ -1986,8 +1986,10 @@ function springboard_admin_config_donation_form_add($form, $form_state, $email_n
       ),
     ),
     'show_other_amount' => 1,
+    'ask_for_quantity' => 1,
     'minimum_donation_amount' => 10,
   );
+  $node->recurring_setting = 'user_choice';
   $node->is_webform_user = 1;
   $node->send_new_user_email = 0;
   node_save($node);
