@@ -28,9 +28,6 @@ function _commerce_psi_request($payment_method, $nvp, $type = 'credit') {
   $account_details['title'] = $payment_method['title'];
   $client = new PsiClient($account_details);
   if (!empty($client)) {
-    return $client->TestConnection('This is a test message.');
-  }
-  if (!empty($client)) {
     return $client->{$type . 'Request'}($nvp);
   }
 }
