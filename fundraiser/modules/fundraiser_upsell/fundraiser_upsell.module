@@ -87,7 +87,7 @@ function fundraiser_upsell_form_alter(&$form, &$form_state, $form_id) {
       fundraiser_upsell_node_settings($form, $form_state, $form['#node']);
     }
     // View form - add the upsell submit function unless blocked by cookies
-    elseif (_fundraiser_upsell_enabled($form['#node']) && _fundraiser_upsell_check_cookies()) {
+    elseif (_fundraiser_upsell_enabled($form['#node']) && _fundraiser_upsell_check_cookies() && is_null(arg(2))) {
       $form['#submit'][] = 'fundraiser_upsell_webform_submit';
     }
   }
@@ -204,12 +204,34 @@ function fundraiser_upsell_node_form_submit($form, &$form_state) {
  * Extra donation form submit function to attach the upsell process
  */
 function fundraiser_upsell_webform_submit($form, &$form_state) {
-  // Add the upsell nid, sid, & uid to the session data
-  $_SESSION['upsell'] = array(
-    'nid' => $form_state['values']['details']['nid'],
-    'sid' => $form_state['values']['details']['sid'],
-    'uid' => $form_state['values']['details']['uid'],
-  );
+  // Determine if the order is already recurring
+  $recurring = $form_state['values']['submitted_tree']['payment_information']['recurs_monthly'];
+  // Don't upsell if its already recurring or if upsell is deactivated
+  if (empty($recurring) && _fundraiser_upsell_check_cookies()) {
+     // Add the upsell nid, sid, uid, & ending date to the session data
+    $_SESSION['upsell'] = array(
+      'nid' => $form_state['values']['details']['nid'],
+      'sid' => $form_state['values']['details']['sid'],
+      'uid' => $form_state['values']['details']['uid'],
+    );
+  }
+}
+
+/**
+ * Add the donation object to the DB for later processing
+ */
+function fundraiser_upsell_fundraiser_donation_success($donation) {
+  // Check for upsell trigger
+  if (!empty($_SESSION['upsell'])) {
+    $record = array(
+      'sid' => $_SESSION['upsell']['sid'],
+      'nid' => $_SESSION['upsell']['nid'],
+      'uid' => $_SESSION['upsell']['uid'],
+      'donation' => serialize($donation),
+      'created' => time(),
+    );
+    drupal_write_record('fundraiser_upsell_secure', $record);
+  }
 }
 
 /**
@@ -220,7 +242,7 @@ function fundraiser_upsell_page_alter(&$page) {
   if (!empty($_SESSION['upsell'])) {
     // Add the upsell to the page
     $node = node_load($_SESSION['upsell']['nid']);
-    $upsell = _fundraiser_upsell_content($node, $_SESSION['upsell']['sid']);
+    $upsell = _fundraiser_upsell_content($node, $_SESSION['upsell']['sid'], $_SESSION['upsell']['end']);
     $page['page_bottom']['message'] = $upsell;
     // Remove the upsell session data
     unset($_SESSION['upsell']);
@@ -231,6 +253,7 @@ function fundraiser_upsell_page_alter(&$page) {
 /**
  * Upsell donation form
  * @param integer $sid
+ * The sid for the master donation
  */
 function fundraiser_upsell_donation_form($form, &$form_state, $sid=0) {
   // Get the default suggested amount based on submitted order
@@ -302,32 +325,53 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
   if (!$same_user || $is_recurring) {
     return FALSE;
   }
-
-  // Decouple if needed
-  if ($decouple) {
-    $order = _fundraiser_upsell_clone_order($order);
-  }
   // Create the recurring donation series
-  fundraiser_upsell_create_recurring($order, $amount);
-  // Grab and process the thank you content if successful
+  fundraiser_upsell_create_recurring($order, $amount, $decouple);
+  // Grab and process the thank you content
   $content = variable_get('fundraiser_upsell_thank_you_content', 'Thank you for your recurring donation!');
   return $content;
 }
 
 /**
  * Convert the single donation into a recurring donation
- * @param object $order - the master order
- * @param float $amount - the decimal amount for recurring donations
+ * @param object $order
+ *   The master order
+ * @param float $amount
+ *   The decimal amount for recurring donations
+ * @param boolean $decouple
+ *   If the new series should be decoupled from the original order
  * @return boolean
  */
-function fundraiser_upsell_create_recurring($order, $amount) {
+function fundraiser_upsell_create_recurring($order, $amount, $decouple) {
+  // Remove the order from the queue
+  
+  // Get the donation object from temporary storage & process the recurring
+  $donation = _fundraiser_upsell_get_donation($order_id);
+  // If no object is found, return FALSE
+  if (empty($donation)) {
+    return FALSE;
+  }
+  $month = $donation->data['payment_fields']['credit']['card_expiration_month'];
+  (!empty($month)) ? $month = $month : $month = date('m');
+  $year = $donation->data['payment_fields']['credit']['card_expiration_year'];
+  (!empty($year)) ? $year = $year : $year = date('Y', strtotime('+1 year'));
+  
+  // Decouple if needed
+  if ($decouple) {
+    $order = _fundraiser_upsell_clone_order($order);
+    // Change donation object
+    $donation->sid = 0;
+    $donation->did = $order->order_id;
+  }
+  // Change amount on donation object
+  $donation->donation['amount'] = $amount;
+  
+  _fundraiser_sustainers_create_future_orders($donation, $month, $year);
   // Set the fundraiser recurring acceptance cookie
   // setcookie('fundraiser_upsell_acceptance', 1, REQUEST_TIME + 3600 * 24 * variable_get('fundraiser_upsell_acceptance_lifetime', 0), "/");
   // _fundraiser_upsell_thankyou_mail();
   // watchdog('fundraiser_upsell', 'Upsell notice sent to @mail', array('@mail' => $user->mail), NULL, WATCHDOG_INFO);
-
-  // Prepare and send the fundraiser upsell success email
-  // Set watchdog message if unsuccessful
+  // Add to the queue?
   return TRUE;
 }
 

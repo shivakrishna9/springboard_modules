@@ -191,6 +191,10 @@ function _fundraiser_upsell_find_suggested_amount($amount) {
  * @return object $new_order
  */
 function _fundraiser_upsell_clone_order($order) {
+  $old_order_id = $order->order_id;
+  $fundraiser = db_query('SELECT * FROM {fundraiser_donation} WHERE did = :did',
+        array(':did' => $old_order_id)
+      )->fetchAssoc();
   $new_order = $order;
   // Modify the order
   $new_order->log = "Cloned from order# $order->order_id";
@@ -206,7 +210,34 @@ function _fundraiser_upsell_clone_order($order) {
   $new_order->commerce_order_total['und'][0]['amount'] = 0;
   $new_order->commerce_order_total['und'][0]['data']['components'][0]['price']['amount'] = 0;
   // Create new order
-  // commerce_order_save($new_order);
+  commerce_order_save($new_order);
   // Copy the new order to fundraiser
+  $fundraiser['did'] = $new_order->order_id;
+  $fundraiser['sid'] = 0;
+  $fundraiser['amount'] = 0;
+  $fundraiser['created'] = time();
+  $fundraiser['changed'] = time();
+  drupal_write_record('fundraiser_donation', $fundraiser);
+  // Add the old order id as a reference
+  $new_order->old_order_id = $old_order_id;
   return $new_order;
+}
+
+/**
+ * Get the donation object out of the DB
+ * @param int $order_id
+ * The order id for the stored donation
+ * @return object $donation
+ * A donation object
+ */
+function _fundraiser_upsell_get_donation($order_id) {
+  $donation = db_query('
+    SELECT fus.donation FROM {fundraiser_upsell_secure} AS fus, {fundraiser_donation} AS fd
+    WHERE fd.sid = fus.sid
+    AND fd.nid = fus.nid
+    AND fd.uid = fus.uid
+    AND fd.did = did',
+      array(':did' => $order_id)
+    )->fetchField();
+  return unserialize($donation);
 }
