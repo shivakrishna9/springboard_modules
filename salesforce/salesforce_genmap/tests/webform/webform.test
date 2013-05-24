@@ -235,16 +235,7 @@ class SalesforceWebformTestCase extends SalesforceGenmapTestCase {
     switch ($type) {
       case 'salesforce_map':
         return 'node/' . $arg1 . '/salesforce';
-/*
-// Depreciated menu pathing, see ticket #304.
-// Rerouting now on the fly based on the node values at the time.
-        if (module_exists('salesforce_donation')) {
-          return 'node/' . $arg1 . '/salesforce/webform';
-        }
-        else {
-          return 'node/' . $arg1 . '/salesforce_webform';
-        }
-*/
+
       case 'submission':
         return 'node/' . $arg1;
 
