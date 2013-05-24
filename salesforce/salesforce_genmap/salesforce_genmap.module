@@ -47,6 +47,7 @@ function salesforce_genmap_menu() {
     'access callback' => '_salesforce_map_redirect_access',
     'access arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
+    'file' => 'includes/salesforce_genmap.map.inc'
   );
   return $items;
 }
@@ -78,39 +79,6 @@ function _salesforce_map_redirect_access($node) {
   }
   // Else deny access, it's not supported at all.
   return FALSE;
-}
-
-/**
- * Menu redirect per node requirement.
- */
-function _salesforce_map_redirect($node) {
-  // Gather modules that provide mapping support for generic objects.
-  // Given that our spec is such we want to minimize tree depth in form display,
-  // And the menu system is unable to determine the type of the node before
-  // displaying the links, a redirect at runtime is the only viable solution.
-  // Given a node, determine what, if any types of mapping are available for it.
-  $modules = salesforce_genmap_info();
-  $supported_modules = array();
-  foreach ($modules as $module => $info) {
-    if (in_array($node->type, $info['supported content types'])) {
-      $access_callback = isset($info['access callback']) ? $info['access callback'] : '';
-      if (isset($info['file'])) {
-        module_load_include('', $module, $info['file']);
-      }
-      if (function_exists($access_callback) && $access_callback($node, $module)) {
-        $supported_modules[$module] = $info;
-      }
-    }
-  }
-  // Now we have a list of the supported mapping forms filters by access.
-  // Only serve up the first of the available mappings.
-  // TODO: Find support in the future for more than one mapping at this location,
-  // WITHOUT having to rely on pre-set menus. Since menus are overall ignorant of node-type.
-  module_load_include('inc', 'salesforce_genmap', 'includes/salesforce_genmap.map');
-  foreach ($supported_modules as $supported_module => $info) {
-    return salesforce_genmap_map_page($node, $supported_module);
-  }
-  return t('No Salesforce mapping is available for this content type.');
 }
 
 /**
