@@ -17,7 +17,7 @@ class SalesforceLogHandlerFilterModule extends views_handler_filter_in_operator 
    */
   public function getValueOptions() {
     if (!isset($this->value_options)) {
-      $result = db_query("SELECT distinct(module) FROM " . $this->view->base_table);
+      $result = db_query("SELECT distinct(module) FROM {" . $this->view->base_table . "}");
       if ($result->rowCount()) {
         foreach ($result as $record) {
           $this->value_options[$record->module] = $record->module;

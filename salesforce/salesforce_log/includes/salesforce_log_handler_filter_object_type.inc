@@ -16,7 +16,7 @@ class SalesforceLogHandlerFilterObjectType extends views_handler_filter_in_opera
    * List of possible Salesforce object types.
    */
   public function getValueOptions() {
-    $result = db_query("SELECT distinct(object_type) FROM " . $this->view->base_table);
+    $result = db_query("SELECT distinct(object_type) FROM {" . $this->view->base_table . "}");
     if ($result->rowCount()) {
       foreach ($result as $record) {
         $this->value_options[$record->object_type] = $record->object_type;
