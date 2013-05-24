@@ -16,13 +16,11 @@ function fundraiser_sustainers_requirements($phase) {
       'severity' => fundraiser_sustainers_sustainer_key_file_exists() ? REQUIREMENT_OK : REQUIREMENT_WARNING,
       'weight' => '-1000',
     );
-
     $key_value = fundraiser_sustainers_get_sustainer_key_value();
     if (!$key_value) {
       $key_value = t('NO VALUE SET');
     }
     $key_match_for_environment = fundraiser_sustainers_processor_key_match();
-
     $requirements['fundraiser_sustainers_key_configured'] = array(
       'title' => t('Fundraiser sustainer key value'),
       'description' => t('The key file\'s value (' . $key_value . ') matches the current server\'s host name ' . $_SERVER['HTTP_HOST'] . '.'),
@@ -30,9 +28,9 @@ function fundraiser_sustainers_requirements($phase) {
       'severity' =>  $key_match_for_environment ? REQUIREMENT_OK : REQUIREMENT_WARNING,
       'weight' => '-999',
     );
-
     return $requirements;
   }
+  return array();
 }
 
 /**
