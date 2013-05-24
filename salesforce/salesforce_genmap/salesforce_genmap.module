@@ -56,24 +56,25 @@ function salesforce_genmap_menu() {
  */
 function _salesforce_map_redirect_access($node) {
   // If the user has access.
-  if (user_access('map salesforce objects')) {
-    $modules = salesforce_genmap_info();
-    $supported_modules = array();
-    foreach ($modules as $module => $info) {
-      if (in_array($node->type, $info['supported content types'])) {
-        $access_callback = isset($info['access callback']) ? $info['access callback'] : '';
-        if (isset($info['file'])) {
-          module_load_include('', $module, $info['file']);
-        }
-        if (function_exists($access_callback) && $access_callback($node, $module)) {
-          $supported_modules[$module] = $info;
-        }
+  $modules = salesforce_genmap_info();
+  $supported_modules = array();
+  foreach ($modules as $module => $info) {
+    if (in_array($node->type, $info['supported content types'])) {
+      $access_callback = isset($info['access callback']) ? $info['access callback'] : '';
+      if (isset($info['file'])) {
+        module_load_include('', $module, $info['file']);
+      }
+      if (function_exists($access_callback) && $access_callback($node, $module)) {
+        $supported_modules[$module] = $info;
+      }
+      elseif (user_access('map salesforce objects')) { // Override if you can map SF objects.
+        $supported_modules[$module] = $info;
       }
     }
-    // If any of the available SF mapping modules support this type.
-    foreach ($supported_modules as $supported_module => $info) {
-      return TRUE;
-    }
+  }
+  // If any of the available SF mapping modules support this type.
+  foreach ($supported_modules as $supported_module => $info) {
+    return TRUE;
   }
   // Else deny access, it's not supported at all.
   return FALSE;
