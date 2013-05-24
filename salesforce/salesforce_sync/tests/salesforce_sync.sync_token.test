@@ -77,7 +77,7 @@ class SalesforceSyncQueueTokenTestCase extends SalesforceQueueTestCase {
     $account_id = array_shift($processed_items['Account']);
 
     // Retreive the contact object so we can verify it's AccountId field.
-    $result = $this->soap->retrieve('AccountId', 'Contact', array($contact_id));
+    $result = $this->processor->salesforceSync->soap->retrieve('AccountId', 'Contact', array($contact_id));
 
     // Grab the account id stored on the contact for comparison.
     $contact_account_id = $result[0]->fields->AccountId;
