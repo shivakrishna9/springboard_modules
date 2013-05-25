@@ -422,14 +422,16 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
  * Insert a copy of the default map when a Fundraiser node is created.
  */
 function fundraiser_sustainers_node_insert($node) {
-  // If node is a donation type.
-  if (fundraiser_is_donation_type($node->type) && function_exists('salesforce_genmap_load_map')) {
+  if (fundraiser_is_donation_type($node->type)) {
+    // If node is a donation type.
     $sustainers_node = array(
       'nid' => $node->nid,
       'recurring_setting' =>  $node->recurring_setting,
     );
     _fundraiser_sustainers_update_sustainers_node($sustainers_node);
+  }
 
+  if (fundraiser_is_donation_type($node->type) && module_exists('salesforce_genmap')) {
     // And if we have a default map.
     $nid = -1;
     if (!empty($node->clone_from_original_nid)) {
@@ -480,10 +482,12 @@ function fundraiser_sustainers_node_update($node) {
  * Insert a copy of the default map when a Fundraiser node is created.
  */
 function fundraiser_sustainers_node_delete($node) {
-  // If node is a donation type.
-  if (fundraiser_is_donation_type($node->type) && function_exists('salesforce_genmap_delete_map')) {
-    salesforce_genmap_delete_map($node->nid, 'fundraiser_sustainers');
+  if (fundraiser_is_donation_type($node->type)) {
     _fundraiser_sustainers_delete_sustainers_node($node->nid);
+  }
+  // If node is a donation type.
+  if (fundraiser_is_donation_type($node->type) && module_exists('salesforce_genmap')) {
+    salesforce_genmap_delete_map($node->nid, 'fundraiser_sustainers');
   }
 }
 
@@ -1265,7 +1269,7 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year) {
       // Update the recurring table.
       _fundraiser_sustainers_create_recurring($recurring_donation);
       // Load the newly created individual donation into salesforce_donation.
-      if (function_exists('salesforce_genmap_send_object_to_queue')) {
+      if (module_exists('salesforce_genmap')) {
         $sf_donation = fundraiser_donation_get_donation($new_donation->did, TRUE);
         salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert',
           $sf_donation->node, $sf_donation->did, $sf_donation, 'donation');
@@ -1417,7 +1421,7 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
           // Update the recurring table.
           _fundraiser_sustainers_create_recurring($recurring_donation);
           // Load the newly created recurring donation into salesforce.
-          if (function_exists('salesforce_genmap_send_object_to_queue')) {
+          if (module_exists('salesforce_genmap')) {
             $sf_donation = fundraiser_donation_get_donation($donation->did, TRUE);
             salesforce_genmap_send_object_to_queue('fundraiser_sustainers', 'insert',
               $sf_donation->node, $sf_donation->did, $sf_donation, 'recurring_donation');

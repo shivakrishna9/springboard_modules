@@ -275,23 +275,17 @@ class FundraiserSustainerTest extends FundraiserSetup {
   function testFundraiserSustainerNoProcessOnMissingKeyStandardCronRun() {
     // Create a recurring donation to test with.
     $master_did = $this->fundraiserSustainerCreateRecurringDonation();
-
     // On initial start, there is no key.
     variable_set('encrypt_secure_key_path', '');
-
     // Run cron.
     $this->cronRun();
-
     // Reload the page to render drupal messages.
     $this->drupalGet('');
-
     // Invalid sustainer key message is displayed.
     $this->assertText('The fundraiser sustainer key has not been configured correctly. Recurring donations will not be processed.',
       t('Cron failed to execute with no key set.'), t('Fundraiser Sustainer Key'));
-
     // Get the total number of sustainers processed.
     $sustainers_processed = $this->fundraiserSustainerChargeCount($master_did);
-
     // Ensure no sustainers were actually processed.
     $this->assertEqual(0, $sustainers_processed, 'Number of sustainers processed is 0.');
   }
@@ -303,26 +297,19 @@ class FundraiserSustainerTest extends FundraiserSetup {
   function testFundraiserSustainerNoProcessOnMissingKeyStandaloneCronRun() {
     // Turn on standalone cron.
     variable_set('fundraiser_standalone_cron_enabled', 1);
-
     // Create a recurring donation to test with.
     $master_did = $this->fundraiserSustainerCreateRecurringDonation();
-
     // On initial start, there is no key.
     variable_set('encrypt_secure_key_path', '');
-
     // Run standalone cron endpoint.
     $this->drupalGet('fundraiser_cron');
-
     // Reload the page to render drupal messages.
     $this->drupalGet('');
-
     // Invalid sustainer key message is displayed.
     $this->assertText('The fundraiser sustainer key has not been configured correctly. Recurring donations will not be processed.',
       t('Cron failed to execute with no key set.'), t('Fundraiser Sustainer Key'));
-
     // Get the total number of sustainers processed.
     $sustainers_processed = $this->fundraiserSustainerChargeCount($master_did);
-
     // Ensure no sustainers were actually processed.
     $this->assertEqual(0, $sustainers_processed, 'Number of sustainers processed is 0.');
   }
@@ -334,24 +321,18 @@ class FundraiserSustainerTest extends FundraiserSetup {
   function testFundraiserSustainerNoProcessOnKeyMismatch() {
     // Create a recurring donation to test with.
     $master_did = $this->fundraiserSustainerCreateRecurringDonation();
-
     // Set up sustainer key file with a bad key.
     variable_set('encrypt_secure_key_path', 'sites/default/files');
     file_put_contents('sites/default/files/sustainer.key', 'BADKEY');
-
     // Run cron.
     $this->cronRun();
-
     // Reload the page to render drupal messages.
     $this->drupalGet('');
-
     // Invalid sustainer key message is displayed.
     $this->assertText('The fundraiser sustainer key has not been configured correctly. Recurring donations will not be processed.',
       t('Cron failed to execute with no key set.'), t('Fundraiser Sustainer Key'));
-
     // Get the total number of sustainers processed.
     $sustainers_processed = $this->fundraiserSustainerChargeCount($master_did);
-
     // Ensure no sustainers were actually processed.
     $this->assertEqual(0, $sustainers_processed, 'Number of sustainers processed is 0.');
   }
@@ -364,23 +345,18 @@ class FundraiserSustainerTest extends FundraiserSetup {
     // Set up sustainer key file with a bad key on purpose.
     variable_set('encrypt_secure_key_path', 'sites/default/files');
     file_put_contents('sites/default/files/sustainer.key', 'example.prod');
-
     // Create a recurring donation to test with. These donations should have example.production
     // as their sustainer key.
     $master_did = $this->fundraiserSustainerCreateRecurringDonation();
-
     // Make sure key is example.prod
     $donations = _fundraiser_sustainers_get_donations_recurr_by_member($master_did);
-
     foreach ($donations as $donation) {
       // Skip the first order.
       if ($donation->did != $donation->master_did) {
         $this->assertEqual('example.prod', $donation->sustainer_key, 'Sustainer record contains the correct sustainer key.');
       }
     }
-
     file_put_contents('sites/default/files/sustainer.key', trim($_SERVER['HTTP_HOST'])); // Set up key correctly for this environment.
-
     // With key setup, advance one charge and check the state afterwards.
     $yesterday = strtotime('-1 day'); // Use yesterday because the cron run happens right after setting this
     db_update('fundraiser_sustainers')
@@ -389,16 +365,12 @@ class FundraiserSustainerTest extends FundraiserSetup {
       ))
       ->condition('did', 2, '=')
       ->execute();
-
     // Run cron.
     $this->cronRun();
-
     // Reload the page to render drupal messages.
     $this->drupalGet('');
-
     // Get the total number of sustainers processed.
     $sustainers_processed = $this->fundraiserSustainerChargeCount($master_did);
-
     // Ensure no sustainers were actually processed.
     $this->assertEqual(0, $sustainers_processed, 'Number of sustainers processed is 0.');
   }
@@ -411,21 +383,17 @@ class FundraiserSustainerTest extends FundraiserSetup {
     // Set up sustainer key file with a bad key on purpose.
     variable_set('encrypt_secure_key_path', 'sites/default/files');
     file_put_contents('sites/default/files/sustainer.key', trim($_SERVER['HTTP_HOST']));
-
     // Create a recurring donation to test with. These donations should have example.production
     // as their sustainer key.
     $master_did = $this->fundraiserSustainerCreateRecurringDonation();
-
     // Make sure key is example.prod
     $donations = _fundraiser_sustainers_get_donations_recurr_by_member($master_did);
-
     foreach ($donations as $donation) {
       // Skip the first order.
       if ($donation->did != $donation->master_did) {
         $this->assertEqual(trim($_SERVER['HTTP_HOST']), $donation->sustainer_key, 'Sustainer record contains the correct sustainer key.');
       }
     }
-
     // With key setup, advance one charge and check the state afterwards.
     $yesterday = strtotime('-1 day'); // Use yesterday because the cron run happens right after setting this
     db_update('fundraiser_sustainers')
@@ -434,19 +402,14 @@ class FundraiserSustainerTest extends FundraiserSetup {
       ))
       ->condition('did', 2, '=')
       ->execute();
-
     // Run cron.
     $this->cronRun();
-
     // Reload the page to render drupal messages.
     $this->drupalGet('');
-
     // Donation success message is displayed.
     $this->assertText(t('Donation was successfully processed.'), t('Donation success message is displayed.'));
-
     // Get the total number of sustainers processed.
     $sustainers_processed = $this->fundraiserSustainerChargeCount($master_did);
-
     // Ensure no sustainers were actually processed.
     $this->assertEqual(1, $sustainers_processed, 'Number of sustainers processed is 1.');
   }
@@ -476,7 +439,6 @@ class FundraiserSustainerTest extends FundraiserSetup {
       $master_did = $donation->did;
       break;
     }
-
     return $master_did;
   }
 
@@ -489,7 +451,6 @@ class FundraiserSustainerTest extends FundraiserSetup {
       ->condition('master_did', $master_did, '=')
       ->condition('gateway_resp', 'success', '=')
       ->condition('did', $master_did, '!='); // exclude first order in series
-
      return $query->countQuery()->execute()->fetchField();
   }
 

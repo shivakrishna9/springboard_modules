@@ -190,47 +190,49 @@ function fundraiser_sustainers_modules_enabled($modules) {
  * Helper function, adding default salesforce map if needed.
  */
 function _fundraiser_sustainers_install_default_sf_map() {
-  $map = salesforce_genmap_load_map(-1, 'fundraiser_sustainers');
-  if (empty($map)) {
-    $map = array();
-    $map = entity_create('salesforce_genmap_map', $map);
-    $map->nid = -1;
-    $map->map_handler = 'fundraiser_sustainers';
-    $map->salesforce_object_type = 'npe03__Recurring_Donation__c';
-    $object_type = '';
-    //module_load_include('inc', 'salesforce_genmap', 'includes/salesforce_genmap.map');
-    //if (function_exists('salesforce_get_api')) {
-    //  $sfapi = salesforce_get_api();
-    //  if ($sfapi->isAuthorized()) {
-    //    if (function_exists('_sfw_salesforce_record_type_list')) {
-    //      $sf_records = _sfw_salesforce_record_type_list($sfapi, 'npe03__Recurring_Donation__c');
-    //      $sf_records = array_flip($sf_records);
-    //      $object_type = $sf_records['Donation'];
-    //    }
-    //  }
-    //}
-    // There seems to be no subtype record type for recurring donations, so leaving this out.
-    $map->salesforce_record_type = $object_type;
-    $map->field_map = array(
-      'fundraiser_sustainers_map' => array(
-        'full_name' => 'Name',
-        'amount' => 'npe03__Amount__c',
-        'contact' => 'npe03__Contact__c',
-        'installment_period' => 'npe03__Installment_Period__c',
-        'schedule_type' => 'npe03__Schedule_Type__c',
-        'installments' => 'npe03__Installments__c',
-        'last_payment_date' => 'npe03__Last_Payment_Date__c',
-        'next_payment_date' => 'npe03__Next_Payment_Date__c',
-      ),
-    );
-    $map->sync_options = array(
-      'insert' => 'insert',
-      'update' => 'update',
-      'delete' => 'delete',
-    );
-    $map->status = 1;
-    $map->module = 'fundraiser_sustainers';
-    salesforce_genmap_save_map($map, 'fundraiser_sustainers');
+  if (module_exists('salesforce_genmap')) {
+    $map = salesforce_genmap_load_map(-1, 'fundraiser_sustainers');
+    if (empty($map)) {
+      $map = array();
+      $map = entity_create('salesforce_genmap_map', $map);
+      $map->nid = -1;
+      $map->map_handler = 'fundraiser_sustainers';
+      $map->salesforce_object_type = 'npe03__Recurring_Donation__c';
+      $object_type = '';
+      //module_load_include('inc', 'salesforce_genmap', 'includes/salesforce_genmap.map');
+      //if (function_exists('salesforce_get_api')) {
+      //  $sfapi = salesforce_get_api();
+      //  if ($sfapi->isAuthorized()) {
+      //    if (function_exists('_sfw_salesforce_record_type_list')) {
+      //      $sf_records = _sfw_salesforce_record_type_list($sfapi, 'npe03__Recurring_Donation__c');
+      //      $sf_records = array_flip($sf_records);
+      //      $object_type = $sf_records['Donation'];
+      //    }
+      //  }
+      //}
+      // There seems to be no subtype record type for recurring donations, so leaving this out.
+      $map->salesforce_record_type = $object_type;
+      $map->field_map = array(
+        'fundraiser_sustainers_map' => array(
+          'full_name' => 'Name',
+          'amount' => 'npe03__Amount__c',
+          'contact' => 'npe03__Contact__c',
+          'installment_period' => 'npe03__Installment_Period__c',
+          'schedule_type' => 'npe03__Schedule_Type__c',
+          'installments' => 'npe03__Installments__c',
+          'last_payment_date' => 'npe03__Last_Payment_Date__c',
+          'next_payment_date' => 'npe03__Next_Payment_Date__c',
+        ),
+      );
+      $map->sync_options = array(
+        'insert' => 'insert',
+        'update' => 'update',
+        'delete' => 'delete',
+      );
+      $map->status = 1;
+      $map->module = 'fundraiser_sustainers';
+      salesforce_genmap_save_map($map, 'fundraiser_sustainers');
+    }
   }
 }
 
