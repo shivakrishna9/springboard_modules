@@ -36,6 +36,17 @@
         $('.fundraiser-donation-form').validate({
             onfocusout: function (element) {
             $(element).valid();
+            // Callback for real-time onkeyup of form elements
+            var isValid = $(element).valid();
+            if (typeof validateKeyCallback != "undefined" && isValid == 0) {
+              // Set status to 0
+              window.validateKeyCallback.status = 0;
+              validateKeyCallback.error(element);
+            } else if (typeof validateKeyCallback != "undefined" && isValid == 1) {
+              // Set status to 1
+              window.validateKeyCallback.status = 1;
+              validateKeyCallback.success(element);         
+            }
           },
           highlight: function(element) {
             $(element).closest('.control-group').removeClass('success').addClass('error');
