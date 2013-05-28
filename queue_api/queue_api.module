@@ -80,6 +80,8 @@ function sf_queue_insert($oid, $type, $action) {
   if ($valid) {
     _sf_queue_insert($oid, $type, $action);
   }
+
+  return $valid;
 }
 
 /**
