@@ -1094,8 +1094,10 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
       $state_field['#prefix'] = '<div id="zone-select-wrapper">';
       $state_field['#suffix'] = '</div>';
 
-      // preload any fields if the user is logged in
-      if (user_is_logged_in()) {
+      // preload any fields if the user is logged in and if offline exists, when not in offline mode 
+      if (user_is_logged_in() &&
+        ( !function_exists('_fundraiser_offline_is_offline') || (function_exists('_fundraiser_offline_is_offline') && !_fundraiser_offline_is_offline()) )
+        ) {
 
         // add default country & state values from user profile
         if ($fids['country'] && $user->profile_country) {
