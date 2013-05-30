@@ -1,3 +1,7 @@
+2013-05-30 Ben Clark <benjamin.clark@jacksonriver.com>
+
+   * fundraiser.module: Changing `fundraiser_node_view()` to only alter the body content when `!$teaser && $page`
+   
 2013-02-14 Jeremy Isett <jeremy.isett@jacksonriver.com>
 
    * fundraiser.module (fundraiser_process_recurring_donations): queuing the donation order after the final attempt
