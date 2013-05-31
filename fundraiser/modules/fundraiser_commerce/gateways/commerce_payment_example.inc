@@ -12,6 +12,7 @@ function commerce_payment_example_fundraiser_commerce_fundraiser_gateway_info() 
   return array(
     'payment_method' => array('credit'),
     'allow_recurring' => array('credit'),
+    'offsite_recurring' => array('credit'),
     'allow_refund' => array('credit'),
     'form callback' => 'commerce_payment_example_fundraiser_commerce_form',
     'cleanup callback' => 'commerce_payment_example_fundraiser_commerce_cleanup',
