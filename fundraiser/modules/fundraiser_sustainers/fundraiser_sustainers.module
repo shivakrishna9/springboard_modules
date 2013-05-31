@@ -338,51 +338,57 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
   // Alter donations based on recurring status.
   if ($context['module'] == 'salesforce_donation') {
     $donation = $context['object'];
+    $info = _fundraiser_get_donation_gateway($donation->did);
+    $offsite_recurring = _fundraiser_sustainers_offsite_recurring($info['offsite_recurring'], $donation->donation['payment_method']);
     $map = $context['map'];
-    if (isset($map->field_map['salesforce_donation_map']['probability'])) {
-      if ($donation->donation['recurs_monthly'] == TRUE && $donation->status_charged != 1) {
-        $sf_field = $map->field_map['salesforce_donation_map']['probability'];
-        $fields[$sf_field] = 50;
-      }
-    }
-    if (isset($map->field_map['salesforce_donation_map']['stage'])) {
-      $sf_field = $map->field_map['salesforce_donation_map']['stage'];
-      if ($fields[$sf_field] == 'Posted' && $donation->donation['recurs_monthly'] == TRUE && $donation->status_charged != 1) {
-        $sf_field = $map->field_map['salesforce_donation_map']['stage'];
-        $fields[$sf_field] = 'Pledged';
-      }
-    }
-    if (isset($map->field_map['salesforce_donation_map']['transaction_date'])) {
-      $sf_field = $map->field_map['salesforce_donation_map']['transaction_date'];
-      if ($donation->donation['recurs_monthly'] == TRUE && $donation->status_charged != 1) {
-        $sf_field = $map->field_map['salesforce_donation_map']['transaction_date'];
-        unset($fields[$sf_field]);
-      }
-    }
-    // Lastly, add a field iff recurring object.
-    if ($donation->donation['recurs_monthly'] == TRUE && !empty($donation->master_did) ) {
-      $fields['npe03__Recurring_Donation__c'] = '[npe03__Recurring_Donation__c:recurring_donation:' . $donation->master_did . ']';
-    }
-    // Lastly, add a field iff recurring object.
-    if ($donation->donation['recurs_monthly'] == TRUE && empty($donation->master_did) ) {
-      $fields['npe03__Recurring_Donation__c'] = '[npe03__Recurring_Donation__c:recurring_donation:' . $donation->did . ']';
-    }
 
-    // If we're dealing with a sustainer charge, only send a subset of data so that other fields
-    // that may have been changed in Salesforce isn't overwritten.
-    if ($donation->donation['recurs_monthly'] == TRUE && $donation->status_charged == 1
-      && !empty($donation->master_did) && $donation->did != $donation->master_did) {
-      // @TODO: Add a configuration screen for specifying which fields get sent back
-      // to Salesforce when a recurring donation charge is processed.
-      $fields_to_update_on_charge = variable_get('fundraiser_sustainers_recurring_donation_charge_fields',
-        array('StageName', 'Transaction_Date_Time__c', 'Probability'));
-      $mapped_fields = array_keys($fields);
-      // Remove fields that are not to be updated when a sustainer is charged.
-      foreach ($mapped_fields as $field) {
-        if (!in_array($field, $fields_to_update_on_charge)) {
-          unset($fields[$field]);
+    if (!$offsite_recurring) {
+      if (isset($map->field_map['salesforce_donation_map']['probability'])) {
+        if ($donation->donation['recurs_monthly'] == TRUE && $donation->status_charged != 1) {
+          $sf_field = $map->field_map['salesforce_donation_map']['probability'];
+          $fields[$sf_field] = 50;
         }
       }
+      if (isset($map->field_map['salesforce_donation_map']['stage'])) {
+        $sf_field = $map->field_map['salesforce_donation_map']['stage'];
+        if ($fields[$sf_field] == 'Posted' && $donation->donation['recurs_monthly'] == TRUE && $donation->status_charged != 1) {
+          $sf_field = $map->field_map['salesforce_donation_map']['stage'];
+          $fields[$sf_field] = 'Pledged';
+        }
+      }
+      if (isset($map->field_map['salesforce_donation_map']['transaction_date'])) {
+        $sf_field = $map->field_map['salesforce_donation_map']['transaction_date'];
+        if ($donation->donation['recurs_monthly'] == TRUE && $donation->status_charged != 1) {
+          $sf_field = $map->field_map['salesforce_donation_map']['transaction_date'];
+          unset($fields[$sf_field]);
+        }
+      }
+      // Lastly, add a field iff recurring object.
+      if ($donation->donation['recurs_monthly'] == TRUE && !empty($donation->master_did) ) {
+        $fields['npe03__Recurring_Donation__c'] = '[npe03__Recurring_Donation__c:recurring_donation:' . $donation->master_did . ']';
+      }
+      // Lastly, add a field iff recurring object.
+      if ($donation->donation['recurs_monthly'] == TRUE && empty($donation->master_did) ) {
+        $fields['npe03__Recurring_Donation__c'] = '[npe03__Recurring_Donation__c:recurring_donation:' . $donation->did . ']';
+      }
+
+      // If we're dealing with a sustainer charge, only send a subset of data so that other fields
+      // that may have been changed in Salesforce isn't overwritten.
+      if ($donation->donation['recurs_monthly'] == TRUE && $donation->status_charged == 1
+        && !empty($donation->master_did) && $donation->did != $donation->master_did) {
+        // @TODO: Add a configuration screen for specifying which fields get sent back
+        // to Salesforce when a recurring donation charge is processed.
+        $fields_to_update_on_charge = variable_get('fundraiser_sustainers_recurring_donation_charge_fields',
+          array('StageName', 'Transaction_Date_Time__c', 'Probability'));
+        $mapped_fields = array_keys($fields);
+        // Remove fields that are not to be updated when a sustainer is charged.
+        foreach ($mapped_fields as $field) {
+          if (!in_array($field, $fields_to_update_on_charge)) {
+            unset($fields[$field]);
+          }
+        }
+      }
+
     }
   }
 }
