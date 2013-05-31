@@ -418,6 +418,10 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
       $sf_field = $map->field_map['salesforce_node_map']['title'];
       $fields[$sf_field] = $donation->node->title;
     }
+    if (isset($map->field_map['salesforce_node_map']['internal_name'])) {
+      $sf_field = $map->field_map['salesforce_node_map']['internal_name'];
+      $fields[$sf_field] = $donation->node->internal_name;
+    }
   }
   // User properties map.
   if (isset($map->field_map['salesforce_user_map'])) {
@@ -609,6 +613,7 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
     '#fields' => array(
       'nid' => t('Node ID'),
       'title' => t('Node Title'),
+      'internal_name' => t('Internal Name'),
     ),
   );
   // User fields.
