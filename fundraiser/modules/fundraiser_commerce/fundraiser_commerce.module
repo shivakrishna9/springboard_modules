@@ -300,7 +300,9 @@ function fundraiser_commerce_fundraiser_gateway_info() {
       if (empty($this_gateway['allow_recurring'])) {
         $this_gateway['allow_recurring'] = array();
       }
-      if (empty($this_gateway['offsite_recurring'])) {
+      if (empty($this_gateway['offsite_recurring'])
+        || empty($method_instance['settings']['allow_refund'])
+        || $method_instance['settings']['allow_refund'] == 0) {
         $this_gateway['offsite_recurring'] = array();
       }
       if (empty($this_gateway['offsite_processing'])) {
@@ -309,7 +311,7 @@ function fundraiser_commerce_fundraiser_gateway_info() {
       if (empty($this_gateway['allow_refund'])) {
         $this_gateway['allow_refund'] = array();
       }
-      // Error check, disallow members of recurring that are in processing.
+      // Error check, disallow members of recurring that are offsite processing.
       $this_gateway['allow_recurring'] = array_diff($this_gateway['allow_recurring'], $this_gateway['offsite_processing']);
       // Save the original data declared.
       $this_gateway['gateway_details'] = $method_instance;
@@ -1598,3 +1600,62 @@ function fundraiser_commerce_fundraiser_get_total_donations_by_nid($nid, $start 
   $totals[$nid] = $data * .01; // convert from pennies.
   return $totals[$nid];
 }
+
+/**
+ * Implements hook_rules_data_info_alter().
+ */
+function commerce_payment_rules_data_info_alter(&$data) {
+  if (!empty($data['commerce_payment_settings'])) {
+    $data['commerce_payment_settings'] = array(
+      'label' => t('Payment settings'),
+      'ui class' => 'FundraiserCommerceUIPaymentSettings',
+    );
+  }
+  return $data;
+}
+
+/**
+ * Adds a payment method settings form to the enabling action.
+ */
+class FundraiserCommerceUIPaymentSettings extends RulesDataUI implements RulesDataDirectInputFormInterface {
+  public static function getDefaultMode() {
+    return 'input';
+  }
+
+  public static function inputForm($name, $info, $settings, RulesPlugin $element) {
+    // If the specified payment method exists...
+    if (!empty($info['payment_method']) && $payment_method = commerce_payment_method_load($info['payment_method'])) {
+      $form[$name]['method_id'] = array('#type' => 'value', '#value' => $info['payment_method']);
+
+      // If the payment method has a settings callback...
+      if ($callback = commerce_payment_method_callback($payment_method, 'settings_form')) {
+        // Prepare an array of payment method settings defaults.
+        $method_settings = !empty($settings[$name]['settings']) && is_array($settings[$name]['settings']) ? $settings[$name]['settings'] : array();
+
+        // Add the settings form elements to the action form.
+        $form[$name]['settings'] = $callback($method_settings);
+      }
+      // And here, we add the remote recurring option iff the module can support it.
+      module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $info['payment_method']);
+      $gateway_info = module_invoke($info['payment_method'], 'fundraiser_commerce_fundraiser_gateway_info');
+      if (!empty($gateway_info['allow_refund'])) {
+        $form[$name]['settings']['allow_refund'] = array(
+         '#type' => 'checkbox',
+         '#title' => t('Offsite recurring donations'),
+         '#description' => t('Handle recurring donations offsite at the gateway.'),
+         '#default_value' => isset($settings['payment_method']['settings']['allow_refund']) ? $settings['payment_method']['settings']['allow_refund'] : FALSE,
+        );
+      }
+    }
+    else {
+      $form[$name]['invalid']['#markup'] = t('Invalid or missing payment method.');
+    }
+    return $form;
+  }
+
+  public static function render($value) {
+    return array();
+  }
+}
+
+
