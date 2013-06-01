@@ -17,7 +17,7 @@ class FundraiserCloneTest extends FundraiserSetup {
    */
   public static function getInfo() {
     return array(
-      'name' => 'Fundraiser Clone',
+      'name' => 'Fundraiser clone',
       'description' => 'Tests donation form cloning behaviors.',
       'group' => 'Fundraiser',
     );
