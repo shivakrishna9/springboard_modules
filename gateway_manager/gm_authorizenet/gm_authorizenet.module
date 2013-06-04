@@ -157,13 +157,50 @@ function gm_authorizenet_settings_form($config = array()) {
   $form['settings']['value_map'] = array(
     '#type' => 'fieldset',
     '#title' => t('Submission mapping'),
-    '#description' => t('During a transaction some additional data from the form submission may be passed along to Authorize.net as ' .
-      'Merchant defined fields. See: https://developer.authorize.net/guides/AIM/Transaction_Data_Requirements/Merchant-defined_Fields.htm ' .
-      'Please map up to five fields - by their webform field key to the correct field key as defined at Authorize.net.'),
+    '#description' => t('During a transaction some additional data from the form submission may be passed along to Authorize.net. ' .
+      'See: https://developer.authorize.net/guides/AIM/wwhelp/wwhimpl/js/html/wwhelp.htm#href=3_TransDataReqs.html#1094346 ' .
+      'Please map up to five fields - by their webform field key to the correct field key as defined at Authorize.net. If you override '.
+      'any fields starting with "x_ship_to" please be sure you do not need to use shipping data on this site.'),
     '#tree' => TRUE,
   );
+
+  $available_fields = array(
+    '', // Nothing.
+    // Normal overrides.
+    'x_company',            // Up to 50 characters (no symbols)
+    'x_ship_to_company',    // Up to 50 characters (no symbols)
+    // Shipping fields, not recommended if your site needs to ship anything.
+    'x_ship_to_first_name', // Up to 50 characters (no symbols)
+    'x_ship_to_last_name',  // Up to 50 characters (no symbols)
+    'x_ship_to_address',    // Up to 60 characters (no symbols)
+    'x_ship_to_city',       // Up to 40 characters (no symbols)
+    'x_ship_to_state',      // Up to 40 characters (no symbols) or a valid two-character state code
+    'x_ship_to_zip',        // Up to 20 characters (no symbols)
+    'x_ship_to_country',    // Up to 60 characters (no symbols) 
+  );
+  // NOTE: re: Merchant defined fields option - THEY ARE NOT AVAILABLE.
+  // If you are a JR dev and you are asked to support it: SAY NO.
+  //
+  // A) Merchant defined fields do not store info in Authnet.
+  // B) IT RISKS THE CUSTOMER BEING SUSPENDED BY AUTHNET.
+  //
+  // From AIM documentation as follows:
+  // Merchant-defined data fields are not intended to and must not be used to 
+  // capture personally identifying information. Accordingly, the merchant is 
+  // prohibited from capturing, obtaining, and/or transmitting any personally 
+  // identifying information in or by means of the merchant-defined data fields. 
+  // Personally identifying information includes, but is not limited to, name, 
+  // address, credit card number, social security number, driver's license number,
+  // state-issued identification number, passport number, and card verification 
+  // numbers (CVV, CVC2, CVV2, CID, CVN). If Authorize.Net discovers that the 
+  // merchant is capturing and/or transmitting personally identifying information
+  // by means of the merchant-defined data fields, whether or not intentionally,
+  // CyberSource will immediately suspend the merchant's account, which will 
+  // result in a rejection of any and all transaction requests submitted by the
+  // merchant after the point of suspension.
+
   // TODO Currently only five allowed values. We can make this AJAXy and n-th available later.
-  for ($i = 1; $i < 6; $i++) {
+  for ($i = 1; $i < 9; $i++) {
     $form['settings']['gm_authnet_webform_field_' . $i] = array(
       '#title' => t('Webform field #%i', array('%i' => $i)),
       '#type' => 'textfield',
@@ -171,7 +208,8 @@ function gm_authorizenet_settings_form($config = array()) {
     );
     $form['settings']['gm_authnet_authorize_field_' . $i] = array(
       '#title' => t('Authorize field #%i', array('%i' => $i)),
-      '#type' => 'textfield',
+      '#type' => 'select',
+      '#options' => array_combine($available_fields, $available_fields),
       '#default_value' => !empty($config['gm_authnet_authorize_field_' . $i]) ? $config['gm_authnet_authorize_field_' . $i] : '',
     );
   }
@@ -542,7 +580,7 @@ function _gm_authorizenet_cim_profile_charge_request($order, $amount, $data) {
     );
     // Set the merchant defined fields if available out of $data.
     $extra_merchant_fields = array();
-    for ($i = 1; $i < 6; $i++) {
+    for ($i = 1; $i < 9; $i++) {
       // If both halves of the pair are set.
       if (isset($data['config']['gm_authnet_webform_field_' . $i]) && isset($data['config']['gm_authnet_authorize_field_' . $i])) {
         if (isset($order->data[$data['config']['gm_authnet_webform_field_' . $i]])) {
@@ -603,7 +641,7 @@ function gm_authorizenet_fundraiser_add_order_fields($fundraiser_fields) {
   if (isset($fundraiser_fields['node']->gateway)) {
     $config = gateway_manager_gateway_info($fundraiser_fields['node']->gateway);
     // Set the merchant defined fields if available out of $data.
-    for ($i = 1; $i < 6; $i++) {
+    for ($i = 1; $i < 9; $i++) {
       // If both halves of the pair are set.
       if (isset($config['config']['gm_authnet_webform_field_' . $i]) && isset($config['config']['gm_authnet_authorize_field_' . $i])) {
         if (isset($fundraiser_fields[$config['config']['gm_authnet_webform_field_' . $i]] )) {
@@ -697,7 +735,7 @@ function _gm_authorizenet_charge($order, $amount, $data) {
   }
 
   // Set the merchant defined fields if available out of $data.
-  for ($i = 1; $i < 6; $i++) {
+  for ($i = 1; $i < 9; $i++) {
     // If both halves of the pair are set.
     if (isset($data['config']['gm_authnet_webform_field_' . $i]) && isset($data['config']['gm_authnet_authorize_field_' . $i])) {
       if (isset($order->data[$data['config']['gm_authnet_webform_field_' . $i]])) {
