@@ -2006,11 +2006,13 @@ function fundraiser_order_decline($order_id, $message, $ref_id = FALSE) {
   // make a log entry
   watchdog('fundraiser', t('Order !id was declined by the payment gateway. Reason: @message', array('!id' => $order_id, '@message' => $message)), NULL, WATCHDOG_DEBUG, NULL);
 
-  // clean up
-  $sid = db_result(db_query("SELECT sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
-  db_query("DELETE FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id);
-  db_query("DELETE FROM {webform_submitted_data} WHERE sid = %d", $sid);
-  db_query("DELETE FROM {webform_submissions} WHERE sid = %d", $sid);
+  if (variable_get('fundraiser_cleanup_submissions_on_fail', TRUE)) {
+    // clean up
+    $sid = db_result(db_query("SELECT sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
+    db_query("DELETE FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id);
+    db_query("DELETE FROM {webform_submitted_data} WHERE sid = %d", $sid);
+    db_query("DELETE FROM {webform_submissions} WHERE sid = %d", $sid);
+  }
 
   // show gateay message if appropriate
   $display_message = variable_get('fundraiser_gateway_messages', 1);

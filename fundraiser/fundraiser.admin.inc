@@ -260,6 +260,13 @@ function fundraiser_admin_settings() {
     '#default_value' => variable_get('fundraiser_development_mode', 0),
     '#description' => t('Development mode allows you to access donation forms over HTTP.'),
   );
+ 
+  $form['fundraiser_cleanup_submissions_on_fail'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Cleanup failures'),
+    '#default_value' => variable_get('fundraiser_cleanup_submissions_on_fail', TRUE),
+    '#description' => t('Clean up failed donations, removing them from fundraiser_webform_order, webform_submitted_data, and webform_submissions tables.'),
+  );
 
   $form['fundraiser_default_minimum'] = array(
     '#type' => 'textfield',
