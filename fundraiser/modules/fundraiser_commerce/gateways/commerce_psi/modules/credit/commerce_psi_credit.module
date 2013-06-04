@@ -6,7 +6,7 @@
 function commerce_psi_credit_commerce_payment_method_info() {
   $payment_methods = array();
 
-  $payment_methods['psi_credit'] = array(
+  $payment_methods['commerce_psi_credit'] = array(
     'base' => 'commerce_psi_credit',
     'title' => t('Payment Solutions Inc. - Credit Card'),
     'short_title' => t('PSI Credit'),
@@ -138,7 +138,7 @@ function commerce_psi_credit_submit_form_submit($payment_method, $pane_form, $pa
   }
 
   // Prepare a transaction object
-  $transaction = commerce_payment_transaction_new('psi_credit', $order->order_id);
+  $transaction = commerce_payment_transaction_new('commerce_psi_credit', $order->order_id);
   $transaction->instance_id = $payment_method['instance_id'];
   $transaction->amount = $charge['amount'];
   $transaction->currency_code = $charge['currency_code'];
