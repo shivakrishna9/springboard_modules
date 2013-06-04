@@ -7,16 +7,21 @@
  * Index callback for springboard service.
  */
 function springboard_api_list_webforms($pubkey, $timestamp, $checksum, $page, $pagesize, $override_400 = FALSE) {
+  // BUG: Services isn't passing the configured default values for page and pagesize under certain conditions.
+  if (!$pagesize) {
+    $pagesize = variable_get('fundraiser_webform_index_page_size', 20);
+  }
   unset($_SESSION['messages']);
   $data = array();
   $error_code = (isset($override_400) && $override_400) ? 200 : 400;
-  $valid = _springboard_api_validate_transaction('index', $timestamp, $pubkey, $checksum);
+  // TODO: replace code below with check on pubkey.
+  $valid = _springboard_api_validate_pubkey($pubkey);
+//  $valid = _springboard_api_validate_transaction('index', $timestamp, $pubkey, $checksum);
 
   if ($valid) {
     $webform_node_types = implode("','", variable_get('webform_node_types', ''));
     $sql = sprintf("SELECT nid, title, type FROM {node} WHERE type IN ('%s') LIMIT %d, %d", $webform_node_types, $page, $pagesize);
     $results = db_query($sql);
-
     while ($result = db_fetch_object($results)) {
       $webforms[] = array(
         'nid' => $result->nid,
@@ -40,14 +45,15 @@ function springboard_api_list_webforms($pubkey, $timestamp, $checksum, $page, $p
  * @return
  * Returns an array of field definitions for the requested webform.
  */
-function springboard_api_get_webform($pubkey, $timestamp, $checksum, $nid, $override_400 = FALSE) {
+function springboard_api_get_webform($pubkey, $nid, $override_400 = FALSE) {
   global $user;
   $error_code = (isset($submission['override_400']) && $submission['override_400']) ? 200 : 400;
   unset($_SESSION['messages']);
   $nid = (int) $nid;
   $webform = array();
   $fields = array();
-  $valid = _springboard_api_validate_transaction('retrieve', $timestamp, $pubkey, $checksum);
+  //$valid = _springboard_api_validate_transaction('retrieve', $timestamp, $pubkey, $checksum);
+  $valid = _springboard_api_validate_pubkey($pubkey);
   if ($valid) {
     $cache_user = $user;
     $uid = db_result(db_query("SELECT uid FROM {springboard_api} WHERE pubkey='%s'", $pubkey));
@@ -94,7 +100,21 @@ function springboard_api_get_webform($pubkey, $timestamp, $checksum, $nid, $over
  */
 function springboard_api_submit_webform($submission) {
   unset($_SESSION['messages']);
-  $valid = _springboard_api_validate_transaction('submit', $submission['time'], $submission['key'], $submission['checksum']);
+
+  $node = node_load(array('nid' => trim($submission['webform_id'])));
+  // Limit full checksum validation to donation form submissions.
+  if (module_exists('fundraiser') && !fundraiser_is_donation_type($node->type)) { 
+     $valid = _springboard_api_validate_pubkey(trim($submission['key']));
+  }
+  else {
+    $valid = _springboard_api_validate_transaction('submit', $submission['time'], $submission['key'], $submission['checksum']);
+    if (isset($submission['redirect_url'])) {
+      $redirect_url = $submission['redirect_url'];
+    }
+    if (isset($submission['error_redirect_url'])) {
+      $error_redirect_url = $submission['error_redirect_url'];
+    }
+  }
   $error_code = (isset($submission['override_400']) && $submission['override_400']) ? 200 : 400;
   if ($valid) {
     springboard_api_validate_donation($submission, $error_code);
@@ -232,11 +252,18 @@ function springboard_api_submit_webform($submission) {
     drupal_execute('webform_client_form_' . $submission->webform_nid, $form_state, $node, $submission, FALSE, FALSE);
     $errors = form_get_errors();
     if (!$errors) {
+      if (isset($submission->redirect_url)) {
+        // redirect session.
+        _springboard_api_redirect($submission->redirect_url);
+      }
       $messages = $_SESSION['messages'];
       $messages[] = 'Submission processed.';
       return $messages;
     }
-    else {
+    else { 
+      if (isset($submission->error_redirect_url)) {
+        _spingboard_api_redirect($submission->error_redirect_url);
+      }
       $formatted_errors = array();
       foreach ($errors as $key => $message) {
         $item = array(
@@ -254,6 +281,9 @@ function springboard_api_submit_webform($submission) {
   }
   else {
     watchdog('springboard_api', t('Invalid submission sent from %ip', array('%ip' => $_SERVER['REMOTE_ADDR'])), array(), WATCHDOG_ERROR);
+    if ($submission->error_redirect_url) {
+      _springboard_api_redirect($error_redirect_url);
+    }
     services_error('Error: Access denied.', $error_code, t('Your submission failed validation.'));
   }
 }
@@ -276,7 +306,6 @@ function springboard_api_validate_donation($donation = array(), $error_code) {
   while ($form_key = db_result($results)) {
 
     if (!in_array($form_key, $donation_keys)) {
-
       $missing_fields[] = $form_key;
     }
   }
@@ -297,7 +326,7 @@ function springboard_api_validate_donation($donation = array(), $error_code) {
     }
   }
   if (count($_SESSION['messages'])) {
-    return services_error('Error: one or more required fields are missing.', $error_code, $_SESSION['messages']);
+    return services_error("Error: The following errors were encountered:\n\n" . implode ("\n", $_SESSION['messages']['status']), $error_code, $_SESSION['messages']);
   }
 }
 
@@ -351,3 +380,14 @@ function _springboard_api_get_webform_components($nid) {
   }
   return $fields;
 }
+
+/**
+ * Redirect browser session instead of returning standard API responses.
+ *
+ * Useful in situations where the API is not being consumed asyncronously.
+ */
+function _springboard_api_redirect($url) {
+  header('Location:' . $url, TRUE);
+  die();
+}
+

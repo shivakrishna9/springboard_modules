@@ -106,7 +106,7 @@ function springboard_api_services_resources() {
             'description' => 'Transaction data.',
             'source' => array('param' => 'key'),
             'type' => 'string',
-          ),
+          ),/*
           array(
             'name' => 'timestamp',
             'optional' => FALSE,
@@ -120,7 +120,7 @@ function springboard_api_services_resources() {
             'description' => 'Transaction data.',
             'source' => array('param' => 'checksum'),
             'type' => 'string',
-          ),
+          ),*/
           array(
             'name' => 'page',
             'optional' => TRUE,
@@ -141,7 +141,7 @@ function springboard_api_services_resources() {
             'name' => 'override_400',
             'optional' => TRUE,
             'type' => 'init',
-            'description' => 'Number of records to get per page.',
+            'description' => 'HTTP status code to return on error.',
             'default value' => FALSE,
             'source' => array('param' => 'override_400'),
           ),
@@ -164,7 +164,7 @@ function springboard_api_services_resources() {
             'description' => 'Transaction data.',
             'source' => array('param' => 'key'),
             'type' => 'string',
-          ),
+          ),/*
           array(
             'name' => 'timestamp',
             'optional' => FALSE,
@@ -178,7 +178,7 @@ function springboard_api_services_resources() {
             'description' => 'Transaction data.',
             'source' => array('param' => 'checksum'),
             'type' => 'string',
-          ),
+          ),*/
           array(
             'name' => 'nid',
             'optional' => FALSE,
@@ -273,7 +273,7 @@ function _springboard_api_keyset_title($kid) {
 }
 
 /**
- *
+ * Validate payload checksum.
  */
 function _springboard_api_validate_transaction($resource, $timestamp, $pubkey, $checksum) {
   $data = array();
@@ -289,4 +289,12 @@ function _springboard_api_validate_transaction($resource, $timestamp, $pubkey, $
   }
 
   return FALSE;
+}
+
+/**
+ * Returns true if pubkey is valid.
+ */
+function _springboard_api_validate_pubkey($pubkey) {
+  $exists = db_result(db_query("SELECT 1 FROM {springboard_api} WHERE pubkey = '%s'", $pubkey));
+  return $exists ? TRUE : FALSE;
 }

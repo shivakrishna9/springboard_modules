@@ -173,13 +173,13 @@ function springboard_api_test_submit(&$form, &$form_state) {
       case 'index':
         drupal_set_message(t('Test index:'));
         $response = $test_client->sb_api_test_index();
-        drupal_set_message(print_r($response['object'],1));
+        drupal_set_message(print_r($response['object'], TRUE));
       break;
       case 'retrieve':
         if ($nid > 0) {
           drupal_set_message(t('Test retrieve:'));
           $response = $test_client->sb_api_test_retrieve($nid);
-          drupal_set_message(print_r($response['object'],1));
+          drupal_set_message(print_r($response['object'], TRUE));
         }
         else {
           drupal_set_message(t('Invalid node selected.'));
