@@ -160,7 +160,7 @@ function _dynamic_gift_strings_parse_amounts($amounts, $show_other, $nid) {
   // format the amounts
   foreach ($amounts as $amount) {
     // first, check to see if the value is numeric. if not, we have some bogus data.
-    if (!is_numeric($amount)) {
+    if (!is_numeric($amount) || $amount == 0) {
       $all_valid = FALSE;
     }
     // if the number has a decimal, retain it. otherwise format without decimals
