@@ -650,6 +650,7 @@ function fundraiser_sustainers_fundraiser_field_info() {
     ),
     '#allow_update' => 1,
     '#allow_respawn' => 1,
+    '#reset_value' => 1,
     '#create_callback' => '_fundraiser_sustainers_recurs_monthly_field_create',
     '#display_callback' => '_fundraiser_sustainers_recurs_monthly_field_display',
      // Display callback, hide this field if the gateway Currently selected by the user is not supportive of recurring.
@@ -663,7 +664,7 @@ function fundraiser_sustainers_fundraiser_field_info() {
  */
 function _fundraiser_sustainers_recurs_monthly_field_create($fundraiser, $field) {
   // If recurring_settingdon't exist, drop the recurring field.
-  if (empty($fundraiser->recurring_setting) || $fundraiser->recurring_setting == 'never') {
+  if (empty($fundraiser->recurring_setting)) {
     return FALSE;
   }
   // If the show other options is disallowed, unset it.
@@ -674,6 +675,15 @@ function _fundraiser_sustainers_recurs_monthly_field_create($fundraiser, $field)
       'hidden_type' => 'hidden',
     );
     $field['#value'] = 'recurs';
+  }
+  // If the show other options is disallowed, unset it.
+  if ($fundraiser->recurring_setting == 'never') {
+    $field['#type'] = 'hidden';
+    $field['#extra'] = array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    );
+    $field['#value'] = 'NO_RECURR';
   }
   // Return the field to be created. Aka: user_choice
   return $field;

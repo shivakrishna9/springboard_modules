@@ -904,6 +904,7 @@ function fundraiser_fundraiser_field_info() {
       'field_prefix' => '$',
     ),
     '#allow_update' => 1,
+    '#reset_value' => 1,
     '#create_callback' => '_fundraiser_amount_field_create',
   );
   $fields['donation']['other_amount'] = array(
