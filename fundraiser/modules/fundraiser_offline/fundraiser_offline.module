@@ -293,6 +293,11 @@ function fundraiser_offline_form_alter(&$form, &$form_state, $form_id) {
     foreach ($map as $field_key => $profile_key) {
       $field =& fundraiser_find_field($form, $component_hierarchy[$field_key]); // From fundraiser.module
       unset($field['#default_value']);
+      // Retrieve the webform component to check for defaults set there, to use instead.
+      // We don't want defaults from other systems basically, just webform if any.
+      if (!empty($field['#webform_component']['value'])) {
+        $field['#default_value'] = $field['#webform_component']['value'];
+      }
     }
 
     // Add our own action and submit.
