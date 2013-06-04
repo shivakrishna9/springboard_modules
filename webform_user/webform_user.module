@@ -728,14 +728,14 @@ function _webform_user_add_webform_defaults(&$node, &$user) {
  */
 function _webform_user_webform_component_types($nid, $form_key = NULL) {
   $component_types = &drupal_static(__FUNCTION__);
-  if (empty($component_types) && !empty($nid)) {
+  if (!empty($nid) && !isset($component_types[$nid])) {
     $result = db_query("SELECT form_key, type FROM {webform_component} WHERE nid = :nid", array(':nid' => $nid));
-    $component_types = $result->fetchAllKeyed();
+    $component_types[$nid] = $result->fetchAllKeyed();
   }
   if (isset($form_key)) {
-    return isset($component_types[$form_key]) ? $component_types[$form_key] : NULL;
+    return isset($component_types[$nid][$form_key]) ? $component_types[$nid][$form_key] : NULL;
   }
-  return $component_types;
+  return isset($component_types[$nid]) ? $component_types[$nid] : array();
 }
 
 /**
