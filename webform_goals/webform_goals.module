@@ -5,6 +5,7 @@
  */
 
 require_once('includes/webform_goals.goals.inc');
+require_once('webform_goals.forms.inc');
 
 /**
  * Implements hook_init().
@@ -16,6 +17,18 @@ function webform_goals_init() {
   $file_system_base_url = file_create_url($base_uri);
   $loader_url = $file_system_base_url . 'webform_goals/webform_goals.jsonp.php';
   drupal_add_js(array('webform_goals' => array('loader_url' => $loader_url)), 'setting');
+}
+
+
+/**
+ * Implements hook_cron().
+ */
+function webform_goals_cron() {
+  module_load_include('inc', 'webform_goals', 'includes/webform_goals.widget');
+  if (!variable_get('webform_goals_standalone_cron', 0)) {
+    drupal_set_message('running webform goals update');
+    webform_goals_rebuild_widgets();
+  }
 }
 
 /**
@@ -96,13 +109,14 @@ function webform_goals_menu() {
   $items['webform_goals_cron'] = array(
     'title' => 'widget rebuild callback',
     'page callback' => 'webform_goals_rebuild_widgets',
-    'access callback' => TRUE, // TODO: secure?
+    'access callback' => TRUE,
     'type' => MENU_CALLBACK,
     'file' => 'includes/webform_goals.widget.inc',
   );
 
   return $items;
 }
+
 
 /**
  * Load a goal from the db.
@@ -336,7 +350,6 @@ function webform_goals_token_info() {
  * Implements hook_tokens().
  */
 function webform_goals_tokens($type, $tokens, $data = array(), $options = array()) {
-
   if ($type = 'webform_goal' && !empty($data['webform_goal'])) {
 
     $goal_progress = webform_goals_track_metric($data['webform_goal']);

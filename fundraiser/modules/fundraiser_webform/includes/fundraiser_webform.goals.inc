@@ -24,7 +24,7 @@ function fundraiser_webform_webform_goals_list_metrics($selected_context, $form_
         'settings_callback' => '',
         'form_text' => array(
           'target_value' => array(
-            'title' => t('Total donations required to meet this goal'),
+            'title' => t('Total donation amount required to meet this goal'),
             'description' => t('Goal progress represents the sum of all successful donations as a percentage of this number.'),
           ),
           'seed' => array(
