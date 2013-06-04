@@ -90,15 +90,19 @@ function sb_npsp_donation_postprocess(&$batch, &$responses, $item_count) {
       // Handle donations
       else {
         $order_id = (int) $batch['records'][$i]->oid;
-        $offline_settings = db_fetch_object(db_query("SELECT temporary_user FROM {fundraiser_offline_donation} WHERE did = %d", $order_id));
         db_query("UPDATE {fundraiser_webform_order} SET sfid = '%s' WHERE order_id = %d", $sfid, $order_id);
-        // delete any temporary offline users
-        if ($offline_settings->temporary_user) {
-          $uid_to_delete = db_result(db_query("SELECT uid FROM {uc_orders} WHERE order_id = %d", $order_id));
-          if ($uid_to_delete > 0) {
-            user_delete(array(), $uid_to_delete);
-            db_query("UPDATE {uc_orders} SET uid = 0 WHERE order_id = %d", $order_id);
-            watchdog('salesforce donation', 'Offline donation user !uid for order !order_id deleted', array('!uid' => $uid_to_delete, '!order_id' => $order_id), WATCHDOG_INFO);
+        // ONLY if offline exists.
+        if (module_exists('fundraiser_offline')) {
+          $offline_settings = db_fetch_object(db_query("SELECT temporary_user FROM {fundraiser_offline_donation} WHERE did = %d", $order_id));
+          // Delete any temporary offline users.
+          if ($offline_settings->temporary_user) {
+            $uid_to_delete = db_result(db_query("SELECT uid FROM {uc_orders} WHERE order_id = %d", $order_id));
+            if ($uid_to_delete > 0) {
+              user_delete(array(), $uid_to_delete);
+              db_query("UPDATE {uc_orders} SET uid = 0 WHERE order_id = %d", $order_id);
+              watchdog('salesforce donation', 'Offline donation user !uid for order !order_id deleted',
+                array('!uid' => $uid_to_delete, '!order_id' => $order_id), WATCHDOG_INFO);
+            }
           }
         }
       }
