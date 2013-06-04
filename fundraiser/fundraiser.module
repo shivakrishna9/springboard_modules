@@ -1556,7 +1556,12 @@ function template_preprocess_fundraiser_confirmation(&$vars) {
     $order = uc_order_load($order_details->order_id);
     module_load_include('inc', 'webform', 'includes/webform.submissions');
     $submission = webform_get_submission($vars['node']->nid, $sid);
-    $message = $vars['node']->confirmation_page_body;
+
+    // Run the message through the selected input format.
+    if (empty($vars['node']->confirmation_page_format)) {
+      $vars['node']->confirmation_page_format = FILTER_FORMAT_DEFAULT;
+    }
+    $message = check_markup($vars['node']->confirmation_page_body, $vars['node']->confirmation_page_format, FALSE);
 
     // replace any submission level tokens
     $message = _webform_filter_values($message, $vars['node'], $submission, NULL, FALSE, TRUE);
