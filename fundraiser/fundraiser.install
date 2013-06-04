@@ -382,6 +382,13 @@ function fundraiser_schema() {
         'not null' => FALSE,
         'default' => '0',
       ),
+      'sustainer_key' => array(
+        'description' => t('Value of the sustainer key at the time of record creation.'),
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+        'default' => '',
+      ),
     ),
     'primary key' => array('order_id'),
     'indexes' => array('master_order_id' => array('master_order_id')),
@@ -1195,5 +1202,26 @@ function fundraiser_update_6317(&$sandbox) {
   );
   $ret = array();
   db_add_field($ret, 'fundraiser_recurring', 'lock_id', $lock_id);
+  return $ret;
+}
+
+/**
+ * Add the sustainer_key field for additional sustainer protection.
+ */
+function fundraiser_update_6318(&$sandbox) {
+  $sustainer_key = array(
+    'description' => t('Value of the sustainer key at the time of record creation.'),
+    'type' => 'varchar',
+    'length' => '255',
+    'not null' => FALSE,
+    'default' => '',
+  );
+  $ret = array();
+  db_add_field($ret, 'fundraiser_recurring', 'sustainer_key', $sustainer_key);
+  // Update the existing donations
+  $sustainer_key = fundraiser_get_sustainer_key_value();
+  if (!empty($sustainer_key)) {
+    $ret[] = update_sql("UPDATE {fundraiser_recurring} SET sustainer_key = '$sustainer_key'");
+  }
   return $ret;
 }
