@@ -58,7 +58,7 @@ function webform_dupe_cop_client_form_validate($form, &$form_state) {
   // Check for previous submissions within the configured time frame.
   $nid = $form_state['values']['details']['nid'];
   $timespan = trim(variable_get('webform_dupe_cop_timespan', '1 hour'));
-  $minimum_timestamp = ($timespan_hours != '0') ? (strtotime($timespan . ' ago')) : 0;
+  $minimum_timestamp = (isset($timespan) && $timespan != '0') ? (strtotime($timespan . ' ago')) : 0;
   $submitted = db_result(db_query(
     "SELECT submitted
       FROM {webform_dupe_cop} wdc
@@ -92,9 +92,10 @@ function webform_dupe_cop_client_form_validate($form, &$form_state) {
     }
     // Log the error to watchdog.
     $headers = webform_dupe_cop_fetch_headers();
-    $log_message = '%date %time - Dupe detected at %webform_id by %user_id matches a submission submitted at %prev_date %prev_time. ' .
-      'Headers: %headers'; // Standard message, no override.
-    watchdog('webform_dupe_cop', $log_message, array(
+    $message = variable_get('webform_dupe_cop_message', '%date %time - Dupe detected at %webform_id by %user_id matches ' .
+      'a submission submitted at %prev_date %prev_time.');
+    $message .= ' Headers: %headers';
+    watchdog('webform_dupe_cop', $message, array(
       '%date' => $date,
       '%time' => $time,
       '%webform_id' => $webform_id,
