@@ -649,6 +649,7 @@ function fundraiser_sustainers_fundraiser_field_info() {
       'multiple' => 'Y',
     ),
     '#allow_update' => 1,
+    '#allow_respawn' => 1,
     '#create_callback' => '_fundraiser_sustainers_recurs_monthly_field_create',
     '#display_callback' => '_fundraiser_sustainers_recurs_monthly_field_display',
      // Display callback, hide this field if the gateway Currently selected by the user is not supportive of recurring.
