@@ -1754,6 +1754,7 @@ function fundraiser_webform_submit($form, &$form_state) {
 
   $node = $form['#parameters'][2];
   $fundraiser_fields = _fundraiser_array_flatten($form_state['values']['submitted_tree']);
+  $fundraiser_fields['node'] = $node;
   $node_id = $form_state['values']['details']['nid'];
 
   // pick out the values we need to generate an order
