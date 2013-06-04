@@ -741,6 +741,33 @@ function _webform_user_validate_email($mail) {
 }
 
 /**
+ * Query for all the component types for a given node ID. Statically cached to
+ * reduce duplicate queries.
+ *
+ * @param $nid
+ *   Webform node ID.
+ * @param $form_key = NULL
+ *   Optionally filter results by a single form key.
+ * @return
+ *   The component type of a single form key if $form_key is set, or all
+ *   component types for the webform node.
+ */
+function _webform_user_webform_component_types($nid, $form_key = NULL) {
+  static $component_types = array();
+  if (!empty($nid) && !isset($component_types[$nid])) {
+    $result = db_query("SELECT form_key, type FROM {webform_component} WHERE nid = %d", $nid);
+    $component_types[$nid] = array();
+    while ($row = db_fetch_object($result)) {
+      $component_types[$nid][$row->form_key] = $row->type;
+    }
+  }
+  if (isset($form_key)) {
+    return isset($component_types[$nid][$form_key]) ? $component_types[$nid][$form_key] : NULL;
+  }
+  return isset($component_types[$nid]) ? $component_types[$nid] : array();
+}
+
+/**
  * Flatten a tree into a flat list. Note: date values are not flattened.
  */
 function _webform_user_flatten_tree($tree, $nid = NULL) {
@@ -748,7 +775,7 @@ function _webform_user_flatten_tree($tree, $nid = NULL) {
 
   foreach ($tree as $key => $val) {
     // look up the type of component
-    $type = db_result(db_query("SELECT type FROM {webform_component} WHERE nid = %d AND form_key = '%s'", $nid, $key));
+    $type = _webform_user_webform_component_types($nid, $key);
 
     if (is_array($val)) {
       // If it's a date, don't flatten the value.
