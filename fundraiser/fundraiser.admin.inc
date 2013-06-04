@@ -196,6 +196,7 @@ function fundraiser_clone_donation_form($nid) {
       $node->title = t('Clone of !title', array('!title' => $node->title));
       $node->internal_name = 'Clone of ' . $original_node->internal_name;
       $node->is_being_cloned = TRUE;
+      $node->clone_from_original_nid = $original_node->nid;
 
       if (variable_get('clone_reset_' . $node->type, FALSE)) {
         $node_options = variable_get('node_options_' . $node->type, array('status', 'promote'));
