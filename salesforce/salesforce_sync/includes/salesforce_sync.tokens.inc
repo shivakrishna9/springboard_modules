@@ -62,7 +62,7 @@ class SalesforceSyncTokenScanner {
   public function objectTokenReplace(&$object) {
     // See if the object has any tokens in it.
     $tokens = $this->findTokens($object);
-
+    $object->tokens_replaced = TRUE;
     // If we've got tokens, replace them.
     if (!empty($tokens)) {
       // Invoke hook_salesforce_sync_tokens_alter() so that other modules
