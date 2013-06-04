@@ -29,6 +29,18 @@ function webform_dupe_cop_schema() {
       ),
     ),
     'primary key' => array('sid'),
+    'indexes' => array(
+      'submission_hash' => array('submission_hash'),
+    ),
   );
   return $schema;
+}
+
+/**
+ * Add index for submission_hash column.
+ */
+function webform_dupe_cop_update_6001() {
+  $ret = array();
+  db_add_index($ret, 'webform_dupe_cop', 'submission_hash', array('submission_hash'));
+  return $ret;
 }
