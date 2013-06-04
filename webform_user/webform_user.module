@@ -754,17 +754,17 @@ function _webform_user_validate_email($mail) {
  */
 function _webform_user_webform_component_types($nid, $form_key = NULL) {
   static $component_types = array();
-  if (empty($component_types) && !empty($nid)) {
+  if (!empty($nid) && !isset($component_types[$nid])) {
     $result = db_query("SELECT form_key, type FROM {webform_component} WHERE nid = %d", $nid);
-    $component_types = array();
+    $component_types[$nid] = array();
     while ($row = db_fetch_object($result)) {
-      $component_types[$row->form_key] = $row->type;
+      $component_types[$nid][$row->form_key] = $row->type;
     }
   }
   if (isset($form_key)) {
-    return isset($component_types[$form_key]) ? $component_types[$form_key] : NULL;
+    return isset($component_types[$nid][$form_key]) ? $component_types[$nid][$form_key] : NULL;
   }
-  return $component_types;
+  return isset($component_types[$nid]) ? $component_types[$nid] : array();
 }
 
 /**
