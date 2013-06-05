@@ -102,18 +102,15 @@ class FundraiserTest extends FundraiserSetup {
           '0' => '100',
           '1' => '$100',
         ),
-        '4' => array(
-          '0' => 'other',
-          '1' => 'Other',
-        ),
       ),
       'minimum_donation_amount' => 10,
     );
     $this->assertEqual(serialize($node->donation_amounts), serialize($expected_amount_wrapper['donation_amounts']),
-      t('The correct amounts were created.'), t('Fundraiser'));
+      t('The correct amounts were created.' . print_r($node,1)), t('Fundraiser'));
     $this->assertEqual($node->minimum_donation_amount, $expected_amount_wrapper['minimum_donation_amount'],
       t('The correct minimum amount was created.'), t('Fundraiser'));
-    $this->assertEqual($node->default_amount, '20', t('The correct default amount was created.'), t('Fundraiser'));
+    //$this->assertEqual($node->default_amount, '20', t('The correct default amount was created.'), t('Fundraiser'));
+    // Tihs is no longer relevant as 'default' is now stored with the webform directly.
     // Check correct payment gateway.
     $expected_payment_gateway =  array(
       'credit' => array(
