@@ -29,7 +29,7 @@ function sb_social_create_share_event_object($share) {
     // 'Market_Source__c' => $share['market_source'],
     'Market_Source_Type__c' => '', // ???
     'Network__c' => $share['service'],
-    'Share_Date__c' => sb_social_format_sf_date($share['time']),
+    'Share_Date__c' => sb_social_format_sf_date($share['created']),
     'shared_name__c' => '', // ???
     'Shared_URL__c' => $share['url'],
     'Submission_ID__c' => $share['sid'],

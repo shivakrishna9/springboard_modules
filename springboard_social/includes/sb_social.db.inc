@@ -15,7 +15,7 @@ function sb_social_share_event_load($share_id) {
       sid,
       nid,
       service,
-      time,
+      created,
       status,
       url
     FROM {sb_social_shares}
@@ -43,7 +43,7 @@ function sb_social_share_event_save($service, $sid) {
     'sid' => $submission->sid,
     'nid' => $submission->nid,
     'service' => $service,
-    'time' => (int) time(),
+    'created' => (int) time(),
     'status' => 'pending',
     'url' => $url,
   );

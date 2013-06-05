@@ -25,7 +25,7 @@ function sb_social_schema() {
     'fields' => array(
       'share_id' => array(
         'description' => 'The node id.',
-        'type' => 'int',
+        'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),

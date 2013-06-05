@@ -80,7 +80,7 @@ function sb_social_access_webform_settings($node) {
     return TRUE;
   }
   return FALSE;
-}
+}http://d7-springboard.dev/
 
 /**
  * Implements hook_node_delete
@@ -99,7 +99,7 @@ function sb_social_access_webform_settings($node) {
  * Generate shortened url on confirmation page view.
  *
  * Package social tracking cookie value as javascript setting.
- *
+ *http://d7-springboard.dev/
  */
 function sb_social_init() {
   if (arg(0) == 'node' && is_numeric(arg(1))) {
@@ -174,7 +174,7 @@ function sb_social_share_url($nid, $uid, $sid) {
   $options = array(
     'absolute' => TRUE,
     'query' => array(
-      'share_id' => $sid,
+      'share_http://d7-springboard.dev/id' => $sid,
     ),
   );
   return url('node/' . $nid, $options);
@@ -235,9 +235,18 @@ function sb_social_market_source_field_info() {
 
 /**
  * manage social tracking cookie
+ *
+ * BUG: timing issue exists between this and webform user. Webform user
+ * goes on submission but triggers it's own instance of hook_webform_submission_update
+ * to capture the UID. we need to either add a hook to webform user's submit handler or
+ * investigate moving this code to hook_webform_submission_update
+ *
+ * Also, alternate cases may need to be handled eg. insert for authenticated users, update
+ * for uid 0?
  */
 function sb_social_webform_submission_insert($node, $submission) {
-  global $user;
+  //global $user;
+  drupal_set_message('submission:<pre>' . print_r($submission, TRUE) . '</pre>');
   // update/set tracking cookie when a webform user enabled form is submitted.
   if (!empty($node->is_webform_user) && $node->is_webform_user) {
     // find email field value
@@ -252,7 +261,7 @@ function sb_social_webform_submission_insert($node, $submission) {
       drupal_set_message('cookie reset');
     }
     else {
-      drupal_set_mesage('unable to set cookie');
+      drupal_set_message('unable to set cookie');
     }
   }
 }

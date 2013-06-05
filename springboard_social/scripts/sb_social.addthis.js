@@ -24,7 +24,7 @@ addthis_share = {
         url: Drupal.settings.sb_social.shortened_url,
         passthrough: {
           twitter: {
-            text: Drupal.settings.sb_social.twitter_message
+            text: Drupal.settings.sb_social.twitter_message,
           }
         }
       };
@@ -39,14 +39,12 @@ function shareResponse(data) {
   console.log(data);
   console.log(Drupal.settings);
   $url = '/sb_social/share_event/' + data.data.service + '/' + Drupal.settings.sb_social.sid;
-  alert('share url:' + $url);
   
   // todo: fire ajax event that logs share event.
   jQuery.ajax({
        url: $url,
        type: "GET",
        success:function(response){
-         alert('share event tracker');
          console.log(response);
        },
   });
