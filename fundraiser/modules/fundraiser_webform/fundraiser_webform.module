@@ -677,7 +677,8 @@ function fundraiser_webform_fundraiser_get_fundraiser_alter($fundraiser) {
   if (is_numeric($fundraiser->nid)) {
     // Grab amounts to pass up to fundraiser to keep values in sync.
     $field = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, 'amount');
-    $amounts = unserialize($field->extra);
+    $unserialized_extra = isset($field->extra) ? unserialize($field->extra) : array();
+    $amounts = $unserialized_extra;
     if (isset($amounts['items'])) {
       $amounts = preg_split('/\n/', trim($amounts['items']));
       $amounts = array_unique($amounts);
@@ -1055,7 +1056,8 @@ function _fundraiser_webform_get_donation_by_sid($sid) {
 function _fundraiser_webform_get_extra_by_key($nid, $form_key) {
   $results = _fundraiser_webform_get_component_by_nid_key($nid, $form_key);
   if ($results) {
-    return unserialize($results->extra);
+    $unserialized_extra = isset($field->extra) ? unserialize($field->extra) : FALSE;
+    return $unserialized_extra;
   }
   return FALSE;
 }
