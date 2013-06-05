@@ -140,14 +140,6 @@ class EmailWrappersTestCase extends DrupalWebTestCase {
 
  
   }
-f ($mail['id'] == 'webform_submission') {
-        $subject_legit = ($mail['subject'] == 'Test webform submission mail');
-        $this->assertTrue($subject_legit, t('Email subject set'));
-
-        $multipart_legit = strpos($mail['body'], 'multi-part message in MIME format');
-        $this->assertTrue($multipart_legit, t('Email is in multipart MIME format'));
-
-        $html_template_legit = strpos($m  
 
   private function WebformCreate() {
     $edit = array();
