@@ -548,10 +548,9 @@ function salesforce_mapping_map_entity($entity, $entity_type, $map) {
     $sync_rules[$sf_field] = isset($field_map['drupal_sf']) ? $field_map['drupal_sf'] : SALESFORCE_SYNC_RULE_ALWAYS;
   }
 
-  $sobject = new stdClass();
-  $sobject->type = $map->salesforce_object_type;
-  $sobject->record = ($map->salesforce_record_type == 'default') ? NULL : $map->salesforce_record_type;
-  $sobject->fields = $fields;
+  $object_type = $map->salesforce_object_type;
+  $record_type = ($map->salesforce_record_type == 'default') ? NULL : $map->salesforce_record_type;
+  $sobject = new SalesforceObject($object_type, $fields, $record_type);
   return array(
     'sobject' => $sobject,
     'sync_rules' => $sync_rules,

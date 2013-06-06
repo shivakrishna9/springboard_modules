@@ -157,54 +157,55 @@ class SalesforceSyncTestCase extends SalesforceTestCase {
       $item->drupal_id = rand(1, $num * 100);
       $item->module = $this->randomName();
       $item->delta = rand(0, 1) ? $this->randomName() : rand(1, $num * 100);
-      $item->operation = $ops[$ops_rand];
+      $item->setOperation($ops[$ops_rand]);
 
       // Create the Salesforce object.
       $object_rand = array_rand($objects);
+      $item->setObjectType($objects[$object_rand]['type']);
       $record_rand = empty($objects[$object_rand]['records']) ? NULL : array_rand($objects[$object_rand]['records']);
-      $sobject = new SalesforceObject($objects[$object_rand]['type'], array());
-      $sobject->record = is_null($record_rand) ? NULL : $objects[$object_rand]['records'][$record_rand];
-      $sobject->fields = array();
+      $record_type = is_null($record_rand) ? NULL : $objects[$object_rand]['records'][$record_rand];
+      $item->setRecordType($record_type);
       foreach ($objects[$object_rand]['fields'] as $field => $can_dedupe) {
         if ($field == 'Email') {
-          $sobject->fields[$field] = strtolower($this->randomName()) . '@' . strtolower($this->randomName()) . '.com';
+          $field_value = strtolower($this->randomName()) . '@' . strtolower($this->randomName()) . '.com';
         }
         elseif ($field == 'Amount') {
-          $sobject->fields[$field] = rand(1, 10000);
+          $field_value = rand(1, 10000);
         }
         elseif ($field == 'CloseDate') {
-          $sobject->fields[$field] = date('c', REQUEST_TIME);
+          $field_value = date('c', REQUEST_TIME);
         }
         else {
-          $sobject->fields[$field] = $this->randomName();
+          $field_value = $this->randomName();
         }
+        $item->addField($field, $field_value);
 
         // If this field can be used for dedupe, give it a 50% chance of it
         // being set.  Unless, of course, the operation is UPSERT, then it needs
         // to be set.
         if ($can_dedupe && (rand(0, 1) || $item->operation == 'UPSERT')) {
-          $item->dedupe_field = $field;
+          $item->setDedupeField($field);
         }
       }
 
       // If the operation is UPSERT, and there is no dedupe field, change the
       // operation to CREATE.
       if ($item->operation == 'UPSERT' && empty($item->dedupe_field)) {
-        $item->operation = 'CREATE';
+        $item->setOperation('CREATE');
       }
 
       // If the operation is UPDATE or DELETE add in a fake Id field.
       if ($item->operation == 'UPDATE' || $item->operation == 'DELETE') {
-        $sobject->Id = $this->randomName();
+        $item->setId($this->randomName());
       }
 
       // If the operation is UPDATE or UPSERT add in fake sync rules for a
       // random quantity of the number of fields.
       if ($item->operation == 'UPDATE' || $item->operation == 'UPSERT') {
         $item->sync_rules = array();
-        $fields = array_keys($sobject->fields);
+        $fields = array_keys($item->sobject->fields);
         shuffle($fields);
-        $field_count = count($sobject->fields);
+        $field_count = count($item->sobject->fields);
         $rand_count = rand(0, $field_count);
         while ($rand_count > 0) {
           $field = array_shift($fields);
@@ -222,8 +223,6 @@ class SalesforceSyncTestCase extends SalesforceTestCase {
       }
 
       // Finalize.
-      $item->object_type = $sobject->type;
-      $item->sobject = $sobject;
       $items[] = $item;
     }
     return $items;
