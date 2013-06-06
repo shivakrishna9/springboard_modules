@@ -88,6 +88,32 @@ class SalesforceSyncSyncTestCase extends SalesforceSyncTestCase {
     $this->assertEqual($account_count, count($account_records_by_field), 'fetchByField() found all requested Account records.');
     $contact_records_by_field = $this->salesforceSync->fetchByField('Contact', array('Id'), 'Email', $emails);
     $this->assertEqual($contact_count, count($contact_records_by_field), 'fetchByField() found all requested Contact records.');
+
+    // Make Opportunities.
+    $items = $this->createItems(20, array('CREATE'), array('Account', 'Contact'));
+    foreach ($items as $key => $item) {
+      $rand_account = array_rand($ids['Account']);
+      $items[$key]->addField('AccountId', $ids['Account'][$rand_account]);
+    }
+    $batches = $this->createBatches($items, TRUE);
+    $opportunities = array();
+    foreach ($batches as $batch) {
+      $results = $this->salesforceSync->sendBatch($batch);
+      // Make sure all of the Opportunities have the correct record type.
+      foreach ($results as $key => $result) {
+        $opportunities[$result->id] = $items[$key];
+      }
+    }
+    $this->assertEqual(41, count($this->salesforceSync->newSfRecords), 'sendBatch() sent all Opportunity batches to Salesforce.');
+
+    // Fetch Opportunities from Salesforce.
+    $opportunity_ids = array_keys($opportunities);
+    $sf_opportunities = $this->salesforceSync->fetchByIds('Opportunity', array('Id', 'RecordTypeId'), $opportunity_ids);
+    $this->assertEqual(20, count($sf_opportunities), 'fetchByIds() found all requested Opportunity records.');
+    foreach ($sf_opportunities as $sf_opportunity) {
+      $opportunity = $opportunities[$sf_opportunity->Id];
+      $this->assertEqual($sf_opportunity->fields->RecordTypeId, $opportunity->sobject->fields['RecordTypeId']);
+    }
   }
 
   /**
