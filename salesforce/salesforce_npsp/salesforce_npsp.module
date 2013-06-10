@@ -51,7 +51,7 @@ function salesforce_npsp_user_view($account) {
  * Implements hook_salesforce_queue_postprocess_batch().
  */
 function salesforce_npsp_salesforce_queue_postprocess_batch($batch, $results, $queue) {
-  if (!isset($batch['sobjects'])) {
+  if (!isset($batch['sobjects']) || empty($batch['sobjects'])) {
     // Some batches do not have sobjects, such as delete.
     return;
   }

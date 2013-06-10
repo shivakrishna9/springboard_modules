@@ -91,13 +91,11 @@ class SalesforceSyncQueueTokenTestCase extends SalesforceQueueTestCase {
    * Creates a account queue item.
    */
   protected function createAccountQueueItem() {
-    $account = new stdClass();
-    $account->type = 'Account';
-    $account->record = NULL;
-    $account->fields = array(
+    $fields = array(
       'Name' => 'Test Account',
       'AccountNumber' => '123',
     );
+    $sobject = new SalesforceObject('Account', $fields);
 
     $queue_item = array(
       'drupal_id' => 100,
@@ -105,7 +103,7 @@ class SalesforceSyncQueueTokenTestCase extends SalesforceQueueTestCase {
       'delta' => 'User',
       'operation' => 'CREATE',
       'object_type' => 'Account',
-      'sobject' => $account,
+      'sobject' => $sobject,
     );
 
     return $queue_item;
@@ -115,15 +113,13 @@ class SalesforceSyncQueueTokenTestCase extends SalesforceQueueTestCase {
    * Creates a contact queue item.
    */
   protected function createContactQueueItem() {
-    $contact = new stdClass();
-    $contact->type = 'Contact';
-    $contact->record = NULL;
-    $contact->fields = array(
+    $fields = array(
       'FirstName' => 'John',
       'LastName' => 'Doe',
       'Email' => 'example@example.com',
       'AccountId' => '[Account:user:100]',
     );
+    $sobject = new SalesforceObject('Contact', $fields);
 
     $queue_item = array(
       'drupal_id' => 200,
@@ -132,7 +128,7 @@ class SalesforceSyncQueueTokenTestCase extends SalesforceQueueTestCase {
       'operation' => 'UPSERT',
       'object_type' => 'Contact',
       'dedupe_field' => 'Email',
-      'sobject' => $contact,
+      'sobject' => $sobject,
     );
 
     return $queue_item;

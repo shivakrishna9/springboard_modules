@@ -84,13 +84,11 @@ class SalesforceSyncFormatsTestCase extends SalesforceQueueTestCase {
    * Creates a campaign queue item.
    */
   protected function createCampaignQueueItem($active = FALSE) {
-    $campaign = new stdClass();
-    $campaign->type = 'Campaign';
-    $campaign->record = NULL;
-    $campaign->fields = array(
+    $fields = array(
       'Name' => 'Campaign Name',
       'IsActive' => $active,
     );
+    $sobject = new SalesforceObject('Campaign', $fields);
 
     $queue_item = array(
       'drupal_id' => 3432,
@@ -98,7 +96,7 @@ class SalesforceSyncFormatsTestCase extends SalesforceQueueTestCase {
       'delta' => 'Campaign',
       'operation' => 'CREATE',
       'object_type' => 'Campaign',
-      'sobject' => $campaign,
+      'sobject' => $sobject,
     );
 
     return $queue_item;

@@ -323,6 +323,21 @@ function _salesforce_sync_get_rmid($item) {
 }
 
 /**
+ * Helper to grab all sync item records based on drupal type.
+ */
+function _salesforce_sync_get_synced_items($drupal_id, $module, $delta) {
+  $items = db_select('salesforce_sync_map', 'm')
+    ->fields('m')
+    ->condition('drupal_id', $drupal_id)
+    ->condition('module', $module)
+    ->condition('delta', $delta)
+    ->execute()
+    ->fetchAll();
+
+  return $items;
+}
+
+/**
  * @} salesforce_sync_map_crud
  */
 

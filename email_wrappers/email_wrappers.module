@@ -90,7 +90,7 @@ function email_wrappers_preview_modal() {
  * on webform email add form.
  */
 function email_wrappers_form_webform_emails_form_alter(&$form, $form_state) {
-  if (fundraiser_is_donation_type($form['#node']->type)) {
+  if (module_exists('fundraiser') && fundraiser_is_donation_type($form['#node']->type)) {
     $cid = _email_wrappers_get_cid($form['#node']->webform['components'], 'mail');
     $form['add']['email_option']['#default_value'] = 'component';
     if ($cid) {

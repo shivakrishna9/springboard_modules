@@ -6,7 +6,7 @@
 function commerce_psi_credit_commerce_payment_method_info() {
   $payment_methods = array();
 
-  $payment_methods['psi_credit'] = array(
+  $payment_methods['commerce_psi_credit'] = array(
     'base' => 'commerce_psi_credit',
     'title' => t('Payment Solutions Inc. - Credit Card'),
     'short_title' => t('PSI Credit'),
@@ -74,7 +74,9 @@ function commerce_psi_credit_submit_form_submit($payment_method, $pane_form, $pa
   module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
   $card_type = commerce_payment_validate_credit_card_type($pane_values['credit_card']['number'], array_keys(commerce_payment_credit_card_types()));
   $all_types = commerce_payment_credit_card_types();
-  // PSI api uses the pretty name for the card type
+  // PSI api uses the pretty name for the card type, need to customize a few
+  $all_types['amex'] = t('AmericanExpress');
+  $all_types['discover'] = t('Discover');
   $pretty_card_type = !empty($all_types[$card_type]) ? $all_types[$card_type] : NULL;
 
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
@@ -138,7 +140,7 @@ function commerce_psi_credit_submit_form_submit($payment_method, $pane_form, $pa
   }
 
   // Prepare a transaction object
-  $transaction = commerce_payment_transaction_new('psi_credit', $order->order_id);
+  $transaction = commerce_payment_transaction_new('commerce_psi_credit', $order->order_id);
   $transaction->instance_id = $payment_method['instance_id'];
   $transaction->amount = $charge['amount'];
   $transaction->currency_code = $charge['currency_code'];

@@ -102,6 +102,12 @@ function webform_goals_admin_settings($form, $form_state) {
     '#type' => 'fieldset',
     '#title' => t('Update settings'),
   );
+  $form['cron']['webform_goals_standalone_cron'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable standalone cron'),
+    '#description' => t('When standalone cron is enabled, maintenance tasks like updating goal progress will no longer be performed during hook_cron and will need to be invoked via /webform_goals_cron. This setting is useful for sites with busy cron tabs as it permits running goal updates as a separate process'),
+    '#default_value' => variable_get('webform_goals_standalone_cron', 0),
+  );
   $form['cron']['webform_goals_widget_update_limit'] = array(
     '#type' => 'textfield',
     '#title' => t('Goal update maximum'),

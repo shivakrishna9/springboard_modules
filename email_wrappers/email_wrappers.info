@@ -14,3 +14,4 @@ files[] = tests/email_wrappers.test
 files[] = email_wrappers.install
 files[] = email_wrappers.module
 files[] = email_wrappers.admin.inc
+files[] = tests/email_wrappers.test

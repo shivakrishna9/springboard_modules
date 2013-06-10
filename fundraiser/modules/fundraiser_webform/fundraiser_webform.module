@@ -677,7 +677,8 @@ function fundraiser_webform_fundraiser_get_fundraiser_alter($fundraiser) {
   if (is_numeric($fundraiser->nid)) {
     // Grab amounts to pass up to fundraiser to keep values in sync.
     $field = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, 'amount');
-    $amounts = unserialize($field->extra);
+    $unserialized_extra = isset($field->extra) ? unserialize($field->extra) : array();
+    $amounts = $unserialized_extra;
     if (isset($amounts['items'])) {
       $amounts = preg_split('/\n/', trim($amounts['items']));
       $amounts = array_unique($amounts);
@@ -954,6 +955,8 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
     }
     $component['weight'] = $weight;
     $allow_update = isset($field['#allow_update']) ? $field['#allow_update'] : 0;
+    $allow_respawn = isset($field['#allow_respawn']) ? $field['#allow_respawn'] : 0;
+    $reset_value = isset($field['#reset_value']) ? $field['#reset_value'] : 0;
 
     $cid = 0; // Default zero.
     // Now that the array has been created, with all the right create callbacks. Figure out if we're updating or inserting.
@@ -964,8 +967,7 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
       if ($allow_update) {
         $component['pid'] = $orig_field->pid; // Keep the original parentage, could be set by user.
         $component['name'] = $orig_field->name; // Keep the original name, could be set by user.
-        // Amount is the only field we handle differently.
-        if ($component['form_key'] != 'amount') {
+        if (!$reset_value) {
           $component['value'] = $orig_field->value; // Keep the original value, could be set by user.
         }
         $component = array_merge((array) $orig_field, (array) $component);
@@ -978,8 +980,7 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
       // So instead, we'll go by only adding new things on new nodes.
       // If the node already exists *and* the field is deleted, we leave it deleted.
       // Otherwise we may be adding something back that was deleted on purpose by user (see empty fieldsets).
-      $allow_update = isset($field['#allow_update']) ? $field['#allow_update'] : 0;
-      if ($allow_update || (isset($fundraiser->is_new) && $fundraiser->is_new == TRUE)) {
+      if ($allow_update || $allow_respawn || (isset($fundraiser->is_new) && $fundraiser->is_new == TRUE)) {
         $cid = webform_component_insert($component);
         if (module_exists('webform_user') && _webform_user_is_webform_user_node($fundraiser)) {
           static $mapping;
@@ -1055,7 +1056,8 @@ function _fundraiser_webform_get_donation_by_sid($sid) {
 function _fundraiser_webform_get_extra_by_key($nid, $form_key) {
   $results = _fundraiser_webform_get_component_by_nid_key($nid, $form_key);
   if ($results) {
-    return unserialize($results->extra);
+    $unserialized_extra = isset($field->extra) ? unserialize($field->extra) : FALSE;
+    return $unserialized_extra;
   }
   return FALSE;
 }
@@ -1063,33 +1065,34 @@ function _fundraiser_webform_get_extra_by_key($nid, $form_key) {
 /**
  * DB function, get webform component form elements.
  */
-function _fundraiser_webform_get_components_by_nid($nid) {
-  return db_query('SELECT * FROM {webform_component} ' .
-    'WHERE nid = :nid',
-    array(':nid' => $nid))->fetchAll();
+function _fundraiser_webform_get_components_by_nid($nid, $return_assoc = FALSE) {
+  $components_by_nid = &drupal_static(__FUNCTION__);
+  if (empty($components_by_nid) || empty($components_by_nid[$nid])) {
+    $components_by_nid[$nid] = db_query('SELECT * FROM {webform_component} WHERE nid = :nid',
+      array(':nid' => $nid))->fetchAllAssoc('form_key');
+  }
+  return ($return_assoc) ? $components_by_nid[$nid] : array_values($components_by_nid[$nid]);
 }
 
 /**
  * DB function, select webform component given node, form key info.
  */
 function _fundraiser_webform_get_component_by_nid_key($nid, $form_key) {
-  return db_query('SELECT * FROM {webform_component} ' .
-    'WHERE nid = :nid ' .
-    'AND form_key = :form_key',
-    array(':nid' => $nid, ':form_key' => $form_key))->fetchObject();
+  $component = _fundraiser_webform_get_components_by_keys($nid, $form_key);
+  return !empty($component) ? array_pop($component) : new stdClass();
 }
 
 /**
  * DB function, get webform component form elements.
  */
 function _fundraiser_webform_get_components_by_keys($nid, $form_keys) {
+  $components = _fundraiser_webform_get_components_by_nid($nid, TRUE);
   if (!is_array($form_keys)) {
     $form_keys = array($form_keys);
   }
-  return db_query('SELECT * FROM {webform_component} ' .
-    'WHERE nid = :nid ' .
-    'AND form_key IN (:form_keys)',
-    array(':nid' => $nid, ':form_keys' => $form_keys))->fetchAll();
+  $form_keys = array_flip($form_keys);
+  $intersect = array_intersect_key($components, $form_keys);
+  return is_array($intersect) ? $intersect : array();
 }
 
 /**

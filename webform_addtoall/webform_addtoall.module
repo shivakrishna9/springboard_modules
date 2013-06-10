@@ -53,7 +53,7 @@ function webform_addtoall_form_submit($form, &$form_state) {
       // Build a list of nids for each form type.
       $result = db_query("SELECT nid FROM {node} WHERE type = :type ", array(':type' => $type));
       $nids = array();
-      while ($obj = db_fetch_object($result)) {
+      while ($obj = $result->fetchObject()) {
         $nids[] = $obj->nid;
       }
       // Clone the component to these nodes.
@@ -75,7 +75,13 @@ function webform_addtoall_component_clone($nids, $form_values) {
   $source_node = node_load($form_values['nid'], NULL, TRUE);
   $source_form_key = $form_values['form_key'];
   $source_pid = $form_values['pid'];
-  $source_pid_form_key =  $source_node->webform['components'][$source_pid]['form_key'];
+  // Not all components have a parent, act accordingly.
+  if ($source_pid) {
+    $source_pid_form_key =  $source_node->webform['components'][$source_pid]['form_key'];
+  }
+  else {
+   $source_pid_form_key = FALSE;
+  }
   $source_weight = $form_values['weight'];
   foreach ($nids as $nid) {
     // Don't do anything if this is the source node
