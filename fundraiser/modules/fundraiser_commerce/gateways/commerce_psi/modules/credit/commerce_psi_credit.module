@@ -74,7 +74,9 @@ function commerce_psi_credit_submit_form_submit($payment_method, $pane_form, $pa
   module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
   $card_type = commerce_payment_validate_credit_card_type($pane_values['credit_card']['number'], array_keys(commerce_payment_credit_card_types()));
   $all_types = commerce_payment_credit_card_types();
-  // PSI api uses the pretty name for the card type
+  // PSI api uses the pretty name for the card type, need to customize a few
+  $all_types['amex'] = t('AmericanExpress');
+  $all_types['discover'] = t('Discover');
   $pretty_card_type = !empty($all_types[$card_type]) ? $all_types[$card_type] : NULL;
 
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
