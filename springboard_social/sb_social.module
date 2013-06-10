@@ -174,7 +174,7 @@ function sb_social_share_url($nid, $uid, $sid) {
   $options = array(
     'absolute' => TRUE,
     'query' => array(
-      'share_http://d7-springboard.dev/id' => $sid,
+      'social_referer_transaction' => $sid,
     ),
   );
   return url('node/' . $nid, $options);
@@ -184,6 +184,7 @@ function sb_social_share_url($nid, $uid, $sid) {
  * Implements hook_market_source_field_info().
  */
 function sb_social_market_source_field_info() {
+  drupal_set_message('hook market source field info invoked.');
   $fields = array();
   // transaction that generated the refered conversion (sid)
   $fields['social_referer_transaction'] = array(
@@ -229,6 +230,7 @@ function sb_social_market_source_field_info() {
           'hidden_type' => 'hidden',
       ),
   );
+  dsm($fields, 'fields');
   return $fields;
 }
 
@@ -245,8 +247,7 @@ function sb_social_market_source_field_info() {
  * for uid 0?
  */
 function sb_social_webform_submission_insert($node, $submission) {
-  //global $user;
-  drupal_set_message('submission:<pre>' . print_r($submission, TRUE) . '</pre>');
+
   // update/set tracking cookie when a webform user enabled form is submitted.
   if (!empty($node->is_webform_user) && $node->is_webform_user) {
     // find email field value
@@ -271,6 +272,7 @@ function sb_social_webform_submission_insert($node, $submission) {
  */
 
 function sb_social_token_info() {
+  drupal_set_message('token info invoked');
   $enabled_services = variable_get('springboard_social_services', array());
   $info['types']['sb_social'] = array(
     'name' => t('Springboard Social'),
@@ -329,7 +331,7 @@ function sb_social_token_info() {
  * Implements hook_tokens().
  */
 function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
-
+  drupal_set_message('hook tokens invoked');
   if ($type = 'sb_social' && !empty($data['node'])) {
     $replacements = array();
     $settings = sb_social_webform_settings_load($data['node']->nid);
@@ -395,6 +397,7 @@ function sb_social_theme($existing, $type, $theme, $path) {
 
 function sb_social_short_url($node, $sid) {
   $submission = _sb_social_load_submission($sid);
+  dsm($submission, 'submission');
   $uid = $submission['uid'];
   $url = sb_social_share_url($node->nid, $uid, $sid);
   return shorten_url($url);
