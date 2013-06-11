@@ -302,10 +302,11 @@ function springboard_menu_alter(&$items) {
     }
 
     // Administer webform content
-    $items['admin/springboard/forms/webforms'] = $items['admin/content/webform'];
+    $items['admin/springboard/forms/webforms'] = isset($views_paths['admin/content/webform']) ? $views_paths['admin/content/webform'] : $items['admin/content/webform'];
     $items['admin/springboard/forms/webforms']['type'] = MENU_NORMAL_ITEM;
     $items['admin/springboard/forms/webforms']['access arguments'] = array('administer springboard');
-    $items['admin/springboard/forms/webforms']['title'] = 'View ' . $items['admin/content/webform']['title'];
+    $title = isset($views_paths['admin/content/webform']['title']) ? $views_paths['admin/content/webform']['title'] : $items['admin/content/webform']['title'];
+    $items['admin/springboard/forms/webforms']['title'] = 'View ' . $title;
     $items['admin/springboard/forms/webforms']['weight'] = 100;
     unset($items['admin/springboard/forms/webforms']['access callback']);
 
