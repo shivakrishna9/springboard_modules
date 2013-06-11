@@ -40,7 +40,6 @@ function sb_social_admin() {
       ),
     ),
   );
-
   return system_settings_form($form);
 }
 
@@ -109,6 +108,29 @@ function sb_social_webform_settings($form, $edit, $node) {
     '#description' => t('Custom twitter message text.'),
     '#default_value' => isset($settings['twitter']['message']) ? $settings['twitter']['message'] : '',
   );
+
+  // Market Source
+  if (module_exists('market_source')) {
+    $form['market_source'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Market Source Settings'),
+      '#description' => t('Optional Market Source values to include in share links'),
+    );
+    $fields = market_source_field_info();
+    // It doesn't make sense to list certain market source fields, like user agent.
+    // the blacklist lets us filter these out cleanly.
+    $blacklist = _sb_social_component_blacklist();
+    foreach ($fields as $key => $field) {
+      if (in_array($key, $blacklist)) {
+        continue;
+      }
+      $form['market_source'][$key] = array(
+        '#type' => 'textfield',
+        '#title' => $field['#title'],
+        '#default_value' => $settings[$service]['market_source'][$key],
+      );
+    }
+  }
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save'),
@@ -135,7 +157,7 @@ function sb_social_process_settings_facebook($form_state) {
   $data = array(
     'title' => !empty($form_state['values']['fb_title']) ? $form_state['values']['fb_title'] : '',
     'description' => !empty($form_state['values']['fb_description']) ? $form_state['values']['fb_description'] : '',
-    'image' => '', // TODO: integrate image field.
+    'image' => '',
   );
   $record = array(
     'nid' => $form_state['values']['nid'],
@@ -143,10 +165,6 @@ function sb_social_process_settings_facebook($form_state) {
     'data' => $data,
   );
 
-  $update = $form_state['values']['update_facebook'] ? array('nid', 'service') : array();
-
-
-  $validators = array();
   if (!empty($form_state['values']['fb_image'])) {
     // apparently the form api only passes the fid when a file has been uploaded
     // so we have to load the full record and fish out the uri to generate
@@ -154,7 +172,7 @@ function sb_social_process_settings_facebook($form_state) {
     $file = file_load($form_state['values']['fb_image']);
     $record['data']['image'] = file_create_url($file->uri);
   }
-  sb_social_webform_settings_save($record, $update);
+  sb_social_webform_settings_save($record, $form_state['values']);
 }
 
 function sb_social_process_settings_twitter($form_state) {
@@ -166,6 +184,5 @@ function sb_social_process_settings_twitter($form_state) {
     'service' => 'twitter',
     'data' => $data,
   );
-  $update = $form_state['values']['update_twitter'] ? array('nid', 'service') : array();
-  sb_social_webform_settings_save($record, $update);
+  sb_social_webform_settings_save($record, $form_state['values']);
 }

@@ -102,45 +102,51 @@ function sb_social_access_webform_settings($node) {
  *http://d7-springboard.dev/
  */
 function sb_social_init() {
+
+  $node = FALSE;
   if (arg(0) == 'node' && is_numeric(arg(1))) {
     $node = node_load(arg(1));
   }
+  drupal_set_message('arg 2:' . arg(2));
   // generate shortened share url.
-  if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == 'done') {
+  if ($node && arg(2) == 'done') {
     $node = node_load(arg(1));
     // TODO: we're going to need to rethink a few things if custom settings are expected
     // outside the scope of a webform.
-    if (!empty($node->is_webform_user)) {
+   /* if (!empty($node->is_webform_user)) {
       $sid = $_GET['sid'];
       if (is_numeric($sid)) {
-        $submission = _sb_social_load_submission($sid);
-        $uid = $submission['uid'];
-        $url = sb_social_share_url($node->nid, $uid, $sid);
+        //$submission = _sb_social_load_submission($sid);
+        //$uid = $submission['uid'];
+        //$url = sb_social_share_url($node->nid, $uid, $sid);
         // Shorten module provides short url via whatever default service is configured.
-        $shortened_url = shorten_url($url);
-        drupal_add_js(array('sb_social' => array('shortened_url' => $shortened_url)), 'setting');
+       // $shortened_url = sb_social_short_url($node, $sid);
+       // drupal_add_js(array('sb_social' => array('shortened_url' => $shortened_url)), 'setting');
       }
-    }
-  }
+    }*/
+ // }
   // add opengraph meta tags and twitter js settings.
   // Note: twitter customizations use the JS api and are handled elsewhere.
-  // TODO: this may get rmoved elsewhere when share links are rendered.
-  if (arg(0) == 'node' && is_numeric(arg(1))) {
-    $settings = sb_social_webform_settings_load(arg(1));
+  // TODO: this may get moved elsewhere when share links are rendered.
+  //if ($node) {
+    $settings = sb_social_webform_settings_load($node->nid);
     if ($settings) {
       drupal_add_js('http://s7.addthis.com/js/250/addthis_widget.js', array('type' => 'external', 'scope' => 'footer'));
+      drupal_add_js(drupal_get_path('module', 'sb_social') . '/scripts/sb_social.addthis.js', 'file');
     }
+
     if (!empty($settings['twitter'])) {
       drupal_add_js(array('sb_social' => array(
-     'twitter_message' => $settings['twitter']['message'],
-     'pubid' => variable_get('springboard_social_addthis_profile_id', ''),
-   )), 'setting');
+       'twitter_message' => $settings['twitter']['message'],
+       'pubid' => variable_get('springboard_social_addthis_profile_id', ''),
+     )), 'setting');
     }
     if (!empty($settings['facebook'])) {
       $meta = array(
         'title' => !empty($settings['facebook']['title']) ? $settings['facebook']['title'] : '',
         'description' => !empty($settings['facebook']['description']) ? $settings['facebook']['description'] : '',
         'image' => $settings['facebook']['image'],
+        //'url' => sb_social_short_url($node, $sid, 'facebook'),
       );
       foreach ($meta as $id => $content) {
         $data = array(
@@ -154,7 +160,7 @@ function sb_social_init() {
         drupal_add_html_head($data, 'opengraph_' . $id);
       }
     }
-    drupal_add_js(drupal_get_path('module', 'sb_social') . '/scripts/sb_social.addthis.js', 'file');
+
   }
   // stash cookie payload in js
   if (!empty($_COOKIE['sb_social_event_submission'])) {
@@ -168,15 +174,25 @@ function sb_social_init() {
 }
 
 
-function sb_social_share_url($nid, $uid, $sid) {
+function sb_social_share_url($nid, $uid, $sid, $service, $settings) {
+  dsm($settings,'url settings');
   $node = node_load($nid);
-  dsm($node, 'node');
+
   $options = array(
     'absolute' => TRUE,
     'query' => array(
       'social_referer_transaction' => $sid,
+      'social_referrer_network' => $service,
     ),
   );
+
+  if (module_exists('market_source') && isset($settings['market_source'])) {
+    foreach ($settings['market_source'] as $key => $value) {
+      $options['query'][$key] = $value;
+    }
+  }
+  $url = url('node/' . $nid, $options);
+  drupal_set_message('url:' . $url);
   return url('node/' . $nid, $options);
 }
 
@@ -219,9 +235,12 @@ function sb_social_market_source_field_info() {
           'hidden_type' => 'hidden',
       ),
   );
+  // in the initial spec but unnecessary. This relationship is already
+  // established in the share event record.
+  //
   // the network the transaction/submission was refered to.
-  $fields['shared_to'] = array(
-      '#title' => t('social referrer transaction'),
+ /* $fields['shared_to'] = array(
+      '#title' => t('Share network'),
       '#type' => 'hidden',
       '#value' => '',
       '#required' => 0,
@@ -229,8 +248,7 @@ function sb_social_market_source_field_info() {
           'description' => '',
           'hidden_type' => 'hidden',
       ),
-  );
-  dsm($fields, 'fields');
+  );*/
   return $fields;
 }
 
@@ -272,7 +290,6 @@ function sb_social_webform_submission_insert($node, $submission) {
  */
 
 function sb_social_token_info() {
-  drupal_set_message('token info invoked');
   $enabled_services = variable_get('springboard_social_services', array());
   $info['types']['sb_social'] = array(
     'name' => t('Springboard Social'),
@@ -331,15 +348,24 @@ function sb_social_token_info() {
  * Implements hook_tokens().
  */
 function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
-  drupal_set_message('hook tokens invoked');
+
   if ($type = 'sb_social' && !empty($data['node'])) {
     $replacements = array();
     $settings = sb_social_webform_settings_load($data['node']->nid);
     dsm($settings, 'settings');
     $enabled_services = variable_get('springboard_social_services', array());
+
     if (!empty($_GET['sid'])) {
       $sid = $_GET['sid'];
-      $settings['url'] = sb_social_short_url($data['node'], $sid);
+      if (in_array('facebook', $enabled_services)) {
+        $urls['facebook_url'] = sb_social_short_url($data['node'], $sid, 'facebook', $settings['facebook']);
+      }
+      if (in_array('twitter', $enabled_services)) {
+        $urls['twitter_url'] = sb_social_short_url($data['node'], $sid, 'twitter', $settings['twitter']);
+      }
+      if ($urls) {
+        $enabled_services = array_merge($enabled_services, $urls);
+      }
     }
     foreach ($tokens as $key => $token) {
       switch ($key) {
@@ -347,7 +373,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
           $replacements[$token] = theme('sb_social_share', array('services' => $enabled_services));
           break;
         case 'facebook_share':
-          $replacements[$token] = theme('sb_social_share', array('services' => array('facebook')));
+          $replacements[$token] = theme('sb_social_share', array('services' => array('facebook', 'facebook_url' => $urls['facebook_url'])));
           break;
         case 'facebook_title':
           $replacements[$token] = !empty($settings['facebook']['title']) ? $settings['facebook']['title'] : '';
@@ -360,13 +386,14 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
           $replacements[$token] =  !empty($settings['facebook']['image']) ? $settings['facebook']['image'] : '';
           break;
         case 'twitter_share':
-          $replacements[$token] = theme('sb_social_share', array('services' => array('twitter')));
+          $replacements[$token] = theme('sb_social_share', array('services' => array('twitter', 'twitter_url' => $urls['twitter_url'])));
           break;
         case 'twitter_message':
           $replacements[$token] =  !empty($settings['twitter']['message']) ? $settings['twitter']['message'] : '';
           break;
         case 'share_url':
-          $replacements[$token] = $settings['url'];
+         // TODO: this token makes no sense in the context of service-specific URLs.
+         // $replacements[$token] = $settings['url'];
           break;
       }
     }
@@ -395,11 +422,25 @@ function sb_social_theme($existing, $type, $theme, $path) {
   return $items;
 }
 
-function sb_social_short_url($node, $sid) {
+function sb_social_short_url($node, $sid, $service, $settings = NULL) {
   $submission = _sb_social_load_submission($sid);
-  dsm($submission, 'submission');
   $uid = $submission['uid'];
-  $url = sb_social_share_url($node->nid, $uid, $sid);
+  $url = sb_social_share_url($node->nid, $uid, $sid, $service, $settings);
   return shorten_url($url);
 }
 
+/**
+ * Provides list of market source fields to exclude on administration pages.
+ */
+function _sb_social_component_blacklist() {
+  return array(
+    'referrer',
+    'initial_referrer',
+    'search_engine',
+    'search_string',
+    'user_agent',
+    'social_referer_transaction',
+    'social_referer_network',
+    'social_referer_contact',
+  );
+}

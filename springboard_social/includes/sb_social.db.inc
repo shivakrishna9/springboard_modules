@@ -97,12 +97,22 @@ function sb_social_webform_settings_load($nid) {
  * service - service name (ex. twitter, facebook)
  * data - array of shared content settings
  */
-function sb_social_webform_settings_save($settings, $update = FALSE) {
-  $update = $update ? 'nid' : array();
+function sb_social_webform_settings_save($settings, $values = NULL) {
+
+  if (module_exists('market_source') && $values) {
+    $fields = market_source_field_info();
+    foreach ($fields as $key => $field) {
+      if (isset($values[$key])) {
+        $settings['data']['market_source'][$key] = $values[$key];
+      }
+    }
+  }
+  dsm($settings, 'save settings');
   if (is_array($settings['data'])) {
     $settings['data'] = serialize($settings['data']);
   }
-  drupal_write_record('sb_social_webform', $settings, $update);
+  sb_social_webform_settings_delete($settings['nid'], $settings['service']);
+  drupal_write_record('sb_social_webform', $settings);
 }
 
 
@@ -111,7 +121,13 @@ function sb_social_webform_settings_save($settings, $update = FALSE) {
  */
 function sb_social_webform_settings_delete($nid, $service = FALSE) {
   // TODO: reimplement with db_delete() to optionally remove single records.
-  db_query('DELETE FROM {sb_social_webform} WHERE nid = :nid', array(':nid' => $nid));
+  $query = db_delete('sb_social_webform');
+  $query->condition('nid', $nid);
+  if ($service) {
+    $query->condition('service', $service);
+  }
+  $query->execute();
+ // db_query('DELETE FROM {sb_social_webform} WHERE nid = :nid', array(':nid' => $nid));
 }
 
 function _sb_social_get_settings_by_sid($sid) {
