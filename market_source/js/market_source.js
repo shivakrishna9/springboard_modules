@@ -75,7 +75,7 @@ Drupal.behaviors.marketSourceInit = {
           setCookie(key, urlParams[key], qs_keys[key]['persistence'] == 'on');
         }
       }
-      if (qs_keys[key]['value'] == false || qs_keys[key]['value'] == null || qs_keys[key]['value']  == '') {
+      if (qs_keys[key]['persistence'] != 'direct') {
         // Is there already a cookie set?
         var cookie = getCookie(key);
         if (cookie != false && cookie != null && cookie != '') {
