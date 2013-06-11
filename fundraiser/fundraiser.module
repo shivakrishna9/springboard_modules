@@ -920,15 +920,24 @@ function fundraiser_fundraiser_field_info() {
     '#create_callback' => '_fundraiser_other_amount_field_create',
     '#validate_callback' => '_fundraiser_other_amount_field_validate',
   );
+  $quantity_max = variable_get('fundraiser_default_quantity', '10');
+  $quantitys = range(1, $quantity_max);
+  $formatted_quantitys = '';
+  foreach ($quantitys as $quantity) {
+    $formatted_quantitys .= $quantity . '|' . $quantity . "\n";
+  }
   $fields['donation']['quantity'] = array(
     '#title' => t('Quantity'),
-    '#type' => 'textfield',
+    '#type' => 'select',
     '#allow_update' => 1,
     '#extra' => array(
       'description' => t('The number of these donations to make.'),
+      'items' => $formatted_quantitys,
+      'aslist' => TRUE,
       'width' => 10,
     ),
     '#value' => 1,
+    '#required' => TRUE,
     '#create_callback' => '_fundraiser_quantity_field_create',
     '#validate_callback' => '_fundraiser_quantity_field_validate',
   );

@@ -18,6 +18,30 @@
         // Turn autocomplete off on CC and CVV form elements.
         $('input[name*="card_number"], input[name*="card_cvv"]').attr('autocomplete','off');
 
+        // Helper function, provides the total display.
+        function _recalculate_quantity_total() {
+          $('#quantity-total').empty();
+          var amount = $('input[type="radio"][name*="amount"]:checked').val();
+          if (amount == 'other') {
+            amount = $('input[name*="other_amount"]').val();
+          }
+          var total = $('select[name*="quantity"]').val() * amount;
+          $('select[name*="quantity"]').after('<span id="quantity-total">Total: $' + total + '</span>');
+        }
+
+        // When the amount changes, change the displayed total.
+        $('select[name*="quantity"]').change(function() {
+          _recalculate_quantity_total();
+        });
+        // And do the same if the amount is changeds
+        $('input[name*="amount"]').change(function() {
+          _recalculate_quantity_total();
+        });
+        // And do the same if the other_amout is changeds
+        $('input[name*="other_amount"]').change(function() {
+          _recalculate_quantity_total();
+        });
+
         // Custom Validation Regex rules: AMEX, VISA, MASTERCARD, DISCOVER, Diner's Club, JCB
         $.validator.addMethod('creditcard', function(value, element) {
           return this.optional(element) || /^(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|6(?:011|5[0-9][0-9])[0-9]{12}|3[47][0-9]{13}|3(?:0[0-5]|[68][0-9])[0-9]{11}|(?:2131|1800|35\d{3})\d{11})$/i.test(value);
