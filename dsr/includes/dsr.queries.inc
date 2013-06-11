@@ -16,7 +16,7 @@
  * @param int $end
  * Unix timestamp representing the report end date
  *
- * @return query results object or FALSE if no results found.
+ U* @return query results object or FALSE if no results found.
  */
 function dsr_select($status, $start, $end) {
   $results = db_query('
@@ -60,7 +60,6 @@ function dsr_get_orders($status, $start_date, $end_date) {
       BETWEEN :start AND :end
       AND f.status = :status
   ', array(':start' => $start_date, ':end' => $end_date, ':status' => $status));
-
   while ($data = $results->fetchAssoc()) {
     $orders[$data['did']] = $data['amount'];
   }
@@ -88,17 +87,7 @@ function dsr_salesforce_aggregate($status, $start_date, $end_date) {
     $and = '';
   }
 
-  $soql =  sprintf("
-      SELECT
-        SUM(AMOUNT) total_amount,
-        COUNT(AMOUNT) total_count,
-        RecordType.Name
-        record_type
-      FROM Opportunity
-      WHERE
-        StageName = '%s'
-        AND Transaction_Date_Time__c > %s
-        AND Transaction_Date_Time__c < %s"
+  $soql =  sprintf("SELECT SUM(AMOUNT) total_amount, COUNT(AMOUNT) total_count, RecordType.Name record_type FROM Opportunity WHERE StageName = '%s' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s"
           . $and .
      " Group By RecordType.Name", $sf_status[$status], $start_date, $end_date);
 
@@ -107,7 +96,7 @@ function dsr_salesforce_aggregate($status, $start_date, $end_date) {
   // make sure we've got a good connection
   if ($salesforce->isAuthorized()) {
     $soql = rawurlencode($soql);
-    $response = $salesforce->query($soql);
+    $response = $salesforce->apiCall('query?q=' . $soql);
     return _dsr_parse_aggregate_result($response);
   }
   else {

@@ -333,8 +333,8 @@ class SalesforceSync {
     }
     $this->batchReplaceTokens($batch);
     $this->batchRemoveBadTokens($batch);
-    $this->batchConvertToSalesforceFormat($batch);
     $this->batchApplySalesforceSyncRules($batch);
+    $this->batchConvertToSalesforceFormat($batch);
     $batch['batch_prepared'] = TRUE;
   }
 
@@ -595,12 +595,12 @@ class SalesforceSync {
               $item->sobject->fields[$field_name] = 0;
             }
             break;
-  
+
           case 'datetime':
             // Salesforce requires ISO 8601 format for dates.
             $item->sobject->fields[$field_name] = date('c', strtotime($value));
             break;
-  
+
           case 'date':
             // Drupal dates come in all flavors. Check to see if it's a unix
             // timestamp. If it is we can skip strtotime().
@@ -611,7 +611,14 @@ class SalesforceSync {
               $item->sobject->fields[$field_name] = date('Y-m-d', strtotime($value));
             }
             break;
-  
+
+           case 'string':
+            // Make sure all strings are escaped correctly for XML. htmlspecialchars will
+            // be sufficient for most strings. If more robust escaping is needed
+            // consider using DOMDocument or SimpleXML to beef this up.
+            $item->sobject->fields[$field_name] = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+            break;
+
           default:
             // Do nothing.
         }

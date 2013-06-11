@@ -265,9 +265,10 @@ class SalesforceObject {
     if (isset($this->fields['RecordTypeId'])) {
       unset($this->fields['RecordTypeId']);
     }
-    if (!empty($this->type)) {
+    if ($this->recordTypeIdFieldExists()) {
       $sfapi = salesforce_get_api();
       if ($sfapi->isAuthorized()) {
+        // NOTE: objectDescribe() is cached.
         $object = $sfapi->objectDescribe($this->type);
         if (isset($object['recordTypeInfos'])) {
           foreach ($object['recordTypeInfos'] as $info) {
@@ -288,19 +289,22 @@ class SalesforceObject {
   }
 
   /**
-   * Helper to set the recordTypeId.
+   * Helper to set the record type by RecordTypeId.
    *
    * @param type $record_type_id
    *   The recordTypeId to set.
    */
   public function setRecordTypeId($record_type_id) {
-    $this->fields['recordTypeId'] = $record_type_id;
+    if ($this->recordTypeIdFieldExists()) {
+      $this->fields['recordTypeId'] = $record_type_id;
+    }
 
     // Set the record type to what coresponds with the id.
     $this->record = NULL;
     if (!empty($this->type)) {
       $sfapi = salesforce_get_api();
       if ($sfapi->isAuthorized()) {
+        // NOTE: objectDescribe() is cached.
         $object = $sfapi->objectDescribe($this->type);
         if (isset($object['recordTypeInfos'])) {
           foreach ($object['recordTypeInfos'] as $info) {
@@ -335,5 +339,28 @@ class SalesforceObject {
     if (!in_array($field_name, $this->fieldsToNull)) {
       $this->fieldsToNull[] = $field_name;
     }
+  }
+
+  /**
+   * Helper to check that the object type has a RecordTypeId field.
+   */
+  protected function recordTypeIdFieldExists() {
+    // The RecordTypeId field is dynamically created and removed by Salesforce.
+    // Even if there is a master record type and no custom records types, if the
+    // user deleted custom record types Salesforce would have automatically
+    // removed the RecordTypeId field.
+    if (!empty($this->type)) {
+      $sfapi = salesforce_get_api();
+      if ($sfapi->isAuthorized()) {
+        // NOTE: objectDescribe() is cached.
+        $object = $sfapi->objectDescribe($this->type);
+        foreach ($object['fields'] as $field) {
+          if ($field['name'] == 'RecordTypeId') {
+            return TRUE;
+          }
+        }
+      }
+    }
+    return FALSE;
   }
 }

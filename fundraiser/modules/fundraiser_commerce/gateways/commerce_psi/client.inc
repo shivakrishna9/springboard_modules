@@ -19,7 +19,7 @@ class PsiClient {
       $this->wsdl = 'https://client.paymentsolutionsinc.net/Staging/Services/Payment/PsiWcfService.svc?wsdl';
     }
     else {
-      $this->wsdl = 'http://68.163.70.218/Services/Payment/PsiWcfService.svc?wsdl';
+      $this->wsdl = 'https://psiwebdev.paymentsolutionsincdev.net/Services/Payment/PsiWcfService.svc?wsdl';
     }
 
     // Create a new soapclient
