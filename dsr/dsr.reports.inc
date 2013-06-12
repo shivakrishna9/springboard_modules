@@ -284,7 +284,7 @@ function theme_dsr_report_table($variables) {
   $rows[] = array(
     '<strong>Salesforce</strong>',
     $sf_data['total_count'],
-    number_format((float) $sf_data['total_amount'], 2, '.', ','),
+    $sf_data['total_amount'],
   );
   // TODO: check this
   if (isset($sf_data['types'])) {
