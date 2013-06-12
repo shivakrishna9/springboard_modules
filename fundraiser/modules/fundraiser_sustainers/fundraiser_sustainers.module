@@ -342,6 +342,13 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
     $offsite_recurring = _fundraiser_sustainers_offsite_recurring($info['offsite_recurring'], $donation->donation['payment_method']);
     $map = $context['map'];
 
+    // Add recurring item marker if recurring or not.
+    $fields['Is_Recurring_Donation__c'] = 'false';
+    if ($donation->donation['recurs_monthly'] == TRUE && !empty($donation->master_did) ) {
+      $fields['Is_Recurring_Donation__c'] = 'true';
+    }
+
+    // Add additional values for where not offsite recurring.
     if (!$offsite_recurring) {
       if (isset($map->field_map['salesforce_donation_map']['probability'])) {
         if ($donation->donation['recurs_monthly'] == TRUE && $donation->status_charged != 1) {
