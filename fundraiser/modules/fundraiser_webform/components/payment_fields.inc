@@ -46,7 +46,7 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
 
   // Find the payment methods component
   $payment_method_component = _fundraiser_webform_get_component_by_nid_key($node->nid, array('payment_method'));
-  $payment_method_field = $node->webform['components'][$payment_method_component->cid];
+  $payment_method_field = isset($node->webform['components'][$payment_method_component->cid]) ? $node->webform['components'][$payment_method_component->cid] : '';
   // Use the enabled payment methods to create the payment fields
   if (!empty($payment_method_field['extra']['payment_methods'])) {
     $payment_methods = array_filter($payment_method_field['extra']['payment_methods'], '_fundraiser_webform_payment_method_array_filter_enabled');
