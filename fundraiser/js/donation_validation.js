@@ -17,6 +17,8 @@
       $(window).ready(function(){
         // Turn autocomplete off on CC and CVV form elements.
         $('input[name*="card_number"], input[name*="card_cvv"]').attr('autocomplete','off');
+        // Set initial form button state to disabled
+        $('#edit-submit').addClass('button_disabled').attr('disabled', true);
 
         // Helper function, provides the total display.
         function _recalculate_quantity_total() {
@@ -33,11 +35,11 @@
         $('select[name*="quantity"]').change(function() {
           _recalculate_quantity_total();
         });
-        // And do the same if the amount is changeds
+        // And do the same if the amount is changed
         $('input[name*="amount"]').change(function() {
           _recalculate_quantity_total();
         });
-        // And do the same if the other_amout is changeds
+        // And do the same if the other_amout is changed
         $('input[name*="other_amount"]').change(function() {
           _recalculate_quantity_total();
         });
@@ -57,11 +59,20 @@
         }, "Enter a valid amount");
 
         // Instantiate Form Validation
-        $('.fundraiser-donation-form').validate({
-            onfocusout: function (element) {
-            $(element).valid();
-            // Callback for real-time onkeyup of form elements
+        $('.fundraiser-donation-form').validate({ 
+          // Custom keyup function checking for tab key (9) and when value is empty
+          onkeyup: function (element, event) {
+            if (event.which === 9 && element.value === "") {
+              return;
+            } else {
+              this.element(element);
+            }
+          },   
+          onfocusout: function (element) {
+            $(element).valid();    
+            // Callback for real-time onfocusout of form elements
             var isValid = $(element).valid();
+            // 
             if (typeof validateKeyCallback != "undefined" && isValid == 0) {
               // Set status to 0
               window.validateKeyCallback.status = 0;
@@ -69,39 +80,30 @@
             } else if (typeof validateKeyCallback != "undefined" && isValid == 1) {
               // Set status to 1
               window.validateKeyCallback.status = 1;
-              validateKeyCallback.success(element);         
+              validateKeyCallback.success(element); 
             }
           },
           highlight: function(element) {
             $(element).closest('.control-group').removeClass('success').addClass('error');
           },
           success: function(element) {
-            element.text('OK').addClass('valid').closest('.control-group').removeClass('error').addClass('success');
+            $(element).text('OK').addClass('valid').closest('.control-group').removeClass('error').addClass('success');
           }
         });
-
-        // Check initial state of form
-        $('.fundraiser-donation-form').once(function(){
+        
+		// On change and keyup check form status
+		$(".fundraiser-donation-form").bind('change keyup', function() {
           if ($(this).validate().checkForm()) {
-            $('#edit-submit').removeClass('button_disabled').attr('disabled', false);
+            $('.fundraiser-donation-form #edit-submit').removeClass('button_disabled').attr('disabled', false);
           } else {
-            $('#edit-submit').addClass('button_disabled').attr('disabled', true);
+            $('.fundraiser-donation-form #edit-submit').addClass('button_disabled').attr('disabled', true);
           }
         });
-
-        // Prevent submissions if errors are present
-        $('.fundraiser-donation-form').bind('change keyup', function() {
-          if ($(this).validate().checkForm()) {
-            $('#edit-submit').removeClass('button_disabled').attr('disabled', false);
-          } else {
-            $('#edit-submit').addClass('button_disabled').attr('disabled', true);
-          }
-        });
-
+        
         $('input[name*="card_number"]').numeric();
         $('input[name*="card_cvv"]').numeric();
 
-         // Zipcode custom validation rule
+        // Zipcode custom validation rule
         $('input[name*="zip"]').rules("add", {
           required: true,
           number: true,
@@ -111,7 +113,7 @@
             minlength: "Minimum of 5 characters"
           }
         });
-          // CVV custom validation rule
+        // CVV custom validation rule
         $('input[name*="card_cvv"]').rules("add", {
           required: true,
           number: true,
