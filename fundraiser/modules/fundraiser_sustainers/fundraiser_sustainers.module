@@ -44,6 +44,16 @@ function fundraiser_sustainers_permission() {
 }
 
 /**
+ * Implements hook_views_api().
+ */
+function fundraiser_sustainers_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'fundraiser_sustainers') . '/includes',
+  );
+}
+
+/**
  * Implements hook_menu().
  */
 function fundraiser_sustainers_menu() {
@@ -544,6 +554,14 @@ function fundraiser_sustainers_process_recurring_donations() {
   // Loop over the found orders
   foreach ($donations as $recurring) {
     if ($sustainer_key == $recurring->sustainer_key) {
+      // Prepare a log record.
+      $log_record = array(
+        'did' => $recurring->did,
+        'gateway' => $recurring->gateway,
+        'date_processed' => time(),
+        'lock_id' => $recurring->lock_id,
+      );
+
       // Get the donation information that we need.
       $donation = fundraiser_donation_get_donation($recurring->did);
       // Then go through each one of these to charge.
@@ -558,13 +576,18 @@ function fundraiser_sustainers_process_recurring_donations() {
         fundraiser_donation_success($donation);
         // Record the success.
         $successes++;
+        $log_record['success'] = TRUE;
       }
       else {
         $donation->result['success'] = FALSE;
+        $log_record['success'] = FALSE;
         fundraiser_donation_decline($donation);
         // Record the fail.
         $fails++;
       }
+
+      // Write the log record.
+      drupal_write_record('fundraiser_sustainers_log', $log_record);
     }
     else {
       // TODO: Unlock the sustainer record. Currently the lock has not been ported from D6.

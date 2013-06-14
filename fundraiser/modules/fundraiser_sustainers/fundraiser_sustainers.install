@@ -137,6 +137,54 @@ function fundraiser_sustainers_schema() {
     ),
     'primary key' => array('did'),
   );
+
+  $schema['fundraiser_sustainers_log'] = array(
+    'description' => 'Stores the result of sustainer processing.',
+    'fields' => array(
+      'lid' => array(
+        'description' => 'Unqiue id of the log entry.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'did' => array(
+        'description' => 'The id of the donation being processed.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'gateway' => array(
+        'description' => 'The gateway that was used to process the charge.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+      ),
+      'date_processed' => array(
+        'description' => 'The date the charge was processed.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'success' => array(
+        'description' => 'Flag to indicate whether the charge was successful or not.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'lock_id' => array(
+        'description' => 'The if of the lock that was put on the records during processing.',
+        'type' => 'varchar',
+        'length' => '55',
+        'not null' => FALSE,
+        'default' => '0',
+      ),
+      'data' => array(
+        'description' => 'Serilized array of extra information.',
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('lid'),
+  );
   return $schema;
 }
 
@@ -310,4 +358,58 @@ function fundraiser_sustainers_update_7004(&$sandbox) {
     'primary key' => array('nid'),
   );
   db_create_table('fundraiser_sustainers_nodes', $schema['fundraiser_sustainers_nodes']);
+}
+
+/**
+ * Adds an additional table to log the results of sustainer processing.
+ */
+function fundraiser_sustainers_update_7005(&$sandbox) {
+  $schema['fundraiser_sustainers_log'] = array(
+    'description' => 'Stores the result of sustainer processing.',
+    'fields' => array(
+      'lid' => array(
+        'description' => 'Unqiue id of the log entry.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'did' => array(
+        'description' => 'The id of the donation being processed.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'gateway' => array(
+        'description' => 'The gateway that was used to process the charge.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+      ),
+      'date_processed' => array(
+        'description' => 'The date the charge was processed.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'success' => array(
+        'description' => 'Flag to indicate whether the charge was successful or not.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'lock_id' => array(
+        'description' => 'The if of the lock that was put on the records during processing.',
+        'type' => 'varchar',
+        'length' => '55',
+        'not null' => FALSE,
+        'default' => '0',
+      ),
+      'data' => array(
+        'description' => 'Serilized array of extra information.',
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('lid'),
+  );
+  db_create_table('fundraiser_sustainers_log', $schema['fundraiser_sustainers_log']);
 }
