@@ -102,6 +102,10 @@ class FundraiserTest extends FundraiserSetup {
           '0' => '100',
           '1' => '$100',
         ),
+        '4' => array(
+          '0' => 'other',
+          '1' => 'Other',
+        ),
       ),
       'minimum_donation_amount' => 10,
     );
