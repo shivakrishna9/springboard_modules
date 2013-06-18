@@ -99,7 +99,12 @@ function sb_social_webform_settings($form, $edit, $node) {
 
   $enabled_services = variable_get('springboard_social_services', array());
   $settings = sb_social_webform_settings_load($node->nid);
-
+  if (empty($settings)) {
+    $form['banner'] = array(
+      '#prefix' => '<h2>' . t('No services enabled') . '</h2>',
+      '#markup' => '<p>' . t('No social media services have been enabled. To enable Social Media services, visit the !admin_screen', array('!admin_screen' => l('module administration page', 'admin/config/services/springboard_social'))) . '</p>',
+    );
+  }
 
   $form['nid'] = array(
     '#type' => 'value',
@@ -159,6 +164,7 @@ function sb_social_webform_settings($form, $edit, $node) {
 
   // Market Source
   if (module_exists('market_source')) {
+
     $form['market_source'] = array(
       '#type' => 'fieldset',
       '#title' => t('Market Source Settings'),
@@ -172,10 +178,11 @@ function sb_social_webform_settings($form, $edit, $node) {
       if (in_array($key, $blacklist)) {
         continue;
       }
+      dsm($settings);
       $form['market_source'][$key] = array(
         '#type' => 'textfield',
         '#title' => $field['#title'],
-        '#default_value' => $settings[$service]['market_source'][$key],
+        '#default_value' => (!empty($settings) && !empty($service)) ? $settings[$service]['market_source'][$key] : '',
       );
     }
   }
