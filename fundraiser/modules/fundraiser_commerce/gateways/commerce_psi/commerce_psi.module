@@ -213,7 +213,7 @@ function _commerce_psi_token_replace($value, $order) {
       $token_set['donation'] = $donation;
     }
   }
-  return token_replace($value, $token_set);
+  return token_replace($value, $token_set, array('clear' => TRUE));
 }
 
 /**
