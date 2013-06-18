@@ -29,6 +29,19 @@ function sb_social_admin() {
       ),
     ),
   );
+  $form['services']['facebook']['springboard_social_facebook_title'] = array(
+    '#type' => 'textfield',
+    '#title'=> t('Default Facebook share title'),
+    '#default_value' => variable_get('springboard_social_facebook_title', '%node[title]'),
+  );
+  $form['services']['facebook']['springboard_social_facebook_description'] = array(
+    '#type' => 'textfield',
+    '#title'=> t('Default Facebook share description'),
+    '#default_value' => variable_get('springboard_social_facebook_description', '%node[teaser]'),
+  );
+  $form['services']['facebook']['springboard_social_facebook_image'] = array(
+
+  );
 
   $form['services']['twitter'] = array(
     '#type' => 'fieldset',
@@ -39,6 +52,11 @@ function sb_social_admin() {
        ':input[name="springboard_social_services[twitter]"]' => array('checked' => FALSE),
       ),
     ),
+  );
+  $form['services']['twitter'] = array(
+    "#type" => 'textfield',
+    '#title' => t('Default twitter share message'),
+    '#default_value' => variable_get('springboard_social_twitter_message', '%node[title]'),
   );
   return system_settings_form($form);
 }

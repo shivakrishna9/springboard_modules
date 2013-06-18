@@ -70,17 +70,48 @@ function sb_social_menu() {
  * Access callback for node share content form.
  */
 function sb_social_access_webform_settings($node) {
+  global $user;
   if (empty($node->is_webform_user)) {
     return FALSE;
   }
-  if (user_access('edit own share content') && node_access('update', $node)) {
+  // grant access to content owned by user that they have permissions to edit.
+  if (user_access('edit own share content') && $node->uid == $user->uid && node_access('update', $node)) {
     return TRUE;
   }
-  elseif (user_access('edit any share content')) {
+  // grant access to content user can edit regardless of ownership.
+  elseif (user_access('edit any share content') && node_access('update', $node)) {
     return TRUE;
   }
   return FALSE;
-}http://d7-springboard.dev/
+}
+
+/**
+ * Implements hook_node_insert().
+ *
+ * Copy parent node settings during clone operation, set defaults from global settings when
+ * creating a new node.
+ * @param type $node
+ */
+function sb_social_node_insert($node) {
+  if (_webform_user_is_webform_user_node($node)) {
+    if (!isset($node->clone_from_original_nid)) {
+      // settings from global defaults
+      sb_social_add_default_settings($node);
+      $enabled_services = variable_get('springboard_social_services', array());
+    } elseif ($node->clone_from_original_nid) {
+      // copy settings
+      $original_settings = sb_social_webform_settings_load($node->clone_from_original_nid);
+      foreach ($original_settings as $service => $data) {
+        $settings = array(
+          'nid' => $node->nid,
+          'service' => $service,
+          'data' => $data,
+        );
+        sb_social_webform_settings_save($settings);
+      }
+    }
+  }
+}
 
 /**
  * Implements hook_node_delete
@@ -254,33 +285,45 @@ function sb_social_market_source_field_info() {
 
 
 /**
- * manage social tracking cookie
+ * Implements hook_webform_submission_update().
  *
- * BUG: timing issue exists between this and webform user. Webform user
- * goes on submission but triggers it's own instance of hook_webform_submission_update
- * to capture the UID. we need to either add a hook to webform user's submit handler or
- * investigate moving this code to hook_webform_submission_update
- *
- * Also, alternate cases may need to be handled eg. insert for authenticated users, update
- * for uid 0?
+ * Set tracking cookie when anonymous user submits a webform user enabled webform.
+ * hook_webform_submission_update() is invoked by webform user after setting the uid
+ * in the submission.
  */
-function sb_social_webform_submission_insert($node, $submission) {
-
+function sb_social_webform_submission_update($node, $submission) {
+  drupal_set_message('sb social webform submission insert invoked');
   // update/set tracking cookie when a webform user enabled form is submitted.
   if (!empty($node->is_webform_user) && $node->is_webform_user) {
+    global $user;
+    // prevent updating authenticated user's cookie when editing another user's submission.
+    if ($user->uid && ($submission->uid != $user->uid)) {
+      return;
+    }
     // find email field value
     // TODO: break dependency on fundraiser_webform.
     $component = _fundraiser_webform_get_component_by_nid_key($node->nid, 'mail');
     $mail = $submission->data[$component->cid]['value'][0];
+    _sb_social_set_tracking_cookie($submission->uid, $mail, $submission->sid);
+  }
+}
 
-    $payload = $submission->uid . '::' . $mail . '::' . $submission->sid;
-    drupal_set_message('adding payload:' . $payload);
-    $set = setcookie("sb_social.event_submission", $payload, strtotime( '+1 year' ) );
-    if ($set) {
-      drupal_set_message('cookie reset');
-    }
-    else {
-      drupal_set_message('unable to set cookie');
+/**
+ * Implements hook_webform_submission_insert().
+ *
+ * Set tracking cookie when form is submitted by an authenticated user.
+ * Since the submission has a valid UID, we can update the cookie.
+ *
+ * Anonymous webform submissions have to be handled during update since webform_user()
+ * backfills the user id in the submission after it's been inserted.
+ */
+function sb_social_webform_submission_insert($node, $submission) {
+  if (!empty($node->is_webform_user) && $node->is_webform_user) {
+    global $user;
+    if ($user->uid == $submission->sid) {
+      $component = _fundraiser_webform_get_component_by_nid_key($node->nid, 'mail');
+      $mail = $submission->data[$component->cid]['value'][0];
+      _sb_social_set_tracking_cookie($submission->uid, $mail, $submission->sid);
     }
   }
 }
@@ -443,4 +486,15 @@ function _sb_social_component_blacklist() {
     'social_referer_network',
     'social_referer_contact',
   );
+}
+
+function _sb_social_set_tracking_cookie($uid, $mail, $sid) {
+  $payload = $uid . '::' . $mail . '::' . $sid;
+  drupal_set_message('adding payload:' . $payload);
+  $set = setcookie("sb_social.event_submission", $payload, strtotime('+1 year'));
+  if ($set) {
+    drupal_set_message('cookie reset');
+  } else {
+    drupal_set_message('unable to set cookie');
+  }
 }
