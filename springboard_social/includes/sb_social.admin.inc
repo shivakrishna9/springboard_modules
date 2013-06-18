@@ -32,15 +32,23 @@ function sb_social_admin() {
   $form['services']['facebook']['springboard_social_facebook_title'] = array(
     '#type' => 'textfield',
     '#title'=> t('Default Facebook share title'),
-    '#default_value' => variable_get('springboard_social_facebook_title', '%node[title]'),
+    '#default_value' => variable_get('springboard_social_facebook_title', '%title'),
   );
   $form['services']['facebook']['springboard_social_facebook_description'] = array(
     '#type' => 'textfield',
     '#title'=> t('Default Facebook share description'),
-    '#default_value' => variable_get('springboard_social_facebook_description', '%node[teaser]'),
+    '#default_value' => variable_get('springboard_social_facebook_description', '%teaser'),
   );
   $form['services']['facebook']['springboard_social_facebook_image'] = array(
-
+    '#type' => 'managed_file',
+    '#title' => 'Image upload',
+    '#description' => t('Upload an image to display in share content'),
+    '#default_value' => variable_get('logo', ''),
+    '#upload_location' => 'public://social_images',
+    '#upload_validators' => array(
+      'file_validate_extensions' => array('gif png jpg jpeg'),
+    ),
+    '#theme' => 'sb_social_share_image_preview',
   );
 
   $form['services']['twitter'] = array(
@@ -53,11 +61,33 @@ function sb_social_admin() {
       ),
     ),
   );
-  $form['services']['twitter'] = array(
+  $form['services']['twitter']['springboard_social_twitter_message'] = array(
     "#type" => 'textfield',
     '#title' => t('Default twitter share message'),
-    '#default_value' => variable_get('springboard_social_twitter_message', '%node[title]'),
+    '#default_value' => variable_get('springboard_social_twitter_message', '%title'),
   );
+
+  if (module_exists('market_source')) {
+    $form['services']['market_source'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Market Source Settings'),
+        '#description' => t('Optional Market Source values to include in share links'),
+    );
+    $fields = market_source_field_info();
+    // It doesn't make sense to list certain market source fields, like user agent.
+    // the blacklist lets us filter these out cleanly.
+    $blacklist = _sb_social_component_blacklist();
+    foreach ($fields as $key => $field) {
+      if (in_array($key, $blacklist)) {
+        continue;
+      }
+      $form['services']['market_source']['springboard_social_ms_' . $key] = array(
+          '#type' => 'textfield',
+          '#title' => $field['#title'],
+          '#default_value' => variable_get('springboard_social_ms_' . $key, ''),
+      );
+    }
+  }
   return system_settings_form($form);
 }
 
@@ -112,7 +142,7 @@ function sb_social_webform_settings($form, $edit, $node) {
       'file_validate_extensions' => array('gif png jpg jpeg'),
     ),
   );
-  // TODO: implement file upload bs.
+  // TODO: implement image preview.
 
   $form['twitter_settings'] = array(
     '#type' => 'fieldset',

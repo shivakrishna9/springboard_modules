@@ -204,6 +204,51 @@ function sb_social_init() {
   }
 }
 
+function sb_social_add_default_settings($node) {
+  $enabled_services = variable_get('springboard_social_services', array());
+
+  if (in_array('facebook', $enabled_services)) {
+    $settings['facebook'] = array(
+      'nid' => $node->nid,
+      'service' => 'facebook',
+      'data' => array(
+        'title' => variable_get('springboard_social_facebook_title', '%title'),
+        'description' => variable_get('springboard_social_facebook_description', '%teaser'),
+        'image' => variable_get('springboard_social_facebook_image', ''),
+      ),
+    );
+  }
+
+  if (in_array('twitter', $enabled_services)) {
+    $settings['twitter'] = array(
+      'nid' => $node->nid,
+      'service' => 'twitter',
+      'data' => array(
+        'message' => variable_get('springboard_social_twitter_message', '%title'),
+      ),
+    );
+  }
+  foreach ($settings as $service => $setting) {
+    if (module_exists('market_source')) {
+      $ms = array();
+      $fields = market_source_field_info();
+      // It doesn't make sense to list certain market source fields, like user agent.
+      // the blacklist lets us filter these out cleanly.
+      $blacklist = _sb_social_component_blacklist();
+      foreach ($fields as $key => $field) {
+        if (in_array($key, $blacklist)) {
+          continue;
+        }
+        $ms[$key] = variable_get('springboard_social_ms_' . $key, '');
+      }
+
+      $settings[$service]['data']['market_source'] = $ms;
+
+    }
+    sb_social_webform_settings_save($settings[$service]);
+  }
+
+}
 
 function sb_social_share_url($nid, $uid, $sid, $service, $settings) {
   dsm($settings,'url settings');
@@ -461,7 +506,9 @@ function sb_social_theme($existing, $type, $theme, $path) {
     ),
     'template' => 'templates/sb_social.share',
   );
-
+  $items['sb_social_share_image_preview'] = array(
+    'render element' => 'element',
+  );
   return $items;
 }
 
@@ -470,6 +517,21 @@ function sb_social_short_url($node, $sid, $service, $settings = NULL) {
   $uid = $submission['uid'];
   $url = sb_social_share_url($node->nid, $uid, $sid, $service, $settings);
   return shorten_url($url);
+}
+
+
+function theme_sb_social_share_image_preview($variables) {
+  dsm($variables, 'variables');
+  $element = $variables['element'];
+
+  if (isset($element['#file']->uri)) {
+    $output = '<div id="edit-logo-ajax-wrapper"><div class="form-item form-type-managed-file form-item-logo"><span class="file">';
+    $output .= '<img height="50px" src="' . file_create_url($element['#file']->uri) . '" />';
+    $output .= '</span><input type="submit" id="edit-' . $element['#name'] . '-remove-button" name="' . $element['#name'] . '_remove_button" value="Remove" class="form-submit ajax-processed">';
+    $output .= '<input type="hidden" name="' . $element['#name'] . '[fid]" value="' . $element['#file']->fid . '">';
+
+    return $output;
+  }
 }
 
 /**
@@ -497,4 +559,40 @@ function _sb_social_set_tracking_cookie($uid, $mail, $sid) {
   } else {
     drupal_set_message('unable to set cookie');
   }
+}
+
+/**
+ * Token replacement.
+ *
+ * @param type $string
+ * @param type $account
+ * User object
+ * @param type $node
+ * Node object
+ * @return string with tokens replaced
+ */
+function _sb_social_replace_tokens($string, $account, $node) {
+  // token list:
+  // %title
+  // %teaser
+  // %name
+  // %mail
+  if (strpos($string, '%title') !== FALSE) {
+    $rep['%title'] = !empty($node->title) ? $node->title : '';
+  }
+  if (strpos($string, '%teaser') !== FALSE) {
+    $rep['%teaser'] = !empty($node->teaser) ? $node->teaser : '';
+  }
+
+  if (strpos($string, '%name') !== FALSE) {
+    $rep['%name'] = ((isset($user->name) && isset($user->uid)) && $user->uid > 0) ? $user->name : '';
+  }
+  if (strpos($string, '%mail') !== FALSE) {
+    $rep['%mail'] = ((isset($user->mail) && isset($user->uid)) && $user->uid > 0) ? $user->mail : '';
+  }
+  foreach ($rep as $target => $value) {
+    $string = str_replace($target, $value, $string);
+  }
+
+  return $string;
 }
