@@ -47,6 +47,7 @@ function _commerce_psi_default_settings() {
       'program_code' => '',
       'source_code' => '',
       'market_source' => '',
+      'send_mail' => '',
     ),
   );
 }
@@ -116,6 +117,12 @@ function _commerce_psi_settings_form($settings) {
     '#description' => t('A value identifying an additional source of the donation. Maximum length of 100.'),
     '#default_value' => $settings['custom_fields']['market_source'],
   );
+  $form['custom_fields']['send_mail'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Send Mail'),
+    '#description' => t('Boolean true/false value. If true indicates donor accepted to receive future emails.'),
+    '#default_value' => $settings['custom_fields']['send_mail'],
+  );
   $form['custom_fields']['tokens'] = array(
     '#type' => 'fieldset',
     '#title' => t('Tracking Replacement Tokens'),
@@ -154,7 +161,7 @@ function _commerce_psi_settings_form($settings) {
  * @return Array
  *    An array ready to be submitted to the PSI API
  */
-function _commerce_psi_build_donor($order) {
+function _commerce_psi_build_donor($order, $payment_method) {
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
   // If there's no billing address return nothing
   if (!$order_wrapper->commerce_customer_billing->value()) {
@@ -186,7 +193,7 @@ function _commerce_psi_build_donor($order) {
     'PostalCode' => drupal_substr($billing_address['postal_code'], 0, 20),
     'Country' => drupal_substr($billing_address['country'], 0, 30),
     'Phone' => !empty($billing_address['phone']) ? drupal_substr($billing_address['phone'], 0 , 20) : 'N/A',
-    'SendEmail' => FALSE,
+    'SendEmail' => _commerce_psi_token_replace($payment_method['settings']['custom_fields']['send_mail'], $order),
   );
 
   return $donor;

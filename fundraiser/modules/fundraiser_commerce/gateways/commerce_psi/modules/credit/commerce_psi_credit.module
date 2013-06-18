@@ -104,7 +104,7 @@ function commerce_psi_credit_submit_form_submit($payment_method, $pane_form, $pa
   }
 
   // Prepare the billing address for use in the request.
-  $nvp['Donor'] = _commerce_psi_build_donor($order);
+  $nvp['Donor'] = _commerce_psi_build_donor($order, $payment_method);
   if (empty($nvp['Donor'])) {
     drupal_set_message(t('There was an error processing this payment. Please try again.'), 'error');
     return FALSE;
