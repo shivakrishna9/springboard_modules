@@ -96,11 +96,15 @@ function sb_social_node_insert($node) {
   if (_webform_user_is_webform_user_node($node)) {
     if (!isset($node->clone_from_original_nid)) {
       // settings from global defaults
-      sb_social_add_default_settings($node);
-      $enabled_services = variable_get('springboard_social_services', array());
-    } elseif ($node->clone_from_original_nid) {
+      sb_social_add_default_settings($node->nid);
+    } elseif ($parent_nid = $node->clone_from_original_nid) {
       // copy settings
-      $original_settings = sb_social_webform_settings_load($node->clone_from_original_nid);
+      $original_settings = sb_social_webform_settings_load($parent_nid);
+      // if the parent node is missing default social settings, add them and then clone the defaults.
+      if (empty($original_settings)) {
+        sb_social_add_default_settings($parent_nid);
+        $original_settings = sb_social_webform_settings_load($parent_nid);
+      }
       foreach ($original_settings as $service => $data) {
         $settings = array(
           'nid' => $node->nid,
@@ -138,28 +142,13 @@ function sb_social_init() {
   if (arg(0) == 'node' && is_numeric(arg(1))) {
     $node = node_load(arg(1));
   }
-  drupal_set_message('arg 2:' . arg(2));
   // generate shortened share url.
   if ($node && arg(2) == 'done') {
     $node = node_load(arg(1));
-    // TODO: we're going to need to rethink a few things if custom settings are expected
-    // outside the scope of a webform.
-   /* if (!empty($node->is_webform_user)) {
-      $sid = $_GET['sid'];
-      if (is_numeric($sid)) {
-        //$submission = _sb_social_load_submission($sid);
-        //$uid = $submission['uid'];
-        //$url = sb_social_share_url($node->nid, $uid, $sid);
-        // Shorten module provides short url via whatever default service is configured.
-       // $shortened_url = sb_social_short_url($node, $sid);
-       // drupal_add_js(array('sb_social' => array('shortened_url' => $shortened_url)), 'setting');
-      }
-    }*/
- // }
-  // add opengraph meta tags and twitter js settings.
-  // Note: twitter customizations use the JS api and are handled elsewhere.
-  // TODO: this may get moved elsewhere when share links are rendered.
-  //if ($node) {
+
+    // add opengraph meta tags and twitter js settings.
+    // Note: twitter customizations use the JS api and are handled elsewhere.
+
     $settings = sb_social_webform_settings_load($node->nid);
     if ($settings) {
       drupal_add_js('http://s7.addthis.com/js/250/addthis_widget.js', array('type' => 'external', 'scope' => 'footer'));
@@ -204,12 +193,13 @@ function sb_social_init() {
   }
 }
 
-function sb_social_add_default_settings($node) {
+// TODO: change param to nid, no need for entire node object.
+function sb_social_add_default_settings($nid) {
   $enabled_services = variable_get('springboard_social_services', array());
 
   if (in_array('facebook', $enabled_services)) {
     $settings['facebook'] = array(
-      'nid' => $node->nid,
+      'nid' => $nid,
       'service' => 'facebook',
       'data' => array(
         'title' => variable_get('springboard_social_facebook_title', '%title'),
@@ -221,7 +211,7 @@ function sb_social_add_default_settings($node) {
 
   if (in_array('twitter', $enabled_services)) {
     $settings['twitter'] = array(
-      'nid' => $node->nid,
+      'nid' => $nid,
       'service' => 'twitter',
       'data' => array(
         'message' => variable_get('springboard_social_twitter_message', '%title'),
@@ -251,7 +241,6 @@ function sb_social_add_default_settings($node) {
 }
 
 function sb_social_share_url($nid, $uid, $sid, $service, $settings) {
-  dsm($settings,'url settings');
   $node = node_load($nid);
 
   $options = array(
@@ -268,7 +257,7 @@ function sb_social_share_url($nid, $uid, $sid, $service, $settings) {
     }
   }
   $url = url('node/' . $nid, $options);
-  drupal_set_message('url:' . $url);
+
   return url('node/' . $nid, $options);
 }
 
@@ -276,7 +265,7 @@ function sb_social_share_url($nid, $uid, $sid, $service, $settings) {
  * Implements hook_market_source_field_info().
  */
 function sb_social_market_source_field_info() {
-  drupal_set_message('hook market source field info invoked.');
+
   $fields = array();
   // transaction that generated the refered conversion (sid)
   $fields['social_referer_transaction'] = array(
@@ -337,7 +326,7 @@ function sb_social_market_source_field_info() {
  * in the submission.
  */
 function sb_social_webform_submission_update($node, $submission) {
-  drupal_set_message('sb social webform submission insert invoked');
+
   // update/set tracking cookie when a webform user enabled form is submitted.
   if (!empty($node->is_webform_user) && $node->is_webform_user) {
     global $user;
@@ -439,9 +428,9 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
 
   if ($type = 'sb_social' && !empty($data['node'])) {
     $replacements = array();
-    $settings = sb_social_webform_settings_load($data['node']->nid);
-    dsm($settings, 'settings');
-    $enabled_services = variable_get('springboard_social_services', array());
+    $node = $data['node'];
+    $settings = sb_social_webform_settings_load($node->nid);
+    $enabled_services = sb_social_get_enabled_services();
 
     if (!empty($_GET['sid'])) {
       $sid = $_GET['sid'];
@@ -459,25 +448,39 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
       switch ($key) {
         case 'share_links':
           $replacements[$token] = theme('sb_social_share', array('services' => $enabled_services));
+          $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node);
           break;
         case 'facebook_share':
           $replacements[$token] = theme('sb_social_share', array('services' => array('facebook', 'facebook_url' => $urls['facebook_url'])));
           break;
         case 'facebook_title':
           $replacements[$token] = !empty($settings['facebook']['title']) ? $settings['facebook']['title'] : '';
+          $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node);
           break;
         case 'facebook_description':
           $replacements[$token] =  !empty($settings['facebook']['description']) ? $settings['facebook']['description'] : '';
+          $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node);
           break;
         case 'facebook_image':
           // TODO: image tag?
           $replacements[$token] =  !empty($settings['facebook']['image']) ? $settings['facebook']['image'] : '';
           break;
         case 'twitter_share':
-          $replacements[$token] = theme('sb_social_share', array('services' => array('twitter', 'twitter_url' => $urls['twitter_url'])));
+          if (in_array('twitter', $enabled_services)) {
+            $replacements[$token] = theme('sb_social_share', array('services' => array('twitter', 'twitter_url' => $urls['twitter_url'])));
+          }
+          else {
+            $replacements[$token] = '';
+          }
           break;
         case 'twitter_message':
-          $replacements[$token] =  !empty($settings['twitter']['message']) ? $settings['twitter']['message'] : '';
+          if (in_array('twitter', $enabled_services)) {
+            $replacements[$token] = $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node);
+            $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node);
+          }
+          else {
+            $replacements[$token] = '';
+          }
           break;
         case 'share_url':
          // TODO: this token makes no sense in the context of service-specific URLs.
@@ -521,7 +524,6 @@ function sb_social_short_url($node, $sid, $service, $settings = NULL) {
 
 
 function theme_sb_social_share_image_preview($variables) {
-  dsm($variables, 'variables');
   $element = $variables['element'];
 
   if (isset($element['#file']->uri)) {
@@ -571,28 +573,31 @@ function _sb_social_set_tracking_cookie($uid, $mail, $sid) {
  * Node object
  * @return string with tokens replaced
  */
-function _sb_social_replace_tokens($string, $account, $node) {
-  // token list:
-  // %title
-  // %teaser
-  // %name
-  // %mail
+function _sb_social_replace_tokens($string, $node) {
+  $rep = array();
+
   if (strpos($string, '%title') !== FALSE) {
     $rep['%title'] = !empty($node->title) ? $node->title : '';
   }
   if (strpos($string, '%teaser') !== FALSE) {
-    $rep['%teaser'] = !empty($node->teaser) ? $node->teaser : '';
+    $lang = $node->language;
+    $teaser = !empty($node->body[$lang][0]['summary']) ? $node->body[$lang][0]['summary'] : '';
+    $rep['%teaser'] = $teaser;
   }
 
+  // TODO: contemplate adding additonal token support for user & node tokens or
+  // just integrate with token module.
+/*
   if (strpos($string, '%name') !== FALSE) {
     $rep['%name'] = ((isset($user->name) && isset($user->uid)) && $user->uid > 0) ? $user->name : '';
   }
   if (strpos($string, '%mail') !== FALSE) {
     $rep['%mail'] = ((isset($user->mail) && isset($user->uid)) && $user->uid > 0) ? $user->mail : '';
   }
+
+*/
   foreach ($rep as $target => $value) {
     $string = str_replace($target, $value, $string);
   }
-
   return $string;
 }

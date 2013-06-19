@@ -88,6 +88,23 @@ function sb_social_webform_settings_load($nid) {
   return $settings[$nid];
 }
 
+function sb_social_get_enabled_services() {
+  static $enabled_services = array();
+  if (empty($enabled_services) && $enabled_services !== FALSE) {
+    $services = variable_get('springboard_social_services', array());
+    if (!empty($services)) {
+      foreach ($services as $service => $status) {
+        if ($status) {
+          $enabled_services[] = $service;
+        }
+      }
+    }
+    if (empty($enabled_services)) {
+      $enabled_services = FALSE;
+    }
+  }
+  return $enabled_services;
+}
 /**
  * Save shared content settings
  *
@@ -130,11 +147,23 @@ function sb_social_webform_settings_delete($nid, $service = FALSE) {
  // db_query('DELETE FROM {sb_social_webform} WHERE nid = :nid', array(':nid' => $nid));
 }
 
+/**
+ * Lookup webform node settings by webform submission id.
+ * @param type $sid
+ * @return type
+ */
 function _sb_social_get_settings_by_sid($sid) {
   $nid = _sb_social_get_nid_by_sid($sid);
   return sb_social_webform_settings_load($nid);
 }
 
+/**
+ * Lookup webform node id from webform submission ID.
+ *
+ * @staticvar array $data
+ * @param type $sid
+ * @return type
+ */
 function _sb_social_get_nid_by_sid($sid) {
   static $data = array();
   if (empty($data[$sid])) {

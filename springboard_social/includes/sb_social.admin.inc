@@ -4,6 +4,7 @@
  * Admin settings
  */
 function sb_social_admin() {
+  // TODO: abstract services. Some kind of plugin architecture would be optimal.
   $services = array(
     'facebook' => t('Facebook'),
     'twitter' => t('Twitter'),
@@ -97,13 +98,18 @@ function sb_social_admin() {
  */
 function sb_social_webform_settings($form, $edit, $node) {
 
-  $enabled_services = variable_get('springboard_social_services', array());
+  $enabled_services = sb_social_get_enabled_services();
   $settings = sb_social_webform_settings_load($node->nid);
-  if (empty($settings)) {
+  if (empty($enabled_services)) {
     $form['banner'] = array(
       '#prefix' => '<h2>' . t('No services enabled') . '</h2>',
       '#markup' => '<p>' . t('No social media services have been enabled. To enable Social Media services, visit the !admin_screen', array('!admin_screen' => l('module administration page', 'admin/config/services/springboard_social'))) . '</p>',
     );
+  }
+
+  if (empty($settings)) {
+    sb_social_add_default_settings($node->nid);
+    $settings = sb_social_webform_settings_load($node->nid);
   }
 
   $form['nid'] = array(
@@ -178,7 +184,7 @@ function sb_social_webform_settings($form, $edit, $node) {
       if (in_array($key, $blacklist)) {
         continue;
       }
-      dsm($settings);
+
       $form['market_source'][$key] = array(
         '#type' => 'textfield',
         '#title' => $field['#title'],
@@ -200,15 +206,16 @@ function sb_social_webform_settings_validate(&$form, $form_state) {
 }
 
 function sb_social_webform_settings_submit($form, $form_state) {
-   $enabled_services = variable_get('springboard_social_services', array());
-   foreach ($enabled_services as $service) {
-     $func = 'sb_social_process_settings_' . $service;
-     $func($form_state);
-   }
+  $enabled_services = sb_social_get_enabled_services();
+  if (is_array($enabled_services)) {
+    foreach ($enabled_services as $service) {
+      $func = 'sb_social_process_settings_' . $service;
+      $func($form_state);
+    }
+  }
 }
 
 function sb_social_process_settings_facebook($form_state) {
-
   $data = array(
     'title' => !empty($form_state['values']['fb_title']) ? $form_state['values']['fb_title'] : '',
     'description' => !empty($form_state['values']['fb_description']) ? $form_state['values']['fb_description'] : '',

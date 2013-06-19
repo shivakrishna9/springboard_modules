@@ -5,7 +5,7 @@ if (in_array('facebook', $services)) : ?>
 <?php 
 endif;
  ?>
-<?php if (in_array('twitter', array_keys($services))) : ?>
+<?php if (in_array('twitter', $services)) : ?>
 <a class="addthis_button_twitter social-share-link twitter" addthis:url="<?php print $services['twitter_url']; ?>"></a>
 <?php
 endif;
