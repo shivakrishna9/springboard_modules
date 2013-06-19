@@ -1066,34 +1066,33 @@ function _fundraiser_webform_get_extra_by_key($nid, $form_key) {
 /**
  * DB function, get webform component form elements.
  */
-function _fundraiser_webform_get_components_by_nid($nid, $return_assoc = FALSE) {
-  $components_by_nid = &drupal_static(__FUNCTION__);
-  if (empty($components_by_nid) || empty($components_by_nid[$nid])) {
-    $components_by_nid[$nid] = db_query('SELECT * FROM {webform_component} WHERE nid = :nid',
-      array(':nid' => $nid))->fetchAllAssoc('form_key');
-  }
-  return ($return_assoc) ? $components_by_nid[$nid] : array_values($components_by_nid[$nid]);
+function _fundraiser_webform_get_components_by_nid($nid) {
+  return db_query('SELECT * FROM {webform_component} ' .
+    'WHERE nid = :nid',
+    array(':nid' => $nid))->fetchAll();
 }
 
 /**
  * DB function, select webform component given node, form key info.
  */
 function _fundraiser_webform_get_component_by_nid_key($nid, $form_key) {
-  $component = _fundraiser_webform_get_components_by_keys($nid, $form_key);
-  return !empty($component) ? array_pop($component) : new stdClass();
+  return db_query('SELECT * FROM {webform_component} ' .
+    'WHERE nid = :nid ' .
+    'AND form_key = :form_key',
+    array(':nid' => $nid, ':form_key' => $form_key))->fetchObject();
 }
 
 /**
  * DB function, get webform component form elements.
  */
 function _fundraiser_webform_get_components_by_keys($nid, $form_keys) {
-  $components = _fundraiser_webform_get_components_by_nid($nid, TRUE);
   if (!is_array($form_keys)) {
     $form_keys = array($form_keys);
   }
-  $form_keys = array_flip($form_keys);
-  $intersect = array_intersect_key($components, $form_keys);
-  return is_array($intersect) ? $intersect : array();
+  return db_query('SELECT * FROM {webform_component} ' .
+    'WHERE nid = :nid ' .
+    'AND form_key IN (:form_keys)',
+    array(':nid' => $nid, ':form_keys' => $form_keys))->fetchAll();
 }
 
 /**
