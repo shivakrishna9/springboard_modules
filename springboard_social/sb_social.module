@@ -451,19 +451,39 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
           $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node);
           break;
         case 'facebook_share':
-          $replacements[$token] = theme('sb_social_share', array('services' => array('facebook', 'facebook_url' => $urls['facebook_url'])));
-          break;
+          if (in_array('facebook', $enabled_services)) {
+            $replacements[$token] = theme('sb_social_share', array('services' => array('facebook', 'facebook_url' => $urls['facebook_url'])));
+          }
+          else {
+            $replacements[$token] = '';
+          }
+        break;
         case 'facebook_title':
-          $replacements[$token] = !empty($settings['facebook']['title']) ? $settings['facebook']['title'] : '';
-          $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node);
+          if (in_array('facebook', $enabled_services)) {
+            $replacements[$token] = !empty($settings['facebook']['title']) ? $settings['facebook']['title'] : '';
+            $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node);
+          }
+          else {
+            $replacements[$token] = '';
+          }
           break;
         case 'facebook_description':
-          $replacements[$token] =  !empty($settings['facebook']['description']) ? $settings['facebook']['description'] : '';
-          $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node);
+          if (in_array('facebook', $enabled_services)) {
+            $replacements[$token] =  !empty($settings['facebook']['description']) ? $settings['facebook']['description'] : '';
+            $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node);
+          }
+          else {
+            $replacements[$token] = '';
+          }
           break;
         case 'facebook_image':
-          // TODO: image tag?
-          $replacements[$token] =  !empty($settings['facebook']['image']) ? $settings['facebook']['image'] : '';
+          if (in_array('twitter', $enabled_services)) {
+            // TODO: image tag?
+            $replacements[$token] =  !empty($settings['facebook']['image']) ? $settings['facebook']['image'] : '';
+          }
+          else {
+            $replacements[$token] = '';
+          }
           break;
         case 'twitter_share':
           if (in_array('twitter', $enabled_services)) {
