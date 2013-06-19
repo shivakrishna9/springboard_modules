@@ -448,7 +448,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
       switch ($key) {
         case 'share_links':
           $replacements[$token] = theme('sb_social_share', array('services' => $enabled_services));
-          $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node);
+          $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node, $sid);
           break;
         case 'facebook_share':
           if (in_array('facebook', $enabled_services)) {
@@ -461,7 +461,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
         case 'facebook_title':
           if (in_array('facebook', $enabled_services)) {
             $replacements[$token] = !empty($settings['facebook']['title']) ? $settings['facebook']['title'] : '';
-            $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node);
+            $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node, $sid);
           }
           else {
             $replacements[$token] = '';
@@ -470,7 +470,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
         case 'facebook_description':
           if (in_array('facebook', $enabled_services)) {
             $replacements[$token] =  !empty($settings['facebook']['description']) ? $settings['facebook']['description'] : '';
-            $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node);
+            $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node, $sid);
           }
           else {
             $replacements[$token] = '';
@@ -496,7 +496,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
         case 'twitter_message':
           if (in_array('twitter', $enabled_services)) {
             $replacements[$token] = $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node);
-            $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node);
+            $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node, $sid);
           }
           else {
             $replacements[$token] = '';
@@ -593,7 +593,7 @@ function _sb_social_set_tracking_cookie($uid, $mail, $sid) {
  * Node object
  * @return string with tokens replaced
  */
-function _sb_social_replace_tokens($string, $node) {
+function _sb_social_replace_tokens($string, $node, $sid = NULL) {
   $rep = array();
 
   if (strpos($string, '%title') !== FALSE) {
@@ -619,5 +619,27 @@ function _sb_social_replace_tokens($string, $node) {
   foreach ($rep as $target => $value) {
     $string = str_replace($target, $value, $string);
   }
+
+  // Do token.module tokens
+  $account = NULL;
+  $donation = NULL;
+  if ($sid) {
+    $donation = _fundraiser_webform_get_donation_by_sid($sid);
+    $account = user_load($donation->uid);
+  }
+  // Do token replacement on body.
+
+  $token_set = array(
+    'node' => $node,
+  );
+  if (!empty($donation)) {
+    $token_set['donation'] = $donation;
+  }
+  if (!empty($account)) {
+    $token_set['user'] = $account;
+  }
+
+  $string = token_replace($string, $token_set);
+
   return $string;
 }

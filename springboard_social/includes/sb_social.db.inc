@@ -185,3 +185,12 @@ function _sb_social_load_submission($sid) {
   ', array(':sid' => $sid));
   return $result->fetchAssoc();
 }
+
+function sb_social_get_donation_by_sid($sid) {
+  $query = db_select('fundraiser_donation', 'f');
+  $query->fields('f');
+  $query->condition('sid', $sid);
+  $result = $query->execute();
+
+  return $result->fetchObject();
+}

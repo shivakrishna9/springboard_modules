@@ -100,13 +100,18 @@ function sb_social_webform_settings($form, $edit, $node) {
 
   $enabled_services = sb_social_get_enabled_services();
   $settings = sb_social_webform_settings_load($node->nid);
+  // setup for token replacement
+  $token_set = array('user', 'node');
+  if (fundraiser_is_donation_type($node->type)) {
+    $token_set[] = 'donation';
+  }
   if (empty($enabled_services)) {
     $form['banner'] = array(
       '#prefix' => '<h2>' . t('No services enabled') . '</h2>',
       '#markup' => '<p>' . t('No social media services have been enabled. To enable Social Media services, visit the !admin_screen', array('!admin_screen' => l('module administration page', 'admin/config/services/springboard_social'))) . '</p>',
     );
   }
-
+  // no previous settings available? save global defaults
   if (empty($settings)) {
     sb_social_add_default_settings($node->nid);
     $settings = sb_social_webform_settings_load($node->nid);
@@ -153,6 +158,20 @@ function sb_social_webform_settings($form, $edit, $node) {
       'file_validate_extensions' => array('gif png jpg jpeg'),
     ),
   );
+  $form['fb_settings']['tokens']= array(
+    '#type' => 'fieldset',
+    '#title' => t('Available Tokens'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['fb_settings']['tokens']['token_help'] = array(
+    '#type' => 'item',
+    '#title' => t('Drupal tokens'),
+    '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
+  );
+
+
+
   // TODO: implement image preview.
 
   $form['twitter_settings'] = array(
@@ -166,6 +185,17 @@ function sb_social_webform_settings($form, $edit, $node) {
     '#title' => t('Message'),
     '#description' => t('Custom twitter message text.'),
     '#default_value' => isset($settings['twitter']['message']) ? $settings['twitter']['message'] : '',
+  );
+  $form['twitter_settings']['tokens']= array(
+    '#type' => 'fieldset',
+    '#title' => t('Available Tokens'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['twitter_settings']['tokens']['token_help'] = array(
+    '#type' => 'item',
+    '#title' => t('Drupal tokens'),
+    '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
   );
 
   // Market Source
