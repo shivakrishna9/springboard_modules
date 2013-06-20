@@ -62,10 +62,12 @@
         $('.fundraiser-donation-form').validate({ 
           // Custom keyup function checking for tab key (9) and when value is empty
           onkeyup: function (element, event) {
-            if (event.which === 9 && element.value === "") {
-              return;
-            } else {
-              this.element(element);
+            if ($(element).next('.error')[0]){
+              if (event.which === 9 && element.value === "") {
+                return;
+              } else {
+                this.element(element);
+              }
             }
           },   
           onfocusout: function (element) {
