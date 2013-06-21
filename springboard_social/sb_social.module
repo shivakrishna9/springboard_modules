@@ -367,7 +367,7 @@ function sb_social_webform_submission_insert($node, $submission) {
  */
 
 function sb_social_token_info() {
-  $enabled_services = variable_get('springboard_social_services', array());
+  $enabled_services = sb_social_get_enabled_services();
   $info['types']['sb_social'] = array(
     'name' => t('Springboard Social'),
     'description' => t('Tokens related to Springboard Social sharing content.'),
@@ -417,7 +417,6 @@ function sb_social_token_info() {
       'name' => t('Sharing short url'),
       'description' => t('Shortened share url, with market source values if available'),
   );
-
   return $info;
 }
 
@@ -495,7 +494,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
           break;
         case 'twitter_message':
           if (in_array('twitter', $enabled_services)) {
-            $replacements[$token] = $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node);
+            $replacements[$token] =  !empty($settings['twitter']['message']) ? $settings['twitter']['message'] : '';
             $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node, $sid);
           }
           else {
@@ -574,13 +573,7 @@ function _sb_social_component_blacklist() {
 
 function _sb_social_set_tracking_cookie($uid, $mail, $sid) {
   $payload = $uid . '::' . $mail . '::' . $sid;
-  drupal_set_message('adding payload:' . $payload);
   $set = setcookie("sb_social.event_submission", $payload, strtotime('+1 year'));
-  if ($set) {
-    drupal_set_message('cookie reset');
-  } else {
-    drupal_set_message('unable to set cookie');
-  }
 }
 
 /**
@@ -605,17 +598,6 @@ function _sb_social_replace_tokens($string, $node, $sid = NULL) {
     $rep['%teaser'] = $teaser;
   }
 
-  // TODO: contemplate adding additonal token support for user & node tokens or
-  // just integrate with token module.
-/*
-  if (strpos($string, '%name') !== FALSE) {
-    $rep['%name'] = ((isset($user->name) && isset($user->uid)) && $user->uid > 0) ? $user->name : '';
-  }
-  if (strpos($string, '%mail') !== FALSE) {
-    $rep['%mail'] = ((isset($user->mail) && isset($user->uid)) && $user->uid > 0) ? $user->mail : '';
-  }
-
-*/
   foreach ($rep as $target => $value) {
     $string = str_replace($target, $value, $string);
   }

@@ -89,9 +89,22 @@ function sb_social_admin() {
       );
     }
   }
+  $form['#submit'][] = 'sb_social_admin_settings_submit';
   return system_settings_form($form);
 }
 
+function sb_social_admin_settings_submit($form, $form_state) {
+  cache_clear_all('*', 'cache_token', TRUE);
+  drupal_static_reset('token_get_info');
+  drupal_static_reset('token_get_global_token_types');
+  drupal_static_reset('token_get_entity_mapping');
+  drupal_static_reset('token_build_tree');
+  drupal_static_reset('_token_profile_fields');
+  drupal_static_reset('token_menu_link_load');
+  drupal_static_reset('token_book_link_load');
+  drupal_static_reset('token_node_menu_link_load');
+  drupal_static_reset('_token_field_info');
+}
 
 /**
  * Node level settings

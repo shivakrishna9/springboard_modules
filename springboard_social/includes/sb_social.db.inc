@@ -99,9 +99,6 @@ function sb_social_get_enabled_services() {
         }
       }
     }
-    if (empty($enabled_services)) {
-      $enabled_services = FALSE;
-    }
   }
   return $enabled_services;
 }
@@ -124,7 +121,6 @@ function sb_social_webform_settings_save($settings, $values = NULL) {
       }
     }
   }
-  dsm($settings, 'save settings');
   if (is_array($settings['data'])) {
     $settings['data'] = serialize($settings['data']);
   }
