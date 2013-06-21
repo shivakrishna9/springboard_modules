@@ -1,0 +1,627 @@
+<?php
+
+
+/**
+ * @file: core hooks
+ */
+
+// db helper functions
+require_once('includes/sb_social.db.inc');
+require_once('includes/sb_social.salesforce.inc');
+
+/**
+ * Implements hook_permissions().
+ */
+function sb_social_permissions() {
+  $permissions = array(
+    'administer springboard social' => array(
+      'title' => t('Administer Springboard Social'),
+      'description' => t('Configure Springboar Social module settings'),
+    ),
+    'edit own share content' => array(
+      'title' => t('Edit own share content'),
+      'description' => t('Edit shared content on own nodes'),
+    ),
+    'edit any share content' => array(
+      'title' => t('Edit any share content'),
+      'description' => t('Edit shared content on all nodes'),
+    ),
+  );
+  return $permissions;
+}
+
+/**
+ * Implements hook_menu().
+ */
+function sb_social_menu() {
+  $items['admin/config/services/springboard_social'] = array(
+    'title' => 'Springboard Social',
+    'description' => 'Social sharing integration',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sb_social_admin'),
+    'access arguments' => array('administer springboard social'),
+    'file' => 'includes/sb_social.admin.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['node/%node/share_settings'] = array(
+    'title' => t('Social'),
+    'description' => '',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sb_social_webform_settings', 1),
+    'access callback' => 'sb_social_access_webform_settings',
+    'access arguments' => array(1),
+    'file' => 'includes/sb_social.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  // service, share_id, uid, sid
+  $items['sb_social/share_event/%/%'] = array(
+    'title' => '',
+    'page callback' => 'sb_social_share_tracker',
+    'page arguments' => array(2, 3),
+    'access callback' => TRUE,
+    'file' => 'includes/sb_social.share.inc',
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+
+/**
+ * Access callback for node share content form.
+ */
+function sb_social_access_webform_settings($node) {
+  global $user;
+  if (empty($node->is_webform_user)) {
+    return FALSE;
+  }
+  // grant access to content owned by user that they have permissions to edit.
+  if (user_access('edit own share content') && $node->uid == $user->uid && node_access('update', $node)) {
+    return TRUE;
+  }
+  // grant access to content user can edit regardless of ownership.
+  elseif (user_access('edit any share content') && node_access('update', $node)) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Implements hook_node_insert().
+ *
+ * Copy parent node settings during clone operation, set defaults from global settings when
+ * creating a new node.
+ * @param type $node
+ */
+function sb_social_node_insert($node) {
+  if (_webform_user_is_webform_user_node($node)) {
+    if (!isset($node->clone_from_original_nid)) {
+      // settings from global defaults
+      sb_social_add_default_settings($node->nid);
+    } elseif ($parent_nid = $node->clone_from_original_nid) {
+      // copy settings
+      $original_settings = sb_social_webform_settings_load($parent_nid);
+      // if the parent node is missing default social settings, add them and then clone the defaults.
+      if (empty($original_settings)) {
+        sb_social_add_default_settings($parent_nid);
+        $original_settings = sb_social_webform_settings_load($parent_nid);
+      }
+      foreach ($original_settings as $service => $data) {
+        $settings = array(
+          'nid' => $node->nid,
+          'service' => $service,
+          'data' => $data,
+        );
+        sb_social_webform_settings_save($settings);
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_node_delete
+ *
+ * purge share content settings when a node is deleted
+ */
+ function sb_social_node_delete($node) {
+   sb_social_webform_settings_delete($node->nid);
+}
+
+/**
+ * Implements hook_init().
+ *
+ * Add OpenGraph meta tags.
+ *
+ * Generate shortened url on confirmation page view.
+ *
+ * Package social tracking cookie value as javascript setting.
+ *http://d7-springboard.dev/
+ */
+function sb_social_init() {
+
+  $node = FALSE;
+  if (arg(0) == 'node' && is_numeric(arg(1))) {
+    $node = node_load(arg(1));
+  }
+  // generate shortened share url.
+  if ($node && arg(2) == 'done') {
+    $node = node_load(arg(1));
+
+    // add opengraph meta tags and twitter js settings.
+    // Note: twitter customizations use the JS api and are handled elsewhere.
+
+    $settings = sb_social_webform_settings_load($node->nid);
+    if ($settings) {
+      drupal_add_js('http://s7.addthis.com/js/250/addthis_widget.js', array('type' => 'external', 'scope' => 'footer'));
+      drupal_add_js(drupal_get_path('module', 'sb_social') . '/scripts/sb_social.addthis.js', 'file');
+    }
+
+    if (!empty($settings['twitter'])) {
+      drupal_add_js(array('sb_social' => array(
+       'twitter_message' => $settings['twitter']['message'],
+       'pubid' => variable_get('springboard_social_addthis_profile_id', ''),
+     )), 'setting');
+    }
+    if (!empty($settings['facebook'])) {
+      $meta = array(
+        'title' => !empty($settings['facebook']['title']) ? $settings['facebook']['title'] : '',
+        'description' => !empty($settings['facebook']['description']) ? $settings['facebook']['description'] : '',
+        'image' => $settings['facebook']['image'],
+        //'url' => sb_social_short_url($node, $sid, 'facebook'),
+      );
+      foreach ($meta as $id => $content) {
+        $data = array(
+          '#type' => 'html_tag',
+          '#tag' => 'meta',
+          '#attributes' => array(
+            'property' =>  "og:$id",
+            'content' => $content,
+          ),
+        );
+        drupal_add_html_head($data, 'opengraph_' . $id);
+      }
+    }
+
+  }
+  // stash cookie payload in js
+  if (!empty($_COOKIE['sb_social_event_submission'])) {
+   $data = explode("::", $_COOKIE['sb_social_event_submission']);
+   drupal_add_js(array('sb_social' => array(
+     'uid' => $data[0],
+     'mail' =>  $data[1],
+     'sid' => $data[2],
+   )), 'setting');
+  }
+}
+
+// TODO: change param to nid, no need for entire node object.
+function sb_social_add_default_settings($nid) {
+  $enabled_services = variable_get('springboard_social_services', array());
+
+  if (in_array('facebook', $enabled_services)) {
+    $settings['facebook'] = array(
+      'nid' => $nid,
+      'service' => 'facebook',
+      'data' => array(
+        'title' => variable_get('springboard_social_facebook_title', '%title'),
+        'description' => variable_get('springboard_social_facebook_description', '%teaser'),
+        'image' => variable_get('springboard_social_facebook_image', ''),
+      ),
+    );
+  }
+
+  if (in_array('twitter', $enabled_services)) {
+    $settings['twitter'] = array(
+      'nid' => $nid,
+      'service' => 'twitter',
+      'data' => array(
+        'message' => variable_get('springboard_social_twitter_message', '%title'),
+      ),
+    );
+  }
+  foreach ($settings as $service => $setting) {
+    if (module_exists('market_source')) {
+      $ms = array();
+      $fields = market_source_field_info();
+      // It doesn't make sense to list certain market source fields, like user agent.
+      // the blacklist lets us filter these out cleanly.
+      $blacklist = _sb_social_component_blacklist();
+      foreach ($fields as $key => $field) {
+        if (in_array($key, $blacklist)) {
+          continue;
+        }
+        $ms[$key] = variable_get('springboard_social_ms_' . $key, '');
+      }
+
+      $settings[$service]['data']['market_source'] = $ms;
+
+    }
+    sb_social_webform_settings_save($settings[$service]);
+  }
+
+}
+
+function sb_social_share_url($nid, $uid, $sid, $service, $settings) {
+  $node = node_load($nid);
+
+  $options = array(
+    'absolute' => TRUE,
+    'query' => array(
+      'social_referer_transaction' => $sid,
+      'social_referrer_network' => $service,
+    ),
+  );
+
+  if (module_exists('market_source') && isset($settings['market_source'])) {
+    foreach ($settings['market_source'] as $key => $value) {
+      $options['query'][$key] = $value;
+    }
+  }
+  $url = url('node/' . $nid, $options);
+
+  return url('node/' . $nid, $options);
+}
+
+/**
+ * Implements hook_market_source_field_info().
+ */
+function sb_social_market_source_field_info() {
+
+  $fields = array();
+  // transaction that generated the refered conversion (sid)
+  $fields['social_referer_transaction'] = array(
+    '#title' => t('social referrer transaction'),
+    '#type' => 'hidden',
+    '#value' => '',
+    '#required' => 0,
+    '#extra' => array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    ),
+  );
+  // network conversion came from
+  $fields['social_referer_network'] = array(
+      '#title' => t('social referrer network'),
+      '#type' => 'hidden',
+      '#value' => '',
+      '#required' => 0,
+      '#extra' => array(
+          'description' => '',
+          'hidden_type' => 'hidden',
+      ),
+  );
+  // contact that generated the refered conversion
+  $fields['social_referer_contact'] = array(
+      '#title' => t('social referrer contact'),
+      '#type' => 'hidden',
+      '#value' => '',
+      '#required' => 0,
+      '#extra' => array(
+          'description' => '',
+          'hidden_type' => 'hidden',
+      ),
+  );
+  // in the initial spec but unnecessary. This relationship is already
+  // established in the share event record.
+  //
+  // the network the transaction/submission was refered to.
+ /* $fields['shared_to'] = array(
+      '#title' => t('Share network'),
+      '#type' => 'hidden',
+      '#value' => '',
+      '#required' => 0,
+      '#extra' => array(
+          'description' => '',
+          'hidden_type' => 'hidden',
+      ),
+  );*/
+  return $fields;
+}
+
+
+/**
+ * Implements hook_webform_submission_update().
+ *
+ * Set tracking cookie when anonymous user submits a webform user enabled webform.
+ * hook_webform_submission_update() is invoked by webform user after setting the uid
+ * in the submission.
+ */
+function sb_social_webform_submission_update($node, $submission) {
+
+  // update/set tracking cookie when a webform user enabled form is submitted.
+  if (!empty($node->is_webform_user) && $node->is_webform_user) {
+    global $user;
+    // prevent updating authenticated user's cookie when editing another user's submission.
+    if ($user->uid && ($submission->uid != $user->uid)) {
+      return;
+    }
+    // find email field value
+    // TODO: break dependency on fundraiser_webform.
+    $component = _fundraiser_webform_get_component_by_nid_key($node->nid, 'mail');
+    $mail = $submission->data[$component->cid]['value'][0];
+    _sb_social_set_tracking_cookie($submission->uid, $mail, $submission->sid);
+  }
+}
+
+/**
+ * Implements hook_webform_submission_insert().
+ *
+ * Set tracking cookie when form is submitted by an authenticated user.
+ * Since the submission has a valid UID, we can update the cookie.
+ *
+ * Anonymous webform submissions have to be handled during update since webform_user()
+ * backfills the user id in the submission after it's been inserted.
+ */
+function sb_social_webform_submission_insert($node, $submission) {
+  if (!empty($node->is_webform_user) && $node->is_webform_user) {
+    global $user;
+    if ($user->uid == $submission->sid) {
+      $component = _fundraiser_webform_get_component_by_nid_key($node->nid, 'mail');
+      $mail = $submission->data[$component->cid]['value'][0];
+      _sb_social_set_tracking_cookie($submission->uid, $mail, $submission->sid);
+    }
+  }
+}
+
+/**
+ * Implements hook_token_info().
+ */
+
+function sb_social_token_info() {
+  $enabled_services = sb_social_get_enabled_services();
+  $info['types']['sb_social'] = array(
+    'name' => t('Springboard Social'),
+    'description' => t('Tokens related to Springboard Social sharing content.'),
+  );
+  // share links, displays addthis div and share links as a bundle.
+  $info['tokens']['sb_social']['share_links'] = array(
+    'name' => t('Share links'),
+    'description' => t('Render standard addthis share links for all social services that are currently enabled.'),
+  );
+  if (in_array('facebook', $enabled_services)) {
+    // fb link
+    $info['tokens']['sb_social']['facebook_share'] = array(
+      'name' => t('Facebook Share link'),
+      'description' => t('AddThis Facebook Share link'),
+    );
+    // fb title
+    $info['tokens']['sb_social']['facebook_title'] = array(
+      'name' => t('Facebook share title'),
+      'description' => t('Title content for Facebook sharing'),
+    );
+    // fb description
+    $info['tokens']['sb_social']['facebook_description'] = array(
+      'name' => t('Facebook share description'),
+      'description' => t('Description content for Facebook sharing'),
+    );
+    // fb image
+    $info['tokens']['sb_social']['facebook_image'] = array(
+      'name' => t('Facebook share image'),
+      'description' => t('Image content for Facebook sharing'),
+    );
+  }
+
+  if (in_array('twitter', $enabled_services)) {
+    // twitter link
+    $info['tokens']['sb_social']['twitter_share'] = array(
+      'name' => t('Twitter Share link'),
+      'description' => t('AddThis Twitter tweet link'),
+    );
+    // twitter message
+    $info['tokens']['sb_social']['twitter_message'] = array(
+      'name' => t('Twitter tweet message'),
+      'description' => t('Message content for Twitter tweet'),
+    );
+  }
+  //shortened url with market source payload if available
+  $info['tokens']['sb_social']['share_url'] = array(
+      'name' => t('Sharing short url'),
+      'description' => t('Shortened share url, with market source values if available'),
+  );
+  return $info;
+}
+
+/**
+ * Implements hook_tokens().
+ */
+function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
+
+  if ($type = 'sb_social' && !empty($data['node'])) {
+    $replacements = array();
+    $node = $data['node'];
+    $settings = sb_social_webform_settings_load($node->nid);
+    $enabled_services = sb_social_get_enabled_services();
+
+    if (!empty($_GET['sid'])) {
+      $sid = $_GET['sid'];
+      if (in_array('facebook', $enabled_services)) {
+        $urls['facebook_url'] = sb_social_short_url($data['node'], $sid, 'facebook', $settings['facebook']);
+      }
+      if (in_array('twitter', $enabled_services)) {
+        $urls['twitter_url'] = sb_social_short_url($data['node'], $sid, 'twitter', $settings['twitter']);
+      }
+      if ($urls) {
+        $enabled_services = array_merge($enabled_services, $urls);
+      }
+    }
+    foreach ($tokens as $key => $token) {
+      switch ($key) {
+        case 'share_links':
+          $replacements[$token] = theme('sb_social_share', array('services' => $enabled_services));
+          $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node, $sid);
+          break;
+        case 'facebook_share':
+          if (in_array('facebook', $enabled_services)) {
+            $replacements[$token] = theme('sb_social_share', array('services' => array('facebook', 'facebook_url' => $urls['facebook_url'])));
+          }
+          else {
+            $replacements[$token] = '';
+          }
+        break;
+        case 'facebook_title':
+          if (in_array('facebook', $enabled_services)) {
+            $replacements[$token] = !empty($settings['facebook']['title']) ? $settings['facebook']['title'] : '';
+            $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node, $sid);
+          }
+          else {
+            $replacements[$token] = '';
+          }
+          break;
+        case 'facebook_description':
+          if (in_array('facebook', $enabled_services)) {
+            $replacements[$token] =  !empty($settings['facebook']['description']) ? $settings['facebook']['description'] : '';
+            $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node, $sid);
+          }
+          else {
+            $replacements[$token] = '';
+          }
+          break;
+        case 'facebook_image':
+          if (in_array('twitter', $enabled_services)) {
+            // TODO: image tag?
+            $replacements[$token] =  !empty($settings['facebook']['image']) ? $settings['facebook']['image'] : '';
+          }
+          else {
+            $replacements[$token] = '';
+          }
+          break;
+        case 'twitter_share':
+          if (in_array('twitter', $enabled_services)) {
+            $replacements[$token] = theme('sb_social_share', array('services' => array('twitter', 'twitter_url' => $urls['twitter_url'])));
+          }
+          else {
+            $replacements[$token] = '';
+          }
+          break;
+        case 'twitter_message':
+          if (in_array('twitter', $enabled_services)) {
+            $replacements[$token] =  !empty($settings['twitter']['message']) ? $settings['twitter']['message'] : '';
+            $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node, $sid);
+          }
+          else {
+            $replacements[$token] = '';
+          }
+          break;
+        case 'share_url':
+         // TODO: this token makes no sense in the context of service-specific URLs.
+         // $replacements[$token] = $settings['url'];
+          break;
+      }
+    }
+    return $replacements;
+  }
+}
+
+function sb_social_webform_confirmations_token_replace_alter(&$tokens, $sid) {
+  $settings = _sb_social_get_settings_by_sid($sid);
+ // $tokens = array_merge($tokens, sb_social_tokens('sb_social', $tokens, array('sb_social_settings' => $settings)));
+
+}
+
+/**
+ * Implements hook_theme().
+ */
+function sb_social_theme($existing, $type, $theme, $path) {
+
+  $items['sb_social_share'] = array(
+    'variables' => array(
+      'services' => NULL,
+    ),
+    'template' => 'templates/sb_social.share',
+  );
+  $items['sb_social_share_image_preview'] = array(
+    'render element' => 'element',
+  );
+  return $items;
+}
+
+function sb_social_short_url($node, $sid, $service, $settings = NULL) {
+  $submission = _sb_social_load_submission($sid);
+  $uid = $submission['uid'];
+  $url = sb_social_share_url($node->nid, $uid, $sid, $service, $settings);
+  return shorten_url($url);
+}
+
+
+function theme_sb_social_share_image_preview($variables) {
+  $element = $variables['element'];
+
+  if (isset($element['#file']->uri)) {
+    $output = '<div id="edit-logo-ajax-wrapper"><div class="form-item form-type-managed-file form-item-logo"><span class="file">';
+    $output .= '<img height="50px" src="' . file_create_url($element['#file']->uri) . '" />';
+    $output .= '</span><input type="submit" id="edit-' . $element['#name'] . '-remove-button" name="' . $element['#name'] . '_remove_button" value="Remove" class="form-submit ajax-processed">';
+    $output .= '<input type="hidden" name="' . $element['#name'] . '[fid]" value="' . $element['#file']->fid . '">';
+
+    return $output;
+  }
+}
+
+/**
+ * Provides list of market source fields to exclude on administration pages.
+ */
+function _sb_social_component_blacklist() {
+  return array(
+    'referrer',
+    'initial_referrer',
+    'search_engine',
+    'search_string',
+    'user_agent',
+    'social_referer_transaction',
+    'social_referer_network',
+    'social_referer_contact',
+  );
+}
+
+function _sb_social_set_tracking_cookie($uid, $mail, $sid) {
+  $payload = $uid . '::' . $mail . '::' . $sid;
+  $set = setcookie("sb_social.event_submission", $payload, strtotime('+1 year'));
+}
+
+/**
+ * Token replacement.
+ *
+ * @param type $string
+ * @param type $account
+ * User object
+ * @param type $node
+ * Node object
+ * @return string with tokens replaced
+ */
+function _sb_social_replace_tokens($string, $node, $sid = NULL) {
+  $rep = array();
+
+  if (strpos($string, '%title') !== FALSE) {
+    $rep['%title'] = !empty($node->title) ? $node->title : '';
+  }
+  if (strpos($string, '%teaser') !== FALSE) {
+    $lang = $node->language;
+    $teaser = !empty($node->body[$lang][0]['summary']) ? $node->body[$lang][0]['summary'] : '';
+    $rep['%teaser'] = $teaser;
+  }
+
+  foreach ($rep as $target => $value) {
+    $string = str_replace($target, $value, $string);
+  }
+
+  // Do token.module tokens
+  $account = NULL;
+  $donation = NULL;
+  if ($sid) {
+    $donation = _fundraiser_webform_get_donation_by_sid($sid);
+    $account = user_load($donation->uid);
+  }
+  // Do token replacement on body.
+
+  $token_set = array(
+    'node' => $node,
+  );
+  if (!empty($donation)) {
+    $token_set['donation'] = $donation;
+  }
+  if (!empty($account)) {
+    $token_set['user'] = $account;
+  }
+
+  $string = token_replace($string, $token_set);
+
+  return $string;
+}
