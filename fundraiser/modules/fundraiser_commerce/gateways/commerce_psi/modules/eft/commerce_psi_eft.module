@@ -139,6 +139,10 @@ function commerce_psi_eft_submit_form_submit($payment_method, $pane_form, $pane_
   $nvp['MarketSource'] = drupal_substr(_commerce_psi_token_replace($payment_method['settings']['custom_fields']['market_source'], $order), 0, 100);
   $nvp['ClientTransactionId'] = $order->order_id;
 
+  // Allow modules to alter the values sent to PSI
+  $context = array('payment_method' => $payment_method, 'type' => 'eft');
+  drupal_alter('commerce_psi_request', $nvp, $context);
+
   // Log the request if specified.
   if ($payment_method['settings']['log']['request'] == 'request') {
     // Mask the credit card number and CVV.
