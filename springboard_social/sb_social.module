@@ -10,9 +10,9 @@ require_once('includes/sb_social.db.inc');
 require_once('includes/sb_social.salesforce.inc');
 
 /**
- * Implements hook_permissions().
+ * Implements hook_permission().
  */
-function sb_social_permissions() {
+function sb_social_permission() {
   $permissions = array(
     'administer springboard social' => array(
       'title' => t('Administer Springboard Social'),
@@ -195,6 +195,7 @@ function sb_social_init() {
 
 // TODO: change param to nid, no need for entire node object.
 function sb_social_add_default_settings($nid) {
+  $settings = array();
   $enabled_services = variable_get('springboard_social_services', array());
 
   if (in_array('facebook', $enabled_services)) {

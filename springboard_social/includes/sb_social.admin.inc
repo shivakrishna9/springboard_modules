@@ -231,7 +231,7 @@ function sb_social_webform_settings($form, $edit, $node) {
       $form['market_source'][$key] = array(
         '#type' => 'textfield',
         '#title' => $field['#title'],
-        '#default_value' => (!empty($settings) && !empty($service)) ? $settings[$service]['market_source'][$key] : '',
+        '#default_value' => (!empty($settings) && !empty($service) && !empty($settings[$service]['market_source'][$key])) ? $settings[$service]['market_source'][$key] : '',
       );
     }
   }
