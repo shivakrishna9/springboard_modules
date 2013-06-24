@@ -110,7 +110,8 @@ class FundraiserTest extends FundraiserSetup {
       'minimum_donation_amount' => 10,
     );
     $this->assertEqual(serialize($node->donation_amounts), serialize($expected_amount_wrapper['donation_amounts']),
-      t('The correct amounts were created.' . print_r($node,1)), t('Fundraiser'));
+      t('The correct amounts were created. ' .
+      serialize($node->donation_amounts) . ' vs ' . serialize($expected_amount_wrapper['donation_amounts']) ), t('Fundraiser'));
     $this->assertEqual($node->minimum_donation_amount, $expected_amount_wrapper['minimum_donation_amount'],
       t('The correct minimum amount was created.'), t('Fundraiser'));
     //$this->assertEqual($node->default_amount, '20', t('The correct default amount was created.'), t('Fundraiser'));
