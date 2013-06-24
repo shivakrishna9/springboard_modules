@@ -124,6 +124,25 @@ function market_source_form_alter(&$form, &$form_state, $form_id) {
     }
   }
   elseif ($form_id == 'webform_component_edit_form') {
+    // For new components ONLY prevent key conflicts by name.
+    if (empty($component['form_key'])) {
+      $node = node_load($form['nid']['#value']);
+      // Gather the set of already available keys.
+      $seen_keys = array();
+      if (isset($node->webform['components'])) {
+        foreach ($node->webform['components'] as $cid => $this_component) {
+          $seen_keys[$cid] = $this_component['form_key'];
+        }
+      }
+      if (in_array($form['form_key']['#default_value'], $seen_keys)) {
+        $new_key_name = $form['form_key']['#default_value'];
+        $count = 0;
+        while (in_array($new_key_name, $seen_keys)) {
+          $new_key_name = $form['form_key']['#default_value'] = $new_key_name = $form['form_key']['#default_value'] . '_' . $count;
+        }
+        $form['form_key']['#default_value'] = $new_key_name;
+      }
+    }
     // Do not allow users to muck with defined form keys in component editting form.
     // They're named what they're named for a reason and we need those keys to remain unharmed.
     // Walk array of defined fields to gather keys.

@@ -312,6 +312,25 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
   // It is critical that we have a matching key id for this value, and it shouldn't change.
   if ($form_id == 'webform_component_edit_form') {
     $node = node_load($form['nid']['#value']);
+    // For new components ONLY prevent key conflicts by name.
+    if (empty($component['form_key'])) {
+      // Gather the set of already available keys.
+      $seen_keys = array();
+      if (isset($node->webform['components'])) {
+        foreach ($node->webform['components'] as $cid => $this_component) {
+          $seen_keys[$cid] = $this_component['form_key'];
+        }
+      }
+      if (in_array($form['form_key']['#default_value'], $seen_keys)) {
+        $new_key_name = $form['form_key']['#default_value'];
+        $count = 0;
+        while (in_array($new_key_name, $seen_keys)) {
+          $new_key_name = $form['form_key']['#default_value'] = $new_key_name = $form['form_key']['#default_value'] . '_' . $count;
+        }
+        $form['form_key']['#default_value'] = $new_key_name;
+      }
+    }
+    // Check against mail for conflict avoidance.
     if (isset($node->is_webform_user) && $node->is_webform_user) {
       if ($form['form_key']['#default_value'] == 'mail') {
         $form['form_key']['#disabled'] = TRUE;
