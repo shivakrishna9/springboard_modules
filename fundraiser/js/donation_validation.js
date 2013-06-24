@@ -169,10 +169,12 @@
         $('input[name*="other_amount"]').blur(function(){
           var value = $(this).val();
           // Match 1-3 decimal/comma places and fix value
-          if (value.match(/([\.,\-]\d{1}?)$/)) {
-            $(this).val($(this).val().slice(0, -2));
-          } else if (value.match(/([\.,\-]\d{2}?)$/)) {
-            $(this).val($(this).val().slice(0, -3));
+          if (value.match(/([\.\-]\d{1}?)$/)) {
+            $(this).val($(this).val() + '0');
+          } else if (value.match(/([\,\-]\d{1}?)$/)) {
+            $(this).val($(this).val().replace(',','.') + '0');
+          } else if (value.match(/([\,\-]\d{2}?)$/)) {
+            $(this).val($(this).val().replace(',','.'));
           } else if (value.match(/([\.,\-]\d{3}?)$/)) {
             $(this).val($(this).val().replace(/\D/g,''));
           }
