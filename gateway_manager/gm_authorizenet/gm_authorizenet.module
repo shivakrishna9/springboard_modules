@@ -389,12 +389,14 @@ function gm_authorizenet_update_payment_profile($profile_id, $payment_profile_id
         'creditCard' => array(
           'cardNumber' => $billing_info['card_num'],
           'expirationDate' => $expiration_date,
-          'cardCode' => $billing_info['card_cvv'],
         ),
       ),
       'customerPaymentProfileId' => $payment_profile_id,
     ),
   );
+  if (!empty($billing_info['card_cvv'])) {
+    $request['paymentProfile']['payment']['creditCard']['cardCode'] = $billing_info['card_cvv'];
+  }
 
   $xml = _gm_authorizenet_xml_api_wrapper('updateCustomerPaymentProfileRequest',   _gm_authorizenet_array_to_xml($request), $data['config']);
   $response = gm_authorizenet_xml_api($server, $xml);
