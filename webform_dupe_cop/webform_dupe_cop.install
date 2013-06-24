@@ -39,4 +39,5 @@ function webform_dupe_cop_schema() {
  */
 function webform_dupe_cop_update_7001() {
   db_add_index('webform_dupe_cop', 'submission_hash', array('submission_hash'));
+  return array();
 }

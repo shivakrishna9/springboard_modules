@@ -8,12 +8,13 @@
  * Implements hook_requirements().
  */
 function webform_goals_requirements($phase) {
+  $requirements = array();
   if ($phase === 'runtime' || $phase == 'update') {
     $path = drupal_realpath(file_default_scheme() . '://') . '/webform_goals';
     $directory_exists = file_prepare_directory($path, FILE_CREATE_DIRECTORY) ? TRUE : FALSE;
     $file_exists = file_exists($path . '/webform_goals.jsonp.php');
     $js_exists = file_exists($path . '/webform_goals.loader.js');
-    return array(
+    $requirements = array(
       array(
         'title' => 'Webform Goals',
         'value' => 'The webform_goals subdirectory has been created and is writeable',
@@ -34,7 +35,7 @@ function webform_goals_requirements($phase) {
       ),
     );
   }
-  return array();
+  return $requirements;
 }
 
 /**

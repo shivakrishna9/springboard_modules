@@ -348,6 +348,7 @@ function fundraiser_update_7000() {
 
   // Drop the gateway field on fundraisers.
   db_drop_field('fundraiser', 'gateway');
+  return array();
 }
 
 /**
@@ -361,7 +362,8 @@ function fundraiser_update_7001() {
       'size' => 'tiny',
       'not null' => FALSE,
       'default' => 0,
-    ),  
+    ),
   );
   db_add_field('fundraiser', 'ask_for_quantity', $field['ask_for_quantity']);
+  return array();
 }

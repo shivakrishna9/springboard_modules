@@ -120,4 +120,5 @@ function webform_user_update_7000(&$sandbox) {
   }
   // Clean up after ourselves.
   variable_del('webform_user_node_types');
+  return array();
 }

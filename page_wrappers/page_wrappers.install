@@ -281,4 +281,5 @@ function page_wrappers_update_7001() {
     'default' => 0,
     'description' => 'Weight of assignment.',
   ));
+  return array();
 }
