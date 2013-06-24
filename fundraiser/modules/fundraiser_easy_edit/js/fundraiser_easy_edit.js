@@ -146,7 +146,7 @@ Drupal.behaviors.fundraiserEasyEditForms = {
           description: '',
           form: window.textfieldForm
         };
-        createBlockUI(vars, 580);
+        createBlockUI(vars, 570);
       });
       $('.add-textarea').click(function(){
         removeOpen(this);
