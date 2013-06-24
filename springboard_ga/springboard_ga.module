@@ -28,6 +28,23 @@ function springboard_ga_menu() {
 function springboard_ga_settings_form($form, &$form_state)  {
   $default_settings = _springboard_ga_default_values();
 
+  // Show a warning message if the webform confirmation pages are ignored by the GA module
+  $page_match = FALSE;
+  $visibility = variable_get('googleanalytics_visibility_pages', 0);
+  $setting_pages = variable_get('googleanalytics_pages', GOOGLEANALYTICS_PAGES);
+  if (!empty($setting_pages)) {
+    $pages = drupal_strtolower($setting_pages);
+    if ($visibility < 2) {
+      $path = 'node/123/done';
+      $page_match = drupal_match_path($path, $pages);
+      $page_match = !($visibility xor $page_match);
+      if ($page_match === FALSE) {
+        drupal_set_message(t('The Google Analytics code has been !ga_admin to not appear on webform confirmation pages in the page visibility settings.',
+          array('!ga_admin' => l('configured', 'admin/config/system/googleanalytics'))), 'warning');
+      }
+    }
+  }
+
   $form['springboard_ga_node_configuration'] = array(
     '#type' => 'checkbox',
     '#title' => 'Enable per node configurations of Google Analytics Tracking for Donations',

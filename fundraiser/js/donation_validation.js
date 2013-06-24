@@ -62,10 +62,12 @@
         $('.fundraiser-donation-form').validate({ 
           // Custom keyup function checking for tab key (9) and when value is empty
           onkeyup: function (element, event) {
-            if (event.which === 9 && element.value === "") {
-              return;
-            } else {
-              this.element(element);
+            if ($(element).next('.error')[0]){
+              if (event.which === 9 && element.value === "") {
+                return;
+              } else {
+                this.element(element);
+              }
             }
           },   
           onfocusout: function (element) {
@@ -167,10 +169,12 @@
         $('input[name*="other_amount"]').blur(function(){
           var value = $(this).val();
           // Match 1-3 decimal/comma places and fix value
-          if (value.match(/([\.,\-]\d{1}?)$/)) {
-            $(this).val($(this).val().slice(0, -2));
-          } else if (value.match(/([\.,\-]\d{2}?)$/)) {
-            $(this).val($(this).val().slice(0, -3));
+          if (value.match(/([\.\-]\d{1}?)$/)) {
+            $(this).val($(this).val() + '0');
+          } else if (value.match(/([\,\-]\d{1}?)$/)) {
+            $(this).val($(this).val().replace(',','.') + '0');
+          } else if (value.match(/([\,\-]\d{2}?)$/)) {
+            $(this).val($(this).val().replace(',','.'));
           } else if (value.match(/([\.,\-]\d{3}?)$/)) {
             $(this).val($(this).val().replace(/\D/g,''));
           }

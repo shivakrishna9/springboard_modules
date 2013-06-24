@@ -92,20 +92,31 @@ Drupal.behaviors.marketSourceInit = {
     if (referrer == '') {
       referrer = '(none)';
     }
-    if ((typeof qs_keys['initial_referrer']['value'] !== 'undefined') && qs_keys['referrer']['persistence'] != false) {
-      var cookie = getCookie('initial_referrer');
+    var cookie;
+    if (typeof qs_keys['initial_referrer']['value'] !== 'undefined') {
+      cookie = getCookie('initial_referrer');
       if (cookie == false || cookie == null || cookie == '') {
         // Store the referrer value in our qs_keys.
         qs_keys['initial_referrer']['value'] = referrer;
         // Set initial_referrer cookie.
         setCookie('initial_referrer', qs_keys['initial_referrer']['value']);
+      } else {
+        qs_keys['initial_referrer']['value'] = cookie;
       }
     }
-    if ((typeof qs_keys['referrer']['value'] !== 'undefined') && qs_keys['referrer']['persistence'] != false) {
-      // Store the referrer value in our qs_keys.
-      qs_keys['referrer']['value'] = referrer;
-      // Set the referrer cookie for backwards compat.
-      setCookie('referrer', qs_keys['referrer']['value']);
+    if (typeof qs_keys['referrer']['value'] !== 'undefined') {
+      if (referrer == '(none)') {
+        // browser isn't providing a referrer, so check for one from before
+        cookie = getCookie('referrer');
+        if (cookie != false && cookie != null && cookie != '') {
+          qs_keys['referrer']['value'] = cookie;
+        }
+      } else {
+        // Store the referrer value in our qs_keys.
+        qs_keys['referrer']['value'] = referrer;
+        // Set the referrer cookie.
+        setCookie('referrer', qs_keys['referrer']['value']);
+      }
     }
 
   }).addClass('marketsource-processed');
