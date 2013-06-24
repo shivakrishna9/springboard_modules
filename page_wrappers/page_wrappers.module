@@ -226,7 +226,7 @@ function page_wrappers_node_update($node) {
  * Implements hook_node_insert().
  */
 function page_wrappers_node_insert($node) {
-  if (_page_wrappers_enabled_type($node)) {
+  if (_page_wrappers_enabled_type($node) && isset($node->page_wrappers)) {
     foreach ($node->page_wrappers as $wrapper) {
       if (!empty($wrapper['wrapper_nid'])) {
         _page_wrappers_assign_wrapper($node->nid, $wrapper);
