@@ -686,9 +686,10 @@ function fundraiser_offline_order_accept($order_id, $transaction_id, $message = 
     db_query('UPDATE {fundraiser_webform_order} SET recurring_status = %d WHERE order_id = %d', $order->data['recurring_status'], $order_id);
   }
 
-  // OFFLINE: Don't do this.
-  // update the user's profile
-  // fundraiser_update_user_profile($order->uid, $webform->webform_nid, $webform->sid);
+  // OFFLINE: Use a different function that normal fundraiser to update the user's profile.
+  // Fundraiser assumes the logged in user to be the donor, but in this case the logged in
+  // user is an admin caging the donation for a different user.
+  fundraiser_offline_update_user_profile($order->uid, $webform->webform_nid, $webform->sid);
 
   // if it's recurring, spawn all the future orders
   if (fundraiser_is_recurring_order($order_id)) {
@@ -950,4 +951,56 @@ function _fundraiser_offline_get_by_title($string) {
     $ret[] = $result;
   }
   return $ret;
+}
+
+/**
+ * Updates the profile of user that submitted the donation.
+ *
+ * @param $uid
+ *   The id of the user that made the donation.
+ * @param $nid
+ *   The nid of the webform node.
+ * @param $sid
+ *   The id of the webform submission that contains the values.
+ */
+function fundraiser_offline_update_user_profile($uid, $nid, $sid) {
+  if ($uid != 0) {
+    $map = fundraiser_create_profile_values_map($nid, $sid);
+    $update_user = user_load($uid);
+
+    // make sure the profile module is enabled
+    if (module_exists('profile')) {
+      $cat_array = profile_categories();
+
+      foreach ($cat_array as $cat) {
+        $updates = array(); // array for storing updates to each profile category
+        $result = _fundraiser_profile_get_fields($cat['name']);
+        while ($row = db_fetch_array($result)) {
+          if (array_key_exists($row['name'], $map)) {
+            $updates[$row['name']] = $map[$row['name']];
+          }
+        }
+        // save profile
+        _fundraiser_profile_save_profile($updates, $update_user, $cat['name']);
+      }
+      // convert ubercart's numeric ids to textual values
+      module_load_include('inc', 'webform', 'includes/webform.submissions');
+      $submission = webform_get_submission($nid, $sid);
+      _fundraiser_update_profile_location($submission, $update_user);
+    }
+
+    // update last_updated date so user will be re-synced on next cron run
+    user_save($update_user, array('last_updated' => time()));
+
+    // insert user back into queue
+    $action = 'update';
+    if (empty($update_user->salesforce_contact_id)) {
+      $action = 'upsert';
+    }
+
+    // If the SF Queue API is enabled, insert this user into the queue
+    if (module_exists('queue_api')) {
+      sf_queue_insert($update_user->uid, 'user', $action);
+    }
+  }
 }
