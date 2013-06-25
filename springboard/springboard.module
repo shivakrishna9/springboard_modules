@@ -327,7 +327,11 @@ function springboard_menu_alter(&$items) {
     $items['admin/springboard/settings/webform-dupe']['title'] = 'Webform Dupe';
     $items['admin/springboard/settings/webform-dupe']['weight'] = 12;
   }
-
+  
+  if (module_exists('sb_social')) {
+    $items['admin/springboard/sb-social'] = $items['admin/config/services/springboard_social'];
+    $items['admin/springboard/sb-social']['type'] = MENU_NORMAL_ITEM;
+  }
 }
 
 /**
