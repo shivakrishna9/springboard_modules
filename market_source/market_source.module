@@ -125,7 +125,7 @@ function market_source_form_alter(&$form, &$form_state, $form_id) {
   }
   elseif ($form_id == 'webform_component_edit_form') {
     // For new components ONLY prevent key conflicts by name.
-    if (empty($component['form_key'])) {
+    if (arg(4) == 'new') {
       $node = node_load($form['nid']['#value']);
       // Gather the set of already available keys.
       $seen_keys = array();

@@ -397,7 +397,7 @@ function fundraiser_webform_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'webform_component_edit_form') {
     $node = node_load($form['nid']['#value']);
     // For new components ONLY prevent key conflicts by name.
-    if (empty($component['form_key'])) {
+    if (arg(4) == 'new') {
       // Gather the set of already available keys.
       $seen_keys = array();
       if (isset($node->webform['components'])) {
