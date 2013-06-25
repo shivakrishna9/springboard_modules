@@ -102,4 +102,5 @@ function sb_social_schema() {
 
 function sb_social_update_7001() {
   db_add_primary_key('sb_social_webform', array('nid', 'service'));
+  return array();
 }

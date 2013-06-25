@@ -279,6 +279,8 @@ function email_wrappers_update_7001() {
   variable_set('email_wrapper_og_filter', $og_filter);
   variable_del('email_confirmation_og_filter');
 
+  return $ret;
+
   // TODO: delete original email confirmation tables.
 }
 
@@ -295,6 +297,7 @@ function email_wrappers_update_7002() {
     $node->promote = 0;
     node_save($node);
   }
+  return array();
 }
 
 /**

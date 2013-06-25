@@ -8,6 +8,7 @@
  * Implements hook_requirements().
  */
 function fundraiser_sustainers_requirements($phase) {
+  $requirements = array();
   if ($phase == 'runtime') {
     $requirements['fundraiser_sustainers_key_exists'] = array(
       'title' => t('Fundraiser sustainer key'),
@@ -28,9 +29,8 @@ function fundraiser_sustainers_requirements($phase) {
       'severity' =>  $key_match_for_environment ? REQUIREMENT_OK : REQUIREMENT_WARNING,
       'weight' => '-999',
     );
-    return $requirements;
   }
-  return array();
+  return $requirements;
 }
 
 /**
@@ -261,6 +261,7 @@ function fundraiser_sustainers_update_7001(&$sandbox) {
     'sustainer_key' => $key,
   ))
   ->execute();
+  return array();
 }
 
 /**
@@ -281,6 +282,7 @@ function fundraiser_sustainers_update_7002(&$sandbox) {
     ),
   );
   db_add_field('fundraiser_sustainers', 'lock_id', $field['lock_id']);
+  return array();
 }
 
 /**
@@ -310,4 +312,5 @@ function fundraiser_sustainers_update_7004(&$sandbox) {
     'primary key' => array('nid'),
   );
   db_create_table('fundraiser_sustainers_nodes', $schema['fundraiser_sustainers_nodes']);
+  return array();
 }

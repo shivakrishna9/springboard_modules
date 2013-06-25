@@ -197,6 +197,7 @@ function sb_social_init() {
 function sb_social_add_default_settings($nid) {
   $settings = array();
   $enabled_services = variable_get('springboard_social_services', array());
+  $settings = array();
 
   if (in_array('facebook', $enabled_services)) {
     $settings['facebook'] = array(

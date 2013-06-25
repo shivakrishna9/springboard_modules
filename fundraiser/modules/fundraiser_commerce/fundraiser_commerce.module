@@ -1156,6 +1156,57 @@ function _fundraiser_commerce_fundraiser_donation_process_external_form_redirect
       }
     }
   }
+
+  // If the form doesn't exist in the cache try the sid from webform
+  elseif ($donation->sid) {
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    $node = $donation->node;
+    $sid = $donation->sid;
+    $submission = webform_get_submission($node->webform['nid'], $sid, TRUE);
+
+    /**
+     * The code below is adapted from the webform module's confirmation handling
+     */
+
+    // Strip out empty tags added by WYSIWYG editors if needed.
+    $confirmation = strlen(trim(strip_tags($node->webform['confirmation']))) ? $node->webform['confirmation'] : '';
+
+    // Clean up the redirect URL and filter it for webform tokens.
+    $redirect_url = trim($node->webform['redirect_url']);
+    $redirect_url = _webform_filter_values($redirect_url, $node, $submission, NULL, FALSE, TRUE);
+
+    // Remove the domain name from the redirect.
+    $redirect_url = preg_replace('/^' . preg_quote($GLOBALS['base_url'], '/') . '\//', '', $redirect_url);
+
+    // Check confirmation and redirect_url fields.
+    $redirect = array('path' => '', 'options' => array());
+    $external_url = FALSE;
+
+    if ($redirect_url == '<none>') {
+      $redirect['path'] = 'node/' . $node->nid;
+    }
+    elseif ($redirect_url == '<confirmation>') {
+      $redirect = array('path' => 'node/' . $node->nid . '/done', 'options' => array('query' => array('sid' => $sid)));
+    }
+    elseif (valid_url($redirect_url, TRUE)) {
+      $redirect['path'] = $redirect_url;
+      $external_url = TRUE;
+    }
+    elseif ($redirect_url && strpos($redirect_url, 'http') !== 0) {
+      $parts = drupal_parse_url($redirect_url);
+      $parts['query'] ? ($parts['query']['sid'] = $sid) : ($parts['query'] = array('sid' => $sid));
+      $query = $parts['query'];
+      $redirect = array('path' => $parts['path'], 'options' => array('query' => $query, 'fragment' => $parts['fragment']));
+    }
+
+    // If redirecting and we have a confirmation message, show it as a message.
+    if (!$external_url && (!empty($redirect_url) && $redirect_url != '<confirmation>') && !empty($confirmation)) {
+      drupal_set_message(check_markup($confirmation, $node->webform['confirmation_format'], '', TRUE));
+    }
+
+    drupal_goto($redirect['path'], $redirect['options']);
+  }
+
   // If we don't have all the information we need, then we do nothing and fall through to standard page display.
 }
 

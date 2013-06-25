@@ -28,4 +28,5 @@ function springboard_update_7000() {
   if (db_table_exists('springboard_sf_status')) {
     db_drop_table('springboard_sf_status');
   }
+  return array();
 }
