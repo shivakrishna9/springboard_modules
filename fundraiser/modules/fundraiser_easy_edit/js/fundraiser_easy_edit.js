@@ -165,7 +165,7 @@ Drupal.behaviors.fundraiserEasyEditForms = {
         console.log('test5');
       });
           
-    });
+    }); // end window.ready function
   }
 }
 })(jQuery);

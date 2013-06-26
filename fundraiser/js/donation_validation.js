@@ -84,6 +84,7 @@
             }
           },
           highlight: function(element) {
+            $(element).addClass('key-validate');
             $(element).closest('.control-group').removeClass('success').addClass('error');
           },
           success: function(element) {
@@ -92,7 +93,7 @@
         });
 
         // On change and keyup check form status
-        $(".fundraiser-donation-form :input").bind('change keyup', function() {
+        $(".fundraiser-donation-form :input.key-validate").bind('change keyup', function() {
           donationValidate.element('#' + $(this).attr('id'));
         });
 
