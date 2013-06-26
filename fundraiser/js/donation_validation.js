@@ -17,8 +17,6 @@
       $(window).ready(function(){
         // Turn autocomplete off on CC and CVV form elements.
         $('input[name*="card_number"], input[name*="card_cvv"]').attr('autocomplete','off');
-        // Set initial form button state to disabled
-        $('#edit-submit').addClass('button_disabled').attr('disabled', true);
 
         // Helper function, provides the total display.
         function _recalculate_quantity_total() {
@@ -59,7 +57,7 @@
         }, "Enter a valid amount");
 
         // Instantiate Form Validation
-        $('.fundraiser-donation-form').validate({ 
+        var donationValidate = $('.fundraiser-donation-form').validate({
           // Custom keyup function checking for tab key (9) and when value is empty
           onkeyup: function (element, event) {
             if ($(element).next('.error')[0]){
@@ -90,18 +88,31 @@
           },
           success: function(element) {
             $(element).text('OK').addClass('valid').closest('.control-group').removeClass('error').addClass('success');
-          }
+          },
         });
-        
-		// On change and keyup check form status
-		$(".fundraiser-donation-form").bind('change keyup', function() {
-          if ($(this).validate().checkForm()) {
-            $('.fundraiser-donation-form #edit-submit').removeClass('button_disabled').attr('disabled', false);
-          } else {
-            $('.fundraiser-donation-form #edit-submit').addClass('button_disabled').attr('disabled', true);
-          }
+
+        // On change and keyup check form status
+        $(".fundraiser-donation-form :input").bind('change keyup', function() {
+          donationValidate.element('#' + $(this).attr('id'));
         });
-        
+
+        // On submission hide the button and replace it with a new value.
+        // Wrap the click in a once trigger to be sure that we bind it the one time.
+        $('.fundraiser-donation-form #edit-submit').once(function() {
+          $('.fundraiser-donation-form #edit-submit').click(function() {
+            // Validate the form
+            if (donationValidate.form()) {
+              $(this).hide();
+              $('.fundraiser_submit_message').hide();
+              $(this).after('<div class="donation-processing-wrapper">' +
+                '<p class="donation-thank-you">Thank you.</p>' +
+                '<p class="donation-processing">Your donation is being processed.</p>' +
+                '<div class="donation-processing-spinner"></div>' +
+                '</div>');
+            }
+          });
+        });
+
         $('input[name*="card_number"]').numeric();
         $('input[name*="card_cvv"]').numeric();
 
@@ -164,7 +175,7 @@
         $('input[name*="other_amount"]').focus(function(){
           $('input[type="radio"][name*="amount"][value="other"]').attr('checked', 'checked');
         })
-        
+
         // Runs on Other Amount field
         $('input[name*="other_amount"]').blur(function(){
           var value = this.value;
@@ -188,12 +199,12 @@
                   // match the last two digits, removing others
                   .match(/\d+\.\d{0,2}|\.\d{0,2}/);   
                 var newValue = value[0];
-			    if (newValue.match(/\.\d{2}/)) {
-			    } else if (newValue.match(/\.\d{1}/)) {
-			      value += '0';
-			    } else {
-			      value += '00';			  
-			    }
+                if (newValue.match(/\.\d{2}/)) {
+                } else if (newValue.match(/\.\d{1}/)) {
+                  value += '0';
+                } else {
+                  value += '00';
+                }
               }
               this.value = value;
               $(this).valid();
@@ -202,20 +213,6 @@
             window.customValidation(value);
             $(this).valid();
           }
-        });
-
-        // On submission hide the button and replace it with a new value.
-        // Wrap the click in a once trigger to be sure that we bind it the one time.
-        $('.fundraiser-donation-form #edit-submit').once(function() {
-          $('.fundraiser-donation-form #edit-submit').click(function() {
-            $(this).hide();
-            $('.fundraiser_submit_message').hide();
-            $(this).after('<div class="donation-processing-wrapper">' +
-              '<p class="donation-thank-you">Thank you.</p>' +
-              '<p class="donation-processing">Your donation is being processed.</p>' +
-              '<div class="donation-processing-spinner"></div>' +
-              '</div>');
-          });
         });
 
         // Ability to override the default message
@@ -246,7 +243,7 @@
         });
         // Implementing our own alert close 
         // Bootstrap.js uses the .on method, not added until jQuery 1.7
-		$('.close').click(function(){
+        $('.close').click(function(){
           $(this).closest('.alert').fadeOut();
         });
 

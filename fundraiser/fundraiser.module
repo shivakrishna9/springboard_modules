@@ -1295,6 +1295,13 @@ function fundraiser_validate_form_fields($form, $form_state, $submission_fields,
  * Must be called from glue display module when displaying the donation form.
  */
 function fundraiser_donation_form(&$form, &$form_state) {
+  // Attach the js files
+  $form['#attached']['js'] = array(
+    drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/jquery.alphanumeric.min.js'),
+    drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/jquery.validate.min.js'),
+    drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/donation_validation.js'),
+  );
+
   // Check to see if the form is being accessed over HTTPS.
   if ((!_fundraiser_is_secure() && !variable_get('fundraiser_development_mode', 0))) {
     // Return a 404 if the page isn't secure and should be.
@@ -1354,18 +1361,7 @@ function fundraiser_donation_form(&$form, &$form_state) {
         $form = array_merge($form, $result);
       }
     }
-    $form['#after_build'][] = 'fundraiser_donation_form_after_build';
   }  
-}
-
-/**
- * Donation form afterbuild, for CSS and JS.
- */
-function fundraiser_donation_form_after_build($form, &$form_state) {
-  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/jquery.alphanumeric.min.js');
-  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/jquery.validate.min.js');
-  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/donation_validation.min.js');
-  return $form;
 }
 
 /**
