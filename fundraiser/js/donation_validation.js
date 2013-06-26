@@ -167,37 +167,18 @@
 
         // Runs on Other Amount field
         $('input[name*="other_amount"]').blur(function(){
-          var value = this.value;
-          console.log(this.value);
-          // check for custom validation function object
-          if (typeof(window.customValidation) === 'undefined') {
-            console.log('undefined');
-            // check if window.customValidation() { } is typeof function
-            // remove commas entirely automatically
-            // add period .00 after if no period
-            // if period one digit, add a 0
-            // if more than two, strip additional
-            // strip more than one period, if back to back
-            // strip all periods after the first, and ensure only two digits
-            // strip all non-digit characters
-            
-          } else {
-            window.customValidation(value);
-            console.log('not undefined');
+          var value = $(this).val();
+          // Match 1-3 decimal/comma places and fix value
+          if (value.match(/([\.\-]\d{1}?)$/)) {
+            $(this).val($(this).val() + '0');
+          } else if (value.match(/([\,\-]\d{1}?)$/)) {
+            $(this).val($(this).val().replace(',','.') + '0');
+          } else if (value.match(/([\,\-]\d{2}?)$/)) {
+            $(this).val($(this).val().replace(',','.'));
+          } else if (value.match(/([\.,\-]\d{3}?)$/)) {
+            $(this).val($(this).val().replace(/\D/g,''));
           }
         });
-
-          var value = $(this).val();
-            // Match 1-3 decimal/comma places and fix value
-            if (value.match(/([\.\-]\d{1}?)$/)) {
-              $(this).val($(this).val() + '0');
-            } else if (value.match(/([\,\-]\d{1}?)$/)) {
-              $(this).val($(this).val().replace(',','.') + '0');
-            } else if (value.match(/([\,\-]\d{2}?)$/)) {
-              $(this).val($(this).val().replace(',','.'));
-            } else if (value.match(/([\.,\-]\d{3}?)$/)) {
-              $(this).val($(this).val().replace(/\D/g,''));
-            }
 
         // On submission hide the button and replace it with a new value.
         // Wrap the click in a once trigger to be sure that we bind it the one time.
