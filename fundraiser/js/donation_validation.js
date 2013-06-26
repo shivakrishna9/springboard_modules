@@ -164,19 +164,43 @@
         $('input[name*="other_amount"]').focus(function(){
           $('input[type="radio"][name*="amount"][value="other"]').attr('checked', 'checked');
         })
-
+        
         // Runs on Other Amount field
         $('input[name*="other_amount"]').blur(function(){
-          var value = $(this).val();
-          // Match 1-3 decimal/comma places and fix value
-          if (value.match(/([\.\-]\d{1}?)$/)) {
-            $(this).val($(this).val() + '0');
-          } else if (value.match(/([\,\-]\d{1}?)$/)) {
-            $(this).val($(this).val().replace(',','.') + '0');
-          } else if (value.match(/([\,\-]\d{2}?)$/)) {
-            $(this).val($(this).val().replace(',','.'));
-          } else if (value.match(/([\.,\-]\d{3}?)$/)) {
-            $(this).val($(this).val().replace(/\D/g,''));
+          var value = this.value;
+          // check for custom validation function object
+          if (typeof(window.customValidation) === 'undefined') {
+            // If the value has length and includes at least one integer
+            if (value.length > 0 && this.value.match(/\d/g)) {
+              // if no period period
+              if (!value.match(/\./)) {
+                // no decimals: strip all other chars, add decimal and 00
+                value = value.replace(/[^\d]+/g,'') + '.00';
+              } else {
+                // Remove all non-integer/period chars
+                value = value.replace(/[^\d\.]+/g,'')
+                  // make first decimal unique                  
+                  .replace(/\./i,'-')
+                  // replace subsequent decimals                  
+                  .replace(/\./g,'')
+                  // set first back to normal
+                  .replace('-','.')
+                  // match the last two digits, removing others
+                  .match(/\d+\.\d{0,2}/);              
+                var newValue = value[0];
+			    if (newValue.match(/\.\d{2}/)) {
+			    } else if (newValue.match(/\.\d{1}/)) {
+			      value += '0';
+			    } else {
+			      value += '00';			  
+			    }
+              }
+              this.value = value;
+              $(this).valid();
+            }
+          } else {
+            window.customValidation(value);
+            $(this).valid();
           }
         });
 
