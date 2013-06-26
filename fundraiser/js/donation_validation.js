@@ -186,7 +186,7 @@
                   // set first back to normal
                   .replace('-','.')
                   // match the last two digits, removing others
-                  .match(/\d+\.\d{0,2}/);              
+                  .match(/\d+\.\d{0,2}|\.\d{0,2}/);   
                 var newValue = value[0];
 			    if (newValue.match(/\.\d{2}/)) {
 			    } else if (newValue.match(/\.\d{1}/)) {
