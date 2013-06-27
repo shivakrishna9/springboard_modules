@@ -1058,6 +1058,13 @@ function fundraiser_sustainers_donation_amount_form_submit($form, &$form_state) 
  * Creates form for billing address update.
  */
 function fundraiser_sustainers_billing_update_form($form, &$form_state, $donation) {
+  // Attach the js files
+  $form['#attached']['js'] = array(
+    drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/jquery.alphanumeric.min.js'),
+    drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/jquery.validate.min.js'),
+    drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/donation_validation.js'),
+  );
+
   // Abort if the gateway does not support recurring.
   $info = _fundraiser_get_donation_gateway($donation->did);
   if (!_fundraiser_sustainers_supports_recurring($info['allow_recurring'], $donation->donation['payment_method'])) {
@@ -1129,8 +1136,6 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
   $form['#calling_module'] = 'fundraiser_sustainers';
   fundraiser_display_form_fields('fundraiser_sustainers', $form, $form_state);
 
-  // Add afterbuild for js, css.
-  $form['#after_build'][] = 'fundraiser_sustainers_billing_update_after_build';
   return $form;
 }
 
