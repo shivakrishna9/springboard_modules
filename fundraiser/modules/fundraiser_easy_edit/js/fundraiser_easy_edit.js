@@ -109,15 +109,25 @@ Drupal.behaviors.fundraiserEasyEditForms = {
         <li><a class="add-markup" href="#">Markup</a></li>
       */
       // Setting cursor to normal
-      
       $.blockUI.defaults.css.cursor = 'default';
       
       window.textfieldForm = '<form class="form-horizontal" id="form-textfield"><div class="control-group"><label class="control-label" for="textfield-type">Type</label><div class="controls"><select name="type" id="textfield-type"><option value="text">Text</option><option value="email">Email</option><option value="number">Number</option><option value="tel">Telephone</option></select></div></div><div class="control-group"><label class="control-label" for="textfield-label">Label</label><div class="controls"><input id="textfield-label" type="text" name="label"/></div></div><div class="control-group"><label class="control-label" for="textfield-prefix">Prefix</label><div class="controls"><input id="textfield-prefix" type="text" name="prefix"/></div></div><div class="control-group"><label class="control-label" for="textfield-suffix">Suffix</label><div class="controls"><input id="textfield-suffix" type="text" name="suffix"/></div></div><div class="control-group"><div class="controls form-inline"><input id="textfield-id" type="text" class="input-small" placeholder="id"><input id="textfield-class" type="text" class="input-small" placeholder="class"></div></div><div class="control-group"><label class="control-label" for="textfield-description">Description</label><div class="controls"><textarea rows="4" cols="40" name="description" id="textfield-description"></textarea></div></div><div class="control-group"><label class="control-label" for="textfield-placeholder">Placeholder</label><div class="controls"><input id="textfield-placeholder" type="text" name="placeholder"/></div></div><div class="control-group"><label class="control-label" for="textfield-default">Default Value</label><div class="controls"><input id="textfield-default" type="text" name="default_value"/></div></div><div class="control-group"><label class="control-label" for="textfield-size">Element Size</label><div class="controls"><select name="size" id="textfield-size"><option value="input-mini">Mini</option><option value="input-small">Small</option><option value="input-medium">Medium</option><option value="input-large">Large</option><option value="input-xlarge">XLarge</option><option value="input-xxlarge">XXLarge</option><option value="">Default</option></select></div></div><div class="control-group"><label class="control-label" for="textfield-required">Required</label><div class="controls"><input id="textfield-required" type="checkbox" name="required"></div></div><div class="control-group"><div class="controls"><input id="textfield-submit" type="submit" value="Submit" class="btn"/></div></div></form>';
       $('body').append('<div class="hidden-text-form">' + window.textfieldForm + '</div>');
       
       // Backbone    
-      // Our Text Component Model class
-      var TextComponent = Backbone.Model.extend({
+      /*
+       * Create our collection
+       */
+      var EasyEdit = Backbone.Collection.extend({
+        //model: function(){ 
+          //console.log('test');
+        //}      
+      });       
+     
+      /*
+       * Custom Text Component Model class
+       */
+      var TextComponentModel = Backbone.Model.extend({
   	    // Default values
   	    defaults: {
     	  cid: '',
@@ -167,6 +177,18 @@ Drupal.behaviors.fundraiserEasyEditForms = {
   	    }
       });
       
+      /*
+       * Custom Text Component View Class
+       */
+      var TextComponentView = Backbone.View.extend({
+        tagName: 'div', // required, but defaults to 'div' if not set
+        className: 'control-group sortable', 
+        id: '', // optional      
+      });
+
+      /*
+       * Create BlockUI function(vars)
+       */
       function createBlockUI(vars){
         $.blockUI({ 
           message: '<div class="closeUI"><i class="icon-remove"></i></div>' + vars.title + vars.description + vars.form,
@@ -190,7 +212,6 @@ Drupal.behaviors.fundraiserEasyEditForms = {
             });  
               
             $('form#form-textfield').submit(function(e){
-                console.log('clicked');
                 var input_type = $(this).find('#textfield-type').val();
                 var input_label = $(this).find('#textfield-label').val();
                 var input_prefix = $(this).find('#textfield-prefix').val();
@@ -199,13 +220,11 @@ Drupal.behaviors.fundraiserEasyEditForms = {
                 var input_description = $(this).find('#textfield-description').val();
                 var input_placeholder = $(this).find('#textfield-placeholder').val();
                 var input_default_value = $(this).find('#textfield-default').val();
-                
                 var input_size = $(this).find('#textfield-size').val();
                 var input_required = $(this).find('#textfield-required').val();
                 var input_class = ($(this).find('#textfield-class').val()) + ((input_required == 'on') ? ' required ' : ' ') + input_size;
-                
 		        // Adding new component from form values
-                var component = new TextComponent({type: input_type, 
+                var component = new TextComponentModel({type: input_type, 
                                                   value: input_default_value,
                                                   label: input_label,
                                             placeholder: input_placeholder,
@@ -215,6 +234,7 @@ Drupal.behaviors.fundraiserEasyEditForms = {
                                                 classes: input_class,
                                             description: input_description
                                             });
+                // Testing added object
                 console.log(JSON.stringify(component));
                 return false;
             });
@@ -251,84 +271,6 @@ Drupal.behaviors.fundraiserEasyEditForms = {
       $('.add-markup').click(function(){
         removeOpen(this);
       });
-      
-      /**
- 		This is the component view, which to say is the markup that defines each component
- 		on the form. During initialization it adds a hidden input field that will be used
- 		to inline edit each component's label. It also defines the various events that can
- 		be trigged when a component is interacted with.
- 	  */
-/*    ComponentView = Backbone.View.extend({
-  	    initialize: function() {
-          // Append an input field for editing the label's value
-          this.$el.append('<input class="edit" type="text" value="' + this.model.get('name') + '"/>');
-        },
-        events: {
-          'click': 'alert',
-          'dblclick': 'edit',
-          'blur .edit': 'close'
-        },
-
-        alert: function() {
-          //alert('label for ' + this.model.get('cid') + ' was clicked');
-        },
-
-        edit: function() {
-          this.$el.children('.edit').addClass('editing');
-          this.$el.children('.edit').focus();
-        },
-
-  		close: function() {
-    	  alert(this.$el.text());
-    	  var value = this.$el.children('.edit').val();
-    	  if (!value) {
-      	    this.clear();
-    	  } else {
-      		this.$el.text(value);
-      		this.$el.children('.edit').removeClass('editing');
-    	  }
-  		}
-	  });
-*/
-/*
-      var TextField = new TextComponent({
-      });
-*/
-
-/*    TextField.on("change:name", function(model, name) {
-        alert("Changed name from " + TextField.previous("name") + " to " + name);
-      });
-*/
-//      TextField.set({name : "test field"});
-//      console.log(TextField);
-      
-        //selectOptions: {},
-        //label: '',
-        //prefix: '',
-        //suffix: '',
-        //id: '',
-        //class: '',
-        //description: '',
-        //placeholder: '',
-        //defaultvalue: ''
-      
-      //Select.options.addOpt('first',20);
-      //Select.options.addOpt('second',20);
-      
-//      console.log(Select);
-      //Select.attributes.selectOptions.test2('wow');
-//      Select.attributes.selectOptions[0] = {value:10};
-//      console.log(Select.attributes.selectOptions['0']);
-//      console.log(Select.attributes.selectOptions);
-      // Create our collection
-      /*var EasyEdit = Backbone.Collection.extend({
-        model: function(){ 
-          //console.log('test');
-        }      
-      });
-      console.log('test');
-      console.log(EasyEdit.prototype);*/
-        
           
     }); // end window.ready function
   }
