@@ -1,0 +1,11 @@
+name = Mobile Rulesets
+description = Use the Mobile Detect PHP library to create rulesets based on detected mobile platforms.
+package = Other
+core = 7.x
+configure = admin/config/settings/mobile-rulesets
+tags[] = mobile
+files[] = tests/mobile_rulesets.test
+
+version = "7.x-1.0-dev"
+core = "7.x"
+

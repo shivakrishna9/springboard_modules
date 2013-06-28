@@ -1,0 +1,91 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function mobile_rulesets_menu() {
+
+}
+
+/**
+ * Implements hook_init().
+ */
+function mobile_rulesets_init() {
+  if (!class_exists('Mobile_Detect')) {
+    $path = function_exists('libraries_get_path') ?
+      libraries_get_path('Mobile-Detect') : 'sites/all/libraries/Mobile-Detect';
+    if (!include($path . '/Mobile_Detect.php')) {
+      $links = array(
+        '!mobile_detect' => l(t('Mobile Detect'), 'https://github.com/serbanghita/Mobile-Detect'),
+        '!download' => l(t('Download', 'https://github.com/serbanghita/Mobile-Detect/tags')),
+      );
+      drupal_set_message('Mobile Rulesets requires the !mobile_detect PHP class to function. !download a copy and add it to your site libraries folder.', $links, 'error');
+    }
+  }
+  
+   // $mobile_detect = new Mobile_Detect;
+   // drupal_set_message('version:' . $mobile_detect->getScriptVersion());
+}
+
+/**
+ * Specified ctools plugins overrides
+ *
+ * Implements hook_ctools_plugin_directory();
+ */
+function mobile_rulesets_ctools_plugin_directory($owner, $plugin_type) {
+  $modules = array('panels', 'ctools');
+  if (in_array($owner, $modules) && !empty($plugin_type)) {
+    return "plugins/$plugin_type";
+  }
+}
+
+function mobile_rulesets_is_mobile() {
+  return _mobile_rulesets_detect('all');
+}
+
+function mobile_rulesets_is_phone() {
+  return _mobile_rulesets_detect('phone');
+}
+
+function mobile_rulesets_is_tablet() {
+  return _mobile_rulesets_detect('tablet');
+}
+
+/**
+ * Perform mobile detection via the Mobile_Detect library
+ * @see https://github.com/serbanghita/Mobile-Detect
+ *
+ * @param string $condition
+ * Condition to check for. Valid options:
+ *  all
+ *  phone
+ *  mobile
+ *
+ * @return 
+ * Returns TRUE if condition is met, FALSE otherwise.
+ */
+function _mobile_rulesets_detect($condition) {
+  if (class_exists('Mobile_Detect')) {
+    $state = FALSE;
+    $detect = new Mobile_Detect;
+    switch ($condition) {
+      case 'all':
+        $state = $detect->isMobile();
+        break;
+      case 'phone':
+        $state = ($detect->isMobile() && !$detect->isTablet());
+        break;
+      case 'tablet':
+        $state = $detect->isTablet();
+        break; 
+      default:
+        $state = FALSE;
+    }
+    return $state;
+  }
+  else {
+     drupal_set_message('Mobile Rulesets requires the !mobile_detect PHP class to function. !download a copy and add it to your site libraries folder.', $links, 'error');
+  }
+  return FALSE;
+  
+}
