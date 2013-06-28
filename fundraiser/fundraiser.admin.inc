@@ -335,6 +335,17 @@ function fundraiser_admin_settings() {
     '#title' => t('Sustainer settings'),
     '#collapsible' => TRUE,
   );
+  
+  $queue_possible = FALSE;
+  if (module_exists('drupal_queue')) {
+    $queue_possible = TRUE;
+  }
+  else {
+    $form['sustainer']['fundraiser_sustainer_set_date_mode_help'] = array(
+      '#type' => 'markup',
+      '#value' => '<div>'. t('Sustainer scheduling is only available with Drupal Queue installed.') .'</div>',
+    );
+  }
 
   $form['sustainer']['fundraiser_sustainer_set_date_mode'] = array(
     '#type' => 'checkbox',
@@ -345,7 +356,7 @@ function fundraiser_admin_settings() {
       'on the date of their anniversary. NOTE: Turning this feature on will convert ' .
       'current sustainers to the new date for all future (and only future) charges. '.
       'Turning this feature off thereafter will revert future charges to anniversary.'),
-    '#submit' => 'fundraiser_sustainer_update_date_mode',
+    '#access' => $queue_possible,
   );
 
   $dates = array_combine(range(1,28), range(1,28)); // Why 28? Feb.
@@ -356,6 +367,7 @@ function fundraiser_admin_settings() {
     '#options' => $dates,
     '#multiple' => FALSE, // TODO set true.
     '#default_value' => variable_get('fundraiser_sustainer_set_dates', array('15')),
+    '#access' => $queue_possible,
   );
 
   $form['sustainer']['fundraiser_cc_expiration_message']['fundraiser_sustainers_send_email'] = array(
@@ -463,6 +475,10 @@ Thanks for your understanding.")),
  * Submit handler for the admin settings().
  */
 function fundraiser_sustainer_update_date_mode($form, &$form_state) {
+  // Check and exit if needed.
+  if (!module_exists('drupal_queue')) {
+    return;
+  }
   // Handle modification of currently active sustainer charge dates.
   // To match the date formatting requested.
   $old_mode = variable_get('fundraiser_sustainer_set_date_mode', FALSE);
@@ -472,11 +488,9 @@ function fundraiser_sustainer_update_date_mode($form, &$form_state) {
   // TODO: this will be changed when we support more than one date.
   // Check if we need to change anything.
   if ($old_mode == $mode && $old_date == $date) {
-  drupal_set_message('a');
     return; // If we haven't changed any setting.
   }
   if ($old_mode == $mode && $mode == FALSE) {
-  drupal_set_message('b');
     return; // If we're still in the same mode, but the mode doesn't need dates.
   }
 
@@ -510,8 +524,8 @@ function fundraiser_sustainer_update_date_mode($form, &$form_state) {
     // of the series as the series is capped by expiration. This spare order just won't be processed.
     // This is such an edge case I don't think it will be a concern.
     if ($set_charge_date >= $now) {
-      drupal_set_message('Updated order #'. $order_info['order_id'] . ' from date ' .  date('d F Y', $base_date) .
-        ' to date ' . date('d F Y', $set_charge_date) . '.');
+      //drupal_set_message('Updated order #'. $order_info['order_id'] . ' from date ' .  date('d F Y', $base_date) .
+      //  ' to date ' . date('d F Y', $set_charge_date) . '.');
       // Now that we know the correct new date for this order, update the table.
       db_query('UPDATE {fundraiser_recurring} ' .
         'SET next_charge = %d ' .
