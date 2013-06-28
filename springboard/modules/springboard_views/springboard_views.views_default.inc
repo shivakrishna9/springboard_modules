@@ -334,12 +334,12 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['title']['alter']['word_boundary'] = FALSE;
   $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
   $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['title']['link_to_node'] = FALSE;
-  /* Field: Fundraiser donation forms: Internal name */
-  $handler->display->display_options['fields']['internal_name']['id'] = 'internal_name';
-  $handler->display->display_options['fields']['internal_name']['table'] = 'fundraiser';
-  $handler->display->display_options['fields']['internal_name']['field'] = 'internal_name';
-  $handler->display->display_options['fields']['internal_name']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['title']['link_to_node'] = FALSE; 
+  /* Field: Content: Internal Name */
+  $handler->display->display_options['fields']['field_fundraiser_internal_name']['id'] = 'field_fundraiser_internal_name';
+  $handler->display->display_options['fields']['field_fundraiser_internal_name']['table'] = 'field_data_field_fundraiser_internal_name';
+  $handler->display->display_options['fields']['field_fundraiser_internal_name']['field'] = 'field_fundraiser_internal_name';
+  $handler->display->display_options['fields']['field_fundraiser_internal_name']['element_label_colon'] = FALSE;
   /* Field: Content: Nid */
   $handler->display->display_options['fields']['nid']['id'] = 'nid';
   $handler->display->display_options['fields']['nid']['table'] = 'node';
