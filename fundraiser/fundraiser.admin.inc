@@ -330,33 +330,61 @@ function fundraiser_admin_settings() {
     '#default_value' => variable_get('fundraiser_cc_exp_year_range', 10),
   );
 
-  $form['fundraiser_cc_expiration_message']['fundraiser_sustainers_send_email'] = array(
+  $form['sustainer'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Sustainer settings'),
+    '#collapsible' => TRUE,
+  );
+
+  $form['sustainer']['fundraiser_sustainer_set_date_mode'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Set date mode'),
+    '#default_value' => variable_get('fundraiser_sustainer_set_date_mode', FALSE),
+    '#description' => t('Process all sustainer charges on a set date each month. ' .
+      'If this checkbox is left unmarked, sustainers will instead be processed ' .
+      'on the date of their anniversary. NOTE: Turning this feature on will convert ' .
+      'current sustainers to the new date for all future (and only future) charges. '.
+      'Turning this feature off thereafter will revert future charges to anniversary.'),
+    '#submit' => 'fundraiser_sustainer_update_date_mode',
+  );
+
+  $dates = array_combine(range(1,28), range(1,28)); // Why 28? Feb.
+  $form['sustainer']['fundraiser_sustainer_set_dates'] = array(
+    '#type' => 'select',
+    '#title' => t('Process date'),
+    '#description' => t('Select the day of each month to process sustainers.'),
+    '#options' => $dates,
+    '#multiple' => FALSE, // TODO set true.
+    '#default_value' => variable_get('fundraiser_sustainer_set_dates', array('15')),
+  );
+
+  $form['sustainer']['fundraiser_cc_expiration_message']['fundraiser_sustainers_send_email'] = array(
     '#type' => 'checkbox',
     '#title' => t('Send expiration email'),
     '#description' => t('If this option is enabled then emails will be sent when a card is about to expire.'),
     '#default_value' => variable_get('fundraiser_sustainers_send_email', TRUE),
   );
 
-  $form['fundraiser_cc_expiration_message'] = array(
+  $form['sustainer']['fundraiser_cc_expiration_message'] = array(
     '#type' => 'fieldset',
     '#title' => t('Credit card expiration email'),
     '#collapsible' => TRUE,
   );
 
-  $form['fundraiser_cc_expiration_message']['fundraiser_cc_exp_subject'] = array(
+  $form['sustainer']['fundraiser_cc_expiration_message']['fundraiser_cc_exp_subject'] = array(
     '#type' => 'textfield',
     '#title' => t('Email subject'),
     '#default_value' => variable_get('fundraiser_cc_exp_subject', 'Your credit card is about to expire'),
   );
 
-  $form['fundraiser_cc_expiration_message']['fundraiser_cc_exp_body'] = array(
+  $form['sustainer']['fundraiser_cc_expiration_message']['fundraiser_cc_exp_body'] = array(
     '#type' => 'textarea',
     '#title' => t('Email body'),
     '#default_value' => variable_get('fundraiser_cc_exp_body', 'Your card ending in [cc_last_4] is about to expire on [exp_month]/[exp_year].'),
     '#description' => t('The body of the email. Available tokens: [exp_month], [exp_year], [order_total], [cc_last_4], [cc_type], [amount]'),
   );
 
-  $form['fundraiser_cc_expiration_message']['tokens'] = array(
+  $form['sustainer']['fundraiser_cc_expiration_message']['tokens'] = array(
     '#type' => 'fieldset',
     '#title' => t('Donor replacement tokens'),
     '#description' => t('The following tokens are available for donor'),
@@ -364,7 +392,7 @@ function fundraiser_admin_settings() {
     '#collapsed' => TRUE,
   );
 
-  $form['fundraiser_cc_expiration_message']['tokens']['user'] = array(
+  $form['sustainer']['fundraiser_cc_expiration_message']['tokens']['user'] = array(
     '#value' => theme('token_help', 'user'),
   );
 
@@ -427,7 +455,73 @@ An administrator has been notified and will correct the issue as soon as possibl
 Thanks for your understanding.")),
   );
 
+  $form['#submit'][] = 'fundraiser_sustainer_update_date_mode';
   return system_settings_form($form);
+}
+
+/**
+ * Submit handler for the admin settings().
+ */
+function fundraiser_sustainer_update_date_mode($form, &$form_state) {
+  // Handle modification of currently active sustainer charge dates.
+  // To match the date formatting requested.
+  $old_mode = variable_get('fundraiser_sustainer_set_date_mode', FALSE);
+  $mode = $form_state['values']['fundraiser_sustainer_set_date_mode'];
+  $old_date = variable_get('fundraiser_sustainer_set_dates', array('15'));
+  $date = $form_state['values']['fundraiser_sustainer_set_dates'];
+  // TODO: this will be changed when we support more than one date.
+  // Check if we need to change anything.
+  if ($old_mode == $mode && $old_date == $date) {
+  drupal_set_message('a');
+    return; // If we haven't changed any setting.
+  }
+  if ($old_mode == $mode && $mode == FALSE) {
+  drupal_set_message('b');
+    return; // If we're still in the same mode, but the mode doesn't need dates.
+  }
+
+  drupal_set_message('Updating the existing sustainers to the new date.');
+  // Looks like we switched modes or dates, so we need to update all the future charges.
+  $future_orders = db_query('SELECT master_order_id, order_id, next_charge FROM {fundraiser_recurring} ' .
+    'WHERE next_charge > %d', time()); // Only the future ones.
+  // Loop through all future charges.
+  $master_orders = array();
+  $now = strtotime('now');
+  while ($order_info = db_fetch_array($future_orders)) {
+    // Set them all to match the updated charge date.
+    if ($mode == FALSE) {
+      // Load the master order if it's not already been loaded to get the original anniversary.
+      if (!in_array($order_info['master_order_id'], array_keys($master_orders))) {
+        $result = db_query('SELECT created FROM {uc_orders} ' .
+          'WHERE order_id = %d', $order_info['master_order_id']);
+        while ($master_order_info = db_fetch_array($result)) {
+          $master_orders[ $order_info['master_order_id'] ]  = $master_order_info['created'];
+        }
+      }
+      $date = date('j', $master_orders[ $order_info['master_order_id'] ]);
+    }
+    // Set all to the date set, by sliding forward from today.
+    $base_date = $order_info['next_charge'];
+    $this_month_year = date('F Y', $base_date); // Use the month and date of the next charge.
+    $set_charge_date = strtotime($date . ' ' . $this_month_year);
+    // If our current date is already past the given charge date, then this new charge date
+    // Will be in the past. We cannot kick it forward by one, as we'll double up on next month.
+    // So we need to just drop this one in the series. We can't just move it forward to the end
+    // of the series as the series is capped by expiration. This spare order just won't be processed.
+    // This is such an edge case I don't think it will be a concern.
+    if ($set_charge_date >= $now) {
+      drupal_set_message('Updated order #'. $order_info['order_id'] . ' from date ' .  date('d F Y', $base_date) .
+        ' to date ' . date('d F Y', $set_charge_date) . '.');
+      // Now that we know the correct new date for this order, update the table.
+      db_query('UPDATE {fundraiser_recurring} ' .
+        'SET next_charge = %d ' .
+        'WHERE order_id = %d', $set_charge_date, $order_info['order_id']);
+      watchdog('fundraiser_sustainers', 'Updated order #'. $order_info['order_id'] . ' from date ' .  date('d F Y', $base_date) .
+        ' to date ' . date('d F Y', $set_charge_date) . '.');
+    }
+    // And repeat until we've updated them all.
+  }
+  drupal_set_message('Finished updating the existing sustainers to the new date.');
 }
 
 /*

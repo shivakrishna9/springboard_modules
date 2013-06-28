@@ -2218,7 +2218,19 @@ function fundraiser_extend_future_orders($master_order_id, $exp_month, $exp_year
   // Otherwise, fundraiser will extend all orders from that date through the
   // expiration date, which may cause unwanted credit card charges.
   if ($last_charge_date < time()) {
+    // Check for the date mode and date selected.
     $last_charge_date = time();
+    if (variable_get('fundraiser_sustainer_set_date_mode', FALSE)) {
+      $day = variable_get('fundraiser_sustainer_set_dates', array('15'));
+      // TODO: this will be changed when we support more than one date.
+      $this_month_year = date('F Y');
+      $last_charge_date = strtotime($date . ' ' . $this_month_year);
+      // If today is before the next charge date, (1/1, 1/5)
+      // Then 'today' is now 1/5, and next charge is 2/5.
+      // If today IS the charge date (1/5), no change. Next charge is 2/5.
+      // If today is after the next charge date (1/10, 1/5).
+      // Then 'today' is now 1/5, and next charge is 2/5.
+    }
   }
 
   // Load up the last order since it will have the most recent changes.
@@ -2278,6 +2290,16 @@ function fundraiser_create_future_orders($order_id, $gateway = NULL, $amount = N
   // grab the donation form url
   $donation_form_url = _fundraiser_donation_form_path($order->products[0]->nid);
 
+  // Check for the date mode and date selected.
+  $date_to_start = strtotime('now');
+  if (variable_get('fundraiser_sustainer_set_date_mode', FALSE)) {
+    $day = variable_get('fundraiser_sustainer_set_dates', array('15'));
+    // TODO: this will be changed when we support more than one date.
+    $this_month_year = date('F Y');
+    $date_to_start = strtotime($day . ' ' . $this_month_year);
+  }
+
+  // Create a series.
   for ($i = 1; $i <= $counter; $i++) {
     $next_order = uc_order_new($user->uid);
     // copy all values to new order
@@ -2292,7 +2314,7 @@ function fundraiser_create_future_orders($order_id, $gateway = NULL, $amount = N
 
     unset($next_order->products[0]->order_product_id);
     uc_order_save($next_order);
-    $next_charge = strtotime("+$i months");
+    $next_charge = strtotime('+' . $i .' months', $date_to_start); // Relative to selected date.
 
     // make a record of the recurring order
     db_query("INSERT INTO {fundraiser_recurring} (master_order_id, order_id, next_charge, gateway, form_url, sustainer_key) VALUES (%d, %d, '%s', '%s', '%s', '%s')", $order_id, $new_id, $next_charge, $gateway, $donation_form_url, $sustainer_key);
