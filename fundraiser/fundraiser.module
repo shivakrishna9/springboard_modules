@@ -2355,12 +2355,15 @@ function fundraiser_process_recurring_donations() {
     if ($order_info['sustainer_key'] == $sustainer_key) {
       if (module_exists('drupal_queue') && variable_get('fundraiser_sustainer_set_date_mode', FALSE)) {
         // If we are in queue mode and have the queue on hand to work with. Use it.
-drupal_set_message('called sustainerQueue');
-        $queue = DrupalQueue::get('sustainerQueue');
-        $queue->createItem($order_info); // Add the item to the queue.
+        //$queue = DrupalQueue::get('sustainerQueue'); // D7 version
+        $queue = drupal_queue_get('example_queue'); // D6 version
+        $queue->createQueue();
+        $queue->createItem(array('order_id' => $order_info['order_id'])); // Add the item to the queue.
+        // Regardless of the queue being reliable or not, the processing code should be aware that
+        // an item might be handed over for processing more than once (because the processing code
+        // might time out before it finishes). 
       }
       else {
-drupal_set_message('called original code');
         // Else work in 'normal' mode.
         _fundraiser_process_recurring_donation($order_info['order_id']);
       }
@@ -2382,7 +2385,7 @@ drupal_set_message('called original code');
  */
 function _fundraiser_queue_process_recurring_donation($item) {
 drupal_set_message('called _fundraiser_queue_process_recurring_donation');
-  $order_id = $item->order_id;
+  $order_id = $item['order_id'];
   watchdog('fundraiser_sustainers', 'Add order to queue '. $order_id);
   _fundraiser_process_recurring_donation($order_id);
 }
