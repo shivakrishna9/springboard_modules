@@ -370,6 +370,17 @@ function fundraiser_admin_settings() {
     '#access' => $queue_possible,
   );
 
+  $seconds = array_combine(range(1,60), range(1,60));
+  $form['sustainer']['fundraiser_sustainer_set_seconds'] = array(
+    '#type' => 'select',
+    '#title' => t('Seconds spent'),
+    '#description' => t('Set how many seconds for each cron to spend on the queue processing sustainer charges. '.
+      'On average a charge takes about a second to process depending on the responsiveness of the gateway.'),
+    '#options' => $seconds,
+    '#default_value' => variable_get('fundraiser_sustainer_set_seconds', 30),
+    '#access' => $queue_possible,
+  );
+  
   $form['sustainer']['fundraiser_cc_expiration_message']['fundraiser_sustainers_send_email'] = array(
     '#type' => 'checkbox',
     '#title' => t('Send expiration email'),
