@@ -17,7 +17,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
    */
   public static function getInfo() {
     return array(
-      'name' => 'Fundraiser sustainers tests',
+      'name' => 'Fundraiser sustainers',
       'description' => 'Tests fundraiser sustainers behavior.',
       'group' => 'Fundraiser',
     );
