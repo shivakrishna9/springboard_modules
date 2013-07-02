@@ -544,6 +544,15 @@ function fundraiser_sustainer_update_date_mode($form, &$form_state) {
       watchdog('fundraiser_sustainers', 'Updated order #'. $order_info['order_id'] . ' from date ' .  date('d F Y', $base_date) .
         ' to date ' . date('d F Y', $set_charge_date) . '.');
     }
+    else {
+      // We need to cancel this order, as it's not available anymore.
+      global $user;
+      $reason = 'Cancelled during switch from set-date queue to anniversary queue, date had passed.';
+      db_query('UPDATE {fundraiser_recurring} SET gateway_resp = \'canceled\', cancellation_reason = \'%s\' ' .
+        'WHERE order_id = %d AND (gateway_resp IS NULL OR gateway_resp = \'failed\''), $reason, $order_info['order_id']);
+      uc_order_comment_save($order_info['order_id'], $user->uid, 'Order canceled by an administrator. Reason: ' .
+        $reason ,'order', 'canceled', FALSE);
+    }
     // And repeat until we've updated them all.
   }
   drupal_set_message('Finished updating the existing sustainers to the new date.');
