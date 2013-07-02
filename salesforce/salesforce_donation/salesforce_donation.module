@@ -420,7 +420,7 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
     }
     if (isset($map->field_map['salesforce_node_map']['internal_name'])) {
       $sf_field = $map->field_map['salesforce_node_map']['internal_name'];
-      $fields[$sf_field] = $donation->node->internal_name;
+      $fields[$sf_field] = $donation->node->field_fundraiser_internal_name[$donation->node->language][0]['value'];
     }
   }
   // User properties map.

@@ -113,9 +113,7 @@ class FundraiserCloneTest extends FundraiserSetup {
     // Compute a diff of the original and clone for comparison.
     $clone_diff = array_diff($cloned_data, $original);;
     // The only things that should be different are ask amounts (known issue with webform)
-    // and the internal title.
     $this->assertTrue(array_key_exists('donation_amounts', $clone_diff), 'Donation amounts contains contains an extra value for other.');
-    $this->assertEqual('Clone of', substr($clone_diff['internal_name'], 0, 8), 'Cloned donation form\'s internal title starts with "Clone of".');
 
   }
 
