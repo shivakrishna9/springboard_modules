@@ -42,7 +42,7 @@ function fundraiser_offline_menu() {
     'title' => 'Offline',
     'page callback' => 'fundraiser_offline_form_forward',
     'page arguments' => array(1),
-    'access callback' => array('process offline donations'),
+    'access callback' => 'fundraiser_offline_form_access',
     'access arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
   );
