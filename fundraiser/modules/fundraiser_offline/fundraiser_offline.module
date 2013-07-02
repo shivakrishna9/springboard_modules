@@ -42,10 +42,22 @@ function fundraiser_offline_menu() {
     'title' => 'Offline',
     'page callback' => 'fundraiser_offline_form_forward',
     'page arguments' => array(1),
-    'access arguments' => array('process offline donations'),
+    'access callback' => array('process offline donations'),
+    'access arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
   );
   return $items;
+}
+
+/**
+ * Access callback for node.
+ */
+function fundraiser_offline_form_access($nid) {
+  $node = node_load($nid);
+  if (user_access('process offline donations') && fundraiser_is_donation_type($node->type)) {
+    return TRUE;
+  }
+  return FALSE;
 }
 
 /**
