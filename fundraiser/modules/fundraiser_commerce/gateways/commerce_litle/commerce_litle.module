@@ -251,11 +251,13 @@ function commerce_litle_cc_submit_form_validate($payment_method, $pane_form, $pa
     !empty($pane_values['cardonfile']) && $pane_values['cardonfile'] !== 'new') {
     return;
   }
+
   module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
   // Validate the credit card fields.
   $settings = array(
     'form_parents' => array_merge($form_parents, array('credit_card')),
   );
+
   if (!commerce_payment_credit_card_validate($pane_values['credit_card'], $settings)) {
     return FALSE;
   }
@@ -287,12 +289,12 @@ function _commerce_litle_request_auth($gateway, $input) {
  * Litle request function wrapper.
  */
 function _commerce_litle_request_capture($gateway, $input) {
-/* Example input
-  $input = array(
-  'litleTxnId'=>'100000000000000001',
-  'id'=> '456',
-  );
-*/
+  /* Example input
+    $input = array(
+      'litleTxnId'=>'100000000000000001',
+      'id'=> '456',
+    );
+  */
   $litle = _commerce_litle_get_litle();
   $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
   return $litle->captureRequest($input);
@@ -302,22 +304,17 @@ function _commerce_litle_request_capture($gateway, $input) {
  * Litle request function wrapper.
  */
 function _commerce_litle_request_partial_capture($gateway, $input) {
-/* Example input
-  $input = array(
-  'partial'=>'true',
-  'id'=> '456',
-  'litleTxnId'=>'320000000000000001',
-  'amount'=>'5005'
-  );
-*/
+  /* Example input
+    $input = array(
+      'partial'=>'true',
+      'id'=> '456',
+      'litleTxnId'=>'320000000000000001',
+      'amount'=>'5005'
+    );
+  */
   $litle = _commerce_litle_get_litle();
   $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
   return $litle->captureRequest($input);
-  /*
-  echo ("Response: " . (XmlParser::getNode($authResponse,'response')) . "<br>");
-  echo ("Message: " . XmlParser::getNode($authResponse,'message') . "<br>");
-  echo ("Litle Transaction ID: " . XmlParser::getNode($authResponse,'litleTxnId'));
-  */
 }
 
 /**
@@ -333,13 +330,13 @@ function _commerce_litle_request_sale($gateway, $input) {
  * Litle request function wrapper.
  */
 function _commerce_litle_request_credit($gateway, $input) {
-/* Example input
-  $input = array(
-  'litleTxnId'=>'100000000000000002',
-  'id'=> '456',
-  'amount'=>'1010'
-  );
-*/
+  /* Example input
+    $input = array(
+      'litleTxnId'=>'100000000000000002',
+      'id'=> '456',
+      'amount'=>'1010'
+    );
+  */
   $litle = _commerce_litle_get_litle();
   $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
   return $litle->creditRequest($input);
@@ -372,9 +369,11 @@ function _commerce_litle_get_litle_config($gateway) {
     'version' => !empty($gateway['settings']['commerce_litle_settings_version']) ? $gateway['settings']['commerce_litle_settings_version'] : '',
     'reportGroup' => !empty($gateway['settings']['commerce_litle_settings_reportGroup']) ? $gateway['settings']['commerce_litle_settings_reportGroup'] : '',
   );
+
   if($gateway['settings']['commerce_litle_settings_sandbox'] == 1) {
     $auth_info['url'] = 'https://www.testlitle.com/sandbox/communicator/online';
   }
+
   return $auth_info;
 }
 
@@ -481,8 +480,6 @@ function _commerce_litle_cc_card_type_to_litle($type) {
  * Payment method callback: checkout form submission.
  */
 function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
-dpm($payment_method, '$payment_method');
-return;
   if (!empty($pane_values['credit_card']['number'])) {
     module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
     $card_type = commerce_payment_validate_credit_card_type($pane_values['credit_card']['number'], array_keys(commerce_payment_credit_card_types()));
@@ -509,12 +506,11 @@ return;
     'card' => array(
       'number' => $pane_values['credit_card']['number'],
       //'number' => '4744770062476561',
-      'expDate' => $pane_values['credit_card']['exp_month'] . substr($pane_values['credit_card']['exp_year'],2,2),
+      'expDate' => str_pad($pane_values['credit_card']['exp_month'], 2, STR_PAD_LEFT) . substr($pane_values['credit_card']['exp_year'],2,2),
       'type' => $litle_card_type,
     )
   );
-  //print_r($nvp);
-  //exit;
+
   if (isset($pane_values['credit_card']['code'])) {
     $nvp['card']['cardValidationNum'] = $pane_values['credit_card']['code'];
   }
@@ -522,11 +518,9 @@ return;
   // Build a description for the order.
   $description = array();
 
-  if (function_exists('commerce_product_line_item_types')) {
-    foreach ($order_wrapper->commerce_line_items as $delta => $line_item_wrapper) {
-      if (in_array($line_item_wrapper->type->value(), commerce_product_line_item_types())) {
-        $description[] = round($line_item_wrapper->quantity->value(), 2) . 'x ' . $line_item_wrapper->line_item_label->value();
-      }
+  foreach ($order_wrapper->commerce_line_items as $delta => $line_item_wrapper) {
+    if (in_array($line_item_wrapper->type->value(), commerce_product_line_item_types())) {
+      $description[] = round($line_item_wrapper->quantity->value(), 2) . 'x ' . $line_item_wrapper->line_item_label->value();
     }
   }
 
@@ -561,6 +555,7 @@ return;
   else {
     $billing_address = array();
   }
+
   //
   /* lets override the uncessary config stuff */
   $nvp += _commerce_litle_get_litle_config($payment_method);
@@ -568,21 +563,19 @@ return;
   $init = _commerce_litle_get_litle();
 
   // first lets do an authorization
-
   $authResponse = $init->authorizationRequest($nvp);
-  
-  if (XmlParser::getNode($authResponse,'response') != '000') {
+
+  if (XmlParser::getNode($authResponse, 'response') != '000') {
     drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
-    drupal_set_message(XmlParser::getNode($authResponse,'message'), 'error');
+    drupal_set_message(XmlParser::getNode($authResponse, 'message'), 'error');
     return FALSE;
   }
-  
 
   $saleResponse = $init->saleRequest($nvp);
  
   $transaction = commerce_payment_transaction_new('commerce_litle_cc', $order->order_id);
   $transaction->instance_id = $payment_method['instance_id'];
-  $transaction->remote_id = XmlParser::getNode($saleResponse,'litleTxnId');
+  $transaction->remote_id = XmlParser::getNode($saleResponse, 'litleTxnId');
   $transaction->amount = $charge['amount'];
   $transaction->currency_code = $charge['currency_code'];
 
@@ -613,17 +606,15 @@ return;
 
   // Build a meaningful response message.
   $message = array(
-    //'<b>' . commerce_litle_reverse_txn_type($response[11]) . '</b>',
-    '<b>' . (XmlParser::getNode($saleResponse,'response') != '000' ? t('REJECTED') : t('ACCEPTED')) . ':</b> ' . check_plain(XmlParser::getNode($saleResponse,'message'))
+    '<b>' . (XmlParser::getNode($saleResponse, 'response') != '000' ? t('REJECTED') : t('ACCEPTED')) . ':</b> ' . check_plain(XmlParser::getNode($saleResponse,'message'))
   );
-
 
   $transaction->message = implode('<br />', $message);
   // Save the transaction information.
   commerce_payment_transaction_save($transaction);
 
   // If the payment failed, display an error and rebuild the form.
-  if (XmlParser::getNode($saleResponse,'response') != '000') {
+  if (XmlParser::getNode($saleResponse, 'response') != '000') {
     drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
     drupal_set_message(XmlParser::getNode($saleResponse,'message'), 'error');
     return FALSE;
@@ -632,9 +623,7 @@ return;
 
 function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
-  // Get the default transaction type from the payment method settings.
-  $txn_type = $payment_method['settings']['commerce_litle_settings_txn_type'];
-  //$txn_type = COMMERCE_CREDIT_AUTH_CAPTURE;
+
   // Build a name-value pair array for this transaction.
   $nvp = array(
     //'x_type' => commerce_litle_txn_type($txn_type),
@@ -646,6 +635,7 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
       'routingNum' => $pane_values['echeck']['routingNum'],
     )
   );
+
   // Build a description for the order.
   $description = array();
 
@@ -688,6 +678,7 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
   else {
     $billing_address = array();
   }
+
   $txn_type = COMMERCE_LITLE_CHECK_SALE;
   $nvp += _commerce_litle_get_litle_config($payment_method);
   $init = _commerce_litle_get_litle();
@@ -695,7 +686,7 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
   // Prepare a transaction object to log the API response.
   $transaction = commerce_payment_transaction_new('commerce_litle_echeck', $order->order_id);
   $transaction->instance_id = $payment_method['instance_id'];
-  $transaction->remote_id = XmlParser::getNode($saleResponse,'litleTxnId');
+  $transaction->remote_id = XmlParser::getNode($saleResponse, 'litleTxnId');
   $transaction->amount = $charge['amount'];
   $transaction->currency_code = $charge['currency_code'];
   //$transaction->payload = $saleResponse;
@@ -712,17 +703,14 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
         break;
     }
   }
-  //print_r($transaction->status);
-  //exit;
+
   // Store the type of transaction in the remote status.
   $transaction->remote_status = COMMERCE_CREDIT_AUTH_CAPTURE;
 
   // Build a meaningful response message.
   $message = array(
-    '<b>' . commerce_litle_reverse_txn_type($response[11]) . '</b>',
-    '<b>' . (XmlParser::getNode($saleResponse,'response') != '000' ? t('REJECTED') : t('ACCEPTED')) . ':</b> ' . check_plain(XmlParser::getNode($saleResponse,'message'))
+    '<b>' . (XmlParser::getNode($saleResponse, 'response') != '000' ? t('REJECTED') : t('ACCEPTED')) . ':</b> ' . check_plain(XmlParser::getNode($saleResponse, 'message'))
   );
-
 
   $transaction->message = implode('<br />', $message);
   // Save the transaction information.

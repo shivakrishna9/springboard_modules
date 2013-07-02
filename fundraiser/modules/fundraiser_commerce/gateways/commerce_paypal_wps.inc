@@ -83,7 +83,7 @@ function commerce_paypal_wps_fundraiser_commerce_redirect_validate($method_insta
 /**
  * Callback function, scrub the data before saving.
  */
-function commerce_paypal_wps_fundraiser_commerce_scrub($payment_method, $submission_fields) {
+function commerce_paypal_wps_fundraiser_commerce_scrub($submission_fields) {
   // Nothing to store for paypal
   return array();
 }

@@ -10,7 +10,8 @@
  */
 function commerce_litle_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
-    'payment_method' => array('credit', 'bank account'),
+    // Create the payment_method array with the commerce gateway method info name as the key
+    'payment_method' => array('commerce_litle_cc' => 'credit', 'commerce_litle_echeck' => 'bank account'),
     'form callback' => 'commerce_litle_fundraiser_commerce_submit_form',
     'cleanup callback' => 'commerce_litle_fundraiser_commerce_cleanup',
     'scrub callback' => 'commerce_litle_fundraiser_commerce_scrub',
@@ -36,13 +37,17 @@ function commerce_litle_fundraiser_commerce_submit_form($payment_method, $config
 /**
  * Convert values to ones that Fundraiser Commerce is looking for
  */
-function commerce_litle_fundraiser_commerce_cleanup($submission_fields) {
-  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
-  return _fundraiser_commerce_credit_card_cleanup($submission_fields);
+function commerce_litle_fundraiser_commerce_cleanup($submission_fields, $payment_method) {
+  if ($payment_method == 'credit') {
+    module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+    return _fundraiser_commerce_credit_card_cleanup($submission_fields);
+  }
+
+  return $submission_fields;
 }
 
 /**
- * Callback function, return the user entered experation dates for this submission.
+ * Callback function, return the user entered expiration dates for this submission.
  */
 function commerce_litle_fundraiser_commerce_expire($submission_fields) {
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
@@ -52,27 +57,27 @@ function commerce_litle_fundraiser_commerce_expire($submission_fields) {
 /**
  * Callback function, scrub the data before saving.
  */
-function commerce_litle_fundraiser_commerce_scrub($payment_method, $submission_fields) {
+function commerce_litle_fundraiser_commerce_scrub($submission_fields, $payment_method) {
   if ($payment_method == 'credit') {
     module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
-    return _fundraiser_commerce_credit_card_scrub($payment_method, $submission_fields);
+    return _fundraiser_commerce_credit_card_scrub($submission_fields);
   }
   elseif ($payment_method == 'bank account') {
     // Scrub sensitive donation fields if they exists.
-    if (isset($fields['bank account']['accNum'])) {
-      $fields['back account']['accNum'] = substr($fields['bank account']['accNum'], -3);
+    if (isset($submission_fields['bank account']['accNum'])) {
+      $submission_fields['back account']['accNum'] = substr($submission_fields['bank account']['accNum'], -3);
     }
-    if (isset($fields['bank account']['account_number'])) {
-      $fields['bank account']['accNum'] = substr($fields['bank account']['accNum'], -3);
+    if (isset($submission_fields['bank account']['account_number'])) {
+      $submission_fields['bank account']['accNum'] = substr($submission_fields['bank account']['accNum'], -3);
     }
-    return $fields;
+    return $submission_fields;
   }
 }
 
 /**
  * Validate the submitted values with the commerce validate function
  */
-function commerce_litle_fundraiser_commerce_validate($submission_fields, $payment_fields) {
+function commerce_litle_fundraiser_commerce_validate($submission_fields, $payment_fields, $payment_method) {
   // Pass the values to the validation scripts
   if ($payment_method == 'credit') {
     $form_parents = array_merge($payment_fields['#parents'], array('credit'));
@@ -81,6 +86,7 @@ function commerce_litle_fundraiser_commerce_validate($submission_fields, $paymen
   }
   elseif ($payment_method == 'bank account') {
     $form_parents = array_merge($payment_fields['#parents'], array('bank account'));
+    // Pass the values array with the key the litle module expects
     $values = array('echeck' => $submission_fields['payment_fields']['bank account']);
     commerce_litle_echeck_submit_form_validate(NULL, $payment_fields, $values, NULL, $form_parents); 
   }
