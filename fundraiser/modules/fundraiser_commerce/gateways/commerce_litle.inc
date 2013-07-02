@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Commerce based hook for commerce_psi
+ * Commerce based hook for commerce_litle
  */
 
 /**

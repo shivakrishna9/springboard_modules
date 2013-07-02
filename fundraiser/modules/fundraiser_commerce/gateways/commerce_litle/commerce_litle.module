@@ -616,7 +616,7 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
   // If the payment failed, display an error and rebuild the form.
   if (XmlParser::getNode($saleResponse, 'response') != '000') {
     drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
-    drupal_set_message(XmlParser::getNode($saleResponse,'message'), 'error');
+    drupal_set_message(XmlParser::getNode($saleResponse, 'message'), 'error');
     return FALSE;
   }
 }
@@ -719,7 +719,7 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
   // If the payment failed, display an error and rebuild the form.
   if (XmlParser::getNode($saleResponse,'response') != '000') {
     drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
-    drupal_set_message(XmlParser::getNode($saleResponse,'message'), 'error');
+    drupal_set_message(XmlParser::getNode($saleResponse, 'message'), 'error');
     return FALSE;
   }
 }
