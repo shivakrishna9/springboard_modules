@@ -145,7 +145,7 @@
           creditcard: true,
           messages: {
             required: "This field is required",
-            creditcard: "Enter a valid credit card number",
+            creditcard: "Enter a valid credit card number"
           }
         });
         // Other Amount
