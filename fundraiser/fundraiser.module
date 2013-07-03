@@ -2357,7 +2357,7 @@ function fundraiser_process_recurring_donations() {
       if (module_exists('drupal_queue') && variable_get('fundraiser_sustainer_set_date_mode', FALSE)) {
         // If we are in queue mode and have the queue on hand to work with. Use it.
         //$queue = DrupalQueue::get('sustainerQueue'); // D7 version
-        $queue = drupal_queue_get('example_queue'); // D6 version
+        $queue = drupal_queue_get('sustainerQueue'); // D6 version
         $queue->createQueue();
         $queue->createItem(array(
           'order_id' => $order_info['order_id'],
