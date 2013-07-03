@@ -362,7 +362,8 @@ class FundraiserSetup extends DrupalWebTestCase {
     $node->type = 'donation_form';
     $node->language = LANGUAGE_NONE;
     $node->uid = 1;
-    $node->title = $node->internal_name = 'Test Donation Form';
+    $node->title = 'Test Donation Form';
+    $node->field_fundraiser_internal_name = array($node->language => array(0 => array('value' => 'Test Donation Form')));
     $node->status = 1;
     $node->promote = 1;
     $node->body['LANGUAGE_NONE'][0]['value'] = 'Donec placerat. Nullam nibh dolor, blandit sed, fermentum id, ' .

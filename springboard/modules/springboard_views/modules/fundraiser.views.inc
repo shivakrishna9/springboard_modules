@@ -21,6 +21,15 @@ function springboard_views_fundraiser_views_data() {
       ),
     ),
   );
+
+  // Join this table to the node table
+  $data['fundraiser']['table']['join'] = array(
+    'node' => array(
+      'left_field' => 'nid',
+      'field' => 'nid',
+    ),
+  );
+
   $data['fundraiser']['gateway'] = array(
     'title' => t('Gateway'),
     'help' => t('The payment gateway the donation form uses to process credit cards.'),
@@ -121,20 +130,6 @@ function springboard_views_fundraiser_views_data() {
     ),
     'filter' => array(
       'handler' => 'views_handler_filter_numeric',
-    ),
-    'sort' => array(
-      'handler' => 'views_handler_sort',
-    ),
-  );
-  $data['fundraiser']['internal_name'] = array(
-    'title' => t('Internal name'),
-    'help' => t('Internal name of the donation form.'),
-    'field' => array(
-      'handler' => 'views_handler_field',
-      'click sortable' => TRUE,
-    ),
-    'filter' => array(
-      'handler' => 'views_handler_filter_string',
     ),
     'sort' => array(
       'handler' => 'views_handler_sort',

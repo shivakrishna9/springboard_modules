@@ -290,12 +290,22 @@ function fundraiser_commerce_fundraiser_gateway_info() {
       $this_gateway['module_name'] = t('Commerce');
       $this_gateway['title'] = $rule_config->label;
       $this_gateway['description'] = $method_instance['description'];
+
       // Gather additional details per our specific implementation.
       // Re: type of fieldset, and available recurring features.
       // By including the plugin code here, we insure that all available functions are available for all other code.
       // When referencing gateway info gathered under gateway_info hooks.
       module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
-      $this_gateway += module_invoke($method_instance['module'], 'fundraiser_commerce_fundraiser_gateway_info');
+      $gateway_options = module_invoke($method_instance['module'], 'fundraiser_commerce_fundraiser_gateway_info');
+      // Some gateways support multiple payment methods and multiple payment processors
+      // Check if it specifies support for each in the payment method array
+      foreach ($gateway_options['payment_method'] as $key => $type) {
+        if (!is_numeric($key) && $key == $method_id) {
+          $gateway_options['payment_method'] = array($type);
+        }
+      }
+      $this_gateway += $gateway_options;
+
       // Make sure defaults are in place if not set in the plugin.
       if (empty($this_gateway['allow_recurring'])) {
         $this_gateway['allow_recurring'] = array();
@@ -318,6 +328,7 @@ function fundraiser_commerce_fundraiser_gateway_info() {
       $fundraiser_gateways[ $this_gateway['id'] ] = $this_gateway;
     }
   }
+
   return $fundraiser_gateways;
 }
 
@@ -718,7 +729,7 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   $scrubbed_fields = $donation->donation['payment_fields'];
   if (isset($method_instance['scrub callback']) && function_exists($method_instance['scrub callback'])) {
     $callback = $method_instance['scrub callback'];
-    $scrubbed_fields = $callback($method_instance, $scrubbed_fields);
+    $scrubbed_fields = $callback($scrubbed_fields, $donation->donation['payment_method']);
   }
   $data = array(
     'payment_method' => $donation->donation['payment_method'],

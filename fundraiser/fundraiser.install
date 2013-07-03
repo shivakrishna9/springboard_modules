@@ -79,12 +79,6 @@ function fundraiser_schema() {
         'type' => 'text',
         'not null' => FALSE,
       ),
-      'internal_name' => array(
-        'description' => 'Another name for the donation form that will not be displayed to end users.',
-        'type' => 'varchar',
-        'length' => '255',
-        'not null' => FALSE,
-      ),
     ),
     'primary key' => array('nid'),
   );
@@ -366,4 +360,31 @@ function fundraiser_update_7001() {
   );
   db_add_field('fundraiser', 'ask_for_quantity', $field['ask_for_quantity']);
   return array();
+}
+
+/**
+ * Switch internal_name field to a content field
+ */
+function fundraiser_update_7002() {
+  // Add the internal name content field to all fundraiser node types
+  $types = node_type_get_types();
+  foreach ($types as $type => $type_info) {
+    if (fundraiser_is_donation_type($type)) {
+      module_load_include('inc', 'fundraiser', 'includes/fundraiser.fields');
+      _fundraiser_add_default_fields($type);
+    }
+  }
+
+  $results = db_query('SELECT nid,internal_name FROM fundraiser');
+
+  if ($results->rowCount()) {
+    foreach ($results as $record) {
+      $node = node_load($record->nid);
+      $node->field_fundraiser_internal_name[$node->language][0]['value'] = $record->internal_name;
+      node_save($node);
+    }
+  }
+
+  // Drop the internal_name field from the fundraiser table.
+  db_drop_field('fundraiser', 'internal_name');
 }

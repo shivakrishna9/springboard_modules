@@ -89,7 +89,7 @@
           },
           success: function(element) {
             $(element).text('OK').addClass('valid').closest('.control-group').removeClass('error').addClass('success');
-          },
+          }
         });
 
         // On change and keyup check form status
@@ -145,7 +145,7 @@
           creditcard: true,
           messages: {
             required: "This field is required",
-            creditcard: "Enter a valid credit card number",
+            creditcard: "Enter a valid credit card number"
           }
         });
         // Other Amount
@@ -161,7 +161,7 @@
             amount: true,
             messages: {
             required: "This field is required",
-            amount: "Enter a valid amount",
+            amount: "Enter a valid amount"
           }
         });
 

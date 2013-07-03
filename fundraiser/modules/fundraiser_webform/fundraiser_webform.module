@@ -572,12 +572,12 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
     if (isset($submission_fields['payment_method']) && $submission_fields['payment_method'] == $payment_method) {
       // Allow the gateway to cleanup the submission before validation
       if (isset($gateway_info['cleanup callback']) && function_exists($gateway_info['cleanup callback'])) {
-        $submission_fields = $gateway_info['cleanup callback']($submission_fields);
+        $submission_fields = $gateway_info['cleanup callback']($submission_fields, $payment_method);
       }
       // Call the gateways validation function
       if (isset($gateway_info['validate callback']) && function_exists($gateway_info['validate callback'])) {
         $payment_fields = fundraiser_webform_fundraiser_get_form_field($form, 'payment_fields');
-        $submission_fields = $gateway_info['validate callback']($submission_fields, $payment_fields);
+        $submission_fields = $gateway_info['validate callback']($submission_fields, $payment_fields, $payment_method);
       }
       // Store the scrub callback for later if this form has errors
       if (isset($gateway_info['scrub callback']) && function_exists($gateway_info['scrub callback'])) {
@@ -605,7 +605,7 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
 
     if (!empty($scrub_callback)) {
       // SCRUB DATA. We do not want to save sensitive payment data in the error watchdog message.
-      $submission_fields['payment_fields'] = $scrub_callback($submission_fields['payment_method'], $submission_fields['payment_fields']);
+      $submission_fields['payment_fields'] = $scrub_callback($submission_fields['payment_fields'], $submission_fields['payment_method']);
     }
 
     $message .= "\n\nSubmitted Values:\n\n";
@@ -650,7 +650,7 @@ function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $dona
     // For the selected payment method run the submission through the gateway's cleanup callback
     if (isset($submission_fields['payment_method']) && $submission_fields['payment_method'] == $payment_method) {
       if (isset($gateway_info['cleanup callback']) && function_exists($gateway_info['cleanup callback'])) {
-        $submission_fields = $gateway_info['cleanup callback']($submission_fields);
+        $submission_fields = $gateway_info['cleanup callback']($submission_fields, $payment_method);
       }
     }
     // Remove unselected payment fields from the values

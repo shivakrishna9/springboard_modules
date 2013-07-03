@@ -177,6 +177,9 @@ function salesforce_sync_ui_sync_confirm_submit($form, &$form_state) {
     $drupal_id = $form_state['values']['drupal_id'];
     $entity = entity_load($form_state['values']['module'], array($drupal_id));
 
+    // Delete the item from any other queue first.
+    salesforce_mapping_dequeue_entity($entity[$form_state['values']['drupal_id']], $form_state['values']['module']);
+
     // Attempt to add the item to the queue.
     $success = salesforce_mapping_send_entity_to_queue($entity[$form_state['values']['drupal_id']], $form_state['values']['module'], 'CREATE');
 

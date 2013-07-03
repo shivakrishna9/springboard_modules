@@ -76,7 +76,8 @@ class WebformUserSetup extends DrupalWebTestCase {
     $node->type = 'petition';
     $node->language = LANGUAGE_NONE;
     $node->uid = 1;
-    $node->title = $node->internal_name = 'Save the Humans';
+    $node->title = 'Save the Humans';
+    $node->field_fundraiser_internal_name = array($node->language => array(0 => array('value' => 'Save the Humans')));
     $node->status = 1;
     $node->promote = 1;
     $node->body['LANGUAGE_NONE'][0]['value'] = 'Sign the petition to save the humans.';

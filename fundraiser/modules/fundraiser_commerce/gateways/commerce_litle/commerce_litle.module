@@ -1,0 +1,800 @@
+<?php
+
+define('COMMERCE_LITLE_CHECK_SALE', 'echeck_sale');
+
+/**
+ * @file
+ * Implements Authorize.Net payment services for use in Drupal Commerce.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function commerce_litle_menu() {
+  $items = array();
+  // Add a menu item for capturing authorizations.
+  $items['admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/litle-cc-capture'] = array(
+    'title' => 'Capture',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('commerce_litle_cc_capture_form', 3, 5),
+    'access callback' => 'commerce_litle_cc_capture_access',
+    'access arguments' => array(3, 5),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'context' => MENU_CONTEXT_INLINE,
+    'weight' => 2,
+    'file' => 'commerce_litle.admin.inc',
+  );
+
+  // Add a menu item for voiding transactions.
+  $items['admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/litle-cc-void'] = array(
+    'title' => 'Void',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('commerce_litle_cc_void_form', 3, 5),
+    'access callback' => 'commerce_litle_cc_void_access',
+    'access arguments' => array(3, 5),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'context' => MENU_CONTEXT_INLINE,
+    'weight' => 2,
+    'file' => 'commerce_litle.admin.inc',
+  );
+
+  // Add a menu item for issuing credits.
+  $items['admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/litle-cc-credit'] = array(
+    'title' => 'Credit',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('commerce_litle_cc_credit_form', 3, 5),
+    'access callback' => 'commerce_litle_cc_credit_access',
+    'access arguments' => array(3, 5),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'context' => MENU_CONTEXT_INLINE,
+    'weight' => 2,
+    'file' => 'commerce_litle.admin.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_commerce_payment_method_info().
+ */
+function commerce_litle_commerce_payment_method_info() {
+  $payment_methods = array();
+  $payment_methods['commerce_litle_cc'] = array(
+    'base' => 'commerce_litle_cc',
+    'title' => t('Litle - Credit Card'),
+    'short_title' => t('Litlet CC'),
+    'display_title' => t('Credit card'),
+    'description' => t('Integrates Litle for credit card transactions.'),
+  );
+  $payment_methods['commerce_litle_echeck'] = array(
+    'base' => 'commerce_litle_echeck',
+    'title' => t('Litle - eCheck'),
+    'short_title' => t('Litle eCheck'),
+    'display_title' => t('eCheck'),
+    'description' => t('Integrates Litle for echeck transactions.'),
+  );
+  return $payment_methods;
+}
+
+/**
+ * Payment method callback: settings form.
+ */
+function commerce_litle_cc_settings_form($settings = array()) {  // Note use of commerce_litle_cc as base.
+  module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+  // Merge default settings into the stored settings array.
+  $form = array();
+  $form['commerce_litle_settings_user'] = array(
+    '#type' => 'textfield',
+    '#title' => t('User'),
+    '#default_value' => isset($settings['commerce_litle_settings_user']) ? $settings['commerce_litle_settings_user'] : '',
+  );
+  $form['commerce_litle_settings_password'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Password'),
+    '#default_value' => isset($settings['commerce_litle_settings_password']) ? $settings['commerce_litle_settings_password'] : '',
+  );
+  $form['commerce_litle_settings_merchantId'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Merchant ID'),
+    '#default_value' => isset($settings['commerce_litle_settings_merchantId']) ? $settings['commerce_litle_settings_merchantId'] : '',
+  );
+  $form['commerce_litle_settings_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('URL'),
+    '#default_value' => isset($settings['commerce_litle_settings_url']) ? $settings['commerce_litle_settings_url'] : '',
+  );
+  $form['commerce_litle_settings_proxy'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Proxy'),
+    '#default_value' => isset($settings['commerce_litle_settings_proxy']) ? $settings['commerce_litle_settings_proxy'] : '',
+  );
+  $form['commerce_litle_settings_timeout'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Timeout'),
+    '#default_value' => isset($settings['commerce_litle_settings_timeout']) ? $settings['commerce_litle_settings_timeout'] : 65,
+  );
+  $form['commerce_litle_settings_version'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Version'),
+    '#default_value' => isset($settings['commerce_litle_settings_version']) ? $settings['commerce_litle_settings_version'] : 8.15,
+  );
+  $form['commerce_litle_settings_reportGroup'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Report group'),
+    '#default_value' => isset($settings['commerce_litle_settings_reportGroup']) ? $settings['commerce_litle_settings_reportGroup'] : 'Default Report Group',
+  );
+  $form['commerce_litle_settings_sandbox'] = array(
+    '#type' => 'checkbox',
+    '#title' => 'Run in Sandbox Mode',
+    '#default_value' => isset($settings['commerce_litle_settings_sandbox']) ? $settings['commerce_litle_settings_sandbox'] : '',
+  );
+  /*
+  $form['commerce_litle_settings_txn_type'] = array(
+    '#type' => 'radios',
+    '#title' => t('Default credit card transaction type'),
+    '#description' => t('The default will be used to process transactions during checkout.'),
+    '#options' => array(
+      COMMERCE_CREDIT_AUTH_CAPTURE => t('Authorization and capture'),
+      COMMERCE_CREDIT_AUTH_ONLY => t('Authorization only (requires manual or automated capture after checkout)'),
+    ),
+    '#default_value' => $settings['commerce_litle_settings_txn_type'],
+  );   
+  */  
+  return $form;
+}
+
+/**
+ * Payment method callback: settings form.
+ */
+function commerce_litle_echeck_settings_form($settings = array()) {  // Note use of commerce_litle_cc as base.
+  module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+  // Merge default settings into the stored settings array.
+  $form = array();
+  $form['commerce_litle_settings_user'] = array(
+    '#type' => 'textfield',
+    '#title' => t('User'),
+    '#default_value' => isset($settings['commerce_litle_settings_user']) ? $settings['commerce_litle_settings_user'] : '',
+  );
+  $form['commerce_litle_settings_password'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Password'),
+    '#default_value' => isset($settings['commerce_litle_settings_password']) ? $settings['commerce_litle_settings_password'] : '',
+  );
+  $form['commerce_litle_settings_merchantId'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Merchant ID'),
+    '#default_value' => isset($settings['commerce_litle_settings_merchantId']) ? $settings['commerce_litle_settings_merchantId'] : '',
+  );
+  $form['commerce_litle_settings_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('URL'),
+    '#default_value' => isset($settings['commerce_litle_settings_url']) ? $settings['commerce_litle_settings_url'] : '',
+  );
+  $form['commerce_litle_settings_proxy'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Proxy'),
+    '#default_value' => isset($settings['commerce_litle_settings_proxy']) ? $settings['commerce_litle_settings_proxy'] : '',
+  );
+  $form['commerce_litle_settings_timeout'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Timeout'),
+    '#default_value' => isset($settings['commerce_litle_settings_timeout']) ? $settings['commerce_litle_settings_timeout'] : 65,
+  );
+  $form['commerce_litle_settings_version'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Version'),
+    '#default_value' => isset($settings['commerce_litle_settings_version']) ? $settings['commerce_litle_settings_version'] : 8.15,
+  );
+  $form['commerce_litle_settings_reportGroup'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Report group'),
+    '#default_value' => isset($settings['commerce_litle_settings_reportGroup']) ? $settings['commerce_litle_settings_reportGroup'] : 'Default Report Group',
+  );
+  $form['commerce_litle_settings_sandbox'] = array(
+    '#type' => 'checkbox',
+    '#title' => 'Run in Sandbox Mode',
+    '#default_value' => isset($settings['commerce_litle_settings_sandbox']) ? $settings['commerce_litle_settings_sandbox'] : '',
+  );
+  /*
+  $form['commerce_litle_settings_txn_type'] = array(
+    '#type' => 'radios',
+    '#title' => t('Default credit card transaction type'),
+    '#description' => t('The default will be used to process transactions during checkout.'),
+    '#options' => array(
+      COMMERCE_CREDIT_AUTH_CAPTURE => t('Authorization and capture'),
+      COMMERCE_CREDIT_AUTH_ONLY => t('Authorization only (requires manual or automated capture after checkout)'),
+    ),
+    '#default_value' => $settings['commerce_litle_settings_txn_type'],
+  );   
+  */  
+  return $form;
+}
+
+/**
+ * Payment method callback: checkout form.
+ */
+function commerce_litle_cc_submit_form($payment_method = NULL, $pane_values = NULL, $checkout_pane = NULL, $order = NULL) {
+  module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+  $fields = array(
+    'code' => '',
+  );
+  return commerce_payment_credit_card_form($fields);
+}
+
+/**
+ * Payment method callback: checkout form.
+ */
+function commerce_litle_echeck_submit_form($payment_method = NULL, $pane_values = NULL, $checkout_pane = NULL, $order = NULL) {
+  $fields = array(
+    'code' => '',
+  );
+  $form['echeck']['accNum'] = array(
+    '#title' => 'Checking Account Number',
+    '#type' => 'textfield',
+    '#size' => 30
+  );
+  $form['echeck']['routingNum'] = array(
+    '#title' => 'Routing Number',
+    '#type' => 'textfield',
+    '#size' => 20
+  );
+  return $form;
+}
+
+
+/**
+ * Payment method callback: checkout form validation.
+ */
+function commerce_litle_cc_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
+  // If the customer specified a card on file, skip the normal validation.
+  // TODO add Card On File support for Litle settings if available. Lower priority, but likely needed in contrib as well.
+  if (module_exists('commerce_cardonfile') && !empty($payment_method['settings']['cim_cardonfile']) &&
+    !empty($pane_values['cardonfile']) && $pane_values['cardonfile'] !== 'new') {
+    return;
+  }
+
+  module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+  // Validate the credit card fields.
+  $settings = array(
+    'form_parents' => array_merge($form_parents, array('credit_card')),
+  );
+
+  if (!commerce_payment_credit_card_validate($pane_values['credit_card'], $settings)) {
+    return FALSE;
+  }
+}
+
+/**
+ * Payment method callback: checkout form validation.
+ */
+function commerce_litle_echeck_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()){
+  $prefix = implode('][', $form_parents) . '][';
+  // Validate the account number fields
+  if (!ctype_digit($pane_values['echeck']['routingNum']) || strlen($pane_values['echeck']['routingNum']) > 9) {
+    form_set_error($prefix . 'routing_number', t('The routing number should be a 9 digit numeric value.'));
+  }
+}
+
+// When done, put submit here, and start making calls to the litle object wrappers below.
+
+/**
+ * Litle request function wrapper.
+ */
+function _commerce_litle_request_auth($gateway, $input) {
+  $litle = _commerce_litle_get_litle();
+  $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
+  return $litle->authorizationRequest($input);
+}
+
+/**
+ * Litle request function wrapper.
+ */
+function _commerce_litle_request_capture($gateway, $input) {
+  /* Example input
+    $input = array(
+      'litleTxnId'=>'100000000000000001',
+      'id'=> '456',
+    );
+  */
+  $litle = _commerce_litle_get_litle();
+  $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
+  return $litle->captureRequest($input);
+}
+
+/**
+ * Litle request function wrapper.
+ */
+function _commerce_litle_request_partial_capture($gateway, $input) {
+  /* Example input
+    $input = array(
+      'partial'=>'true',
+      'id'=> '456',
+      'litleTxnId'=>'320000000000000001',
+      'amount'=>'5005'
+    );
+  */
+  $litle = _commerce_litle_get_litle();
+  $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
+  return $litle->captureRequest($input);
+}
+
+/**
+ * Litle request function wrapper.
+ */
+function _commerce_litle_request_sale($gateway, $input) {
+  $litle = _commerce_litle_get_litle();
+  $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
+  return $litle->saleRequest($input);
+}
+
+/**
+ * Litle request function wrapper.
+ */
+function _commerce_litle_request_credit($gateway, $input) {
+  /* Example input
+    $input = array(
+      'litleTxnId'=>'100000000000000002',
+      'id'=> '456',
+      'amount'=>'1010'
+    );
+  */
+  $litle = _commerce_litle_get_litle();
+  $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
+  return $litle->creditRequest($input);
+}
+
+/**
+ * Helper function, locate and include the Litle SDK object.
+ */
+function _commerce_litle_get_litle() {
+  // Note the placement of the Litle SDK.
+  $library_path = variable_get('commerce_litle_sdk_path', 'sites/all/libraries/litle/lib');
+  $library_mode = variable_get('commerce_litle_sdk_mode', 'LitleOnline');
+  include_once($library_path . '/' . $library_mode . '.php');
+  $litle = new LitleOnlineRequest();
+  return $litle;
+}
+
+/**
+ * Helper function, return gateway configuration values from a given gateway for hash_in values.
+ */
+function _commerce_litle_get_litle_config($gateway) {
+  // Configure with the gateway values for the .ini value, merge with the credit info.
+  $auth_info = array( 
+    'user' => !empty($gateway['settings']['commerce_litle_settings_user']) ? $gateway['settings']['commerce_litle_settings_user'] : '',
+    'password' => !empty($gateway['settings']['commerce_litle_settings_password']) ? $gateway['settings']['commerce_litle_settings_password'] : '',
+    'merchantId' => !empty($gateway['settings']['commerce_litle_settings_merchantId']) ? $gateway['settings']['commerce_litle_settings_merchantId'] : '',
+    'url' => !empty($gateway['settings']['commerce_litle_settings_url']) ? $gateway['settings']['commerce_litle_settings_url'] : '',
+    'proxy' => !empty($gateway['settings']['commerce_litle_settings_proxy']) ? $gateway['settings']['commerce_litle_settings_proxy'] : '',
+    'timeout' => !empty($gateway['settings']['commerce_litle_settings_timeout']) ? $gateway['settings']['commerce_litle_settings_timeout'] : '',
+    'version' => !empty($gateway['settings']['commerce_litle_settings_version']) ? $gateway['settings']['commerce_litle_settings_version'] : '',
+    'reportGroup' => !empty($gateway['settings']['commerce_litle_settings_reportGroup']) ? $gateway['settings']['commerce_litle_settings_reportGroup'] : '',
+  );
+
+  if($gateway['settings']['commerce_litle_settings_sandbox'] == 1) {
+    $auth_info['url'] = 'https://www.testlitle.com/sandbox/communicator/online';
+  }
+
+  return $auth_info;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+// Below here are partially converted authorize functions, to be used as a basis for Litle work.
+
+/**
+ * Determines menu access to the prior authorization capture form for Authorize.Net
+ *   AIM credit card transactions.
+ *
+ * @param $order
+ *   The order the transaction is on.
+ * @param $transaction
+ *   The payment transaction object to be captured.
+ *
+ * @return
+ *   TRUE or FALSE indicating capture access.
+ */
+function commerce_litle_cc_capture_access($order, $transaction) {
+  // Return FALSE if the transaction isn't for Authorize.Net AIM or isn't
+  // awaiting capture.
+  if ($transaction->payment_method != 'litle_aim' || empty($transaction->remote_id) ||
+    strtoupper($transaction->remote_status) != 'AUTH_ONLY') {
+    return FALSE;
+  }
+
+  // Return FALSE if it is more than 30 days past the original authorization.
+  if (time() - $transaction->created > 86400 * 30) {
+    return FALSE;
+  }
+
+  // Allow access if the user can update this transaction.
+  return commerce_payment_transaction_access('update', $transaction);
+}
+
+/**
+ * Determines menu access to the void form for Authorize.Net AIM credit card
+ * transactions
+ *
+ * @param $order
+ *   The order the transaction is on.
+ * @param $transaction
+ *   The payment transaction object to be voided.
+ *
+ * @return
+ *   TRUE or FALSE indicating void access.
+ */
+function commerce_litle_cc_void_access($order, $transaction) {
+  if ($transaction->payment_method != 'litle_aim' || empty($transaction->remote_id) ||
+    !in_array(strtoupper($transaction->remote_status), array('AUTH_ONLY', 'PRIOR_AUTH_CAPTURE', 'AUTH_CAPTURE'))) {
+    return FALSE;
+  }
+
+  // Return FALSE if it is more than 24 hours since the last update to the
+  // transaction, as it will already have been settled.
+  if (time() - $transaction->changed > 2600 * 24) {
+    return FALSE;
+  }
+
+  // Allow access if the user can update this transaction.
+  return commerce_payment_transaction_access('update', $transaction);
+}
+
+/**
+ * Determines menu access to the credit form for successful Authorize.Net AIM credit
+ * card transactions.
+ *
+ * @param $order
+ *   The order the transaction is on.
+ * @param $transaction
+ *   The payment transaction object to be credited.
+ *
+ * @return
+ *   TRUE or FALSE indicating credit access.
+ */
+function commerce_litle_cc_credit_access($order, $transaction) {
+  // Return FALSE if the transaction isn't for Authorize.Net AIM, doesn't have a
+  // success status or has an amount of 0 or less.
+  if ($transaction->payment_method != 'authnet_aim' || $transaction->status != 'success' || $transaction->amount <= 0) {
+    return FALSE;
+  }
+
+  // Return FALSE if it is more than 120 days past the original capture.
+  if (time() - $transaction->created > 86400 * 120) {
+    return FALSE;
+  }
+
+  // Allow access if the user can update this transaction.
+  return commerce_payment_transaction_access('update', $transaction);
+}
+
+function _commerce_litle_cc_card_type_to_litle($type) {
+  switch($type) {
+    case "visa":
+      return "VI";
+    case "mastercard":
+      return "MC";
+    case "amex":
+      return "AX";
+    case "discover":
+      return "DI";
+  } 
+}
+
+/**
+ * Payment method callback: checkout form submission.
+ */
+function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
+  if (!empty($pane_values['credit_card']['number'])) {
+    module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+    $card_type = commerce_payment_validate_credit_card_type($pane_values['credit_card']['number'], array_keys(commerce_payment_credit_card_types()));
+  }
+
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+
+  // Get the default transaction type from the payment method settings.
+  //$txn_type = $payment_method['settings']['commerce_litle_settings_txn_type'];
+
+  // If txn_type has been specified in the pane values array, such as through
+  // the special select element we alter onto the payment terminal form, use
+  // that instead.
+  //if (!empty($pane_values['commerce_litle_settings_txn_type'])) {
+  //  $txn_type = $pane_values['commerce_litle_settings_txn_type'];
+  //}
+  $txn_type = COMMERCE_CREDIT_AUTH_CAPTURE;
+
+  $litle_card_type =  _commerce_litle_cc_card_type_to_litle($card_type);
+
+  $nvp = array(
+    'orderSource' => 'ecommerce',
+    'amount' => commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']) * 100,
+    'card' => array(
+      'number' => $pane_values['credit_card']['number'],
+      'expDate' => str_pad($pane_values['credit_card']['exp_month'], 2, STR_PAD_LEFT) . substr($pane_values['credit_card']['exp_year'],2,2),
+      'type' => $litle_card_type,
+    )
+  );
+
+  if (isset($pane_values['credit_card']['code'])) {
+    $nvp['card']['cardValidationNum'] = $pane_values['credit_card']['code'];
+  }
+
+  // Build a description for the order.
+  $description = array();
+
+  foreach ($order_wrapper->commerce_line_items as $delta => $line_item_wrapper) {
+    if (in_array($line_item_wrapper->type->value(), commerce_product_line_item_types())) {
+      $description[] = round($line_item_wrapper->quantity->value(), 2) . 'x ' . $line_item_wrapper->line_item_label->value();
+    }
+  }
+
+  // Add additional transaction invormation to the request array.
+  $nvp += array(
+    // Order Information
+    'orderId' => $order->order_number,
+    'id' => substr($order->uid, 0, 20),
+  );
+
+  // Prepare the billing address for use in the request.
+  if ($order_wrapper->commerce_customer_billing->value()){
+    $billing_address = $order_wrapper->commerce_customer_billing->commerce_customer_address->value();
+
+    if (empty($billing_address['first_name'])) {
+      $name_parts = explode(' ', $billing_address['name_line']);
+      $billing_address['first_name'] = array_shift($name_parts);
+      $billing_address['last_name'] = implode(' ', $name_parts);
+    }
+
+    $nvp['billToAddress'] = array(
+      // Customer Billing Address
+      'name' => substr($billing_address['first_name'], 0, 50) . " " . substr($billing_address['last_name'], 0, 50),
+      //'x_company' => substr($billing_address['organisation_name'], 0, 50),
+      'addressLine1' => substr($billing_address['thoroughfare'], 0, 60),
+      'city' => substr($billing_address['locality'], 0, 40),
+      'state' => substr($billing_address['administrative_area'], 0, 40),
+      'zip' => substr($billing_address['postal_code'], 0, 20),
+      'country' => $billing_address['country'],
+    );
+  }
+  else {
+    $billing_address = array();
+  }
+
+  //
+  /* lets override the uncessary config stuff */
+  $nvp += _commerce_litle_get_litle_config($payment_method);
+
+  $init = _commerce_litle_get_litle();
+
+  // first lets do an authorization
+  $authResponse = $init->authorizationRequest($nvp);
+
+  if (XmlParser::getNode($authResponse, 'response') != '000') {
+    drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
+    drupal_set_message(XmlParser::getNode($authResponse, 'message'), 'error');
+    return FALSE;
+  }
+
+  $saleResponse = $init->saleRequest($nvp);
+ 
+  $transaction = commerce_payment_transaction_new('commerce_litle_cc', $order->order_id);
+  $transaction->instance_id = $payment_method['instance_id'];
+  $transaction->remote_id = XmlParser::getNode($saleResponse, 'litleTxnId');
+  $transaction->amount = $charge['amount'];
+  $transaction->currency_code = $charge['currency_code'];
+
+  //$transaction->payload = $saleResponse;
+  // If we didn't get an approval response code...
+  if (XmlParser::getNode($saleResponse,'response') != '000') {
+    // Create a failed transaction with the error message.
+    $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+  }
+  else {
+    // Set the transaction status based on the type of transaction this was.
+    switch ($txn_type) {
+      case COMMERCE_CREDIT_AUTH_ONLY:
+        $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
+        break;
+
+      case COMMERCE_CREDIT_AUTH_CAPTURE:
+        $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+        break;
+
+      case COMMERCE_CREDIT_CAPTURE_ONLY:
+        $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+        break;
+    }
+  }
+
+  $transaction->remote_status = COMMERCE_CREDIT_AUTH_CAPTURE;
+
+  // Build a meaningful response message.
+  $message = array(
+    '<b>' . (XmlParser::getNode($saleResponse, 'response') != '000' ? t('REJECTED') : t('ACCEPTED')) . ':</b> ' . check_plain(XmlParser::getNode($saleResponse,'message'))
+  );
+
+  $transaction->message = implode('<br />', $message);
+  // Save the transaction information.
+  commerce_payment_transaction_save($transaction);
+
+  // If the payment failed, display an error and rebuild the form.
+  if (XmlParser::getNode($saleResponse, 'response') != '000') {
+    drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
+    drupal_set_message(XmlParser::getNode($saleResponse, 'message'), 'error');
+    return FALSE;
+  }
+}
+
+function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+
+  // Build a name-value pair array for this transaction.
+  $nvp = array(
+    'orderSource' => 'ecommerce',
+    'amount' => commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']),
+    'echeck' => array(
+      'accNum' => $pane_values['echeck']['accNum'],
+      'accType' => 'Checking',
+      'routingNum' => $pane_values['echeck']['routingNum'],
+    )
+  );
+
+  // Build a description for the order.
+  $description = array();
+
+  if (function_exists('commerce_product_line_item_types')) {
+    foreach ($order_wrapper->commerce_line_items as $delta => $line_item_wrapper) {
+      if (in_array($line_item_wrapper->type->value(), commerce_product_line_item_types())) {
+        $description[] = round($line_item_wrapper->quantity->value(), 2) . 'x ' . $line_item_wrapper->line_item_label->value();
+      }
+    }
+  }
+
+  // Add additional transaction invormation to the request array.
+  $nvp += array(
+    // Order Information
+    'orderId' => $order->order_number,
+    'id' => substr($order->uid, 0, 20),
+  );
+
+  // Prepare the billing address for use in the request.
+  if ($order_wrapper->commerce_customer_billing->value()){
+    $billing_address = $order_wrapper->commerce_customer_billing->commerce_customer_address->value();
+
+    if (empty($billing_address['first_name'])) {
+      $name_parts = explode(' ', $billing_address['name_line']);
+      $billing_address['first_name'] = array_shift($name_parts);
+      $billing_address['last_name'] = implode(' ', $name_parts);
+    }
+
+    $nvp['billToAddress'] = array(
+      // Customer Billing Address
+      'name' => substr($billing_address['first_name'], 0, 50) . " " . substr($billing_address['last_name'], 0, 50),
+      //'x_company' => substr($billing_address['organisation_name'], 0, 50),
+      'addressLine1' => substr($billing_address['thoroughfare'], 0, 60),
+      'city' => substr($billing_address['locality'], 0, 40),
+      'state' => substr($billing_address['administrative_area'], 0, 40),
+      'zip' => substr($billing_address['postal_code'], 0, 20),
+      'country' => $billing_address['country'],
+    );
+  }
+  else {
+    $billing_address = array();
+  }
+
+  $txn_type = COMMERCE_LITLE_CHECK_SALE;
+  $nvp += _commerce_litle_get_litle_config($payment_method);
+  $init = _commerce_litle_get_litle();
+  $saleResponse = $init->echeckSaleRequest($nvp);
+  // Prepare a transaction object to log the API response.
+  $transaction = commerce_payment_transaction_new('commerce_litle_echeck', $order->order_id);
+  $transaction->instance_id = $payment_method['instance_id'];
+  $transaction->remote_id = XmlParser::getNode($saleResponse, 'litleTxnId');
+  $transaction->amount = $charge['amount'];
+  $transaction->currency_code = $charge['currency_code'];
+  //$transaction->payload = $saleResponse;
+  // If we didn't get an approval response code...
+  if (XmlParser::getNode($saleResponse,'response') != '000') {
+    // Create a failed transaction with the error message.
+    $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+  }
+  else {
+    // Set the transaction status based on the type of transaction this was.
+    switch ($txn_type) {
+      case COMMERCE_LITLE_CHECK_SALE:
+        $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+        break;
+    }
+  }
+
+  // Store the type of transaction in the remote status.
+  $transaction->remote_status = COMMERCE_CREDIT_AUTH_CAPTURE;
+
+  // Build a meaningful response message.
+  $message = array(
+    '<b>' . (XmlParser::getNode($saleResponse, 'response') != '000' ? t('REJECTED') : t('ACCEPTED')) . ':</b> ' . check_plain(XmlParser::getNode($saleResponse, 'message'))
+  );
+
+  $transaction->message = implode('<br />', $message);
+  // Save the transaction information.
+  commerce_payment_transaction_save($transaction);
+
+  // If the payment failed, display an error and rebuild the form.
+  if (XmlParser::getNode($saleResponse,'response') != '000') {
+    drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
+    drupal_set_message(XmlParser::getNode($saleResponse, 'message'), 'error');
+    return FALSE;
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+/*
+function commerce_litle_form_commerce_payment_order_transaction_add_form_alter(&$form, &$form_state) {
+  // If the payment terminal is displayed for an authnet_aim transaction...
+  if (!empty($form['payment_terminal']) && $form_state['payment_method']['method_id'] == 'authnet_aim') {
+    // Add a select list to let the administrator choose a different transaction
+    // type than the payment method's default.
+    $form['payment_terminal']['payment_details']['commerce_litle_settings_txn_type'] = array(
+        '#type' => 'select',
+        '#title' => t('Transaction type'),
+        '#options' => array(
+            COMMERCE_CREDIT_AUTH_ONLY => t('Authorization only'),
+            COMMERCE_CREDIT_AUTH_CAPTURE => t('Authorization and capture'),
+        ),
+        '#default_value' => $form_state['payment_method']['settings']['commerce_litle_settings_txn_type'],
+    );
+  }
+}
+*/
+
+/**
+ * Returns the transaction type string for Authorize.Net that corresponds to the
+ *   Drupal Commerce constant.
+ *
+ * @param $txn_type
+ *   A Drupal Commerce transaction type constant.
+ */
+function commerce_litle_txn_type($txn_type) {
+  switch ($txn_type) {
+    case COMMERCE_CREDIT_AUTH_ONLY:
+      return 'AUTH_ONLY';
+    case COMMERCE_CREDIT_PRIOR_AUTH_CAPTURE:
+      return 'PRIOR_AUTH_CAPTURE';
+    case COMMERCE_CREDIT_AUTH_CAPTURE:
+      return 'AUTH_CAPTURE';
+    case COMMERCE_CREDIT_CAPTURE_ONLY:
+      return 'CAPTURE_ONLY';
+    case COMMERCE_CREDIT_REFERENCE_SET:
+    case COMMERCE_CREDIT_REFERENCE_TXN:
+    case COMMERCE_CREDIT_REFERENCE_REMOVE:
+    case COMMERCE_CREDIT_REFERENCE_CREDIT:
+      return NULL;
+    case COMMERCE_CREDIT_CREDIT:
+      return 'CREDIT';
+    case COMMERCE_CREDIT_VOID:
+      return 'VOID';
+  }
+}
+
+
+/**
+ * Returns the description of an Authorize.Net transaction type.
+ *
+ * @param $txn_type
+ *   An Authorize.Net transaction type string.
+ */
+function commerce_litle_reverse_txn_type($txn_type) {
+  switch (strtoupper($txn_type)) {
+    case 'AUTH_ONLY':
+      return t('Authorization only');
+    case 'PRIOR_AUTH_CAPTURE':
+      return t('Prior authorization capture');
+    case 'AUTH_CAPTURE':
+      return t('Authorization and capture');
+    case 'CAPTURE_ONLY':
+      return t('Capture only');
+    case 'CREDIT':
+      return t('Credit');
+    case 'VOID':
+      return t('Void');
+  }
+}

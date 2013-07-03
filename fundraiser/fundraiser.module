@@ -243,8 +243,9 @@ function fundraiser_clone_access_alter(&$access, $node) {
 function fundraiser_clone_node_alter(&$node, $context) {
   // Set the internal name.
   if (fundraiser_is_donation_type($context['original_node']->type)) {
-    if (isset($context['original_node']->internal_name)) {
-      $node->internal_name = t('Clone of @internal', array('@internal' => $context['original_node']->internal_name));
+    if (!empty($context['original_node']->field_fundraiser_internal_name[$context['original_node']->language][0]['value'])) {
+      $internal_name = t('Clone of @internal', array('@internal' => $context['original_node']->field_fundraiser_internal_name[$context['original_node']->language][0]['value']));
+      $node->field_fundraiser_internal_name  = array($node->language => array(0 => array('value' => $internal_name)));
     }
   }
   // The additional load in hook_node_load already will have brought in additional node data.
@@ -300,6 +301,26 @@ function fundraiser_form_node_type_form_alter(&$form, &$form_state) {
       '#default_value' => variable_get('fundraiser_' . $form['#node_type']->type, FALSE),
       '#description' => t('Enable this checkbox if this content type should provide a donation field.'),
     );
+  }
+}
+
+/**
+ * Implements hook_node_type_insert
+ */
+function fundraiser_node_type_insert($type) {
+  if (fundraiser_is_donation_type($type->type)) {
+    module_load_include('inc', 'fundraiser', 'includes/fundraiser.fields');
+    _fundraiser_add_default_fields($type->type);
+  }
+}
+
+/**
+ * Implements hook_node_type_update
+ */
+function fundraiser_node_type_update($type) {
+  if (fundraiser_is_donation_type($type->type)) {
+    module_load_include('inc', 'fundraiser', 'includes/fundraiser.fields');
+    _fundraiser_add_default_fields($type->type);
   }
 }
 
@@ -462,7 +483,7 @@ function fundraiser_form_node_form_alter(&$form, &$form_state, $form_id) {
  *
  * It ultimately populates the fundraiser table from which donation forms are created :
  * nid, gateway, receipt_email_from, receipt_email_address, receipt_email_subject, receipt_email_message,
- * donation_amounts, show_other_amount, ask_for_quantity, minimum_donation_amount, internal_name, confirmation_page_title,
+ * donation_amounts, show_other_amount, ask_for_quantity, minimum_donation_amount, confirmation_page_title,
  * confirmation_page_body, confirmation_page_format, redirect_url.
  */
 function _fundraiser_donation_settings_form(&$form, &$form_state) {
@@ -474,17 +495,6 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
   if (!fundraiser_is_donation_type($node->type)) {
     return;
   }
-  // Fundraiser values are loaded by hook_node_load() on the node type.
-  // So we can safely assume any associated fundraiser information is already available.
-  // Now create form elements for everything we need to set.
-  $form['internal_name'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Internal name'),
-    '#required' => TRUE,
-    '#default_value' => isset($node->internal_name) ? $node->internal_name : '',
-    '#weight' => -4.99,
-    '#maxlength' => 255,
-  );
   $form['fundraiser_settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('Fundraiser settings'),

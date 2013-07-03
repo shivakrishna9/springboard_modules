@@ -43,9 +43,9 @@ function commerce_authnet_fundraiser_commerce_cleanup($submission_fields) {
 /**
  * Callback function, scrub the data before saving.
  */
-function commerce_authnet_fundraiser_commerce_scrub($payment_method, $submission_fields) {
+function commerce_authnet_fundraiser_commerce_scrub($submission_fields) {
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
-  return _fundraiser_commerce_credit_card_scrub($payment_method, $submission_fields);
+  return _fundraiser_commerce_credit_card_scrub($submission_fields);
 }
 
 /**
