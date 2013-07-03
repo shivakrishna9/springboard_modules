@@ -59,7 +59,6 @@
         // Custom zipcode validation
         $.validator.addMethod('zipcode', function(value, element) {
           // Add regexp
-          console.log('zip');
           return this.optional(element) || /(^\d{5}$)|(^\d{5}(-|\s)\d{4}$)/i.test(value);
         }, "Enter a valid zipcode");
 
