@@ -55,6 +55,13 @@
           // Add regexp
           return this.optional(element) || /^[0-9]*(\.\d{1,3})*(,\d{1,3})?$/i.test(value);
         }, "Enter a valid amount");
+        
+        // Custom zipcode validation
+        $.validator.addMethod('zipcode', function(value, element) {
+          // Add regexp
+          console.log('zip');
+          return this.optional(element) || /(^\d{5}$)|(^\d{5}(-|\s)\d{4}$)/i.test(value);
+        }, "Enter a valid zipcode");
 
         // Instantiate Form Validation
         var donationValidate = $('.fundraiser-donation-form').validate({
@@ -120,11 +127,10 @@
         // Zipcode custom validation rule
         $('input[name*="zip"]').rules("add", {
           required: true,
-          number: true,
-          minlength:5,
+          zipcode: true,
           messages: {
             required: "This field is required",
-            minlength: "Minimum of 5 characters"
+            zipcode: "Enter a valid zipcode"
           }
         });
         // CVV custom validation rule
