@@ -999,7 +999,7 @@ function fundraiser_fundraiser_field_info() {
     '#extra' => array(
       'description' => '',
       'width' => 10,
-      'maxlength' => 5,
+      'maxlength' => 10,
     ),
   );
   $fields['payment_information'] = array(
