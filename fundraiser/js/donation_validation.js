@@ -161,7 +161,7 @@
             amount: true,
             messages: {
             required: "This field is required",
-            amount: "Enter a valid amount",
+            amount: "Enter a valid amount"
           }
         });
 
