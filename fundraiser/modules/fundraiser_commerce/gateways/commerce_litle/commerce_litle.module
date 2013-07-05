@@ -519,13 +519,13 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
   $txn_type = COMMERCE_CREDIT_AUTH_CAPTURE;
 
   $litle_card_type =  _commerce_litle_cc_card_type_to_litle($card_type);
-
+dpm($pane_values, '$pane_values');
   $nvp = array(
     'orderSource' => 'ecommerce',
     'amount' => commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']) * 100,
     'card' => array(
       'number' => $pane_values['credit_card']['number'],
-      'expDate' => str_pad($pane_values['credit_card']['exp_month'], 2, STR_PAD_LEFT) . substr($pane_values['credit_card']['exp_year'],2,2),
+      'expDate' => str_pad($pane_values['credit_card']['exp_month'], 2, 0, STR_PAD_LEFT) . substr($pane_values['credit_card']['exp_year'],2,2),
       'type' => $litle_card_type,
     )
   );
