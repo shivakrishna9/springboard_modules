@@ -743,11 +743,11 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
   $init = _commerce_litle_get_litle();
 
   // first lets do an authorization
-  $authResponse = $init->echeckSaleRequest($nvp);
+  $saleResponse = $init->echeckSaleRequest($nvp);
 
   // Log the response if specified.
   if ($payment_method['settings']['log']['response'] == 'response') {
-    watchdog('commerce_litle', 'Litle response: !param', array('!param' => '<pre>' . check_plain(XmlParser::getDomDocumentAsString($authResponse)) . '</pre>', WATCHDOG_DEBUG));
+    watchdog('commerce_litle', 'Litle response: !param', array('!param' => '<pre>' . check_plain(XmlParser::getDomDocumentAsString($saleResponse)) . '</pre>', WATCHDOG_DEBUG));
   }
 
   // Prepare a transaction object to log the API response.
