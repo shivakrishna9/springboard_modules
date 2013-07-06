@@ -633,7 +633,7 @@ function _salesforce_mapping_alter_get_default_value($field, &$form_state, $delt
   // The delta between stored mapping and the form input mapping are
   // incompatible so we'll figure out what the mapping's delta is and check the
   // default value again.
-  if (is_null($value) && !is_null($delta)) {
+  if (is_null($value) && !is_null($delta) || $field == 'key') {
     $mapping = NULL;
     if (isset($form_state['salesforce_mapping'])) {
       $mapping = &$form_state['salesforce_mapping'];
@@ -648,6 +648,11 @@ function _salesforce_mapping_alter_get_default_value($field, &$form_state, $delt
       if (!is_null($map_delta)) {
         $value = _salesforce_mapping_get_default_value($field, $form_state, $map_delta);
       }
+    }
+
+    // Special case when field is 'key'
+    if ($field == 'key' && $value > -1) {
+      $value = TRUE;
     }
   }
   if (in_array($field, array('sf_drupal', 'drupal_sf'))) {
