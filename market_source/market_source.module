@@ -656,17 +656,25 @@ function _market_source_update_component($nid, $field_key, $field, $pid = 0, $we
  * Helper function, retrieve a set of available campaigns.
  */
 function market_source_get_campaigns() {
-  static $campaigns = array();
+  $campaigns = &drupal_static(__FUNCTION__, array());
+
   if (empty($campaigns) && module_exists('salesforce_sync')) {
-    $sync = new SalesforceSync();
-    $found_campaigns = $sync->fetchRecords('Campaign', array('Id', 'Name'));
-    // Return a list of Campaign ids.
-    foreach ($found_campaigns as $found_campaign) {
-      $campaigns[$found_campaign->Id] = array(
-        'id' =>  $found_campaign->Id,
-        'name' =>  $found_campaign->Name,
-      );
+    if ($cache = cache_get('market_source_campaigns')) {
+      $campaigns = $cache->data;
+    }
+    else  {
+      $sync = new SalesforceSync();
+      $found_campaigns = $sync->fetchRecords('Campaign', array('Id', 'Name'));
+      // Return a list of Campaign ids.
+      foreach ($found_campaigns as $found_campaign) {
+        $campaigns[$found_campaign->Id] = array(
+          'id' =>  $found_campaign->Id,
+          'name' =>  $found_campaign->Name,
+        );
+      }
+      cache_set('market_source_campaigns', $campaigns, 'cache');
     }
   }
+
   return $campaigns;
 }

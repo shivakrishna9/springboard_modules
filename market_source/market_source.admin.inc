@@ -346,6 +346,9 @@ function market_source_admin_settings_form_submit($form, &$form_state) {
   }
   // Empty can be left alone, empty is ok. The cookie will fall back to the full domain.
   drupal_set_message(t('Market Source settings saved.'));
+
+  // Empty the cache of campaigns
+  cache_clear_all('market_source_campaigns', 'cache');
 }
 
 /**
