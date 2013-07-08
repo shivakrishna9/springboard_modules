@@ -496,6 +496,7 @@ function fundraiser_sustainer_update_date_mode($form, &$form_state) {
   $mode = $form_state['values']['fundraiser_sustainer_set_date_mode'];
   $old_date = variable_get('fundraiser_sustainer_set_dates', array('15'));
   $date = $form_state['values']['fundraiser_sustainer_set_dates'];
+  $time = '01:01:01'; // One minute, one second after midnight.
   // TODO: this will be changed when we support more than one date.
   // Check if we need to change anything.
   if ($old_mode == $mode && $old_date == $date) {
@@ -524,11 +525,12 @@ function fundraiser_sustainer_update_date_mode($form, &$form_state) {
         }
       }
       $date = date('j', $master_orders[ $order_info['master_order_id'] ]);
+      $time = date('H:i:s', $master_orders[ $order_info['master_order_id'] ]); // The original time.
     }
     // Set all to the date set, by sliding forward from today.
     $base_date = $order_info['next_charge'];
     $this_month_year = date('F Y', $base_date); // Use the month and date of the next charge.
-    $set_charge_date = strtotime($date . ' ' . $this_month_year);
+    $set_charge_date = strtotime($date . ' ' . $this_month_year . ' '. $time);
     // If our current date is already past the given charge date, then this new charge date
     // Will be in the past. We cannot kick it forward by one, as we'll double up on next month.
     // So we need to just drop this one in the series. We can't just move it forward to the end
