@@ -23,7 +23,13 @@ function webform_addtoall_permission() {
 function webform_addtoall_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'webform_component_edit_form' && user_access('add components to any webform type')) {
     $node_names = node_type_get_names();
-    $webform_types = array_flip(variable_get('webform_node_types', array('webform')));
+    $webform_types = array();
+    $types = variable_get('webform_node_types', array('webform'));
+    foreach ($types as $key => $value) {
+      if (is_numeric($key) && $value) {
+        $webform_types[] = $value;
+      }
+    }
     $webform_names = array_intersect_key($node_names, $webform_types);
     $form['addtoall'] = array(
       '#type' => 'fieldset',
