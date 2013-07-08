@@ -519,7 +519,7 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
   $txn_type = COMMERCE_CREDIT_AUTH_CAPTURE;
 
   $litle_card_type =  _commerce_litle_cc_card_type_to_litle($card_type);
-dpm($pane_values, '$pane_values');
+
   $nvp = array(
     'orderSource' => 'ecommerce',
     'amount' => commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']) * 100,
