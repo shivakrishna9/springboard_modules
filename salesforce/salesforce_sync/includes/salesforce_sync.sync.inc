@@ -993,6 +993,13 @@ class SalesforceSync {
    */
   public function fetchRecords($object_type, array $fields, array $conditions = array()) {
     $queries = $this->buildQueries($object_type, $conditions);
+
+    // List of error messages that should cease all querying from continuing.
+    $restricted_errors = array(
+      'REQUEST_LIMIT_EXCEEDED',
+      'bytes exhausted',
+    );
+
     // Partner API requests are formatted incorrectly, so we are reciving the Id
     // as an array, and the fields are not retreived in a structured format.
     // Because of this, we are grabbing only the Ids from this query, then
@@ -1001,7 +1008,13 @@ class SalesforceSync {
     // this query.
     // @see http://goo.gl/Xv8k7
     $ids = array();
+    $continue_queries = TRUE;
     foreach ($queries as $query) {
+      // Only query when we are allowed to query.
+      if (!$continue_queries) {
+        continue;
+      }
+
       // Log the query being run.
       watchdog('salesforce', 'Running SOQL query [!query].',
         array(
@@ -1026,6 +1039,10 @@ class SalesforceSync {
                 $response = $this->soap->queryMore($response->queryLocator);
               }
               catch (Exception $error) {
+                // Stop this query from continuing when an error has been
+                // reached.
+                $more = FALSE;
+
                 // Log message for later investigation.
                 watchdog('salesforce', "[!id] Salesforce queryMore failed: !message\n\n!query",
                   array(
@@ -1033,6 +1050,14 @@ class SalesforceSync {
                     '!message' => $error->getMessage(),
                     '!query' => $query,
                   ), WATCHDOG_DEBUG);
+
+                // Do not continue querying whatsoever if any of one of the
+                // restricted errors has been encountered.
+                foreach ($restricted_errors as $restricted_error) {
+                  if (strpos($error->getMessage(), $restricted_error) !== FALSE) {
+                    $continue_queries = FALSE;
+                  }
+                }
               }
             }
             else {
@@ -1049,6 +1074,14 @@ class SalesforceSync {
             '!message' => $error->getMessage(),
             '!query' => $query,
           ), WATCHDOG_DEBUG);
+
+        // Do not continue querying whatsoever if any of one of the restricted
+        // errors has been encountered.
+        foreach ($restricted_errors as $restricted_error) {
+          if (strpos($error->getMessage(), $restricted_error) !== FALSE) {
+            $continue_queries = FALSE;
+          }
+        }
       }
     }
 
