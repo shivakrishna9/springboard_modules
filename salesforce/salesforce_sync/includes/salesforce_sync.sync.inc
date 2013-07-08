@@ -987,7 +987,6 @@ class SalesforceSync {
    */
   public function fetchRecords($object_type, array $fields, array $conditions = array()) {
     $queries = $this->buildQueries($object_type, $conditions);
-
     // Partner API requests are formatted incorrectly, so we are reciving the Id
     // as an array, and the fields are not retreived in a structured format.
     // Because of this, we are grabbing only the Ids from this query, then
@@ -997,6 +996,12 @@ class SalesforceSync {
     // @see http://goo.gl/Xv8k7
     $ids = array();
     foreach ($queries as $query) {
+      // Log the query being run.
+      watchdog('salesforce', 'Running SOQL query [!query].',
+        array(
+          '!query' => $query,
+        ), WATCHDOG_DEBUG);
+
       try {
         $response = $this->soap->query($query);
         if ($response->size > 0) {
