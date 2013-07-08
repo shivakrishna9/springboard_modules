@@ -909,19 +909,25 @@ class SalesforceSync {
         }
         else {
           // Log message for later investigation.
-          watchdog('salesforce', "[!id] Fetch records by Id returned bad results.\n\n!!response",
+          watchdog('salesforce', "[!id] Fetch records by Id returned bad results for !object.\n\n!response\n\n!fields\n\n!ids",
             array(
               '!id' => 'sync-05',
+              '!object' => $object_type,
               '!response' => print_r($response),
+              '!fields' => print_r($fields),
+              '!ids' => print_r($ids),
             ), WATCHDOG_NOTICE);
         }
       }
       catch (Exception $error) {
         // Log message for later investigation.
-        watchdog('salesforce', '[!id] Fetch records by Id failed: !message',
+        watchdog('salesforce', "[!id] Fetch records by Id failed for !object: !message\n\n!fields\n\n!ids",
           array(
             '!id' => 'sync-04',
+            '!object' => $object_type,
             '!message' => $error->getMessage(),
+              '!fields' => print_r($fields),
+              '!ids' => print_r($ids),
           ), WATCHDOG_DEBUG);
       }
     }
@@ -1021,10 +1027,11 @@ class SalesforceSync {
               }
               catch (Exception $error) {
                 // Log message for later investigation.
-                watchdog('salesforce', '[!id] Salesforce queryMore failed: !message',
+                watchdog('salesforce', "[!id] Salesforce queryMore failed: !message\n\n!query",
                   array(
                     '!id' => 'sync-07',
                     '!message' => $error->getMessage(),
+                    '!query' => $query,
                   ), WATCHDOG_DEBUG);
               }
             }
@@ -1036,10 +1043,11 @@ class SalesforceSync {
       }
       catch (Exception $error) {
         // Log message for later investigation.
-        watchdog('salesforce', '[!id] Salesforce query failed: !message',
+        watchdog('salesforce', "[!id] Salesforce query failed: !message\n\n!query",
           array(
             '!id' => 'sync-06',
             '!message' => $error->getMessage(),
+            '!query' => $query,
           ), WATCHDOG_DEBUG);
       }
     }
@@ -1157,10 +1165,11 @@ class SalesforceSync {
       }
       else {
         // This query is hopeless, forget about it.
-        watchdog('salesforce', '[!id] Query to Salesforce exceeded limit of !char_limit characters.',
+        watchdog('salesforce', "[!id] Query to Salesforce exceeded limit of !char_limit characters.\n\n!conditions",
           array(
             '!id' => 'sync-08',
             '!char_limit' => $this->maxQueryLength,
+            '!conditions' => print_r($conditions),
           ), WATCHDOG_ALERT);
         return array();
       }
