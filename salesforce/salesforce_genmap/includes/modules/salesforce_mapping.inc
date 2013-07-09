@@ -276,15 +276,26 @@ function salesforce_mapping_form_prevalidate($form, &$form_state) {
     if (is_string($delta)) {
       // If the direction is set to never sync, do not set the row so it doesn't
       // go through and subsequently fail validation.
-      if (isset($field_map['drupal_sf']) && $field_map['drupal_sf'] != SALESFORCE_SYNC_RULE_NEVER) {
-        $field_map['key'] = ($key == $field_map['drupal_field']['fieldmap_value']);
-        $field_map['direction'] = 'drupal_sf';
-        $field_maps[] = $field_map;
-      }
-      if (isset($field_map['sf_drupal']) && $field_map['sf_drupal'] != SALESFORCE_SYNC_RULE_NEVER) {
-        $field_map['key'] = $field_map['drupal_sf'] == SALESFORCE_SYNC_RULE_NEVER ? ($key == $field_map['drupal_field']['fieldmap_value']) : FALSE;
-        $field_map['direction'] = 'sf_drupal';
-        $field_maps[] = $field_map;
+      $set_key = ($key == $delta);
+      foreach (array('drupal_sf', 'sf_drupal') as $direction) {
+        if (isset($field_map[$direction]) && $field_map[$direction] != SALESFORCE_SYNC_RULE_NEVER) {
+          $field_map['key'] = FALSE;
+          $field_map['direction'] = $direction;
+          $field_maps[] = $field_map;
+
+          // The salesforce_mapping module expects 'key' to be the row number of
+          // the given item.  Since we 1) have rows labeled as Drupal field and
+          // 2) are adding ghost rows, the 'key' value will need to be manually
+          // calculated. Only one direction should set this value.  If the first
+          // direction doesn't set it, then the next direction will.
+          if ($set_key) {
+            end($field_maps);
+            $position = key($field_maps);
+            $field_maps[$position]['key'] = TRUE;
+            $form_state['values']['key'] = $position;
+            $set_key = FALSE;
+          }
+        }
       }
       unset($field_maps[$delta]);
     }
@@ -632,8 +643,9 @@ function _salesforce_mapping_alter_get_default_value($field, &$form_state, $delt
 
   // The delta between stored mapping and the form input mapping are
   // incompatible so we'll figure out what the mapping's delta is and check the
-  // default value again.
-  if (is_null($value) && !is_null($delta) || $field == 'key') {
+  // default value again.  The original mapping delta is numeric, while our
+  // delta is the Drupal field name.
+  if (is_null($value) && !is_null($delta) || ($field == 'key' && !is_string($value))) {
     $mapping = NULL;
     if (isset($form_state['salesforce_mapping'])) {
       $mapping = &$form_state['salesforce_mapping'];
@@ -649,15 +661,19 @@ function _salesforce_mapping_alter_get_default_value($field, &$form_state, $delt
         $value = _salesforce_mapping_get_default_value($field, $form_state, $map_delta);
       }
     }
-
-    // Special case when field is 'key'
-    if ($field == 'key' && $value > -1) {
-      $value = TRUE;
-    }
   }
+
+  // Special case for sync direction. Automatically set sync rule if no other
+  // value provided.
   if (in_array($field, array('sf_drupal', 'drupal_sf'))) {
     $value = empty($value) ? SALESFORCE_SYNC_RULE_NEVER : $value;
   }
+
+  // Special case for 'key'.  When 'delta' is provided, return TRUE or FALSE.
+  if ($field == 'key' && !is_null($delta)) {
+    $value = $value !== FALSE;
+  }
+
   return $value;
 }
 
