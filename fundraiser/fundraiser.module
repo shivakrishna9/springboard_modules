@@ -2544,6 +2544,14 @@ function fundraiser_mail_alter(&$message) {
   $nid = $parts[1];
   $node = node_load($nid);
 
+  // $parts does not contain a node ID on order update screens.
+  // To prevent compatibility problems with UC update emails
+  // we need to bail out if a node id isn't available.
+  if (!is_object($node)) {
+    return FALSE;
+  }
+
+
   if ($message['id'] == 'uc_order_action-mail') {
     $message['headers']['From'] = $headers['Sender'] = $headers['Return-Path'] = $headers['Errors-To'] = $node->receipt_email_from . ' <' . $node->receipt_email_address . '>';
     $bcc = variable_get('fundraiser_receipt_bcc', '');
