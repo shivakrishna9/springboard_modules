@@ -427,8 +427,9 @@ class SalesforceSync {
    *   modules that hook into the send processes.
    */
   public function batchApplySalesforceSyncRules(&$batch) {
-    if (isset($batch['sync_rules_applied']) && $batch['sync_rules_applied']) {
-      // Skip because the sync rules have already been applied to this item.
+    if ((!isset($batch['sync_rules']) || !$batch['sync_rules']['apply']) || (isset($batch['sync_rules_applied']) && $batch['sync_rules_applied'])) {
+      // Skip because the sync rules are disabled or have already been applied
+      // to this item.
       return;
     }
     else {

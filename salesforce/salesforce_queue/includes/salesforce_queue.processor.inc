@@ -383,12 +383,14 @@ class SalesforceQueueProcessor {
       if ($op == 'UPSERT') {
         $batch['dedupe_field'] = $dedupe_field;
         $batch['sync_rules'] = array(
+          'apply' => FALSE,
           'fields' => array(),
           'dedupe_values' => array(),
         );
       }
       elseif ($op == 'UPDATE') {
         $batch['sync_rules'] = array(
+          'apply' => FALSE,
           'fields' => array(),
           'ids' => array(),
         );
@@ -418,6 +420,8 @@ class SalesforceQueueProcessor {
     // UPSERT and UPDATE items need to have their sync_rules checked.  Add the
     // information needed to process their sync rules to the batch.
     if ($this->itemNeedsToCheckSalesforce($item)) {
+      $batch['sync_rules']['apply'] = TRUE;
+
       // UPDATE items need to store all the fields and object Ids.
       if ($op == 'UPDATE') {
         $batch['sync_rules']['ids'][$item->sobject->Id] = $item->sobject->Id;
@@ -429,15 +433,11 @@ class SalesforceQueueProcessor {
       // UPSERT items need to store all their fields and the values they have
       // set for the given dedupe field.
       elseif ($op == 'UPSERT') {
+        $batch['sync_rules']['dedupe_values'][$item->sobject->fields[$item->dedupe_field]] = $item->sobject->fields[$item->dedupe_field];
         foreach ($item->sobject->fields as $field => $value) {
           $batch['sync_rules']['fields'][$field] = $field;
         }
       }
-    }
-
-    // In an upsert add the dedupe value for checking for an existing record
-    if ($op == 'UPSERT') {
-      $batch['sync_rules']['dedupe_values'][$item->sobject->fields[$item->dedupe_field]] = $item->sobject->fields[$item->dedupe_field];
     }
 
     // $batch_groups referred by reference.

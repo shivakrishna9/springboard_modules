@@ -251,6 +251,9 @@ class SalesforceSyncTestCase extends SalesforceTestCase {
 
       // Add this item's sync rules.
       if (($item->operation == 'UPSERT' || $item->operation == 'UPDATE') && isset($item->sync_rules) && !empty($item->sync_rules)) {
+        if (!isset($batches[$key]['sync_rules'])) {
+          $batches[$key]['sync_rules']['apply'] = FALSE;
+        }
         if ($item->operation == 'UPSERT') {
           $batches[$key]['dedupe_field'] = $item->dedupe_field;
           $dedupe_value = $item->sobject->fields[$item->dedupe_field];
@@ -261,6 +264,9 @@ class SalesforceSyncTestCase extends SalesforceTestCase {
           $batches[$key]['sync_rules']['ids'][$id] = $id;
         }
         foreach ($item->sync_rules as $field => $sync_rule) {
+          if ($sync_rule != 'SALESFORCE_SYNC_RULE_ALWAYS') {
+            $batches[$key]['sync_rules']['apply'] = TRUE;
+          }
           $batches[$key]['sync_rules']['fields'][$field] = $field;
         }
       }
