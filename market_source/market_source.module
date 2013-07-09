@@ -677,7 +677,7 @@ function market_source_get_campaigns() {
           );
         }
 
-        cache_set('market_source_campaigns', $campaigns, 'cache');
+        cache_set('market_source_campaigns', $campaigns, 'cache', CACHE_TEMPORARY);
       }
       catch (Exception $ex) {
         watchdog('Market Source', 'Market Source failed to load the campaign ids due to an API error.',
