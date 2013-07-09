@@ -429,11 +429,15 @@ class SalesforceQueueProcessor {
       // UPSERT items need to store all their fields and the values they have
       // set for the given dedupe field.
       elseif ($op == 'UPSERT') {
-        $batch['sync_rules']['dedupe_values'][$item->sobject->fields[$item->dedupe_field]] = $item->sobject->fields[$item->dedupe_field];
         foreach ($item->sobject->fields as $field => $value) {
           $batch['sync_rules']['fields'][$field] = $field;
         }
       }
+    }
+
+    // In an upsert add the dedupe value for checking for an existing record
+    if ($op == 'UPSERT') {
+      $batch['sync_rules']['dedupe_values'][$item->sobject->fields[$item->dedupe_field]] = $item->sobject->fields[$item->dedupe_field];
     }
 
     // $batch_groups referred by reference.
