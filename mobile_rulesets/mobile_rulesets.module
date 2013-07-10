@@ -12,8 +12,7 @@ function mobile_rulesets_menu() {
  */
 function mobile_rulesets_init() {
   if (!class_exists('Mobile_Detect')) {
-    $path = function_exists('libraries_get_path') ?
-      libraries_get_path('Mobile-Detect') : 'sites/all/libraries/Mobile-Detect';
+    $path = function_exists('libraries_get_path') ? libraries_get_path('Mobile_Detect') : 'sites/all/libraries/Mobile_Detect';
     if (!@include($path . '/Mobile_Detect.php')) {
       _mobile_rulesets_missing_library();
     }
