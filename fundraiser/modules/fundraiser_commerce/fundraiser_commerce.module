@@ -1623,21 +1623,14 @@ function _fundraiser_commerce_get_charged_by_status($status) {
  * Prepare the fundraiser commerce order data for storage
  */
 function _fundraiser_commerce_order_data_prepare($data) {
-  if (!empty($data['payment_fields'])) {
-    $data['payment_fields'] = _fundraiser_commerce_encrypt(serialize($data['payment_fields']));
-  }
-  return addslashes(serialize($data));
+  return _fundraiser_commerce_encrypt(addslashes(serialize($data)));
 }
 
 /**
  * Retrieve the fundraiser commerce order data
  */
 function _fundraiser_commerce_order_data_retrieve($data) {
-  $data = unserialize(stripslashes($data));
-  if (!empty($data['payment_fields'])) {
-    $data['payment_fields'] = unserialize(_fundraiser_commerce_decrypt($data['payment_fields']));
-  }
-  return $data;
+  return unserialize(stripslashes(_fundraiser_commerce_decrypt($data)));
 }
 
 /**
