@@ -132,6 +132,24 @@ function salesforce_queue_menu() {
     'weight' => 10,
   );
 
+  // Execute cron on demand.
+  // There are no restrictions
+  $items['salesforce-queue/process'] = array(
+    'title' => 'Process queue',
+    'description' => 'Call back to immediately process the queue',
+    'page callback' => 'salesforce_queue_cron',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  $items['salesforce-queue/process/%'] = array(
+    'title' => 'Process specific queue',
+    'description' => 'Call back to immediately process a given specific queue',
+    'page callback' => 'salesforce_queue_cron',
+    'page arguments' => array(2),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
   return $items;
 }
 
