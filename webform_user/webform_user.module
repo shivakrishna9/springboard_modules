@@ -386,8 +386,19 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
     $form['#validate'][] = 'webform_user_webform_validate';
     // Add new submit handler.
     $form['#submit'][] = 'webform_user_webform_submit';
+    // Add CSS and JS on after build.
+    $form['#after_build'][] = 'webform_user_webform_after_build';
   }
 
+}
+
+/**
+ * After build to include js and css.
+ */
+function webform_user_webform_after_build($form, $form_state) {
+  // Attach the js files
+  drupal_add_js(drupal_get_path('module', 'webform_user') . '/js/webform_user.js');
+  return $form;
 }
 
 /**
