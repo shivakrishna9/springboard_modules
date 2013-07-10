@@ -14,12 +14,8 @@ function mobile_rulesets_init() {
   if (!class_exists('Mobile_Detect')) {
     $path = function_exists('libraries_get_path') ?
       libraries_get_path('Mobile-Detect') : 'sites/all/libraries/Mobile-Detect';
-    if (!include($path . '/Mobile_Detect.php')) {
-      $links = array(
-        '!mobile_detect' => l(t('Mobile Detect'), 'https://github.com/serbanghita/Mobile-Detect'),
-        '!download' => l(t('Download', 'https://github.com/serbanghita/Mobile-Detect/tags')),
-      );
-      drupal_set_message('Mobile Rulesets requires the !mobile_detect PHP class to function. !download a copy and add it to your site libraries folder.', $links, 'error');
+    if (!@include($path . '/Mobile_Detect.php')) {
+      _mobile_rulesets_missing_library();
     }
   }
   
@@ -84,8 +80,16 @@ function _mobile_rulesets_detect($condition) {
     return $state;
   }
   else {
-     drupal_set_message('Mobile Rulesets requires the !mobile_detect PHP class to function. !download a copy and add it to your site libraries folder.', $links, 'error');
+    _mobile_rulesets_missing_library();
   }
   return FALSE;
   
+}
+
+function _mobile_rulesets_missing_library() {
+  $links = array(
+    '!mobile_detect' => l(t('Mobile Detect'), 'https://github.com/serbanghita/Mobile-Detect'),
+    '!download' => l(t('Download'), 'https://github.com/serbanghita/Mobile-Detect/tags'),
+  );
+  drupal_set_message(t('Mobile Rulesets requires the !mobile_detect PHP class to function. !download a copy and add it to your site libraries folder.', $links), 'error', FALSE);
 }
