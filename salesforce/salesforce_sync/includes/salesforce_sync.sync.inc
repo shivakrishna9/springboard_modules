@@ -613,7 +613,8 @@ class SalesforceSync {
             }
             break;
 
-           case 'string':
+          case 'string':
+          case 'textarea':
             // Make sure all strings are escaped correctly for XML. htmlspecialchars will
             // be sufficient for most strings. If more robust escaping is needed
             // consider using DOMDocument or SimpleXML to beef this up.
