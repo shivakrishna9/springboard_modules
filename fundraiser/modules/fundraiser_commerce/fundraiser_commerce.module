@@ -1626,14 +1626,14 @@ function _fundraiser_commerce_order_data_prepare($data) {
   if (!empty($data['payment_fields'])) {
     $data['payment_fields'] = _fundraiser_commerce_encrypt(serialize($data['payment_fields']));
   }
-  return serialize($data);
+  return addslashes(serialize($data));
 }
 
 /**
  * Retrieve the fundraiser commerce order data
  */
 function _fundraiser_commerce_order_data_retrieve($data) {
-  $data = unserialize($data);
+  $data = unserialize(stripslashes($data));
   if (!empty($data['payment_fields'])) {
     $data['payment_fields'] = unserialize(_fundraiser_commerce_decrypt($data['payment_fields']));
   }
