@@ -605,7 +605,7 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
   }
   // This order data was stored during hook_fundraiser_donation_process(), and scrubbed by the gateway.
   if (!empty($order->data)) {
-    $data = _fundraiser_commerce_decrypt($order->data['fundraiser_commerce']);
+    $data = _fundraiser_commerce_order_data_retrieve($order->data['fundraiser_commerce']);
     $data = unserialize($data);
     // Put data stored data into the right places.
     $donation->donation['payment_method'] = isset($data['payment_method']) ? $data['payment_method'] : '';
@@ -746,7 +746,7 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   // Since Card On File stores data unencrypted we can't use it here.
   // And any other additional information we need to track for the donation object.
   $donation->data = $data;
-  $order->data['fundraiser_commerce'] = _fundraiser_commerce_encrypt(serialize($donation->data));
+  $order->data['fundraiser_commerce'] = _fundraiser_commerce_order_data_prepare($donation->data);
 
   // Save the order.
   $order->uid = $user->uid; // Make sure we have the right user. The one we want.
@@ -1089,7 +1089,7 @@ function _fundraiser_commerce_update_donation_result_data($donation, $success) {
   $donation->data = $data;
   $donation->txn_id = $remote_id; // TODO Not called anywhere locally, this may not even need to be stored.
   // Encrypt it for storage.
-  $order->data['fundraiser_commerce'] = _fundraiser_commerce_encrypt(serialize($donation->data));
+  $order->data['fundraiser_commerce'] = _fundraiser_commerce_order_data_prepare($donation->data);
   // Save the order again to update its line item reference field and user.
   commerce_order_save($order);
   // Pass the result up the chain.
@@ -1617,6 +1617,27 @@ function _fundraiser_commerce_get_charged_by_status($status) {
     return FALSE; // If the donation is still able to be charged, say it hasn't been.
   }
   return TRUE;
+}
+
+/**
+ * Prepare the fundraiser commerce order data for storage
+ */
+function _fundraiser_commerce_order_data_prepare($data) {
+  if (!empty($data['payment_fields'])) {
+    $data['payment_fields'] = _fundraiser_commerce_encrypt(serialize($data['payment_fields']));
+  }
+  return serialize($data);
+}
+
+/**
+ * Retrieve the fundraiser commerce order data
+ */
+function _fundraiser_commerce_order_data_retrieve($data) {
+  $data = unserialize($data);
+  if (!empty($data['payment_fields'])) {
+    $data['payment_fields'] = unserialize(_fundraiser_commerce_decrypt($data['payment_fields']));
+  }
+  return serialize($data);
 }
 
 /**
