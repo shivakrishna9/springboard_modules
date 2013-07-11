@@ -108,6 +108,24 @@ AVS response: Address (Street) and five digit ZIP match",
         'status' => 'success',
         'remote_status' => 'auth_capture',
       ),
+      'psi' => array(
+        'payment_method' => 'credit',
+        'payment_fields' => array(
+          'credit' => array(
+            'card_number' => '0003',
+            'card_cvv' => '',
+            'card_expiration_month' => '7',
+            'card_expiration_year' => '2014',
+            'card_type' => 'MasterCard',
+          ),
+        ),
+        'message' => '!status: !response_message Response code: !response_code; Reason code: !reason_code; Authorization code: !auth_code',
+        'txn_id' => '100003510',
+        'remote_id' => '100003510',
+        'transaction_id' => '106707',
+        'status' => 'success',
+        'remote_status' => '1',
+      ),
     );
 
     // TODO: Add other gateway responses for accept and declines.
