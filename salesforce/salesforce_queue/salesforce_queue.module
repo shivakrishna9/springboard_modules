@@ -133,11 +133,14 @@ function salesforce_queue_menu() {
   );
 
   // Execute cron on demand.
-  // There are no restrictions
+  // There are no restrictions executing the processor since the processor has a
+  // set restriction for a maximum length of time between executions and
+  // prevents concurrent executions.
   $items['salesforce-queue/process'] = array(
     'title' => 'Process queue',
     'description' => 'Call back to immediately process the queue',
     'page callback' => 'salesforce_queue_cron',
+    'page arguments' => array('all'),
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
@@ -273,12 +276,21 @@ function salesforce_queue_process_queue($queue_name = 'all') {
 /**
  * Implements hook_cron().
  */
-function salesforce_queue_cron($queue_name = 'all') {
+function salesforce_queue_cron() {
+  // Abort if this is being run automatically (e.g.: through standard cron) and
+  // running during standard cron is disabled.
+  $params = func_get_args();
+  if (empty($params) && !variable_get('salesforce_queue_cron_enabled', 1)) {
+    return;
+  }
+
   // Limit the running of the processor to a configured frequency.
   $cron_frequency = variable_get('salesforce_queue_cron_frequency', SALESFORCE_QUEUE_CRON_FREQUENCY_DEFAULT);
   $cron_last = variable_get('salesforce_queue_cron_last', 0);
   if (($cron_last + $cron_frequency) < REQUEST_TIME && salesforce_get_api()->isAuthorized()) {
+    $queue_name = (isset($params[0]) && !empty($params[0])) ? $params[0] : 'all';
     salesforce_queue_process_queue($queue_name);
+
     // Set cron_last after process has completed.
     variable_set('salesforce_queue_cron_last', time());
   }
