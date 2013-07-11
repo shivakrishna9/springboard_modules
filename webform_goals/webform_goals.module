@@ -10,13 +10,49 @@ require_once('webform_goals.forms.inc');
 /**
  * Implements hook_init().
  *
- * Add goal replacement script and associated js settings.
+ * Add goal replacment script and associated js settings.
  */
 function webform_goals_init() {
-  $base_uri = file_default_scheme() . '://';
-  $file_system_base_url = file_create_url($base_uri);
-  $loader_url = $file_system_base_url . 'webform_goals/webform_goals.jsonp.php';
+  static $loader_urlh = '';
+
+  if (empty($loader_url)) {
+    $loader_url = (!empty($_SERVER['HTTPS'])) ? "https://" : "http://";
+    $loader_url .= $_SERVER['SERVER_NAME'] . '/webform_goals_jsonp';
+  }
+  // TODO: examine theme post-processing as a potential replacement for js processing on the local site.
   drupal_add_js(array('webform_goals' => array('loader_url' => $loader_url)), 'setting');
+
+   if (arg(0) == 'webform_goals_jsonp') {
+
+    $base_uri = file_default_scheme() . '://';
+    $file_system_base_url = file_create_url($base_uri);
+    $loader_url = $file_system_base_url . 'webform_goals/';
+    $loader_uri = file_build_uri('webform_goals');
+
+    $goal_ids = $_GET['goal_ids'];
+    $ids = explode(',', $goal_ids);
+    $data = array(); 
+    foreach ($ids as $id) {
+      $filename = 'template-' . (int) $id . '.txt';
+ 
+      if (file_exists($loader_uri . '/' . $filename)) {
+        $file = file_get_contents($loader_uri . '/'. $filename);
+        $data[$id] =  unserialize($file);
+        $data['status'] = 'success';
+      }
+      else {
+        watchdog('webform_goals', t('Request for missing goal widget:' . $loader_url . $filename));
+      }
+    }
+    if (empty($data['status'])) {
+      $data['status'] = 'fail';
+      $data['data'] = 'null';
+    }
+    $data = json_encode($data);
+    print $_GET['jsonp_callback'] . '(' . print_r($data, TRUE) . ');';
+    exit;
+  }
+
 }
 
 
@@ -113,10 +149,52 @@ function webform_goals_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'includes/webform_goals.widget.inc',
   );
-
+  $items['webform_goals_jsonp'] = array(
+    'title' => 'goal widget jsonp service',
+    'page callback' => 'webform_goals_jsonp_loader',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
   return $items;
 }
 
+
+function webform_goals_jsonp_loader() {
+  return '<h1>Hai</h1>';
+}
+/**
+ *
+ *
+ */
+function _webform_goals_boots() {
+  if (arg(0) == 'webform_goals_jsonp') {
+
+    $base_uri = file_default_scheme() . '://';
+    $file_system_base_url = file_create_url($base_uri);
+    $loader_url = $file_system_base_url . 'webform_goals/';
+
+    $goal_ids = $_GET['goal_ids'];
+    $ids = explode(',', $goal_ids);
+    $data = array();
+    foreach ($ids as $id) {
+
+
+
+      $filename = 'template-' . (int) $id . '.txt';
+      if (file_exists($loader_url . $filename)) {
+        $file = file_get_contents($filename);
+        $data[$id] =  unserialize($file);
+        $data['status'] = 'success';
+      }
+    }
+    if (empty($data['status'])) {
+      $data['status'] = 'fail';
+      $data['data'] = 'null';
+    }
+    $data = json_encode($data);
+    dsm($data, 'loader data');
+  }
+}
 
 /**
  * Load a goal from the db.
