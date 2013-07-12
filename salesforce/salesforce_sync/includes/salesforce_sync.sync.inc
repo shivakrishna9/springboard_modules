@@ -825,12 +825,12 @@ class SalesforceSync {
     // there is no need to get too alarmed if an item failed to be deleted.
     $msg_id = $item->operation == 'DELETE' ? 'sync-02' : 'sync-01';
     $severity = $item->operation == 'DELETE' ? WATCHDOG_INFO : WATCHDOG_WARNING;
-    watchdog('salesforce', '[!id] Sync failed: !item_id (!message) !result',
+    watchdog('salesforce', '[@id] Sync failed: @item_id (@message) @result',
       array(
-        '!id' => $msg_id,
-        '!item_id' => (isset($item->item_id) ? '#' . $item->item_id : 'N/A'),
-        '!message' => $message,
-        '!result' => is_object($result) && method_exists($result, 'getMessage') ? $result->getMessage() : '',
+        '@id' => $msg_id,
+        '@item_id' => (isset($item->item_id) ? '#' . $item->item_id : 'N/A'),
+        '@message' => $message,
+        '@result' => is_object($result) && method_exists($result, 'getMessage') ? $result->getMessage() : '',
       ), $severity);
 
     // Invokes hook_salesforce_sync_fail_item().
@@ -847,11 +847,11 @@ class SalesforceSync {
    */
   public function failBatch($batch, $message, $result = NULL) {
     // Send an error to admin that the batch failed.
-    watchdog('salesforce', '[!id] Batch failed: (!message) !result',
+    watchdog('salesforce', '[@id] Batch failed: (@message) @result',
       array(
-        '!id' => 'sync-03',
-        '!message' => $message,
-        '!result' => is_object($result) && method_exists($result, 'getMessage') ? $result->getMessage() : '',
+        '@id' => 'sync-03',
+        '@message' => $message,
+        '@result' => is_object($result) && method_exists($result, 'getMessage') ? $result->getMessage() : '',
       ), WATCHDOG_ERROR);
 
     // Fail each item.
@@ -911,25 +911,25 @@ class SalesforceSync {
         }
         else {
           // Log message for later investigation.
-          watchdog('salesforce', "[!id] Fetch records by Id returned bad results for !object.\n\n!response\n\n!fields\n\n!ids",
+          watchdog('salesforce', "[@id] Fetch records by Id returned bad results for @object.\nResponse:\n@response \nFields:\n@fields \nIds:\n@ids",
             array(
-              '!id' => 'sync-05',
-              '!object' => $object_type,
-              '!response' => print_r($response),
-              '!fields' => print_r($fields),
-              '!ids' => print_r($ids),
+              '@id' => 'sync-05',
+              '@object' => $object_type,
+              '@response' => print_r($response),
+              '@fields' => print_r($fields),
+              '@ids' => print_r($ids),
             ), WATCHDOG_NOTICE);
         }
       }
       catch (Exception $error) {
         // Log message for later investigation.
-        watchdog('salesforce', "[!id] Fetch records by Id failed for !object: !message\n\n!fields\n\n!ids",
+        watchdog('salesforce', "[@id] Fetch records by Id failed for @object: @message\nFields:\n@fields \nIds:\n@ids",
           array(
-            '!id' => 'sync-04',
-            '!object' => $object_type,
-            '!message' => $error->getMessage(),
-              '!fields' => print_r($fields),
-              '!ids' => print_r($ids),
+            '@id' => 'sync-04',
+            '@object' => $object_type,
+            '@message' => $error->getMessage(),
+            '@fields' => print_r($fields),
+            '@ids' => print_r($ids),
           ), WATCHDOG_DEBUG);
       }
     }
@@ -1018,9 +1018,9 @@ class SalesforceSync {
       }
 
       // Log the query being run.
-      watchdog('salesforce', 'Running SOQL query [!query].',
+      watchdog('salesforce', 'Running SOQL query [@query].',
         array(
-          '!query' => $query,
+          '@query' => $query,
         ), WATCHDOG_DEBUG);
 
       try {
@@ -1046,11 +1046,11 @@ class SalesforceSync {
                 $more = FALSE;
 
                 // Log message for later investigation.
-                watchdog('salesforce', "[!id] Salesforce queryMore failed: !message\n\n!query",
+                watchdog('salesforce', "[@id] Salesforce queryMore failed: @message\nQuery: @query",
                   array(
-                    '!id' => 'sync-07',
-                    '!message' => $error->getMessage(),
-                    '!query' => $query,
+                    '@id' => 'sync-07',
+                    '@message' => $error->getMessage(),
+                    '@query' => $query,
                   ), WATCHDOG_DEBUG);
 
                 // Do not continue querying whatsoever if any of one of the
@@ -1070,11 +1070,11 @@ class SalesforceSync {
       }
       catch (Exception $error) {
         // Log message for later investigation.
-        watchdog('salesforce', "[!id] Salesforce query failed: !message\n\n!query",
+        watchdog('salesforce', "[@id] Salesforce query failed: @message\nQuery: @query",
           array(
-            '!id' => 'sync-06',
-            '!message' => $error->getMessage(),
-            '!query' => $query,
+            '@id' => 'sync-06',
+            '@message' => $error->getMessage(),
+            '@query' => $query,
           ), WATCHDOG_DEBUG);
 
         // Do not continue querying whatsoever if any of one of the restricted
@@ -1200,11 +1200,11 @@ class SalesforceSync {
       }
       else {
         // This query is hopeless, forget about it.
-        watchdog('salesforce', "[!id] Query to Salesforce exceeded limit of !char_limit characters.\n\n!conditions",
+        watchdog('salesforce', "[@id] Query to Salesforce exceeded limit of @char_limit characters.\nProvided conditions:\n@conditions",
           array(
-            '!id' => 'sync-08',
-            '!char_limit' => $this->maxQueryLength,
-            '!conditions' => print_r($conditions),
+            '@id' => 'sync-08',
+            '@char_limit' => $this->maxQueryLength,
+            '@conditions' => print_r($conditions),
           ), WATCHDOG_ALERT);
         return array();
       }
@@ -1251,9 +1251,9 @@ class SalesforceSync {
     // for simpletests and drush.
     $sfapi = (!is_object($sfapi) || !$sfapi->isAuthorized()) ? salesforce_get_api() : $sfapi;
     if (!$sfapi->isAuthorized()) {
-      watchdog('salesforce', '[!id] SalesforceAPI is not authorized',
+      watchdog('salesforce', '[@id] SalesforceAPI is not authorized',
         array(
-          '!id' => 'sync-10',
+          '@id' => 'sync-10',
         ), WATCHDOG_NOTICE);
       $sfapi = NULL;
     }
@@ -1301,10 +1301,10 @@ class SalesforceSync {
 
     // Send a fail message.
     else {
-      watchdog('salesforce', '[!id] SalesforceSoapPartner cannot be used: !message',
+      watchdog('salesforce', '[@id] SalesforceSoapPartner cannot be used: @message',
         array(
-          '!id' => 'sync-11',
-          '!message' => $message,
+          '@id' => 'sync-11',
+          '@message' => $message,
         ), WATCHDOG_NOTICE);
     }
 
