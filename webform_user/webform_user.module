@@ -1067,9 +1067,10 @@ function _webform_user_save_profile_map($uid, &$map) {
     if (isset($profile_values['mail'])) {
       // Check for length. User mail max length: 254
       if (strlen($profile_values['mail']) > 254) {
+        $original_field = $profile_values['mail'];
         $profile_values['mail'] = substr($profile_values['mail'], 0, 254);
-        watchdog('webform_user', 'Truncated field @field_name at length @length for user #@uid',
-          array('@field_name' => 'mail', '@length' => 254, '@uid' => $uid));
+        watchdog('webform_user', 'Truncated field @field_name at length @length for user #@uid. Original data: @original_field',
+          array('@field_name' => 'mail', '@length' => 254, '@uid' => $uid, '@original_field' => $original_field));
       }
       $account->mail = $profile_values['mail'];
       unset($profile_values['mail']);
@@ -1088,9 +1089,10 @@ function _webform_user_save_profile_map($uid, &$map) {
             // Text areas are stored in blob form, so not an issue.
             $max_length = isset($field_info['settings']['max_length']) ? $field_info['settings']['max_length'] : '';
             if (!empty($max_length) && strlen($field_value) > $max_length) {
+              $original_field = $field_value;
               $field_value = substr($field_value, 0, $max_length);
-              watchdog('webform_user', 'Truncated field @field_name at length @length for user #@uid',
-                array('@field_name' => $field_name, '@length' => $max_length, '@uid' => $uid));
+              watchdog('webform_user', 'Truncated field @field_name at length @length for user #@uid. Original data: @original_field',
+                array('@field_name' => $field_name, '@length' => $max_length, '@uid' => $uid, '@original_field' => $original_field));
             }
             $account->{$field_name}['und'][0]['value'] = $field_value;
           }
