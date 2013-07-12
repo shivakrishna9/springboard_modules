@@ -46,6 +46,13 @@ class SalesforceSync {
   protected $maxQueryLength = 10000;
 
   /**
+   * Maximum quantity of records that can ever be retrieved.
+   *
+   * @var int
+   */
+  protected $queryLimit = 4000;
+
+  /**
    *  A running log of the new records created in Salesforce.
    *
    * @var array
@@ -73,6 +80,7 @@ class SalesforceSync {
     $this->maxQueryLength = variable_get('salesforce_sync_max_query_length', SALESFORCE_SYNC_MAX_QUERY_LENGTH_DEFAULT);
     $this->maxBatchSize = variable_get('salesforce_sync_max_batch_size', SALESFORCE_SYNC_MAX_BATCH_SIZE_DEFAULT);
     $this->maxRetrieveSize = variable_get('salesforce_sync_max_retrieve_size', SALESFORCE_SYNC_MAX_RETRIEVE_SIZE_DEFAULT);
+    $this->queryLimit = variable_get('salesforce_sync_query_limit', SALESFORCE_SYNC_QUERY_LIMIT_DEFAULT);
     $this->tokenScanner = new SalesforceSyncTokenScanner($this->getProcessedItemIds());
     $this->setSalesforceApi($sfapi);
     $this->setSalesforceSoap($soap);
@@ -1243,6 +1251,11 @@ class SalesforceSync {
     // returned from this method.
     if ($fail) {
       $queries = array();
+    }
+
+    // Add the limit to the end of each query.
+    foreach ($queries as $key => $query) {
+      $queries[$key] .= ' LIMIT ' . $this->queryLimit;
     }
 
     return $queries;

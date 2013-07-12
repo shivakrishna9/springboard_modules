@@ -48,6 +48,9 @@ define('SALESFORCE_SYNC_MAX_BATCH_SIZE_DEFAULT', 200);
 // The maximum records that can be fetched from Salesforce in one call.
 define('SALESFORCE_SYNC_MAX_RETRIEVE_SIZE_DEFAULT', 2000);
 
+// The maximum quantity of records that can ever be retrieved.
+define('SALESFORCE_SYNC_QUERY_LIMIT_DEFAULT', 4000);
+
 /**
  * @}
  */
