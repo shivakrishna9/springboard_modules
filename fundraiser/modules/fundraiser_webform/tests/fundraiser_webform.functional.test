@@ -19,7 +19,7 @@ class FundraiserWebformFunctionalTest extends FundraiserSetup {
     return array(
       'name' => 'Fundraiser Webform functional tests',
       'description' => 'Tests fundraiser webform behavior.',
-      'group' => 'Springboard',
+      'group' => 'Fundraiser',
     );
   }
 

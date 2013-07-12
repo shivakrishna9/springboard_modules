@@ -15,7 +15,7 @@ class FundraiserCommerceGatewayAuthnetTest extends FundraiserCommerceGatewayTest
     return array(
       'name' => 'Fundraiser Commerce Authorize.net Gateway',
       'description' => 'Confirm the Authorize.net gateway can process a donation.',
-      'group' => 'Springboard',
+      'group' => 'Fundraiser',
     );
   }
 

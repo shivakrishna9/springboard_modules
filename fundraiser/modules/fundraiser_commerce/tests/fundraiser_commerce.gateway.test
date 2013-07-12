@@ -15,7 +15,7 @@ class FundraiserCommerceGatewayTest extends FundraiserSetup {
     return array(
       'name' => 'Fundraiser Commerce Gateway',
       'description' => 'Parent class for testing the Fundraiser Commerce Gateways',
-      'group' => 'Springboard',
+      'group' => 'Fundraiser',
     );
   }
 
