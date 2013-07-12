@@ -915,9 +915,9 @@ class SalesforceSync {
             array(
               '@id' => 'sync-05',
               '@object' => $object_type,
-              '@response' => print_r($response),
-              '@fields' => print_r($fields),
-              '@ids' => print_r($ids),
+              '@response' => print_r($response, TRUE),
+              '@fields' => print_r($fields, TRUE),
+              '@ids' => print_r($ids, TRUE),
             ), WATCHDOG_NOTICE);
         }
       }
@@ -928,8 +928,8 @@ class SalesforceSync {
             '@id' => 'sync-04',
             '@object' => $object_type,
             '@message' => $error->getMessage(),
-            '@fields' => print_r($fields),
-            '@ids' => print_r($ids),
+            '@fields' => print_r($fields, TRUE),
+            '@ids' => print_r($ids, TRUE),
           ), WATCHDOG_DEBUG);
       }
     }
@@ -1204,7 +1204,7 @@ class SalesforceSync {
           array(
             '@id' => 'sync-08',
             '@char_limit' => $this->maxQueryLength,
-            '@conditions' => print_r($conditions),
+            '@conditions' => print_r($conditions, TRUE),
           ), WATCHDOG_ALERT);
         return array();
       }
