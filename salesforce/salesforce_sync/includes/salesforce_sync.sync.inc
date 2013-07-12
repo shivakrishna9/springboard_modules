@@ -1137,47 +1137,73 @@ class SalesforceSync {
     }
 
     // Build the WHERE part of the query.
+    // Automatically fail if conditions is empty.  We disallow selects without a
+    // WHERE condition so every row is not selected.
+    $fail = empty($conditions);
     foreach ($conditions as $key => $condition) {
+      if (empty($condition)) {
+        // Fail out if an empty condition is provided.
+        $fail = TRUE;
+        watchdog('salesforce', "[@id] Empty query condition provided for key @key\nProvided conditions:\n@conditions ",
+          array(
+            '@id' => 'sync-12',
+            '@key' => $key,
+            '@conditions' => print_r($conditions, TRUE),
+          ), WATCHDOG_ALERT);
+      }
+
       // Handle cases where the condition is provided to us as a 'field', 'op',
       // 'value' array.
-      if (is_array($condition) && isset($condition['op']) && isset($condition['field']) && isset($condition['value'])) {
-        $op = $condition['op'];
-        $field = $condition['field'];
-        // The value can be provided as an array and we'll convert it to a
-        // string automatically.
-        if ($query_splits == 0 || is_string($condition['value'])) {
-          if (is_array($condition['value'])) {
-            $value = " ('" . implode("', '", $condition['value']) . "')";
-          }
-          else {
-            $value = $condition['value'];
-          }
-
-          // Append the condition to each query.
-          $i = $query_count;
-          while ($i >= 0) {
-            $queries[$i] .= ($key == 0 ? ' WHERE' : ' AND');
-            $queries[$i] .= ' ' . $field . ' ' . $op . ' ' . $value;
-            $i--;
-          }
+      else if (is_array($condition) && isset($condition['op']) && isset($condition['field']) && isset($condition['value'])) {
+        if (empty($condition['op']) || empty($condition['field']) || empty($condition['value'])) {
+          // Fail out if any of options are empty.
+          $fail = TRUE;
+          watchdog('salesforce', "[@id] Empty query condition provided\nProvided condition:\n@condition",
+            array(
+              '@id' => 'sync-12',
+              '@condition' => print_r($condition, TRUE),
+            ), WATCHDOG_ALERT);
         }
-        // If the query needs to be split up, this is where it is done.  We will
-        // divide the values of the array into the number of splits requested.
-        elseif ($query_splits > 0 && is_array($condition['value'])) {
-          $chunk_size = count($condition['value']) / ($query_splits + 1);
-          $value_chunks = array_chunk($condition['value'], $chunk_size);
-          $new_queries = array();
-          foreach ($value_chunks as $value_chunk) {
-            $value = " ('" . implode("', '", $value_chunk) . "')";
-            $operation = $field . ' ' . $op . ' ' . $value;
-            foreach ($queries as $i => $query) {
-              $new_queries[] = $query . ($key == 0 ? ' WHERE' : ' AND') . ' ' . $operation;
+        else {
+          $op = $condition['op'];
+          $field = $condition['field'];
+          // The value can be provided as an array and we'll convert it to a
+          // string automatically.
+          if ($query_splits == 0 || is_string($condition['value'])) {
+            if (is_array($condition['value'])) {
+              $value = " ('" . implode("', '", $condition['value']) . "')";
+            }
+            else {
+              $value = $condition['value'];
+            }
+
+            // Append the condition to each query.
+            $i = $query_count;
+            while ($i >= 0) {
+              $queries[$i] .= ($key == 0 ? ' WHERE' : ' AND');
+              $queries[$i] .= ' ' . $field . ' ' . $op . ' ' . $value;
+              $i--;
             }
           }
-          $query_count = count($new_queries);
-          $queries = $new_queries;
+          // If the query needs to be split up, this is where it is done.  We will
+          // divide the values of the array into the number of splits requested.
+          elseif ($query_splits > 0 && is_array($condition['value'])) {
+            $chunk_size = count($condition['value']) / ($query_splits + 1);
+            $value_chunks = array_chunk($condition['value'], $chunk_size);
+            $new_queries = array();
+            foreach ($value_chunks as $value_chunk) {
+              $value = " ('" . implode("', '", $value_chunk) . "')";
+              $operation = $field . ' ' . $op . ' ' . $value;
+              foreach ($queries as $i => $query) {
+                $new_queries[] = $query . ($key == 0 ? ' WHERE' : ' AND') . ' ' . $operation;
+              }
+            }
+            $query_count = count($new_queries);
+            $queries = $new_queries;
+          }
         }
       }
+
       // Plain old strings can be passed straight on through to the query.
       elseif (is_string($condition)) {
         $i = $query_count;
@@ -1187,8 +1213,10 @@ class SalesforceSync {
           $i--;
         }
       }
+
+      // WTF why did you pass something else? No, I can't handle it.
       else {
-        // WTF why did you pass something else? No, I can't handle it.
+        $fail = TRUE;
       }
     }
 
@@ -1198,20 +1226,26 @@ class SalesforceSync {
         $query_splits++;
         return $this->buildQueries($object_type, $conditions, $query_splits);
       }
-      else {
-        // This query is hopeless, forget about it.
-        watchdog('salesforce', "[@id] Query to Salesforce exceeded limit of @char_limit characters.\nProvided conditions:\n@conditions",
-          array(
-            '@id' => 'sync-08',
-            '@char_limit' => $this->maxQueryLength,
-            '@conditions' => print_r($conditions, TRUE),
-          ), WATCHDOG_ALERT);
-        return array();
-      }
+
+      // This query is hopeless, forget about it.
+      $fail = TRUE;
+      watchdog('salesforce', "[@id] Query to Salesforce exceeded limit of @char_limit characters.\nConditions provided:\n@conditions",
+        array(
+          '@id' => 'sync-08',
+          '@char_limit' => $this->maxQueryLength,
+          '@conditions' => print_r($conditions, TRUE),
+        ), WATCHDOG_ALERT);
     }
-    else {
-      return $queries;
+
+    // If there was a failure at any point, blank out the query so no query is
+    // performed. Not providing any queries will prevent any from being
+    // executed because the intended behavior is to loop through the queries
+    // returned from this method.
+    if ($fail) {
+      $queries = array();
     }
+
+    return $queries;
   }
 
   /**

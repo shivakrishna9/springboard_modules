@@ -286,6 +286,7 @@ function salesforce_sync_salesforce_log_info() {
       'sync-08' => t('Query cannot be shortened under max length'),
       'sync-10' => t('SalesforceAPI is unauthorized'),
       'sync-11' => t('SalesforceSoapPartner is unusable'),
+      'sync-12' => t('Empty query condition provided')
     ),
   );
 }
