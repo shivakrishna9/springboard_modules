@@ -2702,6 +2702,7 @@ function _fundraiser_update_tracking_value($nid, $field) {
   $tracking = _fundraiser_get_tracking_by_nid($nid);
   // No tracking data? Create one.
   if (!$tracking) {
+    $tracking = new stdClass();
     $tracking->nid = $nid;
     _fundraiser_create_tracking($tracking);
     $tracking = _fundraiser_get_tracking_by_nid($nid);
