@@ -668,7 +668,7 @@ function market_source_get_campaigns() {
       try {
         $sync = new SalesforceSync();
 
-        $found_campaigns = $sync->fetchRecords('Campaign', array('Id', 'Name'), 'isActive = TRUE');
+        $found_campaigns = $sync->fetchRecords('Campaign', array('Id', 'Name'), array('isActive = TRUE'));
         // Return a list of Campaign ids.
         foreach ($found_campaigns as $found_campaign) {
           $campaigns[$found_campaign->Id] = array(
