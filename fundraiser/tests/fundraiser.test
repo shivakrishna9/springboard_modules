@@ -38,8 +38,9 @@ class FundraiserTest extends FundraiserSetup {
    * Test the creation of a fundraiser form node.
    */
   function testFundraiserNodeCreation() {
-    $node->default_amount = 20; // Set a different default than normal.
-    $created_node = parent::_fundraiser_setup_create_node($node);
+    $node_stub = new stdClass();
+    $node_stub->default_amount = 20; // Set a different default than normal.
+    $created_node = parent::_fundraiser_setup_create_node($node_stub);
     // Load the created node, so we get latest data.
     $node = node_load($created_node->nid);
     // Check that the created node is expected, per configurations given in setUp.
@@ -164,8 +165,9 @@ class FundraiserTest extends FundraiserSetup {
    * Test the creation of a fundraiser form node.
    */
   function testFundraiserFormDisplay() {
-    $node->default_amount = 20; // Set a different default than normal.
-    $node = parent::_fundraiser_setup_create_node($node);
+    $node_stub = new stdClass();
+    $node_stub->default_amount = 20; // Set a different default than normal.
+    $node = parent::_fundraiser_setup_create_node($node_stub);
     $this->drupalGet('node/'. $node->nid); // Get the node display page. In default mode by default.
     // Check 20 is the default value.
     $this->assertFieldByName('submitted[donation][amount]', 20, t('The correct default value (20) selected on the donation form.'),
