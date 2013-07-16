@@ -1766,6 +1766,8 @@ function fundraiser_commerce_commerce_paypal_ipn_process($order, $payment_method
   _fundraiser_commerce_update_donation_result_data($donation, $success);
   // Finish up any last cleanup for this transaction.
   fundraiser_commerce_fundraiser_donation_after_process($donation);
+  // Save the donation
+  fundraiser_donation_update($donation);
   // Finish up the submission to kick off success / decline triggers.
   _fundraiser_donation_submit_after_process($donation);
 }
