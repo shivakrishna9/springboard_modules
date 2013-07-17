@@ -55,8 +55,9 @@ class EmailWrappersTestCase extends DrupalWebTestCase {
       'email_wrapper_text_message[und][0][value]' => 'This is a text message',
     );
     $this->drupalPost('node/add/email-wrapper', $edit, t('Save'));
-    $this->assertText('Access denied', t('Email Wrapper unpublished by default'));
- 
+    $email_wrapper = node_load(2);
+    $this->assertFalse($email_wrapper->status, t('Email Wrapper unpublished by default'));
+
     // confirm preview button?
 
     // Confirm settingsf UI available.
