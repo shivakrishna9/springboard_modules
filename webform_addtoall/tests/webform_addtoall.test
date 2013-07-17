@@ -2,11 +2,11 @@
 
 /**
  * @file
- * Common functions for all the secure prepopulate tests.
+ * Common functions for all the webform add-to-all tests.
  */
 
-class WebformConfirmationsTestCase extends DrupalWebTestCase {
- 
+class WebformAddToAllTestCase extends DrupalWebTestCase {
+
  public static function getInfo() {
     return array(
       'name' => 'Webform Add To All',
