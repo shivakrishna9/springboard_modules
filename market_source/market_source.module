@@ -559,9 +559,9 @@ function market_source_market_source_field_info() {
  * Helper function, return a list of all market source fields from all available modules.
  */
 function market_source_field_info() {
-  static $fields;
   // Cache market source fields during page execution.
-  if (empty($fields)) {
+  $fields = &drupal_static(__FUNCTION__);
+  if (!isset($fields) || empty($fields)) {
     // Request additional fields from other modules.
     $fields = module_invoke_all('market_source_field_info');
     // Allow for others to modify as needed.
