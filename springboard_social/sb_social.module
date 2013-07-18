@@ -255,6 +255,9 @@ function sb_social_share_url($nid, $uid, $sid, $service, $settings) {
 
   if (module_exists('market_source') && isset($settings['market_source'])) {
     foreach ($settings['market_source'] as $key => $value) {
+      if (!$value) {
+        continue;
+      }
       $options['query'][$key] = $value;
     }
   }
