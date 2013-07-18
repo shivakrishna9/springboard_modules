@@ -1002,6 +1002,10 @@ class SalesforceSync {
    *   </code>
    */
   public function fetchRecords($object_type, array $fields, array $conditions = array()) {
+    if (!is_object($this->soap)) {
+      watchdog('salesforce_sync', t('Unable to connect to Salesforce'), array(), WATCHDOG_ERROR);
+      return FALSE;
+    }
     $queries = $this->buildQueries($object_type, $conditions);
 
     // List of error messages that should cease all querying from continuing.
