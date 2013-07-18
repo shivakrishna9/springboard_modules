@@ -58,8 +58,8 @@
         
         // Custom zipcode validation
         $.validator.addMethod('zipcode', function(value, element) {
-          // Add regexp
-          return this.optional(element) || /(^\d{5}$)|(^\d{5}(-|\s)\d{4}$)/i.test(value);
+          // U.S. or Canadian Zip codes
+          return this.optional(element) || /(^\d{5}((-|\s)\d{4})?$)|(^[ABCEGHJKLMNPRSTVXY]{1}\d{1}[A-Z]{1} *\d{1}[A-Z]{1}\d{1}$)/i.test(value);
         }, "Enter a valid zipcode");
 
         // Instantiate Form Validation
