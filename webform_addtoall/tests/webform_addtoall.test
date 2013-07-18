@@ -59,7 +59,6 @@ class WebformAddToAllTestCase extends DrupalWebTestCase {
      'form_key' => 'derp',
      'value' => '',
      'addtoall[webform_types][webform]' => 'webform',
-     'pid' => 0,
      'extra[description]' => '',
    );
    $this->drupalPost("node/$nid/webform/components/new/textfield", $settings, t('Save component'), $options, array(), 'webform-component-edit-form');
