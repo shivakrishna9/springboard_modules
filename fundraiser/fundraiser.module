@@ -1565,12 +1565,17 @@ function fundraiser_donation_create($donation) {
     'status' => $donation->status,
     'amount' => $donation->donation['amount'],
     'currency' => $donation->donation['currency'],
-    'gateway' => $donation->gateway,
     'txn_id' => '',
     'form_url' => $form_url,
     'created' => REQUEST_TIME,
     'changed' => REQUEST_TIME,
   );
+  if (is_string($donation->gateway)) {
+    $donation_record['gateway'] = $donation->gateway;
+  }
+  elseif (is_array($donation->gateway) && isset($donation->gateway['id']) && !empty($donation->gateway['id'])) {
+    $donation_record['gateway'] = $donation->gateway['id'];
+  }
   _fundraiser_create_donation($donation_record);
   // Add a comment.
   global $user;
@@ -1612,8 +1617,13 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
   if (isset($donation->currency) && !empty($donation->currency)) {
     $donation_record['currency'] = $donation->currency;
   }
-  if (isset($donation->gateway) && !empty($donation->gateway) && is_string($donation->gateway)) {
-    $donation_record['gateway'] = $donation->gateway;
+  if (isset($donation->gateway) && !empty($donation->gateway)) {
+    if (is_string($donation->gateway)) {
+      $donation_record['gateway'] = $donation->gateway;
+    }
+    elseif (is_array($donation->gateway) && isset($donation->gateway['id']) && !empty($donation->gateway['id'])) {
+      $donation_record['gateway'] = $donation->gateway['id'];
+    }
   }
   if (isset($donation->txn_id) && !empty($donation->txn_id)) {
     $donation_record['txn_id'] = $donation->txn_id;

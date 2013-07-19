@@ -194,8 +194,8 @@ class FundraiserSustainerTest extends FundraiserSetup {
       'city' => 'CHANGED CITY',
       'zip' => '12345',
       'payment_fields[credit][card_number]' => '4111111111111111',
-      'payment_fields[credit][expiration_date][card_expiration_month]' => ''. $month,
-      'payment_fields[credit][expiration_date][card_expiration_year]' => ''. $year,
+      'payment_fields[credit][expiration_date][card_expiration_month]' => $month,
+      'payment_fields[credit][expiration_date][card_expiration_year]' => $year,
       'payment_fields[credit][card_cvv]' => '111',
     );
     $this->drupalPost('user/' . $created_user->uid . '/recurring_overview/' . $master_did, $post, t('Save changes'));
@@ -219,8 +219,8 @@ class FundraiserSustainerTest extends FundraiserSetup {
     $new_year = date('Y', strtotime('+1 month'));
     $post = array(
       'payment_fields[credit][card_number]' => '4111111111111111',
-      'payment_fields[credit][expiration_date][card_expiration_month]' => ''. $new_month,
-      'payment_fields[credit][expiration_date][card_expiration_year]' => ''. $new_year,
+      'payment_fields[credit][expiration_date][card_expiration_month]' => $new_month,
+      'payment_fields[credit][expiration_date][card_expiration_year]' => $new_year,
       'payment_fields[credit][card_cvv]' => '111',
     );
     $this->drupalPost('user/' . $created_user->uid . '/recurring_overview/' . $master_did, $post, t('Save changes'));
@@ -238,8 +238,8 @@ class FundraiserSustainerTest extends FundraiserSetup {
     $new_year = date('Y', strtotime('+3 month'));
     $post = array(
       'payment_fields[credit][card_number]' => '4111111111111111',
-      'payment_fields[credit][expiration_date][card_expiration_month]' => ''. $new_month,
-      'payment_fields[credit][expiration_date][card_expiration_year]' => ''. $new_year,
+      'payment_fields[credit][expiration_date][card_expiration_month]' => $new_month,
+      'payment_fields[credit][expiration_date][card_expiration_year]' => $new_year,
       'payment_fields[credit][card_cvv]' => '111',
     );
     $this->drupalPost('user/' . $created_user->uid . '/recurring_overview/' . $master_did, $post, t('Save changes'));
