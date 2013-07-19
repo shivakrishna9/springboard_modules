@@ -89,7 +89,7 @@ function sb_social_admin() {
         foreach ($campaigns as $campaign_id => $campaign) {
           $select_options[$campaign_id] = $campaign['name'] . ' (' . $campaign_id . ')';
         }
-    
+
         $form['services']['market_source']['springoard_social_ms_cid'] = array(
           '#type' => 'select',
           '#title' => t('Campaign ID'),

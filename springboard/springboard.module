@@ -327,7 +327,7 @@ function springboard_menu_alter(&$items) {
     $items['admin/springboard/settings/webform-dupe']['title'] = 'Webform Dupe';
     $items['admin/springboard/settings/webform-dupe']['weight'] = 12;
   }
-  
+
   if (module_exists('sb_social')) {
     $items['admin/springboard/sb-social'] = $items['admin/config/services/springboard_social'];
     $items['admin/springboard/sb-social']['type'] = MENU_NORMAL_ITEM;
@@ -584,7 +584,7 @@ function springboard_form_alter(&$form, &$form_state, $form_id) {
       $input_class = isset($user_profile_field['extra']['classes']) ? $user_profile_field['extra']['classes'] : 'input-medium';
       $field = _springboard_get_form_field($form, $field_name);
       $field['#attributes']['class'][] = $input_class;
-      $form = _springboard_update_form_field($form, $field_name, $field);  
+      $form = _springboard_update_form_field($form, $field_name, $field);
     }
   }
 }

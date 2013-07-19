@@ -1340,21 +1340,21 @@ function fundraiser_donation_form(&$form, &$form_state) {
     // We add these first to make sure they're available for the hook call.
     $form['#validate'][] = 'fundraiser_donation_validate';
     $form['#submit'][] = 'fundraiser_donation_submit';
-    
-    // When confirmations are moved, this goes elsewhere.
-    $form['#submit'][] = 'fundraiser_donation_post_submit';   
 
-    // Add class to zip code field    
+    // When confirmations are moved, this goes elsewhere.
+    $form['#submit'][] = 'fundraiser_donation_post_submit';
+
+    // Add class to zip code field
     $quantity = _fundraiser_get_form_field($form, 'quantity');
     if (!empty($quantity)) {
       $quantity['#attributes']['class'][] = 'input-medium';
-      $form = _fundraiser_update_form_field($form, 'quantity', $quantity);    
+      $form = _fundraiser_update_form_field($form, 'quantity', $quantity);
     }
 
     // Add class to zip code field
     $zip = _fundraiser_get_form_field($form, 'zip');
     $zip['#attributes']['class'][] = 'input-medium';
-    $form = _fundraiser_update_form_field($form, 'zip', $zip);    
+    $form = _fundraiser_update_form_field($form, 'zip', $zip);
 
     // Add class to donation_other field
     $other_amount = _fundraiser_get_form_field($form, 'other_amount');
@@ -1371,7 +1371,7 @@ function fundraiser_donation_form(&$form, &$form_state) {
         $form = array_merge($form, $result);
       }
     }
-  }  
+  }
 }
 
 /**
@@ -2382,7 +2382,7 @@ function _fundraiser_create_fundraiser($fundraiser) {
     $imploded_amounts = array_unique($imploded_amounts);
     // On getting fundraiser this will be exploded into the correct values.
     $fundraiser['donation_amounts'] = implode(',', $imploded_amounts);
-    // TODO: we should also store the donation_default internally, instead of 
+    // TODO: we should also store the donation_default internally, instead of
     // relying on fundraiser_webform to store that value for us.
     // For now, this will have to do.
     // Serialize for storage, our configured gateway values for storage in components.

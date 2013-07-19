@@ -6,7 +6,7 @@
  */
 
 // Include the setup test class.
-module_load_include('test', 'fundraiser', 'tests/fundraiser_commerce.gateway'); 
+module_load_include('test', 'fundraiser', 'tests/fundraiser_commerce.gateway');
 
 class FundraiserCommerceGatewayAuthnetTest extends FundraiserCommerceGatewayTest {
   protected $privileged_user;

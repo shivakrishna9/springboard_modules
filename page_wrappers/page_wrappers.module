@@ -392,7 +392,7 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
         '#suffix' => '</div>',
         '#theme' => 'page_wrappers_node_assignments',
       );
- 
+
       // Let the ajax functions know which field group to update
       $form['#page_wrapper_config_parent'] = 'page_wrappers';
 
@@ -710,7 +710,7 @@ function _page_wrappers_available_wrappers() {
 
 /**
  * Get all Access Rulesets
- * 
+ *
  * @return Array
  *    Returns an array of Access Rulesets
  */
@@ -751,7 +751,7 @@ function _page_wrappers_assign_wrapper($nid, $wrapper) {
 
 /**
  * Determines which page wrapper to use with Ctools Access Rules
- * 
+ *
  * @param $wrappers Array
  *    An array of page wrapper assignments
  * @param $node Object
@@ -798,7 +798,7 @@ function _page_wrappers_node_assigned_wrapper($node) {
 
 /**
  * Determine if the current page is a node that could be displayed in a page wrapper
- * 
+ *
  * @return Object
  *    A fully loaded node if this is a page request for a page wrapper enabled node, else false
  */
@@ -814,7 +814,7 @@ function _page_wrappers_page_node() {
   }
 
   if ($node && _page_wrappers_enabled_type($node, TRUE)) {
-    return $node;   
+    return $node;
   }
 
   return FALSE;

@@ -69,7 +69,7 @@ class FundraiserTest extends FundraiserSetup {
     $fundraiser->show_other_amount = TRUE;
     $fundraiser->minimum_donation_amount = 10;
     $fundraiser->default_amount = 20;
-    $fundraiser->gateways = serialize($node->gateways); 
+    $fundraiser->gateways = serialize($node->gateways);
     // Tweak the field with a callback as needed per fundraiser's configurations.
     foreach ($field_keys as $field_key) {
       // In case a runtime requirement changes the field info types (as amount for example does).
@@ -196,7 +196,7 @@ class FundraiserTest extends FundraiserSetup {
       $count++;
       $did = $donation->did;
     }
-    $this->assertEqual(1, $count, t('A single donation (#@did) was created.', array('@did' => $did)), t('Fundraiser Submit'));   
+    $this->assertEqual(1, $count, t('A single donation (#@did) was created.', array('@did' => $did)), t('Fundraiser Submit'));
     // Confirmation tokens -> covered elsewhere, check for donation tokens though.
     $post = array(
       'submitted[donor_information][first_name]' => 'FIRST NAME',

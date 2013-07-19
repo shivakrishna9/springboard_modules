@@ -186,7 +186,7 @@ function fundraiser_upsell_token_list($type = 'all') {
 
 
 /**
- * Checks if a confirmation page has been viewed. Copied from 
+ * Checks if a confirmation page has been viewed. Copied from
  * funderaiser_secure_confirmation but added a count as it will expect the count
  * to be 1 in order to view the upsell
  *

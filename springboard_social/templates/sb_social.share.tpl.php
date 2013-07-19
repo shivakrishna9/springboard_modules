@@ -2,7 +2,7 @@
 <?php
 if (in_array('facebook', $services)) : ?>
 <a class="addthis_button_facebook social-share-link facebook" addthis:url="<?php print $services['facebook_url']; ?>"></a>
-<?php 
+<?php
 endif;
  ?>
 <?php if (in_array('twitter', $services)) : ?>
@@ -10,4 +10,4 @@ endif;
 <?php
 endif;
 ?>
-</div> 
+</div>

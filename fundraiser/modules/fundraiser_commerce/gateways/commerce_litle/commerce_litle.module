@@ -146,8 +146,8 @@ function commerce_litle_cc_settings_form($settings = array()) {  // Note use of 
       COMMERCE_CREDIT_AUTH_ONLY => t('Authorization only (requires manual or automated capture after checkout)'),
     ),
     '#default_value' => $settings['commerce_litle_settings_txn_type'],
-  );   
-  */  
+  );
+  */
   return $form;
 }
 
@@ -222,8 +222,8 @@ function commerce_litle_echeck_settings_form($settings = array()) {  // Note use
       COMMERCE_CREDIT_AUTH_ONLY => t('Authorization only (requires manual or automated capture after checkout)'),
     ),
     '#default_value' => $settings['commerce_litle_settings_txn_type'],
-  );   
-  */  
+  );
+  */
   return $form;
 }
 
@@ -377,7 +377,7 @@ function _commerce_litle_get_litle() {
  */
 function _commerce_litle_get_litle_config($gateway) {
   // Configure with the gateway values for the .ini value, merge with the credit info.
-  $auth_info = array( 
+  $auth_info = array(
     'user' => !empty($gateway['settings']['commerce_litle_settings_user']) ? $gateway['settings']['commerce_litle_settings_user'] : '',
     'password' => !empty($gateway['settings']['commerce_litle_settings_password']) ? $gateway['settings']['commerce_litle_settings_password'] : '',
     'merchantId' => !empty($gateway['settings']['commerce_litle_settings_merchantId']) ? $gateway['settings']['commerce_litle_settings_merchantId'] : '',
@@ -493,7 +493,7 @@ function _commerce_litle_cc_card_type_to_litle($type) {
       return "AX";
     case "discover":
       return "DI";
-  } 
+  }
 }
 
 /**
@@ -613,7 +613,7 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
   }
 
   $saleResponse = $init->saleRequest($nvp);
- 
+
   $transaction = commerce_payment_transaction_new('commerce_litle_cc', $order->order_id);
   $transaction->instance_id = $payment_method['instance_id'];
   $transaction->remote_id = XmlParser::getNode($saleResponse, 'litleTxnId');

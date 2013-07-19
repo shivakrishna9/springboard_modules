@@ -31,7 +31,7 @@ function springboard_views_views_handlers() {
  */
 function springboard_views_views_data() {
   $data = _springboard_views_invoke_all('views_data');
-  
+
   // Add Views table information for Webform hidden components
   $data['webform_component']['table']['group'] = t('Webform');
   $data['webform_component']['table']['base'] = array(

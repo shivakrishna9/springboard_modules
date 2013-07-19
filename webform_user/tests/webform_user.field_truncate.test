@@ -85,7 +85,7 @@ class WebformUserFieldTruncateTest extends WebformUserSetup {
     // Check the referrer string.
     $truncated = substr($sbp_initial_referrer, 0, 255);
     $users_sbp_initial_referrer = $user->sbp_initial_referrer[$lang][0]['value'];
-    $this->assertEqual($truncated, $users_sbp_initial_referrer, 'Created user\'s referrer is truncated.');    
+    $this->assertEqual($truncated, $users_sbp_initial_referrer, 'Created user\'s referrer is truncated.');
     $this->assertEqual(strlen($users_sbp_initial_referrer), 255, 'Created user\'s referrer is the max length.');
   }
 
