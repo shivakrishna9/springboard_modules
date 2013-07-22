@@ -485,8 +485,17 @@ function _fundraiser_commerce_submission_flatten($submit_tree) {
  * AJAX callback for dealing with changes to the donation form.
  */
 function _fundraiser_commerce_client_state_ajax_submit($form, $form_state, &$mess = '') {
-  // Get the form item we want to render.
-  return fundraiser_get_form_field($form['#calling_module'], $form, 'state');
+  // Replace the state field with an updated version with the state list for the
+  // selected country.
+  // After the replace event add focus to the state field. This makes for a smooth transition
+  // in some browsers for users who tab between fields.
+  return array(
+    '#type' => 'ajax',
+    '#commands' => array(
+      ajax_command_replace('#zone-select-wrapper', render(fundraiser_get_form_field($form['#calling_module'], $form, 'state'))),
+      ajax_command_invoke('#edit-submitted-billing-information-state', 'focus'),
+    )
+  );
 }
 
 /**
