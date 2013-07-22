@@ -262,7 +262,7 @@ function sb_social_share_url($nid, $uid, $sid, $service, $settings) {
     }
   }
   $url = url('node/' . $nid, $options);
-
+  drupal_set_message('share url:' . $url);
   return url('node/' . $nid, $options);
 }
 
