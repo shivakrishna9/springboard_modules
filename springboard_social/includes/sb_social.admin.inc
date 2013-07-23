@@ -82,11 +82,28 @@ function sb_social_admin() {
       if (in_array($key, $blacklist)) {
         continue;
       }
-      $form['services']['market_source']['springboard_social_ms_' . $key] = array(
+      // special handling for campaign ID
+      if ($key == 'cid') {
+        $campaigns = market_source_get_campaigns(FALSE);
+        $select_options = array();
+        foreach ($campaigns as $campaign_id => $campaign) {
+          $select_options[$campaign_id] = $campaign['name'] . ' (' . $campaign_id . ')';
+        }
+
+        $form['services']['market_source']['springoard_social_ms_cid'] = array(
+          '#type' => 'select',
+          '#title' => t('Campaign ID'),
+          '#options' => $select_options,
+          '#default_value' => variable_get('springboard_social_ms_cid', ''),
+        );
+      }
+      else {
+        $form['services']['market_source']['springboard_social_ms_' . $key] = array(
           '#type' => 'textfield',
           '#title' => $field['#title'],
           '#default_value' => variable_get('springboard_social_ms_' . $key, ''),
-      );
+        );
+      }
     }
   }
   $form['#submit'][] = 'sb_social_admin_settings_submit';
@@ -227,12 +244,26 @@ function sb_social_webform_settings($form, $edit, $node) {
       if (in_array($key, $blacklist)) {
         continue;
       }
-
-      $form['market_source'][$key] = array(
-        '#type' => 'textfield',
-        '#title' => $field['#title'],
-        '#default_value' => (!empty($settings) && !empty($service) && !empty($settings[$service]['market_source'][$key])) ? $settings[$service]['market_source'][$key] : '',
-      );
+      if ($key == 'cid') {
+        $campaigns = market_source_get_campaigns(FALSE);
+        $select_options = array();
+        foreach ($campaigns as $campaign_id => $campaign) {
+          $select_options[$campaign_id] = $campaign['name'] . ' (' . $campaign_id . ')';
+        }
+        $form['market_source']['cid'] = array(
+          '#type' => 'select',
+          '#title' => t('Campaign ID'),
+          '#options' => $select_options,
+          '#default_value' => (!empty($settings) && !empty($service) && !empty($settings[$service]['market_source'][$key])) ? $settings[$service]['market_source'][$key] : '',
+        );
+      }
+      else {
+        $form['market_source'][$key] = array(
+          '#type' => 'textfield',
+          '#title' => $field['#title'],
+          '#default_value' => (!empty($settings) && !empty($service) && !empty($settings[$service]['market_source'][$key])) ? $settings[$service]['market_source'][$key] : '',
+        );
+      }
     }
   }
   $form['submit'] = array(

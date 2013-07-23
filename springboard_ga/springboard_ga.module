@@ -440,7 +440,7 @@ EOS;
     $js .= "\n" . _springboard_ga_js_add_trans($node->springboard_ga['springboard_ga_trans'], 'traditional');
     $js .= "\n" . _springboard_ga_js_add_item($node->springboard_ga['springboard_ga_item'], 'traditional');
     $js .= <<<EOS
-      
+
       springboard_ga_pageTracker._trackTrans();
     } catch(err) {}
 EOS;

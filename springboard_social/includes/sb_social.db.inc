@@ -85,7 +85,57 @@ function sb_social_webform_settings_load($nid) {
       $settings[$nid][$result['service']] = unserialize($result['data']);
     }
   }
+  // supply global defaults if no settings are available.
+  if (empty($settings[$nid])) {
+    $enabled_services = sb_social_get_enabled_services();
+    foreach ($enabled_services as $service) {
+      $settings[$nid][$service] = _sb_social_webform_defaults($service);
+    }
+  }
+
   return $settings[$nid];
+}
+
+/**
+ * provide service default settings
+ */
+function _sb_social_webform_defaults($service) {
+  switch ($service) {
+    case 'facebook':
+      $settings = array(
+        'title' => variable_get('springboard_social_facebook_title', '%title'),
+        'description' => variable_get('springboard_social_facebook_description', '%teaser'),
+        'image' => '', variable_get('springboard_social_facebook_image', ''),
+      );
+      break;
+    case 'twitter':
+      $settings = array(
+        'message' => variable_get('springboard_social_twitter_message', '%title'),
+      );
+      break;
+    default:
+      break;
+  }
+  if (module_exists('market_source')) {
+    $settings['market_source'] = _sb_social_market_source_defaults();
+  }
+  return $settings;
+}
+
+/**
+ * Provide default MS settings when no node settings are available.
+ */
+function _sb_social_market_source_defaults() {
+  $market_source = array();
+  $fields = market_source_field_info();
+  $blacklist = _sb_social_component_blacklist();
+  foreach ($fields as $key => $field) {
+    if (in_array($key, $blacklist)) {
+        continue;
+    }
+    $market_source[$key] = variable_get('springboard_social_ms_' . $key, '');
+  }
+  return $market_source;
 }
 
 function sb_social_get_enabled_services() {

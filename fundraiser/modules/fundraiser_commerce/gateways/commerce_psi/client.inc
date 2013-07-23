@@ -146,7 +146,7 @@ class PsiClient {
         'ResponseMessage' => 'This was a test transaction.',
         'ResponseTime' => '2343.75',
         'TransactionId' => 123123123,
-      ); 
+      );
     }
   }
 }

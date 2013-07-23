@@ -337,8 +337,8 @@ function salesforce_log_watchdog($watchdog_message) {
   if ($watchdog_message['type'] == 'salesforce' && (module_exists('rules') || module_exists('trigger'))) {
     // The 'Any Salesforce message' event is always included.
     $ids = array('salesforce_log-log-00');
-    if (isset($watchdog_message['variables']['!id'])) {
-      $ids[] = 'salesforce_log-' . $watchdog_message['variables']['!id'];
+    if (isset($watchdog_message['variables']['@id'])) {
+      $ids[] = 'salesforce_log-' . $watchdog_message['variables']['@id'];
     }
     global $user;
     foreach ($ids as $id) {

@@ -9,7 +9,7 @@
 class springboard_webform_hidden_component_values extends views_handler_field{
   //add an option to the field handler to choose which component's value is displayed.
   function option_definition() {
-    $options = parent::option_definition();    
+    $options = parent::option_definition();
     $options['webform_component_options'] = array('default' => NULL);
     return $options;
   }
@@ -24,7 +24,7 @@ class springboard_webform_hidden_component_values extends views_handler_field{
       ->execute();
     $options = array();
     while($record = $result->fetchAssoc()) {
-      $options[$record['form_key']] = $record['name']; 
+      $options[$record['form_key']] = $record['name'];
     }
     //Create a form item of options for which component's value to display.
     $form['webform_component_options'] = array(
@@ -35,7 +35,7 @@ class springboard_webform_hidden_component_values extends views_handler_field{
       '#default_value' => $this->options['webform_component_options'],
     );
   }
-   
+
   function query() {
     //Join in an instance of the webform_component table for the form_key value chosen.
     $this->ensure_my_table();
@@ -45,11 +45,11 @@ class springboard_webform_hidden_component_values extends views_handler_field{
       'table' => 'webform_component',
       'field' => 'nid',
     );
-    $join = new views_join(); 
+    $join = new views_join();
     $join->definition = $first;
     $join->construct();
-    $join->adjusted = TRUE;    
-      
+    $join->adjusted = TRUE;
+
     $alias = 'webform_component_'.$this->options['webform_component_options'];
     $this->query->add_field($alias,'value', $alias.'_value');
     $this->query->add_relationship($alias, $join, 'node');
@@ -57,9 +57,9 @@ class springboard_webform_hidden_component_values extends views_handler_field{
       0,
       db_and()
         ->condition('webform_component_'.$this->options['webform_component_options'].'.form_key', $this->options['webform_component_options'], "=")
-    );    
+    );
   }
-    
+
   function render($values) {
     //output the value
     $alias = 'webform_component_'.$this->options['webform_component_options'].'_value';

@@ -50,6 +50,18 @@ function salesforce_sync_admin_form($form, &$form_state) {
     '#default_value' => _sfs_get_value('max_retrieve_size', $form_state),
   );
 
+  // Variable salesforce_sync_query_limit.
+  $form['query_limit'] = array(
+    '#id' => 'salesforce-sync-salesforce-query-limit',
+    '#title' => t('Query Limit'),
+    '#description' => t('The maximum quantity of records that can be retrieved
+      from Salesforce in a single process.  This prevents bad queries from
+      trying to select all records.'),
+    '#type' => 'textfield',
+    '#size' => 6,
+    '#default_value' => _sfs_get_value('query_limit', $form_state),
+  );
+
   // Variable salesforce_sync_max_query_length.
   $form['max_query_length'] = array(
     '#id' => 'salesforce-sync-salesforce-max-query-length',
@@ -81,6 +93,7 @@ function salesforce_sync_admin_form_validate($form, &$form_state) {
       case 'max_batch_size':
       case 'max_retrieve_size':
       case 'max_query_length':
+      case 'query_limit':
         $title = $form[$var]['#title'];
         if (!is_numeric($value)) {
           form_set_error($var, 'Value for "' . $title . '" must be numeric.');
@@ -111,6 +124,7 @@ function salesforce_sync_admin_form_submit($form, &$form_state) {
       case 'max_batch_size':
       case 'max_retrieve_size':
       case 'max_query_length':
+      case 'query_limit':
         $converted_value = _sfs_get_value($var, $form_state);
         variable_set('salesforce_sync_' . $var, $converted_value);
         break;
@@ -140,6 +154,10 @@ function _sfs_get_value($field, $form_state) {
 
       case 'max_query_length':
         $value = variable_get('salesforce_sync_max_query_length', SALESFORCE_SYNC_MAX_QUERY_LENGTH_DEFAULT);
+        break;
+
+      case 'query_limit':
+        $value = variable_get('salesforce_sync_query_limit', SALESFORCE_SYNC_QUERY_LIMIT_DEFAULT);
         break;
     }
   }

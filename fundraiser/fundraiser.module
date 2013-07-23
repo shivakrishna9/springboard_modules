@@ -1340,21 +1340,21 @@ function fundraiser_donation_form(&$form, &$form_state) {
     // We add these first to make sure they're available for the hook call.
     $form['#validate'][] = 'fundraiser_donation_validate';
     $form['#submit'][] = 'fundraiser_donation_submit';
-    
-    // When confirmations are moved, this goes elsewhere.
-    $form['#submit'][] = 'fundraiser_donation_post_submit';   
 
-    // Add class to zip code field    
+    // When confirmations are moved, this goes elsewhere.
+    $form['#submit'][] = 'fundraiser_donation_post_submit';
+
+    // Add class to zip code field
     $quantity = _fundraiser_get_form_field($form, 'quantity');
     if (!empty($quantity)) {
       $quantity['#attributes']['class'][] = 'input-medium';
-      $form = _fundraiser_update_form_field($form, 'quantity', $quantity);    
+      $form = _fundraiser_update_form_field($form, 'quantity', $quantity);
     }
 
     // Add class to zip code field
     $zip = _fundraiser_get_form_field($form, 'zip');
     $zip['#attributes']['class'][] = 'input-medium';
-    $form = _fundraiser_update_form_field($form, 'zip', $zip);    
+    $form = _fundraiser_update_form_field($form, 'zip', $zip);
 
     // Add class to donation_other field
     $other_amount = _fundraiser_get_form_field($form, 'other_amount');
@@ -1371,7 +1371,7 @@ function fundraiser_donation_form(&$form, &$form_state) {
         $form = array_merge($form, $result);
       }
     }
-  }  
+  }
 }
 
 /**
@@ -1565,12 +1565,17 @@ function fundraiser_donation_create($donation) {
     'status' => $donation->status,
     'amount' => $donation->donation['amount'],
     'currency' => $donation->donation['currency'],
-    'gateway' => $donation->gateway,
     'txn_id' => '',
     'form_url' => $form_url,
     'created' => REQUEST_TIME,
     'changed' => REQUEST_TIME,
   );
+  if (is_string($donation->gateway)) {
+    $donation_record['gateway'] = $donation->gateway;
+  }
+  elseif (is_array($donation->gateway) && isset($donation->gateway['id']) && !empty($donation->gateway['id'])) {
+    $donation_record['gateway'] = $donation->gateway['id'];
+  }
   _fundraiser_create_donation($donation_record);
   // Add a comment.
   global $user;
@@ -1612,8 +1617,13 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
   if (isset($donation->currency) && !empty($donation->currency)) {
     $donation_record['currency'] = $donation->currency;
   }
-  if (isset($donation->gateway) && !empty($donation->gateway) && is_string($donation->gateway)) {
-    $donation_record['gateway'] = $donation->gateway;
+  if (isset($donation->gateway) && !empty($donation->gateway)) {
+    if (is_string($donation->gateway)) {
+      $donation_record['gateway'] = $donation->gateway;
+    }
+    elseif (is_array($donation->gateway) && isset($donation->gateway['id']) && !empty($donation->gateway['id'])) {
+      $donation_record['gateway'] = $donation->gateway['id'];
+    }
   }
   if (isset($donation->txn_id) && !empty($donation->txn_id)) {
     $donation_record['txn_id'] = $donation->txn_id;
@@ -2372,7 +2382,7 @@ function _fundraiser_create_fundraiser($fundraiser) {
     $imploded_amounts = array_unique($imploded_amounts);
     // On getting fundraiser this will be exploded into the correct values.
     $fundraiser['donation_amounts'] = implode(',', $imploded_amounts);
-    // TODO: we should also store the donation_default internally, instead of 
+    // TODO: we should also store the donation_default internally, instead of
     // relying on fundraiser_webform to store that value for us.
     // For now, this will have to do.
     // Serialize for storage, our configured gateway values for storage in components.
@@ -2702,6 +2712,7 @@ function _fundraiser_update_tracking_value($nid, $field) {
   $tracking = _fundraiser_get_tracking_by_nid($nid);
   // No tracking data? Create one.
   if (!$tracking) {
+    $tracking = new stdClass();
     $tracking->nid = $nid;
     _fundraiser_create_tracking($tracking);
     $tracking = _fundraiser_get_tracking_by_nid($nid);

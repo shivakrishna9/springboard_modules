@@ -48,6 +48,9 @@ define('SALESFORCE_SYNC_MAX_BATCH_SIZE_DEFAULT', 200);
 // The maximum records that can be fetched from Salesforce in one call.
 define('SALESFORCE_SYNC_MAX_RETRIEVE_SIZE_DEFAULT', 2000);
 
+// The maximum quantity of records that can ever be retrieved.
+define('SALESFORCE_SYNC_QUERY_LIMIT_DEFAULT', 4000);
+
 /**
  * @}
  */
@@ -286,6 +289,7 @@ function salesforce_sync_salesforce_log_info() {
       'sync-08' => t('Query cannot be shortened under max length'),
       'sync-10' => t('SalesforceAPI is unauthorized'),
       'sync-11' => t('SalesforceSoapPartner is unusable'),
+      'sync-12' => t('Empty query condition provided')
     ),
   );
 }

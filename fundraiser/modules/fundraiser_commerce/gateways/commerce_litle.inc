@@ -88,7 +88,7 @@ function commerce_litle_fundraiser_commerce_validate($submission_fields, $paymen
     $form_parents = array_merge($payment_fields['#parents'], array('bank account'));
     // Pass the values array with the key the litle module expects
     $values = array('echeck' => $submission_fields['payment_fields']['bank account']);
-    commerce_litle_echeck_submit_form_validate(NULL, $payment_fields, $values, NULL, $form_parents); 
+    commerce_litle_echeck_submit_form_validate(NULL, $payment_fields, $values, NULL, $form_parents);
   }
 
   return $submission_fields;

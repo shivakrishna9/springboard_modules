@@ -38,8 +38,9 @@ class FundraiserTest extends FundraiserSetup {
    * Test the creation of a fundraiser form node.
    */
   function testFundraiserNodeCreation() {
-    $node->default_amount = 20; // Set a different default than normal.
-    $created_node = parent::_fundraiser_setup_create_node($node);
+    $node_stub = new stdClass();
+    $node_stub->default_amount = 20; // Set a different default than normal.
+    $created_node = parent::_fundraiser_setup_create_node($node_stub);
     // Load the created node, so we get latest data.
     $node = node_load($created_node->nid);
     // Check that the created node is expected, per configurations given in setUp.
@@ -68,7 +69,7 @@ class FundraiserTest extends FundraiserSetup {
     $fundraiser->show_other_amount = TRUE;
     $fundraiser->minimum_donation_amount = 10;
     $fundraiser->default_amount = 20;
-    $fundraiser->gateways = serialize($node->gateways); 
+    $fundraiser->gateways = serialize($node->gateways);
     // Tweak the field with a callback as needed per fundraiser's configurations.
     foreach ($field_keys as $field_key) {
       // In case a runtime requirement changes the field info types (as amount for example does).
@@ -164,8 +165,9 @@ class FundraiserTest extends FundraiserSetup {
    * Test the creation of a fundraiser form node.
    */
   function testFundraiserFormDisplay() {
-    $node->default_amount = 20; // Set a different default than normal.
-    $node = parent::_fundraiser_setup_create_node($node);
+    $node_stub = new stdClass();
+    $node_stub->default_amount = 20; // Set a different default than normal.
+    $node = parent::_fundraiser_setup_create_node($node_stub);
     $this->drupalGet('node/'. $node->nid); // Get the node display page. In default mode by default.
     // Check 20 is the default value.
     $this->assertFieldByName('submitted[donation][amount]', 20, t('The correct default value (20) selected on the donation form.'),
@@ -194,7 +196,7 @@ class FundraiserTest extends FundraiserSetup {
       $count++;
       $did = $donation->did;
     }
-    $this->assertEqual(1, $count, t('A single donation (#@did) was created.', array('@did' => $did)), t('Fundraiser Submit'));   
+    $this->assertEqual(1, $count, t('A single donation (#@did) was created.', array('@did' => $did)), t('Fundraiser Submit'));
     // Confirmation tokens -> covered elsewhere, check for donation tokens though.
     $post = array(
       'submitted[donor_information][first_name]' => 'FIRST NAME',

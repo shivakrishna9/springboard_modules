@@ -2,11 +2,11 @@
 
 /**
  * @file
- * Common functions for all the secure prepopulate tests.
+ * Common functions for all the webform add-to-all tests.
  */
 
-class WebformConfirmationsTestCase extends DrupalWebTestCase {
- 
+class WebformAddToAllTestCase extends DrupalWebTestCase {
+
  public static function getInfo() {
     return array(
       'name' => 'Webform Add To All',
@@ -34,7 +34,7 @@ class WebformConfirmationsTestCase extends DrupalWebTestCase {
   function testWebformComponentAdd() {
     //create test webforms
     $nids = $this->WebformCreateMultiple();
-    
+
    // component addtoall
    $nid = $nids[0];
    $options = array(
@@ -59,7 +59,6 @@ class WebformConfirmationsTestCase extends DrupalWebTestCase {
      'form_key' => 'derp',
      'value' => '',
      'addtoall[webform_types][webform]' => 'webform',
-     'pid' => 0,
      'extra[description]' => '',
    );
    $this->drupalPost("node/$nid/webform/components/new/textfield", $settings, t('Save component'), $options, array(), 'webform-component-edit-form');
@@ -69,10 +68,10 @@ class WebformConfirmationsTestCase extends DrupalWebTestCase {
      $success = db_query('SELECT 1 FROM {webform_component} WHERE form_key = :form_key AND nid = :nid', array(':form_key' => 'derp', ':nid' => $nid))->fetchColumn();
      $this->assertTrue($success, t('Component added to node @nid', array('@nid' => $nid)));
    }
- 
-   // confirm element display on webforms.  
+
+   // confirm element display on webforms.
   }
-  
+
   private function WebformCreateMultiple($count = 3) {
     $nids = array();
     for ($i = 0; $i < $count; ++$i) {
@@ -95,7 +94,7 @@ class WebformConfirmationsTestCase extends DrupalWebTestCase {
       'value' => '',
       'extra' => serialize(array(
         'title_display' => 'before',
-        'description' => '', 
+        'description' => '',
         'private' => '',
       )),
       'mandatory' => '',

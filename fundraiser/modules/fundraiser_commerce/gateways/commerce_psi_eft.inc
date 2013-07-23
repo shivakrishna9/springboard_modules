@@ -12,6 +12,7 @@ function commerce_psi_eft_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     'payment_method' => array('bank account'),
     'allow_recurring' => array('bank account'),
+    'offsite_recurring' => array('bank account'),
     'form callback' => 'commerce_psi_eft_fundraiser_commerce_submit_form',
     'cleanup callback' => 'commerce_psi_eft_fundraiser_commerce_cleanup',
     'scrub callback' => 'commerce_psi_eft_fundraiser_commerce_scrub',

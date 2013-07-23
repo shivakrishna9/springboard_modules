@@ -485,8 +485,17 @@ function _fundraiser_commerce_submission_flatten($submit_tree) {
  * AJAX callback for dealing with changes to the donation form.
  */
 function _fundraiser_commerce_client_state_ajax_submit($form, $form_state, &$mess = '') {
-  // Get the form item we want to render.
-  return fundraiser_get_form_field($form['#calling_module'], $form, 'state');
+  // Replace the state field with an updated version with the state list for the
+  // selected country.
+  // After the replace event add focus to the state field. This makes for a smooth transition
+  // in some browsers for users who tab between fields.
+  return array(
+    '#type' => 'ajax',
+    '#commands' => array(
+      ajax_command_replace('#zone-select-wrapper', render(fundraiser_get_form_field($form['#calling_module'], $form, 'state'))),
+      ajax_command_invoke('#edit-submitted-billing-information-state', 'focus'),
+    )
+  );
 }
 
 /**
@@ -1640,7 +1649,7 @@ function _fundraiser_commerce_encrypt($input) {
   if (module_exists('encrypt')) {
     module_load_install('encrypt');
     $requirements = encrypt_requirements('runtime');
-    if ($requirements['encrypt_keys']['severity'] == REQUIREMENT_ERROR) {
+    if (isset($requirements['encrypt_keys']) && $requirements['encrypt_keys']['severity'] == REQUIREMENT_ERROR) {
       drupal_set_message(t('A problem was found with your secure key.') . ' ' .
         $requirements['encrypt_keys']['value'],  'warning');
     }
@@ -1658,7 +1667,7 @@ function _fundraiser_commerce_decrypt($input) {
   if (module_exists('encrypt')) {
     module_load_install('encrypt');
     $requirements = encrypt_requirements('runtime');
-    if ($requirements['encrypt_keys']['severity'] == REQUIREMENT_ERROR) {
+    if (isset($requirements['encrypt_keys']) && $requirements['encrypt_keys']['severity'] == REQUIREMENT_ERROR) {
       drupal_set_message(t('A problem was found with your secure key.') . ' ' .
         $requirements['encrypt_keys']['value'],  'warning');
     }
@@ -1730,7 +1739,7 @@ class FundraiserCommerceUIPaymentSettings extends RulesDataUI implements RulesDa
       // And here, we add the remote recurring option iff the module can support it.
       module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $info['payment_method']);
       $gateway_info = module_invoke($info['payment_method'], 'fundraiser_commerce_fundraiser_gateway_info');
-      if (!empty($gateway_info['allow_recurring'])) {
+      if (!empty($gateway_info['allow_recurring']) && !empty($gateway_info['offsite_recurring'])) {
         $form[$name]['settings']['offsite_recurring'] = array(
          '#type' => 'checkbox',
          '#title' => t('Offsite recurring donations'),
@@ -1780,6 +1789,8 @@ function fundraiser_commerce_commerce_paypal_ipn_process($order, $payment_method
   _fundraiser_commerce_update_donation_result_data($donation, $success);
   // Finish up any last cleanup for this transaction.
   fundraiser_commerce_fundraiser_donation_after_process($donation);
+  // Save the donation
+  fundraiser_donation_update($donation);
   // Finish up the submission to kick off success / decline triggers.
   _fundraiser_donation_submit_after_process($donation);
 }

@@ -129,6 +129,7 @@ function salesforce_log_views_default_views() {
   $handler->display->display_options['fields']['bid']['alter']['make_link'] = TRUE;
   $handler->display->display_options['fields']['bid']['alter']['path'] = 'admin/reports/salesforce/item?bid=[bid]';
   $handler->display->display_options['fields']['bid']['alter']['alt'] = 'View the items synced in this batch.';
+  $handler->display->display_options['fields']['bid']['separator'] = '';
   /* Field: Salesforce batch log: Module */
   $handler->display->display_options['fields']['module']['id'] = 'module';
   $handler->display->display_options['fields']['module']['table'] = 'salesforce_log_batch';
@@ -788,6 +789,7 @@ function salesforce_log_views_default_views() {
   $handler->display->display_options['fields']['item_id']['id'] = 'item_id';
   $handler->display->display_options['fields']['item_id']['table'] = 'salesforce_queue';
   $handler->display->display_options['fields']['item_id']['field'] = 'item_id';
+  $handler->display->display_options['fields']['item_id']['separator'] = '';
   /* Field: Salesforce queue: Module */
   $handler->display->display_options['fields']['module']['id'] = 'module';
   $handler->display->display_options['fields']['module']['table'] = 'salesforce_queue';

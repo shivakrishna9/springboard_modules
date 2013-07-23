@@ -6,7 +6,7 @@
  */
 
 // Include the setup test class.
-module_load_include('test', 'fundraiser', 'tests/fundraiser.setup'); 
+module_load_include('test', 'fundraiser', 'tests/fundraiser.setup');
 
 class FundraiserCommerceGatewayTest extends FundraiserSetup {
   protected $privileged_user;
@@ -15,7 +15,7 @@ class FundraiserCommerceGatewayTest extends FundraiserSetup {
     return array(
       'name' => 'Fundraiser Commerce Gateway',
       'description' => 'Parent class for testing the Fundraiser Commerce Gateways',
-      'group' => 'Springboard',
+      'group' => 'Fundraiser',
     );
   }
 
