@@ -145,11 +145,23 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
     '#type' => 'textfield',
     '#default_value' => variable_get('fundraiser_upsell_rejection_lifetime', ''),
   );
-  $form['fundraiser_upsell_debug'] = array(
+  $form['fundraiser_upsell_advanced'] = array(
+    '#title' => t('Advanced Settings'),
+    '#type' => 'fieldset',
+    '#collapsible' => true,
+    '#collapsed' => false
+  );
+  $form['fundraiser_upsell_advanced']['fundraiser_upsell_debug'] = array(
     '#title' => t('Debug Mode'),
     '#type' => 'checkbox',
     '#default_value' => variable_get('fundraiser_upsell_debug', 0),
     '#description' => t('Debug mode will open the upsell box regardless of cookie settings,'),
+  );
+  $form['fundraiser_upsell_advanced']['fundraiser_upsell_decouple'] = array(
+    '#title' => t('Decouple Mode'),
+    '#type' => 'checkbox',
+    '#default_value' => variable_get('fundraiser_upsell_decouple', 0),
+    '#description' => t('Decouple mode for recurring donations requires a change in Salesforce.'),
   );
   // Additional submit handler to package the bracket data into a single variable
   $form['#submit'][] = 'fundraiser_upsell_admin_settings_form_submit';

@@ -1,7 +1,7 @@
 -- SUMMARY --
 
-* This module provides an upsell feature for fundraiser. It displays a modal
-window on the donation's confirmation page with an upsell form. If the user
+* This module provides an upsell feature for fundraiser. It displays a modal 
+window on the donation's confirmation page with an upsell form. If the user 
 completes the form, it converts the single donation into a recurring donation.
 
 -- REQUIREMENTS --

@@ -150,14 +150,16 @@ function fundraiser_upsell_node_settings(&$form, $form_state, $node) {
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
-  $form['fundraiser_upsell']['additional_options']['upsell_decoupled'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Decouple recurring donations'),
-    '#default_value' => !empty($node->upsell['decoupled']) ? $node->upsell['decoupled'] : '',
-    '#description' => t('By default, the upsell recurring donations use this donation
-    as the first one. If this is checked, it will instead start a new series of
-    recurring donations with a blank first donation.'),
-  );
+  if(variable_get('fundraiser_upsell_decouple', 0) == 1) {
+    $form['fundraiser_upsell']['additional_options']['upsell_decoupled'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Decouple recurring donations'),
+      '#default_value' => !empty($node->upsell['decoupled']) ? $node->upsell['decoupled'] : '',
+      '#description' => t('By default, the upsell recurring donations use this donation
+      as the first one. If this is checked, it will instead start a new series of
+      recurring donations with a blank first donation.'),
+    );
+  }
   // @TODO: make this a select list populated by SF cache?
   $form['fundraiser_upsell']['additional_options']['upsell_campaign_id'] = array(
     '#title' => t('Sustainer Salesforce Campaign ID'),
@@ -235,6 +237,7 @@ function fundraiser_upsell_page_alter(&$page) {
 function fundraiser_upsell_donation_form($form, &$form_state, $sid=0) {
   // Get the default suggested amount based on submitted order
   $order = _fundraiser_upsell_get_order($sid);
+
   if (!empty($sid) && !empty($order) && is_object($order)) {
     $order_total = round($order->commerce_order_total['und'][0]['amount']/100);
     $suggested_amount = _fundraiser_upsell_find_suggested_amount($order_total);
@@ -242,7 +245,7 @@ function fundraiser_upsell_donation_form($form, &$form_state, $sid=0) {
   // Set default values
   $suggested_amount = !empty($suggested_amount) ? $suggested_amount : 10;
   $order_id = !empty($order->order_id) ? $order->order_id : 0;
-  $decouple = !empty($order->upsell['decouple']) ? $order->upsell['decouple'] : 0;
+  $decouple = !empty($order->upsell['decoupled']) ? $order->upsell['decoupled'] : 0;
   $campaign_id = !empty($order->upsell['campaign_id']) ? $order->upsell['campaign_id'] : variable_get('fundraiser_upsell_sf_campaign_id', '');
   $nid = !empty($order->upsell['nid']) ? $order->upsell['nid'] : arg(1);
   // Build the form
@@ -290,7 +293,7 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
   $amount = $data['amount'];
   $decouple = $data['decouple'];
   $campaign_id = $data['campaign_id'];
-  $order = commerce_load_order($data['order_id']);
+  $order = commerce_order_load($data['order_id']);
   $is_recurring = db_query("
     SELECT COUNT(master_did)
     FROM {fundraiser_sustainers}
@@ -302,10 +305,10 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
   if (!$same_user || $is_recurring) {
     return FALSE;
   }
-
   // Decouple if needed
   if ($decouple) {
-    $order = _fundraiser_upsell_clone_order($order);
+    // this part isn't creating the donation object
+    $order = _fundraiser_upsell_clone_order($order, array('amount' => $amount, 'status' => 'pending_future_payment'));
   }
   // Create the recurring donation series
   fundraiser_upsell_create_recurring($order, $amount);
@@ -328,6 +331,19 @@ function fundraiser_upsell_create_recurring($order, $amount) {
 
   // Prepare and send the fundraiser upsell success email
   // Set watchdog message if unsuccessful
+  $donation = fundraiser_donation_get_donation($order->order_id);
+  $info = _fundraiser_get_donation_gateway($donation->did);
+  // This created donation is the master, so passing it in to create the set.
+  // We can't predict the form key for these values, so ask the gateway to provide.
+  if (isset($info['expire callback'])) {
+    $expiration_func = $info['expire callback'];
+    if (function_exists($expiration_func)) {
+      $expires = $expiration_func($donation->donation);
+      if (isset($expires['month']) && isset($expires['year'])) {
+        _fundraiser_sustainers_create_future_orders($donation, $expires['month'], $expires['year']);
+      }
+    }
+  }
   return TRUE;
 }
 
