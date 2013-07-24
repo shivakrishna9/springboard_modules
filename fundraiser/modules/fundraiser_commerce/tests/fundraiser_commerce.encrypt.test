@@ -39,11 +39,10 @@ class FundraiserCommerceEncryptTest extends FundraiserSetup {
     $this->privileged_user = $this->drupalCreateUser($permissions);
     $this->drupalLogin($this->privileged_user);
 
-    // Create encryption settings (AES 256).
-    $edit = array();
-    $edit['encrypt_default_method'] = 'mcrypt_rij_256';
-    $edit['encrypt_secure_key_path'] = $file_path;
-    $this->drupalPost('admin/config/system/encrypt', $edit, t('Save configuration'));
+    // Set encryption config (AES 256).
+    variable_set('encrypt_encryption_method', 'mcrypt_rij_256');
+    variable_set('encrypt_key_provider', 'file');
+    variable_set('encrypt_key_providers_file_settings', array('path' => $file_path, 'method' => 'file_contents'));
   }
 
   /**
