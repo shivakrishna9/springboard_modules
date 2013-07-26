@@ -65,7 +65,7 @@ function commerce_litle_fundraiser_commerce_scrub($submission_fields, $payment_m
   elseif ($payment_method == 'bank account') {
     // Scrub sensitive donation fields if they exists.
     if (isset($submission_fields['bank account']['accNum'])) {
-      $submission_fields['back account']['accNum'] = substr($submission_fields['bank account']['accNum'], -3);
+      $submission_fields['bank account']['accNum'] = substr($submission_fields['bank account']['accNum'], -3);
     }
     if (isset($submission_fields['bank account']['account_number'])) {
       $submission_fields['bank account']['accNum'] = substr($submission_fields['bank account']['accNum'], -3);

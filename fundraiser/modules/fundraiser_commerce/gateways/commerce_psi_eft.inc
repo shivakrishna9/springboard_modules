@@ -45,7 +45,7 @@ function commerce_psi_eft_fundraiser_commerce_submit_form($payment_method, $conf
 function commerce_psi_eft_fundraiser_commerce_scrub($fields) {
   // Scrub sensitive donation fields if they exists.
   if (isset($fields['bank account']['routing_number'])) {
-    $fields['back account']['routing_number'] = substr($fields['bank account']['routing_number'], -3);
+    $fields['bank account']['routing_number'] = substr($fields['bank account']['routing_number'], -3);
   }
   if (isset($fields['bank account']['account_number'])) {
     $fields['bank account']['account_number'] = substr($fields['bank account']['account_number'], -3);
