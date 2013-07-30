@@ -33,9 +33,9 @@
           data: sendData,
           dataType: 'json',
           complete: function(data) {
-            var returnContent = JSON.parse(data.response);
+            var returnContent = JSON.parse(data.responseText);
             $.blockUI({
-              message: returnContent['content'],
+              message: returnContent,
               centerY : 0,
               timeout: 3000,
               css: {

@@ -314,7 +314,7 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
   fundraiser_upsell_create_recurring($order, $amount);
   // Grab and process the thank you content if successful
   $content = variable_get('fundraiser_upsell_thank_you_content', 'Thank you for your recurring donation!');
-  return $content;
+  return drupal_json_output($content);
 }
 
 /**
@@ -325,16 +325,15 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
  */
 function fundraiser_upsell_create_recurring($order, $amount) {
   // Set the fundraiser recurring acceptance cookie
-  // setcookie('fundraiser_upsell_acceptance', 1, REQUEST_TIME + 3600 * 24 * variable_get('fundraiser_upsell_acceptance_lifetime', 0), "/");
-  // _fundraiser_upsell_thankyou_mail();
-  // watchdog('fundraiser_upsell', 'Upsell notice sent to @mail', array('@mail' => $user->mail), NULL, WATCHDOG_INFO);
-
-  // Prepare and send the fundraiser upsell success email
-  // Set watchdog message if unsuccessful
+  setcookie('fundraiser_upsell_acceptance', 1, REQUEST_TIME + 3600 * 24 * variable_get('fundraiser_upsell_acceptance_lifetime', 0), "/");
+  // Load the donation object and change the value
   $donation = fundraiser_donation_get_donation($order->order_id);
-  $info = _fundraiser_get_donation_gateway($donation->did);
+  $donation->amount = $amount;
+  $donation->donation['amount'] = $amount;
+  $donation->submission_data['amount'] = $amount;
   // This created donation is the master, so passing it in to create the set.
   // We can't predict the form key for these values, so ask the gateway to provide.
+  $info = _fundraiser_get_donation_gateway($donation->did);
   if (isset($info['expire callback'])) {
     $expiration_func = $info['expire callback'];
     if (function_exists($expiration_func)) {
@@ -344,6 +343,7 @@ function fundraiser_upsell_create_recurring($order, $amount) {
       }
     }
   }
+  // Send the thank you message
   return TRUE;
 }
 
