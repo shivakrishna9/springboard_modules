@@ -318,6 +318,9 @@ function salesforce_management_api_fieldmap_objects($type) {
               'field_type' => $field->type,
               'nillable' => $field->nillable,
               'length' => $field->length,
+              'unique' => $field->unique,
+              'name_field' => $field->nameField,
+              'idLookup' => $field->idLookup,
             );
             if ($field->createable != 1) {
               $objects[$sf_objects[$key]]['fields'][$field->name]['type'] = SALESFORCE_FIELD_SOURCE_ONLY;
