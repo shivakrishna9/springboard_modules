@@ -66,20 +66,15 @@ function sb_social_share_event_delete($sid) {
 /**
  * Load shared content settings
  */
-function sb_social_webform_settings_load($nid) {
+function sb_social_settings_load($nid) {
   static $settings = array();
 
   if (empty($settings[$nid])) {
     $settings[$nid] = array();
-    $results = db_query('
-      SELECT
-        nid,
-        service,
-        data
-      FROM {sb_social_webform}
-      WHERE
-        nid = :nid
-    ', array(':nid' => $nid));
+    $query = db_select('sb_social_node', 's');
+    $query->fields('s');
+    $query->condition('nid', $nid, '=');
+    $results = $query->execute();
 
     while ($result = $results->fetchAssoc()) {
       $settings[$nid][$result['service']] = unserialize($result['data']);
@@ -89,17 +84,51 @@ function sb_social_webform_settings_load($nid) {
   if (empty($settings[$nid])) {
     $enabled_services = sb_social_get_enabled_services();
     foreach ($enabled_services as $service) {
-      $settings[$nid][$service] = _sb_social_webform_defaults($service);
+      $settings[$nid][$service] = _sb_social_settings_defaults($service);
     }
   }
-
   return $settings[$nid];
+}
+
+function sb_social_path_settings_load($pid) {
+  $path = sb_social_get_path_by_pid($pid);
+
+  $query = db_select('sb_social_path', 's');
+  $query->fields('s');
+  $query->condition('path', $path, '=');
+  $results = $query->execute();
+
+  while ($result = $results->fetchAssoc()) {
+    $settings[$path][$result['service']] = unserialize($result['data']);
+  }
+
+  if (empty($settings[$path])) {
+    $enabled_services = sb_social_get_enabled_services();
+    foreach ($enabled_services as $service) {
+      $settings[$path][$service] = _sb_social_settings_defaults($service);
+    }
+  }
+  return $settings[$path];
+}
+
+function sb_social_get_path_by_pid($pid) {
+  $result = db_query('SELECT path FROM {sb_social_path} WHERE pid = :pid', array(':pid' => $pid));
+  return $result->fetchField();
+}
+
+function sb_social_path_settings_load_all() {
+  $settings = array();
+  $results = db_query('SELECT path, pid FROM {sb_social_path} GROUP BY path');
+  while ($item = $results->fetchAssoc()) {
+    $settings[] = $item;
+  }
+  return $settings;
 }
 
 /**
  * provide service default settings
  */
-function _sb_social_webform_defaults($service) {
+function _sb_social_settings_defaults($service) {
   switch ($service) {
     case 'facebook':
       $settings = array(
@@ -111,6 +140,12 @@ function _sb_social_webform_defaults($service) {
     case 'twitter':
       $settings = array(
         'message' => variable_get('springboard_social_twitter_message', '%title'),
+      );
+      break;
+    case 'email':
+      $settings = array(
+        'subject' => variable_get('springboard_social_email_subject', '%title'),
+        'message' => variable_get('springboard_social_email_message'. ''),
       );
       break;
     default:
@@ -161,7 +196,7 @@ function sb_social_get_enabled_services() {
  * service - service name (ex. twitter, facebook)
  * data - array of shared content settings
  */
-function sb_social_webform_settings_save($settings, $values = NULL) {
+function sb_social_node_settings_save($settings, $values = NULL) {
 
   if (module_exists('market_source') && $values) {
     $fields = market_source_field_info();
@@ -174,23 +209,65 @@ function sb_social_webform_settings_save($settings, $values = NULL) {
   if (is_array($settings['data'])) {
     $settings['data'] = serialize($settings['data']);
   }
-  sb_social_webform_settings_delete($settings['nid'], $settings['service']);
-  drupal_write_record('sb_social_webform', $settings);
+  dsm($settings, 'save settings');
+  sb_social_node_settings_delete($settings['nid'], $settings['service']);
+  drupal_write_record('sb_social_node', $settings);
 }
 
+/**
+ * Save path settings.
+ * @param type $settings
+ * @param type $values
+ */
+function sb_social_path_settings_save($settings, $values = NULL) {
+  if (module_exists('market_source') && $values) {
+    $fields = market_source_field_info();
+    foreach ($fields as $key => $field) {
+      if (isset($values[$key])) {
+        $settings['data']['market_source'][$key] = $values[$key];
+      }
+    }
+  }
+  if (is_array($settings['data'])) {
+    $settings['data'] = serialize($settings['data']);
+  }
+  $update = array();
+  $pid = _sb_social_pid_by_path_service($settings['path'], $settings['service']);
+
+  if ($pid) {
+    $settings['pid'] = $pid;
+    $update = array('pid', 'service');
+  }
+  $record = (object) $settings;
+  $ret = drupal_write_record('sb_social_path', $settings, $update); //, $update);
+}
+
+
+function _sb_social_path_record_exists($path) {
+  return db_query('SELECT 1 FROM {sb_social_path} WHERE path = :path', array(':path' => $path))->fetchField();
+}
 
 /**
  * Delete shared content settings
  */
-function sb_social_webform_settings_delete($nid, $service = FALSE) {
+function sb_social_node_settings_delete($nid, $service = FALSE) {
   // TODO: reimplement with db_delete() to optionally remove single records.
-  $query = db_delete('sb_social_webform');
+  $query = db_delete('sb_social_node');
   $query->condition('nid', $nid);
   if ($service) {
     $query->condition('service', $service);
   }
   $query->execute();
  // db_query('DELETE FROM {sb_social_webform} WHERE nid = :nid', array(':nid' => $nid));
+}
+
+function sb_social_path_settings_delete($path, $service = FALSE) {
+  $query = db_delete('sb_social_path');
+  $query->condition('path', $path);
+  if ($service) {
+    $query->condition('service', $service);
+  }
+  $query->execute();
 }
 
 /**
@@ -200,7 +277,7 @@ function sb_social_webform_settings_delete($nid, $service = FALSE) {
  */
 function _sb_social_get_settings_by_sid($sid) {
   $nid = _sb_social_get_nid_by_sid($sid);
-  return sb_social_webform_settings_load($nid);
+  return sb_social_settings_load($nid);
 }
 
 /**
@@ -239,4 +316,9 @@ function sb_social_get_donation_by_sid($sid) {
   $result = $query->execute();
 
   return $result->fetchObject();
+}
+
+function _sb_social_pid_by_path_service($path, $service) {
+  $result = db_query("SELECT pid FROM {sb_social_path} WHERE path = :path AND service = :service", array(':path' => $path, ':service' => $service));
+  return $result->fetchField();
 }
