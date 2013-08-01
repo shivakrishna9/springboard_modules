@@ -1,0 +1,82 @@
+<?php
+
+/**
+ * @file
+ *
+ * This module is used to delete old object map data from the system.
+ */
+
+/**
+ * Implementation of hook_menu().
+ */
+function sf_purge_menu() {
+  $items['admin/settings/salesforce-management/purge'] = array(
+    'title' => t('Purge settings'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sf_purge_settings_form'),
+    'access arguments' => array('configure salesforce purge'),
+    'file' => 'sf_purge.admin.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['admin/settings/salesforce-management/purge/now'] = array(
+    'title' => t('Purge settings'),
+    'page callback' => 'sf_purge_purge',
+    'access arguments' => array('configure salesforce purge'),
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
+ * Deletes records from the salesforce_management_object_map table
+ * based on drupal type.
+ */
+function sf_purge_purge() {
+  // Get the types to be purged.
+  $purge_types = variable_get('sf_purge_drupal_types', array());
+  $types_to_purge = array();
+
+  // Ensure we actually have some types to purge.
+  if (count($purge_types)) {
+    // Create an array of the types to purge.
+    foreach ($purge_types as $type => $purge) {
+      if ($purge) {
+        $types_to_purge[] = $type;
+      }
+    }
+
+    // Create a string of types to be used in an IN clause.
+    $placeholders = db_placeholders($types_to_purge, 'text');
+
+    do {
+      sleep(2); // Give other processes a shot at the database.
+      db_query("DELETE FROM {salesforce_management_object_map}
+        WHERE drupal_type IN ($placeholders)
+        ORDER BY oid
+        LIMIT 2000",
+        $types_to_purge
+      );
+    } while (db_affected_rows() > 0);
+
+  }
+}
+
+/**
+ * Calculates the number of records stored in the
+ * salesforce_management_object_map table by drupal_type.
+ */
+function sf_purge_count_by_type() {
+  $counts = array();
+
+  $result = db_query("SELECT drupal_type, count(drupal_type) as record_count
+    FROM {salesforce_management_object_map}
+    GROUP BY drupal_type");
+
+  while ($data = db_fetch_object($result)) {
+    $counts[$data->drupal_type] = $data->record_count;
+  }
+
+  return $counts;
+}

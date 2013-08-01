@@ -1,0 +1,6 @@
+name = Salesforce purge
+description = Purges the Salesforce object map table of unneeded data to prevent it from causing a performance bottleneck.
+package = Jackson River Springboard - extras
+core = 6.x
+version = 6.x-3.3
+dependencies[] = queue_processor
