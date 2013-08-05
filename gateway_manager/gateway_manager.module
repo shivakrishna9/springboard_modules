@@ -406,10 +406,13 @@ function _gateway_manager_clear_cache() {
  */
 function gateway_manager_donation_transaction_details_alter(&$details) {
   // look up the name of the gateway
-  $gateway = db_fetch_object(db_query("SELECT name, type FROM {gateway_manager_gateways} WHERE id = %d", $details['gateway']));
-  $details['gateway'] = $gateway->name;
+  if (!empty($details['gateway']) && is_numeric($details['gateway'])) {
+    $gateway = db_fetch_object(db_query("SELECT name, type FROM {gateway_manager_gateways} WHERE id = %d", $details['gateway']));
+    if (!empty($gateway->name)) {
+      $details['gateway'] = $gateway->name;
+    }
+  }
 }
-
 
 /**
  * Get the payment gateway for the given order object or order ID

@@ -186,6 +186,7 @@ class Donation {
     $stages = $this->_get_stages();
 
     // load items required to populate the object
+    uc_credit_cache('clear');
     $order = uc_order_load($this->order_id);
     $payments = uc_payment_load_payments($this->order_id);
     $user = user_load($order->uid);
@@ -234,8 +235,6 @@ class Donation {
 
     $this->stage = $stages[$order->order_status];
 
-    uc_credit_cache('clear');
-
     // add gateway and transaction id
     $txn_details = $this->_load_transaction_details($this->order_id);
     $this->payment_gateway = $txn_details['gateway'];
@@ -251,6 +250,8 @@ class Donation {
 
     $this->_load_webform_values($this->donation_form_nid, $sid);
 
+    // Allow modules to alter the object
+    drupal_alter('sf_donation_object', $this);
   }
 
   /**

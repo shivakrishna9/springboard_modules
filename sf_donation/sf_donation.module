@@ -326,6 +326,7 @@ function sf_donation_mapping_form($form_state, $node) {
   // Get a list of built-in Donation form fields that can be mapped to SF fields
   $properties = Donation::get_mappable_properties();
   asort($properties);
+  drupal_alter('sf_donation_mappable_properties', $properties, $node);
 
   // For each Donation form field, show a dropdown of all SF fields
   foreach ($properties as $key => $value) {
