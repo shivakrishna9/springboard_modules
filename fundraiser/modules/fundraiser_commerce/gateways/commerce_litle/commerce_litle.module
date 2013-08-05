@@ -547,7 +547,7 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
   $nvp += array(
     // Order Information
     'orderId' => $order->order_number,
-    'id' => substr($order->uid, 0, 20),
+    'customerId' => $order->uid,
   );
 
   // Prepare the billing address for use in the request.
@@ -575,12 +575,22 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
     $billing_address = array();
   }
 
-  //
   /* lets override the uncessary config stuff */
   $nvp += _commerce_litle_get_litle_config($payment_method);
 
+  $init = _commerce_litle_get_litle();
+
+  // Prepare a transaction object to log the API response.
+  $transaction = commerce_payment_transaction_new('commerce_litle_echeck', $order->order_id);
+  $transaction->instance_id = $payment_method['instance_id'];
+  $transaction->amount = $charge['amount'];
+  $transaction->currency_code = $charge['currency_code'];
+  // Save the transaction information to get transaction id
+  commerce_payment_transaction_save($transaction);
+  $nvp['id'] = substr($transaction->transaction_id, 0, 20);
+
   // Log the request if specified.
-  if ($payment_method['settings']['log']['request'] == 'request') {
+  if ($payment_method['settings']['log']['request'] === 'request') {
     // Mask secure data
     $log_nvp = $nvp;
     $log_nvp['password'] = str_repeat('X', strlen($log_nvp['password']));
@@ -596,14 +606,12 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
     watchdog('commerce_litle', 'Litle request: !param', array('!param' => '<pre>' . check_plain(print_r($log_nvp, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
   }
 
-  $init = _commerce_litle_get_litle();
-
   // first lets do an authorization
   $authResponse = $init->authorizationRequest($nvp);
 
   // Log the response if specified.
-  if ($payment_method['settings']['log']['response'] == 'response') {
-    watchdog('commerce_litle', 'Litle response: !param', array('!param' => '<pre>' . check_plain(XmlParser::getDomDocumentAsString($authResponse)) . '</pre>', WATCHDOG_DEBUG));
+  if ($payment_method['settings']['log']['response'] === 'response') {
+    watchdog('commerce_litle', 'Litle Authorization response: !param', array('!param' => '<pre>' . check_plain(XmlParser::getDomDocumentAsString($authResponse)) . '</pre>', WATCHDOG_DEBUG));
   }
 
   if (XmlParser::getNode($authResponse, 'response') != '000') {
@@ -614,13 +622,11 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
 
   $saleResponse = $init->saleRequest($nvp);
 
-  $transaction = commerce_payment_transaction_new('commerce_litle_cc', $order->order_id);
-  $transaction->instance_id = $payment_method['instance_id'];
-  $transaction->remote_id = XmlParser::getNode($saleResponse, 'litleTxnId');
-  $transaction->amount = $charge['amount'];
-  $transaction->currency_code = $charge['currency_code'];
+  // Log the response if specified.
+  if ($payment_method['settings']['log']['response'] === 'response') {
+    watchdog('commerce_litle', 'Litle Sale response: !param', array('!param' => '<pre>' . check_plain(XmlParser::getDomDocumentAsString($saleResponse)) . '</pre>', WATCHDOG_DEBUG));
+  }
 
-  //$transaction->payload = $saleResponse;
   // If we didn't get an approval response code...
   if (XmlParser::getNode($saleResponse,'response') != '000') {
     // Create a failed transaction with the error message.
@@ -644,6 +650,8 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
   }
 
   $transaction->remote_status = COMMERCE_CREDIT_AUTH_CAPTURE;
+  // Store the remote id
+  $transaction->remote_id = XmlParser::getNode($saleResponse, 'litleTxnId');
 
   // Build a meaningful response message.
   $message = array(
@@ -691,11 +699,11 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
   $nvp += array(
     // Order Information
     'orderId' => $order->order_number,
-    'id' => substr($order->uid, 0, 20),
+    'customerId' => $order->uid,
   );
 
   // Prepare the billing address for use in the request.
-  if ($order_wrapper->commerce_customer_billing->value()){
+  if ($order_wrapper->commerce_customer_billing->value()) {
     $billing_address = $order_wrapper->commerce_customer_billing->commerce_customer_address->value();
 
     if (empty($billing_address['first_name'])) {
@@ -723,8 +731,20 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
 
   $nvp += _commerce_litle_get_litle_config($payment_method);
 
+  $init = _commerce_litle_get_litle();
+
+  // Prepare a transaction object to log the API response.
+  $transaction = commerce_payment_transaction_new('commerce_litle_echeck', $order->order_id);
+  $transaction->instance_id = $payment_method['instance_id'];
+  $transaction->amount = $charge['amount'];
+  $transaction->currency_code = $charge['currency_code'];
+  // Save the transaction information to get transaction id
+  commerce_payment_transaction_save($transaction);
+  $nvp['id'] = substr($transaction->transaction_id, 0, 20);
+
   // Log the request if specified.
-  if ($payment_method['settings']['log']['request'] == 'request') {
+  if ($payment_method['settings']['log']['request'] === 'request') {
+
     // Mask secure data
     $log_nvp = $nvp;
     $log_nvp['password'] = str_repeat('X', strlen($log_nvp['password']));
@@ -740,23 +760,14 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
     watchdog('commerce_litle', 'Litle request: !param', array('!param' => '<pre>' . check_plain(print_r($log_nvp, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
   }
 
-  $init = _commerce_litle_get_litle();
-
-  // first lets do an authorization
+  // Make the request
   $saleResponse = $init->echeckSaleRequest($nvp);
 
   // Log the response if specified.
-  if ($payment_method['settings']['log']['response'] == 'response') {
+  if ($payment_method['settings']['log']['response'] === 'response') {
     watchdog('commerce_litle', 'Litle response: !param', array('!param' => '<pre>' . check_plain(XmlParser::getDomDocumentAsString($saleResponse)) . '</pre>', WATCHDOG_DEBUG));
   }
 
-  // Prepare a transaction object to log the API response.
-  $transaction = commerce_payment_transaction_new('commerce_litle_echeck', $order->order_id);
-  $transaction->instance_id = $payment_method['instance_id'];
-  $transaction->remote_id = XmlParser::getNode($saleResponse, 'litleTxnId');
-  $transaction->amount = $charge['amount'];
-  $transaction->currency_code = $charge['currency_code'];
-  //$transaction->payload = $saleResponse;
   // If we didn't get an approval response code...
   if (XmlParser::getNode($saleResponse,'response') != '000') {
     // Create a failed transaction with the error message.
@@ -773,6 +784,8 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
 
   // Store the type of transaction in the remote status.
   $transaction->remote_status = COMMERCE_CREDIT_AUTH_CAPTURE;
+  // Store the remote id
+  $transaction->remote_id = XmlParser::getNode($saleResponse, 'litleTxnId');
 
   // Build a meaningful response message.
   $message = array(
