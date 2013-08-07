@@ -71,7 +71,6 @@ function sb_social_settings_load($sid) {
   $results = db_query('SELECT * FROM {sb_social_settings} WHERE sid = :sid', array(':sid' => $sid));
 
   $settings = $results->fetchAssoc();
-  dsm($settings, 'settings mid load');
   if ($settings) {
     $settings['data'] = unserialize($settings['data']);
   }
@@ -84,7 +83,6 @@ function sb_social_settings_load($sid) {
     }
     $settings['data']['market_source'] = _sb_social_market_source_defaults();
   }
-  dsm($settings, 'settings after load');
   return $settings;
 }
 
@@ -173,7 +171,6 @@ function sb_social_get_enabled_services() {
  * @param type $values
  */
 function sb_social_settings_save($settings, $values = NULL) {
-  dsm($settings, 'settings during save');
   if (is_array($settings['data'])) {
     $settings['data'] = serialize($settings['data']);
   }

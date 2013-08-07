@@ -312,7 +312,6 @@ function sb_social_path_settings_submit($form, $form_state) {
         }
       }
     }
-    dsm($data, 'data post process');
     // sid is handled in the save function.
     $record = array(
         'id' => $form_state['values']['path'],
@@ -441,7 +440,6 @@ function sb_social_settings_submit($form, $form_state) {
         }
       }
     }
-    dsm($data, 'data post process');
     // sid is handled in the save function.
     $record = array(
         'id' => $form_state['values']['id'],
