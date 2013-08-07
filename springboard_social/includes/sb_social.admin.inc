@@ -135,7 +135,7 @@ function sb_social_admin() {
 
 
 /**
- * Admin settings form for per-path share settings.
+ * Path settings admin page.
  */
 function sb_social_path_admin() {
   $form['preamble'] = array(
@@ -157,7 +157,7 @@ function sb_social_path_admin() {
   foreach ($settings as $item) {
     $row = array();
     $row[] = $item['path'];
-    $row[] = _sb_social_path_actions($item['pid']);
+    $row[] = _sb_social_path_actions($item['sid']);
     $rows[] = $row;
   }
   $vars = array(
@@ -186,18 +186,21 @@ function _sb_social_add_path() {
 }
 
 
-function _sb_social_path_actions($pid) {
-  if (!$pid) {
+function _sb_social_path_actions($sid) {
+  if (!$sid) {
     return FALSE;
   }
   $actions = array();
 
-  $links[] = l(t('Edit'), 'admin/config/services/springboard_social/path-settings/edit/' . $pid);
-  $links[] = l(t('Delete'), 'admin/config/services/springboard_social/path-settings/delete/' . $pid);
+  $links[] = l(t('Edit'), 'admin/config/services/springboard_social/path-settings/edit/' . $sid);
+  $links[] = l(t('Delete'), 'admin/config/services/springboard_social/path-settings/delete/' . $sid);
 
   return implode('&nbsp;&nbsp;', $links);
 }
 
+/**
+ * Why are we resetting a bunch of token cache stuff here?
+ */
 function sb_social_admin_settings_submit($form, $form_state) {
   cache_clear_all('*', 'cache_token', TRUE);
   drupal_static_reset('token_get_info');
@@ -211,13 +214,16 @@ function sb_social_admin_settings_submit($form, $form_state) {
   drupal_static_reset('_token_field_info');
 }
 
-
-function sb_social_path_settings($form, $edit, $pid = NULL) {
+/**
+ * Path settings form.
+ */
+function sb_social_path_settings($form, $edit, $sid = NULL) {
 
   $enabled_services = sb_social_get_enabled_services();
-  $settings = sb_social_path_settings_load($pid);
-  if (is_numeric($pid) && $pid) {
-    $settings['path'] = sb_social_get_path_by_pid($pid);
+  $settings = sb_social_settings_load($sid);
+
+  if (is_numeric($sid) && $sid) {
+    $settings['path'] = sb_social_get_id_by_sid($sid);
   }
   $token_set = array('user', 'node');
 
@@ -227,12 +233,16 @@ function sb_social_path_settings($form, $edit, $pid = NULL) {
       '#markup' => '<p>' . t('No social media services have been enabled. To enable Social Media services, visit the !admin_screen', array('!admin_screen' => l('module administration page', 'admin/config/services/springboard_social'))) . '</p>',
     );
   }
-
+  // defines record type in {sb_social_settings}
+  $form['type'] = array(
+    '#type' => 'value',
+    '#value' => 'path',
+  );
   $form['path'] = array(
     '#type' => 'textfield',
     '#title' => t('Path'),
     '#description' => t('Drupal internal path (Example: node/1). You may also use valid path aliases.'),
-    '#default_value' => isset($settings['path']) ? $settings['path'] : '',
+    '#default_value' => isset($settings['id']) ? $settings['id'] : '',
     '#required' => TRUE,
   );
   foreach ($enabled_services as $service) {
@@ -241,140 +251,20 @@ function sb_social_path_settings($form, $edit, $pid = NULL) {
       '#value' => !empty($settings[$service]),
     );
   }
-  $form['fb_settings'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Facebook Settings'),
-    '#access' => in_array('facebook', $enabled_services),
-  );
-  // title
-  $form['fb_settings']['fb_title'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Title'),
-    '#description' => t('Facebook Share title'),
-    '#default_value' => isset($settings['facebook']['title']) ? $settings['facebook']['title'] : '',
-  );
 
-  // description
-   $form['fb_settings']['fb_description'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Description'),
-    '#description' => t('Facebook Share description'),
-    '#default_value' => isset($settings['facebook']['description']) ? $settings['facebook']['description'] : '',
-  );
-  // image
-  $form['fb_settings']['fb_image'] = array(
-    '#type' => 'managed_file',
-    '#title' => 'Image upload',
-    '#description' => t('Upload a custom image to display in share content'),
-    '#default_value' => variable_get('logo', ''),
-    '#upload_location' => 'public://social_images',
-    '#upload_validators' => array(
-      'file_validate_extensions' => array('gif png jpg jpeg'),
-    ),
-  );
-  $form['fb_settings']['tokens']= array(
-    '#type' => 'fieldset',
-    '#title' => t('Available Tokens'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
-  $form['fb_settings']['tokens']['token_help'] = array(
-    '#type' => 'item',
-    '#title' => t('Drupal tokens'),
-    '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
-  );
+  ctools_include('plugins');
+  $plugins = ctools_get_plugins('sb_social', 'social_networks');
 
-  // TODO: implement image preview.
-
-  $form['twitter_settings'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Twitter Settings'),
-    '#access' => in_array('twitter', $enabled_services),
-  );
-  // message
-  $form['twitter_settings']['twitter_message'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Message'),
-    '#description' => t('Custom twitter message text.'),
-    '#default_value' => isset($settings['twitter']['message']) ? $settings['twitter']['message'] : '',
-  );
-  $form['twitter_settings']['tokens']= array(
-    '#type' => 'fieldset',
-    '#title' => t('Available Tokens'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
-  $form['twitter_settings']['tokens']['token_help'] = array(
-    '#type' => 'item',
-    '#title' => t('Drupal tokens'),
-    '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
-  );
-
-  $form['email_settings'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Email Settings'),
-    '#access' => in_array('email', $enabled_services),
-  );
-  $form['email_settings']['email_subject'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Email subject'),
-    '#default_value' => isset($settings['email']['subject']) ? $settings['email']['subject'] : '',
-  );
-  $form['email_settings']['email_message'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Email message'),
-    '#default_value' => isset($settings['email']['message']) ? $settings['email']['message'] : '',
-  );
-  $form['email_settings']['tokens']= array(
-    '#type' => 'fieldset',
-    '#title' => t('Available Tokens'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
-  $form['email_settings']['tokens']['token_help'] = array(
-    '#type' => 'item',
-    '#title' => t('Drupal tokens'),
-    '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
-  );
-
-  // Market Source
-  if (module_exists('market_source')) {
-
-    $form['market_source'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Market Source Settings'),
-      '#description' => t('Optional Market Source values to include in share links'),
-    );
-    $fields = market_source_field_info();
-    // It doesn't make sense to list certain market source fields, like user agent.
-    // the blacklist lets us filter these out cleanly.
-    $blacklist = _sb_social_component_blacklist();
-    foreach ($fields as $key => $field) {
-      if (in_array($key, $blacklist)) {
-        continue;
-      }
-      if ($key == 'cid') {
-        $campaigns = market_source_get_campaigns(FALSE);
-        $select_options = array();
-        foreach ($campaigns as $campaign_id => $campaign) {
-          $select_options[$campaign_id] = $campaign['name'] . ' (' . $campaign_id . ')';
-        }
-        $form['market_source']['cid'] = array(
-          '#type' => 'select',
-          '#title' => t('Campaign ID'),
-          '#options' => $select_options,
-          '#default_value' => (!empty($settings) && !empty($service) && !empty($settings[$service]['market_source'][$key])) ? $settings[$service]['market_source'][$key] : '',
-        );
-      }
-      else {
-        $form['market_source'][$key] = array(
-          '#type' => 'textfield',
-          '#title' => $field['#title'],
-          '#default_value' => (!empty($settings) && !empty($service) && !empty($settings[$service]['market_source'][$key])) ? $settings[$service]['market_source'][$key] : '',
-        );
-      }
-    }
+  foreach($plugins as $id => $plugin) {
+    $func = $plugin['settings'];
+    $func($form, $enabled_services, $settings['data'][$id], $token_set);
   }
+
+   // Market Source settings
+  if (module_exists('market_source')) {
+    _sb_social_settings_market_source($form, $settings);
+  }
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save'),
@@ -384,75 +274,62 @@ function sb_social_path_settings($form, $edit, $pid = NULL) {
   return $form;
 }
 
-function sb_social_path_settings_validate($form, $form_state) {
+function sb_social_path_settings_validate(&$form, $form_state) {
+  // TODO: run this validation on the ADD form only.
+/*  $path = $form_state['values']['path'];
+  if ($id = _sb_social_sid_by_id($path)) {
+    $link = l(t('here'), 'admin/config/services/springboard_social/path-settings/edit/' . $id);
+    form_set_error('path', t('Settings already exist for !path. You may edit them !link', array('!path' => $path, '!link' => $link)));
+  }*/
 
 }
 
+/**
+ * Path settings submit callback, invokes social_networks plugin "process" callbacks to build data array and saves data
+ * to db.
+ */
 function sb_social_path_settings_submit($form, $form_state) {
+  ctools_include('plugins');
+  $plugins = ctools_get_plugins('sb_social', 'social_networks');
+
+  $data = array();
   $enabled_services = sb_social_get_enabled_services();
+  $keys = array_keys($plugins);
+
   if (is_array($enabled_services)) {
     foreach ($enabled_services as $service) {
-      $func = 'sb_social_process_path_settings_' . $service;
-      $func($form_state);
+      if (in_array($service, $keys)) {
+        $func = $plugins[$service]['process'];
+        drupal_set_message('process function:' . $func);
+        $func($data, $form_state);
+      }
     }
+    if (module_exists('market_source')) {
+      $fields = market_source_field_info();
+      foreach ($fields as $key => $field) {
+        if (isset($form_state['values'][$key])) {
+          $data['market_source'][$key] = $form_state['values'][$key];
+        }
+      }
+    }
+    dsm($data, 'data post process');
+    // sid is handled in the save function.
+    $record = array(
+        'id' => $form_state['values']['path'],
+        'type' => 'path',
+        'data' => $data,
+    );
+    sb_social_settings_save($record, $form_state['values']);
+
   }
-}
-
-function sb_social_process_path_settings_facebook($form_state) {
-  $data = array(
-      'title' => !empty($form_state['values']['fb_title']) ? $form_state['values']['fb_title'] : '',
-      'description' => !empty($form_state['values']['fb_description']) ? $form_state['values']['fb_description'] : '',
-      'image' => '',
-  );
-  $record = array(
-      //'pid' => !empty($form_state['values']['pid']) ? $form_state['values']['pid'] : '',
-      'path' => $form_state['values']['path'],
-      'service' => 'facebook',
-      'data' => $data,
-  );
-
-  if (!empty($form_state['values']['fb_image'])) {
-    // apparently the form api only passes the fid when a file has been uploaded
-    // so we have to load the full record and fish out the uri to generate
-    // a usable image url.
-    $file = file_load($form_state['values']['fb_image']);
-    $record['data']['image'] = file_create_url($file->uri);
-  }
-  sb_social_path_settings_save($record, $form_state['values']);
-}
-
-function sb_social_process_path_settings_twitter($form_state) {
-  $data = array(
-      'message' => !empty($form_state['values']['twitter_message']) ? $form_state['values']['twitter_message'] : '',
-  );
-  $record = array(
-      //'pid' => !empty($form_state['values']['pid']) ? $form_state['values']['pid'] : '',
-      'path' => $form_state['values']['path'],
-      'service' => 'twitter',
-      'data' => $data,
-  );
-  sb_social_path_settings_save($record, $form_state['values']);
-}
-
-function sb_social_process_path_settings_email($form_state) {
-  $data = array(
-    'subject' => !empty($form_state['values']['email_subject']) ? $form_state['values']['email_subject'] : '',
-    'message' => !empty($form_state['values']['email_message']) ? $form_state['values']['email_message'] : '',
-  );
-  $record = array(
-    'path' => $form_state['values']['path'],
-    'service' => 'email',
-    'data' => $data
-  );
-  sb_social_path_settings_save($record, $form_state['values']);
 }
 
 /**
  * Goal deletion form.
  *
  */
-function sb_social_path_settings_delete_form($form, $form_state, $pid) {
-  $path = sb_social_get_path_by_pid($pid);
+function sb_social_path_settings_delete_form($form, $form_state, $id) {
+  $path = sb_social_get_id_by_sid($id);
   $form['confirmation_text'] = array(
       '#markup' => t('Are you sure you want to unrecoverably delete the share settings for @path?', array('@path' => $path)),
   );
@@ -485,13 +362,15 @@ function sb_social_path_settings_delete_submit($form, &$form_state) {
 function _sb_social_path_delete_cancel() {
   drupal_goto('admin/config/services/springboard_social/path-settings');
 }
+
 /**
  * Node level settings
  */
 function sb_social_node_settings($form, $edit, $node) {
 
   $enabled_services = sb_social_get_enabled_services();
-  $settings = sb_social_settings_load($node->nid);
+  $sid = _sb_social_sid_by_id($node->nid);
+  $settings = sb_social_settings_load($sid);
 
   // setup for token replacement
   $token_set = array('user', 'node');
@@ -504,122 +383,77 @@ function sb_social_node_settings($form, $edit, $node) {
       '#prefix' => '<h2>' . t('No services enabled') . '</h2>',
       '#markup' => '<p>' . t('No social media services have been enabled. To enable Social Media services, visit the !admin_screen', array('!admin_screen' => l('module administration page', 'admin/config/services/springboard_social'))) . '</p>',
     );
-  }
-  // no previous settings available? save global defaults
-  if (empty($settings)) {
-    sb_social_add_default_settings($node->nid);
-    $settings = sb_social_settings_load($node->nid);
+    return $form;
   }
 
-  $form['nid'] = array(
+  $form['id'] = array(
     '#type' => 'value',
     '#value' => $node->nid,
   );
-  foreach ($enabled_services as $service) {
-    $form['update_' . $service] = array(
-      '#type' => 'value',
-      '#value' => !empty($settings[$service]),
-    );
+  $form['type'] = array(
+    '#type' => 'value',
+    '#value' => 'node',
+  );
+
+  ctools_include('plugins');
+  $plugins = ctools_get_plugins('sb_social', 'social_networks');
+
+  foreach ($plugins as $id => $plugin) {
+    $func = $plugin['settings'];
+    $func($form, $enabled_services, $settings['data'][$id], $token_set);
   }
-  $form['fb_settings'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Facebook Settings'),
-    '#access' => in_array('facebook', $enabled_services),
-  );
-  // title
-  $form['fb_settings']['fb_title'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Title'),
-    '#description' => t('Facebook Share title'),
-    '#default_value' => isset($settings['facebook']['title']) ? $settings['facebook']['title'] : '',
-  );
 
-  // description
-   $form['fb_settings']['fb_description'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Description'),
-    '#description' => t('Facebook Share description'),
-    '#default_value' => isset($settings['facebook']['description']) ? $settings['facebook']['description'] : '',
-  );
-  // image
-  $form['fb_settings']['fb_image'] = array(
-    '#type' => 'managed_file',
-    '#title' => 'Image upload',
-    '#description' => t('Upload a custom image to display in share content'),
-    '#default_value' => variable_get('logo', ''),
-    '#upload_location' => 'public://social_images',
-    '#upload_validators' => array(
-      'file_validate_extensions' => array('gif png jpg jpeg'),
-    ),
-  );
-  $form['fb_settings']['tokens']= array(
-    '#type' => 'fieldset',
-    '#title' => t('Available Tokens'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
-  $form['fb_settings']['tokens']['token_help'] = array(
-    '#type' => 'item',
-    '#title' => t('Drupal tokens'),
-    '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
-  );
-
-  // TODO: implement image preview.
-
-  $form['twitter_settings'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Twitter Settings'),
-    '#access' => in_array('twitter', $enabled_services),
-  );
-  // message
-  $form['twitter_settings']['twitter_message'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Message'),
-    '#description' => t('Custom twitter message text.'),
-    '#default_value' => isset($settings['twitter']['message']) ? $settings['twitter']['message'] : '',
-  );
-  $form['twitter_settings']['tokens']= array(
-    '#type' => 'fieldset',
-    '#title' => t('Available Tokens'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
-  $form['twitter_settings']['tokens']['token_help'] = array(
-    '#type' => 'item',
-    '#title' => t('Drupal tokens'),
-    '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
-  );
-
-  $form['email_settings'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Email Settings'),
-      '#access' => in_array('email', $enabled_services),
-  );
-  $form['email_settings']['email_subject'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Email subject'),
-      '#default_value' => isset($settings['email']['subject']) ? $settings['email']['subject'] : '',
-  );
-  $form['email_settings']['email_message'] = array(
-      '#type' => 'textarea',
-      '#title' => t('Email message'),
-      '#default_value' => isset($settings['email']['message']) ? $settings['email']['message'] : '',
-  );
-  $form['email_settings']['tokens']= array(
-    '#type' => 'fieldset',
-    '#title' => t('Available Tokens'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
-  $form['email_settings']['tokens']['token_help'] = array(
-    '#type' => 'item',
-    '#title' => t('Drupal tokens'),
-    '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
-  );
-  // Market Source
+  // Market Source settings
   if (module_exists('market_source')) {
+    _sb_social_settings_market_source($form, $settings);
+  }
 
-    $form['market_source'] = array(
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+  );
+  $form['#submit'][] = 'sb_social_settings_submit';
+  return $form;
+}
+
+
+function sb_social_settings_submit($form, $form_state) {
+  ctools_include('plugins');
+  $plugins = ctools_get_plugins('sb_social', 'social_networks');
+
+  $data = array();
+  $enabled_services = sb_social_get_enabled_services();
+  $keys = array_keys($plugins);
+
+  if (is_array($enabled_services)) {
+    foreach ($enabled_services as $service) {
+      if (in_array($service, $keys)) {
+        $func = $plugins[$service]['process'];
+        drupal_set_message('process function:' . $func);
+        $func($data, $form_state);
+      }
+    }
+    if (module_exists('market_source')) {
+      $fields = market_source_field_info();
+      foreach ($fields as $key => $field) {
+        if (isset($form_state['values'][$key])) {
+          $data['market_source'][$key] = $form_state['values'][$key];
+        }
+      }
+    }
+    dsm($data, 'data post process');
+    // sid is handled in the save function.
+    $record = array(
+        'id' => $form_state['values']['id'],
+        'type' => $form_state['values']['type'],
+        'data' => $data,
+    );
+    sb_social_settings_save($record, $form_state['values']);
+  }
+}
+
+function _sb_social_settings_market_source(&$form, $settings) {
+  $form['market_source'] = array(
       '#type' => 'fieldset',
       '#title' => t('Market Source Settings'),
       '#description' => t('Optional Market Source values to include in share links'),
@@ -642,85 +476,15 @@ function sb_social_node_settings($form, $edit, $node) {
           '#type' => 'select',
           '#title' => t('Campaign ID'),
           '#options' => $select_options,
-          '#default_value' => (!empty($settings) && !empty($service) && !empty($settings[$service]['market_source'][$key])) ? $settings[$service]['market_source'][$key] : '',
+          '#default_value' => (!empty($settings) && !empty($settings['data']['market_source'][$key])) ? $settings['data']['market_source'][$key] : '',
         );
       }
       else {
         $form['market_source'][$key] = array(
           '#type' => 'textfield',
           '#title' => $field['#title'],
-          '#default_value' => (!empty($settings) && !empty($service) && !empty($settings[$service]['market_source'][$key])) ? $settings[$service]['market_source'][$key] : '',
+          '#default_value' => (!empty($settings) && !empty($settings['data']['market_source'][$key])) ? $settings['data']['market_source'][$key] : '',
         );
       }
     }
-  }
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save'),
-  );
-  $form['#validate'][] = 'sb_social_node_settings_validate';
-  $form['#submit'][] = 'sb_social_node_settings_submit';
-  return $form;
-}
-
-function sb_social_node_settings_validate(&$form, $form_state) {
-
-}
-
-function sb_social_node_settings_submit($form, $form_state) {
-  $enabled_services = sb_social_get_enabled_services();
-  if (is_array($enabled_services)) {
-    foreach ($enabled_services as $service) {
-      $func = 'sb_social_process_settings_' . $service;
-      drupal_set_message('process:' . $func);
-      $func($form_state);
-    }
-  }
-}
-
-function sb_social_process_settings_facebook($form_state) {
-  $data = array(
-    'title' => !empty($form_state['values']['fb_title']) ? $form_state['values']['fb_title'] : '',
-    'description' => !empty($form_state['values']['fb_description']) ? $form_state['values']['fb_description'] : '',
-    'image' => '',
-  );
-  $record = array(
-    'nid' => $form_state['values']['nid'],
-    'service' => 'facebook',
-    'data' => $data,
-  );
-
-  if (!empty($form_state['values']['fb_image'])) {
-    // apparently the form api only passes the fid when a file has been uploaded
-    // so we have to load the full record and fish out the uri to generate
-    // a usable image url.
-    $file = file_load($form_state['values']['fb_image']);
-    $record['data']['image'] = file_create_url($file->uri);
-  }
-  sb_social_node_settings_save($record, $form_state['values']);
-}
-
-function sb_social_process_settings_twitter($form_state) {
-  $data = array(
-    'message' => !empty($form_state['values']['twitter_message']) ? $form_state['values']['twitter_message'] : '',
-  );
-  $record = array(
-    'nid' => $form_state['values']['nid'],
-    'service' => 'twitter',
-    'data' => $data,
-  );
-  sb_social_node_settings_save($record, $form_state['values']);
-}
-
-function sb_social_process_settings_email($form_state) {
-  $data = array(
-    'subject' => !empty($form_state['values']['email_subject']) ? $form_state['values']['email_subject'] : '',
-    'message' => !empty($form_state['values']['email_message']) ? $form_state['values']['email_message'] : '',
-  );
-  $record = array(
-    'nid' => $form_state['values']['nid'],
-    'service' => 'email',
-    'data' => $data
-  );
-  sb_social_node_settings_save($record, $form_state['values']);
 }

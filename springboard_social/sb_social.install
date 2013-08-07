@@ -76,97 +76,34 @@ function sb_social_schema() {
     ),
     'primary key' => array('share_id'),
   );
-  $schema['sb_social_node'] = array(
-    'description' => 'Stores shared content settings for individual nodes',
-    'fields' => array(
-      'nid' => array(
-        'description' => 'The node id.',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'service' => array(
-        'description' => 'sharing service',
-        'type' => 'varchar',
-        'length' => 60,
-      ),
-      'data' => array(
-        'description' => 'serialized settings array',
-        'type' => 'text',
-      ),
-    ),
-    'primary key' => array('nid', 'service'),
-  );
-  $schema['sb_social_path'] = array(
+  $schema['sb_social_settings'] = array(
     'description' => 'shared content settings for individual paths',
     'fields' => array(
-      'pid' => array(
-        'description' => 'path id.',
+      'sid' => array(
+        'description' => 'settings id',
         'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
-      'path' => array(
-        'description' => 'drupal path.',
+      'id' => array(
+        'description' => 'drupal id, path or node id.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
       ),
-      'service' => array(
-        'description' => 'sharing service',
+      'type' => array(
+        'description' => 'node, path, etc',
         'type' => 'varchar',
-        'length' => 60,
+        'length' => '60',
+        'not null' => TRUE,
       ),
       'data' => array(
         'description' => 'serialized settings array',
         'type' => 'text',
       ),
     ),
-    'primary key' => array('pid'),
+    'primary key' => array('sid'),
   );
   return $schema;
 }
 
-function sb_social_update_7001() {
-  db_add_primary_key('sb_social_webform', array('nid', 'service'));
-  return array();
-}
-
-/**
- * Schema changes to support path settings
- */
-function sb_social_update_7002() {
-  // rename sb_social_webform sb_social_node
-  $ret[] = db_rename_table('sb_social_webform', 'sb_social_node');
-
-  // add sb_social_path table
-  $table = array(
-    'description' => 'shared content settings for individual paths',
-    'fields' => array(
-      'pid' => array(
-        'description' => 'path id.',
-        'type' => 'serial',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'path' => array(
-        'description' => 'drupal path.',
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-      ),
-      'service' => array(
-        'description' => 'sharing service',
-        'type' => 'varchar',
-        'length' => 60,
-      ),
-      'data' => array(
-        'description' => 'serialized settings array',
-        'type' => 'text',
-      ),
-    ),
-    'primary key' => array('pid'),
-  );
-  $ret[] = db_create_table('sb_social_path', $table);
-  return $ret;
-}

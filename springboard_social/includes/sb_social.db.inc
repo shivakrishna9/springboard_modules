@@ -66,59 +66,37 @@ function sb_social_share_event_delete($sid) {
 /**
  * Load shared content settings
  */
-function sb_social_settings_load($nid) {
-  static $settings = array();
+function sb_social_settings_load($sid) {
 
-  if (empty($settings[$nid])) {
-    $settings[$nid] = array();
-    $query = db_select('sb_social_node', 's');
-    $query->fields('s');
-    $query->condition('nid', $nid, '=');
-    $results = $query->execute();
+  $results = db_query('SELECT * FROM {sb_social_settings} WHERE sid = :sid', array(':sid' => $sid));
 
-    while ($result = $results->fetchAssoc()) {
-      $settings[$nid][$result['service']] = unserialize($result['data']);
-    }
+  $settings = $results->fetchAssoc();
+  dsm($settings, 'settings mid load');
+  if ($settings) {
+    $settings['data'] = unserialize($settings['data']);
   }
+
   // supply global defaults if no settings are available.
-  if (empty($settings[$nid])) {
+  if (empty($settings)) {
     $enabled_services = sb_social_get_enabled_services();
     foreach ($enabled_services as $service) {
-      $settings[$nid][$service] = _sb_social_settings_defaults($service);
+      $settings['data'][$service] = _sb_social_settings_defaults($service);
     }
+    $settings['data']['market_source'] = _sb_social_market_source_defaults();
   }
-  return $settings[$nid];
+  dsm($settings, 'settings after load');
+  return $settings;
 }
 
-function sb_social_path_settings_load($pid) {
-  $path = sb_social_get_path_by_pid($pid);
 
-  $query = db_select('sb_social_path', 's');
-  $query->fields('s');
-  $query->condition('path', $path, '=');
-  $results = $query->execute();
-
-  while ($result = $results->fetchAssoc()) {
-    $settings[$path][$result['service']] = unserialize($result['data']);
-  }
-
-  if (empty($settings[$path])) {
-    $enabled_services = sb_social_get_enabled_services();
-    foreach ($enabled_services as $service) {
-      $settings[$path][$service] = _sb_social_settings_defaults($service);
-    }
-  }
-  return $settings[$path];
-}
-
-function sb_social_get_path_by_pid($pid) {
-  $result = db_query('SELECT path FROM {sb_social_path} WHERE pid = :pid', array(':pid' => $pid));
+function sb_social_get_id_by_sid($id) {
+  $result = db_query('SELECT id FROM {sb_social_settings} WHERE id = :id', array(':id' => $id));
   return $result->fetchField();
 }
 
 function sb_social_path_settings_load_all() {
   $settings = array();
-  $results = db_query('SELECT path, pid FROM {sb_social_path} GROUP BY path');
+  $results = db_query('SELECT id as path, sid FROM {sb_social_settings} WHERE type = :type', array(':type' => 'path'));
   while ($item = $results->fetchAssoc()) {
     $settings[] = $item;
   }
@@ -187,59 +165,27 @@ function sb_social_get_enabled_services() {
   }
   return $enabled_services;
 }
-/**
- * Save shared content settings
- *
- * @param $settings
- * Associative array with the following required keys:
- * nid - node id
- * service - service name (ex. twitter, facebook)
- * data - array of shared content settings
- */
-function sb_social_node_settings_save($settings, $values = NULL) {
 
-  if (module_exists('market_source') && $values) {
-    $fields = market_source_field_info();
-    foreach ($fields as $key => $field) {
-      if (isset($values[$key])) {
-        $settings['data']['market_source'][$key] = $values[$key];
-      }
-    }
-  }
-  if (is_array($settings['data'])) {
-    $settings['data'] = serialize($settings['data']);
-  }
-  dsm($settings, 'save settings');
-  sb_social_node_settings_delete($settings['nid'], $settings['service']);
-  drupal_write_record('sb_social_node', $settings);
-}
 
 /**
  * Save path settings.
  * @param type $settings
  * @param type $values
  */
-function sb_social_path_settings_save($settings, $values = NULL) {
-  if (module_exists('market_source') && $values) {
-    $fields = market_source_field_info();
-    foreach ($fields as $key => $field) {
-      if (isset($values[$key])) {
-        $settings['data']['market_source'][$key] = $values[$key];
-      }
-    }
-  }
+function sb_social_settings_save($settings, $values = NULL) {
+  dsm($settings, 'settings during save');
   if (is_array($settings['data'])) {
     $settings['data'] = serialize($settings['data']);
   }
   $update = array();
-  $pid = _sb_social_pid_by_path_service($settings['path'], $settings['service']);
+  $sid = _sb_social_sid_by_id($settings['id']);
 
-  if ($pid) {
-    $settings['pid'] = $pid;
-    $update = array('pid', 'service');
+  if ($sid) {
+    $settings['sid'] = $sid;
+    $update = array('sid');
   }
-  $record = (object) $settings;
-  $ret = drupal_write_record('sb_social_path', $settings, $update); //, $update);
+
+  drupal_write_record('sb_social_settings', $settings, $update);
 }
 
 
@@ -247,26 +193,10 @@ function _sb_social_path_record_exists($path) {
   return db_query('SELECT 1 FROM {sb_social_path} WHERE path = :path', array(':path' => $path))->fetchField();
 }
 
-/**
- * Delete shared content settings
- */
-function sb_social_node_settings_delete($nid, $service = FALSE) {
-  // TODO: reimplement with db_delete() to optionally remove single records.
-  $query = db_delete('sb_social_node');
-  $query->condition('nid', $nid);
-  if ($service) {
-    $query->condition('service', $service);
-  }
-  $query->execute();
- // db_query('DELETE FROM {sb_social_webform} WHERE nid = :nid', array(':nid' => $nid));
-}
 
-function sb_social_path_settings_delete($path, $service = FALSE) {
-  $query = db_delete('sb_social_path');
-  $query->condition('path', $path);
-  if ($service) {
-    $query->condition('service', $service);
-  }
+function sb_social_settings_delete($id) {
+  $query = db_delete('sb_social_settings');
+  $query->condition('id', $id);
   $query->execute();
 }
 
@@ -318,7 +248,7 @@ function sb_social_get_donation_by_sid($sid) {
   return $result->fetchObject();
 }
 
-function _sb_social_pid_by_path_service($path, $service) {
-  $result = db_query("SELECT pid FROM {sb_social_path} WHERE path = :path AND service = :service", array(':path' => $path, ':service' => $service));
+function _sb_social_sid_by_id($id) {
+  $result = db_query("SELECT sid FROM {sb_social_settings} WHERE id = :id", array(':id' => $id));
   return $result->fetchField();
 }

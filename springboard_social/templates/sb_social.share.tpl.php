@@ -11,7 +11,7 @@ endif;
 endif;
 ?>
 <?php if (in_array('email', $services)) : ?>
-<a class="addthis_button_email social-share-link email" addthis:url="<?php print($services['email_url']; ?>"</a>
+<a class="addthis_button_email social-share-link email" addthis:url="<?php print $services['email_url']; ?>"</a>
 <?php
 endif;
 ?>

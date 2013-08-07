@@ -8,6 +8,7 @@
 // db helper functions
 require_once('includes/sb_social.db.inc');
 require_once('includes/sb_social.salesforce.inc');
+require_once('includes/sb_social.ctools.inc');
 
 /**
  * Implements hook_permission().
@@ -122,37 +123,6 @@ function sb_social_access_node_settings($node) {
   return FALSE;
 }
 
-/**
- * Implements hook_node_insert().
- *
- * Copy parent node settings during clone operation, set defaults from global settings when
- * creating a new node.
- * @param type $node
- */
-function sb_social_node_insert($node) {
-  if (_webform_user_is_webform_user_node($node)) {
-    if (!isset($node->clone_from_original_nid)) {
-      // settings from global defaults
-      sb_social_add_default_settings($node->nid);
-    } elseif ($parent_nid = $node->clone_from_original_nid) {
-      // copy settings
-      $original_settings = sb_social_settings_load($parent_nid);
-      // if the parent node is missing default social settings, add them and then clone the defaults.
-      if (empty($original_settings)) {
-        sb_social_add_default_settings($parent_nid);
-        $original_settings = sb_social_settings_load($parent_nid);
-      }
-      foreach ($original_settings as $service => $data) {
-        $settings = array(
-          'nid' => $node->nid,
-          'service' => $service,
-          'data' => $data,
-        );
-        sb_social_webform_settings_save($settings);
-      }
-    }
-  }
-}
 
 /**
  * Implements hook_node_delete
@@ -174,30 +144,39 @@ function sb_social_node_insert($node) {
  *http://d7-springboard.dev/
  */
 function sb_social_init() {
-
+  $js_settings = array();
   $node = FALSE;
   if (arg(0) == 'node' && is_numeric(arg(1))) {
     $node = node_load(arg(1));
   }
   // generate shortened share url.
   if ($node && arg(2) == 'done') {
-    $node = node_load(arg(1));
 
     // add opengraph meta tags and twitter js settings.
     // Note: twitter customizations use the JS api and are handled elsewhere.
 
     $settings = sb_social_settings_load($node->nid);
-    if ($settings) {
-      drupal_add_js('http://s7.addthis.com/js/250/addthis_widget.js', array('type' => 'external', 'scope' => 'footer'));
-      drupal_add_js(drupal_get_path('module', 'sb_social') . '/scripts/sb_social.addthis.js', 'file');
-    }
 
+    if (!empty($settings['email'])) {
+      $email = array('sb_social' => array(
+        'email_subject' => $settings['email']['subject'],
+        'email_message' => $settings['email']['message'],
+        'pubid' => variable_get('springboard_social_addthis_profile_id', ''),
+      ));
+      $js_settings = array_merge($email, $js_settings);
+    }
     if (!empty($settings['twitter'])) {
-      drupal_add_js(array('sb_social' => array(
+      $twitter = array('sb_social' => array(
        'twitter_message' => $settings['twitter']['message'],
        'pubid' => variable_get('springboard_social_addthis_profile_id', ''),
-     )), 'setting');
+      ));
+      $js_settings['sb_social'] = array_merge($twitter['sb_social'], $js_settings['sb_social']);
     }
+
+    if (count($js_settings)) {
+      drupal_add_js(array('sb_social' => $js_settings), 'setting');
+    }
+
     if (!empty($settings['facebook'])) {
       $meta = array(
         'title' => !empty($settings['facebook']['title']) ? $settings['facebook']['title'] : '',
@@ -217,6 +196,10 @@ function sb_social_init() {
         drupal_add_html_head($data, 'opengraph_' . $id);
       }
     }
+    if ($settings) {
+      drupal_add_js('http://s7.addthis.com/js/250/addthis_widget.js', array('type' => 'external', 'scope' => 'footer'));
+      drupal_add_js(drupal_get_path('module', 'sb_social') . '/scripts/sb_social.addthis.js', 'file');
+    }
 
   }
   // stash cookie payload in js
@@ -230,54 +213,7 @@ function sb_social_init() {
   }
 }
 
-// TODO: change param to nid, no need for entire node object.
-function sb_social_add_default_settings($nid) {
-  $settings = array();
-  $enabled_services = variable_get('springboard_social_services', array());
-  $settings = array();
 
-  if (in_array('facebook', $enabled_services)) {
-    $settings['facebook'] = array(
-      'nid' => $nid,
-      'service' => 'facebook',
-      'data' => array(
-        'title' => variable_get('springboard_social_facebook_title', '%title'),
-        'description' => variable_get('springboard_social_facebook_description', '%teaser'),
-        'image' => variable_get('springboard_social_facebook_image', ''),
-      ),
-    );
-  }
-
-  if (in_array('twitter', $enabled_services)) {
-    $settings['twitter'] = array(
-      'nid' => $nid,
-      'service' => 'twitter',
-      'data' => array(
-        'message' => variable_get('springboard_social_twitter_message', '%title'),
-      ),
-    );
-  }
-  foreach ($settings as $service => $setting) {
-    if (module_exists('market_source')) {
-      $ms = array();
-      $fields = market_source_field_info();
-      // It doesn't make sense to list certain market source fields, like user agent.
-      // the blacklist lets us filter these out cleanly.
-      $blacklist = _sb_social_component_blacklist();
-      foreach ($fields as $key => $field) {
-        if (in_array($key, $blacklist)) {
-          continue;
-        }
-        $ms[$key] = variable_get('springboard_social_ms_' . $key, '');
-      }
-
-      $settings[$service]['data']['market_source'] = $ms;
-
-    }
-    sb_social_webform_settings_save($settings[$service]);
-  }
-
-}
 
 function sb_social_share_url($nid, $uid, $sid, $service, $settings) {
   $node = node_load($nid);
@@ -341,20 +277,6 @@ function sb_social_market_source_field_info() {
           'hidden_type' => 'hidden',
       ),
   );
-  // in the initial spec but unnecessary. This relationship is already
-  // established in the share event record.
-  //
-  // the network the transaction/submission was refered to.
- /* $fields['shared_to'] = array(
-      '#title' => t('Share network'),
-      '#type' => 'hidden',
-      '#value' => '',
-      '#required' => 0,
-      '#extra' => array(
-          'description' => '',
-          'hidden_type' => 'hidden',
-      ),
-  );*/
   return $fields;
 }
 
