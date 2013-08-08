@@ -73,3 +73,85 @@ function fundraiser_ab_webform_ab_valid_webforms_alter(&$forms, $webform_type) {
     }
   }
 }
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ * Tell ctools where this module's plugins live
+ */
+function fundraiser_ab_ctools_plugin_directory($owner, $plugin_type) {
+  if ($owner == 'webform_ab') {
+    return 'plugins/' . $plugin_type;
+  }
+}
+
+/**
+ * Implementation of hook_webform_ab_conversion().
+ * Save updated stats for this donation form/test node combo.
+ */
+function fundraiser_ab_webform_ab_conversion($test_node, $form_state_values) {
+  if ($webform_node = node_load($form_state_values['webform_nid'])) {
+    // Only update on donation form submissions
+    if (fundraiser_is_donation_type($webform_node->type)) {
+      // Flatten the submitted values, for convenience
+      $submission_fields = _fundraiser_webform_submission_flatten($form_state_values['webform_nid'], $form_state_values['submitted_tree']);
+
+      $recurs = FALSE;
+      if (!isset($submission_fields['recurs_monthly'])) { // In case the recurs_monthly field doesn't exist.
+        $submission_fields['recurs_monthly'] = FALSE;
+      }
+      if (is_bool($submission_fields['recurs_monthly'])) {
+        $recurs = $submission_fields['recurs_monthly'];
+      }
+      elseif (is_array($submission_fields['recurs_monthly']) && isset($submission_fields['recurs_monthly'][0])) {
+        $recurs = ($submission_fields['recurs_monthly'][0] == 'recurs') ? TRUE : FALSE;
+      }
+      else {
+        $recurs = ($submission_fields['recurs_monthly'] == 'recurs') ? TRUE : FALSE;
+      }
+
+      // Check if Other amount field was used
+      $donation_amount = $submission_fields['amount'];
+      if ($donation_amount == "other") {
+        $donation_amount = $submission_fields['other_amount'];
+      }
+drupal_set_message('$donation_amount: ' . $donation_amount);
+      // Check if the stat record already exists
+      if (db_query('SELECT test_nid FROM {fundraiser_ab_stats} WHERE test_nid = :test_nid AND webform_nid LIKE :webform_nid', array(':test_nid' => $test_nid, ':webform_nid' => $webform_nid))->fetchfield()) {
+        // Prep placeholders for query
+        $placeholders = array();
+        $placeholders[':donation_amount'] = $donation_amount;
+
+        // Start query
+        $sql = 'UPDATE {fundraiser_ab_stats} SET donation_count = donation_count + 1, total_donations = total_donations + :donation_amount';
+
+        // If it's a sustainer, increase those values too
+        if ($recurs) {
+          $sql .= ', sustainer_count = sustainer_count + 1, total_sustainer_donations = total_sustainer_donations + :donation_amount';
+        }
+
+        // Make sure the right row is updated
+        $sql .= ' WHERE test_nid = :test_nid AND webform_nid = :webform_nid';
+
+        // And add the placeholder values used for the where clause
+        $placeholders[':test_nid'] = $test_node->nid;
+        $placeholders[':webform_nid'] = $webform_node->nid;
+dpm($placeholders, '$placeholders');
+        db_query($sql, $placeholders);
+      }
+      else {
+        // Create a new stat record
+        $row = array(
+          'test_nid' => $test_node->nid,
+          'webform_nid' => $webform_node->nid,
+          'total_donations' => $donation_amount,
+          'donation_count' => 1,
+          'total_sustainer_donations' => ($recurs) ? $donation_amount : 0,
+          'sustainer_count' => ($recurs) ? 1 : 0,
+        );
+        dpm($row, '$row');
+        drupal_write_record('fundraiser_ab_stats', $row);
+        dpm($row, '$row');
+      }
+    }
+  }
+}
