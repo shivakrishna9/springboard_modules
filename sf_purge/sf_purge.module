@@ -21,12 +21,23 @@ function sf_purge_menu() {
 
   $items['admin/settings/salesforce-management/purge/now'] = array(
     'title' => t('Purge settings'),
-    'page callback' => 'sf_purge_purge',
+    'page callback' => 'sf_purge_purge_now',
     'access arguments' => array('configure salesforce purge'),
     'type' => MENU_CALLBACK,
   );
-
+  $items['sf_purge'] = array(
+    'title' => t('Purge callback'),
+    'page callback' => 'sf_purge_purge',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
   return $items;
+}
+
+function sf_purge_purge_now() {
+  sf_purge_purge();
+  drupal_set_message('Purge complete. Please review site logs for additional details.');
+  drupal_goto('admin/settings/salesforce-management/purge');
 }
 
 /**
@@ -36,6 +47,7 @@ function sf_purge_menu() {
 function sf_purge_purge() {
   // Get the types to be purged.
   $purge_types = variable_get('sf_purge_drupal_types', array());
+  $record_count = variable_get('sf_purge_record_count', 2000);
   $types_to_purge = array();
 
   // Ensure we actually have some types to purge.
@@ -47,20 +59,26 @@ function sf_purge_purge() {
       }
     }
 
-    // Create a string of types to be used in an IN clause.
-    $placeholders = db_placeholders($types_to_purge, 'text');
+    $backups = sf_purge_backup_records($types_to_purge);
 
-    do {
-      sleep(2); // Give other processes a shot at the database.
+    // purge.
+    if (is_array($backups)) {
+      foreach ($backups as $drupal_type => $oids) {
+      $placeholders = db_placeholders($oids, 'int');
+
       db_query("DELETE FROM {salesforce_management_object_map}
-        WHERE drupal_type IN ($placeholders)
-        ORDER BY oid
-        LIMIT 2000",
-        $types_to_purge
-      );
-    } while (db_affected_rows() > 0);
+          WHERE
+            drupal_type = '" . $drupal_type . "'
+          AND
+            oid IN (" . $placeholders . ")
+          ORDER BY oid
+          LIMIT $record_count", $oids);
+       watchdog('sf_purge', t('Deleted %count %type records', array('%count' => count($oids), '%type' => $drupal_type)), array(), WATCHDOG_NOTICE);
 
+      }
+    }
   }
+  return 'Purge complete.';
 }
 
 /**
@@ -79,4 +97,69 @@ function sf_purge_count_by_type() {
   }
 
   return $counts;
+}
+
+/**
+ * Back up sf object map records in preparation for purging.
+ *
+ * Writes backup files to files/sf_purge_backups
+ *
+ * @param $purge_types
+ * an array of drupal types that should be purged.
+ *
+ * @return
+ * Returns an array of oids for records backed up or FALSE if no records were available or
+ * there was a problem writing the backup file.
+ */
+function sf_purge_backup_records($types_to_purge) {
+
+  $headers = array('drupal_type', 'oid', 'sfid', 'fieldmap');
+  $rows[] = implode(',', $headers);
+  $oids = array();
+  $placeholders = db_placeholders($types_to_purge, 'text');
+  $record_count = variable_get('sf_purge_record_count', 2000);
+  $results = db_query("
+    SELECT
+      drupal_type,
+      oid,
+      sfid,
+      fieldmap
+    FROM {salesforce_management_object_map}
+    WHERE drupal_type IN ($placeholders)
+      ORDER BY oid
+      LIMIT $record_count
+  ", $types_to_purge);
+
+  while ($record = db_fetch_array($results)) {
+    $oids[$record['drupal_type']][] = $record['oid'];
+    $row = array();
+    $row[] = $record['drupal_type'];
+    $row[] = $record['oid'];
+    $row[] = $record['sfid'];
+    $row[] = $record['fieldmap'];
+    $rows[] = implode(',', $row);
+  }
+
+  $directory = file_directory_path() . '/sf_purge_backups';
+  if (file_check_directory($directory, FILE_CREATE_DIRECTORY)) {
+    if (count($oids)) {
+       $filename = date('m-d-YTH-m-s') . '.csv';
+       $data = implode("\n", $rows);
+       $dest = $directory . '/' . $filename;
+       $saved = file_save_data($data, $dest, FILE_EXISTS_RENAME);
+       if (!$saved) {
+         watchdog('sf_purge', t(''), array(), WATCHDOG_ERROR);
+         return FALSE;
+       }
+       return $oids;
+    }
+    else {
+      watchdog('sf_purge', t('SF Purge found no records to purge.'), array(), WATCHDOG_NOTICE);
+      return FALSE;
+    }
+  }
+  else {
+    watchdog('sf_purge', t('Unable to create sf_purge_backups directory.'), array(), WATCHDOG_ERROR);
+    return FALSE;
+  }
 }
