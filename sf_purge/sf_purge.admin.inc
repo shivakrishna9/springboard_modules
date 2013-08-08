@@ -10,7 +10,7 @@
  * Salesforce purge settings form.
  */
 function sf_purge_settings_form() {
-  // consider switching to SELECT DISTINCT drupal_types FROM {salesforce_management_object_map} ?
+  // grab a list of drupal types from the queue processor.
   $available_purge_types = drupal_map_assoc(variable_get('queue_processing_order', array('user', 'donation', 'webform', 'node')));
   $purge_types = variable_get('sf_purge_drupal_types', array());
 

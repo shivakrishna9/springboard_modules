@@ -18,13 +18,14 @@ function sf_purge_menu() {
     'file' => 'sf_purge.admin.inc',
     'type' => MENU_NORMAL_ITEM,
   );
-
+  // menu callback for purge now button
   $items['admin/settings/salesforce-management/purge/now'] = array(
     'title' => t('Purge settings'),
     'page callback' => 'sf_purge_purge_now',
     'access arguments' => array('configure salesforce purge'),
     'type' => MENU_CALLBACK,
   );
+  // cronnable purge
   $items['sf_purge'] = array(
     'title' => t('Purge callback'),
     'page callback' => 'sf_purge_purge',
@@ -36,7 +37,8 @@ function sf_purge_menu() {
 
 function sf_purge_purge_now() {
   sf_purge_purge();
-  drupal_set_message('Purge complete. Please review site logs for additional details.');
+  $log_url = l('site logs', 'admin/reports/dblog');
+  drupal_set_message(t('Purge complete. Please review !log_url for additional details.', array('!log_url' => $log_url)));
   drupal_goto('admin/settings/salesforce-management/purge');
 }
 
@@ -78,7 +80,6 @@ function sf_purge_purge() {
       }
     }
   }
-  return 'Purge complete.';
 }
 
 /**
