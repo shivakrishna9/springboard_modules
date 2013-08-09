@@ -6,22 +6,67 @@
  */
 
 /**
- * Switch exisitng orders to the new encryption scheme
+ * Removed update function
  */
 function fundraiser_commerce_update_7001() {
+}
+
+/**
+ * Update fundraiser commerce's order data to the latest encryption scheme, 
+ */
+function fundraiser_commerce_update_7002(&$sandbox) {
+  // Ensure the encryption function is here
+  module_load_include('inc', 'encrypt', 'includes/encrypt.encrypt');
   $results = db_query('SELECT order_id FROM commerce_order');
 
-  if ($results->rowCount()) {
-    foreach ($results as $record) {
-      $order = commerce_order_load($record->order_id);
-      if (!empty($order->data['fundraiser_commerce'])) {
-        $data = unserialize(_fundraiser_commerce_decrypt($order->data['fundraiser_commerce']));
-        // This value should be an array, don't touch if its anything else.
-        if (is_array($data)) {
-          $order->data['fundraiser_commerce'] = _fundraiser_commerce_order_data_prepare($data);
+  // Prepare the sandbox info
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['current_order_id'] = 0;
+    $sandbox['max'] = db_query('SELECT COUNT(DISTINCT order_id) FROM {commerce_order}')->fetchField();
+  }
+
+  $results = db_select('commerce_order', 'o')->fields('o', array('order_id'))->condition('order_id', $sandbox['current_order_id'], '>')->range(0, 3)->orderBy('order_id', 'ASC')->execute();
+
+  foreach ($results as $row) {
+    // Retrieve the data with stripslashes and old encryption method
+    $order = commerce_order_load($row->order_id);
+
+    // If the data has been encrypted with the mcrypt_rij_256 method we need to un-encrypt it using the drupal private key
+    $encryption_array = unserialize($order->data['fundraiser_commerce']);
+    if ($encryption_array['method'] == 'mcrypt_rij_256') {
+      // Pass an empty options array so the function will use the drupal private key
+      $decrypted = encrypt_encrypt_mcrypt_rij_256('decrypt', $encryption_array['text'], array());
+      // Get the data array, remove the slashes that had been added before
+      $data_array = unserialize(stripslashes($decrypted));
+      // If we have an array then this is data we can work with. this will prevent working with data thats been corrected
+      if (!empty($data_array)) {
+        // Remove the message variable
+        if (isset($data_array['message'])) {
+          unset($data_array['message']);
+        }
+
+        // send the data back through the prepare function so it will use the new method
+        $order->data['fundraiser_commerce'] = _fundraiser_commerce_order_data_prepare($data_array);
+        // If we get back value we're good, otherwise error out with a message, the order data needs to be fixed
+        if (empty($order->data['fundraiser_commerce'])) {
+          throw new DrupalUpdateException('There was an error encrypting the data for order #' . $order->order_id);
+        }
+        else {
           commerce_order_save($order);
         }
       }
     }
+
+    $sandbox['progress']++;
+    $sandbox['current_order_id'] = $order->order_id;
+  }
+
+  $sandbox['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
+
+  // To display a message to the user when the update is completed, return it.
+  // If you do not want to display a completion message, simply return nothing.
+  if ($sandbox['#finished'] >= 1) {
+    return t('The fundraiser commerce order data has been re-encrypted.');
   }
 }
