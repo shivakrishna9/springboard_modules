@@ -5,6 +5,8 @@ $plugin = array(
   'title' => 'Facebook',
   'settings' => 'facebook_settings',
   'process' => 'facebook_process_settings',
+  'share_config' => 'facebook_share_opengraph_config',
+  'js' => FALSE,
 );
 
 
@@ -67,4 +69,41 @@ function facebook_process_settings(&$data, $form_state) {
     $file = file_load($form_state['values']['fb_image']);
     $data['image'] = file_create_url($file->uri);
   }
+}
+
+/**
+ * Configure AddThis share buttons for Facebook.
+ *
+ * Add OpenGraph meta tags used by Facebook to define custom title, description, and image content on
+ * shares.
+ *
+ * Facebook and a few other services use opengraph tags to define custom share content instead of the 
+ * usual AddThis javascript configuration objects.
+ * 
+ */ 
+function facebook_share_opengraph_config($settings, $node = FALSE) {
+  $facebook = $settings['data']['facebook'];
+  $meta = array(
+    'title' => !empty($facebook['title']) ? $facebook['title'] : '',
+    'description' => !empty($facebook['description']) ? $facebook['description'] : '',
+    'image' => $facebook['image'],
+     //'url' => sb_social_short_url($node, $sid, 'facebook'),
+  );
+  if ($node) {
+    foreach ($meta as $field => $value) {
+      $meta[$field] = _sb_social_replace_tokens($value, $node);	
+    }
+  }
+  foreach ($meta as $id => $content) {
+     $data = array(
+      '#type' => 'html_tag',
+      '#tag' => 'meta',
+      '#attributes' => array(
+        'property' =>  "og:$id",
+        'content' => $content,
+      ),
+    );
+    drupal_add_html_head($data, 'opengraph_' . $id);
+  }
+
 }

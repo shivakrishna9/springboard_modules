@@ -105,6 +105,27 @@ function sb_social_menu() {
   return $items;
 }
 
+/*
+ * Implements hook_block_info().
+ */
+function sb_social_block_info() {
+  $blocks['social_sharing'] = array(
+    'info' => t('Social Sharing'),
+  );
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function sb_social_block_view($delta = '') {
+  if ($delta = 'social_sharing') {
+    $vars = array('services' => array('facebook', 'facebook_url' => $urls['facebook_url']));
+    $block['subject'] = NULL;
+    $block['content'] = theme('sb_social_share', $vars);
+    return $block;
+  }
+}
 
 /**
  * Access callback for node share content form.
@@ -144,72 +165,52 @@ function sb_social_access_node_settings($node) {
  *http://d7-springboard.dev/
  */
 function sb_social_init() {
-  $js_settings = array();
-  $node = FALSE;
   if (arg(0) == 'node' && is_numeric(arg(1))) {
     $node = node_load(arg(1));
+    $id = is_object($node) ? $node->nid : FALSE;
   }
-  // generate shortened share url.
-  if ($node && arg(2) == 'done') {
+  else {
+    // social supports both internal paths and path aliases so
+    // we need to check both.
+    $path = current_path();
+    $alias = drupal_get_path_alias($path);
+    $id = !empty($alias) ? array($path, $alias) : $path;
+  }
 
-    // add opengraph meta tags and twitter js settings.
-    // Note: twitter customizations use the JS api and are handled elsewhere.
-
-    $settings = sb_social_settings_load($node->nid);
-
-    if (!empty($settings['email'])) {
-      $email = array('sb_social' => array(
-        'email_subject' => $settings['email']['subject'],
-        'email_message' => $settings['email']['message'],
-        'pubid' => variable_get('springboard_social_addthis_profile_id', ''),
-      ));
-      $js_settings = array_merge($email, $js_settings);
-    }
-    if (!empty($settings['twitter'])) {
-      $twitter = array('sb_social' => array(
-       'twitter_message' => $settings['twitter']['message'],
-       'pubid' => variable_get('springboard_social_addthis_profile_id', ''),
-      ));
-      $js_settings['sb_social'] = array_merge($twitter['sb_social'], $js_settings['sb_social']);
-    }
-
-    if (count($js_settings)) {
-      drupal_add_js(array('sb_social' => $js_settings), 'setting');
-    }
-
-    if (!empty($settings['facebook'])) {
-      $meta = array(
-        'title' => !empty($settings['facebook']['title']) ? $settings['facebook']['title'] : '',
-        'description' => !empty($settings['facebook']['description']) ? $settings['facebook']['description'] : '',
-        'image' => $settings['facebook']['image'],
-        //'url' => sb_social_short_url($node, $sid, 'facebook'),
-      );
-      foreach ($meta as $id => $content) {
-        $data = array(
-          '#type' => 'html_tag',
-          '#tag' => 'meta',
-          '#attributes' => array(
-            'property' =>  "og:$id",
-            'content' => $content,
-          ),
-        );
-        drupal_add_html_head($data, 'opengraph_' . $id);
-      }
-    }
+  if ($id) {
+    $sid = _sb_social_sid_by_id($id);
+    $settings = sb_social_settings_load($sid);
+    
     if ($settings) {
+      ctools_include('plugins');
+      $plugins = ctools_get_plugins('sb_social', 'social_networks');
+      $enabled_services = sb_social_get_enabled_services();
+      $path = drupal_get_path('module', 'sb_social');
+
+      foreach($plugins as $service => $plugin) {
+
+        if (is_array($enabled_services) && in_array($service, $enabled_services)) {
+          $func = $plugin['share_config'];
+          $func($settings, $node);
+          if (!empty($plugin['js'])) {
+            drupal_add_js($path . '/' . $plugin['js']);
+          }
+        }
+      }
       drupal_add_js('http://s7.addthis.com/js/250/addthis_widget.js', array('type' => 'external', 'scope' => 'footer'));
       drupal_add_js(drupal_get_path('module', 'sb_social') . '/scripts/sb_social.addthis.js', 'file');
-    }
 
+    }
   }
   // stash cookie payload in js
-  if (!empty($_COOKIE['sb_social_event_submission'])) {
-   $data = explode("::", $_COOKIE['sb_social_event_submission']);
-   drupal_add_js(array('sb_social' => array(
-     'uid' => $data[0],
-     'mail' =>  $data[1],
-     'sid' => $data[2],
-   )), 'setting');
+  // TODO: this should probably live somewhere else.
+   if (!empty($_COOKIE['sb_social_event_submission'])) {
+     $data = explode("::", $_COOKIE['sb_social_event_submission']);
+     drupal_add_js(array('sb_social' => array(
+       'uid' => $data[0],
+       'mail' =>  $data[1],
+       'sid' => $data[2],
+     )), 'setting');
   }
 }
 
@@ -551,7 +552,6 @@ function _sb_social_set_tracking_cookie($uid, $mail, $sid) {
  */
 function _sb_social_replace_tokens($string, $node, $sid = NULL) {
   $rep = array();
-
   if (strpos($string, '%title') !== FALSE) {
     $rep['%title'] = !empty($node->title) ? $node->title : '';
   }

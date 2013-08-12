@@ -5,6 +5,8 @@ $plugin = array(
   'title' => t('Facebook'),
   'settings' => 'twitter_settings',
   'process' => 'twitter_process_settings',
+  'share_config' => 'twitter_share_js_config',
+  'js' => 'plugins/social_networks/twitter/twitter.share.js',
 );
 
 
@@ -39,4 +41,11 @@ function twitter_process_settings(&$data, $form_state) {
   $data['twitter'] = array(
     'message' => !empty($form_state['values']['twitter_message']) ? $form_state['values']['twitter_message'] : '',
   );
+}
+
+function twitter_share_js_config($settings) {
+  $settings = array(
+    'twitter_message' => $settings['data']['twitter']['message'],
+  );
+  drupal_add_js(array('sb_social' => $settings), 'setting');
 }

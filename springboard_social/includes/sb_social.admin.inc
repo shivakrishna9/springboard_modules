@@ -222,6 +222,9 @@ function sb_social_path_settings($form, $edit, $sid = NULL) {
   $enabled_services = sb_social_get_enabled_services();
   $settings = sb_social_settings_load($sid);
 
+  // differentiate add vs edit forms, prevents path validation from incorrectly flagging an edit form
+  // as a dupe on hook_validate.
+  $edit['is_new'] = !$settings;
   if (is_numeric($sid) && $sid) {
     $settings['path'] = sb_social_get_id_by_sid($sid);
   }
@@ -275,12 +278,36 @@ function sb_social_path_settings($form, $edit, $sid = NULL) {
 }
 
 function sb_social_path_settings_validate(&$form, $form_state) {
-  // TODO: run this validation on the ADD form only.
-/*  $path = $form_state['values']['path'];
-  if ($id = _sb_social_sid_by_id($path)) {
-    $link = l(t('here'), 'admin/config/services/springboard_social/path-settings/edit/' . $id);
-    form_set_error('path', t('Settings already exist for !path. You may edit them !link', array('!path' => $path, '!link' => $link)));
-  }*/
+
+  if ($form_state['is_new']) {
+    $path_is_alias = FALSE;
+    $path = $form_state['values']['path'];
+    // does path have an alias?
+    $alias = drupal_get_path_alias($path);
+    if (!$alias) {
+      // No alias? Check to see if path is an alias.
+      $alias = drupal_lookup_path('alias', $path);
+      if ($alias) {
+        $path_is_alias = TRUE;
+      }
+    }
+    // if path has an alias or is an alias, check both values for dupes.
+    $id = $alias ? array($path, $alias) : $path;
+
+    if ($sid = _sb_social_sid_by_id($id)) {
+      $link = l(t('here'), 'admin/config/services/springboard_social/path-settings/edit/' . $sid);
+      if (is_array($id)) {
+        $message = t('!alias is a path alias for !path. Settings already exist for !path. You may edit them !link', array('!path' => $path, '!link' => $link));
+      }
+      elseif ($path_is_alias) {
+        $message = t('!path is a path alias of !alias. Settings already exist for !alias. You may edit them !link', array('!path' => $path, '!alias' => $alias, 'link' => $link));
+      }
+      else {
+        $message = t('Settings already exist for !path. You may edit them !link', array('!path' => $path, '!link' => $link));
+      }
+      form_set_error('path', $message);
+    }
+  }
 
 }
 
@@ -300,7 +327,6 @@ function sb_social_path_settings_submit($form, $form_state) {
     foreach ($enabled_services as $service) {
       if (in_array($service, $keys)) {
         $func = $plugins[$service]['process'];
-        drupal_set_message('process function:' . $func);
         $func($data, $form_state);
       }
     }
@@ -428,7 +454,6 @@ function sb_social_settings_submit($form, $form_state) {
     foreach ($enabled_services as $service) {
       if (in_array($service, $keys)) {
         $func = $plugins[$service]['process'];
-        drupal_set_message('process function:' . $func);
         $func($data, $form_state);
       }
     }

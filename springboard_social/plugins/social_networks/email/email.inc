@@ -5,6 +5,8 @@ $plugin = array(
   'title' => t('Email'),
   'settings' => 'email_settings',
   'process' => 'email_process_settings',
+  'share_config' => 'email_share_js_config',
+  'js' => 'plugins/social_networks/email/email.share.js',
 );
 
 
@@ -43,4 +45,12 @@ function email_process_settings(&$data, $form_state) {
     'subject' => !empty($form_state['values']['email_subject']) ? $form_state['values']['email_subject'] : '',
     'message' => !empty($form_state['values']['email_message']) ? $form_state['values']['email_message'] : '',
   );
+}
+
+function email_share_js_config($settings) {
+  $settings = array(
+    'email_subject' => $settings['data']['email']['subject'],
+    'email_message' => $settings['data']['email']['message'],
+  );
+  drupal_add_js(array('sb_social' => $settings), 'setting');  
 }

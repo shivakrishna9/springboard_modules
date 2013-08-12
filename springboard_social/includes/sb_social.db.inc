@@ -246,6 +246,20 @@ function sb_social_get_donation_by_sid($sid) {
 }
 
 function _sb_social_sid_by_id($id) {
-  $result = db_query("SELECT sid FROM {sb_social_settings} WHERE id = :id", array(':id' => $id));
-  return $result->fetchField();
+  $query = db_select('sb_social_settings', 's');
+  $query->fields('s', array('sid'));
+
+  if (is_array($id)) {
+    $or = db_or();
+    foreach ($id as $data) {
+      $or->condition('id', $data, '=');
+    }
+    $query->condition($or);
+  }
+  else {
+    $query->condition('id', $id, '=');
+  }
+  $results = $query->execute();
+
+  return $results->fetchField();
 }
