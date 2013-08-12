@@ -174,9 +174,6 @@ function sb_social_path_admin() {
     '#type' => 'markup',
     '#markup' => theme_table($vars),
   );
-  // add/edit
-  // paths (this should probably be a view)
-    // fields: path | links (edit, delete)
   $form['#submit'][] = '_sb_social_add_path';
   return $form;
 }
@@ -353,14 +350,14 @@ function sb_social_path_settings_submit($form, $form_state) {
  * Goal deletion form.
  *
  */
-function sb_social_path_settings_delete_form($form, $form_state, $id) {
-  $path = sb_social_get_id_by_sid($id);
+function sb_social_path_settings_delete_form($form, $form_state, $sid) {
+  $path = sb_social_get_id_by_sid($sid);
   $form['confirmation_text'] = array(
-      '#markup' => t('Are you sure you want to unrecoverably delete the share settings for @path?', array('@path' => $path)),
+      '#markup' => t('Are you sure you want to unrecoverably delete the share settings for %path?', array('%path' => $path)),
   );
-  $form['path'] = array(
+  $form['sid'] = array(
       '#type' => 'value',
-      '#value' => $path ? $path : '',
+      '#value' => $sid,
   );
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['submit'] = array(
@@ -378,8 +375,8 @@ function sb_social_path_settings_delete_form($form, $form_state, $id) {
 }
 
 function sb_social_path_settings_delete_submit($form, &$form_state) {
-  if (!empty($form_state['values']['path'])) {
-    sb_social_path_settings_delete($form_state['values']['path']);
+  if (!empty($form_state['values']['sid'])) {
+    sb_social_settings_delete($form_state['values']['sid']);
   }
   $form_state['redirect'] = array('admin/config/services/springboard_social/path-settings');
 }

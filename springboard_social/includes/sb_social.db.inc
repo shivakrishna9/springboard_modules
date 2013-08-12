@@ -87,8 +87,8 @@ function sb_social_settings_load($sid) {
 }
 
 
-function sb_social_get_id_by_sid($id) {
-  $result = db_query('SELECT id FROM {sb_social_settings} WHERE id = :id', array(':id' => $id));
+function sb_social_get_id_by_sid($sid) {
+  $result = db_query('SELECT id FROM {sb_social_settings} WHERE sid = :sid', array(':sid' => $sid));
   return $result->fetchField();
 }
 
@@ -191,9 +191,9 @@ function _sb_social_path_record_exists($path) {
 }
 
 
-function sb_social_settings_delete($id) {
+function sb_social_settings_delete($sid) {
   $query = db_delete('sb_social_settings');
-  $query->condition('id', $id);
+  $query->condition('sid', $sid);
   $query->execute();
 }
 
