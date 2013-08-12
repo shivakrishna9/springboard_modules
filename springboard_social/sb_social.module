@@ -165,6 +165,7 @@ function sb_social_access_node_settings($node) {
  *http://d7-springboard.dev/
  */
 function sb_social_init() {
+  $node = FALSE;
   if (arg(0) == 'node' && is_numeric(arg(1))) {
     $node = node_load(arg(1));
     $id = is_object($node) ? $node->nid : FALSE;
