@@ -89,11 +89,11 @@ function facebook_share_opengraph_config($settings, $node = FALSE) {
     'image' => $facebook['image'],
      //'url' => sb_social_short_url($node, $sid, 'facebook'),
   );
-  if ($node) {
-    foreach ($meta as $field => $value) {
-      $meta[$field] = _sb_social_replace_tokens($value, $node);	
-    }
+  
+  foreach ($meta as $field => $value) {
+    $meta[$field] = _sb_social_replace_tokens($value, $node);	
   }
+  
   foreach ($meta as $id => $content) {
      $data = array(
       '#type' => 'html_tag',

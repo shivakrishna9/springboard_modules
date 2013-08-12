@@ -554,10 +554,10 @@ function _sb_social_set_tracking_cookie($uid, $mail, $sid) {
 function _sb_social_replace_tokens($string, $node, $sid = NULL) {
   $rep = array();
   if (strpos($string, '%title') !== FALSE) {
-    $rep['%title'] = !empty($node->title) ? $node->title : '';
+    $rep['%title'] = !empty($node->title) ? $node->title : drupal_get_title();
   }
   if (strpos($string, '%teaser') !== FALSE) {
-    $lang = $node->language;
+    $lang = !empty($node->language) ? $node->language : '';
     $teaser = !empty($node->body[$lang][0]['summary']) ? $node->body[$lang][0]['summary'] : '';
     $rep['%teaser'] = $teaser;
   }
