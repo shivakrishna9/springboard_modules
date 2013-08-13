@@ -134,29 +134,25 @@ function sb_social_block_view($delta = '') {
     }
     $sid = _sb_social_sid_by_id($id);
     $settings = sb_social_settings_load($sid);
-   
+
     ctools_include('plugins');
     $plugins = ctools_get_plugins('sb_social', 'social_networks');
     $enabled_services = sb_social_get_enabled_services();
     $services = array_keys($plugins);
- 
+
     // render button for each enabled service
     foreach ($services as $service) {
       if (in_array($service, $enabled_services)) {
-        drupal_set_message('render button for:' . $service);
         $vars['service'] = $service;
         $vars['url'] = sb_social_short_url($service, $settings);
         $vars['extra'] = '';
         if (isset($plugins[$service]['button_extra'])) {
-          drupal_set_message('setting extra for service:' . $service);
           $func = $plugins[$service]['button_extra'];
           $vars['extra'] = $func($settings['data'][$service]);
         }
-        dsm($vars, 'vars');
         $buttons[] = theme('sb_social_share_button', $vars);
       }
     }
-    dsm($buttons, 'buttons');
     $buttons = implode("\n", $buttons);
     $block['subject'] = NULL;
     $block['content'] = theme('sb_social_share', array('buttons' => $buttons));
@@ -203,6 +199,8 @@ function sb_social_access_node_settings($node) {
  */
 function sb_social_init() {
   $node = FALSE;
+  $submission_id = is_numeric($_GET['sid']) ? $_GET['sid'] : FALSE;
+
   if (arg(0) == 'node' && is_numeric(arg(1))) {
     $node = node_load(arg(1));
     $id = is_object($node) ? $node->nid : FALSE;
@@ -218,7 +216,7 @@ function sb_social_init() {
   if ($id) {
     $sid = _sb_social_sid_by_id($id);
     $settings = sb_social_settings_load($sid);
-    
+
     if ($settings) {
       ctools_include('plugins');
       $plugins = ctools_get_plugins('sb_social', 'social_networks');
@@ -228,8 +226,11 @@ function sb_social_init() {
       foreach($plugins as $service => $plugin) {
 
         if (is_array($enabled_services) && in_array($service, $enabled_services)) {
+          // run config callbacks, this sets up js settings, opengraph tags, etc.
           $func = $plugin['share_config'];
-          $func($settings, $node);
+          $func($settings, $node, $sid);
+
+          // if the plugin has a js file to add, include it here. Note: only one include per plugin is supported.
           if (!empty($plugin['js'])) {
             drupal_add_js($path . '/' . $plugin['js']);
           }
@@ -557,7 +558,7 @@ function sb_social_short_url($service, $settings, $submission_id = FALSE) {
     'social_referrer_network' => $service,
   );
   if (!empty($submission_id)) {
-    $params['social_referrer_transaction'] = $submission_id; 
+    $params['social_referrer_transaction'] = $submission_id;
   }
   if (module_exists('market_source') && isset($settings['data']['market_source'])) {
     foreach ($settings['data']['market_source'] as $key => $value) {
@@ -573,7 +574,7 @@ function sb_social_short_url($service, $settings, $submission_id = FALSE) {
   // friendlier for end users.
   $path = ($settings['type'] == 'path') ? $settings['id'] : 'node/' . $settings['id'];
   $alias = drupal_get_path_alias($path);
- 
+
   $path = $alias ? $alias : $path;
   $options = array(
     'absolute' => TRUE,
@@ -590,7 +591,6 @@ function sb_social_short_url_old($node, $sid, $service, $settings = NULL) {
   $submission = _sb_social_load_submission($sid);
   $uid = $submission['uid'];
   $url = sb_social_share_url($node->nid, $uid, $sid, $service, $settings);
-  drupal_set_message($url);
   return shorten_url($url);
 }
 

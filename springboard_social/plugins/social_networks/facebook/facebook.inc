@@ -126,7 +126,7 @@ function facebook_process_settings(&$data, $form_state) {
  * usual AddThis javascript configuration objects.
  * 
  */ 
-function facebook_share_opengraph_config($settings, $node = FALSE) {
+function facebook_share_opengraph_config($settings, $node = FALSE, $sid = FALSE) {
   $facebook = $settings['data']['facebook'];
   $meta = array(
     'title' => !empty($facebook['title']) ? $facebook['title'] : '',
@@ -136,7 +136,7 @@ function facebook_share_opengraph_config($settings, $node = FALSE) {
   );
   
   foreach ($meta as $field => $value) {
-    $meta[$field] = _sb_social_replace_tokens($value, $node);	
+    $meta[$field] = _sb_social_replace_tokens($value, $node, $sid);	
   }
   
   foreach ($meta as $id => $content) {

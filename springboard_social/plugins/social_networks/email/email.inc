@@ -13,7 +13,6 @@ $plugin = array(
   'uninstall' => 'email_uninstall',
 );
 
-// TODO: add uninstall hook to clear variables.
 
 function email_defaults() {
   $settings = array(
@@ -83,10 +82,10 @@ function email_process_settings(&$data, $form_state) {
   );
 }
 
-function email_share_js_config($settings) {
+function email_share_js_config($settings, $node = FALSE, $sid = FALSE) {
   $settings = array(
-    'email_subject' => $settings['data']['email']['subject'],
-    'email_message' => $settings['data']['email']['message'],
+    'email_subject' => _sb_social_replace_tokens($settings['data']['email']['subject'], $node, $sid),
+    'email_message' => _sb_social_replace_tokens($settings['data']['email']['message'], $node, $sid),
   );
   drupal_add_js(array('sb_social' => $settings), 'setting');  
 }

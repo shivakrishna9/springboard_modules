@@ -72,9 +72,9 @@ function twitter_process_settings(&$data, $form_state) {
   );
 }
 
-function twitter_share_js_config($settings) {
+function twitter_share_js_config($settings, $node = FALSE, $sid = FALSE) {
   $settings = array(
-    'twitter_message' => $settings['data']['twitter']['message'],
+    'twitter_message' => _sb_social_replace_tokens($settings['data']['twitter']['message'], $node, $sid),
   );
   drupal_add_js(array('sb_social' => $settings), 'setting');
 }
