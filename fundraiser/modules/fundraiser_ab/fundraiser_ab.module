@@ -38,11 +38,6 @@ function fundraiser_ab_node_load($nodes, $types) {
 }
 
 /**
- * @todo
- *    Add win condition for total amount collected?
- */
-
-/**
  * Implements hook_webform_ab_get_webform_types().
  */
 function fundraiser_ab_webform_ab_get_webform_types() {
@@ -57,6 +52,8 @@ function fundraiser_ab_webform_ab_get_webform_types() {
  */
 function fundraiser_ab_webform_ab_validate_conversion($webform_types, $test_node, $form_state) {
   if ($webform_types == 'fundraiser') {
+      dpm($form_state);
+      dpm(form_get_errors());
     // If abort is TRUE, the payment failed.
     // Only return TRUE if the abort flag is NOT set to TRUE
     return ($form_state['values']['abort'] !== TRUE);
@@ -125,6 +122,13 @@ function fundraiser_ab_webform_ab_conversion($test_node, $form_state_values) {
   if ($webform_node = node_load($form_state_values['webform_nid'])) {
     // Only update on donation form submissions
     if (fundraiser_is_donation_type($webform_node->type)) {
+      // Only act on successful donations
+      dpm($form_state_values['#donations']);
+      //if (empty($form_state_values['#donations']) || ($form_state_values['#donations']->status === 'failed')) {
+      //      dpm('failed');
+      //  return;
+      //}
+
       // Flatten the submitted values, for convenience
       $submission_fields = _fundraiser_webform_submission_flatten($form_state_values['webform_nid'], $form_state_values['submitted_tree']);
 
@@ -148,7 +152,7 @@ function fundraiser_ab_webform_ab_conversion($test_node, $form_state_values) {
       if ($donation_amount == "other") {
         $donation_amount = $submission_fields['other_amount'];
       }
-
+dpm($form_state_values, '$form_state_values');
       // Check if the stat record already exists
       $exist = db_query('SELECT test_nid FROM {fundraiser_ab_stats} WHERE test_nid = :test_nid AND webform_nid = :webform_nid', array(':test_nid' => $test_node->nid, ':webform_nid' => $webform_node->nid))->fetchfield();
 
