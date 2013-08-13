@@ -134,17 +134,32 @@ function sb_social_block_view($delta = '') {
     }
     $sid = _sb_social_sid_by_id($id);
     $settings = sb_social_settings_load($sid);
-    dsm($settings, 'settings loaded during hook_block_view');
    
     ctools_include('plugins');
     $plugins = ctools_get_plugins('sb_social', 'social_networks');
-    foreach ($plugins as $service => $plugin) {
-     /* $vars['services'][$service]['url'] = '';
-      $vars = array('services' => array('facebook', 'facebook_url' => $urls['facebook_url']));*/
-      $vars['services'][$service]['url'] = sb_social_short_url($service, $settings, FALSE);
+    $enabled_services = sb_social_get_enabled_services();
+    $services = array_keys($plugins);
+ 
+    // render button for each enabled service
+    foreach ($services as $service) {
+      if (in_array($service, $enabled_services)) {
+        drupal_set_message('render button for:' . $service);
+        $vars['service'] = $service;
+        $vars['url'] = sb_social_short_url($service, $settings);
+        $vars['extra'] = '';
+        if (isset($plugins[$service]['button_extra'])) {
+          drupal_set_message('setting extra for service:' . $service);
+          $func = $plugins[$service]['button_extra'];
+          $vars['extra'] = $func($settings['data'][$service]);
+        }
+        dsm($vars, 'vars');
+        $buttons[] = theme('sb_social_share_button', $vars);
+      }
     }
+    dsm($buttons, 'buttons');
+    $buttons = implode("\n", $buttons);
     $block['subject'] = NULL;
-    $block['content'] = theme('sb_social_share', $vars);
+    $block['content'] = theme('sb_social_share', array('buttons' => $buttons));
     return $block;
   }
 }
@@ -508,16 +523,35 @@ function sb_social_theme($existing, $type, $theme, $path) {
 
   $items['sb_social_share'] = array(
     'variables' => array(
-      'services' => NULL,
+      'vars' => NULL,
     ),
     'template' => 'templates/sb_social.share',
   );
+  $items['sb_social_share_button'] = array(
+    'variables' => array(
+      'settings' => NULL,
+    ),
+    'template' => 'templates/sb_social.share_button',
+  );
+  // TODO: redo fb image upload as an image picker of existing uploads with optional upload field and ajaxy UI.
   $items['sb_social_share_image_preview'] = array(
     'render element' => 'element',
   );
   return $items;
 }
 
+/**
+ * generate a short url from share settings.
+ *
+ * @param $service
+ * service name
+ *
+ * @param $settings
+ * share settings for the current node or path
+ *
+ * @param $submission_id
+ * Webform submission ID, used on confirmation pages to track shares to donations.
+ */
 function sb_social_short_url($service, $settings, $submission_id = FALSE) {
   $params = array(
     'social_referrer_network' => $service,
@@ -548,6 +582,7 @@ function sb_social_short_url($service, $settings, $submission_id = FALSE) {
 
   $url = url($path, $options);
   drupal_set_message('url:' . $url);
+  // TODO: shorten
   return $url;
 }
 

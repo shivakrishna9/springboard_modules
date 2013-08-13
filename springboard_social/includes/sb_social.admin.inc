@@ -21,75 +21,16 @@ function sb_social_admin() {
     '#title' => t('AddThis Profile ID'),
     '#default_value' => variable_get('springboard_social_addthis_profile_id', ''),
   );
-  $form['services']['facebook'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Facebook Settings'),
-    '#states' => array(
-      // Hide the settings when facebook checkbox is not selected.
-      'invisible' => array(
-       ':input[name="springboard_social_services[facebook]"]' => array('checked' => FALSE),
-      ),
-    ),
-  );
-  $form['services']['facebook']['springboard_social_facebook_title'] = array(
-    '#type' => 'textfield',
-    '#title'=> t('Default Facebook share title'),
-    '#default_value' => variable_get('springboard_social_facebook_title', '%title'),
-  );
-  $form['services']['facebook']['springboard_social_facebook_description'] = array(
-    '#type' => 'textfield',
-    '#title'=> t('Default Facebook share description'),
-    '#default_value' => variable_get('springboard_social_facebook_description', '%teaser'),
-  );
-  $form['services']['facebook']['springboard_social_facebook_image'] = array(
-    '#type' => 'managed_file',
-    '#title' => 'Image upload',
-    '#description' => t('Upload an image to display in share content'),
-    '#default_value' => variable_get('logo', ''),
-    '#upload_location' => 'public://social_images',
-    '#upload_validators' => array(
-      'file_validate_extensions' => array('gif png jpg jpeg'),
-    ),
-    '#theme' => 'sb_social_share_image_preview',
-  );
 
-  $form['services']['twitter'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Twitter'),
-    '#states' => array(
-      // Hide the settings when facebook checkbox is not selected.
-      'invisible' => array(
-       ':input[name="springboard_social_services[twitter]"]' => array('checked' => FALSE),
-      ),
-    ),
-  );
-  $form['services']['twitter']['springboard_social_twitter_message'] = array(
-    "#type" => 'textfield',
-    '#title' => t('Default twitter share message'),
-    '#default_value' => variable_get('springboard_social_twitter_message', '%title'),
-  );
-
-  $form['services']['email'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Email Settings'),
-    '#states' => array(
-      // Hide the settings when facebook checkbox is not selected.
-      'invisible' => array(
-       ':input[name="springboard_social_services[email]"]' => array('checked' => FALSE),
-      ),
-    ),
-  );
-  $form['services']['email']['springboard_social_email_subject'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Email subject'),
-    '#default_value' => variable_get('springboard_social_email_subject', '%title'),
-  );
-  $form['services']['email']['springboard_social_email_message'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Email message'),
-    '#default_value' => variable_get('springboard_social_email_message', ''),
-  );
-
+  // load service specific settings fields from plugins
+  ctools_include('plugins');
+  $plugins = ctools_get_plugins('sb_social', 'social_networks');
+  foreach ($plugins as $service => $plugin) {
+    $func = isset($plugin['admin_settings']) ? $plugin['admin_settings'] : FALSE;
+    if ($func) {
+      $func($form);
+    }
+  }
 
   if (module_exists('market_source')) {
     $form['services']['market_source'] = array(

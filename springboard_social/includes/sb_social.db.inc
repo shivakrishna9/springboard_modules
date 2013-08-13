@@ -67,10 +67,11 @@ function sb_social_share_event_delete($sid) {
  * Load shared content settings
  */
 function sb_social_settings_load($sid) {
+  drupal_set_message('sid:' . $sid);
   // This can get called by hook_block_view() in addition to hook_init() so we should cache.
   static $settings = array();
 
-  if (empty($settings[$sid]) {
+  if (empty($settings[$sid])) {
     $results = db_query('SELECT * FROM {sb_social_settings} WHERE sid = :sid', array(':sid' => $sid));
 
     $settings[$sid] = $results->fetchAssoc();
@@ -107,7 +108,7 @@ function sb_social_settings_load($sid) {
       }
     }
   }
-  return $settings['sid'];
+  return $settings[$sid];
 }
 
 

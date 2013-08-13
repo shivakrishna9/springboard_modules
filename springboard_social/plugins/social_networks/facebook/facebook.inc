@@ -1,13 +1,15 @@
 <?php
 
 $plugin = array(
-  'name' => 'facebook',
-  'title' => 'Facebook',
-  'settings' => 'facebook_settings',
-  'process' => 'facebook_process_settings',
-  'share_config' => 'facebook_share_opengraph_config',
-  'js' => FALSE,
-  'defaults' => 'facebook_defaults',
+  'name' => 'facebook', // internal service name
+  'title' => t('Facebook'), // Human-readable service name
+  'settings' => 'facebook_settings', // additions to path and node settings forms
+  'admin_settings' => 'facebook_admin_settings', // additions to admin defaults settings form
+  'process' => 'facebook_process_settings', // submit handler for node & path settings fields
+  'share_config' => 'facebook_share_opengraph_config', // render share settings required by AddThis
+  'js' => FALSE, // include js settings as needed
+  'defaults' => 'facebook_defaults', // provide default settings
+  'uninstall' => 'facebook_uninstall', // uninstall hook: remove variables, etc.
 );
 
 function facebook_defaults() {
@@ -17,6 +19,40 @@ function facebook_defaults() {
     'image' => '', variable_get('springboard_social_facebook_image', ''),
   );
   return $settings;
+}
+
+function facebook_admin_settings(&$form) {
+  $form['services']['facebook'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Facebook Settings'),
+    '#states' => array(
+      // Hide the settings when facebook checkbox is not selected.
+      'invisible' => array(
+        ':input[name="springboard_social_services[facebook]"]' => array('checked' => FALSE),
+      ),
+    ),
+  );
+  $form['services']['facebook']['springboard_social_facebook_title'] = array(
+    '#type' => 'textfield',
+    '#title'=> t('Default Facebook share title'),
+    '#default_value' => variable_get('springboard_social_facebook_title', '%title'),
+  );
+  $form['services']['facebook']['springboard_social_facebook_description'] = array(
+    '#type' => 'textfield',
+    '#title'=> t('Default Facebook share description'),
+    '#default_value' => variable_get('springboard_social_facebook_description', '%teaser'),
+  );
+  $form['services']['facebook']['springboard_social_facebook_image'] = array(
+    '#type' => 'managed_file',
+    '#title' => 'Image upload',
+    '#description' => t('Upload an image to display in share content'),
+    '#default_value' => variable_get('logo', ''),
+    '#upload_location' => 'public://social_images',
+    '#upload_validators' => array(
+      'file_validate_extensions' => array('gif png jpg jpeg'),
+    ),
+    '#theme' => 'sb_social_share_image_preview',
+  );
 }
 
 function facebook_settings(&$form, $enabled_services = array(), $settings = array(), $token_set = array('all')) {
@@ -114,5 +150,12 @@ function facebook_share_opengraph_config($settings, $node = FALSE) {
     );
     drupal_add_html_head($data, 'opengraph_' . $id);
   }
+}
+
+function facebook_uninstall() {
+  // remove variables.
+  variable_del('springboard_social_facebook_title');
+  variable_del('springboard_social_facebook_description');
+  variable_del('springboard_social_facebook_image');
 
 }
