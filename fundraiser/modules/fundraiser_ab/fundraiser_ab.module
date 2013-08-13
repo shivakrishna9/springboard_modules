@@ -52,7 +52,7 @@ function fundraiser_ab_webform_ab_get_webform_types() {
  */
 function fundraiser_ab_webform_ab_validate_conversion($webform_types, $test_node, $form_state) {
   // Only act on successful donations
-  if (($webform_types == 'fundraiser') && (empty($form_state_values['#donations']) || ($form_state_values['#donations']->status === 'failed'))) {
+  if (($webform_types == 'fundraiser') && (empty($form_state['#donation']) || ($form_state['#donation']->status === 'failed'))) {
     return FALSE;
   }
   elseif ($webform_types == 'fundraiser') {
@@ -123,7 +123,7 @@ function fundraiser_ab_webform_ab_conversion($test_node, $form_state_values) {
     // Only update on donation form submissions
     if (fundraiser_is_donation_type($webform_node->type)) {
       // Only act on successful donations
-      if (empty($form_state_values['#donations']) || ($form_state_values['#donations']->status === 'failed')) {
+      if (empty($form_state_values['#donation']) || ($form_state_values['#donation']->status === 'failed')) {
         return;
       }
 
