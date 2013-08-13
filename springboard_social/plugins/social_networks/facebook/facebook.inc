@@ -7,8 +7,17 @@ $plugin = array(
   'process' => 'facebook_process_settings',
   'share_config' => 'facebook_share_opengraph_config',
   'js' => FALSE,
+  'defaults' => 'facebook_defaults',
 );
 
+function facebook_defaults() {
+  $settings = array(
+    'title' => variable_get('springboard_social_facebook_title', '%title'),
+    'description' => variable_get('springboard_social_facebook_description', '%teaser'),
+    'image' => '', variable_get('springboard_social_facebook_image', ''),
+  );
+  return $settings;
+}
 
 function facebook_settings(&$form, $enabled_services = array(), $settings = array(), $token_set = array('all')) {
   $form['fb_settings'] = array(

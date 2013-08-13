@@ -120,7 +120,29 @@ function sb_social_block_info() {
  */
 function sb_social_block_view($delta = '') {
   if ($delta = 'social_sharing') {
-    $vars = array('services' => array('facebook', 'facebook_url' => $urls['facebook_url']));
+    $node = menu_get_object();
+    if (!$node) {
+      // is it a confirmation page?
+      $node = menu_get_object('webform_menu');
+      // if we still don't have a node id then we must assume this isn't a node
+      // or confirmation page and any settings that may be available will come
+      // from the current path.
+      $id = !$node ? current_path() : $node->nid;
+    }
+    else {
+      $id = $node->nid;
+    }
+    $sid = _sb_social_sid_by_id($id);
+    $settings = sb_social_settings_load($sid);
+    dsm($settings, 'settings loaded during hook_block_view');
+   
+    ctools_include('plugins');
+    $plugins = ctools_get_plugins('sb_social', 'social_networks');
+    foreach ($plugins as $service => $plugin) {
+     /* $vars['services'][$service]['url'] = '';
+      $vars = array('services' => array('facebook', 'facebook_url' => $urls['facebook_url']));*/
+      $vars['services'][$service]['url'] = sb_social_short_url($service, $settings, FALSE);
+    }
     $block['subject'] = NULL;
     $block['content'] = theme('sb_social_share', $vars);
     return $block;
@@ -228,8 +250,8 @@ function sb_social_share_url($nid, $uid, $sid, $service, $settings) {
     ),
   );
 
-  if (module_exists('market_source') && isset($settings['market_source'])) {
-    foreach ($settings['market_source'] as $key => $value) {
+  if (module_exists('market_source') && isset($settings['data']['market_source'])) {
+    foreach ($settings['data']['market_source'] as $key => $value) {
       if (!$value) {
         continue;
       }
@@ -393,20 +415,17 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
   if ($type = 'sb_social' && !empty($data['node'])) {
     $replacements = array();
     $node = $data['node'];
+    // TODO: get this working for path settings.
     $settings = sb_social_settings_load($node->nid);
     $enabled_services = sb_social_get_enabled_services();
+    $sid = (!empty($_GET['sid']) && is_numeric($_GET['sid'])) ? $_GET['sid'] : FALSE;
 
-    if (!empty($_GET['sid'])) {
-      $sid = $_GET['sid'];
-      if (in_array('facebook', $enabled_services)) {
-        $urls['facebook_url'] = sb_social_short_url($data['node'], $sid, 'facebook', $settings['facebook']);
-      }
-      if (in_array('twitter', $enabled_services)) {
-        $urls['twitter_url'] = sb_social_short_url($data['node'], $sid, 'twitter', $settings['twitter']);
-      }
-      if ($urls) {
-        $enabled_services = array_merge($enabled_services, $urls);
-      }
+    foreach ($enabled_services as $service) {
+      $urls[$service . '_url'] = sb_social_short_url($service, $settings, $sid);
+    }
+
+    if ($urls) {
+      $enabled_services = array_merge($enabled_services, $urls);
     }
     foreach ($tokens as $key => $token) {
       switch ($key) {
@@ -499,10 +518,44 @@ function sb_social_theme($existing, $type, $theme, $path) {
   return $items;
 }
 
-function sb_social_short_url($node, $sid, $service, $settings = NULL) {
+function sb_social_short_url($service, $settings, $submission_id = FALSE) {
+  $params = array(
+    'social_referrer_network' => $service,
+  );
+  if (!empty($submission_id)) {
+    $params['social_referrer_transaction'] = $submission_id; 
+  }
+  if (module_exists('market_source') && isset($settings['data']['market_source'])) {
+    foreach ($settings['data']['market_source'] as $key => $value) {
+      if (empty($value)) {
+        continue;
+      }
+      $params[$key] = $value;
+    }
+  }
+  // if this is a node-level setting the id is the node id so we have to
+  // reconstruct the internal path (ex. node/2).
+  // Once we have a path, check for an avaliable alias since these tend to be
+  // friendlier for end users.
+  $path = ($settings['type'] == 'path') ? $settings['id'] : 'node/' . $settings['id'];
+  $alias = drupal_get_path_alias($path);
+ 
+  $path = $alias ? $alias : $path;
+  $options = array(
+    'absolute' => TRUE,
+    'query' => $params
+  );
+
+  $url = url($path, $options);
+  drupal_set_message('url:' . $url);
+  return $url;
+}
+
+function sb_social_short_url_old($node, $sid, $service, $settings = NULL) {
   $submission = _sb_social_load_submission($sid);
   $uid = $submission['uid'];
   $url = sb_social_share_url($node->nid, $uid, $sid, $service, $settings);
+  drupal_set_message($url);
   return shorten_url($url);
 }
 

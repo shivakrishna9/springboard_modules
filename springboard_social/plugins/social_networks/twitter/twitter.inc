@@ -7,8 +7,17 @@ $plugin = array(
   'process' => 'twitter_process_settings',
   'share_config' => 'twitter_share_js_config',
   'js' => 'plugins/social_networks/twitter/twitter.share.js',
+  'defaults' => 'twitter_defaults',
 );
 
+// TODO: add uninstall function to clear variables.
+
+function twitter_defaults() {
+  $settings = array(
+    'message' => variable_get('springboard_social_twitter_message', '%title'),
+  );
+  return $settings;
+}
 
 function twitter_settings(&$form, $enabled_services = array(), $settings = array(), $token_set = array('all')) {
   $form['twitter_settings'] = array(

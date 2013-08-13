@@ -67,23 +67,47 @@ function sb_social_share_event_delete($sid) {
  * Load shared content settings
  */
 function sb_social_settings_load($sid) {
+  // This can get called by hook_block_view() in addition to hook_init() so we should cache.
+  static $settings = array();
 
-  $results = db_query('SELECT * FROM {sb_social_settings} WHERE sid = :sid', array(':sid' => $sid));
+  if (empty($settings[$sid]) {
+    $results = db_query('SELECT * FROM {sb_social_settings} WHERE sid = :sid', array(':sid' => $sid));
 
-  $settings = $results->fetchAssoc();
-  if ($settings) {
-    $settings['data'] = unserialize($settings['data']);
-  }
-
-  // supply global defaults if no settings are available.
-  if (empty($settings)) {
-    $enabled_services = sb_social_get_enabled_services();
-    foreach ($enabled_services as $service) {
-      $settings['data'][$service] = _sb_social_settings_defaults($service);
+    $settings[$sid] = $results->fetchAssoc();
+    if ($settings[$sid]) {
+      $settings[$sid]['data'] = unserialize($settings['data']);
     }
-    $settings['data']['market_source'] = _sb_social_market_source_defaults();
+
+    // supply global defaults if no settings are available.
+    if (empty($settings[$sid])) {
+      // check for node view page. 
+      $node = menu_get_object();
+      // confirmation page
+      if (!$node && arg(2) == 'done') {
+        $node = menu_get_object('webform_menu');
+      }
+      if (isset($node->nid)) {
+        drupal_set_message('node page, use node id');
+        $settings[$sid]['id'] = $node->nid;
+        $settings[$sid]['type'] = 'node';
+      }
+      else {
+        // if we still don't have settings, use the current path.
+        drupal_set_message('not a node page, use current path');
+        $settings[$sid]['id'] = current_path();
+        $settings[$sid]['type'] = 'path';
+      }
+    
+      $enabled_services = sb_social_get_enabled_services();
+      foreach ($enabled_services as $service) {
+        $settings[$sid]['data'][$service] = _sb_social_settings_defaults($service);
+      }
+      if (module_exists('market_source')) {
+        $settings[$sid]['data']['market_source'] = _sb_social_market_source_defaults();
+      }
+    }
   }
-  return $settings;
+  return $settings['sid'];
 }
 
 
@@ -92,6 +116,9 @@ function sb_social_get_id_by_sid($sid) {
   return $result->fetchField();
 }
 
+/**
+ * Load all path settings, used by path admin list page.
+ */
 function sb_social_path_settings_load_all() {
   $settings = array();
   $results = db_query('SELECT id as path, sid FROM {sb_social_settings} WHERE type = :type', array(':type' => 'path'));
@@ -101,35 +128,21 @@ function sb_social_path_settings_load_all() {
   return $settings;
 }
 
+// TODO: replace with plugin defaults.
 /**
  * provide service default settings
  */
 function _sb_social_settings_defaults($service) {
-  switch ($service) {
-    case 'facebook':
-      $settings = array(
-        'title' => variable_get('springboard_social_facebook_title', '%title'),
-        'description' => variable_get('springboard_social_facebook_description', '%teaser'),
-        'image' => '', variable_get('springboard_social_facebook_image', ''),
-      );
-      break;
-    case 'twitter':
-      $settings = array(
-        'message' => variable_get('springboard_social_twitter_message', '%title'),
-      );
-      break;
-    case 'email':
-      $settings = array(
-        'subject' => variable_get('springboard_social_email_subject', '%title'),
-        'message' => variable_get('springboard_social_email_message'. ''),
-      );
-      break;
-    default:
-      break;
+  $settings = array();
+  ctools_include('plugins');
+  $plugins = ctools_get_plugins('sb_social', 'social_networks'); 
+  $services = array_keys($plugins);
+ 
+  if (in_array($service, $services)) {
+    $func = $plugins[$service]['defaults'];
+    $settings = $func();
   }
-  if (module_exists('market_source')) {
-    $settings['market_source'] = _sb_social_market_source_defaults();
-  }
+
   return $settings;
 }
 

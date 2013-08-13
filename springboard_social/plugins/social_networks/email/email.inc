@@ -7,8 +7,18 @@ $plugin = array(
   'process' => 'email_process_settings',
   'share_config' => 'email_share_js_config',
   'js' => 'plugins/social_networks/email/email.share.js',
+  'defaults' => 'email_defaults',
 );
 
+// TODO: add uninstall hook to clear variables.
+
+function email_defaults() {
+  $settings = array(
+    'subject' => variable_get('springboard_social_email_subject', '%title'),
+    'message' => variable_get('springboard_social_email_message'. ''),
+  );
+  return $settings;
+}
 
 function email_settings(&$form, $enabled_services = array(), $settings = array(), $token_set = array('all')) {
   $form['email_settings'] = array(
