@@ -67,7 +67,6 @@ function sb_social_share_event_delete($sid) {
  * Load shared content settings
  */
 function sb_social_settings_load($sid) {
-  drupal_set_message('sid:' . $sid);
   // This can get called by hook_block_view() in addition to hook_init() so we should cache.
   static $settings = array();
 
@@ -75,8 +74,8 @@ function sb_social_settings_load($sid) {
     $results = db_query('SELECT * FROM {sb_social_settings} WHERE sid = :sid', array(':sid' => $sid));
 
     $settings[$sid] = $results->fetchAssoc();
-    if ($settings[$sid]) {
-      $settings[$sid]['data'] = unserialize($settings['data']);
+    if ($settings[$sid] && !empty($settings[$sid]['data'])) {
+      $settings[$sid]['data'] = unserialize($settings[$sid]['data']);
     }
 
     // supply global defaults if no settings are available.
@@ -88,13 +87,11 @@ function sb_social_settings_load($sid) {
         $node = menu_get_object('webform_menu');
       }
       if (isset($node->nid)) {
-        drupal_set_message('node page, use node id');
         $settings[$sid]['id'] = $node->nid;
         $settings[$sid]['type'] = 'node';
       }
       else {
         // if we still don't have settings, use the current path.
-        drupal_set_message('not a node page, use current path');
         $settings[$sid]['id'] = current_path();
         $settings[$sid]['type'] = 'path';
       }

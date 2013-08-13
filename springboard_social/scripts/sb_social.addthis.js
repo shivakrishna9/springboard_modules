@@ -2,10 +2,13 @@ var addthis_config = {
   pubid: ''
 };
 
+var addthis_share = {
+
+};
+
 
 (function ($) {
   $(document).ready(function() {
-  console.log(Drupal.settings);
   Drupal.behaviors.sb_social = {
     attach: function (context, settings) {
       // AddThis requires some global configuration objects be populated
@@ -13,7 +16,6 @@ var addthis_config = {
       window.addthis_config = {
         pubid: Drupal.settings.sb_social.pubid
       };
-      console.log(Drupal.settings.sb_social);
       // event listener logs share event
       window.addthis.addEventListener('addthis.menu.share', shareResponse);
     }

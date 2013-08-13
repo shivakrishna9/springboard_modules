@@ -98,6 +98,6 @@ function email_uninstall() {
 // undocumented little hack to set the email subject to a value we control.
 // by setting the title attribute in the link we override AddThis' default behavior which
 // is pulling in the <title></title> contents as the email subject.
-function email_button_extra($settings) {
-  return 'addthis:title="' . $settings['subject'] . '"';
+function email_button_extra($settings, $node = FALSE, $submission_id = FALSE) {
+  return 'addthis:title="' . _sb_social_replace_tokens($settings['subject'], $node, $submission_id) . '"';
 }

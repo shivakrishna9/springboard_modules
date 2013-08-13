@@ -199,7 +199,7 @@ function sb_social_access_node_settings($node) {
  */
 function sb_social_init() {
   $node = FALSE;
-  $submission_id = is_numeric($_GET['sid']) ? $_GET['sid'] : FALSE;
+  $submission_id = (isset($_GET['sid']) && is_numeric($_GET['sid'])) ? $_GET['sid'] : FALSE;
 
   if (arg(0) == 'node' && is_numeric(arg(1))) {
     $node = node_load(arg(1));

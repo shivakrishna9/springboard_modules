@@ -1,6 +1,5 @@
 (function ($) {
-  $(document).ready(function() {
-  Drupal.behaviors.sb_social = {
+  Drupal.behaviors.sb_social_twitter = {
     attach: function (context, settings) {
       // set up custom configuration for twitter message and share URL
       window.addthis_share = {
@@ -12,6 +11,5 @@
       };
     }
   };
-  });
 })(jQuery);
 
