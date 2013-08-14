@@ -43,7 +43,35 @@ function facebook_token_info() {
   return $facebook_tokens;
 }
 
-function facebook_token_replace() {
+function facebook_token_replace($tokens, &$replacements, $settings, $node = FALSE, $submission_id = FALSE, $extra = FALSE) {
+  foreach ($tokens as $key => $token) {
+    switch ($key) {
+      case 'facebook_share':
+        $vars['service'] = $service;
+        $vars['url'] = sb_social_short_url('facebook', $settings, $submission_id);
+        $vars['extra'] = '';
+
+        if (isset($extra) && function_exists($extra)) {
+          $vars['extra'] = $extra($settings['data']['facebook']);
+        }
+        $button = theme('sb_social_share_button', $vars);
+        $replacements[$token] = theme('sb_social_share', array('buttons' => $button);
+        break;
+      case 'facebook_title': 
+        $replacements[$token] = !empty($settings['data']['facebook']['title']) ? _sb_social_replace_tokens($settings['data']['facebook']['title'], $node, $submission_id) : '';
+        break;
+      case 'facebook_description':
+        $replacements[$token] =  !empty($settings['data']['facebook']['description']) ? _sb_social_replace_tokens($settings['data']['facebook']['description'], $node, $submission_id) : '';
+        break;
+      case 'facebook_image':
+        // TODO: image tag?
+        $replacements[$token] =  !empty($settings['data']['facebook']['image']) ? $settings['data']['facebook']['image'] : '';
+        break;
+      case 'facebook_share_url':
+        $replacements[$token] = sb_social_short_url('facebook', $settings, $submission_id);
+        break;
+    }
+  }
 
 }
 

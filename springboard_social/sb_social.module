@@ -415,92 +415,55 @@ function sb_social_token_info() {
  */
 function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
 
-  if ($type = 'sb_social' && !empty($data['node'])) {
+  if ($type = 'sb_social') {
     $replacements = array();
-    $node = $data['node'];
-    // TODO: get this working for path settings.
-    $settings = sb_social_settings_load($node->nid);
-    $enabled_services = sb_social_get_enabled_services();
-    $sid = (!empty($_GET['sid']) && is_numeric($_GET['sid'])) ? $_GET['sid'] : FALSE;
-
-    foreach ($enabled_services as $service) {
-      $urls[$service . '_url'] = sb_social_short_url($service, $settings, $sid);
+    $node = !empty($data['node']) ? $data['node'] : FALSE;
+    // TODO: replace id detection with a helper function.
+    if (isset($node->nid) && $node->nid) {
+      $id = $node->nid;
     }
-
-    if ($urls) {
-      $enabled_services = array_merge($enabled_services, $urls);
+    else {
+      // attempt to load path settings
+      $path = current_path();
+      $alias = drupal_get_path_alias($path);
+      $id = $alias ? array($path, $alias) : $path;
     }
-    foreach ($tokens as $key => $token) {
-      switch ($key) {
-        case 'share_links':
-          $replacements[$token] = theme('sb_social_share', array('services' => $enabled_services));
-          $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node, $sid);
-          break;
-        case 'facebook_share':
-          if (in_array('facebook', $enabled_services)) {
-            $replacements[$token] = theme('sb_social_share', array('services' => array('facebook', 'facebook_url' => $urls['facebook_url'])));
-          }
-          else {
-            $replacements[$token] = '';
-          }
-        break;
-        case 'facebook_title':
-          if (in_array('facebook', $enabled_services)) {
-            $replacements[$token] = !empty($settings['facebook']['title']) ? $settings['facebook']['title'] : '';
-            $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node, $sid);
-          }
-          else {
-            $replacements[$token] = '';
-          }
-          break;
-        case 'facebook_description':
-          if (in_array('facebook', $enabled_services)) {
-            $replacements[$token] =  !empty($settings['facebook']['description']) ? $settings['facebook']['description'] : '';
-            $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node, $sid);
-          }
-          else {
-            $replacements[$token] = '';
-          }
-          break;
-        case 'facebook_image':
-          if (in_array('twitter', $enabled_services)) {
-            // TODO: image tag?
-            $replacements[$token] =  !empty($settings['facebook']['image']) ? $settings['facebook']['image'] : '';
-          }
-          else {
-            $replacements[$token] = '';
-          }
-          break;
-        case 'twitter_share':
-          if (in_array('twitter', $enabled_services)) {
-            $replacements[$token] = theme('sb_social_share', array('services' => array('twitter', 'twitter_url' => $urls['twitter_url'])));
-          }
-          else {
-            $replacements[$token] = '';
-          }
-          break;
-        case 'twitter_message':
-          if (in_array('twitter', $enabled_services)) {
-            $replacements[$token] =  !empty($settings['twitter']['message']) ? $settings['twitter']['message'] : '';
-            $replacements[$token] = _sb_social_replace_tokens($replacements[$token], $node, $sid);
-          }
-          else {
-            $replacements[$token] = '';
-          }
-          break;
-        case 'share_url':
-         // TODO: this token makes no sense in the context of service-specific URLs.
-         // $replacements[$token] = $settings['url'];
-          break;
+    drupal_set_message('token replacement id:' . $id);
+    $sid = _sb_social_sid_by_id($id);
+    
+    $settings = sb_social_settings_load($sid);
+    $enabled_plugins = sb_social_get_enabled_plugins();
+    $submission_id = (!isset($_GET['sid']) && is_numeric($_GET['sid'])) ? $_GET['sid'] : FALSE;
+    foreach ($enabled_plugins as $service => $plugin) {
+      if (!empty($plugin['token_replace')) {
+        $func = $plugin['token_replace'];
+        // convolution required to establish "extra" url parameters when generating share links
+        $extra = isset($plugin['button_extra']) ? $plugin['button_extra'] : FALSE;
+        $func($tokens, $replacements, $settings, $node, $sumission_id, $extra);
       }
     }
+    // do share links
+    $keys = array_keys($tokens);
+    if (in_array('share_links', $keys)) {
+      foreach ($enabled_plugins as $service => $plugin) {
+        $vars['service'] = $service;
+        $vars['url'] = sb_social_short_url($service, $settings);
+        $vars['extra'] = '';
+        if (isset($plugins[$service]['button_extra'])) {
+          $func = $plugins[$service]['button_extra'];
+          $vars['extra'] = $func($settings['data'][$service]);
+        }
+        $buttons[] = theme('sb_social_share_button', $vars);
+      }
+      $buttons = implode("\n", $buttons); 
+      $replacements[$token] = $enabled_plugins ? theme('sb_social_share', array('buttons' => $buttons)) : '';
+    }  
     return $replacements;
   }
 }
 
 function sb_social_webform_confirmations_token_replace_alter(&$tokens, $sid) {
   $settings = _sb_social_get_settings_by_sid($sid);
- // $tokens = array_merge($tokens, sb_social_tokens('sb_social', $tokens, array('sb_social_settings' => $settings)));
 
 }
 
@@ -569,9 +532,7 @@ function sb_social_short_url($service, $settings, $submission_id = FALSE) {
   );
 
   $url = url($path, $options);
-  drupal_set_message('url:' . $url);
-  // TODO: shorten
-  return $url;
+  return shorten_url($url);
 }
 
 function sb_social_short_url_old($node, $sid, $service, $settings = NULL) {
@@ -591,7 +552,14 @@ function theme_sb_social_share_image_preview($variables) {
     $output .= '</span><input type="submit" id="edit-' . $element['#name'] . '-remove-button" name="' . $element['#name'] . '_remove_button" value="Remove" class="form-submit ajax-processed">';
     $output .= '<input type="hidden" name="' . $element['#name'] . '[fid]" value="' . $element['#file']->fid . '">';
 
-    return $output;
+    return $output['service'] = $service;
+        $vars['url'] = sb_social_short_url($service, $settings);
+        $vars['extra'] = '';
+        if (isset($plugins[$service]['button_extra'])) {
+          $func = $plugins[$service]['button_extra'];
+          $vars['extra'] = $func($settings['data'][$service]);
+        }
+        $buttons[] = theme('sb_social_share_button', $vars);
   }
 }
 
