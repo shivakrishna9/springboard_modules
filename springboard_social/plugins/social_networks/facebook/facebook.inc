@@ -10,7 +10,42 @@ $plugin = array(
   'js' => FALSE, // include js settings as needed
   'defaults' => 'facebook_defaults', // provide default settings
   'uninstall' => 'facebook_uninstall', // uninstall hook: remove variables, etc.
+  'token_info' => facebook_token_info(),
+  'token_replace' => 'facebook_token_replace',
 );
+
+function facebook_token_info() {
+  $facebook_tokens = array();
+  $facebooK_tokens['facebook_share'] = array(
+    'name' => t('Facebook Share link'),
+    'description' => t('AddThis Facebook Share link'),
+  );
+  // fb title
+  $facebook_tokens['facebook_title'] = array(
+    'name' => t('Facebook share title'),
+    'description' => t('Title content for Facebook sharing'),
+  );
+  // fb description
+  $facebook_tokens['facebook_description'] = array(
+    'name' => t('Facebook share description'),
+    'description' => t('Description content for Facebook sharing'),
+  );
+  // fb image
+  $facebook_tokens['facebook_image'] = array(
+    'name' => t('Facebook share image'),
+    'description' => t('Image content for Facebook sharing'),
+  );
+  $facebook_tokens['facebook_share_url'] = array(
+    'name' => t('Facebook share URL'),
+    'description' => t('Short URL containing share tracking values for Facebook.'),
+  );
+
+  return $facebook_tokens;
+}
+
+function facebook_token_replace() {
+
+}
 
 function facebook_defaults() {
   $settings = array(

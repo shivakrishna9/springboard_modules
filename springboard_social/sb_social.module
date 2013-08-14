@@ -161,6 +161,25 @@ function sb_social_block_view($delta = '') {
 }
 
 /**
+ * Get social network plugins for enabled services.
+ */
+function sb_social_get_enabled_plugins() {
+  static $enabled_plugins = array();
+  if (empty($enabled_plugins)) {
+    ctools_include('plugins');
+    $plugins = ctools_get_plugins('sb_social', 'social_networks');
+    $enabled_services = sb_social_get_enabled_services();
+    $services = array_keys($plugins);
+    foreach ($enabled_services as $service) {
+      if (in_array($service, $services)) {
+        $enabled_plugins[$service] = $plugins[$service];
+      }
+    }
+  }
+  return $enabled_plugins;
+}
+
+/**
  * Access callback for node share content form.
  */
 function sb_social_access_node_settings($node) {
@@ -371,6 +390,8 @@ function sb_social_webform_submission_insert($node, $submission) {
 
 function sb_social_token_info() {
   $enabled_services = sb_social_get_enabled_services();
+  $enabled_plugins = sb_social_get_enabled_plugins();
+
   $info['types']['sb_social'] = array(
     'name' => t('Springboard Social'),
     'description' => t('Tokens related to Springboard Social sharing content.'),
@@ -380,46 +401,12 @@ function sb_social_token_info() {
     'name' => t('Share links'),
     'description' => t('Render standard addthis share links for all social services that are currently enabled.'),
   );
-  if (in_array('facebook', $enabled_services)) {
-    // fb link
-    $info['tokens']['sb_social']['facebook_share'] = array(
-      'name' => t('Facebook Share link'),
-      'description' => t('AddThis Facebook Share link'),
-    );
-    // fb title
-    $info['tokens']['sb_social']['facebook_title'] = array(
-      'name' => t('Facebook share title'),
-      'description' => t('Title content for Facebook sharing'),
-    );
-    // fb description
-    $info['tokens']['sb_social']['facebook_description'] = array(
-      'name' => t('Facebook share description'),
-      'description' => t('Description content for Facebook sharing'),
-    );
-    // fb image
-    $info['tokens']['sb_social']['facebook_image'] = array(
-      'name' => t('Facebook share image'),
-      'description' => t('Image content for Facebook sharing'),
-    );
+  foreach ($enabled_plugins as $service => $plugin) {
+    if (!empty($plugin['token_info'])) {
+      $info['tokens']['sb_social'] = array_merge($info['tokens']['sb_social'], $plugin['token_info']);
+    }
   }
 
-  if (in_array('twitter', $enabled_services)) {
-    // twitter link
-    $info['tokens']['sb_social']['twitter_share'] = array(
-      'name' => t('Twitter Share link'),
-      'description' => t('AddThis Twitter tweet link'),
-    );
-    // twitter message
-    $info['tokens']['sb_social']['twitter_message'] = array(
-      'name' => t('Twitter tweet message'),
-      'description' => t('Message content for Twitter tweet'),
-    );
-  }
-  //shortened url with market source payload if available
-  $info['tokens']['sb_social']['share_url'] = array(
-      'name' => t('Sharing short url'),
-      'description' => t('Shortened share url, with market source values if available'),
-  );
   return $info;
 }
 

@@ -10,7 +10,30 @@ $plugin = array(
   'js' => 'plugins/social_networks/twitter/twitter.share.js',
   'defaults' => 'twitter_defaults',
   'uninstall' => 'twitter_uninstall',
+  'token_info' => twitter_token_info(),
+  'token_replace' => 'twitter_token_replace',
 );
+
+function twitter_token_info() {
+  $twitter_tokens['twitter_share_link'] = array(
+    'name' => t('Twitter Share link'),
+    'description' => t('AddThis Twitter tweet link'),
+  );
+  // twitter message
+  $twitter_tokens['twitter_message'] = array(
+    'name' => t('Twitter tweet message'),
+    'description' => t('Message content for Twitter tweet'),
+  );
+  $twitter_tokens['twitter_share_url'] = array(
+    'name' => t('Twitter share URL'),
+    'description' => t('Short URL containing share tracking values for Twitter.'),
+  );
+  return $twitter_tokens;
+}
+
+function twitter_token_replace() {
+
+}
 
 // TODO: add uninstall function to clear variables.
 

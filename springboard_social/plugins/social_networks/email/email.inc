@@ -11,8 +11,37 @@ $plugin = array(
   'defaults' => 'email_defaults',
   'button_extra' => 'email_button_extra',
   'uninstall' => 'email_uninstall',
+  'token_info' => email_token_info(),
+  'token_replace' => 'email_token_replace',
 );
 
+
+function email_token_info() {
+  $email_tokens = array();
+  $email_tokens['email_share_link'] = array(
+    'name' => t('Email share link'),
+    'description' => t('AddThis Email link'),
+  );
+  $email_tokens['email_subject'] = array(
+    'name' => t('Email subject'),
+    'description' => t('Share email subject'),
+  );
+  $email_tokens['email_message'] = array(
+    'name' => t('Email message'),
+    'description' => t('Share email message'),
+  );
+  $email_tokens['email_share_url'] = array(
+    'name' => t('Email share URL'),
+    'description' => t('Short URL containing share tracking values for Email.'),
+  );
+
+
+  return $email_tokens;
+}
+
+function email_token_replace() {
+
+}
 
 function email_defaults() {
   $settings = array(
