@@ -122,11 +122,6 @@ function fundraiser_ab_webform_ab_conversion($test_node, $form_state_values) {
   if ($webform_node = node_load($form_state_values['webform_nid'])) {
     // Only update on donation form submissions
     if (fundraiser_is_donation_type($webform_node->type)) {
-      // Only act on successful donations
-      if (empty($form_state_values['#donation']) || ($form_state_values['#donation']->status === 'failed')) {
-        return;
-      }
-
       // Flatten the submitted values, for convenience
       $submission_fields = _fundraiser_webform_submission_flatten($form_state_values['webform_nid'], $form_state_values['submitted_tree']);
 
