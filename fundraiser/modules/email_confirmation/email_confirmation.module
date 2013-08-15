@@ -551,11 +551,10 @@ function email_confirmation_fundraiser_order_success($order) {
 
       // TODO: convert field to accept input filters.
       $template_text = db_result(db_query(
-        'SELECT field_confirmation_text_message_value FROM {content_type_confirmation_template} t ' .
+        'SELECT field_confirmation_text_value FROM {content_type_confirmation_template} t ' .
         'INNER JOIN {node} n ON n.vid = t.vid ' .
         'WHERE t.nid=%d',
         $settings->tid));
-
       $message = array();
       $message['from_name'] = $settings->from_name;
       $message['from_address'] = $settings->reply_to_email;
@@ -573,7 +572,7 @@ function email_confirmation_fundraiser_order_success($order) {
 
       // final pass attempts to replace webform token values
       $message['html_body'] = _webform_filter_values($message['html_body'], $node, $submission, NULL, FALSE, FALSE);
-
+   
       // Same as above, with check_plain() included to insure final output is plain text.
       $message['text_body'] = token_replace($template_text, 'order', $order);
       $message['text_body'] = token_replace($message['text_body'], 'order', $order);
@@ -636,8 +635,8 @@ function email_confirmation_mail($key, &$message, $params) {
   // Now create the message, with an HTML component and a plaintext component
   //
 
-  $body_html = $params['html_body'];
-  $body_text = '<html><head></head><body>' . $params['text_body'] . '</body></html>';
+  $body_text = $params['text_body'];
+  $body_html = '<html><head></head><body>' . $params['html_body'] . '</body></html>';
 
   $multi_body  = "
 
@@ -687,8 +686,6 @@ function email_confirmation_token_values($type, $object = NULL) {
     $node = node_load($nid);
 
     $data = db_fetch_object(db_query('SELECT html_message, html_message_format, text_message, text_message_format FROM {fundraiser_confirmations} WHERE nid=%d', $nid));
-    $values['confirmation-message-text'] = check_markup($data->text_message, $data->text_message_format, FALSE);
-    $values['confirmation-message-text'] = check_plain($values['confirmation-message-text']);
 
     $php_filter = db_result(db_query('SELECT format FROM {filter_formats} WHERE name = "PHP code"'));
 
@@ -698,6 +695,14 @@ function email_confirmation_token_values($type, $object = NULL) {
     }
     else {
       $values['confirmation-message-html'] = $data->html_message;
+    }
+
+    // similar treatment for text message field
+    if ($php_filter && $data->text_message_format == $php_filter) {
+       $values['confirmation-message-text'] = check_markup($data->text_message, $data->text_message_format, FALSE);
+    }
+    else {
+      $values['confirmation-message-text'] = check_plain($data->text_message);
     }
     $values['order-node-title'] = check_plain($node->title);
     return $values;
