@@ -66,59 +66,81 @@ function sb_social_share_event_delete($sid) {
 /**
  * Load shared content settings
  */
-function sb_social_webform_settings_load($nid) {
+function sb_social_settings_load($sid) {
+  // This can get called by hook_block_view() in addition to hook_init() so we should cache.
   static $settings = array();
 
-  if (empty($settings[$nid])) {
-    $settings[$nid] = array();
-    $results = db_query('
-      SELECT
-        nid,
-        service,
-        data
-      FROM {sb_social_webform}
-      WHERE
-        nid = :nid
-    ', array(':nid' => $nid));
+  if (empty($settings[$sid])) {
+    $results = db_query('SELECT * FROM {sb_social_settings} WHERE sid = :sid', array(':sid' => $sid));
 
-    while ($result = $results->fetchAssoc()) {
-      $settings[$nid][$result['service']] = unserialize($result['data']);
+    $settings[$sid] = $results->fetchAssoc();
+    if ($settings[$sid] && !empty($settings[$sid]['data'])) {
+      $settings[$sid]['data'] = unserialize($settings[$sid]['data']);
+    }
+
+    // supply global defaults if no settings are available.
+    if (empty($settings[$sid])) {
+      // check for node view page. 
+      $node = menu_get_object();
+      // confirmation page
+      if (!$node && arg(2) == 'done') {
+        $node = menu_get_object('webform_menu');
+      }
+      if (isset($node->nid)) {
+        $settings[$sid]['id'] = $node->nid;
+        $settings[$sid]['type'] = 'node';
+      }
+      else {
+        // if we still don't have settings, use the current path.
+        $settings[$sid]['id'] = current_path();
+        $settings[$sid]['type'] = 'path';
+      }
+    
+      $enabled_services = sb_social_get_enabled_services();
+      foreach ($enabled_services as $service) {
+        $settings[$sid]['data'][$service] = _sb_social_settings_defaults($service);
+      }
+      if (module_exists('market_source')) {
+        $settings[$sid]['data']['market_source'] = _sb_social_market_source_defaults();
+      }
     }
   }
-  // supply global defaults if no settings are available.
-  if (empty($settings[$nid])) {
-    $enabled_services = sb_social_get_enabled_services();
-    foreach ($enabled_services as $service) {
-      $settings[$nid][$service] = _sb_social_webform_defaults($service);
-    }
-  }
+  return $settings[$sid];
+}
 
-  return $settings[$nid];
+
+function sb_social_get_id_by_sid($sid) {
+  $result = db_query('SELECT id FROM {sb_social_settings} WHERE sid = :sid', array(':sid' => $sid));
+  return $result->fetchField();
 }
 
 /**
+ * Load all path settings, used by path admin list page.
+ */
+function sb_social_path_settings_load_all() {
+  $settings = array();
+  $results = db_query('SELECT id as path, sid FROM {sb_social_settings} WHERE type = :type', array(':type' => 'path'));
+  while ($item = $results->fetchAssoc()) {
+    $settings[] = $item;
+  }
+  return $settings;
+}
+
+// TODO: replace with plugin defaults.
+/**
  * provide service default settings
  */
-function _sb_social_webform_defaults($service) {
-  switch ($service) {
-    case 'facebook':
-      $settings = array(
-        'title' => variable_get('springboard_social_facebook_title', '%title'),
-        'description' => variable_get('springboard_social_facebook_description', '%teaser'),
-        'image' => '', variable_get('springboard_social_facebook_image', ''),
-      );
-      break;
-    case 'twitter':
-      $settings = array(
-        'message' => variable_get('springboard_social_twitter_message', '%title'),
-      );
-      break;
-    default:
-      break;
+function _sb_social_settings_defaults($service) {
+  $settings = array();
+  ctools_include('plugins');
+  $plugins = ctools_get_plugins('sb_social', 'social_networks'); 
+  $services = array_keys($plugins);
+ 
+  if (in_array($service, $services)) {
+    $func = $plugins[$service]['defaults'];
+    $settings = $func();
   }
-  if (module_exists('market_source')) {
-    $settings['market_source'] = _sb_social_market_source_defaults();
-  }
+
   return $settings;
 }
 
@@ -152,45 +174,38 @@ function sb_social_get_enabled_services() {
   }
   return $enabled_services;
 }
-/**
- * Save shared content settings
- *
- * @param $settings
- * Associative array with the following required keys:
- * nid - node id
- * service - service name (ex. twitter, facebook)
- * data - array of shared content settings
- */
-function sb_social_webform_settings_save($settings, $values = NULL) {
 
-  if (module_exists('market_source') && $values) {
-    $fields = market_source_field_info();
-    foreach ($fields as $key => $field) {
-      if (isset($values[$key])) {
-        $settings['data']['market_source'][$key] = $values[$key];
-      }
-    }
-  }
+
+/**
+ * Save path settings.
+ * @param type $settings
+ * @param type $values
+ */
+function sb_social_settings_save($settings, $values = NULL) {
   if (is_array($settings['data'])) {
     $settings['data'] = serialize($settings['data']);
   }
-  sb_social_webform_settings_delete($settings['nid'], $settings['service']);
-  drupal_write_record('sb_social_webform', $settings);
+  $update = array();
+  $sid = _sb_social_sid_by_id($settings['id']);
+
+  if ($sid) {
+    $settings['sid'] = $sid;
+    $update = array('sid');
+  }
+
+  drupal_write_record('sb_social_settings', $settings, $update);
 }
 
 
-/**
- * Delete shared content settings
- */
-function sb_social_webform_settings_delete($nid, $service = FALSE) {
-  // TODO: reimplement with db_delete() to optionally remove single records.
-  $query = db_delete('sb_social_webform');
-  $query->condition('nid', $nid);
-  if ($service) {
-    $query->condition('service', $service);
-  }
+function _sb_social_path_record_exists($path) {
+  return db_query('SELECT 1 FROM {sb_social_path} WHERE path = :path', array(':path' => $path))->fetchField();
+}
+
+
+function sb_social_settings_delete($sid) {
+  $query = db_delete('sb_social_settings');
+  $query->condition('sid', $sid);
   $query->execute();
- // db_query('DELETE FROM {sb_social_webform} WHERE nid = :nid', array(':nid' => $nid));
 }
 
 /**
@@ -200,7 +215,7 @@ function sb_social_webform_settings_delete($nid, $service = FALSE) {
  */
 function _sb_social_get_settings_by_sid($sid) {
   $nid = _sb_social_get_nid_by_sid($sid);
-  return sb_social_webform_settings_load($nid);
+  return sb_social_settings_load($nid);
 }
 
 /**
@@ -239,4 +254,23 @@ function sb_social_get_donation_by_sid($sid) {
   $result = $query->execute();
 
   return $result->fetchObject();
+}
+
+function _sb_social_sid_by_id($id) {
+  $query = db_select('sb_social_settings', 's');
+  $query->fields('s', array('sid'));
+
+  if (is_array($id)) {
+    $or = db_or();
+    foreach ($id as $data) {
+      $or->condition('id', $data, '=');
+    }
+    $query->condition($or);
+  }
+  else {
+    $query->condition('id', $id, '=');
+  }
+  $results = $query->execute();
+
+  return $results->fetchField();
 }

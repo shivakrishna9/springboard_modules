@@ -76,31 +76,34 @@ function sb_social_schema() {
     ),
     'primary key' => array('share_id'),
   );
-  $schema['sb_social_webform'] = array(
-    'description' => 'Stores shared content settings for individual webforms',
+  $schema['sb_social_settings'] = array(
+    'description' => 'shared content settings for individual paths',
     'fields' => array(
-      'nid' => array(
-        'description' => 'The node id.',
-        'type' => 'int',
+      'sid' => array(
+        'description' => 'settings id',
+        'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
-      'service' => array(
-        'description' => 'sharing service',
+      'id' => array(
+        'description' => 'drupal id, path or node id.',
         'type' => 'varchar',
-        'length' => 60,
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => 'node, path, etc',
+        'type' => 'varchar',
+        'length' => '60',
+        'not null' => TRUE,
       ),
       'data' => array(
         'description' => 'serialized settings array',
         'type' => 'text',
       ),
     ),
-    'primary key' => array('nid', 'service'),
+    'primary key' => array('sid'),
   );
   return $schema;
 }
 
-function sb_social_update_7001() {
-  db_add_primary_key('sb_social_webform', array('nid', 'service'));
-  return array();
-}
