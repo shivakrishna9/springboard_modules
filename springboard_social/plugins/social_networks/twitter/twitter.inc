@@ -43,7 +43,7 @@ function twitter_token_replace($tokens, &$replacements, $settings, $node = FALSE
           $vars['extra'] = $extra();
         }
         $button = theme('sb_social_share_button', $vars);
-        $replacements[$token] = theme('sb_social_share', array('buttons' => $button);
+        $replacements[$token] = theme('sb_social_share', array('buttons' => $button));
         break;
       case 'twitter_message':
         $replacements[$token] =  !empty($settings['data']['twitter']['message']) ? _sb_social_replace_tokens($settings['data']['twitter']['message'], $node, $submission_id) : '';

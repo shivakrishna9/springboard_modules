@@ -55,7 +55,7 @@ function facebook_token_replace($tokens, &$replacements, $settings, $node = FALS
           $vars['extra'] = $extra($settings['data']['facebook']);
         }
         $button = theme('sb_social_share_button', $vars);
-        $replacements[$token] = theme('sb_social_share', array('buttons' => $button);
+        $replacements[$token] = theme('sb_social_share', array('buttons' => $button));
         break;
       case 'facebook_title': 
         $replacements[$token] = !empty($settings['data']['facebook']['title']) ? _sb_social_replace_tokens($settings['data']['facebook']['title'], $node, $submission_id) : '';

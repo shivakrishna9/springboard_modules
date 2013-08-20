@@ -51,13 +51,13 @@ function email_token_replace($tokens, &$replacements, $settings, $node = FALSE, 
           $vars['extra'] = $extra();
         }
         $button = theme('sb_social_share_button', $vars);
-        $replacements[$token] = theme('sb_social_share', array('buttons' => $button);
+        $replacements[$token] = theme('sb_social_share', array('buttons' => $button));
         break;
       case 'email_subject':
         $replacements[$token] = !empty($settings['data']['email']['subject']) ? _sb_social_replace_tokens($settings['data']['email']['subject'], $node, $submission_id) : '';
         break;
       case 'email_message':
-        $replacements[$token] = !empty($settings['data']['email']['message']) ? _sb_social_replace_tokens($settings['data']['email']['message'], $node, $submission_id) : '',
+        $replacements[$token] = !empty($settings['data']['email']['message']) ? _sb_social_replace_tokens($settings['data']['email']['message'], $node, $submission_id) : '';
         break;
       case 'email_share_url':
         $replacements[$token] = sb_social_short_url('email', $settings, $submission_id);

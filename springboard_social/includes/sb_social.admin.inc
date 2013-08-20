@@ -253,7 +253,7 @@ function sb_social_path_settings_validate(&$form, $form_state) {
  * Path settings submit callback, invokes social_networks plugin "process" callbacks to build data array and saves data
  * to db.
  */
-function sb_social_path_settings_submit($form, $form_state) {
+function sb_social_path_settings_submit($form, &$form_state) {
   ctools_include('plugins');
   $plugins = ctools_get_plugins('sb_social', 'social_networks');
 
@@ -283,7 +283,7 @@ function sb_social_path_settings_submit($form, $form_state) {
         'data' => $data,
     );
     sb_social_settings_save($record, $form_state['values']);
-
+    $form_state['redirect'] = url('admin/config/services/springboard_social/path-settings', array('absolute' => TRUE));
   }
 }
 
@@ -360,10 +360,12 @@ function sb_social_node_settings($form, $edit, $node) {
 
   ctools_include('plugins');
   $plugins = ctools_get_plugins('sb_social', 'social_networks');
-
-  foreach ($plugins as $id => $plugin) {
-    $func = $plugin['settings'];
-    $func($form, $enabled_services, $settings['data'][$id], $token_set);
+   
+  foreach ($enabled_services as $service) {
+    if (!empty($plugins[$service]['settings'])) {
+      $func = $plugins[$service]['settings'];
+      $func($form, $enabled_services, $settings['data'][$service], $token_set);
+    }
   }
 
   // Market Source settings

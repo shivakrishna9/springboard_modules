@@ -435,11 +435,11 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
     $enabled_plugins = sb_social_get_enabled_plugins();
     $submission_id = (!isset($_GET['sid']) && is_numeric($_GET['sid'])) ? $_GET['sid'] : FALSE;
     foreach ($enabled_plugins as $service => $plugin) {
-      if (!empty($plugin['token_replace')) {
+      if (!empty($plugin['token_replace'])) {
         $func = $plugin['token_replace'];
         // convolution required to establish "extra" url parameters when generating share links
         $extra = isset($plugin['button_extra']) ? $plugin['button_extra'] : FALSE;
-        $func($tokens, $replacements, $settings, $node, $sumission_id, $extra);
+        $func($tokens, $replacements, $settings, $node, $submission_id, $extra);
       }
     }
     // do share links
