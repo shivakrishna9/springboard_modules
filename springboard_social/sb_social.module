@@ -428,7 +428,6 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
       $alias = drupal_get_path_alias($path);
       $id = $alias ? array($path, $alias) : $path;
     }
-    drupal_set_message('token replacement id:' . $id);
     $sid = _sb_social_sid_by_id($id);
     
     $settings = sb_social_settings_load($sid);
