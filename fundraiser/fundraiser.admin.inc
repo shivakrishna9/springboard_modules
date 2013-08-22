@@ -551,7 +551,7 @@ function fundraiser_sustainer_update_date_mode($form, &$form_state) {
       global $user;
       $reason = 'Cancelled during switch from set-date queue to anniversary queue, date had passed.';
       db_query('UPDATE {fundraiser_recurring} SET gateway_resp = \'canceled\', cancellation_reason = \'%s\' ' .
-        'WHERE order_id = %d AND (gateway_resp IS NULL OR gateway_resp = \'failed\'', $reason, $order_info['order_id']);
+        'WHERE order_id = %d AND (gateway_resp IS NULL OR gateway_resp = \'failed\')', $reason, $order_info['order_id']);
       uc_order_comment_save($order_info['order_id'], $user->uid, 'Order canceled by an administrator. Reason: ' .
         $reason ,'order', 'canceled', FALSE);
     }
