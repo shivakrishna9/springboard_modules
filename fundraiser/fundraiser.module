@@ -1123,15 +1123,15 @@ function _fundraiser_other_amount_field_create($fundraiser, $field) {
  * Validation callback for field other_amount. Called during form validation.
  */
 function _fundraiser_other_amount_field_validate($form, $form_state, $submission_fields, $value) {
-	// Check for confusing selection.
-	if (!empty($submission_fields['amount']) && $submission_fields['amount'] != "other" && !empty($submission_fields['other_amount'])) {
+    // Check for confusing selection.
+    if (!empty($submission_fields['amount']) && $submission_fields['amount'] != "other" && !empty($submission_fields['other_amount'])) {
     return array(
       'amount' => t('You have entered a custom amount and selected a set amount. Please clarify which amount you ' .
         'intend to give, if you want to give the amount that appears in the other box, please select Other from ' .
         'the radio buttons.'),
       'other_amount' => '',
       );
-	}
+    }
   $value = $submission_fields['amount'];
   // Look for other amount if set.
   if ($submission_fields['amount'] == 'other') {
@@ -1165,14 +1165,14 @@ function _fundraiser_email_field_validate($form, $form_state, $submission_fields
  * Validation callback for field other_amount. Called during form validation.
  */
 function _fundraiser_quantity_field_validate($form, $form_state, $submission_fields, $value) {
-	// Check for confusing selection.
-	if (empty($submission_fields['quantity'])) {
+    // Check for confusing selection.
+    if (empty($submission_fields['quantity'])) {
     return array('quantity' => t('You did not enter a quantity.'));
-	}
-	// Not numeric.
-	if (!is_numeric($submission_fields['quantity'])) {
+    }
+    // Not numeric.
+    if (!is_numeric($submission_fields['quantity'])) {
     return array('quantity' => t('You did not enter a valid number.'));
-	}
+    }
 }
 
 /**
@@ -2758,3 +2758,132 @@ function fundraiser_get_total_donations_by_nid($nid, $start = FALSE, $end = FALS
   return $total_donations[0];
 }
 
+/**
+ * Implements hook_action_info().
+ */
+function fundraiser_action_info() {
+  return array(
+    '_fundraiser_gateway_switch_action' => array(
+      'description' => t('Gateway Bulk Switch'),
+      'label' => t('Switch the gateway configurations of multiple forms at once.'),
+      'type' => 'node',
+      'configurable' => TRUE,
+      'triggers' => array('any'),
+    ),
+  );
+}
+
+/**
+ * An action to change the gateway of a node
+ */
+function _fundraiser_gateway_switch_action($node, $context = array()) {
+  dpm($node, '$node');
+  dpm($context, '$context');
+  $orig_config = $node->gateways;
+  foreach ($context['update_methods'] as $method) {
+    $node->gateways[$method] = $context['gateways'][$method];
+
+    // If we're updating the default setting
+    if (!empty($context['update_default'])) {
+      $node->gateways[$method]['default'] = ($context['gateways']['_default'] == $method) ? 1 : 0;
+    }
+    else {
+      $node->gateways[$method]['default'] = $orig_config[$method]['default'];
+    }
+
+    // If we're updating the weights
+    if (!empty($context['update_weights'])) {
+      $node->gateways[$method]['weight'] = $context['gateways'][$method]['weight'];
+    }
+    else {
+      $node->gateways[$method]['weight'] = $orig_config[$method]['weight'];
+    }
+  }
+
+  _fundraiser_update_fundraiser($node);
+  //$wrapper = entity_metadata_wrapper('node', $node);
+  //$wrapper->gateway->set($gateways);
+}
+
+/**
+ * Configuration form for the gateway switching action
+ */
+function _fundraiser_gateway_switch_action_form($context) {
+  $gateways = _fundraiser_gateway_info();
+
+  if (empty($gateways)) {
+    return array();
+  }
+
+  // Create an array of available payment methods
+  foreach($gateways as $gateway) {
+    $types = isset($gateway['payment_method']) ? $gateway['payment_method'] : array();
+    foreach ($types as $type) {
+      $methods[$type] = $type;
+    }
+  }
+
+  $form['update_methods'] = array(
+    '#title' => 'Payment Methods to Update',
+    '#description' => t('Select the payment methods to update. Do not select a payment method if you do want it to be updated.'),
+    '#type' => 'checkboxes',
+    '#options' => $methods,
+  );
+
+  $form['update_default'] = array(
+    '#title' => 'Update the default method',
+    '#description' => t('Check this to change the default method across all these forms.'),
+    '#type' => 'checkbox',
+    '#return_value' => 1,
+  );
+
+  $form['update_weights'] = array(
+    '#title' => 'Update the ordering',
+    '#description' => t('Check this to change the ordering of methods across all these forms.'),
+    '#type' => 'checkbox',
+    '#return_value' => 1,
+  );
+
+  $fieldset = array(
+    '#type' => 'fieldset',
+    '#title' => t('Payment methods'),
+    '#description' => t('Enable donation form payment methods and their corresponding gateways.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+    '#tree' => TRUE,
+    '#theme' => 'fundraiser_form_payment_methods',
+  );
+
+  $configuration = variable_get('fundraiser_payment_method_config_defaults', array());
+  $form['gateways'] = _fundraiser_form_payment_method_config_fieldset($gateways, $configuration, $fieldset, 'gateways');
+
+  foreach ($methods as $method) {
+    foreach (element_children($form['gateways'][$method]) as $field_name) {
+      dpm($field_name);
+      $form['gateways'][$method][$field_name]['#states'] = array(
+        'disabled' => array(
+          ':input[name="update_methods[' . $method . ']"]' => array('checked' => FALSE),
+        ),
+      );
+    }
+    $form['gateways'][$method]['_default']['#states']['visible'][] = array(':input[name="update_default"]' => array('checked' => TRUE));
+    $form['gateways'][$method]['weight']['#states']['visible'][] = array(':input[name="update_weights"]' => array('checked' => TRUE));
+  }
+
+  // Pass the scheme as a value, so that the submit callback can access it.
+  $form['scheme'] = array(
+    '#type' => 'value',
+    '#value' => $context['settings']['scheme'],
+  );
+
+  return $form;
+}
+
+function _fundraiser_gateway_switch_action_submit($form, $form_state) {
+  return array(
+    'update_methods' => array_filter($form_state['values']['update_methods']),
+    'update_default' => $form_state['values']['update_default'],
+    'update_weights' => $form_state['values']['update_weights'],
+    'gateways' => $form_state['values']['gateways'],
+  );
+}
