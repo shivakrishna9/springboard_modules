@@ -42,13 +42,13 @@ function email_token_info() {
 function email_token_replace($tokens, &$replacements, $settings, $node = FALSE, $submission_id = FALSE, $extra = FALSE) {
   foreach ($tokens as $key => $token) {
     switch ($key) {
-      case 'email_share':
+      case 'email_share_link':
         $vars['service'] = 'email';
         $vars['url'] = sb_social_short_url('twitter', $settings, $submission_id);
         $vars['extra'] = '';
 
         if ($extra && function_exists($extra)) {
-          $vars['extra'] = $extra();
+          $vars['extra'] = $extra($settings['data']['email'], $node, $submission_id);
         }
         $button = theme('sb_social_share_button', $vars);
         $replacements[$token] = theme('sb_social_share', array('buttons' => $button));
@@ -62,7 +62,6 @@ function email_token_replace($tokens, &$replacements, $settings, $node = FALSE, 
       case 'email_share_url':
         $replacements[$token] = sb_social_short_url('email', $settings, $submission_id);
         break;
-
     }
   }
 }

@@ -16,7 +16,7 @@ $plugin = array(
 
 function facebook_token_info() {
   $facebook_tokens = array();
-  $facebooK_tokens['facebook_share'] = array(
+  $facebooK_tokens['facebook_share_link'] = array(
     'name' => t('Facebook Share link'),
     'description' => t('AddThis Facebook Share link'),
   );
@@ -46,8 +46,8 @@ function facebook_token_info() {
 function facebook_token_replace($tokens, &$replacements, $settings, $node = FALSE, $submission_id = FALSE, $extra = FALSE) {
   foreach ($tokens as $key => $token) {
     switch ($key) {
-      case 'facebook_share':
-        $vars['service'] = $service;
+      case 'facebook_share_link':
+        $vars['service'] = 'facebook';
         $vars['url'] = sb_social_short_url('facebook', $settings, $submission_id);
         $vars['extra'] = '';
 

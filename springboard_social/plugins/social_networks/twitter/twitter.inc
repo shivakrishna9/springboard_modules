@@ -34,13 +34,13 @@ function twitter_token_info() {
 function twitter_token_replace($tokens, &$replacements, $settings, $node = FALSE, $submission_id = FALSE, $extra = FALSE) {
   foreach ($tokens as $key => $token) {
     switch ($key) {
-      case 'twitter_share':
-        $vars['service'] = $service;
+      case 'twitter_share_link':
+        $vars['service'] = 'twitter';
         $vars['url'] = sb_social_short_url('twitter', $settings, $submission_id);
         $vars['extra'] = '';
 
         if ($extra && function_exists($extra)) {
-          $vars['extra'] = $extra();
+          $vars['extra'] = $extra($settings['data']['twitter'], $node, $submission_id);
         }
         $button = theme('sb_social_share_button', $vars);
         $replacements[$token] = theme('sb_social_share', array('buttons' => $button));
@@ -51,7 +51,6 @@ function twitter_token_replace($tokens, &$replacements, $settings, $node = FALSE
       case 'twitter_share_url':
         $replacements[$token] = sb_social_short_url('facebook', $settings, $submission_id);
         break;
-
     }
   }
 }
