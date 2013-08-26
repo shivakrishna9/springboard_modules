@@ -433,7 +433,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
     
     $settings = sb_social_settings_load($sid);
     $enabled_plugins = sb_social_get_enabled_plugins();
-    $submission_id = (!isset($_GET['sid']) && is_numeric($_GET['sid'])) ? $_GET['sid'] : FALSE;
+    $submission_id = (isset($_GET['sid']) && is_numeric($_GET['sid'])) ? $_GET['sid'] : FALSE;
     foreach ($enabled_plugins as $service => $plugin) {
       if (!empty($plugin['token_replace'])) {
         $func = $plugin['token_replace'];
@@ -456,7 +456,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
         $buttons[] = theme('sb_social_share_button', $vars);
       }
       $buttons = implode("\n", $buttons); 
-      $replacements[$token] = $enabled_plugins ? theme('sb_social_share', array('buttons' => $buttons)) : '';
+      $replacements['[sb_social:share_links]'] = $enabled_plugins ? theme('sb_social_share', array('buttons' => $buttons)) : '';
     }  
     return $replacements;
   }
