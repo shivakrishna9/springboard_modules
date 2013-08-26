@@ -17,7 +17,9 @@ var addthis_share = {
         pubid: Drupal.settings.sb_social.pubid
       };
       // event listener logs share event
-      window.addthis.addEventListener('addthis.menu.share', shareResponse);
+      if (typeof window.addthis !== "undefined") {
+        window.addthis.addEventListener('addthis.menu.share', shareResponse);
+      }
     }
   };
   });
