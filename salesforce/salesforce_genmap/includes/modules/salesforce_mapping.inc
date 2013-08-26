@@ -93,7 +93,10 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
       // We want all of the drupal fields to be listed on the form automatically
       // instead of adding each one manually.  Print Drupal field's user
       // friendly name as a label and set the fieldmap_value to it's machine
-      // name.
+      // name.  If a field has multiple attributes, then $drupal_field_label
+      // will be an array and $drupal_field_name will be a user-friendly name of
+      // the entire field set.
+      $drupal_field_label = is_array($drupal_field_label) ? $drupal_field_name : $drupal_field_label;
       $row['drupal_field']['fieldmap_label'] = array(
         '#markup' => '<label>' . $drupal_field_label . '</label>',
       );
