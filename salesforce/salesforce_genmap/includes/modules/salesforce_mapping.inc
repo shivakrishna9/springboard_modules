@@ -57,7 +57,8 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
     $salesforce_object_type = _salesforce_mapping_alter_get_default_value('salesforce_object_type', $form_state);
     $property_info = salesforce_mapping_get_fieldmap_types('property');
     $entity_type = _salesforce_mapping_alter_get_default_value('drupal_entity_type', $form_state);
-    $entity_fields = call_user_func($property_info['options_callback'], $entity_type);
+    $entity_bundle_type = _salesforce_mapping_alter_get_default_value('drupal_bundle', $form_state);
+    $entity_fields = call_user_func($property_info['options_callback'], $entity_type, $entity_bundle_type);
     unset($entity_fields['']);
     $sf_fields = _salesforce_mapping_get_salesforce_field_options($salesforce_object_type, $form_state);
     asort($sf_fields);
