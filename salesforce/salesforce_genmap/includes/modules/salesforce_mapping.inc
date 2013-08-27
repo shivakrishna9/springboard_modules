@@ -670,7 +670,7 @@ function _salesforce_mapping_alter_get_default_value($field, &$form_state, $delt
   // Special case for sync direction. Automatically set sync rule if no other
   // value provided.
   if (in_array($field, array('sf_drupal', 'drupal_sf'))) {
-    $value = empty($value) ? SALESFORCE_SYNC_RULE_NEVER : $value;
+    $value = empty($value) ? SALESFORCE_SYNC_RULE_ALWAYS : $value;
   }
 
   // Special case for 'key'.  When 'delta' is provided, return TRUE or FALSE.
