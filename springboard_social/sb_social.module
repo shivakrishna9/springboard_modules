@@ -218,7 +218,11 @@ function sb_social_access_node_settings($node) {
  */
 function sb_social_init() {
   $node = FALSE;
-  $submission_id = (isset($_GET['sid']) && is_numeric($_GET['sid'])) ? $_GET['sid'] : FALSE;
+  $js_settings = array(
+    'sid' => (isset($_GET['sid']) && is_numeric($_GET['sid'])) ? $_GET['sid'] : 0,
+    'pubid' => variable_get('springboard_social_addthis_profile_id'),
+  );
+  drupal_add_js(array('sb_social' => $js_settings), 'setting');
 
   if (arg(0) == 'node' && is_numeric(arg(1))) {
     $node = node_load(arg(1));
