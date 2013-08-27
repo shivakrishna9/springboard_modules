@@ -46,7 +46,10 @@ function _fundraiser_upsell_content($node, $sid) {
     '#type' => 'container',
     '#attributes' => array(
       'id' => array('message-modal'),
-      'class' => array('live', $upsell_class),
+      'class' => array(
+        'live',
+        $upsell_class
+      ),
       'style' => array($upsell_size),
     ),
   );
@@ -72,13 +75,9 @@ function _fundraiser_upsell_content_preview($node) {
   // Add the thank you content for ease of display
   $content['message_wrapper']['message_return'] = array(
     '#type' => 'container',
-    '#attributes' => array(
-      'id' => array('message-return'),
-    ),
+    '#attributes' => array('id' => array('message-return'), ),
   );
-  $content['message_wrapper']['message_return']['content'] = array(
-    '#markup' => variable_get('fundraiser_upsell_thank_you_content', 'Thank you!'),
-  );
+  $content['message_wrapper']['message_return']['content'] = array('#markup' => variable_get('fundraiser_upsell_thank_you_content', 'Thank you!'), );
   // Stop the preview form from actually working
   unset($content['message_wrapper']['message_modal']['form']['#submit']);
   unset($content['message_wrapper']['message_modal']['form']['#action']);
@@ -87,7 +86,7 @@ function _fundraiser_upsell_content_preview($node) {
 }
 
 /**
- * Process the upsell donaton form from the POSTed ajax callback
+ * Process the upsell donation form from the POSTed ajax callback
  */
 function _fundraiser_upsell_ajax_process($node) {
   $data = $_POST;
@@ -96,7 +95,7 @@ function _fundraiser_upsell_ajax_process($node) {
     return drupal_json_output(false);
   }
   $content = fundraiser_upsell_upsell_ajax_submit($data);
-  //$content = array ('content' => 'Thank you for your order');
+
   return drupal_json_output($content);
 }
 
@@ -135,7 +134,7 @@ function _fundraiser_upsell_check_cookies() {
  * @param integer $sid
  * @param object $order
  */
-function _fundraiser_upsell_get_order($sid=NULL) {
+function _fundraiser_upsell_get_order($sid = NULL) {
   // Return empty object if no sid
   if (empty($sid)) {
     return new stdClass();
@@ -145,9 +144,7 @@ function _fundraiser_upsell_get_order($sid=NULL) {
     SELECT *
     FROM {fundraiser_donation} AS fd, {fundraiser_upsell} AS fu
     WHERE fd.sid = :sid
-    AND fd.nid = fu.nid",
-    array(':sid' => $sid)
-    )->fetchAssoc();
+    AND fd.nid = fu.nid", array(':sid' => $sid))->fetchAssoc();
   $order = commerce_order_load($donation['did']);
   // Add the donation & upsell info
   $order->upsell = $donation;
@@ -158,12 +155,7 @@ function _fundraiser_upsell_get_order($sid=NULL) {
  * Determine if the node has upsell enabled
  */
 function _fundraiser_upsell_enabled($node) {
-  if (!empty($node->upsell['enabled']) && $node->upsell['enabled']) {
-    return TRUE;
-  }
-  else {
-    return FALSE;
-  }
+  return (isset($node->upsell['enabled']) && $node->upsell['enabled']) ? TRUE : FALSE;
 }
 
 /**
@@ -195,7 +187,6 @@ function _fundraiser_upsell_clone_order($order, $options = null) {
   $new_order = $order;
   // Modify the order
   $new_order->log = "Cloned from order# $order->order_id";
-  // $new_order->created = '';
   $new_order->changed = '';
   $new_order->revision_id = NULL;
   unset($new_order->revision_uid);
@@ -204,11 +195,13 @@ function _fundraiser_upsell_clone_order($order, $options = null) {
   $new_order->order_id = NULL;
   $new_order->order_number = NULL;
   $new_order->in_new = TRUE;
-  if(isset($options['amount'])) {
+  // Change the value
+  if (isset($options['amount'])) {
     $new_order->status = $options['status'];
     $new_order->commerce_order_total['und'][0]['amount'] = $options['amount'];
     $new_order->commerce_order_total['und'][0]['data']['components'][0]['price']['amount'] = $options['amount'];
-  } else {
+  }
+  else {
     $new_order->commerce_order_total['und'][0]['amount'] = 0;
     $new_order->commerce_order_total['und'][0]['data']['components'][0]['price']['amount'] = 0;
   }
@@ -222,8 +215,8 @@ function _fundraiser_upsell_clone_order($order, $options = null) {
   $donation_record = array(
     'did' => $new_order->order_id, // Donation id.
     'nid' => $donation->nid, // Fundraiser node id.
-    'uid' => $donation->uid,  // Submission user id.
-    'sid' => $donation->sid,  // Submission id.
+    'uid' => $donation->uid, // Submission user id.
+    'sid' => $donation->sid, // Submission id.
     'status' => $new_order->status,
     'amount' => $donation->amount,
     'currency' => $donation->currency,
@@ -235,4 +228,20 @@ function _fundraiser_upsell_clone_order($order, $options = null) {
   );
   _fundraiser_create_donation($donation_record);
   return $new_order;
+}
+
+/**
+ * Check to see if a donation was successfully added as a recurring.
+ *
+ * @param int $did
+ *   The order/donaton id
+ *
+ * @return bool
+ */
+function _fundraiser_upsell_check_recurring($did) {
+  $is_recurring = db_query('
+    SELECT count(*)
+    FROM {fundraiser_sustainers}
+    WHERE master_did = :mid', array(':mid' => $did))->fetchField();
+  return ($is_recurring) ? TRUE : FALSE;
 }

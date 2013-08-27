@@ -46,8 +46,10 @@
                 top: '10em'
               }
             });
-            // unblock when remote call returns
-            // $.unblockUI();
+          },
+          error: function(data) {
+            console.log(data);
+            $.unblockUI();
           }
         });
       });
