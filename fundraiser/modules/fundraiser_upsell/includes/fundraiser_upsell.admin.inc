@@ -54,7 +54,7 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
     '#type' => 'item',
     '#title' => t('Options'),
   );
-  $form['options'] = array (
+  $form['options'] = array(
     '#type' => 'vertical_tabs',
   );
   $form['options']['brackets'] = array(

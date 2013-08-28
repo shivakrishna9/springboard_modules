@@ -92,10 +92,9 @@ function _fundraiser_upsell_ajax_process($node) {
   $data = $_POST;
   // Check the form token to be sure this is a valid callback
   if (!drupal_valid_token($data['form_token'], $data['form_id'])) {
-    return drupal_json_output(false);
+    return drupal_json_output('false');
   }
   $content = fundraiser_upsell_upsell_ajax_submit($data);
-
   return drupal_json_output($content);
 }
 
@@ -182,7 +181,7 @@ function _fundraiser_upsell_find_suggested_amount($amount) {
  * @param object $order
  * @return object $new_order
  */
-function _fundraiser_upsell_clone_order($order, $options = null) {
+function _fundraiser_upsell_clone_order($order, $options = NULL) {
   $donation = fundraiser_donation_get_donation($order->order_id);
   $new_order = $order;
   // Modify the order
@@ -243,5 +242,5 @@ function _fundraiser_upsell_check_recurring($did) {
     SELECT count(*)
     FROM {fundraiser_sustainers}
     WHERE master_did = :mid', array(':mid' => $did))->fetchField();
-  return ($is_recurring) ? TRUE : FALSE;
+  return ($is_recurring > 0) ? TRUE : FALSE;
 }

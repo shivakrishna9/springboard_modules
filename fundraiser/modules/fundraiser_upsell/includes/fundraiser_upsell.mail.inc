@@ -44,7 +44,6 @@ function fundraiser_upsell_admin_thank_you_settings() {
     'name' => 'email_admin_form',
     'module' => 'fundraiser_upsell',
     'delta' => 'thank_you_settings',
-    'send_callback' => 'fundraiser_upsell_send_callback',
   );
   // Generate the mail configuration form.
   $email_form = email_wrappers_mail_form(array(), $params);
@@ -55,11 +54,17 @@ function fundraiser_upsell_admin_thank_you_settings() {
   // Modify the headers section
   $form['email']['headers']['#title'] = "Mail headers";
   $form['email']['headers']['#weight'] = -5;
-  $form['email']['headers']['from_name']['#default_value'] = $site_name;
-  $form['email']['headers']['from_mail']['#default_value'] = $site_mail;
+  if (empty($form['email']['headers']['from_name']['#default_value'])) {
+    $form['email']['headers']['from_name']['#default_value'] = $site_name;
+  }
+  if (empty($form['email']['headers']['from_name']['#default_value'])) {
+    $form['email']['headers']['from_name']['#default_value'] = $site_mail;
+  }
   $form['email']['headers']['recipients']['#description'] = $recipient_description;
   $form['email']['headers']['recipients']['#weight'] = 1;
-  $form['email']['headers']['recipients']['#default_value'] = $site_mail;
+  if (empty($form['email']['headers']['recipients']['#default_value'])) {
+    $form['email']['headers']['recipients']['#default_value'] = $site_mail;
+  }
   // Add an additional button we can use to send a test mail.
   $form['email']['headers']['fundraiser_upsell_send'] = array(
     '#type' => 'button',
@@ -91,7 +96,9 @@ function fundraiser_upsell_admin_thank_you_settings() {
 function fundraiser_upsell_send_test($form, $form_state) {
   module_load_include('inc', 'email_wrappers', 'email_wrappers.api');
   $params = array(
+    'name' => 'email_admin_form',
     'module' => 'fundraiser_upsell',
+    'delta' => 'thank_you_settings',
   );
   $mail = email_wrappers_mail_load($params);
   email_wrappers_send_mail($mail, $params);
@@ -101,22 +108,17 @@ function fundraiser_upsell_send_test($form, $form_state) {
  * Send the thank you email after the upsell.
  */
 function fundraiser_upsell_send_thank_you($donation) {
+  $to_email = $donation->donation['mail'];
+  $to_name = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
   module_load_include('inc', 'email_wrappers', 'email_wrappers.api');
   $params = array(
+    'name' => 'email_admin_form',
     'module' => 'fundraiser_upsell',
+    'delta' => 'thank_you_settings',
   );
   // Load the email wrappers options
   $mail = email_wrappers_mail_load($params);
   // Modify the "to:" information to match the donation
-  $mail['to_mail'] = $donation->donation['mail'];
-  $mail['to_name'] = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
+  $mail->recipients = "$to_email <$to_name>";
   email_wrappers_send_mail($mail, $params);
-}
-
-/**
- * Invoked when a mail is sent.
- */
-function fundraiser_upsell_send_callback($mail, $params = array()) {
-  drupal_set_message('send callback invoked');
-  drupal_set_message('Your mail has been sent!');
 }

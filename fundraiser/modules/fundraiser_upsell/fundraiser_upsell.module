@@ -208,12 +208,16 @@ function fundraiser_upsell_node_form_submit($form, &$form_state) {
  * Extra donation form submit function to attach the upsell process
  */
 function fundraiser_upsell_webform_submit($form, &$form_state) {
-  // Add the upsell nid, sid, & uid to the session data
-  $_SESSION['upsell'] = array(
-    'nid' => $form_state['values']['details']['nid'],
-    'sid' => $form_state['values']['details']['sid'],
-    'uid' => $form_state['values']['details']['uid'],
-  );
+  // Don't try to upsell if its already recurring
+  $not_recurring = empty($form_state['input']['submitted']['payment_information']['recurs_monthly']['recurs']) ? TRUE : FALSE;
+  if ($not_recurring) {
+    // Add the upsell nid, sid, & uid to the session data
+    $_SESSION['upsell'] = array(
+      'nid' => $form_state['values']['details']['nid'],
+      'sid' => $form_state['values']['details']['sid'],
+      'uid' => $form_state['values']['details']['uid'],
+    );
+    }
 }
 
 /**
@@ -296,10 +300,10 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
   $campaign_id = $data['campaign_id'];
   $order = commerce_order_load($data['order_id']);
   $is_recurring = _fundraiser_upsell_check_recurring($order->order_id);
-  $same_user = ($user->uid == $order->uid) ? TRUE : FALSE;
+  $different_user = ($user->uid != $order->uid) ? TRUE : FALSE;
   // If either this is a different user or the donation is already recurring, then stop
-  if (!$same_user || $is_recurring) {
-    return FALSE;
+  if ($different_user || $is_recurring) {
+    return 'false';
   }
   // Decouple if needed
   if ($decouple) {
@@ -310,10 +314,15 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
     ));
   }
   // Create the recurring donation series
-  fundraiser_upsell_create_recurring($order, $amount);
+  $success = fundraiser_upsell_create_recurring($order, $amount);
   // Grab and process the thank you content if successful
-  $content = variable_get('fundraiser_upsell_thank_you_content', 'Thank you for your recurring donation!');
-  return drupal_json_output($content);
+  if ($success) {
+    $content = variable_get('fundraiser_upsell_thank_you_content', 'Thank you for your recurring donation!');
+  }
+  else {
+    $content = 'There was a problem processing your order. Please try again.';
+  }
+  return $content;
 }
 
 /**
@@ -345,7 +354,7 @@ function fundraiser_upsell_create_recurring($order, $amount) {
   }
   // If successful, send the thank you message
   if (_fundraiser_upsell_check_recurring($donation->did)) {
-    module_load_include('inc', 'fundraiser_upsell', 'fundraiser_upsell.mail');
+    module_load_include('inc', 'fundraiser_upsell', 'includes/fundraiser_upsell.mail');
     fundraiser_upsell_send_thank_you($donation);
   }
 
