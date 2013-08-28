@@ -1,5 +1,5 @@
 <?php
- /**
+/**
  * @file
  * fundraiser_upsell.module - Core module file
  */
@@ -148,7 +148,7 @@ function fundraiser_upsell_node_settings(&$form, $form_state, $node) {
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
-  if (variable_get('fundraiser_upsell_decouple', 0) == 1) {
+  if (variable_get('fundraiser_upsell_decouple', 0)) {
     $form['fundraiser_upsell']['additional_options']['upsell_decoupled'] = array(
       '#type' => 'checkbox',
       '#title' => t('Decouple recurring donations'),
@@ -217,7 +217,7 @@ function fundraiser_upsell_webform_submit($form, &$form_state) {
       'sid' => $form_state['values']['details']['sid'],
       'uid' => $form_state['values']['details']['uid'],
     );
-    }
+  }
 }
 
 /**
@@ -317,7 +317,9 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
   $success = fundraiser_upsell_create_recurring($order, $amount);
   // Grab and process the thank you content if successful
   if ($success) {
-    $content = variable_get('fundraiser_upsell_thank_you_content', 'Thank you for your recurring donation!');
+    $donation = fundraiser_donation_get_donation($order->order_id);
+    $raw_content = variable_get('fundraiser_upsell_thank_you_content', 'Thank you for your recurring donation!');
+    $content = token_replace($raw_content, array('donation' => $donation), array('clear' => TRUE));
   }
   else {
     $content = 'There was a problem processing your order. Please try again.';
@@ -352,7 +354,7 @@ function fundraiser_upsell_create_recurring($order, $amount) {
       }
     }
   }
-  // If successful, send the thank you message
+  // Send the thank you message
   if (_fundraiser_upsell_check_recurring($donation->did)) {
     module_load_include('inc', 'fundraiser_upsell', 'includes/fundraiser_upsell.mail');
     fundraiser_upsell_send_thank_you($donation);

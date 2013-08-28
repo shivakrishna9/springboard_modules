@@ -46,10 +46,7 @@ function _fundraiser_upsell_content($node, $sid) {
     '#type' => 'container',
     '#attributes' => array(
       'id' => array('message-modal'),
-      'class' => array(
-        'live',
-        $upsell_class
-      ),
+      'class' => array('live', $upsell_class),
       'style' => array($upsell_size),
     ),
   );

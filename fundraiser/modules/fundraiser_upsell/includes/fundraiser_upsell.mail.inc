@@ -29,8 +29,11 @@ function fundraiser_upsell_admin_thank_you_settings() {
     '#weight' => -19,
   );
   $form['fundraiser_upsell_thank_you_content_tokens']['help'] = array(
-    '#value' => theme('token_help', 'upsell'),
-  );
+    '#theme' => 'token_tree',
+    '#token_types' => array('donation'), // The token types that have specific context. Can be multiple token types like 'term' and/or 'user'
+    '#global_types' => FALSE, // A boolean TRUE or FALSE whether to include 'global' context tokens like [current-user:*] or [site:*]. Defaults to TRUE.
+    '#click_insert' => TRUE,
+);
   $form['email_title'] = array(
     '#type' => 'item',
     '#title' => t('E-mail settings'),
@@ -83,11 +86,19 @@ function fundraiser_upsell_admin_thank_you_settings() {
   $form['save'] = $form['email']['save'];
   $form['#validate'] = $form['email']['#validate'];
   $form['#submit'] = $form['email']['#submit'];
+  $form['#submit'][] = 'fundraiser_upsell_admin_thank_you_submit';
   unset($form['email']['save']);
   unset($form['email']['#validate']);
   unset($form['email']['#submit']);
 
   return $form;
+}
+
+/**
+ * Submit callback for the non-email wrapper fields on the thank you settings form
+ */
+function fundraiser_upsell_admin_thank_you_submit($form, $form_state) {
+  variable_set('fundraiser_upsell_thank_you_content', $form_state['values']['fundraiser_upsell_thank_you_content']);
 }
 
 /**
