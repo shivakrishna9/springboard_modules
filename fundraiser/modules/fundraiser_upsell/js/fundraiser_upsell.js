@@ -24,7 +24,7 @@
         var sendData = $(this).serialize();
         path = $(this).attr('action');
         // Update the block message 
-        $('#message-modal').html('<h1>Processing your sustainer gift... </h1>');
+        $('#message-modal').hide().html('<h1>Processing your sustainer gift... </h1>').fadeIn(750);
         // Post the form
         req = $.ajax({
           type: 'post',
@@ -35,7 +35,7 @@
         });
         // Display the thank you messagfe if successful
         req.done(function( data, textStatus, jqXHR ) {
-          $('#message-modal').html(data);
+          $('#message-modal').hide().html(data).fadeIn(750);
         });
         // Log the error if there is a problem
         req.fail(function( jqXHR, textStatus, errorThrown ) {
