@@ -434,7 +434,7 @@ class SalesforceMappingAlterSalesforceQueueTestCase extends SalesforceMappingAlt
   /**
    * Helper to return the last queued item.
    */
-  public function fetchQueueItem() {
+  protected function fetchQueueItem() {
     $queue = salesforce_queue_load();
     $item = $queue->claimItem();
     $this->assertFalse(empty($item), 'Data was received from the queue.');
@@ -448,7 +448,7 @@ class SalesforceMappingAlterSalesforceQueueTestCase extends SalesforceMappingAlt
   /**
    * Helper to delete a queue item.
    */
-  public function deleteQueueItem($item) {
+  protected function deleteQueueItem($item) {
     if (empty($item)) {
       return;
     }
@@ -461,7 +461,7 @@ class SalesforceMappingAlterSalesforceQueueTestCase extends SalesforceMappingAlt
   /**
    * Make different queue items have the same format.
    */
-  public function formatQueueItem($item) {
+  protected function formatQueueItem($item) {
     $this->assertTrue(is_object($item->sobject), 'Received an expected queue item for Salesforce Queue.');
     if (is_object($item)) {
       $item = (array) $item;
@@ -473,7 +473,7 @@ class SalesforceMappingAlterSalesforceQueueTestCase extends SalesforceMappingAlt
   /**
    * Helper to compare what was submitted to what was sent to the queue.
    */
-  public function compareSubmissionQueueItem($user, $item, $operation) {
+  protected function compareSubmissionQueueItem($user, $item, $operation) {
     if (!empty($item)) {
       $this->assertTrue(isset($item['operation']), 'Operation not set in SalesforceQueue queue item.');
       if (isset($item['operation'])) {
