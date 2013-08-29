@@ -23,17 +23,17 @@ function fundraiser_upsell_admin_thank_you_settings() {
   );
   $form['fundraiser_upsell_thank_you_content_tokens'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Available confirmation message tokens'),
+    '#title' => t('Available thank you message tokens'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
     '#weight' => -19,
   );
   $form['fundraiser_upsell_thank_you_content_tokens']['help'] = array(
     '#theme' => 'token_tree',
-    '#token_types' => array('donation'), // The token types that have specific context. Can be multiple token types like 'term' and/or 'user'
-    '#global_types' => FALSE, // A boolean TRUE or FALSE whether to include 'global' context tokens like [current-user:*] or [site:*]. Defaults to TRUE.
+    '#token_types' => array('donation'),
+    '#global_types' => FALSE,
     '#click_insert' => TRUE,
-);
+  );
   $form['email_title'] = array(
     '#type' => 'item',
     '#title' => t('E-mail settings'),
@@ -82,6 +82,19 @@ function fundraiser_upsell_admin_thank_you_settings() {
   if (empty($form['email']['message']['subject']['#default_value'])) {
     $form['email']['message']['subject']['#default_value'] = "Thank you for becoming a sustaining partner.";
   }
+  $form['email']['message']['tokens'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Available email message tokens'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#weight' => 19,
+  );
+  $form['email']['message']['tokens']['help'] = array(
+    '#theme' => 'token_tree',
+    '#token_types' => array('donation'),
+    '#global_types' => FALSE,
+    '#click_insert' => TRUE,
+  );
   // Move the button and validation
   $form['save'] = $form['email']['save'];
   $form['#validate'] = $form['email']['#validate'];
@@ -131,5 +144,8 @@ function fundraiser_upsell_send_thank_you($donation) {
   $mail = email_wrappers_mail_load($params);
   // Modify the "to:" information to match the donation
   $mail->recipients = "$to_email <$to_name>";
+  // Modify the messages to replace tokens
+  $mail->html_message = token_replace($mail->html_message, array('donation' => $donation), array('clear' => TRUE));
+  $mail->text_message = token_replace($mail->text_message, array('donation' => $donation), array('clear' => TRUE));
   email_wrappers_send_mail($mail, $params);
 }

@@ -62,7 +62,6 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
     '#type' => 'fieldset',
   );
   $form['options']['brackets']['fundraiser_upsell_brackets'] = array(
-    '#title' => t('Upsell Brackets'),
     '#type' => 'fieldset',
     '#prefix' => '<div class="clear-block" id="brackets-wrapper">',
     '#suffix' => '</div>',
