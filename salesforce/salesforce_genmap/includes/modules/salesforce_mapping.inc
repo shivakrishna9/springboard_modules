@@ -55,11 +55,9 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
     );
 
     $salesforce_object_type = _salesforce_mapping_alter_get_default_value('salesforce_object_type', $form_state);
-    $property_info = salesforce_mapping_get_fieldmap_types('property');
     $entity_type = _salesforce_mapping_alter_get_default_value('drupal_entity_type', $form_state);
     $entity_bundle_type = _salesforce_mapping_alter_get_default_value('drupal_bundle', $form_state);
-    $entity_fields = call_user_func($property_info['options_callback'], $entity_type, $entity_bundle_type);
-    unset($entity_fields['']);
+    $entity_fields = _salesforce_mapping_get_entity_fields($entity_type, $entity_bundle_type);
     $sf_fields = _salesforce_mapping_get_salesforce_field_options($salesforce_object_type, $form_state);
     asort($sf_fields);
     $dedupe_isset = FALSE;
@@ -682,6 +680,51 @@ function _salesforce_mapping_alter_get_default_value($field, &$form_state, $delt
 }
 
 /**
+ * Get all fields for a given entity type and bundle.
+ *
+ * This is a modification of salesforce_mapping_property_fieldmap_options()
+ * because that function assumes it will be used as an option list for a select
+ * field, rather it nests fields with multiple values, which is not what we
+ * want when looping through the values.
+ *
+ * @param string $entity_type
+ *   Type of entity to check against.
+ * @param string $entity_bundle_type
+ *   The specific bundle to check that is part of the given entity type.
+ *
+ * @return array
+ *   List of fields for the given entity type and bundle, keyed by the fields'
+ *   machine names and values as the fields' user-friendly name.
+ */
+function _salesforce_mapping_get_entity_fields($entity_type, $entity_bundle_type = FALSE) {
+  $entity_fields = salesforce_mapping_property_fieldmap_options($entity_type, $entity_bundle_type);
+
+  // Remove - Select - option.
+  unset($entity_fields['']);
+
+  // Flatten the field list.
+  $field_names = array();
+  foreach ($entity_fields as $key => $value) {
+    if (is_array($value)) {
+      // When an array, $key is the user-friendly name rather than machine name.
+      // The $sub_key value contains both the machine name of the field and the
+      // field's attribute as "field:attribute", for example, "body:text". The
+      // $value is the attribute's user friendly name, for example, "Text".
+      foreach ($value as $sub_key => $sub_value) {
+        $field_names[$sub_key] = $key . ': ' . $sub_value;
+      }
+    }
+    else {
+      // Otherwise, $key is the machine name and $value is the user friendly
+      // name.
+      $field_names[$key] = $value;
+    }
+  }
+
+  return $field_names;
+}
+
+/**
  * Helper to see if the given Salesforce field can be used as an idLookup.
  *
  * @param string $field
@@ -801,8 +844,17 @@ function _salesforce_mapping_datatype_can_sync($entity_type, $drupal_field, $sal
   }
   else {
     $entity_properties = entity_get_all_property_info($entity_type);
-    $drupal_field_info = $entity_properties[$drupal_field];
-    $drupal_datatype = isset($drupal_field_info['type']) ? $drupal_field_info['type'] : 'text';
+    $drupal_field_parts = explode(':', $drupal_field);
+    $drupal_datatype = 'text';
+    if (isset($entity_properties[$drupal_field_parts[0]])) {
+      $drupal_field_info = $entity_properties[$drupal_field_parts[0]];
+      if ((!isset($drupal_field_parts[1]) || empty($drupal_field_parts[1])) && isset($drupal_field_info['type'])) {
+        $drupal_datatype = $drupal_field_info['type'];
+      }
+      elseif (isset($drupal_field_parts[1]) && !empty($drupal_field_parts[1]) && isset($drupal_field_info['property_info'][$drupal_field_parts[1]]['type'])) {
+        $drupal_datatype = $drupal_field_info['property_info'][$drupal_field_parts[1]]['type'];
+      }
+    }
     $form_state['sfm_storage']['drupal_datatype'][$entity_type][$drupal_field] = $drupal_datatype;
   }
 
