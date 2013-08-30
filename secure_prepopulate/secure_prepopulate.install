@@ -46,6 +46,10 @@ function secure_prepopulate_schema() {
         'not null' => FALSE,
       ),
     ),
+    'indexes' => array(
+      'hash' => array('hash'),
+      'expired' => array('expire_date'),
+    ),
   );
   $schema['secure_prepopulate_synonyms'] = array(
     'description' => 'Token string keys and their associated webform component form_keys',
@@ -62,4 +66,14 @@ function secure_prepopulate_schema() {
     'primary key' => array('token_key'),
   );
   return $schema;
+}
+
+/**
+ * Add indexes to tables.
+ */
+function secure_prepopulate_update_7001() {
+  $ret = array();
+  $ret[] = db_add_index('secure_prepopulate_expired', 'hash', array('hash'));
+  $ret[] = db_add_index('secure_prepopulate_expired', 'expired', array('expire_date'));
+  return $ret;
 }
