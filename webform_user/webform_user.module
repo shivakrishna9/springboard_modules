@@ -55,7 +55,9 @@ function webform_user_menu() {
  * Access callback to check if current node is a webform user.
  */
 function webform_user_access($node) {
-  return ($node->is_webform_user && node_access('update', $node));
+  $access = ($node->is_webform_user && node_access('update', $node));
+  drupal_alter('webform_user_access', $access, $node);
+  return $access;
 }
 
 /**
