@@ -35,6 +35,11 @@ function sf_purge_menu() {
   return $items;
 }
 
+/**
+ * Execute record purge and redirect to admin page.
+ *
+ * Used by the "purge now" button.
+ */
 function sf_purge_purge_now() {
   sf_purge_purge();
   $log_url = l('site logs', 'admin/reports/dblog');
