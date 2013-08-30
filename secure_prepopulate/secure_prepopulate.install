@@ -61,6 +61,10 @@ function secure_prepopulate_schema() {
         'not null' => FALSE,
       ),
     ),
+    'indexes' => array(
+      'hash' => array('hash'),
+      'expired' => array('expire_date'),
+    ),
   );
 
   return $schema;
@@ -85,4 +89,14 @@ function secure_prepopulate_update_6001() {
     variable_set('secure_prepopulate_iv', encrypt($vector));
   }
 
+}
+
+/**
+ * Add indexes to table.
+ */
+function secure_prepopulate_update_6002() {
+  $ret = array();
+  db_add_index($ret, 'secure_prepopulate_expired', 'hash', array('hash'));
+  db_add_index($ret, 'secure_prepopulate_expired', 'expired', array('expire_date'));
+  return $ret;
 }
