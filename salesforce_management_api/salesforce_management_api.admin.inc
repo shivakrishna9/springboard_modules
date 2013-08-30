@@ -52,9 +52,9 @@ function salesforce_management_api_settings_form() {
     '#options' => array(
       SALESFORCE_LOG_NONE => t('Do not log any Salesforce activities.'),
       SALESFORCE_LOG_SOME => t('Log important Salesforce activities.'),
-      SALESFORCE_LOG_ALL => t('Log all Salesforce activitiies.'),
+      SALESFORCE_LOG_ALL => t('Log all Salesforce activities.'),
     ),
-    '#default_value' => variable_get('salesforce_management_api_activitiy_log', SALESFORCE_LOG_SOME),
+    '#default_value' => variable_get('salesforce_management_api_activity_log', SALESFORCE_LOG_SOME),
   );
   $form['log']['salesforce_management_api_error_log'] = array(
     '#type' => 'radios',
