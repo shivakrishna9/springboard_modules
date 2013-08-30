@@ -1,3 +1,7 @@
+2013-08-06 Jeremy Isett <jeremy.isett@jacksonriver.com>
+
+   * donation.php: check that gateway is a gm gateway before setting name in gateway_manager_donation_transaction_details_alter
+
 2012-04-25  Sarah Hood  <sarah.hood@jacksonriver.com>
 
     * Added toggle status for gateways, allowing gateways to be deactivated from fundraiser select dropdowns without being deleted.

@@ -545,6 +545,12 @@ function _gm_authorizenet_cim_profile_charge($order, $amount, $data) {
       // Save a comment to the order.
       uc_order_comment_save($order->order_id, $user->uid, implode('<br />', $comment), 'admin');
     }
+
+    if (!empty($response['directResponse'])) {
+      // Log the response
+      $log = explode(',', $response['directResponse']);
+      _gm_authorizenet_log_response($order->order_id, $log);
+    }
   }
 
   // Build the response to the payment gateway API.
@@ -902,6 +908,9 @@ function _gm_authorizenet_charge($order, $amount, $data) {
   // Save the comment to the order.
   uc_order_comment_save($order->order_id, $user->uid, $comment, 'admin');
 
+  // Log the response
+  _gm_authorizenet_log_response($order->order_id, $response);
+
   return $result;
 }
 
@@ -1242,4 +1251,112 @@ function gm_authorizenet_refund($order_id, $amount, $data) {
     return gm_authorizenet_charge($order_id, $amount, $data);
   }
   return array();
+}
+
+/**
+ * Logs the authorize.net response
+ *
+ * @param $order_id
+ *   The order  id associated with the response details.
+ * @param $response
+ *   The array of values from the authorize.net response
+ */
+function _gm_authorizenet_log_response($order_id, $response) {
+  // Load the existing order data array.
+  $data = db_result(db_query("SELECT data FROM {uc_orders} WHERE order_id = %d", $order_id));
+  $data = unserialize($data);
+
+  $data['response'] = $response;
+
+  // Save the updated data array to the database.
+  db_query("UPDATE {uc_orders} SET data = '%s' WHERE order_id = %d", serialize($data), $order_id);
+}
+
+/**
+ * Implements hook_sf_donation_mappable_properties_alter
+ *
+ * Adds the authorize.net response fields to the list of mappable properties
+ */
+function gm_authorizenet_sf_donation_mappable_properties_alter(&$properties, $node) {
+  // Verify the node's gateway is GM authorize.net
+  if (!empty($node->gateway) && is_numeric($node->gateway) && $gateway_info = gateway_manager_gateway_load($node->gateway)) {
+    if ($gateway_info->type == 'gm_authorizenet') {
+      foreach (_gm_authroizenet_response_fields() as $delta => $field) {
+        list($label, $description) = $field;
+        $properties['gateway_authorizenet_' . $delta] = 'Authorize.net ' . $label . '<br />' . $description;
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_sf_donation_object_alter
+ *
+ * Map the authorize.net response values
+ */
+function gm_authorizenet_sf_donation_object_alter($object) {
+  $order = uc_order_load($object->order_id);
+  if (!empty($order->data['response'])) {
+    foreach (_gm_authroizenet_response_fields() as $delta => $field) {
+      if (isset($order->data['response'][$delta])) {
+        $object->{'gateway_authorizenet_' . $delta} = $order->data['response'][$delta];
+      }
+    }
+  }
+}
+
+/**
+ * Returns field labels and descriptions for the authorize.net response
+ *
+ * @return Array
+ *    An Array of labels and descriptions keyed in the order they appear in the response object
+ */
+function _gm_authroizenet_response_fields() {
+  return array(
+    array('Response Code', "The overall status of the transaction"),
+    array('Response Subcode', "Code used by the payment gateway for internal"),
+    array('Response Reason Code', "Code that represents more details about the transaction result"),
+    array('Response Reason Text', "A brief description of the result"),
+    array('Authorization Code', "The authorization or approval code"),
+    array('AVS Response', "The Address Verification Service (AVS) response code"),
+    array('Transaction ID', "The payment gateway-assigned"),
+    array('Invoice Number', "The merchant-assigned invoice number for the"),
+    array('Description', "The transaction description"),
+    array('Amount', "The amount of the transaction"),
+    array('Method', "The payment method"),
+    array('Transaction Type', "The type of credit card transaction"),
+    array('Customer ID', "The merchant-assigned customer ID"),
+    array('First Name', "The first name associated with the billing address"),
+    array('Last Name', "The last name associated with the billing address"),
+    array('Company', "The company associated with the billing address"),
+    array('Address', "The customer’s billing address"),
+    array('City', "The city of the billing address"),
+    array('State', "The state of the billing address"),
+    array('ZIP Code', "The ZIP code of the billing address"),
+    array('Country', "The country of the billing address"),
+    array('Phone', "The phone number associated with the billing address"),
+    array('Fax', "The fax number associated with the billing address"),
+    array('Email Address', "The valid email address"),
+    array('Ship To First Name', "The first name associated with the shipping"),
+    array('Ship To Last Name', "The last name associated with the shipping address"),
+    array('Ship To Company', "The company associated with the shipping address"),
+    array('Ship To Address', "The shipping address"),
+    array('Ship To City', "The city of the shipping address"),
+    array('Ship To State', "The state of the shipping address"),
+    array('Ship To ZIP', "The ZIP code of the shipping address"),
+    array('Ship To Country', "The country of the shipping address"),
+    array('Tax', "The tax amount charged"),
+    array('Duty', "The duty amount charged"),
+    array('Freight', "The freight amount charged"),
+    array('Tax Exempt', "The tax exempt status"),
+    array('Purchase Order', "The merchant assigned purchase order number"),
+    array('MD5 Hash', "The payment gateway-generated MD5 hash value"),
+    array('Card Code Response',  "The card code verification (CCV) response code"),
+    array('Cardholder Authentication Verification Response', "The cardholder authentication verification response code"),
+    50 => array('Account Number', "Last 4 digits of the card provided"),
+    51 => array('Card Type', "Visa, MasterCard, American Express, Discover, Diners Club, JCB"),
+    52 => array('Split Tender ID', "Links the current authorization request to the original authorization request"),
+    53 => array('Requested Amount', "Amount requested in the original authorization"),
+    54 => array('Balance On Card', "Balance on the debit card or prepaid card"),
+  );
 }

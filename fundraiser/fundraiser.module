@@ -2285,6 +2285,12 @@ function fundraiser_create_future_orders($order_id, $gateway = NULL, $amount = N
     $next_order = clone $order;
     $next_order->order_id = $new_id;
     $next_order->order_status = 'pending_future_payment';
+
+    // remove the response from the original order
+    if (!empty($next_order->data['response'])) {
+      unset($next_order->data['response']);
+    }
+
     // use $amount of not empty, need to set this on the product because of uc_get_total
     if (!empty($amount)) {
       $next_order->products[0]->price = $amount;

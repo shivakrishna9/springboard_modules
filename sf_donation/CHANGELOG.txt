@@ -1,3 +1,8 @@
+2013-08-06 Jeremy Isett <jeremy.isett@jacksonriver.com>
+
+   * donation.php: Allow module to alter SF object data, move uc_credit_cache clear to start of construct
+   * sf_donation.module: Allow modules to alter mappable properties in sf_donation_mapping_form
+
 2013-02-14 Jeremy Isett <jeremy.isett@jacksonriver.com>
 
    * donation.php: Added failed status to NPSP stage maps
