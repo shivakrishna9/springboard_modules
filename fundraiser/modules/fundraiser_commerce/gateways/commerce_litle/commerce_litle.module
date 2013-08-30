@@ -560,11 +560,6 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
     $nvp['card']['cardValidationNum'] = $pane_values['credit_card']['code'];
   }
 
-  /**
-   * @todo Somewhere around here, do some cardonfile checking to see if we have a token
-   * @todo If we do, then replace the card stuff in $nvp with the token stuff instead.
-   */
-
   // Build a description for the order.
   $description = array();
 
@@ -614,6 +609,183 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
 
   $init = _commerce_litle_get_litle();
 
+
+  // If Card on File is enabled, see if we have a token already
+
+  /**
+   * @todo Change this value to use a setting from the litle settings form, after adding the setting to the form.
+   */
+  $payment_method['settings']['cardonfile'] = 1;
+
+  /**
+   * @todo Check the $pane_values var to see if it has cardonfile_store at this point.
+   */
+
+  if (module_exists('commerce_cardonfile') && !empty($payment_method['settings']['cardonfile']) &&
+    !empty($pane_values['credit_card']['cardonfile_store']) && $pane_values['credit_card']['cardonfile_store']) {
+
+    // Build a payment details array for the credit card.
+    $payment_details = array(
+      'accountNumber' => $pane_values['credit_card']['number'],
+      'orderId' => $order->order_number,
+    );
+
+    if (isset($pane_values['credit_card']['code'])) {
+      $payment_details['cardValidationNum'] = $pane_values['credit_card']['code'];
+    }
+
+    // First look to see if we already have cards on file for the user.
+    $stored_cards = commerce_cardonfile_data_load_multiple($order->uid, $payment_method['instance_id']);
+    $add_to_profile = NULL;
+
+    // If we didn't find any, attempt to register a token now.
+    if (empty($stored_cards)) {
+      // Submit a registerTokenRequest.
+      $tokenResponse = commerce_litle_register_token_request($init, $litle_config, $payment_details);
+
+      if ($tokenResponse) {
+        $tokenResponseCode = XmlParser::getNode($tokenResponse, 'response');
+
+        // 801 Account numbeer was successfully registered.
+        if ($tokenResponseCode == 801) {
+          $litleToken = XmlParser::getNode($tokenResponse, 'littleToken');
+
+          // store the token with cardonfile
+          $card_data = array();
+          $card_data['uid'] = $order->uid;
+          $card_data['payment_method'] = $payment_method['method_id'];
+          $card_data['instance_id'] = $payment_method['instance_id'];
+          $card_data['remote_id'] = $litleToken;
+          $card_data['card_type'] = !empty($card_type) ? $card_type : 'card';
+          $card_data['card_name'] = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
+          $card_data['card_number'] = substr($pane_values['credit_card']['number'], -4);
+          $card_data['card_exp_month'] = $pane_values['credit_card']['exp_month'];
+          $card_data['card_exp_year'] = $pane_values['credit_card']['exp_year'];
+          $card_data->status = 1;
+
+          // Save and log the creation of the new card on file.
+          commerce_cardonfile_data_save($card_data);
+          watchdog('commerce_litle', 'Token @litleToken registered and saved to user @uid.', array('@litleToken' => $litleToken, '@uid' => $order->uid));
+        }
+        // 802 Account number was previously registered.
+        elseif ($tokenResponseCode == 802) {
+
+          /**
+           * @todo I don't understand the litle equivalent of this authnet code.  It's possible I shouldn't test for this and just do a cardonfile_data_save on both 801 and 802.
+           */
+
+          // But if a Customer Profile already existed for this user, attempt
+          // instead to add this card as a new Payment Profile to it.
+//          $result = array_filter(explode(' ', (string) $response->messages->message->text), 'is_numeric');
+//          $add_to_profile = reset($result);
+        }
+        else {
+
+          /**
+           * @todo Not an 801 or 802, so probably an error.  What should we do here, aside from watchdogging it?
+           */
+
+        }
+      }
+    }
+    else {  // we have stored cards
+
+      /**
+       * At this point $stored_cards is "An associative array of all applicable card data keyed by card_id "
+       * @todo $stored_cards is an array.  How do we pick one if there are multiple items?  Why would there be multiple items?
+       *
+       */
+      foreach ($stored_cards as $stored_card_id => $stored_card) {
+
+      }
+
+      /**
+       * @todo Do we need to do anything here for litle?  Below is what authnet does.
+       */
+
+      // Extract the user's Customer Profile ID from the first card's remote ID.
+//      $card_data = reset($stored_cards);
+//      list($cim_customer_profile_id, $cim_payment_profile_id) = explode('|', $card_data->remote_id);
+
+      // Attempt to add the card as a new payment profile to this Customer Profile.
+//      $add_to_profile = $cim_customer_profile_id;
+    }
+
+
+    /**
+     * @todo Is all this $add_to_profile stuff Authnet specific?  Does it apply to litle?
+     */
+
+    // Attempt to add the card to an existing Customer Profile if specified.
+    if (!empty($add_to_profile)) {
+      $response = commerce_authnet_cim_create_customer_payment_profile_request($payment_method, $add_to_profile, $order, $payment_details);
+
+      // If the Payment Profile creation was a success, store the new card on
+      // file data locally.
+      if ((string) $response->messages->resultCode == 'Ok') {
+        // Build a remote ID that includes the Customer Profile ID and the new
+        // Payment Profile ID.
+        $remote_id = $add_to_profile . '|' . (string) $response->customerPaymentProfileId;
+
+        $card_data = commerce_cardonfile_new();
+        $card_data->uid = $order->uid;
+        $card_data->payment_method = $payment_method['method_id'];
+        $card_data->instance_id = $payment_method['instance_id'];
+        $card_data->remote_id = $remote_id;
+        $card_data->card_type = !empty($card_type) ? $card_type : 'card';
+        $card_data->card_name = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
+        $card_data->card_number = substr($pane_values['credit_card']['number'], -4);
+        $card_data->card_exp_month = $pane_values['credit_card']['exp_month'];
+        $card_data->card_exp_year = $pane_values['credit_card']['exp_year'];
+        $card_data->status = 1;
+
+        // Save and log the creation of the new card on file.
+        commerce_cardonfile_save($card_data);
+        watchdog('commerce_authnet', 'CIM Payment Profile added to Customer Profile @profile_id for user @uid.', array('@profile_id' => $add_to_profile, '@uid' => $order->uid));
+      }
+      elseif (!empty($card_data) && (string) $response->messages->message->code == 'E00040') {
+        // But if we could not find a customer profile, assume the existing
+        // customer profile ID we had is no longer valid and deactivate the card
+        // data that resulted in the error.
+        $card_data->status = 0;
+        commerce_cardonfile_save($card_data);
+
+        // Submit a CIM request to create the Customer Profile.
+        if ($response = commerce_authnet_cim_create_customer_profile_request($payment_method, $order, $payment_details)) {
+          // If the Customer Profile creation was a success, store the new card on
+          // file data locally.
+          if ((string) $response->messages->resultCode == 'Ok') {
+            // Build a remote ID that includes the Customer Profile ID and the
+            // Payment Profile ID.
+            $remote_id = (string) $response->customerProfileId . '|' . (string) $response->customerPaymentProfileIdList->numericString;
+
+            $card_data = commerce_cardonfile_new();
+            $card_data->uid = $order->uid;
+            $card_data->payment_method = $payment_method['method_id'];
+            $card_data->instance_id = $payment_method['instance_id'];
+            $card_data->remote_id = $remote_id;
+            $card_data->card_type = !empty($card_type) ? $card_type : 'card';
+            $card_data->card_name = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
+            $card_data->card_number = substr($pane_values['credit_card']['number'], -4);
+            $card_data->card_exp_month = $pane_values['credit_card']['exp_month'];
+            $card_data->card_exp_year = $pane_values['credit_card']['exp_year'];
+            $card_data->status = 1;
+
+            // Save and log the creation of the new card on file.
+            commerce_cardonfile_save($card_data);
+            watchdog('commerce_authnet', 'CIM Customer Profile @profile_id created and saved to user @uid.', array('@profile_id' => (string) $response->customerProfileId, '@uid' => $order->uid));
+          }
+        }
+      }
+    } // end if (!empty($add_to_profile))
+
+    /**
+     * @todo Here I think is where we should modify the $nvp array to remove the card data and insert the token data for the auth / sale requests.
+     */
+
+  } // end if cardonfile
+
+
   // Prepare a transaction object to log the API response.
   $transaction = commerce_payment_transaction_new('commerce_litle_echeck', $order->order_id);
   $transaction->instance_id = $payment_method['instance_id'];
@@ -652,49 +824,6 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
     drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
     drupal_set_message(XmlParser::getNode($authResponse, 'message'), 'error');
     return FALSE;
-  }
-
-  if (module_exists('commerce_cardonfile')) {
-    $litleToken = XmlParser::getNode($authResponse, 'litleToken');
-    if ($litleToken == '') {
-      // authorizationRequest() didn't give us a token.
-      // So call registerToken explicitly.
-
-      $tokenRequestData = array(
-        // these test values should return 801 Account number was successfully registered.
-        // test 4457119922390123
-        'accountNumber' => $nvp['card']['number'],
-        // test 50
-        'orderId' => $nvp['orderId'],
-      );
-
-      $litleToken = commerce_litle_request_token($init, $litle_config, $tokenRequestData);
-    }
-
-    // hopefully at this point we would have a token.
-    // either through the auth or through an explicit call.
-    if ($litleToken == '') {
-      // Okay this is where it is seriously not working.
-      // Maybe the litle account doesn't have tokenizing turned on?
-
-      /**
-       * @todo Do something nicer here.
-       */
-      watchdog('commerce_litle', 'Cannot get a litle token. I tried really hard.', array(WATCHDOG_DEBUG));
-    }
-    else {
-
-      /**
-       * @todo Remove the watchdog. This kinda sorta isn't an error.
-       */
-      watchdog('commerce_litle', 'We have a litle token after explicitly calling registerToken', array(WATCHDOG_DEBUG));
-    }
-
-    /**
-     * At this point we have a token.
-     * @todo do the cardonfile stuff to store the token
-     * @todo modify the $nvp array to pass the token instead of the card to saleRequest()
-     */
   }
 
   $saleResponse = $init->saleRequest($nvp);
@@ -753,20 +882,15 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
  * @param array $litle_config  The result of _commerce_litle_get_litle_config($payment_method)
  * @param array $data  Data to pass to the API call. Will vary depending on payment type (cc vs bank)
  *
- * @return string  The token, or empty string on failure.
+ * @return The registerTokenRequest Response
  */
-function commerce_litle_request_token($litle, $litle_config, $data) {
+function commerce_litle_register_token_request($litle, $litle_config, $data) {
   $data += $litle_config;
   $tokenResponse = $litle->registerTokenRequest($data);
 
   watchdog('commerce_litle', 'Litle Token response: !param', array('!param' => '<pre>' . check_plain(XmlParser::getDomDocumentAsString($tokenResponse)) . '</pre>', WATCHDOG_DEBUG));
 
-  // successful response
-  if (in_array(XmlParser::getNode($tokenResponse, 'response'), array('801', '802'))) {
-    return XmlParser::getNode($tokenResponse, 'litleToken');
-  }
-
-  return '';
+  return $tokenResponse;
 }
 
 function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
