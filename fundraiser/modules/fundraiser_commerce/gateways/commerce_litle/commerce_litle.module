@@ -636,7 +636,6 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
 
     // First look to see if we already have cards on file for the user.
     $stored_cards = commerce_cardonfile_data_load_multiple($order->uid, $payment_method['instance_id']);
-    $add_to_profile = NULL;
 
     // If we didn't find any, attempt to register a token now.
     if (empty($stored_cards)) {
@@ -647,7 +646,8 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
         $tokenResponseCode = XmlParser::getNode($tokenResponse, 'response');
 
         // 801 Account numbeer was successfully registered.
-        if ($tokenResponseCode == 801) {
+        // 802 Account number was previously registered.
+        if (in_array($tokenResponseCode, array(801, 802)) {
           $litleToken = XmlParser::getNode($tokenResponse, 'littleToken');
 
           // store the token with cardonfile
@@ -667,18 +667,6 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
           commerce_cardonfile_data_save($card_data);
           watchdog('commerce_litle', 'Token @litleToken registered and saved to user @uid.', array('@litleToken' => $litleToken, '@uid' => $order->uid));
         }
-        // 802 Account number was previously registered.
-        elseif ($tokenResponseCode == 802) {
-
-          /**
-           * @todo I don't understand the litle equivalent of this authnet code.  It's possible I shouldn't test for this and just do a cardonfile_data_save on both 801 and 802.
-           */
-
-          // But if a Customer Profile already existed for this user, attempt
-          // instead to add this card as a new Payment Profile to it.
-//          $result = array_filter(explode(' ', (string) $response->messages->message->text), 'is_numeric');
-//          $add_to_profile = reset($result);
-        }
         else {
 
           /**
@@ -693,94 +681,31 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
       /**
        * At this point $stored_cards is "An associative array of all applicable card data keyed by card_id "
        * @todo $stored_cards is an array.  How do we pick one if there are multiple items?  Why would there be multiple items?
+       * The authnet version of this used the first item in the array ex. reset($stored_cards)
        *
        */
       foreach ($stored_cards as $stored_card_id => $stored_card) {
 
       }
 
-      /**
-       * @todo Do we need to do anything here for litle?  Below is what authnet does.
-       */
-
-      // Extract the user's Customer Profile ID from the first card's remote ID.
-//      $card_data = reset($stored_cards);
-//      list($cim_customer_profile_id, $cim_payment_profile_id) = explode('|', $card_data->remote_id);
-
-      // Attempt to add the card as a new payment profile to this Customer Profile.
-//      $add_to_profile = $cim_customer_profile_id;
     }
-
-
-    /**
-     * @todo Is all this $add_to_profile stuff Authnet specific?  Does it apply to litle?
-     */
-
-    // Attempt to add the card to an existing Customer Profile if specified.
-    if (!empty($add_to_profile)) {
-      $response = commerce_authnet_cim_create_customer_payment_profile_request($payment_method, $add_to_profile, $order, $payment_details);
-
-      // If the Payment Profile creation was a success, store the new card on
-      // file data locally.
-      if ((string) $response->messages->resultCode == 'Ok') {
-        // Build a remote ID that includes the Customer Profile ID and the new
-        // Payment Profile ID.
-        $remote_id = $add_to_profile . '|' . (string) $response->customerPaymentProfileId;
-
-        $card_data = commerce_cardonfile_new();
-        $card_data->uid = $order->uid;
-        $card_data->payment_method = $payment_method['method_id'];
-        $card_data->instance_id = $payment_method['instance_id'];
-        $card_data->remote_id = $remote_id;
-        $card_data->card_type = !empty($card_type) ? $card_type : 'card';
-        $card_data->card_name = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
-        $card_data->card_number = substr($pane_values['credit_card']['number'], -4);
-        $card_data->card_exp_month = $pane_values['credit_card']['exp_month'];
-        $card_data->card_exp_year = $pane_values['credit_card']['exp_year'];
-        $card_data->status = 1;
-
-        // Save and log the creation of the new card on file.
-        commerce_cardonfile_save($card_data);
-        watchdog('commerce_authnet', 'CIM Payment Profile added to Customer Profile @profile_id for user @uid.', array('@profile_id' => $add_to_profile, '@uid' => $order->uid));
-      }
-      elseif (!empty($card_data) && (string) $response->messages->message->code == 'E00040') {
-        // But if we could not find a customer profile, assume the existing
-        // customer profile ID we had is no longer valid and deactivate the card
-        // data that resulted in the error.
-        $card_data->status = 0;
-        commerce_cardonfile_save($card_data);
-
-        // Submit a CIM request to create the Customer Profile.
-        if ($response = commerce_authnet_cim_create_customer_profile_request($payment_method, $order, $payment_details)) {
-          // If the Customer Profile creation was a success, store the new card on
-          // file data locally.
-          if ((string) $response->messages->resultCode == 'Ok') {
-            // Build a remote ID that includes the Customer Profile ID and the
-            // Payment Profile ID.
-            $remote_id = (string) $response->customerProfileId . '|' . (string) $response->customerPaymentProfileIdList->numericString;
-
-            $card_data = commerce_cardonfile_new();
-            $card_data->uid = $order->uid;
-            $card_data->payment_method = $payment_method['method_id'];
-            $card_data->instance_id = $payment_method['instance_id'];
-            $card_data->remote_id = $remote_id;
-            $card_data->card_type = !empty($card_type) ? $card_type : 'card';
-            $card_data->card_name = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
-            $card_data->card_number = substr($pane_values['credit_card']['number'], -4);
-            $card_data->card_exp_month = $pane_values['credit_card']['exp_month'];
-            $card_data->card_exp_year = $pane_values['credit_card']['exp_year'];
-            $card_data->status = 1;
-
-            // Save and log the creation of the new card on file.
-            commerce_cardonfile_save($card_data);
-            watchdog('commerce_authnet', 'CIM Customer Profile @profile_id created and saved to user @uid.', array('@profile_id' => (string) $response->customerProfileId, '@uid' => $order->uid));
-          }
-        }
-      }
-    } // end if (!empty($add_to_profile))
 
     /**
      * @todo Here I think is where we should modify the $nvp array to remove the card data and insert the token data for the auth / sale requests.
+     *
+     * For an auth or sale request, litle wants litleToken, expDate, and cardValidationNum
+     * Since we're registering tokens with the cardValidationNum included, litle doesn't require the code to be submitted again.
+     * So we should set cardValidationNum to 000 to use litle's stored value
+     * litleToken and expDate can be gotten from stored_card.
+     *
+     * Should be something like this.
+     *  <token>
+     *    <litleToken>remote_id</litleToken>
+     *    <expDate>1112</expDate>
+     *    <cardValidationNum>000</cardValidationNum>
+     * </token>
+     *
+     * Then we need to NULL out $nvp['card'] so it doesn't get sent. Or maybe rearrange the code to not add the card key unless we really have card data.
      */
 
   } // end if cardonfile
