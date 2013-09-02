@@ -75,6 +75,9 @@ function sb_social_schema() {
       ),
     ),
     'primary key' => array('share_id'),
+    'indexes' => array(
+      'sid' => array('sid'),
+    ),
   );
   $schema['sb_social_settings'] = array(
     'description' => 'shared content settings for individual paths',
@@ -103,7 +106,19 @@ function sb_social_schema() {
       ),
     ),
     'primary key' => array('sid'),
+    'indexes' => array(
+      'type' => array('type'),
+    ),
   );
   return $schema;
 }
 
+/**
+ * Add indexes to tables.
+ */
+function sb_social_update_7001() {
+  $ret = array();
+  $ret[] = db_add_index('sb_social_shares', 'sid', array('sid'));
+  $ret[] = db_add_index('sb_social_settings', 'type', array('type'));
+  return $ret;
+}

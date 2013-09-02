@@ -139,13 +139,26 @@ function capwiz_connect_schema() {
       ),
     ),
     'primary key' => array('id'),
+    'unique_keys' => array(
+      'unique' => array('capwiz_alert_id', 'capwiz_user_id', 'action_timestamp', 'message_id'),
+    ),
     'indexes' => array(
       'capwiz_account_id' => array('capwiz_account_id'),
       'capwiz_alert_id' => array('capwiz_alert_id'),
       'capwiz_user_id' => array('capwiz_user_id'),
+      'message_id' => array('message_id'),
     ),
   );
 
   return $schema;
 }
 
+/**
+ * Add indexes to table.
+ */
+function capwiz_connect_update_7001() {
+  $ret = array();
+  $ret[] = db_add_unique_key('capwiz_connect_actions', 'unique', array('capwiz_alert_id', 'capwiz_user_id', 'action_timestamp', 'message_id'));
+  $ret[] = db_add_index('capwiz_connect_actions', 'message_id', array('message_id'));
+  return $ret;
+}

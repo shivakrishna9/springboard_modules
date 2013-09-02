@@ -190,6 +190,9 @@ function webform_goals_schema() {
       ),
     ),
     'primary key' => array('gid'),
+    'indexes' => array(
+      'update_on_cron' => array('update_on_cron'),
+    ),
   );
   $schema['webform_goals_widget'] = array(
     'description' => 'Stores goal configuration data.',
@@ -227,8 +230,21 @@ function webform_goals_schema() {
       ),
     ),
     'primary key' => array('gid', 'nid'),
+    'indexes' => array(
+      'gid' => array('gid'),
+      'nid' => array('nid'),
+    ),
   );
   return $schema;
 }
 
-
+/**
+ * Add indexes to tables.
+ */
+function webform_goals_update_7001() {
+  $ret = array();
+  $ret[] = db_add_index('webform_goals', 'update_on_cron', array('update_on_cron'));
+  $ret[] = db_add_index('webform_goals_node', 'gid', array('gid'));
+  $ret[] = db_add_index('webform_goals_node', 'nid', array('nid'));
+  return $ret;
+}

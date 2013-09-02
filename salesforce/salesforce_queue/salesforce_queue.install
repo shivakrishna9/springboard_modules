@@ -90,15 +90,75 @@ function salesforce_queue_schema() {
       ),
     ),
     'primary key' => array('item_id'),
-    'indexes' => array(
-      'drupal_index' => array(
+    'unique keys' => array(
+      'delta_drupal_module_object' => array(
+        'delta',
         'drupal_id',
         'module',
-        'delta',
         'object_type',
+      ),
+    ),
+    'indexes' => array(
+      'created' => array('created'),
+      'delta' => array('delta'),
+      'drupal_id' => array('drupal_id'),
+      'module' => array('module'),
+      'object_type' => array('object_type'),
+      'operation' => array('operation'),
+      'queue' => array('queue'),
+      'created_queue' => array(
+        'created',
+        'queue',
+      ),
+      'delta_module_object' => array(
+        'delta',
+        'module',
+        'object_type',
+      ),
+      'delta_module' => array(
+        'delta',
+        'module',
+      ),
+      'delta_drupal_module' => array(
+        'delta',
+        'drupal_id',
+        'module',
+      ),
+      'object_op' => array(
+        'object_type',
+        'operation',
+      ),
+      'object_queue' => array(
+        'object_type',
+        'queue',
       ),
     ),
   );
 
   return $schema;
+}
+
+/**
+ * Add indexes to tables.
+ */
+function salesforce_queue_update_7001() {
+  $ret = array();
+
+  $ret[] = db_drop_index('salesforce_queue', 'drupal_index');
+
+  $ret[] = db_add_index('salesforce_queue', 'created', array('created'));
+  $ret[] = db_add_index('salesforce_queue', 'delta', array('delta'));
+  $ret[] = db_add_index('salesforce_queue', 'drupal_id', array('drupal_id'));
+  $ret[] = db_add_index('salesforce_queue', 'module', array('module'));
+  $ret[] = db_add_index('salesforce_queue', 'object_type', array('object_type'));
+  $ret[] = db_add_index('salesforce_queue', 'operation', array('operation'));
+  $ret[] = db_add_index('salesforce_queue', 'queue', array('queue'));
+  $ret[] = db_add_index('salesforce_queue', 'created_queue', array('created', 'queue'));
+  $ret[] = db_add_index('salesforce_queue', 'delta_module_object', array('delta', 'module', 'object_type'));
+  $ret[] = db_add_index('salesforce_queue', 'delta_module', array('delta', 'module'));
+  $ret[] = db_add_index('salesforce_queue', 'delta_drupal_module', array('delta', 'drupal_id', 'module'));
+  $ret[] = db_add_index('salesforce_queue', 'object_op', array('object_type', 'operation'));
+  $ret[] = db_add_index('salesforce_queue', 'object_queue', array('object_type', 'queue'));
+
+  return $ret;
 }
