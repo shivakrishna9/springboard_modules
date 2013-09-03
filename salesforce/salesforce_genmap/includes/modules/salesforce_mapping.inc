@@ -303,6 +303,9 @@ function salesforce_mapping_form_prevalidate($form, &$form_state) {
       unset($field_maps[$delta]);
     }
   }
+  if (!is_int($form_state['values']['key'])) {
+    $form_state['values']['key'] = FALSE;
+  }
 }
 
 /**
