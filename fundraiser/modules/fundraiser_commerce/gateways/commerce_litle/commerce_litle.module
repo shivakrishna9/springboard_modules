@@ -561,9 +561,12 @@ function commerce_litle_cc_test_token_request() {
  */
 function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
 
-  /**
-   * @todo The part where we check if the user picked a card on file.  See authnet.  Needed for contrib.
-   */
+  // If the customer specified payment using a card on file, attempt that now
+  // and simply return the result.
+  if (module_exists('commerce_cardonfile') && $payment_method['settings']['cardonfile'] &&
+    !empty($pane_values['cardonfile']) && $pane_values['cardonfile'] !== 'new') {
+    return commerce_litle_cc_vault_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge);
+  }
 
   // Determine the credit card type if possible for use in later code.
   if (!empty($pane_values['credit_card']['number'])) {
@@ -641,115 +644,13 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
     $billing_address = array();
   }
 
-  /* lets override the uncessary config stuff */
+  /* let's override the unnecessary config stuff */
 
   // stored in a var because it's used again later.
   $litle_config = _commerce_litle_get_litle_config($payment_method);
   $nvp += $litle_config;
 
   $init = _commerce_litle_get_litle();
-
-
-  // If Card on File is enabled, see if we have a token already
-
-  /**
-   * @todo Change this value to use a setting from the litle settings form, after adding the setting to the form.
-   */
-  $payment_method['settings']['cardonfile'] = 1;
-
-  /**
-   * @todo Check the $pane_values var to see if it has cardonfile_store at this point.
-   */
-
-  if (module_exists('commerce_cardonfile') && !empty($payment_method['settings']['cardonfile']) &&
-    !empty($pane_values['credit_card']['cardonfile_store']) && $pane_values['credit_card']['cardonfile_store']) {
-
-    // Build a payment details array for the credit card.
-    $payment_details = array(
-      'accountNumber' => $pane_values['credit_card']['number'],
-      'orderId' => $order->order_number,
-    );
-
-    if (isset($pane_values['credit_card']['code'])) {
-      $payment_details['cardValidationNum'] = $pane_values['credit_card']['code'];
-    }
-
-    // First look to see if we already have cards on file for the user.
-    $stored_cards = commerce_cardonfile_data_load_multiple($order->uid, $payment_method['instance_id']);
-
-    // If we didn't find any, attempt to register a token now.
-    if (empty($stored_cards)) {
-      // Submit a registerTokenRequest.
-      $tokenResponse = commerce_litle_register_token_request($init, $litle_config, $payment_details);
-
-      if ($tokenResponse) {
-        $tokenResponseCode = XmlParser::getNode($tokenResponse, 'response');
-
-        // 801 Account numbeer was successfully registered.
-        // 802 Account number was previously registered.
-        if (in_array($tokenResponseCode, array(801, 802))) {
-          $litleToken = XmlParser::getNode($tokenResponse, 'littleToken');
-
-          // store the token with cardonfile
-          $card_data = array();
-          $card_data['uid'] = $order->uid;
-          $card_data['payment_method'] = $payment_method['method_id'];
-          $card_data['instance_id'] = $payment_method['instance_id'];
-          $card_data['remote_id'] = $litleToken;
-          $card_data['card_type'] = !empty($card_type) ? $card_type : 'card';
-          $card_data['card_name'] = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
-          $card_data['card_number'] = substr($pane_values['credit_card']['number'], -4);
-          $card_data['card_exp_month'] = $pane_values['credit_card']['exp_month'];
-          $card_data['card_exp_year'] = $pane_values['credit_card']['exp_year'];
-          $card_data->status = 1;
-
-          // Save and log the creation of the new card on file.
-          commerce_cardonfile_data_save($card_data);
-          watchdog('commerce_litle', 'Token @litleToken registered and saved to user @uid.', array('@litleToken' => $litleToken, '@uid' => $order->uid));
-        }
-        else {
-
-          /**
-           * @todo Not an 801 or 802, so probably an error.  What should we do here, aside from watchdogging it?
-           */
-
-        }
-      }
-    }
-    else {  // we have stored cards
-
-      /**
-       * At this point $stored_cards is "An associative array of all applicable card data keyed by card_id "
-       * @todo $stored_cards is an array.  How do we pick one if there are multiple items?  Why would there be multiple items?
-       * The authnet version of this used the first item in the array ex. reset($stored_cards)
-       *
-       */
-      foreach ($stored_cards as $stored_card_id => $stored_card) {
-
-      }
-
-    }
-
-    /**
-     * @todo Here I think is where we should modify the $nvp array to remove the card data and insert the token data for the auth / sale requests.
-     *
-     * For an auth or sale request, litle wants litleToken, expDate, and cardValidationNum
-     * Since we're registering tokens with the cardValidationNum included, litle doesn't require the code to be submitted again.
-     * So we should set cardValidationNum to 000 to use litle's stored value
-     * litleToken and expDate can be gotten from stored_card.
-     *
-     * Should be something like this.
-     *  <token>
-     *    <litleToken>remote_id</litleToken>
-     *    <expDate>1112</expDate>
-     *    <cardValidationNum>000</cardValidationNum>
-     * </token>
-     *
-     * Then we need to NULL out $nvp['card'] so it doesn't get sent. Or maybe rearrange the code to not add the card key unless we really have card data.
-     */
-
-  } // end if cardonfile
-
 
   // Prepare a transaction object to log the API response.
   $transaction = commerce_payment_transaction_new('commerce_litle_echeck', $order->order_id);
@@ -839,8 +740,271 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
     drupal_set_message(XmlParser::getNode($saleResponse, 'message'), 'error');
     return FALSE;
   }
+
+  // If Card on File is enabled, see if we have tokens saved and if not, get a new one.
+  if (module_exists('commerce_cardonfile') && !empty($payment_method['settings']['cardonfile']) &&
+    !empty($pane_values['credit_card']['cardonfile_store']) && $pane_values['credit_card']['cardonfile_store']) {
+
+    // Build a payment details array for the credit card.
+    $payment_details = array(
+      'accountNumber' => $pane_values['credit_card']['number'],
+      'orderId' => $order->order_number,
+    );
+
+    if (isset($pane_values['credit_card']['code'])) {
+      $payment_details['cardValidationNum'] = $pane_values['credit_card']['code'];
+    }
+
+    // First look to see if we already have cards on file for the user.
+    $stored_cards = commerce_cardonfile_data_load_multiple($order->uid, $payment_method['instance_id']);
+
+    // If we didn't find any, attempt to register a token now.
+    if (empty($stored_cards)) {
+      // Submit a registerTokenRequest.
+      $tokenResponse = commerce_litle_register_token_request($init, $litle_config, $payment_details);
+
+      if ($tokenResponse) {
+        $tokenResponseCode = XmlParser::getNode($tokenResponse, 'response');
+
+        // 801 Account numbeer was successfully registered.
+        // 802 Account number was previously registered.
+        if (in_array($tokenResponseCode, array(801, 802))) {
+          $litleToken = XmlParser::getNode($tokenResponse, 'littleToken');
+
+          // store the token with cardonfile
+          $card_data = array();
+          $card_data['uid'] = $order->uid;
+          $card_data['payment_method'] = $payment_method['method_id'];
+          $card_data['instance_id'] = $payment_method['instance_id'];
+          $card_data['remote_id'] = $litleToken;
+          $card_data['card_type'] = !empty($card_type) ? $card_type : 'card';
+          $card_data['card_name'] = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
+          $card_data['card_number'] = substr($pane_values['credit_card']['number'], -4);
+          $card_data['card_exp_month'] = $pane_values['credit_card']['exp_month'];
+          $card_data['card_exp_year'] = $pane_values['credit_card']['exp_year'];
+          $card_data->status = 1;
+
+          // Save and log the creation of the new card on file.
+          commerce_cardonfile_data_save($card_data);
+          watchdog('commerce_litle', 'Token @litleToken registered and saved to user @uid.', array('@litleToken' => $litleToken, '@uid' => $order->uid));
+        }
+        else {
+
+          /**
+           * @todo Not an 801 or 802, so probably an error.  What should we do here, aside from watchdogging it?
+           */
+
+        }
+      }
+    }
+    else {  // we have stored cards
+
+      /**
+       * At this point $stored_cards is "An associative array of all applicable card data keyed by card_id "
+       * @todo Do we need to do anything here?
+       *
+       */
+    }
+
+  } // end if cardonfile
+
 }
 
+/**
+ * Imitates the checkout form submission callback for the CC Vault payment method.
+ */
+function commerce_litle_cc_vault_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
+  // First attempt to load the card on file.
+  $card_data = commerce_cardonfile_data_load($pane_values['cardonfile']);
+
+  // Fail now if it is no longer available or the card is inactive.
+  if (empty($card_data) || $card_data->status == 0) {
+    drupal_set_message(t('The requested card on file is no longer valid.'), 'error');
+    return FALSE;
+  }
+
+  return commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, $order, $charge);
+}
+
+/**
+ * Card on file callback: background charge payment
+ *
+ * @param object $payment_method
+ *  The payment method instance definition array.
+ * @param object $card_data
+ *   The stored credit card data array to be processed
+ * @param object $order
+ *   The order object that is being processed
+ * @param array $charge
+ *   The price array for the charge amount with keys of 'amount' and 'currency'
+ *   If null the total value of the order is used.
+ *
+ * @return
+ *   TRUE if the transaction was successful
+ */
+function commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, $order, $charge = NULL) {
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+  $txn_type = COMMERCE_CREDIT_AUTH_CAPTURE;
+
+  // Format order total for transaction.
+  if (!isset($charge)) {
+    $charge = commerce_line_items_total($order_wrapper->commerce_line_items);
+  }
+
+  // Build a data array for the transaction API request.
+  $request_data = array(
+    'orderSource' => 'ecommerce',
+    // Order Information
+    'orderId' => $order->order_number,
+    'customerId' => $order->uid,
+    'amount' => commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']) * 100,
+    'token' => array(
+      'littleToken' => $card_data->remote_id,
+      'expDate' => str_pad($card_data['card_exp_month'], 2, 0, STR_PAD_LEFT) . substr($card_data['card_exp_year'],2,2),
+      // 000 means use litle's stored value
+      'cardValidationNum' => '000'
+    )
+  );
+
+  // Prepare the billing address for use in the request.
+  /**
+   * @todo Do we need to send billing address if we're providing a token?
+   */
+  if ($order_wrapper->commerce_customer_billing->value()){
+    $billing_address = $order_wrapper->commerce_customer_billing->commerce_customer_address->value();
+
+    if (empty($billing_address['first_name'])) {
+      $name_parts = explode(' ', $billing_address['name_line']);
+      $billing_address['first_name'] = array_shift($name_parts);
+      $billing_address['last_name'] = implode(' ', $name_parts);
+    }
+
+    $request_data['billToAddress'] = array(
+      // Customer Billing Address
+      'name' => substr($billing_address['first_name'], 0, 50) . " " . substr($billing_address['last_name'], 0, 50),
+      //'x_company' => substr($billing_address['organisation_name'], 0, 50),
+      'addressLine1' => substr($billing_address['thoroughfare'], 0, 60),
+      'city' => substr($billing_address['locality'], 0, 40),
+      'state' => substr($billing_address['administrative_area'], 0, 40),
+      'zip' => substr($billing_address['postal_code'], 0, 20),
+      'country' => $billing_address['country'],
+    );
+  }
+
+  /* let's override the unnecessary config stuff */
+
+  // stored in a var because it's used again later.
+  $litle_config = _commerce_litle_get_litle_config($payment_method);
+  $request_data += $litle_config;
+
+  $init = _commerce_litle_get_litle();
+
+  // Prepare a transaction object to log the API response.
+  $transaction = commerce_payment_transaction_new('commerce_litle_echeck', $order->order_id);
+  $transaction->instance_id = $payment_method['instance_id'];
+  $transaction->amount = $charge['amount'];
+  $transaction->currency_code = $charge['currency_code'];
+  // Save the transaction information to get transaction id
+  commerce_payment_transaction_save($transaction);
+  $request_data['id'] = substr($transaction->transaction_id, 0, 20);
+
+  // Log the request if specified.
+  if ($payment_method['settings']['log']['request'] === 'request') {
+    // Mask secure data
+    $log_nvp = $request_data;
+    $log_nvp['password'] = str_repeat('X', strlen($log_nvp['password']));
+    $log_nvp['merchantId'] = str_repeat('X', strlen($log_nvp['merchantId']));
+    if (!empty($log_nvp['card']['number'])) {
+      $log_nvp['card']['number'] = str_repeat('X', strlen($log_nvp['card']['number']) - 4) . substr($log_nvp['card']['number'], -4);
+    }
+
+    if (!empty($log_nvp['card']['cardValidationNum'])) {
+      $log_nvp['card']['cardValidationNum'] = str_repeat('X', strlen($log_nvp['card']['cardValidationNum']));
+    }
+
+    watchdog('commerce_litle', 'Litle request: !param', array('!param' => '<pre>' . check_plain(print_r($log_nvp, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+  }
+
+  // first lets do an authorization
+  $authResponse = $init->authorizationRequest($request_data);
+
+  // Log the response if specified.
+  if ($payment_method['settings']['log']['response'] === 'response') {
+    watchdog('commerce_litle', 'Litle Authorization response: !param', array('!param' => '<pre>' . check_plain(XmlParser::getDomDocumentAsString($authResponse)) . '</pre>', WATCHDOG_DEBUG));
+  }
+
+  $authResponseCode = XmlParser::getNode($authResponse, 'response');
+  if ($authResponseCode != '000') {
+    /**
+     * 822  Token was not found.
+     * 823  Token was invalid.
+     */
+    if (in_array($authResponseCode, array('822', '823'))) {
+      // if the token is not valid, deactivate the card on file
+      $card_data->status = 0;
+      commerce_cardonfile_data_save($card_data);
+
+      drupal_set_message(t('The card you selected is no longer valid. Please use a different card to complete payment.'), 'error');
+      return FALSE;
+    }
+
+    drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
+    drupal_set_message(XmlParser::getNode($authResponse, 'message'), 'error');
+    return FALSE;
+  }
+
+  $saleResponse = $init->saleRequest($request_data);
+
+  // Log the response if specified.
+  if ($payment_method['settings']['log']['response'] === 'response') {
+    watchdog('commerce_litle', 'Litle Sale response: !param', array('!param' => '<pre>' . check_plain(XmlParser::getDomDocumentAsString($saleResponse)) . '</pre>', WATCHDOG_DEBUG));
+  }
+
+  // If we didn't get an approval response code...
+  if (XmlParser::getNode($saleResponse,'response') != '000') {
+    // Create a failed transaction with the error message.
+    $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+  }
+  else {
+    // Set the transaction status based on the type of transaction this was.
+    switch ($txn_type) {
+      case COMMERCE_CREDIT_AUTH_ONLY:
+        $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
+        break;
+
+      case COMMERCE_CREDIT_AUTH_CAPTURE:
+        $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+        break;
+
+      case COMMERCE_CREDIT_CAPTURE_ONLY:
+        $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+        break;
+    }
+  }
+
+  // Store the type of transaction in the remote status.
+  $transaction->remote_status = COMMERCE_CREDIT_AUTH_CAPTURE;
+
+  // Store the remote id
+  $transaction->remote_id = XmlParser::getNode($saleResponse, 'litleTxnId');
+
+  // Build a meaningful response message.
+  $message = array(
+    '<b>' . (XmlParser::getNode($saleResponse, 'response') != '000' ? t('REJECTED') : t('ACCEPTED')) . ':</b> ' . check_plain(XmlParser::getNode($saleResponse,'message'))
+  );
+
+  $transaction->message = implode('<br />', $message);
+  // Save the transaction information.
+  commerce_payment_transaction_save($transaction);
+
+  // If the payment failed, display an error and rebuild the form.
+  if (XmlParser::getNode($saleResponse, 'response') != '000') {
+    drupal_set_message(t('We received the following error processing your card on file. Please enter you information again or try a different card.'), 'error');
+    drupal_set_message(XmlParser::getNode($saleResponse, 'message'), 'error');
+    return FALSE;
+  }
+
+}
 
 /**
  * @param object $litle  The litle object
