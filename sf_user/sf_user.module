@@ -461,15 +461,16 @@ function sf_user_user($op, &$edit, &$account, $category = NULL) {
 
       // delete
     case 'delete':
+      // Removed per ticket #314 in SB3.
       // remove from queue
-      $salesforce = salesforce_management_api_id_load('user', $account->uid);
+      //$salesforce = salesforce_management_api_id_load('user', $account->uid);
       // only insert users that have already been exported to salesforce
-      if (!empty($salesforce)) {
-        sf_queue_insert($account->uid, 'user', 'delete');
-      }
-      else {
-        sf_queue_delete($account->uid, 'user');
-      }
+      //if (!empty($salesforce)) {
+      //  sf_queue_insert($account->uid, 'user', 'delete');
+      //}
+      //else {
+      //  sf_queue_delete($account->uid, 'user');
+      //}
       break;
   }
 }
