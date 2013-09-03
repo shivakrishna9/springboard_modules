@@ -17,6 +17,7 @@ function commerce_litle_fundraiser_commerce_fundraiser_gateway_info() {
     'cleanup callback' => 'commerce_litle_fundraiser_commerce_cleanup',
     'scrub callback' => 'commerce_litle_fundraiser_commerce_scrub',
     'validate callback' => 'commerce_litle_fundraiser_commerce_validate',
+    'expire callback' => 'commerce_litle_fundraiser_commerce_expire',
     'charge callback' => 'commerce_litle_fundraiser_commerce_charge',
   );
 }
