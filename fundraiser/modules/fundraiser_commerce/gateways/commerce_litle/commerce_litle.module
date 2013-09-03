@@ -127,6 +127,23 @@ function commerce_litle_cc_settings_form($settings = array()) {  // Note use of 
     '#title' => 'Run in Sandbox Mode',
     '#default_value' => isset($settings['commerce_litle_settings_sandbox']) ? $settings['commerce_litle_settings_sandbox'] : '',
   );
+
+  if (module_exists('commerce_cardonfile')) {
+    $form['cardonfile'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enable Card on File functionality with this payment method using the Litle Vault.'),
+      '#description' => t('You must be token enabled and certified prior to using the Vault feature. Please consult your Litle Customer Experience Manager concerning the requirements and details of this process.'),
+      '#default_value' => isset($settings['cardonfile']) ? $settings['cardonfile'] : 0,
+    );
+
+  }
+  else {
+    $form['cardonfile'] = array(
+      '#type' => 'markup',
+      '#markup' => t('To enable Card on File funcitionality download and install the Card on File module.'),
+    );
+  }
+
   $form['log'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Log the following messages for debugging'),
@@ -203,6 +220,23 @@ function commerce_litle_echeck_settings_form($settings = array()) {  // Note use
     '#title' => 'Run in Sandbox Mode',
     '#default_value' => isset($settings['commerce_litle_settings_sandbox']) ? $settings['commerce_litle_settings_sandbox'] : '',
   );
+
+  if (module_exists('commerce_cardonfile')) {
+    $form['cardonfile'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enable Card on File functionality with this payment method using the Litle Vault.'),
+      '#description' => t('You must be token enabled and certified prior to using the Vault feature. Please consult your Litle Customer Experience Manager concerning the requirements and details of this process.'),
+      '#default_value' => isset($settings['cardonfile']) ? $settings['cardonfile'] : 0,
+    );
+
+  }
+  else {
+    $form['cardonfile'] = array(
+      '#type' => 'markup',
+      '#markup' => t('To enable Card on File funcitionality download and install the Card on File module.'),
+    );
+  }
+
   $form['log'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Log the following messages for debugging'),
@@ -265,7 +299,7 @@ function commerce_litle_echeck_submit_form($payment_method = NULL, $pane_values 
 function commerce_litle_cc_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
   // If the customer specified a card on file, skip the normal validation.
   // TODO add Card On File support for Litle settings if available. Lower priority, but likely needed in contrib as well.
-  if (module_exists('commerce_cardonfile') && !empty($payment_method['settings']['cim_cardonfile']) &&
+  if (module_exists('commerce_cardonfile') && !empty($payment_method['settings']['cardonfile']) &&
     !empty($pane_values['cardonfile']) && $pane_values['cardonfile'] !== 'new') {
     return;
   }
@@ -526,6 +560,12 @@ function commerce_litle_cc_test_token_request() {
  * Payment method callback: checkout form submission.
  */
 function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
+
+  /**
+   * @todo The part where we check if the user picked a card on file.  See authnet.  Needed for contrib.
+   */
+
+  // Determine the credit card type if possible for use in later code.
   if (!empty($pane_values['credit_card']['number'])) {
     module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
     $card_type = commerce_payment_validate_credit_card_type($pane_values['credit_card']['number'], array_keys(commerce_payment_credit_card_types()));
@@ -569,7 +609,7 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
     }
   }
 
-  // Add additional transaction invormation to the request array.
+  // Add additional transaction information to the request array.
   $nvp += array(
     // Order Information
     'orderId' => $order->order_number,
