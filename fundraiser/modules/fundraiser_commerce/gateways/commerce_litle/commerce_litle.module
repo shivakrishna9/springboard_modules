@@ -760,45 +760,55 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
 
     // If we didn't find any, attempt to register a token now.
     if (empty($stored_cards)) {
+
+      // if we're in the sandbox, use the test data for registering a token
+      // this should return an 801 response code
+      if ($payment_method['settings']['commerce_litle_settings_sandbox'] == 1) {
+        $payment_details['accountNumber'] = '4457119922390123';
+        $payment_details['orderId'] = '50';
+      };
+
       // Submit a registerTokenRequest.
       $tokenResponse = commerce_litle_register_token_request($init, $litle_config, $payment_details);
 
-      if ($tokenResponse) {
-        $tokenResponseCode = XmlParser::getNode($tokenResponse, 'response');
+      $tokenResponseCode = XmlParser::getNode($tokenResponse, 'response');
 
-        // 801 Account numbeer was successfully registered.
-        // 802 Account number was previously registered.
-        if (in_array($tokenResponseCode, array(801, 802))) {
-          $litleToken = XmlParser::getNode($tokenResponse, 'littleToken');
+      /**
+       * Keep in mind tokenResponseCode is different than response.
+       * 801 Account numbeer was successfully registered.
+       * 802 Account number was previously registered.
+       */
+      if (in_array($tokenResponseCode, array(801, 802))) {
+        $litleToken = XmlParser::getNode($tokenResponse, 'litleToken');
 
-          // store the token with cardonfile
-          $card_data = array();
-          $card_data['uid'] = $order->uid;
-          $card_data['payment_method'] = $payment_method['method_id'];
-          $card_data['instance_id'] = $payment_method['instance_id'];
-          $card_data['remote_id'] = $litleToken;
-          $card_data['card_type'] = !empty($card_type) ? $card_type : 'card';
-          $card_data['card_name'] = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
-          $card_data['card_number'] = substr($pane_values['credit_card']['number'], -4);
-          $card_data['card_exp_month'] = $pane_values['credit_card']['exp_month'];
-          $card_data['card_exp_year'] = $pane_values['credit_card']['exp_year'];
-          $card_data->status = 1;
+        // store the token with cardonfile
+        $card_data = array();
+        $card_data['uid'] = $order->uid;
+        $card_data['payment_method'] = $payment_method['method_id'];
+        $card_data['instance_id'] = $payment_method['instance_id'];
+        $card_data['remote_id'] = $litleToken;
+        $card_data['card_type'] = !empty($card_type) ? $card_type : 'card';
+        $card_data['card_name'] = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
+        $card_data['card_number'] = substr($pane_values['credit_card']['number'], -4);
+        $card_data['card_exp_month'] = $pane_values['credit_card']['exp_month'];
+        $card_data['card_exp_year'] = $pane_values['credit_card']['exp_year'];
+        $card_data['status'] = 1;
 
-          // Save and log the creation of the new card on file.
-          commerce_cardonfile_data_save($card_data);
-          watchdog('commerce_litle', 'Token @litleToken registered and saved to user @uid.', array('@litleToken' => $litleToken, '@uid' => $order->uid));
-        }
-        else {
-
-          /**
-           * @todo Not an 801 or 802, so probably an error.  What should we do here, aside from watchdogging it?
-           */
-
-        }
+        // Save and log the creation of the new card on file.
+        commerce_cardonfile_data_save($card_data);
+        watchdog('commerce_litle', 'Token @litleToken registered and saved to user @uid.', array('@litleToken' => $litleToken, '@uid' => $order->uid));
       }
+      else {
+
+
+        /**
+         * @todo Not an 801 or 802, so probably an error.  What should we do here, aside from watchdogging it?
+         */
+
+      }
+
     }
     else {  // we have stored cards
-
       /**
        * At this point $stored_cards is "An associative array of all applicable card data keyed by card_id "
        * @todo Do we need to do anything here?
@@ -818,7 +828,7 @@ function commerce_litle_cc_vault_submit_form_submit($payment_method, $pane_form,
   $card_data = commerce_cardonfile_data_load($pane_values['cardonfile']);
 
   // Fail now if it is no longer available or the card is inactive.
-  if (empty($card_data) || $card_data->status == 0) {
+  if (empty($card_data) || $card_data['status'] == 0) {
     drupal_set_message(t('The requested card on file is no longer valid.'), 'error');
     return FALSE;
   }
@@ -859,12 +869,20 @@ function commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, 
     'customerId' => $order->uid,
     'amount' => commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']) * 100,
     'token' => array(
-      'littleToken' => $card_data->remote_id,
+      'litleToken' => $card_data['remote_id'],
       'expDate' => str_pad($card_data['card_exp_month'], 2, 0, STR_PAD_LEFT) . substr($card_data['card_exp_year'],2,2),
       // 000 means use litle's stored value
       'cardValidationNum' => '000'
     )
   );
+
+  // if we're in the sandbox, use the test tokenized data for auth and sale requests.
+  // this should return a 000 response code from the auth request and sale request
+  if ($payment_method['settings']['commerce_litle_settings_sandbox'] == 1) {
+    $request_data['token']['litleToken'] = '1111222233330196';
+    $request_data['token']['expDate'] = '1114';
+    $request_data['orderId'] = '58';
+  };
 
   // Prepare the billing address for use in the request.
   /**

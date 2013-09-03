@@ -109,6 +109,31 @@ function commerce_litle_fundraiser_commerce_charge($method_instance, $donation) 
   // Execute call to Litle depending on what payment method we have
   if ($donation->donation['payment_method'] == 'credit') {
     $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
+
+    $method_instance['settings']['cardonfile'] = FALSE;
+
+    if (module_exists('commerce_cardonfile')) {
+      $method_instance['settings']['cardonfile'] = TRUE; // Card on file,
+      $pane_values['credit_card']['cardonfile_store'] = TRUE; // And store it please.
+      $pane_values['cardonfile'] = 'new'; // Make a new token unless we already have one on record.
+
+      $stored_cards = commerce_cardonfile_data_load_multiple($donation->uid, $method_instance['instance_id']);
+      // Filter out expired cards.
+      foreach ($stored_cards as $card_id => $card_data) {
+        if ($card_data['card_exp_year'] < date('Y') ||
+          $card_data['card_exp_year'] == date('Y') && $card_data['card_exp_month'] < date('m')) {
+          unset($stored_cards[$card_id]);
+        }
+      }
+      if (!empty($stored_cards)) {
+        // Then grab the first one.
+        foreach ($stored_cards as $card_id => $card_data) {
+          $pane_values['cardonfile'] =  $card_id;
+        }
+      }
+
+    }
+
     $result = commerce_litle_cc_submit_form_submit($method_instance, $pane_form, $pane_values, $order, $charge);
   }
   elseif ($donation->donation['payment_method'] == 'bank account') {
