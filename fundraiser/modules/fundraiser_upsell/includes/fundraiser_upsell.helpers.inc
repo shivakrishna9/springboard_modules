@@ -85,7 +85,6 @@ function _fundraiser_upsell_ajax_process($node) {
     return drupal_json_output(false);
   }
   $content = fundraiser_upsell_upsell_ajax_submit($data);
-  // $content = array ('content' => 'Thank you for your order');
   return drupal_json_output($content);
 }
 
@@ -177,11 +176,11 @@ function _fundraiser_upsell_find_suggested_amount($amount) {
  * @param object $order
  * @return object $new_order
  */
-function _fundraiser_upsell_clone_order($order) {
+function _fundraiser_upsell_clone_order($order, $options = NULL) {
+  $donation = fundraiser_donation_get_donation($order->order_id);
   $new_order = $order;
   // Modify the order
   $new_order->log = "Cloned from order# $order->order_id";
-  // $new_order->created = '';
   $new_order->changed = '';
   $new_order->revision_id = NULL;
   unset($new_order->revision_uid);
@@ -190,10 +189,53 @@ function _fundraiser_upsell_clone_order($order) {
   $new_order->order_id = NULL;
   $new_order->order_number = NULL;
   $new_order->in_new = TRUE;
-  $new_order->commerce_order_total['und'][0]['amount'] = 0;
-  $new_order->commerce_order_total['und'][0]['data']['components'][0]['price']['amount'] = 0;
+  // Change the value
+  if (isset($options['amount'])) {
+    $new_order->status = $options['status'];
+    $new_order->commerce_order_total['und'][0]['amount'] = $options['amount'];
+    $new_order->commerce_order_total['und'][0]['data']['components'][0]['price']['amount'] = $options['amount'];
+  }
+  else {
+    $new_order->commerce_order_total['und'][0]['amount'] = 0;
+    $new_order->commerce_order_total['und'][0]['data']['components'][0]['price']['amount'] = 0;
+  }
   // Create new order
-  // commerce_order_save($new_order);
+  commerce_order_save($new_order);
   // Copy the new order to fundraiser
+  //watchdog('fundraiser', 'Order <pre>@order</pre>',
+  //  array('@order' => print_r($order,true)), WATCHDOG_DEBUG, NULL);
+  //watchdog('fundraiser', 'Donation <pre>@donation</pre>',
+  //  array('@donation' => print_r($donation,true)), WATCHDOG_DEBUG, NULL);
+  $donation_record = array(
+    'did' => $new_order->order_id, // Donation id.
+    'nid' => $donation->nid, // Fundraiser node id.
+    'uid' => $donation->uid, // Submission user id.
+    'sid' => $donation->sid, // Submission id.
+    'status' => $new_order->status,
+    'amount' => $donation->amount,
+    'currency' => $donation->currency,
+    'gateway' => $donation->gateway['id'],
+    'txn_id' => '',
+    'form_url' => $donation->form_url,
+    'created' => REQUEST_TIME,
+    'changed' => REQUEST_TIME,
+  );
+  _fundraiser_create_donation($donation_record);
   return $new_order;
+}
+
+/**
+ * Check to see if a donation was successfully added as a recurring.
+ *
+ * @param int $did
+ *   The order/donaton id
+ *
+ * @return bool
+ */
+function _fundraiser_upsell_check_recurring($did) {
+  $is_recurring = db_query('
+    SELECT count(*)
+    FROM {fundraiser_sustainers}
+    WHERE master_did = :mid', array(':mid' => $did))->fetchField();
+  return ($is_recurring > 0) ? TRUE : FALSE;
 }
