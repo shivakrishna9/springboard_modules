@@ -44,7 +44,8 @@ function salesforce_sync_admin_form($form, &$form_state) {
   $form['max_retrieve_size'] = array(
     '#id' => 'salesforce-sync-salesforce-max-retrieve-size',
     '#title' => t('Maximum Salesforce Retrieve Size'),
-    '#description' => t('The maximum number of records that can be fetched from Salesforce in a single call.'),
+    '#description' => t('The maximum number of records that can be fetched from
+      Salesforce in a single call.'),
     '#type' => 'textfield',
     '#size' => 6,
     '#default_value' => _salesforce_sync_get_value('max_retrieve_size', $form_state),
@@ -66,7 +67,9 @@ function salesforce_sync_admin_form($form, &$form_state) {
   $form['max_query_length'] = array(
     '#id' => 'salesforce-sync-salesforce-max-query-length',
     '#title' => t('Maximum length of a Salesforce Query'),
-    '#description' => t('The maximum number of characters a query to Salesforce can be.  If a query exceeds this limit it will be automatically broken up into multiple smaller lengthed queries.'),
+    '#description' => t('The maximum number of characters a query to Salesforce
+      can be.  If a query exceeds this limit it will be automatically broken up
+      into multiple smaller lengthed queries.'),
     '#type' => 'textfield',
     '#size' => 6,
     '#default_value' => _salesforce_sync_get_value('max_query_length', $form_state),
