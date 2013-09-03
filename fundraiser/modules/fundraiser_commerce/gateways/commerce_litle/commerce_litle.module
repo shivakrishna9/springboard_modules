@@ -226,7 +226,6 @@ function commerce_litle_echeck_settings_form($settings = array()) {  // Note use
     '#title' => 'Run in Sandbox Mode',
     '#default_value' => isset($settings['commerce_litle_settings_sandbox']) ? $settings['commerce_litle_settings_sandbox'] : '',
   );
-
   $form['log'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Log the following messages for debugging'),
