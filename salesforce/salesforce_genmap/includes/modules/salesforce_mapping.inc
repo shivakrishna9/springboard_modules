@@ -63,9 +63,10 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
     $dedupe_isset = FALSE;
     foreach ($entity_fields as $drupal_field_name => $drupal_field_label) {
       $delta = $drupal_field_name;
+      $sanitized_delta = str_replace(':', '-', $delta);
 
       // Same as original.
-      $row_id = 'edit-salesforce-field-mappings-' . $delta;
+      $row_id = 'edit-salesforce-field-mappings-' . $sanitized_delta;
       $form['salesforce_field_mappings_wrapper']['salesforce_field_mappings'][$delta] = array(
         '#type' => 'container',
         '#attributes' => array(
@@ -78,7 +79,7 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
       $row['drupal_field'] = array(
         '#type' => 'container',
         '#attributes' => array(
-          'id' => array('edit-drupal-field-' . $delta),
+          'id' => array('edit-drupal-field-' . $sanitized_delta),
         ),
       );
 
@@ -108,7 +109,7 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
       // solely the property Drupal fieldmap type.
       $salesforce_field = _salesforce_mapping_alter_get_default_value('salesforce_field', $form_state, $delta);
       $row['salesforce_field'] = array(
-        '#id' => 'edit-salesforce-field-' . $delta,
+        '#id' => 'edit-salesforce-field-' . $sanitized_delta,
         '#type' => 'select',
         '#description' => t('Select a Salesforce field to map.'),
         '#options' => $sf_fields,
@@ -126,7 +127,7 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
           $dedupe_isset = TRUE;
         }
         $row['key'] = array(
-          '#id' => 'edit-key-' . $delta,
+          '#id' => 'edit-key-' . $sanitized_delta,
           '#type' => 'radio',
           '#name' => 'key',
           '#return_value' => $delta,
@@ -142,8 +143,8 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
       }
 
       // Add field-by-field sync rule columns.
-      $row['drupal_sf'] = array('#id' => 'edit-drupal-sf-' . $delta);
-      $row['sf_drupal'] = array('#id' => 'edit-sf-drupal-' . $delta);
+      $row['drupal_sf'] = array('#id' => 'edit-drupal-sf-' . $sanitized_delta);
+      $row['sf_drupal'] = array('#id' => 'edit-sf-drupal-' . $sanitized_delta);
       if (empty($salesforce_field)) {
         $row['drupal_sf'] += array(
           '#markup' => '<label class="description">' . t('Select Salesforce field.') . '</label>',
