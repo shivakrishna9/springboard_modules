@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Helper for constructing common Salesforce objects.
+ * Contains SalesforceSyncItem and SalesforceObject classes
  */
 
 /**
