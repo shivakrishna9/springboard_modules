@@ -519,32 +519,6 @@ function _commerce_litle_cc_card_type_to_litle($type) {
 }
 
 /**
- * Test function to call registerTokenRequest()
- * Should be called from drush.
- *
- * @todo Remove me when tokens are working.
- */
-function commerce_litle_cc_test_token_request() {
-
-  $gateway = array();
-  $gateway['settings']['commerce_litle_settings_sandbox'] = 1;
-  $gateway['settings']['commerce_litle_settings_reportGroup'] = 'abc';
-
-  $init = _commerce_litle_get_litle();
-
-  $tokenRequestData = array(
-    'accountNumber' => '4457119922390123',
-    'orderId' => '52',
-  );
-  $tokenRequestData += _commerce_litle_get_litle_config($gateway);
-  $tokenResponse = $init->registerTokenRequest($tokenRequestData);
-
-  watchdog('commerce_litle', 'Litle Token response: !param', array('!param' => '<pre>' . check_plain(XmlParser::getDomDocumentAsString($tokenResponse)) . '</pre>', WATCHDOG_DEBUG));
-
-}
-
-
-/**
  * Payment method callback: checkout form submission.
  */
 function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
