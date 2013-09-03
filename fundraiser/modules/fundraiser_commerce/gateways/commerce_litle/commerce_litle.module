@@ -64,6 +64,12 @@ function commerce_litle_commerce_payment_method_info() {
     'short_title' => t('Litlet CC'),
     'display_title' => t('Credit card'),
     'description' => t('Integrates Litle for credit card transactions.'),
+    'cardonfile' => array(
+      'charge callback' => 'commerce_litle_cc_vault_cardonfile_charge',
+      // update and delete not yet implemented.
+//      'update callback' => 'commerce_litle_cc_vault_cardonfile_update',
+//      'delete callback' => 'commerce_litle_cc_vault_cardonfile_delete',
+    ),
   );
   $payment_methods['commerce_litle_echeck'] = array(
     'base' => 'commerce_litle_echeck',
@@ -298,7 +304,6 @@ function commerce_litle_echeck_submit_form($payment_method = NULL, $pane_values 
  */
 function commerce_litle_cc_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
   // If the customer specified a card on file, skip the normal validation.
-  // TODO add Card On File support for Litle settings if available. Lower priority, but likely needed in contrib as well.
   if (module_exists('commerce_cardonfile') && !empty($payment_method['settings']['cardonfile']) &&
     !empty($pane_values['cardonfile']) && $pane_values['cardonfile'] !== 'new') {
     return;
