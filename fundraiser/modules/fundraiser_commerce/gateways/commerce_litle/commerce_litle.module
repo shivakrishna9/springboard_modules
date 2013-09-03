@@ -227,22 +227,6 @@ function commerce_litle_echeck_settings_form($settings = array()) {  // Note use
     '#default_value' => isset($settings['commerce_litle_settings_sandbox']) ? $settings['commerce_litle_settings_sandbox'] : '',
   );
 
-  if (module_exists('commerce_cardonfile')) {
-    $form['cardonfile'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Enable Card on File functionality with this payment method using the Litle Vault.'),
-      '#description' => t('You must be token enabled and certified prior to using the Vault feature. Please consult your Litle Customer Experience Manager concerning the requirements and details of this process.'),
-      '#default_value' => isset($settings['cardonfile']) ? $settings['cardonfile'] : 0,
-    );
-
-  }
-  else {
-    $form['cardonfile'] = array(
-      '#type' => 'markup',
-      '#markup' => t('To enable Card on File funcitionality download and install the Card on File module.'),
-    );
-  }
-
   $form['log'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Log the following messages for debugging'),
