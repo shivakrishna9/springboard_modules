@@ -6,9 +6,6 @@
  */
 
 
-// Load extended modules include files.
-_salesforce_sync_load_extended_modules();
-
 /**
  * @defgroup salesforce_sync_rules Sync Rule Options with Salesforce
  * @{
@@ -141,13 +138,6 @@ function salesforce_sync_permission() {
       'restrict access' => TRUE,
     ),
   );
-  $extended_modules = _salesforce_sync_get_extended_modules_list();
-  foreach ($extended_modules as $module) {
-    $module_perms = module_invoke($module, 'salesforce_sync_permission');
-    if (!empty($module_perms) && is_array($module_perms)) {
-      $permissions += $module_perms;
-    }
-  }
   return $permissions;
 }
 
@@ -344,46 +334,3 @@ function _salesforce_sync_get_synced_items($drupal_id, $module, $delta) {
 /**
  * @} salesforce_sync_map_crud
  */
-
-/**
- * Helper to get list of modules being extended.
- */
-function _salesforce_sync_get_extended_modules_list() {
-  $modules = array();
-
-  // Drupal function file_scan_directory() uses the opendir() approach which
-  // does not work if the path contains symlinks.  Using scandir() to be more
-  // flexible.
-  $cache = cache_get('salesforce_sync_extended_modules');
-  if (empty($cache)) {
-    $path = drupal_get_path('module', 'salesforce_sync') . '/includes/modules';
-    if (is_dir($path)) {
-      $files = scandir($path);
-      foreach ($files as $file) {
-        if (!in_array($file, array('.', '..')) && substr($file, -4) == '.inc') {
-          $modules[] = substr($file, 0, -4);
-        }
-      }
-    }
-    cache_set('salesforce_sync_extended_modules', $modules);
-  }
-  else {
-    $modules = $cache->data;
-  }
-  return $modules;
-}
-
-/**
- * Helper to load the include files for the modules we extend.
- */
-function _salesforce_sync_load_extended_modules($module = '') {
-  if (empty($module)) {
-    $modules = _salesforce_sync_get_extended_modules_list();
-  }
-  else {
-    $modules = array($module);
-  }
-  foreach ($modules as $module) {
-    module_load_include('inc', 'salesforce_sync', 'includes/modules/' . $module);
-  }
-}
