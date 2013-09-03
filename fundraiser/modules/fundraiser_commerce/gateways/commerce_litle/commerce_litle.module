@@ -647,7 +647,7 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
 
         // 801 Account numbeer was successfully registered.
         // 802 Account number was previously registered.
-        if (in_array($tokenResponseCode, array(801, 802)) {
+        if (in_array($tokenResponseCode, array(801, 802))) {
           $litleToken = XmlParser::getNode($tokenResponse, 'littleToken');
 
           // store the token with cardonfile
