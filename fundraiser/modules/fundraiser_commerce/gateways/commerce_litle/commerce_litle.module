@@ -762,22 +762,12 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
       }
       else {
 
-
         /**
          * @todo Not an 801 or 802, so probably an error.  What should we do here, aside from watchdogging it?
          */
 
       }
-
     }
-    else {  // we have stored cards
-      /**
-       * At this point $stored_cards is "An associative array of all applicable card data keyed by card_id "
-       * @todo Do we need to do anything here?
-       *
-       */
-    }
-
   } // end if cardonfile
 
 }
