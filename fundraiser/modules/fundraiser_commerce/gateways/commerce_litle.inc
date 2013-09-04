@@ -119,11 +119,11 @@ function commerce_litle_fundraiser_commerce_charge($method_instance, $donation) 
       $pane_values['credit_card']['cardonfile_store'] = TRUE; // And store it please.
       $pane_values['cardonfile'] = 'new'; // Make a new token unless we already have one on record.
 
-      $stored_cards = commerce_cardonfile_data_load_multiple($donation->uid, $method_instance['instance_id']);
+      $stored_cards = commerce_cardonfile_load_multiple_by_uid($donation->uid, $method_instance['instance_id']);
       // Filter out expired cards.
       foreach ($stored_cards as $card_id => $card_data) {
-        if ($card_data['card_exp_year'] < date('Y') ||
-          $card_data['card_exp_year'] == date('Y') && $card_data['card_exp_month'] < date('m')) {
+        if ($card_data->card_exp_year < date('Y') ||
+          $card_data->card_exp_year == date('Y') && $card_data->card_exp_month < date('m')) {
           unset($stored_cards[$card_id]);
         }
       }

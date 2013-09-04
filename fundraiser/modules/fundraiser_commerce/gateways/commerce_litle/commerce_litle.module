@@ -718,7 +718,7 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
     }
 
     // First look to see if we already have cards on file for the user.
-    $stored_cards = commerce_cardonfile_data_load_multiple($order->uid, $payment_method['instance_id']);
+    $stored_cards = commerce_cardonfile_load_multiple_by_uid($order->uid, $payment_method['instance_id']);
 
     // If we didn't find any, attempt to register a token now.
     if (empty($stored_cards)) {
@@ -744,20 +744,20 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
         $litleToken = XmlParser::getNode($tokenResponse, 'litleToken');
 
         // store the token with cardonfile
-        $card_data = array();
-        $card_data['uid'] = $order->uid;
-        $card_data['payment_method'] = $payment_method['method_id'];
-        $card_data['instance_id'] = $payment_method['instance_id'];
-        $card_data['remote_id'] = $litleToken;
-        $card_data['card_type'] = !empty($card_type) ? $card_type : 'card';
-        $card_data['card_name'] = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
-        $card_data['card_number'] = substr($pane_values['credit_card']['number'], -4);
-        $card_data['card_exp_month'] = $pane_values['credit_card']['exp_month'];
-        $card_data['card_exp_year'] = $pane_values['credit_card']['exp_year'];
-        $card_data['status'] = 1;
+        $card_data = commerce_cardonfile_new();
+        $card_data->uid = $order->uid;
+        $card_data->payment_method = $payment_method['method_id'];
+        $card_data->instance_id = $payment_method['instance_id'];
+        $card_data->remote_id = $litleToken;
+        $card_data->card_type = !empty($card_type) ? $card_type : 'card';
+        $card_data->card_name = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
+        $card_data->card_number = substr($pane_values['credit_card']['number'], -4);
+        $card_data->card_exp_month = $pane_values['credit_card']['exp_month'];
+        $card_data->card_exp_year = $pane_values['credit_card']['exp_year'];
+        $card_data->status = 1;
 
         // Save and log the creation of the new card on file.
-        commerce_cardonfile_data_save($card_data);
+        commerce_cardonfile_save($card_data);
         watchdog('commerce_litle', 'Token @litleToken registered and saved to user @uid.', array('@litleToken' => $litleToken, '@uid' => $order->uid));
       }
       else {
@@ -777,10 +777,10 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
  */
 function commerce_litle_cc_vault_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
   // First attempt to load the card on file.
-  $card_data = commerce_cardonfile_data_load($pane_values['cardonfile']);
+  $card_data = commerce_cardonfile_load($pane_values['cardonfile']);
 
   // Fail now if it is no longer available or the card is inactive.
-  if (empty($card_data) || $card_data['status'] == 0) {
+  if (empty($card_data) || $card_data->status == 0) {
     drupal_set_message(t('The requested card on file is no longer valid.'), 'error');
     return FALSE;
   }
@@ -821,8 +821,8 @@ function commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, 
     'customerId' => $order->uid,
     'amount' => commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']) * 100,
     'token' => array(
-      'litleToken' => $card_data['remote_id'],
-      'expDate' => str_pad($card_data['card_exp_month'], 2, 0, STR_PAD_LEFT) . substr($card_data['card_exp_year'],2,2),
+      'litleToken' => $card_data->remote_id,
+      'expDate' => str_pad($card_data->card_exp_month, 2, 0, STR_PAD_LEFT) . substr($card_data->card_exp_year,2,2),
       // 000 means use litle's stored value
       'cardValidationNum' => '000'
     )
@@ -912,7 +912,7 @@ function commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, 
     if (in_array($authResponseCode, array('822', '823'))) {
       // if the token is not valid, deactivate the card on file
       $card_data->status = 0;
-      commerce_cardonfile_data_save($card_data);
+      commerce_cardonfile_save($card_data);
 
       drupal_set_message(t('The card you selected is no longer valid. Please use a different card to complete payment.'), 'error');
       return FALSE;
