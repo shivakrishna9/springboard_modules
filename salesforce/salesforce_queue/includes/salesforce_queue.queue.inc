@@ -223,14 +223,12 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
     // Invoke hook_salesforce_queue_delete_item().
     module_invoke_all('salesforce_queue_delete_item', $item);
 
-    $result = db_delete('salesforce_queue')
+    return db_delete('salesforce_queue')
       ->condition('drupal_id', $item->drupal_id)
       ->condition('module', $item->module)
       ->condition('delta', $item->delta)
       ->condition('object_type', $item->object_type)
       ->execute();
-
-    return $result;
   }
 
   /**
