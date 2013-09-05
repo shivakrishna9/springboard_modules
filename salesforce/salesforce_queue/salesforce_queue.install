@@ -57,10 +57,11 @@ function salesforce_queue_schema() {
         'default' => NULL,
       ),
       'sobject' => array(
-        'description' => 'The Salesforce sObject in json format.',
+        'description' => 'The Salesforce sObject.',
         'type' => 'text',
         'size' => 'big',
         'not null' => TRUE,
+        'serialize' => TRUE,
       ),
       'sync_rules' => array(
         'description' => 'A serialized array that stores the sync rules for each field in the sObject.',

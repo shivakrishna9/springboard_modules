@@ -267,19 +267,10 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *
    * @param object $item
    *   A record as retreived from the database
-   *
-   * @return object
-   *   The record formatted for general use
    */
   protected function unfoldItem($item) {
-    if (is_object($item)) {
-      $item->sobject = json_decode($item->sobject);
-      if (isset($item->sobject->fields)) {
-        $item->sobject->fields = (array) $item->sobject->fields;
-      }
-      $item->sync_rules = unserialize($item->sync_rules);
-    }
-    return $item;
+    $item->sobject = is_string($item->sobject) ? unserialize($item->sobject) : $item->sobject;
+    $item->sync_rules = is_string($item->sync_rules) ? unserialize($item->sync_rules) : $item->sync_rules;
   }
 
   /**
@@ -345,8 +336,8 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
         $query->condition('queue', $this->queueName);
       }
       $result = $query->execute();
-      foreach ($result as $record) {
-        $item = $this->unfoldItem($record);
+      foreach ($result as $item) {
+        $this->unfoldItem($item);
         $item->leaseKey = $key;
         $items[] = $item;
       }
