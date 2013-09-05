@@ -85,7 +85,7 @@ function fundraiser_commerce_refund_form($form, &$form_state, $order, $transacti
 function fundraiser_commerce_entity_view($entity, $type, $view_mode, $langcode) {
   switch ($type) {
     case 'commerce_order':
-      if ($view_mode == 'administrator' || $view_mode == 'full') {
+      if (($view_mode == 'administrator' || $view_mode == 'full') && fundraiser_donation_get_donation($entity->order_id)) {
         $entity->content['fundraiser_donation'] = array(
           '#prefix' => '<div class="field field-name-fundraiser-donation field-type-fundraiser-donation field-label-above">' .
             '<div class="field-label">' . t('Fundraiser information') . ': </div>' .

@@ -79,7 +79,10 @@ function page_wrappers_schema() {
       ),
     ),
     'indexes' => array(
-      'indexes' => array('nid'),
+      'nid' => array('nid'),
+      'weight' => array('weight'),
+      'nid_weight' => array('nid', 'weight'),
+      'wrapper_nid' => array('wrapper_nid'),
     ),
   );
 
@@ -282,4 +285,17 @@ function page_wrappers_update_7001() {
     'description' => 'Weight of assignment.',
   ));
   return array();
+}
+
+/**
+ * Add indexes to tables.
+ */
+function page_wrappers_update_7002() {
+  $ret = array();
+  $ret[] = db_drop_index('node_page_wrappers', 'indexes');
+  $ret[] = db_add_index('node_page_wrappers', 'nid', array('nid'));
+  $ret[] = db_add_index('node_page_wrappers', 'nid_weight', array('nid', 'weight'));
+  $ret[] = db_add_index('node_page_wrappers', 'wrapper_nid', array('wrapper_nid'));
+  $ret[] = db_add_index('node_page_wrappers', 'weight', array('weight'));
+  return $ret;
 }

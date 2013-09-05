@@ -39,7 +39,8 @@ class SpringboardSocialFunctionalTest extends FundraiserSetup {
       'ctools',
       'market_source',
       'clone',
-      'webform_confirmations',
+      'webform',
+      //'webform_confirmations',
     );
     parent::setUp($additional_modules);
   }
@@ -50,11 +51,13 @@ class SpringboardSocialFunctionalTest extends FundraiserSetup {
       'administer site configuration',
       'administer fundraiser',
       'create webform content',
+      'edit any webform content',
       'edit own webform content',
-      'bypass node access',
       'access all webform results',
       'create donation_form content',
       'edit any donation_form content',
+      'edit own donation_form content',
+      'configure webform emails',
       'administer springboard social',
       'edit any share content', // need to create separate unprivileged user and user with "edit own"
     );
@@ -62,7 +65,7 @@ class SpringboardSocialFunctionalTest extends FundraiserSetup {
     $this->privileged_user = $this->drupalCreateUser($permissions);
     $this->drupalLogin($this->privileged_user);
     // Enable services
-    variable_set('springboard_social_services', array('facebook' => 'facebook', 'twitter' => 'twitter'));
+    variable_set('springboard_social_services', array('facebook' => 'facebook', 'twitter' => 'twitter', 'email' => 'email'));
 
     // set up donation form
 
@@ -70,6 +73,7 @@ class SpringboardSocialFunctionalTest extends FundraiserSetup {
     $node_stub->default_amount = 20; // Set a different default than normal.
     $created_node = parent::_fundraiser_setup_create_node($node_stub);
     $node = node_load($created_node->nid);
+    $this->assertTrue($node->type == 'donation_form', t('Donation form node type correct'));
     $this->drupalGet('node/' . $node->nid);
 
     // add custom MS fields
@@ -111,7 +115,7 @@ class SpringboardSocialFunctionalTest extends FundraiserSetup {
     $this->assertRaw('<input type="hidden" name="submitted[social_referer_network]" value="" />', t('Social referer network rendered as hidden form field'), 'Market Source');
     $this->assertRaw('<input type="hidden" name="submitted[social_referer_contact]" value="" />', t('Social referer contact rendered as hidden form field'), 'Market Source');
 
-    // confirm global defaults inherited on node creation
+    // confirm global defaults populated correctly
     $this->drupalGet('node/' . $node->nid . '/share_settings');
     $this->assertFieldByName('fb_title', '%title', t('Facebook Title field present with correct default'));
     $this->assertFieldByName('fb_description', '%teaser', t('Facebook Description field present with correct default'));
@@ -124,15 +128,23 @@ class SpringboardSocialFunctionalTest extends FundraiserSetup {
 
     // set up confirmation page
     $confirmation = 'Thank you for your donation [donation:name]!';
-    $confirmation .= 'Share links: [sb_social:share_links';
+    $confirmation .= 'Share links: [sb_social:share_links]';
     $confirmation .= 'Facebook tokens, facebook_title::[sb_social:facebook_title] facebook_description::[sb_social:facebook_description]';
     $confirmation .= 'Twitter tokens, twitter_message::[sb_social:twitter_message]';
-    /*
-     // BUG: Currently getting access denied attempting to submit webform settings form.
+    $confirmation .= 'Email tokens, email_suject::[sb_social:email_subject]';
+    $confirmation .= 'Email tokens, email_message::[sb_social:email_message]';
+
+    // $this->drupalGet('node/' . $node->nid . '/webform');
+ 
     $settings = array(
       'confirmation[confirmation_page_title]' => 'Thank you for your donation',
       'confirmation[value]' => $confirmation,
     );
+    
+    // BUG: test user cannot access webform configuration screen despite having update access to the node in question.
+    // save confirmation page settings
+    // $path = 'node/' . $node->nid . '/webform/configure';
+    // $this->drupalPost($path, $settings, t('Save configuration')); 
 
     // confirm token replacements
      $donation_settings = array(
@@ -145,7 +157,6 @@ class SpringboardSocialFunctionalTest extends FundraiserSetup {
     );
     $this->_fundraiser_setup_post_donation($node->nid, $donation_settings);
 
-    */
       // node tokens
 
       // token module tokens

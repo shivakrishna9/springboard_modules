@@ -15,7 +15,14 @@
  * Webform submission id associated with share event
  *
  */
-function sb_social_share_tracker($service, $sid) {
- sb_social_share_event_save($service, $sid);
- return 'Share tracked';
+function sb_social_share_tracker($service, $sid = FALSE) {
+  ctools_include('plugins');
+  $plugins = ctools_get_plugins('sb_social', 'social_networks');
+  $enabled_services = sb_social_get_enabled_services();
+
+  if (in_array($service, $enabled_services)) {
+    sb_social_share_event_save($service, $sid);
+    return "Share tracked";
+  }
+  return FALSE;
 }

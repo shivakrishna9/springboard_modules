@@ -40,7 +40,6 @@ function _commerce_psi_default_settings() {
     'txn_mode' => COMMERCE_PSI_MODE_TEST,
     'account_username' => '',
     'account_password' => '',
-    'account_ip' => '',
     'log' => array('request' => '0', 'response' => '0'),
     'custom_fields' => array(
       'pay_code' => '',
@@ -79,12 +78,6 @@ function _commerce_psi_settings_form($settings) {
     '#title' => t('Password'),
     '#default_value' => _commerce_psi_decrypt($settings['account_password']),
     '#value_callback' => '_commerce_psi_encrypt_settings_password',
-    '#required' => TRUE,
-  );
-  $form['account_ip'] = array(
-    '#type' => 'textfield',
-    '#title' => t('IP Address'),
-    '#default_value' => $settings['account_ip'],
     '#required' => TRUE,
   );
   $form['custom_fields'] = array(

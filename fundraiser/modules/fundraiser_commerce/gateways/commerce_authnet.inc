@@ -97,7 +97,7 @@ function _commerce_authnet_fundraiser_commerce_charge_without_cim($payment_metho
   // Call to commerce_authnet_aim_submit_form_submit() based on instance callbacks.
   $pane_form = array(); // Not actually used anywhere in this system, so ignore it.
   $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
-  $payment_method['settings']['cim_cardonfile'] = FALSE;
+
   // Execute call to commerce_authnet, without CIM enabled (in case card on file is turned on).
   $result = commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge);
   $success = FALSE;
@@ -129,14 +129,13 @@ function _commerce_authnet_fundraiser_commerce_charge_with_cim($payment_method, 
   // As a result, sustainer has NO NEED for cim to be loaded into the donation object. Those tokens Go Away.
   // If possible at least.
   // TODO - add encryption?
-  $payment_method['settings']['cim_cardonfile'] = TRUE; // Card on file,
   $pane_values['credit_card']['cardonfile_store'] = TRUE; // And store it please.
   $pane_values['cardonfile'] = 'new'; // Make a new CIM unless we already have one on record.
-  $stored_cards = commerce_cardonfile_data_load_multiple($donation->uid, $payment_method['instance_id']);
+  $stored_cards = commerce_cardonfile_load_multiple_by_uid($donation->uid, $payment_method['instance_id']);
   // Filter out expired cards.
   foreach ($stored_cards as $card_id => $card_data) {
-    if ($card_data['card_exp_year'] < date('Y') ||
-      $card_data['card_exp_year'] == date('Y') && $card_data['card_exp_month'] < date('m')) {
+    if ($card_data->card_exp_year < date('Y') ||
+      $card_data->card_exp_year == date('Y') && $card_data->card_exp_month < date('m')) {
       unset($stored_cards[$card_id]);
     }
   }
@@ -160,12 +159,12 @@ function _commerce_authnet_fundraiser_commerce_charge_with_cim($payment_method, 
  * Callback function, update data stored at the gateway.
  */
 function commerce_authnet_fundraiser_commerce_update($payment_method, $donation) {
-  // Get the card.
-  $stored_cards = commerce_cardonfile_data_load_multiple($donation->uid, $payment_method['instance_id']);
+  // Get the card. 
+  $stored_cards = commerce_cardonfile_load_multiple_by_uid($donation->uid, $payment_method['instance_id']);
   // Filter out expired cards.
   foreach ($stored_cards as $card_id => $card_data) {
-    if ($card_data['card_exp_year'] < date('Y') ||
-      $card_data['card_exp_year'] == date('Y') && $card_data['card_exp_month'] < date('m')) {
+    if ($card_data->card_exp_year < date('Y') ||
+      $card_data->card_exp_year == date('Y') && $card_data->card_exp_month < date('m')) {
       unset($stored_cards[$card_id]);
     }
   }
@@ -176,6 +175,7 @@ function commerce_authnet_fundraiser_commerce_update($payment_method, $donation)
       $card_data = $this_card;
     }
   }
+
   // Donation card data.
   $additional_data = array(
   'card_number' => isset($donation->donation['payment_fields']['credit']['card_number']) ?
