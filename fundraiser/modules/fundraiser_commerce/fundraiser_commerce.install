@@ -12,7 +12,10 @@ function fundraiser_commerce_update_7001() {
 }
 
 /**
- * Update fundraiser commerce's order data to the latest encryption scheme, 
+ * Update fundraiser commerce's order data to the latest encryption scheme.
+ * Please be sure you've applied these two patches to the encrypt module before running this update:
+ * https://drupal.org/files/encrypt_key_is_never_used.patch
+ * https://github.com/JacksonRiver/Springboard-Build/blob/7.x-4.x/patches/encrypt-trim-only-decrypted-output.patch
  */
 function fundraiser_commerce_update_7002(&$sandbox) {
   // Ensure the encryption function is here
