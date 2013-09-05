@@ -93,6 +93,7 @@ class SalesforceLogAdminTestCase extends SalesforceLogTestCase {
     $this->createQueueItems($queue, 3, array('CREATE'), array('Account', 'Contact'));
     $items = $queue->claimBatch();
     // Create an array of drupal ids from the failed items
+    $failed_drupal_ids = array();
     foreach ($items as $item) {
       $failed_drupal_ids[] = $item->drupal_id;
     }
@@ -114,6 +115,7 @@ class SalesforceLogAdminTestCase extends SalesforceLogTestCase {
     $queue = salesforce_queue_load('new');
     $items = $queue->claimBatch();
     // Create an array of requeued items
+    $requeued_drupal_ids = array();
     foreach ($items as $item) {
       $requeued_drupal_ids[] = $item->drupal_id;
     }
