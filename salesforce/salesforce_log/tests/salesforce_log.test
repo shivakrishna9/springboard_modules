@@ -28,40 +28,17 @@ class SalesforceLogTestCase extends SalesforceQueueTestCase {
    */
   public function setUp($modules = array(), $permissions = array()) {
     $modules = $modules + array(
-      'entity',
-      'entity_token',
-      'libraries',
       'views',
       'views_bulk_operations',
-      'salesforce',
-      'salesforce_soap',
-      'salesforce_sync',
-      'salesforce_queue',
       'salesforce_log',
     );
-    parent::setUp($modules);
-
-    // Create an admin user.
-    $permissions = $permissions + array(
-      'access content',
-      'administer site configuration',
-      'administer content types',
-      'administer nodes',
-      'administer users',
-      'administer salesforce',
-      'administer salesforce sync',
-    );
-    $this->admin_user = $this->drupalCreateUser($permissions);
-    // Don't forget, need to pass --uri in drush command in order for logging
-    // in to work.
-    $this->drupalLogin($this->admin_user);
+    parent::setUp($modules, $permissions);
   }
 
   /**
    * Implementation of tearDown().
    */
   public function tearDown() {
-    user_cancel(array(), $this->admin_user->uid, 'user_cancel_delete');
     parent::tearDown();
   }
 
