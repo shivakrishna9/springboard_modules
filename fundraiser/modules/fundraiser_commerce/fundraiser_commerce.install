@@ -37,11 +37,14 @@ function fundraiser_commerce_update_7002(&$sandbox) {
 
     // If the data has been encrypted with the mcrypt_rij_256 method we need to un-encrypt it using the drupal private key
     $encryption_array = unserialize($order->data['fundraiser_commerce']);
+
     if ($encryption_array['method'] == 'mcrypt_rij_256') {
       // Pass an empty options array so the function will use the drupal private key
       $decrypted = encrypt_encrypt_mcrypt_rij_256('decrypt', $encryption_array['text'], array());
+
       // Get the data array, remove the slashes that had been added before
       $data_array = unserialize(stripslashes($decrypted));
+
       // If we have an array then this is data we can work with. this will prevent working with data thats been corrected
       if (!empty($data_array)) {
         // Remove the message variable
@@ -51,6 +54,7 @@ function fundraiser_commerce_update_7002(&$sandbox) {
 
         // send the data back through the prepare function so it will use the new method
         $order->data['fundraiser_commerce'] = _fundraiser_commerce_order_data_prepare($data_array);
+
         // If we get back value we're good, otherwise error out with a message, the order data needs to be fixed
         if (empty($order->data['fundraiser_commerce'])) {
           throw new DrupalUpdateException('There was an error encrypting the data for order #' . $order->order_id);
