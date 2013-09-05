@@ -260,7 +260,7 @@ function fundraiser_admin_settings() {
     '#default_value' => variable_get('fundraiser_development_mode', 0),
     '#description' => t('Development mode allows you to access donation forms over HTTP.'),
   );
- 
+
   $form['fundraiser_cleanup_submissions_on_fail'] = array(
     '#type' => 'checkbox',
     '#title' => t('Cleanup failures'),
@@ -335,7 +335,7 @@ function fundraiser_admin_settings() {
     '#title' => t('Sustainer settings'),
     '#collapsible' => TRUE,
   );
-  
+
   $queue_possible = FALSE;
   if (module_exists('drupal_queue')) {
     $queue_possible = TRUE;
@@ -380,7 +380,7 @@ function fundraiser_admin_settings() {
     '#default_value' => variable_get('fundraiser_sustainer_set_seconds', 30),
     '#access' => $queue_possible,
   );
-  
+
   $form['sustainer']['fundraiser_cc_expiration_message']['fundraiser_sustainers_send_email'] = array(
     '#type' => 'checkbox',
     '#title' => t('Send expiration email'),
@@ -506,59 +506,193 @@ function fundraiser_sustainer_update_date_mode($form, &$form_state) {
     return; // If we're still in the same mode, but the mode doesn't need dates.
   }
 
-  drupal_set_message('Updating the existing sustainers to the new date.');
   // Looks like we switched modes or dates, so we need to update all the future charges.
+
+  // Load the $batch variable with an array containing the details
+  // of what to run
+//  $batch = fundraiser_sustainer_update_date_mode_batch($mode, $date, $time);
+
+//  dpm($batch);
+
+  // dumbed down batch for testing
+  $batch = array(
+    'title' => t('Batch test'),
+    'operations' => array(
+      array('fundraiser_sustainer_batch_test_op', array()),
+    ),
+    'finished' => 'fundraiser_sustainer_finished_callback',
+  );
+
+  // Start the batch process running
+  batch_set($batch);
+
+  drupal_set_message('Updated the existing sustainers to the new date.');
+}
+
+function fundraiser_sustainer_batch_test_op(&$context) {
+  watchdog('fundraiser_sustainer_batch_test', 'inside fundraiser_sustainer_batch_test_op');
+  $context['finished'] = 1;
+}
+
+function fundraiser_sustainer_finished_callback() {
+  watchdog('fundraiseer_sustainer_batch_test', 'inside fundraiser_sustainer_finished_callback');
+  drupal_set_message('Finished the test batch');
+}
+
+/**
+ * Creates the batch array for the update date mode job.
+ *
+ * This method does not yet do the work; it simply builds an array
+ * of the work which needs to be done during the batch processing.
+ * The results of this function will be passed to the batch
+ * processor for actual processing.
+ */
+/*
+function fundraiser_sustainer_update_date_mode_batch($mode, $date, $time) {
+  $operations = array();
+
   $future_orders = db_query('SELECT master_order_id, order_id, next_charge FROM {fundraiser_recurring} ' .
     'WHERE next_charge > %d', time()); // Only the future ones.
-  // Loop through all future charges.
-  $master_orders = array();
-  $now = strtotime('now');
+
   while ($order_info = db_fetch_array($future_orders)) {
-    // Set them all to match the updated charge date.
-    if ($mode == FALSE) {
-      // Load the master order if it's not already been loaded to get the original anniversary.
-      if (!in_array($order_info['master_order_id'], array_keys($master_orders))) {
-        $result = db_query('SELECT created FROM {uc_orders} ' .
-          'WHERE order_id = %d', $order_info['master_order_id']);
-        while ($master_order_info = db_fetch_array($result)) {
-          $master_orders[ $order_info['master_order_id'] ]  = $master_order_info['created'];
-        }
-      }
-      $date = date('j', $master_orders[ $order_info['master_order_id'] ]);
-      $time = date('H:i:s', $master_orders[ $order_info['master_order_id'] ]); // The original time.
-    }
-    // Set all to the date set, by sliding forward from today.
-    $base_date = $order_info['next_charge'];
-    $this_month_year = date('F Y', $base_date); // Use the month and date of the next charge.
-    $set_charge_date = strtotime($date . ' ' . $this_month_year . ' '. $time);
-    // If our current date is already past the given charge date, then this new charge date
-    // Will be in the past. We cannot kick it forward by one, as we'll double up on next month.
-    // So we need to just drop this one in the series. We can't just move it forward to the end
-    // of the series as the series is capped by expiration. This spare order just won't be processed.
-    // This is such an edge case I don't think it will be a concern.
-    if ($set_charge_date >= $now) {
-      //drupal_set_message('Updated order #'. $order_info['order_id'] . ' from date ' .  date('d F Y', $base_date) .
-      //  ' to date ' . date('d F Y', $set_charge_date) . '.');
-      // Now that we know the correct new date for this order, update the table.
-      db_query('UPDATE {fundraiser_recurring} ' .
-        'SET next_charge = %d ' .
-        'WHERE order_id = %d', $set_charge_date, $order_info['order_id']);
-      watchdog('fundraiser_sustainers', 'Updated order #'. $order_info['order_id'] . ' from date ' .  date('d F Y', $base_date) .
-        ' to date ' . date('d F Y', $set_charge_date) . '.');
-    }
-    else {
-      // We need to cancel this order, as it's not available anymore.
-      global $user;
-      $reason = 'Cancelled during switch from set-date queue to anniversary queue, date had passed.';
-      db_query('UPDATE {fundraiser_recurring} SET gateway_resp = \'canceled\', cancellation_reason = \'%s\' ' .
-        'WHERE order_id = %d AND (gateway_resp IS NULL OR gateway_resp = \'failed\')', $reason, $order_info['order_id']);
-      uc_order_comment_save($order_info['order_id'], $user->uid, 'Order canceled by an administrator. Reason: ' .
-        $reason ,'order', 'canceled', FALSE);
-    }
-    // And repeat until we've updated them all.
+    $operations[] = array('fundraiser_sustainer_update_date_mode_operation', array($mode, $date, $time, $order_info));
   }
-  drupal_set_message('Finished updating the existing sustainers to the new date.');
+
+  $batch = array(
+    'operations' => $operations,
+    'finished' => 'fundraiser_sustainer_update_date_mode_finished',
+    // We can define custom messages instead of the default ones.
+    'title' => t('Processing sustainers for date mode update'),
+    'init_message' => t('Date mode update is starting.'),
+    'progress_message' => t('Processed @current out of @total.'),
+    'error_message' => t('The date mode update has encountered an error.'),
+  );
+
+  return $batch;
 }
+*/
+
+/**
+ * A batch operation for the date mode update.
+ *
+ * @param array $context
+ */
+/*
+function fundraiser_sustainer_update_date_mode_operation($mode, $date, $time, $order_info, &$context) {
+  watchdog('fundraiser_sustainer', 'inside fundraiser_sustainer_update_date_mode_operation()');
+
+  // Use the $context['sandbox'] at your convenience to store the
+  // information needed to track progression between successive calls.
+  if (!isset($context['sandbox']['progress'])) {
+    $context['sandbox']['progress'] = 0;
+    // count the number of sustainers to process
+    // Only the future ones.
+    $context['sandbox']['max'] = db_result(db_query('SELECT COUNT(master_order_id) FROM {fundraiser_recurring} ' .
+      'WHERE next_charge > %d', time()));
+    $context['master_orders'] = array();
+  }
+
+  var_export($context);exit;
+  // do the stuff here
+
+  $now = strtotime('now');
+
+  // Set them all to match the updated charge date.
+  if ($mode == FALSE) {
+    // Load the master order if it's not already been loaded to get the original anniversary.
+    if (!in_array($order_info['master_order_id'], array_keys($context['sandbox']['master_orders']))) {
+      $result = db_query('SELECT created FROM {uc_orders} ' .
+        'WHERE order_id = %d', $order_info['master_order_id']);
+      while ($master_order_info = db_fetch_array($result)) {
+        $context['sandbox']['master_orders'][ $order_info['master_order_id'] ]  = $master_order_info['created'];
+      }
+    }
+    $date = date('j', $context['sandbox']['master_orders'][ $order_info['master_order_id'] ]);
+    $time = date('H:i:s', $context['sandbox']['master_orders'][ $order_info['master_order_id'] ]); // The original time.
+  }
+
+  // Set all to the date set, by sliding forward from today.
+  $base_date = $order_info['next_charge'];
+  $this_month_year = date('F Y', $base_date); // Use the month and date of the next charge.
+  $set_charge_date = strtotime($date . ' ' . $this_month_year . ' '. $time);
+  // If our current date is already past the given charge date, then this new charge date
+  // Will be in the past. We cannot kick it forward by one, as we'll double up on next month.
+  // So we need to just drop this one in the series. We can't just move it forward to the end
+  // of the series as the series is capped by expiration. This spare order just won't be processed.
+  // This is such an edge case I don't think it will be a concern.
+  if ($set_charge_date >= $now) {
+    //drupal_set_message('Updated order #'. $order_info['order_id'] . ' from date ' .  date('d F Y', $base_date) .
+    //  ' to date ' . date('d F Y', $set_charge_date) . '.');
+    // Now that we know the correct new date for this order, update the table.
+    db_query('UPDATE {fundraiser_recurring} ' .
+      'SET next_charge = %d ' .
+      'WHERE order_id = %d', $set_charge_date, $order_info['order_id']);
+
+    $message = 'Updated order #'. $order_info['order_id'] . ' from date ' .  date('d F Y', $base_date) .
+      ' to date ' . date('d F Y', $set_charge_date) . '.';
+
+  }
+  else {
+    // We need to cancel this order, as it's not available anymore.
+    global $user;
+
+    $reason = 'Cancelled during switch from set-date queue to anniversary queue, date had passed.';
+    $messaeg = 'Order canceled by an administrator. Reason: ' . $reason;
+
+    db_query('UPDATE {fundraiser_recurring} SET gateway_resp = \'canceled\', cancellation_reason = \'%s\' ' .
+      'WHERE order_id = %d AND (gateway_resp IS NULL OR gateway_resp = \'failed\')', $reason, $order_info['order_id']);
+    uc_order_comment_save($order_info['order_id'], $user->uid, $message, 'order', 'canceled', FALSE);
+  }
+
+
+  watchdog('fundraiser_sustainers', $message);
+
+  // Store some result for post-processing in the finished callback.
+  $context['results'][] = $message;
+
+  // Update our progress information.
+  $context['sandbox']['progress']++;
+
+  $context['message'] = 'Order ID ' . $order_info['order_id'];
+
+  // Inform the batch engine that we are not finished,
+  // and provide an estimation of the completion level we reached.
+  if ($context['sandbox']['progress'] >= $context['sandbox']['max']) {
+    // We should always check if the current progress is equal or greater to
+    // the total number of items to process. For example, if a node is added
+    // while this batch process is running, the progress value will end up being
+    // one greater than the max value. This will cause an infinite loop. We
+    // prevent this from happening by always checking if progress is greater
+    // than or equal to max.
+    $context['finished'] = 1;
+  }
+  else {
+    $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
+  }
+}
+*/
+
+/**
+ * Batch 'finished' callback used by update date mode.
+ */
+/*
+function fundraiser_sustainer_update_date_mode_finished($success, $results, $operations) {
+  watchdog('fundraiser_sustainer', 'inside fundraiser_sustainer_update_date_mode_finished()');
+
+  if ($success) {
+    // Here we could do something meaningful with the results.
+    // We just display the number of nodes we processed...
+    $message = 'Finished updating the existing sustainers to the new date. ' . count($results) . ' sustainers processed.';
+  }
+  else {
+    // An error occurred.
+    // $operations contains the operations that remained unprocessed.
+    $error_operation = reset($operations);
+    $message = 'An error occurred while processing ' . $error_operation[0] . ' with arguments :' . print_r($error_operation[0], TRUE);
+  }
+  drupal_set_message($message);
+}
+*/
 
 /*
  * Creates a list of all donation forms on the site
