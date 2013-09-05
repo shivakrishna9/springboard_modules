@@ -178,7 +178,7 @@ class SalesforceSyncTestCase extends SalesforceTestCase {
         else {
           $field_value = $this->randomName();
         }
-        $item->addField($field, $field_value);
+        $item->setField($field, $field_value);
 
         // If this field can be used for dedupe, give it a 50% chance of it
         // being set.  Unless, of course, the operation is UPSERT, then it needs

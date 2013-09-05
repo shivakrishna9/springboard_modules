@@ -120,8 +120,18 @@ class SalesforceSyncItem {
    * @param string $field_value
    *   Value of the field to set.
    */
-  public function addField($field_name, $field_value) {
-    $this->sobject->addField($field_name, $field_value);
+  public function setField($field_name, $field_value) {
+    $this->sobject->setField($field_name, $field_value);
+  }
+
+  /**
+   * Wrapper for the sobject to remove a field from the fields array.
+   *
+   * @param string $field_name
+   *   The Salesforce machine name of the field.
+   */
+  public function unsetField($field_name) {
+    $this->sobject->unsetField($field_name);
   }
 
   /**
@@ -130,8 +140,18 @@ class SalesforceSyncItem {
    * @param string $field_name
    *   The Salesforce machine name of the field.
    */
-  public function addFieldToNull($field_name) {
-    $this->sobject->addFieldToNull($field_name);
+  public function setFieldToNull($field_name) {
+    $this->sobject->setFieldToNull($field_name);
+  }
+
+  /**
+   * Wrapper for the sobject to unset a field from the fieldsToNull array.
+   *
+   * @param string $field_name
+   *   The Salesforce machine name of the field.
+   */
+  public function unsetFieldToNull($field_name) {
+    $this->sobject->unsetFieldToNull($field_name);
   }
 }
 
@@ -325,8 +345,20 @@ class SalesforceObject {
    * @param string $field_value
    *   Value of the field to set.
    */
-  public function addField($field_name, $field_value) {
+  public function setField($field_name, $field_value) {
     $this->fields[$field_name] = $field_value;
+  }
+
+  /**
+   * Remove a field from the fields array so it will not be processed.
+   *
+   * @param string $field_name
+   *   The Salesforce machine name of the field.
+   */
+  public function unsetField($field_name) {
+    if (isset($this->fields[$field_name])) {
+      unset($this->fields[$field_name]);
+    }
   }
 
   /**
@@ -335,9 +367,21 @@ class SalesforceObject {
    * @param string $field_name
    *   The Salesforce machine name of the field.
    */
-  public function addFieldToNull($field_name) {
+  public function setFieldToNull($field_name) {
     if (!in_array($field_name, $this->fieldsToNull)) {
       $this->fieldsToNull[] = $field_name;
+    }
+  }
+
+  /**
+   * Helper to prevent a field from being set to NULL.
+   *
+   * @param string $field_name
+   *   The Salesforce machine name of the field.
+   */
+  public function unsetFieldToNull($field_name) {
+    if (isset($this->fieldsToNull[$field_name])) {
+      unset($this->fieldsToNull[$field_name]);
     }
   }
 

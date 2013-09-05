@@ -93,7 +93,7 @@ class SalesforceSyncSyncTestCase extends SalesforceSyncTestCase {
     $items = $this->createItems(20, array('CREATE'), array('Account', 'Contact'));
     foreach ($items as $key => $item) {
       $rand_account = array_rand($ids['Account']);
-      $items[$key]->addField('AccountId', $ids['Account'][$rand_account]);
+      $items[$key]->setField('AccountId', $ids['Account'][$rand_account]);
     }
     $batches = $this->createBatches($items, TRUE);
     $opportunities = array();
