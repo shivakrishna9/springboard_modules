@@ -29,7 +29,11 @@ function fundraiser_commerce_update_7002(&$sandbox) {
     $sandbox['max'] = db_query('SELECT COUNT(DISTINCT order_id) FROM {commerce_order}')->fetchField();
   }
 
-  $results = db_select('commerce_order', 'o')->fields('o', array('order_id'))->condition('order_id', $sandbox['current_order_id'], '>')->range(0, 3)->orderBy('order_id', 'ASC')->execute();
+  $results = db_select('commerce_order', 'o')
+    ->fields('o', array('order_id'))
+    ->condition('order_id', $sandbox['current_order_id'], '>')
+    ->range(0, 3)->orderBy('order_id', 'ASC')
+    ->execute();
 
   foreach ($results as $row) {
     // Retrieve the data with stripslashes and old encryption method
