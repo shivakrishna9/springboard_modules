@@ -109,37 +109,30 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
       return FALSE;
     }
 
+    // Convert to a SalesforceSyncItem entity.
+    $item = salesforce_sync_convert_to_item($data);
+
+    // If this item is in the queue, replace the original.
+    // With drupal_write_record, replacement is just a matter of filling in the
+    // $keys array.
     $keys = array();
-    if ($this->itemInQueue($data)) {
-      // If this item is in the queue, replace the original.
-      // With drupal_write_record, replacement is just a matter of filling in
-      // the $keys array.
+    if ($this->itemInQueue($item)) {
       $keys = array('drupal_id', 'module', 'delta', 'object_type');
     }
     else {
-      // As a new record, fill in all the new fields.
-      $data['queue'] = $this->queueName == 'all' ? 'new' : $this->queueName;
-
-      // We cannot rely on REQUEST_TIME because many items might be created
-      // by a single request which takes longer than 1 second.
-      $data['created'] = time();
-    }
-
-    // If sync_rules hasn't been set, add an empty array to make the database
-    // happy and make it slightly easier on the developer to not be required.
-    if (!isset($data['sync_rules'])) {
-      $data['sync_rules'] = array();
+      // Set default values.
+      $item->queue = $this->queueName == 'all' ? 'new' : $this->queueName;
+      $item->created = REQUEST_TIME;
     }
 
     // Invoke hook_salesforce_queue_create_item_alter().
-    drupal_alter('salesforce_queue_create_item', $data);
+    drupal_alter('salesforce_queue_create_item', $item);
 
-    // Insert this baby.
-    $data['sobject'] = json_encode($data['sobject']);
-    $result = drupal_write_record('salesforce_queue', $data, $keys);
+    // Save to database.
+    $result = drupal_write_record('salesforce_queue', $item, $keys);
 
     // Invoke hook_salesforce_queue_create_item().
-    module_invoke_all('salesforce_queue_create_item', $data, $result);
+    module_invoke_all('salesforce_queue_create_item', $item, $result);
 
     return $result;
   }
@@ -208,17 +201,14 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   /**
    * Remove an item from the queue.
    *
-   * @param object $item
+   * @param $data
    *   The original queue item as given to you in claimItem()
    *
    * @return bool
    *   TRUE on successful delete, FALSE if the delete could not be performed
    */
-  public function deleteItem($item) {
-    if (!is_object($item)) {
-      // Cannot delete from this kind of item.
-      return FALSE;
-    }
+  public function deleteItem($data) {
+    $item = salesforce_sync_convert_to_item($data);
 
     // Invoke hook_salesforce_queue_delete_item().
     module_invoke_all('salesforce_queue_delete_item', $item);
@@ -263,10 +253,10 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   /**
    * Helper to open an item after it has been retreived from the database.
    *
-   * @param object $item
+   * @param SalesforceSyncItem $item
    *   A record as retreived from the database
    */
-  protected function unfoldItem($item) {
+  protected function unfoldItem(SalesforceSyncItem $item) {
     $item->sobject = is_string($item->sobject) ? unserialize($item->sobject) : $item->sobject;
     $item->sync_rules = is_string($item->sync_rules) ? unserialize($item->sync_rules) : $item->sync_rules;
   }
@@ -334,7 +324,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
         $query->condition('queue', $this->queueName);
       }
       $result = $query->execute();
-      foreach ($result as $item) {
+      while ($item = $result->fetchObject('SalesforceSyncItem')) {
         $this->unfoldItem($item);
         $item->leaseKey = $key;
         $items[] = $item;
@@ -465,7 +455,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   /**
    * Check to see if a given item is already in the queue.
    *
-   * @param array $data
+   * @param object $data
    *   An array of data that is typically used in createItem() to send to queue.
    *   The nessisary keys for this method are:
    *     - drupal_id: Unique identifier of the Drupal object, such as the
@@ -481,12 +471,13 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
     if (!$this->isValidItem($data)) {
       return FALSE;
     }
+    $item = salesforce_sync_convert_to_item($data);
     $count = db_select('salesforce_queue', 'q')
       ->fields('q', array('item_id'))
-      ->condition('drupal_id', $data['drupal_id'])
-      ->condition('module', $data['module'])
-      ->condition('delta', $data['delta'])
-      ->condition('object_type', $data['object_type'])
+      ->condition('drupal_id', $item->drupal_id)
+      ->condition('module', $item->module)
+      ->condition('delta', $item->delta)
+      ->condition('object_type', $item->object_type)
       ->countQuery()
       ->execute()
       ->fetchField();
@@ -520,9 +511,12 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
       ->condition('delta', $delta)
       ->condition('object_type', $object_type)
       ->execute()
-      ->fetchObject();
-    $item = $this->unfoldItem($item);
-    return $item;
+      ->fetchObject('SalesforceSyncItem');
+    if (is_object($item)) {
+      $this->unfoldItem($item);
+      return $item;
+    }
+    return FALSE;
   }
 
   /**

@@ -11,6 +11,13 @@
 class SalesforceSyncItem {
 
   /**
+   * The routines this item has been prepped for prior to syncing.
+   *
+   * @var array
+   */
+  protected $preparedRoutines = array();
+
+  /**
    * Constructs a SalesforceSyncItem.
    *
    * @param string $object_type
@@ -32,12 +39,26 @@ class SalesforceSyncItem {
    *   The field with which whose value identifies this record as a unique item,
    *   such as 'Email' or 'Name'.
    */
-  public function __construct($object_type = '', $operation = NULL, $sync_rules = array(), $dedupe_field = NULL) {
-    $this->sobject = new SalesforceObject($object_type);
-    $this->setObjectType($object_type);
-    $this->setDedupeField($dedupe_field);
-    $this->setOperation($operation);
-    $this->sync_rules = $sync_rules;
+  public function __construct($object_type = '', $operation = NULL, $sync_rules = array(), $dedupe_field = '') {
+    if (!isset($this->sobject) || empty($this->sobject)) {
+      $this->sobject = new SalesforceObject($object_type);
+    }
+
+    if ((empty($object_type) && !isset($this->object_type)) || !empty($object_type)) {
+      $this->setObjectType($object_type);
+    }
+
+    if ((empty($operation) && !isset($this->operation)) || !empty($operation)) {
+      $this->setOperation($operation);
+    }
+
+    if ((empty($dedupe_field) && !isset($this->dedupe_field)) || !empty($operation)) {
+      $this->setDedupeField($dedupe_field);
+    }
+
+    if ((empty($sync_rules) && !isset($this->sync_rules)) || !empty($sync_rules)) {
+      $this->sync_rules = $sync_rules;
+    }
   }
 
   /**
@@ -153,6 +174,48 @@ class SalesforceSyncItem {
   public function unsetFieldToNull($field_name) {
     $this->sobject->unsetFieldToNull($field_name);
   }
+
+  /**
+   * Declare item as having been prepared to sync for the given routine.
+   *
+   * @param string $routine
+   */
+  public function setPrepared($routine) {
+    $this->preparedRoutines[$routine] = TRUE;
+  }
+
+  /**
+   * Declare item as not yet prepared to sync for the given routine.
+   *
+   * @param string $routine
+   */
+  public function setNotPrepared($routine) {
+    $this->preparedRoutines[$routine] = FALSE;
+  }
+
+  /**
+   * Reset all prepared statuses for this item.
+   *
+   * @param string $routine
+   */
+  public function setNonePrepared() {
+    $this->preparedRoutines = array();
+  }
+
+  /**
+   * Check to see if this item has been prepared for the given routine.
+   *
+   * @param string $routine
+   *
+   * @return boolean
+   *   TRUE if prepared, FALSE if not prepared.
+   */
+  public function isPrepared($routine) {
+    if (isset($this->preparedRoutines[$routine])) {
+      return $this->preparedRoutines[$routine];
+    }
+    return FALSE;
+  }
 }
 
 /**
@@ -233,9 +296,15 @@ class SalesforceObject {
    *   Subtype of the object type.
    */
   public function __construct($object_type = '', $fields = array(), $record = NULL) {
-    $this->fields = $fields;
-    $this->setType($object_type);
-    $this->setRecord($record);
+    if (!empty($object_type)) {
+      $this->setType($object_type);
+    }
+    if (!empty($record)) {
+      $this->setRecord($record);
+    }
+    if (!empty($fields)) {
+      $this->fields = $fields;
+    }
   }
 
   /**

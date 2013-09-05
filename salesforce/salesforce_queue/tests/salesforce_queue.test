@@ -53,13 +53,12 @@ class SalesforceQueueTestCase extends SalesforceSyncTestCase {
    */
   public function createQueueItems(SalesforceQueue $queue, $num = 5, $ops = array(), $exempt_objects = array()) {
     $items = $this->createItems($num, $ops, $exempt_objects);
-    $data_items = array();
+    $queue_items = array();
     foreach ($items as $item) {
-      $data = (array) $item;
-      $result = $queue->createItem($data);
+      $result = $queue->createItem($item);
       $this->assertTrue($result, 'Created a queue item.');
-      $data_items[] = $data;
+      $queue_items[] = $item;
     }
-    return $data_items;
+    return $queue_items;
   }
 }

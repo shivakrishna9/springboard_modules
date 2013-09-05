@@ -437,12 +437,8 @@ class SalesforceMappingAlterSalesforceQueueTestCase extends SalesforceMappingAlt
   protected function fetchQueueItem() {
     $queue = salesforce_queue_load();
     $item = $queue->claimItem();
-    $this->assertFalse(empty($item), 'Data was received from the queue.');
-    if (empty($item)) {
-      return array();
-    }
     $queue->releaseItem($item);
-    return $this->formatQueueItem($item);
+    return $item;
   }
 
   /**
@@ -453,39 +449,22 @@ class SalesforceMappingAlterSalesforceQueueTestCase extends SalesforceMappingAlt
       return;
     }
     db_delete('salesforce_queue')
-    ->condition('item_id', $item['item_id'])
+    ->condition('item_id', $item->item_id)
     ->execute();
     return;
   }
 
   /**
-   * Make different queue items have the same format.
-   */
-  protected function formatQueueItem($item) {
-    $this->assertTrue(is_object($item->sobject), 'Received an expected queue item for Salesforce Queue.');
-    if (is_object($item)) {
-      $item = (array) $item;
-      return $item;
-    }
-    return array();
-  }
-
-  /**
-   * Helper to compare what was submitted to what was sent to the queue.
+   * Helper to compare what was submitted with what was sent to the queue.
    */
   protected function compareSubmissionQueueItem($user, $item, $operation) {
-    if (!empty($item)) {
-      $this->assertTrue(isset($item['operation']), 'Operation not set in SalesforceQueue queue item.');
-      if (isset($item['operation'])) {
-        $this->assertEqual($item['operation'], $operation, 'The ' . $item['operation'] . ' operation was sent to SalesforceQueue when ' . $operation . ' was expected.');
-      }
-      $this->assertTrue((isset($item['sobject']) && is_object($item['sobject'])), 'sObject not built properly in SalesforceQueue queue item.');
-      if (isset($item['sobject']) && is_object($item['sobject'])) {
-        $fields = $item['sobject']->fields;
-        $this->assertEqual($fields['LastName'], $user->name, 'Name SalesforceQueue data matches submitted data.');
-        $this->assertEqual($fields['Email'], $user->mail, 'Email SalesforceQueue data matches submitted data.');
-        $this->assertEqual($fields['Birthdate'], date('c', $user->created), 'Birthdate SalesforceQueue data matches submitted data.');
-      }
-    }
+    $this->assertFalse(empty($item), 'Data was received from the queue.');
+    $this->assertFalse(empty($item->operation), 'Operation set in SalesforceQueue queue item.');
+    $this->assertEqual($item->operation, $operation, 'The ' . $item->operation . ' operation was sent to SalesforceQueue when ' . $operation . ' was expected.');
+    $this->assertTrue(is_object($item->sobject), 'sObject built properly in SalesforceQueue queue item.');
+    $fields = $item->sobject->fields;
+    $this->assertEqual($fields['LastName'], $user->name, 'Name SalesforceQueue data matches submitted data.');
+    $this->assertEqual($fields['Email'], $user->mail, 'Email SalesforceQueue data matches submitted data.');
+    $this->assertEqual($fields['Birthdate'], date('c', $user->created), 'Birthdate SalesforceQueue data matches submitted data.');
   }
 }

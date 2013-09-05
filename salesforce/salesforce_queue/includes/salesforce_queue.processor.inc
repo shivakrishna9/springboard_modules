@@ -291,7 +291,7 @@ class SalesforceQueueProcessor {
 
       // Adjust just in case an UPSERT command falls through without a dedupe.
       if ($item->operation == 'UPSERT' && empty($item->dedupe_field)) {
-        $item->operation = 'CREATE';
+        $item->setOperation('CREATE');
       }
 
       // Test the item for validity and fail it if it does not pass.

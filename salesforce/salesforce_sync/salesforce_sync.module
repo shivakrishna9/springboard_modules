@@ -146,10 +146,10 @@ function salesforce_sync_permission() {
  */
 function salesforce_sync_salesforce_queue_create_item_alter(&$item) {
   // When adding queue items, ensure that the sfid is in the sobject.
-  if (($item['operation'] == 'UPDATE' || $item['operation'] == 'DELETE') && !isset($item['sobject']->Id)) {
+  if (($item->operation == 'UPDATE' || $item->operation == 'DELETE') && !isset($item->sobject->Id)) {
     $record = salesforce_sync_load_map($item);
     if (!empty($record) && isset($record->sfid)) {
-      $item['sobject']->Id = $record->sfid;
+      $item->setId($record->sfid);
     }
   }
 }
@@ -182,6 +182,28 @@ function salesforce_sync_salesforce_sync_pass_item($item, $result) {
     }
   }
 }
+
+/**
+ * Convert a given array or object to a SalesforceSyncItem.
+ *
+ * @param mixed $data
+ *   An array or object of data to define the initial values.
+ *
+ * @return SalesforceSyncItem
+ */
+function salesforce_sync_convert_to_item($data) {
+    if ($data instanceof SalesforceSyncItem) {
+      $item = $data;
+    }
+    else {
+      $data = is_object($data) ? get_object_vars($data) : $data;
+      $item = new SalesforceSyncItem();
+      foreach ($data as $property => $value) {
+        $item->$property = $value;
+      }
+    }
+    return $item;
+  }
 
 
 /**

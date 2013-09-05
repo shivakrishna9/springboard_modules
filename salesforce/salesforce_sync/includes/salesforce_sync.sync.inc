@@ -245,22 +245,7 @@ class SalesforceSync {
       // If all items failed token checks, $results could be empty.
       if (is_array($results)) {
         foreach ($results as $key => $result) {
-          // Since we pass an item to others to trigger actions based on its
-          // success, we should make sure we send the same type and structure of
-          // item.
-          if (isset($items[$key]) && isset($items[$key]->sobject)) {
-            $item = $items[$key];
-          }
-          elseif (isset($items[$key])) {
-            $sobject = $items[$key];
-            $dedupe_field = isset($batch['dedupe_field']) ? $batch['dedupe_field'] : NULL;
-            $item = new SalesforceSyncItem($sobject->type, $batch['operation'], array(), $dedupe_field);
-            $item->sobject = $sobject;
-          }
-          else {
-            $item = new SalesforceSyncItem();
-            $item->sobject->Id = $result->Id;
-          }
+          $item = $items[$key];
           if ($result->success) {
             $this->passItem($item, $result);
           }
@@ -284,7 +269,7 @@ class SalesforceSync {
   /**
    * Wrapper for sendBatch in order to send a single item to Salesforce.
    *
-   * @param object $item
+   * @param SalesforceSyncItem $item
    *   An individual representation of a record and instructions of how that
    *   record will be consumed by the recipient.
    *
@@ -292,7 +277,7 @@ class SalesforceSync {
    *   Results of sendBatch. Upon success, the Salesforce results are provided.
    *   If there is an exception then it will return FALSE.
    */
-  public function sendItem($item) {
+  public function sendItem(SalesforceSyncItem $item) {
     $batch = array(
       'object_type' => $item->object_type,
       'operation' => $item->operation,
@@ -488,7 +473,7 @@ class SalesforceSync {
     // Go through the items and apply the sync rules based upon the information
     // just retreived from Salesforce.
     foreach ($items as $key => $item) {
-      if (isset($item->sync_rules_applied) && $item->sync_rules_applied) {
+      if ($item->isPrepared('sync_rules')) {
         // Skip if the sync rules have already been applied to this item.
       }
       else {
@@ -503,7 +488,7 @@ class SalesforceSync {
         if (is_string($id) && isset($sf_records[$id])) {
           $items[$key]->sobject->fields = $this->applySyncRules($item_fields, $sf_records[$id], $item->sync_rules);
         }
-        $items[$key]->sync_rules_applied = TRUE;
+        $items[$key]->setPrepared('sync_rules');
       }
     }
   }
@@ -550,12 +535,12 @@ class SalesforceSync {
   /**
    * Convert the mapped values into a format compatible to send to Salesforce.
    *
-   * @param object $item
+   * @param SalesforceSyncItem $item
    *   An individual representation of a record and instructions of how that
    *   record will be consumed by the recipient.
    */
-  public function convertToSalesforceFormat(&$item) {
-    if (isset($item->converted_to_salesforce_format) && $item->converted_to_salesforce_format) {
+  public function convertToSalesforceFormat(SalesforceSyncItem $item) {
+    if ($item->isPrepared('converted_to_salesforce_format')) {
       // Skip because this item has already had its formats converted.
       return;
     }
@@ -598,26 +583,26 @@ class SalesforceSync {
           case 'boolean':
             // Convert any value that evaluates to TRUE as 1
             if ($value) {
-              $item->sobject->fields[$field_name] = 1;
+              $value = 1;
             }
             else {
-              $item->sobject->fields[$field_name] = 0;
+              $value = 0;
             }
             break;
 
           case 'datetime':
             // Salesforce requires ISO 8601 format for dates.
-            $item->sobject->fields[$field_name] = date('c', strtotime($value));
+            $value = date('c', strtotime($value));
             break;
 
           case 'date':
             // Drupal dates come in all flavors. Check to see if it's a unix
             // timestamp. If it is we can skip strtotime().
             if ($this->isValidTimestamp($value)) {
-              $item->sobject->fields[$field_name] = date('Y-m-d', $value);
+              $value = date('Y-m-d', $value);
             }
             else {
-              $item->sobject->fields[$field_name] = date('Y-m-d', strtotime($value));
+              $value = date('Y-m-d', strtotime($value));
             }
             break;
 
@@ -626,17 +611,19 @@ class SalesforceSync {
             // Make sure all strings are escaped correctly for XML. htmlspecialchars will
             // be sufficient for most strings. If more robust escaping is needed
             // consider using DOMDocument or SimpleXML to beef this up.
-            $item->sobject->fields[$field_name] = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+            $value = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
             break;
 
           default:
             // Do nothing.
         }
+
+        $item->setField($field_name, $value);
       }
     }
 
     // Mark the item as converted.
-    $item->converted_to_salesforce_format = TRUE;
+    $item->setPrepared('converted_to_salesforce_format');
   }
 
   /**
@@ -688,11 +675,11 @@ class SalesforceSync {
   /**
    * Wrapper for importBatch in order to import a single item from Salesforce.
    *
-   * @param object $item
+   * @param SalesforceSyncItem $item
    *   It is unknown at this time if Drupal items will be formatted differently
    *   from the Salesforce items.
    */
-  public function importItem($item) {
+  public function importItem(SalesforceSyncItem $item) {
     $batch = array(
       'items' => array($item),
     );
@@ -757,19 +744,19 @@ class SalesforceSync {
   /**
    * Convert the mapped values into a format compatible to import into Drupal.
    *
-   * @param object $item
+   * @param SalesforceSyncItem $item
    *   It is unknown at this time if Drupal items will be formatted differently
    *   from the Salesforce items.
    */
-  public function convertToDrupalFormat($item) {
-    if (isset($item->converted_to_drupal_format) && $item->converted_to_drupal_format) {
+  public function convertToDrupalFormat(SalesforceSyncItem $item) {
+    if ($item->isPrepared('converted_to_drupal_format')) {
       // Skip because this item has already had its formats converted.
       return;
     }
 
     // @TODO: Convert each field.
     // Mark the item as converted.
-    $item->converted_to_drupal_format = TRUE;
+    $item->setPrepared('converted_to_drupal_format');
   }
 
   /**
@@ -785,13 +772,13 @@ class SalesforceSync {
   /**
    * Marks an item has having succeeded processing.
    *
-   * @param object $item
+   * @param SalesforceSyncItem $item
    *   Item to be processed.
    * @param object $result
    *   Result of the item's processing from Salesforce.
    */
-  public function passItem($item, $result) {
-    $item->sobject->Id = $result->id;
+  public function passItem(SalesforceSyncItem $item, $result) {
+    $item->setId($result->id);
 
     // Keep a log of newly created items.
     if ($item->operation == 'CREATE' || $item->operation == 'UPSERT') {
@@ -819,7 +806,7 @@ class SalesforceSync {
   /**
    * Marks an item has having failed.
    *
-   * @param object $item
+   * @param SalesforceSyncItem $item
    *   Item to be processed.
    * @param string $message
    *   Error message.
@@ -827,7 +814,7 @@ class SalesforceSync {
    *   Salesforce result if the item had received a result from salesforce, or
    *   exception caught when call failed.
    */
-  public function failItem($item, $message, $result = NULL) {
+  public function failItem(SalesforceSyncItem $item, $message, $result = NULL) {
     // Send an error to admin that the item failed.
     // With many cases of Salesforce being helpful and deleting things for you,
     // there is no need to get too alarmed if an item failed to be deleted.
@@ -915,7 +902,14 @@ class SalesforceSync {
       try {
         $response = $this->soap->retrieve($fields, $object_type, $id_chunk);
         if (is_array($response)) {
-          $responses = array_merge($responses, $response);
+          // Convert SObject to SalesforceObject
+          foreach ($response as $sobject) {
+            $salesforce_object = new SalesforceObject();
+            foreach (get_object_vars($sobject) as $property => $value) {
+              $salesforce_object->$property = $value;
+            }
+            $responses[] = $salesforce_object;
+          }
         }
         else {
           // Log message for later investigation.

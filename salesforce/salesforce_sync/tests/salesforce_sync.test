@@ -286,11 +286,11 @@ class SalesforceSyncTestCase extends SalesforceTestCase {
   public function deleteItemsFromSalesforce($queue_items) {
     $conditions = array();
     foreach ($queue_items as $queue_item) {
-      $object_type = $queue_item['object_type'];
+      $object_type = $queue_item->object_type;
       $field = ($object_type == 'Contact') ? 'LastName' : 'Name';
       $conditions[$object_type]['field'] = $field;
       $conditions[$object_type]['op'] = 'IN';
-      $field_value = $queue_item['sobject']->fields[$field];
+      $field_value = $queue_item->sobject->fields[$field];
       $conditions[$object_type]['value'][$field_value] = $field_value;
     }
     $batch = array(
@@ -302,10 +302,8 @@ class SalesforceSyncTestCase extends SalesforceTestCase {
     foreach ($conditions as $object_type => $condition) {
       $records = $sync->fetchRecords($object_type, array('Id'), array($condition));
       foreach ($records as $record) {
+        $item = new SalesforceSyncItem($record->type, 'DELETE');
         $record->fields = array();
-        $item = new stdClass();
-        $item->object_type = $record->type;
-        $item->operation = 'DELETE';
         $item->sobject = $record;
         $batch['items'][] = $item;
         $batch['ids'][] = $record->Id;
