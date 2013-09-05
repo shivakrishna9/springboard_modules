@@ -199,7 +199,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *   granted because the wrong key was granted.
    */
   public function releaseItem($item) {
-    if (is_object($item)) {
+    if ($this->isValidItem($item)) {
       return $this->releaseBatch($item->leaseKey);
     }
     return FALSE;
