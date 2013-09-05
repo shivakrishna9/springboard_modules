@@ -271,7 +271,7 @@ function _salesforce_sync_get_rmid($item) {
     return $item->rmid;
   }
   if (is_object($item)) {
-    $record = (array) clone($item);
+    $record = get_object_vars($item);
   }
   else {
     $record = $item;

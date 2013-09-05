@@ -406,7 +406,7 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
   public function formatQueueItem($item) {
     $this->assertTrue(is_object($item->sobject), 'Received an expected queue item for Salesforce Queue.');
     if (is_object($item)) {
-      $item = (array) $item;
+      $item = get_object_vars($item);
       return $item;
     }
     return array();

@@ -429,7 +429,7 @@ function _sfw_default_value($form, $form_state, $field, $group = NULL, $drupal_f
   // Refer against inputted values if the form has been submitted, else the
   // node.
   if (empty($form_state['input']['salesforce_object_info']) && !empty($node_map)) {
-    $map = (array) $node_map;
+    $map = is_object($node_map) ? get_object_vars($node_map) : $node_map;
   }
   else {
     $map = _sfw_convert_input($form_state['input']);

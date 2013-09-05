@@ -539,8 +539,13 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   /**
    * Helper to check if a given array or object is valid queue data.
    */
-  protected function isValidItem($item) {
-    $data = is_object($item) ? (array) $item : $item;
+  protected function isValidItem($data) {
+    // Accept only objects and arrays.
+    if (!is_object($data) && !is_array($data)) {
+      return FALSE;
+    }
+
+    // Ensure required keys exist.
     $required = array(
       'drupal_id',
       'module',
@@ -549,11 +554,18 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
       'operation',
       'sobject',
     );
-    $provided = array_keys($data);
+    if (is_array($data)) {
+      $provided = array_keys($data);
+    }
+    else {
+      $vars = get_object_vars($data);
+      $provided = array_keys($vars);
+    }
     if (count(array_intersect($required, $provided)) < 6) {
       // When it doesn't have all of the required fields, it is not valid.
       return FALSE;
     }
+
     return TRUE;
   }
 }

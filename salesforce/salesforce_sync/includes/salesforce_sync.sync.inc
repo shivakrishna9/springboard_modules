@@ -103,7 +103,7 @@ class SalesforceSync {
    *   value being one of the 4 sync rules.
    */
   public function applySyncRules($item_fields, $consumer_fields, $sync_rules) {
-    $consumer_fields = (array) $consumer_fields;
+    $consumer_fields = is_object($consumer_fields) ? get_object_vars($consumer_fields) : $consumer_fields;
     foreach ($sync_rules as $field => $sync_rule) {
       switch ($sync_rule) {
         case SALESFORCE_SYNC_RULE_ALWAYS:

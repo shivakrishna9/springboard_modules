@@ -141,7 +141,7 @@ class SalesforceQueueQueueTestCase extends SalesforceQueueTestCase {
     // delta, object_type] as another item already in the queue, then that
     // item will be replaced with the new data instead of a new queue item being
     // created. Lets re-create an item we just fetched and see it merge.
-    $data = (array) $whole_queue_item;
+    $data = get_object_vars($whole_queue_item);
     // Unset everything we don't use when creating a new item.
     $keys = array(
       'drupal_id',
@@ -218,12 +218,12 @@ class SalesforceQueueQueueTestCase extends SalesforceQueueTestCase {
     // will give us multiple items at once to work with.
     $this->createQueueItems($whole_queue, 15);
     $items = $whole_queue->claimBatch(5);
-    $data = (array) $items[4];
+    $data = get_object_vars($items[4]);
     $this->assertTrue($whole_queue->itemInQueue($data), 'The claimed item is in queue.');
     // Now lets change just one trait and ensure it fails.
     $keys = array('drupal_id', 'module', 'delta', 'object_type');
     foreach ($keys as $num => $key) {
-      $data = (array) $items[$num];
+      $data = get_object_vars($items[$num]);
       $data[$key] = 'foo';
       $this->assertFalse($whole_queue->itemInQueue($data), 'The altered claimed item is not in the queue.');
     }
