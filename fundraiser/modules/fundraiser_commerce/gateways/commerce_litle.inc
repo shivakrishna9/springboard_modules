@@ -12,7 +12,7 @@ function commerce_litle_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     // Create the payment_method array with the commerce gateway method info name as the key
     'payment_method' => array('commerce_litle_cc' => 'credit', 'commerce_litle_echeck' => 'bank account'),
-    'allow_recurring' => array('credit'),
+    'allow_recurring' => array('credit', 'bank account'),
     'form callback' => 'commerce_litle_fundraiser_commerce_submit_form',
     'cleanup callback' => 'commerce_litle_fundraiser_commerce_cleanup',
     'scrub callback' => 'commerce_litle_fundraiser_commerce_scrub',
@@ -117,29 +117,22 @@ function commerce_litle_fundraiser_commerce_charge($method_instance, $donation) 
     if (module_exists('commerce_cardonfile')) {
       $method_instance['settings']['cardonfile'] = TRUE; // Card on file,
       $pane_values['credit_card']['cardonfile_store'] = TRUE; // And store it please.
-      $pane_values['cardonfile'] = 'new'; // Make a new token unless we already have one on record.
-
-      $stored_cards = commerce_cardonfile_load_multiple_by_uid($donation->uid, $method_instance['instance_id']);
-      // Filter out expired cards.
-      foreach ($stored_cards as $card_id => $card_data) {
-        if ($card_data->card_exp_year < date('Y') ||
-          $card_data->card_exp_year == date('Y') && $card_data->card_exp_month < date('m')) {
-          unset($stored_cards[$card_id]);
-        }
-      }
-      if (!empty($stored_cards)) {
-        // Then grab the first one.
-        foreach ($stored_cards as $card_id => $card_data) {
-          $pane_values['cardonfile'] =  $card_id;
-        }
-      }
-
+      $pane_values['cardonfile'] = commerce_litle_get_cardonfile_pane_value($donation->uid, $method_instance['instance_id']);
     }
 
     $result = commerce_litle_cc_submit_form_submit($method_instance, $pane_form, $pane_values, $order, $charge);
   }
   elseif ($donation->donation['payment_method'] == 'bank account') {
     $pane_values['echeck'] = $donation->donation['payment_fields']['bank account'];
+
+    $method_instance['settings']['cardonfile'] = FALSE;
+
+    if (module_exists('commerce_cardonfile')) {
+      $method_instance['settings']['cardonfile'] = TRUE; // Card on file,
+      $pane_values['echeck']['cardonfile_store'] = TRUE; // And store it please.
+      $pane_values['cardonfile'] = commerce_litle_get_cardonfile_pane_value($donation->uid, $method_instance['instance_id']);
+    }
+
     $result = commerce_litle_echeck_submit_form_submit($method_instance, $pane_form, $pane_values, $order, $charge);
   }
 
@@ -149,4 +142,36 @@ function commerce_litle_fundraiser_commerce_charge($method_instance, $donation) 
     $success = TRUE;
   }
   return $success;
+}
+
+/**
+ * Returns the card_id of an unexpired, active card on file,
+ * or 'new' if there isn't one.
+ *
+ * @param int $uid  User ID
+ * @param int $instance_id  Payment method instance ID
+ *
+ * @return int|string  The string 'new' or a card_id from cardonfile.
+ */
+function commerce_litle_get_cardonfile_pane_value($uid, $instance_id) {
+  // Make a new token unless we already have one on record.
+  $return = 'new';
+
+  $stored_cards = commerce_cardonfile_load_multiple_by_uid($uid, $instance_id);
+  // Filter out expired cards.
+  foreach ($stored_cards as $card_id => $card_data) {
+    if ($card_data->card_exp_year < date('Y') ||
+      $card_data->card_exp_year == date('Y') && $card_data->card_exp_month < date('m')) {
+      unset($stored_cards[$card_id]);
+    }
+  }
+
+  if (!empty($stored_cards)) {
+    // Then grab the first one.
+    foreach ($stored_cards as $card_id => $card_data) {
+      $return = $card_id;
+    }
+  }
+
+  return $return;
 }
