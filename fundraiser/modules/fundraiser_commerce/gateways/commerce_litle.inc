@@ -25,7 +25,7 @@ function commerce_litle_fundraiser_commerce_fundraiser_gateway_info() {
 /**
  * Returns the form fields for this method
  */
-function commerce_litle_fundraiser_commerce_submit_form($payment_method, $config) {
+function commerce_litle_fundraiser_commerce_submit_form($payment_method) {
   if ($payment_method == 'credit') {
     module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
     return _fundraiser_commerce_credit_card_form();
@@ -44,7 +44,6 @@ function commerce_litle_fundraiser_commerce_cleanup($submission_fields, $payment
     module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
     return _fundraiser_commerce_credit_card_cleanup($submission_fields);
   }
-
   return $submission_fields;
 }
 
@@ -52,6 +51,17 @@ function commerce_litle_fundraiser_commerce_cleanup($submission_fields, $payment
  * Callback function, return the user entered expiration dates for this submission.
  */
 function commerce_litle_fundraiser_commerce_expire($submission_fields) {
+
+  if ($submission_fields['payment_method'] == 'bank account') {
+    // pretend expiration date for sustainers
+    $exp_timestamp = strtotime('+12 months');
+
+    return array(
+      'month' => date('m', $exp_timestamp),
+      'year' => date('Y', $exp_timestamp),
+    );
+  }
+
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
   return _fundraiser_commerce_credit_card_expire($submission_fields);
 }
@@ -158,6 +168,11 @@ function commerce_litle_get_cardonfile_pane_value($uid, $instance_id) {
   $return = 'new';
 
   $stored_cards = commerce_cardonfile_load_multiple_by_uid($uid, $instance_id);
+
+  if ($stored_cards == FALSE) {
+    return $return;
+  }
+
   // Filter out expired cards.
   foreach ($stored_cards as $card_id => $card_data) {
     if ($card_data->card_exp_year < date('Y') ||
