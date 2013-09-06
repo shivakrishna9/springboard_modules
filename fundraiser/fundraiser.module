@@ -2792,8 +2792,6 @@ function fundraiser_action_info() {
  * An action to change the gateway of a node
  */
 function _fundraiser_gateway_switch_action($node, $context = array()) {
-  dpm($node, '$node');
-  dpm($context, '$context');
   $orig_config = $node->gateways;
   foreach ($context['update_methods'] as $method) {
     $node->gateways[$method] = $context['gateways'][$method];
@@ -2816,8 +2814,6 @@ function _fundraiser_gateway_switch_action($node, $context = array()) {
   }
 
   _fundraiser_update_fundraiser($node);
-  //$wrapper = entity_metadata_wrapper('node', $node);
-  //$wrapper->gateway->set($gateways);
 }
 
 /**
