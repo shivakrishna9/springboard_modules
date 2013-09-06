@@ -2870,7 +2870,6 @@ function _fundraiser_gateway_switch_action_form($context) {
 
   foreach ($methods as $method) {
     foreach (element_children($form['gateways'][$method]) as $field_name) {
-      dpm($field_name);
       $form['gateways'][$method][$field_name]['#states'] = array(
         'disabled' => array(
           ':input[name="update_methods[' . $method . ']"]' => array('checked' => FALSE),
