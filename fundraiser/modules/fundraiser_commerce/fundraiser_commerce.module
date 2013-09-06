@@ -1077,7 +1077,6 @@ function _fundraiser_commerce_update_donation_result_data($donation, $success) {
     'message' => $success ? t('Donation was successfully processed.') : t('Donation transaction failed.'), // Shown to user.
     // Additional data for the order record to store.
     'data' => array(
-      'message' => $message, // Official message from gateway.
       'txn_id' => $remote_id,
       'remote_id' => $remote_id, // The handler ID.
       'transaction_id' => $transaction_id, // The Drupal ID.
@@ -1632,14 +1631,23 @@ function _fundraiser_commerce_get_charged_by_status($status) {
  * Prepare the fundraiser commerce order data for storage
  */
 function _fundraiser_commerce_order_data_prepare($data) {
-  return _fundraiser_commerce_encrypt(addslashes(serialize($data)));
+  $encrypted = _fundraiser_commerce_encrypt(serialize($data));
+
+  // Check to ensure the correct encryption was used
+  $encryption_array = unserialize($encrypted);
+  if ($encryption_array['method'] != 'mcrypt_rij_256' || $encryption_array['key_name'] != 'secure_file_key') {
+    watchdog('fundraiser_commerce', 'The encryption module has not been configured correctly. You may need to patch or update your version.', array(), WATCHDOG_EMERGENCY, l('Fix', 'admin/config/system/encrypt'));
+    return FALSE;
+  }
+
+  return $encrypted;
 }
 
 /**
  * Retrieve the fundraiser commerce order data
  */
 function _fundraiser_commerce_order_data_retrieve($data) {
-  return unserialize(stripslashes(_fundraiser_commerce_decrypt($data)));
+  return unserialize(_fundraiser_commerce_decrypt($data));
 }
 
 /**
