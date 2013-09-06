@@ -134,7 +134,7 @@ function sb_social_block_view($delta = '') {
     }
     $sid = _sb_social_sid_by_id($id);
     $settings = sb_social_settings_load($sid);
-
+    $submission_id = isset($_GET['sid']) ? $_GET['sid'] : FALSE;
     ctools_include('plugins');
     $plugins = ctools_get_plugins('sb_social', 'social_networks');
     $enabled_services = sb_social_get_enabled_services();
@@ -144,7 +144,7 @@ function sb_social_block_view($delta = '') {
     foreach ($services as $service) {
       if (in_array($service, $enabled_services)) {
         $vars['service'] = $service;
-        $vars['url'] = sb_social_short_url($service, $settings);
+        $vars['url'] = sb_social_short_url($service, $settings, $submission_id);
         $vars['extra'] = '';
         if (isset($plugins[$service]['button_extra'])) {
           $func = $plugins[$service]['button_extra'];
@@ -277,31 +277,6 @@ function sb_social_init() {
   }
 }
 
-
-
-function sb_social_share_url($nid, $uid, $sid, $service, $settings) {
-  $node = node_load($nid);
-
-  $options = array(
-    'absolute' => TRUE,
-    'query' => array(
-      'social_referer_transaction' => $sid,
-      'social_referrer_network' => $service,
-    ),
-  );
-
-  if (module_exists('market_source') && isset($settings['data']['market_source'])) {
-    foreach ($settings['data']['market_source'] as $key => $value) {
-      if (!$value) {
-        continue;
-      }
-      $options['query'][$key] = $value;
-    }
-  }
-  $url = url('node/' . $nid, $options);
-  return url('node/' . $nid, $options);
-}
-
 /**
  * Implements hook_market_source_field_info().
  */
@@ -344,6 +319,32 @@ function sb_social_market_source_field_info() {
   return $fields;
 }
 
+/**
+ * Implements hook_market_source_external_field_keys().
+ */
+function sb_social_market_source_external_field_keys() {
+  $items = array(
+    'social_referer_transaction' => array(
+      'key' => 'social_referer_transaction',
+      'name' => t('Social referer transaction'),
+      'default' => '',
+      'persistence' => 'on',
+    ),
+    'social_referer_network' => array(
+      'key' => 'social_referer_network',
+      'name' => t('Social referer transaction'),
+      'default' => '',
+      'persistence' => 'on',
+    ),
+    'social_referer_contact' => array(
+      'key' => 'social_referer_contact',
+      'name' => t('Social referer transaction'),
+      'default' => '',
+      'persistence' => 'on',
+    ),
+  );
+  return $items;
+}
 
 /**
  * Implements hook_webform_submission_update().
@@ -451,7 +452,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
     if (in_array('share_links', $keys)) {
       foreach ($enabled_plugins as $service => $plugin) {
         $vars['service'] = $service;
-        $vars['url'] = sb_social_short_url($service, $settings);
+        $vars['url'] = sb_social_short_url($service, $settings, $submission_id);
         $vars['extra'] = '';
         if (isset($plugins[$service]['button_extra'])) {
           $func = $plugins[$service]['button_extra'];
@@ -508,11 +509,12 @@ function sb_social_theme($existing, $type, $theme, $path) {
  * Webform submission ID, used on confirmation pages to track shares to donations.
  */
 function sb_social_short_url($service, $settings, $submission_id = FALSE) {
+
   $params = array(
-    'social_referrer_network' => $service,
+    'social_referer_network' => $service, 
   );
   if (!empty($submission_id)) {
-    $params['social_referrer_transaction'] = $submission_id;
+    $params['social_referer_transaction'] = $submission_id;
   }
   if (module_exists('market_source') && isset($settings['data']['market_source'])) {
     foreach ($settings['data']['market_source'] as $key => $value) {
@@ -536,13 +538,6 @@ function sb_social_short_url($service, $settings, $submission_id = FALSE) {
   );
 
   $url = url($path, $options);
-  return shorten_url($url);
-}
-
-function sb_social_short_url_old($node, $sid, $service, $settings = NULL) {
-  $submission = _sb_social_load_submission($sid);
-  $uid = $submission['uid'];
-  $url = sb_social_share_url($node->nid, $uid, $sid, $service, $settings);
   return shorten_url($url);
 }
 
