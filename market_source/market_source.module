@@ -349,7 +349,7 @@ function _market_source_build_qs_keys() {
     //   - key          : unique field key
     //   - name         : human-readable name
     //   - default      : default value
-    //   - persisitence : persistance settings for this fields, acceptable values are 'on', 'off' or 'direct'
+    //   - persistence : persistence settings for this fields, acceptable values are 'on', 'off' or 'direct'
     $external_fields = module_invoke_all('market_source_external_field_keys');
     $field_settings = array(
       'ms' => isset($default_fields['market_source']) ? $default_fields['market_source'] : array(),
