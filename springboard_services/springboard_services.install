@@ -1,0 +1,10 @@
+<?php
+
+/**
+ *
+ */
+function springboard_services_schema() {
+  // uid
+  // key
+  // host ??
+}

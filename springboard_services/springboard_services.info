@@ -1,0 +1,6 @@
+name = Springboard Services
+description = Provides Services module integration
+core = 7.x
+package = Jackson River Springboard
+configure = admin/springboard/services
+version = 7.x-4.x-dev
