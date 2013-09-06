@@ -30,18 +30,23 @@ function sb_social_share_event_load($share_id) {
  * Save share event
  */
 function sb_social_share_event_save($service, $sid) {
+  global $user;
   module_load_include('inc', 'webform', 'includes/webform.submissions');
   $nid = _sb_social_get_nid_by_sid($sid);
   $submission = webform_get_submission($nid, $sid);
-  $url = sb_social_share_url($nid, $submission->uid, $sid);
+  $settings = sb_social_get_current_settings();
+  $uid = !empty($submission->uid) ? $submission->uid : $user->uid;
+ 
+  $url = sb_social_share_url($nid, $uid, $sid, $service, $settings);
+
   // update is not included as these records should only
   // be created when a share event has taken place
   // and should not be editable after the fact.
   $query = db_insert('sb_social_shares');
   $record = array(
-    'uid' => $submission->uid,
-    'sid' => $submission->sid,
-    'nid' => $submission->nid,
+    'uid' => $uid,
+    'sid' => $sid,
+    'nid' => $nid,
     'service' => $service,
     'created' => (int) time(),
     'status' => 'pending',
@@ -54,6 +59,26 @@ function sb_social_share_event_save($service, $sid) {
     sb_social_add_share_to_queue($share_id);
   }
 
+}
+
+function sb_social_get_current_settings() {
+  if (arg(0) == 'node' && is_numeric(arg(1))) {
+    $node = node_load(arg(1));
+    $id = is_object($node) ? $node->nid : FALSE;
+  }
+  else {
+    // social supports both internal paths and path aliases so
+    // we need to check both.
+    $path = current_path();
+    $alias = drupal_get_path_alias($path);
+    $id = !empty($alias) ? array($path, $alias) : $path;
+  }
+
+  if ($id) {
+    $sid = _sb_social_sid_by_id($id);
+    $settings = sb_social_settings_load($sid);
+  }
+  return $settings;
 }
 
 /**
@@ -229,7 +254,8 @@ function _sb_social_get_nid_by_sid($sid) {
   static $data = array();
   if (empty($data[$sid])) {
     $result = db_query('SELECT nid FROM {webform_submissions} WHERE sid = :sid', array(':sid' => $sid));
-    $data[$sid] = $result->fetchField();
+    $nid = $result->fetchField();
+    $data[$sid] = $nid ? $nid : 0;
   }
   return $data[$sid];
 }

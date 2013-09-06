@@ -136,6 +136,17 @@ function fundraiser_sustainers_schema() {
       ),
     ),
     'primary key' => array('did'),
+    'indexes' => array(
+      'master_did' => array('master_did'),
+      'attempts_gateway_lock_next' => array('attempts', 'gateway_resp', 'lock_id', 'next_charge'),
+      'did_gateway_master' => array('did', 'gateway_resp', 'master_did'),
+      'did_lock_next' => array('did', 'lock_id', 'next_charge'),
+      'did_master' => array('did', 'master_did'),
+      'gateway_master' => array('gateway_resp', 'master_did'),
+      'lock_next' => array('lock_id', 'next_charge'),
+      'master_next_charge' => array('master_did', 'next_charge'),
+
+    ),
   );
   return $schema;
 }
@@ -313,4 +324,20 @@ function fundraiser_sustainers_update_7004(&$sandbox) {
   );
   db_create_table('fundraiser_sustainers_nodes', $schema['fundraiser_sustainers_nodes']);
   return array();
+}
+
+/**
+ * Add indexes to tables.
+ */
+function fundraiser_sustainers_update_7005() {
+  $ret = array();
+  $ret[] = db_add_index('fundraiser_sustainers', 'master_did', array('master_did'));
+  $ret[] = db_add_index('fundraiser_sustainers', 'attempts_gateway_lock_next', array('attempts', 'gateway_resp', 'lock_id', 'next_charge'));
+  $ret[] = db_add_index('fundraiser_sustainers', 'did_gateway_master', array('did', 'gateway_resp', 'master_did'));
+  $ret[] = db_add_index('fundraiser_sustainers', 'did_lock_next', array('did', 'lock_id', 'next_charge'));
+  $ret[] = db_add_index('fundraiser_sustainers', 'did_master', array('did', 'master_did'));
+  $ret[] = db_add_index('fundraiser_sustainers', 'gateway_master', array('gateway_resp', 'master_did'));
+  $ret[] = db_add_index('fundraiser_sustainers', 'lock_next', array('lock_id', 'next_charge'));
+  $ret[] = db_add_index('fundraiser_sustainers', 'master_next_charge', array('master_did', 'next_charge'));
+  return $ret;
 }

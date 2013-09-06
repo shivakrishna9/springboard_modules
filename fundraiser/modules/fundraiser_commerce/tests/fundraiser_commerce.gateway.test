@@ -20,12 +20,7 @@ class FundraiserCommerceGatewayTest extends FundraiserSetup {
   }
 
   public function setUp($modules = array(), $permissions = array()) {
-    $modules = array_merge($modules, array(
-      'encrypt'
-    ));
     parent::setUp($modules);
-    variable_set('encrypt_secure_key_path', DRUPAL_ROOT . '/sites/default/files/keys');
-    variable_set('encrypt_default_method', 'mcrypt_rij_256');
 
     $permissions = array_merge($permissions, array(
       'administer site configuration',

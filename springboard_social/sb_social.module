@@ -218,7 +218,11 @@ function sb_social_access_node_settings($node) {
  */
 function sb_social_init() {
   $node = FALSE;
-  $submission_id = (isset($_GET['sid']) && is_numeric($_GET['sid'])) ? $_GET['sid'] : FALSE;
+  $js_settings = array(
+    'sid' => (isset($_GET['sid']) && is_numeric($_GET['sid'])) ? $_GET['sid'] : 0,
+    'pubid' => variable_get('springboard_social_addthis_profile_id'),
+  );
+  drupal_add_js(array('sb_social' => $js_settings), 'setting');
 
   if (arg(0) == 'node' && is_numeric(arg(1))) {
     $node = node_load(arg(1));
@@ -255,7 +259,8 @@ function sb_social_init() {
           }
         }
       }
-      drupal_add_js('http://s7.addthis.com/js/250/addthis_widget.js', array('type' => 'external', 'scope' => 'footer'));
+      $prefix = !empty($_SERVER['HTTPS']) ? 'https://' : 'http://';
+      drupal_add_js($prefix . 's7.addthis.com/js/250/addthis_widget.js', array('type' => 'external', 'scope' => 'footer'));
       drupal_add_js(drupal_get_path('module', 'sb_social') . '/scripts/sb_social.addthis.js', 'file');
 
     }
@@ -432,7 +437,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
     
     $settings = sb_social_settings_load($sid);
     $enabled_plugins = sb_social_get_enabled_plugins();
-    $submission_id = (!isset($_GET['sid']) && is_numeric($_GET['sid'])) ? $_GET['sid'] : FALSE;
+    $submission_id = (isset($_GET['sid']) && is_numeric($_GET['sid'])) ? $_GET['sid'] : FALSE;
     foreach ($enabled_plugins as $service => $plugin) {
       if (!empty($plugin['token_replace'])) {
         $func = $plugin['token_replace'];
@@ -455,7 +460,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
         $buttons[] = theme('sb_social_share_button', $vars);
       }
       $buttons = implode("\n", $buttons); 
-      $replacements[$token] = $enabled_plugins ? theme('sb_social_share', array('buttons' => $buttons)) : '';
+      $replacements['[sb_social:share_links]'] = $enabled_plugins ? theme('sb_social_share', array('buttons' => $buttons)) : '';
     }  
     return $replacements;
   }

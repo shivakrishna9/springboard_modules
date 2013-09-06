@@ -436,6 +436,18 @@ function secure_prepopulate_clear_session($nid) {
 }
 
 /**
+ * Implements hook_cron().
+ */
+function secure_prepopulate_cron() {
+  // Cleanup the secure_prepopulate_expired table.
+  $max_days = variable_get('secure_prepopulate_expired_date_limit', 30);
+  $max_date = REQUEST_TIME - ($max_days * 24 * 60 * 60);
+  db_delete('secure_prepopulate_expired')
+    ->condition('expire_date', $max_date, '<')
+    ->execute();
+}
+
+/**
  * Helper function, creates a nested array of where components exist in the FAPI array for all components in a webform.
  *
  * @param $nid

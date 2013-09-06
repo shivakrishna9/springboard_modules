@@ -87,6 +87,9 @@ $schema['email_wrappers_webform'] = array(
       ),
     ),
     'primary key' => array('nid', 'eid'),
+    'indexes' => array(
+      'nid' => array('nid'),
+    ),
   );
 
   $schema['email_wrappers'] = array(
@@ -157,6 +160,9 @@ $schema['email_wrappers_webform'] = array(
       ),
     ),
     'primary key' => array('mid'),
+    'indexes' => array(
+      'module_delta' => array('module', 'delta'),
+    ),
   );
   return $schema;
 }
@@ -298,6 +304,16 @@ function email_wrappers_update_7002() {
     node_save($node);
   }
   return array();
+}
+
+/**
+ * Add indexes to tables.
+ */
+function email_wrappers_update_7003() {
+  $ret = array();
+  $ret[] = db_add_index('email_wrappers_webform', 'nid', array('nid'));
+  $ret[] = db_add_index('email_wrappers', 'module_delta', array('module', 'delta'));
+  return $ret;
 }
 
 /**
