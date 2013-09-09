@@ -2836,7 +2836,7 @@ function _fundraiser_gateway_switch_action_form($context) {
 
   $form['update_methods'] = array(
     '#title' => 'Payment Methods to Update',
-    '#description' => t('Select the payment methods to update. Do not select a payment method if you do want it to be updated.'),
+    '#description' => t('Select the payment methods to update. Only select a payment method if you want its settings to be changed on all the forms.'),
     '#type' => 'checkboxes',
     '#options' => $methods,
   );
