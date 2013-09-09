@@ -466,7 +466,11 @@ Thanks for your understanding.")),
   return system_settings_form($form);
 }
 
-
+/**
+ * Page callback to admin the date mode.
+ *
+ * @return array  Form API
+ */
 function fundraiser_sustaienr_date_mode_form() {
   $form = array();
   $queue_possible = FALSE;
@@ -571,6 +575,9 @@ function fundraiser_sustainer_date_mode_max_records() {
  * of the work which needs to be done during the batch processing.
  * The results of this function will be passed to the batch
  * processor for actual processing.
+ *
+ * @param boolean $mode  The date mode setting.
+ * @param integer $date  The numerical day of the month to set the charge date.
  */
 function fundraiser_sustainer_update_date_mode_batch($mode, $date) {
   $time = '01:01:01'; // One minute, one second after midnight.
@@ -580,6 +587,8 @@ function fundraiser_sustainer_update_date_mode_batch($mode, $date) {
     'WHERE next_charge > UNIX_TIMESTAMP(NOW())'); // Only the future ones.
 
   while ($order_info = db_fetch_array($future_orders)) {
+    // we pass mode, date, and time to every operation call even though they don't change.
+    // The reason is because we can't seem to be able to set $context['sandbox'] otherwise.
     $operations[] = array('fundraiser_sustainer_update_date_mode_operation', array($mode, $date, $time, $order_info));
   }
 
@@ -600,8 +609,11 @@ function fundraiser_sustainer_update_date_mode_batch($mode, $date) {
 /**
  * A batch operation for the date mode update.
  *
- * @param array $order_info
- * @param array $context
+ * @param boolean $mode
+ * @param integer $date The day of the month.
+ * @param string The time to use for the next charges.
+ * @param array $order_info  Includes order_id, master_order_id, and next_charge
+ * @param array $context  The batch variable that gets passed by reference between operation calls.
  */
 function fundraiser_sustainer_update_date_mode_operation($mode, $date, $time, $order_info, &$context) {
 
@@ -615,7 +627,6 @@ function fundraiser_sustainer_update_date_mode_operation($mode, $date, $time, $o
     $context['sandbox']['now'] = strtotime('now');
     $context['sandbox']['progress'] = 0;
     // count the number of sustainers to process
-    // Only the future ones.
     $context['sandbox']['max'] = fundraiser_sustainer_date_mode_max_records();
     $context['sandbox']['master_orders'] = array();
   }
@@ -688,8 +699,7 @@ function fundraiser_sustainer_update_date_mode_operation($mode, $date, $time, $o
 function fundraiser_sustainer_update_date_mode_finished($success, $results, $operations) {
 
   if ($success) {
-    // Here we could do something meaningful with the results.
-    // We just display the number of nodes we processed...
+    // display the number of sustainers processed and the result messages.
     drupal_set_message('Finished updating the existing sustainers to the new date. ' . count($results) . ' sustainers processed.');
 
     foreach ($results as $result) {
