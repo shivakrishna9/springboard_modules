@@ -347,27 +347,11 @@ function fundraiser_admin_settings() {
     );
   }
 
-  $form['sustainer']['fundraiser_sustainer_set_date_mode'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Set date mode'),
-    '#default_value' => variable_get('fundraiser_sustainer_set_date_mode', FALSE),
-    '#description' => t('Process all sustainer charges on a set date each month. ' .
-      'If this checkbox is left unmarked, sustainers will instead be processed ' .
-      'on the date of their anniversary. NOTE: Turning this feature on will convert ' .
-      'current sustainers to the new date for all future (and only future) charges. '.
-      'Turning this feature off thereafter will revert future charges to anniversary.'),
-    '#access' => $queue_possible,
-  );
-
-  $dates = array_combine(range(1,28), range(1,28)); // Why 28? Feb.
-  $form['sustainer']['fundraiser_sustainer_set_dates'] = array(
-    '#type' => 'select',
-    '#title' => t('Process date'),
-    '#description' => t('Select the day of each month to process sustainers.'),
-    '#options' => $dates,
-    '#multiple' => FALSE, // TODO set true.
-    '#default_value' => variable_get('fundraiser_sustainer_set_dates', array('15')),
-    '#access' => $queue_possible,
+  $form['sustainer']['fundraiser_sustainer_set_date_mode_link'] = array(
+    '#type' => 'markup',
+    '#prefix' => '<div>',
+    '#suffix' => '</div>',
+    '#value' => l('Configure sustainer date mode.', 'admin/settings/fundraiser/date_mode'),
   );
 
   $seconds = array_combine(range(1,60), range(1,60));
@@ -519,6 +503,12 @@ function fundraiser_sustaienr_date_mode_form() {
     '#access' => $queue_possible,
   );
 
+  $form['batch_warning'] = array(
+    '#type' => 'markup',
+    '#value' => '<div><p><strong>Warning:</strong>  Changing the settings will start off a batch process that needs to be completed. At least ' .
+      fundraiser_sustainer_date_mode_max_records() . ' records will need to be updated.</p></div>',
+  );
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => 'Submit',
@@ -564,6 +554,14 @@ function fundraiser_sustaienr_date_mode_form_submit($form, &$form_state) {
   // Start the batch process running
   batch_set(fundraiser_sustainer_update_date_mode_batch($new_mode, $new_date));
 
+}
+
+/**
+ * @return integer|FALSE  The number of future sustainer records.
+ */
+function fundraiser_sustainer_date_mode_max_records() {
+  return db_result(db_query('SELECT COUNT(master_order_id) FROM {fundraiser_recurring} ' .
+      'WHERE next_charge > UNIX_TIMESTAMP(NOW())'));
 }
 
 /**
@@ -618,8 +616,7 @@ function fundraiser_sustainer_update_date_mode_operation($mode, $date, $time, $o
     $context['sandbox']['progress'] = 0;
     // count the number of sustainers to process
     // Only the future ones.
-    $context['sandbox']['max'] = db_result(db_query('SELECT COUNT(master_order_id) FROM {fundraiser_recurring} ' .
-        'WHERE next_charge > %d', time()));
+    $context['sandbox']['max'] = fundraiser_sustainer_date_mode_max_records();
     $context['sandbox']['master_orders'] = array();
   }
 
@@ -674,7 +671,7 @@ function fundraiser_sustainer_update_date_mode_operation($mode, $date, $time, $o
     uc_order_comment_save($order_info['order_id'], $user->uid, $message, 'order', 'canceled', FALSE);
   }
 
-  watchdog('fundraiser_sustainers', $message);
+  watchdog('fundraiser', $message);
 
   // Store some result for post-processing in the finished callback.
   $context['results'][] = $message;
