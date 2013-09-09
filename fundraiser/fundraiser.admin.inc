@@ -462,7 +462,6 @@ An administrator has been notified and will correct the issue as soon as possibl
 Thanks for your understanding.")),
   );
 
-  $form['#submit'][] = 'fundraiser_sustainer_update_date_mode';
   return system_settings_form($form);
 }
 
