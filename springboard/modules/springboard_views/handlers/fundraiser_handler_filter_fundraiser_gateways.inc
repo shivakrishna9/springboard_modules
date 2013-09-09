@@ -2,25 +2,40 @@
 
 /**
  * @file
- * Definition of SalesforceLogHandlerFilterModule.
+ * Definition of fundraiser_handler_filter_fundraiser_gateways
  */
 
 /**
- * Filter by module.
- *
- * @ingroup views_filter_handlers
+ * Filter by a donation form's gateways
  */
-class fundraiser_handler_filter_fundraiser_gateways extends views_handler_filter_string {
-
+class fundraiser_handler_filter_fundraiser_gateways extends views_handler_filter {
   /**
-   * List of possible modules.
+   * Setup the exposed form as a select
    */
-  public function get_value_options() {
-   $this->value_options = array(0 => 'gateways');
-  }
-  
   public function exposed_form(&$form, &$form_state) {
     parent::exposed_form($form, $form_state);
-    dpm($form);
+    $form['gateways']['#type'] = 'select';
+    unset($form['gateways']['#size']);
+    $gateways = _fundraiser_gateway_info($id = NULL);
+    $form['gateways']['#options'] = array();
+    $form['gateways']['#options']['All'] = 'All';
+    foreach($gateways as $gateway) {
+      $form['gateways']['#options'][ $gateway['id'] ] = $gateway['title'];
+    }
+
+    $form[$value]['#default_value'] = 'All';
+  }
+
+  /**
+   * Add this filter to the query.
+   *
+   * The gateways are saved as a serialized string so using a LIKE query is the best way to search it
+   */
+  function query() {
+    $this->ensure_my_table();
+    if (!empty($this->value[0])) {
+      $field = "$this->table_alias.$this->real_field";
+      $this->query->add_where($this->options['group'], $field, '%' . db_like($this->value[0]) . '%', 'LIKE');
+    }
   }
 }
