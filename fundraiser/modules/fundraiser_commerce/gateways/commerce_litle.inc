@@ -175,6 +175,11 @@ function commerce_litle_get_cardonfile_pane_value($uid, $instance_id) {
 
   // Filter out expired cards.
   foreach ($stored_cards as $card_id => $card_data) {
+    // special case for echecks
+    if ($card_data->card_exp_year == 0 && $card_data->card_exp_month == 0) {
+      continue;
+    }
+
     if ($card_data->card_exp_year < date('Y') ||
       $card_data->card_exp_year == date('Y') && $card_data->card_exp_month < date('m')) {
       unset($stored_cards[$card_id]);
