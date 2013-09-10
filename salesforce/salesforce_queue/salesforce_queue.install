@@ -145,6 +145,8 @@ function salesforce_queue_update_7001() {
   $ret = array();
 
   db_drop_index('salesforce_queue', 'drupal_index');
+  db_add_unique_key('salesforce_queue', 'delta_drupal_module_object', array('delta', 'drupal_id', 'module', 'object_type'));
+  $ret[] = t('Replace "drupal_index" to a "delta_drupal_module_object" unique key on the {salesforce_queue} table.');
 
   db_add_index('salesforce_queue', 'created', array('created'));
   db_add_index('salesforce_queue', 'delta', array('delta'));
