@@ -2915,9 +2915,9 @@ function _fundraiser_gateway_switch_action_validate($form, $form_state) {
         $default_enabled = TRUE;
       }
     }
-  }
-  if (!$default_enabled) {
-    form_set_error('update_default', "You've selected to update the default method but haven't chosen an enabled method.");
+    if (!$default_enabled) {
+      form_set_error('update_default', "You've selected to update the default method but haven't chosen an enabled method.");
+    }
   }
 }
 
