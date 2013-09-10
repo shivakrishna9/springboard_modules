@@ -410,22 +410,20 @@ function fundraiser_update_7002() {
  * Add indexes to tables.
  */
 function fundraiser_update_7003() {
-  $ret = array();
+  db_add_index('fundraiser_donation', 'changed', array('changed'));
+  db_add_index('fundraiser_donation', 'gateway', array('gateway'));
+  db_add_index('fundraiser_donation', 'nid', array('nid'));
+  db_add_index('fundraiser_donation', 'uid', array('uid'));
+  db_add_index('fundraiser_donation', 'status', array('status'));
+  db_add_index('fundraiser_donation', 'sid', array('sid'));
+  db_add_index('fundraiser_donation', 'txn_id', array('txn_id'));
+  db_add_index('fundraiser_donation', 'changed_status', array('changed', 'status'));
+  db_add_index('fundraiser_donation', 'gateway_txn_id', array('gateway', 'txn_id'));
+  db_add_index('fundraiser_donation', 'nid_sid', array('nid', 'sid'));
+  db_add_index('fundraiser_donation', 'nid_uid', array('nid', 'uid'));
 
-  $ret[] = db_add_index('fundraiser_donation', 'changed', array('changed'));
-  $ret[] = db_add_index('fundraiser_donation', 'gateway', array('gateway'));
-  $ret[] = db_add_index('fundraiser_donation', 'nid', array('nid'));
-  $ret[] = db_add_index('fundraiser_donation', 'uid', array('uid'));
-  $ret[] = db_add_index('fundraiser_donation', 'status', array('status'));
-  $ret[] = db_add_index('fundraiser_donation', 'sid', array('sid'));
-  $ret[] = db_add_index('fundraiser_donation', 'txn_id', array('txn_id'));
-  $ret[] = db_add_index('fundraiser_donation', 'changed_status', array('changed', 'status'));
-  $ret[] = db_add_index('fundraiser_donation', 'gateway_txn_id', array('gateway', 'txn_id'));
-  $ret[] = db_add_index('fundraiser_donation', 'nid_sid', array('nid', 'sid'));
-  $ret[] = db_add_index('fundraiser_donation', 'nid_uid', array('nid', 'uid'));
+  db_add_index('fundraiser_refund', 'did', array('did'));
+  db_add_index('fundraiser_refund', 'receipt_id', array('receipt_id'));
 
-  $ret[] = db_add_index('fundraiser_refund', 'did', array('did'));
-  $ret[] = db_add_index('fundraiser_refund', 'receipt_id', array('receipt_id'));
-
-  return $ret;
+  return t('Added indexes to {fundraiser_donation} and {fundraiser_refund} tables.');
 }

@@ -310,10 +310,10 @@ function email_wrappers_update_7002() {
  * Add indexes to tables.
  */
 function email_wrappers_update_7003() {
-  $ret = array();
-  $ret[] = db_add_index('email_wrappers_webform', 'nid', array('nid'));
-  $ret[] = db_add_index('email_wrappers', 'module_delta', array('module', 'delta'));
-  return $ret;
+  db_add_index('email_wrappers_webform', 'nid', array('nid'));
+  db_add_index('email_wrappers', 'module_delta', array('module', 'delta'));
+
+  return t('Added index to {email_wrappers_webform} and {email_wrappers} tables.');
 }
 
 /**

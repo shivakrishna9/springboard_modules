@@ -129,9 +129,9 @@ function webform_user_update_7000(&$sandbox) {
  * Add indexes to tables.
  */
 function webform_user_update_7001() {
-  $ret = array();
-  $ret[] = db_add_index('webform_user_component_map', 'cid', array('cid'));
-  $ret[] = db_add_index('webform_user_component_map', 'map_id', array('map_id'));
-  $ret[] = db_add_index('webform_user_component_map', 'nid', array('nid'));
-  return $ret;
+  db_add_index('webform_user_component_map', 'cid', array('cid'));
+  db_add_index('webform_user_component_map', 'map_id', array('map_id'));
+  db_add_index('webform_user_component_map', 'nid', array('nid'));
+
+  return t('Added indexes to {webform_user_component_map} table.');
 }

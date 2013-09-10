@@ -292,10 +292,16 @@ function page_wrappers_update_7001() {
  */
 function page_wrappers_update_7002() {
   $ret = array();
-  $ret[] = db_drop_index('node_page_wrappers', 'indexes');
-  $ret[] = db_add_index('node_page_wrappers', 'nid', array('nid'));
-  $ret[] = db_add_index('node_page_wrappers', 'nid_weight', array('nid', 'weight'));
-  $ret[] = db_add_index('node_page_wrappers', 'wrapper_nid', array('wrapper_nid'));
-  $ret[] = db_add_index('node_page_wrappers', 'weight', array('weight'));
-  return $ret;
+
+  db_drop_index('node_page_wrappers', 'indexes');
+  db_add_index('node_page_wrappers', 'nid', array('nid'));
+  $ret[] = t('Renamed index "indexes" to "nid" on {node_page_wrappers} table.');
+
+
+  db_add_index('node_page_wrappers', 'nid_weight', array('nid', 'weight'));
+  db_add_index('node_page_wrappers', 'wrapper_nid', array('wrapper_nid'));
+  db_add_index('node_page_wrappers', 'weight', array('weight'));
+  $ret[] = t('Added additional indexes to {node_page_wrappers} table.');
+
+  return implode("\n", $ret);
 }
