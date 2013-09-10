@@ -273,7 +273,7 @@ function salesforce_log_update_7001() {
   db_add_index('salesforce_log_batch', 'delta_module_object', array('delta', 'module', 'object_type'));
   $ret[] = t('Renamed index "drupal_index" to "drupal_module_object" on {salesforce_log_batch} table.');
 
-  db_drop_index('salesforce_log_batch', 'item_id_bid');
+  db_drop_index('salesforce_log_item', 'item_id_bid');
   db_add_index('salesforce_log_item', 'bid_item', array('bid', 'item_id'));
   $ret[] = t('Renamed index "item_id_bid" to "bid_item" on {salesforce_log_item} table.');
 
