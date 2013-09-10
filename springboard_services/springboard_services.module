@@ -22,21 +22,21 @@ function springboard_services_menu() {
 
 function springboard_services_services_resources() {
   $springboard_resource = array(
-    'webform' => array(
+    'donation' => array(
       'operations' => array(
         'retrieve' => array(
-          'file' => array('type' => 'inc', 'module' => 'springboard_services', 'name' => 'resources/webform'),
-          'callback' => '_springboard_services_webform_resource_retrieve',
+          'file' => array('type' => 'inc', 'module' => 'springboard_services', 'name' => 'includes/springboard_services.services_callbacks'),
+          'callback' => 'springboard_services_donation_form_retrieve',
           'args' => array(
             array(
               'name' => 'nid',
               'optional' => FALSE,
               'source' => array('path' => 0),
               'type' => 'int',
-              'description' => 'The nid of the webform to get',
+              'description' => 'The nid of the donation form to get',
             ),
           ),
-          'access callback' => '_springboard_services_webform_resource_access',
+          'access callback' => 'springboard_services_donation_form_access',
           'access arguments' => array('view'),
           'access arguments append' => TRUE,
         ),
@@ -96,8 +96,8 @@ function springboard_services_services_resources() {
           'access arguments append' => TRUE,
         ),*/
         'index' => array(
-          'file' => array('type' => 'inc', 'module' => 'springoard_services', 'name' => 'resources/webform'),
-          'callback' => '_springboard_services_webform_resource_index',
+          'file' => array('type' => 'inc', 'module' => 'springoard_services', 'name' => 'includes/springoard_services.services_callbacks'),
+          'callback' => 'springboard_services_donation_form_index',
           'args' => array(
             array(
               'name' => 'page',
@@ -106,22 +106,6 @@ function springboard_services_services_resources() {
               'description' => 'The zero-based index of the page to get, defaults to 0.',
               'default value' => 0,
               'source' => array('param' => 'page'),
-            ),
-            array(
-              'name' => 'fields',
-              'optional' => TRUE,
-              'type' => 'string',
-              'description' => 'The fields to get.',
-              'default value' => '*',
-              'source' => array('param' => 'fields'),
-            ),
-            array(
-              'name' => 'parameters',
-              'optional' => TRUE,
-              'type' => 'array',
-              'description' => 'Parameters array',
-              'default value' => array(),
-              'source' => array('param' => 'parameters'),
             ),
             array(
               'name' => 'pagesize',
