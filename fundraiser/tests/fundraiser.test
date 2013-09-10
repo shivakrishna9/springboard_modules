@@ -312,4 +312,16 @@ class FundraiserTest extends FundraiserSetup {
       t('Fundraiser Email'));
   }
 
+  /**
+   * Test the creation of the encrypt key
+   */
+  function testFundraiserEncryptKey() {
+    $key_file = variable_get('encrypt_secure_key_path', '') . '/' . ENCRYPT_SECURE_KEY_FILE;
+    $string = NULL;
+    if (file_exists($key_file)) {
+      $string = file_get_contents($key_file);
+    }
+    $this->assertNotNull($string, 'The Encrypt key is being created and is populated with a string.');
+  }
+
 }
