@@ -133,7 +133,7 @@ class FundraiserTest extends FundraiserSetup {
    */
   function testFundraiserFormSSHAccess() {
     $node = parent::_fundraiser_setup_create_node();
-    $message = 'The donation form you are trying to access has not been secured properly.';
+    $message = 'We\'re sorry, but this donation form is experiencing a temporary problem. Please try again later.';
     variable_set('fundraiser_development_mode', 0); // TURN OFF DEFAULT MODE.
 
     // Specifically turn HTTPS on. Your test server should have HTTPS
