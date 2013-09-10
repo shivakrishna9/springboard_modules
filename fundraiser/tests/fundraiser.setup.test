@@ -32,7 +32,7 @@ class FundraiserSetup extends DrupalWebTestCase {
     parent::setUp($enable_modules);
 
     // Create a key file
-    variable_set('encrypt_secure_key_path', DRUPAL_ROOT . '/sites/default/files');
+    variable_set('encrypt_secure_key_path', DRUPAL_ROOT . '/' . variable_get('file_public_path', conf_path() . '/files'));
     variable_set('encrypt_default_method', 'mcrypt_rij_256');
     $key_file = variable_get('encrypt_secure_key_path', '') . '/' . ENCRYPT_SECURE_KEY_FILE;
     $open_file = fopen($key_file, 'wb');
