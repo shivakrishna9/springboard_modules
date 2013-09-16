@@ -140,6 +140,21 @@ function sb_social_get_id_by_sid($sid) {
 }
 
 /**
+ * Get settings id by drupal id
+ *
+ * @param $id
+ * Node id for node settings, path for path settings.
+ *
+ * @return
+ * Returns the sid associated with the given id, or FALSE if no records were found.
+ */
+function sb_social_get_sid_by_id($id) {
+  $result = db_query('SELECT sid FROM {sb_social_settings} WHERE id = :id', array(':id' => $id));
+  $data = $result->fetchField();
+  return $data ? $data : FALSE;
+}
+
+/**
  * Load all path settings, used by path admin list page.
  */
 function sb_social_path_settings_load_all() {

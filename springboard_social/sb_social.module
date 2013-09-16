@@ -203,7 +203,10 @@ function sb_social_access_node_settings($node) {
  * purge share content settings when a node is deleted
  */
  function sb_social_node_delete($node) {
-   sb_social_webform_settings_delete($node->nid);
+   $sid = sb_social_get_sid_by_id($node->nid);
+   if (is_numeric($sid) && $sid) {
+     sb_social_settings_delete($sid);
+   }
 }
 
 /**
