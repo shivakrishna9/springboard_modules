@@ -1095,7 +1095,7 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
       $state_field['#prefix'] = '<div id="zone-select-wrapper">';
       $state_field['#suffix'] = '</div>';
 
-      // preload any fields if the user is logged in and if offline exists, when not in offline mode 
+      // preload any fields if the user is logged in and if offline exists, when not in offline mode
       if (user_is_logged_in() &&
         ( !function_exists('_fundraiser_offline_is_offline') || (function_exists('_fundraiser_offline_is_offline') && !_fundraiser_offline_is_offline()) )
         ) {
@@ -2416,10 +2416,22 @@ function _fundraiser_queue_process_recurring_donation($item) {
 function _fundraiser_process_recurring_donation($order_id, $batch_id, &$successes, &$fails) {
   // In order to prevent queue handling from re-processing (prevent possible queue issues).
   // First check that the order locked is the batch id and not 'processing'.
-  $this_lock_id = db_query('SELECT lock_id FROM {fundraiser_recurring} ' .
-    'WHERE order_id = %d', $order_id);
-  $this_lock_id = db_fetch_array($this_lock_id);
-  $lock_id = isset($this_lock_id['lock_id']) ? $this_lock_id['lock_id'] : 0;
+
+  $sustainer_result = db_query("SELECT lock_id FROM {fundraiser_recurring}
+    WHERE next_charge < %d AND
+    (gateway_resp IS NULL OR gateway_resp = 'failed') AND
+    attempts < 3 AND
+    order_id = %d",
+    array(time(), $order_id)
+  );
+
+  $sustainer = db_fetch_object($sustainer_result);
+  if (!$sustainer) {
+    // no rows matched the criteria, so give up.
+    return;
+  }
+
+  $lock_id = !empty($sustainer->lock_id) ? $sustainer->lock_id : 0;
   if ($lock_id != 'processing' && $lock_id != 0) {
     $this_lock_id = db_query('UPDATE {fundraiser_recurring} ' .
       'SET lock_id = \'processing\' ' . // Locking to prevent the risk of concurrency during drupal queue handling.
@@ -2511,9 +2523,7 @@ function _fundraiser_process_recurring_donation($order_id, $batch_id, &$successe
   }
   // Reset the lock id from processing to the original batch id.
   // That way we can tell which orders went into the queue as a group.
-  $this_lock_id = db_query('UPDATE {fundraiser_recurring} ' .
-    'SET lock_id = \'processing\' ' .
-    'WHERE order_id = %d', $batch_id);
+  db_query("UPDATE {fundraiser_recurring} SET lock_id = '%s' WHERE order_id = %d", array($batch_id, $order_id));
 }
 
 /**
