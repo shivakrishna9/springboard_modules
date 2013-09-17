@@ -1647,7 +1647,11 @@ function _fundraiser_commerce_order_data_prepare($data) {
  * Retrieve the fundraiser commerce order data
  */
 function _fundraiser_commerce_order_data_retrieve($data) {
-  return unserialize(_fundraiser_commerce_decrypt($data));
+  $decrypted = _fundraiser_commerce_decrypt($data);
+  if (is_string($decrypted) && $unserialized = @unserialize($decrypted)) {
+    return $unserialized;
+  }
+  return $decrypted;
 }
 
 /**
