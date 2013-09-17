@@ -675,7 +675,6 @@ function fundraiser_webform_fundraiser_donation_post_submit($form, $form_state, 
   // Handle behavior if it was a failure.
   if (!isset($donation->result['success']) || (isset($donation->result['success']) && $donation->result['success'] == FALSE) ) {
     // Tell webform we're not done and rebuild the form.
-    unset($form_state['values']['details']['sid']);
     if (!isset($donation->result['message']) || empty($donation->result['message'])) {
       $donation->result['message'] = t('Your payment method has been denied. Please try another.');
     }
