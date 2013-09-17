@@ -3426,3 +3426,18 @@ function fundraiser_secure_confirmation_flag($sid) {
     db_query('INSERT INTO {fundraiser_secure} (sid) VALUES (%s)', $sid);
   }
 }
+
+/**
+ * Returns the previous sustainer order in the sustainer series.
+ *
+ * @param integer $master_order_id
+ * @param integer $order_id
+ * @return integer|FALSE
+ */
+function fundraiser_get_previous_order_in_series($master_order_id, $order_id) {
+  return db_result(db_query_range("SELECT order_id FROM {fundraiser_recurring}
+      WHERE master_order_id = %d
+      AND order_id < %d
+      ORDER BY order_id DESC",
+      $master_order_id, $order_id, 0, 1));
+}
