@@ -2410,6 +2410,7 @@ function _fundraiser_queue_process_recurring_donation($item) {
 // ON PAIN OF DEATH BY TJ.
 /**
  * Helper function, process the donation given the order id.
+ *
  * Seriously. DO NOT CALL THIS FUNCTION - this function is only called after key processing is handled.
  * In either the cron mode or the queue mode. Calling it directly anywhere else bypasses key checking.
  */
@@ -2429,8 +2430,9 @@ function _fundraiser_process_recurring_donation($order_id, $batch_id, &$successe
   // if a sustainer doesn't match the above criteria, then we don't do anything.
   $sustainer = db_fetch_object($sustainer_result);
   if ($sustainer) {
-    $this_lock_id = db_query('UPDATE {fundraiser_recurring} ' .
-      'SET lock_id = \'processing\' ' . // Locking to prevent the risk of concurrency during drupal queue handling.
+    // Locking to prevent the risk of concurrency during drupal queue handling.
+    db_query('UPDATE {fundraiser_recurring} ' .
+      'SET lock_id = \'processing\' ' .
       'WHERE order_id = %d', $order_id);
     $order = uc_order_load($order_id);
     $total = $order->order_total;
@@ -2453,10 +2455,6 @@ function _fundraiser_process_recurring_donation($order_id, $batch_id, &$successe
         array('!id' => $order->order_id, '!nid' => $order->products[0]->nid)), NULL, WATCHDOG_CRITICAL);
     }
     else {
-  // I'm repeating this here in case you didn't read the note above:
-  // STOP.
-  // DO NOT CALL THIS FUNCTION DIRECTLY.
-  // ON PAIN OF DEATH BY TJ.
       // Process the order
       $result = $charge_function($order_id, $total, $data);
       if ($result['success']) {
@@ -2477,10 +2475,6 @@ function _fundraiser_process_recurring_donation($order_id, $batch_id, &$successe
         }
       }
       else {
-  // I'm repeating this here in case you didn't read the note above:
-  // STOP.
-  // DO NOT CALL THIS FUNCTION DIRECTLY.
-  // ON PAIN OF DEATH BY TJ.
         $fails++;
         db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = %d", $order->order_id);
         db_query("UPDATE {fundraiser_recurring} SET
@@ -2512,10 +2506,6 @@ function _fundraiser_process_recurring_donation($order_id, $batch_id, &$successe
       }
       uc_credit_cache('clear');
     }
-  // I'm repeating this here in case you didn't read the note above:
-  // STOP.
-  // DO NOT CALL THIS FUNCTION DIRECTLY.
-  // ON PAIN OF DEATH BY TJ.
 
     // Reset the lock id from processing to the original batch id.
     // That way we can tell which orders went into the queue as a group.
