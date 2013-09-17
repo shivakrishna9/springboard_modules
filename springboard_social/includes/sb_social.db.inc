@@ -37,7 +37,7 @@ function sb_social_share_event_save($service, $sid) {
   $settings = sb_social_get_current_settings();
   $uid = !empty($submission->uid) ? $submission->uid : $user->uid;
  
-  $url = sb_social_share_url($nid, $uid, $sid, $service, $settings);
+  $url = sb_social_share_tracker_url($nid, $uid, $sid, $service, $settings);
 
   // update is not included as these records should only
   // be created when a share event has taken place

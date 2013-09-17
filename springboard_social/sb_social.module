@@ -542,6 +542,49 @@ function sb_social_short_url($service, $settings, $submission_id = FALSE) {
   return shorten_url($url);
 }
 
+
+/**
+ * generate url for share tracking purposes
+ *
+ * @param $nid
+ * node id
+ *
+ * @param $uid
+ * User id
+ *
+ * @sid
+ * webform submission id
+ *
+ * @service
+ * Social network
+ *
+ * @settings
+ * an array of additional settings
+ */
+function sb_social_share_tracker_url($nid, $uid, $sid, $service, $settings) {
+  $node = node_load($nid);
+
+  $options = array(
+    'absolute' => TRUE,
+    'query' => array(
+      'social_referer_transaction' => $sid,
+      'social_referrer_network' => $service,
+    ),
+  );
+
+  if (module_exists('market_source') && isset($settings['data']['market_source'])) {
+    foreach ($settings['data']['market_source'] as $key => $value) {
+      if (!$value) {
+        continue;
+      }
+      $options['query'][$key] = $value;
+    }
+  }
+  $url = url('node/' . $nid, $options);
+  return url('node/' . $nid, $options);
+} 
+
+
 function sb_social_short_url_old($node, $sid, $service, $settings = NULL) {
   $submission = _sb_social_load_submission($sid);
   $uid = $submission['uid'];
