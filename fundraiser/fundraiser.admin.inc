@@ -260,7 +260,7 @@ function fundraiser_admin_settings() {
     '#default_value' => variable_get('fundraiser_development_mode', 0),
     '#description' => t('Development mode allows you to access donation forms over HTTP.'),
   );
- 
+
   $form['fundraiser_cleanup_submissions_on_fail'] = array(
     '#type' => 'checkbox',
     '#title' => t('Cleanup failures'),
@@ -335,7 +335,7 @@ function fundraiser_admin_settings() {
     '#title' => t('Sustainer settings'),
     '#collapsible' => TRUE,
   );
-  
+
   $queue_possible = FALSE;
   if (module_exists('drupal_queue')) {
     $queue_possible = TRUE;
@@ -380,7 +380,7 @@ function fundraiser_admin_settings() {
     '#default_value' => variable_get('fundraiser_sustainer_set_seconds', 30),
     '#access' => $queue_possible,
   );
-  
+
   $form['sustainer']['fundraiser_cc_expiration_message']['fundraiser_sustainers_send_email'] = array(
     '#type' => 'checkbox',
     '#title' => t('Send expiration email'),
@@ -508,8 +508,9 @@ function fundraiser_sustainer_update_date_mode($form, &$form_state) {
 
   drupal_set_message('Updating the existing sustainers to the new date.');
   // Looks like we switched modes or dates, so we need to update all the future charges.
+  // Need to order this query so earlier orders are processed first.
   $future_orders = db_query('SELECT master_order_id, order_id, next_charge FROM {fundraiser_recurring} ' .
-    'WHERE next_charge > %d', time()); // Only the future ones.
+    'WHERE next_charge > %d ORDER BY order_id ASC', time()); // Only the future ones.
   // Loop through all future charges.
   $master_orders = array();
   $now = strtotime('now');
@@ -531,6 +532,21 @@ function fundraiser_sustainer_update_date_mode($form, &$form_state) {
     $base_date = $order_info['next_charge'];
     $this_month_year = date('F Y', $base_date); // Use the month and date of the next charge.
     $set_charge_date = strtotime($date . ' ' . $this_month_year . ' '. $time);
+
+    $previous_order_id = fundraiser_get_previous_order_in_series($order_info['master_order_id'], $order_info['order_id']);
+    if ($previous_order_id !== FALSE) {
+      $previous_order_charge = db_result(db_query("SELECT next_charge FROM {fundraiser_recurring} WHERE order_id = %d", $previous_order_id));
+
+      $this_date = new DateTime(date('Y-m-d', $set_charge_date));
+      $previous_date = new DateTime(date('Y-m-d', $previous_order_charge));
+      $days_since = $this_date->diff($previous_date)->days;
+
+      if ($days_since > 32) {
+        $set_charge_date = strtotime('-1 month', $set_charge_date);
+      }
+
+    }
+
     // If our current date is already past the given charge date, then this new charge date
     // Will be in the past. We cannot kick it forward by one, as we'll double up on next month.
     // So we need to just drop this one in the series. We can't just move it forward to the end
