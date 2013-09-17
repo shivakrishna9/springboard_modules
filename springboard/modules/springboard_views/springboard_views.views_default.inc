@@ -570,6 +570,9 @@ function springboard_views_views_default_views() {
 
   /* Display: Fundraiser Gateway Switcher */
   $handler = $view->new_display('page', 'Fundraiser Gateway Switcher', 'page_3');
+  $handler->display->display_options['defaults']['access'] = FALSE;
+  $handler->display->display_options['access']['type'] = 'perm';
+  $handler->display->display_options['access']['perm'] = 'use gateway switcher';
   $handler->display->display_options['defaults']['pager'] = FALSE;
   $handler->display->display_options['pager']['type'] = 'full';
   $handler->display->display_options['pager']['options']['items_per_page'] = '50';
