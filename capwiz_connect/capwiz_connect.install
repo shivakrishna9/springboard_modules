@@ -157,8 +157,8 @@ function capwiz_connect_schema() {
  * Add indexes to table.
  */
 function capwiz_connect_update_7001() {
-  $ret = array();
-  $ret[] = db_add_unique_key('capwiz_connect_actions', 'unique', array('capwiz_alert_id', 'capwiz_user_id', 'action_timestamp', 'message_id'));
-  $ret[] = db_add_index('capwiz_connect_actions', 'message_id', array('message_id'));
-  return $ret;
+  db_add_unique_key('capwiz_connect_actions', 'unique', array('capwiz_alert_id', 'capwiz_user_id', 'action_timestamp', 'message_id'));
+  db_add_index('capwiz_connect_actions', 'message_id', array('message_id'));
+
+  return t('Added unique key to {capwiz_connect_actions} and index {capwiz_connect_actions} tables.');
 }

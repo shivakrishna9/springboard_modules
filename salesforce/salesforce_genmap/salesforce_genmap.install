@@ -111,7 +111,7 @@ function salesforce_genmap_schema() {
  * Add indexes to tables.
  */
 function salesforce_genmap_update_7001() {
-  $ret = array();
-  $ret[] = db_add_index('salesforce_genmap_map', 'nid_map_handler', array('nid', 'map_handler'));
-  return $ret;
+  db_add_index('salesforce_genmap_map', 'nid_map_handler', array('nid', 'map_handler'));
+
+  return t('Added index to {salesforce_genmap_map} table.');
 }

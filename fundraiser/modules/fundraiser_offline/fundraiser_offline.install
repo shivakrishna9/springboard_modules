@@ -78,8 +78,8 @@ function fundraiser_offline_schema() {
  * Add indexes to tables.
  */
 function fundraiser_offline() {
-  $ret = array();
-  $ret[] = db_add_index('fundraiser_offline', 'status', array('status'));
-  $ret[] = db_add_index('fundraiser_offline_donation', 'nid', array('nid'));
-  return $ret;
+  db_add_index('fundraiser_offline', 'status', array('status'));
+  db_add_index('fundraiser_offline_donation', 'nid', array('nid'));
+
+  return t('Added index to {fundraiser_offline} and {fundraiser_offline_donation} tables.');
 }

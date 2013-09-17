@@ -133,7 +133,7 @@ class FundraiserTest extends FundraiserSetup {
    */
   function testFundraiserFormSSHAccess() {
     $node = parent::_fundraiser_setup_create_node();
-    $message = 'The donation form you are trying to access has not been secured properly.';
+    $message = 'We\'re sorry, but this donation form is experiencing a temporary problem. Please try again later.';
     variable_set('fundraiser_development_mode', 0); // TURN OFF DEFAULT MODE.
 
     // Specifically turn HTTPS on. Your test server should have HTTPS
@@ -310,6 +310,18 @@ class FundraiserTest extends FundraiserSetup {
     $message = t('Donation was successfully processed.');
     $this->assertText($message, t('A donation with a set other_amount was successfully processed.'),
       t('Fundraiser Email'));
+  }
+
+  /**
+   * Test the creation of the encrypt key
+   */
+  function testFundraiserEncryptKey() {
+    $key_file = variable_get('encrypt_secure_key_path', '') . '/' . ENCRYPT_SECURE_KEY_FILE;
+    $string = NULL;
+    if (file_exists($key_file)) {
+      $string = file_get_contents($key_file);
+    }
+    $this->assertNotNull($string, 'The Encrypt key is being created and is populated with a string.');
   }
 
 }

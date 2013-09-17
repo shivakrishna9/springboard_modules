@@ -117,8 +117,8 @@ function sb_social_schema() {
  * Add indexes to tables.
  */
 function sb_social_update_7001() {
-  $ret = array();
-  $ret[] = db_add_index('sb_social_shares', 'sid', array('sid'));
-  $ret[] = db_add_index('sb_social_settings', 'type', array('type'));
-  return $ret;
+  db_add_index('sb_social_shares', 'sid', array('sid'));
+  db_add_index('sb_social_settings', 'type', array('type'));
+
+  return t('Added index to {sb_social_shares} and {sb_social_settings} tables.');
 }

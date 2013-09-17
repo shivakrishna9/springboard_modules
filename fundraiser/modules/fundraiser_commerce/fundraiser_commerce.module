@@ -1635,7 +1635,7 @@ function _fundraiser_commerce_order_data_prepare($data) {
 
   // Check to ensure the correct encryption was used
   $encryption_array = unserialize($encrypted);
-  if ($encryption_array['method'] != 'mcrypt_rij_256' || $encryption_array['key_name'] != 'secure_file_key') {
+  if (!isset($encryption_array['method']) || $encryption_array['method'] != 'mcrypt_rij_256' || !isset($encryption_array['key_name']) || $encryption_array['key_name'] != 'secure_file_key') {
     watchdog('fundraiser_commerce', 'The encryption module has not been configured correctly. You may need to patch or update your version.', array(), WATCHDOG_EMERGENCY, l('Fix', 'admin/config/system/encrypt'));
     return FALSE;
   }

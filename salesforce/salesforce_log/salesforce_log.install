@@ -269,38 +269,41 @@ function salesforce_log_schema() {
 function salesforce_log_update_7001() {
   $ret = array();
 
-  $ret[] = db_drop_index('salesforce_log_batch', 'drupal_index');
-  $ret[] = db_drop_index('salesforce_log_batch', 'item_id_bid');
+  db_drop_index('salesforce_log_batch', 'drupal_index');
+  db_add_index('salesforce_log_batch', 'delta_module_object', array('delta', 'module', 'object_type'));
+  $ret[] = t('Renamed index "drupal_index" to "drupal_module_object" on {salesforce_log_batch} table.');
 
-  $ret[] = db_add_index('salesforce_log_batch', 'end', array('end'));
-  $ret[] = db_add_index('salesforce_log_batch', 'failures', array('failures'));
-  $ret[] = db_add_index('salesforce_log_batch', 'module', array('module'));
-  $ret[] = db_add_index('salesforce_log_batch', 'object_type', array('object_type'));
-  $ret[] = db_add_index('salesforce_log_batch', 'operation', array('operation'));
-  $ret[] = db_add_index('salesforce_log_batch', 'successes', array('successes'));
-  $ret[] = db_add_index('salesforce_log_batch', 'delta_module_object', array('delta', 'module', 'object_type'));
-  $ret[] = db_add_index('salesforce_log_batch', 'end_bid', array('end', 'bid'));
-  $ret[] = db_add_index('salesforce_log_batch', 'fail_module', array('failures', 'module'));
-  $ret[] = db_add_index('salesforce_log_batch', 'fail_module_object_op', array('failures', 'module', 'object_type', 'operation'));
-  $ret[] = db_add_index('salesforce_log_batch', 'fail_object', array('failures', 'object_type'));
-  $ret[] = db_add_index('salesforce_log_batch', 'fail_object_op', array('failures', 'object_type', 'operation'));
-  $ret[] = db_add_index('salesforce_log_batch', 'fail_op', array('failures', 'operation'));
-  $ret[] = db_add_index('salesforce_log_batch', 'module_object', array('module', 'object_type'));
-  $ret[] = db_add_index('salesforce_log_batch', 'module_object_op', array('module', 'object_type', 'operation'));
-  $ret[] = db_add_index('salesforce_log_batch', 'module_op', array('module', 'operation'));
-  $ret[] = db_add_index('salesforce_log_batch', 'object_op', array('object_type', 'operation'));
+  db_drop_index('salesforce_log_item', 'item_id_bid');
+  db_add_index('salesforce_log_item', 'bid_item', array('bid', 'item_id'));
+  $ret[] = t('Renamed index "item_id_bid" to "bid_item" on {salesforce_log_item} table.');
 
-  $ret[] = db_add_index('salesforce_log_item', 'bid', array('bid'));
-  $ret[] = db_add_index('salesforce_log_item', 'drupal_id', array('drupal_id'));
-  $ret[] = db_add_index('salesforce_log_item', 'error_code', array('error_code'));
-  $ret[] = db_add_index('salesforce_log_item', 'item_id', array('item_id'));
-  $ret[] = db_add_index('salesforce_log_item', 'object_type', array('object_type'));
-  $ret[] = db_add_index('salesforce_log_item', 'sfid', array('sfid'));
-  $ret[] = db_add_index('salesforce_log_item', 'status', array('status'));
-  $ret[] = db_add_index('salesforce_log_item', 'bid_drupal_object', array('bid', 'drupal_id', 'object_type'));
-  $ret[] = db_add_index('salesforce_log_item', 'bid_item', array('bid', 'item_id'));
-  $ret[] = db_add_index('salesforce_log_item', 'drupal_object', array('drupal_id', 'object_type'));
-  $ret[] = db_add_index('salesforce_log_item', 'object_status', array('object_type', 'status'));
+  db_add_index('salesforce_log_batch', 'end', array('end'));
+  db_add_index('salesforce_log_batch', 'failures', array('failures'));
+  db_add_index('salesforce_log_batch', 'module', array('module'));
+  db_add_index('salesforce_log_batch', 'object_type', array('object_type'));
+  db_add_index('salesforce_log_batch', 'operation', array('operation'));
+  db_add_index('salesforce_log_batch', 'successes', array('successes'));
+  db_add_index('salesforce_log_batch', 'end_bid', array('end', 'bid'));
+  db_add_index('salesforce_log_batch', 'fail_module', array('failures', 'module'));
+  db_add_index('salesforce_log_batch', 'fail_module_object_op', array('failures', 'module', 'object_type', 'operation'));
+  db_add_index('salesforce_log_batch', 'fail_object', array('failures', 'object_type'));
+  db_add_index('salesforce_log_batch', 'fail_object_op', array('failures', 'object_type', 'operation'));
+  db_add_index('salesforce_log_batch', 'fail_op', array('failures', 'operation'));
+  db_add_index('salesforce_log_batch', 'module_object', array('module', 'object_type'));
+  db_add_index('salesforce_log_batch', 'module_object_op', array('module', 'object_type', 'operation'));
+  db_add_index('salesforce_log_batch', 'module_op', array('module', 'operation'));
+  db_add_index('salesforce_log_batch', 'object_op', array('object_type', 'operation'));
+  db_add_index('salesforce_log_item', 'bid', array('bid'));
+  db_add_index('salesforce_log_item', 'drupal_id', array('drupal_id'));
+  db_add_index('salesforce_log_item', 'error_code', array('error_code'));
+  db_add_index('salesforce_log_item', 'item_id', array('item_id'));
+  db_add_index('salesforce_log_item', 'object_type', array('object_type'));
+  db_add_index('salesforce_log_item', 'sfid', array('sfid'));
+  db_add_index('salesforce_log_item', 'status', array('status'));
+  db_add_index('salesforce_log_item', 'bid_drupal_object', array('bid', 'drupal_id', 'object_type'));
+  db_add_index('salesforce_log_item', 'drupal_object', array('drupal_id', 'object_type'));
+  db_add_index('salesforce_log_item', 'object_status', array('object_type', 'status'));
+  $ret[] = t('Added more indexes to {salesforce_log_batch} and {salesforce_log_item} tables.');
 
-  return $ret;
+  return implode("\n", $ret);
 }
