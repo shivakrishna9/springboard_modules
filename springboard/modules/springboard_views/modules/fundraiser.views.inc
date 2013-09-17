@@ -30,7 +30,7 @@ function springboard_views_fundraiser_views_data() {
     ),
   );
 
-  $data['fundraiser']['gateway'] = array(
+  $data['fundraiser']['gateways'] = array(
     'title' => t('Gateway'),
     'help' => t('The payment gateway the donation form uses to process credit cards.'),
     'field' => array(
@@ -38,7 +38,7 @@ function springboard_views_fundraiser_views_data() {
       'click sortable' => TRUE,
     ),
     'filter' => array(
-      'handler' => 'views_handler_filter_string',
+      'handler' => 'fundraiser_handler_filter_fundraiser_gateways',
     ),
     'sort' => array(
       'handler' => 'views_handler_sort',
