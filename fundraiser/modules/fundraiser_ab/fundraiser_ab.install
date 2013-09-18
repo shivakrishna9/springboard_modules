@@ -126,8 +126,7 @@ function fundraiser_ab_update_6200() {
     ),
   );
 
-  db_create_table($ret, 'fundraiser_ab_stats', $schema);
-  return $ret;
+  db_create_table('fundraiser_ab_stats', $schema);
 }
 
 /**
