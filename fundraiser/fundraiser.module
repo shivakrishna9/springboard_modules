@@ -3554,8 +3554,6 @@ function fundraiser_sustainer_fix_date_mode() {
 
   drush_print('Iterating through serieses.');
 
-  $now = strtotime('now');
-
   $master_ids = fundraiser_get_master_order_ids_after($now);
 
   foreach ($master_ids as $master_id) {
@@ -3603,7 +3601,7 @@ function fundraiser_sustainer_fix_date_mode() {
         'WHERE order_id = %d', $new_date, $order['order_id']);
 
       drush_print('Updated order '. $order['order_id'] .
-        ' (master order ' . $master_id . ') ' .
+        ' (master order ' . $master_id . ')' .
         ' from ' .
         date('Y-m-d', $order['next_charge']) .
         ' to ' . date('Y-m-d', $new_date));
@@ -3618,4 +3616,65 @@ function fundraiser_sustainer_fix_date_mode() {
   drush_print($no_change . ' rows left unchanged');
   drush_print($baseline_rows . ' baseline date rows');
 
+}
+
+/**
+ * Finds duplicates and gaps in future sustainers.
+ *
+ * Should be run from drush eval.
+ */
+function fundraiser_sustainer_find_duplicates_and_gaps() {
+  $count = 0;
+  $gaps = 0;
+  $now = strtotime('now');
+
+  $mode = variable_get('fundraiser_sustainer_set_date_mode', FALSE);
+
+  if (!$mode) {
+    drush_print('Date mode is not enabled.');
+    return;
+  }
+
+  drush_print('Iterating through serieses.');
+
+  $master_ids = fundraiser_get_master_order_ids_after($now);
+
+  foreach ($master_ids as $master_id) {
+    $orders = fundraiser_get_sustainer_series($master_id);
+    $charges = array();
+
+    foreach ($orders as $order) {
+      if ($order['next_charge'] > $now && $order['gateway_resp'] == NULL) {
+        $charges[$order['next_charge']][] = $order['order_id'];
+      }
+
+    }
+
+    $previous_charge_date = FALSE;
+    foreach ($charges as $date => $dupes) {
+      if ($previous_charge_date) {
+        if ($date - $previous_charge_date > (3600 * 24 * 31)) {
+          drush_print('gap found (master ID ' . $master_id . ') between order ' . $charges[$previous_charge_date][0] . ' and order ' . $charges[$date][0]);
+          $gaps++;
+        }
+      }
+      $previous_charge_date = $date;
+      if (count($dupes) > 1) {
+        drush_print('Master ID ' . $master_id . ' for ' . date('Y-m-d', $date) . ' has multiple orders.');
+        foreach ($dupes as $dupe) {
+          foreach ($orders as $order) {
+            if ($order['order_id'] == $dupe) {
+              drush_print(var_export($order, TRUE));
+              break;
+            }
+          }
+        }
+
+        $count++;
+      }
+    }
+  }
+
+  drush_print($count . ' sets of duplicates found.');
+  drush_print($gaps . ' gaps found between orders.');
 }
