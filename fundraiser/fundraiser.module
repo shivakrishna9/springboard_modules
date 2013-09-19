@@ -3433,6 +3433,8 @@ function fundraiser_secure_confirmation_flag($sid) {
  * @param integer $master_order_id
  * @param integer $order_id
  * @return integer|FALSE
+ *
+ * @deprecated
  */
 function fundraiser_get_previous_order_in_series($master_order_id, $order_id) {
   return db_result(db_query_range("SELECT order_id FROM {fundraiser_recurring}
@@ -3453,9 +3455,12 @@ function fundraiser_get_previous_order_in_series($master_order_id, $order_id) {
 function fundraiser_get_sustainer_series($master_order_id) {
   $return = array();
 
-  $return[0] = db_fetch_array(db_query("SELECT order_id, created AS next_charge, modified FROM {uc_orders} WHERE order_id = %d", $master_order_id));
+  $return[0] = db_fetch_array(
+    db_query("SELECT order_id, created AS next_charge, modified
+    FROM {uc_orders} WHERE order_id = %d", $master_order_id)
+  );
 
-  // not sure these are good assumptions?
+  // Assume the master order succeeded.
   $return[0]['gateway_resp'] = 'success';
   $return[0]['attempts'] = 0;
 
@@ -3503,23 +3508,18 @@ function fundraiser_get_master_order_ids_after($timestamp) {
  *
  * @return array|bool
  */
-function fundraiser_get_baseline_info($orders) {
+function fundraiser_sustainer_get_baseline_info($orders) {
   $now = strtotime('now');
   foreach ($orders as $i => $order) {
     // element 0 is the master order
     // element 1 is the first sustainer
     // skip the master order.
-    if ($i == 0) {
-      continue;
-    }
-
     // skip past orders
-    if ($order['next_charge'] < $now) {
-      continue;
-    }
-
     // skip future failed and canceled orders.
-    if (in_array($order['gateway_resp'], array('failed', 'canceled'))) {
+    if ($i == 0 ||
+      $order['next_charge'] < $now ||
+      in_array($order['gateway_resp'], array('failed', 'canceled'))
+    ) {
       continue;
     }
 
@@ -3540,11 +3540,6 @@ function fundraiser_get_baseline_info($orders) {
  * Should be okay to run this multiple times.
  */
 function fundraiser_sustainer_fix_date_mode() {
-  $count = 0;
-  $past_records = 0;
-  $future_processed_orders = 0;
-  $baseline_rows = 0;
-
   $mode = variable_get('fundraiser_sustainer_set_date_mode', FALSE);
 
   if (!$mode) {
@@ -3552,31 +3547,38 @@ function fundraiser_sustainer_fix_date_mode() {
     return;
   }
 
-  drush_print('Iterating through serieses.');
+  $count = 0;
+  $past_records = 0;
+  $future_processed_orders = 0;
+  $baseline_rows = 0;
+  $now = strtotime('now');
 
   $master_ids = fundraiser_get_master_order_ids_after($now);
 
+  drush_print('Iterating through serieses.');
+
   foreach ($master_ids as $master_id) {
     $orders = fundraiser_get_sustainer_series($master_id);
-    $baseline_info = fundraiser_get_baseline_info($orders);
+    $baseline_info = fundraiser_sustainer_get_baseline_info($orders);
 
     // if there's no legit baseline date, go to the next series.
     if ($baseline_info === FALSE) {
       continue;
     }
 
+    // edit the sustainer after the baseline sustainer.
     $start_at = $baseline_info['index'] + 1;
     $baseline_date = $baseline_info['date'];
-//    drush_print("start at $start_at  baseline date $baseline_date");
     $baseline_rows++;
 
+    // offset number of months from the baseline date
     $increment = 0;
     for ($i = $start_at; $i < count($orders); $i++) {
       $order = $orders[$i];
       $increment++;
 
       // skip past orders
-      // shouldn't happen
+      // shouldn't happen because $start_at should already be past them.
       if ($order['next_charge'] < $now) {
         $past_records++;
         continue;
@@ -3624,16 +3626,16 @@ function fundraiser_sustainer_fix_date_mode() {
  * Should be run from drush eval.
  */
 function fundraiser_sustainer_find_duplicates_and_gaps() {
-  $count = 0;
-  $gaps = 0;
-  $now = strtotime('now');
-
   $mode = variable_get('fundraiser_sustainer_set_date_mode', FALSE);
 
   if (!$mode) {
     drush_print('Date mode is not enabled.');
     return;
   }
+
+  $count = 0;
+  $gaps = 0;
+  $now = strtotime('now');
 
   drush_print('Iterating through serieses.');
 
@@ -3652,28 +3654,44 @@ function fundraiser_sustainer_find_duplicates_and_gaps() {
 
     $previous_charge_date = FALSE;
     foreach ($charges as $date => $dupes) {
+      // See if the last charge date was more than 31 days ago.
       if ($previous_charge_date) {
-        if ($date - $previous_charge_date > (3600 * 24 * 31)) {
-          drush_print('gap found (master ID ' . $master_id . ') between order ' . $charges[$previous_charge_date][0] . ' and order ' . $charges[$date][0]);
+        $difference = $date - $previous_charge_date;
+        $difference_in_days = $difference / (3600 * 24);
+        if ($difference_in_days > 31.5) {
+          drush_print(
+            'gap found (master ID ' . $master_id . ') between order ' .
+            $charges[$previous_charge_date][0] . ' and order ' .
+            $charges[$date][0] . ' - ' .
+            $difference_in_days . ' days difference.');
           $gaps++;
         }
       }
+
       $previous_charge_date = $date;
+
       if (count($dupes) > 1) {
         drush_print('Master ID ' . $master_id . ' for ' . date('Y-m-d', $date) . ' has multiple orders.');
         foreach ($dupes as $dupe) {
+
+          // find the order
           foreach ($orders as $order) {
             if ($order['order_id'] == $dupe) {
-              drush_print(var_export($order, TRUE));
+              drush_print(
+                $order['order_id'] . ' - ' .
+                $order['next_charge'] . ' - ' .
+                $order['gateway_resp'] . ' - ' .
+                $order['attempts']
+              );
               break;
             }
-          }
-        }
+          } // end find the order
 
+        }
         $count++;
-      }
-    }
-  }
+      } // end duplicate check
+    } // end foreach charges
+  } // end foreach master id
 
   drush_print($count . ' sets of duplicates found.');
   drush_print($gaps . ' gaps found between orders.');
