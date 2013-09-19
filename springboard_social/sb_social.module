@@ -203,7 +203,10 @@ function sb_social_access_node_settings($node) {
  * purge share content settings when a node is deleted
  */
  function sb_social_node_delete($node) {
-   sb_social_webform_settings_delete($node->nid);
+   $sid = sb_social_get_sid_by_id($node->nid);
+   if (is_numeric($sid) && $sid) {
+     sb_social_settings_delete($sid);
+   } 
 }
 
 /**
@@ -541,6 +544,47 @@ function sb_social_short_url($service, $settings, $submission_id = FALSE) {
   return shorten_url($url);
 }
 
+
+/**
+ * generate url for share tracking purposes
+ *
+ * @param $nid
+ * node id
+ *
+ * @param $uid
+ * User id
+ *
+ * @sid
+ * webform submission id
+ *
+ * @service
+ * Social network
+ *
+ * @settings
+ * an array of additional settings
+ */
+function sb_social_share_tracker_url($nid, $uid, $sid, $service, $settings) {
+  $node = node_load($nid);
+
+  $options = array(
+    'absolute' => TRUE,
+    'query' => array(
+      'social_referer_transaction' => $sid,
+      'social_referrer_network' => $service,
+    ),
+  );
+
+  if (module_exists('market_source') && isset($settings['data']['market_source'])) {
+    foreach ($settings['data']['market_source'] as $key => $value) {
+      if (!$value) {
+        continue;
+      }
+      $options['query'][$key] = $value;
+    }
+  }
+  $url = url('node/' . $nid, $options);
+  return url('node/' . $nid, $options);
+}  
 
 function theme_sb_social_share_image_preview($variables) {
   $element = $variables['element'];

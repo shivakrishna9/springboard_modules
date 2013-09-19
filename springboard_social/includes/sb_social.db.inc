@@ -37,7 +37,7 @@ function sb_social_share_event_save($service, $sid) {
   $settings = sb_social_get_current_settings();
   $uid = !empty($submission->uid) ? $submission->uid : $user->uid;
  
-  $url = sb_social_share_url($nid, $uid, $sid, $service, $settings);
+  $url = sb_social_share_tracker_url($nid, $uid, $sid, $service, $settings);
 
   // update is not included as these records should only
   // be created when a share event has taken place
@@ -138,6 +138,21 @@ function sb_social_get_id_by_sid($sid) {
   $result = db_query('SELECT id FROM {sb_social_settings} WHERE sid = :sid', array(':sid' => $sid));
   return $result->fetchField();
 }
+
+/**
+ * Get settings id by drupal id
+ *
+ * @param $id
+ * Node id for node settings, path for path settings.
+ *
+ * @return
+ * Returns the sid associated with the given id, or FALSE if no records were found.
+ */
+function sb_social_get_sid_by_id($id) {
+  $result = db_query('SELECT sid FROM {sb_social_settings} WHERE id = :id', array(':id' => $id));
+  $data = $result->fetchField();
+  return $data ? $data : FALSE;
+} 
 
 /**
  * Load all path settings, used by path admin list page.
