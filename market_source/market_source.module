@@ -342,6 +342,15 @@ function _market_source_build_qs_keys() {
     // collate custom and default field settings
     $default_fields = variable_get('market_source_default_fields', array());
     $custom_fields = variable_get('market_source_custom_fields', array());
+
+    // Pull in details for any ms fields defined by other modules.
+    // Modules that invoke this hook should return an array of field records.
+    // Each record should contain the following key/value pairs:
+    //   - key          : unique field key
+    //   - name         : human-readable name
+    //   - default      : default value
+    //   - persistence : persistence settings for this fields, acceptable values are 'on', 'off' or 'direct'
+    $external_fields = module_invoke_all('market_source_external_field_keys');
     $field_settings = array(
       'ms' => isset($default_fields['market_source']) ? $default_fields['market_source'] : array(),
       'cid' => isset($default_fields['campaign']) ? $default_fields['campaign'] : array(),
@@ -354,7 +363,11 @@ function _market_source_build_qs_keys() {
     foreach ($custom_fields as $custom_field) {
       $field_settings[ $custom_field['key'] ] = $custom_field;
     }
-
+    if (is_array($external_fields) && count($external_fields)) {
+      foreach ($external_fields as $external_field) {
+        $field_settings[ $external_field['key'] ] = $external_field;
+      }
+    }
     // create keys with null values and persistence settings
     $ms_keys = _market_source_get_field_keys();
     if (is_array($ms_keys)) {
