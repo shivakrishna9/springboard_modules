@@ -507,73 +507,108 @@ function fundraiser_sustainer_update_date_mode($form, &$form_state) {
   }
 
   drupal_set_message('Updating the existing sustainers to the new date.');
-  // Looks like we switched modes or dates, so we need to update all the future charges.
-  // Need to order this query so earlier orders are processed first.
-  $future_orders = db_query('SELECT master_order_id, order_id, next_charge FROM {fundraiser_recurring} ' .
-    'WHERE next_charge > %d ORDER BY order_id ASC', time()); // Only the future ones.
-  // Loop through all future charges.
-  $master_orders = array();
+
   $now = strtotime('now');
-  while ($order_info = db_fetch_array($future_orders)) {
-    // Set them all to match the updated charge date.
-    if ($mode == FALSE) {
-      // Load the master order if it's not already been loaded to get the original anniversary.
-      if (!in_array($order_info['master_order_id'], array_keys($master_orders))) {
-        $result = db_query('SELECT created FROM {uc_orders} ' .
-          'WHERE order_id = %d', $order_info['master_order_id']);
-        while ($master_order_info = db_fetch_array($result)) {
-          $master_orders[ $order_info['master_order_id'] ]  = $master_order_info['created'];
-        }
-      }
-      $date = date('j', $master_orders[ $order_info['master_order_id'] ]);
-      $time = date('H:i:s', $master_orders[ $order_info['master_order_id'] ]); // The original time.
-    }
-    // Set all to the date set, by sliding forward from today.
-    $base_date = $order_info['next_charge'];
-    $this_month_year = date('F Y', $base_date); // Use the month and date of the next charge.
-    $set_charge_date = strtotime($date . ' ' . $this_month_year . ' '. $time);
-
-    $previous_order_id = fundraiser_get_previous_order_in_series($order_info['master_order_id'], $order_info['order_id']);
-    if ($previous_order_id !== FALSE) {
-      $previous_order_charge = db_result(db_query("SELECT next_charge FROM {fundraiser_recurring} WHERE order_id = %d", $previous_order_id));
-
-      $this_date = new DateTime(date('Y-m-d', $set_charge_date));
-      $previous_date = new DateTime(date('Y-m-d', $previous_order_charge));
-      $days_since = $this_date->diff($previous_date)->days;
-
-      if ($days_since > 32) {
-        $set_charge_date = strtotime('-1 month', $set_charge_date);
-      }
-
+  $count = 0;
+  $master_ids = fundraiser_get_master_order_ids_after($now);
+  foreach ($master_ids as $master_id) {
+    $orders = fundraiser_get_sustainer_series($master_id);
+    $baseline_info = fundraiser_sustainer_get_baseline_info($orders);
+    // if there's no legit baseline date, go to the next series.
+    if ($baseline_info === FALSE) {
+      continue;
     }
 
-    // If our current date is already past the given charge date, then this new charge date
-    // Will be in the past. We cannot kick it forward by one, as we'll double up on next month.
-    // So we need to just drop this one in the series. We can't just move it forward to the end
-    // of the series as the series is capped by expiration. This spare order just won't be processed.
-    // This is such an edge case I don't think it will be a concern.
-    if ($set_charge_date >= $now) {
-      //drupal_set_message('Updated order #'. $order_info['order_id'] . ' from date ' .  date('d F Y', $base_date) .
-      //  ' to date ' . date('d F Y', $set_charge_date) . '.');
-      // Now that we know the correct new date for this order, update the table.
+    // start at the baseline sustainer, skipping the irrelevant ones.
+    $start_at = $baseline_info['index'];
+    $baseline_date = $baseline_info['date'];
+
+    // change the day of the baseline date if date is on
+    if ($mode) {
+      $baseline_date = strtotime(date("Y-m-$date $time", $baseline_date));
+    }
+    // Otherwise use the day of the month that the master order was charged on.
+    else {
+      $date_of_master = fundraiser_sustainers_get_master_order_day_of_month($master_id);
+
+      // note that strtotime will add the days to make this a valid date
+      $baseline_date = strtotime(date("Y-m-$date_of_master H:i:s", $baseline_date));
+    }
+
+    // offset number of months from the baseline date
+    $increment = 0;
+    for ($i = $start_at; $i < count($orders); $i++) {
+      $order = $orders[$i];
+      $new_date = strtotime('+' . $increment . ' months', $baseline_date);
+      $increment++;
+
+      // skip past orders
+      // shouldn't happen because $start_at should already be past them.
+      if ($order['next_charge'] < $now) {
+        continue;
+      }
+
+      // skip future failed and canceled orders.
+      if (in_array($order['gateway_resp'], array('failed', 'canceled'))) {
+        continue;
+      }
+
+      // no change, skip it
+      if ($order['next_charge'] == $new_date) {
+        continue;
+      }
+
+      // do the update
       db_query('UPDATE {fundraiser_recurring} ' .
         'SET next_charge = %d ' .
-        'WHERE order_id = %d', $set_charge_date, $order_info['order_id']);
-      watchdog('fundraiser_sustainers', 'Updated order #'. $order_info['order_id'] . ' from date ' .  date('d F Y', $base_date) .
-        ' to date ' . date('d F Y', $set_charge_date) . '.');
+        'WHERE order_id = %d', $new_date, $order['order_id']);
+
+      $message = 'Updated order '. $order['order_id'] .
+        ' (master order ' . $master_id . ')' .
+        ' from ' .
+        date('Y-m-d', $order['next_charge']) .
+        ' to ' . date('Y-m-d', $new_date);
+      drupal_set_message($message);
+      watchdog('fundraiser_sustainers', $message);
+
+      $count++;
     }
-    else {
-      // We need to cancel this order, as it's not available anymore.
-      global $user;
-      $reason = 'Cancelled during switch from set-date queue to anniversary queue, date had passed.';
-      db_query('UPDATE {fundraiser_recurring} SET gateway_resp = \'canceled\', cancellation_reason = \'%s\' ' .
-        'WHERE order_id = %d AND (gateway_resp IS NULL OR gateway_resp = \'failed\')', $reason, $order_info['order_id']);
-      uc_order_comment_save($order_info['order_id'], $user->uid, 'Order canceled by an administrator. Reason: ' .
-        $reason ,'order', 'canceled', FALSE);
-    }
-    // And repeat until we've updated them all.
   }
-  drupal_set_message('Finished updating the existing sustainers to the new date.');
+  watchdog('fundraiser_sustainers', $count . ' sustainers updated.');
+  drupal_set_message($count . ' sustainers updated.');
+
+
+  /**
+   * @todo Figure out how to handle orders getting dates set to the past.  If we cancel them then we can't uncancel.
+   */
+
+//    else {
+//      // We need to cancel this order, as it's not available anymore.
+//      global $user;
+//      $reason = 'Cancelled during switch from set-date queue to anniversary queue, date had passed.';
+//      db_query('UPDATE {fundraiser_recurring} SET gateway_resp = \'canceled\', cancellation_reason = \'%s\' ' .
+//        'WHERE order_id = %d AND (gateway_resp IS NULL OR gateway_resp = \'failed\')', $reason, $order_info['order_id']);
+//      uc_order_comment_save($order_info['order_id'], $user->uid, 'Order canceled by an administrator. Reason: ' .
+//        $reason ,'order', 'canceled', FALSE);
+//    }
+
+
+}
+
+/**
+ * Returns the charge day of the month of the master order.
+ *
+ * Used for switching to anniversary mode.
+ *
+ * @param integer $master_id
+ *
+ * @return bool|string
+ */
+function fundraiser_sustainers_get_master_order_day_of_month($master_id) {
+  return date('d', db_result(db_query(
+        'SELECT created FROM {uc_orders} ' .
+        'WHERE order_id = %d', $master_id
+      )));
 }
 
 /*
@@ -830,4 +865,93 @@ function fundraiser_update_cron_settings($form, $form_state) {
     // Refresh menu cache.
     menu_rebuild();
   }
+}
+
+/**
+ * Returns an array of master order IDs for serieses that have future orders.
+ *
+ * @param integer $timestamp
+ *
+ * @return array
+ */
+function fundraiser_get_master_order_ids_after($timestamp) {
+  $return = array();
+
+  $results = db_query("SELECT DISTINCT master_order_id FROM {fundraiser_recurring}
+    WHERE next_charge > %d
+    ORDER BY master_order_id ASC, next_charge ASC",
+    $timestamp
+  );
+
+  while ($row = db_fetch_array($results)) {
+    $return[] = $row['master_order_id'];
+  }
+
+  return $return;
+}
+
+/**
+ * Returns info on all orders in a sustainer series.
+ *
+ * The 0th element is the master order.
+ *
+ * @param integer $master_order_id
+ * @return array
+ */
+function fundraiser_get_sustainer_series($master_order_id) {
+  $return = array();
+
+  $return[0] = db_fetch_array(
+    db_query("SELECT order_id, created AS next_charge, modified
+    FROM {uc_orders} WHERE order_id = %d", $master_order_id)
+  );
+
+  // Assume the master order succeeded.
+  $return[0]['gateway_resp'] = 'success';
+  $return[0]['attempts'] = 0;
+
+  $results = db_query("SELECT order_id, next_charge, gateway_resp, attempts
+    FROM {fundraiser_recurring} WHERE master_order_id = %d ORDER BY order_id ASC",
+    $master_order_id
+  );
+
+  while ($row = db_fetch_array($results)) {
+    $return[] = $row;
+  }
+
+  return $return;
+}
+
+/**
+ * Gets the array index and date of a baseline to calculate future orders from.
+ *
+ * Ignores the master order, past orders, canceled or failed orders.
+ *
+ * @param array $orders
+ *
+ * @return array|bool
+ */
+function fundraiser_sustainer_get_baseline_info($orders) {
+  $now = strtotime('now');
+  foreach ($orders as $i => $order) {
+    // element 0 is the master order
+    // element 1 is the first sustainer
+    // skip the master order.
+    // skip past orders
+    // skip future failed and canceled orders.
+    if ($i == 0 ||
+      $order['next_charge'] < $now ||
+      in_array($order['gateway_resp'], array('failed', 'canceled'))
+    ) {
+      continue;
+    }
+
+    // after passing that criteria, the first order in the sequence is the baseline.
+    return array(
+      'index' => $i,
+      'date' => $order['next_charge'],
+    );
+
+  }
+  return FALSE;
 }
