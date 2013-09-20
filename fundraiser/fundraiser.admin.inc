@@ -563,6 +563,11 @@ function fundraiser_sustainer_update_date_mode($form, &$form_state) {
         'SET next_charge = %d ' .
         'WHERE order_id = %d', $new_date, $order['order_id']);
 
+      // update the order in salesforce
+      if (module_exists('sf_donation')) {
+        sf_queue_insert($order['order_id'], FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+      }
+
       $message = 'Updated order '. $order['order_id'] .
         ' (master order ' . $master_id . ')' .
         ' from ' .
