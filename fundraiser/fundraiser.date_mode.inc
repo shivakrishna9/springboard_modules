@@ -47,7 +47,7 @@ function fundraiser_sustainer_date_mode_form() {
   );
 
   $seconds = array_combine(range(1,60), range(1,60));
-  $form['sustainer']['fundraiser_sustainer_set_seconds'] = array(
+  $form['fundraiser_sustainer_set_seconds'] = array(
     '#type' => 'select',
     '#title' => t('Seconds spent'),
     '#description' => t('Set how many seconds for each cron to spend on the queue processing sustainer charges. '.
@@ -91,6 +91,7 @@ function fundraiser_sustaienr_date_mode_form_submit($form, &$form_state) {
   // save the new values
   variable_set('fundraiser_sustainer_set_date_mode', $new_mode);
   variable_set('fundraiser_sustainer_set_dates', $new_date);
+  variable_set('fundraiser_sustainer_set_seconds', $form_state['values']['fundraiser_sustainer_set_seconds']);
 
   // TODO: this will be changed when we support more than one date.
   // Check if we need to change anything.
