@@ -2349,7 +2349,7 @@ function fundraiser_create_future_orders($order_id, $gateway = NULL, $amount = N
 /**
  * Implements hook_cron_queue_info().
  */
-+function fundraiser_cron_queue_info() {
+function fundraiser_cron_queue_info() {
   $queues = array();
   $queues['sustainerQueue'] = array(
     'worker callback' => '_fundraiser_queue_process_recurring_donation',
@@ -2438,23 +2438,39 @@ function _fundraiser_queue_process_recurring_donation($item) {
 function _fundraiser_process_recurring_donation($order_id, $batch_id, &$successes, &$fails) {
   // In order to prevent queue handling from re-processing (prevent possible queue issues).
   // First check that the order locked is the batch id and not 'processing'.
-  $this_lock_id = db_query('SELECT lock_id FROM {fundraiser_recurring} ' .
-    'WHERE order_id = %d', $order_id);
-  $this_lock_id = db_fetch_array($this_lock_id);
-  $lock_id = isset($this_lock_id['lock_id']) ? $this_lock_id['lock_id'] : 0;
-  if ($lock_id != 'processing' && $lock_id != 0) {
-    $this_lock_id = db_query('UPDATE {fundraiser_recurring} ' .
-      'SET lock_id = \'processing\' ' . // Locking to prevent the risk of concurrency during drupal queue handling.
+
+  // The extra WHERE clauses are to make sure nothing's changed
+  // since the time this order was queued.
+  $sustainer_result = db_query("SELECT lock_id FROM {fundraiser_recurring}
+    WHERE next_charge < %d AND
+    (gateway_resp IS NULL OR gateway_resp = 'failed') AND
+    lock_id NOT IN ('processing', '0') AND
+    attempts < 3 AND
+    order_id = %d",
+    array(time(), $order_id)
+  );
+
+  // if a sustainer doesn't match the above criteria, then we don't do anything.
+  $sustainer = db_fetch_object($sustainer_result);
+  if ($sustainer) {
+    // Locking to prevent the risk of concurrency during drupal queue handling.
+    db_query('UPDATE {fundraiser_recurring} ' .
+      'SET lock_id = \'processing\' ' .
       'WHERE order_id = %d', $order_id);
-    $order_id = $order_id;
     $order = uc_order_load($order_id);
     $total = $order->order_total;
     $charge_function = NULL;
-    $ref_id = array_shift(array_keys($order->data['cc_txns']['references']));
+
     $data = array(
       'txn_type' => 'reference_txn',
-      'ref_id' => $ref_id,
     );
+
+    // not sure what $ref_id is for, but the test gateway doesn't have it.
+    if (isset($order->data['cc_txns']['references'])) {
+      $ref_id = array_shift(array_keys($order->data['cc_txns']['references']));
+      $data['ref_id'] = $ref_id;
+    }
+
     $charge_function = _fundraiser_charge_function($order_id, $order->products[0]->nid, $data);
     if (empty($charge_function)) {
       db_query("UPDATE {fundraiser_recurring} SET lock_id = '0' WHERE order_id = %d", $order_id); // Reset lock back to 0 for retry.
@@ -2462,6 +2478,7 @@ function _fundraiser_process_recurring_donation($order_id, $batch_id, &$successe
           array('!id' => $order->order_id, '!nid' => $order->products[0]->nid)), NULL, WATCHDOG_CRITICAL);
     }
     else {
+      // Process the order
       $result = $charge_function($order_id, $total, $data);
       if ($result['success']) {
         $successes++;
@@ -2512,17 +2529,12 @@ function _fundraiser_process_recurring_donation($order_id, $batch_id, &$successe
       }
       uc_credit_cache('clear');
     }
+
+    // Reset the lock id from processing to the original batch id.
+    // That way we can tell which orders went into the queue as a group.
+    db_query("UPDATE {fundraiser_recurring} SET lock_id = '%s' WHERE order_id = %d", array($batch_id, $order_id));
+
   }
-  else {
-    // This order is already in process. We can give it a beat to complete.
-    sleep(1);
-    // And finish processing.
-  }
-  // Reset the lock id from processing to the original batch id.
-  // That way we can tell which orders went into the queue as a group.
-  $this_lock_id = db_query('UPDATE {fundraiser_recurring} ' .
-    'SET lock_id = \'processing\' ' .
-    'WHERE order_id = %d', $batch_id);
 }
 
 /**
