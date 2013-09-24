@@ -260,7 +260,7 @@ function fundraiser_admin_settings() {
     '#default_value' => variable_get('fundraiser_development_mode', 0),
     '#description' => t('Development mode allows you to access donation forms over HTTP.'),
   );
- 
+
   $form['fundraiser_cleanup_submissions_on_fail'] = array(
     '#type' => 'checkbox',
     '#title' => t('Cleanup failures'),
