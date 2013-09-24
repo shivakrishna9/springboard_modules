@@ -28,7 +28,7 @@ function fundraiser_sustainer_date_mode_form() {
     '#title' => t('Set date mode'),
     '#default_value' => variable_get('fundraiser_sustainer_set_date_mode', FALSE),
     '#description' => t('Process all sustainer charges on a set date each month. ' .
-      'If this checkbox is left unmarked, sustainers will instead be processed ' .
+      'If this checkbox is left unchecked, sustainers will instead be processed ' .
       'on the date of their anniversary. NOTE: Turning this feature on will convert ' .
       'current sustainers to the new date for all future (and only future) charges. '.
       'Turning this feature off thereafter will revert future charges to anniversary.'),
@@ -50,8 +50,9 @@ function fundraiser_sustainer_date_mode_form() {
   $form['fundraiser_sustainer_set_seconds'] = array(
     '#type' => 'select',
     '#title' => t('Seconds spent'),
-    '#description' => t('Set how many seconds for each cron to spend on the queue processing sustainer charges. '.
-      'On average a charge takes about a second to process depending on the responsiveness of the gateway.'),
+    '#description' => t('Set how many seconds for each drupal queue run to spend on the queue processing sustainer charges. '.
+      'If drupal queue is running as part of drupal cron, leave this at about 30 seconds or less so it won\'t time out.' .
+      'If drupal queue is running standalone through drush then this can be higher to process more sustainers in a single run.'),
     '#options' => $seconds,
     '#default_value' => variable_get('fundraiser_sustainer_set_seconds', 30),
     '#access' => $queue_possible,
@@ -59,8 +60,13 @@ function fundraiser_sustainer_date_mode_form() {
 
   $form['batch_warning'] = array(
     '#type' => 'markup',
-    '#value' => '<div><p><strong>Warning:</strong>  Changing the settings will start off a batch process that needs to be completed. At least ' .
-      fundraiser_sustainer_date_mode_max_records() . ' records will need to be updated.</p></div>',
+    '#value' => '<div><p><strong>Warning:</strong>  Changing the settings ' .
+      'will start off a batch process that needs to be completed. About ' .
+      fundraiser_sustainer_date_mode_max_records() .
+      ' records will need to be updated.  These changes will affect future scheduled charges. ' .
+      'However this will not include any scheduled charges in the current month ' .
+      'to prevent charges from being rescheduled into the past.' .
+      'Beware that changing these settings repeatedly could have side effects.</p></div>',
   );
 
   $form['submit'] = array(
@@ -74,7 +80,7 @@ function fundraiser_sustainer_date_mode_form() {
 /**
  * Submit handler for the date mode settings.
  */
-function fundraiser_sustaienr_date_mode_form_submit($form, &$form_state) {
+function fundraiser_sustainer_date_mode_form_submit($form, &$form_state) {
   // Check and exit if needed.
   if (!module_exists('drupal_queue')) {
     drupal_set_message('Drupal Queue is not enabled, so no changes have been saved.');
@@ -139,8 +145,6 @@ function fundraiser_sustainer_update_date_mode_batch($mode, $date) {
   $operations = array();
 
   $now = strtotime('now');
-  $this_year_month = date('Y-m');
-  $count = 0;
   $master_ids = fundraiser_get_master_order_ids_after($now);
 
   $max = count($master_ids);
@@ -156,9 +160,9 @@ function fundraiser_sustainer_update_date_mode_batch($mode, $date) {
     // We can define custom messages instead of the default ones.
     'title' => t('Processing sustainers for date mode update'),
     'init_message' => t('Date mode update is starting.'),
-    'progress_message' => t('Processed @current out of @total.'),
+    'progress_message' => t('Processed @current sustainer sets out of @total.'),
     'error_message' => t('The date mode update has encountered an error.'),
-    'file' => drupal_get_path('module', 'fundraiser') . '/fundraiser.admin.inc',
+    'file' => drupal_get_path('module', 'fundraiser') . '/fundraiser.date_mode.inc',
   );
 
   return $batch;
@@ -184,9 +188,8 @@ function fundraiser_sustainer_update_date_mode_operation($mode, $date, $time, $m
     $context['sandbox']['date'] = $date;
     $context['sandbox']['time'] = $time;
     $context['sandbox']['now'] = strtotime('now');
-    $context['sandbox']['progress'] = 0;
-    $context['sandbox']['rows_updated'] = 0;
     // count the number of sustainers to process
+    $context['sandbox']['progress'] = 0;
     $context['sandbox']['max'] = $max;
   }
 
@@ -194,6 +197,8 @@ function fundraiser_sustainer_update_date_mode_operation($mode, $date, $time, $m
   $baseline_info = fundraiser_sustainer_get_baseline_info($orders);
   // if there's no legit baseline date, go to the next series.
   if ($baseline_info === FALSE) {
+    // Update our progress information.
+    $context['sandbox']['progress']++;
     return;
   }
 
@@ -217,6 +222,7 @@ function fundraiser_sustainer_update_date_mode_operation($mode, $date, $time, $m
   $increment = 0;
   for ($i = $start_at; $i < count($orders); $i++) {
     $order = $orders[$i];
+
     $new_date = strtotime('+' . $increment . ' months', $baseline_date);
     $increment++;
 
@@ -257,12 +263,10 @@ function fundraiser_sustainer_update_date_mode_operation($mode, $date, $time, $m
       ' from ' .
       date('Y-m-d', $order['next_charge']) .
       ' to ' . date('Y-m-d', $new_date);
-    drupal_set_message($message);
+
     watchdog('fundraiser_sustainers', $message);
     // Store some result for post-processing in the finished callback.
     $context['results'][] = $message;
-
-    $context['sandbox']['rows_updated']++;
   }
 
   // Update our progress information.
@@ -279,11 +283,6 @@ function fundraiser_sustainer_update_date_mode_finished($success, $results, $ope
   if ($success) {
     // display the number of sustainers processed and the result messages.
     drupal_set_message('Finished updating the existing sustainers to the new date. ' . count($results) . ' sustainers processed.');
-
-    foreach ($results as $result) {
-      drupal_set_message($result);
-    }
-
   }
   else {
     // An error occurred.

@@ -94,7 +94,7 @@ function fundraiser_menu() {
   $items['admin/settings/fundraiser/date_mode'] = array(
     'title' => 'Fundraiser sustainer date mode settings',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('fundraiser_sustaienr_date_mode_form'),
+    'page arguments' => array('fundraiser_sustainer_date_mode_form'),
     'access arguments' => array("administer fundraiser"),
     'type' => MENU_NORMAL_ITEM,
     'file' => 'fundraiser.date_mode.inc',
