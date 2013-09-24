@@ -509,6 +509,7 @@ function fundraiser_sustainer_update_date_mode($form, &$form_state) {
   drupal_set_message('Updating the existing sustainers to the new date.');
 
   $now = strtotime('now');
+  $this_year_month = date('Y-m');
   $count = 0;
   $master_ids = fundraiser_get_master_order_ids_after($now);
   foreach ($master_ids as $master_id) {
@@ -548,6 +549,12 @@ function fundraiser_sustainer_update_date_mode($form, &$form_state) {
         continue;
       }
 
+      // if the next charge is in this month, leave it alone.
+      // This should prevent sliding charges into the past.
+      if (date('Y-m', $order['next_charge']) == $this_year_month) {
+        continue;
+      }
+
       // skip future failed and canceled orders.
       if (in_array($order['gateway_resp'], array('failed', 'canceled'))) {
         continue;
@@ -581,23 +588,6 @@ function fundraiser_sustainer_update_date_mode($form, &$form_state) {
   }
   watchdog('fundraiser_sustainers', $count . ' sustainers updated.');
   drupal_set_message($count . ' sustainers updated.');
-
-
-  /**
-   * @todo Figure out how to handle orders getting dates set to the past.  If we cancel them then we can't uncancel.
-   */
-
-//    else {
-//      // We need to cancel this order, as it's not available anymore.
-//      global $user;
-//      $reason = 'Cancelled during switch from set-date queue to anniversary queue, date had passed.';
-//      db_query('UPDATE {fundraiser_recurring} SET gateway_resp = \'canceled\', cancellation_reason = \'%s\' ' .
-//        'WHERE order_id = %d AND (gateway_resp IS NULL OR gateway_resp = \'failed\')', $reason, $order_info['order_id']);
-//      uc_order_comment_save($order_info['order_id'], $user->uid, 'Order canceled by an administrator. Reason: ' .
-//        $reason ,'order', 'canceled', FALSE);
-//    }
-
-
 }
 
 /**
