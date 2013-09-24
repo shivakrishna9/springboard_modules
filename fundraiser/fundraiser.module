@@ -100,7 +100,6 @@ function fundraiser_menu() {
     'file' => 'fundraiser.date_mode.inc',
   );
 
-
   $items['admin/store/reports/fundraiser'] = array(
     'title' => t('Donation report'),
     'page callback' => 'fundraiser_monthly_report',

@@ -35,7 +35,7 @@ function fundraiser_sustainer_date_mode_form() {
     '#access' => $queue_possible,
   );
 
-  $dates = array_combine(range(1,28), range(1,28)); // Why 28? Feb.
+  $dates = array_combine(range(1, 28), range(1, 28)); // Why 28? Feb.
   $form['fundraiser_sustainer_set_dates'] = array(
     '#type' => 'select',
     '#title' => t('Process date'),
@@ -46,7 +46,7 @@ function fundraiser_sustainer_date_mode_form() {
     '#access' => $queue_possible,
   );
 
-  $seconds = array_combine(range(1,60), range(1,60));
+  $seconds = array_combine(range(1, 60), range(1, 60));
   $form['fundraiser_sustainer_set_seconds'] = array(
     '#type' => 'select',
     '#title' => t('Seconds spent'),
