@@ -135,16 +135,16 @@ class SpringboardSocialFunctionalTest extends FundraiserSetup {
     $confirmation .= 'Email tokens, email_message::[sb_social:email_message]';
 
     // $this->drupalGet('node/' . $node->nid . '/webform');
- 
+
     $settings = array(
       'confirmation[confirmation_page_title]' => 'Thank you for your donation',
       'confirmation[value]' => $confirmation,
     );
-    
+
     // BUG: test user cannot access webform configuration screen despite having update access to the node in question.
     // save confirmation page settings
     // $path = 'node/' . $node->nid . '/webform/configure';
-    // $this->drupalPost($path, $settings, t('Save configuration')); 
+    // $this->drupalPost($path, $settings, t('Save configuration'));
 
     // confirm token replacements
      $donation_settings = array(

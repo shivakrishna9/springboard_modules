@@ -159,7 +159,7 @@ function _commerce_authnet_fundraiser_commerce_charge_with_cim($payment_method, 
  * Callback function, update data stored at the gateway.
  */
 function commerce_authnet_fundraiser_commerce_update($payment_method, $donation) {
-  // Get the card. 
+  // Get the card.
   $stored_cards = commerce_cardonfile_load_multiple_by_uid($donation->uid, $payment_method['instance_id']);
   // Filter out expired cards.
   foreach ($stored_cards as $card_id => $card_data) {

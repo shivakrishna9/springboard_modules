@@ -5,7 +5,7 @@
       modalWidth = $('#message-modal').width();
       modalHeight = $('#message-modal').height();
       // Pop up the modal on the page load
-      $.blockUI({ 
+      $.blockUI({
         message: $('#message-modal'),
         centerY : 0,
         css: {
@@ -23,7 +23,7 @@
         // Grab the values
         var sendData = $(this).serialize();
         path = $(this).attr('action');
-        // Update the block message 
+        // Update the block message
         $('#message-modal').hide().html('<h1>Processing your sustainer gift... </h1>').fadeIn(750);
         // Post the form
         req = $.ajax({
@@ -50,8 +50,8 @@
       });
       // Preview submit function
       $('.preview #edit-submit').click(function() {
-        // update the block message 
-        $.blockUI({ 
+        // update the block message
+        $.blockUI({
           message: $('#message-return'),
           centerY : 0,
           timeout: 3000,
