@@ -139,7 +139,7 @@ function email_share_js_config($settings, $node = FALSE, $sid = FALSE) {
     'email_subject' => _sb_social_replace_tokens($settings['data']['email']['subject'], $node, $sid),
     'email_message' => _sb_social_replace_tokens($settings['data']['email']['message'], $node, $sid),
   );
-  drupal_add_js(array('sb_social' => $settings), 'setting');  
+  drupal_add_js(array('sb_social' => $settings), 'setting');
 }
 
 function email_uninstall() {

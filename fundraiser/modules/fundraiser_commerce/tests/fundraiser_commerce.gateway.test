@@ -35,7 +35,7 @@ class FundraiserCommerceGatewayTest extends FundraiserSetup {
     $this->privileged_user = $this->drupalCreateUser($permissions);
     $this->drupalLogin($this->privileged_user);
 
-    $this->donation_form = $this->_fundraiser_setup_create_node();
+    $this->donation_form = $this->createDonationForm();
   }
 
   function _importGatewayRule($config) {

@@ -438,7 +438,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
       $id = $alias ? array($path, $alias) : $path;
     }
     $sid = _sb_social_sid_by_id($id);
-    
+
     $settings = sb_social_settings_load($sid);
     $enabled_plugins = sb_social_get_enabled_plugins();
     $submission_id = (isset($_GET['sid']) && is_numeric($_GET['sid'])) ? $_GET['sid'] : FALSE;
@@ -463,9 +463,9 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
         }
         $buttons[] = theme('sb_social_share_button', $vars);
       }
-      $buttons = implode("\n", $buttons); 
+      $buttons = implode("\n", $buttons);
       $replacements['[sb_social:share_links]'] = $enabled_plugins ? theme('sb_social_share', array('buttons' => $buttons)) : '';
-    }  
+    }
     return $replacements;
   }
 }

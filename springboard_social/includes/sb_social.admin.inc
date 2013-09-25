@@ -360,7 +360,7 @@ function sb_social_node_settings($form, $edit, $node) {
 
   ctools_include('plugins');
   $plugins = ctools_get_plugins('sb_social', 'social_networks');
-   
+
   foreach ($enabled_services as $service) {
     if (!empty($plugins[$service]['settings'])) {
       $func = $plugins[$service]['settings'];

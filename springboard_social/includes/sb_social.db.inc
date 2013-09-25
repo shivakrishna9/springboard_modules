@@ -36,7 +36,6 @@ function sb_social_share_event_save($service, $sid) {
   $submission = webform_get_submission($nid, $sid);
   $settings = sb_social_get_current_settings();
   $uid = !empty($submission->uid) ? $submission->uid : $user->uid;
- 
   $url = sb_social_share_tracker_url($nid, $uid, $sid, $service, $settings);
 
   // update is not included as these records should only
@@ -105,7 +104,7 @@ function sb_social_settings_load($sid) {
 
     // supply global defaults if no settings are available.
     if (empty($settings[$sid])) {
-      // check for node view page. 
+      // check for node view page.
       $node = menu_get_object();
       // confirmation page
       if (!$node && arg(2) == 'done') {
@@ -120,7 +119,7 @@ function sb_social_settings_load($sid) {
         $settings[$sid]['id'] = current_path();
         $settings[$sid]['type'] = 'path';
       }
-    
+
       $enabled_services = sb_social_get_enabled_services();
       foreach ($enabled_services as $service) {
         $settings[$sid]['data'][$service] = _sb_social_settings_defaults($service);
@@ -152,7 +151,7 @@ function sb_social_get_sid_by_id($id) {
   $result = db_query('SELECT sid FROM {sb_social_settings} WHERE id = :id', array(':id' => $id));
   $data = $result->fetchField();
   return $data ? $data : FALSE;
-} 
+}
 
 /**
  * Load all path settings, used by path admin list page.
@@ -173,9 +172,9 @@ function sb_social_path_settings_load_all() {
 function _sb_social_settings_defaults($service) {
   $settings = array();
   ctools_include('plugins');
-  $plugins = ctools_get_plugins('sb_social', 'social_networks'); 
+  $plugins = ctools_get_plugins('sb_social', 'social_networks');
   $services = array_keys($plugins);
- 
+
   if (in_array($service, $services)) {
     $func = $plugins[$service]['defaults'];
     $settings = $func();

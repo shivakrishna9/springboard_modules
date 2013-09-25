@@ -9,13 +9,13 @@
 class springboard_webform_hidden_component_values extends views_handler_field{
   //add an option to the field handler to choose which component's value is displayed.
   function option_definition() {
-    $options = parent::option_definition();
+    $options = $this->option_definition();
     $options['webform_component_options'] = array('default' => NULL);
     return $options;
   }
 
   function options_form(&$form, &$form_state) {
-    parent::options_form($form, $form_state);
+    $this->options_form($form, $form_state);
     //Build a list of distinct hidden components defined by webform or other modules.
     $result = db_select('webform_component', 'wc')
       ->fields('wc', array('form_key', 'name'))

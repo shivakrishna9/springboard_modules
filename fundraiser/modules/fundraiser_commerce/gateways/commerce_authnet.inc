@@ -133,16 +133,18 @@ function _commerce_authnet_fundraiser_commerce_charge_with_cim($payment_method, 
   $pane_values['cardonfile'] = 'new'; // Make a new CIM unless we already have one on record.
   $stored_cards = commerce_cardonfile_load_multiple_by_uid($donation->uid, $payment_method['instance_id']);
   // Filter out expired cards.
-  foreach ($stored_cards as $card_id => $card_data) {
-    if ($card_data->card_exp_year < date('Y') ||
-      $card_data->card_exp_year == date('Y') && $card_data->card_exp_month < date('m')) {
-      unset($stored_cards[$card_id]);
-    }
-  }
   if (!empty($stored_cards)) {
-    // Then grab the first one.
     foreach ($stored_cards as $card_id => $card_data) {
-      $pane_values['cardonfile'] =  $card_id;
+      if ($card_data->card_exp_year < date('Y') ||
+        $card_data->card_exp_year == date('Y') && $card_data->card_exp_month < date('m')) {
+        unset($stored_cards[$card_id]);
+      }
+    }
+    if (!empty($stored_cards)) {
+      // Then grab the first one.
+      foreach ($stored_cards as $card_id => $card_data) {
+        $pane_values['cardonfile'] =  $card_id;
+      }
     }
   }
   // Gathered pane values now submit.
@@ -159,7 +161,7 @@ function _commerce_authnet_fundraiser_commerce_charge_with_cim($payment_method, 
  * Callback function, update data stored at the gateway.
  */
 function commerce_authnet_fundraiser_commerce_update($payment_method, $donation) {
-  // Get the card. 
+  // Get the card.
   $stored_cards = commerce_cardonfile_load_multiple_by_uid($donation->uid, $payment_method['instance_id']);
   // Filter out expired cards.
   foreach ($stored_cards as $card_id => $card_data) {
