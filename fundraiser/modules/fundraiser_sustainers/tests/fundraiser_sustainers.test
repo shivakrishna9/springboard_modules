@@ -39,16 +39,9 @@ class FundraiserSustainerTest extends FundraiserSetup {
    * Test the creation of a recurring donation.
    */
   function testFundraiserSustainerSubmit() {
-    // Create a node.
-    $node = parent::_fundraiser_setup_create_node();
-    // Post to the node.
-    $month = date('n', strtotime('+1 year'));
-    $year = date('Y', strtotime('+1 year'));
-    $post['submitted[payment_information][recurs_monthly][recurs]'] = 'recurs';
-    $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_month]'] = $month;
-    $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_year]'] = $year;
-    $post['submitted[donor_information][mail]'] = 'fundraiser_sustainer@example.com';
-    parent::_fundraiser_setup_post_donation($node->nid, $post);
+    // Create a sustainer donation.
+    $this->createFundraiserSustainer();
+
     // Get the created user.
     $created_user = user_load_by_mail('fundraiser_sustainer@example.com');
     $this->assertEqual('fundraiser_sustainer@example.com', $created_user->mail, t('The user account #@uid was created with @email.',
@@ -454,6 +447,22 @@ class FundraiserSustainerTest extends FundraiserSetup {
     else {
       $this->assertEqual(1, 0, 'Cannot write dummy key file to ' . $file_path . 'sustainer.key.');
     }
+  }
+
+  /**
+   * Helper to create a fundraiser sustainer donation.
+   */
+  protected function createFundraiserSustainer() {
+    // Create a node.
+    $node = parent::_fundraiser_setup_create_node();
+    // Post to the node.
+    $month = date('n', strtotime('+1 year'));
+    $year = date('Y', strtotime('+1 year'));
+    $post['submitted[payment_information][recurs_monthly][recurs]'] = 'recurs';
+    $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_month]'] = $month;
+    $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_year]'] = $year;
+    $post['submitted[donor_information][mail]'] = 'fundraiser_sustainer@example.com';
+    parent::_fundraiser_setup_post_donation($node->nid, $post);
   }
 
   /**
