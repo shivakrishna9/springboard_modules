@@ -95,7 +95,7 @@ function fundraiser_menu() {
     'title' => 'Sustainer date mode settings',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fundraiser_sustainer_date_mode_form'),
-    'access arguments' => array("administer fundraiser"),
+    'access arguments' => array('administer fundraiser'),
     'type' => MENU_NORMAL_ITEM,
     'file' => 'fundraiser.date_mode.inc',
   );
