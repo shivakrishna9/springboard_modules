@@ -38,8 +38,9 @@ class FundraiserTest extends FundraiserSetup {
    * Test the creation of a fundraiser form node.
    */
   function testFundraiserNodeCreation() {
-    $node->default_amount = 20; // Set a different default than normal.
-    $created_node = parent::_fundraiser_setup_create_node($node);
+    $node_stub = new stdClass();
+    $node_stub->default_amount = 20; // Set a different default than normal.
+    $created_node = parent::_fundraiser_setup_create_node($node_stub);
     // Load the created node, so we get latest data.
     $node = node_load($created_node->nid);
     // Check that the created node is expected, per configurations given in setUp.
@@ -68,7 +69,7 @@ class FundraiserTest extends FundraiserSetup {
     $fundraiser->show_other_amount = TRUE;
     $fundraiser->minimum_donation_amount = 10;
     $fundraiser->default_amount = 20;
-    $fundraiser->gateways = serialize($node->gateways); 
+    $fundraiser->gateways = serialize($node->gateways);
     // Tweak the field with a callback as needed per fundraiser's configurations.
     foreach ($field_keys as $field_key) {
       // In case a runtime requirement changes the field info types (as amount for example does).
@@ -102,11 +103,16 @@ class FundraiserTest extends FundraiserSetup {
           '0' => '100',
           '1' => '$100',
         ),
+        '4' => array(
+          '0' => 'other',
+          '1' => 'Other',
+        ),
       ),
       'minimum_donation_amount' => 10,
     );
     $this->assertEqual(serialize($node->donation_amounts), serialize($expected_amount_wrapper['donation_amounts']),
-      t('The correct amounts were created.' . print_r($node,1)), t('Fundraiser'));
+      t('The correct amounts were created. ' .
+      serialize($node->donation_amounts) . ' vs ' . serialize($expected_amount_wrapper['donation_amounts']) ), t('Fundraiser'));
     $this->assertEqual($node->minimum_donation_amount, $expected_amount_wrapper['minimum_donation_amount'],
       t('The correct minimum amount was created.'), t('Fundraiser'));
     //$this->assertEqual($node->default_amount, '20', t('The correct default amount was created.'), t('Fundraiser'));
@@ -127,7 +133,7 @@ class FundraiserTest extends FundraiserSetup {
    */
   function testFundraiserFormSSHAccess() {
     $node = parent::_fundraiser_setup_create_node();
-    $message = 'The donation form you are trying to access has not been secured properly.';
+    $message = 'We\'re sorry, but this donation form is experiencing a temporary problem. Please try again later.';
     variable_set('fundraiser_development_mode', 0); // TURN OFF DEFAULT MODE.
 
     // Specifically turn HTTPS on. Your test server should have HTTPS
@@ -159,8 +165,9 @@ class FundraiserTest extends FundraiserSetup {
    * Test the creation of a fundraiser form node.
    */
   function testFundraiserFormDisplay() {
-    $node->default_amount = 20; // Set a different default than normal.
-    $node = parent::_fundraiser_setup_create_node($node);
+    $node_stub = new stdClass();
+    $node_stub->default_amount = 20; // Set a different default than normal.
+    $node = parent::_fundraiser_setup_create_node($node_stub);
     $this->drupalGet('node/'. $node->nid); // Get the node display page. In default mode by default.
     // Check 20 is the default value.
     $this->assertFieldByName('submitted[donation][amount]', 20, t('The correct default value (20) selected on the donation form.'),
@@ -189,7 +196,7 @@ class FundraiserTest extends FundraiserSetup {
       $count++;
       $did = $donation->did;
     }
-    $this->assertEqual(1, $count, t('A single donation (#@did) was created.', array('@did' => $did)), t('Fundraiser Submit'));   
+    $this->assertEqual(1, $count, t('A single donation (#@did) was created.', array('@did' => $did)), t('Fundraiser Submit'));
     // Confirmation tokens -> covered elsewhere, check for donation tokens though.
     $post = array(
       'submitted[donor_information][first_name]' => 'FIRST NAME',
@@ -303,6 +310,18 @@ class FundraiserTest extends FundraiserSetup {
     $message = t('Donation was successfully processed.');
     $this->assertText($message, t('A donation with a set other_amount was successfully processed.'),
       t('Fundraiser Email'));
+  }
+
+  /**
+   * Test the creation of the encrypt key
+   */
+  function testFundraiserEncryptKey() {
+    $key_file = variable_get('encrypt_secure_key_path', '') . '/' . ENCRYPT_SECURE_KEY_FILE;
+    $string = NULL;
+    if (file_exists($key_file)) {
+      $string = file_get_contents($key_file);
+    }
+    $this->assertNotNull($string, 'The Encrypt key is being created and is populated with a string.');
   }
 
 }

@@ -374,4 +374,13 @@ class SalesforceMappingAlterMapTestCase extends SalesforceMappingAlterTestCase {
       }
     }
   }
+
+  /**
+   * Tests the mapping behavior of different field types.
+   */
+  public function testEntityFieldTypes() {
+    // The default map in createSalesforceMapping is a user.  Map to a content
+    // type we can test various field types.
+    $this->createEntityFieldTypeSalesforceMapping();
+  }
 }

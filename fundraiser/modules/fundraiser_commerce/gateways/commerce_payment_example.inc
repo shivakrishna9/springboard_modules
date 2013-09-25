@@ -42,9 +42,9 @@ function commerce_payment_example_fundraiser_commerce_cleanup($submission_fields
 /**
  * Callback function, scrub the fields before they get saved.
  */
-function commerce_payment_example_fundraiser_commerce_scrub($payment_method, $submission_fields) {
+function commerce_payment_example_fundraiser_commerce_scrub($submission_fields, $payment_method) {
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
-  return _fundraiser_commerce_credit_card_scrub($payment_method, $submission_fields);
+  return _fundraiser_commerce_credit_card_scrub($submission_fields);
 }
 
 /**

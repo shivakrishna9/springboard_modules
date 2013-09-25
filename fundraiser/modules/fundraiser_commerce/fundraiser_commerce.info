@@ -12,3 +12,4 @@ version = 7.x-4.x-dev
 ;files[] = tests/fundraiser_commerce.unit.test
 files[] = tests/fundraiser_commerce.gateway.test
 files[] = tests/fundraiser_commerce.gateway.authnet.test
+files[] = tests/fundraiser_commerce.encrypt.test

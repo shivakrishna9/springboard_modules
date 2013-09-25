@@ -28,6 +28,23 @@ function springboard_ga_menu() {
 function springboard_ga_settings_form($form, &$form_state)  {
   $default_settings = _springboard_ga_default_values();
 
+  // Show a warning message if the webform confirmation pages are ignored by the GA module
+  $page_match = FALSE;
+  $visibility = variable_get('googleanalytics_visibility_pages', 0);
+  $setting_pages = variable_get('googleanalytics_pages', GOOGLEANALYTICS_PAGES);
+  if (!empty($setting_pages)) {
+    $pages = drupal_strtolower($setting_pages);
+    if ($visibility < 2) {
+      $path = 'node/123/done';
+      $page_match = drupal_match_path($path, $pages);
+      $page_match = !($visibility xor $page_match);
+      if ($page_match === FALSE) {
+        drupal_set_message(t('The Google Analytics code has been !ga_admin to not appear on webform confirmation pages in the page visibility settings.',
+          array('!ga_admin' => l('configured', 'admin/config/system/googleanalytics'))), 'warning');
+      }
+    }
+  }
+
   $form['springboard_ga_node_configuration'] = array(
     '#type' => 'checkbox',
     '#title' => 'Enable per node configurations of Google Analytics Tracking for Donations',
@@ -103,6 +120,15 @@ function springboard_ga_form_node_form_alter(&$form, &$form_state) {
       '#collapsed' => TRUE,
     ) +  _springboard_ga_transaction_form_fields($form['#node']->springboard_ga['springboard_ga_trans']);
 
+    // Disable these fields if the checkbox is not checked
+    foreach(element_children($form['springboard_ga']['springboard_ga_trans']) as $field_name) {
+      $form['springboard_ga']['springboard_ga_trans'][$field_name]['#states'] = array(
+       'disabled' => array(
+         ':input[name="springboard_ga[springboard_ga_node_configuration]"]' => array('checked' => FALSE),
+         ),
+      );
+    }
+
     // Add the item fields
     $form['springboard_ga']['springboard_ga_item'] = array(
       '#type' => 'fieldset',
@@ -111,6 +137,15 @@ function springboard_ga_form_node_form_alter(&$form, &$form_state) {
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
     ) + _springboard_ga_item_form_fields($form['#node']->springboard_ga['springboard_ga_item']);
+
+    // Disable these fields if the checkbox is not checked
+    foreach(element_children($form['springboard_ga']['springboard_ga_item']) as $field_name) {
+      $form['springboard_ga']['springboard_ga_item'][$field_name]['#states'] = array(
+       'disabled' => array(
+         ':input[name="springboard_ga[springboard_ga_node_configuration]"]' => array('checked' => FALSE),
+         ),
+      );
+    }
 
     // Add the token help
     $token_set = array('donation', 'user', 'node');
@@ -207,9 +242,15 @@ function springboard_ga_preprocess_webform_confirmation(&$vars) {
   if (fundraiser_is_donation_type($vars['node']->type) && !empty($vars['node']->springboard_ga)) {
     global $conf;
     $script = _springboard_ga_js_build($vars['node'], 'asynch');
+    // Standard Drupal token replace
     $token_set = array('node' => $vars['node']);
     drupal_alter('webform_confirmations_token_replace', $token_set, $vars['sid']);
     $script = token_replace($script, $token_set);
+    // Replace webform tokens for the submission.
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    $submission = webform_get_submission($vars['node']->nid, $vars['sid']);
+    $script = _webform_filter_values($script, $vars['node'], $submission, NULL, FALSE, TRUE);
+    // Add the script to the main GA module's global after script variable
     $conf['googleanalytics_codesnippet_after'] .= $script;
   }
 }
@@ -399,7 +440,7 @@ EOS;
     $js .= "\n" . _springboard_ga_js_add_trans($node->springboard_ga['springboard_ga_trans'], 'traditional');
     $js .= "\n" . _springboard_ga_js_add_item($node->springboard_ga['springboard_ga_item'], 'traditional');
     $js .= <<<EOS
-      
+
       springboard_ga_pageTracker._trackTrans();
     } catch(err) {}
 EOS;

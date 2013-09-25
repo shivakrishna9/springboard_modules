@@ -104,8 +104,8 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
     // Abort if we did not receive a valid item that can be queued.
     if (!$this->isValidItem($data)) {
       // Send an error to admin that we couldn't save to the queue.
-      watchdog('salesforce', '[!id] Submitted item could not be queued.',
-        array('!id' => 'queue-01'), WATCHDOG_CRITICAL);
+      watchdog('salesforce', '[@id] Submitted item could not be queued.',
+        array('@id' => 'queue-01'), WATCHDOG_CRITICAL);
       return FALSE;
     }
 
@@ -358,8 +358,8 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
     else {
       // Send a warning that there was an attempt to claim items when the queue
       // was leased.
-      watchdog('salesforce', '[!id] A claim was attempted on a leased queue.',
-        array('!id' => 'queue-02'), WATCHDOG_DEBUG);
+      watchdog('salesforce', '[@id] A claim was attempted on a leased queue.',
+        array('@id' => 'queue-02'), WATCHDOG_DEBUG);
     }
     return empty($items) ? FALSE : $items;
   }

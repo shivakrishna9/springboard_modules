@@ -193,7 +193,7 @@ function _fundraiser_commerce_credit_card_expires_today($submission_fields) {
  * @return Array
  *    The updated fields values
  */
-function _fundraiser_commerce_credit_card_scrub($payment_method, $fields) {
+function _fundraiser_commerce_credit_card_scrub($fields) {
   // Scrub sensitive donation fields if they exists.
   if (isset($fields['credit']['card_number'])) {
     // Reduce the credit card number to last four digits

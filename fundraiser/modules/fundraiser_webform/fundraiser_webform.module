@@ -111,8 +111,6 @@ function fundraiser_webform_webform_confirmations_token_replace_alter(&$tokens, 
 
 /**
  * Implements hook_confirmation_page_tokens().
- *
- *
  */
 function fundraiser_webform_confirmation_page_tokens($node_type) {
   static $token_list = array();
@@ -398,6 +396,25 @@ function fundraiser_webform_form_alter(&$form, &$form_state, $form_id) {
   // They're named what they're named for a reason and we need those keys to remain unharmed.
   if ($form_id == 'webform_component_edit_form') {
     $node = node_load($form['nid']['#value']);
+    // For new components ONLY prevent key conflicts by name.
+    if (arg(4) == 'new') {
+      // Gather the set of already available keys.
+      $seen_keys = array();
+      if (isset($node->webform['components'])) {
+        foreach ($node->webform['components'] as $cid => $this_component) {
+          $seen_keys[$cid] = $this_component['form_key'];
+        }
+      }
+      if (in_array($form['form_key']['#default_value'], $seen_keys)) {
+        $new_key_name = $form['form_key']['#default_value'];
+        $count = 0;
+        while (in_array($new_key_name, $seen_keys)) {
+          $new_key_name = $form['form_key']['#default_value'] = $new_key_name = $form['form_key']['#default_value'] . '_' . $count;
+        }
+        $form['form_key']['#default_value'] = $new_key_name;
+      }
+    }
+    // For donation types ONLY prevent type trigger.
     if (fundraiser_is_donation_type($node->type)) {
       // Walk array of defined fields to gather keys.
       $preserved_keys = _fundraiser_get_field_keys();
@@ -555,12 +572,12 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
     if (isset($submission_fields['payment_method']) && $submission_fields['payment_method'] == $payment_method) {
       // Allow the gateway to cleanup the submission before validation
       if (isset($gateway_info['cleanup callback']) && function_exists($gateway_info['cleanup callback'])) {
-        $submission_fields = $gateway_info['cleanup callback']($submission_fields);
+        $submission_fields = $gateway_info['cleanup callback']($submission_fields, $payment_method);
       }
       // Call the gateways validation function
       if (isset($gateway_info['validate callback']) && function_exists($gateway_info['validate callback'])) {
         $payment_fields = fundraiser_webform_fundraiser_get_form_field($form, 'payment_fields');
-        $submission_fields = $gateway_info['validate callback']($submission_fields, $payment_fields);
+        $submission_fields = $gateway_info['validate callback']($submission_fields, $payment_fields, $payment_method);
       }
       // Store the scrub callback for later if this form has errors
       if (isset($gateway_info['scrub callback']) && function_exists($gateway_info['scrub callback'])) {
@@ -588,7 +605,7 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
 
     if (!empty($scrub_callback)) {
       // SCRUB DATA. We do not want to save sensitive payment data in the error watchdog message.
-      $submission_fields['payment_fields'] = $scrub_callback($submission_fields['payment_method'], $submission_fields['payment_fields']);
+      $submission_fields['payment_fields'] = $scrub_callback($submission_fields['payment_fields'], $submission_fields['payment_method']);
     }
 
     $message .= "\n\nSubmitted Values:\n\n";
@@ -633,7 +650,7 @@ function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $dona
     // For the selected payment method run the submission through the gateway's cleanup callback
     if (isset($submission_fields['payment_method']) && $submission_fields['payment_method'] == $payment_method) {
       if (isset($gateway_info['cleanup callback']) && function_exists($gateway_info['cleanup callback'])) {
-        $submission_fields = $gateway_info['cleanup callback']($submission_fields);
+        $submission_fields = $gateway_info['cleanup callback']($submission_fields, $payment_method);
       }
     }
     // Remove unselected payment fields from the values
@@ -658,7 +675,6 @@ function fundraiser_webform_fundraiser_donation_post_submit($form, $form_state, 
   // Handle behavior if it was a failure.
   if (!isset($donation->result['success']) || (isset($donation->result['success']) && $donation->result['success'] == FALSE) ) {
     // Tell webform we're not done and rebuild the form.
-    unset($form_state['values']['details']['sid']);
     if (!isset($donation->result['message']) || empty($donation->result['message'])) {
       $donation->result['message'] = t('Your payment method has been denied. Please try another.');
     }
@@ -1126,7 +1142,7 @@ function fundraiser_webform_get_submission($sid) {
   $data = array();
   // Query the required submission data.
   $query = db_select('webform_submitted_data', 'sd');
-  $query->leftJoin('webform_component', 'sc', 'sc.cid = sd.cid');
+  $query->leftJoin('webform_component', 'sc', 'sc.nid = sd.nid AND sc.cid = sd.cid');
   $query->fields('sd', array('no', 'data'))
     ->fields('sc', array('form_key'))
     ->condition('sd.sid', $sid)

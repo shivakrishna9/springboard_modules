@@ -956,7 +956,8 @@ function fundraiser_sustainers_edit_form($did) {
 
   // Generate forms, or error messages as needed.
   if ($remaining_donation_count > 0 && empty($cancelled)) {
-    $donation_amount_form = drupal_render( drupal_get_form('fundraiser_sustainers_donation_amount_form', $donation, $next_donation));
+    $donation_amount_form_array = drupal_get_form('fundraiser_sustainers_donation_amount_form', $donation, $next_donation);
+    $donation_amount_form = drupal_render($donation_amount_form_array);
   }
   elseif ($remaining_donation_count == 0) {
     $donation_amount_form = t('There are no further charges for this recurring donation.');
@@ -967,7 +968,8 @@ function fundraiser_sustainers_edit_form($did) {
   $donation_amount_form = '<div id="donation-amount-form"><h2>Update Donation Amount</h2>' . $donation_amount_form . '</div>';
 
   if ($remaining_donation_count > 0 && empty($cancelled)) {
-    $billing_update_form = drupal_render( drupal_get_form('fundraiser_sustainers_billing_update_form', $next_donation));
+    $billing_update_form_array = drupal_get_form('fundraiser_sustainers_billing_update_form', $next_donation);
+    $billing_update_form = drupal_render($billing_update_form_array);
   }
   elseif ($remaining_donation_count == 0) {
     $billing_update_form = t('There are no further charges for this recurring donation.');
@@ -978,7 +980,8 @@ function fundraiser_sustainers_edit_form($did) {
   $billing_update_form = '<div id="donation-billing-form"><h2>Update Your Credit Card Information</h2>' . $billing_update_form . '</div>';
 
   if ($remaining_donation_count > 0 && empty($cancelled)) {
-    $cancel_form = drupal_render( drupal_get_form('fundraiser_sustainers_cancel_form', $next_donation) );
+    $cancel_form_array = drupal_get_form('fundraiser_sustainers_cancel_form', $next_donation);
+    $cancel_form = drupal_render($cancel_form_array);
   }
   elseif ($remaining_donation_count == 0) {
     $cancel_form = t('There are no further charges for this recurring donation.');
@@ -1081,6 +1084,12 @@ function fundraiser_sustainers_donation_amount_form_submit($form, &$form_state) 
  * Creates form for billing address update.
  */
 function fundraiser_sustainers_billing_update_form($form, &$form_state, $donation) {
+  // Attach the js files
+  $form['#attached']['js'] = array(
+    drupal_get_path('module', 'fundraiser') . '/js/jquery.alphanumeric.min.js',
+    drupal_get_path('module', 'fundraiser') . '/js/jquery.validate.min.js',
+    drupal_get_path('module', 'fundraiser') . '/js/donation_validation.js',
+  );
   // Abort if the gateway does not support recurring.
   $info = _fundraiser_get_donation_gateway($donation->did);
   if (!_fundraiser_sustainers_supports_recurring($info['allow_recurring'], $donation->donation['payment_method'])) {
@@ -1152,8 +1161,6 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
   $form['#calling_module'] = 'fundraiser_sustainers';
   fundraiser_display_form_fields('fundraiser_sustainers', $form, $form_state);
 
-  // Add afterbuild for js, css.
-  $form['#after_build'][] = 'fundraiser_sustainers_billing_update_after_build';
   return $form;
 }
 
@@ -1455,6 +1462,7 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
       $info = _fundraiser_get_donation_gateway($donation->did);
       if (_fundraiser_sustainers_supports_recurring($info['allow_recurring'], $donation->donation['payment_method'])) { // Allows recurring
         // Then we do all the creating of offline values, table, SF object, and extra orders.
+        $donation->recurring = new stdClass();
         $donation->recurring->master_did = $donation->did;
         // Add the master to the recurring table.
         $recurring_donation = array(

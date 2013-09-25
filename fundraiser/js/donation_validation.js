@@ -17,8 +17,6 @@
       $(window).ready(function(){
         // Turn autocomplete off on CC and CVV form elements.
         $('input[name*="card_number"], input[name*="card_cvv"]').attr('autocomplete','off');
-        // Set initial form button state to disabled
-        $('#edit-submit').addClass('button_disabled').attr('disabled', true);
 
         // Helper function, provides the total display.
         function _recalculate_quantity_total() {
@@ -58,21 +56,29 @@
           return this.optional(element) || /^[0-9]*(\.\d{1,3})*(,\d{1,3})?$/i.test(value);
         }, "Enter a valid amount");
 
+        // Custom zipcode validation
+        $.validator.addMethod('zipcode', function(value, element) {
+          // U.S. or Canadian Zip codes
+          return this.optional(element) || /(^\d{5}((-|\s)\d{4})?$)|(^[ABCEGHJKLMNPRSTVXY]{1}\d{1}[A-Z]{1} *\d{1}[A-Z]{1}\d{1}$)/i.test(value);
+        }, "Enter a valid zipcode");
+
         // Instantiate Form Validation
-        $('.fundraiser-donation-form').validate({ 
+        var donationValidate = $('.fundraiser-donation-form').validate({
           // Custom keyup function checking for tab key (9) and when value is empty
           onkeyup: function (element, event) {
-            if (event.which === 9 && element.value === "") {
-              return;
-            } else {
-              this.element(element);
+            if ($(element).next('.error')[0]){
+              if (event.which === 9 && element.value === "") {
+                return;
+              } else {
+                this.element(element);
+              }
             }
-          },   
+          },
           onfocusout: function (element) {
-            $(element).valid();    
+            $(element).valid();
             // Callback for real-time onfocusout of form elements
             var isValid = $(element).valid();
-            // 
+            //
             if (typeof validateKeyCallback != "undefined" && isValid == 0) {
               // Set status to 0
               window.validateKeyCallback.status = 0;
@@ -80,37 +86,50 @@
             } else if (typeof validateKeyCallback != "undefined" && isValid == 1) {
               // Set status to 1
               window.validateKeyCallback.status = 1;
-              validateKeyCallback.success(element); 
+              validateKeyCallback.success(element);
             }
           },
           highlight: function(element) {
+            $(element).addClass('key-validate');
             $(element).closest('.control-group').removeClass('success').addClass('error');
           },
           success: function(element) {
             $(element).text('OK').addClass('valid').closest('.control-group').removeClass('error').addClass('success');
           }
         });
-        
-		// On change and keyup check form status
-		$(".fundraiser-donation-form").bind('change keyup', function() {
-          if ($(this).validate().checkForm()) {
-            $('.fundraiser-donation-form #edit-submit').removeClass('button_disabled').attr('disabled', false);
-          } else {
-            $('.fundraiser-donation-form #edit-submit').addClass('button_disabled').attr('disabled', true);
-          }
+
+        // On change and keyup check form status
+        $(".fundraiser-donation-form :input.key-validate").bind('change keyup', function() {
+          donationValidate.element('#' + $(this).attr('id'));
         });
-        
+
+        // On submission hide the button and replace it with a new value.
+        // Wrap the click in a once trigger to be sure that we bind it the one time.
+        $('.fundraiser-donation-form #edit-submit').once(function() {
+          $('.fundraiser-donation-form #edit-submit').click(function() {
+            // Validate the form
+            if (donationValidate.form()) {
+              $(this).hide();
+              $('.fundraiser_submit_message').hide();
+              $(this).after('<div class="donation-processing-wrapper">' +
+                '<p class="donation-thank-you">Thank you.</p>' +
+                '<p class="donation-processing">Your donation is being processed.</p>' +
+                '<div class="donation-processing-spinner"></div>' +
+                '</div>');
+            }
+          });
+        });
+
         $('input[name*="card_number"]').numeric();
         $('input[name*="card_cvv"]').numeric();
 
         // Zipcode custom validation rule
         $('input[name*="zip"]').rules("add", {
           required: true,
-          number: true,
-          minlength:5,
+          zipcode: true,
           messages: {
             required: "This field is required",
-            minlength: "Minimum of 5 characters"
+            zipcode: "Enter a valid zipcode"
           }
         });
         // CVV custom validation rule
@@ -131,7 +150,7 @@
           creditcard: true,
           messages: {
             required: "This field is required",
-            creditcard: "Enter a valid credit card number",
+            creditcard: "Enter a valid credit card number"
           }
         });
         // Other Amount
@@ -147,7 +166,7 @@
             amount: true,
             messages: {
             required: "This field is required",
-            amount: "Enter a valid amount",
+            amount: "Enter a valid amount"
           }
         });
 
@@ -165,29 +184,41 @@
 
         // Runs on Other Amount field
         $('input[name*="other_amount"]').blur(function(){
-          var value = $(this).val();
-          // Match 1-3 decimal/comma places and fix value
-          if (value.match(/([\.,\-]\d{1}?)$/)) {
-            $(this).val($(this).val().slice(0, -2));
-          } else if (value.match(/([\.,\-]\d{2}?)$/)) {
-            $(this).val($(this).val().slice(0, -3));
-          } else if (value.match(/([\.,\-]\d{3}?)$/)) {
-            $(this).val($(this).val().replace(/\D/g,''));
+          var value = this.value;
+          // check for custom validation function object
+          if (typeof(window.customValidation) === 'undefined') {
+            // If the value has length and includes at least one integer
+            if (value.length > 0 && this.value.match(/\d/g)) {
+              // if no period period
+              if (!value.match(/\./)) {
+                // no decimals: strip all other chars, add decimal and 00
+                value = value.replace(/[^\d]+/g,'') + '.00';
+              } else {
+                // Remove all non-integer/period chars
+                value = value.replace(/[^\d\.]+/g,'')
+                  // make first decimal unique
+                  .replace(/\./i,'-')
+                  // replace subsequent decimals
+                  .replace(/\./g,'')
+                  // set first back to normal
+                  .replace('-','.')
+                  // match the last two digits, removing others
+                  .match(/\d+\.\d{0,2}|\.\d{0,2}/);
+                var newValue = value[0];
+                if (newValue.match(/\.\d{2}/)) {
+                } else if (newValue.match(/\.\d{1}/)) {
+                  value += '0';
+                } else {
+                  value += '00';
+                }
+              }
+              this.value = value;
+              $(this).valid();
+            }
+          } else {
+            window.customValidation(value);
+            $(this).valid();
           }
-        });
-
-        // On submission hide the button and replace it with a new value.
-        // Wrap the click in a once trigger to be sure that we bind it the one time.
-        $('.fundraiser-donation-form #edit-submit').once(function() {
-          $('.fundraiser-donation-form #edit-submit').click(function() {
-            $(this).hide();
-            $('.fundraiser_submit_message').hide();
-            $(this).after('<div class="donation-processing-wrapper">' +
-              '<p class="donation-thank-you">Thank you.</p>' +
-              '<p class="donation-processing">Your donation is being processed.</p>' +
-              '<div class="donation-processing-spinner"></div>' +
-              '</div>');
-          });
         });
 
         // Ability to override the default message
@@ -216,9 +247,9 @@
             $(this).next().addClass('spacer');
           }
         });
-        // Implementing our own alert close 
+        // Implementing our own alert close
         // Bootstrap.js uses the .on method, not added until jQuery 1.7
-		$('.close').click(function(){
+        $('.close').click(function(){
           $(this).closest('.alert').fadeOut();
         });
 

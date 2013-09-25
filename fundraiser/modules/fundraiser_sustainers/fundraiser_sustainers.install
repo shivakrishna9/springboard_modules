@@ -8,6 +8,7 @@
  * Implements hook_requirements().
  */
 function fundraiser_sustainers_requirements($phase) {
+  $requirements = array();
   if ($phase == 'runtime') {
     $requirements['fundraiser_sustainers_key_exists'] = array(
       'title' => t('Fundraiser sustainer key'),
@@ -28,9 +29,8 @@ function fundraiser_sustainers_requirements($phase) {
       'severity' =>  $key_match_for_environment ? REQUIREMENT_OK : REQUIREMENT_WARNING,
       'weight' => '-999',
     );
-    return $requirements;
   }
-  return array();
+  return $requirements;
 }
 
 /**
@@ -136,6 +136,17 @@ function fundraiser_sustainers_schema() {
       ),
     ),
     'primary key' => array('did'),
+    'indexes' => array(
+      'master_did' => array('master_did'),
+      'attempts_gateway_lock_next' => array('attempts', 'gateway_resp', 'lock_id', 'next_charge'),
+      'did_gateway_master' => array('did', 'gateway_resp', 'master_did'),
+      'did_lock_next' => array('did', 'lock_id', 'next_charge'),
+      'did_master' => array('did', 'master_did'),
+      'gateway_master' => array('gateway_resp', 'master_did'),
+      'lock_next' => array('lock_id', 'next_charge'),
+      'master_next_charge' => array('master_did', 'next_charge'),
+
+    ),
   );
 
   $schema['fundraiser_sustainers_log'] = array(
@@ -309,6 +320,7 @@ function fundraiser_sustainers_update_7001(&$sandbox) {
     'sustainer_key' => $key,
   ))
   ->execute();
+  return array();
 }
 
 /**
@@ -329,6 +341,7 @@ function fundraiser_sustainers_update_7002(&$sandbox) {
     ),
   );
   db_add_field('fundraiser_sustainers', 'lock_id', $field['lock_id']);
+  return array();
 }
 
 /**
@@ -358,12 +371,29 @@ function fundraiser_sustainers_update_7004(&$sandbox) {
     'primary key' => array('nid'),
   );
   db_create_table('fundraiser_sustainers_nodes', $schema['fundraiser_sustainers_nodes']);
+  return array();
+}
+
+/**
+ * Add indexes to tables.
+ */
+function fundraiser_sustainers_update_7005() {
+  db_add_index('fundraiser_sustainers', 'master_did', array('master_did'));
+  db_add_index('fundraiser_sustainers', 'attempts_gateway_lock_next', array('attempts', 'gateway_resp', 'lock_id', 'next_charge'));
+  db_add_index('fundraiser_sustainers', 'did_gateway_master', array('did', 'gateway_resp', 'master_did'));
+  db_add_index('fundraiser_sustainers', 'did_lock_next', array('did', 'lock_id', 'next_charge'));
+  db_add_index('fundraiser_sustainers', 'did_master', array('did', 'master_did'));
+  db_add_index('fundraiser_sustainers', 'gateway_master', array('gateway_resp', 'master_did'));
+  db_add_index('fundraiser_sustainers', 'lock_next', array('lock_id', 'next_charge'));
+  db_add_index('fundraiser_sustainers', 'master_next_charge', array('master_did', 'next_charge'));
+
+  return t('Added indexes to {fundraiser_sustainers} table.');
 }
 
 /**
  * Adds an additional table to log the results of sustainer processing.
  */
-function fundraiser_sustainers_update_7005(&$sandbox) {
+function fundraiser_sustainers_update_7006(&$sandbox) {
   $schema['fundraiser_sustainers_log'] = array(
     'description' => 'Stores the result of sustainer processing.',
     'fields' => array(

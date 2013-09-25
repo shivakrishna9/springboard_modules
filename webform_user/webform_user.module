@@ -312,6 +312,25 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
   // It is critical that we have a matching key id for this value, and it shouldn't change.
   if ($form_id == 'webform_component_edit_form') {
     $node = node_load($form['nid']['#value']);
+    // For new components ONLY prevent key conflicts by name.
+    if (arg(4) == 'new') {
+      // Gather the set of already available keys.
+      $seen_keys = array();
+      if (isset($node->webform['components'])) {
+        foreach ($node->webform['components'] as $cid => $this_component) {
+          $seen_keys[$cid] = $this_component['form_key'];
+        }
+      }
+      if (in_array($form['form_key']['#default_value'], $seen_keys)) {
+        $new_key_name = $form['form_key']['#default_value'];
+        $count = 0;
+        while (in_array($new_key_name, $seen_keys)) {
+          $new_key_name = $form['form_key']['#default_value'] = $new_key_name = $form['form_key']['#default_value'] . '_' . $count;
+        }
+        $form['form_key']['#default_value'] = $new_key_name;
+      }
+    }
+    // Check against mail for conflict avoidance.
     if (isset($node->is_webform_user) && $node->is_webform_user) {
       if ($form['form_key']['#default_value'] == 'mail') {
         $form['form_key']['#disabled'] = TRUE;
@@ -1046,6 +1065,13 @@ function _webform_user_save_profile_map($uid, &$map) {
     }
     // Starting with the mail field.
     if (isset($profile_values['mail'])) {
+      // Check for length. User mail max length: 254
+      if (strlen($profile_values['mail']) > 254) {
+        $original_field = $profile_values['mail'];
+        $profile_values['mail'] = substr($profile_values['mail'], 0, 254);
+        watchdog('webform_user', 'Truncated field @field_name at length @length for user #@uid. Original data: @original_field',
+          array('@field_name' => 'mail', '@length' => 254, '@uid' => $uid, '@original_field' => $original_field));
+      }
       $account->mail = $profile_values['mail'];
       unset($profile_values['mail']);
     }
@@ -1057,6 +1083,17 @@ function _webform_user_save_profile_map($uid, &$map) {
       foreach ($profile_values as $field_name => $field_value) {
         if (isset($account->{$field_name})) {
           if (is_array($account->{$field_name})) {
+            // Check for length.
+            $field_info = field_info_field($field_name);
+            // Length is a concern for text fields. Select values set will fail validation.
+            // Text areas are stored in blob form, so not an issue.
+            $max_length = isset($field_info['settings']['max_length']) ? $field_info['settings']['max_length'] : '';
+            if (!empty($max_length) && strlen($field_value) > $max_length) {
+              $original_field = $field_value;
+              $field_value = substr($field_value, 0, $max_length);
+              watchdog('webform_user', 'Truncated field @field_name at length @length for user #@uid. Original data: @original_field',
+                array('@field_name' => $field_name, '@length' => $max_length, '@uid' => $uid, '@original_field' => $original_field));
+            }
             $account->{$field_name}['und'][0]['value'] = $field_value;
           }
         }
@@ -1072,6 +1109,8 @@ function _webform_user_save_profile_map($uid, &$map) {
           $expected_fields = _profile_get_fields($category['name'], FALSE);
           foreach ($expected_fields as $expected_field) {
             if (!isset($profile[ $expected_field->name ])) {
+              // profile.module saves values in text field type as defined in hook_schema().
+              // Aka mediumtext, 16 MB. So not really an issue for this.
               $this_profile[ $expected_field->name ] = $profile_values[ $expected_field->name ];
             }
           }

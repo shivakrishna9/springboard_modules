@@ -124,6 +124,25 @@ function market_source_form_alter(&$form, &$form_state, $form_id) {
     }
   }
   elseif ($form_id == 'webform_component_edit_form') {
+    // For new components ONLY prevent key conflicts by name.
+    if (arg(4) == 'new') {
+      $node = node_load($form['nid']['#value']);
+      // Gather the set of already available keys.
+      $seen_keys = array();
+      if (isset($node->webform['components'])) {
+        foreach ($node->webform['components'] as $cid => $this_component) {
+          $seen_keys[$cid] = $this_component['form_key'];
+        }
+      }
+      if (in_array($form['form_key']['#default_value'], $seen_keys)) {
+        $new_key_name = $form['form_key']['#default_value'];
+        $count = 0;
+        while (in_array($new_key_name, $seen_keys)) {
+          $new_key_name = $form['form_key']['#default_value'] = $new_key_name = $form['form_key']['#default_value'] . '_' . $count;
+        }
+        $form['form_key']['#default_value'] = $new_key_name;
+      }
+    }
     // Do not allow users to muck with defined form keys in component editting form.
     // They're named what they're named for a reason and we need those keys to remain unharmed.
     // Walk array of defined fields to gather keys.
@@ -138,7 +157,12 @@ function market_source_form_alter(&$form, &$form_state, $form_id) {
     if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
       if ($form_key == 'cid') {
         if (module_exists('salesforce_sync')) {
-          $campaigns = market_source_get_campaigns();
+          // Check if we should reset the cache
+          $reset = FALSE;
+          if (!empty($_GET['campaign-cache-clear'])) {
+            $reset = TRUE;
+          }
+          $campaigns = market_source_get_campaigns($reset);
           $select_options = array();
           foreach ($campaigns as $campaign_id => $campaign) {
             $select_options[$campaign_id] = $campaign['name'] . ' (' . $campaign_id . ')';
@@ -147,6 +171,9 @@ function market_source_form_alter(&$form, &$form_state, $form_id) {
             $form['value']['#type'] = 'select';
             $form['value']['#options'] = $select_options;
           }
+          // Add a link to clear the cache
+          $form['value']['#suffix'] = l('Clear the campaign cache', current_path(), array('query' => array('campaign-cache-clear' => 1)));
+          $form['value']['#suffix'] .= '<div>' . t("To update the list of campaigns in the dropdown click the link above to clear the campaign cache.") . '</div>';
         }
       }
     }
@@ -532,9 +559,9 @@ function market_source_market_source_field_info() {
  * Helper function, return a list of all market source fields from all available modules.
  */
 function market_source_field_info() {
-  static $fields;
   // Cache market source fields during page execution.
-  if (empty($fields)) {
+  $fields = &drupal_static(__FUNCTION__);
+  if (!isset($fields) || empty($fields)) {
     // Request additional fields from other modules.
     $fields = module_invoke_all('market_source_field_info');
     // Allow for others to modify as needed.
@@ -636,18 +663,47 @@ function _market_source_update_component($nid, $field_key, $field, $pid = 0, $we
 /**
  * Helper function, retrieve a set of available campaigns.
  */
-function market_source_get_campaigns() {
-  static $campaigns = array();
+function market_source_get_campaigns($reset = FALSE) {
+  // If the reset option has been passed clear the static variable
+  if ($reset === TRUE) {
+    drupal_static_reset(__FUNCTION__);
+  }
+
+  $campaigns = &drupal_static(__FUNCTION__, array());
+
   if (empty($campaigns) && module_exists('salesforce_sync')) {
-    $sync = new SalesforceSync();
-    $found_campaigns = $sync->fetchRecords('Campaign', array('Id', 'Name'));
-    // Return a list of Campaign ids.
-    foreach ($found_campaigns as $found_campaign) {
-      $campaigns[$found_campaign->Id] = array(
-        'id' =>  $found_campaign->Id,
-        'name' =>  $found_campaign->Name,
-      );
+    if (($cache = cache_get('market_source_campaigns')) && $reset === FALSE) {
+      $campaigns = $cache->data;
+    }
+    else  {
+
+      // Create a new soapclient
+      try {
+        $sync = new SalesforceSync();
+
+        $found_campaigns = $sync->fetchRecords('Campaign', array('Id', 'Name'), array('isActive = TRUE'));
+        // Return a list of Campaign ids.
+        if (is_array($found_campaigns)) {
+          foreach ($found_campaigns as $found_campaign) {
+            $campaigns[$found_campaign->Id] = array(
+              'id' =>  $found_campaign->Id,
+              'name' =>  $found_campaign->Name,
+            );
+          }
+        }
+        else {
+          $campaigns = array();
+        }
+        cache_set('market_source_campaigns', $campaigns, 'cache', CACHE_TEMPORARY);
+      }
+      catch (Exception $ex) {
+        watchdog('Market Source', 'Market Source failed to load the campaign ids due to an API error.',
+          array(),
+          WATCHDOG_ERROR);
+        return array();
+      }
     }
   }
+
   return $campaigns;
 }

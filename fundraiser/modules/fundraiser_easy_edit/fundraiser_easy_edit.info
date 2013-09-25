@@ -1,6 +1,0 @@
-name = Fundraiser Easy Edit
-description = Adds Webform Inline Editing to Donation Forms
-core = 7.x
-package = Jackson River Springboard - extras
-dependencies[] = fundraiser
-version =  7.x-1.0

@@ -1,0 +1,124 @@
+<?php
+
+/**
+ * @file: install, uninstall && update functions
+ */
+
+/**
+ * Implements hook_install().
+ */
+function sb_social_install() {
+  $path = drupal_realpath(file_default_scheme() . '://') . '/social_images';
+  file_prepare_directory($path, FILE_CREATE_DIRECTORY);
+}
+
+
+function sb_social_uninstall() {
+  variable_del('springboard_social_services');
+  variable_del('springboard_social_addthis_profile_id');
+  variable_del('springboard_social_facebook_description');
+
+  db_query("DELETE FROM {variable} WHERE name LIKE 'springboard_social_facebook%'")->execute();
+  db_query("DELETE FROM {variable} WHERE name LIKE 'springboard_social_twitter%'")->execute();
+  db_query("DELETE FROM {variable} WHERE name LIKE 'springboard_social_ms%'")->execute();
+}
+/**
+ * Implements hook_schema().
+ */
+function sb_social_schema() {
+  $schema['sb_social_shares'] = array(
+    'description' => 'Stores data for share events',
+    'fields' => array(
+      'share_id' => array(
+        'description' => 'The node id.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'description' => 'user id associated with webform submission',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'sid' => array(
+        'description' => 'webform submission id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'nid' => array(
+        'description' => 'webform node id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'created' => array(
+        'description' => 'created timestamp',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'service' => array(
+        'description' => 'social sharing service',
+        'type' => 'varchar',
+        'length' => 60,
+      ),
+      'status' => array(
+        'description' => 'sync status',
+        'type' => 'varchar',
+        'length' => 40,
+      ),
+      'url' => array(
+        'description' => 'shared URL',
+         'type'=> 'text',
+      ),
+    ),
+    'primary key' => array('share_id'),
+    'indexes' => array(
+      'sid' => array('sid'),
+    ),
+  );
+  $schema['sb_social_settings'] = array(
+    'description' => 'shared content settings for individual paths',
+    'fields' => array(
+      'sid' => array(
+        'description' => 'settings id',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'id' => array(
+        'description' => 'drupal id, path or node id.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => 'node, path, etc',
+        'type' => 'varchar',
+        'length' => '60',
+        'not null' => TRUE,
+      ),
+      'data' => array(
+        'description' => 'serialized settings array',
+        'type' => 'text',
+      ),
+    ),
+    'primary key' => array('sid'),
+    'indexes' => array(
+      'type' => array('type'),
+    ),
+  );
+  return $schema;
+}
+
+/**
+ * Add indexes to tables.
+ */
+function sb_social_update_7001() {
+  db_add_index('sb_social_shares', 'sid', array('sid'));
+  db_add_index('sb_social_settings', 'type', array('type'));
+
+  return t('Added index to {sb_social_shares} and {sb_social_settings} tables.');
+}

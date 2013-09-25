@@ -85,7 +85,7 @@ function fundraiser_commerce_refund_form($form, &$form_state, $order, $transacti
 function fundraiser_commerce_entity_view($entity, $type, $view_mode, $langcode) {
   switch ($type) {
     case 'commerce_order':
-      if ($view_mode == 'administrator' || $view_mode == 'full') {
+      if (($view_mode == 'administrator' || $view_mode == 'full') && fundraiser_donation_get_donation($entity->order_id)) {
         $entity->content['fundraiser_donation'] = array(
           '#prefix' => '<div class="field field-name-fundraiser-donation field-type-fundraiser-donation field-label-above">' .
             '<div class="field-label">' . t('Fundraiser information') . ': </div>' .
@@ -290,12 +290,22 @@ function fundraiser_commerce_fundraiser_gateway_info() {
       $this_gateway['module_name'] = t('Commerce');
       $this_gateway['title'] = $rule_config->label;
       $this_gateway['description'] = $method_instance['description'];
+
       // Gather additional details per our specific implementation.
       // Re: type of fieldset, and available recurring features.
       // By including the plugin code here, we insure that all available functions are available for all other code.
       // When referencing gateway info gathered under gateway_info hooks.
       module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
-      $this_gateway += module_invoke($method_instance['module'], 'fundraiser_commerce_fundraiser_gateway_info');
+      $gateway_options = module_invoke($method_instance['module'], 'fundraiser_commerce_fundraiser_gateway_info');
+      // Some gateways support multiple payment methods and multiple payment processors
+      // Check if it specifies support for each in the payment method array
+      foreach ($gateway_options['payment_method'] as $key => $type) {
+        if (!is_numeric($key) && $key == $method_id) {
+          $gateway_options['payment_method'] = array($type);
+        }
+      }
+      $this_gateway += $gateway_options;
+
       // Make sure defaults are in place if not set in the plugin.
       if (empty($this_gateway['allow_recurring'])) {
         $this_gateway['allow_recurring'] = array();
@@ -318,6 +328,7 @@ function fundraiser_commerce_fundraiser_gateway_info() {
       $fundraiser_gateways[ $this_gateway['id'] ] = $this_gateway;
     }
   }
+
   return $fundraiser_gateways;
 }
 
@@ -474,8 +485,17 @@ function _fundraiser_commerce_submission_flatten($submit_tree) {
  * AJAX callback for dealing with changes to the donation form.
  */
 function _fundraiser_commerce_client_state_ajax_submit($form, $form_state, &$mess = '') {
-  // Get the form item we want to render.
-  return fundraiser_get_form_field($form['#calling_module'], $form, 'state');
+  // Replace the state field with an updated version with the state list for the
+  // selected country.
+  // After the replace event add focus to the state field. This makes for a smooth transition
+  // in some browsers for users who tab between fields.
+  return array(
+    '#type' => 'ajax',
+    '#commands' => array(
+      ajax_command_replace('#zone-select-wrapper', render(fundraiser_get_form_field($form['#calling_module'], $form, 'state'))),
+      ajax_command_invoke('#edit-submitted-billing-information-state', 'focus'),
+    )
+  );
 }
 
 /**
@@ -594,8 +614,8 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
   }
   // This order data was stored during hook_fundraiser_donation_process(), and scrubbed by the gateway.
   if (!empty($order->data)) {
-    $data = _fundraiser_commerce_decrypt($order->data['fundraiser_commerce']);
-    $data = unserialize($data);
+    $data = _fundraiser_commerce_order_data_retrieve($order->data['fundraiser_commerce']);
+
     // Put data stored data into the right places.
     $donation->donation['payment_method'] = isset($data['payment_method']) ? $data['payment_method'] : '';
     $donation->donation['payment_fields'] = isset($data['payment_fields']) ? $data['payment_fields'] : array();
@@ -718,7 +738,7 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   $scrubbed_fields = $donation->donation['payment_fields'];
   if (isset($method_instance['scrub callback']) && function_exists($method_instance['scrub callback'])) {
     $callback = $method_instance['scrub callback'];
-    $scrubbed_fields = $callback($method_instance, $scrubbed_fields);
+    $scrubbed_fields = $callback($scrubbed_fields, $donation->donation['payment_method']);
   }
   $data = array(
     'payment_method' => $donation->donation['payment_method'],
@@ -735,7 +755,7 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   // Since Card On File stores data unencrypted we can't use it here.
   // And any other additional information we need to track for the donation object.
   $donation->data = $data;
-  $order->data['fundraiser_commerce'] = _fundraiser_commerce_encrypt(serialize($donation->data));
+  $order->data['fundraiser_commerce'] = _fundraiser_commerce_order_data_prepare($donation->data);
 
   // Save the order.
   $order->uid = $user->uid; // Make sure we have the right user. The one we want.
@@ -916,7 +936,7 @@ function _fundraiser_commerce_fundraiser_donation_process_external_form($form, $
       if (!empty($method_instance['offsite_autoredirect'])) {
         $form['#attached']['js'][] = drupal_get_path('module', 'commerce_payment') . '/commerce_payment.js';
         $form['help']['#markup'] = '<div class="checkout-help">' . t('Please wait while you are redirected to the payment server. ' .
-          'If nothing happens within 10 seconds, please click on the button below.') . '</div>';
+          'If nothing happens within 10 seconds, please click on the button above.') . '</div>';
       }
 
       $form['#prefix'] = '<div class="payment-redirect-form">';
@@ -1057,7 +1077,6 @@ function _fundraiser_commerce_update_donation_result_data($donation, $success) {
     'message' => $success ? t('Donation was successfully processed.') : t('Donation transaction failed.'), // Shown to user.
     // Additional data for the order record to store.
     'data' => array(
-      'message' => $message, // Official message from gateway.
       'txn_id' => $remote_id,
       'remote_id' => $remote_id, // The handler ID.
       'transaction_id' => $transaction_id, // The Drupal ID.
@@ -1078,7 +1097,7 @@ function _fundraiser_commerce_update_donation_result_data($donation, $success) {
   $donation->data = $data;
   $donation->txn_id = $remote_id; // TODO Not called anywhere locally, this may not even need to be stored.
   // Encrypt it for storage.
-  $order->data['fundraiser_commerce'] = _fundraiser_commerce_encrypt(serialize($donation->data));
+  $order->data['fundraiser_commerce'] = _fundraiser_commerce_order_data_prepare($donation->data);
   // Save the order again to update its line item reference field and user.
   commerce_order_save($order);
   // Pass the result up the chain.
@@ -1156,6 +1175,57 @@ function _fundraiser_commerce_fundraiser_donation_process_external_form_redirect
       }
     }
   }
+
+  // If the form doesn't exist in the cache try the sid from webform
+  elseif ($donation->sid) {
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    $node = $donation->node;
+    $sid = $donation->sid;
+    $submission = webform_get_submission($node->webform['nid'], $sid, TRUE);
+
+    /**
+     * The code below is adapted from the webform module's confirmation handling
+     */
+
+    // Strip out empty tags added by WYSIWYG editors if needed.
+    $confirmation = strlen(trim(strip_tags($node->webform['confirmation']))) ? $node->webform['confirmation'] : '';
+
+    // Clean up the redirect URL and filter it for webform tokens.
+    $redirect_url = trim($node->webform['redirect_url']);
+    $redirect_url = _webform_filter_values($redirect_url, $node, $submission, NULL, FALSE, TRUE);
+
+    // Remove the domain name from the redirect.
+    $redirect_url = preg_replace('/^' . preg_quote($GLOBALS['base_url'], '/') . '\//', '', $redirect_url);
+
+    // Check confirmation and redirect_url fields.
+    $redirect = array('path' => '', 'options' => array());
+    $external_url = FALSE;
+
+    if ($redirect_url == '<none>') {
+      $redirect['path'] = 'node/' . $node->nid;
+    }
+    elseif ($redirect_url == '<confirmation>') {
+      $redirect = array('path' => 'node/' . $node->nid . '/done', 'options' => array('query' => array('sid' => $sid)));
+    }
+    elseif (valid_url($redirect_url, TRUE)) {
+      $redirect['path'] = $redirect_url;
+      $external_url = TRUE;
+    }
+    elseif ($redirect_url && strpos($redirect_url, 'http') !== 0) {
+      $parts = drupal_parse_url($redirect_url);
+      $parts['query'] ? ($parts['query']['sid'] = $sid) : ($parts['query'] = array('sid' => $sid));
+      $query = $parts['query'];
+      $redirect = array('path' => $parts['path'], 'options' => array('query' => $query, 'fragment' => $parts['fragment']));
+    }
+
+    // If redirecting and we have a confirmation message, show it as a message.
+    if (!$external_url && (!empty($redirect_url) && $redirect_url != '<confirmation>') && !empty($confirmation)) {
+      drupal_set_message(check_markup($confirmation, $node->webform['confirmation_format'], '', TRUE));
+    }
+
+    drupal_goto($redirect['path'], $redirect['options']);
+  }
+
   // If we don't have all the information we need, then we do nothing and fall through to standard page display.
 }
 
@@ -1558,13 +1628,40 @@ function _fundraiser_commerce_get_charged_by_status($status) {
 }
 
 /**
+ * Prepare the fundraiser commerce order data for storage
+ */
+function _fundraiser_commerce_order_data_prepare($data) {
+  $encrypted = _fundraiser_commerce_encrypt(serialize($data));
+
+  // Check to ensure the correct encryption was used
+  $encryption_array = unserialize($encrypted);
+  if (!isset($encryption_array['method']) || $encryption_array['method'] != 'mcrypt_rij_256' || !isset($encryption_array['key_name']) || $encryption_array['key_name'] != 'secure_file_key') {
+    watchdog('fundraiser_commerce', 'The encryption module has not been configured correctly. You may need to patch or update your version.', array(), WATCHDOG_EMERGENCY, l('Fix', 'admin/config/system/encrypt'));
+    return FALSE;
+  }
+
+  return $encrypted;
+}
+
+/**
+ * Retrieve the fundraiser commerce order data
+ */
+function _fundraiser_commerce_order_data_retrieve($data) {
+  $decrypted = _fundraiser_commerce_decrypt($data);
+  if (is_string($decrypted) && $unserialized = @unserialize($decrypted)) {
+    return $unserialized;
+  }
+  return $decrypted;
+}
+
+/**
  * Helper function, wrapper for encrypt function.
  */
 function _fundraiser_commerce_encrypt($input) {
   if (module_exists('encrypt')) {
     module_load_install('encrypt');
     $requirements = encrypt_requirements('runtime');
-    if ($requirements['encrypt_keys']['severity'] == REQUIREMENT_ERROR) {
+    if (isset($requirements['encrypt_keys']) && $requirements['encrypt_keys']['severity'] == REQUIREMENT_ERROR) {
       drupal_set_message(t('A problem was found with your secure key.') . ' ' .
         $requirements['encrypt_keys']['value'],  'warning');
     }
@@ -1582,7 +1679,7 @@ function _fundraiser_commerce_decrypt($input) {
   if (module_exists('encrypt')) {
     module_load_install('encrypt');
     $requirements = encrypt_requirements('runtime');
-    if ($requirements['encrypt_keys']['severity'] == REQUIREMENT_ERROR) {
+    if (isset($requirements['encrypt_keys']) && $requirements['encrypt_keys']['severity'] == REQUIREMENT_ERROR) {
       drupal_set_message(t('A problem was found with your secure key.') . ' ' .
         $requirements['encrypt_keys']['value'],  'warning');
     }
@@ -1654,7 +1751,7 @@ class FundraiserCommerceUIPaymentSettings extends RulesDataUI implements RulesDa
       // And here, we add the remote recurring option iff the module can support it.
       module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $info['payment_method']);
       $gateway_info = module_invoke($info['payment_method'], 'fundraiser_commerce_fundraiser_gateway_info');
-      if (!empty($gateway_info['allow_recurring'])) {
+      if (!empty($gateway_info['allow_recurring']) && !empty($gateway_info['offsite_recurring'])) {
         $form[$name]['settings']['offsite_recurring'] = array(
          '#type' => 'checkbox',
          '#title' => t('Offsite recurring donations'),
@@ -1674,4 +1771,38 @@ class FundraiserCommerceUIPaymentSettings extends RulesDataUI implements RulesDa
   }
 }
 
+/**
+ * Supported gateway hooks.
+ * Some gateways in order to integrate with the fundraiser_commerce system must implement hooks.
+ * As the /inc files for those gateways are not automatically included, we must include those hooks
+ * internally to allow Drupal to pick up on the implementation. The space below is reserved for those.
+ */
 
+/**
+ * Implements hook_commerce_paypal_ipn_process().
+ */
+function fundraiser_commerce_commerce_paypal_ipn_process($order, $payment_method, $ipn) {
+  // If the user executes the transaction and then abandons at Paypal, not returning to fundraiser_commerce's
+  // return path and not triggering anything in _fundraiser_commerce_fundraiser_donation_process_external_form_return()
+  // Therefore we need to finish completion at the IPN transaction process path.
+
+  // We skip this step for so long as a pending is in play.
+  if ($ipn['payment_status'] == 'Pending') {
+    return;
+  }
+  // Anything else, except Completed counts as a fail.
+  $success = FALSE;
+  if ($ipn['payment_status'] == 'Completed') {
+    $success = TRUE;
+  }
+  // Grab the donation object from the order.
+  $donation = fundraiser_donation_get_donation($order->order_id);
+  // Update the donation and order data and result values based on the success.
+  _fundraiser_commerce_update_donation_result_data($donation, $success);
+  // Finish up any last cleanup for this transaction.
+  fundraiser_commerce_fundraiser_donation_after_process($donation);
+  // Save the donation
+  fundraiser_donation_update($donation);
+  // Finish up the submission to kick off success / decline triggers.
+  _fundraiser_donation_submit_after_process($donation);
+}

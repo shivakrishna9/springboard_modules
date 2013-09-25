@@ -45,6 +45,10 @@ function fundraiser_permission() {
       'title' => t('Clone donation form'),
       'description' => t('Clone donation forms.'),
     ),
+    'use gateway switcher' => array(
+      'title' => t('Use the bulk gateway switcher'),
+      'description' => t('Allows users to change donation form gateway configurations in bulk.'),
+    ),
   );
 }
 
@@ -243,8 +247,9 @@ function fundraiser_clone_access_alter(&$access, $node) {
 function fundraiser_clone_node_alter(&$node, $context) {
   // Set the internal name.
   if (fundraiser_is_donation_type($context['original_node']->type)) {
-    if (isset($context['original_node']->internal_name)) {
-      $node->internal_name = t('Clone of @internal', array('@internal' => $context['original_node']->internal_name));
+    if (!empty($context['original_node']->field_fundraiser_internal_name[$context['original_node']->language][0]['value'])) {
+      $internal_name = t('Clone of @internal', array('@internal' => $context['original_node']->field_fundraiser_internal_name[$context['original_node']->language][0]['value']));
+      $node->field_fundraiser_internal_name  = array($node->language => array(0 => array('value' => $internal_name)));
     }
   }
   // The additional load in hook_node_load already will have brought in additional node data.
@@ -300,6 +305,26 @@ function fundraiser_form_node_type_form_alter(&$form, &$form_state) {
       '#default_value' => variable_get('fundraiser_' . $form['#node_type']->type, FALSE),
       '#description' => t('Enable this checkbox if this content type should provide a donation field.'),
     );
+  }
+}
+
+/**
+ * Implements hook_node_type_insert
+ */
+function fundraiser_node_type_insert($type) {
+  if (fundraiser_is_donation_type($type->type)) {
+    module_load_include('inc', 'fundraiser', 'includes/fundraiser.fields');
+    _fundraiser_add_default_fields($type->type);
+  }
+}
+
+/**
+ * Implements hook_node_type_update
+ */
+function fundraiser_node_type_update($type) {
+  if (fundraiser_is_donation_type($type->type)) {
+    module_load_include('inc', 'fundraiser', 'includes/fundraiser.fields');
+    _fundraiser_add_default_fields($type->type);
   }
 }
 
@@ -462,7 +487,7 @@ function fundraiser_form_node_form_alter(&$form, &$form_state, $form_id) {
  *
  * It ultimately populates the fundraiser table from which donation forms are created :
  * nid, gateway, receipt_email_from, receipt_email_address, receipt_email_subject, receipt_email_message,
- * donation_amounts, show_other_amount, ask_for_quantity, minimum_donation_amount, internal_name, confirmation_page_title,
+ * donation_amounts, show_other_amount, ask_for_quantity, minimum_donation_amount, confirmation_page_title,
  * confirmation_page_body, confirmation_page_format, redirect_url.
  */
 function _fundraiser_donation_settings_form(&$form, &$form_state) {
@@ -474,17 +499,6 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
   if (!fundraiser_is_donation_type($node->type)) {
     return;
   }
-  // Fundraiser values are loaded by hook_node_load() on the node type.
-  // So we can safely assume any associated fundraiser information is already available.
-  // Now create form elements for everything we need to set.
-  $form['internal_name'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Internal name'),
-    '#required' => TRUE,
-    '#default_value' => isset($node->internal_name) ? $node->internal_name : '',
-    '#weight' => -4.99,
-    '#maxlength' => 255,
-  );
   $form['fundraiser_settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('Fundraiser settings'),
@@ -999,7 +1013,7 @@ function fundraiser_fundraiser_field_info() {
     '#extra' => array(
       'description' => '',
       'width' => 10,
-      'maxlength' => 5,
+      'maxlength' => 10,
     ),
   );
   $fields['payment_information'] = array(
@@ -1113,15 +1127,15 @@ function _fundraiser_other_amount_field_create($fundraiser, $field) {
  * Validation callback for field other_amount. Called during form validation.
  */
 function _fundraiser_other_amount_field_validate($form, $form_state, $submission_fields, $value) {
-	// Check for confusing selection.
-	if (!empty($submission_fields['amount']) && $submission_fields['amount'] != "other" && !empty($submission_fields['other_amount'])) {
+    // Check for confusing selection.
+    if (!empty($submission_fields['amount']) && $submission_fields['amount'] != "other" && !empty($submission_fields['other_amount'])) {
     return array(
       'amount' => t('You have entered a custom amount and selected a set amount. Please clarify which amount you ' .
         'intend to give, if you want to give the amount that appears in the other box, please select Other from ' .
         'the radio buttons.'),
       'other_amount' => '',
       );
-	}
+    }
   $value = $submission_fields['amount'];
   // Look for other amount if set.
   if ($submission_fields['amount'] == 'other') {
@@ -1155,14 +1169,14 @@ function _fundraiser_email_field_validate($form, $form_state, $submission_fields
  * Validation callback for field other_amount. Called during form validation.
  */
 function _fundraiser_quantity_field_validate($form, $form_state, $submission_fields, $value) {
-	// Check for confusing selection.
-	if (empty($submission_fields['quantity'])) {
+    // Check for confusing selection.
+    if (empty($submission_fields['quantity'])) {
     return array('quantity' => t('You did not enter a quantity.'));
-	}
-	// Not numeric.
-	if (!is_numeric($submission_fields['quantity'])) {
+    }
+    // Not numeric.
+    if (!is_numeric($submission_fields['quantity'])) {
     return array('quantity' => t('You did not enter a valid number.'));
-	}
+    }
 }
 
 /**
@@ -1295,15 +1309,21 @@ function fundraiser_validate_form_fields($form, $form_state, $submission_fields,
  * Must be called from glue display module when displaying the donation form.
  */
 function fundraiser_donation_form(&$form, &$form_state) {
+  // Attach the js files
+  $form['#attached']['js'] = array(
+    drupal_get_path('module', 'fundraiser') . '/js/jquery.alphanumeric.min.js',
+    drupal_get_path('module', 'fundraiser') . '/js/jquery.validate.min.js',
+    drupal_get_path('module', 'fundraiser') . '/js/donation_validation.js',
+  );
+
   // Check to see if the form is being accessed over HTTPS.
   if ((!_fundraiser_is_secure() && !variable_get('fundraiser_development_mode', 0))) {
     // Return a 404 if the page isn't secure and should be.
     $node = $form['#node'];
     watchdog('fundraiser', 'The donation form <em>!title</em> is not protected with SSL.',
       array('!title' => $node->title), WATCHDOG_CRITICAL, l('View the donation form', 'node/' . $node->nid));
-    $message = variable_get('fundraiser_http_error_message', t('We\'re sorry. The donation form you are trying ' .
-      'to access has not been secured properly. Safeguarding your personal information is extremely important ' .
-      'to us, therefore we cannot accept donations from this form at this time.'));
+    $message = variable_get('fundraiser_http_error_message', t('We\'re sorry, but this ' .
+        'donation form is experiencing a temporary problem. Please try again later.'));
     // Remove all other form elements.
     foreach (element_children($form) as $child) {
       unset($form[$child]);
@@ -1323,21 +1343,21 @@ function fundraiser_donation_form(&$form, &$form_state) {
     // We add these first to make sure they're available for the hook call.
     $form['#validate'][] = 'fundraiser_donation_validate';
     $form['#submit'][] = 'fundraiser_donation_submit';
-    
-    // When confirmations are moved, this goes elsewhere.
-    $form['#submit'][] = 'fundraiser_donation_post_submit';   
 
-    // Add class to zip code field    
+    // When confirmations are moved, this goes elsewhere.
+    $form['#submit'][] = 'fundraiser_donation_post_submit';
+
+    // Add class to zip code field
     $quantity = _fundraiser_get_form_field($form, 'quantity');
     if (!empty($quantity)) {
       $quantity['#attributes']['class'][] = 'input-medium';
-      $form = _fundraiser_update_form_field($form, 'quantity', $quantity);    
+      $form = _fundraiser_update_form_field($form, 'quantity', $quantity);
     }
 
     // Add class to zip code field
     $zip = _fundraiser_get_form_field($form, 'zip');
     $zip['#attributes']['class'][] = 'input-medium';
-    $form = _fundraiser_update_form_field($form, 'zip', $zip);    
+    $form = _fundraiser_update_form_field($form, 'zip', $zip);
 
     // Add class to donation_other field
     $other_amount = _fundraiser_get_form_field($form, 'other_amount');
@@ -1354,18 +1374,7 @@ function fundraiser_donation_form(&$form, &$form_state) {
         $form = array_merge($form, $result);
       }
     }
-    $form['#after_build'][] = 'fundraiser_donation_form_after_build';
-  }  
-}
-
-/**
- * Donation form afterbuild, for CSS and JS.
- */
-function fundraiser_donation_form_after_build($form, &$form_state) {
-  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/jquery.alphanumeric.min.js');
-  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/jquery.validate.min.js');
-  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/donation_validation.min.js');
-  return $form;
+  }
 }
 
 /**
@@ -1506,6 +1515,10 @@ function fundraiser_donation_comment($donation, $comment, $variables = array(), 
 function fundraiser_donation_information_table($did) {
   $rows = array();
   $donation = fundraiser_donation_get_donation($did);
+  if (!$donation) {
+    return;
+  }
+
   $rows[] = array('Fundraiser user', t('User #@uid - !name',
     array('@uid' => $donation->uid, '!name' => l($donation->user->name, 'user/' . $donation->user->uid))));
   if (isset($donation->node->nid)) {
@@ -1559,12 +1572,17 @@ function fundraiser_donation_create($donation) {
     'status' => $donation->status,
     'amount' => $donation->donation['amount'],
     'currency' => $donation->donation['currency'],
-    'gateway' => $donation->gateway,
     'txn_id' => '',
     'form_url' => $form_url,
     'created' => REQUEST_TIME,
     'changed' => REQUEST_TIME,
   );
+  if (is_string($donation->gateway)) {
+    $donation_record['gateway'] = $donation->gateway;
+  }
+  elseif (is_array($donation->gateway) && isset($donation->gateway['id']) && !empty($donation->gateway['id'])) {
+    $donation_record['gateway'] = $donation->gateway['id'];
+  }
   _fundraiser_create_donation($donation_record);
   // Add a comment.
   global $user;
@@ -1606,8 +1624,13 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
   if (isset($donation->currency) && !empty($donation->currency)) {
     $donation_record['currency'] = $donation->currency;
   }
-  if (isset($donation->gateway) && !empty($donation->gateway) && is_string($donation->gateway)) {
-    $donation_record['gateway'] = $donation->gateway;
+  if (isset($donation->gateway) && !empty($donation->gateway)) {
+    if (is_string($donation->gateway)) {
+      $donation_record['gateway'] = $donation->gateway;
+    }
+    elseif (is_array($donation->gateway) && isset($donation->gateway['id']) && !empty($donation->gateway['id'])) {
+      $donation_record['gateway'] = $donation->gateway['id'];
+    }
   }
   if (isset($donation->txn_id) && !empty($donation->txn_id)) {
     $donation_record['txn_id'] = $donation->txn_id;
@@ -1769,6 +1792,12 @@ function fundraiser_donation_delete($donation) {
 
 /**
  * Utility function, given a donation id - get everything that goes with it.
+ *
+ * @param $did Numeric
+ *    The ID of the donation
+ *
+ * @return Mixed
+ *    The fully loaded donation object or FALSE if no donation is found
  */
 function fundraiser_donation_get_donation($did, $refresh = FALSE) {
   // Pull from cached donation unless we are refreshing the cache.
@@ -1776,11 +1805,16 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
   if (!$refresh && isset($donations[$did])) {
     return $donations[$did];
   }
+
+  // Grab basic data from our own systems.
+  $donation_record = _fundraiser_get_donation_by_did($did);
+  if (!$donation_record) {
+    return FALSE;
+  }
+
   // If refreshing, or first load, pull all data from database.
   $donation = (object) array();
   $donation->did = $did;
-  // Grab basic data from our own systems.
-  $donation_record = _fundraiser_get_donation_by_did($did);
   $donation->nid = $donation_record->nid;
   $donation->node = node_load($donation_record->nid);
   $donation->uid = $donation_record->uid;
@@ -2366,7 +2400,7 @@ function _fundraiser_create_fundraiser($fundraiser) {
     $imploded_amounts = array_unique($imploded_amounts);
     // On getting fundraiser this will be exploded into the correct values.
     $fundraiser['donation_amounts'] = implode(',', $imploded_amounts);
-    // TODO: we should also store the donation_default internally, instead of 
+    // TODO: we should also store the donation_default internally, instead of
     // relying on fundraiser_webform to store that value for us.
     // For now, this will have to do.
     // Serialize for storage, our configured gateway values for storage in components.
@@ -2696,6 +2730,7 @@ function _fundraiser_update_tracking_value($nid, $field) {
   $tracking = _fundraiser_get_tracking_by_nid($nid);
   // No tracking data? Create one.
   if (!$tracking) {
+    $tracking = new stdClass();
     $tracking->nid = $nid;
     _fundraiser_create_tracking($tracking);
     $tracking = _fundraiser_get_tracking_by_nid($nid);
@@ -2741,3 +2776,158 @@ function fundraiser_get_total_donations_by_nid($nid, $start = FALSE, $end = FALS
   return $total_donations[0];
 }
 
+/**
+ * Implements hook_action_info().
+ */
+function fundraiser_action_info() {
+  return array(
+    '_fundraiser_gateway_switch_action' => array(
+      'description' => t('Gateway Bulk Switch'),
+      'label' => t('Switch the gateway configurations of multiple forms at once.'),
+      'type' => 'node',
+      'configurable' => TRUE,
+      'triggers' => array('any'),
+    ),
+  );
+}
+
+/**
+ * An action to change the gateway of a node
+ */
+function _fundraiser_gateway_switch_action($node, $context = array()) {
+  $orig_config = $node->gateways;
+  // Only update the methods that have been selected
+  foreach ($context['update_methods'] as $method) {
+    $node->gateways[$method] = $context['gateways'][$method];
+
+    // If we're updating the default setting
+    if (!empty($context['update_default']) && !empty($context['gateways']['_default'])) {
+      $node->gateways[$method]['default'] = ($context['gateways']['_default'] == $method) ? 1 : 0;
+    }
+    // Else use the original setting, if not in the original setting then set it to 0
+    else {
+      $node->gateways[$method]['default'] = !empty($orig_config[$method]['default']) ? $orig_config[$method]['default'] : 0;
+    }
+
+    // If we're updating the weights
+    if (!empty($context['update_weights'])) {
+      $node->gateways[$method]['weight'] = $context['gateways'][$method]['weight'];
+    }
+    // Else use the original setting, if not in the original setting then set it to 0
+    else {
+      $node->gateways[$method]['weight'] = !empty($orig_config[$method]['weight']) ? $orig_config[$method]['weight'] : 0;
+    }
+  }
+
+  _fundraiser_update_fundraiser($node);
+}
+
+/**
+ * Configuration form for the gateway switching action
+ */
+function _fundraiser_gateway_switch_action_form($context) {
+  $gateways = _fundraiser_gateway_info();
+
+  if (empty($gateways)) {
+    return array();
+  }
+
+  // Create an array of available payment methods
+  foreach($gateways as $gateway) {
+    $types = isset($gateway['payment_method']) ? $gateway['payment_method'] : array();
+    foreach ($types as $type) {
+      $methods[$type] = $type;
+    }
+  }
+
+  // Checkboxes to select which payment methods will be updated
+  $form['update_methods'] = array(
+    '#title' => 'Payment Methods to Update',
+    '#description' => t('Select the payment methods to update. Only select a payment method if you want its settings to be changed on all the forms.'),
+    '#type' => 'checkboxes',
+    '#options' => $methods,
+  );
+
+  // Option to update the default method across all the forms
+  $form['update_default'] = array(
+    '#title' => 'Update the default method',
+    '#description' => t('Check this to change the default method across all these forms.'),
+    '#type' => 'checkbox',
+    '#return_value' => 1,
+  );
+
+  // Option to update the ordering accross all the forms
+  $form['update_weights'] = array(
+    '#title' => 'Update the ordering',
+    '#description' => t('Check this to change the ordering of methods across all these forms.'),
+    '#type' => 'checkbox',
+    '#return_value' => 1,
+  );
+
+  $fieldset = array(
+    '#type' => 'fieldset',
+    '#title' => t('Payment methods'),
+    '#description' => t('Enable donation form payment methods and their corresponding gateways.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+    '#tree' => TRUE,
+    '#theme' => 'fundraiser_form_payment_methods',
+  );
+
+  $configuration = variable_get('fundraiser_payment_method_config_defaults', array());
+  $form['gateways'] = _fundraiser_form_payment_method_config_fieldset($gateways, $configuration, $fieldset, 'gateways');
+
+  foreach ($methods as $method) {
+    foreach (element_children($form['gateways'][$method]) as $field_name) {
+      // Add states to each config field to disable it if that payment method hasn't been selected
+      $form['gateways'][$method][$field_name]['#states'] = array(
+        'disabled' => array(
+          ':input[name="update_methods[' . $method . ']"]' => array('checked' => FALSE),
+        ),
+      );
+    }
+
+    // Add states to hide the default and weight fields if that option isn't checked
+    $form['gateways'][$method]['_default']['#states']['visible'][] = array(':input[name="update_default"]' => array('checked' => TRUE));
+    $form['gateways'][$method]['weight']['#states']['visible'][] = array(':input[name="update_weights"]' => array('checked' => TRUE));
+  }
+
+  return $form;
+}
+
+/**
+ * Validate handler for the gateway switch action form
+ */
+function _fundraiser_gateway_switch_action_validate($form, $form_state) {
+  $update_methods = array_filter($form_state['values']['update_methods']);
+  // Ensure at least one method has been selected
+  if (empty($update_methods)) {
+    form_set_error('update_methods', 'Please select at least one payment method.');
+    return;
+  }
+
+  // If updating the default method ensure an enabled payment method is selected as default
+  $default_enabled = FALSE;
+  if (!empty($form_state['values']['update_default'])) {
+    foreach ($update_methods as $method) {
+      if ($form_state['values']['gateways'][$method]['status'] == 1 && $form_state['values']['gateways']['_default'] == $method) {
+        $default_enabled = TRUE;
+      }
+    }
+    if (!$default_enabled) {
+      form_set_error('update_default', "You've selected to update the default method but haven't chosen an enabled method.");
+    }
+  }
+}
+
+/**
+ * Submit handler for the gateway switch action form
+ */
+function _fundraiser_gateway_switch_action_submit($form, $form_state) {
+  return array(
+    'update_methods' => array_filter($form_state['values']['update_methods']),
+    'update_default' => $form_state['values']['update_default'],
+    'update_weights' => $form_state['values']['update_weights'],
+    'gateways' => $form_state['values']['gateways'],
+  );
+}

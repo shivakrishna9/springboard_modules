@@ -6,7 +6,7 @@
  */
 
 // Include the setup test class.
-module_load_include('test', 'fundraiser', 'tests/fundraiser_commerce.gateway'); 
+module_load_include('test', 'fundraiser', 'tests/fundraiser_commerce.gateway');
 
 class FundraiserCommerceGatewayAuthnetTest extends FundraiserCommerceGatewayTest {
   protected $privileged_user;
@@ -15,7 +15,7 @@ class FundraiserCommerceGatewayAuthnetTest extends FundraiserCommerceGatewayTest
     return array(
       'name' => 'Fundraiser Commerce Authorize.net Gateway',
       'description' => 'Confirm the Authorize.net gateway can process a donation.',
-      'group' => 'Springboard',
+      'group' => 'Fundraiser',
     );
   }
 

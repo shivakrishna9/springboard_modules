@@ -1527,7 +1527,7 @@ function _springboard_default_user_profile($mode = 'commerce') {
       'type' => 'text_textfield',
     ),
   );
-  if ($mode == 'ubercart') {
+  if ($mode == 'ubercart' && module_exists('ubercart')) {
     // Default options loaded from {uc_zones} On the assumption we are using Ubercart here.
     // Load State/Province options from {uc_zones}, UC default is zone codes for US & Canada.
     $countries_set = fundraiser_ubercart_get_countries();
@@ -1545,7 +1545,7 @@ function _springboard_default_user_profile($mode = 'commerce') {
       'settings' => array('allowed_values' => $zones),
     );
   }
-  elseif ($mode == 'commerce') {
+  elseif ($mode == 'commerce' && module_exists('fundraiser_commerce')) {
     // Commerce does not store countries in a database, it relies instead on locale.inc
     $countries_set = fundraiser_commerce_get_countries();
     $zones = '';
@@ -1582,7 +1582,7 @@ function _springboard_default_user_profile($mode = 'commerce') {
       'type' => 'text_textfield',
     ),
   );
-  if ($mode == 'ubercart') {
+  if ($mode == 'ubercart' && module_exists('ubercart')) {
     // Default options loaded from {uc_zones} On the assumption we are using Ubercart here.
     // Load State/Province options from {uc_zones}, UC default is zone codes for US & Canada.
     $countries_set = fundraiser_ubercart_get_countries();
@@ -1600,7 +1600,7 @@ function _springboard_default_user_profile($mode = 'commerce') {
       'settings' => array('allowed_values' => $countries),
     );
   }
-  elseif ($mode == 'commerce') {
+  elseif ($mode == 'commerce' && module_exists('fundraiser_commerce')) {
     // Commerce does not store countries in a database, it relies instead on locale.inc
     $countries_set = fundraiser_commerce_get_countries();
     $countries = '';
@@ -1895,7 +1895,8 @@ function springboard_admin_config_donation_form_add($form, $form_state, $email_n
   $node->type = 'donation_form';
   $node->language = LANGUAGE_NONE;
   $node->uid = 1;
-  $node->title = $node->internal_name = 'Test Donation Form';
+  $node->title = 'Test Donation Form';
+  $node->field_fundraiser_internal_name = array($node->language => array(0 => array('value' => 'Test Donation Form')));
   $node->status = 1;
   $node->promote = 1;
   $node->body['LANGUAGE_NONE'][0]['value'] = 'Donec placerat. Nullam nibh dolor, blandit sed, fermentum id, ' .

@@ -19,7 +19,7 @@ class FundraiserWebformFunctionalTest extends FundraiserSetup {
     return array(
       'name' => 'Fundraiser Webform functional tests',
       'description' => 'Tests fundraiser webform behavior.',
-      'group' => 'Springboard',
+      'group' => 'Fundraiser',
     );
   }
 
@@ -28,7 +28,7 @@ class FundraiserWebformFunctionalTest extends FundraiserSetup {
    */
   function setUp($addtional_modules = array()) {
     // hijack mail system
-    variable_set('mail_system', array('default-system' => 'TestingMailSystem')); 
+    variable_set('mail_system', array('default-system' => 'TestingMailSystem'));
 
     // Call the parent to set all of the base modules up.
     $additional_modules = array(
@@ -98,7 +98,7 @@ class FundraiserWebformFunctionalTest extends FundraiserSetup {
     $this->createWebformEmail($settings);
     $this->drupalGet('node/' . $node->nid . '/webform/emails/2');
 
-    
+
     // submit donation form (successful)
     $donation_settings = array(
       'submitted[donor_information][first_name]' => 'Keyser',
@@ -121,7 +121,7 @@ class FundraiserWebformFunctionalTest extends FundraiserSetup {
 
     $subject_legit = ($mails[0]['subject'] == 'Donation successful');
     $this->assertTrue($subject_legit, t('Mail subject correct'));
-   
+
     // confirm order token replacement
     $this->assertTrue(strpos($mails[0]['body'], 'first_name:Keyser'), t('Token replacement: donation first name replaced correctly'));
     $this->assertTrue(strpos($mails[0]['body'], 'last_name:Soze'), t('Token replacement: donation last name replaced correctly'));
@@ -139,7 +139,7 @@ class FundraiserWebformFunctionalTest extends FundraiserSetup {
     $mails = $this->drupalGetMails();
     $mail_numbers_still_legit = (count($mails) == 1);
     $this->assertTrue($mail_numbers_still_legit, t('Mail count legit after failed donation'));
-   
+
     $to_legit = ($mails[0]['to'] == 'example@example.com');
     $this->assertTrue($to_legit, t('Recipient address correct'));
     $from_legit = ($mails[0]['from'] == '"Donation failed" <donationfailed@example.com>');
@@ -150,7 +150,7 @@ class FundraiserWebformFunctionalTest extends FundraiserSetup {
     $subject_legit = ($mails[0]['subject'] == 'Donation failed');
     $this->assertTrue($subject_legit, t('Mail subject correct'));
 
- 
+
   }
 
   private function createEmailWrapper($settings = array()) {
@@ -168,7 +168,7 @@ class FundraiserWebformFunctionalTest extends FundraiserSetup {
       'email_wrapper_text_template[und][0][value]' => isset($settings['text_template']) ? $settings['text_template'] : 'Thanks for the submission (text) %text_message',
       'email_wrapper_text_message[und][0][value]' => isset($settings['text_message']) ? $settings['text_message'] : 'This is a text message',
     );
-    $this->drupalPost('node/add/email-wrapper', $edit, t('Save')); 
+    $this->drupalPost('node/add/email-wrapper', $edit, t('Save'));
   }
 
   private function createWebformEmail($settings) {
@@ -198,7 +198,7 @@ class FundraiserWebformFunctionalTest extends FundraiserSetup {
       'subject_option' => 'custom',
       'subject_custom' => isset($settings['subject']) ? $settings['subject'] : 'Test webform custom subject',
       // 'subject_component' => 1,
-      'from_address_option' => 'custom', 
+      'from_address_option' => 'custom',
       'from_address_custom' => isset($settings['from_address']) ? $settings['from_address'] : 'from@example.com',
       // 'from_address_component' => 1,
       'from_name_option' => 'custom',
@@ -207,7 +207,7 @@ class FundraiserWebformFunctionalTest extends FundraiserSetup {
       'email_wrappers_html_message' => isset($settings['html_message']) ? $settings['html_message'] : '<p>Customized html message</p>',
       'email_wrappers_text_message' => isset($settings['text_message']) ? $settings['text_message'] : 'Customized text message',
     );
-    $this->drupalPost(NULL, $edit, t('Save e-mail settings')); 
+    $this->drupalPost(NULL, $edit, t('Save e-mail settings'));
   }
 
   private function getMailComponentCid($node) {

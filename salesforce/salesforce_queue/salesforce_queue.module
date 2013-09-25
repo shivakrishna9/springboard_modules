@@ -106,6 +106,7 @@ function salesforce_queue_entity_info() {
  * Implements hook_menu().
  */
 function salesforce_queue_menu() {
+  // Settings page.
   $items['admin/config/salesforce/salesforce-queue'] = array(
     'title' => 'Queue',
     'description' => 'Configuration settings for the Salesforce queue.',
@@ -119,6 +120,7 @@ function salesforce_queue_menu() {
   $items['admin/config/salesforce/salesforce-queue/config']['type'] = MENU_DEFAULT_LOCAL_TASK;
   $items['admin/config/salesforce/salesforce-queue/config']['weight'] = -10;
 
+  // Utility to help debugging.
   $items['admin/config/salesforce/salesforce-queue/object-verify'] = array(
     'title' => 'Debug',
     'description' => 'Utility for verifying the format of Salesforce objects.',
@@ -128,6 +130,27 @@ function salesforce_queue_menu() {
     'type' => MENU_LOCAL_TASK,
     'file' => 'includes/salesforce_queue.utility.inc',
     'weight' => 10,
+  );
+
+  // Execute cron on demand.
+  // There are no restrictions executing the processor since the processor has a
+  // set restriction for a maximum length of time between executions and
+  // prevents concurrent executions.
+  $items['salesforce-queue/process'] = array(
+    'title' => 'Process queue',
+    'description' => 'Call back to immediately process the queue',
+    'page callback' => 'salesforce_queue_cron',
+    'page arguments' => array('all'),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  $items['salesforce-queue/process/%'] = array(
+    'title' => 'Process specific queue',
+    'description' => 'Call back to immediately process a given specific queue',
+    'page callback' => 'salesforce_queue_cron',
+    'page arguments' => array(2),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
   );
 
   return $items;
@@ -254,11 +277,20 @@ function salesforce_queue_process_queue($queue_name = 'all') {
  * Implements hook_cron().
  */
 function salesforce_queue_cron() {
+  // Abort if this is being run automatically (e.g.: through standard cron) and
+  // running during standard cron is disabled.
+  $params = func_get_args();
+  if (empty($params) && !variable_get('salesforce_queue_cron_enabled', 1)) {
+    return;
+  }
+
   // Limit the running of the processor to a configured frequency.
   $cron_frequency = variable_get('salesforce_queue_cron_frequency', SALESFORCE_QUEUE_CRON_FREQUENCY_DEFAULT);
   $cron_last = variable_get('salesforce_queue_cron_last', 0);
   if (($cron_last + $cron_frequency) < REQUEST_TIME && salesforce_get_api()->isAuthorized()) {
-    salesforce_queue_process_queue();
+    $queue_name = (isset($params[0]) && !empty($params[0])) ? $params[0] : 'all';
+    salesforce_queue_process_queue($queue_name);
+
     // Set cron_last after process has completed.
     variable_set('salesforce_queue_cron_last', time());
   }
