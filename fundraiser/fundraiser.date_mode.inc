@@ -264,6 +264,13 @@ function fundraiser_sustainer_update_date_mode_operation($mode, $date, $time, $m
       date('Y-m-d', $order['next_charge']) .
       ' to ' . date('Y-m-d', $new_date);
 
+    $replacements = array(
+      '!from' => date('n/j/Y', $order['next_charge']),
+      '!to' => date('n/j/Y', $new_date)
+    );
+
+    uc_order_comment_save($order['order_id'], 0, t('Payment charge date changed from !from to !to.', $replacements), 'admin');
+
     watchdog('fundraiser_sustainers', $message);
     // Store some result for post-processing in the finished callback.
     $context['results'][] = $message;
