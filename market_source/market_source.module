@@ -444,7 +444,7 @@ function market_source_create_standard_components($nid, $default_campaign = NULL
       'hidden_type' => 'hidden',
     ),
     'mandatory' => 1,
-    'weignt' => 21,
+    'weight' => 21,
     'email' => 1,
     'maps_to' => 'profile_cid',
   );
