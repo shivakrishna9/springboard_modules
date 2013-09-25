@@ -60,7 +60,7 @@ class FundraiserWebformFunctionalTest extends FundraiserSetup {
     // set up donation form
 
     $node->default_amount = 20; // Set a different default than normal.
-    $created_node = parent::_fundraiser_setup_create_node($node);
+    $created_node = parent::createDonationForm($node);
     $node = node_load($created_node->nid);
     $this->drupalGet('node/' . $node->nid);
     // create email wrapper node 2 (success)
@@ -108,7 +108,7 @@ class FundraiserWebformFunctionalTest extends FundraiserSetup {
       'submitted[billing_information][address_line_2]' => $this->randomName(5),
       'submitted[billing_information][city]' => 'Greensboro',
     );
-    $this->_fundraiser_setup_post_donation($node->nid, $donation_settings);
+    $this->submitDonation($node->nid, $donation_settings);
     $mails = $this->drupalGetMails();
     $mail_numbers_legit = (count($mails) == 1);
     $this->assertTrue($mail_numbers_legit, t('Mail count legit after successful donation'));
@@ -135,7 +135,7 @@ class FundraiserWebformFunctionalTest extends FundraiserSetup {
     variable_set('drupal_test_email_collector', array());
 
     // submit donation form (fail)
-    $this->_fundraiser_setup_post_donation($node->nid, array('submitted[payment_information][payment_fields][credit][card_number]' => '000000000000000'));
+    $this->submitDonation($node->nid, array('submitted[payment_information][payment_fields][credit][card_number]' => '000000000000000'));
     $mails = $this->drupalGetMails();
     $mail_numbers_still_legit = (count($mails) == 1);
     $this->assertTrue($mail_numbers_still_legit, t('Mail count legit after failed donation'));

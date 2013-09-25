@@ -87,9 +87,9 @@ class FundraiserSustainerTest extends FundraiserSetup {
    */
   function testFundraiserSustainerUI() {
     // Create a node.
-    $created_user = parent::_fundraiser_setup_create_user();
+    $created_user = parent::createFundraiserUser();
     $this->drupalLogin($created_user);
-    $node = parent::_fundraiser_setup_create_node();
+    $node = parent::createDonationForm();
     // Post to the node.
     $month = date('n', strtotime('+1 year'));
     $year = date('Y', strtotime('+1 year'));
@@ -97,14 +97,14 @@ class FundraiserSustainerTest extends FundraiserSetup {
     $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_month]'] = $month;
     $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_year]'] = $year;
     $post['submitted[donor_information][mail]'] = $created_user->mail;
-    parent::_fundraiser_setup_post_donation($node->nid, $post);
+    parent::submitDonation($node->nid, $post);
     $this->drupalLogout();
     // Anon can't go to the sustainer's page.
     $this->drupalGet('user/' . $created_user->uid . '/recurring_overview');
     $this->assertText('You are not authorized to access this page. ', t('Accessing the sustaining user as anonymous shows the correct message text.'),
       t('Fundraiser Sustainers UI'));
     // Create a new user.
-    $user = parent::_fundraiser_setup_create_user();
+    $user = parent::createFundraiserUser();
     $this->drupalLogin($user);
     // Diff user can't go to the sustainer's page.
     $this->drupalGet('user/' . $created_user->uid . '/recurring_overview');
@@ -140,9 +140,9 @@ class FundraiserSustainerTest extends FundraiserSetup {
    */
   function testFundraiserSustainerUpdate() {
     // Create a node.
-    $created_user = parent::_fundraiser_setup_create_user(array('cancel future donations'));
+    $created_user = parent::createFundraiserUser(array('cancel future donations'));
     $this->drupalLogin($created_user);
-    $node = parent::_fundraiser_setup_create_node();
+    $node = parent::createDonationForm();
     // Post to the node.
     $month = date('n', strtotime('+1 year'));
     $year = date('Y', strtotime('+1 year'));
@@ -150,7 +150,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
     $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_month]'] = $month;
     $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_year]'] = $year;
     $post['submitted[donor_information][mail]'] = $created_user->mail;
-    parent::_fundraiser_setup_post_donation($node->nid, $post);
+    parent::submitDonation($node->nid, $post);
     // Get the master did.
     $donations = _fundraiser_get_donations();
     $master_did = '';
@@ -454,7 +454,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
    */
   protected function createFundraiserSustainer() {
     // Create a node.
-    $node = parent::_fundraiser_setup_create_node();
+    $node = parent::createDonationForm();
     // Post to the node.
     $month = date('n', strtotime('+1 year'));
     $year = date('Y', strtotime('+1 year'));
@@ -462,7 +462,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
     $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_month]'] = $month;
     $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_year]'] = $year;
     $post['submitted[donor_information][mail]'] = 'fundraiser_sustainer@example.com';
-    parent::_fundraiser_setup_post_donation($node->nid, $post);
+    parent::submitDonation($node->nid, $post);
   }
 
   /**
@@ -473,9 +473,9 @@ class FundraiserSustainerTest extends FundraiserSetup {
     // Set the encryption path to avoid errors during get node, etc.
     variable_set('encrypt_secure_key_path', $file_path);
     // Create a node.
-    $created_user = parent::_fundraiser_setup_create_user();
+    $created_user = parent::createFundraiserUser();
     $this->drupalLogin($created_user);
-    $node = parent::_fundraiser_setup_create_node();
+    $node = parent::createDonationForm();
     // Post to the node.
     $month = date('n', strtotime('+1 year'));
     $year = date('Y', strtotime('+1 year'));
@@ -483,7 +483,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
     $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_month]'] = $month;
     $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_year]'] = $year;
     $post['submitted[donor_information][mail]'] = $created_user->mail;
-    parent::_fundraiser_setup_post_donation($node->nid, $post);
+    parent::submitDonation($node->nid, $post);
     // Get the master did.
     $donations = _fundraiser_get_donations();
     $master_did = '';

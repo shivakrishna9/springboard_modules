@@ -122,10 +122,10 @@ class FundraiserCloneTest extends FundraiserSetup {
    */
   function fundraiserCloneNode() {
     // create a user with cloning permissions
-    $user = $this->_fundraiser_setup_create_user(array('clone donation form', 'clone node', 'clone own nodes', 'create donation form', 'create donation_form content', 'edit own donation_form content', 'edit any donation form'));
+    $user = $this->createFundraiserUser(array('clone donation form', 'clone node', 'clone own nodes', 'create donation form', 'create donation_form content', 'edit own donation_form content', 'edit any donation form'));
 
     // Create a node to clone.
-    $node = $this->_fundraiser_setup_create_node(array('uid' => $user->uid));
+    $node = $this->createDonationForm(array('uid' => $user->uid));
 
     // Add a custom title to the confirmation page (this is cheating a bit).
     db_update('webform_confirmations')

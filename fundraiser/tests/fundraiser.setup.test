@@ -42,9 +42,9 @@ class FundraiserSetup extends DrupalWebTestCase {
     fclose($open_file);
 
     // Setup the environment to a default standard.
-    $this->_fundraiser_setup_user_profile();
-    $this->_fundraiser_setup_webform_to_user_map();
-    $this->_fundraiser_setup_create_type();
+    $this->setupUserProfile();
+    $this->setupWebformToUserMap();
+    $this->createDonationContentType();
     // Do not create an additional node, but leave code in place for it.
   }
 
@@ -55,7 +55,7 @@ class FundraiserSetup extends DrupalWebTestCase {
   /**
    * Configure a default set of User profile fields.
    */
-  protected function _fundraiser_setup_user_profile() {
+  protected function setupUserProfile() {
     // See http://drupal.org/node/874026 for discussion re: Profile in D7.
     // By preference we use field API.
     $profile_fields = array();
@@ -285,7 +285,7 @@ class FundraiserSetup extends DrupalWebTestCase {
   /**
    * Configure a default set of User profile to Webform maps.
    */
-  protected function _fundraiser_setup_webform_to_user_map() {
+  protected function setupWebformToUserMap() {
     // Set the default fundraiser to webform user profile handling settings.
     variable_set('fundraiser_webform_to_user_map', array(
       'mail' => 'mail',
@@ -304,7 +304,7 @@ class FundraiserSetup extends DrupalWebTestCase {
   /**
    * Configure a default set of Market Source to Webform maps.
    *
-  protected function _fundraiser_setup_market_source_to_user_map() {
+  protected function setupMarketSourceToUserMap() {
     // And the same for market source
     variable_set('market_source_to_user_map', array(
       'sbp_cid' => 'cid',
@@ -322,7 +322,7 @@ class FundraiserSetup extends DrupalWebTestCase {
   /**
    * Create the donation_form type.
    */
-  protected function _fundraiser_setup_create_type() {
+  protected function createDonationContentType() {
     $type = node_type_set_defaults();
     $type->name = t('Donation Form');
     $type->type = 'donation_form';
@@ -365,7 +365,7 @@ class FundraiserSetup extends DrupalWebTestCase {
   /**
    * Create an example Fundraiser node.
    */
-  protected function _fundraiser_setup_create_node($node_configs = '') {
+  protected function createDonationForm($node_configs = '') {
     $fields = fundraiser_field_info(TRUE);
     // Create the node.
     $node = new stdClass();
@@ -484,7 +484,7 @@ class FundraiserSetup extends DrupalWebTestCase {
   /**
    * Create an example Fundraiser user.
    */
-  protected function _fundraiser_setup_create_user($user_configs = '') {
+  protected function createFundraiserUser($user_configs = '') {
     $user = array(
       'access content',
     );
@@ -501,7 +501,7 @@ class FundraiserSetup extends DrupalWebTestCase {
   /**
    * Create a standard post.
    */
-  protected function _fundraiser_setup_post_donation($nid, $post_config = '') {
+  protected function submitDonation($nid, $post_config = '') {
     // Standard post values.
     $month = date('n');
     $year = date('Y');
