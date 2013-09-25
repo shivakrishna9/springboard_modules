@@ -71,7 +71,7 @@ class SpringboardSocialFunctionalTest extends FundraiserSetup {
 
     $node_stub = new stdClass();
     $node_stub->default_amount = 20; // Set a different default than normal.
-    $created_node = parent::_fundraiser_setup_create_node($node_stub);
+    $created_node = $this->createDonationForm($node_stub);
     $node = node_load($created_node->nid);
     $this->assertTrue($node->type == 'donation_form', t('Donation form node type correct'));
     $this->drupalGet('node/' . $node->nid);
@@ -155,7 +155,7 @@ class SpringboardSocialFunctionalTest extends FundraiserSetup {
       'submitted[billing_information][address_line_2]' => $this->randomName(5),
       'submitted[billing_information][city]' => 'Greensboro',
     );
-    $this->_fundraiser_setup_post_donation($node->nid, $donation_settings);
+    $this->submitDonation($node->nid, $donation_settings);
 
       // node tokens
 

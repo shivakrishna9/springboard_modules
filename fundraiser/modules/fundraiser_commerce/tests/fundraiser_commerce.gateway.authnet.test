@@ -37,7 +37,7 @@ class FundraiserCommerceGatewayAuthnetTest extends FundraiserCommerceGatewayTest
     $this->drupalPost('node/' . $this->donation_form->nid . '/edit', $edit, t('Save'));
     $this->drupalGet('node/' . $this->donation_form->nid);
 
-    $this->_fundraiser_setup_post_donation($this->donation_form->nid);
+    $this->submitDonation($this->donation_form->nid);
   }
 
 }
