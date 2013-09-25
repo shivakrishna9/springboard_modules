@@ -50,7 +50,7 @@ function fundraiser_schema() {
       'donation_amounts' => array(
         'description' => 'A comma delimited string of ask amounts to be displayed on the donation form.',
         'type' => 'varchar',
-        'length' => '100',
+        'length' => '255',
         'not null' => FALSE,
       ),
       'show_other_amount' => array(
@@ -426,4 +426,15 @@ function fundraiser_update_7003() {
   db_add_index('fundraiser_refund', 'receipt_id', array('receipt_id'));
 
   return t('Added indexes to {fundraiser_donation} and {fundraiser_refund} tables.');
+}
+
+/**
+ * Increase length of donation amounts in {fundraiser}
+ */
+function fundraiser_update_7004() {
+  db_change_field('fundraiser', 'donation_amounts', 'donation_amounts', array(
+    'type' => 'varchar',
+    'length' => '255',
+    'not null' => FALSE,
+  ));
 }
