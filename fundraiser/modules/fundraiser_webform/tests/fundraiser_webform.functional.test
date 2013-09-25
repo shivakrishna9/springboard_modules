@@ -60,7 +60,7 @@ class FundraiserWebformFunctionalTest extends FundraiserSetup {
     // set up donation form
 
     $node->default_amount = 20; // Set a different default than normal.
-    $created_node = parent::createDonationForm($node);
+    $created_node = $this->createDonationForm($node);
     $node = node_load($created_node->nid);
     $this->drupalGet('node/' . $node->nid);
     // create email wrapper node 2 (success)
