@@ -41,8 +41,8 @@ function fundraiser_sustainer_date_mode_form() {
     '#title' => t('Process date'),
     '#description' => t('Select the day of each month to process sustainers.'),
     '#options' => $dates,
-    '#multiple' => FALSE, // TODO set true.
-    '#default_value' => variable_get('fundraiser_sustainer_set_dates', array('15')),
+    '#multiple' => FALSE,
+    '#default_value' => variable_get('fundraiser_sustainer_set_dates', '15'),
     '#access' => $queue_possible,
   );
 
@@ -91,7 +91,7 @@ function fundraiser_sustainer_date_mode_form_submit($form, &$form_state) {
   // To match the date formatting requested.
   $old_mode = variable_get('fundraiser_sustainer_set_date_mode', FALSE);
   $new_mode = $form_state['values']['fundraiser_sustainer_set_date_mode'];
-  $old_date = variable_get('fundraiser_sustainer_set_dates', array('15'));
+  $old_date = variable_get('fundraiser_sustainer_set_dates', '15');
   $new_date = $form_state['values']['fundraiser_sustainer_set_dates'];
 
   // save the new values
@@ -99,7 +99,6 @@ function fundraiser_sustainer_date_mode_form_submit($form, &$form_state) {
   variable_set('fundraiser_sustainer_set_dates', $new_date);
   variable_set('fundraiser_sustainer_set_seconds', $form_state['values']['fundraiser_sustainer_set_seconds']);
 
-  // TODO: this will be changed when we support more than one date.
   // Check if we need to change anything.
   if ($old_mode == $new_mode && $old_date == $new_date) {
     drupal_set_message('No changes made.');

@@ -2234,8 +2234,7 @@ function fundraiser_extend_future_orders($master_order_id, $exp_month, $exp_year
      * @todo Revist and review the following block of code.
      */
     if (module_exists('drupal_queue') && variable_get('fundraiser_sustainer_set_date_mode', FALSE)) {
-      $day = variable_get('fundraiser_sustainer_set_dates', array('15'));
-      // TODO: this will be changed when we support more than one date.
+      $day = variable_get('fundraiser_sustainer_set_dates', '15');
       $this_month_year = date('F Y');
       $last_charge_date = strtotime($day . ' ' . $this_month_year);
       // If today is before the next charge date, (1/1, 1/5)
@@ -2306,8 +2305,7 @@ function fundraiser_create_future_orders($order_id, $gateway = NULL, $amount = N
   // Check for the date mode and date selected.
   $date_to_start = strtotime('now');
   if (module_exists('drupal_queue') && variable_get('fundraiser_sustainer_set_date_mode', FALSE)) {
-    $day = variable_get('fundraiser_sustainer_set_dates', array('15'));
-    // TODO: this will be changed when we support more than one date.
+    $day = variable_get('fundraiser_sustainer_set_dates', '15');
     $this_month_year = date('F Y');
     $date_to_start = strtotime($day . ' ' . $this_month_year);
   }
