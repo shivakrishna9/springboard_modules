@@ -6,9 +6,12 @@
 
 class FundraiserSustainerDateModeTestCase extends DrupalWebTestCase {
 
-  protected  $fundraiser_node;
+  protected $number_of_orders = 3;
+  protected $fundraiser_node;
   protected $orders;
-  public $_user;
+  protected $cc_exp_month;
+  protected $cc_exp_year;
+  public $user;
 
   /**
    * Implementation of getInfo().
@@ -16,7 +19,7 @@ class FundraiserSustainerDateModeTestCase extends DrupalWebTestCase {
   public static function getInfo() {
     return array(
       'name' => t('Fundraiser sustainer date mode'),
-      'description' => t('Submits recurring donations and checks the charge dates.'),
+      'description' => t('Submits recurring donations and checks the charge dates when date mode is enabled.'),
       'group' => t('Springboard'),
     );
   }
@@ -63,8 +66,8 @@ class FundraiserSustainerDateModeTestCase extends DrupalWebTestCase {
     );
 
     // Create and log in our privileged user.
-    $this->_user =  $this->drupalCreateUser($permissions);
-    $this->drupalLogin($this->_user);
+    $this->user =  $this->drupalCreateUser($permissions);
+    $this->drupalLogin($this->user);
 
     // Create ubercart settings
     $this->setupPayment();
@@ -73,6 +76,11 @@ class FundraiserSustainerDateModeTestCase extends DrupalWebTestCase {
 
     // Create a donation form
     $this->getFundraiserNode();
+
+    // change credit card expiration date 3 months into the future
+    $future = strtotime("+3 month");
+    $this->cc_exp_month = date('m', $future);
+    $this->cc_exp_year = date('Y', $future);
 
   }
 
@@ -83,39 +91,62 @@ class FundraiserSustainerDateModeTestCase extends DrupalWebTestCase {
     parent::tearDown();
   }
 
-  function testAnniveersaryOrdersCreated() {
-    $number_of_orders = 1;
-    // Create some orders in anniversary mode
-    $this->disableDateMode();
-    $this->createRecurringOrders($number_of_orders);
-    $this->assertEqual($number_of_orders, count($this->orders), 'Order count matches number of orders created.');
-    $today = date('d');
-    foreach ($this->orders as $order) {
-      $charges = db_query("SELECT order_id, next_charge FROM {fundraiser_recurring} WHERE master_order_id = %d ORDER BY next_charge ASC", $order->order_id);
-      while ($charge = db_fetch_object($charges)) {
-        $this->assertEqual($today, date('d', $charge->next_charge), 'Today\'s day ' . $today . ' matches the anniversary next_charge day from order' . $charge->order_id);
-      }
-    }
-  }
+  /**
+   * This should actually happen in the normal submissions tests.
+   */
+//  function testAnniversaryOrdersCreated() {
+//    $number_of_orders = 1;
+//    // Create some orders in anniversary mode
+//    $this->disableDateMode();
+//    $this->createRecurringOrders($number_of_orders);
+//    $this->assertEqual($number_of_orders, count($this->orders), 'Order count matches number of orders created.');
+//    $today = date('d');
+//    foreach ($this->orders as $order) {
+//      $charges = db_query("SELECT order_id, next_charge FROM {fundraiser_recurring} WHERE master_order_id = %d ORDER BY next_charge ASC", $order->order_id);
+//      while ($charge = db_fetch_object($charges)) {
+//        $this->assertEqual($today, date('d', $charge->next_charge), 'Today\'s day ' . $today . ' matches the anniversary next_charge day from order' . $charge->order_id);
+//      }
+//    }
+//  }
 
+  /**
+   * Enables date mode and creates recurring orders and checks the next_charge days.
+   */
   function testDateModeOrdersCreated() {
-    $number_of_orders = 1;
-    $day = date('d', strtotime('+2 days'));
-    if ($day > 28) {
-      $day = 28;
+    // day should be between 1 and 28, and shouldn't be today's day.
+    // here we're picking two days after today, unless it's out of range.
+    $today = date('d');
+    if ($today > 26) {
+      $day = 2;
+    }
+    else {
+      $day = $today + 2;
     }
 
     $this->enableDateMode($day);
-    $this->createRecurringOrders($number_of_orders);
-    $this->assertEqual($number_of_orders, count($this->orders), 'Order count matches number of orders created.');
+    $this->createRecurringOrders($this->number_of_orders);
+    $this->assertEqual($this->number_of_orders, count($this->orders), 'Order count matches number of orders created.');
+
+    // Within each master order, confirm that the next_charge days are correct.
     foreach ($this->orders as $order) {
-      $charges = db_query("SELECT order_id, next_charge FROM {fundraiser_recurring} WHERE master_order_id = %d ORDER BY next_charge ASC", $order->order_id);
+      $charges = db_query("SELECT order_id, next_charge
+        FROM {fundraiser_recurring}
+        WHERE master_order_id = %d ORDER BY next_charge ASC",
+        $order->order_id);
+
       while ($charge = db_fetch_object($charges)) {
-        $this->assertEqual($day, date('d', $charge->next_charge), 'The date mode day ' . $day . ' matches the next_charge day from order' . $charge->order_id);
+        $this->assertEqual($day, date('d', $charge->next_charge),
+          'The date mode day ' . $day . ' matches the next_charge day from order ' . $charge->order_id
+        );
       }
     }
   }
 
+  /**
+   * Enables date mode on the settings page.
+   *
+   * @param integer $day  The day to set for date mode. (1 - 28)
+   */
   function enableDateMode($day) {
 
     // start out disabled
@@ -135,6 +166,9 @@ class FundraiserSustainerDateModeTestCase extends DrupalWebTestCase {
     $this->assertEqual(variable_get('fundraiser_sustainer_set_dates', ''), $day, 'Dates for date mode correctly set.');
   }
 
+  /**
+   * Goes to the date mode settings page and disables it.
+   */
   function disableDateMode() {
 
     // start out enabled
@@ -153,20 +187,14 @@ class FundraiserSustainerDateModeTestCase extends DrupalWebTestCase {
   }
 
   /**
-   * Recurring donation submission test
+   * Recurring donation submissions
    */
-  function createRecurringOrder() {
+  function createRecurringOrder($cc_exp_month, $cc_exp_year) {
     // use the same node each time so we don't keep creating them.
-    // $this->fundraiserReset();
     $node = $this->getFundraiserNode();
 
     $data = $this->createTestData();
     $submission = $this->createSubmission($data);
-
-    // change credit card expiration date 3 months into the future
-    $future = strtotime("+3 month");
-    $cc_exp_month = date('n', $future);
-    $cc_exp_year = date('Y', $future);
 
     $submission["submitted[credit_card_information][recurs_monthly][recurs]"] = 'recurs';
     $submission["submitted[credit_card_information][expiration_date][card_expiration_month]"] = $cc_exp_month;
@@ -175,7 +203,7 @@ class FundraiserSustainerDateModeTestCase extends DrupalWebTestCase {
     $this->drupalGet('node/' . $node->nid);
     $this->drupalPost(NULL, $submission, t('Submit'));
 
-    $this->assertText(t('Credit card payment processed successfully.'), t('Make sure the text "Type: Authorization and capture" appear after successful donation form submission'));
+    $this->assertText(t('Credit card payment processed successfully.'), t('Make sure the text "Credit card payment processed successfully." appears after successful donation form submission'));
 
     // Get the SID of the new submission.
     $matches = array();
@@ -183,23 +211,22 @@ class FundraiserSustainerDateModeTestCase extends DrupalWebTestCase {
     $sid = $matches[1];
 
     $order_id = db_result(db_query("SELECT order_id FROM {fundraiser_webform_order} WHERE sid = %d", $sid));
-    return uc_order_load($order_id);
-//    // get the id of the next recurring order
-//    $next_order_id = db_result(db_query("SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = %d ORDER BY next_charge LIMIT 1", $order_id));
-//    $yesterday = strtotime("-1 day");
-//    db_query("UPDATE {fundraiser_recurring} SET next_charge = %d WHERE order_id = %d", $yesterday, $next_order_id);
-//    _fundraiser_cron_process();
 
+    return uc_order_load($order_id);
   }
 
-  function getFundraiserNode($type = 'donation_form') {
-    $args = func_get_args();
+  /**
+   * Returns the node for the donation form.  Creates one if it doesn't exist.
+   *
+   * @return stdClass
+   */
+  function getFundraiserNode() {
     if (isset($this->fundraiser_node)) {
       return $this->fundraiser_node;
     }
 
     $settings = array(
-      'type' => $type,
+      'type' => 'donation_form',
       'language' => '',
       'uid' => '1',
       'status' => '1',
@@ -255,10 +282,6 @@ class FundraiserSustainerDateModeTestCase extends DrupalWebTestCase {
       ),
     );
 
-    if (isset($args[0]['settings'])) {
-      $settings = array_merge($settings, $args[0]['settings']);
-    }
-
     $node = $this->drupalCreateNode($settings);
     $node = node_load($node->nid, TRUE);
 
@@ -307,44 +330,18 @@ class FundraiserSustainerDateModeTestCase extends DrupalWebTestCase {
     $personal['profile_state'] = 'DC';
     $personal['profile_zip'] = 20009;
     $personal['profile_country'] = 'US';
-    _fundraiser_profile_save_profile($personal, $this->_user, 'Personal Information');
+    _fundraiser_profile_save_profile($personal, $this->user, 'Personal Information');
     $system = array();
     $system['profile_cid'] = '';
     $system['profile_ms'] = 'market-source';
     $system['profile_referrer'] = '';
   }
 
-  function createFundraiserType($type, $name) {
-    $content_type = new stdClass();
-    $content_type->type = $type;
-    $content_type->name = $name;
-    $content_type->orig_type = '';
-    $content_type->old_type = '';
-    $content_type->description = '';
-    $content_type->help = '';
-    $content_type->min_word_count = 0;
-    $content_type->title_label = 'Title';
-    $content_type->body_label = 'Body';
-    $content_type->has_title = 1;
-    $content_type->has_body = 1;
-    $content_type->module = 'node';
-    $content_type->custom = 1;
-    $content_type->modified = 1;
-    $content_type->locked = '';
-
-    node_type_save($content_type);
-    node_types_rebuild();
-
-    // we have to fudge here since we're not actually submitting the form
-    $primary_types = variable_get('webform_node_types_primary', array('webform'));
-    $types = variable_get('webform_node_types', array('webform'));
-    $primary_types[] = $type;
-    variable_set('webform_node_types_primary', $primary_types);
-    $types[] = $type;
-    variable_set('webform_node_types', $types);
-    variable_set('fundraiser_' . $type, TRUE);
-  }
-
+  /**
+   * Returns some test data.
+   *
+   * @return array
+   */
   function createTestData() {
     $tomorrow = strtotime("+1 day");
     $first_name = $this->randomName(7);
@@ -363,10 +360,16 @@ class FundraiserSustainerDateModeTestCase extends DrupalWebTestCase {
       'cc_cvv' => '111',
       'cc_exp_month' => date('n', $tomorrow),
       'cc_exp_year' => date('Y', $tomorrow),
-      'cc_exp_day' => date('j', $tomorrow),
     );
   }
 
+  /**
+   * Sets up the form API array with the given data.
+   *
+   * @param array $data
+   *
+   * @return array
+   */
   function createSubmission($data) {
     $edit1["submitted[donation][amount]"] = $data['amount'];
     $edit1["submitted[donor_information][first_name]"] = $data['first_name'];
@@ -384,19 +387,14 @@ class FundraiserSustainerDateModeTestCase extends DrupalWebTestCase {
     return $edit1;
   }
 
-  function clearOrders() {
-    db_query("truncate {uc_orders}");
-    db_query("truncate uc_order_comments");
-    db_query("truncate uc_order_admin_comments");
-    db_query("truncate uc_order_products");
-    db_query("truncate uc_order_line_items");
-    db_query("truncate uc_payment_receipts");
-  }
-
-
+  /**
+   * Creates count number of recurring donations.
+   *
+   * @param int $count
+   */
   function createRecurringOrders($count = 3) {
     for ($i = 0; $i < $count; $i++) {
-      $this->orders[] = $this->createRecurringOrder();
+      $this->orders[] = $this->createRecurringOrder($this->cc_exp_month, $this->cc_exp_year);
     }
   }
 
@@ -406,26 +404,29 @@ class FundraiserSustainerDateModeTestCase extends DrupalWebTestCase {
  *
 
         Convert  Create  Extend
-on      X         X       X
-off     X         X       X
+on               Tested
+off              n/a      n/a
 
 
-Disable date mode through the UI
 
+This test should go in the normal submission tests.
 (mode off and create order)
 Create a few recurring orders - at least one on Jan 31st
 assert that the next_charge dates on these orders is correct
 
-(mode off and convert to on)
-enable date mode through the UI
-set date to a month day that has already passed (1 < x < today)
-(Does simpletest play nice with batch api?)
-assert that the next_charge dates are correctly updated
-
-(mode on and extend)
+Needs to be tested in normal submission tests
+(mode off and extend)
 Change the expiration date on an order to further in the future
 assert new next_charges are correct
 
+
+(mode off and convert to on)
+have some existing orders
+enable date mode through the UI
+set date to a month day that has already passed (1 < x < today)
+assert that the next_charge dates are correctly updated
+
+This is being currently being tested.
 (mode on and create)
 create a new recurring order
 assert next_charges are correct
@@ -434,24 +435,9 @@ assert next_charges are correct
 change date to a month day that hasn't happened yet (today < x < 28)
 assert next_charges on all orders
 
-(mode on and extend)
-Change the expiration date on an order to further in the future
-assert new next_charges are correct
-
-(mode on and create)
-create a new recurring order
-assert next_charges are correct
-
-(mode on and convert)
+(mode on and convert to off)
+have some recurring orders while date mode is on
 disable date mode through the UI
 assert next_charges are correct (anniversary mode)
-
-(mode off and extend)
-Change the expiration date on an order to further in the future
-assert new next_charges are correct
-
-(mode off and create)
-create a new recurring order
-assert next_charge is anniversary
 
  */
