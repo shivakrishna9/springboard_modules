@@ -1,0 +1,25 @@
+#message_wrapper.hidden, .hidden {
+  display:none;
+}
+#message-modal h2, #message-modal h3 {
+  margin:0;
+}
+
+#fundraiser-upsell-donation-form label {
+  float: left;
+  margin-right: 1em;
+  margin-top: 0.25em;
+}
+
+/* Move the currency symbol from the description into the input field */
+#fundraiser-upsell-donation-form .description {
+  height: 0px;
+  position: relative;
+  top: -1.9em;
+  font-size: 1em;
+  left: 9.7em;
+}
+
+#fundraiser-upsell-donation-form #edit-amount {
+  padding-left: 1em;
+}

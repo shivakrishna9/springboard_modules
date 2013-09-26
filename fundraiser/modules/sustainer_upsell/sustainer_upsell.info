@@ -1,6 +1,0 @@
-name = Sustainer Upsell
-description = Upsell lightbox for recurring donations
-core = 6.x
-package = Jackson River Springboard - extras
-dependencies[] = fundraiser
-version =  6.x-3.3
