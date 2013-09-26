@@ -320,16 +320,17 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
   }
   // Decouple if needed
   if ($decoupled) {
-    $order = _fundraiser_upsell_clone_order($order, array(
+    $new_order = _fundraiser_upsell_clone_order($order, array(
       'amount' => $amount,
       'status' => 'pending_future_payment'
     ));
+    unset($order);
+    $order = $new_order;
   }
   // Create the recurring donation series
-  $success = (fundraiser_upsell_create_recurring($order, $amount, $user)) ? TRUE : FALSE;
+  $success = (fundraiser_upsell_create_recurring($order, $amount, $user, $decoupled)) ? TRUE : FALSE;
   // Set the master order to recurring and process the thank you content if successful
   if ($success) {
-    db_query("UPDATE {fundraiser_webform_order} SET recurring_status = 1 WHERE order_id = %d", $order->order_id);
     $raw_content = variable_get('fundraiser_upsell_thank_you_content', 'Thank you for your recurring donation!');
     $content = token_replace_multiple($raw_content, array('global' => NULL, 'order' => $order), NULL, NULL, array('clear' => TRUE));
   }
@@ -343,12 +344,19 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
  * Convert the single donation into a recurring donation
  * @param object $order - the master order
  * @param float $amount - the decimal amount for recurring donations
+ * @param object $user - user object
+ * @param boolean $decoupled - if the order is decoupled or not
  * @return boolean
  */
-function fundraiser_upsell_create_recurring($order, $amount, $user) {
+function fundraiser_upsell_create_recurring($order, $amount, $user, $decoupled = 0) {
   // Create the recurring orders
   fundraiser_create_future_orders($order->order_id,NULL,$amount);
-  // $orders = db_query("SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = %d", $order->order_id);
+  // If this is a decoupled order, we will end up with a duplicate because the
+  // decoupled order is in recurring for next month, and the future orders will
+  // also create an order for next month. In this case, we need to delete the extra.
+  if ($decoupled) {
+    db_query("DELETE FROM {fundraiser_recurring} WHERE master_order_id = %d AND order_id <> %d ORDER BY order_id ASC LIMIT 1", $order->order_id, $order->order_id);
+  }
   // Set the master id to show its recurring
   db_query("UPDATE fundraiser_webform_order SET recurring_status = 1 WHERE order_id = %d", $order->order_id);
   // Check to see if the order is in the queue. If so delete it so we can put it back in as a recurring donation.

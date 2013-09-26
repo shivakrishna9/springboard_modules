@@ -194,6 +194,7 @@ function _fundraiser_upsell_clone_order($order, $options = NULL) {
   // Get the amount and set it.
   $amount = (isset($options['amount'])) ? $options['amount'] : $order->order_total;
   $new_order->products[0]->price = $amount;
+  $new_order->order_total = $amount;
   // Remove the response from the original order.
   if (!empty($new_order->data['response'])) {
     unset($new_order->data['response']);
@@ -204,6 +205,18 @@ function _fundraiser_upsell_clone_order($order, $options = NULL) {
   // Add a comment to the order stating when it will be charged.
   $next_charge = strtotime("+1 months");
   uc_order_comment_save($new_id, 0, t('Payment will be processed on !date.', array('!date' => date('n/j/Y', $next_charge))), 'admin');
+  // Add the new order to the fundraiser_recurring table so it will be processed in the future
+  $sustainer_key = fundraiser_get_sustainer_key_value();
+  $order_id = $new_id;
+  $gateway = $order->data['gateway'];
+  $nid = $order->products[0]->nid;
+  $sid = ($_GET['sid']) ? $_GET['sid'] : 0;
+  $donation_form_url = _fundraiser_donation_form_path($nid);
+  db_query("INSERT INTO {fundraiser_recurring} (master_order_id, order_id, next_charge, gateway, form_url, sustainer_key) VALUES (%d, %d, '%s', '%s', '%s', '%s')",
+    $order_id, $new_id, $next_charge, $gateway, $donation_form_url, $sustainer_key);
+  // Now add it to the fundraiser_webform_order table
+  db_query("INSERT INTO {fundraiser_webform_order} (webform_nid, order_id, sid, recurring_status, user_agent, form_url) VALUES (%d, %d, %d, %d, '%s', '%s')",
+    $nid, $order_id, $form_state['values']['details']['sid'], $order->data['recurring_status'], $_SERVER['HTTP_USER_AGENT'], $donation_form_url);
 
   return $new_order;
 }
