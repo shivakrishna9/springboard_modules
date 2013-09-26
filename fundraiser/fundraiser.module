@@ -2230,9 +2230,6 @@ function fundraiser_extend_future_orders($master_order_id, $exp_month, $exp_year
     // Check for the date mode and date selected.
     $last_charge_date = time();
 
-    /**
-     * @todo Revist and review the following block of code.
-     */
     if (module_exists('drupal_queue') && variable_get('fundraiser_sustainer_set_date_mode', FALSE)) {
       $day = variable_get('fundraiser_sustainer_set_dates', '15');
       $this_month_year = date('F Y');

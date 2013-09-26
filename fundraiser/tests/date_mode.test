@@ -11,6 +11,8 @@ class FundraiserSustainerDateModeTestCase extends DrupalWebTestCase {
   protected $orders;
   protected $cc_exp_month;
   protected $cc_exp_year;
+  protected $new_cc_exp_month;
+  protected $new_cc_exp_year;
   public $user;
 
   /**
@@ -78,10 +80,14 @@ class FundraiserSustainerDateModeTestCase extends DrupalWebTestCase {
     $this->getFundraiserNode();
 
     // change credit card expiration date 3 months into the future
-    $future = strtotime("+3 month");
+    $future = strtotime("+3 months");
     $this->cc_exp_month = date('m', $future);
     $this->cc_exp_year = date('Y', $future);
 
+    // new expiration date
+    $future = strtotime("+6 months");
+    $this->new_cc_exp_month = date('m', $future);
+    $this->new_cc_exp_year = date('Y', $future);
   }
 
   /**
@@ -139,6 +145,25 @@ class FundraiserSustainerDateModeTestCase extends DrupalWebTestCase {
           'The date mode day ' . $day . ' matches the next_charge day from order ' . $charge->order_id
         );
       }
+
+      // extend the order
+      fundraiser_extend_future_orders($order->order_id, $this->new_cc_exp_month, $this->new_cc_exp_year);
+
+      // grab the new last charge after the extension
+      $new_last_charge = db_query("SELECT order_id, next_charge
+        FROM {fundraiser_recurring}
+        WHERE master_order_id = %d ORDER BY next_charge DESC LIMIT 0, 1",
+        $order->order_id);
+
+      $new_last_charge = db_fetch_object($new_last_charge);
+      $new_last_charge = $new_last_charge->next_charge;
+      $new_exp_date = $this->new_cc_exp_year . '-' . $this->new_cc_exp_month . '-' . $day;
+      $this->assertEqual($new_exp_date, date('Y-m-d', $new_last_charge),
+        'The new last charge date matches the extended expiration date.' .
+        "New exp date $new_exp_date" .
+        "New last charge " . date('Y-m-d', $new_last_charge)
+      );
+
     }
   }
 
@@ -394,7 +419,13 @@ class FundraiserSustainerDateModeTestCase extends DrupalWebTestCase {
    */
   function createRecurringOrders($count = 3) {
     for ($i = 0; $i < $count; $i++) {
-      $this->orders[] = $this->createRecurringOrder($this->cc_exp_month, $this->cc_exp_year);
+      // spread out the expiration dates
+      $timestamp = strtotime($this->cc_exp_year . '-' . $this->cc_exp_month . '-01');
+      $new_timestamp = strtotime("+$i months", $timestamp);
+      $month = date('n', $new_timestamp);
+      $year = date('Y', $new_timestamp);
+
+      $this->orders[] = $this->createRecurringOrder($month, $year);
     }
   }
 
@@ -404,7 +435,7 @@ class FundraiserSustainerDateModeTestCase extends DrupalWebTestCase {
  *
 
         Convert  Create  Extend
-on               Tested
+on               Tested  Tested
 off              n/a      n/a
 
 
@@ -431,7 +462,12 @@ This is being currently being tested.
 create a new recurring order
 assert next_charges are correct
 
-(change date while mode is already on)
+This is currently being tested.
+(mode on and extend expiration)
+change the expiration date and call the extend function
+assert that new last charge date matches
+
+(change date mode date while mode is already on)
 change date to a month day that hasn't happened yet (today < x < 28)
 assert next_charges on all orders
 
