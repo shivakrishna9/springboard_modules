@@ -140,10 +140,16 @@ class FundraiserSustainerDateModeTestCase extends DrupalWebTestCase {
         WHERE master_order_id = %d ORDER BY next_charge ASC",
         $order->order_id);
 
+      $fake_seconds = 431582400;
+      $fake_seconds_increment = 3600;
       while ($charge = db_fetch_object($charges)) {
         $this->assertEqual($day, date('d', $charge->next_charge),
           'The date mode day ' . $day . ' matches the next_charge day from order ' . $charge->order_id
         );
+
+        // set all charges to the past so we can properly test extend_future_orders
+        $fake_seconds += $fake_seconds_increment;
+        db_query("UPDATE {fundraiser_recurring} SET next_charge = %d WHERE order_id = %d", $fake_seconds, $charge->order_id);
       }
 
       // extend the order
