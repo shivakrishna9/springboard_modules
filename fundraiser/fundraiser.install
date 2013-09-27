@@ -394,7 +394,7 @@ function fundraiser_schema() {
     'indexes' => array('master_order_id' => array('master_order_id')),
   );
 
-  $schema['{fundraiser_component_map}'] = array(
+  $schema['fundraiser_component_map'] = array(
     'description' => t('TODO: please describe this table!'),
     'fields' => array(
       'nid' => array(
