@@ -1,0 +1,149 @@
+<?php
+/**
+ * @file
+ * Fundraiser module sustainer tests.
+ */
+
+include_once(dirname(__FILE__) . '/fundraiserTestHelper.class.php');
+
+class FundraiserSustainerTestCase extends fundraiserTestHelper {
+
+  protected $number_of_orders = 2;
+  protected $orders;
+  protected $cc_exp_month;
+  protected $cc_exp_year;
+  protected $new_cc_exp_month;
+  protected $new_cc_exp_year;
+
+  /**
+   * Implementation of getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => t('Fundraiser sustainer'),
+      'description' => t('Submits recurring donations and checks the charge dates.'),
+      'group' => t('Springboard'),
+    );
+  }
+
+  /**
+   * Implementation of setUp().
+   */
+  function setUp() {
+    parent::setUp();
+
+//    $this->drupalLogin($this->user);
+
+    // Create a donation form
+    $this->getFundraiserForm();
+
+    // change credit card expiration date 3 months into the future
+    $future = strtotime("+3 months");
+    $this->cc_exp_month = date('m', $future);
+    $this->cc_exp_year = date('Y', $future);
+
+    // new expiration date
+    $future = strtotime("+9 months");
+    $this->new_cc_exp_month = date('m', $future);
+    $this->new_cc_exp_year = date('Y', $future);
+  }
+
+  /**
+   * Implementation of tearDown().
+   */
+  function tearDown() {
+    parent::tearDown();
+  }
+
+  /**
+   * This should actually happen in the normal submissions tests.
+   */
+  function testRecurringOrdersCreated() {
+    $this->createRecurringOrders($this->number_of_orders);
+    $this->assertEqual($this->number_of_orders, count($this->orders), 'Order count matches number of orders created.');
+    foreach ($this->orders as $order) {
+      $next_charge = time();
+      $charges = db_query("SELECT order_id, next_charge FROM {fundraiser_recurring} WHERE master_order_id = %d ORDER BY next_charge ASC", $order->order_id);
+
+      $fake_seconds = 431582400;
+      $fake_seconds_increment = 3600;
+
+      while ($charge = db_fetch_object($charges)) {
+        $next_charge = strtotime('+1 month', $next_charge);
+        // exact seconds don't match
+        $this->assertEqual(date('Y-m-d H:i', $next_charge), date('Y-m-d H:i', $charge->next_charge), 'The expected next charge ' . date('c', $next_charge) . ' matches the actual next charge ' . date('c', $charge->next_charge) . '.');
+
+        // set all charges to the past so we can properly test extend_future_orders
+        $fake_seconds += $fake_seconds_increment;
+        db_query("UPDATE {fundraiser_recurring} SET next_charge = %d WHERE order_id = %d", $fake_seconds, $charge->order_id);
+      }
+
+      // extend the order
+      fundraiser_extend_future_orders($order->order_id, $this->new_cc_exp_month, $this->new_cc_exp_year);
+
+      // grab the new last charge after the extension
+      $new_last_charge = db_query("SELECT order_id, next_charge
+        FROM {fundraiser_recurring}
+        WHERE master_order_id = %d ORDER BY next_charge DESC LIMIT 0, 1",
+        $order->order_id
+      );
+
+      $new_last_charge = db_fetch_object($new_last_charge);
+      $new_last_charge = $new_last_charge->next_charge;
+      $new_exp_date = $this->new_cc_exp_year . '-' . $this->new_cc_exp_month;
+      $this->assertEqual($new_exp_date, date('Y-m', $new_last_charge),
+        'The new last charge date matches the extended expiration date.' .
+        "New exp date $new_exp_date" .
+        "New last charge " . date('Y-m-d', $new_last_charge)
+      );
+
+    }
+  }
+
+  /**
+   * Recurring donation submissions
+   */
+  function createRecurringOrder($cc_exp_month, $cc_exp_year) {
+    // use the same node each time so we don't keep creating them.
+    $node = $this->getFundraiserForm();
+
+    $data = $this->createTestData();
+    $submission = $this->createSubmission($data);
+
+    $submission["submitted[credit_card_information][recurs_monthly][recurs]"] = 'recurs';
+    $submission["submitted[credit_card_information][expiration_date][card_expiration_month]"] = $cc_exp_month;
+    $submission["submitted[credit_card_information][expiration_date][card_expiration_year]"] = $cc_exp_year;
+
+    $this->drupalGet('node/' . $node->nid);
+    $this->drupalPost(NULL, $submission, t('Submit'));
+
+    $this->assertText(t('Credit card payment processed successfully.'), t('Make sure the text "Credit card payment processed successfully." appears after successful donation form submission'));
+
+    // Get the SID of the new submission.
+    $matches = array();
+    preg_match('/sid=([0-9]+)/', $this->getUrl(), $matches);
+    $sid = $matches[1];
+
+    $order_id = db_result(db_query("SELECT order_id FROM {fundraiser_webform_order} WHERE sid = %d", $sid));
+
+    return uc_order_load($order_id);
+  }
+
+  /**
+   * Creates count number of recurring donations.
+   *
+   * @param int $count
+   */
+  function createRecurringOrders($count = 3) {
+    for ($i = 0; $i < $count; $i++) {
+      // spread out the expiration dates
+      $timestamp = strtotime($this->cc_exp_year . '-' . $this->cc_exp_month . '-01');
+      $new_timestamp = strtotime("+$i months", $timestamp);
+      $month = date('n', $new_timestamp);
+      $year = date('Y', $new_timestamp);
+
+      $this->orders[] = $this->createRecurringOrder($month, $year);
+    }
+  }
+
+}
