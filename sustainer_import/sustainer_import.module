@@ -1,0 +1,65 @@
+<?php
+
+/**
+ * @file
+ */
+
+require_once('includes/sustainer_import.db.inc');
+
+/**
+ * Implements hook_permission().
+ */
+function sustainer_import_hook_permission() {
+  $permissions['administer sustainer import'] = array(
+    'title' => t('Administer Sustainer Import'),
+    'description' => t('Configure sustainer import module and upload records to the import queue.'),
+    'restrict access' => TRUE,
+  );
+  $permissions['import sustainer data'] = array(
+    'title' => t('Import Sustainer Data'),
+    'description' => t('View import queue reports and run import queue processor'),
+    'restrict access' => TRUE,
+  );
+
+  return $permissions();
+}
+
+/**
+ * Implements hook_menu().
+ */
+function sustainer_import_menu() {
+  $items['admin/config/development/sustainer_import'] = array(
+    'title' => 'Sustainer Import',
+    'description' => 'Configure sustainer import and import sustainer records from external sources',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sustainer_import_admin'),
+    'access arguments' => array('administer sustainer import'),
+    'file' => 'includes/sustainer_import.admin.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['admin/config/development/sustainer_import/settings'] = $items['admin/config/development/sustainer_import'];
+  $items['admin/config/development/sustainer_import/settings']['title'] = t('Settings');
+  $items['admin/config/development/sustainer_import/settings']['type'] = MENU_DEFAULT_LOCAL_TASK;
+
+  $items['admin/config/development/sustainer_import/import'] = array(
+    'title' => 'Import',
+    'description' => 'Import records',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sustainer_import_import_page'),
+    'access arguments' => array('import sustainer data'),
+    'file' => 'includes/sustainer_import.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/config/development/sustainer_import/%sustainer_record/edit'] = array(
+    'title' => 'Edit sustainer import record',
+    'description' => 'Modify records before item is imported',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sustainer_import_edit_record', 4),
+    'access arguments' => array('import sustainer data'),
+    'file' => 'includes/sustainer_import.edit.inc',
+    'type' => MENU_CALLBACK,
+  );
+}
+
+

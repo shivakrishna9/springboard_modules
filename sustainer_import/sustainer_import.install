@@ -1,0 +1,72 @@
+<?php
+
+/**
+ * @File install/uninstall hooks, db schema definition
+ */
+
+function sustainer_import_uninstall() {
+  variable_del('sustainer_import_queue_process_record_count');
+}
+
+function sustainer_import_schema() {
+  // import queue table
+  $schema['sustainer_import_queue'] = array(
+    'description' => 'Stores data for donation_form nodes.',
+    'fields' => array(
+      'rid' => array(
+        'description' => 'The row id.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'record' => array(
+        'description' => 'serialized row data from import file',
+        'type' => 'text',
+      ),
+      'created' => array(
+        'description' => 'timestamp when record was created',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'status' => array(
+        'description' => 'import status',
+        'type' => 'varchar',
+        'size' => 60,
+      ),
+    ),
+    'primary key' => array('nid'),
+  );
+
+  // log table for items processed by import queue.
+  // required to revert import data.
+  $schema['sustainer_import_log'] = array(
+    'description' => 'Log import history',
+    'fields' => array(
+      'rid' => array(
+        'description' => 'row id of import record',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'import_ids' => array(
+        'description' => 'record type and ids created during import',
+        'type' => 'text',
+      ),
+      'timestamp' => array(
+        'description' => 'timestamp of import process',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'errors' => array(
+        'description' => 'error messages encountered during import processing',
+        'type' => 'text',
+      ),
+
+    ),
+    'primary key' => array('rid'),
+  );
+  return $schema;
+}

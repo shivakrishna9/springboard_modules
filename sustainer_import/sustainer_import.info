@@ -1,0 +1,6 @@
+name = Sustainer Import
+description = A utility module for bulk importing sustainer account and donation series data from external data sources.
+core = 7.x
+package = Jackson River Springboard Dev
+configure = admin/config/development/sustainer_import
+version = 7.x-4.x-dev
