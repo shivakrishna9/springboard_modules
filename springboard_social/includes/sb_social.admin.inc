@@ -373,6 +373,18 @@ function sb_social_node_settings($form, $edit, $node) {
     _sb_social_settings_market_source($form, $settings);
   }
 
+  // Whether or not this page should be static so it can be cached.
+  $cached_enabled = variable_get('sb_social_cached_enabled_pages', array());
+  $form['sb_social_cached_enabled'] = array(
+    '#type' => 'checkbox',
+    '#name' => 'sb_social_cached_enabled',
+    '#title' => t('Enable ability to cache confirmation page'),
+    '#default_value' => isset($cached_enabled[$node->nid]) ? $cached_enabled[$node->nid] : FALSE,
+    '#description' => t('Should all users receive the same exact page so it can
+      be cached?  If this happens, Springboard Social will not be able to track
+      a specific user\'s social influence.'),
+  );
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save'),
@@ -412,6 +424,9 @@ function sb_social_settings_submit($form, $form_state) {
         'data' => $data,
     );
     sb_social_settings_save($record, $form_state['values']);
+    $cached_pages = variable_get('sb_social_cached_enabled_pages', array());
+    $cached_pages[$form_state['values']['id']] = $form_state['values']['sb_social_cached_enabled'];
+    variable_set('sb_social_cached_enabled_pages', $cached_pages);
   }
 }
 

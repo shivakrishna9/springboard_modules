@@ -268,9 +268,10 @@ function sb_social_init() {
 
     }
   }
-  // stash cookie payload in js
+  // Stash cookie payload in js, except when pages is cached enabled.
   // TODO: this should probably live somewhere else.
-   if (!empty($_COOKIE['sb_social_event_submission'])) {
+  $cached_pages = variable_get('sb_social_cached_enabled_pages', array());
+   if (!empty($_COOKIE['sb_social_event_submission']) && (empty($id) || !isset($cached_pages[$id]) || !$cached_pages[$id]))) {
      $data = explode("::", $_COOKIE['sb_social_event_submission']);
      drupal_add_js(array('sb_social' => array(
        'uid' => $data[0],
@@ -390,6 +391,30 @@ function sb_social_webform_submission_insert($node, $submission) {
       $mail = $submission->data[$component->cid]['value'][0];
       _sb_social_set_tracking_cookie($submission->uid, $mail, $submission->sid);
     }
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function sb_social_form_alter(&$form, &$form_state, $form_id) {
+  if (strstr($form_id, 'webform_client_form_')) {
+    // Add our own custom submit callback.
+    $form['#submit'][] = 'sb_social_webform_client_form_submit';
+  }
+}
+
+/**
+ * Submit callback for webform client forms
+ */
+function sb_social_webform_client_form_submit($form, &$form_state) {
+  // Modify the redirect to remove the sid as a unique identifier when the
+  // webform requests this particular form should have cachable confirmation
+  // pages.
+  $cached_pages = variable_get('sb_social_cached_enabled_pages', array());
+  $webform_id = isset($form_state['complete form']['#node']) ? $form_state['complete form']['#node']->nid : 0;
+  if (isset($cached_pages[$webform_id]) && $cached_pages[$webform_id]) {
+    unset($form_state['redirect'][1]['query']['sid']);
   }
 }
 

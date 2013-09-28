@@ -120,6 +120,7 @@ class SpringboardSocialFunctionalTest extends FundraiserSetup {
     $this->assertFieldByName('fb_title', '%title', t('Facebook Title field present with correct default'));
     $this->assertFieldByName('fb_description', '%teaser', t('Facebook Description field present with correct default'));
     $this->assertFieldByName('twitter_message', '%title', t('Twitter message field present with correct default'));
+    $this->assertFieldByName('sb_social_cached_enabled', '', t('Cache confirmation page toggle exists.'));
 
     // Confirm form elements present for all expected MS fields
     $this->assertFieldByName('ms', '', t('Default Market Source ms field available'));
@@ -156,6 +157,14 @@ class SpringboardSocialFunctionalTest extends FundraiserSetup {
       'submitted[billing_information][city]' => 'Greensboro',
     );
     $this->submitDonation($node->nid, $donation_settings);
+    $this->assertTrue(strstr($this->getUrl(), 'sid='));
+
+    // Check confirmation page cache.
+    $this->drupalGet('node/' . $node->nid . '/share_settings');
+    $this->drupalPost(NULL, array('sb_social_cached_enabled' => TRUE), 'Save');
+    $donation_settings['submitted[donor_information][mail]'] = 'example2@example.com';
+    $this->submitDonation($node->nid, $donation_settings);
+    $this->assertFalse(strstr($this->getUrl(), 'sid='));
 
       // node tokens
 
