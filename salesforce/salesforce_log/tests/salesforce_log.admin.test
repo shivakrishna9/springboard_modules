@@ -49,7 +49,7 @@ class SalesforceLogAdminTestCase extends SalesforceLogTestCase {
   /**
    * Test the main admin screen
    */
-  function testAdminScreen() {
+  public function testAdminScreen() {
     $this->drupalGet($this->logAdminPath);
     $this->assertResponse(200, 'The main log admin page appears.');
     // Confirm the links are on the page
@@ -61,7 +61,7 @@ class SalesforceLogAdminTestCase extends SalesforceLogTestCase {
   /**
    * Test the queue admin screen
    */
-  function testAdminQueueScreen() {
+  public function testAdminQueueScreen() {
     $this->drupalGet($this->logAdminQueuePath);
     $this->assertResponse(200, 'The queue log admin page appears.');
 
@@ -126,7 +126,7 @@ class SalesforceLogAdminTestCase extends SalesforceLogTestCase {
   /**
    * Test the batch admin screen
    */
-  function testAdminBatchScreen() {
+  public function testAdminBatchScreen() {
     $this->drupalGet($this->logAdminBatchPath);
     $this->assertResponse(200, 'The batch log admin page appears.');
   }
@@ -134,12 +134,12 @@ class SalesforceLogAdminTestCase extends SalesforceLogTestCase {
   /**
    * Test the item admin screen
    */
-  function testAdminItemScreen() {
+  public function testAdminItemScreen() {
     $this->drupalGet($this->logAdminItemPath);
     $this->assertResponse(200, 'The item log admin page appears.');
   }
 
-  function testItemLogging() {
+  public function testItemLogging() {
     // Set the max retries to 1 to quickly force errors
     global $conf;
     $conf['salesforce_queue_max_retries'] = 1;

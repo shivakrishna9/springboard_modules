@@ -28,7 +28,7 @@ class SpringboardSocialFunctionalTest extends FundraiserSetup {
   /**
    * Implements setUp().
    */
-  function setUp($addtional_modules = array()) {
+  public function setUp($addtional_modules = array()) {
     // hijack mail system
     variable_set('mail_system', array('default-system' => 'TestingMailSystem'));
 
@@ -46,7 +46,7 @@ class SpringboardSocialFunctionalTest extends FundraiserSetup {
   }
 
     // tests
-  function testSpringboardSocial() {
+  public function testSpringboardSocial() {
     $permissions = array(
       'administer site configuration',
       'administer fundraiser',

@@ -133,7 +133,7 @@ class springboard_views_join extends views_join {
   /**
    * Build the SQL for the join this object represents.
    */
-  function join($table, &$query) {
+  public function join($table, &$query) {
     if (empty($this->definition['table formula'])) {
       $right_table = "{" . $this->table . "}";
     }

@@ -13,7 +13,7 @@ class SecurePrepopulateTestCase extends DrupalWebTestCase {
   /**
    * Implementation of setUp().
    */
-  function setUp() {
+  public function setUp() {
     parent::setUp(
       'webform',
       'profile',
@@ -30,7 +30,7 @@ class SecurePrepopulateTestCase extends DrupalWebTestCase {
   /**
    * Defines the webform compontents to be used in testing.
    */
-  function testComponents() {
+  public function testComponents() {
     if (isset($this->_test_components)) {
       return $this->_test_components;
     }
@@ -65,7 +65,7 @@ class SecurePrepopulateTestCase extends DrupalWebTestCase {
    * @return
    *   The newly created node id.
    */
-  function webformNode() {
+  protected function webformNode() {
     if (isset($this->_webform_node)) {
       return $this->_webform_node;
     }

@@ -29,7 +29,7 @@ class FundraiserCommerceGatewayAuthnetTest extends FundraiserCommerceGatewayTest
     $this->_importGatewayRule($config);
   }
 
-  function testAuthorize() {
+  public function testAuthorize() {
     debug($this->donation_form);
     $edit = array(
       'gateways[credit][id]' => 'authnet_aim|commerce_payment_authnet_aim',

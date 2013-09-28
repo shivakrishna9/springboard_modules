@@ -26,7 +26,7 @@ class FundraiserCloneTest extends FundraiserSetup {
   /**
    * Implementation of setUp().
    */
-  function setUp() {
+  public function setUp() {
     parent::setUp(array('clone', 'webform_confirmations'));
     // Make sure the new permissions for the content type get added to the permission cache.
     $this->checkPermissions(array('create donation_form content'), TRUE);
@@ -38,14 +38,14 @@ class FundraiserCloneTest extends FundraiserSetup {
   /**
    * Implementation of tearDown().
    */
-  function tearDown() {
+  public function tearDown() {
     parent::tearDown();
   }
 
   /**
    * Tests that the user map clones correctly.
    */
-  function testFundraiserCloneMap() {
+  public function testFundraiserCloneMap() {
     $cloned_node = $this->fundraiserCloneNode();
 
     // User maps verification.
@@ -67,7 +67,7 @@ class FundraiserCloneTest extends FundraiserSetup {
    * Tests that form components clone correclty. Really a function of the webform
    * module but checking here just for fun.
    */
-  function testFundraiesrCloneComponents() {
+  public function testFundraiesrCloneComponents() {
     $cloned_node = $this->fundraiserCloneNode();
 
      // Check webform components.
@@ -92,7 +92,7 @@ class FundraiserCloneTest extends FundraiserSetup {
    * Ensures the confirmation page title clones correclty when webform_confirmations
    * module is enabled.
    */
-  function testFundraierCloneConfirmationPage() {
+  public function testFundraierCloneConfirmationPage() {
     $cloned_node = $this->fundraiserCloneNode();
 
     // Check the page title of confirmation page for cloned node.
@@ -103,7 +103,7 @@ class FundraiserCloneTest extends FundraiserSetup {
   /**
    * Tests that fundraiser specific data clones correctly.
    */
-  function testFundraiserCloneFundraiser() {
+  public function testFundraiserCloneFundraiser() {
     $cloned_node = $this->fundraiserCloneNode();
 
     // General fundraiser configuration
@@ -120,7 +120,7 @@ class FundraiserCloneTest extends FundraiserSetup {
   /**
    * Clones a donation form and returns the new node.
    */
-  function fundraiserCloneNode() {
+  protected function fundraiserCloneNode() {
     // create a user with cloning permissions
     $user = $this->createFundraiserUser(array('clone donation form', 'clone node', 'clone own nodes', 'create donation form', 'create donation_form content', 'edit own donation_form content', 'edit any donation form'));
 

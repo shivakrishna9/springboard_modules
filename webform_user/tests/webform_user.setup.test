@@ -12,7 +12,7 @@ class WebformUserSetup extends DrupalWebTestCase {
   /**
    * Implementation of setUp().
    */
-  function setUp($additional_modules = array()) {
+  public function setUp($additional_modules = array()) {
     $enable_modules = array(
       'webform_user',
     );
@@ -69,7 +69,7 @@ class WebformUserSetup extends DrupalWebTestCase {
   /**
    * Create an instance of a webform user enabled node to use for testing.
    */
-  function _webform_user_create_node() {
+  protected function _webform_user_create_node() {
     // Create the node.
     $node = new stdClass();
     $node->is_new = 1;
@@ -114,7 +114,7 @@ class WebformUserSetup extends DrupalWebTestCase {
   /**
    * Create a petition content type and webform user enable it.
    */
-  function _webform_user_create_type() {
+  protected function _webform_user_create_type() {
     $type = node_type_set_defaults();
     $type->name = t('Petition');
     $type->type = 'petition';
@@ -158,7 +158,7 @@ class WebformUserSetup extends DrupalWebTestCase {
    * Creates the standard set of user profile fields that are used
    * in webform_user.
    */
-  function _webform_user_setup_user_profile() {
+  protected function _webform_user_setup_user_profile() {
     // Get default profile field definitions.
     $profile_fields = $this->webformUserDefaultProfileFields();
 
@@ -181,7 +181,7 @@ class WebformUserSetup extends DrupalWebTestCase {
 
   }
 
-  function webformUserCreateUser() {
+  protected function webformUserCreateUser() {
     // Create a user to test with.
     $user = $this->drupalCreateUser(array('access content'));
 
@@ -204,7 +204,7 @@ class WebformUserSetup extends DrupalWebTestCase {
   /**
    * Utility function, checks to see if a component exists for a given webform.
    */
-  function webformUserComponentExists($nid, $form_key) {
+  protected function webformUserComponentExists($nid, $form_key) {
     return (bool) db_query('SELECT cid FROM {webform_component} WHERE form_key = :form_key AND nid=:nid',
       array(':form_key' => $form_key, ':nid' => $nid))->fetchField();
   }
@@ -212,14 +212,14 @@ class WebformUserSetup extends DrupalWebTestCase {
   /**
    * Utility function to get the details of a webform component.
    */
-  function webformUserComponentDetails($nid, $form_key) {
+  protected function webformUserComponentDetails($nid, $form_key) {
     return db_query('SELECT cid, form_key, type, mandatory FROM {webform_component} WHERE form_key = :form_key AND nid = :nid', array(':form_key' => $form_key, ':nid' => $nid))->fetchObject();
   }
 
   /**
    * Utility function to create new user entity fields.
    */
-  function webformUserAddField($name, $label, $type) {
+  protected function webformUserAddField($name, $label, $type) {
 
     $field = array(
       'field_name' => $name,
@@ -242,7 +242,7 @@ class WebformUserSetup extends DrupalWebTestCase {
   /**
    * Utility function to return all standard profile field definitions.
    */
-  function webformUserDefaultProfileFields() {
+  protected function webformUserDefaultProfileFields() {
     $profile_fields = array();
 
     $profile_fields[] = array(

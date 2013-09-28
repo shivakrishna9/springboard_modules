@@ -17,7 +17,7 @@ class FundraiserWebformUnitTestSetup extends DrupalWebTestCase {
   /**
    * Implemenation of setUp().
    */
-  function setUp() {
+  public function setUp() {
     // Call the parent to set all of the base modules up.
     parent::setUp( array(
         'fundraiser_webform',
@@ -45,7 +45,7 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
   /**
    * Unit test DB related functions.
    */
-  function testFundraiserWebformDBFunctions() {
+  public function testFundraiserWebformDBFunctions() {
     $defaults = array(
       'nid' => 1,
       'cid' => 1,
@@ -123,7 +123,7 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
   /**
    * Unit test component creation function - per field info declared by Fundraiser API.
    */
-  function testFundraiserWebformComponentFunctions() {
+  public function testFundraiserWebformComponentFunctions() {
     // First create test data, here, a donation content type and node to test against.
     $fundraiser->nid = 1;
     $fields['key_one'] = array(
@@ -231,7 +231,7 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
    * Unit test amount field creation as declared by Fundraiser API. Testing amounts separately b/c they're tricky.
    * ALERT: This is technically an integration test of the Fundraiser Webform implementation of create callbacks in field creation.
    */
-  function testFundraiserWebformAmountFieldFunctions() {
+  public function testFundraiserWebformAmountFieldFunctions() {
     $fundraiser->nid = 1;
     $fundraiser->donation_amounts = array(
       array('10', '$10'),
@@ -381,7 +381,7 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
   /**
    * Unit test form manipulation for webform form components during form creation.
    */
-  function testFundraiserWebformFAPIFunctions() {
+  public function testFundraiserWebformFAPIFunctions() {
     // Make sure we're clean in the database.
     db_delete('webform_component')->execute();
 

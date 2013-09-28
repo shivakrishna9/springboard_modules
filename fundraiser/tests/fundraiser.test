@@ -26,7 +26,7 @@ class FundraiserTest extends FundraiserSetup {
   /**
    * Implements setUp().
    */
-  function setUp($additional_modules = array()) {
+  public function setUp($additional_modules = array()) {
     // Call the parent to set all of the base modules up.
     $additional_modules = array(
       'webform_confirmations', // For token testing.
@@ -37,7 +37,7 @@ class FundraiserTest extends FundraiserSetup {
   /**
    * Test the creation of a fundraiser form node.
    */
-  function testFundraiserNodeCreation() {
+  public function testFundraiserNodeCreation() {
     $node_stub = new stdClass();
     $node_stub->default_amount = 20; // Set a different default than normal.
     $created_node = $this->createDonationForm($node_stub);
@@ -131,7 +131,7 @@ class FundraiserTest extends FundraiserSetup {
   /**
    * Test the creation of a fundraiser form node.
    */
-  function testFundraiserFormSSHAccess() {
+  public function testFundraiserFormSSHAccess() {
     $node = $this->createDonationForm();
     $message = 'We\'re sorry, but this donation form is experiencing a temporary problem. Please try again later.';
     variable_set('fundraiser_development_mode', 0); // TURN OFF DEFAULT MODE.
@@ -164,7 +164,7 @@ class FundraiserTest extends FundraiserSetup {
   /**
    * Test the creation of a fundraiser form node.
    */
-  function testFundraiserFormDisplay() {
+  public function testFundraiserFormDisplay() {
     $node_stub = new stdClass();
     $node_stub->default_amount = 20; // Set a different default than normal.
     $node = $this->createDonationForm($node_stub);
@@ -219,7 +219,7 @@ class FundraiserTest extends FundraiserSetup {
   /**
    * Test the creation of a fundraiser form node.
    */
-  function testFundraiserFormEmailValidation() {
+  public function testFundraiserFormEmailValidation() {
     $node = $this->createDonationForm();
     // Check various emails fail.
     $post = array('submitted[donor_information][mail]' => 'BROKEN_EMAIL');
@@ -280,7 +280,7 @@ class FundraiserTest extends FundraiserSetup {
   /**
    * Test the creation of a fundraiser form node.
    */
-  function testFundraiserFormAmountValidation() {
+  public function testFundraiserFormAmountValidation() {
     $node = $this->createDonationForm();
     // Check various emails fail.
     $post = array(
@@ -315,7 +315,7 @@ class FundraiserTest extends FundraiserSetup {
   /**
    * Test the creation of the encrypt key
    */
-  function testFundraiserEncryptKey() {
+  public function testFundraiserEncryptKey() {
     $key_file = variable_get('encrypt_secure_key_path', '') . '/' . ENCRYPT_SECURE_KEY_FILE;
     $string = NULL;
     if (file_exists($key_file)) {

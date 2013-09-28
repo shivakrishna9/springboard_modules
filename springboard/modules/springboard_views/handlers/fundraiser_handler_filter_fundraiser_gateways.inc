@@ -31,7 +31,7 @@ class fundraiser_handler_filter_fundraiser_gateways extends views_handler_filter
    *
    * The gateways are saved as a serialized string so using a LIKE query is the best way to search it
    */
-  function query() {
+  public function query() {
     $this->ensure_my_table();
     if (!empty($this->value[0])) {
       $field = "$this->table_alias.$this->real_field";

@@ -8,13 +8,13 @@
 
 class springboard_webform_hidden_component_values extends views_handler_field{
   //add an option to the field handler to choose which component's value is displayed.
-  function option_definition() {
+  public function option_definition() {
     $options = $this->option_definition();
     $options['webform_component_options'] = array('default' => NULL);
     return $options;
   }
 
-  function options_form(&$form, &$form_state) {
+  public function options_form(&$form, &$form_state) {
     $this->options_form($form, $form_state);
     //Build a list of distinct hidden components defined by webform or other modules.
     $result = db_select('webform_component', 'wc')
@@ -36,7 +36,7 @@ class springboard_webform_hidden_component_values extends views_handler_field{
     );
   }
 
-  function query() {
+  public function query() {
     //Join in an instance of the webform_component table for the form_key value chosen.
     $this->ensure_my_table();
     $first = array(
@@ -60,7 +60,7 @@ class springboard_webform_hidden_component_values extends views_handler_field{
     );
   }
 
-  function render($values) {
+  public function render($values) {
     //output the value
     $alias = 'webform_component_'.$this->options['webform_component_options'].'_value';
     return check_plain($values->$alias);

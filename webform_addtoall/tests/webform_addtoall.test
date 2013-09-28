@@ -18,7 +18,7 @@ class WebformAddToAllTestCase extends DrupalWebTestCase {
   /**
    * Implementation of setUp().
    */
-  function setUp() {
+  public function setUp() {
     parent::setUp(array('webform', 'webform_addtoall'));
 
     $this->privileged_user = $this->drupalCreateUser(array(
@@ -31,7 +31,7 @@ class WebformAddToAllTestCase extends DrupalWebTestCase {
     $this->drupalLogin($this->privileged_user);
   }
 
-  function testWebformComponentAdd() {
+  public function testWebformComponentAdd() {
     //create test webforms
     $nids = $this->WebformCreateMultiple();
 

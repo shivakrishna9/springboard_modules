@@ -18,7 +18,7 @@ class EmailWrappersTestCase extends DrupalWebTestCase {
   /**
    * Implementation of setUp().
    */
-  function setUp() {
+  public function setUp() {
     parent::setUp(array('webform', 'email_wrappers', 'ctools'));
     // jam email system
     variable_set('mail_system', array('default-system' => 'TestingMailSystem'));
@@ -34,7 +34,7 @@ class EmailWrappersTestCase extends DrupalWebTestCase {
     $this->drupalLogin($this->privileged_user);
   }
 
-  function testEmaplWrappersSettings() {
+  public function testEmaplWrappersSettings() {
     //create test webform
     $this->WebformCreate();
 

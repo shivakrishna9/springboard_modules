@@ -38,7 +38,7 @@ class FundraiserCommerceGatewayTest extends FundraiserSetup {
     $this->donation_form = $this->createDonationForm();
   }
 
-  function _importGatewayRule($config) {
+  protected function _importGatewayRule($config) {
     $rules_config = rules_import($config);
     if ($existing_config = rules_config_load($rules_config->name)) {
       // Copy DB id and remove the new indicator to overwrite the existing record.
