@@ -57,7 +57,7 @@ function facebook_token_replace($tokens, &$replacements, $settings, $node = FALS
         $button = theme('sb_social_share_button', $vars);
         $replacements[$token] = theme('sb_social_share', array('buttons' => $button));
         break;
-      case 'facebook_title': 
+      case 'facebook_title':
         $replacements[$token] = !empty($settings['data']['facebook']['title']) ? _sb_social_replace_tokens($settings['data']['facebook']['title'], $node, $submission_id) : '';
         break;
       case 'facebook_description':
@@ -185,10 +185,10 @@ function facebook_process_settings(&$data, $form_state) {
  * Add OpenGraph meta tags used by Facebook to define custom title, description, and image content on
  * shares.
  *
- * Facebook and a few other services use opengraph tags to define custom share content instead of the 
+ * Facebook and a few other services use opengraph tags to define custom share content instead of the
  * usual AddThis javascript configuration objects.
- * 
- */ 
+ *
+ */
 function facebook_share_opengraph_config($settings, $node = FALSE, $sid = FALSE) {
   $facebook = $settings['data']['facebook'];
   $meta = array(
@@ -197,11 +197,11 @@ function facebook_share_opengraph_config($settings, $node = FALSE, $sid = FALSE)
     'image' => $facebook['image'],
      //'url' => sb_social_short_url($node, $sid, 'facebook'),
   );
-  
+
   foreach ($meta as $field => $value) {
     $meta[$field] = _sb_social_replace_tokens($value, $node, $sid);	
   }
-  
+
   foreach ($meta as $id => $content) {
      $data = array(
       '#type' => 'html_tag',
