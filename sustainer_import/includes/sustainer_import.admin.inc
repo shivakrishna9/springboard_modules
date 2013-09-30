@@ -74,7 +74,16 @@ function sustainer_import_upload_validate(&$form, $form_state) {
  * Submit import file uploads
  */
 function sustainer_import_upload_submit($form, $form_state) {
-
+ $file = $form_state['storage']['file'];
+  // We are done with the file, remove it from storage.
+  unset($form_state['storage']['file']);
+  // Make the storage of the file permanent
+  $file->status = FILE_STATUS_PERMANENT;
+  // Save file status.
+  file_save($file);
+  dsm($file, 'file');
+  // Set a response to the user.
+  drupal_set_message(t('The form has been submitted and the image has been saved, filename: @filename.', array('@filename' => $file->filename)));
 }
 
 /**

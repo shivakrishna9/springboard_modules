@@ -19,6 +19,12 @@ function sustainer_import_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
+      'master_order_id' => array(
+        'description' => 'original master order id of the series being imported, used to dedupe record imports',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
       'record' => array(
         'description' => 'serialized row data from import file',
         'type' => 'text',
