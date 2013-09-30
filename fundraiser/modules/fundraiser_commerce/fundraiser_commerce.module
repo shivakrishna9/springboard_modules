@@ -360,7 +360,7 @@ function fundraiser_commerce_fundraiser_field_info_alter(&$fields) {
   }
 
   // Set the default to a global default if set.
-  $fields['billing_information']['country'] = array(
+  $country_field = array(
     '#title' => t('Country'),
     '#type' => 'select',
     '#required' => 1,
@@ -374,8 +374,11 @@ function fundraiser_commerce_fundraiser_field_info_alter(&$fields) {
   );
   $default_country = variable_get('fundraiser_default_country', 'US');
   if (!empty($default_country)) {
-    $fields['billing_information']['country']['#value'] = $default_country;
+    $country_field['#value'] = $default_country;
   }
+
+  $fields = _fundraiser_update_form_field($fields, 'country', $country_field);
+
   $options = '';
   $included_zones = array();
   foreach ($countries->zones as $zone_id => $zone) {
@@ -384,7 +387,8 @@ function fundraiser_commerce_fundraiser_field_info_alter(&$fields) {
       $included_zones[] = $zone->iso;
     }
   }
-  $fields['billing_information']['state'] = array(
+
+  $state_field = array(
     '#title' => t('State/Province'),
     '#type' => 'select',
     '#required' => 1,
@@ -396,8 +400,15 @@ function fundraiser_commerce_fundraiser_field_info_alter(&$fields) {
     ),
     '#display_callback' => '_fundraiser_commerce_zone_field_display',
   );
+
+  $fields = _fundraiser_update_form_field($fields, 'state', $state_field);
+
   // Add our own validation routines to the billing fields for credit cards.
-  $fields['payment_information']['payment_fields']['#validate_callback'] = '_fundraiser_commerce_payment_fields_validate';
+  $payment_fields = _fundraiser_get_form_field($fields, 'payment_fields');
+  $payment_fields['#validate_callback'] = '_fundraiser_commerce_payment_fields_validate';
+
+  $fields = _fundraiser_update_form_field($fields, 'payment_fields', $payment_fields);
+
   return $fields;
 }
 
