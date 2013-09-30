@@ -14,7 +14,7 @@ function validation_log_form_alter(&$form, $form_state, $form_id) {
   // If our form name stars with 'webform_', good bet it's a webform to monitor.
   if (strpos($form_id, 'webform_') === 0 &&
     isset($form['#parameters'][2]->type) && $form['#parameters'][2]->type == 'donation_form') {
-      $form['#validate'][] = '_validation_log_validate_webform';
+    $form['#validate'][] = '_validation_log_validate_webform';
   }
 }
 
