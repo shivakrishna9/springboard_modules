@@ -42,10 +42,10 @@ function market_source_init() {
   }
   // Add other variables to the JS settings array.
   drupal_add_js(array('market_source' => array(
-    'qs_keys' => _market_source_build_qs_keys(),
-    'maxlength' => MARKET_SOURCE_VALUE_MAXLENGTH,
-    'cookie_domain' => $market_source_cookie_domain,
-  )), 'setting');
+      'qs_keys' => _market_source_build_qs_keys(),
+      'maxlength' => MARKET_SOURCE_VALUE_MAXLENGTH,
+      'cookie_domain' => $market_source_cookie_domain,
+    )), 'setting');
 }
 
 /**
@@ -103,7 +103,7 @@ function market_source_webform_user_profile_fields_alter(&$fields, $node) {
   }
   foreach ($fields as $index => $profile_field) {
     $name = $profile_field['name'];
-    if (isset($mapping[ $name ]) &&  $mapping[ $name ]) {
+    if (isset($mapping[$name]) &&   $mapping[$name]) {
       // This field will be created by fundraiser, so we don't need to set it up in webform user.
       unset($fields[$index]);
     }
@@ -149,9 +149,9 @@ function market_source_form_alter(&$form, &$form_state, $form_id) {
     $preserved_keys = _market_source_get_field_keys();
     $form_key = $form['form_key']['#default_value'];
     if (in_array($form_key, $preserved_keys)) {
-        $form['form_key']['#disabled'] = TRUE;
-        $form['form_key']['#description'] .= '</br>' . t('This field key is required by Market Source and cannot be changed.');
-        $form['form_key']['#value'] = $form['form_key']['#default_value'];
+      $form['form_key']['#disabled'] = TRUE;
+      $form['form_key']['#description'] .= '</br>' . t('This field key is required by Market Source and cannot be changed.');
+      $form['form_key']['#value'] = $form['form_key']['#default_value'];
     }
     // Now that keys are preserved, check for the campaign id.
     if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
@@ -221,10 +221,10 @@ function market_source_user_register_after_build($form, &$form_state) {
   $form_keys = _market_source_build_form_keys($form, 'profile_');
   // Add form_keys to the JS settings array.
   drupal_add_js(array('market_source' => array(
-    'form_keys' => array(
-      $form['#id'] => $form_keys,
-    ),
-  )), 'setting');
+      'form_keys' => array(
+        $form['#id'] => $form_keys,
+      ),
+    )), 'setting');
   // Mandatory return value for #after_build callbacks.
   return $form;
 }
@@ -361,18 +361,18 @@ function _market_source_build_qs_keys() {
       'user_agent' => isset($default_fields['user_agent']) ? $default_fields['user_agent'] : array(),
     );
     foreach ($custom_fields as $custom_field) {
-      $field_settings[ $custom_field['key'] ] = $custom_field;
+      $field_settings[$custom_field['key']] = $custom_field;
     }
     if (is_array($external_fields) && count($external_fields)) {
       foreach ($external_fields as $external_field) {
-        $field_settings[ $external_field['key'] ] = $external_field;
+        $field_settings[$external_field['key']] = $external_field;
       }
     }
     // create keys with null values and persistence settings
     $ms_keys = _market_source_get_field_keys();
     if (is_array($ms_keys)) {
       foreach ($ms_keys as $ms_key) {
-        $qs_keys[ $ms_key ] = array(
+        $qs_keys[$ms_key] = array(
           'value' => NULL,
           'persistence' => isset($field_settings[$ms_key]['persistence']) ? $field_settings[$ms_key]['persistence'] : TRUE,
         );
@@ -553,7 +553,7 @@ function market_source_market_source_field_info() {
   $custom_fields = variable_get('market_source_custom_fields', array());
   if (count($custom_fields)) {
     foreach ($custom_fields as $custom_field) {
-      $fields[ $custom_field['key'] ] = array(
+      $fields[$custom_field['key']] = array(
         '#title' => isset($custom_field['name']) ? $custom_field['name'] : 'Custom Field - ' . $custom_field['key'],
         '#type' => 'hidden',
         '#value' => isset($custom_field['default']) ? $custom_field['default'] : '',
@@ -688,7 +688,7 @@ function market_source_get_campaigns($reset = FALSE) {
     if (($cache = cache_get('market_source_campaigns')) && $reset === FALSE) {
       $campaigns = $cache->data;
     }
-    else  {
+    else {
 
       // Create a new soapclient
       try {
@@ -699,8 +699,8 @@ function market_source_get_campaigns($reset = FALSE) {
         if (is_array($found_campaigns)) {
           foreach ($found_campaigns as $found_campaign) {
             $campaigns[$found_campaign->Id] = array(
-              'id' =>  $found_campaign->Id,
-              'name' =>  $found_campaign->Name,
+              'id' => $found_campaign->Id,
+              'name' => $found_campaign->Name,
             );
           }
         }
