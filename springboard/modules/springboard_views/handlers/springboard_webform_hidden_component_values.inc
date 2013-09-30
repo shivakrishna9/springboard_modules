@@ -6,7 +6,7 @@
  * Defines a Views field handler for displaying values of webform hidden components.
  */
 
-class springboard_webform_hidden_component_values extends views_handler_field{
+class springboard_webform_hidden_component_values extends views_handler_field {
   //add an option to the field handler to choose which component's value is displayed.
   public function option_definition() {
     $options = $this->option_definition();
@@ -23,7 +23,7 @@ class springboard_webform_hidden_component_values extends views_handler_field{
       ->distinct()
       ->execute();
     $options = array();
-    while($record = $result->fetchAssoc()) {
+    while ($record = $result->fetchAssoc()) {
       $options[$record['form_key']] = $record['name'];
     }
     //Create a form item of options for which component's value to display.
@@ -50,19 +50,19 @@ class springboard_webform_hidden_component_values extends views_handler_field{
     $join->construct();
     $join->adjusted = TRUE;
 
-    $alias = 'webform_component_'.$this->options['webform_component_options'];
-    $this->query->add_field($alias,'value', $alias.'_value');
+    $alias = 'webform_component_' . $this->options['webform_component_options'];
+    $this->query->add_field($alias, 'value', $alias . '_value');
     $this->query->add_relationship($alias, $join, 'node');
     $this->query->add_where(
       0,
       db_and()
-        ->condition('webform_component_'.$this->options['webform_component_options'].'.form_key', $this->options['webform_component_options'], "=")
+        ->condition('webform_component_' . $this->options['webform_component_options'] . '.form_key', $this->options['webform_component_options'], "=")
     );
   }
 
   public function render($values) {
     //output the value
-    $alias = 'webform_component_'.$this->options['webform_component_options'].'_value';
+    $alias = 'webform_component_' . $this->options['webform_component_options'] . '_value';
     return check_plain($values->$alias);
   }
 }

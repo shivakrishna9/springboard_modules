@@ -19,8 +19,8 @@ class fundraiser_handler_filter_fundraiser_gateways extends views_handler_filter
     $gateways = _fundraiser_gateway_info($id = NULL);
     $form['gateways']['#options'] = array();
     $form['gateways']['#options']['All'] = 'All';
-    foreach($gateways as $gateway) {
-      $form['gateways']['#options'][ $gateway['id'] ] = $gateway['title'];
+    foreach ($gateways as $gateway) {
+      $form['gateways']['#options'][$gateway['id']] = $gateway['title'];
     }
 
     $form[$value]['#default_value'] = 'All';
