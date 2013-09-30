@@ -5,3 +5,51 @@
  * Provide options for form layouts in donation forms.
  */
 
+/**
+ * Implements hook_fundraiser_field_info()
+ */
+function form_layouts_fundraiser_field_info() {
+  $fields = array();
+
+  $fields['left_column'] = array(
+    '#title' => t('Left Column'),
+    '#type' => 'fieldset',
+    '#required' => 0,
+  );
+
+  $fields['right_column'] = array(
+    '#title' => t('Right Column'),
+    '#type' => 'fieldset',
+    '#required' => 0,
+  );
+
+  return $fields;
+}
+
+/**
+ * Implements hook_fundraiser_field_info_alter().
+ */
+function form_layouts_fundraiser_field_info_alter(&$info) {
+  $info['left_column']['donation'] = $info['donation'];
+  $info['left_column']['donor_information'] = $info['donor_information'];
+
+  $info['right_column']['billing_information'] = $info['billing_information'];
+  $info['right_column']['payment_information'] = $info['payment_information'];
+
+  unset($info['donation']);
+  unset($info['donor_information']);
+  unset($info['billing_information']);
+  unset($info['payment_information']);
+}
+
+/**
+ * Implements hook_fundraiser_donation_form().
+ *
+ * @param array $form
+ *
+ * @return array
+ */
+function form_layouts_fundraiser_donation_form($form) {
+  $form['#attached']['css'][] = drupal_get_path('module', 'form_layouts') . '/css/form_layouts.css';
+  return $form;
+}
