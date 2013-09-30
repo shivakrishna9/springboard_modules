@@ -66,22 +66,22 @@ function sb_social_menu() {
     'type' => MENU_CALLBACK,
   );
   $items['admin/config/services/springboard_social/path-settings/edit/%'] = array(
-      'title' => 'Edit path share settings',
-      'description' => '',
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('sb_social_path_settings', 6),
-      'access arguments' => array('administer springboard social'),
-      'file' => 'includes/sb_social.admin.inc',
-      'type' => MENU_CALLBACK,
+    'title' => 'Edit path share settings',
+    'description' => '',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sb_social_path_settings', 6),
+    'access arguments' => array('administer springboard social'),
+    'file' => 'includes/sb_social.admin.inc',
+    'type' => MENU_CALLBACK,
   );
   $items['admin/config/services/springboard_social/path-settings/delete/%'] = array(
-      'title' => 'Delete path share settings',
-      'description' => '',
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('sb_social_path_settings_delete_form', 6),
-      'access arguments' => array('administer springboard social'),
-      'file' => 'includes/sb_social.admin.inc',
-      'type' => MENU_CALLBACK,
+    'title' => 'Delete path share settings',
+    'description' => '',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sb_social_path_settings_delete_form', 6),
+    'access arguments' => array('administer springboard social'),
+    'file' => 'includes/sb_social.admin.inc',
+    'type' => MENU_CALLBACK,
   );
   $items['node/%node/share_settings'] = array(
     'title' => t('Social'),
@@ -202,11 +202,11 @@ function sb_social_access_node_settings($node) {
  *
  * purge share content settings when a node is deleted
  */
- function sb_social_node_delete($node) {
-   $sid = sb_social_get_sid_by_id($node->nid);
-   if (is_numeric($sid) && $sid) {
-     sb_social_settings_delete($sid);
-   } 
+function sb_social_node_delete($node) {
+  $sid = sb_social_get_sid_by_id($node->nid);
+  if (is_numeric($sid) && $sid) {
+    sb_social_settings_delete($sid);
+  }
 }
 
 /**
@@ -249,7 +249,7 @@ function sb_social_init() {
       $enabled_services = sb_social_get_enabled_services();
       $path = drupal_get_path('module', 'sb_social');
 
-      foreach($plugins as $service => $plugin) {
+      foreach ($plugins as $service => $plugin) {
 
         if (is_array($enabled_services) && in_array($service, $enabled_services)) {
           // run config callbacks, this sets up js settings, opengraph tags, etc.
@@ -270,13 +270,13 @@ function sb_social_init() {
   }
   // stash cookie payload in js
   // TODO: this should probably live somewhere else.
-   if (!empty($_COOKIE['sb_social_event_submission'])) {
-     $data = explode("::", $_COOKIE['sb_social_event_submission']);
-     drupal_add_js(array('sb_social' => array(
-       'uid' => $data[0],
-       'mail' =>  $data[1],
-       'sid' => $data[2],
-     )), 'setting');
+  if (!empty($_COOKIE['sb_social_event_submission'])) {
+    $data = explode("::", $_COOKIE['sb_social_event_submission']);
+    drupal_add_js(array('sb_social' => array(
+        'uid' => $data[0],
+        'mail' => $data[1],
+        'sid' => $data[2],
+      )), 'setting');
   }
 }
 
@@ -514,7 +514,7 @@ function sb_social_theme($existing, $type, $theme, $path) {
 function sb_social_short_url($service, $settings, $submission_id = FALSE) {
 
   $params = array(
-    'social_referer_network' => $service, 
+    'social_referer_network' => $service,
   );
   if (!empty($submission_id)) {
     $params['social_referer_transaction'] = $submission_id;
@@ -537,7 +537,7 @@ function sb_social_short_url($service, $settings, $submission_id = FALSE) {
   $path = $alias ? $alias : $path;
   $options = array(
     'absolute' => TRUE,
-    'query' => $params
+    'query' => $params,
   );
 
   $url = url($path, $options);
@@ -584,7 +584,7 @@ function sb_social_share_tracker_url($nid, $uid, $sid, $service, $settings) {
   }
   $url = url('node/' . $nid, $options);
   return url('node/' . $nid, $options);
-}  
+}
 
 function theme_sb_social_share_image_preview($variables) {
   $element = $variables['element'];

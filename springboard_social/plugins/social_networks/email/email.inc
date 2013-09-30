@@ -69,7 +69,7 @@ function email_token_replace($tokens, &$replacements, $settings, $node = FALSE, 
 function email_defaults() {
   $settings = array(
     'subject' => variable_get('springboard_social_email_subject', '%title'),
-    'message' => variable_get('springboard_social_email_message'. ''),
+    'message' => variable_get('springboard_social_email_message' . ''),
   );
   return $settings;
 }
@@ -91,7 +91,7 @@ function email_settings(&$form, $enabled_services = array(), $settings = array()
     '#title' => t('Email message'),
     '#default_value' => isset($settings['message']) ? $settings['message'] : '',
   );
-  $form['email_settings']['tokens']= array(
+  $form['email_settings']['tokens'] = array(
     '#type' => 'fieldset',
     '#title' => t('Available Tokens'),
     '#collapsible' => TRUE,
@@ -111,7 +111,7 @@ function email_admin_settings(&$form) {
     '#states' => array(
       // Hide the settings when facebook checkbox is not selected.
       'invisible' => array(
-       ':input[name="springboard_social_services[email]"]' => array('checked' => FALSE),
+        ':input[name="springboard_social_services[email]"]' => array('checked' => FALSE),
       ),
     ),
   );

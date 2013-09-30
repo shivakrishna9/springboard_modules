@@ -45,7 +45,7 @@ class SpringboardSocialFunctionalTest extends FundraiserSetup {
     parent::setUp($additional_modules);
   }
 
-    // tests
+  // tests
   public function testSpringboardSocial() {
     $permissions = array(
       'administer site configuration',
@@ -147,7 +147,7 @@ class SpringboardSocialFunctionalTest extends FundraiserSetup {
     // $this->drupalPost($path, $settings, t('Save configuration'));
 
     // confirm token replacements
-     $donation_settings = array(
+    $donation_settings = array(
       'submitted[donor_information][first_name]' => 'Keyser',
       'submitted[donor_information][last_name]' => 'Soze',
       'submitted[donor_information][mail]' => 'example@example.com',
@@ -157,9 +157,9 @@ class SpringboardSocialFunctionalTest extends FundraiserSetup {
     );
     $this->submitDonation($node->nid, $donation_settings);
 
-      // node tokens
+    // node tokens
 
-      // token module tokens
+    // token module tokens
 
     // confirm share urls contain expected values for internal and generic MS fields
 

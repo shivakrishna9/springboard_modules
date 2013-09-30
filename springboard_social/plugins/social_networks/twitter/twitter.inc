@@ -78,7 +78,7 @@ function twitter_settings(&$form, $enabled_services = array(), $settings = array
     '#description' => t('Custom twitter message text.'),
     '#default_value' => isset($settings['message']) ? $settings['message'] : '',
   );
-  $form['twitter_settings']['tokens']= array(
+  $form['twitter_settings']['tokens'] = array(
     '#type' => 'fieldset',
     '#title' => t('Available Tokens'),
     '#collapsible' => TRUE,
@@ -98,7 +98,7 @@ function twitter_admin_settings(&$form) {
     '#states' => array(
       // Hide the settings when facebook checkbox is not selected.
       'invisible' => array(
-       ':input[name="springboard_social_services[twitter]"]' => array('checked' => FALSE),
+        ':input[name="springboard_social_services[twitter]"]' => array('checked' => FALSE),
       ),
     ),
   );
