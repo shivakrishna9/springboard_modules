@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @file
+ * Helpers for testing fields.
+ */
+
+/**
  * Helper to add one of each type of core field to a given content type.
  */
 function _salesforce_mapping_generate_test_fields($content_type) {
