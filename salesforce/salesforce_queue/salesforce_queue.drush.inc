@@ -23,8 +23,8 @@ function salesforce_queue_drush_command() {
   $items = array();
   $items['salesforce-queue-process'] = array(
     'description' => dt('Processes the Salesforce queue.'),
-    'arguments'   => array(
-      'queue'    => dt('Name of the queue to process'),
+    'arguments' => array(
+      'queue' => dt('Name of the queue to process'),
     ),
     'examples' => array(
       'Standard example' => 'drush salesforce-queue-process',
