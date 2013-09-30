@@ -6,11 +6,12 @@
  *
  */
 
-// TODO why on earth is this making a var per node? Move this to a TABLE like a sensible person.
 /**
- * Implements hook_uninstall().
+ * Remove cruft from the old form_layouts module.
+ *
+ * Implements hook_update_N().
  */
-function form_layouts_uninstall() {
+function form_layouts_update_7101() {
   $types = fundraiser_get_donation_types();
   $result = db_query('SELECT nid FROM {node} WHERE type IN (:types)', array(':types' => $types));
   foreach ($result as $data) {

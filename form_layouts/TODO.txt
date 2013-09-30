@@ -1,3 +1,0 @@
-This module has the opotential to be expected pass use for donations forms.
-There are some dependandcies on webform, and dependancies on fieldset names that I want to see removed.
-If we could switch to CSS for 2 column where/left-then-right-then-left etc was a viable option, then we could simpley two column sort fieldsets - any and all - without dependancy on names. (At which point, lets make this Non fundraiser dependant)
