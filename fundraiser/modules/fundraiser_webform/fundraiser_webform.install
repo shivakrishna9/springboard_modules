@@ -11,9 +11,9 @@ function fundraiser_webform_install() {
   // Clean up from older versions of fundraiser.
   if (db_table_exists('fundraiser_webform_order')) {
     // Rename webform components for email key to mail key. (Part of the compatibility for webform_user.)
-    db_query('UPDATE {webform_component} w '.
-      'INNER JOIN {fundraiser} f ON w.nid = f.nid '.
-      'SET w.form_key = \'mail\' '.
+    db_query('UPDATE {webform_component} w ' .
+      'INNER JOIN {fundraiser} f ON w.nid = f.nid ' .
+      'SET w.form_key = \'mail\' ' .
       'WHERE w.form_key = \'email\' AND w.nid = f.nid ');
     // The table doesn't go away yet, because we may still need it for fundraiser.
     // But if fundraiser has flagged that it's done porting data, we can drop it.

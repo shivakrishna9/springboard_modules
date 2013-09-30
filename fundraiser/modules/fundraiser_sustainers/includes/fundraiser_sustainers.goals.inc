@@ -53,7 +53,7 @@ function fundraiser_sustainers_webform_goals_track_metric($goal, $params = array
     elseif (!empty($goal['extra']['selected_node_type'])) {
       $nids = _webform_goals_nids_by_type($goal['extra']['selected_node_type']);
       if (is_array($nids)) {
-        foreach($nids as $nid) {
+        foreach ($nids as $nid) {
           $sustainers = _fundraiser_sustainers_get_total_sustainers_by_nid($nid, $goal['start_date'], $goal['end_date']);
 
           if ($sustainers) {

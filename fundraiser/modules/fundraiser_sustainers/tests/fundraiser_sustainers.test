@@ -503,7 +503,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
       ->condition('master_did', $master_did, '=')
       ->condition('gateway_resp', 'success', '=')
       ->condition('did', $master_did, '!='); // exclude first order in series
-     return $query->countQuery()->execute()->fetchField();
+    return $query->countQuery()->execute()->fetchField();
   }
 
 }

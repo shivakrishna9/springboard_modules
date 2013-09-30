@@ -21,7 +21,7 @@ class FundraiserCommerceGatewayAuthnetTest extends FundraiserCommerceGatewayTest
 
   public function setUp($modules = array(), $permissions = array()) {
     $modules = array_merge($modules, array(
-      'commerce_authnet'
+      'commerce_authnet',
     ));
     parent::setUp($modules);
     $file = DRUPAL_ROOT . '/' . drupal_get_path('module', 'fundraiser_commerce') . '/tests/authnet.rule';

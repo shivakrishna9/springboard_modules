@@ -22,7 +22,7 @@ function _fundraiser_add_default_fields($type) {
       field_create_field($field['field_config']);
     }
     // Before adding the field check that it does not exist on the node type
-    if(!field_info_instance('node', $field_name, $type)) {
+    if (!field_info_instance('node', $field_name, $type)) {
       field_create_instance($field['field_instance']);
     }
   }

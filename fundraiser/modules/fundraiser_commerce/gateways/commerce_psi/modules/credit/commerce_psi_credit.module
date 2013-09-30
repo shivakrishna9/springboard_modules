@@ -86,7 +86,7 @@ function commerce_psi_credit_submit_form_submit($payment_method, $pane_form, $pa
   $nvp['CreditCard'] = array(
     'CardNo' => $pane_values['credit_card']['number'],
     'ExpMonth' => $pane_values['credit_card']['exp_month'],
-    'ExpYear'=> $pane_values['credit_card']['exp_year'],
+    'ExpYear' => $pane_values['credit_card']['exp_year'],
     'Type' => $pretty_card_type,
   );
 
@@ -125,7 +125,10 @@ function commerce_psi_credit_submit_form_submit($payment_method, $pane_form, $pa
   $nvp['ClientTransactionId'] = $order->order_id;
 
   // Allow modules to alter the values sent to PSI
-  $context = array('payment_method' => $payment_method, 'type' => 'credit');
+  $context = array(
+    'payment_method' => $payment_method,
+    'type' => 'credit',
+  );
   drupal_alter('commerce_psi_request', $nvp, $context);
 
   // Log the request if specified.

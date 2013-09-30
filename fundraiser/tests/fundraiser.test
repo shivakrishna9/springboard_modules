@@ -122,7 +122,7 @@ class FundraiserTest extends FundraiserSetup {
       'credit' => array(
         'status' => 1,
         'method' => 'credit',
-        'id' => 'commerce_payment_example|commerce_payment_commerce_payment_example'
+        'id' => 'commerce_payment_example|commerce_payment_commerce_payment_example',
       ),
     );
     $this->assertIdentical($node->gateways, $expected_payment_gateway, t('The correct gateways were created and assigned.'), t('Fundraiser'));
@@ -142,7 +142,7 @@ class FundraiserTest extends FundraiserSetup {
       $this->assertEqual(TRUE, $result, '_fundraiser_is_secure() returned TRUE when HTTPS set to "on".', t('Fundraiser HTTPS'));
       $base_url = $GLOBALS['base_url'];
       $base_url = str_replace('http://', 'https://', $base_url);
-      $this->drupalGet($base_url . '/node/'. $node->nid);
+      $this->drupalGet($base_url . '/node/' . $node->nid);
       $this->assertNoText($message, t('Accessing the form shows the correct message text.'), t('Fundraiser HTTPS'));
     }
 
@@ -150,14 +150,14 @@ class FundraiserTest extends FundraiserSetup {
     unset($_SERVER['HTTPS']);
     $result = _fundraiser_is_secure();
     $this->assertEqual(FALSE, $result, '_fundraiser_is_secure() returned FALSE when HTTPS unset.', t('Fundraiser HTTPS'));
-    $this->drupalGet('node/'. $node->nid);
+    $this->drupalGet('node/' . $node->nid);
     $this->assertText($message, t('Accessing the form shows the correct message text.'), t('Fundraiser HTTPS'));
 
     // Specifically turn HTTPS off.
     $_SERVER['HTTPS'] = 'off';
     $result = _fundraiser_is_secure();
     $this->assertEqual(FALSE, $result, '_fundraiser_is_secure() returned FALSE when HTTPS set to "off".', t('Fundraiser HTTPS'));
-    $this->drupalGet('node/'. $node->nid);
+    $this->drupalGet('node/' . $node->nid);
     $this->assertText($message, t('Accessing the form shows the correct message text.'), t('Fundraiser HTTPS'));
   }
 
@@ -168,7 +168,7 @@ class FundraiserTest extends FundraiserSetup {
     $node_stub = new stdClass();
     $node_stub->default_amount = 20; // Set a different default than normal.
     $node = $this->createDonationForm($node_stub);
-    $this->drupalGet('node/'. $node->nid); // Get the node display page. In default mode by default.
+    $this->drupalGet('node/' . $node->nid); // Get the node display page. In default mode by default.
     // Check 20 is the default value.
     $this->assertFieldByName('submitted[donation][amount]', 20, t('The correct default value (20) selected on the donation form.'),
       t('Fundraiser Display'));

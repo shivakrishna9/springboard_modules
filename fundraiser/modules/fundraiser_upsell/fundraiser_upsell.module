@@ -69,7 +69,7 @@ function fundraiser_upsell_permission() {
   return array('administer fundraiser upsells' => array(
       'title' => t('Administer fundraiser upsell feature'),
       'description' => t('Perform administration tasks for fundraiser upsell.'),
-    ), );
+    ));
 }
 
 /**
@@ -196,7 +196,7 @@ function fundraiser_upsell_node_form_submit($form, &$form_state) {
     'modal_width' => $form_state['values']['upsell_modal_width'],
     'modal_height' => $form_state['values']['upsell_modal_height'],
     'decoupled' => 0,
-    'campaign_id' => $form_state['values']['upsell_campaign_id']
+    'campaign_id' => $form_state['values']['upsell_campaign_id'],
   );
   // Add the actual decouple value is decouple is activated
   if (variable_get('fundraiser_upsell_decouple', 0) == 1) {
@@ -310,7 +310,7 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
     // this part isn't creating the donation object
     $order = _fundraiser_upsell_clone_order($order, array(
       'amount' => $amount,
-      'status' => 'pending_future_payment'
+      'status' => 'pending_future_payment',
     ));
   }
   // Create the recurring donation series

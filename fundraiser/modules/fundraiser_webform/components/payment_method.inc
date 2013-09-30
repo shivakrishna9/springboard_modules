@@ -31,7 +31,7 @@ function _webform_defaults_payment_method() {
       'custom_keys' => FALSE,
       'options_source' => '',
       'private' => FALSE,
-      'payment_methods' => array()
+      'payment_methods' => array(),
     ),
   );
 }
@@ -67,7 +67,7 @@ function _webform_edit_payment_method($component) {
     $form['no_gateways_notice']['#markup'] = '<div>' . t('There are no gateways configured. Please create some gateways in the store configuration.') . '</div>';
     return $form;
   }
-  foreach($temp_gateways as $temp_gateway) {
+  foreach ($temp_gateways as $temp_gateway) {
     $types = isset($temp_gateway['payment_method']) ? $temp_gateway['payment_method'] : array();
     foreach ($types as $type) {
       $all_payment_methods[$type][] = $temp_gateway;
@@ -89,7 +89,7 @@ function _webform_edit_payment_method($component) {
     // Build the #options array for the payment processors supporting this payment method.
     $processor_options = array(NULL => '- ' . t('select') . ' -');
     foreach (element_children($method) as $key) {
-      $processor_options[ $method[$key]['id'] ] = $method[$key]['title'];
+      $processor_options[$method[$key]['id']] = $method[$key]['title'];
     }
     $fieldset[$method_key] = array('#tree' => TRUE);
     $fieldset[$method_key]['status'] = array(

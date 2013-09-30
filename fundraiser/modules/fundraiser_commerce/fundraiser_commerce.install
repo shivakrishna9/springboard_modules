@@ -8,8 +8,7 @@
 /**
  * Removed update function
  */
-function fundraiser_commerce_update_7001() {
-}
+function fundraiser_commerce_update_7001() { }
 
 /**
  * Update fundraiser commerce's order data to the latest encryption scheme.
