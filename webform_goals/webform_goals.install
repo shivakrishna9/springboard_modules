@@ -42,29 +42,29 @@ function webform_goals_requirements($phase) {
  * Implements hook_install().
  */
 function webform_goals_install() {
- // create subdir in files
-$path = 'public://webform_goals';
- if (file_prepare_directory($path, FILE_CREATE_DIRECTORY)) {
+  // create subdir in files
+  $path = 'public://webform_goals';
+  if (file_prepare_directory($path, FILE_CREATE_DIRECTORY)) {
 
-   // set up jsonp endpoint and loader scripts in subdirectory of files.
-   // this approach is required because multi-site installations require individual copies of these files.
-   $original_path = getcwd();
+    // set up jsonp endpoint and loader scripts in subdirectory of files.
+    // this approach is required because multi-site installations require individual copies of these files.
+    $original_path = getcwd();
 
-   $module_path = drupal_get_path('module', 'webform_goals');
-   chdir($module_path);
-   // copy jsonp endpoint and loader js to subdir.
-   $loader = file_get_contents('webform_goals.loader.js');
-   $jsonp = file_get_contents('webform_goals.jsonp.php');
-   chdir($original_path);
-   // overwrite placeholder in loader js with correct url for jsonp endpoint
-   $base_uri = file_default_scheme() . '://';
-   $file_system_base_url = file_create_url($base_uri);
-   $loader = str_replace('http://DOMAIN/PATH/TO/FILES/', $file_system_base_url, $loader);
+    $module_path = drupal_get_path('module', 'webform_goals');
+    chdir($module_path);
+    // copy jsonp endpoint and loader js to subdir.
+    $loader = file_get_contents('webform_goals.loader.js');
+    $jsonp = file_get_contents('webform_goals.jsonp.php');
+    chdir($original_path);
+    // overwrite placeholder in loader js with correct url for jsonp endpoint
+    $base_uri = file_default_scheme() . '://';
+    $file_system_base_url = file_create_url($base_uri);
+    $loader = str_replace('http://DOMAIN/PATH/TO/FILES/', $file_system_base_url, $loader);
 
-   file_unmanaged_save_data($jsonp, 'public://webform_goals/webform_goals.jsonp.php');
-   file_unmanaged_save_data($loader, 'public://webform_goals/webform_goals.loader.js');
+    file_unmanaged_save_data($jsonp, 'public://webform_goals/webform_goals.jsonp.php');
+    file_unmanaged_save_data($loader, 'public://webform_goals/webform_goals.loader.js');
 
- }
+  }
 
 }
 

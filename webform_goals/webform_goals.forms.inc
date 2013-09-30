@@ -141,7 +141,10 @@ function webform_goals_add($form, $form_state, $goal = array()) {
     '#description' => !empty($selected_metric['form_text']['display_threshold']['description']) ? $selected_metric['form_text']['display_threshold']['description'] : t('The starter message will be displayed until goal progress meets this minimum.'),
     '#size' => 8,
     '#id' => 'edit-display_threshold',
-    '#attributes' => array('name' => 'display_threshold', 'class' => array('container-inline')),
+    '#attributes' => array(
+      'name' => 'display_threshold',
+      'class' => array('container-inline'),
+    ),
     '#default_value' => !empty($goal['display_threshold']) ? $goal['display_threshold'] : 0,
   );
 
@@ -228,7 +231,7 @@ function webform_goals_add($form, $form_state, $goal = array()) {
   if (!empty($goal['template_format'])) {
     $form['template']['template']['#format'] = $goal['template_format'];
   }
-   $form['template']['template']['token_tree'] = array(
+  $form['template']['template']['token_tree'] = array(
     '#type' => 'fieldset',
     '#title' => t('Replacement patterns'),
     '#collapsible' => TRUE,
@@ -237,7 +240,10 @@ function webform_goals_add($form, $form_state, $goal = array()) {
     '#weight' => 10,
   );
   // Add token UI for goal tokens.
-  $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+  );
   $form['#validate'][] = 'webform_goals_add_validate';
   $form['#submit'][] = 'webform_goals_add_submit';
 
@@ -325,8 +331,8 @@ function webform_goals_context_callback($form, $form_state) {
     '#commands' => array(
       ajax_command_replace('#context-description', render($form['context_container']['context_description'])),
       ajax_command_replace("#context-options", render($form['context_container']['options_wrapper'])),
-      ajax_command_replace("#context-metrics", render($form['metrics_wrapper']))
-    )
+      ajax_command_replace("#context-metrics", render($form['metrics_wrapper'])),
+    ),
   );
 }
 
@@ -337,8 +343,8 @@ function webform_goals_extra_callback($form, $form_state) {
   return array(
     '#type' => 'ajax',
     '#commands' => array(
-      ajax_command_replace("#context-metrics", render($form['metrics_wrapper']))
-    )
+      ajax_command_replace("#context-metrics", render($form['metrics_wrapper'])),
+    ),
   );
 }
 /**
@@ -351,7 +357,7 @@ function webform_goals_metrics_callback($form, $form_state) {
       ajax_command_replace('#context-metrics', render($form['metrics_wrapper'])),
       ajax_command_replace("#options-goal-settings", render($form['goal_wrapper'])),
       ajax_command_replace('#context-seed', render($form['seed_wrapper'])),
-    )
+    ),
   );
 }
 
@@ -393,14 +399,14 @@ function webform_goals_delete($form, $form_state, $goal = array()) {
     '#type' => 'value',
     '#value' => !empty($goal['gid']) ? $goal['gid'] : NULL,
   );
-   $form['actions'] = array('#type' => 'actions');
+  $form['actions'] = array('#type' => 'actions');
   $form['actions']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Delete'),
   );
   $form['actions']['cancel'] = array(
-    '#type'   => 'submit',
-    '#value'  => t('Cancel'),
+    '#type' => 'submit',
+    '#value' => t('Cancel'),
     '#submit' => array('_webform_goals_form_cancel'),
     '#limit_validation_errors' => array(),
   );
