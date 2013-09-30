@@ -109,8 +109,8 @@ class SalesforceSyncTokenScanner {
     $token = $this->splitToken($token);
     // TODO: Optimize this! isset() perhaps?
     if (array_key_exists($token['sf_type'], $this->tokenValueCache)
-      && array_key_exists($token['drupal_type'], $this->tokenValueCache[$token['sf_type']])
-      && array_key_exists($token['drupal_id'], $this->tokenValueCache[$token['sf_type']][$token['drupal_type']])) {
+       && array_key_exists($token['drupal_type'], $this->tokenValueCache[$token['sf_type']])
+       && array_key_exists($token['drupal_id'], $this->tokenValueCache[$token['sf_type']][$token['drupal_type']])) {
 
       return $this->tokenValueCache[$token['sf_type']][$token['drupal_type']][$token['drupal_id']];
     }

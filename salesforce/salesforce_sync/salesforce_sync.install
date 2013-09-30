@@ -90,7 +90,8 @@ function salesforce_sync_update_7001() {
   $ret = array();
 
   db_drop_index('salesforce_sync_map', 'drupal_index');
-  db_add_index('salesforce_sync_map', 'delta_drupal_module_object', array('delta', 'drupal_id', 'module', 'object_type'));
+  db_add_index('salesforce_sync_map', 'delta_drupal_module_object',
+    array('delta', 'drupal_id', 'module', 'object_type'));
   $ret[] = t('Rename index "drupal_index" to "delta_drupal_module_object" on {salesforce_sync_map} table.');
 
   db_add_index('salesforce_sync_map', 'delta', array('delta'));
@@ -98,8 +99,10 @@ function salesforce_sync_update_7001() {
   db_add_index('salesforce_sync_map', 'module', array('module'));
   db_add_index('salesforce_sync_map', 'object_type', array('object_type'));
   db_add_index('salesforce_sync_map', 'sfid', array('sfid'));
-  db_add_index('salesforce_sync_map', 'delta_drupal_module', array('delta', 'drupal_id', 'module'));
-  db_add_index('salesforce_sync_map', 'delta_drupal_object', array('delta', 'drupal_id', 'object_type'));
+  db_add_index('salesforce_sync_map', 'delta_drupal_module',
+    array('delta', 'drupal_id', 'module'));
+  db_add_index('salesforce_sync_map', 'delta_drupal_object',
+    array('delta', 'drupal_id', 'object_type'));
   $ret[] = t('Added indexes to {salesforce_sync_map} table.');
 
   return implode("\n", $ret);

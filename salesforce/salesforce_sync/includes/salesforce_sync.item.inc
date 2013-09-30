@@ -65,7 +65,7 @@ class SalesforceSyncItem {
    * Wrapper for the sobject to set the record type.
    *
    * @param string $record
-   *  The type of record to set.
+   *   The type of record to set.
    */
   public function setRecord($record) {
     $this->sobject->setRecord($record);
@@ -237,7 +237,7 @@ class SalesforceObject {
   public function setType($object_type) {
     $this->type = $object_type;
 
-    // Set the record type once again to ensure the record type id is valid
+    // Set the record type once again to ensure the record type id is valid.
     if (!empty($this->record)) {
       $this->setRecord($this->record);
     }
@@ -254,7 +254,7 @@ class SalesforceObject {
    * Helper to set the record type.
    *
    * @param string $record
-   *  The type of record to set.
+   *   The type of record to set.
    */
   public function setRecord($record) {
     $this->record = $record;
@@ -291,7 +291,7 @@ class SalesforceObject {
   /**
    * Helper to set the record type by RecordTypeId.
    *
-   * @param type $record_type_id
+   * @param string $record_type_id
    *   The recordTypeId to set.
    */
   public function setRecordTypeId($record_type_id) {
