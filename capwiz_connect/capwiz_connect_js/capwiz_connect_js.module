@@ -250,11 +250,11 @@ function _capwiz_connect_js_field_maps($type, $data) {
   $maps = array(
     'MC_message_id' => array(),
     'MC_address' => array(
-      'user' => 'address'
+      'user' => 'address',
     ),
     'MC_alert_type' => array(),
     'MC_alertid' => array(
-      'action' => 'alert_id'
+      'action' => 'alert_id',
     ),
     'MC_bill_id' => array(),
     'MC_content_dir' => array(),
@@ -293,15 +293,15 @@ function _capwiz_connect_js_field_maps($type, $data) {
     'MC_saveletter' => array(),
     'MC_signature' => array(),
     'MC_subject' => array(
-      'action' => 'title'
+      'action' => 'title',
     ),
     'MC_video_url' => array(),
     'TAF_email' => array(
       'user' => 'mail',
-      'action' => 'mail'
+      'action' => 'mail',
     ),
     'TAF_name' => array(
-      'user' => 'name'
+      'user' => 'name',
     ),
     'code' => array(),
     'cookie_name' => array(),
