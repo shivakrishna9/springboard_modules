@@ -75,7 +75,7 @@ function webform_token_selector_token_list($nid) {
     $token_blacklist = array();
     drupal_alter('webform_token_selector_blacklist', $token_blacklist);
 
-    foreach($node->webform['components'] as $component) {
+    foreach ($node->webform['components'] as $component) {
 
       if ($component['type'] != 'hidden' && $component['type'] != 'fieldset' && !in_array($component['form_key'], $token_blacklist)) {
         $parents = webform_component_parent_keys($node, $component);
