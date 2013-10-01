@@ -1,17 +1,22 @@
-#webform-component-left-column, #webform-component-right-column {
-    width: 45%;
+#webform-component-left-region, #webform-component-right-region {
+    width: 46%;
     float: left;
     margin: 10px;
 }
 
-#webform-component-left-column {
+#webform-component-top-region {
+
+}
+
+#webform-component-left-region {
     clear: left;
 }
 
-#webform-component-right-column {
+#webform-component-right-region {
     clear: right;
 }
 
+#webform-component-bottom-region,
 .fundraiser_submit_message {
     clear: both;
 }
