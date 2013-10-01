@@ -13,7 +13,7 @@ class fundraiser_handler_filter_fundraiser_gateways extends views_handler_filter
    * Setup the exposed form as a select
    */
   public function exposed_form(&$form, &$form_state) {
-    $this->exposed_form($form, $form_state);
+    parent::exposed_form($form, $form_state);
     $form['gateways']['#type'] = 'select';
     unset($form['gateways']['#size']);
     $gateways = _fundraiser_gateway_info($id = NULL);
