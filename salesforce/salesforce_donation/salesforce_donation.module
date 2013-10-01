@@ -230,6 +230,37 @@ function salesforce_donation_salesforce_genmap_map_item_alter(&$item, $donation)
 }
 
 /**
+ * Implements hook_fundraiser_donation_delete().
+ */
+function salesforce_donation_fundraiser_donation_delete($donation) {
+  _salesforce_donation_queue_donation('delete', $donation->did, $donation);
+}
+
+/**
+ * Implements hook_fundraiser_donation_decline().
+ */
+function salesforce_donation_fundraiser_donation_decline($donation) {
+  _salesforce_donation_queue_donation('update', $donation->did, $donation);
+}
+
+/**
+ * Implements hook_fundraiser_donation_cancel().
+ */
+function salesforce_donation_fundraiser_donation_cancel($donation) {
+  _salesforce_donation_queue_donation('update', $donation->did, $donation);
+}
+
+/**
+ * Helper to queue a donation's current status by did
+ */
+function _salesforce_donation_queue_donation($operation, $did, $donation = NULL) {
+  $donation = is_null() ? _fundraiser_get_donation_by_did($did) : $donation;
+  $donation_node = isset($donation->node) ? $donation->node : node_load($donation->nid);
+  salesforce_genmap_send_object_to_queue('salesforce_donation', $operation,
+    $donation_node, $did, $donation, 'donation');
+}
+
+/**
  * Implements hook_salesforce_genmap_info().
  */
 function salesforce_donation_salesforce_genmap_info() {
