@@ -65,6 +65,7 @@ function _fundraiser_cron_process() {
 function fundraiser_perm() {
   return array(
     'administer fundraiser',
+    'administer fundraiser date mode',
     'create donation form',
     'edit own donation form',
     'edit any donation form',
@@ -95,7 +96,7 @@ function fundraiser_menu() {
     'title' => 'Sustainer date mode settings',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fundraiser_sustainer_date_mode_form'),
-    'access arguments' => array('administer fundraiser'),
+    'access arguments' => array('administer fundraiser date mode'),
     'type' => MENU_NORMAL_ITEM,
     'file' => 'fundraiser.date_mode.inc',
   );
