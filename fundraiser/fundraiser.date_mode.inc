@@ -114,7 +114,6 @@ function fundraiser_sustainer_date_mode_form_submit($form, &$form_state) {
   // if we're switching to date mode from anniversary mode,
   // create the table to store the original charges.
   if ($old_mode == FALSE && $new_mode == TRUE) {
-    fundraiser_create_date_mode_table();
     fundraiser_save_date_mode_values();
     // after this, fall through to start the batch update.
   }
@@ -122,7 +121,6 @@ function fundraiser_sustainer_date_mode_form_submit($form, &$form_state) {
   // restore the original values only and drop the table
   elseif ($old_mode == TRUE && $new_mode == FALSE) {
     fundraiser_update_recurring_with_original_dates();
-    fundraiser_drop_date_mode_table();
 
     // in this case we are not switching sustainers that get added after the switch to date mode
     // they will remain on the day of the month and not on anniversary of the original order
@@ -447,22 +445,4 @@ function fundraiser_update_recurring_with_original_dates() {
     SET r.next_charge = d.original_next_charge
     WHERE from_unixtime(r.next_charge) > now() AND r.gateway_resp IS NULL"
   );
-}
-
-/**
- * Creates the date mode table.
- */
-function fundraiser_create_date_mode_table() {
-  db_query("CREATE TABLE IF NOT EXISTS {fundraiser_recurring_date_mode} (
-    `order_id` int(10) unsigned NOT NULL,
-    `original_next_charge` int(11) NOT NULL,
-    PRIMARY KEY (`order_id`)
-  ) ENGINE=InnoDB DEFAULT CHARSET=latin1;");
-}
-
-/**
- * Drops the date mode table.
- */
-function fundraiser_drop_date_mode_table() {
-  db_query("DROP TABLE IF EXISTS {fundraiser_recurring_date_mode}");
 }
