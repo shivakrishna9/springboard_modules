@@ -24,13 +24,13 @@ function _fundraiser_upsell_content($node, $sid) {
   $height = $node->upsell['modal_height'];
   // Get the content for the form.
   $upsell_class = (!empty($node->upsell['class'])) ? $node->upsell['class'] : '';
-  $upsell_header = (!empty($node->upsell['header'])) ? $node->upsell['header'] : variable_get('fundraiser_upsell_default_content', '');
+  $upsell_content = (!empty($node->upsell['content'])) ? $node->upsell['content'] : variable_get('fundraiser_upsell_default_content', '');
   $upsell_disclaimer = variable_get('fundraiser_upsell_default_content_disclaimer', '');
   // Build the output
   $content = '<div id="message-wrapper" class="hidden">';
   $content .= '<div id="message-modal" class="live-modal ' . $upsell_class;
   $content .= '" style="' . $upsell_size . '">';
-  $content .= $upsell_header;
+  $content .= '<div id="message-content">' . $upsell_content . '</div>';
   $content .= drupal_get_form('fundraiser_upsell_donation_form', $sid);
   $content .= '<div id="message-disclaimer">' . $upsell_disclaimer . '</div>';
   $content .= '</div></div>';
@@ -57,7 +57,7 @@ function _fundraiser_upsell_content_preview($node) {
   $upsell_size = 'width:' . $width . 'px;height:' . $height . 'px;';
   // Get the content for the form.
   $upsell_class = (!empty($node->upsell['class'])) ? $node->upsell['class'] : '';
-  $upsell_header = (!empty($node->upsell['header'])) ? $node->upsell['header'] : variable_get('fundraiser_upsell_default_content', '');
+  $upsell_content = (!empty($node->upsell['content'])) ? $node->upsell['content'] : variable_get('fundraiser_upsell_default_content', '');
   $upsell_disclaimer = variable_get('fundraiser_upsell_default_content_disclaimer', '');
   $upsell_thankyou = variable_get('fundraiser_upsell_thank_you_content', 'Thank you for your recurring donation!');
   // Build the output
@@ -65,12 +65,13 @@ function _fundraiser_upsell_content_preview($node) {
   $content .= '<div id="message-wrapper" class="hidden">';
   $content .= '<div id="message-modal" class="preview-modal ' . $upsell_class;
   $content .= '" style="' . $upsell_size . '">';
-  $content .= $upsell_header;
+  $content .= '<div class="message-content">' . $upsell_content . '</div>';
   $content .= drupal_get_form('fundraiser_upsell_donation_form', 0);
   $content .= '<div id="message-disclaimer">' . $upsell_disclaimer . '</div>';
   $content .= '</div></div>';
   // Add the thank you message for the preview
-  $content .= '<div id="message-return" class="hidden">' . $upsell_thankyou . '</div>';
+  $content .= '<div id="message-return" class="hidden preview-modal thank-you ' . $upsell_class;
+  $content .= '" style="' . $upsell_size . '"><div class="message-content">' . $upsell_thankyou . '</div></div>';
 
   return $content;
 }

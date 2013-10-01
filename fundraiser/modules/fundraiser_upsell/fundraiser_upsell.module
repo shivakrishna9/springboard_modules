@@ -204,10 +204,15 @@ function fundraiser_upsell_node_form_submit($form, &$form_state) {
 /**
  * Extra donation form submit function to attach the upsell process
  */
-function fundraiser_upsell_webform_submit($form, &$form_state) {
-  // Don't try to upsell if its already recurring
+function fundraiser_upsell_webform_submit($form, $form_state) {
+  // Find the sid from the redirect so we know it succeeded
+  foreach ($form_state['redirect'] as $key => $path) {
+    $check_path = explode('=', $path);
+    $successful = ($check_path[0] == 'sid' && is_int($check_path[1] + 0)) ? TRUE : FALSE;
+  }
+  // Don't try to upsell if its already recurring or unsuccessful
   $not_recurring = empty($form_state['input']['submitted']['payment_information']['recurs_monthly']['recurs']) ? TRUE : FALSE;
-  if ($not_recurring) {
+  if ($successful && $not_recurring) {
     // Add the upsell nid, sid, & uid to the session data
     $_SESSION['upsell'] = array(
       'nid' => $form_state['values']['details']['nid'],

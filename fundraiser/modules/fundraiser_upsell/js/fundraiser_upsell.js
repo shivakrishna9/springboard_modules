@@ -15,6 +15,8 @@
           top: '10em'
         }
       });
+      // Assign an ID to the blockUI message
+      $('.blockUI.blockMsg').attr('id', 'upsell-modal');
       // Unblock the UI after the ajax call no matter what happens
       $( document ).ajaxStop(function() {
         setTimeout(function() {
@@ -40,6 +42,7 @@
           // Display the thank you message if successful
           success: function(response) {
             $('#message-modal').hide().html(response).fadeIn(750);
+            $('#message-modal').addClass('thank-you');
           },
           // Log the error if there is a problem
           error: function(msg) {
@@ -62,6 +65,9 @@
             top: '10em'
           }
         });
+        $('#message-return').removeClass('hidden');
+        // Assign an ID to the blockUI message
+        $('.blockUI.blockMsg').attr('id', 'upsell-modal');
         return false;
       });
       // Close button
