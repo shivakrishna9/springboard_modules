@@ -16,7 +16,7 @@ function form_layouts_fundraiser_field_info() {
     '#type' => 'fieldset',
     '#required' => 0,
     '#create_callback' => 'form_layouts_field_create',
-    '#display_callback' => 'form_layouts_field_display',
+    '#display_callback' => 'form_layouts_top_region_display',
   );
 
   $fields['left_region'] = array(
@@ -24,7 +24,7 @@ function form_layouts_fundraiser_field_info() {
     '#type' => 'fieldset',
     '#required' => 0,
     '#create_callback' => 'form_layouts_field_create',
-    '#display_callback' => 'form_layouts_field_display',
+    '#display_callback' => 'form_layouts_left_region_display',
   );
 
   $fields['right_region'] = array(
@@ -32,7 +32,7 @@ function form_layouts_fundraiser_field_info() {
     '#type' => 'fieldset',
     '#required' => 0,
     '#create_callback' => 'form_layouts_field_create',
-    '#display_callback' => 'form_layouts_field_display',
+    '#display_callback' => 'form_layouts_right_region_display',
   );
 
   $fields['bottom_region'] = array(
@@ -40,7 +40,7 @@ function form_layouts_fundraiser_field_info() {
     '#type' => 'fieldset',
     '#required' => 0,
     '#create_callback' => 'form_layouts_field_create',
-    '#display_callback' => 'form_layouts_field_display',
+    '#display_callback' => 'form_layouts_bottom_region_display',
   );
 
   return $fields;
@@ -62,18 +62,6 @@ function form_layouts_fundraiser_field_info_alter(&$info) {
 }
 
 /**
- * Implements hook_fundraiser_donation_form().
- *
- * @param array $form
- *
- * @return array
- */
-function form_layouts_fundraiser_donation_form($form) {
-  $form['#attached']['css'][] = drupal_get_path('module', 'form_layouts') . '/css/form_layouts.css';
-  return $form;
-}
-
-/**
  * @param stdClass $fundraiser
  * @param array $field
  *
@@ -86,14 +74,31 @@ function form_layouts_field_create($fundraiser, $field) {
   return $field;
 }
 
-/**
- * @param $form
- * @param $form_state
- * @param $field
- *
- * @return array $field
- */
-function form_layouts_field_display($form, $form_state, $field) {
+function form_layouts_top_region_display($form, $form_state, $field) {
+  $field['#attributes']['class'][] = 'span12';
+  $field['#prefix'] = '<div class="row">';
+  $field['#suffix'] = '</div>';
+  return $field;
+}
+
+function form_layouts_left_region_display($form, $form_state, $field) {
+  $field['#attributes']['class'][] = 'span6';
+  $field['#prefix'] = '<div class="row">';
+//  $field['#suffix'] = '</div>';
+  return $field;
+}
+
+function form_layouts_right_region_display($form, $form_state, $field) {
+  $field['#attributes']['class'][] = 'span6';
+//  $field['#prefix'] = '<div class="row">';
+  $field['#suffix'] = '</div>';
+  return $field;
+}
+
+function form_layouts_bottom_region_display($form, $form_state, $field) {
+  $field['#attributes']['class'][] = 'span12';
+  $field['#prefix'] = '<div class="row">';
+  $field['#suffix'] = '</div>';
   return $field;
 }
 
