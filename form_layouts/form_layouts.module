@@ -11,16 +11,36 @@
 function form_layouts_fundraiser_field_info() {
   $fields = array();
 
-  $fields['left_column'] = array(
-    '#title' => t('Left Column'),
+  $fields['top_region'] = array(
+    '#title' => t('Top region'),
     '#type' => 'fieldset',
     '#required' => 0,
+    '#create_callback' => 'form_layouts_field_create',
+    '#display_callback' => 'form_layouts_field_display',
   );
 
-  $fields['right_column'] = array(
-    '#title' => t('Right Column'),
+  $fields['left_region'] = array(
+    '#title' => t('Left region'),
     '#type' => 'fieldset',
     '#required' => 0,
+    '#create_callback' => 'form_layouts_field_create',
+    '#display_callback' => 'form_layouts_field_display',
+  );
+
+  $fields['right_region'] = array(
+    '#title' => t('Right region'),
+    '#type' => 'fieldset',
+    '#required' => 0,
+    '#create_callback' => 'form_layouts_field_create',
+    '#display_callback' => 'form_layouts_field_display',
+  );
+
+  $fields['bottom_region'] = array(
+    '#title' => t('Bottom region'),
+    '#type' => 'fieldset',
+    '#required' => 0,
+    '#create_callback' => 'form_layouts_field_create',
+    '#display_callback' => 'form_layouts_field_display',
   );
 
   return $fields;
@@ -30,11 +50,10 @@ function form_layouts_fundraiser_field_info() {
  * Implements hook_fundraiser_field_info_alter().
  */
 function form_layouts_fundraiser_field_info_alter(&$info) {
-  $info['left_column']['donation'] = $info['donation'];
-  $info['left_column']['donor_information'] = $info['donor_information'];
-
-  $info['right_column']['billing_information'] = $info['billing_information'];
-  $info['right_column']['payment_information'] = $info['payment_information'];
+  $info['top_region']['donation'] = $info['donation'];
+  $info['left_region']['donor_information'] = $info['donor_information'];
+  $info['right_region']['billing_information'] = $info['billing_information'];
+  $info['bottom_region']['payment_information'] = $info['payment_information'];
 
   unset($info['donation']);
   unset($info['donor_information']);
@@ -52,4 +71,63 @@ function form_layouts_fundraiser_field_info_alter(&$info) {
 function form_layouts_fundraiser_donation_form($form) {
   $form['#attached']['css'][] = drupal_get_path('module', 'form_layouts') . '/css/form_layouts.css';
   return $form;
+}
+
+/**
+ * @param stdClass $fundraiser
+ * @param array $field
+ *
+ * @return FALSE|array $field
+ */
+function form_layouts_field_create($fundraiser, $field) {
+//  dpm($fundraiser);
+//  dpm($field);
+
+  return $field;
+}
+
+/**
+ * @param $form
+ * @param $form_state
+ * @param $field
+ *
+ * @return array $field
+ */
+function form_layouts_field_display($form, $form_state, $field) {
+  return $field;
+}
+
+/**
+ * Implements hook_form_BASE_FORM_ID_alter() for node forms.
+ */
+function form_layouts_form_node_form_alter(&$form, &$form_state, $form_id) {
+  if (fundraiser_is_donation_type($form['#node']->type)) {
+    $form['form_layouts'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Form Layout'),
+      '#description' => t('Select the form layout for this form. Defaults to one-column layout.'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+    );
+    $form['form_layouts']['form_layouts'] = array(
+      '#type' => 'select',
+      '#title' => t('Layout'),
+      '#options' => form_layouts_get_layout_options(),
+      '#default_value' => 0,
+      '#description' => 'Choose an initial layout for the form.  Choose None to leave the layout as-is.',
+    );
+  }
+}
+
+// @todo Replace with DB
+function form_layouts_get_layout_options() {
+  return array(
+    0 => 'None',
+    1 => 'One Column',
+    2 => 'Two Columns',
+  );
+}
+
+function form_layouts_fundraiser_create_fundraiser_alter($fundraiser) {
+  dpm($fundraiser);
 }
