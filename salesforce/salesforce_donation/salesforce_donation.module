@@ -566,6 +566,7 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
     $fields['salesforce_donation_map']['#fields']['card_number'] = t('Credit card last 4') . ' (' . t('Default payment field') . ')';
     $fields['salesforce_donation_map']['#fields']['card_expiration_month'] = t('Expiration month') . ' (' . t('Default payment field') . ')';
     $fields['salesforce_donation_map']['#fields']['card_expiration_year'] = t('Expiration year') . ' (' . t('Default payment field') . ')';
+    $fields['salesforce_donation_map']['#fields']['card_type'] = t('Card type') . ' (' . t('Default payment field') . ')';
   }
 
   // Webform component fields.
