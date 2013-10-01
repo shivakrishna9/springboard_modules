@@ -7,6 +7,8 @@
 
 /**
  * Implements hook_fundraiser_field_info()
+ *
+ * @todo Weight these fields.
  */
 function form_layouts_fundraiser_field_info() {
   $fields = array();
@@ -75,28 +77,32 @@ function form_layouts_field_create($fundraiser, $field) {
 }
 
 function form_layouts_top_region_display($form, $form_state, $field) {
-  $field['#attributes']['class'][] = 'span12';
+  // note that we're intentionally removing other classes here
+  $field['#attributes']['class'] = array('span12');
   $field['#prefix'] = '<div class="row">';
   $field['#suffix'] = '</div>';
   return $field;
 }
 
 function form_layouts_left_region_display($form, $form_state, $field) {
-  $field['#attributes']['class'][] = 'span6';
+  // note that we're intentionally removing other classes here
+  $field['#attributes']['class'] = array('span6');
   $field['#prefix'] = '<div class="row">';
 //  $field['#suffix'] = '</div>';
   return $field;
 }
 
 function form_layouts_right_region_display($form, $form_state, $field) {
-  $field['#attributes']['class'][] = 'span6';
+  // note that we're intentionally removing other classes here
+  $field['#attributes']['class'] = array('span6');
 //  $field['#prefix'] = '<div class="row">';
   $field['#suffix'] = '</div>';
   return $field;
 }
 
 function form_layouts_bottom_region_display($form, $form_state, $field) {
-  $field['#attributes']['class'][] = 'span12';
+  // note that we're intentionally removing other classes here
+  $field['#attributes']['class'] = array('span12');
   $field['#prefix'] = '<div class="row">';
   $field['#suffix'] = '</div>';
   return $field;
