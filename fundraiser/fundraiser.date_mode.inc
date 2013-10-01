@@ -109,7 +109,26 @@ function fundraiser_sustainer_date_mode_form_submit($form, &$form_state) {
     return; // If we're still in the same mode, but the mode doesn't need dates.
   }
 
-  // Looks like we switched modes or dates, so we need to update all the future charges.
+  // Looks like we switched modes or dates, so we need to take action.
+
+  // if we're switching to date mode from anniversary mode,
+  // create the table to store the original charges.
+  if ($old_mode == FALSE && $new_mode == TRUE) {
+    fundraiser_create_date_mode_table();
+    fundraiser_save_date_mode_values();
+    // after this, fall through to start the batch update.
+  }
+  // if we're switching from date mode to anniversary mode,
+  // restore the original values only and drop the table
+  elseif ($old_mode == TRUE && $new_mode == FALSE) {
+    fundraiser_update_recurring_with_original_dates();
+    fundraiser_drop_date_mode_table();
+
+    // in this case we are not switching sustainers that get added after the switch to date mode
+    // they will remain on the day of the month and not on anniversary of the original order
+    drupal_set_message('Sustainers have been restored to their previous anniversary dates.');
+    return;
+  }
 
   // Start the batch process running
   batch_set(fundraiser_sustainer_update_date_mode_batch($new_mode, $new_date));
@@ -403,4 +422,47 @@ function fundraiser_sustainer_get_baseline_info($orders) {
 
   }
   return FALSE;
+}
+
+/**
+ * Empties the date mode table and copies the next_charge values
+ * to the date mode table.
+ */
+function fundraiser_save_date_mode_values() {
+  db_query("TRUNCATE TABLE {fundraiser_recurring_date_mode}");
+  db_query("INSERT INTO {fundraiser_recurring_date_mode} (order_id, original_next_charge)
+    (
+    SELECT order_id, next_charge FROM fundraiser_recurring
+    WHERE from_unixtime(next_charge) > now() AND gateway_resp IS NULL
+    )"
+  );
+}
+
+/**
+ * Restores the originally changed values of next_charge.
+ */
+function fundraiser_update_recurring_with_original_dates() {
+  db_query("UPDATE {fundraiser_recurring} AS r
+    INNER JOIN {fundraiser_recurring_date_mode} AS d ON r.order_id = d.order_id
+    SET r.next_charge = d.original_next_charge
+    WHERE from_unixtime(r.next_charge) > now() AND r.gateway_resp IS NULL"
+  );
+}
+
+/**
+ * Creates the date mode table.
+ */
+function fundraiser_create_date_mode_table() {
+  db_query("CREATE TABLE IF NOT EXISTS {fundraiser_recurring_date_mode} (
+    `order_id` int(10) unsigned NOT NULL,
+    `original_next_charge` int(11) NOT NULL,
+    PRIMARY KEY (`order_id`)
+  ) ENGINE=InnoDB DEFAULT CHARSET=latin1;");
+}
+
+/**
+ * Drops the date mode table.
+ */
+function fundraiser_drop_date_mode_table() {
+  db_query("DROP TABLE IF EXISTS {fundraiser_recurring_date_mode}");
 }
