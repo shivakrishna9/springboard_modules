@@ -569,6 +569,7 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
   $donation->donation['amount'] = commerce_currency_amount_to_decimal($order->commerce_order_total[LANGUAGE_NONE][0]['amount'],
     $order->commerce_order_total[LANGUAGE_NONE][0]['currency_code']);
   $donation->donation['quantity'] = 1;
+  $donation->donation['hostname'] = $order->hostname;
   $found = commerce_line_item_load_multiple(array(), array('order_id' => $order->order_id));
   $line_item_id = -1;
   foreach ($found as $id => $found) {

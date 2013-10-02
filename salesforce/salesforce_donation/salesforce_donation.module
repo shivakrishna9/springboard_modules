@@ -304,6 +304,10 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
       $sf_field = $map->field_map['salesforce_donation_map']['status'];
       $fields[$sf_field] = $donation->status;
     }
+    if (isset($map->field_map['salesforce_donation_map']['hostname'])) {
+      $sf_field = $map->field_map['salesforce_donation_map']['hostname'];
+      $fields[$sf_field] = $donation->donation['hostname'];
+    }
   }
 
   // And lastly, the reconstructed data fields. Information derived from the
@@ -496,6 +500,7 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
       'gateway_name' => t('Gateway Name'),
       'txn_id' => t('Transaction ID'),
       'status' => t('Payment Status'),
+      'hostname' => t('IP address'),
     ),
   );
 
@@ -566,6 +571,7 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
     $fields['salesforce_donation_map']['#fields']['card_number'] = t('Credit card last 4') . ' (' . t('Default payment field') . ')';
     $fields['salesforce_donation_map']['#fields']['card_expiration_month'] = t('Expiration month') . ' (' . t('Default payment field') . ')';
     $fields['salesforce_donation_map']['#fields']['card_expiration_year'] = t('Expiration year') . ' (' . t('Default payment field') . ')';
+    $fields['salesforce_donation_map']['#fields']['card_type'] = t('Card type') . ' (' . t('Default payment field') . ')';
   }
 
   // Webform component fields.
