@@ -222,18 +222,31 @@ function fundraiser_upsell_webform_submit($form, $form_state) {
   }
 }
 
+/**
+ * Implments hook_footer to add the upsell data to the page
+ */
+function fundraiser_upsell_footer($main) {
+  // Check for upsell trigger
+  if (!empty($_SESSION['upsell'])) {
+    // Generate the upsell content for display
+    $node = node_load($_SESSION['upsell']['nid']);
+    $upsell = _fundraiser_upsell_content($node, $_SESSION['upsell']['sid']);
+    return $upsell;
+  }
+}
+
+/**
+ * Implements template_preprocess_page to refresh the CSS/JS and remove the 
+ *   upsell session info.
+ */
 function fundraiser_upsell_preprocess_page(&$variables) {
   // Check for upsell trigger
   if (!empty($_SESSION['upsell'])) {
-    // Add the upsell to the page
-    $node = node_load($_SESSION['upsell']['nid']);
-    $upsell = _fundraiser_upsell_content($node, $_SESSION['upsell']['sid']);
-    $variables['footer'] .= $upsell;
-    // Remove the upsell session data
-    unset($_SESSION['upsell']);
     // Refresh the CSS and JS
     $variables['styles'] = drupal_get_css();
     $variables['scripts'] = drupal_get_js();
+    // Remove the upsell session data
+    unset($_SESSION['upsell']);
   }
 }
 

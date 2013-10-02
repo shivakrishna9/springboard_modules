@@ -30,7 +30,7 @@ function _fundraiser_upsell_content($node, $sid) {
   $content = '<div id="message-wrapper" class="hidden">';
   $content .= '<div id="message-modal" class="live-modal ' . $upsell_class;
   $content .= '" style="' . $upsell_size . '">';
-  $content .= '<div id="message-content">' . $upsell_content . '</div>';
+  $content .= '<div class="message-content">' . $upsell_content . '</div>';
   $content .= drupal_get_form('fundraiser_upsell_donation_form', $sid);
   $content .= '<div id="message-disclaimer">' . $upsell_disclaimer . '</div>';
   $content .= '</div></div>';
