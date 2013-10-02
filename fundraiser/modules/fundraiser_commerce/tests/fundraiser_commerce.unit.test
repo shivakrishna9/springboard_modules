@@ -13,11 +13,11 @@ class FundraiserCommerceUnitTestSetup extends DrupalWebTestCase {
   /**
    * Implemenation of setUp().
    */
-  public function setUp() {
-    parent::setUp( array(
+  public function setUp($modules = array()) {
+    $modules = array_merge($modules, array(
       'fundraiser_commerce',
-    )
-    );
+    ));
+    parent::setUp($modules);
   }
 }
 

@@ -18,8 +18,12 @@ class WebformAddToAllTestCase extends DrupalWebTestCase {
   /**
    * Implementation of setUp().
    */
-  public function setUp() {
-    parent::setUp(array('webform', 'webform_addtoall'));
+  public function setUp($modules = array()) {
+    $modules = array_merge($modules, array(
+      'webform',
+      'webform_addtoall',
+    ));
+    parent::setUp($modules);
 
     $this->privileged_user = $this->drupalCreateUser(array(
       'administer site configuration',

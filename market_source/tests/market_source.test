@@ -16,8 +16,12 @@ class MarketSourceTestCase extends DrupalWebTestCase {
     );
   }
 
-  public function setUp() {
-    parent::setUp('market_source', 'webform');
+  public function setUp($modules = array()) {
+    $modules = array_merge($modules, array(
+      'market_source',
+      'webform',
+    ));
+    parent::setUp($modules);
 
     $this->privileged_user = $this->drupalCreateUser(array(
       'administer site configuration',

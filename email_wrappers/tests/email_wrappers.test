@@ -18,8 +18,14 @@ class EmailWrappersTestCase extends DrupalWebTestCase {
   /**
    * Implementation of setUp().
    */
-  public function setUp() {
-    parent::setUp(array('webform', 'email_wrappers', 'ctools'));
+  public function setUp($modules = array()) {
+    $modules = array_merge($modules, array(
+      'ctools',
+      'email_wrappers',
+      'webform',
+    ));
+    parent::setUp($modules);
+
     // jam email system
     variable_set('mail_system', array('default-system' => 'TestingMailSystem'));
 

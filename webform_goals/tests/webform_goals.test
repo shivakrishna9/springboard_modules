@@ -8,10 +8,11 @@ class WebformUserIntegratedTestSetup extends DrupalWebTestCase {
   /**
    * Implements setUp().
    */
-  public function setUp() {
-    parent::setUp('webform_goals');
-
-
+  public function setUp($modules = array()) {
+    $modules = array_merge($modules, array(
+      'webform_goals',
+    ));
+    parent::setUp($modules);
 
     // Create user accounts.
 
