@@ -41,6 +41,7 @@ function sustainer_import_menu() {
   $items['admin/config/development/sustainer_import/settings'] = $items['admin/config/development/sustainer_import'];
   $items['admin/config/development/sustainer_import/settings']['title'] = t('Settings');
   $items['admin/config/development/sustainer_import/settings']['type'] = MENU_DEFAULT_LOCAL_TASK;
+  $items['admin/config/development/sustainer_import/settings']['weight'] = -1;
 
   $items['admin/config/development/sustainer_import/import'] = array(
     'title' => 'Import',
@@ -49,6 +50,16 @@ function sustainer_import_menu() {
     'page arguments' => array('sustainer_import_import_page'),
     'access arguments' => array('import sustainer data'),
     'file' => 'includes/sustainer_import.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/config/development/sustainer_import/queue'] = array(
+    'title' => 'Queue',
+    'description' => 'Process items in the queue and view queue status reporting',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sustainer_import_queue'),
+    'access arguments' => array('administer sustainer import'),
+    'file' => 'includes/sustainer_import.queue.inc',
+    'weight' => 1,
     'type' => MENU_LOCAL_TASK,
   );
   $items['admin/config/development/sustainer_import/%sustainer_record/edit'] = array(
@@ -60,6 +71,7 @@ function sustainer_import_menu() {
     'file' => 'includes/sustainer_import.edit.inc',
     'type' => MENU_CALLBACK,
   );
+  return $items;
 }
 
 

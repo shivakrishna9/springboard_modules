@@ -34,15 +34,14 @@ function sustainer_import_schema() {
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
-        'default' => 0,
       ),
       'status' => array(
         'description' => 'import status',
         'type' => 'varchar',
-        'size' => 60,
+        'length' => 60,
       ),
     ),
-    'primary key' => array('nid'),
+    'primary key' => array('rid'),
   );
 
   // log table for items processed by import queue.
@@ -72,7 +71,6 @@ function sustainer_import_schema() {
       ),
 
     ),
-    'primary key' => array('rid'),
   );
   return $schema;
 }
