@@ -28,8 +28,19 @@ class FundraiserTestCase extends DrupalWebTestCase {
     // Assumptions: fundraiser_commerce, and fundraiser_webform.
     // Additional modules to be turned on.
     $modules = array_merge($modules, array(
+      'addressfield',
+      'commerce',
+      'commerce_customer',
+      'commerce_line_item',
+      'commerce_order',
+      'commerce_payment',
+      'commerce_price',
+      'ctools',
       'encrypt',
+      'entity',
       'fundraiser',
+      'token',
+      'webform',
       'webform_user',
 
       // Default testing environment.
