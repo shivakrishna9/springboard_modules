@@ -27,9 +27,8 @@ class FundraiserFormTestCase extends FundraiserTestCase {
    * Implements setUp().
    */
   public function setUp($additional_modules = array()) {
-    // Call the parent to set all of the base modules up.
     $additional_modules = array(
-      'webform_confirmations', // For token testing.
+      'webform_confirmations',
     );
     parent::setUp($additional_modules);
   }

@@ -8,7 +8,6 @@
 include_once dirname(__FILE__) . '/salesforce_queue.test';
 
 /**
- * @file
  * Salesforce queue module config form tests.
  */
 class SalesforceQueueAdminTestCase extends SalesforceQueueTestCase {

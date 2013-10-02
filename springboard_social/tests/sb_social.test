@@ -32,10 +32,10 @@ class SpringboardSocialFunctionalTest extends FundraiserTestCase {
     // hijack mail system
     variable_set('mail_system', array('default-system' => 'TestingMailSystem'));
 
-    // Call the parent to set all of the base modules up.
+
     $additional_modules = array(
       'sb_social',
-      'shorten', // shorten urls.
+      'shorten',
       'ctools',
       'market_source',
       'clone',
@@ -59,7 +59,8 @@ class SpringboardSocialFunctionalTest extends FundraiserTestCase {
       'edit own donation_form content',
       'configure webform emails',
       'administer springboard social',
-      'edit any share content', // need to create separate unprivileged user and user with "edit own"
+      // need to create separate unprivileged user and user with "edit own"
+      'edit any share content',
     );
     $this->checkPermissions(array('create donation_form content', 'edit any donation_form content'), TRUE);
     $this->privileged_user = $this->drupalCreateUser($permissions);

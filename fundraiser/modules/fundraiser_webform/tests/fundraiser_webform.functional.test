@@ -27,16 +27,15 @@ class FundraiserWebformFunctionalTest extends FundraiserTestCase {
    * Implements setUp().
    */
   public function setUp($addtional_modules = array()) {
-    // hijack mail system
-    variable_set('mail_system', array('default-system' => 'TestingMailSystem'));
-
-    // Call the parent to set all of the base modules up.
     $additional_modules = array(
-      'webform_confirmations', // For token testing.
+      'webform_confirmations',
       'email_wrappers',
       'ctools',
     );
     parent::setUp($additional_modules);
+
+    // hijack mail system
+    variable_set('mail_system', array('default-system' => 'TestingMailSystem'));
   }
 
   // tests

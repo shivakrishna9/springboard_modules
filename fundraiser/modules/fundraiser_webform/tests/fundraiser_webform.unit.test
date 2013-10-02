@@ -18,7 +18,6 @@ class FundraiserWebformUnitTestSetup extends DrupalWebTestCase {
    * Implemenation of setUp().
    */
   public function setUp() {
-    // Call the parent to set all of the base modules up.
     parent::setUp( array(
       'fundraiser_webform',
     )
@@ -254,7 +253,9 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
         'width' => 10,
         'field_prefix' => '$',
       ),
-      '#create_callback' => '_fundraiser_amount_field_create', // This tests code in fundraiser.module in conjunction with fundraiser_webform field creation.
+      // This tests code in fundraiser.module in conjunction with
+      // fundraiser_webform field creation.
+      '#create_callback' => '_fundraiser_amount_field_create',
     );
     $fields['donation']['other_amount'] = array(
       '#title' => 'Other',
@@ -265,7 +266,9 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
         'width' => 10,
         'field_prefix' => '$',
       ),
-      '#create_callback' => '_fundraiser_other_amount_field_create', // This tests code in fundraiser.module in conjunction with fundraiser_webform field creation.
+      // This tests code in fundraiser.module in conjunction with
+      // fundraiser_webform field creation.
+      '#create_callback' => '_fundraiser_other_amount_field_create',
       '#validate_callback' => '_fundraiser_other_amount_field_validate',
     );
     $child_weight = 0;

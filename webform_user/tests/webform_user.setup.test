@@ -18,8 +18,6 @@ class WebformUserSetup extends DrupalWebTestCase {
     );
 
     $enable_modules = array_merge($enable_modules, $additional_modules);
-
-    // Call the parent to set all of the base modules up.
     parent::setUp($enable_modules);
 
     // Setup the environment to a default standard.

@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Fundraiser module setup, designed to provide a standard environment for children tests.
+ * Provide a standard environment for child tests.
  */
 
 /**
@@ -15,7 +15,7 @@ class FundraiserTestCase extends DrupalWebTestCase {
   public static function getInfo() {
     return array(
       'name' => 'General API for Fundraiser Tests',
-      'description' => 'Provides an API for testing fundraiser and related modules.',
+      'description' => 'Sets up basic tools for testing fundraiser-related functionality.',
       'group' => 'Fundraiser',
     );
   }
@@ -28,18 +28,23 @@ class FundraiserTestCase extends DrupalWebTestCase {
     // Assumptions: fundraiser_commerce, and fundraiser_webform.
     // Additional modules to be turned on.
     $enable_modules = array(
-      'fundraiser',
-      'fundraiser_webform', // Default testing environment.
-      'fundraiser_commerce', // Default testing environment.
-      'webform_user',
-      'commerce_product', // To remove when dependancies in commerce_authnet, commerce_payment resolved.
-      'commerce_product_reference', // To remove when dependancies in commerce_authnet, commerce_payment resolved.
-      'commerce_payment_example', // Gateway.
       'encrypt',
+      'fundraiser',
+      'webform_user',
+
+      // Default testing environment.
+      'fundraiser_commerce',
+      'fundraiser_webform',
+
+      // To remove when dependancies in commerce_authnet, commerce_payment are
+      // resolved.
+      'commerce_product',
+      'commerce_product_reference',
+
+      // Gateway.
+      'commerce_payment_example',
     );
     $enable_modules = array_merge($enable_modules, $additional_modules);
-
-    // Call the parent to set all of the base modules up.
     parent::setUp($enable_modules);
 
     // Create a key file
@@ -56,7 +61,6 @@ class FundraiserTestCase extends DrupalWebTestCase {
     $this->setupUserProfile();
     $this->setupWebformToUserMap();
     $this->createDonationContentType();
-    // Do not create an additional node, but leave code in place for it.
   }
 
   /**

@@ -14,7 +14,6 @@ class FundraiserCommerceUnitTestSetup extends DrupalWebTestCase {
    * Implemenation of setUp().
    */
   public function setUp() {
-    // Call the parent to set all of the base modules up.
     parent::setUp( array(
       'fundraiser_commerce',
     )
