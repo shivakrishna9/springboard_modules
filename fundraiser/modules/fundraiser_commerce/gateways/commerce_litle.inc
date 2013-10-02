@@ -12,6 +12,7 @@ function commerce_litle_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     // Create the payment_method array with the commerce gateway method info name as the key
     'payment_method' => array('commerce_litle_cc' => 'credit', 'commerce_litle_echeck' => 'bank account'),
+    // @todo bank account (echeck) recurring is not yet fully implemented.
     'allow_recurring' => array('credit'),
     'form callback' => 'commerce_litle_fundraiser_commerce_submit_form',
     'cleanup callback' => 'commerce_litle_fundraiser_commerce_cleanup',
