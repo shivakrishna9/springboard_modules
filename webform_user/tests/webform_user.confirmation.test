@@ -19,14 +19,14 @@ class WebformUserConfirmationTest extends WebformUserSetup {
   /**
    * Implementation of setUp().
    */
-  function setUp() {
+  public function setUp() {
     parent::setUp(array('webform_confirmations'));
   }
 
   /**
    * Implementation of tearDown().
    */
-  function tearDown() {
+  public function tearDown() {
     parent::tearDown();
   }
 
@@ -34,7 +34,7 @@ class WebformUserConfirmationTest extends WebformUserSetup {
    * Tests the user token replacements that can be made when an authenticated
    * user submits a webform user form.
    */
-  function testWebformUserConfirmationPageTokens() {
+  public function testWebformUserConfirmationPageTokens() {
     // Create a form for testing.
     $this->_webform_user_create_node();
 

@@ -66,22 +66,22 @@ function sb_social_menu() {
     'type' => MENU_CALLBACK,
   );
   $items['admin/config/services/springboard_social/path-settings/edit/%'] = array(
-      'title' => 'Edit path share settings',
-      'description' => '',
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('sb_social_path_settings', 6),
-      'access arguments' => array('administer springboard social'),
-      'file' => 'includes/sb_social.admin.inc',
-      'type' => MENU_CALLBACK,
+    'title' => 'Edit path share settings',
+    'description' => '',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sb_social_path_settings', 6),
+    'access arguments' => array('administer springboard social'),
+    'file' => 'includes/sb_social.admin.inc',
+    'type' => MENU_CALLBACK,
   );
   $items['admin/config/services/springboard_social/path-settings/delete/%'] = array(
-      'title' => 'Delete path share settings',
-      'description' => '',
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('sb_social_path_settings_delete_form', 6),
-      'access arguments' => array('administer springboard social'),
-      'file' => 'includes/sb_social.admin.inc',
-      'type' => MENU_CALLBACK,
+    'title' => 'Delete path share settings',
+    'description' => '',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sb_social_path_settings_delete_form', 6),
+    'access arguments' => array('administer springboard social'),
+    'file' => 'includes/sb_social.admin.inc',
+    'type' => MENU_CALLBACK,
   );
   $items['node/%node/share_settings'] = array(
     'title' => t('Social'),
@@ -134,7 +134,7 @@ function sb_social_block_view($delta = '') {
     }
     $sid = _sb_social_sid_by_id($id);
     $settings = sb_social_settings_load($sid);
-
+    $submission_id = isset($_GET['sid']) ? $_GET['sid'] : FALSE;
     ctools_include('plugins');
     $plugins = ctools_get_plugins('sb_social', 'social_networks');
     $enabled_services = sb_social_get_enabled_services();
@@ -144,7 +144,7 @@ function sb_social_block_view($delta = '') {
     foreach ($services as $service) {
       if (in_array($service, $enabled_services)) {
         $vars['service'] = $service;
-        $vars['url'] = sb_social_short_url($service, $settings);
+        $vars['url'] = sb_social_short_url($service, $settings, $submission_id);
         $vars['extra'] = '';
         if (isset($plugins[$service]['button_extra'])) {
           $func = $plugins[$service]['button_extra'];
@@ -202,8 +202,11 @@ function sb_social_access_node_settings($node) {
  *
  * purge share content settings when a node is deleted
  */
- function sb_social_node_delete($node) {
-   sb_social_webform_settings_delete($node->nid);
+function sb_social_node_delete($node) {
+  $sid = sb_social_get_sid_by_id($node->nid);
+  if (is_numeric($sid) && $sid) {
+    sb_social_settings_delete($sid);
+  }
 }
 
 /**
@@ -218,7 +221,11 @@ function sb_social_access_node_settings($node) {
  */
 function sb_social_init() {
   $node = FALSE;
-  $submission_id = (isset($_GET['sid']) && is_numeric($_GET['sid'])) ? $_GET['sid'] : FALSE;
+  $js_settings = array(
+    'sid' => (isset($_GET['sid']) && is_numeric($_GET['sid'])) ? $_GET['sid'] : 0,
+    'pubid' => variable_get('springboard_social_addthis_profile_id'),
+  );
+  drupal_add_js(array('sb_social' => $js_settings), 'setting');
 
   if (arg(0) == 'node' && is_numeric(arg(1))) {
     $node = node_load(arg(1));
@@ -242,7 +249,7 @@ function sb_social_init() {
       $enabled_services = sb_social_get_enabled_services();
       $path = drupal_get_path('module', 'sb_social');
 
-      foreach($plugins as $service => $plugin) {
+      foreach ($plugins as $service => $plugin) {
 
         if (is_array($enabled_services) && in_array($service, $enabled_services)) {
           // run config callbacks, this sets up js settings, opengraph tags, etc.
@@ -263,39 +270,14 @@ function sb_social_init() {
   }
   // stash cookie payload in js
   // TODO: this should probably live somewhere else.
-   if (!empty($_COOKIE['sb_social_event_submission'])) {
-     $data = explode("::", $_COOKIE['sb_social_event_submission']);
-     drupal_add_js(array('sb_social' => array(
-       'uid' => $data[0],
-       'mail' =>  $data[1],
-       'sid' => $data[2],
-     )), 'setting');
+  if (!empty($_COOKIE['sb_social_event_submission'])) {
+    $data = explode("::", $_COOKIE['sb_social_event_submission']);
+    drupal_add_js(array('sb_social' => array(
+        'uid' => $data[0],
+        'mail' => $data[1],
+        'sid' => $data[2],
+      )), 'setting');
   }
-}
-
-
-
-function sb_social_share_url($nid, $uid, $sid, $service, $settings) {
-  $node = node_load($nid);
-
-  $options = array(
-    'absolute' => TRUE,
-    'query' => array(
-      'social_referer_transaction' => $sid,
-      'social_referrer_network' => $service,
-    ),
-  );
-
-  if (module_exists('market_source') && isset($settings['data']['market_source'])) {
-    foreach ($settings['data']['market_source'] as $key => $value) {
-      if (!$value) {
-        continue;
-      }
-      $options['query'][$key] = $value;
-    }
-  }
-  $url = url('node/' . $nid, $options);
-  return url('node/' . $nid, $options);
 }
 
 /**
@@ -340,6 +322,32 @@ function sb_social_market_source_field_info() {
   return $fields;
 }
 
+/**
+ * Implements hook_market_source_external_field_keys().
+ */
+function sb_social_market_source_external_field_keys() {
+  $items = array(
+    'social_referer_transaction' => array(
+      'key' => 'social_referer_transaction',
+      'name' => t('Social referer transaction'),
+      'default' => '',
+      'persistence' => 'on',
+    ),
+    'social_referer_network' => array(
+      'key' => 'social_referer_network',
+      'name' => t('Social referer transaction'),
+      'default' => '',
+      'persistence' => 'on',
+    ),
+    'social_referer_contact' => array(
+      'key' => 'social_referer_contact',
+      'name' => t('Social referer transaction'),
+      'default' => '',
+      'persistence' => 'on',
+    ),
+  );
+  return $items;
+}
 
 /**
  * Implements hook_webform_submission_update().
@@ -430,7 +438,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
       $id = $alias ? array($path, $alias) : $path;
     }
     $sid = _sb_social_sid_by_id($id);
-    
+
     $settings = sb_social_settings_load($sid);
     $enabled_plugins = sb_social_get_enabled_plugins();
     $submission_id = (isset($_GET['sid']) && is_numeric($_GET['sid'])) ? $_GET['sid'] : FALSE;
@@ -447,7 +455,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
     if (in_array('share_links', $keys)) {
       foreach ($enabled_plugins as $service => $plugin) {
         $vars['service'] = $service;
-        $vars['url'] = sb_social_short_url($service, $settings);
+        $vars['url'] = sb_social_short_url($service, $settings, $submission_id);
         $vars['extra'] = '';
         if (isset($plugins[$service]['button_extra'])) {
           $func = $plugins[$service]['button_extra'];
@@ -455,9 +463,9 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
         }
         $buttons[] = theme('sb_social_share_button', $vars);
       }
-      $buttons = implode("\n", $buttons); 
+      $buttons = implode("\n", $buttons);
       $replacements['[sb_social:share_links]'] = $enabled_plugins ? theme('sb_social_share', array('buttons' => $buttons)) : '';
-    }  
+    }
     return $replacements;
   }
 }
@@ -504,11 +512,12 @@ function sb_social_theme($existing, $type, $theme, $path) {
  * Webform submission ID, used on confirmation pages to track shares to donations.
  */
 function sb_social_short_url($service, $settings, $submission_id = FALSE) {
+
   $params = array(
-    'social_referrer_network' => $service,
+    'social_referer_network' => $service,
   );
   if (!empty($submission_id)) {
-    $params['social_referrer_transaction'] = $submission_id;
+    $params['social_referer_transaction'] = $submission_id;
   }
   if (module_exists('market_source') && isset($settings['data']['market_source'])) {
     foreach ($settings['data']['market_source'] as $key => $value) {
@@ -528,20 +537,54 @@ function sb_social_short_url($service, $settings, $submission_id = FALSE) {
   $path = $alias ? $alias : $path;
   $options = array(
     'absolute' => TRUE,
-    'query' => $params
+    'query' => $params,
   );
 
   $url = url($path, $options);
   return shorten_url($url);
 }
 
-function sb_social_short_url_old($node, $sid, $service, $settings = NULL) {
-  $submission = _sb_social_load_submission($sid);
-  $uid = $submission['uid'];
-  $url = sb_social_share_url($node->nid, $uid, $sid, $service, $settings);
-  return shorten_url($url);
-}
 
+/**
+ * generate url for share tracking purposes
+ *
+ * @param $nid
+ * node id
+ *
+ * @param $uid
+ * User id
+ *
+ * @sid
+ * webform submission id
+ *
+ * @service
+ * Social network
+ *
+ * @settings
+ * an array of additional settings
+ */
+function sb_social_share_tracker_url($nid, $uid, $sid, $service, $settings) {
+  $node = node_load($nid);
+
+  $options = array(
+    'absolute' => TRUE,
+    'query' => array(
+      'social_referer_transaction' => $sid,
+      'social_referrer_network' => $service,
+    ),
+  );
+
+  if (module_exists('market_source') && isset($settings['data']['market_source'])) {
+    foreach ($settings['data']['market_source'] as $key => $value) {
+      if (!$value) {
+        continue;
+      }
+      $options['query'][$key] = $value;
+    }
+  }
+  $url = url('node/' . $nid, $options);
+  return url('node/' . $nid, $options);
+}
 
 function theme_sb_social_share_image_preview($variables) {
   $element = $variables['element'];

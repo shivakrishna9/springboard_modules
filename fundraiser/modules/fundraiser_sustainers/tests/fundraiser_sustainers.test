@@ -26,7 +26,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
   /**
    * Implements setUp().
    */
-  function setUp($additional_modules = array()) {
+  public function setUp($additional_modules = array()) {
     // Call the parent to set all of the base modules up.
     $additional_modules = array(
       'fundraiser_sustainers', // For token testing.
@@ -38,17 +38,10 @@ class FundraiserSustainerTest extends FundraiserSetup {
   /**
    * Test the creation of a recurring donation.
    */
-  function testFundraiserSustainerSubmit() {
-    // Create a node.
-    $node = parent::_fundraiser_setup_create_node();
-    // Post to the node.
-    $month = date('n', strtotime('+1 year'));
-    $year = date('Y', strtotime('+1 year'));
-    $post['submitted[payment_information][recurs_monthly][recurs]'] = 'recurs';
-    $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_month]'] = $month;
-    $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_year]'] = $year;
-    $post['submitted[donor_information][mail]'] = 'fundraiser_sustainer@example.com';
-    parent::_fundraiser_setup_post_donation($node->nid, $post);
+  public function testFundraiserSustainerSubmit() {
+    // Create a sustainer donation.
+    $this->createFundraiserSustainer();
+
     // Get the created user.
     $created_user = user_load_by_mail('fundraiser_sustainer@example.com');
     $this->assertEqual('fundraiser_sustainer@example.com', $created_user->mail, t('The user account #@uid was created with @email.',
@@ -92,11 +85,11 @@ class FundraiserSustainerTest extends FundraiserSetup {
   /**
    * Test the creation of a recurring donation susteiner interface.
    */
-  function testFundraiserSustainerUI() {
+  public function testFundraiserSustainerUI() {
     // Create a node.
-    $created_user = parent::_fundraiser_setup_create_user();
+    $created_user = $this->createFundraiserUser();
     $this->drupalLogin($created_user);
-    $node = parent::_fundraiser_setup_create_node();
+    $node = $this->createDonationForm();
     // Post to the node.
     $month = date('n', strtotime('+1 year'));
     $year = date('Y', strtotime('+1 year'));
@@ -104,14 +97,14 @@ class FundraiserSustainerTest extends FundraiserSetup {
     $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_month]'] = $month;
     $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_year]'] = $year;
     $post['submitted[donor_information][mail]'] = $created_user->mail;
-    parent::_fundraiser_setup_post_donation($node->nid, $post);
+    $this->submitDonation($node->nid, $post);
     $this->drupalLogout();
     // Anon can't go to the sustainer's page.
     $this->drupalGet('user/' . $created_user->uid . '/recurring_overview');
     $this->assertText('You are not authorized to access this page. ', t('Accessing the sustaining user as anonymous shows the correct message text.'),
       t('Fundraiser Sustainers UI'));
     // Create a new user.
-    $user = parent::_fundraiser_setup_create_user();
+    $user = $this->createFundraiserUser();
     $this->drupalLogin($user);
     // Diff user can't go to the sustainer's page.
     $this->drupalGet('user/' . $created_user->uid . '/recurring_overview');
@@ -145,11 +138,11 @@ class FundraiserSustainerTest extends FundraiserSetup {
   /**
    * Test the creation of a recurring donation susteiner interface.
    */
-  function testFundraiserSustainerUpdate() {
+  public function testFundraiserSustainerUpdate() {
     // Create a node.
-    $created_user = parent::_fundraiser_setup_create_user(array('cancel future donations'));
+    $created_user = $this->createFundraiserUser(array('cancel future donations'));
     $this->drupalLogin($created_user);
-    $node = parent::_fundraiser_setup_create_node();
+    $node = $this->createDonationForm();
     // Post to the node.
     $month = date('n', strtotime('+1 year'));
     $year = date('Y', strtotime('+1 year'));
@@ -157,7 +150,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
     $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_month]'] = $month;
     $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_year]'] = $year;
     $post['submitted[donor_information][mail]'] = $created_user->mail;
-    parent::_fundraiser_setup_post_donation($node->nid, $post);
+    $this->submitDonation($node->nid, $post);
     // Get the master did.
     $donations = _fundraiser_get_donations();
     $master_did = '';
@@ -272,7 +265,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
    * Test to make sure sustainers are not processed when the sustainer key file is missing
    * during normal Drupal cron run.
    */
-  function testFundraiserSustainerNoProcessOnMissingKeyStandardCronRun() {
+  public function testFundraiserSustainerNoProcessOnMissingKeyStandardCronRun() {
     // Create a recurring donation to test with.
     $master_did = $this->fundraiserSustainerCreateRecurringDonation();
     // On initial start, there is no key.
@@ -294,7 +287,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
    * Test to make sure sustainers are not processed when the sustainer key file is missing
    * during normal standalone cron run.
    */
-  function testFundraiserSustainerNoProcessOnMissingKeyStandaloneCronRun() {
+  public function testFundraiserSustainerNoProcessOnMissingKeyStandaloneCronRun() {
     // Turn on standalone cron.
     variable_set('fundraiser_standalone_cron_enabled', 1);
     // Create a recurring donation to test with.
@@ -318,7 +311,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
    * Test to make sure sustainers are not processed when the sustainer key file is configured
    * with a bad key.
    */
-  function testFundraiserSustainerNoProcessOnKeyMismatch() {
+  public function testFundraiserSustainerNoProcessOnKeyMismatch() {
     $file_path = variable_get('file_public_path', conf_path() . '/files');
     if (is_writable($file_path)) {
       $this->assertEqual(1, 1, $file_path . ' is writable.');
@@ -354,7 +347,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
    * Test to make sure sustainers are not processed when the sustainer key file is configured
    * correctly, but the recurring record has a different value.
    */
-  function testFundraiserSustainerNoProcessOnEnvironmentMismatch() {
+  public function testFundraiserSustainerNoProcessOnEnvironmentMismatch() {
     $file_path = variable_get('file_public_path', conf_path() . '/files');
     if (is_writable($file_path)) {
       $this->assertEqual(1, 1, $file_path . ' is writable.');
@@ -408,7 +401,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
    * Test to make sure sustainers are processed when the sustainer key file is configured
    * correctly, with a matching key value in the key file and in the sustainer record.
    */
-  function testFundraiserSustainerProcessOnEnvironmentMatch() {
+  public function testFundraiserSustainerProcessOnEnvironmentMatch() {
     $file_path = variable_get('file_public_path', conf_path() . '/files');
     if (is_writable($file_path)) {
       $this->assertEqual(1, 1, $file_path . ' is writable.');
@@ -457,6 +450,22 @@ class FundraiserSustainerTest extends FundraiserSetup {
   }
 
   /**
+   * Helper to create a fundraiser sustainer donation.
+   */
+  protected function createFundraiserSustainer() {
+    // Create a node.
+    $node = $this->createDonationForm();
+    // Post to the node.
+    $month = date('n', strtotime('+1 year'));
+    $year = date('Y', strtotime('+1 year'));
+    $post['submitted[payment_information][recurs_monthly][recurs]'] = 'recurs';
+    $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_month]'] = $month;
+    $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_year]'] = $year;
+    $post['submitted[donor_information][mail]'] = 'fundraiser_sustainer@example.com';
+    $this->submitDonation($node->nid, $post);
+  }
+
+  /**
    * Helper function to create a series of recurring donations.
    */
   private function fundraiserSustainerCreateRecurringDonation() {
@@ -464,9 +473,9 @@ class FundraiserSustainerTest extends FundraiserSetup {
     // Set the encryption path to avoid errors during get node, etc.
     variable_set('encrypt_secure_key_path', $file_path);
     // Create a node.
-    $created_user = parent::_fundraiser_setup_create_user();
+    $created_user = $this->createFundraiserUser();
     $this->drupalLogin($created_user);
-    $node = parent::_fundraiser_setup_create_node();
+    $node = $this->createDonationForm();
     // Post to the node.
     $month = date('n', strtotime('+1 year'));
     $year = date('Y', strtotime('+1 year'));
@@ -474,7 +483,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
     $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_month]'] = $month;
     $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_year]'] = $year;
     $post['submitted[donor_information][mail]'] = $created_user->mail;
-    parent::_fundraiser_setup_post_donation($node->nid, $post);
+    $this->submitDonation($node->nid, $post);
     // Get the master did.
     $donations = _fundraiser_get_donations();
     $master_did = '';
@@ -494,7 +503,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
       ->condition('master_did', $master_did, '=')
       ->condition('gateway_resp', 'success', '=')
       ->condition('did', $master_did, '!='); // exclude first order in series
-     return $query->countQuery()->execute()->fetchField();
+    return $query->countQuery()->execute()->fetchField();
   }
 
 }

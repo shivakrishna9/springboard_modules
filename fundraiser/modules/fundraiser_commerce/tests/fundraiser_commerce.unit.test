@@ -13,11 +13,11 @@ class FundraiserCommerceUnitTestSetup extends DrupalWebTestCase {
   /**
    * Implemenation of setUp().
    */
-  function setUp() {
+  public function setUp() {
     // Call the parent to set all of the base modules up.
     parent::setUp( array(
-        'fundraiser_commerce',
-      )
+      'fundraiser_commerce',
+    )
     );
   }
 }
@@ -41,7 +41,7 @@ class FundraiserCommerceUnitTestCase extends FundraiserCommerceUnitTestSetup {
   /**
    * Unit test DB functions for fundraiser_donation.
    */
-  function testcommerceDBFunctions() {
+  public function testcommerceDBFunctions() {
     // Check countries created.
     $countries = _fundraiser_commerce_get_countries();
     $this->assertEqual(count($countries), 243, '_fundraiser_commerce_get_countries() got correct default number of countries.', 'testcommerceDBFunctions');
@@ -78,7 +78,7 @@ class FundraiserCommerceUnitTestCase extends FundraiserCommerceUnitTestSetup {
   /**
    * Unit test DB functions for fundraiser_donation.
    */
-  function testcommerceCardFunctions() {
+  public function testcommerceCardFunctions() {
     // Check path for encryption path.
     $path = fundraiser_commerce_fundraiser_get_credit_encryption_path();
     $expected = t('Not configured, see below.');
@@ -115,13 +115,13 @@ class FundraiserCommerceUnitTestCase extends FundraiserCommerceUnitTestSetup {
   /**
    * Unit test DB functions for fundraiser_donation.
    */
-  function testcommerceDonationFunctions() {
+  public function testcommerceDonationFunctions() {
 
     // An example form to flatten for value.
     $form_state['donation']['amount'] = 'Please select your tax-deductible gift amount below';
     $form_state['mail'] = 'Email';
     $flattened = _fundraiser_commerce_submission_flatten($form_state);
-    $this->assertEqual($flattened['amount'], 'Please select your tax-deductible gift amount below', print_r($flattened,1).'_fundraiser_commerce_submission_flatten() got correct field.', 'testcommerceCardFunctions');
+    $this->assertEqual($flattened['amount'], 'Please select your tax-deductible gift amount below', print_r($flattened, 1) . '_fundraiser_commerce_submission_flatten() got correct field.', 'testcommerceCardFunctions');
     $this->assertEqual($flattened['mail'], 'Email', '_fundraiser_commerce_submission_flatten() got correct field.', 'testcommerceCardFunctions');
 
     /**

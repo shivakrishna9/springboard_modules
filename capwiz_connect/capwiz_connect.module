@@ -82,13 +82,13 @@ function capwiz_connect_menu() {
     'type' => MENU_CALLBACK,
   );
 
-  $items[CAPWIZ_CONNECT_ADMIN_URL. '/accounts/%capwiz_connect_account/overview'] = array(
+  $items[CAPWIZ_CONNECT_ADMIN_URL . '/accounts/%capwiz_connect_account/overview'] = array(
     'title' => 'Overview',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 0,
   );
 
-  $items[CAPWIZ_CONNECT_ADMIN_URL. '/accounts/%capwiz_connect_account/edit'] = array(
+  $items[CAPWIZ_CONNECT_ADMIN_URL . '/accounts/%capwiz_connect_account/edit'] = array(
     'title' => 'Edit',
     'description' => 'Edit a Capwiz Connect account',
     'file' => 'capwiz_connect.admin.inc',
@@ -327,9 +327,9 @@ function capwiz_connect_cron() {
 }
 
 /*
-* Implements hook_cron_queue_info().
-*/
-function capwiz_connect_cron_queue_info(){
+ * Implements hook_cron_queue_info().
+ */
+function capwiz_connect_cron_queue_info() {
   $queues['capwiz_connect'] = array(
     'worker callback' => 'capwiz_connect_cron_process',
     'time' => 120,

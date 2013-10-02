@@ -23,7 +23,7 @@ class FundraiserCommerceEncryptTest extends FundraiserSetup {
    */
   public function setUp($modules = array(), $permissions = array()) {
     $modules = array_merge($modules, array(
-      'encrypt'
+      'encrypt',
     ));
     parent::setUp($modules);
 
@@ -38,11 +38,6 @@ class FundraiserCommerceEncryptTest extends FundraiserSetup {
     // Login a user that is permissioned to configure the encrypt module.
     $this->privileged_user = $this->drupalCreateUser($permissions);
     $this->drupalLogin($this->privileged_user);
-
-    // Set encryption config (AES 256).
-    variable_set('encrypt_encryption_method', 'mcrypt_rij_256');
-    variable_set('encrypt_key_provider', 'file');
-    variable_set('encrypt_key_providers_file_settings', array('path' => $file_path, 'method' => 'file_contents'));
   }
 
   /**

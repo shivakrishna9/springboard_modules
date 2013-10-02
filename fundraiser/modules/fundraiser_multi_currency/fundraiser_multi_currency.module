@@ -159,8 +159,8 @@ function fundraiser_multi_currency_fundraiser_donation_form($form, $form_state) 
       // Pass the default value up so our js knows where to start.
       drupal_add_js(array('fundraiser_multi_currency' => array(
           'currencies' => $currencies,
-          'original' => isset($currency_field['#default_value']) ? $currency_field['#default_value'] : 'USD')
-        ),
+          'original' => isset($currency_field['#default_value']) ? $currency_field['#default_value'] : 'USD',
+        )),
         'setting');
     }
     // Then set defaults for other fields.

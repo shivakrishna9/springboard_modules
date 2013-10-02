@@ -21,7 +21,7 @@ class FundraiserCommerceGatewayAuthnetTest extends FundraiserCommerceGatewayTest
 
   public function setUp($modules = array(), $permissions = array()) {
     $modules = array_merge($modules, array(
-      'commerce_authnet'
+      'commerce_authnet',
     ));
     parent::setUp($modules);
     $file = DRUPAL_ROOT . '/' . drupal_get_path('module', 'fundraiser_commerce') . '/tests/authnet.rule';
@@ -29,7 +29,7 @@ class FundraiserCommerceGatewayAuthnetTest extends FundraiserCommerceGatewayTest
     $this->_importGatewayRule($config);
   }
 
-  function testAuthorize() {
+  public function testAuthorize() {
     debug($this->donation_form);
     $edit = array(
       'gateways[credit][id]' => 'authnet_aim|commerce_payment_authnet_aim',
@@ -37,7 +37,7 @@ class FundraiserCommerceGatewayAuthnetTest extends FundraiserCommerceGatewayTest
     $this->drupalPost('node/' . $this->donation_form->nid . '/edit', $edit, t('Save'));
     $this->drupalGet('node/' . $this->donation_form->nid);
 
-    $this->_fundraiser_setup_post_donation($this->donation_form->nid);
+    $this->submitDonation($this->donation_form->nid);
   }
 
 }

@@ -153,7 +153,7 @@ function springboard_admin_settings_validate(&$form, $form_state) {
  */
 function springboard_admin_config(&$form, $form_state) {
   if (variable_get('springboard_needs_config', FALSE)) {
-   set_time_limit(300);
+    set_time_limit(300);
     variable_del('springboard_needs_config');
     drupal_set_message(t('Please see the !help page for additional help configuring Springboard.',
       array('!help' => l(t('Help'), 'admin/springboard/help'))));
@@ -254,7 +254,7 @@ function springboard_admin_config_modules($form, $form_state) {
   }
   $modules = array('comment', 'overlay');
   module_disable($modules, TRUE);
-  drupal_set_message(t('Modules %modules have been disabled.', array('%modules' =>implode(', ', $modules))));
+  drupal_set_message(t('Modules %modules have been disabled.', array('%modules' => implode(', ', $modules))));
 }
 
 /**
@@ -1527,13 +1527,13 @@ function _springboard_default_user_profile($mode = 'commerce') {
       'type' => 'text_textfield',
     ),
   );
-  if ($mode == 'ubercart') {
+  if ($mode == 'ubercart' && module_exists('ubercart')) {
     // Default options loaded from {uc_zones} On the assumption we are using Ubercart here.
     // Load State/Province options from {uc_zones}, UC default is zone codes for US & Canada.
     $countries_set = fundraiser_ubercart_get_countries();
     $zones = '';
     foreach ($countries_set->zones as $zone) {
-       $zones[$zone->zone_id] = $zone->zone_name;
+      $zones[$zone->zone_id] = $zone->zone_name;
     }
     $profile_fields[] = array(
       'label' => t('State/Province'),
@@ -1545,12 +1545,12 @@ function _springboard_default_user_profile($mode = 'commerce') {
       'settings' => array('allowed_values' => $zones),
     );
   }
-  elseif ($mode == 'commerce') {
+  elseif ($mode == 'commerce' && module_exists('fundraiser_commerce')) {
     // Commerce does not store countries in a database, it relies instead on locale.inc
     $countries_set = fundraiser_commerce_get_countries();
     $zones = '';
     foreach ($countries_set->zones as $zone) {
-       $zones[$zone->zone_id] = $zone->zone_name;
+      $zones[$zone->zone_id] = $zone->zone_name;
     }
     // For Commerce or others for now.
     $profile_fields[] = array(
@@ -1582,13 +1582,13 @@ function _springboard_default_user_profile($mode = 'commerce') {
       'type' => 'text_textfield',
     ),
   );
-  if ($mode == 'ubercart') {
+  if ($mode == 'ubercart' && module_exists('ubercart')) {
     // Default options loaded from {uc_zones} On the assumption we are using Ubercart here.
     // Load State/Province options from {uc_zones}, UC default is zone codes for US & Canada.
     $countries_set = fundraiser_ubercart_get_countries();
     $countries = '';
     foreach ($countries_set->countries as $country) {
-       $countries[$country->country_id] = $country->country_name;
+      $countries[$country->country_id] = $country->country_name;
     }
     $profile_fields[] = array(
       'label' => t('Country'),
@@ -1600,12 +1600,12 @@ function _springboard_default_user_profile($mode = 'commerce') {
       'settings' => array('allowed_values' => $countries),
     );
   }
-  elseif ($mode == 'commerce') {
+  elseif ($mode == 'commerce' && module_exists('fundraiser_commerce')) {
     // Commerce does not store countries in a database, it relies instead on locale.inc
     $countries_set = fundraiser_commerce_get_countries();
     $countries = '';
     foreach ($countries_set->countries as $country) {
-       $countries[$country->country_id] = $country->country_name;
+      $countries[$country->country_id] = $country->country_name;
     }
     // For Commerce or others for now.
     $profile_fields[] = array(
@@ -1813,7 +1813,7 @@ function springboard_admin_config_email_wrapper_add($form, $form_state) {
   $node->type = 'email_wrapper';
   $node->language = LANGUAGE_NONE;
   $node->uid = 1;
-  $node->title ='Example Email Wrapper';
+  $node->title = 'Example Email Wrapper';
   $node->status = 0;
   $node->promote = 0;
   $node->email_wrapper_from_name[LANGUAGE_NONE][0] = array(
@@ -1857,7 +1857,7 @@ function springboard_admin_config_email_wrapper_add($form, $form_state) {
     'safe_value' => '<p>Please visit us again soon.</p>',
   );
   $node->email_wrapper_text_template[LANGUAGE_NONE][0] = array(
-    'value' =>  'Thank you for your generous donation!' . "\n" .
+    'value' => 'Thank you for your generous donation!' . "\n" .
       "\n" .
       '%text_message' . "\n" .
       "\n" .
@@ -1960,7 +1960,7 @@ function springboard_admin_config_donation_form_add($form, $form_state, $email_n
     'credit' => array(
       'status' => 1,
       'method' => 'credit',
-      'id' => 'commerce_payment_example|commerce_payment_commerce_payment_example'
+      'id' => 'commerce_payment_example|commerce_payment_commerce_payment_example',
     ),
   );
   $node->amount_wrapper = array(
@@ -2008,22 +2008,22 @@ function springboard_admin_config_donation_form_add($form, $form_state, $email_n
   }
   if ($email_nid != NULL) {
     $settings = array(
-    'nid' => $node->nid,
-    'eid' => $eid,
-    'tid' => $email_nid,
-    'bcc_email' => '',
-    'html_message' => 'Thank you [donation:first_name] [donation:last_name] for your donation of [donation:amount] USD.' . "\n" .
+      'nid' => $node->nid,
+      'eid' => $eid,
+      'tid' => $email_nid,
+      'bcc_email' => '',
+      'html_message' => 'Thank you [donation:first_name] [donation:last_name] for your donation of [donation:amount] USD.' . "\n" .
       "\n" .
       'The email address we have for you is: [donation:mail]' . "\n" .
       "\n" .
       'Your card ending in [donation:card_number], expires [donation:card_expiration_month] / [donation:card_expiration_year]',
-    'html_message_format' => 'filtered_html',
-    'text_message' => 'Thank you [donation:first_name] [donation:last_name] for your donation of [donation:amount] USD.' . "\n" .
+      'html_message_format' => 'filtered_html',
+      'text_message' => 'Thank you [donation:first_name] [donation:last_name] for your donation of [donation:amount] USD.' . "\n" .
       "\n" .
       'The email address we have for you is: [donation:mail]' . "\n" .
       "\n" .
       'Your card ending in [donation:card_number], expires [donation:card_expiration_month] / [donation:card_expiration_year]',
-    'extra' => array(),
+      'extra' => array(),
     );
   }
   // One last save.

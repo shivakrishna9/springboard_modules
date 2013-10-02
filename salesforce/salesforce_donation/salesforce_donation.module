@@ -192,7 +192,7 @@ function salesforce_donation_fundraiser_donation_success($donation) {
   // Since this is called at the end of a standalone processing, or after a
   // recurring donation is processed: upsert.
   if ($donation->donation['recurs_monthly'] == TRUE && $donation->status_charged == 1
-    && !empty($donation->master_did) && $donation->did != $donation->master_did) {
+     && !empty($donation->master_did) && $donation->did != $donation->master_did) {
     // This is part of a recurring set, already sent up once - update now.
     salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
   }
@@ -364,10 +364,10 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
       }
       $fields[$sf_field] = t('Donation - !first !last (!date)',
         array(
-          '!first' => $donation->donation['first_name'],
-          '!last' => $donation->donation['last_name'],
-          '!date' => gmdate('Y-m-d H:i:s\Z', $date),
-        ));
+        '!first' => $donation->donation['first_name'],
+        '!last' => $donation->donation['last_name'],
+        '!date' => gmdate('Y-m-d H:i:s\Z', $date),
+      ));
     }
   }
 
@@ -517,8 +517,8 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
     // Skip if this is a fieldset type.
     // Payment fields are individualized below, so don't include here.
     if ($donation_field['#type'] != 'fieldset'
-      && $donation_field['#type'] != 'payment_fields'
-      && $form_key != 'other_amount') {
+       && $donation_field['#type'] != 'payment_fields'
+       && $form_key != 'other_amount') {
       $fields['salesforce_donation_map']['#fields'][$form_key] = $donation_field['#title'] .
         ' (' . $donation_field['#type'] . ')';
     }
@@ -672,8 +672,8 @@ function _salesforce_donation_get_form_fields($form, $fields = array()) {
  */
 function salesforce_donation_map_page_access($node, $module) {
   if ($node !== FALSE
-    && fundraiser_is_donation_type($node->type)
-    && user_access('map salesforce to donation')
+     && fundraiser_is_donation_type($node->type)
+     && user_access('map salesforce to donation')
     ) {
     return TRUE;
   }

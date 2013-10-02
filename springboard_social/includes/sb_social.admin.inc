@@ -196,12 +196,12 @@ function sb_social_path_settings($form, $edit, $sid = NULL) {
   ctools_include('plugins');
   $plugins = ctools_get_plugins('sb_social', 'social_networks');
 
-  foreach($plugins as $id => $plugin) {
+  foreach ($plugins as $id => $plugin) {
     $func = $plugin['settings'];
     $func($form, $enabled_services, $settings['data'][$id], $token_set);
   }
 
-   // Market Source settings
+  // Market Source settings
   if (module_exists('market_source')) {
     _sb_social_settings_market_source($form, $settings);
   }
@@ -278,9 +278,9 @@ function sb_social_path_settings_submit($form, &$form_state) {
     }
     // sid is handled in the save function.
     $record = array(
-        'id' => $form_state['values']['path'],
-        'type' => 'path',
-        'data' => $data,
+      'id' => $form_state['values']['path'],
+      'type' => 'path',
+      'data' => $data,
     );
     sb_social_settings_save($record, $form_state['values']);
     $form_state['redirect'] = url('admin/config/services/springboard_social/path-settings', array('absolute' => TRUE));
@@ -294,22 +294,22 @@ function sb_social_path_settings_submit($form, &$form_state) {
 function sb_social_path_settings_delete_form($form, $form_state, $sid) {
   $path = sb_social_get_id_by_sid($sid);
   $form['confirmation_text'] = array(
-      '#markup' => t('Are you sure you want to unrecoverably delete the share settings for %path?', array('%path' => $path)),
+    '#markup' => t('Are you sure you want to unrecoverably delete the share settings for %path?', array('%path' => $path)),
   );
   $form['sid'] = array(
-      '#type' => 'value',
-      '#value' => $sid,
+    '#type' => 'value',
+    '#value' => $sid,
   );
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['submit'] = array(
-      '#type' => 'submit',
-      '#value' => t('Delete'),
+    '#type' => 'submit',
+    '#value' => t('Delete'),
   );
   $form['actions']['cancel'] = array(
-      '#type' => 'submit',
-      '#value' => t('Cancel'),
-      '#submit' => array('_sb_social_path_delete_cancel'),
-      '#limit_validation_errors' => array(),
+    '#type' => 'submit',
+    '#value' => t('Cancel'),
+    '#submit' => array('_sb_social_path_delete_cancel'),
+    '#limit_validation_errors' => array(),
   );
   $form['#submit'][] = 'sb_social_path_settings_delete_submit';
   return $form;
@@ -360,7 +360,7 @@ function sb_social_node_settings($form, $edit, $node) {
 
   ctools_include('plugins');
   $plugins = ctools_get_plugins('sb_social', 'social_networks');
-   
+
   foreach ($enabled_services as $service) {
     if (!empty($plugins[$service]['settings'])) {
       $func = $plugins[$service]['settings'];
@@ -407,9 +407,9 @@ function sb_social_settings_submit($form, $form_state) {
     }
     // sid is handled in the save function.
     $record = array(
-        'id' => $form_state['values']['id'],
-        'type' => $form_state['values']['type'],
-        'data' => $data,
+      'id' => $form_state['values']['id'],
+      'type' => $form_state['values']['type'],
+      'data' => $data,
     );
     sb_social_settings_save($record, $form_state['values']);
   }
@@ -417,37 +417,37 @@ function sb_social_settings_submit($form, $form_state) {
 
 function _sb_social_settings_market_source(&$form, $settings) {
   $form['market_source'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Market Source Settings'),
-      '#description' => t('Optional Market Source values to include in share links'),
-    );
-    $fields = market_source_field_info();
-    // It doesn't make sense to list certain market source fields, like user agent.
-    // the blacklist lets us filter these out cleanly.
-    $blacklist = _sb_social_component_blacklist();
-    foreach ($fields as $key => $field) {
-      if (in_array($key, $blacklist)) {
-        continue;
-      }
-      if ($key == 'cid') {
-        $campaigns = market_source_get_campaigns(FALSE);
-        $select_options = array();
-        foreach ($campaigns as $campaign_id => $campaign) {
-          $select_options[$campaign_id] = $campaign['name'] . ' (' . $campaign_id . ')';
-        }
-        $form['market_source']['cid'] = array(
-          '#type' => 'select',
-          '#title' => t('Campaign ID'),
-          '#options' => $select_options,
-          '#default_value' => (!empty($settings) && !empty($settings['data']['market_source'][$key])) ? $settings['data']['market_source'][$key] : '',
-        );
-      }
-      else {
-        $form['market_source'][$key] = array(
-          '#type' => 'textfield',
-          '#title' => $field['#title'],
-          '#default_value' => (!empty($settings) && !empty($settings['data']['market_source'][$key])) ? $settings['data']['market_source'][$key] : '',
-        );
-      }
+    '#type' => 'fieldset',
+    '#title' => t('Market Source Settings'),
+    '#description' => t('Optional Market Source values to include in share links'),
+  );
+  $fields = market_source_field_info();
+  // It doesn't make sense to list certain market source fields, like user agent.
+  // the blacklist lets us filter these out cleanly.
+  $blacklist = _sb_social_component_blacklist();
+  foreach ($fields as $key => $field) {
+    if (in_array($key, $blacklist)) {
+      continue;
     }
+    if ($key == 'cid') {
+      $campaigns = market_source_get_campaigns(FALSE);
+      $select_options = array();
+      foreach ($campaigns as $campaign_id => $campaign) {
+        $select_options[$campaign_id] = $campaign['name'] . ' (' . $campaign_id . ')';
+      }
+      $form['market_source']['cid'] = array(
+        '#type' => 'select',
+        '#title' => t('Campaign ID'),
+        '#options' => $select_options,
+        '#default_value' => (!empty($settings) && !empty($settings['data']['market_source'][$key])) ? $settings['data']['market_source'][$key] : '',
+      );
+    }
+    else {
+      $form['market_source'][$key] = array(
+        '#type' => 'textfield',
+        '#title' => $field['#title'],
+        '#default_value' => (!empty($settings) && !empty($settings['data']['market_source'][$key])) ? $settings['data']['market_source'][$key] : '',
+      );
+    }
+  }
 }

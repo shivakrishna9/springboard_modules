@@ -57,7 +57,7 @@ function facebook_token_replace($tokens, &$replacements, $settings, $node = FALS
         $button = theme('sb_social_share_button', $vars);
         $replacements[$token] = theme('sb_social_share', array('buttons' => $button));
         break;
-      case 'facebook_title': 
+      case 'facebook_title':
         $replacements[$token] = !empty($settings['data']['facebook']['title']) ? _sb_social_replace_tokens($settings['data']['facebook']['title'], $node, $submission_id) : '';
         break;
       case 'facebook_description':
@@ -97,12 +97,12 @@ function facebook_admin_settings(&$form) {
   );
   $form['services']['facebook']['springboard_social_facebook_title'] = array(
     '#type' => 'textfield',
-    '#title'=> t('Default Facebook share title'),
+    '#title' => t('Default Facebook share title'),
     '#default_value' => variable_get('springboard_social_facebook_title', '%title'),
   );
   $form['services']['facebook']['springboard_social_facebook_description'] = array(
     '#type' => 'textfield',
-    '#title'=> t('Default Facebook share description'),
+    '#title' => t('Default Facebook share description'),
     '#default_value' => variable_get('springboard_social_facebook_description', '%teaser'),
   );
   $form['services']['facebook']['springboard_social_facebook_image'] = array(
@@ -133,7 +133,7 @@ function facebook_settings(&$form, $enabled_services = array(), $settings = arra
     '#default_value' => isset($settings['title']) ? $settings['title'] : '',
   );
   // description
-   $form['fb_settings']['fb_description'] = array(
+  $form['fb_settings']['fb_description'] = array(
     '#type' => 'textarea',
     '#title' => t('Description'),
     '#description' => t('Facebook Share description'),
@@ -150,7 +150,7 @@ function facebook_settings(&$form, $enabled_services = array(), $settings = arra
       'file_validate_extensions' => array('gif png jpg jpeg'),
     ),
   );
-  $form['fb_settings']['tokens']= array(
+  $form['fb_settings']['tokens'] = array(
     '#type' => 'fieldset',
     '#title' => t('Available Tokens'),
     '#collapsible' => TRUE,
@@ -165,9 +165,9 @@ function facebook_settings(&$form, $enabled_services = array(), $settings = arra
 
 function facebook_process_settings(&$data, $form_state) {
   $data['facebook'] = array(
-      'title' => !empty($form_state['values']['fb_title']) ? $form_state['values']['fb_title'] : '',
-      'description' => !empty($form_state['values']['fb_description']) ? $form_state['values']['fb_description'] : '',
-      'image' => '',
+    'title' => !empty($form_state['values']['fb_title']) ? $form_state['values']['fb_title'] : '',
+    'description' => !empty($form_state['values']['fb_description']) ? $form_state['values']['fb_description'] : '',
+    'image' => '',
   );
 
   if (!empty($form_state['values']['fb_image'])) {
@@ -185,29 +185,29 @@ function facebook_process_settings(&$data, $form_state) {
  * Add OpenGraph meta tags used by Facebook to define custom title, description, and image content on
  * shares.
  *
- * Facebook and a few other services use opengraph tags to define custom share content instead of the 
+ * Facebook and a few other services use opengraph tags to define custom share content instead of the
  * usual AddThis javascript configuration objects.
- * 
- */ 
+ *
+ */
 function facebook_share_opengraph_config($settings, $node = FALSE, $sid = FALSE) {
   $facebook = $settings['data']['facebook'];
   $meta = array(
     'title' => !empty($facebook['title']) ? $facebook['title'] : '',
     'description' => !empty($facebook['description']) ? $facebook['description'] : '',
     'image' => $facebook['image'],
-     //'url' => sb_social_short_url($node, $sid, 'facebook'),
+    //'url' => sb_social_short_url($node, $sid, 'facebook'),
   );
-  
+
   foreach ($meta as $field => $value) {
-    $meta[$field] = _sb_social_replace_tokens($value, $node, $sid);	
+    $meta[$field] = _sb_social_replace_tokens($value, $node, $sid);
   }
-  
+
   foreach ($meta as $id => $content) {
-     $data = array(
+    $data = array(
       '#type' => 'html_tag',
       '#tag' => 'meta',
       '#attributes' => array(
-        'property' =>  "og:$id",
+        'property' => "og:$id",
         'content' => $content,
       ),
     );

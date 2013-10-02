@@ -12,7 +12,7 @@ class FundraiserSetup extends DrupalWebTestCase {
   /**
    * Implements setUp().
    */
-  function setUp($additional_modules = array()) {
+  public function setUp($additional_modules = array()) {
     // This module sets up the basic fundraiser environment for testing.
     // Assumptions: fundraiser_commerce, and fundraiser_webform.
     // Additional modules to be turned on.
@@ -24,27 +24,38 @@ class FundraiserSetup extends DrupalWebTestCase {
       'commerce_product', // To remove when dependancies in commerce_authnet, commerce_payment resolved.
       'commerce_product_reference', // To remove when dependancies in commerce_authnet, commerce_payment resolved.
       'commerce_payment_example', // Gateway.
+      'encrypt',
     );
     $enable_modules = array_merge($enable_modules, $additional_modules);
 
     // Call the parent to set all of the base modules up.
     parent::setUp($enable_modules);
 
+    // Create a key file
+    variable_set('encrypt_secure_key_path', DRUPAL_ROOT . '/' . variable_get('file_public_path', conf_path() . '/files'));
+    variable_set('encrypt_default_method', 'mcrypt_rij_256');
+    $key_file = variable_get('encrypt_secure_key_path', '') . '/' . ENCRYPT_SECURE_KEY_FILE;
+    $open_file = fopen($key_file, 'wb');
+    $new_key = md5(uniqid(mt_rand(0, mt_rand()), TRUE)) . md5(uniqid(mt_rand(0, mt_rand()), TRUE));
+    // Create file with new key in it.
+    fwrite($open_file, $new_key);
+    fclose($open_file);
+
     // Setup the environment to a default standard.
-    $this->_fundraiser_setup_user_profile();
-    $this->_fundraiser_setup_webform_to_user_map();
-    $this->_fundraiser_setup_create_type();
+    $this->setupUserProfile();
+    $this->setupWebformToUserMap();
+    $this->createDonationContentType();
     // Do not create an additional node, but leave code in place for it.
   }
 
   /**
-   * Additional configuration functions to create a working environment.
+   * Additional configuration public functions to create a working environment.
    */
 
   /**
    * Configure a default set of User profile fields.
    */
-  function _fundraiser_setup_user_profile() {
+  protected function setupUserProfile() {
     // See http://drupal.org/node/874026 for discussion re: Profile in D7.
     // By preference we use field API.
     $profile_fields = array();
@@ -92,7 +103,7 @@ class FundraiserSetup extends DrupalWebTestCase {
     $countries_set = fundraiser_commerce_get_countries();
     $zones = '';
     foreach ($countries_set->zones as $zone) {
-       $zones[$zone->zone_id] = $zone->zone_name;
+      $zones[$zone->zone_id] = $zone->zone_name;
     }
     // For Commerce or others for now.
     $profile_fields[] = array(
@@ -115,7 +126,7 @@ class FundraiserSetup extends DrupalWebTestCase {
     // Commerce does not store countries in a database, it relies instead on locale.inc
     $countries = '';
     foreach ($countries_set->countries as $country) {
-       $countries[$country->country_id] = $country->country_name;
+      $countries[$country->country_id] = $country->country_name;
     }
     // For Commerce or others for now.
     $profile_fields[] = array(
@@ -274,7 +285,7 @@ class FundraiserSetup extends DrupalWebTestCase {
   /**
    * Configure a default set of User profile to Webform maps.
    */
-  function _fundraiser_setup_webform_to_user_map() {
+  protected function setupWebformToUserMap() {
     // Set the default fundraiser to webform user profile handling settings.
     variable_set('fundraiser_webform_to_user_map', array(
       'mail' => 'mail',
@@ -286,14 +297,14 @@ class FundraiserSetup extends DrupalWebTestCase {
       'sbp_state' => 'state',
       'sbp_zip' => 'zip',
       'sbp_country' => 'country',
-      )
+    )
     );
   }
 
   /**
    * Configure a default set of Market Source to Webform maps.
    *
-  function _fundraiser_setup_market_source_to_user_map() {
+  protected function setupMarketSourceToUserMap() {
     // And the same for market source
     variable_set('market_source_to_user_map', array(
       'sbp_cid' => 'cid',
@@ -311,7 +322,7 @@ class FundraiserSetup extends DrupalWebTestCase {
   /**
    * Create the donation_form type.
    */
-  function _fundraiser_setup_create_type() {
+  protected function createDonationContentType() {
     $type = node_type_set_defaults();
     $type->name = t('Donation Form');
     $type->type = 'donation_form';
@@ -354,7 +365,7 @@ class FundraiserSetup extends DrupalWebTestCase {
   /**
    * Create an example Fundraiser node.
    */
-  function _fundraiser_setup_create_node($node_configs = '') {
+  protected function createDonationForm($node_configs = '') {
     $fields = fundraiser_field_info(TRUE);
     // Create the node.
     $node = new stdClass();
@@ -380,7 +391,7 @@ class FundraiserSetup extends DrupalWebTestCase {
       'in, feugiat ac, molestie eget, wisi.';
     $node->body['LANGUAGE_NONE'][0]['format'] = 'filtered_html';
     $node->webform = array(
-        'confirmation' => 'Thank you [donation:first_name] [donation:last_name] for your donation of [donation:amount] USD.' . "\n" .
+      'confirmation' => 'Thank you [donation:first_name] [donation:last_name] for your donation of [donation:amount] USD.' . "\n" .
         "\n" .
         'The email address we have for you is: [donation:mail]' . "\n" .
         "\n" .
@@ -415,7 +426,7 @@ class FundraiserSetup extends DrupalWebTestCase {
       'credit' => array(
         'status' => 1,
         'method' => 'credit',
-        'id' => 'commerce_payment_example|commerce_payment_commerce_payment_example'
+        'id' => 'commerce_payment_example|commerce_payment_commerce_payment_example',
       ),
     );
     $node->amount_wrapper = array(
@@ -473,7 +484,7 @@ class FundraiserSetup extends DrupalWebTestCase {
   /**
    * Create an example Fundraiser user.
    */
-  function _fundraiser_setup_create_user($user_configs = '') {
+  protected function createFundraiserUser($user_configs = '') {
     $user = array(
       'access content',
     );
@@ -490,7 +501,7 @@ class FundraiserSetup extends DrupalWebTestCase {
   /**
    * Create a standard post.
    */
-  function _fundraiser_setup_post_donation($nid, $post_config = '') {
+  protected function submitDonation($nid, $post_config = '') {
     // Standard post values.
     $month = date('n');
     $year = date('Y');

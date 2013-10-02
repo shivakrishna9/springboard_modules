@@ -151,6 +151,96 @@ class SalesforceMappingAlterTestCase extends SalesforceMappingTestCase {
   }
 
   /**
+   * Create salesforce mapping based on a node entity with various field types.
+   */
+  public function createEntityFieldTypeSalesforceMapping() {
+    $content_type = $this->drupalCreateContentType(array('type' => 'testtype'));
+
+    module_load_include('inc', 'salesforce_genmap', 'tests/salesforce_mapping/salesforce_mapping.test_fields');
+    _salesforce_mapping_generate_test_fields($content_type->type);
+
+    // Map the testtype fields to various Contact fields.
+    $config = array(
+      'drupal_entity_type' => 'node',
+      'drupal_bundle' => 'testtype',
+      'salesforce_object_type' => 'Contact',
+      'key' => 'title',
+      'mapping' => array(
+        'title' => array(
+          'salesforce_field' => 'Email',
+          'drupal_sf' => SALESFORCE_SYNC_RULE_ALWAYS,
+          'sf_drupal' => SALESFORCE_SYNC_RULE_ALWAYS,
+        ),
+        'body:value' => array(
+          'salesforce_field' => 'Description',
+          'drupal_sf' => SALESFORCE_SYNC_RULE_ALWAYS,
+          'sf_drupal' => SALESFORCE_SYNC_RULE_ALWAYS,
+        ),
+        'body:summary' => array(
+          'salesforce_field' => 'npe01__Home_Address__c',
+          'drupal_sf' => SALESFORCE_SYNC_RULE_ALWAYS,
+          'sf_drupal' => SALESFORCE_SYNC_RULE_ALWAYS,
+        ),
+        'field_checkbox' => array(
+          'salesforce_field' => 'npe01__Private__c',
+          'drupal_sf' => SALESFORCE_SYNC_RULE_ALWAYS,
+          'sf_drupal' => SALESFORCE_SYNC_RULE_ALWAYS,
+        ),
+        'field_decimal' => array(
+          'salesforce_field' => 'npo02__AverageAmount__c',
+          'drupal_sf' => SALESFORCE_SYNC_RULE_ALWAYS,
+          'sf_drupal' => SALESFORCE_SYNC_RULE_ALWAYS,
+        ),
+        'field_float' => array(
+          'salesforce_field' => 'npo02__Best_Gift_Year_Total__c',
+          'drupal_sf' => SALESFORCE_SYNC_RULE_ALWAYS,
+          'sf_drupal' => SALESFORCE_SYNC_RULE_ALWAYS,
+        ),
+        'field_integer' => array(
+          'salesforce_field' => 'npo02__LastOppAmount__c',
+          'drupal_sf' => SALESFORCE_SYNC_RULE_ALWAYS,
+          'sf_drupal' => SALESFORCE_SYNC_RULE_ALWAYS,
+        ),
+        'field_list_float' => array(
+          'salesforce_field' => 'npo02__LastMembershipAmount__c',
+          'drupal_sf' => SALESFORCE_SYNC_RULE_ALWAYS,
+          'sf_drupal' => SALESFORCE_SYNC_RULE_ALWAYS,
+        ),
+        'field_list_integer' => array(
+          'salesforce_field' => 'npe01__Lifetime_Giving_History_Amount__c',
+          'drupal_sf' => SALESFORCE_SYNC_RULE_ALWAYS,
+          'sf_drupal' => SALESFORCE_SYNC_RULE_ALWAYS,
+        ),
+        'field_list_text' => array(
+          'salesforce_field' => 'Department',
+          'drupal_sf' => SALESFORCE_SYNC_RULE_ALWAYS,
+          'sf_drupal' => SALESFORCE_SYNC_RULE_ALWAYS,
+        ),
+        'field_long_text' => array(
+          'salesforce_field' => 'npe01__Work_Address__c',
+          'drupal_sf' => SALESFORCE_SYNC_RULE_ALWAYS,
+          'sf_drupal' => SALESFORCE_SYNC_RULE_ALWAYS,
+        ),
+        'field_text_field' => array(
+          'salesforce_field' => 'Name',
+          'drupal_sf' => SALESFORCE_SYNC_RULE_ALWAYS,
+          'sf_drupal' => SALESFORCE_SYNC_RULE_ALWAYS,
+        ),
+      ),
+      'sync_triggers' => array(
+        '1' => TRUE,
+        '2' => TRUE,
+        '8' => TRUE,
+        '16' => TRUE,
+      ),
+    );
+    $this->salesforceConnect();
+    // The createSalesforceMapping method automatically tests that filling out
+    // the form worked correctly.
+    $this->createSalesforceMapping('bar', 'barbang', $config);
+  }
+
+  /**
    * Helper to enable the ability to delete during a sync trigger.
    *
    * @param string $module

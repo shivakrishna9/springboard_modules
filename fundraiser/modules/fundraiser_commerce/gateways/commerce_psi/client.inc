@@ -53,8 +53,8 @@ class PsiClient {
       'credentials' => array(
         'UserName' => $this->getAccountSetting('account_username'),
         'Password' => $this->getAccountSetting('account_password'),
-        'SourceIpAddress' => $this->getAccountSetting('account_ip'),
-      )
+        'SourceIpAddress' => ip_address(),
+      ),
     );
   }
 

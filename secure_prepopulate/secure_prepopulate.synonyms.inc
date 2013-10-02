@@ -27,28 +27,28 @@ function secure_prepopulate_synonyms($form, $form_state) {
     }
   }
   $form['table'] = array(
-      '#type' => 'markup',
-      '#markup' => theme_table($variables),
+    '#type' => 'markup',
+    '#markup' => theme_table($variables),
   );
   $form['synonyms'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Add synonyms'),
+    '#type' => 'fieldset',
+    '#title' => t('Add synonyms'),
   );
   $form['synonyms']['token_key'] = array(
-      '#type' => 'textfield',
-      '#title' => t('token key'),
-      '#size' => 20,
-      '#required' => TRUE,
+    '#type' => 'textfield',
+    '#title' => t('token key'),
+    '#size' => 20,
+    '#required' => TRUE,
   );
   $form['synonyms']['synonyms'] = array(
-      '#type' => 'textfield',
-      '#title' => t('synonyms'),
-      '#description' => t('a comma-separated list of webform component form keys that are synonymous with this token key.'),
-      '#required' => TRUE,
+    '#type' => 'textfield',
+    '#title' => t('synonyms'),
+    '#description' => t('a comma-separated list of webform component form keys that are synonymous with this token key.'),
+    '#required' => TRUE,
   );
   $form['synonyms']['add'] = array(
-      '#type' => 'submit',
-      '#value' => t('Add'),
+    '#type' => 'submit',
+    '#value' => t('Add'),
   );
   $form['#validate'][] = 'secure_prepopulate_validate_synonym';
   $form['#submit'][] = 'secure_prepopulate_submit_synonym';
@@ -89,8 +89,8 @@ function secure_prepopulate_validate_synonym(&$form, $form_state) {
 
 function secure_prepopulate_submit_synonym($form, $form_state) {
   $settings = array(
-      'token_key' => $form_state['values']['form_key'],
-      'synonyms' => $form_state['values']['synonyms'],
+    'token_key' => $form_state['values']['form_key'],
+    'synonyms' => $form_state['values']['synonyms'],
   );
   secure_prepopulate_save_synonym($settings);
 }
@@ -121,8 +121,8 @@ function secure_prepopulate_edit_synonym($form, $form_state, $synonym = NULL) {
     '#value' => t('Save'),
   );
   $form['cancel'] = array(
-    '#type'   => 'submit',
-    '#value'  => t('Cancel'),
+    '#type' => 'submit',
+    '#value' => t('Cancel'),
     '#submit' => array('_secure_prepopulate_synonym_form_cancel'),
     '#limit_validation_errors' => array(),
   );
@@ -161,8 +161,8 @@ function secure_prepopulate_delete_synonym_form($form, $form_state, $synonym = N
     '#value' => t('Delete'),
   );
   $form['cancel'] = array(
-    '#type'   => 'submit',
-    '#value'  => t('Cancel'),
+    '#type' => 'submit',
+    '#value' => t('Cancel'),
     '#submit' => array('_secure_prepopulate_synonym_form_cancel'),
     '#limit_validation_errors' => array(),
   );

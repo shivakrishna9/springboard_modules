@@ -125,15 +125,15 @@ function _dsr_discrepancy_report_links($order_id) {
   $submission = dsr_get_order_submission_id($order_id);
 
 
-    if (module_exists('fundraiser_commerce')) {
-     $links[] = l('view order', 'admin/commerce/orders/' . $order_id);
-    }
-    elseif (module_exists('fundraiser_ubercart')) {
-      $links[] = l('view order', 'admin/store/orders/' . $order_id);
-    }
-    $links[] = l('view form submission', sprintf('node/%s/submission/%s', $submission['webform_nid'], $submission['sid']));
-    // TODO: replace batch viewer
-    //$links[] = l('view batches', '', array('fragment' => ' ', 'external' => TRUE, 'attributes' => array('class' => 'batch-viewer')));
+  if (module_exists('fundraiser_commerce')) {
+    $links[] = l('view order', 'admin/commerce/orders/' . $order_id);
+  }
+  elseif (module_exists('fundraiser_ubercart')) {
+    $links[] = l('view order', 'admin/store/orders/' . $order_id);
+  }
+  $links[] = l('view form submission', sprintf('node/%s/submission/%s', $submission['webform_nid'], $submission['sid']));
+  // TODO: replace batch viewer
+  //$links[] = l('view batches', '', array('fragment' => ' ', 'external' => TRUE, 'attributes' => array('class' => 'batch-viewer')));
 
   $variables = array(
     'items' => $links,
@@ -311,8 +311,8 @@ function theme_dsr_report_table($variables) {
   return $output;
 }
 
-function theme_dsr_box($variables){
-   $output = '<h2>' . $variables['label'] . '</h2>';
-   $output .= '<div class="dsr-box">' . $variables['content'] . '</div>';
-   return $output;
+function theme_dsr_box($variables) {
+  $output = '<h2>' . $variables['label'] . '</h2>';
+  $output .= '<div class="dsr-box">' . $variables['content'] . '</div>';
+  return $output;
 }

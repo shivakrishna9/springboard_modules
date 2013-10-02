@@ -26,7 +26,7 @@ class FundraiserTest extends FundraiserSetup {
   /**
    * Implements setUp().
    */
-  function setUp($additional_modules = array()) {
+  public function setUp($additional_modules = array()) {
     // Call the parent to set all of the base modules up.
     $additional_modules = array(
       'webform_confirmations', // For token testing.
@@ -37,10 +37,10 @@ class FundraiserTest extends FundraiserSetup {
   /**
    * Test the creation of a fundraiser form node.
    */
-  function testFundraiserNodeCreation() {
+  public function testFundraiserNodeCreation() {
     $node_stub = new stdClass();
     $node_stub->default_amount = 20; // Set a different default than normal.
-    $created_node = parent::_fundraiser_setup_create_node($node_stub);
+    $created_node = $this->createDonationForm($node_stub);
     // Load the created node, so we get latest data.
     $node = node_load($created_node->nid);
     // Check that the created node is expected, per configurations given in setUp.
@@ -122,7 +122,7 @@ class FundraiserTest extends FundraiserSetup {
       'credit' => array(
         'status' => 1,
         'method' => 'credit',
-        'id' => 'commerce_payment_example|commerce_payment_commerce_payment_example'
+        'id' => 'commerce_payment_example|commerce_payment_commerce_payment_example',
       ),
     );
     $this->assertIdentical($node->gateways, $expected_payment_gateway, t('The correct gateways were created and assigned.'), t('Fundraiser'));
@@ -131,9 +131,9 @@ class FundraiserTest extends FundraiserSetup {
   /**
    * Test the creation of a fundraiser form node.
    */
-  function testFundraiserFormSSHAccess() {
-    $node = parent::_fundraiser_setup_create_node();
-    $message = 'The donation form you are trying to access has not been secured properly.';
+  public function testFundraiserFormSSHAccess() {
+    $node = $this->createDonationForm();
+    $message = 'We\'re sorry, but this donation form is experiencing a temporary problem. Please try again later.';
     variable_set('fundraiser_development_mode', 0); // TURN OFF DEFAULT MODE.
 
     // Specifically turn HTTPS on. Your test server should have HTTPS
@@ -142,7 +142,7 @@ class FundraiserTest extends FundraiserSetup {
       $this->assertEqual(TRUE, $result, '_fundraiser_is_secure() returned TRUE when HTTPS set to "on".', t('Fundraiser HTTPS'));
       $base_url = $GLOBALS['base_url'];
       $base_url = str_replace('http://', 'https://', $base_url);
-      $this->drupalGet($base_url . '/node/'. $node->nid);
+      $this->drupalGet($base_url . '/node/' . $node->nid);
       $this->assertNoText($message, t('Accessing the form shows the correct message text.'), t('Fundraiser HTTPS'));
     }
 
@@ -150,25 +150,25 @@ class FundraiserTest extends FundraiserSetup {
     unset($_SERVER['HTTPS']);
     $result = _fundraiser_is_secure();
     $this->assertEqual(FALSE, $result, '_fundraiser_is_secure() returned FALSE when HTTPS unset.', t('Fundraiser HTTPS'));
-    $this->drupalGet('node/'. $node->nid);
+    $this->drupalGet('node/' . $node->nid);
     $this->assertText($message, t('Accessing the form shows the correct message text.'), t('Fundraiser HTTPS'));
 
     // Specifically turn HTTPS off.
     $_SERVER['HTTPS'] = 'off';
     $result = _fundraiser_is_secure();
     $this->assertEqual(FALSE, $result, '_fundraiser_is_secure() returned FALSE when HTTPS set to "off".', t('Fundraiser HTTPS'));
-    $this->drupalGet('node/'. $node->nid);
+    $this->drupalGet('node/' . $node->nid);
     $this->assertText($message, t('Accessing the form shows the correct message text.'), t('Fundraiser HTTPS'));
   }
 
   /**
    * Test the creation of a fundraiser form node.
    */
-  function testFundraiserFormDisplay() {
+  public function testFundraiserFormDisplay() {
     $node_stub = new stdClass();
     $node_stub->default_amount = 20; // Set a different default than normal.
-    $node = parent::_fundraiser_setup_create_node($node_stub);
-    $this->drupalGet('node/'. $node->nid); // Get the node display page. In default mode by default.
+    $node = $this->createDonationForm($node_stub);
+    $this->drupalGet('node/' . $node->nid); // Get the node display page. In default mode by default.
     // Check 20 is the default value.
     $this->assertFieldByName('submitted[donation][amount]', 20, t('The correct default value (20) selected on the donation form.'),
       t('Fundraiser Display'));
@@ -180,7 +180,7 @@ class FundraiserTest extends FundraiserSetup {
     $this->assertFieldByName('submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_year]', $year,
       t('The correct default year (@year) selected on the donation form.', array('@year' => $year)), t('Fundraiser Display'));
     // Test anon. posting.
-    parent::_fundraiser_setup_post_donation($node->nid);
+    $this->submitDonation($node->nid);
     $message = t('Donation was successfully processed.');
     $this->assertText($message, t('An anon. user was able to submit a donation.'),
       t('Fundraiser Submit'));
@@ -209,7 +209,7 @@ class FundraiserTest extends FundraiserSetup {
       'submitted[billing_information][state]' => 'CA',
       'submitted[billing_information][zip]' => '12345',
     );
-    parent::_fundraiser_setup_post_donation($node->nid, $post);
+    $this->submitDonation($node->nid, $post);
     foreach ($post as $label => $value) {
       $this->assertText($value, t('The token value (@value) for @label was successfully displayed.',
         array('@value' => $value, '@label' => $label)), t('Fundraiser Tokens'));
@@ -219,15 +219,15 @@ class FundraiserTest extends FundraiserSetup {
   /**
    * Test the creation of a fundraiser form node.
    */
-  function testFundraiserFormEmailValidation() {
-    $node = parent::_fundraiser_setup_create_node();
+  public function testFundraiserFormEmailValidation() {
+    $node = $this->createDonationForm();
     // Check various emails fail.
     $post = array('submitted[donor_information][mail]' => 'BROKEN_EMAIL');
-    parent::_fundraiser_setup_post_donation($node->nid, $post);
+    $this->submitDonation($node->nid, $post);
     $message = t('Please enter a valid email address.');
     $this->assertText($message, t('An invalid email address (BROKEN_EMAIL) was not accepted.'), t('Fundraiser Email'));
     // Check for success.
-    parent::_fundraiser_setup_post_donation($node->nid);
+    $this->submitDonation($node->nid);
     $message = t('Donation was successfully processed.');
     $this->assertText($message, t('A valid email address was accepted.'), t('Fundraiser Email'));
 
@@ -249,7 +249,7 @@ class FundraiserTest extends FundraiserSetup {
     $emails[] = '1Email+add@example.c0m'; // Invalid character in domain ending.
     foreach ($emails as $email) {
       $post = array('submitted[donor_information][mail]' => $email);
-      parent::_fundraiser_setup_post_donation($node->nid, $post);
+      $this->submitDonation($node->nid, $post);
       $message = t('Please enter a valid email address.');
       $this->assertText($message, t('An invalid email address (@email) was not accepted.',
         array('@email' => $email)), t('Fundraiser Email'));
@@ -270,7 +270,7 @@ class FundraiserTest extends FundraiserSetup {
     $emails[] = '1Email+add@sub-example.coooom'; // Maximum length domain ending.
     foreach ($emails as $email) {
       $post = array('submitted[donor_information][mail]' => $email);
-      parent::_fundraiser_setup_post_donation($node->nid, $post);
+      $this->submitDonation($node->nid, $post);
       $message = t('Donation was successfully processed.');
       $this->assertText($message, t('A valid email address (@email) was accepted.',
         array('@email' => $email)), t('Fundraiser Email'));
@@ -280,14 +280,14 @@ class FundraiserTest extends FundraiserSetup {
   /**
    * Test the creation of a fundraiser form node.
    */
-  function testFundraiserFormAmountValidation() {
-    $node = parent::_fundraiser_setup_create_node();
+  public function testFundraiserFormAmountValidation() {
+    $node = $this->createDonationForm();
     // Check various emails fail.
     $post = array(
       'submitted[donation][amount]' => 10,
       'submitted[donation][other_amount]' => 20,
     );
-    parent::_fundraiser_setup_post_donation($node->nid, $post);
+    $this->submitDonation($node->nid, $post);
     // Check misconfigured amounts (a # and an other) fails.
     $message = t('You have entered a custom amount and selected a set amount.');
     $this->assertText($message, t('Setting both amount and other-amount was not accepted.'),
@@ -297,7 +297,7 @@ class FundraiserTest extends FundraiserSetup {
       'submitted[donation][amount]' => 10,
       'submitted[donation][other_amount]' => '',
     );
-    parent::_fundraiser_setup_post_donation($node->nid, $post);
+    $this->submitDonation($node->nid, $post);
     $message = t('Donation was successfully processed.');
     $this->assertText($message, t('A donation with a set amount was successfully processed.'),
       t('Fundraiser Email'));
@@ -306,10 +306,22 @@ class FundraiserTest extends FundraiserSetup {
       'submitted[donation][amount]' => 'other',
       'submitted[donation][other_amount]' => 20,
     );
-    parent::_fundraiser_setup_post_donation($node->nid, $post);
+    $this->submitDonation($node->nid, $post);
     $message = t('Donation was successfully processed.');
     $this->assertText($message, t('A donation with a set other_amount was successfully processed.'),
       t('Fundraiser Email'));
+  }
+
+  /**
+   * Test the creation of the encrypt key
+   */
+  public function testFundraiserEncryptKey() {
+    $key_file = variable_get('encrypt_secure_key_path', '') . '/' . ENCRYPT_SECURE_KEY_FILE;
+    $string = NULL;
+    if (file_exists($key_file)) {
+      $string = file_get_contents($key_file);
+    }
+    $this->assertNotNull($string, 'The Encrypt key is being created and is populated with a string.');
   }
 
 }

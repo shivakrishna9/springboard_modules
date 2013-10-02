@@ -29,8 +29,9 @@ function _salesforce_map_redirect($node) {
   }
   // Now we have a list of the supported mapping forms filters by access.
   // Only serve up the first of the available mappings.
-  // TODO: Find support in the future for more than one mapping at this location,
-  // WITHOUT having to rely on pre-set menus. Since menus are overall ignorant of node-type.
+  // TODO: Find support in the future for more than one mapping at this
+  // location, WITHOUT having to rely on pre-set menus. Since menus are overall
+  // ignorant of node-type.
   foreach ($supported_modules as $supported_module => $info) {
     return salesforce_genmap_map_page($node, $supported_module);
   }

@@ -10,14 +10,26 @@
 function fundraiser_upsell_admin_settings_form($form, &$form_state) {
   // Set the default bracket info
   $brackets_default = array(
-    0 => array('low' => 0, 'high' => 20, 'upsell' => 10),
-    1 => array('low' => 21, 'high' => 40, 'upsell' => 25),
-    2 => array('low' => 41, 'high' => 60, 'upsell' => 50),
+    0 => array(
+      'low' => 0,
+      'high' => 20,
+      'upsell' => 10,
+    ),
+    1 => array(
+      'low' => 21,
+      'high' => 40,
+      'upsell' => 25,
+    ),
+    2 => array(
+      'low' => 41,
+      'high' => 60,
+      'upsell' => 50,
+    ),
   );
   $brackets = variable_get("fundraiser_upsell_brackets", $brackets_default);
   // Set the delta for the number of brackets plus one extra blank
   if (isset($_POST['brackets_delta'])) {
-    $delta = $_POST['brackets_delta']+1;
+    $delta = $_POST['brackets_delta'] + 1;
   }
   elseif (count($brackets)) {
     $delta = count($brackets) + 1;
@@ -29,21 +41,52 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
   $default_disclaimer = '<em>By signing up to be a monthly donor, your credit card will be charged the monthly amount you specify beginning next month.</em>';
   // Build the form
   $form = array();
-  $form['fundraiser_upsell_brackets'] = array(
+  $form['fundraiser_upsell_default_content'] = array(
+    '#title' => t('Default content for Upsell'),
+    '#type' => 'textarea',
+    '#default_value' => variable_get('fundraiser_upsell_default_content', $default_content),
+  );
+  // @TODO : allow WYSIWYG format selection
+  //$form['fundraiser_upsell_default_content']['format'] = filter_form($myfield1['format'], NULL, array('field1_format'));
+  // @TODO : add in the token list
+  $form['fundraiser_upsell_default_content_disclaimer'] = array(
+    '#title' => t('Default disclaimer for Upsell content'),
+    '#type' => 'textarea',
+    '#rows' => 2,
+    '#default_value' => variable_get('fundraiser_upsell_default_content_disclaimer', $default_disclaimer),
+  );
+  // @TODO: make this a select list populated by SF cache
+  $form['fundraiser_upsell_sf_campaign_id'] = array(
+    '#title' => t('Sustainer Salesforce Campaign ID'),
+    '#type' => 'textfield',
+    '#default_value' => variable_get('fundraiser_upsell_sf_campaign_id', ''),
+  );
+  // Add the options as vertical tabs
+  $form['options_title'] = array(
+    '#type' => 'item',
+    '#title' => t('Options'),
+  );
+  $form['options'] = array(
+    '#type' => 'vertical_tabs',
+  );
+  $form['options']['brackets'] = array(
     '#title' => t('Upsell Brackets'),
+    '#type' => 'fieldset',
+  );
+  $form['options']['brackets']['fundraiser_upsell_brackets'] = array(
     '#type' => 'fieldset',
     '#prefix' => '<div class="clear-block" id="brackets-wrapper">',
     '#suffix' => '</div>',
     '#description' => 'Leave a row of fields blank to delete that row of brackets.',
   );
   // This is the container that hold the brackets and is rebuilt with AJAX call
-  $form['fundraiser_upsell_brackets']['brackets'] = array(
+  $form['options']['brackets']['fundraiser_upsell_brackets']['brackets'] = array(
     '#prefix' => '<div id="bracket-amounts">',
     '#suffix' => '</div>',
   );
   // Build and fill the brackets
   for ($i = 0; $i < $delta; ++$i) {
-    $form['fundraiser_upsell_brackets']['brackets']['fundraiser_upsell_brackets_low_' . $i] = array(
+    $form['options']['brackets']['fundraiser_upsell_brackets']['brackets']['fundraiser_upsell_brackets_low_' . $i] = array(
       '#title' => t('Low Value'),
       '#type' => 'textfield',
       '#size' => 15,
@@ -51,7 +94,7 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
       '#prefix' => '<div class="upsell_low" style="float: left; clear: left; margin-right: 3em;">',
       '#suffix' => "</div>",
     );
-    $form['fundraiser_upsell_brackets']['brackets']['fundraiser_upsell_brackets_high_' . $i] = array(
+    $form['options']['brackets']['fundraiser_upsell_brackets']['brackets']['fundraiser_upsell_brackets_high_' . $i] = array(
       '#title' => t('High Value'),
       '#type' => 'textfield',
       '#size' => 15,
@@ -59,7 +102,7 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
       '#prefix' => '<div class="upsell_high" style="float: left; margin-right: 3em;">',
       '#suffix' => "</div>",
     );
-    $form['fundraiser_upsell_brackets']['brackets']['fundraiser_upsell_brackets_upsell_' . $i] = array(
+    $form['options']['brackets']['fundraiser_upsell_brackets']['brackets']['fundraiser_upsell_brackets_upsell_' . $i] = array(
       '#title' => t('Upsell Value'),
       '#type' => 'textfield',
       '#size' => 15,
@@ -68,13 +111,13 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
       '#suffix' => "</div>",
     );
   }
-  // Store the number of brakcets for later
-  $form['fundraiser_upsell_brackets']['brackets']['brackets_delta'] = array(
+  // Store the number of brackets for later
+  $form['options']['brackets']['fundraiser_upsell_brackets']['brackets']['brackets_delta'] = array(
     '#type' => 'hidden',
     '#value' => $delta,
   );
   // Button to add another bracket and rebuild this section
-  $form['fundraiser_upsell_brackets']['add_more'] = array(
+  $form['options']['brackets']['fundraiser_upsell_brackets']['add_more'] = array(
     '#type' => 'submit',
     '#value' => t('Add another'),
     '#description' => t("Click here to add more brackets."),
@@ -88,76 +131,49 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
     '#prefix' => '<div style="float: left; clear: both; padding-top: 1em">',
     '#suffix' => "</div>",
   );
-  // Build the rest of the form
-  $form['fundraiser_upsell_default_content'] = array(
-    '#title' => t('Default content for Upsell'),
-    '#type' => 'textarea',
-    '#default_value' => variable_get('fundraiser_upsell_default_content', $default_content),
+  $form['options']['cookies'] = array(
+    '#title' => t('Cookies'),
+    '#type' => 'fieldset',
   );
-  // @TODO : allow WYSIWYG format selection
-  //$form['fundraiser_upsell_default_content']['format'] = filter_form($myfield1['format'], NULL, array('field1_format'));
-  // @TODO : add in the token list
-  $form['fundraiser_upsell_default_content_disclaimer'] = array(
-    '#title' => t('Default disclaimer for Upsell content'),
-    '#type' => 'textfield',
-    '#maxlength' => 256,
-    '#default_value' => variable_get('fundraiser_upsell_default_content_disclaimer', $default_disclaimer),
-  );
-  // @TODO: make this a select list populated by SF cache
-  $form['fundraiser_upsell_sf_campaign_id'] = array(
-    '#title' => t('Sustainer Salesforce Campaign ID'),
-    '#type' => 'textfield',
-    '#default_value' => variable_get('fundraiser_upsell_sf_campaign_id', ''),
-  );
-  $form['fundraiser_upsell_thank_you_content'] = array(
-    '#title' => t('Default content for thank you message'),
-    '#type' => 'textarea',
-    '#default_value' => variable_get('fundraiser_upsell_thank_you_content', 'Thank you for your recurring donation!'),
-  );
-  // @TODO : allow WYSIWYG format selection
-  //$form['fundraiser_upsell_thank_you_content']['format'] = filter_form($myfield1['format'], NULL, array('field1_format'));
-  // @TODO : add in the token list
-  $form['fundraiser_upsell_acceptance'] = array(
+  $form['options']['cookies']['fundraiser_upsell_acceptance'] = array(
     '#title' => t('Acceptance Cookie'),
     '#type' => 'fieldset',
   );
-  $form['fundraiser_upsell_acceptance']['fundraiser_upsell_acceptance_enabled'] = array(
+  $form['options']['cookies']['fundraiser_upsell_acceptance']['fundraiser_upsell_acceptance_enabled'] = array(
     '#title' => t('Enabled'),
     '#type' => 'checkbox',
     '#default_value' => variable_get('fundraiser_upsell_acceptance_enabled', 0),
   );
-  $form['fundraiser_upsell_acceptance']['fundraiser_upsell_acceptance_lifetime'] = array(
+  $form['options']['cookies']['fundraiser_upsell_acceptance']['fundraiser_upsell_acceptance_lifetime'] = array(
     '#title' => t('Cookie lifetype in days'),
     '#type' => 'textfield',
     '#default_value' => variable_get('fundraiser_upsell_acceptance_lifetime', ''),
   );
-  $form['fundraiser_upsell_rejection'] = array(
+  $form['options']['cookies']['fundraiser_upsell_rejection'] = array(
     '#title' => t('Rejection Cookie'),
     '#type' => 'fieldset',
   );
-  $form['fundraiser_upsell_rejection']['fundraiser_upsell_rejection_enabled'] = array(
+  $form['options']['cookies']['fundraiser_upsell_rejection']['fundraiser_upsell_rejection_enabled'] = array(
     '#title' => t('Enabled'),
     '#type' => 'checkbox',
     '#default_value' => variable_get('fundraiser_upsell_rejection_enabled', 0),
   );
-  $form['fundraiser_upsell_rejection']['fundraiser_upsell_rejection_lifetime'] = array(
+  $form['options']['cookies']['fundraiser_upsell_rejection']['fundraiser_upsell_rejection_lifetime'] = array(
     '#title' => t('Cookie lifetype in days'),
     '#type' => 'textfield',
     '#default_value' => variable_get('fundraiser_upsell_rejection_lifetime', ''),
   );
-  $form['fundraiser_upsell_advanced'] = array(
+  $form['options']['fundraiser_upsell_advanced'] = array(
     '#title' => t('Advanced Settings'),
     '#type' => 'fieldset',
-    '#collapsible' => true,
-    '#collapsed' => false
   );
-  $form['fundraiser_upsell_advanced']['fundraiser_upsell_debug'] = array(
+  $form['options']['fundraiser_upsell_advanced']['fundraiser_upsell_debug'] = array(
     '#title' => t('Debug Mode'),
     '#type' => 'checkbox',
     '#default_value' => variable_get('fundraiser_upsell_debug', 0),
     '#description' => t('Debug mode will open the upsell box regardless of cookie settings,'),
   );
-  $form['fundraiser_upsell_advanced']['fundraiser_upsell_decouple'] = array(
+  $form['options']['fundraiser_upsell_advanced']['fundraiser_upsell_decouple'] = array(
     '#title' => t('Decouple Mode'),
     '#type' => 'checkbox',
     '#default_value' => variable_get('fundraiser_upsell_decouple', 0),
@@ -179,7 +195,7 @@ function fundraiser_upsell_admin_settings_form_validate($form, &$form_state) {
   // Loop though the bracket values
   for ($i = 0; $i < $delta; ++$i) {
     if (!empty($vals['fundraiser_upsell_brackets_low_' . $i]) && !is_numeric($vals['fundraiser_upsell_brackets_low_' . $i])) {
-      form_set_error("fundraiser_upsell_brackets][brackets][fundraiser_upsell_brackets_low_$i", t('The bracket values must be numbers only.'));
+      form_set_error("options']['brackets']['fundraiser_upsell_brackets][brackets][fundraiser_upsell_brackets_low_$i", t('The bracket values must be numbers only.'));
     }
     if (!empty($vals['fundraiser_upsell_brackets_high_' . $i]) && !is_numeric($vals['fundraiser_upsell_brackets_high_' . $i])) {
       form_set_error('upsell', t('The bracket values must be numbers only.'));
@@ -225,7 +241,7 @@ function fundraiser_upsell_admin_settings_form_submit($form, &$form_state) {
  * Callback handler for the donation ask amount form #ajax.
  */
 function _fundraiser_upsell_admin_settings_ajax($form, $form_state) {
-  return $form['fundraiser_upsell_brackets']['brackets'];
+  return $form['options']['brackets']['fundraiser_upsell_brackets']['brackets'];
 }
 
 /**
@@ -235,76 +251,3 @@ function fundraiser_upsell_admin_settings_ajax_submit(&$form, &$form_state) {
   ++$form_state['values']['brackets_delta'];
   $form_state['rebuild'] = TRUE;
 }
-
-/**
- * Admin configuration thank you form.
- */
-function fundraiser_upsell_admin_thank_you_settings($form, &$form_state) {
-  $site_mail = variable_get('site_mail', '');
-  $form = array();
-  $form['fundraiser_upsell_thank_you_content'] = array(
-    '#title' => t('Default content for Upsell Thank You'),
-    '#type' => 'textarea',
-    '#default_value' => variable_get('fundraiser_upsell_thank_you_content', ''),
-  );
-  $form['fundraiser_upsell_thank_you_content_tokens']['tokens'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Available confirmation message tokens'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
-  $form['fundraiser_upsell_thank_you_content_tokens']['tokens']['help'] = array(
-    '#value' => theme('token_help', 'upsell'),
-  );
-  $form['fundraiser_upsell_email'] = array(
-    '#title' => t('Email Defaults'),
-    '#type' => 'fieldset',
-  );
-  $form['fundraiser_upsell_email']["fundraiser_upsell_email_from"] = array(
-    '#title' => t('From Address'),
-    '#type' => 'textfield',
-    '#default_value' => variable_get('fundraiser_upsell_email_from', $site_mail),
-    '#description' => 'Format: "From Name" &lt;email@address&gt;',
-  );
-  $form['fundraiser_upsell_email']["fundraiser_upsell_email_bcc"] = array(
-    '#title' => t('BCC Address'),
-    '#type' => 'textfield',
-    '#default_value' => variable_get('fundraiser_upsell_email_bcc', ''),
-    '#description' => 'Format: "From Name" &lt;email@address&gt;',
-  );
-  $form['fundraiser_upsell_email']['fundraiser_upsell_email_subject'] = array(
-    '#title' => 'Email Subject',
-    '#type' => 'textfield',
-    '#default_value' => variable_get('fundraiser_upsell_email_subject', 'Thank you for becoming a sustaining partner.'),
-  );
-  $form["fundraiser_upsell_thank_you_email_html"] = array(
-    '#title' => t('Thank You HTML Email Content'),
-    '#type' => 'textarea',
-    '#default_value' => variable_get('fundraiser_upsell_thank_you_email_html', ''),
-  );
-  $form['fundraiser_upsell_thankyou_form']['tokens'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Available confirmation message tokens'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
-  $form['fundraiser_upsell_thankyou_form']['tokens']['help'] = array(
-    '#value' => theme('token_help', 'upsell'),
-  );
-  $form["fundraiser_upsell_thank_you_email_text"] = array(
-    '#title' => t('Thank You TEXT Email Content'),
-    '#type' => 'textarea',
-    '#default_value' => variable_get('fundraiser_upsell_thank_you_email_text', ''),
-  );
-  $form['fundraiser_upsell_thankyou_form_text']['tokens'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Available confirmation message tokens'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
-  $form['fundraiser_upsell_thankyou_form_text']['tokens']['help'] = array(
-    '#value' => theme('token_help', 'upsell'),
-  );
-  return system_settings_form($form);
-}
-

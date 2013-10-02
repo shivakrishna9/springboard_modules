@@ -20,7 +20,7 @@ class EncryptionTestCase extends SecurePrepopulateTestCase {
   /**
    * Test the decryption of a string
    */
-  function testDecrypt() {
+  public function testDecrypt() {
     $decrypted = secure_prepopulate_decrypt($this->_encrypted);
     $this->assertEqual($decrypted['first_name'], 'Euro', t('Make sure decrypted first_name field = Euro'));
     $this->assertEqual($decrypted['last_name'], 'Guy', t('Make sure decrypted last_name field = Guy'));

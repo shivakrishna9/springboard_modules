@@ -60,7 +60,7 @@ function fundraiser_webform_webform_component_info() {
       'description' => FALSE,
       'default_value' => FALSE,
     ),
-    'file' => 'components/payment_method.inc'
+    'file' => 'components/payment_method.inc',
   );
   $components['payment_fields'] = array(
     'label' => t('Payment Fields'),
@@ -71,7 +71,7 @@ function fundraiser_webform_webform_component_info() {
       'description' => FALSE,
       'default_value' => FALSE,
     ),
-    'file' => 'components/payment_fields.inc'
+    'file' => 'components/payment_fields.inc',
   );
   return $components;
 }
@@ -83,8 +83,8 @@ function fundraiser_webform_theme($existing, $type, $theme, $path) {
   return array(
     'fundraiser_webform_component_payment_methods' => array(
       'render element' => 'form',
-      'file' => 'components/payment_method.inc'
-    )
+      'file' => 'components/payment_method.inc',
+    ),
   );
 }
 
@@ -277,7 +277,7 @@ function fundraiser_webform_form_fundraiser_admin_settings_alter(&$form, &$form_
       'components for user fields we need to avoid doubling up on component creation. Therefore a map of Fundraiser components to user ' .
       'profile fields needs to be created. This will prevent Webform User from creating the same components that Fundraiser already ' .
       'handles. For each profile field listed here set which (if any) Fundraiser field will handle creating a component for it instead. ' .
-      'Fields left unmapped will be created by Webform User.').'</div>',
+      'Fields left unmapped will be created by Webform User.') . '</div>',
     );
     // If the module exists, we can use it's functions.
     $profile_fields = _webform_user_get_profile_fields();
@@ -288,7 +288,7 @@ function fundraiser_webform_form_fundraiser_admin_settings_alter(&$form, &$form_
       '#suffix' => '</div>',
       '#tree' => TRUE,
       '#theme' => 'table',
-      '#header' => array(t('Profile field'), t('Matching component will be created by this Fundraiser field') ),
+      '#header' => array(t('Profile field'), t('Matching component will be created by this Fundraiser field')),
       '#rows' => array(),
     );
     $options = array('0' => t('--Not handled by Fundraiser--'));
@@ -338,7 +338,7 @@ function fundraiser_webform_webform_user_profile_fields_alter(&$fields, $node) {
     $mapping = variable_get('fundraiser_webform_to_user_map', array('mail' => 'mail'));
     foreach ($fields as $index => $profile_field) {
       $name = $profile_field['name'];
-      if (isset($mapping[ $name ]) &&  $mapping[ $name ]) {
+      if (isset($mapping[$name]) &&   $mapping[$name]) {
         // This field will be created by fundraiser, so we don't need to set it up in webform user.
         unset($fields[$index]);
       }
@@ -386,7 +386,7 @@ function fundraiser_webform_form_alter(&$form, &$form_state, $form_id) {
       fundraiser_webform_submission_display($form, $form_state);
     }
     // Handle the donation form display.
-    if (fundraiser_is_donation_type($form['#node']->type)  && arg(2) != 'submission') { // From fundraiser.module.
+    if (fundraiser_is_donation_type($form['#node']->type)   && arg(2) != 'submission') { // From fundraiser.module.
       // From fundraiser.module, calls hooks to create form and submission paths.
       fundraiser_donation_form($form, $form_state); // From fundraiser.module.
     }
@@ -456,7 +456,7 @@ function fundraiser_webform_submission_display(&$form, &$form_state) {
   if (isset($recurs_monthly_field)) {
     $recurs = t('No');
     if (isset($recurs_monthly_field['#default_value'][0])
-      && ($recurs_monthly_field['#default_value'][0] == 'recurs')) {
+       && ($recurs_monthly_field['#default_value'][0] == 'recurs')) {
       $recurs = t('Yes');
     }
     $form['submitted']['donation_info']['recurring'] = array(
@@ -513,7 +513,7 @@ function fundraiser_webform_fundraiser_get_form_field($form, $field_key) {
  */
 function fundraiser_webform_fundraiser_update_form_field($form, $field_key, $new_field) {
   // Walks a given form looking for the given key. Returns it when found.
-  $field =& _fundraiser_webform_find_field($form, _fundraiser_webform_parse_component($form['#node']->nid, $field_key));
+  $field = &_fundraiser_webform_find_field($form, _fundraiser_webform_parse_component($form['#node']->nid, $field_key));
   // Update the field in the form.
   $field = $new_field;
   // Return the form for the calling function.
@@ -537,7 +537,7 @@ function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
 
   // And lastly add a user facing message for submit.
   $form['submit']['#suffix'] = '<div class="fundraiser_submit_message">' .
-    theme('image', array('path' =>  drupal_get_path('module', 'fundraiser_webform') . '/images/padlock.png' )) .
+    theme('image', array('path' => drupal_get_path('module', 'fundraiser_webform') . '/images/padlock.png')) .
     t('By clicking SUBMIT DONATION your credit card will be securely processed.') .
     '</div>';
   $form['#after_build'][] = 'fundraiser_webform_fundraiser_donation_form_after_build';
@@ -664,8 +664,8 @@ function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $dona
   $donation->donation = $submission_fields;
   $donation->sid = $form_state['values']['details']['sid'];
   // Figure out which gateway it is that this selection indicates for this node.
-  $field =& _fundraiser_webform_find_field($form, _fundraiser_webform_parse_component($form['#node']->nid, 'payment_method'));
-  $donation->gateway = $field['#webform_component']['extra']['payment_methods'][ $submission_fields['payment_method'] ]['id'];
+  $field = &_fundraiser_webform_find_field($form, _fundraiser_webform_parse_component($form['#node']->nid, 'payment_method'));
+  $donation->gateway = $field['#webform_component']['extra']['payment_methods'][$submission_fields['payment_method']]['id'];
 }
 
 /**
@@ -675,7 +675,6 @@ function fundraiser_webform_fundraiser_donation_post_submit($form, $form_state, 
   // Handle behavior if it was a failure.
   if (!isset($donation->result['success']) || (isset($donation->result['success']) && $donation->result['success'] == FALSE) ) {
     // Tell webform we're not done and rebuild the form.
-    unset($form_state['values']['details']['sid']);
     if (!isset($donation->result['message']) || empty($donation->result['message'])) {
       $donation->result['message'] = t('Your payment method has been denied. Please try another.');
     }
@@ -768,8 +767,21 @@ function fundraiser_webform_fundraiser_update_fundraiser_alter($fundraiser) {
  * Implements hook_fundraiser_field_info_alter().
  */
 function fundraiser_webform_fundraiser_field_info_alter($fields) {
-  $email_map = array('amount', 'other_amount', 'first_name', 'last_name', 'mail', 'address', 'address_line_2',
-    'city', 'zip', 'country', 'state', 'payment_fields', 'payment_method');
+  $email_map = array(
+    'amount',
+    'other_amount',
+    'first_name',
+    'last_name',
+    'mail',
+    'address',
+    'address_line_2',
+    'city',
+    'zip',
+    'country',
+    'state',
+    'payment_fields',
+    'payment_method',
+  );
   foreach (element_children($fields) as $key) {
     $fields[$key] = _fundraiser_webform_fundraiser_field_info_alter($key, $fields[$key], $email_map);
   }

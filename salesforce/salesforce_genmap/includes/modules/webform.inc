@@ -188,7 +188,7 @@ function webform_salesforce_genmap_permission() {
 function webform_map_page_access($node) {
   // %webform_menu returns FALSE if not valid.
   if ($node !== FALSE
-    && user_access('map salesforce to webform')
+     && user_access('map salesforce to webform')
     ) {
     return TRUE;
   }

@@ -27,7 +27,7 @@ function commerce_payment_example_fundraiser_commerce_fundraiser_gateway_info() 
  * Callback function, use this form for the given gateway.
  */
 function commerce_payment_example_fundraiser_commerce_form($payment_method) {
-   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
   return _fundraiser_commerce_credit_card_form();
 }
 

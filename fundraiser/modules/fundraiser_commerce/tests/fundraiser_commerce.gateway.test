@@ -20,12 +20,7 @@ class FundraiserCommerceGatewayTest extends FundraiserSetup {
   }
 
   public function setUp($modules = array(), $permissions = array()) {
-    $modules = array_merge($modules, array(
-      'encrypt'
-    ));
     parent::setUp($modules);
-    variable_set('encrypt_secure_key_path', DRUPAL_ROOT . '/sites/default/files/keys');
-    variable_set('encrypt_default_method', 'mcrypt_rij_256');
 
     $permissions = array_merge($permissions, array(
       'administer site configuration',
@@ -40,10 +35,10 @@ class FundraiserCommerceGatewayTest extends FundraiserSetup {
     $this->privileged_user = $this->drupalCreateUser($permissions);
     $this->drupalLogin($this->privileged_user);
 
-    $this->donation_form = $this->_fundraiser_setup_create_node();
+    $this->donation_form = $this->createDonationForm();
   }
 
-  function _importGatewayRule($config) {
+  protected function _importGatewayRule($config) {
     $rules_config = rules_import($config);
     if ($existing_config = rules_config_load($rules_config->name)) {
       // Copy DB id and remove the new indicator to overwrite the existing record.

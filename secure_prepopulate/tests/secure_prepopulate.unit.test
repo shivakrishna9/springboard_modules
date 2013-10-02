@@ -1,15 +1,15 @@
 <?php
 /**
-* Administration tests for my module.
-*/
+ * Administration tests for my module.
+ */
 class securePrepopulateUnitTestCase extends DrupalWebTestCase {
 
 
-/**
+  /**
    * Implements getInfo().
    */
   public static function getInfo() {
-    return array (
+    return array(
       'name' => t('Secure pre-populate unit tests'),
       'description' => t('Administration tests for my module.'),
       'group' => t('Secure Prepopulate'),
@@ -46,5 +46,38 @@ class securePrepopulateUnitTestCase extends DrupalWebTestCase {
     $message = '_secure_prepopulate_encrypt() returns expected values.';
     $this->assertTrue($result, $message);
   }
+
+  /**
+   * Ensure cron jobs are working correctly.
+   */
+  public function testCron() {
+    // Create dummy entries.
+    foreach (range(0, 60) as $num) {
+      $row = array(
+        'hash' => md5($num),
+        'expire_date' => (REQUEST_TIME - ($num * 24 * 60 * 60)),
+      );
+      drupal_write_record('secure_prepopulate_expired', $row);
+    }
+
+    // Run cron. Everything older than 30 days should be deleted.
+    $this->cronRun();
+
+    // Verify entries were removed.
+    $max_date = REQUEST_TIME - (30 * 24 * 60 * 60);
+    $expired_count = db_select('secure_prepopulate_expired', 's')
+      ->fields('s', array('hash'))
+      ->condition('expire_date', $max_date, '<')
+      ->execute()
+      ->rowCount();
+    $this->assertEqual(0, $expired_count);
+
+    // Verify the other entries weren't removed.
+    $not_expired_count = db_select('secure_prepopulate_expired', 's')
+      ->fields('s', array('hash'))
+      ->condition('expire_date', $max_date, '>')
+      ->execute()
+      ->rowCount();
+    $this->assertEqual(30, $not_expired_count);
+  }
 }
-?>

@@ -136,7 +136,7 @@ function _webform_user_email_access($op, $node) {
  * Node object
  */
 function _webform_user_component_access($op, $node) {
-if (_webform_user_is_webform_user_node($node)) {
+  if (_webform_user_is_webform_user_node($node)) {
     if (user_access('alter webform components') && node_access($op, $node)) {
       return TRUE;
     }
@@ -353,7 +353,7 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
       // Map each profile field if there's a matching component field.
       foreach ($map as $webform_field => $profile_field) {
         if (array_key_exists($webform_field, $component_hierarchy)) {
-          $form_field =& _webform_user_find_field($form, $component_hierarchy[$webform_field]);
+          $form_field = &_webform_user_find_field($form, $component_hierarchy[$webform_field]);
           if (isset($user_data->$profile_field)) {
             // Figure out what the value is.
             $profile_value = is_array($user_data->$profile_field) ? '1' : 0;
@@ -537,7 +537,10 @@ function webform_user_mapping_form($form, $form_state, $node) {
       unset($select);
     }
   }
-  $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+  );
   return $form;
 }
 
@@ -595,7 +598,7 @@ function webform_user_node_update($node) {
     // If the node hasn't been a webform_user form and it's set to be a webform_user form, make it one.
     $current_node = node_load($node->nid);
     if (!_webform_user_is_webform_user_node($current_node) && _webform_user_is_webform_user_node($node)
-      && $current_node->webform['components'][1]['form_key'] != 'mail') { //TODO make sure this ref is correct.
+       && $current_node->webform['components'][1]['form_key'] != 'mail') { //TODO make sure this ref is correct.
       // TODO confirm that this works if email not #1, other modules make components too.
       _webform_user_create_webform_components($node);
     }
@@ -622,16 +625,16 @@ function webform_user_node_load($nodes, $types) {
     array(':nids' => array_keys($nodes)));
   foreach ($webform_users as $webform_user) {
     $webform_user = (array) $webform_user;
-    $nodes[ $webform_user['nid'] ]->is_webform_user = $webform_user['is_webform_user'];
-    $nodes[ $webform_user['nid'] ]->send_new_user_email = $webform_user['send_new_user_email'];
+    $nodes[$webform_user['nid']]->is_webform_user = $webform_user['is_webform_user'];
+    $nodes[$webform_user['nid']]->send_new_user_email = $webform_user['send_new_user_email'];
     $map = array();
     foreach ($maps as $row) {
       $row = (array) $row;
       if ($row['nid'] == $webform_user['nid']) {
-        $map[ $row['cid'] ] = $row['map_id'];
+        $map[$row['cid']] = $row['map_id'];
       }
     }
-    $nodes[ $webform_user['nid'] ]->map = $map;
+    $nodes[$webform_user['nid']]->map = $map;
   }
 }
 
@@ -863,12 +866,12 @@ function _webform_user_create_webform_components(&$node) {
       // Prevents fieldsets that aren't being used from getting created.
 
       if (isset($field['category_key']) && !empty($field['category_key'])) {
-        if (isset($fieldset_created[ $field['category_key'] ])){
-          $fieldset_id = $fieldset_created[ $field['category_key'] ];
+        if (isset($fieldset_created[$field['category_key']])) {
+          $fieldset_id = $fieldset_created[$field['category_key']];
         }
         else {
-          $fieldset_id = webform_component_insert($fieldset_lookup[ $field['category_key'] ]);
-          $fieldset_created[ $field['category_key'] ] = $fieldset_id; // Save the created id.
+          $fieldset_id = webform_component_insert($fieldset_lookup[$field['category_key']]);
+          $fieldset_created[$field['category_key']] = $fieldset_id; // Save the created id.
         }
       }
       /**
@@ -1053,14 +1056,14 @@ function _webform_user_save_profile_map($uid, &$map) {
         case 'checkboxes':
         case 'list_boolean':
           // These take integers. Always set them T or F.
-          $profile_values[ $field['name'] ] = !empty($map[ $field['name'] ]) ? 1 : 0;
-        break;
+          $profile_values[$field['name']] = !empty($map[$field['name']]) ? 1 : 0;
+          break;
         default:
           // Only add the profile result if the name is in the keys.
           if (in_array($field['name'], array_keys($map))) {
-            $profile_values[ $field['name'] ] = $map[ $field['name'] ];
+            $profile_values[$field['name']] = $map[$field['name']];
           }
-        break;
+          break;
       }
     }
     // Starting with the mail field.
@@ -1108,10 +1111,10 @@ function _webform_user_save_profile_map($uid, &$map) {
           $this_profile = array();
           $expected_fields = _profile_get_fields($category['name'], FALSE);
           foreach ($expected_fields as $expected_field) {
-            if (!isset($profile[ $expected_field->name ])) {
+            if (!isset($profile[$expected_field->name])) {
               // profile.module saves values in text field type as defined in hook_schema().
               // Aka mediumtext, 16 MB. So not really an issue for this.
-              $this_profile[ $expected_field->name ] = $profile_values[ $expected_field->name ];
+              $this_profile[$expected_field->name] = $profile_values[$expected_field->name];
             }
           }
           profile_save_profile($this_profile, $account, $category['name']);
@@ -1221,14 +1224,14 @@ function _webform_user_set_values(&$node) {
   $record = array(
     'nid' => $node->nid,
     'is_webform_user' => $is_webform_user,
-    'send_new_user_email' => $send_new_user_email
+    'send_new_user_email' => $send_new_user_email,
   );
   // Doesn't exist yet, add the data to the table.
   if (!$exists && $is_webform_user) {
     drupal_write_record('webform_user', $record);
   }
   else {
-  // Or update it.
+    // Or update it.
     drupal_write_record('webform_user', $record, array('nid'));
   }
 }
@@ -1316,7 +1319,10 @@ function theme_webform_user_webform_components_form($variables) {
 
   $node = $form['#node'];
 
-  $header = array(t('Label'), t('Type'), t('Value'), t('Mandatory'), t('Weight'), array('data' => t('Operations'), 'colspan' => 3));
+  $header = array(t('Label'), t('Type'), t('Value'), t('Mandatory'), t('Weight'), array(
+      'data' => t('Operations'),
+      'colspan' => 3,
+    ));
 
   // Add a row containing form elements for a new item.
   unset($form['add']['name']['#title'], $form['add_type']['#description']);
@@ -1331,9 +1337,15 @@ function theme_webform_user_webform_components_form($variables) {
     '',
     drupal_render($form['add']['mandatory']),
     drupal_render($form['add']['cid']) . drupal_render($form['add']['pid']) . drupal_render($form['add']['weight']),
-    array('colspan' => 3, 'data' => drupal_render($form['add']['add'])),
+    array(
+      'colspan' => 3,
+      'data' => drupal_render($form['add']['add']),
+    ),
   );
-  $add_form = array('data' => $row_data, 'class' => array('draggable', 'webform-add-form'));
+  $add_form = array(
+    'data' => $row_data,
+    'class' => array('draggable', 'webform-add-form'),
+  );
   $form_rendered = FALSE;
 
   if (!empty($node->webform['components'])) {
@@ -1342,70 +1354,16 @@ function theme_webform_user_webform_components_form($variables) {
     _webform_components_tree_build($node->webform['components'], $component_tree, 0, $page_count);
     $component_tree = _webform_components_tree_sort($component_tree);
     // Build the table rows.
-    function _webform_components_form_rows($node, $cid, $component, $level, &$form, &$rows, &$add_form) {
-      // Create presentable values.
-      if (drupal_strlen($component['value']) > 30) {
-        $component['value'] = drupal_substr($component['value'], 0, 30);
-        $component['value'] .= '...';
-      }
-      $component['value'] = check_plain($component['value']);
 
-      // Remove individual titles from the mandatory and weight fields.
-      unset($form['components'][$cid]['mandatory']['#title']);
-      unset($form['components'][$cid]['pid']['#title']);
-      unset($form['components'][$cid]['weight']['#title']);
-
-      // Add special classes for weight and parent fields.
-      $form['components'][$cid]['cid']['#attributes']['class'] = array('webform-cid');
-      $form['components'][$cid]['pid']['#attributes']['class'] = array('webform-pid');
-      $form['components'][$cid]['weight']['#attributes']['class'] = array('webform-weight');
-
-      // Build indentation for this row.
-      $indents = '';
-      for ($n = 1; $n <= $level; $n++) {
-        $indents .= '<div class="indentation">&nbsp;</div>';
-      }
-
-      // Add each component to a table row.
-      $row_data = array(
-        $indents . filter_xss($component['name']),
-        $form['add']['type']['#options'][$component['type']],
-        ($component['value'] == '') ? '-' : $component['value'],
-        drupal_render($form['components'][$cid]['mandatory']),
-        drupal_render($form['components'][$cid]['cid']) . drupal_render($form['components'][$cid]['pid']) . drupal_render($form['components'][$cid]['weight']),
-        _webform_user_edit_component_link($node, $cid),
-        _webform_user_clone_component_link($node, $cid),
-        _webform_user_delete_component_link($node, $cid),
-      );
-      $row_class = array('draggable');
-      if (!webform_component_feature($component['type'], 'group')) {
-        $row_class[] = 'tabledrag-leaf';
-      }
-      if ($component['type'] == 'pagebreak') {
-        $row_class[] = 'tabledrag-root';
-        $row_class[] = 'webform-pagebreak';
-        $row_data[0] = array('class' => array('webform-pagebreak'), 'data' => $row_data[0]);
-      }
-      $rows[] = array('data' => $row_data, 'class' => $row_class);
-      if (isset($component['children']) && is_array($component['children'])) {
-        foreach ($component['children'] as $cid => $component) {
-          _webform_components_form_rows($node, $cid, $component, $level + 1, $form, $rows, $add_form);
-        }
-      }
-
-      // Add the add form if this was the last edited component.
-      if (isset($_GET['cid']) && $component['cid'] == $_GET['cid'] && $add_form) {
-        $add_form['data'][0] = $indents . $add_form['data'][0];
-        $rows[] = $add_form;
-        $add_form = FALSE;
-      }
-    }
     foreach ($component_tree['children'] as $cid => $component) {
       _webform_components_form_rows($node, $cid, $component, 0, $form, $rows, $add_form);
     }
   }
   else {
-    $rows[] = array(array('data' => t('No Components, add a component below.'), 'colspan' => 9));
+    $rows[] = array(array(
+        'data' => t('No Components, add a component below.'),
+        'colspan' => 9,
+      ));
   }
 
   // Append the add form if not already printed.
@@ -1438,4 +1396,69 @@ function _webform_user_delete_component_link($node, $cid) {
     return l(t('Delete'), 'node/' . $node->nid . '/webform/components/' . $cid . '/delete', array('query' => drupal_get_destination()));
   }
   return '';
+}
+
+function _webform_components_form_rows($node, $cid, $component, $level, &$form, &$rows, &$add_form) {
+  // Create presentable values.
+  if (drupal_strlen($component['value']) > 30) {
+    $component['value'] = drupal_substr($component['value'], 0, 30);
+    $component['value'] .= '...';
+  }
+  $component['value'] = check_plain($component['value']);
+
+  // Remove individual titles from the mandatory and weight fields.
+  unset($form['components'][$cid]['mandatory']['#title']);
+  unset($form['components'][$cid]['pid']['#title']);
+  unset($form['components'][$cid]['weight']['#title']);
+
+  // Add special classes for weight and parent fields.
+  $form['components'][$cid]['cid']['#attributes']['class'] = array('webform-cid');
+  $form['components'][$cid]['pid']['#attributes']['class'] = array('webform-pid');
+  $form['components'][$cid]['weight']['#attributes']['class'] = array('webform-weight');
+
+  // Build indentation for this row.
+  $indents = '';
+  for ($n = 1; $n <= $level; $n++) {
+    $indents .= '<div class="indentation">&nbsp;</div>';
+  }
+
+  // Add each component to a table row.
+  $row_data = array(
+    $indents . filter_xss($component['name']),
+    $form['add']['type']['#options'][$component['type']],
+    ($component['value'] == '') ? '-' : $component['value'],
+    drupal_render($form['components'][$cid]['mandatory']),
+    drupal_render($form['components'][$cid]['cid']) . drupal_render($form['components'][$cid]['pid']) . drupal_render($form['components'][$cid]['weight']),
+    _webform_user_edit_component_link($node, $cid),
+    _webform_user_clone_component_link($node, $cid),
+    _webform_user_delete_component_link($node, $cid),
+  );
+  $row_class = array('draggable');
+  if (!webform_component_feature($component['type'], 'group')) {
+    $row_class[] = 'tabledrag-leaf';
+  }
+  if ($component['type'] == 'pagebreak') {
+    $row_class[] = 'tabledrag-root';
+    $row_class[] = 'webform-pagebreak';
+    $row_data[0] = array(
+      'class' => array('webform-pagebreak'),
+      'data' => $row_data[0],
+    );
+  }
+  $rows[] = array(
+    'data' => $row_data,
+    'class' => $row_class,
+  );
+  if (isset($component['children']) && is_array($component['children'])) {
+    foreach ($component['children'] as $cid => $component) {
+      _webform_components_form_rows($node, $cid, $component, $level + 1, $form, $rows, $add_form);
+    }
+  }
+
+  // Add the add form if this was the last edited component.
+  if (isset($_GET['cid']) && $component['cid'] == $_GET['cid'] && $add_form) {
+    $add_form['data'][0] = $indents . $add_form['data'][0];
+    $rows[] = $add_form;
+    $add_form = FALSE;
+  }
 }

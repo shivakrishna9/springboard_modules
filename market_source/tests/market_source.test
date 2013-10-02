@@ -23,7 +23,7 @@ class MarketSourceTestCase extends DrupalWebTestCase {
       'administer site configuration',
       'access all webform results',
       'create webform content',
-      'edit own webform content'
+      'edit own webform content',
     ));
   }
 

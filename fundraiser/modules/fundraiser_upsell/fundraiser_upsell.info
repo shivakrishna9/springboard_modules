@@ -4,4 +4,5 @@ core = 7.x
 package = Jackson River Springboard - extras
 dependencies[] = fundraiser
 dependencies[] = fundraiser_sustainers
-version =  7.x-3.0-dev
+dependencies[] = email_wrappers
+version =  7.x-4.x-dev

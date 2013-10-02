@@ -58,7 +58,7 @@ function fundraiser_webform_webform_goals_track_metric($goal, $params = array())
     elseif (!empty($goal['extra']['selected_node_type'])) {
       $nids = _webform_goals_nids_by_type($goal['extra']['selected_node_type']);
       if (is_array($nids)) {
-        foreach($nids as $nid) {
+        foreach ($nids as $nid) {
           $donations = fundraiser_get_total_donations_by_nid($nid, $goal['start_date'], $goal['end_date']);
           if ($donations) {
             $data['count'] += $donations;
@@ -73,7 +73,7 @@ function fundraiser_webform_webform_goals_track_metric($goal, $params = array())
 }
 
 function fundraiser_webform_is_fundraiser_goal($selected_context, $form_state, $goal = array()) {
-   if ($selected_context['id'] == 'single' || $selected_context['id'] == 'group') {
+  if ($selected_context['id'] == 'single' || $selected_context['id'] == 'group') {
     $type = '';
     if (!empty($goal['extra']['selected_form_id'])) {
       $nid = $goal['extra']['selected_form_id'];
