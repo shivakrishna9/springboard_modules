@@ -10,6 +10,17 @@
 class FundraiserTestCase extends DrupalWebTestCase {
 
   /**
+   * Implements getInfo(). Declares this test class to fundraiser testing.
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'General API for Fundraiser Tests',
+      'description' => 'Provides an API for testing fundraiser and related modules.',
+      'group' => 'Fundraiser',
+    );
+  }
+
+  /**
    * Implements setUp().
    */
   public function setUp($additional_modules = array()) {
