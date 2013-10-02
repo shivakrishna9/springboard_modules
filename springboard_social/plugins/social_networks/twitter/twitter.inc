@@ -1,8 +1,8 @@
 <?php
 
 $plugin = array(
-  'name' => 'Twitter',
-  'title' => t('Facebook'),
+  'name' => 'twitter',
+  'title' => t('Twitter'),
   'settings' => 'twitter_settings',
   'admin_settings' => 'twitter_admin_settings',
   'process' => 'twitter_process_settings',

@@ -134,24 +134,21 @@ function sb_social_block_view($delta = '') {
     }
     $sid = _sb_social_sid_by_id($id);
     $settings = sb_social_settings_load($sid);
-    $submission_id = isset($_GET['sid']) ? $_GET['sid'] : FALSE;
-    ctools_include('plugins');
-    $plugins = ctools_get_plugins('sb_social', 'social_networks');
-    $enabled_services = sb_social_get_enabled_services();
-    $services = array_keys($plugins);
+    $plugins = sb_social_get_enabled_plugins();
 
     // render button for each enabled service
-    foreach ($services as $service) {
-      if (in_array($service, $enabled_services)) {
-        $vars['service'] = $service;
-        $vars['url'] = sb_social_short_url($service, $settings, $submission_id);
-        $vars['extra'] = '';
-        if (isset($plugins[$service]['button_extra'])) {
-          $func = $plugins[$service]['button_extra'];
+    foreach ($plugins as $service => $plugin) {
+      $vars['service'] = $service;
+      $vars['url'] = sb_social_short_url($service, $settings);
+      $vars['extra'] = '';
+
+      if (isset($plugin['button_extra'])) {
+        $func = $plugin['button_extra'];
+        if (function_exists($func)) {
           $vars['extra'] = $func($settings['data'][$service]);
         }
-        $buttons[] = theme('sb_social_share_button', $vars);
       }
+      $buttons[] = theme('sb_social_share_button', $vars);
     }
     $buttons = implode("\n", $buttons);
     $block['subject'] = NULL;
@@ -166,8 +163,7 @@ function sb_social_block_view($delta = '') {
 function sb_social_get_enabled_plugins() {
   static $enabled_plugins = array();
   if (empty($enabled_plugins)) {
-    ctools_include('plugins');
-    $plugins = ctools_get_plugins('sb_social', 'social_networks');
+    $plugins = sb_social_list_plugins();
     $enabled_services = sb_social_get_enabled_services();
     $services = array_keys($plugins);
     foreach ($enabled_services as $service) {
@@ -177,6 +173,18 @@ function sb_social_get_enabled_plugins() {
     }
   }
   return $enabled_plugins;
+}
+
+/**
+ * List all available plugins.
+ */
+function sb_social_list_plugins() {
+  static $plugins = array();
+  if (empty($plugins)) {
+    ctools_include('plugins');
+    $plugins = ctools_get_plugins('sb_social', 'social_networks');
+  }
+  return $plugins;
 }
 
 /**
@@ -202,11 +210,8 @@ function sb_social_access_node_settings($node) {
  *
  * purge share content settings when a node is deleted
  */
-function sb_social_node_delete($node) {
-  $sid = sb_social_get_sid_by_id($node->nid);
-  if (is_numeric($sid) && $sid) {
-    sb_social_settings_delete($sid);
-  }
+ function sb_social_node_delete($node) {
+   sb_social_webform_settings_delete($node->nid);
 }
 
 /**
@@ -244,22 +249,21 @@ function sb_social_init() {
     $settings = sb_social_settings_load($sid);
 
     if ($settings) {
-      ctools_include('plugins');
-      $plugins = ctools_get_plugins('sb_social', 'social_networks');
-      $enabled_services = sb_social_get_enabled_services();
+      $plugins = sb_social_get_enabled_plugins();
       $path = drupal_get_path('module', 'sb_social');
 
       foreach ($plugins as $service => $plugin) {
 
-        if (is_array($enabled_services) && in_array($service, $enabled_services)) {
-          // run config callbacks, this sets up js settings, opengraph tags, etc.
-          $func = $plugin['share_config'];
+        // run config callbacks, this sets up js settings, opengraph tags, etc.
+        $func = $plugin['share_config'];
+        if (function_exists($func)) {
+          drupal_set_message('invoking share function:' . $func);
           $func($settings, $node, $sid);
+        }
 
-          // if the plugin has a js file to add, include it here. Note: only one include per plugin is supported.
-          if (!empty($plugin['js'])) {
-            drupal_add_js($path . '/' . $plugin['js']);
-          }
+        // if the plugin has a js file to add, include it here. Note: only one include per plugin is supported.
+        if (!empty($plugin['js'])) {
+          drupal_add_js($path . '/' . $plugin['js']);
         }
       }
       $prefix = !empty($_SERVER['HTTPS']) ? 'https://' : 'http://';
@@ -278,6 +282,31 @@ function sb_social_init() {
         'sid' => $data[2],
       )), 'setting');
   }
+}
+
+
+
+function sb_social_share_url($nid, $uid, $sid, $service, $settings) {
+  $node = node_load($nid);
+
+  $options = array(
+    'absolute' => TRUE,
+    'query' => array(
+      'social_referer_transaction' => $sid,
+      'social_referrer_network' => $service,
+    ),
+  );
+
+  if (module_exists('market_source') && isset($settings['data']['market_source'])) {
+    foreach ($settings['data']['market_source'] as $key => $value) {
+      if (!$value) {
+        continue;
+      }
+      $options['query'][$key] = $value;
+    }
+  }
+  $url = url('node/' . $nid, $options);
+  return url('node/' . $nid, $options);
 }
 
 /**
@@ -442,6 +471,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
     $settings = sb_social_settings_load($sid);
     $enabled_plugins = sb_social_get_enabled_plugins();
     $submission_id = (isset($_GET['sid']) && is_numeric($_GET['sid'])) ? $_GET['sid'] : FALSE;
+
     foreach ($enabled_plugins as $service => $plugin) {
       if (!empty($plugin['token_replace'])) {
         $func = $plugin['token_replace'];
@@ -455,15 +485,22 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
     if (in_array('share_links', $keys)) {
       foreach ($enabled_plugins as $service => $plugin) {
         $vars['service'] = $service;
+        // TODO: check this
         $vars['url'] = sb_social_short_url($service, $settings, $submission_id);
         $vars['extra'] = '';
-        if (isset($plugins[$service]['button_extra'])) {
-          $func = $plugins[$service]['button_extra'];
-          $vars['extra'] = $func($settings['data'][$service]);
+
+        // Some buttons (like email) require additional html attributes. The button_extra callback
+        // provides these values.
+        if (isset($plugin['button_extra'])) {
+          $func = $plugin['button_extra'];
+          if (function_exists($func)) {
+            $vars['extra'] = $func($settings['data'][$service]);
+          }
         }
         $buttons[] = theme('sb_social_share_button', $vars);
       }
       $buttons = implode("\n", $buttons);
+      // TODO: check this
       $replacements['[sb_social:share_links]'] = $enabled_plugins ? theme('sb_social_share', array('buttons' => $buttons)) : '';
     }
     return $replacements;
@@ -595,14 +632,7 @@ function theme_sb_social_share_image_preview($variables) {
     $output .= '</span><input type="submit" id="edit-' . $element['#name'] . '-remove-button" name="' . $element['#name'] . '_remove_button" value="Remove" class="form-submit ajax-processed">';
     $output .= '<input type="hidden" name="' . $element['#name'] . '[fid]" value="' . $element['#file']->fid . '">';
 
-    return $output['service'] = $service;
-        $vars['url'] = sb_social_short_url($service, $settings);
-        $vars['extra'] = '';
-        if (isset($plugins[$service]['button_extra'])) {
-          $func = $plugins[$service]['button_extra'];
-          $vars['extra'] = $func($settings['data'][$service]);
-        }
-        $buttons[] = theme('sb_social_share_button', $vars);
+    return $output;
   }
 }
 

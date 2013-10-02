@@ -4,12 +4,12 @@
  * Admin settings
  */
 function sb_social_admin() {
-  // TODO: abstract services. Some kind of plugin architecture would be optimal.
-  $services = array(
-    'facebook' => t('Facebook'),
-    'twitter' => t('Twitter'),
-    'email' => t('Email'),
-  );
+  
+  $plugins = sb_social_list_plugins();
+ 
+  foreach ($plugins as $plugin) {
+    $services[$plugin['name']] = $plugin['title'];
+  }
   $form['springboard_social_services'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Enabled services'),
@@ -22,12 +22,12 @@ function sb_social_admin() {
     '#default_value' => variable_get('springboard_social_addthis_profile_id', ''),
   );
 
-  // load service specific settings fields from plugins
-  ctools_include('plugins');
-  $plugins = ctools_get_plugins('sb_social', 'social_networks');
+  // Each plugin should implement an an admin settings callback that outputs the specific
+  // form fields required by the service. These fields are used to configure sitewide
+  // defaults for share content.
   foreach ($plugins as $service => $plugin) {
     $func = isset($plugin['admin_settings']) ? $plugin['admin_settings'] : FALSE;
-    if ($func) {
+    if (function_exists($func)) {
       $func($form);
     }
   }
@@ -193,12 +193,15 @@ function sb_social_path_settings($form, $edit, $sid = NULL) {
     );
   }
 
-  ctools_include('plugins');
-  $plugins = ctools_get_plugins('sb_social', 'social_networks');
+  $plugins = sb_social_list_plugins();
 
-  foreach ($plugins as $id => $plugin) {
-    $func = $plugin['settings'];
-    $func($form, $enabled_services, $settings['data'][$id], $token_set);
+  // Each plugin should implement a settings callback function that provides the required
+  // form elements to configure share content for this service.
+  foreach($plugins as $service => $plugin) {
+    $func = isset($plugin['settings']) ? $plugin['settings'] : FALSE;
+    if ($func && function_exists($func)) {
+      $func($form, $enabled_services, $settings['data'][$service], $token_set);
+    }
   }
 
   // Market Source settings
@@ -254,13 +257,13 @@ function sb_social_path_settings_validate(&$form, $form_state) {
  * to db.
  */
 function sb_social_path_settings_submit($form, &$form_state) {
-  ctools_include('plugins');
-  $plugins = ctools_get_plugins('sb_social', 'social_networks');
+  $plugins = sb_social_list_plugins();
 
   $data = array();
   $enabled_services = sb_social_get_enabled_services();
   $keys = array_keys($plugins);
 
+  // TODO: replace this code block and others like it with a helper function that executes the desired service callback(s).
   if (is_array($enabled_services)) {
     foreach ($enabled_services as $service) {
       if (in_array($service, $keys)) {
@@ -358,9 +361,8 @@ function sb_social_node_settings($form, $edit, $node) {
     '#value' => 'node',
   );
 
-  ctools_include('plugins');
-  $plugins = ctools_get_plugins('sb_social', 'social_networks');
-
+  $plugins = sb_social_list_plugins();
+   
   foreach ($enabled_services as $service) {
     if (!empty($plugins[$service]['settings'])) {
       $func = $plugins[$service]['settings'];
@@ -383,8 +385,7 @@ function sb_social_node_settings($form, $edit, $node) {
 
 
 function sb_social_settings_submit($form, $form_state) {
-  ctools_include('plugins');
-  $plugins = ctools_get_plugins('sb_social', 'social_networks');
+  $plugins = sb_social_list_plugins();
 
   $data = array();
   $enabled_services = sb_social_get_enabled_services();
