@@ -7,5 +7,5 @@ configure = admin/config/system/fundraiser
 dependencies[] = token
 ;Testing files
 files[] = tests/fundraiser.test
-;files[] = tests/fundraiser.unit.test
+files[] = tests/fundraiser.form.test
 files[] = tests/fundraiser.clone.test

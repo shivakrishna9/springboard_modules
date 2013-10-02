@@ -5,12 +5,12 @@
  */
 
 // Include the setup test class.
-module_load_include('test', 'fundraiser', 'tests/fundraiser.setup');
+module_load_include('test', 'fundraiser', 'tests/fundraiser');
 
 /**
  * Fundraiser cloning test class.
  */
-class FundraiserCloneTest extends FundraiserSetup {
+class FundraiserCloneTest extends FundraiserTestCase {
 
   /**
    * Implementation of getInfo().

@@ -6,9 +6,9 @@
  */
 
 // Include the setup test class.
-module_load_include('test', 'fundraiser', 'tests/fundraiser.setup');
+module_load_include('test', 'fundraiser', 'tests/fundraiser');
 
-class FundraiserCommerceGatewayTest extends FundraiserSetup {
+class FundraiserCommerceGatewayTest extends FundraiserTestCase {
   protected $privileged_user;
 
   public static function getInfo() {

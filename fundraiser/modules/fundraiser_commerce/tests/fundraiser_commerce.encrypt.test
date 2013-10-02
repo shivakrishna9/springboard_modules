@@ -6,9 +6,9 @@
  */
 
 // Include the setup test class.
-module_load_include('test', 'fundraiser', 'tests/fundraiser.setup');
+module_load_include('test', 'fundraiser', 'tests/fundraiser');
 
-class FundraiserCommerceEncryptTest extends FundraiserSetup {
+class FundraiserCommerceEncryptTest extends FundraiserTestCase {
 
   public static function getInfo() {
     return array(

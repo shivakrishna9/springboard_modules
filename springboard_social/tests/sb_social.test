@@ -7,12 +7,12 @@
  */
 
 // Include the setup test class.
-module_load_include('test', 'fundraiser', 'tests/fundraiser.setup');
+module_load_include('test', 'fundraiser', 'tests/fundraiser');
 
 /**
  * Setup and tear down web class. Does nothing else.
  */
-class SpringboardSocialFunctionalTest extends FundraiserSetup {
+class SpringboardSocialFunctionalTest extends FundraiserTestCase {
 
   /**
    * Implements getInfo(). Declares this test class to fundraiser testing.
