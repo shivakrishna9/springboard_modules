@@ -12,7 +12,7 @@ function commerce_litle_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     // Create the payment_method array with the commerce gateway method info name as the key
     'payment_method' => array('commerce_litle_cc' => 'credit', 'commerce_litle_echeck' => 'bank account'),
-    'allow_recurring' => array('credit', 'bank account'),
+    'allow_recurring' => array('credit'),
     'form callback' => 'commerce_litle_fundraiser_commerce_submit_form',
     'cleanup callback' => 'commerce_litle_fundraiser_commerce_cleanup',
     'scrub callback' => 'commerce_litle_fundraiser_commerce_scrub',
@@ -161,7 +161,7 @@ function commerce_litle_fundraiser_commerce_charge($method_instance, $donation) 
  * @param int $uid  User ID
  * @param int $instance_id  Payment method instance ID
  *
- * @return int|string  The string 'new' or a card_id from cardonfile.
+ * @return string  The string 'new' or a card_id from cardonfile.
  */
 function commerce_litle_get_cardonfile_pane_value($uid, $instance_id) {
   // Make a new token unless we already have one on record.
