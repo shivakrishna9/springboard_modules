@@ -23,11 +23,11 @@ class FundraiserTestCase extends DrupalWebTestCase {
   /**
    * Implements setUp().
    */
-  public function setUp($additional_modules = array()) {
+  public function setUp($modules = array()) {
     // This module sets up the basic fundraiser environment for testing.
     // Assumptions: fundraiser_commerce, and fundraiser_webform.
     // Additional modules to be turned on.
-    $enable_modules = array(
+    $modules = array_merge($modules, array(
       'encrypt',
       'fundraiser',
       'webform_user',
@@ -43,9 +43,8 @@ class FundraiserTestCase extends DrupalWebTestCase {
 
       // Gateway.
       'commerce_payment_example',
-    );
-    $enable_modules = array_merge($enable_modules, $additional_modules);
-    parent::setUp($enable_modules);
+    ));
+    parent::setUp($modules);
 
     // Create a key file
     variable_set('encrypt_secure_key_path', DRUPAL_ROOT . '/' . variable_get('file_public_path', conf_path() . '/files'));

@@ -12,13 +12,11 @@ class WebformUserSetup extends DrupalWebTestCase {
   /**
    * Implementation of setUp().
    */
-  public function setUp($additional_modules = array()) {
-    $enable_modules = array(
+  public function setUp($modules = array()) {
+    $modules = array_merge($modules, array(
       'webform_user',
-    );
-
-    $enable_modules = array_merge($enable_modules, $additional_modules);
-    parent::setUp($enable_modules);
+    ));
+    parent::setUp($modules);
 
     // Setup the environment to a default standard.
     $this->_webform_user_setup_user_profile();

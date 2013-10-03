@@ -28,12 +28,11 @@ class SpringboardSocialFunctionalTest extends FundraiserTestCase {
   /**
    * Implements setUp().
    */
-  public function setUp($addtional_modules = array()) {
+  public function setUp($modules = array()) {
     // hijack mail system
     variable_set('mail_system', array('default-system' => 'TestingMailSystem'));
 
-
-    $additional_modules = array(
+    $modules = array_merge($modules, array(
       'sb_social',
       'shorten',
       'ctools',
@@ -41,8 +40,8 @@ class SpringboardSocialFunctionalTest extends FundraiserTestCase {
       'clone',
       'webform',
       //'webform_confirmations',
-    );
-    parent::setUp($additional_modules);
+    ));
+    parent::setUp($modules);
   }
 
   // tests

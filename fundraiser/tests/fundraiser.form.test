@@ -26,11 +26,11 @@ class FundraiserFormTestCase extends FundraiserTestCase {
   /**
    * Implements setUp().
    */
-  public function setUp($additional_modules = array()) {
-    $additional_modules = array(
+  public function setUp($modules = array()) {
+    $modules = array_merge($modules, array(
       'webform_confirmations',
-    );
-    parent::setUp($additional_modules);
+    ));
+    parent::setUp($modules);
   }
 
   /**
