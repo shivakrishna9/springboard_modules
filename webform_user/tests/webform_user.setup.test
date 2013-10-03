@@ -12,7 +12,7 @@ class WebformUserSetup extends DrupalWebTestCase {
   /**
    * Implementation of setUp().
    */
-  public function setUp($modules = array()) {
+  public function setUp($modules = array(), $permissions = array()) {
     $modules = array_merge($modules, array(
       'webform_user',
     ));

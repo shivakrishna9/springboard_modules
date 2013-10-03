@@ -16,12 +16,15 @@ class securePrepopulateUnitTestCase extends DrupalWebTestCase {
     );
   }
 
-  public function setUp($modules = array()) {
+  public function setUp($modules = array(), $permissions = array()) {
     // Enable any module that you will need in your tests.
     $modules = array_merge($modules, array(
       'secure_prepopulate',
     ));
     parent::setUp($modules);
+
+    $this->admin_user = $this->drupalCreateUser($permissions);
+    $this->drupalLogin($this->admin_user);
   }
 
   public function testCrypt() {

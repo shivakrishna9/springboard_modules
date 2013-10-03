@@ -39,7 +39,7 @@ class SalesforceLogTestCase extends SalesforceQueueTestCase {
       'salesforce_queue',
       'salesforce_log',
     );
-    parent::setUp($modules);
+    parent::setUp($modules, $permissions);
 
     // Create an admin user.
     $permissions = $permissions + array(

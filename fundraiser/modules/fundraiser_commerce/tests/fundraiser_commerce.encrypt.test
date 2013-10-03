@@ -25,7 +25,7 @@ class FundraiserCommerceEncryptTest extends FundraiserTestCase {
     $modules = array_merge($modules, array(
       'encrypt',
     ));
-    parent::setUp($modules);
+    parent::setUp($modules, $permissions);
 
     $permissions = array_merge($permissions, array(
       'administer site configuration',

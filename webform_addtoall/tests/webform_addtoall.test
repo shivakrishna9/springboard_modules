@@ -18,20 +18,21 @@ class WebformAddToAllTestCase extends DrupalWebTestCase {
   /**
    * Implementation of setUp().
    */
-  public function setUp($modules = array()) {
+  public function setUp($modules = array(), $permissions = array()) {
     $modules = array_merge($modules, array(
       'webform',
       'webform_addtoall',
     ));
     parent::setUp($modules);
 
-    $this->privileged_user = $this->drupalCreateUser(array(
+    $permissions = array_merge($permissions, array(
       'administer site configuration',
       'add components to any webform type',
       'create webform content',
       'edit own webform content',
       'access all webform results',
     ));
+    $this->privileged_user = $this->drupalCreateUser($permissions);
     $this->drupalLogin($this->privileged_user);
   }
 

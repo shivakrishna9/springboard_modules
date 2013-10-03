@@ -17,11 +17,14 @@ class FundraiserWebformUnitTestSetup extends DrupalWebTestCase {
   /**
    * Implemenation of setUp().
    */
-  public function setUp($modules = array()) {
+  public function setUp($modules = array(), $permissions = array()) {
     $modules = array_merge($modules, array(
       'fundraiser_webform',
     ));
     parent::setUp($modules);
+
+    $this->admin_user = $this->drupalCreateUser($permissions);
+    $this->drupalLogin($this->admin_user);
   }
 }
 

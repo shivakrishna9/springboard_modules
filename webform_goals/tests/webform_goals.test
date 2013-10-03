@@ -8,40 +8,41 @@ class WebformUserIntegratedTestSetup extends DrupalWebTestCase {
   /**
    * Implements setUp().
    */
-  public function setUp($modules = array()) {
+  public function setUp($modules = array(), $permissions = array()) {
     $modules = array_merge($modules, array(
       'webform_goals',
     ));
     parent::setUp($modules);
 
     // Create user accounts.
-
-    // Create a webform editor to test creating and editing own content.
-    $permissions['editor'] = array(
-      'access content',
-      'create webform content',
-      'edit own webform content',
-      'access all webform results',
-    );
-    // Create a webform admin that will do all node creation.
-    $permissions['admin'] = array(
-      'access content',
-      'administer nodes',
-      'create webform content',
-      'edit any webform content',
-      'access all webform results',
-      'edit all webform submissions',
-      'delete all webform submissions',
-      'administer users',
-      'administer user map',
-      'alter webform components',
-      'configure webform settings',
-      'configure webform emails',
-    );
-
+    $permissions = array_merge($permissions, array(
+      // Create a webform editor to test creating and editing own content.
+      'editor' => array(
+        'access content',
+        'create webform content',
+        'edit own webform content',
+        'access all webform results',
+      ),
+      // Create a webform admin that will do all node creation.
+      'admin' =>array(
+        'access content',
+        'administer nodes',
+        'create webform content',
+        'edit any webform content',
+        'access all webform results',
+        'edit all webform submissions',
+        'delete all webform submissions',
+        'administer users',
+        'administer user map',
+        'alter webform components',
+        'configure webform settings',
+        'configure webform emails',
+      ),
+    ));
     foreach ($permissions as $user_key => $role_permissions) {
       $this->users[$user_key] = $this->drupalCreateUser($role_permissions);
     }
+    $this->drupalLogin($this->users['admin']);
   }
 }
 

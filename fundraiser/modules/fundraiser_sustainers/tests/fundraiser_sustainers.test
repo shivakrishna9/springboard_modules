@@ -26,11 +26,11 @@ class FundraiserSustainerTest extends FundraiserTestCase {
   /**
    * Implements setUp().
    */
-  public function setUp($modules = array()) {
+  public function setUp($modules = array(), $permissions = array()) {
     $modules = array_merge($modules, array(
       'fundraiser_sustainers',
     ));
-    parent::setUp($modules);
+    parent::setUp($modules, $permissions);
   }
 
   /**

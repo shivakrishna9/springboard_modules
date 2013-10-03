@@ -18,7 +18,7 @@ class EmailWrappersTestCase extends DrupalWebTestCase {
   /**
    * Implementation of setUp().
    */
-  public function setUp($modules = array()) {
+  public function setUp($modules = array(), $permissions = array()) {
     $modules = array_merge($modules, array(
       'ctools',
       'email_wrappers',
@@ -29,7 +29,7 @@ class EmailWrappersTestCase extends DrupalWebTestCase {
     // jam email system
     variable_set('mail_system', array('default-system' => 'TestingMailSystem'));
 
-    $this->privileged_user = $this->drupalCreateUser(array(
+    $permissions = array_merge($permissions, array(
       'administer site configuration',
       'create webform content',
       'create email_wrapper content',
@@ -37,6 +37,7 @@ class EmailWrappersTestCase extends DrupalWebTestCase {
       'edit own email_wrapper content',
       'access all webform results',
     ));
+    $this->privileged_user = $this->drupalCreateUser($permissions);
     $this->drupalLogin($this->privileged_user);
   }
 

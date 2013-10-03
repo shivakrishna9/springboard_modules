@@ -13,13 +13,16 @@ class SecurePrepopulateTestCase extends DrupalWebTestCase {
   /**
    * Implementation of setUp().
    */
-  public function setUp($modules = array()) {
+  public function setUp($modules = array(), $permissions = array()) {
     $modules = array_merge($modules, array(
       'webform',
       'profile',
       'secure_prepopulate',
     ));
     parent::setUp($modules);
+
+    $this->admin_user = $this->drupalCreateUser($permissions);
+    $this->drupalLogin($this->admin_user);
 
     // set up some default variables
     variable_set('secure_prepopulate_key', '12345678901234561234567890123456');

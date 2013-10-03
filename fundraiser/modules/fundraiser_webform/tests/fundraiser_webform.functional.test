@@ -26,13 +26,13 @@ class FundraiserWebformFunctionalTest extends FundraiserTestCase {
   /**
    * Implements setUp().
    */
-  public function setUp($modules = array()) {
+  public function setUp($modules = array(), $permissions = array()) {
     $modules = array_merge($modules, array(
       'webform_confirmations',
       'email_wrappers',
       'ctools',
     ));
-    parent::setUp($modules);
+    parent::setUp($modules, $permissions);
 
     // hijack mail system
     variable_set('mail_system', array('default-system' => 'TestingMailSystem'));

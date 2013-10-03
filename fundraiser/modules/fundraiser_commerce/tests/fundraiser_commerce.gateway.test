@@ -20,7 +20,7 @@ class FundraiserCommerceGatewayTest extends FundraiserTestCase {
   }
 
   public function setUp($modules = array(), $permissions = array()) {
-    parent::setUp($modules);
+    parent::setUp($modules, $permissions);
 
     $permissions = array_merge($permissions, array(
       'administer site configuration',

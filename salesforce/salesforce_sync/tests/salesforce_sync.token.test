@@ -24,7 +24,7 @@ class SalesforceSyncTokenTestCase extends DrupalWebTestCase {
   /**
    * Implementation of setUp().
    */
-  public function setUp($modules = array()) {
+  public function setUp($modules = array(), $permissions = array()) {
     $modules = $modules + array(
       'libraries',
       'salesforce',

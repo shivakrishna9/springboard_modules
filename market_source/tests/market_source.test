@@ -16,19 +16,21 @@ class MarketSourceTestCase extends DrupalWebTestCase {
     );
   }
 
-  public function setUp($modules = array()) {
+  public function setUp($modules = array(), $permissions = array()) {
     $modules = array_merge($modules, array(
       'market_source',
       'webform',
     ));
     parent::setUp($modules);
 
-    $this->privileged_user = $this->drupalCreateUser(array(
+    $permissions = array_merge($permissions, array(
       'administer site configuration',
       'access all webform results',
       'create webform content',
       'edit own webform content',
     ));
+    $this->privileged_user = $this->drupalCreateUser($permissions);
+    $this->drupalLogin($this->privileged_user);
   }
 
   /**

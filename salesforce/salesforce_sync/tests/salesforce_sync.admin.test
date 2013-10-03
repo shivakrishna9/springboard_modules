@@ -26,8 +26,8 @@ class SalesforceSyncAdminTestCase extends SalesforceSyncTestCase {
   /**
    * Implementation of setUp().
    */
-  public function setUp($modules = array()) {
-    parent::setUp($modules);
+  public function setUp($modules = array(), $permissions = array()) {
+    parent::setUp($modules, $permissions);
 
     // Path to config page.
     $this->path = 'admin/config/salesforce/salesforce-sync/config';
