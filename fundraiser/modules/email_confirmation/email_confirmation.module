@@ -615,7 +615,6 @@ function email_confirmation_fundraiser_order_success($order) {
  * Implements hook_mail().
  */
 function email_confirmation_mail($key, &$message, $params) {
-
   // To make the HTML email work, implement all our own headers
   $boundary = '----=_NextPart_' . md5(uniqid());
 
@@ -629,8 +628,8 @@ function email_confirmation_mail($key, &$message, $params) {
   $default_from = '"' . $params['from_name'] . '" <' . $params['from_address'] . '>';
   $headers['From'] = $headers['Sender'] =  $headers['Return-Path'] = $headers['Errors-To'] = $default_from;
 
-  if (!empty($params->bcc_address)) {
-    $headers['Bcc'] = $params['bcc_address'];
+  if (is_array($params) && !empty($params['bcc'])) {
+    $headers['Bcc'] = $params['bcc'];
   }
   //
   // Now create the message, with an HTML component and a plaintext component
