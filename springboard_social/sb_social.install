@@ -17,10 +17,13 @@ function sb_social_uninstall() {
   variable_del('springboard_social_services');
   variable_del('springboard_social_addthis_profile_id');
   variable_del('springboard_social_facebook_description');
+  variable_del('springboard_social_debug_mode');
+  variable_del('springboard_social_enabled_content_types');
 
-  db_query("DELETE FROM {variable} WHERE name LIKE 'springboard_social_facebook%'")->execute();
-  db_query("DELETE FROM {variable} WHERE name LIKE 'springboard_social_twitter%'")->execute();
-  db_query("DELETE FROM {variable} WHERE name LIKE 'springboard_social_ms%'")->execute();
+  db_query("DELETE FROM {variable} WHERE name LIKE 'springboard_social_facebook%'");
+  db_query("DELETE FROM {variable} WHERE name LIKE 'springboard_social_twitter%'");
+  db_query("DELETE FROM {variable} WHERE name LIKE 'springboard_social_email%'");
+  db_query("DELETE FROM {variable} WHERE name LIKE 'springboard_social_ms%'");
 }
 /**
  * Implements hook_schema().

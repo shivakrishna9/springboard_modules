@@ -4,13 +4,43 @@
  * Admin settings form
  */
 function sb_social_admin() {
-  
+  $form['springboard_social_addthis_profile_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('AddThis Profile ID'),
+    '#default_value' => variable_get('springboard_social_addthis_profile_id', ''),
+    '#required' => TRUE,
+  );
+  $form['springboard_social_debug_mode'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable debug mode'),
+    '#default_value' => variable_get('springboard_social_debug_mode', 0),
+  );
+  // enable social settings tab on a per-content-type basis
+  $form['content_types'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Enable social sharing for the following content types'),
+  );
+  $content_types = node_type_get_types();
+  dsm($content_types);
+  foreach ($content_types as $key => $type) {
+    $content_type_options[$type->type] = $type->name;
+  }
+  $form['content_types']['springboard_social_enabled_content_types'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Enabled content types'),
+    '#options' => $content_type_options,
+    '#default_value' => variable_get('springboard_social_enabled_content_types', array()),
+  );
+
+  $form['services'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Enable social sharing services'),
+  );
   $plugins = sb_social_list_plugins();
- 
   foreach ($plugins as $plugin) {
     $services[$plugin['name']] = $plugin['title'];
   }
-  $form['springboard_social_services'] = array(
+  $form['services']['springboard_social_services'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Enabled services'),
     '#options' => $services,
@@ -169,10 +199,16 @@ function sb_social_path_settings($form, $edit, $sid = NULL) {
 
   $enabled_services = sb_social_get_enabled_services();
   $settings = sb_social_settings_load($sid);
-
+   dsm($settings, 'settings');
   // differentiate add vs edit forms, prevents path validation from incorrectly flagging an edit form
   // as a dupe on hook_validate.
-  $edit['is_new'] = !$settings;
+  $edit['is_new'] = $sid === NULL ? TRUE : FALSE;
+  // since sb_social_settings_load() will load global defaults if no settings are currently available,
+  // we override the default ID for new paths. This prevents the url of the path add page from
+  // getting populated in the path field when creating new path settings.
+  if ($edit['is_new']) {
+    $settings['id'] = '';
+  }
   if (is_numeric($sid) && $sid) {
     $settings['path'] = sb_social_get_id_by_sid($sid);
   }

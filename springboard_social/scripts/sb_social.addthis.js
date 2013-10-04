@@ -3,7 +3,6 @@ var addthis_config = {
 };
 
 var addthis_share = {
-  'url' : 'http://www.google.com'
 };
 
 
@@ -16,15 +15,19 @@ var addthis_share = {
       window.addthis_config = {
         pubid: Drupal.settings.sb_social.pubid
       };
-      // event listener logs share event
-      if (typeof window.addthis !== "undefined") {
-        window.addthis.addEventListener('addthis.menu.share', shareResponse);
-      }
 
-      // Of course Facebook requires special handling, how could it be otherwise?
-      $('.social-share-link.facebook').click(function() {
+      // hijack click event for share links, apply share url provided by share tracker
+      $('.social-share-link').click(function() {
           $elem = $(this);
-          $url = '/sb_social/share_event/facebook/';
+          if ($(this).hasClass('facebook')) {
+            $url = '/sb_social/share_event/facebook/';
+          }
+          if ($(this).hasClass('twitter')) {
+             $url = '/sb_social/share_event/twitter/';
+          }
+          if ($(this).hasClass('email')) {
+              $url = '/sb_social/share_event/email/';
+          }
           $url = $url + Drupal.settings.sb_social.id + '/';
           $url = $url + Drupal.settings.sb_social.id_type + '/';
           $url = $url + Drupal.settings.sb_social.market_source + '/';
@@ -46,33 +49,3 @@ var addthis_share = {
   //});
 })(jQuery);
 
-// Register share event and provide share URL to AddThis.
-function shareResponse(event) {
-  // Facebook share buttons have to be handled earlier in execution to ensure
-  // AddThis picks up the correct URL.
-  if (event.data.service == 'facebook') {
-    return;
-  }
-
-  $url = '/sb_social/share_event/';
-  $url = $url + event.data.service + '/';
-  $url = $url + Drupal.settings.sb_social.id + '/';
-  $url = $url + Drupal.settings.sb_social.id_type + '/';
-  $url = $url + Drupal.settings.sb_social.market_source + '/';
-
-  jQuery.ajax({
-       url: $url,
-       success:function(response){
-
-         // overwrite existing placeholder url with one
-         // that contains the share event id
-         // email tracks on this pair
-         event.data.element.conf.url = response;
-         event.data.element.share.url = response;
-         // twitter appears to track on these two
-         event.data.element.share.trackurl = response;
-         event.data.url = response;
-       },
-      async: false
-  });
-}

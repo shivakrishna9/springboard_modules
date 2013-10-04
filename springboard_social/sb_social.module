@@ -191,7 +191,12 @@ function sb_social_list_plugins() {
  */
 function sb_social_access_node_settings($node) {
   global $user;
+  // hide share content settings tab on disabled content types
+  $enabled_content_types = variable_get('springboard_social_enabled_content_types', array());
 
+  if (empty($enabled_content_types[$node->type])) {
+    return FALSE;
+  }
   // grant access to content owned by user that they have permissions to edit.
   if (user_access('edit own share content') && $node->uid == $user->uid && node_access('update', $node)) {
     return TRUE;
@@ -252,7 +257,7 @@ function sb_social_init() {
     $alias = drupal_get_path_alias($path);
     $id = !empty($alias) ? array($path, $alias) : $path;
     if (!$js_settings['id']) {
-      $js_settings['id'] = $path; //TODO: this isn't gonna work, need a numeric value to pass to the tracker.
+      $js_settings['id'] = $path; // TODO: this isn't gonna work, need a single value to pass to the tracker.
       $js_settings['id_type'] = 'path';
     }
   }
@@ -542,7 +547,7 @@ function sb_social_share_tracker_url($share_id, $settings, $url_path) {
     }
   }
   $url = url($url_path, $options);
-  return url($url_path, $options);
+  return $url;
 }
 
 // TODO: find time to get the image preview working.
