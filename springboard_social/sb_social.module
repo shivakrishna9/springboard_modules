@@ -252,7 +252,7 @@ function sb_social_init() {
     $alias = drupal_get_path_alias($path);
     $id = !empty($alias) ? array($path, $alias) : $path;
     if (!$js_settings['id']) {
-      $js_settings['id'] = $path; //TODO: this isn't gonna work, need a numeric value here.
+      $js_settings['id'] = $path; //TODO: this isn't gonna work, need a numeric value to pass to the tracker.
       $js_settings['id_type'] = 'path';
     }
   }
@@ -430,7 +430,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
   if ($type = 'sb_social') {
     $replacements = array();
     $node = !empty($data['node']) ? $data['node'] : FALSE;
-    // TODO: replace id detection with a helper function.
+
     if (isset($node->nid) && $node->nid) {
       $id = $node->nid;
     }
@@ -509,58 +509,7 @@ function sb_social_theme($existing, $type, $theme, $path) {
 
 
 /**
- * Generate a short url from share settings.
- *
- * @param $service
- * service name
- *
- * @param $settings
- * share settings for the current node or path
- *
- * @param $submission_id
- * Webform submission ID, used on confirmation pages to track shares to donations.
- */
-/* function sb_social_short_url($service, $settings, $submission_id = FALSE) {
-  // TODO: this needs to go away. Share urls now contain share id's that are generated during the share event.
-  // it is no longer possible to generate a share URL in advance. This function is currently used to generate
-  // token values for share_url tokens generated for each enabled service. These URL's are now incorrect.
-  // Both this function and the share_url tokens should be removed and any implementations currently
-  // relying on these tokens should leave the addthis:url attribute blank and be sure to add
-  // the appropriate classes to their custom share links so the social share tracker js picks up the slack.
-
-  $params = array(
-    'social_referer_network' => $service,
-  );
-  if (!empty($submission_id)) {
-    $params['social_referer_transaction'] = $submission_id;
-  }
-  if (module_exists('market_source') && isset($settings['data']['market_source'])) {
-    foreach ($settings['data']['market_source'] as $key => $value) {
-      if (empty($value)) {
-        continue;
-      }
-      $params[$key] = $value;
-    }
-  }
-  // if this is a node-level setting the id is the node id so we have to
-  // reconstruct the internal path (ex. node/2).
-  // Once we have a path, check for an avaliable alias since these tend to be
-  // friendlier for end users.
-  $path = ($settings['type'] == 'path') ? $settings['id'] : 'node/' . $settings['id'];
-  $alias = drupal_get_path_alias($path);
-
-  $path = $alias ? $alias : $path;
-  $options = array(
-    'absolute' => TRUE,
-    'query' => $params,
-  );
-  $url = url($path, $options);
-  return shorten_url($url);
-} */
-
-
-/**
- * generate url for share tracking purposes
+ * Generate url for share tracking purposes
  *
  * @param $share_id
  * Social share event id

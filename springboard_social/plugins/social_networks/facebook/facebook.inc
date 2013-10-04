@@ -187,7 +187,6 @@ function facebook_share_opengraph_config($settings, $node = FALSE, $sid = FALSE)
     'title' => !empty($facebook['title']) ? $facebook['title'] : '',
     'description' => !empty($facebook['description']) ? $facebook['description'] : '',
     'image' => $facebook['image'],
-    //'url' => sb_social_short_url($node, $sid, 'facebook'),
   );
 
   foreach ($meta as $field => $value) {
