@@ -139,7 +139,6 @@ function sb_social_block_view($delta = '') {
     // render button for each enabled service
     foreach ($plugins as $service => $plugin) {
       $vars['service'] = $service;
-      $vars['url'] = sb_social_short_url($service, $settings);
       $vars['extra'] = '';
 
       if (isset($plugin['button_extra'])) {
@@ -304,29 +303,6 @@ function sb_social_init() {
 }
 
 
-/*
-function sb_social_share_url($nid, $uid, $sid, $service, $settings) {
-  $node = node_load($nid);
-
-  $options = array(
-    'absolute' => TRUE,
-    'query' => array(
-      'social_referer_transaction' => $sid,
-      'social_referrer_network' => $service,
-    ),
-  );
-
-  if (module_exists('market_source') && isset($settings['data']['market_source'])) {
-    foreach ($settings['data']['market_source'] as $key => $value) {
-      if (!$value) {
-        continue;
-      }
-      $options['query'][$key] = $value;
-    }
-  }
-  $url = url('node/' . $nid, $options);
-  return url('node/' . $nid, $options);
-}*/
 
 /**
  * Implements hook_market_source_field_info().
@@ -345,29 +321,7 @@ function sb_social_market_source_field_info() {
       'hidden_type' => 'hidden',
     ),
   );
-  /*
-  // network conversion came from
-  $fields['social_referer_network'] = array(
-      '#title' => t('social referrer network'),
-      '#type' => 'hidden',
-      '#value' => '',
-      '#required' => 0,
-      '#extra' => array(
-          'description' => '',
-          'hidden_type' => 'hidden',
-      ),
-  );
-  // contact that generated the refered conversion
-  $fields['social_referer_contact'] = array(
-      '#title' => t('social referrer contact'),
-      '#type' => 'hidden',
-      '#value' => '',
-      '#required' => 0,
-      '#extra' => array(
-          'description' => '',
-          'hidden_type' => 'hidden',
-      ),
-  );*/
+
   return $fields;
 }
 
@@ -505,8 +459,6 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
     if (in_array('share_links', $keys)) {
       foreach ($enabled_plugins as $service => $plugin) {
         $vars['service'] = $service;
-        // TODO: check this
-        $vars['url'] = sb_social_short_url($service, $settings, $submission_id);
         $vars['extra'] = '';
 
         // Some buttons (like email) require additional html attributes. The button_extra callback
@@ -520,7 +472,6 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
         $buttons[] = theme('sb_social_share_button', $vars);
       }
       $buttons = implode("\n", $buttons);
-      // TODO: check this
       $replacements['[sb_social:share_links]'] = $enabled_plugins ? theme('sb_social_share', array('buttons' => $buttons)) : '';
     }
     return $replacements;
@@ -569,7 +520,7 @@ function sb_social_theme($existing, $type, $theme, $path) {
  * @param $submission_id
  * Webform submission ID, used on confirmation pages to track shares to donations.
  */
-function sb_social_short_url($service, $settings, $submission_id = FALSE) {
+/* function sb_social_short_url($service, $settings, $submission_id = FALSE) {
   // TODO: this needs to go away. Share urls now contain share id's that are generated during the share event.
   // it is no longer possible to generate a share URL in advance. This function is currently used to generate
   // token values for share_url tokens generated for each enabled service. These URL's are now incorrect.
@@ -605,7 +556,7 @@ function sb_social_short_url($service, $settings, $submission_id = FALSE) {
   );
   $url = url($path, $options);
   return shorten_url($url);
-}
+} */
 
 
 /**

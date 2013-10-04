@@ -30,10 +30,6 @@ function email_token_info() {
     'name' => t('Email message'),
     'description' => t('Share email message'),
   );
-  $email_tokens['email_share_url'] = array(
-    'name' => t('Email share URL'),
-    'description' => t('Short URL containing share tracking values for Email.'),
-  );
 
 
   return $email_tokens;
@@ -44,7 +40,6 @@ function email_token_replace($tokens, &$replacements, $settings, $node = FALSE, 
     switch ($key) {
       case 'email_share_link':
         $vars['service'] = 'email';
-        $vars['url'] = sb_social_short_url('twitter', $settings, $submission_id);
         $vars['extra'] = '';
 
         if ($extra && function_exists($extra)) {
@@ -58,9 +53,6 @@ function email_token_replace($tokens, &$replacements, $settings, $node = FALSE, 
         break;
       case 'email_message':
         $replacements[$token] = !empty($settings['data']['email']['message']) ? _sb_social_replace_tokens($settings['data']['email']['message'], $node, $submission_id) : '';
-        break;
-      case 'email_share_url':
-        $replacements[$token] = sb_social_short_url('email', $settings, $submission_id);
         break;
     }
   }
