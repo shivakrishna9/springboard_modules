@@ -108,7 +108,7 @@ class WebformDupeCopTestCase extends DrupalWebTestCase {
   /**
    * Method to create a test webform.
    */
-  private function webformDupeCopCreateForm() {
+  protected function webformDupeCopCreateForm() {
     $node = new stdClass();
     $node->is_new = 1;
     $node->type = 'webform';
@@ -149,7 +149,7 @@ class WebformDupeCopTestCase extends DrupalWebTestCase {
   /**
    * Method to create some test components on a webform.
    */
-  private function webformDupeCopCreateComponents() {
+  protected function webformDupeCopCreateComponents() {
     // Add some webform components
     $component = array(
       'nid' => 1,

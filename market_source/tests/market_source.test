@@ -113,7 +113,7 @@ class MarketSourceTestCase extends DrupalWebTestCase {
   /**
    * Creates a webform for testing.
    */
-  private function marketSourceCreateWebform() {
+  protected function marketSourceCreateWebform() {
 
     $settings = array(
       'type' => 'webform',

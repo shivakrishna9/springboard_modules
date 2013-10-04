@@ -149,7 +149,7 @@ class EmailWrappersTestCase extends DrupalWebTestCase {
 
   }
 
-  private function WebformCreate() {
+  protected function WebformCreate() {
     $edit = array();
     $edit['title'] = 'Webform Confirmation test webform';
     $edit["body[und][0][value]"] = $this->randomName(16);
@@ -173,7 +173,7 @@ class EmailWrappersTestCase extends DrupalWebTestCase {
     drupal_write_record('webform_component', $component);
   }
 
-  private function WebformPost() {
+  protected function WebformPost() {
     $edit = array();
     $edit["submitted[mail]"] = 'example@example.com';
     $this->drupalPost('node/1', $edit, t('Submit'), array(), array(), 'webform-client-form-1');

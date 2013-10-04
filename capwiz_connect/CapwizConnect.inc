@@ -455,7 +455,7 @@ class CapizConnect {
    * @return int
    *   Returns a status matching a static $STAT_* variable from this class
    */
-  private function saveUser($user) {
+  protected function saveUser($user) {
     $return_value = 0;
 
     $capwiz_user_id = $user->id;
@@ -850,7 +850,7 @@ class CapizConnect {
    * @return int
    *   Returns a status matching a static $STAT_* variable from this class
    */
-  private function saveAction($action) {
+  protected function saveAction($action) {
     $return_value = 0;
 
     $message_id = $action->messageId;

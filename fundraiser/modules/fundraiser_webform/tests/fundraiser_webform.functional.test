@@ -152,7 +152,7 @@ class FundraiserWebformFunctionalTest extends FundraiserTestCase {
 
   }
 
-  private function createEmailWrapper($settings = array()) {
+  protected function createEmailWrapper($settings = array()) {
     $edit = array(
       'title' => isset($settings['title']) ? $settings['title'] : 'Test Email Wrapper',
       'email_wrapper_from_name[und][0][value]' => isset($settings['from_name']) ? $settings['from_name'] : 'Email Wrappers Test',
@@ -170,7 +170,7 @@ class FundraiserWebformFunctionalTest extends FundraiserTestCase {
     $this->drupalPost('node/add/email-wrapper', $edit, t('Save'));
   }
 
-  private function createWebformEmail($settings) {
+  protected function createWebformEmail($settings) {
     $nid = $settings['nid'];
     // create email
     $edit = array(
@@ -209,7 +209,7 @@ class FundraiserWebformFunctionalTest extends FundraiserTestCase {
     $this->drupalPost(NULL, $edit, t('Save e-mail settings'));
   }
 
-  private function getMailComponentCid($node) {
+  protected function getMailComponentCid($node) {
     foreach ($node->webform['components'] as $cid => $component) {
       if ($component['form_key'] == 'mail') {
         return $cid;

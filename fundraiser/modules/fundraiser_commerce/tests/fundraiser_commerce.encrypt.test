@@ -62,7 +62,7 @@ class FundraiserCommerceEncryptTest extends FundraiserTestCase {
    * Helper function to create the respone data structure for
    * each supported payment gateway.
    */
-  private function getTestResponses() {
+  protected function getTestResponses() {
     return $responses = array(
       'authorize' => array(
         'payment_method' => 'credit',

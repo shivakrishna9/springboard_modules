@@ -466,7 +466,7 @@ class FundraiserSustainerTest extends FundraiserTestCase {
   /**
    * Helper function to create a series of recurring donations.
    */
-  private function fundraiserSustainerCreateRecurringDonation() {
+  protected function fundraiserSustainerCreateRecurringDonation() {
     $file_path = variable_get('file_public_path', conf_path() . '/files');
     // Set the encryption path to avoid errors during get node, etc.
     variable_set('encrypt_secure_key_path', $file_path);
@@ -495,7 +495,7 @@ class FundraiserSustainerTest extends FundraiserTestCase {
   /**
    * Helper function to check how many sustainers were processed after cron is run.
    */
-  private function fundraiserSustainerChargeCount($master_did) {
+  protected function fundraiserSustainerChargeCount($master_did) {
     $query = db_select('fundraiser_sustainers', 'f')
       ->fields('f')
       ->condition('master_did', $master_did, '=')
