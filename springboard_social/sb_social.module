@@ -93,11 +93,11 @@ function sb_social_menu() {
     'file' => 'includes/sb_social.admin.inc',
     'type' => MENU_LOCAL_TASK,
   );
-  // service, share_id, uid, sid
-  $items['sb_social/share_event/%/%'] = array(
+  // service, id, type, market_source
+  $items['sb_social/share_event/%/%/%/%'] = array(
     'title' => '',
     'page callback' => 'sb_social_share_tracker',
-    'page arguments' => array(2, 3),
+    'page arguments' => array(2, 3, 4, 5),
     'access callback' => TRUE,
     'file' => 'includes/sb_social.share.inc',
     'type' => MENU_CALLBACK,
@@ -227,21 +227,35 @@ function sb_social_access_node_settings($node) {
 function sb_social_init() {
   $node = FALSE;
   $js_settings = array(
-    'sid' => (isset($_GET['sid']) && is_numeric($_GET['sid'])) ? $_GET['sid'] : 0,
+    'id' => 0,
+    'id_type' => '',
     'pubid' => variable_get('springboard_social_addthis_profile_id'),
+    'market_source' => '',
   );
-  drupal_add_js(array('sb_social' => $js_settings), 'setting');
 
-  if (arg(0) == 'node' && is_numeric(arg(1))) {
+  if (isset($_GET['sid']) && is_numeric($_GET['sid'])) {
+    $js_settings['id'] = $_GET['sid'];
+    $js_settings['id_type'] = 'sid';
+  }
+  if (arg(0) == 'node' && is_numeric(arg(1))) { // TODO: replace this with a valid core hook
     $node = node_load(arg(1));
     $id = is_object($node) ? $node->nid : FALSE;
+
+    if (!$js_settings['id']) {
+      $js_settings['id'] = is_object($node) ? $node->nid : 0;
+      $js_settings['id_type'] = 'nid';
+    }
   }
   else {
     // social supports both internal paths and path aliases so
-    // we need to check both.
+    // we need to check both
     $path = current_path();
     $alias = drupal_get_path_alias($path);
     $id = !empty($alias) ? array($path, $alias) : $path;
+    if (!$js_settings['id']) {
+      $js_settings['id'] = $path; //TODO: this isn't gonna work, need a numeric value here.
+      $js_settings['id_type'] = 'path';
+    }
   }
 
   if ($id) {
@@ -249,6 +263,9 @@ function sb_social_init() {
     $settings = sb_social_settings_load($sid);
 
     if ($settings) {
+      if (isset($settings['data']['market_source']['ms'])) {
+        $js_settings['market_source'] = $settings['data']['market_source']['ms'];
+      }
       $plugins = sb_social_get_enabled_plugins();
       $path = drupal_get_path('module', 'sb_social');
 
@@ -257,7 +274,6 @@ function sb_social_init() {
         // run config callbacks, this sets up js settings, opengraph tags, etc.
         $func = $plugin['share_config'];
         if (function_exists($func)) {
-          drupal_set_message('invoking share function:' . $func);
           $func($settings, $node, $sid);
         }
 
@@ -272,8 +288,11 @@ function sb_social_init() {
 
     }
   }
+
+  drupal_add_js(array('sb_social' => $js_settings), 'setting');
   // stash cookie payload in js
   // TODO: this should probably live somewhere else.
+  /*
   if (!empty($_COOKIE['sb_social_event_submission'])) {
     $data = explode("::", $_COOKIE['sb_social_event_submission']);
     drupal_add_js(array('sb_social' => array(
@@ -281,11 +300,11 @@ function sb_social_init() {
         'mail' => $data[1],
         'sid' => $data[2],
       )), 'setting');
-  }
+  }*/
 }
 
 
-
+/*
 function sb_social_share_url($nid, $uid, $sid, $service, $settings) {
   $node = node_load($nid);
 
@@ -307,7 +326,7 @@ function sb_social_share_url($nid, $uid, $sid, $service, $settings) {
   }
   $url = url('node/' . $nid, $options);
   return url('node/' . $nid, $options);
-}
+}*/
 
 /**
  * Implements hook_market_source_field_info().
@@ -326,6 +345,7 @@ function sb_social_market_source_field_info() {
       'hidden_type' => 'hidden',
     ),
   );
+  /*
   // network conversion came from
   $fields['social_referer_network'] = array(
       '#title' => t('social referrer network'),
@@ -347,7 +367,7 @@ function sb_social_market_source_field_info() {
           'description' => '',
           'hidden_type' => 'hidden',
       ),
-  );
+  );*/
   return $fields;
 }
 
@@ -536,8 +556,9 @@ function sb_social_theme($existing, $type, $theme, $path) {
   return $items;
 }
 
+
 /**
- * generate a short url from share settings.
+ * Generate a short url from share settings.
  *
  * @param $service
  * service name
@@ -549,6 +570,12 @@ function sb_social_theme($existing, $type, $theme, $path) {
  * Webform submission ID, used on confirmation pages to track shares to donations.
  */
 function sb_social_short_url($service, $settings, $submission_id = FALSE) {
+  // TODO: this needs to go away. Share urls now contain share id's that are generated during the share event.
+  // it is no longer possible to generate a share URL in advance. This function is currently used to generate
+  // token values for share_url tokens generated for each enabled service. These URL's are now incorrect.
+  // Both this function and the share_url tokens should be removed and any implementations currently
+  // relying on these tokens should leave the addthis:url attribute blank and be sure to add
+  // the appropriate classes to their custom share links so the social share tracker js picks up the slack.
 
   $params = array(
     'social_referer_network' => $service,
@@ -576,7 +603,6 @@ function sb_social_short_url($service, $settings, $submission_id = FALSE) {
     'absolute' => TRUE,
     'query' => $params,
   );
-
   $url = url($path, $options);
   return shorten_url($url);
 }
@@ -585,29 +611,25 @@ function sb_social_short_url($service, $settings, $submission_id = FALSE) {
 /**
  * generate url for share tracking purposes
  *
- * @param $nid
- * node id
+ * @param $share_id
+ * Social share event id
  *
- * @param $uid
- * User id
+ * @param $settings
+ * an array of additional share settings
  *
- * @sid
- * webform submission id
+ * @param $url_path
  *
- * @service
- * Social network
  *
- * @settings
- * an array of additional settings
+ * @return string
+ * Returns an absolute url including share tracking id and market source values.
  */
-function sb_social_share_tracker_url($nid, $uid, $sid, $service, $settings) {
-  $node = node_load($nid);
+function sb_social_share_tracker_url($share_id, $settings, $url_path) {
+  //$node = node_load($nid);
 
   $options = array(
     'absolute' => TRUE,
     'query' => array(
-      'social_referer_transaction' => $sid,
-      'social_referrer_network' => $service,
+      'social_referer_transaction' => $share_id,
     ),
   );
 
@@ -619,10 +641,11 @@ function sb_social_share_tracker_url($nid, $uid, $sid, $service, $settings) {
       $options['query'][$key] = $value;
     }
   }
-  $url = url('node/' . $nid, $options);
-  return url('node/' . $nid, $options);
+  $url = url($url_path, $options);
+  return url($url_path, $options);
 }
 
+// TODO: find time to get the image preview working.
 function theme_sb_social_share_image_preview($variables) {
   $element = $variables['element'];
 
@@ -652,6 +675,7 @@ function _sb_social_component_blacklist() {
   );
 }
 
+// TODO: find somewhere other than this module for the springboard tracking cookie to live.
 function _sb_social_set_tracking_cookie($uid, $mail, $sid) {
   $payload = $uid . '::' . $mail . '::' . $sid;
   $set = setcookie("sb_social.event_submission", $payload, strtotime('+1 year'));

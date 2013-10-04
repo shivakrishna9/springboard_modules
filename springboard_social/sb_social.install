@@ -53,6 +53,26 @@ function sb_social_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
+      'page_name' => array(
+        'description' => 'shared page name',
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+      'internal_name' => array(
+        'description' => 'shared page internal name',
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+      'type' => array(
+        'description' => 'share type',
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+      'market_source' => array(
+        'description' => 'share URL market source',
+        'type' => 'varchar',
+        'length' => 255,
+      ),
       'created' => array(
         'description' => 'created timestamp',
         'type' => 'int',
@@ -121,4 +141,16 @@ function sb_social_update_7001() {
   db_add_index('sb_social_settings', 'type', array('type'));
 
   return t('Added index to {sb_social_shares} and {sb_social_settings} tables.');
+}
+
+/**
+ * Add social tracker fields.
+ */
+function sb_social_update_7002() {
+  db_add_field('sb_social_shares', 'market_source', array('type' => 'varchar', 'length' => 255, 'description' => 'Share URL market source'));
+  db_add_field('sb_social_shares', 'page_name', array('type' => 'varchar', 'length' => 255, 'description' => 'shared page name'));
+  db_add_field('sb_social_shares', 'internal_name', array('type' => 'varchar', 'length' => 255, 'description' => 'shared page internal name'));
+  db_add_field('sb_social_shares', 'type', array('type' => 'varchar', 'length' => 255, 'description' => 'share type'));
+
+  return t('Added columns to {sb_social_shares}');
 }

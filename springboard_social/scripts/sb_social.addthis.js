@@ -3,7 +3,7 @@ var addthis_config = {
 };
 
 var addthis_share = {
-
+  'url' : 'http://www.google.com'
 };
 
 
@@ -20,18 +20,59 @@ var addthis_share = {
       if (typeof window.addthis !== "undefined") {
         window.addthis.addEventListener('addthis.menu.share', shareResponse);
       }
+
+      // Of course Facebook requires special handling, how could it be otherwise?
+      $('.social-share-link.facebook').click(function() {
+          $elem = $(this);
+          $url = '/sb_social/share_event/facebook/';
+          $url = $url + Drupal.settings.sb_social.id + '/';
+          $url = $url + Drupal.settings.sb_social.id_type + '/';
+          $url = $url + Drupal.settings.sb_social.market_source + '/';
+
+          // Register share event and provide share URL to AddThis.
+          jQuery.ajax({
+              url: $url,
+              success:function(response) {
+                // Overwrite default url with share url (including share id and market source values)
+                $elem.attr('addthis:url', response);
+                $elem.context.conf.url = response;
+                $elem.context.share.url = response;
+              },
+              async: false
+          });
+      });
     }
   };
   //});
 })(jQuery);
 
-function shareResponse(data) {
-  $url = '/sb_social/share_event/' + data.data.service + '/' + Drupal.settings.sb_social.sid;
+// Register share event and provide share URL to AddThis.
+function shareResponse(event) {
+  // Facebook share buttons have to be handled earlier in execution to ensure
+  // AddThis picks up the correct URL.
+  if (event.data.service == 'facebook') {
+    return;
+  }
+
+  $url = '/sb_social/share_event/';
+  $url = $url + event.data.service + '/';
+  $url = $url + Drupal.settings.sb_social.id + '/';
+  $url = $url + Drupal.settings.sb_social.id_type + '/';
+  $url = $url + Drupal.settings.sb_social.market_source + '/';
+
   jQuery.ajax({
        url: $url,
-       type: "GET",
        success:function(response){
-         console.log(response);
-       }
+
+         // overwrite existing placeholder url with one
+         // that contains the share event id
+         // email tracks on this pair
+         event.data.element.conf.url = response;
+         event.data.element.share.url = response;
+         // twitter appears to track on these two
+         event.data.element.share.trackurl = response;
+         event.data.url = response;
+       },
+      async: false
   });
 }

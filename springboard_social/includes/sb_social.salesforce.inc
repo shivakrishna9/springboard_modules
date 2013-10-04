@@ -4,6 +4,13 @@
  * @file Salesforce integration code.
  */
 
+/**
+ * Add a social share event to the Salesforce queue.
+ *
+ * @param $share_id
+ * Share id of the share event to add to the queue.
+ *
+ */
 function sb_social_add_share_to_queue($share_id) {
   module_load_include('module', 'salesforce_queue');
   $share = sb_social_share_event_load($share_id);
@@ -22,18 +29,29 @@ function sb_social_add_share_to_queue($share_id) {
   $result = $queue->createItem($item);
 }
 
+/**
+ * Generate a Salesforce object to sync a social share event
+ *
+ * @param $share
+ * Share record
+ *
+ * @return stdClass
+ * Returns SF object.
+ */
 function sb_social_create_share_event_object($share) {
   // Create a fields array.
   $fields = array(
-    'Contact__c' => sb_social_create_sf_user_token($share['uid']),
-    // 'Market_Source__c' => $share['market_source'],
-    'Market_Source_Type__c' => '', // ???
-    'Network__c' => $share['service'],
+    'Contact_sharer__c' => sb_social_create_sf_user_token($share['uid']),
+    'Market_Source__c' => $share['market_source'],
+    'Shared_Page_Drupal_ID__c' => $share['nid'],
+    'Social_Network__c' => $share['service'],
     'Share_Date__c' => sb_social_format_sf_date($share['created']),
-    'shared_name__c' => '', // ???
-    'Shared_URL__c' => $share['url'],
+    'Shared_Page_Name__c' => $share['page_name'],
+    'Shared_Page_Name_Internal__c' => $share['internal_name'],
+    'Share_URL__c' => $share['url'],
+    'Social_Share_ID__c' => $share['share_id'],
+    'Social_Share_Type__c' => $share['type'],
     'Submission_ID__c' => $share['sid'],
-    'Total_Value_of_Social_Shares__c' => 0, // ???
   );
 
   // This is SOAP partner API format.

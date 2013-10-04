@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Admin settings
+ * Admin settings form
  */
 function sb_social_admin() {
   
@@ -119,11 +119,21 @@ function sb_social_path_admin() {
   return $form;
 }
 
+/**
+ * Helper function, redirects to path add form().
+ */
 function _sb_social_add_path() {
   drupal_goto('admin/config/services/springboard_social/path-settings/add');
 }
 
-
+/**
+ * Generate edit/delete links for path admin table.
+ *
+ * @param $sid
+ * Settings ID
+ *
+ * @return bool|string
+ */
 function _sb_social_path_actions($sid) {
   if (!$sid) {
     return FALSE;
@@ -218,6 +228,12 @@ function sb_social_path_settings($form, $edit, $sid = NULL) {
   return $form;
 }
 
+/**
+ * Validation callback for the path settings form.
+ *
+ * @param $form
+ * @param $form_state
+ */
 function sb_social_path_settings_validate(&$form, $form_state) {
 
   if ($form_state['is_new']) {
@@ -252,6 +268,7 @@ function sb_social_path_settings_validate(&$form, $form_state) {
 
 }
 
+
 /**
  * Path settings submit callback, invokes social_networks plugin "process" callbacks to build data array and saves data
  * to db.
@@ -271,6 +288,7 @@ function sb_social_path_settings_submit($form, &$form_state) {
         $func($data, $form_state);
       }
     }
+
     if (module_exists('market_source')) {
       $fields = market_source_field_info();
       foreach ($fields as $key => $field) {
@@ -285,14 +303,13 @@ function sb_social_path_settings_submit($form, &$form_state) {
       'type' => 'path',
       'data' => $data,
     );
-    sb_social_settings_save($record, $form_state['values']);
+    sb_social_settings_save($record);
     $form_state['redirect'] = url('admin/config/services/springboard_social/path-settings', array('absolute' => TRUE));
   }
 }
 
 /**
- * Goal deletion form.
- *
+ * Path settings delete form.
  */
 function sb_social_path_settings_delete_form($form, $form_state, $sid) {
   $path = sb_social_get_id_by_sid($sid);
@@ -318,6 +335,12 @@ function sb_social_path_settings_delete_form($form, $form_state, $sid) {
   return $form;
 }
 
+/**
+ * Submit handler for path settings delete form.
+ *
+ * @param $form
+ * @param $form_state
+ */
 function sb_social_path_settings_delete_submit($form, &$form_state) {
   if (!empty($form_state['values']['sid'])) {
     sb_social_settings_delete($form_state['values']['sid']);
@@ -325,6 +348,9 @@ function sb_social_path_settings_delete_submit($form, &$form_state) {
   $form_state['redirect'] = array('admin/config/services/springboard_social/path-settings');
 }
 
+/**
+ * Submit callback, drives cancel button on path settings delete form.
+ */
 function _sb_social_path_delete_cancel() {
   drupal_goto('admin/config/services/springboard_social/path-settings');
 }
@@ -383,7 +409,12 @@ function sb_social_node_settings($form, $edit, $node) {
   return $form;
 }
 
-
+/**
+ * Node settings form submit handler.
+ *
+ * Invokes "process" callback for each enabled plugin, actual data handling happens
+ * in these callbacks.
+ */
 function sb_social_settings_submit($form, $form_state) {
   $plugins = sb_social_list_plugins();
 
@@ -412,10 +443,16 @@ function sb_social_settings_submit($form, $form_state) {
       'type' => $form_state['values']['type'],
       'data' => $data,
     );
-    sb_social_settings_save($record, $form_state['values']);
+    sb_social_settings_save($record);
   }
 }
 
+/**
+ * Generate market source fields for share settings forms.
+ *
+ * @param $form
+ * @param $settings
+ */
 function _sb_social_settings_market_source(&$form, $settings) {
   $form['market_source'] = array(
     '#type' => 'fieldset',

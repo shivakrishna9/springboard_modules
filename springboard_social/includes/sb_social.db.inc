@@ -6,6 +6,12 @@
 
 /**
  * Load share event
+ *
+ * @param $share_id int
+ * Social share event ID.
+ *
+ * @return array
+ * Returns an associative array.
  */
 function sb_social_share_event_load($share_id) {
   $result = db_query('
@@ -14,11 +20,16 @@ function sb_social_share_event_load($share_id) {
       uid,
       sid,
       nid,
+      page_name,
+      internal_name,
+      market_source,
+      s.type,
       service,
       created,
       status,
       url
-    FROM {sb_social_shares}
+
+    FROM {sb_social_shares} s
     WHERE
       share_id = :share_id
   ', array(':share_id' => $share_id));
@@ -27,16 +38,66 @@ function sb_social_share_event_load($share_id) {
 }
 
 /**
- * Save share event
+ * Save a social share event to the database, add the new share event to the Salesforce queue, and return
+ * a share url for the event.
+ *
+ * @param $service
+ * Social service (email, facebook, twitter)
+ *
+ * @param $id
+ * Unique settings id (nid, webform submission id, or path)
+ *
+ * @param $type
+ * ID type (sid, nid, path)
+ *
+ * @param $market_source
+ * Market source (ms) field value associated with this share event.
+ *
+ * @return string
+ * Counterintuitively enough, this function returns a shortened share url for the share event.
  */
-function sb_social_share_event_save($service, $sid) {
+function sb_social_share_event_save($service, $id, $type, $market_source) {
+  // TODO: there's too much going on here. Break this up into a legitimate save function and a callback
+  // function that handles the rest of what is going on here.
   global $user;
-  module_load_include('inc', 'webform', 'includes/webform.submissions');
-  $nid = _sb_social_get_nid_by_sid($sid);
-  $submission = webform_get_submission($nid, $sid);
-  $settings = sb_social_get_current_settings();
+  // deal with submission-based shares (confirmation pages)
+  if (is_numeric($id) && $type == 'sid') {
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    $sid = $id;
+    $nid = _sb_social_get_nid_by_sid($id);
+    $node = node_load($nid);
+    $page_name = !empty($node->title) ? $node->title : '';
+    $language = $node->language;
+    $internal_name = !empty($node->field_fundraiser_internal_name[$language][0]['value']) ? $node->field_fundraiser_internal_name[$language][0]['value'] : '';
+    $type = $node->type;
+    $submission = webform_get_submission($nid, $sid);
+    $uid = !empty($submission->uid) ? $submission->uid : $user->uid;
+    $url_path = 'node/' . $node->nid;
+    $settings_id = $node->nid;
+  }
+  // shares from node pages
+  if (is_numeric($id) && $type == 'nid') {
+    $sid = 0;
+    $nid = $id;
+    $uid = $user->uid;
+    $node = node_load($id);
+    $page_name = !empty($node->title) ? $node->title : '';
+    $internal_name = '';
+    $type = $node->type;
+    $url_path = 'node/' . $node->nid;
+    $settings_id = $node->nid;
+  }
+  // shares from non-node pages (path based)
+  if ($type == 'path') {
+    $nid = 0;
+    $sid = 0;
+    $uid = $user->uid;
+    // TODO: settings id = path or alias.
+  }
+
+  $settings = sb_social_get_current_settings($settings_id);
+
   $uid = !empty($submission->uid) ? $submission->uid : $user->uid;
-  $url = sb_social_share_tracker_url($nid, $uid, $sid, $service, $settings);
 
   // update is not included as these records should only
   // be created when a share event has taken place
@@ -44,33 +105,62 @@ function sb_social_share_event_save($service, $sid) {
   $query = db_insert('sb_social_shares');
   $record = array(
     'uid' => $uid,
-    'sid' => $sid,
-    'nid' => $nid,
+    'sid' => !empty($sid) ? $sid : 0,
+    'nid' => !empty($nid) ? $nid : 0,
+    'market_source' => $market_source,
+    'page_name' => $page_name,
+    'internal_name' => $internal_name,
+    'type' => $type,
     'service' => $service,
     'created' => (int) time(),
     'status' => 'pending',
-    'url' => $url,
+    'url' => '',
   );
+
   $share_id = $query->fields($record)->execute();
+  // generate url and update share record.
+  $url = sb_social_share_tracker_url($share_id, $settings, $url_path);
+
+  db_query('UPDATE {sb_social_shares} set url = :url WHERE share_id = :share_id', array(':url' => $url, ':share_id' => $share_id));
   watchdog('sb_social', 'share id:' . $share_id);
+
   if ($share_id && module_exists('salesforce_queue')) {
     watchdog('sb_social', 'attempted to add share event to queue');
     sb_social_add_share_to_queue($share_id);
   }
 
+  return $url;
 }
 
-function sb_social_get_current_settings() {
-  if (arg(0) == 'node' && is_numeric(arg(1))) {
-    $node = node_load(arg(1));
-    $id = is_object($node) ? $node->nid : FALSE;
-  }
-  else {
-    // social supports both internal paths and path aliases so
-    // we need to check both.
-    $path = current_path();
-    $alias = drupal_get_path_alias($path);
-    $id = !empty($alias) ? array($path, $alias) : $path;
+/**
+ * Load social settings by id.
+ *
+ *If no id is provided, attempt to identify applicable settings from
+ * the url.
+ *
+ * @param bool $id
+ * Optional share settings id.
+ *
+ * @return mixed
+ * Returns an associative array containing the social share settings applicable
+ * to the ID passed or the current URL.
+ */
+function sb_social_get_current_settings($id = FALSE) {
+  // TODO: consider simplifying this function, since share urls are only generated when
+  // a user clicks on a share button, and that happens in the context of the share tracker url
+  // most of this functionality may not be required any longer.
+  if (!$id) {
+    if (arg(0) == 'node' && is_numeric(arg(1))) {
+      $node = node_load(arg(1));
+      $id = is_object($node) ? $node->nid : FALSE;
+    }
+    else {
+      // social supports both internal paths and path aliases so
+      // we need to check both.
+      $path = current_path();
+      $alias = drupal_get_path_alias($path);
+      $id = !empty($alias) ? array($path, $alias) : $path;
+    }
   }
 
   if ($id) {
@@ -132,20 +222,27 @@ function sb_social_settings_load($sid) {
   return $settings[$sid];
 }
 
-
+/**
+ * Lookup ID associated with the share settings ID provided.
+ *
+ * @param $sid
+ * Share settings ID
+ *
+ * @return mixed
+ * returns the node id or path associated with the share settings ID.
+ */
 function sb_social_get_id_by_sid($sid) {
   $result = db_query('SELECT id FROM {sb_social_settings} WHERE sid = :sid', array(':sid' => $sid));
   return $result->fetchField();
 }
 
 /**
- * Get settings id by drupal id
+ * Get share settings id by drupal id
  *
  * @param $id
  * Node id for node settings, path for path settings.
  *
- * @return
- * Returns the sid associated with the given id, or FALSE if no records were found.
+ * @return bool Returns the sid associated with the given id, or FALSE if no records were found.
  */
 function sb_social_get_sid_by_id($id) {
   $result = db_query('SELECT sid FROM {sb_social_settings} WHERE id = :id', array(':id' => $id));
@@ -199,6 +296,12 @@ function _sb_social_market_source_defaults() {
   return $market_source;
 }
 
+/**
+ * List services enabled on the Social admin settings form.
+ *
+ * @return array
+ * An array of enabled services.
+ */
 function sb_social_get_enabled_services() {
   static $enabled_services = array();
   if (empty($enabled_services) && $enabled_services !== FALSE) {
@@ -216,17 +319,20 @@ function sb_social_get_enabled_services() {
 
 
 /**
- * Save path settings.
- * @param type $settings
- * @param type $values
+ * Save share settings.
+ *
+ * @param array $settings
+ *
  */
-function sb_social_settings_save($settings, $values = NULL) {
+function sb_social_settings_save($settings) {
   if (is_array($settings['data'])) {
     $settings['data'] = serialize($settings['data']);
   }
   $update = array();
   $sid = _sb_social_sid_by_id($settings['id']);
 
+  // if there is a share settings id associated with the settings id,
+  // update the existing record.
   if ($sid) {
     $settings['sid'] = $sid;
     $update = array('sid');
@@ -235,12 +341,12 @@ function sb_social_settings_save($settings, $values = NULL) {
   drupal_write_record('sb_social_settings', $settings, $update);
 }
 
-
-function _sb_social_path_record_exists($path) {
-  return db_query('SELECT 1 FROM {sb_social_path} WHERE path = :path', array(':path' => $path))->fetchField();
-}
-
-
+/**
+ * Delete share settings.
+ *
+ * @param $sid
+ * share settings id of record to delete.
+ */
 function sb_social_settings_delete($sid) {
   $query = db_delete('sb_social_settings');
   $query->condition('sid', $sid);
@@ -248,9 +354,13 @@ function sb_social_settings_delete($sid) {
 }
 
 /**
- * Lookup webform node settings by webform submission id.
- * @param type $sid
- * @return type
+ * Lookup social share settings by webform submission id.
+ *
+ * @param int $sid
+ * Webform submission id
+ *
+ * @return array
+ * returns
  */
 function _sb_social_get_settings_by_sid($sid) {
   $nid = _sb_social_get_nid_by_sid($sid);

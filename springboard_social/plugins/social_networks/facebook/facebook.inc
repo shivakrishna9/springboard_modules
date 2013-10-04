@@ -16,7 +16,7 @@ $plugin = array(
 
 function facebook_token_info() {
   $facebook_tokens = array();
-  $facebooK_tokens['facebook_share_link'] = array(
+  $facebook_tokens['facebook_share_link'] = array(
     'name' => t('Facebook Share link'),
     'description' => t('AddThis Facebook Share link'),
   );
