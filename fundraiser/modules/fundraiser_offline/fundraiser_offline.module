@@ -130,7 +130,7 @@ function fundraiser_offline_form_node_form_alter(&$form, &$form_state, $form_id)
       '#type' => 'checkbox',
       '#title' => t('Available offline?'),
       '#description' => t('Check this box to mark this fundraiser node as available offline.'),
-      '#default_value' => $form['#node']->fundraiser_offline,
+      '#default_value' => isset($form['#node']->fundraiser_offline) ? $form['#node']->fundraiser_offline : 0,
     );
   }
 }
