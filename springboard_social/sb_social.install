@@ -71,7 +71,7 @@ function sb_social_schema() {
       ),
       'url' => array(
         'description' => 'shared URL',
-         'type'=> 'text',
+        'type' => 'text',
       ),
     ),
     'primary key' => array('share_id'),

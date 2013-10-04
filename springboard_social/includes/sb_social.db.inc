@@ -192,7 +192,7 @@ function _sb_social_market_source_defaults() {
   $blacklist = _sb_social_component_blacklist();
   foreach ($fields as $key => $field) {
     if (in_array($key, $blacklist)) {
-        continue;
+      continue;
     }
     $market_source[$key] = variable_get('springboard_social_ms_' . $key, '');
   }

@@ -18,7 +18,7 @@ function sb_social_ctools_plugin_directory($owner, $plugin_type) {
  */
 function sb_social_ctools_plugin_type() {
   $plugins['social_networks'] = array(
-      'load themes' => TRUE,
+    'load themes' => TRUE,
   );
 
   return $plugins;

@@ -1,15 +1,15 @@
 <?php
 /**
-* Administration tests for my module.
-*/
+ * Administration tests for my module.
+ */
 class securePrepopulateUnitTestCase extends DrupalWebTestCase {
 
 
-/**
+  /**
    * Implements getInfo().
    */
   public static function getInfo() {
-    return array (
+    return array(
       'name' => t('Secure pre-populate unit tests'),
       'description' => t('Administration tests for my module.'),
       'group' => t('Secure Prepopulate'),

@@ -1,17 +1,16 @@
 <?php
 
 /**
-* @file
-* Administrative functions for the Capwiz Connect JS module
-*/
+ * @file
+ * Administrative functions for the Capwiz Connect JS module
+ */
 
 /**
  * Implements of hook_form_alter()
  *
  * Here to ensure this inc file gets loaded for form_id_alter below
  */
-function capwiz_connect_js_form_alter(&$form, &$form_state, $form_id){
-}
+function capwiz_connect_js_form_alter(&$form, &$form_state, $form_id) { }
 
 /**
  * Implements hook_form_id_alter().
@@ -197,7 +196,7 @@ function capwiz_connect_js_alert_list_form($form, &$form_state) {
 
     $operations['edit'] = array(
       'title' => t('edit'),
-      'href' => CAPWIZ_CONNECT_ADMIN_URL . '/alerts/' . $id . '/edit'
+      'href' => CAPWIZ_CONNECT_ADMIN_URL . '/alerts/' . $id . '/edit',
     );
 
     // Render an unordered list of operations links.
@@ -299,14 +298,14 @@ function capwiz_connect_js_alert_list_form_submit($form, &$form_state) {
   elseif ($form_state['values']['operation'] == 'update_redirect') {
     db_update('capwiz_connect_js_alerts')
       ->fields(array('redirect' => $form_state['values']['update_redirect_url']))
-      ->condition ('capwiz_alert_id', $ids, 'IN')
+      ->condition('capwiz_alert_id', $ids, 'IN')
       ->execute();
   }
   // Remove alert redirects
   elseif ($form_state['values']['operation'] == 'remove_redirect') {
     db_update('capwiz_connect_js_alerts')
       ->fields(array('redirect' => ''))
-      ->condition ('capwiz_alert_id', $ids, 'IN')
+      ->condition('capwiz_alert_id', $ids, 'IN')
       ->execute();
   }
 }
@@ -335,7 +334,7 @@ function capwiz_connect_js_alert_addoredit_form($form, &$form_state, $action, $i
   if (!$alert) {
     // If the internal capwiz name has been set then we can load up alerts from the RSS feed
     if (variable_get('capwiz_connect_js_account_internal_name', '') != '') {
-     $url = 'http://www.capwiz.com/' . variable_get('capwiz_connect_js_account_internal_name', '') . '/RSS/alerts/';
+      $url = 'http://www.capwiz.com/' . variable_get('capwiz_connect_js_account_internal_name', '') . '/RSS/alerts/';
       $public_rss = @simplexml_load_file($url);
     }
 

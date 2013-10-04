@@ -78,7 +78,7 @@ function market_source_admin_settings_form($form, &$form_state) {
   //shortcut
   $default_fields_values = &$form_state['values']['market_source_default_fields']['default_fields_wrapper'];
 
-  foreach($default_fields_list as $key=>$field_name) {
+  foreach ($default_fields_list as $key => $field_name) {
     $persistence_field = ($key == 'referrer' || $key == 'initial_referrer') ?
       // hidden field to force persistence for referrer fields
       array(
@@ -208,7 +208,7 @@ function market_source_admin_settings_form($form, &$form_state) {
       'components for user fields we need to avoid doubling up on component creation. Therefore a map of Market Source components to user ' .
       'profile fields needs to be created. This will prevent Webform User from creating the same components that Market Source already ' .
       'handles. For each profile field listed here set which (if any) Market Source field will handle creating a component for it instead. ' .
-      'Fields left unmapped will be created by Webform User.').'</div>',
+      'Fields left unmapped will be created by Webform User.') . '</div>',
     );
     // If the module exists, we can use it's functions.
     $profile_fields = _webform_user_get_profile_fields();
@@ -219,7 +219,7 @@ function market_source_admin_settings_form($form, &$form_state) {
       '#suffix' => '</div>',
       '#tree' => TRUE,
       '#theme' => 'table',
-      '#header' => array(t('Profile field'), t('Matching component will be created by this Market Source field') ),
+      '#header' => array(t('Profile field'), t('Matching component will be created by this Market Source field')),
       '#rows' => array(),
     );
     $options = array('0' => t('--Not handled by Market Source--'));
@@ -255,7 +255,7 @@ function market_source_admin_settings_form($form, &$form_state) {
 /**
  * AHAH callback for the Add More button for custom fields.
  */
-function market_source_admin_add_more_ahah($form, $form_state)  {
+function market_source_admin_add_more_ahah($form, $form_state) {
   $form['market_source_global_fields']['custom_fields_wrapper']['#collapsed'] = FALSE;
   return $form['market_source_global_fields']['custom_fields_wrapper'];
 }

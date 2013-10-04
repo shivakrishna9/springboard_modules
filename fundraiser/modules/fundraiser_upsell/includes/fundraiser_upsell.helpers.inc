@@ -72,9 +72,9 @@ function _fundraiser_upsell_content_preview($node) {
   // Add the thank you content for ease of display
   $content['message_wrapper']['message_return'] = array(
     '#type' => 'container',
-    '#attributes' => array('id' => array('message-return'), ),
+    '#attributes' => array('id' => array('message-return')),
   );
-  $content['message_wrapper']['message_return']['content'] = array('#markup' => variable_get('fundraiser_upsell_thank_you_content', 'Thank you!'), );
+  $content['message_wrapper']['message_return']['content'] = array('#markup' => variable_get('fundraiser_upsell_thank_you_content', 'Thank you!'));
   // Stop the preview form from actually working
   unset($content['message_wrapper']['message_modal']['form']['#submit']);
   unset($content['message_wrapper']['message_modal']['form']['#action']);
@@ -160,7 +160,7 @@ function _fundraiser_upsell_enabled($node) {
  */
 function _fundraiser_upsell_find_suggested_amount($amount) {
   $brackets = variable_get("fundraiser_upsell_brackets", array());
-  foreach ($brackets AS $i => $bracket) {
+  foreach ($brackets as $i => $bracket) {
     // If the amount is within the brackets, then use this upsell setting
     if (($amount >= $bracket['low']) && ($amount <= $bracket['high'])) {
       $upsell = $bracket['upsell'];

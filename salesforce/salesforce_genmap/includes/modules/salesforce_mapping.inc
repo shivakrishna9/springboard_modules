@@ -38,14 +38,11 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
       '#header' => array(
         'drupal_field' => t('Drupal field'),
         'salesforce_field' => t('Salesforce field'),
-
         // Column 'key' renamed to 'Dedupe'.
         'key' => t('Dedupe'),
-
         // Add columns for field-by-field sync rules.
         'drupal_sf' => t('Overwrite rule when exporting to Salesforce'),
         'sf_drupal' => t('Overwrite rule when importing into Drupal'),
-
         // Column 'direction' removed.
         // Column 'delete_field_maping' removed.
       ),
@@ -907,8 +904,8 @@ function _salesforce_mapping_datatype_can_sync($entity_type, $drupal_field, $sal
   // there is not a rule or when the ruleset is empty.
   if (
        !isset($verify_array[$direction][$salesforce_datatype])
-       || empty($verify_array[$direction][$salesforce_datatype])
-       || in_array($drupal_datatype, $verify_array[$direction][$salesforce_datatype])
+        || empty($verify_array[$direction][$salesforce_datatype])
+        || in_array($drupal_datatype, $verify_array[$direction][$salesforce_datatype])
      ) {
     // These two datatypes can sync.  Now see if the the sync rule is compatible
     // with this set.

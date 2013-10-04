@@ -103,7 +103,7 @@ class FundraiserSetup extends DrupalWebTestCase {
     $countries_set = fundraiser_commerce_get_countries();
     $zones = '';
     foreach ($countries_set->zones as $zone) {
-       $zones[$zone->zone_id] = $zone->zone_name;
+      $zones[$zone->zone_id] = $zone->zone_name;
     }
     // For Commerce or others for now.
     $profile_fields[] = array(
@@ -126,7 +126,7 @@ class FundraiserSetup extends DrupalWebTestCase {
     // Commerce does not store countries in a database, it relies instead on locale.inc
     $countries = '';
     foreach ($countries_set->countries as $country) {
-       $countries[$country->country_id] = $country->country_name;
+      $countries[$country->country_id] = $country->country_name;
     }
     // For Commerce or others for now.
     $profile_fields[] = array(
@@ -297,7 +297,7 @@ class FundraiserSetup extends DrupalWebTestCase {
       'sbp_state' => 'state',
       'sbp_zip' => 'zip',
       'sbp_country' => 'country',
-      )
+    )
     );
   }
 
@@ -391,7 +391,7 @@ class FundraiserSetup extends DrupalWebTestCase {
       'in, feugiat ac, molestie eget, wisi.';
     $node->body['LANGUAGE_NONE'][0]['format'] = 'filtered_html';
     $node->webform = array(
-        'confirmation' => 'Thank you [donation:first_name] [donation:last_name] for your donation of [donation:amount] USD.' . "\n" .
+      'confirmation' => 'Thank you [donation:first_name] [donation:last_name] for your donation of [donation:amount] USD.' . "\n" .
         "\n" .
         'The email address we have for you is: [donation:mail]' . "\n" .
         "\n" .
@@ -426,7 +426,7 @@ class FundraiserSetup extends DrupalWebTestCase {
       'credit' => array(
         'status' => 1,
         'method' => 'credit',
-        'id' => 'commerce_payment_example|commerce_payment_commerce_payment_example'
+        'id' => 'commerce_payment_example|commerce_payment_commerce_payment_example',
       ),
     );
     $node->amount_wrapper = array(

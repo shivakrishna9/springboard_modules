@@ -19,14 +19,14 @@ class WebformUserConfigTest extends WebformUserSetup {
   /**
    * Implementation of setUp().
    */
-  function setUp() {
+  public function setUp() {
     parent::setUp();
   }
 
   /**
    * Implementation of tearDown().
    */
-  function tearDown() {
+  public function tearDown() {
     parent::tearDown();
   }
 
@@ -34,7 +34,7 @@ class WebformUserConfigTest extends WebformUserSetup {
    * Test that unsupported field types like image and file fields do not get created
    * as webform components.
    */
-  function testWebformUserInvalidFieldTypes() {
+  public function testWebformUserInvalidFieldTypes() {
     $this->webformUserAddField('resume', 'Resume', 'file');
 
     $this->drupalLogin($this->users['editor']);
@@ -54,7 +54,7 @@ class WebformUserConfigTest extends WebformUserSetup {
   /**
    * Test that the webform map is created and stored correctly in the database.
    */
-  function testWebformUserMap() {
+  public function testWebformUserMap() {
     // Create a new webform user form.
     $this->drupalLogin($this->users['editor']);
 
@@ -82,7 +82,7 @@ class WebformUserConfigTest extends WebformUserSetup {
    * Test that new fields added to the user entity get created on
    * new webform user forms.
    */
-  function testWebformUserCustomComponentCreation() {
+  public function testWebformUserCustomComponentCreation() {
     // Add a new field to the user entity.
     $this->webformUserAddField('favorite_color', 'Favorite color', 'text');
 
@@ -111,7 +111,7 @@ class WebformUserConfigTest extends WebformUserSetup {
    * Tests that webform user correctly adds the default profile fields as the correct
    * webform component types.
    */
-  function testWebformUserDefaultComponentCreation() {
+  public function testWebformUserDefaultComponentCreation() {
 
     $this->drupalLogin($this->users['editor']);
 

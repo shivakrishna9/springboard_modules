@@ -29,7 +29,7 @@ class PageWrappersRulesetTestCase extends PageWrappersTestCase {
     $this->page_wrapper_test_rid = $this->drupalCreateRole(array('access content'), 'page wrapper test');
   }
 
-  function testPageWrappersRulesetTest() {
+  public function testPageWrappersRulesetTest() {
     //Create two page wrappers
     $edit['title'] = $this->randomName(8);
     $edit["page_wrappers_html_template[und][0][value]"] = $this->html_template('Ruleset 1');
@@ -78,7 +78,7 @@ class PageWrappersRulesetTestCase extends PageWrappersTestCase {
     $this->assertText('Ruleset 2', t('The default ruleset configuration selected the appropriate Page Wrapper for an anonymous user'), 'Page Wrappers Node');
   }
 
-  function createRuleset() {
+  protected function createRuleset() {
     $import = '
       $ruleset = new stdClass();
       $ruleset->disabled = FALSE; /* Edit this to true to make a default ruleset disabled initially */

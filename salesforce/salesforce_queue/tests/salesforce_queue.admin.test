@@ -184,7 +184,11 @@ class SalesforceQueueAdminTestCase extends SalesforceQueueTestCase {
     $this->assertNoFieldChecked('edit-tracked-queues-retry', 'Retry queue was unselected after saving form.');
     $this->assertFieldChecked('edit-tracked-queues-foo', 'Fail queue was selected after saving form.');
     $this->assertFieldChecked('edit-tracked-queues-bar', 'Fail queue was selected after saving form.');
-    $tracked_queues = array('bar' => 'bar', 'fail' => 'fail', 'foo' => 'foo');
+    $tracked_queues = array(
+      'bar' => 'bar',
+      'fail' => 'fail',
+      'foo' => 'foo',
+    );
     $this->assertEqual($tracked_queues, variable_get('salesforce_queue_tracked_queues', NULL), 'Tracked Queues saved after saving form.');
 
     // Remove the identifiers for the 'foo' and 'bar' queues and verify that

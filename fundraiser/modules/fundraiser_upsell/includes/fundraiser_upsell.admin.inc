@@ -10,14 +10,26 @@
 function fundraiser_upsell_admin_settings_form($form, &$form_state) {
   // Set the default bracket info
   $brackets_default = array(
-    0 => array('low' => 0, 'high' => 20, 'upsell' => 10),
-    1 => array('low' => 21, 'high' => 40, 'upsell' => 25),
-    2 => array('low' => 41, 'high' => 60, 'upsell' => 50),
+    0 => array(
+      'low' => 0,
+      'high' => 20,
+      'upsell' => 10,
+    ),
+    1 => array(
+      'low' => 21,
+      'high' => 40,
+      'upsell' => 25,
+    ),
+    2 => array(
+      'low' => 41,
+      'high' => 60,
+      'upsell' => 50,
+    ),
   );
   $brackets = variable_get("fundraiser_upsell_brackets", $brackets_default);
   // Set the delta for the number of brackets plus one extra blank
   if (isset($_POST['brackets_delta'])) {
-    $delta = $_POST['brackets_delta']+1;
+    $delta = $_POST['brackets_delta'] + 1;
   }
   elseif (count($brackets)) {
     $delta = count($brackets) + 1;

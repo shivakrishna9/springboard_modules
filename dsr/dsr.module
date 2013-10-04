@@ -99,7 +99,8 @@ function dsr_theme() {
       'variables' => array(
         'label' => NULL,
         'salesforce_data' => NULL,
-        'drupal_data' => NULL),
+        'drupal_data' => NULL,
+      ),
       'file' => 'dsr.reports.inc',
     ),
     'dsr_box' => array(
@@ -624,7 +625,7 @@ function _dsr_collect_stats($start_date = NULL, $end_date = NULL) {
 
   // Salesforce
   $donations_posted = dsr_salesforce_aggregate('payment_received', $sf_dates['start'], $sf_dates['end']);
-  $donations_refunded = dsr_salesforce_aggregate('refunded', $sf_dates['start'], $sf_dates['end']);;
+  $donations_refunded = dsr_salesforce_aggregate('refunded', $sf_dates['start'], $sf_dates['end']);
   $donations_partially_refunded = dsr_salesforce_aggregate('partially_refunded', $sf_dates['start'], $sf_dates['end']);
 
   if ($donations_posted['total_amount'] != $orders_posted['total_amount'] ||

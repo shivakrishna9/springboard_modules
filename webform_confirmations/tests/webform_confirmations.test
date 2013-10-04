@@ -64,7 +64,7 @@ class WebformConfirmationsTestCase extends DrupalWebTestCase {
     // Configure webform confirmation: page
     $this->WebformConfigureConfirmatioPage();
 
-  // Submit webform
+    // Submit webform
     $this->WebformPost();
     $this->assertText('Test confirmation page title', t('Confirmation page title set correctly'));
     $this->assertText('Keyser Soze', t('Webform token replacement functions as expected'));
@@ -100,7 +100,7 @@ class WebformConfirmationsTestCase extends DrupalWebTestCase {
       )),
       'mandatory' => '',
     );
-     drupal_write_record('webform_component', $component);
+    drupal_write_record('webform_component', $component);
   }
 
   protected function WebformPost() {

@@ -19,14 +19,14 @@ class WebformUserSubmissionTest extends WebformUserSetup {
   /**
    * Implementation of setUp().
    */
-  function setUp() {
+  public function setUp() {
     parent::setUp();
   }
 
   /**
    * Implementation of tearDown().
    */
-  function tearDown() {
+  public function tearDown() {
     parent::tearDown();
   }
 
@@ -34,7 +34,7 @@ class WebformUserSubmissionTest extends WebformUserSetup {
    * Tests that a new user account is created when an anonymous user with a non-matching
    * email address submits a webform user form.
    */
-  function testWebformUserAnonymousSubmission() {
+  public function testWebformUserAnonymousSubmission() {
     // Create a form for testing.
     $this->_webform_user_create_node();
 
@@ -112,7 +112,7 @@ class WebformUserSubmissionTest extends WebformUserSetup {
    * This test verifies that an existing user is updated when a form is submitted by an anonymous
    * user with a matching email address.
    */
-  function testWebformUserAnonymousWithExistingEmail() {
+  public function testWebformUserAnonymousWithExistingEmail() {
     // Create a form for testing.
     $this->_webform_user_create_node();
 
@@ -181,7 +181,7 @@ class WebformUserSubmissionTest extends WebformUserSetup {
   /**
    * Test that a form is prepopulated correctly when an authenticated user visits a form.
    */
-  function testWebformUserAuthenticatedFormRender() {
+  public function testWebformUserAuthenticatedFormRender() {
     // Create a form for testing.
     $this->_webform_user_create_node();
 
@@ -209,7 +209,7 @@ class WebformUserSubmissionTest extends WebformUserSetup {
   /**
    * Tests the new account notification email feature.
    */
-  function testWebformUserEmailNotification() {
+  public function testWebformUserEmailNotification() {
     // Create a form for testing.
     $this->_webform_user_create_node();
 

@@ -19,14 +19,14 @@ class WebformUserFieldTruncateTest extends WebformUserSetup {
   /**
    * Implementation of setUp().
    */
-  function setUp() {
+  public function setUp() {
     parent::setUp();
   }
 
   /**
    * Implementation of tearDown().
    */
-  function tearDown() {
+  public function tearDown() {
     parent::tearDown();
   }
 
@@ -34,7 +34,7 @@ class WebformUserFieldTruncateTest extends WebformUserSetup {
    * Tests that a new user account is created when an anonymous user with a non-matching
    * email address submits a webform user form.
    */
-  function testWebformUserAnonymousSubmission() {
+  public function testWebformUserAnonymousSubmission() {
     // Create a form for testing.
     $this->_webform_user_create_node();
 

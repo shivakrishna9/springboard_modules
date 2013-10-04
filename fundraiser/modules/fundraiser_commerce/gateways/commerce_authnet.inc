@@ -180,11 +180,11 @@ function commerce_authnet_fundraiser_commerce_update($payment_method, $donation)
 
   // Donation card data.
   $additional_data = array(
-  'card_number' => isset($donation->donation['payment_fields']['credit']['card_number']) ?
+    'card_number' => isset($donation->donation['payment_fields']['credit']['card_number']) ?
     $donation->donation['payment_fields']['credit']['card_number'] : '',
-  'card_exp_month' => isset($donation->donation['payment_fields']['credit']['card_expiration_month']) ?
+    'card_exp_month' => isset($donation->donation['payment_fields']['credit']['card_expiration_month']) ?
     $donation->donation['payment_fields']['credit']['card_expiration_month'] : '',
-  'card_exp_year' => isset($donation->donation['payment_fields']['credit']['card_expiration_year']) ?
+    'card_exp_year' => isset($donation->donation['payment_fields']['credit']['card_expiration_year']) ?
     $donation->donation['payment_fields']['credit']['card_expiration_year'] : '',
   );
   $card_data = array_merge($card_data, $additional_data);
@@ -258,7 +258,7 @@ function _commerce_authnet_fundraiser_commerce_authnet_cim_cardonfile_update($fo
     'customerProfileId' => $cim_customer_profile_id,
     'paymentProfile' => array(
       'billTo' => array(
-        'firstName' =>  substr($first_name, 0, 50),
+        'firstName' => substr($first_name, 0, 50),
         'lastName' => substr($last_name, 0, 50),
         'company' => (string) $billto->company,
         'address' => $address,

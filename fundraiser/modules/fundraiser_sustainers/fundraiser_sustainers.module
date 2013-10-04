@@ -226,7 +226,7 @@ function fundraiser_sustainers_charge_now($did) {
   $donation->next_charge = strtotime('now');
   _fundraiser_sustainers_update_recurring($donation);
   drupal_set_message(t('The charge date for donation #@did has been advanced to @date. It will be charged on the next Fundraiser cron.',
-    array('@did' => $did, '@date' => format_date(strtotime('now')) )));
+    array('@did' => $did, '@date' => format_date(strtotime('now')))));
   // Afterwards return where we came from.
   drupal_goto( drupal_get_destination() );
 }
@@ -277,8 +277,11 @@ function fundraiser_sustainers_salesforce_genmap_map_fields(stdClass $donation, 
         $date = strtotime($donation->transaction_date);
       }
       $fields[$sf_field] =  t('Recurring Donation - !first !last (!date)',
-        array('!first' => $donation->donation['first_name'], '!last' => $donation->donation['last_name'],
-        '!date' => gmdate('Y-m-d H:i:s\Z', $date)));
+        array(
+        '!first' => $donation->donation['first_name'],
+        '!last' => $donation->donation['last_name'],
+        '!date' => gmdate('Y-m-d H:i:s\Z', $date),
+      ));
     }
     if (isset($map->field_map['fundraiser_sustainers_map']['amount'])) {
       $sf_field = $map->field_map['fundraiser_sustainers_map']['amount'];
@@ -382,7 +385,7 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
       // If we're dealing with a sustainer charge, only send a subset of data so that other fields
       // that may have been changed in Salesforce isn't overwritten.
       if ($donation->donation['recurs_monthly'] == TRUE && $donation->status_charged == 1
-        && !empty($donation->master_did) && $donation->did != $donation->master_did) {
+         && !empty($donation->master_did) && $donation->did != $donation->master_did) {
         // @TODO: Add a configuration screen for specifying which fields get sent back
         // to Salesforce when a recurring donation charge is processed.
         $fields_to_update_on_charge = variable_get('fundraiser_sustainers_recurring_donation_charge_fields',
@@ -439,7 +442,7 @@ function fundraiser_sustainers_node_insert($node) {
     // If node is a donation type.
     $sustainers_node = array(
       'nid' => $node->nid,
-      'recurring_setting' =>  $node->recurring_setting,
+      'recurring_setting' => $node->recurring_setting,
     );
     _fundraiser_sustainers_update_sustainers_node($sustainers_node);
   }
@@ -484,7 +487,7 @@ function fundraiser_sustainers_node_update($node) {
   if (fundraiser_is_donation_type($node->type)) {
     $sustainers_node = array(
       'nid' => $node->nid,
-      'recurring_setting' =>  $node->recurring_setting,
+      'recurring_setting' => $node->recurring_setting,
     );
     _fundraiser_sustainers_update_sustainers_node($sustainers_node);
   }
@@ -660,7 +663,7 @@ function fundraiser_sustainers_fundraiser_field_info() {
     '#reset_value' => 1,
     '#create_callback' => '_fundraiser_sustainers_recurs_monthly_field_create',
     '#display_callback' => '_fundraiser_sustainers_recurs_monthly_field_display',
-     // Display callback, hide this field if the gateway Currently selected by the user is not supportive of recurring.
+    // Display callback, hide this field if the gateway Currently selected by the user is not supportive of recurring.
   );
   // Add a display callback for the gateways, to make sure the selected one is flagged for gateway support or not.
   return $fields;
@@ -1015,7 +1018,7 @@ function fundraiser_sustainers_donation_amount_form($form, &$form_state, $donati
   );
   $form['submit'] = array(
     '#type' => 'submit',
-     '#value' => t('Update donation amount'),
+    '#value' => t('Update donation amount'),
   );
   $form['#donation'] = $donation;
   return $form;
@@ -1030,7 +1033,7 @@ function fundraiser_sustainers_donation_amount_form_validate($form, &$form_state
   }
   if ($form_state['values']['fee_amount'] < $form_state['values']['min_amount']) {
     form_set_error('amount', t('Donation amount must be greater than %minimum',
-      array('%minimum' =>  money_format('%i', $form_state['values']['min_amount']))));
+      array('%minimum' => money_format('%i', $form_state['values']['min_amount']))));
   }
 }
 
@@ -1051,8 +1054,12 @@ function fundraiser_sustainers_donation_amount_form_submit($form, &$form_state) 
     global $user;
     $username = isset($user->name) ? $user->name : 'Anonymous';
     fundraiser_donation_comment($donation, 'The amount of this gift was changed from $@old_amount to $@new_amount on @date by @username.',
-      array('@old_amount' => $donation->donation['old_amount'], '@new_amount' => $donation->donation['amount'],
-        '@date' => format_date(strtotime('now')), '@username' => $username));
+      array(
+      '@old_amount' => $donation->donation['old_amount'],
+      '@new_amount' => $donation->donation['amount'],
+      '@date' => format_date(strtotime('now')),
+      '@username' => $username,
+    ));
   }
   drupal_set_message(t('The amount of all future donations has been updated to @amount.', array('@amount' => $amount)));
 }
@@ -1112,7 +1119,7 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
     '#attributes' => array('id' => 'credit-card-info'),
     '#tree' => TRUE,
   );
-  $form['payment_fields'][ $donation->donation['payment_method'] ] = array(
+  $form['payment_fields'][$donation->donation['payment_method']] = array(
     '#type' => 'fieldset',
     '#attributes' => array('id' => 'credit-card-info'),
   );
@@ -1122,7 +1129,7 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
   if (isset($donation->gateway['form callback'])) {
     $form_func = $donation->gateway['form callback'];
     if (function_exists($form_func)) {
-      $form['payment_fields'][ $donation->donation['payment_method'] ] += $form_func($donation->donation['payment_method']);
+      $form['payment_fields'][$donation->donation['payment_method']] += $form_func($donation->donation['payment_method']);
     }
   }
 
@@ -1471,11 +1478,12 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
               }
             }
           }
-        } else {
+        }
+        else {
           // ALERT: This gateway does it's own recurring stuff, so we skipped it here.
           // But we should probably tell someone this was attempted.
           watchdog('fundraiser_sustainers', 'A offsite recurring donation was created, for master donation id #@nid',
-            array('@nid'=> $donation->nid));
+            array('@nid' => $donation->nid));
         }
       }
       else {
@@ -1483,7 +1491,7 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
         // But we should probably tell someone this was attempted. We have protections on the form, but they
         // are JS based to hide the form element, so we check server side too.
         watchdog('fundraiser_sustainers', 'A recurring donation for a non-recurring gateway was attempted, for master donation id #@nid',
-          array('@nid'=> $donation->nid));
+          array('@nid' => $donation->nid));
       }
     }
   }
@@ -1586,7 +1594,7 @@ function fundraiser_sustainers_sustainer_key_file_exists() {
   $dir = module_invoke_all('fundraiser_get_credit_encryption_path');
   $dir = $dir[0];
   if (!empty($dir) && $dir !== t('Not configured, see below.')) {
-    $filename = rtrim($dir, '/\\') .'/sustainer.key';
+    $filename = rtrim($dir, '/\\') . '/sustainer.key';
     if (file_exists($filename) && $file = fopen($filename, 'r')) {
       return $filename;
     }
@@ -1612,7 +1620,11 @@ function _fundraiser_sustainers_send_cc_notification($master_did, $uid) {
   // Do token replacement on body.
   $body = variable_get('fundraiser_cc_exp_body',
     'Your card ending in [donation:card_number] is about to expire on [donation:card_expiration_month]/[donation:card_expiration_year].');
-  $token_set = array('node' => $donation->node, 'donation' => $donation, 'user' => $user);
+  $token_set = array(
+    'node' => $donation->node,
+    'donation' => $donation,
+    'user' => $user,
+  );
   $body = token_replace($body, $token_set);
   // Pass tokens as param so hook_mail has access.
   $params['fundraiser_sustainers_token_set'] = $token_set;
@@ -1854,17 +1866,17 @@ function _fundraiser_sustainers_cron_get_recurring($limit = 1000) {
     'WHERE (r.gateway_resp IS NULL OR r.gateway_resp = \'failed\') ' .
     'AND r.next_charge < :now ' .
     'AND r.attempts < 3 ' . // If already been tried 3 times, Stop Trying.
-    'AND r.lock_id = 0 '. // And not locked.
+    'AND r.lock_id = 0 ' . // And not locked.
     'LIMIT 0, ' . $limit,
     array(':now' => $now)
-  )->fetchAllKeyed(0,0);
+  )->fetchAllKeyed(0, 0);
   if (!empty($donations)) {
     db_query('UPDATE {fundraiser_sustainers} r1 ' .
       'SET r1.lock_id = :uni_batch_id ' .
       'WHERE r1.did IN (:donations)',
       array(':uni_batch_id' => $uni_batch_id, ':donations' => $donations)
     );
-  };
+  }
   // Grab the locked donations for this batch.
   $donations = db_query('SELECT * FROM {fundraiser_sustainers} r ' .
     'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .

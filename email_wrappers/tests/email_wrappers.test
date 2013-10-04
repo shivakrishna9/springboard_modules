@@ -7,7 +7,7 @@
 
 class EmailWrappersTestCase extends DrupalWebTestCase {
 
- public static function getInfo() {
+  public static function getInfo() {
     return array(
       'name' => 'Email Wrappers',
       'description' => 'Email Wrappers functional tests.',
@@ -18,7 +18,7 @@ class EmailWrappersTestCase extends DrupalWebTestCase {
   /**
    * Implementation of setUp().
    */
-  function setUp() {
+  public function setUp() {
     parent::setUp(array('webform', 'email_wrappers', 'ctools'));
     // jam email system
     variable_set('mail_system', array('default-system' => 'TestingMailSystem'));
@@ -34,7 +34,7 @@ class EmailWrappersTestCase extends DrupalWebTestCase {
     $this->drupalLogin($this->privileged_user);
   }
 
-  function testEmaplWrappersSettings() {
+  public function testEmaplWrappersSettings() {
     //create test webform
     $this->WebformCreate();
 
@@ -74,14 +74,14 @@ class EmailWrappersTestCase extends DrupalWebTestCase {
     $this->assertOptionSelected('edit-email-wrappers-email-template', 0, t('Email template selection field present on form with no default selected.'));
 
     // confirm select ajax populates fields
-     $edit['email_wrappers_email_template'] = 2;
-     $this->drupalPostAJAX(NULL, $edit, 'email_wrappers_email_template');
-     $this->assertFieldByName('email_wrappers_bcc', 'bcc0@example.com', t('BCC default inherited from template selection'));
-     $this->assertFieldByName('subject_custom', 'Test webform submission mail', t('Subject default inherited from template selection'));
-     $this->assertFieldByName('from_address_custom', 'from@example.com', t('From address default inherited from template selection'));
-     $this->assertFieldByName('from_name_custom', 'Email Wrappers Test', t('From name default inherited from template selection'));
-     $this->assertFieldByName('email_wrappers_html_message', '<p>This is an html message</p>', t('HTML message default inherited from template selection'));
-     $this->assertFieldByName('email_wrappers_text_message', 'This is a text message', t('Text message default inherited from template selection'));
+    $edit['email_wrappers_email_template'] = 2;
+    $this->drupalPostAJAX(NULL, $edit, 'email_wrappers_email_template');
+    $this->assertFieldByName('email_wrappers_bcc', 'bcc0@example.com', t('BCC default inherited from template selection'));
+    $this->assertFieldByName('subject_custom', 'Test webform submission mail', t('Subject default inherited from template selection'));
+    $this->assertFieldByName('from_address_custom', 'from@example.com', t('From address default inherited from template selection'));
+    $this->assertFieldByName('from_name_custom', 'Email Wrappers Test', t('From name default inherited from template selection'));
+    $this->assertFieldByName('email_wrappers_html_message', '<p>This is an html message</p>', t('HTML message default inherited from template selection'));
+    $this->assertFieldByName('email_wrappers_text_message', 'This is a text message', t('Text message default inherited from template selection'));
 
     // save
     $edit = array(
@@ -134,9 +134,9 @@ class EmailWrappersTestCase extends DrupalWebTestCase {
         $this->assertTrue($text_message_legit, t('Email text message populated'));
       }
     }
-      // confirm mail headers (type, to, from, replyto, bcc)
-      // confirm html content
-      // confirm text content
+    // confirm mail headers (type, to, from, replyto, bcc)
+    // confirm html content
+    // confirm text content
 
 
 
@@ -163,7 +163,7 @@ class EmailWrappersTestCase extends DrupalWebTestCase {
       )),
       'mandatory' => '',
     );
-     drupal_write_record('webform_component', $component);
+    drupal_write_record('webform_component', $component);
   }
 
   private function WebformPost() {

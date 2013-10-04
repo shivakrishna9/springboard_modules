@@ -20,7 +20,7 @@ class AnonymousUserTestCase extends SecurePrepopulateTestCase {
   /**
    * Test pre-population for an anonymous user
    */
-  function testAnonymousPopulate() {
+  public function testAnonymousPopulate() {
     $node = $this->webformNode();
     $this->drupalGet('node/' . $node->nid);
     $this->pass(var_export($this->drupalGetContent(), TRUE));

@@ -623,9 +623,10 @@ class SalesforceSync {
 
           case 'string':
           case 'textarea':
-            // Make sure all strings are escaped correctly for XML. htmlspecialchars will
-            // be sufficient for most strings. If more robust escaping is needed
-            // consider using DOMDocument or SimpleXML to beef this up.
+            // Make sure all strings are escaped correctly for XML.
+            // htmlspecialchars will be sufficient for most strings. If more
+            // robust escaping is needed consider using DOMDocument or SimpleXML
+            // to beef this up.
             $item->sobject->fields[$field_name] = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
             break;
 
@@ -1003,7 +1004,7 @@ class SalesforceSync {
    */
   public function fetchRecords($object_type, array $fields, array $conditions = array()) {
     if (!is_object($this->soap)) {
-      watchdog('salesforce_sync', t('Unable to connect to Salesforce'), array(), WATCHDOG_ERROR);
+      watchdog('salesforce_sync', 'Unable to connect to Salesforce', array(), WATCHDOG_ERROR);
       return FALSE;
     }
     $queries = $this->buildQueries($object_type, $conditions);
@@ -1166,7 +1167,7 @@ class SalesforceSync {
 
       // Handle cases where the condition is provided to us as a 'field', 'op',
       // 'value' array.
-      else if (is_array($condition) && isset($condition['op']) && isset($condition['field']) && isset($condition['value'])) {
+      elseif (is_array($condition) && isset($condition['op']) && isset($condition['field']) && isset($condition['value'])) {
         if (empty($condition['op']) || empty($condition['field']) || empty($condition['value'])) {
           // Fail out if any of options are empty.
           $fail = TRUE;
@@ -1197,8 +1198,9 @@ class SalesforceSync {
               $i--;
             }
           }
-          // If the query needs to be split up, this is where it is done.  We will
-          // divide the values of the array into the number of splits requested.
+          // If the query needs to be split up, this is where it is done.  We
+          // will divide the values of the array into the number of splits
+          // requested.
           elseif ($query_splits > 0 && is_array($condition['value'])) {
             $chunk_size = count($condition['value']) / ($query_splits + 1);
             $value_chunks = array_chunk($condition['value'], $chunk_size);
