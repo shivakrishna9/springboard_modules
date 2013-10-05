@@ -329,7 +329,7 @@ function commerce_litle_cc_submit_form_validate($payment_method, $pane_form, $pa
 /**
  * Payment method callback: checkout form validation.
  */
-function commerce_litle_echeck_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()){
+function commerce_litle_echeck_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
   // If the customer specified a card on file, skip the normal validation.
   if (module_exists('commerce_cardonfile') && !empty($payment_method['settings']['cardonfile']) &&
     !empty($pane_values['cardonfile']) && $pane_values['cardonfile'] !== 'new') {
@@ -439,14 +439,14 @@ function _commerce_litle_get_litle_config($gateway) {
     'reportGroup' => !empty($gateway['settings']['commerce_litle_settings_reportGroup']) ? $gateway['settings']['commerce_litle_settings_reportGroup'] : '',
   );
 
-  if($gateway['settings']['commerce_litle_settings_sandbox'] == 1) {
+  if ($gateway['settings']['commerce_litle_settings_sandbox'] == 1) {
     $auth_info['url'] = 'https://www.testlitle.com/sandbox/communicator/online';
   }
 
   return $auth_info;
 }
 
-//----------------------------------------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------
 // Below here are partially converted authorize functions, to be used as a basis for Litle work.
 
 /**
@@ -535,7 +535,7 @@ function commerce_litle_cc_credit_access($order, $transaction) {
 }
 
 function _commerce_litle_cc_card_type_to_litle($type) {
-  switch($type) {
+  switch ($type) {
     case "visa":
       return "VI";
     case "mastercard":
@@ -573,9 +573,9 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
   // If txn_type has been specified in the pane values array, such as through
   // the special select element we alter onto the payment terminal form, use
   // that instead.
-  //if (!empty($pane_values['commerce_litle_settings_txn_type'])) {
-  //  $txn_type = $pane_values['commerce_litle_settings_txn_type'];
-  //}
+  // if (!empty($pane_values['commerce_litle_settings_txn_type'])) {
+  //   $txn_type = $pane_values['commerce_litle_settings_txn_type'];
+  // }
   $txn_type = COMMERCE_CREDIT_AUTH_CAPTURE;
 
   $litle_card_type =  _commerce_litle_cc_card_type_to_litle($card_type);
@@ -585,7 +585,7 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
     'amount' => commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']) * 100,
     'card' => array(
       'number' => $pane_values['credit_card']['number'],
-      'expDate' => str_pad($pane_values['credit_card']['exp_month'], 2, 0, STR_PAD_LEFT) . substr($pane_values['credit_card']['exp_year'],2,2),
+      'expDate' => str_pad($pane_values['credit_card']['exp_month'], 2, 0, STR_PAD_LEFT) . substr($pane_values['credit_card']['exp_year'], 2, 2),
       'type' => $litle_card_type,
     )
   );
@@ -611,7 +611,7 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
   );
 
   // Prepare the billing address for use in the request.
-  if ($order_wrapper->commerce_customer_billing->value()){
+  if ($order_wrapper->commerce_customer_billing->value()) {
     $billing_address = $order_wrapper->commerce_customer_billing->commerce_customer_address->value();
 
     if (empty($billing_address['first_name'])) {
@@ -691,7 +691,7 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
   }
 
   // If we didn't get an approval response code...
-  if (XmlParser::getNode($saleResponse,'response') != '000') {
+  if (XmlParser::getNode($saleResponse, 'response') != '000') {
     // Create a failed transaction with the error message.
     $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
   }
@@ -718,7 +718,7 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
 
   // Build a meaningful response message.
   $message = array(
-    '<b>' . (XmlParser::getNode($saleResponse, 'response') != '000' ? t('REJECTED') : t('ACCEPTED')) . ':</b> ' . check_plain(XmlParser::getNode($saleResponse,'message'))
+    '<b>' . (XmlParser::getNode($saleResponse, 'response') != '000' ? t('REJECTED') : t('ACCEPTED')) . ':</b> ' . check_plain(XmlParser::getNode($saleResponse, 'message'))
   );
 
   $transaction->message = implode('<br />', $message);
@@ -851,7 +851,7 @@ function commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, 
     'amount' => commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']) * 100,
     'token' => array(
       'litleToken' => $card_data->remote_id,
-      'expDate' => str_pad($card_data->card_exp_month, 2, 0, STR_PAD_LEFT) . substr($card_data->card_exp_year,2,2),
+      'expDate' => str_pad($card_data->card_exp_month, 2, 0, STR_PAD_LEFT) . substr($card_data->card_exp_year, 2, 2),
       // 000 means use litle's stored value
       'cardValidationNum' => '000'
     )
@@ -869,7 +869,7 @@ function commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, 
   /**
    * @todo Do we need to send billing address if we're providing a token?
    */
-  if ($order_wrapper->commerce_customer_billing->value()){
+  if ($order_wrapper->commerce_customer_billing->value()) {
     $billing_address = $order_wrapper->commerce_customer_billing->commerce_customer_address->value();
 
     if (empty($billing_address['first_name'])) {
@@ -960,7 +960,7 @@ function commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, 
   }
 
   // If we didn't get an approval response code...
-  if (XmlParser::getNode($saleResponse,'response') != '000') {
+  if (XmlParser::getNode($saleResponse, 'response') != '000') {
     // Create a failed transaction with the error message.
     $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
   }
@@ -989,7 +989,7 @@ function commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, 
 
   // Build a meaningful response message.
   $message = array(
-    '<b>' . (XmlParser::getNode($saleResponse, 'response') != '000' ? t('REJECTED') : t('ACCEPTED')) . ':</b> ' . check_plain(XmlParser::getNode($saleResponse,'message'))
+    '<b>' . (XmlParser::getNode($saleResponse, 'response') != '000' ? t('REJECTED') : t('ACCEPTED')) . ':</b> ' . check_plain(XmlParser::getNode($saleResponse, 'message'))
   );
 
   $transaction->message = implode('<br />', $message);
@@ -1128,7 +1128,7 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
   }
 
   // If we didn't get an approval response code...
-  if (XmlParser::getNode($saleResponse,'response') != '000') {
+  if (XmlParser::getNode($saleResponse, 'response') != '000') {
     // Create a failed transaction with the error message.
     $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
   }
@@ -1156,7 +1156,7 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
   commerce_payment_transaction_save($transaction);
 
   // If the payment failed, display an error and rebuild the form.
-  if (XmlParser::getNode($saleResponse,'response') != '000') {
+  if (XmlParser::getNode($saleResponse, 'response') != '000') {
     drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
     drupal_set_message(XmlParser::getNode($saleResponse, 'message'), 'error');
     return FALSE;
@@ -1371,7 +1371,7 @@ function commerce_litle_echeck_vault_cardonfile_charge($payment_method, $card_da
   }
 
   // If we didn't get an approval response code...
-  if (XmlParser::getNode($saleResponse,'response') != '000') {
+  if (XmlParser::getNode($saleResponse, 'response') != '000') {
     // Create a failed transaction with the error message.
     $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
   }
@@ -1399,7 +1399,7 @@ function commerce_litle_echeck_vault_cardonfile_charge($payment_method, $card_da
   commerce_payment_transaction_save($transaction);
 
   // If the payment failed, display an error and rebuild the form.
-  if (XmlParser::getNode($saleResponse,'response') != '000') {
+  if (XmlParser::getNode($saleResponse, 'response') != '000') {
     drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
     drupal_set_message(XmlParser::getNode($saleResponse, 'message'), 'error');
     return FALSE;
