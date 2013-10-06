@@ -27,7 +27,7 @@ class FundraiserCommerceUnitTestSetup extends DrupalWebTestCase {
 /**
  * Fundraiser testing class.
  */
-class FundraiserCommerceUnitTestCase extends FundraiserCommerceUnitTestSetup {
+class FundraiserCommerceUnitTestSetUp extends FundraiserCommerceUnitTestSetup {
 
   /**
    * Implements getInfo(). Declares this test class to fundraiser testing.

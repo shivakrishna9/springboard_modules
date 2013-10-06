@@ -10,7 +10,7 @@ module_load_include('test', 'capwiz_connect', 'tests/capwiz_connect');
 /**
  * Sets up basic tools for testing CapWiz Connect JS.
  */
-class CapwizConnectJsTestCase extends CapwizConnectTestCase {
+class CapwizConnectJsTestSetUp extends CapwizConnectTestSetUp {
 
   /**
    * Implementation of getInfo().
@@ -35,21 +35,5 @@ class CapwizConnectJsTestCase extends CapwizConnectTestCase {
       'manage capwiz js alerts',
     ));
     parent::setUp($modules, $permissions);
-  }
-
-  /**
-   * Implementation of tearDown().
-   */
-  public function tearDown() {
-    parent::tearDown();
-  }
-
-  /**
-   * Test installation of dependencies.
-   *
-   * Remove this test once tests are added for this module.
-   */
-  public function testInstall() {
-    $this->assertTrue(module_exists('capwiz_connect_js'), 'Module was not enabled correctly.');
   }
 }

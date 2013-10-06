@@ -10,7 +10,7 @@ module_load_include('test', 'salesforce_mapping', 'tests/salesforce_mapping');
 /**
  * Tests basic set up for mapping salesforce objects.
  */
-class SalesforceMappingAlterTestCase extends SalesforceMappingTestCase {
+class SalesforceMappingAlterTestSetUp extends SalesforceMappingTestCase {
 
   /**
    * Implementation of getInfo().

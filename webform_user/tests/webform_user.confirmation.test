@@ -3,7 +3,7 @@
  * @file
  * Test the webform user confirmation page.
  */
-class WebformUserConfirmationTest extends WebformUserSetup {
+class WebformUserConfirmationTest extends WebformUserTestSetUp {
 
   /**
    * Implementation of getInfo().

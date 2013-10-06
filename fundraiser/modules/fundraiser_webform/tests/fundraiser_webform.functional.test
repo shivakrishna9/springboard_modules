@@ -10,7 +10,7 @@ module_load_include('test', 'fundraiser', 'tests/fundraiser');
 /**
  * Setup and tear down web class. Does nothing else.
  */
-class FundraiserWebformFunctionalTest extends FundraiserTestCase {
+class FundraiserWebformFunctionalTest extends FundraiserWebformTestSetup {
 
   /**
    * Implements getInfo(). Declares this test class to fundraiser testing.

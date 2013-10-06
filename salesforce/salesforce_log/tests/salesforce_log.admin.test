@@ -10,7 +10,7 @@ module_load_include('test', 'salesforce_log', 'tests/salesforce_log');
 /**
  * Tests basic set up for triggering events on Salesforce watchdog logs.
  */
-class SalesforceLogAdminTestCase extends SalesforceLogTestCase {
+class SalesforceLogAdminTestCase extends SalesforceLogTestSetUp {
 
   /**
    * Implementation of getInfo().

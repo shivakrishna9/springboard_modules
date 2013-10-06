@@ -10,7 +10,7 @@ module_load_include('test', 'fundraiser', 'tests/fundraiser_sustainers');
 /**
  * Tests the CRUD behavior of sustainers.
  */
-class FundraiserSustainersSustainersTest extends FundraiserSustainersTest {
+class FundraiserSustainersSustainersTest extends FundraiserSustainersTestSetUp {
 
   /**
    * Implements getInfo(). Declares this test class to fundraiser testing.

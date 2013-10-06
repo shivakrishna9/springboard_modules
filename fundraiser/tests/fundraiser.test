@@ -7,7 +7,7 @@
 /**
  * Setup and tear down web class. Does nothing else.
  */
-class FundraiserTestCase extends DrupalWebTestCase {
+class FundraiserTestSetUp extends DrupalWebTestCase {
 
   /**
    * Implements getInfo(). Declares this test class to fundraiser testing.

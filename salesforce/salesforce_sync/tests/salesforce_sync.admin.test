@@ -10,7 +10,7 @@ include_once dirname(__FILE__) . '/salesforce_sync.test';
 /**
  * Salesforce queue module config form tests.
  */
-class SalesforceSyncAdminTestCase extends SalesforceSyncTestCase {
+class SalesforceSyncAdminTestCase extends SalesforceSyncTestSetUp {
 
   /**
    * Implementation of getInfo().

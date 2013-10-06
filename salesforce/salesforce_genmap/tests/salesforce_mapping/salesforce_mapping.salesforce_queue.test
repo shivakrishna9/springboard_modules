@@ -10,7 +10,7 @@ module_load_include('test', 'salesforce_genmap', 'tests/salesforce_mapping/sales
 /**
  * Tests integrating salesforce_mapping into queuing.
  */
-class SalesforceMappingAlterSalesforceQueueTestCase extends SalesforceMappingAlterTestCase {
+class SalesforceMappingAlterSalesforceQueueTestCase extends SalesforceMappingAlterTestSetUp {
 
   /**
    * Implementation of getInfo().

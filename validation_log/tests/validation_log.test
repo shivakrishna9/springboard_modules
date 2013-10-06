@@ -8,7 +8,7 @@
 /**
  * Sets up basic tools for testing Validation Log.
  */
-class ValidationLogTestCase extends DrupalWebTestCase {
+class ValidationLogTestSetUp extends DrupalWebTestCase {
 
   /**
    * Implementation of getInfo().
@@ -47,14 +47,5 @@ class ValidationLogTestCase extends DrupalWebTestCase {
   public function tearDown() {
     user_cancel(array(), $this->admin_user->uid, 'user_cancel_delete');
     parent::tearDown();
-  }
-
-  /**
-   * Test installation of dependencies.
-   *
-   * Remove this test once tests are added for this module.
-   */
-  public function testInstall() {
-    $this->assertTrue(module_exists('validation_log'), 'Module was not enabled correctly.');
   }
 }

@@ -10,7 +10,7 @@ module_load_include('test', 'salesforce_genmap', 'tests/webform/webform');
 /**
  * Tests mapping Salesforce objects onto webforms.
  */
-class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
+class SalesforceWebformMapTestCase extends SalesforceWebformTestSetUp {
 
   /**
    * Implementation of getInfo().

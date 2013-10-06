@@ -8,7 +8,7 @@
 /**
  * Sets up basic tools for testing Form Layouts.
  */
-class FormLayoutsTestCase extends DrupalWebTestCase {
+class FormLayoutsTestSetUp extends DrupalWebTestCase {
 
   /**
    * Implementation of getInfo().
@@ -52,14 +52,5 @@ class FormLayoutsTestCase extends DrupalWebTestCase {
   public function tearDown() {
     user_cancel(array(), $this->admin_user->uid, 'user_cancel_delete');
     parent::tearDown();
-  }
-
-  /**
-   * Test installation of dependencies.
-   *
-   * Remove this test once tests are added for this module.
-   */
-  public function testInstall() {
-    $this->assertTrue(module_exists('form_layouts'), 'Module was not enabled correctly.');
   }
 }

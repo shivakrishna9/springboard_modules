@@ -10,7 +10,7 @@ module_load_include('test', 'salesforce_genmap', 'tests/salesforce_genmap');
 /**
  * Sets up basic tools for testing Salesforce Donation.
  */
-class SalesforceDonationTestCase extends SalesforceGenmapTestCase {
+class SalesforceDonationTestSetUp extends SalesforceGenmapTestSetUp {
 
   /**
    * Implementation of getInfo().
@@ -43,14 +43,5 @@ class SalesforceDonationTestCase extends SalesforceGenmapTestCase {
    */
   public function tearDown() {
     parent::tearDown();
-  }
-
-  /**
-   * Test installation of dependencies.
-   *
-   * Remove this test once tests are added for this module.
-   */
-  public function testInstall() {
-    $this->assertTrue(module_exists('salesforce_donation'), 'Module was not enabled correctly.');
   }
 }

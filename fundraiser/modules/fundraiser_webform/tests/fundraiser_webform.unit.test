@@ -12,7 +12,7 @@
 /**
  * Setup and tear down web class. Does nothing else.
  */
-class FundraiserWebformUnitTestSetup extends DrupalWebTestCase {
+class FundraiserWebformTestSetup extends FundraiserTestSetUp {
 
   /**
    * Implemenation of setUp().
@@ -31,7 +31,7 @@ class FundraiserWebformUnitTestSetup extends DrupalWebTestCase {
 /**
  * Fundraiser testing class.
  */
-class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
+class FundraiserWebformUnitTestCase extends FundraiserWebformTestSetup {
 
   /**
    * Implements getInfo(). Declares this test class to fundraiser testing.

@@ -10,7 +10,7 @@ module_load_include('test', 'fundraiser', 'tests/fundraiser');
 /**
  * Fundraiser cloning test class.
  */
-class FundraiserCloneTest extends FundraiserTestCase {
+class FundraiserCloneTest extends FundraiserTestSetUp {
 
   /**
    * Implementation of getInfo().

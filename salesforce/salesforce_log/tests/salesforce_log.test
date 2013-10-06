@@ -10,7 +10,7 @@ module_load_include('test', 'salesforce_queue', 'tests/salesforce_queue');
 /**
  * Basic set up for running salesforce_log tests.
  */
-class SalesforceLogTestCase extends SalesforceQueueTestCase {
+class SalesforceLogTestSetUp extends SalesforceQueueTestSetUp {
 
   /**
    * Implementation of getInfo().

@@ -10,7 +10,7 @@ module_load_include('test', 'salesforce_genmap', 'tests/salesforce_genmap');
 /**
  * Tests basic set up for mapping salesforce objects to webforms.
  */
-class SalesforceGenmapEntitiesTestCase extends SalesforceGenmapTestCase {
+class SalesforceGenmapEntitiesTestCase extends SalesforceGenmapTestSetUp {
 
   /**
    * Implementation of getInfo().

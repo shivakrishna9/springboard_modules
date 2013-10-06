@@ -10,7 +10,7 @@ include_once dirname(__FILE__) . '/salesforce_queue.test';
 /**
  * Tests basic set up for queueing data for Salesforce and sending it.
  */
-class SalesforceQueueQueueTestCase extends SalesforceQueueTestCase {
+class SalesforceQueueQueueTestCase extends SalesforceQueueTestSetUp {
 
   /**
    * Implementation of getInfo().

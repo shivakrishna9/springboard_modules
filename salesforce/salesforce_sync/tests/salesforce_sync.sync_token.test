@@ -10,7 +10,7 @@ module_load_include('test', 'salesforce_queue', 'tests/salesforce_queue');
 /**
  * Ensure salesforce_sync integrates with salesforce_queue properly.
  */
-class SalesforceSyncQueueTokenTestCase extends SalesforceQueueTestCase {
+class SalesforceSyncQueueTokenTestCase extends SalesforceQueueTestSetUp {
 
   /**
    * Implementation of getInfo().

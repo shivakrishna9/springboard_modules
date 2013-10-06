@@ -10,7 +10,7 @@ include_once dirname(__FILE__) . '/salesforce_sync.test';
 /**
  * Tests for SalesforceSync.
  */
-class SalesforceSyncSyncTestCase extends SalesforceSyncTestCase {
+class SalesforceSyncSyncTestCase extends SalesforceSyncTestSetUp {
 
   /**
    * Implementation of getInfo().

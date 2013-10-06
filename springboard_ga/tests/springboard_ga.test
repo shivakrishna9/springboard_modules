@@ -8,7 +8,7 @@
 /**
  * Sets up basic tools for testing Springboard GA.
  */
-class SpringboardGaTestCase extends DrupalWebTestCase {
+class SpringboardGaTestSetUp extends DrupalWebTestCase {
 
   /**
    * Implementation of getInfo().
@@ -50,14 +50,5 @@ class SpringboardGaTestCase extends DrupalWebTestCase {
   public function tearDown() {
     user_cancel(array(), $this->admin_user->uid, 'user_cancel_delete');
     parent::tearDown();
-  }
-
-  /**
-   * Test installation of dependencies.
-   *
-   * Remove this test once tests are added for this module.
-   */
-  public function testInstall() {
-    $this->assertTrue(module_exists('springboard_ga'), 'Module was not enabled correctly.');
   }
 }

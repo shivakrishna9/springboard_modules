@@ -10,7 +10,7 @@ module_load_include('test', 'salesforce', 'tests/salesforce');
 /**
  * Tests basic set up for syncing data between Salesforce and Drupal.
  */
-class SalesforceSyncTestCase extends SalesforceTestCase {
+class SalesforceSyncTestSetUp extends SalesforceTestCase {
 
   /**
    * List of all operations.

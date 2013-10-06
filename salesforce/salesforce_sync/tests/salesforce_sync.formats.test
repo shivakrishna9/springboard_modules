@@ -10,7 +10,7 @@ module_load_include('test', 'salesforce_queue', 'tests/salesforce_queue');
 /**
  * Ensure salesforce_sync converts data formats properly.
  */
-class SalesforceSyncFormatsTestCase extends SalesforceQueueTestCase {
+class SalesforceSyncFormatsTestCase extends SalesforceQueueTestSetUp {
 
   /**
    * Implementation of getInfo().

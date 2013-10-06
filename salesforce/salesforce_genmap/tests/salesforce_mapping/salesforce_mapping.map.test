@@ -10,7 +10,7 @@ module_load_include('test', 'salesforce_genmap', 'tests/salesforce_mapping/sales
 /**
  * Tests mapping Salesforce objects onto entities.
  */
-class SalesforceMappingAlterMapTestCase extends SalesforceMappingAlterTestCase {
+class SalesforceMappingAlterMapTestCase extends SalesforceMappingAlterTestSetUp {
 
   /**
    * Implementation of getInfo().

@@ -7,7 +7,7 @@
 /**
  * Setup and tear down web class. Does nothing else.
  */
-class WebformUserSetup extends DrupalWebTestCase {
+class WebformUserTestSetUp extends DrupalWebTestCase {
 
   /**
    * Implementation of setUp().

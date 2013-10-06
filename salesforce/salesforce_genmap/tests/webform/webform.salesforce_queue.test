@@ -10,7 +10,7 @@ module_load_include('test', 'salesforce_genmap', 'tests/webform/webform');
 /**
  * Tests integrating webform mapping into queuing.
  */
-class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase {
+class SalesforceWebformSalesforceQueueTestSetUp extends SalesforceWebformTestSetUp {
 
   /**
    * Implementation of getInfo().

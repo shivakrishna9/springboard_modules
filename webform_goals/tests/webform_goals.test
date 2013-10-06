@@ -3,7 +3,7 @@
  * @file
  * Test interaction between user accounts and webform fields.
  */
-class WebformUserIntegratedTestSetup extends DrupalWebTestCase {
+class WebformGoalsTestSetUp extends WebformUserTestSetUp {
 
   /**
    * Implements setUp().
@@ -49,7 +49,7 @@ class WebformUserIntegratedTestSetup extends DrupalWebTestCase {
 /**
  * Webform user testing class.
  */
-class WebformGoalsIntegratedTestCase extends WebformGoalsIntegratedTestSetup {
+class WebformGoalsUITestCase extends WebformGoalsTestSetUp {
 
   /**
    * Implements getInfo().
@@ -83,7 +83,7 @@ class WebformGoalsIntegratedTestCase extends WebformGoalsIntegratedTestSetup {
 /**
  * Webform user testing class.
  */
-class WebformGoalsUnitTestCase extends WebformGoalsIntegratedTestSetup {
+class WebformGoalsUnitTestCase extends WebformGoalsTestSetUp {
 
   /**
    * Implements getInfo().
