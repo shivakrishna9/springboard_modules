@@ -28,33 +28,12 @@ class SalesforceLogTestSetUp extends SalesforceQueueTestSetUp {
    */
   public function setUp($modules = array(), $permissions = array()) {
     $modules = $modules + array(
-      'entity',
       'entity_token',
-      'libraries',
       'views',
       'views_bulk_operations',
-      'salesforce',
-      'salesforce_soap',
-      'salesforce_sync',
-      'salesforce_queue',
       'salesforce_log',
     );
     parent::setUp($modules, $permissions);
-
-    // Create an admin user.
-    $permissions = $permissions + array(
-      'access content',
-      'administer site configuration',
-      'administer content types',
-      'administer nodes',
-      'administer users',
-      'administer salesforce',
-      'administer salesforce sync',
-    );
-    $this->admin_user = $this->drupalCreateUser($permissions);
-    // Don't forget, need to pass --uri in drush command in order for logging
-    // in to work.
-    $this->drupalLogin($this->admin_user);
   }
 
   /**
