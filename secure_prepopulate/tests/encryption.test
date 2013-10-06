@@ -5,7 +5,7 @@
  * Secure prepopulate encryption tests.
  */
 
-include_once(dirname(__FILE__) . '/secure_prepopulate.test');
+module_load_include('test', 'secure_prepopulate', 'tests/secure_prepopulate');
 
 class EncryptionTestCase extends SecurePrepopulateTestCase {
 

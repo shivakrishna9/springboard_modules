@@ -5,7 +5,7 @@
  * Simple tests for includes/salesforce_queue.processor.inc
  */
 
-include_once dirname(__FILE__) . '/salesforce_queue.test';
+module_load_include('test', 'salesforce_queue', 'tests/salesforce_queue');
 
 /**
  * Tests basic set up for queueing data for Salesforce and sending it
