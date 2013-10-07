@@ -10,6 +10,7 @@ dependencies[] = salesforce_queue
 files[] = tests/salesforce_mapping/salesforce_mapping.entities.test
 files[] = tests/salesforce_mapping/salesforce_mapping.map.test
 files[] = tests/salesforce_mapping/salesforce_mapping.salesforce_queue.test
+files[] = tests/salesforce_mapping/salesforce_mapping.test_fields.test
 files[] = tests/salesforce_mapping/salesforce_mapping.test
 files[] = tests/webform/webform.map.test
 files[] = tests/webform/webform.salesforce_queue.test
