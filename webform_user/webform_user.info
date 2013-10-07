@@ -1,4 +1,3 @@
-; $Id: $
 name = Webform User
 description = Enables the creation of user accounts from data submitted by forms and questionnaires.
 core = 7.x
