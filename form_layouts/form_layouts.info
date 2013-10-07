@@ -5,5 +5,3 @@ package = Jackson River Springboard - extras
 dependencies[] = fundraiser_webform
 version = 7.x-4.x-dev
 files[] = tests/form_layouts.test
-files[] = fundraiser_webform.install
-files[] = fundraiser_webform.module
