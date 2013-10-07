@@ -6,28 +6,9 @@
  */
 
 /**
- * Setup and tear down web class. Does nothing else.
- */
-class FundraiserCommerceUnitTestSetup extends DrupalWebTestCase {
-
-  /**
-   * Implemenation of setUp().
-   */
-  public function setUp($modules = array(), $permissions = array()) {
-    $modules = array_merge($modules, array(
-      'fundraiser_commerce',
-    ));
-    parent::setUp($modules);
-
-    $this->admin_user = $this->drupalCreateUser($permissions);
-    $this->drupalLogin($this->admin_user);
-  }
-}
-
-/**
  * Fundraiser testing class.
  */
-class FundraiserCommerceUnitTestSetUp extends FundraiserCommerceUnitTestSetup {
+class FundraiserCommerceUnitTestCase extends FundraiserCommerceTestSetup {
 
   /**
    * Implements getInfo(). Declares this test class to fundraiser testing.

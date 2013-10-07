@@ -2,13 +2,28 @@
 
 /**
  * @file
- * Test suite for Market Source module.
+ * Setup class for fundraiser_commerce tests.
  */
 
-// Include the setup test class.
 module_load_include('test', 'fundraiser', 'tests/fundraiser');
 
-class FundraiserCommerceGatewayTestSetUp extends FundraiserTestSetUp {
+/**
+ * Setup and tear down web class. Does nothing else.
+ */
+class FundraiserCommerceTestSetup extends FundraiserTestSetup {
+
+  /**
+   * Implemenation of setUp().
+   */
+  public function setUp($modules = array(), $permissions = array()) {
+    $modules = array_merge($modules, array(
+      'fundraiser_commerce',
+    ));
+    parent::setUp($modules, $permissions);
+  }
+}
+
+class FundraiserCommerceGatewayTestSetUp extends FundraiserCommerceTestSetup {
   protected $privileged_user;
 
   public static function getInfo() {
