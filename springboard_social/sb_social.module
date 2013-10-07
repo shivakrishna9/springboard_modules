@@ -247,7 +247,7 @@ function sb_social_init() {
   if (arg(0) == 'node' && is_numeric(arg(1))) { // TODO: replace this with a valid core hook
     $node = node_load(arg(1));
     $id = is_object($node) ? $node->nid : FALSE;
-    $sid = sb_social_sid_by_id($id);
+    $sid = _sb_social_sid_by_id($id);
 
     if (!$js_settings['id']) {
       $js_settings['id'] = is_object($node) ? $node->nid : 0;
