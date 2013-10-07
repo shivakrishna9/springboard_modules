@@ -1,72 +1,47 @@
 <?php
-
 /**
  * @file
- * Install file for the form layouts module.
+ * Install file for the form layout module.
  *
  */
-
 
 /**
  * Implements hook_install().
  */
-function form_layouts_install() {
-
-  $layout = serialize(array(
-      'top' => array('thing1', 'thing2'),
-      'bottom' => array(),
-    ));
-
-  db_query("INSERT INTO {form_layouts} (name, layout) VALUES('One column', '%s')", array($layout));
-
-  $layout = serialize(array(
-      'left' => array('thing1', 'thing2'),
-      'right' => array('thing3', 'thing4'),
-    ));
-
-  db_query("INSERT INTO {form_layouts} (name, layout) VALUES('Two columns', '%s')", array($layout));
-}
-
-function form_layouts_schema() {
-  $schema['form_layouts'] = array(
-    'description' => 'Form layouts with fieldset configurations.',
-    'fields' => array(
-      'id' => array(
-        'description' => 'Form layout ID',
-        'type' => 'serial',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'name' => array(
-        'description' => 'A name for the layout.',
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-      ),
+function form_layout_install() {
+  $default_form_layouts = array(
+    'one_column' => array(
+      'name' => 'One Column',
       'layout' => array(
-        'description' => 'The layout definition.',
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'serialize' => TRUE,
+        'top_region' => array(
+          'donation',
+          'donor_information',
+          'billing_information',
+          'payment_information'
+          ),
+        ),
+      ),
+    'two_column' => array(
+      'name' => 'Two Columns',
+      'layout' => array(
+        'left_region' => array(
+          'donation',
+          'donor_information'
+        ),
+        'right_region' => array(
+          'billing_information',
+          'payment_information'
+        ),
       ),
     ),
-    'primary key' => array('id'),
   );
 
-  return $schema;
+  variable_set('form_layout', $default_form_layouts);
 }
 
 /**
- * Remove cruft from the old form_layouts module.
- *
- * Implements hook_update_N().
+ * Implements hook_uninstall().
  */
-function form_layouts_update_7101() {
-  $types = fundraiser_get_donation_types();
-  $result = db_query('SELECT nid FROM {node} WHERE type IN (:types)', array(':types' => $types));
-  foreach ($result as $data) {
-    $var_name = 'donation_form_' . $data->nid . '_theme';
-    variable_del($var_name);
-  }
+function form_layout_uninstall() {
+  variable_del('form_layout');
 }
