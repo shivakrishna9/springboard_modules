@@ -1,35 +1,14 @@
 <?php
 
 /**
- * The following functions need unit test coverage.
- */
-
-/**
  * @file
- * Fundraiser module tests.
+ * Fundraiser webform unit tests.
  */
 
-/**
- * Setup and tear down web class. Does nothing else.
- */
-class FundraiserWebformTestSetup extends FundraiserTestSetUp {
-
-  /**
-   * Implemenation of setUp().
-   */
-  public function setUp($modules = array(), $permissions = array()) {
-    $modules = array_merge($modules, array(
-      'fundraiser_webform',
-    ));
-    parent::setUp($modules);
-
-    $this->admin_user = $this->drupalCreateUser($permissions);
-    $this->drupalLogin($this->admin_user);
-  }
-}
+module_load_include('test', 'fundraiser_webform', 'tests/fundraiser_webform');
 
 /**
- * Fundraiser testing class.
+ * Fundraiser webform testing class.
  */
 class FundraiserWebformUnitTestCase extends FundraiserWebformTestSetup {
 

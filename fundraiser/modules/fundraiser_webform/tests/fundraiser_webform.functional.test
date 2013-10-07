@@ -5,7 +5,7 @@
  */
 
 // Include the setup test class.
-module_load_include('test', 'fundraiser', 'tests/fundraiser');
+module_load_include('test', 'fundraiser_webform', 'tests/fundraiser_webform');
 
 /**
  * Setup and tear down web class. Does nothing else.
