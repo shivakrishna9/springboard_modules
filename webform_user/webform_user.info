@@ -5,7 +5,8 @@ version = 7.x-4.x-dev
 package = Webform Extra
 configure = admin/config/content/webform_user
 dependencies[] = webform
-;Testing files
+
+; Tests
 files[] = tests/webform_user.setup.test
 files[] = tests/webform_user.config.test
 files[] = tests/webform_user.submission.test

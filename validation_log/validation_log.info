@@ -3,4 +3,6 @@ description = Provides a log of validation errors
 package = Jackson River Springboard - extras
 core = 7.x
 version = 7.x-4.x-dev
+
+; Tests
 files[] = tests/validation_log.test

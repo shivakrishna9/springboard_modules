@@ -7,4 +7,6 @@ version = 7.x-4.x-dev
 project = "Jackson River Springboard - extras"
 dependencies[] = fundraiser
 dependencies[] = salesforce_donation
+
+; Tests
 files[] = tests/dsr.test

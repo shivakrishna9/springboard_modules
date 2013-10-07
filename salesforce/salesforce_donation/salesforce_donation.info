@@ -7,4 +7,6 @@ dependencies[] = entity
 dependencies[] = salesforce
 dependencies[] = salesforce_genmap
 dependencies[] = fundraiser
+
+; Tests
 files[] = tests/salesforce_donation.test

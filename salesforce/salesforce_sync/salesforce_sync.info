@@ -8,11 +8,12 @@ files[] = includes/salesforce_sync.item.inc
 files[] = includes/salesforce_sync.sync.inc
 files[] = includes/salesforce_sync.tokens.inc
 
+; Tests
+files[] = tests/salesforce_sync.test
 files[] = tests/salesforce_sync.admin.test
 files[] = tests/salesforce_sync.entities.test
 files[] = tests/salesforce_sync.salesforce_queue.test
 files[] = tests/salesforce_sync.sync.test
-files[] = tests/salesforce_sync.test
 files[] = tests/salesforce_sync.token.test
 files[] = tests/salesforce_sync.sync_token.test
 files[] = tests/salesforce_sync.formats.test

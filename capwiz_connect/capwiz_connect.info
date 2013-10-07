@@ -4,5 +4,7 @@ core = 7.x
 package = "Jackson River Springboard - extras"
 version = 7.x-4.x-dev
 dependencies[] = encrypt
-files[] = tests/capwiz_connect.test
 files[] = CapwizConnect.inc
+
+; Tests
+files[] = tests/capwiz_connect.test

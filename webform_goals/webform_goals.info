@@ -11,5 +11,5 @@ dependencies[] = token
 dependencies[] = date_api
 dependencies[] = ctools
 
-// tests
+; Tests
 files[] = tests/webform_goals.test

@@ -8,8 +8,9 @@ dependencies[] = commerce_payment
 dependencies[] = commerce_customer
 dependencies[] = encrypt
 version = 7.x-4.x-dev
-;Testing files
-;files[] = tests/fundraiser_commerce.unit.test
-files[] = tests/fundraiser_commerce.gateway.test
-files[] = tests/fundraiser_commerce.gateway.authnet.test
+
+; Tests
+files[] = tests/fundraiser_commerce.test
 files[] = tests/fundraiser_commerce.encrypt.test
+files[] = tests/fundraiser_commerce.gateway.authnet.test
+;files[] = tests/fundraiser_commerce.unit.test

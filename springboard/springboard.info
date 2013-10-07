@@ -6,4 +6,6 @@ configure = admin/springboard
 version = 7.x-4.x-dev
 dependencies[] = ctools
 dependencies[] = views
+
+; Tests
 files[] = tests/springboard.test
