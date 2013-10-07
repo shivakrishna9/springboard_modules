@@ -133,6 +133,27 @@ function sb_social_schema() {
       'type' => array('type'),
     ),
   );
+  $schema['sb_social_path'] = array(
+    'description' => 'lookup table, provides numeric ID for individual drupal paths with settings.',
+    'fields' => array(
+      'pid' => array(
+        'description' => 'path id',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'path' => array(
+        'description' => 'drupal id, path or node id.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('pid'),
+    'indexes' => array(
+      'path' => array('path'),
+    ),
+  );
   return $schema;
 }
 
@@ -156,4 +177,32 @@ function sb_social_update_7002() {
   db_add_field('sb_social_shares', 'type', array('type' => 'varchar', 'length' => 255, 'description' => 'share type'));
 
   return t('Added columns to {sb_social_shares}');
+}
+
+/**
+ * Add sb_social_path table
+ */
+function sb_social_update_7003() {
+  $schema['sb_social_path'] = array(
+    'description' => 'lookup table, provides numeric ID for individual drupal paths with settings.',
+    'fields' => array(
+      'pid' => array(
+        'description' => 'path id',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'path' => array(
+        'description' => 'drupal id, path or node id.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('pid'),
+    'indexes' => array(
+      'path' => array('path'),
+    ),
+  );
+  db_create_table('sb_social_path', $schema['sb_social_path']);
 }

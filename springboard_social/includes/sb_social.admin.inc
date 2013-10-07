@@ -21,7 +21,6 @@ function sb_social_admin() {
     '#title' => t('Enable social sharing for the following content types'),
   );
   $content_types = node_type_get_types();
-  dsm($content_types);
   foreach ($content_types as $key => $type) {
     $content_type_options[$type->type] = $type->name;
   }
@@ -150,7 +149,7 @@ function sb_social_path_admin() {
 }
 
 /**
- * Helper function, redirects to path add form().
+ * Helper function, redirects to path add form.
  */
 function _sb_social_add_path() {
   drupal_goto('admin/config/services/springboard_social/path-settings/add');
@@ -199,7 +198,7 @@ function sb_social_path_settings($form, $edit, $sid = NULL) {
 
   $enabled_services = sb_social_get_enabled_services();
   $settings = sb_social_settings_load($sid);
-   dsm($settings, 'settings');
+
   // differentiate add vs edit forms, prevents path validation from incorrectly flagging an edit form
   // as a dupe on hook_validate.
   $edit['is_new'] = $sid === NULL ? TRUE : FALSE;
@@ -208,10 +207,12 @@ function sb_social_path_settings($form, $edit, $sid = NULL) {
   // getting populated in the path field when creating new path settings.
   if ($edit['is_new']) {
     $settings['id'] = '';
+    $form['is_new'] = array(
+      '#type' => 'value',
+      '#value' => TRUE,
+    );
   }
-  if (is_numeric($sid) && $sid) {
-    $settings['path'] = sb_social_get_id_by_sid($sid);
-  }
+
   $token_set = array('user', 'node');
 
   if (empty($enabled_services)) {
@@ -225,11 +226,12 @@ function sb_social_path_settings($form, $edit, $sid = NULL) {
     '#type' => 'value',
     '#value' => 'path',
   );
+
   $form['path'] = array(
     '#type' => 'textfield',
     '#title' => t('Path'),
     '#description' => t('Drupal internal path (Example: node/1). You may also use valid path aliases.'),
-    '#default_value' => isset($settings['id']) ? $settings['id'] : '',
+    '#default_value' => isset($settings['path']) ? $settings['path'] : '',
     '#required' => TRUE,
   );
   foreach ($enabled_services as $service) {
@@ -333,9 +335,13 @@ function sb_social_path_settings_submit($form, &$form_state) {
         }
       }
     }
-    // sid is handled in the save function.
+    // check for an existing path id, if none exists save path and use ID supplied.
+    $id  = sb_social_get_path_id($form_state['values']['path']);
+    if (!$id) {
+      $id = sb_social_save_path($form_state['values']['path']);
+    }
     $record = array(
-      'id' => $form_state['values']['path'],
+      'id' => $id,
       'type' => 'path',
       'data' => $data,
     );

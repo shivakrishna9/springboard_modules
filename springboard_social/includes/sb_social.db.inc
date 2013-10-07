@@ -61,6 +61,7 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
   // function that handles the rest of what is going on here.
   global $user;
   // deal with submission-based shares (confirmation pages)
+  // TODO: i believe this is no longer needed.
   if (is_numeric($id) && $type == 'sid') {
     module_load_include('inc', 'webform', 'includes/webform.submissions');
     $sid = $id;
@@ -91,11 +92,15 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
   if ($type == 'path') {
     $nid = 0;
     $sid = 0;
+    $page_name = '';
+    $internal_name = '';
+    $type = 'page';
+    $url_path = sb_social_get_path($id);
     $uid = $user->uid;
-    // TODO: settings id = path or alias.
+    $settings_id = sb_social_get_sid_by_id($id, 'path');
   }
 
-  $settings = sb_social_get_current_settings($settings_id);
+  $settings = sb_social_settings_load($settings_id);
 
   $uid = !empty($submission->uid) ? $submission->uid : $user->uid;
 
@@ -191,7 +196,9 @@ function sb_social_settings_load($sid) {
     if ($settings[$sid] && !empty($settings[$sid]['data'])) {
       $settings[$sid]['data'] = unserialize($settings[$sid]['data']);
     }
-
+    if ($settings[$sid]['type'] == 'path') {
+      $settings[$sid]['path'] = sb_social_get_path($settings[$sid]['id']);
+    }
     // supply global defaults if no settings are available.
     if (empty($settings[$sid])) {
       // check for node view page.
@@ -242,10 +249,20 @@ function sb_social_get_id_by_sid($sid) {
  * @param $id
  * Node id for node settings, path for path settings.
  *
+ * @param $type
+ * optional record type
+ *
  * @return bool Returns the sid associated with the given id, or FALSE if no records were found.
  */
-function sb_social_get_sid_by_id($id) {
-  $result = db_query('SELECT sid FROM {sb_social_settings} WHERE id = :id', array(':id' => $id));
+function sb_social_get_sid_by_id($id, $type = FALSE) {
+  $query = db_select('sb_social_settings', 's');
+  $query->fields('s', array('sid'));
+
+  if ($type) {
+    $query->condition('type', $type, '=');
+  }
+  $result = $query->execute();
+
   $data = $result->fetchField();
   return $data ? $data : FALSE;
 }
@@ -255,7 +272,7 @@ function sb_social_get_sid_by_id($id) {
  */
 function sb_social_path_settings_load_all() {
   $settings = array();
-  $results = db_query('SELECT id as path, sid FROM {sb_social_settings} WHERE type = :type', array(':type' => 'path'));
+  $results = db_query('SELECT s.sid, p.path FROM {sb_social_settings} s INNER JOIN {sb_social_path} p ON s.id = p.pid;');
   while ($item = $results->fetchAssoc()) {
     $settings[] = $item;
   }
@@ -325,6 +342,7 @@ function sb_social_get_enabled_services() {
  *
  */
 function sb_social_settings_save($settings) {
+
   if (is_array($settings['data'])) {
     $settings['data'] = serialize($settings['data']);
   }
@@ -337,7 +355,6 @@ function sb_social_settings_save($settings) {
     $settings['sid'] = $sid;
     $update = array('sid');
   }
-
   drupal_write_record('sb_social_settings', $settings, $update);
 }
 
@@ -422,5 +439,42 @@ function _sb_social_sid_by_id($id) {
   }
   $results = $query->execute();
 
+  return $results->fetchField();
+}
+
+/**
+ * Lookup numeric id of path.
+ *
+ * @param $path
+ * Drupal path, may be a string or an array of original path and alias.
+ */
+function sb_social_get_path_id($path) {
+  $query = db_select('sb_social_path', 'p');
+  $query->fields('p',array('pid'));
+
+  if (is_array($path)) {
+    $or = db_or();
+    foreach ($path as $item) {
+      $or->condition('path', $item, '=');
+    }
+    $query->condition($or);
+  }
+  else {
+    $query->condition('path', $path, '=');
+  }
+  $results = $query->execute();
+
+  return $results->fetchField();
+}
+
+function sb_social_save_path($path) {
+  $query = db_insert('sb_social_path');
+  $record = array('path' => $path);
+  $path_id = $query->fields($record)->execute();
+  return $path_id;
+}
+
+function sb_social_get_path($id) {
+  $results = db_query('SELECT path FROM {sb_social_path} WHERE pid = :id', array(':id' => $id));
   return $results->fetchField();
 }
