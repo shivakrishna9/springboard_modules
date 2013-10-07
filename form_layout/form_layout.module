@@ -6,9 +6,138 @@
  */
 
 /**
- * Provides the regions fields.
+ * Implements hook_permission().
+ */
+function form_layout_permission() {
+  return array(
+    'administer form layouts' => array(
+      'title' => t('Administer Form layouts'),
+      'description' => t('Configure default form layouts for donation forms.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function form_layout_menu() {
+  $items = array();
+
+  $base_path = form_layout_menu_base_path();
+  $arg = form_layout_menu_base_path_arg_position();
+
+  $items[$base_path] = array(
+    'title' => 'Form layouts',
+    'page callback' => 'form_layout_list',
+    'access arguments' => array('administer form layouts'),
+    'file' => 'form_layout.pages.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 100,
+  );
+
+  $items[$base_path . '/add'] = array(
+    'title' => 'Add form layout',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('form_layout_add'),
+    'access arguments' => array('administer form layouts'),
+    'file' => 'form_layout.pages.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  $items[$base_path . '/%form_layout/edit'] = array(
+    'title' => 'Edit form layout',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('form_layout_edit', $arg),
+    'access arguments' => array('administer form layouts'),
+    'file' => 'form_layout.pages.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  $items[$base_path . '/%form_layout/delete'] = array(
+    'title' => 'Delete form layout',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('form_layout_delete_confirm', $arg),
+    'access arguments' => array('administer form layouts'),
+    'file' => 'form_layout.pages.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
+ * A base path for which to provide menu items.
  *
+ * @return string
+ */
+function form_layout_menu_base_path() {
+  return 'admin/config/system/fundraiser/form_layout';
+}
+
+/**
+ * The arg() posiiton where the forml layout machine name will be.
+ *
+ * This is for the edit and delete operations.
+ * If we change the base path also change this.
+ *
+ * @return int
+ */
+function form_layout_menu_base_path_arg_position() {
+  return 5;
+}
+
+/**
+ * Load a single form layout or all form layouts.
+ *
+ * @param string|null $name  The machine name.  Leave NULL to get all layouts.
+ *
+ * @return array|bool  Single layout array, or all layouts, or FALSE
+ */
+function form_layout_load($name = NULL) {
+  $layouts = variable_get('form_layout', array());
+  if (is_null($name)) {
+    return $layouts;
+  }
+  elseif (isset($layouts[$name])) {
+    return $layouts[$name];
+  }
+
+  return FALSE;
+}
+
+/**
+ * Save a form layout.
+ *
+ * If the machine name already exists it will be overwritten.
+ *
+ * @param string $machine_name
+ * @param array $layout
+ */
+function form_layout_save($machine_name, $layout) {
+  $layouts = variable_get('form_layout');
+  $layouts[$machine_name] = $layout;
+
+  variable_set('form_layout', $layouts);
+}
+
+/**
+ * Delete a form layout
+ *
+ * @param string $machine_name
+ */
+function form_layout_delete($machine_name) {
+  $layouts = variable_get('form_layout');
+  unset($layouts[$machine_name]);
+
+  variable_set('form_layout', $layouts);
+}
+
+/**
  * Implements hook_fundraiser_field_info()
+ *
+ * Provides the additional regions fields.
+ *
+ * @todo Is the weighting working?
  */
 function form_layout_fundraiser_field_info() {
   $fields = array();
@@ -53,16 +182,19 @@ function form_layout_fundraiser_field_info() {
 }
 
 /**
+ * Implements hook_fundraiser_field_info_alter().
+ *
  * When the fields are being created, use the layout to rearrange the fieldsets.
  *
- * Implements hook_fundraiser_field_info_alter().
+ * The layout selected is stored in a session here because I can't figure out
+ * another way to get at it from the node_form when the node is being created.
+ * @todo Is there a better way to get this value here?
  */
 function form_layout_fundraiser_field_info_alter(&$info) {
-
   // 0 means no change
-  if (isset($_SESSION['form_layout']) && $_SESSION['form_layout']['layout'] != 0) {
+  if (isset($_SESSION['form_layout']) && $_SESSION['form_layout'] != 0) {
 
-    switch ($_SESSION['form_layous']['layout']) {
+    switch ($_SESSION['form_layous']) {
       case 2:
         $info['left_region']['donation'] = $info['donation'];
         $info['left_region']['donor_information'] = $info['donor_information'];
@@ -75,28 +207,44 @@ function form_layout_fundraiser_field_info_alter(&$info) {
         $info['top_region']['billing_information'] = $info['billing_information'];
         $info['top_region']['payment_information'] = $info['payment_information'];
         break;
+
+      // @todo Load the form layouts here and move the fieldsets around.
     }
 
+    // remove the original fields.
     unset($info['donation']);
     unset($info['donor_information']);
     unset($info['billing_information']);
     unset($info['payment_information']);
   }
 
+  // remove the session var
   unset($_SESSION['form_layouts']);
-
 }
 
 /**
+ * Field create callback for the regions.
+ *
  * @param stdClass $fundraiser
  * @param array $field
  *
- * @return FALSE|array $field
+ * @return array|bool $field or FALSE to not create the field.
  */
 function form_layout_field_create($fundraiser, $field) {
   return $field;
 }
 
+/**
+ * Display callback for the top region.
+ *
+ * Does some bootstrap formatting and removes the title.
+ *
+ * @param array $form
+ * @param array $form_state
+ * @param array $field
+ *
+ * @return array
+ */
 function form_layout_top_region_display($form, $form_state, $field) {
   // note that we're intentionally removing other classes here
   $field['#attributes']['class'] = array('span12');
@@ -107,26 +255,63 @@ function form_layout_top_region_display($form, $form_state, $field) {
   return $field;
 }
 
+/**
+ * Display callback for the left region.
+ *
+ * Does bootstrap formatting and removes the title.
+ *
+ * @param array $form
+ * @param array $form_state
+ * @param array $field
+ *
+ * @return array
+ */
 function form_layout_left_region_display($form, $form_state, $field) {
   // note that we're intentionally removing other classes here
   $field['#attributes']['class'] = array('span6');
   $field['#title'] = '';
+
+  // this div gets closed after the right region.
   $field['#prefix'] = '<div class="row">';
-//  $field['#suffix'] = '</div>';
+
   $field['#weight'] = -49;
   return $field;
 }
 
+/**
+ * Display callback for the right region.
+ *
+ * Does bootstrap formatting and removes the title.
+ *
+ * @param array $form
+ * @param array $form_state
+ * @param array $field
+ *
+ * @return array
+ */
 function form_layout_right_region_display($form, $form_state, $field) {
   // note that we're intentionally removing other classes here
   $field['#attributes']['class'] = array('span6');
   $field['#title'] = '';
-//  $field['#prefix'] = '<div class="row">';
+
+  // this div was opened before the left region.
   $field['#suffix'] = '</div>';
+
   $field['#weight'] = -48;
   return $field;
 }
 
+/**
+ * Display callback for the bottom region.
+ *
+ * Does bootstrap formatting and removes the title.
+ *
+ * @param array $form
+ * @param array $form_state
+ * @param array $field
+ *
+ * @return array
+ */
 function form_layout_bottom_region_display($form, $form_state, $field) {
   // note that we're intentionally removing other classes here
   $field['#attributes']['class'] = array('span12');
@@ -160,12 +345,24 @@ function form_layout_form_node_form_alter(&$form, &$form_state, $form_id) {
   $form['#submit'][] = 'form_layout_node_form_submit';
 }
 
-// @todo Replace with DB
 function form_layout_get_layout_options() {
+  $options = array();
+  $options[0] = t('None');
+  $layouts = variable_get('form_layout', array());
+
+  foreach ($layouts as $id => $layout) {
+    $options[$id] = $layout['name'];
+  }
+
+  return $options;
+}
+
+function form_layout_get_region_options() {
   return array(
-    0 => 'None',
-    1 => 'One Column',
-    2 => 'Two Columns',
+    'top_region' => 'Top',
+    'left_region' => 'Left',
+    'right_region' => 'Right',
+    'bottom_region' => 'Bottom',
   );
 }
 
@@ -180,10 +377,7 @@ function form_layout_node_form_submit($form, &$form_state) {
     // if this is a new node, set a session var to change the layout
     // in form_layouts_fundraiser_field_info_alter()
     // We do this because we don't have fields attached until the node has been saved.
-    $_SESSION['form_layouts'] = array(
-      'nid' => $form_state['values']['nid'],
-      'layout' => $layout_id,
-    );
+    $_SESSION['form_layout'] = $layout_id;
   }
   else {
     // existing node
