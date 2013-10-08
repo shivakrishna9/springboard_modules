@@ -225,6 +225,11 @@ function form_layout_table_rows($layout) {
  * @return bool  Whether the machine name already exists.
  */
 function form_layout_machine_name_exists($name) {
+  // special case
+  if ($name == 'none') {
+    return TRUE;
+  }
+
   $layouts = variable_get('form_layout', array());
 
   return (in_array($name, array_keys($layouts)));
