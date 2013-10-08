@@ -114,7 +114,7 @@ function form_layout_load($name = NULL) {
  * @param array $layout
  */
 function form_layout_save($machine_name, $layout) {
-  $layouts = variable_get('form_layout');
+  $layouts = form_layout_load();
   $layouts[$machine_name] = $layout;
 
   variable_set('form_layout', $layouts);
@@ -126,7 +126,7 @@ function form_layout_save($machine_name, $layout) {
  * @param string $machine_name
  */
 function form_layout_delete($machine_name) {
-  $layouts = variable_get('form_layout');
+  $layouts = form_layout_load();
   unset($layouts[$machine_name]);
 
   variable_set('form_layout', $layouts);
@@ -146,7 +146,6 @@ function form_layout_fundraiser_field_info() {
     '#title' => t('Top region'),
     '#type' => 'fieldset',
     '#required' => 0,
-    '#create_callback' => 'form_layout_field_create',
     '#display_callback' => 'form_layout_top_region_display',
     '#weight' => -50,
   );
@@ -155,7 +154,6 @@ function form_layout_fundraiser_field_info() {
     '#title' => t('Left region'),
     '#type' => 'fieldset',
     '#required' => 0,
-    '#create_callback' => 'form_layout_field_create',
     '#display_callback' => 'form_layout_left_region_display',
     '#weight' => -48,
   );
@@ -164,7 +162,6 @@ function form_layout_fundraiser_field_info() {
     '#title' => t('Right region'),
     '#type' => 'fieldset',
     '#required' => 0,
-    '#create_callback' => 'form_layout_field_create',
     '#display_callback' => 'form_layout_right_region_display',
     '#weight' => -48,
   );
@@ -173,7 +170,6 @@ function form_layout_fundraiser_field_info() {
     '#title' => t('Bottom region'),
     '#type' => 'fieldset',
     '#required' => 0,
-    '#create_callback' => 'form_layout_field_create',
     '#display_callback' => 'form_layout_bottom_region_display',
     '#weight' => -47,
   );
@@ -207,18 +203,6 @@ function form_layout_fundraiser_field_info_alter(&$info) {
 
   // remove the session var
   unset($_SESSION['form_layouts']);
-}
-
-/**
- * Field create callback for the regions.
- *
- * @param stdClass $fundraiser
- * @param array $field
- *
- * @return array|bool $field or FALSE to not create the field.
- */
-function form_layout_field_create($fundraiser, $field) {
-  return $field;
 }
 
 /**
@@ -320,7 +304,7 @@ function form_layout_form_node_form_alter(&$form, &$form_state, $form_id) {
     $form['form_layout'] = array(
       '#type' => 'fieldset',
       '#title' => t('Form Layout'),
-      '#description' => t('Select the form layout for this form. Defaults to one-column layout.'),
+      '#description' => t('Select the form layout for this form.'),
       '#collapsible' => TRUE,
       '#collapsed' => FALSE,
     );
@@ -329,7 +313,7 @@ function form_layout_form_node_form_alter(&$form, &$form_state, $form_id) {
       '#title' => t('Layout'),
       '#options' => form_layout_get_layout_options(),
       '#default_value' => 0,
-      '#description' => 'Choose an initial layout for the form.  Choose None to leave the layout as-is.',
+      '#description' => 'Choose a layout for the form.  Choose None to leave the layout as-is.',
     );
   }
   $form['#submit'][] = 'form_layout_node_form_submit';
@@ -366,6 +350,13 @@ function form_layout_get_region_options() {
   );
 }
 
+/**
+ * Submit handler for the node form.
+ *
+ * If this is a new node, set a session variable
+ * so the fundraiser_field_info_alter() hook will order the fieldsets.
+ * If we're editing a node, rearrange fieldsets now.
+ */
 function form_layout_node_form_submit($form, &$form_state) {
   $layout_name = $form_state['values']['form_layout'];
   if ($layout_name == 'none') {
@@ -384,11 +375,18 @@ function form_layout_node_form_submit($form, &$form_state) {
     // existing node
     // Unfortunately we can't use the same hook as above.
     // So we'll just change things now.
+    // By directly modifying $form_state['values'] here,
+    // it will all get saved later on as an entity.
     form_layout_update_layout($form_state['values']['webform']['components'], $layout_name);
   }
-
 }
 
+/**
+ * Rearrange webform components to match the layout selected.
+ *
+ * @param array $components
+ * @param string $layout_name
+ */
 function form_layout_update_layout(&$components, $layout_name) {
   $cids = form_layout_key_cids_by_form_key($components);
 
@@ -407,7 +405,7 @@ function form_layout_update_layout(&$components, $layout_name) {
  *
  * @param array $components  As given in $node->webform['components']
  *
- * @return array  form_key => cid
+ * @return array  array(form_key => cid, ...)
  */
 function form_layout_key_cids_by_form_key($components) {
   $return = array();

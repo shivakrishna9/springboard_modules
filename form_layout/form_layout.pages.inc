@@ -49,7 +49,6 @@ function form_layout_list() {
  * Page callback for adding form layouts
  */
 function form_layout_add() {
-
   $form = form_layout_form();
 
   $form['submit'] = array(
@@ -64,7 +63,6 @@ function form_layout_add() {
  * Page callback for editing form layouts.
  */
 function form_layout_edit($form, &$form_state, $layout) {
-
   $machine_name = arg(form_layout_menu_base_path_arg_position());
   $form = form_layout_form($machine_name, $layout);
 
@@ -88,7 +86,6 @@ function form_layout_edit($form, &$form_state, $layout) {
  * @return array  Form API
  */
 function form_layout_form($machine_name = NULL, $layout = NULL) {
-
   $form = array();
 
   $form['title'] = array(
@@ -108,19 +105,27 @@ function form_layout_form($machine_name = NULL, $layout = NULL) {
     '#disabled' => !empty($machine_name),
   );
 
-  $elements = array('donation', 'donor_information', 'billing_information', 'payment_information');
-
   $form['elements'] = array(
     '#type' => 'fieldset',
     '#title' => 'Elements',
   );
 
+  $elements = form_layout_get_fieldset_keys();
+
   foreach ($elements as $element) {
+
+    if (isset($layout['layout'])) {
+      $default_region_value = form_layout_find_region_value_by_element($element, $layout['layout']);
+    }
+    else {
+      $default_region_value = 'top_region';
+    }
+
     $form['elements'][$element] = array(
       '#title' => $element . ' position',
       '#type' => 'select',
       '#options' => form_layout_get_region_options(),
-      '#default_value' => isset($layout['layout']) ? form_layout_find_region_value_by_element($element, $layout['layout']) : 'top_region',
+      '#default_value' => $default_region_value,
     );
   }
 
@@ -154,7 +159,7 @@ function form_layout_edit_submit($form, &$form_state) {
  */
 function form_layout_submit($values) {
   // build the layout definition array
-  $elements = array('donation', 'donor_information', 'billing_information', 'payment_information');
+  $elements = form_layout_get_fieldset_keys();
   $layout_definiiton = array();
   foreach ($elements as $element) {
     $layout_definiiton[$values[$element]][] = $element;
@@ -230,7 +235,7 @@ function form_layout_machine_name_exists($name) {
     return TRUE;
   }
 
-  $layouts = variable_get('form_layout', array());
+  $layouts = form_layout_load();
 
   return (in_array($name, array_keys($layouts)));
 }
@@ -250,4 +255,18 @@ function form_layout_find_region_value_by_element($needle, $haystack) {
     }
   }
   return '';
+}
+
+/**
+ * Gets the keys for the fieldsets that can be moved inside the layout regions.
+ *
+ * @return array
+ */
+function form_layout_get_fieldset_keys() {
+  return array(
+    'donation',
+    'donor_information',
+    'billing_information',
+    'payment_information'
+  );
 }
