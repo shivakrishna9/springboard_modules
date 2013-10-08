@@ -92,7 +92,7 @@ function form_layout_edit($form, &$form_state, $layout) {
 function form_layout_form($machine_name = NULL, $layout = NULL) {
   $form = array();
 
-  $form['title'] = array(
+  $form['name'] = array(
     '#title' => 'Layout name',
     '#type' => 'textfield',
     '#required' => TRUE,
@@ -102,8 +102,10 @@ function form_layout_form($machine_name = NULL, $layout = NULL) {
 
   $form['machine_name'] = array(
     '#type' => 'machine_name',
+    '#maxlength' => 255,
     '#machine_name' => array(
       'exists' => 'form_layout_machine_name_exists',
+      'source' => array('name'),
     ),
     '#default_value' => isset($machine_name) ? $machine_name : '',
     '#disabled' => !empty($machine_name),
@@ -172,7 +174,7 @@ function form_layout_submit($values) {
 
   $machine_name = $values['machine_name'];
 
-  $layout['name'] = $values['title'];
+  $layout['name'] = $values['name'];
   $layout['layout'] = $layout_definiiton;
 
   form_layout_save($machine_name, $layout);
@@ -190,7 +192,7 @@ function form_layout_delete_confirm($form, &$form_state, $layout) {
   );
 
   return confirm_form($form,
-    t('Are you sure you want to delete %title?', array('%title' => $layout['name'])),
+    t('Are you sure you want to delete %name?', array('%name' => $layout['name'])),
     form_layout_menu_base_path(),
     t('This action cannot be undone.'),
     t('Delete'),
