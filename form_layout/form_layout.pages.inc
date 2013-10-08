@@ -201,23 +201,6 @@ function form_layout_delete_confirm_submit($form, &$form_state) {
 }
 
 /**
- * Finds the region name for a given element name.
- *
- * @param string $needle  The element you're looking for.
- * @param array $haystack  The layout definition array.
- *
- * @return string  The region name
- */
-function form_layout_find_region_value_by_element($needle, $haystack) {
-  foreach ($haystack as $region) {
-    if (isset($region[$needle])) {
-      return $region[$needle];
-    }
-  }
-  return '';
-}
-
-/**
  * Generate the rows for a table that shows the content of each region.
  *
  * @param array $layout
@@ -245,4 +228,21 @@ function form_layout_machine_name_exists($name) {
   $layouts = variable_get('form_layout', array());
 
   return (in_array($name, array_keys($layouts)));
+}
+
+/**
+ * Finds the region name for a given element name.
+ *
+ * @param string $needle  The element name you're looking for.
+ * @param array $haystack  The layout definition array.
+ *
+ * @return string  The region name
+ */
+function form_layout_find_region_value_by_element($needle, $haystack) {
+  foreach ($haystack as $region) {
+    if (isset($region[$needle])) {
+      return $region[$needle];
+    }
+  }
+  return '';
 }

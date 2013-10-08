@@ -194,28 +194,16 @@ function form_layout_fundraiser_field_info_alter(&$info) {
   // 0 means no change
   if (isset($_SESSION['form_layout']) && $_SESSION['form_layout'] != 0) {
 
-    switch ($_SESSION['form_layous']) {
-      case 2:
-        $info['left_region']['donation'] = $info['donation'];
-        $info['left_region']['donor_information'] = $info['donor_information'];
-        $info['right_region']['billing_information'] = $info['billing_information'];
-        $info['right_region']['payment_information'] = $info['payment_information'];
-        break;
-      case 1:
-        $info['top_region']['donation'] = $info['donation'];
-        $info['top_region']['donor_information'] = $info['donor_information'];
-        $info['top_region']['billing_information'] = $info['billing_information'];
-        $info['top_region']['payment_information'] = $info['payment_information'];
-        break;
+    $layout = form_layout_load($_SESSION['form_layout']);
 
-      // @todo Load the form layouts here and move the fieldsets around.
+    foreach ($layout['layout'] as $region => $content) {
+      foreach ($content as $fieldset) {
+        // place the fieldset into the correct region
+        $info[$region][$fieldset] = $info[$fieldset];
+        // remove the original fieldset
+        unset($info[$fieldset]);
+      }
     }
-
-    // remove the original fields.
-    unset($info['donation']);
-    unset($info['donor_information']);
-    unset($info['billing_information']);
-    unset($info['payment_information']);
   }
 
   // remove the session var
@@ -324,6 +312,9 @@ function form_layout_bottom_region_display($form, $form_state, $field) {
 
 /**
  * Implements hook_form_BASE_FORM_ID_alter() for node forms.
+ *
+ * Adds a fieldset and select list to choose layout options
+ * on donation forms.
  */
 function form_layout_form_node_form_alter(&$form, &$form_state, $form_id) {
   if (fundraiser_is_donation_type($form['#node']->type)) {
@@ -345,10 +336,15 @@ function form_layout_form_node_form_alter(&$form, &$form_state, $form_id) {
   $form['#submit'][] = 'form_layout_node_form_submit';
 }
 
+/**
+ * Provides an array with machine_name => layout name
+ *
+ * @return array
+ */
 function form_layout_get_layout_options() {
   $options = array();
-  $options[0] = t('None');
-  $layouts = variable_get('form_layout', array());
+  $options[0] = t('None/No Change');
+  $layouts = form_layout_load();
 
   foreach ($layouts as $id => $layout) {
     $options[$id] = $layout['name'];
@@ -357,6 +353,11 @@ function form_layout_get_layout_options() {
   return $options;
 }
 
+/**
+ * Provides an array with region name and pretty values.
+ *
+ * @return array
+ */
 function form_layout_get_region_options() {
   return array(
     'top_region' => 'Top',
@@ -368,61 +369,51 @@ function form_layout_get_region_options() {
 
 function form_layout_node_form_submit($form, &$form_state) {
 
-  $layout_id = $form_state['values']['form_layout'];
-  if ($layout_id == 0) {
+  $layout_name = $form_state['values']['form_layout'];
+  if ($layout_name == 0) {
+    // don't make a change
     return;
   }
 
   if (is_null($form_state['values']['nid'])) {
     // if this is a new node, set a session var to change the layout
     // in form_layouts_fundraiser_field_info_alter()
-    // We do this because we don't have fields attached until the node has been saved.
-    $_SESSION['form_layout'] = $layout_id;
+    // We do this because we don't have fields attached
+    // until the node has been saved.
+    $_SESSION['form_layout'] = $layout_name;
   }
   else {
     // existing node
     // Unfortunately we can't use the same hook as above.
     // So we'll just change things now.
-    form_layout_update_layout($form_state['values']['webform']['components'], $layout_id);
+    form_layout_update_layout($form_state['values']['webform']['components'], $layout_name);
   }
-
 }
 
-function form_layout_update_layout(&$components, $layout_id) {
+function form_layout_update_layout(&$components, $layout_name) {
+  $cids = form_layout_key_cids_by_form_key($components);
 
-  $keyed_components = form_layout_key_components_by_form_key($components);
+  $layout = form_layout_load($layout_name);
 
-  $top = $keyed_components['top_region']['cid'];
-  $left = $keyed_components['left_region']['cid'];
-  $right = $keyed_components['right_region']['cid'];
-  $bottom = $keyed_components['bottom_region']['cid'];
-
-  $donation_cid = $keyed_components['donation']['cid'];
-  $donor_information_cid = $keyed_components['donor_information']['cid'];
-  $billing_information_cid = $keyed_components['billing_information']['cid'];
-  $payment_information_cid = $keyed_components['payment_information']['cid'];
-
-  switch ($layout_id) {
-    case 2:
-      $components[$donation_cid]['pid'] = $left;
-      $components[$donor_information_cid]['pid'] = $left;
-      $components[$billing_information_cid]['pid'] = $right;
-      $components[$payment_information_cid]['pid'] = $right;
-      break;
-    case 1:
-      $components[$donation_cid]['pid'] = $top;
-      $components[$donor_information_cid]['pid'] = $top;
-      $components[$billing_information_cid]['pid'] = $top;
-      $components[$payment_information_cid]['pid'] = $top;
-      break;
+  foreach ($layout['layout'] as $region => $content) {
+    foreach ($content as $fieldset) {
+      $cid = $cids[$fieldset];
+      $components[$cid]['pid'] = $cids[$region];
+    }
   }
-
 }
 
-function form_layout_key_components_by_form_key($components) {
+/**
+ * Takes webform components keyed by cid and keys them by form_key.
+ *
+ * @param array $components  As given in $node->webform['components']
+ *
+ * @return array  form_key => cid
+ */
+function form_layout_key_cids_by_form_key($components) {
   $return = array();
   foreach ($components as $cid => $component) {
-    $return[$component['form_key']] = $component;
+    $return[$component['form_key']] = $cid;
   }
   return $return;
 }
