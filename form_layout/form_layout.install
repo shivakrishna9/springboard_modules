@@ -2,7 +2,6 @@
 /**
  * @file
  * Install file for the form layout module.
- *
  */
 
 /**
@@ -17,20 +16,20 @@ function form_layout_install() {
           'donation',
           'donor_information',
           'billing_information',
-          'payment_information'
-          ),
+          'payment_information',
         ),
       ),
+    ),
     'two_column' => array(
       'name' => 'Two Columns',
       'layout' => array(
         'left_region' => array(
           'donation',
-          'donor_information'
+          'donor_information',
         ),
         'right_region' => array(
           'billing_information',
-          'payment_information'
+          'payment_information',
         ),
       ),
     ),

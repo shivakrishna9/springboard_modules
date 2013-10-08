@@ -11,7 +11,7 @@ function form_layout_list() {
   $output = array();
 
   $output['add'] = array(
-    '#markup' => l('Add a form layout.', form_layout_menu_base_path() . '/add'),
+    '#markup' => l(t('Add a form layout.'), form_layout_menu_base_path() . '/add'),
   );
 
   $layouts = form_layout_load();
@@ -46,7 +46,7 @@ function form_layout_list() {
 }
 
 /**
- * Page callback for adding form layouts
+ * Page callback for adding form layouts.
  */
 function form_layout_add() {
   $form = form_layout_form();
@@ -81,9 +81,13 @@ function form_layout_edit($form, &$form_state, $layout) {
  * Does not include a submit button.
  *
  * @param string|null $machine_name
- * @param array|null $layout
+ *   The machine name of the layout to edit.
  *
- * @return array  Form API
+ * @param array|null $layout
+ *   The layout array to edit.
+ *
+ * @return array
+ *   Form API
  */
 function form_layout_form($machine_name = NULL, $layout = NULL) {
   $form = array();
@@ -122,7 +126,7 @@ function form_layout_form($machine_name = NULL, $layout = NULL) {
     }
 
     $form['elements'][$element] = array(
-      '#title' => $element . ' position',
+      '#title' => check_plain($element . ' position'),
       '#type' => 'select',
       '#options' => form_layout_get_region_options(),
       '#default_value' => $default_region_value,
@@ -138,7 +142,7 @@ function form_layout_form($machine_name = NULL, $layout = NULL) {
 function form_layout_add_submit($form, &$form_state) {
   form_layout_submit($form_state['values']);
 
-  drupal_set_message('Form layout created.');
+  drupal_set_message(t('Form layout created.'));
   $form_state['redirect'] = form_layout_menu_base_path();
 }
 
@@ -148,17 +152,18 @@ function form_layout_add_submit($form, &$form_state) {
 function form_layout_edit_submit($form, &$form_state) {
   form_layout_submit($form_state['values']);
 
-  drupal_set_message('Form layout updated.');
+  drupal_set_message(t('Form layout updated.'));
   $form_state['redirect'] = form_layout_menu_base_path();
 }
 
 /**
- * Helper for the add/edit submit handlers
+ * Helper for the add/edit submit handlers.
  *
- * @param array $values  The $form_state['values'] array from the submit handler.
+ * @param array $values
+ *   The $form_state['values'] array from the submit handler.
  */
 function form_layout_submit($values) {
-  // build the layout definition array
+  // Build the layout definition array.
   $elements = form_layout_get_fieldset_keys();
   $layout_definiiton = array();
   foreach ($elements as $element) {
@@ -199,7 +204,7 @@ function form_layout_delete_confirm($form, &$form_state, $layout) {
 function form_layout_delete_confirm_submit($form, &$form_state) {
   if ($form_state['values']['confirm']) {
     form_layout_delete($form_state['values']['machine_name']);
-    drupal_set_message('The form layout was deleted.');
+    drupal_set_message(t('The form layout was deleted.'));
   }
 
   $form_state['redirect'] = form_layout_menu_base_path();
@@ -209,8 +214,10 @@ function form_layout_delete_confirm_submit($form, &$form_state) {
  * Generate the rows for a table that shows the content of each region.
  *
  * @param array $layout
+ *   The layout array with layout definition.
  *
- * @return array  The rows with region and content.
+ * @return array
+ *   The rows with region and content.
  */
 function form_layout_table_rows($layout) {
   $rows = array();
@@ -226,11 +233,13 @@ function form_layout_table_rows($layout) {
  * Machine name exists callback.
  *
  * @param string $name
+ *   Potential machine name for the form layout.
  *
- * @return bool  Whether the machine name already exists.
+ * @return bool
+ *   Whether the machine name already exists.
  */
 function form_layout_machine_name_exists($name) {
-  // special case
+  // Special case.
   if ($name == 'none') {
     return TRUE;
   }
@@ -243,10 +252,14 @@ function form_layout_machine_name_exists($name) {
 /**
  * Finds the region name for a given element name.
  *
- * @param string $needle  The element name you're looking for.
- * @param array $haystack  The layout definition array.
+ * @param string $needle
+ *   The element name you're looking for.
  *
- * @return string  The region name
+ * @param array $haystack
+ *   The layout definition array.
+ *
+ * @return string
+ *   The region name
  */
 function form_layout_find_region_value_by_element($needle, $haystack) {
   foreach ($haystack as $region) {
@@ -261,12 +274,13 @@ function form_layout_find_region_value_by_element($needle, $haystack) {
  * Gets the keys for the fieldsets that can be moved inside the layout regions.
  *
  * @return array
+ *   Array of form keys.
  */
 function form_layout_get_fieldset_keys() {
   return array(
     'donation',
     'donor_information',
     'billing_information',
-    'payment_information'
+    'payment_information',
   );
 }
