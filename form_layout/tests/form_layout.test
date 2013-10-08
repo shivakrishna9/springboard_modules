@@ -1,0 +1,151 @@
+<?php
+/**
+ * @file
+ * Tests for the form layout admin.
+ */
+
+class FormLayoutTest extends DrupalWebTestCase {
+
+  protected $user;
+
+  /**
+   * Implements getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Form layout tests',
+      'description' => 'Tests form layout CRUD and donation form layouts.',
+      'group' => 'Springboard',
+    );
+  }
+
+  /**
+   * Implements setUp().
+   */
+  public function setUp($additional_modules = array()) {
+    // Call the parent to set all of the base modules up.
+    $additional_modules = array(
+      'form_layout',
+    );
+
+    parent::setUp($additional_modules);
+
+    $perms = array(
+      'create donation form',
+      'administer form layouts',
+      'edit own donation form',
+    );
+    $this->user = $this->drupalCreateUser($perms);
+    $this->drupalLogin($this->user);
+  }
+
+  /**
+   * Test that the default form layouts got created.
+   */
+  public function testDefaultFormLayouts() {
+    // Open the form layout list page.
+    $this->drupalGet(form_layout_menu_base_path());
+
+    $this->assertText('One Column', 'One column form layout exists.');
+    $this->assertText('top_region');
+    $this->assertText('donation, donor_information, billing_information, payment_information');
+
+    $this->assertText('Two Columns', 'Two column form layout exists.');
+    $this->assertText('left_region');
+    $this->assertText('right_region');
+  }
+
+  /**
+   * Tests the form admin pages.
+   */
+  public function testFormLayoutCRUD() {
+    $region1 = 'bottom_region';
+    $region2 = 'right_region';
+    $name = $this->randomString(8);
+    $machine_name = drupal_strtolower($this->randomName(8));
+
+    // create a form layout
+    $this->drupalGet(form_layout_menu_base_path() . '/add');
+
+    $edit = array(
+      'name' => $name,
+      'machine_name' => $machine_name,
+      'donation' => $region1,
+      'donor_information' => $region1,
+      'payment_information' => $region1,
+      'billing_information' => $region1,
+    );
+
+    $this->drupalPost(NULL, $edit, t('Add'));
+    $this->assertText('Form layout created.');
+
+
+    // read the form layout from the listing page
+    //assert layout name exists on page
+    $this->assertText($name);
+
+
+    // edit the form layout
+    $this->drupalGet(form_layout_menu_base_path() . '/' . $machine_name . '/edit');
+
+    $edit = array(
+      'donation' => $region2,
+      'donor_information' => $region2,
+      'payment_information' => $region2,
+      'billing_information' => $region2,
+    );
+
+    $this->drupalPost(NULL, $edit, t('Edit'));
+    $this->assertText('Form layout updated.');
+
+
+    // delete the form layout
+    $this->drupalGet(form_layout_menu_base_path() . '/' . $machine_name . '/delete');
+    $this->drupalPost(NULL, array(), t('Delete'));
+    $this->assertText('The form layout was deleted.');
+    $this->assertNoText($name);
+  }
+
+  /**
+   * @todo This test doesn't work yet because we have to set up a donation form content type.
+   *
+   * I tried extending FundraiserSetup, but it runs the content type creation
+   * on every test.  The tests then take an unreasonably long time.
+   * I really jut need a donation form content type for this method only.
+   */
+  public function testDonationFormLayout() {
+    // this test is incomplete
+    return;
+
+    // I get access denied on node/add
+    // But it's logged in because the screenshot shows my account and log out links.
+    $this->drupalGet('node/add');
+
+    // Add a donation form
+    // fill in name and internal name
+    // pick two column layout
+    // click save
+    // assert that all four fieldsets are under top region
+
+    $title = $this->randomString(8);
+    $internal_name = drupal_strtolower($this->randomName(8));
+
+    // create a donation form and pick a form layout
+    $this->drupalGet('node/add/donation-form');
+    $edit = array(
+      'title' => $title,
+      'internal_name' => $internal_name,
+      'form_layout' => 'none',
+    );
+    $this->drupalPost(NULL, $edit, t('Save'));
+
+    // Edit the form layout on the donation form
+    // click edit
+    // pick one column layout
+    // click save
+    // assert that donation and donor info are in left region
+    // assert that billing and payment are in right region
+
+  }
+
+}
