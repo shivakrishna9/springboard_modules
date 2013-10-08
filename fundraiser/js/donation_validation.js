@@ -124,51 +124,59 @@
         $('input[name*="card_cvv"]').numeric();
 
         // Zipcode custom validation rule
-        $('input[name*="zip"]').rules("add", {
-          required: true,
-          zipcode: true,
-          messages: {
-            required: "This field is required",
-            zipcode: "Enter a valid zipcode"
-          }
-        });
-        // CVV custom validation rule
-        $('input[name*="card_cvv"]').rules("add", {
-          required: true,
-          number: true,
-          minlength:3,
-          maxlength:4,
-          messages: {
-            required: "This field is required",
-            minlength: "Minimum of 3 characters",
-            maxlength: "Maximum of 4 characters"
-          }
-        });
-        // Credit Card custom validation rule
-        $('input[name*="card_number"]').rules("add", {
-          required: true,
-          creditcard: true,
-          messages: {
-            required: "This field is required",
-            creditcard: "Enter a valid credit card number"
-          }
-        });
-        // Other Amount
-        $('input[name*="other_amount"]').rules("add", {
-          required: {
-            depends: function(element) {
-              if ($('input[type="radio"][name$="[amount]"][value="other"]').is(":checked"))
-                return true;
-              else
-                return false;
-            }
-          },
-            amount: true,
+        if ($('input[name*="zip"]')[0]) {
+          $('input[name*="zip"]').rules("add", {
+            required: true,
+            zipcode: true,
             messages: {
-            required: "This field is required",
-            amount: "Enter a valid amount"
-          }
-        });
+              required: "This field is required",
+              zipcode: "Enter a valid zipcode"
+            }
+          });
+        }
+        // CVV custom validation rule
+        if ($('input[name*="card_cvv"]')[0]) {
+          $('input[name*="card_cvv"]').rules("add", {
+            required: true,
+            number: true,
+            minlength:3,
+            maxlength:4,
+            messages: {
+              required: "This field is required",
+              minlength: "Minimum of 3 characters",
+              maxlength: "Maximum of 4 characters"
+            }
+          });
+        }
+        // Credit Card custom validation rule
+        if ($('input[name*="card_number"]')[0]) {
+          $('input[name*="card_number"]').rules("add", {
+            required: true,
+            creditcard: true,
+            messages: {
+              required: "This field is required",
+              creditcard: "Enter a valid credit card number"
+            }
+          });
+        }
+        // Other Amount
+        if ($('input[name*="other_amount"]')[0]) {
+          $('input[name*="other_amount"]').rules("add", {
+            required: {
+              depends: function(element) {
+                if ($('input[type="radio"][name$="[amount]"][value="other"]').is(":checked"))
+                  return true;
+                else
+                  return false;
+              }
+            },
+              amount: true,
+              messages: {
+              required: "This field is required",
+              amount: "Enter a valid amount"
+            }
+          });
+        }
 
         // Focus and Blur conditional functions
         $('input[type="radio"][name*="amount"]').change(function(){
