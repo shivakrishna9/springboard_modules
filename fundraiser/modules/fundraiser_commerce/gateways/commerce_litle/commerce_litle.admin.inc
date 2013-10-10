@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Administrative forms for the Authorize.Net module.
+ * Administrative forms for the Litle module.
  */
 
 
@@ -73,7 +73,7 @@ function commerce_litle_cc_capture_form_validate($form, &$form_state) {
 
   // Ensure the amount is less than or equal to the authorization amount.
   if ($amount > commerce_currency_amount_to_decimal($transaction->amount, $transaction->currency_code)) {
-    form_set_error('amount', t('You cannot capture more than you authorized through Authorize.Net.'));
+    form_set_error('amount', t('You cannot capture more than you authorized through Litle.'));
   }
 
   // If the authorization has expired, display an error message and redirect.
@@ -99,7 +99,7 @@ function commerce_litle_cc_capture_form_submit($form, &$form_state) {
     'x_amount' => $amount,
   );
 
-  // Submit the request to Authorize.Net.
+  // Submit the request to Litle.
   $response = commerce_litle_cc_request($form_state['payment_method'], $nvp);
 
   // Update and save the transaction based on the response.
@@ -173,7 +173,7 @@ function commerce_litle_cc_void_form_submit($form, &$form_state) {
     'x_trans_id' => $transaction->remote_id,
   );
 
-  // Submit the request to Authorize.Net.
+  // Submit the request to Litle.
   $response = commerce_litle_cc_request($form_state['payment_method'], $nvp);
 
   // Update and save the transaction based on the response.
@@ -275,7 +275,7 @@ function commerce_litle_cc_credit_form_submit($form, &$form_state) {
     'amount' => $amount,
   );
 
-  // Submit the request to Authorize.Net.
+  // Submit the request to Litle.
   $response = commerce_litle_cc_credit_request($nvp);
 
   // If the credit succeeded...
@@ -301,7 +301,7 @@ function commerce_litle_cc_credit_form_submit($form, &$form_state) {
     // Save the failure response message to the original transaction.
     $transaction->payload[REQUEST_TIME] = $response;
 
-    // Display a failure message and response reason from Authorize.net.
+    // Display a failure message and response reason from Litle .
     drupal_set_message(t('Credit failed: @reason', array('@reason' => check_plain($response[3]))), 'error');
 
     // Add an additional helper message if the transaction hadn't settled yet.

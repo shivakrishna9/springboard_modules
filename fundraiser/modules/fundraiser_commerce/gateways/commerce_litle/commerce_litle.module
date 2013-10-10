@@ -4,7 +4,7 @@ define('COMMERCE_LITLE_CHECK_SALE', 'echeck_sale');
 
 /**
  * @file
- * Implements Authorize.Net payment services for use in Drupal Commerce.
+ * Implements Litle payment services for use in Drupal Commerce.
  */
 
 /**
@@ -55,7 +55,7 @@ function commerce_litle_menu() {
 
 
 /**
- * Determines menu access to the prior authorization capture form for Authorize.Net
+ * Determines menu access to the prior authorization capture form for Litle
  *   AIM credit card transactions.
  *
  * @param $order
@@ -69,9 +69,9 @@ function commerce_litle_menu() {
  * @todo Might be incomplete.
  */
 function commerce_litle_cc_capture_access($order, $transaction) {
-  // Return FALSE if the transaction isn't for Authorize.Net AIM or isn't
+  // Return FALSE if the transaction isn't for Litle or isn't
   // awaiting capture.
-  if ($transaction->payment_method != 'litle_aim' || empty($transaction->remote_id) ||
+  if ($transaction->payment_method != 'commerce_litle_cc' || empty($transaction->remote_id) ||
     strtoupper($transaction->remote_status) != 'AUTH_ONLY') {
     return FALSE;
   }
@@ -86,7 +86,7 @@ function commerce_litle_cc_capture_access($order, $transaction) {
 }
 
 /**
- * Determines menu access to the void form for Authorize.Net AIM credit card
+ * Determines menu access to the void form for Litle credit card
  * transactions
  *
  * @param $order
@@ -116,7 +116,7 @@ function commerce_litle_cc_void_access($order, $transaction) {
 }
 
 /**
- * Determines menu access to the credit form for successful Authorize.Net AIM credit
+ * Determines menu access to the credit form for successful Litle credit
  * card transactions.
  *
  * @param $order
@@ -128,7 +128,7 @@ function commerce_litle_cc_void_access($order, $transaction) {
  *   TRUE or FALSE indicating credit access.
  */
 function commerce_litle_cc_credit_access($order, $transaction) {
-  // Return FALSE if the transaction isn't for Authorize.Net AIM, doesn't have a
+  // Return FALSE if the transaction isn't for Litle, doesn't have a
   // success status or has an amount of 0 or less.
   if ($transaction->payment_method != 'commerce_litle_cc' || $transaction->status != 'success' || $transaction->amount <= 0) {
     return FALSE;
