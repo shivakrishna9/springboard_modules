@@ -145,7 +145,6 @@ function commerce_litle_cc_void_form($form, &$form_state, $order, $transaction) 
     '#markup' => t('Are you sure that you want to void this transaction?'),
   );
 
-  // @todo Confirm that this cancel path works.
   $form = confirm_form(
     $form,
     t('Are you sure that you want to void this transaction?'),
@@ -222,7 +221,6 @@ function commerce_litle_cc_credit_form($form, &$form_state, $order, $transaction
     '#size' => 16,
   );
 
-  // @todo Confirm this cancel path exists and works.
   $form = confirm_form($form,
     t('What amount do you want to credit?'),
     'admin/commerce/orders/' . $order->order_id . '/payment',
@@ -252,7 +250,8 @@ function commerce_litle_cc_credit_form_validate($form, &$form_state) {
     form_set_error('amount', t('You cannot credit more than you captured through Litle.'));
   }
 
-  // @todo What is Litle's limit for transaction age for crediting?
+  // @todo Does Litle have an age limit crediting transactions?
+  // Using 120 days here since that's what authnet module uses.
   // If the transaction is older than 120 days, display an error message and redirect.
   if (time() - $transaction->created > 86400 * 120) {
     drupal_set_message(t('This capture has passed its 120 day limit for issuing credits.'), 'error');
@@ -261,10 +260,13 @@ function commerce_litle_cc_credit_form_validate($form, &$form_state) {
 }
 
 /**
- * Submit handler: process a credit via AIM.
+ * Submit handler: process a credit.
  */
 function commerce_litle_cc_credit_form_submit($form, &$form_state) {
+  //  dpm($form_state);
   $transaction = $form_state['transaction'];
+  // @todo Make sure amount is formatted correctly.
+  // Litle wants number of cents.
   $amount = $form_state['values']['amount'];
   $order = $form_state['order'];
   $payment_method = $form_state['payment_method'];
@@ -276,22 +278,26 @@ function commerce_litle_cc_credit_form_submit($form, &$form_state) {
   );
 
   // Submit the request to Litle.
-  $response = commerce_litle_cc_credit_request($nvp);
+  $response = _commerce_litle_request_credit($payment_method, $nvp);
 
   // If the credit succeeded...
-  if ($response[0] == 1) {
+  $response_code = XmlParser::getNode($response, 'response');
+
+  if ($response_code == '000') {
+    // @todo Make sure cred_amount is formatted correctly in the drupal message.
     $credit_amount = commerce_currency_decimal_to_amount($amount, $transaction->currency_code);
     drupal_set_message(t('Credit for @amount issued successfully', array('@amount' => commerce_currency_format($credit_amount, $transaction->currency_code))));
 
     // Create a new transaction to record the credit.
     $credit_transaction = commerce_payment_transaction_new('commerce_litle_cc', $order->order_id);
     $credit_transaction->instance_id = $payment_method['instance_id'];
-    $credit_transaction->remote_id = $response[6];
+    $credit_transaction->remote_id = XmlParser::getNode($authResponse, 'litleTxnId');
+    // @todo Make sure amount is formatted correctly in the DB.
     $credit_transaction->amount = $credit_amount * -1;
     $credit_transaction->currency_code = $transaction->currency_code;
     $credit_transaction->payload[REQUEST_TIME] = $response;
     $credit_transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
-    $credit_transaction->remote_status = $response[11];
+    $credit_transaction->remote_status = COMMERCE_CREDIT_AUTH_CAPTURE;
     $credit_transaction->message = t('Credited to @remote_id.', array('@remote_id' => $transaction->remote_id));
 
     // Save the credit transaction.
@@ -302,16 +308,16 @@ function commerce_litle_cc_credit_form_submit($form, &$form_state) {
     $transaction->payload[REQUEST_TIME] = $response;
 
     // Display a failure message and response reason from Litle .
-    drupal_set_message(t('Credit failed: @reason', array('@reason' => check_plain($response[3]))), 'error');
+    $message = XmlParser::getNode($response, 'message');
+    drupal_set_message(t('Credit failed: @reason', array('@reason' => check_plain($message))), 'error');
 
     // Add an additional helper message if the transaction hadn't settled yet.
-    if ($response[2] == 54) {
-      drupal_set_message(t('The transaction must be setted before a credit can be issued. This usually takes 24 hours'), 'error');
-    }
+//    if ($response[2] == 54) {
+//      drupal_set_message(t('The transaction must be setted before a credit can be issued. This usually takes 24 hours'), 'error');
+//    }
 
     commerce_payment_transaction_save($transaction);
   }
-
 
   $form_state['redirect'] = 'admin/commerce/orders/' . $order->order_id . '/payment';
 }
