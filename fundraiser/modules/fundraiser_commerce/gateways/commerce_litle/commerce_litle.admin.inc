@@ -8,6 +8,8 @@
 
 /**
  * Form callback: allows the user to capture a prior authorization.
+ *
+ * @todo Complete this function for Litle.
  */
 function commerce_litle_cc_capture_form($form, &$form_state, $order, $transaction) {
   $form_state['order'] = $order;
@@ -57,6 +59,8 @@ function commerce_litle_cc_capture_form($form, &$form_state, $order, $transactio
 
 /**
  * Validate handler: ensure a valid amount is given.
+ *
+ * @todo Complete this function.
  */
 function commerce_litle_cc_capture_form_validate($form, &$form_state) {
   $transaction = $form_state['transaction'];
@@ -81,6 +85,8 @@ function commerce_litle_cc_capture_form_validate($form, &$form_state) {
 
 /**
  * Submit handler: process a prior authorization capture via AIM.
+ *
+ * @todo Complete this function.
  */
 function commerce_litle_cc_capture_form_submit($form, &$form_state) {
   $transaction = $form_state['transaction'];
@@ -139,7 +145,9 @@ function commerce_litle_cc_void_form($form, &$form_state, $order, $transaction) 
     '#markup' => t('Are you sure that you want to void this transaction?'),
   );
 
-  $form = confirm_form($form,
+  // @todo Confirm that this cancel path works.
+  $form = confirm_form(
+    $form,
     t('Are you sure that you want to void this transaction?'),
     'admin/commerce/orders/' . $order->order_id . '/payment',
     '',
@@ -153,6 +161,8 @@ function commerce_litle_cc_void_form($form, &$form_state, $order, $transaction) 
 
 /**
  * Submit handler: process the void request.
+ *
+ * @todo Complete this function
  */
 function commerce_litle_cc_void_form_submit($form, &$form_state) {
   $transaction = $form_state['transaction'];
@@ -212,6 +222,7 @@ function commerce_litle_cc_credit_form($form, &$form_state, $order, $transaction
     '#size' => 16,
   );
 
+  // @todo Confirm this cancel path exists and works.
   $form = confirm_form($form,
     t('What amount do you want to credit?'),
     'admin/commerce/orders/' . $order->order_id . '/payment',
@@ -238,9 +249,10 @@ function commerce_litle_cc_credit_form_validate($form, &$form_state) {
 
   // Ensure the amount is less than or equal to the captured amount.
   if ($amount > commerce_currency_amount_to_decimal($transaction->amount, $transaction->currency_code)) {
-    form_set_error('amount', t('You cannot credit more than you captured through Authorize.Net.'));
+    form_set_error('amount', t('You cannot credit more than you captured through Litle.'));
   }
 
+  // @todo What is Litle's limit for transaction age for crediting?
   // If the transaction is older than 120 days, display an error message and redirect.
   if (time() - $transaction->created > 86400 * 120) {
     drupal_set_message(t('This capture has passed its 120 day limit for issuing credits.'), 'error');
@@ -257,65 +269,49 @@ function commerce_litle_cc_credit_form_submit($form, &$form_state) {
   $order = $form_state['order'];
   $payment_method = $form_state['payment_method'];
 
-  // Determine the last 4 credit card digits from the previous transaction.
-  $transaction_payload = end($transaction->payload);
-  $credit_card = !empty($transaction_payload[50]) ? substr($transaction_payload[50], 4, 8) : '';
+  // Build a name-value pair array for this transaction.
+  $nvp = array(
+    'litleTxnId' => $transaction->remote_id,
+    'amount' => $amount,
+  );
 
-  // Make sure that the last 4 digits are available and valid.
-  if (!intval($credit_card) || strlen($credit_card) != 4) {
-    drupal_set_message(t('The credit could not be attempted, because the last 4 digits of the credit card were not found in the transaction data. Please login to your Authorize.Net merchant interface to issue the credit.'));
-    return FALSE;
+  // Submit the request to Authorize.Net.
+  $response = commerce_litle_cc_credit_request($nvp);
+
+  // If the credit succeeded...
+  if ($response[0] == 1) {
+    $credit_amount = commerce_currency_decimal_to_amount($amount, $transaction->currency_code);
+    drupal_set_message(t('Credit for @amount issued successfully', array('@amount' => commerce_currency_format($credit_amount, $transaction->currency_code))));
+
+    // Create a new transaction to record the credit.
+    $credit_transaction = commerce_payment_transaction_new('commerce_litle_cc', $order->order_id);
+    $credit_transaction->instance_id = $payment_method['instance_id'];
+    $credit_transaction->remote_id = $response[6];
+    $credit_transaction->amount = $credit_amount * -1;
+    $credit_transaction->currency_code = $transaction->currency_code;
+    $credit_transaction->payload[REQUEST_TIME] = $response;
+    $credit_transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+    $credit_transaction->remote_status = $response[11];
+    $credit_transaction->message = t('Credited to @remote_id.', array('@remote_id' => $transaction->remote_id));
+
+    // Save the credit transaction.
+    commerce_payment_transaction_save($credit_transaction);
   }
   else {
-    // Build a name-value pair array for this transaction.
-    $nvp = array(
-      'x_type' => 'CREDIT',
-      'x_trans_id' => $transaction->remote_id,
-      'x_amount' => $amount,
-      'x_card_num' => $credit_card,
-      'x_invoice_num' => $order->order_number,
-      'x_email' => substr($order->mail, 0, 255),
-      'x_cust_id' => substr($order->uid, 0, 20),
-      'x_customer_ip' => substr(ip_address(), 0, 15),
-    );
+    // Save the failure response message to the original transaction.
+    $transaction->payload[REQUEST_TIME] = $response;
 
-    // Submit the request to Authorize.Net.
-    $response = commerce_litle_cc_request($form_state['payment_method'], $nvp);
+    // Display a failure message and response reason from Authorize.net.
+    drupal_set_message(t('Credit failed: @reason', array('@reason' => check_plain($response[3]))), 'error');
 
-    // If the credit succeeded...
-    if ($response[0] == 1) {
-      $credit_amount = commerce_currency_decimal_to_amount($amount, $transaction->currency_code);
-      drupal_set_message(t('Credit for @amount issued successfully', array('@amount' => commerce_currency_format($credit_amount, $transaction->currency_code))));
-
-      // Create a new transaction to record the credit.
-      $credit_transaction = commerce_payment_transaction_new('authnet_aim', $order->order_id);
-      $credit_transaction->instance_id = $payment_method['instance_id'];
-      $credit_transaction->remote_id = $response[6];
-      $credit_transaction->amount = $credit_amount * -1;
-      $credit_transaction->currency_code = $transaction->currency_code;
-      $credit_transaction->payload[REQUEST_TIME] = $response;
-      $credit_transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
-      $credit_transaction->remote_status = $response[11];
-      $credit_transaction->message = t('Credited to @remote_id.', array('@remote_id' => $transaction->remote_id));
-
-      // Save the credit transaction.
-      commerce_payment_transaction_save($credit_transaction);
+    // Add an additional helper message if the transaction hadn't settled yet.
+    if ($response[2] == 54) {
+      drupal_set_message(t('The transaction must be setted before a credit can be issued. This usually takes 24 hours'), 'error');
     }
-    else {
-      // Save the failure response message to the original transaction.
-      $transaction->payload[REQUEST_TIME] = $response;
 
-      // Display a failure message and response reason from Authorize.net.
-      drupal_set_message(t('Credit failed: @reason', array('@reason' => check_plain($response[3]))), 'error');
-
-      // Add an additional helper message if the transaction hadn't settled yet.
-      if ($response[2] == 54) {
-        drupal_set_message(t('The transaction must be setted before a credit can be issued. This usually takes 24 hours'), 'error');
-      }
-
-      commerce_payment_transaction_save($transaction);
-    }
+    commerce_payment_transaction_save($transaction);
   }
+
 
   $form_state['redirect'] = 'admin/commerce/orders/' . $order->order_id . '/payment';
 }

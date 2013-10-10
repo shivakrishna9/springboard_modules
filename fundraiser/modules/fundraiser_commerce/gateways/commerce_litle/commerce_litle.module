@@ -53,6 +53,97 @@ function commerce_litle_menu() {
   return $items;
 }
 
+
+/**
+ * Determines menu access to the prior authorization capture form for Authorize.Net
+ *   AIM credit card transactions.
+ *
+ * @param $order
+ *   The order the transaction is on.
+ * @param $transaction
+ *   The payment transaction object to be captured.
+ *
+ * @return
+ *   TRUE or FALSE indicating capture access.
+ *
+ * @todo Might be incomplete.
+ */
+function commerce_litle_cc_capture_access($order, $transaction) {
+  // Return FALSE if the transaction isn't for Authorize.Net AIM or isn't
+  // awaiting capture.
+  if ($transaction->payment_method != 'litle_aim' || empty($transaction->remote_id) ||
+    strtoupper($transaction->remote_status) != 'AUTH_ONLY') {
+    return FALSE;
+  }
+
+  // Return FALSE if it is more than 30 days past the original authorization.
+  if (time() - $transaction->created > 86400 * 30) {
+    return FALSE;
+  }
+
+  // Allow access if the user can update this transaction.
+  return commerce_payment_transaction_access('update', $transaction);
+}
+
+/**
+ * Determines menu access to the void form for Authorize.Net AIM credit card
+ * transactions
+ *
+ * @param $order
+ *   The order the transaction is on.
+ * @param $transaction
+ *   The payment transaction object to be voided.
+ *
+ * @return
+ *   TRUE or FALSE indicating void access.
+ */
+function commerce_litle_cc_void_access($order, $transaction) {
+
+  // @todo Check possible remote_status values to see if these are the same for litle.
+  if ($transaction->payment_method != 'commerce_litle_cc' || empty($transaction->remote_id) ||
+    !in_array(strtoupper($transaction->remote_status), array('AUTH_ONLY', 'PRIOR_AUTH_CAPTURE', 'AUTH_CAPTURE'))) {
+    return FALSE;
+  }
+
+  // Return FALSE if it is more than 24 hours since the last update to the
+  // transaction, as it will already have been settled.
+  if (time() - $transaction->changed > 2600 * 24) {
+    return FALSE;
+  }
+
+  // Allow access if the user can update this transaction.
+  return commerce_payment_transaction_access('update', $transaction);
+}
+
+/**
+ * Determines menu access to the credit form for successful Authorize.Net AIM credit
+ * card transactions.
+ *
+ * @param $order
+ *   The order the transaction is on.
+ * @param $transaction
+ *   The payment transaction object to be credited.
+ *
+ * @return
+ *   TRUE or FALSE indicating credit access.
+ */
+function commerce_litle_cc_credit_access($order, $transaction) {
+  // Return FALSE if the transaction isn't for Authorize.Net AIM, doesn't have a
+  // success status or has an amount of 0 or less.
+  if ($transaction->payment_method != 'commerce_litle_cc' || $transaction->status != 'success' || $transaction->amount <= 0) {
+    return FALSE;
+  }
+
+  // Return FALSE if it is more than 120 days past the original capture.
+  // @todo Find out what's Litle's limit is.
+  if (time() - $transaction->created > 86400 * 120) {
+    return FALSE;
+  }
+
+  // Allow access if the user can update this transaction.
+  return commerce_payment_transaction_access('update', $transaction);
+}
+
 /**
  * Implements hook_commerce_payment_method_info().
  */
@@ -66,7 +157,7 @@ function commerce_litle_commerce_payment_method_info() {
     'description' => t('Integrates Litle for credit card transactions.'),
     'cardonfile' => array(
       'charge callback' => 'commerce_litle_cc_vault_cardonfile_charge',
-      // update and delete not yet implemented.
+      // @todo Implement update and delete callbacks for cardonfile
 //      'update callback' => 'commerce_litle_cc_vault_cardonfile_update',
 //      'delete callback' => 'commerce_litle_cc_vault_cardonfile_delete',
     ),
@@ -304,7 +395,6 @@ function commerce_litle_echeck_submit_form($payment_method = NULL, $pane_values 
   return $form;
 }
 
-
 /**
  * Payment method callback: checkout form validation.
  */
@@ -328,6 +418,8 @@ function commerce_litle_cc_submit_form_validate($payment_method, $pane_form, $pa
 
 /**
  * Payment method callback: checkout form validation.
+ *
+ * @todo Possibly incomplete and untested.
  */
 function commerce_litle_echeck_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
   // If the customer specified a card on file, skip the normal validation.
@@ -343,217 +435,10 @@ function commerce_litle_echeck_submit_form_validate($payment_method, $pane_form,
   }
 }
 
-// When done, put submit here, and start making calls to the litle object wrappers below.
-
-/**
- * Litle request function wrapper.
- */
-function _commerce_litle_request_auth($gateway, $input) {
-  $litle = _commerce_litle_get_litle();
-  $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
-  return $litle->authorizationRequest($input);
-}
-
-/**
- * Litle request function wrapper.
- */
-function _commerce_litle_request_capture($gateway, $input) {
-  /* Example input
-    $input = array(
-      'litleTxnId'=>'100000000000000001',
-      'id'=> '456',
-    );
-  */
-  $litle = _commerce_litle_get_litle();
-  $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
-  return $litle->captureRequest($input);
-}
-
-/**
- * Litle request function wrapper.
- */
-function _commerce_litle_request_partial_capture($gateway, $input) {
-  /* Example input
-    $input = array(
-      'partial'=>'true',
-      'id'=> '456',
-      'litleTxnId'=>'320000000000000001',
-      'amount'=>'5005'
-    );
-  */
-  $litle = _commerce_litle_get_litle();
-  $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
-  return $litle->captureRequest($input);
-}
-
-/**
- * Litle request function wrapper.
- */
-function _commerce_litle_request_sale($gateway, $input) {
-  $litle = _commerce_litle_get_litle();
-  $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
-  return $litle->saleRequest($input);
-}
-
-/**
- * Litle request function wrapper.
- */
-function _commerce_litle_request_credit($gateway, $input) {
-  /* Example input
-    $input = array(
-      'litleTxnId'=>'100000000000000002',
-      'id'=> '456',
-      'amount'=>'1010'
-    );
-  */
-  $litle = _commerce_litle_get_litle();
-  $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
-  return $litle->creditRequest($input);
-}
-
-/**
- * Helper function, locate and include the Litle SDK object.
- */
-function _commerce_litle_get_litle() {
-  // Note the placement of the Litle SDK.
-  $library_path = variable_get('commerce_litle_sdk_path', 'sites/all/libraries/litle/lib');
-  $library_mode = variable_get('commerce_litle_sdk_mode', 'LitleOnline');
-  include_once($library_path . '/' . $library_mode . '.php');
-  $litle = new LitleOnlineRequest();
-  return $litle;
-}
-
-/**
- * Helper function, return gateway configuration values from a given gateway for hash_in values.
- */
-function _commerce_litle_get_litle_config($gateway) {
-  // Configure with the gateway values for the .ini value, merge with the credit info.
-  $auth_info = array(
-    'user' => !empty($gateway['settings']['commerce_litle_settings_user']) ? $gateway['settings']['commerce_litle_settings_user'] : '',
-    'password' => !empty($gateway['settings']['commerce_litle_settings_password']) ? $gateway['settings']['commerce_litle_settings_password'] : '',
-    'merchantId' => !empty($gateway['settings']['commerce_litle_settings_merchantId']) ? $gateway['settings']['commerce_litle_settings_merchantId'] : '',
-    'url' => !empty($gateway['settings']['commerce_litle_settings_url']) ? $gateway['settings']['commerce_litle_settings_url'] : '',
-    'proxy' => !empty($gateway['settings']['commerce_litle_settings_proxy']) ? $gateway['settings']['commerce_litle_settings_proxy'] : '',
-    'timeout' => !empty($gateway['settings']['commerce_litle_settings_timeout']) ? $gateway['settings']['commerce_litle_settings_timeout'] : '',
-    'version' => !empty($gateway['settings']['commerce_litle_settings_version']) ? $gateway['settings']['commerce_litle_settings_version'] : '',
-    'reportGroup' => !empty($gateway['settings']['commerce_litle_settings_reportGroup']) ? $gateway['settings']['commerce_litle_settings_reportGroup'] : '',
-  );
-
-  if ($gateway['settings']['commerce_litle_settings_sandbox'] == 1) {
-    $auth_info['url'] = 'https://www.testlitle.com/sandbox/communicator/online';
-  }
-
-  return $auth_info;
-}
-
-// ---------------------------------------------------------------------------------------------
-// Below here are partially converted authorize functions, to be used as a basis for Litle work.
-
-/**
- * Determines menu access to the prior authorization capture form for Authorize.Net
- *   AIM credit card transactions.
- *
- * @param $order
- *   The order the transaction is on.
- * @param $transaction
- *   The payment transaction object to be captured.
- *
- * @return
- *   TRUE or FALSE indicating capture access.
- */
-function commerce_litle_cc_capture_access($order, $transaction) {
-  // Return FALSE if the transaction isn't for Authorize.Net AIM or isn't
-  // awaiting capture.
-  if ($transaction->payment_method != 'litle_aim' || empty($transaction->remote_id) ||
-    strtoupper($transaction->remote_status) != 'AUTH_ONLY') {
-    return FALSE;
-  }
-
-  // Return FALSE if it is more than 30 days past the original authorization.
-  if (time() - $transaction->created > 86400 * 30) {
-    return FALSE;
-  }
-
-  // Allow access if the user can update this transaction.
-  return commerce_payment_transaction_access('update', $transaction);
-}
-
-/**
- * Determines menu access to the void form for Authorize.Net AIM credit card
- * transactions
- *
- * @param $order
- *   The order the transaction is on.
- * @param $transaction
- *   The payment transaction object to be voided.
- *
- * @return
- *   TRUE or FALSE indicating void access.
- */
-function commerce_litle_cc_void_access($order, $transaction) {
-
-  // @todo Check possible remote_status values to see if these are the same for litle.
-  if ($transaction->payment_method != 'commerce_litle_cc' || empty($transaction->remote_id) ||
-    !in_array(strtoupper($transaction->remote_status), array('AUTH_ONLY', 'PRIOR_AUTH_CAPTURE', 'AUTH_CAPTURE'))) {
-    return FALSE;
-  }
-
-  // Return FALSE if it is more than 24 hours since the last update to the
-  // transaction, as it will already have been settled.
-  if (time() - $transaction->changed > 2600 * 24) {
-    return FALSE;
-  }
-
-  // Allow access if the user can update this transaction.
-  return commerce_payment_transaction_access('update', $transaction);
-}
-
-/**
- * Determines menu access to the credit form for successful Authorize.Net AIM credit
- * card transactions.
- *
- * @param $order
- *   The order the transaction is on.
- * @param $transaction
- *   The payment transaction object to be credited.
- *
- * @return
- *   TRUE or FALSE indicating credit access.
- */
-function commerce_litle_cc_credit_access($order, $transaction) {
-  // Return FALSE if the transaction isn't for Authorize.Net AIM, doesn't have a
-  // success status or has an amount of 0 or less.
-  if ($transaction->payment_method != 'commerce_litle_cc' || $transaction->status != 'success' || $transaction->amount <= 0) {
-    return FALSE;
-  }
-
-  // Return FALSE if it is more than 120 days past the original capture.
-  if (time() - $transaction->created > 86400 * 120) {
-    return FALSE;
-  }
-
-  // Allow access if the user can update this transaction.
-  return commerce_payment_transaction_access('update', $transaction);
-}
-
-function _commerce_litle_cc_card_type_to_litle($type) {
-  switch ($type) {
-    case "visa":
-      return "VI";
-    case "mastercard":
-      return "MC";
-    case "amex":
-      return "AX";
-    case "discover":
-      return "DI";
-  }
-}
-
 /**
  * Payment method callback: checkout form submission.
  */
 function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
-
   // If the customer specified payment using a card on file, attempt that now
   // and simply return the result.
   if (module_exists('commerce_cardonfile') && $payment_method['settings']['cardonfile'] &&
@@ -1030,21 +915,8 @@ function commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, 
 }
 
 /**
- * @param object $litle  The litle object
- * @param array $litle_config  The result of _commerce_litle_get_litle_config($payment_method)
- * @param array $data  Data to pass to the API call. Will vary depending on payment type (cc vs bank)
- *
- * @return The registerTokenRequest Response
+ * @todo Card on file isn't fully implemented.
  */
-function commerce_litle_register_token_request($litle, $litle_config, $data) {
-  $data += $litle_config;
-  $tokenResponse = $litle->registerTokenRequest($data);
-
-  watchdog('commerce_litle', 'Litle Token response: !param', array('!param' => '<pre>' . check_plain(XmlParser::getDomDocumentAsString($tokenResponse)) . '</pre>', WATCHDOG_DEBUG));
-
-  return $tokenResponse;
-}
-
 function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
   // If the customer specified payment using a card on file, attempt that now
   // and simply return the result.
@@ -1265,6 +1137,8 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
 
 /**
  * Imitates the checkout form submission callback for the echeck Vault payment method.
+ *
+ * @todo Not fully implemented or tested.
  */
 function commerce_litle_echeck_vault_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
   // First attempt to load the card on file.
@@ -1294,6 +1168,8 @@ function commerce_litle_echeck_vault_submit_form_submit($payment_method, $pane_f
  *
  * @return
  *   TRUE if the transaction was successful
+ *
+ * @todo Not fully implemented or tested.
  */
 function commerce_litle_echeck_vault_cardonfile_charge($payment_method, $card_data, $order, $charge = NULL) {
 
@@ -1432,6 +1308,136 @@ function commerce_litle_echeck_vault_cardonfile_charge($payment_method, $card_da
 }
 
 /**
+ * Litle request function wrapper.
+ */
+function _commerce_litle_request_auth($gateway, $input) {
+  $litle = _commerce_litle_get_litle();
+  $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
+  return $litle->authorizationRequest($input);
+}
+
+/**
+ * Litle request function wrapper.
+ */
+function _commerce_litle_request_capture($gateway, $input) {
+  /* Example input
+    $input = array(
+      'litleTxnId'=>'100000000000000001',
+      'id'=> '456',
+    );
+  */
+  $litle = _commerce_litle_get_litle();
+  $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
+  return $litle->captureRequest($input);
+}
+
+/**
+ * Litle request function wrapper.
+ */
+function _commerce_litle_request_partial_capture($gateway, $input) {
+  /* Example input
+    $input = array(
+      'partial'=>'true',
+      'id'=> '456',
+      'litleTxnId'=>'320000000000000001',
+      'amount'=>'5005'
+    );
+  */
+  $litle = _commerce_litle_get_litle();
+  $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
+  return $litle->captureRequest($input);
+}
+
+/**
+ * Litle request function wrapper.
+ */
+function _commerce_litle_request_sale($gateway, $input) {
+  $litle = _commerce_litle_get_litle();
+  $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
+  return $litle->saleRequest($input);
+}
+
+/**
+ * Litle request function wrapper.
+ */
+function _commerce_litle_request_credit($gateway, $input) {
+  /* Example input
+    $input = array(
+      'litleTxnId'=>'100000000000000002',
+      'id'=> '456',
+      'amount'=>'1010'
+    );
+  */
+  $litle = _commerce_litle_get_litle();
+  $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
+  return $litle->creditRequest($input);
+}
+
+/**
+ * Helper function, locate and include the Litle SDK object.
+ */
+function _commerce_litle_get_litle() {
+  // Note the placement of the Litle SDK.
+  $library_path = variable_get('commerce_litle_sdk_path', 'sites/all/libraries/litle/lib');
+  $library_mode = variable_get('commerce_litle_sdk_mode', 'LitleOnline');
+  include_once($library_path . '/' . $library_mode . '.php');
+  $litle = new LitleOnlineRequest();
+  return $litle;
+}
+
+/**
+ * Helper function, return gateway configuration values from a given gateway for hash_in values.
+ */
+function _commerce_litle_get_litle_config($gateway) {
+  // Configure with the gateway values for the .ini value, merge with the credit info.
+  $auth_info = array(
+    'user' => !empty($gateway['settings']['commerce_litle_settings_user']) ? $gateway['settings']['commerce_litle_settings_user'] : '',
+    'password' => !empty($gateway['settings']['commerce_litle_settings_password']) ? $gateway['settings']['commerce_litle_settings_password'] : '',
+    'merchantId' => !empty($gateway['settings']['commerce_litle_settings_merchantId']) ? $gateway['settings']['commerce_litle_settings_merchantId'] : '',
+    'url' => !empty($gateway['settings']['commerce_litle_settings_url']) ? $gateway['settings']['commerce_litle_settings_url'] : '',
+    'proxy' => !empty($gateway['settings']['commerce_litle_settings_proxy']) ? $gateway['settings']['commerce_litle_settings_proxy'] : '',
+    'timeout' => !empty($gateway['settings']['commerce_litle_settings_timeout']) ? $gateway['settings']['commerce_litle_settings_timeout'] : '',
+    'version' => !empty($gateway['settings']['commerce_litle_settings_version']) ? $gateway['settings']['commerce_litle_settings_version'] : '',
+    'reportGroup' => !empty($gateway['settings']['commerce_litle_settings_reportGroup']) ? $gateway['settings']['commerce_litle_settings_reportGroup'] : '',
+  );
+
+  if ($gateway['settings']['commerce_litle_settings_sandbox'] == 1) {
+    $auth_info['url'] = 'https://www.testlitle.com/sandbox/communicator/online';
+  }
+
+  return $auth_info;
+}
+
+/**
+ * @param object $litle  The litle object
+ * @param array $litle_config  The result of _commerce_litle_get_litle_config($payment_method)
+ * @param array $data  Data to pass to the API call. Will vary depending on payment type (cc vs bank)
+ *
+ * @return The registerTokenRequest Response
+ */
+function commerce_litle_register_token_request($litle, $litle_config, $data) {
+  $data += $litle_config;
+  $tokenResponse = $litle->registerTokenRequest($data);
+
+  watchdog('commerce_litle', 'Litle Token response: !param', array('!param' => '<pre>' . check_plain(XmlParser::getDomDocumentAsString($tokenResponse)) . '</pre>', WATCHDOG_DEBUG));
+
+  return $tokenResponse;
+}
+
+function _commerce_litle_cc_card_type_to_litle($type) {
+  switch ($type) {
+    case "visa":
+      return "VI";
+    case "mastercard":
+      return "MC";
+    case "amex":
+      return "AX";
+    case "discover":
+      return "DI";
+  }
+}
+
+/**
  * Implements hook_form_FORM_ID_alter().
  */
 /*
@@ -1454,7 +1460,7 @@ function commerce_litle_form_commerce_payment_order_transaction_add_form_alter(&
 */
 
 /**
- * Returns the transaction type string for Authorize.Net that corresponds to the
+ * Returns the transaction type string for Litle that corresponds to the
  *   Drupal Commerce constant.
  *
  * @param $txn_type
@@ -1482,12 +1488,11 @@ function commerce_litle_txn_type($txn_type) {
   }
 }
 
-
 /**
- * Returns the description of an Authorize.Net transaction type.
+ * Returns the description of a Litle transaction type.
  *
  * @param $txn_type
- *   An Authorize.Net transaction type string.
+ *   A Litle transaction type string.
  */
 function commerce_litle_reverse_txn_type($txn_type) {
   switch (strtoupper($txn_type)) {
