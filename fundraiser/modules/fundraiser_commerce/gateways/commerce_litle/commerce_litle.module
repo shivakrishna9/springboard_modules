@@ -491,7 +491,9 @@ function commerce_litle_cc_capture_access($order, $transaction) {
  *   TRUE or FALSE indicating void access.
  */
 function commerce_litle_cc_void_access($order, $transaction) {
-  if ($transaction->payment_method != 'litle_aim' || empty($transaction->remote_id) ||
+
+  // @todo Check possible remote_status values to see if these are the same for litle.
+  if ($transaction->payment_method != 'commerce_litle_cc' || empty($transaction->remote_id) ||
     !in_array(strtoupper($transaction->remote_status), array('AUTH_ONLY', 'PRIOR_AUTH_CAPTURE', 'AUTH_CAPTURE'))) {
     return FALSE;
   }
@@ -521,7 +523,7 @@ function commerce_litle_cc_void_access($order, $transaction) {
 function commerce_litle_cc_credit_access($order, $transaction) {
   // Return FALSE if the transaction isn't for Authorize.Net AIM, doesn't have a
   // success status or has an amount of 0 or less.
-  if ($transaction->payment_method != 'authnet_aim' || $transaction->status != 'success' || $transaction->amount <= 0) {
+  if ($transaction->payment_method != 'commerce_litle_cc' || $transaction->status != 'success' || $transaction->amount <= 0) {
     return FALSE;
   }
 
