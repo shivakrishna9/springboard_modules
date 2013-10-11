@@ -277,8 +277,18 @@ function commerce_litle_cc_credit_form_submit($form, &$form_state) {
     'amount' => $amount,
   );
 
+  // Log the request if specified.
+  if ($payment_method['settings']['log']['request'] === 'request') {
+    watchdog('commerce_litle', 'Litle Credit request: !param', array('!param' => '<pre>' . check_plain(print_r($nvp, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+  }
+
   // Submit the request to Litle.
   $response = _commerce_litle_request_credit($payment_method, $nvp);
+
+  // Log the response if specified.
+  if ($payment_method['settings']['log']['response'] === 'response') {
+    watchdog('commerce_litle', 'Litle Credit response: !param', array('!param' => '<pre>' . check_plain(XmlParser::getDomDocumentAsString($response)) . '</pre>', WATCHDOG_DEBUG));
+  }
 
   // If the credit succeeded...
   $response_code = XmlParser::getNode($response, 'response');
@@ -291,7 +301,7 @@ function commerce_litle_cc_credit_form_submit($form, &$form_state) {
     // Create a new transaction to record the credit.
     $credit_transaction = commerce_payment_transaction_new('commerce_litle_cc', $order->order_id);
     $credit_transaction->instance_id = $payment_method['instance_id'];
-    $credit_transaction->remote_id = XmlParser::getNode($authResponse, 'litleTxnId');
+    $credit_transaction->remote_id = XmlParser::getNode($response, 'litleTxnId');
     // @todo Make sure amount is formatted correctly in the DB.
     $credit_transaction->amount = $credit_amount * -1;
     $credit_transaction->currency_code = $transaction->currency_code;
