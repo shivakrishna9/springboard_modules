@@ -14,12 +14,14 @@ function commerce_litle_fundraiser_commerce_fundraiser_gateway_info() {
     'payment_method' => array('commerce_litle_cc' => 'credit', 'commerce_litle_echeck' => 'bank account'),
     // @todo bank account (echeck) recurring is not yet fully implemented.
     'allow_recurring' => array('credit'),
+    'allow_refund' => array('credit'),
     'form callback' => 'commerce_litle_fundraiser_commerce_submit_form',
     'cleanup callback' => 'commerce_litle_fundraiser_commerce_cleanup',
     'scrub callback' => 'commerce_litle_fundraiser_commerce_scrub',
     'validate callback' => 'commerce_litle_fundraiser_commerce_validate',
     'expire callback' => 'commerce_litle_fundraiser_commerce_expire',
     'charge callback' => 'commerce_litle_fundraiser_commerce_charge',
+    'refund callback' => 'commerce_litle_fundraiser_commerce_refund',
   );
 }
 
@@ -195,4 +197,33 @@ function commerce_litle_get_cardonfile_pane_value($uid, $instance_id) {
   }
 
   return $return;
+}
+
+/**
+ * Refund callback for Litle, wraps the admin form used for refund with our own system.
+ */
+function commerce_litle_fundraiser_commerce_refund($payment_method, $refund) {
+  // Retrieve data.
+  $refunding_order = commerce_order_load($refund->did);
+  $transactions = commerce_payment_transaction_load_multiple(array(), $conditions = array('order_id' => $refunding_order->order_id));
+  $transaction = array_shift($transactions); // The first one is the original donation.
+
+  $form = array();
+  $form_state = array();
+  // Set up the values needed for the transaction to go through.
+  $form_state['transaction'] = $transaction;
+  $form_state['values']['amount'] = $refund->amount;
+  $form_state['order'] = $refunding_order;
+  $form_state['payment_method'] = commerce_payment_method_instance_load($transaction->instance_id);
+  // Submit the donation form.
+  module_load_include('inc', 'commerce_litle', 'commerce_litle.admin');
+  $result = commerce_litle_cc_credit_form_submit($form, $form_state);
+  // @todo the form submit function returns void.
+  //   So the following code doesn't really do anything, I think.
+  //   Leaving it in for now since that's how I found it.
+  $success = FALSE;
+  if ($result !== FALSE) {
+    $success = TRUE;
+  }
+  return $success;
 }
