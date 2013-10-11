@@ -2085,6 +2085,7 @@ function _fundraiser_refund_form_submit($form, &$form_state) {
   }
 
   // Set up the refund.
+  $refund = new stdClass();
   $refund->did = $donation->did;
   $refund->amount = $amount;
   $refund->currency = $donation->currency;
