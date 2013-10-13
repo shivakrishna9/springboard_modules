@@ -250,7 +250,6 @@ function commerce_litle_cc_credit_form_validate($form, &$form_state) {
     form_set_error('amount', t('You cannot credit more than you captured through Litle.'));
   }
 
-  // @todo Does Litle have an age limit crediting transactions?
   // Using 120 days here since that's what authnet module uses.
   // If the transaction is older than 120 days, display an error message and redirect.
   if (time() - $transaction->created > 86400 * 120) {
@@ -263,18 +262,17 @@ function commerce_litle_cc_credit_form_validate($form, &$form_state) {
  * Submit handler: process a credit.
  */
 function commerce_litle_cc_credit_form_submit($form, &$form_state) {
-  //  dpm($form_state);
   $transaction = $form_state['transaction'];
-  // @todo Make sure amount is formatted correctly.
-  // Litle wants number of cents.
   $amount = $form_state['values']['amount'];
+  $credit_amount = commerce_currency_decimal_to_amount($amount, $transaction->currency_code);
   $order = $form_state['order'];
   $payment_method = $form_state['payment_method'];
 
   // Build a name-value pair array for this transaction.
+  // Litle expects amounts in integer number of cents.
   $nvp = array(
     'litleTxnId' => $transaction->remote_id,
-    'amount' => $amount,
+    'amount' => $credit_amount,
   );
 
   // Log the request if specified.
@@ -284,28 +282,24 @@ function commerce_litle_cc_credit_form_submit($form, &$form_state) {
 
   // Submit the request to Litle.
   $response = _commerce_litle_request_credit($payment_method, $nvp);
+  $response_string = XmlParser::getDomDocumentAsString($response);
+  $response_code = XmlParser::getNode($response, 'response');
 
   // Log the response if specified.
   if ($payment_method['settings']['log']['response'] === 'response') {
-    watchdog('commerce_litle', 'Litle Credit response: !param', array('!param' => '<pre>' . check_plain(XmlParser::getDomDocumentAsString($response)) . '</pre>', WATCHDOG_DEBUG));
+    watchdog('commerce_litle', 'Litle Credit response: !param', array('!param' => '<pre>' . check_plain($response_string) . '</pre>', WATCHDOG_DEBUG));
   }
 
-  // If the credit succeeded...
-  $response_code = XmlParser::getNode($response, 'response');
-
   if ($response_code == '000') {
-    // @todo Make sure cred_amount is formatted correctly in the drupal message.
-    $credit_amount = commerce_currency_decimal_to_amount($amount, $transaction->currency_code);
     drupal_set_message(t('Credit for @amount issued successfully', array('@amount' => commerce_currency_format($credit_amount, $transaction->currency_code))));
 
     // Create a new transaction to record the credit.
     $credit_transaction = commerce_payment_transaction_new('commerce_litle_cc', $order->order_id);
     $credit_transaction->instance_id = $payment_method['instance_id'];
     $credit_transaction->remote_id = XmlParser::getNode($response, 'litleTxnId');
-    // @todo Make sure amount is formatted correctly in the DB.
     $credit_transaction->amount = $credit_amount * -1;
     $credit_transaction->currency_code = $transaction->currency_code;
-    $credit_transaction->payload[REQUEST_TIME] = $response;
+    $credit_transaction->payload[REQUEST_TIME] = $response_string;
     $credit_transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
     $credit_transaction->remote_status = COMMERCE_CREDIT_AUTH_CAPTURE;
     $credit_transaction->message = t('Credited to @remote_id.', array('@remote_id' => $transaction->remote_id));
@@ -315,7 +309,7 @@ function commerce_litle_cc_credit_form_submit($form, &$form_state) {
   }
   else {
     // Save the failure response message to the original transaction.
-    $transaction->payload[REQUEST_TIME] = $response;
+    $transaction->payload[REQUEST_TIME] = $response_string;
 
     // Display a failure message and response reason from Litle .
     $message = XmlParser::getNode($response, 'message');
