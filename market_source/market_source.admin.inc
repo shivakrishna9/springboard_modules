@@ -49,7 +49,7 @@ function market_source_admin_settings_form($form, &$form_state) {
   // Default global field settings.
   $form['market_source_default_fields'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Webform Default Global Fields'),
+    '#title' => t('Default Global Fields'),
     '#description' => t('Customize certain aspects of the default webform fields.'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
@@ -117,7 +117,7 @@ function market_source_admin_settings_form($form, &$form_state) {
   // Custom global fields.
   $form['market_source_global_fields'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Webform Custom Global Fields'),
+    '#title' => t('Custom Global Fields'),
     '#description' => t('Any global custom fields created will be added as webform components to your webforms when they are created. ' .
       'Custom fields are not retroactively applied to existing webforms. Leave blank to remove a field.'),
     '#collapsible' => TRUE,
