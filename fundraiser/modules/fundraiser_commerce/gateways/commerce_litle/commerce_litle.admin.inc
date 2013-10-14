@@ -251,7 +251,7 @@ function commerce_litle_cc_credit_form_validate($form, &$form_state) {
   }
 
   // Using 120 days here since that's what authnet module uses.
-  // If the transaction is older than 120 days, display an error message and redirect.
+  // If the transaction is older than 120 days, display an error and redirect.
   if (time() - $transaction->created > 86400 * 120) {
     drupal_set_message(t('This capture has passed its 120 day limit for issuing credits.'), 'error');
     drupal_goto('admin/commerce/orders/' . $form_state['order']->order_id . '/payment');
@@ -284,7 +284,11 @@ function commerce_litle_cc_credit_form_submit($form, &$form_state) {
  *   Uses the payment method settings to determine what to log.
  *
  * @param stdClass $transaction
+ *   The transaction object.
+ *
  * @param stdClass $order
+ *   The order object.
+ *
  * @param float $amount
  *   Decimal format amount.  Gets converted to and from amount in this function.
  *
@@ -343,10 +347,9 @@ function commerce_litle_cc_credit_request($payment_method, $transaction, $order,
     drupal_set_message(t('Credit failed: @reason', array('@reason' => check_plain($message))), 'error');
 
     // Add an additional helper message if the transaction hadn't settled yet.
-//    if ($response[2] == 54) {
-//      drupal_set_message(t('The transaction must be setted before a credit can be issued. This usually takes 24 hours'), 'error');
-//    }
-
+    // if ($response[2] == 54) {
+    //   drupal_set_message(t('The transaction must be setted before a credit can be issued. This usually takes 24 hours'), 'error');
+    // }
     commerce_payment_transaction_save($transaction);
   }
 
