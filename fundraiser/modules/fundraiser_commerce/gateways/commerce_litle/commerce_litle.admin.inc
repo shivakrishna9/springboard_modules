@@ -262,11 +262,37 @@ function commerce_litle_cc_credit_form_validate($form, &$form_state) {
  * Submit handler: process a credit.
  */
 function commerce_litle_cc_credit_form_submit($form, &$form_state) {
-  $transaction = $form_state['transaction'];
-  $amount = $form_state['values']['amount'];
-  $credit_amount = commerce_currency_decimal_to_amount($amount, $transaction->currency_code);
-  $order = $form_state['order'];
   $payment_method = $form_state['payment_method'];
+  $transaction = $form_state['transaction'];
+  $order = $form_state['order'];
+  $amount = $form_state['values']['amount'];
+
+  commerce_litle_cc_credit_request($payment_method, $transaction, $order, $amount);
+
+  $form_state['redirect'] = 'admin/commerce/orders/' . $order->order_id . '/payment';
+}
+
+/**
+ * Makes the Credit request and handles transactions and logging.
+ *
+ * Formats the request, makes it.
+ * Logs response and request if needed.
+ * On success creates a new transaction.
+ * On failure updates the current transaction.
+ *
+ * @param array $payment_method
+ *   Uses the payment method settings to determine what to log.
+ *
+ * @param stdClass $transaction
+ * @param stdClass $order
+ * @param float $amount
+ *   Decimal format amount.  Gets converted to and from amount in this function.
+ *
+ * @return bool
+ *   Whether the refund was successful.
+ */
+function commerce_litle_cc_credit_request($payment_method, $transaction, $order, $amount) {
+  $credit_amount = commerce_currency_decimal_to_amount($amount, $transaction->currency_code);
 
   // Build a name-value pair array for this transaction.
   // Litle expects amounts in integer number of cents.
@@ -306,6 +332,7 @@ function commerce_litle_cc_credit_form_submit($form, &$form_state) {
 
     // Save the credit transaction.
     commerce_payment_transaction_save($credit_transaction);
+    return TRUE;
   }
   else {
     // Save the failure response message to the original transaction.
@@ -323,5 +350,5 @@ function commerce_litle_cc_credit_form_submit($form, &$form_state) {
     commerce_payment_transaction_save($transaction);
   }
 
-  $form_state['redirect'] = 'admin/commerce/orders/' . $order->order_id . '/payment';
+  return FALSE;
 }

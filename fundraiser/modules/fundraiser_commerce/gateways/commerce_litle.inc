@@ -208,22 +208,9 @@ function commerce_litle_fundraiser_commerce_refund($payment_method, $refund) {
   $transactions = commerce_payment_transaction_load_multiple(array(), $conditions = array('order_id' => $refunding_order->order_id));
   $transaction = array_shift($transactions); // The first one is the original donation.
 
-  $form = array();
-  $form_state = array();
   // Set up the values needed for the transaction to go through.
-  $form_state['transaction'] = $transaction;
-  $form_state['values']['amount'] = $refund->amount;
-  $form_state['order'] = $refunding_order;
-  $form_state['payment_method'] = commerce_payment_method_instance_load($transaction->instance_id);
+  $payment_method = commerce_payment_method_instance_load($transaction->instance_id);
   // Submit the donation form.
   module_load_include('inc', 'commerce_litle', 'commerce_litle.admin');
-  $result = commerce_litle_cc_credit_form_submit($form, $form_state);
-  // @todo the form submit function returns void.
-  //   So the following code doesn't really do anything, I think.
-  //   Leaving it in for now since that's how I found it.
-  $success = FALSE;
-  if ($result !== FALSE) {
-    $success = TRUE;
-  }
-  return $success;
+  return commerce_litle_cc_credit_request($payment_method, $transaction, $refunding_order, $refund->amount);
 }
