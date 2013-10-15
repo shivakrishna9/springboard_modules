@@ -51,8 +51,15 @@ function form_layout_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
-      'form_layout' => array(
+      'layout_name' => array(
         'description' => 'The form layout machine name for this node.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'submit_position' => array(
+        'description' => 'The form layout region for the submit button.',
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,

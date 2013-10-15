@@ -327,6 +327,30 @@ function form_layout_bottom_region_display($form, $form_state, $field) {
 }
 
 /**
+ * Implements hook_preprocess_HOOK() for webform_form().
+ *
+ * @todo Try these other hooks earlier in the process.
+ *   form_layout_fundraiser_donation_form($form, $form_state)
+ *   form_layout_form_webform_client_form_alter(&$form, &$form_state, $form_id)
+ */
+function form_layout_preprocess_webform_form(&$variables) {
+  $submit_position = $variables['form']['#node']->submit_position;
+
+  if (empty($submit_position)) {
+    return;
+  }
+
+  $variables['form']['submitted'][$submit_position]['submit'] = $variables['form']['submit'];
+  $variables['form']['submitted'][$submit_position]['actions'] = $variables['form']['actions'];
+
+  $variables['form']['submitted'][$submit_position]['submit']['#weight'] = 999;
+  $variables['form']['submitted'][$submit_position]['actions']['#weight'] = 1000;
+
+  unset($variables['form']['submit']);
+  unset($variables['form']['actions']);
+}
+
+/**
  * Implements hook_form_BASE_FORM_ID_alter() for node_form().
  *
  * Adds a fieldset and select list to choose layout options
@@ -355,6 +379,20 @@ function form_layout_form_node_form_alter(&$form, &$form_state, $form_id) {
       '#options' => $options,
       '#default_value' => $default_value,
       '#description' => 'Choose a layout for the form.',
+    );
+
+    $options = form_layout_get_region_options();
+    $default_value = 'bottom_region';
+    if (!empty($form['#node']->submit_position) && in_array($form['#node']->submit_position, array_keys($options))) {
+      $default_value = $form['#node']->submit_position;
+    }
+
+    $form['form_layout']['submit_position'] = array(
+      '#type' => 'select',
+      '#title' => t('Submit button position'),
+      '#options' => $options,
+      '#default_value' => $default_value,
+      '#description' => 'Choose where the submit should be placed.',
     );
   }
   $form['#submit'][] = 'form_layout_node_form_submit';
@@ -477,7 +515,11 @@ function form_layout_node_insert($node) {
 function form_layout_node_load($nodes, $types) {
   foreach ($nodes as $node) {
     if (fundraiser_is_donation_type($node->type)) {
-      $nodes[$node->nid]->form_layout = form_layout_get_node_layout($node->nid);
+      $layout = form_layout_get_node_layout($node->nid);
+      if (!empty($layout)) {
+        $nodes[$node->nid]->form_layout = isset($layout['layout_name']) ? $layout['layout_name'] : 'none';
+        $nodes[$node->nid]->submit_position = isset($layout['submit_position']) ? $layout['submit_position'] : 'bottom_region';
+      }
     }
   }
 }
@@ -487,7 +529,7 @@ function form_layout_node_load($nodes, $types) {
  */
 function form_layout_node_update($node) {
   if (fundraiser_is_donation_type($node->type) && !empty($node->form_layout)) {
-    form_layout_save_node_layout($node->nid, $node->form_layout);
+    form_layout_save_node_layout($node->nid, $node->form_layout, $node->submit_position);
   }
 }
 
@@ -507,19 +549,22 @@ function form_layout_node_delete($node) {
  *   Node ID.
  * @param string $layout
  *   Layout machine name.
+ * @param string $submit_position
+ *   The region name in which to place the submit button.
  *
  * @return bool|int
  *   FALSE on failure, SAVED_NEW or SAVED_UPDATED on success.
  */
-function form_layout_save_node_layout($nid, $layout) {
+function form_layout_save_node_layout($nid, $layout, $submit_position) {
   $record = array(
     'nid' => $nid,
-    'form_layout' => $layout,
+    'layout_name' => $layout,
+    'submit_position' => $submit_position,
   );
 
-  $node_layout = form_layout_get_node_layout($nid);
+  $layout = form_layout_get_node_layout($nid);
 
-  if ($node_layout == '') {
+  if (empty($layout)) {
     // New record.
     return drupal_write_record('form_layout_node', $record);
   }
@@ -554,14 +599,13 @@ function form_layout_delete_node_layout($nid) {
  *   Layout machine name.
  */
 function form_layout_get_node_layout($nid) {
-  $result = db_query("SELECT form_layout FROM {form_layout_node} WHERE nid = :nid",
+  $result = db_query("SELECT layout_name, submit_position FROM {form_layout_node} WHERE nid = :nid",
     array(':nid' => $nid)
   );
 
   if ($result->rowCount() > 0) {
-    return $result->fetchField();
+    return $result->fetchAssoc();
   }
 
-  // Default value.
-  return '';
+  return array();
 }
