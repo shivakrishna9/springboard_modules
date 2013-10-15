@@ -44,13 +44,16 @@ function sustainer_import_import_record_insert($record) {
   if (in_array($record['order_id'], $master_ids)) {
     return FALSE;
   }
+  dsm($record, 'record during save');
   $data = array(
     'master_order_id' => $record['order_id'],
     'record' => serialize($record),
     'created' => time(),
     'status' => '',
+    'gateway_type' => $record['payment_details']['gateway_type'],
   );
-  $output = drupal_write_record('sustainer_import_queue', $data, $update);
+
+  $output = drupal_write_record('sustainer_import_queue', $data);
   dsm($output, 'dwr output');
 }
 
@@ -63,13 +66,41 @@ function sustainer_import_get_pending_queue_items() {
   return $records;
 }
 
+/**
+ * Provide a count of queue items by status.
+ *
+ * @return array
+ */
 function sustainer_import_queue_status_counts() {
   $output = array();
-  $results = db_query('SELECT status as status, COUNT(status) AS count FROM sustainer_import_queue GROUP BY status');
+  $results = db_query('SELECT status as status, COUNT(status) AS count FROM {sustainer_import_queue} GROUP BY status');
   while ($data =  $results->fetchAssoc()){
      $output[] = $data;
   }
   return $output;
 }
 
+/**
+ * List payment gateway types in queue.
+ */
+function sustainer_import_queue_gateway_types() {
+  $output = array();
+  $results = db_query('SELECT DISTINCT(gateway_type) FROM {sustainer_import_queue}');
+  while ($data = $results->fetchAssoc()) {
+    $output[] = $data['gateway_type'];
+  }
+  return $output;
+}
+
+/**
+ * List available payment gateways.
+ */
+function sustainer_import_list_payment_gateways() {
+  $gateway_info = _fundraiser_gateway_info();
+  foreach ($gateway_info as $key => $gateway) {
+    $gateways[$key] = $gateway['title'];
+  }
+  dsm($gateways);
+  return $gateways;
+}
 

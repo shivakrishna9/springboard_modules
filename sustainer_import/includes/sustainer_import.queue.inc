@@ -21,11 +21,34 @@ function sustainer_import_queue() {
     '#executes_submit_callback' => TRUE,
     '#submit' => array('sustainer_import_process_queue'),
   );
+  $form['gateway_map'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Payment gateway type map'),
+    '#description' => t('Map import gateway types to existing payment gateways and donation forms. Each gateway type must be mapped to a payment gateway before the queue can be processed.'),
+  );
+  $gateway_types = sustainer_import_queue_gateway_types();
+  dsm($gateway_types, 'gateway types');
+  foreach ($gateway_types as $gateway_type) {
+    dsm($gateway_type);
+    $form['gateway_map'][$gateway_type] = array(
+      '#type' => 'select',
+      '#title' => $gateway_type,
+      '#options' => array_merge(array('0' => '- select -'), sustainer_import_list_payment_gateways()),
+      '#default_value' => variable_get('sustainer_import_gateway_' . $gateway_type, 0),
+    );
+  }
+  $form['gateway_map']['save_map'] = array(
+    '#type' => 'button',
+    '#value' => t('Save gateway map'),
+    '#executes_submit_callback' => TRUE,
+    '#submit' => array('sustainer_import_save_gateway_map'),
+  );
   return $form;
 }
 
 function sustainer_import_queue_report() {
   // list items in queue
+  $status_rows = array();
   $queue_status_counts = sustainer_import_queue_status_counts();
   foreach ($queue_status_counts as $status_count) {
     // apply pending label to items with empty status
@@ -57,12 +80,14 @@ function sustainer_import_process_queue() {
     if (_sustainer_import_validate_account_record($record['user_info'])) {
       // passes validation, create or dedupe.
       $account = _sustainer_import_create_account($record['user_info']);
+      dsm($account, 'account');
       $record['uid'] = $account->uid;
     }
   // master order record
   if ($record['uid']) {
     if(_sustainer_import_validate_master_order($record)) {
-      // create master order
+      $master_order = _sustainer_import_create_master_order($record, $account);
+      dsm($master_order, 'master_order');
     }
   }
     // create
@@ -71,6 +96,20 @@ function sustainer_import_process_queue() {
       // validate
       // create
   // update log
+  }
+}
+
+/**
+ * Save queue gateway type to payment gatewway mapping.
+ */
+function sustainer_import_save_gateway_map($form, $form_state) {
+  $gateway_types = sustainer_import_queue_gateway_types();
+  dsm($gateway_types, 'gateway types');
+  dsm($form_state['values']);
+  foreach ($gateway_types as $gateway_type) {
+    $gateway = $form_state['values'][$gateway_type];
+    drupal_set_message('gateway:' . $gateway);
+    variable_set('sustainer_import_gateway_' . $gateway_type, $gateway);
   }
 }
 
@@ -242,8 +281,12 @@ function _sustainer_import_validate_master_order($record) {
   return TRUE;
 }
 
-function _sustainer_import_create_master_order($record) {
+function _sustainer_import_create_master_order($record, $account) {
   // create master order
+  $donation = _sustainer_import_build_donation_object($record, $account);
+  fundraiser_donation_create($donation);
+
+  return $donation;
 }
 
 function _sustainer_import_validate_sustainer_series_instance($instance_details) {
@@ -284,4 +327,81 @@ function _sustainer_import_save_account_sfids($uid, $sfid, $type) {
 function _sustainer_import_name_from_mail($mail) {
   $parts = explode('@', $mail);
   return $parts[0];
+}
+
+
+/**
+ * Create an an initial donation object from the import record
+ */
+function _sustainer_import_build_donation_object($record, $account) {
+  dsm($record, 'record during donation build');
+ // $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+ // $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
+
+  $donation = new stdClass();
+  $donation->created = $record['created'];
+  $donation->changed = $record['created'];
+  $donation->uid = $account->uid;
+  $donation->user = $account;
+  $donation->mail = $account->mail;
+
+   $donation->sid = 0; // placeholder since no webform submission is created.
+  // This payment has been captured, note the commerce order needs to be updated to payment received
+  $donation->status = 'payment_received';
+
+  // Get the node from gateway map
+  // TODO: implement admin form, map gateway type to existing gateway & donation form.
+  //$donation->node = _fundraiser_commerce_order_node_from_line_item($line_item);
+
+  // $donation->nid = $donation->node->nid;
+  $gateway_id = variable_get('sustainer_import_gateway_' . $record['payment_details']['gateway_type'], 0);
+
+  // $donation->gateway = $order->data['payment_method'];
+  // TODO: might be the whole gateway array, confirm.
+  $donation->gateway = $gateway_id;
+
+  $donation->donation = array();
+
+  // Populate the necessary address values
+  $donation->donation['mail'] = $account->mail;
+  $donation->donation['country'] = $record['billing_info']['country'];
+  $donation->donation['first_name'] = $record['user_info']['first_name'];
+  $donation->donation['last_name'] = $record['user_info']['last_name'];
+  $donation->donation['state'] = $record['billing_info']['state'];
+  $donation->donation['address'] =  $record['billing_info']['address_1'];
+  $donation->donation['address_line_2'] = $record['billing_info']['address_2'];
+  $donation->donation['city'] = $record['billing_info']['city'];
+  $donation->donation['zip'] = $record['billing_info']['zip'];
+
+  // payment details were saved with the original donation
+  $donation->donation['payment_method'] = 'credit'; // $data['payment_method'];
+  $donation->donation['payment_fields'] = array(
+    'credit' => array(
+      'card_number' => $record['payment_details']['last_four'],
+      'card_expiration_month' => $record['payment_details']['month'],
+      'card_expiration_year' => $record['payment_details']['year'],
+      'card_cvv' = '', // data unvailable due to PCI requirements
+      'card_type' => $record['payment_details']['type'],
+    ),
+  );
+  // From the line item get the donation amount
+  // TODO: confirm currency code & amount location in $record.
+  $donation->donation['amount'] = commerce_currency_amount_to_decimal($record['amount'], 'USD');
+  $donation->donation['currency'] = 'USD'; //$line_item_wrapper->commerce_total->currency_code->value();
+
+  // Flag the donation recurring or not
+  $donation->donation['recurs_monthly'] = TRUE; //_fundraiser_commerce_order_confirm_line_item_recurring($line_item);
+
+   dsm($donation, 'donation');
+  return $donation;
+}
+
+/**
+ * Lookup payment profile info and return full sim/profile_id string.
+ *
+ * @param $sim
+ *
+ */
+function _sustainer_import_update_authnet_sim($sim) {
+
 }

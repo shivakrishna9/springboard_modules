@@ -40,6 +40,11 @@ function sustainer_import_schema() {
         'type' => 'varchar',
         'length' => 60,
       ),
+      'gateway_type' => array(
+        'description' => 'import status',
+        'type' => 'varchar',
+        'length' => 255,
+      ),
     ),
     'primary key' => array('rid'),
   );
