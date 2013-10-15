@@ -209,7 +209,6 @@ function form_layout_fundraiser_field_info_alter(&$info) {
 
 /**
  * Implements hook_theme().
- *
  */
 function form_layout_theme() {
   return array(
@@ -502,9 +501,9 @@ function form_layout_node_delete($node) {
 }
 
 /**
- * Saves the layout machine name to the DB
+ * Saves the layout machine name to the DB.
  *
- * @param integer $nid
+ * @param int $nid
  *   Node ID.
  * @param string $layout
  *   Layout machine name.
@@ -521,11 +520,11 @@ function form_layout_save_node_layout($nid, $layout) {
   $node_layout = form_layout_get_node_layout($nid);
 
   if ($node_layout == '') {
-    // new record
+    // New record.
     return drupal_write_record('form_layout_node', $record);
   }
   else {
-    // update record
+    // Update record.
     return drupal_write_record('form_layout_node', $record, 'nid');
   }
 }
@@ -533,10 +532,11 @@ function form_layout_save_node_layout($nid, $layout) {
 /**
  * Deletes a form layout record for the given node.
  *
- * @param $nid
+ * @param int $nid
  *   Node ID.
  *
  * @return DatabaseStatementInterface
+ *   Result of the delete query.
  */
 function form_layout_delete_node_layout($nid) {
   return db_delete('form_layout_node')
@@ -547,7 +547,7 @@ function form_layout_delete_node_layout($nid) {
 /**
  * Gets the layout machine name for a node.
  *
- * @param integer $nid
+ * @param int $nid
  *   Node ID.
  *
  * @return string
