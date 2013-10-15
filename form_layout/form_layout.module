@@ -144,8 +144,6 @@ function form_layout_delete($machine_name) {
  * Implements hook_fundraiser_field_info().
  *
  * Provides the additional regions fields.
- *
- * @todo Is the weighting working?
  */
 function form_layout_fundraiser_field_info() {
   $fields = array();
@@ -155,7 +153,6 @@ function form_layout_fundraiser_field_info() {
     '#type' => 'fieldset',
     '#required' => 0,
     '#display_callback' => 'form_layout_top_region_display',
-    '#weight' => -50,
   );
 
   $fields['left_region'] = array(
@@ -163,7 +160,6 @@ function form_layout_fundraiser_field_info() {
     '#type' => 'fieldset',
     '#required' => 0,
     '#display_callback' => 'form_layout_left_region_display',
-    '#weight' => -48,
   );
 
   $fields['right_region'] = array(
@@ -171,7 +167,6 @@ function form_layout_fundraiser_field_info() {
     '#type' => 'fieldset',
     '#required' => 0,
     '#display_callback' => 'form_layout_right_region_display',
-    '#weight' => -48,
   );
 
   $fields['bottom_region'] = array(
@@ -179,7 +174,6 @@ function form_layout_fundraiser_field_info() {
     '#type' => 'fieldset',
     '#required' => 0,
     '#display_callback' => 'form_layout_bottom_region_display',
-    '#weight' => -47,
   );
 
   return $fields;
@@ -214,6 +208,43 @@ function form_layout_fundraiser_field_info_alter(&$info) {
 }
 
 /**
+ * Implements hook_theme().
+ *
+ */
+function form_layout_theme() {
+  return array(
+    'form_layout_region' => array(
+      'render element' => 'element',
+    ),
+  );
+}
+
+/**
+ * Theme wrapper for regions.
+ *
+ * Replaces region fieldset tags with divs.
+ */
+function theme_form_layout_region($variables) {
+  $element = $variables['element'];
+
+  element_set_attributes($element, array('id'));
+
+  $output = '<div' . drupal_attributes($element['#attributes']) . '>';
+  if (!empty($element['#title'])) {
+    $output .= '<div class="div-title">' . $element['#title'] . '</div>';
+  }
+  if (!empty($element['#description'])) {
+    $output .= '<div class="div-description">' . $element['#description'] . '</div>';
+  }
+  $output .= $element['#children'];
+  if (isset($element['#value'])) {
+    $output .= $element['#value'];
+  }
+  $output .= "</div>\n";
+  return $output;
+}
+
+/**
  * Display callback for the top region.
  *
  * Does some bootstrap formatting and removes the title.
@@ -228,6 +259,7 @@ function form_layout_top_region_display($form, $form_state, $field) {
   $field['#prefix'] = '<div class="row">';
   $field['#suffix'] = '</div>';
   $field['#weight'] = -50;
+  $field['#theme_wrappers'][] = 'form_layout_region';
   return $field;
 }
 
@@ -248,6 +280,8 @@ function form_layout_left_region_display($form, $form_state, $field) {
   $field['#prefix'] = '<div class="row">';
 
   $field['#weight'] = -49;
+
+  $field['#theme_wrappers'][] = 'form_layout_region';
   return $field;
 }
 
@@ -268,6 +302,8 @@ function form_layout_right_region_display($form, $form_state, $field) {
   $field['#suffix'] = '</div>';
 
   $field['#weight'] = -48;
+
+  $field['#theme_wrappers'][] = 'form_layout_region';
   return $field;
 }
 
@@ -286,6 +322,8 @@ function form_layout_bottom_region_display($form, $form_state, $field) {
   $field['#prefix'] = '<div class="row">';
   $field['#suffix'] = '</div>';
   $field['#weight'] = -47;
+
+  $field['#theme_wrappers'][] = 'form_layout_region';
   return $field;
 }
 
