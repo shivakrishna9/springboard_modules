@@ -12,9 +12,17 @@ var addthis_share = {
     attach: function (context, settings) {
       // AddThis requires some global configuration objects be populated
       // set up the AddThis account ID from admin settings
-      window.addthis_config = {
-        pubid: Drupal.settings.sb_social.pubid
-      };
+      if (typeof window.addthis_config !== "undefined") {
+        settings = {
+          pubid: Drupal.settings.sb_social.pubid
+        };
+        jQuery.extend(window.addthis_config, settings);
+      }
+      else {
+        window.addthis_config = {
+          pubid: Drupal.settings.sb_social.pubid
+        }
+      }
       // hijack click event for share links, apply share url provided by share tracker
       $('.social-share-link').click(function() {
           $elem = $(this);
