@@ -342,12 +342,20 @@ function form_layout_form_node_form_alter(&$form, &$form_state, $form_id) {
       '#collapsible' => TRUE,
       '#collapsed' => FALSE,
     );
+
+    $options = form_layout_get_layout_options();
+    $default_value = 'none';
+
+    if (!empty($form['#node']->form_layout) && in_array($form['#node']->form_layout, array_keys($options))) {
+      $default_value = $form['#node']->form_layout;
+    }
+
     $form['form_layout']['form_layout'] = array(
       '#type' => 'select',
       '#title' => t('Layout'),
-      '#options' => form_layout_get_layout_options(),
-      '#default_value' => 0,
-      '#description' => 'Choose a layout for the form.  Choose None to leave the layout as-is.',
+      '#options' => $options,
+      '#default_value' => $default_value,
+      '#description' => 'Choose a layout for the form.',
     );
   }
   $form['#submit'][] = 'form_layout_node_form_submit';
@@ -453,4 +461,107 @@ function form_layout_key_cids_by_form_key($components) {
     $return[$component['form_key']] = $cid;
   }
   return $return;
+}
+
+/**
+ * Implements hook_node_insert().
+ *
+ * Save the form layout.
+ */
+function form_layout_node_insert($node) {
+  form_layout_node_update($node);
+}
+
+/**
+ * Implements hook_node_load().
+ */
+function form_layout_node_load($nodes, $types) {
+  foreach ($nodes as $node) {
+    if (fundraiser_is_donation_type($node->type)) {
+      $nodes[$node->nid]->form_layout = form_layout_get_node_layout($node->nid);
+    }
+  }
+}
+
+/**
+ * Implements hook_node_update().
+ */
+function form_layout_node_update($node) {
+  if (fundraiser_is_donation_type($node->type) && !empty($node->form_layout)) {
+    form_layout_save_node_layout($node->nid, $node->form_layout);
+  }
+}
+
+/**
+ * Implements hook_node_delete().
+ */
+function form_layout_node_delete($node) {
+  if (fundraiser_is_donation_type($node->type)) {
+    form_layout_delete_node_layout($node->nid);
+  }
+}
+
+/**
+ * Saves the layout machine name to the DB
+ *
+ * @param integer $nid
+ *   Node ID.
+ * @param string $layout
+ *   Layout machine name.
+ *
+ * @return bool|int
+ *   FALSE on failure, SAVED_NEW or SAVED_UPDATED on success.
+ */
+function form_layout_save_node_layout($nid, $layout) {
+  $record = array(
+    'nid' => $nid,
+    'form_layout' => $layout,
+  );
+
+  $node_layout = form_layout_get_node_layout($nid);
+
+  if ($node_layout == '') {
+    // new record
+    return drupal_write_record('form_layout_node', $record);
+  }
+  else {
+    // update record
+    return drupal_write_record('form_layout_node', $record, 'nid');
+  }
+}
+
+/**
+ * Deletes a form layout record for the given node.
+ *
+ * @param $nid
+ *   Node ID.
+ *
+ * @return DatabaseStatementInterface
+ */
+function form_layout_delete_node_layout($nid) {
+  return db_delete('form_layout_node')
+    ->condition('nid', $nid)
+    ->execute();
+}
+
+/**
+ * Gets the layout machine name for a node.
+ *
+ * @param integer $nid
+ *   Node ID.
+ *
+ * @return string
+ *   Layout machine name.
+ */
+function form_layout_get_node_layout($nid) {
+  $result = db_query("SELECT form_layout FROM {form_layout_node} WHERE nid = :nid",
+    array(':nid' => $nid)
+  );
+
+  if ($result->rowCount() > 0) {
+    return $result->fetchField();
+  }
+
+  // Default value.
+  return '';
 }
