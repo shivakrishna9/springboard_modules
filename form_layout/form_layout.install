@@ -39,6 +39,33 @@ function form_layout_install() {
 }
 
 /**
+ * Implements hook_schema().
+ */
+function form_layout_schema() {
+  $schema['form_layout_node'] = array(
+    'description' => 'Stores form layout information per fundraising node.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'Fundraiser {node}.nid.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'form_layout' => array(
+        'description' => 'The form layout machine name for this node.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('nid'),
+  );
+
+  return $schema;
+}
+
+/**
  * Implements hook_uninstall().
  */
 function form_layout_uninstall() {
