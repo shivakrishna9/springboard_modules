@@ -219,6 +219,7 @@ function market_source_user_register_after_build($form, &$form_state) {
   }
   // Get form keys array.
   $form_keys = _market_source_build_form_keys($form, 'profile_');
+
   // Add form_keys to the JS settings array.
   drupal_add_js(array('market_source' => array(
       'form_keys' => array(
@@ -402,6 +403,10 @@ function _market_source_build_form_keys(&$form, $prefix = NULL) {
       $form_keys[$key] = $element['#name'];
     }
   }
+
+  $context = array('form' => $form, 'prefix' => $prefix);
+  drupal_alter('market_source_build_form_keys', $form_keys, $context);
+
   return $form_keys;
 }
 
@@ -411,7 +416,7 @@ function _market_source_build_form_keys(&$form, $prefix = NULL) {
 function &_market_source_form_find_element(&$form, $key) {
   foreach (element_children($form) as $id) {
     $element = &$form[$id];
-    if ($id == $key) {
+    if ($id === $key) {
       return $element;
     }
     else {
@@ -466,12 +471,14 @@ function _market_source_validate_cid($val) {
  * Implements hook_node_insert().
  */
 function market_source_node_insert($node) {
-  $webform_types = variable_get('webform_node_types', array('webform'));
-  // Make sure this node type contains a webform.
-  if (in_array($node->type, $webform_types)) {
-    if (!isset($node->clone_from_original_nid)) { // Value from node_clone module.
-      module_load_include('inc', 'webform', 'includes/webform.components');
-      $components = market_source_create_standard_components($node->nid);
+  if (module_exists('webform')) {
+    $webform_types = variable_get('webform_node_types', array('webform'));
+    // Make sure this node type contains a webform.
+    if (in_array($node->type, $webform_types)) {
+      if (!isset($node->clone_from_original_nid)) { // Value from node_clone module.
+        module_load_include('inc', 'webform', 'includes/webform.components');
+        $components = market_source_create_standard_components($node->nid);
+      }
     }
   }
 }

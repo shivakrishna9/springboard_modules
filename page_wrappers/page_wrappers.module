@@ -79,6 +79,22 @@ function page_wrappers_preprocess_page(&$vars) {
     $wrapper = _page_wrappers_node_assigned_wrapper($node);
   }
 
+  // Allow context to optionally override this
+  if (module_exists('context') && $node = _page_wrappers_context_page_node()) {
+    $contexts = context_active_contexts();
+    foreach ($contexts as $context) {
+      // Check if page_wrapper is a reaction for this context
+      if (isset($context->reactions['page_wrappers'])) {
+        $wrapper = array(
+          'nid' => $node->nid,
+          'wrapper_nid' => $context->reactions['page_wrappers']['page_wrapper'],
+          'ruleset' => 1,
+          'weight' => -20,
+        );
+      }
+    }
+  }
+
   if (!empty($wrapper)) {
     // Some pages may not have a node set, we'll need it for the wrapper template
     if (!isset($vars['node'])) {
@@ -1114,3 +1130,11 @@ function _page_wrappers_list_wrappers_by_group($nid) {
   }
   return count($wrappers) ? $wrappers : FALSE;
 }
+
+/**
+ * Include the context code if context is enabled
+ */
+if (module_exists('context')) {
+  include_once 'page_wrappers.context.inc';
+}
+
