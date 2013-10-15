@@ -402,6 +402,14 @@ function _sustainer_import_build_donation_object($record, $account) {
  * @param $sim
  *
  */
-function _sustainer_import_update_authnet_sim($sim) {
+function _sustainer_import_update_authnet_sim($payment_method, $cim_customer_profile_id) {
+
+    // Build the get payment profile request data.
+    $api_request_data = array(
+      'customerProfileId' => $cim_customer_profile_id,
+    );
+
+    return commerce_authnet_cim_request($payment_method, 'getCustomerPaymentProfileRequest', $api_request_data);
+
 
 }
