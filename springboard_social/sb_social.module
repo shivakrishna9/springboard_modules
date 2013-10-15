@@ -93,7 +93,7 @@ function sb_social_menu() {
     'file' => 'includes/sb_social.admin.inc',
     'type' => MENU_LOCAL_TASK,
   );
-  // service, id, type, market_source
+  // service, id, type, market source
   $items['sb_social/share_event/%/%/%/%'] = array(
     'title' => '',
     'page callback' => 'sb_social_share_tracker',
@@ -132,6 +132,7 @@ function sb_social_block_view($delta = '') {
     else {
       $id = $node->nid;
     }
+
     $sid = _sb_social_sid_by_id($id);
     $settings = sb_social_settings_load($sid);
     $plugins = sb_social_get_enabled_plugins();
@@ -241,13 +242,16 @@ function sb_social_init() {
 
   if (isset($_GET['sid']) && is_numeric($_GET['sid'])) {
     $submission_id = $_GET['sid'];
-   // $js_settings['id'] = $_GET['sid'];
+    $js_settings['submission_id'] = $_GET['sid'];
    // $js_settings['id_type'] = 'sid';
   }
   if (arg(0) == 'node' && is_numeric(arg(1))) { // TODO: replace this with a valid core hook
     $node = node_load(arg(1));
+
     $id = is_object($node) ? $node->nid : FALSE;
-    $sid = _sb_social_sid_by_id($id);
+    if ($id) {
+      $sid = sb_social_get_sid_by_id($id, 'node');
+    }
 
     if (!$js_settings['id']) {
       $js_settings['id'] = is_object($node) ? $node->nid : 0;
@@ -272,12 +276,15 @@ function sb_social_init() {
   if ($id) {
     $settings = sb_social_settings_load($sid);
 
-    if (isset($settings['data']['market_source']['ms'])) {
+    if (!empty($settings['data']['market_source']['ms'])) {
       $js_settings['market_source'] = $settings['data']['market_source']['ms'];
+    }
+    else {
+      // initialize to a non-null value
+      $js_settings['market_source'] = '0';
     }
     $plugins = sb_social_get_enabled_plugins();
     $path = drupal_get_path('module', 'sb_social');
-
 
     foreach ($plugins as $service => $plugin) {
 
@@ -453,7 +460,6 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
       $id = $alias ? array($path, $alias) : $path;
     }
     $sid = _sb_social_sid_by_id($id);
-
     $settings = sb_social_settings_load($sid);
     $enabled_plugins = sb_social_get_enabled_plugins();
     $submission_id = (isset($_GET['sid']) && is_numeric($_GET['sid'])) ? $_GET['sid'] : FALSE;

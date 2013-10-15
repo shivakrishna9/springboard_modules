@@ -57,36 +57,37 @@ function sb_social_share_event_load($share_id) {
  * Counterintuitively enough, this function returns a shortened share url for the share event.
  */
 function sb_social_share_event_save($service, $id, $type, $market_source) {
-  // TODO: there's too much going on here. Break this up into a legitimate save function and a callback
-  // function that handles the rest of what is going on here.
+
   global $user;
   // deal with submission-based shares (confirmation pages)
-  // TODO: i believe this is no longer needed.
-  if (is_numeric($id) && $type == 'sid') {
+  // TODO: clean this up, refactor around a single $record array().
+  if (is_numeric($_GET['sid']) && $type == 'nid') {
     module_load_include('inc', 'webform', 'includes/webform.submissions');
-    $sid = $id;
-    $nid = _sb_social_get_nid_by_sid($id);
+    $sid = $_GET['sid'];
+    $submission = webform_get_submission($id, $sid);
+    $nid = isset($submission->nid) ? $submission->nid : 0;
     $node = node_load($nid);
-    $page_name = !empty($node->title) ? $node->title : '';
-    $language = $node->language;
-    $internal_name = !empty($node->field_fundraiser_internal_name[$language][0]['value']) ? $node->field_fundraiser_internal_name[$language][0]['value'] : '';
-    $type = $node->type;
-    $submission = webform_get_submission($nid, $sid);
     $uid = !empty($submission->uid) ? $submission->uid : $user->uid;
+    $settings_id = sb_social_get_sid_by_id($id, 'node');
+    $type = 'node';
+    $page_name = !empty($node->title) ? $node->title : '';
+    $internal_name_field = field_get_items('node', $node, 'field_fundraiser_internal_name');
+    $internal_name = !empty($internal_name_field[0]['value']) ? $internal_name_field[0]['value'] : '';
     $url_path = 'node/' . $node->nid;
-    $settings_id = $node->nid;
   }
   // shares from node pages
-  if (is_numeric($id) && $type == 'nid') {
+  elseif (is_numeric($id) && $type == 'nid') {
     $sid = 0;
     $nid = $id;
     $uid = $user->uid;
     $node = node_load($id);
     $page_name = !empty($node->title) ? $node->title : '';
-    $internal_name = '';
+    $internal_name = ''; // TODO: fix
     $type = $node->type;
     $url_path = 'node/' . $node->nid;
     $settings_id = $node->nid;
+    $internal_name_field = field_get_items('node', $node, 'field_fundraiser_internal_name');
+    $internal_name = !empty($internal_name_field[0]['value']) ? $internal_name_field[0]['value'] : '';
   }
   // shares from non-node pages (path based)
   if ($type == 'path') {
@@ -96,7 +97,7 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
     $internal_name = '';
     $type = 'page';
     $url_path = sb_social_get_path($id);
-    $uid = $user->uid;
+    $uid = $uid ? $uid : $user->uid;
     $settings_id = sb_social_get_sid_by_id($id, 'path');
   }
 
@@ -186,8 +187,9 @@ function sb_social_share_event_delete($sid) {
  * Load shared content settings
  */
 function sb_social_settings_load($sid) {
+
   // This can get called by hook_block_view() in addition to hook_init() so we should cache.
-  static $settings = array();
+  $settings = &drupal_static(__FUNCTION__);
 
   if (empty($settings[$sid])) {
     $results = db_query('SELECT * FROM {sb_social_settings} WHERE sid = :sid', array(':sid' => $sid));
@@ -199,6 +201,7 @@ function sb_social_settings_load($sid) {
     if ($settings[$sid]['type'] == 'path') {
       $settings[$sid]['path'] = sb_social_get_path($settings[$sid]['id']);
     }
+
     // supply global defaults if no settings are available.
     if (empty($settings[$sid])) {
       // check for node view page.
@@ -226,6 +229,7 @@ function sb_social_settings_load($sid) {
       }
     }
   }
+
   return $settings[$sid];
 }
 
@@ -255,14 +259,14 @@ function sb_social_get_id_by_sid($sid) {
  * @return bool Returns the sid associated with the given id, or FALSE if no records were found.
  */
 function sb_social_get_sid_by_id($id, $type = FALSE) {
+
   $query = db_select('sb_social_settings', 's');
   $query->fields('s', array('sid'));
-
+  $query->condition('id', $id, '=');
   if ($type) {
     $query->condition('type', $type, '=');
   }
   $result = $query->execute();
-
   $data = $result->fetchField();
   return $data ? $data : FALSE;
 }
@@ -379,9 +383,10 @@ function sb_social_settings_delete($sid) {
  * @return array
  * returns
  */
-function _sb_social_get_settings_by_sid($sid) {
-  $nid = _sb_social_get_nid_by_sid($sid);
-  return sb_social_settings_load($nid);
+function _sb_social_get_settings_by_sid($submission_id) {
+  $nid = _sb_social_get_nid_by_sid($submission_id);
+  $sid = sb_social_get_sid_by_id($nid, 'node');
+  return sb_social_settings_load($sid);
 }
 
 /**

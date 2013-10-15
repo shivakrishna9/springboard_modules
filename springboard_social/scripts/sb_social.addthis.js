@@ -15,7 +15,6 @@ var addthis_share = {
       window.addthis_config = {
         pubid: Drupal.settings.sb_social.pubid
       };
-
       // hijack click event for share links, apply share url provided by share tracker
       $('.social-share-link').click(function() {
           $elem = $(this);
@@ -31,6 +30,11 @@ var addthis_share = {
           $url = $url + Drupal.settings.sb_social.id + '/';
           $url = $url + Drupal.settings.sb_social.id_type + '/';
           $url = $url + Drupal.settings.sb_social.market_source + '/';
+
+          // conditionally add webform submission id if present
+          if (typeof Drupal.settings.sb_social.submission_id != 'undefined') {
+            $url = $url + '?sid=' + Drupal.settings.sb_social.submission_id;
+          }
 
           // Register share event and provide share URL to AddThis.
           jQuery.ajax({
