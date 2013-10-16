@@ -145,7 +145,7 @@ function sb_social_block_view($delta = '') {
       if (isset($plugin['button_extra'])) {
         $func = $plugin['button_extra'];
         if (function_exists($func)) {
-          $vars['extra'] = $func($settings['data'][$service]);
+          $vars['extra'] = $func($settings['data'][$service], $node);
         }
       }
       $buttons[] = theme('sb_social_share_button', $vars);
@@ -484,7 +484,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
         if (isset($plugin['button_extra'])) {
           $func = $plugin['button_extra'];
           if (function_exists($func)) {
-            $vars['extra'] = $func($settings['data'][$service]);
+            $vars['extra'] = $func($settings['data'][$service], $node, $submission_id);
           }
         }
         $buttons[] = theme('sb_social_share_button', $vars);
