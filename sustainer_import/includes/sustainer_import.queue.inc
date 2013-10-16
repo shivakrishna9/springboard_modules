@@ -30,11 +30,23 @@ function sustainer_import_queue() {
   dsm($gateway_types, 'gateway types');
   foreach ($gateway_types as $gateway_type) {
     dsm($gateway_type);
+    $defaults = variable_get('sustainer_import_gateway_map_' . $gateway_type, array());
+    dsm($defaults, 'defaults');
     $form['gateway_map'][$gateway_type] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Map ') . $gateway_type,
+    );
+      $form['gateway_map'][$gateway_type][$gateway_type . '_id'] = array(
       '#type' => 'select',
-      '#title' => $gateway_type,
+      '#title' => t('Select a payment gateway for this type'),
       '#options' => array_merge(array('0' => '- select -'), sustainer_import_list_payment_gateways()),
-      '#default_value' => variable_get('sustainer_import_gateway_' . $gateway_type, 0),
+      '#default_value' => !empty($defaults['gateway_id']) ? $defaults['gateway_id'] : 0,
+    );
+    $form['gateway_map'][$gateway_type][$gateway_type . '_nid'] = array(
+      '#type' => 'select',
+      '#title' => t('Select a donation form for this type'),
+      '#options' => array_merge(array('0' => t('- select -')), _sustainer_import_list_donation_forms()),
+      "#default_value" => !empty($defaults['nid']) ? $defaults['nid'] : 0,
     );
   }
   $form['gateway_map']['save_map'] = array(
@@ -107,9 +119,10 @@ function sustainer_import_save_gateway_map($form, $form_state) {
   dsm($gateway_types, 'gateway types');
   dsm($form_state['values']);
   foreach ($gateway_types as $gateway_type) {
-    $gateway = $form_state['values'][$gateway_type];
-    drupal_set_message('gateway:' . $gateway);
-    variable_set('sustainer_import_gateway_' . $gateway_type, $gateway);
+    $settings['gateway_id'] = $form_state['values'][$gateway_type . '_id'];
+    $settings['nid'] = $form_state['values'][$gateway_type . '_nid'];
+    dsm($settings, 'settings');
+    variable_set('sustainer_import_gateway_map_' . $gateway_type, $settings);
   }
 }
 
@@ -380,7 +393,7 @@ function _sustainer_import_build_donation_object($record, $account) {
       'card_number' => $record['payment_details']['last_four'],
       'card_expiration_month' => $record['payment_details']['month'],
       'card_expiration_year' => $record['payment_details']['year'],
-      'card_cvv' = '', // data unvailable due to PCI requirements
+      'card_cvv' => '', // data unvailable due to PCI requirements
       'card_type' => $record['payment_details']['type'],
     ),
   );

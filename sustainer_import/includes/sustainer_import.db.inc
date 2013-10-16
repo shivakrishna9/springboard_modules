@@ -104,3 +104,25 @@ function sustainer_import_list_payment_gateways() {
   return $gateways;
 }
 
+/**
+ * List available donation forms.
+ */
+function _sustainer_import_list_donation_forms() {
+  $nodes = array();
+  $enabled_node_types = array();
+  $types = fundraiser_get_donation_types();
+  foreach ($types as $type => $enabled) {
+    if ($enabled) {
+      $enabled_node_types[] = $type;
+    }
+  }
+
+  $results = db_query('SELECT nid, title FROM {node} WHERE type IN (:types)', array(':types' => $enabled_node_types));
+
+  while($data = $results->fetchAssoc()) {
+    $nodes[$data['nid']] = $data['title'];
+  }
+
+  return $nodes;
+}
+
