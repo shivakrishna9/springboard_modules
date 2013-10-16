@@ -34,15 +34,18 @@ function fundraiser_commerce_menu() {
  * Implements hook_menu_alter().
  */
 function fundraiser_commerce_menu_alter(&$items) {
+  // Deny access to the the void and credit forms provided by the gateways
   foreach ($items as $path => $item) {
     if (strpos($path, 'admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/') !== FALSE) {
-      // If not view or delete, strip it out to be replaced with our form Refund.
+      // If not view or delete change the access callback to deny access
       if (($path != 'admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/view') &&
         ($path != 'admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/delete')) {
-        unset($items[$path]);
+        $items[$path]['access callback'] = '_fundraiser_commerce_deny_gateway_credit_form_access';
       }
     }
   }
+
+  // Custom refund form for fundraiser
   $items['admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/refund'] = array(
     'title' => 'Refund',
     'page callback' => 'drupal_get_form',
@@ -52,6 +55,13 @@ function fundraiser_commerce_menu_alter(&$items) {
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'context' => MENU_CONTEXT_INLINE,
   );
+}
+
+/**
+ * Menu access for the gateway credit and void forms
+ */
+function _fundraiser_commerce_deny_gateway_credit_form_access($order, $transaction) {
+  return FALSE;
 }
 
 /**
