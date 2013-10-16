@@ -392,7 +392,7 @@ function fundraiser_update_7002() {
     }
   }
 
-  $results = db_query('SELECT nid,internal_name FROM fundraiser');
+  $results = db_query('SELECT nid, internal_name FROM {fundraiser}');
 
   if ($results->rowCount()) {
     foreach ($results as $record) {
