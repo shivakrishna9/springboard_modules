@@ -116,12 +116,11 @@ function sustainer_import_process_queue() {
  */
 function sustainer_import_save_gateway_map($form, $form_state) {
   $gateway_types = sustainer_import_queue_gateway_types();
-  dsm($gateway_types, 'gateway types');
-  dsm($form_state['values']);
+
   foreach ($gateway_types as $gateway_type) {
     $settings['gateway_id'] = $form_state['values'][$gateway_type . '_id'];
     $settings['nid'] = $form_state['values'][$gateway_type . '_nid'];
-    dsm($settings, 'settings');
+
     variable_set('sustainer_import_gateway_map_' . $gateway_type, $settings);
   }
 }
@@ -211,7 +210,7 @@ function _sustainer_import_validate_account_record($account_details) {
  * master order.
  *
  * @param $record
- * Associative array of data required to create a sustainer series master order in commerce and
+ * Associative array of data required to create a sustainer series mastervariable_set('sustainer_import_gateway_map_' . $gateway_type, $settings); order in commerce and
  * Fundraiser.
  *
  * Required fields:
@@ -298,7 +297,16 @@ function _sustainer_import_create_master_order($record, $account) {
   // create master order
   $donation = _sustainer_import_build_donation_object($record, $account);
   fundraiser_donation_create($donation);
-
+  dsm($donation, 'donation after create');
+  // update commerce order status to payment received.
+  if (!empty($donation->did)) {
+    db_query('UPDATE {commerce_order} SET status = :status WHERE order_id = :order_id', array(':status' => 'payment_received', ':order_id' => $donation->did));
+  }
+  // save payment method details (cardonfile)
+  $payment_method = commerce_payment_method_instance_load($donation->gateway);
+  dsm($payment_method, 'payment method');
+  // get updated sim
+  $sim = _sustainer_import_update_authnet_sim($payment_method, $record['payment_details']['gateway_token']);
   return $donation;
 }
 
@@ -367,11 +375,11 @@ function _sustainer_import_build_donation_object($record, $account) {
   //$donation->node = _fundraiser_commerce_order_node_from_line_item($line_item);
 
   // $donation->nid = $donation->node->nid;
-  $gateway_id = variable_get('sustainer_import_gateway_' . $record['payment_details']['gateway_type'], 0);
+  $gateway_map = variable_get('sustainer_import_gateway_map_' . $record['payment_details']['gateway_type'], array());
 
   // $donation->gateway = $order->data['payment_method'];
-  // TODO: might be the whole gateway array, confirm.
-  $donation->gateway = $gateway_id;
+  // TODO: throw error if gateway id is not available.
+  $donation->gateway = !empty($gateway_map['gateway_id']) ? $gateway_map['gateway_id'] : '';
 
   $donation->donation = array();
 
@@ -417,12 +425,13 @@ function _sustainer_import_build_donation_object($record, $account) {
  */
 function _sustainer_import_update_authnet_sim($payment_method, $cim_customer_profile_id) {
 
-    // Build the get payment profile request data.
-    $api_request_data = array(
-      'customerProfileId' => $cim_customer_profile_id,
-    );
+  // Build the get payment profile request data.
+  $api_request_data = array(
+    'customerProfileId' => $cim_customer_profile_id,
+  );
+  // TODO: add error handling if this breaks.
+  $response = commerce_authnet_cim_request($payment_method, 'getCustomerProfileRequest', $api_request_data);
+  $payment_profile_id = $response->profile->paymentProfiles->customerPaymentProfileId;
 
-    return commerce_authnet_cim_request($payment_method, 'getCustomerPaymentProfileRequest', $api_request_data);
-
-
+  return $cim_customer_profile_id . '|' . $payment_profile_id;
 }
