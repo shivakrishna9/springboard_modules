@@ -95,19 +95,33 @@ function sustainer_import_process_queue() {
       dsm($account, 'account');
       $record['uid'] = $account->uid;
     }
+    else {
+      // TODO: log error with user account creation and continue to next record.
+    }
   // master order record
   if ($record['uid']) {
     if(_sustainer_import_validate_master_order($record)) {
-      $master_order = _sustainer_import_create_master_order($record, $account);
-      dsm($master_order, 'master_order');
+      $donation = _sustainer_import_create_master_order($record, $account);
+      dsm($donation, 'master_donation');
     }
+  }
+  else {
+    // TODO: log error with order/donation/sim/cardonfile creation and continue to next record.
   }
     // create
   // sustainer series
-    //foreach
-      // validate
-      // create
-  // update log
+  if ($donation->did && $record['uid']) {
+    foreach ($record['payment_schedule'] as $instance_details) {
+      if (_sustainer_import_validate_sustainer_series_instance($instance_details)) {
+        _sustainer_import_create_sustainer_series_instance($instance_details, $donation);
+      }
+      else {
+        // TODO: throw error and bail
+      }
+    }
+    // TODO: if bail, log error and continue to next record.
+  }
+  // TODO: log errors/status/id's for this record
   }
 }
 
@@ -295,7 +309,17 @@ function _sustainer_import_validate_master_order($record) {
 
 function _sustainer_import_create_master_order($record, $account) {
   // create master order
-  $donation = _sustainer_import_build_donation_object($record, $account);
+  $gateway_map = variable_get('sustainer_import_gateway_map_' . $record['payment_details']['gateway_type'], array());
+  dsm($gateway_map, 'gateway map during order creation');
+  if (!empty($gateway_map['nid']) && is_numeric($gateway_map['nid'])) {
+    $node = node_load($gateway_map['nid']);
+  }
+  else {
+    // TODO: log map error and bail
+    $node = FALSE; // temporary measure.
+  }
+  dsm($node, 'node during donation creation');
+  $donation = _sustainer_import_build_donation_object($record, $account, $node);
   fundraiser_donation_create($donation);
   dsm($donation, 'donation after create');
   // update commerce order status to payment received.
@@ -304,9 +328,14 @@ function _sustainer_import_create_master_order($record, $account) {
   }
   // save payment method details (cardonfile)
   $payment_method = commerce_payment_method_instance_load($donation->gateway);
-  dsm($payment_method, 'payment method');
+
   // get updated sim
+  // TODO: this needs error handling. If authnet falls down trying to update the profile id
+  // we have to hault the import since future orders won't be billable until this is resolved.
   $sim = _sustainer_import_update_authnet_sim($payment_method, $record['payment_details']['gateway_token']);
+
+  // store cardonfile entry.
+  $card_data = _sustainer_import_save_cc_data($sim, $record, $donation, $account);
   return $donation;
 }
 
@@ -315,8 +344,36 @@ function _sustainer_import_validate_sustainer_series_instance($instance_details)
   // de-dupe??
 }
 
-function _sustainer_import_create_sustainer_series_instance($instance_details) {
-  // create sustainer series instance.
+/**
+ * Create a single sustainer series instance.
+ *
+ * @param $instance_details
+ * @param $donation
+ */
+function _sustainer_import_create_sustainer_series_instance($instance_details, $donation) {
+  // Stage 1: create the donation and order objects for the sustainer charge.
+  $new_donation = clone $donation;
+  $new_donation->sid = 0; // Not actually submitted, it's automated, so no sid.
+  // Create the new donation object, but do not process it. Processing doesn't occur till cron.
+  // New donation has all of the old donation information already loaded.
+  fundraiser_donation_create($new_donation);
+  $next_charge = strtotime($instance_details['month'] . '/' . $instance_details['day'] . '/' . $instance_details['year']);
+  drupal_set_message('next charge:' . $next_charge);
+  /*
+  fundraiser_donation_comment($new_donation, 'Sustainer donation scheduled to be charged at @next_charge',
+    array('@next_charge' => format_date($next_charge)));
+  // After this, the donation did and donation data is set.
+  // The new donation object, with new did, needs to be saved to recurring so we can grab it later.
+  $recurring_donation = array(
+    'master_did' => $donation->did,
+    'did' => $new_donation->did,
+    'next_charge' => $next_charge,
+    'sustainer_key' => $sustainer_key,
+  );
+  // Update the recurring table.
+  _fundraiser_sustainers_create_recurring($recurring_donation);
+  */
+  // Stage 2: update the sustainer record with status, sf id,
 }
 
 /**
@@ -352,9 +409,16 @@ function _sustainer_import_name_from_mail($mail) {
 
 
 /**
- * Create an an initial donation object from the import record
+ * Create a commerce order and donation records,
+ * update authnet profile id
+ * save cardonfile record for payment details
+ *
+ * @param $record
+ * @param $account
+ * @param $node
+ * @return stdClass
  */
-function _sustainer_import_build_donation_object($record, $account) {
+function _sustainer_import_build_donation_object($record, $account, $node) {
   dsm($record, 'record during donation build');
  // $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
  // $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
@@ -366,7 +430,7 @@ function _sustainer_import_build_donation_object($record, $account) {
   $donation->user = $account;
   $donation->mail = $account->mail;
 
-   $donation->sid = 0; // placeholder since no webform submission is created.
+  $donation->sid = 0; // placeholder since no webform submission is created.
   // This payment has been captured, note the commerce order needs to be updated to payment received
   $donation->status = 'payment_received';
 
@@ -374,10 +438,11 @@ function _sustainer_import_build_donation_object($record, $account) {
   // TODO: implement admin form, map gateway type to existing gateway & donation form.
   //$donation->node = _fundraiser_commerce_order_node_from_line_item($line_item);
 
-  // $donation->nid = $donation->node->nid;
+  $donation->nid = $node->nid;
+  $donation->node = $node;
   $gateway_map = variable_get('sustainer_import_gateway_map_' . $record['payment_details']['gateway_type'], array());
 
-  // $donation->gateway = $order->data['payment_method'];
+
   // TODO: throw error if gateway id is not available.
   $donation->gateway = !empty($gateway_map['gateway_id']) ? $gateway_map['gateway_id'] : '';
 
@@ -434,4 +499,49 @@ function _sustainer_import_update_authnet_sim($payment_method, $cim_customer_pro
   $payment_profile_id = $response->profile->paymentProfiles->customerPaymentProfileId;
 
   return $cim_customer_profile_id . '|' . $payment_profile_id;
+}
+
+/**
+ * Save cardonfile record for the user's credit card.
+ *
+ * If a record already exists for this card, return that record with no further processing.
+ *
+ * @param $sim
+ * @param $record
+ * @param $donation
+ * @param $account
+ * @return Ambigous
+ */
+function _sustainer_import_save_cc_data($sim, $record, $donation, $account) {
+  $preexisting_cards = commerce_cardonfile_load_multiple_by_uid($account->uid);
+
+  // we want to avoid creating duplicate card entries for a user.
+  // dedupe on sim (remote id in {commerce_cardonfile})
+  if ($preexisting_cards) {
+    foreach ($preexisting_cards as $card) {
+      if ($card->remote_id == $sim) {
+        return $card;
+      }
+    }
+  }
+  $payment_method = commerce_payment_method_instance_load($donation->gateway);
+  dsm($payment_method, 'method loaded during cc save');
+
+  $card_data = commerce_cardonfile_new();
+  $card_data->uid = $account->uid;
+  $card_data->payment_method = $payment_method['method_id'];
+  $card_data->instance_id = $payment_method['instance_id'];
+  $card_data->remote_id = $sim;
+  $card_data->card_type = $record['payment_details']['type'];
+  $card_data->card_name = $record['user_info']['first_name'] . ' ' . $record['user_info']['last_name'];
+  $card_data->card_number = $record['payment_details']['last_four'];
+  $card_data->card_exp_month = $record['payment_details']['month'];
+  $card_data->card_exp_year = $record['payment_details']['year'];
+  $card_data->status = 1;
+  $card_data->instance_default = 1; // set as default since this is the only record we have.
+
+  // Save and log the creation of the new card on file.
+  commerce_cardonfile_save($card_data);
+  return $card_data;
+
 }
