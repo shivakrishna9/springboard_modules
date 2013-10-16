@@ -159,7 +159,7 @@ function fundraiser_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
-      //TODO add transaction information here with the gateway.
+      // @todo Add transaction information here with the gateway.
     ),
     'primary key' => array('did'),
     'indexes' => array(
@@ -302,13 +302,17 @@ function fundraiser_update_last_removed() {
  */
 
 /**
- * D7 upgrade, copy donation information out of Ubercart orders, into a location where fundraiser can track it.
+ * D7 upgrade.
+ *
+ * Copy donation information out of Ubercart orders
+ *   and into a location where fundraiser can track it.
  */
 function fundraiser_update_7000() {
   // Create new donation table.
   $donation_table = fundraiser_schema();
   db_create_table('fundraiser_donation', $donation_table['fundraiser_donation']);
-  // Get all existing fundraiser donation information, and load the fundriaser_donation table with it all.
+  // Get all existing fundraiser donation information,
+  // and load the fundriaser_donation table with it all.
   // From ubercart's order tables.
   $donations = db_query('SELECT o.order_id, f.nid, o.uid FROM {uc_orders} o ' .
    'LEFT JOIN {uc_order_products} p ON o.order_id = p.order_id ' .
@@ -321,8 +325,10 @@ function fundraiser_update_7000() {
         'uid' => $donation->uid,
       );
       // Add gateway and transaction information from webform.
-      // The table doesn't go away yet, because we will still need it for fundraiser_sustainer.
-      // But we can throw a signal that fundraiser is done with it to let sustainer delete.
+      // The table doesn't go away yet, because we will still need it
+      // for fundraiser_sustainer.
+      // But we can throw a signal that fundraiser is done with it
+      // to let sustainer delete.
       variable_set('fundraiser_port_webform_done', TRUE);
       $gateway_infos = db_query('SELECT * FROM {fundraiser_webform_order} WHERE order_id = :did',
         array(':did' => $donation->order_id));
@@ -331,8 +337,10 @@ function fundraiser_update_7000() {
         $record['gateway'] = $gateway_info->gateway;
         $record['txn_id'] = $gateway_info->txn_id;
       }
-      // The table doesn't go away yet, because we will still need it for fundraiser_sustainer.
-      // But we can throw a signal that fundraiser is done with it to let sustainer delete.
+      // The table doesn't go away yet, because we will still need it
+      // for fundraiser_sustainer.
+      // But we can throw a signal that fundraiser is done with it
+      // to let sustainer delete.
       variable_set('fundraiser_port_recurring_done', TRUE);
       $gateway_infos = db_query('SELECT * FROM {fundraiser_recurring} WHERE order_id = :did',
         array(':did' => $donation->order_id));
@@ -380,10 +388,10 @@ function fundraiser_update_7001() {
 }
 
 /**
- * Switch internal_name field to a content field
+ * Switch internal_name field to a content field.
  */
 function fundraiser_update_7002() {
-  // Add the internal name content field to all fundraiser node types
+  // Add the internal name content field to all fundraiser node types.
   $types = node_type_get_types();
   foreach ($types as $type => $type_info) {
     if (fundraiser_is_donation_type($type)) {
@@ -429,7 +437,7 @@ function fundraiser_update_7003() {
 }
 
 /**
- * Increase length of donation amounts in {fundraiser}
+ * Increase length of donation amounts in {fundraiser}.
  */
 function fundraiser_update_7004() {
   db_change_field('fundraiser', 'donation_amounts', 'donation_amounts', array(
