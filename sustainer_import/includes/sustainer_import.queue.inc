@@ -354,26 +354,27 @@ function _sustainer_import_create_sustainer_series_instance($instance_details, $
   // Stage 1: create the donation and order objects for the sustainer charge.
   $new_donation = clone $donation;
   $new_donation->sid = 0; // Not actually submitted, it's automated, so no sid.
-  // Create the new donation object, but do not process it. Processing doesn't occur till cron.
-  // New donation has all of the old donation information already loaded.
+  // save the donation object for the sustainer series instance
   fundraiser_donation_create($new_donation);
+  // compile next charge timestamp from month, day, and year.
   $next_charge = strtotime($instance_details['month'] . '/' . $instance_details['day'] . '/' . $instance_details['year']);
-  drupal_set_message('next charge:' . $next_charge);
-  /*
   fundraiser_donation_comment($new_donation, 'Sustainer donation scheduled to be charged at @next_charge',
     array('@next_charge' => format_date($next_charge)));
-  // After this, the donation did and donation data is set.
-  // The new donation object, with new did, needs to be saved to recurring so we can grab it later.
+
+  // write sustainer record.
   $recurring_donation = array(
     'master_did' => $donation->did,
     'did' => $new_donation->did,
     'next_charge' => $next_charge,
-    'sustainer_key' => $sustainer_key,
+    'sustainer_key' => '', // wtf is this?
+    'sf_opportunity_id' => $instance_details['salesforce_opportunity_id'],
+    'sf_recurring_id' => '', // do we need this?
+    'sf_sync_status' => '', // ???
+    'gateway_resp' => $instance_details['status'], // ???
+    'attempts' => '', // probably default to 1?
+    'cancellation_reason' => '', // Not applicable?
   );
-  // Update the recurring table.
   _fundraiser_sustainers_create_recurring($recurring_donation);
-  */
-  // Stage 2: update the sustainer record with status, sf id,
 }
 
 /**
