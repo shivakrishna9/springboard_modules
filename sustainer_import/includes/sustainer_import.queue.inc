@@ -89,7 +89,8 @@ function sustainer_import_process_queue() {
     dsm($record);
     // user record
     // validate
-    if (_sustainer_import_validate_account_record($record['user_info'])) {
+    $errors = array();
+    if (_sustainer_import_validate_account_record($record['user_info'], $errors)) {
       // passes validation, create or dedupe.
       $account = _sustainer_import_create_account($record['user_info']);
       dsm($account, 'account');
@@ -98,29 +99,31 @@ function sustainer_import_process_queue() {
     else {
       // TODO: log error with user account creation and continue to next record.
     }
-  // master order record
-  if ($record['uid']) {
-    if(_sustainer_import_validate_master_order($record)) {
-      $donation = _sustainer_import_create_master_order($record, $account);
-      dsm($donation, 'master_donation');
+    // master order record
+    if ($record['uid']) {
+      if(_sustainer_import_validate_master_order($record, $errors)) {
+        $donation = _sustainer_import_create_master_order($record, $account);
+        dsm($donation, 'master_donation');
+      }
     }
-  }
-  else {
-    // TODO: log error with order/donation/sim/cardonfile creation and continue to next record.
-  }
+    else {
+      // TODO: log error with order/donation/sim/cardonfile creation and continue to next record.
+    }
     // create
-  // sustainer series
-  if ($donation->did && $record['uid']) {
-    foreach ($record['payment_schedule'] as $instance_details) {
-      if (_sustainer_import_validate_sustainer_series_instance($instance_details)) {
-        _sustainer_import_create_sustainer_series_instance($instance_details, $donation);
-      }
-      else {
-        // TODO: throw error and bail
+    // sustainer series
+    if ($donation->did && $record['uid']) {
+      foreach ($record['payment_schedule'] as $instance_details) {
+        if (_sustainer_import_validate_sustainer_series_instance($instance_details, $errors)) {
+          _sustainer_import_create_sustainer_series_instance($instance_details, $donation);
+        }
+        else {
+          // we need to bail out of processing sustainer instances if an error is encountered.
+          break;
+        }
       }
     }
-    // TODO: if bail, log error and continue to next record.
-  }
+    $log = sustainer_import_log_value();
+    dsm($log, 'run log');
   // TODO: log errors/status/id's for this record
   }
 }
@@ -167,7 +170,7 @@ function _sustainer_import_create_account($account_details) {
     );
 
     $account = user_save((object) $user_record);
-
+    sustainer_import_log_value('uid', $account->uid, 'Created new user account.');
     // if we have SF id's for the account, save them now.
     if ($account_details['sf_contact_id']) {
       _sustainer_import_save_account_sfids($account->uid, $account_details['sf_contact_id'], 'Contact');
@@ -175,6 +178,9 @@ function _sustainer_import_create_account($account_details) {
     if ($account_details['sf_account_id']) {
       _sustainer_import_save_account_sfids($account->uid, $account_details['sf_account_id'], 'Account');
     }
+  }
+  else {
+    sustainer_import_log_value('uid', $account->uid, 'User account already existed.');
   }
   return $account;
 }
@@ -196,23 +202,22 @@ function _sustainer_import_create_account($account_details) {
  * @return bool
  * Returns TRUE if account details pass validation, otherwise FALSE.
  */
-function _sustainer_import_validate_account_record($account_details) {
+function _sustainer_import_validate_account_record($account_details, &$errors) {
   // confirm all required fields have data
-  $errors = array();
+  $local_errors = array();
   $required_fields = array('email', 'sf_contact_id', 'sf_account_id');
   foreach ($required_fields as $field) {
     if (empty($account_details[$field])) {
-      $errors[] = t('Missing !field in user record', array('!field' => $field));
+      $local_errors[] = t('Missing !field in user record', array('!field' => $field));
     }
     // confirm email address is valid
     if ($field == 'email' && !filter_var($account_details['email'], FILTER_VALIDATE_EMAIL)) {
-      $errors[] = t('Invalid email address: !address', array('!address' => $account_details['email']));
+      $local_errors[] = t('Invalid email address: !address', array('!address' => $account_details['email']));
     }
   }
 
-  if (count($errors)) {
-    // TODO: log transaction errors, update queue record and bail
-    drupal_set_message(implode(', ', $errors), 'error');
+  if (count($local_errors)) {
+    $errors = array_merge($errors, $local_errors);
     return FALSE;
   }
   dsm($account_details, 'user record passes validation');
@@ -254,35 +259,35 @@ function _sustainer_import_validate_account_record($account_details) {
  * @return bool
  * Returns TRUE if the import record passes validation, FALSE otherwise.
  */
-function _sustainer_import_validate_master_order($record) {
-  $errors = array();
+function _sustainer_import_validate_master_order($record, &$errors) {
+  $local_errors = array();
   // confirm all required fields have data
   $required_fields = array('uid', 'amount', 'salesforce_opportunity_id', 'salesforce_recurring_donation_id');
   // validate top level fields
   foreach ($required_fields as $field) {
     if (empty($record[$field])) {
-      $errors[] = t('Missing required field for master order:!field', array('!field' => $field));
+      $local_errors[] = t('Missing required field for master order:!field', array('!field' => $field));
     }
     if ($field == 'amount') {
       if (!is_numeric($record['amount'])) {
-        $errors[] = t('Donation amount is not numeric: !amount', array('!amount' => $record['amount']));
+        $local_errors[] = t('Donation amount is not numeric: !amount', array('!amount' => $record['amount']));
       }
     }
   }
 
   // hit user_info
   if (empty($record['user_info']['first_name'])) {
-    $errors[] = t('Missing first_name in user info');
+    $local_errors[] = t('Missing first_name in user info');
   }
   if (empty($record['user_info']['last_name'])) {
-    $errors[] = t('Missing last_name in user info');
+    $local_errors[] = t('Missing last_name in user info');
   }
 
   // billing info
   $required_fields = array('address_1', 'city', 'state', 'zip', 'country');
   foreach ($required_fields as $field) {
     if (empty($record['billing_info'][$field])) {
-      $errors[] = t('Missing required billing information field:!field', array('!field' => $field));
+      $local_errors[] = t('Missing required billing information field:!field', array('!field' => $field));
     }
   }
 
@@ -290,23 +295,27 @@ function _sustainer_import_validate_master_order($record) {
   $required_fields = array('gateway_token', 'type', 'last_four', 'month', 'year');
   foreach ($required_fields as $field) {
     if (empty($record['payment_details'][$field])) {
-      $errors[] = t('Missing required payment details field:!field', array('!field' => $field));
+      $local_errors[] = t('Missing required payment details field:!field', array('!field' => $field));
     }
     if ($field == 'last_four' && !is_numeric($record['payment_details']['last_four'])) {
-      $errors[] = t('Last four are not numeric:!last_four', array('!last_four' => $record['payment_details']['last_four']));
+      $local_errors[] = t('Last four are not numeric:!last_four', array('!last_four' => $record['payment_details']['last_four']));
     }
     // TODO: add numeric checks for month and year
   }
 
-  if (count($errors)) {
-    // TODO: log transaction errors, update queue record and bail
-    drupal_set_message(implode(', ', $errors), 'error');
+  if (count($local_errors)) {
+    $errors = array_merge($errors, $local_errors);
     return FALSE;
   }
-  dsm($record, 'master order details pass validation');
+
   return TRUE;
 }
 
+/**
+ * @param $record
+ * @param $account
+ * @return stdClass
+ */
 function _sustainer_import_create_master_order($record, $account) {
   // create master order
   $gateway_map = variable_get('sustainer_import_gateway_map_' . $record['payment_details']['gateway_type'], array());
@@ -321,6 +330,24 @@ function _sustainer_import_create_master_order($record, $account) {
   dsm($node, 'node during donation creation');
   $donation = _sustainer_import_build_donation_object($record, $account, $node);
   fundraiser_donation_create($donation);
+  sustainer_import_log_value('did', $donation->did, 'Created the fundraiser master donation');
+
+  // create entry in fundraiser_sustainers for master order
+  // write sustainer record.
+  $recurring_donation = array(
+    'master_did' => $donation->did,
+    'did' => $donation->did,
+    'next_charge' => $donation->created,
+    'sustainer_key' => fundraiser_sustainers_get_sustainer_key_value(),
+    'sf_opportunity_id' => $record['salesforce_opportunity_id'], //$instance_details['salesforce_opportunity_id'],
+    'sf_recurring_id' => '', // not used
+    'sf_sync_status' => '', // not used
+    'gateway_resp' => 'success', // has to be successful otherwise no sustainer series
+    'attempts' => 1,
+    'cancellation_reason' => '', // Not applicable?
+  );
+  _fundraiser_sustainers_create_recurring($recurring_donation);
+
   dsm($donation, 'donation after create');
   // update commerce order status to payment received.
   if (!empty($donation->did)) {
@@ -333,15 +360,27 @@ function _sustainer_import_create_master_order($record, $account) {
   // TODO: this needs error handling. If authnet falls down trying to update the profile id
   // we have to hault the import since future orders won't be billable until this is resolved.
   $sim = _sustainer_import_update_authnet_sim($payment_method, $record['payment_details']['gateway_token']);
-
+  sustainer_import_log_value('sim', $sim, 'Retrieved sim from authorize.net');
   // store cardonfile entry.
   $card_data = _sustainer_import_save_cc_data($sim, $record, $donation, $account);
   return $donation;
 }
 
-function _sustainer_import_validate_sustainer_series_instance($instance_details) {
-  // confirm all required fields have data
-  // de-dupe??
+function _sustainer_import_validate_sustainer_series_instance($instance_details, &$errors) {
+  $local_errors = array();
+  $required_fields = array('year', 'month', 'day', 'salesforce_opportunity_id');
+  $count = 0;
+  foreach ($required_fields as $field) {
+    ++$count;
+    if (empty($instance_details[$field])) {
+      $local_errors[] = t('missing required field (!field) on sustainer instance !count', array('!field' => $field, '!count' => $count));
+    }
+  }
+  if (count($local_errors)) {
+    $errors = array_merge($errors, $local_errors);
+    return FALSE;
+  }
+  return TRUE;
 }
 
 /**
@@ -357,7 +396,8 @@ function _sustainer_import_create_sustainer_series_instance($instance_details, $
   // save the donation object for the sustainer series instance
   fundraiser_donation_create($new_donation);
   // compile next charge timestamp from month, day, and year.
-  $next_charge = strtotime($instance_details['month'] . '/' . $instance_details['day'] . '/' . $instance_details['year']);
+  $date = $instance_details['month'] . '/' . $instance_details['day'] . '/' . $instance_details['year'];
+  $next_charge = strtotime($date);
   fundraiser_donation_comment($new_donation, 'Sustainer donation scheduled to be charged at @next_charge',
     array('@next_charge' => format_date($next_charge)));
 
@@ -366,15 +406,19 @@ function _sustainer_import_create_sustainer_series_instance($instance_details, $
     'master_did' => $donation->did,
     'did' => $new_donation->did,
     'next_charge' => $next_charge,
-    'sustainer_key' => '', // wtf is this?
+    'sustainer_key' => fundraiser_sustainers_get_sustainer_key_value(),
     'sf_opportunity_id' => $instance_details['salesforce_opportunity_id'],
-    'sf_recurring_id' => '', // do we need this?
-    'sf_sync_status' => '', // ???
+    'sf_recurring_id' => '', // field isn't used
+    'sf_sync_status' => '', // field isn't used
     'gateway_resp' => $instance_details['status'], // ???
-    'attempts' => '', // probably default to 1?
-    'cancellation_reason' => '', // Not applicable?
+    'attempts' => $instance_details['attempts'], // probably default to 1?
+    'cancellation_reason' => '', // Not importing cancelled records
   );
   _fundraiser_sustainers_create_recurring($recurring_donation);
+
+  // TODO: update commerce order status.
+
+  sustainer_import_log_value('recurring_instance', $next_charge, t('Created sustainer series instance for !date', array('!date' => $date)));
 }
 
 /**
@@ -545,4 +589,23 @@ function _sustainer_import_save_cc_data($sim, $record, $donation, $account) {
   commerce_cardonfile_save($card_data);
   return $card_data;
 
+}
+
+/**
+ * @param bool $key
+ * @param bool $value
+ * @param bool $message
+ * @return mixed
+ */
+function sustainer_import_log_value($key = FALSE, $value = FALSE, $message = FALSE) {
+  static $log = array();
+  if (!$key && !$value && !$message) {
+    return $log;
+  }
+  if (empty($log['$key'])) {
+    $log['$key'] = array(
+      'value' => $value,
+      'message' => $message,
+    );
+  }
 }
