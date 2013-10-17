@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file module code & core hooks
  */
@@ -54,7 +53,6 @@ function webform_goals_init() {
   }
 
 }
-
 
 /**
  * Implements hook_cron().
@@ -158,10 +156,10 @@ function webform_goals_menu() {
   return $items;
 }
 
-
 function webform_goals_jsonp_loader() {
   return '<h1>Hai</h1>';
 }
+
 /**
  *
  *
@@ -645,15 +643,11 @@ function template_preprocess_webform_goals_widget_loader(&$vars) {
   $vars['file_url'] = $file_uri;
 }
 
-
 /**
  * Goal status, used by admin display.
  */
 function webform_goals_goal_status($goal) {
-
-
   if ($goal['end_date'] && $goal['end_date'] < time()) {
-
     return $goal['auto_expire'] ? t('expired') : t('ended');
   }
   if ($goal['start_date'] > time()) {
@@ -806,5 +800,4 @@ function webform_goals_calculate_progress(&$data, $goal) {
   $data['percent'] = round(($data['count'] / $goal['target_value']) * 100, 1);
   $data['remaining'] = $goal['target_value'] - $data['count'];
   $data['percent_remaining'] = round(($data['remaining'] / $goal['target_value']) * 100, 1);
-
 }
