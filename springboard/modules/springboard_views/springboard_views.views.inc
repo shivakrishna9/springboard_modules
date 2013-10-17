@@ -20,7 +20,7 @@ function springboard_views_views_handlers() {
         'parent' => 'views_handler_field',
       ),
       'springboard_webform_hidden_component_values' => array(
-        'parent' => 'views_handler_field'
+        'parent' => 'views_handler_field',
       ),
     ),
   );
@@ -31,7 +31,7 @@ function springboard_views_views_handlers() {
  */
 function springboard_views_views_data() {
   $data = _springboard_views_invoke_all('views_data');
-  
+
   // Add Views table information for Webform hidden components
   $data['webform_component']['table']['group'] = t('Webform');
   $data['webform_component']['table']['base'] = array(
@@ -43,17 +43,17 @@ function springboard_views_views_data() {
     'node' => array(
       'type' => 'INNER',
       'left_field' => 'nid',
-      'field' => 'nid'
+      'field' => 'nid',
     ),
     'webform_submissions' => array(
       'left_field' => 'nid',
-      'field' => 'nid'
+      'field' => 'nid',
     ),
   );
   $data['webform_component']['value'] = array(
     'title' => t('Webform Hidden Components'),
     'help' => t('Display default values of webform hidden components.'),
-    'relationship' => array (
+    'relationship' => array(
       'base' => 'node',
       'field' => 'nid',
       'handler' => 'views_handler_relationship',
@@ -133,7 +133,7 @@ class springboard_views_join extends views_join {
   /**
    * Build the SQL for the join this object represents.
    */
-  function join($table, &$query) {
+  public function join($table, &$query) {
     if (empty($this->definition['table formula'])) {
       $right_table = "{" . $this->table . "}";
     }

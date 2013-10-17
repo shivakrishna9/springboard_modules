@@ -53,8 +53,8 @@ class PsiClient {
       'credentials' => array(
         'UserName' => $this->getAccountSetting('account_username'),
         'Password' => $this->getAccountSetting('account_password'),
-        'SourceIpAddress' => $this->getAccountSetting('account_ip'),
-      )
+        'SourceIpAddress' => ip_address(),
+      ),
     );
   }
 
@@ -146,7 +146,7 @@ class PsiClient {
         'ResponseMessage' => 'This was a test transaction.',
         'ResponseTime' => '2343.75',
         'TransactionId' => 123123123,
-      ); 
+      );
     }
   }
 }

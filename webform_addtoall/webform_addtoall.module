@@ -27,7 +27,7 @@ function webform_addtoall_form_alter(&$form, &$form_state, $form_id) {
     $types = variable_get('webform_node_types', array('webform'));
     foreach ($types as $key => $value) {
       if (is_numeric($key) && $value) {
-        $webform_types[] = $value;
+        $webform_types[$value] = $value;
       }
     }
     $webform_names = array_intersect_key($node_names, $webform_types);
@@ -86,7 +86,7 @@ function webform_addtoall_component_clone($nids, $form_values) {
     $source_pid_form_key =  $source_node->webform['components'][$source_pid]['form_key'];
   }
   else {
-   $source_pid_form_key = FALSE;
+    $source_pid_form_key = FALSE;
   }
   $source_weight = $form_values['weight'];
   foreach ($nids as $nid) {

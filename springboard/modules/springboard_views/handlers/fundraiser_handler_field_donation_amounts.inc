@@ -9,7 +9,7 @@ class fundraiser_handler_field_donation_amounts extends views_handler_field_prer
   /**
    * Break up our field into a proper list.
    */
-  function pre_render($values) {
+  public function pre_render($values) {
     $this->items = array();
     foreach ($values as $value) {
       $field = $value->{$this->field_alias};

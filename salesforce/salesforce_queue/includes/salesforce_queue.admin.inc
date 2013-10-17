@@ -71,11 +71,26 @@ function salesforce_queue_admin_form($form, &$form_state) {
     '#id' => 'salesforce-queue-cron-frequency',
     '#title' => t('Minimum Cron Frequency'),
     '#description' => t('The minimum amount of time that can pass before the
-      queue processor can run again through cron.  The value is in minutes.'),
+      queue processor can run again through cron and on-demand.  The value is in
+      minutes.'),
     '#type' => 'textfield',
     '#size' => 6,
     // Convert value from seconds to minutes.
     '#default_value' => (_sfq_get_value('cron_frequency', $form_state) / 60),
+  );
+
+  // Variable salesforce_queue_cron_enabled
+  $form['cron_enabled'] = array(
+    '#id' => 'salesforce-queue-cron-standalone',
+    '#title' => t('Run queue processor during core cron'),
+    '#description' => t('Whether or not the queue processor should be executed
+      during core cron runs.  The queue processor may need to be decoupled from
+      core cron if the processing of queue items is too processor intensive
+      causing time-outs.  The queue processor can be run on-demand by hitting
+      "salesforce-queue/process" or "salesforce-queue/process/foobar" where
+      "foobar" is the name of the specific queue to process.'),
+    '#type' => 'checkbox',
+    '#default_value' => _sfq_get_value('cron_enabled', $form_state),
   );
 
   // Variable salesforce_queue_tracked_queues.
@@ -229,6 +244,7 @@ function salesforce_queue_admin_form_submit($form, &$form_state) {
 
   foreach ($form_state['input'] as $var => $value) {
     switch ($var) {
+      case 'cron_enabled':
       case 'cron_frequency':
       case 'lease_time':
       case 'max_items':
@@ -248,7 +264,10 @@ function salesforce_queue_admin_form_submit($form, &$form_state) {
  */
 function _sfq_get_value($field, $form_state) {
   $value = NULL;
-  if (isset($form_state['input'][$field])) {
+  if ($field == 'cron_enabled' && !empty($form_state['input'])) {
+    $value = isset($form_state['input']['cron_enabled']) && $form_state['input']['cron_enabled'] ? 1 : 0;
+  }
+  elseif (isset($form_state['input'][$field])) {
     // Convert the user contributed value into an expected format.
     $value = $form_state['input'][$field];
     switch ($field) {
@@ -297,6 +316,10 @@ function _sfq_get_value($field, $form_state) {
   else {
     // Use current configured value, or default value.
     switch ($field) {
+      case 'cron_enabled':
+        $value = variable_get('salesforce_queue_cron_enabled', 1);
+        break;
+
       case 'cron_frequency':
         $value = variable_get('salesforce_queue_cron_frequency', SALESFORCE_QUEUE_CRON_FREQUENCY_DEFAULT);
         break;
@@ -319,9 +342,15 @@ function _sfq_get_value($field, $form_state) {
         break;
 
       case 'tracked_queues':
-        $default_queues = array('new' => 'new', 'retry' => 'retry');
+        $default_queues = array(
+          'new' => 'new',
+          'retry' => 'retry',
+        );
         $value = variable_get('salesforce_queue_tracked_queues', $default_queues);
         break;
+
+      default:
+        $value = variable_get('salesforce_queue_' . $field, NULL);
     }
   }
   return $value;

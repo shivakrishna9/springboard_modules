@@ -25,7 +25,7 @@ function springboard_ga_menu() {
 /**
  * Main settings form for the module
  */
-function springboard_ga_settings_form($form, &$form_state)  {
+function springboard_ga_settings_form($form, &$form_state) {
   $default_settings = _springboard_ga_default_values();
 
   // Show a warning message if the webform confirmation pages are ignored by the GA module
@@ -55,14 +55,14 @@ function springboard_ga_settings_form($form, &$form_state)  {
   $form['springboard_ga_trans'] = array(
     '#type' => 'fieldset',
     '#title' => 'Transaction Defaults',
-    '#description' => 'Populate default values for transactions. A token list is available below.'
+    '#description' => 'Populate default values for transactions. A token list is available below.',
   ) + _springboard_ga_transaction_form_fields($default_settings['springboard_ga_trans']);
 
   // Add the item fields
   $form['springboard_ga_item'] = array(
     '#type' => 'fieldset',
     '#title' => 'Item Defaults',
-    '#description' => 'Populate default values for transactions. A token list is available below.'
+    '#description' => 'Populate default values for transactions. A token list is available below.',
   ) +  _springboard_ga_item_form_fields($default_settings['springboard_ga_item']);
 
   // Add the token help
@@ -92,7 +92,7 @@ function springboard_ga_form_node_form_alter(&$form, &$form_state) {
     // If there's nothing set yet, like for a new node use the default values
     if (empty($form['#node']->springboard_ga)) {
       $form['#node']->springboard_ga = _springboard_ga_default_values();
-    };
+    }
 
     // Add the submit handler
     $form['#submit'][] = 'springboard_ga_nodeform_submit';
@@ -121,11 +121,11 @@ function springboard_ga_form_node_form_alter(&$form, &$form_state) {
     ) +  _springboard_ga_transaction_form_fields($form['#node']->springboard_ga['springboard_ga_trans']);
 
     // Disable these fields if the checkbox is not checked
-    foreach(element_children($form['springboard_ga']['springboard_ga_trans']) as $field_name) {
+    foreach (element_children($form['springboard_ga']['springboard_ga_trans']) as $field_name) {
       $form['springboard_ga']['springboard_ga_trans'][$field_name]['#states'] = array(
-       'disabled' => array(
-         ':input[name="springboard_ga[springboard_ga_node_configuration]"]' => array('checked' => FALSE),
-         ),
+        'disabled' => array(
+          ':input[name="springboard_ga[springboard_ga_node_configuration]"]' => array('checked' => FALSE),
+        ),
       );
     }
 
@@ -139,11 +139,11 @@ function springboard_ga_form_node_form_alter(&$form, &$form_state) {
     ) + _springboard_ga_item_form_fields($form['#node']->springboard_ga['springboard_ga_item']);
 
     // Disable these fields if the checkbox is not checked
-    foreach(element_children($form['springboard_ga']['springboard_ga_item']) as $field_name) {
+    foreach (element_children($form['springboard_ga']['springboard_ga_item']) as $field_name) {
       $form['springboard_ga']['springboard_ga_item'][$field_name]['#states'] = array(
-       'disabled' => array(
-         ':input[name="springboard_ga[springboard_ga_node_configuration]"]' => array('checked' => FALSE),
-         ),
+        'disabled' => array(
+          ':input[name="springboard_ga[springboard_ga_node_configuration]"]' => array('checked' => FALSE),
+        ),
       );
     }
 
@@ -181,7 +181,7 @@ function springboard_ga_nodeform_submit($form, &$form_state) {
       }
     }
     // Not overridden, delete an existing record
-    else if ($existing) {
+    elseif ($existing) {
       db_delete('springboard_ga')
         ->condition('nid', $form_state['values']['nid'])
         ->execute();
@@ -440,7 +440,7 @@ EOS;
     $js .= "\n" . _springboard_ga_js_add_trans($node->springboard_ga['springboard_ga_trans'], 'traditional');
     $js .= "\n" . _springboard_ga_js_add_item($node->springboard_ga['springboard_ga_item'], 'traditional');
     $js .= <<<EOS
-      
+
       springboard_ga_pageTracker._trackTrans();
     } catch(err) {}
 EOS;

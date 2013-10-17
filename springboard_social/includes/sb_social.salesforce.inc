@@ -10,12 +10,12 @@ function sb_social_add_share_to_queue($share_id) {
   $sobject = sb_social_create_share_event_object($share);
 
   $item = array(
-      'drupal_id' => $share_id,
-      'module' => 'sb_social',
-      'delta' => 'share_event',
-      'object_type' => 'Social_Share__c',
-      'operation' => 'CREATE',
-      'sobject' => $sobject,
+    'drupal_id' => $share_id,
+    'module' => 'sb_social',
+    'delta' => 'share_event',
+    'object_type' => 'Social_Share__c',
+    'operation' => 'CREATE',
+    'sobject' => $sobject,
   );
 
   $queue = salesforce_queue_load();
@@ -23,7 +23,7 @@ function sb_social_add_share_to_queue($share_id) {
 }
 
 function sb_social_create_share_event_object($share) {
-    // Create a fields array.
+  // Create a fields array.
   $fields = array(
     'Contact__c' => sb_social_create_sf_user_token($share['uid']),
     // 'Market_Source__c' => $share['market_source'],

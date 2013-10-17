@@ -145,7 +145,7 @@ function webform_confirmations_form_webform_configure_form_alter(&$form, &$form_
   );
   $webform_token_help = theme('webform_token_help', array());
   $webform_token_help = str_replace('%post', '%value', $webform_token_help);
-  $webform_token_help = str_replace('POST ', '', $webform_token_help); 
+  $webform_token_help = str_replace('POST ', '', $webform_token_help);
   $form['submission']['help']['webform_tokens'] = array(
     '#type' => 'item',
     '#title' => t('Webform tokens'),
@@ -224,8 +224,8 @@ function webform_confirmations_fundraiser_donation_decline($donation) {
 function webform_confirmations_node_load($nodes, $types) {
   $webform_confirmations = _webform_confirmations_get_by_nids(array_keys($nodes));
   foreach ($webform_confirmations as $webform_confirmation) {
-    $nodes[ $webform_confirmation->nid ]->webform_confirmations_set = 1;
-    $nodes[ $webform_confirmation->nid ]->confirmation_page_title =
+    $nodes[$webform_confirmation->nid]->webform_confirmations_set = 1;
+    $nodes[$webform_confirmation->nid]->confirmation_page_title =
       isset($webform_confirmation->confirmation_page_title) ? $webform_confirmation->confirmation_page_title : '';
   }
 }
@@ -391,7 +391,10 @@ function _webform_confirmation_send_confirmation_mail($settings, $donation) {
     $message = $params['message'];
 
     // Email Wrappers handles webform token replacement so all we need to do is pick off order tokens.
-    $token_set = array('node' => node_load($nid), 'donation' => $donation);
+    $token_set = array(
+      'node' => node_load($nid),
+      'donation' => $donation,
+    );
     $params['settings']['html_message'] = token_replace($params['settings']['html_message'], $token_set);
     $params['settings']['text_message'] = token_replace($params['settings']['text_message'], $token_set);
 

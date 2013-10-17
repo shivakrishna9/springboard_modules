@@ -3,7 +3,7 @@
  * @file API example code for module developers.
  */
 
- /**
+/**
  * Implements hook_webform_goals_list_context().
  *
  * Provides "example single" context.
@@ -44,7 +44,7 @@ function webform_goals_webform_goals_list_context() {
     'settings_callback' => 'webform_goals_single_context_fields',
     'description' => t('This goal will only be applied to a single webform you select.'),
   );
-   return $context;
+  return $context;
 }
 
 /**

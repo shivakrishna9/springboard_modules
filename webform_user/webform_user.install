@@ -76,9 +76,6 @@ function webform_user_schema() {
       ),
     ),
     'primary key' => array('nid'),
-    'indexes' => array(
-      'nid' => array('nid'),
-    ),
   );
   $schema['webform_user_component_map'] = array(
     'description' => 'The map of fields on a node to user profile fields',
@@ -103,6 +100,11 @@ function webform_user_schema() {
       ),
     ),
     'primary key' => array('nid', 'cid'),
+    'indexes' => array(
+      'cid' => array('cid'),
+      'map_id' => array('map_id'),
+      'nid' => array('nid'),
+    ),
   );
   return $schema;
 }
@@ -121,4 +123,15 @@ function webform_user_update_7000(&$sandbox) {
   // Clean up after ourselves.
   variable_del('webform_user_node_types');
   return array();
+}
+
+/**
+ * Add indexes to tables.
+ */
+function webform_user_update_7001() {
+  db_add_index('webform_user_component_map', 'cid', array('cid'));
+  db_add_index('webform_user_component_map', 'map_id', array('map_id'));
+  db_add_index('webform_user_component_map', 'nid', array('nid'));
+
+  return t('Added indexes to {webform_user_component_map} table.');
 }

@@ -100,8 +100,18 @@ function salesforce_genmap_schema() {
     'primary key' => array('mid'),
     'indexes' => array(
       'nid' => array('nid'),
+      'nid_map_handler' => array('nid', 'map_handler'),
     ),
   );
 
   return $schema;
+}
+
+/**
+ * Add indexes to tables.
+ */
+function salesforce_genmap_update_7001() {
+  db_add_index('salesforce_genmap_map', 'nid_map_handler', array('nid', 'map_handler'));
+
+  return t('Added index to {salesforce_genmap_map} table.');
 }

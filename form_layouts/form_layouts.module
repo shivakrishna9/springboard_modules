@@ -156,7 +156,7 @@ function form_layouts_form_layouts_info() {
     'template' => 'two-column-donation',
     'path' => drupal_get_path('module', 'form_layouts') . '/templates/',
     'css' => array(drupal_get_path('module', 'form_layouts') . '/css/two_column_donation.css'),
-    'preprocess function' =>'form_layouts_preprocess_two_column_donation',
+    'preprocess function' => 'form_layouts_preprocess_two_column_donation',
   );
   $templates['two_column_left_right'] = array(
     'name' => t('Two column: left-right fieldsets'),

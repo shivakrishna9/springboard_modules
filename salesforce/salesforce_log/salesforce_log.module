@@ -129,7 +129,8 @@ function salesforce_log_salesforce_queue_batch_alter(&$batch, $queue, $processor
 function salesforce_log_salesforce_sync_fail_item($item, $message, $result) {
   $record = _salesforce_log_prepare_item_record($item);
   $record->status = 'failed';
-  // If the result is an object grab the message from there, otherwise use the main message variable
+  // If the result is an object grab the message from there, otherwise use the
+  // main message variable.
   if (is_object($result)) {
     $record->error_code = !empty($result->faultcode) ? $result->faultcode : $result->errors[0]->statusCode;
     $record->message = !empty($result->faultstring) ? $result->faultstring : $result->errors[0]->message;
@@ -337,8 +338,8 @@ function salesforce_log_watchdog($watchdog_message) {
   if ($watchdog_message['type'] == 'salesforce' && (module_exists('rules') || module_exists('trigger'))) {
     // The 'Any Salesforce message' event is always included.
     $ids = array('salesforce_log-log-00');
-    if (isset($watchdog_message['variables']['!id'])) {
-      $ids[] = 'salesforce_log-' . $watchdog_message['variables']['!id'];
+    if (isset($watchdog_message['variables']['@id'])) {
+      $ids[] = 'salesforce_log-' . $watchdog_message['variables']['@id'];
     }
     global $user;
     foreach ($ids as $id) {

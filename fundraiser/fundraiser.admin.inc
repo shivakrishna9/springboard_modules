@@ -25,10 +25,9 @@ function fundraiser_admin_settings($form, &$form_state) {
   $form['fundraiser']['fundraiser_http_error_message'] = array(
     '#type' => 'textarea',
     '#title' => t('HTTPS error message'),
-    '#default_value' => variable_get('fundraiser_http_error_message', t('We\'re sorry. The donation form you are trying ' .
-        'to access has not been secured properly. Safeguarding your personal information is extremely important ' .
-        'to us, therefore we cannot accept donations from this form at this time.')),
-    '#description' => t('The message to display to the user when a donation page is not secure and the site is in ' .
+    '#default_value' => variable_get('fundraiser_http_error_message', t('We\'re sorry, but this ' .
+        'donation form is experiencing a temporary problem. Please try again later.')),
+    '#description' => t('The message to display to the user when a donation page is not secure and the site is ' .
       'NOT in development mode.'),
   );
   $form['fundraiser']['fundraiser_default_minimum'] = array(
@@ -115,10 +114,10 @@ function _fundraiser_form_payment_method_settings_validate($form, &$form_state) 
     // Check that the marked payment type actually have selected gateways to match.
     foreach ($enabled_methods as $method => $enabled_method) {
       if (empty($enabled_method['id'])) {
-        form_set_error('fundraiser_payment_method_config_defaults][' . $method .'][id', t('All enabled payment methods must select a gateway.'));
+        form_set_error('fundraiser_payment_method_config_defaults][' . $method . '][id', t('All enabled payment methods must select a gateway.'));
       }
       if (count($enabled_methods) > 1 && empty($enabled_method['label'])) {
-        form_set_error('fundraiser_payment_method_config_defaults][' . $method .'][label', t('Please enter a label for the %method gateway.', array('%method' => $method)));
+        form_set_error('fundraiser_payment_method_config_defaults][' . $method . '][label', t('Please enter a label for the %method gateway.', array('%method' => $method)));
       }
     }
     // Check that a default has been set.

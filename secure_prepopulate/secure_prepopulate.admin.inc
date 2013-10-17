@@ -32,6 +32,13 @@ function secure_prepopulate_admin_settings($form, &$form_state) {
     ),
     '#default_value' => variable_get('secure_prepopulate_precedence', 'url'),
   );
+  $form['secure_prepopulate_expired_date_limit'] = array(
+    '#type' => 'textfield',
+    '#size' => 6,
+    '#title' => t('Number of days before entries are cleared from the expired table'),
+    '#description' => t('Clean out entries from the expired table that are older than the given amount of days.'),
+    '#default_value' => variable_get('secure_prepopulate_expired_date_limit', 30),
+  );
   return system_settings_form($form);
 }
 
@@ -44,6 +51,9 @@ function secure_prepopulate_admin_settings_validate(&$form, $form_state) {
   }
   if (mb_strlen($form_state['values']['secure_prepopulate_iv']) != 16) {
     form_set_error('secure_prepopulate_iv', 'Initialization vector must be either 128 bits (16 bytes) in length.');
+  }
+  if (!is_numeric($form_state['values']['secure_prepopulate_expired_date_limit'])) {
+    form_set_error('secure_prepopulate_expired_date_limit', 'Expired date limit must be numeric.');
   }
 }
 
@@ -74,14 +84,12 @@ function secure_prepopulate_token_generator($form, $form_state) {
     '#type' => 'textfield',
     '#title' => t('Last name'),
     '#size' => 20,
-
   );
   // email
   $form['secure_prepopulate']['email'] = array(
     '#type' => 'textfield',
     '#title' => t('Email'),
     '#size' => 50,
-
   );
   // address
   $form['secure_prepopulate']['address'] = array(
@@ -139,10 +147,10 @@ function secure_prepopulate_token_generator($form, $form_state) {
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
     );
-    $form['dynamic_gift_strings']['amounts']= array(
+    $form['dynamic_gift_strings']['amounts'] = array(
       '#title' => t('Ask amounts'),
       '#type' => 'textfield',
-      '#description' =>t('Enter the ask amounts you want to show here. Values should be comma-separated. Example: 27,47,97'),
+      '#description' => t('Enter the ask amounts you want to show here. Values should be comma-separated. Example: 27,47,97'),
       '#size' => 50,
     );
     $form['dynamic_gift_strings']['default_amount'] = array(
@@ -163,7 +171,7 @@ function secure_prepopulate_token_generator($form, $form_state) {
 
 function secure_prepopulate_token_generator_submit($form, $form_state) {
 
-  if ($af =secure_prepopulate_generate_af_string($form_state['values'])) {
+  if ($af = secure_prepopulate_generate_af_string($form_state['values'])) {
     drupal_set_message('af token generated:');
     drupal_set_message($af);
   }

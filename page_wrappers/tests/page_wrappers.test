@@ -81,7 +81,7 @@ class PageWrappersTestCase extends DrupalWebTestCase {
 
   }
 
-  function testPageWrappersRulesTest() {
+  public function testPageWrappersRulesTest() {
     //Create two page wrappers
     $edit['title'] = $this->randomName(8);
     $edit["page_wrappers_html_template[und][0][value]"] = $this->html_template('Ruleset 1');
@@ -92,7 +92,7 @@ class PageWrappersTestCase extends DrupalWebTestCase {
     $this->drupalPost('node/add/page-wrapper', $edit, t('Save'));
   }
 
-  function html_template($custom_text = '') {
+  protected function html_template($custom_text = '') {
     return "
 Test Page Wrapper
 <p>[messages]</p>

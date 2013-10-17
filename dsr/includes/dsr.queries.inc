@@ -30,7 +30,10 @@ function dsr_select($status, $start, $end) {
       AND f.status = :status
   ', array(':start' => $start, ':end' => $end, ':status' => $status))->fetchAssoc();
 
-  return !empty($results) ? $results : array('total_count' => 0, 'total_amount' => 0);
+  return !empty($results) ? $results : array(
+    'total_count' => 0,
+    'total_amount' => 0,
+  );
 }
 
 

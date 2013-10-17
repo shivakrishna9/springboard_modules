@@ -71,36 +71,54 @@ function sb_social_schema() {
       ),
       'url' => array(
         'description' => 'shared URL',
-         'type'=> 'text',
+        'type' => 'text',
       ),
     ),
     'primary key' => array('share_id'),
+    'indexes' => array(
+      'sid' => array('sid'),
+    ),
   );
-  $schema['sb_social_webform'] = array(
-    'description' => 'Stores shared content settings for individual webforms',
+  $schema['sb_social_settings'] = array(
+    'description' => 'shared content settings for individual paths',
     'fields' => array(
-      'nid' => array(
-        'description' => 'The node id.',
-        'type' => 'int',
+      'sid' => array(
+        'description' => 'settings id',
+        'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
-      'service' => array(
-        'description' => 'sharing service',
+      'id' => array(
+        'description' => 'drupal id, path or node id.',
         'type' => 'varchar',
-        'length' => 60,
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => 'node, path, etc',
+        'type' => 'varchar',
+        'length' => '60',
+        'not null' => TRUE,
       ),
       'data' => array(
         'description' => 'serialized settings array',
         'type' => 'text',
       ),
     ),
-    'primary key' => array('nid', 'service'),
+    'primary key' => array('sid'),
+    'indexes' => array(
+      'type' => array('type'),
+    ),
   );
   return $schema;
 }
 
+/**
+ * Add indexes to tables.
+ */
 function sb_social_update_7001() {
-  db_add_primary_key('sb_social_webform', array('nid', 'service'));
-  return array();
+  db_add_index('sb_social_shares', 'sid', array('sid'));
+  db_add_index('sb_social_settings', 'type', array('type'));
+
+  return t('Added index to {sb_social_shares} and {sb_social_settings} tables.');
 }

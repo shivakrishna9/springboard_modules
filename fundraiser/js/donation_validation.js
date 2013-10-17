@@ -55,11 +55,11 @@
           // Add regexp
           return this.optional(element) || /^[0-9]*(\.\d{1,3})*(,\d{1,3})?$/i.test(value);
         }, "Enter a valid amount");
-        
+
         // Custom zipcode validation
         $.validator.addMethod('zipcode', function(value, element) {
-          // Add regexp
-          return this.optional(element) || /(^\d{5}$)|(^\d{5}(-|\s)\d{4}$)/i.test(value);
+          // U.S. or Canadian Zip codes
+          return this.optional(element) || /(^\d{5}((-|\s)\d{4})?$)|(^[ABCEGHJKLMNPRSTVXY]{1}\d{1}[A-Z]{1} *\d{1}[A-Z]{1}\d{1}$)/i.test(value);
         }, "Enter a valid zipcode");
 
         // Instantiate Form Validation
@@ -73,12 +73,12 @@
                 this.element(element);
               }
             }
-          },   
+          },
           onfocusout: function (element) {
-            $(element).valid();    
+            $(element).valid();
             // Callback for real-time onfocusout of form elements
             var isValid = $(element).valid();
-            // 
+            //
             if (typeof validateKeyCallback != "undefined" && isValid == 0) {
               // Set status to 0
               window.validateKeyCallback.status = 0;
@@ -86,7 +86,7 @@
             } else if (typeof validateKeyCallback != "undefined" && isValid == 1) {
               // Set status to 1
               window.validateKeyCallback.status = 1;
-              validateKeyCallback.success(element); 
+              validateKeyCallback.success(element);
             }
           },
           highlight: function(element) {
@@ -196,14 +196,14 @@
               } else {
                 // Remove all non-integer/period chars
                 value = value.replace(/[^\d\.]+/g,'')
-                  // make first decimal unique                  
+                  // make first decimal unique
                   .replace(/\./i,'-')
-                  // replace subsequent decimals                  
+                  // replace subsequent decimals
                   .replace(/\./g,'')
                   // set first back to normal
                   .replace('-','.')
                   // match the last two digits, removing others
-                  .match(/\d+\.\d{0,2}|\.\d{0,2}/);   
+                  .match(/\d+\.\d{0,2}|\.\d{0,2}/);
                 var newValue = value[0];
                 if (newValue.match(/\.\d{2}/)) {
                 } else if (newValue.match(/\.\d{1}/)) {
@@ -247,7 +247,7 @@
             $(this).next().addClass('spacer');
           }
         });
-        // Implementing our own alert close 
+        // Implementing our own alert close
         // Bootstrap.js uses the .on method, not added until jQuery 1.7
         $('.close').click(function(){
           $(this).closest('.alert').fadeOut();

@@ -93,7 +93,7 @@ function springboard_menu() {
     'access arguments' => array('administer springboard'),
     'file' => 'springboard.admin.inc',
     'type' => MENU_LOCAL_TASK,
-    'weight' => 7
+    'weight' => 7,
   );
   // Springboard Help
   $items['admin/springboard/help'] = array(
@@ -233,39 +233,39 @@ function springboard_menu_alter(&$items) {
   // Add menu items from salesforce_log.
   if (module_exists('salesforce_log')) {
 
-      // Salesforce batch history
-      if (isset($views_paths['admin/reports/salesforce/batch'])) {
-        $items['admin/springboard/reports/history'] = $views_paths['admin/reports/salesforce/batch'];
-        $items['admin/springboard/reports/history']['type'] = MENU_NORMAL_ITEM;
-        $items['admin/springboard/reports/history']['title'] = 'Batch History Report';
-        $items['admin/springboard/reports/history']['access arguments'] = array('administer springboard');
-        $items['admin/springboard/reports/history']['weight'] = 1;
-        unset($items['admin/springboard/reports/history']['access callback']);
-      }
+    // Salesforce batch history
+    if (isset($views_paths['admin/reports/salesforce/batch'])) {
+      $items['admin/springboard/reports/history'] = $views_paths['admin/reports/salesforce/batch'];
+      $items['admin/springboard/reports/history']['type'] = MENU_NORMAL_ITEM;
+      $items['admin/springboard/reports/history']['title'] = 'Batch History Report';
+      $items['admin/springboard/reports/history']['access arguments'] = array('administer springboard');
+      $items['admin/springboard/reports/history']['weight'] = 1;
+      unset($items['admin/springboard/reports/history']['access callback']);
+    }
 
-      // Salesforce queues
-      if (isset($views_paths['admin/reports/salesforce/queue'])) {
-        // Salesforce current queue
-        $items['admin/springboard/reports/queue'] = $views_paths['admin/reports/salesforce/queue'];
-        $items['admin/springboard/reports/queue']['type'] = MENU_NORMAL_ITEM;
-        $items['admin/springboard/reports/queue']['title'] = 'Currently Queued Items';
-        $items['admin/springboard/reports/queue']['access arguments'] = array('administer springboard');
-        $items['admin/springboard/reports/queue']['options'] = array('query' => array('queue' => 'new'));
-        $items['admin/springboard/reports/queue']['weight'] = 2;
-        unset($items['admin/springboard/reports/queue']['access callback']);
+    // Salesforce queues
+    if (isset($views_paths['admin/reports/salesforce/queue'])) {
+      // Salesforce current queue
+      $items['admin/springboard/reports/queue'] = $views_paths['admin/reports/salesforce/queue'];
+      $items['admin/springboard/reports/queue']['type'] = MENU_NORMAL_ITEM;
+      $items['admin/springboard/reports/queue']['title'] = 'Currently Queued Items';
+      $items['admin/springboard/reports/queue']['access arguments'] = array('administer springboard');
+      $items['admin/springboard/reports/queue']['options'] = array('query' => array('queue' => 'new'));
+      $items['admin/springboard/reports/queue']['weight'] = 2;
+      unset($items['admin/springboard/reports/queue']['access callback']);
 
-        // Salesforce retry queue
-        $items['admin/springboard/reports/queue-retry'] = $items['admin/springboard/reports/queue'];
-        $items['admin/springboard/reports/queue-retry']['title'] = 'Retry Queue';
-        $items['admin/springboard/reports/queue-retry']['options'] = array('query' => array('queue' => 'retry'));
-        $items['admin/springboard/reports/queue-retry']['weight'] = 3;
+      // Salesforce retry queue
+      $items['admin/springboard/reports/queue-retry'] = $items['admin/springboard/reports/queue'];
+      $items['admin/springboard/reports/queue-retry']['title'] = 'Retry Queue';
+      $items['admin/springboard/reports/queue-retry']['options'] = array('query' => array('queue' => 'retry'));
+      $items['admin/springboard/reports/queue-retry']['weight'] = 3;
 
-        // Salesforce permanent failures queue
-        $items['admin/springboard/reports/queue-fail'] = $items['admin/springboard/reports/queue'];
-        $items['admin/springboard/reports/queue-fail']['title'] = 'Permanent Failure Queue';
-        $items['admin/springboard/reports/queue-fail']['options'] = array('query' => array('queue' => 'fail'));
-        $items['admin/springboard/reports/queue-fail']['weight'] = 4;
-      }
+      // Salesforce permanent failures queue
+      $items['admin/springboard/reports/queue-fail'] = $items['admin/springboard/reports/queue'];
+      $items['admin/springboard/reports/queue-fail']['title'] = 'Permanent Failure Queue';
+      $items['admin/springboard/reports/queue-fail']['options'] = array('query' => array('queue' => 'fail'));
+      $items['admin/springboard/reports/queue-fail']['weight'] = 4;
+    }
   }
 
   // Add menu items from salesforce_mapping.
@@ -327,7 +327,7 @@ function springboard_menu_alter(&$items) {
     $items['admin/springboard/settings/webform-dupe']['title'] = 'Webform Dupe';
     $items['admin/springboard/settings/webform-dupe']['weight'] = 12;
   }
-  
+
   if (module_exists('sb_social')) {
     $items['admin/springboard/sb-social'] = $items['admin/config/services/springboard_social'];
     $items['admin/springboard/sb-social']['type'] = MENU_NORMAL_ITEM;
@@ -386,11 +386,11 @@ function springboard_springboard_help() {
   $help_array = array();
   $help_array[t('Documentation')] = array(
     t('Springboard documentation is available on !docs.',
-      array('!docs' => l('gospringboard.com', 'http://www.gospringboard.com/documentation')))
+      array('!docs' => l('gospringboard.com', 'http://www.gospringboard.com/documentation'))),
   );
   $help_array[t('Issue Tracker')] = array(
     t('The Springboard project issue tracker is hosted on !issue_tracker',
-      array('!issue_tracker' => l('drupal.org', 'http://drupal.org/project/springboard')))
+      array('!issue_tracker' => l('drupal.org', 'http://drupal.org/project/springboard'))),
   );
   return $help_array;
 }
@@ -410,7 +410,7 @@ function springboard_springboard_dashboard_panes() {
     'label' => t('Recent donation forms'),
     'description' => t('Configuration and submissions summary for recently created or updated springboard donation forms.'),
     'content' => '<h2>' . t('Recent donation forms ') .
-      (module_exists('webform') ? l(t('Create donation form'), $base_url.'/node/add/donation-form', array('attributes' => array('class' => 'button'))) : '' ) .
+      (module_exists('webform') ? l(t('Create donation form'), $base_url . '/node/add/donation-form', array('attributes' => array('class' => 'button'))) : '' ) .
       '</h2>' .
       '<div class="springboard-pane" id="springboard-recent-donation-forms">' .
       (module_exists('views') ? views_embed_view('sbv_forms', 'block_1') : t('Please enable the Views module to improve your Springboard experience.')) .
@@ -421,7 +421,7 @@ function springboard_springboard_dashboard_panes() {
     'label' => t('Recent forms'),
     'description' => t('Configuration and submissions summary for recently created or updated springboard forms.'),
     'content' => '<h2>' . t('Recent forms ') .
-      (module_exists('fundraiser') ? l(t('Create form'), $base_url.'/node/add/webform', array('attributes' => array('class' => 'button'))) : '')  .
+      (module_exists('fundraiser') ? l(t('Create form'), $base_url . '/node/add/webform', array('attributes' => array('class' => 'button'))) : '')  .
       '</h2>' .
       '<div class="springboard-pane" id="springboard-recent-forms">' .
       (module_exists('views') ? views_embed_view('sbv_forms', 'block') : t('Please enable the Views module to improve your Springboard experience.')) .
@@ -444,7 +444,8 @@ function _springboard_sf_status() {
     if ($sf->isAuthorized()) {
       $status = TRUE;
       $identity = $sf->getIdentity();
-    } else {
+    }
+    else {
       $status = FALSE;
     }
     // Latest batch # total items :: success :: fail.
@@ -453,14 +454,18 @@ function _springboard_sf_status() {
       $query = db_select('salesforce_log_batch', 'sflog')
         ->fields('sflog')
         ->orderBy('bid', 'DESC')
-        ->range(0,1)
+        ->range(0, 1)
         ->execute();
       $batch = $query->fetchObject();
       if ($batch) {
         $batch_status = t('Batch # @id - @record_count::<span class="successes">@success_count</span>::' .
           '<span class="failures">@fail_count</span>',
-          array('@id' => $batch->bid, '@record_count' => $batch->count, '@success_count' => $batch->successes,
-          '@fail_count' => $batch->failures));
+          array(
+          '@id' => $batch->bid,
+          '@record_count' => $batch->count,
+          '@success_count' => $batch->successes,
+          '@fail_count' => $batch->failures,
+        ));
       }
       else {
         $batch_status = t('No batches processed yet.');
@@ -584,7 +589,7 @@ function springboard_form_alter(&$form, &$form_state, $form_id) {
       $input_class = isset($user_profile_field['extra']['classes']) ? $user_profile_field['extra']['classes'] : 'input-medium';
       $field = _springboard_get_form_field($form, $field_name);
       $field['#attributes']['class'][] = $input_class;
-      $form = _springboard_update_form_field($form, $field_name, $field);  
+      $form = _springboard_update_form_field($form, $field_name, $field);
     }
   }
 }

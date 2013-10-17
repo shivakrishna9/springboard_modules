@@ -47,7 +47,7 @@ function salesforce_genmap_menu() {
     'access callback' => '_salesforce_map_redirect_access',
     'access arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
-    'file' => 'includes/salesforce_genmap.map.inc'
+    'file' => 'includes/salesforce_genmap.map.inc',
   );
   return $items;
 }
@@ -68,7 +68,8 @@ function _salesforce_map_redirect_access($node) {
       if (function_exists($access_callback) && $access_callback($node, $module)) {
         $supported_modules[$module] = $info;
       }
-      elseif (user_access('map salesforce objects')) { // Override if you can map SF objects.
+      // Override if you can map SF objects.
+      elseif (user_access('map salesforce objects')) {
         $supported_modules[$module] = $info;
       }
     }

@@ -392,7 +392,7 @@ function webform_goals_token_info() {
     'name' => t('Percent of goal met, capped at 100'),
     'description' => t('Goal progress percentage, will not exceed 100. Useful for setting widths on progress bars'),
   );
-   $info['tokens']['webform_goal']['progress-remaining-raw'] = array(
+  $info['tokens']['webform_goal']['progress-remaining-raw'] = array(
     'name' => t('Total of goal remaining.'),
     'description' => t('Unfortmatted total progress remaining.'),
   );
@@ -433,12 +433,12 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
     $goal_progress = webform_goals_track_metric($data['webform_goal']);
     $goal = $data['webform_goal'];
     $standard_tokens = array('gid', 'name', 'starter_message', 'display_threshold');
-    foreach($standard_tokens as $standard) {
+    foreach ($standard_tokens as $standard) {
       if (isset($tokens[$standard])) {
-        $replacements[$tokens[$standard]]= $data['webform_goal'][$standard];
+        $replacements[$tokens[$standard]] = $data['webform_goal'][$standard];
       }
     }
-    foreach($tokens as $key => $token) {
+    foreach ($tokens as $key => $token) {
       switch ($key) {
         case 'start_date':
           $replacements[$token] = date('m-d-Y', $goal['start_date']);
@@ -625,7 +625,7 @@ function theme_webform_goals_widget($args) { //$goal) {
   return serialize($data);
 }
 
-function  _webform_goals_pack_tokens($goal, $nid) {
+function _webform_goals_pack_tokens($goal, $nid) {
   $tokens = webform_goals_token_info();
   foreach ($tokens['tokens']['webform_goal'] as $key => $value) {
     // I had this nifty idea where I packed all the tokens down with json_encode and then

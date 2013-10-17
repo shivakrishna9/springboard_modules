@@ -26,6 +26,9 @@ function fundraiser_offline_schema() {
       ),
     ),
     'primary key' => array('nid'),
+    'indexes' => array(
+      'status' => array('status'),
+    ),
   );
   $schema['fundraiser_offline_donation'] = array(
     'description' => 'Stored fundraiser nodes marked as offline',
@@ -51,7 +54,7 @@ function fundraiser_offline_schema() {
       ),
       'created_by' => array(
         'description' => t('The ID of the user that created the donation.'),
-          // Offline users are not always the same as the associated user account.
+        // Offline users are not always the same as the associated user account.
         'type' => 'int',
         'not null' => FALSE,
       ),
@@ -64,6 +67,19 @@ function fundraiser_offline_schema() {
       ),
     ),
     'primary key' => array('did'),
+    'indexes' => array(
+      'nid' => array('nid'),
+    ),
   );
   return $schema;
+}
+
+/**
+ * Add indexes to tables.
+ */
+function fundraiser_offline() {
+  db_add_index('fundraiser_offline', 'status', array('status'));
+  db_add_index('fundraiser_offline_donation', 'nid', array('nid'));
+
+  return t('Added index to {fundraiser_offline} and {fundraiser_offline_donation} tables.');
 }

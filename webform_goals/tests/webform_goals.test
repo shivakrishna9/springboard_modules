@@ -8,7 +8,7 @@ class WebformUserIntegratedTestSetup extends DrupalWebTestCase {
   /**
    * Implements setUp().
    */
-  function setUp() {
+  public function setUp() {
     parent::setUp('webform_goals');
 
 
@@ -61,7 +61,7 @@ class WebformGoalsIntegratedTestCase extends WebformGoalsIntegratedTestSetup {
   }
 
   // Confirm UI elements on webform node create form.
-  function testWebformGoalsUI() {
+  public function testWebformGoalsUI() {
     // Log in our editor.
     $this->drupalLogin($this->users['editor']);
     $edit = array(
@@ -97,7 +97,7 @@ class WebformGoalsUnitTestCase extends WebformGoalsIntegratedTestSetup {
   /**
    * Unit test helper functions.
    */
-  function testWebformGoalsHelperFunctions() {
+  public function testWebformGoalsHelperFunctions() {
     // TODO: test goal progress calculations
     // TODO: test token replacement
   }

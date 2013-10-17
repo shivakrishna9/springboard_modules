@@ -6,7 +6,7 @@
 
 /**
  * Add fields needed by fundraiser to a node type
- * 
+ *
  * @param $type String
  *    The type of node to check if the fundraiser fields exist, and if not add them to
  */
@@ -22,7 +22,7 @@ function _fundraiser_add_default_fields($type) {
       field_create_field($field['field_config']);
     }
     // Before adding the field check that it does not exist on the node type
-    if(!field_info_instance('node', $field_name, $type)) {
+    if (!field_info_instance('node', $field_name, $type)) {
       field_create_instance($field['field_instance']);
     }
   }
@@ -30,9 +30,9 @@ function _fundraiser_add_default_fields($type) {
 
 /**
  * Returns an array of field configurations
- * 
+ *
  * This is copied from a features export.
- * 
+ *
  * @param $type String
  *    The type of node these fields will be added to, used to populate the bundle property
  */

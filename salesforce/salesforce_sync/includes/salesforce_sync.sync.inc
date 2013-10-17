@@ -46,6 +46,13 @@ class SalesforceSync {
   protected $maxQueryLength = 10000;
 
   /**
+   * Maximum quantity of records that can ever be retrieved.
+   *
+   * @var int
+   */
+  protected $queryLimit = 4000;
+
+  /**
    *  A running log of the new records created in Salesforce.
    *
    * @var array
@@ -73,6 +80,7 @@ class SalesforceSync {
     $this->maxQueryLength = variable_get('salesforce_sync_max_query_length', SALESFORCE_SYNC_MAX_QUERY_LENGTH_DEFAULT);
     $this->maxBatchSize = variable_get('salesforce_sync_max_batch_size', SALESFORCE_SYNC_MAX_BATCH_SIZE_DEFAULT);
     $this->maxRetrieveSize = variable_get('salesforce_sync_max_retrieve_size', SALESFORCE_SYNC_MAX_RETRIEVE_SIZE_DEFAULT);
+    $this->queryLimit = variable_get('salesforce_sync_query_limit', SALESFORCE_SYNC_QUERY_LIMIT_DEFAULT);
     $this->tokenScanner = new SalesforceSyncTokenScanner($this->getProcessedItemIds());
     $this->setSalesforceApi($sfapi);
     $this->setSalesforceSoap($soap);
@@ -613,10 +621,12 @@ class SalesforceSync {
             }
             break;
 
-           case 'string':
-            // Make sure all strings are escaped correctly for XML. htmlspecialchars will
-            // be sufficient for most strings. If more robust escaping is needed
-            // consider using DOMDocument or SimpleXML to beef this up.
+          case 'string':
+          case 'textarea':
+            // Make sure all strings are escaped correctly for XML.
+            // htmlspecialchars will be sufficient for most strings. If more
+            // robust escaping is needed consider using DOMDocument or SimpleXML
+            // to beef this up.
             $item->sobject->fields[$field_name] = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
             break;
 
@@ -824,12 +834,12 @@ class SalesforceSync {
     // there is no need to get too alarmed if an item failed to be deleted.
     $msg_id = $item->operation == 'DELETE' ? 'sync-02' : 'sync-01';
     $severity = $item->operation == 'DELETE' ? WATCHDOG_INFO : WATCHDOG_WARNING;
-    watchdog('salesforce', '[!id] Sync failed: !item_id (!message) !result',
+    watchdog('salesforce', '[@id] Sync failed: @item_id (@message) @result',
       array(
-        '!id' => $msg_id,
-        '!item_id' => (isset($item->item_id) ? '#' . $item->item_id : 'N/A'),
-        '!message' => $message,
-        '!result' => is_object($result) && method_exists($result, 'getMessage') ? $result->getMessage() : '',
+        '@id' => $msg_id,
+        '@item_id' => (isset($item->item_id) ? '#' . $item->item_id : 'N/A'),
+        '@message' => $message,
+        '@result' => is_object($result) && method_exists($result, 'getMessage') ? $result->getMessage() : '',
       ), $severity);
 
     // Invokes hook_salesforce_sync_fail_item().
@@ -846,11 +856,11 @@ class SalesforceSync {
    */
   public function failBatch($batch, $message, $result = NULL) {
     // Send an error to admin that the batch failed.
-    watchdog('salesforce', '[!id] Batch failed: (!message) !result',
+    watchdog('salesforce', '[@id] Batch failed: (@message) @result',
       array(
-        '!id' => 'sync-03',
-        '!message' => $message,
-        '!result' => is_object($result) && method_exists($result, 'getMessage') ? $result->getMessage() : '',
+        '@id' => 'sync-03',
+        '@message' => $message,
+        '@result' => is_object($result) && method_exists($result, 'getMessage') ? $result->getMessage() : '',
       ), WATCHDOG_ERROR);
 
     // Fail each item.
@@ -910,25 +920,25 @@ class SalesforceSync {
         }
         else {
           // Log message for later investigation.
-          watchdog('salesforce', "[!id] Fetch records by Id returned bad results for !object.\n\n!response\n\n!fields\n\n!ids",
+          watchdog('salesforce', "[@id] Fetch records by Id returned bad results for @object.\nResponse:\n@response \nFields:\n@fields \nIds:\n@ids",
             array(
-              '!id' => 'sync-05',
-              '!object' => $object_type,
-              '!response' => print_r($response),
-              '!fields' => print_r($fields),
-              '!ids' => print_r($ids),
+              '@id' => 'sync-05',
+              '@object' => $object_type,
+              '@response' => print_r($response, TRUE),
+              '@fields' => print_r($fields, TRUE),
+              '@ids' => print_r($ids, TRUE),
             ), WATCHDOG_NOTICE);
         }
       }
       catch (Exception $error) {
         // Log message for later investigation.
-        watchdog('salesforce', "[!id] Fetch records by Id failed for !object: !message\n\n!fields\n\n!ids",
+        watchdog('salesforce', "[@id] Fetch records by Id failed for @object: @message\nFields:\n@fields \nIds:\n@ids",
           array(
-            '!id' => 'sync-04',
-            '!object' => $object_type,
-            '!message' => $error->getMessage(),
-              '!fields' => print_r($fields),
-              '!ids' => print_r($ids),
+            '@id' => 'sync-04',
+            '@object' => $object_type,
+            '@message' => $error->getMessage(),
+            '@fields' => print_r($fields, TRUE),
+            '@ids' => print_r($ids, TRUE),
           ), WATCHDOG_DEBUG);
       }
     }
@@ -993,6 +1003,10 @@ class SalesforceSync {
    *   </code>
    */
   public function fetchRecords($object_type, array $fields, array $conditions = array()) {
+    if (!is_object($this->soap)) {
+      watchdog('salesforce_sync', 'Unable to connect to Salesforce', array(), WATCHDOG_ERROR);
+      return FALSE;
+    }
     $queries = $this->buildQueries($object_type, $conditions);
 
     // List of error messages that should cease all querying from continuing.
@@ -1017,9 +1031,9 @@ class SalesforceSync {
       }
 
       // Log the query being run.
-      watchdog('salesforce', 'Running SOQL query [!query].',
+      watchdog('salesforce', 'Running SOQL query [@query].',
         array(
-          '!query' => $query,
+          '@query' => $query,
         ), WATCHDOG_DEBUG);
 
       try {
@@ -1045,11 +1059,11 @@ class SalesforceSync {
                 $more = FALSE;
 
                 // Log message for later investigation.
-                watchdog('salesforce', "[!id] Salesforce queryMore failed: !message\n\n!query",
+                watchdog('salesforce', "[@id] Salesforce queryMore failed: @message\nQuery: @query",
                   array(
-                    '!id' => 'sync-07',
-                    '!message' => $error->getMessage(),
-                    '!query' => $query,
+                    '@id' => 'sync-07',
+                    '@message' => $error->getMessage(),
+                    '@query' => $query,
                   ), WATCHDOG_DEBUG);
 
                 // Do not continue querying whatsoever if any of one of the
@@ -1069,11 +1083,11 @@ class SalesforceSync {
       }
       catch (Exception $error) {
         // Log message for later investigation.
-        watchdog('salesforce', "[!id] Salesforce query failed: !message\n\n!query",
+        watchdog('salesforce', "[@id] Salesforce query failed: @message\nQuery: @query",
           array(
-            '!id' => 'sync-06',
-            '!message' => $error->getMessage(),
-            '!query' => $query,
+            '@id' => 'sync-06',
+            '@message' => $error->getMessage(),
+            '@query' => $query,
           ), WATCHDOG_DEBUG);
 
         // Do not continue querying whatsoever if any of one of the restricted
@@ -1136,47 +1150,74 @@ class SalesforceSync {
     }
 
     // Build the WHERE part of the query.
+    // Automatically fail if conditions is empty.  We disallow selects without a
+    // WHERE condition so every row is not selected.
+    $fail = empty($conditions);
     foreach ($conditions as $key => $condition) {
+      if (empty($condition)) {
+        // Fail out if an empty condition is provided.
+        $fail = TRUE;
+        watchdog('salesforce', "[@id] Empty query condition provided for key @key\nProvided conditions:\n@conditions ",
+          array(
+            '@id' => 'sync-12',
+            '@key' => $key,
+            '@conditions' => print_r($conditions, TRUE),
+          ), WATCHDOG_ALERT);
+      }
+
       // Handle cases where the condition is provided to us as a 'field', 'op',
       // 'value' array.
-      if (is_array($condition) && isset($condition['op']) && isset($condition['field']) && isset($condition['value'])) {
-        $op = $condition['op'];
-        $field = $condition['field'];
-        // The value can be provided as an array and we'll convert it to a
-        // string automatically.
-        if ($query_splits == 0 || is_string($condition['value'])) {
-          if (is_array($condition['value'])) {
-            $value = " ('" . implode("', '", $condition['value']) . "')";
-          }
-          else {
-            $value = $condition['value'];
-          }
-
-          // Append the condition to each query.
-          $i = $query_count;
-          while ($i >= 0) {
-            $queries[$i] .= ($key == 0 ? ' WHERE' : ' AND');
-            $queries[$i] .= ' ' . $field . ' ' . $op . ' ' . $value;
-            $i--;
-          }
+      elseif (is_array($condition) && isset($condition['op']) && isset($condition['field']) && isset($condition['value'])) {
+        if (empty($condition['op']) || empty($condition['field']) || empty($condition['value'])) {
+          // Fail out if any of options are empty.
+          $fail = TRUE;
+          watchdog('salesforce', "[@id] Empty query condition provided\nProvided condition:\n@condition",
+            array(
+              '@id' => 'sync-12',
+              '@condition' => print_r($condition, TRUE),
+            ), WATCHDOG_ALERT);
         }
-        // If the query needs to be split up, this is where it is done.  We will
-        // divide the values of the array into the number of splits requested.
-        elseif ($query_splits > 0 && is_array($condition['value'])) {
-          $chunk_size = count($condition['value']) / ($query_splits + 1);
-          $value_chunks = array_chunk($condition['value'], $chunk_size);
-          $new_queries = array();
-          foreach ($value_chunks as $value_chunk) {
-            $value = " ('" . implode("', '", $value_chunk) . "')";
-            $operation = $field . ' ' . $op . ' ' . $value;
-            foreach ($queries as $i => $query) {
-              $new_queries[] = $query . ($key == 0 ? ' WHERE' : ' AND') . ' ' . $operation;
+        else {
+          $op = $condition['op'];
+          $field = $condition['field'];
+          // The value can be provided as an array and we'll convert it to a
+          // string automatically.
+          if ($query_splits == 0 || is_string($condition['value'])) {
+            if (is_array($condition['value'])) {
+              $value = " ('" . implode("', '", $condition['value']) . "')";
+            }
+            else {
+              $value = $condition['value'];
+            }
+
+            // Append the condition to each query.
+            $i = $query_count;
+            while ($i >= 0) {
+              $queries[$i] .= ($key == 0 ? ' WHERE' : ' AND');
+              $queries[$i] .= ' ' . $field . ' ' . $op . ' ' . $value;
+              $i--;
             }
           }
-          $query_count = count($new_queries);
-          $queries = $new_queries;
+          // If the query needs to be split up, this is where it is done.  We
+          // will divide the values of the array into the number of splits
+          // requested.
+          elseif ($query_splits > 0 && is_array($condition['value'])) {
+            $chunk_size = count($condition['value']) / ($query_splits + 1);
+            $value_chunks = array_chunk($condition['value'], $chunk_size);
+            $new_queries = array();
+            foreach ($value_chunks as $value_chunk) {
+              $value = " ('" . implode("', '", $value_chunk) . "')";
+              $operation = $field . ' ' . $op . ' ' . $value;
+              foreach ($queries as $i => $query) {
+                $new_queries[] = $query . ($key == 0 ? ' WHERE' : ' AND') . ' ' . $operation;
+              }
+            }
+            $query_count = count($new_queries);
+            $queries = $new_queries;
+          }
         }
       }
+
       // Plain old strings can be passed straight on through to the query.
       elseif (is_string($condition)) {
         $i = $query_count;
@@ -1186,8 +1227,10 @@ class SalesforceSync {
           $i--;
         }
       }
+
+      // WTF why did you pass something else? No, I can't handle it.
       else {
-        // WTF why did you pass something else? No, I can't handle it.
+        $fail = TRUE;
       }
     }
 
@@ -1197,20 +1240,31 @@ class SalesforceSync {
         $query_splits++;
         return $this->buildQueries($object_type, $conditions, $query_splits);
       }
-      else {
-        // This query is hopeless, forget about it.
-        watchdog('salesforce', "[!id] Query to Salesforce exceeded limit of !char_limit characters.\n\n!conditions",
-          array(
-            '!id' => 'sync-08',
-            '!char_limit' => $this->maxQueryLength,
-            '!conditions' => print_r($conditions),
-          ), WATCHDOG_ALERT);
-        return array();
-      }
+
+      // This query is hopeless, forget about it.
+      $fail = TRUE;
+      watchdog('salesforce', "[@id] Query to Salesforce exceeded limit of @char_limit characters.\nConditions provided:\n@conditions",
+        array(
+          '@id' => 'sync-08',
+          '@char_limit' => $this->maxQueryLength,
+          '@conditions' => print_r($conditions, TRUE),
+        ), WATCHDOG_ALERT);
     }
-    else {
-      return $queries;
+
+    // If there was a failure at any point, blank out the query so no query is
+    // performed. Not providing any queries will prevent any from being
+    // executed because the intended behavior is to loop through the queries
+    // returned from this method.
+    if ($fail) {
+      $queries = array();
     }
+
+    // Add the limit to the end of each query.
+    foreach ($queries as $key => $query) {
+      $queries[$key] .= ' LIMIT ' . $this->queryLimit;
+    }
+
+    return $queries;
   }
 
   /**
@@ -1250,9 +1304,9 @@ class SalesforceSync {
     // for simpletests and drush.
     $sfapi = (!is_object($sfapi) || !$sfapi->isAuthorized()) ? salesforce_get_api() : $sfapi;
     if (!$sfapi->isAuthorized()) {
-      watchdog('salesforce', '[!id] SalesforceAPI is not authorized',
+      watchdog('salesforce', '[@id] SalesforceAPI is not authorized',
         array(
-          '!id' => 'sync-10',
+          '@id' => 'sync-10',
         ), WATCHDOG_NOTICE);
       $sfapi = NULL;
     }
@@ -1300,10 +1354,10 @@ class SalesforceSync {
 
     // Send a fail message.
     else {
-      watchdog('salesforce', '[!id] SalesforceSoapPartner cannot be used: !message',
+      watchdog('salesforce', '[@id] SalesforceSoapPartner cannot be used: @message',
         array(
-          '!id' => 'sync-11',
-          '!message' => $message,
+          '@id' => 'sync-11',
+          '@message' => $message,
         ), WATCHDOG_NOTICE);
     }
 

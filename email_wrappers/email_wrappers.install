@@ -43,7 +43,7 @@ function email_wrappers_uninstall() {
 }
 
 function email_wrappers_schema() {
-$schema['email_wrappers_webform'] = array(
+  $schema['email_wrappers_webform'] = array(
     'description' => t('Stores data for donation_form nodes.'),
     'fields' => array(
       'nid' => array(
@@ -87,6 +87,9 @@ $schema['email_wrappers_webform'] = array(
       ),
     ),
     'primary key' => array('nid', 'eid'),
+    'indexes' => array(
+      'nid' => array('nid'),
+    ),
   );
 
   $schema['email_wrappers'] = array(
@@ -157,6 +160,9 @@ $schema['email_wrappers_webform'] = array(
       ),
     ),
     'primary key' => array('mid'),
+    'indexes' => array(
+      'module_delta' => array('module', 'delta'),
+    ),
   );
   return $schema;
 }
@@ -229,22 +235,22 @@ function email_wrappers_update_7001() {
   // copy data from {fundraiser_confirmations} to {email_wrappers}.
   $results = db_select('fundraiser_confirmations', 'f')
     ->fields('f', array(
-      'nid',
-      'tid',
-      'subject',
-      'from_name',
-      'reply_to_email',
-      'bcc_email',
-      'html_message',
-      'html_message_format',
-      'text_message',
-    ))
+    'nid',
+    'tid',
+    'subject',
+    'from_name',
+    'reply_to_email',
+    'bcc_email',
+    'html_message',
+    'html_message_format',
+    'text_message',
+  ))
     ->execute();
 
   while ($confirmation = $results->fetchAssoc()) {
     // get email component cid for the webform in question
     $nid = $confirmation['nid'];
-    $component_cid = db_query("SELECT cid FROM {webform_component} WHERE nid = :nid AND form_key IN (:keys)", array(':nid' => $nid, ':keys' => array('mail','email')))->fetchColumn();
+    $component_cid = db_query("SELECT cid FROM {webform_component} WHERE nid = :nid AND form_key IN (:keys)", array(':nid' => $nid, ':keys' => array('mail', 'email')))->fetchColumn();
     // insert into {webform_emails}, capture eid
     $email = array(
       'nid' => $confirmation['nid'],
@@ -263,14 +269,14 @@ function email_wrappers_update_7001() {
     // insert into {email_wrappers_webform}
     db_insert('email_wrappers_webform')
       ->fields(array(
-        'nid' => $confirmation['nid'],
-        'eid' => $eid,
-        'tid' => $confirmation['tid'],
-        'html_message' => $confirmation['html_message'],
-        'html_message_format' => $confirmation['html_message_format'],
-        'text_message' => $confirmation['text_message'],
-        'bcc_email' => $confirmation['bcc_email'],
-      ))
+      'nid' => $confirmation['nid'],
+      'eid' => $eid,
+      'tid' => $confirmation['tid'],
+      'html_message' => $confirmation['html_message'],
+      'html_message_format' => $confirmation['html_message_format'],
+      'text_message' => $confirmation['text_message'],
+      'bcc_email' => $confirmation['bcc_email'],
+    ))
       ->execute();
   }
 
@@ -291,13 +297,23 @@ function email_wrappers_update_7002() {
   ->fields('n', array('nid'))
   ->condition('type', 'email_wrapper')
   ->execute();
-  while($nid = $results->fetchField()) {
+  while ($nid = $results->fetchField()) {
     $node = node_load($nid);
     $node->status = 0;
     $node->promote = 0;
     node_save($node);
   }
   return array();
+}
+
+/**
+ * Add indexes to tables.
+ */
+function email_wrappers_update_7003() {
+  db_add_index('email_wrappers_webform', 'nid', array('nid'));
+  db_add_index('email_wrappers', 'module_delta', array('module', 'delta'));
+
+  return t('Added index to {email_wrappers_webform} and {email_wrappers} tables.');
 }
 
 /**
@@ -540,8 +556,8 @@ function _email_wrappers_delete_fields() {
 }
 
 function _email_wrappers_delete_nodes() {
- require_once('email_wrappers.module');
- $nids = email_wrappers_get_nodes();
- node_delete_multiple($nids);
- drupal_set_message('Email Wrappers have been deleted.');
+  require_once('email_wrappers.module');
+  $nids = email_wrappers_get_nodes();
+  node_delete_multiple($nids);
+  drupal_set_message('Email Wrappers have been deleted.');
 }

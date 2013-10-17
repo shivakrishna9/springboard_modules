@@ -12,7 +12,7 @@
 ?>
 <div class="springboard-pane" id="salesforce-status-pane">
   <p><?php print $variables['status'] ? '<span class="sf-connected">' . t('Salesforce connected') . '</span>' : '<span class="sf-notconncected">' .
-    t('Salesforce not connected ') . l(t('Update authentication'), 'admin/config/services/salesforce') . '</span>'; ?></p>
+    t('Salesforce not connected ') . l(t('Update authentication'), 'admin/config/salesforce/authorize') . '</span>'; ?></p>
   <?php if ($status): ?>
   <p>Connected as: <?php print $identity['username'];?></p>
   <p>Organization Id: <?php print $identity['organization_id'];?></p>
