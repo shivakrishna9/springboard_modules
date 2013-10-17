@@ -161,9 +161,9 @@ function webform_goals_jsonp_loader() {
 }
 
 /**
+ * @todo I'm fairly certain this is only for debug. Remove if nothing complains.
  *
  *
- */
 function _webform_goals_boots() {
   if (arg(0) == 'webform_goals_jsonp') {
 
@@ -191,6 +191,7 @@ function _webform_goals_boots() {
     dsm($data, 'loader data');
   }
 }
+*/
 
 /**
  * Load a goal from the db.
