@@ -13,7 +13,7 @@ require_once('webform_goals.forms.inc');
  * Add goal replacment script and associated js settings.
  */
 function webform_goals_init() {
-  static $loader_urlh = '';
+  static $loader_url = '';
 
   if (empty($loader_url)) {
     $loader_url = (!empty($_SERVER['HTTPS'])) ? "https://" : "http://";
@@ -31,10 +31,10 @@ function webform_goals_init() {
 
     $goal_ids = $_GET['goal_ids'];
     $ids = explode(',', $goal_ids);
-    $data = array(); 
+    $data = array();
     foreach ($ids as $id) {
       $filename = 'template-' . (int) $id . '.txt';
- 
+
       if (file_exists($loader_uri . '/' . $filename)) {
         $file = file_get_contents($loader_uri . '/'. $filename);
         $data[$id] =  unserialize($file);
@@ -177,8 +177,6 @@ function _webform_goals_boots() {
     $ids = explode(',', $goal_ids);
     $data = array();
     foreach ($ids as $id) {
-
-
 
       $filename = 'template-' . (int) $id . '.txt';
       if (file_exists($loader_url . $filename)) {
