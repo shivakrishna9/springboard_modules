@@ -15,7 +15,6 @@
 
       url: Drupal.settings.webform_goals.loader_url,
       success: function (data) {
-        console.log(data);
         // unpack data and place accordingly.
         //  data format:
         //    - status
