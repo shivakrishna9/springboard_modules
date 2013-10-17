@@ -38,19 +38,19 @@ function webform_goals_install() {
   $path = 'public://webform_goals';
   if (file_prepare_directory($path, FILE_CREATE_DIRECTORY)) {
 
-    // set up the loader script in subdirectory of files.
-    // this approach is required because multi-site installations require individual copies of this file.
-   $original_path = getcwd();
+  // set up the loader script in subdirectory of files.
+  // this approach is required because multi-site installations require individual copies of this file.
+  $original_path = getcwd();
 
-   // load a copy of the external loader js file
-   $module_path = drupal_get_path('module', 'webform_goals');
-   chdir($module_path);
-   $loader = file_get_contents('webform_goals.loader.js');
+  // load a copy of the external loader js file
+  $module_path = drupal_get_path('module', 'webform_goals');
+  chdir($module_path);
+  $loader = file_get_contents('webform_goals.loader.js');
 
-   // Tweak the jsonp endpoint url and save
-   chdir($original_path);
-   $loader = str_replace('http://DOMAIN', 'http://' . $_SERVER['SERVER_NAME'], $loader);
-   file_unmanaged_save_data($loader, 'public://webform_goals/webform_goals.loader.js');
+  // Tweak the jsonp endpoint url and save
+  chdir($original_path);
+  $loader = str_replace('http://DOMAIN', 'http://' . $_SERVER['SERVER_NAME'], $loader);
+  file_unmanaged_save_data($loader, 'public://webform_goals/webform_goals.loader.js');
 
   }
 
