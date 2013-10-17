@@ -12,7 +12,6 @@ function webform_goals_requirements($phase) {
   if ($phase === 'runtime' || $phase == 'update') {
     $path = drupal_realpath(file_default_scheme() . '://') . '/webform_goals';
     $directory_exists = file_prepare_directory($path, FILE_CREATE_DIRECTORY) ? TRUE : FALSE;
-    $js_exists = file_exists($path . '/webform_goals.loader.js');
     $requirements = array(
       array(
         'title' => 'Webform Goals',
