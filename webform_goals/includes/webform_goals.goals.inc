@@ -61,6 +61,82 @@ function webform_goals_group_context_fields(&$form, $goal = array()) {
  *   The goal array.
  */
 function webform_goals_form_group_context_fields(&$form, $goal = array()) {
+
+  $form['form_group'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Form group builder'),
+    '#collapsible' => FALSE,
+  );
+
+  $form['form_group']['available_forms'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Available forms'),
+    '#collapsible' => FALSE,
+  );
+
+  $types = webform_variable_get('webform_node_types');
+  $form_types = array();
+  $results = db_query("SELECT type, name FROM {node_type} WHERE type IN (:types)", array(':types' => $types));
+
+  if ($results->rowCount() > 1) {
+    foreach ($results as $result) {
+      $form_types[$result->type] = $result->name;
+    }
+
+    $form['form_group']['available_forms']['selected_form_types'] = array(
+      '#type' => 'checkboxes',
+      '#options' => $form_types,
+      '#title' => t('Filter by type'),
+    );
+  }
+
+  $options = array();
+  $nodes = db_query("SELECT nid, title, type FROM {node} WHERE type IN (:types) ORDER BY nid ASC", array(':types' => $types));
+  foreach ($nodes as $node) {
+    $options[$node->nid] = array(
+      'title' => $node->title,
+      'type' => $form_types[$node->type],
+    );
+  }
+
+  $header = array(
+    'title' => t('Title'),
+    'type' => t('Type'),
+  );
+
+  $form['form_group']['available_forms']['title_filter'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Filter by title',
+  );
+
+  $form['form_group']['available_forms']['available_forms'] = array(
+    '#type' => 'tableselect',
+    '#options' => $options,
+    '#header' => $header,
+  );
+
+  $form['form_group']['available_forms']['add_selected'] = array(
+    '#type' => 'button',
+    '#value' => 'Add selected',
+  );
+
+  $form['form_group']['forms_in_group'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Forms in group'),
+    '#collapsible' => FALSE,
+  );
+
+  $form['form_group']['forms_in_group']['forms_in_group'] = array(
+    '#type' => 'tableselect',
+    '#options' => $options,
+    '#header' => $header,
+  );
+
+  $form['form_group']['forms_in_group']['remove_selected'] = array(
+    '#type' => 'button',
+    '#value' => 'Remove selected',
+  );
+
   $form['selected_form_ids'] = array(
     '#type' => 'select',
     '#multiple' => TRUE,
