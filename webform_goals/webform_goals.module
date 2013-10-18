@@ -716,13 +716,19 @@ function _webform_goals_get_selected_context($form_state, $goal = array()) {
 
 /**
  * Figure out what webform nodes are impacted based on goal settings.
- * @param type $group
- * @return array of nids
+ *
+ * @param array $goal
+ *   The goal array.
+ * @return array
+ *   An array of nids.
  */
 function _webform_goals_calculate_nids_for_goal($goal) {
   if ($goal['context'] == 'single') {
-
     return (array) $goal['extra']['selected_form_id'];
+  }
+
+  if ($goal['context'] == 'form_group') {
+    return $goal['extra']['selected_form_ids'];
   }
 
   if ($goal['context'] == 'group') {
