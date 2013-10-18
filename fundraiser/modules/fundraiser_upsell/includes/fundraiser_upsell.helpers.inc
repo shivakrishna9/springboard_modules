@@ -82,7 +82,8 @@ function _fundraiser_upsell_content_preview($node) {
 function _fundraiser_upsell_ajax_process($node) {
   $data = $_POST;
   // Check the form token to be sure this is a valid callback
-  if (!drupal_valid_token($data['form_token'], $data['form_id'])) {
+  if (!drupal_valid_token($data['form_token'], $data['form_id'], TRUE)) {
+    watchdog('fundraiser_upsell', 'Upsell order %oid failed because of an invalid form token.', array('%oid' => $order->order_id), WATCHDOG_NOTICE);
     $content = t('There was a problem with your order. Please try again');
   }
   else {

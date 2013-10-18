@@ -247,7 +247,7 @@ function fundraiser_upsell_preprocess_page(&$variables) {
     $variables['scripts'] = drupal_get_js();
     // Remove the upsell session data
     unset($_SESSION['upsell']);
-  }
+   }
 }
 
 /**
@@ -332,9 +332,15 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
   $order = uc_order_load($data['order_id']);
   $is_recurring = _fundraiser_upsell_check_recurring($order->order_id);
   $different_user = ($user->uid != $order->uid) ? TRUE : FALSE;
-  // If either this is a different user or the donation is already recurring, then stop
-  if ($different_user || $is_recurring) {
+  // If the donation is already recurring, then stop
+  if ($is_recurring) {
+    watchdog('fundraiser_upsell', 'Upsell failed - order %oid is already recurring.', array('%oid' => $order->order_id), WATCHDOG_NOTICE);
     return 'This is already a recurring donation. Thank you.';
+  }
+  // If the user is different then stop - skip anon users because we don't know.
+  if ($different_user && $user->uid != 0) {
+    watchdog('fundraiser_upsell', 'Upsell user doesn\'t match the order %oid user.', array('%oid' => $order->order_id), WATCHDOG_NOTICE);
+    return 'There was a problem processing your order. Please try again.';
   }
   // Decouple if needed
   if ($decoupled) {
@@ -353,6 +359,7 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
     $content = token_replace_multiple($raw_content, array('global' => NULL, 'order' => $order), NULL, NULL, array('clear' => TRUE));
   }
   else {
+    watchdog('fundraiser_upsell', 'Upsell failed for order %oid.', array('%oid' => $order->order_id), WATCHDOG_NOTICE);
     $content = 'There was a problem processing your order. Please try again.';
   }
   return $content;
