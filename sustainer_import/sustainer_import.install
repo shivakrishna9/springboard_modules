@@ -77,5 +77,29 @@ function sustainer_import_schema() {
 
     ),
   );
+
+  $schema['sustainer_import_id_map'] = array(
+    'description' => 'Maps old record ids to new record ids.',
+    'fields' => array(
+      'id' => array(
+        'description' => 'The new donation id.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'legacy_id' => array(
+        'description'> 'The legacy id of the donation.',
+        'type' => 'varchar',
+        'length' => 50,
+      ),
+      'created' => array(
+        'description' => 'The time the record was created.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+  );
+
   return $schema;
 }

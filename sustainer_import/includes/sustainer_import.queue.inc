@@ -349,10 +349,7 @@ function _sustainer_import_create_master_order($record, $account) {
   _fundraiser_sustainers_create_recurring($recurring_donation);
 
   dsm($donation, 'donation after create');
-  // update commerce order status to payment received.
-  if (!empty($donation->did)) {
-    db_query('UPDATE {commerce_order} SET status = :status WHERE order_id = :order_id', array(':status' => 'payment_received', ':order_id' => $donation->did));
-  }
+
   // save payment method details (cardonfile)
   $payment_method = commerce_payment_method_instance_load($donation->gateway);
 
@@ -363,8 +360,89 @@ function _sustainer_import_create_master_order($record, $account) {
   sustainer_import_log_value('sim', $sim, 'Retrieved sim from authorize.net');
   // store cardonfile entry.
   $card_data = _sustainer_import_save_cc_data($sim, $record, $donation, $account);
+
+  // Create a payment transaction and update the order status
+  sustainer_import_create_payment_transaction($donation);
+  _fundraiser_commerce_update_order_status('payment_received', $donation->did);
+
+  // The master order is exported to Salesforce as 2 objects. We need to add the
+  // sync map records here. One for the opportunity and one for the recurring
+  // donation object.
+  // Opportunity
+  $map = array(
+    'sfid' => $record['salesforce_opportunity_id'],
+    'module' => 'salesforce_donation',
+    'delta' => 'donation',
+    'drupal_id' => $donation->did,
+    'object_type' => 'Opportunity'
+  );
+  sustainer_import_add_sync_map($map);
+
+  // Recurring donation
+  $map['sfid'] = $record['salesforce_recurring_donation_id'];
+  $map['object_type'] = 'npe03__Recurring_Donation__c';
+  $map['module'] = 'fundraiser_sustainers';
+  $map['delta'] = 'recurring_donation';
+  sustainer_import_add_sync_map($map);
+
+  // Update Salesforce with new order id.
+  sustainer_import_update_opportunity_id($donation, $record['salesforce_opportunity_id']);
+
+  // Maintain a map of ids.
+  sustainer_import_map_ids($donation->did, $record['order_id']);
+
   return $donation;
 }
+
+/**
+ * Creates a record to map old and new order ids.
+ *
+ * @param $id
+ *   The new id.
+ *
+ * @param $legacy_id
+ *   The old id.
+ */
+function sustainer_import_map_ids($id, $legacy_id) {
+  $record = array(
+    'id' => $id,
+    'legacy_id' => $legacy_id,
+    'created' => time(),
+  );
+
+  drupal_write_record('sustainer_import_id_map', $record);
+}
+
+/**
+ * Creates a queue item to update the order id field on each opportunity.
+ *
+ * @param $donation
+ *   The full donation object.
+ *
+ * @param $sfid
+ *   The Salesforce id of the opportunity.
+ */
+function sustainer_import_update_opportunity_id($donation, $sfid) {
+  $sobject = new stdClass();
+  $sobject->Id = $sfid;
+  $sobject->type = 'Opportunity';
+  $sobject->fields = array(
+    'Order_Id__c' => $donation->did,
+  );
+
+  $item = array(
+    'drupal_id' => $donation->did,
+    'module' => 'salesforce_donation',
+    'delta' => 'donation',
+    'object_type' => 'Opportunity',
+    'operation' => 'UPDATE',
+    'sobject' => $sobject,
+  );
+
+  $queue = salesforce_queue_load();
+  $result = $queue->createItem($item);
+}
+
 
 function _sustainer_import_validate_sustainer_series_instance($instance_details, &$errors) {
   $local_errors = array();
@@ -416,9 +494,67 @@ function _sustainer_import_create_sustainer_series_instance($instance_details, $
   );
   _fundraiser_sustainers_create_recurring($recurring_donation);
 
-  // TODO: update commerce order status.
+  // Add a payment and update commerce order status.
+  if ($instance_details['status'] == 'success') {
+    sustainer_import_create_payment_transaction($new_donation);
+    _fundraiser_commerce_update_order_status('payment_received', $new_donation->did);
+  }
+  else if ($instance_details['status'] == 'failed' && $instance_details['attempts'] >= 3) {
+   _fundraiser_commerce_update_order_status('failed', $new_donation->did);
+  }
+
+  // Add the donation to the sync map table
+  $map = array(
+    'sfid' => $instance_details['salesforce_opportunity_id'],
+    'module' => 'salesforce_donation',
+    'delta' => 'donation',
+    'drupal_id' => $new_donation->did,
+    'object_type' => 'Opportunity'
+  );
+
+  sustainer_import_add_sync_map($map);
+
+  // Update Salesforce with new order id.
+  sustainer_import_update_opportunity_id($new_donation, $instance_details['salesforce_opportunity_id']);
+
+  // TODO: Map ids, but order_id isn't on the payment schedule records.
+  //sustainer_import_map_ids();
 
   sustainer_import_log_value('recurring_instance', $next_charge, t('Created sustainer series instance for !date', array('!date' => $date)));
+}
+
+/**
+ * Adds a payment transaction to a donation.
+ *
+ * @param $donation
+ *   The donation to which the payment will be added.
+ */
+function sustainer_import_create_payment_transaction($donation) {
+  $gateway_info = explode('|', $donation->gateway);
+  $transaction = commerce_payment_transaction_new($gateway_info[0], $donation->did);
+  $transaction->instance_id = $donation->gateway;
+  $transaction->remote_id = 'UNAVAILABLE';
+  $transaction->amount = $donation->donation['amount'] * 100;
+  $transaction->currency_code = $donation->donation['currency'];
+  $transaction->payload[REQUEST_TIME] = array();
+  $transaction->remote_status = 'auth_capture';
+  $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+  commerce_payment_transaction_save($transaction);
+}
+
+/**
+ * Saves a salesforce sync map.
+ *
+ * @param $map
+ *   The map to save.
+ */
+function sustainer_import_add_sync_map($map) {
+  if (module_exists('salesforce_sync')) {
+    salesforce_sync_save_map($map);
+  }
+  else {
+    drupal_set_message("Unable to save sync map because the Salesforce Sync module is not enabled.");
+  }
 }
 
 /**
@@ -436,14 +572,13 @@ function _sustainer_import_create_sustainer_series_instance($instance_details, $
 function _sustainer_import_save_account_sfids($uid, $sfid, $type) {
   drupal_set_message("record save attempt. uid: $uid, sfid:$sfid, type:$type");
   $sf_map = array(
-    'mid' => NULL,
     'sfid' => $sfid,
     'drupal_id' => $uid,
     'module' => 'user',
     'delta' => 'user',
     'object_type' => $type,
   );
-  salesforce_sync_save_map($sf_map);
+  sustainer_import_add_sync_map($sf_map);
   drupal_set_message('saved !type record for !uid', array('!uid' => $uid, '!type' => $type));
 }
 
@@ -517,7 +652,7 @@ function _sustainer_import_build_donation_object($record, $account, $node) {
   );
   // From the line item get the donation amount
   // TODO: confirm currency code & amount location in $record.
-  $donation->donation['amount'] = commerce_currency_amount_to_decimal($record['amount'], 'USD');
+  $donation->donation['amount'] = commerce_currency_amount_to_decimal($record['amount'] * 100, 'USD');
   $donation->donation['currency'] = 'USD'; //$line_item_wrapper->commerce_total->currency_code->value();
 
   // Flag the donation recurring or not
