@@ -252,6 +252,13 @@ function commerce_litle_cc_settings_form($settings = array()) {
     );
   }
 
+  $form['verbose_gateway'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Verbose gateway errors.'),
+    '#description' => t('If checked, specific error messages from the Litle gateway will be displayed to the user.'),
+    '#default_value' => isset($settings['verbose_gateway']) ? $settings['verbose_gateway'] : FALSE,
+  );
+
   $form['log'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Log the following messages for debugging'),
@@ -346,6 +353,13 @@ function commerce_litle_echeck_settings_form($settings = array()) {
       '#markup' => t('To enable Card on File funcitionality download and install the Card on File module.'),
     );
   }
+
+  $form['verbose_gateway'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Verbose gateway errors.'),
+    '#description' => t('If checked, specific error messages from the Litle gateway will be displayed to the user.'),
+    '#default_value' => isset($settings['verbose_gateway']) ? $settings['verbose_gateway'] : FALSE,
+  );
 
   $form['log'] = array(
     '#type' => 'checkboxes',
@@ -583,8 +597,11 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
     // Save the transaction information.
     commerce_payment_transaction_save($transaction);
 
-    drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
-    drupal_set_message(check_plain($message), 'error');
+    drupal_set_message(t('We received an error while processing your card. Please enter your information again or try a different card.'), 'error');
+    if ($payment_method['settings']['verbose_gateway']) {
+      drupal_set_message(check_plain($message), 'error');
+    }
+
     return FALSE;
   }
 
@@ -632,8 +649,12 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
 
   // If the payment failed, display an error and rebuild the form.
   if (XmlParser::getNode($sale_response, 'response') != '000') {
-    drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
-    drupal_set_message(check_plain(XmlParser::getNode($sale_response, 'message')), 'error');
+    drupal_set_message(t('We received an error processing your card. Please enter your information again or try a different card.'), 'error');
+
+    if ($payment_method['settings']['verbose_gateway']) {
+      drupal_set_message(check_plain(XmlParser::getNode($sale_response, 'message')), 'error');
+    }
+
     return FALSE;
   }
 
@@ -854,8 +875,12 @@ function commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, 
     // Save the transaction information.
     commerce_payment_transaction_save($transaction);
 
-    drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
-    drupal_set_message(check_plain($message), 'error');
+    drupal_set_message(t('We received an error processing your card. Please enter your information again or try a different card.'), 'error');
+
+    if ($payment_method['settings']['verbose_gateway']) {
+      drupal_set_message(check_plain($message), 'error');
+    }
+
     return FALSE;
   }
 
@@ -905,8 +930,12 @@ function commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, 
 
   // If the payment failed, display an error and rebuild the form.
   if (XmlParser::getNode($sale_response, 'response') != '000') {
-    drupal_set_message(t('We received the following error processing your card on file. Please enter you information again or try a different card.'), 'error');
-    drupal_set_message(check_plain(XmlParser::getNode($sale_response, 'message')), 'error');
+    drupal_set_message(t('We received an error processing your card on file. Please enter your information again or try a different card.'), 'error');
+
+    if ($payment_method['settings']['verbose_gateway']) {
+      drupal_set_message(check_plain(XmlParser::getNode($sale_response, 'message')), 'error');
+    }
+
     return FALSE;
   }
 
@@ -1053,8 +1082,12 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
 
   // If the payment failed, display an error and rebuild the form.
   if (XmlParser::getNode($sale_response, 'response') != '000') {
-    drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
-    drupal_set_message(check_plain(XmlParser::getNode($sale_response, 'message')), 'error');
+    drupal_set_message(t('We received an error processing your card. Please enter your information again or try a different card.'), 'error');
+
+    if ($payment_method['settings']['verbose_gateway']) {
+      drupal_set_message(check_plain(XmlParser::getNode($sale_response, 'message')), 'error');
+    }
+
     return FALSE;
   }
 
@@ -1290,8 +1323,12 @@ function commerce_litle_echeck_vault_cardonfile_charge($payment_method, $card_da
 
   // If the payment failed, display an error and rebuild the form.
   if (XmlParser::getNode($sale_response, 'response') != '000') {
-    drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
-    drupal_set_message(check_plain(XmlParser::getNode($sale_response, 'message')), 'error');
+    drupal_set_message(t('We received an error processing your card. Please enter your information again or try a different card.'), 'error');
+
+    if ($payment_method['settings']['verbose_gateway']) {
+      drupal_set_message(check_plain(XmlParser::getNode($sale_response, 'message')), 'error');
+    }
+
     return FALSE;
   }
 }
