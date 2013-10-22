@@ -62,16 +62,44 @@ function sustainer_import_menu() {
     'weight' => 1,
     'type' => MENU_LOCAL_TASK,
   );
-  $items['admin/config/development/sustainer_import/%sustainer_record/edit'] = array(
+  $items['admin/config/development/sustainer_import/%sustainer_import_queue_record/edit'] = array(
     'title' => 'Edit sustainer import record',
     'description' => 'Modify records before item is imported',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('sustainer_import_edit_record', 4),
+    'page arguments' => array('sustainer_import_edit_queue_item', 4),
     'access arguments' => array('import sustainer data'),
-    'file' => 'includes/sustainer_import.edit.inc',
+    'file' => 'includes/sustainer_import.admin.inc',
     'type' => MENU_CALLBACK,
   );
   return $items;
+}
+
+/**
+ * Menu loader function for individual queue records.
+ *
+ * @param $rid
+ * Record id
+ *
+ * @return mixed
+ * returns an associative array containing the record data.
+ */
+function sustainer_import_queue_record_load($rid) {
+  $result = db_query('
+    SELECT
+      rid,
+      master_order_id,
+      record,
+      created,
+      status,
+      gateway_type
+    FROM {sustainer_import_queue}
+    WHERE rid = :rid
+  ', array(':rid' => $rid));
+  $record = $result->fetchAssoc();
+  if (!empty($record['record'])) {
+    $record['record'] = unserialize($record['record']);
+  }
+  return $record;
 }
 
 
