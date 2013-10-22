@@ -127,6 +127,37 @@ function sustainer_import_edit_queue_item($form, $form_state, $record) {
   dsm($args, 'args');
   $payment_schedule = array();
   $form = array();
+
+  // stash record values that don't change
+  $form['master_order_id'] = array('#type' => 'value', '#value' => $record['master_order_id']);
+  $form['rid'] = array('#type' => 'value', '#value' => $record['rid']);
+  $form['created'] = array('#type' => 'value', '#value' => $record['record']['created']);
+
+  // top level details about the record
+  $form['master_order_details'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Master order details'),
+  );
+  $form['master_order_details']['master_salesforce_opportunity_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Salesforce Opportunity ID'),
+    '#default_value' => !empty($record['record']['salesforce_opportunity_id']) ? $record['record']['salesforce_opportunity_id'] : '',
+    '#required' => TRUE,
+  );
+  $form['master_order_details']['salesforce_recurring_donation_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Salesforce Recurring Donation ID'),
+    '#default_value' => !empty($record['record']['salesforce_recurring_donation_id']) ? $record['record']['salesforce_recurring_donation_id'] : '',
+    '#required' => TRUE,
+  );
+  $form['master_order_details']['amount'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Amount'),
+    '#default_value' => !empty($record['record']['amount']) ? $record['record']['amount'] : '',
+    '#required' => TRUE,
+  );
+
+  // user account details
   $form['user_info'] = array(
     '#type' => 'fieldset',
     '#title' => t('User info'),
@@ -158,6 +189,7 @@ function sustainer_import_edit_queue_item($form, $form_state, $record) {
     '#default_value' => !empty($record['record']['user_info']['email']) ? $record['record']['user_info']['email'] : '',
   );
 
+   // billing information
   $form['billing_info'] = array(
     '#type' => 'fieldset',
     '#title' => t('Billing info'),
@@ -198,6 +230,7 @@ function sustainer_import_edit_queue_item($form, $form_state, $record) {
     '#required' => TRUE,
   );
 
+  // card/payment details
   $form['payment_details'] = array(
     '#type' => 'fieldset',
     '#title' => t('Payment Details'),
@@ -246,45 +279,115 @@ function sustainer_import_edit_queue_item($form, $form_state, $record) {
 
   $payment_schedule = !empty($record['record']['payment_schedule']) ? $record['record']['payment_schedule'] : array();
   $count = 0;
+
+  // payment schedule details
   foreach ($payment_schedule as $payment_instance) {
     $form['payment_schedule'][$count] = array(
       '#type' => 'fieldset',
       '#title' => t('Record !count', array('!count' => $count +1)),
     );
-    $form['payment_schedule'][$count]['year'] = array(
+    $form['payment_schedule'][$count]['year_' . $count] = array(
       '#type' => 'textfield',
       '#title' => t('Year'),
       '#default_value' => !empty($payment_schedule[$count]['year']) ? $payment_schedule[$count]['year'] : '',
       '#required' => TRUE,
     );
-    $form['payment_schedule'][$count]['month'] = array(
+    $form['payment_schedule'][$count]['month_' . $count] = array(
       '#type' => 'textfield',
       '#title' => t('Month'),
       '#default_value' => !empty($payment_schedule[$count]['month']) ? $payment_schedule[$count]['month'] : '',
       '#required' => TRUE,
     );
-    $form['payment_schedule'][$count]['day'] = array(
+    $form['payment_schedule'][$count]['day_' . $count] = array(
       '#type' => 'textfield',
       '#title' => t('Day'),
       '#default_value' => !empty($payment_schedule[$count]['day']) ? $payment_schedule[$count]['day'] : '',
       '#required' => TRUE,
     );
-    $form['payment_schedule'][$count]['sf_opportunity_id'] = array(
+    $form['payment_schedule'][$count]['sf_opportunity_id_' . $count] = array(
       '#type' => 'textfield',
       '#title' => t('SF opportunity id'),
       '#default_value' => !empty($payment_schedule[$count]['salesforce_opportunity_id']) ? $payment_schedule[$count]['salesforce_opportunity_id'] : '',
       '#required' => TRUE,
     );
-    $form['payment_schedule'][$count]['status'] = array(
+    $form['payment_schedule'][$count]['status_' . $count] = array(
       '#type' => 'textfield',
       '#title' => t('Status'),
       '#default_value' => !empty($payment_schedule[$count]['status']) ? $payment_schedule[$count]['status'] : '',
       '#required' => TRUE,
     );
+    $form['payment_schedule'][$count]['attempts_' . $count] = array('#type' => 'value', '#value' => $payment_schedule[$count]['attempts']);
     ++$count;
   }
-
+  $form['sustainer_series_count'] = array('#type' => 'value', '#value' => $count);
+  $form['save'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+  );
+  $form['#submit'][] = 'sustainer_import_edit_queue_item_submit';
   return $form;
+}
+
+function sustainer_import_edit_queue_item_submit($form, $form_state) {
+  dsm($form_state, 'form state');
+  $payment_schedule = array();
+
+  for ($i = 0; $i < $form_state['values']['sustainer_series_count']; ++$i) {
+    $payment_schedule[$i] = array(
+      'year' => $form_state['values']['year_' . $i],
+      'month' => $form_state['values']['month_' . $i],
+      'day' => $form_state['values']['day_' . $i],
+      'salesforce_opportunity_id' => $form_state['values']['sf_opportunity_id_' . $i],
+      'salesforce_recurring_id' => '', // not in use
+      'status' => $form_state['values']['status_' . $i],
+      'attempts' => $form_state['values']['attempts_' . $i], // passed through from original record, no edit.
+    );
+  }
+
+  $record = array(
+    'order_id' => $form_state['values']['master_order_id'],
+    'salesforce_opportunity_id' => $form_state['values']['master_salesforce_opportunity_id'],
+    'salesforce_recurring_donation_id' => $form_state['values']['salesforce_recurring_donation_id'],
+    'amount' => (float) $form_state['values']['amount'],
+    'created' => $form_state['values']['created'],
+    'user_info' => array(
+      'sf_contact_id' => $form_state['values']['sf_contact_id'],
+      'sf_account_id' => $form_state['values']['sf_account_id'],
+      'first_name' => $form_state['values']['first_name'],
+      'last_name' => $form_state['values']['last_name'],
+      'email' => $form_state['values']['mail'],
+    ),
+    'billing_info' => array(
+      'address_1' => $form_state['values']['address_1'],
+      'address_2' => $form_state['values']['address_2'],
+      'city' => $form_state['values']['city'],
+      'state' => $form_state['values']['state'],
+      'zip' => $form_state['values']['zip'],
+      'country' => $form_state['values']['country'],
+    ),
+    'payment_details' => array(
+      'gateway_type' => $form_state['values']['gateway_type'],
+      'gateway_token' => $form_state['values']['gateway_token'],
+      'last_four' => $form_state['values']['last_four'],
+      'type' => $form_state['values']['card_type'],
+      'month' => $form_state['values']['month'],
+      'year' => $form_state['values']['year'],
+    ),
+    'payment_schedule' => $payment_schedule,
+  );
+
+  $data = array(
+    'rid' => $form_state['values']['rid'],
+    'master_order_id' => $form_state['values']['master_order_id'],
+    'record' => $record, // TODO: serialize
+    'created' => time(),
+    'status' => '', // reset status on save, this requeues the record.
+    'gateway_type' => $form_state['values']['gateway_type'],
+  );
+  dsm($data);
+  $data['record'] = serialize($data['record']);
+  drupal_write_record('sustainer_import_queue', $data, array('rid'));
+  drupal_set_message('This record has been updated and re-queued for import.');
 }
 
 
