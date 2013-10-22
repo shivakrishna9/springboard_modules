@@ -253,7 +253,7 @@ function theme_form_layout_region($variables) {
  */
 function form_layout_top_region_display($form, $form_state, $field) {
   // Note that we're intentionally removing other classes here.
-  $field['#attributes']['class'] = array('span12');
+  $field['#attributes']['class'] = array('span12', 'fieldset');
   $field['#title'] = '';
   $field['#prefix'] = '<div class="row">';
   $field['#suffix'] = '</div>';
@@ -272,7 +272,7 @@ function form_layout_top_region_display($form, $form_state, $field) {
  */
 function form_layout_left_region_display($form, $form_state, $field) {
   // Note that we're intentionally removing other classes here.
-  $field['#attributes']['class'] = array('span6');
+  $field['#attributes']['class'] = array('span6', 'fieldset');
   $field['#title'] = '';
 
   // This div gets closed after the right region.
@@ -294,7 +294,7 @@ function form_layout_left_region_display($form, $form_state, $field) {
  */
 function form_layout_right_region_display($form, $form_state, $field) {
   // Note that we're intentionally removing other classes here.
-  $field['#attributes']['class'] = array('span6');
+  $field['#attributes']['class'] = array('span6', 'fieldset');
   $field['#title'] = '';
 
   // This div was opened before the left region.
@@ -316,7 +316,7 @@ function form_layout_right_region_display($form, $form_state, $field) {
  */
 function form_layout_bottom_region_display($form, $form_state, $field) {
   // Note that we're intentionally removing other classes here.
-  $field['#attributes']['class'] = array('span12');
+  $field['#attributes']['class'] = array('span12', 'fieldset');
   $field['#title'] = '';
   $field['#prefix'] = '<div class="row">';
   $field['#suffix'] = '</div>';
