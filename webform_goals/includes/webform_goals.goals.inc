@@ -53,23 +53,192 @@ function webform_goals_group_context_fields(&$form, $goal = array()) {
 }
 
 /**
+ * Settings callback for the form group webform goals context.
+ *
+ * @param array $form
+ *   The form parent element to add additional context settings.
+ * @param array $goal
+ *   The goal array.
+ */
+function webform_goals_form_group_context_fields(&$form, $goal = array()) {
+
+  $form['form_group'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Form group builder'),
+    '#collapsible' => FALSE,
+  );
+
+  if (FALSE) {
+
+    $form['form_group']['available_forms'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Available forms'),
+      '#collapsible' => FALSE,
+    );
+
+    $types = webform_variable_get('webform_node_types');
+    $form_types = array();
+    $results = db_query("SELECT type, name FROM {node_type} WHERE type IN (:types)", array(':types' => $types));
+
+    if ($results->rowCount() > 1) {
+      foreach ($results as $result) {
+        $form_types[$result->type] = $result->name;
+      }
+
+      $form['form_group']['available_forms']['selected_form_types'] = array(
+        '#type' => 'checkboxes',
+        '#options' => $form_types,
+        '#title' => t('Filter by type'),
+        '#ajax' => array(
+          'callback' => 'webform_goals_form_group_builder_available_forms_element',
+          'effect' => 'fade',
+          'method' => 'replace',
+          'wrapper' => 'form-group-available-forms',
+        ),
+      );
+    }
+    else {
+      // @todo Set initial options to only include the one content type.
+    }
+
+  //  $form['form_group']['available_forms']['title_filter'] = array(
+  //    '#type' => 'textfield',
+  //    '#title' => 'Filter by title',
+  //  );
+  //
+    $form['form_group']['available_forms']['available_forms'] = array(
+      '#type' => 'select',
+      '#multiple' => TRUE,
+      '#title' => 'Available',
+      '#options' => array(),
+      '#size' => 10,
+      '#prefix' => '<div id="form-group-available-forms">',
+      '#suffix' => '</div>',
+    );
+
+    $form['form_group']['available_forms']['add_selected'] = array(
+      '#type' => 'button',
+      '#value' => 'Add selected',
+      '#ajax' => array(
+        'callback' => 'webform_goals_form_group_add_selected',
+        'effect' => 'fade',
+        'method' => 'replace',
+        'wrapper' => 'form-group-selected-forms',
+      ),
+    );
+
+    $form['form_group']['selected_forms'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Forms in group'),
+      '#collapsible' => FALSE,
+    );
+
+    $form['form_group']['selected_forms']['selected_forms'] = array(
+      '#type' => 'select',
+      '#multiple' => TRUE,
+      '#options' => array(),
+      '#title' => 'Selected forms.',
+      '#prefix' => '<div id="form-group-selected-forms">',
+      '#suffix' => '</div>',
+    );
+  }
+
+//  $form['form_group']['forms_in_group']['remove_selected'] = array(
+//    '#type' => 'button',
+//    '#value' => 'Remove selected',
+//  );
+
+  $form['form_group']['selected_form_ids'] = array(
+    '#type' => 'select',
+    '#multiple' => TRUE,
+    '#size' => 10,
+    '#title' => 'Forms',
+    '#empty_option' => t('-- select --'),
+    '#empty_value' => 0,
+    '#required' => TRUE,
+    '#description' => t('Select the forms that will contribute to this goal.'),
+    '#options' => _webform_goals_list_webforms(),
+    '#default_value' => !empty($goal['extra']['selected_form_ids']) ? $goal['extra']['selected_form_ids'] : 0,
+    '#ajax' => array(
+      'callback' => 'webform_goals_extra_callback',
+      'wrapper' => 'context-metrics',
+      'method' => 'replace',
+      'effect' => 'fade',
+    ),
+  );
+
+//  $form['mockup'] = array(
+//    '#theme' => 'image',
+//    '#path' => drupal_get_path('module', 'webform_goals') . '/mockup.png',
+//  );
+}
+
+function webform_goals_form_group_add_selected($form, $form_state) {
+
+  $options = array();
+  $checked_forms = array_filter($form_state['values']['selected_forms']);
+  foreach ($checked_forms as $checked_form) {
+    $options[$checked_form] = $form['context_container']['options_wrapper']['options']['form_group']['available_forms']['available_forms']['#options'][$checked_form];
+  }
+  dsm($checked_forms);
+  $messages = theme('status_messages');
+  $form['context_container']['options_wrapper']['options']['form_group']['selected_forms']['selected_forms']['#options'] = $options;
+  return array(
+    '#type' => 'ajax',
+    '#commands' => array(
+      ajax_command_replace("#form-group-selected-forms", $messages . render($form['context_container']['options_wrapper']['options']['form_group']['selected_forms']['selected_forms'])),
+    ),
+  );
+}
+
+function webform_goals_form_group_builder_available_forms_element($form, $form_state) {
+  $options = array();
+  $types = array_keys(array_filter($form_state['values']['selected_form_types']));
+
+  if (count($types)) {
+    $nodes = db_query("SELECT nid, title, type FROM {node} WHERE type IN (:types) ORDER BY nid ASC", array(':types' => $types));
+    foreach ($nodes as $node) {
+      $options[$node->nid] = $node->title . ' - ' . $form['context_container']['options_wrapper']['options']['form_group']['available_forms']['selected_form_types']['#options'][$node->type];
+    }
+  }
+
+  $form['context_container']['options_wrapper']['options']['form_group']['available_forms']['available_forms']['#options'] = $options;
+
+  return array(
+    '#type' => 'ajax',
+    '#commands' => array(
+      ajax_command_replace("#form-group-available-forms", render($form['context_container']['options_wrapper']['options']['form_group']['available_forms']['available_forms'])),
+    ),
+  );
+}
+
+/**
  * Implements hook_webform_goals_list_context().
  *
- * Provide "global" and "single webform" contexts.
+ * Provide group, form group, and single contexts.
  */
 function webform_goals_webform_goals_list_context() {
   $context['group'] = array(
     'id' => 'group',
     'name' => t('Group by type'),
     'settings_callback' => 'webform_goals_group_context_fields',
+    'description' => t('Goal progress is calculated by adding metrics for all forms of the given type.'),
+  );
+
+  $context['form_group'] = array(
+    'id' => 'form_group',
+    'name' => t('Form group'),
+    'settings_callback' => 'webform_goals_form_group_context_fields',
     'description' => t('Goal progress is calculated by adding metrics for all forms in the group.'),
   );
+
   $context['single'] = array(
     'id' => 'single',
     'name' => t('Single'),
     'settings_callback' => 'webform_goals_single_context_fields',
     'description' => t('This goal will only be applied to a single webform you select.'),
   );
+
   return $context;
 }
 
@@ -116,7 +285,11 @@ function webform_goals_webform_goals_list_metrics($selected_context, $form_state
           ),
         ),
       );
+      // fall through
     case 'group':
+      // fall through
+    case 'form_group':
+      // fall through
     default:
       $metrics['submission_count'] = array(
         'id' => 'submission_count',
@@ -155,6 +328,10 @@ function webform_goals_webform_goals_save_goal($settings, $form_state) {
     $settings['extra']['selected_node_type'] = $form_state['values']['selected_node_type'];
   }
 
+  if ($settings['context'] === 'form_group') {
+    $settings['extra']['selected_form_ids'] = $form_state['values']['selected_form_ids'];
+  }
+
   if ($settings['metric'] === 'custom_field') {
     $settings['extra']['custom_field_selection'] = $form_state['values']['custom_field_selection'];
   }
@@ -169,7 +346,9 @@ function webform_goals_webform_goals_track_metric($goal, $params = array()) {
   if ($goal['metric'] === 'submission_count') {
     if ($goal['context'] == 'single') {
       $data['count'] = _webform_goals_count_submissions($goal['extra']['selected_form_id'], $goal['start_date'], $goal['end_date']);
-
+    }
+    elseif ($goal['context'] == 'form_group') {
+      $data['count'] = webform_goals_count_submissions_by_form_ids($goal['extra']['selected_form_ids'], $goal['start_date'], $goal['end_date']);
     }
     // TODO: add case for global with provided nid.
     else {
@@ -194,10 +373,23 @@ function webform_goals_webform_goals_track_metric($goal, $params = array()) {
   }
 }
 
-function _webform_goals_count_submissions($nid, $start = FALSE, $end = FALSE) {
+/**
+ * Counts the number of submissions across the given array of form IDs.
+ *
+ * @param array $nids
+ *   An array of nids (form IDs)
+ * @param string|bool $start
+ *   Start timestamp for form submissions.
+ * @param string|bool $end
+ *   End timestamp for form submissions.
+ *
+ * @return int
+ *   Number of the submissions.
+ */
+function webform_goals_count_submissions_by_form_ids($nids, $start = FALSE, $end = FALSE) {
   $query = db_select('webform_submissions', 'w');
   $query->fields('w', array('sid'));
-  $query->condition('nid', $nid, '=');
+  $query->condition('nid', $nids, 'IN');
   if ($start) {
     $query->condition('submitted', $start, '>=');
   }
@@ -207,6 +399,23 @@ function _webform_goals_count_submissions($nid, $start = FALSE, $end = FALSE) {
   $num_rows = $query->countQuery()->execute()->fetchField();
 
   return $num_rows;
+}
+
+/**
+ * Counts form submissions on a single form.
+ *
+ * @param int $nid
+ *   Single form ID
+ * @param string|bool $start
+ *   Start timestamp for submissions.
+ * @param string|bool $end
+ *   End timestamp for submissions.
+ *
+ * @return int
+ *   Number of submissions.
+ */
+function _webform_goals_count_submissions($nid, $start = FALSE, $end = FALSE) {
+  return webform_goals_count_submissions_by_form_ids(array($nid), $start, $end);
 }
 
 function _webform_goals_total_submissions($node_type, $start = FALSE, $end = FALSE) {

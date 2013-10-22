@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file module code & core hooks
  */
@@ -10,15 +9,89 @@ require_once('webform_goals.forms.inc');
 /**
  * Implements hook_init().
  *
- * Add goal replacement script and associated js settings.
+ * Add goal replacment script and associated js settings.
  */
 function webform_goals_init() {
-  $base_uri = file_default_scheme() . '://';
-  $file_system_base_url = file_create_url($base_uri);
-  $loader_url = $file_system_base_url . 'webform_goals/webform_goals.jsonp.php';
+  static $loader_url = '';
+
+  if (empty($loader_url)) {
+    $loader_url = (!empty($_SERVER['HTTPS'])) ? "https://" : "http://";
+    $loader_url .= $_SERVER['SERVER_NAME'] . '/webform_goals_jsonp';
+  }
+  // TODO: examine theme post-processing as a potential replacement for js processing on the local site.
   drupal_add_js(array('webform_goals' => array('loader_url' => $loader_url)), 'setting');
+
+  if (arg(0) == 'webform_goals_jsonp') {
+
+    $callback = isset($_GET['jsonp_callback']) ? $_GET['jsonp_callback'] : '';
+
+    // Fail early if we don't have anything to work with.
+    if (!isset($_GET['goal_ids'])) {
+      webform_goals_jsonp_fail($callback);
+    }
+
+    $ids = explode(',', $_GET['goal_ids']);
+
+    // Fail if we don't get IDs.
+    if (!is_array($ids) || count($ids) < 1) {
+      webform_goals_jsonp_fail($callback);
+    }
+
+    $base_uri = file_default_scheme() . '://';
+    $file_system_base_url = file_create_url($base_uri);
+    // Example 'http://example.com/sites/default/files/webform_goals/'.
+    $loader_url = $file_system_base_url . 'webform_goals/';
+
+    // Example 'public://webform_goals'.
+    $loader_uri = file_build_uri('webform_goals');
+
+    $data = array();
+    foreach ($ids as $id) {
+      $filename = 'template-' . (int) $id . '.txt';
+
+      if (file_exists($loader_uri . '/' . $filename)) {
+        $file = file_get_contents($loader_uri . '/'. $filename);
+        $data[$id] =  unserialize($file);
+        $data['status'] = 'success';
+      }
+      else {
+        watchdog('webform_goals', t('Request for missing goal widget:' . $loader_url . $filename));
+      }
+    }
+    if (empty($data['status'])) {
+      webform_goals_jsonp_fail($callback);
+    }
+    webform_goals_jsonp_send($callback, $data);
+  }
+
 }
 
+/**
+ * Prints out the failure jsonp and exit.
+ *
+ * @param string $callback
+ *   The jsonp callback string usually provided in $_GET.
+ */
+function webform_goals_jsonp_fail($callback) {
+  $data = array(
+    'status' => 'fail',
+    'data' => 'null',
+  );
+  webform_goals_jsonp_send($callback, $data);
+}
+
+/**
+ * Print the jsonp constructed by the callback and data array and exit.
+ *
+ * @param $callback
+ *   The jsonp callback string usually provided in $_GET.
+ * @param array $data
+ *   The data array to send. Should typically have a 'success' key.
+ */
+function webform_goals_jsonp_send($callback, $data) {
+  print $callback . '(' . json_encode($data) . ');';
+  exit;
+}
 
 /**
  * Implements hook_cron().
@@ -113,10 +186,51 @@ function webform_goals_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'includes/webform_goals.widget.inc',
   );
-
+  $items['webform_goals_jsonp'] = array(
+    'title' => 'goal widget jsonp service',
+    'page callback' => 'webform_goals_jsonp_loader',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
   return $items;
 }
 
+function webform_goals_jsonp_loader() {
+  return '<h1>Hai</h1>';
+}
+
+/**
+ * @todo I'm fairly certain this is only for debug. Remove if nothing complains.
+ *
+ *
+function _webform_goals_boots() {
+  if (arg(0) == 'webform_goals_jsonp') {
+
+    $base_uri = file_default_scheme() . '://';
+    $file_system_base_url = file_create_url($base_uri);
+    $loader_url = $file_system_base_url . 'webform_goals/';
+
+    $goal_ids = $_GET['goal_ids'];
+    $ids = explode(',', $goal_ids);
+    $data = array();
+    foreach ($ids as $id) {
+
+      $filename = 'template-' . (int) $id . '.txt';
+      if (file_exists($loader_url . $filename)) {
+        $file = file_get_contents($filename);
+        $data[$id] =  unserialize($file);
+        $data['status'] = 'success';
+      }
+    }
+    if (empty($data['status'])) {
+      $data['status'] = 'fail';
+      $data['data'] = 'null';
+    }
+    $data = json_encode($data);
+    dsm($data, 'loader data');
+  }
+}
+*/
 
 /**
  * Load a goal from the db.
@@ -569,15 +683,11 @@ function template_preprocess_webform_goals_widget_loader(&$vars) {
   $vars['file_url'] = $file_uri;
 }
 
-
 /**
  * Goal status, used by admin display.
  */
 function webform_goals_goal_status($goal) {
-
-
   if ($goal['end_date'] && $goal['end_date'] < time()) {
-
     return $goal['auto_expire'] ? t('expired') : t('ended');
   }
   if ($goal['start_date'] > time()) {
@@ -606,13 +716,19 @@ function _webform_goals_get_selected_context($form_state, $goal = array()) {
 
 /**
  * Figure out what webform nodes are impacted based on goal settings.
- * @param type $group
- * @return array of nids
+ *
+ * @param array $goal
+ *   The goal array.
+ * @return array
+ *   An array of nids.
  */
 function _webform_goals_calculate_nids_for_goal($goal) {
   if ($goal['context'] == 'single') {
-
     return (array) $goal['extra']['selected_form_id'];
+  }
+
+  if ($goal['context'] == 'form_group') {
+    return $goal['extra']['selected_form_ids'];
   }
 
   if ($goal['context'] == 'group') {
@@ -730,5 +846,4 @@ function webform_goals_calculate_progress(&$data, $goal) {
   $data['percent'] = round(($data['count'] / $goal['target_value']) * 100, 1);
   $data['remaining'] = $goal['target_value'] - $data['count'];
   $data['percent_remaining'] = round(($data['remaining'] / $goal['target_value']) * 100, 1);
-
 }
