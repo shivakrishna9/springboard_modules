@@ -68,77 +68,80 @@ function webform_goals_form_group_context_fields(&$form, $goal = array()) {
     '#collapsible' => FALSE,
   );
 
-  $form['form_group']['available_forms'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Available forms'),
-    '#collapsible' => FALSE,
-  );
+  if (FALSE) {
 
-  $types = webform_variable_get('webform_node_types');
-  $form_types = array();
-  $results = db_query("SELECT type, name FROM {node_type} WHERE type IN (:types)", array(':types' => $types));
+    $form['form_group']['available_forms'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Available forms'),
+      '#collapsible' => FALSE,
+    );
 
-  if ($results->rowCount() > 1) {
-    foreach ($results as $result) {
-      $form_types[$result->type] = $result->name;
+    $types = webform_variable_get('webform_node_types');
+    $form_types = array();
+    $results = db_query("SELECT type, name FROM {node_type} WHERE type IN (:types)", array(':types' => $types));
+
+    if ($results->rowCount() > 1) {
+      foreach ($results as $result) {
+        $form_types[$result->type] = $result->name;
+      }
+
+      $form['form_group']['available_forms']['selected_form_types'] = array(
+        '#type' => 'checkboxes',
+        '#options' => $form_types,
+        '#title' => t('Filter by type'),
+        '#ajax' => array(
+          'callback' => 'webform_goals_form_group_builder_available_forms_element',
+          'effect' => 'fade',
+          'method' => 'replace',
+          'wrapper' => 'form-group-available-forms',
+        ),
+      );
+    }
+    else {
+      // @todo Set initial options to only include the one content type.
     }
 
-    $form['form_group']['available_forms']['selected_form_types'] = array(
-      '#type' => 'checkboxes',
-      '#options' => $form_types,
-      '#title' => t('Filter by type'),
+  //  $form['form_group']['available_forms']['title_filter'] = array(
+  //    '#type' => 'textfield',
+  //    '#title' => 'Filter by title',
+  //  );
+  //
+    $form['form_group']['available_forms']['available_forms'] = array(
+      '#type' => 'select',
+      '#multiple' => TRUE,
+      '#title' => 'Available',
+      '#options' => array(),
+      '#size' => 10,
+      '#prefix' => '<div id="form-group-available-forms">',
+      '#suffix' => '</div>',
+    );
+
+    $form['form_group']['available_forms']['add_selected'] = array(
+      '#type' => 'button',
+      '#value' => 'Add selected',
       '#ajax' => array(
-        'callback' => 'webform_goals_form_group_builder_available_forms_element',
+        'callback' => 'webform_goals_form_group_add_selected',
         'effect' => 'fade',
         'method' => 'replace',
-        'wrapper' => 'form-group-available-forms',
+        'wrapper' => 'form-group-selected-forms',
       ),
     );
+
+    $form['form_group']['selected_forms'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Forms in group'),
+      '#collapsible' => FALSE,
+    );
+
+    $form['form_group']['selected_forms']['selected_forms'] = array(
+      '#type' => 'select',
+      '#multiple' => TRUE,
+      '#options' => array(),
+      '#title' => 'Selected forms.',
+      '#prefix' => '<div id="form-group-selected-forms">',
+      '#suffix' => '</div>',
+    );
   }
-  else {
-    // @todo Set initial options to only include the one content type.
-  }
-
-//  $form['form_group']['available_forms']['title_filter'] = array(
-//    '#type' => 'textfield',
-//    '#title' => 'Filter by title',
-//  );
-//
-  $form['form_group']['available_forms']['available_forms'] = array(
-    '#type' => 'select',
-    '#multiple' => TRUE,
-    '#title' => 'Available',
-    '#options' => array(),
-    '#size' => 10,
-    '#prefix' => '<div id="form-group-available-forms">',
-    '#suffix' => '</div>',
-  );
-
-  $form['form_group']['available_forms']['add_selected'] = array(
-    '#type' => 'button',
-    '#value' => 'Add selected',
-    '#ajax' => array(
-      'callback' => 'webform_goals_form_group_add_selected',
-      'effect' => 'fade',
-      'method' => 'replace',
-      'wrapper' => 'form-group-selected-forms',
-    ),
-  );
-
-  $form['form_group']['selected_forms'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Forms in group'),
-    '#collapsible' => FALSE,
-  );
-
-  $form['form_group']['selected_forms']['selected_forms'] = array(
-    '#type' => 'select',
-    '#multiple' => TRUE,
-    '#options' => array(),
-    '#title' => 'Selected forms.',
-    '#prefix' => '<div id="form-group-selected-forms">',
-    '#suffix' => '</div>',
-  );
 
 //  $form['form_group']['forms_in_group']['remove_selected'] = array(
 //    '#type' => 'button',
