@@ -124,9 +124,11 @@ function sustainer_import_process_queue() {
     }
     $log = sustainer_import_log_value();
     dsm($log, 'run log');
-  // TODO: log errors/status/id's for this record
+    sustainer_import_log_record($record, $log, $errors);
   }
 }
+
+
 
 /**
  * Save queue gateway type to payment gatewway mapping.

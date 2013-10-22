@@ -126,3 +126,31 @@ function _sustainer_import_list_donation_forms() {
   return $nodes;
 }
 
+
+/**
+ * Update queue and log tables when a record has finished processing.
+ */
+function sustainer_import_log_record($record, $log, $errors) {
+  if (count($errors)) {
+    drupal_set_message('errors ecountered while processing record:' . $record['order_id']);
+    $status = 'failed';
+  }
+  else {
+    $status = 'complete';
+  }
+  // update queue record with status.
+  db_query('
+    UPDATE {sustainer_import_queue}
+    SET status = :status
+    WHERE master_order_id = :order_id',
+    array(':status' => $status, ':order_id' => $record['order_id']));
+
+  // log progress
+  $record = array(
+    'rid' => '', //get row id from queue table
+    'import_ids' => serialize($log);
+    'timestamp' => time();
+    'errors' => serialize($errors);
+  );
+  drupal_write_record('sustainer_import_log', $record);
+}
