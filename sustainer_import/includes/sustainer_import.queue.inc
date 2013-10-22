@@ -520,7 +520,7 @@ function _sustainer_import_create_sustainer_series_instance($instance_details, $
   sustainer_import_update_opportunity_id($new_donation, $instance_details['salesforce_opportunity_id']);
 
   // TODO: Map ids, but order_id isn't on the payment schedule records.
-  //sustainer_import_map_ids();
+  sustainer_import_map_ids($new_donation->did, $instance_details['order_id']);
 
   sustainer_import_log_value('recurring_instance', $next_charge, t('Created sustainer series instance for !date', array('!date' => $date)));
 }
