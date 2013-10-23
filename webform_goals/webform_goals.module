@@ -12,6 +12,12 @@ require_once('webform_goals.forms.inc');
  * Add goal replacment script and associated js settings.
  */
 function webform_goals_init() {
+
+  if (!variable_get('webform_goals_loader_file_created', FALSE)) {
+    // Loader file has not been copied.  Do it now.
+    variable_set('webform_goals_loader_file_created', webform_goals_save_loader_file());
+  }
+
   static $loader_url = '';
 
   if (empty($loader_url)) {
@@ -64,6 +70,46 @@ function webform_goals_init() {
     webform_goals_jsonp_send($callback, $data);
   }
 
+}
+
+/**
+ * Saves the loader file to the files directory.
+ *
+ * Replaces the url for the ajax call with the correct server name.
+ *   This approach is required because multi-site installations require
+ *   individual copies of this file.
+ *
+ * @return bool
+ *   Successful at copying the loader file to the files dir.
+ */
+function webform_goals_save_loader_file() {
+
+  if (empty($_SERVER['SERVER_NAME'])) {
+    // We don't have a server name here.
+    return FALSE;
+  }
+
+  // create subdir in files
+  $path = 'public://webform_goals';
+  if (file_prepare_directory($path, FILE_CREATE_DIRECTORY)) {
+
+    // set up the loader script in subdirectory of files.
+    // load a copy of the external loader js file
+    $module_path = drupal_get_path('module', 'webform_goals');
+    $loader = file_get_contents($module_path . '/webform_goals.loader.js');
+
+    $loader = str_replace('http://DOMAIN', 'http://' . $_SERVER['SERVER_NAME'], $loader);
+    $result = file_unmanaged_save_data($loader, 'public://webform_goals/webform_goals.loader.js');
+    if ($result == FALSE) {
+      return FALSE;
+    }
+    else {
+      return TRUE;
+    }
+
+  }
+
+  return FALSE;
 }
 
 /**

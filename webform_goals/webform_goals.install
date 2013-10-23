@@ -35,6 +35,14 @@ function webform_goals_requirements($phase) {
  * Implements hook_install().
  */
 function webform_goals_install() {
+  variable_set('webform_goals_loader_file_created', FALSE);
+  if (empty($_SERVER['SERVER_NAME'])) {
+    // Running from somewhere that doesn't set the server name.
+    // Set a variable to create the loader file later inside a page callback
+    // when we have a server name.
+    return;
+  }
+
   // create subdir in files
   $path = 'public://webform_goals';
   if (file_prepare_directory($path, FILE_CREATE_DIRECTORY)) {
@@ -52,7 +60,7 @@ function webform_goals_install() {
     chdir($original_path);
     $loader = str_replace('http://DOMAIN', 'http://' . $_SERVER['SERVER_NAME'], $loader);
     file_unmanaged_save_data($loader, 'public://webform_goals/webform_goals.loader.js');
-
+    variable_set('webform_goals_loader_file_created', TRUE);
   }
 
 }
@@ -64,6 +72,7 @@ function webform_goals_uninstall() {
   $path = drupal_realpath(file_default_scheme() . '://') . '/webform_goals';
   file_unmanaged_delete_recursive($path);
   variable_del('webform_goals_widget_update_limit');
+  variable_del('webform_goals_loader_file_created');
 }
 
 /**
