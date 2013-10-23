@@ -79,7 +79,10 @@ function sustainer_import_get_failed_queue_items() {
 
 function sustainer_import_get_log_entry($rid) {
   $result = db_query('SELECT rid, import_ids, timestamp, errors FROM {sustainer_import_log} WHERE rid = :rid', array(':rid' => $rid));
-  return $result->fetchAssoc();
+  $log_entry =  $result->fetchAssoc();
+  $log_entry['import_ids'] = unserialize($log_entry['import_ids']);
+  $log_entry['errors'] = unserialize($log_entry['errors']);
+  return $log_entry;
 }
 /**
  * Provide a count of queue items by status.

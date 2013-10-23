@@ -393,8 +393,47 @@ function sustainer_import_edit_queue_item_submit($form, $form_state) {
 
 function sustainer_import_queue_failure_report() {
   $failures = sustainer_import_get_failed_queue_items();
-  foreach ($failures as $record) {
-    $log = sustainer_import_get_log_entry($record['rid']);
+  dsm($failures, 'failures');
+  $headers = array('master order id', 'date', 'id log', 'errors', 'actions');
+
+  foreach ($failures as $rid => $record) {
+    $log = sustainer_import_get_log_entry($rid);
+
+    $status_rows[] = array(
+      'data' => array(
+        $record['order_id'],
+        format_date($log['timestamp'], 'short'),
+        _sustainer_import_unpack_id_log($log),
+        _sustainer_import_unpack_errors($log),
+        l('Edit', 'admin/config/development/sustainer_import/' . $rid . '/edit'),
+      )
+    );
+
+    dsm($log, 'log entry');
   }
+  $headers = array(
+    array('data' => array('Master order ID')),
+    array('data' => array('Date')),
+    array('data' => array('ID Log')),
+    array('data' => array('Errors')),
+    array('data' => array('Actions')),
+  );
+  $table = theme('table', array('header' => $headers, 'rows' => $status_rows));
+  return $table;
 }
 
+function _sustainer_import_unpack_id_log($log) {
+  $output = '';
+  foreach ($log['import_ids'] as $key => $data) {
+    $output .= '<p>' . $key . ':' . $data['value'] . '  (' . $data['message'] . ')</p>';
+  }
+  return $output;
+}
+
+function _sustainer_import_unpack_errors($log) {
+  $output = '';
+  foreach ($log['errors'] as $key => $error) {
+    $output .= '<p>' . $error . '</p>';
+  }
+  return $output;
+}

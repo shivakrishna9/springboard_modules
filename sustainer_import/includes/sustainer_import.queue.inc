@@ -63,15 +63,20 @@ function sustainer_import_queue_report() {
   $status_rows = array();
   $queue_status_counts = sustainer_import_queue_status_counts();
   foreach ($queue_status_counts as $status_count) {
+    $actions = '';
     // apply pending label to items with empty status
     if (!$status_count['status']) {
       $status_count['status'] = 'pending';
     }
-    $status_rows[] = array('data' => array($status_count['status'], $status_count['count']));
+    if ($status_count['status'] == 'failed') {
+      $actions = l('failure report', 'admin/config/development/sustainer_import/queue_failure_report');
+    }
+    $status_rows[] = array('data' => array($status_count['status'], $status_count['count'], $actions));
   }
   $headers = array(
     array('data' => array('status')),
     array('data' => array('count')),
+    array('data' => array('actions')),
 
   );
   $table = theme('table', array('header' =>$headers, 'rows' =>$status_rows));
