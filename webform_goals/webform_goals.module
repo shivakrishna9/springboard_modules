@@ -99,7 +99,7 @@ function webform_goals_save_loader_file() {
     $loader = file_get_contents($module_path . '/webform_goals.loader.js');
 
     $loader = str_replace('http://DOMAIN', 'http://' . $_SERVER['SERVER_NAME'], $loader);
-    $result = file_unmanaged_save_data($loader, 'public://webform_goals/webform_goals.loader.js');
+    $result = file_unmanaged_save_data($loader, 'public://webform_goals/webform_goals.loader.js', FILE_EXISTS_REPLACE);
     if ($result == FALSE) {
       return FALSE;
     }

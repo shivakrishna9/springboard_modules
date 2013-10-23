@@ -59,7 +59,7 @@ function webform_goals_install() {
     // Tweak the jsonp endpoint url and save
     chdir($original_path);
     $loader = str_replace('http://DOMAIN', 'http://' . $_SERVER['SERVER_NAME'], $loader);
-    file_unmanaged_save_data($loader, 'public://webform_goals/webform_goals.loader.js');
+    file_unmanaged_save_data($loader, 'public://webform_goals/webform_goals.loader.js', FILE_EXISTS_REPLACE);
     variable_set('webform_goals_loader_file_created', TRUE);
   }
 
