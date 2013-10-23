@@ -147,10 +147,11 @@ function sustainer_import_log_record($record, $log, $errors) {
 
   // log progress
   $record = array(
-    'rid' => '', //get row id from queue table
+    'rid' => $record['rid'], //get row id from queue table
     'import_ids' => serialize($log),
     'timestamp' => time(),
     'errors' => serialize($errors),
   );
+  dsm($record, 'log record');
   drupal_write_record('sustainer_import_log', $record);
 }

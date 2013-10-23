@@ -81,6 +81,17 @@ function sustainer_import_queue_report() {
   return $table;
 }
 
+/**
+ * Primary queue processing callback. This function triggers validation & creation of
+ * the following:
+ *
+ * - associated user account
+ * - commerce master order
+ * - fundraiser master donation record
+ * - cardonfile payment method record
+ * - fundraiser sustainer series records
+ * - commerce orders for each sustainer series instance
+ */
 function sustainer_import_process_queue() {
   // get pending queue items
   $queue = sustainer_import_get_pending_queue_items();
@@ -258,6 +269,10 @@ function _sustainer_import_validate_account_record($account_details, &$errors) {
  *   - month : card expiration month
  *   - year : card expiration year
  *
+ * @param $errors
+ * An array used to capture any error messages encountered while validating the master order and associated
+ * records.
+ *
  * @return bool
  * Returns TRUE if the import record passes validation, FALSE otherwise.
  */
@@ -357,7 +372,7 @@ function _sustainer_import_create_master_order($record, $account) {
 
   // get updated sim
   // TODO: this needs error handling. If authnet falls down trying to update the profile id
-  // we have to hault the import since future orders won't be billable until this is resolved.
+  // we have to halt the import since future orders won't be billable until this is resolved.
   $sim = _sustainer_import_update_authnet_sim($payment_method, $record['payment_details']['gateway_token']);
   sustainer_import_log_value('sim', $sim, 'Retrieved sim from authorize.net');
   // store cardonfile entry.
