@@ -96,8 +96,7 @@ function sustainer_import_process_queue() {
   // get pending queue items
   $queue = sustainer_import_get_pending_queue_items();
   // parse item
-  foreach ($queue as $record) {
-    dsm($record);
+  foreach ($queue as $rid => $record) {
     // user record
     // validate
     $errors = array();
@@ -113,8 +112,8 @@ function sustainer_import_process_queue() {
     // master order record
     if ($record['uid']) {
       if(_sustainer_import_validate_master_order($record, $errors)) {
-        $donation = _sustainer_import_create_master_order($record, $account);
-        dsm($donation, 'master_donation');
+        $donation = _sustainer_import_create_master_order($record, $account, $errors);
+        //dsm($donation, 'master_donation');
       }
     }
     else {
@@ -125,7 +124,7 @@ function sustainer_import_process_queue() {
     if ($donation->did && $record['uid']) {
       foreach ($record['payment_schedule'] as $instance_details) {
         if (_sustainer_import_validate_sustainer_series_instance($instance_details, $errors)) {
-          _sustainer_import_create_sustainer_series_instance($instance_details, $donation);
+          _sustainer_import_create_sustainer_series_instance($instance_details, $donation, $errors);
         }
         else {
           // we need to bail out of processing sustainer instances if an error is encountered.
@@ -135,7 +134,9 @@ function sustainer_import_process_queue() {
     }
     $log = sustainer_import_log_value();
     dsm($log, 'run log');
-    sustainer_import_log_record($record, $log, $errors);
+    dsm($errors, 'errors');
+    dsm($record, 'record');
+    sustainer_import_log_record($rid, $record, $log, $errors);
   }
 }
 
@@ -331,9 +332,11 @@ function _sustainer_import_validate_master_order($record, &$errors) {
 /**
  * @param $record
  * @param $account
+ * @param $errors
+ *
  * @return stdClass
  */
-function _sustainer_import_create_master_order($record, $account) {
+function _sustainer_import_create_master_order($record, $account, &$errors) {
   // create master order
   $gateway_map = variable_get('sustainer_import_gateway_map_' . $record['payment_details']['gateway_type'], array());
   dsm($gateway_map, 'gateway map during order creation');
@@ -342,10 +345,30 @@ function _sustainer_import_create_master_order($record, $account) {
   }
   else {
     // TODO: log map error and bail
-    $node = FALSE; // temporary measure.
+    $errors[] = t('Unable to load node related to the payment gateway type: !type. Either this gateway type has not been mapped or the mapped node has been deleted.');
+    return FALSE;
   }
-  dsm($node, 'node during donation creation');
+
   $donation = _sustainer_import_build_donation_object($record, $account, $node);
+  dsm($donation, 'donation');
+  // Before we can save the donation record we need to get an updated SIM from
+  // Authorize.net. If for any reason we can't get this value there is no point in
+  // importing the donation record as we won't be able to charge until the SIM is updated.
+
+  $payment_method = commerce_payment_method_instance_load($donation->gateway);
+
+  // get updated sim
+  $sim = _sustainer_import_update_authnet_sim($payment_method, $record['payment_details']['gateway_token']);
+  if ($sim) {
+    drupal_set_message('got sim:' . $sim);
+    sustainer_import_log_value('sim', $sim, 'Retrieved sim from authorize.net');
+  }
+  else {
+    $errors[] = t('Unable to update payment gateway token. Import halted.');
+    return FALSE;
+  }
+
+
   fundraiser_donation_create($donation);
   sustainer_import_log_value('did', $donation->did, 'Created the fundraiser master donation');
 
@@ -363,18 +386,9 @@ function _sustainer_import_create_master_order($record, $account) {
     'attempts' => 1,
     'cancellation_reason' => '', // Not applicable?
   );
+  // create entry in {fundraiser_sustainers} for the master order.
   _fundraiser_sustainers_create_recurring($recurring_donation);
 
-  dsm($donation, 'donation after create');
-
-  // save payment method details (cardonfile)
-  $payment_method = commerce_payment_method_instance_load($donation->gateway);
-
-  // get updated sim
-  // TODO: this needs error handling. If authnet falls down trying to update the profile id
-  // we have to halt the import since future orders won't be billable until this is resolved.
-  $sim = _sustainer_import_update_authnet_sim($payment_method, $record['payment_details']['gateway_token']);
-  sustainer_import_log_value('sim', $sim, 'Retrieved sim from authorize.net');
   // store cardonfile entry.
   $card_data = _sustainer_import_save_cc_data($sim, $record, $donation, $account);
 
@@ -754,10 +768,28 @@ function sustainer_import_log_value($key = FALSE, $value = FALSE, $message = FAL
   if (!$key && !$value && !$message) {
     return $log;
   }
-  if (empty($log['$key'])) {
-    $log['$key'] = array(
+  if (empty($log[$key])) {
+    $log[$key] = array(
       'value' => $value,
       'message' => $message,
     );
+  }
+  elseif ($key == 'recurring_instance') {
+    // do a little dance since we usually have several of these.
+    if (count($log[$key]) == 1) {
+      $original = $log[$key];
+      $log[$key] = array();
+      $log[$key][] = $original;
+      $log[$key][] = array(
+        'value' => $value,
+        'message' => $message,
+      );
+    }
+    else {
+      $log[$key][] = array(
+        'value' => $value,
+        'message' => $message,
+      );
+    }
   }
 }

@@ -59,9 +59,9 @@ function sustainer_import_import_record_insert($record) {
 
 function sustainer_import_get_pending_queue_items() {
   $records = array();
-  $results = db_query("SELECT record FROM {sustainer_import_queue} WHERE status = ''");
+  $results = db_query("SELECT rid, record FROM {sustainer_import_queue} WHERE status = ''");
   while ($item = $results->fetchAssoc()) {
-    $records[] = unserialize($item['record']);
+    $records[$item['rid']] = unserialize($item['record']);
   }
   return $records;
 }
@@ -130,9 +130,9 @@ function _sustainer_import_list_donation_forms() {
 /**
  * Update queue and log tables when a record has finished processing.
  */
-function sustainer_import_log_record($record, $log, $errors) {
+function sustainer_import_log_record($rid, $record, $log, $errors) {
   if (count($errors)) {
-    drupal_set_message('errors ecountered while processing record:' . $record['order_id']);
+    drupal_set_message('errors ecountered while processing record:' . $record['order_id'], 'error');
     $status = 'failed';
   }
   else {
@@ -142,12 +142,12 @@ function sustainer_import_log_record($record, $log, $errors) {
   db_query('
     UPDATE {sustainer_import_queue}
     SET status = :status
-    WHERE master_order_id = :order_id',
-    array(':status' => $status, ':order_id' => $record['order_id']));
+    WHERE rid = :rid',
+    array(':status' => $status, ':rid' => $rid));
 
   // log progress
   $record = array(
-    'rid' => $record['rid'], //get row id from queue table
+    'rid' => $rid, //get row id from queue table
     'import_ids' => serialize($log),
     'timestamp' => time(),
     'errors' => serialize($errors),
