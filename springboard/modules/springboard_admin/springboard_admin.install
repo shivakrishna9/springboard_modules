@@ -1,0 +1,51 @@
+<?php
+/**
+ *  @file
+ */
+include_once ('springboard_admin.menu.inc');
+
+/**
+ * Implements hook_install().
+ *
+ * Creates a custom drupal menu for the Springboard administration interface
+ */
+
+function springboard_admin_install() {
+
+  // Define and save the Springboard Administration menu
+  $sb_menu = springboard_admin_admin_menu();
+  menu_save($sb_menu);
+  // Define and add default menu items to the Springboard Administration menu
+  $sb_menu_items = springboard_admin_admin_menu_items();
+
+  /*
+   *  iterate through each item. Save the parent and then the children using the
+   * parent's newly assign mlid as the child's plid. If the menu ever advances
+   * to more than two levels, we will need to rewrite this to be recursive
+   */
+  foreach ($sb_menu_items as $key => $item) {
+    $children = isset($item['_children']) ? $item['_children'] : array();
+
+    $mlid = menu_link_save($item);
+    if ($mlid) {
+      foreach ($children as $child) {
+        $child['plid'] = $mlid;
+        menu_link_save($child);
+      }
+    }
+    else {
+      drupal_set_message('springboard admin menu item ' . $item['title'] . ' and its children were not created due to an error', 'warning');
+    }
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ *
+ * Delete the custom drupal menu for the Springboard administration interface
+ */
+
+function springboard_admin_uninstall() {
+  $sb_menu = springboard_admin_admin_menu();
+  menu_delete($sb_menu);
+}
