@@ -57,6 +57,7 @@ function sustainer_import_import_record_insert($record) {
   dsm($output, 'dwr output');
 }
 
+// TODO: consolidate functions that fetch from the queue.
 function sustainer_import_get_pending_queue_items() {
   $records = array();
   $results = db_query("SELECT rid, record FROM {sustainer_import_queue} WHERE status = ''");
@@ -66,6 +67,20 @@ function sustainer_import_get_pending_queue_items() {
   return $records;
 }
 
+function sustainer_import_get_failed_queue_items() {
+  $records = array();
+  $results = db_query("SELECT rid, record FROM {sustainer_import_queue} WHERE status = 'failed'");
+  while ($item = $results->fetchAssoc()) {
+    $records[$item['rid']] = unserialize($item['record']);
+  }
+  return $records;
+}
+
+
+function sustainer_import_get_log_entry($rid) {
+  $result = db_query('SELECT rid, import_ids, timestamp, errors FROM {sustainer_import_log} WHERE rid = :rid', array(':rid' => $rid));
+  return $result->fetchAssoc();
+}
 /**
  * Provide a count of queue items by status.
  *

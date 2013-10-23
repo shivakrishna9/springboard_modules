@@ -391,3 +391,10 @@ function sustainer_import_edit_queue_item_submit($form, $form_state) {
 }
 
 
+function sustainer_import_queue_failure_report() {
+  $failures = sustainer_import_get_failed_queue_items();
+  foreach ($failures as $record) {
+    $log = sustainer_import_get_log_entry($record['rid']);
+  }
+}
+
