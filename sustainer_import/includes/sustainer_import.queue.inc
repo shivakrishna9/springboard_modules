@@ -214,15 +214,13 @@ function _sustainer_import_create_account($account_details) {
 function _sustainer_import_validate_account_record($account_details, &$errors) {
   // confirm all required fields have data
   $local_errors = array();
-  $required_fields = array('email', 'sf_contact_id', 'sf_account_id');
-  foreach ($required_fields as $field) {
-    if (empty($account_details[$field])) {
-      $local_errors[] = t('Missing !field in user record', array('!field' => $field));
-    }
-    // confirm email address is valid
-    if ($field == 'email' && !filter_var($account_details['email'], FILTER_VALIDATE_EMAIL)) {
-      $local_errors[] = t('Invalid email address: !address', array('!address' => $account_details['email']));
-    }
+
+  if (empty($account_details['email'])) {
+    $local_errors[] = t('Missing email address in user record');
+  }
+  // confirm email address is valid
+  if (!filter_var($account_details['email'], FILTER_VALIDATE_EMAIL)) {
+    $local_errors[] = t('Invalid email address: !address', array('!address' => $account_details['email']));
   }
 
   if (count($local_errors)) {
@@ -275,7 +273,7 @@ function _sustainer_import_validate_account_record($account_details, &$errors) {
 function _sustainer_import_validate_master_order($record, &$errors) {
   $local_errors = array();
   // confirm all required fields have data
-  $required_fields = array('uid', 'amount', 'salesforce_opportunity_id', 'salesforce_recurring_donation_id');
+  $required_fields = array('uid', 'amount');
   // validate top level fields
   foreach ($required_fields as $field) {
     if (empty($record[$field])) {
@@ -305,7 +303,7 @@ function _sustainer_import_validate_master_order($record, &$errors) {
   }
 
   // payment_details
-  $required_fields = array('gateway_token', 'type', 'last_four', 'month', 'year');
+  $required_fields = array('gateway_token', 'gateway_type', 'type', 'last_four', 'month', 'year');
   foreach ($required_fields as $field) {
     if (empty($record['payment_details'][$field])) {
       $local_errors[] = t('Missing required payment details field:!field', array('!field' => $field));
@@ -313,7 +311,6 @@ function _sustainer_import_validate_master_order($record, &$errors) {
     if ($field == 'last_four' && !is_numeric($record['payment_details']['last_four'])) {
       $local_errors[] = t('Last four are not numeric:!last_four', array('!last_four' => $record['payment_details']['last_four']));
     }
-    // TODO: add numeric checks for month and year
   }
 
   if (count($local_errors)) {
@@ -339,7 +336,7 @@ function _sustainer_import_create_master_order($record, $account, &$errors) {
     $node = node_load($gateway_map['nid']);
   }
   else {
-    // TODO: log map error and bail
+    // log map error and bail
     $errors[] = t('Unable to load node related to the payment gateway type: !type. Either this gateway type has not been mapped or the mapped node has been deleted.');
     return FALSE;
   }
@@ -356,7 +353,7 @@ function _sustainer_import_create_master_order($record, $account, &$errors) {
   $sim = _sustainer_import_update_authnet_sim($payment_method, $record['payment_details']['gateway_token']);
   if ($sim) {
     drupal_set_message('got sim:' . $sim);
-    sustainer_import_log_value('sim', $sim, 'Retrieved sim from authorize.net');
+    sustainer_import_log_value('sim', $sim, 'Retrieved payment gateway token from authorize.net');
   }
   else {
     $errors[] = t('Unable to update payment gateway token. Import halted.');
@@ -472,7 +469,7 @@ function sustainer_import_update_opportunity_id($donation, $sfid) {
 
 function _sustainer_import_validate_sustainer_series_instance($instance_details, &$errors) {
   $local_errors = array();
-  $required_fields = array('year', 'month', 'day', 'salesforce_opportunity_id');
+  $required_fields = array('year', 'month', 'day');
   $count = 0;
   foreach ($required_fields as $field) {
     ++$count;
@@ -543,7 +540,7 @@ function _sustainer_import_create_sustainer_series_instance($instance_details, $
   // Update Salesforce with new order id.
   sustainer_import_update_opportunity_id($new_donation, $instance_details['salesforce_opportunity_id']);
 
-  // TODO: Map ids, but order_id isn't on the payment schedule records.
+  // Map original sustainer instance order id to new order id.
   sustainer_import_map_ids($new_donation->did, $instance_details['order_id']);
 
   sustainer_import_log_value('recurring_instance', $next_charge, t('Created sustainer series instance for !date', array('!date' => $date)));
