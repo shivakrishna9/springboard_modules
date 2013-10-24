@@ -99,7 +99,6 @@ function _sustainer_import_parse_file($file) {
         // inject into db table
         sustainer_import_import_record_insert($order_detail);
       }
-      dsm($input, 'uploaded input');
     }
     else {
       drupal_set_message('Uploaded file is in an incorrect format or contains errors', 'error');
@@ -123,8 +122,6 @@ function sustainer_import_queue_report() {
  * Edit record in import queue.
  */
 function sustainer_import_edit_queue_item($form, $form_state, $record) {
-  $args = func_get_args();
-  dsm($args, 'args');
   $payment_schedule = array();
   $form = array();
 
@@ -329,7 +326,7 @@ function sustainer_import_edit_queue_item($form, $form_state, $record) {
 }
 
 function sustainer_import_edit_queue_item_submit($form, $form_state) {
-  dsm($form_state, 'form state');
+
   $payment_schedule = array();
 
   for ($i = 0; $i < $form_state['values']['sustainer_series_count']; ++$i) {
@@ -384,7 +381,7 @@ function sustainer_import_edit_queue_item_submit($form, $form_state) {
     'status' => '', // reset status on save, this requeues the record.
     'gateway_type' => $form_state['values']['gateway_type'],
   );
-  dsm($data);
+
   $data['record'] = serialize($data['record']);
   drupal_write_record('sustainer_import_queue', $data, array('rid'));
   drupal_set_message('This record has been updated and re-queued for import.');
@@ -393,7 +390,6 @@ function sustainer_import_edit_queue_item_submit($form, $form_state) {
 
 function sustainer_import_queue_failure_report() {
   $failures = sustainer_import_get_failed_queue_items();
-  dsm($failures, 'failures');
   $headers = array('master order id', 'date', 'id log', 'errors', 'actions');
 
   foreach ($failures as $rid => $record) {
@@ -408,8 +404,6 @@ function sustainer_import_queue_failure_report() {
         l('Edit', 'admin/config/development/sustainer_import/' . $rid . '/edit'),
       )
     );
-
-    dsm($log, 'log entry');
   }
   $headers = array(
     array('data' => array('Master order ID')),

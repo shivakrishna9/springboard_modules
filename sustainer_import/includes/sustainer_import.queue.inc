@@ -108,25 +108,18 @@ function sustainer_import_process_queue() {
     if (_sustainer_import_validate_account_record($record['user_info'], $errors)) {
       // passes validation, create or dedupe.
       $account = _sustainer_import_create_account($record['user_info']);
-      dsm($account, 'account');
       $record['uid'] = $account->uid;
     }
-    else {
-      // TODO: log error with user account creation and continue to next record.
-    }
     // master order record
-    if ($record['uid']) {
+    if (!empty($record['uid'])) {
       if(_sustainer_import_validate_master_order($record, $errors)) {
         $donation = _sustainer_import_create_master_order($record, $account, $errors);
-        //dsm($donation, 'master_donation');
       }
     }
-    else {
-      // TODO: log error with order/donation/sim/cardonfile creation and continue to next record.
-    }
+
     // create
     // sustainer series
-    if ($donation->did && $record['uid']) {
+    if (!isset($donation->did) && $donation->did && $record['uid']) {
       foreach ($record['payment_schedule'] as $instance_details) {
         if (_sustainer_import_validate_sustainer_series_instance($instance_details, $errors)) {
           _sustainer_import_create_sustainer_series_instance($instance_details, $donation, $errors);
@@ -138,9 +131,6 @@ function sustainer_import_process_queue() {
       }
     }
     $log = sustainer_import_log_value();
-    dsm($log, 'run log');
-    dsm($errors, 'errors');
-    dsm($record, 'record');
     sustainer_import_log_record($rid, $record, $log, $errors);
   }
 }
@@ -239,7 +229,7 @@ function _sustainer_import_validate_account_record($account_details, &$errors) {
     $errors = array_merge($errors, $local_errors);
     return FALSE;
   }
-  dsm($account_details, 'user record passes validation');
+
   return TRUE;
 }
 
@@ -344,7 +334,7 @@ function _sustainer_import_validate_master_order($record, &$errors) {
 function _sustainer_import_create_master_order($record, $account, &$errors) {
   // create master order
   $gateway_map = variable_get('sustainer_import_gateway_map_' . $record['payment_details']['gateway_type'], array());
-  dsm($gateway_map, 'gateway map during order creation');
+
   if (!empty($gateway_map['nid']) && is_numeric($gateway_map['nid'])) {
     $node = node_load($gateway_map['nid']);
   }
@@ -355,7 +345,7 @@ function _sustainer_import_create_master_order($record, $account, &$errors) {
   }
 
   $donation = _sustainer_import_build_donation_object($record, $account, $node);
-  dsm($donation, 'donation');
+
   // Before we can save the donation record we need to get an updated SIM from
   // Authorize.net. If for any reason we can't get this value there is no point in
   // importing the donation record as we won't be able to charge until the SIM is updated.
@@ -635,9 +625,6 @@ function _sustainer_import_name_from_mail($mail) {
  * @return stdClass
  */
 function _sustainer_import_build_donation_object($record, $account, $node) {
-  dsm($record, 'record during donation build');
- // $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
- // $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
 
   $donation = new stdClass();
   $donation->created = $record['created'];
@@ -694,7 +681,6 @@ function _sustainer_import_build_donation_object($record, $account, $node) {
   // Flag the donation recurring or not
   $donation->donation['recurs_monthly'] = TRUE; //_fundraiser_commerce_order_confirm_line_item_recurring($line_item);
 
-   dsm($donation, 'donation');
   return $donation;
 }
 
@@ -741,7 +727,6 @@ function _sustainer_import_save_cc_data($sim, $record, $donation, $account) {
     }
   }
   $payment_method = commerce_payment_method_instance_load($donation->gateway);
-  dsm($payment_method, 'method loaded during cc save');
 
   $card_data = commerce_cardonfile_new();
   $card_data->uid = $account->uid;

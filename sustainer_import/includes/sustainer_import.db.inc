@@ -44,7 +44,7 @@ function sustainer_import_import_record_insert($record) {
   if (in_array($record['order_id'], $master_ids)) {
     return FALSE;
   }
-  dsm($record, 'record during save');
+
   $data = array(
     'master_order_id' => $record['order_id'],
     'record' => serialize($record),
@@ -53,8 +53,8 @@ function sustainer_import_import_record_insert($record) {
     'gateway_type' => $record['payment_details']['gateway_type'],
   );
 
-  $output = drupal_write_record('sustainer_import_queue', $data);
-  dsm($output, 'dwr output');
+  drupal_write_record('sustainer_import_queue', $data);
+
 }
 
 // TODO: consolidate functions that fetch from the queue.
@@ -115,10 +115,11 @@ function sustainer_import_queue_gateway_types() {
  */
 function sustainer_import_list_payment_gateways() {
   $gateway_info = _fundraiser_gateway_info();
+
   foreach ($gateway_info as $key => $gateway) {
     $gateways[$key] = $gateway['title'];
   }
-  dsm($gateways);
+
   return $gateways;
 }
 
@@ -170,6 +171,6 @@ function sustainer_import_log_record($rid, $record, $log, $errors) {
     'timestamp' => time(),
     'errors' => serialize($errors),
   );
-  dsm($record, 'log record');
+
   drupal_write_record('sustainer_import_log', $record);
 }

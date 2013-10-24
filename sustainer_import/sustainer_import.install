@@ -6,6 +6,7 @@
 
 function sustainer_import_uninstall() {
   variable_del('sustainer_import_queue_process_record_count');
+  db_query("DELETE FROM {sustainer_import} WHERE name LIKE '%sustainer_import_gateway'");
 }
 
 function sustainer_import_schema() {
