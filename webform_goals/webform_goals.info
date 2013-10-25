@@ -11,5 +11,8 @@ dependencies[] = token
 dependencies[] = date_api
 dependencies[] = ctools
 
-// tests
+; tests
 files[] = tests/webform_goals.test
+
+; Always available CSS
+stylesheets[all][] = css/webform_goals.css
