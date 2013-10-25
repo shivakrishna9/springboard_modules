@@ -41,6 +41,7 @@
         jQuery(document).ready(function() {
             var ids = [];
             items = jQuery('.wg-goal').map(function(){
+                jQuery(this).hide();
                 ids.push(jQuery(this).data('gid'));
             });
 
@@ -75,6 +76,8 @@
                                             element.html(html);
                                         });
                                     }
+
+                                    jQuery(this).show();
                                 }
                             });
                         }
