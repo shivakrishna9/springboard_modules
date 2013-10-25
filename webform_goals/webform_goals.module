@@ -22,7 +22,13 @@ function webform_goals_init() {
 
   if (empty($loader_url)) {
     $loader_url = (!empty($_SERVER['HTTPS'])) ? "https://" : "http://";
-    $loader_url .= $_SERVER['SERVER_NAME'] . '/webform_goals_jsonp';
+    $loader_url .= $_SERVER['SERVER_NAME'];
+    if (variable_get('clean_url', TRUE)) {
+      $loader_url .= '/webform_goals_jsonp';
+    }
+    else {
+      $loader_url .= '/?q=webform_goals_jsonp';
+    }
   }
   // TODO: examine theme post-processing as a potential replacement for js processing on the local site.
   drupal_add_js(array('webform_goals' => array('loader_url' => $loader_url)), 'setting');
