@@ -883,12 +883,15 @@ function _webform_goals_flag_goal_updates($gids = array()) {
 /**
  * Calculate goal completion percentage, remaining and remaining percentage
  *
+ * Also adds seed value if specified.
+ *
  * @param array $data
- * An associative array containing the following data:
+ *   An associative array containing the following data:
  *   'count' => the total goal progress count.
+ *   Additional values are added to this array.
  *
  * @param array $goal
- * Goal array.
+ *   Goal array.
  */
 function webform_goals_calculate_progress(&$data, $goal) {
   // apply seed
