@@ -1396,6 +1396,7 @@ function _commerce_litle_request_credit($gateway, $input) {
   */
   $litle = _commerce_litle_get_litle();
   $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
+  $input['id'] = $input['litleTxnId'];
   return $litle->creditRequest($input);
 }
 
