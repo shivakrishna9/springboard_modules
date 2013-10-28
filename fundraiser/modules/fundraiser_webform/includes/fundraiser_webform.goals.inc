@@ -52,29 +52,36 @@ function fundraiser_webform_webform_goals_track_metric($goal, $params = array())
   );
   if ($goal['metric'] === 'fundraiser_donation_amount') {
 
+    // Create an array of nids that we're tracking.
     if (!empty($goal['extra']['selected_form_id'])) {
-      $data['count'] = fundraiser_get_total_donations_by_nid($goal['extra']['selected_form_id'], $goal['start_date'], $goal['end_date']);
+      // Needs to be an array for the foreach below.
+      $nids = array($goal['extra']['selected_form_id']);
+    }
+    elseif (!empty($goal['extra']['selected_node_type'])) {
+      $nids = _webform_goals_nids_by_type($goal['extra']['selected_node_type']);
+    }
+    elseif (!empty($goal['extra']['selected_form_ids'])) {
+      $nids = $goal['extra']['selected_form_ids'];
     }
     else {
-      if (!empty($goal['extra']['selected_node_type'])) {
-        $nids = _webform_goals_nids_by_type($goal['extra']['selected_node_type']);
-      }
-      elseif (!empty($goal['extra']['selected_form_ids'])) {
-        $nids = $goal['extra']['selected_form_ids'];
-      }
+      // Default value.
+      $nids = array();
+    }
 
-      // Bet the database loves this.
-      if (is_array($nids)) {
-        foreach ($nids as $nid) {
-          $donations = fundraiser_get_total_donations_by_nid($nid, $goal['start_date'], $goal['end_date']);
-          if ($donations) {
-            $data['count'] += $donations;
-          }
+    // Bet the database loves this.
+    if (count($nids)) {
+      foreach ($nids as $nid) {
+        $donations = fundraiser_get_total_donations_by_nid($nid, $goal['start_date'], $goal['end_date']);
+        if ($donations) {
+          $data['count'] += $donations;
         }
-        $data['count'] = number_format((float) $data['count'], 2); // Alligator wrestling to keep format identical with single values.
       }
     }
+
+    // Adds the seed value and calculates the related values.
     webform_goals_calculate_progress($data, $goal);
+    // Pretty format the donation amount..
+    $data['count'] = number_format((float) $data['count'], 2);
     return $data;
   }
 }
