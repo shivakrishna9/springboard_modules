@@ -27,11 +27,8 @@ function sustainer_import_queue() {
     '#description' => t('Map import gateway types to existing payment gateways and donation forms. Each gateway type must be mapped to a payment gateway before the queue can be processed.'),
   );
   $gateway_types = sustainer_import_queue_gateway_types();
-  dsm($gateway_types, 'gateway types');
   foreach ($gateway_types as $gateway_type) {
-    dsm($gateway_type);
     $defaults = variable_get('sustainer_import_gateway_map_' . $gateway_type, array());
-    dsm($defaults, 'defaults');
     $form['gateway_map'][$gateway_type] = array(
       '#type' => 'fieldset',
       '#title' => t('Map ') . $gateway_type,
