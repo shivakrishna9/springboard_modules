@@ -385,6 +385,14 @@ function webform_goals_widget_load($gid) {
   return $widget->fetchField();
 }
 
+/**
+ * Creates an array for select #options of webform enabled nodes.
+ *
+ * Organized by node type.
+ *
+ * @return array|bool
+ *   A multidimensional array keyed by node type and nid.
+ */
 function _webform_goals_list_webforms() {
   static $nodes = array();
   if (!count($nodes)) {
@@ -393,7 +401,7 @@ function _webform_goals_list_webforms() {
       SELECT nid, title, type FROM {node} WHERE type IN(:types)
     ', array(':types' => $types));
     while ($result = $results->fetchAssoc()) {
-      $nodes[$result['type']][$result['nid']] = $result['title'];
+      $nodes[$result['type']][$result['nid']] = '(' . $result['nid'] . ') ' . $result['title'];
     }
   }
   return count($nodes) ? $nodes : FALSE;
