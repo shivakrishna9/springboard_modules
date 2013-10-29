@@ -406,7 +406,7 @@ function _webform_goals_list_webforms() {
       if (fundraiser_is_donation_type($result['type'])) {
         $node = node_load($result['nid']);
         $node_wrapper = entity_metadata_wrapper('node', $node);
-        $internal_name = ' - ' . $node_wrapper->field_fundraiser_internal_name->value();
+        $internal_name = ' - ' . $node_wrapper->field_fundraiser_internal_name->value(array('sanitize' => TRUE));
       }
       $nodes[$result['type']][$result['nid']] = '(' . $result['nid'] . ') ' . $result['title'] . $internal_name;
     }
