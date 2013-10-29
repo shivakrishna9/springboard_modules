@@ -116,7 +116,7 @@ function sustainer_import_process_queue() {
 
     // create
     // sustainer series
-    if (!isset($donation->did) && $donation->did && $record['uid']) {
+    if (isset($donation->did) && $donation->did && $record['uid']) {
       foreach ($record['payment_schedule'] as $instance_details) {
         if (_sustainer_import_validate_sustainer_series_instance($instance_details, $errors)) {
           _sustainer_import_create_sustainer_series_instance($instance_details, $donation, $errors);
@@ -349,7 +349,6 @@ function _sustainer_import_create_master_order($record, $account, &$errors) {
   // get updated sim
   $sim = _sustainer_import_update_authnet_sim($payment_method, $record['payment_details']['gateway_token']);
   if ($sim) {
-    drupal_set_message('got sim:' . $sim);
     sustainer_import_log_value('sim', $sim, 'Retrieved payment gateway token from authorize.net');
   }
   else {
@@ -465,6 +464,7 @@ function sustainer_import_update_opportunity_id($donation, $sfid) {
 
 
 function _sustainer_import_validate_sustainer_series_instance($instance_details, &$errors) {
+
   $local_errors = array();
   $required_fields = array('year', 'month', 'day');
   $count = 0;
@@ -590,7 +590,7 @@ function sustainer_import_add_sync_map($map) {
  * Salesforce record type (typically Contact or Account)
  */
 function _sustainer_import_save_account_sfids($uid, $sfid, $type) {
-  drupal_set_message("record save attempt. uid: $uid, sfid:$sfid, type:$type");
+
   $sf_map = array(
     'sfid' => $sfid,
     'drupal_id' => $uid,
@@ -599,7 +599,7 @@ function _sustainer_import_save_account_sfids($uid, $sfid, $type) {
     'object_type' => $type,
   );
   sustainer_import_add_sync_map($sf_map);
-  drupal_set_message('saved !type record for !uid', array('!uid' => $uid, '!type' => $type));
+
 }
 
 function _sustainer_import_name_from_mail($mail) {
