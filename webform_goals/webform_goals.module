@@ -401,7 +401,14 @@ function _webform_goals_list_webforms() {
       SELECT nid, title, type FROM {node} WHERE type IN(:types)
     ', array(':types' => $types));
     while ($result = $results->fetchAssoc()) {
-      $nodes[$result['type']][$result['nid']] = '(' . $result['nid'] . ') ' . $result['title'];
+      $internal_name = '';
+      // If it's a fundraiser enabled node, load it to get the internal name.
+      if (fundraiser_is_donation_type($result['type'])) {
+        $node = node_load($result['nid']);
+        $node_wrapper = entity_metadata_wrapper('node', $node);
+        $internal_name = ' - ' . $node_wrapper->field_fundraiser_internal_name->value();
+      }
+      $nodes[$result['type']][$result['nid']] = '(' . $result['nid'] . ') ' . $result['title'] . $internal_name;
     }
   }
   return count($nodes) ? $nodes : FALSE;
