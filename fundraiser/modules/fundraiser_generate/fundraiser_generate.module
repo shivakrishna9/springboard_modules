@@ -168,15 +168,19 @@ function fundraiser_generate_donations($nid, $count = 1, $type = 'single', $ms =
             'state' => 'DC',
             'zip' => mt_rand(11111, 55555),
           ),
-          'credit_card_information' => array(
-            'card_number' => '4111111111111111',
-            'card_cvv' => '111',
+          'payment_information' => array(
+            'payment_fields' => array(
+              'credit' => array(
+                'card_number' => '4111111111111111',
+                'expiration_date' => array(
+                  'card_expiration_month' => mt_rand(1, 12),
+                  'card_expiration_year' => mt_rand($year + 1, $year + 3),
+                ),
+                'card_cvv' => '111',
+              ),
+            ),
             'recurs_monthly' => array(
               'recurs' => $recurs,
-            ),
-            'expiration_date' => array(
-              'card_expiration_month' => mt_rand(1, 12),
-              'card_expiration_year' => mt_rand($year + 1, $year + 3),
             ),
           ),
           'ms' => $ms,
