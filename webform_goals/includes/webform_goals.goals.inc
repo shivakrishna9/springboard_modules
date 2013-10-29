@@ -64,10 +64,15 @@ function webform_goals_form_group_context_fields(&$form, &$form_state, $goal = a
 
   dsm($form_state);
 
-  $available_options = array();
+  $types = webform_variable_get('webform_node_types');
+  if (empty($form_state['storage']['all_webform_nodes'])) {
+    $form_state['storage']['all_webform_nodes'] = _webform_goals_list_webforms();
+  }
+
+  $available_options = $form_state['storage']['all_webform_nodes'];
   $selected_options = array();
 
-  if (!$form_state['submitted']) {
+  if (!$form_state['submitted'] && isset($goal['extra']['selected_form_ids'])) {
     $selected_nids = $goal['extra']['selected_form_ids'];
   }
   elseif (!empty($form_state['values']['selected_form_ids'])) {
@@ -75,6 +80,22 @@ function webform_goals_form_group_context_fields(&$form, &$form_state, $goal = a
   }
   else {
     $selected_nids = array();
+  }
+
+  foreach ($selected_nids as $selected_nid) {
+    $selected_options[$selected_nid] = $selected_nid;
+  }
+
+  if (!empty($form_state['values']['selected_form_types'])) {
+    $selected_types = array_keys(array_filter($form_state['values']['selected_form_types']));
+  }
+  else {
+    $selected_types = array();
+  }
+
+  $filtered_available_options = array();
+  foreach($selected_types as $type) {
+    $filtered_available_options[$type] = $available_options[$type];
   }
 
   $form['form_group'] = array(
@@ -91,49 +112,17 @@ function webform_goals_form_group_context_fields(&$form, &$form_state, $goal = a
     '#collapsible' => FALSE,
   );
 
-  $types = webform_variable_get('webform_node_types');
   $form_types = array();
-  $results = db_query("SELECT type, name FROM {node_type} WHERE type IN (:types)", array(':types' => $types));
-
-  if ($results->rowCount() > 1) {
-    foreach ($results as $result) {
-      $form_types[$result->type] = $result->name;
-    }
-
-    $form['form_group']['available_forms']['selected_form_types'] = array(
-      '#type' => 'checkboxes',
-      '#options' => $form_types,
-      '#title' => t('Filter by type'),
-      '#ajax' => webform_goals_form_group_builder_ajax('webform_goals_form_group_builder_available_forms_element'),
-    );
-  }
-  else {
-//    $types = array($results[0]->type);
+  foreach ($form_state['storage']['all_webform_nodes'] as $type => $nodes) {
+    $form_types[$type] = $type;
   }
 
-  if (!empty($form_state['values']['selected_form_types'])) {
-    $types = array_keys(array_filter($form_state['values']['selected_form_types']));
-  }
-  else {
-    $types = array();
-  }
-
-  if (count($types)) {
-    $nodes = db_query("SELECT nid, title, type FROM {node} WHERE type IN (:types) ORDER BY nid ASC", array(':types' => $types));
-    foreach ($nodes as $node) {
-      $form_state['storage']['all_webform_nodes'][$node->nid] = array(
-        'nid' => $node->nid,
-        'title' => $node->title,
-        'type' => $form_types[$node->type],
-        'machine_type' => $node->type,
-      );
-      $available_options[$node->nid] = $form_state['storage']['all_webform_nodes'][$node->nid];
-    }
-  }
-
-  foreach ($selected_nids as $selected_nid) {
-    $selected_options[$selected_nid] = $form_state['storage']['all_webform_nodes'][$selected_nid];
-  }
+  $form['form_group']['available_forms']['selected_form_types'] = array(
+    '#type' => 'checkboxes',
+    '#options' => $form_types,
+    '#title' => t('Filter by type'),
+    '#ajax' => webform_goals_form_group_builder_ajax('webform_goals_form_group_builder_available_forms_element'),
+  );
 
   $header = array(
     'nid' => 'NID',
@@ -147,7 +136,7 @@ function webform_goals_form_group_context_fields(&$form, &$form_state, $goal = a
 
     foreach ($checked_available_forms as $checked_available_form) {
       // Add the option to the right side.
-      $selected_options[$checked_available_form] = $form_state['storage']['all_webform_nodes'][$checked_available_form];
+      $selected_options[$checked_available_form] = '(' . $checked_available_form . ') ' . $checked_available_form;
       // Remove it from the left side.
 //      unset($available_options[$checked_available_form]);
     }
@@ -170,11 +159,12 @@ function webform_goals_form_group_context_fields(&$form, &$form_state, $goal = a
 
   // Left side.
   $form['form_group']['available_forms']['available_forms'] = array(
-    '#type' => 'tableselect',
-    '#header' => $header,
+    '#type' => 'select',
+    '#size' => 10,
     '#multiple' => TRUE,
     '#title' => 'Available',
-    '#options' => $available_options,
+    '#options' => $filtered_available_options,
+    '#default_value' => array(),
   );
 
   $form['form_group']['available_forms']['add_selected'] = array(
@@ -190,8 +180,8 @@ function webform_goals_form_group_context_fields(&$form, &$form_state, $goal = a
   );
 
   $items = array();
-  foreach ($selected_options as $option) {
-    $items[] = '(' . $option['nid'] . ')' . $option['title'] . ' - ' . $option['type'];
+  foreach ($selected_options as $id => $option) {
+    $items[] = '(' . $id . ') ' . $option;
   }
   // Right side.
   $form['form_group']['selected_forms']['selected_forms'] = array(
@@ -203,13 +193,13 @@ function webform_goals_form_group_context_fields(&$form, &$form_state, $goal = a
 //    '#default_value' => array(),
     '#title' => 'Selected forms.',
   );
-
+/*
   $form['form_group']['selected_forms']['remove_selected'] = array(
     '#type' => 'button',
     '#value' => 'Remove selected',
     '#ajax' => webform_goals_form_group_builder_ajax('webform_goals_form_group_remove_selected'),
   );
-
+*/
   $form['form_group']['selected_form_ids'] = array(
     '#type' => 'select',
     '#multiple' => TRUE,
