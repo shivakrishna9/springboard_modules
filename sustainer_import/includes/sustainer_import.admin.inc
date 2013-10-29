@@ -86,14 +86,17 @@ function sustainer_import_upload_submit($form, $form_state) {
 
 function _sustainer_import_parse_file($file) {
   if ($file->uri) {
-    $input = '';
+    $input = array();
     $infile = fopen($file->uri, 'r');
     while ($line = fgets($infile)) {
-      $input .= $line;
+      $data = @unserialize($line);
+      // we want to skip any null records caused by extraneous newlines.
+      if (is_array($data)) {
+        $input[] = $data[0];
+      }
     }
     // We're manually handling serialization issues here so we want to suppress
     // the natural output of unserialize() in the event of an error.
-    $input = @unserialize($input);
     if (is_array($input)) {
       foreach($input as $order_detail) {
         // inject into db table
