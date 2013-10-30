@@ -145,13 +145,11 @@ function sustainer_import_edit_queue_item($form, $form_state, $record) {
     '#type' => 'textfield',
     '#title' => t('Salesforce Opportunity ID'),
     '#default_value' => !empty($record['record']['salesforce_opportunity_id']) ? $record['record']['salesforce_opportunity_id'] : '',
-    '#required' => TRUE,
   );
   $form['master_order_details']['salesforce_recurring_donation_id'] = array(
     '#type' => 'textfield',
     '#title' => t('Salesforce Recurring Donation ID'),
     '#default_value' => !empty($record['record']['salesforce_recurring_donation_id']) ? $record['record']['salesforce_recurring_donation_id'] : '',
-    '#required' => TRUE,
   );
   $form['master_order_details']['amount'] = array(
     '#type' => 'textfield',
@@ -169,7 +167,6 @@ function sustainer_import_edit_queue_item($form, $form_state, $record) {
     '#type' => 'textfield',
     '#title' => t('SF contact id'),
     '#default_value' => !empty($record['record']['user_info']['sf_contact_id']) ? $record['record']['user_info']['sf_contact_id'] : '',
-    '#required' => TRUE,
   );
   $form['user_info']['sf_account_id'] = array(
     '#type' => 'textfield',
@@ -311,7 +308,6 @@ function sustainer_import_edit_queue_item($form, $form_state, $record) {
       '#type' => 'textfield',
       '#title' => t('SF opportunity id'),
       '#default_value' => !empty($payment_schedule[$count]['salesforce_opportunity_id']) ? $payment_schedule[$count]['salesforce_opportunity_id'] : '',
-      '#required' => TRUE,
     );
     $form['payment_schedule'][$count]['status_' . $count] = array(
       '#type' => 'textfield',
