@@ -97,16 +97,19 @@ function _sustainer_import_parse_file($file) {
     }
     // We're manually handling serialization issues here so we want to suppress
     // the natural output of unserialize() in the event of an error.
+    $record_count = 0;
     if (is_array($input)) {
       foreach($input as $order_detail) {
         // inject into db table
         sustainer_import_import_record_insert($order_detail);
+        ++$record_count;
       }
     }
     else {
       drupal_set_message('Uploaded file is in an incorrect format or contains errors', 'error');
-      // throw error on file format
+      return FALSE;
     }
+    drupal_set_message(t('!record_count records have been added to the import queue.', array('!record_count' => $record_count)));
   }
   else {
 

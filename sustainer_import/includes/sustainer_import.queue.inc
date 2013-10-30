@@ -166,6 +166,7 @@ function sustainer_import_save_gateway_map($form, $form_state) {
 function _sustainer_import_create_account($account_details) {
   // create user account or return existing account if mail exists
   $account = user_load_by_mail($account_details['email']);
+
   if (!$account) {
     // save user
     $user_record = array(
@@ -602,9 +603,25 @@ function _sustainer_import_save_account_sfids($uid, $sfid, $type) {
 
 }
 
-function _sustainer_import_name_from_mail($mail) {
-  $parts = explode('@', $mail);
-  return $parts[0];
+/**
+ * Generate an account username from email with duplicate prevention.
+ *
+ * @param $email
+ * @return string
+ */
+function _sustainer_import_name_from_mail($email) {
+  $name = substr($email, 0, strpos($email, '@'));
+  $name = preg_replace('/[^A-Za-z0-9_.-]/', '', $name);
+  $name = trim(substr($name, 0, USERNAME_MAX_LENGTH - 4));
+  // Make sure we don't hand out a duplicate username.
+  while (db_query('SELECT COUNT(uid) FROM {users} WHERE name LIKE :name', array(':name' => $name))->fetchField() > 0) {
+    if (strlen($name) == USERNAME_MAX_LENGTH) {
+      $name = substr($name, 0, USERNAME_MAX_LENGTH - 4);
+    }
+    $name .= rand(0, 9);
+  }
+  return $name;
+
 }
 
 
@@ -692,9 +709,13 @@ function _sustainer_import_update_authnet_sim($payment_method, $cim_customer_pro
   );
   // TODO: add error handling if this breaks.
   $response = commerce_authnet_cim_request($payment_method, 'getCustomerProfileRequest', $api_request_data);
-  $payment_profile_id = $response->profile->paymentProfiles->customerPaymentProfileId;
-
-  return $cim_customer_profile_id . '|' . $payment_profile_id;
+  if (isset($response->profile->paymentProfiles->customerPaymentProfileId)) {
+    $payment_profile_id = $response->profile->paymentProfiles->customerPaymentProfileId;
+    return $cim_customer_profile_id . '|' . $payment_profile_id;
+  }
+  else {
+    return FALSE;
+  }
 }
 
 /**
