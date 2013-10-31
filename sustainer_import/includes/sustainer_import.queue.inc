@@ -537,7 +537,7 @@ function _sustainer_import_create_sustainer_series_instance($instance_details, $
   sustainer_import_add_sync_map($map);
 
   // Update Salesforce with new order id.
-  if (!empty($instance_details['salesforce_opportunity_id'])) {}
+  if (!empty($instance_details['salesforce_opportunity_id'])) {
     sustainer_import_update_opportunity_id($new_donation, $instance_details['salesforce_opportunity_id']);
   }
   // Map original sustainer instance order id to new order id.
