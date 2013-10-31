@@ -3,15 +3,15 @@
  * @file
  * Test interaction between user accounts and webform fields.
  */
-class WebformUserIntegratedTestSetup extends DrupalWebTestCase {
+class WebformGoalsIntegratedTestSetup extends DrupalWebTestCase {
+
+  protected $users;
 
   /**
    * Implements setUp().
    */
   public function setUp() {
     parent::setUp('webform_goals');
-
-
 
     // Create user accounts.
 
@@ -103,6 +103,3 @@ class WebformGoalsUnitTestCase extends WebformGoalsIntegratedTestSetup {
   }
 
 }
-
-
-

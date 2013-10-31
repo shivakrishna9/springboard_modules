@@ -1084,10 +1084,9 @@ function _fundraiser_webform_get_donation_by_sid($sid) {
  * DB function, given a nid and field key, get and *unserialize* the extra field from webform component.
  */
 function _fundraiser_webform_get_extra_by_key($nid, $form_key) {
-  $results = _fundraiser_webform_get_component_by_nid_key($nid, $form_key);
-  if ($results) {
-    $unserialized_extra = isset($field->extra) ? unserialize($field->extra) : FALSE;
-    return $unserialized_extra;
+  $result = _fundraiser_webform_get_component_by_nid_key($nid, $form_key);
+  if ($result) {
+    return isset($result->extra) ? unserialize($result->extra) : FALSE;
   }
   return FALSE;
 }

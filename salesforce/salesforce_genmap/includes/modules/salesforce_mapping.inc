@@ -463,6 +463,14 @@ function salesforce_mapping_send_entity_to_queue($entity, $entity_type, $op) {
     return FALSE;
   }
 
+  // Allow modules to control whether this entity is queued
+  foreach (module_implements('salesforce_mapping_confirm_entity_for_queue') as $module) {
+    $function = $module . '_salesforce_mapping_confirm_entity_for_queue';
+    if ($function($entity, $entity_type, $op) === FALSE) {
+      return FALSE;
+    }
+  }
+
   // Information specific to this entity.
   list($entity_id, , $bundle) = entity_extract_ids($entity_type, $entity);
 
