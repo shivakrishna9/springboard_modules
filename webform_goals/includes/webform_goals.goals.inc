@@ -57,154 +57,18 @@ function webform_goals_group_context_fields(&$form, &$form_state, $goal = array(
  *
  * @param array $form
  *   The form parent element to add additional context settings.
+ * @param array &$form_state
+ *   The current form state.
  * @param array $goal
  *   The goal array.
  */
 function webform_goals_form_group_context_fields(&$form, &$form_state, $goal = array()) {
 
-  dsm($form_state);
-
-  $types = webform_variable_get('webform_node_types');
-  if (empty($form_state['storage']['all_webform_nodes'])) {
-    $form_state['storage']['all_webform_nodes'] = _webform_goals_list_webforms();
-  }
-
-  $available_options = $form_state['storage']['all_webform_nodes'];
-  $selected_options = array();
-
-  if (!$form_state['submitted'] && isset($goal['extra']['selected_form_ids'])) {
-    $selected_nids = $goal['extra']['selected_form_ids'];
-  }
-  elseif (!empty($form_state['values']['selected_form_ids'])) {
-    $selected_nids = $form_state['values']['selected_form_ids'];
-  }
-  else {
-    $selected_nids = array();
-  }
-
-  foreach ($selected_nids as $selected_nid) {
-    $selected_options[$selected_nid] = $selected_nid;
-  }
-
-  if (!empty($form_state['values']['selected_form_types'])) {
-    $selected_types = array_keys(array_filter($form_state['values']['selected_form_types']));
-  }
-  else {
-    $selected_types = array();
-  }
-
-  $filtered_available_options = array();
-  foreach($selected_types as $type) {
-    $filtered_available_options[$type] = $available_options[$type];
-  }
-
-  $form['form_group'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Form group builder'),
-    '#collapsible' => FALSE,
-    '#prefix' => '<div id="form-group-builder">',
-    '#suffix' => '</div>',
-  );
-
-  $form['form_group']['available_forms'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Available forms'),
-    '#collapsible' => FALSE,
-  );
-
-  $form_types = array();
-  foreach ($form_state['storage']['all_webform_nodes'] as $type => $nodes) {
-    $form_types[$type] = $type;
-  }
-
-  $form['form_group']['available_forms']['selected_form_types'] = array(
-    '#type' => 'checkboxes',
-    '#options' => $form_types,
-    '#title' => t('Filter by type'),
-    '#ajax' => webform_goals_form_group_builder_ajax('webform_goals_form_group_builder_available_forms_element'),
-  );
-
-  $header = array(
-    'nid' => 'NID',
-    'title' => 'Title',
-    'type' => 'Type',
-    'machine_type' => 'Machine type',
-  );
-
-  if (!empty($form_state['clicked_button']['#value']) && $form_state['clicked_button']['#value'] == 'Add selected') {
-    $checked_available_forms = array_keys(array_filter($form_state['values']['available_forms']));
-
-    foreach ($checked_available_forms as $checked_available_form) {
-      // Add the option to the right side.
-      $selected_options[$checked_available_form] = '(' . $checked_available_form . ') ' . $checked_available_form;
-      // Remove it from the left side.
-//      unset($available_options[$checked_available_form]);
-    }
-
-  }
-  elseif (!empty($form_state['clicked_button']['#value']) && $form_state['clicked_button']['#value'] == 'Remove selected') {
-//    $checked_selected_forms = array_keys(array_filter($form_state['values']['selected_forms']));
-//
-//    // remove checked options from the right side.
-//    foreach ($checked_selected_forms as $checked_selected_form) {
-//      unset($selected_options[$checked_selected_form]);
-//
-//      // if the form matches the filter criteria, add it back to the left side.
-//      // if the checked selected form type is in the $types array then add it back to the left side.
-//      if (in_array($form_state['storage']['all_webform_nodes'][$checked_selected_form]['machine_type'], $types)) {
-//        $available_options[$checked_selected_form] = $form_state['storage']['all_webform_nodes'][$checked_selected_form];
-//      }
-//    }
-  }
-
-  // Left side.
-  $form['form_group']['available_forms']['available_forms'] = array(
-    '#type' => 'select',
-    '#size' => 10,
-    '#multiple' => TRUE,
-    '#title' => 'Available',
-    '#options' => $filtered_available_options,
-    '#default_value' => array(),
-  );
-
-  $form['form_group']['available_forms']['add_selected'] = array(
-    '#type' => 'button',
-    '#value' => 'Add selected',
-    '#ajax' => webform_goals_form_group_builder_ajax('webform_goals_form_group_add_selected'),
-  );
-
-  $form['form_group']['selected_forms'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Forms in group'),
-    '#collapsible' => FALSE,
-  );
-
-  $items = array();
-  foreach ($selected_options as $id => $option) {
-    $items[] = '(' . $id . ') ' . $option;
-  }
-  // Right side.
-  $form['form_group']['selected_forms']['selected_forms'] = array(
-    '#theme' => 'item_list',
-    '#items' => $items,
-//    '#header' => $header,
-//    '#multiple' => TRUE,
-//    '#options' => $selected_options,
-//    '#default_value' => array(),
-    '#title' => 'Selected forms.',
-  );
-/*
-  $form['form_group']['selected_forms']['remove_selected'] = array(
-    '#type' => 'button',
-    '#value' => 'Remove selected',
-    '#ajax' => webform_goals_form_group_builder_ajax('webform_goals_form_group_remove_selected'),
-  );
-*/
-  $form['form_group']['selected_form_ids'] = array(
+  $form['selected_form_ids'] = array(
     '#type' => 'select',
     '#multiple' => TRUE,
     '#size' => 10,
-    '#title' => 'Forms',
+    '#title' => 'Forms in form group',
     '#empty_option' => t('-- select --'),
     '#empty_value' => 0,
     '#required' => TRUE,
@@ -219,49 +83,6 @@ function webform_goals_form_group_context_fields(&$form, &$form_state, $goal = a
     ),
   );
 
-//  $form['mockup'] = array(
-//    '#theme' => 'image',
-//    '#path' => drupal_get_path('module', 'webform_goals') . '/mockup.png',
-//  );
-}
-
-function webform_goals_form_group_builder_ajax($callback) {
-  return array(
-    'callback' => $callback,
-    'effect' => 'fade',
-    'method' => 'replace',
-    'wrapper' => 'form-group-builder',
-  );
-}
-
-function webform_goals_form_group_remove_selected($form, $form_state) {
-  $messages = theme('status_messages');
-  return array(
-    '#type' => 'ajax',
-    '#commands' => array(
-      ajax_command_replace("#form-group-builder", $messages . render($form['context_container']['options_wrapper']['options']['form_group'])),
-    ),
-  );
-}
-
-function webform_goals_form_group_add_selected($form, $form_state) {
-  $messages = theme('status_messages');
-  return array(
-    '#type' => 'ajax',
-    '#commands' => array(
-      ajax_command_replace("#form-group-builder", $messages . render($form['context_container']['options_wrapper']['options']['form_group'])),
-    ),
-  );
-}
-
-function webform_goals_form_group_builder_available_forms_element($form, $form_state) {
-  $messages = theme('status_messages');
-  return array(
-    '#type' => 'ajax',
-    '#commands' => array(
-      ajax_command_replace("#form-group-builder", $messages . render($form['context_container']['options_wrapper']['options']['form_group'])),
-    ),
-  );
 }
 
 /**
