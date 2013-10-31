@@ -397,6 +397,8 @@ function _webform_goals_list_webforms() {
   static $nodes = array();
   if (!count($nodes)) {
     $types = webform_variable_get('webform_node_types');
+    $readable_types = webform_goals_get_readable_types($types);
+
     $results = db_query('
       SELECT nid, title, type FROM {node} WHERE type IN(:types)
     ', array(':types' => $types));
@@ -408,10 +410,31 @@ function _webform_goals_list_webforms() {
         $node_wrapper = entity_metadata_wrapper('node', $node);
         $internal_name = ' - ' . $node_wrapper->field_fundraiser_internal_name->value(array('sanitize' => TRUE));
       }
-      $nodes[$result['type']][$result['nid']] = '(' . $result['nid'] . ') ' . $result['title'] . $internal_name;
+      $readable_type = $readable_types[$result['type']];
+      $nodes[$result['type']][$result['nid']] = '(' . $result['nid'] . ') ' . $result['title'] . $internal_name . ' - ' . $readable_type;
     }
   }
+
   return count($nodes) ? $nodes : FALSE;
+}
+
+/**
+ * Gets the human readable type names for the given machine type names.
+ *
+ * @param array $types
+ *   machine names
+ *
+ * @return array
+ *   machine name => display name
+ */
+function webform_goals_get_readable_types($types) {
+  $return = array();
+  $results = db_query("SELECT type, name FROM {node_type} WHERE type IN (:types)", array(':types' => $types));
+  foreach($results as $result) {
+    $return[$result->type] = $result->name;
+  }
+
+  return $return;
 }
 
 function _webform_goals_field_list($nid) {
