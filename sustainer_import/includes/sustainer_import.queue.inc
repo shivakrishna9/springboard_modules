@@ -406,8 +406,9 @@ function _sustainer_import_create_master_order($record, $account, &$errors) {
   sustainer_import_add_sync_map($map);
 
   // Update Salesforce with new order id.
-  sustainer_import_update_opportunity_id($donation, $record['salesforce_opportunity_id']);
-
+  if (!empty($record['salesforce_opportunity_id'])) {
+    sustainer_import_update_opportunity_id($donation, $record['salesforce_opportunity_id']);
+  }
   // Maintain a map of ids.
   sustainer_import_map_ids($donation->did, $record['order_id']);
 
@@ -536,8 +537,9 @@ function _sustainer_import_create_sustainer_series_instance($instance_details, $
   sustainer_import_add_sync_map($map);
 
   // Update Salesforce with new order id.
-  sustainer_import_update_opportunity_id($new_donation, $instance_details['salesforce_opportunity_id']);
-
+  if (!empty($instance_details['salesforce_opportunity_id'])) {}
+    sustainer_import_update_opportunity_id($new_donation, $instance_details['salesforce_opportunity_id']);
+  }
   // Map original sustainer instance order id to new order id.
   sustainer_import_map_ids($new_donation->did, $instance_details['order_id']);
 
