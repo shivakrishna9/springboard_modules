@@ -3,4 +3,4 @@ description = Implements Payment Solutions, Inc. Electronic Funds Transfer (EFT)
 package = Commerce (contrib)
 dependencies[] = commerce_psi
 core = 7.x
-version = 7.x-4.0-beta4.0.5
+version = 7.x-4.0-beta4.0.6
