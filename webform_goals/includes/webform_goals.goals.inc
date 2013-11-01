@@ -142,7 +142,8 @@ function webform_goals_webform_goals_list_metrics($selected_context, $form_state
         'name' => t('Custom field '),
         'description' => t('Goal progress will be calculated based on the sum of values submitted by this field.'),
         'settings_callback' => 'webform_goals_single_custom_fields',
-        'child_elements' => $elements, // TODO: replace with callback.
+        // @todo Replace with callback.
+        'child_elements' => $elements,
         'form_text' => array(
           'target_value' => array(
             'title' => t('What is the total field value required to meet this goal?'),
