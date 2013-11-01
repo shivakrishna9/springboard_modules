@@ -69,7 +69,7 @@ function webform_goals_add($form, $form_state, $goal = array()) {
       '#description' => t('The selected context requires the following additional settings:'),
     );
     $func = $selected_context['settings_callback'];
-    $func($form['context_container']['options_wrapper']['options'], $goal);
+    $func($form['context_container']['options_wrapper']['options'], $form_state, $goal);
 
   }
 
