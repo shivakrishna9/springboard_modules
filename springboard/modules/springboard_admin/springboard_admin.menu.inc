@@ -40,6 +40,8 @@ function springboard_admin_admin_menu_items() {
     'link_path' => 'admin/springboard/forms/donation',
     'link_title' => t('Donation Forms'),
     'menu_name' => 'springboard_admin_menu',
+    'expanded' => TRUE,
+    'customized' => 1,
     'weight' => 0,
     '_children' => array(),
   );
@@ -49,6 +51,8 @@ function springboard_admin_admin_menu_items() {
     'link_path' => 'admin/springboard/forms/donation',
     'link_title' => t('View All Donation Forms'),
     'menu_name' => 'springboard_admin_menu',
+    'expanded' => TRUE,
+    'customized' => 1,
     'weight' => 0,
   );
 
@@ -57,6 +61,8 @@ function springboard_admin_admin_menu_items() {
     'link_path' => 'node/add/donation-form',
     'link_title' => 'Create a Donation Form',
     'menu_name' => 'springboard_admin_menu',
+    'expanded' => TRUE,
+    'customized' => 1,
     'weight' => 1,
   );
 
@@ -67,6 +73,8 @@ function springboard_admin_admin_menu_items() {
       // admin/springboard/templates
       'link_title' => 'Confirmation Templates',
       'menu_name' => 'springboard_admin_menu',
+      'expanded' => TRUE,
+      'customized' => 1,
       'weight' => 2,
     );
   }
@@ -76,6 +84,8 @@ function springboard_admin_admin_menu_items() {
     'link_path' => 'admin/springboard/repots/dsr',
     'link_title' => 'Donation Reports',
     'menu_name' => 'springboard_admin_menu',
+    'expanded' => TRUE,
+    'customized' => 1,
     'weight' => 3,
   );
 
@@ -84,6 +94,8 @@ function springboard_admin_admin_menu_items() {
     'link_path' => 'admin/config/salesforce/salesforce-donation',
     'link_title' => 'Donation Settings',
     'menu_name' => 'springboard_admin_menu',
+    'expanded' => TRUE,
+    'customized' => 1,
     'weight' => 4,
   );
 
@@ -92,6 +104,8 @@ function springboard_admin_admin_menu_items() {
     'link_path' => 'admin/springboard/forms/webforms',
     'link_title' => t('Forms'),
     'menu_name' => 'springboard_admin_menu',
+    'expanded' => TRUE,
+    'customized' => 1,
     'weight' => 1,
     '_children' => array(),
   );
@@ -101,6 +115,8 @@ function springboard_admin_admin_menu_items() {
     'link_path' => 'admin/springboard/forms/webforms',
     'link_title' => t('View All Forms'),
     'menu_name' => 'springboard_admin_menu',
+    'expanded' => TRUE,
+    'customized' => 1,
     'weight' => 0,
   );
 
@@ -108,8 +124,7 @@ function springboard_admin_admin_menu_items() {
    * Create a menu item for each type of webform
    * In the future, we will use an intermediate page to choose the form type.
    **/
-  $webforms = variable_get('webform_node_types', serialize(array()));
-  unserialize($webforms);
+  $webforms = variable_get('webform_node_types', array());
   foreach ($webforms as $node_type) {
     if ($node_type && $node_type != 'donation_form') {
       drupal_set_message($node_type);
@@ -118,6 +133,8 @@ function springboard_admin_admin_menu_items() {
         'link_path' => 'node/add/' . $node_type,
         'link_title' => 'Create a ' . $node_type . ' Form',
         'menu_name' => 'springboard_admin_menu',
+        'expanded' => TRUE,
+        'customized' => 1,
         'weight' => 1,
       );
     }
@@ -129,6 +146,8 @@ function springboard_admin_admin_menu_items() {
     // admin/springboard/templates
     'link_title' => 'Confirmation Templates',
     'menu_name' => 'springboard_admin_menu',
+    'expanded' => TRUE,
+    'customized' => 1,
     'weight' => 2,
   );
 
@@ -137,7 +156,9 @@ function springboard_admin_admin_menu_items() {
    'link_path' => '',
    'link_title' => 'Form Reports',
    'menu_name' => 'springboard_admin_menu',
-   'weight' => 3,
+   'expanded' => TRUE,
+   'customized' => 1,
+   'weight' =>  3,
    );*/
 
   // Forms > Form Settings
@@ -145,6 +166,8 @@ function springboard_admin_admin_menu_items() {
     'link_path' => 'admin/springboard/forms/webforms',
     'link_title' => 'Form Settings',
     'menu_name' => 'springboard_admin_menu',
+    'expanded' => TRUE,
+    'customized' => 1,
     'weight' => 4,
   );
 
@@ -154,51 +177,63 @@ function springboard_admin_admin_menu_items() {
     // admin/springboard/templates
     'link_title' => t('Templates'),
     'menu_name' => 'springboard_admin_menu',
+    'expanded' => TRUE,
+    'customized' => 1,
     'weight' => 2,
     '_children' => array(),
   );
 
   // Templates > Page Templates
   $items['templates']['_children'][] = array(
-    'link_path' => '/admin/springboard/templates/page_templates', // @TODO create
-    // this page /admin/springboard/templates/page_templates
+    'link_path' => 'admin/springboard/templates/page-templates', // @TODO create
+    // this page /admin/springboard/templates/page-templates
     'link_title' => 'Page Templates',
     'menu_name' => 'springboard_admin_menu',
+    'expanded' => TRUE,
+    'customized' => 1,
     'weight' => 1,
   );
 
   // Templates > Email Templates
   $items['templates']['_children'][] = array(
-    'link_path' => '/admin/springboard/templates/email_templates', // @TODO
-    // create this page /admin/springboard/templates/email_templates
+    'link_path' => 'admin/springboard/templates/email-templates', // @TODO
+    // create this page /admin/springboard/templates/email-templates
     'link_title' => 'Email Templates',
     'menu_name' => 'springboard_admin_menu',
+    'expanded' => TRUE,
+    'customized' => 1,
     'weight' => 1,
   );
 
   // Top Level: Marketing & Analytics
   $items['marketing_analytics'] = array(
-    'link_path' => 'admin/springboard/marketing_analytics', // @TODO create this
-    // page admin/springboard/marketing_analytics
+    'link_path' => 'admin/springboard/marketing-analytics', // @TODO create this
+    // page admin/springboard/marketing-analytics
     'link_title' => t('Marketing & Analytics'),
     'menu_name' => 'springboard_admin_menu',
+    'expanded' => TRUE,
+    'customized' => 1,
     'weight' => 4,
     '_children' => array(),
   );
 
   // Marketing & Analytics > Source Codes
   $items['marketing_analytics']['_children'][] = array(
-    'link_path' => '/admin/springboard/settings/market-source',
+    'link_path' => 'admin/springboard/settings/market-source',
     'link_title' => 'Source Codes',
     'menu_name' => 'springboard_admin_menu',
+    'expanded' => TRUE,
+    'customized' => 1,
     'weight' => 1,
   );
 
   // Marketing & Analytics > Analytics Integraiton
   $items['marketing_analytics']['_children'][] = array(
-    'link_path' => '/admin/springboard/settings/ga',
+    'link_path' => 'admin/springboard/settings/ga',
     'link_title' => 'Analytics Integration',
     'menu_name' => 'springboard_admin_menu',
+    'expanded' => TRUE,
+    'customized' => 1,
     'weight' => 2,
   );
 
@@ -208,6 +243,8 @@ function springboard_admin_admin_menu_items() {
     // admin/springboard/results
     'link_title' => t('Results'),
     'menu_name' => 'springboard_admin_menu',
+    'expanded' => TRUE,
+    'customized' => 1,
     'weight' => 5,
     '_children' => array(),
   );
@@ -217,6 +254,8 @@ function springboard_admin_admin_menu_items() {
     'link_path' => 'admin/springboard/repots/dsr',
     'link_title' => 'Donation Reports',
     'menu_name' => 'springboard_admin_menu',
+    'expanded' => TRUE,
+    'customized' => 1,
     'weight' => 0,
   );
 
@@ -225,6 +264,8 @@ function springboard_admin_admin_menu_items() {
     'link_path' => 'admin/springboard/settings',
     'link_title' => t('Options'),
     'menu_name' => 'springboard_admin_menu',
+    'expanded' => TRUE,
+    'customized' => 1,
     'weight' => 6,
     '_children' => array(),
   );
@@ -234,6 +275,8 @@ function springboard_admin_admin_menu_items() {
     'link_path' => 'user',
     'link_title' => 'My Profile',
     'menu_name' => 'springboard_admin_menu',
+    'expanded' => TRUE,
+    'customized' => 1,
     'weight' => 0,
   );
 
@@ -243,8 +286,37 @@ function springboard_admin_admin_menu_items() {
     // springboard or make a new page and change path here
     'link_title' => 'Settings',
     'menu_name' => 'springboard_admin_menu',
+    'expanded' => TRUE,
+    'customized' => 1,
+    'weight' => 1,
+  );
+
+  $items['tools'] = array(
+    'link_path' => '',
+    'link_title' => 'Other Tools',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => TRUE,
+    'customized' => 1,
+    'weight' => 0,
+    '_children' => array(),
+  );
+
+  $items['tools']['drupal'] = array(
+    'link_path' => 'http://drupal.org',
+    'link_title' => 'Drupal',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => TRUE,
+    'customized' => 1,
     'weight' => 0,
   );
 
+  $items['tools']['salesforce'] = array(
+    'link_path' => 'http://salesforce.com',
+    'link_title' => 'Salesforce.com',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => TRUE,
+    'customized' => 1,
+    'weight' => 1,
+  );
   return $items;
 }
