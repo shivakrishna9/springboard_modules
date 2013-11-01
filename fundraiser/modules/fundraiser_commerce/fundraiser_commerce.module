@@ -1700,7 +1700,7 @@ function _fundraiser_commerce_encrypt($input) {
     $requirements = encrypt_requirements('runtime');
     if (isset($requirements['encrypt_keys']) && $requirements['encrypt_keys']['severity'] == REQUIREMENT_ERROR) {
       drupal_set_message(t('A problem was found with your secure key.') . ' ' .
-        $requirements['encrypt_keys']['value'],   'warning');
+        $requirements['encrypt_keys']['value'], 'warning');
     }
     else {
       return encrypt($input);
@@ -1718,7 +1718,7 @@ function _fundraiser_commerce_decrypt($input) {
     $requirements = encrypt_requirements('runtime');
     if (isset($requirements['encrypt_keys']) && $requirements['encrypt_keys']['severity'] == REQUIREMENT_ERROR) {
       drupal_set_message(t('A problem was found with your secure key.') . ' ' .
-        $requirements['encrypt_keys']['value'],   'warning');
+        $requirements['encrypt_keys']['value'], 'warning');
     }
     else {
       return decrypt($input);
