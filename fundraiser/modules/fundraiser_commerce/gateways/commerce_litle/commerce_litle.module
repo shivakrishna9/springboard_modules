@@ -577,34 +577,6 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
     watchdog('commerce_litle', 'Litle request: !param', array('!param' => '<pre>' . check_plain(print_r($log_nvp, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
   }
 
-  // First let's do an authorization.
-  $auth_response = $init->authorizationRequest($nvp);
-
-  // Log the response if specified.
-  if ($payment_method['settings']['log']['response'] === 'response') {
-    watchdog('commerce_litle', 'Litle Authorization response: !param', array('!param' => '<pre>' . check_plain(XmlParser::getDomDocumentAsString($auth_response)) . '</pre>', WATCHDOG_DEBUG));
-  }
-
-  if (XmlParser::getNode($auth_response, 'response') != '000') {
-    // Create a failed transaction with the error message.
-    $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
-    $transaction->remote_status = COMMERCE_CREDIT_AUTH_CAPTURE;
-    // Store the remote id.
-    $transaction->remote_id = XmlParser::getNode($auth_response, 'litleTxnId');
-
-    $message = XmlParser::getNode($auth_response, 'message');
-    $transaction->message = '<b>' . t('REJECTED') . ':</b> ' . check_plain($message);
-    // Save the transaction information.
-    commerce_payment_transaction_save($transaction);
-
-    drupal_set_message(t('We received an error while processing your card. Please enter your information again or try a different card.'), 'error');
-    if ($payment_method['settings']['verbose_gateway']) {
-      drupal_set_message(check_plain($message), 'error');
-    }
-
-    return FALSE;
-  }
-
   $sale_response = $init->saleRequest($nvp);
 
   // Log the response if specified.
@@ -841,47 +813,6 @@ function commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, 
     }
 
     watchdog('commerce_litle', 'Litle request: !param', array('!param' => '<pre>' . check_plain(print_r($log_nvp, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
-  }
-
-  // First let's do an authorization.
-  $auth_response = $init->authorizationRequest($request_data);
-
-  // Log the response if specified.
-  if ($payment_method['settings']['log']['response'] === 'response') {
-    watchdog('commerce_litle', 'Litle Authorization response: !param', array('!param' => '<pre>' . check_plain(XmlParser::getDomDocumentAsString($auth_response)) . '</pre>', WATCHDOG_DEBUG));
-  }
-
-  $auth_response_code = XmlParser::getNode($auth_response, 'response');
-  if ($auth_response_code != '000') {
-    // 822 Token was not found.
-    // 823 Token was invalid.
-    if (in_array($auth_response_code, array('822', '823'))) {
-      // If the token is not valid, deactivate the card on file.
-      $card_data->status = 0;
-      commerce_cardonfile_save($card_data);
-
-      drupal_set_message(t('The card you selected is no longer valid. Please use a different card to complete payment.'), 'error');
-      return FALSE;
-    }
-
-    // Create a failed transaction with the error message.
-    $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
-    $transaction->remote_status = COMMERCE_CREDIT_AUTH_CAPTURE;
-    // Store the remote id.
-    $transaction->remote_id = XmlParser::getNode($auth_response, 'litleTxnId');
-
-    $message = XmlParser::getNode($auth_response, 'message');
-    $transaction->message = '<b>' . t('REJECTED') . ':</b> ' . check_plain($message);
-    // Save the transaction information.
-    commerce_payment_transaction_save($transaction);
-
-    drupal_set_message(t('We received an error processing your card. Please enter your information again or try a different card.'), 'error');
-
-    if ($payment_method['settings']['verbose_gateway']) {
-      drupal_set_message(check_plain($message), 'error');
-    }
-
-    return FALSE;
   }
 
   $sale_response = $init->saleRequest($request_data);
@@ -1331,15 +1262,6 @@ function commerce_litle_echeck_vault_cardonfile_charge($payment_method, $card_da
 
     return FALSE;
   }
-}
-
-/**
- * Litle request function wrapper.
- */
-function _commerce_litle_request_auth($gateway, $input) {
-  $litle = _commerce_litle_get_litle();
-  $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
-  return $litle->authorizationRequest($input);
 }
 
 /**
