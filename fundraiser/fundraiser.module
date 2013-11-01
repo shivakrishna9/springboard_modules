@@ -6,7 +6,8 @@
  */
 
 // Include theme related functions.
-require_once('fundraiser.theme.inc'); //TODO merge this back in.
+// @todo Merge this back in.
+require_once 'fundraiser.theme.inc';
 
 /**
  * Implements hook_permission().
@@ -1159,7 +1160,7 @@ function _fundraiser_other_amount_field_validate($form, $form_state, $submission
 /**
  * Validation callback for field email. Called during form validation.
  */
-function _fundraiser_email_field_validate($form, $form_state, $submission_fields,   $value) {
+function _fundraiser_email_field_validate($form, $form_state, $submission_fields, $value) {
   if (!_fundraiser_validate_email(trim($value))) {
     return array('mail' => t('You must enter a valid email address.'));
   }

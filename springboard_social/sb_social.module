@@ -6,9 +6,9 @@
  */
 
 // db helper functions
-require_once('includes/sb_social.db.inc');
-require_once('includes/sb_social.salesforce.inc');
-require_once('includes/sb_social.ctools.inc');
+require_once 'includes/sb_social.db.inc';
+require_once 'includes/sb_social.salesforce.inc';
+require_once 'includes/sb_social.ctools.inc';
 
 /**
  * Implements hook_permission().

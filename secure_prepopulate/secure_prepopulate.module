@@ -1,11 +1,11 @@
 <?php
-
 /**
  * @file
- * This module provides functionality for pre-popluating forms from an ecrypted query string parameter.
+ * This module provides functionality for pre-popluating forms from
+ *   an ecrypted query string parameter.
  */
-require_once('secure_prepopulate.synonyms.inc');
 
+require_once 'secure_prepopulate.synonyms.inc';
 
 /**
  * Implmentation of hook_menu().

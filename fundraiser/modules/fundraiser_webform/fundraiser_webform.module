@@ -1,10 +1,10 @@
 <?php
-
-require_once('includes/fundraiser_webform.goals.inc');
 /**
  * @file
  * Field management functions for the fundraiser module
  */
+
+require_once 'includes/fundraiser_webform.goals.inc';
 
 /**
  * Implements hook_menu_alter().

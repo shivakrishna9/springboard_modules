@@ -6,7 +6,7 @@
 
 // @see: http://drupal.org/node/921398 #3
 module_load_include('inc', 'webform', 'includes/webform.components');
-require_once('email_wrappers.mail.inc');
+require_once 'email_wrappers.mail.inc';
 
 function email_wrappers_perm() {
 
