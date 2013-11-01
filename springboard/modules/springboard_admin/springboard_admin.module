@@ -1,1 +1,79 @@
 <?php 
+
+/** 
+ * Implements hook_menu().
+ */
+ 
+function springboard_admin_menu() {
+  $items = array();
+  $items['admin/springboard/templates'] = array(
+    'title' => 'Templates',
+    'type' => MENU_NORMAL_ITEM,
+    'access callback' => 'springboard_admin_menu_access',
+    'access arguments' => array('admin/springboard/templates'),
+    'page callback' => 'springboard_admin_template_page',
+  );
+  return $items;
+}
+
+/**
+ * Callback function. 
+ * Performs page access checks for Springboard administrative pages.
+ *
+ * @param $path
+ * The page path.
+ * 
+ * @return 
+ * Boolean to indicate if access is allowed.
+ *
+ */
+
+function springboard_admin_menu_access($path) {
+  switch ($path) {
+    case 'admin/springboard/templates':
+      if (user_access('edit any page_wrapper content') || user_access('edit any email_wrapper content')) {
+        return TRUE;
+      }
+      else {
+        return FALSE;
+      }
+    break;
+    
+  }
+}
+
+/**
+ * Callback function.
+ * Renders page content for the "Templates" administrative page.
+ * 
+ * @return
+ * HTML output for the page.
+ */
+
+function springboard_admin_template_page() {
+  $output = '';
+  
+  // load Page Templates view
+  $view = views_get_view('sbv_page_templates');
+  $view->set_display('block_1');
+  $view->set_arguments(array());
+  $view->pre_execute();
+  $view->execute();
+  if($view && $view->access('block_1') && !empty($view->result)) {
+    $output .= '<h2>' . $view->get_title('block_1') . '</h2>';
+    $output .= $view->render();
+  }
+
+  // load Email Templates view
+  $view = views_get_view('sbv_email_templates');
+  $view->set_display('block_1');
+  $view->set_arguments(array());
+  $view->pre_execute();
+  $view->execute();
+  if($view && $view->access('block_1') && !empty($view->result)) {
+    $output .= '<h2>' . $view->get_title('block_1') . '</h2>';
+    $output .= $view->render();
+  }
+  
+  return $output;
+}
