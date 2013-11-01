@@ -645,7 +645,7 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
  * 'gid' if updating an existing record or array() if inserting new.
  */
 function webform_goals_update_widget($args, $update = array()) {
-  require_once'includes/webform_goals.files.inc';
+  require_once 'includes/webform_goals.files.inc';
   $goal = $args['webform_goal'];
   $settings = array(
     'gid' => $goal['gid'],
