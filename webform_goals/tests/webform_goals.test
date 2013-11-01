@@ -32,10 +32,6 @@ class WebformGoalsIntegratedTestSetup extends DrupalWebTestCase {
       'edit all webform submissions',
       'delete all webform submissions',
       'administer users',
-      'administer user map',
-      'alter webform components',
-      'configure webform settings',
-      'configure webform emails',
     );
 
     foreach ($permissions as $user_key => $role_permissions) {
@@ -56,7 +52,7 @@ class WebformGoalsIntegratedTestCase extends WebformGoalsIntegratedTestSetup {
     return array(
       'name' => t('Webform Goals'),
       'description' => t('Checks goals UI & Display.'),
-      'group' => t('Webform User'),
+      'group' => t('Webform Goals'),
     );
   }
 
