@@ -3,8 +3,8 @@
  * @file module code & core hooks
  */
 
-require_once('includes/webform_goals.goals.inc');
-require_once('webform_goals.forms.inc');
+require_once 'includes/webform_goals.goals.inc';
+require_once 'webform_goals.forms.inc';
 
 /**
  * Implements hook_init().
@@ -362,7 +362,7 @@ function webform_goal_load_multiple($nid = FALSE) {
  * @return type
  */
 function webform_goals_delete_goal($gid) {
-  require_once('includes/webform_goals.files.inc');
+  require_once 'includes/webform_goals.files.inc';
   db_query('
     DELETE FROM {webform_goals
     WHERE gid = :gid
@@ -397,6 +397,8 @@ function _webform_goals_list_webforms() {
   static $nodes = array();
   if (!count($nodes)) {
     $types = webform_variable_get('webform_node_types');
+    $readable_types = webform_goals_get_readable_types($types);
+
     $results = db_query('
       SELECT nid, title, type FROM {node} WHERE type IN(:types)
     ', array(':types' => $types));
@@ -408,10 +410,31 @@ function _webform_goals_list_webforms() {
         $node_wrapper = entity_metadata_wrapper('node', $node);
         $internal_name = ' - ' . $node_wrapper->field_fundraiser_internal_name->value(array('sanitize' => TRUE));
       }
-      $nodes[$result['type']][$result['nid']] = '(' . $result['nid'] . ') ' . $result['title'] . $internal_name;
+      $readable_type = $readable_types[$result['type']];
+      $nodes[$result['type']][$result['nid']] = '(' . $result['nid'] . ') ' . $result['title'] . $internal_name . ' - ' . $readable_type;
     }
   }
+
   return count($nodes) ? $nodes : FALSE;
+}
+
+/**
+ * Gets the human readable type names for the given machine type names.
+ *
+ * @param array $types
+ *   machine names
+ *
+ * @return array
+ *   machine name => display name
+ */
+function webform_goals_get_readable_types($types) {
+  $return = array();
+  $results = db_query("SELECT type, name FROM {node_type} WHERE type IN (:types)", array(':types' => $types));
+  foreach($results as $result) {
+    $return[$result->type] = $result->name;
+  }
+
+  return $return;
 }
 
 function _webform_goals_field_list($nid) {
@@ -546,36 +569,46 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
         case 'start_date':
           $replacements[$token] = date('m-d-Y', $goal['start_date']);
           break;
+
         case 'end_date':
           $replacements[$token] = date('m-d-Y', $goal['end_date']);
           break;
+
         case 'progress-raw':
           $replacements[$token] = $goal_progress['count'];
           break;
+
         case 'progress-percent':
           $replacements[$token] = $goal_progress['percent'];
           break;
+
         case 'progress-percent-capped':
           $replacements[$token] = ($goal_progress['percent'] > 100) ? 100 : $goal_progress['percent'];
           break;
+
         case 'progress-remaining-raw':
           $replacements[$token] = $goal_progress['remaining'];
           break;
+
         case 'progress-remaining-percent':
           $replacements[$token] = $goal_progress['percent_remaining'];
           break;
+
         case 'progress-remaining-percent-capped':
           $replacements[$token] = ($goal_progress['percent_remaining'] < 0) ? 0 : $goal_progress['percent_remaining'];
           break;
+
         case 'progress-bar':
           // cap at 100 so we don't blow out our CSS widths.
           $percent_capped = ($goal_progress['percent'] > 100) ? 100 : $goal_progress['percent'];
           //$replacements[$token] = theme('webform_goals_progress_bar', array('goal_id' => $goal['gid'], 'goal_progress' => $progress));
           $replacements[$token] = webform_goals_render_progress_bar($goal['progress_bar'], $percent_capped);
           break;
+
         case 'starter-message':
           $replacements[$token] = check_markup($goal['starter_message'], $goal['starter_message_format']);
           break;
+
         case 'progress-starter':
           $output = '';
           if ($goal_progress['count'] >= $data['webform_goal']['display_threshold']) {
@@ -588,12 +621,15 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
           }
           $replacements[$token] = $output;
           break;
+
         case 'target':
           $replacements[$token] = $data['webform_goal']['target_value'];
           break;
+
         case 'total':
           $replacements[$token] = $goal_progress['count'];
           break;
+
       }
     }
     return $replacements;
@@ -609,7 +645,7 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
  * 'gid' if updating an existing record or array() if inserting new.
  */
 function webform_goals_update_widget($args, $update = array()) {
-  require_once('includes/webform_goals.files.inc');
+  require_once 'includes/webform_goals.files.inc';
   $goal = $args['webform_goal'];
   $settings = array(
     'gid' => $goal['gid'],
@@ -718,11 +754,11 @@ function webform_goals_theme($existing, $type, $theme, $path) {
  * Applies appropriate template filtering and token replacement to
  * goal templates when rendering a widget.
  */
-function theme_webform_goals_widget($args) { //$goal) {
+function theme_webform_goals_widget($args) {
   $goal = $args['webform_goal'];
   $nid = isset($goal['extra']['selected_form_id']) ? $goal['extra']['selected_form_id'] : 0;
   $template = token_replace(check_markup($goal['template'], $goal['template_format']), array('webform_goal' => $goal, 'nid' => $nid));
-  //$template_filtered = $template, $goal['template_format'];
+  // $template_filtered = $template, $goal['template_format'];
   $data['markup'] = $template;
   $data['tokens'] = _webform_goals_pack_tokens($goal, $nid);
   return serialize($data);

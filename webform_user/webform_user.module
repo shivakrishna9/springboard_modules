@@ -524,7 +524,7 @@ function webform_user_mapping_form($form, $form_state, $node) {
     '#header' => $header,
     '#rows' => array(),
   );
-  foreach ($node->webform['components']  as $cid => $component) {
+  foreach ($node->webform['components'] as $cid => $component) {
     if (isset($node->map[$cid])) {
       $default = $node->map[$cid];
     }

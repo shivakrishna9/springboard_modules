@@ -35,6 +35,17 @@ function webform_goals_requirements($phase) {
  * Implements hook_install().
  */
 function webform_goals_install() {
+
+  // Add the goals paths to the paths to use improved multi select on.
+  if (module_exists('improved_multi_select')) {
+    $paths = variable_get('improved_multi_select:url', '');
+    if ($paths) {
+      $paths .= "\n";
+    }
+    $paths .= 'admin/config/content/webform_goals/*';
+    variable_set('improved_multi_select:url', $paths);
+  }
+
   variable_set('webform_goals_loader_file_created', FALSE);
   if (empty($_SERVER['SERVER_NAME'])) {
     // Running from somewhere that doesn't set the server name.

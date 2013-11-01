@@ -24,8 +24,10 @@ function webform_goals_admin_list($form, $form_state = array()) {
     $row[] = $goal['name'];
     $row[] = $selected_context['name'];
     $row[] = $selected_metric['name'];
-    $row[] = $goal['target_value']; //TODO: for single context add link to parent node or node title
-    $row[] = $data['count']; // TODO amount: circle back once metrics tracking code is in play.
+    // @todo for single context add link to parent node or node title
+    $row[] = $goal['target_value'];
+    // @todo amount: circle back once metrics tracking code is in play.
+    $row[] = $data['count'];
     $row[] = $data['percent'] . '%';
     $row[] = webform_goals_goal_status($goal);
     $row[] = _webform_goals_actions($goal);
@@ -91,7 +93,8 @@ function _webform_goals_actions($goal) {
   $links[] = l(t('Embed code'), 'webform_goals/' . $goal['gid'] . '/embed', $options);
 
   foreach ($links as $link) {
-    $output .= $link . '&nbsp;&nbsp;'; // lame
+    // lame
+    $output .= $link . '&nbsp;&nbsp;';
   }
   return $output;
 }
