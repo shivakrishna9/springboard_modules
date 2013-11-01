@@ -74,12 +74,9 @@ function webform_goals_add($form, $form_state, $goal = array()) {
   }
 
   // SF Webform should add the Salesforce context.
-
   // Metrics radios (standard + plugin architecture)
-
   foreach ($metrics as $key => $metric) {
     $metrics_options[$key] = $metric['name'];
-
   }
 
   // #AJAX enable so minimum display limit UI can be swapped.
@@ -92,7 +89,8 @@ function webform_goals_add($form, $form_state, $goal = array()) {
   $form['metrics_wrapper']['metrics'] = array(
     '#type' => 'radios',
     '#title' => '',
-    '#options' => $metrics_options, // Get valid options from plugin
+    // Get valid options from plugin
+    '#options' => $metrics_options,
     '#default_value' => $selected_metric['id'],
     '#ajax' => array(
       'callback' => 'webform_goals_metrics_callback',
@@ -226,7 +224,8 @@ function webform_goals_add($form, $form_state, $goal = array()) {
     '#type' => 'text_format',
     '#title' => t('Goal template'),
     '#description' => t(''),
-    '#default_value' => !empty($goal['template']) ? $goal['template'] : theme('webform_goals_default_template'), //TODO: theme function to output default template
+    // @todo theme function to output default template
+    '#default_value' => !empty($goal['template']) ? $goal['template'] : theme('webform_goals_default_template'),
   );
   if (!empty($goal['template_format'])) {
     $form['template']['template']['#format'] = $goal['template_format'];
@@ -271,7 +270,7 @@ function webform_goals_add_validate(&$form, &$form_state) {
  * Submission handler for goal add/edit form.
  */
 function webform_goals_add_submit($form, &$form_state) {
-  require_once('includes/webform_goals.files.inc');
+  require_once 'includes/webform_goals.files.inc';
 
   $settings = array(
     'gid' => !empty($form_state['values']['gid']) ? $form_state['values']['gid'] : '',
@@ -444,15 +443,20 @@ function webform_goals_render_progress_bar($bar_type, $goal_progress, $drupal = 
     case 'flat_ui':
       $output = theme('webform_goals_flat_ui_progress_bar', array('goal_progress' => $goal_progress));
       break;
+
     case 'twitter_basic':
       $output = theme('webform_goals_twitter_progress_bar', array('goal_progress' => $goal_progress));
       break;
+
     case 'twitter_striped':
       $output = theme('webform_goals_twitter_striped_progress_bar', array('goal_progress' => $goal_progress));
       break;
+
     case 'animated':
       $output = theme('webform_goals_animated_progress_bar', array('goal_progress' => $goal_progress, 'drupal' => $drupal));
       break;
+
   }
+
   return $output;
 }
