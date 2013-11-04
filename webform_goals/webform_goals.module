@@ -555,8 +555,7 @@ function webform_goals_token_info() {
  */
 function webform_goals_tokens($type, $tokens, $data = array(), $options = array()) {
   if ($type = 'webform_goal' && !empty($data['webform_goal'])) {
-
-    $goal_progress = webform_goals_track_metric($data['webform_goal']);
+    $goal_progress = $data['goal_progress'];
     $goal = $data['webform_goal'];
     $standard_tokens = array('gid', 'name', 'starter_message', 'display_threshold');
     foreach ($standard_tokens as $standard) {
@@ -647,6 +646,7 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
 function webform_goals_update_widget($args, $update = array()) {
   require_once 'includes/webform_goals.files.inc';
   $goal = $args['webform_goal'];
+  $args['goal_progress'] = webform_goals_track_metric($goal);
   $settings = array(
     'gid' => $goal['gid'],
     'widget' => theme('webform_goals_widget', $args),
@@ -699,6 +699,7 @@ function webform_goals_theme($existing, $type, $theme, $path) {
       'arguments' => array(
         'goal' => NULL,
         'nid' => NULL,
+        'goal_progress' => NULL,
       ),
     ),
     'webform_goals_default_template' => array(
@@ -756,20 +757,27 @@ function webform_goals_theme($existing, $type, $theme, $path) {
  */
 function theme_webform_goals_widget($args) {
   $goal = $args['webform_goal'];
-  $nid = isset($goal['extra']['selected_form_id']) ? $goal['extra']['selected_form_id'] : 0;
-  $template = token_replace(check_markup($goal['template'], $goal['template_format']), array('webform_goal' => $goal, 'nid' => $nid));
+
+  $token_data = array(
+    'webform_goal' => $goal,
+    'nid' => isset($goal['extra']['selected_form_id']) ? $goal['extra']['selected_form_id'] : 0,
+    'goal_progress' => $args['goal_progress'],
+  );
+
+  $template = token_replace(check_markup($goal['template'], $goal['template_format']), $token_data);
   // $template_filtered = $template, $goal['template_format'];
   $data['markup'] = $template;
-  $data['tokens'] = _webform_goals_pack_tokens($goal, $nid);
+  $data['tokens'] = _webform_goals_pack_tokens($token_data);
   return serialize($data);
 }
 
-function _webform_goals_pack_tokens($goal, $nid) {
+function _webform_goals_pack_tokens($token_data) {
+  $tokens_replaced = array();
   $tokens = webform_goals_token_info();
   foreach ($tokens['tokens']['webform_goal'] as $key => $value) {
     // I had this nifty idea where I packed all the tokens down with json_encode and then
     // replaced them in one go. Unfortunately the markup tokens screw up the decode.
-    $tokens_replaced["[webform_goal:$key]"] = token_replace("[webform_goal:$key]", array('webform_goal' => $goal, 'nid' => $nid));
+    $tokens_replaced["[webform_goal:$key]"] = token_replace("[webform_goal:$key]", $token_data);
   }
 
   return $tokens_replaced;
