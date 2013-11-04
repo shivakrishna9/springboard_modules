@@ -2772,13 +2772,15 @@ function fundraiser_webform_token_selector_blacklist_alter(&$tokens) {
  * ecommerce-agnostic lookup of total dollar amount donated via a single
  * donation form.
  *
- * @param type $nid
- * Node ID
+ * @param int $nid
+ *   Node ID
  *
- * @return total successful donations or FALSE if none found.
+ * @return float|bool
+ *   Total successful donations or FALSE if none found.
  */
 function fundraiser_get_total_donations_by_nid($nid, $start = FALSE, $end = FALSE) {
-  $node = node_load($nid);
+  // @todo I don't think this loaded node is needed.
+  // $node = node_load($nid);
   $total_donations = module_invoke_all('fundraiser_get_total_donations_by_nid', $nid, $start, $end);
   return $total_donations[0];
 }
