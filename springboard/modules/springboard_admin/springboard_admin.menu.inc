@@ -36,7 +36,7 @@ function springboard_admin_admin_menu_items() {
   $items = array();
   // Top Level: Home (dashboard)
   $items['dashboard'] = array(
-    'link_path' => 'admin/springboard/',
+    'link_path' => 'admin/springboard',
     'link_title' => t('Home'),
     'menu_name' => 'springboard_admin_menu',
     'expanded' => TRUE,
