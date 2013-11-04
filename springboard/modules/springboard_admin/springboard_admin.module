@@ -1,5 +1,7 @@
 <?php 
 
+include_once('springboard_admin.menu.inc');
+
 /** 
  * Implements hook_menu().
  */
@@ -14,6 +16,36 @@ function springboard_admin_menu() {
     'page callback' => 'springboard_admin_template_page',
   );
   return $items;
+}
+
+/**
+ * Implements hook_custom_theme().
+ * 
+ * Force the use of springboard_backend theme on Springboard-related 
+ * administration pages.
+ */
+
+function springboard_admin_custom_theme() {
+  $themes = list_themes();
+
+  if (!isset($themes['springboard_backend'])) {
+    return;
+  }
+
+  $sb_menu = springboard_admin_admin_menu_items();
+  $paths = array();
+  foreach ($sb_menu as $item) {
+    $paths[] = $item['link_path'];
+    // as with the installation, if we ever need more than 2 levels of 
+    // navigation, we will need real recursion here.
+    foreach ($item['_children'] as $child) {
+      $paths[] = $child['link_path'];
+    }
+  }
+
+  if (in_array($_GET['q'], $paths)) {
+    return 'springboard_backend';
+  }
 }
 
 /**

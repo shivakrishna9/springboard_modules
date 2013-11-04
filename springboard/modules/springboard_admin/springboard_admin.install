@@ -12,6 +12,13 @@ include_once ('springboard_admin.menu.inc');
 
 function springboard_admin_install() {
 
+  // Set the weight of springboard_admin very high so our theme switch rules
+  // will always override other settings.
+  db_update('system')
+    ->fields(array('weight' => 20))
+    ->condition('name', 'springboard_admin', '=')
+    ->execute();
+ 
   // Define and save the Springboard Administration menu
   $sb_menu = springboard_admin_admin_menu();
   menu_save($sb_menu);

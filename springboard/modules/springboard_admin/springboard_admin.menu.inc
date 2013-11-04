@@ -34,7 +34,17 @@ function springboard_admin_admin_menu() {
  */
 function springboard_admin_admin_menu_items() {
   $items = array();
-
+  // Top Level: Home (dashboard)
+  $items['dashboard'] = array(
+    'link_path' => 'admin/springboard/',
+    'link_title' => t('Home'),
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => TRUE,
+    'customized' => 1,
+    'weight' => 0,
+    '_children' => array(),
+  );
+  
   // Top Level: Donation Form
   $items['donation_forms'] = array(
     'link_path' => 'admin/springboard/forms/donation',
@@ -42,7 +52,7 @@ function springboard_admin_admin_menu_items() {
     'menu_name' => 'springboard_admin_menu',
     'expanded' => TRUE,
     'customized' => 1,
-    'weight' => 0,
+    'weight' => 1,
     '_children' => array(),
   );
 
@@ -106,7 +116,7 @@ function springboard_admin_admin_menu_items() {
     'menu_name' => 'springboard_admin_menu',
     'expanded' => TRUE,
     'customized' => 1,
-    'weight' => 1,
+    'weight' => 2,
     '_children' => array(),
   );
 
@@ -179,7 +189,7 @@ function springboard_admin_admin_menu_items() {
     'menu_name' => 'springboard_admin_menu',
     'expanded' => TRUE,
     'customized' => 1,
-    'weight' => 2,
+    'weight' => 3,
     '_children' => array(),
   );
 
@@ -297,7 +307,7 @@ function springboard_admin_admin_menu_items() {
     'menu_name' => 'springboard_admin_menu',
     'expanded' => TRUE,
     'customized' => 1,
-    'weight' => 0,
+    'weight' => 7,
     '_children' => array(),
   );
 
@@ -306,6 +316,7 @@ function springboard_admin_admin_menu_items() {
     'link_title' => 'Drupal',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => TRUE,
+    'external' => 1,
     'customized' => 1,
     'weight' => 0,
   );
@@ -315,6 +326,7 @@ function springboard_admin_admin_menu_items() {
     'link_title' => 'Salesforce.com',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => TRUE,
+    'external' => 1,
     'customized' => 1,
     'weight' => 1,
   );
