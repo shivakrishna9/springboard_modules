@@ -1752,6 +1752,29 @@ function fundraiser_commerce_fundraiser_get_total_donations_by_nid($nid, $start 
 }
 
 /**
+ */
+function fundraiser_commerce_fundraiser_get_total_donations_by_nids($nids, $start = FALSE, $end = FALSE) {
+  // Since more than one goal may target this nid with differing date ranges we
+  // can't cache this.
+
+  $query = db_select('field_data_commerce_order_total', 'f');
+  $query->join('commerce_order', 'c', 'c.order_id = f.entity_id');
+  $query->join('fundraiser_donation', 'fd', 'fd.did = c.order_id');
+  $query->addExpression('SUM(f.commerce_order_total_amount)', 'total');
+  $query->condition('fd.nid', $nids, 'IN');
+  $query->condition('c.status', 'payment_received', '=');
+  if ($start) {
+    $query->condition('c.created', $start, '>=');
+  }
+  if ($end) {
+    $query->condition('c.created', $end, '<=');
+  }
+  $data = $query->execute()->fetchField();
+  // convert from pennies.
+  return $data * .01;
+}
+
+/**
  * Implements hook_rules_data_info_alter().
  */
 function commerce_payment_rules_data_info_alter(&$data) {

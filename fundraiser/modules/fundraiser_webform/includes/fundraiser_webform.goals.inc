@@ -70,12 +70,13 @@ function fundraiser_webform_webform_goals_track_metric($goal, $params = array())
 
     // Bet the database loves this.
     if (count($nids)) {
-      foreach ($nids as $nid) {
-        $donations = fundraiser_get_total_donations_by_nid($nid, $goal['start_date'], $goal['end_date']);
-        if ($donations) {
-          $data['count'] += $donations;
-        }
-      }
+      $data['count'] = fundraiser_commerce_fundraiser_get_total_donations_by_nids($nids, $goal['start_date'], $goal['end_date']);
+//      foreach ($nids as $nid) {
+//        $donations = fundraiser_get_total_donations_by_nid($nid, $goal['start_date'], $goal['end_date']);
+//        if ($donations) {
+//          $data['count'] += $donations;
+//        }
+//      }
     }
 
     // Adds the seed value and calculates the related values.
