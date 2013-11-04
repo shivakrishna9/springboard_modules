@@ -648,3 +648,10 @@ function _sb_social_replace_tokens($string, $node, $sid = NULL) {
   $string = token_replace($string, $token_set);
   return $string;
 }
+
+/**
+ * Implements hook_
+ */
+function springoboard_social_salesforce_queue_create_item_alter(&$item) {
+  //dsm($item, 'queue item');
+}

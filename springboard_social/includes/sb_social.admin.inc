@@ -486,6 +486,7 @@ function sb_social_settings_submit($form, $form_state) {
       'data' => $data,
     );
     sb_social_settings_save($record);
+    drupal_set_message(t('Settings saved.'));
   }
 }
 
