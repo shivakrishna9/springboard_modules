@@ -61,7 +61,7 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
   global $user;
   // deal with submission-based shares (confirmation pages)
   // TODO: clean this up, refactor around a single $record array().
-  if (is_numeric($_GET['sid']) && $type == 'nid') {
+  if (isset($_GET['sid']) && is_numeric($_GET['sid']) && $type == 'nid') {
     module_load_include('inc', 'webform', 'includes/webform.submissions');
     $sid = $_GET['sid'];
     $submission = webform_get_submission($id, $sid);
