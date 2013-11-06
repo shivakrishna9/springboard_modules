@@ -47,7 +47,7 @@ function springboard_admin_admin_menu_items() {
   
   // Top Level: Donation Form
   $items['donation_forms'] = array(
-    'link_path' => 'admin/springboard/forms/donation',
+    'link_path' => 'admin/springboard/forms/donations',
     'link_title' => t('Donation Forms'),
     'menu_name' => 'springboard_admin_menu',
     'expanded' => TRUE,
@@ -58,7 +58,7 @@ function springboard_admin_admin_menu_items() {
 
   // Donation Forms > View All Donation Forms
   $items['donation_forms']['_children'][] = array(
-    'link_path' => 'admin/springboard/forms/donation',
+    'link_path' => 'admin/springboard/forms/donations',
     'link_title' => t('View All Donation Forms'),
     'menu_name' => 'springboard_admin_menu',
     'expanded' => TRUE,
