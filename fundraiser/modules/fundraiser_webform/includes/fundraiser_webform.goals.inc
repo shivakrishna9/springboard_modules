@@ -68,14 +68,10 @@ function fundraiser_webform_webform_goals_track_metric($goal, $params = array())
       $nids = array();
     }
 
-    // Bet the database loves this.
+    // Grouping the nids together to optimize for the case of multiple nids.
+    // This will perform a single query instead of one per nid.
     if (count($nids)) {
-      foreach ($nids as $nid) {
-        $donations = fundraiser_get_total_donations_by_nid($nid, $goal['start_date'], $goal['end_date']);
-        if ($donations) {
-          $data['count'] += $donations;
-        }
-      }
+      $data['count'] = fundraiser_get_total_donations_by_nids($nids, $goal['start_date'], $goal['end_date']);
     }
 
     // Adds the seed value and calculates the related values.

@@ -2769,17 +2769,20 @@ function fundraiser_webform_token_selector_blacklist_alter(&$tokens) {
 }
 
 /**
- * ecommerce-agnostic lookup of total dollar amount donated via a single
- * donation form.
+ * ecommerce-agnostic lookup of total dollar amount donated via multiple
+ *   donation forms.
  *
- * @param type $nid
- * Node ID
+ * Looks up by multiple nids in the hopes of a single faster IN query.
  *
- * @return total successful donations or FALSE if none found.
+ * @param array $nids
+ *   Node IDs
+ *
+ * @return float|bool
+ *   Total successful donations or FALSE if none found.
  */
-function fundraiser_get_total_donations_by_nid($nid, $start = FALSE, $end = FALSE) {
-  $node = node_load($nid);
-  $total_donations = module_invoke_all('fundraiser_get_total_donations_by_nid', $nid, $start, $end);
+function fundraiser_get_total_donations_by_nids($nids, $start = FALSE, $end = FALSE) {
+  $total_donations = module_invoke_all('fundraiser_get_total_donations_by_nids', $nids, $start, $end);
+  // Use the first implementation called.  There should only be one anyway.
   return $total_donations[0];
 }
 
