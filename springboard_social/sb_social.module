@@ -652,6 +652,12 @@ function _sb_social_replace_tokens($string, $node, $sid = NULL) {
 /**
  * Implements hook_
  */
-function springoboard_social_salesforce_queue_create_item_alter(&$item) {
+function sb_social_salesforce_queue_create_item_alter(&$item) {
   dsm($item, 'queue item');
+}
+
+
+function sb_social_salesforce_sync_pass_item($item, $result) {
+  dsm($item, 'item');
+  dsm($result, 'result');
 }

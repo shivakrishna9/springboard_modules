@@ -53,7 +53,7 @@ function sb_social_create_share_event_object($share) {
     'Social_Share_Type__c' => $share['type'],
     'Submission_ID__c' => $share['sid'],
   );
-
+  watchdog('sb_social', print_r($fields, TRUE));
   // This is SOAP partner API format.
   $sobject = new stdClass();
   $sobject->type = 'Social_Share__c'; // sf object type
