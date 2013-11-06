@@ -2772,6 +2772,8 @@ function fundraiser_webform_token_selector_blacklist_alter(&$tokens) {
  * ecommerce-agnostic lookup of total dollar amount donated via multiple
  *   donation forms.
  *
+ * Looks up by multiple nids in the hopes of a single faster IN query.
+ *
  * @param array $nids
  *   Node IDs
  *
@@ -2780,6 +2782,7 @@ function fundraiser_webform_token_selector_blacklist_alter(&$tokens) {
  */
 function fundraiser_get_total_donations_by_nids($nids, $start = FALSE, $end = FALSE) {
   $total_donations = module_invoke_all('fundraiser_get_total_donations_by_nids', $nids, $start, $end);
+  // Use the first implementation called.  There should only be one anyway.
   return $total_donations[0];
 }
 

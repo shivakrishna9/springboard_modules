@@ -1730,7 +1730,7 @@ function _fundraiser_commerce_decrypt($input) {
 /**
  * Implements hook_fundraiser_get_total_donations_by_nids().
  *
- * General purporse getting total donation for an array of nids.
+ * General purpose getting total donation for an array of nids.
  *   Does not take multiple currencies into account.  Assumes all USD.
  *
  * @param array $nids
@@ -1747,6 +1747,11 @@ function fundraiser_commerce_fundraiser_get_total_donations_by_nids($nids, $star
   // Since more than one goal may target this nid with differing date ranges we
   // can't cache this.
 
+  // This would normally use the commerce_order table and do two JOINs,
+  // but here we use the derived values in fundraiser_donation to speed up
+  // the query.
+  // Having an index on fd.status also helps of course.
+  // (commerce_order doesn't have that index.)
   $query = db_select('fundraiser_donation', 'fd');
   $query->addExpression('SUM(fd.amount)', 'total');
   $query->condition('fd.nid', $nids, 'IN');

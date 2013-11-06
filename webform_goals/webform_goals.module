@@ -638,15 +638,24 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
 /**
  * Re-render widget markup with up-to-date progress data.
  * @param array $goal
- * Goal array.
+ *   Goal array.
  *
  * @param $update
- * 'gid' if updating an existing record or array() if inserting new.
+ *   'gid' if updating an existing record or array() if inserting new.
+ *   @todo Deprecated?
  */
 function webform_goals_update_widget($args, $update = array()) {
   require_once 'includes/webform_goals.files.inc';
   $goal = $args['webform_goal'];
+
+  // Calculate the goal progress here once per widget.
+  // Previously this was done in hook_tokens,
+  // but that gets called once per token replaced.
+  // So this was calculating multiple times.
+  // Instead we pass the progress to the theme_webform_goals_widget()
+  // function and that passes it to token_replace down to hook_tokens.
   $args['goal_progress'] = webform_goals_track_metric($goal);
+
   $settings = array(
     'gid' => $goal['gid'],
     'widget' => theme('webform_goals_widget', $args),
@@ -758,6 +767,7 @@ function webform_goals_theme($existing, $type, $theme, $path) {
 function theme_webform_goals_widget($args) {
   $goal = $args['webform_goal'];
 
+  // Token data needed for hook_tokens to do its job.
   $token_data = array(
     'webform_goal' => $goal,
     'nid' => isset($goal['extra']['selected_form_id']) ? $goal['extra']['selected_form_id'] : 0,
@@ -771,6 +781,15 @@ function theme_webform_goals_widget($args) {
   return serialize($data);
 }
 
+/**
+ * Gets token replacements in a keyed array.
+ *
+ * @param array $token_data
+ *   Keyed array of 'webform_goal', 'nid', and 'goal_progress'
+ *
+ * @return array
+ *   Keyed array of token replacements from token_replace().
+ */
 function _webform_goals_pack_tokens($token_data) {
   $tokens_replaced = array();
   $tokens = webform_goals_token_info();

@@ -68,6 +68,8 @@ function fundraiser_webform_webform_goals_track_metric($goal, $params = array())
       $nids = array();
     }
 
+    // Grouping the nids together to optimize for the case of multiple nids.
+    // This will perform a single query instead of one per nid.
     if (count($nids)) {
       $data['count'] = fundraiser_get_total_donations_by_nids($nids, $goal['start_date'], $goal['end_date']);
     }
