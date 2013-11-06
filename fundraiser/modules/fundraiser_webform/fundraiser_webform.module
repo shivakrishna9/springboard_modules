@@ -997,6 +997,11 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
       if ($allow_update) {
         $component['pid'] = $orig_field->pid; // Keep the original parentage, could be set by user.
         $component['name'] = $orig_field->name; // Keep the original name, could be set by user.
+
+        // Need to get the description and keep the original one.
+        $orig_field->extra = unserialize($orig_field->extra);
+        $component['extra']['description'] = $orig_field->extra['description'];
+
         if (!$reset_value) {
           $component['value'] = $orig_field->value; // Keep the original value, could be set by user.
         }
