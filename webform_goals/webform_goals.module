@@ -630,7 +630,7 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
         case 'progress-count-or-starter':
           $output = '';
           // Remove any number_format() stuff for the comparison to the threshold.
-          $clean_count = str_replace(array(',', '.'), '', $goal_progress['count']);
+          $clean_count = str_replace(',', '', $goal_progress['count']);
           if ($clean_count >= $data['webform_goal']['display_threshold']) {
             $output = $goal_progress['count'];
           }
