@@ -649,6 +649,7 @@ function _sb_social_replace_tokens($string, $node, $sid = NULL) {
   return $string;
 }
 
+
 /**
  * Implements hook_
  */
@@ -657,7 +658,34 @@ function sb_social_salesforce_queue_create_item_alter(&$item) {
 }
 
 
+/**
+ * When an opportunity syncs successfully assign it's salesforce id to any
+ * related share events.
+ *
+ * @param $item
+ * @param $result
+ */
 function sb_social_salesforce_sync_pass_item($item, $result) {
-  dsm($item, 'item');
-  dsm($result, 'result');
+  if ($item->object_type === 'Opportunity' && !empty($item->drupal_id)) {
+    sb_social_update_opportunity_id($item, $result);
+    // donation came from a share URL
+    // TODO: this isn't timed correctly. Code should be elsewhere.
+    // TODO: we want to add the sfid of the share event when the donation sobject is created
+    // TODO: OR if the share event hasn't synced yet, we do nothing and requeue
+    // TODO: the opportunity with the share sfid when it syncs successfully.
+    if (isset($item->fields['Social_Referrer_Transaction__c'])) {
+      $sfid = _sb_social_get_opportunity_id_from_share_id($item->fields['Social_Referrer_Transaction__c']);
+      // Parent share event has been synced and as a sfid.
+      if ($sfid) {
+        // add sfid of share event to opportunity
+      }
+    }
+  }
+
+  if ($item->object_type === 'Social_Share__c' && !empty($item->drupal_id)) {
+    sb_social_update_sf_share_id($item, $result);
+  }
+  dsm($item, 'pass item');
+  dsm($result, 'pass result');
+
 }

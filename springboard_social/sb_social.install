@@ -96,6 +96,16 @@ function sb_social_schema() {
         'description' => 'shared URL',
         'type' => 'text',
       ),
+      'sf_share_id' => array(
+        'description' => 'Salesforce Share ID',
+        'type' => 'varchar',
+        'length' => 60,
+      ),
+      'opportunity_id' => array(
+        'description' => 'Salesforce Opportunity ID',
+        'type' => 'varchar',
+        'length' => 60,
+      ),
     ),
     'primary key' => array('share_id'),
     'indexes' => array(
@@ -206,3 +216,23 @@ function sb_social_update_7003() {
   );
   db_create_table('sb_social_path', $schema['sb_social_path']);
 }
+
+/**
+ * Add columns for Salesforce IDs
+ */
+function sb_social_update_7004() {
+  db_add_field('sb_social_shares', 'sf_share_id', array('type' => 'varchar', 'length' => 60, 'description' => 'Salesforce Share ID'));
+  db_add_field('sb_social_shares', 'opportunity_id', array('type' => 'varchar', 'length' => 60, 'description' => 'Salesforce Opportunity ID'));
+}
+/*
+ * 'sf_share_id' => array(
+        'description' => 'Salesforce Share ID',
+        'type' => 'varchar',
+        'length' => 60,
+      ),
+      'opportunity_id' => array(
+        'description' => 'Salesforce Opportunity ID',
+        'type' => 'varchar',
+        'length' => 60,
+      ),
+ */

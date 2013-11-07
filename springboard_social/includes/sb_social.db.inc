@@ -123,6 +123,12 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
     'url' => '',
   );
 
+  // go after the sfid of the parent opportunity if sid is present. This handles
+  // cases where a user shares from a confirmation page after the submission has synced to salesforce.
+  if ($record['sid']) {
+    $record['opportunity_id'] = _sb_social_get_opportunity_id_from_submission_id($record['sid']);
+  }
+
   $share_id = $query->fields($record)->execute();
   // generate url and update share record.
   $url = sb_social_share_tracker_url($share_id, $settings, $url_path);
@@ -482,4 +488,53 @@ function sb_social_save_path($path) {
 function sb_social_get_path($id) {
   $results = db_query('SELECT path FROM {sb_social_path} WHERE pid = :id', array(':id' => $id));
   return $results->fetchField();
+}
+
+/**
+ * Lookup webform submission ID for a given fundraiser donation id.
+ */
+function _sb_social_get_webform_sid_by_donation_id($did) {
+  $result = db_query('SELECT sid FROM {fundraiser_donation} WHERE did = :did', array(':did' => $did));
+  return $result->fetchField();
+}
+
+function sb_social_update_opportunity_id($item, $record) {
+  if (empty($record->id) || $record->success != TRUE) {
+    return FALSE;
+  }
+  $sid = _sb_social_get_webform_sid_by_donation_id($item->drupal_id);
+  drupal_set_message('updated record for !sid for opp id !opp_id', array('!sid' => $sid, '!opp_id' => $record->id));
+  db_query('UPDATE {sb_social_shares} SET opportunity_id = :oppid WHERE sid = :sid', array(':oppid' => $record->id, ':sid' => $sid));
+  return TRUE;
+}
+
+function sb_social_update_sf_share_id($item, $record) {
+  drupal_set_message('attempting to update sfid for share !share. ID: !id', array('!share' => $item->drupal_id, '!id' => $record->id));
+  db_query('UPDATE {sb_social_shares} SET sf_share_id = :sf_share_id WHERE share_id = :share_id', array(':sf_share_id' => $record->id, 'share_id' => $item->drupal_id));
+}
+
+function _sb_social_get_share_salesforce_id_from_map($share_id) {
+  $result = db_query('SELECT sfid FROM {salesforce_sync_map} WHERE drupal_id = :share_id AND module ="sb_social" AND delta = "share_event"', array(':share_id' => $share_id));
+  return $result->fetchField();
+}
+
+function _sb_social_get_opportunity_id_from_submission_id($sid) {
+  $result = db_query('
+    SELECT
+      s.sfid
+    FROM {salesforce_sync_map} s
+    INNER JOIN {fundraiser_donation} f
+      ON f.did = s.drupal_id
+    WHERE f.sid = :sid', array(':sid' => $sid));
+  $sfid = $result->fetchField();
+  return $sfid ? $sfid : 0;
+}
+
+function _sb_social_get_opportunity_id_from_share_id($share_id) {
+  $result = db_query('SELECT sid FROM {sb_social_shares} WHERE share_id = :share_id', array(':share_id' => $share_id));
+  $sid = $result->fetchField();
+  if ($sid) {
+    return _sb_social_get_opportunity_id_from_submission_id($sid);
+  }
+  return FALSE;
 }
