@@ -1762,9 +1762,9 @@ function fundraiser_commerce_fundraiser_get_total_donations_by_nids($nids, $star
   if ($end) {
     $query->condition('fd.created', $end, '<=');
   }
-  $data = $query->execute()->fetchField();
-  // convert from pennies.
-  return $data * .01;
+
+  // This result will already be in dollars.
+  return $query->execute()->fetchField();
 }
 
 /**
