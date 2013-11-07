@@ -297,9 +297,15 @@ function webform_goals_add_submit($form, &$form_state) {
   $save = drupal_write_record('webform_goals', $settings, $update);
   $settings['extra'] = $extra;
   $nid = !empty($extra['selected_form_id']) ? $extra['selected_form_id'] : 0;
+
+  $theme_args = array(
+    'webform_goal' => $settings,
+    'nid' => $nid,
+    'goal_progress' => webform_goals_track_metric($settings),
+  );
   $widget = array(
     'gid' => $settings['gid'],
-    'widget' => theme('webform_goals_widget', array('webform_goal' => $settings, 'nid' => $nid)),
+    'widget' => theme('webform_goals_widget', $theme_args),
   );
 
   drupal_write_record('webform_goals_widget', $widget, $update);
