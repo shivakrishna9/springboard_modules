@@ -538,6 +538,12 @@ function webform_goals_token_info() {
     'name' => t('Progress bar/starter message'),
     'description' => t('Displayes themed progress bar or starter message if display threshold has not been met.'),
   );
+
+  $info['tokens']['webform_goal']['progress-count-or-starter'] = array(
+    'name' => t('Progress count/starter message'),
+    'description' => t('Displays the progress count or the starter message if display threshold has not been met.'),
+  );
+
   $info['tokens']['webform_goal']['target'] = array(
     'name' => t('Goal target'),
     'description' => t('The goal target number.'),
@@ -614,6 +620,19 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
             $percent_capped = ($goal_progress['percent'] > 100) ? 100 : $goal_progress['percent'];
             //$output = theme('webform_goals_progress_bar', array('goal_id' => $goal['gid'], 'goal_progress' => $percent_capped));
             $output = webform_goals_render_progress_bar($goal['progress_bar'], $percent_capped);
+          }
+          elseif (!empty($goal['starter_message'])) {
+            $output = check_markup($goal['starter_message'], $goal['starter_message_format']);
+          }
+          $replacements[$token] = $output;
+          break;
+
+        case 'progress-count-or-starter':
+          $output = '';
+          // Remove any number_format() stuff for the comparison to the threshold.
+          $clean_count = str_replace(',', '', $goal_progress['count']);
+          if ($clean_count >= $data['webform_goal']['display_threshold']) {
+            $output = $goal_progress['count'];
           }
           elseif (!empty($goal['starter_message'])) {
             $output = check_markup($goal['starter_message'], $goal['starter_message_format']);
