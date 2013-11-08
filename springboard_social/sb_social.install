@@ -164,6 +164,31 @@ function sb_social_schema() {
       'path' => array('path'),
     ),
   );
+  $schema['sb_social_submissions'] = array(
+    'description' => 'lookup table, stores webform submission id and donation id for submissions related to a share',
+    'fields' => array(
+      'share_id' => array(
+        'description' => 'share id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'sid' => array(
+        'description' => 'webform submission id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'did' => array(
+        'description' => 'donation id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+  );
   return $schema;
 }
 
@@ -224,15 +249,35 @@ function sb_social_update_7004() {
   db_add_field('sb_social_shares', 'sf_share_id', array('type' => 'varchar', 'length' => 60, 'description' => 'Salesforce Share ID'));
   db_add_field('sb_social_shares', 'opportunity_id', array('type' => 'varchar', 'length' => 60, 'description' => 'Salesforce Opportunity ID'));
 }
-/*
- * 'sf_share_id' => array(
-        'description' => 'Salesforce Share ID',
-        'type' => 'varchar',
-        'length' => 60,
-      ),
-      'opportunity_id' => array(
-        'description' => 'Salesforce Opportunity ID',
-        'type' => 'varchar',
-        'length' => 60,
-      ),
+
+/**
+ * Adds lookup table to track webform submissions and donation ids associated with a share.
  */
+function sb_social_update_7005() {
+  $schema['sb_social_submissions'] = array(
+    'description' => 'lookup table, stores webform submission id and donation id for submissions related to a share',
+    'fields' => array(
+      'share_id' => array(
+        'description' => 'share id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'sid' => array(
+        'description' => 'webform submission id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'did' => array(
+        'description' => 'donation id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+  );
+  db_create_table('sb_social_submissions', $schema['sb_social_submissions']);
+}

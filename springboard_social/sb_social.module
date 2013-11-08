@@ -654,7 +654,34 @@ function _sb_social_replace_tokens($string, $node, $sid = NULL) {
  * Implements hook_
  */
 function sb_social_salesforce_queue_create_item_alter(&$item) {
-  dsm($item, 'queue item');
+   /* If the donation was created by a user who came to the site from a share
+    URL (social_referrer_transaction market source field set) we want to
+    try to add the sfid of the original share event to the opportunity as it's
+    going into the queue.
+
+    If the original share event hasn't been synced yet (no sfid) we go ahead and
+    sync the opportunity anyway, when the share event syncs we'll requeue any applicable
+    donations and queue them for resync.
+   */
+
+  if ($item['object_type'] == 'Opportunity') {
+    dsm($item, 'item at beginning of alter');
+    if (!empty($item['sobject']->fields['Social_Referrer_Transaction__c'])) {
+
+      $sfid = _sb_social_get_share_salesforce_id_from_map($item['sobject']->fields['Social_Referrer_Transaction__c']);
+
+      if ($sfid) {
+        $item['sobject']->fields['Social_Share__c'] = $sfid;
+      }
+      else {
+        $item['sobject']->fields['Social_Share__c'] = 0;
+      }
+    }
+    else {
+      $item['sobject']->fields['Social_Share__c'] = 0;
+    }
+    dsm($item, 'item at tail end of alter');
+  }
 }
 
 
@@ -668,24 +695,48 @@ function sb_social_salesforce_queue_create_item_alter(&$item) {
 function sb_social_salesforce_sync_pass_item($item, $result) {
   if ($item->object_type === 'Opportunity' && !empty($item->drupal_id)) {
     sb_social_update_opportunity_id($item, $result);
-    // donation came from a share URL
-    // TODO: this isn't timed correctly. Code should be elsewhere.
-    // TODO: we want to add the sfid of the share event when the donation sobject is created
-    // TODO: OR if the share event hasn't synced yet, we do nothing and requeue
-    // TODO: the opportunity with the share sfid when it syncs successfully.
-    if (isset($item->fields['Social_Referrer_Transaction__c'])) {
-      $sfid = _sb_social_get_opportunity_id_from_share_id($item->fields['Social_Referrer_Transaction__c']);
-      // Parent share event has been synced and as a sfid.
-      if ($sfid) {
-        // add sfid of share event to opportunity
-      }
-    }
   }
 
   if ($item->object_type === 'Social_Share__c' && !empty($item->drupal_id)) {
+    // stash the returned salesforce id in the sb_social_shares table. This
+    // does duplicate data in {salesforce_sync_map} but it may come in handy later
+    // to have everything in one place. This may let us sidestep future performance issues
+    // as {salesforce_sync_map} has a ton of records.
     sb_social_update_sf_share_id($item, $result);
+
+    // check for donations related to this share event and resync them with the
+    // correct sfid for the share event
+
+    // lookup donations involved
+    $donation_ids = sb_social_load_related_donation_ids($item->drupal_id);
+    dsm($donation_ids, 'related donation ids');
+    // requeue, alter hook should add the sfid of the share.
+    foreach($donation_ids as $donation_id) {
+      $donation = fundraiser_donation_get_donation($donation_id, TRUE);
+      drupal_set_message('requeue donation:' . $donation_id);
+      salesforce_genmap_send_object_to_queue('salesforce_donation', 'UPDATE', $donation->node, $donation->did, $donation, 'donation');
+    }
   }
   dsm($item, 'pass item');
   dsm($result, 'pass result');
 
 }
+
+
+/**
+ * Implements hook_fundraiser_donation_success().
+ *
+ * On successful donation, if the donation came from a share url, we want to add that event
+ * to the submissions table.
+ *
+ * @param $donation
+ */
+function sb_social_fundraiser_donation_success($donation) {
+  // social MS field has a share transaction value, submission
+  // is associated with a share
+  if (!empty($donation->donation['social_referer_transaction'])) {
+    sb_social_submission_save($donation->donation['social_referer_transaction'], $donation->sid, $donation->did);
+  }
+}
+
+// TODO: add similar tracker for petitions and other webform submissions?

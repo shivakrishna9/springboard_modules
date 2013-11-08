@@ -478,6 +478,19 @@ function sb_social_get_path_id($path) {
   return $results->fetchField();
 }
 
+/**
+ * Save path record and return path id.
+ *
+ * This permits us to reference an arbitrary Drupal path
+ * with a unique numeric identifier, which can then be used as
+ * the numeric portion of edit form paths or passed as an ID to
+ * the share tracking callback.
+ *
+ * @param string $path
+ * Drupal menu path.
+ *
+ * @return int
+ */
 function sb_social_save_path($path) {
   $query = db_insert('sb_social_path');
   $record = array('path' => $path);
@@ -485,6 +498,15 @@ function sb_social_save_path($path) {
   return $path_id;
 }
 
+/**
+ * Lookup Drupal menu path by numeric path id.
+ *
+ * @param int $id
+ * Numeric id of the drupal path we're looking for.
+ *
+ * @return string
+ * Returns the requested path.
+ */
 function sb_social_get_path($id) {
   $results = db_query('SELECT path FROM {sb_social_path} WHERE pid = :id', array(':id' => $id));
   return $results->fetchField();
@@ -498,23 +520,26 @@ function _sb_social_get_webform_sid_by_donation_id($did) {
   return $result->fetchField();
 }
 
+/**
+ * @param $item
+ * @param $record
+ * @return bool
+ */
 function sb_social_update_opportunity_id($item, $record) {
   if (empty($record->id) || $record->success != TRUE) {
     return FALSE;
   }
   $sid = _sb_social_get_webform_sid_by_donation_id($item->drupal_id);
-  drupal_set_message('updated record for !sid for opp id !opp_id', array('!sid' => $sid, '!opp_id' => $record->id));
   db_query('UPDATE {sb_social_shares} SET opportunity_id = :oppid WHERE sid = :sid', array(':oppid' => $record->id, ':sid' => $sid));
   return TRUE;
 }
 
 function sb_social_update_sf_share_id($item, $record) {
-  drupal_set_message('attempting to update sfid for share !share. ID: !id', array('!share' => $item->drupal_id, '!id' => $record->id));
   db_query('UPDATE {sb_social_shares} SET sf_share_id = :sf_share_id WHERE share_id = :share_id', array(':sf_share_id' => $record->id, 'share_id' => $item->drupal_id));
 }
 
 function _sb_social_get_share_salesforce_id_from_map($share_id) {
-  $result = db_query('SELECT sfid FROM {salesforce_sync_map} WHERE drupal_id = :share_id AND module ="sb_social" AND delta = "share_event"', array(':share_id' => $share_id));
+  $result = db_query('SELECT sfid FROM {salesforce_sync_map} WHERE drupal_id = :share_id AND module = :module AND delta = :delta', array(':share_id' => $share_id, ':module' => "sb_social", ':delta' => "share_event"));
   return $result->fetchField();
 }
 
@@ -537,4 +562,38 @@ function _sb_social_get_opportunity_id_from_share_id($share_id) {
     return _sb_social_get_opportunity_id_from_submission_id($sid);
   }
   return FALSE;
+}
+
+/**
+ * Save a record to the submissions tracking table.
+ *
+ * When a user comes to the site from a share url and makes a donation we want
+ * to store that information.
+ *
+ * @param $share_id
+ * @param $submission_id
+ * @param int $donation_id
+ */
+function sb_social_submission_save($share_id, $submission_id, $donation_id = 0) {
+  $record = array(
+    'share_id' => $share_id,
+    'sid' => $submission_id,
+    'did' => $donation_id,
+  );
+  drupal_write_record('sb_social_submissions', $record);
+}
+
+/**
+ * Return a list of donation ids that are related to this share event.
+ *
+ * @param int $share_id
+ * Social Share event ID.
+ */
+function sb_social_load_related_donation_ids($share_id) {
+  $donation_ids = array();
+  $result = db_query('SELECT did FROM {sb_social_submissions} WHERE share_id = :share_id', array(':share_id' => $share_id));
+  while ($donation_id = $result->fetchField()) {
+    $donation_ids[] = $donation_id;
+  }
+  return $donation_ids;
 }
