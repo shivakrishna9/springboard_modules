@@ -19,6 +19,7 @@ function sb_social_share_event_load($share_id) {
       share_id,
       uid,
       sid,
+      did,
       nid,
       page_name,
       internal_name,
@@ -27,7 +28,9 @@ function sb_social_share_event_load($share_id) {
       service,
       created,
       status,
-      url
+      url,
+      sf_share_id,
+      opportunity_id
 
     FROM {sb_social_shares} s
     WHERE
@@ -60,10 +63,11 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
 
   global $user;
   // deal with submission-based shares (confirmation pages)
-  // TODO: clean this up, refactor around a single $record array().
+
   if (isset($_GET['sid']) && is_numeric($_GET['sid']) && $type == 'nid') {
     module_load_include('inc', 'webform', 'includes/webform.submissions');
     $sid = $_GET['sid'];
+    $did = $sid ? _sb_social_get_did_by_sid($sid) : 0;
     $submission = webform_get_submission($id, $sid);
     $nid = isset($submission->nid) ? $submission->nid : 0;
     $node = node_load($nid);
@@ -112,6 +116,7 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
   $record = array(
     'uid' => $uid,
     'sid' => !empty($sid) ? $sid : 0,
+    'did' => !empty($did) ? $did : 0,
     'nid' => !empty($nid) ? $nid : 0,
     'market_source' => $market_source,
     'page_name' => $page_name,
@@ -289,7 +294,7 @@ function sb_social_path_settings_load_all() {
   return $settings;
 }
 
-// TODO: replace with plugin defaults.
+
 /**
  * provide service default settings
  */
@@ -412,6 +417,14 @@ function _sb_social_get_nid_by_sid($sid) {
   return $data[$sid];
 }
 
+/**
+ * Load a partial submission record from webform_submissions
+ *
+ * @param int $sid
+ * submission id
+ *
+ * @return mixed
+ */
 function _sb_social_load_submission($sid) {
   $result = db_query('
     SELECT
@@ -425,6 +438,14 @@ function _sb_social_load_submission($sid) {
   return $result->fetchAssoc();
 }
 
+/**
+ * Lookup donation details by webform submission id.
+ *
+ * @param int $sid
+ * submission id
+ *
+ * @return mixed
+ */
 function sb_social_get_donation_by_sid($sid) {
   $query = db_select('fundraiser_donation', 'f');
   $query->fields('f');
@@ -433,6 +454,7 @@ function sb_social_get_donation_by_sid($sid) {
 
   return $result->fetchObject();
 }
+
 
 function _sb_social_sid_by_id($id) {
   $query = db_select('sb_social_settings', 's');
@@ -521,8 +543,14 @@ function _sb_social_get_webform_sid_by_donation_id($did) {
 }
 
 /**
+ * Add opportunity sfid to {sb_social_shares}
+ *
  * @param $item
+ * Salesforce queue item
+ *
  * @param $record
+ * Salesforce queue response record
+ *
  * @return bool
  */
 function sb_social_update_opportunity_id($item, $record) {
@@ -534,15 +562,40 @@ function sb_social_update_opportunity_id($item, $record) {
   return TRUE;
 }
 
+/**
+ * Add share sfid to {sb_social_shares}
+ *
+ * @param $item
+ * Salesforce queue item
+ *
+ * @param $record
+ * Salesforce queue response record
+ */
 function sb_social_update_sf_share_id($item, $record) {
   db_query('UPDATE {sb_social_shares} SET sf_share_id = :sf_share_id WHERE share_id = :share_id', array(':sf_share_id' => $record->id, 'share_id' => $item->drupal_id));
 }
 
+/**
+ * Lookup the sfid of a share event that is stored in {salesforce_sync_map}
+ *
+ * @param $share_id
+ * share event id
+ *
+ * @return mixed
+ */
 function _sb_social_get_share_salesforce_id_from_map($share_id) {
   $result = db_query('SELECT sfid FROM {salesforce_sync_map} WHERE drupal_id = :share_id AND module = :module AND delta = :delta', array(':share_id' => $share_id, ':module' => "sb_social", ':delta' => "share_event"));
   return $result->fetchField();
 }
 
+/**
+ * Look up the Opportunity Salesforce ID associated with a given webform submission id.
+ *
+ * @param $sid
+ * Webform submission ID.
+ *
+ * @return int
+ */
 function _sb_social_get_opportunity_id_from_submission_id($sid) {
   $result = db_query('
     SELECT
@@ -555,6 +608,15 @@ function _sb_social_get_opportunity_id_from_submission_id($sid) {
   return $sfid ? $sfid : 0;
 }
 
+/**
+ * Look up the Opportunity Salesforce ID for share events associated with a donation.
+ *
+ * @param int $share_id
+ * share id
+ *
+ * @return bool|string
+ * returns the sfid if one is available or FALSE.
+ */
 function _sb_social_get_opportunity_id_from_share_id($share_id) {
   $result = db_query('SELECT sid FROM {sb_social_shares} WHERE share_id = :share_id', array(':share_id' => $share_id));
   $sid = $result->fetchField();
@@ -596,4 +658,41 @@ function sb_social_load_related_donation_ids($share_id) {
     $donation_ids[] = $donation_id;
   }
   return $donation_ids;
+}
+
+/**
+ * Add did value to shares table.
+ */
+function sb_social_update_did($sid, $did) {
+  db_query('UPDATE {sb_social_shares} SET did = :did WHERE sid = :sid', array(':did' => $did, ':sid' => $sid));
+}
+
+/**
+ * List share records related to a donation.
+ *
+ * @param $drupal_id
+ * @return array
+ */
+function sb_social_get_shares_related_to_donation($did) {
+  $related_shares = array();
+
+  $results = db_query('SELECT * FROM {sb_social_shares} WHERE did = :did', array(':did' => $did));
+  while ($share = $results->fetchAssoc) {
+    $related_shares[] = $share;
+  }
+  return $related_shares;
+}
+
+/**
+ * Stripped down version of fundraiser_get_donation_by_sid. In this instance
+ * we don't need the entire donation record.
+ *
+ * @param $sid
+ * webform submission id.
+ *
+ * @return mixed
+ */
+function _sb_social_get_did_by_sid($sid) {
+  $results = db_query('SELECT did FROM {fundraiser_donation} WHERE sid = :sid', array(':sid' => $sid));
+  return $results->fetchField();
 }

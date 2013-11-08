@@ -50,6 +50,13 @@ function sb_social_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
+      'did' => array(
+        'description' => 'donation id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
       'nid' => array(
         'description' => 'webform node id',
         'type' => 'int',
@@ -280,4 +287,19 @@ function sb_social_update_7005() {
     ),
   );
   db_create_table('sb_social_submissions', $schema['sb_social_submissions']);
+}
+
+/*
+ * Add did column to shares table
+ */
+function sb_social_update_7006() {
+  $field = array(
+    'description' => 'donation id',
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+    'default' => 0,
+  );
+  db_add_field('sb_social_shares', 'did', $field);
+
 }

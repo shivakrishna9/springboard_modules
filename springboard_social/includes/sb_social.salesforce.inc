@@ -11,7 +11,7 @@
  * Share id of the share event to add to the queue.
  *
  */
-function sb_social_add_share_to_queue($share_id, $op = 'CREATE') {
+function sb_social_add_share_to_queue($share_id, $op = 'CREATE', $id = NULL) {
   module_load_include('module', 'salesforce_queue');
   $share = sb_social_share_event_load($share_id);
   $sobject = sb_social_create_share_event_object($share);
@@ -24,7 +24,9 @@ function sb_social_add_share_to_queue($share_id, $op = 'CREATE') {
     'operation' => $op,
     'sobject' => $sobject,
   );
-
+  if ($op == 'UPDATE' && !empty($id)) {
+    $item['Id'] = $id;
+  }
   $queue = salesforce_queue_load();
   $result = $queue->createItem($item);
 }
@@ -52,13 +54,21 @@ function sb_social_create_share_event_object($share) {
     'Social_Share_ID__c' => $share['share_id'],
     'Social_Share_Type__c' => $share['type'],
     'Submission_ID__c' => $share['sid'],
-    // add opportunity id
   );
-  watchdog('sb_social', print_r($fields, TRUE));
+
+  // conditionally add the opportunity id if this share is related to a donation.
+  if (is_numeric($share['did']) && $share['did']) {
+    // this will usually return 0 but covers the highly unlikely event where the opportunity
+    // has synced before the user shares.
+    $fields['Opportunity_ID__c'] = _sb_social_get_opportunity_id_from_submission_id($share['sid']);
+  }
+  else {
+    $fields['Opportunity_ID__c'] = 0;
+  }
+
   // This is SOAP partner API format.
   $sobject = new stdClass();
   $sobject->type = 'Social_Share__c'; // sf object type
-
   $sobject->fields = $fields;
 
   return $sobject;
@@ -79,4 +89,21 @@ function sb_social_create_sf_user_token($uid) {
  */
 function sb_social_format_sf_date($time) {
   return date('Y-m-d H:i:s', $time);
+}
+
+function sb_social_salesforce_requeue_related_shares($item, $result) {
+  $related_shares = sb_social_get_shares_related_to_donation($item->drupal_id);
+
+  foreach ($related_shares as $share) {
+    dsm($share, 'share requeuing');
+    // if the share has a sfid requeue, otherwise delete dupes in queue and recreate
+    if (!empty($share['sf_share_id'])) {
+      sb_social_add_share_to_queue($share['share_id'], 'UPDATE', $id = $share['sf_share_id']);
+    }
+    else {
+      // item hasn't synced yet, nuke it and rebuild.
+      db_query('DELETE FROM {salesforce_queue WHERE drupal_id = :share_id AND module = :module AND delta = :delta}', array(':share_id' => $share['share_id'], ':module' => 'sb_social', ':delta' => 'share_event'));
+      sb_social_add_share_to_queue($share['share_id']);
+    }
+  }
 }

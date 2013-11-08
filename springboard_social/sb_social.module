@@ -651,18 +651,21 @@ function _sb_social_replace_tokens($string, $node, $sid = NULL) {
 
 
 /**
- * Implements hook_
+ * Implements hook_salesforce_queue_create_item_alter().
+ *
+ * If the donation was created by a user who came to the site from a share
+ * URL (social_referrer_transaction market source field set) we want to
+ * try to add the sfid of the original share event to the opportunity as it's
+ * going into the queue.
+ *
+ * If the original share event hasn't been synced yet (no sfid) we go ahead and
+ * sync the opportunity anyway, when the share event syncs we'll requeue any applicable
+ * donations and queue them for resync.
+ *
+ * @param mixed $item
+ * Salesforce queue item array.
  */
 function sb_social_salesforce_queue_create_item_alter(&$item) {
-   /* If the donation was created by a user who came to the site from a share
-    URL (social_referrer_transaction market source field set) we want to
-    try to add the sfid of the original share event to the opportunity as it's
-    going into the queue.
-
-    If the original share event hasn't been synced yet (no sfid) we go ahead and
-    sync the opportunity anyway, when the share event syncs we'll requeue any applicable
-    donations and queue them for resync.
-   */
 
   if ($item['object_type'] == 'Opportunity') {
     dsm($item, 'item at beginning of alter');
@@ -689,15 +692,21 @@ function sb_social_salesforce_queue_create_item_alter(&$item) {
  * When an opportunity syncs successfully assign it's salesforce id to any
  * related share events.
  *
- * @param $item
- * @param $result
+ * @param mixed $item
+ * Salesforce queue item
+ *
+ * @param object $result
+ * Salesforce queue respons result
  */
 function sb_social_salesforce_sync_pass_item($item, $result) {
   if ($item->object_type === 'Opportunity' && !empty($item->drupal_id)) {
     sb_social_update_opportunity_id($item, $result);
+
+    // requeue related shares with the opportunity sfid
+    sb_social_salesforce_requeue_related_shares($item, $result);
   }
 
-  if ($item->object_type === 'Social_Share__c' && !empty($item->drupal_id)) {
+  if ($item->object_type === 'Social_Share__c' && !empty($item->drupal_id) && $item->operation == 'CREATE') {
     // stash the returned salesforce id in the sb_social_shares table. This
     // does duplicate data in {salesforce_sync_map} but it may come in handy later
     // to have everything in one place. This may let us sidestep future performance issues
@@ -739,4 +748,4 @@ function sb_social_fundraiser_donation_success($donation) {
   }
 }
 
-// TODO: add similar tracker for petitions and other webform submissions?
+// TODO: Future development - add similar tracker for petitions and other webform submissions?
