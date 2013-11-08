@@ -39,9 +39,9 @@ function springboard_admin_install() {
     // if save was successful, loop through child items
     if ($plid) {
       $mlids[] = $plid;
-      for ($i = 0; isset($children[$i]); $i++) {
-        $children[$i]['plid'] = $plid;
-        $mlid = menu_link_save($children[$i], array(), array($plid => $item));
+      foreach ($children as $key => $child) {
+        $children[$key]['plid'] = $plid;
+        $mlid = menu_link_save($children[$key], array(), array($plid => $item));
         $mlids[] = $mlid;
       }
     }
