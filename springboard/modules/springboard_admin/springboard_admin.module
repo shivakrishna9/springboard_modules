@@ -15,6 +15,13 @@ function springboard_admin_menu() {
     'access arguments' => array('admin/springboard/templates'),
     'page callback' => 'springboard_admin_template_page',
   );
+  $items['admin/springboard/results'] = array(
+    'title' => 'Results',
+    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('administer springboard'),
+    'page callback' => 'springboard_admin_aggregate_links_page',
+    'page arguments' => array('admin/springboard/results'),
+   );
   return $items;
 }
 
@@ -70,7 +77,6 @@ function springboard_admin_menu_access($path) {
         return FALSE;
       }
     break;
-    
   }
 }
 
@@ -108,4 +114,27 @@ function springboard_admin_template_page() {
   }
   
   return $output;
+}
+
+/**
+ * Callback function.
+ * Renders page content for admin pages that are aggregates of child page links.
+ * 
+ * @return
+ * HTML output for the page.
+ */
+
+function springboard_admin_aggregate_links_page($path) {
+  // load the springboard admin menu so we know what links to render
+  $menu = springboard_admin_admin_menu_items();
+  $links = array();
+  foreach ($menu[$path]['_children'] as $item) {
+    $links[] = array(
+      'title' => $item['link_title'],
+      'href' => $item['link_path'],
+    );
+  }
+
+  return theme_links(array('links' => $links, 'attributes' => array('class' => array('aggregate-links')), 'heading' => ''));
+  
 }
