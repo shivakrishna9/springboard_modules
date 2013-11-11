@@ -677,7 +677,7 @@ function sb_social_get_shares_related_to_donation($did) {
   $related_shares = array();
 
   $results = db_query('SELECT * FROM {sb_social_shares} WHERE did = :did', array(':did' => $did));
-  while ($share = $results->fetchAssoc) {
+  while ($share = $results->fetchAssoc()) {
     $related_shares[] = $share;
   }
   return $related_shares;

@@ -60,10 +60,9 @@ function sb_social_create_share_event_object($share) {
   if (is_numeric($share['did']) && $share['did']) {
     // this will usually return 0 but covers the highly unlikely event where the opportunity
     // has synced before the user shares.
-    $fields['Opportunity_ID__c'] = _sb_social_get_opportunity_id_from_submission_id($share['sid']);
-  }
-  else {
-    $fields['Opportunity_ID__c'] = 0;
+    if ($opportunity_id = _sb_social_get_opportunity_id_from_submission_id($share['sid'])) {
+      $fields['Opportunity_ID__c'] = $opportunity_id;
+    }
   }
 
   // This is SOAP partner API format.
