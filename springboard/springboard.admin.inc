@@ -3,6 +3,38 @@
  * @file
  * Provides Springboard administrative forms.
  */
+ 
+ /**
+ * Dashboard settings form.
+ */
+ function springboard_dashboard_settings() {
+  $form = array();
+   // TODO: add support for pane weights.
+  $panes = module_invoke_all('springboard_dashboard_panes');
+  drupal_alter('springboard_dashboard_panes', $panes);
+  foreach ($panes as $name => $info) {
+    $panes[$name] = $info['label'];
+  }
+  $form['springboard_dashboard_config']['panes'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Dashboard Panes'),
+  );
+  $form['springboard_dashboard_config']['panes']['springboard_enabled_panes'] = array(
+    '#description' => t('Enable/disable visible panes on the Springboard Dashboard'),
+    '#type' => 'checkboxes',
+    '#options' => $panes,
+    '#default_value' => variable_get('springboard_enabled_panes', array()),
+  );
+  $form['#submit'] = array('springboard_dashboard_config_save');
+  
+  $form['actions']['cancel'] = array( 
+    '#type' => 'submit',
+    '#value' => t('Return to Dashboard'),
+    '#submit' => array('springboard_dashboard_config_cancel'),
+    '#description' => t('Cancel changes and return to the dashboard')
+  );
+  return system_settings_form($form);
+ }
 
 /**
  * Admin settings form.
@@ -77,22 +109,6 @@ function springboard_admin_settings() {
       '#submit' => array('springboard_admin_ignore'),
     );
   }
-  // TODO: add support for pane weights.
-  $panes = module_invoke_all('springboard_dashboard_panes');
-  drupal_alter('springboard_dashboard_panes', $panes);
-  foreach ($panes as $name => $info) {
-    $panes[$name] = $info['label'];
-  }
-  $form['panes'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Dashboard Panes'),
-  );
-  $form['panes']['springboard_enabled_panes'] = array(
-    '#description' => t('Enable/disable visible panes on the Springboard Dashboard'),
-    '#type' => 'checkboxes',
-    '#options' => $panes,
-    '#default_value' => variable_get('springboard_enabled_panes', array()),
-  );
   $form['dashboard'] = array(
     '#type' => 'fieldset',
     '#title' => t('Dashboard Threshold Settings'),

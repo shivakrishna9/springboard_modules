@@ -47,6 +47,18 @@ function springboard_menu() {
     'page callback' => 'springboard_admin_dashboard',
     'type' => MENU_LOCAL_TASK,
     'weight' => -5,
+    );
+    
+  // Springboard dashboard settings
+  $items['admin/springboard/dashboard/settings'] = array(
+    'title' => 'Springboard Dashboard Configuration',
+    'description' => 'Configure the Springboard dashboard.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_dashboard_settings'),
+    'access arguments' => array('administer springboard'),
+    'file' => 'springboard.admin.inc',
+    'type' => MENU_LOCAL_ACTION,
+    'weight' => -5,
   );
   // Springboard forms admin.
   $items['admin/springboard/forms'] = array(

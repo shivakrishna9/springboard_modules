@@ -35,14 +35,23 @@ function springboard_admin_admin_menu() {
 function springboard_admin_admin_menu_items() {
   $items = array();
   // Top Level: Home (dashboard)
-  $items['admin/springboard'] = array(
-    'link_path' => 'admin/springboard',
+  $items['admin/springboard/dashboard'] = array(
+    'link_path' => 'admin/springboard/dashboard',
     'link_title' => t('Home'),
     'menu_name' => 'springboard_admin_menu',
-    'expanded' => TRUE,
+    'expanded' => FALSE,
     'customized' => 1,
     'weight' => 0,
     '_children' => array(),
+  );
+  
+  $items['admin/springboard/dashboard']['_children']['admin/springboard/dashboard/settings'] = array(
+    'link_path' => 'admin/springboard/dashboard/settings',
+    'link_title' => t('Home'),
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => FALSE,
+    'customized' => 1,
+    'weight' => 0,
   );
   
   // Top Level: Donation Form
