@@ -2074,3 +2074,18 @@ function springboard_admin_ignore($form, $form_state) {
   drupal_set_message(t('Please see the !help page for additional help configuring Springboard.',
     array('!help' => l(t('Help'), 'admin/springboard/help'))));
 }
+
+/**
+ * Submit handler for the Springboard Dashboard config
+ */
+ 
+ function springboard_dashboard_config_save($form, &$form_state) {
+   $form_state['redirect'] = 'admin/springboard/dashboard';
+ }
+ 
+/**
+ * Submit handler for the Springboard Dashbord config cancel button
+ */
+function springboard_dashboard_config_cancel($form, &$form_state) {
+  $form_state['redirect'] = 'admin/springboard/dashboard';
+}
