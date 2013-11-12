@@ -163,9 +163,6 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
  * to the ID passed or the current URL.
  */
 function sb_social_get_current_settings($id = FALSE) {
-  // TODO: consider simplifying this function, since share urls are only generated when
-  // a user clicks on a share button, and that happens in the context of the share tracker url
-  // most of this functionality may not be required any longer.
   if (!$id) {
     if (arg(0) == 'node' && is_numeric(arg(1))) {
       $node = node_load(arg(1));
@@ -654,10 +651,7 @@ function sb_social_submission_save($share_id, $submission_id, $donation_id = 0) 
 function sb_social_load_related_donation_ids($share_id) {
   $donation_ids = array();
   $result = db_query('SELECT did FROM {sb_social_submissions} WHERE share_id = :share_id', array(':share_id' => $share_id));
-  while ($donation_id = $result->fetchField()) {
-    $donation_ids[] = $donation_id;
-  }
-  return $donation_ids;
+  return $result->fetchCol();
 }
 
 /**
@@ -665,22 +659,6 @@ function sb_social_load_related_donation_ids($share_id) {
  */
 function sb_social_update_did($sid, $did) {
   db_query('UPDATE {sb_social_shares} SET did = :did WHERE sid = :sid', array(':did' => $did, ':sid' => $sid));
-}
-
-/**
- * List share records related to a donation.
- *
- * @param $drupal_id
- * @return array
- */
-function sb_social_get_shares_related_to_donation($did) {
-  $related_shares = array();
-
-  $results = db_query('SELECT * FROM {sb_social_shares} WHERE did = :did', array(':did' => $did));
-  while ($share = $results->fetchAssoc()) {
-    $related_shares[] = $share;
-  }
-  return $related_shares;
 }
 
 /**

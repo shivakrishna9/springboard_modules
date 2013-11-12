@@ -666,24 +666,15 @@ function _sb_social_replace_tokens($string, $node, $sid = NULL) {
  * Salesforce queue item array.
  */
 function sb_social_salesforce_queue_create_item_alter(&$item) {
-
   if ($item['object_type'] == 'Opportunity') {
-    dsm($item, 'item at beginning of alter');
     if (!empty($item['sobject']->fields['Social_Referrer_Transaction__c'])) {
-
       $sfid = _sb_social_get_share_salesforce_id_from_map($item['sobject']->fields['Social_Referrer_Transaction__c']);
-
+      // the original share event has synced at some point, requeue with the sfid for the share event.
       if ($sfid) {
         $item['sobject']->fields['Social_Share__c'] = $sfid;
       }
-      else {
-        $item['sobject']->fields['Social_Share__c'] = 0;
-      }
+
     }
-    else {
-      $item['sobject']->fields['Social_Share__c'] = 0;
-    }
-    dsm($item, 'item at tail end of alter');
   }
 }
 
@@ -701,9 +692,6 @@ function sb_social_salesforce_queue_create_item_alter(&$item) {
 function sb_social_salesforce_sync_pass_item($item, $result) {
   if ($item->object_type === 'Opportunity' && !empty($item->drupal_id)) {
     sb_social_update_opportunity_id($item, $result);
-
-    // requeue related shares with the opportunity sfid
-    sb_social_salesforce_requeue_related_shares($item, $result);
   }
 
   if ($item->object_type === 'Social_Share__c' && !empty($item->drupal_id) && $item->operation == 'CREATE') {
@@ -715,20 +703,14 @@ function sb_social_salesforce_sync_pass_item($item, $result) {
 
     // check for donations related to this share event and resync them with the
     // correct sfid for the share event
-
-    // lookup donations involved
     $donation_ids = sb_social_load_related_donation_ids($item->drupal_id);
-    dsm($donation_ids, 'related donation ids');
+
     // requeue, alter hook should add the sfid of the share.
     foreach($donation_ids as $donation_id) {
       $donation = fundraiser_donation_get_donation($donation_id, TRUE);
-      drupal_set_message('requeue donation:' . $donation_id);
-      salesforce_genmap_send_object_to_queue('salesforce_donation', 'UPDATE', $donation->node, $donation->did, $donation, 'donation');
+      salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
     }
   }
-  dsm($item, 'pass item');
-  dsm($result, 'pass result');
-
 }
 
 
@@ -742,7 +724,7 @@ function sb_social_salesforce_sync_pass_item($item, $result) {
  */
 function sb_social_fundraiser_donation_success($donation) {
   // social MS field has a share transaction value, submission
-  // is associated with a share
+  // is associated with a share.
   if (!empty($donation->donation['social_referer_transaction'])) {
     sb_social_submission_save($donation->donation['social_referer_transaction'], $donation->sid, $donation->did);
   }
