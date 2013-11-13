@@ -527,7 +527,7 @@ function email_wrappers_load_settings($nid, $eid = FALSE) {
     if (!empty($data['extra'])) {
       $data['extra'] = unserialize($data['extra']);
     }
-    return $data;
+    return !emptY($data['tid']) ? $data : FALSE;
   }
   else {
     $data = array();
