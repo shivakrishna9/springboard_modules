@@ -310,20 +310,26 @@ function webform_goals_add_submit($form, &$form_state) {
 
   drupal_write_record('webform_goals_widget', $widget, $update);
   _webform_goals_file_insert($settings, $widget['widget']);
-  if ($save == SAVED_NEW) {
 
-    $settings['extra'] = $extra;
-    $nids = _webform_goals_calculate_nids_for_goal($settings);
+  $settings['extra'] = $extra;
+  $nids = _webform_goals_calculate_nids_for_goal($settings);
 
-    foreach ($nids as $nid) {
-      $node_settings = array(
-        'gid' => $settings['gid'],
-        'nid' => $nid,
-      );
-      // TODO: optimize this as a bulk insert?
-      drupal_write_record('webform_goals_node', $node_settings);
-    }
+  // Remove the relevant rows from {webform_goals_node}
+  // and add new rows.
+  // We need to do this to update the nodes selected if they change
+  // during a goal edit.
+  db_delete('webform_goals_node')
+    ->condition('gid', $settings['gid'])
+    ->execute();
+  $query = db_insert('webform_goals_node')->fields(array('gid', 'nid'));
+  foreach ($nids as $nid) {
+    $query->values(array(
+      'gid' => $settings['gid'],
+      'nid' => $nid,
+    ));
   }
+  $query->execute();
+
   $form_state['redirect'] = array('admin/config/content/webform_goals');
 }
 

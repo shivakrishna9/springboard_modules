@@ -25,7 +25,13 @@
           if (amount == 'other') {
             amount = $('input[name*="other_amount"]').val();
           }
-          var total = $('select[name*="quantity"]').val() * amount;
+          // prevent total from displaying NaN if other amount input is incorrectly formatted.
+          if (isNaN(amount) === true) {
+            var total = 0.00;
+          }
+          else {
+            var total = $('select[name*="quantity"]').val() * amount;
+          }
           $('select[name*="quantity"]').after('<span id="quantity-total">Total: $' + total + '</span>');
         }
 
@@ -221,6 +227,8 @@
                 }
               }
               this.value = value;
+              // total should be recalculated as value has changed without triggering .change() event handler.
+              _recalculate_quantity_total();
               $(this).valid();
             }
           } else {
