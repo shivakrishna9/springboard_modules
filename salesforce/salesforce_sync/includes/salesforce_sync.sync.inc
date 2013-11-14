@@ -596,6 +596,19 @@ class SalesforceSync {
       if (!empty($field_datatypes[$field_name])) {
         switch ($field_datatypes[$field_name]) {
           case 'boolean':
+            if (is_string($value)) {
+              // An array of string values that are considered TRUE
+              $valid_booleans = array('true', 'yes', '1');
+              // if the value is in the array set it to TRUE
+              if (in_array(strtolower(trim($value)), $valid_booleans)) {
+                $value = TRUE;
+              }
+              // Default to FALSE
+              else {
+                $value = FALSE;
+              }
+            }
+
             // Convert any value that evaluates to TRUE as 1
             if ($value) {
               $item->sobject->fields[$field_name] = 1;
