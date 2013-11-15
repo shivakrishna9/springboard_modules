@@ -273,7 +273,13 @@ function salesforce_genmap_map_object($module, stdClass $object, Entity $map, $n
   // Create the Salesforce object.
   $object_type = $map->salesforce_object_type;
   $record_type = empty($map->salesforce_record_type) ? NULL : $map->salesforce_record_type;
-  $sobject = new SalesforceObject($object_type, $fields, $record_type);
+  $sobject = new SalesforceObject($object_type, $fields);
+  // The constructor for SalesforceObject expects $record_type to be a name. The genmap record
+  // now stores record type ids so let's set the record type explicity by passing it to setRecordTypeId
+  // after the object is constructed.
+  if (!empty($record_type)) {
+    $sobject->setRecordTypeId($record_type);
+  }
 
   // Let other modules modify it.
   drupal_alter('salesforce_genmap_map_object', $sobject);
