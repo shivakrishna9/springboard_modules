@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Commerce based hook for commerce_litle
+ * Commerce based hook for commerce_sage_payments
  */
 
 /**
@@ -11,16 +11,16 @@
 function commerce_sage_payments_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     // Create the payment_method array with the commerce gateway method info name as the key
-    'payment_method' => array('commerce_sage_payments_cc' => 'credit'),
-    'allow_recurring' => array('credit'),
-    'allow_refund' => array('credit'),
-    'form callback' => 'commerce_sage_payments_fundraiser_commerce_submit_form',
-    'cleanup callback' => 'commerce_sage_payments_fundraiser_commerce_cleanup',
-    'scrub callback' => 'commerce_sage_payments_fundraiser_commerce_scrub',
+    'payment_method'    => array('commerce_sage_payments_cc' => 'credit'),
+    'allow_recurring'   => array('credit'),
+    'allow_refund'      => array('credit'),
+    'form callback'     => 'commerce_sage_payments_fundraiser_commerce_submit_form',
+    'cleanup callback'  => 'commerce_sage_payments_fundraiser_commerce_cleanup',
+    'scrub callback'    => 'commerce_sage_payments_fundraiser_commerce_scrub',
     'validate callback' => 'commerce_sage_payments_fundraiser_commerce_validate',
-    'expire callback' => 'commerce_sage_payments_fundraiser_commerce_expire',
-    'charge callback' => 'commerce_sage_payments_fundraiser_commerce_charge',
-    'refund callback' => 'commerce_sage_payments_fundraiser_commerce_refund',
+    'expire callback'   => 'commerce_sage_payments_fundraiser_commerce_expire',
+    'charge callback'   => 'commerce_sage_payments_fundraiser_commerce_charge',
+    'refund callback'   => 'commerce_sage_payments_fundraiser_commerce_refund',
   );
 }
 
@@ -88,7 +88,7 @@ function commerce_sage_payments_fundraiser_commerce_charge($method_instance, $do
 
   $pane_form = array(); // Not actually used anywhere in this system, so ignore it.
 
-  // Execute call to Litle depending on what payment method we have
+  // Execute call to Sage Payments depending on what payment method we have
   if ($donation->donation['payment_method'] == 'credit') {
     $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
 
@@ -154,7 +154,7 @@ function commerce_sage_payments_get_cardonfile_pane_value($uid, $instance_id) {
 }
 
 /**
- * Refund callback for Sage Oayments, wraps the admin form used for refund with our own system.
+ * Refund callback for Sage Payments, wraps the admin form used for refund with our own system.
  */
 function commerce_sage_payments_fundraiser_commerce_refund($payment_method, $refund) {
   // Retrieve data.
@@ -166,5 +166,5 @@ function commerce_sage_payments_fundraiser_commerce_refund($payment_method, $ref
   $payment_method = commerce_payment_method_instance_load($transaction->instance_id);
   // Submit the donation form.
   module_load_include('inc', 'commerce_sage_payments', 'commerce_sage_payments.admin');
-  return commerce_litle_cc_credit_request($payment_method, $transaction, $refunding_order, $refund->amount);
+  return commerce_sage_payments_cc_credit_request($payment_method, $transaction, $refunding_order, $refund->amount);
 }
