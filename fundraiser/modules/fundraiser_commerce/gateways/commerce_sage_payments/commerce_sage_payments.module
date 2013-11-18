@@ -1,0 +1,888 @@
+<?php
+/**
+ * @file
+ * Implements Sage Payment payment services for use in Drupal Commerce.
+ */
+
+
+/**
+ * Implements hook_menu().
+ */
+function commerce_sage_payments_menu() {
+  $items = array();
+  // Add a menu item for capturing authorizations.
+  $items['admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/sage-payment-cc-capture'] = array(
+    'title' => 'Capture',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('commerce_sage_payments__cc_capture_form', 3, 5),
+    'access callback' => 'commerce_sage_payments__cc_capture_access',
+    'access arguments' => array(3, 5),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'context' => MENU_CONTEXT_INLINE,
+    'weight' => 2,
+    'file' => 'commerce_sage_payment.admin.inc',
+  );
+
+  // Add a menu item for voiding transactions.
+  $items['admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/sage-payment-cc-void'] = array(
+    'title' => 'Void',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('commerce_sage_payments_cc_void_form', 3, 5),
+    'access callback' => 'commerce_sage_payments_cc_void_access',
+    'access arguments' => array(3, 5),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'context' => MENU_CONTEXT_INLINE,
+    'weight' => 2,
+    'file' => 'commerce_sage_payment.admin.inc',
+  );
+
+  // Add a menu item for issuing credits.
+  $items['admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/sage-payment-cc-credit'] = array(
+    'title' => 'Credit',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('commerce_sage_payments_cc_credit_form', 3, 5),
+    'access callback' => 'commerce_sage_payments_cc_credit_access',
+    'access arguments' => array(3, 5),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'context' => MENU_CONTEXT_INLINE,
+    'weight' => 2,
+    'file' => 'commerce_sage_payment.admin.inc',
+  );
+  return $items;
+}
+
+
+/**
+ * Determines menu access to the prior auth capture form for CC transactions.
+ *
+ * @param stdClass $order
+ *   The order the transaction is on.
+ * @param stdClass $transaction
+ *   The payment transaction object to be captured.
+ *
+ * @return bool
+ *   TRUE or FALSE indicating capture access.
+ *
+ * @todo Might be incomplete.
+ */
+function commerce_sage_payments_cc_capture_access($order, $transaction) {
+  // Return FALSE if the transaction isn't for Sage Payments or isn't
+  // awaiting capture.
+  if ($transaction->payment_method != 'commerce_sage_payments_cc' || empty($transaction->remote_id) ||
+    strtoupper($transaction->remote_status) != 'AUTH_ONLY') {
+    return FALSE;
+  }
+
+  // Return FALSE if it is more than 30 days past the original authorization.
+  if (time() - $transaction->created > 86400 * 30) {
+    return FALSE;
+  }
+
+  // Allow access if the user can update this transaction.
+  return commerce_payment_transaction_access('update', $transaction);
+}
+
+/**
+ * Determines menu access to the void form for Sage Payment credit card transactions.
+ *
+ * @param stdClass $order
+ *   The order the transaction is on.
+ * @param stdClass $transaction
+ *   The payment transaction object to be voided.
+ *
+ * @return bool
+ *   TRUE or FALSE indicating void access.
+ */
+function commerce_sage_payments_cc_void_access($order, $transaction) {
+
+  // @todo Check possible remote_status values to see if they are the same
+  //   for Sage Payments.
+  $expected_remote_status = array(
+    'AUTH_ONLY',
+    'PRIOR_AUTH_CAPTURE',
+    'AUTH_CAPTURE',
+  );
+  if ($transaction->payment_method != 'commerce_sage_payments_cc' || empty($transaction->remote_id) ||
+    !in_array(strtoupper($transaction->remote_status), $expected_remote_status)) {
+    return FALSE;
+  }
+
+  // Return FALSE if it is more than 24 hours since the last update to the
+  // transaction, as it will already have been settled.
+  if (time() - $transaction->changed > 2600 * 24) {
+    return FALSE;
+  }
+
+  // Allow access if the user can update this transaction.
+  return commerce_payment_transaction_access('update', $transaction);
+}
+
+/**
+ * Determines menu access to the credit form for successful CC transactions.
+ *
+ * @param stdClass $order
+ *   The order the transaction is on.
+ * @param stdClass $transaction
+ *   The payment transaction object to be credited.
+ *
+ * @return bool
+ *   TRUE or FALSE indicating credit access.
+ */
+function commerce_sage_payments_cc_credit_access($order, $transaction) {
+  // Return FALSE if the transaction isn't for Sage Payments, doesn't have a
+  // success status or has an amount of 0 or less.
+  if ($transaction->payment_method != 'commerce_sage_payments_cc' || $transaction->status != 'success' || $transaction->amount <= 0) {
+    return FALSE;
+  }
+
+  // Return FALSE if it is more than 120 days past the original capture.
+  // @todo Find out what's Sage Payments's limit is.
+  if (time() - $transaction->created > 86400 * 120) {
+    return FALSE;
+  }
+
+  // Allow access if the user can update this transaction.
+  return commerce_payment_transaction_access('update', $transaction);
+}
+
+/**
+ * Implements hook_commerce_payment_method_info().
+ */
+function commerce_sage_payments_commerce_payment_method_info() {
+  $payment_methods = array();
+  $payment_methods['commerce_sage_payments_cc'] = array(
+    'base' => 'commerce_sage_payments_cc',
+    'title' => t('Sage Payment - Credit Card'),
+    'short_title' => t('Sage Payment CC'),
+    'display_title' => t('Credit card'),
+    'description' => t('Integrates Sage Payment for credit card transactions.'),
+    'cardonfile' => array(
+      'charge callback' => 'commerce_sage_payments_cc_vault_cardonfile_charge',
+      // @todo Implement update and delete callbacks for cardonfile.
+      // 'update callback' => 'commerce_sage_payments_cc_vault_cardonfile_update',
+      // 'delete callback' => 'commerce_sage_payments_cc_vault_cardonfile_delete',
+    ),
+  );
+  return $payment_methods;
+}
+
+/**
+ * Payment method callback: settings form.
+ *
+ * Note use of commerce_sage_payments_cc as base.
+ */
+function commerce_sage_payments_cc_settings_form($settings = array()) {
+  module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+  // Merge default settings into the stored settings array.
+  $form = array();
+  $form['commerce_sage_payments_settings_merchant_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Merchant ID'),
+    '#default_value' => isset($settings['commerce_sage_payments_settings_merchant_id']) ? $settings['commerce_sage_payments_settings_merchant_id'] : '',
+  );
+  $form['commerce_sage_payments_settings_merchant_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Merchant Key'),
+    '#default_value' => isset($settings['commerce_sage_payments_settings_merchant_key']) ? $settings['commerce_sage_payments_settings_merchant_key'] : '',
+  );
+
+  $form['commerce_sage_payments_settings_sandbox'] = array(
+    '#type' => 'checkbox',
+    '#title' => 'Run in Sandbox Mode',
+    '#default_value' => isset($settings['commerce_sage_payments_settings_sandbox']) ? $settings['commerce_sage_payments_settings_sandbox'] : '',
+  );
+
+  if (module_exists('commerce_cardonfile')) {
+    $form['cardonfile'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enable Card on File functionality with this payment method using the Sage Payments Vault.'),
+      '#description' => t('You must be token enabled and certified prior to using the Vault feature. Please consult your Sage Payments Customer Experience Manager concerning the requirements and details of this process.'),
+      '#default_value' => isset($settings['cardonfile']) ? $settings['cardonfile'] : 0,
+    );
+
+  }
+  else {
+    $form['cardonfile'] = array(
+      '#type' => 'markup',
+      '#markup' => t('To enable Card on File funcitionality download and install the Card on File module.'),
+    );
+  }
+
+  $form['verbose_gateway'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Verbose gateway errors.'),
+    '#description' => t('If checked, specific error messages from the Sage Payments gateway will be displayed to the user.'),
+    '#default_value' => isset($settings['verbose_gateway']) ? $settings['verbose_gateway'] : FALSE,
+  );
+
+  $form['log'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Log the following messages for debugging'),
+    '#options' => array(
+      'request' => t('API request messages'),
+      'response' => t('API response messages'),
+    ),
+    '#default_value' => isset($settings['log']) ? $settings['log'] : array('request' => '0', 'response' => '0'),
+  );
+  return $form;
+}
+
+
+/**
+ * Payment method callback: checkout form.
+ */
+function commerce_sage_payments_cc_submit_form($payment_method = NULL, $pane_values = NULL, $checkout_pane = NULL, $order = NULL) {
+  module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+  $fields = array(
+    'code' => '',
+  );
+  return commerce_payment_credit_card_form($fields);
+}
+
+/**
+ * Payment method callback: checkout form validation.
+ */
+function commerce_sage_payments_cc_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
+  // If the customer specified a card on file, skip the normal validation.
+  if (module_exists('commerce_cardonfile') && !empty($payment_method['settings']['cardonfile']) &&
+    !empty($pane_values['cardonfile']) && $pane_values['cardonfile'] !== 'new') {
+    return;
+  }
+
+  module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+  // Validate the credit card fields.
+  $settings = array(
+    'form_parents' => array_merge($form_parents, array('credit_card')),
+  );
+
+  if (!commerce_payment_credit_card_validate($pane_values['credit_card'], $settings)) {
+    return FALSE;
+  }
+}
+
+/**
+ * Payment method callback: checkout form submission.
+ */
+function commerce_sage_payments_cc_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
+  // If the customer specified payment using a card on file, attempt that now
+  // and simply return the result.
+  if (module_exists('commerce_cardonfile') && $payment_method['settings']['cardonfile'] &&
+    !empty($pane_values['cardonfile']) && $pane_values['cardonfile'] !== 'new') {
+    return commerce_sage_payments_cc_vault_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge);
+  }
+
+  // Determine the credit card type if possible for use in later code.
+  if (!empty($pane_values['credit_card']['number'])) {
+    module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+    $card_type = commerce_payment_validate_credit_card_type($pane_values['credit_card']['number'], array_keys(commerce_payment_credit_card_types()));
+  }
+
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+
+  // Get the default transaction type from the payment method settings.
+  // $txn_type = $payment_method['settings']['commerce_sage_payments_settings_txn_type'];
+
+  // If txn_type has been specified in the pane values array, such as through
+  // the special select element we alter onto the payment terminal form, use
+  // that instead.
+  // if (!empty($pane_values['commerce_sage_payments_settings_txn_type'])) {
+  //   $txn_type = $pane_values['commerce_sage_payments_settings_txn_type'];
+  // }
+  $txn_type = COMMERCE_CREDIT_AUTH_CAPTURE;
+
+  $sage_payments_card_type = _commerce_sage_payments_cc_card_type_to_sage_payments($card_type);
+
+  $nvp = array(
+    'orderSource' => 'ecommerce',
+    'amount' => commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']) * 100,
+    'card' => array(
+      'number' => $pane_values['credit_card']['number'],
+      'expDate' => str_pad($pane_values['credit_card']['exp_month'], 2, 0, STR_PAD_LEFT) . substr($pane_values['credit_card']['exp_year'], 2, 2),
+      'type' => $sage_payments_card_type,
+    ),
+  );
+
+  if (isset($pane_values['credit_card']['code'])) {
+    $nvp['card']['cardValidationNum'] = $pane_values['credit_card']['code'];
+  }
+
+  // Build a description for the order.
+  $description = array();
+
+  foreach ($order_wrapper->commerce_line_items as $delta => $line_item_wrapper) {
+    if (in_array($line_item_wrapper->type->value(), commerce_product_line_item_types())) {
+      $description[] = round($line_item_wrapper->quantity->value(), 2) . 'x ' . $line_item_wrapper->line_item_label->value();
+    }
+  }
+
+  // Add additional transaction information to the request array.
+  $nvp += array(
+    // Order Information.
+    'orderId' => $order->order_number,
+    'customerId' => $order->uid,
+  );
+
+  // Prepare the billing address for use in the request.
+  if ($order_wrapper->commerce_customer_billing->value()) {
+    $billing_address = $order_wrapper->commerce_customer_billing->commerce_customer_address->value();
+
+    if (empty($billing_address['first_name'])) {
+      $name_parts = explode(' ', $billing_address['name_line']);
+      $billing_address['first_name'] = array_shift($name_parts);
+      $billing_address['last_name'] = implode(' ', $name_parts);
+    }
+
+    $nvp['billToAddress'] = array(
+      // Customer Billing Address.
+      'name' => substr($billing_address['first_name'], 0, 50) . " " . substr($billing_address['last_name'], 0, 50),
+      // 'x_company' => substr($billing_address['organisation_name'], 0, 50),
+      'addressLine1' => substr($billing_address['thoroughfare'], 0, 60),
+      'city' => substr($billing_address['locality'], 0, 40),
+      'state' => substr($billing_address['administrative_area'], 0, 40),
+      'zip' => substr($billing_address['postal_code'], 0, 20),
+      'country' => $billing_address['country'],
+    );
+  }
+  else {
+    $billing_address = array();
+  }
+
+  /* let's override the unnecessary config stuff */
+
+  // Config stored in a var because it's used again later.
+  $sage_payments_config = _commerce_sage_payments_get_sage_payments_config($payment_method);
+  $nvp += $sage_payments_config;
+
+  $init = _commerce_sage_payments_get_sage_payments();
+
+  // Prepare a transaction object to log the API response.
+  $transaction = commerce_payment_transaction_new('commerce_sage_payments_cc', $order->order_id);
+  $transaction->instance_id = $payment_method['instance_id'];
+  $transaction->amount = $charge['amount'];
+  $transaction->currency_code = $charge['currency_code'];
+  // Save the transaction information to get transaction id.
+  commerce_payment_transaction_save($transaction);
+  $nvp['id'] = substr($transaction->transaction_id, 0, 20);
+
+  // Log the request if specified.
+  if ($payment_method['settings']['log']['request'] === 'request') {
+    // Mask secure data.
+    $log_nvp = $nvp;
+    $log_nvp['password'] = str_repeat('X', strlen($log_nvp['password']));
+    $log_nvp['merchantId'] = str_repeat('X', strlen($log_nvp['merchantId']));
+    if (!empty($log_nvp['card']['number'])) {
+      $log_nvp['card']['number'] = str_repeat('X', strlen($log_nvp['card']['number']) - 4) . substr($log_nvp['card']['number'], -4);
+    }
+
+    if (!empty($log_nvp['card']['cardValidationNum'])) {
+      $log_nvp['card']['cardValidationNum'] = str_repeat('X', strlen($log_nvp['card']['cardValidationNum']));
+    }
+
+    watchdog('commerce_sage_payments', 'Sage Payments request: !param', array('!param' => '<pre>' . check_plain(print_r($log_nvp, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+  }
+
+  $sale_response = $init->saleRequest($nvp);
+
+  // Log the response if specified.
+  if ($payment_method['settings']['log']['response'] === 'response') {
+    watchdog('commerce_sage_payments', 'Sage Payments Sale response: !param', array('!param' => '<pre>' . check_plain(XmlParser::getDomDocumentAsString($sale_response)) . '</pre>', WATCHDOG_DEBUG));
+  }
+
+  // If we didn't get an approval response code...
+  if (XmlParser::getNode($sale_response, 'response') != '000') {
+    // Create a failed transaction with the error message.
+    $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+  }
+  else {
+    // Set the transaction status based on the type of transaction this was.
+    switch ($txn_type) {
+      case COMMERCE_CREDIT_AUTH_ONLY:
+        $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
+        break;
+
+      case COMMERCE_CREDIT_AUTH_CAPTURE:
+        $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+        break;
+
+      case COMMERCE_CREDIT_CAPTURE_ONLY:
+        $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+        break;
+    }
+  }
+
+  $transaction->remote_status = COMMERCE_CREDIT_AUTH_CAPTURE;
+  // Store the remote id.
+  $transaction->remote_id = XmlParser::getNode($sale_response, 'litleTxnId');
+
+  // Build a meaningful response message.
+  $message = array(
+    '<b>' . (XmlParser::getNode($sale_response, 'response') != '000' ? t('REJECTED') : t('ACCEPTED')) . ':</b> ' . check_plain(XmlParser::getNode($sale_response, 'message')),
+  );
+
+  $transaction->message = implode('<br />', $message);
+  // Save the transaction information.
+  commerce_payment_transaction_save($transaction);
+
+  // If the payment failed, display an error and rebuild the form.
+  if (XmlParser::getNode($sale_response, 'response') != '000') {
+    drupal_set_message(t('We received an error processing your card. Please enter your information again or try a different card.'), 'error');
+
+    if ($payment_method['settings']['verbose_gateway']) {
+      drupal_set_message(check_plain(XmlParser::getNode($sale_response, 'message')), 'error');
+    }
+
+    return FALSE;
+  }
+
+  // If Card on File is enabled, see if we have tokens saved.
+  // Ii not, get a new token.
+  if (module_exists('commerce_cardonfile') && !empty($payment_method['settings']['cardonfile']) &&
+    !empty($pane_values['credit_card']['cardonfile_store']) && $pane_values['credit_card']['cardonfile_store']) {
+
+    // Build a payment details array for the credit card.
+    $payment_details = array(
+      'accountNumber' => $pane_values['credit_card']['number'],
+      'orderId' => $order->order_number,
+    );
+
+    if (isset($pane_values['credit_card']['code'])) {
+      $payment_details['cardValidationNum'] = $pane_values['credit_card']['code'];
+    }
+
+    // First look to see if we already have cards on file for the user.
+    $stored_cards = commerce_cardonfile_load_multiple_by_uid($order->uid, $payment_method['instance_id']);
+
+    // If we didn't find any, attempt to register a token now.
+    if (empty($stored_cards)) {
+
+      // If we're in the sandbox, use the test data for registering a token.
+      // This should return an 801 response code.
+      if ($payment_method['settings']['commerce_sage_payments_settings_sandbox'] == 1) {
+        $payment_details['accountNumber'] = '4457119922390123';
+        $payment_details['orderId'] = '50';
+      };
+
+      // Submit a registerTokenRequest.
+      $token_response = commerce_sage_payments_register_token_request($init, $sage_payment_config, $payment_details);
+
+      $token_response_code = XmlParser::getNode($token_response, 'response');
+
+      // Keep in mind tokenResponseCode is different than response.
+      // 801 Account numbeer was successfully registered.
+      // 802 Account number was previously registered.
+      if (in_array($token_response_code, array(801, 802))) {
+        $litle_token = XmlParser::getNode($token_response, 'litleToken');
+
+        // Store the token with cardonfile.
+        $card_data = commerce_cardonfile_new();
+        $card_data->uid = $order->uid;
+        $card_data->payment_method = $payment_method['method_id'];
+        $card_data->instance_id = $payment_method['instance_id'];
+        $card_data->remote_id = $litle_token;
+        $card_data->card_type = !empty($card_type) ? $card_type : 'card';
+        $card_data->card_name = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
+        $card_data->card_number = substr($pane_values['credit_card']['number'], -4);
+        $card_data->card_exp_month = $pane_values['credit_card']['exp_month'];
+        $card_data->card_exp_year = $pane_values['credit_card']['exp_year'];
+        $card_data->status = 1;
+
+        // Save and log the creation of the new card on file.
+        commerce_cardonfile_save($card_data);
+        watchdog('commerce_sage_payments', 'Token @litleToken registered and saved to user @uid.', array('@litleToken' => $litle_token, '@uid' => $order->uid));
+      }
+      else {
+
+        // @todo Not an 801 or 802, so may be an error. What should we do here?
+      }
+    }
+  } // End if cardonfile.
+}
+
+/**
+ * Imitates the checkout form submit callback for the CC Vault payment method.
+ */
+function commerce_sage_payments_cc_vault_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
+  // First attempt to load the card on file.
+  $card_data = commerce_cardonfile_load($pane_values['cardonfile']);
+
+  // Fail now if it is no longer available or the card is inactive.
+  if (empty($card_data) || $card_data->status == 0) {
+    drupal_set_message(t('The requested card on file is no longer valid.'), 'error');
+    return FALSE;
+  }
+
+  return commerce_sage_payments_cc_vault_cardonfile_charge($payment_method, $card_data, $order, $charge);
+}
+
+/**
+ * Card on file callback: background charge payment.
+ *
+ * @param object $payment_method
+ *   The payment method instance definition array.
+ * @param object $card_data
+ *   The stored credit card data array to be processed
+ * @param object $order
+ *   The order object that is being processed
+ * @param array $charge
+ *   The price array for the charge amount with keys of 'amount' and 'currency'
+ *   If null the total value of the order is used.
+ *
+ * @return bool|NULL
+ *   FALSE if the transaction was not successfull
+ */
+function commerce_sage_payments_cc_vault_cardonfile_charge($payment_method, $card_data, $order, $charge = NULL) {
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+  $txn_type = COMMERCE_CREDIT_AUTH_CAPTURE;
+
+  // Format order total for transaction.
+  if (!isset($charge)) {
+    $charge = commerce_line_items_total($order_wrapper->commerce_line_items);
+  }
+
+  // Build a data array for the transaction API request.
+  $request_data = array(
+    'orderSource' => 'ecommerce',
+    // Order Information.
+    'orderId' => $order->order_number,
+    'customerId' => $order->uid,
+    'amount' => commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']) * 100,
+    'token' => array(
+      'litleToken' => $card_data->remote_id,
+      'expDate' => str_pad($card_data->card_exp_month, 2, 0, STR_PAD_LEFT) . substr($card_data->card_exp_year, 2, 2),
+      // 000 means use litle's stored value.
+      'cardValidationNum' => '000',
+    ),
+  );
+
+  // If in the sandbox, use the test tokenized data for auth and sale requests.
+  // This should return a 000 response code from both requests.
+  if ($payment_method['settings']['commerce_sage_payments_settings_sandbox'] == 1) {
+    $request_data['token']['litleToken'] = '1111222233330196';
+    $request_data['token']['expDate'] = '1114';
+    $request_data['orderId'] = '58';
+  };
+
+  // Prepare the billing address for use in the request.
+  // @todo Do we need to send billing address if we're providing a token?
+  if ($order_wrapper->commerce_customer_billing->value()) {
+    $billing_address = $order_wrapper->commerce_customer_billing->commerce_customer_address->value();
+
+    if (empty($billing_address['first_name'])) {
+      $name_parts = explode(' ', $billing_address['name_line']);
+      $billing_address['first_name'] = array_shift($name_parts);
+      $billing_address['last_name'] = implode(' ', $name_parts);
+    }
+
+    $request_data['billToAddress'] = array(
+      // Customer Billing Address.
+      'name' => substr($billing_address['first_name'], 0, 50) . " " . substr($billing_address['last_name'], 0, 50),
+      // 'x_company' => substr($billing_address['organisation_name'], 0, 50),
+      'addressLine1' => substr($billing_address['thoroughfare'], 0, 60),
+      'city' => substr($billing_address['locality'], 0, 40),
+      'state' => substr($billing_address['administrative_area'], 0, 40),
+      'zip' => substr($billing_address['postal_code'], 0, 20),
+      'country' => $billing_address['country'],
+    );
+  }
+
+  /* let's override the unnecessary config stuff */
+
+  // Config stored in a var because it's used again later.
+  $sage_payments_config = _commerce_sage_payments_get_litle_config($payment_method);
+  $request_data += $litle_config;
+
+  $init = _commerce_sage_payments_get_litle();
+
+  // Prepare a transaction object to log the API response.
+  $transaction = commerce_payment_transaction_new('commerce_sage_payments_cc', $order->order_id);
+  $transaction->instance_id = $payment_method['instance_id'];
+  $transaction->amount = $charge['amount'];
+  $transaction->currency_code = $charge['currency_code'];
+  // Save the transaction information to get transaction id.
+  commerce_payment_transaction_save($transaction);
+  $request_data['id'] = substr($transaction->transaction_id, 0, 20);
+
+  // Log the request if specified.
+  if ($payment_method['settings']['log']['request'] === 'request') {
+    // Mask secure data.
+    $log_nvp = $request_data;
+    $log_nvp['password'] = str_repeat('X', strlen($log_nvp['password']));
+    $log_nvp['merchantId'] = str_repeat('X', strlen($log_nvp['merchantId']));
+    if (!empty($log_nvp['card']['number'])) {
+      $log_nvp['card']['number'] = str_repeat('X', strlen($log_nvp['card']['number']) - 4) . substr($log_nvp['card']['number'], -4);
+    }
+
+    if (!empty($log_nvp['card']['cardValidationNum'])) {
+      $log_nvp['card']['cardValidationNum'] = str_repeat('X', strlen($log_nvp['card']['cardValidationNum']));
+    }
+
+    watchdog('commerce_sage_payments', 'Sage Payments request: !param', array('!param' => '<pre>' . check_plain(print_r($log_nvp, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+  }
+
+  $sale_response = $init->saleRequest($request_data);
+
+  // Log the response if specified.
+  if ($payment_method['settings']['log']['response'] === 'response') {
+    watchdog('commerce_sage_payments', 'Sage Payments Sale response: !param', array('!param' => '<pre>' . check_plain(XmlParser::getDomDocumentAsString($sale_response)) . '</pre>', WATCHDOG_DEBUG));
+  }
+
+  // If we didn't get an approval response code...
+  if (XmlParser::getNode($sale_response, 'response') != '000') {
+    // Create a failed transaction with the error message.
+    $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+  }
+  else {
+    // Set the transaction status based on the type of transaction this was.
+    switch ($txn_type) {
+      case COMMERCE_CREDIT_AUTH_ONLY:
+        $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
+        break;
+
+      case COMMERCE_CREDIT_AUTH_CAPTURE:
+        $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+        break;
+
+      case COMMERCE_CREDIT_CAPTURE_ONLY:
+        $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+        break;
+    }
+  }
+
+  // Store the type of transaction in the remote status.
+  $transaction->remote_status = COMMERCE_CREDIT_AUTH_CAPTURE;
+
+  // Store the remote id.
+  $transaction->remote_id = XmlParser::getNode($sale_response, 'litleTxnId');
+
+  // Build a meaningful response message.
+  $message = array(
+    '<b>' . (XmlParser::getNode($sale_response, 'response') != '000' ? t('REJECTED') : t('ACCEPTED')) . ':</b> ' . check_plain(XmlParser::getNode($sale_response, 'message')),
+  );
+
+  $transaction->message = implode('<br />', $message);
+  // Save the transaction information.
+  commerce_payment_transaction_save($transaction);
+
+  // If the payment failed, display an error and rebuild the form.
+  if (XmlParser::getNode($sale_response, 'response') != '000') {
+    drupal_set_message(t('We received an error processing your card on file. Please enter your information again or try a different card.'), 'error');
+
+    if ($payment_method['settings']['verbose_gateway']) {
+      drupal_set_message(check_plain(XmlParser::getNode($sale_response, 'message')), 'error');
+    }
+
+    return FALSE;
+  }
+
+}
+
+/**
+ * Litle request function wrapper.
+ */
+function _commerce_sage_payments_request_capture($gateway, $input) {
+  /* Example input
+    $input = array(
+      'litleTxnId'=>'100000000000000001',
+      'id'=> '456',
+    );
+  */
+  $litle = _commerce_sage_payments_get_litle();
+  $input = array_merge($input, _commerce_sage_payments_get_litle_config($gateway));
+  return $litle->captureRequest($input);
+}
+
+/**
+ * Litle request function wrapper.
+ */
+function _commerce_sage_payments_request_partial_capture($gateway, $input) {
+  /* Example input
+    $input = array(
+      'partial'=>'true',
+      'id'=> '456',
+      'litleTxnId'=>'320000000000000001',
+      'amount'=>'5005'
+    );
+  */
+  $litle = _commerce_sage_payments_get_litle();
+  $input = array_merge($input, _commerce_sage_payments_get_litle_config($gateway));
+  return $litle->captureRequest($input);
+}
+
+/**
+ * Litle request function wrapper.
+ */
+function _commerce_sage_payments_request_sale($gateway, $input) {
+  $litle = _commerce_sage_payments_get_litle();
+  $input = array_merge($input, _commerce_sage_payments_get_litle_config($gateway));
+  return $litle->saleRequest($input);
+}
+
+/**
+ * Litle request function wrapper.
+ */
+function _commerce_sage_payments_request_credit($gateway, $input) {
+  /* Example input
+    $input = array(
+      'litleTxnId'=>'100000000000000002',
+      'id'=> '456',
+      'amount'=>'1010'
+    );
+  */
+  $litle = _commerce_sage_payments_get_litle();
+  $input = array_merge($input, _commerce_sage_payments_get_litle_config($gateway));
+  $input['id'] = $input['litleTxnId'];
+  return $litle->creditRequest($input);
+}
+
+/**
+ * Load the SOAP client and WSDL definitions.
+ */
+function _commerce_sage_payments_get_sage_payments() {
+
+  $client = new SoapClient('https://gateway.sagepayments.net/web_services/wsvtextensions/transaction_processing.asmx?WSDL');
+  return client;
+}
+
+/**
+ * Return gateway configuration values from a given gateway for hash_in values.
+ */
+function _commerce_sage_payments_get_sage_payments_config($gateway) {
+  // Configure with the gateway values for the .ini value, merge with the credit info.
+  $auth_info = array(
+    'user' => !empty($gateway['settings']['commerce_sage_payments_settings_user']) ? $gateway['settings']['commerce_sage_payments_settings_user'] : '',
+    'password' => !empty($gateway['settings']['commerce_sage_payments_settings_password']) ? $gateway['settings']['commerce_sage_payments_settings_password'] : '',
+    'merchantId' => !empty($gateway['settings']['commerce_sage_payments_settings_merchantId']) ? $gateway['settings']['commerce_sage_payments_settings_merchantId'] : '',
+    'url' => !empty($gateway['settings']['commerce_sage_payments_settings_url']) ? $gateway['settings']['commerce_sage_payments_settings_url'] : '',
+    'proxy' => !empty($gateway['settings']['commerce_sage_payments_settings_proxy']) ? $gateway['settings']['commerce_sage_payments_settings_proxy'] : '',
+    'timeout' => !empty($gateway['settings']['commerce_sage_payments_settings_timeout']) ? $gateway['settings']['commerce_sage_payments_settings_timeout'] : '',
+    'version' => !empty($gateway['settings']['commerce_sage_payments_settings_version']) ? $gateway['settings']['commerce_sage_payments_settings_version'] : '',
+    'reportGroup' => !empty($gateway['settings']['commerce_sage_payments_settings_reportGroup']) ? $gateway['settings']['commerce_sage_payments_settings_reportGroup'] : '',
+  );
+
+  if ($gateway['settings']['commerce_sage_payments_settings_sandbox'] == 1) {
+    $auth_info['url'] = 'https://www.testlitle.com/sandbox/communicator/online';
+  }
+
+  return $auth_info;
+}
+
+/**
+ * Sends a request to Litle to register a token.
+ *
+ * @param stdClass $litle
+ *   The litle object
+ * @param array $litle_config
+ *   The result of _commerce_sage_payments_get_litle_config($payment_method)
+ * @param array $data
+ *   Data to pass to the API call.
+ *   Will vary depending on payment type (cc vs bank)
+ *
+ * @return
+ *   The registerTokenRequest Response
+ */
+function commerce_sage_payments_register_token_request($litle, $litle_config, $data) {
+  $data += $litle_config;
+  $token_response = $litle->registerTokenRequest($data);
+
+  watchdog('commerce_sage_payments', 'Sage Payments Token response: !param', array('!param' => '<pre>' . check_plain(XmlParser::getDomDocumentAsString($token_response)) . '</pre>', WATCHDOG_DEBUG));
+
+  return $token_response;
+}
+
+/**
+ * Converts the CC card type name to the Sage Payments version.
+ *
+ * @param string $type
+ *   Card type name.
+ *
+ * @return string
+ *   Sage Payments CC card type.
+ */
+function _commerce_sage_payments_cc_card_type_to_sage_payments($type) {
+  switch ($type) {
+    case "visa":
+      return "VI";
+
+    case "mastercard":
+      return "MC";
+
+    case "amex":
+      return "AX";
+
+    case "discover":
+      return "DI";
+
+  }
+}
+
+
+/**
+ * Returns the transaction type string for Sage Payments that corresponds to the
+ *   Drupal Commerce constant.
+ *
+ * @param $txn_type
+ *   A Drupal Commerce transaction type constant.
+ *
+ * @return string|NULL
+ *   Litle transaction type string.
+ */
+function commerce_sage_payments_txn_type($txn_type) {
+  switch ($txn_type) {
+    case COMMERCE_CREDIT_AUTH_ONLY:
+      return 'AUTH_ONLY';
+
+    case COMMERCE_CREDIT_PRIOR_AUTH_CAPTURE:
+      return 'PRIOR_AUTH_CAPTURE';
+
+    case COMMERCE_CREDIT_AUTH_CAPTURE:
+      return 'AUTH_CAPTURE';
+
+    case COMMERCE_CREDIT_CAPTURE_ONLY:
+      return 'CAPTURE_ONLY';
+
+    case COMMERCE_CREDIT_REFERENCE_SET:
+    case COMMERCE_CREDIT_REFERENCE_TXN:
+    case COMMERCE_CREDIT_REFERENCE_REMOVE:
+    case COMMERCE_CREDIT_REFERENCE_CREDIT:
+      return NULL;
+
+    case COMMERCE_CREDIT_CREDIT:
+      return 'CREDIT';
+
+    case COMMERCE_CREDIT_VOID:
+      return 'VOID';
+
+  }
+}
+
+/**
+ * Returns the description of a Sage Payments transaction type.
+ *
+ * @param string $txn_type
+ *   A Sage Payments transaction type string.
+ *
+ * @return string
+ *   Translateable description.
+ */
+function commerce_sage_payments_reverse_txn_type($txn_type) {
+  switch (strtoupper($txn_type)) {
+    case 'AUTH_ONLY':
+      return t('Authorization only');
+
+    case 'PRIOR_AUTH_CAPTURE':
+      return t('Prior authorization capture');
+
+    case 'AUTH_CAPTURE':
+      return t('Authorization and capture');
+
+    case 'CAPTURE_ONLY':
+      return t('Capture only');
+
+    case 'CREDIT':
+      return t('Credit');
+
+    case 'VOID':
+      return t('Void');
+
+  }
+}
