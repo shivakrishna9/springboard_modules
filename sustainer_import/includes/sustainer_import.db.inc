@@ -87,6 +87,8 @@ function sustainer_import_get_log_entry($rid) {
 /**
  * Provide a count of queue items by status.
  *
+ * Provides item counts by status for admin screen.
+ *
  * @return array
  */
 function sustainer_import_queue_status_counts() {

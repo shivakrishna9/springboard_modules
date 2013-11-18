@@ -84,55 +84,72 @@ function sustainer_import_queue_report() {
 }
 
 /**
- * Primary queue processing callback. This function triggers validation & creation of
- * the following:
- *
- * - associated user account
- * - commerce master order
- * - fundraiser master donation record
- * - cardonfile payment method record
- * - fundraiser sustainer series records
- * - commerce orders for each sustainer series instance
+ * Create import queue batch
  */
 function sustainer_import_process_queue() {
-  // get pending queue items
-  $queue = sustainer_import_get_pending_queue_items();
-  // parse item
-  foreach ($queue as $rid => $record) {
-    // user record
-    // validate
-    $errors = array();
-    if (_sustainer_import_validate_account_record($record['user_info'], $errors)) {
-      // passes validation, create or dedupe.
-      $account = _sustainer_import_create_account($record['user_info']);
-      $record['uid'] = $account->uid;
-    }
-    // master order record
-    if (!empty($record['uid'])) {
-      if(_sustainer_import_validate_master_order($record, $errors)) {
-        $donation = _sustainer_import_create_master_order($record, $account, $errors);
-      }
-    }
 
-    // create
-    // sustainer series
-    if (isset($donation->did) && $donation->did && $record['uid']) {
-      foreach ($record['payment_schedule'] as $instance_details) {
-        if (_sustainer_import_validate_sustainer_series_instance($instance_details, $errors)) {
-          _sustainer_import_create_sustainer_series_instance($instance_details, $donation, $errors);
-        }
-        else {
-          // we need to bail out of processing sustainer instances if an error is encountered.
-          break;
-        }
-      }
-    }
-    $log = sustainer_import_log_value();
-    sustainer_import_log_record($rid, $record, $log, $errors);
-  }
+  batch_set(sustainer_import_batch_queue_items());
 }
 
+/**
+ * Create batch of queue items.
+ *
+ * @return array
+ */
+function sustainer_import_batch_queue_items() {
+  $queue = sustainer_import_get_pending_queue_items();
 
+  foreach($queue as $rid => $record) {
+    $operations[] = array('sustainer_import_process_batch_record', array($record));
+  }
+  $batch = array(
+    'operations' => $operations,
+    'finished' => 'sustainer_import_batch_processing_complete',
+  );
+  return $batch;
+}
+
+function sustainer_import_process_batch_record($record) {
+  $errors = array();
+  if (_sustainer_import_validate_account_record($record['user_info'], $errors)) {
+    // passes validation, create or dedupe.
+    $account = _sustainer_import_create_account($record['user_info']);
+    $record['uid'] = $account->uid;
+  }
+  // master order record
+  if (!empty($record['uid'])) {
+    if(_sustainer_import_validate_master_order($record, $errors)) {
+      $donation = _sustainer_import_create_master_order($record, $account, $errors);
+    }
+  }
+  // sustainer series
+  if (isset($donation->did) && $donation->did && $record['uid']) {
+    foreach ($record['payment_schedule'] as $instance_details) {
+      if (_sustainer_import_validate_sustainer_series_instance($instance_details, $errors)) {
+        _sustainer_import_create_sustainer_series_instance($instance_details, $donation, $errors);
+      }
+      else {
+        // we need to bail out of processing sustainer instances if an error is encountered.
+        break;
+      }
+    }
+  }
+  $log = sustainer_import_log_value();
+  sustainer_import_log_record($rid, $record, $log, $errors);
+}
+
+/**
+ *
+ */
+function sustainer_import_batch_processing_complete($success, $results, $operations) {
+  if ($success) {
+    drupal_set_message(t('@count sustainers imported.', array('@count' => count($results))));
+  } else {
+    // Batch API flaked in some way.
+    $error_operation = reset($operations);
+    drupal_set_message(t('An error occurred while processing @operation with arguments : @args', array('@operation' => $error_operation[0], '@args' => print_r($error_operation[0], TRUE))));
+  }
+}
 
 /**
  * Save queue gateway type to payment gatewway mapping.
