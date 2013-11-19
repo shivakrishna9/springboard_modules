@@ -214,6 +214,20 @@ function salesforce_donation_fundraiser_refund_success($refund) {
   salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $donation->node, $donation->did, $donation, 'donation');
 }
 
+
+/**
+ * Implements hook_fundraiser_donation_cancel().
+ *
+ * Recurring donations that have been canceled should be added to the queue.
+ */
+function salesforce_donation_fundraiser_donation_cancel($donation) {
+  $donation = fundraiser_donation_get_donation($donation->did);
+  $donation->status = 'canceled';
+  // TODO: check cancelled donation for sfid, if none remove any existing INSERT records for
+  // that object from the queue and insert.
+  salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
+}
+
 /**
  * Implements hook_salesforce_genmap_map_item_alter().
  */
@@ -474,6 +488,7 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
       }
     }
   }
+
   return $fields;
 }
 
