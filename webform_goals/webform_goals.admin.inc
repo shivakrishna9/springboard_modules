@@ -129,6 +129,25 @@ function webform_goals_admin_settings($form, $form_state) {
     '#submit' => array('webform_goals_rebuild_loader_file_submit'),
   );
 
+  $form['improved_multi_select'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Improved Multi Select'),
+    '#description' => t('The Improved Multi Select module can be used to enhance the user experience in webform goals when building form groups.  It is not required however.'),
+  );
+
+  if (module_exists('improved_multi_select')) {
+    $improved_multi_select_text = 'Improved Multi Select module is enabled. ' . l('Configure it here', 'admin/config/user-interface/ims') . ' by adding the path admin/config/content/webform_goals/* if it is not already added.';
+  }
+  else {
+    $improved_multi_select_text = 'Improved Multi Select is not enabled.';
+  }
+
+  $form['improved_multi_select']['module_status'] = array(
+    '#type' => 'markup',
+    '#markup' => $improved_multi_select_text,
+  );
+
+
   return system_settings_form($form);
 }
 
