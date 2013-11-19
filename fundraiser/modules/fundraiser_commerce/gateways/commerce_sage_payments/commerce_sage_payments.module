@@ -290,20 +290,14 @@ function commerce_sage_payments_cc_submit_form_submit($payment_method, $pane_for
   // }
   $txn_type = COMMERCE_CREDIT_AUTH_CAPTURE;
 
-  $sage_payments_card_type = _commerce_sage_payments_cc_card_type_to_sage_payments($card_type);
-
-  $nvp = array(
-    'orderSource' => 'ecommerce',
-    'amount' => commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']) * 100,
-    'card' => array(
-      'number' => $pane_values['credit_card']['number'],
-      'expDate' => str_pad($pane_values['credit_card']['exp_month'], 2, 0, STR_PAD_LEFT) . substr($pane_values['credit_card']['exp_year'], 2, 2),
-      'type' => $sage_payments_card_type,
-    ),
+  $request_parameters = array (
+    'T_AMT'        => commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']),
+    'C_CARDNUMBER' => $pane_values['credit_card']['number'],
+    'C_EXP'        => str_pad($pane_values['credit_card']['exp_month'], 2, 0, STR_PAD_LEFT) . substr($pane_values['credit_card']['exp_year'], 2, 2),
   );
 
   if (isset($pane_values['credit_card']['code'])) {
-    $nvp['card']['cardValidationNum'] = $pane_values['credit_card']['code'];
+    $parameters['C_CCV'] = $pane_values['credit_card']['code'];
   }
 
   // Build a description for the order.
@@ -316,10 +310,10 @@ function commerce_sage_payments_cc_submit_form_submit($payment_method, $pane_for
   }
 
   // Add additional transaction information to the request array.
-  $nvp += array(
+  $request_parameters += array(
     // Order Information.
-    'orderId' => $order->order_number,
-    'customerId' => $order->uid,
+    'T_ORDERNUM' => $order->order_number,
+    'T_CUSTOMER_NUMBER' => $order->uid,
   );
 
   // Prepare the billing address for use in the request.
@@ -332,16 +326,13 @@ function commerce_sage_payments_cc_submit_form_submit($payment_method, $pane_for
       $billing_address['last_name'] = implode(' ', $name_parts);
     }
 
-    $nvp['billToAddress'] = array(
-      // Customer Billing Address.
-      'name' => substr($billing_address['first_name'], 0, 50) . " " . substr($billing_address['last_name'], 0, 50),
-      // 'x_company' => substr($billing_address['organisation_name'], 0, 50),
-      'addressLine1' => substr($billing_address['thoroughfare'], 0, 60),
-      'city' => substr($billing_address['locality'], 0, 40),
-      'state' => substr($billing_address['administrative_area'], 0, 40),
-      'zip' => substr($billing_address['postal_code'], 0, 20),
-      'country' => $billing_address['country'],
-    );
+    $request_parameters['C_EMAIL']   = $order_wrapper->mail->value();
+    $request_parameters['C_NAME']    = substr($billing_address['first_name'], 0, 50) . " " . substr($billing_address['last_name'], 0, 50);
+    $request_parameters['C_ADDRESS'] = substr($billing_address['thoroughfare'], 0, 60);
+    $request_parameters['C_CITY']    = substr($billing_address['locality'], 0, 40);
+    $request_parameters['C_STATE']   = substr($billing_address['administrative_area'], 0, 40);
+    $request_parameters['C_ZIP']     = substr($billing_address['postal_code'], 0, 20);
+    $request_parameters['C_COUNTRY'] = $billing_address['country'];
   }
   else {
     $billing_address = array();
@@ -351,9 +342,8 @@ function commerce_sage_payments_cc_submit_form_submit($payment_method, $pane_for
 
   // Config stored in a var because it's used again later.
   $sage_payments_config = _commerce_sage_payments_get_sage_payments_config($payment_method);
-  $nvp += $sage_payments_config;
+  $request_parameters += $sage_payments_config;
 
-  $init = _commerce_sage_payments_get_sage_payments();
 
   // Prepare a transaction object to log the API response.
   $transaction = commerce_payment_transaction_new('commerce_sage_payments_cc', $order->order_id);
@@ -362,34 +352,36 @@ function commerce_sage_payments_cc_submit_form_submit($payment_method, $pane_for
   $transaction->currency_code = $charge['currency_code'];
   // Save the transaction information to get transaction id.
   commerce_payment_transaction_save($transaction);
-  $nvp['id'] = substr($transaction->transaction_id, 0, 20);
+
+  // @todo Figure out if there is anywhere in Sage Payments to store a transaction id
+  //$request_parameters['T_ORDERNUM'] = substr($transaction->transaction_id, 0, 20);
 
   // Log the request if specified.
   if ($payment_method['settings']['log']['request'] === 'request') {
     // Mask secure data.
-    $log_nvp = $nvp;
-    $log_nvp['password'] = str_repeat('X', strlen($log_nvp['password']));
-    $log_nvp['merchantId'] = str_repeat('X', strlen($log_nvp['merchantId']));
-    if (!empty($log_nvp['card']['number'])) {
-      $log_nvp['card']['number'] = str_repeat('X', strlen($log_nvp['card']['number']) - 4) . substr($log_nvp['card']['number'], -4);
+    $log_request_parameters = $request_parameters;
+    $log_request_parameters['M_KEY'] = str_repeat('X', strlen($log_request_parameters['M_KEY']));
+
+    if (!empty($log_request_parameters['C_NUM'])) {
+      $log_request_parameters['C_NUM'] = str_repeat('X', strlen($log_request_parameters['C_NUM']) - 4) . substr($log_request_parameters['C_NUM'], -4);
     }
 
-    if (!empty($log_nvp['card']['cardValidationNum'])) {
-      $log_nvp['card']['cardValidationNum'] = str_repeat('X', strlen($log_nvp['card']['cardValidationNum']));
+    if (!empty($log_request_parameters['C_CCV'])) {
+      $log_request_parameters['C_CCV'] = str_repeat('X', strlen($log_request_parameters['CCV']));
     }
 
-    watchdog('commerce_sage_payments', 'Sage Payments request: !param', array('!param' => '<pre>' . check_plain(print_r($log_nvp, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+    watchdog('commerce_sage_payments', 'Sage Payments request: !param', array('!param' => '<pre>' . check_plain(print_r($log_request_parameters, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
   }
 
-  $sale_response = $init->saleRequest($nvp);
+  $transaction_response = _commerce_sage_payments_sale_request($request_parameters);
 
   // Log the response if specified.
   if ($payment_method['settings']['log']['response'] === 'response') {
-    watchdog('commerce_sage_payments', 'Sage Payments Sale response: !param', array('!param' => '<pre>' . check_plain(XmlParser::getDomDocumentAsString($sale_response)) . '</pre>', WATCHDOG_DEBUG));
+    watchdog('commerce_sage_payments', 'Sage Payments Sale response: !param', array('!param' => '<pre>' . check_plain(print_r($transaction_response, TRUE)) . '</pre>', WATCHDOG_DEBUG));
   }
 
   // If we didn't get an approval response code...
-  if (XmlParser::getNode($sale_response, 'response') != '000') {
+  if ($transaction_response->APPROVAL_INDICATOR != 'A') {
     // Create a failed transaction with the error message.
     $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
   }
@@ -412,11 +404,13 @@ function commerce_sage_payments_cc_submit_form_submit($payment_method, $pane_for
 
   $transaction->remote_status = COMMERCE_CREDIT_AUTH_CAPTURE;
   // Store the remote id.
-  $transaction->remote_id = XmlParser::getNode($sale_response, 'litleTxnId');
+  $transaction->remote_id = $transaction_response->REFERENCE;
 
   // Build a meaningful response message.
   $message = array(
-    '<b>' . (XmlParser::getNode($sale_response, 'response') != '000' ? t('REJECTED') : t('ACCEPTED')) . ':</b> ' . check_plain(XmlParser::getNode($sale_response, 'message')),
+
+    '<b>' . ($transaction_response->APPROVAL_INDICATOR != 'A' ? t('REJECTED') : t('ACCEPTED')) . ':</b> ' . check_plain(print_r($transaction_response, TRUE))
+
   );
 
   $transaction->message = implode('<br />', $message);
@@ -424,11 +418,11 @@ function commerce_sage_payments_cc_submit_form_submit($payment_method, $pane_for
   commerce_payment_transaction_save($transaction);
 
   // If the payment failed, display an error and rebuild the form.
-  if (XmlParser::getNode($sale_response, 'response') != '000') {
+  if ($transaction_response->APPROVAL_INDICATOR != 'A') {
     drupal_set_message(t('We received an error processing your card. Please enter your information again or try a different card.'), 'error');
 
     if ($payment_method['settings']['verbose_gateway']) {
-      drupal_set_message(check_plain(XmlParser::getNode($sale_response, 'message')), 'error');
+      drupal_set_message(check_plain(print_r($transaction_response, 'message')), 'error');
     }
 
     return FALSE;
@@ -436,7 +430,8 @@ function commerce_sage_payments_cc_submit_form_submit($payment_method, $pane_for
 
   // If Card on File is enabled, see if we have tokens saved.
   // Ii not, get a new token.
-  if (module_exists('commerce_cardonfile') && !empty($payment_method['settings']['cardonfile']) &&
+  // @todo get the card on file stuff working.
+  if (FALSE && module_exists('commerce_cardonfile') && !empty($payment_method['settings']['cardonfile']) &&
     !empty($pane_values['credit_card']['cardonfile_store']) && $pane_values['credit_card']['cardonfile_store']) {
 
     // Build a payment details array for the credit card.
@@ -737,37 +732,49 @@ function _commerce_sage_payments_request_credit($gateway, $input) {
 /**
  * Load the SOAP client and WSDL definitions.
  */
-function _commerce_sage_payments_get_sage_payments() {
-
+function _commerce_sage_payments_get_sage_payments_client() {
   $client = new SoapClient('https://gateway.sagepayments.net/web_services/wsvtextensions/transaction_processing.asmx?WSDL');
-  return client;
+  return $client;
 }
 
 /**
- * Return gateway configuration values from a given gateway for hash_in values.
+ * Return gateway configuration values from a given gateway.
  */
 function _commerce_sage_payments_get_sage_payments_config($gateway) {
   // Configure with the gateway values for the .ini value, merge with the credit info.
   $auth_info = array(
-    'user' => !empty($gateway['settings']['commerce_sage_payments_settings_user']) ? $gateway['settings']['commerce_sage_payments_settings_user'] : '',
-    'password' => !empty($gateway['settings']['commerce_sage_payments_settings_password']) ? $gateway['settings']['commerce_sage_payments_settings_password'] : '',
-    'merchantId' => !empty($gateway['settings']['commerce_sage_payments_settings_merchantId']) ? $gateway['settings']['commerce_sage_payments_settings_merchantId'] : '',
-    'url' => !empty($gateway['settings']['commerce_sage_payments_settings_url']) ? $gateway['settings']['commerce_sage_payments_settings_url'] : '',
-    'proxy' => !empty($gateway['settings']['commerce_sage_payments_settings_proxy']) ? $gateway['settings']['commerce_sage_payments_settings_proxy'] : '',
-    'timeout' => !empty($gateway['settings']['commerce_sage_payments_settings_timeout']) ? $gateway['settings']['commerce_sage_payments_settings_timeout'] : '',
-    'version' => !empty($gateway['settings']['commerce_sage_payments_settings_version']) ? $gateway['settings']['commerce_sage_payments_settings_version'] : '',
-    'reportGroup' => !empty($gateway['settings']['commerce_sage_payments_settings_reportGroup']) ? $gateway['settings']['commerce_sage_payments_settings_reportGroup'] : '',
+    'M_ID'  => !empty($gateway['settings']['commerce_sage_payments_settings_merchant_id'])  ? $gateway['settings']['commerce_sage_payments_settings_merchant_id']  : '',
+    'M_KEY' => !empty($gateway['settings']['commerce_sage_payments_settings_merchant_key']) ? $gateway['settings']['commerce_sage_payments_settings_merchant_key'] : '',
   );
-
-  if ($gateway['settings']['commerce_sage_payments_settings_sandbox'] == 1) {
-    $auth_info['url'] = 'https://www.testlitle.com/sandbox/communicator/online';
-  }
 
   return $auth_info;
 }
 
 /**
- * Sends a request to Litle to register a token.
+ * Sends a sale request to Sage Payments.
+ *
+ * @param stdClass $request_parameters
+ *   Data to pass to the API call.
+ *
+ * @return array
+ *   The parsed transaction info.
+ */
+function _commerce_sage_payments_sale_request($request_parameters) {
+  $sage_client = _commerce_sage_payments_get_sage_payments_client();
+  $response = $sage_client->BANKCARD_SALE($request_parameters);
+
+  watchdog('commerce_sage_payments', 'Sage Payments Sale response: !param', array('!param' => '<pre>' . check_plain($response) . '</pre>', WATCHDOG_DEBUG));
+  if (is_object($response) && is_object($response->BANKCARD_SALEResult)){
+      $response_parsed  = new SimpleXMLElement($response->BANKCARD_SALEResult->any);
+      $transaction_response = $response_parsed->NewDataSet->Table1;
+  }
+
+  return $transaction_response;
+}
+
+
+/**
+ * Sends a request to Sage Payments to register a token.
  *
  * @param stdClass $litle
  *   The litle object
@@ -787,32 +794,6 @@ function commerce_sage_payments_register_token_request($litle, $litle_config, $d
   watchdog('commerce_sage_payments', 'Sage Payments Token response: !param', array('!param' => '<pre>' . check_plain(XmlParser::getDomDocumentAsString($token_response)) . '</pre>', WATCHDOG_DEBUG));
 
   return $token_response;
-}
-
-/**
- * Converts the CC card type name to the Sage Payments version.
- *
- * @param string $type
- *   Card type name.
- *
- * @return string
- *   Sage Payments CC card type.
- */
-function _commerce_sage_payments_cc_card_type_to_sage_payments($type) {
-  switch ($type) {
-    case "visa":
-      return "VI";
-
-    case "mastercard":
-      return "MC";
-
-    case "amex":
-      return "AX";
-
-    case "discover":
-      return "DI";
-
-  }
 }
 
 
