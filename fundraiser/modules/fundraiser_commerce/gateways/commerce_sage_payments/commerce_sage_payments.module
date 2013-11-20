@@ -4,147 +4,6 @@
  * Implements Sage Payment payment services for use in Drupal Commerce.
  */
 
-
-/**
- * Implements hook_menu().
- */
-function commerce_sage_payments_menu() {
-  $items = array();
-  // Add a menu item for capturing authorizations.
-  $items['admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/sage-payment-cc-capture'] = array(
-    'title' => 'Capture',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('commerce_sage_payments__cc_capture_form', 3, 5),
-    'access callback' => 'commerce_sage_payments__cc_capture_access',
-    'access arguments' => array(3, 5),
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'context' => MENU_CONTEXT_INLINE,
-    'weight' => 2,
-    'file' => 'commerce_sage_payment.admin.inc',
-  );
-
-  // Add a menu item for voiding transactions.
-  $items['admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/sage-payment-cc-void'] = array(
-    'title' => 'Void',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('commerce_sage_payments_cc_void_form', 3, 5),
-    'access callback' => 'commerce_sage_payments_cc_void_access',
-    'access arguments' => array(3, 5),
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'context' => MENU_CONTEXT_INLINE,
-    'weight' => 2,
-    'file' => 'commerce_sage_payment.admin.inc',
-  );
-
-  // Add a menu item for issuing credits.
-  $items['admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/sage-payment-cc-credit'] = array(
-    'title' => 'Credit',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('commerce_sage_payments_cc_credit_form', 3, 5),
-    'access callback' => 'commerce_sage_payments_cc_credit_access',
-    'access arguments' => array(3, 5),
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'context' => MENU_CONTEXT_INLINE,
-    'weight' => 2,
-    'file' => 'commerce_sage_payment.admin.inc',
-  );
-  return $items;
-}
-
-
-/**
- * Determines menu access to the prior auth capture form for CC transactions.
- *
- * @param stdClass $order
- *   The order the transaction is on.
- * @param stdClass $transaction
- *   The payment transaction object to be captured.
- *
- * @return bool
- *   TRUE or FALSE indicating capture access.
- *
- * @todo Might be incomplete.
- */
-function commerce_sage_payments_cc_capture_access($order, $transaction) {
-  // Return FALSE if the transaction isn't for Sage Payments or isn't
-  // awaiting capture.
-  if ($transaction->payment_method != 'commerce_sage_payments_cc' || empty($transaction->remote_id) ||
-    strtoupper($transaction->remote_status) != 'AUTH_ONLY') {
-    return FALSE;
-  }
-
-  // Return FALSE if it is more than 30 days past the original authorization.
-  if (time() - $transaction->created > 86400 * 30) {
-    return FALSE;
-  }
-
-  // Allow access if the user can update this transaction.
-  return commerce_payment_transaction_access('update', $transaction);
-}
-
-/**
- * Determines menu access to the void form for Sage Payment credit card transactions.
- *
- * @param stdClass $order
- *   The order the transaction is on.
- * @param stdClass $transaction
- *   The payment transaction object to be voided.
- *
- * @return bool
- *   TRUE or FALSE indicating void access.
- */
-function commerce_sage_payments_cc_void_access($order, $transaction) {
-
-  // @todo Check possible remote_status values to see if they are the same
-  //   for Sage Payments.
-  $expected_remote_status = array(
-    'AUTH_ONLY',
-    'PRIOR_AUTH_CAPTURE',
-    'AUTH_CAPTURE',
-  );
-  if ($transaction->payment_method != 'commerce_sage_payments_cc' || empty($transaction->remote_id) ||
-    !in_array(strtoupper($transaction->remote_status), $expected_remote_status)) {
-    return FALSE;
-  }
-
-  // Return FALSE if it is more than 24 hours since the last update to the
-  // transaction, as it will already have been settled.
-  if (time() - $transaction->changed > 2600 * 24) {
-    return FALSE;
-  }
-
-  // Allow access if the user can update this transaction.
-  return commerce_payment_transaction_access('update', $transaction);
-}
-
-/**
- * Determines menu access to the credit form for successful CC transactions.
- *
- * @param stdClass $order
- *   The order the transaction is on.
- * @param stdClass $transaction
- *   The payment transaction object to be credited.
- *
- * @return bool
- *   TRUE or FALSE indicating credit access.
- */
-function commerce_sage_payments_cc_credit_access($order, $transaction) {
-  // Return FALSE if the transaction isn't for Sage Payments, doesn't have a
-  // success status or has an amount of 0 or less.
-  if ($transaction->payment_method != 'commerce_sage_payments_cc' || $transaction->status != 'success' || $transaction->amount <= 0) {
-    return FALSE;
-  }
-
-  // Return FALSE if it is more than 120 days past the original capture.
-  // @todo Find out what's Sage Payments's limit is.
-  if (time() - $transaction->created > 86400 * 120) {
-    return FALSE;
-  }
-
-  // Allow access if the user can update this transaction.
-  return commerce_payment_transaction_access('update', $transaction);
-}
-
 /**
  * Implements hook_commerce_payment_method_info().
  */
@@ -435,7 +294,7 @@ function commerce_sage_payments_cc_submit_form_submit($payment_method, $pane_for
 
 
       // Try to save a credit card in the Vault.
-      $vault_response = commerce_sage_payments_register_vault_request($payment_method, $payment_details);
+      $vault_response = commerce_sage_payments_vault_request_insert($payment_method, $payment_details);
 
       if (trim($vault_response->SUCCESS) == 'true') {
         $guid = trim($vault_response->GUID);
@@ -618,37 +477,6 @@ function commerce_sage_payments_cc_vault_cardonfile_charge($payment_method, $car
 
 }
 
-/**
- * Sage Payments request function wrapper.
- */
-function _commerce_sage_payments_request_capture($gateway, $input) {
-  /* Example input
-    $input = array(
-      'litleTxnId'=>'100000000000000001',
-      'id'=> '456',
-    );
-  */
-  $litle = _commerce_sage_payments_get_litle();
-  $input = array_merge($input, _commerce_sage_payments_get_litle_config($gateway));
-  return $litle->captureRequest($input);
-}
-
-/**
- * Sage Payments request function wrapper.
- */
-function _commerce_sage_payments_request_partial_capture($gateway, $input) {
-  /* Example input
-    $input = array(
-      'partial'=>'true',
-      'id'=> '456',
-      'litleTxnId'=>'320000000000000001',
-      'amount'=>'5005'
-    );
-  */
-  $litle = _commerce_sage_payments_get_litle();
-  $input = array_merge($input, _commerce_sage_payments_get_litle_config($gateway));
-  return $litle->captureRequest($input);
-}
 
 /**
  * Load the SOAP client and WSDL definitions.
@@ -752,7 +580,7 @@ function _commerce_sage_payments_request_credit($gateway, $request_parameters) {
  * @return
  *   The response object with 'SUCCESS' (boolean), 'GUID' (string), and 'MESSAGE' (string) attributes
  */
-function commerce_sage_payments_register_vault_request($gateway, $request_parameters) {
+function commerce_sage_payments_vault_request_insert($gateway, $request_parameters) {
   $vault_client = _commerce_sage_payments_get_sage_payments_vault_management_client();
   $request_parameters += _commerce_sage_payments_get_sage_payments_config($gateway);
   $response = $vault_client->INSERT_CREDIT_CARD_DATA($request_parameters);
@@ -793,74 +621,3 @@ function _commerce_sage_payments_vault_request_sale($gateway, $request_parameter
   return $transaction_response;
 }
 
-
-/**
- * Returns the transaction type string for Sage Payments that corresponds to the
- *   Drupal Commerce constant.
- *
- * @param $txn_type
- *   A Drupal Commerce transaction type constant.
- *
- * @return string|NULL
- *   Litle transaction type string.
- */
-function commerce_sage_payments_txn_type($txn_type) {
-  switch ($txn_type) {
-    case COMMERCE_CREDIT_AUTH_ONLY:
-      return 'AUTH_ONLY';
-
-    case COMMERCE_CREDIT_PRIOR_AUTH_CAPTURE:
-      return 'PRIOR_AUTH_CAPTURE';
-
-    case COMMERCE_CREDIT_AUTH_CAPTURE:
-      return 'AUTH_CAPTURE';
-
-    case COMMERCE_CREDIT_CAPTURE_ONLY:
-      return 'CAPTURE_ONLY';
-
-    case COMMERCE_CREDIT_REFERENCE_SET:
-    case COMMERCE_CREDIT_REFERENCE_TXN:
-    case COMMERCE_CREDIT_REFERENCE_REMOVE:
-    case COMMERCE_CREDIT_REFERENCE_CREDIT:
-      return NULL;
-
-    case COMMERCE_CREDIT_CREDIT:
-      return 'CREDIT';
-
-    case COMMERCE_CREDIT_VOID:
-      return 'VOID';
-
-  }
-}
-
-/**
- * Returns the description of a Sage Payments transaction type.
- *
- * @param string $txn_type
- *   A Sage Payments transaction type string.
- *
- * @return string
- *   Translateable description.
- */
-function commerce_sage_payments_reverse_txn_type($txn_type) {
-  switch (strtoupper($txn_type)) {
-    case 'AUTH_ONLY':
-      return t('Authorization only');
-
-    case 'PRIOR_AUTH_CAPTURE':
-      return t('Prior authorization capture');
-
-    case 'AUTH_CAPTURE':
-      return t('Authorization and capture');
-
-    case 'CAPTURE_ONLY':
-      return t('Capture only');
-
-    case 'CREDIT':
-      return t('Credit');
-
-    case 'VOID':
-      return t('Void');
-
-  }
-}
