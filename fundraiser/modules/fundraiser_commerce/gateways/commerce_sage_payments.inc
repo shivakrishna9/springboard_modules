@@ -11,7 +11,7 @@
 function commerce_sage_payments_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     // Create the payment_method array with the commerce gateway method info name as the key
-    'payment_method'    => array('commerce_sage_payments_cc' => 'credit'),
+    'payment_method'    => array('credit'),
     'allow_recurring'   => array('credit'),
     'allow_refund'      => array('credit'),
     'form callback'     => 'commerce_sage_payments_fundraiser_commerce_submit_form',

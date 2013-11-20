@@ -298,38 +298,35 @@ function commerce_sage_payments_cc_credit_form_submit($form, &$form_state) {
 function commerce_sage_payments_cc_credit_request($payment_method, $transaction, $order, $amount) {
   $credit_amount = commerce_currency_decimal_to_amount($amount, $transaction->currency_code);
 
-  // Build a name-value pair array for this transaction.
-  // Sage Payments expects amounts in integer number of cents.
-  $nvp = array(
-    'litleTxnId' => $transaction->remote_id,
-    'amount' => $credit_amount,
+  $request_parameters = array(
+    'T_AMT'         => $credit_amount,
+    'T_REFERENCE'   => $transaction->remote_id,
   );
 
   // Log the request if specified.
   if ($payment_method['settings']['log']['request'] === 'request') {
-    watchdog('commerce_sage_payments', 'Litle Credit request: !param', array('!param' => '<pre>' . check_plain(print_r($nvp, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+    watchdog('commerce_sage_payments', 'Sage Payments Credit request: !param', array('!param' => '<pre>' . check_plain(print_r($request_parameters, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
   }
 
   // Submit the request to Litle.
-  $response = _commerce_sage_payments_request_credit($payment_method, $nvp);
-  $response_string = XmlParser::getDomDocumentAsString($response);
-  $response_code = XmlParser::getNode($response, 'response');
+  $response = _commerce_sage_payments_request_credit($payment_method, $request_parameters);
+
 
   // Log the response if specified.
   if ($payment_method['settings']['log']['response'] === 'response') {
-    watchdog('commerce_sage_payments', 'Litle Credit response: !param', array('!param' => '<pre>' . check_plain($response_string) . '</pre>', WATCHDOG_DEBUG));
+    watchdog('commerce_sage_payments', 'Sage Payments Credit response: !param', array('!param' => '<pre>' . check_plain(print_r($response, TRUE)) . '</pre>', WATCHDOG_DEBUG));
   }
 
-  if ($response_code == '000') {
+  if (trim($response->MESSAGE) == 'APPROVED') {
     drupal_set_message(t('Credit for @amount issued successfully', array('@amount' => commerce_currency_format($credit_amount, $transaction->currency_code))));
 
     // Create a new transaction to record the credit.
     $credit_transaction = commerce_payment_transaction_new('commerce_sage_payments_cc', $order->order_id);
     $credit_transaction->instance_id = $payment_method['instance_id'];
-    $credit_transaction->remote_id = XmlParser::getNode($response, 'litleTxnId');
+    $credit_transaction->remote_id = $response->REFERENCE;
     $credit_transaction->amount = $credit_amount * -1;
     $credit_transaction->currency_code = $transaction->currency_code;
-    $credit_transaction->payload[REQUEST_TIME] = $response_string;
+    $credit_transaction->payload[REQUEST_TIME] = check_plain(print_r($response, TRUE));
     $credit_transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
     $credit_transaction->remote_status = COMMERCE_CREDIT_AUTH_CAPTURE;
     $credit_transaction->message = t('Credited to @remote_id.', array('@remote_id' => $transaction->remote_id));
@@ -340,10 +337,10 @@ function commerce_sage_payments_cc_credit_request($payment_method, $transaction,
   }
   else {
     // Save the failure response message to the original transaction.
-    $transaction->payload[REQUEST_TIME] = $response_string;
+    $transaction->payload[REQUEST_TIME] = check_plain(print_r($response, TRUE));
 
-    // Display a failure message and response reason from Litle .
-    $message = XmlParser::getNode($response, 'message');
+    // Display a failure message and response reason from Sage Payments.
+    $message = $response->MESSAGE;
     drupal_set_message(t('Credit failed: @reason', array('@reason' => check_plain($message))), 'error');
 
     // Add an additional helper message if the transaction hadn't settled yet.
