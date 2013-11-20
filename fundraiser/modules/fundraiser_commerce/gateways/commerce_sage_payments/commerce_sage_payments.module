@@ -196,7 +196,7 @@ function commerce_sage_payments_cc_settings_form($settings = array()) {
     $form['cardonfile'] = array(
       '#type' => 'checkbox',
       '#title' => t('Enable Card on File functionality with this payment method using the Sage Payments Vault.'),
-      '#description' => t('You must be token enabled and certified prior to using the Vault feature. Please consult your Sage Payments Customer Experience Manager concerning the requirements and details of this process.'),
+      '#description' => t('You must have the Vault functionality enabled by Sage Payments to using the Vault feature. Please consult your Sage Payments Representative concerning the requirements and details of this process.'),
       '#default_value' => isset($settings['cardonfile']) ? $settings['cardonfile'] : 0,
     );
 
@@ -358,7 +358,7 @@ function commerce_sage_payments_cc_submit_form_submit($payment_method, $pane_for
     watchdog('commerce_sage_payments', 'Sage Payments request: !param', array('!param' => '<pre>' . check_plain(print_r($log_request_parameters, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
   }
 
-  $transaction_response = _commerce_sage_payments_sale_request($request_parameters);
+  $transaction_response = _commerce_sage_payments_request_sale($payment_method, $request_parameters);
 
   // Log the response if specified.
   if ($payment_method['settings']['log']['response'] === 'response') {
@@ -416,21 +416,16 @@ function commerce_sage_payments_cc_submit_form_submit($payment_method, $pane_for
     return FALSE;
   }
 
-  // If Card on File is enabled, see if we have tokens saved.
-  // Ii not, get a new token.
-  // @todo get the card on file stuff working.
-  if (FALSE && module_exists('commerce_cardonfile') && !empty($payment_method['settings']['cardonfile']) &&
+  // If Card on File is enabled, see if we have a credit card saved.
+  // If not, get a new token.
+  if (module_exists('commerce_cardonfile') && !empty($payment_method['settings']['cardonfile']) &&
     !empty($pane_values['credit_card']['cardonfile_store']) && $pane_values['credit_card']['cardonfile_store']) {
 
     // Build a payment details array for the credit card.
     $payment_details = array(
-      'accountNumber' => $pane_values['credit_card']['number'],
-      'orderId' => $order->order_number,
+      'CARDNUMBER'      => $pane_values['credit_card']['number'],
+      'EXPIRATION_DATE' => str_pad($pane_values['credit_card']['exp_month'], 2, 0, STR_PAD_LEFT) . substr($pane_values['credit_card']['exp_year'], 2, 2),
     );
-
-    if (isset($pane_values['credit_card']['code'])) {
-      $payment_details['cardValidationNum'] = $pane_values['credit_card']['code'];
-    }
 
     // First look to see if we already have cards on file for the user.
     $stored_cards = commerce_cardonfile_load_multiple_by_uid($order->uid, $payment_method['instance_id']);
@@ -438,30 +433,19 @@ function commerce_sage_payments_cc_submit_form_submit($payment_method, $pane_for
     // If we didn't find any, attempt to register a token now.
     if (empty($stored_cards)) {
 
-      // If we're in the sandbox, use the test data for registering a token.
-      // This should return an 801 response code.
-      if ($payment_method['settings']['commerce_sage_payments_settings_sandbox'] == 1) {
-        $payment_details['accountNumber'] = '4457119922390123';
-        $payment_details['orderId'] = '50';
-      };
 
-      // Submit a registerTokenRequest.
-      $token_response = commerce_sage_payments_register_token_request($init, $sage_payment_config, $payment_details);
+      // Try to save a credit card in the Vault.
+      $vault_response = commerce_sage_payments_register_vault_request($payment_method, $payment_details);
 
-      $token_response_code = XmlParser::getNode($token_response, 'response');
-
-      // Keep in mind tokenResponseCode is different than response.
-      // 801 Account numbeer was successfully registered.
-      // 802 Account number was previously registered.
-      if (in_array($token_response_code, array(801, 802))) {
-        $litle_token = XmlParser::getNode($token_response, 'litleToken');
+      if (trim($vault_response->SUCCESS) == 'true') {
+        $guid = trim($vault_response->GUID);
 
         // Store the token with cardonfile.
         $card_data = commerce_cardonfile_new();
         $card_data->uid = $order->uid;
         $card_data->payment_method = $payment_method['method_id'];
         $card_data->instance_id = $payment_method['instance_id'];
-        $card_data->remote_id = $litle_token;
+        $card_data->remote_id = $guid;
         $card_data->card_type = !empty($card_type) ? $card_type : 'card';
         $card_data->card_name = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
         $card_data->card_number = substr($pane_values['credit_card']['number'], -4);
@@ -471,11 +455,10 @@ function commerce_sage_payments_cc_submit_form_submit($payment_method, $pane_for
 
         // Save and log the creation of the new card on file.
         commerce_cardonfile_save($card_data);
-        watchdog('commerce_sage_payments', 'Token @litleToken registered and saved to user @uid.', array('@litleToken' => $litle_token, '@uid' => $order->uid));
+        watchdog('commerce_sage_payments', 'GUID @guid registered and saved to user @uid.', array('@guid' => $guid, '@uid' => $order->uid));
       }
       else {
-
-        // @todo Not an 801 or 802, so may be an error. What should we do here?
+        // @todo Errored. What should we do here?
       }
     }
   } // End if cardonfile.
@@ -687,22 +670,6 @@ function _commerce_sage_payments_request_partial_capture($gateway, $input) {
   return $litle->captureRequest($input);
 }
 
-
-/**
- * Sage Payment Credit request function wrapper.
- */
-function _commerce_sage_payments_request_credit($gateway, $request_parameters) {
-  $sage_client = _commerce_sage_payments_get_sage_payments_client();
-  $request_parameters = array_merge($request_parameters, _commerce_sage_payments_get_sage_payments_config($gateway));
-  $response = $sage_client->BANKCARD_CREDIT($request_parameters);
-  if (is_object($response) && is_object($response->BANKCARD_CREDITResult)){
-      $response_parsed  = new SimpleXMLElement($response->BANKCARD_CREDITResult->any);
-      $transaction_response = (object)(array) $response_parsed->NewDataSet->Table1;
-  }
-  return $transaction_response;
-}
-
-
 /**
  * Load the SOAP client and WSDL definitions.
  */
@@ -710,6 +677,23 @@ function _commerce_sage_payments_get_sage_payments_client() {
   $client = new SoapClient('https://gateway.sagepayments.net/web_services/wsvtextensions/transaction_processing.asmx?WSDL');
   return $client;
 }
+
+/**
+ * Load the SOAP client and WSDL definitions for the Sage Payments Vault admin.
+ */
+function _commerce_sage_payments_get_sage_payments_vault_management_client() {
+  $client = new SoapClient('https://www.sagepayments.net/web_services/wsVault/wsVault.asmx?WSDL');
+  return $client;
+}
+
+/**
+ * Load the SOAP client and WSDL definitions for Sage Payments Vault transaction processing.
+ */
+function _commerce_sage_payments_get_sage_payments_vault_transaction_client() {
+  $client = new SoapClient('https://www.sagepayments.net/web_services/wsVault/wsVaultBankcard.asmx?WSDL');
+  return $client;
+}
+
 
 /**
  * Return gateway configuration values from a given gateway.
@@ -727,14 +711,18 @@ function _commerce_sage_payments_get_sage_payments_config($gateway) {
 /**
  * Sends a sale request to Sage Payments.
  *
- * @param stdClass $request_parameters
+ * @param array $gateway
+ *   The payment method.
+ *
+ * @param array $request_parameters
  *   Data to pass to the API call.
  *
- * @return array
+ * @return object $transaction_response
  *   The parsed transaction info.
  */
-function _commerce_sage_payments_sale_request($request_parameters) {
+function _commerce_sage_payments_request_sale($gateway, $request_parameters) {
   $sage_client = _commerce_sage_payments_get_sage_payments_client();
+  $request_parameters = array_merge($request_parameters, _commerce_sage_payments_get_sage_payments_config($gateway));
   $response = $sage_client->BANKCARD_SALE($request_parameters);
 
   watchdog('commerce_sage_payments', 'Sage Payments Sale response: !param', array('!param' => '<pre>' . check_plain($response) . '</pre>', WATCHDOG_DEBUG));
@@ -748,23 +736,53 @@ function _commerce_sage_payments_sale_request($request_parameters) {
 
 
 /**
- * Sends a request to Sage Payments to register a token.
+ * Sage Payment Credit request function wrapper.
  *
- * @param stdClass $litle
- *   The litle object
- * @param array $litle_config
- *   The result of _commerce_sage_payments_get_litle_config($payment_method)
+ * @param array $gateway
+ *   The payment method.
+ *
+ * @param array $request_parameters
+ *   Data to pass to the API call.
+ *
+ * @return object $transaction_response
+ *   The parsed transaction info.
+ */
+function _commerce_sage_payments_request_credit($gateway, $request_parameters) {
+  $sage_client = _commerce_sage_payments_get_sage_payments_client();
+  $request_parameters = array_merge($request_parameters, _commerce_sage_payments_get_sage_payments_config($gateway));
+  $response = $sage_client->BANKCARD_CREDIT($request_parameters);
+  if (is_object($response) && is_object($response->BANKCARD_CREDITResult)){
+      $response_parsed  = new SimpleXMLElement($response->BANKCARD_CREDITResult->any);
+      $transaction_response = (object)(array) $response_parsed->NewDataSet->Table1;
+  }
+  return $transaction_response;
+}
+
+
+/**
+ * Sends a request to Sage Payments to save a credit card in the Vault.
+ *
+ * @param array $gateway
+ *   The payment method.
+ *
  * @param array $data
  *   Data to pass to the API call.
  *   Will vary depending on payment type (cc vs bank)
  *
  * @return
- *   The registerTokenRequest Response
+ *   The response object with 'SUCCESS' (boolean), 'GUID' (string), and 'MESSAGE' (string) attributes
  */
-function commerce_sage_payments_register_token_request($litle, $litle_config, $data) {
-  $data += $litle_config;
-  $token_response = $litle->registerTokenRequest($data);
-  watchdog('commerce_sage_payments', 'Sage Payments Token response: !param', array('!param' => '<pre>' . check_plain(XmlParser::getDomDocumentAsString($token_response)) . '</pre>', WATCHDOG_DEBUG));
+function commerce_sage_payments_register_vault_request($gateway, $request_parameters) {
+  $vault_client = _commerce_sage_payments_get_sage_payments_vault_management_client();
+  $request_parameters += _commerce_sage_payments_get_sage_payments_config($gateway);
+  $response = $vault_client->INSERT_CREDIT_CARD_DATA($request_parameters);
+  if (is_object($response) && is_object($response->INSERT_CREDIT_CARD_DATAResult)){
+      $response_parsed  = new SimpleXMLElement($response->INSERT_CREDIT_CARD_DATAResult->any);
+      $transaction_response = (object)(array) $response_parsed->NewDataSet->Table1;
+  }
+  return $transaction_response;
+
+  watchdog('commerce_sage_payments', 'Sage Payments Vault response: !param', array('!param' => '<pre>' . check_plain(print_r($token_response), TRUE) . '</pre>', WATCHDOG_DEBUG));
   return $token_response;
 }
 
