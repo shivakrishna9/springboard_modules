@@ -66,15 +66,7 @@ function market_source_admin_settings_form($form, &$form_state) {
     $form_state['values']['market_source_default_fields']['default_fields_wrapper'] = variable_get('market_source_default_fields', NULL);
   }
   //set up fields to loop through
-  $default_fields_list = array(
-    'market_source' => t('Market Source'),
-    'campaign' => t('Campaign ID'),
-    'referrer' => t('Referrer'),
-    'initial_referrer' => t('Initial Referrer'),
-    'search_engine' => t('Search Engine'),
-    'search_string' => t('Search String'),
-    'user_agent' => t('User Agent'),
-  );
+  $default_fields_list = market_source_list_default_fields();
   //shortcut
   $default_fields_values = &$form_state['values']['market_source_default_fields']['default_fields_wrapper'];
 
@@ -403,4 +395,17 @@ function _market_source_get_nonfieldset_keys($field_info = NULL, $fields = array
     }
   }
   return $fields;
+}
+
+function market_source_list_default_fields() {
+  $default_fields_list = array(
+    'market_source' => t('Market Source'),
+    'campaign' => t('Campaign ID'),
+    'referrer' => t('Referrer'),
+    'initial_referrer' => t('Initial Referrer'),
+    'search_engine' => t('Search Engine'),
+    'search_string' => t('Search String'),
+    'user_agent' => t('User Agent'),
+  );
+  return $default_fields_list;
 }

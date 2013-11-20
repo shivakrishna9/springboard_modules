@@ -503,11 +503,14 @@ function _sb_social_settings_market_source(&$form, $settings) {
     '#description' => t('Optional Market Source values to include in share links'),
   );
   $fields = market_source_field_info();
+  $share_enabled_fields = _sb_social_list_share_enabled_market_source_fields();
+
   // It doesn't make sense to list certain market source fields, like user agent.
   // the blacklist lets us filter these out cleanly.
   $blacklist = _sb_social_component_blacklist();
   foreach ($fields as $key => $field) {
-    if (in_array($key, $blacklist)) {
+    // skip market source fields that haven't been share enabled.
+    if (!in_array($key, $share_enabled_fields)) {
       continue;
     }
     if ($key == 'cid') {
@@ -531,4 +534,33 @@ function _sb_social_settings_market_source(&$form, $settings) {
       );
     }
   }
+}
+
+/**
+ * List share-enabled market source fields.
+ *
+ * @return array
+ */
+function _sb_social_list_share_enabled_market_source_fields() {
+  $enabled_fields = array();
+  $default_fields = variable_get('sb_social_market_source_default_fields', array());
+  $custom_fields = variable_get('sb_social_market_source_custom_fields', array());
+  $fields = array_merge($default_fields, $custom_fields);
+
+  foreach ($fields as $key => $value) {
+    // Fiddling required due to quirks in how Market Source presents data during form submission.
+    // ms and cid fields are not indexed by their actual form key, so we have to do a quick conversion.
+    switch ($key) {
+      case 'market_source':
+        $key = 'ms';
+        break;
+      case 'campaign':
+        $key = 'cid';
+        break;
+    }
+    if ($value['share_enabled'] === 1) {
+      $enabled_fields[] = $key;
+    }
+  }
+  return $enabled_fields;
 }

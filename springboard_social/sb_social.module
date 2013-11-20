@@ -105,6 +105,83 @@ function sb_social_menu() {
   return $items;
 }
 
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Add share enabled checkboxes to default and custom market source fields.
+ * This permits admins to configure which Market Source fields show up
+ * on the Social settings page, thereby limiting which fields can be used
+ * in a social share link.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function sb_social_form_market_source_admin_settings_form_alter(&$form, $form_state) {
+  $default_fields_list = market_source_list_default_fields();
+  $default_field_values = variable_get('sb_social_market_source_default_fields', array());
+  // add share enabled checkbox to default ms fields
+  foreach ($default_fields_list as $key => $field_name) {
+    $form['market_source_default_fields']['default_fields_wrapper'][$key]['share_enabled'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Share Tracking'),
+      '#description' => t('Used in social share links'),
+      '#prefix' => '<div class="container-inline">',
+      '#suffix' => '</div>',
+      '#default_value' => isset($default_field_values[$key]) ? $default_field_values[$key]['share_enabled'] : 0,
+    );
+  }
+
+  $custom_fields = &$form['market_source_global_fields']['custom_fields_wrapper'];
+  $custom_field_values = &$form_state['values']['market_source_global_fields']['custom_fields_wrapper'];
+  $custom_field_saved_state = variable_get('sb_social_market_source_custom_fields', array());
+  // add share enabled checkox to custom ms fields
+  foreach ($custom_field_values as $i => $field_value) {
+    $key = isset($field_value['key']) ? $field_value['key'] : FALSE;
+    $custom_fields[$i]['share_enabled'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Share Tracking'),
+      '#description' => t('Used in social share links'),
+      '#prefix' => '<div class="container-inline">',
+      '#suffix' => '</div>',
+      '#default_value' => ($key && isset($custom_field_saved_state[$key])) ? $custom_field_saved_state[$key]['share_enabled'] : 0,
+    );
+  }
+  $form['#submit'][] = 'sb_social_market_source_admin_settings_submit';
+}
+
+/**
+ * Submit handler for Market Source admin settings screen.
+ *
+ * Save share enabled checkbox values.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function sb_social_market_source_admin_settings_submit($form, $form_state) {
+  $default_fields = array();
+  $values = $form_state['values'];
+  if (!empty($values['market_source_default_fields']['default_fields_wrapper'])) {
+    foreach ($values['market_source_default_fields']['default_fields_wrapper'] as $key => $default_values) {
+      $default_fields[$key] = array(
+        'share_enabled' => $default_values['share_enabled'],
+      );
+    }
+  }
+  variable_set('sb_social_market_source_default_fields', $default_fields);
+  // Save all the custom fields.
+  $custom_fields = array();
+  if (!empty($values['market_source_global_fields']['custom_fields_wrapper'])) {
+    foreach ($values['market_source_global_fields']['custom_fields_wrapper'] as $i => $field) {
+      if (!empty($field['key']) && !empty($field['name'])) {
+        $custom_fields[$field['key']] = array(
+          'share_enabled' => $field['share_enabled'],
+        );
+      }
+    }
+  }
+  variable_set('sb_social_market_source_custom_fields', $custom_fields);
+}
+
 /*
  * Implements hook_block_info().
  */
