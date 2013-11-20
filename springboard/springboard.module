@@ -329,8 +329,8 @@ function springboard_menu_alter(&$items) {
   }
 
   if (module_exists('sb_social')) {
-    $items['admin/springboard/sb-social'] = $items['admin/config/services/springboard_social'];
-    $items['admin/springboard/sb-social']['type'] = MENU_NORMAL_ITEM;
+    $items['admin/springboard/settings/sb-social'] = $items['admin/config/services/springboard_social'];
+    $items['admin/springboard/settings/sb-social']['type'] = MENU_NORMAL_ITEM;
   }
 }
 
