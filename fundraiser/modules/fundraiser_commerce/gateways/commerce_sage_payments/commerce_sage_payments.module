@@ -263,7 +263,7 @@ function commerce_sage_payments_cc_submit_form_submit($payment_method, $pane_for
     drupal_set_message(t('We received an error processing your card. Please enter your information again or try a different card.'), 'error');
 
     if ($payment_method['settings']['verbose_gateway']) {
-      drupal_set_message(check_plain(print_r($transaction_response, 'message')), 'error');
+      drupal_set_message(check_plain(print_r($transaction_response, TRUE)), 'error');
     }
 
     return FALSE;
@@ -463,7 +463,7 @@ function commerce_sage_payments_cc_vault_cardonfile_charge($payment_method, $car
     drupal_set_message(t('We received an error processing your card on file. Please enter your information again or try a different card.'), 'error');
 
     if ($payment_method['settings']['verbose_gateway']) {
-      drupal_set_message(check_plain(print_r($transaction_response, 'message')), 'error');
+      drupal_set_message(check_plain(print_r($transaction_response, TRUE)), 'error');
     }
 
     return FALSE;
@@ -527,7 +527,7 @@ function _commerce_sage_payments_request_sale($gateway, $request_parameters) {
   $request_parameters = array_merge($request_parameters, _commerce_sage_payments_get_sage_payments_config($gateway));
   $response = $sage_client->BANKCARD_SALE($request_parameters);
 
-  watchdog('commerce_sage_payments', 'Sage Payments Sale response: !param', array('!param' => '<pre>' . check_plain($response) . '</pre>', WATCHDOG_DEBUG));
+  watchdog('commerce_sage_payments', 'Sage Payments Sale response: !param', array('!param' => '<pre>' . check_plain(print_r($response, TRUE)) . '</pre>', WATCHDOG_DEBUG));
   if (is_object($response) && is_object($response->BANKCARD_SALEResult)){
       $response_parsed  = new SimpleXMLElement($response->BANKCARD_SALEResult->any);
       $transaction_response = (object)(array) $response_parsed->NewDataSet->Table1;
@@ -606,7 +606,7 @@ function _commerce_sage_payments_vault_request_sale($gateway, $request_parameter
   $request_parameters = array_merge($request_parameters, _commerce_sage_payments_get_sage_payments_config($gateway));
   $response = $sage_client->VAULT_BANKCARD_SALE($request_parameters);
 
-  watchdog('commerce_sage_payments', 'Sage Payments Sale response: !param', array('!param' => '<pre>' . check_plain($response) . '</pre>', WATCHDOG_DEBUG));
+  watchdog('commerce_sage_payments', 'Sage Payments Sale response: !param', array('!param' => '<pre>' . check_plain(print_r($response, TRUE)) . '</pre>', WATCHDOG_DEBUG));
   if (is_object($response) && is_object($response->VAULT_BANKCARD_SALEResult)){
       $response_parsed  = new SimpleXMLElement($response->VAULT_BANKCARD_SALEResult->any);
       $transaction_response = (object)(array) $response_parsed->NewDataSet->Table1;
