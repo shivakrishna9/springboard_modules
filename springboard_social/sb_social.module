@@ -705,7 +705,8 @@ function _sb_social_replace_tokens($string, $node, $sid = NULL) {
   // Do token.module tokens
   $account = NULL;
   $donation = NULL;
-  if ($sid) {
+  // limit to actual donation forms.
+  if ($sid && isset($node->type) && fundraiser_is_donation_type($node->type)) {
     $donation = _fundraiser_webform_get_donation_by_sid($sid);
     $account = user_load($donation->uid);
   }
