@@ -45,12 +45,6 @@ function commerce_sage_payments_cc_settings_form($settings = array()) {
     '#default_value' => isset($settings['commerce_sage_payments_settings_merchant_key']) ? $settings['commerce_sage_payments_settings_merchant_key'] : '',
   );
 
-  $form['commerce_sage_payments_settings_sandbox'] = array(
-    '#type' => 'checkbox',
-    '#title' => 'Run in Sandbox Mode',
-    '#default_value' => isset($settings['commerce_sage_payments_settings_sandbox']) ? $settings['commerce_sage_payments_settings_sandbox'] : '',
-  );
-
   if (module_exists('commerce_cardonfile')) {
     $form['cardonfile'] = array(
       '#type' => 'checkbox',
