@@ -241,6 +241,14 @@ function sb_social_settings_load($sid) {
   return $settings[$sid];
 }
 
+
+/**
+ * Delete settings.
+ */
+function sb_social_webform_settings_delete($nid, $type = 'node') {
+  db_query('DELETE FROM {sb_social_settings} WHERE id = :id AND type = :type', array(':id' => $nid, ':type' => $type));
+}
+
 /**
  * Lookup ID associated with the share settings ID provided.
  *
