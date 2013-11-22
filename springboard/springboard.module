@@ -30,18 +30,6 @@ function springboard_menu() {
   // Springboard task list.
   $items['admin/springboard'] = array(
     'title' => 'Springboard',
-    'description' => 'Configure and administer Springboard.',
-    'page callback' => 'system_admin_menu_block_page',
-    'module' => 'system',
-    'file path' => drupal_get_path('module', 'system'),
-    'file' => 'system.admin.inc',
-    'access arguments' => array('administer springboard'),
-    'type' => MENU_NORMAL_ITEM,
-  );
-
-  // Springboard dashboard.
-  $items['admin/springboard/dashboard'] = array(
-    'title' => 'Dashboard',
     'description' => 'Access reports and site maintenance tasks.',
     'access arguments' => array('access springboard dashboard'),
     'page callback' => 'springboard_admin_dashboard',
@@ -49,17 +37,6 @@ function springboard_menu() {
     'weight' => -5,
     );
     
-  // Springboard dashboard settings
-  $items['admin/springboard/dashboard/settings'] = array(
-    'title' => 'Springboard Dashboard Configuration',
-    'description' => 'Configure the Springboard dashboard.',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('springboard_dashboard_settings'),
-    'access arguments' => array('administer springboard'),
-    'file' => 'springboard.admin.inc',
-    'type' => MENU_LOCAL_ACTION,
-    'weight' => -5,
-  );
   // Springboard forms admin.
   $items['admin/springboard/forms'] = array(
     'title' => 'Forms',
@@ -106,6 +83,17 @@ function springboard_menu() {
     'file' => 'springboard.admin.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => 7,
+  );
+  // Springboard dashboard settings.
+  $items['admin/springboard/options/dashboard'] = array(
+    'title' => 'Springboard Dashboard Configuration',
+    'description' => 'Configure Springboard dashboard.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_dashboard_settings'),
+    'access arguments' => array('administer springboard'),
+    'file' => 'springboard.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => -5,
   );
   // Springboard Help
   $items['admin/springboard/help'] = array(

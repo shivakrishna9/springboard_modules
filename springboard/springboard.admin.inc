@@ -31,7 +31,8 @@
     '#type' => 'submit',
     '#value' => t('Return to Dashboard'),
     '#submit' => array('springboard_dashboard_config_cancel'),
-    '#description' => t('Cancel changes and return to the dashboard')
+    '#description' => t('Cancel changes and return to the dashboard'),
+    '#weight' => 10,
   );
   return system_settings_form($form);
  }
@@ -2080,12 +2081,12 @@ function springboard_admin_ignore($form, $form_state) {
  */
  
  function springboard_dashboard_config_save($form, &$form_state) {
-   $form_state['redirect'] = 'admin/springboard/dashboard';
+   $form_state['redirect'] = 'admin/springboard';
  }
  
 /**
  * Submit handler for the Springboard Dashbord config cancel button
  */
 function springboard_dashboard_config_cancel($form, &$form_state) {
-  $form_state['redirect'] = 'admin/springboard/dashboard';
+  $form_state['redirect'] = 'admin/springboard';
 }

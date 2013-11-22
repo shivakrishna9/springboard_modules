@@ -4,6 +4,7 @@ package = Jackson River Springboard
 core = 7.x
 version = 7.x-4.0-dev
 
+dependencies[] = menu
 dependencies[] = springboard
 
 files[] = springboard_admin.menu.inc
