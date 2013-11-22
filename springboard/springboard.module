@@ -62,7 +62,7 @@ function springboard_menu() {
     'weight' => -3,
   );
   // Springboard settings list.
-  $items['admin/springboard/settings'] = array(
+  $items['admin/springboard/options'] = array(
     'title' => 'Settings',
     'description' => 'Configure Springboard modules.',
     'page callback' => 'system_admin_menu_block_page',
@@ -74,7 +74,7 @@ function springboard_menu() {
     'weight' => -2,
   );
   // Springboard dashboard settings.
-  $items['admin/springboard/settings/springboard'] = array(
+  $items['admin/springboard/options/springboard'] = array(
     'title' => 'Springboard',
     'description' => 'Configure Springboard.',
     'page callback' => 'drupal_get_form',

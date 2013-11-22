@@ -263,7 +263,7 @@ function springboard_admin_admin_menu_items() {
 
   // Top Level: Options
   $items['admin/springboard/options'] = array(
-    'link_path' => 'admin/springboard/settings',
+    'link_path' => 'admin/springboard/options',
     'link_title' => t('Options'),
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,

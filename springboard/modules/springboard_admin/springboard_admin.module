@@ -22,6 +22,13 @@ function springboard_admin_menu() {
     'page callback' => 'springboard_admin_aggregate_links_page',
     'page arguments' => array('admin/springboard/results'),
    );
+   $items['admin/springboard/options'] = array(
+    'title' => 'Options',
+    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('administer springboard'),
+    'page callback' => 'springboard_admin_aggregate_links_page',
+    'page arguments' => array('admin/springboard/options'),
+   );
   return $items;
 }
 
