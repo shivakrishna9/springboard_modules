@@ -615,31 +615,46 @@ function email_confirmation_fundraiser_order_success($order) {
  * Implements hook_mail().
  */
 function email_confirmation_mail($key, &$message, $params) {
+  $headers = array();
 
-  // To make the HTML email work, implement all our own headers
-  $boundary = '----=_NextPart_' . md5(uniqid());
-
-  $headers = array(
-    'MIME-Version' => '1.0',
-    'Content-Type' => 'multipart/alternative; boundary="' . $boundary . '"',
-    'Content-Transfer-Encoding' => '8Bit',
-    'X-Mailer' => 'Drupal',
-  );
-
+  // From and Sender get the fully-formatted email address.
   $default_from = '"' . $params['from_name'] . '" <' . $params['from_address'] . '>';
-  $headers['From'] = $headers['Sender'] =  $headers['Return-Path'] = $headers['Errors-To'] = $default_from;
+  $headers['From'] = $headers['Sender'] =  $default_from;
+  // Return-Path and Errors-To get just the email address itself.
+  $headers['Return-Path'] = $headers['Errors-To'] = $params['from_address'];
 
-  if (!empty($params->bcc_address)) {
-    $headers['Bcc'] = $params['bcc_address'];
+  if (is_array($params) && !empty($params['bcc'])) {
+    $headers['Bcc'] = $params['bcc'];
   }
-  //
-  // Now create the message, with an HTML component and a plaintext component
-  //
 
-  $body_html = $params['html_body'];
-  $body_text = '<html><head></head><body>' . $params['text_body'] . '</body></html>';
+  $message['subject'] = $params['subject'];
 
-  $multi_body  = "
+  // Are we using mimemail? If so, there's no need to set our own boundaries.
+  // Note: uses the strpos() expression from mimemail.module:416 so that we
+  // know that drupal_mail_wrapper() is set to mimemail's.
+  if (module_exists('mimemail') && strpos(variable_get('smtp_library', ''), 'mimemail') !== FALSE) {
+    $message['body'] = $params['html_body'];
+    $message['text'] = $params['text_body'];
+  }
+  else {
+    // To make the HTML email work, implement all our own headers
+    $boundary = '----=_NextPart_' . md5(uniqid());
+
+    $headers += array(
+      'MIME-Version' => '1.0',
+      'Content-Transfer-Encoding' => '8Bit',
+      'X-Mailer' => 'Drupal',
+      'Content-Type' => 'multipart/alternative; boundary="' . $boundary . '"',
+    );
+
+    //
+    // Now create the message, with an HTML component and a plaintext component
+    //
+
+    $body_html = $params['html_body'];
+    $body_text = '<html><head></head><body>' . $params['text_body'] . '</body></html>';
+
+    $multi_body  = "
 
 This is a multi-part message in MIME format.
 
@@ -657,8 +672,9 @@ $body_html
 
 ";
 
-  $message['subject'] = $params['subject'];
-  $message['body'][] = $multi_body;
+    $message['body'][] = $multi_body;
+  }
+
   $message['headers'] = $headers;
 }
 
