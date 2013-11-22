@@ -220,8 +220,8 @@ function springboard_admin_admin_menu_items() {
   );
 
   // Marketing & Analytics > Source Codes
-  $items['admin/springboard/marketing-analytics']['_children']['admin/springboard/settings/market-source'] = array(
-    'link_path' => 'admin/springboard/settings/market-source',
+  $items['admin/springboard/marketing-analytics']['_children']['admin/springboard/options/market-source'] = array(
+    'link_path' => 'admin/springboard/options/market-source',
     'link_title' => 'Source Codes',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
@@ -230,8 +230,8 @@ function springboard_admin_admin_menu_items() {
   );
 
   // Marketing & Analytics > Analytics Integraiton
-  $items['admin/springboard/marketing-analytics']['_children']['admin/springboard/settings/ga'] = array(
-    'link_path' => 'admin/springboard/settings/ga',
+  $items['admin/springboard/marketing-analytics']['_children']['admin/springboard/options/ga'] = array(
+    'link_path' => 'admin/springboard/options/ga',
     'link_title' => 'Analytics Integration',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
