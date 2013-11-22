@@ -397,13 +397,37 @@ function springboard_springboard_help() {
 }
 
 /**
+ * Implements hook_block_info().
+ */
+function springboard_block_info() {
+  $blocks = array();
+  $blocks['springboard_sf_status'] = array(
+    'info' => t('Salesforce Status'),
+    'cache' => DRUPAL_NO_CACHE,
+    
+  );
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function springboard_block_view($delta) {
+  switch($delta) {
+    case 'springboard_sf_status':
+      return array('subject' => t('Salesforce connection status'), 'content' => _springboard_sf_status());
+    break;
+  }
+}
+/**
  * Implements hook_springboard_dashboard_panes().
  */
 function springboard_springboard_dashboard_panes() {
+   $sf_status = module_invoke('springboard', 'block_view', 'springboard_sf_status');
   $panes['springboard_sf_status'] = array(
-    'label' => t('Salesforce connection status'),
-    'description' => t('Salesforce connection status'),
-    'content' => _springboard_sf_status(),
+    'label' => $sf_status ['subject'],
+    'description' => $sf_status ['subject'],
+    'content' => $sf_status['content'],
     'weight' => 0,
   );
   global $base_url;
