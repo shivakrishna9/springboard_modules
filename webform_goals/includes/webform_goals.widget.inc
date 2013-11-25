@@ -32,7 +32,7 @@ function webform_goals_rebuild_widgets() {
       WHERE gid IN (:gids)
     ', array(':gids' => $updated_goals));
   }
-  return 'goal update complete.';
+  return 'Webform goals update complete.';
 }
 
 function webform_goals_widget_display_embed($goal) {
