@@ -410,6 +410,7 @@ function webform_user_webform_validate($form, &$form_state) {
   if (_webform_user_is_webform_user_node($node) && !_webform_user_validate_email(isset($fields['mail']) ? $fields['mail'] : '')) {
     form_set_error('mail', t('Please enter a valid email address.'));
   }
+  $form_state['values']['submitted_tree'] = $form_state['values']['submitted'];
 }
 
 /**

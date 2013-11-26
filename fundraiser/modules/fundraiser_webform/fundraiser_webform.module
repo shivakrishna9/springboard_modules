@@ -811,6 +811,11 @@ function fundraiser_webform_fundraiser_donation_get_donation($donation) {
   if ($donation->sid > 0) { // Then this donation was created via user submission.
     $data = fundraiser_webform_get_submission($donation->sid);
     foreach ($data as $form_key => $value) {
+      // special handling for payment fields
+      if ($form_key == 'payment_fields') {
+        $donation->submission_data['payment_fields'] = '';
+        continue;
+      }
       // If only one value, use the value.
       $donation->submission_data[$form_key] = $value['value'][0];
       if (count($value) > 1) {
