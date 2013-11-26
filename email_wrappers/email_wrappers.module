@@ -106,7 +106,6 @@ function email_wrappers_form_webform_emails_form_alter(&$form, $form_state) {
  * Adds mail template UI to Fundraiser donation form and webform confirmation settings form.
  */
 function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state, $form_id) {
-
   // Add a few tweaks to the webform email list form.
   if ($form_id === 'webform_email_edit_form') {
     $path = drupal_get_path('module', 'email_wrappers');
@@ -226,9 +225,13 @@ function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state,
     $form['#submit'][] = 'email_wrappers_email_submit_callback';
   }
 
-  if ($form_id == 'webform_email_delete_form') {
-    $form['#submit'][] = 'email_wrappers_delete_callback';
-  }
+}
+
+/**
+ * Add callback to delete email wrappers settings when an email is deleted.
+ */
+function email_wrappers_form_webform_email_delete_form_alter(&$form, $form_state) {
+  $form['#submit'][] = 'email_wrappers_delete_callback';
 }
 
 
@@ -244,13 +247,13 @@ function email_wrappers_email_validate_callback(&$form, &$form_state) {
  */
 function email_wrappers_email_submit_callback($form, $form_state) {
   $values = $form_state['values'];
-
+  $node = $form_state['complete form']['#node'];
   // If any information has been added to "extra" by other modules, it is saved at this time. This approach
   // allows other modules to append useful configuration information to the email without having to
   // join across a bunch of lookup tables to get all the settings for a given mail.
   if (is_numeric($values['email_wrappers_email_template']) && $values['email_wrappers_email_template'] > 0) {
     $settings = array(
-      'nid' => $values['node']->nid,
+      'nid' => $node->nid,
       'eid' => $values['eid'],
       'tid' => $values['email_wrappers_email_template'],
       'bcc_email' => is_array($values['email_wrappers_bcc']) ? implode(',', $values['email_wrappers_bcc']) : $values['email_wrappers_bcc'],
@@ -259,8 +262,8 @@ function email_wrappers_email_submit_callback($form, $form_state) {
       'text_message' => $values['email_wrappers_text_message'],
       'extra' => !empty($form_state['extra']) ? serialize($form_state['extra']) : serialize(array()),
     );
-    email_wrappers_delete_settings($values['node']->nid, $values['eid']);
-    email_wrappers_save_settings($values['node']->nid, $values['eid'], $settings);
+    email_wrappers_delete_settings($node->nid, $values['eid']);
+    email_wrappers_save_settings($node->nid, $values['eid'], $settings);
   }
 }
 
