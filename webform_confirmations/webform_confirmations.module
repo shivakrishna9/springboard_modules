@@ -71,9 +71,9 @@ function webform_confirmations_preprocess_webform_confirmation(&$vars) {
  *  Conditionally add send on order success checkbox to webform email configuration forms.
  */
 function webform_confirmations_form_webform_email_edit_form_alter(&$form, $form_state, $form_id) {
-  if (module_exists('email_wrappers') && fundraiser_is_donation_type($form['node']['#value']->type)) {
+  if (module_exists('email_wrappers') && fundraiser_is_donation_type($form['#node']->type)) {
 
-    $node = $form['node']['#value'];
+    $node = $form['#node'];
     $send_default = _webform_confirmation_send_on_settings($form_state);
     $send_options = array(
       0 => t('Always'),
