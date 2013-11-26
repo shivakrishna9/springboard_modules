@@ -104,9 +104,6 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
  */
 function _fundraiser_component_payment_fields_pre_render($element) {
   // Add the id of the outer fieldset to the js settings
-  if (empty($element['#attributes']['id'])) {
-    dsm($element, 'element');
-  }
   if (!empty($element['#attributes']['id'])) {
     // this is being added to js settings but no code in product calls these values directly. What's up with that?
     drupal_add_js(array('fundraiserWebform' => array('components' => array('payment_fields' => array('id' => $element['#attributes']['id'])))), 'setting');
