@@ -1,0 +1,171 @@
+<?php
+
+/**
+ * @file
+ *
+ * This module is used to delete old object map data from the system.
+ */
+
+/**
+ * Implementation of hook_menu().
+ */
+function sf_purge_menu() {
+  $items['admin/settings/salesforce-management/purge'] = array(
+    'title' => t('Purge settings'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sf_purge_settings_form'),
+    'access arguments' => array('configure salesforce purge'),
+    'file' => 'sf_purge.admin.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  // menu callback for purge now button
+  $items['admin/settings/salesforce-management/purge/now'] = array(
+    'title' => t('Purge settings'),
+    'page callback' => 'sf_purge_purge_now',
+    'access arguments' => array('configure salesforce purge'),
+    'type' => MENU_CALLBACK,
+  );
+  // cronnable purge
+  $items['sf_purge'] = array(
+    'title' => t('Purge callback'),
+    'page callback' => 'sf_purge_purge',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Execute record purge and redirect to admin page.
+ *
+ * Used by the "purge now" button.
+ */
+function sf_purge_purge_now() {
+  sf_purge_purge();
+  $log_url = l('site logs', 'admin/reports/dblog');
+  drupal_set_message(t('Purge complete. Please review !log_url for additional details.', array('!log_url' => $log_url)));
+  drupal_goto('admin/settings/salesforce-management/purge');
+}
+
+/**
+ * Deletes records from the salesforce_management_object_map table
+ * based on drupal type.
+ */
+function sf_purge_purge() {
+  // Get the types to be purged.
+  $purge_types = variable_get('sf_purge_drupal_types', array());
+  $record_count = variable_get('sf_purge_record_count', 2000);
+  $types_to_purge = array();
+
+  // Ensure we actually have some types to purge.
+  if (count($purge_types)) {
+    // Create an array of the types to purge.
+    foreach ($purge_types as $type => $purge) {
+      if ($purge) {
+        $types_to_purge[] = $type;
+      }
+    }
+
+    $backups = sf_purge_backup_records($types_to_purge);
+
+    // purge.
+    if (is_array($backups)) {
+      foreach ($backups as $drupal_type => $oids) {
+      $placeholders = db_placeholders($oids, 'int');
+
+      db_query("DELETE FROM {salesforce_management_object_map}
+          WHERE
+            drupal_type = '" . $drupal_type . "'
+          AND
+            oid IN (" . $placeholders . ")
+          ORDER BY oid
+          LIMIT $record_count", $oids);
+       watchdog('sf_purge', t('Deleted %count %type records', array('%count' => count($oids), '%type' => $drupal_type)), array(), WATCHDOG_NOTICE);
+
+      }
+    }
+  }
+}
+
+/**
+ * Calculates the number of records stored in the
+ * salesforce_management_object_map table by drupal_type.
+ */
+function sf_purge_count_by_type() {
+  $counts = array();
+
+  $result = db_query("SELECT drupal_type, count(drupal_type) as record_count
+    FROM {salesforce_management_object_map}
+    GROUP BY drupal_type");
+
+  while ($data = db_fetch_object($result)) {
+    $counts[$data->drupal_type] = $data->record_count;
+  }
+
+  return $counts;
+}
+
+/**
+ * Back up sf object map records in preparation for purging.
+ *
+ * Writes backup files to files/sf_purge_backups
+ *
+ * @param $purge_types
+ * an array of drupal types that should be purged.
+ *
+ * @return
+ * Returns an array of oids for records backed up or FALSE if no records were available or
+ * there was a problem writing the backup file.
+ */
+function sf_purge_backup_records($types_to_purge) {
+
+  $headers = array('drupal_type', 'oid', 'sfid', 'fieldmap');
+  $rows[] = implode(',', $headers);
+  $oids = array();
+  $placeholders = db_placeholders($types_to_purge, 'text');
+  $record_count = variable_get('sf_purge_record_count', 2000);
+  $results = db_query("
+    SELECT
+      drupal_type,
+      oid,
+      sfid,
+      fieldmap
+    FROM {salesforce_management_object_map}
+    WHERE drupal_type IN ($placeholders)
+      ORDER BY oid
+      LIMIT $record_count
+  ", $types_to_purge);
+
+  while ($record = db_fetch_array($results)) {
+    $oids[$record['drupal_type']][] = $record['oid'];
+    $row = array();
+    $row[] = $record['drupal_type'];
+    $row[] = $record['oid'];
+    $row[] = $record['sfid'];
+    $row[] = $record['fieldmap'];
+    $rows[] = implode(',', $row);
+  }
+
+  $directory = file_directory_path() . '/sf_purge_backups';
+  if (file_check_directory($directory, FILE_CREATE_DIRECTORY)) {
+    if (count($oids)) {
+       $filename = date('m-d-YTH-m-s') . '.csv';
+       $data = implode("\n", $rows);
+       $dest = $directory . '/' . $filename;
+       $saved = file_save_data($data, $dest, FILE_EXISTS_RENAME);
+       if (!$saved) {
+         watchdog('sf_purge', t(''), array(), WATCHDOG_ERROR);
+         return FALSE;
+       }
+       return $oids;
+    }
+    else {
+      watchdog('sf_purge', t('SF Purge found no records to purge.'), array(), WATCHDOG_NOTICE);
+      return FALSE;
+    }
+  }
+  else {
+    watchdog('sf_purge', t('Unable to create sf_purge_backups directory.'), array(), WATCHDOG_ERROR);
+    return FALSE;
+  }
+}

@@ -572,13 +572,13 @@ function email_confirmation_fundraiser_order_success($order) {
       $message['html_body'] = token_replace($message['html_body']);
 
       // final pass attempts to replace webform token values
-      $message['html_body'] = _webform_filter_values($message['html_body'], $node, $submission, NULL, FALSE, FALSE);
+      $message['html_body'] = _webform_filter_values($message['html_body'], $node, $submission, NULL, FALSE, TRUE);
 
       // Same as above, with check_plain() included to insure final output is plain text.
       $message['text_body'] = token_replace($template_text, 'order', $order);
       $message['text_body'] = token_replace($message['text_body'], 'order', $order);
       $message['text_body'] = token_replace($message['text_body']);
-      $message['text_body'] = _webform_filter_values($message['text_body'], $node, $submission, NULL, FALSE, FALSE);
+      $message['text_body'] = _webform_filter_values($message['text_body'], $node, $submission, NULL, FALSE, TRUE);
       $message['text_body'] = check_plain($message['text_body']);
       $message['bcc'] = $settings->bcc_email;
 

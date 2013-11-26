@@ -389,6 +389,16 @@ function secure_prepopulate_clear_session($nid) {
 }
 
 /**
+ * Implements hook_cron().
+ */
+function secure_prepopulate_cron() {
+  // Cleanup the secure_prepopulate_expired table.
+  $max_days = variable_get('secure_prepopulate_expired_date_limit', 30);
+  $max_date = REQUEST_TIME - ($max_days * 24 * 60 * 60);
+  db_query("DELETE FROM {secure_prepopulate_expired} WHERE expire_date < %d", array($max_date));
+}
+
+/**
  * Converts a 2 character iso country code to an ubercart country id.
  *
  * @parm $country

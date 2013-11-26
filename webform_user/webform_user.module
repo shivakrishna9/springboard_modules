@@ -55,7 +55,9 @@ function webform_user_menu() {
  * Access callback to check if current node is a webform user.
  */
 function webform_user_access($node) {
-  return ($node->is_webform_user && node_access('update', $node));
+  $access = ($node->is_webform_user && node_access('update', $node));
+  drupal_alter('webform_user_access', $access, $node);
+  return $access;
 }
 
 /**
@@ -633,7 +635,7 @@ function _webform_user_add_webform_defaults(&$node, &$user) {
 function webform_user_webform_validate($form, &$form_state) {
   $node = node_load(array('nid' => $form_state['values']['details']['nid']));
   $fields = _webform_user_flatten_tree($form_state['values']['submitted'], $node->nid);
-  if ($node->is_webform_user && !_webform_user_validate_email($fields['mail'])) {
+  if ($node->is_webform_user && isset($fields['mail']) && !_webform_user_validate_email($fields['mail'])) {
     form_set_error('mail', t('Please enter a valid email address.'));
   }
 }
