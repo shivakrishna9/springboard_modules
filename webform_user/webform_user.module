@@ -1367,7 +1367,7 @@ function theme_webform_user_webform_components_form($variables) {
     // Build the table rows.
 
     foreach ($component_tree['children'] as $cid => $component) {
-      _webform_components_form_rows($node, $cid, $component, 0, $form, $rows, $add_form);
+      _webform_user_components_form_rows($node, $cid, $component, 0, $form, $rows, $add_form);
     }
   }
   else {
@@ -1409,7 +1409,7 @@ function _webform_user_delete_component_link($node, $cid) {
   return '';
 }
 
-function _webform_components_form_rows($node, $cid, $component, $level, &$form, &$rows, &$add_form) {
+function _webform_user_components_form_rows($node, $cid, $component, $level, &$form, &$rows, &$add_form) {
   // Create presentable values.
   if (drupal_strlen($component['value']) > 30) {
     $component['value'] = drupal_substr($component['value'], 0, 30);
@@ -1462,7 +1462,7 @@ function _webform_components_form_rows($node, $cid, $component, $level, &$form, 
   );
   if (isset($component['children']) && is_array($component['children'])) {
     foreach ($component['children'] as $cid => $component) {
-      _webform_components_form_rows($node, $cid, $component, $level + 1, $form, $rows, $add_form);
+      _webform_user_components_form_rows($node, $cid, $component, $level + 1, $form, $rows, $add_form);
     }
   }
 
