@@ -32,12 +32,12 @@ function commerce_ogone_fundraiser_commerce_form($payment_method) {
         '#type' => 'textfield',
         '#title' => t('Paypal email'),
       );
-    break;
+      break;
     case 'credit':
     default:
       module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
       $form = _fundraiser_commerce_credit_card_form();
-    break;
+      break;
   }
   return $form;
 }

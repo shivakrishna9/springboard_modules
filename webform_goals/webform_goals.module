@@ -1,24 +1,149 @@
 <?php
-
 /**
  * @file module code & core hooks
  */
 
-require_once('includes/webform_goals.goals.inc');
-require_once('webform_goals.forms.inc');
+require_once 'includes/webform_goals.goals.inc';
+require_once 'webform_goals.forms.inc';
 
 /**
  * Implements hook_init().
  *
- * Add goal replacement script and associated js settings.
+ * Add goal replacment script and associated js settings.
  */
 function webform_goals_init() {
-  $base_uri = file_default_scheme() . '://';
-  $file_system_base_url = file_create_url($base_uri);
-  $loader_url = $file_system_base_url . 'webform_goals/webform_goals.jsonp.php';
+
+  if (!variable_get('webform_goals_loader_file_created', FALSE)) {
+    // Loader file has not been copied.  Do it now.
+    variable_set('webform_goals_loader_file_created', webform_goals_save_loader_file());
+  }
+
+  static $loader_url = '';
+
+  if (empty($loader_url)) {
+    $loader_url = (!empty($_SERVER['HTTPS'])) ? "https://" : "http://";
+    $loader_url .= $_SERVER['SERVER_NAME'];
+    if (variable_get('clean_url', TRUE)) {
+      $loader_url .= '/webform_goals_jsonp';
+    }
+    else {
+      $loader_url .= '/?q=webform_goals_jsonp';
+    }
+  }
+  // TODO: examine theme post-processing as a potential replacement for js processing on the local site.
   drupal_add_js(array('webform_goals' => array('loader_url' => $loader_url)), 'setting');
+
+  if (arg(0) == 'webform_goals_jsonp') {
+
+    $callback = isset($_GET['jsonp_callback']) ? $_GET['jsonp_callback'] : '';
+
+    // Fail early if we don't have anything to work with.
+    if (!isset($_GET['goal_ids'])) {
+      webform_goals_jsonp_fail($callback);
+    }
+
+    $ids = explode(',', $_GET['goal_ids']);
+
+    // Fail if we don't get IDs.
+    if (!is_array($ids) || count($ids) < 1) {
+      webform_goals_jsonp_fail($callback);
+    }
+
+    $base_uri = file_default_scheme() . '://';
+    $file_system_base_url = file_create_url($base_uri);
+    // Example 'http://example.com/sites/default/files/webform_goals/'.
+    $loader_url = $file_system_base_url . 'webform_goals/';
+
+    // Example 'public://webform_goals'.
+    $loader_uri = file_build_uri('webform_goals');
+
+    $data = array();
+    foreach ($ids as $id) {
+      $filename = 'template-' . (int) $id . '.txt';
+
+      if (file_exists($loader_uri . '/' . $filename)) {
+        $file = file_get_contents($loader_uri . '/'. $filename);
+        $data[$id] =  unserialize($file);
+        $data['status'] = 'success';
+      }
+      else {
+        watchdog('webform_goals', t('Request for missing goal widget:' . $loader_url . $filename));
+      }
+    }
+    if (empty($data['status'])) {
+      webform_goals_jsonp_fail($callback);
+    }
+    webform_goals_jsonp_send($callback, $data);
+  }
+
 }
 
+/**
+ * Saves the loader file to the files directory.
+ *
+ * Replaces the url for the ajax call with the correct server name.
+ *   This approach is required because multi-site installations require
+ *   individual copies of this file.
+ *
+ * @return bool
+ *   Successful at copying the loader file to the files dir.
+ */
+function webform_goals_save_loader_file() {
+
+  if (empty($_SERVER['SERVER_NAME'])) {
+    // We don't have a server name here.
+    return FALSE;
+  }
+
+  // create subdir in files
+  $path = 'public://webform_goals';
+  if (file_prepare_directory($path, FILE_CREATE_DIRECTORY)) {
+
+    // set up the loader script in subdirectory of files.
+    // load a copy of the external loader js file
+    $module_path = drupal_get_path('module', 'webform_goals');
+    $loader = file_get_contents($module_path . '/webform_goals.loader.js');
+
+    $loader = str_replace('http://DOMAIN', 'http://' . $_SERVER['SERVER_NAME'], $loader);
+    $result = file_unmanaged_save_data($loader, 'public://webform_goals/webform_goals.loader.js', FILE_EXISTS_REPLACE);
+    if ($result == FALSE) {
+      return FALSE;
+    }
+    else {
+      return TRUE;
+    }
+
+  }
+
+  return FALSE;
+}
+
+/**
+ * Prints out the failure jsonp and exit.
+ *
+ * @param string $callback
+ *   The jsonp callback string usually provided in $_GET.
+ */
+function webform_goals_jsonp_fail($callback) {
+  $data = array(
+    'status' => 'fail',
+    'data' => 'null',
+  );
+  webform_goals_jsonp_send($callback, $data);
+}
+
+/**
+ * Print the jsonp constructed by the callback and data array and exit.
+ *
+ * @param $callback
+ *   The jsonp callback string usually provided in $_GET.
+ * @param array $data
+ *   The data array to send. Should typically have a 'success' key.
+ */
+function webform_goals_jsonp_send($callback, $data) {
+  print $callback . '(' . json_encode($data) . ');';
+  exit;
+}
 
 /**
  * Implements hook_cron().
@@ -113,10 +238,51 @@ function webform_goals_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'includes/webform_goals.widget.inc',
   );
-
+  $items['webform_goals_jsonp'] = array(
+    'title' => 'goal widget jsonp service',
+    'page callback' => 'webform_goals_jsonp_loader',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
   return $items;
 }
 
+function webform_goals_jsonp_loader() {
+  return '<h1>Hai</h1>';
+}
+
+/**
+ * @todo I'm fairly certain this is only for debug. Remove if nothing complains.
+ *
+ *
+function _webform_goals_boots() {
+  if (arg(0) == 'webform_goals_jsonp') {
+
+    $base_uri = file_default_scheme() . '://';
+    $file_system_base_url = file_create_url($base_uri);
+    $loader_url = $file_system_base_url . 'webform_goals/';
+
+    $goal_ids = $_GET['goal_ids'];
+    $ids = explode(',', $goal_ids);
+    $data = array();
+    foreach ($ids as $id) {
+
+      $filename = 'template-' . (int) $id . '.txt';
+      if (file_exists($loader_url . $filename)) {
+        $file = file_get_contents($filename);
+        $data[$id] =  unserialize($file);
+        $data['status'] = 'success';
+      }
+    }
+    if (empty($data['status'])) {
+      $data['status'] = 'fail';
+      $data['data'] = 'null';
+    }
+    $data = json_encode($data);
+    dsm($data, 'loader data');
+  }
+}
+*/
 
 /**
  * Load a goal from the db.
@@ -196,7 +362,7 @@ function webform_goal_load_multiple($nid = FALSE) {
  * @return type
  */
 function webform_goals_delete_goal($gid) {
-  require_once('includes/webform_goals.files.inc');
+  require_once 'includes/webform_goals.files.inc';
   db_query('
     DELETE FROM {webform_goals
     WHERE gid = :gid
@@ -219,18 +385,56 @@ function webform_goals_widget_load($gid) {
   return $widget->fetchField();
 }
 
+/**
+ * Creates an array for select #options of webform enabled nodes.
+ *
+ * Organized by node type.
+ *
+ * @return array|bool
+ *   A multidimensional array keyed by node type and nid.
+ */
 function _webform_goals_list_webforms() {
   static $nodes = array();
   if (!count($nodes)) {
     $types = webform_variable_get('webform_node_types');
+    $readable_types = webform_goals_get_readable_types($types);
+
     $results = db_query('
       SELECT nid, title, type FROM {node} WHERE type IN(:types)
     ', array(':types' => $types));
     while ($result = $results->fetchAssoc()) {
-      $nodes[$result['type']][$result['nid']] = $result['title'];
+      $internal_name = '';
+      // If it's a fundraiser enabled node, load it to get the internal name.
+      if (fundraiser_is_donation_type($result['type'])) {
+        $node = node_load($result['nid']);
+        $node_wrapper = entity_metadata_wrapper('node', $node);
+        $internal_name = ' - ' . $node_wrapper->field_fundraiser_internal_name->value(array('sanitize' => TRUE));
+      }
+      $readable_type = $readable_types[$result['type']];
+      $nodes[$result['type']][$result['nid']] = '(' . $result['nid'] . ') ' . $result['title'] . $internal_name . ' - ' . $readable_type;
     }
   }
+
   return count($nodes) ? $nodes : FALSE;
+}
+
+/**
+ * Gets the human readable type names for the given machine type names.
+ *
+ * @param array $types
+ *   machine names
+ *
+ * @return array
+ *   machine name => display name
+ */
+function webform_goals_get_readable_types($types) {
+  $return = array();
+  $results = db_query("SELECT type, name FROM {node_type} WHERE type IN (:types)", array(':types' => $types));
+  foreach($results as $result) {
+    $return[$result->type] = $result->name;
+  }
+
+  return $return;
 }
 
 function _webform_goals_field_list($nid) {
@@ -314,7 +518,7 @@ function webform_goals_token_info() {
     'name' => t('Percent of goal met, capped at 100'),
     'description' => t('Goal progress percentage, will not exceed 100. Useful for setting widths on progress bars'),
   );
-   $info['tokens']['webform_goal']['progress-remaining-raw'] = array(
+  $info['tokens']['webform_goal']['progress-remaining-raw'] = array(
     'name' => t('Total of goal remaining.'),
     'description' => t('Unfortmatted total progress remaining.'),
   );
@@ -334,6 +538,12 @@ function webform_goals_token_info() {
     'name' => t('Progress bar/starter message'),
     'description' => t('Displayes themed progress bar or starter message if display threshold has not been met.'),
   );
+
+  $info['tokens']['webform_goal']['progress-count-or-starter'] = array(
+    'name' => t('Progress count/starter message'),
+    'description' => t('Displays the progress count or the starter message if display threshold has not been met.'),
+  );
+
   $info['tokens']['webform_goal']['target'] = array(
     'name' => t('Goal target'),
     'description' => t('The goal target number.'),
@@ -351,50 +561,59 @@ function webform_goals_token_info() {
  */
 function webform_goals_tokens($type, $tokens, $data = array(), $options = array()) {
   if ($type = 'webform_goal' && !empty($data['webform_goal'])) {
-
-    $goal_progress = webform_goals_track_metric($data['webform_goal']);
+    $goal_progress = $data['goal_progress'];
     $goal = $data['webform_goal'];
     $standard_tokens = array('gid', 'name', 'starter_message', 'display_threshold');
-    foreach($standard_tokens as $standard) {
+    foreach ($standard_tokens as $standard) {
       if (isset($tokens[$standard])) {
-        $replacements[$tokens[$standard]]= $data['webform_goal'][$standard];
+        $replacements[$tokens[$standard]] = $data['webform_goal'][$standard];
       }
     }
-    foreach($tokens as $key => $token) {
+    foreach ($tokens as $key => $token) {
       switch ($key) {
         case 'start_date':
           $replacements[$token] = date('m-d-Y', $goal['start_date']);
           break;
+
         case 'end_date':
           $replacements[$token] = date('m-d-Y', $goal['end_date']);
           break;
+
         case 'progress-raw':
           $replacements[$token] = $goal_progress['count'];
           break;
+
         case 'progress-percent':
           $replacements[$token] = $goal_progress['percent'];
           break;
+
         case 'progress-percent-capped':
           $replacements[$token] = ($goal_progress['percent'] > 100) ? 100 : $goal_progress['percent'];
           break;
+
         case 'progress-remaining-raw':
           $replacements[$token] = $goal_progress['remaining'];
           break;
+
         case 'progress-remaining-percent':
           $replacements[$token] = $goal_progress['percent_remaining'];
           break;
+
         case 'progress-remaining-percent-capped':
           $replacements[$token] = ($goal_progress['percent_remaining'] < 0) ? 0 : $goal_progress['percent_remaining'];
           break;
+
         case 'progress-bar':
           // cap at 100 so we don't blow out our CSS widths.
           $percent_capped = ($goal_progress['percent'] > 100) ? 100 : $goal_progress['percent'];
           //$replacements[$token] = theme('webform_goals_progress_bar', array('goal_id' => $goal['gid'], 'goal_progress' => $progress));
           $replacements[$token] = webform_goals_render_progress_bar($goal['progress_bar'], $percent_capped);
           break;
+
         case 'starter-message':
           $replacements[$token] = check_markup($goal['starter_message'], $goal['starter_message_format']);
           break;
+
         case 'progress-starter':
           $output = '';
           if ($goal_progress['count'] >= $data['webform_goal']['display_threshold']) {
@@ -407,12 +626,28 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
           }
           $replacements[$token] = $output;
           break;
+
+        case 'progress-count-or-starter':
+          $output = '';
+          // Remove any number_format() stuff for the comparison to the threshold.
+          $clean_count = str_replace(',', '', $goal_progress['count']);
+          if ($clean_count >= $data['webform_goal']['display_threshold']) {
+            $output = $goal_progress['count'];
+          }
+          elseif (!empty($goal['starter_message'])) {
+            $output = check_markup($goal['starter_message'], $goal['starter_message_format']);
+          }
+          $replacements[$token] = $output;
+          break;
+
         case 'target':
           $replacements[$token] = $data['webform_goal']['target_value'];
           break;
+
         case 'total':
           $replacements[$token] = $goal_progress['count'];
           break;
+
       }
     }
     return $replacements;
@@ -422,14 +657,24 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
 /**
  * Re-render widget markup with up-to-date progress data.
  * @param array $goal
- * Goal array.
+ *   Goal array.
  *
  * @param $update
- * 'gid' if updating an existing record or array() if inserting new.
+ *   'gid' if updating an existing record or array() if inserting new.
+ *   @todo Deprecated?
  */
 function webform_goals_update_widget($args, $update = array()) {
-  require_once('includes/webform_goals.files.inc');
+  require_once 'includes/webform_goals.files.inc';
   $goal = $args['webform_goal'];
+
+  // Calculate the goal progress here once per widget.
+  // Previously this was done in hook_tokens,
+  // but that gets called once per token replaced.
+  // So this was calculating multiple times.
+  // Instead we pass the progress to the theme_webform_goals_widget()
+  // function and that passes it to token_replace down to hook_tokens.
+  $args['goal_progress'] = webform_goals_track_metric($goal);
+
   $settings = array(
     'gid' => $goal['gid'],
     'widget' => theme('webform_goals_widget', $args),
@@ -482,6 +727,7 @@ function webform_goals_theme($existing, $type, $theme, $path) {
       'arguments' => array(
         'goal' => NULL,
         'nid' => NULL,
+        'goal_progress' => NULL,
       ),
     ),
     'webform_goals_default_template' => array(
@@ -537,22 +783,39 @@ function webform_goals_theme($existing, $type, $theme, $path) {
  * Applies appropriate template filtering and token replacement to
  * goal templates when rendering a widget.
  */
-function theme_webform_goals_widget($args) { //$goal) {
+function theme_webform_goals_widget($args) {
   $goal = $args['webform_goal'];
-  $nid = isset($goal['extra']['selected_form_id']) ? $goal['extra']['selected_form_id'] : 0;
-  $template = token_replace(check_markup($goal['template'], $goal['template_format']), array('webform_goal' => $goal, 'nid' => $nid));
-  //$template_filtered = $template, $goal['template_format'];
+
+  // Token data needed for hook_tokens to do its job.
+  $token_data = array(
+    'webform_goal' => $goal,
+    'nid' => isset($goal['extra']['selected_form_id']) ? $goal['extra']['selected_form_id'] : 0,
+    'goal_progress' => $args['goal_progress'],
+  );
+
+  $template = token_replace(check_markup($goal['template'], $goal['template_format']), $token_data);
+  // $template_filtered = $template, $goal['template_format'];
   $data['markup'] = $template;
-  $data['tokens'] = _webform_goals_pack_tokens($goal, $nid);
+  $data['tokens'] = _webform_goals_pack_tokens($token_data);
   return serialize($data);
 }
 
-function  _webform_goals_pack_tokens($goal, $nid) {
+/**
+ * Gets token replacements in a keyed array.
+ *
+ * @param array $token_data
+ *   Keyed array of 'webform_goal', 'nid', and 'goal_progress'
+ *
+ * @return array
+ *   Keyed array of token replacements from token_replace().
+ */
+function _webform_goals_pack_tokens($token_data) {
+  $tokens_replaced = array();
   $tokens = webform_goals_token_info();
   foreach ($tokens['tokens']['webform_goal'] as $key => $value) {
     // I had this nifty idea where I packed all the tokens down with json_encode and then
     // replaced them in one go. Unfortunately the markup tokens screw up the decode.
-    $tokens_replaced["[webform_goal:$key]"] = token_replace("[webform_goal:$key]", array('webform_goal' => $goal, 'nid' => $nid));
+    $tokens_replaced["[webform_goal:$key]"] = token_replace("[webform_goal:$key]", $token_data);
   }
 
   return $tokens_replaced;
@@ -569,15 +832,11 @@ function template_preprocess_webform_goals_widget_loader(&$vars) {
   $vars['file_url'] = $file_uri;
 }
 
-
 /**
  * Goal status, used by admin display.
  */
 function webform_goals_goal_status($goal) {
-
-
   if ($goal['end_date'] && $goal['end_date'] < time()) {
-
     return $goal['auto_expire'] ? t('expired') : t('ended');
   }
   if ($goal['start_date'] > time()) {
@@ -606,13 +865,19 @@ function _webform_goals_get_selected_context($form_state, $goal = array()) {
 
 /**
  * Figure out what webform nodes are impacted based on goal settings.
- * @param type $group
- * @return array of nids
+ *
+ * @param array $goal
+ *   The goal array.
+ * @return array
+ *   An array of nids.
  */
 function _webform_goals_calculate_nids_for_goal($goal) {
   if ($goal['context'] == 'single') {
-
     return (array) $goal['extra']['selected_form_id'];
+  }
+
+  if ($goal['context'] == 'form_group') {
+    return $goal['extra']['selected_form_ids'];
   }
 
   if ($goal['context'] == 'group') {
@@ -715,12 +980,15 @@ function _webform_goals_flag_goal_updates($gids = array()) {
 /**
  * Calculate goal completion percentage, remaining and remaining percentage
  *
+ * Also adds seed value if specified.
+ *
  * @param array $data
- * An associative array containing the following data:
+ *   An associative array containing the following data:
  *   'count' => the total goal progress count.
+ *   Additional values are added to this array.
  *
  * @param array $goal
- * Goal array.
+ *   Goal array.
  */
 function webform_goals_calculate_progress(&$data, $goal) {
   // apply seed
@@ -730,5 +998,4 @@ function webform_goals_calculate_progress(&$data, $goal) {
   $data['percent'] = round(($data['count'] / $goal['target_value']) * 100, 1);
   $data['remaining'] = $goal['target_value'] - $data['count'];
   $data['percent_remaining'] = round(($data['remaining'] / $goal['target_value']) * 100, 1);
-
 }

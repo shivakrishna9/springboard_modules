@@ -342,7 +342,10 @@ function _sfq_get_value($field, $form_state) {
         break;
 
       case 'tracked_queues':
-        $default_queues = array('new' => 'new', 'retry' => 'retry');
+        $default_queues = array(
+          'new' => 'new',
+          'retry' => 'retry',
+        );
         $value = variable_get('salesforce_queue_tracked_queues', $default_queues);
         break;
 

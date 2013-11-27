@@ -130,7 +130,7 @@ function fundraiser_offline_form_node_form_alter(&$form, &$form_state, $form_id)
       '#type' => 'checkbox',
       '#title' => t('Available offline?'),
       '#description' => t('Check this box to mark this fundraiser node as available offline.'),
-      '#default_value' => $form['#node']->fundraiser_offline,
+      '#default_value' => isset($form['#node']->fundraiser_offline) ? $form['#node']->fundraiser_offline : 0,
     );
   }
 }
@@ -314,7 +314,7 @@ function _fundraiser_offline_is_offline($set = '') {
   if ($set === TRUE) {
     $_SESSION['fundraiser_offline'] = TRUE;
   }
-  if (isset($_SESSION['fundraiser_offline'])  && $set === FALSE) {
+  if (isset($_SESSION['fundraiser_offline'])   && $set === FALSE) {
     unset($_SESSION['fundraiser_offline']);
   }
   return isset($_SESSION['fundraiser_offline']) ? TRUE : FALSE;
@@ -488,7 +488,7 @@ function _fundraiser_offline_get_by_title($string) {
   $results = db_query('SELECT * FROM {fundraiser_offline} o ' .
     'LEFT JOIN {node} n ON o.nid = n.nid ' .
     'WHERE o.status = 1 AND n.title LIKE :string',
-    array(':string' => '%'.$string.'%')
+    array(':string' => '%' . $string . '%')
   );
   return $results->fetchAll();
 }

@@ -14,7 +14,7 @@
  * @param array $goal
  * Goal array.
  */
-function webform_goals_single_context_fields(&$form, $goal = array()) {
+function webform_goals_single_context_fields(&$form, &$form_state, $goal = array()) {
   $form['selected_form_id'] = array(
     '#type' => 'select',
     '#title' => '',
@@ -33,7 +33,7 @@ function webform_goals_single_context_fields(&$form, $goal = array()) {
   );
 }
 
-function webform_goals_group_context_fields(&$form, $goal = array()) {
+function webform_goals_group_context_fields(&$form, &$form_state, $goal = array()) {
   $form['selected_node_type'] = array(
     '#type' => 'select',
     '#title' => '',
@@ -53,24 +53,66 @@ function webform_goals_group_context_fields(&$form, $goal = array()) {
 }
 
 /**
+ * Settings callback for the form group webform goals context.
+ *
+ * @param array $form
+ *   The form parent element to add additional context settings.
+ * @param array &$form_state
+ *   The current form state.
+ * @param array $goal
+ *   The goal array.
+ */
+function webform_goals_form_group_context_fields(&$form, &$form_state, $goal = array()) {
+
+  $form['selected_form_ids'] = array(
+    '#type' => 'select',
+    '#multiple' => TRUE,
+    '#size' => 10,
+    '#title' => 'Forms in form group',
+    '#empty_option' => t('-- select --'),
+    '#empty_value' => 0,
+    '#required' => TRUE,
+    '#description' => t('Select the forms that will contribute to this goal.'),
+    '#options' => _webform_goals_list_webforms(),
+    '#default_value' => !empty($goal['extra']['selected_form_ids']) ? $goal['extra']['selected_form_ids'] : 0,
+    '#ajax' => array(
+      'callback' => 'webform_goals_extra_callback',
+      'wrapper' => 'context-metrics',
+      'method' => 'replace',
+      'effect' => 'fade',
+    ),
+  );
+
+}
+
+/**
  * Implements hook_webform_goals_list_context().
  *
- * Provide "global" and "single webform" contexts.
+ * Provide group, form group, and single contexts.
  */
 function webform_goals_webform_goals_list_context() {
   $context['group'] = array(
     'id' => 'group',
     'name' => t('Group by type'),
     'settings_callback' => 'webform_goals_group_context_fields',
+    'description' => t('Goal progress is calculated by adding metrics for all forms of the given type.'),
+  );
+
+  $context['form_group'] = array(
+    'id' => 'form_group',
+    'name' => t('Form group'),
+    'settings_callback' => 'webform_goals_form_group_context_fields',
     'description' => t('Goal progress is calculated by adding metrics for all forms in the group.'),
   );
+
   $context['single'] = array(
     'id' => 'single',
     'name' => t('Single'),
     'settings_callback' => 'webform_goals_single_context_fields',
     'description' => t('This goal will only be applied to a single webform you select.'),
   );
-   return $context;
+
+  return $context;
 }
 
 /**
@@ -100,7 +142,8 @@ function webform_goals_webform_goals_list_metrics($selected_context, $form_state
         'name' => t('Custom field '),
         'description' => t('Goal progress will be calculated based on the sum of values submitted by this field.'),
         'settings_callback' => 'webform_goals_single_custom_fields',
-        'child_elements' => $elements, // TODO: replace with callback.
+        // @todo Replace with callback.
+        'child_elements' => $elements,
         'form_text' => array(
           'target_value' => array(
             'title' => t('What is the total field value required to meet this goal?'),
@@ -116,7 +159,11 @@ function webform_goals_webform_goals_list_metrics($selected_context, $form_state
           ),
         ),
       );
+      // fall through
     case 'group':
+      // fall through
+    case 'form_group':
+      // fall through
     default:
       $metrics['submission_count'] = array(
         'id' => 'submission_count',
@@ -155,6 +202,10 @@ function webform_goals_webform_goals_save_goal($settings, $form_state) {
     $settings['extra']['selected_node_type'] = $form_state['values']['selected_node_type'];
   }
 
+  if ($settings['context'] === 'form_group') {
+    $settings['extra']['selected_form_ids'] = $form_state['values']['selected_form_ids'];
+  }
+
   if ($settings['metric'] === 'custom_field') {
     $settings['extra']['custom_field_selection'] = $form_state['values']['custom_field_selection'];
   }
@@ -169,7 +220,9 @@ function webform_goals_webform_goals_track_metric($goal, $params = array()) {
   if ($goal['metric'] === 'submission_count') {
     if ($goal['context'] == 'single') {
       $data['count'] = _webform_goals_count_submissions($goal['extra']['selected_form_id'], $goal['start_date'], $goal['end_date']);
-
+    }
+    elseif ($goal['context'] == 'form_group') {
+      $data['count'] = webform_goals_count_submissions_by_form_ids($goal['extra']['selected_form_ids'], $goal['start_date'], $goal['end_date']);
     }
     // TODO: add case for global with provided nid.
     else {
@@ -194,10 +247,23 @@ function webform_goals_webform_goals_track_metric($goal, $params = array()) {
   }
 }
 
-function _webform_goals_count_submissions($nid, $start = FALSE, $end = FALSE) {
+/**
+ * Counts the number of submissions across the given array of form IDs.
+ *
+ * @param array $nids
+ *   An array of nids (form IDs)
+ * @param string|bool $start
+ *   Start timestamp for form submissions.
+ * @param string|bool $end
+ *   End timestamp for form submissions.
+ *
+ * @return int
+ *   Number of the submissions.
+ */
+function webform_goals_count_submissions_by_form_ids($nids, $start = FALSE, $end = FALSE) {
   $query = db_select('webform_submissions', 'w');
   $query->fields('w', array('sid'));
-  $query->condition('nid', $nid, '=');
+  $query->condition('nid', $nids, 'IN');
   if ($start) {
     $query->condition('submitted', $start, '>=');
   }
@@ -207,6 +273,23 @@ function _webform_goals_count_submissions($nid, $start = FALSE, $end = FALSE) {
   $num_rows = $query->countQuery()->execute()->fetchField();
 
   return $num_rows;
+}
+
+/**
+ * Counts form submissions on a single form.
+ *
+ * @param int $nid
+ *   Single form ID
+ * @param string|bool $start
+ *   Start timestamp for submissions.
+ * @param string|bool $end
+ *   End timestamp for submissions.
+ *
+ * @return int
+ *   Number of submissions.
+ */
+function _webform_goals_count_submissions($nid, $start = FALSE, $end = FALSE) {
+  return webform_goals_count_submissions_by_form_ids(array($nid), $start, $end);
 }
 
 function _webform_goals_total_submissions($node_type, $start = FALSE, $end = FALSE) {

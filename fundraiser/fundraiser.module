@@ -6,7 +6,8 @@
  */
 
 // Include theme related functions.
-require_once('fundraiser.theme.inc'); //TODO merge this back in.
+// @todo Merge this back in.
+require_once 'fundraiser.theme.inc';
 
 /**
  * Implements hook_permission().
@@ -143,12 +144,12 @@ function fundraiser_token_info() {
     $info['tokens']['donation']['card_expiration_year'] = array(
       'name' => t('Card expiration year'),
       'description' => t('The expiration year of the card, ' .
-        'available only if the user selected a credit card method supporting this token.')
+        'available only if the user selected a credit card method supporting this token.'),
     );
     $info['tokens']['donation']['card_type'] = array(
       'name' => t('Card type'),
       'description' => t('The type of credit card, ' .
-        'available only if the user selected a credit card method supporting this token.')
+        'available only if the user selected a credit card method supporting this token.'),
     );
   }
   return $info;
@@ -212,7 +213,7 @@ function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) 
   $replacements = array();
   foreach ($tokens as $key => $token) {
     if (isset($data[$key])) {
-      $replacements[ $token ] = $data[$key];
+      $replacements[$token] = $data[$key];
     }
   }
   if ($node_tokens = token_find_with_prefix($tokens, 'node')) {
@@ -269,7 +270,7 @@ function fundraiser_views_api() {
  * Implementshook_node_access().
  */
 function fundraiser_node_access($node, $op, $account) {
-   // Without an idea who the owner is or type is we can't assess access. So don't rock the boat.
+  // Without an idea who the owner is or type is we can't assess access. So don't rock the boat.
   if ( isset($node->type) && isset($node->uid) && fundraiser_is_donation_type($node->type)) {
     $is_author = $account->uid == $node->uid;
     switch ($op) {
@@ -564,7 +565,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     $donation_amounts = isset($node->donation_amounts) ? $node->donation_amounts : array();
     // If not there, then grab some defaults.
     if (count($donation_amounts) == 0) {
-      $default_amounts = variable_get('fundraiser_default_amounts', '10|$10'."\n".'20|$20'."\n".'50|$50'."\n".'100|$100');
+      $default_amounts = variable_get('fundraiser_default_amounts', '10|$10' . "\n" . '20|$20' . "\n" . '50|$50' . "\n" . '100|$100');
       $default_amounts = explode("\n", $default_amounts);
       $default_amounts = array_unique($default_amounts);
       $exploded_amounts = array();
@@ -681,7 +682,7 @@ function _fundraiser_node_form_after_build($form, &$form_state) {
  */
 function _fundraiser_form_payment_method_config_fieldset($gateways, $configuration, $fieldset, $name) {
   // Create an array of gateways by the type of available payment methods
-  foreach($gateways as $gateway) {
+  foreach ($gateways as $gateway) {
     $types = isset($gateway['payment_method']) ? $gateway['payment_method'] : array();
     foreach ($types as $type) {
       $all_payment_methods[$type][] = $gateway;
@@ -702,7 +703,7 @@ function _fundraiser_form_payment_method_config_fieldset($gateways, $configurati
     // Build the #options array for the payment processors supporting this payment method.
     $processor_options = array();
     foreach (element_children($method) as $key) {
-      $processor_options[ $method[$key]['id'] ] = $method[$key]['title'];
+      $processor_options[$method[$key]['id']] = $method[$key]['title'];
     }
     $fieldset[$method_key] = array('#tree' => TRUE);
     $fieldset[$method_key]['status'] = array(
@@ -776,10 +777,10 @@ function _fundraiser_form_payment_method_validate($form, &$form_state) {
     // Check that the marked payment type actually have selected gateways to match.
     foreach ($enabled_methods as $method => $enabled_method) {
       if (empty($enabled_method['id'])) {
-        form_set_error('gateways][' . $method .'][id', t('All enabled payment methods must select a gateway.'));
+        form_set_error('gateways][' . $method . '][id', t('All enabled payment methods must select a gateway.'));
       }
       if (count($enabled_methods) > 1 && empty($enabled_method['label'])) {
-        form_set_error('gateways][' . $method .'][label', t('Please enter a label for the %method gateway.', array('%method' => $method)));
+        form_set_error('gateways][' . $method . '][label', t('Please enter a label for the %method gateway.', array('%method' => $method)));
       }
     }
     // Check that a default has been set.
@@ -918,7 +919,7 @@ function fundraiser_fundraiser_field_info() {
       'field_prefix' => '$',
     ),
     '#allow_update' => 1,
-    '#reset_value' => 1,
+    '#reset_value' => 0,
     '#create_callback' => '_fundraiser_amount_field_create',
   );
   $fields['donation']['other_amount'] = array(
@@ -1118,7 +1119,7 @@ function _fundraiser_other_amount_field_create($fundraiser, $field) {
     return FALSE; // FALSE as opposed to empty, means we delete this field if it exists.
   }
   // Update the min with fundraiser's min.
-  $field['#extra']['description'] = 'Minimum payment $' . number_format($fundraiser->minimum_donation_amount, 2). '.';
+  $field['#extra']['description'] = 'Minimum payment $' . number_format($fundraiser->minimum_donation_amount, 2) . '.';
   // Return the field to be created.
   return $field;
 }
@@ -1127,15 +1128,15 @@ function _fundraiser_other_amount_field_create($fundraiser, $field) {
  * Validation callback for field other_amount. Called during form validation.
  */
 function _fundraiser_other_amount_field_validate($form, $form_state, $submission_fields, $value) {
-    // Check for confusing selection.
-    if (!empty($submission_fields['amount']) && $submission_fields['amount'] != "other" && !empty($submission_fields['other_amount'])) {
+  // Check for confusing selection.
+  if (!empty($submission_fields['amount']) && $submission_fields['amount'] != "other" && !empty($submission_fields['other_amount'])) {
     return array(
       'amount' => t('You have entered a custom amount and selected a set amount. Please clarify which amount you ' .
         'intend to give, if you want to give the amount that appears in the other box, please select Other from ' .
         'the radio buttons.'),
       'other_amount' => '',
-      );
-    }
+    );
+  }
   $value = $submission_fields['amount'];
   // Look for other amount if set.
   if ($submission_fields['amount'] == 'other') {
@@ -1159,7 +1160,7 @@ function _fundraiser_other_amount_field_validate($form, $form_state, $submission
 /**
  * Validation callback for field email. Called during form validation.
  */
-function _fundraiser_email_field_validate($form, $form_state, $submission_fields,  $value) {
+function _fundraiser_email_field_validate($form, $form_state, $submission_fields, $value) {
   if (!_fundraiser_validate_email(trim($value))) {
     return array('mail' => t('You must enter a valid email address.'));
   }
@@ -1169,14 +1170,14 @@ function _fundraiser_email_field_validate($form, $form_state, $submission_fields
  * Validation callback for field other_amount. Called during form validation.
  */
 function _fundraiser_quantity_field_validate($form, $form_state, $submission_fields, $value) {
-    // Check for confusing selection.
-    if (empty($submission_fields['quantity'])) {
+  // Check for confusing selection.
+  if (empty($submission_fields['quantity'])) {
     return array('quantity' => t('You did not enter a quantity.'));
-    }
-    // Not numeric.
-    if (!is_numeric($submission_fields['quantity'])) {
+  }
+  // Not numeric.
+  if (!is_numeric($submission_fields['quantity'])) {
     return array('quantity' => t('You did not enter a valid number.'));
-    }
+  }
 }
 
 /**
@@ -1281,7 +1282,7 @@ function fundraiser_validate_form_fields($form, $form_state, $submission_fields,
     // Check only if the submission field is set.
     // And the additional validate callback exists.
     if (isset($submission_fields[$child]) && isset($field_info[$child]['#validate_callback'])
-      && function_exists($field_info[$child]['#validate_callback'])) {
+       && function_exists($field_info[$child]['#validate_callback'])) {
       $error_messages = call_user_func($field_info[$child]['#validate_callback'], $form, $form_state,
         $submission_fields, $submission_fields[$child]);
       if (isset($error_messages) && !empty($error_messages)) {
@@ -1313,7 +1314,7 @@ function fundraiser_donation_form(&$form, &$form_state) {
   $form['#attached']['js'] = array(
     drupal_get_path('module', 'fundraiser') . '/js/jquery.alphanumeric.min.js',
     drupal_get_path('module', 'fundraiser') . '/js/jquery.validate.min.js',
-    drupal_get_path('module', 'fundraiser') . '/js/donation_validation.js',
+    drupal_get_path('module', 'fundraiser') . '/js/donation_validation.min.js',
   );
 
   // Check to see if the form is being accessed over HTTPS.
@@ -1529,7 +1530,10 @@ function fundraiser_donation_information_table($did) {
     $rows[] = array('Fundraiser node', t('Node #@nid - !title',
       array('@nid' => '---', '!title' => t('No fundraiser node found.'))));
   }
-  $variables = array('header' => array(), 'rows' => $rows);
+  $variables = array(
+    'header' => array(),
+    'rows' => $rows,
+  );
   drupal_alter('fundraiser_donation_information_table', $variables, $donation);
   return theme('table', $variables);
 }
@@ -1567,8 +1571,8 @@ function fundraiser_donation_create($donation) {
   $donation_record = array(
     'did' => $donation->did, // Donation id.
     'nid' => $donation->nid, // Fundraiser node id.
-    'uid' => $donation->uid,  // Submission user id.
-    'sid' => $donation->sid,  // Submission id.
+    'uid' => $donation->uid, // Submission user id.
+    'sid' => $donation->sid, // Submission id.
     'status' => $donation->status,
     'amount' => $donation->donation['amount'],
     'currency' => $donation->donation['currency'],
@@ -1883,9 +1887,11 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
     foreach ($donation->refunds as $refund) {
       $refunded_total += abs($refund->amount);
       $refund_summary[] = t('Refund #%id for $%amount on %date.',
-        array('%id' => $refund->did, '%amount' => abs($refund->amount),
-          '%date' => date('m/d/y', isset($refund->created) ? $refund->created : 0)
-        )
+        array(
+        '%id' => $refund->did,
+        '%amount' => abs($refund->amount),
+        '%date' => date('m/d/y', isset($refund->created) ? $refund->created : 0),
+      )
       ); //TODO fix up value display for international.
     }
     $refund_summary = !empty($refund_summary) ? theme('item_list', array('items' => $refund_summary)) : t('No refunds have been made.');
@@ -1928,7 +1934,7 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
     '#collapsed' => FALSE,
   );
   // Only show the refund form if the payment was made through a payment gateway that can handle refunds
-  if (isset($donation->gateway)) {  // Set during fundraiser_donation_get_donation().
+  if (isset($donation->gateway)) { // Set during fundraiser_donation_get_donation().
     $can_refund = FALSE;
     if (!empty($donation->gateway['allow_refund']) && in_array($donation->donation['payment_method'], $donation->gateway['allow_refund'])) {
       $can_refund = TRUE;
@@ -1965,7 +1971,7 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
         '#title' => t('Refund options'),
         '#type' => 'radios',
         '#options' => array(
-          'full' => t('Full Refund ( %amount )', array('%amount' => $able_to_refund . ' ' . $donation->currency )),
+          'full' => t('Full Refund ( %amount )', array('%amount' => $able_to_refund . ' ' . $donation->currency)),
           'partial' => t('Partial Refund'),
         ),
         '#default_value' => isset($form_state['input']['refund_type']) ? $form_state['input']['refund_type'] : 'full',
@@ -2080,6 +2086,7 @@ function _fundraiser_refund_form_submit($form, &$form_state) {
   }
 
   // Set up the refund.
+  $refund = new stdClass();
   $refund->did = $donation->did;
   $refund->amount = $amount;
   $refund->currency = $donation->currency;
@@ -2112,7 +2119,7 @@ function _fundraiser_refund_form_submit($form, &$form_state) {
  * Utility function, given a donation id - get all refunds.
  */
 function fundraiser_refund_get_refunds_by_did($did, $refresh = FALSE) {
-   // Pull from cached donation unless we are refreshing the cache.
+  // Pull from cached donation unless we are refreshing the cache.
   static $refunds;
   if (!$refresh && isset($refunds[$did])) {
     return $refunds[$did];
@@ -2762,17 +2769,20 @@ function fundraiser_webform_token_selector_blacklist_alter(&$tokens) {
 }
 
 /**
- * ecommerce-agnostic lookup of total dollar amount donated via a single
- * donation form.
+ * ecommerce-agnostic lookup of total dollar amount donated via multiple
+ *   donation forms.
  *
- * @param type $nid
- * Node ID
+ * Looks up by multiple nids in the hopes of a single faster IN query.
  *
- * @return total successful donations or FALSE if none found.
+ * @param array $nids
+ *   Node IDs
+ *
+ * @return float|bool
+ *   Total successful donations or FALSE if none found.
  */
-function fundraiser_get_total_donations_by_nid($nid, $start = FALSE, $end = FALSE) {
-  $node = node_load($nid);
-  $total_donations = module_invoke_all('fundraiser_get_total_donations_by_nid', $nid, $start, $end);
+function fundraiser_get_total_donations_by_nids($nids, $start = FALSE, $end = FALSE) {
+  $total_donations = module_invoke_all('fundraiser_get_total_donations_by_nids', $nids, $start, $end);
+  // Use the first implementation called.  There should only be one anyway.
   return $total_donations[0];
 }
 
@@ -2833,7 +2843,7 @@ function _fundraiser_gateway_switch_action_form($context) {
   }
 
   // Create an array of available payment methods
-  foreach($gateways as $gateway) {
+  foreach ($gateways as $gateway) {
     $types = isset($gateway['payment_method']) ? $gateway['payment_method'] : array();
     foreach ($types as $type) {
       $methods[$type] = $type;

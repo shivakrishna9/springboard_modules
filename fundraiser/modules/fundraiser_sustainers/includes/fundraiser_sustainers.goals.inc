@@ -9,7 +9,8 @@ function fundraiser_sustainers_webform_goals_list_metrics($selected_context, $fo
 
   // this metric should only be available to donation forms selected in a "single" context
   // or groups if the node type is also a donation node type.
-  if ($selected_context['id'] == 'single' || $selected_context['id'] == 'group') {
+  // or form groups if all forms selected in the group are fundraiser enabled.
+  if (in_array($selected_context['id'], array('single', 'group', 'form_group'))) {
     $is_fundraiser_goal = fundraiser_webform_is_fundraiser_goal($selected_context, $form_state, $goal);
     if ($is_fundraiser_goal) {
       $metrics['fundraiser_sustainer_count'] = array(
@@ -50,10 +51,16 @@ function fundraiser_sustainers_webform_goals_track_metric($goal, $params = array
     }
     // group goal handling. since we have multiple nodes we query the db for each.
     // Bet the database loves this. Can this be improved?
-    elseif (!empty($goal['extra']['selected_node_type'])) {
-      $nids = _webform_goals_nids_by_type($goal['extra']['selected_node_type']);
+    else {
+      if (!empty($goal['extra']['selected_node_type'])) {
+        $nids = _webform_goals_nids_by_type($goal['extra']['selected_node_type']);
+      }
+      elseif (!empty($goal['extra']['selected_form_ids'])) {
+        $nids = $goal['extra']['selected_form_ids'];
+      }
+
       if (is_array($nids)) {
-        foreach($nids as $nid) {
+        foreach ($nids as $nid) {
           $sustainers = _fundraiser_sustainers_get_total_sustainers_by_nid($nid, $goal['start_date'], $goal['end_date']);
 
           if ($sustainers) {

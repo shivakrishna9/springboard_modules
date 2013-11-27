@@ -69,17 +69,14 @@ function webform_goals_add($form, $form_state, $goal = array()) {
       '#description' => t('The selected context requires the following additional settings:'),
     );
     $func = $selected_context['settings_callback'];
-    $func($form['context_container']['options_wrapper']['options'], $goal);
+    $func($form['context_container']['options_wrapper']['options'], $form_state, $goal);
 
   }
 
   // SF Webform should add the Salesforce context.
-
   // Metrics radios (standard + plugin architecture)
-
   foreach ($metrics as $key => $metric) {
     $metrics_options[$key] = $metric['name'];
-
   }
 
   // #AJAX enable so minimum display limit UI can be swapped.
@@ -92,7 +89,8 @@ function webform_goals_add($form, $form_state, $goal = array()) {
   $form['metrics_wrapper']['metrics'] = array(
     '#type' => 'radios',
     '#title' => '',
-    '#options' => $metrics_options, // Get valid options from plugin
+    // Get valid options from plugin
+    '#options' => $metrics_options,
     '#default_value' => $selected_metric['id'],
     '#ajax' => array(
       'callback' => 'webform_goals_metrics_callback',
@@ -141,7 +139,10 @@ function webform_goals_add($form, $form_state, $goal = array()) {
     '#description' => !empty($selected_metric['form_text']['display_threshold']['description']) ? $selected_metric['form_text']['display_threshold']['description'] : t('The starter message will be displayed until goal progress meets this minimum.'),
     '#size' => 8,
     '#id' => 'edit-display_threshold',
-    '#attributes' => array('name' => 'display_threshold', 'class' => array('container-inline')),
+    '#attributes' => array(
+      'name' => 'display_threshold',
+      'class' => array('container-inline'),
+    ),
     '#default_value' => !empty($goal['display_threshold']) ? $goal['display_threshold'] : 0,
   );
 
@@ -223,12 +224,13 @@ function webform_goals_add($form, $form_state, $goal = array()) {
     '#type' => 'text_format',
     '#title' => t('Goal template'),
     '#description' => t(''),
-    '#default_value' => !empty($goal['template']) ? $goal['template'] : theme('webform_goals_default_template'), //TODO: theme function to output default template
+    // @todo theme function to output default template
+    '#default_value' => !empty($goal['template']) ? $goal['template'] : theme('webform_goals_default_template'),
   );
   if (!empty($goal['template_format'])) {
     $form['template']['template']['#format'] = $goal['template_format'];
   }
-   $form['template']['template']['token_tree'] = array(
+  $form['template']['template']['token_tree'] = array(
     '#type' => 'fieldset',
     '#title' => t('Replacement patterns'),
     '#collapsible' => TRUE,
@@ -237,7 +239,10 @@ function webform_goals_add($form, $form_state, $goal = array()) {
     '#weight' => 10,
   );
   // Add token UI for goal tokens.
-  $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+  );
   $form['#validate'][] = 'webform_goals_add_validate';
   $form['#submit'][] = 'webform_goals_add_submit';
 
@@ -265,7 +270,7 @@ function webform_goals_add_validate(&$form, &$form_state) {
  * Submission handler for goal add/edit form.
  */
 function webform_goals_add_submit($form, &$form_state) {
-  require_once('includes/webform_goals.files.inc');
+  require_once 'includes/webform_goals.files.inc';
 
   $settings = array(
     'gid' => !empty($form_state['values']['gid']) ? $form_state['values']['gid'] : '',
@@ -292,27 +297,39 @@ function webform_goals_add_submit($form, &$form_state) {
   $save = drupal_write_record('webform_goals', $settings, $update);
   $settings['extra'] = $extra;
   $nid = !empty($extra['selected_form_id']) ? $extra['selected_form_id'] : 0;
+
+  $theme_args = array(
+    'webform_goal' => $settings,
+    'nid' => $nid,
+    'goal_progress' => webform_goals_track_metric($settings),
+  );
   $widget = array(
     'gid' => $settings['gid'],
-    'widget' => theme('webform_goals_widget', array('webform_goal' => $settings, 'nid' => $nid)),
+    'widget' => theme('webform_goals_widget', $theme_args),
   );
 
   drupal_write_record('webform_goals_widget', $widget, $update);
   _webform_goals_file_insert($settings, $widget['widget']);
-  if ($save == SAVED_NEW) {
 
-    $settings['extra'] = $extra;
-    $nids = _webform_goals_calculate_nids_for_goal($settings);
+  $settings['extra'] = $extra;
+  $nids = _webform_goals_calculate_nids_for_goal($settings);
 
-    foreach ($nids as $nid) {
-      $node_settings = array(
-        'gid' => $settings['gid'],
-        'nid' => $nid,
-      );
-      // TODO: optimize this as a bulk insert?
-      drupal_write_record('webform_goals_node', $node_settings);
-    }
+  // Remove the relevant rows from {webform_goals_node}
+  // and add new rows.
+  // We need to do this to update the nodes selected if they change
+  // during a goal edit.
+  db_delete('webform_goals_node')
+    ->condition('gid', $settings['gid'])
+    ->execute();
+  $query = db_insert('webform_goals_node')->fields(array('gid', 'nid'));
+  foreach ($nids as $nid) {
+    $query->values(array(
+      'gid' => $settings['gid'],
+      'nid' => $nid,
+    ));
   }
+  $query->execute();
+
   $form_state['redirect'] = array('admin/config/content/webform_goals');
 }
 
@@ -325,8 +342,8 @@ function webform_goals_context_callback($form, $form_state) {
     '#commands' => array(
       ajax_command_replace('#context-description', render($form['context_container']['context_description'])),
       ajax_command_replace("#context-options", render($form['context_container']['options_wrapper'])),
-      ajax_command_replace("#context-metrics", render($form['metrics_wrapper']))
-    )
+      ajax_command_replace("#context-metrics", render($form['metrics_wrapper'])),
+    ),
   );
 }
 
@@ -337,8 +354,8 @@ function webform_goals_extra_callback($form, $form_state) {
   return array(
     '#type' => 'ajax',
     '#commands' => array(
-      ajax_command_replace("#context-metrics", render($form['metrics_wrapper']))
-    )
+      ajax_command_replace("#context-metrics", render($form['metrics_wrapper'])),
+    ),
   );
 }
 /**
@@ -351,7 +368,7 @@ function webform_goals_metrics_callback($form, $form_state) {
       ajax_command_replace('#context-metrics', render($form['metrics_wrapper'])),
       ajax_command_replace("#options-goal-settings", render($form['goal_wrapper'])),
       ajax_command_replace('#context-seed', render($form['seed_wrapper'])),
-    )
+    ),
   );
 }
 
@@ -393,14 +410,14 @@ function webform_goals_delete($form, $form_state, $goal = array()) {
     '#type' => 'value',
     '#value' => !empty($goal['gid']) ? $goal['gid'] : NULL,
   );
-   $form['actions'] = array('#type' => 'actions');
+  $form['actions'] = array('#type' => 'actions');
   $form['actions']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Delete'),
   );
   $form['actions']['cancel'] = array(
-    '#type'   => 'submit',
-    '#value'  => t('Cancel'),
+    '#type' => 'submit',
+    '#value' => t('Cancel'),
     '#submit' => array('_webform_goals_form_cancel'),
     '#limit_validation_errors' => array(),
   );
@@ -438,15 +455,20 @@ function webform_goals_render_progress_bar($bar_type, $goal_progress, $drupal = 
     case 'flat_ui':
       $output = theme('webform_goals_flat_ui_progress_bar', array('goal_progress' => $goal_progress));
       break;
+
     case 'twitter_basic':
       $output = theme('webform_goals_twitter_progress_bar', array('goal_progress' => $goal_progress));
       break;
+
     case 'twitter_striped':
       $output = theme('webform_goals_twitter_striped_progress_bar', array('goal_progress' => $goal_progress));
       break;
+
     case 'animated':
       $output = theme('webform_goals_animated_progress_bar', array('goal_progress' => $goal_progress, 'drupal' => $drupal));
       break;
+
   }
+
   return $output;
 }

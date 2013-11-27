@@ -5,7 +5,7 @@
  * Secure prepopulate tests for anonymous users.
  */
 
-include_once(dirname(__FILE__) . '/secure_prepopulate.test');
+include_once dirname(__FILE__) . '/secure_prepopulate.test';
 
 class AnonymousUserTestCase extends SecurePrepopulateTestCase {
 
@@ -20,7 +20,7 @@ class AnonymousUserTestCase extends SecurePrepopulateTestCase {
   /**
    * Test pre-population for an anonymous user
    */
-  function testAnonymousPopulate() {
+  public function testAnonymousPopulate() {
     $node = $this->webformNode();
     $this->drupalGet('node/' . $node->nid);
     $this->pass(var_export($this->drupalGetContent(), TRUE));

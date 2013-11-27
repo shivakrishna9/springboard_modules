@@ -6,7 +6,7 @@
 
 // @see: http://drupal.org/node/921398 #3
 module_load_include('inc', 'webform', 'includes/webform.components');
-require_once('email_wrappers.mail.inc');
+require_once 'email_wrappers.mail.inc';
 
 function email_wrappers_perm() {
 
@@ -45,40 +45,40 @@ function email_wrappers_menu() {
 
 // Modal display window for email preview. At some point this should be converted to one or more theme functions/templates.
 function email_wrappers_preview_modal() {
-    ctools_include('ajax');
-    ctools_include('modal');
-    module_load_include('inc', 'ctools', 'includes/modal');
-    $title = 'Template Preview';
-    $values = $_POST['template_wrapper'];
+  ctools_include('ajax');
+  ctools_include('modal');
+  module_load_include('inc', 'ctools', 'includes/modal');
+  $title = 'Template Preview';
+  $values = $_POST['template_wrapper'];
 
-    $template = $_POST['email_wrappers_email_template'];
+  $template = $_POST['email_wrappers_email_template'];
 
-    $output = array();
-    $output['subject'] = $_POST['subject_custom'];
-    $output['email'] = array(
-      'from' => '&lt;' . $_POST['from_name_custom'] . '&gt;' . $_POST['from_address_custom'],
-      'bcc' => $_POST['email_wrappers_bcc'],
-    );
-    $output['HTML'] = _email_wrappers_preview('html', $_POST['email_wrappers_html_message'], $template);
-    $output['text'] = _email_wrappers_preview('text', $_POST['email_wrappers_text_message'], $template);
-    $keys = array_keys($output);
-    foreach($keys as $key) {
-      if (is_array($output[$key])) {
+  $output = array();
+  $output['subject'] = $_POST['subject_custom'];
+  $output['email'] = array(
+    'from' => '&lt;' . $_POST['from_name_custom'] . '&gt;' . $_POST['from_address_custom'],
+    'bcc' => $_POST['email_wrappers_bcc'],
+  );
+  $output['HTML'] = _email_wrappers_preview('html', $_POST['email_wrappers_html_message'], $template);
+  $output['text'] = _email_wrappers_preview('text', $_POST['email_wrappers_text_message'], $template);
+  $keys = array_keys($output);
+  foreach ($keys as $key) {
+    if (is_array($output[$key])) {
 
-        $preview .= '<fieldset id="field-' . $key . '"><label for="field-' . $key . '" style="font-weight:bold">' . ucfirst($key) . '</label>';
-        $subkeys = array_keys($output[$key]);
-        foreach ($subkeys as $subkey) {
-          $preview .= '<p>' . ucfirst($subkey) . ':&nbsp; ' . $output[$key][$subkey] . '</p>';
-        }
-        $preview .= '</fieldset>';
+      $preview .= '<fieldset id="field-' . $key . '"><label for="field-' . $key . '" style="font-weight:bold">' . ucfirst($key) . '</label>';
+      $subkeys = array_keys($output[$key]);
+      foreach ($subkeys as $subkey) {
+        $preview .= '<p>' . ucfirst($subkey) . ':&nbsp; ' . $output[$key][$subkey] . '</p>';
       }
-      else {
-        $preview .= '<fieldset id="field-' . $key . '"><label for="field-' . $key . '" style="font-weight:bold">' . ucfirst($key) . '</label>';
-        $preview .= '<div>' . $output[$key] . '</div>';
-        $preview .= '</fieldset>';
-      }
+      $preview .= '</fieldset>';
     }
-    ctools_modal_render($title, $preview);
+    else {
+      $preview .= '<fieldset id="field-' . $key . '"><label for="field-' . $key . '" style="font-weight:bold">' . ucfirst($key) . '</label>';
+      $preview .= '<div>' . $output[$key] . '</div>';
+      $preview .= '</fieldset>';
+    }
+  }
+  ctools_modal_render($title, $preview);
 
 }
 
@@ -253,7 +253,7 @@ function email_wrappers_email_submit_callback($form, $form_state) {
       'nid' => $values['node']->nid,
       'eid' => $values['eid'],
       'tid' => $values['email_wrappers_email_template'],
-      'bcc_email' => is_array($values['email_wrappers_bcc']) ? implode(',', $values['email_wrappers_bcc']): $values['email_wrappers_bcc'],
+      'bcc_email' => is_array($values['email_wrappers_bcc']) ? implode(',', $values['email_wrappers_bcc']) : $values['email_wrappers_bcc'],
       'html_message' => $values['email_wrappers_html_message'],
       'html_message_format' => '',
       'text_message' => $values['email_wrappers_text_message'],
@@ -549,16 +549,16 @@ function email_wrappers_mail_load($params = array()) {
     return $settings[$mid];
   }
   elseif ($mid) {
-   $query = db_select('email_wrappers', 'e');
-   $query->fields('e');
-   $query->condition('mid', $mid);
-   $result = $query->execute();
-   $mail = $result->fetchObject();
-   $settings[$mid] = $mail;
+    $query = db_select('email_wrappers', 'e');
+    $query->fields('e');
+    $query->condition('mid', $mid);
+    $result = $query->execute();
+    $mail = $result->fetchObject();
+    $settings[$mid] = $mail;
   }
   elseif (isset($params['module']) && isset($params['delta'])) {
-   // $result = db_query("SELECT * FROM {mailtron} WHERE module = '%s' AND name = '%s'", $params['module'], $params['name']);
-   // $mail = db_fetch_object($result);
+    // $result = db_query("SELECT * FROM {mailtron} WHERE module = '%s' AND name = '%s'", $params['module'], $params['name']);
+    // $mail = db_fetch_object($result);
     $query = db_select('email_wrappers', 'e');
     $query->fields('e');
     $query->condition('module', $params['module']);
@@ -657,9 +657,9 @@ function _email_wrappers_concat_bcc($node) {
  * default value for the "custom" textfield.
  */
 function _email_wrappers_webform_option_defaults(&$form, $field_key, $value) {
-    $form[$field_key . '_option']['default']['#value'] = '';
-    $form[$field_key . '_option']['custom']['#value'] = 'custom';
-    $form[$field_key . '_custom']['#value'] = $value;
+  $form[$field_key . '_option']['default']['#value'] = '';
+  $form[$field_key . '_option']['custom']['#value'] = 'custom';
+  $form[$field_key . '_custom']['#value'] = $value;
 }
 
 /**

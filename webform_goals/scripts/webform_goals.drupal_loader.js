@@ -3,6 +3,7 @@
     attach: function (context, settings) {
     var ids = [];
     items = jQuery('.wg-goal').map(function(){
+      jQuery(this).hide();
       ids.push(jQuery(this).data('gid'));
     });
     // TODO: add site namespacing so goals can be shared to external Drupal sites that have this module installed.
@@ -38,6 +39,7 @@
                  element.html(html);
                });
              }
+             jQuery(this).show();
            }
           });
         }

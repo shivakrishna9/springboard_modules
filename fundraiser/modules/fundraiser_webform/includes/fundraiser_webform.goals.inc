@@ -11,9 +11,10 @@
  */
 function fundraiser_webform_webform_goals_list_metrics($selected_context, $form_state, $goal = array()) {
 
-  // this metric should only be available to donation forms selected in a "single" context
-  // or groups if the node type is also a donation node type.
-  if ($selected_context['id'] == 'single' || $selected_context['id'] == 'group') {
+  // This metric should only be available to donation forms selected in a "single" context
+  // or groups if the node type is also a donation node type
+  // or form groups if all forms selected in the group are fundraiser enabled.
+  if (in_array($selected_context['id'], array('single', 'group', 'form_group'))) {
     $is_fundraiser_goal = fundraiser_webform_is_fundraiser_goal($selected_context, $form_state, $goal);
 
     if ($is_fundraiser_goal) {
@@ -51,30 +52,67 @@ function fundraiser_webform_webform_goals_track_metric($goal, $params = array())
   );
   if ($goal['metric'] === 'fundraiser_donation_amount') {
 
+    // Create an array of nids that we're tracking.
     if (!empty($goal['extra']['selected_form_id'])) {
-      $data['count'] = fundraiser_get_total_donations_by_nid($goal['extra']['selected_form_id'], $goal['start_date'], $goal['end_date']);
+      // Needs to be an array for the foreach below.
+      $nids = array($goal['extra']['selected_form_id']);
     }
-    // Bet the database loves this.
     elseif (!empty($goal['extra']['selected_node_type'])) {
       $nids = _webform_goals_nids_by_type($goal['extra']['selected_node_type']);
-      if (is_array($nids)) {
-        foreach($nids as $nid) {
-          $donations = fundraiser_get_total_donations_by_nid($nid, $goal['start_date'], $goal['end_date']);
-          if ($donations) {
-            $data['count'] += $donations;
-          }
-        }
-        $data['count'] = number_format((float) $data['count'], 2); // Alligator wrestling to keep format identical with single values.
-      }
     }
+    elseif (!empty($goal['extra']['selected_form_ids'])) {
+      $nids = $goal['extra']['selected_form_ids'];
+    }
+    else {
+      // Default value.
+      $nids = array();
+    }
+
+    // Grouping the nids together to optimize for the case of multiple nids.
+    // This will perform a single query instead of one per nid.
+    if (count($nids)) {
+      $data['count'] = fundraiser_get_total_donations_by_nids($nids, $goal['start_date'], $goal['end_date']);
+    }
+
+    // Adds the seed value and calculates the related values.
     webform_goals_calculate_progress($data, $goal);
+    // Pretty format the donation amount..
+    $data['count'] = number_format((float) $data['count'], 2);
     return $data;
   }
 }
 
 function fundraiser_webform_is_fundraiser_goal($selected_context, $form_state, $goal = array()) {
-   if ($selected_context['id'] == 'single' || $selected_context['id'] == 'group') {
+
+  if ($selected_context['id'] == 'form_group') {
+    if (!empty($form_state['values']['selected_form_ids'])) {
+      $nids = $form_state['values']['selected_form_ids'];
+    }
+    elseif (!empty($goal['extra']['selected_form_ids'])) {
+      $nids = $goal['extra']['selected_form_ids'];
+    }
+    else {
+      $nids = array();
+    }
+
+    if (count($nids)) {
+      $types = db_query("SELECT DISTINCT type FROM {node} WHERE nid IN (:nids)", array(':nids' => $nids));
+    }
+    else {
+      // no forms selected, so total donation amount is not available.
+      return FALSE;
+    }
+    foreach ($types as $type) {
+      if (!fundraiser_is_donation_type($type->type)) {
+        return FALSE;
+      }
+    }
+    return TRUE;
+  }
+
+  if ($selected_context['id'] == 'single' || $selected_context['id'] == 'group') {
     $type = '';
+    // @todo Might need to check $form_state before $goal.  Needs testing.
     if (!empty($goal['extra']['selected_form_id'])) {
       $nid = $goal['extra']['selected_form_id'];
     }

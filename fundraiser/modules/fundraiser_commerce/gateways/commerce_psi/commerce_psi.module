@@ -185,7 +185,7 @@ function _commerce_psi_build_donor($order, $payment_method) {
     'StateProvince' => drupal_substr($billing_address['administrative_area'], 0, 50),
     'PostalCode' => drupal_substr($billing_address['postal_code'], 0, 20),
     'Country' => drupal_substr($billing_address['country'], 0, 30),
-    'Phone' => !empty($billing_address['phone']) ? drupal_substr($billing_address['phone'], 0 , 20) : 'N/A',
+    'Phone' => !empty($billing_address['phone']) ? drupal_substr($billing_address['phone'], 0, 20) : 'N/A',
     'SendEmail' => _commerce_psi_token_replace($payment_method['settings']['custom_fields']['send_mail'], $order),
   );
 

@@ -34,15 +34,18 @@ function fundraiser_commerce_menu() {
  * Implements hook_menu_alter().
  */
 function fundraiser_commerce_menu_alter(&$items) {
+  // Deny access to the the void and credit forms provided by the gateways
   foreach ($items as $path => $item) {
     if (strpos($path, 'admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/') !== FALSE) {
-      // If not view or delete, strip it out to be replaced with our form Refund.
+      // If not view or delete change the access callback to deny access
       if (($path != 'admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/view') &&
         ($path != 'admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/delete')) {
-        unset($items[$path]);
+        $items[$path]['access callback'] = '_fundraiser_commerce_deny_gateway_credit_form_access';
       }
     }
   }
+
+  // Custom refund form for fundraiser
   $items['admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/refund'] = array(
     'title' => 'Refund',
     'page callback' => 'drupal_get_form',
@@ -52,6 +55,13 @@ function fundraiser_commerce_menu_alter(&$items) {
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'context' => MENU_CONTEXT_INLINE,
   );
+}
+
+/**
+ * Menu access for the gateway credit and void forms
+ */
+function _fundraiser_commerce_deny_gateway_credit_form_access($order, $transaction) {
+  return FALSE;
 }
 
 /**
@@ -94,7 +104,7 @@ function fundraiser_commerce_entity_view($entity, $type, $view_mode, $langcode) 
           '#suffix' => '</div></div></div>',
         );
       }
-    break;
+      break;
     default:
   }
 }
@@ -110,7 +120,7 @@ function fundraiser_commerce_fundraiser_donation_information_table_alter(&$varia
       array(
         '!did' => l($refunded_donation->did, 'admin/commerce/orders/' . $refunded_donation->did . '/view'),
         '@nid' => $refunded_donation->nid,
-        '!title' => l($refunded_donation->node->title, 'node/' . $refunded_donation->node->nid)
+        '!title' => l($refunded_donation->node->title, 'node/' . $refunded_donation->node->nid),
       )
     ));
   }
@@ -157,8 +167,10 @@ function fundraiser_commerce_commerce_line_item_type_info() {
  */
 function commerce_donation_line_item_title($line_item) {
   $donation = fundraiser_donation_get_donation($line_item->order_id);
-  return t('Donation for Fundraiser #%nid %title', array('%nid' => $donation->nid,
-    '%title' => isset($donation->node->title) ? $donation->node->title : ''));
+  return t('Donation for Fundraiser #%nid %title', array(
+    '%nid' => $donation->nid,
+    '%title' => isset($donation->node->title) ? $donation->node->title : '',
+  ));
 }
 
 /**
@@ -218,10 +230,10 @@ function commerce_donation_line_item_add_form_submit(&$line_item, $element, &$fo
       $line_item->commerce_unit_price[LANGUAGE_NONE][0],
       'base_price',
       array(
-        'amount' => commerce_currency_decimal_to_amount($values['amount']['#value'], $values['currency']['#value']),
-        'currency_code' => $values['currency']['#value'],
-        'data' => array(),
-      ),
+      'amount' => commerce_currency_decimal_to_amount($values['amount']['#value'], $values['currency']['#value']),
+      'currency_code' => $values['currency']['#value'],
+      'data' => array(),
+    ),
       TRUE
     );
   }
@@ -311,8 +323,8 @@ function fundraiser_commerce_fundraiser_gateway_info() {
         $this_gateway['allow_recurring'] = array();
       }
       if (empty($this_gateway['offsite_recurring'])
-        || empty($method_instance['settings']['offsite_recurring'])
-        || $method_instance['settings']['offsite_recurring'] == 0) {
+         || empty($method_instance['settings']['offsite_recurring'])
+         || $method_instance['settings']['offsite_recurring'] == 0) {
         $this_gateway['offsite_recurring'] = array();
       }
       if (empty($this_gateway['offsite_processing'])) {
@@ -325,7 +337,7 @@ function fundraiser_commerce_fundraiser_gateway_info() {
       $this_gateway['allow_recurring'] = array_diff($this_gateway['allow_recurring'], $this_gateway['offsite_processing']);
       // Save the original data declared.
       $this_gateway['gateway_details'] = $method_instance;
-      $fundraiser_gateways[ $this_gateway['id'] ] = $this_gateway;
+      $fundraiser_gateways[$this_gateway['id']] = $this_gateway;
     }
   }
 
@@ -438,7 +450,7 @@ function _fundraiser_commerce_payment_fields_validate($form, $form_state, $submi
         return array(
           'card_expiration_month' => t('The credit card you entered has expired.'),
           'card_expiration_year' => '',
-          );
+        );
       }
     }
   }
@@ -494,7 +506,7 @@ function _fundraiser_commerce_client_state_ajax_submit($form, $form_state, &$mes
     '#commands' => array(
       ajax_command_replace('#zone-select-wrapper', render(fundraiser_get_form_field($form['#calling_module'], $form, 'state'))),
       ajax_command_invoke('#edit-submitted-billing-information-state', 'focus'),
-    )
+    ),
   );
 }
 
@@ -512,8 +524,8 @@ function _fundraiser_commerce_zone_field_display($form, $form_state, $field) {
   if (array_key_exists('country', $fields)) {
     $country_id = $fields['country'];
     // Filter options down to just the zones available for this country.
-    if (isset($countries->countries[ $country_id ])) {
-      $available_zones = $countries->countries[ $country_id ]->zones;
+    if (isset($countries->countries[$country_id])) {
+      $available_zones = $countries->countries[$country_id]->zones;
     }
   }
   else {
@@ -523,8 +535,8 @@ function _fundraiser_commerce_zone_field_display($form, $form_state, $field) {
     if (isset($country_field['#default_value'])) {
       $default = $country_field['#default_value'];
       $default = $default;
-      if (isset($countries->countries[ $default ])) {
-        $available_zones = $countries->countries[ $default ]->zones;
+      if (isset($countries->countries[$default])) {
+        $available_zones = $countries->countries[$default]->zones;
       }
     }
   }
@@ -532,7 +544,7 @@ function _fundraiser_commerce_zone_field_display($form, $form_state, $field) {
   if (!empty($available_zones)) {
     $new_zone_options = array();
     foreach ($available_zones as $zone_id => $zone) {
-      $new_zone_options[ $zone->iso ] = $zone->zone_name;
+      $new_zone_options[$zone->iso] = $zone->zone_name;
     }
     $field['#options'] = $new_zone_options;
   }
@@ -567,9 +579,10 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
   $donation->donation['amount'] = commerce_currency_amount_to_decimal($order->commerce_order_total[LANGUAGE_NONE][0]['amount'],
     $order->commerce_order_total[LANGUAGE_NONE][0]['currency_code']);
   $donation->donation['quantity'] = 1;
+  $donation->donation['hostname'] = $order->hostname;
   $found = commerce_line_item_load_multiple(array(), array('order_id' => $order->order_id));
   $line_item_id = -1;
-  foreach($found as $id => $found) {
+  foreach ($found as $id => $found) {
     $line_item_id = $id;
   }
   if ($line_item_id != -1) {
@@ -704,7 +717,7 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   // Look up the profile by user id or email, then if not found make a new profile.
   $found = commerce_customer_profile_load_multiple(array(), array('uid' => $user->uid));
   $profile_id = -1;
-  foreach($found as $id => $found) {
+  foreach ($found as $id => $found) {
     $profile_id = $id;
   }
   if ($profile_id != -1) {
@@ -793,7 +806,10 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
       watchdog('fundraiser', 'Cannot determine the redirect form for donation @id. Node id of donation form is @nid',
         array('@id' => $donation->did, '@nid' => $donation->nid), WATCHDOG_CRITICAL);
       watchdog('fundraiser_commerce', 'Redirect hook is empty.');
-      $donation->result = array('success' => FALSE, 'message' => 'Cannot determine the redirect hook for this donation.');
+      $donation->result = array(
+        'success' => FALSE,
+        'message' => 'Cannot determine the redirect hook for this donation.',
+      );
       return; // At this point, the original form will reload with error.
     }
     // If external, check for paths to be available.
@@ -810,7 +826,10 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
       watchdog('fundraiser', 'Cannot determine the payment gateway for donation @id. Node id of donation form is @nid',
         array('@id' => $donation->did, '@nid' => $donation->nid), WATCHDOG_CRITICAL);
       watchdog('fundraiser_commerce', 'Charge function :function is empty.', array(':function' => $info['charge callback']));
-      $donation->result = array('success' => FALSE, 'message' => 'Cannot determine the payment gateway for this donation.');
+      $donation->result = array(
+        'success' => FALSE,
+        'message' => 'Cannot determine the payment gateway for this donation.',
+      );
       return; // Return the failure.
     }
     // And process.
@@ -944,7 +963,7 @@ function _fundraiser_commerce_fundraiser_donation_process_external_form($form, $
       return $form;
     }
   }
-  $form['message'] = array (
+  $form['message'] = array(
     '#markup' => '<div class="fundraiser-commerce-failed-to-redirect">' . $log . '</div>',
   );
   return $form;
@@ -1053,7 +1072,10 @@ function _fundraiser_commerce_fundraiser_donation_process_external_form_return($
 function _fundraiser_commerce_update_donation_result_data($donation, $success) {
   // If no result then presume a failure or no hook installed for this gateway type.
   if (!isset($success)) {
-    $donation->result = array('success' => FALSE, 'message' => 'This payment gateway is not supported by Fundraiser Commerce.');
+    $donation->result = array(
+      'success' => FALSE,
+      'message' => 'This payment gateway is not supported by Fundraiser Commerce.',
+    );
     return; // Return the failure.
   }
   // Load the order object so we can save additional data post submit.
@@ -1198,14 +1220,20 @@ function _fundraiser_commerce_fundraiser_donation_process_external_form_redirect
     $redirect_url = preg_replace('/^' . preg_quote($GLOBALS['base_url'], '/') . '\//', '', $redirect_url);
 
     // Check confirmation and redirect_url fields.
-    $redirect = array('path' => '', 'options' => array());
+    $redirect = array(
+      'path' => '',
+      'options' => array(),
+    );
     $external_url = FALSE;
 
     if ($redirect_url == '<none>') {
       $redirect['path'] = 'node/' . $node->nid;
     }
     elseif ($redirect_url == '<confirmation>') {
-      $redirect = array('path' => 'node/' . $node->nid . '/done', 'options' => array('query' => array('sid' => $sid)));
+      $redirect = array(
+        'path' => 'node/' . $node->nid . '/done',
+        'options' => array('query' => array('sid' => $sid)),
+      );
     }
     elseif (valid_url($redirect_url, TRUE)) {
       $redirect['path'] = $redirect_url;
@@ -1215,7 +1243,13 @@ function _fundraiser_commerce_fundraiser_donation_process_external_form_redirect
       $parts = drupal_parse_url($redirect_url);
       $parts['query'] ? ($parts['query']['sid'] = $sid) : ($parts['query'] = array('sid' => $sid));
       $query = $parts['query'];
-      $redirect = array('path' => $parts['path'], 'options' => array('query' => $query, 'fragment' => $parts['fragment']));
+      $redirect = array(
+        'path' => $parts['path'],
+        'options' => array(
+          'query' => $query,
+          'fragment' => $parts['fragment'],
+        ),
+      );
     }
 
     // If redirecting and we have a confirmation message, show it as a message.
@@ -1250,7 +1284,7 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
   // Update the existing line item(s) with the new value.
   $found = commerce_line_item_load_multiple(array(), array('order_id' => $order->order_id));
   $line_item_id = -1;
-  foreach($found as $id => $found) {
+  foreach ($found as $id => $found) {
     $line_item_id = $id;
   }
   if ($line_item_id != -1) {
@@ -1284,7 +1318,7 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
   // Update the customer profile with new info.
   $found = commerce_customer_profile_load_multiple(array(), array('uid' => $user->uid));
   $profile_id = -1;
-  foreach($found as $id => $found) {
+  foreach ($found as $id => $found) {
     $profile_id = $id;
   }
   if ($profile_id != -1) {
@@ -1407,7 +1441,10 @@ function fundraiser_commerce_fundraiser_refund_process($refund) {
       watchdog('fundraiser', 'Cannot determine the payment gateway for refund @id. Node id of refund form is @nid',
         array('@id' => $refund->did, '@nid' => $donation->nid), WATCHDOG_CRITICAL);
       watchdog('fundraiser_commerce', 'Refund function :function is empty.', array(':function' => $info['refund callback']));
-      $donation->result = array('success' => FALSE, 'message' => 'Cannot determine the payment gateway for this refund.');
+      $donation->result = array(
+        'success' => FALSE,
+        'message' => 'Cannot determine the payment gateway for this refund.',
+      );
       return; // Return the failure.
     }
   }
@@ -1663,7 +1700,7 @@ function _fundraiser_commerce_encrypt($input) {
     $requirements = encrypt_requirements('runtime');
     if (isset($requirements['encrypt_keys']) && $requirements['encrypt_keys']['severity'] == REQUIREMENT_ERROR) {
       drupal_set_message(t('A problem was found with your secure key.') . ' ' .
-        $requirements['encrypt_keys']['value'],  'warning');
+        $requirements['encrypt_keys']['value'], 'warning');
     }
     else {
       return encrypt($input);
@@ -1681,7 +1718,7 @@ function _fundraiser_commerce_decrypt($input) {
     $requirements = encrypt_requirements('runtime');
     if (isset($requirements['encrypt_keys']) && $requirements['encrypt_keys']['severity'] == REQUIREMENT_ERROR) {
       drupal_set_message(t('A problem was found with your secure key.') . ' ' .
-        $requirements['encrypt_keys']['value'],  'warning');
+        $requirements['encrypt_keys']['value'], 'warning');
     }
     else {
       return decrypt($input);
@@ -1691,27 +1728,43 @@ function _fundraiser_commerce_decrypt($input) {
 }
 
 /**
- * Implements hook_fundraiser_get_total_donations_by_nid().
+ * Implements hook_fundraiser_get_total_donations_by_nids().
+ *
+ * General purpose getting total donation for an array of nids.
+ *   Does not take multiple currencies into account.  Assumes all USD.
+ *
+ * @param array $nids
+ *   NIDs.
+ * @param string|bool $start
+ *   Start date.
+ * @param string|bool $end
+ *   End date.
+ *
+ * @return float
+ *   Total amount of donations.
  */
-function fundraiser_commerce_fundraiser_get_total_donations_by_nid($nid, $start = FALSE, $end = FALSE) {
+function fundraiser_commerce_fundraiser_get_total_donations_by_nids($nids, $start = FALSE, $end = FALSE) {
   // Since more than one goal may target this nid with differing date ranges we
   // can't cache this.
 
-  $query = db_select('field_data_commerce_order_total', 'f');
-  $query->join('commerce_order', 'c', 'c.order_id = f.entity_id');
-  $query->join('fundraiser_donation', 'fd', 'fd.did = c.order_id');
-  $query->addExpression('SUM(f.commerce_order_total_amount)', 'total');
-  $query->condition('fd.nid', $nid, '=');
-  $query->condition('c.status', 'payment_received', '=');
+  // This would normally use the commerce_order table and do two JOINs,
+  // but here we use the derived values in fundraiser_donation to speed up
+  // the query.
+  // Having an index on fd.status also helps of course.
+  // (commerce_order doesn't have that index.)
+  $query = db_select('fundraiser_donation', 'fd');
+  $query->addExpression('SUM(fd.amount)', 'total');
+  $query->condition('fd.nid', $nids, 'IN');
+  $query->condition('fd.status', 'payment_received', '=');
   if ($start) {
-    $query->condition('c.created', $start, '>=');
+    $query->condition('fd.created', $start, '>=');
   }
   if ($end) {
-    $query->condition('c.created', $end, '<=');
+    $query->condition('fd.created', $end, '<=');
   }
-  $data = $query->execute()->fetchField();
-  $totals[$nid] = $data * .01; // convert from pennies.
-  return $totals[$nid];
+
+  // This result will already be in dollars.
+  return $query->execute()->fetchField();
 }
 
 /**
@@ -1738,7 +1791,10 @@ class FundraiserCommerceUIPaymentSettings extends RulesDataUI implements RulesDa
   public static function inputForm($name, $info, $settings, RulesPlugin $element) {
     // If the specified payment method exists...
     if (!empty($info['payment_method']) && $payment_method = commerce_payment_method_load($info['payment_method'])) {
-      $form[$name]['method_id'] = array('#type' => 'value', '#value' => $info['payment_method']);
+      $form[$name]['method_id'] = array(
+        '#type' => 'value',
+        '#value' => $info['payment_method'],
+      );
 
       // If the payment method has a settings callback...
       if ($callback = commerce_payment_method_callback($payment_method, 'settings_form')) {
@@ -1753,10 +1809,10 @@ class FundraiserCommerceUIPaymentSettings extends RulesDataUI implements RulesDa
       $gateway_info = module_invoke($info['payment_method'], 'fundraiser_commerce_fundraiser_gateway_info');
       if (!empty($gateway_info['allow_recurring']) && !empty($gateway_info['offsite_recurring'])) {
         $form[$name]['settings']['offsite_recurring'] = array(
-         '#type' => 'checkbox',
-         '#title' => t('Offsite recurring donations'),
-         '#description' => t('Handle recurring donations offsite at the gateway.'),
-         '#default_value' => isset($settings['payment_method']['settings']['offsite_recurring']) ? $settings['payment_method']['settings']['offsite_recurring'] : FALSE,
+          '#type' => 'checkbox',
+          '#title' => t('Offsite recurring donations'),
+          '#description' => t('Handle recurring donations offsite at the gateway.'),
+          '#default_value' => isset($settings['payment_method']['settings']['offsite_recurring']) ? $settings['payment_method']['settings']['offsite_recurring'] : FALSE,
         );
       }
     }

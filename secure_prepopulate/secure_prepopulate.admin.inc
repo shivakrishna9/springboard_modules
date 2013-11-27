@@ -84,14 +84,12 @@ function secure_prepopulate_token_generator($form, $form_state) {
     '#type' => 'textfield',
     '#title' => t('Last name'),
     '#size' => 20,
-
   );
   // email
   $form['secure_prepopulate']['email'] = array(
     '#type' => 'textfield',
     '#title' => t('Email'),
     '#size' => 50,
-
   );
   // address
   $form['secure_prepopulate']['address'] = array(
@@ -149,10 +147,10 @@ function secure_prepopulate_token_generator($form, $form_state) {
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
     );
-    $form['dynamic_gift_strings']['amounts']= array(
+    $form['dynamic_gift_strings']['amounts'] = array(
       '#title' => t('Ask amounts'),
       '#type' => 'textfield',
-      '#description' =>t('Enter the ask amounts you want to show here. Values should be comma-separated. Example: 27,47,97'),
+      '#description' => t('Enter the ask amounts you want to show here. Values should be comma-separated. Example: 27,47,97'),
       '#size' => 50,
     );
     $form['dynamic_gift_strings']['default_amount'] = array(
@@ -173,7 +171,7 @@ function secure_prepopulate_token_generator($form, $form_state) {
 
 function secure_prepopulate_token_generator_submit($form, $form_state) {
 
-  if ($af =secure_prepopulate_generate_af_string($form_state['values'])) {
+  if ($af = secure_prepopulate_generate_af_string($form_state['values'])) {
     drupal_set_message('af token generated:');
     drupal_set_message($af);
   }

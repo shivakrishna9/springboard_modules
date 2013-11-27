@@ -371,19 +371,43 @@ class SalesforceSyncSyncTestCase extends SalesforceSyncTestCase {
 
     // Compare against the original records.
     $encountered_rules = array(
-      'always' => array('pass' => 0, 'fail' => 0),
+      'always' => array(
+        'pass' => 0,
+        'fail' => 0,
+      ),
       'blank' => array(
-        'is_blank' => array('pass' => 0, 'fail' => 0),
-        'not_blank' => array('pass' => 0, 'fail' => 0),
+        'is_blank' => array(
+          'pass' => 0,
+          'fail' => 0,
+        ),
+        'not_blank' => array(
+          'pass' => 0,
+          'fail' => 0,
+        ),
       ),
       'append' => array(
-        'is_empty' => array('pass' => 0, 'fail' => 0),
-        'not_empty' => array('pass' => 0, 'fail' => 0),
+        'is_empty' => array(
+          'pass' => 0,
+          'fail' => 0,
+        ),
+        'not_empty' => array(
+          'pass' => 0,
+          'fail' => 0,
+        ),
       ),
-      'never' => array('pass' => 0, 'fail' => 0),
+      'never' => array(
+        'pass' => 0,
+        'fail' => 0,
+      ),
       'no_rule' => array(
-        'is_dedupe' => array('pass' => 0, 'fail' => 0),
-        'not_dedupe' => array('pass' => 0, 'fail' => 0),
+        'is_dedupe' => array(
+          'pass' => 0,
+          'fail' => 0,
+        ),
+        'not_dedupe' => array(
+          'pass' => 0,
+          'fail' => 0,
+        ),
       ),
     );
     $compared_item_count = 0;
@@ -602,10 +626,16 @@ class SalesforceSyncSyncTestCase extends SalesforceSyncTestCase {
       $object_type = isset($batch['object_type']) ? $batch['object_type'] : NULL;
       $operation = $batch['operation'];
       if (!isset($encountered_ops[$operation])) {
-        $encountered_ops[$operation] = array('pass' => 0, 'fail' => 0);
+        $encountered_ops[$operation] = array(
+          'pass' => 0,
+          'fail' => 0,
+        );
       }
       if (!isset($encountered_objects[$object_type]) && !is_null($object_type)) {
-        $encountered_objects[$object_type] = array('pass' => 0, 'fail' => 0);
+        $encountered_objects[$object_type] = array(
+          'pass' => 0,
+          'fail' => 0,
+        );
       }
 
       // Before sending the batch out to processing, map all of the

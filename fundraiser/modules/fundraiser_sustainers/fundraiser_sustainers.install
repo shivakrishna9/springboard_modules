@@ -26,7 +26,7 @@ function fundraiser_sustainers_requirements($phase) {
       'title' => t('Fundraiser sustainer key value'),
       'description' => t('The key file\'s value (' . $key_value . ') matches the current server\'s host name ' . $_SERVER['HTTP_HOST'] . '.'),
       'value' => t('Yes'),
-      'severity' =>  $key_match_for_environment ? REQUIREMENT_OK : REQUIREMENT_WARNING,
+      'severity' => $key_match_for_environment ? REQUIREMENT_OK : REQUIREMENT_WARNING,
       'weight' => '-999',
     );
   }
@@ -145,7 +145,6 @@ function fundraiser_sustainers_schema() {
       'gateway_master' => array('gateway_resp', 'master_did'),
       'lock_next' => array('lock_id', 'next_charge'),
       'master_next_charge' => array('master_did', 'next_charge'),
-
     ),
   );
 
@@ -211,7 +210,7 @@ function fundraiser_sustainers_install() {
       '(master_did, did, next_charge, sf_opportunity_id, sf_recurring_id, sf_stagename, sf_sync_status, ' .
         'gateway_resp, attempts, cancellation_reason) ' .
       'SELECT master_order_id, order_id, next_charge, sf_opportunity_id, sf_recurring_id, sf_stagename, sf_sync_status, ' .
-        'gateway_resp, attempts, cancellation_reason '.
+        'gateway_resp, attempts, cancellation_reason ' .
       'FROM {fundraiser_recurring}');
 
     // The table doesn't go away yet, because we may still need it for fundraiser.

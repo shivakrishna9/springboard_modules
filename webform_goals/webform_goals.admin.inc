@@ -1,4 +1,4 @@
-i<?php
+<?php
 
 /**
  * @file Admin screens.
@@ -24,8 +24,10 @@ function webform_goals_admin_list($form, $form_state = array()) {
     $row[] = $goal['name'];
     $row[] = $selected_context['name'];
     $row[] = $selected_metric['name'];
-    $row[] = $goal['target_value']; //TODO: for single context add link to parent node or node title
-    $row[] = $data['count']; // TODO amount: circle back once metrics tracking code is in play.
+    // @todo for single context add link to parent node or node title
+    $row[] = $goal['target_value'];
+    // @todo amount: circle back once metrics tracking code is in play.
+    $row[] = $data['count'];
     $row[] = $data['percent'] . '%';
     $row[] = webform_goals_goal_status($goal);
     $row[] = _webform_goals_actions($goal);
@@ -91,7 +93,8 @@ function _webform_goals_actions($goal) {
   $links[] = l(t('Embed code'), 'webform_goals/' . $goal['gid'] . '/embed', $options);
 
   foreach ($links as $link) {
-    $output .= $link . '&nbsp;&nbsp;'; // lame
+    // lame
+    $output .= $link . '&nbsp;&nbsp;';
   }
   return $output;
 }
@@ -114,5 +117,26 @@ function webform_goals_admin_settings($form, $form_state) {
     '#description' => t('Calculating goal progress can be system intensive for large group goals. If goal progress is not updating in a reasonable timeframe try lowering this number.'),
     '#default_value' => variable_get('webform_goals_widget_update_limit', '50'),
   );
+
+  $form['loader_file'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Loader file'),
+  );
+
+  $form['loader_file']['rebuild_loader_file'] = array(
+    '#type' => 'submit',
+    '#value' => t('Rebuild loader file'),
+    '#submit' => array('webform_goals_rebuild_loader_file_submit'),
+  );
+
   return system_settings_form($form);
+}
+
+function webform_goals_rebuild_loader_file_submit($form, &$form_state) {
+  if (webform_goals_save_loader_file()) {
+    drupal_set_message('The loader file has been successfully created.');
+  }
+  else {
+    drupal_set_message('Unable to create the loader file.');
+  }
 }

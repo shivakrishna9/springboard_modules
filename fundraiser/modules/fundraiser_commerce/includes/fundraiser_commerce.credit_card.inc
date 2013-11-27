@@ -63,6 +63,14 @@ function _fundraiser_commerce_credit_card_form() {
     '#fundraiser_commerce_required' => TRUE,
     '#salesforce_mappable' => FALSE,
   );
+
+  // Hidden field to be filled in during processing.
+  $form['card_type'] = array(
+    '#type' => 'hidden',
+    '#title' => 'Card type',
+    '#value' => FALSE,
+  );
+
   return $form;
 }
 

@@ -182,7 +182,7 @@ class CapizConnect {
 
     // If requesting a second (or third or fourth or...) batch of users, start at
     // some point in the result set.
-    $query_params['start'] = (int)$start;
+    $query_params['start'] = (int) $start;
     // If a batch size is given, only get that many items
     if ($batch_size > 0) {
       $query_params['end'] = $query_params['start'] + $batch_size;
@@ -405,7 +405,7 @@ class CapizConnect {
         $message .= " Failed to create: %create_fail.";
         $severity = WATCHDOG_ERROR;
       }
-      if ($save_counts[self::$STAT_UPDATE_FAIL]> 0) {
+      if ($save_counts[self::$STAT_UPDATE_FAIL] > 0) {
         $message .= " Failed to update: %update_fail.";
         $severity = WATCHDOG_ERROR;
       }
@@ -441,7 +441,7 @@ class CapizConnect {
     // Update the settings
     db_update('capwiz_connect_accounts')
       ->fields(array('user_sync_since' => $time_set, 'user_sync_offset' => $offset_set))
-      ->condition ('id', $this->account_details->id)
+      ->condition('id', $this->account_details->id)
       ->execute();
   }
 
@@ -477,9 +477,9 @@ class CapizConnect {
       }
       else {
         $edit = array(
-          'name'    => $email,
-          'pass'    => user_password(),
-          'mail'    => $email
+          'name' => $email,
+          'pass' => user_password(),
+          'mail' => $email,
         );
 
         $drupal_account = user_save('', $edit);
@@ -636,7 +636,7 @@ class CapizConnect {
 
       // Save the value
       // If it's a profile field
-      if ((int)$target_field > 0) {
+      if ((int) $target_field > 0) {
         // Always overwrite, or overwrite when blank
         if (empty($business_rule) || $business_rule == 'always' || ($business_rule == 'blank' && empty($existing_profile_values[$target_field]))) {
           db_query('INSERT INTO {profile_values} (uid, fid, value) VALUES (%d, %d, "%s") ON DUPLICATE KEY UPDATE value = "%s"', $drupal_account->uid, $target_field, $value, $value);
@@ -688,7 +688,7 @@ class CapizConnect {
 
     // If requesting a second (or third or fourth or...) batch of actions,
     // start at some point in the result set.
-    $query_params['start'] = (int)$start;
+    $query_params['start'] = (int) $start;
     // If a batch size is given, only get that many items
     if ($batch_size > 0) {
       $query_params['end'] = $query_params['start'] + $batch_size;
@@ -763,7 +763,7 @@ class CapizConnect {
     // Query for actions that have been updated since the last time
     $sync_since = $this->account_details->action_sync_since;
     // Add one to the offset to keep from importing the last action
-    $start_offset = $this->account_details->action_sync_offset+1;
+    $start_offset = $this->account_details->action_sync_offset + 1;
     $batch_size = variable_get('capwiz_connect_action_batch_size', 100);
     $actions = $this->queryActions($sync_since, $start_offset, $batch_size);
 
@@ -837,7 +837,7 @@ class CapizConnect {
     // Update the settings
     db_update('capwiz_connect_accounts')
       ->fields(array('action_sync_since' => $time_set, 'action_sync_offset' => $offset_set))
-      ->condition ('id', $this->account_details->id)
+      ->condition('id', $this->account_details->id)
       ->execute();
   }
 

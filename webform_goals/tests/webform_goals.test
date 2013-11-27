@@ -3,15 +3,15 @@
  * @file
  * Test interaction between user accounts and webform fields.
  */
-class WebformUserIntegratedTestSetup extends DrupalWebTestCase {
+class WebformGoalsIntegratedTestSetup extends DrupalWebTestCase {
+
+  protected $users;
 
   /**
    * Implements setUp().
    */
-  function setUp() {
+  public function setUp() {
     parent::setUp('webform_goals');
-
-
 
     // Create user accounts.
 
@@ -32,10 +32,6 @@ class WebformUserIntegratedTestSetup extends DrupalWebTestCase {
       'edit all webform submissions',
       'delete all webform submissions',
       'administer users',
-      'administer user map',
-      'alter webform components',
-      'configure webform settings',
-      'configure webform emails',
     );
 
     foreach ($permissions as $user_key => $role_permissions) {
@@ -56,12 +52,12 @@ class WebformGoalsIntegratedTestCase extends WebformGoalsIntegratedTestSetup {
     return array(
       'name' => t('Webform Goals'),
       'description' => t('Checks goals UI & Display.'),
-      'group' => t('Webform User'),
+      'group' => t('Webform Goals'),
     );
   }
 
   // Confirm UI elements on webform node create form.
-  function testWebformGoalsUI() {
+  public function testWebformGoalsUI() {
     // Log in our editor.
     $this->drupalLogin($this->users['editor']);
     $edit = array(
@@ -97,12 +93,9 @@ class WebformGoalsUnitTestCase extends WebformGoalsIntegratedTestSetup {
   /**
    * Unit test helper functions.
    */
-  function testWebformGoalsHelperFunctions() {
+  public function testWebformGoalsHelperFunctions() {
     // TODO: test goal progress calculations
     // TODO: test token replacement
   }
 
 }
-
-
-

@@ -1,9 +1,9 @@
 <?php
 
 /**
-* @file
-* Callback functions for JSON input/output by the Capwiz Connect JS module
-*/
+ * @file
+ * Callback functions for JSON input/output by the Capwiz Connect JS module
+ */
 
 /**
  * Callback for the decryption of the form values

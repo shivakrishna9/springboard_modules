@@ -114,10 +114,10 @@ function _fundraiser_form_payment_method_settings_validate($form, &$form_state) 
     // Check that the marked payment type actually have selected gateways to match.
     foreach ($enabled_methods as $method => $enabled_method) {
       if (empty($enabled_method['id'])) {
-        form_set_error('fundraiser_payment_method_config_defaults][' . $method .'][id', t('All enabled payment methods must select a gateway.'));
+        form_set_error('fundraiser_payment_method_config_defaults][' . $method . '][id', t('All enabled payment methods must select a gateway.'));
       }
       if (count($enabled_methods) > 1 && empty($enabled_method['label'])) {
-        form_set_error('fundraiser_payment_method_config_defaults][' . $method .'][label', t('Please enter a label for the %method gateway.', array('%method' => $method)));
+        form_set_error('fundraiser_payment_method_config_defaults][' . $method . '][label', t('Please enter a label for the %method gateway.', array('%method' => $method)));
       }
     }
     // Check that a default has been set.

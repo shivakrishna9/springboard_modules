@@ -112,7 +112,6 @@ function _page_wrappers_create_fields() {
   }
 
   $fields = array(
-
     // css filefield
     'css_filefield' => array(
       'translatable' => '1',
@@ -164,7 +163,6 @@ function _page_wrappers_create_fields() {
         'bundle' => 'page_wrapper',
       ),
     ),
-
     // javascript filefield
     'js_filefield' => array(
       'field_name' => 'page_wrappers_js',
@@ -210,7 +208,6 @@ function _page_wrappers_create_fields() {
         'bundle' => 'page_wrapper',
       ),
     ),
-
     // html template
     'html_template' => array(
       'field_name' => 'page_wrappers_html_template',
@@ -259,10 +256,10 @@ function _page_wrappers_delete_fields() {
 }
 
 function _page_wrappers_delete_nodes() {
- require_once('page_wrappers.module');
- $nids = page_wrappers_get_nodes();
- node_delete_multiple($nids);
- drupal_set_message(t('Page Wrappers have been deleted.'));
+  require_once 'page_wrappers.module';
+  $nids = page_wrappers_get_nodes();
+  node_delete_multiple($nids);
+  drupal_set_message(t('Page Wrappers have been deleted.'));
 }
 
 /**

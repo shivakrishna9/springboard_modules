@@ -1,8 +1,8 @@
 <?php
 
 $plugin = array(
-  'name' => 'Twitter',
-  'title' => t('Facebook'),
+  'name' => 'twitter',
+  'title' => t('Twitter'),
   'settings' => 'twitter_settings',
   'admin_settings' => 'twitter_admin_settings',
   'process' => 'twitter_process_settings',
@@ -24,10 +24,6 @@ function twitter_token_info() {
     'name' => t('Twitter tweet message'),
     'description' => t('Message content for Twitter tweet'),
   );
-  $twitter_tokens['twitter_share_url'] = array(
-    'name' => t('Twitter share URL'),
-    'description' => t('Short URL containing share tracking values for Twitter.'),
-  );
   return $twitter_tokens;
 }
 
@@ -36,7 +32,6 @@ function twitter_token_replace($tokens, &$replacements, $settings, $node = FALSE
     switch ($key) {
       case 'twitter_share_link':
         $vars['service'] = 'twitter';
-        $vars['url'] = sb_social_short_url('twitter', $settings, $submission_id);
         $vars['extra'] = '';
 
         if ($extra && function_exists($extra)) {
@@ -47,9 +42,6 @@ function twitter_token_replace($tokens, &$replacements, $settings, $node = FALSE
         break;
       case 'twitter_message':
         $replacements[$token] =  !empty($settings['data']['twitter']['message']) ? _sb_social_replace_tokens($settings['data']['twitter']['message'], $node, $submission_id) : '';
-        break;
-      case 'twitter_share_url':
-        $replacements[$token] = sb_social_short_url('facebook', $settings, $submission_id);
         break;
     }
   }
@@ -78,7 +70,7 @@ function twitter_settings(&$form, $enabled_services = array(), $settings = array
     '#description' => t('Custom twitter message text.'),
     '#default_value' => isset($settings['message']) ? $settings['message'] : '',
   );
-  $form['twitter_settings']['tokens']= array(
+  $form['twitter_settings']['tokens'] = array(
     '#type' => 'fieldset',
     '#title' => t('Available Tokens'),
     '#collapsible' => TRUE,
@@ -98,7 +90,7 @@ function twitter_admin_settings(&$form) {
     '#states' => array(
       // Hide the settings when facebook checkbox is not selected.
       'invisible' => array(
-       ':input[name="springboard_social_services[twitter]"]' => array('checked' => FALSE),
+        ':input[name="springboard_social_services[twitter]"]' => array('checked' => FALSE),
       ),
     ),
   );

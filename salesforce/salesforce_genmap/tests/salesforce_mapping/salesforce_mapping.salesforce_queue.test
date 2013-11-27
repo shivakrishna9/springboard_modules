@@ -116,7 +116,10 @@ class SalesforceMappingAlterSalesforceQueueTestCase extends SalesforceMappingAlt
 
     // Enable ability to set a DELETE sync option and set option on map.
     $this->enableDeleteSync('salesforce_mapping');
-    $edit = array('sync_triggers[' . SALESFORCE_MAPPING_SYNC_DRUPAL_DELETE . ']' => TRUE, 'sync_triggers[32]' => TRUE);
+    $edit = array(
+      'sync_triggers[' . SALESFORCE_MAPPING_SYNC_DRUPAL_DELETE . ']' => TRUE,
+      'sync_triggers[32]' => TRUE,
+    );
     $this->drupalPost($this->manageMapPrefix . 'foobar', $edit, 'Save mapping');
     entity_get_controller('salesforce_mapping')->resetCache();
 
@@ -339,7 +342,7 @@ class SalesforceMappingAlterSalesforceQueueTestCase extends SalesforceMappingAlt
     $body = '';
     foreach (range(1, 500) as $num) {
       $body .= $this->randomName(rand(2, 12));
-      $body .= rand(1, 10) > 8 ? (rand(1,15) < 14 ? '. ' : ".\n\n") : ' ';
+      $body .= rand(1, 10) > 8 ? (rand(1, 15) < 14 ? '. ' : ".\n\n") : ' ';
     }
     $node_config = array(
       'type' => 'testtype',
@@ -353,50 +356,50 @@ class SalesforceMappingAlterSalesforceQueueTestCase extends SalesforceMappingAlt
       ),
       'field_checkbox' => array(
         LANGUAGE_NONE => array(
-          array('value' => TRUE)
-        )
+          array('value' => TRUE),
+        ),
       ),
       'field_decimal' => array(
         LANGUAGE_NONE => array(
-          array('value' => 123.4)
-        )
+          array('value' => 123.4),
+        ),
       ),
       'field_float' => array(
         LANGUAGE_NONE => array(
-          array('value' => 456)
-        )
+          array('value' => 456),
+        ),
       ),
       'field_integer' => array(
         LANGUAGE_NONE => array(
-          array('value' => 789)
-        )
+          array('value' => 789),
+        ),
       ),
       'field_list_float' => array(
         LANGUAGE_NONE => array(
-          array('value' => 4)
-        )
+          array('value' => 4),
+        ),
       ),
       'field_list_integer' => array(
         LANGUAGE_NONE => array(
-          array('value' => 5)
-        )
+          array('value' => 5),
+        ),
       ),
       'field_list_text' => array(
         LANGUAGE_NONE => array(
-          array('value' => 'bar')
-        )
+          array('value' => 'bar'),
+        ),
       ),
       // Has 'safe_value'
       'field_long_text' => array(
         LANGUAGE_NONE => array(
-          array('value' => $this->randomString())
-        )
+          array('value' => $this->randomString()),
+        ),
       ),
       // Has 'safe_value'
       'field_text_field' => array(
         LANGUAGE_NONE => array(
-          array('value' => $this->randomString())
-        )
+          array('value' => $this->randomString()),
+        ),
       ),
     );
     $node = $this->drupalCreateNode($node_config);

@@ -7,7 +7,7 @@ function page_wrappers_theme($existing, $type, $theme, $path) {
   return array(
     'page_wrappers_node_assignments' => array(
       'render element' => 'form',
-    )
+    ),
   );
 }
 
@@ -57,7 +57,7 @@ function page_wrappers_theme_registry_alter(&$theme_registry) {
 
 /**
  * Helper function for re-ordering arrays (needed by theme_registry_alter)
-*/
+ */
 function _page_wrappers_insert_after_first_element(&$a, $element) {
   if (is_array($a)) {
     $first_element = array_shift($a);
@@ -77,6 +77,22 @@ function page_wrappers_preprocess_page(&$vars) {
   $wrapper = NULL;
   if ($node = _page_wrappers_page_node()) {
     $wrapper = _page_wrappers_node_assigned_wrapper($node);
+  }
+
+  // Allow context to optionally override this
+  if (module_exists('context') && $node = _page_wrappers_context_page_node()) {
+    $contexts = context_active_contexts();
+    foreach ($contexts as $context) {
+      // Check if page_wrapper is a reaction for this context
+      if (isset($context->reactions['page_wrappers'])) {
+        $wrapper = array(
+          'nid' => $node->nid,
+          'wrapper_nid' => $context->reactions['page_wrappers']['page_wrapper'],
+          'ruleset' => 1,
+          'weight' => -20,
+        );
+      }
+    }
   }
 
   if (!empty($wrapper)) {
@@ -186,7 +202,7 @@ function page_wrappers_form(&$node, &$form_state) {
  */
 function page_wrappers_node_view($node, $view_mode) {
   if (($view_mode == 'full') && ($node->type == 'page_wrapper') && node_is_page($node)) {
-     $node->content = array('preview' => drupal_get_form('_page_wrapper_preview_form'));
+    $node->content = array('preview' => drupal_get_form('_page_wrapper_preview_form'));
   }
   return $node;
 }
@@ -298,7 +314,7 @@ function page_wrappers_node_load($nodes, $types) {
   $result = db_query('SELECT * FROM {node_page_wrappers} WHERE nid IN(:nids) order by weight ASC', array(':nids' => $nids))->fetchAll(PDO::FETCH_ASSOC);
   if (!empty($result)) {
     foreach ($result as $record) {
-      $nodes[ $record['nid'] ]->page_wrappers[] = $record;
+      $nodes[$record['nid']]->page_wrappers[] = $record;
     }
   }
 }
@@ -450,21 +466,21 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
  */
 function page_wrapper_add_assignment_submit($form, &$form_state) {
   // Remove any empty configurations
-  foreach ($form_state['values'][ $form['#page_wrapper_config_parent'] ] as $key => $config) {
+  foreach ($form_state['values'][$form['#page_wrapper_config_parent']] as $key => $config) {
     if (empty($config['wrapper_nid'])) {
-      unset($form_state['values'][ $form['#page_wrapper_config_parent'] ][$key]);
+      unset($form_state['values'][$form['#page_wrapper_config_parent']][$key]);
     }
   }
 
   // Set the amount of configured wrappers
   if ($form_state['values']['page_wrappers_more']) {
-    $form_state['wrappers_count'] = count($form_state['values'][ $form['#page_wrapper_config_parent'] ]) + 1;
+    $form_state['wrappers_count'] = count($form_state['values'][$form['#page_wrapper_config_parent']]) + 1;
   }
 
   // Renumber the choices. This invalidates the corresponding key/value
   // associations in $form_state['input'], so clear that out
-  $form_state['node']->page_wrappers = array_values($form_state['values'][ $form['#page_wrapper_config_parent'] ]);
-  unset($form_state['input'][ $form['#page_wrapper_config_parent'] ]);
+  $form_state['node']->page_wrappers = array_values($form_state['values'][$form['#page_wrapper_config_parent']]);
+  unset($form_state['input'][$form['#page_wrapper_config_parent']]);
   $form_state['rebuild'] = TRUE;
 }
 
@@ -481,7 +497,7 @@ function page_wrappers_og_ajax_callback($form, $form_state) {
  * @see page_wrapper_add_assignment_submit()
  */
 function _page_wrappers_add_js($form, $form_state) {
-  return $form['page_wrappers_settings'][ $form['#page_wrapper_config_parent'] ];
+  return $form['page_wrappers_settings'][$form['#page_wrapper_config_parent']];
 }
 
 /**
@@ -1114,3 +1130,11 @@ function _page_wrappers_list_wrappers_by_group($nid) {
   }
   return count($wrappers) ? $wrappers : FALSE;
 }
+
+/**
+ * Include the context code if context is enabled
+ */
+if (module_exists('context')) {
+  include_once 'page_wrappers.context.inc';
+}
+

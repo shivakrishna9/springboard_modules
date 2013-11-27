@@ -86,7 +86,7 @@ function webform_addtoall_component_clone($nids, $form_values) {
     $source_pid_form_key =  $source_node->webform['components'][$source_pid]['form_key'];
   }
   else {
-   $source_pid_form_key = FALSE;
+    $source_pid_form_key = FALSE;
   }
   $source_weight = $form_values['weight'];
   foreach ($nids as $nid) {

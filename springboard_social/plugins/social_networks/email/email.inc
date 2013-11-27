@@ -30,10 +30,6 @@ function email_token_info() {
     'name' => t('Email message'),
     'description' => t('Share email message'),
   );
-  $email_tokens['email_share_url'] = array(
-    'name' => t('Email share URL'),
-    'description' => t('Short URL containing share tracking values for Email.'),
-  );
 
 
   return $email_tokens;
@@ -44,7 +40,6 @@ function email_token_replace($tokens, &$replacements, $settings, $node = FALSE, 
     switch ($key) {
       case 'email_share_link':
         $vars['service'] = 'email';
-        $vars['url'] = sb_social_short_url('twitter', $settings, $submission_id);
         $vars['extra'] = '';
 
         if ($extra && function_exists($extra)) {
@@ -59,9 +54,6 @@ function email_token_replace($tokens, &$replacements, $settings, $node = FALSE, 
       case 'email_message':
         $replacements[$token] = !empty($settings['data']['email']['message']) ? _sb_social_replace_tokens($settings['data']['email']['message'], $node, $submission_id) : '';
         break;
-      case 'email_share_url':
-        $replacements[$token] = sb_social_short_url('email', $settings, $submission_id);
-        break;
     }
   }
 }
@@ -69,7 +61,7 @@ function email_token_replace($tokens, &$replacements, $settings, $node = FALSE, 
 function email_defaults() {
   $settings = array(
     'subject' => variable_get('springboard_social_email_subject', '%title'),
-    'message' => variable_get('springboard_social_email_message'. ''),
+    'message' => variable_get('springboard_social_email_message' . ''),
   );
   return $settings;
 }
@@ -91,7 +83,7 @@ function email_settings(&$form, $enabled_services = array(), $settings = array()
     '#title' => t('Email message'),
     '#default_value' => isset($settings['message']) ? $settings['message'] : '',
   );
-  $form['email_settings']['tokens']= array(
+  $form['email_settings']['tokens'] = array(
     '#type' => 'fieldset',
     '#title' => t('Available Tokens'),
     '#collapsible' => TRUE,
@@ -111,7 +103,7 @@ function email_admin_settings(&$form) {
     '#states' => array(
       // Hide the settings when facebook checkbox is not selected.
       'invisible' => array(
-       ':input[name="springboard_social_services[email]"]' => array('checked' => FALSE),
+        ':input[name="springboard_social_services[email]"]' => array('checked' => FALSE),
       ),
     ),
   );

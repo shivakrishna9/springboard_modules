@@ -38,7 +38,7 @@ function webform_confirmations_install() {
     // Copy all data over from the old tables to the new table.
     db_query('REPLACE INTO {webform_confirmations} ' .
       '(nid, confirmation_page_title) ' .
-      'SELECT nid, confirmation_page_title '.
+      'SELECT nid, confirmation_page_title ' .
       'FROM {webform_user}');
     // If we're done, we can drop the old fields.
     db_drop_field('webform_user', 'confirmation_page_title');
@@ -48,14 +48,14 @@ function webform_confirmations_install() {
     // Copy all data over from the old tables to the new table.
     db_query('REPLACE INTO {webform_confirmations} ' .
       '(nid, confirmation_page_title) ' .
-      'SELECT nid, confirmation_page_title '.
+      'SELECT nid, confirmation_page_title ' .
       'FROM {fundraiser}');
     // If we're done, we can drop the old fields.
     db_drop_field('fundraiser', 'confirmation_page_title');
     // Move additional settings over to the proper configuration tracking in webform proper.
     db_query('REPLACE INTO {webform} ' .
       '(nid, confirmation, confirmation_format, redirect_url) ' .
-      'SELECT nid, confirmation_page_body, confirmation_page_format, redirect_url '.
+      'SELECT nid, confirmation_page_body, confirmation_page_format, redirect_url ' .
       'FROM {fundraiser}');
     db_drop_field('fundraiser', 'confirmation_page_body');
     db_drop_field('fundraiser', 'confirmation_page_format');

@@ -38,14 +38,11 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
       '#header' => array(
         'drupal_field' => t('Drupal field'),
         'salesforce_field' => t('Salesforce field'),
-
         // Column 'key' renamed to 'Dedupe'.
         'key' => t('Dedupe'),
-
         // Add columns for field-by-field sync rules.
         'drupal_sf' => t('Overwrite rule when exporting to Salesforce'),
         'sf_drupal' => t('Overwrite rule when importing into Drupal'),
-
         // Column 'direction' removed.
         // Column 'delete_field_maping' removed.
       ),
@@ -464,6 +461,14 @@ function salesforce_mapping_send_entity_to_queue($entity, $entity_type, $op) {
     // prevent any sort of deletion of records but rather to prevent the
     // deletion of records on a triggered event.
     return FALSE;
+  }
+
+  // Allow modules to control whether this entity is queued
+  foreach (module_implements('salesforce_mapping_confirm_entity_for_queue') as $module) {
+    $function = $module . '_salesforce_mapping_confirm_entity_for_queue';
+    if ($function($entity, $entity_type, $op) === FALSE) {
+      return FALSE;
+    }
   }
 
   // Information specific to this entity.
@@ -907,8 +912,8 @@ function _salesforce_mapping_datatype_can_sync($entity_type, $drupal_field, $sal
   // there is not a rule or when the ruleset is empty.
   if (
        !isset($verify_array[$direction][$salesforce_datatype])
-       || empty($verify_array[$direction][$salesforce_datatype])
-       || in_array($drupal_datatype, $verify_array[$direction][$salesforce_datatype])
+        || empty($verify_array[$direction][$salesforce_datatype])
+        || in_array($drupal_datatype, $verify_array[$direction][$salesforce_datatype])
      ) {
     // These two datatypes can sync.  Now see if the the sync rule is compatible
     // with this set.

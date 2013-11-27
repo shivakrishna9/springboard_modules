@@ -28,7 +28,7 @@ class SpringboardSocialFunctionalTest extends FundraiserSetup {
   /**
    * Implements setUp().
    */
-  function setUp($addtional_modules = array()) {
+  public function setUp($addtional_modules = array()) {
     // hijack mail system
     variable_set('mail_system', array('default-system' => 'TestingMailSystem'));
 
@@ -40,13 +40,13 @@ class SpringboardSocialFunctionalTest extends FundraiserSetup {
       'market_source',
       'clone',
       'webform',
-      //'webform_confirmations',
+      'webform_confirmations',
     );
     parent::setUp($additional_modules);
   }
 
-    // tests
-  function testSpringboardSocial() {
+  // tests
+  public function testSpringboardSocial() {
     $permissions = array(
       'administer site configuration',
       'administer fundraiser',
@@ -57,6 +57,7 @@ class SpringboardSocialFunctionalTest extends FundraiserSetup {
       'create donation_form content',
       'edit any donation_form content',
       'edit own donation_form content',
+      'configure webform settings',
       'configure webform emails',
       'administer springboard social',
       'edit any share content', // need to create separate unprivileged user and user with "edit own"
@@ -141,13 +142,12 @@ class SpringboardSocialFunctionalTest extends FundraiserSetup {
       'confirmation[value]' => $confirmation,
     );
 
-    // BUG: test user cannot access webform configuration screen despite having update access to the node in question.
     // save confirmation page settings
-    // $path = 'node/' . $node->nid . '/webform/configure';
-    // $this->drupalPost($path, $settings, t('Save configuration'));
+    $path = 'node/' . $node->nid . '/webform/configure';
+    $this->drupalPost($path, $settings, t('Save configuration'));
 
     // confirm token replacements
-     $donation_settings = array(
+    $donation_settings = array(
       'submitted[donor_information][first_name]' => 'Keyser',
       'submitted[donor_information][last_name]' => 'Soze',
       'submitted[donor_information][mail]' => 'example@example.com',
@@ -157,9 +157,9 @@ class SpringboardSocialFunctionalTest extends FundraiserSetup {
     );
     $this->submitDonation($node->nid, $donation_settings);
 
-      // node tokens
+    // node tokens
 
-      // token module tokens
+    // token module tokens
 
     // confirm share urls contain expected values for internal and generic MS fields
 
