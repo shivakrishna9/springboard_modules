@@ -187,11 +187,6 @@ function fundraiser_sustainers_schema() {
         'not null' => FALSE,
         'default' => '0',
       ),
-      'data' => array(
-        'description' => 'Serilized array of extra information.',
-        'type' => 'text',
-        'not null' => FALSE,
-      ),
     ),
     'primary key' => array('lid'),
   );
@@ -431,11 +426,6 @@ function fundraiser_sustainers_update_7006(&$sandbox) {
         'length' => '55',
         'not null' => FALSE,
         'default' => '0',
-      ),
-      'data' => array(
-        'description' => 'Serilized array of extra information.',
-        'type' => 'text',
-        'not null' => FALSE,
       ),
     ),
     'primary key' => array('lid'),
