@@ -476,7 +476,12 @@ function commerce_sage_payments_cc_vault_cardonfile_charge($payment_method, $car
  * Load the SOAP client and WSDL definitions.
  */
 function _commerce_sage_payments_get_sage_payments_client() {
-  $client = new SoapClient('https://gateway.sagepayments.net/web_services/wsvtextensions/transaction_processing.asmx?WSDL');
+ // $client = new SoapClient('https://gateway.sagepayments.net/web_services/wsvtextensions/transaction_processing.asmx?WSDL');
+  $client = new SoapClient(drupal_get_path('module', 'commerce_sage_payments') . '/libraries/transaction_processing.wsdl.xml',
+                           array('location' => 'https://gateway.sagepayments.net/web_services/wsvtextensions/transaction_processing.asmx',
+                                 'uri'      => 'https://gateway.sagepayments.net/web_services/wsvtextensions/'
+                                )
+                          );
   return $client;
 }
 
@@ -484,7 +489,12 @@ function _commerce_sage_payments_get_sage_payments_client() {
  * Load the SOAP client and WSDL definitions for the Sage Payments Vault admin.
  */
 function _commerce_sage_payments_get_sage_payments_vault_management_client() {
-  $client = new SoapClient('https://gateway.sagepayments.net/web_services/wsVault/wsVault.asmx?WSDL');
+//  $client = new SoapClient('https://gateway.sagepayments.net/web_services/wsVault/wsVault.asmx?WSDL');
+  $client = new SoapClient(drupal_get_path('module', 'commerce_sage_payments') . '/libraries/wsVault.wsdl.xml',
+                           array('location' => 'https://gateway.sagepayments.net/web_services/wsVault/wsVault.asmx',
+                                 'uri'      => 'https://gateway.sagepayments.net/web_services/wsVault/'
+                                )
+                          );
   return $client;
 }
 
@@ -492,7 +502,12 @@ function _commerce_sage_payments_get_sage_payments_vault_management_client() {
  * Load the SOAP client and WSDL definitions for Sage Payments Vault transaction processing.
  */
 function _commerce_sage_payments_get_sage_payments_vault_bankcard_client() {
-  $client = new SoapClient('https://gateway.sagepayments.net/web_services/wsVault/wsVaultBankcard.asmx?WSDL');
+  // $client = new SoapClient('https://gateway.sagepayments.net/web_services/wsVault/wsVaultBankcard.asmx?WSDL');
+  $client = new SoapClient(drupal_get_path('module', 'commerce_sage_payments') . '/libraries/wsVaultBankcard.wsdl.xml',
+                           array('location' => 'https://gateway.sagepayments.net/web_services/wsVault/wsVaultBankcard.asmx',
+                                 'uri'      => 'https://gateway.sagepayments.net/web_services/wsVault/'
+                                )
+                          );
   return $client;
 }
 
