@@ -4,6 +4,12 @@
  * Implements Sage Payment payment services for use in Drupal Commerce.
  */
 
+
+// The Application ID is assigned by Sage Payments. I believe only one
+// will be needed for Springboard, but we can parameterize this if we need to.
+
+define ('SPRINGBOARD_APPLICATION_ID', 'SAGETEST1000000DEMOAAS9USEN');
+
 /**
  * Implements hook_commerce_payment_method_info().
  */
@@ -520,6 +526,7 @@ function _commerce_sage_payments_get_sage_payments_config($gateway) {
   $auth_info = array(
     'M_ID'  => !empty($gateway['settings']['commerce_sage_payments_settings_merchant_id'])  ? $gateway['settings']['commerce_sage_payments_settings_merchant_id']  : '',
     'M_KEY' => !empty($gateway['settings']['commerce_sage_payments_settings_merchant_key']) ? $gateway['settings']['commerce_sage_payments_settings_merchant_key'] : '',
+    'T_APPLICATION_ID' => SPRINGBOARD_APPLICATION_ID
   );
 
   return $auth_info;
