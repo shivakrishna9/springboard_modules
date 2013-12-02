@@ -254,6 +254,15 @@ function springboard_views_sf_retry_queue_delete_action($object, $context) {
  * Add available views as options on the Springboard dashboard.
  */
 function springboard_views_springboard_dashboard_panes() {
+  $panes['springboard_recent_log_entries'] = array(
+    'label' => t('Recent log entries'),
+    'description' => t('List of recent log messages related to Springboard.'),
+    'content' => '<h2>' . t('Recent log entries') . '</h2>' . 
+      '<div class="springboard-pane" id="springboard-recent-donation-forms">' .
+      (module_exists('views') ? views_embed_view('sbv_dblog', 'block_1') : t('Please enable the Views module to improve your Springboard experience.')) .
+      '</div>',
+    'weight' => 1,
+  );
   global $base_url;
   $panes['springboard_recent_donation_forms'] = array(
     'label' => t('Recent donation forms'),
