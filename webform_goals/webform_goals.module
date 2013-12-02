@@ -151,8 +151,8 @@ function webform_goals_jsonp_send($callback, $data) {
 function webform_goals_cron() {
   module_load_include('inc', 'webform_goals', 'includes/webform_goals.widget');
   if (!variable_get('webform_goals_standalone_cron', 0)) {
-    drupal_set_message('running webform goals update');
     webform_goals_rebuild_widgets();
+    drupal_set_message('Updated webform goals.');
   }
 }
 
@@ -161,7 +161,7 @@ function webform_goals_cron() {
  */
 function webform_goals_menu() {
   $items['admin/config/content/webform_goals'] = array(
-    'title' => 'Webform Goals',
+    'title' => 'Webform goals',
     'description' => 'Assign and track goals on webforms',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('webform_goals_admin_list'),
