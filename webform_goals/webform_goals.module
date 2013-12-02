@@ -411,7 +411,7 @@ function _webform_goals_list_webforms() {
         $internal_name = ' - ' . $node_wrapper->field_fundraiser_internal_name->value(array('sanitize' => TRUE));
       }
       $readable_type = $readable_types[$result['type']];
-      $nodes[$result['type']][$result['nid']] = '(' . $result['nid'] . ') ' . $result['title'] . $internal_name . ' - ' . $readable_type;
+      $nodes[$readable_type][$result['nid']] = '(' . $result['nid'] . ') ' . $result['title'] . $internal_name . ' - ' . $readable_type;
     }
   }
 
