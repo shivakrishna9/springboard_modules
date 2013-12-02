@@ -3150,5 +3150,217 @@ function springboard_views_views_default_views() {
   $handler -> display -> display_options['footer']['area']['format'] = 'filtered_html';
   $views[$view -> name] = $view;
 
+  /**
+   * View sbv_dblog
+   */
+
+  $view = new view();
+  $view -> name = 'sbv_dblog';
+  $view -> description = '';
+  $view -> tag = 'default';
+  $view -> base_table = 'watchdog';
+  $view -> human_name = 'Recent log messages extended';
+  $view -> core = 7;
+  $view -> api_version = '3.0';
+  $view -> disabled = FALSE;
+  /* Edit this to true to make a default view disabled initially */
+
+  /* Display: Master */
+  $handler = $view -> new_display('default', 'Master', 'default');
+  $handler -> display -> display_options['title'] = 'Springboard log messages';
+  $handler -> display -> display_options['use_more'] = TRUE;
+  $handler -> display -> display_options['use_more_always'] = FALSE;
+  $handler -> display -> display_options['access']['type'] = 'perm';
+  $handler -> display -> display_options['access']['perm'] = 'access site reports';
+  $handler -> display -> display_options['cache']['type'] = 'none';
+  $handler -> display -> display_options['query']['type'] = 'views_query';
+  $handler -> display -> display_options['exposed_form']['type'] = 'basic';
+  $handler -> display -> display_options['pager']['type'] = 'full';
+  $handler -> display -> display_options['pager']['options']['items_per_page'] = '20';
+  $handler -> display -> display_options['pager']['options']['offset'] = '0';
+  $handler -> display -> display_options['pager']['options']['id'] = '0';
+  $handler -> display -> display_options['pager']['options']['quantity'] = '9';
+  $handler -> display -> display_options['style_plugin'] = 'watchdog_table';
+  $handler -> display -> display_options['style_options']['columns'] = array(
+    'severity' => 'severity',
+    'timestamp' => 'timestamp',
+    'type' => 'type',
+    'message' => 'message',
+  );
+  $handler -> display -> display_options['style_options']['default'] = '-1';
+  $handler -> display -> display_options['style_options']['info'] = array(
+    'severity' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'timestamp' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'type' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'message' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+  );
+  $handler -> display -> display_options['style_options']['watchdog_table_type'] = 1;
+  $handler -> display -> display_options['style_options']['watchdog_table_severity'] = 1;
+  /* Relationship: Watchdog: User */
+  $handler -> display -> display_options['relationships']['uid']['id'] = 'uid';
+  $handler -> display -> display_options['relationships']['uid']['table'] = 'watchdog';
+  $handler -> display -> display_options['relationships']['uid']['field'] = 'uid';
+  /* Field: Watchdog: Severity */
+  $handler -> display -> display_options['fields']['severity']['id'] = 'severity';
+  $handler -> display -> display_options['fields']['severity']['table'] = 'watchdog';
+  $handler -> display -> display_options['fields']['severity']['field'] = 'severity';
+  $handler -> display -> display_options['fields']['severity']['watchdog_severity_icon'] = 0;
+  /* Field: Watchdog: Type */
+  $handler -> display -> display_options['fields']['type']['id'] = 'type';
+  $handler -> display -> display_options['fields']['type']['table'] = 'watchdog';
+  $handler -> display -> display_options['fields']['type']['field'] = 'type';
+  /* Field: Watchdog: Message */
+  $handler -> display -> display_options['fields']['message']['id'] = 'message';
+  $handler -> display -> display_options['fields']['message']['table'] = 'watchdog';
+  $handler -> display -> display_options['fields']['message']['field'] = 'message';
+  $handler -> display -> display_options['fields']['message']['watchdog_message_format'] = 1;
+  $handler -> display -> display_options['fields']['message']['watchdog_message_link'] = 0;
+  /* Field: Watchdog: Timestamp */
+  $handler -> display -> display_options['fields']['timestamp']['id'] = 'timestamp';
+  $handler -> display -> display_options['fields']['timestamp']['table'] = 'watchdog';
+  $handler -> display -> display_options['fields']['timestamp']['field'] = 'timestamp';
+  $handler -> display -> display_options['fields']['timestamp']['date_format'] = 'long';
+  /* Sort criterion: Watchdog: Timestamp */
+  $handler -> display -> display_options['sorts']['timestamp']['id'] = 'timestamp';
+  $handler -> display -> display_options['sorts']['timestamp']['table'] = 'watchdog';
+  $handler -> display -> display_options['sorts']['timestamp']['field'] = 'timestamp';
+  $handler -> display -> display_options['sorts']['timestamp']['order'] = 'DESC';
+  /* Filter criterion: Watchdog: Type */
+  $handler -> display -> display_options['filters']['type']['id'] = 'type';
+  $handler -> display -> display_options['filters']['type']['table'] = 'watchdog';
+  $handler -> display -> display_options['filters']['type']['field'] = 'type';
+  $handler -> display -> display_options['filters']['type']['value'] = array(
+    'fundraiser_cron' => 'fundraiser_cron',
+    'fundraiser_sustainers' => 'fundraiser_sustainers',
+    'springboard_config' => 'springboard_config',
+  );
+  $handler -> display -> display_options['filters']['type']['group'] = 1;
+  $handler -> display -> display_options['filters']['type']['expose']['operator_id'] = 'type_op';
+  $handler -> display -> display_options['filters']['type']['expose']['label'] = 'Type';
+  $handler -> display -> display_options['filters']['type']['expose']['operator'] = 'type_op';
+  $handler -> display -> display_options['filters']['type']['expose']['identifier'] = 'type';
+  $handler -> display -> display_options['filters']['type']['expose']['multiple'] = TRUE;
+
+  /* Display: Page */
+  $handler = $view -> new_display('page', 'Page', 'page');
+  $handler -> display -> display_options['path'] = 'admin/springboard/reports/dblog';
+
+  /* Display: Springboard Dashboard Log */
+  $handler = $view -> new_display('block', 'Springboard Dashboard Log', 'block_1');
+  $handler -> display -> display_options['defaults']['pager'] = FALSE;
+  $handler -> display -> display_options['pager']['type'] = 'some';
+  $handler -> display -> display_options['pager']['options']['items_per_page'] = '5';
+  $handler -> display -> display_options['pager']['options']['offset'] = '0';
+  $handler -> display -> display_options['defaults']['style_plugin'] = FALSE;
+  $handler -> display -> display_options['style_plugin'] = 'default';
+  $handler -> display -> display_options['style_options']['grouping'] = array(0 => array(
+      'field' => 'severity',
+      'rendered' => 1,
+      'rendered_strip' => 0,
+    ), );
+  $handler -> display -> display_options['defaults']['style_options'] = FALSE;
+  $handler -> display -> display_options['defaults']['row_plugin'] = FALSE;
+  $handler -> display -> display_options['row_plugin'] = 'fields';
+  $handler -> display -> display_options['defaults']['row_options'] = FALSE;
+  $handler -> display -> display_options['defaults']['fields'] = FALSE;
+  /* Field: Watchdog: Severity */
+  $handler -> display -> display_options['fields']['severity']['id'] = 'severity';
+  $handler -> display -> display_options['fields']['severity']['table'] = 'watchdog';
+  $handler -> display -> display_options['fields']['severity']['field'] = 'severity';
+  $handler -> display -> display_options['fields']['severity']['label'] = '';
+  $handler -> display -> display_options['fields']['severity']['exclude'] = TRUE;
+  $handler -> display -> display_options['fields']['severity']['element_label_colon'] = FALSE;
+  $handler -> display -> display_options['fields']['severity']['watchdog_severity_icon'] = 0;
+  /* Field: Watchdog: Timestamp */
+  $handler -> display -> display_options['fields']['timestamp']['id'] = 'timestamp';
+  $handler -> display -> display_options['fields']['timestamp']['table'] = 'watchdog';
+  $handler -> display -> display_options['fields']['timestamp']['field'] = 'timestamp';
+  $handler -> display -> display_options['fields']['timestamp']['label'] = '';
+  $handler -> display -> display_options['fields']['timestamp']['exclude'] = TRUE;
+  $handler -> display -> display_options['fields']['timestamp']['element_label_colon'] = FALSE;
+  $handler -> display -> display_options['fields']['timestamp']['date_format'] = 'time ago';
+  /* Field: Watchdog: Type */
+  $handler -> display -> display_options['fields']['type']['id'] = 'type';
+  $handler -> display -> display_options['fields']['type']['table'] = 'watchdog';
+  $handler -> display -> display_options['fields']['type']['field'] = 'type';
+  $handler -> display -> display_options['fields']['type']['label'] = '';
+  $handler -> display -> display_options['fields']['type']['exclude'] = TRUE;
+  $handler -> display -> display_options['fields']['type']['element_label_colon'] = FALSE;
+  /* Field: Watchdog: Message */
+  $handler -> display -> display_options['fields']['message']['id'] = 'message';
+  $handler -> display -> display_options['fields']['message']['table'] = 'watchdog';
+  $handler -> display -> display_options['fields']['message']['field'] = 'message';
+  $handler -> display -> display_options['fields']['message']['label'] = '';
+  $handler -> display -> display_options['fields']['message']['alter']['alter_text'] = TRUE;
+  $handler -> display -> display_options['fields']['message']['alter']['text'] = '[type]: [message] <em>[timestamp]</em>';
+  $handler -> display -> display_options['fields']['message']['alter']['max_length'] = '240';
+  $handler -> display -> display_options['fields']['message']['element_label_colon'] = FALSE;
+  $handler -> display -> display_options['fields']['message']['watchdog_message_format'] = 0;
+  $handler -> display -> display_options['fields']['message']['watchdog_message_link'] = 1;
+  $handler -> display -> display_options['defaults']['filter_groups'] = FALSE;
+  $handler -> display -> display_options['defaults']['filters'] = FALSE;
+  /* Filter criterion: Watchdog: Type */
+  $handler -> display -> display_options['filters']['type']['id'] = 'type';
+  $handler -> display -> display_options['filters']['type']['table'] = 'watchdog';
+  $handler -> display -> display_options['filters']['type']['field'] = 'type';
+  $handler -> display -> display_options['filters']['type']['value'] = array(
+    'fundraiser_cron' => 'fundraiser_cron',
+    'fundraiser_sustainers' => 'fundraiser_sustainers',
+    'springboard_config' => 'springboard_config',
+    'capwiz_connect' => 'capwiz_connect',
+    'commerce_psi' => 'commerce_psi',
+    'commerce_litle' => 'commerce_litle',
+    'dynamic gift strings' => 'dynamic gift strings',
+    'fundraiser' => 'fundraiser',
+    'fundraiser_commerce' => 'fundraiser_commerce',
+    'fundraiser_cron' => 'fundraiser_cron',
+    'fundraiser_sustainers' => 'fundraiser_sustainers',
+    'fundraiser_webform' => 'fundraiser_webform',
+    'fundraiser_comment' => 'fundraiser_comment',
+    'Market Source' => 'Market Source',
+    'salesforce' => 'salesforce',
+    'Salesforce Pull' => 'Salesforce Pull',
+    'salesforce_push' => 'salesforce_push',
+    'salesforce_soap' => 'salesforce_soap',
+    'salesforce_sync' => 'salesforce_sync',
+    'sb_social' => 'sb_social',
+    'Secure Prepopulate' => 'Secure Prepopulate',
+    'springboard_config' => 'springboard_config',
+    'webform_dupe_cop' => 'webform_dupe_cop',
+    'webform_goals' => 'webform_goals',
+    'webform_user' => 'webform_user'
+  );
+  $handler -> display -> display_options['filters']['type']['group'] = 1;
+  $handler -> display -> display_options['filters']['type']['expose']['operator_id'] = 'type_op';
+  $handler -> display -> display_options['filters']['type']['expose']['label'] = 'Type';
+  $handler -> display -> display_options['filters']['type']['expose']['operator'] = 'type_op';
+  $handler -> display -> display_options['filters']['type']['expose']['identifier'] = 'type';
+  $handler -> display -> display_options['filters']['type']['expose']['multiple'] = TRUE;
+  $views[$view -> name] = $view;
+
   return $views;
 }
