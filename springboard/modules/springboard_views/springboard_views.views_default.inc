@@ -3362,5 +3362,114 @@ function springboard_views_views_default_views() {
   $handler -> display -> display_options['filters']['type']['expose']['multiple'] = TRUE;
   $views[$view -> name] = $view;
 
+  $view = new view();
+  $view->name = 'salesforce_soap_errors';
+  $view->description = '';
+  $view->tag = 'default';
+  $view->base_table = 'salesforce_log_item';
+  $view->human_name = 'salesforce_soap_errors';
+  $view->core = 7;
+  $view->api_version = '3.0';
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+
+  /* Display: Master */
+  $handler = $view->new_display('default', 'Master', 'default');
+  $handler->display->display_options['title'] = 'Errors for Unsynched Content';
+  $handler->display->display_options['use_more_always'] = FALSE;
+  $handler->display->display_options['access']['type'] = 'perm';
+  $handler->display->display_options['access']['perm'] = 'view salesforce batch logs';
+  $handler->display->display_options['cache']['type'] = 'none';
+  $handler->display->display_options['query']['type'] = 'views_query';
+  $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['pager']['type'] = 'full';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '10';
+  $handler->display->display_options['style_plugin'] = 'table';
+  $handler->display->display_options['style_options']['columns'] = array(
+    'drupal_id' => 'drupal_id',
+    'error_code' => 'error_code',
+    'object_type' => 'object_type',
+    'message' => 'message',
+  );
+  $handler->display->display_options['style_options']['default'] = '-1';
+  $handler->display->display_options['style_options']['info'] = array(
+    'drupal_id' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'error_code' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'object_type' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'message' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+  );
+  /* Field: Salesforce item log: Drupal ID */
+  $handler->display->display_options['fields']['drupal_id']['id'] = 'drupal_id';
+  $handler->display->display_options['fields']['drupal_id']['table'] = 'salesforce_log_item';
+  $handler->display->display_options['fields']['drupal_id']['field'] = 'drupal_id';
+  /* Field: Salesforce item log: Object type */
+  $handler->display->display_options['fields']['object_type']['id'] = 'object_type';
+  $handler->display->display_options['fields']['object_type']['table'] = 'salesforce_log_item';
+  $handler->display->display_options['fields']['object_type']['field'] = 'object_type';
+  /* Field: Salesforce item log: Message */
+  $handler->display->display_options['fields']['message']['id'] = 'message';
+  $handler->display->display_options['fields']['message']['table'] = 'salesforce_log_item';
+  $handler->display->display_options['fields']['message']['field'] = 'message';
+  $handler->display->display_options['fields']['message']['label'] = 'Explanation';
+  /* Sort criterion: Salesforce item log: Log Item ID */
+  $handler->display->display_options['sorts']['lid']['id'] = 'lid';
+  $handler->display->display_options['sorts']['lid']['table'] = 'salesforce_log_item';
+  $handler->display->display_options['sorts']['lid']['field'] = 'lid';
+  $handler->display->display_options['sorts']['lid']['order'] = 'DESC';
+  /* Filter criterion: Salesforce item log: Error code */
+  $handler->display->display_options['filters']['error_code']['id'] = 'error_code';
+  $handler->display->display_options['filters']['error_code']['table'] = 'salesforce_log_item';
+  $handler->display->display_options['filters']['error_code']['field'] = 'error_code';
+  $handler->display->display_options['filters']['error_code']['value'] = 'Client';
+  /* Filter criterion: Salesforce item log: Message */
+  $handler->display->display_options['filters']['message']['id'] = 'message';
+  $handler->display->display_options['filters']['message']['table'] = 'salesforce_log_item';
+  $handler->display->display_options['filters']['message']['field'] = 'message';
+  $handler->display->display_options['filters']['message']['operator'] = 'contains';
+  $handler->display->display_options['filters']['message']['value'] = 'SOAP-ERROR';
+
+  /* Display: Page */
+  $handler = $view->new_display('page', 'Page', 'page');
+  $handler->display->display_options['path'] = 'admin/springboard/reports/salesforce-soap-errors';
+  $handler->display->display_options['menu']['type'] = 'normal';
+  $handler->display->display_options['menu']['title'] = 'Unsynched Errors';
+  $handler->display->display_options['menu']['weight'] = '0';
+  $handler->display->display_options['menu']['name'] = 'management';
+  $handler->display->display_options['menu']['context'] = 0;
+  $handler->display->display_options['menu']['context_only_inline'] = 0;
+
+  /* Display: Unsynched Errors Block */
+  $handler = $view->new_display('block', 'Unsynched Errors Block', 'block');
+  $handler->display->display_options['defaults']['title'] = FALSE;
+  $handler->display->display_options['title'] = 'Errors for Unsynched Content';
+  $handler->display->display_options['defaults']['pager'] = FALSE;
+  $handler->display->display_options['pager']['type'] = 'some';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '3';
+  $handler->display->display_options['pager']['options']['offset'] = '0';
+  $handler->display->display_options['block_description'] = 'Unsynched Errors';
+
   return $views;
 }
