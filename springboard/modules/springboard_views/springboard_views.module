@@ -247,3 +247,35 @@ function springboard_views_sf_retry_queue_delete_action($object, $context) {
   ->condition('id', $context['row']->id)
   ->execute();
 }
+
+/**
+ * Implements hook_springboard_dashboard_panes().
+ * 
+ * Add available views as options on the Springboard dashboard.
+ */
+function springboard_views_springboard_dashboard_panes() {
+  global $base_url;
+  $panes['springboard_recent_donation_forms'] = array(
+    'label' => t('Recent donation forms'),
+    'description' => t('Configuration and submissions summary for recently created or updated springboard donation forms.'),
+    'content' => '<h2>' . t('Recent donation forms ') .
+      (module_exists('webform') ? l(t('Create donation form'), $base_url . '/node/add/donation-form', array('attributes' => array('class' => array('button', 'add-button')))) : '' ) .
+      '</h2>' .
+      '<div class="springboard-pane" id="springboard-recent-donation-forms">' .
+      (module_exists('views') ? views_embed_view('sbv_forms', 'block_1') : t('Please enable the Views module to improve your Springboard experience.')) .
+      '</div>',
+    'weight' => 1,
+  );
+  $panes['springboard_recent_forms'] = array(
+    'label' => t('Recent forms'),
+    'description' => t('Configuration and submissions summary for recently created or updated springboard forms.'),
+    'content' => '<h2>' . t('Recent forms ') .
+      (module_exists('fundraiser') ? l(t('Create form'), $base_url . '/node/add/webform', array('attributes' => array('class' => array('button', 'add-button')))) : '')  .
+      '</h2>' .
+      '<div class="springboard-pane" id="springboard-recent-forms">' .
+      (module_exists('views') ? views_embed_view('sbv_forms', 'block') : t('Please enable the Views module to improve your Springboard experience.')) .
+      '</div>',
+    'weight' => 2,
+  );
+  return $panes;
+}

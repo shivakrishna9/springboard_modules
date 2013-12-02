@@ -423,35 +423,12 @@ function springboard_block_view($delta) {
  * Implements hook_springboard_dashboard_panes().
  */
 function springboard_springboard_dashboard_panes() {
-   $sf_status = module_invoke('springboard', 'block_view', 'springboard_sf_status');
+  $sf_status = module_invoke('springboard', 'block_view', 'springboard_sf_status');
   $panes['springboard_sf_status'] = array(
     'label' => $sf_status ['subject'],
     'description' => $sf_status ['subject'],
     'content' => $sf_status['content'],
     'weight' => 0,
-  );
-  global $base_url;
-  $panes['springboard_recent_donation_forms'] = array(
-    'label' => t('Recent donation forms'),
-    'description' => t('Configuration and submissions summary for recently created or updated springboard donation forms.'),
-    'content' => '<h2>' . t('Recent donation forms ') .
-      (module_exists('webform') ? l(t('Create donation form'), $base_url . '/node/add/donation-form', array('attributes' => array('class' => 'button'))) : '' ) .
-      '</h2>' .
-      '<div class="springboard-pane" id="springboard-recent-donation-forms">' .
-      (module_exists('views') ? views_embed_view('sbv_forms', 'block_1') : t('Please enable the Views module to improve your Springboard experience.')) .
-      '</div>',
-    'weight' => 1,
-  );
-  $panes['springboard_recent_forms'] = array(
-    'label' => t('Recent forms'),
-    'description' => t('Configuration and submissions summary for recently created or updated springboard forms.'),
-    'content' => '<h2>' . t('Recent forms ') .
-      (module_exists('fundraiser') ? l(t('Create form'), $base_url . '/node/add/webform', array('attributes' => array('class' => 'button'))) : '')  .
-      '</h2>' .
-      '<div class="springboard-pane" id="springboard-recent-forms">' .
-      (module_exists('views') ? views_embed_view('sbv_forms', 'block') : t('Please enable the Views module to improve your Springboard experience.')) .
-      '</div>',
-    'weight' => 2,
   );
   return $panes;
 }
