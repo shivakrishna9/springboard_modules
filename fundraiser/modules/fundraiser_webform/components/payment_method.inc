@@ -307,7 +307,27 @@ function _webform_submit_payment_method($component, $value) {
  * Implements _webform_analysis_component().
  */
 function _webform_analysis_payment_method($component, $sids = array(), $single = FALSE) {
-  return webform_analysis_select($component, $sids, $single);
+  $query = db_select('webform_submitted_data', 'wsd', array('fetch' => PDO::FETCH_ASSOC))
+    ->fields('wsd', array('data'))
+    ->condition('nid', $component['nid'])
+    ->condition('cid', $component['cid'])
+    ->condition('data', '', '<>')
+    ->groupBy('data');
+  $query->addExpression('COUNT(data)', 'datacount');
+
+  if (count($sids)) {
+    $query->condition('sid', $sids, 'IN');
+  }
+
+  $result = $query->execute();
+  $rows = array();
+  foreach ($result as $data) {
+    $display_option = $data['data'];
+    $rows[$data['data']] = array(_webform_filter_xss($display_option), $data['datacount']);
+  }
+
+  return $rows;
+
 }
 
 /**
