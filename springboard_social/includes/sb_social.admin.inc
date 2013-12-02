@@ -532,31 +532,3 @@ function _sb_social_settings_market_source(&$form, $settings) {
   }
 }
 
-/**
- * List share-enabled market source fields.
- *
- * @return array
- */
-function _sb_social_list_share_enabled_market_source_fields() {
-  $enabled_fields = array();
-  $default_fields = variable_get('sb_social_market_source_default_fields', array());
-  $custom_fields = variable_get('sb_social_market_source_custom_fields', array());
-  $fields = array_merge($default_fields, $custom_fields);
-
-  foreach ($fields as $key => $value) {
-    // Fiddling required due to quirks in how Market Source presents data during form submission.
-    // ms and cid fields are not indexed by their actual form key, so we have to do a quick conversion.
-    switch ($key) {
-      case 'market_source':
-        $key = 'ms';
-        break;
-      case 'campaign':
-        $key = 'cid';
-        break;
-    }
-    if ($value['share_enabled'] === 1) {
-      $enabled_fields[] = $key;
-    }
-  }
-  return $enabled_fields;
-}
