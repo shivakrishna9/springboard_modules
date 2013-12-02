@@ -654,22 +654,6 @@ function theme_sb_social_share_image_preview($variables) {
   }
 }
 
-/**
- * Provides list of market source fields to exclude on administration pages.
- */
-function _sb_social_component_blacklist() {
-  return array(
-    'referrer',
-    'initial_referrer',
-    'search_engine',
-    'search_string',
-    'user_agent',
-    'social_referer_transaction',
-    'social_referer_network',
-    'social_referer_contact',
-  );
-}
-
 // TODO: find somewhere other than this module for the springboard tracking cookie to live.
 function _sb_social_set_tracking_cookie($uid, $mail, $sid) {
   $payload = $uid . '::' . $mail . '::' . $sid;

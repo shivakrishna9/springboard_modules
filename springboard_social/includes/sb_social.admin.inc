@@ -504,9 +504,6 @@ function _sb_social_settings_market_source(&$form, $settings) {
   $fields = market_source_field_info();
   $share_enabled_fields = _sb_social_list_share_enabled_market_source_fields();
 
-  // It doesn't make sense to list certain market source fields, like user agent.
-  // the blacklist lets us filter these out cleanly.
-  $blacklist = _sb_social_component_blacklist();
   foreach ($fields as $key => $field) {
     // skip market source fields that haven't been share enabled.
     if (!in_array($key, $share_enabled_fields)) {
