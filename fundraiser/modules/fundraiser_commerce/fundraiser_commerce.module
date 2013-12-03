@@ -1804,7 +1804,8 @@ class FundraiserCommerceUIPaymentSettings extends RulesDataUI implements RulesDa
         // Add the settings form elements to the action form.
         $form[$name]['settings'] = $callback($method_settings);
       }
-      // And here, we add the remote recurring option iff the module can support it.
+
+      // Add the remote recurring option if the module supports it.
       module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $payment_method['module']);
       $gateway_info = module_invoke($payment_method['module'], 'fundraiser_commerce_fundraiser_gateway_info');
       if (!empty($gateway_info['allow_recurring']) && !empty($gateway_info['offsite_recurring'])) {
