@@ -37,12 +37,9 @@ function commerce_sage_payments_fundraiser_commerce_submit_form($payment_method)
 /**
  * Convert values to ones that Fundraiser Commerce is looking for
  */
-function commerce_sage_payments_fundraiser_commerce_cleanup($submission_fields, $payment_method) {
-  if ($payment_method == 'credit') {
-    module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
-    return _fundraiser_commerce_credit_card_cleanup($submission_fields);
-  }
-  return $submission_fields;
+function commerce_sage_payments_fundraiser_commerce_cleanup($submission_fields) {
+  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+  return _fundraiser_commerce_credit_card_cleanup($submission_fields);
 }
 
 /**
@@ -56,23 +53,19 @@ function commerce_sage_payments_fundraiser_commerce_expire($submission_fields) {
 /**
  * Callback function, scrub the data before saving.
  */
-function commerce_sage_payments_fundraiser_commerce_scrub($submission_fields, $payment_method) {
-  if ($payment_method == 'credit') {
-    module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
-    return _fundraiser_commerce_credit_card_scrub($submission_fields);
-  }
+function commerce_sage_payments_fundraiser_commerce_scrub($submission_fields) {
+  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+  return _fundraiser_commerce_credit_card_scrub($submission_fields);
 }
 
 /**
  * Validate the submitted values with the commerce validate function
  */
-function commerce_sage_payments_fundraiser_commerce_validate($submission_fields, $payment_fields, $payment_method) {
+function commerce_sage_payments_fundraiser_commerce_validate($submission_fields, $payment_fields) {
   // Pass the values to the validation scripts
-  if ($payment_method == 'credit') {
-    $form_parents = array_merge($payment_fields['#parents'], array('credit'));
-    module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
-    _fundraiser_commerce_credit_card_validate($submission_fields, $form_parents);
-  }
+  $form_parents = array_merge($payment_fields['#parents'], array('credit'));
+  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+  _fundraiser_commerce_credit_card_validate($submission_fields, $form_parents);
   return $submission_fields;
 }
 
