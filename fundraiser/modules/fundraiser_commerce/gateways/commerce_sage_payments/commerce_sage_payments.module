@@ -17,9 +17,8 @@ function commerce_sage_payments_commerce_payment_method_info() {
     'description' => t('Integrates Sage Payment for credit card transactions.'),
     'cardonfile' => array(
       'charge callback' => 'commerce_sage_payments_cc_vault_cardonfile_charge',
-      // @todo Implement update and delete callbacks for cardonfile.
-      // 'update callback' => 'commerce_sage_payments_cc_vault_cardonfile_update',
-      // 'delete callback' => 'commerce_sage_payments_cc_vault_cardonfile_delete',
+      'update callback' => 'commerce_sage_payments_cc_vault_cardonfile_update',
+      'delete callback' => 'commerce_sage_payments_cc_vault_cardonfile_delete',
     ),
   );
   return $payment_methods;
@@ -478,6 +477,37 @@ function commerce_sage_payments_cc_vault_cardonfile_charge($payment_method, $car
 }
 
 
+
+/**
+ * Card on file callback: updates the associated customer payment profile.
+ */
+function commerce_sage_payments_cc_vault_cardonfile_update($form, &$form_state, $payment_method, $card_data) {
+
+    $request_parameters = array (
+      'GUID' => $card_data->remote_id,
+      'EXPIRATION_DATE' => str_pad($form_state['values']['credit_card']['exp_month'], 2, 0, STR_PAD_LEFT) . substr($form_state['values']['credit_card']['exp_year'], 2, 2),
+    );
+    $request_parameters += _commerce_sage_payments_get_sage_payments_config($payment_method);
+    $response = commerce_sage_payments_vault_request_update_expiration($payment_method, $request_parameters);
+
+  return $response;
+}
+
+/**
+ * Card on file callback: deletes the associated customer payment profile.
+ */
+function commerce_sage_payments_cc_vault_cardonfile_delete($form, &$form_state, $payment_method, $card_data) {
+  $request_parameters = array (
+    'GUID' => $card_data->remote_id
+  );
+  $request_parameters += _commerce_sage_payments_get_sage_payments_config($payment_method);
+  $response = commerce_sage_payments_vault_request_delete($payment_method, $request_parameters);
+  return $response;
+}
+
+
+
+
 /**
  * Load the SOAP client and WSDL definitions.
  */
@@ -606,9 +636,62 @@ function commerce_sage_payments_vault_request_insert($gateway, $request_paramete
   }
   return $transaction_response;
 
-  watchdog('commerce_sage_payments', 'Sage Payments Vault response: !param', array('!param' => '<pre>' . check_plain(print_r($token_response), TRUE) . '</pre>', WATCHDOG_DEBUG));
+  watchdog('commerce_sage_payments', 'Sage Payments Vault response: !param', array('!param' => '<pre>' . check_plain(print_r($transaction_response), TRUE) . '</pre>', WATCHDOG_DEBUG));
   return $token_response;
 }
+
+
+/**
+ * Sends a request to Sage Payments to update the credit card expiration in the Vault.
+ *
+ * @param array $gateway
+ *   The payment method.
+ *
+ * @param array $data
+ *   Data to pass to the API call.
+ *   Will vary depending on payment type (cc vs bank)
+ *
+ * @return
+ *   The response object with 'SUCCESS' (boolean)
+ */
+function commerce_sage_payments_vault_request_update_expiration($gateway, $request_parameters) {
+  $vault_client = _commerce_sage_payments_get_sage_payments_vault_management_client();
+  $request_parameters += _commerce_sage_payments_get_sage_payments_config($gateway);
+  $response = $vault_client->UPDATE_CREDIT_CARD_EXPIRATION_DATE($request_parameters);
+   if (is_object($response) && is_object($response->UPDATE_CREDIT_CARD_EXPIRATION_DATEResult)){
+    $response_parsed  = new SimpleXMLElement($response->UPDATE_CREDIT_CARD_EXPIRATION_DATEResult->any);
+    $transaction_response = (object)(array) $response_parsed->NewDataSet->Table1;
+    watchdog('commerce_sage_payments', 'Sage Payments Vault response: !param', array('!param' => '<pre>' . check_plain(print_r($transaction_response), TRUE) . '</pre>', WATCHDOG_DEBUG));
+    return $transaction_response->SUCCESS == 'true';
+  }
+}
+
+
+/**
+ * Sends a request to Sage Payments to delete a credit card in the Vault.
+ *
+ * @param array $gateway
+ *   The payment method.
+ *
+ * @param array $data
+ *   Data to pass to the API call.
+ *   Will vary depending on payment type (cc vs bank)
+ *
+ * @return
+ *   The response (boolean).
+ */
+function commerce_sage_payments_vault_request_delete($gateway, $request_parameters) {
+  $vault_client = _commerce_sage_payments_get_sage_payments_vault_management_client();
+  $request_parameters += _commerce_sage_payments_get_sage_payments_config($gateway);
+  $response = $vault_client->DELETE_DATA($request_parameters);
+  if (is_object($response) && isset($response->DELETE_DATAResult)){
+    $transaction_response = $response->DELETE_DATAResult;
+  }
+
+  watchdog('commerce_sage_payments', 'Sage Payments Vault response: !param', array('!param' => '<pre>' . check_plain(print_r($transaction_response), TRUE) . '</pre>', WATCHDOG_DEBUG));
+  return $transaction_response;
+}
+
 
 
 /**
