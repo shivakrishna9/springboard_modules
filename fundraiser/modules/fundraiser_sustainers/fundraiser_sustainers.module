@@ -356,9 +356,9 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
     $map = $context['map'];
 
     // Add recurring item marker if recurring or not.
-    $fields['Is_Recurring_Donation__c'] = 'false';
+    $fields['Is_Recurring_Donation__c'] = FALSE;
     if ($donation->donation['recurs_monthly'] == TRUE) {
-      $fields['Is_Recurring_Donation__c'] = 'true';
+      $fields['Is_Recurring_Donation__c'] = TRUE;
     }
 
     // Add additional values for where not offsite recurring.
