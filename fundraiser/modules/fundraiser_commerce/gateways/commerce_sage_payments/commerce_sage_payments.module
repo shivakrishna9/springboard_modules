@@ -479,7 +479,7 @@ function commerce_sage_payments_cc_vault_cardonfile_charge($payment_method, $car
 
 
 /**
- * Card on file callback: updates the associated customer payment profile.
+ * Card on file callback: updates the credit card expiry.
  */
 function commerce_sage_payments_cc_vault_cardonfile_update($form, &$form_state, $payment_method, $card_data) {
 
@@ -621,7 +621,6 @@ function _commerce_sage_payments_request_credit($gateway, $request_parameters) {
  *
  * @param array $data
  *   Data to pass to the API call.
- *   Will vary depending on payment type (cc vs bank)
  *
  * @return
  *   The response object with 'SUCCESS' (boolean), 'GUID' (string), and 'MESSAGE' (string) attributes
@@ -649,10 +648,9 @@ function commerce_sage_payments_vault_request_insert($gateway, $request_paramete
  *
  * @param array $data
  *   Data to pass to the API call.
- *   Will vary depending on payment type (cc vs bank)
  *
  * @return
- *   The response object with 'SUCCESS' (boolean)
+ *   (boolean) for whether the update was successful or not.
  */
 function commerce_sage_payments_vault_request_update_expiration($gateway, $request_parameters) {
   $vault_client = _commerce_sage_payments_get_sage_payments_vault_management_client();
@@ -675,7 +673,6 @@ function commerce_sage_payments_vault_request_update_expiration($gateway, $reque
  *
  * @param array $data
  *   Data to pass to the API call.
- *   Will vary depending on payment type (cc vs bank)
  *
  * @return
  *   The response (boolean).
