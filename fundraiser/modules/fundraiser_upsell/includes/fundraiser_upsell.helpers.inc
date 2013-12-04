@@ -20,39 +20,28 @@ function _fundraiser_upsell_content($node, $sid) {
   drupal_add_js($path . '/js/fundraiser_upsell.js');
   drupal_add_js($path . '/js/jquery.blockUI.js');
   // Get the size and class for the modal
-  $width = $node->upsell['modal_width'];
-  $height = $node->upsell['modal_height'];
-  $upsell_size = 'width:' . $width . 'px;height:' . $height . 'px;';
-  (!empty($node->upsell['class'])) ? $upsell_class = $node->upsell['class'] : $upsell_class = '';
-  $upsell_class = drupal_html_class($upsell_class);
-  // Get the upsell content data
-  if (!empty($node->upsell['content'])) {
-    $upsell_header = $node->upsell['content'];
-  }
-  else {
-    $upsell_header = variable_get('fundraiser_upsell_default_content', '');
-  }
+  $width = (!empty($node->upsell['modal_width'])) ? $node->upsell['modal_width'] : 400;
+  $height = (!empty($node->upsell['modal_height'])) ? $node->upsell['modal_height'] : 300;
+  // Pass values to javascript
+  $rejection_days = variable_get('fundraiser_upsell_rejection_lifetime', '180');
+  $settings = array(
+    'width' => $width,
+    'height' => $height,
+    'rejectionDays' => $rejection_days,
+  );
+  drupal_add_js(array('fundraiser_upsell' => $settings), 'setting');
+  // Get the content for the form.
+  $upsell_class = (!empty($node->upsell['class'])) ? $node->upsell['class'] : '';
+  $upsell_content = (!empty($node->upsell['content'])) ? $node->upsell['content'] : variable_get('fundraiser_upsell_default_content', '');
   $upsell_disclaimer = variable_get('fundraiser_upsell_default_content_disclaimer', '');
-  // Build the render array
-  $content = array();
-  $content['message_wrapper'] = array(
-    '#type' => 'container',
-    '#attributes' => array(
-      'id' => array('message-wrapper'),
-      'class' => array('hidden'),
-    ),
-  );
-  $content['message_wrapper']['message_modal'] = array(
-    '#type' => 'container',
-    '#attributes' => array(
-      'id' => array('message-modal'),
-      'class' => array('live', $upsell_class),
-      'style' => array($upsell_size),
-    ),
-  );
-  $content['message_wrapper']['message_modal']['form'] = drupal_get_form('fundraiser_upsell_donation_form', $sid);
-  $content['message_wrapper']['message_modal']['form']['#prefix'] = $upsell_header;
-  $content['message_wrapper']['message_modal']['form']['#suffix'] = $upsell_disclaimer;
+  // Build the output
+  $content = '<div id="message-wrapper" class="hidden">';
+  $content .= '<div id="message-modal" class="live-modal ' . $upsell_class;
+  $content .= '" style="' . $upsell_size . '">';
+  $content .= '<div class="message-content">' . $upsell_content . '</div>';
+  $content .= drupal_get_form('fundraiser_upsell_donation_form', $sid);
+  $content .= '<div id="message-disclaimer">' . $upsell_disclaimer . '</div>';
+  $content .= '</div></div>';
 
   return $content;
 }
@@ -65,21 +54,43 @@ function _fundraiser_upsell_content($node, $sid) {
  * A render array for generating the content
  */
 function _fundraiser_upsell_content_preview($node) {
-  // Grab the render array and modify it
-  $content = _fundraiser_upsell_content($node, 0);
-  $content['message_wrapper']['#prefix'] = 'This is a preview of the upsell and thank you content for this form.';
-  $content['message_wrapper']['message_modal']['#attributes']['class'][0] = 'preview';
-  // Add the thank you content for ease of display
-  $content['message_wrapper']['message_return'] = array(
-    '#type' => 'container',
-    '#attributes' => array('id' => array('message-return')),
+  // Add the css & js
+  $path = drupal_get_path('module', 'fundraiser_upsell');
+  drupal_add_css($path . '/css/fundraiser_upsell.css');
+  drupal_add_js($path . '/js/fundraiser_upsell.js');
+  drupal_add_js($path . '/js/jquery.blockUI.js');
+  // Get the size and class for the modal
+  $width = (!empty($node->upsell['modal_width'])) ? $node->upsell['modal_width'] : 400;
+  $height = (!empty($node->upsell['modal_height'])) ? $node->upsell['modal_height'] : 300;
+  $upsell_size = 'width:' . $width . 'px;height:' . $height . 'px;';
+  // Pass values to javascript
+  $rejection_days = variable_get('fundraiser_upsell_rejection_lifetime', '180');
+  $settings = array(
+    'width' => $width,
+    'height' => $height,
+    'rejectionDays' => $rejection_days,
   );
-  $content['message_wrapper']['message_return']['content'] = array('#markup' => variable_get('fundraiser_upsell_thank_you_content', 'Thank you!'));
-  // Stop the preview form from actually working
-  unset($content['message_wrapper']['message_modal']['form']['#submit']);
-  unset($content['message_wrapper']['message_modal']['form']['#action']);
-  // Render array and return it
-  return drupal_render($content);
+  drupal_add_js(array('fundraiser_upsell' => $settings), 'setting');
+  // Get the content for the form.
+  $upsell_class = (!empty($node->upsell['class'])) ? $node->upsell['class'] : '';
+  $upsell_content = (!empty($node->upsell['content'])) ? $node->upsell['content'] : variable_get('fundraiser_upsell_default_content', '');
+  $upsell_disclaimer = variable_get('fundraiser_upsell_default_content_disclaimer', '');
+  $upsell_thankyou_text = variable_get('fundraiser_upsell_thank_you_content', 'Thank you for your recurring donation!');
+  $upsell_thankyou = token_replace_multiple($upsell_thankyou_text, array('global' => NULL, 'order' => NULL, 'domain' => NULL));
+  // Build the output
+  $content = '<div id="upsell-preview">This is a preview of the upsell and thank you content for this form.</div>';
+  $content .= '<div id="message-wrapper" class="hidden">';
+  $content .= '<div id="message-modal" class="preview-modal ' . $upsell_class;
+  $content .= '" style="' . $upsell_size . '">';
+  $content .= '<div class="message-content">' . $upsell_content . '</div>';
+  $content .= drupal_get_form('fundraiser_upsell_donation_form', 0);
+  $content .= '<div id="message-disclaimer">' . $upsell_disclaimer . '</div>';
+  $content .= '</div></div>';
+  // Add the thank you message for the preview
+  $content .= '<div id="message-return" class="hidden preview-modal thank-you ' . $upsell_class;
+  $content .= '" style="' . $upsell_size . '"><div class="message-content">' . $upsell_thankyou . '</div></div>';
+
+  return $content;
 }
 
 /**
@@ -88,11 +99,14 @@ function _fundraiser_upsell_content_preview($node) {
 function _fundraiser_upsell_ajax_process($node) {
   $data = $_POST;
   // Check the form token to be sure this is a valid callback
-  if (!drupal_valid_token($data['form_token'], $data['form_id'])) {
-    return drupal_json_output('false');
+  if (!drupal_valid_token($data['form_token'], $data['form_id'], TRUE)) {
+    watchdog('fundraiser_upsell', 'Upsell order %oid failed because of an invalid form token.', array('%oid' => $order->order_id), WATCHDOG_NOTICE);
+    $content = t('There was a problem with your order. Please try again');
   }
-  $content = fundraiser_upsell_upsell_ajax_submit($data);
-  return drupal_json_output($content);
+  else {
+    $content = fundraiser_upsell_upsell_ajax_submit($data);
+  }
+  return drupal_json($content);
 }
 
 /**
@@ -151,7 +165,12 @@ function _fundraiser_upsell_get_order($sid = NULL) {
  * Determine if the node has upsell enabled
  */
 function _fundraiser_upsell_enabled($node) {
-  return (isset($node->upsell['enabled']) && $node->upsell['enabled']) ? TRUE : FALSE;
+  if (!empty($node->upsell['enabled']) && $node->upsell['enabled']) {
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
 }
 
 /**
@@ -175,54 +194,62 @@ function _fundraiser_upsell_find_suggested_amount($amount) {
 
 /**
  * If we need to decouple the original order, clone it to a new order_id and set the value to $0
+ * Much of this comes from fundraiser_create_future_orders()
+ *
  * @param object $order
+ *
  * @return object $new_order
  */
 function _fundraiser_upsell_clone_order($order, $options = NULL) {
-  $donation = fundraiser_donation_get_donation($order->order_id);
-  $new_order = $order;
-  // Modify the order
-  $new_order->log = "Cloned from order# $order->order_id";
-  $new_order->changed = '';
-  $new_order->revision_id = NULL;
-  unset($new_order->revision_uid);
-  unset($new_order->revision_timestamp);
-  unset($new_order->revision_hostname);
-  $new_order->order_id = NULL;
-  $new_order->order_number = NULL;
-  $new_order->in_new = TRUE;
-  // Change the value
-  if (isset($options['amount'])) {
-    $new_order->status = $options['status'];
-    $new_order->commerce_order_total['und'][0]['amount'] = $options['amount'];
-    $new_order->commerce_order_total['und'][0]['data']['components'][0]['price']['amount'] = $options['amount'];
+  // Create new order.
+  $new_order = uc_order_new($order->uid);
+  // Copy all values to new order.
+  $new_id = $new_order->order_id;
+  $new_order = clone $order;
+  $new_order->order_id = $new_id;
+  // Make sure we know this is decoupled
+  $new_order->data['cloned_from'] = $order->order_id;
+  // Set the proper status.
+  $status = (isset($options['status'])) ? $options['status'] : $order->order_status;
+  $new_order->order_status = $status;
+  // Get the amount and set it.
+  $amount = (isset($options['amount'])) ? $options['amount'] : $order->order_total;
+  $new_order->products[0]->price = $amount;
+  $new_order->order_total = $amount;
+  // Calculate and set the start date
+  $date = new DateTime('NOW');
+  // Make sure the payment is next month
+  $date->modify('next month');
+  $date_to_start = strtotime($date->format('Y-m-d'));
+  // Add this to the order data for later processing
+  $new_order->data['date_to_start'] = $date_to_start;
+  // Remove the response from the original order.
+  if (!empty($new_order->data['response'])) {
+    unset($new_order->data['response']);
   }
-  else {
-    $new_order->commerce_order_total['und'][0]['amount'] = 0;
-    $new_order->commerce_order_total['und'][0]['data']['components'][0]['price']['amount'] = 0;
-  }
-  // Create new order
-  commerce_order_save($new_order);
-  // Copy the new order to fundraiser
-  //watchdog('fundraiser', 'Order <pre>@order</pre>',
-  //  array('@order' => print_r($order,true)), WATCHDOG_DEBUG, NULL);
-  //watchdog('fundraiser', 'Donation <pre>@donation</pre>',
-  //  array('@donation' => print_r($donation,true)), WATCHDOG_DEBUG, NULL);
-  $donation_record = array(
-    'did' => $new_order->order_id, // Donation id.
-    'nid' => $donation->nid, // Fundraiser node id.
-    'uid' => $donation->uid, // Submission user id.
-    'sid' => $donation->sid, // Submission id.
-    'status' => $new_order->status,
-    'amount' => $donation->amount,
-    'currency' => $donation->currency,
-    'gateway' => $donation->gateway['id'],
-    'txn_id' => '',
-    'form_url' => $donation->form_url,
-    'created' => REQUEST_TIME,
-    'changed' => REQUEST_TIME,
-  );
-  _fundraiser_create_donation($donation_record);
+  // Remove the old product id and save.
+  unset($new_order->products[0]->order_product_id);
+  uc_order_save($new_order);
+  // Add a comment to the order stating when it will be charged.
+  uc_order_comment_save($new_id, 0, t('Payment will be processed on !date.', array('!date' => date('n/j/Y', $date_to_start))), 'admin');
+  // Add the new order to the fundraiser_recurring table so it will be processed in the future
+  $gateway = $order->data['gateway'];
+  $nid = $order->products[0]->nid;
+  $sid = ($_GET['sid']) ? $_GET['sid'] : 0;
+  $donation_form_url = _fundraiser_donation_form_path($nid);
+  db_query("
+    INSERT INTO {fundraiser_recurring}
+    (master_order_id, order_id, next_charge, gateway, form_url)
+    VALUES (%d, %d, '%s', '%s', '%s')
+    ", $new_id, $new_id, $date_to_start, $gateway, $donation_form_url);
+
+  // Now add it to the fundraiser_webform_order table
+  db_query("
+    INSERT INTO {fundraiser_webform_order}
+    (webform_nid, order_id, sid, recurring_status, user_agent, form_url)
+    VALUES (%d, %d, %d, %d, '%s', '%s')
+    ", $nid, $new_id, $sid, $order->data['recurring_status'], $_SERVER['HTTP_USER_AGENT'], $donation_form_url);
+
   return $new_order;
 }
 
@@ -230,7 +257,7 @@ function _fundraiser_upsell_clone_order($order, $options = NULL) {
  * Check to see if a donation was successfully added as a recurring.
  *
  * @param int $did
- *   The order/donaton id
+ *   The order/donation id
  *
  * @return bool
  */
@@ -240,4 +267,45 @@ function _fundraiser_upsell_check_recurring($did) {
     FROM {fundraiser_sustainers}
     WHERE master_did = :mid', array(':mid' => $did))->fetchField();
   return ($is_recurring > 0) ? TRUE : FALSE;
+}
+
+/**
+ * Add a custom campaign id to the recurring donations in the data arry for each
+ *   order. This will later be used to alter the batch hook and set this campaign
+ *   id for salesforce.
+ *
+ * @param int $master_order_id
+ *   The order id for the master order
+ * @param string $campaign_id
+ *   The campaign id to add to each order
+ */
+function _fundraiser_upsell_set_recurring_campaigns($master_order_id, $campaign_id) {
+  // Grab the list of orders that are recurring in the series
+  $recurring = array();
+  $result = db_query("SELECT * FROM {fundraiser_recurring} WHERE master_order_id = %d", $master_order_id);
+  while ($row = db_fetch_array($result)) {
+    $recurring[] = $row['order_id'];
+  }
+  // Loop through the list
+  foreach ($recurring as $order_id) {
+    // Load the order, add the campaign id, and save the order again
+    $order = uc_order_load($order_id);
+    $order->data['campaign_id'] = $campaign_id;
+    uc_order_save($order);
+  }
+}
+
+/**
+ * Check that a field exists in SF
+ *
+ * @param string $type
+ *   The Salesforce object type.
+ * @param string $field_name
+ *   The Salesforce field name to check
+ *
+ * @return boolean
+ */
+function _fundraiser_upsell_check_sf_field($type = 'Opportunity', $field_name = '') {
+  $objects = salesforce_management_api_fieldmap_objects('salesforce');
+  return (isset($objects[$type]) && isset($objects[$type]['fields'][$field_name])) ? TRUE : FALSE;
 }

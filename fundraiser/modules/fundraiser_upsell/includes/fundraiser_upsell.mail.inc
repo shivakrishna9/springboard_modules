@@ -118,6 +118,10 @@ function fundraiser_upsell_admin_thank_you_submit($form, $form_state) {
  * Button submit callback, triggers mail send when clicked.
  */
 function fundraiser_upsell_send_test($form, $form_state) {
+  // Run it through the normal submit functions to save values
+  mailtron_mail_form_submit($form, $form_state);
+  fundraiser_upsell_admin_thank_you_submit($form, $form_state);
+  // Now, process and send the test email
   module_load_include('inc', 'email_wrappers', 'email_wrappers.api');
   $params = array(
     'name' => 'email_admin_form',
@@ -125,6 +129,10 @@ function fundraiser_upsell_send_test($form, $form_state) {
     'delta' => 'thank_you_settings',
   );
   $mail = email_wrappers_mail_load($params);
+  // Modify the messages to replace tokens
+  $mail->subject = token_replace_multiple($mail->subject, array('global' => NULL, 'order' => $order, 'domain' => NULL));
+  $mail->html_body = token_replace_multiple($mail->html_body, array('global' => NULL, 'order' => $order, 'domain' => NULL));
+  $mail->text_body = token_replace_multiple($mail->text_body, array('global' => NULL, 'order' => $order, 'domain' => NULL));
   email_wrappers_send_mail($mail, $params);
 }
 
