@@ -1,13 +1,11 @@
 <?php
 /**
  * @file
- * fundraiser_upsell.install
  * Install, update, and uninstall functions for the fundraiser_upsell module.
- *
  */
 
 /**
- * Implementation of hook_install().
+ * Implements hook_install().
  */
 function fundraiser_upsell_install() {
   db_query("UPDATE {system} SET weight = 5 WHERE name = 'fundraiser_upsell'");
@@ -30,7 +28,7 @@ function fundraiser_upsell_install() {
 }
 
 /**
- * Implementation of hook_uninstall().
+ * Implements hook_uninstall().
  */
 function funsraiser_upsell_uninstall() {
   variable_del('fundraiser_upsell_acceptance_enabled');

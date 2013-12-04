@@ -8,7 +8,7 @@
  * Admin configuration form for the Fundraiser Upsell global settings.
  */
 function fundraiser_upsell_admin_settings_form($form, &$form_state) {
-  // Set the default bracket info
+  // Set the default bracket info.
   $brackets_default = array(
     0 => array(
       'low' => 0,
@@ -27,7 +27,7 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
     ),
   );
   $brackets = variable_get("fundraiser_upsell_brackets", $brackets_default);
-  // Set the delta for the number of brackets plus one extra blank
+  // Set the delta for the number of brackets plus one extra blank.
   if (isset($_POST['brackets_delta'])) {
     $delta = $_POST['brackets_delta'] + 1;
   }
@@ -39,7 +39,7 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
   }
   $default_content = '<h3>Become a</h3><h2>MONTHLY DONOR</h2><p>Your donation will repeat every month.</p>';
   $default_disclaimer = '<em>By signing up to be a monthly donor, your credit card will be charged the monthly amount you specify beginning next month.</em>';
-  // Build the form
+  // Build the form.
   $form = array();
   $form['fundraiser_upsell_brackets'] = array(
     '#title' => t('Upsell Brackets'),
@@ -48,12 +48,12 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
     '#suffix' => '</div>',
     '#description' => 'Leave a row of fields blank to delete that row of brackets.',
   );
-  // This is the container that hold the brackets and is rebuilt with AJAX call
+  // This is the container that hold the brackets and is rebuilt with AJAX call.
   $form['fundraiser_upsell_brackets']['brackets'] = array(
     '#prefix' => '<div id="bracket-amounts">',
     '#suffix' => '</div>',
   );
-  // Build and fill the brackets
+  // Build and fill the brackets.
   for ($i = 0; $i < $delta; ++$i) {
     $form['fundraiser_upsell_brackets']['brackets']['fundraiser_upsell_brackets_low_' . $i] = array(
       '#title' => t('Low Value'),
@@ -80,17 +80,18 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
       '#suffix' => "</div>",
     );
   }
-  // Store the number of brackets for later
+  // Store the number of brackets for later.
   $form['fundraiser_upsell_brackets']['brackets']['brackets_delta'] = array(
     '#type' => 'hidden',
     '#value' => $delta,
   );
-  // Button to add another bracket and rebuild this section
+  // Button to add another bracket and rebuild this section.
   $form['fundraiser_upsell_brackets']['add_more'] = array(
     '#type' => 'submit',
     '#value' => t('Add another'),
     '#description' => t("Click here to add more brackets."),
-    '#submit' => array('fundraiser_upsell_admin_settings_ajax_submit'), // If no javascript action.
+    // If no javascript action.
+    '#submit' => array('fundraiser_upsell_admin_settings_ajax_submit'),
     '#ajax' => array(
       'callback' => '_fundraiser_upsell_admin_settings_ajax',
       'wrapper' => 'bracket-amounts',
@@ -100,15 +101,14 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
     '#prefix' => '<div style="float: left; clear: both; padding-top: 1em">',
     '#suffix' => "</div>",
   );
-  // Build the rest of the form
+  // Build the rest of the form.
   $form['fundraiser_upsell_default_content'] = array(
     '#title' => t('Default content for Upsell'),
     '#type' => 'textarea',
     '#default_value' => variable_get('fundraiser_upsell_default_content', $default_content),
   );
-  // @TODO : allow WYSIWYG format selection
-  //$form['fundraiser_upsell_default_content']['format'] = filter_form($myfield1['format'], NULL, array('field1_format'));
-  // @TODO : add in the token list
+  // @todo : Allow WYSIWYG format selection.
+  // @todo : Add in the token list.
   $form['fundraiser_upsell_default_content_disclaimer'] = array(
     '#title' => t('Default disclaimer for Upsell content'),
     '#type' => 'textfield',
@@ -168,20 +168,21 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
     '#default_value' => variable_get('fundraiser_upsell_decouple', 0),
     '#description' => t('Decouple mode for recurring donations requires a change in Salesforce for proper tracking. You need to add a text field called "Initial_Upsell_Donation__c" to both the recurring and single donation objects.'),
   );
-  // Additional submit handler to package the bracket data into a single variable
+  // Additional submit handler to package the bracket data
+  // into a single variable.
   $form['#submit'][] = 'fundraiser_upsell_admin_settings_form_submit';
 
   return system_settings_form($form);
 }
 
 /**
- * Validation handler for the admin upsell config
+ * Validation handler for the admin upsell config.
  */
 function fundraiser_upsell_admin_settings_form_validate($form, &$form_state) {
   $vals = $form_state['values'];
-  // Make sure that all of the bracket settings are numeric only
+  // Make sure that all of the bracket settings are numeric only.
   $delta = $vals['brackets_delta'];
-  // Loop though the bracket values
+  // Loop though the bracket values.
   for ($i = 0; $i < $delta; ++$i) {
     if (!empty($vals['fundraiser_upsell_brackets_low_' . $i]) && !is_numeric($vals['fundraiser_upsell_brackets_low_' . $i])) {
       form_set_error("fundraiser_upsell_brackets][brackets][fundraiser_upsell_brackets_low_$i", t('The bracket values must be numbers only.'));
@@ -193,7 +194,7 @@ function fundraiser_upsell_admin_settings_form_validate($form, &$form_state) {
       form_set_error('upsell', t('The bracket values must be numbers only.'));
     }
   }
-  // If either cookie is set, it must be a number greater than 0
+  // If either cookie is set, it must be a number greater than 0.
   if ($vals['fundraiser_upsell_acceptance_enabled'] == 1 && (!is_numeric($vals['fundraiser_upsell_acceptance_lifetime']) || $vals['fundraiser_upsell_acceptance_lifetime'] < 1)) {
     form_set_error('upsell', t('Acceptance cookie lifetime must be a number greater than 0.'));
   }
@@ -203,22 +204,25 @@ function fundraiser_upsell_admin_settings_form_validate($form, &$form_state) {
 }
 
 /**
- * Additional submit handler for the admin upsell config
- * This is to collect the upsell brackets into an array and set that to a system
- * variable instead of allow the default setting of one variable per bracket setting.
+ * Additional submit handler for the admin upsell config.
+ *
+ * This is to collect the upsell brackets into an array and set that to a
+ * system variable instead of allowing the default setting of
+ * one variable per bracket setting.
  */
 function fundraiser_upsell_admin_settings_form_submit($form, &$form_state) {
   $delta = $form_state['values']['brackets_delta'];
   $brackets = array();
-  // Loop though the bracket values
+  // Loop though the bracket values.
   for ($i = 0; $i < $delta; ++$i) {
-    // Collect the bracket info into a single array (if it exists)
+    // Collect the bracket info into a single array (if it exists).
     if ((!empty($form_state['values']['fundraiser_upsell_brackets_low_' . $i]) || $form_state['values']['fundraiser_upsell_brackets_low_' . $i] == 0) && !empty($form_state['values']['fundraiser_upsell_brackets_high_' . $i]) && !empty($form_state['values']['fundraiser_upsell_brackets_upsell_' . $i])) {
       $brackets[$i]['low'] = $form_state['values']['fundraiser_upsell_brackets_low_' . $i];
       $brackets[$i]['high'] = $form_state['values']['fundraiser_upsell_brackets_high_' . $i];
       $brackets[$i]['upsell'] = $form_state['values']['fundraiser_upsell_brackets_upsell_' . $i];
     }
-    // Unset the individual bracket fields to prevent addinga  variable for each
+    // Unset the individual bracket fields to prevent
+    // adding a variable for each.
     unset($form_state['values']['fundraiser_upsell_brackets_low_' . $i]);
     unset($form_state['values']['fundraiser_upsell_brackets_high_' . $i]);
     unset($form_state['values']['fundraiser_upsell_brackets_upsell_' . $i]);

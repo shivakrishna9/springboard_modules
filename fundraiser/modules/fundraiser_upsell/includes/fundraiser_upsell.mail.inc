@@ -1,20 +1,20 @@
 <?php
 /**
  * @file
- * fundraiser_upsell.mail.inc - Mail forms and functions
+ * Mail forms and functions for upsell.
  */
 
 /**
- * Admin form for the thank you email functions
+ * Admin form for the thank you email functions.
  */
 function fundraiser_upsell_admin_thank_you_settings() {
-  // Get some default values
+  // Get some default values.
   $form = array();
   $site_mail = variable_get('site_mail', '');
   $site_name = variable_get('site_name', '');
   $thank_you_content = variable_get('fundraiser_upsell_thank_you_content', '');
   $recipient_description = t("This is used to optionally send a test. The final email will be sent to the donation user. For more than one address, addresses should be separated by a comma. Example: test1@example.com,test2@example.com");
-  // Add the thank you content fields
+  // Add the thank you content fields.
   $form['fundraiser_upsell_thank_you_content'] = array(
     '#title' => t('Default content for Upsell Thank You'),
     '#type' => 'textarea',
@@ -39,7 +39,8 @@ function fundraiser_upsell_admin_thank_you_settings() {
     '#title' => t('E-mail settings'),
     '#weight' => -10,
   );
-  // Pull in the required include file to get access to email_wrappers helper functions.
+  // Pull in the required include file
+  // to get access to email_wrappers helper functions.
   module_load_include('inc', 'email_wrappers', 'email_wrappers.api');
   module_load_include('module', 'email_wrappers');
   // Set up some initial parameters for our new mail configuration form.
@@ -50,11 +51,11 @@ function fundraiser_upsell_admin_thank_you_settings() {
   );
   // Generate the mail configuration form.
   $email_form = email_wrappers_mail_form(array(), $params);
-  // Add the email form
+  // Add the email form.
   $form['email'] = $email_form;
   $form['email']['#type'] = 'vertical_tabs';
   $form['email']['#weight'] = -9;
-  // Modify the headers section
+  // Modify the headers section.
   $form['email']['headers']['#title'] = "Mail headers";
   $form['email']['headers']['#weight'] = -5;
   if (empty($form['email']['headers']['from_name']['#default_value'])) {
@@ -76,7 +77,7 @@ function fundraiser_upsell_admin_thank_you_settings() {
     '#submit' => array('fundraiser_upsell_send_test'),
     '#weight' => 2,
   );
-  // Modify the message section
+  // Modify the message section.
   $form['email']['message']['#title'] = "Mail body";
   $form['email']['message']['#weight'] = -6;
   if (empty($form['email']['message']['subject']['#default_value'])) {
@@ -95,7 +96,7 @@ function fundraiser_upsell_admin_thank_you_settings() {
     '#global_types' => FALSE,
     '#click_insert' => TRUE,
   );
-  // Move the button and validation
+  // Move the button and validation.
   $form['save'] = $form['email']['save'];
   $form['#validate'] = $form['email']['#validate'];
   $form['#submit'] = $form['email']['#submit'];
@@ -108,7 +109,7 @@ function fundraiser_upsell_admin_thank_you_settings() {
 }
 
 /**
- * Submit callback for the non-email wrapper fields on the thank you settings form
+ * Submit handler for non-email wrapper fields on the thank you settings form.
  */
 function fundraiser_upsell_admin_thank_you_submit($form, $form_state) {
   variable_set('fundraiser_upsell_thank_you_content', $form_state['values']['fundraiser_upsell_thank_you_content']);
@@ -118,10 +119,10 @@ function fundraiser_upsell_admin_thank_you_submit($form, $form_state) {
  * Button submit callback, triggers mail send when clicked.
  */
 function fundraiser_upsell_send_test($form, $form_state) {
-  // Run it through the normal submit functions to save values
+  // Run it through the normal submit functions to save values.
   mailtron_mail_form_submit($form, $form_state);
   fundraiser_upsell_admin_thank_you_submit($form, $form_state);
-  // Now, process and send the test email
+  // Now, process and send the test email.
   module_load_include('inc', 'email_wrappers', 'email_wrappers.api');
   $params = array(
     'name' => 'email_admin_form',
@@ -129,10 +130,22 @@ function fundraiser_upsell_send_test($form, $form_state) {
     'delta' => 'thank_you_settings',
   );
   $mail = email_wrappers_mail_load($params);
-  // Modify the messages to replace tokens
-  $mail->subject = token_replace_multiple($mail->subject, array('global' => NULL, 'order' => $order, 'domain' => NULL));
-  $mail->html_body = token_replace_multiple($mail->html_body, array('global' => NULL, 'order' => $order, 'domain' => NULL));
-  $mail->text_body = token_replace_multiple($mail->text_body, array('global' => NULL, 'order' => $order, 'domain' => NULL));
+  // Modify the messages to replace tokens.
+  $mail->subject = token_replace_multiple($mail->subject, array(
+      'global' => NULL,
+      'order' => $order,
+      'domain' => NULL,
+    ));
+  $mail->html_body = token_replace_multiple($mail->html_body, array(
+      'global' => NULL,
+      'order' => $order,
+      'domain' => NULL,
+    ));
+  $mail->text_body = token_replace_multiple($mail->text_body, array(
+      'global' => NULL,
+      'order' => $order,
+      'domain' => NULL,
+    ));
   email_wrappers_send_mail($mail, $params);
 }
 
@@ -148,11 +161,11 @@ function fundraiser_upsell_send_thank_you($donation) {
     'module' => 'fundraiser_upsell',
     'delta' => 'thank_you_settings',
   );
-  // Load the email wrappers options
+  // Load the email wrappers options.
   $mail = email_wrappers_mail_load($params);
-  // Modify the "to:" information to match the donation
+  // Modify the "to:" information to match the donation.
   $mail->recipients = "$to_email <$to_name>";
-  // Modify the messages to replace tokens
+  // Modify the messages to replace tokens.
   $mail->html_message = token_replace($mail->html_message, array('donation' => $donation), array('clear' => TRUE));
   $mail->text_message = token_replace($mail->text_message, array('donation' => $donation), array('clear' => TRUE));
   email_wrappers_send_mail($mail, $params);
