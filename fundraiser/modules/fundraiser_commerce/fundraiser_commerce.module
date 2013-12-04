@@ -1109,6 +1109,13 @@ function _fundraiser_commerce_update_donation_result_data($donation, $success) {
     //'customer_profile_id' => '',
   );
   $data = $result['data'];
+
+  // Store the card on file profile id for reference charges
+  if ($donation->reference_charge == TRUE) {
+    $card = _fundraiser_commerce_donation_cardonfile_card($donation);
+    $data['cardonfile'] = $card->card_id;
+  }
+
   // There may be information already in the donation->data.
   // We want to make sure this information propogates if it's available on the donation object already.
   if (is_array($donation->data) && !empty($donation->data)) {
@@ -1862,4 +1869,53 @@ function fundraiser_commerce_commerce_paypal_ipn_process($order, $payment_method
   fundraiser_donation_update($donation);
   // Finish up the submission to kick off success / decline triggers.
   _fundraiser_donation_submit_after_process($donation);
+}
+
+/**
+ * Load the card on file profile for a donation
+ *
+ * @param $donation Object
+ *    Fundraiser donation object
+ * @param $active boolean
+ *    Flag to select only active cards, defaults to TRUE
+ * @return Object
+ *    Card on file card entity
+ */
+function _fundraiser_commerce_donation_cardonfile_card($donation, $active = TRUE) {
+  // Allow modules to provide their own card on file profile field values
+  if (!empty($donation->gateway['cardonfile callback'])) {
+    $cardonfile_fields = $donation->gateway['cardonfile callback']($donation);
+  }
+  // If this is a credit purchase use the default credit function
+  elseif ($donation->donation['payment_method'] == 'credit') {
+    module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+    $cardonfile_fields = _fundraiser_commerce_credit_card_cardonfile_fields($donation);
+  }
+
+  if (empty($cardonfile_fields)) {
+    return FALSE;
+  }
+
+  // Query for the card on file profile using the provided values
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'commerce_cardonfile')
+  ->propertyCondition('uid', $donation->uid)
+  ->propertyCondition('instance_id', is_string($donation->gateway) ? $donation->gateway : $donation->gateway['id'])
+  ->propertyCondition('card_number', $cardonfile_fields['card_number'])
+  ->propertyCondition('card_exp_month', $cardonfile_fields['card_exp_month'])
+  ->propertyCondition('card_exp_year', $cardonfile_fields['card_exp_year']);
+
+  if ($active) {
+    $query->propertyCondition('status', TRUE);
+  }
+
+  $result = $query->execute();
+
+  if (isset($result['commerce_cardonfile'])) {
+    $id = reset(array_keys($result['commerce_cardonfile']));
+    return commerce_cardonfile_load($id);
+  }
+  else {
+    return FALSE;
+  }
 }

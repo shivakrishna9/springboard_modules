@@ -69,87 +69,41 @@ function commerce_authnet_fundraiser_commerce_validate($submission_fields, $paym
 /**
  * Callback function, charge gateway.
  */
-function commerce_authnet_fundraiser_commerce_charge($payment_method, $donation) {
-  // This gateway allows recurring data.
-  // Based on that - presume that we would normally to use the 'card on file' features provided
-  // by commerce_authnet.
-  // But card on file does not encrypt things as we need it to, so we're going to need to track our
-  // own data and charge systems here. It's a bit of a pain and means we can't readily use the standard
-  // submission anymore. But that's as things go.
-  // The commerce_authnet module needs to be extensively refactored to allow for automatic posts.
-  // TODO: do this as a patch and submit to maintainer.
-  if (module_exists('commerce_cardonfile')) {
-    return _commerce_authnet_fundraiser_commerce_charge_with_cim($payment_method, $donation);
-  }
-  else {
-    return _commerce_authnet_fundraiser_commerce_charge_without_cim($payment_method, $donation);
-  }
-}
-
-/**
- * Easy mode, submit to Authnet without CIM.
- */
-function _commerce_authnet_fundraiser_commerce_charge_without_cim($payment_method, $donation) {
+function commerce_authnet_fundraiser_commerce_charge($method_instance, $donation) {
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
   // Translate from donation settings to the correct values for the plugin.
   $order = commerce_order_load($donation->did);
-  $charge = $order->commerce_order_total[LANGUAGE_NONE][0];
-  // Call to commerce_authnet_aim_submit_form_submit() based on instance callbacks.
+  $wrapper = entity_metadata_wrapper('commerce_order', $order);
+  $charge = $wrapper->commerce_order_total->value();
+
   $pane_form = array(); // Not actually used anywhere in this system, so ignore it.
+
   $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
 
-  // Execute call to commerce_authnet, without CIM enabled (in case card on file is turned on).
-  $result = commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge);
-  $success = FALSE;
-  if ($result !== FALSE) {
-    $success = TRUE;
-  }
-  return $success;
-}
-
-/**
- * Hard mode, without card on file, we need to replicate the work of it in order to re-use the same values
- * from regular CIM. For now those, let's just use CIM to establish the behavior before we replicate.
- */
-function _commerce_authnet_fundraiser_commerce_charge_with_cim($payment_method, $donation) {
-  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
-  // Translate from donation settings to the correct values for the plugin.
-  $order = commerce_order_load($donation->did);
-  $charge = $order->commerce_order_total[LANGUAGE_NONE][0];
-  // Call to commerce_authnet_aim_submit_form_submit() based on instance callbacks.
-  $pane_form = array(); // Not actually used anywhere in this system, so ignore it.
-  $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
+  // Pad single digit exp months for authnet validation
   if (strlen($pane_values['credit_card']['exp_month']) == 1) {
     $pane_values['credit_card']['exp_month'] = '0' . $pane_values['credit_card']['exp_month'];
   }
-  // Account for any CIM if stored on file, we have everything we need here - no need to pull out
-  // of the donation object or habitually load this value from the donation. This may need to be
-  // revised later, but for now I don't think we need to pull sustainer data with the donation.
-  // Commerce needs to execute billing update to call into the gateway to update on asociated CIMs.
-  // As a result, sustainer has NO NEED for cim to be loaded into the donation object. Those tokens Go Away.
-  // If possible at least.
-  // TODO - add encryption?
-  $pane_values['credit_card']['cardonfile_store'] = TRUE; // And store it please.
-  $pane_values['cardonfile'] = 'new'; // Make a new CIM unless we already have one on record.
-  $stored_cards = commerce_cardonfile_load_multiple_by_uid($donation->uid, $payment_method['instance_id']);
-  // Filter out expired cards.
-  if (!empty($stored_cards)) {
-    foreach ($stored_cards as $card_id => $card_data) {
-      if ($card_data->card_exp_year < date('Y') ||
-        $card_data->card_exp_year == date('Y') && $card_data->card_exp_month < date('m')) {
-        unset($stored_cards[$card_id]);
-      }
+
+  $pane_values['frequency'] = $donation->donation['recurs_monthly'] == TRUE ? 'Monthly' : NULL;
+
+  // If card on file is enabled check if we should create a new profile
+  if (module_exists('commerce_cardonfile')) {
+    // If this is not a reference charge be sure to store the data and set the new flag
+    if ($donation->reference_charge == FALSE) {
+      $pane_values['credit_card']['cardonfile_store'] = TRUE;
+      $pane_values['cardonfile'] = 'new';
     }
-    if (!empty($stored_cards)) {
-      // Then grab the first one.
-      foreach ($stored_cards as $card_id => $card_data) {
-        $pane_values['cardonfile'] =  $card_id;
+    elseif ($donation->reference_charge == TRUE) {
+      $card = _fundraiser_commerce_donation_cardonfile_card($donation);
+      if (!empty($card)) {
+        $pane_values['cardonfile'] = $card->card_id;
       }
     }
   }
-  // Gathered pane values now submit.
-  $result = commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge);
-  // At this point the card has been saved on the user profile.
+
+  // Execute the authnet submit handler
+  $result = commerce_authnet_aim_submit_form_submit($method_instance, $pane_form, $pane_values, $order, $charge);
   $success = FALSE;
   if ($result !== FALSE) {
     $success = TRUE;

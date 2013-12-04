@@ -1413,7 +1413,7 @@ function fundraiser_donation_validate(&$form, &$form_state) {
  */
 function fundraiser_donation_submit(&$form, &$form_state) {
   // Create the donation object and load it with the submitted information for the donation.
-  $donation = (object) array();
+  $donation = new stdClass();
   // Using user load to avoid user object being carried by ref around.
   global $user;
   $donation->uid = $user->uid;
@@ -1421,6 +1421,9 @@ function fundraiser_donation_submit(&$form, &$form_state) {
   // Load the node from the form.
   $donation->nid = $form['#node']->nid;
   $donation->node = $form['#node'];
+
+  // Since this is a form submission set the reference charge value to FALSE
+  $donation->reference_charge = FALSE;
 
   // Call hook to gather submission donation values for the donation.
   module_invoke_all('fundraiser_donation_submit', $form, $form_state, $donation);
@@ -1842,6 +1845,7 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
   // And has refund grab them too
   $donation->refunds = FALSE;
   $donation->refunds = fundraiser_refund_get_refunds_by_did($did, TRUE);
+
   // Call hooks to re-create the donation info.
   // The glue modules handle everything else once handed fundraisers info.
   module_invoke_all('fundraiser_donation_get_donation', $donation);

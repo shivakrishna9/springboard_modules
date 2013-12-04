@@ -567,6 +567,10 @@ function fundraiser_sustainers_process_recurring_donations() {
 
       // Get the donation information that we need.
       $donation = fundraiser_donation_get_donation($recurring->did);
+
+      // Set the reference charge flag to TRUE
+      $donation->reference_charge = TRUE;
+
       // Then go through each one of these to charge.
       // Since we already created the donation (and saved any CC info at that time).
       // All we need to do is process it and respond afterwards as needed.
