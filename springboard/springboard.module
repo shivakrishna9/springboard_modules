@@ -357,7 +357,9 @@ function springboard_admin_dashboard() {
   // Add our CSS for display.
   drupal_add_css(drupal_get_path('module', 'springboard') . '/css/springboard.css', 'module');
   $content = '<div class="springboard-dashboard dashboard">';
+  $content = '<div class="springboard-dashboard-customize">';
   $content .= l(t('Customize Dashboard'), 'admin/springboard/options/dashboard', array('attributes' => array('class'=>array('button', 'options-task'))));
+  $content .= '</div>';
   // Load the enabled panes for the dashboard.
   $panes = module_invoke_all('springboard_dashboard_panes');
   drupal_alter('springboard_dashboard_panes', $panes);
