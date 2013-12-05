@@ -157,7 +157,7 @@ function fundraiser_webform_fundraiser_donation_information_table_alter(&$variab
 function fundraiser_webform_node_type_insert($info) {
   if (fundraiser_is_donation_type($info->type)) { // From fundraiser.module.
     _fundraiser_webform_toggle_webform($info->type, TRUE);
-    webform_node_type('update', $info); // From webform.module.
+    webform_node_types('update', $info); // From webform.module.
   }
 }
 
