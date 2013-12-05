@@ -983,7 +983,7 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
     }
     $component['type'] = isset($field['#type']) ? $field['#type'] : '';
     $component['extra'] = isset($field['#extra']) ? $field['#extra'] : array('description' => '');
-    $component['mandatory'] = isset($field['#required']) ? $field['#required'] : 0;
+    $component['required'] = isset($field['#required']) ? $field['#required'] : 0;
     $component['email'] = isset($field['#email']) ? 1 : 0;
     if (isset($field['#profile_map'])) {
       $component['maps_to'] = $field['#profile_map'];

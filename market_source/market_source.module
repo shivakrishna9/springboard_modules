@@ -648,7 +648,7 @@ function _market_source_update_component($nid, $field_key, $field, $pid = 0, $we
     }
     $component['type'] = isset($field['#type']) ? $field['#type'] : '';
     $component['extra'] = isset($field['#extra']) ? $field['#extra'] : array('description' => '');
-    $component['mandatory'] = isset($field['#required']) ? $field['#required'] : 0;
+    $component['required'] = isset($field['#required']) ? $field['#required'] : 0;
     $component['email'] = 1; //isset($field['#email']) ? 1 : 0;
     $component['weight'] = $weight;
     $allow_update = isset($field['#allow_update']) ? $field['#allow_update'] : 0;
