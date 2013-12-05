@@ -14,7 +14,7 @@ module_load_include('inc', 'fundraiser_upsell', 'includes/fundraiser_upsell.help
  */
 function fundraiser_upsell_menu() {
   $items = array();
-  $items['admin/springboard/settings/fundraiser/fundraiser_upsell'] = array(
+  $items['admin/springboard/options/fundraiser/fundraiser_upsell'] = array(
     'title' => 'Sustainer upsell settings',
     'description' => 'Administer fundraiser upsell settings.',
     'access arguments' => array('administer fundraiser upsells'),
@@ -23,7 +23,7 @@ function fundraiser_upsell_menu() {
     'type' => MENU_NORMAL_ITEM,
     'file' => 'includes/fundraiser_upsell.admin.inc',
   );
-  $items['admin/springboard/settings/fundraiser/fundraiser_upsell/general'] = array(
+  $items['admin/springboard/options/fundraiser/fundraiser_upsell/general'] = array(
     'title' => 'General settings',
     'description' => 'Administer fundraiser upsell settings.',
     'access arguments' => array('administer fundraiser upsells'),
@@ -32,7 +32,7 @@ function fundraiser_upsell_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'file' => 'includes/fundraiser_upsell.admin.inc',
   );
-  $items['admin/springboard/settings/fundraiser/fundraiser_upsell/thank-you'] = array(
+  $items['admin/springboard/options/fundraiser/fundraiser_upsell/thank-you'] = array(
     'title' => 'Thank you settings',
     'description' => 'Administer fundraiser upsell "thank you" settings.',
     'access arguments' => array('administer fundraiser upsells'),
