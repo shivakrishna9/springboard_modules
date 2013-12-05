@@ -380,8 +380,8 @@ function springboard_admin_dashboard() {
       $pane_count++;
     }
   }
-  $content .= '<div class="springboard-column-left">' . $column_left . "</div>";
-  $content .= '<div class="springboard-column-right">' . $column_right . "</div>";
+  $content .= '<div class="springboard-column sb-col-left">' . $column_left . "</div>";
+  $content .= '<div class="springboard-column sb-col-right">' . $column_right . "</div>";
   $content .= '</div>';
   return $content;
 }
