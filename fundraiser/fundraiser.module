@@ -1186,7 +1186,7 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
       $form['#validate'][] = 'fundraiser_webform_validate';
       $form['#submit'][] = 'fundraiser_webform_submit';
       $form['#submit'][] = 'fundraiser_confirmation';
-      $form['submit']['#suffix'] = '<div class="fundraiser_submit_message">' . theme('image', drupal_get_path('module', 'fundraiser') . '/padlock.gif') . t('By clicking SUBMIT DONATION your credit card will be securely processed.') . '</div>';
+      $form['actions']['submit']['#suffix'] = '<div class="fundraiser_submit_message">' . theme('image', drupal_get_path('module', 'fundraiser') . '/padlock.gif') . t('By clicking SUBMIT DONATION your credit card will be securely processed.') . '</div>';
     }
   }
 
