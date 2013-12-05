@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Mail forms and functions for upsell.
+ * Mail forms and functions for fundraiser upsell.
  */
 
 /**
@@ -120,6 +120,7 @@ function fundraiser_upsell_admin_thank_you_submit($form, $form_state) {
  */
 function fundraiser_upsell_send_test($form, $form_state) {
   // Run it through the normal submit functions to save values.
+  // @todo This function doesn't exist.  Refactor.
   mailtron_mail_form_submit($form, $form_state);
   fundraiser_upsell_admin_thank_you_submit($form, $form_state);
   // Now, process and send the test email.
@@ -131,17 +132,17 @@ function fundraiser_upsell_send_test($form, $form_state) {
   );
   $mail = email_wrappers_mail_load($params);
   // Modify the messages to replace tokens.
-  $mail->subject = token_replace_multiple($mail->subject, array(
+  $mail->subject = token_replace($mail->subject, array(
       'global' => NULL,
       'order' => $order,
       'domain' => NULL,
     ));
-  $mail->html_body = token_replace_multiple($mail->html_body, array(
+  $mail->html_body = token_replace($mail->html_message, array(
       'global' => NULL,
       'order' => $order,
       'domain' => NULL,
     ));
-  $mail->text_body = token_replace_multiple($mail->text_body, array(
+  $mail->text_body = token_replace($mail->text_message, array(
       'global' => NULL,
       'order' => $order,
       'domain' => NULL,

@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * fundraiser_upsell.admin.inc - Admin forms and functions
+ * Admin forms and functions for upsell.
  */
 
 /**
@@ -39,7 +39,7 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
   }
   $default_content = '<h3>Become a</h3><h2>MONTHLY DONOR</h2><p>Your donation will repeat every month.</p>';
   $default_disclaimer = '<em>By signing up to be a monthly donor, your credit card will be charged the monthly amount you specify beginning next month.</em>';
-  // Build the form.
+
   $form = array();
   $form['fundraiser_upsell_brackets'] = array(
     '#title' => t('Upsell Brackets'),
@@ -48,11 +48,14 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
     '#suffix' => '</div>',
     '#description' => 'Leave a row of fields blank to delete that row of brackets.',
   );
-  // This is the container that hold the brackets and is rebuilt with AJAX call.
+
+  // This is the container that holds the brackets
+  // and is rebuilt with an AJAX call.
   $form['fundraiser_upsell_brackets']['brackets'] = array(
     '#prefix' => '<div id="bracket-amounts">',
     '#suffix' => '</div>',
   );
+
   // Build and fill the brackets.
   for ($i = 0; $i < $delta; ++$i) {
     $form['fundraiser_upsell_brackets']['brackets']['fundraiser_upsell_brackets_low_' . $i] = array(
@@ -93,7 +96,7 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
     // If no javascript action.
     '#submit' => array('fundraiser_upsell_admin_settings_ajax_submit'),
     '#ajax' => array(
-      'callback' => '_fundraiser_upsell_admin_settings_ajax',
+      'callback' => 'fundraiser_upsell_admin_settings_ajax',
       'wrapper' => 'bracket-amounts',
       'method' => 'replace',
       'effect' => 'fade',
@@ -107,8 +110,9 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
     '#type' => 'textarea',
     '#default_value' => variable_get('fundraiser_upsell_default_content', $default_content),
   );
-  // @todo : Allow WYSIWYG format selection.
-  // @todo : Add in the token list.
+
+  // @todo Allow WYSIWYG format selection.
+  // @todo Add in the token list.
   $form['fundraiser_upsell_default_content_disclaimer'] = array(
     '#title' => t('Default disclaimer for Upsell content'),
     '#type' => 'textfield',
@@ -116,17 +120,21 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
     '#default_value' => variable_get('fundraiser_upsell_default_content_disclaimer', $default_disclaimer),
   );
 
-  $salesforce_campaign_options = array_merge(
-    array('' => '(blank)'),
-    salesforce_management_api_get_campaigns()
-  );
+  // @todo Fix this.
+  if (module_exists('salesforce_upsell')) {
+    $salesforce_campaign_options = array_merge(
+      array('' => '(blank)'),
+      salesforce_upsell_get_campaigns()
+    );
 
-  $form['fundraiser_upsell_sf_campaign_id'] = array(
-    '#title' => t('Sustainer Salesforce Campaign ID'),
-    '#type' => 'select',
-    '#default_value' => variable_get('fundraiser_upsell_sf_campaign_id', ''),
-    '#options' => $salesforce_campaign_options,
-  );
+    $form['fundraiser_upsell_sf_campaign_id'] = array(
+      '#title' => t('Sustainer Salesforce Campaign ID'),
+      '#type' => 'select',
+      '#default_value' => variable_get('fundraiser_upsell_sf_campaign_id', ''),
+      '#options' => $salesforce_campaign_options,
+    );
+  }
+
 
   $form['fundraiser_upsell_acceptance'] = array(
     '#title' => t('Acceptance Cookie'),
@@ -233,7 +241,7 @@ function fundraiser_upsell_admin_settings_form_submit($form, &$form_state) {
 /**
  * Callback handler for the donation ask amount form #ajax.
  */
-function _fundraiser_upsell_admin_settings_ajax($form, $form_state) {
+function fundraiser_upsell_admin_settings_ajax($form, $form_state) {
   return $form['fundraiser_upsell_brackets']['brackets'];
 }
 
