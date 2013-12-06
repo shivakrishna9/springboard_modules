@@ -3571,8 +3571,8 @@ function springboard_views_views_default_views() {
   $views[$view -> name] = $view;
 
   $view = new view();
-  $view->name = 'salesforce_soap_errors';
-  $view->description = '';
+  $view->name = 'sbv_soap_errors';
+  $view->description = 'Salesforce SOAP Errors';
   $view->tag = 'default';
   $view->base_table = 'salesforce_log_item';
   $view->human_name = 'salesforce_soap_errors';
@@ -3684,6 +3684,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['pager']['options']['items_per_page'] = '3';
   $handler->display->display_options['pager']['options']['offset'] = '0';
   $handler->display->display_options['block_description'] = 'Unsynched Errors';
-
+  $views[$view -> name] = $view;
+  
   return $views;
 }

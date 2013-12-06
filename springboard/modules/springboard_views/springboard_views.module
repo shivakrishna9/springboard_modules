@@ -259,7 +259,7 @@ function springboard_views_springboard_dashboard_panes() {
     'label' => t('Recent Unsynched SOAP errors'),
     'description' => t('List of recent unsynched SOAP errors.'),
     'content' => '<h2>' . t('Recent Unsynched SOAP errors') . '</h2>' .
-      (module_exists('views') ? views_embed_view('salesforce_soap_errors', 'block') : t('Please enable the Views module to improve your Springboard experience.')),
+      (module_exists('views') ? views_embed_view('sbv_soap_errors', 'block') : t('Please enable the Views module to improve your Springboard experience.')),
     'weight' => 4,
   );
   $panes['springboard_recent_log_entries'] = array(
