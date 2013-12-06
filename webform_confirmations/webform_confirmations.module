@@ -49,12 +49,15 @@ function webform_confirmations_preprocess_webform_confirmation(&$vars) {
       // Replace webform tokens for the submission.
       module_load_include('inc', 'webform', 'includes/webform.submissions');
       $submission = webform_get_submission($vars['node']->nid, $vars['sid']);
-      $vars['confirmation_message'] = _webform_filter_values($vars['confirmation_message'], $vars['node'], $submission, NULL, FALSE, TRUE);
+      //$vars['confirmation_message'] = _webform_filter_values($vars['confirmation_message'], $vars['node'], $submission, NULL, FALSE, TRUE);
       // _webform_filter_values removes HTML if strict is set to TRUE.
       // Replace drupal tokens for the submission.
       $token_set = array('node' => node_load($vars['node']->nid));
+      if ($submission) {
+        $token_set['webform-submission'] = $submission;
+      }
       drupal_alter('webform_confirmations_token_replace', $token_set, $vars['sid']);
-      $vars['confirmation_message'] = token_replace($vars['confirmation_message'], $token_set);
+      $vars['confirmation_message'] = token_replace($vars['confirmation_message'], $token_set, array('clear' => true, 'sanitize' => TRUE));
     }
     else {
       // No access.
