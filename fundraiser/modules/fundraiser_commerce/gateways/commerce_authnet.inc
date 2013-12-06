@@ -88,13 +88,70 @@ function commerce_authnet_fundraiser_commerce_charge($method_instance, $donation
   // Add fundraiser commerce data to the pane values array
   _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
 
+  // For commerce authnet we need to do our own cardonfile storage below, so we set the storage flag to false
+  $pane_values['credit_card']['cardonfile_store'] = FALSE;
+
   // Execute the authnet submit handler
   $result = commerce_authnet_aim_submit_form_submit($method_instance, $pane_form, $pane_values, $order, $charge);
   $success = FALSE;
   if ($result !== FALSE) {
     $success = TRUE;
   }
+
+  // For commerce authnet we store a CIM profile for each order, not just per user
+  if ($success && module_exists('commerce_cardonfile') && $donation->reference_charge == FALSE) {
+    _commerce_authnet_fundraiser_cim_profile_create($pane_values, $method_instance, $order, $donation);
+  }
+
   return $success;
+}
+
+/**
+ * CIM profile creation so we get a new profile for each order
+ *
+ * Also see fundraiser_commerce_commerce_authnet_cim_request_alter
+ */
+function _commerce_authnet_fundraiser_cim_profile_create($pane_values, $method_instance, $order, $donation) {
+  $payment_details = array(
+    'cardNumber' => $pane_values['credit_card']['number'],
+    'expirationDate' => $pane_values['credit_card']['exp_year'] . '-' . $pane_values['credit_card']['exp_month'],
+  );
+
+  if (isset($pane_values['credit_card']['code'])) {
+    $payment_details['cardCode'] = $pane_values['credit_card']['code'];
+  }
+
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+  $billing_address = $order_wrapper->commerce_customer_billing->commerce_customer_address->value();
+
+  if ($response = commerce_authnet_cim_create_customer_profile_request($method_instance, $order, $payment_details)) {
+   // If the Customer Profile creation was a success, store the new card on
+   // file data locally.
+   if ((string) $response->messages->resultCode == 'Ok') {
+      // Build a remote ID that includes the Customer Profile ID and the
+      // Payment Profile ID.
+      $remote_id = (string) $response->customerProfileId . '|' . (string) $response->customerPaymentProfileIdList->numericString;
+      $card_data = commerce_cardonfile_new();
+      $card_data->uid = $order->uid;
+      $card_data->payment_method = $method_instance['method_id'];
+      $card_data->instance_id = $method_instance['instance_id'];
+      $card_data->remote_id = $remote_id;
+      $card_data->card_type = !empty($pane_values['credit_card']['card_type']) ? $pane_values['credit_card']['card_type'] : 'card';
+      $card_data->card_name = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
+      $card_data->card_number = substr($pane_values['credit_card']['number'], -4);
+      $card_data->card_exp_month = $pane_values['credit_card']['exp_month'];
+      $card_data->card_exp_year = $pane_values['credit_card']['exp_year'];
+      $card_data->status = 1;
+
+      // Save and log the creation of the new card on file.
+      commerce_cardonfile_save($card_data);
+
+      // Save this to the donation data array
+      $donation->data['cardonfile'] = $card_data->card_id;
+
+      watchdog('commerce_authnet', 'CIM Customer Profile @profile_id created and saved to user @uid.', array('@profile_id' => (string) $response->customerProfileId, '@uid' => $order->uid));
+    }
+  }
 }
 
 /**

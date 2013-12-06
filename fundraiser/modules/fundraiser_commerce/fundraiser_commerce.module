@@ -1110,12 +1110,6 @@ function _fundraiser_commerce_update_donation_result_data($donation, $success) {
   );
   $data = $result['data'];
 
-  // Store the card on file profile id for reference charges
-  if ($donation->reference_charge == TRUE) {
-    $card = _fundraiser_commerce_donation_cardonfile_card($donation);
-    $data['cardonfile'] = $card->card_id;
-  }
-
   // There may be information already in the donation->data.
   // We want to make sure this information propogates if it's available on the donation object already.
   if (is_array($donation->data) && !empty($donation->data)) {
@@ -1919,6 +1913,11 @@ function _fundraiser_commerce_submit_handler_pane_values(&$pane_values, $donatio
  *    Card on file card entity
  */
 function _fundraiser_commerce_donation_cardonfile_card($donation, $active = TRUE) {
+  // If this donation has the cardonfile value set in its data array, load the card data from that
+  if (!empty($donation->data['cardonfile'])) {
+    return commerce_cardonfile_load($donation->data['cardonfile']);
+  }
+
   // Allow modules to provide their own card on file profile field values
   if (!empty($donation->gateway['cardonfile callback'])) {
     $cardonfile_fields = $donation->gateway['cardonfile callback']($donation);
@@ -1954,5 +1953,15 @@ function _fundraiser_commerce_donation_cardonfile_card($donation, $active = TRUE
   }
   else {
     return FALSE;
+  }
+}
+
+/**
+ * Implements hook_commerce_authnet_cim_request_alter
+ */
+function fundraiser_commerce_commerce_authnet_cim_request_alter($api_request_element) {
+  // Change the description to something unique so we get a new profile each time
+  if (!empty($api_request_element->profile->description)) {
+    $api_request_element->profile->description = substr(t('Order @order taking place at @date', array('@order' => $order->order_id, '@date' => format_date(time()))), 0, 255);
   }
 }
