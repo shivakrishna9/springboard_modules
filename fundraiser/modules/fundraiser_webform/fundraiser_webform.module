@@ -663,9 +663,11 @@ function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $dona
   $submission_fields['mail'] = trim($submission_fields['mail']);
   $donation->donation = $submission_fields;
   $donation->sid = $form_state['values']['details']['sid'];
-  // Figure out which gateway it is that this selection indicates for this node.
+
+  // Set the gateway for this donation, this value is found in the payment method's component settings for the payment type
   $field = &_fundraiser_webform_find_field($form, _fundraiser_webform_parse_component($form['#node']->nid, 'payment_method'));
-  $donation->gateway = $field['#webform_component']['extra']['payment_methods'][$submission_fields['payment_method']]['id'];
+  $gateway_id = $field['#webform_component']['extra']['payment_methods'][ $submission_fields['payment_method'] ]['id'];
+  $donation->gateway = _fundraiser_gateway_info($gateway_id);
 }
 
 /**

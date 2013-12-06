@@ -1872,7 +1872,44 @@ function fundraiser_commerce_commerce_paypal_ipn_process($order, $payment_method
 }
 
 /**
- * Load the card on file profile for a donation
+ * Add values to the pane_values array before they go to the commerce submit handler
+ *
+ * @param $pane_values Array
+ *    Values to be sent to a commerce payment processor, passed by reference
+ * @return nothing
+ */
+function _fundraiser_commerce_submit_handler_pane_values(&$pane_values, $donation) {
+  // If card on file is enabled check if we should create a new profile
+  if (module_exists('commerce_cardonfile')) {
+    // If this is not a reference charge be sure to store the data and set the new flag
+    if ($donation->reference_charge == FALSE) {
+      $pane_values['credit_card']['cardonfile_store'] = TRUE;
+      $pane_values['cardonfile'] = 'new';
+    }
+    elseif ($donation->reference_charge == TRUE) {
+      // Load the card on file card card data
+      $card = _fundraiser_commerce_donation_cardonfile_card($donation);
+      if (!empty($card)) {
+        $pane_values['cardonfile'] = $card->card_id;
+      }
+      else {
+        // Log the missing card data
+        watchdog(
+          'fundraiser',
+          'A reference charge was attempted on donation @id but no stored card data was found.',
+          array('@id' => $donation->did),
+          WATCHDOG_CRITICAL
+        );
+      }
+    }
+  }
+
+  // Allow other modules to alter the pane values
+  drupal_alter('fundraiser_commerce_submit_handler_pane_values', $pane_values, $donation);
+}
+
+/**
+ * Load the card on file card data for a donation
  *
  * @param $donation Object
  *    Fundraiser donation object
@@ -1900,7 +1937,7 @@ function _fundraiser_commerce_donation_cardonfile_card($donation, $active = TRUE
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'commerce_cardonfile')
   ->propertyCondition('uid', $donation->uid)
-  ->propertyCondition('instance_id', is_string($donation->gateway) ? $donation->gateway : $donation->gateway['id'])
+  ->propertyCondition('instance_id', $donation->gateway['id'])
   ->propertyCondition('card_number', $cardonfile_fields['card_number'])
   ->propertyCondition('card_exp_month', $cardonfile_fields['card_exp_month'])
   ->propertyCondition('card_exp_year', $cardonfile_fields['card_exp_year']);

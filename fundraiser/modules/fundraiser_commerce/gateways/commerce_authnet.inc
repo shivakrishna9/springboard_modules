@@ -85,22 +85,8 @@ function commerce_authnet_fundraiser_commerce_charge($method_instance, $donation
     $pane_values['credit_card']['exp_month'] = '0' . $pane_values['credit_card']['exp_month'];
   }
 
-  $pane_values['frequency'] = $donation->donation['recurs_monthly'] == TRUE ? 'Monthly' : NULL;
-
-  // If card on file is enabled check if we should create a new profile
-  if (module_exists('commerce_cardonfile')) {
-    // If this is not a reference charge be sure to store the data and set the new flag
-    if ($donation->reference_charge == FALSE) {
-      $pane_values['credit_card']['cardonfile_store'] = TRUE;
-      $pane_values['cardonfile'] = 'new';
-    }
-    elseif ($donation->reference_charge == TRUE) {
-      $card = _fundraiser_commerce_donation_cardonfile_card($donation);
-      if (!empty($card)) {
-        $pane_values['cardonfile'] = $card->card_id;
-      }
-    }
-  }
+  // Add fundraiser commerce data to the pane values array
+  _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
 
   // Execute the authnet submit handler
   $result = commerce_authnet_aim_submit_form_submit($method_instance, $pane_form, $pane_values, $order, $charge);
