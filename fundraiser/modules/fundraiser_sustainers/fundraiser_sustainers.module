@@ -1429,7 +1429,7 @@ function fundraiser_sustainers_fundraiser_donation_create($donation) {
     $recurs = ($donation->donation['recurs_monthly'][0] == 'recurs') ? TRUE : FALSE;
   }
   elseif (is_array($donation->donation['recurs_monthly']) && isset($donation->donation['recurs_monthly']['recurs'])) {
-    $recurs = ($donation->donation['recurs_monthly']['recurs'] == 'recurs') ? TRUE : FALSE;
+    $recurs = ($donation->donation['recurs_monthly']['recurs'] === 'recurs') ? TRUE : FALSE;
   }
   else {
     $recurs = ($donation->donation['recurs_monthly'] == 'recurs') ? TRUE : FALSE;
