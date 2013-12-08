@@ -1,0 +1,186 @@
+<?php
+
+/**
+ * @file
+ * Integrates Springboard with Services.
+ */
+
+/**
+ * Implements hook_permission().
+ */
+function hook_permission() {
+  return array(
+    'administer springboard api' => array(
+      'title' => t('Administer Springboard API'),
+      'description' => t('Perform administration tasks for Springboard API.'),
+    ),
+  );
+}
+
+function springboard_api_form_alter($form, $form_state, $form_id) {
+  drupal_set_message('form id:' . $form_id);
+}
+/**
+ * Implements hook_menu().
+ */
+function springboard_api_menu() {
+  $items = array();
+  $items['admin/config/services/springboard_api'] = array(
+    'title' => 'Springboard API',
+    'description' => 'Configure Springboard API settings.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_api_admin_settings'),
+    'access arguments' => array('administer springboard api'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'includes/springboard_api.admin.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_services_resources().
+ */
+function springboard_api_services_resources() {
+  $resource = array(
+    'springboard donation' => array(
+      'operations' => array(
+        'create' => array(
+          'help' => 'Create a donation',
+          'file' => array('type' => 'inc', 'module' => 'springboard_api', 'name' => 'resources/springboard_api.donation_resourcess'),
+          'callback' => 'springboard_api_donation_resource_create',
+          'args' => array(
+            array(
+              'name' => 'donation',
+              'optional' => FALSE,
+              'source' => 'data',
+              'description' => 'The node data to create',
+              'type' => 'array',
+            ),
+          ),
+          'access callback' => 'springboard_api_donation_resource_access',
+          'access arguments' => array('create'),
+          'access arguments append' => TRUE,
+        ),
+      ),
+    ),
+    'springboard-forms' => array(
+      'operations' => array(
+        'retrieve' => array(
+          'help' => 'Retrieve detailed information about a specific form.',
+          'file' => array('type' => 'inc', 'module' => 'springboard_api', 'name' => 'resources/springboard_api.form_resources'),
+          'callback' => 'springboard_api_form_resource_retrieve',
+          'args' => array(
+            array(
+              'form_id' => 'nid',
+              'optional' => FALSE,
+              'source' => array('path' => 0),
+              'type' => 'int',
+              'description' => 'The node id of the form to get',
+            ),
+          ),
+          'access callback' => 'springboard_api_form_resource_access',
+          'access arguments' => array('view'),
+          'access arguments append' => TRUE,
+        ),
+        'index' => array(
+          'help' => 'List avaialble forms',
+          'file' => array('type' => 'inc', 'module' => 'springboard_api', 'name' => 'resources/springboard_api.form_resources'),
+          'callback' => 'springboard_api_form_resource_index',
+          'access callback' => 'springboard_api_form_resource_access',
+          'access arguments' => array('index'),
+          'access arguments append' => TRUE,
+        ),
+      ),
+      'targeted_actions' => array(
+        'submit' => array(
+          'help' => 'Submit a webform via the API',
+          'file' => array('type' => 'inc', 'module' => 'springboard_api', 'name' => 'resources/springboard_api.form_resources'),
+          'callback' => 'springboard_api_form_action_submit',
+          'access callback' => 'springboard_api_form_resource_access',
+          'access arguments' => array('submit'),
+          'access arguments append' => TRUE,
+          'args' => array(
+            array(
+              'name' => 'nid',
+              'optional' => FALSE,
+              'source' => array('path' => 0),
+              'type' => 'int',
+              'description' => 'The node id of the webform to submit.',
+            ),
+            array(
+              'name' => 'sumission',
+              'optional' => FALSE,
+              'source' => 'data',
+              'description' => 'Weform submission data.',
+              'type' => 'array',
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+  return $resource;
+}
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ */
+function springboard_api_ctools_plugin_directory($owner, $plugin_type) {
+  if ($owner = 'springboard_api') {
+    return "plugins/$plugin_type";
+  }
+}
+
+/**
+ * Implements hook_ctools_plugin_type().
+ */
+function springboard_api_ctools_plugin_type() {
+  $plugins['api_management_services'] = array(
+    'load themes' => TRUE,
+  );
+
+  return $plugins;
+}
+
+/**
+ *
+ */
+function springboard_api_list_management_services() {
+  $services = array();
+  ctools_include('plugins');
+  $plugins = ctools_get_plugins('springboard_api', 'api_management_services');
+  foreach ($plugins as $plugin) {
+    if (isset($plugin['name']) && isset($plugin['title'])) {
+      $services[$plugin['name']] = $plugin['title'];
+    }
+  }
+  return $services;
+
+}
+
+/**
+ *
+ */
+function springboard_api_get_enabled_management_service() {
+  if ($enabled_service = variable_get('springboard_api_management_service', 0)) {
+    ctools_include('plugins');
+    $plugins = ctools_get_plugins('springboard_api', 'api_management_services');
+    foreach ($plugins as $plugin) {
+      if ($plugin['name'] === $enabled_service) {
+        return $plugin;
+      }
+    }
+  }
+  return FALSE;
+}
+
+/**
+ *
+ *
+ */
+function springboard_api_form_resource_access() {
+  // authenticate
+  // check throttling
+  // log access attempt
+  return TRUE;
+}
