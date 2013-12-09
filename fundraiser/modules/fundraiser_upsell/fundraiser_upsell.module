@@ -77,16 +77,15 @@ function fundraiser_upsell_permission() {
  * donation forms to process the upsell if necessary.
  */
 function fundraiser_upsell_form_alter(&$form, &$form_state, $form_id) {
-  // Only check nodes that are donation types.
-  if (fundraiser_upsell_is_available($form['#node'])) {
-    // Edit form - inject the Upsell settings into the node form.
-    if (!empty($form['#node_edit_form'])) {
-      fundraiser_upsell_add_node_settings($form);
-    }
-    // View form - add the upsell submit function unless blocked by cookies.
-    elseif (fundraiser_upsell_is_enabled($form['#node']) && fundraiser_upsell_should_display_modal()) {
-      $form['#submit'][] = 'fundraiser_upsell_webform_submit';
-    }
+  // Edit form - inject the Upsell settings into the node form.
+  if (!empty($form['#node_edit_form']) && fundraiser_upsell_is_available($form['#node'])) {
+    fundraiser_upsell_add_node_settings($form);
+  }
+  // View form - add the upsell submit function unless blocked by cookies.
+  elseif (!empty($form['#node'])
+    && fundraiser_upsell_is_enabled($form['#node'])
+    && fundraiser_upsell_should_display_modal()) {
+    $form['#submit'][] = 'fundraiser_upsell_webform_submit';
   }
 }
 
@@ -144,16 +143,18 @@ function fundraiser_upsell_add_node_settings(&$form) {
     '#default_value' => !empty($node->upsell['modal_height']) ? $node->upsell['modal_height'] : 300,
     '#description' => t('This will override the site default.'),
   );
-  $form['fundraiser_upsell']['additional_options'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Additional options'),
-    '#weight' => 10,
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
 
   // @todo Fix the salesforce campaign listing stuff.
   if (module_exists('salesforce_upsell')) {
+
+    $form['fundraiser_upsell']['additional_options'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Additional options'),
+      '#weight' => 10,
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+
     $salesforce_campaign_options = array_merge(
       array('' => '(blank)'),
       salesforce_upsell_api_get_campaigns()
@@ -258,6 +259,8 @@ function fundraiser_upsell_webform_submit($form, &$form_state) {
 
 /**
  * Implements hook_page_alter().
+ *
+ * Adds the modal to the page.
  */
 function fundraiser_upsell_page_alter(&$page) {
   // Check for upsell trigger.
