@@ -659,6 +659,7 @@ function fundraiser_upsell_content($node, $sid) {
   // Get the size and class for the modal.
   $width = (!empty($node->upsell['modal_width'])) ? $node->upsell['modal_width'] : 400;
   $height = (!empty($node->upsell['modal_height'])) ? $node->upsell['modal_height'] : 300;
+  $upsell_size = 'width:' . $width . 'px;height:' . $height . 'px;';
   // Pass values to javascript.
   $rejection_days = variable_get('fundraiser_upsell_rejection_lifetime', '180');
   $settings = array(
