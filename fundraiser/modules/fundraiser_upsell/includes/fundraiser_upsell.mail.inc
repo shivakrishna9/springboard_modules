@@ -120,8 +120,7 @@ function fundraiser_upsell_admin_thank_you_submit($form, $form_state) {
  */
 function fundraiser_upsell_send_test($form, $form_state) {
   // Run it through the normal submit functions to save values.
-  // @todo This function doesn't exist.  Refactor.
-  mailtron_mail_form_submit($form, $form_state);
+  email_wrappers_mail_form_submit($form, $form_state);
   fundraiser_upsell_admin_thank_you_submit($form, $form_state);
   // Now, process and send the test email.
   module_load_include('inc', 'email_wrappers', 'email_wrappers.api');
