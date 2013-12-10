@@ -310,10 +310,9 @@ function page_wrappers_update_7002() {
 }
 
 /**
- * add textareas and remove file uploads
+ * add css and js textareas
  */
 function page_wrappers_update_7003() {
-
   $fields = array(
     'css_textarea' => array(
       'field_name' => 'page_wrappers_css_textarea',
@@ -487,29 +486,64 @@ function page_wrappers_update_7003() {
     field_create_field($values);
     field_create_instance($instance);
   }
+}
 
+/**
+ * populate css and js textareas
+ */
+function page_wrappers_update_7105() {
+  //TODO: probably need to batch process this
   $wrappers = db_query("SELECT nid FROM {node} WHERE type = 'page_wrapper'");
-  $css_contents = '';
-  $js_contents = '';
+
+  $css_folder = 'public://page_wrappers/styles/';
+  $js_folder = 'public://page_wrappers/scripts/';
+  $css_dir = file_prepare_directory($css_folder, FILE_CREATE_DIRECTORY);
+  $js_dir = file_prepare_directory($js_folder, FILE_CREATE_DIRECTORY);
+
   foreach($wrappers as $nid) {
+    $css_contents = '';
+    $js_contents = '';
     $node = node_load($nid->nid);
+
     $existing_css = db_query("SELECT * FROM {field_data_page_wrappers_css} WHERE entity_id = :nid AND language = :lang", array(':nid' => $node->nid, ':lang' => $node->language));
     foreach ($existing_css as $css) {
-      $file = file_load($css->page_wrappers_css_fid);
-      $uri = file_create_url($file->uri);
-      $css_contents .= file_get_contents($uri);
+      $existing_css_file = file_load($css->page_wrappers_css_fid);
+      $css_uri = file_create_url($existing_css_file->uri);
+      $css_contents .= file_get_contents($css_uri);
     }
+    if($css_contents != '') {
+      $css_name = trim(drupal_basename($node->title . "_style.css"));
+      $css_file = file_save_data($css_contents, $css_folder . $css_name, FILE_EXISTS_REPLACE);
+      $css_file->filemime = 'text/css';
+      file_save($css_file);
+      $node->page_wrappers_css_textarea[$node->language][0]['value'] = $css_contents;
+      $node->page_wrappers_css_path[$node->language][0]['value'] = $css_folder . $css_file->filename;
+    }
+
     $existing_js = db_query("SELECT * FROM {field_data_page_wrappers_js} WHERE entity_id = :nid AND language = :lang", array(':nid' => $node->nid, ':lang' => $node->language));
     foreach ($existing_js as $js) {
-      $file = file_load($js->page_wrappers_css_fid);
-      $uri = file_create_url($file->uri);
-      $js_contents .= file_get_contents($uri);
+      $existing_js_file = file_load($js->page_wrappers_js_fid);
+      $js_uri = file_create_url($existing_js_file->uri);
+      $js_contents .= file_get_contents($js_uri);
     }
-    $node->page_wrappers_css_textarea[$node->language][0]['value'] = $css_contents;
-    $node->page_wrappers_js_textarea[$node->language][0]['value'] = $js_contents;
+    if($js_contents != '') {
+      $js_name = trim(drupal_basename($node->title . "_script.txt"));
+      $js_file = file_save_data($js_contents, $js_folder . $js_name, FILE_EXISTS_REPLACE);
+      $js_file->filemime = 'text/plain';
+      file_save($js_file);
+      $node->page_wrappers_js_textarea[$node->language][0]['value'] = $js_contents;
+      $node->page_wrappers_js_path[$node->language][0]['value'] = $js_folder . $js_file->filename;
+    }
+
     field_attach_update('node', $node);
   }
+}
+/**
+ * remove old file upload fields
+ */
 
+
+function page_wrappers_update_7005() {
   $fields = array(
     'page_wrappers_css',
     'page_wrappers_js',
@@ -520,5 +554,8 @@ function page_wrappers_update_7003() {
     $field = field_info_field($field_name);
     field_delete_field($field);
   }
-  //cache_clear_all();
+
+  field_cache_clear();
+  drupal_clear_css_cache();
+  drupal_clear_js_cache();
 }
