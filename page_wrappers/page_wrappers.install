@@ -512,7 +512,7 @@ function page_wrappers_update_7004() {
     $existing_css = db_query("SELECT * FROM {field_data_page_wrappers_css} WHERE entity_id = :nid AND language = :lang", array(':nid' => $node->nid, ':lang' => $node->language));
     foreach ($existing_css as $css) {
      $existing_css_file = file_load($css->page_wrappers_css_fid);
-     if($existing_css_file) [
+     if($existing_css_file) {
        $fhandle = fopen($existing_css_file->uri, 'r');
        $css_contents .= fread($fhandle, filesize($existing_css_file->uri));
        fclose($fhandle);
