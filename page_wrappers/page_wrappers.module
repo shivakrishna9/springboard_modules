@@ -1138,3 +1138,8 @@ if (module_exists('context')) {
   include_once 'page_wrappers.context.inc';
 }
 
+function page_wrappers_field_access($op, $field, $entity_type, $entity, $account) {
+  if ($field['field_name'] == 'page_wrappers_css_path' || $field['field_name'] == 'page_wrappers_js_path') {
+    return FALSE;
+  }
+}

@@ -245,12 +245,18 @@ function _page_wrappers_delete_fields() {
     'page_wrappers_css',
     'page_wrappers_js',
     'page_wrappers_html_template',
+    'page_wrappers_css_textarea',
+    'page_wrappers_js_textarea',
+    'page_wrappers_css_path',
+    'page_wrappers_js_path',
   );
   foreach ($fields as $field_name) {
-    $field = field_info_instance('node', $field_name, 'email_wrapper');
-    field_delete_instance($field);
-    $field = field_info_field($field_name);
-    field_delete_field($field);
+    $field = field_info_instance('node', $field_name, 'page_wrapper');
+    if(!empty($field)) {
+      field_delete_instance($field);
+      $field = field_info_field($field_name);
+      field_delete_field($field);
+    }
   }
   drupal_set_message(t('Page Wrapper fields deleted.'));
 }
@@ -301,4 +307,218 @@ function page_wrappers_update_7002() {
   $ret[] = t('Added additional indexes to {node_page_wrappers} table.');
 
   return implode("\n", $ret);
+}
+
+/**
+ * add textareas and remove file uploads
+ */
+function page_wrappers_update_7003() {
+
+  $fields = array(
+    'css_textarea' => array(
+      'field_name' => 'page_wrappers_css_textarea',
+      'type' => 'text_long',
+      'cardinality' => 1,
+      'no_ui' => TRUE,
+      'settings' => array(),
+      'entity_types' => array('node'),
+      '_instance' => array(
+        'field_name' => 'page_wrappers_css_textarea',
+        'entity_type' => 'node',
+        'bundle' => 'page_wrapper',
+        'required' => FALSE,
+        'label' => st('CSS'),
+        'description' => st('CSS code for page wrapper'),
+        'widget' => array(
+          'type' => 'text_textarea',
+          'weight' => 6,
+          'settings' => array(
+            'rows' => 15,
+          ),
+        ),
+        'settings' => array(
+          'text_processing' => 0,
+        ),
+        'display' => array(
+          'default' => array(
+            'label' => 'above',
+            'type' => 'hidden',
+            'settings' => array(),
+            'weight' => 0,
+          ),
+          'teaser' => array(
+            'type' => 'hidden',
+            'label' => 'above',
+            'settings' => array(),
+            'weight' => 0,
+          ),
+        ),
+      ),
+    ),
+    'js_textarea' => array(
+      'field_name' => 'page_wrappers_js_textarea',
+      'type' => 'text_long',
+      'cardinality' => 1,
+      'no_ui' => TRUE,
+      'settings' => array(),
+      'entity_types' => array('node'),
+      '_instance' => array(
+        'field_name' => 'page_wrappers_js_textarea',
+        'entity_type' => 'node',
+        'bundle' => 'page_wrapper',
+        'required' => FALSE,
+        'label' => st('javascript'),
+        'description' => st('javascript code for page wrapper'),
+        'widget' => array(
+          'type' => 'text_textarea',
+          'weight' => 6,
+          'settings' => array(
+            'rows' => 15,
+          ),
+        ),
+        'settings' => array(
+          'text_processing' => 0,
+        ),
+        'display' => array(
+          'default' => array(
+            'label' => 'above',
+            'type' => 'hidden',
+            'settings' => array(),
+            'weight' => 0,
+          ),
+          'teaser' => array(
+            'type' => 'hidden',
+            'label' => 'above',
+            'settings' => array(),
+            'weight' => 0,
+          ),
+        ),
+      ),
+    ),
+    'css_path' => array(
+      'field_name' => 'page_wrappers_css_path',
+      'type' => 'text',
+      'cardinality' => 1,
+      'no_ui' => TRUE,
+      'locked' => TRUE,
+      'settings' => array(),
+      'entity_types' => array('node'),
+      '_instance' => array(
+        'field_name' => 'page_wrappers_css_path',
+        'entity_type' => 'node',
+        'bundle' => 'page_wrapper',
+        'required' => FALSE,
+        'label' => st('CSS Path'),
+        'description' => st(''),
+        'widget' => array(
+          'type' => 'text_textfield',
+          'weight' => 6,
+          'settings' => array(
+            'size' => 60,
+          ),
+        ),
+        'settings' => array(
+          'text_processing' => 0,
+        ),
+        'display' => array(
+          'default' => array(
+            'label' => 'hidden',
+            'type' => 'hidden',
+            'settings' => array(),
+            'weight' => 0,
+          ),
+          'teaser' => array(
+            'type' => 'hidden',
+            'label' => 'hidden',
+            'settings' => array(),
+            'weight' => 0,
+          ),
+        ),
+      ),
+    ),
+    'js_path' => array(
+      'field_name' => 'page_wrappers_js_path',
+      'type' => 'text',
+      'cardinality' => 1,
+      'locked' => TRUE,
+      'no_ui' => TRUE,
+      'settings' => array(
+      ),
+      'entity_types' => array('node'),
+      '_instance' => array(
+        'field_name' => 'page_wrappers_js_path',
+        'entity_type' => 'node',
+        'bundle' => 'page_wrapper',
+        'required' => FALSE,
+        'label' => st('JS Path'),
+        'description' => st(''),
+        'widget' => array(
+          'type' => 'text_textfield',
+          'weight' => 6,
+          'settings' => array(
+            'size' => 60,
+          ),
+        ),
+        'settings' => array(
+          'text_processing' => 0,
+          'no_ui' => TRUE,
+        ),
+        'display' => array(
+          'default' => array(
+            'label' => 'hidden',
+            'type' => 'hidden',
+            'settings' => array(),
+            'weight' => 0,
+          ),
+          'teaser' => array(
+            'type' => 'hidden',
+            'label' => 'hidden',
+            'settings' => array(),
+            'weight' => 0,
+          ),
+        ),
+      ),
+    ),
+  );
+
+  foreach ($fields as $key => $values) {
+    $instance = $values['_instance'];
+    unset($values['_instance']);
+    field_create_field($values);
+    field_create_instance($instance);
+  }
+
+  $wrappers = db_query("SELECT nid FROM {node} WHERE type = 'page_wrapper'");
+  $css_contents = '';
+  $js_contents = '';
+  foreach($wrappers as $nid) {
+    $node = node_load($nid->nid);
+    $existing_css = db_query("SELECT * FROM {field_data_page_wrappers_css} WHERE entity_id = :nid AND language = :lang", array(':nid' => $node->nid, ':lang' => $node->language));
+    foreach ($existing_css as $css) {
+      $file = file_load($css->page_wrappers_css_fid);
+      $uri = file_create_url($file->uri);
+      $css_contents .= file_get_contents($uri);
+    }
+    $existing_js = db_query("SELECT * FROM {field_data_page_wrappers_js} WHERE entity_id = :nid AND language = :lang", array(':nid' => $node->nid, ':lang' => $node->language));
+    foreach ($existing_js as $js) {
+      $file = file_load($js->page_wrappers_css_fid);
+      $uri = file_create_url($file->uri);
+      $js_contents .= file_get_contents($uri);
+    }
+    $node->page_wrappers_css_textarea[$node->language][0]['value'] = $css_contents;
+    $node->page_wrappers_js_textarea[$node->language][0]['value'] = $js_contents;
+    field_attach_update('node', $node);
+  }
+
+  $fields = array(
+    'page_wrappers_css',
+    'page_wrappers_js',
+  );
+  foreach ($fields as $field_name) {
+    $field = field_info_instance('node', $field_name, 'page_wrapper');
+    field_delete_instance($field);
+    $field = field_info_field($field_name);
+    field_delete_field($field);
+  }
+  //cache_clear_all();
 }
