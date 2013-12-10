@@ -491,7 +491,7 @@ function page_wrappers_update_7003() {
 /**
  * populate css and js textareas
  */
-function page_wrappers_update_7004() {
+function page_wrappers_update_7005() {
   //TODO: probably need to batch process this
   $wrappers = db_query("SELECT nid FROM {node} WHERE type = 'page_wrapper'");
 
@@ -507,12 +507,13 @@ function page_wrappers_update_7004() {
 
     $existing_css = db_query("SELECT * FROM {field_data_page_wrappers_css} WHERE entity_id = :nid AND language = :lang", array(':nid' => $node->nid, ':lang' => $node->language));
     foreach ($existing_css as $css) {
-      $existing_css_file = file_load($css->page_wrappers_css_fid);
-      $css_uri = file_create_url($existing_css_file->uri);
-      $css_contents .= file_get_contents($css_uri);
+     $existing_css_file = file_load($css->page_wrappers_css_fid);
+     $fhandle = fopen($existing_css_file->uri, 'r');
+     $css_contents .= fread($fhandle, filesize($existing_css_file->uri));
+     fclose($fhandle);
     }
     if($css_contents != '') {
-      $css_name = trim(drupal_basename($node->title . "_style.css"));
+      $css_name = $node->title . "_style.css";
       $css_file = file_save_data($css_contents, $css_folder . $css_name, FILE_EXISTS_REPLACE);
       $css_file->filemime = 'text/css';
       file_save($css_file);
@@ -523,11 +524,12 @@ function page_wrappers_update_7004() {
     $existing_js = db_query("SELECT * FROM {field_data_page_wrappers_js} WHERE entity_id = :nid AND language = :lang", array(':nid' => $node->nid, ':lang' => $node->language));
     foreach ($existing_js as $js) {
       $existing_js_file = file_load($js->page_wrappers_js_fid);
-      $js_uri = file_create_url($existing_js_file->uri);
-      $js_contents .= file_get_contents($js_uri);
+      $fhandle = fopen($existing_js_file->uri, 'r');
+      $js_contents .= fread($fhandle, filesize($existing_js_file->uri));
+      fclose($fhandle);
     }
     if($js_contents != '') {
-      $js_name = trim(drupal_basename($node->title . "_script.txt"));
+      $js_name = $node->title . "_script.txt";
       $js_file = file_save_data($js_contents, $js_folder . $js_name, FILE_EXISTS_REPLACE);
       $js_file->filemime = 'text/plain';
       file_save($js_file);
@@ -541,7 +543,6 @@ function page_wrappers_update_7004() {
 /**
  * remove old file upload fields
  */
-
 
 function page_wrappers_update_7005() {
   $fields = array(
