@@ -170,12 +170,6 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
     '#default_value' => variable_get('fundraiser_upsell_debug', 0),
     '#description' => t('Debug mode will open the upsell box regardless of cookie settings,'),
   );
-  $form['fundraiser_upsell_decouple'] = array(
-    '#title' => t('Decouple Mode'),
-    '#type' => 'checkbox',
-    '#default_value' => variable_get('fundraiser_upsell_decouple', 0),
-    '#description' => t('Decouple mode for recurring donations requires a change in Salesforce for proper tracking. You need to add a text field called "Initial_Upsell_Donation__c" to both the recurring and single donation objects.'),
-  );
   // Additional submit handler to package the bracket data
   // into a single variable.
   $form['#submit'][] = 'fundraiser_upsell_admin_settings_form_submit';

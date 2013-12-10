@@ -93,13 +93,6 @@ function fundraiser_upsell_schema() {
         'not null' => TRUE,
         'default' => 300,
       ),
-      'decoupled' => array(
-        'description' => 'A boolean indicating whether the upsell recurring donations are decoupled from the original donation.',
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-        'size' => 'tiny',
-      ),
       'campaign_id' => array(
         'description' => 'The campaign id for this upsell recurring donation.',
         'type' => 'varchar',
@@ -112,4 +105,12 @@ function fundraiser_upsell_schema() {
   );
 
   return $schema;
+}
+
+/**
+ * Removes the decoupled field, as all upsells are now decoupled.
+ */
+function fundraiser_upsell_update_7000() {
+  db_drop_field('fundraiser_upsell', 'decoupled');
+  variable_del('fundraiser_upsell_decouple');
 }

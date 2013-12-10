@@ -165,7 +165,7 @@ function fundraiser_upsell_add_node_settings(&$form) {
       '#type' => 'select',
       '#options' => $salesforce_campaign_options,
       '#default_value' => !empty($node->upsell['campaign_id']) ? $node->upsell['campaign_id'] : variable_get('fundraiser_upsell_sf_campaign_id', ''),
-      '#description' => t('Set the campaign id to be used for the upsell form. Please note that if the decouple option above is selected, and this field is left blank, then all recurring donations will have blank campaign ids.'),
+      '#description' => t('Set the campaign id to be used for the upsell form. Please note that if this field is left blank, then all recurring donations will have blank campaign ids.'),
     );
   }
 
@@ -417,21 +417,6 @@ function fundraiser_upsell_create_recurring($order, $amount) {
   fundraiser_create_future_orders($order->order_id, NULL, $amount, $date_to_start);
   // Set the master id to show it's recurring.
   db_query("UPDATE {fundraiser_webform_order} SET recurring_status = 1 WHERE order_id = %d", $order->order_id);
-
-  // @todo Revisit this whole section.
-  // Check to see if the order is in the queue.
-  // If so delete it so we can put it back in as a recurring donation.
-  // Only do this for non-decoupled upsells.
-  // Decoupled upsells need the original one-time donation to export
-  // as an independent opportunity.
-  if (module_exists('queue_api') && empty($order->data['decoupled'])) {
-    if (_in_queue($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE)) {
-      sf_queue_delete($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE);
-    }
-
-    // Put in queue as recurring donation.
-    sf_queue_insert($order->order_id, FUNDRAISER_RECURRING_DONATION_TYPE, 'create');
-  }
 
   // Set the fundraiser recurring acceptance cookie.
   $cookie_lifetime = variable_get('fundraiser_upsell_acceptance_lifetime', 0);
@@ -866,8 +851,7 @@ function _fundraiser_upsell_find_suggested_amount($amount) {
 /**
  * Clone the order for decoupling.
  *
- * If we need to decouple the original order,
- * clone it to a new order_id and set the value to $0.
+ * Clone the original order to a new order_id and set the value to $0.
  * Much of this comes from fundraiser_create_future_orders().
  *
  * @param object $order
