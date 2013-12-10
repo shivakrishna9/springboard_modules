@@ -267,8 +267,8 @@ function fundraiser_upsell_page_alter(&$page) {
   if (!empty($_SESSION['upsell'])) {
     // Add the upsell to the page.
     $node = node_load($_SESSION['upsell']['nid']);
-    $upsell = fundraiser_upsell_content($node, $_SESSION['upsell']['sid']);
-    $page['page_bottom']['message'] = $upsell;
+    $upsell_form = fundraiser_upsell_content($node, $_SESSION['upsell']['sid']);
+    $page['footer']['message-modal'] = $upsell_form;
     // Remove the upsell session data.
     unset($_SESSION['upsell']);
   }
@@ -657,16 +657,21 @@ function fundraiser_upsell_content($node, $sid) {
   $upsell_class = (!empty($node->upsell['class'])) ? $node->upsell['class'] : '';
   $upsell_content = (!empty($node->upsell['content'])) ? $node->upsell['content'] : variable_get('fundraiser_upsell_default_content', '');
   $upsell_disclaimer = variable_get('fundraiser_upsell_default_content_disclaimer', '');
-  // Build the output.
-  $content = '<div id="message-wrapper" class="hidden">';
-  $content .= '<div id="message-modal" class="live-modal ' . $upsell_class;
-  $content .= '" style="' . $upsell_size . '">';
-  $content .= '<div class="message-content">' . $upsell_content . '</div>';
-  $content .= drupal_get_form('fundraiser_upsell_donation_form', $sid);
-  $content .= '<div id="message-disclaimer">' . $upsell_disclaimer . '</div>';
-  $content .= '</div></div>';
 
-  return $content;
+  // Build the output.
+  $prefix = '<div id="message-wrapper" class="hidden">';
+  $prefix .= '<div id="message-modal" class="live-modal ' . $upsell_class;
+  $prefix .= '" style="' . $upsell_size . '">';
+  $prefix .= '<div class="message-content">' . $upsell_content . '</div>';
+
+  $suffix .= '<div id="message-disclaimer">' . $upsell_disclaimer . '</div>';
+  $suffix .= '</div></div>';
+
+  $form = drupal_get_form('fundraiser_upsell_donation_form', $sid);
+  $form['#prefix'] = $prefix;
+  $form['#suffix'] = $suffix;
+
+  return $form;
 }
 
 /**
