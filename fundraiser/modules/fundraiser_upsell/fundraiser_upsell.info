@@ -5,4 +5,5 @@ package = Jackson River Springboard - extras
 dependencies[] = fundraiser
 dependencies[] = fundraiser_sustainers
 dependencies[] = email_wrappers
+dependencies[] = jquery_update
 version = 7.x-4.x
