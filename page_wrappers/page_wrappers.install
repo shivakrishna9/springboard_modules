@@ -491,7 +491,7 @@ function page_wrappers_update_7003() {
 /**
  * populate css and js textareas
  */
-function page_wrappers_update_7005() {
+function page_wrappers_update_7004() {
   //TODO: probably need to batch process this
   $wrappers = db_query("SELECT nid FROM {node} WHERE type = 'page_wrapper'");
 
