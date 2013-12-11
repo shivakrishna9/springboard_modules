@@ -493,17 +493,24 @@ function page_wrappers_update_7003() {
  */
 function page_wrappers_update_7004() {
   //TODO: probably need to batch process this
-  $wrappers = db_query("SELECT nid FROM {node} WHERE type = 'page_wrapper'");
-
   $css_folder = 'public://page_wrappers/styles/';
   $js_folder = 'public://page_wrappers/scripts/';
-  $css_dir = file_prepare_directory($css_folder, FILE_CREATE_DIRECTORY);
-  $js_dir = file_prepare_directory($js_folder, FILE_CREATE_DIRECTORY);
 
-  if(!$ccs_dir || !$js_dir) {
+  $css_dir = file_prepare_directory($css_folder, FILE_MODIFY_PERMISSIONS);
+  if(!$css_dir) {
+    $css_dir = file_prepare_directory($css_folder, FILE_CREATE_DIRECTORY);
+  }
+
+  $js_dir = file_prepare_directory($js_folder, FILE_MODIFY_PERMISSIONS);
+  if(!$js_dir) {
+    $js_dir = file_prepare_directory($js_folder, FILE_CREATE_DIRECTORY);
+  }
+
+  if(!$css_dir || !$js_dir) {
     throw new DrupalUpdateException('Update could not configure the page wrapper css or javascript directory. Please check file system permissions');
   }
 
+  $wrappers = db_query("SELECT nid FROM {node} WHERE type = 'page_wrapper'");
   foreach($wrappers as $nid) {
     $css_contents = '';
     $js_contents = '';
@@ -514,6 +521,7 @@ function page_wrappers_update_7004() {
      $existing_css_file = file_load($css->page_wrappers_css_fid);
      if($existing_css_file) {
        $fhandle = fopen($existing_css_file->uri, 'r');
+      //if fhandle doesn't exist because physical file is missing or deleted, do we want to throw an exception here or let the script proceed?
        $css_contents .= fread($fhandle, filesize($existing_css_file->uri));
        fclose($fhandle);
      }
@@ -549,7 +557,7 @@ function page_wrappers_update_7004() {
       $node->page_wrappers_js_path[$node->language][0]['value'] = $js_folder . $js_file->filename;
     }
 
-    field_attach_update('node', $node);
+    field_attach_update('node', $node); //or node_save()
   }
 }
 /**
