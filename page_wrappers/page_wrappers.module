@@ -198,6 +198,49 @@ function page_wrappers_form(&$node, &$form_state) {
 }
 
 /**
+ * Create or update js and css files for saving during nodeapi operations
+ */
+
+function page_wrappers_node_presave($node) {
+  if($node->type == 'page_wrapper') {
+    $css_content =  $node->page_wrappers_css_textarea[$node->language][0]['value'];
+    $js_content = $node->page_wrappers_js_textarea[$node->language][0]['value'];
+
+    if(isset($css_content) || isset($js_content)) {
+
+      $css_folder = 'public://page_wrappers/styles/';
+      $js_folder = 'public://page_wrappers/scripts/';
+
+      $css_dir = file_prepare_directory($css_folder, FILE_MODIFY_PERMISSIONS);
+      if(!$css_dir) {
+        $css_dir = file_prepare_directory($css_folder, FILE_CREATE_DIRECTORY);
+      }
+
+      $js_dir = file_prepare_directory($js_folder, FILE_MODIFY_PERMISSIONS);
+      if(!$js_dir) {
+        $js_dir = file_prepare_directory($js_folder, FILE_CREATE_DIRECTORY);
+      }
+
+      $js_name = $node->title . "_script.js";
+      $js_file = file_save_data($js_contents, $js_folder . $js_name, FILE_EXISTS_REPLACE);
+      if(isset($js_file)) {
+        $js_file->filemime = 'text/plain';
+        file_save($js_file);
+      }
+      $css_name = $node->title . "_style.css";
+      $css_file = file_save_data($css_contents, $css_folder . $css_name, FILE_EXISTS_REPLACE);
+      if(isset($css_file)) {
+        $css_file->filemime = 'text/css';
+        file_save($css_file);
+      }
+      $node->page_wrappers_css_path[$node->language][0]['value'] = $css_folder . $css_file->filename;
+      $node->page_wrappers_js_path[$node->language][0]['value'] = $js_folder . $css_file->filename;
+    }
+  }
+}
+
+
+/**
  * Implements of hook_node_view().
  */
 function page_wrappers_node_view($node, $view_mode) {
@@ -222,7 +265,6 @@ function page_wrappers_node_update($node) {
       ))
       ->condition('nid', $node->nid)
       ->execute();
-
     // Nuke caches so page wrapper is applied to itself by the theme layer.
     drupal_flush_all_caches();
   }
