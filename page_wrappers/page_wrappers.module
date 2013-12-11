@@ -412,28 +412,62 @@ function page_wrappers_form_page_wrapper_node_form_alter(&$form, $form_state) {
 
   $form['css_fieldset'] = array(
   '#type' => 'fieldset',
-  '#title' => t('CSS Settings'),
+  '#title' => t('Style Sheet'),
   '#weight' => -4,
   '#collapsible' => TRUE,
   '#collapsed' => FALSE,
   '#description' => t('You have two choices when it comes to the page wrapper\'s stylesheet. You can use an existing CSS file that was created by another page wrapper, or enter unique CSS. If you choose to create new CSS, it will be avilable for use by other page wrappers'),
-
-);
-  $form['css_fieldset']['page_wrapper_alternate_css'] = array(
-    '#type' => 'select',
-    '#title' => t('Alternate CSS'),
-    '#options' => $wrappers,
-    '#default_value' => '',
-    '#description' => t(''),
-    '#weight' => -4,
   );
+  $form['css_fieldset']['existing']['pw_existing'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Use Existing CSS'),
+    '#default_value' => 0,
+    '#weight' => -5,
+    '#states' => array(
+      'disabled' => array(
+        ':input[name="pw_custom"]' => array('checked' => TRUE),
+      ),
+    ),
+  );
+  $form['css_fieldset']['existing']['page_wrapper_alternate_css'] = array(
+      '#type' => 'select',
+      '#title' => t(''),
+      '#options' => $wrappers,
+      '#default_value' => '',
+      '#description' => t(''),
+      '#weight' => -4,
+      '#states' => array(
+      'disabled' => array(
+        ':input[name="pw_custom"]' => array('checked' => TRUE),
+       ),
+    ),
+  );
+  if(empty($wrappers)) {
+    $form['css_fieldset']['existing']['page_wrapper_alternate_css']['#disabled'] = TRUE;
+    $form['css_fieldset']['existing']['pw_existing']['#disabled'] = TRUE;
+    $form['css_fieldset']['existing']['page_wrapper_alternate_css']['#description'] = t('No stylesheets are currently available.');
 
-  $form['css_fieldset']['page_wrappers_css_textarea'] = $form['page_wrappers_css_textarea'];
-  $form['css_fieldset']['page_wrappers_css_textarea']['#weight'] = 0;
+  }
+  $form['css_fieldset']['new']['pw_custom'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Create New CSS'),
+    '#default_value' => 0,
+    '#weight' => -5,
+    '#states' => array(
+      'disabled' => array(
+        ':input[name="pw_existing"]' => array('checked' => TRUE),
+       ),
+    ),
+  );
+  $form['page_wrappers_css_textarea'][$form['language']['#value']][0]['value']['#states'] = array(
+    'disabled' => array(
+     ':input[name="pw_existing"]' => array('checked' => TRUE),
+    ),
+  );
+  $form['css_fieldset']['new']['page_wrappers_css_textarea'] = $form['page_wrappers_css_textarea'];
+  $form['css_fieldset']['new']['page_wrappers_css_textarea']['#weight'] = 0;
   unset($form['page_wrappers_css_textarea']);
-
 }
-
 
 /**
  * Implementation of hook_form_BASE_FORM_ID_alter.
