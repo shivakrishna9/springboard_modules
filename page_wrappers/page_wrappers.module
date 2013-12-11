@@ -111,24 +111,31 @@ function page_wrappers_preprocess_page(&$vars) {
       // load the wrapper node
       $wrapper_node = node_load($wrapper['wrapper_nid']);
 
+      //DEPRECATED
       // if there's a css file add it; also see this module's hook_css_alter function
       if (isset($wrapper_node->page_wrappers_css) && count($wrapper_node->page_wrappers_css)) {
-
         $css_files = field_get_items('node', $wrapper_node, 'page_wrappers_css');
-
         foreach ($css_files as $css_file) {
           drupal_add_css($css_file['uri']);
         }
       }
-
       // if there's a js file add it
       if (isset($wrapper_node->page_wrappers_js) && count($wrapper_node->page_wrappers_js)) {
-
         $js_files = field_get_items('node', $wrapper_node, 'page_wrappers_js');
-
         foreach ($js_files as $js_file) {
           drupal_add_js($js_file['uri']);
         }
+      }
+      //END DEPRECATED
+
+      if (isset($wrapper_node->page_wrappers_css_textarea)) {
+        $css_file = $wrapper_node->page_wrappers_css_path[$wrapper_node->language][0]['value'];
+        drupal_add_css($css_file);
+      }
+      // if there's a js file add it
+      if (isset($wrapper_node->page_wrappers_js_textarea)) {
+        $js_file = $wrapper_node->page_wrappers_js_path[$wrapper_node->language][0]['value'];
+        drupal_add_js($js_file);
       }
     }
   }
@@ -159,7 +166,10 @@ function page_wrappers_css_alter(&$css) {
   // If this is a node that has a wrapper assigned remove all the theme stylesheets
   if (!empty($assigned_wrapper)) {
     $wrapper_node = node_load($assigned_wrapper['wrapper_nid']);
-    $css_files = field_get_items('node', $wrapper_node, 'page_wrappers_css');
+
+    $css_files = field_get_items('node', $wrapper_node, 'page_wrappers_css'); //DEPRECATED
+
+    $css_files[]['uri'] = $wrapper_node->page_wrappers_css_path[$wrapper_node->language][0]['value'];
     // If a stylesheet has been added to the wrapper, don't remove it
     $keep = array();
     if (!empty($css_files)) {
@@ -198,6 +208,7 @@ function page_wrappers_form(&$node, &$form_state) {
 }
 
 /**
+ * Implements of hook_node_presave()
  * Create or update js and css files for saving during nodeapi operations
  */
 
@@ -206,35 +217,35 @@ function page_wrappers_node_presave($node) {
     $css_content =  $node->page_wrappers_css_textarea[$node->language][0]['value'];
     $js_content = $node->page_wrappers_js_textarea[$node->language][0]['value'];
 
-    if(isset($css_content) || isset($js_content)) {
+    $css_folder = 'public://page_wrappers/styles/';
+    $js_folder = 'public://page_wrappers/scripts/';
 
-      $css_folder = 'public://page_wrappers/styles/';
-      $js_folder = 'public://page_wrappers/scripts/';
-
+    if(isset($css_content)) {
       $css_dir = file_prepare_directory($css_folder, FILE_MODIFY_PERMISSIONS);
       if(!$css_dir) {
         $css_dir = file_prepare_directory($css_folder, FILE_CREATE_DIRECTORY);
       }
-
-      $js_dir = file_prepare_directory($js_folder, FILE_MODIFY_PERMISSIONS);
-      if(!$js_dir) {
-        $js_dir = file_prepare_directory($js_folder, FILE_CREATE_DIRECTORY);
-      }
-
-      $js_name = $node->title . "_script.js";
-      $js_file = file_save_data($js_contents, $js_folder . $js_name, FILE_EXISTS_REPLACE);
-      if(isset($js_file)) {
-        $js_file->filemime = 'text/plain';
-        file_save($js_file);
-      }
       $css_name = $node->title . "_style.css";
-      $css_file = file_save_data($css_contents, $css_folder . $css_name, FILE_EXISTS_REPLACE);
+      $css_file = file_save_data($css_content, $css_folder . $css_name, FILE_EXISTS_REPLACE);
       if(isset($css_file)) {
         $css_file->filemime = 'text/css';
         file_save($css_file);
       }
       $node->page_wrappers_css_path[$node->language][0]['value'] = $css_folder . $css_file->filename;
-      $node->page_wrappers_js_path[$node->language][0]['value'] = $js_folder . $css_file->filename;
+    }
+
+    if(isset($js_content)) {
+      $js_dir = file_prepare_directory($js_folder, FILE_MODIFY_PERMISSIONS);
+      if(!$js_dir) {
+        $js_dir = file_prepare_directory($js_folder, FILE_CREATE_DIRECTORY);
+      }
+      $js_name = $node->title . "_script.js";
+      $js_file = file_save_data($js_content, $js_folder . $js_name, FILE_EXISTS_REPLACE);
+      if(isset($js_file)) {
+        $js_file->filemime = 'text/plain';
+        file_save($js_file);
+      }
+      $node->page_wrappers_js_path[$node->language][0]['value'] = $js_folder . $js_file->filename;
     }
   }
 }
@@ -385,6 +396,44 @@ function page_wrappers_node_delete($node) {
       ->execute();
   }
 }
+
+function page_wrappers_form_page_wrapper_node_form_alter(&$form, $form_state) {
+  $wrappers = _page_wrappers_available_wrappers();
+  $css = array();
+  foreach($wrappers as $nid => $title) {
+    if($nid > 0) {
+      $node = node_load($nid);
+      $css[$nid] = $node->page_wrappers_css_path[$node->language][0]['value'];
+      if(empty($css[$nid])) {
+        unset($wrappers[$nid]);
+      }
+    }
+  }
+
+  $form['css_fieldset'] = array(
+  '#type' => 'fieldset',
+  '#title' => t('CSS Settings'),
+  '#weight' => -4,
+  '#collapsible' => TRUE,
+  '#collapsed' => FALSE,
+  '#description' => t('You have two choices when it comes to the page wrapper\'s stylesheet. You can use an existing CSS file that was created by another page wrapper, or enter unique CSS. If you choose to create new CSS, it will be avilable for use by other page wrappers'),
+
+);
+  $form['css_fieldset']['page_wrapper_alternate_css'] = array(
+    '#type' => 'select',
+    '#title' => t('Alternate CSS'),
+    '#options' => $wrappers,
+    '#default_value' => '',
+    '#description' => t(''),
+    '#weight' => -4,
+  );
+
+  $form['css_fieldset']['page_wrappers_css_textarea'] = $form['page_wrappers_css_textarea'];
+  $form['css_fieldset']['page_wrappers_css_textarea']['#weight'] = 0;
+  unset($form['page_wrappers_css_textarea']);
+
+}
+
 
 /**
  * Implementation of hook_form_BASE_FORM_ID_alter.
