@@ -330,7 +330,7 @@ function page_wrappers_update_7003() {
         'description' => st('CSS code for page wrapper'),
         'widget' => array(
           'type' => 'text_textarea',
-          'weight' => -4,
+          'weight' => -3,
           'settings' => array(
             'rows' => 15,
           ),
@@ -370,7 +370,7 @@ function page_wrappers_update_7003() {
         'description' => st('javascript code for page wrapper'),
         'widget' => array(
           'type' => 'text_textarea',
-          'weight' => -4,
+          'weight' => -2,
           'settings' => array(
             'rows' => 15,
           ),
