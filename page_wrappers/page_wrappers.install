@@ -547,7 +547,7 @@ function page_wrappers_update_7004() {
       }
     }
     if($js_contents != '') {
-      $js_name = $node->title . "_script.txt";
+      $js_name = $node->title . "_script.js";
       $js_file = file_save_data($js_contents, $js_folder . $js_name, FILE_EXISTS_REPLACE);
       if(isset($js_file)) {
         $js_file->filemime = 'text/plain';
