@@ -557,7 +557,7 @@ function page_wrappers_update_7004() {
     $js_contents = '';
     $node = node_load($nid->nid);
 
-    $existing_css = db_query("SELECT * FROM {field_data_page_wrappers_css} WHERE entity_id = :nid AND language = :lang", array(':nid' => $node->nid, ':lang' => $node->language));
+    $existing_css = db_query("SELECT * FROM {field_data_page_wrappers_css} WHERE entity_id = :nid", array(':nid' => $node->nid));
     foreach ($existing_css as $css) {
      $existing_css_file = file_load($css->page_wrappers_css_fid);
      if($existing_css_file) {
@@ -574,11 +574,11 @@ function page_wrappers_update_7004() {
         $css_file->filemime = 'text/css';
         file_save($css_file);
       }
-      $node->page_wrappers_css_textarea[$node->language][0]['value'] = $css_contents;
-      $node->page_wrappers_css_path[$node->language][0]['value'] = $css_folder . $css_file->filename;
+      $node->page_wrappers_css_textarea[LANGUAGE_NONE][0]['value'] = $css_contents;
+      $node->page_wrappers_css_path[LANGUAGE_NONE][0]['value'] = $css_folder . $css_file->filename;
     }
 
-    $existing_js = db_query("SELECT * FROM {field_data_page_wrappers_js} WHERE entity_id = :nid AND language = :lang", array(':nid' => $node->nid, ':lang' => $node->language));
+    $existing_js = db_query("SELECT * FROM {field_data_page_wrappers_js} WHERE entity_id = :nid", array(':nid' => $node->nid));
     foreach ($existing_js as $js) {
       $existing_js_file = file_load($js->page_wrappers_js_fid);
       if($existing_js_file) {
@@ -594,8 +594,8 @@ function page_wrappers_update_7004() {
         $js_file->filemime = 'text/plain';
         file_save($js_file);
       }
-      $node->page_wrappers_js_textarea[$node->language][0]['value'] = $js_contents;
-      $node->page_wrappers_js_path[$node->language][0]['value'] = $js_folder . $js_file->filename;
+      $node->page_wrappers_js_textarea[LANGUAGE_NONE][0]['value'] = $js_contents;
+      $node->page_wrappers_js_path[LANGUAGE_NONE][0]['value'] = $js_folder . $js_file->filename;
     }
 
     field_attach_update('node', $node); //or node_save()
