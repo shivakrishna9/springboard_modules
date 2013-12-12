@@ -3020,6 +3020,7 @@ function springboard_views_views_default_views() {
   /* Display: Master */
   $handler = $view -> new_display('default', 'Master', 'default');
   $handler -> display -> display_options['title'] = 'Page Templates';
+  $handler -> display -> display_options['use_ajax'] = TRUE;
   $handler -> display -> display_options['use_more_always'] = FALSE;
   $handler -> display -> display_options['access']['type'] = 'perm';
   $handler -> display -> display_options['access']['perm'] = 'edit any page_wrapper content';
@@ -3162,7 +3163,6 @@ function springboard_views_views_default_views() {
 
   /* Display: Page */
   $handler = $view -> new_display('page', 'Page', 'page');
-  $handler -> display -> display_options['exposed_block'] = TRUE;
   $handler -> display -> display_options['path'] = 'admin/springboard/templates/page-templates';
 
   /* Display: Block */
@@ -3196,6 +3196,7 @@ function springboard_views_views_default_views() {
   /* Display: Master */
   $handler = $view -> new_display('default', 'Master', 'default');
   $handler -> display -> display_options['title'] = 'Email Templates';
+  $handler -> display -> display_options['use_ajax'] = TRUE;
   $handler -> display -> display_options['use_more_always'] = FALSE;
   $handler -> display -> display_options['access']['type'] = 'perm';
   $handler -> display -> display_options['access']['perm'] = 'edit any email_wrapper content';
@@ -3338,7 +3339,6 @@ function springboard_views_views_default_views() {
 
   /* Display: Page */
   $handler = $view -> new_display('page', 'Page', 'page');
-  $handler -> display -> display_options['exposed_block'] = TRUE;
   $handler -> display -> display_options['path'] = 'admin/springboard/templates/email-templates';
 
   /* Display: Block */
