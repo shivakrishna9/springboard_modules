@@ -77,6 +77,14 @@ function springboard_api_services_resources() {
               'type' => 'int',
               'description' => 'The node id of the form to get',
             ),
+            array(
+              'name' => 'op',
+              'type' => 'array',
+              'description' => '',
+              'source' => array('param' => 'op'),
+              'optional' => TRUE,
+              'default value' => array(),
+            ),
           ),
           'access callback' => 'springboard_api_form_resource_access',
           'access arguments' => array('view'),
@@ -91,13 +99,37 @@ function springboard_api_services_resources() {
           'access arguments append' => TRUE,
         ),
       ),
-      'targeted_actions' => array(
+      'actions' => array(
         'submit' => array(
           'help' => 'Submit a webform via the API',
           'file' => array('type' => 'inc', 'module' => 'springboard_api', 'name' => 'resources/springboard_api.form_resources'),
           'callback' => 'springboard_api_form_action_submit',
           'access callback' => 'springboard_api_form_resource_access',
           'access arguments' => array('submit'),
+          'access arguments append' => TRUE,
+          'args' => array(
+            array(
+              'name'         => 'nid',
+              'type'         => 'int',
+              'description'  => t('node id of the form to submit.'),
+              'source'       => array('param' => 'form_id'),
+              'optional'     => FALSE,
+            ),
+            array(
+              'name' => 'submission',
+              'optional' => FALSE,
+              'source' => 'data',
+              'description' => 'Weform submission data.',
+              'type' => 'array',
+            ),
+          ),
+        ),
+        'render' => array(
+          'help' => 'request a rendered form',
+          'file' => array('type' => 'inc', 'module' => 'springboard_api', 'name' => 'resources/springboard_api.form_resources'),
+          'callback' => 'springboard_api_form_action_render',
+          'access callback' => 'springboard_api_form_resource_access',
+          'access arguments' => array('render'),
           'access arguments append' => TRUE,
           'args' => array(
             array(
@@ -108,10 +140,10 @@ function springboard_api_services_resources() {
               'description' => 'The node id of the webform to submit.',
             ),
             array(
-              'name' => 'sumission',
-              'optional' => FALSE,
+              'name' => 'wrapper',
+              'optional' => TRUE,
               'source' => 'data',
-              'description' => 'Weform submission data.',
+              'description' => 'page wrapper id.',
               'type' => 'array',
             ),
           ),
@@ -183,4 +215,105 @@ function springboard_api_form_resource_access() {
   // check throttling
   // log access attempt
   return TRUE;
+}
+
+/**
+ * Get form node & field information for a requested form.
+ */
+function springboard_api_get_form_details($nid) {
+  $webform_component_types = webform_component_options();
+  $node = node_load($nid);
+  if (is_object($node)) {
+    // fish for internal name.
+    $lang = $node->language;
+    $internal_name = isset($node->field_fundraiser_internal_name) ? $node->field_fundraiser_internal_name[$lang][0]['safe_value'] : '';
+
+    $form_details = array(
+      'nid' => $node->nid,
+      'title' => $node->title,
+      'internal_name' => $internal_name,
+      'type' => $node->type,
+      'body' => $node->body,
+      'fields' => array(),
+    );
+
+    // build form field details list.
+    foreach ($node->webform['components'] as $cid => $component) {
+      // handle special component types implemented by springboard modules (payment_method, payment_fields, etc)
+      if (!in_array($component->type, array_keys($webform_component_types))) {
+        $form_details['fields'][] = module_invoke_all('springboard_api_describe_custom_component', $node, $component);
+      }
+      // special handling for select fields. Client developers shouldn't require specialist knowledge
+      // of how webform decides what markup type to generate based on various settings in extra, so we
+      // provide a conversion.
+      if ($component['type'] == 'select') {
+        if ($component['extra']['aslist']) {
+          $type = 'select';
+        }
+        elseif ($component['extra']['multiple']) {
+          $type = 'checkbox';
+        }
+        else {
+          $type = 'radio';
+        }
+      }
+      else {
+        $type = $component['type'];
+      }
+
+      // TODO: handle payment method fields.
+      if ($component['type'] == 'payment_method' && module_exists('fundraiser')) {
+        $field_info = _springboard_api_get_payment_field_info($component);
+        $form_details['fields'][] = array(
+          'cid' => $component['cid'],
+          'pid' => $component['pid'],
+          'type' => $component['type'],
+          'children' => $field_info,
+        );
+        continue;
+      }
+
+      $form_details['fields'][] = array(
+        'cid' => $cid,
+        'pid' => $component['pid'],
+        'form_key' => $component['form_key'],
+        'type' => $type,
+        'name' => $component['name'],
+        'required' => $component['mandatory'],
+        'default value' => $component['value'],
+        'accepted values' => !empty($component['extra']['items']) ? _springboard_api_parse_extra_items($component['extra']['items']) : '',
+      );
+    }
+    return $form_details;
+  }
+  else {
+    return FALSE;
+  }
+}
+
+function _springboard_api_parse_extra_items($items) {
+  $parts = explode("\n", $items);
+  foreach ($parts as $part) {
+    $sub = explode('|', $part);
+
+    $values[$sub[0]] = $sub[1];
+  }
+  return $values;
+}
+
+function _springboard_api_get_payment_field_info($component) {
+  $payment_methods = array_filter($component['extra']['payment_methods'], '_fundraiser_webform_payment_method_array_filter_enabled');
+  if (is_array($payment_methods)) {
+    foreach ($payment_methods as $type => $gateway_details) {
+      $gateway = _fundraiser_gateway_info($gateway_details['id']);
+      dsm($gateway, 'gateway');
+      if (isset($gateway['field info callback']) && function_exists($gateway['field info callback'])) {
+        $func = $gateway['field info callback'];
+        $field_info = $func();
+        $payment_fields[$type] = $field_info;
+      }
+    }
+    return $payment_fields;
+  }
+  return FALSE;
 }

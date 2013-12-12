@@ -237,3 +237,52 @@ function _fundraiser_commerce_credit_card_pane_values($donation) {
     ),
   );
 }
+
+/**
+ *
+ */
+function springboard_api_describe_custom_component($node, $component) {
+  $this_year = date('Y');
+  $years[$this_year] = $this_year;
+  for ($i = 1; $i <= 15; $i++) {
+    $years[$this_year + $i] = $this_year + $i;
+  }
+
+  return array(
+    'card_number' => array(
+      'type' => 'textfield',
+      'name' => t('Credit card number'),
+      'required' => TRUE,
+      'default value' => '',
+    ),
+    'expiration_date' => array(
+      'type' => 'fieldset',
+      'children' => array(
+        'card_expiration_month' => array(
+          'type' => 'select',
+          'name' => t('Expiration month'),
+          'required' => TRUE,
+          'default value' => date('n', time()),
+          'accepted values' => array(1,2,3,4,5,6,7,8,9,10,11,12),
+        ),
+        'card_expiration_year' => array(
+          'type' => 'select',
+          'name' => t('Expiration year'),
+          'required' => TRUE,
+          'default value' => $this_year,
+          'accepted values' => $years,
+        ),
+      ),
+    ),
+    'card_cvv' => array(
+      'type' => 'textfield',
+      'name' => t('CVV'),
+      'required' => TRUE,
+    ),
+    'card_type' => array(
+      'type' => 'hidden',
+      'required' => FALSE,
+    ),
+     
+  );
+}

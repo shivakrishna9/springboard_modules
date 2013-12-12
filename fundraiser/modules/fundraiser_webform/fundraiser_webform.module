@@ -1183,3 +1183,67 @@ function fundraiser_webform_get_submission($sid) {
 function _fundraiser_webform_payment_method_array_filter_enabled($method_settings) {
   return !empty($method_settings['status']);
 }
+
+/**
+ * Implements hook_springboard_api
+ */
+function fundraiser_webform_springboard_api_describe_custom_component($node, $component) {
+  $component = (array) $component;
+  if ($component['type'] == 'payment_method') {
+    dsm($component, 'component');
+    $field = array();
+    // get payment methods.
+    $payment_methods = array_keys($component['extra']['payment_methods']);
+    dsm($payment_methods, 'payment methods');
+    if (count($payment_methods) == 1) {
+      $field = array(
+        'cid' => $component['cid'],
+        'pid' => $component['pid'],
+        'form_key' => $component['form_key'],
+        'type' => 'hidden',
+        'name' => $component['name'],
+        'required' => $component['mandatory'],
+        'default value' => $payment_methods[0],
+      );
+    }
+    elseif (count($payment_methods > 1)) {
+      foreach ($component['extra']['payment_methods'] as $type => $payment_method) {
+        if ($payment_method['default'] == 1) {
+          $default = $type;
+          break;
+        }
+      }
+      $field = array(
+        'cid' => $component['cid'],
+        'pid' => $component['pid'],
+        'form_key' => $component['form_key'],
+        'type' => 'radio',
+        'name' => $component['name'],
+        'required' => 1,
+        'default value' => $default,
+        'accepted values' => $payment_methods,
+      );
+    }
+    return $field;
+  }
+
+  if ($component['type'] == 'payment_fields') {
+    // for each available payment method describe via info in the payment method field info callback.
+    foreach ($node->webform['components'] as $cid => $webform_component) {
+      if ($webform_component['form_key'] == 'payment_methods') {
+        $payment_methods = $webform_component;
+        break;
+      }
+    }
+    foreach ($payment_methods['extra']['payment_methods'] as $type => $payment_method) {
+      $gateway_info = _fundraiser_gateway_info($payment_method['id']);
+      // Check against the gateway config for a specific form to go with this payment gateway.
+      if (isset($gateway_info['form info callback'])) {
+        $form_func = $gateway_info['form info callback'];
+        if (function_exists($form_func)) {
+          $field[$type] = $form_func();
+        }
+      }
+    }
+  }
+}

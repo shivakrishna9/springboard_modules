@@ -10,7 +10,11 @@
  *
  *
  */
-function springboard_api_form_resource_retrieve($nid) {
+function springboard_api_form_resource_retrieve($nid, $op = NULL) {
+
+  if ($op) {
+    return springboard_api_form_action_render($nid);
+  }
   $form_details = springboard_api_get_form_details($nid);
   if ($form_details) {
     return $form_details;
@@ -41,76 +45,45 @@ function springboard_api_form_resource_index() {
  *
  *
  */
-function springoard_api_form_action_submit() {
-  $submission = _services_arg_value($submission, 'submission');
-  return $submission;
-  $form_id = 'webform_client_form_' . $nid;
-  $node = node_load($nid);
-  $form_state['webform_completed'] = 1;
-  $form_state['values'] = array(
-    'submit' => t('Donate'),
-    'op' => t('Donate'),
-    'details' => array(
-      'nid' => $nid,
-      'sid' =>  '',
-      'uid' => 0, // fundraiser should figure this out by email address.
-      'page_num' => 1,
-      'page_count' => 1,
-      'finished' => 0,
-    ),
-  );
-  foreach ($node->webform['component'] as $cid => $component) {
-    if ($component['type'] != 'fieldset') {
-      $form_state['values']['submitted'][$cid] = isset($submission[$component['form_key']]) ? $submission[$component['form_key']] : '';
-    }
-  }
-}
-
-/**
- * Get form node & field information for a requested form.
- */
-function springboard_api_get_form_details($nid) {
-  $node = node_load($nid);
-  if (is_object($node)) {
-    // fish for internal name.
-    $lang = $node->language;
-    $internal_name = isset($node->field_fundraiser_internal_name) ? $node->field_fundraiser_internal_name[$lang][0]['safe_value'] : '';
-
-    $form_details = array(
-      'nid' => $node->nid,
-      'title' => $node->title,
-      'internal_name' => $internal_name,
-      'type' => $node->type,
-      'body' => $node->body,
-      'fields' => array(),
+function springboard_api_form_action_submit($nid, $submission) {
+  if (is_numeric($nid) && is_array($submission)) {
+    $form_id = 'webform_client_form_' . $nid;
+    $node = node_load($nid);
+    $form_state['webform_completed'] = 1;
+    $form_state['values'] = array(
+      'submit' => t('Donate'),
+      'op' => t('Donate'),
+      'details' => array(
+        'nid' => $nid,
+        'sid' =>  '',
+        'uid' => 0, // fundraiser should figure this out by email address.
+        'page_num' => 1,
+        'page_count' => 1,
+        'finished' => 0,
+      ),
     );
-
-    // build form field details list.
     foreach ($node->webform['components'] as $cid => $component) {
-      $form_details['fields'][] = array(
-        'cid' => $cid,
-        'pid' => $component['pid'],
-        'form_key' => $component['form_key'],
-        'type' => $component['type'],
-        'name' => $component['name'],
-        'required' => $component['mandatory'],
-        'default value' => $component['value'],
-        'accepted values' => !empty($component['extra']['items']) ? _springboard_api_parse_extra_items($component['extra']['items']) : '',
-      );
+      if ($component['type'] == 'payment_method') {
+        $field_info = _springboard_api_get_payment_field_info($component);
+
+      }
+      elseif ($component['type'] != 'fieldset') {
+        $fields[] = $component['form_key'];
+        $form_state['values']['submitted'][$cid] = isset($submission[$component['form_key']]) ? $submission[$component['form_key']] : '';
+      }
     }
-    return $form_details;
-  }
-  else {
-    return FALSE;
+    return $form_state['values']['submitted'];sta
+    return $fields;
   }
 }
 
-function _springboard_api_parse_extra_items($items) {
-  $parts = explode("\n", $items);
-  foreach ($parts as $part) {
-    $sub = explode('|', $part);
+function springboard_api_form_action_render() {
+  $args = func_get_args();
+  $nid = $args[0];
+  $node = node_load($nid);
+  $submission = array();
+  $wrapper = isset($args[1]) ? $args[1] : FALSE;
 
-    $values[] = $sub[0];
-  }
-  return $values;
+  $form = drupal_get_form('webform_client_form_' . $nid, $node, $submission, $is_draft = FALSE, $filter = TRUE);
+  return render($form);
 }
