@@ -17,8 +17,20 @@ function hook_permission() {
   );
 }
 
-function springboard_api_form_alter($form, $form_state, $form_id) {
+function springboard_api_form_alter(&$form, $form_state, $form_id) {
   drupal_set_message('form id:' . $form_id);
+  if ($form_id == 'page_wrapper_node_form') {
+    $form['test-wrapper'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('test fieldset'),
+    );
+    $form['test-wrapper']['test-select'] = array(
+      '#type' => 'select',
+      '#title' => t('test select'),
+      '#options' => array('1' => 'one', '2' => 'two', '3' => 'three'),
+      '#default_value' => '2',
+    );
+  }
 }
 /**
  * Implements hook_menu().
