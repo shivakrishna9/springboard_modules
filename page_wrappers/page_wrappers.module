@@ -128,13 +128,25 @@ function page_wrappers_preprocess_page(&$vars) {
       }
       //END DEPRECATED
 
-      if (isset($wrapper_node->page_wrappers_css_textarea)) {
-        $css_file = $wrapper_node->page_wrappers_css_path[$wrapper_node->language][0]['value'];
+
+      if(!empty($wrapper_node->page_wrappers_css_source[LANGUAGE_NONE][0]['value'])) {
+        $external = $wrapper_node->page_wrappers_css_source[LANGUAGE_NONE][0]['value'];
+        $ext_node = node_load($external);
+        if(isset($ext_node->page_wrappers_css_path[LANGUAGE_NONE][0]['value'])) {
+          $ext_path = $ext_node->page_wrappers_css_path[LANGUAGE_NONE][0]['value'];
+        }
+      }
+      if (!isset($external) && isset($wrapper_node->page_wrappers_css_textarea[LANGUAGE_NONE][0]['value'])) {
+        $css_file = $wrapper_node->page_wrappers_css_path[LANGUAGE_NONE][0]['value'];
         drupal_add_css($css_file);
       }
+      elseif(isset($external) && isset($ext_path)) {
+        drupal_add_css($ext_path);
+      }
+
       // if there's a js file add it
-      if (isset($wrapper_node->page_wrappers_js_textarea)) {
-        $js_file = $wrapper_node->page_wrappers_js_path[$wrapper_node->language][0]['value'];
+      if (isset($wrapper_node->page_wrappers_js_textarea[LANGUAGE_NONE][0]['value'])) {
+        $js_file = $wrapper_node->page_wrappers_js_path[LANGUAGE_NONE][0]['value'];
         drupal_add_js($js_file);
       }
     }
@@ -169,7 +181,18 @@ function page_wrappers_css_alter(&$css) {
 
     $css_files = field_get_items('node', $wrapper_node, 'page_wrappers_css'); //DEPRECATED
 
-    $css_files[]['uri'] = $wrapper_node->page_wrappers_css_path[$wrapper_node->language][0]['value'];
+    if(!empty($wrapper_node->page_wrappers_css_source[LANGUAGE_NONE][0]['value'])) {
+      $external = $wrapper_node->page_wrappers_css_source[LANGUAGE_NONE][0]['value'];
+      $ext_node = node_load($external);
+      if(isset($ext_node->page_wrappers_css_path[LANGUAGE_NONE][0]['value'])) {
+        $ext_path = $ext_node->page_wrappers_css_path[LANGUAGE_NONE][0]['value'];
+      }
+    }
+    if (!isset($external) && isset($wrapper_node->page_wrappers_css_textarea[LANGUAGE_NONE][0]['value'])) {      $css_files[]['uri'] = $wrapper_node->page_wrappers_css_path[LANGUAGE_NONE][0]['value'];
+    }
+    elseif(isset($external) && isset($ext_path)) {
+        $css_files[]['uri'] = $ext_path;
+    }
     // If a stylesheet has been added to the wrapper, don't remove it
     $keep = array();
     if (!empty($css_files)) {
@@ -214,8 +237,12 @@ function page_wrappers_form(&$node, &$form_state) {
 
 function page_wrappers_node_presave($node) {
   if($node->type == 'page_wrapper') {
-    $css_content =  $node->page_wrappers_css_textarea[$node->language][0]['value'];
-    $js_content = $node->page_wrappers_js_textarea[$node->language][0]['value'];
+    if(isset($node->page_wrappers_css_textarea[LANGUAGE_NONE][0]['value'])) {
+      $css_content =  $node->page_wrappers_css_textarea[LANGUAGE_NONE][0]['value'];
+    }
+    if(isset($node->page_wrappers_js_textarea[LANGUAGE_NONE][0]['value'])) {
+      $js_content = $node->page_wrappers_js_textarea[LANGUAGE_NONE][0]['value'];
+    }
 
     $css_folder = 'public://page_wrappers/styles/';
     $js_folder = 'public://page_wrappers/scripts/';
@@ -231,7 +258,7 @@ function page_wrappers_node_presave($node) {
         $css_file->filemime = 'text/css';
         file_save($css_file);
       }
-      $node->page_wrappers_css_path[$node->language][0]['value'] = $css_folder . $css_file->filename;
+      $node->page_wrappers_css_path[LANGUAGE_NONE][0]['value'] = $css_folder . $css_file->filename;
     }
 
     if(isset($js_content)) {
@@ -245,7 +272,7 @@ function page_wrappers_node_presave($node) {
         $js_file->filemime = 'text/plain';
         file_save($js_file);
       }
-      $node->page_wrappers_js_path[$node->language][0]['value'] = $js_folder . $js_file->filename;
+      $node->page_wrappers_js_path[LANGUAGE_NONE][0]['value'] = $js_folder . $js_file->filename;
     }
   }
 }
@@ -403,13 +430,17 @@ function page_wrappers_form_page_wrapper_node_form_alter(&$form, $form_state) {
   foreach($wrappers as $nid => $title) {
     if($nid > 0) {
       $node = node_load($nid);
-      $css[$nid] = $node->page_wrappers_css_path[$node->language][0]['value'];
+      if(isset($node->page_wrappers_css_path[LANGUAGE_NONE])) {
+        $css[$nid] = $node->page_wrappers_css_path[LANGUAGE_NONE][0]['value'];
+      }
       if(empty($css[$nid])) {
         unset($wrappers[$nid]);
       }
+      if(isset($form['#node']->nid)) {
+        unset($wrappers[$form['#node']->nid]);
+      }
     }
   }
-
   $form['css_fieldset'] = array(
   '#type' => 'fieldset',
   '#title' => t('Style Sheet'),
@@ -418,10 +449,15 @@ function page_wrappers_form_page_wrapper_node_form_alter(&$form, $form_state) {
   '#collapsed' => FALSE,
   '#description' => t('You have two choices when it comes to the page wrapper\'s stylesheet. You can use an existing CSS file that was created by another page wrapper, or enter unique CSS. If you choose to create new CSS, it will be avilable for use by other page wrappers'),
   );
+
+  $source = $form['page_wrappers_css_source'][LANGUAGE_NONE][0]['value']['#default_value'];
+  $alt_value = !empty($source) ? $source : 0;
+  $box_value = !empty($source) ? 1 : 0;
+
   $form['css_fieldset']['existing']['pw_existing'] = array(
     '#type' => 'checkbox',
     '#title' => t('Use Existing CSS'),
-    '#default_value' => 0,
+    '#default_value' => $box_value,
     '#weight' => -5,
     '#states' => array(
       'disabled' => array(
@@ -433,12 +469,15 @@ function page_wrappers_form_page_wrapper_node_form_alter(&$form, $form_state) {
       '#type' => 'select',
       '#title' => t(''),
       '#options' => $wrappers,
-      '#default_value' => '',
+      '#default_value' => array($alt_value),
       '#description' => t(''),
       '#weight' => -4,
       '#states' => array(
       'disabled' => array(
         ':input[name="pw_custom"]' => array('checked' => TRUE),
+       ),
+      'disabled' => array(
+        ':input[name="pw_existing"]' => array('unchecked' => TRUE),
        ),
     ),
   );
@@ -446,12 +485,16 @@ function page_wrappers_form_page_wrapper_node_form_alter(&$form, $form_state) {
     $form['css_fieldset']['existing']['page_wrapper_alternate_css']['#disabled'] = TRUE;
     $form['css_fieldset']['existing']['pw_existing']['#disabled'] = TRUE;
     $form['css_fieldset']['existing']['page_wrapper_alternate_css']['#description'] = t('No stylesheets are currently available.');
-
   }
+
+  if(!$box_value) {
+    $internal = $form['page_wrappers_css_textarea'][LANGUAGE_NONE][0]['value']['#default_value'];
+  }
+  $has_internal = !empty($internal) ? 1 : 0;
   $form['css_fieldset']['new']['pw_custom'] = array(
     '#type' => 'checkbox',
     '#title' => t('Create New CSS'),
-    '#default_value' => 0,
+    '#default_value' => $has_internal,
     '#weight' => -5,
     '#states' => array(
       'disabled' => array(
@@ -459,14 +502,44 @@ function page_wrappers_form_page_wrapper_node_form_alter(&$form, $form_state) {
        ),
     ),
   );
-  $form['page_wrappers_css_textarea'][$form['language']['#value']][0]['value']['#states'] = array(
+  $form['page_wrappers_css_textarea'][LANGUAGE_NONE][0]['value']['#states'] = array(
     'disabled' => array(
      ':input[name="pw_existing"]' => array('checked' => TRUE),
+    ),
+    'disabled' => array(
+     ':input[name="pw_custom"]' => array('unchecked' => TRUE),
     ),
   );
   $form['css_fieldset']['new']['page_wrappers_css_textarea'] = $form['page_wrappers_css_textarea'];
   $form['css_fieldset']['new']['page_wrappers_css_textarea']['#weight'] = 0;
   unset($form['page_wrappers_css_textarea']);
+  $form['#validate'][] = 'page_wrappers_page_wrapper_form_validate';
+  $form['#submit'][] = 'page_wrappers_page_wrapper_form_submit';
+ }
+
+function page_wrappers_page_wrapper_form_validate(&$form, &$form_state) {
+   $form['page_wrappers_css_source']['#parents'] = array('page_wrappers_css_source');
+  if($form_state['values']['pw_existing'] == 0) {
+    form_set_value($form['page_wrappers_css_source'], array(LANGUAGE_NONE => array(0 => array('value' => '0'))), $form_state);
+  }
+  else {
+    form_set_value($form['page_wrappers_css_source'], array(LANGUAGE_NONE => array(0 => array('value' => $form_state['values']['page_wrapper_alternate_css']))), $form_state);
+  }
+
+  //javascript disabled and multiple boxes are checked:
+  if($form_state['values']['pw_existing'] == 1 && $form_state['values']['pw_custom'] == 1) {
+    form_set_error('css_fieldset', "only one css option can be checked");
+  }
+
+  if($form_state['values']['pw_existing'] == 1 && $form_state['values']['page_wrapper_alternate_css'] == 0) {
+    form_set_error('page_wrapper_alternate_css', t("You have opted to select an existing stylesheet, but did make a choice."));
+  }
+  if($form_state['values']['pw_custom'] == 1 && empty($form_state['values']['page_wrappers_css_textarea'][LANGUAGE_NONE][0]['value'])) {
+    form_set_error('css_fieldset', t("You have opted to create a new stylesheet, but did not enter any values."));
+  }
+}
+
+function page_wrappers_page_wrapper_form_submit(&$form, &$form_state) {
 }
 
 /**
@@ -1264,7 +1337,7 @@ if (module_exists('context')) {
 }
 
 function page_wrappers_field_access($op, $field, $entity_type, $entity, $account) {
-  if ($field['field_name'] == 'page_wrappers_css_path' || $field['field_name'] == 'page_wrappers_js_path') {
+  if ($field['field_name'] == 'page_wrappers_css_path' || $field['field_name'] == 'page_wrappers_js_path' || $field['field_name'] == 'page_wrappers_css_source') {
     return FALSE;
   }
 }
