@@ -475,8 +475,7 @@ function _springboard_sf_status() {
         ->execute();
       $batch = $query->fetchObject();
       if ($batch) {
-        $batch_status = t('Batch # @id - @record_count::<span class="successes">@success_count</span>::' .
-          '<span class="failures">@fail_count</span>',
+        $batch_status = t('Batch # @id of @record_count items processed with <span class="successes">@success_count successes</span> and <span class="failures">@fail_count failures</span>.',
           array(
           '@id' => $batch->bid,
           '@record_count' => $batch->count,
@@ -501,8 +500,7 @@ function springboard_dashboard_queue() {
   $form = array();
   $form['submit'] = array(
     '#type' => 'submit',
-    '#value' => t('Submit'),
-    '#prefix' => t('Run Springboard Sync'),
+    '#value' => t('Run Springboard Sync'),
     '#submit' => array('springboard_dashboard_queue_submit'),
   );
   return $form;

@@ -10,11 +10,12 @@
  * - $identity: Array of Salesforce identity information. Only populated if $status is TRUE.
  */
 ?>
-  <p><?php print $variables['status'] ? '<span class="sf-connected">' . t('Salesforce connected') . '</span>' : '<span class="sf-notconncected">' .
-    t('Salesforce not connected ') . l(t('Update authentication'), 'admin/config/salesforce/authorize') . '</span>'; ?></p>
+  <div class="sf-status"><?php print $variables['status'] ? '<p class="sf-connected">' . t('Salesforce connected') . '</p>' : '<p class="sf-notconncected">' .
+    t('Salesforce not connected ') . '</p>' . l(t('Update authentication'), 'admin/config/salesforce/authorize', array('attributes'=>array('class'=>array('button')))) . '</span>'; ?><?php print($status ? render($queue) : ''); ?></div>
   <?php if ($status): ?>
-  <p>Connected as: <?php print $identity['username'];?></p>
-  <p>Organization Id: <?php print $identity['organization_id'];?></p>
+  <ul>
+  <li>Connected as: <?php print $identity['username'];?></li>
+  <li>Organization Id: <?php print $identity['organization_id'];?></li>
+  <?php print isset($variables['batch_status']) ? '<li' . $variables['batch_status'] . '</li>' : ''; ?>
+  </ul>
   <?php endif; ?>
-  <p><?php print isset($variables['batch_status']) ? $variables['batch_status'] : ''; ?></p>
-  <p><?php print render($queue); ?></p>
