@@ -1,0 +1,326 @@
+<?php
+/**
+ * @file
+ * fundraiser_tickets.module
+ */
+
+/**
+ * Implements hook_menu().
+ */
+
+function fundraiser_tickets_menu() {
+  $items = array();
+
+  $items['node/%node/tickets'] = array(
+    'title' => 'Tickets',
+    'description' => 'Ticket settings',
+    'page callback' => 'fundraiser_tickets_edit_settings',
+    'page arguments' => array(1),
+    'access callback' => 'fundraiser_tickets_manage_access',
+    'access arguments' => array(1),
+    'weight' => 2,
+    'type' => MENU_LOCAL_TASK,
+    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+  );
+  $items['node/%node/tickets/settings'] = array(
+    'title' => 'Settings',
+    'description' => 'Ticket settings',
+    'page callback' => 'fundraiser_tickets_edit_settings',
+    'page arguments' => array(1),
+    'access callback' => 'fundraiser_tickets_manage_access',
+    'access arguments' => array(1),
+    'weight' => 3,
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+
+  $items['node/%node/tickets/tickets'] = array(
+    'title' => 'Tickets',
+    'description' => 'Tickets',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_tickets_order_ticket_types_form',1),
+    'access callback' => 'fundraiser_tickets_manage_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'fundraiser_tickets.forms.inc',
+    'weight' => 4,
+  );
+
+  $items['node/%node/tickets/add'] = array(
+    'title' => 'Add ticket type',
+    'description' => 'Add ticket type',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_tickets_ticket_form', 1),
+    'access callback' => 'fundraiser_tickets_manage_access',
+    'access arguments' => array(1),
+    'type' => MENU_CALLBACK,
+    'file' => 'fundraiser_tickets.forms.inc',
+  );
+
+  $items['node/%node/tickets/%commerce_product/edit'] = array(
+    'title' => 'Edit ticket type',
+    'description' => 'Edit ticket type',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_tickets_ticket_form', 1, 3),
+    'access callback' => 'fundraiser_tickets_manage_access',
+    'access arguments' => array(1),
+    'type' => MENU_CALLBACK,
+    'file' => 'fundraiser_tickets.forms.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Menu access callback. Ensure node has ticketing enabled and user has node
+ * 'update' permission.
+ */
+function fundraiser_tickets_manage_access($node, $account = NULL) {
+  global $user;
+  $account = isset($account) ? $account : $user;
+  $ticket_types = fundraiser_tickets_get_ticket_types();
+
+  return node_access('update', $node, $account) && $ticket_types[$node->type] == true;
+}
+
+
+/**
+ * Implements hook_theme().
+ */
+function fundraiser_tickets_theme($existing, $type, $theme, $path) {
+  return array(
+    'fundraiser_tickets_theme_order_ticket_types_form' => array(
+      'render element' => 'element'
+    ),
+  );
+}
+
+/**
+ * Implements hook_webform_component_info().
+ */
+function fundraiser_tickets_webform_component_info() {
+  $components = array();
+  $components['tickets'] = array(
+    'label' => t('Ticket box'),
+    'description' => t('The ticket listing box.'),
+    'features' => array(
+      'csv' => TRUE,
+      'email' => TRUE,
+      'email_address' => FALSE,
+      'email_name' => FALSE,
+      'required' => FALSE,
+      'title_display' => FALSE,
+      'title_inline' => FALSE,
+      'conditional' => FALSE,
+      'group' => FALSE,
+      'spam_analysis' => FALSE,
+      'attachment' => FALSE,
+      'required' => FALSE,
+      'description' => FALSE,
+      'default_value' => FALSE,
+    ),
+    'file' => 'components/tickets.inc',
+  );
+  return $components;
+}
+
+/**
+ * Page callback for the tickets settings management page.
+ */
+function fundraiser_tickets_edit_settings($node){
+
+  module_load_include('inc', 'node', 'node.pages');
+  $form = node_page_edit($node);
+  $form['title']['#access'] = FALSE;
+  $form['field_fundraiser_internal_name']['#access'] = FALSE;
+  $form['body']['#access'] = FALSE;
+  $form['additional_settings']['#access'] = FALSE;
+
+  return drupal_render($form);
+}
+
+/**
+ * Page callback for the tickets management page.
+ */
+function fundraiser_tickets_edit_tickets($node){
+  return 'This is the ticket management screen. <br /><a href="add">Add ticket type</a>';
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function fundraiser_tickets_form_alter(&$form, &$form_state, $form_id) {
+
+  // Do not allow users to muck with defined form keys in component editting form.
+  // They're named what they're named for a reason and we need those keys to remain unharmed.
+  if ($form_id == 'webform_component_edit_form') {
+    $node = node_load($form['nid']['#value']);
+    // For donation types ONLY prevent type trigger.
+    if (fundraiser_tickets_is_ticket_type($node->type)) {
+       $form_key = $form['form_key']['#default_value'];
+      if ($form_key == 'tickets') {
+        $form['form_key']['#disabled'] = TRUE;
+        $form['form_key']['#description'] .= '</br>' . t('This field key is required by Fundraiser and cannot be changed.');
+        $form['form_key']['#value'] = $form['form_key']['#default_value'];
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ *
+ * Alter content type settings to add "Enable ticketed events?" checkbox.
+ */
+function fundraiser_tickets_form_node_form_alter(&$form, &$form_state) {
+  if (arg(0) == 'node' && (arg(2) == 'edit' || arg(1) == 'add')){
+    foreach ($form as $key => $element){
+      if (strstr($key, 'fr_tickets')){
+        $form[$key]['#access'] = FALSE;
+      }
+    }
+  } elseif (arg(0) == 'node' && arg(2) == 'tickets'){
+    $form['#after_build'][] = '_fundraiser_tickets_ticket_settings_form_organize';
+    $form['#validate'] = array();
+    $form['#submit'] = array();
+  }
+}
+
+
+/**
+* Afterbuild function to add fieldsets to the tickets tab
+*/
+function _fundraiser_tickets_ticket_settings_form_organize($form, $form_state){
+    // Create fieldset
+    $form['waitlist']  = array(
+      '#type' => 'fieldset',
+      '#title' => t('Wait List options'),
+      '#weight' => '-5'
+    );
+    $form['waitlist']['fr_tickets_waitlist_form'] = $form['fr_tickets_waitlist_form'];
+    $form['waitlist']['fr_tickets_waitlist_soldout'] = $form['fr_tickets_waitlist_soldout'];
+    $form['waitlist']['fr_tickets_waitlist_closed'] = $form['fr_tickets_waitlist_closed'];
+    unset($form['fr_tickets_waitlist_form']);
+    unset($form['fr_tickets_waitlist_soldout']);
+    unset($form['fr_tickets_waitlist_closed']);
+
+    $form['closed']  = array(
+      '#type' => 'fieldset',
+      '#title' => t('Close settings'),
+      '#weight' => '-3'
+    );
+    $form['closed']['fr_tickets_closed_is_closed'] = $form['fr_tickets_closed_is_closed'];
+    $form['closed']['fr_tickets_closed_close_date'] = $form['fr_tickets_closed_close_date'];
+    $form['closed']['fr_tickets_closed_options'] = $form['fr_tickets_closed_options'];
+    $form['closed']['fr_tickets_closed_redirect'] = $form['fr_tickets_closed_redirect'];
+    $form['closed']['fr_tickets_closed_message'] = $form['fr_tickets_closed_message'];
+    unset($form['fr_tickets_closed_is_closed']);
+    unset($form['fr_tickets_closed_close_date']);
+    unset($form['fr_tickets_closed_options']);
+    unset($form['fr_tickets_closed_redirect']);
+    unset($form['fr_tickets_closed_message']);
+
+    $form['soldout']  = array(
+      '#type' => 'fieldset',
+      '#title' => t('Sell out settings'),
+      '#weight' => '-1'
+    );
+    $form['soldout']['fr_tickets_soldout_options'] = $form['fr_tickets_soldout_options'];
+    $form['soldout']['fr_tickets_soldout_redirect'] = $form['fr_tickets_soldout_redirect'];
+    $form['soldout']['fr_tickets_soldout_message'] = $form['fr_tickets_soldout_message'];
+    unset($form['fr_tickets_soldout_options']);
+    unset($form['fr_tickets_soldout_redirect']);
+    unset($form['fr_tickets_soldout_message']);
+
+    $form['donation']  = array(
+      '#type' => 'fieldset',
+      '#title' => t('Donation add-on'),
+      '#weight' => '1'
+    );
+    $form['donation']['fr_tickets_donation_donation'] = $form['fr_tickets_donation_donation'];
+    unset($form['fr_tickets_donation_donation']);
+
+    return $form;
+}
+
+
+/**
+ * Implements hook_form_alter().
+ *
+ * Alter content type settings to add "Enable ticketed events?" checkbox.
+ */
+function fundraiser_tickets_form_node_type_form_alter(&$form, &$form_state) {
+  if (isset($form['type'])) {
+    $form['fundraiser_type']['fundraiser_tickets'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enable ticketed events?'),
+      '#default_value' => variable_get('fundraiser_tickets_' . $form['#node_type']->type, FALSE),
+      '#description' => t('Enable this checkbox if this content type should provide ticketed event sales.  Fundraiser must be enabled as well.'),
+    );
+    $form['#validate'][] = 'fundraiser_tickets_form_node_type_form_validate';
+  }
+}
+
+/**
+ * Validation callback for the node type form. Called during form validation.
+ */
+function fundraiser_tickets_form_node_type_form_validate($form, &$form_state){
+  if ($form_state['values']['fundraiser_tickets'] && ! $form_state['values']['fundraiser']){
+    form_set_error('fundraiser', t('Fundraiser must also be enabled for ticketed event sales.'));
+  }
+}
+
+/**
+ * Implements hook_node_type_insert
+ */
+function fundraiser_tickets_node_type_insert($type) {
+  if (fundraiser_tickets_is_ticket_type($type->type)){
+    if (! fundraiser_is_donation_type($type->type)){
+      drupal_set_message(t('Fundraiser must also be enabled for ticketed event sales.'), 'error');
+    } else {
+      module_load_include('inc', 'fundraiser_tickets', 'includes/fundraiser_tickets.fields');
+      module_load_include('inc', 'fundraiser_tickets', 'includes/fundraiser_tickets.product');
+      _fundraiser_tickets_add_default_fields($type->type);
+      _fundraiser_tickets_create_fundraiser_ticket_product();
+    }
+  }
+}
+
+/**
+ * Implements hook_node_type_update
+ */
+function fundraiser_tickets_node_type_update($type) {
+  if (fundraiser_tickets_is_ticket_type($type->type)){
+    if (! fundraiser_is_donation_type($type->type)){
+      drupal_set_message(t('Fundraiser must also be enabled for ticketed event sales.'), 'error');
+    } else {
+      module_load_include('inc', 'fundraiser_tickets', 'includes/fundraiser_tickets.fields');
+      module_load_include('inc', 'fundraiser_tickets', 'includes/fundraiser_tickets.product');
+      _fundraiser_tickets_add_default_fields($type->type);
+      _fundraiser_tickets_create_fundraiser_ticket_product();
+    }
+  }
+}
+
+/**
+ * Helper function, determine if this node type supports ticketed events.
+ */
+function fundraiser_tickets_is_ticket_type($type) {
+  static $fundraiser_tickets_types;
+  // Cache fundraiser ticket content types during page execution.
+  if (!isset($fundraiser_tickets_types[$type])) {
+    $fundraiser_tickets_types[$type] = variable_get('fundraiser_tickets_' . $type, FALSE);
+  }
+  return $fundraiser_tickets_types[$type];
+}
+
+/**
+ * Helper function, determine if this node type supports ticketed events.
+ */
+function fundraiser_tickets_get_ticket_types() {
+  // For all types, check if they are a fundraiser type.
+  $types = node_type_get_types();
+  foreach ($types as $type => $type_info) {
+    $fundraiser_tickets_types[$type] = variable_get('fundraiser_tickets_' . $type, FALSE);
+  }
+  return $fundraiser_tickets_types;
+}
