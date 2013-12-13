@@ -63,7 +63,7 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
       '#type' => 'textfield',
       '#size' => 15,
       '#default_value' => isset($brackets[$i]) ? $brackets[$i]['low'] : '',
-      '#prefix' => '<div class="upsell_low" style="float: left; clear: left; margin-right: 3em;">',
+      '#prefix' => '<div class="upsell_low">',
       '#suffix' => "</div>",
     );
     $form['fundraiser_upsell_brackets']['brackets']['fundraiser_upsell_brackets_high_' . $i] = array(
@@ -71,7 +71,7 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
       '#type' => 'textfield',
       '#size' => 15,
       '#default_value' => isset($brackets[$i]) ? $brackets[$i]['high'] : '',
-      '#prefix' => '<div class="upsell_high" style="float: left; margin-right: 3em;">',
+      '#prefix' => '<div class="upsell_high">',
       '#suffix' => "</div>",
     );
     $form['fundraiser_upsell_brackets']['brackets']['fundraiser_upsell_brackets_upsell_' . $i] = array(
@@ -79,7 +79,7 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
       '#type' => 'textfield',
       '#size' => 15,
       '#default_value' => isset($brackets[$i]) ? $brackets[$i]['upsell'] : '',
-      '#prefix' => '<div class="upsell_value" style="float: left; margin-right: 3em;">',
+      '#prefix' => '<div class="upsell_value">',
       '#suffix' => "</div>",
     );
   }
@@ -101,7 +101,7 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
       'method' => 'replace',
       'effect' => 'fade',
     ),
-    '#prefix' => '<div style="float: left; clear: both; padding-top: 1em">',
+    '#prefix' => '<div class="add_more_button_wrapper">',
     '#suffix' => "</div>",
   );
   // Build the rest of the form.
@@ -134,7 +134,6 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
       '#options' => $salesforce_campaign_options,
     );
   }
-
 
   $form['fundraiser_upsell_acceptance'] = array(
     '#title' => t('Acceptance Cookie'),
