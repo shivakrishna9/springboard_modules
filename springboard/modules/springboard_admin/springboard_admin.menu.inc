@@ -87,8 +87,8 @@ function springboard_admin_admin_menu_items() {
     );
 
   // Donation Forms > Donation Reports
-  $items['admin/springboard/forms/donations']['_children']['admin/springboard/repots/dsr'] = array(
-    'link_path' => 'admin/springboard/repots/dsr',
+  $items['admin/springboard/forms/donations']['_children']['admin/springboard/reports/dsr'] = array(
+    'link_path' => 'admin/springboard/reports/dsr',
     'link_title' => 'Donation Reports',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
@@ -241,7 +241,7 @@ function springboard_admin_admin_menu_items() {
 
   // Top Level: Results
   $items['admin/springboard/results'] = array(
-    'link_path' => 'admin/springboard/results', // @TODO create this page
+    'link_path' => 'admin/springboard/reports/dsr', // @TODO create this page
     // admin/springboard/results
     'link_title' => t('Results'),
     'menu_name' => 'springboard_admin_menu',
@@ -252,8 +252,8 @@ function springboard_admin_admin_menu_items() {
   );
 
   // Marketing & Analytics > Donation Reports
-  $items['admin/springboard/results']['_children']['admin/springboard/repots/dsr'] = array(
-    'link_path' => 'admin/springboard/repots/dsr',
+  $items['admin/springboard/results']['_children']['admin/springboard/reports/dsr'] = array(
+    'link_path' => 'admin/springboard/reports/dsr',
     'link_title' => 'Donation Reports',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
@@ -312,8 +312,8 @@ function springboard_admin_admin_menu_items() {
     'weight' => 0,
   );
 
-  $items['tools'] = array(
-    'link_path' => '', // @TODO determine a page for this
+  $items['admin/springboard/tools'] = array(
+    'link_path' => 'admin/springboard/tools', // @TODO determine a page for this
     'link_title' => 'Other Tools',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
@@ -322,7 +322,7 @@ function springboard_admin_admin_menu_items() {
     '_children' => array(),
   );
 
-  $items['tools']['drupal'] = array(
+  $items['admin/springboard/tools']['_children']['drupal'] = array(
     'link_path' => 'http://drupal.org',
     'link_title' => 'Drupal',
     'menu_name' => 'springboard_admin_menu',
@@ -332,7 +332,7 @@ function springboard_admin_admin_menu_items() {
     'weight' => 0,
   );
 
-  $items['tools']['salesforce'] = array(
+  $items['admin/springboard/tools']['_children']['salesforce'] = array(
     'link_path' => 'http://salesforce.com',
     'link_title' => 'Salesforce.com',
     'menu_name' => 'springboard_admin_menu',

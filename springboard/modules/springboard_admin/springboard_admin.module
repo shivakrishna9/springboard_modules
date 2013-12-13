@@ -29,6 +29,13 @@ function springboard_admin_menu() {
     'page callback' => 'springboard_admin_aggregate_links_page',
     'page arguments' => array('admin/springboard/options'),
    );
+   $items['admin/springboard/tools'] = array(
+    'title' => 'Other Tools',
+    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('administer springboard'),
+    'page callback' => 'springboard_admin_aggregate_links_page',
+    'page arguments' => array('admin/springboard/tools'),
+   );
   return $items;
 }
 
@@ -136,9 +143,14 @@ function springboard_admin_aggregate_links_page($path) {
   $menu = springboard_admin_admin_menu_items();
   $links = array();
   foreach ($menu[$path]['_children'] as $item) {
+    $options = array();  
+    if(isset($item['external'])) {
+      $options['external'] = $item['external'];
+    }
     $links[] = array(
       'title' => $item['link_title'],
       'href' => $item['link_path'],
+      'options' => $options,
     );
   }
 
