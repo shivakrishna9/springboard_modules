@@ -327,7 +327,7 @@ function page_wrappers_update_7003() {
         'bundle' => 'page_wrapper',
         'required' => FALSE,
         'label' => st(''),
-        'description' => st('CSS code for page wrapper'),
+        'description' => st(''),
         'widget' => array(
           'type' => 'text_textarea',
           'weight' => -3,
@@ -366,8 +366,8 @@ function page_wrappers_update_7003() {
         'entity_type' => 'node',
         'bundle' => 'page_wrapper',
         'required' => FALSE,
-        'label' => st('javascript'),
-        'description' => st('javascript code for page wrapper'),
+        'label' => st('Javascript'),
+        'description' => st('Opening and closing &lt;script&gt; tags are not required.'),
         'widget' => array(
           'type' => 'text_textarea',
           'weight' => -2,
