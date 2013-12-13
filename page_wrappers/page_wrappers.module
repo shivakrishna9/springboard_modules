@@ -590,7 +590,6 @@ function page_wrappers_node_access($node, $op, $account) {
   }
 }
 
-
 function page_wrappers_menu_alter(&$items) {
   if (isset($items['node/%node/delete'])) {
     $items['node/%node/delete']['page arguments'] = array('page_wrappers_node_delete_confirm', 1);
