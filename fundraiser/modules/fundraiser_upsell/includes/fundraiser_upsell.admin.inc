@@ -8,6 +8,8 @@
  * Admin configuration form for the Fundraiser Upsell global settings.
  */
 function fundraiser_upsell_admin_settings_form($form, &$form_state) {
+  $path = drupal_get_path('module', 'fundraiser_upsell');
+  drupal_add_css($path . '/css/fundraiser_upsell.css');
   // Set the default bracket info.
   $brackets_default = array(
     0 => array(
