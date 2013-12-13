@@ -569,7 +569,7 @@ function page_wrappers_update_7004() {
     }
     if($css_contents != '') {
       $css_name = $node->title . "_style.css";
-      $css_file = file_save_data($css_contents, $css_folder . $css_name, FILE_EXISTS_REPLACE);
+      $css_file = file_save_data($css_contents, $css_folder . $css_name, FILE_EXISTS_RENAME);
       if(isset($css_file)) {
         $css_file->filemime = 'text/css';
         file_save($css_file);
@@ -589,7 +589,7 @@ function page_wrappers_update_7004() {
     }
     if($js_contents != '') {
       $js_name = $node->title . "_script.js";
-      $js_file = file_save_data($js_contents, $js_folder . $js_name, FILE_EXISTS_REPLACE);
+      $js_file = file_save_data($js_contents, $js_folder . $js_name, FILE_EXISTS_RENAME);
       if(isset($js_file)) {
         $js_file->filemime = 'text/plain';
         file_save($js_file);

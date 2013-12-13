@@ -254,7 +254,7 @@ function page_wrappers_node_presave($node) {
         $css_dir = file_prepare_directory($css_folder, FILE_CREATE_DIRECTORY);
       }
       $css_name = $node->title . "_style.css";
-      $css_file = file_save_data($css_content, $css_folder . $css_name, FILE_EXISTS_REPLACE);
+      $css_file = file_save_data($css_content, $css_folder . $css_name, FILE_EXISTS_RENAME);
       if(isset($css_file)) {
         $css_file->filemime = 'text/css';
         file_save($css_file);
@@ -462,11 +462,10 @@ function page_wrappers_form_page_wrapper_node_form_alter(&$form, $form_state) {
   $disabled = FALSE;
   if(isset($form['#node']->nid)) {
     $active_external = db_query('SELECT * FROM {field_data_page_wrappers_css_source} WHERE page_wrappers_css_source_value = :nid', array(':nid' => $form['#node']->nid))->fetchAllAssoc('entity_id');
-    if(isset($active_external)) {
+    if(isset($active_external) && !empty($active_external)) {
       $disabled = TRUE;
     }
   }
-
    $form['css_fieldset']['existing']['pw_existing'] = array(
     '#type' => 'checkbox',
     '#title' => t('Use Existing CSS'),
@@ -582,11 +581,47 @@ function page_wrappers_page_wrapper_form_validate(&$form, &$form_state) {
 function page_wrappers_page_wrapper_form_submit(&$form, &$form_state) {
 }
 
+function page_wrappers_node_access($node, $op, $account) {
+  if ($op == 'delete' && $node->type == 'page_wrapper') {
+    $active_external = db_query('SELECT * FROM {field_data_page_wrappers_css_source} WHERE page_wrappers_css_source_value = :nid', array(':nid' => $node->nid))->fetchAllAssoc('entity_id');
+    if (isset($active_external) && !empty($active_external)) {
+      return NODE_ACCESS_DENY;
+    }
+  }
+}
+
+
+function page_wrappers_menu_alter(&$items) {
+  if (isset($items['node/%node/delete'])) {
+    $items['node/%node/delete']['page arguments'] = array('page_wrappers_node_delete_confirm', 1);
+  }
+}
+
+function page_wrappers_node_delete_confirm($form, &$form_state, $node) {
+  if($node->type != "page_wrapper") {
+    return node_delete_confirm($form, $form_state, $node);
+  }
+  else {
+    $active_external = db_query('SELECT * FROM {field_data_page_wrappers_css_source} WHERE page_wrappers_css_source_value = :nid', array(':nid' => $node->nid))->fetchAllAssoc('entity_id');
+    if (isset($active_external) && !empty($active_external)) {
+      $form['#node'] = $node;
+      $form['nid'] = array(
+        '#type' => 'value',
+        '#value' => $node->nid,
+      );
+      return confirm_form($form, t('%title?\'s stylesheet is being used by other Page Wrappers. Deleting it will remove the styles from the other page wrappers. Are you sure you want to do this?', array('%title' => $node->title)), 'node/' . $node->nid, t('This action cannot be undone.'), t('Delete'), t('Cancel'));
+    }
+    else {
+      return node_delete_confirm($form, $form_state, $node);
+    }
+  }
+}
+
+
 /**
  * Implementation of hook_form_BASE_FORM_ID_alter.
  */
 function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
-
   // add the list of available wrappers to the node form
   if (_page_wrappers_enabled_type($form['#node'])) {
     $form['#attached']['js'][] = drupal_get_path('module', 'page_wrappers') . '/js/page_wrappers.admin.js';
