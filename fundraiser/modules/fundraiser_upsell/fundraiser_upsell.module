@@ -267,8 +267,34 @@ function fundraiser_upsell_page_alter(&$page) {
   if (!empty($_SESSION['upsell'])) {
     // Add the upsell to the page.
     $node = node_load($_SESSION['upsell']['nid']);
-    $upsell_form = fundraiser_upsell_content($node, $_SESSION['upsell']['sid']);
-    $page['footer']['message-modal'] = $upsell_form;
+
+    $modal = array(
+      '#theme' => 'fundraiser_upsell_modal',
+      '#sid' => $_SESSION['upsell']['sid'],
+      '#rejection_days' => variable_get('fundraiser_upsell_rejection_lifetime', '180'),
+      '#footer' => variable_get('fundraiser_upsell_default_content_disclaimer', ''),
+      '#preview' => FALSE,
+    );
+
+    // Override defaults.
+    if (!empty($node->upsell['modal_width'])) {
+      $modal['#width'] = $node->upsell['modal_width'];
+    }
+    if (!empty($node->upsell['modal_height'])) {
+      $modal['#height'] = $node->upsell['modal_height'];
+    }
+    if (!empty($node->upsell['class'])) {
+      $modal['#class'] = $node->upsell['class'];
+    }
+    if (!empty($node->upsell['content'])) {
+      $modal['#content'] = $node->upsell['content'];
+    }
+    else {
+      $modal['#content'] = variable_get('fundraiser_upsell_default_content', '');
+    }
+
+    $page['footer']['message-modal'] = $modal;
+
     // Remove the upsell session data.
     unset($_SESSION['upsell']);
   }
@@ -613,6 +639,9 @@ function fundraiser_upsell_node_delete(&$node) {
  * Output an array of the DB structure mapped to the $node object.
  */
 function fundraiser_upsell_node_record($node) {
+
+  $campaign_id = !empty($node->upsell['campaign_id']) ? $node->upsell['campaign_id'] : '';
+
   return array(
     'nid' => $node->nid,
     'enabled' => $node->upsell['enabled'],
@@ -620,8 +649,60 @@ function fundraiser_upsell_node_record($node) {
     'class' => $node->upsell['class'],
     'modal_width' => $node->upsell['modal_width'],
     'modal_height' => $node->upsell['modal_height'],
-    'campaign_id' => $node->upsell['campaign_id'],
+    'campaign_id' => $campaign_id,
   );
+}
+
+/**
+ * Implements hook_theme().
+ */
+function fundraiser_upsell_theme() {
+  $theme = array(
+    'fundraiser_upsell_modal' => array(
+      'variables' => array(
+        'width' => 400,
+        'height' => 300,
+        'class' => '',
+        'rejection_days' => '180',
+        'content' => '',
+        'footer' => '',
+        'sid' => NULL,
+        'preview' => FALSE,
+      ),
+    ),
+  );
+
+  return $theme;
+}
+
+function theme_fundraiser_upsell_modal($variables) {
+  // Add the css & js.
+  $path = drupal_get_path('module', 'fundraiser_upsell');
+  drupal_add_css($path . '/css/fundraiser_upsell.css');
+  drupal_add_js($path . '/js/fundraiser_upsell.js');
+  drupal_add_js($path . '/js/jquery.blockUI.js');
+
+  $settings = array(
+    'width' => $variables['width'],
+    'height' => $variables['height'],
+    'rejectionDays' => $variables['rejection_days'],
+  );
+  drupal_add_js(array('fundraiser_upsell' => $settings), 'setting');
+
+  $upsell_size = 'width:' . $variables['width'] . 'px;height:' . $variables['height'] . 'px;';
+
+  $content = '<div id="message-wrapper" class="hidden">';
+  $content .= '<div id="message-modal" class="live-modal ' . $variables['class'];
+  $content .= '" style="' . $upsell_size . '">';
+  $content .= '<div class="message-content">' . $variables['content'] . '</div>';
+
+  $form = drupal_get_form('fundraiser_upsell_donation_form', $variables['sid']);
+  $content .= drupal_render($form);
+
+  $content .= '<div id="message-disclaimer">' . $variables['footer'] . '</div>';
+  $content .= '</div></div>';
+
+  return $content;
 }
 
 /**
