@@ -35,7 +35,8 @@ Drupal.behaviors.fundraiser_upsell = {
             var sendData = $(this).serialize();
             path = $(this).attr('action');
             // Update the block message
-            $('#message-modal').hide().html('<div class="message-content"><h1>Processing your sustainer gift... </h1></div>').fadeIn(750);
+            var modalMessage = Drupal.t('Processing your sustainer gift...');
+            $('#message-modal').hide().html('<div class="message-content"><h1>' + modalMessage + '</h1></div>').fadeIn(750);
             // Post the form and process
             $.ajax({
                 type: 'post',

@@ -26,3 +26,20 @@
 #fundraiser-upsell-donation-form #edit-amount {
   padding-left: 1em;
 }
+
+#fundraiser-upsell-admin-settings-form .upsell_low,
+#fundraiser-upsell-admin-settings-form .upsell_high,
+#fundraiser-upsell-admin-settings-form .upsell_upsell {
+  float: left;
+  margin-right: 3em;
+}
+
+#fundraiser-upsell-admin-settings-form .upsell_low {
+  clear: left;
+}
+
+#fundraiser-upsell-admin-settings-form .add_more_button_wrapper {
+  float: left;
+  clear: both;
+  padding-top: 1em;
+}
