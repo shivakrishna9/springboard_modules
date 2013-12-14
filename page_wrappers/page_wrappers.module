@@ -131,12 +131,14 @@ function page_wrappers_preprocess_page(&$vars) {
 
       if(!empty($wrapper_node->page_wrappers_css_source[LANGUAGE_NONE][0]['value'])) {
         $external = $wrapper_node->page_wrappers_css_source[LANGUAGE_NONE][0]['value'];
-        $ext_node = node_load($external);
-        if(isset($ext_node->page_wrappers_css_path[LANGUAGE_NONE][0]['value'])) {
-          $ext_path = $ext_node->page_wrappers_css_path[LANGUAGE_NONE][0]['value'];
+        if($external != -1) {
+          $ext_node = node_load($external);
+          if(isset($ext_node->page_wrappers_css_path[LANGUAGE_NONE][0]['value'])) {
+            $ext_path = $ext_node->page_wrappers_css_path[LANGUAGE_NONE][0]['value'];
+          }
         }
       }
-      if (!isset($external) && isset($wrapper_node->page_wrappers_css_textarea[LANGUAGE_NONE][0]['value'])) {
+      if ((!isset($external) || $external == -1) && isset($wrapper_node->page_wrappers_css_textarea[LANGUAGE_NONE][0]['value'])) {
         $css_file = $wrapper_node->page_wrappers_css_path[LANGUAGE_NONE][0]['value'];
         drupal_add_css($css_file);
       }
@@ -183,12 +185,15 @@ function page_wrappers_css_alter(&$css) {
 
     if(!empty($wrapper_node->page_wrappers_css_source[LANGUAGE_NONE][0]['value'])) {
       $external = $wrapper_node->page_wrappers_css_source[LANGUAGE_NONE][0]['value'];
-      $ext_node = node_load($external);
-      if(isset($ext_node->page_wrappers_css_path[LANGUAGE_NONE][0]['value'])) {
-        $ext_path = $ext_node->page_wrappers_css_path[LANGUAGE_NONE][0]['value'];
+      if($external != -1) {
+        $ext_node = node_load($external);
+        if(isset($ext_node->page_wrappers_css_path[LANGUAGE_NONE][0]['value'])) {
+          $ext_path = $ext_node->page_wrappers_css_path[LANGUAGE_NONE][0]['value'];
+        }
       }
     }
-    if (!isset($external) && isset($wrapper_node->page_wrappers_css_textarea[LANGUAGE_NONE][0]['value'])) {      $css_files[]['uri'] = $wrapper_node->page_wrappers_css_path[LANGUAGE_NONE][0]['value'];
+    if ((!isset($external) || $external == -1) && isset($wrapper_node->page_wrappers_css_textarea[LANGUAGE_NONE][0]['value'])) {
+      $css_files[]['uri'] = $wrapper_node->page_wrappers_css_path[LANGUAGE_NONE][0]['value'];
     }
     elseif(isset($external) && isset($ext_path)) {
         $css_files[]['uri'] = $ext_path;
@@ -253,8 +258,8 @@ function page_wrappers_node_presave($node) {
       if(!$css_dir) {
         $css_dir = file_prepare_directory($css_folder, FILE_CREATE_DIRECTORY);
       }
-      $css_name = $node->title . "_style.css";
-      $css_file = file_save_data($css_content, $css_folder . $css_name, FILE_EXISTS_RENAME);
+      $css_name = $node->title . "_" . $node->nid . "_style.css";
+      $css_file = file_save_data($css_content, $css_folder . $css_name, FILE_EXISTS_REPLACE);
       if(isset($css_file)) {
         $css_file->filemime = 'text/css';
         file_save($css_file);
@@ -267,7 +272,7 @@ function page_wrappers_node_presave($node) {
       if(!$js_dir) {
         $js_dir = file_prepare_directory($js_folder, FILE_CREATE_DIRECTORY);
       }
-      $js_name = $node->title . "_script.js";
+      $js_name = $node->title . "_" . $node->nid . "_script.js";
       $js_file = file_save_data($js_content, $js_folder . $js_name, FILE_EXISTS_REPLACE);
       if(isset($js_file)) {
         $js_file->filemime = 'text/plain';
