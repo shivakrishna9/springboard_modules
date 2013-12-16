@@ -534,8 +534,9 @@ function page_wrappers_update_7003() {
  */
 function page_wrappers_update_7004(&$sandbox) {
 
-  $css_folder = 'public://page_wrappers/styles/';
-  $js_folder = 'public://page_wrappers/scripts/';
+  $filedir = file_default_scheme() . '://' . '/page_wrappers';
+  $css_folder = $filedir . '/styles/';
+  $js_folder = $filedir . '/scripts/';
 
   $css_dir = file_prepare_directory($css_folder, FILE_MODIFY_PERMISSIONS);
   if(!$css_dir) {
