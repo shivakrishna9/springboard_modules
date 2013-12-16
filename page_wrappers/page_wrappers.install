@@ -569,10 +569,11 @@ function page_wrappers_update_7004(&$sandbox) {
     foreach ($existing_css as $css) {
      $existing_css_file = file_load($css->page_wrappers_css_fid);
      if($existing_css_file) {
-       $fhandle = fopen($existing_css_file->uri, 'r');
-      //if fhandle doesn't exist because physical file is missing or deleted, do we want to throw an exception here or let the script proceed?
-       $css_contents .= fread($fhandle, filesize($existing_css_file->uri));
-       fclose($fhandle);
+       $fhandle = @fopen($existing_css_file->uri, 'r');
+       if(!empty($fhandle)) {
+         $css_contents .= fread($fhandle, filesize($existing_css_file->uri));
+         fclose($fhandle);
+       }
      }
     }
     if($css_contents != '') {
@@ -591,9 +592,11 @@ function page_wrappers_update_7004(&$sandbox) {
     foreach ($existing_js as $js) {
       $existing_js_file = file_load($js->page_wrappers_js_fid);
       if($existing_js_file) {
-        $fhandle = fopen($existing_js_file->uri, 'r');
-        $js_contents .= fread($fhandle, filesize($existing_js_file->uri));
-        fclose($fhandle);
+        $fhandle = @fopen($existing_js_file->uri, 'r');
+        if(!empty($fhandle)) {
+          $js_contents .= fread($fhandle, filesize($existing_js_file->uri));
+          fclose($fhandle);
+        }
       }
     }
     if($js_contents != '') {
