@@ -21,6 +21,7 @@ function commerce_authnet_fundraiser_commerce_fundraiser_gateway_info() {
     'charge callback' => 'commerce_authnet_fundraiser_commerce_charge',
     'update callback' => 'commerce_authnet_fundraiser_commerce_update',
     'refund callback' => 'commerce_authnet_fundraiser_commerce_refund',
+    'cardonfile callback' => 'commerce_authnet_fundraiser_commerce_cardonfile',
   );
 }
 
@@ -88,9 +89,6 @@ function commerce_authnet_fundraiser_commerce_charge($method_instance, $donation
   // Add fundraiser commerce data to the pane values array
   _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
 
-  // For commerce authnet we need to do our own cardonfile storage below, so we set the storage flag to false
-  $pane_values['credit_card']['cardonfile_store'] = FALSE;
-
   // Execute the authnet submit handler
   $result = commerce_authnet_aim_submit_form_submit($method_instance, $pane_form, $pane_values, $order, $charge);
   $success = FALSE;
@@ -98,80 +96,82 @@ function commerce_authnet_fundraiser_commerce_charge($method_instance, $donation
     $success = TRUE;
   }
 
-  // For commerce authnet we store a CIM profile for each order, not just per user
-  if ($success && module_exists('commerce_cardonfile') && $donation->reference_charge == FALSE) {
-    _commerce_authnet_fundraiser_cim_profile_create($pane_values, $method_instance, $order, $donation);
-  }
+  // Perform post processing functions
+  _fundraiser_commerce_charge_submit_form_process($success, $method_instance, $pane_values, $donation);
 
   return $success;
 }
 
 /**
- * CIM profile creation so we get a new profile for each order
+ * Card on file callback
  *
- * Also see fundraiser_commerce_commerce_authnet_cim_request_alter
+ * We use a custom callback since we may need to update an existing CIM profile
  */
-function _commerce_authnet_fundraiser_cim_profile_create($pane_values, $method_instance, $order, $donation) {
-  $payment_details = array(
-    'cardNumber' => $pane_values['credit_card']['number'],
-    'expirationDate' => $pane_values['credit_card']['exp_year'] . '-' . $pane_values['credit_card']['exp_month'],
-  );
+function commerce_authnet_fundraiser_commerce_cardonfile($donation) {
+  // Use standard function to setup the card on file fields
+  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+  $cardonfile_fields = _fundraiser_commerce_credit_card_cardonfile_fields($donation);
 
-  if (isset($pane_values['credit_card']['code'])) {
-    $payment_details['cardCode'] = $pane_values['credit_card']['code'];
-  }
+  // Authorize.net does not check the exp date when checking for duplicate profiles
+  // So we need to search locally to see if we have an existing profile for a card number
+  // Only perform this when we're in an active non-reference charge
+  if ($donation->reference_charge === FALSE) {
+    // Query the db for an existing record
+    $fields = $cardonfile_fields + array('instance_id' => $donation->gateway['id'], 'uid' => $donation->uid);
+    $card_data = _fundraiser_commerce_cardonfile_exp_date_mismatch($fields);
 
-  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
-  $billing_address = $order_wrapper->commerce_customer_billing->commerce_customer_address->value();
+    // If we have a profile for this user update it in the CIM
+    if ($card_data) {
+      // A basic value the update function uses
+      $form = array('credit_card' => array('number' => array('#default_value' => '')));
 
-  if ($response = commerce_authnet_cim_create_customer_profile_request($method_instance, $order, $payment_details)) {
-   // If the Customer Profile creation was a success, store the new card on
-   // file data locally.
-   if ((string) $response->messages->resultCode == 'Ok') {
-      // Build a remote ID that includes the Customer Profile ID and the
-      // Payment Profile ID.
-      $remote_id = (string) $response->customerProfileId . '|' . (string) $response->customerPaymentProfileIdList->numericString;
-      $card_data = commerce_cardonfile_new();
-      $card_data->uid = $order->uid;
-      $card_data->payment_method = $method_instance['method_id'];
-      $card_data->instance_id = $method_instance['instance_id'];
-      $card_data->remote_id = $remote_id;
-      $card_data->card_type = !empty($pane_values['credit_card']['card_type']) ? $pane_values['credit_card']['card_type'] : 'card';
-      $card_data->card_name = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
-      $card_data->card_number = substr($pane_values['credit_card']['number'], -4);
-      $card_data->card_exp_month = $pane_values['credit_card']['exp_month'];
-      $card_data->card_exp_year = $pane_values['credit_card']['exp_year'];
-      $card_data->status = 1;
+      // Get the latest credit card values
+      $submitted = _fundraiser_commerce_credit_card_pane_values($donation);
 
-      // Save and log the creation of the new card on file.
-      commerce_cardonfile_save($card_data);
+      $form_state['values'] = $submitted;
+      // Update the exp dates
+      $card_data->card_exp_year = $submitted['credit_card']['exp_year'];
+      $card_data->card_exp_month = sprintf("%02d", $submitted['credit_card']['exp_month']);
 
-      // Save this to the donation data array
-      $donation->data['cardonfile'] = $card_data->card_id;
+      // Make the update request to authorize.net
+      $update = commerce_authnet_cim_cardonfile_update($form, $form_state, $donation->gateway['gateway_details'], $card_data);
 
-      watchdog('commerce_authnet', 'CIM Customer Profile @profile_id created and saved to user @uid.', array('@profile_id' => (string) $response->customerProfileId, '@uid' => $order->uid));
+      // If the update was successful save the new card data locally
+      if ($update) {
+        commerce_cardonfile_save($card_data);
+      }
     }
   }
+
+  return $cardonfile_fields;
 }
 
 /**
  * Callback function, update data stored at the gateway.
  */
 function commerce_authnet_fundraiser_commerce_update($payment_method, $donation) {
-  // Get the card.
-  $stored_cards = commerce_cardonfile_load_multiple_by_uid($donation->uid, $payment_method['instance_id']);
-  // Filter out expired cards.
-  foreach ($stored_cards as $card_id => $card_data) {
-    if ($card_data->card_exp_year < date('Y') ||
-      $card_data->card_exp_year == date('Y') && $card_data->card_exp_month < date('m')) {
-      unset($stored_cards[$card_id]);
-    }
+  // Load the profile from the donation if its set
+  if (!empty($donation->data['cardonfile'])) {
+    $card_data = commerce_cardonfile_load($donation->data['cardonfile']);
   }
-  $card_data = '';
-  if (!empty($stored_cards)) {
-    // Then grab the first one.
-    foreach ($stored_cards as $card_id => $this_card) {
-      $card_data = $this_card;
+
+  // In the chance the data has been removed search for the card to update
+  if (empty($card_data)) {
+    // Get the card.
+    $stored_cards = commerce_cardonfile_load_multiple_by_uid($donation->uid, $payment_method['instance_id']);
+    // Filter out expired cards.
+    foreach ($stored_cards as $card_id => $card_data) {
+      if ($card_data->card_exp_year < date('Y') ||
+        $card_data->card_exp_year == date('Y') && $card_data->card_exp_month < date('m')) {
+        unset($stored_cards[$card_id]);
+      }
+    }
+    $card_data = '';
+    if (!empty($stored_cards)) {
+      // Then grab the first one.
+      foreach ($stored_cards as $card_id => $this_card) {
+        $card_data = $this_card;
+      }
     }
   }
 
@@ -201,7 +201,6 @@ function commerce_authnet_fundraiser_commerce_update($payment_method, $donation)
   $form_state['values']['credit_card']['state'] = isset($donation->donation['state']) ? $donation->donation['state'] : '';
   $form_state['values']['credit_card']['zip'] = isset($donation->donation['zip']) ? $donation->donation['zip'] : '';
   $form_state['values']['credit_card']['country'] = isset($donation->donation['country']) ? $donation->donation['country'] : '';
-
   if (!empty($card_data)) {
     // Calling commerce_authnet_cim_cardonfile_update.
     _commerce_authnet_fundraiser_commerce_authnet_cim_cardonfile_update($form, $form_state, $payment_method, $card_data);

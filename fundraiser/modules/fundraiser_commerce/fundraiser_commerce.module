@@ -741,13 +741,14 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   $order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'] = $profile->profile_id;
 
   // Gather the payment fields for storage, and scrub them.
-  if (isset($donation->did)) {
+  if (!empty($donation->gateway)) {
+    $method_instance = is_string($donation->gateway) ? _fundraiser_gateway_info($donation->gateway) : $donation->gateway;
+  }
+  else {
     $info = _fundraiser_get_donation_gateway($donation->did);
     $method_instance = _fundraiser_gateway_info($info['id']);
   }
-  else {
-    $method_instance = _fundraiser_gateway_info($donation->gateway);
-  }
+
   $scrubbed_fields = $donation->donation['payment_fields'];
   if (isset($method_instance['scrub callback']) && function_exists($method_instance['scrub callback'])) {
     $callback = $method_instance['scrub callback'];
@@ -763,6 +764,7 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   if (isset($donation->data) && is_array($donation->data) && !empty($donation->data)) {
     $data = array_merge($donation->data, $data);
   }
+
   // Then set the data for storage on the order object to be ecrypted.
   // This data array contains: method choosen, fields for the method, card handler id info.
   // Since Card On File stores data unencrypted we can't use it here.
@@ -1875,14 +1877,29 @@ function fundraiser_commerce_commerce_paypal_ipn_process($order, $payment_method
 function _fundraiser_commerce_submit_handler_pane_values(&$pane_values, $donation) {
   // If card on file is enabled check if we should create a new profile
   if (module_exists('commerce_cardonfile')) {
-    // If this is not a reference charge be sure to store the data and set the new flag
-    if ($donation->reference_charge == FALSE) {
-      $pane_values['credit_card']['cardonfile_store'] = TRUE;
+    // Load any existing card data
+    $card = _fundraiser_commerce_donation_cardonfile_card($donation);
+
+    // If this is not a reference charge be sure to store the card data and set the new flag
+    if ($donation->reference_charge === FALSE) {
+      // If there is not an existing card then set the store flag to TRUE
+      // This ensures card on file integrations create new profiles only for new cards
+      if (empty($card)) {
+        $pane_values['credit_card']['cardonfile_store'] = TRUE;
+      }
+      else {
+        $pane_values['credit_card']['cardonfile_store'] = FALSE;
+
+        // Also set this value on the donation for saving later
+        $donation->data['cardonfile'] = $card->card_id;
+      }
+
+      // Set this value to new even for existing cards
       $pane_values['cardonfile'] = 'new';
     }
+    // For reference charges add the cardonfile id
     elseif ($donation->reference_charge == TRUE) {
       // Load the card on file card card data
-      $card = _fundraiser_commerce_donation_cardonfile_card($donation);
       if (!empty($card)) {
         $pane_values['cardonfile'] = $card->card_id;
       }
@@ -1900,6 +1917,28 @@ function _fundraiser_commerce_submit_handler_pane_values(&$pane_values, $donatio
 
   // Allow other modules to alter the pane values
   drupal_alter('fundraiser_commerce_submit_handler_pane_values', $pane_values, $donation);
+}
+
+/**
+ * Perform some standard functions after a commerce submit form has been procssed
+ *
+ * @param $success Boolean
+ *    TRUE or FALSE
+ * @param $method_instance Array
+ *    Details on the gateway
+ * @param $pane_values Array
+ *    Values passed to the commerce submit handler
+ * @param $donation Object
+ *    Fundraiser donation object
+ * @return nothing
+ */
+function _fundraiser_commerce_charge_submit_form_process($success, $method_instance, $pane_values, $donation) {
+  // If this charge resulted in a new card on file save that to the donation
+  if ($success && module_exists('commerce_cardonfile') && $pane_values['credit_card']['cardonfile_store'] == TRUE) {
+    // Load up the cardonfile record for this donation and save it
+    $card = _fundraiser_commerce_donation_cardonfile_card($donation);
+    $donation->data['cardonfile'] = $card->card_id;
+  }
 }
 
 /**
@@ -1950,6 +1989,39 @@ function _fundraiser_commerce_donation_cardonfile_card($donation, $active = TRUE
   if (isset($result['commerce_cardonfile'])) {
     $id = reset(array_keys($result['commerce_cardonfile']));
     return commerce_cardonfile_load($id);
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
+ * Search the card on file table for a record that doesn't match the date
+ *
+ * @param $fields Array
+ *    Array of fields to search card on file table
+ * @return Object
+ *    Card on file card entity
+ */
+function _fundraiser_commerce_cardonfile_exp_date_mismatch($fields) {
+  // Create the date or portion of the query
+  $date_or = db_or()
+  ->condition('c.card_exp_month', $fields['card_exp_month'], '<>')
+  ->condition('c.card_exp_year', $fields['card_exp_year'], '<>');
+
+  // Query the db for an existing record
+  $existing = db_select('commerce_cardonfile', 'c')
+  ->fields('c', array('card_id'))
+  ->condition('c.uid', $fields['uid'], '=')
+  ->condition('c.instance_id', $fields['instance_id'], '=')
+  ->condition('c.card_number', $fields['card_number'], '=')
+  ->condition($date_or)
+  ->range(0, 1)
+  ->execute()
+  ->fetchField();
+
+  if ($existing) {
+    return commerce_cardonfile_load($existing);
   }
   else {
     return FALSE;
