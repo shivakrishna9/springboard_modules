@@ -82,9 +82,7 @@ function commerce_authnet_fundraiser_commerce_charge($method_instance, $donation
   $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
 
   // Pad single digit exp months for authnet validation
-  if (strlen($pane_values['credit_card']['exp_month']) == 1) {
-    $pane_values['credit_card']['exp_month'] = '0' . $pane_values['credit_card']['exp_month'];
-  }
+  $pane_values['credit_card']['exp_month'] = sprintf("%02d", $pane_values['credit_card']['exp_month']);
 
   // Add fundraiser commerce data to the pane values array
   _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
@@ -115,30 +113,19 @@ function commerce_authnet_fundraiser_commerce_cardonfile($donation) {
   // Authorize.net does not check the exp date when checking for duplicate profiles
   // So we need to search locally to see if we have an existing profile for a card number
   // Only perform this when we're in an active non-reference charge
-  if ($donation->reference_charge === FALSE) {
+  if (isset($donation->reference_charge) && $donation->reference_charge === FALSE) {
     // Query the db for an existing record
     $fields = $cardonfile_fields + array('instance_id' => $donation->gateway['id'], 'uid' => $donation->uid);
     $card_data = _fundraiser_commerce_cardonfile_exp_date_mismatch($fields);
 
     // If we have a profile for this user update it in the CIM
     if ($card_data) {
-      // A basic value the update function uses
-      $form = array('credit_card' => array('number' => array('#default_value' => '')));
-
-      // Get the latest credit card values
-      $submitted = _fundraiser_commerce_credit_card_pane_values($donation);
-
-      $form_state['values'] = $submitted;
-      // Update the exp dates
-      $card_data->card_exp_year = $submitted['credit_card']['exp_year'];
-      $card_data->card_exp_month = sprintf("%02d", $submitted['credit_card']['exp_month']);
-
       // Make the update request to authorize.net
-      $update = commerce_authnet_cim_cardonfile_update($form, $form_state, $donation->gateway['gateway_details'], $card_data);
+      $updated_card = commerce_authnet_fundraiser_commerce_update($donation->gateway['gateway_details'], $donation, $card_data);
 
       // If the update was successful save the new card data locally
-      if ($update) {
-        commerce_cardonfile_save($card_data);
+      if ($updated_card) {
+        commerce_cardonfile_save($updated_card);
       }
     }
   }
@@ -149,61 +136,48 @@ function commerce_authnet_fundraiser_commerce_cardonfile($donation) {
 /**
  * Callback function, update data stored at the gateway.
  */
-function commerce_authnet_fundraiser_commerce_update($payment_method, $donation) {
-  // Load the profile from the donation if its set
-  if (!empty($donation->data['cardonfile'])) {
+function commerce_authnet_fundraiser_commerce_update($payment_method, $donation, $card_data = NULL) {
+  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+
+  // If no card data was passed load the profile from the donation if its set
+  if (empty($card_data) && !empty($donation->data['cardonfile'])) {
     $card_data = commerce_cardonfile_load($donation->data['cardonfile']);
   }
 
-  // In the chance the data has been removed search for the card to update
   if (empty($card_data)) {
-    // Get the card.
-    $stored_cards = commerce_cardonfile_load_multiple_by_uid($donation->uid, $payment_method['instance_id']);
-    // Filter out expired cards.
-    foreach ($stored_cards as $card_id => $card_data) {
-      if ($card_data->card_exp_year < date('Y') ||
-        $card_data->card_exp_year == date('Y') && $card_data->card_exp_month < date('m')) {
-        unset($stored_cards[$card_id]);
-      }
-    }
-    $card_data = '';
-    if (!empty($stored_cards)) {
-      // Then grab the first one.
-      foreach ($stored_cards as $card_id => $this_card) {
-        $card_data = $this_card;
-      }
-    }
+    // Log the missing card data
+    watchdog(
+      'fundraiser',
+      'A card update was attempted on donation @id but no stored card data was found.',
+      array('@id' => $donation->did),
+      WATCHDOG_CRITICAL
+    );
+
+    return;
   }
 
-  // Donation card data.
-  $additional_data = array(
-    'card_number' => isset($donation->donation['payment_fields']['credit']['card_number']) ?
-    $donation->donation['payment_fields']['credit']['card_number'] : '',
-    'card_exp_month' => isset($donation->donation['payment_fields']['credit']['card_expiration_month']) ?
-    $donation->donation['payment_fields']['credit']['card_expiration_month'] : '',
-    'card_exp_year' => isset($donation->donation['payment_fields']['credit']['card_expiration_year']) ?
-    $donation->donation['payment_fields']['credit']['card_expiration_year'] : '',
-  );
-  $card_data = array_merge($card_data, $additional_data);
-  if (strlen($card_data['card_exp_month']) == 1) {
-    $card_data['card_exp_month'] = '0' . $card_data['card_exp_month']; // Format the date value.
-  }
-  // Set additional values.
+  // Pull the new credit card values from the donation and set them on the card data object
+  $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
+  $card_data->card_number = substr($pane_values['credit_card']['number'], -4);
+  $card_data->card_exp_month = sprintf("%02d", $pane_values['credit_card']['exp_month']);
+  $card_data->card_exp_year = $pane_values['credit_card']['exp_year'];
+
+  // We're mirroring the commerce_authnet_cim_cardonfile_update function so setup values that function uses, see that function for details
   $form['credit_card']['number']['#default_value'] = '';
-  $form_state['values']['credit_card']['number'] = isset($donation->donation['payment_fields']['credit']['card_number']) ?
-    $donation->donation['payment_fields']['credit']['card_number'] : '';
+  $form_state['values']['credit_card']['number'] = $pane_values['credit_card']['number'];
   $form_state['values']['credit_card']['owner'] = isset($donation->donation['first_name']) ? $donation->donation['first_name'] : '';
   $form_state['values']['credit_card']['owner'] .= isset($donation->donation['last_name']) ? ' ' . $donation->donation['last_name'] : '';
-  // Additional fields.
   $form_state['values']['credit_card']['address'] = isset($donation->donation['address']) ? $donation->donation['address'] : '';
   $form_state['values']['credit_card']['address'] .= isset($donation->donation['address_line_2']) ? ' ' . $donation->donation['address_line_2'] : '';
   $form_state['values']['credit_card']['city'] = isset($donation->donation['city']) ? $donation->donation['city'] : '';
   $form_state['values']['credit_card']['state'] = isset($donation->donation['state']) ? $donation->donation['state'] : '';
   $form_state['values']['credit_card']['zip'] = isset($donation->donation['zip']) ? $donation->donation['zip'] : '';
   $form_state['values']['credit_card']['country'] = isset($donation->donation['country']) ? $donation->donation['country'] : '';
-  if (!empty($card_data)) {
-    // Calling commerce_authnet_cim_cardonfile_update.
-    _commerce_authnet_fundraiser_commerce_authnet_cim_cardonfile_update($form, $form_state, $payment_method, $card_data);
+
+  $update = _commerce_authnet_fundraiser_commerce_authnet_cim_cardonfile_update($form, $form_state, $payment_method, $card_data);
+
+  if ($update) {
+    return $card_data;
   }
 }
 
@@ -217,13 +191,13 @@ function commerce_authnet_fundraiser_commerce_update($payment_method, $donation)
  */
 function _commerce_authnet_fundraiser_commerce_authnet_cim_cardonfile_update($form, &$form_state, $payment_method, $card_data) {
   // Extract the Customer Profile and Payment Profile IDs from the remote_id.
-  list($cim_customer_profile_id, $cim_payment_profile_id) = explode('|', $card_data['remote_id']);
+  list($cim_customer_profile_id, $cim_payment_profile_id) = explode('|', $card_data->remote_id);
 
   if ($form_state['values']['credit_card']['number'] != $form['credit_card']['number']['#default_value']) {
     $number = $form_state['values']['credit_card']['number'];
   }
   else {
-    $number = 'XXXX' . $card_data['card_number'];
+    $number = 'XXXX' . $card_data->card_number;
   }
 
   // Load the payment profile so that billTo can be updated.
@@ -266,7 +240,7 @@ function _commerce_authnet_fundraiser_commerce_authnet_cim_cardonfile_update($fo
       'payment' => array(
         'creditCard' => array(
           'cardNumber' => $number,
-          'expirationDate' => $card_data['card_exp_year'] . '-' . $card_data['card_exp_month'],
+          'expirationDate' => $card_data->card_exp_year . '-' . $card_data->card_exp_month,
         ),
       ),
       'customerPaymentProfileId' => $cim_payment_profile_id,
@@ -275,6 +249,7 @@ function _commerce_authnet_fundraiser_commerce_authnet_cim_cardonfile_update($fo
 
   // Fetch the response from the API server and let Card on File know if the update was successful.
   $xml_response = commerce_authnet_cim_request($payment_method, 'updateCustomerPaymentProfileRequest', $api_request_data);
+
   return (string) $xml_response->messages->message->code == 'I00001';
 }
 

@@ -1361,10 +1361,10 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
     $info = _fundraiser_get_donation_gateway($donation->did);
     // Check for the billing function to be defined.
     if (isset($info['update callback']) && function_exists($info['update callback'])) {
-      $info = _fundraiser_get_donation_gateway($donation->did);
       $method_instance = commerce_payment_method_instance_load($info['id']); // From commerce_payment.module.
-      $update_function = $info['update callback'];
-      $result = $update_function($method_instance, $donation);
+      // Load the card data for updating
+      $card_data = _fundraiser_commerce_donation_cardonfile_card($donation);
+      $result = $info['update callback']($method_instance, $donation, $card_data);
     }
   }
 }
@@ -1894,7 +1894,7 @@ function _fundraiser_commerce_submit_handler_pane_values(&$pane_values, $donatio
         $donation->data['cardonfile'] = $card->card_id;
       }
 
-      // Set this value to new even for existing cards
+      // To avoid using the CIM charge set this value to new even for existing cards
       $pane_values['cardonfile'] = 'new';
     }
     // For reference charges add the cardonfile id
@@ -1934,7 +1934,7 @@ function _fundraiser_commerce_submit_handler_pane_values(&$pane_values, $donatio
  */
 function _fundraiser_commerce_charge_submit_form_process($success, $method_instance, $pane_values, $donation) {
   // If this charge resulted in a new card on file save that to the donation
-  if ($success && module_exists('commerce_cardonfile') && $pane_values['credit_card']['cardonfile_store'] == TRUE) {
+  if ($success && module_exists('commerce_cardonfile') && !empty($pane_values['credit_card']['cardonfile_store'])) {
     // Load up the cardonfile record for this donation and save it
     $card = _fundraiser_commerce_donation_cardonfile_card($donation);
     $donation->data['cardonfile'] = $card->card_id;
@@ -2025,15 +2025,5 @@ function _fundraiser_commerce_cardonfile_exp_date_mismatch($fields) {
   }
   else {
     return FALSE;
-  }
-}
-
-/**
- * Implements hook_commerce_authnet_cim_request_alter
- */
-function fundraiser_commerce_commerce_authnet_cim_request_alter($api_request_element) {
-  // Change the description to something unique so we get a new profile each time
-  if (!empty($api_request_element->profile->description)) {
-    $api_request_element->profile->description = substr(t('Order @order taking place at @date', array('@order' => $order->order_id, '@date' => format_date(time()))), 0, 255);
   }
 }
