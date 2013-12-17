@@ -634,7 +634,7 @@ function page_wrappers_form_node_delete_confirm_alter(&$form, &$form_state, $for
       if (isset($active_donation) && !empty($active_donation)) {
         $form['in_use'] = array(
         '#prefix' => '<div class = "wrapper-warning">',
-        '#markup' => t('%title\'s stylesheet is being used donation forms. Deleting it will remove the styles from the forms.', array('%title' => $form['#node']->title)),
+        '#markup' => t('%title\'s stylesheet is being used on donation forms. Deleting it will remove the styles from the forms.', array('%title' => $form['#node']->title)),
         '#suffix' => "</div>"
         );
       }
