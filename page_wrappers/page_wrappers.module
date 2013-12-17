@@ -614,48 +614,61 @@ function page_wrappers_page_wrapper_form_validate(&$form, &$form_state) {
 }
 
 /**
- * Implements hook_node_access
- * forbid deletion of referenced page_wrappers
+ * Implements hook_form_FORMID_alter
+ * intercept node delete and add a custom confirm message for page_wrapper nodes
  */
-function page_wrappers_node_access($node, $op, $account) {
-  if ($op == 'delete' && $node->type == 'page_wrapper') {
-    $active_external = db_query('SELECT * FROM {field_data_page_wrappers_css_source} WHERE page_wrappers_css_source_value = :nid', array(':nid' => $node->nid))->fetchAllAssoc('entity_id');
+
+function page_wrappers_form_node_delete_confirm_alter(&$form, &$form_state, $form_id) {
+
+  if($form['#node']->type == "page_wrapper") {
+    $active_external = db_query('SELECT * FROM {field_data_page_wrappers_css_source} WHERE page_wrappers_css_source_value = :nid', array(':nid' => $form['#node']->nid))->fetchAllAssoc('entity_id');
     if (isset($active_external) && !empty($active_external)) {
-      return NODE_ACCESS_DENY;
+      $form['in_use'] = array(
+      '#prefix' => '<div class = "wrapper-warning">',
+      '#markup' => t('%title\'s stylesheet is being used by other Page Wrappers. Deleting it will remove the styles from the other page wrappers.', array('%title' => $form['#node']->title)),
+      '#suffix' => "</div>"
+      );
+    }
+    else {
+      $active_donation = db_query('SELECT * FROM {node_page_wrappers} WHERE wrapper_nid = :nid', array(':nid' => $form['#node']->nid))->fetchAllAssoc('nid');
+      if (isset($active_donation) && !empty($active_donation)) {
+        $form['in_use'] = array(
+        '#prefix' => '<div class = "wrapper-warning">',
+        '#markup' => t('%title\'s stylesheet is being used donation forms. Deleting it will remove the styles from the forms.', array('%title' => $form['#node']->title)),
+        '#suffix' => "</div>"
+        );
+      }
     }
   }
 }
 
 /**
- * Implements hook_menu_alter
+ * Implements hook_form_FORMID_alter
  * intercept node delete and add a custom confirm message for page_wrapper nodes
  */
-function page_wrappers_menu_alter(&$items) {
-  if (isset($items['node/%node/delete'])) {
-    $items['node/%node/delete']['page arguments'] = array('page_wrappers_node_delete_confirm', 1);
-  }
-}
 
-function page_wrappers_node_delete_confirm($form, &$form_state, $node) {
-  if($node->type != "page_wrapper") {
-    return node_delete_confirm($form, $form_state, $node);
-  }
-  else {
-    $active_external = db_query('SELECT * FROM {field_data_page_wrappers_css_source} WHERE page_wrappers_css_source_value = :nid', array(':nid' => $node->nid))->fetchAllAssoc('entity_id');
-    if (isset($active_external) && !empty($active_external)) {
-      $form['#node'] = $node;
-      $form['nid'] = array(
-        '#type' => 'value',
-        '#value' => $node->nid,
-      );
-      return confirm_form($form, t('%title?\'s stylesheet is being used by other Page Wrappers. Deleting it will remove the styles from the other page wrappers. Are you sure you want to do this?', array('%title' => $node->title)), 'node/' . $node->nid, t('This action cannot be undone.'), t('Delete'), t('Cancel'));
-    }
-    else {
-      return node_delete_confirm($form, $form_state, $node);
+function page_wrappers_form_node_admin_content_alter(&$form, &$form_state, $form_id) {
+  if(isset($form_state['values']) && $form_state['values']['operation'] == 'delete') {
+    $nodes = $form_state['values']['nodes'];
+    foreach ($nodes as $key => $nid) {
+      if($nid) {
+        $node = node_load($nid);
+        if($node->type == "page_wrapper") {
+          $active_external = db_query('SELECT * FROM {field_data_page_wrappers_css_source} WHERE page_wrappers_css_source_value = :nid', array(':nid' => $node->nid))->fetchAllAssoc('entity_id');
+          if (isset($active_external) && !empty($active_external)) {
+            $form['nodes'][$node->nid]['#suffix'] = '<span class = "wrapper-warning">' . t('@title\'s stylesheet is being used by other Page Wrappers. Deleting it will remove the styles from the other page wrappers.', array('@title' => $node->title)) . '</span></li>';
+          }
+          else {
+            $active_donation = db_query('SELECT * FROM {node_page_wrappers} WHERE wrapper_nid = :nid', array(':nid' => $node->nid))->fetchAllAssoc('nid');
+            if (isset($active_donation) && !empty($active_donation)) {
+              $form['nodes'][$node->nid]['#suffix'] = '<span class = "wrapper-warning">' .  t('@title\'s stylesheet is being used on donation forms. Deleting it will remove the styles from the forms.', array('@title' => $node->title)) . '</span></li>';
+            }
+          }
+        }
+      }
     }
   }
 }
-
 
 /**
  * Implementation of hook_form_BASE_FORM_ID_alter.
