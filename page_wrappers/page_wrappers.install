@@ -575,7 +575,8 @@ function page_wrappers_update_7004(&$sandbox) {
          fclose($fhandle);
        }
        else {
-        throw new DrupalUpdateException('Update 7004 did not complete. file was missing: ' . $existing_css_file->filename . '. Fix this error and try again');
+         //don't throw exception for missing files, per discussion
+        //throw new DrupalUpdateException('Update 7004 did not complete. file was missing: ' . $existing_css_file->filename . '. Fix this error and try again');
        }
      }
     }
@@ -601,7 +602,7 @@ function page_wrappers_update_7004(&$sandbox) {
           fclose($fhandle);
         }
         else {
-        throw new DrupalUpdateException('Update 7004 did not complete. file was missing: ' . $existing_css_file->filename . '. Fix this error and try again');
+        //throw new DrupalUpdateException('Update 7004 did not complete. file was missing: ' . $existing_css_file->filename . '. Fix this error and try again');
        }
       }
     }
