@@ -560,7 +560,6 @@ function page_wrappers_update_7004(&$sandbox) {
   }
   $nids = db_query('SELECT nid FROM {node} WHERE type = :page && nid > '.$sandbox['last_nid'].' LIMIT '.$sandbox['limit'].'',  array(':page' => 'page_wrapper'))->fetchCol();
   $wrappers = node_load_multiple($nids, array());
-
   foreach($wrappers as $node){
     $css_contents = '';
     $js_contents = '';
@@ -575,6 +574,7 @@ function page_wrappers_update_7004(&$sandbox) {
          fclose($fhandle);
        }
        else {
+          $messages[] = t('CSS file was missing: @name for node @nid', array('@name' => $existing_css_file->filename, '@nid' => $node->nid));
          //don't throw exception for missing files, per discussion
         //throw new DrupalUpdateException('Update 7004 did not complete. file was missing: ' . $existing_css_file->filename . '. Fix this error and try again');
        }
@@ -602,6 +602,7 @@ function page_wrappers_update_7004(&$sandbox) {
           fclose($fhandle);
         }
         else {
+          $messages[] = t('Javascript file was missing: @name for node @nid', array('@name' => $existing_js_file->filename, '@nid' => $node->nid));
         //throw new DrupalUpdateException('Update 7004 did not complete. file was missing: ' . $existing_css_file->filename . '. Fix this error and try again');
        }
       }
@@ -623,6 +624,10 @@ function page_wrappers_update_7004(&$sandbox) {
   }
   $sandbox['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
   $sandbox['last_nid'] = $node->nid;
+  if(!empty($messages)) {
+    $message = implode(' ', $messages);
+    return $message;
+  }
 }
 
 
