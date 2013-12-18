@@ -9,24 +9,6 @@
   margin:0;
 }
 
-#fundraiser-upsell-donation-form label {
-  float: left;
-  margin-right: 1em;
-  margin-top: 0.25em;
-}
-
-/* Move the currency symbol from the description into the input field */
-#fundraiser-upsell-donation-form .description {
-  height: 0px;
-  position: relative;
-  top: -1.9em;
-  left: 11.7em;
-}
-
-#fundraiser-upsell-donation-form #edit-amount {
-  padding-left: 1em;
-}
-
 #fundraiser-upsell-admin-settings-form .upsell_low,
 #fundraiser-upsell-admin-settings-form .upsell_high,
 #fundraiser-upsell-admin-settings-form .upsell_upsell {
