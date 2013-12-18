@@ -122,19 +122,21 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
     '#default_value' => variable_get('fundraiser_upsell_default_content_disclaimer', $default_disclaimer),
   );
 
-  // @todo Fix this.
-  if (module_exists('salesforce_upsell')) {
-    $salesforce_campaign_options = array_merge(
-      array('' => '(blank)'),
-      salesforce_upsell_get_campaigns()
-    );
+  if (module_exists('market_source')) {
+    $salesforce_campaign_options = market_source_get_campaigns();
+    if (!empty($salesforce_campaign_options)) {
+      $salesforce_campaign_options = array_merge(
+        array('' => '(blank)'),
+        $salesforce_campaign_options
+      );
 
-    $form['fundraiser_upsell_sf_campaign_id'] = array(
-      '#title' => t('Sustainer Salesforce Campaign ID'),
-      '#type' => 'select',
-      '#default_value' => variable_get('fundraiser_upsell_sf_campaign_id', ''),
-      '#options' => $salesforce_campaign_options,
-    );
+      $form['fundraiser_upsell_sf_campaign_id'] = array(
+        '#title' => t('Sustainer Salesforce Campaign ID'),
+        '#type' => 'select',
+        '#default_value' => variable_get('fundraiser_upsell_sf_campaign_id', ''),
+        '#options' => $salesforce_campaign_options,
+      );
+    }
   }
 
   $form['fundraiser_upsell_acceptance'] = array(
