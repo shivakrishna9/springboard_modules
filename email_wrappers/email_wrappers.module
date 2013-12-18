@@ -122,7 +122,7 @@ function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state,
     $defaults = array();
     // check the db for settings
     if (isset($form['eid']['#value'])) {
-      $defaults = email_wrappers_load_settings($form['node']['#value']->nid, $form['eid']['#value']);
+      $defaults = email_wrappers_load_settings($form['#node']->nid, $form['eid']['#value']);
     }
 
     // no settings available, load defaults from the selected template
