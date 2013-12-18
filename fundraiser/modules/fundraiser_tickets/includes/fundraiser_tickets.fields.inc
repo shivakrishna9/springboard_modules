@@ -339,10 +339,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
         'cache_enabled' => 0,
         'granularity' => array(
           'day' => 'day',
-          'hour' => 'hour',
-          'minute' => 'minute',
           'month' => 'month',
-          'second' => 0,
           'year' => 'year',
         ),
         'timezone_db' => 'UTC',
@@ -386,7 +383,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
         'module' => 'date',
         'settings' => array(
           'increment' => 30,
-          'input_format' => 'm/d/Y - H:i:s',
+          'input_format' => 'm/d/Y',
           'input_format_custom' => '',
           'label_position' => 'above',
           'text_parts' => array(),
@@ -578,7 +575,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
       ),
       'entity_type' => 'node',
       'field_name' => 'fr_tickets_closed_message',
-      'label' => 'Message 1',
+      'label' => 'Closed message',
       'required' => 0,
       'settings' => array(
         'text_processing' => 1,
@@ -931,6 +928,150 @@ $fields['fr_tickets_soldout_redirect'] = array(
     )
   );
 
+  // The aggregated ticket inventory info
+
+   $fields['fr_tickets_inventory_initial'] = array(
+    'field_config' => array(
+      'active' => 1,
+      'cardinality' => 1,
+      'deleted' => 0,
+      'entity_types' => array(),
+      'field_name' => 'fr_tickets_inventory_initial',
+      'locked' => 0,
+      'module' => 'number',
+      'settings' => array(
+        'size' => 8,
+        'max_length' => 10,
+        'text_processing' => 0,
+      ),
+      'translatable' => 0,
+      'type' => 'number_integer',
+    ),
+    'field_instance' => array(
+      'bundle' => $type,
+      'default_value' => NULL,
+      'deleted' => 0,
+      'description' => '',
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 8,
+        ),
+        'teaser' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 0,
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'fr_tickets_inventory_initial',
+      'label' => 'Initial ticket inventory',
+      'required' => 0,
+      'settings' => array(
+        'text_processing' => 0,
+        'user_register_form' => FALSE,
+      ),
+    )
+  );
+
+   $fields['fr_tickets_inventory_available'] = array(
+    'field_config' => array(
+      'active' => 1,
+      'cardinality' => 1,
+      'deleted' => 0,
+      'entity_types' => array(),
+      'field_name' => 'fr_tickets_inventory_available',
+      'locked' => 0,
+      'module' => 'number',
+      'settings' => array(
+        'size' => 8,
+        'max_length' => 10,
+        'text_processing' => 0,
+      ),
+      'translatable' => 0,
+      'type' => 'number_integer',
+    ),
+    'field_instance' => array(
+      'bundle' => $type,
+      'default_value' => NULL,
+      'deleted' => 0,
+      'description' => '',
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 8,
+        ),
+        'teaser' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 0,
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'fr_tickets_inventory_available',
+      'label' => 'Available ticket inventory',
+      'required' => 0,
+      'settings' => array(
+        'text_processing' => 0,
+        'user_register_form' => FALSE,
+      ),
+    )
+  );
+
+   $fields['fr_tickets_inventory_purchased'] = array(
+    'field_config' => array(
+      'active' => 1,
+      'cardinality' => 1,
+      'deleted' => 0,
+      'entity_types' => array(),
+      'field_name' => 'fr_tickets_inventory_purchased',
+      'locked' => 0,
+      'module' => 'number',
+      'settings' => array(
+        'size' => 8,
+        'max_length' => 10,
+        'text_processing' => 0,
+      ),
+      'translatable' => 0,
+      'type' => 'number_integer',
+    ),
+    'field_instance' => array(
+      'bundle' => $type,
+      'default_value' => NULL,
+      'deleted' => 0,
+      'description' => '',
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 8,
+        ),
+        'teaser' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 0,
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'fr_tickets_inventory_purchased',
+      'label' => 'Purchased ticket inventory',
+      'required' => 0,
+      'settings' => array(
+        'text_processing' => 0,
+        'user_register_form' => FALSE,
+      ),
+    )
+  );
+
+
  // Translatables
   // Included for use with string extractors like potx.
   t('Allow waitlist for closed out events');
@@ -939,14 +1080,16 @@ $fields['fr_tickets_soldout_redirect'] = array(
   t('Close event on');
   t('Enable add-on donation');
   t('Event is closed');
-  t('Internal Name');
-  t('Message 1');
-  t('Message 2');
-  t('Redirect URL 1');
-  t('Redirect URL 2');
+  t('Closed message');
+  t('Sold out message');
+  t('Closed redirect');
+  t('Sold out redirect');
   t('Wait list form');
   t('When an event is closed users should be');
   t('When an event is sold out users should be');
+  t('Initial ticket inventory');
+  t('Available ticket inventory');
+  t('Purchased ticket inventory');
 
   return $fields;
 }

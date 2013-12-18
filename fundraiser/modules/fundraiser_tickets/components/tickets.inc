@@ -33,14 +33,17 @@ function _webform_render_tickets($component, $value = NULL, $filter = TRUE) {
   $element = array(
     '#type' => 'item',
     '#title' => $filter ? _webform_filter_xss($component['name']) : $component['name'],
- //   '#title_display' => $component['extra']['title_display'] ? $component['extra']['title_display'] : NULL,
     '#weight' => $component['weight'],
-  //  '#description' => $filter ? _webform_filter_descriptions($component['extra']['description']) : $component['extra']['description'],
     '#attributes' => array('class' => 'webform-component-tickets'),
     '#title_display' => 'none',
     '#webform_component' => $component,
     '#theme' => 'fundraiser_tickets_webform_table'
   );
+
+  $node = isset($component['nid']) ? node_load($component['nid']) : NULL;
+  $node_wrapper = entity_metadata_wrapper('node', $node);
+  $ticket_types = $node_wrapper->fr_tickets_ticket_types->value();
+  $element['#ticket_types'] = $ticket_types;
 
   // Hide the event_table title if #title_display is 'none'.
   if (!empty($component['extra']['title_display']) && $component['extra']['title_display'] == 'none') {
@@ -64,19 +67,16 @@ function webform_tickets_prerender($element) {
 /**
  * Theme the form elements into a table
  */
-function theme_fundraiser_tickets_webform_table($elements) {
+function theme_fundraiser_tickets_webform_table($variables) {
 
-  // TODO: figure out why this is getting nested
-  $element = $elements['element'];
-  $node = isset($element['#webform_component']['nid']) ? node_load($element['#webform_component']['nid']) : NULL;
-  $node_wrapper = entity_metadata_wrapper('node', $node);
-  $ticket_types = $node_wrapper->fr_tickets_ticket_types->value();
 
-  if (! empty($ticket_types)){
+  $element = $variables['element'];
+
+  if (! empty($element['#ticket_types'])){
 
     $rows = array();
     // Loop through the element and output the children fields as rows
-    foreach ($ticket_types as $i => $ticket_type) {
+    foreach ($element['#ticket_types'] as $i => $ticket_type) {
       $product_wrapper = entity_metadata_wrapper('commerce_product', $ticket_type);
       $id = $product_wrapper->product_id->value();
       $row  = array();
@@ -93,7 +93,6 @@ function theme_fundraiser_tickets_webform_table($elements) {
     }
 
     // Add a row to contain our totals
-    $id = $node_wrapper->nid->value();
     $rows[] = array('data' => array(t('Totals'), '', array('data' => 0, 'id' => $id . '-total-quantity', 'align' => 'right'), array('data' => '$ 0.00', 'id' => $id . '-total-cost', 'align' => 'right')));
     $header = array(t('Type'), '', array('data' => t('Quantity'), 'align' => 'right'), array('data' => t('Amount'), 'align' => 'right'));
     $attributes = array('class' => $element['#attributes']['class'], 'id' => $id, 'width' => '100%');
