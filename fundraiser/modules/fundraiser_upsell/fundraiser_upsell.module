@@ -104,39 +104,55 @@ function fundraiser_upsell_add_node_settings(&$form) {
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
     '#group' => 'additional_settings',
+    '#tree' => TRUE,
   );
-  $form['fundraiser_upsell']['upsell_enabled'] = array(
+  $form['fundraiser_upsell']['enabled'] = array(
     '#type' => 'checkbox',
     '#title' => t('Upsell enabled'),
     '#default_value' => !empty($node->upsell['enabled']) ? $node->upsell['enabled'] : '',
   );
-  $form['fundraiser_upsell']['upsell_content'] = array(
+  $form['fundraiser_upsell']['content'] = array(
     '#title' => t('Form specific Upsell Content'),
     '#type' => 'textarea',
     '#default_value' => !empty($node->upsell['content']) ? $node->upsell['content'] : '',
     '#description' => t('If no content is given the default will be used.'),
   );
-  $form['fundraiser_upsell']['modal_theming'] = array(
+
+  $form['fundraiser_upsell']['footer'] = array(
+    '#title' => t('Form specific Upsell Footer'),
+    '#type' => 'textarea',
+    '#default_value' => !empty($node->upsell['footer']) ? $node->upsell['footer'] : '',
+    '#description' => t('Content that goes below the upsell form.  It can be used for a disclaimer.'),
+  );
+
+  $form['fundraiser_upsell']['thankyou'] = array(
+    '#title' => t('Thank you content'),
+    '#type' => 'textarea',
+    '#default_value' => !empty($node->upsell['thankyou']) ? $node->upsell['thankyou'] : '',
+    '#description' => t('The content in the modal after the sustainer is processed.'),
+  );
+
+  $form['fundraiser_upsell']['modal_theme'] = array(
     '#type' => 'fieldset',
     '#title' => t('Modal theming'),
     '#weight' => 5,
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
-  $form['fundraiser_upsell']['modal_theming']['upsell_class'] = array(
+  $form['fundraiser_upsell']['modal_theme']['class'] = array(
     '#title' => t('CSS class(es)'),
     '#type' => 'textfield',
     '#default_value' => !empty($node->upsell['class']) ? $node->upsell['class'] : '',
     '#description' => t('Separate multiple classes with a space.'),
   );
-  $form['fundraiser_upsell']['modal_theming']['upsell_modal_width'] = array(
+  $form['fundraiser_upsell']['modal_theme']['width'] = array(
     '#title' => t('Modal window width (in pixels)'),
     '#type' => 'textfield',
     '#size' => 5,
     '#default_value' => !empty($node->upsell['modal_width']) ? $node->upsell['modal_width'] : 400,
     '#description' => t('This will override the site default.'),
   );
-  $form['fundraiser_upsell']['modal_theming']['upsell_modal_height'] = array(
+  $form['fundraiser_upsell']['modal_theme']['height'] = array(
     '#title' => t('Modal window height (in pixels)'),
     '#type' => 'textfield',
     '#size' => 5,
@@ -144,29 +160,31 @@ function fundraiser_upsell_add_node_settings(&$form) {
     '#description' => t('This will override the site default.'),
   );
 
-  // @todo Fix the salesforce campaign listing stuff.
-  if (module_exists('salesforce_upsell')) {
+  if (module_exists('market_source')) {
+    $salesforce_campaign_options = market_source_get_campaigns();
 
-    $form['fundraiser_upsell']['additional_options'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Additional options'),
-      '#weight' => 10,
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-    );
+    if (!empty($salesforce_campaign_options)) {
+      $salesforce_campaign_options = array_merge(
+        array('' => '(blank)'),
+        $salesforce_campaign_options
+      );
 
-    $salesforce_campaign_options = array_merge(
-      array('' => '(blank)'),
-      salesforce_upsell_api_get_campaigns()
-    );
+      $form['fundraiser_upsell']['additional_options'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Additional options'),
+        '#weight' => 10,
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+      );
 
-    $form['fundraiser_upsell']['additional_options']['upsell_campaign_id'] = array(
-      '#title' => t('Sustainer Salesforce Campaign ID'),
-      '#type' => 'select',
-      '#options' => $salesforce_campaign_options,
-      '#default_value' => !empty($node->upsell['campaign_id']) ? $node->upsell['campaign_id'] : variable_get('fundraiser_upsell_sf_campaign_id', ''),
-      '#description' => t('Set the campaign id to be used for the upsell form. Please note that if this field is left blank, then all recurring donations will have blank campaign ids.'),
-    );
+      $form['fundraiser_upsell']['additional_options']['upsell_campaign_id'] = array(
+        '#title' => t('Sustainer Salesforce Campaign ID'),
+        '#type' => 'select',
+        '#options' => $salesforce_campaign_options,
+        '#default_value' => !empty($node->upsell['campaign_id']) ? $node->upsell['campaign_id'] : variable_get('fundraiser_upsell_sf_campaign_id', ''),
+        '#description' => t('Set the campaign id to be used for the upsell form. Please note that if this field is left blank, then all recurring donations will have blank campaign ids.'),
+      );
+    }
   }
 
   $form['#validate'][] = 'fundraiser_upsell_node_form_validate';
@@ -177,8 +195,8 @@ function fundraiser_upsell_add_node_settings(&$form) {
  * Additional validation for the fundraiser_upsell node settings.
  */
 function fundraiser_upsell_node_form_validate($form, &$form_state) {
-  $modal_width = $form_state['values']['upsell_modal_width'];
-  $modal_height = $form_state['values']['upsell_modal_height'];
+  $modal_width = $form_state['values']['fundraiser_upsell']['modal_theme']['width'];
+  $modal_height = $form_state['values']['fundraiser_upsell']['modal_theme']['height'];
   if (empty($modal_width) || !is_numeric($modal_width)) {
     form_set_error('fundraiser_upsell][modal_theming][upsell_modal_width',
       t('The fundraiser upsell modal width must be a number.'));
@@ -196,17 +214,7 @@ function fundraiser_upsell_node_form_validate($form, &$form_state) {
  * Example: $node->upsell['enabled']
  */
 function fundraiser_upsell_node_form_submit($form, &$form_state) {
-  $form_state['values']['upsell'] = array(
-    'enabled' => $form_state['values']['upsell_enabled'],
-    'content' => $form_state['values']['upsell_content'],
-    'class' => $form_state['values']['upsell_class'],
-    'modal_width' => $form_state['values']['upsell_modal_width'],
-    'modal_height' => $form_state['values']['upsell_modal_height'],
-  );
 
-  if (!empty($form_state['values']['upsell_campaign_id'])) {
-    $form_state['values']['upsell']['campaign_id'] = $form_state['values']['upsell_campaign_id'];
-  }
 }
 
 /**
@@ -640,15 +648,17 @@ function fundraiser_upsell_node_delete(&$node) {
  */
 function fundraiser_upsell_node_record($node) {
 
-  $campaign_id = !empty($node->upsell['campaign_id']) ? $node->upsell['campaign_id'] : '';
+  $campaign_id = !empty($node->fundraiser_upsell['campaign_id']) ? $node->fundraiser_upsell['campaign_id'] : '';
 
   return array(
     'nid' => $node->nid,
-    'enabled' => $node->upsell['enabled'],
-    'content' => $node->upsell['content'],
-    'class' => $node->upsell['class'],
-    'modal_width' => $node->upsell['modal_width'],
-    'modal_height' => $node->upsell['modal_height'],
+    'enabled' => $node->fundraiser_upsell['enabled'],
+    'content' => $node->fundraiser_upsell['content'],
+    'footer' => $node->fundraiser_upsell['footer'],
+    'thankyou' => $node->fundraiser_upsell['thankyou'],
+    'class' => $node->fundraiser_upsell['modal_theme']['class'],
+    'width' => $node->fundraiser_upsell['modal_theme']['width'],
+    'height' => $node->fundraiser_upsell['modal_theme']['height'],
     'campaign_id' => $campaign_id,
   );
 }
