@@ -121,12 +121,7 @@ function commerce_authnet_fundraiser_commerce_cardonfile($donation) {
     // If we have a profile for this user update it in the CIM
     if ($card_data) {
       // Make the update request to authorize.net
-      $updated_card = commerce_authnet_fundraiser_commerce_update($donation->gateway['gateway_details'], $donation, $card_data);
-
-      // If the update was successful save the new card data locally
-      if ($updated_card) {
-        commerce_cardonfile_save($updated_card);
-      }
+      commerce_authnet_fundraiser_commerce_update($donation->gateway['gateway_details'], $donation, $card_data);
     }
   }
 
@@ -177,6 +172,7 @@ function commerce_authnet_fundraiser_commerce_update($payment_method, $donation,
   $update = _commerce_authnet_fundraiser_commerce_authnet_cim_cardonfile_update($form, $form_state, $payment_method, $card_data);
 
   if ($update) {
+    commerce_cardonfile_save($card_data);
     return $card_data;
   }
 }

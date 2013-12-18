@@ -1920,7 +1920,7 @@ function _fundraiser_commerce_submit_handler_pane_values(&$pane_values, $donatio
 }
 
 /**
- * Perform some standard functions after a commerce submit form has been procssed
+ * Perform some standard functions after a commerce submit form has been processed
  *
  * @param $success Boolean
  *    TRUE or FALSE
