@@ -78,6 +78,7 @@ function theme_fundraiser_tickets_webform_table($elements) {
     // Loop through the element and output the children fields as rows
     foreach ($ticket_types as $i => $ticket_type) {
       $product_wrapper = entity_metadata_wrapper('commerce_product', $ticket_type);
+      $id = $product_wrapper->product_id->value();
       $row  = array();
       $item = array();
       $item['#type'] = 'select';
@@ -86,15 +87,14 @@ function theme_fundraiser_tickets_webform_table($elements) {
       $item['#title'] = '';
       $description = check_plain($product_wrapper->fr_tickets_description->value());
       // Add a div to contain the ticket total
-   //   $ticket_total = array('data' => '$ ' . $item['#webform_component']['extra']['ticket_total'], 'class' => 'event-ticket-select-total', 'id' => $item['#id'] . '-ticket-total', 'align' => 'right');
-      $ticket_total = array();
+      $ticket_total = array('data' => '$ 0.00', 'class' => 'event-ticket-select-total', 'id' => $id . '-ticket-total', 'align' => 'right');
       $row['data'] = array($title, $description, array('data'=> drupal_render($item), 'align' => 'right'), $ticket_total);
       $rows[] = $row;
     }
 
     // Add a row to contain our totals
     $id = $node_wrapper->nid->value();
-    $rows[] = array('data' => array(t('Totals'), '', array('data' => 0, 'id' => $id . '-total-quantity', 'align' => 'right'), array('data' => '$ 0', 'id' => $id . '-total-cost', 'align' => 'right')));
+    $rows[] = array('data' => array(t('Totals'), '', array('data' => 0, 'id' => $id . '-total-quantity', 'align' => 'right'), array('data' => '$ 0.00', 'id' => $id . '-total-cost', 'align' => 'right')));
     $header = array(t('Type'), '', array('data' => t('Quantity'), 'align' => 'right'), array('data' => t('Amount'), 'align' => 'right'));
     $attributes = array('class' => $element['#attributes']['class'], 'id' => $id, 'width' => '100%');
 
@@ -103,7 +103,7 @@ function theme_fundraiser_tickets_webform_table($elements) {
       '#header' => $header,
       '#rows' => $rows
     );
-    $output .= drupal_render($table);
+    $output = drupal_render($table);
     return $output;
   }
 }
