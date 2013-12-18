@@ -1290,8 +1290,18 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
 }
 
 /**
- * Helper function, create recurring donations to the limits of the donation card expiration date.
- * If the recurring donations exist already update, cancelling those that are past expiration.
+ * Create recurring donations up until the date given.
+ *
+ * If the recurring donations exist already update,
+ * cancelling those that are past expiration.
+ *
+ * @param object $donation
+ *   The donation object to clone from.  This will become the master order.
+ * @param int $month
+ *   The month number to stop on.  Usually the credit card expiration.
+ * @param int $year
+ *   The year number to stop on.  Usually the credit card expiration.
+ *
  */
 function _fundraiser_sustainers_create_future_orders($donation, $month, $year) {
   // Handle the rest of the set based on the given donation.
@@ -1440,7 +1450,7 @@ function fundraiser_sustainers_fundraiser_donation_get_donation($donation) {
  * Implements hook_fundraiser_donation_create().
  */
 function fundraiser_sustainers_fundraiser_donation_create($donation) {
-  // If this has been flagged as a recurring dontation, mark it properly so all following systems can understand.
+  // If this has been flagged as a recurring donation, mark it properly so all following systems can understand.
   $recurs = FALSE;
   if (!isset($donation->donation['recurs_monthly'])) { // In case the recurs_monthly field doesn't exist.
     $donation->donation['recurs_monthly'] = FALSE;
@@ -1877,6 +1887,20 @@ function _fundraiser_sustainers_get_donations_recurr_processed($master_did) {
 }
 
 /**
+ * Counts the number of sustainers in a sustainer series, including the master.
+ *
+ * @param int $master_did
+ *   The donation ID of the master donation.
+ *
+ * @return int
+ *   Number of sustainer rows with the given master donation ID.
+ */
+function fundraiser_sustainers_count_donations_in_series($master_did) {
+  return db_query('SELECT count(*) FROM {fundraiser_sustainers}
+    WHERE master_did = :did', array(':did' => $master_did))->fetchField();
+}
+
+/**
  * DB function, get unlocked donations ready to be processed.
  * Lock them.
  */
@@ -1999,4 +2023,53 @@ function _fundraiser_sustainers_update_sustainers_node($sustainers_node) {
  */
 function _fundraiser_sustainers_delete_sustainers_node($nid) {
   db_delete('fundraiser_sustainers_nodes')->condition('nid', $nid)->execute();
+}
+
+/**
+ * Returns the cid of the recurring webform component for a given node.
+ *
+ * @param object $node
+ *   Node object.
+ *
+ * @return bool|int
+ *   The component ID, or FALSE if one can't be found.
+ */
+function fundraiser_sustainers_get_recurring_cid_by_node($node) {
+  $form_key = 'recurs_monthly';
+
+  if (count($node->webform['components'])) {
+    foreach ($node->webform['components'] as $cid => $component) {
+      if ($component['form_key'] == $form_key) {
+        return $cid;
+      }
+    }
+  }
+
+  return FALSE;
+}
+
+/**
+ * Determine if the webform component value indicates that a submission is recurring.
+ *
+ * @param string|array $value
+ *   The value of the recurring webform component to check.
+ *
+ * @return bool
+ *   TRUE if this value indicates the submission is recurring.
+ */
+function fundraiser_sustainers_component_value_is_recurring($value) {
+  $recurs_string = 'recurs';
+
+  // The component is usually a select or checkbox.
+  // So $value would be an array.
+  if (is_array($value) && in_array($recurs_string, $value)) {
+    return TRUE;
+  }
+  // If recurring is required, the component will be hidden.
+  // And $recurring_value will be a string.
+  elseif (is_string($value) && $value == $recurs_string) {
+    return TRUE;
+  }
+
+  return FALSE;
 }
