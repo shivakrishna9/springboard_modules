@@ -102,9 +102,9 @@ function fundraiser_tickets_ticket_form_submit($form, &$form_state) {
   $cp->commerce_price = array(LANGUAGE_NONE => array( 0 => array('amount' => $form_state['values']['price'] * 100, 'currency_code' => 'USD',)));
   if (commerce_product_save($cp) && $cp->product_id){
     if ($edit == FALSE){
-      $node_wrapped = entity_metadata_wrapper('node', $node);
-      $node_wrapped->fr_tickets_ticket_types[] = $cp->product_id;
-      $node_wrapped->save();
+      $node_wrapper = entity_metadata_wrapper('node', $node);
+      $node_wrapper->fr_tickets_ticket_types[] = $cp->product_id;
+      $node_wrapper->save();
     }
   }
   drupal_goto('node/' . $node->nid . '/tickets/tickets');
@@ -117,8 +117,8 @@ function fundraiser_tickets_order_ticket_types_form($form, &$form_state, $node){
 
   if (! empty($node->fr_tickets_ticket_types)){
     $node_wrapper = entity_metadata_wrapper('node', $node);
-    $products_wrapped = $node_wrapper->language($language->language)->fr_tickets_ticket_types;
-    $products = $products_wrapped->value();
+    $products_wrapper = $node_wrapper->language($language->language)->fr_tickets_ticket_types;
+    $products = $products_wrapper->value();
     uasort($products, '_fundraiser_tickets_weight_sort');
   }
 
@@ -137,34 +137,34 @@ function fundraiser_tickets_order_ticket_types_form($form, &$form_state, $node){
 
     // create the form elements for each product
     foreach ($products as $key => $product) {
-      $product_wrapped = entity_metadata_wrapper('commerce_product', $product);
+      $product_wrapper = entity_metadata_wrapper('commerce_product', $product);
       $form['tickets'][$key]['price'] = array(
-        '#markup' => commerce_currency_format($product_wrapped->commerce_price->amount->value(), $product_wrapped->commerce_price->currency_code->value(), $product)
+        '#markup' => commerce_currency_format($product_wrapper->commerce_price->amount->value(), $product_wrapper->commerce_price->currency_code->value(), $product)
       );
       $form['tickets'][$key]['title'] = array(
-        '#markup' => $product_wrapped->title->value(),
+        '#markup' => $product_wrapper->title->value(),
       );
       $form['tickets'][$key]['description'] = array(
-        '#markup' => $product_wrapped->fr_tickets_description->value(),
+        '#markup' => $product_wrapper->fr_tickets_description->value(),
       );
       $form['tickets'][$key]['quantity'] = array(
-        '#markup' => $product_wrapped->fr_tickets_quantity->value() ,
+        '#markup' => $product_wrapper->fr_tickets_quantity->value() ,
       );
       $form['tickets'][$key]['sold_out_message'] = array(
-        '#markup' => $product_wrapped->fr_tickets_sold_out_message->value() ,
+        '#markup' => $product_wrapper->fr_tickets_sold_out_message->value() ,
       );
       $form['tickets'][$key]['warning'] = array(
-        '#markup' => $product_wrapped->fr_tickets_threshold->value() ,
+        '#markup' => $product_wrapper->fr_tickets_threshold->value() ,
       );
       $form['tickets'][$key]['edit_link'] = array(
         '#type' => 'link',
         '#title' => t('edit'),
-        '#href' => 'node/' . $node->nid . '/tickets/' . $product_wrapped->product_id->value() . '/edit',
+        '#href' => 'node/' . $node->nid . '/tickets/' . $product_wrapper->product_id->value() . '/edit',
       );
 
       $form['tickets'][$key]['ticket_id'] = array(
         '#type' => 'hidden',
-        '#value' => $product_wrapped->product_id->value()
+        '#value' => $product_wrapper->product_id->value()
       );
 
       $form['tickets'][$key]['weight'] = array(
@@ -237,10 +237,10 @@ function fundraiser_tickets_order_ticket_types_form_validate($form, &$form_state
 
 function fundraiser_tickets_order_ticket_types_form_submit($form, &$form_state) {
   foreach ($form_state['values']['tickets'] as $i => $ticket){
-    $product_wrapped = entity_metadata_wrapper('commerce_product', commerce_product_load($ticket['ticket_id']));
-    if ($product_wrapped->fr_tickets_weight->value() != $ticket['weight']){
-      $product_wrapped->fr_tickets_weight->set($ticket['weight']);
-      $product_wrapped->save();
+    $product_wrapper = entity_metadata_wrapper('commerce_product', commerce_product_load($ticket['ticket_id']));
+    if ($product_wrapper->fr_tickets_weight->value() != $ticket['weight']){
+      $product_wrapper->fr_tickets_weight->set($ticket['weight']);
+      $product_wrapper->save();
     }
   }
 }
