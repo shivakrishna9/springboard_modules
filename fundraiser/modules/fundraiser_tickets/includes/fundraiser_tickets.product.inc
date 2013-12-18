@@ -48,8 +48,8 @@ function _fundraiser_tickets_product_fields() {
       'active' => 1,
       'locked' => 1,
       'settings' => array(
-        'size' => 8,
-        'max_length' => 10,
+        'size' => 5,
+        'max_length' => 8,
         'text_processing' => 0,
       ),
     ),
@@ -101,8 +101,8 @@ function _fundraiser_tickets_product_fields() {
         'active' => 1,
         'locked' => 1,
         'settings' => array(
-          'size' => 8,
-          'max_length' => 10,
+          'size' => 5,
+          'max_length' => 8,
           'text_processing' => 0,
         ),
       ),
