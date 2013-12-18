@@ -99,7 +99,6 @@ function fundraiser_tickets_theme($existing, $type, $theme, $path) {
   return $theme;
 }
 
-
 /**
  * Implements hook_webform_component_info().
  */
