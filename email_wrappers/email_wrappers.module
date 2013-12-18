@@ -540,6 +540,13 @@ function email_wrappers_load_settings($nid, $eid = FALSE) {
 
 /**
  * Mail configuration loader.
+ *
+ * @param array $params
+ *   Should contain either 'mid' or ('module' and 'delta') to identify
+ *   the email wrapper.
+ *
+ * @return object|bool
+ *   The email wrapper object, or FALSE if one can't be found.
  */
 function email_wrappers_mail_load($params = array()) {
   $mid = isset($params['mid']) ? $params['mid'] : FALSE;
