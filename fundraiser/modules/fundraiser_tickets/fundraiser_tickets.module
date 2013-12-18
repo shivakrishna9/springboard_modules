@@ -91,8 +91,14 @@ function fundraiser_tickets_theme($existing, $type, $theme, $path) {
     'fundraiser_tickets_theme_order_ticket_types_form' => array(
       'render element' => 'element'
     ),
+    'fundraiser_tickets_webform_table' => array(
+      'render element' => 'element',
+      'arguments' => array('element' => NULL, 'value' => NULL),
+    ),
   );
+  return $theme;
 }
+
 
 /**
  * Implements hook_webform_component_info().
