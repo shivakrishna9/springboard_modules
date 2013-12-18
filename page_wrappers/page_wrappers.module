@@ -606,7 +606,7 @@ function page_wrappers_page_wrapper_form_validate(&$form, &$form_state) {
   }
 
   if($form_state['values']['pw_existing'] == 1 && $form_state['values']['page_wrapper_alternate_css'] == 0) {
-    form_set_error('page_wrapper_alternate_css', t("You have opted to select an existing stylesheet, but did make a choice."));
+    form_set_error('page_wrapper_alternate_css', t("You have opted to select an existing stylesheet, but did not make a choice."));
   }
   if($form_state['values']['pw_custom'] == 1 && empty($form_state['values']['page_wrappers_css_textarea'][LANGUAGE_NONE][0]['value'])) {
     form_set_error('css_fieldset', t("You have opted to create a new stylesheet, but did not enter any values."));
