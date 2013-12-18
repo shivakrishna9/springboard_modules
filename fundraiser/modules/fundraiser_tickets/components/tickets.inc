@@ -29,39 +29,22 @@ function _webform_edit_tickets($component) {
  * Implements _webform_render_component().
  */
 function _webform_render_tickets($component, $value = NULL, $filter = TRUE) {
-  $node = isset($component['nid']) ? node_load($component['nid']) : NULL;
-  $node_wrapper = entity_metadata_wrapper('node', $node);
-  $element = array();
-  $element['#prefix'] =  '<table class="ticket_table">';
-  $element['#prefix'] .= '<tr class="ticket_headers"><th>Type</th><th>Description</th><th>Quantity</th><th>Amount</th></tr>';
-  $element['#suffix'] = '<tr class="ticket_additional_donation"><td colspan="2"><input type="checkbox">Add an additional donation?</td><td><input type="text"></td><td>$0</td></tr>';
-  $element['#suffix'] .= '<tr class="ticket_total"><td colspan="3">Total</td><td>$0</td></tr>';
-  $element['#suffix'] .= '</table>';
 
-  $ticket_rows = $node_wrapper->fr_tickets_ticket_types->value();
+  $element = array(
+    '#type' => 'item',
+    '#title' => $filter ? _webform_filter_xss($component['name']) : $component['name'],
+ //   '#title_display' => $component['extra']['title_display'] ? $component['extra']['title_display'] : NULL,
+    '#weight' => $component['weight'],
+  //  '#description' => $filter ? _webform_filter_descriptions($component['extra']['description']) : $component['extra']['description'],
+    '#attributes' => array('class' => 'webform-component-tickets'),
+    '#title_display' => 'none',
+    '#webform_component' => $component,
+    '#theme' => 'fundraiser_tickets_webform_table'
+  );
 
-  if (! empty($ticket_rows)){
-
-    $rows = array();
-    // Loop through the payment methods and add fields for each type.
-    foreach ($ticket_rows as $i => $ticket_row) {
-      $product_wrapper = entity_metadata_wrapper('commerce_product', $ticket_row);
-      // Setup the fieldset
-      $element[$product_wrapper->sku->value()] = array(
-        '#type' => 'select',
-        '#options' => range(0,50),
-        '#title' => '',
-        '#prefix' => '<tr class="ticket_row">' . '<td>' . $product_wrapper->title->value()
-          . '(' . commerce_currency_format($product_wrapper->commerce_price->amount->value(), $product_wrapper->commerce_price->currency_code->value(), $product_wrapper) . ')</td>'
-          . '<td>' . $product_wrapper->fr_tickets_description->value() . '</td>'
-          . '<td>',
-        '#suffix' => '</td><td id="' . $product_wrapper->sku->value() .'_total">$0</td>' . '</tr>',
-        '#attributes' => array(
-          'class' => array(''),
-        ),
-      );
-    }
-
+  // Hide the event_table title if #title_display is 'none'.
+  if (!empty($component['extra']['title_display']) && $component['extra']['title_display'] == 'none') {
+    $element['#title'] = NULL;
   }
 
   return $element;
@@ -70,8 +53,57 @@ function _webform_render_tickets($component, $value = NULL, $filter = TRUE) {
 /**
  * Pre-render function to add our id to the js settings
  */
-function _fundraiser_component_tickets_pre_render($element) {
-  // Add the id of the outer fieldset to the js settings
-  //drupal_add_js(array('fundraiserWebform' => array('components' => array('payment_fields' => array('id' => $element['#attributes']['id'])))), 'setting');
+function webform_tickets_prerender($element) {
+  // $id = 'webform-component-' . str_replace('_', '-', implode('--', array_slice($element['#parents'], 1)));
+  // $element['#attributes']['id'] = $id;
+  // drupal_add_js(array('acluEvents' => array('table' => array('id' => $id))), 'setting');
   return $element;
+}
+
+
+/**
+ * Theme the form elements into a table
+ */
+function theme_fundraiser_tickets_webform_table($elements) {
+
+  // TODO: figure out why this is getting nested
+  $element = $elements['element'];
+  $node = isset($element['#webform_component']['nid']) ? node_load($element['#webform_component']['nid']) : NULL;
+  $node_wrapper = entity_metadata_wrapper('node', $node);
+  $ticket_types = $node_wrapper->fr_tickets_ticket_types->value();
+
+  if (! empty($ticket_types)){
+
+    $rows = array();
+    // Loop through the element and output the children fields as rows
+    foreach ($ticket_types as $i => $ticket_type) {
+      $product_wrapper = entity_metadata_wrapper('commerce_product', $ticket_type);
+      $row  = array();
+      $item = array();
+      $item['#type'] = 'select';
+      $item['#options'] = range(0,50);
+      $title = check_plain($product_wrapper->title->value()) . ' (' . commerce_currency_format($product_wrapper->commerce_price->amount->value(), $product_wrapper->commerce_price->currency_code->value(), $product_wrapper) . ')';
+      $item['#title'] = '';
+      $description = check_plain($product_wrapper->fr_tickets_description->value());
+      // Add a div to contain the ticket total
+   //   $ticket_total = array('data' => '$ ' . $item['#webform_component']['extra']['ticket_total'], 'class' => 'event-ticket-select-total', 'id' => $item['#id'] . '-ticket-total', 'align' => 'right');
+      $ticket_total = array();
+      $row['data'] = array($title, $description, array('data'=> drupal_render($item), 'align' => 'right'), $ticket_total);
+      $rows[] = $row;
+    }
+
+    // Add a row to contain our totals
+    $id = $node_wrapper->nid->value();
+    $rows[] = array('data' => array(t('Totals'), '', array('data' => 0, 'id' => $id . '-total-quantity', 'align' => 'right'), array('data' => '$ 0', 'id' => $id . '-total-cost', 'align' => 'right')));
+    $header = array(t('Type'), '', array('data' => t('Quantity'), 'align' => 'right'), array('data' => t('Amount'), 'align' => 'right'));
+    $attributes = array('class' => $element['#attributes']['class'], 'id' => $id, 'width' => '100%');
+
+    $table = array(
+      '#theme' => 'table',
+      '#header' => $header,
+      '#rows' => $rows
+    );
+    $output .= drupal_render($table);
+    return $output;
+  }
 }
