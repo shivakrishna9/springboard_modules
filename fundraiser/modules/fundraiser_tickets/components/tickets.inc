@@ -30,7 +30,7 @@ function _webform_edit_tickets($component) {
  */
 function _webform_render_tickets($component, $value = NULL, $filter = TRUE) {
   $node = isset($component['nid']) ? node_load($component['nid']) : NULL;
-  $node_wrapped = entity_metadata_wrapper('node', $node);
+  $node_wrapper = entity_metadata_wrapper('node', $node);
   $element = array();
   $element['#prefix'] =  '<table class="ticket_table">';
   $element['#prefix'] .= '<tr class="ticket_headers"><th>Type</th><th>Description</th><th>Quantity</th><th>Amount</th></tr>';
@@ -38,24 +38,24 @@ function _webform_render_tickets($component, $value = NULL, $filter = TRUE) {
   $element['#suffix'] .= '<tr class="ticket_total"><td colspan="3">Total</td><td>$0</td></tr>';
   $element['#suffix'] .= '</table>';
 
-  $ticket_rows = $node_wrapped->fr_tickets_ticket_types->value();
+  $ticket_rows = $node_wrapper->fr_tickets_ticket_types->value();
 
   if (! empty($ticket_rows)){
 
     $rows = array();
     // Loop through the payment methods and add fields for each type.
     foreach ($ticket_rows as $i => $ticket_row) {
-      $product_wrapped = entity_metadata_wrapper('commerce_product', $ticket_row);
+      $product_wrapper = entity_metadata_wrapper('commerce_product', $ticket_row);
       // Setup the fieldset
-      $element[$product_wrapped->sku->value()] = array(
+      $element[$product_wrapper->sku->value()] = array(
         '#type' => 'select',
         '#options' => range(0,50),
         '#title' => '',
-        '#prefix' => '<tr class="ticket_row">' . '<td>' . $product_wrapped->title->value()
-          . '(' . commerce_currency_format($product_wrapped->commerce_price->amount->value(), $product_wrapped->commerce_price->currency_code->value(), $product_wrapped) . ')</td>'
-          . '<td>' . $product_wrapped->fr_tickets_description->value() . '</td>'
+        '#prefix' => '<tr class="ticket_row">' . '<td>' . $product_wrapper->title->value()
+          . '(' . commerce_currency_format($product_wrapper->commerce_price->amount->value(), $product_wrapper->commerce_price->currency_code->value(), $product_wrapper) . ')</td>'
+          . '<td>' . $product_wrapper->fr_tickets_description->value() . '</td>'
           . '<td>',
-        '#suffix' => '</td><td id="' . $product_wrapped->sku->value() .'_total">$0</td>' . '</tr>',
+        '#suffix' => '</td><td id="' . $product_wrapper->sku->value() .'_total">$0</td>' . '</tr>',
         '#attributes' => array(
           'class' => array(''),
         ),
