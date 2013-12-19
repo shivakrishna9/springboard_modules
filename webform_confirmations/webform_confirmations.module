@@ -8,6 +8,69 @@
  * webform.
  */
 
+
+/**
+ * Implements hook_menu_alter
+ * Webform 4's access is too strict for anon submissions, so we need to override
+ * This will allow us to pull the access checking code out of the preprocess function below
+ * where it lived for webform 3
+ */
+function webform_confirmations_menu_alter(&$items) {
+  $items['node/%webform_menu/done']['access callback'] = 'webform_confirmations_confirmation_page_access';
+}
+
+/**
+ * Menu Access callbock for confirmation pages
+ * Taken from webform module
+ */
+
+function webform_confirmations_confirmation_page_access($node) {
+  global $user;
+
+  // Make sure SID is a positive integer.
+  $sid = (!empty($_GET['sid']) && (int) $_GET['sid'] > 0) ? (int) $_GET['sid'] : NULL;
+
+  if ($sid) {
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    $submission = webform_get_submission($node->nid, $sid);
+  }
+  else {
+    $submission = NULL;
+  }
+
+  if ($submission) {
+    // Logged-in users.
+    if ($user->uid) {
+      // User's own submission.
+      if ($submission->uid === $user->uid && node_access('view', $node)) {
+        return TRUE;
+      }
+      // User has results access to this submission.
+      elseif (webform_submission_access($node, $submission)) {
+        return TRUE;
+      }
+    }
+
+    // Anonymous user for their own submission. Hash of submission data must
+    // match the hash in the query string.
+
+    //Springboard alteration is here:
+    elseif (((int) $user->uid === 0 && (int) $submission->uid === 0) || ((int) $user->uid === 0 && $user->hostname == $submission->remote_addr)) {
+      $hash_query = !empty($_GET['token']) ? $_GET['token'] : NULL;
+      $hash = md5($submission->submitted . $submission->sid . drupal_get_private_key());
+      $sub = $submission->submitted;
+      $now = time();
+      //expire the page after 10 minutes for anonymous
+      $elapsed = $now - $sub;
+      if ($hash_query === $hash && $elapsed < 600) {
+        return TRUE;
+      }
+    }
+  }
+
+  return FALSE;
+}
+
 /**
  * Implements hook_preprocess_webform_confirmation().
  * Overrides the template during preprocess to insert correct token values on display.
@@ -15,55 +78,24 @@
  */
 function webform_confirmations_preprocess_webform_confirmation(&$vars) {
   if (isset($vars['node']->nid) && _webform_confirmations_is_configured($vars['node'])) {
-    // Check for access, if the user doesn't have access - change the message to match.
-    $access = FALSE;
-    if (isset($vars['sid'])) {
-      // Gather information about this sid. If the logged in user is the same as submitted it, allowed.
-      global $user;
-      module_load_include('inc', 'webform', 'includes/webform.submissions');
-      $submission = webform_get_submission($vars['node']->nid, $vars['sid']);
-      // If a logged in user, check user id.
-      if ($user->uid != 0) {
-        if ($user->uid == $submission->uid) {
-          $access = TRUE;
-        }
-      }
-      // If anon, then check the IP address. (Anon submissions should be all on the same IP.)
-      if ($user->hostname == $submission->remote_addr) {
-        $access = TRUE;
-      }
-      // If has permissions as an admin user.
-      if (user_access('access all webform results')) {
-        $access = TRUE;
-      }
+    // Reprocess the message. Webform properly uses a strip_tag here that will kill all HTML.
+    // So for our purposes, we need to reprocess the set message to get the correct values.
+    $vars['confirmation_message'] = check_markup($vars['node']->webform['confirmation'], $vars['node']->webform['confirmation_format'], '', TRUE);
+    // We get check_markup() from filter.module.
+    // Set title if available from configurations.
+    if (!empty($vars['node']->confirmation_page_title)) {
+      drupal_set_title($vars['node']->confirmation_page_title);
     }
-    if ($access) {
-      // Reprocess the message. Webform properly uses a strip_tag here that will kill all HTML.
-      // So for our purposes, we need to reprocess the set message to get the correct values.
-      $vars['confirmation_message'] = check_markup($vars['node']->webform['confirmation'], $vars['node']->webform['confirmation_format'], '', TRUE);
-      // We get check_markup() from filter.module.
-      // Set title if available from configurations.
-      if (!empty($vars['node']->confirmation_page_title)) {
-        drupal_set_title($vars['node']->confirmation_page_title);
-      }
-      // Replace webform tokens for the submission.
-      module_load_include('inc', 'webform', 'includes/webform.submissions');
-      $submission = webform_get_submission($vars['node']->nid, $vars['sid']);
-      //$vars['confirmation_message'] = _webform_filter_values($vars['confirmation_message'], $vars['node'], $submission, NULL, FALSE, TRUE);
-      // _webform_filter_values removes HTML if strict is set to TRUE.
-      // Replace drupal tokens for the submission.
-      $token_set = array('node' => node_load($vars['node']->nid));
-      if ($submission) {
-        $token_set['webform-submission'] = $submission;
-      }
-      drupal_alter('webform_confirmations_token_replace', $token_set, $vars['sid']);
-      $vars['confirmation_message'] = token_replace($vars['confirmation_message'], $token_set, array('clear' => true, 'sanitize' => TRUE));
+    // Replace webform tokens for the submission.
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    $submission = webform_get_submission($vars['node']->nid, $vars['sid']);
+    // Replace drupal tokens for the submission.
+    $token_set = array('node' => node_load($vars['node']->nid));
+    if ($submission) {
+      $token_set['webform-submission'] = $submission;
     }
-    else {
-      // No access.
-      $vars['confirmation_message'] = t('You are not authorized to access this page.');
-      drupal_set_title(t('Access denied'));
-    }
+    drupal_alter('webform_confirmations_token_replace', $token_set, $vars['sid']);
+    $vars['confirmation_message'] = token_replace($vars['confirmation_message'], $token_set, array('clear' => true, 'sanitize' => TRUE));
   }
 }
 
