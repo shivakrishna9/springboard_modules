@@ -472,7 +472,7 @@ function _market_source_validate_cid($val) {
  */
 function market_source_node_insert($node) {
   if (module_exists('webform')) {
-    $webform_types = variable_get('webform_node_types', array('webform'));
+    $webform_types = webform_node_types();
     // Make sure this node type contains a webform.
     if (in_array($node->type, $webform_types)) {
       if (!isset($node->clone_from_original_nid)) { // Value from node_clone module.

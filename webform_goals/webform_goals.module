@@ -396,7 +396,7 @@ function webform_goals_widget_load($gid) {
 function _webform_goals_list_webforms() {
   static $nodes = array();
   if (!count($nodes)) {
-    $types = webform_variable_get('webform_node_types');
+    $types = webform_node_types();
     $readable_types = webform_goals_get_readable_types($types);
 
     $results = db_query('

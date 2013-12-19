@@ -732,7 +732,7 @@ function email_wrappers_node_insert($node) {
     return;
   }
   // we're only interested in webform nodes with configured emails
-  if (in_array($node->type, webform_variable_get('webform_node_types')) && isset($node->webform['emails'])) {
+  if (variable_get('webform_node_' . $node->type, FALSE) && isset($node->webform['emails'])) {
     $settings = email_wrappers_load_settings($node->clone_from_original_nid);
     if ($settings) {
       foreach ($settings as $data) {

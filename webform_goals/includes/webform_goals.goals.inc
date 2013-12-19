@@ -343,7 +343,7 @@ function _webform_goals_total_component_values($nid, $form_key, $start = FALSE, 
 }
 
 function _webform_goals_get_webform_node_types() {
-  $webform_types = variable_get('webform_node_types');
+  $webform_types = webform_node_types();
   $result = db_query('
     SELECT
       type,

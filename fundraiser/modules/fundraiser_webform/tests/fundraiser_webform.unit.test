@@ -397,7 +397,7 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
     // Check the content type creation.
     $this->assertEqual(variable_get('fundraiser_' . $content_type->type, FALSE), TRUE, 'Created node type is listed in fundraiser type variable.', 'testFundraiserWebformFAPIFunctions');
     $this->assertEqual(fundraiser_is_donation_type($content_type->type), TRUE, 'Created node type is listed in fundraiser types.', 'testFundraiserWebformFAPIFunctions');
-    $webform_types = webform_variable_get('webform_node_types');
+    $webform_types = webform_node_types();
     $this->assertEqual(in_array($content_type->type, $webform_types), TRUE, 'Created node type is listed in webform_node_types.', 'testFundraiserWebformFAPIFunctions');
     $webform_types = webform_variable_get('webform_node_types_primary');
     $this->assertEqual(in_array($content_type->type, $webform_types), TRUE, 'Created node type is listed in webform_node_types_primary.', 'testFundraiserWebformFAPIFunctions');

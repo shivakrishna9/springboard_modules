@@ -289,7 +289,7 @@ function springboard_menu_alter(&$items) {
   // Add menu items from webform.
   if (module_exists('webform')) {
     //dynamically generate links to create non-fundraiser forms
-    $types = webform_variable_get('webform_node_types');
+    $types = webform_node_types();
     foreach ($types as $type) {
       if (!in_array($type, $types_added) && isset($items['node/add/' . $type])) {
         $type = str_replace('_', '-', $type);

@@ -27,7 +27,7 @@ function fundraiser_webform_menu_alter(&$items) {
  * EXCEPT: for donation types.
  */
 function fundraiser_webform_admin_content() {
-  $webform_types = webform_variable_get('webform_node_types');
+  $webform_types = webform_node_types();
   // Filter for donation types.
   $donation_types = fundraiser_get_donation_types();
   $types = array();
@@ -239,7 +239,7 @@ function fundraiser_webform_form_node_type_form_alter_submit($form, &$form_state
  * Helper function, enable or disable webform settings.
  */
 function _fundraiser_webform_toggle_webform($type, $is_enabled = TRUE) {
-  $webform_node_types = variable_get('webform_node_types', array('webform'));
+  $webform_node_types = webform_node_types();
   $webform_node_types_primary = variable_get('webform_node_types_primary', array('webform'));
   // Make sure this content type is enabled for webform if not already.
   // Add the selected node types to the webform_node_types_primary so a webform is added by default.
@@ -249,7 +249,12 @@ function _fundraiser_webform_toggle_webform($type, $is_enabled = TRUE) {
   }
   // If disabled, we leave it as a webform for other modules to use.
   // Re-save the variables.
-  variable_set('webform_node_types', array_unique($webform_node_types));
+
+  foreach ($webform_node_types as $node_type) {
+    if(variable_get('webform_node_' . $node_type, FALSE) == FALSE) {
+      variable_set('webform_node_' . $node_type, TRUE);
+    }
+  }
   variable_set('webform_node_types_primary', array_unique($webform_node_types_primary));
 }
 

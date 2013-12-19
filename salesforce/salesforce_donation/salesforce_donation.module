@@ -263,7 +263,10 @@ function salesforce_donation_salesforce_genmap_info_alter(&$items) {
         $donation_types[] = $type;
       }
     }
-    $webform_types = webform_variable_get('webform_node_types');
+    $webform_types = array();
+    if (module_exists('webform')) {
+      $webform_types = webform_node_types();
+    }
     $removed_donation_types = array_diff($webform_types, $donation_types);
     $items['webform']['supported content types'] = $removed_donation_types;
   }

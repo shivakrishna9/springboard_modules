@@ -1793,11 +1793,18 @@ function springboard_admin_config_donation_form_type($form, $form_state) {
   node_types_rebuild();
   node_add_body_field($type);
   // Add as a webform.
-  $webform_node_types = variable_get('webform_node_types', array('webform'));
+  $webform_node_types = array();
+  if (module_exists('webform')) {
+    $webform_node_types = webform_node_types();
+  }
   $webform_node_types_primary = variable_get('webform_node_types_primary', array('webform'));
   $webform_node_types = array_merge($webform_node_types, array('donation_form'));
   $webform_node_types_primary = array_merge($webform_node_types_primary, array('donation_form'));
-  variable_set('webform_node_types', array_unique($webform_node_types));
+  foreach ($webform_node_types as $node_type) {
+    if(variable_get('webform_node_' . $node_type, FALSE) == FALSE) {
+      variable_set('webform_node_' . $node_type, TRUE);
+    }
+  }
   variable_set('webform_node_types_primary', array_unique($webform_node_types_primary));
   // Done.
   drupal_set_message(t('The content type <em>donation_form</em> has been added.'));
