@@ -18,6 +18,10 @@ function springboard_permission() {
       'title' => t('Access the Springboard dashboard'),
       'description' => t('Access the main landing page for springboard.'),
     ),
+    'administer springboard dashboard' => array(
+      'title' => t('Administer the Springboard dashboard'),
+      'description' => t('Change available panes and other settings for the main landing page for springboard.')
+    )
   );
 }
 
@@ -90,7 +94,7 @@ function springboard_menu() {
     'description' => 'Configure Springboard dashboard.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('springboard_dashboard_settings'),
-    'access arguments' => array('administer springboard'),
+    'access arguments' => array('administer springboard dashboard'),
     'file' => 'springboard.admin.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => -5,
@@ -357,9 +361,11 @@ function springboard_admin_dashboard() {
   // Add our CSS for display.
   drupal_add_css(drupal_get_path('module', 'springboard') . '/css/springboard.css', 'module');
   $content = '<div class="springboard-dashboard dashboard">';
-  $content = '<div class="springboard-dashboard-customize">';
-  $content .= l(t('Customize Dashboard'), 'admin/springboard/options/dashboard', array('attributes' => array('class'=>array('button', 'options-task'))));
-  $content .= '</div>';
+  if(user_access('administer springboard dashboard')) {
+    $content = '<div class="springboard-dashboard-customize">';
+    $content .= l(t('Customize Dashboard'), 'admin/springboard/options/dashboard', array('attributes' => array('class'=>array('button', 'options-task'))));
+    $content .= '</div>';
+  }
   // Load the enabled panes for the dashboard.
   $panes = module_invoke_all('springboard_dashboard_panes');
   drupal_alter('springboard_dashboard_panes', $panes);
