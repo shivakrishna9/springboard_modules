@@ -556,9 +556,10 @@ function page_wrappers_update_7004(&$sandbox) {
     $sandbox['progress'] = 0;
     $sandbox['last_nid'] = 0;
     $sandbox['limit'] = 10;
-    $sandbox['max'] = db_query("SELECT COUNT(DISTINCT nid) FROM {node} WHERE type = :page", array(':page' => 'page_wrapper'))->fetchField() - 1;
+    $sandbox['max'] = db_query("SELECT COUNT(DISTINCT nid) FROM {node} WHERE type = :page", array(':page' => 'page_wrapper'))->fetchField();
   }
-  $nids = db_query('SELECT nid FROM {node} WHERE type = :page && nid > '.$sandbox['last_nid'].' LIMIT '.$sandbox['limit'].'',  array(':page' => 'page_wrapper'))->fetchCol();
+  $nids = db_query('SELECT nid FROM {node} WHERE type = :page && nid > '. $sandbox['last_nid'] .' LIMIT '. $sandbox['limit'] .'',  array(':page' => 'page_wrapper'))->fetchCol();
+
   $wrappers = node_load_multiple($nids, array());
   foreach($wrappers as $node){
     $css_contents = '';
