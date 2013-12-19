@@ -39,6 +39,43 @@ function springboard_admin_menu() {
   return $items;
 }
 
+ /**
+ * Implements hook_permission().
+ */
+function springboard_admin_permission() {
+  return array(
+    'administer springboard theme' => array(
+      'title' => t('Administer the Springboard theme'),
+      'description' => t('Administer configurations related to the display of the springboard_backend theme.')
+    )
+  );
+}
+
+/** 
+ * Implements hook_form_ID_alter().
+ * 
+ * Add options to springboard configuration for enabling/disabling the 
+ * springboard_backend theme.
+ */
+
+function springboard_admin_form_springboard_admin_settings_alter(&$form, &$form_state) {
+  if (user_access('administer springboard theme')) {
+  $form['admin'] = array(
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#title' => t('Springboard administration settings'),
+    '#description' => t('Configure how you administer Springboard.'),
+  );
+  $form['admin']['springboard_theme_enable'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable the Springboard administrative theme.'),
+    '#description' => t('Force the use of the springboard_backend theme on all Springboard-related administrative pages. The administrative theme set at admin/appearence will still be used for other Drupal administrative pages.'),
+    '#default_value' => variable_get('springboard_theme_enable', 1)
+   );
+  }
+}
+
 /**
  * Implements hook_custom_theme().
  * 
@@ -47,12 +84,17 @@ function springboard_admin_menu() {
  */
 
 function springboard_admin_custom_theme() {
+  // If the springboard_backend theme is disabled, do nothing.
+  if (variable_get('springboard_theme_enable', 1) == 0) {
+    return;
+  }  
+  // If the springboard_backend theme does not exist, we can do nothing.
   $themes = list_themes();
-
   if (!isset($themes['springboard_backend'])) {
     return;
   }
-
+  
+  // Build an array of pages that the admin theme applies to
   $sb_menu = springboard_admin_admin_menu_items();
   $paths = array();
   foreach ($sb_menu as $item) {
@@ -155,5 +197,4 @@ function springboard_admin_aggregate_links_page($path) {
   }
 
   return theme_links(array('links' => $links, 'attributes' => array('class' => array('aggregate-links')), 'heading' => ''));
-  
 }
