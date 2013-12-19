@@ -329,8 +329,14 @@ function springboard_menu_alter(&$items) {
   }
 
   if (module_exists('sb_social')) {
-    $items['admin/springboard/sb-social'] = $items['admin/config/services/springboard_social'];
-    $items['admin/springboard/sb-social']['type'] = MENU_NORMAL_ITEM;
+    $items['admin/springboard/settings/sb-social'] = $items['admin/config/services/springboard_social'];
+    $items['admin/springboard/settings/sb-social']['type'] = MENU_NORMAL_ITEM;
+  }
+
+  if (module_exists('webform_goals')) {
+    $items['admin/springboard/settings/webform-goals'] = $items['admin/config/content/webform_goals'];
+    $items['admin/springboard/settings/webform-goals']['type'] = MENU_NORMAL_ITEM;
+    $items['admin/springboard/settings/webform-goals']['access arguments'] = array('administer springboard');
   }
 }
 

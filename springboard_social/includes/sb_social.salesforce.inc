@@ -42,6 +42,7 @@ function sb_social_add_share_to_queue($share_id, $op = 'CREATE', $id = NULL) {
  */
 function sb_social_create_share_event_object($share) {
   // Create a fields array.
+  $name = '';
   $fields = array(
     'Contact_sharer__c' => sb_social_create_sf_user_token($share['uid']),
     'Market_Source__c' => $share['market_source'],
@@ -58,9 +59,14 @@ function sb_social_create_share_event_object($share) {
 
   // conditionally add the opportunity id if this share is related to a donation.
   if (is_numeric($share['did']) && $share['did']) {
+    $donation = fundraiser_donation_get_donation($share['did']);
+    if (isset($donation->donation['first_name']) && isset($donation->donation['last_name'])) {
+      $name = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
+    }
     $fields['Opportunity_ID__c'] = '[Opportunity:donation:' . $share['did'] . ']';
   }
-
+  // set the Name field for the share. On donations we can include the first and last name.
+  $fields['Name'] = 'Social Share - ' . $name . ' (' . date('Y-m-d H:i:se', time()) . ')';
   // This is SOAP partner API format.
   $sobject = new stdClass();
   $sobject->type = 'Social_Share__c'; // sf object type

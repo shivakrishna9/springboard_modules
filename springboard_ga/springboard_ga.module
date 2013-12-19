@@ -251,6 +251,9 @@ function springboard_ga_preprocess_webform_confirmation(&$vars) {
     $submission = webform_get_submission($vars['node']->nid, $vars['sid']);
     $script = _webform_filter_values($script, $vars['node'], $submission, NULL, FALSE, TRUE);
     // Add the script to the main GA module's global after script variable
+    if(!isset($conf['googleanalytics_codesnippet_after'])) {
+      variable_set('googleanalytics_codesnippet_after', '');
+    }
     $conf['googleanalytics_codesnippet_after'] .= $script;
   }
 }
