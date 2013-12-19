@@ -135,19 +135,19 @@ function page_wrappers_preprocess_page(&$vars) {
         * 3. NULL, which means that no CSS has been selected for this wrapper
         */
       if(!empty($wrapper_node->page_wrappers_css_source[LANGUAGE_NONE][0]['value'])) {
-        $external = $wrapper_node->page_wrappers_css_source[LANGUAGE_NONE][0]['value'];
-        if($external != -1) {
-          $ext_node = node_load($external); //there's a reference to another page_wrapper
+        $css_source = $wrapper_node->page_wrappers_css_source[LANGUAGE_NONE][0]['value'];
+        if($css_source != -1) {
+          $ext_node = node_load($css_source); //there's a reference to another page_wrapper
           if(isset($ext_node->page_wrappers_css_path[LANGUAGE_NONE][0]['value'])) {
-            $ext_path = $ext_node->page_wrappers_css_path[LANGUAGE_NONE][0]['value']; //grab the external css
+            $ext_path = $ext_node->page_wrappers_css_path[LANGUAGE_NONE][0]['value']; //grab the css_source css
           }
         }
       }
-      if ((!isset($external) || $external == -1) && isset($wrapper_node->page_wrappers_css_textarea[LANGUAGE_NONE][0]['value'])) {
-        $css_file = $wrapper_node->page_wrappers_css_path[LANGUAGE_NONE][0]['value']; //internal css
-        drupal_add_css($css_file);
+      if ((isset($css_source) && $css_source == -1) && isset($wrapper_node->page_wrappers_css_textarea[LANGUAGE_NONE][0]['value'])) {
+        $internal_path = $wrapper_node->page_wrappers_css_path[LANGUAGE_NONE][0]['value']; //internal css
+        drupal_add_css($internal_path);
       }
-      elseif(isset($external) && isset($ext_path)) {
+      elseif(isset($css_source) && isset($ext_path)) {
         drupal_add_css($ext_path);
       }
 
@@ -473,11 +473,14 @@ function page_wrappers_form_page_wrapper_node_form_alter(&$form, $form_state) {
   );
 
   //does this node have an internal or external stylesheet?
-  $source = $form['page_wrappers_css_source'][LANGUAGE_NONE][0]['value']['#default_value'];
-  if(isset($source)) {
-    $alt_value = $source > 0 ? $source : 0; // > 0 means external stylesheet
+  if(isset($form['page_wrappers_css_source'][LANGUAGE_NONE][0]['value']['#default_value'])) {
+    $css_source = $form['page_wrappers_css_source'][LANGUAGE_NONE][0]['value']['#default_value'];
+    $alt_value = $css_source > 0 ? $css_source : NULL; // > 0 means external stylesheet
     //should the external checkbox be checked?
-    $box_value = $source <= 0 ? 0 : 1; // <= 0 means internal sheet or no sheet
+    $box_value = $css_source <= 0 ? NULL : 1; // <= 0 means internal sheet or no sheet
+  }
+  else {
+    $css_source = NULL;
   }
 
   //Check to see if another page_wrapper is using CSS from this page wrapper
@@ -494,7 +497,7 @@ function page_wrappers_form_page_wrapper_node_form_alter(&$form, $form_state) {
   $form['css_fieldset']['existing']['pw_existing'] = array(
     '#type' => 'checkbox',
     '#title' => t('Use Existing CSS'),
-    '#default_value' => $box_value,
+    '#default_value' => isset($box_value) ? $box_value : 0,
     '#weight' => -5,
   );
 
@@ -502,7 +505,7 @@ function page_wrappers_form_page_wrapper_node_form_alter(&$form, $form_state) {
       '#type' => 'select',
       '#title' => t(''),
       '#options' => $wrappers,
-      '#default_value' => array($alt_value),
+      '#default_value' => isset($alt_value) ? array($alt_value) : 0,
       '#description' => t(''),
       '#weight' => -4,
   );
@@ -535,9 +538,8 @@ function page_wrappers_form_page_wrapper_node_form_alter(&$form, $form_state) {
     $form['css_fieldset']['existing']['pw_existing']['#disabled'] = TRUE;
     $form['css_fieldset']['existing']['page_wrapper_alternate_css']['#description'] = t('No stylesheets are currently available.');
   }
-
-  if(!$box_value) { //external box is not checked
-    if($source === '-1') { //internal box was checked
+  if(!isset($box_value)) { //external box is not checked
+    if(isset($css_source) && $css_source === '-1') { //internal box was checked
       $has_internal = 1;
     }
   }
