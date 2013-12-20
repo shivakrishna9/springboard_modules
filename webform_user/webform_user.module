@@ -900,7 +900,7 @@ function _webform_user_create_webform_components(&$node) {
         'pid' => $fieldset_id,
         'name' => $field['title'],
         'type' => $field['type'],
-        'mandatory' => isset($field['mandatory']) ? $field['mandatory'] : 0,
+        'required' => isset($field['required']) ? $field['required'] : 0,
         'weight' => isset($field['weight']) ? $field['weight'] : 0,
         'email' => 1,
         'extra' => array(
@@ -1153,7 +1153,7 @@ function _webform_user_get_profile_fields() {
    * name - form key
    * title - human readable name
    * type - webform component type
-   * mandatory - required or not (optional, defaults to 0)
+   * required - required or not (optional, defaults to 0)
    * weight - order of display (optional, defaults to 0)
    * explanation - description (optional, defaults to '')
    * options - array of select options, required for type list_float
@@ -1166,7 +1166,7 @@ function _webform_user_get_profile_fields() {
     'name' => 'mail',
     'title' => t('E-mail address'),
     'type' => 'email',
-    'mandatory' => 1,
+    'required' => 1,
     'weight' => 0,
     'explanantion' => '',
     'options' => NULL,
@@ -1196,7 +1196,7 @@ function _webform_user_get_profile_fields() {
     if (!empty($result->data['display']['default']['type']) && $result->data['display']['default']['type'] == 'hidden') {
       $field['type'] = 'hidden';
     }
-    $field['mandatory'] = $result->data['required'] ? $result->data['required'] : 0;
+    $field['required'] = $result->data['required'] ? $result->data['required'] : 0;
     $field['weight'] = $result->data['widget']['weight'];
     $field['explanantion'] = $result->data['description'];
     $field['options'] = isset($result->extra['settings']['allowed_values']) ? $result->extra['settings']['allowed_values'] : NULL;
@@ -1217,7 +1217,7 @@ function _webform_user_get_profile_fields() {
         $field['title'] = $profile_field->title;
         // TODO Map types to types webform understands.
         $field['type'] = $profile_field->type;
-        $field['mandatory'] = $profile_field->required ? $profile_field->required : 0;
+        $field['required'] = $profile_field->required ? $profile_field->required : 0;
         $field['weight'] = $profile_field->weight;
         $field['explanantion'] = isset($profile_field->explanantion) ? $profile_field->explanantion : '';
         $field['options'] = isset($profile_field->options) ? $profile_field->options : NULL;
@@ -1324,7 +1324,7 @@ function webform_user_theme_registry_alter(&$theme_registry) {
  * We need to hide edit, delete, and add functionality based
  * on additional permissions.
  */
-function theme_webform_user_webform_components_form($variables) {
+function webform_user_preprocess_webform_components_form(&$variables) {
   $form = $variables['form'];
 
   $form['components']['#attached']['library'][] = array('webform', 'admin');
@@ -1335,10 +1335,8 @@ function theme_webform_user_webform_components_form($variables) {
 
   $node = $form['#node'];
 
-  $header = array(t('Label'), t('Type'), t('Value'), t('Mandatory'), t('Weight'), array(
-      'data' => t('Operations'),
-      'colspan' => 3,
-    ));
+  $header = array(t('Label'), t('Type'), t('Value'), t('Required'), t('Weight'), array('data' => t('Operations'), 'colspan' => 3));
+  $rows = array();
 
   // Add a row containing form elements for a new item.
   unset($form['add']['name']['#title'], $form['add_type']['#description']);
@@ -1348,16 +1346,17 @@ function theme_webform_user_webform_components_form($variables) {
   $form['add']['pid']['#attributes']['class'] = array('webform-pid');
   $form['add']['weight']['#attributes']['class'] = array('webform-weight');
   $row_data = array(
-    drupal_render($form['add']['name']),
-    drupal_render($form['add']['type']),
+    render($form['add']['name']),
+    render($form['add']['type']),
     '',
-    drupal_render($form['add']['mandatory']),
-    drupal_render($form['add']['cid']) . drupal_render($form['add']['pid']) . drupal_render($form['add']['weight']),
+    render($form['add']['required']),
+    render($form['add']['cid']) . render($form['add']['pid']) . render($form['add']['weight']),
     array(
       'colspan' => 3,
-      'data' => drupal_render($form['add']['add']),
+      'data' => render($form['add']['add']),
     ),
   );
+
   $add_form = array(
     'data' => $row_data,
     'class' => array('draggable', 'webform-add-form'),
@@ -1370,7 +1369,6 @@ function theme_webform_user_webform_components_form($variables) {
     _webform_components_tree_build($node->webform['components'], $component_tree, 0, $page_count);
     $component_tree = _webform_components_tree_sort($component_tree);
     // Build the table rows.
-
     foreach ($component_tree['children'] as $cid => $component) {
       _webform_user_components_form_rows($node, $cid, $component, 0, $form, $rows, $add_form);
     }
@@ -1387,9 +1385,16 @@ function theme_webform_user_webform_components_form($variables) {
     $rows[] = $add_form;
   }
 
+  $variables['rows'] = $rows;
+  $variables['header'] = $header;
+  $variables['form'] = $form;
+}
+
+
+function theme_webform_user_webform_components_form($variables) {
   $output = '';
-  $output .= theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => 'webform-components')));
-  $output .= user_access('alter webform components') ? drupal_render_children($form) : '';
+  $output .= theme('table', array('header' => $variables['header'], 'rows' => $variables['rows'], 'attributes' => array('id' => 'webform-components')));
+  $output .= user_access('alter webform components') ? drupal_render_children($variables['form']) : '';
   return $output;
 }
 
@@ -1422,8 +1427,8 @@ function _webform_user_components_form_rows($node, $cid, $component, $level, &$f
   }
   $component['value'] = check_plain($component['value']);
 
-  // Remove individual titles from the mandatory and weight fields.
-  unset($form['components'][$cid]['mandatory']['#title']);
+  // Remove individual titles from the required and weight fields.
+  unset($form['components'][$cid]['required']['#title']);
   unset($form['components'][$cid]['pid']['#title']);
   unset($form['components'][$cid]['weight']['#title']);
 
@@ -1443,8 +1448,8 @@ function _webform_user_components_form_rows($node, $cid, $component, $level, &$f
     $indents . filter_xss($component['name']),
     $form['add']['type']['#options'][$component['type']],
     ($component['value'] == '') ? '-' : $component['value'],
-    drupal_render($form['components'][$cid]['mandatory']),
-    drupal_render($form['components'][$cid]['cid']) . drupal_render($form['components'][$cid]['pid']) . drupal_render($form['components'][$cid]['weight']),
+    render($form['components'][$cid]['required']),
+    render($form['components'][$cid]['cid']) . render($form['components'][$cid]['pid']) . render($form['components'][$cid]['weight']),
     _webform_user_edit_component_link($node, $cid),
     _webform_user_clone_component_link($node, $cid),
     _webform_user_delete_component_link($node, $cid),
