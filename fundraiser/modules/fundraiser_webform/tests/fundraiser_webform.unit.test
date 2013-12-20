@@ -55,7 +55,7 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
       'type' => 'textfield',
       'value' => 'Field value',
       'extra' => serialize(array('Extra data')),
-      'mandatory' => 0,
+      'required' => 0,
       'weight' => 0,
     );
     drupal_write_record('webform_component', $defaults);
@@ -184,7 +184,7 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
     $this->assertEqual($results[1]->type, $fields['key_one']['key_two']['#type'], '_fundraiser_webform_update_component() created the correct settings.', 'testFundraiserWebformComponentFunctions');
     $this->assertEqual($results[1]->value, $fields['key_one']['key_two']['#value'], '_fundraiser_webform_update_component() created the correct settings.', 'testFundraiserWebformComponentFunctions');
     $this->assertEqual($results[1]->extra, serialize($fields['key_one']['key_two']['#extra']), '_fundraiser_webform_update_component() created the correct settings.', 'testFundraiserWebformComponentFunctions');
-    $this->assertEqual($results[1]->mandatory, $fields['key_one']['key_two']['#required'], '_fundraiser_webform_update_component() created the correct settings.', 'testFundraiserWebformComponentFunctions');
+    $this->assertEqual($results[1]->required, $fields['key_one']['key_two']['#required'], '_fundraiser_webform_update_component() created the correct settings.', 'testFundraiserWebformComponentFunctions');
     $this->assertEqual($results[4]->pid, $results[3]->cid, '_fundraiser_webform_update_component() nested fields correctly down two levels.', 'testFundraiserWebformComponentFunctions');
 
     // Check the paths are as expected.

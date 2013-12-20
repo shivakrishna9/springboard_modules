@@ -217,7 +217,7 @@ class WebformUserSetup extends DrupalWebTestCase {
    * Utility function to get the details of a webform component.
    */
   protected function webformUserComponentDetails($nid, $form_key) {
-    return db_query('SELECT cid, form_key, type, mandatory FROM {webform_component} WHERE form_key = :form_key AND nid = :nid', array(':form_key' => $form_key, ':nid' => $nid))->fetchObject();
+    return db_query('SELECT cid, form_key, type, required FROM {webform_component} WHERE form_key = :form_key AND nid = :nid', array(':form_key' => $form_key, ':nid' => $nid))->fetchObject();
   }
 
   /**

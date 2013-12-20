@@ -40,7 +40,7 @@ class WebformAddToAllTestCase extends DrupalWebTestCase {
     $options = array(
       'query' => array(
         'name' => 'Derp',
-        'mandatory' => 0,
+        'required' => 0,
         'pid' => 0,
         'weight' => 2,
       ),
@@ -97,7 +97,7 @@ class WebformAddToAllTestCase extends DrupalWebTestCase {
           'description' => '',
           'private' => '',
         )),
-        'mandatory' => '',
+        'required' => '',
       );
       drupal_write_record('webform_component', $component);
     }

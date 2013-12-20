@@ -15,7 +15,7 @@ function _webform_defaults_payment_method() {
   return array(
     'name' => '',
     'form_key' => 'payment_method',
-    'mandatory' => 1,
+    'required' => 1,
     'pid' => 0,
     'weight' => 0,
     'value' => '',

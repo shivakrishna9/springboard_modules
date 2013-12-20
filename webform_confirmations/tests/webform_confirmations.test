@@ -98,7 +98,7 @@ class WebformConfirmationsTestCase extends DrupalWebTestCase {
         'description' => '',
         'private' => '',
       )),
-      'mandatory' => '',
+      'required' => '',
     );
     drupal_write_record('webform_component', $component);
   }

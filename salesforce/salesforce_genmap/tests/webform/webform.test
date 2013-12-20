@@ -81,7 +81,7 @@ class SalesforceWebformTestCase extends SalesforceGenmapTestCase {
         'unique' => 0,
         'conditional_operator' => '',
       ),
-      'mandatory' => 0,
+      'required' => 0,
       'pid' => 0,
       'weight' => 0,
       'value' => '',
