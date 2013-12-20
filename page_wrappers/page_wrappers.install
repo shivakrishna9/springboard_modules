@@ -112,40 +112,34 @@ function _page_wrappers_create_fields() {
   }
 
   $fields = array(
-    // css filefield
-    'css_filefield' => array(
-      'translatable' => '1',
-      'settings' => array(
-        'display_field' => 1,
-        'display_default' => 0,
-        'uri_scheme' => 'public',
-      ),
-      'field_name' => 'page_wrappers_css',
-      'type' => 'file',
-      'active' => '1',
-      'locked' => '0',
-      'cardinality' => '-1',
+     'css_textarea' => array(
+      'field_name' => 'page_wrappers_css_textarea',
+      'type' => 'text_long',
+      'cardinality' => 1,
+      'no_ui' => TRUE,
+      'settings' => array(),
+      'entity_types' => array('node'),
       '_instance' => array(
-        'label' => st('Upload a stylesheet'),
+        'field_name' => 'page_wrappers_css_textarea',
+        'entity_type' => 'node',
+        'bundle' => 'page_wrapper',
+        'required' => FALSE,
+        'label' => st(''),
+        'description' => st(''),
         'widget' => array(
-          'weight' => '-4',
-          'type' => 'file_generic',
-          'active' => 1,
+          'type' => 'text_textarea',
+          'weight' => -3,
           'settings' => array(
-            'progress_indicator' => 'throbber',
+            'rows' => 15,
           ),
         ),
         'settings' => array(
-          'file_directory' => 'page_wrappers/styles',
-          'file_extensions' => 'css',
-          'max_filesize' => '2 MB',
-          'description_field' => 0,
-          'user_register_form' => FALSE,
+          'text_processing' => 0,
         ),
         'display' => array(
           'default' => array(
             'label' => 'above',
-            'type' => 'file_default',
+            'type' => 'hidden',
             'settings' => array(),
             'weight' => 0,
           ),
@@ -156,41 +150,36 @@ function _page_wrappers_create_fields() {
             'weight' => 0,
           ),
         ),
-        'required' => 0,
-        'description' => '',
-        'field_name' => 'page_wrappers_css',
-        'entity_type' => 'node',
-        'bundle' => 'page_wrapper',
       ),
     ),
-    // javascript filefield
-    'js_filefield' => array(
-      'field_name' => 'page_wrappers_js',
-      'type' => 'file',
-      'active' => '1',
-      'locked' => '0',
-      'cardinality' => '-1',
+    'js_textarea' => array(
+      'field_name' => 'page_wrappers_js_textarea',
+      'type' => 'text_long',
+      'cardinality' => 1,
+      'no_ui' => TRUE,
+      'settings' => array(),
+      'entity_types' => array('node'),
       '_instance' => array(
-        'label' => st('Upload a script'),
+        'field_name' => 'page_wrappers_js_textarea',
+        'entity_type' => 'node',
+        'bundle' => 'page_wrapper',
+        'required' => FALSE,
+        'label' => st('Javascript'),
+        'description' => st('Opening and closing &lt;script&gt; tags are not required.'),
         'widget' => array(
-          'weight' => '-4',
-          'type' => 'file_generic',
-          'active' => 1,
+          'type' => 'text_textarea',
+          'weight' => -2,
           'settings' => array(
-            'progress_indicator' => 'throbber',
+            'rows' => 15,
           ),
         ),
         'settings' => array(
-          'file_directory' => 'page_wrappers/scripts',
-          'file_extensions' => 'js',
-          'max_filesize' => '2 MB',
-          'description_field' => 0,
-          'user_register_form' => FALSE,
+          'text_processing' => 0,
         ),
         'display' => array(
           'default' => array(
             'label' => 'above',
-            'type' => 'file_default',
+            'type' => 'hidden',
             'settings' => array(),
             'weight' => 0,
           ),
@@ -201,11 +190,131 @@ function _page_wrappers_create_fields() {
             'weight' => 0,
           ),
         ),
-        'required' => 0,
-        'description' => '',
-        'field_name' => 'page_wrappers_js',
+      ),
+    ),
+    'css_path' => array(
+      'field_name' => 'page_wrappers_css_path',
+      'type' => 'text',
+      'cardinality' => 1,
+      'no_ui' => TRUE,
+      'locked' => TRUE,
+      'settings' => array(),
+      'entity_types' => array('node'),
+      '_instance' => array(
+        'field_name' => 'page_wrappers_css_path',
         'entity_type' => 'node',
         'bundle' => 'page_wrapper',
+        'required' => FALSE,
+        'label' => st('CSS Path'),
+        'description' => st(''),
+        'widget' => array(
+          'type' => 'text_textfield',
+          'weight' => 6,
+          'settings' => array(
+            'size' => 60,
+          ),
+        ),
+        'settings' => array(
+          'text_processing' => 0,
+        ),
+        'display' => array(
+          'default' => array(
+            'label' => 'hidden',
+            'type' => 'hidden',
+            'settings' => array(),
+            'weight' => 0,
+          ),
+          'teaser' => array(
+            'type' => 'hidden',
+            'label' => 'hidden',
+            'settings' => array(),
+            'weight' => 0,
+          ),
+        ),
+      ),
+    ),
+    'js_path' => array(
+      'field_name' => 'page_wrappers_js_path',
+      'type' => 'text',
+      'cardinality' => 1,
+      'locked' => TRUE,
+      'no_ui' => TRUE,
+      'settings' => array(
+      ),
+      'entity_types' => array('node'),
+      '_instance' => array(
+        'field_name' => 'page_wrappers_js_path',
+        'entity_type' => 'node',
+        'bundle' => 'page_wrapper',
+        'required' => FALSE,
+        'label' => st('JS Path'),
+        'description' => st(''),
+        'widget' => array(
+          'type' => 'text_textfield',
+          'weight' => 6,
+          'settings' => array(
+            'size' => 60,
+          ),
+        ),
+        'settings' => array(
+          'text_processing' => 0,
+          'no_ui' => TRUE,
+        ),
+        'display' => array(
+          'default' => array(
+            'label' => 'hidden',
+            'type' => 'hidden',
+            'settings' => array(),
+            'weight' => 0,
+          ),
+          'teaser' => array(
+            'type' => 'hidden',
+            'label' => 'hidden',
+            'settings' => array(),
+            'weight' => 0,
+          ),
+        ),
+      ),
+    ),
+    'css_source' => array(
+      'field_name' => 'page_wrappers_css_source',
+      'type' => 'number_integer',
+      'cardinality' => 1,
+      'no_ui' => TRUE,
+      'locked' => TRUE,
+      'settings' => array(),
+      'entity_types' => array('node'),
+      '_instance' => array(
+        'field_name' => 'page_wrappers_css_source',
+        'entity_type' => 'node',
+        'bundle' => 'page_wrapper',
+        'required' => FALSE,
+        'label' => st('CSS Source nid'),
+        'description' => st(''),
+        'widget' => array(
+          'type' => 'number',
+          'weight' => 6,
+          'settings' => array(
+            'size' => 60,
+          ),
+        ),
+        'settings' => array(
+          'text_processing' => 0,
+        ),
+        'display' => array(
+          'default' => array(
+            'label' => 'hidden',
+            'type' => 'hidden',
+            'settings' => array(),
+            'weight' => 0,
+          ),
+          'teaser' => array(
+            'type' => 'hidden',
+            'label' => 'hidden',
+            'settings' => array(),
+            'weight' => 0,
+          ),
+        ),
       ),
     ),
     // html template
