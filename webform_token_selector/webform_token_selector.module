@@ -83,7 +83,7 @@ function webform_token_selector_token_list($nid) {
         if ($component['name'] == 'Please select your tax-deductible gift amount below') {
           $component['name'] = t('Donation amount');
         }
-        $webform_tokens['webform']['%value[' . implode('][', $parents) . ']'] = $component['name'];
+        $webform_tokens['webform']['[submission:values:' . implode(':', $parents) . ']'] = $component['name'];
       }
     }
     // allow other modules to add more tokens

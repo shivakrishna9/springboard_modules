@@ -307,7 +307,7 @@ function secure_prepopulate_after_build($form, &$form_state) {
               $field[$field['#webform_component']['form_key']]['#value'] = $field['#webform_component']['value'];
               break;
             default:
-              if (strpos($field['#webform_component']['value'], '%get[') !== FALSE) {
+              if (strpos($field['#webform_component']['value'], '[current-page:query') !== FALSE) {
                 // If the default value is %get[something], set the field to nothing.
                 $field['#value'] = NULL;
                 $field['#default_value'] = NULL;

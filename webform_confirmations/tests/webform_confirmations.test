@@ -112,7 +112,7 @@ class WebformConfirmationsTestCase extends DrupalWebTestCase {
   protected function WebformConfigureConfirmatioPage() {
     $edit = array();
     $edit["confirmation[confirmation_page_title]"] = 'Test confirmation page title';
-    $edit["confirmation[value]"] = 'This is a confirmation message. %value[name]';
+    $edit["confirmation[value]"] = 'This is a confirmation message. [submission:values:name]';
     $edit["confirmation[format]"] = 'filtered_html';
     $edit["redirect"] = 'confirmation';
     $edit["redirect_url"] = '';
