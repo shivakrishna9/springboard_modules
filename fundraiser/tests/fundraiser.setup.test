@@ -24,6 +24,7 @@ class FundraiserSetup extends DrupalWebTestCase {
       'commerce_product', // To remove when dependancies in commerce_authnet, commerce_payment resolved.
       'commerce_product_reference', // To remove when dependancies in commerce_authnet, commerce_payment resolved.
       'commerce_payment_example', // Gateway.
+      'commerce_cardonfile',
       'encrypt',
     );
     $enable_modules = array_merge($enable_modules, $additional_modules);
@@ -529,6 +530,41 @@ class FundraiserSetup extends DrupalWebTestCase {
       $post = array_merge($post, $post_config);
     }
     $this->drupalPost('node/' . $nid, $post, t('Donate'));
+  }
+
+  protected function getCreditCards() {
+    $one_year_from_now = date_add(new DateTime(), date_interval_create_from_date_string('1 year'));
+    $expiration_year = date_format($one_year_from_now, 'Y');
+    $expiration_month = 12;
+
+    $cards = array(
+      'visa' => array(
+        'card_number' => '4111111111111111',
+        'card_expiration_month' => $expiration_month,
+        'card_expiration_year' => $expiration_year,
+        'card_cvv' => 111,
+      ),
+      'mastercard' => array(
+        'card_number' => '5555555555554444',
+        'card_expiration_month' => $expiration_month,
+        'card_expiration_year' => $expiration_year,
+        'card_cvv' => 111,
+      ),
+      'amex' => array(
+        'card_number' => '370000000000002',
+        'card_expiration_month' => $expiration_month,
+        'card_expiration_year' => $expiration_year,
+        'card_cvv' => 1111,
+      ),
+      'discover' => array(
+        'card_number' => '6011000000000012',
+        'card_expiration_month' => $expiration_month,
+        'card_expiration_year' => $expiration_year,
+        'card_cvv' => 111,
+      ),
+    );
+
+    return $cards;
   }
 
 }
