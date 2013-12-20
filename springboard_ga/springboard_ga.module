@@ -249,7 +249,7 @@ function springboard_ga_preprocess_webform_confirmation(&$vars) {
     // Replace webform tokens for the submission.
     module_load_include('inc', 'webform', 'includes/webform.submissions');
     $submission = webform_get_submission($vars['node']->nid, $vars['sid']);
-    $script = _webform_filter_values($script, $vars['node'], $submission, NULL, FALSE, TRUE);
+    $script = webform_replace_tokens($script, $vars['node'], $submission, NULL, FALSE);
     // Add the script to the main GA module's global after script variable
     if(!isset($conf['googleanalytics_codesnippet_after'])) {
       variable_set('googleanalytics_codesnippet_after', '');

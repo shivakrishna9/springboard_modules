@@ -323,7 +323,7 @@ function _webform_analysis_payment_method($component, $sids = array(), $single =
   $rows = array();
   foreach ($result as $data) {
     $display_option = $data['data'];
-    $rows[$data['data']] = array(_webform_filter_xss($display_option), $data['datacount']);
+    $rows[$data['data']] = array(webform_filter_xss($display_option), $data['datacount']);
   }
 
   return $rows;

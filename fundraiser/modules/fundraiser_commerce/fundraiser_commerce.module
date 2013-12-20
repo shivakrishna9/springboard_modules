@@ -1214,7 +1214,7 @@ function _fundraiser_commerce_fundraiser_donation_process_external_form_redirect
 
     // Clean up the redirect URL and filter it for webform tokens.
     $redirect_url = trim($node->webform['redirect_url']);
-    $redirect_url = _webform_filter_values($redirect_url, $node, $submission, NULL, FALSE, TRUE);
+    $redirect_url = webform_replace_tokens($redirect_url, $node, $submission, NULL, FALSE);
 
     // Remove the domain name from the redirect.
     $redirect_url = preg_replace('/^' . preg_quote($GLOBALS['base_url'], '/') . '\//', '', $redirect_url);
