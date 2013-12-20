@@ -1918,6 +1918,12 @@ function fundraiser_webform_submit($form, &$form_state) {
     form_set_error('credit_card_information][card_number', $result['message']);
     $form_state['values']['details']['finished'] = 0;
     $form_state['rebuild'] = TRUE;
+    // reload js includes that may not get added during hook_form_alter().
+    $base = drupal_get_path('module', 'fundraiser');
+    drupal_add_js($base .'/jquery.alphanumeric.js');
+    drupal_add_js($base .'/fundraiser.js');
+    drupal_add_css($base . '/fundraiser-donation-form.css');
+
   }
 }
 
