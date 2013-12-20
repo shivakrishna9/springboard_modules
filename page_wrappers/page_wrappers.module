@@ -469,7 +469,7 @@ function page_wrappers_form_page_wrapper_node_form_alter(&$form, $form_state) {
   '#weight' => -4,
   '#collapsible' => TRUE,
   '#collapsed' => FALSE,
-  '#description' => t('You have two choices when it comes to the page wrapper\'s stylesheet. You can use an existing CSS file that was created by another page wrapper, or enter unique CSS. If you choose to create new CSS, it will be avilable for use by other page wrappers'),
+  '#description' => t('You have two choices when it comes to the page wrapper\'s stylesheet. You can use an existing CSS file that was created by another page wrapper, or enter unique CSS. If you choose to create new CSS, it will be available for use by other page wrappers'),
   );
 
   //does this node have an internal or external stylesheet?
