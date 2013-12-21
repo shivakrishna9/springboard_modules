@@ -20,7 +20,7 @@ function springboard_api_form_resource_retrieve($nid, $op = NULL) {
     return $form_details;
   }
   else {
-    // throw error.
+    return services_error("The requested form does not exist.", 404);
   }
 }
 
@@ -33,11 +33,11 @@ function springboard_api_form_resource_index() {
   $form_types = variable_get('webform_node_types', array());
   $form_select = db_select('node', 'n');
   $form_select->fields('n', array('nid', 'type', 'title'));
+  $form_select->leftJoin('field_data_field_fundraiser_internal_name', 'f', 'n.nid = f.entity_id');
+  $form_select->addExpression("COALESCE(f.field_fundraiser_internal_name_value, '')",'internal_name');
   $form_select->condition('type', $form_types, 'in');
-  return $form_select->execute()->fetchAll();
-  services_resource_build_index_query($form_select, 0, 0, 0, 1, 'form');
-  $results = services_resource_execute_index_query($user_select);
-  return services_resource_build_index_list($results, 'form', 'nid');
+  $results = $form_select->execute();
+  return $results->fetchAll();
 
 }
 
@@ -72,7 +72,7 @@ function springboard_api_form_action_submit($nid, $submission) {
         $form_state['values']['submitted'][$cid] = isset($submission[$component['form_key']]) ? $submission[$component['form_key']] : '';
       }
     }
-    return $form_state['values']['submitted'];sta
+    return $form_state['values']['submitted'];
     return $fields;
   }
 }

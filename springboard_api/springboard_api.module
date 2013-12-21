@@ -54,7 +54,7 @@ function springboard_api_menu() {
  */
 function springboard_api_services_resources() {
   $resource = array(
-    'springboard donation' => array(
+    'springboard-donation' => array(
       'operations' => array(
         'create' => array(
           'help' => 'Create a donation',
@@ -81,6 +81,9 @@ function springboard_api_services_resources() {
           'help' => 'Retrieve detailed information about a specific form.',
           'file' => array('type' => 'inc', 'module' => 'springboard_api', 'name' => 'resources/springboard_api.form_resources'),
           'callback' => 'springboard_api_form_resource_retrieve',
+          'access callback' => 'springboard_api_form_resource_access',
+          'access arguments' => array('retrieve'),
+          'access arguments append' => TRUE,
           'args' => array(
             array(
               'form_id' => 'nid',
@@ -191,8 +194,7 @@ function springboard_api_ctools_plugin_type() {
  */
 function springboard_api_list_management_services() {
   $services = array();
-  ctools_include('plugins');
-  $plugins = ctools_get_plugins('springboard_api', 'api_management_services');
+  $plugins = springboard_api_get_available_plugins();
   foreach ($plugins as $plugin) {
     if (isset($plugin['name']) && isset($plugin['title'])) {
       $services[$plugin['name']] = $plugin['title'];
@@ -207,8 +209,7 @@ function springboard_api_list_management_services() {
  */
 function springboard_api_get_enabled_management_service() {
   if ($enabled_service = variable_get('springboard_api_management_service', 0)) {
-    ctools_include('plugins');
-    $plugins = ctools_get_plugins('springboard_api', 'api_management_services');
+    $plugins = springboard_api_get_available_plugins();
     foreach ($plugins as $plugin) {
       if ($plugin['name'] === $enabled_service) {
         return $plugin;
@@ -219,13 +220,35 @@ function springboard_api_get_enabled_management_service() {
 }
 
 /**
+ * @return array
+ */
+function springboard_api_get_available_plugins() {
+  $plugins = array();
+  ctools_include('plugins');
+  $plugins = ctools_get_plugins('springboard_api', 'api_management_services');
+  return $plugins;
+}
+
+/**
  *
  *
  */
-function springboard_api_form_resource_access() {
-  // authenticate
-  // check throttling
-  // log access attempt
+function springboard_api_form_resource_access($op, $data) {
+  // TODO: we may want to add response code & details to log.
+  springboard_api_log_service_usage($endpoint, $data = NULL);
+  $service = springboard_api_get_enabled_management_service();
+  if (isset($service['throttling_callback']) && function_exists($service['throttling_callback'])) {
+    $func = $service['throttling_callback'];
+    $request_ok = $func();
+    if (!$request_ok) {
+      // bail out, throttle limit has been reached.
+      return FALSE;
+    }
+  }
+  if (isset($service['authentication_callback']) && function_exists($service['authentication_callback'])) {
+     $func = $service['authentication_callback'];
+     return $func($op, $data);
+  }
   return TRUE;
 }
 
@@ -233,8 +256,10 @@ function springboard_api_form_resource_access() {
  * Get form node & field information for a requested form.
  */
 function springboard_api_get_form_details($nid) {
-  $webform_component_types = webform_component_options();
+  $webform_standard_component_types = array('date', 'email', 'fieldset', 'file', 'hidden', 'grid', 'markup', 'number', 'pagebreak', 'select', 'textfield', 'textarea', 'time');
+
   $node = node_load($nid);
+  dsm($node->webform['components'], 'components');
   if (is_object($node)) {
     // fish for internal name.
     $lang = $node->language;
@@ -252,7 +277,8 @@ function springboard_api_get_form_details($nid) {
     // build form field details list.
     foreach ($node->webform['components'] as $cid => $component) {
       // handle special component types implemented by springboard modules (payment_method, payment_fields, etc)
-      if (!in_array($component->type, array_keys($webform_component_types))) {
+      if (!in_array($component['type'], $webform_standard_component_types)) {
+        drupal_set_message('component cid: ' . $component['cid'] . ' type not in list:' . $component['type']);
         $form_details['fields'][] = module_invoke_all('springboard_api_describe_custom_component', $node, $component);
       }
       // special handling for select fields. Client developers shouldn't require specialist knowledge
@@ -313,6 +339,15 @@ function _springboard_api_parse_extra_items($items) {
   return $values;
 }
 
+/**
+ * Lookup payment method field information.
+ *
+ * @param $component
+ * Payment methods webform component.
+ *
+ * @return mixed
+ * Returns payment field array or FALSE if no payment methods are found.
+ */
 function _springboard_api_get_payment_field_info($component) {
   $payment_methods = array_filter($component['extra']['payment_methods'], '_fundraiser_webform_payment_method_array_filter_enabled');
   if (is_array($payment_methods)) {
@@ -328,4 +363,22 @@ function _springboard_api_get_payment_field_info($component) {
     return $payment_fields;
   }
   return FALSE;
+}
+
+/**
+ * Log API request.
+ *
+ * @param $endpoint
+ * @param null $data
+ */
+function springboard_api_log_service_usage($endpoint, $data = NULL) {
+  // TODO:$_SERVER['HTTP_X_FORWARDED_FOR'] to capture ip behind proxy
+  $record = array(
+    'time' => time(),
+    'remote_ip' => isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : 'unknown',
+    'referrer' => isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'unknown',
+    'endpoint' => $endpoint,
+    'data' => $data,
+  );
+  drupal_write_record('springboard_api_tracker', $record);
 }

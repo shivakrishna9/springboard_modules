@@ -20,6 +20,7 @@ function commerce_payment_example_fundraiser_commerce_fundraiser_gateway_info() 
     'expire callback' => 'commerce_payment_example_fundraiser_commerce_expire',
     'charge callback' => 'commerce_payment_example_fundraiser_commerce_charge',
     'refund callback' => 'commerce_payment_example_fundraiser_commerce_refund',
+    'form info callback' => 'fundraiser_commerce_cc_payment_fields_info',
   );
 }
 

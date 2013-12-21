@@ -8,7 +8,7 @@
 /**
  *
  */
-function springboard_api_admin_settings() {
+function springboard_api_admin_settings($form, $form_state) {
   $available_services = springboard_api_list_management_services();
   $options = array_merge(array('0' => t('- select -')), $available_services);
 
@@ -19,6 +19,13 @@ function springboard_api_admin_settings() {
     '#options' => $options,
     '#default_value' => variable_get('springboard_api_management_service', 0),
   );
-
+  // additional plugin-specific settings
+  $plugins = springboard_api_get_available_plugins();
+  foreach ($plugins as $plugin) {
+    if (isset($plugin['admin_settings']) && function_exists($plugin['admin_settings'])) {
+      $func = $plugin['admin_settings'];
+      $func($form, $form_state);
+    }
+  }
   return system_settings_form($form);
 }

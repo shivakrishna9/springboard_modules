@@ -1227,7 +1227,7 @@ function fundraiser_webform_springboard_api_describe_custom_component($node, $co
     return $field;
   }
 
-  if ($component['type'] == 'payment_fields') {
+  if ($component['type'] = 'payment_fields') {
     // for each available payment method describe via info in the payment method field info callback.
     foreach ($node->webform['components'] as $cid => $webform_component) {
       if ($webform_component['form_key'] == 'payment_methods') {

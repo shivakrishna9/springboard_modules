@@ -241,7 +241,7 @@ function _fundraiser_commerce_credit_card_pane_values($donation) {
 /**
  *
  */
-function springboard_api_describe_custom_component($node, $component) {
+function fundraiser_commerce_cc_payment_fields_info() {
   $this_year = date('Y');
   $years[$this_year] = $this_year;
   for ($i = 1; $i <= 15; $i++) {
