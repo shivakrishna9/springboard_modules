@@ -1,0 +1,177 @@
+<?php
+
+/**
+ * @file
+ */
+
+function springboard_services_menu() {
+  // admin key list
+  $items[''] = array(
+
+  );
+  // key add
+  $items[''] = array(
+
+  );
+  // key remove
+  $items[''] = array(
+
+  );
+  return $items;
+}
+
+function springboard_services_services_resources() {
+  $springboard_resource = array(
+    'donation' => array(
+      'operations' => array(
+        'retrieve' => array(
+          'file' => array('type' => 'inc', 'module' => 'springboard_services', 'name' => 'includes/springboard_services.services_callbacks'),
+          'callback' => 'springboard_services_donation_form_retrieve',
+          'args' => array(
+            array(
+              'name' => 'nid',
+              'optional' => FALSE,
+              'source' => array('path' => 0),
+              'type' => 'int',
+              'description' => 'The nid of the donation form to get',
+            ),
+          ),
+          'access callback' => 'springboard_services_donation_form_access',
+          'access arguments' => array('view'),
+          'access arguments append' => TRUE,
+        ),
+        /*
+        'create' => array(
+          'file' => array('type' => 'inc', 'module' => 'services', 'name' => 'resources/node_resource'),
+          'callback' => '_node_resource_create',
+          'args' => array(
+            array(
+              'name' => 'node',
+              'optional' => FALSE,
+              'source' => 'data',
+              'description' => 'The node data to create',
+              'type' => 'array',
+            ),
+          ),
+          'access callback' => '_node_resource_access',
+          'access arguments' => array('create'),
+          'access arguments append' => TRUE,
+        ),
+        'update' => array(
+          'file' => array('type' => 'inc', 'module' => 'services', 'name' => 'resources/node_resource'),
+          'callback' => '_node_resource_update',
+          'args' => array(
+            array(
+              'name' => 'nid',
+              'optional' => FALSE,
+              'source' => array('path' => 0),
+              'type' => 'int',
+              'description' => 'The nid of the node to get',
+            ),
+            array(
+              'name' => 'node',
+              'optional' => FALSE,
+              'source' => 'data',
+              'description' => 'The node data to update',
+              'type' => 'array',
+            ),
+          ),
+          'access callback' => '_node_resource_access',
+          'access arguments' => array('update'),
+          'access arguments append' => TRUE,
+        ),
+        'delete' => array(
+          'file' => array('type' => 'inc', 'module' => 'services', 'name' => 'resources/node_resource'),
+          'callback' => '_node_resource_delete',
+          'args' => array(
+            array(
+              'name' => 'nid',
+              'optional' => FALSE,
+              'source' => array('path' => 0),
+              'type' => 'int',
+            ),
+          ),
+          'access callback' => '_node_resource_access',
+          'access arguments' => array('delete'),
+          'access arguments append' => TRUE,
+        ),*/
+        'index' => array(
+          'file' => array('type' => 'inc', 'module' => 'springoard_services', 'name' => 'includes/springoard_services.services_callbacks'),
+          'callback' => 'springboard_services_donation_form_index',
+          'args' => array(
+            array(
+              'name' => 'page',
+              'optional' => TRUE,
+              'type' => 'int',
+              'description' => 'The zero-based index of the page to get, defaults to 0.',
+              'default value' => 0,
+              'source' => array('param' => 'page'),
+            ),
+            array(
+              'name' => 'pagesize',
+              'optional' => TRUE,
+              'type' => 'int',
+              'description' => 'Number of records to get per page.',
+              'default value' => variable_get('services_node_index_page_size', 20),
+              'source' => array('param' => 'pagesize'),
+            ),
+          ),
+          'access arguments' => array('access content'),
+        ),
+      ),
+      'targeted_actions' => array(
+        'submit' => array(
+          'help' => 'Post a webform submission',
+          'file' => array('type' => 'inc', 'module' => 'springboard_services', 'name' => 'resources/webform'),
+          'callback' => '_springboard_services_webform_submit',
+          'access callback' => '_springboard_services_webform_resource_access',
+          'access arguments' => array('submit'),
+          'access arguments append' => TRUE,
+          'args' => array(
+            array(
+              'name' => 'nid',
+              'optional' => FALSE,
+              'source' => array('path' => 0),
+              'type' => 'int',
+              'description' => 'The nid of the node to attach a file to',
+            ),
+            array(
+              'name' => 'key',
+              'optional' => FALSE,
+              'source' => array('data' => 'key'),
+            ),
+            array(
+              'name' => 'field_values',
+              'optional' => TRUE,
+              'source' => array('data' => 'field_values'),
+              'description' => 'The extra field values',
+              'type' => 'array',
+              'default value' => array(),
+            ),
+          ),
+        ),
+      ),
+      'relationships' => array(
+        'components' => array(
+          'file' => array('type' => 'inc', 'module' => 'springboard_services', 'name' => 'resources/webform'),
+          'help'   => t('This method returns form component details associated with a webform.'),
+          'access callback' => '_springboard_services_webform_resource_access',
+          'access arguments' => array('view'),
+          'access arguments append' => TRUE,
+          'callback' => '_node_resource_load_node_files',
+          'args'     => array(
+            array(
+              'name' => 'nid',
+              'optional' => FALSE,
+              'source' => array('path' => 0),
+              'type' => 'int',
+              'description' => 'The nid of the node whose files we are getting',
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  return $node_resource;
+}
