@@ -561,3 +561,245 @@ function _email_wrappers_delete_nodes() {
   node_delete_multiple($nids);
   drupal_set_message('Email Wrappers have been deleted.');
 }
+
+
+/**
+ * Rewrite token replacement system to use D7 tokens.
+ *
+ * If needed, please download and install the Token module from drupal.org.
+ * Otherwise some tokens will not be rendered.
+ */
+function email_wrappers_update_7401(&$sandbox) {
+  // Define replacements.
+
+  $expr = _email_wrappers_update_get_expressions();
+
+  $limit = variable_get('webform_update_batch_size', 100);
+  $processed_count = _email_wrappers_update_7401_batch($sandbox, $expr['patterns'], $expr['replacements'], $expr['dpatterns'], $expr['dreplacements'], $limit);
+
+  // If less than limit was processed, the update process is finished.
+  if ($processed_count < $limit || $sandbox['progress'] == $sandbox['max']) {
+    $finished = TRUE;
+  }
+
+  // If there's no max value then there's nothing to update and we're finished.
+  if (empty($sandbox['max']) || isset($finished)) {
+    $message = t('Your existing webform email wrappers have been upgraded to use the global Drupal 7 token system.');
+    if (!module_exists('token')) {
+      $message .= ' <strong>' . t('Please download and install the <a href="http://drupal.org/project/token" target="_blank">Token module</a>. Otherwise some tokens will not be rendered.') . '</strong>';
+    }
+    return $message;
+  }
+  else {
+    // Indicate our current progress to the batch update system.
+    $sandbox['#finished'] = $sandbox['progress'] / $sandbox['max'];
+  }
+}
+
+/**
+ * Utility function to update all the locations that use tokens.
+ */
+function _email_wrappers_update_7401_batch(&$sandbox, $patterns, $replacements, $dpatterns, $dreplacements, $limit) {
+  // Set up the initial batch process.
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['last_nid_processed'] = -1;
+    $sandbox['max'] = db_select('webform')
+      ->countQuery()
+      ->execute()
+      ->fetchField();
+  }
+  $webforms = db_select('webform', 'w')
+    ->fields('w')
+    ->condition('nid', $sandbox['last_nid_processed'], '>')
+    ->orderBy('nid', 'ASC')
+    ->range(0, $limit)
+    ->execute()
+    ->fetchAllAssoc('nid', PDO::FETCH_ASSOC);
+
+  foreach ($webforms as $nid => $webform) {
+
+    // Update tokens in e-mail configurations.
+    $result = db_select('email_wrappers_webform', 'eww', array('fetch' => PDO::FETCH_ASSOC))
+      ->fields('eww')
+      ->condition('eww.nid', $nid)
+      ->execute();
+    foreach ($result as $wrapper) {
+      $parts = array(
+        'html_message',
+        'text_message',
+      );
+      $original = $wrapper;
+      foreach ($parts as $part) {
+        $email[$part] = str_replace($patterns, $replacements, $wrapper[$part]);
+        $email[$part] = preg_replace($dpatterns, $dreplacements, $wrapper[$part]);
+      }
+      if ($wrapper != $original) {
+        drupal_write_record('email_wrappers_webforms', $wrapper, array('nid', 'eid'));
+      }
+    }
+
+    // Update the last processed NID.
+    $sandbox['last_nid_processed'] = $nid;
+    $sandbox['progress']++;
+  }
+  return count($webforms);
+}
+
+/**
+ * Rewrite token replacement system to use D7 tokens.
+ *
+ * If needed, please download and install the Token module from drupal.org.
+ * Otherwise some tokens will not be rendered.
+ */
+function email_wrappers_update_7402(&$sandbox) {
+
+  $limit = variable_get('webform_update_batch_size', 100);
+  $expr = _email_wrappers_update_get_expressions();
+  $processed_count = _email_wrappers_update_7402_batch($sandbox, $expr['patterns'], $expr['replacements'], $expr['dpatterns'], $expr['dreplacements'], $limit);
+
+  // If less than limit was processed, the update process is finished.
+  if ($processed_count < $limit || $sandbox['progress'] == $sandbox['max']) {
+    $finished = TRUE;
+  }
+
+  // If there's no max value then there's nothing to update and we're finished.
+  if (empty($sandbox['max']) || isset($finished)) {
+    $message = t('Your existing webform email wrappers have been upgraded to use the global Drupal 7 token system.');
+    if (!module_exists('token')) {
+      $message .= ' <strong>' . t('Please download and install the <a href="http://drupal.org/project/token" target="_blank">Token module</a>. Otherwise some tokens will not be rendered.') . '</strong>';
+    }
+    return $message;
+  }
+  else {
+    // Indicate our current progress to the batch update system.
+    $sandbox['#finished'] = $sandbox['progress'] / $sandbox['max'];
+  }
+}
+
+/**
+ * Utility function to update all the locations that use tokens.
+ */
+function _email_wrappers_update_7402_batch(&$sandbox, $patterns, $replacements, $dpatterns, $dreplacements, $limit) {
+  // Set up the initial batch process.
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['last_nid_processed'] = -1;
+    $sandbox['max'] = db_select('node')
+      ->condition('type', 'email_wrapper', '=')
+      ->countQuery()
+      ->execute()
+      ->fetchField();
+  }
+
+  $wrappers = db_select('node', 'n')
+    ->fields('n')
+    ->condition('nid', $sandbox['last_nid_processed'], '>')
+    ->condition('type', 'email_wrapper', '=')
+    ->orderBy('nid', 'ASC')
+    ->range(0, $limit)
+    ->execute()
+    ->fetchAllAssoc('nid', PDO::FETCH_ASSOC);
+
+  foreach ($wrappers as $nid => $wrapper) {
+
+    $field_names = array('email_wrapper_text_message', 'email_wrapper_html_message');
+    foreach($field_names as $field) {
+    // Update tokens in e-mail configurations.
+      $result = db_select('field_data_' . $field, 'f', array('fetch' => PDO::FETCH_ASSOC))
+        ->fields('f')
+        ->condition('f.entity_id', $nid)
+        ->execute();
+      foreach ($result as $wrapper_field) {
+        $parts = array(
+          'html_message',
+          'text_message',
+          'email_wrapper_html_message_summary',
+        );
+        $original = $wrapper_field;
+        foreach ($parts as $part) {
+          $wrapper_field[$part] = str_replace($patterns, $replacements, $wrapper_field[$part]);
+          $wrapper_field[$part] = preg_replace($dpatterns, $dreplacements, $wrapper_field[$part]);
+        }
+        if ($wrapper_field != $original) {
+          drupal_write_record('field_data_' . $field, $wrapper_field, array('entity_type', 'entity_id', 'revision_id', 'deleted', 'delta', 'language'));
+          drupal_write_record('field_revision_' . $field, $wrapper_field, array('entity_type', 'entity_id', 'revision_id', 'deleted', 'delta', 'language'));
+        }
+      }
+    }
+
+    $field_names = array('email_wrapper_bcc_email', 'email_wrapper_from_email', 'email_wrapper_from_name', 'email_wrapper_reply_email', 'email_wrapper_subject');
+    foreach($field_names as $field) {
+    // Update tokens in e-mail configurations.
+      $result = db_select('field_data_' . $field, 'f', array('fetch' => PDO::FETCH_ASSOC))
+        ->fields('f')
+        ->condition('f.entity_id', $nid)
+        ->execute();
+      foreach ($result as $wrapper_field) {
+        $part = $field . '_value';
+        $original = $wrapper_field;
+        $wrapper_field[$part] = str_replace($patterns, $replacements, $wrapper_field[$part]);
+        $wrapper_field[$part] = preg_replace($dpatterns, $dreplacements, $wrapper_field[$part]);
+        if ($wrapper_field != $original) {
+          drupal_write_record('field_data_' . $field, $wrapper_field, array('entity_type', 'entity_id', 'revision_id', 'deleted', 'delta', 'language'));
+          drupal_write_record('field_revision_' . $field, $wrapper_field, array('entity_type', 'entity_id', 'revision_id', 'deleted', 'delta', 'language'));
+        }
+      }
+    }
+
+    // Update the last processed NID.
+    $sandbox['last_nid_processed'] = $nid;
+    $sandbox['progress']++;
+  }
+
+  return count($wrappers);
+}
+
+function _email_wrappers_update_get_expressions() {
+
+  // Define replacements.
+  $patterns = array(
+    '%username',
+    '%useremail',
+    '%uid',
+    '%date',
+    '%ip_address',
+    '%site',
+    '%nid',
+    '%title',
+    '%email_values',
+    '%submission_url',
+    '%sid',
+    '%server[REQUEST_URI]',
+    '][', // Used to convert nested arrays of %value and %email.
+  );
+  $replacements = array(
+    '[current-user:name]',
+    '[current-user:mail]',
+    '[current-user:uid]',
+    '[submission:date:long]',
+    '[current-user:ip-address]',
+    '[site:name]',
+    '[node:nid]',
+    '[node:title]',
+    '[submission:values]',
+    '[submission:url]',
+    '[submission:sid]',
+    '[current-page:url]',
+    ':', // Replace "][" with ":" for %value and %email.
+  );
+  $dpatterns = array(
+    '/%get\[([^\]]+)\]/m',
+    '/%email\[([^% \n\r\t]+)?\]/m',
+    '/%value\[([^% \n\r\t]+)?\]/m',
+    '/%profile\[([^\]]+)\]/m',
+  );
+  $dreplacements = array(
+    '[current-page:query:$1]',
+    '[submission:values:$1]',
+    '[submission:values:$1:nolabel]',
+    '[current-user:$1]',
+  );
+
+  return array('patterns' => $patterns, 'replacements' => $replacements, 'dpatterns' => $dpatterns, 'dreplacements' => $dreplacements);
+}
