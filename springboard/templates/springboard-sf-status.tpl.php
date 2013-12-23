@@ -16,6 +16,6 @@
   <ul>
   <li>Connected as: <?php print $identity['username'];?></li>
   <li>Organization Id: <?php print $identity['organization_id'];?></li>
-  <?php print isset($variables['batch_status']) ? '<li' . $variables['batch_status'] . '</li>' : ''; ?>
+  <?php print isset($variables['batch_status']) ? '<li>' . $variables['batch_status'] . '</li>' : ''; ?>
   </ul>
   <?php endif; ?>
