@@ -564,18 +564,16 @@ function _email_wrappers_delete_nodes() {
 
 
 /**
- * Rewrite token replacement system to use D7 tokens.
- *
- * If needed, please download and install the Token module from drupal.org.
- * Otherwise some tokens will not be rendered.
+ * Swap old style webform tokens for Drupal tokens in the email wrapper tables
+ * modified from webform.install
  */
-function email_wrappers_update_7401(&$sandbox) {
+function email_wrappers_update_7413(&$sandbox) {
   // Define replacements.
 
   $expr = _email_wrappers_update_get_expressions();
 
   $limit = variable_get('webform_update_batch_size', 100);
-  $processed_count = _email_wrappers_update_7401_batch($sandbox, $expr['patterns'], $expr['replacements'], $expr['dpatterns'], $expr['dreplacements'], $limit);
+  $processed_count = _email_wrappers_update_7413_batch($sandbox, $expr['patterns'], $expr['replacements'], $expr['dpatterns'], $expr['dreplacements'], $limit);
 
   // If less than limit was processed, the update process is finished.
   if ($processed_count < $limit || $sandbox['progress'] == $sandbox['max']) {
@@ -584,7 +582,7 @@ function email_wrappers_update_7401(&$sandbox) {
 
   // If there's no max value then there's nothing to update and we're finished.
   if (empty($sandbox['max']) || isset($finished)) {
-    $message = t('Your existing webform email wrappers have been upgraded to use the global Drupal 7 token system.');
+    $message = t('Your existing email wrapper tables have been upgraded to use the global Drupal 7 token system.');
     if (!module_exists('token')) {
       $message .= ' <strong>' . t('Please download and install the <a href="http://drupal.org/project/token" target="_blank">Token module</a>. Otherwise some tokens will not be rendered.') . '</strong>';
     }
@@ -599,7 +597,9 @@ function email_wrappers_update_7401(&$sandbox) {
 /**
  * Utility function to update all the locations that use tokens.
  */
-function _email_wrappers_update_7401_batch(&$sandbox, $patterns, $replacements, $dpatterns, $dreplacements, $limit) {
+function _email_wrappers_update_7413_batch(&$sandbox, $patterns, $replacements, $dpatterns, $dreplacements, $limit) {
+  // modified from webform.install
+
   // Set up the initial batch process.
   if (!isset($sandbox['progress'])) {
     $sandbox['progress'] = 0;
@@ -618,11 +618,10 @@ function _email_wrappers_update_7401_batch(&$sandbox, $patterns, $replacements, 
     ->fetchAllAssoc('nid', PDO::FETCH_ASSOC);
 
   foreach ($webforms as $nid => $webform) {
-
     // Update tokens in e-mail configurations.
-    $result = db_select('email_wrappers_webform', 'eww', array('fetch' => PDO::FETCH_ASSOC))
-      ->fields('eww')
-      ->condition('eww.nid', $nid)
+    $result = db_select('email_wrappers_webform', 'ew', array('fetch' => PDO::FETCH_ASSOC))
+      ->fields('ew')
+      ->condition('ew.nid', $nid)
       ->execute();
     foreach ($result as $wrapper) {
       $parts = array(
@@ -631,14 +630,20 @@ function _email_wrappers_update_7401_batch(&$sandbox, $patterns, $replacements, 
       );
       $original = $wrapper;
       foreach ($parts as $part) {
-        $email[$part] = str_replace($patterns, $replacements, $wrapper[$part]);
-        $email[$part] = preg_replace($dpatterns, $dreplacements, $wrapper[$part]);
+        $wrapper[$part] = str_replace($patterns, $replacements, $wrapper[$part]);
+        $wrapper[$part] = preg_replace($dpatterns, $dreplacements, $wrapper[$part]);
       }
       if ($wrapper != $original) {
-        drupal_write_record('email_wrappers_webforms', $wrapper, array('nid', 'eid'));
+        db_update('email_wrappers_webform')
+        ->fields(array(
+          'html_message' => $wrapper['html_message'],
+          'text_message' => $wrapper['text_message'],
+        ))
+        ->condition('nid', $wrapper['nid'], '=')
+        ->condition('eid', $wrapper['eid'], '=')
+        ->execute();
       }
     }
-
     // Update the last processed NID.
     $sandbox['last_nid_processed'] = $nid;
     $sandbox['progress']++;
@@ -647,16 +652,14 @@ function _email_wrappers_update_7401_batch(&$sandbox, $patterns, $replacements, 
 }
 
 /**
- * Rewrite token replacement system to use D7 tokens.
- *
- * If needed, please download and install the Token module from drupal.org.
- * Otherwise some tokens will not be rendered.
+ * Swap old style webform tokens for Drupal tokens in the email wrapper fields
  */
-function email_wrappers_update_7402(&$sandbox) {
+function email_wrappers_update_7414(&$sandbox) {
+  // modified from webform.install
 
   $limit = variable_get('webform_update_batch_size', 100);
   $expr = _email_wrappers_update_get_expressions();
-  $processed_count = _email_wrappers_update_7402_batch($sandbox, $expr['patterns'], $expr['replacements'], $expr['dpatterns'], $expr['dreplacements'], $limit);
+  $processed_count = _email_wrappers_update_7414_batch($sandbox, $expr['patterns'], $expr['replacements'], $expr['dpatterns'], $expr['dreplacements'], $limit);
 
   // If less than limit was processed, the update process is finished.
   if ($processed_count < $limit || $sandbox['progress'] == $sandbox['max']) {
@@ -665,7 +668,7 @@ function email_wrappers_update_7402(&$sandbox) {
 
   // If there's no max value then there's nothing to update and we're finished.
   if (empty($sandbox['max']) || isset($finished)) {
-    $message = t('Your existing webform email wrappers have been upgraded to use the global Drupal 7 token system.');
+    $message = t('Your existing email wrapper fields have been upgraded to use the global Drupal 7 token system.');
     if (!module_exists('token')) {
       $message .= ' <strong>' . t('Please download and install the <a href="http://drupal.org/project/token" target="_blank">Token module</a>. Otherwise some tokens will not be rendered.') . '</strong>';
     }
@@ -680,7 +683,8 @@ function email_wrappers_update_7402(&$sandbox) {
 /**
  * Utility function to update all the locations that use tokens.
  */
-function _email_wrappers_update_7402_batch(&$sandbox, $patterns, $replacements, $dpatterns, $dreplacements, $limit) {
+function _email_wrappers_update_7414_batch(&$sandbox, $patterns, $replacements, $dpatterns, $dreplacements, $limit) {
+  // modified from webform.install
   // Set up the initial batch process.
   if (!isset($sandbox['progress'])) {
     $sandbox['progress'] = 0;
@@ -712,8 +716,8 @@ function _email_wrappers_update_7402_batch(&$sandbox, $patterns, $replacements, 
         ->execute();
       foreach ($result as $wrapper_field) {
         $parts = array(
-          'html_message',
-          'text_message',
+          'email_wrapper_html_message_value',
+          'email_wrapper_text_message_value',
           'email_wrapper_html_message_summary',
         );
         $original = $wrapper_field;
@@ -722,41 +726,42 @@ function _email_wrappers_update_7402_batch(&$sandbox, $patterns, $replacements, 
           $wrapper_field[$part] = preg_replace($dpatterns, $dreplacements, $wrapper_field[$part]);
         }
         if ($wrapper_field != $original) {
-          drupal_write_record('field_data_' . $field, $wrapper_field, array('entity_type', 'entity_id', 'revision_id', 'deleted', 'delta', 'language'));
-          drupal_write_record('field_revision_' . $field, $wrapper_field, array('entity_type', 'entity_id', 'revision_id', 'deleted', 'delta', 'language'));
+          db_update('field_data_' . $field)
+          ->fields(array(
+            $field . '_value' => $wrapper_field[$field . '_value'],
+
+          ))
+          ->condition('entity_type', $wrapper_field['entity_type'], '=')
+          ->condition('entity_id', $wrapper_field['entity_id'], '=')
+          ->condition('revision_id', $wrapper_field['revision_id'], '=')
+          ->condition('delta', $wrapper_field['delta'], '=')
+          ->condition('deleted', $wrapper_field['deleted'], '=')
+          ->condition('language', $wrapper_field['language'], '=')
+          ->execute();
+
+          db_update('field_revision_' . $field)
+          ->fields(array(
+            $field . '_value' => $wrapper_field[$field . '_value'],
+          ))
+          ->condition('entity_type', $wrapper_field['entity_type'], '=')
+          ->condition('entity_id', $wrapper_field['entity_id'], '=')
+          ->condition('revision_id', $wrapper_field['revision_id'], '=')
+          ->condition('delta', $wrapper_field['delta'], '=')
+          ->condition('deleted', $wrapper_field['deleted'], '=')
+          ->condition('language', $wrapper_field['language'], '=')
+          ->execute();
         }
       }
     }
-
-    $field_names = array('email_wrapper_bcc_email', 'email_wrapper_from_email', 'email_wrapper_from_name', 'email_wrapper_reply_email', 'email_wrapper_subject');
-    foreach($field_names as $field) {
-    // Update tokens in e-mail configurations.
-      $result = db_select('field_data_' . $field, 'f', array('fetch' => PDO::FETCH_ASSOC))
-        ->fields('f')
-        ->condition('f.entity_id', $nid)
-        ->execute();
-      foreach ($result as $wrapper_field) {
-        $part = $field . '_value';
-        $original = $wrapper_field;
-        $wrapper_field[$part] = str_replace($patterns, $replacements, $wrapper_field[$part]);
-        $wrapper_field[$part] = preg_replace($dpatterns, $dreplacements, $wrapper_field[$part]);
-        if ($wrapper_field != $original) {
-          drupal_write_record('field_data_' . $field, $wrapper_field, array('entity_type', 'entity_id', 'revision_id', 'deleted', 'delta', 'language'));
-          drupal_write_record('field_revision_' . $field, $wrapper_field, array('entity_type', 'entity_id', 'revision_id', 'deleted', 'delta', 'language'));
-        }
-      }
-    }
-
     // Update the last processed NID.
     $sandbox['last_nid_processed'] = $nid;
     $sandbox['progress']++;
   }
-
   return count($wrappers);
 }
 
 function _email_wrappers_update_get_expressions() {
-
+  //Patterns found in webform.install
   // Define replacements.
   $patterns = array(
     '%username',
@@ -802,4 +807,81 @@ function _email_wrappers_update_get_expressions() {
   );
 
   return array('patterns' => $patterns, 'replacements' => $replacements, 'dpatterns' => $dpatterns, 'dreplacements' => $dreplacements);
+}
+
+/**
+ * Replace "no lable" with "withlabel" in email wrapper tables
+ */
+function email_wrappers_update_7415(&$sandbox) {
+  // modified from webform.install
+  // Define replacements.
+  $patterns = array();
+  $replacements = array();
+  $dpatterns = array(
+    '/\[submission:values(:(?!nolabel)[a-z_]+)+\]/m',
+    '/\[submission:values(:([a-z_:]+))?:nolabel\]/m',
+  );
+  $dreplacements = array(
+    '[submission:values$1:withlabel]',
+    '[submission:values$1]',
+  );
+
+  $limit = variable_get('webform_update_batch_size', 100);
+  $processed_count = _email_wrappers_update_7413_batch($sandbox, $patterns, $replacements, $dpatterns, $dreplacements, $limit);
+
+  // If less than limit was processed, the update process is finished.
+  if ($processed_count < $limit || $sandbox['progress'] == $sandbox['max']) {
+    $finished = TRUE;
+  }
+
+  // If there's no max value then there's nothing to update and we're finished.
+  if (empty($sandbox['max']) || isset($finished)) {
+    return t('Replaced tokens using [submission:values:x] with [submission:values:x:withlabel].');
+  }
+  else {
+    // Indicate our current progress to the batch update system.
+    $sandbox['#finished'] = $sandbox['progress'] / $sandbox['max'];
+  }
+}
+
+/**
+ * Replace "no lable" with "withlabel" in email wrapper fields
+ */
+function email_wrappers_update_7416(&$sandbox) {
+  // modified from webform.install
+  // Define replacements.
+  $patterns = array();
+  $replacements = array();
+  $dpatterns = array(
+    '/\[submission:values(:(?!nolabel)[a-z_]+)+\]/m',
+    '/\[submission:values(:([a-z_:]+))?:nolabel\]/m',
+  );
+  $dreplacements = array(
+    '[submission:values$1:withlabel]',
+    '[submission:values$1]',
+  );
+
+  $limit = variable_get('webform_update_batch_size', 100);
+  $processed_count = _email_wrappers_update_7414_batch($sandbox, $patterns, $replacements, $dpatterns, $dreplacements, $limit);
+
+  // If less than limit was processed, the update process is finished.
+  if ($processed_count < $limit || $sandbox['progress'] == $sandbox['max']) {
+    $finished = TRUE;
+  }
+
+  // If there's no max value then there's nothing to update and we're finished.
+  if (empty($sandbox['max']) || isset($finished)) {
+    return t('Replaced tokens using [submission:values:x] with [submission:values:x:withlabel].');
+  }
+  else {
+    // Indicate our current progress to the batch update system.
+    $sandbox['#finished'] = $sandbox['progress'] / $sandbox['max'];
+  }
+}
+
+function email_wrappers_update_dependencies() {
+  $dependencies['email_wrappers'][7413] = array(
+    'webform' => 7412,
+  );
+  return $dependencies;
 }
