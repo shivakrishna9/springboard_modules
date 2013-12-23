@@ -256,5 +256,5 @@ function _fundraiser_commerce_credit_card_cardonfile_fields($donation) {
     'card_number' => substr($pane_values['credit_card']['number'], -4),
     'card_exp_month' => $pane_values['credit_card']['exp_month'],
     'card_exp_year' => $pane_values['credit_card']['exp_year'],
-  );
+  ) + array('instance_id' => $donation->gateway['id'], 'uid' => $donation->uid);
 }

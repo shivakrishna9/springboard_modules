@@ -1971,14 +1971,32 @@ function _fundraiser_commerce_donation_cardonfile_card($donation, $active = TRUE
     return FALSE;
   }
 
+  return _fundraiser_commerce_cardonfile_match($cardonfile_fields, $active = TRUE);
+}
+
+/**
+ * Search the card on file table for a record
+ *
+ * @param $fields Array
+ *    Array of fields to search card on file table
+ * @return Object
+ *    Card on file card entity or FALSE if no record
+ */
+function _fundraiser_commerce_cardonfile_match($fields, $active = TRUE) {
   // Query for the card on file profile using the provided values
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'commerce_cardonfile')
-  ->propertyCondition('uid', $donation->uid)
-  ->propertyCondition('instance_id', $donation->gateway['id'])
-  ->propertyCondition('card_number', $cardonfile_fields['card_number'])
-  ->propertyCondition('card_exp_month', $cardonfile_fields['card_exp_month'])
-  ->propertyCondition('card_exp_year', $cardonfile_fields['card_exp_year']);
+  ->propertyCondition('uid', $fields['uid'])
+  ->propertyCondition('instance_id', $fields['instance_id'])
+  ->propertyCondition('card_number', $fields['card_number']);
+
+  if (!empty($fields['card_exp_month'])) {
+    $query->propertyCondition('card_exp_month', $fields['card_exp_month']);
+  }
+
+  if (!empty($fields['card_exp_year'])) {
+    $query->propertyCondition('card_exp_year', $fields['card_exp_year']);
+  }
 
   if ($active) {
     $query->propertyCondition('status', TRUE);
@@ -2001,7 +2019,7 @@ function _fundraiser_commerce_donation_cardonfile_card($donation, $active = TRUE
  * @param $fields Array
  *    Array of fields to search card on file table
  * @return Object
- *    Card on file card entity
+ *    Card on file card entity or FALSE if no record
  */
 function _fundraiser_commerce_cardonfile_exp_date_mismatch($fields) {
   // Create the date or portion of the query
@@ -2025,5 +2043,15 @@ function _fundraiser_commerce_cardonfile_exp_date_mismatch($fields) {
   }
   else {
     return FALSE;
+  }
+}
+
+/**
+ * Implements hook_commerce_authnet_cim_request_alter
+ */
+function fundraiser_commerce_commerce_authnet_cim_request_alter($api_request_element) {
+  // Change the description to something unique so we get a new profile each time
+  if (!empty($api_request_element->profile->description)) {
+    $api_request_element->profile->description = substr(t('CIM request taking place at @date', array('@date' => format_date(time()))), 0, 255);
   }
 }

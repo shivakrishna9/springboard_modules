@@ -115,8 +115,7 @@ function commerce_authnet_fundraiser_commerce_cardonfile($donation) {
   // Only perform this when we're in an active non-reference charge
   if (isset($donation->reference_charge) && $donation->reference_charge === FALSE) {
     // Query the db for an existing record
-    $fields = $cardonfile_fields + array('instance_id' => $donation->gateway['id'], 'uid' => $donation->uid);
-    $card_data = _fundraiser_commerce_cardonfile_exp_date_mismatch($fields);
+    $card_data = _fundraiser_commerce_cardonfile_exp_date_mismatch($cardonfile_fields);
 
     // If we have a profile for this user update it in the CIM
     if ($card_data) {
@@ -129,7 +128,18 @@ function commerce_authnet_fundraiser_commerce_cardonfile($donation) {
 }
 
 /**
- * Callback function, update data stored at the gateway.
+ * Callback function, update card data stored at the gateway and locally
+ *
+ * @param $payment_method Array
+ *    Commerce payment method array
+ * @param $donation Object
+ *    Fundraiser commerce donation object which should include the new/updated card data
+ * @param $card_data Object
+ *    Card on file entity, this should be the current entity for the donation,
+ *    new data should be passed in the donation object
+ *
+ * @return Object
+ *    Card on file entity for the new/updated card data
  */
 function commerce_authnet_fundraiser_commerce_update($payment_method, $donation, $card_data = NULL) {
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
@@ -151,29 +161,98 @@ function commerce_authnet_fundraiser_commerce_update($payment_method, $donation,
     return;
   }
 
-  // Pull the new credit card values from the donation and set them on the card data object
+  // Pull the new credit card values from the donation
   $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
-  $card_data->card_number = substr($pane_values['credit_card']['number'], -4);
-  $card_data->card_exp_month = sprintf("%02d", $pane_values['credit_card']['exp_month']);
-  $card_data->card_exp_year = $pane_values['credit_card']['exp_year'];
 
-  // We're mirroring the commerce_authnet_cim_cardonfile_update function so setup values that function uses, see that function for details
-  $form['credit_card']['number']['#default_value'] = '';
-  $form_state['values']['credit_card']['number'] = $pane_values['credit_card']['number'];
-  $form_state['values']['credit_card']['owner'] = isset($donation->donation['first_name']) ? $donation->donation['first_name'] : '';
-  $form_state['values']['credit_card']['owner'] .= isset($donation->donation['last_name']) ? ' ' . $donation->donation['last_name'] : '';
-  $form_state['values']['credit_card']['address'] = isset($donation->donation['address']) ? $donation->donation['address'] : '';
-  $form_state['values']['credit_card']['address'] .= isset($donation->donation['address_line_2']) ? ' ' . $donation->donation['address_line_2'] : '';
-  $form_state['values']['credit_card']['city'] = isset($donation->donation['city']) ? $donation->donation['city'] : '';
-  $form_state['values']['credit_card']['state'] = isset($donation->donation['state']) ? $donation->donation['state'] : '';
-  $form_state['values']['credit_card']['zip'] = isset($donation->donation['zip']) ? $donation->donation['zip'] : '';
-  $form_state['values']['credit_card']['country'] = isset($donation->donation['country']) ? $donation->donation['country'] : '';
+  // Load the card on file values for this donation
+  $cardonfile_fields = _fundraiser_commerce_credit_card_cardonfile_fields($donation);
 
-  $update = _commerce_authnet_fundraiser_commerce_authnet_cim_cardonfile_update($form, $form_state, $payment_method, $card_data);
+  // Check the card number to see if it matches the current card data number
+  // If it does then we use the update function
+  // if its a new card we use the create profile function
+  $action = 'update';
+  if ($cardonfile_fields['card_number'] != $card_data->card_number) {
+    $action = 'new';
+  }
 
-  if ($update) {
-    commerce_cardonfile_save($card_data);
-    return $card_data;
+  if ($action == 'update') {
+    $card_data->card_number = $cardonfile_fields['card_number'];
+    $card_data->card_exp_month = sprintf("%02d", $cardonfile_fields['card_exp_month']);
+    $card_data->card_exp_year = $cardonfile_fields['card_exp_year'];
+
+    // We're mirroring the commerce_authnet_cim_cardonfile_update function so setup values that function uses, see that function for details
+    $form['credit_card']['number']['#default_value'] = '';
+    $form_state['values']['credit_card']['number'] = $pane_values['credit_card']['number'];
+    $form_state['values']['credit_card']['owner'] = isset($donation->donation['first_name']) ? $donation->donation['first_name'] : '';
+    $form_state['values']['credit_card']['owner'] .= isset($donation->donation['last_name']) ? ' ' . $donation->donation['last_name'] : '';
+    $form_state['values']['credit_card']['address'] = isset($donation->donation['address']) ? $donation->donation['address'] : '';
+    $form_state['values']['credit_card']['address'] .= isset($donation->donation['address_line_2']) ? ' ' . $donation->donation['address_line_2'] : '';
+    $form_state['values']['credit_card']['city'] = isset($donation->donation['city']) ? $donation->donation['city'] : '';
+    $form_state['values']['credit_card']['state'] = isset($donation->donation['state']) ? $donation->donation['state'] : '';
+    $form_state['values']['credit_card']['zip'] = isset($donation->donation['zip']) ? $donation->donation['zip'] : '';
+    $form_state['values']['credit_card']['country'] = isset($donation->donation['country']) ? $donation->donation['country'] : '';
+
+    $response = _commerce_authnet_fundraiser_commerce_authnet_cim_cardonfile_update($form, $form_state, $payment_method, $card_data);
+
+    if ($response) {
+      commerce_cardonfile_save($card_data);
+      return $card_data;
+    }
+  }
+  // Create a new card on file record
+  elseif ($action == 'new') {
+    // First check if this card number has been used in an existing profile
+    if ($existing = _fundraiser_commerce_cardonfile_match($cardonfile_fields)) {
+      // Set the existing card no the donation and return it
+      $donation->data['cardonfile'] = $existing->card_id;
+      return $existing;
+    }
+
+    // We're using the built in function that requires a payment details array and the order
+    $payment_details = array(
+      'cardNumber' => $pane_values['credit_card']['number'],
+      'expirationDate' => $pane_values['credit_card']['exp_year'] . '-' . sprintf("%02d", $pane_values['credit_card']['exp_month']),
+    );
+
+    if (isset($pane_values['credit_card']['code'])) {
+      $payment_details['cardCode'] = $pane_values['credit_card']['code'];
+    }
+
+    // Load the order
+    $order = commerce_order_load($donation->did);
+    $response = commerce_authnet_cim_create_customer_profile_request($payment_method, $order, $payment_details);
+
+    // If the Customer Profile creation was a success, store the new card on file data locally.
+    if ($response && (string) $response->messages->resultCode == 'Ok') {
+      // Build a remote ID that includes the Customer Profile ID and the
+      // Payment Profile ID.
+      $remote_id = (string) $response->customerProfileId . '|' . (string) $response->customerPaymentProfileIdList->numericString;
+
+      // Get the card type
+      $card_type = commerce_payment_validate_credit_card_type($pane_values['credit_card']['number'], array_keys(commerce_payment_credit_card_types()));
+      $all_types = commerce_payment_credit_card_types();
+      $card_type = !empty($all_types[$card_type]) ? $all_types[$card_type] : 'card';
+
+      // Create a new cardonfile entity
+      $new_data = commerce_cardonfile_new();
+      $new_data->uid = $order->uid;
+      $new_data->payment_method = $payment_method['method_id'];
+      $new_data->instance_id = $payment_method['instance_id'];
+      $new_data->remote_id = $remote_id;
+      $new_data->card_type = $card_type;
+      $new_data->card_name = !empty($card_data->card_name) ? $card_data->card_name : '';
+      $new_data->card_number = $cardonfile_fields['card_number'];
+      $new_data->card_exp_month = $cardonfile_fields['card_exp_month'];
+      $new_data->card_exp_year = $cardonfile_fields['card_exp_year'];
+      $new_data->status = 1;
+
+      // Save and log the creation of the new card on file.
+      commerce_cardonfile_save($new_data);
+      // Set the value on the donation
+      $donation->data['cardonfile'] = $new_data->card_id;
+      watchdog('commerce_authnet', 'CIM Customer Profile @profile_id created and saved to user @uid.', array('@profile_id' => (string) $response->customerProfileId, '@uid' => $order->uid));
+      return $new_data;
+    }
   }
 }
 
