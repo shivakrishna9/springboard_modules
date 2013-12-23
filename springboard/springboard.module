@@ -436,7 +436,7 @@ function springboard_block_info() {
 function springboard_block_view($delta) {
   switch($delta) {
     case 'springboard_sf_status':
-      return array('subject' => t('Salesforce connection status'), 'content' => _springboard_sf_status());
+      return array('subject' => t('Sync Status'), 'content' => _springboard_sf_status());
     break;
   }
 }
