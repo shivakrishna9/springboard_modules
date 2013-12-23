@@ -120,7 +120,8 @@ function fundraiser_upsell_add_node_settings(&$form) {
 
   $form['fundraiser_upsell']['footer'] = array(
     '#title' => t('Form specific Upsell Footer'),
-    '#type' => 'textarea',
+    '#type' => 'textfield',
+    '#maxlength' => 255,
     '#default_value' => !empty($node->fundraiser_upsell['footer']) ? $node->fundraiser_upsell['footer'] : '',
     '#description' => t('Content that goes below the upsell form.  It can be used for a disclaimer.'),
   );
