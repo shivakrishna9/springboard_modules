@@ -109,26 +109,26 @@ function fundraiser_upsell_add_node_settings(&$form) {
   $form['fundraiser_upsell']['enabled'] = array(
     '#type' => 'checkbox',
     '#title' => t('Upsell enabled'),
-    '#default_value' => !empty($node->upsell['enabled']) ? $node->upsell['enabled'] : '',
+    '#default_value' => !empty($node->fundraiser_upsell['enabled']) ? $node->fundraiser_upsell['enabled'] : '',
   );
   $form['fundraiser_upsell']['content'] = array(
     '#title' => t('Form specific Upsell Content'),
     '#type' => 'textarea',
-    '#default_value' => !empty($node->upsell['content']) ? $node->upsell['content'] : '',
+    '#default_value' => !empty($node->fundraiser_upsell['content']) ? $node->fundraiser_upsell['content'] : '',
     '#description' => t('If no content is given the default will be used.'),
   );
 
   $form['fundraiser_upsell']['footer'] = array(
     '#title' => t('Form specific Upsell Footer'),
     '#type' => 'textarea',
-    '#default_value' => !empty($node->upsell['footer']) ? $node->upsell['footer'] : '',
+    '#default_value' => !empty($node->fundraiser_upsell['footer']) ? $node->fundraiser_upsell['footer'] : '',
     '#description' => t('Content that goes below the upsell form.  It can be used for a disclaimer.'),
   );
 
   $form['fundraiser_upsell']['thankyou'] = array(
     '#title' => t('Thank you content'),
     '#type' => 'textarea',
-    '#default_value' => !empty($node->upsell['thankyou']) ? $node->upsell['thankyou'] : '',
+    '#default_value' => !empty($node->fundraiser_upsell['thankyou']) ? $node->fundraiser_upsell['thankyou'] : '',
     '#description' => t('The content in the modal after the sustainer is processed.'),
   );
 
@@ -142,21 +142,21 @@ function fundraiser_upsell_add_node_settings(&$form) {
   $form['fundraiser_upsell']['modal_theme']['class'] = array(
     '#title' => t('CSS class(es)'),
     '#type' => 'textfield',
-    '#default_value' => !empty($node->upsell['class']) ? $node->upsell['class'] : '',
+    '#default_value' => !empty($node->fundraiser_upsell['modal_theme']['class']) ? $node->fundraiser_upsell['modal_theme']['class'] : '',
     '#description' => t('Separate multiple classes with a space.'),
   );
   $form['fundraiser_upsell']['modal_theme']['width'] = array(
     '#title' => t('Modal window width (in pixels)'),
     '#type' => 'textfield',
     '#size' => 5,
-    '#default_value' => !empty($node->upsell['modal_width']) ? $node->upsell['modal_width'] : 400,
+    '#default_value' => !empty($node->fundraiser_upsell['modal_theme']['width']) ? $node->fundraiser_upsell['modal_theme']['width'] : 400,
     '#description' => t('This will override the site default.'),
   );
   $form['fundraiser_upsell']['modal_theme']['height'] = array(
     '#title' => t('Modal window height (in pixels)'),
     '#type' => 'textfield',
     '#size' => 5,
-    '#default_value' => !empty($node->upsell['modal_height']) ? $node->upsell['modal_height'] : 300,
+    '#default_value' => !empty($node->fundraiser_upsell['modal_theme']['height']) ? $node->fundraiser_upsell['modal_theme']['height'] : 300,
     '#description' => t('This will override the site default.'),
   );
 
@@ -181,7 +181,7 @@ function fundraiser_upsell_add_node_settings(&$form) {
         '#title' => t('Sustainer Salesforce Campaign ID'),
         '#type' => 'select',
         '#options' => $salesforce_campaign_options,
-        '#default_value' => !empty($node->upsell['campaign_id']) ? $node->upsell['campaign_id'] : variable_get('fundraiser_upsell_sf_campaign_id', ''),
+        '#default_value' => !empty($node->fundraiser_upsell['campaign_id']) ? $node->fundraiser_upsell['campaign_id'] : variable_get('fundraiser_upsell_sf_campaign_id', ''),
         '#description' => t('Set the campaign id to be used for the upsell form. Please note that if this field is left blank, then all recurring donations will have blank campaign ids.'),
       );
     }
@@ -621,8 +621,8 @@ function fundraiser_upsell_node_load($nodes, $types) {
         array(':nid' => $node->nid)
       )->fetchAssoc();
       // Merge data from upsell settings with node.
-      unset($upsell['nid']);
-      $nodes[$node->nid]->upsell = $upsell;
+      $upsell = fundraiser_upsell_unflatten_record($upsell);
+      $nodes[$node->nid]->fundraiser_upsell = $upsell;
     }
   }
 }
@@ -648,10 +648,36 @@ function fundraiser_upsell_node_record($node) {
     'footer' => $node->fundraiser_upsell['footer'],
     'thankyou' => $node->fundraiser_upsell['thankyou'],
     'class' => $node->fundraiser_upsell['modal_theme']['class'],
-    'width' => $node->fundraiser_upsell['modal_theme']['width'],
-    'height' => $node->fundraiser_upsell['modal_theme']['height'],
+    'modal_width' => $node->fundraiser_upsell['modal_theme']['width'],
+    'modal_height' => $node->fundraiser_upsell['modal_theme']['height'],
     'campaign_id' => $campaign_id,
   );
+}
+
+/**
+ * Takes the result from the upsell DB query and turns it into a tree.
+ *
+ * @param array $upsell
+ *   Associative array from a db_query result.
+ *
+ * @return array
+ *   Associative array with modal_theme as a sub array.
+ */
+function fundraiser_upsell_unflatten_record($upsell) {
+  $unflat = array(
+    'enabled' => $upsell['enabled'],
+    'content' => $upsell['content'],
+    'footer' => $upsell['footer'],
+    'thankyou' => $upsell['thankyou'],
+    'modal_theme' => array(
+      'class' => $upsell['class'],
+      'width' => $upsell['modal_width'],
+      'height' => $upsell['modal_height'],
+    ),
+    'campaign_id' => $upsell['campaign_id'],
+  );
+
+  return $unflat;
 }
 
 /**
@@ -676,6 +702,14 @@ function fundraiser_upsell_theme() {
   return $theme;
 }
 
+/**
+ * Theme callback for the upsell modal.
+ *
+ * @param array $variables
+ *
+ * @return string
+ *   The HTML for the modal.
+ */
 function theme_fundraiser_upsell_modal($variables) {
   // Add the css & js.
   $path = drupal_get_path('module', 'fundraiser_upsell');
@@ -788,7 +822,7 @@ function fundraiser_upsell_content_preview($node) {
   $upsell_content = (!empty($node->upsell['content'])) ? $node->upsell['content'] : variable_get('fundraiser_upsell_default_content', '');
   $upsell_disclaimer = variable_get('fundraiser_upsell_default_content_disclaimer', '');
   $upsell_thankyou_text = variable_get('fundraiser_upsell_thank_you_content', 'Thank you for your recurring donation!');
-  $upsell_thankyou = token_replace_multiple($upsell_thankyou_text, array(
+  $upsell_thankyou = token_replace($upsell_thankyou_text, array(
       'global' => NULL,
       'order' => NULL,
       'domain' => NULL,

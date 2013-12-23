@@ -74,6 +74,18 @@ function fundraiser_upsell_schema() {
         'type' => 'text',
         'not null' => TRUE,
       ),
+      'footer' => array(
+        'description' => 'Node specific footer to place on the upsell modal below the form.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'thankyou' => array(
+        'description' => 'Node specific content to place on the upsell modal thank you page.',
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
       'class' => array(
         'description' => 'Additional class(es) to pass to the theme.',
         'type' => 'varchar',
@@ -94,7 +106,7 @@ function fundraiser_upsell_schema() {
         'default' => 300,
       ),
       'campaign_id' => array(
-        'description' => 'The campaign id for this upsell recurring donation.',
+        'description' => 'The Salesforce campaign id for this upsell recurring donation.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
@@ -113,4 +125,29 @@ function fundraiser_upsell_schema() {
 function fundraiser_upsell_update_7000() {
   db_drop_field('fundraiser_upsell', 'decoupled');
   variable_del('fundraiser_upsell_decouple');
+}
+
+/**
+ * Adds the footer and thankyou fields so individual forms can have them.
+ */
+function fundraiser_upsell_update_7001() {
+  $footer_field = array(
+    'description' => 'Node specific footer to place on the upsell modal below the form.',
+    'type' => 'varchar',
+    'length' => 255,
+    'not null' => TRUE,
+    'default' => '',
+    'initial' => '',
+  );
+
+  db_add_field('fundraiser_upsell', 'footer', $footer_field);
+
+  $thankyou_field = array(
+    'description' => 'Node specific content to place on the upsell modal thank you page.',
+    'type' => 'text',
+    'not null' => TRUE,
+    'initial' => '',
+  );
+
+  db_add_field('fundraiser_upsell', 'thankyou', $thankyou_field);
 }
