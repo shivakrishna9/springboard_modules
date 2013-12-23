@@ -211,8 +211,8 @@ function fundraiser_upsell_node_form_validate($form, &$form_state) {
 /**
  * Additional submit handler to move the upsell settings into an array.
  *
- * The node will then be saved with this data in $node->upsell.
- * Example: $node->upsell['enabled']
+ * The node will then be saved with this data in $node->fundraiser_upsell.
+ * Example: $node->fundraiser_upsell['enabled']
  */
 function fundraiser_upsell_node_form_submit($form, &$form_state) {
 
@@ -268,25 +268,30 @@ function fundraiser_upsell_page_alter(&$page) {
       '#theme' => 'fundraiser_upsell_modal',
       '#sid' => $_SESSION['upsell']['sid'],
       '#rejection_days' => variable_get('fundraiser_upsell_rejection_lifetime', '180'),
-      '#footer' => variable_get('fundraiser_upsell_default_content_disclaimer', ''),
       '#preview' => FALSE,
     );
 
     // Override defaults.
-    if (!empty($node->upsell['modal_theme']['width'])) {
-      $modal['#width'] = $node->upsell['modal_theme']['width'];
+    if (!empty($node->fundraiser_upsell['modal_theme']['width'])) {
+      $modal['#width'] = $node->fundraiser_upsell['modal_theme']['width'];
     }
-    if (!empty($node->upsell['modal_theme']['height'])) {
-      $modal['#height'] = $node->upsell['modal_theme']['height'];
+    if (!empty($node->fundraiser_upsell['modal_theme']['height'])) {
+      $modal['#height'] = $node->fundraiser_upsell['modal_theme']['height'];
     }
-    if (!empty($node->upsell['modal_theme']['class'])) {
-      $modal['#class'] = $node->upsell['modal_theme']['class'];
+    if (!empty($node->fundraiser_upsell['modal_theme']['class'])) {
+      $modal['#class'] = $node->fundraiser_upsell['modal_theme']['class'];
     }
-    if (!empty($node->upsell['content'])) {
-      $modal['#content'] = $node->upsell['content'];
+    if (!empty($node->fundraiser_upsell['content'])) {
+      $modal['#content'] = $node->fundraiser_upsell['content'];
     }
     else {
       $modal['#content'] = variable_get('fundraiser_upsell_default_content', '');
+    }
+    if (!empty($node->fundraiser_upsell['footer'])) {
+      $modal['#footer'] = $node->fundraiser_upsell['footer'];
+    }
+    else {
+      $modal['#footer'] = variable_get('fundraiser_upsell_default_content_disclaimer', '');
     }
 
     // Add the modal to the bottom of the page.
@@ -421,10 +426,7 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
     fundraiser_upsell_send_thank_you($master_order);
 
     // Generate the thank you content.
-    // @todo Replace with per node thankyou message.
-    // $raw_content = $donation->node->upsell['thankyou']
-    // something like that.
-    $raw_content = variable_get('fundraiser_upsell_thank_you_content', 'Thank you for your recurring donation!');
+    $raw_content = $donation->node->fundraiser_upsell['thankyou'];
     $content = token_replace($raw_content, array('donation' => $donation), array('clear' => TRUE));
 
   }
@@ -759,8 +761,8 @@ function fundraiser_upsell_content($node, $sid) {
   drupal_add_js($path . '/js/fundraiser_upsell.js');
   drupal_add_js($path . '/js/jquery.blockUI.js');
   // Get the size and class for the modal.
-  $width = (!empty($node->upsell['modal_width'])) ? $node->upsell['modal_width'] : 400;
-  $height = (!empty($node->upsell['modal_height'])) ? $node->upsell['modal_height'] : 300;
+  $width = (!empty($node->fundraiser_upsell['modal_theme']['width'])) ? $node->fundraiser_upsell['modal_theme']['width'] : 400;
+  $height = (!empty($node->fundraiser_upsell['modal_theme']['height'])) ? $node->fundraiser_upsell['modal_theme']['height'] : 300;
   $upsell_size = 'width:' . $width . 'px;height:' . $height . 'px;';
   // Pass values to javascript.
   $rejection_days = variable_get('fundraiser_upsell_rejection_lifetime', '180');
@@ -771,9 +773,9 @@ function fundraiser_upsell_content($node, $sid) {
   );
   drupal_add_js(array('fundraiser_upsell' => $settings), 'setting');
   // Get the content for the form.
-  $upsell_class = (!empty($node->upsell['class'])) ? $node->upsell['class'] : '';
-  $upsell_content = (!empty($node->upsell['content'])) ? $node->upsell['content'] : variable_get('fundraiser_upsell_default_content', '');
-  $upsell_disclaimer = variable_get('fundraiser_upsell_default_content_disclaimer', '');
+  $upsell_class = (!empty($node->fundraiser_upsell['modal_theme']['class'])) ? $node->fundraiser_upsell['modal']['class'] : '';
+  $upsell_content = (!empty($node->fundraiser_upsell['content'])) ? $node->fundraiser_upsell['content'] : variable_get('fundraiser_upsell_default_content', '');
+  $upsell_footer = (!empty($node->fundraiser_upsell['footer'])) ? $node->fundraiser_upsell['footer'] : variable_get('fundraiser_upsell_default_content_disclaimer', '');
 
   // Build the output.
   $prefix = '<div id="message-wrapper" class="hidden">';
@@ -781,7 +783,7 @@ function fundraiser_upsell_content($node, $sid) {
   $prefix .= '" style="' . $upsell_size . '">';
   $prefix .= '<div class="message-content">' . $upsell_content . '</div>';
 
-  $suffix .= '<div id="message-disclaimer">' . $upsell_disclaimer . '</div>';
+  $suffix .= '<div id="message-footer">' . $upsell_footer . '</div>';
   $suffix .= '</div></div>';
 
   $form = drupal_get_form('fundraiser_upsell_donation_form', $sid);
@@ -807,8 +809,8 @@ function fundraiser_upsell_content_preview($node) {
   drupal_add_js($path . '/js/fundraiser_upsell.js');
   drupal_add_js($path . '/js/jquery.blockUI.js');
   // Get the size and class for the modal.
-  $width = (!empty($node->upsell['modal_width'])) ? $node->upsell['modal_width'] : 400;
-  $height = (!empty($node->upsell['modal_height'])) ? $node->upsell['modal_height'] : 300;
+  $width = (!empty($node->fundraiser_upsell['modal_them']['width'])) ? $node->fundraiser_upsell['modal_theme']['width'] : 400;
+  $height = (!empty($node->fundraiser_upsell['modal_theme']['height'])) ? $node->fundraiser_upsell['modal_theme']['height'] : 300;
   $upsell_size = 'width:' . $width . 'px;height:' . $height . 'px;';
   // Pass values to javascript.
   $rejection_days = variable_get('fundraiser_upsell_rejection_lifetime', '180');
@@ -819,9 +821,9 @@ function fundraiser_upsell_content_preview($node) {
   );
   drupal_add_js(array('fundraiser_upsell' => $settings), 'setting');
   // Get the content for the form.
-  $upsell_class = (!empty($node->upsell['class'])) ? $node->upsell['class'] : '';
-  $upsell_content = (!empty($node->upsell['content'])) ? $node->upsell['content'] : variable_get('fundraiser_upsell_default_content', '');
-  $upsell_disclaimer = variable_get('fundraiser_upsell_default_content_disclaimer', '');
+  $upsell_class = (!empty($node->fundraiser_upsell['modal_theme']['class'])) ? $node->fundraiser_upsell['modal_theme']['class'] : '';
+  $upsell_content = (!empty($node->fundraiser_upsell['content'])) ? $node->fundraiser_upsell['content'] : variable_get('fundraiser_upsell_default_content', '');
+  $upsell_footer = (!empty($node->fundraiser_upsell['footer'])) ? $node->fundraiser_upsell['footer'] : variable_get('fundraiser_upsell_default_content_disclaimer', '');
   $upsell_thankyou_text = variable_get('fundraiser_upsell_thank_you_content', 'Thank you for your recurring donation!');
   $upsell_thankyou = token_replace($upsell_thankyou_text, array(
       'global' => NULL,
@@ -835,7 +837,7 @@ function fundraiser_upsell_content_preview($node) {
   $content .= '" style="' . $upsell_size . '">';
   $content .= '<div class="message-content">' . $upsell_content . '</div>';
   $content .= drupal_get_form('fundraiser_upsell_donation_form', 0);
-  $content .= '<div id="message-disclaimer">' . $upsell_disclaimer . '</div>';
+  $content .= '<div id="message-disclaimer">' . $upsell_footer . '</div>';
   $content .= '</div></div>';
   // Add the thank you message for the preview.
   $content .= '<div id="message-return" class="hidden preview-modal thank-you ' . $upsell_class;
@@ -931,8 +933,8 @@ function fundraiser_upsell_is_enabled($node) {
   return (
     !empty($node)
     && fundraiser_is_donation_type($node->type)
-    && !empty($node->upsell['enabled'])
-    && $node->upsell['enabled']
+    && !empty($node->fundraiser_upsell['enabled'])
+    && $node->fundraiser_upsell['enabled']
   );
 }
 
