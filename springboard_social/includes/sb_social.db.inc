@@ -214,10 +214,10 @@ function sb_social_settings_load($sid) {
     if (empty($settings[$sid])) {
       // check for node view page.
       if (arg(0) == 'node' && is_numeric(arg(1))) {
-        $node = node_load(arg(1));
+        $nid = arg(1);
       }
-      if (isset($node->nid)) {
-        $settings[$sid]['id'] = $node->nid;
+      if (isset($nid)) {
+        $settings[$sid]['id'] = $nid;
         $settings[$sid]['type'] = 'node';
       }
       else {
