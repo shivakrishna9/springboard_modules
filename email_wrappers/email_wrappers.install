@@ -564,10 +564,10 @@ function _email_wrappers_delete_nodes() {
 
 
 /**
- * Swap old style webform tokens for Drupal tokens in the email wrapper tables
- * modified from webform.install
+ * Swap old style webform tokens for Drupal tokens in the email_wrapper_webform table
  */
 function email_wrappers_update_7413(&$sandbox) {
+  // modified from webform.install
   // Define replacements.
 
   $expr = _email_wrappers_update_get_expressions();
@@ -595,7 +595,7 @@ function email_wrappers_update_7413(&$sandbox) {
 }
 
 /**
- * Utility function to update all the locations that use tokens.
+ * Utility function to update all the email_wrapper_webform locations that use tokens.
  */
 function _email_wrappers_update_7413_batch(&$sandbox, $patterns, $replacements, $dpatterns, $dreplacements, $limit) {
   // modified from webform.install
@@ -652,7 +652,7 @@ function _email_wrappers_update_7413_batch(&$sandbox, $patterns, $replacements, 
 }
 
 /**
- * Swap old style webform tokens for Drupal tokens in the email wrapper fields
+ * Swap old style webform tokens for Drupal tokens in the email_wrapper field API fields
  */
 function email_wrappers_update_7414(&$sandbox) {
   // modified from webform.install
@@ -681,7 +681,7 @@ function email_wrappers_update_7414(&$sandbox) {
 }
 
 /**
- * Utility function to update all the locations that use tokens.
+ * Utility function to update all the email wrapper field API fields that use tokens.
  */
 function _email_wrappers_update_7414_batch(&$sandbox, $patterns, $replacements, $dpatterns, $dreplacements, $limit) {
   // modified from webform.install
@@ -790,7 +790,7 @@ function email_wrappers_update_7415(&$sandbox) {
 }
 
 /**
- * Utility function to update all the locations that use tokens.
+ * Utility function to update all the email_wrapper locations that use tokens.
  */
 function _email_wrappers_update_7415_batch(&$sandbox, $patterns, $replacements, $dpatterns, $dreplacements, $limit) {
   // modified from webform.install
@@ -891,7 +891,7 @@ function _email_wrappers_update_get_expressions() {
 }
 
 /**
- * Replace "no lable" with "withlabel" in email wrapper tables
+ * Replace "no lable" with "withlabel" in email_wrapper_webform table
  */
 function email_wrappers_update_7416(&$sandbox) {
   // modified from webform.install
@@ -927,7 +927,7 @@ function email_wrappers_update_7416(&$sandbox) {
 }
 
 /**
- * Replace "no lable" with "withlabel" in email wrapper fields
+ * Replace "no lable" with "withlabel" in email wrapper field API fields
  */
 function email_wrappers_update_7417(&$sandbox) {
   // modified from webform.install
@@ -945,6 +945,41 @@ function email_wrappers_update_7417(&$sandbox) {
 
   $limit = variable_get('webform_update_batch_size', 100);
   $processed_count = _email_wrappers_update_7414_batch($sandbox, $patterns, $replacements, $dpatterns, $dreplacements, $limit);
+
+  // If less than limit was processed, the update process is finished.
+  if ($processed_count < $limit || $sandbox['progress'] == $sandbox['max']) {
+    $finished = TRUE;
+  }
+
+  // If there's no max value then there's nothing to update and we're finished.
+  if (empty($sandbox['max']) || isset($finished)) {
+    return t('Replaced tokens using [submission:values:x] with [submission:values:x:withlabel].');
+  }
+  else {
+    // Indicate our current progress to the batch update system.
+    $sandbox['#finished'] = $sandbox['progress'] / $sandbox['max'];
+  }
+}
+
+/**
+ * Replace "no lable" with "withlabel" in email_wrapper table
+ */
+function email_wrappers_update_7418(&$sandbox) {
+  // modified from webform.install
+  // Define replacements.
+  $patterns = array();
+  $replacements = array();
+  $dpatterns = array(
+    '/\[submission:values(:(?!nolabel)[a-z_]+)+\]/m',
+    '/\[submission:values(:([a-z_:]+))?:nolabel\]/m',
+  );
+  $dreplacements = array(
+    '[submission:values$1:withlabel]',
+    '[submission:values$1]',
+  );
+
+  $limit = variable_get('webform_update_batch_size', 100);
+  $processed_count = _email_wrappers_update_7415_batch($sandbox, $patterns, $replacements, $dpatterns, $dreplacements, $limit);
 
   // If less than limit was processed, the update process is finished.
   if ($processed_count < $limit || $sandbox['progress'] == $sandbox['max']) {
