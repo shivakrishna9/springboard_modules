@@ -197,18 +197,10 @@ function sb_social_block_info() {
  */
 function sb_social_block_view($delta = '') {
   if ($delta = 'social_sharing') {
-    $node = menu_get_object();
-    if (!$node) {
-      // is it a confirmation page?
-      $node = menu_get_object('webform_menu');
-      // if we still don't have a node id then we must assume this isn't a node
-      // or confirmation page and any settings that may be available will come
-      // from the current path.
-      $id = !$node ? current_path() : $node->nid;
+    if (arg(0) == 'node' && is_numeric(arg(1))) {
+      $node = node_load(arg(1));
     }
-    else {
-      $id = $node->nid;
-    }
+    $id = !$node ? current_path() : $node->nid;
 
     $sid = _sb_social_sid_by_id($id);
     $settings = sb_social_settings_load($sid);
