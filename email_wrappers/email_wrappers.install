@@ -833,8 +833,6 @@ function _email_wrappers_update_7415_batch(&$sandbox, $patterns, $replacements, 
       ))
       ->condition('mid', $wrapper['mid'], '=')
       ->execute();
-            throw new DrupalUpdateException('Something went wrong; here is what you should do.');
-
     }
     // Update the last processed NID.
     $sandbox['last_nid_processed'] = $mid;
