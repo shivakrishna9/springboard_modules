@@ -466,7 +466,7 @@ function page_wrappers_form_page_wrapper_node_form_alter(&$form, $form_state) {
   $form['css_fieldset'] = array(
   '#type' => 'fieldset',
   '#title' => t('Style Sheet'),
-  '#weight' => -4,
+  '#weight' => -3,
   '#collapsible' => TRUE,
   '#collapsed' => FALSE,
   '#description' => t('You have two choices when it comes to the page wrapper\'s stylesheet. You can use an existing CSS file that was created by another page wrapper, or enter unique CSS. If you choose to create new CSS, it will be available for use by other page wrappers'),
@@ -487,10 +487,11 @@ function page_wrappers_form_page_wrapper_node_form_alter(&$form, $form_state) {
   //disable the external selector if true
   $disabled = FALSE;
   if(isset($form['#node']->nid)) {
-    $active_external = db_query('SELECT * FROM {field_data_page_wrappers_css_source} WHERE page_wrappers_css_source_value = :nid', array(':nid' => $form['#node']->nid))->fetchAllAssoc('entity_id');
+    $active_external = db_query('SELECT c.entity_id, n.title FROM {field_data_page_wrappers_css_source} c INNER JOIN {node} n on c.entity_id = n.nid  WHERE c.page_wrappers_css_source_value = :nid', array(':nid' => $form['#node']->nid))->fetchAll();
     if(isset($active_external) && !empty($active_external)) {
       $disabled = TRUE;
     }
+    $is_wrapping = db_query('SELECT c.nid, n.title FROM {node_page_wrappers} c INNER JOIN {node} n on c.nid = n.nid  WHERE c.wrapper_nid = :nid', array(':nid' => $form['#node']->nid))->fetchAll();
   }
 
   //create the external checkbox and external selector
@@ -581,7 +582,46 @@ function page_wrappers_form_page_wrapper_node_form_alter(&$form, $form_state) {
   $form['css_fieldset']['new']['page_wrappers_css_textarea'] = $form['page_wrappers_css_textarea'];
   $form['css_fieldset']['new']['page_wrappers_css_textarea']['#weight'] = 0;
   unset($form['page_wrappers_css_textarea']);
+  if(isset($is_wrapping) || isset($active_external)) {
+    $form['subset'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Items using this page wrapper'),
+      '#weight' => -4,
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#description' => t(''),
+    );
 
+    $header = array('Node ID', 'Title');
+    $rows = array();
+    if(isset($is_wrapping)) {
+      foreach($is_wrapping as $wrap) {
+       $rows['pages'][$wrap->nid]['nid']['data'] = $wrap->nid;
+       $rows['pages'][$wrap->nid]['nid']['class'] = 'wrapper-page-nid';
+       $rows['pages'][$wrap->nid]['title']['data'] = $wrap->title;
+       $rows['pages'][$wrap->nid]['title']['class'] = 'wrapper-page-title';
+      }
+    }
+    if(isset($active_external)) {
+      foreach($active_external as $ext) {
+       $rows['page_wrappers'][$ext->entity_id]['nid']['data'] = $ext->entity_id;
+       $rows['page_wrappers'][$ext->entity_id]['nid']['class'] = 'wrapper-page-nid';
+       $rows['page_wrappers'][$ext->entity_id]['title']['data'] = $ext->title;
+       $rows['page_wrappers'][$ext->entity_id]['title']['class'] = 'wrapper-page-title';
+      }
+    }
+    foreach($rows as $name => $row) {
+      $message = ($name == "page_wrappers") ? "'s CSS" : "";
+      $action = ($name == "page_wrappers") ? "borrowing" : "using";
+      $form['subset'][$name] = array(
+          '#type' => 'item',
+          '#title' => t('@name @action this page wrapper@mess', array('@name' => str_replace('_', ' ', ucfirst($name)), '@mess' => $message, '@action' => $action)),
+          '#markup' => theme('table',  array('header' => $header, 'rows' => $row, 'attributes' => array('id' => $name))),
+          '#prefix' => '<div class = "page-wrapper-used">',
+          '#suffix' => '</div>'
+        );
+    }
+  }
   $form['#validate'][] = 'page_wrappers_page_wrapper_form_validate';
 }
 
