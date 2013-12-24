@@ -213,10 +213,8 @@ function sb_social_settings_load($sid) {
     // supply global defaults if no settings are available.
     if (empty($settings[$sid])) {
       // check for node view page.
-      $node = menu_get_object();
-      // confirmation page
-      if (!$node && arg(2) == 'done') {
-        $node = menu_get_object('webform_menu');
+      if (arg(0) == 'node' && is_numeric(arg(1))) {
+        $node = node_load(arg(1));
       }
       if (isset($node->nid)) {
         $settings[$sid]['id'] = $node->nid;
