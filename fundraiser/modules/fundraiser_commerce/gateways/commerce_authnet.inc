@@ -120,7 +120,7 @@ function commerce_authnet_fundraiser_commerce_cardonfile($donation) {
     // If we have a profile for this user update it in the CIM
     if ($card_data) {
       // Make the update request to authorize.net
-      commerce_authnet_fundraiser_commerce_update($donation->gateway['gateway_details'], $donation, $card_data);
+      commerce_authnet_fundraiser_commerce_update($donation, $card_data);
     }
   }
 
@@ -130,8 +130,6 @@ function commerce_authnet_fundraiser_commerce_cardonfile($donation) {
 /**
  * Callback function, update card data stored at the gateway and locally
  *
- * @param $payment_method Array
- *    Commerce payment method array
  * @param $donation Object
  *    Fundraiser commerce donation object which should include the new/updated card data
  * @param $card_data Object
@@ -141,8 +139,9 @@ function commerce_authnet_fundraiser_commerce_cardonfile($donation) {
  * @return Object
  *    Card on file entity for the new/updated card data
  */
-function commerce_authnet_fundraiser_commerce_update($payment_method, $donation, $card_data = NULL) {
+function commerce_authnet_fundraiser_commerce_update($donation, $card_data = NULL) {
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+  $payment_method = $donation->gateway['gateway_details'];
 
   // If no card data was passed load the profile from the donation if its set
   if (empty($card_data) && !empty($donation->data['cardonfile'])) {
@@ -169,15 +168,30 @@ function commerce_authnet_fundraiser_commerce_update($payment_method, $donation,
 
   // Check the card number to see if it matches the current card data number
   // If it does then we use the update function
-  // if its a new card we use the create profile function
+  // if its a new card check if we should create a new CIM profile
   $action = 'update';
   if ($cardonfile_fields['card_number'] != $card_data->card_number) {
-    $action = 'new';
+    // This is a new card for this donation, make sure we don't have an existing profile
+    // First check with the card number and date
+    if ($existing = _fundraiser_commerce_cardonfile_match($cardonfile_fields)) {
+      // Set the existing card on the donation and return it
+      $donation->data['cardonfile'] = $existing->card_id;
+      $card_data = $existing;
+    }
+    // Check if we have a mismatched exp date record
+    elseif ($mismatch =  _fundraiser_commerce_cardonfile_exp_date_mismatch($cardonfile_fields)) {
+      $donation->data['cardonfile'] = $mismatch->card_id;
+      $card_data = $mismatch;
+    }
+    // Nothing stored locally so create a new profile
+    else {
+      $action = 'new';
+    }
   }
 
   if ($action == 'update') {
     $card_data->card_number = $cardonfile_fields['card_number'];
-    $card_data->card_exp_month = sprintf("%02d", $cardonfile_fields['card_exp_month']);
+    $card_data->card_exp_month = $cardonfile_fields['card_exp_month'];
     $card_data->card_exp_year = $cardonfile_fields['card_exp_year'];
 
     // We're mirroring the commerce_authnet_cim_cardonfile_update function so setup values that function uses, see that function for details
@@ -201,13 +215,6 @@ function commerce_authnet_fundraiser_commerce_update($payment_method, $donation,
   }
   // Create a new card on file record
   elseif ($action == 'new') {
-    // First check if this card number has been used in an existing profile
-    if ($existing = _fundraiser_commerce_cardonfile_match($cardonfile_fields)) {
-      // Set the existing card no the donation and return it
-      $donation->data['cardonfile'] = $existing->card_id;
-      return $existing;
-    }
-
     // We're using the built in function that requires a payment details array and the order
     $payment_details = array(
       'cardNumber' => $pane_values['credit_card']['number'],
@@ -315,7 +322,7 @@ function _commerce_authnet_fundraiser_commerce_authnet_cim_cardonfile_update($fo
       'payment' => array(
         'creditCard' => array(
           'cardNumber' => $number,
-          'expirationDate' => $card_data->card_exp_year . '-' . $card_data->card_exp_month,
+          'expirationDate' => $card_data->card_exp_year . '-' . sprintf("%02d", $card_data->card_exp_month),
         ),
       ),
       'customerPaymentProfileId' => $cim_payment_profile_id,

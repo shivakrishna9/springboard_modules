@@ -770,6 +770,16 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   // Since Card On File stores data unencrypted we can't use it here.
   // And any other additional information we need to track for the donation object.
   $donation->data = $data;
+
+  // If this is a sustainer create process clear the data array of the master order values
+  if (!empty($donation->sustainer_create)) {
+    $donation->data['txn_id'] = '';
+    $donation->data['remote_id'] = '';
+    $donation->data['transaction_id'] = '';
+    $donation->data['status'] = '';
+    $donation->data['remote_status'] = '';
+  }
+
   $order->data['fundraiser_commerce'] = _fundraiser_commerce_order_data_prepare($donation->data);
 
   // Save the order.
@@ -1284,68 +1294,108 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
   // Get the original order.
   $order = commerce_order_load($donation->did);
 
-  // Update the existing line item(s) with the new value.
-  $found = commerce_line_item_load_multiple(array(), array('order_id' => $order->order_id));
-  $line_item_id = -1;
-  foreach ($found as $id => $found) {
-    $line_item_id = $id;
-  }
-  if ($line_item_id != -1) {
-    $line_item = commerce_line_item_load($line_item_id);
-  }
-  else {
-    $line_item = commerce_line_item_new('donation', $order->order_id);
-  }
-  // Update line item with the new amount information as needed.
-  $line_item->line_item_label = t('Donation');
-  $line_item->quantity = $quantity;
-  $line_item->commerce_unit_price[LANGUAGE_NONE][0] = array(
-    'amount' => commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency']),
-    'currency_code' => $donation->donation['currency'],
-  );
-  // Make sure the line item will be included in the update for order total.
-  $line_item->commerce_unit_price[LANGUAGE_NONE][0]['data'] = commerce_price_component_add(
-    $line_item->commerce_unit_price[LANGUAGE_NONE][0],
-    'base_price',
-    array(
+  // Update the amount
+  if (!empty($donation->update_amount)) {
+    // Update the existing line item(s) with the new value.
+    $found = commerce_line_item_load_multiple(array(), array('order_id' => $order->order_id));
+    $line_item_id = -1;
+    foreach ($found as $id => $found) {
+      $line_item_id = $id;
+    }
+    if ($line_item_id != -1) {
+      $line_item = commerce_line_item_load($line_item_id);
+    }
+    else {
+      $line_item = commerce_line_item_new('donation', $order->order_id);
+    }
+    // Update line item with the new amount information as needed.
+    $line_item->line_item_label = t('Donation');
+    $line_item->quantity = $quantity;
+    $line_item->commerce_unit_price[LANGUAGE_NONE][0] = array(
       'amount' => commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency']),
       'currency_code' => $donation->donation['currency'],
-      'data' => array(),
-    ),
-    TRUE
-  );
-  commerce_line_item_save($line_item);
-  // Add the line item to the order.
-  $order->commerce_line_items[LANGUAGE_NONE][0]['line_item_id'] = $line_item->line_item_id;
+    );
+    // Make sure the line item will be included in the update for order total.
+    $line_item->commerce_unit_price[LANGUAGE_NONE][0]['data'] = commerce_price_component_add(
+      $line_item->commerce_unit_price[LANGUAGE_NONE][0],
+      'base_price',
+      array(
+        'amount' => commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency']),
+        'currency_code' => $donation->donation['currency'],
+        'data' => array(),
+      ),
+      TRUE
+    );
+    commerce_line_item_save($line_item);
+    // Add the line item to the order.
+    $order->commerce_line_items[LANGUAGE_NONE][0]['line_item_id'] = $line_item->line_item_id;
+  }
 
-  // Update the customer profile with new info.
-  $found = commerce_customer_profile_load_multiple(array(), array('uid' => $user->uid));
-  $profile_id = -1;
-  foreach ($found as $id => $found) {
-    $profile_id = $id;
+  // Update the billing information
+  if (!empty($donation->update_billing)) {
+    // Update the customer profile with new info.
+    $found = commerce_customer_profile_load_multiple(array(), array('uid' => $user->uid));
+    $profile_id = -1;
+    foreach ($found as $id => $found) {
+      $profile_id = $id;
+    }
+    if ($profile_id != -1) {
+      $profile = commerce_customer_profile_load($profile_id);
+    }
+    else {
+      $profile = commerce_customer_profile_new('billing', $user->uid); // Billing type comes with Commerce by default.
+    }
+    // Update profile with the billing information.
+    $profile->commerce_customer_address[LANGUAGE_NONE][0] = addressfield_default_values();
+    $profile->commerce_customer_address[LANGUAGE_NONE][0]['country'] = $donation->donation['country'];
+    $profile->commerce_customer_address[LANGUAGE_NONE][0]['name_line'] = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
+    $profile->commerce_customer_address[LANGUAGE_NONE][0]['first_name'] = $donation->donation['first_name'];
+    $profile->commerce_customer_address[LANGUAGE_NONE][0]['last_name'] = $donation->donation['last_name'];
+    $profile->commerce_customer_address[LANGUAGE_NONE][0]['administrative_area'] = $donation->donation['state'];
+    $profile->commerce_customer_address[LANGUAGE_NONE][0]['thoroughfare'] = $donation->donation['address'];
+    $profile->commerce_customer_address[LANGUAGE_NONE][0]['premise'] = $donation->donation['address_line_2'];
+    $profile->commerce_customer_address[LANGUAGE_NONE][0]['locality'] = $donation->donation['city'];
+    $profile->commerce_customer_address[LANGUAGE_NONE][0]['postal_code'] = $donation->donation['zip'];
+    commerce_customer_profile_save($profile);
+    $order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'] = $profile->profile_id;
   }
-  if ($profile_id != -1) {
-    $profile = commerce_customer_profile_load($profile_id);
-  }
-  else {
-    $profile = commerce_customer_profile_new('billing', $user->uid); // Billing type comes with Commerce by default.
-  }
-  // Update profile with the billing information.
-  $profile->commerce_customer_address[LANGUAGE_NONE][0] = addressfield_default_values();
-  $profile->commerce_customer_address[LANGUAGE_NONE][0]['country'] = $donation->donation['country'];
-  $profile->commerce_customer_address[LANGUAGE_NONE][0]['name_line'] = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
-  $profile->commerce_customer_address[LANGUAGE_NONE][0]['first_name'] = $donation->donation['first_name'];
-  $profile->commerce_customer_address[LANGUAGE_NONE][0]['last_name'] = $donation->donation['last_name'];
-  $profile->commerce_customer_address[LANGUAGE_NONE][0]['administrative_area'] = $donation->donation['state'];
-  $profile->commerce_customer_address[LANGUAGE_NONE][0]['thoroughfare'] = $donation->donation['address'];
-  $profile->commerce_customer_address[LANGUAGE_NONE][0]['premise'] = $donation->donation['address_line_2'];
-  $profile->commerce_customer_address[LANGUAGE_NONE][0]['locality'] = $donation->donation['city'];
-  $profile->commerce_customer_address[LANGUAGE_NONE][0]['postal_code'] = $donation->donation['zip'];
-  commerce_customer_profile_save($profile);
-  $order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'] = $profile->profile_id;
 
-  // Save the order again to update its line item reference field.
-  commerce_order_save($order);
+  // Update the payment information
+  if (!empty($donation->update_payment)) {
+    // Allow the gateways to clean the data before going to the update function
+    if (isset($donation->gateway['cleanup callback']) && function_exists($donation->gateway['cleanup callback'])) {
+      $cleaned = $donation->gateway['cleanup callback']($donation->donation, $donation->donation['payment_method']);
+      $donation->donation['payment_fields'] = $cleaned['payment_fields'];
+    }
+
+    // Update the gateway's stored data.
+    // Gateways that allow recurring donation will have an update callback
+    $update_callback = isset($donation->gateway['update callback']) && function_exists($donation->gateway['update callback']) ? $donation->gateway['update callback'] : FALSE; 
+
+    // If we're in a sustainer update, and this is the first record update the stored payment information
+    if (!empty($donation->sustainer_update) && !empty($donation->sustainer_update_first) && $update_callback) {
+      // Load the current card data for updating
+      $card_data = _fundraiser_commerce_donation_cardonfile_card($donation);
+      $update_callback($donation, $card_data);
+    }
+    // Sustainer update, update remaining donations with the first record's cardonfile id
+    // This avoids calling the APIs for each donation
+    elseif (!empty($donation->sustainer_update) && !empty($donation->sustainer_update_did)) {
+      $master = fundraiser_donation_get_donation($donation->sustainer_update_did);
+      $donation->data['cardonfile'] = $master->data['cardonfile'];
+    }
+
+    // Allow the gateways to scrub the data before saving
+    $scrubbed_fields = $donation->donation['payment_fields'];
+    if (isset($donation->gateway['scrub callback']) && function_exists($donation->gateway['scrub callback'])) {
+      $scrubbed_fields = $donation->gateway['scrub callback']($scrubbed_fields, $donation->donation['payment_method']);
+    }
+
+    $donation->data['payment_fields'] = $scrubbed_fields;
+
+    // Save this in the order's data array
+    $order->data['fundraiser_commerce'] = _fundraiser_commerce_order_data_prepare($donation->data);
+  }
 
   // Add the status data.
   $donation->status = $donation->status_label = isset($order->status) ? $order->status : 'unknown';
@@ -1354,19 +1404,8 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
     $donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->status);
   }
 
-  // Update the gateway's stored data.
-  // Only relevant for gateways that allow recurring donations.
-  if (!empty($donation->update_billing) && $donation->update_billing) {
-    // Grab the gateway configuration from fundraisers data.
-    $info = _fundraiser_get_donation_gateway($donation->did);
-    // Check for the billing function to be defined.
-    if (isset($info['update callback']) && function_exists($info['update callback'])) {
-      $method_instance = commerce_payment_method_instance_load($info['id']); // From commerce_payment.module.
-      // Load the card data for updating
-      $card_data = _fundraiser_commerce_donation_cardonfile_card($donation);
-      $result = $info['update callback']($method_instance, $donation, $card_data);
-    }
-  }
+  // Save the order
+  commerce_order_save($order);
 }
 
 /**
@@ -1894,7 +1933,7 @@ function _fundraiser_commerce_submit_handler_pane_values(&$pane_values, $donatio
         $donation->data['cardonfile'] = $card->card_id;
       }
 
-      // To avoid using the CIM charge set this value to new even for existing cards
+      // To avoid using a stored CIM to charge set this value to new even for existing cards
       $pane_values['cardonfile'] = 'new';
     }
     // For reference charges add the cardonfile id
@@ -2005,8 +2044,8 @@ function _fundraiser_commerce_cardonfile_match($fields, $active = TRUE) {
   $result = $query->execute();
 
   if (isset($result['commerce_cardonfile'])) {
-    $id = reset(array_keys($result['commerce_cardonfile']));
-    return commerce_cardonfile_load($id);
+    $ids = array_keys($result['commerce_cardonfile']);
+    return commerce_cardonfile_load($ids[0]);
   }
   else {
     return FALSE;
