@@ -760,6 +760,89 @@ function _email_wrappers_update_7414_batch(&$sandbox, $patterns, $replacements, 
   return count($wrappers);
 }
 
+/**
+ * Swap old style webform tokens for Drupal tokens in the email_wrapper table
+ */
+function email_wrappers_update_7415(&$sandbox) {
+  // modified from webform.install
+
+  $limit = variable_get('webform_update_batch_size', 100);
+  $expr = _email_wrappers_update_get_expressions();
+  $processed_count = _email_wrappers_update_7415_batch($sandbox, $expr['patterns'], $expr['replacements'], $expr['dpatterns'], $expr['dreplacements'], $limit);
+
+  // If less than limit was processed, the update process is finished.
+  if ($processed_count < $limit || $sandbox['progress'] == $sandbox['max']) {
+    $finished = TRUE;
+  }
+
+  // If there's no max value then there's nothing to update and we're finished.
+  if (empty($sandbox['max']) || isset($finished)) {
+    $message = t('Your existing email wrapper fields have been upgraded to use the global Drupal 7 token system.');
+    if (!module_exists('token')) {
+      $message .= ' <strong>' . t('Please download and install the <a href="http://drupal.org/project/token" target="_blank">Token module</a>. Otherwise some tokens will not be rendered.') . '</strong>';
+    }
+    return $message;
+  }
+  else {
+    // Indicate our current progress to the batch update system.
+    $sandbox['#finished'] = $sandbox['progress'] / $sandbox['max'];
+  }
+}
+
+/**
+ * Utility function to update all the locations that use tokens.
+ */
+function _email_wrappers_update_7415_batch(&$sandbox, $patterns, $replacements, $dpatterns, $dreplacements, $limit) {
+  // modified from webform.install
+  // Set up the initial batch process.
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['last_nid_processed'] = -1;
+    $sandbox['max'] = db_select('email_wrappers')
+      ->countQuery()
+      ->execute()
+      ->fetchField();
+  }
+
+  $wrappers = db_select('email_wrappers', 'n')
+    ->fields('n')
+    ->condition('mid', $sandbox['last_nid_processed'], '>')
+    ->orderBy('mid', 'ASC')
+    ->range(0, $limit)
+    ->execute()
+    ->fetchAllAssoc('mid', PDO::FETCH_ASSOC);
+
+   foreach ($wrappers as $mid => $wrapper) {
+    // Update tokens in e-mail configurations.
+
+    $parts = array(
+      'html_message',
+      'text_message',
+    );
+    $original = $wrapper;
+    foreach ($parts as $part) {
+      $wrapper[$part] = str_replace($patterns, $replacements, $wrapper[$part]);
+      $wrapper[$part] = preg_replace($dpatterns, $dreplacements, $wrapper[$part]);
+    }
+    if ($wrapper != $original) {
+    echo $wrapper['text_message'];
+      db_update('email_wrappers')
+      ->fields(array(
+        'html_message' => $wrapper['html_message'],
+        'text_message' => $wrapper['text_message'],
+      ))
+      ->condition('mid', $wrapper['mid'], '=')
+      ->execute();
+            throw new DrupalUpdateException('Something went wrong; here is what you should do.');
+
+    }
+    // Update the last processed NID.
+    $sandbox['last_nid_processed'] = $mid;
+    $sandbox['progress']++;
+  }
+  return count($wrappers);
+}
+
 function _email_wrappers_update_get_expressions() {
   //Patterns found in webform.install
   // Define replacements.
@@ -812,7 +895,7 @@ function _email_wrappers_update_get_expressions() {
 /**
  * Replace "no lable" with "withlabel" in email wrapper tables
  */
-function email_wrappers_update_7415(&$sandbox) {
+function email_wrappers_update_7416(&$sandbox) {
   // modified from webform.install
   // Define replacements.
   $patterns = array();
@@ -839,6 +922,7 @@ function email_wrappers_update_7415(&$sandbox) {
     return t('Replaced tokens using [submission:values:x] with [submission:values:x:withlabel].');
   }
   else {
+    throw new DrupalUpdateException('Something went wrong; here is what you should do.');
     // Indicate our current progress to the batch update system.
     $sandbox['#finished'] = $sandbox['progress'] / $sandbox['max'];
   }
@@ -847,7 +931,7 @@ function email_wrappers_update_7415(&$sandbox) {
 /**
  * Replace "no lable" with "withlabel" in email wrapper fields
  */
-function email_wrappers_update_7416(&$sandbox) {
+function email_wrappers_update_7417(&$sandbox) {
   // modified from webform.install
   // Define replacements.
   $patterns = array();
