@@ -891,7 +891,7 @@ function _email_wrappers_update_get_expressions() {
 }
 
 /**
- * Replace "no lable" with "withlabel" in email_wrapper_webform table
+ * Replace "no label" with "withlabel" in email_wrapper_webform table
  */
 function email_wrappers_update_7416(&$sandbox) {
   // modified from webform.install
@@ -927,7 +927,7 @@ function email_wrappers_update_7416(&$sandbox) {
 }
 
 /**
- * Replace "no lable" with "withlabel" in email wrapper field API fields
+ * Replace "no label" with "withlabel" in email wrapper field API fields
  */
 function email_wrappers_update_7417(&$sandbox) {
   // modified from webform.install
@@ -962,7 +962,7 @@ function email_wrappers_update_7417(&$sandbox) {
 }
 
 /**
- * Replace "no lable" with "withlabel" in email_wrapper table
+ * Replace "no label" with "withlabel" in email_wrapper table
  */
 function email_wrappers_update_7418(&$sandbox) {
   // modified from webform.install
