@@ -582,7 +582,7 @@ function page_wrappers_form_page_wrapper_node_form_alter(&$form, $form_state) {
   $form['css_fieldset']['new']['page_wrappers_css_textarea'] = $form['page_wrappers_css_textarea'];
   $form['css_fieldset']['new']['page_wrappers_css_textarea']['#weight'] = 0;
   unset($form['page_wrappers_css_textarea']);
-  if(isset($is_wrapping) || isset($active_external)) {
+  if((isset($is_wrapping) && !empty($is_wrapping)) || (isset($active_external) && !empty($active_external))) {
     $form['subset'] = array(
       '#type' => 'fieldset',
       '#title' => t('Items using this page wrapper'),
