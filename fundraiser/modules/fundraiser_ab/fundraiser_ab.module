@@ -136,6 +136,9 @@ function fundraiser_ab_webform_ab_conversion($test_node, $form_state_values) {
       elseif (is_array($submission_fields['recurs_monthly']) && isset($submission_fields['recurs_monthly'][0])) {
         $recurs = ($submission_fields['recurs_monthly'][0] == 'recurs') ? TRUE : FALSE;
       }
+      elseif (is_array($submission_fields['recurs_monthly']) && isset($submission_fields['recurs_monthly'])) {
+        $recurs = ($submission_fields['recurs_monthly'] === 'recurs') ? TRUE : FALSE;
+      }
       else {
         $recurs = ($submission_fields['recurs_monthly'] == 'recurs') ? TRUE : FALSE;
       }
