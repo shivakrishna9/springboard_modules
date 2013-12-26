@@ -256,15 +256,12 @@ function springboard_api_form_resource_access($op, $data) {
  * Get form node & field information for a requested form.
  */
 function springboard_api_get_form_details($nid) {
-  $webform_standard_component_types = array('date', 'email', 'fieldset', 'file', 'hidden', 'grid', 'markup', 'number', 'pagebreak', 'select', 'textfield', 'textarea', 'time');
-
   $node = node_load($nid);
-  dsm($node->webform['components'], 'components');
   if (is_object($node)) {
     // fish for internal name.
     $lang = $node->language;
     $internal_name = isset($node->field_fundraiser_internal_name) ? $node->field_fundraiser_internal_name[$lang][0]['safe_value'] : '';
-
+    // high level form node details
     $form_details = array(
       'nid' => $node->nid,
       'title' => $node->title,
@@ -273,59 +270,43 @@ function springboard_api_get_form_details($nid) {
       'body' => $node->body,
       'fields' => array(),
     );
-
-    // build form field details list.
+    // build form field list
     foreach ($node->webform['components'] as $cid => $component) {
-      // handle special component types implemented by springboard modules (payment_method, payment_fields, etc)
-      if (!in_array($component['type'], $webform_standard_component_types)) {
-        drupal_set_message('component cid: ' . $component['cid'] . ' type not in list:' . $component['type']);
-        $form_details['fields'][] = module_invoke_all('springboard_api_describe_custom_component', $node, $component);
-      }
-      // special handling for select fields. Client developers shouldn't require specialist knowledge
-      // of how webform decides what markup type to generate based on various settings in extra, so we
-      // provide a conversion.
-      if ($component['type'] == 'select') {
-        if ($component['extra']['aslist']) {
-          $type = 'select';
-        }
-        elseif ($component['extra']['multiple']) {
-          $type = 'checkbox';
-        }
-        else {
-          $type = 'radio';
-        }
-      }
-      else {
-        $type = $component['type'];
-      }
-
-      // TODO: handle payment method fields.
-      if ($component['type'] == 'payment_method' && module_exists('fundraiser')) {
-        $field_info = _springboard_api_get_payment_field_info($component);
-        $form_details['fields'][] = array(
-          'cid' => $component['cid'],
-          'pid' => $component['pid'],
-          'type' => $component['type'],
-          'children' => $field_info,
-        );
+      // skip fieldsets
+      if ($component['type'] == 'fieldset') {
         continue;
       }
-
-      $form_details['fields'][] = array(
-        'cid' => $cid,
-        'pid' => $component['pid'],
-        'form_key' => $component['form_key'],
-        'type' => $type,
-        'name' => $component['name'],
-        'required' => $component['mandatory'],
-        'default value' => $component['value'],
-        'accepted values' => !empty($component['extra']['items']) ? _springboard_api_parse_extra_items($component['extra']['items']) : '',
-      );
+      // each webform component type has a render function that generates the form api array for that component type.
+      // we're using this function to generate the form api code for each component in the webform. The fapi array is
+      // then parsed for information like type, required, default value, etc. In this way we can
+      // analyze standard and custom component types regardless of what modules created them.
+      $func = '_webform_render_' . $component['type'];
+      if (function_exists($func)) {
+        $fapi = $func($component);
+        $save = &$form_details['fields'][$component['form_key']];
+        $save['form_key'] = $component['form_key'];
+        _springboard_api_parse_component_fapi($save, $fapi);
+      }
     }
     return $form_details;
   }
   else {
     return FALSE;
+  }
+}
+
+function _springboard_api_parse_component_fapi(&$save, $fapi) {
+  $save = array(
+    'label' => isset($fapi['#title']) ? $fapi["#title"] : '',
+    'type' => isset($fapi['#type']) ? $fapi['#type'] : '',
+    'default value' => isset($fapi['#default_value']) ? $fapi['#default_value'] : '',
+    'accepted values' => isset($fapi['#options']) ? $fapi['#options'] : '',
+    'required' => isset($fapi['#required']) ? $fapi['#required'] : FALSE,
+  );
+  // recurse on any nested elements.
+  $children = element_children($fapi);
+  foreach ($children as $key) {
+    _springboard_api_parse_component_fapi($save[$key], $fapi[$key]);
   }
 }
 
