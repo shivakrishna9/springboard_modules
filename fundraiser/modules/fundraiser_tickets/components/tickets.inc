@@ -37,7 +37,8 @@ function _webform_render_tickets($component, $value = NULL, $filter = TRUE) {
     '#attributes' => array('class' => 'webform-component-tickets'),
     '#title_display' => 'none',
     '#webform_component' => $component,
-    '#theme' => 'fundraiser_tickets_webform_table'
+    '#theme' => 'fundraiser_tickets_webform_table',
+    '#attached' => array('js' => array(drupal_get_path('module', 'fundraiser_tickets') . '/js/fundraiser_tickets.js'))
   );
 
   $node = isset($component['nid']) ? node_load($component['nid']) : NULL;
@@ -57,12 +58,11 @@ function _webform_render_tickets($component, $value = NULL, $filter = TRUE) {
  * Pre-render function to add our id to the js settings
  */
 function webform_tickets_prerender($element) {
-  // $id = 'webform-component-' . str_replace('_', '-', implode('--', array_slice($element['#parents'], 1)));
-  // $element['#attributes']['id'] = $id;
-  // drupal_add_js(array('acluEvents' => array('table' => array('id' => $id))), 'setting');
+  $id = 'webform-component-' . str_replace('_', '-', implode('--', array_slice($element['#parents'], 1)));
+  $element['#attributes']['id'] = $id;
+  drupal_add_js(array('fundraiserTickets' => array('table' => array('id' => $id))), 'setting');
   return $element;
 }
-
 
 /**
  * Theme the form elements into a table
@@ -75,6 +75,7 @@ function theme_fundraiser_tickets_webform_table($variables) {
   if (! empty($element['#ticket_types'])){
 
     $rows = array();
+    $ticket_prices = array();
     // Loop through the element and output the children fields as rows
     foreach ($element['#ticket_types'] as $i => $ticket_type) {
       $product_wrapper = entity_metadata_wrapper('commerce_product', $ticket_type);
@@ -82,20 +83,26 @@ function theme_fundraiser_tickets_webform_table($variables) {
       $row  = array();
       $item = array();
       $item['#type'] = 'select';
+      $item['#name'] = 'product-' . $id . '-ticket-quant';
+      $item['#id'] = 'product-' . $id . '-ticket-quant';
       $item['#options'] = range(0,50);
       $title = check_plain($product_wrapper->title->value()) . ' (' . commerce_currency_format($product_wrapper->commerce_price->amount->value(), $product_wrapper->commerce_price->currency_code->value(), $product_wrapper) . ')';
+      $ticket_prices[$product_wrapper->product_id->value()] = $product_wrapper->commerce_price->amount->value() / 100;
       $item['#title'] = '';
       $description = check_plain($product_wrapper->fr_tickets_description->value());
       // Add a div to contain the ticket total
-      $ticket_total = array('data' => '$ 0.00', 'class' => 'event-ticket-select-total', 'id' => $id . '-ticket-total', 'align' => 'right');
+      $ticket_total = array('data' => '$ 0.00', 'class' => 'fundraiser-ticket-type-total', 'id' => 'product-' . $id . '-tickets-total', 'align' => 'right');
       $row['data'] = array($title, $description, array('data'=> drupal_render($item), 'align' => 'right'), $ticket_total);
       $rows[] = $row;
     }
 
     // Add a row to contain our totals
-    $rows[] = array('data' => array(t('Totals'), '', array('data' => 0, 'id' => $id . '-total-quantity', 'align' => 'right'), array('data' => '$ 0.00', 'id' => $id . '-total-cost', 'align' => 'right')));
+    $rows[] = array('data' => array(t('Totals'), '', array('data' => 0, 'id' => 'fundraiser-tickets-total-quant', 'align' => 'right'), array('data' => '$ 0.00', 'id' => 'fundraiser-tickets-total-cost', 'align' => 'right')));
     $header = array(t('Type'), '', array('data' => t('Quantity'), 'align' => 'right'), array('data' => t('Amount'), 'align' => 'right'));
     $attributes = array('class' => $element['#attributes']['class'], 'id' => $id, 'width' => '100%');
+
+    // Add the JS for the settings too
+    drupal_add_js(array('fundraiserTickets' => array('ticketPrices' => $ticket_prices)), 'setting');
 
     $table = array(
       '#theme' => 'table',

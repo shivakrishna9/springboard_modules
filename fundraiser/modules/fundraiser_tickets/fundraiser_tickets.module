@@ -190,8 +190,21 @@ function _fundraiser_tickets_ticket_settings_form_organize($form, $form_state){
     $form['closed']['fr_tickets_closed_is_closed'] = $form['fr_tickets_closed_is_closed'];
     $form['closed']['fr_tickets_closed_close_date'] = $form['fr_tickets_closed_close_date'];
     $form['closed']['fr_tickets_closed_options'] = $form['fr_tickets_closed_options'];
+
     $form['closed']['fr_tickets_closed_redirect'] = $form['fr_tickets_closed_redirect'];
+    $form['closed']['fr_tickets_closed_redirect']['#states'] = array(
+      'visible' => array(
+        ':input[name="fr_tickets_closed_options[und]"]' => array('value' => 'redirect'),
+      ),
+    );
+
     $form['closed']['fr_tickets_closed_message'] = $form['fr_tickets_closed_message'];
+    $form['closed']['fr_tickets_closed_message']['#states'] = array(
+      'visible' => array(
+        ':input[name="fr_tickets_closed_options[und]"]' => array('value' => 'message'),
+      ),
+    );
+
     unset($form['fr_tickets_closed_is_closed']);
     unset($form['fr_tickets_closed_close_date']);
     unset($form['fr_tickets_closed_options']);
@@ -204,8 +217,21 @@ function _fundraiser_tickets_ticket_settings_form_organize($form, $form_state){
       '#weight' => '-1'
     );
     $form['soldout']['fr_tickets_soldout_options'] = $form['fr_tickets_soldout_options'];
+
     $form['soldout']['fr_tickets_soldout_redirect'] = $form['fr_tickets_soldout_redirect'];
+    $form['soldout']['fr_tickets_soldout_redirect']['#states'] = array(
+      'visible' => array(
+        ':input[name="fr_tickets_soldout_options[und]"]' => array('value' => 'redirect'),
+      ),
+    );
+
     $form['soldout']['fr_tickets_soldout_message'] = $form['fr_tickets_soldout_message'];
+    $form['soldout']['fr_tickets_soldout_message']['#states'] = array(
+      'visible' => array(
+        ':input[name="fr_tickets_soldout_options[und]"]' => array('value' => 'message'),
+      ),
+    );
+
     unset($form['fr_tickets_soldout_options']);
     unset($form['fr_tickets_soldout_redirect']);
     unset($form['fr_tickets_soldout_message']);
