@@ -15,7 +15,7 @@ function _webform_defaults_tickets() {
   );
 }
 
-  /**
+/**
  * Implements _webform_edit_component().
  */
 function _webform_edit_tickets($component) {
@@ -43,19 +43,46 @@ function _webform_render_tickets($component, $value = NULL, $filter = TRUE) {
 
   $node = isset($component['nid']) ? node_load($component['nid']) : NULL;
   $node_wrapper = entity_metadata_wrapper('node', $node);
-  $ticket_types = $node_wrapper->fr_tickets_ticket_types->value();
-  $element['#ticket_types'] = $ticket_types;
-  if ($node_wrapper->fr_tickets_donation_donation->value() == TRUE){
-    $element['#allow_extra_donation'] = TRUE;
-  } else {
-    $element['#allow_extra_donation'] = FALSE;
-  }
+  if (fundraiser_tickets_is_ticket_type($node->type)){
 
-  // Hide the event_table title if #title_display is 'none'.
-  if (!empty($component['extra']['title_display']) && $component['extra']['title_display'] == 'none') {
-    $element['#title'] = NULL;
-  }
+    $ticket_types = $node_wrapper->fr_tickets_ticket_types->value();
 
+    if (! empty($ticket_types)){
+      // Loop through the element and output the children fields as rows
+      foreach ($ticket_types as $i => $ticket_type) {
+        $product_wrapper = entity_metadata_wrapper('commerce_product', $ticket_type);
+        $id = $product_wrapper->product_id->value();
+        $item = array();
+        $item['#type'] = 'select';
+        $item['#id'] = 'product-' . $id . '-ticket-quant';
+        $item['#extra']['product_id'] =  $id;
+        $item['#options'] = range(0,50);
+        $item['#title'] = '';
+        $element[$item['#id']] = $item;
+      }
+    }
+
+    if ($node_wrapper->fr_tickets_donation_donation->value() == TRUE){
+      $element['#allow_extra_donation'] = TRUE;
+    } else {
+      $element['#allow_extra_donation'] = FALSE;
+    }
+
+    if ($element['#allow_extra_donation'] == TRUE){
+      $item = array(
+        '#type' => 'textfield',
+        '#size' => 20,
+        '#default_value' =>  NULL,
+        '#id' => 'fundraiser-tickets-extra-donation'
+      );
+      $element['fundraiser-tickets-extra-donation'] = $item;
+    }
+
+    // Hide the event_table title if #title_display is 'none'.
+    if (!empty($component['extra']['title_display']) && $component['extra']['title_display'] == 'none') {
+      $element['#title'] = NULL;
+    }
+  }
   return $element;
 }
 
@@ -74,59 +101,44 @@ function webform_tickets_prerender($element) {
  */
 function theme_fundraiser_tickets_webform_table($variables) {
 
-
   $element = $variables['element'];
 
-  if (! empty($element['#ticket_types'])){
+  $rows = array();
+  $last_row = array();
+  $ticket_prices = array();
 
-    $rows = array();
-    $ticket_prices = array();
-    // Loop through the element and output the children fields as rows
-    foreach ($element['#ticket_types'] as $i => $ticket_type) {
-      $product_wrapper = entity_metadata_wrapper('commerce_product', $ticket_type);
-      $id = $product_wrapper->product_id->value();
+  // Loop through the element and output the children fields as rows
+  foreach (element_children($element) as $id) {
+    if ($id == 'fundraiser-tickets-extra-donation'){
+      $last_row = array('data' => array(t('Additional Donation'), '', drupal_render($element[$id]), ''));
+    } elseif (isset($element[$id]['#extra']['product_id'])){
+      $product_wrapper = entity_metadata_wrapper('commerce_product', commerce_product_load($element[$id]['#extra']['product_id']));
       $row  = array();
-      $item = array();
-      $item['#type'] = 'select';
-      $item['#name'] = 'product-' . $id . '-ticket-quant';
-      $item['#id'] = 'product-' . $id . '-ticket-quant';
-      $item['#options'] = range(0,50);
       $title = check_plain($product_wrapper->title->value()) . ' (' . commerce_currency_format($product_wrapper->commerce_price->amount->value(), $product_wrapper->commerce_price->currency_code->value(), $product_wrapper) . ')';
       $ticket_prices[$product_wrapper->product_id->value()] = $product_wrapper->commerce_price->amount->value() / 100;
-      $item['#title'] = '';
       $description = check_plain($product_wrapper->fr_tickets_description->value());
       // Add a div to contain the ticket total
-      $ticket_total = array('data' => '$ 0.00', 'class' => 'fundraiser-ticket-type-total', 'id' => 'product-' . $id . '-tickets-total', 'align' => 'right');
-      $row['data'] = array($title, $description, array('data'=> drupal_render($item), 'align' => 'right'), $ticket_total);
+      $ticket_total = array('data' => '$ 0.00', 'class' => 'fundraiser-ticket-type-total', 'id' => 'product-' . $element[$id]['#extra']['product_id'] . '-tickets-total', 'align' => 'right');
+      $row['data'] = array($title, $description, array('data'=> drupal_render($element[$id]), 'align' => 'right'), $ticket_total);
       $rows[] = $row;
     }
-
-    if ($element['#allow_extra_donation'] == TRUE){
-      $item = array(
-        '#type' => 'textfield',
-        '#size' => 20,
-        '#default_value' =>  NULL,
-        '#name' => 'fundraiser-tickets-additional-gift',
-        '#id' => 'fundraiser-tickets-additional-gift'
-      );
-      $rows[] = array('data' => array(t('Additional Donation'), '', drupal_render($item), ''));
-    }
-
-
-    // Add a row to contain our totals
-    $rows[] = array('data' => array(t('Totals'), '', array('data' => 0, 'id' => 'fundraiser-tickets-total-quant', 'align' => 'right'), array('data' => '$ 0.00', 'id' => 'fundraiser-tickets-total-cost', 'align' => 'right')));
-    $header = array(t('Type'), '', array('data' => t('Quantity'), 'align' => 'right'), array('data' => t('Amount'), 'align' => 'right'));
-    $attributes = array('class' => $element['#attributes']['class'], 'id' => $id, 'width' => '100%');
-
-    // Add the JS for the settings too
-    drupal_add_js(array('fundraiserTickets' => array('ticketPrices' => $ticket_prices)), 'setting');
-
-    $table = array(
-      '#theme' => 'table',
-      '#header' => $header,
-      '#rows' => $rows
-    );
-    $output = drupal_render($table);
-    return $output;
   }
+
+  $rows[] = $last_row;
+
+  // Add a row to contain our totals
+  $rows[] = array('data' => array(t('Totals'), '', array('data' => 0, 'id' => 'fundraiser-tickets-total-quant', 'align' => 'right'), array('data' => '$ 0.00', 'id' => 'fundraiser-tickets-total-cost', 'align' => 'right')));
+  $header = array(t('Type'), '', array('data' => t('Quantity'), 'align' => 'right'), array('data' => t('Amount'), 'align' => 'right'));
+  $attributes = array('class' => $element['#attributes']['class'], 'id' => $id, 'width' => '100%');
+
+  // Add the JS for the settings too
+  drupal_add_js(array('fundraiserTickets' => array('ticketPrices' => $ticket_prices)), 'setting');
+
+  $table = array(
+    '#theme' => 'table',
+    '#header' => $header,
+    '#rows' => $rows
+  );
+  $output = drupal_render($table);
+  return $output;
 }

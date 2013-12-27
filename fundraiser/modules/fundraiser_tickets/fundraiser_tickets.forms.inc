@@ -125,7 +125,6 @@ function fundraiser_tickets_order_ticket_types_form_validate($form, &$form_state
   }
 }
 
-
 function fundraiser_tickets_order_ticket_types_form_submit($form, &$form_state) {
   foreach ($form_state['values']['tickets'] as $i => $ticket){
     $product_wrapper = entity_metadata_wrapper('commerce_product', commerce_product_load($ticket['ticket_id']));
@@ -139,7 +138,6 @@ function fundraiser_tickets_order_ticket_types_form_submit($form, &$form_state) 
 // Custom array sort function by weight.
 function _fundraiser_tickets_weight_sort($a, $b) {
   if (isset($a->fr_tickets_weight) && isset($b->fr_tickets_weight)) {
-  //  dpm($a);
     return $a->fr_tickets_weight['und'][0]['value'] < $b->fr_tickets_weight['und'][0]['value'] ? -1 : 1;
   }
   return 0;

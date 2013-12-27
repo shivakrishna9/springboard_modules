@@ -77,6 +77,49 @@ function fundraiser_tickets_theme($existing, $type, $theme, $path) {
 }
 
 /**
+ * Implements hook_fundraiser_field_info().
+ *
+ * Adds the ticket element to the webform.
+ */
+function fundraiser_tickets_fundraiser_field_info(){
+
+  // Donation amounts are handled in a special case.
+  $fields['tickets'] = array(
+    '#title' => t('Tickets'),
+    '#type' => 'fieldset',
+    '#required' => 0,
+  );
+  $fields['tickets']['ticket_box'] = array(
+    '#title' => t('Tickets'),
+    '#type' => 'tickets',
+    '#required' => 1,
+    '#allow_update' => 1,
+  );
+  $fields['amount'] = array(
+    '#title' => t('Amount'),
+    '#type' => 'hidden',
+    '#value' => '',
+    '#required' => 1,
+    '#extra' => array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    ),
+  );
+  return $fields;
+}
+
+
+/**
+ * Implements hook_fundraiser_field_info_alter().
+ *
+ * Remove the donation fields, since we don't want them on ticket pages.
+ */
+function fundraiser_tickets_fundraiser_field_info_alter(&$info){
+  unset($info['donation']);
+}
+
+
+/**
  * Implements hook_webform_component_info().
  */
 function fundraiser_tickets_webform_component_info() {
@@ -143,26 +186,131 @@ function fundraiser_tickets_form_alter(&$form, &$form_state, $form_id) {
  * Alter content type settings to add "Enable ticketed events?" checkbox.
  */
 function fundraiser_tickets_form_node_form_alter(&$form, &$form_state) {
-  if (arg(0) == 'node' && (arg(2) == 'edit' || arg(1) == 'add')){
-    // Hide all tickets fields on the standard node add/edit page.
-    foreach (element_children($form) as $child){
-      if (fundraiser_tickets_is_ticket_field($child)){
-        $form[$child]['#access'] = FALSE;
+
+  if (fundraiser_tickets_is_ticket_type($form['type']['#value'])){
+
+    // Don't allow them to tinker with dollar handles or recurring gift settings
+    $form['fundraiser_settings']['fundraiser_sustainers']['#access'] = FALSE;
+    $form['fundraiser_settings']['amount_wrapper']['#access'] = FALSE;
+
+    if (arg(0) == 'node' && (arg(2) == 'edit' || arg(1) == 'add')){
+      // Hide all tickets fields on the standard node add/edit page.
+      foreach (element_children($form) as $child){
+        if (fundraiser_tickets_is_ticket_field($child)){
+          $form[$child]['#access'] = FALSE;
+        }
       }
-    }
-  } elseif (arg(0) == 'node' && arg(2) == 'tickets'){
-    // Hide all fields that aren't required on the tickets tab
-    $required_fields = array('actions','nid','vid','uid','type','option','form_build_id','form_token','form_id','webform');
-    foreach (element_children($form) as $child){
-      if (! fundraiser_tickets_is_ticket_field($child) && ! in_array($child, $required_fields)){
-        $form[$child]['#access'] = FALSE;
+      $form['#validate'][] = '_fundraiser_tickets_form_node_form_validate';
+    } elseif (arg(0) == 'node' && arg(2) == 'tickets'){
+      // Hide all fields that aren't required on the tickets tab
+      $required_fields = array('actions','nid','vid','uid','type','option','form_build_id','form_token','form_id','webform');
+      foreach (element_children($form) as $child){
+        if (! fundraiser_tickets_is_ticket_field($child) && ! in_array($child, $required_fields)){
+          $form[$child]['#access'] = FALSE;
+        }
       }
+      $form['#after_build'][] = '_fundraiser_tickets_ticket_settings_form_organize';
+      $form['#validate'] = array();
+      $form['#submit'] = array();
     }
-    $form['#after_build'][] = '_fundraiser_tickets_ticket_settings_form_organize';
-    $form['#validate'] = array();
-    $form['#submit'] = array();
   }
 }
+
+/**
+ * Validate callback for node form.
+ *
+ * Make sure recurring billing is disabled on ticket forms.
+ */
+function _fundraiser_tickets_form_node_form_validate(&$form, &$form_state) {
+  $form_state['values']['recurring_setting'] = 'never';
+}
+
+
+function fundraiser_tickets_fundraiser_donation_validate($form, $form_state) {
+  //dpm('recalculate the amount value here rather than trust what the JS is passing in');
+}
+
+function fundraiser_tickets_fundraiser_donation_create($donation) {
+  // dpm('donation create');
+}
+
+
+// --- Commerce related functions --- //
+
+/**
+ * Implements hook_commerce_line_item_type_info().
+ */
+function fundraiser_tickets_commerce_line_item_type_info() {
+  $line_item_types = array();
+  $line_item_types['ticket'] = array(
+    'type' => 'ticket',
+    'name' => t('Ticket'),
+    'description' => t('A ticket sale.'),
+    'product' => TRUE,
+  );
+  return $line_item_types;
+}
+
+function fundraiser_tickets_fundraiser_commerce_generate_line_items($donation, $order){
+  if (isset($donation->donation['ticket_box']) && is_array($donation->donation['ticket_box']) && count($donation->donation['ticket_box'])){
+    $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+    foreach ($donation->donation['ticket_box'] as $key => $quantity){
+      if (strstr($key, 'product-') && is_numeric(explode('-',$key)[1]) && $quantity > 0){
+        $product_id = explode('-',$key)[1];
+        $product_wrapper = entity_metadata_wrapper('commerce_product', commerce_product_load($product_id));
+        $line_item = commerce_line_item_new('ticket', $order->order_id);
+        $line_item->line_item_label = t('Ticket - ' . $product_wrapper->title->value());
+        $line_item->quantity = $quantity;
+        $line_item->commerce_unit_price[LANGUAGE_NONE][0] = array(
+          'amount' => $product_wrapper->commerce_price->amount->value(),
+          'currency_code' => $donation->donation['currency'],
+        );
+        // Make sure the line item will be included in the update for order total.
+        $line_item->commerce_unit_price[LANGUAGE_NONE][0]['data'] = commerce_price_component_add(
+          $line_item->commerce_unit_price[LANGUAGE_NONE][0],
+          'base_price',
+          array(
+            'amount' => $product_wrapper->commerce_price->amount->value(),
+            'currency_code' => $donation->donation['currency'],
+            'data' => array(),
+          ),
+          TRUE
+        );
+        commerce_line_item_save($line_item);
+        $order_wrapper->commerce_line_items[] = $line_item;
+      } elseif ($key == 'fundraiser-tickets-extra-donation'){
+        $amount = $quantity;
+        if ($amount > 0){
+          $line_item = commerce_line_item_new('donation', $order->order_id);
+          $line_item->line_item_label = t('Extra Donation');
+          $line_item->quantity = 1;
+          $line_item->commerce_unit_price[LANGUAGE_NONE][0] = array(
+            'amount' => commerce_currency_decimal_to_amount($amount, $donation->donation['currency']),
+            'currency_code' => $donation->donation['currency'],
+          );
+          // Make sure the line item will be included in the update for order total.
+          $line_item->commerce_unit_price[LANGUAGE_NONE][0]['data'] = commerce_price_component_add(
+            $line_item->commerce_unit_price[LANGUAGE_NONE][0],
+            'base_price',
+            array(
+              'amount' => commerce_currency_decimal_to_amount($amount, $donation->donation['currency']),
+              'currency_code' => $donation->donation['currency'],
+              'data' => array(),
+            ),
+            TRUE
+          );
+          commerce_line_item_save($line_item);
+          $order_wrapper->commerce_line_items[] = $line_item;
+        }
+      }
+    }
+    return TRUE;
+  } else {
+    return FALSE;
+  }
+}
+
+
 
 
 /**
@@ -427,4 +575,3 @@ function fundraiser_tickets_get_ticket_field_keys(){
   module_load_include('inc', 'fundraiser_tickets', 'includes/fundraiser_tickets.fields');
   return array_keys(_fundraiser_tickets_default_fields_settings(NULL));
 }
-

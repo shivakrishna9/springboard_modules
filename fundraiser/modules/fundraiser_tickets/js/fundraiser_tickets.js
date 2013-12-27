@@ -29,7 +29,7 @@
       });
     });
 
-    $('#fundraiser-tickets-additional-gift').keyup(function() {
+    $('#fundraiser-tickets-extra-donation').keyup(function() {
       self.setAmounts();
     });
 
@@ -43,6 +43,7 @@
     total = self.calcTotal(),
     totalQuantity = self.calcQuantity();
     $('#fundraiser-tickets-total-cost').text('$ ' + (total).formatMoney(2, '.', ','));
+    $("input[name='submitted[amount]']").val((total).formatMoney(2, '.', ''));
     $('#fundraiser-tickets-total-quant').text(totalQuantity);
     $.each(self.ticketPrices, function(productId, price) {
       $('#product-' + productId + '-tickets-total').text('$ ' + (self.calcField(productId, price)).formatMoney(2, '.', ','));
@@ -65,7 +66,9 @@
     $.each(self.ticketPrices, function(productId, price) {
       total = total + (price * $('#product-' + productId + '-ticket-quant').val());
     });
-    total = total + parseFloat($('#fundraiser-tickets-additional-gift').val());
+    if ($('#fundraiser-tickets-extra-donation').val()){
+      total = total + parseFloat($('#fundraiser-tickets-extra-donation').val());
+    }
     return total;
   }
 
