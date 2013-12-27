@@ -148,6 +148,13 @@ function form_layout_delete($machine_name) {
 function form_layout_fundraiser_field_info() {
   $fields = array();
 
+  $fields['left_sidebar'] = array(
+    '#title' => t('Left sidebar'),
+    '#type' => 'fieldset',
+    '#required' => 0,
+    '#display_callback' => 'form_layout_left_sidebar_display',
+  );
+
   $fields['top_region'] = array(
     '#title' => t('Top region'),
     '#type' => 'fieldset',
@@ -174,6 +181,13 @@ function form_layout_fundraiser_field_info() {
     '#type' => 'fieldset',
     '#required' => 0,
     '#display_callback' => 'form_layout_bottom_region_display',
+  );
+
+  $fields['right_sidebar'] = array(
+    '#title' => t('Right sidebar'),
+    '#type' => 'fieldset',
+    '#required' => 0,
+    '#display_callback' => 'form_layout_right_sidebar_display',
   );
 
   return $fields;
@@ -241,6 +255,40 @@ function theme_form_layout_region($variables) {
   }
   $output .= "</div>\n";
   return $output;
+}
+
+/**
+ * Display callback for the left sidebar.
+ *
+ * Does some bootstrap formatting and removes the title.
+ *
+ * @return array
+ *   The modified field array.
+ */
+function form_layout_left_sidebar_display($form, $form_state, $field) {
+  // Note that we're intentionally removing other classes here.
+  $field['#attributes']['class'] = array('fieldset');
+  $field['#title'] = '';
+  $field['#weight'] = -60;
+  $field['#theme_wrappers'][] = 'form_layout_region';
+  return $field;
+}
+
+/**
+ * Display callback for the right sidebar.
+ *
+ * Does some bootstrap formatting and removes the title.
+ *
+ * @return array
+ *   The modified field array.
+ */
+function form_layout_right_sidebar_display($form, $form_state, $field) {
+  // Note that we're intentionally removing other classes here.
+  $field['#attributes']['class'] = array('fieldset');
+  $field['#title'] = '';
+  $field['#weight'] = -40;
+  $field['#theme_wrappers'][] = 'form_layout_region';
+  return $field;
 }
 
 /**
