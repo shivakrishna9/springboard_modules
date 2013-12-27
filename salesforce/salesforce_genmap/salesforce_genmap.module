@@ -466,6 +466,16 @@ function _salesforce_genmap_alter_operation(&$item, $op = NULL) {
     $op = 'CREATE';
   }
 
+  // If an item comes in as a CREATE operation, we should check to see if
+  // it's already been exported. If it has let's change the operation to
+  // UPDATE to prevent duplicates from being created in Salesforce.
+  if (($op == 'CREATE' && $record_map = salesforce_sync_load_map($item))) {
+    $op = 'UPDATE';
+    if (!isset($item['sobject']->Id)) {
+      $item['sobject']->Id = $record_map->sfid;
+    }
+  }
+
   // Verify if we have a record map of this item yet.  Don't bother checking if
   // it is an UPDATE that has an Id set because we can be confident that this
   // item is correctly configured and doesn't need automated help.

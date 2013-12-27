@@ -484,7 +484,7 @@ function sb_social_webform_submission_update($node, $submission) {
 function sb_social_webform_submission_insert($node, $submission) {
   if (!empty($node->is_webform_user) && $node->is_webform_user) {
     global $user;
-    if ($user->uid == $submission->sid) {
+    if ($user->uid == $submission->uid) {
       $component = _fundraiser_webform_get_component_by_nid_key($node->nid, 'mail');
       $mail = $submission->data[$component->cid]['value'][0];
       _sb_social_set_tracking_cookie($submission->uid, $mail, $submission->sid);
