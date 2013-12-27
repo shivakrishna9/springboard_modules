@@ -28,6 +28,11 @@
         self.setAmounts();
       });
     });
+
+    $('#fundraiser-tickets-additional-gift').keyup(function() {
+      self.setAmounts();
+    });
+
   }
 
   /**
@@ -37,8 +42,6 @@
     var self = this,
     total = self.calcTotal(),
     totalQuantity = self.calcQuantity();
-    console.log(self);
-    //$('#edit-submitted-donation-amount').val((total).formatMoney(2, '.', ''));
     $('#fundraiser-tickets-total-cost').text('$ ' + (total).formatMoney(2, '.', ','));
     $('#fundraiser-tickets-total-quant').text(totalQuantity);
     $.each(self.ticketPrices, function(productId, price) {
@@ -62,6 +65,7 @@
     $.each(self.ticketPrices, function(productId, price) {
       total = total + (price * $('#product-' + productId + '-ticket-quant').val());
     });
+    total = total + parseFloat($('#fundraiser-tickets-additional-gift').val());
     return total;
   }
 

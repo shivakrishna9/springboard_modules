@@ -45,6 +45,11 @@ function _webform_render_tickets($component, $value = NULL, $filter = TRUE) {
   $node_wrapper = entity_metadata_wrapper('node', $node);
   $ticket_types = $node_wrapper->fr_tickets_ticket_types->value();
   $element['#ticket_types'] = $ticket_types;
+  if ($node_wrapper->fr_tickets_donation_donation->value() == TRUE){
+    $element['#allow_extra_donation'] = TRUE;
+  } else {
+    $element['#allow_extra_donation'] = FALSE;
+  }
 
   // Hide the event_table title if #title_display is 'none'.
   if (!empty($component['extra']['title_display']) && $component['extra']['title_display'] == 'none') {
@@ -95,6 +100,18 @@ function theme_fundraiser_tickets_webform_table($variables) {
       $row['data'] = array($title, $description, array('data'=> drupal_render($item), 'align' => 'right'), $ticket_total);
       $rows[] = $row;
     }
+
+    if ($element['#allow_extra_donation'] == TRUE){
+      $item = array(
+        '#type' => 'textfield',
+        '#size' => 20,
+        '#default_value' =>  NULL,
+        '#name' => 'fundraiser-tickets-additional-gift',
+        '#id' => 'fundraiser-tickets-additional-gift'
+      );
+      $rows[] = array('data' => array(t('Additional Donation'), '', drupal_render($item), ''));
+    }
+
 
     // Add a row to contain our totals
     $rows[] = array('data' => array(t('Totals'), '', array('data' => 0, 'id' => 'fundraiser-tickets-total-quant', 'align' => 'right'), array('data' => '$ 0.00', 'id' => 'fundraiser-tickets-total-cost', 'align' => 'right')));
