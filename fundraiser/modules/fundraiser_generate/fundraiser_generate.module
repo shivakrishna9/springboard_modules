@@ -165,18 +165,22 @@ function fundraiser_generate_donations($nid, $count = 1, $type = 'single', $ms =
             'address_line_2' => '',
             'city' => devel_generate_word(mt_rand(7, 15)), // From devel_generate.module.
             'country' => 'US',
-            'state' => _fundraiser_generate_random_state(),
+            'state' => 'DC',
             'zip' => mt_rand(11111, 55555),
           ),
-          'credit_card_information' => array(
-            'card_number' => '4111111111111111',
-            'card_cvv' => '111',
+          'payment_information' => array(
+            'payment_fields' => array(
+              'credit' => array(
+                'card_number' => '4111111111111111',
+                'expiration_date' => array(
+                  'card_expiration_month' => mt_rand(1, 12),
+                  'card_expiration_year' => mt_rand($year + 1, $year + 3),
+                ),
+                'card_cvv' => '111',
+              ),
+            ),
             'recurs_monthly' => array(
               'recurs' => $recurs,
-            ),
-            'expiration_date' => array(
-              'card_expiration_month' => mt_rand(1, 12),
-              'card_expiration_year' => mt_rand($year + 1, $year + 3),
             ),
           ),
           'ms' => $ms,
@@ -204,28 +208,11 @@ function _fundraiser_generate_get_forms() {
 }
 
 /**
- * Generates a random zone id.
- */
-function _fundraiser_generate_random_state() {
-  static $zones;
-  if (count($zones == 0)) {
-    // Load up available zones from fundraiser hooks.
-    //TODO this is no longer a valid hook.
-    $zones = array_values(module_invoke_all('fundraiser_get_country_zones', 840));
-  }
-  // Get length of array.
-  $length = count($zones) - 1;
-  // Return random index from array.
-  $id = $zones[rand(0, $length)];
-  return $id;
-}
-
-/**
  * Generates a random ask amount value().
  */
 function _fundraiser_generate_random_ask_amount($nid) {
-  $amount_values = array();
-  $amount_values = _fundraiser_webform_get_extra_by_key($nid, 'amount'); // From fundraiser_webform.module.
+  // From fundraiser_webform.module.
+  $amount_values = _fundraiser_webform_get_extra_by_key($nid, 'amount');
   $amount_values = preg_split('/\n/', trim($amount_values['items']));
   array_pop($amount_values); // Get rid of other for now.
   $values = array();

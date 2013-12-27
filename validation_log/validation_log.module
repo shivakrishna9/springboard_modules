@@ -16,7 +16,7 @@
 // Jackson River related logging has been moved to an inc. file.
 // If validation log is ever released this allows JRiver to keep
 // customized logging separate as a sub module.
-include_once('validation_log.jriver.inc');
+include_once 'validation_log.jriver.inc';
 
 /**
  * Validation log function, to be used here and in other modules as needed.

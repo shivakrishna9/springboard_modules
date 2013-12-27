@@ -171,7 +171,7 @@ function email_wrappers_schema() {
  * Implements hook_update().
  */
 function email_wrappers_update_7001() {
-  require_once(DRUPAL_ROOT . "/sites/all/modules/webform/includes/webform.emails.inc");
+  require_once DRUPAL_ROOT . "/sites/all/modules/webform/includes/webform.emails.inc";
   if (!function_exists('webform_email_insert')) {
     $ret[] = 'Unable to locate webform module';
     return $ret;
@@ -556,7 +556,7 @@ function _email_wrappers_delete_fields() {
 }
 
 function _email_wrappers_delete_nodes() {
-  require_once('email_wrappers.module');
+  require_once 'email_wrappers.module';
   $nids = email_wrappers_get_nodes();
   node_delete_multiple($nids);
   drupal_set_message('Email Wrappers have been deleted.');

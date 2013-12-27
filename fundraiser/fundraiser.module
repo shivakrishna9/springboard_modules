@@ -6,7 +6,8 @@
  */
 
 // Include theme related functions.
-require_once('fundraiser.theme.inc'); //TODO merge this back in.
+// @todo Merge this back in.
+require_once 'fundraiser.theme.inc';
 
 /**
  * Implements hook_permission().
@@ -918,7 +919,7 @@ function fundraiser_fundraiser_field_info() {
       'field_prefix' => '$',
     ),
     '#allow_update' => 1,
-    '#reset_value' => 1,
+    '#reset_value' => 0,
     '#create_callback' => '_fundraiser_amount_field_create',
   );
   $fields['donation']['other_amount'] = array(
@@ -1159,7 +1160,7 @@ function _fundraiser_other_amount_field_validate($form, $form_state, $submission
 /**
  * Validation callback for field email. Called during form validation.
  */
-function _fundraiser_email_field_validate($form, $form_state, $submission_fields,   $value) {
+function _fundraiser_email_field_validate($form, $form_state, $submission_fields, $value) {
   if (!_fundraiser_validate_email(trim($value))) {
     return array('mail' => t('You must enter a valid email address.'));
   }
@@ -2085,6 +2086,7 @@ function _fundraiser_refund_form_submit($form, &$form_state) {
   }
 
   // Set up the refund.
+  $refund = new stdClass();
   $refund->did = $donation->did;
   $refund->amount = $amount;
   $refund->currency = $donation->currency;
@@ -2767,17 +2769,20 @@ function fundraiser_webform_token_selector_blacklist_alter(&$tokens) {
 }
 
 /**
- * ecommerce-agnostic lookup of total dollar amount donated via a single
- * donation form.
+ * ecommerce-agnostic lookup of total dollar amount donated via multiple
+ *   donation forms.
  *
- * @param type $nid
- * Node ID
+ * Looks up by multiple nids in the hopes of a single faster IN query.
  *
- * @return total successful donations or FALSE if none found.
+ * @param array $nids
+ *   Node IDs
+ *
+ * @return float|bool
+ *   Total successful donations or FALSE if none found.
  */
-function fundraiser_get_total_donations_by_nid($nid, $start = FALSE, $end = FALSE) {
-  $node = node_load($nid);
-  $total_donations = module_invoke_all('fundraiser_get_total_donations_by_nid', $nid, $start, $end);
+function fundraiser_get_total_donations_by_nids($nids, $start = FALSE, $end = FALSE) {
+  $total_donations = module_invoke_all('fundraiser_get_total_donations_by_nids', $nids, $start, $end);
+  // Use the first implementation called.  There should only be one anyway.
   return $total_donations[0];
 }
 

@@ -192,6 +192,46 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
   }
 
   /**
+   * Test to ensure that when an exported item is re-added to the Salesforce
+   * Queue as a CREATE operation that it gets correctly converted to an
+   * UPDATE to prevent creating a duplicate record in Salesforce.
+   */
+  public function testCreateToUpdateOperationConverstion() {
+    $edit = array(
+      'submitted[first_name]' => 'ExampleFirstName',
+      'submitted[last_name]' => 'ExampleLastName',
+      'submitted[email]' => 'webform2@email.com',
+    );
+
+    // Initial export should be a CREATE operation.
+    $this->drupalPost($this->webformPath('submission', $this->webform1->nid), $edit, 'Submit');
+    $item = $this->fetchQueueItem();
+    $this->compareSubmissionQueueItem($edit, $item, 'CREATE');
+
+    // Process this queue item so a real record is created in Salesforce.
+    $this->salesforceConnect();
+    $processor = salesforce_queue_load_processor();
+    $processor->process();
+
+    // Requeue the item as a CREATE and make sure it's operation is switched to UPDATE
+    // because it has already been exported and a record exists in the sync_map
+    // table.
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    $submission = webform_get_submission($this->webform1->nid, 1);
+
+    // Simulate re-adding to queue as a create (insert) operation.
+    salesforce_genmap_send_object_to_queue('webform', 'insert', $this->webform1, 1, $submission, $this->webform1->nid);
+
+    // Get the queue item and assert the operation has been changed to
+    // UPDATE.
+    $item = $this->fetchQueueItem();
+    $this->compareSubmissionQueueItem($edit, $item, 'UPDATE');
+
+    // Remove the new record from Salesforce.
+    $processor->deleteNewSfRecords();
+  }
+
+  /**
    * Helper tests sync options are obeyed for the controlling queue.
    */
   public function testSyncOptions() {

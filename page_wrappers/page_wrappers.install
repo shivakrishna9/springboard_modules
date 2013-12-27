@@ -256,7 +256,7 @@ function _page_wrappers_delete_fields() {
 }
 
 function _page_wrappers_delete_nodes() {
-  require_once('page_wrappers.module');
+  require_once 'page_wrappers.module';
   $nids = page_wrappers_get_nodes();
   node_delete_multiple($nids);
   drupal_set_message(t('Page Wrappers have been deleted.'));

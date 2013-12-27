@@ -17,10 +17,13 @@ function sb_social_uninstall() {
   variable_del('springboard_social_services');
   variable_del('springboard_social_addthis_profile_id');
   variable_del('springboard_social_facebook_description');
+  variable_del('springboard_social_debug_mode');
+  variable_del('springboard_social_enabled_content_types');
 
-  db_query("DELETE FROM {variable} WHERE name LIKE 'springboard_social_facebook%'")->execute();
-  db_query("DELETE FROM {variable} WHERE name LIKE 'springboard_social_twitter%'")->execute();
-  db_query("DELETE FROM {variable} WHERE name LIKE 'springboard_social_ms%'")->execute();
+  db_query("DELETE FROM {variable} WHERE name LIKE 'springboard_social_facebook%'");
+  db_query("DELETE FROM {variable} WHERE name LIKE 'springboard_social_twitter%'");
+  db_query("DELETE FROM {variable} WHERE name LIKE 'springboard_social_email%'");
+  db_query("DELETE FROM {variable} WHERE name LIKE 'springboard_social_ms%'");
 }
 /**
  * Implements hook_schema().
@@ -47,11 +50,38 @@ function sb_social_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
+      'did' => array(
+        'description' => 'donation id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
       'nid' => array(
         'description' => 'webform node id',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
+      ),
+      'page_name' => array(
+        'description' => 'shared page name',
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+      'internal_name' => array(
+        'description' => 'shared page internal name',
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+      'type' => array(
+        'description' => 'share type',
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+      'market_source' => array(
+        'description' => 'share URL market source',
+        'type' => 'varchar',
+        'length' => 255,
       ),
       'created' => array(
         'description' => 'created timestamp',
@@ -72,6 +102,16 @@ function sb_social_schema() {
       'url' => array(
         'description' => 'shared URL',
         'type' => 'text',
+      ),
+      'sf_share_id' => array(
+        'description' => 'Salesforce Share ID',
+        'type' => 'varchar',
+        'length' => 60,
+      ),
+      'opportunity_id' => array(
+        'description' => 'Salesforce Opportunity ID',
+        'type' => 'varchar',
+        'length' => 60,
       ),
     ),
     'primary key' => array('share_id'),
@@ -110,6 +150,52 @@ function sb_social_schema() {
       'type' => array('type'),
     ),
   );
+  $schema['sb_social_path'] = array(
+    'description' => 'lookup table, provides numeric ID for individual drupal paths with settings.',
+    'fields' => array(
+      'pid' => array(
+        'description' => 'path id',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'path' => array(
+        'description' => 'drupal id, path or node id.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('pid'),
+    'indexes' => array(
+      'path' => array('path'),
+    ),
+  );
+  $schema['sb_social_submissions'] = array(
+    'description' => 'lookup table, stores webform submission id and donation id for submissions related to a share',
+    'fields' => array(
+      'share_id' => array(
+        'description' => 'share id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'sid' => array(
+        'description' => 'webform submission id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'did' => array(
+        'description' => 'donation id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+  );
   return $schema;
 }
 
@@ -121,4 +207,99 @@ function sb_social_update_7001() {
   db_add_index('sb_social_settings', 'type', array('type'));
 
   return t('Added index to {sb_social_shares} and {sb_social_settings} tables.');
+}
+
+/**
+ * Add social tracker fields.
+ */
+function sb_social_update_7002() {
+  db_add_field('sb_social_shares', 'market_source', array('type' => 'varchar', 'length' => 255, 'description' => 'Share URL market source'));
+  db_add_field('sb_social_shares', 'page_name', array('type' => 'varchar', 'length' => 255, 'description' => 'shared page name'));
+  db_add_field('sb_social_shares', 'internal_name', array('type' => 'varchar', 'length' => 255, 'description' => 'shared page internal name'));
+  db_add_field('sb_social_shares', 'type', array('type' => 'varchar', 'length' => 255, 'description' => 'share type'));
+
+  return t('Added columns to {sb_social_shares}');
+}
+
+/**
+ * Add sb_social_path table
+ */
+function sb_social_update_7003() {
+  $schema['sb_social_path'] = array(
+    'description' => 'lookup table, provides numeric ID for individual drupal paths with settings.',
+    'fields' => array(
+      'pid' => array(
+        'description' => 'path id',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'path' => array(
+        'description' => 'drupal id, path or node id.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('pid'),
+    'indexes' => array(
+      'path' => array('path'),
+    ),
+  );
+  db_create_table('sb_social_path', $schema['sb_social_path']);
+}
+
+/**
+ * Add columns for Salesforce IDs
+ */
+function sb_social_update_7004() {
+  db_add_field('sb_social_shares', 'sf_share_id', array('type' => 'varchar', 'length' => 60, 'description' => 'Salesforce Share ID'));
+  db_add_field('sb_social_shares', 'opportunity_id', array('type' => 'varchar', 'length' => 60, 'description' => 'Salesforce Opportunity ID'));
+}
+
+/**
+ * Adds lookup table to track webform submissions and donation ids associated with a share.
+ */
+function sb_social_update_7005() {
+  $schema['sb_social_submissions'] = array(
+    'description' => 'lookup table, stores webform submission id and donation id for submissions related to a share',
+    'fields' => array(
+      'share_id' => array(
+        'description' => 'share id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'sid' => array(
+        'description' => 'webform submission id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'did' => array(
+        'description' => 'donation id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+  );
+  db_create_table('sb_social_submissions', $schema['sb_social_submissions']);
+}
+
+/*
+ * Add did column to shares table
+ */
+function sb_social_update_7006() {
+  $field = array(
+    'description' => 'donation id',
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+    'default' => 0,
+  );
+  db_add_field('sb_social_shares', 'did', $field);
+
 }

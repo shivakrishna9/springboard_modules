@@ -16,7 +16,7 @@ $plugin = array(
 
 function facebook_token_info() {
   $facebook_tokens = array();
-  $facebooK_tokens['facebook_share_link'] = array(
+  $facebook_tokens['facebook_share_link'] = array(
     'name' => t('Facebook Share link'),
     'description' => t('AddThis Facebook Share link'),
   );
@@ -35,10 +35,6 @@ function facebook_token_info() {
     'name' => t('Facebook share image'),
     'description' => t('Image content for Facebook sharing'),
   );
-  $facebook_tokens['facebook_share_url'] = array(
-    'name' => t('Facebook share URL'),
-    'description' => t('Short URL containing share tracking values for Facebook.'),
-  );
 
   return $facebook_tokens;
 }
@@ -48,7 +44,6 @@ function facebook_token_replace($tokens, &$replacements, $settings, $node = FALS
     switch ($key) {
       case 'facebook_share_link':
         $vars['service'] = 'facebook';
-        $vars['url'] = sb_social_short_url('facebook', $settings, $submission_id);
         $vars['extra'] = '';
 
         if (isset($extra) && function_exists($extra)) {
@@ -66,9 +61,6 @@ function facebook_token_replace($tokens, &$replacements, $settings, $node = FALS
       case 'facebook_image':
         // TODO: image tag?
         $replacements[$token] =  !empty($settings['data']['facebook']['image']) ? $settings['data']['facebook']['image'] : '';
-        break;
-      case 'facebook_share_url':
-        $replacements[$token] = sb_social_short_url('facebook', $settings, $submission_id);
         break;
     }
   }
@@ -195,7 +187,6 @@ function facebook_share_opengraph_config($settings, $node = FALSE, $sid = FALSE)
     'title' => !empty($facebook['title']) ? $facebook['title'] : '',
     'description' => !empty($facebook['description']) ? $facebook['description'] : '',
     'image' => $facebook['image'],
-    //'url' => sb_social_short_url($node, $sid, 'facebook'),
   );
 
   foreach ($meta as $field => $value) {
