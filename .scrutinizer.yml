@@ -11,6 +11,7 @@ filter:
         - 'app/*'
         - 'web/*'
 tools:
+    js_hint: true
     php_mess_detector:
         extensions:
             - php
@@ -23,15 +24,15 @@ tools:
             excluded_paths: ['vendor/*', 'app/*', 'web/*']
         config:
             code_size_rules:
-                cyclomatic_complexity:  false
-                npath_complexity:     false
-                excessive_method_length:  false
-                excessive_class_length:  false
-                excessive_parameter_list:  false
-                excessive_public_count:  false
-                too_many_fields:      false
-                too_many_methods:     false
-                excessive_class_complexity:  false
+                cyclomatic_complexity:  true
+                npath_complexity:     true
+                excessive_method_length:  true
+                excessive_class_length:  true
+                excessive_parameter_list:  true
+                excessive_public_count:  true
+                too_many_fields:      true
+                too_many_methods:     true
+                excessive_class_complexity:  true
             design_rules:
                 exit_expression:      true
                 eval_expression:      true
@@ -45,12 +46,12 @@ tools:
                 unused_private_method:  true
                 unused_formal_parameter:  false
             naming_rules:
-                short_variable:       false
-                long_variable:        false
-                short_method:         false
+                short_variable:       true
+                long_variable:        true
+                short_method:         true
                 constructor_conflict:  true
                 constant_naming:      true
-                boolean_method_name:  false
+                boolean_method_name:  true
             controversial_rules:
                 superglobals:         false
                 camel_case_class_name:  false
