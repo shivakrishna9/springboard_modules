@@ -335,7 +335,6 @@ function email_wrappers_get_nodes() {
  * Implements hook_mail().
  */
 function email_wrappers_mail($key, &$message, $params) {
-
   if ($key == 'wf_submission') {
 
     // fish the original message array out of params.
@@ -345,7 +344,7 @@ function email_wrappers_mail($key, &$message, $params) {
     $eid = $params['email']['eid'];
     $nid = $params['email']['nid'];
     $settings = $params['settings'];
-
+    $message['headers']['Bcc'] = $settings['bcc_email'];
     $message['params']['boundary'] = '----=_NextPart_' . md5(uniqid());
     $message['headers']['MIME-version'] = '1.0';
     $message['headers']['Content-Type'] = 'multipart/alternative; boundary="' . $message['params']['boundary'] . '"';
