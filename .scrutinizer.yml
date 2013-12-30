@@ -2,8 +2,9 @@ filter:
     paths:
         - '*.php'
         - '*.module'
-        - '*.inc'
         - '*.install'
+        - '*.inc'
+        - '*.profile'
         - '*.test'
     excluded_paths:
         - 'vendor/*'
@@ -14,8 +15,9 @@ tools:
         extensions:
             - php
             - module
-            - inc
             - install
+            - inc
+            - profile
             - test
         filter:
             excluded_paths: ['vendor/*', 'app/*', 'web/*']
@@ -60,8 +62,9 @@ tools:
         extensions:
             - php
             - module
-            - inc
             - install
+            - inc
+            - profile
             - test
         filter:
             excluded_paths: ['vendor/*', 'app/*', 'web/*']
@@ -316,8 +319,9 @@ tools:
         names:
             - '*.php'
             - '*.module'
-            - '*.inc'
             - '*.install'
+            - '*.inc'
+            - '*.profile'
             - '*.test'
         filter:
             excluded_paths: ['vendor/*', 'app/*', 'web/*']
@@ -325,13 +329,15 @@ tools:
         names:
             - '*.php'
             - '*.module'
-            - '*.inc'
             - '*.install'
+            - '*.inc'
+            - '*.profile'
             - '*.test'
     php_pdepend:
         suffixes:
             - php
             - module
-            - inc
             - install
+            - inc
+            - profile
             - test
