@@ -11,7 +11,10 @@ include_once ('springboard_admin.menu.inc');
  */
 
 function springboard_admin_install() {
-
+  $themes = list_themes();
+  if(in_array('springboard_backend',$themes)) {
+    theme_enable('springboard_backend');
+  }
   // Set the weight of springboard_admin very high so our theme switch rules
   // will always override other settings.
   db_update('system')
