@@ -106,6 +106,7 @@ function _page_wrappers_create_fields() {
       'modified' => 1,
       'locked' => 0,
       'title_label' => $t('Internal Title'),
+      'node_submitted' => 0,
     );
     $type = node_type_set_defaults($type);
     node_type_save($type);
