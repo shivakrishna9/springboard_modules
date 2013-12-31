@@ -1306,7 +1306,7 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
     $line_item = commerce_line_item_new('donation', $order->order_id);
   }
 
-  // This is hosing my fundraiser tickets stuff, so I'm conditionalizing it for now.
+  // Conditionalized to prevent interference with fundraiser_tickets.
   if ($line_type->type == 'donation'){
     // Update line item with the new amount information as needed.
     $line_item->line_item_label = t('Donation');

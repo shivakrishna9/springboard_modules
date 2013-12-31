@@ -88,6 +88,9 @@ function fundraiser_tickets_fundraiser_field_info(){
     '#title' => t('Tickets'),
     '#type' => 'fieldset',
     '#required' => 0,
+    '#create_callback' => '_fundraiser_tickets_ticket_field_create',
+    '#display_callback' => '_fundraiser_tickets_ticket_field_display',
+    // Display callback, hide this field if the node isn't a ticket node.
   );
   $fields['tickets']['ticket_box'] = array(
     '#title' => t('Tickets'),
@@ -115,7 +118,32 @@ function fundraiser_tickets_fundraiser_field_info(){
  * Remove the donation fields, since we don't want them on ticket pages.
  */
 function fundraiser_tickets_fundraiser_field_info_alter(&$info){
-  unset($info['donation']);
+  $info['donation']['#create_callback'] = '_fundraiser_tickets_donation_create';
+  $info['donation']['#display_callback'] = '_fundraiser_tickets_donation_display';
+}
+
+/**
+ * Field create callback, adjsut the type of the recurring page shown, based on fundraiser settings.
+ */
+function _fundraiser_tickets_ticket_field_create($fundraiser, $field) {
+  // If not a ticket page, drop the ticket field, drop the recurring field.
+  if (! fundraiser_tickets_is_ticket_type($fundraiser->type)) {
+    return FALSE;
+  } else {
+    return $field;
+  }
+}
+
+/**
+ * Field create callback, adjsut the type of the recurring page shown, based on fundraiser settings.
+ */
+function _fundraiser_tickets_donation_create($fundraiser, $field) {
+  // If not a ticket page, drop the ticket field, drop the recurring field.
+  if (fundraiser_tickets_is_ticket_type($fundraiser->type)) {
+     return FALSE;
+  } else {
+    return $field;
+  }
 }
 
 
@@ -251,6 +279,12 @@ function fundraiser_tickets_commerce_line_item_type_info() {
   return $line_item_types;
 }
 
+/**
+ * Implements hook_fundraiser_commerce_generate_line_items().
+ *
+ * Generate line items for the ticket sales and the extra donation.
+ * Returns TRUE if line items have been generated. Otherwise, returns FALSE.
+ */
 function fundraiser_tickets_fundraiser_commerce_generate_line_items($donation, $order){
   if (isset($donation->donation['ticket_box']) && is_array($donation->donation['ticket_box']) && count($donation->donation['ticket_box'])){
     $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
@@ -309,8 +343,6 @@ function fundraiser_tickets_fundraiser_commerce_generate_line_items($donation, $
     return FALSE;
   }
 }
-
-
 
 
 /**
