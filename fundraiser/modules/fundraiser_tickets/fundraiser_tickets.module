@@ -253,18 +253,6 @@ function _fundraiser_tickets_form_node_form_validate(&$form, &$form_state) {
   $form_state['values']['recurring_setting'] = 'never';
 }
 
-
-function fundraiser_tickets_fundraiser_donation_validate($form, $form_state) {
-  //dpm('recalculate the amount value here rather than trust what the JS is passing in');
-}
-
-function fundraiser_tickets_fundraiser_donation_create($donation) {
-  // dpm('donation create');
-}
-
-
-// --- Commerce related functions --- //
-
 /**
  * Implements hook_commerce_line_item_type_info().
  */
@@ -491,6 +479,44 @@ function fundraiser_tickets_node_type_update($type) {
   }
 }
 
+
+/**
+ * Implements hook_node_view().
+ */
+function fundraiser_tickets_node_view($node, $view_mode, $langcode) {
+  // If this isn't a fundraiser ticket type, ignore it.
+  if (fundraiser_tickets_is_ticket_type($node->type)) {
+    if ($view_mode == 'full') {
+
+      // If we are closed or sold out, figure out what to do with them based
+      // on the form settings.
+      if(fundraiser_tickets_is_closed($node)){
+        $node_wrapper = entity_metadata_wrapper('node', $node);
+        switch($node_wrapper->fr_tickets_closed_options->value()){
+
+          case 'message':
+            drupal_set_message($node_wrapper->fr_tickets_closed_message->value->value(array('sanitize' => TRUE)));
+            break;
+
+          case 'redirect':
+            drupal_goto($node_wrapper->fr_tickets_closed_redirect->value());
+
+          case 'form':
+            drupal_goto('node/' . $node_wrapper->fr_tickets_waitlist_form->value()->nid);
+            break;
+
+          default:
+            drupal_set_message('This form is closed.');
+        }
+      }
+
+    }
+  }
+
+}
+
+
+
 /**
  * Implements hook_form_alter().
  *
@@ -607,3 +633,17 @@ function fundraiser_tickets_get_ticket_field_keys(){
   module_load_include('inc', 'fundraiser_tickets', 'includes/fundraiser_tickets.fields');
   return array_keys(_fundraiser_tickets_default_fields_settings(NULL));
 }
+
+
+/**
+ * Helper function, determine if a given ticket page is closed.
+ */
+function fundraiser_tickets_is_closed($node) {
+  $node_wrapper = entity_metadata_wrapper('node', $node);
+  if ($node_wrapper->fr_tickets_closed_is_closed->value() == TRUE || ($node_wrapper->fr_tickets_closed_close_date->value() !== NULL && strtotime($node_wrapper->fr_tickets_closed_close_date->value()) < time())){
+    return TRUE;
+  } else {
+    return FALSE;
+  }
+}
+

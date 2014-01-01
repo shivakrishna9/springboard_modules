@@ -372,8 +372,8 @@ function _fundraiser_tickets_default_fields_settings($type) {
       'label' => 'Close event on',
       'required' => 0,
       'settings' => array(
-        'default_value' => 'now',
-        'default_value2' => 'same',
+        'default_value' => '',
+        'default_value2' => '',
         'default_value_code' => '',
         'default_value_code2' => '',
         'user_register_form' => FALSE,

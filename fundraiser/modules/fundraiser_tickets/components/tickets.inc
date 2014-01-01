@@ -129,7 +129,7 @@ function theme_fundraiser_tickets_webform_table($variables) {
   // Add a row to contain our totals
   $rows[] = array('data' => array(t('Totals'), '', array('data' => 0, 'id' => 'fundraiser-tickets-total-quant', 'align' => 'right'), array('data' => '$ 0.00', 'id' => 'fundraiser-tickets-total-cost', 'align' => 'right')));
   $header = array(t('Type'), '', array('data' => t('Quantity'), 'align' => 'right'), array('data' => t('Amount'), 'align' => 'right'));
-  $attributes = array('class' => $element['#attributes']['class'], 'id' => $id, 'width' => '100%');
+ // $attributes = array('class' => $element['#attributes']['class'], 'id' => $id, 'width' => '100%');
 
   // Add the JS for the settings too
   drupal_add_js(array('fundraiserTickets' => array('ticketPrices' => $ticket_prices)), 'setting');
