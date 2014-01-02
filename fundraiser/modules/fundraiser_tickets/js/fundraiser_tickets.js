@@ -41,8 +41,10 @@
   Drupal.fundraiserTickets.prototype.setAmounts = function() {
     var self = this,
     total = self.calcTotal(),
+    extra = self.calcExtra(),
     totalQuantity = self.calcQuantity();
     $('#fundraiser-tickets-total-cost').text('$ ' + (total).formatMoney(2, '.', ','));
+    $('#fundraiser-tickets-extra-donation-display').text('$ ' + (extra).formatMoney(2, '.', ','));
     $("input[name='submitted[amount]']").val((total).formatMoney(2, '.', ''));
     $('#fundraiser-tickets-total-quant').text(totalQuantity);
     $.each(self.ticketPrices, function(productId, price) {
@@ -71,6 +73,19 @@
     }
     return total;
   }
+
+  /**
+   * Calculate the extra amount
+   */
+  Drupal.fundraiserTickets.prototype.calcExtra = function() {
+    var self = this;
+    var extra = 0;
+    if ($('#fundraiser-tickets-extra-donation').val()){
+      extra = parseFloat($('#fundraiser-tickets-extra-donation').val());
+    }
+    return extra;
+  }
+
 
   /**
    * Calculate the quantity of tickets selected

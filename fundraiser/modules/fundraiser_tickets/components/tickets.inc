@@ -117,7 +117,7 @@ function theme_fundraiser_tickets_webform_table($variables) {
   // Loop through the element and output the children fields as rows
   foreach (element_children($element) as $id) {
     if ($id == 'fundraiser-tickets-extra-donation'){
-      $last_row = array('data' => array(t('Additional Donation'), '', drupal_render($element[$id]), ''));
+      $last_row = array('data' => array(t('Additional Donation'), '', drupal_render($element[$id]), '',array('data' => '$ 0.00', 'id' => 'fundraiser-tickets-extra-donation-display', 'align' => 'right')));
     } elseif (isset($element[$id]['#extra']['product_id'])){
       $product_wrapper = entity_metadata_wrapper('commerce_product', commerce_product_load($element[$id]['#extra']['product_id']));
       $tickets_available = $product_wrapper->fr_tickets_quantity->value() - $product_wrapper->fr_tickets_quantity_sold->value();
