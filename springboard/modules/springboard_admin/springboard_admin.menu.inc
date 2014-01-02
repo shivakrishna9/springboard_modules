@@ -333,7 +333,7 @@ function springboard_admin_admin_menu_items() {
   );
 
   $items['admin/springboard/tools']['_children']['salesforce'] = array(
-    'link_path' => 'http://salesforce.com',
+    'link_path' => 'http://login.salesforce.com',
     'link_title' => 'Salesforce.com',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
