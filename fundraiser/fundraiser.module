@@ -1851,6 +1851,23 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
 }
 
 /**
+ * Get the first donation ID that matches the given submission ID.
+ *
+ * Be aware that multiple donations may have the same submission ID.
+ * For example, recurring donations will have the initial sid.
+ *
+ * @param int $sid
+ *   The submission ID.
+ *
+ * @return int|bool
+ *   The donation ID, or FALSE.
+ */
+function fundraiser_donation_get_did_by_sid($sid) {
+  return db_query("SELECT MIN(did) FROM {fundraiser_donation} WHERE sid = :sid", array(':sid' => $sid))
+    ->fetchField();
+}
+
+/**
  * Refund donation form functions.
  */
 
