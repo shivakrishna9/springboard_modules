@@ -515,10 +515,27 @@ function fundraiser_tickets_node_view($node, $view_mode, $langcode) {
             break;
 
           default:
-            drupal_set_message('This form is closed.');
+            drupal_set_message(t('This form is closed.'));
+        }
+      } elseif(fundraiser_tickets_is_sold_out($node)){
+        $node_wrapper = entity_metadata_wrapper('node', $node);
+        switch($node_wrapper->fr_tickets_soldout_options->value()){
+
+          case 'message':
+            drupal_set_message($node_wrapper->fr_tickets_soldout_message->value->value(array('sanitize' => TRUE)));
+            break;
+
+          case 'redirect':
+            drupal_goto($node_wrapper->fr_tickets_soldout_redirect->value());
+
+          case 'form':
+            drupal_goto('node/' . $node_wrapper->fr_tickets_waitlist_form->value()->nid);
+            break;
+
+          default:
+            drupal_set_message(t('This form is sold out.'));
         }
       }
-
     }
   }
 
@@ -589,13 +606,13 @@ function fundraiser_tickets_entity_update($entity, $type) {
 function fundraiser_tickets_update_inventory($node_wrapper){
   $ticket_types = $node_wrapper->fr_tickets_ticket_types->value();
   if (is_array($ticket_types)){
-      $initial_tickets = 0;
-      foreach ($ticket_types as $offset => $ticket_level){
-        $ticket_level_wrapper = entity_metadata_wrapper('commerce_product', $ticket_level);
-        $initial_tickets += $ticket_level_wrapper->fr_tickets_quantity->value();
-      }
-      $node_wrapper->fr_tickets_inventory_initial->set($initial_tickets);
-      $node_wrapper->save();
+    $initial_tickets = 0;
+    foreach ($ticket_types as $offset => $ticket_level){
+      $ticket_level_wrapper = entity_metadata_wrapper('commerce_product', $ticket_level);
+      $initial_tickets += $ticket_level_wrapper->fr_tickets_quantity->value();
+    }
+    $node_wrapper->fr_tickets_inventory_initial->set($initial_tickets);
+    $node_wrapper->save();
   }
 }
 
@@ -657,3 +674,21 @@ function fundraiser_tickets_is_closed($node) {
   }
 }
 
+
+/**
+ * Helper function, determine if all tickets for a given ticket page are sold.
+ */
+function fundraiser_tickets_is_sold_out($node) {
+  $sold_out = TRUE;
+  $node_wrapper = entity_metadata_wrapper('node', $node);
+  $ticket_types = $node_wrapper->fr_tickets_ticket_types->value();
+  if (is_array($ticket_types)){
+    foreach ($ticket_types as $offset => $ticket_level){
+      $product_wrapper = entity_metadata_wrapper('commerce_product', $ticket_level);
+      if ($product_wrapper->status->value() == 1 && $product_wrapper->fr_tickets_quantity->value() > $product_wrapper->fr_tickets_quantity_sold->value()){
+        return FALSE;
+      }
+    }
+  }
+  return $sold_out;
+}

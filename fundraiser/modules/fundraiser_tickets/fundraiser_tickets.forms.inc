@@ -43,6 +43,9 @@ function fundraiser_tickets_order_ticket_types_form($form, &$form_state, $node){
       $form['tickets'][$key]['quantity'] = array(
         '#markup' => check_plain($product_wrapper->fr_tickets_quantity->value()),
       );
+      $form['tickets'][$key]['sold'] = array(
+        '#markup' => check_plain($product_wrapper->fr_tickets_quantity_sold->value()),
+      );
       $form['tickets'][$key]['sold_out_message'] = array(
         '#markup' => check_plain($product_wrapper->fr_tickets_sold_out_message->value()),
       );
@@ -92,6 +95,7 @@ function theme_fundraiser_tickets_theme_order_ticket_types_form($vars) {
     'title' => t('Title'),
     'description' => t('Description'),
     'quantity' => t('Quantity'),
+    'sold' => t('Sold'),
     'sold_out_message' => t('Sold out message'),
     'warning' => t('Warning'),
     'edit_link' => t(''),
