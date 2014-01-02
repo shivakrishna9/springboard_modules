@@ -6,3 +6,6 @@ dependencies[] = fundraiser_webform
 version = 7.x-4.x-dev
 
 files[] = tests/form_layout.test
+
+; Always available CSS
+stylesheets[all][] = css/form_layout.css

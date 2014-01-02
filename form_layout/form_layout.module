@@ -267,10 +267,13 @@ function theme_form_layout_region($variables) {
  */
 function form_layout_left_sidebar_display($form, $form_state, $field) {
   // Note that we're intentionally removing other classes here.
-  $field['#attributes']['class'] = array('fieldset');
+  $field['#attributes']['class'] = array('fieldset', 'left-sidebar', 'span3');
   $field['#title'] = '';
   $field['#weight'] = -60;
   $field['#theme_wrappers'][] = 'form_layout_region';
+  // These are closed in the bottom region suffix.
+  $field['#prefix'] = '<div class="both-sidebars"><div class="container"><div class="row"><div class="span12">';
+
   return $field;
 }
 
@@ -284,10 +287,14 @@ function form_layout_left_sidebar_display($form, $form_state, $field) {
  */
 function form_layout_right_sidebar_display($form, $form_state, $field) {
   // Note that we're intentionally removing other classes here.
-  $field['#attributes']['class'] = array('fieldset');
+  $field['#attributes']['class'] = array('fieldset', 'right-sidebar', 'span3');
   $field['#title'] = '';
-  $field['#weight'] = -40;
+  $field['#weight'] = -55;
   $field['#theme_wrappers'][] = 'form_layout_region';
+
+  // Closed in bottom region.
+  $field['#prefix'] = '<div class="middle-right-sidebar">';
+
   return $field;
 }
 
@@ -303,7 +310,7 @@ function form_layout_top_region_display($form, $form_state, $field) {
   // Note that we're intentionally removing other classes here.
   $field['#attributes']['class'] = array('span12', 'fieldset');
   $field['#title'] = '';
-  $field['#prefix'] = '<div class="row">';
+  $field['#prefix'] = '<div class="center-area"><div class="row">';
   $field['#suffix'] = '</div>';
   $field['#weight'] = -50;
   $field['#theme_wrappers'][] = 'form_layout_region';
@@ -346,6 +353,7 @@ function form_layout_right_region_display($form, $form_state, $field) {
   $field['#title'] = '';
 
   // This div was opened before the left region.
+  // row
   $field['#suffix'] = '</div>';
 
   $field['#weight'] = -48;
@@ -367,7 +375,23 @@ function form_layout_bottom_region_display($form, $form_state, $field) {
   $field['#attributes']['class'] = array('span12', 'fieldset');
   $field['#title'] = '';
   $field['#prefix'] = '<div class="row">';
+
+  // Closes row
   $field['#suffix'] = '</div>';
+
+  // Closes center-area
+  $field['#suffix'] .= '</div>';
+
+  // Closes middle-right-sidebar.
+  $field['#suffix'] .= '</div>';
+
+  // These divs are opened in left sidebar prefix.
+  // span12, row, container
+  $field['#suffix'] .= '</div></div></div>';
+
+  // Closes both-sidebars
+  $field['#suffix'] .= '</div>';
+
   $field['#weight'] = -47;
 
   $field['#theme_wrappers'][] = 'form_layout_region';

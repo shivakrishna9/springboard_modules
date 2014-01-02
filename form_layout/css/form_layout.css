@@ -1,0 +1,34 @@
+form .left-sidebar {
+  float: left;
+  min-height: 600px;
+}
+
+form .right-sidebar {
+  float: right;
+  min-height: 600px;
+}
+
+.both-sidebars [class*="span"],
+.both-sidebars .row {
+  margin-left: 0;
+}
+
+.center-area {
+  overflow: hidden;
+}
+
+.middle-right-sidebar {
+  overflow: hidden;
+}
+
+form .both-sidebars .center-area .span12 {
+  width: 100%;
+  clear: both;
+  min-height: 200px;
+}
+
+form .both-sidebars .center-area .span6 {
+  width: 50%;
+  clear: none;
+  min-height: 200px;
+}
