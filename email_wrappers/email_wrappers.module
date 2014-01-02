@@ -171,7 +171,7 @@ function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state,
       '#title' => t('BCC addresses'),
       '#description' => t('BCC the following email addresses when an email is sent. Addresses must be separated by a comma. Example: test1#example.com,test2@example.com.'),
       '#weight' => 7,
-      '#value' => isset($defaults['bcc_email']) ? $defaults['bcc_email'] : '',
+      '#default_value' => isset($defaults['bcc_email']) ? $defaults['bcc_email'] : '',
     );
 
     // Throw some defaults at webform's built in templating system since it's being overridden anyway.
@@ -344,7 +344,9 @@ function email_wrappers_mail($key, &$message, $params) {
     $eid = $params['email']['eid'];
     $nid = $params['email']['nid'];
     $settings = $params['settings'];
-    $message['headers']['Bcc'] = $settings['bcc_email'];
+    if (isset($settings['bcc_email'])) {
+      $message['headers']['Bcc'] = $settings['bcc_email'];
+    }
     $message['params']['boundary'] = '----=_NextPart_' . md5(uniqid());
     $message['headers']['MIME-version'] = '1.0';
     $message['headers']['Content-Type'] = 'multipart/alternative; boundary="' . $message['params']['boundary'] . '"';
