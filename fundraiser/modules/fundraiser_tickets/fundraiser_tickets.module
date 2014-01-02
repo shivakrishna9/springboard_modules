@@ -72,6 +72,9 @@ function fundraiser_tickets_theme($existing, $type, $theme, $path) {
     'fundraiser_tickets_webform_table' => array(
       'render element' => 'element',
     ),
+    'fundraiser_tickets_warning_indicator' => array(
+      'variables' => array('warning_message' => NULL),
+    ),
   );
   return $theme;
 }
@@ -299,6 +302,7 @@ function fundraiser_tickets_fundraiser_commerce_generate_line_items($donation, $
           TRUE
         );
         commerce_line_item_save($line_item);
+        _fundraiser_tickets_update_quantity_sold($product_wrapper, $quantity);
         $order_wrapper->commerce_line_items[] = $line_item;
       } elseif ($key == 'fundraiser-tickets-extra-donation'){
         $amount = $quantity;
@@ -332,6 +336,11 @@ function fundraiser_tickets_fundraiser_commerce_generate_line_items($donation, $
   }
 }
 
+
+function _fundraiser_tickets_update_quantity_sold($product_wrapper, $quantity){
+  $product_wrapper->fr_tickets_quantity_sold->set($product_wrapper->fr_tickets_quantity_sold->value() + $quantity);
+  $product_wrapper->save();
+}
 
 /**
 * Afterbuild function to add fieldsets to the tickets tab
@@ -527,6 +536,7 @@ function fundraiser_tickets_form_commerce_product_ui_product_form_alter(&$form, 
   if ($product->type == 'fundraiser_ticket'){
     $form['sku']['#access'] = FALSE;
     $form['fr_tickets_weight']['#access'] = FALSE;
+    $form['fr_tickets_quantity_sold']['#access'] = FALSE;
     $form['#validate'][] = 'fundraiser_tickets_form_commerce_product_ui_product_form_validate';
   }
 }
@@ -552,12 +562,12 @@ function fundraiser_tickets_entity_insert($entity, $type) {
   if ($type == 'commerce_product' && $entity->type =='fundraiser_ticket'){
     $destination = drupal_get_destination();
     preg_match('/node\/(\\d+)\/tickets\/tickets/' , $destination['destination'], $matches);
-    if ($matches[1]){
+    if (isset($matches[1])){
       $node_wrapper = entity_metadata_wrapper('node', node_load($matches[1]));
+      $node_wrapper->fr_tickets_ticket_types[] = $entity->product_id;
+      $node_wrapper->save();
+      fundraiser_tickets_update_inventory($node_wrapper);
     }
-    $node_wrapper->fr_tickets_ticket_types[] = $entity->product_id;
-    $node_wrapper->save();
-    fundraiser_tickets_update_inventory($node_wrapper);
   }
 }
 
@@ -565,10 +575,10 @@ function fundraiser_tickets_entity_update($entity, $type) {
   if ($type == 'commerce_product' && $entity->type =='fundraiser_ticket'){
     $destination = drupal_get_destination();
     preg_match('/node\/(\\d+)\/tickets\/tickets/' , $destination['destination'], $matches);
-    if ($matches[1]){
+    if (isset($matches[1])){
       $node_wrapper = entity_metadata_wrapper('node', node_load($matches[1]));
+      fundraiser_tickets_update_inventory($node_wrapper);
     }
-    fundraiser_tickets_update_inventory($node_wrapper);
   }
 }
 

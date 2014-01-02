@@ -51,12 +51,19 @@ function _webform_render_tickets($component, $value = NULL, $filter = TRUE) {
       // Loop through the element and output the children fields as rows
       foreach ($ticket_types as $i => $ticket_type) {
         $product_wrapper = entity_metadata_wrapper('commerce_product', $ticket_type);
+        if ($product_wrapper->status->value() == FALSE){
+          continue;
+        }
+        $tickets_available = $product_wrapper->fr_tickets_quantity->value() - $product_wrapper->fr_tickets_quantity_sold->value();
         $id = $product_wrapper->product_id->value();
         $item = array();
         $item['#type'] = 'select';
         $item['#id'] = 'product-' . $id . '-ticket-quant';
         $item['#extra']['product_id'] =  $id;
-        $item['#options'] = range(0,50);
+        $item['#options'] = range(0,($tickets_available < 50 ? $tickets_available : 50));
+        if (! $tickets_available){
+          $item['#disabled'] = TRUE;
+        }
         $item['#title'] = '';
         $element[$item['#id']] = $item;
       }
@@ -113,13 +120,16 @@ function theme_fundraiser_tickets_webform_table($variables) {
       $last_row = array('data' => array(t('Additional Donation'), '', drupal_render($element[$id]), ''));
     } elseif (isset($element[$id]['#extra']['product_id'])){
       $product_wrapper = entity_metadata_wrapper('commerce_product', commerce_product_load($element[$id]['#extra']['product_id']));
+      $tickets_available = $product_wrapper->fr_tickets_quantity->value() - $product_wrapper->fr_tickets_quantity_sold->value();
       $row  = array();
       $title = check_plain($product_wrapper->title->value()) . ' (' . commerce_currency_format($product_wrapper->commerce_price->amount->value(), $product_wrapper->commerce_price->currency_code->value(), $product_wrapper) . ')';
       $ticket_prices[$product_wrapper->product_id->value()] = $product_wrapper->commerce_price->amount->value() / 100;
-      $description = check_plain($product_wrapper->fr_tickets_description->value());
+      $description = $tickets_available ? check_plain($product_wrapper->fr_tickets_description->value()) : check_plain($product_wrapper->fr_tickets_sold_out_message->value());
+      $warning_message = $tickets_available > 0 && $tickets_available < $product_wrapper->fr_tickets_threshold->value() ? theme('fundraiser_tickets_warning_indicator', array('warning_message' =>t("Only @tickets remaining!", array('@tickets' => format_plural($tickets_available, '1 ticket', '@count tickets'))))) : NULL;
+
       // Add a div to contain the ticket total
       $ticket_total = array('data' => '$ 0.00', 'class' => 'fundraiser-ticket-type-total', 'id' => 'product-' . $element[$id]['#extra']['product_id'] . '-tickets-total', 'align' => 'right');
-      $row['data'] = array($title, $description, array('data'=> drupal_render($element[$id]), 'align' => 'right'), $ticket_total);
+      $row['data'] = array($title, $description, array('data'=> drupal_render($element[$id]), 'align' => 'right'), $warning_message, $ticket_total);
       $rows[] = $row;
     }
   }
@@ -127,8 +137,8 @@ function theme_fundraiser_tickets_webform_table($variables) {
   $rows[] = $last_row;
 
   // Add a row to contain our totals
-  $rows[] = array('data' => array(t('Totals'), '', array('data' => 0, 'id' => 'fundraiser-tickets-total-quant', 'align' => 'right'), array('data' => '$ 0.00', 'id' => 'fundraiser-tickets-total-cost', 'align' => 'right')));
-  $header = array(t('Type'), '', array('data' => t('Quantity'), 'align' => 'right'), array('data' => t('Amount'), 'align' => 'right'));
+  $rows[] = array('data' => array(t('Totals'), '', array('data' => 0, 'id' => 'fundraiser-tickets-total-quant', 'align' => 'right'), '', array('data' => '$ 0.00', 'id' => 'fundraiser-tickets-total-cost', 'align' => 'right')));
+  $header = array(t('Type'), '', array('data' => t('Quantity'), 'align' => 'right'), '', array('data' => t('Amount'), 'align' => 'right'));
  // $attributes = array('class' => $element['#attributes']['class'], 'id' => $id, 'width' => '100%');
 
   // Add the JS for the settings too
@@ -142,3 +152,9 @@ function theme_fundraiser_tickets_webform_table($variables) {
   $output = drupal_render($table);
   return $output;
 }
+
+function theme_fundraiser_tickets_warning_indicator($vars){
+  return '*' . $vars['warning_message'] . '*';
+}
+
+
