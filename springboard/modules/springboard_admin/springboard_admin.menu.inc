@@ -341,5 +341,14 @@ function springboard_admin_admin_menu_items() {
     'customized' => 1,
     'weight' => 1,
   );
+  
+  $items['admin/springboard/tools']['_children']['logout'] = array(
+    'link_path' => 'user/logout',
+    'link_title' => 'Logout',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 2,
+  );
   return $items;
 }

@@ -73,6 +73,29 @@ function springboard_admin_form_springboard_admin_settings_alter(&$form, &$form_
     '#description' => t('Force the use of the springboard_backend theme on all Springboard-related administrative pages. The administrative theme set at admin/appearence will still be used for other Drupal administrative pages.'),
     '#default_value' => variable_get('springboard_theme_enable', 1)
    );
+   $roles = user_roles(TRUE, 'access springboard dashboard');
+   $form['admin']['springboard_login_redirect_roles'] = array(
+     '#type' => 'checkboxes',
+     '#title' => t('User roles to redirect on login.'),
+     '#description' => t('Choose which user roles will be redirected to the Springboard Dashboard upon login.'),
+     '#options' => $roles,
+     '#default_value' => variable_get('springboard_login_redirect_roles', array_keys($roles))
+    );
+  }
+}
+
+function springboard_admin_user_login(&$edit, $account) {
+  if (!isset($_POST['form_id']) || $_POST['form_id'] != 'user_pass_reset') {
+    $available_roles = user_roles(TRUE, 'access springboard dashboard');
+    $redirect_roles = variable_get('springboard_login_redirect_roles', array_keys($available_roles));
+    // Check if the user has ones of the roles that gets redirected to the Sprinboard dashboard
+    foreach($account->roles as $rid => $assigned_role) {
+      // If any role matches, change the redirect and end the function.
+      if($assigned_role && in_array($rid, $redirect_roles)) {
+        $edit['redirect'] = 'admin/springboard';
+      return;
+      }
+    }
   }
 }
 
