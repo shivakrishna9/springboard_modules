@@ -322,9 +322,9 @@ function springboard_admin_admin_menu_items() {
     '_children' => array(),
   );
 
-  $items['admin/springboard/tools']['_children']['drupal'] = array(
+  $items['admin/springboard/tools']['_children']['website'] = array(
     'link_path' => 'http://drupal.org',
-    'link_title' => 'Drupal',
+    'link_title' => 'Your Website',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
     'external' => 1,
