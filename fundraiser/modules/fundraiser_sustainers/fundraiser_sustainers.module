@@ -1245,7 +1245,7 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
     }
   }
 
-  // Remove unnessecary values.
+  // Remove unnecessary values.
   unset($submission_fields['master_did']);
   unset($submission_fields['uid']);
   $update_billing = TRUE;
@@ -1896,7 +1896,7 @@ function _fundraiser_sustainers_get_donations_recurr_processed($master_did) {
  *   Number of sustainer rows with the given master donation ID.
  */
 function fundraiser_sustainers_count_donations_in_series($master_did) {
-  return db_query('SELECT count(*) FROM {fundraiser_sustainers}
+  return db_query('SELECT COUNT(*) FROM {fundraiser_sustainers}
     WHERE master_did = :did', array(':did' => $master_did))->fetchField();
 }
 
