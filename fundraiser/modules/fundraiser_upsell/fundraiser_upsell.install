@@ -8,6 +8,7 @@
  * Implements hook_install().
  */
 function fundraiser_upsell_install() {
+  // @todo Why do we need to mess with the weight?
   db_query("UPDATE {system} SET weight = 5 WHERE name = 'fundraiser_upsell'");
 
   // Set the default content.
