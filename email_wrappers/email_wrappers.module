@@ -172,6 +172,11 @@ function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state,
       '#description' => t('BCC the following email addresses when an email is sent. Addresses must be separated by a comma. Example: test1#example.com,test2@example.com.'),
       '#weight' => 7,
       '#default_value' => isset($defaults['bcc_email']) ? $defaults['bcc_email'] : '',
+      '#states' => array(
+        'visible' => array(
+        ':input[name="email_wrappers_email_template"]' => array('!value' => '0'),
+        ),
+      ),
     );
 
     // Throw some defaults at webform's built in templating system since it's being overridden anyway.
