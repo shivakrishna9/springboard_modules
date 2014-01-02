@@ -24,11 +24,9 @@ form .right-sidebar {
 form .both-sidebars .center-area .span12 {
   width: 100%;
   clear: both;
-  min-height: 200px;
 }
 
 form .both-sidebars .center-area .span6 {
   width: 50%;
   clear: none;
-  min-height: 200px;
 }
