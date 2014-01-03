@@ -119,8 +119,8 @@ function fundraiser_upsell_admin_thank_you_submit($form, $form_state) {
  * Button submit callback, triggers mail send when clicked.
  */
 function fundraiser_upsell_send_test($form, $form_state) {
-  // @todo When sending a test email we don't have an $order
-  $order = NULL;
+  // @todo When sending a test email we don't have a donation.
+  $donation = NULL;
   // Run it through the normal submit functions to save values.
   email_wrappers_mail_form_submit($form, $form_state);
   fundraiser_upsell_admin_thank_you_submit($form, $form_state);
@@ -135,17 +135,17 @@ function fundraiser_upsell_send_test($form, $form_state) {
   // Modify the messages to replace tokens.
   $mail->subject = token_replace($mail->subject, array(
       'global' => NULL,
-      'order' => $order,
+      'donation' => $donation,
       'domain' => NULL,
     ));
   $mail->html_message = token_replace($mail->html_message, array(
       'global' => NULL,
-      'order' => $order,
+      'donation' => $donation,
       'domain' => NULL,
     ));
   $mail->text_message = token_replace($mail->text_message, array(
       'global' => NULL,
-      'order' => $order,
+      'donation' => $donation,
       'domain' => NULL,
     ));
   email_wrappers_send_mail($mail, $params);
