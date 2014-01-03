@@ -386,32 +386,27 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
   $master_donation = fundraiser_upsell_copy_donation($donation, 'pending_future_payment', $amount);
 
   // Create the recurring donation series.
-  // @todo Faking the result.  Hook this back up later.
-  $success = TRUE;
-  // $success = fundraiser_upsell_create_recurring($master_order);
+  $success = fundraiser_upsell_create_recurring_series($master_donation);
   // Grab and process the thank you content if successful.
   if ($success) {
     // Add the campaign id to all recurring orders.
     if (!empty($campaign_id)) {
-      // @todo Add this back in.
-//      fundraiser_upsell_set_recurring_campaigns($master_order->order_id, $campaign_id);
-//      $master_order->data['campaign_id'] = $campaign_id;
+      fundraiser_upsell_set_recurring_campaigns($master_donation->did, $campaign_id);
+      // @todo This might not be the right place.
+      $master_donation->order->data['campaign_id'] = $campaign_id;
     }
 
     // Mark this order as an upsell.
-    // @todo Add this back in.
-//    $master_order->data['upsell'] = TRUE;
-//    commerce_order_save($master_order);
+    // @todo This might not be the correct place.
+    $master_donation->order->data['upsell'] = TRUE;
+    commerce_order_save($master_donation->order);
 
     fundraiser_upsell_set_acceptance_cookie();
 
     // Send the thank you message.
-//    module_load_include('inc', 'fundraiser_upsell', 'includes/fundraiser_upsell.mail');
+    module_load_include('inc', 'fundraiser_upsell', 'includes/fundraiser_upsell.mail');
 
-    // @todo Eventually we'll need a node here in order to get the thankyou
-    // mail text when we do per node email wrappers settings.
-    // Currently using the master order for token replacements.
-//    fundraiser_upsell_send_thank_you($master_order);
+    fundraiser_upsell_send_thank_you($master_donation);
 
     // Generate the thank you content.
     $raw_content = $master_donation->node->fundraiser_upsell['thankyou'];
@@ -429,23 +424,25 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
 /**
  * Convert the single donation into a recurring donation.
  *
- * @param object $order
- *   The order that will become the master order in the sustainer series.
+ * @param object $donation
+ *   The donation that will become the master donation in the sustainer series.
  *
  * @return bool
  *   TRUE on successful creation of sustainers in the series.
  *
  */
-function fundraiser_upsell_create_recurring($order) {
+function fundraiser_upsell_create_recurring_series($donation) {
   // Since this is decoupled, we need to set the start date to ensure that we
   // advance the future orders by one month.
-  $date_to_start = $order->data['date_to_start'];
-  unset($order->data['date_to_start']);
+  // @todo Figure out where to get this out of the donation.
+  $date_to_start = $donation->order->data['date_to_start'];
+  unset($donation->order->data['date_to_start']);
   // Create the recurring orders.
-  // @todo This function doesn't exist. Refactor.
-  fundraiser_create_future_orders($order->order_id, NULL, $date_to_start);
+  // @todo Get end month and year out of the donation gateway.
+  _fundraiser_sustainers_create_future_orders($donation, $month, $year, $date_to_start);
   // Set the master id to show it's recurring.
-  db_query("UPDATE {fundraiser_webform_order} SET recurring_status = 1 WHERE order_id = %d", $order->order_id);
+  // @todo What replaced this table in sb4?
+  // db_query("UPDATE {fundraiser_webform_order} SET recurring_status = 1 WHERE order_id = %d", $order->order_id);
 
   if (fundraiser_upsell_check_recurring($order->order_id)) {
     return TRUE;

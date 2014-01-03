@@ -158,6 +158,8 @@ function fundraiser_upsell_send_thank_you($donation) {
   $to_email = $donation->donation['mail'];
   $to_name = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
   module_load_include('inc', 'email_wrappers', 'email_wrappers.api');
+  // @todo Eventually use node specific form, so we'll use $donation->nid
+  //   as part of the delta.
   $params = array(
     'name' => 'email_admin_form',
     'module' => 'fundraiser_upsell',
