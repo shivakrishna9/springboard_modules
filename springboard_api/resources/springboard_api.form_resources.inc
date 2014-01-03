@@ -28,14 +28,18 @@ function springboard_api_form_resource_retrieve($nid, $op = NULL) {
  *
  *
  */
-function springboard_api_form_resource_index() {
-
+function springboard_api_form_resource_index($node_type = NULL) {
   $form_types = variable_get('webform_node_types', array());
   $form_select = db_select('node', 'n');
   $form_select->fields('n', array('nid', 'type', 'title'));
   $form_select->leftJoin('field_data_field_fundraiser_internal_name', 'f', 'n.nid = f.entity_id');
   $form_select->addExpression("COALESCE(f.field_fundraiser_internal_name_value, '')",'internal_name');
-  $form_select->condition('type', $form_types, 'in');
+  if ($node_type && in_array($node_type, $form_types)) {
+    $form_select->condition('type', $node_type, '=');
+  }
+  else {
+    $form_select->condition('type', $form_types, 'in');
+  }
   $results = $form_select->execute();
   return $results->fetchAll();
 
