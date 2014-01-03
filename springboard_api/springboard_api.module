@@ -297,7 +297,9 @@ function springboard_api_get_form_details($nid) {
 }
 
 function _springboard_api_parse_component_fapi(&$save, $fapi) {
-  dsm($fapi, 'fapi');
+  if ($fapi['#type'] == 'date') {
+    $fapi = form_process_date($fapi);
+  }
   $save = array(
     'label' => isset($fapi['#title']) ? $fapi["#title"] : '',
     'type' => isset($fapi['#type']) ? $fapi['#type'] : '',
