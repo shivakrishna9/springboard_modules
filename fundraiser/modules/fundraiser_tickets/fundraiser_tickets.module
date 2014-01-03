@@ -541,6 +541,32 @@ function fundraiser_tickets_node_view($node, $view_mode, $langcode) {
 
 }
 
+/**
+ * Implements hook_clone_node_alter().
+ */
+function fundraiser_tickets_clone_node_alter(&$node, $context) {
+  if (fundraiser_tickets_is_ticket_type($context['original_node']->type)) {
+    // We want to associated cloned pages with new products
+    //  and reset the sold ticket count.
+    $node_wrapper = entity_metadata_wrapper('node', $node);
+    $ticket_types = $node_wrapper->fr_tickets_ticket_types->value();
+    if (is_array($ticket_types)){
+      $new_ticket_types = array();
+      foreach ($ticket_types as $offset => $ticket_type){
+        $new_ticket_type = clone $ticket_type;
+        $new_ticket_type->sku .= '-1';
+        $new_ticket_type->product_id = FALSE;
+        $new_ticket_type->revision_id = FALSE;
+        $new_ticket_type->is_new = TRUE;
+        $new_ticket_type->fr_tickets_quantity_sold[LANGUAGE_NONE][0] = 0;
+        commerce_product_save($new_ticket_type);
+        $new_ticket_types[] = $new_ticket_type;
+      }
+      $node_wrapper->fr_tickets_ticket_types->set($new_ticket_types);
+    }
+  }
+}
+
 
 
 /**

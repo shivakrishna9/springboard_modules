@@ -10,6 +10,7 @@ dependencies[] = commerce_product_ui
 dependencies[] = entityreference
 dependencies[] = date
 dependencies[] = date_popup
+dependencies[] = node_clone
 version = 7.x-4.x-dev
 ;Testing files
 files[] = tests/fundraiser_tickets.test
