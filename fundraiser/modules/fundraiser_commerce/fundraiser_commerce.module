@@ -1391,10 +1391,8 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
       $scrubbed_fields = $donation->gateway['scrub callback']($scrubbed_fields, $donation->donation['payment_method']);
     }
 
+    // Add the fields to the data array
     $donation->data['payment_fields'] = $scrubbed_fields;
-
-    // Save this in the order's data array
-    $order->data['fundraiser_commerce'] = _fundraiser_commerce_order_data_prepare($donation->data);
   }
 
   // Add the status data.
@@ -1403,6 +1401,9 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
     $donation->status_label = _fundraiser_commerce_get_label_by_status($order->status);
     $donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->status);
   }
+
+  // Save the updated data array to the order's data column
+  $order->data['fundraiser_commerce'] = _fundraiser_commerce_order_data_prepare($donation->data);
 
   // Save the order
   commerce_order_save($order);
