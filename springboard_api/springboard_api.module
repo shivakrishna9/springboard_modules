@@ -4,9 +4,12 @@
  * @file
  * Integrates Springboard with Services.
  */
-
+/**
+ * Implements hook_init().
+ *
+ * Add support for CORS headers.
+ */
 function springboard_api_init() {
-  dsm($_SERVER, 'server');
   $method = $_SERVER['REQUEST_METHOD'];
   if (isset($_SERVER['HTTP_ORIGIN'])) {
     drupal_add_http_header('Access-Control-Allow-Origin', $_SERVER['HTTP_ORIGIN']);
@@ -368,7 +371,6 @@ function _springboard_api_get_payment_field_info($component) {
   if (is_array($payment_methods)) {
     foreach ($payment_methods as $type => $gateway_details) {
       $gateway = _fundraiser_gateway_info($gateway_details['id']);
-      dsm($gateway, 'gateway');
       if (isset($gateway['field info callback']) && function_exists($gateway['field info callback'])) {
         $func = $gateway['field info callback'];
         $field_info = $func();
