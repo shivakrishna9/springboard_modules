@@ -1863,3 +1863,26 @@ function fundraiser_commerce_commerce_paypal_ipn_process($order, $payment_method
   // Finish up the submission to kick off success / decline triggers.
   _fundraiser_donation_submit_after_process($donation);
 }
+
+/**
+ * Given a donation, determine when the payment method expires.
+ *
+ * @param object $donation
+ *   The donation object.
+ *
+ * @return NULL|array
+ *   An array with 'month' and 'year' keys.
+ */
+function fundraiser_commerce_get_payment_method_expiration_date_from_donation($donation) {
+  if (isset($donation->gateway['expire callback'])) {
+    $expiration_func = $donation->gateway['expire callback'];
+    if (function_exists($expiration_func)) {
+      $expires = $expiration_func($donation->donation);
+      if (isset($expires['month']) && isset($expires['year'])) {
+        return $expires;
+      }
+    }
+  }
+
+  return NULL;
+}
