@@ -5,10 +5,27 @@
  * Integrates Springboard with Services.
  */
 
+function springboard_api_init() {
+  dsm($_SERVER, 'server');
+  $method = $_SERVER['REQUEST_METHOD'];
+  if (isset($_SERVER['HTTP_ORIGIN'])) {
+    drupal_add_http_header('Access-Control-Allow-Origin', $_SERVER['HTTP_ORIGIN']);
+  }
+ if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'])) {
+    drupal_add_http_header('Access-Control-Allow-Headers', $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']);
+  }
+  if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD'])) {
+    drupal_add_http_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  }
+  if ($method == 'OPTIONS') {
+    exit;
+  }
+}
+
 /**
  * Implements hook_permission().
  */
-function hook_permission() {
+function springboard_api_permission() {
   return array(
     'administer springboard api' => array(
       'title' => t('Administer Springboard API'),
