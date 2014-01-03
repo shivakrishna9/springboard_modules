@@ -279,7 +279,6 @@ function _webform_goals_boots() {
       $data['data'] = 'null';
     }
     $data = json_encode($data);
-    dsm($data, 'loader data');
   }
 }
 */
