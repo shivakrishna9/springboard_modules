@@ -266,13 +266,15 @@ function theme_form_layout_region($variables) {
  *   The modified field array.
  */
 function form_layout_left_sidebar_display($form, $form_state, $field) {
+  $sidebar_class = form_layout_get_sidebar_class_name($form['#node']);
   // Note that we're intentionally removing other classes here.
   $field['#attributes']['class'] = array('fieldset', 'left-sidebar', 'span3');
   $field['#title'] = '';
   $field['#weight'] = -60;
   $field['#theme_wrappers'][] = 'form_layout_region';
   // These are closed in the bottom region suffix.
-  $field['#prefix'] = '<div class="both-sidebars"><div class="container"><div class="row"><div class="span12">';
+  $field['#prefix'] = '<div class="' . $sidebar_class . '">';
+  $field['#prefix'] .= '<div class="container"><div class="row"><div class="span12">';
 
   return $field;
 }
@@ -680,4 +682,61 @@ function form_layout_get_node_layout($nid) {
   }
 
   return array();
+}
+
+/**
+ * Determines which sidebar class name to use.
+ *
+ * @param object $node
+ *   The webform node object.
+ *
+ * @return string
+ *   The CSS class name.
+ */
+function form_layout_get_sidebar_class_name($node) {
+  $sidebar_cids = form_layout_get_sidebar_cids($node);
+  $has_content = array(
+    'left_sidebar' => FAlSE,
+    'right_sidebar' => FALSE,
+  );
+  foreach ($node->webform['components'] as $component) {
+    foreach ($sidebar_cids as $form_key => $cid) {
+      if ($component['pid'] == $cid) {
+        $has_content[$form_key] = TRUE;
+      }
+    }
+  }
+
+  if ($has_content['left_sidebar'] && $has_content['right_sidebar']) {
+    return 'both-sidebars';
+  }
+  elseif ($has_content['left_sidebar'] || $has_content['right_sidebar']) {
+    return 'single-sidebar';
+  }
+
+  return '';
+}
+
+/**
+ * Gets the component IDs of the left and right sidebar fieldsets.
+ *
+ * @param object $node
+ *   Webform node.
+ *
+ * @return array
+ *   An array of webform component IDs, keyed by form_key
+ */
+function form_layout_get_sidebar_cids($node) {
+  $cids = array();
+  foreach ($node->webform['components'] as $component) {
+    if (in_array($component['form_key'], array('left_sidebar', 'right_sidebar'))) {
+      $cids[$component['form_key']] = $component['cid'];
+
+      if (count($cids) == 2) {
+        return $cids;
+      }
+    }
+  }
+
+  return $cids;
 }
