@@ -297,7 +297,6 @@ function fundraiser_upsell_donation_form($form, &$form_state, $did = NULL, $prev
   // Build the form.
   $form = array();
 
-  // @todo Possibly get the currency symbol from the order?
   $form['amount'] = array(
     '#title' => t('Monthly donation'),
     '#type' => 'textfield',
@@ -344,9 +343,9 @@ function fundraiser_upsell_donation_form($form, &$form_state, $did = NULL, $prev
 /**
  * Submission callback function for the modal upsell form.
  *
- * Does some error checking, clones the original order, uses the cloned order
- * to create a sustainer series, sets acceptance cookie, sends thankyou email,
- * and returns the content for the thankyou modal.
+ * Does some error checking, clones the original donation, uses the cloned
+ * donation to create a sustainer series, sets acceptance cookie,
+ * sends thankyou email, and returns the content for the thankyou modal.
  *
  * @param array $data
  *   The submitted upsell form data.
@@ -364,7 +363,7 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
   $different_user = ($user->uid != $donation->uid) ? TRUE : FALSE;
   // If the donation is already recurring, then stop.
   if ($is_recurring) {
-    watchdog('fundraiser_upsell', 'Upsell failed - order %oid is already recurring.', array('%oid' => $donation->did), WATCHDOG_NOTICE);
+    watchdog('fundraiser_upsell', 'Upsell failed - Donation %did is already part of a recurring series.', array('%did' => $donation->did), WATCHDOG_NOTICE);
     return 'This is already a recurring donation. Thank you.';
   }
   // If the user is different then stop - skip anon users because we don't know.
@@ -375,32 +374,28 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
       '%donation_uid' => $donation->uid,
     );
     watchdog('fundraiser_upsell', 'Upsell user doesn\'t match the donation %did user. Upsell uid is %upsell_uid and Donation uid is %donation_uid', $replacements, WATCHDOG_NOTICE);
-    return 'There was a problem processing your order. Please try again.';
+    return 'There was a problem processing your Donation. Please try again.';
   }
 
   // Here we need to clone the original donation but with a future next_charge
   // date and a different amount.
   // Then use that as the master donation to create a recurring series.
-  // @todo Should we be cloning the order or the donation?
-  // I'm leaning towards donation.
   $master_donation = fundraiser_upsell_copy_donation($donation, 'pending_future_payment', $amount);
 
   // Create the recurring donation series.
   $success = fundraiser_upsell_create_recurring_series($master_donation);
+
+  // Mark this donation as an upsell.
+  $master_donation->data['upsell'] = TRUE;
+
   // Grab and process the thank you content if successful.
   if ($success) {
-    // Add the campaign id to all recurring orders.
+    // Add the campaign id to all recurring donations.
     if (!empty($campaign_id)) {
-      fundraiser_upsell_set_recurring_campaigns($master_donation->did, $campaign_id);
-      // @todo This might not be the right place.
-      $master_donation->order->data['campaign_id'] = $campaign_id;
+      // @todo Fix this.
+      // fundraiser_upsell_set_recurring_campaigns($master_donation->did, $campaign_id);
+      $master_donation->data['campaign_id'] = $campaign_id;
     }
-
-    // Mark this order as an upsell.
-    // @todo This might not be the correct place.
-    $master_donation->order->data['upsell'] = TRUE;
-    commerce_order_save($master_donation->order);
-
     fundraiser_upsell_set_acceptance_cookie();
 
     // Send the thank you message.
@@ -415,7 +410,7 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
   }
   else {
     watchdog('fundraiser_upsell', 'Upsell failed for the original donation %did.', array('%did' => $donation->did), WATCHDOG_NOTICE);
-    return 'There was a problem processing your order. Please try again.';
+    return 'There was a problem processing your donation. Please try again.';
   }
 
   return $content;
@@ -433,19 +428,18 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
  */
 function fundraiser_upsell_create_recurring_series($donation) {
   // Since this is decoupled, we need to set the start date to ensure that we
-  // advance the future orders by one month.
-  // @todo Figure out where to get this out of the donation.
-  $date_to_start = $donation->order->data['date_to_start'];
-  unset($donation->order->data['date_to_start']);
-  // Create the recurring orders.
-  // @todo Get end month and year out of the donation gateway.
-  _fundraiser_sustainers_create_future_orders($donation, $month, $year, $date_to_start);
-  // Set the master id to show it's recurring.
-  // @todo What replaced this table in sb4?
-  // db_query("UPDATE {fundraiser_webform_order} SET recurring_status = 1 WHERE order_id = %d", $order->order_id);
+  // advance the future donations by one month.
+  $date_to_start = $donation->data['date_to_start'];
 
-  if (fundraiser_upsell_check_recurring($order->order_id)) {
-    return TRUE;
+  // Create the recurring donations.
+  // Get the expiration month and year out of the payment gateway.
+  $expires = fundraiser_commerce_get_payment_method_expiration_date_from_donation($donation);
+  if (!empty($expires)) {
+    _fundraiser_sustainers_create_future_orders($donation, $expires['month'], $expires['year'], $date_to_start);
+
+    if (fundraiser_upsell_check_recurring($donation->did)) {
+      return TRUE;
+    }
   }
 
   return FALSE;
@@ -810,8 +804,8 @@ function fundraiser_upsell_ajax_process($node) {
   }
   // Check the form token to be sure this is a valid callback.
   elseif (!drupal_valid_token($data['form_token'], $data['form_id'], TRUE)) {
-    watchdog('fundraiser_upsell', 'Upsell order %oid failed because of an invalid form token.', array('%oid' => $order->order_id), WATCHDOG_NOTICE);
-    $content = t('There was a problem with your order. Please try again');
+    watchdog('fundraiser_upsell', 'Upsell donation %did failed because of an invalid form token.', array('%did' => $data['did']), WATCHDOG_NOTICE);
+    $content = t('There was a problem with your donation. Please try again');
   }
   else {
     $content = fundraiser_upsell_upsell_ajax_submit($data);
@@ -852,32 +846,6 @@ function fundraiser_upsell_should_display_modal() {
 
   // No cookies OR debug is on, then we should display the upsell.
   return ((!$rejection && !$acceptance) || $debug);
-}
-
-/**
- * Generate the order object from the sid.
- *
- * @param int $sid
- *   Submission ID.
- *
- * @return object
- *   The order.
- */
-function fundraiser_upsell_get_order_by_sid($sid = NULL) {
-  // Return empty object if no sid.
-  if (empty($sid)) {
-    return new stdClass();
-  }
-  // Otherwise look up and load the order object.
-  $donation = db_query("
-    SELECT *
-    FROM {fundraiser_donation} AS fd, {fundraiser_upsell} AS fu
-    WHERE fd.sid = :sid
-    AND fd.nid = fu.nid", array(':sid' => $sid))->fetchAssoc();
-  $order = commerce_order_load($donation['did']);
-  // Add the donation & upsell info.
-  $order->upsell = $donation;
-  return $order;
 }
 
 /**
@@ -949,10 +917,7 @@ function fundraiser_upsell_find_suggested_amount($amount) {
 function fundraiser_upsell_copy_donation($donation, $new_status = 'pending_future_payment', $new_amount = '') {
 
   $new_donation = clone $donation;
-  // @todo Do we want to set the sid to 0?
-  // This upsold donation technically isn't submitted by a webform.
-  // Sustainers set recurring donations to a zero sid.
-  //  $new_donation->sid = 0; // Not actually submitted, it's automated, so no sid.
+
   // Create the new donation object, but do not process it.
   // New donation has all of the old donation information already loaded.
   // Also creates a new order to along with the donation.
@@ -981,68 +946,28 @@ function fundraiser_upsell_copy_donation($donation, $new_status = 'pending_futur
 //      $sf_donation->node, $sf_donation->did, $sf_donation, 'donation');
 //  }
 
-  // @todo Where in the donation can we set the cloned_from to get it saved?
-  // This is how sb3 did it.
-  // Make sure we know this is decoupled.
-  // $new_order->data['cloned_from'] = $order->order_id;
+  // Make sure we know this is cloned from an original donation
+  // so we can link the two..
+  $new_donation->data['cloned_from'] = $donation->did;
 
-  // @todo Set a new order status.  Find out where in the donation.
+  // Set the proper order status and amount.
+  $new_donation->status = $new_status;
+  $new_donation->donation['amount'] = $new_amount;
 
-  // @todo Set a new amount.  Find out where in the donation.
-
-  // @todo Remove old response and product IDs from donation?
-
-
-  // This is the old code from the sb3 version.
-  // @todo See what else we need to do from below that isn't happening above.
-/*
-  // Create new order.
-  $new_order = commerce_order_new($order->uid);
-  // Copy all values to new order.
-  $new_id = $new_order->order_id;
-  $new_order = clone $order;
-  $new_order->order_id = $new_id;
-  // Make sure we know this is decoupled.
-  $new_order->data['cloned_from'] = $order->order_id;
-  // Set the proper status.
-  $status = (isset($options['status'])) ? $options['status'] : $order->order_status;
-  $new_order->order_status = $status;
-  // Get the amount and set it.
-  $amount = (isset($options['amount'])) ? $options['amount'] : $order->order_total;
-  $new_order->products[0]->price = $amount;
-  $new_order->order_total = $amount;
   // Calculate and set the start date.
   $date = new DateTime('NOW');
   // Make sure the payment is next month.
   $date->modify('next month');
   $date_to_start = strtotime($date->format('Y-m-d'));
-  // Add this to the order data for later processing.
-  $new_order->data['date_to_start'] = $date_to_start;
-  // Remove the response from the original order.
-  if (!empty($new_order->data['response'])) {
-    unset($new_order->data['response']);
-  }
-  // Remove the old product id and save.
-  unset($new_order->products[0]->order_product_id);
-  commerce_order_save($new_order);
+  // Add this to the donation data for later processing.
+  $new_donation->data['date_to_start'] = $date_to_start;
 
-  // Add the new order to the fundraiser_recurring table
-  // so it will be processed in the future.
-  $nid = $order->products[0]->nid;
-  $sid = ($_GET['sid']) ? $_GET['sid'] : 0;
+  // @todo Remove old response and other gateway stuff from donation?
 
-  // Now add it to the fundraiser_webform_order table.
-  // @todo Is the fundraiser_webform_order table gone? What's replaced it?
-  // @todo This function doesn't exist in sb4.
-  $donation_form_url = _fundraiser_donation_form_path($nid);
-  db_query("
-    INSERT INTO {fundraiser_webform_order}
-    (webform_nid, order_id, sid, recurring_status, user_agent, form_url)
-    VALUES (%d, %d, %d, %d, '%s', '%s')
-    ", $nid, $new_id, $sid, $order->data['recurring_status'], $_SERVER['HTTP_USER_AGENT'], $donation_form_url);
+  watchdog('upsell', var_export($donation, TRUE));
 
-  return $new_order;
-*/
+  fundraiser_donation_update($new_donation);
+  return $new_donation;
 }
 
 /**
