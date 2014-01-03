@@ -235,7 +235,7 @@ function springboard_api_get_available_plugins() {
  */
 function springboard_api_form_resource_access($op, $data) {
   // TODO: we may want to add response code & details to log.
-  springboard_api_log_service_usage($endpoint, $data = NULL);
+  springboard_api_log_service_usage($op, $data = NULL);
   $service = springboard_api_get_enabled_management_service();
   if (isset($service['throttling_callback']) && function_exists($service['throttling_callback'])) {
     $func = $service['throttling_callback'];
@@ -269,6 +269,7 @@ function springboard_api_get_form_details($nid) {
       'type' => $node->type,
       'body' => $node->body,
       'fields' => array(),
+      'token' => drupal_get_token('services'), // go ahead and pre-load csrf token so it's available when the form is submitted.
     );
     // build form field list
     foreach ($node->webform['components'] as $cid => $component) {
@@ -296,6 +297,7 @@ function springboard_api_get_form_details($nid) {
 }
 
 function _springboard_api_parse_component_fapi(&$save, $fapi) {
+  dsm($fapi, 'fapi');
   $save = array(
     'label' => isset($fapi['#title']) ? $fapi["#title"] : '',
     'type' => isset($fapi['#type']) ? $fapi['#type'] : '',
@@ -303,6 +305,11 @@ function _springboard_api_parse_component_fapi(&$save, $fapi) {
     'accepted values' => isset($fapi['#options']) ? $fapi['#options'] : '',
     'required' => isset($fapi['#required']) ? $fapi['#required'] : FALSE,
   );
+
+  // if component default hasn't been found check #value
+  if (empty($save['default value'])) {
+    $save['default value'] = isset($fapi['#value']) ? $fapi['#value'] : '';
+  }
   // recurse on any nested elements.
   $children = element_children($fapi);
   foreach ($children as $key) {
@@ -352,14 +359,14 @@ function _springboard_api_get_payment_field_info($component) {
  * @param $endpoint
  * @param null $data
  */
-function springboard_api_log_service_usage($endpoint, $data = NULL) {
+function springboard_api_log_service_usage($op, $data = NULL) {
   // TODO:$_SERVER['HTTP_X_FORWARDED_FOR'] to capture ip behind proxy
   $record = array(
     'time' => time(),
     'remote_ip' => isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : 'unknown',
     'referrer' => isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'unknown',
-    'endpoint' => $endpoint,
-    'data' => $data,
+    'endpoint' => $op,
+    'data' => serialize($data),
   );
   drupal_write_record('springboard_api_tracker', $record);
 }

@@ -347,7 +347,11 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
     global $user;
     $user_data = user_load($user->uid);
     // If the user is logged in.
-    if (user_is_logged_in() && _webform_user_is_webform_user_node($node)) {
+    dsm($form_state, 'form_state in webform user');
+    if ($form_state['programmed']) {
+      drupal_set_message('programmatic submission detected');
+    }
+    if (user_is_logged_in() && _webform_user_is_webform_user_node($node) && (!isset($form_state['programmed']) || !$form_state['programmed'])) {
       $component_hierarchy = __webform_user_parse_components($node->nid, $components);
       $map = webform_user_user_map($node->nid);
       // Map each profile field if there's a matching component field.
@@ -375,7 +379,7 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
                 }
                 break;
               default:
-                $form_field['#default_value'] = check_plain($profile_value);
+                 $form_field['#default_value'] = check_plain($profile_value);
                 break;
             }
           } // End if webform empty with a profile field value.
