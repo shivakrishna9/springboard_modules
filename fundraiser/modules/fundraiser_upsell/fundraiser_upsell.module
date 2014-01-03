@@ -141,7 +141,7 @@ function fundraiser_upsell_add_node_settings(&$form) {
     '#collapsed' => TRUE,
   );
   $form['fundraiser_upsell']['modal_theme']['class'] = array(
-    '#title' => t('CSS class(es)'),
+    '#title' => t('Custom CSS class(es)'),
     '#type' => 'textfield',
     '#default_value' => !empty($node->fundraiser_upsell['modal_theme']['class']) ? $node->fundraiser_upsell['modal_theme']['class'] : '',
     '#description' => t('Separate multiple classes with a space.'),
@@ -152,6 +152,7 @@ function fundraiser_upsell_add_node_settings(&$form) {
     '#size' => 5,
     '#default_value' => !empty($node->fundraiser_upsell['modal_theme']['width']) ? $node->fundraiser_upsell['modal_theme']['width'] : 400,
     '#description' => t('This will override the site default.'),
+    '#field_suffix' => 'px',
   );
   $form['fundraiser_upsell']['modal_theme']['height'] = array(
     '#title' => t('Modal window height (in pixels)'),
@@ -159,6 +160,7 @@ function fundraiser_upsell_add_node_settings(&$form) {
     '#size' => 5,
     '#default_value' => !empty($node->fundraiser_upsell['modal_theme']['height']) ? $node->fundraiser_upsell['modal_theme']['height'] : 300,
     '#description' => t('This will override the site default.'),
+    '#field_suffix' => 'px',
   );
 
   if (module_exists('market_source')) {
@@ -170,15 +172,7 @@ function fundraiser_upsell_add_node_settings(&$form) {
         $salesforce_campaign_options
       );
 
-      $form['fundraiser_upsell']['additional_options'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Additional options'),
-        '#weight' => 10,
-        '#collapsible' => TRUE,
-        '#collapsed' => TRUE,
-      );
-
-      $form['fundraiser_upsell']['additional_options']['upsell_campaign_id'] = array(
+      $form['fundraiser_upsell']['campaign_id'] = array(
         '#title' => t('Sustainer Salesforce Campaign ID'),
         '#type' => 'select',
         '#options' => $salesforce_campaign_options,
@@ -251,10 +245,15 @@ function fundraiser_upsell_page_alter(&$page) {
   // Added by upsell's webform submit handler.
   if (!empty($_SESSION['upsell'])) {
     // Add the upsell to the page.
-    $node = node_load($_SESSION['upsell']['nid']);
+    $modal = array();
+    $did = fundraiser_donation_get_did_by_sid($_SESSION['upsell']['sid']);
+    // !== because we could get a did of 0.
+    if ($did !== FALSE) {
+      $donation = fundraiser_donation_get_donation($did);
 
-    $modal = fundraiser_upsell_create_modal_variables($node);
-    $modal['#sid'] = $_SESSION['upsell']['sid'];
+      $modal = fundraiser_upsell_create_modal_variables($donation->node);
+      $modal['#did'] = $did;
+    }
 
     // Add the modal to the bottom of the page.
     $page['footer']['message-modal'] = $modal;
@@ -267,37 +266,38 @@ function fundraiser_upsell_page_alter(&$page) {
 /**
  * Upsell donation form for the modal.
  *
- * @param int $sid
- *   Submission ID
+ * @param int $did
+ *   Donation ID.
  * @param bool $preview
  *   Whether this is the preview form.
  *
  * @return array
  *   Form API array.
  */
-function fundraiser_upsell_donation_form($form, &$form_state, $sid = NULL, $preview = FALSE) {
-  // Get the default suggested amount based on submitted order.
-  $order = fundraiser_upsell_get_order_by_sid($sid);
+function fundraiser_upsell_donation_form($form, &$form_state, $did = NULL, $preview = FALSE) {
 
-  // Use these defaults unless we can override them from an order.
-  // When we're in preview mode we won't have an order.
-  $suggested_amount = '10';
-  $order_id = '0';
-  $campaign_id = '';
+  if (!is_null($did) && $donation = fundraiser_donation_get_donation($did)) {
+    $suggested_amount = fundraiser_upsell_find_suggested_amount($donation->amount);
 
-  if (!empty($sid) && !empty($order) && is_object($order)) {
-    $order_total = round($order->commerce_order_total['und'][0]['amount'] / 100);
-    $suggested_amount = fundraiser_upsell_find_suggested_amount($order_total);
+    $campaign_id = !empty($donation->node->fundraiser_upsell['campaign_id']) ?
+      $donation->node->fundraiser_upsell['campaign_id'] :
+      variable_get('fundraiser_upsell_sf_campaign_id', '');
 
-    $order_id = !empty($order->order_id) ? $order->order_id : 0;
-    $campaign_id = !empty($order->upsell['campaign_id']) ? $order->upsell['campaign_id'] : variable_get('fundraiser_upsell_sf_campaign_id', '');
+    $nid = $donation->nid;
   }
+  else {
+    $suggested_amount = '10';
+    $campaign_id = '';
+    $did = '';
 
-  // In preview the nid will be arg(1).
-  $nid = !empty($order->upsell['nid']) ? $order->upsell['nid'] : arg(1);
+    // In preview the nid will be arg(1).
+    $nid = arg(1);
+  }
 
   // Build the form.
   $form = array();
+
+  // @todo Possibly get the currency symbol from the order?
   $form['amount'] = array(
     '#title' => t('Monthly donation'),
     '#type' => 'textfield',
@@ -306,9 +306,13 @@ function fundraiser_upsell_donation_form($form, &$form_state, $sid = NULL, $prev
     '#default_value' => $suggested_amount,
     '#weight' => -10,
   );
-  $form['order_id'] = array(
+
+  // These have to be hidden instead of value since we're submitting this form
+  // in a weird way.  It's a custom form action submitted via ajax() in
+  // the upsell JS.
+  $form['did'] = array(
     '#type' => 'hidden',
-    '#value' => $order_id,
+    '#value' => $did,
   );
   $form['campaign_id'] = array(
     '#type' => 'hidden',
@@ -318,6 +322,7 @@ function fundraiser_upsell_donation_form($form, &$form_state, $sid = NULL, $prev
     '#type' => 'hidden',
     '#value' => $preview,
   );
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Yes, Sign Me Up!'),
@@ -330,6 +335,8 @@ function fundraiser_upsell_donation_form($form, &$form_state, $sid = NULL, $prev
     '#attributes' => array('id' => 'edit-close'),
   );
 
+  // I think we're using a custom action since this form doesn't have a
+  // specific page callback.
   $form['#action'] = url('node/' . $nid . '/upsell/process');
   return $form;
 }
@@ -352,28 +359,31 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
   global $user;
   $amount = $data['amount'];
   $campaign_id = $data['campaign_id'];
-  $order = commerce_order_load($data['order_id']);
-  $is_recurring = fundraiser_upsell_check_recurring($order->order_id);
-  $different_user = ($user->uid != $order->uid) ? TRUE : FALSE;
+  $donation = fundraiser_donation_get_donation($data['did']);
+  $is_recurring = fundraiser_upsell_check_recurring($donation->did);
+  $different_user = ($user->uid != $donation->uid) ? TRUE : FALSE;
   // If the donation is already recurring, then stop.
   if ($is_recurring) {
-    watchdog('fundraiser_upsell', 'Upsell failed - order %oid is already recurring.', array('%oid' => $order->order_id), WATCHDOG_NOTICE);
+    watchdog('fundraiser_upsell', 'Upsell failed - order %oid is already recurring.', array('%oid' => $donation->did), WATCHDOG_NOTICE);
     return 'This is already a recurring donation. Thank you.';
   }
   // If the user is different then stop - skip anon users because we don't know.
   if ($different_user && $user->uid != 0) {
-    watchdog('fundraiser_upsell', 'Upsell user doesn\'t match the order %oid user.', array('%oid' => $order->order_id), WATCHDOG_NOTICE);
+    $replacements = array(
+      '%did' => $donation->did,
+      '%upsell_uid' => $user->uid,
+      '%donation_uid' => $donation->uid,
+    );
+    watchdog('fundraiser_upsell', 'Upsell user doesn\'t match the donation %did user. Upsell uid is %upsell_uid and Donation uid is %donation_uid', $replacements, WATCHDOG_NOTICE);
     return 'There was a problem processing your order. Please try again.';
   }
 
-  // Decouple by cloning the order and creating recurring orders
-  // from the new order.
-  // This part isn't creating the donation object.
-
-  $master_order = fundraiser_upsell_clone_order($order, array(
-    'amount' => $amount,
-    'status' => 'pending_future_payment',
-  ));
+  // Here we need to clone the original donation but with a future next_charge
+  // date and a different amount.
+  // Then use that as the master donation to create a recurring series.
+  // @todo Should we be cloning the order or the donation?
+  // I'm leaning towards donation.
+  $master_donation = fundraiser_upsell_copy_donation($donation, 'pending_future_payment', $amount);
 
   // Create the recurring donation series.
   // @todo Faking the result.  Hook this back up later.
@@ -395,9 +405,6 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
 
     fundraiser_upsell_set_acceptance_cookie();
 
-    // Get the full donation object for token replacement.
-    $donation = fundraiser_donation_get_donation($master_order->order_id);
-
     // Send the thank you message.
 //    module_load_include('inc', 'fundraiser_upsell', 'includes/fundraiser_upsell.mail');
 
@@ -407,12 +414,12 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
 //    fundraiser_upsell_send_thank_you($master_order);
 
     // Generate the thank you content.
-    $raw_content = $donation->node->fundraiser_upsell['thankyou'];
-    $content = token_replace($raw_content, array('donation' => $donation), array('clear' => TRUE));
+    $raw_content = $master_donation->node->fundraiser_upsell['thankyou'];
+    $content = token_replace($raw_content, array('donation' => $master_donation), array('clear' => TRUE));
 
   }
   else {
-    watchdog('fundraiser_upsell', 'Upsell failed for order %oid.', array('%oid' => $new_order->order_id), WATCHDOG_NOTICE);
+    watchdog('fundraiser_upsell', 'Upsell failed for the original donation %did.', array('%did' => $donation->did), WATCHDOG_NOTICE);
     return 'There was a problem processing your order. Please try again.';
   }
 
@@ -679,7 +686,7 @@ function fundraiser_upsell_theme() {
         'rejection_days' => '180',
         'content' => '',
         'footer' => '',
-        'sid' => NULL,
+        'did' => NULL,
         'preview' => FALSE,
       ),
     ),
@@ -723,7 +730,7 @@ function theme_fundraiser_upsell_modal($variables) {
 
   $content .= '<div class="message-content">' . $variables['content'] . '</div>';
 
-  $form = drupal_get_form('fundraiser_upsell_donation_form', $variables['sid'], $variables['preview']);
+  $form = drupal_get_form('fundraiser_upsell_donation_form', $variables['did'], $variables['preview']);
   $content .= drupal_render($form);
 
   $content .= '<div id="message-footer">' . $variables['footer'] . '</div>';
@@ -745,8 +752,8 @@ function fundraiser_upsell_content_preview($node) {
 
   $modal = fundraiser_upsell_create_modal_variables($node);
 
-  // @todo I forgot what we need sid for here?
-  $modal['#sid'] = '';
+  // No donation ID in preview.
+  $modal['#did'] = '';
   $modal['#preview'] = TRUE;
 
   return $modal;
@@ -926,23 +933,72 @@ function fundraiser_upsell_find_suggested_amount($amount) {
 }
 
 /**
- * Clone the order for decoupling.
+ * Copy the donation for decoupling from the original donation.
  *
- * Clone the original order to a new order_id and set the value to $0.
- * Much of this comes from fundraiser_create_future_orders().
+ * Copy the original donation to a new did and update the status and amount..
  *
- * @param object $order
- *   The order to clone.
- * @param array|NULL $options
- *   An array of options to be overridden in the cloned order.
- *   Currently only supports 'amount' and 'status' keys.
+ * @param object $donation
+ *   The donation to copy.
+ * @param string $new_status
+ *   The status of the new donation.
+ * @param float $amount
+ *   The amount for the new donation.
  *
  * @return object
- *   The new order object.
+ *   The new donation object.
  *
  * @todo Review and refactor.
  */
-function fundraiser_upsell_clone_order($order, $options = NULL) {
+function fundraiser_upsell_copy_donation($donation, $new_status = 'pending_future_payment', $new_amount = '') {
+
+  $new_donation = clone $donation;
+  // @todo Do we want to set the sid to 0?
+  // This upsold donation technically isn't submitted by a webform.
+  // Sustainers set recurring donations to a zero sid.
+  //  $new_donation->sid = 0; // Not actually submitted, it's automated, so no sid.
+  // Create the new donation object, but do not process it.
+  // New donation has all of the old donation information already loaded.
+  // Also creates a new order to along with the donation.
+  fundraiser_donation_create($new_donation);
+
+  $next_charge = strtotime('+1 month');
+  fundraiser_donation_comment($new_donation, 'Upsell donation scheduled to be charged at @next_charge',
+    array('@next_charge' => format_date($next_charge)));
+
+  // After this, the donation did and donation data is set.
+  // The new donation object, with new did, needs to be saved to recurring so we can grab it later.
+  $recurring_donation_record = array(
+    'master_did' => $new_donation->did,
+    'did' => $new_donation->did,
+    'next_charge' => $next_charge,
+    'sustainer_key' => fundraiser_sustainers_get_sustainer_key_value(),
+  );
+  // Update the recurring table.
+  _fundraiser_sustainers_create_recurring($recurring_donation_record);
+
+  // Load the newly created individual donation into salesforce_donation.
+  // @todo This came from sustainers, do I need to do something here?
+//  if (module_exists('salesforce_genmap')) {
+//    $sf_donation = fundraiser_donation_get_donation($new_donation->did, TRUE);
+//    salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert',
+//      $sf_donation->node, $sf_donation->did, $sf_donation, 'donation');
+//  }
+
+  // @todo Where in the donation can we set the cloned_from to get it saved?
+  // This is how sb3 did it.
+  // Make sure we know this is decoupled.
+  // $new_order->data['cloned_from'] = $order->order_id;
+
+  // @todo Set a new order status.  Find out where in the donation.
+
+  // @todo Set a new amount.  Find out where in the donation.
+
+  // @todo Remove old response and product IDs from donation?
+
+
+  // This is the old code from the sb3 version.
+  // @todo See what else we need to do from below that isn't happening above.
+/*
   // Create new order.
   $new_order = commerce_order_new($order->uid);
   // Copy all values to new order.
@@ -972,23 +1028,16 @@ function fundraiser_upsell_clone_order($order, $options = NULL) {
   // Remove the old product id and save.
   unset($new_order->products[0]->order_product_id);
   commerce_order_save($new_order);
-  // Add a comment to the order stating when it will be charged.
-  // @todo This function doesn't exist.  Refactor.
-  uc_order_comment_save($new_id, 0, t('Payment will be processed on !date.', array('!date' => date('n/j/Y', $date_to_start))), 'admin');
+
   // Add the new order to the fundraiser_recurring table
   // so it will be processed in the future.
-  $gateway = $order->data['gateway'];
   $nid = $order->products[0]->nid;
   $sid = ($_GET['sid']) ? $_GET['sid'] : 0;
-  // @todo This function doesn't exist.  Refactor.
-  $donation_form_url = _fundraiser_donation_form_path($nid);
-  db_query("
-    INSERT INTO {fundraiser_recurring}
-    (master_order_id, order_id, next_charge, gateway, form_url)
-    VALUES (%d, %d, '%s', '%s', '%s')
-    ", $new_id, $new_id, $date_to_start, $gateway, $donation_form_url);
 
   // Now add it to the fundraiser_webform_order table.
+  // @todo Is the fundraiser_webform_order table gone? What's replaced it?
+  // @todo This function doesn't exist in sb4.
+  $donation_form_url = _fundraiser_donation_form_path($nid);
   db_query("
     INSERT INTO {fundraiser_webform_order}
     (webform_nid, order_id, sid, recurring_status, user_agent, form_url)
@@ -996,6 +1045,7 @@ function fundraiser_upsell_clone_order($order, $options = NULL) {
     ", $nid, $new_id, $sid, $order->data['recurring_status'], $_SERVER['HTTP_USER_AGENT'], $donation_form_url);
 
   return $new_order;
+*/
 }
 
 /**
@@ -1022,6 +1072,8 @@ function fundraiser_upsell_check_recurring($did) {
  *   The order id for the master order.
  * @param string $campaign_id
  *   The campaign id to add to each order.
+ *
+ * @todo Change this to donation.
  */
 function fundraiser_upsell_set_recurring_campaigns($master_order_id, $campaign_id) {
   // Grab the list of orders that are recurring in the series.
