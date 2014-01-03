@@ -1301,11 +1301,16 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
  *   The month number to stop on.  Usually the credit card expiration.
  * @param int $year
  *   The year number to stop on.  Usually the credit card expiration.
+ * @param int $start
+ *   The timestamp to start from.  If not set will default to now.
  *
  */
-function _fundraiser_sustainers_create_future_orders($donation, $month, $year) {
+function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $start = NULL) {
   // Handle the rest of the set based on the given donation.
-  $start = strtotime("now");
+  if (is_null($start)) {
+    $start = strtotime("now");
+  }
+
   $stop = mktime(0, 0, 0, $month, 1, $year);
   $months = ((idate('Y', $stop) * 12) + idate('m', $stop)) - ((idate('Y', $start) * 12) + idate('m', $start));
   $processed_months = 0;
