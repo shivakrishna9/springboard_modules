@@ -382,20 +382,23 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
   // Then use that as the master donation to create a recurring series.
   $master_donation = fundraiser_upsell_copy_donation($donation, 'pending_future_payment', $amount);
 
+  // Add the campaign id to all recurring donations.
+  if (!empty($campaign_id)) {
+    $master_donation->donation['data']['campaign_id'] = $campaign_id;
+    fundraiser_donation_update($master_donation);
+    // Refresh our donation object.
+    $master_donation = fundraiser_donation_get_donation($master_donation->did, TRUE);
+  }
+
   // Create the recurring donation series.
+  // @todo Check that the recurring donations have campaign ID set in data.
   $success = fundraiser_upsell_create_recurring_series($master_donation);
 
-  // Mark this donation as an upsell.
-  $master_donation->data['upsell'] = TRUE;
+  // Mark only the master donation as an upsell.
+  $master_donation->donation['data']['upsell'] = TRUE;
 
   // Grab and process the thank you content if successful.
   if ($success) {
-    // Add the campaign id to all recurring donations.
-    if (!empty($campaign_id)) {
-      // @todo Fix this.
-      // fundraiser_upsell_set_recurring_campaigns($master_donation->did, $campaign_id);
-      $master_donation->data['campaign_id'] = $campaign_id;
-    }
     fundraiser_upsell_set_acceptance_cookie();
 
     // Send the thank you message.
@@ -740,7 +743,6 @@ function theme_fundraiser_upsell_modal($variables) {
  *   A render array for generating the content.
  */
 function fundraiser_upsell_content_preview($node) {
-
   $modal = fundraiser_upsell_create_modal_variables($node);
 
   // No donation ID in preview.
@@ -912,19 +914,19 @@ function fundraiser_upsell_find_suggested_amount($amount) {
  * @return object
  *   The new donation object.
  *
- * @todo Review and refactor.
  */
 function fundraiser_upsell_copy_donation($donation, $new_status = 'pending_future_payment', $new_amount = '') {
 
+  // Remember clone is a shallow copy.
   $new_donation = clone $donation;
 
   // Create the new donation object, but do not process it.
   // New donation has all of the old donation information already loaded.
-  // Also creates a new order to along with the donation.
+  // Also creates a new order to go along with the donation.
   fundraiser_donation_create($new_donation);
 
   $next_charge = strtotime('+1 month');
-  fundraiser_donation_comment($new_donation, 'Upsell donation scheduled to be charged at @next_charge',
+  fundraiser_donation_comment($new_donation, 'Initial Upsell donation scheduled to be charged at @next_charge',
     array('@next_charge' => format_date($next_charge)));
 
   // After this, the donation did and donation data is set.
@@ -948,7 +950,7 @@ function fundraiser_upsell_copy_donation($donation, $new_status = 'pending_futur
 
   // Make sure we know this is cloned from an original donation
   // so we can link the two..
-  $new_donation->data['cloned_from'] = $donation->did;
+  $new_donation->donation['data']['cloned_from'] = $donation->did;
 
   // Set the proper order status and amount.
   $new_donation->status = $new_status;
@@ -960,7 +962,7 @@ function fundraiser_upsell_copy_donation($donation, $new_status = 'pending_futur
 
   // Reload the donation so the amount and other donation stuff gets refreshed.
   // Also this will cause it to get the recurring record.
-  $new_donation = fundraiser_donation_get_donation($new_donation->did);
+  $new_donation = fundraiser_donation_get_donation($new_donation->did, TRUE);
 
   watchdog('upsell', var_export($new_donation, TRUE));
 
@@ -978,36 +980,6 @@ function fundraiser_upsell_copy_donation($donation, $new_status = 'pending_futur
  */
 function fundraiser_upsell_check_recurring($did) {
   return (fundraiser_sustainers_count_donations_in_series($did) > 0);
-}
-
-/**
- * Add a custom campaign ID to the recurring donations.
- *
- * Add a custom campaign id to the recurring donations in the data array for
- * each order. This will later be used to alter the batch hook and set
- * this campaign id for salesforce.
- *
- * @param int $master_order_id
- *   The order id for the master order.
- * @param string $campaign_id
- *   The campaign id to add to each order.
- *
- * @todo Change this to donation.
- */
-function fundraiser_upsell_set_recurring_campaigns($master_order_id, $campaign_id) {
-  // Grab the list of orders that are recurring in the series.
-  $recurring = array();
-  $result = db_query("SELECT * FROM {fundraiser_recurring} WHERE master_order_id = %d", $master_order_id);
-  while ($row = db_fetch_array($result)) {
-    $recurring[] = $row['order_id'];
-  }
-  // Loop through the list.
-  foreach ($recurring as $order_id) {
-    // Load the order, add the campaign id, and save the order again.
-    $order = commerce_order_load($order_id);
-    $order->data['campaign_id'] = $campaign_id;
-    commerce_order_save($order);
-  }
 }
 
 /**
