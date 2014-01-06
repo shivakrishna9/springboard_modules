@@ -1303,8 +1303,7 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
  *   The year number to stop on.  Usually the credit card expiration.
  * @param int $start
  *   The timestamp to start from.  If not set will default to now.
- *   By "start" we mean the first donation after the master donation will be
- *   one month after $start or now.
+ *   The first non-master donation will happen one month after the $start.
  *
  */
 function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $start = NULL) {
@@ -1333,7 +1332,7 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
       // Create the new donation object, but do not process it. Processing doesn't occur till cron.
       // New donation has all of the old donation information already loaded.
       fundraiser_donation_create($new_donation);
-      $next_charge = strtotime('+ ' . $processed_months . ' months');
+      $next_charge = strtotime('+ ' . $processed_months . ' months', $start);
       fundraiser_donation_comment($new_donation, 'Sustainer donation scheduled to be charged at @next_charge',
         array('@next_charge' => format_date($next_charge)));
       // After this, the donation did and donation data is set.
