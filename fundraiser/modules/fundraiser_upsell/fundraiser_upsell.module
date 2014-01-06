@@ -228,9 +228,7 @@ function fundraiser_upsell_webform_submit($form, &$form_state) {
     // Add the upsell nid, sid, & uid to the session data so the modal can
     // be added to the page later in another hook.
     $_SESSION['upsell'] = array(
-      'nid' => $form_state['values']['details']['nid'],
       'sid' => $form_state['values']['details']['sid'],
-      'uid' => $form_state['values']['details']['uid'],
     );
   }
 }
@@ -382,12 +380,18 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
   // Then use that as the master donation to create a recurring series.
   $master_donation = fundraiser_upsell_copy_donation($donation, 'pending_future_payment', $amount);
 
+  // @todo Need this now because donation doesn't save order data on update.
+  $master_order = commerce_order_load($master_donation->did);
+
   // Add the campaign id to all recurring donations.
   if (!empty($campaign_id)) {
-    $master_donation->donation['data']['campaign_id'] = $campaign_id;
-    fundraiser_donation_update($master_donation);
+    // @todo This probably isn't right.
+    // The order gets saved a little later.
+    $master_order->data['campaign_id'] = $campaign_id;
+
+    // fundraiser_donation_update($master_donation);
     // Refresh our donation object.
-    $master_donation = fundraiser_donation_get_donation($master_donation->did, TRUE);
+    // $master_donation = fundraiser_donation_get_donation($master_donation->did, TRUE);
   }
 
   // Create the recurring donation series.
@@ -395,7 +399,10 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
   $success = fundraiser_upsell_create_recurring_series($master_donation);
 
   // Mark only the master donation as an upsell.
-  $master_donation->donation['data']['upsell'] = TRUE;
+  // @todo Probably isn't right.
+  $master_order->data['upsell'] = TRUE;
+
+  commerce_order_save($master_order);
 
   // Grab and process the thank you content if successful.
   if ($success) {
@@ -920,6 +927,21 @@ function fundraiser_upsell_copy_donation($donation, $new_status = 'pending_futur
   // Remember clone is a shallow copy.
   $new_donation = clone $donation;
 
+  // Make sure we know this is cloned from an original donation
+  // so we can link the two.
+  $new_donation->data['cloned_from'] = $donation->did;
+
+  // Reset transaction info.
+  $new_donation->data['txn_id'] = '';
+  $new_donation->data['remote_id'] = '';
+  $new_donation->data['transaction_id'] = '';
+  $new_donation->data['status'] = '';
+  $new_donation->data['remote_status'] = '';
+
+  // Set the proper order status and amount.
+  $new_donation->status = $new_status;
+  $new_donation->donation['amount'] = $new_amount;
+
   // Create the new donation object, but do not process it.
   // New donation has all of the old donation information already loaded.
   // Also creates a new order to go along with the donation.
@@ -948,23 +970,14 @@ function fundraiser_upsell_copy_donation($donation, $new_status = 'pending_futur
 //      $sf_donation->node, $sf_donation->did, $sf_donation, 'donation');
 //  }
 
-  // Make sure we know this is cloned from an original donation
-  // so we can link the two..
-  $new_donation->donation['data']['cloned_from'] = $donation->did;
-
-  // Set the proper order status and amount.
-  $new_donation->status = $new_status;
-  $new_donation->donation['amount'] = $new_amount;
-
-  // @todo Remove old response and other transaction stuff from donation?
-
-  fundraiser_donation_update($new_donation);
+  // This handles the line item and new amount stuff.
+//  fundraiser_donation_update($new_donation);
 
   // Reload the donation so the amount and other donation stuff gets refreshed.
   // Also this will cause it to get the recurring record.
   $new_donation = fundraiser_donation_get_donation($new_donation->did, TRUE);
 
-  watchdog('upsell', var_export($new_donation, TRUE));
+//  watchdog('upsell', var_export($new_donation, TRUE));
 
   return $new_donation;
 }
