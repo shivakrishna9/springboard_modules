@@ -281,6 +281,7 @@ function fundraiser_tickets_commerce_line_item_type_info() {
 function fundraiser_tickets_fundraiser_commerce_generate_line_items($donation, $order){
   if (isset($donation->donation['ticket_box']) && is_array($donation->donation['ticket_box']) && count($donation->donation['ticket_box'])){
     $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+    $node_wrapper = entity_metadata_wrapper('node', $donation->node);
     foreach ($donation->donation['ticket_box'] as $key => $quantity){
       if (strstr($key, 'product-') && is_numeric(explode('-',$key)[1]) && $quantity > 0){
         $product_id = explode('-',$key)[1];
@@ -332,6 +333,7 @@ function fundraiser_tickets_fundraiser_commerce_generate_line_items($donation, $
         }
       }
     }
+    fundraiser_tickets_update_inventory($node_wrapper);
     return TRUE;
   } else {
     return FALSE;
