@@ -593,6 +593,7 @@ function fundraiser_tickets_form_commerce_product_ui_product_form_alter(&$form, 
     $form['fr_tickets_weight']['#access'] = FALSE;
     $form['fr_tickets_quantity_sold']['#access'] = FALSE;
     $form['#validate'][] = 'fundraiser_tickets_form_commerce_product_ui_product_form_validate';
+    unset($form['actions']['save_continue']);
   }
 }
 
@@ -602,14 +603,24 @@ function fundraiser_tickets_form_commerce_product_ui_product_form_alter(&$form, 
  * Generate a SKU and weight setting for new products
  */
 function fundraiser_tickets_form_commerce_product_ui_product_form_validate($form, &$form_state){
-  if (! $form_state['values']['sku']){
-    $destination = drupal_get_destination();
-    preg_match('/node\/(\\d+)\/tickets\/tickets/' , $destination['destination'], $matches);
-    if ($matches[1]){
-      $node_wrapper = entity_metadata_wrapper('node', $node = node_load($matches[1]));
+  $product = $form_state['commerce_product'];
+  if ($product->type == 'fundraiser_ticket'){
+
+    $form_state['values']['fr_tickets_quantity'][LANGUAGE_NONE][0]['value'] = intval($form_state['values']['fr_tickets_quantity'][LANGUAGE_NONE][0]['value']);
+    $form_state['values']['fr_tickets_threshold'][LANGUAGE_NONE][0]['value'] = intval($form_state['values']['fr_tickets_threshold'][LANGUAGE_NONE][0]['value']);
+
+    if (! $form_state['values']['fr_tickets_quantity'][LANGUAGE_NONE][0]['value']){
+      form_set_error('fr_tickets_quantity', t('Quantity must be numeric.'));
     }
-    $form_state['values']['sku']    = 'ticket-' . $node_wrapper->nid->value() . '-' . (count($node_wrapper->fr_tickets_ticket_types->value()) + 1);
-    $form_state['values']['fr_tickets_weight'][$form_state['values']['language']][0]['value'] = count($node_wrapper->fr_tickets_ticket_types->value()) + 1;
+    if (! $form_state['values']['sku']){
+      $destination = drupal_get_destination();
+      preg_match('/node\/(\\d+)\/tickets\/tickets/' , $destination['destination'], $matches);
+      if ($matches[1]){
+        $node_wrapper = entity_metadata_wrapper('node', $node = node_load($matches[1]));
+      }
+      $form_state['values']['sku']    = 'ticket-' . $node_wrapper->nid->value() . '-' . (count($node_wrapper->fr_tickets_ticket_types->value()) + 1);
+      $form_state['values']['fr_tickets_weight'][$form_state['values']['language']][0]['value'] = count($node_wrapper->fr_tickets_ticket_types->value()) + 1;
+    }
   }
 }
 
@@ -650,17 +661,20 @@ function fundraiser_tickets_entity_update($entity, $type) {
 
 /**
  * Update the ticket level numbers that are saved in fields on the node.
- *  TODO: on ticket sale, update the remaining/sold number as well.
  */
 function fundraiser_tickets_update_inventory($node_wrapper){
   $ticket_types = $node_wrapper->fr_tickets_ticket_types->value();
   if (is_array($ticket_types)){
-    $initial_tickets = 0;
+    $inventory_initial = 0;
+    $inventory_purchased = 0;
     foreach ($ticket_types as $offset => $ticket_level){
       $ticket_level_wrapper = entity_metadata_wrapper('commerce_product', $ticket_level);
-      $initial_tickets += $ticket_level_wrapper->fr_tickets_quantity->value();
+      $inventory_initial   += $ticket_level_wrapper->fr_tickets_quantity->value();
+      $inventory_purchased += $ticket_level_wrapper->fr_tickets_quantity_sold->value();
     }
-    $node_wrapper->fr_tickets_inventory_initial->set($initial_tickets);
+    $node_wrapper->fr_tickets_inventory_initial->set($inventory_initial);
+    $node_wrapper->fr_tickets_inventory_purchased->set($inventory_purchased);
+    $node_wrapper->fr_tickets_inventory_available->set($inventory_initial - $inventory_purchased);
     $node_wrapper->save();
   }
 }

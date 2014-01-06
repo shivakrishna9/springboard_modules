@@ -75,7 +75,7 @@ function _fundraiser_tickets_product_fields() {
       'entity_type' => 'commerce_product',
       'field_name' => 'fr_tickets_quantity',
       'label' => 'Quantity',
-      'required' => 0,
+      'required' => 1,
       'settings' => array(
         'text_processing' => 0,
         'user_register_form' => FALSE,
