@@ -69,17 +69,14 @@ function webform_goals_add($form, $form_state, $goal = array()) {
       '#description' => t('The selected context requires the following additional settings:'),
     );
     $func = $selected_context['settings_callback'];
-    $func($form['context_container']['options_wrapper']['options'], $goal);
+    $func($form['context_container']['options_wrapper']['options'], $form_state, $goal);
 
   }
 
   // SF Webform should add the Salesforce context.
-
   // Metrics radios (standard + plugin architecture)
-
   foreach ($metrics as $key => $metric) {
     $metrics_options[$key] = $metric['name'];
-
   }
 
   // #AJAX enable so minimum display limit UI can be swapped.
@@ -92,7 +89,8 @@ function webform_goals_add($form, $form_state, $goal = array()) {
   $form['metrics_wrapper']['metrics'] = array(
     '#type' => 'radios',
     '#title' => '',
-    '#options' => $metrics_options, // Get valid options from plugin
+    // Get valid options from plugin
+    '#options' => $metrics_options,
     '#default_value' => $selected_metric['id'],
     '#ajax' => array(
       'callback' => 'webform_goals_metrics_callback',
@@ -226,7 +224,8 @@ function webform_goals_add($form, $form_state, $goal = array()) {
     '#type' => 'text_format',
     '#title' => t('Goal template'),
     '#description' => t(''),
-    '#default_value' => !empty($goal['template']) ? $goal['template'] : theme('webform_goals_default_template'), //TODO: theme function to output default template
+    // @todo theme function to output default template
+    '#default_value' => !empty($goal['template']) ? $goal['template'] : theme('webform_goals_default_template'),
   );
   if (!empty($goal['template_format'])) {
     $form['template']['template']['#format'] = $goal['template_format'];
@@ -271,7 +270,7 @@ function webform_goals_add_validate(&$form, &$form_state) {
  * Submission handler for goal add/edit form.
  */
 function webform_goals_add_submit($form, &$form_state) {
-  require_once('includes/webform_goals.files.inc');
+  require_once 'includes/webform_goals.files.inc';
 
   $settings = array(
     'gid' => !empty($form_state['values']['gid']) ? $form_state['values']['gid'] : '',
@@ -298,27 +297,39 @@ function webform_goals_add_submit($form, &$form_state) {
   $save = drupal_write_record('webform_goals', $settings, $update);
   $settings['extra'] = $extra;
   $nid = !empty($extra['selected_form_id']) ? $extra['selected_form_id'] : 0;
+
+  $theme_args = array(
+    'webform_goal' => $settings,
+    'nid' => $nid,
+    'goal_progress' => webform_goals_track_metric($settings),
+  );
   $widget = array(
     'gid' => $settings['gid'],
-    'widget' => theme('webform_goals_widget', array('webform_goal' => $settings, 'nid' => $nid)),
+    'widget' => theme('webform_goals_widget', $theme_args),
   );
 
   drupal_write_record('webform_goals_widget', $widget, $update);
   _webform_goals_file_insert($settings, $widget['widget']);
-  if ($save == SAVED_NEW) {
 
-    $settings['extra'] = $extra;
-    $nids = _webform_goals_calculate_nids_for_goal($settings);
+  $settings['extra'] = $extra;
+  $nids = _webform_goals_calculate_nids_for_goal($settings);
 
-    foreach ($nids as $nid) {
-      $node_settings = array(
-        'gid' => $settings['gid'],
-        'nid' => $nid,
-      );
-      // TODO: optimize this as a bulk insert?
-      drupal_write_record('webform_goals_node', $node_settings);
-    }
+  // Remove the relevant rows from {webform_goals_node}
+  // and add new rows.
+  // We need to do this to update the nodes selected if they change
+  // during a goal edit.
+  db_delete('webform_goals_node')
+    ->condition('gid', $settings['gid'])
+    ->execute();
+  $query = db_insert('webform_goals_node')->fields(array('gid', 'nid'));
+  foreach ($nids as $nid) {
+    $query->values(array(
+      'gid' => $settings['gid'],
+      'nid' => $nid,
+    ));
   }
+  $query->execute();
+
   $form_state['redirect'] = array('admin/config/content/webform_goals');
 }
 
@@ -444,15 +455,20 @@ function webform_goals_render_progress_bar($bar_type, $goal_progress, $drupal = 
     case 'flat_ui':
       $output = theme('webform_goals_flat_ui_progress_bar', array('goal_progress' => $goal_progress));
       break;
+
     case 'twitter_basic':
       $output = theme('webform_goals_twitter_progress_bar', array('goal_progress' => $goal_progress));
       break;
+
     case 'twitter_striped':
       $output = theme('webform_goals_twitter_striped_progress_bar', array('goal_progress' => $goal_progress));
       break;
+
     case 'animated':
       $output = theme('webform_goals_animated_progress_bar', array('goal_progress' => $goal_progress, 'drupal' => $drupal));
       break;
+
   }
+
   return $output;
 }

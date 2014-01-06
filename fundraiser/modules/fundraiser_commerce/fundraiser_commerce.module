@@ -1700,7 +1700,7 @@ function _fundraiser_commerce_encrypt($input) {
     $requirements = encrypt_requirements('runtime');
     if (isset($requirements['encrypt_keys']) && $requirements['encrypt_keys']['severity'] == REQUIREMENT_ERROR) {
       drupal_set_message(t('A problem was found with your secure key.') . ' ' .
-        $requirements['encrypt_keys']['value'],   'warning');
+        $requirements['encrypt_keys']['value'], 'warning');
     }
     else {
       return encrypt($input);
@@ -1718,7 +1718,7 @@ function _fundraiser_commerce_decrypt($input) {
     $requirements = encrypt_requirements('runtime');
     if (isset($requirements['encrypt_keys']) && $requirements['encrypt_keys']['severity'] == REQUIREMENT_ERROR) {
       drupal_set_message(t('A problem was found with your secure key.') . ' ' .
-        $requirements['encrypt_keys']['value'],   'warning');
+        $requirements['encrypt_keys']['value'], 'warning');
     }
     else {
       return decrypt($input);
@@ -1728,27 +1728,43 @@ function _fundraiser_commerce_decrypt($input) {
 }
 
 /**
- * Implements hook_fundraiser_get_total_donations_by_nid().
+ * Implements hook_fundraiser_get_total_donations_by_nids().
+ *
+ * General purpose getting total donation for an array of nids.
+ *   Does not take multiple currencies into account.  Assumes all USD.
+ *
+ * @param array $nids
+ *   NIDs.
+ * @param string|bool $start
+ *   Start date.
+ * @param string|bool $end
+ *   End date.
+ *
+ * @return float
+ *   Total amount of donations.
  */
-function fundraiser_commerce_fundraiser_get_total_donations_by_nid($nid, $start = FALSE, $end = FALSE) {
+function fundraiser_commerce_fundraiser_get_total_donations_by_nids($nids, $start = FALSE, $end = FALSE) {
   // Since more than one goal may target this nid with differing date ranges we
   // can't cache this.
 
-  $query = db_select('field_data_commerce_order_total', 'f');
-  $query->join('commerce_order', 'c', 'c.order_id = f.entity_id');
-  $query->join('fundraiser_donation', 'fd', 'fd.did = c.order_id');
-  $query->addExpression('SUM(f.commerce_order_total_amount)', 'total');
-  $query->condition('fd.nid', $nid, '=');
-  $query->condition('c.status', 'payment_received', '=');
+  // This would normally use the commerce_order table and do two JOINs,
+  // but here we use the derived values in fundraiser_donation to speed up
+  // the query.
+  // Having an index on fd.status also helps of course.
+  // (commerce_order doesn't have that index.)
+  $query = db_select('fundraiser_donation', 'fd');
+  $query->addExpression('SUM(fd.amount)', 'total');
+  $query->condition('fd.nid', $nids, 'IN');
+  $query->condition('fd.status', 'payment_received', '=');
   if ($start) {
-    $query->condition('c.created', $start, '>=');
+    $query->condition('fd.created', $start, '>=');
   }
   if ($end) {
-    $query->condition('c.created', $end, '<=');
+    $query->condition('fd.created', $end, '<=');
   }
-  $data = $query->execute()->fetchField();
-  $totals[$nid] = $data * .01; // convert from pennies.
-  return $totals[$nid];
+
+  // This result will already be in dollars.
+  return $query->execute()->fetchField();
 }
 
 /**
@@ -1788,9 +1804,10 @@ class FundraiserCommerceUIPaymentSettings extends RulesDataUI implements RulesDa
         // Add the settings form elements to the action form.
         $form[$name]['settings'] = $callback($method_settings);
       }
-      // And here, we add the remote recurring option iff the module can support it.
-      module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $info['payment_method']);
-      $gateway_info = module_invoke($info['payment_method'], 'fundraiser_commerce_fundraiser_gateway_info');
+
+      // Add the remote recurring option if the module supports it.
+      module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $payment_method['module']);
+      $gateway_info = module_invoke($payment_method['module'], 'fundraiser_commerce_fundraiser_gateway_info');
       if (!empty($gateway_info['allow_recurring']) && !empty($gateway_info['offsite_recurring'])) {
         $form[$name]['settings']['offsite_recurring'] = array(
           '#type' => 'checkbox',

@@ -63,7 +63,7 @@ function salesforce_donation_settings($form, &$form_state) {
   }
   // Add at index 0.
   array_unshift($available_statuses, '-- Not mapped --');
-  $mapped_stages = variable_get('salesforce_donation_mapped_stages', array());
+  $mapped_stages = variable_get('salesforce_donation_mapped_stages', salesforce_donation_default_stage_map());
   foreach ($stages as $stage) {
     $form['sf_donation_stages']['sf_donation_' . $stage] = array(
       '#title' => t('@stage Stage:', array('@stage' => $stage)),
@@ -100,6 +100,19 @@ function salesforce_donation_settings($form, &$form_state) {
 function salesforce_donation_map_form_after_build($form, &$form_state) {
   module_load_include('inc', 'salesforce_genmap', 'includes/salesforce_genmap.map');
   return salesforce_genmap_map_form_after_build($form, $form_state);
+}
+
+/**
+ * Default commerce stage map.
+ */
+function salesforce_donation_default_stage_map() {
+  return array(
+    'Posted' => 'payment_received',
+    'Withdrawn' => 'canceled',
+    'Pledged' => 'pending_future_payment',
+    'Partially Refunded' => 'partially_refunded',
+    'Refunded' => 'refunded',
+  );
 }
 
 /**
@@ -212,6 +225,18 @@ function salesforce_donation_fundraiser_refund_success($refund) {
   $donation->is_refund = TRUE;
   // This is standalone, or the first in a recurring set.
   salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $donation->node, $donation->did, $donation, 'donation');
+}
+
+
+/**
+ * Implements hook_fundraiser_donation_cancel().
+ *
+ * Recurring donations that have been canceled should be added to the queue.
+ */
+function salesforce_donation_fundraiser_donation_cancel($donation) {
+  $donation = fundraiser_donation_get_donation($donation->did);
+  $donation->status = 'canceled';
+  salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
 }
 
 /**
@@ -340,7 +365,7 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
     if (isset($map->field_map['salesforce_donation_map']['stage'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['stage'];
       $stage = 'Posted';
-      $mapped_stages = variable_get('salesforce_donation_mapped_stages', array());
+      $mapped_stages = variable_get('salesforce_donation_mapped_stages', salesforce_donation_default_stage_map());
       if (!empty($mapped_stages)) {
         if (in_array($donation->status, $mapped_stages)) {
           $flipped_stages = array_flip($mapped_stages);
@@ -474,6 +499,7 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
       }
     }
   }
+
   return $fields;
 }
 

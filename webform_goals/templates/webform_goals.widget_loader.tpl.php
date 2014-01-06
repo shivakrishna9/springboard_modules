@@ -1,7 +1,7 @@
-<h5>For use on external sites be sure to include the widget loader script:</h5>
+<h5>For use on external sites be sure to include the script tag below.  This is not needed for embeds on this site.</h5>
 <pre><code>
 
-&lt;script type="text/javascript" src="<?php print url(file_create_url(file_default_scheme() . '://'), array('absolute' => TRUE)); ?>/webform_goals/webform_goals.loader.js"&gt;&lt;/script&gt;
+&lt;script type="text/javascript" src="<?php print url(file_create_url(file_default_scheme() . '://'), array('absolute' => TRUE)); ?>webform_goals/webform_goals.loader.js"&gt;&lt;/script&gt;
 
 </code></pre>
 
@@ -9,7 +9,7 @@
 <p>Display the standard goal template</p>
 <pre><code>
 
-&lt;div class="wg-goal" data-gid="<?php print $goal['gid']; ?>"&gt;&lt;/div&gt;
+&lt;div class="wg-goal" style="display: none;" data-gid="<?php print $goal['gid']; ?>"&gt;&lt;/div&gt;
 
 </code></pre>
 
@@ -17,7 +17,7 @@
 <p>Custom templates let you use goal tokens to build custom goal widget displays on the fly.</p>
 <pre><code>
 
-&lt;div class="wg-goal" data-gid="<?php print $goal['gid']; ?>"&gt;
+&lt;div class="wg-goal" style="display: none;" data-gid="<?php print $goal['gid']; ?>"&gt;
   You may place custom text here. Goal data, including progress bar
   can be referenced here using the standard goal tokens:
   [webform_goal:name] - goal name
