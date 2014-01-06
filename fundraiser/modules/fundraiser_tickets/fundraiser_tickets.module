@@ -243,6 +243,8 @@ function fundraiser_tickets_form_node_form_alter(&$form, &$form_state) {
       $form['#after_build'][] = '_fundraiser_tickets_ticket_settings_form_organize';
       $form['#validate'] = array();
       $form['#submit'] = array();
+      unset($form['actions']['preview']);
+      unset($form['actions']['delete']);
     }
   }
 }
@@ -452,7 +454,7 @@ function fundraiser_tickets_form_node_type_form_alter(&$form, &$form_state) {
  */
 function fundraiser_tickets_form_node_type_form_validate($form, &$form_state){
   if ($form_state['values']['fundraiser_tickets'] && ! $form_state['values']['fundraiser']){
-    form_set_error('fundraiser', t('Fundraiser must also be enabled for ticketed event sales.'));
+    form_set_error('fundraiser', t('Fundraiser must also be enabled for ticketed event content types.'));
   }
 }
 
@@ -611,6 +613,12 @@ function fundraiser_tickets_form_commerce_product_ui_product_form_validate($form
   }
 }
 
+/**
+ * Implements hook_entity_insert().
+ *
+ * Save an entity reference associating ticket products with the pages they are sold on.
+ * Also update the total available tickets on the associated ticket page node.
+ */
 function fundraiser_tickets_entity_insert($entity, $type) {
   if ($type == 'commerce_product' && $entity->type =='fundraiser_ticket'){
     $destination = drupal_get_destination();
@@ -624,6 +632,11 @@ function fundraiser_tickets_entity_insert($entity, $type) {
   }
 }
 
+/**
+ * Implements hook_entity_update().
+ *
+ * Update the total available tickets available on the associated ticket page node.
+ */
 function fundraiser_tickets_entity_update($entity, $type) {
   if ($type == 'commerce_product' && $entity->type =='fundraiser_ticket'){
     $destination = drupal_get_destination();
