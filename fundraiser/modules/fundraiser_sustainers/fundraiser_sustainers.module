@@ -1303,6 +1303,8 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
  *   The year number to stop on.  Usually the credit card expiration.
  * @param int $start
  *   The timestamp to start from.  If not set will default to now.
+ *   By "start" we mean the first donation after the master donation will be
+ *   one month after $start or now.
  *
  */
 function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $start = NULL) {
