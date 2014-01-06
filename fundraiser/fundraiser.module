@@ -1798,7 +1798,9 @@ function fundraiser_donation_delete($donation) {
  * Utility function, given a donation id - get everything that goes with it.
  *
  * @param int $did
- *    The ID of the donation
+ *   The ID of the donation
+ * @param bool $refresh
+ *   If TRUE rebuild the entire donation even if it's statically cached.
  *
  * @return object|bool
  *    The fully loaded donation object or FALSE if no donation is found
