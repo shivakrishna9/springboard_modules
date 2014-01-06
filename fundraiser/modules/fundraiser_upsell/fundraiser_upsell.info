@@ -3,6 +3,7 @@ description = Upsell modal for converting a donation to a recurring donation.
 core = 7.x
 package = Jackson River Springboard - extras
 dependencies[] = fundraiser
+dependencies[] = fundraiser_commerce
 dependencies[] = fundraiser_sustainers
 dependencies[] = email_wrappers
 dependencies[] = jquery_update
