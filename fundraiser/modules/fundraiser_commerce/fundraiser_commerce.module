@@ -1307,7 +1307,7 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
   }
 
   // Conditionalized to prevent interference with fundraiser_tickets.
-  if ($line_type->type == 'donation'){
+  if ($line_item->type == 'donation'){
     // Update line item with the new amount information as needed.
     $line_item->line_item_label = t('Donation');
     $line_item->quantity = $quantity;
