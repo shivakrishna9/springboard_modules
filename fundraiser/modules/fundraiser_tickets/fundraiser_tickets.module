@@ -7,7 +7,6 @@
 /**
  * Implements hook_menu().
  */
-
 function fundraiser_tickets_menu() {
   $items = array();
 
@@ -59,7 +58,6 @@ function fundraiser_tickets_manage_access($node, $account = NULL) {
 
   return node_access('update', $node, $account) && $ticket_types[$node->type] == true;
 }
-
 
 /**
  * Implements hook_theme().
@@ -113,7 +111,6 @@ function fundraiser_tickets_fundraiser_field_info(){
   );
   return $fields;
 }
-
 
 /**
  * Implements hook_fundraiser_field_info_alter().
@@ -273,6 +270,31 @@ function fundraiser_tickets_commerce_line_item_type_info() {
 }
 
 /**
+ * Implements hook_fundraiser_donation_validate().
+ *
+ * Verify we still have enough tickets to fulfill the order
+ */
+function fundraiser_tickets_fundraiser_donation_validate($form, $form_state){
+  if (fundraiser_tickets_is_ticket_type($form['#node']->type)){
+    foreach ($form_state['values']['submitted']['tickets']['ticket_box'] as $key => $quantity){
+      if (strstr($key, 'product-') && is_numeric(explode('-',$key)[1]) && $quantity > 0){
+        $product_id = explode('-',$key)[1];
+        $product_wrapper = entity_metadata_wrapper('commerce_product', commerce_product_load($product_id));
+        $available_tickets = $product_wrapper->fr_tickets_quantity->value() - $product_wrapper->fr_tickets_quantity_sold->value();
+        if ($quantity > $available_tickets){
+          form_set_error($key, t('Your order could not be completed because only @quantity @type tickets remain.', array('@quantity' => $available_tickets, '@type' => $product_wrapper->title->value())));
+        }
+      } elseif ($key == 'fundraiser-tickets-extra-donation'){
+        $amount = $quantity;
+        if ($amount && ! floatval($amount)){
+         form_set_error('fundraiser-tickets-extra-donation', t('Additional donation must be a number.'));
+        }
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_fundraiser_commerce_generate_line_items().
  *
  * Generate line items for the ticket sales and the extra donation.
@@ -340,7 +362,9 @@ function fundraiser_tickets_fundraiser_commerce_generate_line_items($donation, $
   }
 }
 
-
+/**
+* Helper function: updates the number of tickets sold.
+*/
 function _fundraiser_tickets_update_quantity_sold($product_wrapper, $quantity){
   $product_wrapper->fr_tickets_quantity_sold->set($product_wrapper->fr_tickets_quantity_sold->value() + $quantity);
   $product_wrapper->save();
@@ -433,7 +457,6 @@ function _fundraiser_tickets_ticket_settings_form_organize($form, $form_state){
     return $form;
 }
 
-
 /**
  * Implements hook_form_alter().
  *
@@ -491,7 +514,6 @@ function fundraiser_tickets_node_type_update($type) {
     }
   }
 }
-
 
 /**
  * Implements hook_node_view().
@@ -552,7 +574,6 @@ function fundraiser_tickets_node_view($node, $view_mode, $langcode) {
       }
     }
   }
-
 }
 
 /**
@@ -580,7 +601,6 @@ function fundraiser_tickets_clone_node_alter(&$node, $context) {
     }
   }
 }
-
 
 
 /**
@@ -705,7 +725,6 @@ function fundraiser_tickets_get_ticket_types() {
   return $fundraiser_tickets_types;
 }
 
-
 /**
  * Helper function, determine if a given field is a ticketing field.
  */
@@ -726,7 +745,6 @@ function fundraiser_tickets_get_ticket_field_keys(){
   return array_keys(_fundraiser_tickets_default_fields_settings(NULL));
 }
 
-
 /**
  * Helper function, determine if a given ticket page is closed.
  */
@@ -738,7 +756,6 @@ function fundraiser_tickets_is_closed($node) {
     return FALSE;
   }
 }
-
 
 /**
  * Helper function, determine if all tickets for a given ticket page are sold.
