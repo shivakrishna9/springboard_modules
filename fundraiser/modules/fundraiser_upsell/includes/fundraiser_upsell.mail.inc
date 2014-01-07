@@ -45,7 +45,7 @@ function fundraiser_upsell_admin_thank_you_settings() {
   module_load_include('module', 'email_wrappers');
   // Set up some initial parameters for our new mail configuration form.
   $params = array(
-    'name' => 'email_admin_form',
+    'name' => 'fundraiser_upsell',
     'module' => 'fundraiser_upsell',
     'delta' => 'thank_you_settings',
   );
@@ -158,12 +158,10 @@ function fundraiser_upsell_send_thank_you($donation) {
   $to_email = $donation->donation['mail'];
   $to_name = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
   module_load_include('inc', 'email_wrappers', 'email_wrappers.api');
-  // @todo Eventually use node specific form, so we'll use $donation->nid
-  //   as part of the delta.
   $params = array(
-    'name' => 'email_admin_form',
+    'name' => 'fundraiser_upsell',
     'module' => 'fundraiser_upsell',
-    'delta' => 'thank_you_settings',
+    'delta' => 'nid_' . $donation->nid,
   );
   // Load the email wrappers options.
   $mail = email_wrappers_mail_load($params);

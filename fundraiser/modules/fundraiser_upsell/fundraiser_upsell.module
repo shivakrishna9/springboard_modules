@@ -163,6 +163,39 @@ function fundraiser_upsell_add_node_settings(&$form) {
     '#field_suffix' => 'px',
   );
 
+  if (module_exists('email_wrappers')) {
+    // If this is an edit form, use the node's email wrapper settings.
+    if (!empty($form['#node']->nid)) {
+      $email_wrapper_delta = 'nid_' . $form['#node']->nid;
+    }
+    // Otherwise, start with the default global settings.
+    else {
+      $email_wrapper_delta = 'thank_you_settings';
+    }
+    module_load_include('inc', 'email_wrappers', 'email_wrappers.api');
+    $params = array(
+      'name' => 'fundraiser_upsell',
+      'module' => 'fundraiser_upsell',
+      'delta' => $email_wrapper_delta,
+    );
+
+    // Generate the mail configuration form.
+    $form['fundraiser_upsell']['email_wrappers'] = email_wrappers_mail_form(array(), $params);
+    $form['fundraiser_upsell']['email_wrappers']['#type'] = 'fieldset';
+    $form['fundraiser_upsell']['email_wrappers']['#title'] = t('Confirmation email settings');
+
+    $form['fundraiser_upsell']['email_wrappers']['headers']['from_name']['#required'] = FALSE;
+    $form['fundraiser_upsell']['email_wrappers']['headers']['from_mail']['#required'] = FALSE;
+    $form['fundraiser_upsell']['email_wrappers']['message']['subject']['#required'] = FALSE;
+
+    unset($form['fundraiser_upsell']['email_wrappers']['headers']['recipients']);
+    unset($form['fundraiser_upsell']['email_wrappers']['headers']['cc']);
+    unset($form['fundraiser_upsell']['email_wrappers']['headers']['bcc']);
+    unset($form['fundraiser_upsell']['email_wrappers']['save']);
+    unset($form['fundraiser_upsell']['email_wrappers']['#validate']);
+    unset($form['fundraiser_upsell']['email_wrappers']['#submit']);
+  }
+
   if (module_exists('market_source')) {
     $salesforce_campaign_options = market_source_get_campaigns();
 
@@ -183,6 +216,7 @@ function fundraiser_upsell_add_node_settings(&$form) {
   }
 
   $form['#validate'][] = 'fundraiser_upsell_node_form_validate';
+  $form['#submit'][] = 'fundraiser_upsell_node_form_submit';
 }
 
 /**
@@ -198,6 +232,47 @@ function fundraiser_upsell_node_form_validate($form, &$form_state) {
   if (empty($modal_height) || !is_numeric($modal_height)) {
     form_set_error('fundraiser_upsell][modal_theming][upsell_modal_height',
       t('The fundraiser upsell modal height must be a number.'));
+  }
+
+  // @todo Maybe get email wrappers validate happening.
+  // Validate email wrappers won't work because they're conditional on
+  // upsell being enabled.
+//  if (module_exists('email_wrappers')) {
+//    $email_wrappers_form_state = array(
+//      'values' => $form_state['values']['fundraiser_upsell']['email_wrappers'],
+//    );
+//    module_load_include('inc', 'email_wrappers', 'email_wrappers.api');
+//    email_wrappers_mail_form_validate($form, $email_wrappers_form_state);
+//  }
+}
+
+function fundraiser_upsell_node_form_submit($form, &$form_state) {
+  if (module_exists('email_wrappers')) {
+    if (!empty($form_state['values']['nid'])) {
+      $delta = 'nid_' . $form_state['values']['nid'];
+    }
+    else {
+      $delta = 'thank_you_settings';
+    }
+
+    // Need to fake a form state in order to save the mail settings.
+    $email_wrappers_form_state = array(
+      'values' => $form_state['values']['fundraiser_upsell']['email_wrappers'],
+    );
+    $email_wrappers_form_state['values']['delta'] = $delta;
+    $headers = $form_state['values']['fundraiser_upsell']['email_wrappers']['headers'];
+    $message = $form_state['values']['fundraiser_upsell']['email_wrappers']['message'];
+    $email_wrappers_form_state['values']['from_name'] = $headers['from_name'];
+    $email_wrappers_form_state['values']['from_mail'] = $headers['from_mail'];
+    $email_wrappers_form_state['values']['recipients'] = '';
+    $email_wrappers_form_state['values']['cc'] = '';
+    $email_wrappers_form_state['values']['bcc'] = '';
+    $email_wrappers_form_state['values']['subject'] = $message['subject'];
+    $email_wrappers_form_state['values']['html_body'] = $message['html_body'];
+    $email_wrappers_form_state['values']['text_body'] = $message['text_body'];
+
+    module_load_include('inc', 'email_wrappers', 'email_wrappers.api');
+    email_wrappers_mail_form_submit($form, $email_wrappers_form_state);
   }
 }
 
