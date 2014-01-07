@@ -699,7 +699,7 @@ function fundraiser_upsell_node_load($nodes, $types) {
 /**
  * Implements hook_node_delete().
  */
-function fundraiser_upsell_node_delete(&$node) {
+function fundraiser_upsell_node_delete($node) {
   db_query('DELETE FROM {fundraiser_upsell} WHERE nid = :nid', array(':nid' => $node->nid));
 }
 
