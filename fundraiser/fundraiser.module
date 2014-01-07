@@ -2112,6 +2112,15 @@ function fundraiser_confirmation($form, &$form_state) {
     $query = $parts['query'] ? ($parts['query'] . '&sid=' . $sid) : ('sid=' . $sid);
     $redirect = array($parts['path'], $query, $parts['fragment']);
   }
+  // perform any last minute alterations to redirect urls required by other modules.
+  // note we're avoiding module_invoke and module_invoke_all() so we can pass
+  // $redirect by reference.
+  foreach (module_implements('fundraiser_confirmation_redirect') as $module) {
+    $function = $module . '_fundraiser_confirmation_redirect';
+    if (function_exists($function)) {
+      $function($redirect, $form, $form_state);
+    }
+  }
 
   $form_state['redirect'] = $redirect;
 }
