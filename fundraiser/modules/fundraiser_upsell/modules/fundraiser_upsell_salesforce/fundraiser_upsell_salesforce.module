@@ -5,47 +5,51 @@
  */
 
 /**
- * Implements hook_form_alter().
+ * Implements hook_upsell_node_settings_alter().
  *
- * Inject the upsell Salesforce settings form into donation edit forms.
+ * Adds the Salesforce campaign ID to the form.
  */
-function fundraiser_upsell_salesforce_form_alter(&$form, &$form_state, $form_id) {
-  // Edit form - inject the Salesforce Upsell settings into the node form.
-  if (!empty($form['#node_edit_form']) && fundraiser_upsell_is_available($form['#node'])) {
-    fundraiser_upsell_salesforce_add_node_settings($form);
-  }
-}
-
-/**
- * Form for injecting into the node edit page.
- *
- * @param array $form
- *   The form to modify.
- */
-function fundraiser_upsell_salesforce_add_node_settings(&$form) {
+function fundraiser_upsell_salesforce_upsell_node_settings_alter(&$form) {
   $node = $form['#node'];
 
-  $salesforce_campaign_options = market_source_get_campaigns();
+  $campaigns = market_source_get_campaigns();
 
-  if (!empty($salesforce_campaign_options)) {
-    $salesforce_campaign_options = array_merge(
-      array('' => '(blank)'),
-      $salesforce_campaign_options
+  if (!empty($campaigns)) {
+    $campaign_options = array(
+      '' => '(blank)',
     );
 
-    $form['fundraiser_upsell_salesforce'] = array(
+    foreach ($campaigns as $id => $campaign) {
+      $campaign_options[$id] = $campaign['name'];
+    }
+
+    dpm($campaign_options);
+
+    $form['fundraiser_upsell']['salesforce'] = array(
       '#type' => 'fieldset',
       '#tree' => TRUE,
       '#title' => t('Salesforce values for upsold donations.'),
     );
-    $form['fundraiser_upsell_salesforce']['campaign_id'] = array(
+    $form['fundraiser_upsell']['salesforce']['campaign_id'] = array(
       '#title' => t('Sustainer Salesforce Campaign ID'),
       '#type' => 'select',
-      '#options' => $salesforce_campaign_options,
+      '#options' => $campaign_options,
       '#default_value' => !empty($node->fundraiser_upsell_salesforce['campaign_id']) ? $node->fundraiser_upsell_salesforce['campaign_id'] : '',
       '#description' => t('Set the campaign to be used for upsold donations from this form. Please note that if this field is set to (blank), then all recurring donations will have blank campaign ids.'),
     );
   }
+
+  $form['#submit'][] = 'fundraiser_upsell_salesforce_node_settings_submit';
+}
+
+/**
+ * Submit callback.
+ *
+ * Moves the values around so the nodeapi functions can find them.
+ */
+function fundraiser_upsell_salesforce_node_settings_submit($form, &$form_state) {
+  $form_state['values']['fundraiser_upsell_salesforce'] = $form_state['values']['fundraiser_upsell']['salesforce'];
+  $form_state['values']['fundraiser_upsell']['salesforce'] = NULL;
 }
 
 /**

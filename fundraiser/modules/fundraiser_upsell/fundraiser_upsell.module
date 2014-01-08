@@ -196,6 +196,9 @@ function fundraiser_upsell_add_node_settings(&$form) {
     unset($form['fundraiser_upsell']['email_wrappers']['#submit']);
   }
 
+  // Let submodules add settings.
+  drupal_alter('upsell_node_settings', $form);
+
   $form['#validate'][] = 'fundraiser_upsell_node_form_validate';
   $form['#submit'][] = 'fundraiser_upsell_node_form_submit';
 }
