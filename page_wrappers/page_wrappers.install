@@ -111,8 +111,54 @@ function _page_wrappers_create_fields() {
     $type = node_type_set_defaults($type);
     node_type_save($type);
   }
-
+  // build list of themes for the theme css select field's options
+  $themes = list_themes();
+  $themes_options = array();
+  foreach ($themes as $theme) {
+    $themes_options[$theme->name] = $theme->info['name'];
+  }
   $fields = array(
+    // theme css select field
+    'theme_css' => array(
+      'active' => 1,
+      'cardinality' => 1,
+      'deleted' => 0,
+      'entity_types' => array(),
+      'field_name' => 'page_wrappers_theme_css',
+      'foreign keys' => array(),
+      'indexes' => array(
+        'value' => array(
+          0 => 'value',
+        ),
+      ),
+      'locked' => 0,
+      'module' => 'list',
+      'settings' => array(
+        'allowed_values' => $themes_options,
+      ),
+      'translatable' => 0,
+      'type' => 'list_text',
+      '_instance' => array(
+        'bundle' => 'page_wrapper',
+        'default_value' => NULL,
+        'deleted' => 0,
+        'description' => '',
+        'entity_type' => 'node',
+        'field_name' => 'page_wrappers_theme_css',
+        'label' => 'Include Theme CSS',
+        'required' => 0,
+        'settings' => array(
+          'user_register_form' => FALSE,
+        ),
+        'widget' => array(
+          'active' => 1,
+          'module' => 'options',
+          'settings' => array(),
+          'type' => 'options_select',
+          'weight' => 1,
+        ),
+      ),
+    ),
     // css filefield
     'css_filefield' => array(
       'translatable' => '1',
@@ -246,6 +292,7 @@ function _page_wrappers_delete_fields() {
     'page_wrappers_css',
     'page_wrappers_js',
     'page_wrappers_html_template',
+    'page_wrappers_theme_css',
   );
   foreach ($fields as $field_name) {
     $field = field_info_instance('node', $field_name, 'email_wrapper');
@@ -302,4 +349,73 @@ function page_wrappers_update_7002() {
   $ret[] = t('Added additional indexes to {node_page_wrappers} table.');
 
   return implode("\n", $ret);
+}
+
+/**
+ * Add option to include a theme's CSS on a page wrapper.
+ */
+function page_wrappers_update_7003() {
+  $themes = list_themes();
+  $themes_options = array();
+  foreach ($themes as $theme) {
+    $themes_options[$theme->name] = $theme->info['name'];
+  }
+  $field = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'page_wrappers_theme_css',
+    'foreign keys' => array(),
+    'indexes' => array(
+      'value' => array(
+        0 => 'value',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'list',
+    'settings' => array(
+      'allowed_values' => $themes_options,
+    ),
+    'translatable' => 0,
+    'type' => 'list_text',
+  );
+  $field_instance = array(
+    'bundle' => 'page_wrapper',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => 'Include all of the CSS from the selected theme in this page wrapper.',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'list',
+        'settings' => array(),
+        'type' => 'list_default',
+        'weight' => 2,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'page_wrappers_theme_css',
+    'label' => 'Include Theme CSS',
+    'required' => 0,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'options',
+      'settings' => array(),
+      'type' => 'options_select',
+      'weight' => 1,
+    ),
+  );
+
+  field_create_field($field);
+  field_create_instance($field_instance);
 }

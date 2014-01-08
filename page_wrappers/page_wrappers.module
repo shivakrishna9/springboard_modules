@@ -111,6 +111,13 @@ function page_wrappers_preprocess_page(&$vars) {
       // load the wrapper node
       $wrapper_node = node_load($wrapper['wrapper_nid']);
 
+      // if there is theme CSS allowed, add those files.
+      if ($theme_css = _page_wrappers_get_theme_css($wrapper_node)) {
+        foreach($theme_css as $stylesheet) {
+          drupal_add_css($stylesheet['path'], $stylesheet['options']);
+        }
+      }
+      
       // if there's a css file add it; also see this module's hook_css_alter function
       if (isset($wrapper_node->page_wrappers_css) && count($wrapper_node->page_wrappers_css)) {
 
@@ -160,13 +167,21 @@ function page_wrappers_css_alter(&$css) {
   if (!empty($assigned_wrapper)) {
     $wrapper_node = node_load($assigned_wrapper['wrapper_nid']);
     $css_files = field_get_items('node', $wrapper_node, 'page_wrappers_css');
-    // If a stylesheet has been added to the wrapper, don't remove it
     $keep = array();
+    // If a stylesheet is from an allowed theme, don't remove it.
+    if($theme_css = _page_wrappers_get_theme_css($wrapper_node)) {
+      foreach($theme_css as $css_file) {
+        $keep[] = $css_file['path'];
+      }
+    }
+    
+    // If a stylesheet has been added to the wrapper, don't remove it.
     if (!empty($css_files)) {
       foreach ($css_files as $css_file) {
         $keep[] = $css_file['uri'];
       }
     }
+
     // Loop through the stylesheets removing all except the ones in the keep array and module files
     foreach ($css as $path => $info) {
       if (!in_array($path, $keep) && (strpos($path, 'modules/') === FALSE)) {
@@ -1138,3 +1153,29 @@ if (module_exists('context')) {
   include_once 'page_wrappers.context.inc';
 }
 
+/**
+ * List allowed CSS files.
+ * 
+ * @param $wrapper_node
+ * The page wrapper node object.
+ * 
+ * @return associative array of css file and properties or FALSE if there are none.
+ */
+
+function _page_wrappers_get_theme_css($wrapper_node) {
+  $css = FALSE;
+  if (isset($wrapper_node->page_wrappers_theme_css) && count($wrapper_node->page_wrappers_theme_css)) {
+    $css = array();
+    $allowed_themes = field_get_items('node', $wrapper_node, 'page_wrappers_theme_css');
+    $themes_list = list_themes();
+      foreach($allowed_themes as $theme) {
+        $style_sheets = $themes_list[$theme['value']]->stylesheets;
+        foreach($style_sheets as $media => $sheets) {
+          foreach($sheets as $uri) {
+            $css[] = array('path' => drupal_get_path('theme', $theme) . $uri, 'options' => array('media' => $media));
+          }
+        }
+      }
+    }
+  return $css;
+}
