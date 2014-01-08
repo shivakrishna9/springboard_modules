@@ -1,0 +1,32 @@
+<?php
+/**
+ * @file
+ * Schema function for the fundraiser_upsell_salesforce module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function fundraiser_upsell_salesforce_schema() {
+  $schema['fundraiser_upsell_salesforce'] = array(
+    'description' => 'Stores Salesforce specific data for nodes that are fundraiser upsell enabled.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The node id.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'campaign_id' => array(
+        'description' => 'The Salesforce campaign id to use for upsold donations against this node.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('nid'),
+  );
+
+  return $schema;
+}
