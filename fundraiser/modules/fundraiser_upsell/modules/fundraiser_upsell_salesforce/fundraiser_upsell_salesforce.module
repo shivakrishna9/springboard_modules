@@ -23,8 +23,6 @@ function fundraiser_upsell_salesforce_upsell_node_settings_alter(&$form) {
       $campaign_options[$id] = $campaign['name'];
     }
 
-    dpm($campaign_options);
-
     $form['fundraiser_upsell']['salesforce'] = array(
       '#type' => 'fieldset',
       '#tree' => TRUE,
@@ -66,6 +64,21 @@ function fundraiser_upsell_salesforce_upsold_donation_alter(&$donation) {
     $order = commerce_order_load($donation->did);
     $order->data['campaign_id'] = $donation->node->fundraiser_upsell['salesforce']['campaign_id'];
     commerce_order_save($order);
+  }
+}
+
+/**
+ * Implements hook_salesforce_queue_create_item_alter().
+ *
+ * Set the campaign ID if it's supposed to be different.
+ */
+function fundraiser_upsell_salesforce_salesforce_queue_create_item_alter(&$item) {
+  dpm($item);
+  if ($item->delta == 'donation') {
+    $donation = fundraiser_donation_get_donation($item->drupal_id);
+    if (isset($donation->data['campaign_id'])) {
+      $item['sobject']->fields['CampaignId'] = $donation->data['campaign_id'];
+    }
   }
 }
 
