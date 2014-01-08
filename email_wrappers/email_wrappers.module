@@ -588,6 +588,27 @@ function email_wrappers_mail_load($params = array()) {
 }
 
 /**
+ * Delete mail configuration.
+ *
+ * @param array $params
+ *   mid or (module and delta)
+ */
+function email_wrappers_mail_delete($params) {
+  $mid = isset($params['mid']) ? $params['mid'] : FALSE;
+
+  if ($mid) {
+    db_query('DELETE FROM {email_wrappers} WHERE mid = :mid', array(':mid' => $mid));
+  }
+  elseif (isset($params['module']) && isset($params['delta'])) {
+    $values = array(
+      ':module' => $params['module'],
+      ':delta' => $params['delta'],
+    );
+    db_query('DELETE FROM {email_wrappers} WHERE module = :module AND delta = :delta', $values);
+  }
+}
+
+/**
  * Load email settings from db.
  *
  * @param $nid
