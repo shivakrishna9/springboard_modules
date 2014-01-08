@@ -121,7 +121,7 @@ function _page_wrappers_create_fields() {
     // theme css select field
     'theme_css' => array(
       'active' => 1,
-      'cardinality' => 1,
+      'cardinality' => -1,
       'deleted' => 0,
       'entity_types' => array(),
       'field_name' => 'page_wrappers_theme_css',
@@ -362,7 +362,7 @@ function page_wrappers_update_7003() {
   }
   $field = array(
     'active' => 1,
-    'cardinality' => 1,
+    'cardinality' => -1,
     'deleted' => 0,
     'entity_types' => array(),
     'field_name' => 'page_wrappers_theme_css',
