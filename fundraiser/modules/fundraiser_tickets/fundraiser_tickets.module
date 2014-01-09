@@ -277,8 +277,8 @@ function fundraiser_tickets_commerce_line_item_type_info() {
 function fundraiser_tickets_fundraiser_donation_validate($form, $form_state){
   if (fundraiser_tickets_is_ticket_type($form['#node']->type)){
     foreach ($form_state['values']['submitted']['tickets']['ticket_box'] as $key => $quantity){
-      if (strstr($key, 'product-') && is_numeric(explode('-',$key)[1]) && $quantity > 0){
-        $product_id = explode('-',$key)[1];
+      $product_id = _fundraiser_tickets_get_product_id_from_form_element_name($key);
+      if ($product_id && $quantity > 0){
         $product_wrapper = entity_metadata_wrapper('commerce_product', commerce_product_load($product_id));
         $available_tickets = $product_wrapper->fr_tickets_quantity->value() - $product_wrapper->fr_tickets_quantity_sold->value();
         if ($quantity > $available_tickets){
@@ -305,8 +305,8 @@ function fundraiser_tickets_fundraiser_commerce_generate_line_items($donation, $
     $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
     $node_wrapper = entity_metadata_wrapper('node', $donation->node);
     foreach ($donation->donation['ticket_box'] as $key => $quantity){
-      if (strstr($key, 'product-') && is_numeric(explode('-',$key)[1]) && $quantity > 0){
-        $product_id = explode('-',$key)[1];
+      $product_id = _fundraiser_tickets_get_product_id_from_form_element_name($key);
+      if ($product_id && $quantity > 0){
         $product_wrapper = entity_metadata_wrapper('commerce_product', commerce_product_load($product_id));
         $line_item = commerce_line_item_new('ticket', $order->order_id);
         $line_item->line_item_label = t('Ticket - ' . $product_wrapper->title->value());
@@ -359,6 +359,18 @@ function fundraiser_tickets_fundraiser_commerce_generate_line_items($donation, $
     return TRUE;
   } else {
     return FALSE;
+  }
+}
+
+/**
+* Helper function: parse the product id out of the form element name.
+*/
+function _fundraiser_tickets_get_product_id_from_form_element_name($name){
+  list ($prefix, $product_id) = explode('-',$name);
+  if (strstr($prefix, 'product') && is_numeric($product_id)){
+    return $product_id;
+  } else {
+    return NULL;
   }
 }
 
