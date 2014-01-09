@@ -475,6 +475,9 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
  *
  */
 function fundraiser_upsell_create_recurring_series($donation) {
+
+  drupal_alter('upsold_donation_before_recurring', $donation);
+
   // Since this is decoupled, we need to set the start date to ensure that we
   // advance the future donations by one month.
   $date_to_start = $donation->recurring->next_charge;
