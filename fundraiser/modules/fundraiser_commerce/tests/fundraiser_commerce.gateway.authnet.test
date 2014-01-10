@@ -169,7 +169,7 @@ class FundraiserCommerceGatewayAuthnetTest extends FundraiserCommerceGatewayTest
 
     // Updated card info
     $post = array(
-      'payment_fields[credit][card_number]' => '4222222222222222',
+      'payment_fields[credit][card_number]' => '5555555555554444',
       'payment_fields[credit][expiration_date][card_expiration_month]' => $expiration_month+1,
       'payment_fields[credit][expiration_date][card_expiration_year]' => $expiration_year+1,
       'payment_fields[credit][card_cvv]' => '222',
@@ -181,19 +181,20 @@ class FundraiserCommerceGatewayAuthnetTest extends FundraiserCommerceGatewayTest
     // since we're doing all of this in a single request.
     entity_get_controller('commerce_cardonfile')->resetCache();
 
-    // Reload the donation to get any changes that were made.
-    $donation = fundraiser_donation_get_donation($donation->did, TRUE);
+    // Reload the next donation in the series to get any changes that were made. The original donation has already
+    // been processed and is therefore unaffected by the billing change.
+    $donation = fundraiser_donation_get_donation($donation->did+1, TRUE);
     $card_data = _fundraiser_commerce_donation_cardonfile_card($donation);
 
     // Get the payment profile from authorize.net. We can only verify card number because
     // expiration month and day are masked.
     $payment_profile = $this->getPaymentProfile($card_data, $donation);
-    $this->assertEqual(substr($payment_profile->paymentProfile->payment->creditCard->cardNumber, -4), '2222', 'Correct card number is stored in payment profile in authorize.net after the card number has been changed.');
+    $this->assertEqual(substr($payment_profile->paymentProfile->payment->creditCard->cardNumber, -4), '4444', 'Correct card number is stored in payment profile in authorize.net after the card number has been changed.');
 
     // Check local card storage for correct updates.
     $this->assertEqual($expiration_month+1, $card_data->card_exp_month, 'Credit card expiration month correctly updated in local card on file profile after the card number has been changed.');
     $this->assertEqual($expiration_year+1, $card_data->card_exp_year, 'Credit card expiration year correctly updated in local card on file profile after the card number has been changed.');
-    $this->assertEqual('2222', $card_data->card_number, 'Credit card number changed in local card on file profile after the card number has been changed.');
+    $this->assertEqual('4444', $card_data->card_number, 'Credit card number changed in local card on file profile after the card number has been changed.');
   }
 
   /**
