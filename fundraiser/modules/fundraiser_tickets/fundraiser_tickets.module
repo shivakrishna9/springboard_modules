@@ -304,7 +304,9 @@ function fundraiser_tickets_fundraiser_commerce_generate_line_items($donation, $
   if (isset($donation->donation['ticket_box']) && is_array($donation->donation['ticket_box']) && count($donation->donation['ticket_box'])){
     $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
     $node_wrapper = entity_metadata_wrapper('node', $donation->node);
-    foreach ($donation->donation['ticket_box'] as $key => $quantity){
+    foreach ($donation->donation['ticket_box'] as $offset => $serialized_value){
+      $form_row = unserialize($serialized_value);
+      list ($key, $quantity) = each($form_row);
       $product_id = _fundraiser_tickets_get_product_id_from_form_element_name($key);
       if ($product_id && $quantity > 0){
         $product_wrapper = entity_metadata_wrapper('commerce_product', commerce_product_load($product_id));

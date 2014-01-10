@@ -26,6 +26,18 @@ function _webform_edit_tickets($component) {
 }
 
 /**
+ * Implements _webform_submit_component().
+ *
+ * Convert submitted keys and values into serialized, saveable data.
+ */
+function _webform_submit_tickets($component, $values) {
+  foreach ($values as $key => $submitted_value){
+    $return[] = serialize(array($key => $submitted_value));
+  }
+  return $return;
+}
+
+/**
  * Implements _webform_render_component().
  */
 function _webform_render_tickets($component, $value = NULL, $filter = TRUE) {
