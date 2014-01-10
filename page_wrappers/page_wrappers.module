@@ -1172,7 +1172,7 @@ function _page_wrappers_get_theme_css($wrapper_node) {
         $style_sheets = $themes_list[$theme['value']]->stylesheets;
         foreach($style_sheets as $media => $sheets) {
           foreach($sheets as $uri) {
-            $css[] = array('path' => drupal_get_path('theme', $theme['value']) . $uri, 'options' => array('media' => $media));
+            $css[] = array('path' => $uri, 'options' => array('media' => $media));
           }
         }
       }
