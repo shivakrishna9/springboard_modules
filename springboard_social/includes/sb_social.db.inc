@@ -323,9 +323,9 @@ function _sb_social_settings_defaults($service) {
 function _sb_social_market_source_defaults() {
   $market_source = array();
   $fields = market_source_field_info();
-  $blacklist = _sb_social_component_blacklist();
+  $share_enabled_fields = _sb_social_list_share_enabled_market_source_fields();
   foreach ($fields as $key => $field) {
-    if (in_array($key, $blacklist)) {
+    if (!in_array($key, $share_enabled_fields)) {
       continue;
     }
     $market_source[$key] = variable_get('springboard_social_ms_' . $key, '');
