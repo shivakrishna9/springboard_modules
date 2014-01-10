@@ -6,6 +6,38 @@
  * integration.
  */
 
+// Lastname for sync override. Defaults to Friend of [sitename]
+define('SALESFORCE_NPSP_DEFAULT_LASTNAME', 'Friend of ' . variable_get('site_name'));
+
+/**
+ * Implements hook_menu().
+ */
+function salesforce_npsp_menu() {
+// Settings page.
+  $items['admin/config/salesforce/salesforce-npsp'] = array(
+    'title' => 'Salesforce Nonprofit Starter Pack',
+    'description' => 'Configuration settings for the Salesforce Nonprofit Starter Pack.',
+    'page callback' => 'salesforce_npsp_admin_page',
+    'access arguments' => array('administer salesforce npsp'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'includes/salesforce_npsp.admin.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function salesforce_npsp_permission() {
+  return array(
+    'administer salesforce npsp' => array(
+      'description' => t('Configure settings for the Salesforce Nonprofit Starter Pack.'),
+      'title' => t('Configure Salesforce NPSP'),
+      'restrict access' => TRUE,
+    ),
+  );
+}
+
 /**
  * Implements hook_user_load().
  */
@@ -134,4 +166,20 @@ function salesforce_npsp_save_account_ids($account_ids) {
 
     salesforce_sync_save_map($record);
   }
+}
+
+/**
+ * Implements hook_salesforce_sync_fail_item().
+ * When a Contact sync fails due to a missing last name, add a last name as configured in admin settings.
+ *
+ * @TODO remove this function once a full solution is developed.
+ */
+function salesforce_npsp_salesforce_sync_fail_item($item, $message, $result) {
+
+  // If sync fails because LastName is empty, item lastname to standard value
+  if (array_key_exists('LastName', $item->sobject->fields) && $result->errors[0]->message == "Required fields are missing: [LastName]") {
+    $lastname = variable_get('salesforce_npsp_lastname', SALESFORCE_NPSP_DEFAULT_LASTNAME);
+    $item->sobject->fields['LastName'] = $lastname;
+  }
+
 }
