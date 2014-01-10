@@ -5,13 +5,13 @@
  * Primary test class for Springboard API module
  */
 
-class EmailWrappersTestCase extends DrupalWebTestCase {
+class SpringboardAPITestCase extends DrupalWebTestCase {
 
   public static function getInfo() {
     return array(
-      'name' => 'Email Wrappers',
-      'description' => 'Email Wrappers functional tests.',
-      'group' => 'Email Wrappers',
+      'name' => 'Springboard API',
+      'description' => 'Springboard API functional tests.',
+      'group' => 'Springboard API',
     );
   }
 
@@ -78,9 +78,66 @@ class EmailWrappersTestCase extends DrupalWebTestCase {
   public function testSpringboardApiIndex() {
     $this->drupalLogin($this->privileged_user);
     $this->webform = $this->_springboard_api_create_webform();
+
+    $form_types = variable_get('webform_node_types_primary', array('webform'));
+    module_load_include('inc', 'springboard_api', 'resources/springboard_api.form_resources');
+    // list webforms
+    $list = springboard_api_form_resource_index();
+    $this->assertTrue(count($list) == 1, t('Single record returned by list endpoint'));
+    $item = (array) $list[0];
+    $keys = array_keys($item);
+    // confirm output
+    $this->assertTrue((in_array('nid', $keys) && $item['nid'] == 1), t('node id correctly listed in index'));
+    $this->assertTrue((in_array('type', $keys) && $item['type'] == 'webform'), t('node type correctly listed in index'));
+    $this->assertTrue((in_array('title', $keys) && $item['title'] == t('Test Webform')), t('node title correctly listed in index'));
+
+    // retrieve details for webform
+    $details = springboard_api_form_resource_retrieve(1);
+    // confirm output
+    $this->assertTrue(TRUE, print_r($details, TRUE));
+    $keys = array_keys($details);
+    $this->assertTrue((in_array('nid', $keys) && $details['nid'] == 1), t('node id correctly listed in retrieved details'));
+    $this->assertTrue((in_array('title', $keys) && $details['title'] == t('Test Webform')), t('node title correctly listed in retreived details'));
+    $this->assertTrue((in_array('internal_name', $keys) && $details['internal_name'] == ''), t('internal name correctly listed in retreived details'));
+    $this->assertTrue((in_array('type', $keys) && $details['type'] == 'webform'), t('node type correctly listed in retreived details'));
+    $this->assertTrue((in_array('fields', $keys) && count($details['fields']) == 7), t('field count is correct'));
+
+    if (is_array($details['fields'])) {
+      $webform_components = $this->_springboard_api_webform_components();
+      $this->assertTrue(TRUE, print_r($webform_components, TRUE));
+      $this->_springboard_api_validate_fields($details['fields'], $webform_components);
+
+
+    }
+    // submit webform
+    // confirm data save
+    // nid, title, type, body, fields
+    // submit webform with errors
+    // confirm error messages
   }
 
-  private function _springboard_api_create_webform() {
+  function _springboard_api_validate_fields($fields, $webform_components) {
+    $standard_keys = array('label', 'type', 'default value', 'accepted values', 'required');
+    foreach ($fields as $form_key => $field_info) {
+      $component = isset($webform_components[$form_key]) ? $webform_components[$form_key] : FALSE;
+      if (!$component) {
+        // component form key not present in the master list of components, this shouldn't be possible.
+        $this->assertTrue(FALSE, t('Bogus webform component detected: !form_key', array('!form_key' => $form_key)));
+      }
+      else {
+        // spot check the field label.
+        $this->assertTrue((isset($field_info['label']) && $field_info['label'] == $webform_components[$form_key]['component']['name']), t('Component label correct for !form_key', array('!form_key' => $form_key)));
+
+        $mandatory = isset($webform_components[$form_key]['component']['mandatory']) ? isset($webform_components[$form_key]['component']['mandatory']) : NULL;
+        if ($mandatory !== NULL) {
+          $this->assertTrue($field_info['required'] == (int) $mandatory, t('"Mandatory" field settings correct for !form_key', array('!form_key' => $form_key)));
+        }
+        // TODO: check default, mandatory & accepted values, will probably need to actually render the component FAPI
+      }
+    }
+  }
+
+  function _springboard_api_webform_components() {
     $webform_components = array(
       // Test date components.
       'date' => array(
@@ -174,7 +231,7 @@ class EmailWrappersTestCase extends DrupalWebTestCase {
         ),
         'sample values' => 'admin@localhost.localhost',
         'database values' => array('admin@localhost.localhost'),
-        'database default values' => array($this->webform_users['admin']->mail),
+        'database default values' => array(),
       ),
       // Test hidden components.
       'hidden' => array(
@@ -191,7 +248,7 @@ class EmailWrappersTestCase extends DrupalWebTestCase {
         'database values' => array('default hidden value'),
         'database default values' => array('default hidden value'),
       ),
-      'textfield' => array(
+      'textfield_test' => array(
         'component' => array(
           'form_key' => 'textfield_test',
           'name' => 'Textfield',
@@ -209,6 +266,11 @@ class EmailWrappersTestCase extends DrupalWebTestCase {
         'database default values' => array(),
       ),
     );
+    return $webform_components;
+  }
+
+  private function _springboard_api_create_webform() {
+    $webform_components =  $this->_springboard_api_webform_components();
 
     $settings = array(
       'type' => 'webform',
@@ -221,8 +283,8 @@ class EmailWrappersTestCase extends DrupalWebTestCase {
       'tnid' => '0',
       'translate' => '0',
       'title' => 'Test Webform',
-      'body' => array(LANGUAGE_NONE => array(array('value' => 'Donec placerat. Nullam nibh dolor, blandit sed, fermentum id, imperdiet sit amet, neque. Nam mollis ultrices justo. Sed tempor. Sed vitae tellus. Etiam sem arcu, eleifend sit amet, gravida eget, porta at, wisi. Nam non lacus vitae ipsum viverra pretium. Phasellus massa. Fusce magna sem, gravida in, feugiat ac, molestie eget, wisi. Fusce consectetuer luctus ipsum. Vestibulum nunc. Suspendisse dignissim adipiscing libero. Integer leo. Sed pharetra ligula a dui. Quisque ipsum nibh, ullamcorper eget, pulvinar sed, posuere vitae, nulla. Sed varius nibh ut lacus. Curabitur fringilla. Nunc est ipsum, pretium quis, dapibus sed, varius non, lectus. Proin a quam. Praesent lacinia, eros quis aliquam porttitor, urna lacus volutpat urna, ut fermentum neque mi egestas dolor.'))),
-      'teaser' => array(LANGUAGE_NONE => array(array('value' => 'Donec placerat. Nullam nibh dolor, blandit sed, fermentum id, imperdiet sit amet, neque. Nam mollis ultrices justo. Sed tempor. Sed vitae tellus. Etiam sem arcu, eleifend sit amet, gravida eget, porta at, wisi. Nam non lacus vitae ipsum viverra pretium. Phasellus massa. Fusce magna sem, gravida in, feugiat ac, molestie eget, wisi. Fusce consectetuer luctus ipsum. Vestibulum nunc. Suspendisse dignissim adipiscing libero. Integer leo. Sed pharetra ligula a dui. Quisque ipsum nibh, ullamcorper eget, pulvinar sed, posuere vitae, nulla. Sed varius nibh ut lacus. Curabitur fringilla.'))),
+      'body' => array(LANGUAGE_NONE => array(array('value' => 'Donec placerat. Nullam nibh dolor.'))),
+      'teaser' => array(LANGUAGE_NONE => array(array('value' => 'Donec placerat.'))),
       'log' => '',
       'format' => '1',
       'webform' => array(
@@ -241,7 +303,7 @@ class EmailWrappersTestCase extends DrupalWebTestCase {
       ),
     );
     $cid = 0;
-    foreach ($weform_components as $key => $component_info) {
+    foreach ($webform_components as $key => $component_info) {
       $cid++;
       $settings['webform']['components'][$cid] = $component_info['component'];
       $settings['webform']['components'][$cid]['cid'] = $cid;
