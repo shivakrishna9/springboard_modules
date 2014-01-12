@@ -211,7 +211,7 @@ function fundraiser_tickets_form_alter(&$form, &$form_state, $form_id) {
 /**
  * Implements hook_form_alter().
  *
- * Alter content type settings to add "Enable ticketed events?" checkbox.
+ * Alter ticket settings form and add validation callback.
  */
 function fundraiser_tickets_form_node_form_alter(&$form, &$form_state) {
 
@@ -238,7 +238,7 @@ function fundraiser_tickets_form_node_form_alter(&$form, &$form_state) {
         }
       }
       $form['#after_build'][] = '_fundraiser_tickets_ticket_settings_form_organize';
-      $form['#validate'] = array();
+      $form['#validate'] = array('_fundraiser_tickets_ticket_settings_form_validate');
       $form['#submit'] = array();
       unset($form['actions']['preview']);
       unset($form['actions']['delete']);
@@ -475,6 +475,30 @@ function _fundraiser_tickets_ticket_settings_form_organize($form, $form_state){
 
     return $form;
 }
+
+
+/**
+ * Validate callback for node form when in ticket settings view.
+ *
+ * Verify that redirect URLS are valid. Cribbed from menu module.
+ */
+function _fundraiser_tickets_ticket_settings_form_validate(&$form, &$form_state) {
+
+  if ($form_state['values']['fr_tickets_closed_options'][LANGUAGE_NONE][0]['value'] == 'redirect'){
+    $closed_redirect = $form_state['values']['fr_tickets_closed_redirect'][LANGUAGE_NONE][0]['value'];
+    if (!trim($closed_redirect) || !drupal_valid_path($closed_redirect, TRUE)) {
+      form_set_error('fr_tickets_closed_redirect', t("The path '@link_path' is either invalid or you do not have access to it.", array('@link_path' => $closed_redirect)));
+    }
+  }
+
+  if ($form_state['values']['fr_tickets_soldout_options'][LANGUAGE_NONE][0]['value'] == 'redirect'){
+    $soldout_redirect = $form_state['values']['fr_tickets_soldout_redirect'][LANGUAGE_NONE][0]['value'];
+    if (!trim($soldout_redirect) || !drupal_valid_path($soldout_redirect, TRUE)) {
+      form_set_error('fr_tickets_soldout_redirect', t("The path '@link_path' is either invalid or you do not have access to it.", array('@link_path' => $soldout_redirect)));
+    }
+  }
+}
+
 
 /**
  * Implements hook_form_alter().

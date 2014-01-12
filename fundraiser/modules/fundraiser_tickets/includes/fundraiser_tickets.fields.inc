@@ -413,7 +413,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
       'settings' => array(
         'allowed_values' => array(
           'form' => 'Taken to the waitlist form',
-          'redirect' => 'Redirected to another page on the site',
+          'redirect' => 'Redirected to another page',
           'message' => 'Shown a message',
         ),
         'allowed_values_function' => '',
@@ -613,7 +613,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
       'settings' => array(
         'allowed_values' => array(
           'wait' => 'Taken to the waitlist form',
-          'redirect' => 'Redirected to another page on the site',
+          'redirect' => 'Redirected to another page',
           'message' => 'Shown a message',
         ),
         'allowed_values_function' => '',
