@@ -137,7 +137,7 @@ function theme_fundraiser_tickets_webform_table($variables) {
       $title = check_plain($product_wrapper->title->value()) . ' (' . commerce_currency_format($product_wrapper->commerce_price->amount->value(), $product_wrapper->commerce_price->currency_code->value(), $product_wrapper) . ')';
       $ticket_prices[$product_wrapper->product_id->value()] = $product_wrapper->commerce_price->amount->value() / 100;
       $description = $tickets_available ? check_plain($product_wrapper->fr_tickets_description->value()) : check_plain($product_wrapper->fr_tickets_sold_out_message->value());
-      $warning_message = $tickets_available > 0 && $tickets_available < $product_wrapper->fr_tickets_threshold->value() ? theme('fundraiser_tickets_warning_indicator', array('warning_message' =>t("Only @tickets remaining!", array('@tickets' => format_plural($tickets_available, '1 ticket', '@count tickets'))))) : NULL;
+      $warning_message = $tickets_available > 0 && $tickets_available <= $product_wrapper->fr_tickets_threshold->value() ? theme('fundraiser_tickets_warning_indicator', array('warning_message' =>t("Only @tickets remaining!", array('@tickets' => format_plural($tickets_available, '1 ticket', '@count tickets'))))) : NULL;
 
       // Add a div to contain the ticket total
       $ticket_total = array('data' => '$ 0.00', 'class' => 'fundraiser-ticket-type-total', 'id' => 'product-' . $element[$id]['#extra']['product_id'] . '-tickets-total', 'align' => 'right');
