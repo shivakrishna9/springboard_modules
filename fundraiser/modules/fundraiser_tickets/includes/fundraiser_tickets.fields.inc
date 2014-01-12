@@ -612,7 +612,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
       'module' => 'list',
       'settings' => array(
         'allowed_values' => array(
-          'wait' => 'Taken to the waitlist form',
+          'form' => 'Taken to the waitlist form',
           'redirect' => 'Redirected to another page',
           'message' => 'Shown a message',
         ),
