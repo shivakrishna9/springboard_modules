@@ -610,7 +610,13 @@ function fundraiser_tickets_clone_node_alter(&$node, $context) {
       $new_ticket_types = array();
       foreach ($ticket_types as $offset => $ticket_type){
         $new_ticket_type = clone $ticket_type;
-        $new_ticket_type->sku .= '-1';
+        // Product SKUs need to be unique and can be no longer than 255 characters.
+        // We don't know the nid of the new node yet, so I am using time() and
+        // a random number to generate a unique SKU.
+        if (strlen($new_ticket_type->sku > 220)){
+          $new_ticket_type->sku = substr($new_ticket_type->sku, 0, 220);
+        }
+        $new_ticket_type->sku .= '-clone-' . time() . sprintf('%04d',rand(1,1000));
         $new_ticket_type->product_id = FALSE;
         $new_ticket_type->revision_id = FALSE;
         $new_ticket_type->is_new = TRUE;
