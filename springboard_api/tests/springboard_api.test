@@ -19,7 +19,7 @@ class SpringboardAPITestCase extends DrupalWebTestCase {
    * Implementation of setUp().
    */
   public function setUp() {
-    parent::setUp(array('webform', 'springboard_api', 'ctools', 'services', 'rest_server'));
+    parent::setUp(array('webform', 'ctools', 'services', 'rest_server', 'springboard_api'));
     $this->privileged_user = $this->drupalCreateUser(array(
       'administer site configuration',
       'create webform content',
@@ -75,7 +75,7 @@ class SpringboardAPITestCase extends DrupalWebTestCase {
     drupal_write_record('services_endpoint', $record);
   }
 
-  public function testSpringboardApiIndex() {
+  public function testSpringboardApi() {
     $this->drupalLogin($this->privileged_user);
     $this->webform = $this->_springboard_api_create_webform();
 
@@ -86,15 +86,15 @@ class SpringboardAPITestCase extends DrupalWebTestCase {
     $this->assertTrue(count($list) == 1, t('Single record returned by list endpoint'));
     $item = (array) $list[0];
     $keys = array_keys($item);
-    // confirm output
+    // Confirm output.
     $this->assertTrue((in_array('nid', $keys) && $item['nid'] == 1), t('node id correctly listed in index'));
     $this->assertTrue((in_array('type', $keys) && $item['type'] == 'webform'), t('node type correctly listed in index'));
     $this->assertTrue((in_array('title', $keys) && $item['title'] == t('Test Webform')), t('node title correctly listed in index'));
 
-    // retrieve details for webform
+    // Retrieve details for webform.
     $details = springboard_api_form_resource_retrieve(1);
-    // confirm output
-    $this->assertTrue(TRUE, print_r($details, TRUE));
+    // Confirm output.
+    //$this->assertTrue(TRUE, print_r($details, TRUE));
     $keys = array_keys($details);
     $this->assertTrue((in_array('nid', $keys) && $details['nid'] == 1), t('node id correctly listed in retrieved details'));
     $this->assertTrue((in_array('title', $keys) && $details['title'] == t('Test Webform')), t('node title correctly listed in retreived details'));
@@ -104,16 +104,23 @@ class SpringboardAPITestCase extends DrupalWebTestCase {
 
     if (is_array($details['fields'])) {
       $webform_components = $this->_springboard_api_webform_components();
-      $this->assertTrue(TRUE, print_r($webform_components, TRUE));
+      //$this->assertTrue(TRUE, print_r($webform_components, TRUE));
       $this->_springboard_api_validate_fields($details['fields'], $webform_components);
-
-
     }
-    // submit webform
-    // confirm data save
-    // nid, title, type, body, fields
-    // submit webform with errors
-    // confirm error messages
+    // Submit webform.
+    module_load_include('inc', 'services', 'includes/services.runtime');
+    $this->submission = $this->_springboard_api_submit_webform($webform_components);
+    //$this->assertTrue(TRUE, print_r($this->submission, TRUE));
+    // Confirm data save.
+    $this->assertTrue(isset($this->submission->sid) && isset($this->submission->nid), t('Submission record created'));
+    // Confirm submission field values.
+    $this->assertTrue($this->submission->data['1']['value'][0] == '2014-01-25', t('Date field set correctly'));
+    $this->assertTrue($this->submission->data['2']['value'][0] == 'one', t('Checkboxes field set correctly'));
+    $this->assertTrue($this->submission->data['3']['value'][0] == 'one', t('Radios field set correctly'));
+    $this->assertTrue($this->submission->data['4']['value'][0] == 'one', t('Select field set correctly'));
+    $this->assertTrue($this->submission->data['5']['value'][0] == 'test@example.com', t('E-mail field set correctly'));
+    $this->assertTrue($this->submission->data['6']['value'][0] == 'hidden value', t('Hidden field set correctly'));
+    $this->assertTrue($this->submission->data['7']['value'][0] == 'textfield value', t('Textfield field set correctly'));
   }
 
   function _springboard_api_validate_fields($fields, $webform_components) {
@@ -127,14 +134,34 @@ class SpringboardAPITestCase extends DrupalWebTestCase {
       else {
         // spot check the field label.
         $this->assertTrue((isset($field_info['label']) && $field_info['label'] == $webform_components[$form_key]['component']['name']), t('Component label correct for !form_key', array('!form_key' => $form_key)));
-
-        $mandatory = isset($webform_components[$form_key]['component']['mandatory']) ? isset($webform_components[$form_key]['component']['mandatory']) : NULL;
+        // required
+        $mandatory = isset($webform_components[$form_key]['component']['mandatory']) ? $webform_components[$form_key]['component']['mandatory'] : 0;
         if ($mandatory !== NULL) {
-          $this->assertTrue($field_info['required'] == (int) $mandatory, t('"Mandatory" field settings correct for !form_key', array('!form_key' => $form_key)));
+          $this->assertTrue((int) $field_info['required'] == (int) $mandatory, t('"Mandatory" field settings correct for !form_key', array('!form_key' => $form_key)));
         }
-        // TODO: check default, mandatory & accepted values, will probably need to actually render the component FAPI
       }
     }
+  }
+
+  function _springboard_api_submit_webform($webform_components) {
+    $values = array(
+      'date' => array(
+        'month' => '1',
+        'day' => '25',
+        'year' => '2014',
+      ),
+      'checkboxes' => array(
+        'one' => 'one',
+      ),
+      'radios' => 'one',
+      'select' => 'one',
+      'email' => 'test@example.com',
+      'hidden' => 'hidden value',
+      'textfield_test' => 'textfield value',
+    );
+    springboard_api_form_action_submit(1, $values);
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    return webform_get_submission(1, 1);
   }
 
   function _springboard_api_webform_components() {
@@ -148,14 +175,14 @@ class SpringboardAPITestCase extends DrupalWebTestCase {
           'value' => '19 Nov 1978',
           'extra' => array(
             'timezone' => 'site',
-            'start_date' => '-100 years',
+            'start_date' => '-2 years',
             'end_date' => '+2 years',
           ),
           'mandatory' => '0',
           'pid' => '0',
           'weight' => '-15',
         ),
-        'sample values' => array('day' => '30', 'month' => '9', 'year' => '1982'),
+        'sample values' => '2014-02-25',
         'database values' => array('1982-09-30'),
         'database default values' => array('1978-11-19'),
       ),
@@ -170,11 +197,11 @@ class SpringboardAPITestCase extends DrupalWebTestCase {
             'items' => "one|one\ntwo|two\nthree|three",
             'multiple' => 1,
           ),
-          'mandatory' => '0',
+          'mandatory' => '1',
           'pid' => '0',
           'weight' => '-15',
         ),
-        'sample values' => array('one' => TRUE, 'two' => FALSE, 'three' => TRUE),
+        'sample values' => 'one',
         'database values' => array('one', 'three'),
         'database default values' => array('two'),
       ),
@@ -239,14 +266,14 @@ class SpringboardAPITestCase extends DrupalWebTestCase {
           'form_key' => 'hidden',
           'name' => 'Hidden',
           'type' => 'hidden',
-          'value' => 'default hidden value',
-          'mandatory' => '1',
+          'value' => 'hidden value',
+          'mandatory' => '0',
           'pid' => '0',
           'weight' => '-4',
         ),
         'sample values' => NULL,
-        'database values' => array('default hidden value'),
-        'database default values' => array('default hidden value'),
+        'database values' => array('hidden value'),
+        'database default values' => array('hidden value'),
       ),
       'textfield_test' => array(
         'component' => array(
@@ -261,7 +288,7 @@ class SpringboardAPITestCase extends DrupalWebTestCase {
           'pid' => '0',
           'weight' => '-6',
         ),
-        'sample values' => '',
+        'sample values' => 'test value',
         'database values' => array(),
         'database default values' => array(),
       ),

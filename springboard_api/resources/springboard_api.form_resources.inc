@@ -34,7 +34,7 @@ function springboard_api_form_resource_index($node_type = NULL) {
   $form_select->fields('n', array('nid', 'type', 'title'));
   if (module_exists('fundraiser')) {
     $form_select->leftJoin('field_data_field_fundraiser_internal_name', 'f', 'n.nid = f.entity_id');
-    $form_select->addExpression("COALESCE(f.field_fundraiser_internal_name_value, '')",'internal_name');
+    $form_select->addExpression("COALESCE(f.field_fundraiser_internal_name_value, '')", 'internal_name');
   }
   if ($node_type && in_array($node_type, $form_types)) {
     $form_select->condition('type', $node_type, '=');

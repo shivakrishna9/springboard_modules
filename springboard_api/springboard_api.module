@@ -2,8 +2,9 @@
 
 /**
  * @file
- * Integrates Springboard with Services.
+ * Core & contrib hooks.
  */
+
 /**
  * Implements hook_init().
  *
@@ -14,7 +15,7 @@ function springboard_api_init() {
   if (isset($_SERVER['HTTP_ORIGIN'])) {
     drupal_add_http_header('Access-Control-Allow-Origin', $_SERVER['HTTP_ORIGIN']);
   }
- if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'])) {
+  if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'])) {
     drupal_add_http_header('Access-Control-Allow-Headers', $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']);
   }
   if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD'])) {
@@ -37,21 +38,6 @@ function springboard_api_permission() {
   );
 }
 
-function springboard_api_form_alter(&$form, $form_state, $form_id) {
-  drupal_set_message('form id:' . $form_id);
-  if ($form_id == 'page_wrapper_node_form') {
-    $form['test-wrapper'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('test fieldset'),
-    );
-    $form['test-wrapper']['test-select'] = array(
-      '#type' => 'select',
-      '#title' => t('test select'),
-      '#options' => array('1' => 'one', '2' => 'two', '3' => 'three'),
-      '#default_value' => '2',
-    );
-  }
-}
 /**
  * Implements hook_menu().
  */
@@ -78,7 +64,11 @@ function springboard_api_services_resources() {
       'operations' => array(
         'create' => array(
           'help' => 'Create a donation',
-          'file' => array('type' => 'inc', 'module' => 'springboard_api', 'name' => 'resources/springboard_api.donation_resourcess'),
+          'file' => array(
+            'type' => 'inc',
+            'module' => 'springboard_api',
+            'name' => 'resources/springboard_api.donation_resources',
+          ),
           'callback' => 'springboard_api_donation_resource_create',
           'args' => array(
             array(
@@ -99,7 +89,11 @@ function springboard_api_services_resources() {
       'operations' => array(
         'retrieve' => array(
           'help' => 'Retrieve detailed information about a specific form.',
-          'file' => array('type' => 'inc', 'module' => 'springboard_api', 'name' => 'resources/springboard_api.form_resources'),
+          'file' => array(
+            'type' => 'inc',
+            'module' => 'springboard_api',
+            'name' => 'resources/springboard_api.form_resources',
+          ),
           'callback' => 'springboard_api_form_resource_retrieve',
           'access callback' => 'springboard_api_form_resource_access',
           'access arguments' => array('retrieve'),
@@ -127,7 +121,11 @@ function springboard_api_services_resources() {
         ),
         'index' => array(
           'help' => 'List avaialble forms',
-          'file' => array('type' => 'inc', 'module' => 'springboard_api', 'name' => 'resources/springboard_api.form_resources'),
+          'file' => array(
+            'type' => 'inc',
+            'module' => 'springboard_api',
+            'name' => 'resources/springboard_api.form_resources',
+          ),
           'callback' => 'springboard_api_form_resource_index',
           'access callback' => 'springboard_api_form_resource_access',
           'access arguments' => array('index'),
@@ -146,7 +144,11 @@ function springboard_api_services_resources() {
       'actions' => array(
         'submit' => array(
           'help' => 'Submit a webform via the API',
-          'file' => array('type' => 'inc', 'module' => 'springboard_api', 'name' => 'resources/springboard_api.form_resources'),
+          'file' => array(
+            'type' => 'inc',
+            'module' => 'springboard_api',
+            'name' => 'resources/springboard_api.form_resources',
+          ),
           'callback' => 'springboard_api_form_action_submit',
           'access callback' => 'springboard_api_form_resource_access',
           'access arguments' => array('submit'),
@@ -170,7 +172,11 @@ function springboard_api_services_resources() {
         ),
         'render' => array(
           'help' => 'request a rendered form',
-          'file' => array('type' => 'inc', 'module' => 'springboard_api', 'name' => 'resources/springboard_api.form_resources'),
+          'file' => array(
+            'type' => 'inc',
+            'module' => 'springboard_api',
+            'name' => 'resources/springboard_api.form_resources',
+          ),
           'callback' => 'springboard_api_form_action_render',
           'access callback' => 'springboard_api_form_resource_access',
           'access arguments' => array('render'),
@@ -219,7 +225,7 @@ function springboard_api_ctools_plugin_type() {
 }
 
 /**
- *
+ * List available service management plugins.
  */
 function springboard_api_list_management_services() {
   $services = array();
@@ -234,7 +240,7 @@ function springboard_api_list_management_services() {
 }
 
 /**
- *
+ * Retrieve the currently enabled service management plugin.
  */
 function springboard_api_get_enabled_management_service() {
   if ($enabled_service = variable_get('springboard_api_management_service', 0)) {
@@ -249,7 +255,7 @@ function springboard_api_get_enabled_management_service() {
 }
 
 /**
- * @return array
+ * Get service management plugin definitions.
  */
 function springboard_api_get_available_plugins() {
   $plugins = array();
@@ -259,8 +265,15 @@ function springboard_api_get_available_plugins() {
 }
 
 /**
+ * Access callback for form resources.
  *
+ * Checks validation & throttling with enabled service management plugin.
  *
+ * @param string $op
+ *   Endpoint requested.
+ *
+ * @param mixed $data
+ *   Any other argument data passed by Services.
  */
 function springboard_api_form_resource_access($op, $data) {
   springboard_api_log_service_usage($op, $data = NULL);
@@ -269,13 +282,13 @@ function springboard_api_form_resource_access($op, $data) {
     $func = $service['throttling_callback'];
     $request_ok = $func();
     if (!$request_ok) {
-      // bail out, throttle limit has been reached.
+      // Bail out, throttle limit has been reached.
       return services_error(t('API usage limit has been reached. Try your request again later.', array('@type' => $node_type)), 406);
     }
   }
   if (isset($service['authentication_callback']) && function_exists($service['authentication_callback'])) {
-     $func = $service['authentication_callback'];
-     return $func($op, $data);
+    $func = $service['authentication_callback'];
+    return $func($op, $data);
   }
   return TRUE;
 }
@@ -286,10 +299,11 @@ function springboard_api_form_resource_access($op, $data) {
 function springboard_api_get_form_details($nid) {
   $node = node_load($nid);
   if (is_object($node)) {
-    // fish for internal name.
+    // Fish for internal name.
     $lang = $node->language;
     $internal_name = isset($node->field_fundraiser_internal_name) ? $node->field_fundraiser_internal_name[$lang][0]['safe_value'] : '';
-    // high level form node details
+    // High level form node details.
+    // Go ahead and pre-load csrf token so it's available when the form is submitted.
     $form_details = array(
       'nid' => $node->nid,
       'title' => $node->title,
@@ -297,18 +311,20 @@ function springboard_api_get_form_details($nid) {
       'type' => $node->type,
       'body' => $node->body,
       'fields' => array(),
-      'token' => drupal_get_token('services'), // go ahead and pre-load csrf token so it's available when the form is submitted.
+      'token' => drupal_get_token('services'),
     );
-    // build form field list
+    // Build form field list.
     foreach ($node->webform['components'] as $cid => $component) {
-      // skip fieldsets
+      // Skip fieldsets.
       if ($component['type'] == 'fieldset') {
         continue;
       }
-      // each webform component type has a render function that generates the form api array for that component type.
-      // we're using this function to generate the form api code for each component in the webform. The fapi array is
-      // then parsed for information like type, required, default value, etc. In this way we can
-      // analyze standard and custom component types regardless of what modules created them.
+      // Each webform component type has a render function that generates the form api array
+      // for that component type.
+      // We're using this function to generate the form api code for each component in the webform.
+      // The fapi array is then parsed for information like type, required, default value, etc.
+      // In this way we can analyze standard and custom component types regardless of what modules
+      // created them.
       $func = '_webform_render_' . $component['type'];
       if (function_exists($func)) {
         $fapi = $func($component);
@@ -324,6 +340,15 @@ function springboard_api_get_form_details($nid) {
   }
 }
 
+/**
+ * Examine the Form API array generated for a given webform component.
+ *
+ * @param $save
+ *   Storage variable, passed by reference to permit recursion.
+ *
+ * @param $fapi
+ *   Form API array data to parse.
+ */
 function _springboard_api_parse_component_fapi(&$save, $fapi) {
   if ($fapi['#type'] == 'date') {
     $fapi = form_process_date($fapi);
@@ -333,7 +358,7 @@ function _springboard_api_parse_component_fapi(&$save, $fapi) {
     'type' => isset($fapi['#type']) ? $fapi['#type'] : '',
     'default value' => isset($fapi['#default_value']) ? $fapi['#default_value'] : '',
     'accepted values' => isset($fapi['#options']) ? $fapi['#options'] : '',
-    'required' => isset($fapi['#required']) ? $fapi['#required'] : FALSE,
+    'required' => isset($fapi['#required']) ? $fapi['#required'] : 0,
   );
 
   // if component default hasn't been found check #value
@@ -347,6 +372,15 @@ function _springboard_api_parse_component_fapi(&$save, $fapi) {
   }
 }
 
+/**
+ * Unpack webform component "extra" data.
+ *
+ * @param $items
+ *   Raw "extra" string.
+ *
+ * @return mixed
+ *   Returns unpacked array of data.
+ */
 function _springboard_api_parse_extra_items($items) {
   $parts = explode("\n", $items);
   foreach ($parts as $part) {
