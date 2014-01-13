@@ -165,8 +165,29 @@ function theme_fundraiser_tickets_webform_table($variables) {
   return $output;
 }
 
+/**
+ * Theme function for the low ticket quantity warning message.
+ */
 function theme_fundraiser_tickets_warning_indicator($vars){
   return '*' . $vars['warning_message'] . '*';
 }
+
+/**
+ * Theme function for the message that replaces the webform when the form is
+ * closed.
+ */
+function theme_fundraiser_tickets_closed_message($vars){
+  return $vars['message']['safe_value'];
+}
+
+/**
+ * Theme function for the message that replaces the webform when tickets are
+ * sold out.
+ */
+function theme_fundraiser_tickets_soldout_message($vars){
+  return $vars['message']['safe_value'];
+}
+
+
 
 
