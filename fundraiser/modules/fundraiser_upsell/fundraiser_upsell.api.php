@@ -69,7 +69,7 @@ function hook_upsold_donation_alter(&$upsold_donation) {
  * An example of this hook in use is to queue up the master donation as a
  *   recurring donation and as a donation/opportunity in Salesforce.
  *
- * @param $master_donation
+ * @param object $master_donation
  *   The master donation object.
  *   $master_donation->fundraiser_upsell->related_did will contain the
  *   donation ID of the upsold donation.
