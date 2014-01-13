@@ -29,7 +29,7 @@ function sb_social_metatag_metatags_view_alter(&$output, $instance) {
   $settings = sb_social_settings_load($sid);
   $plugins = sb_social_get_enabled_plugins();
 
-  // render button for each enabled service
+  // Check for metatag view alter callbacks in the plugins.
   foreach ($plugins as $service => $plugin) {
     $vars['service'] = $service;
     if (isset($plugin['metatag_view_alter'])) {
