@@ -40,7 +40,7 @@ var addthis_share = {
           $url = $url + Drupal.settings.sb_social.market_source + '/';
 
           // conditionally add webform submission id if present
-          if (typeof Drupal.settings.sb_social.submission_id != 'undefined') {
+          if (typeof Drupal.settings.sb_social.submission_id !== 'undefined') {
             $url = $url + '?sid=' + Drupal.settings.sb_social.submission_id;
           }
 
@@ -50,6 +50,9 @@ var addthis_share = {
               success:function(response) {
                 // Overwrite default url with share url (including share id and market source values)
                 $elem.attr('addthis:url', response);
+                if ($elem.hasClass('facebook')) {
+                  $elem.attr('fb:like:href', response);
+                }
                 $elem.context.conf.url = response;
                 $elem.context.share.url = response;
               },
