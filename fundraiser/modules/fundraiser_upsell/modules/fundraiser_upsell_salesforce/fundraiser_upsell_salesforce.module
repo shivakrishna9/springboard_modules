@@ -208,6 +208,20 @@ function fundraiser_upsell_salesforce_node_record($node) {
 
 /**
  * Implements hook_salesforce_sync_pass_item().
+ *
+ * If we have all the data we need, we will create an Upsell sobject and send it
+ *   to the Salesforce queue.
+ *
+ * There are two cases to take care of here.
+ *
+ * First case, we have a recurring donation related to upsell.
+ *   In this case, look up the upsold donation ID and see if it has an SFID.
+ *
+ * Second case, we have a donation that happens to be upsold.  Look up the
+ *   related recurring donation and see if it has an SFID.
+ *
+ * If both objects have SFIDs and DIDs then we know the prerequisites are met.
+ *   Create an Upsell sobject and queue it up.
  */
 function fundraiser_upsell_salesforce_salesforce_sync_pass_item($item, $result) {
   $name = 'Upsell';
@@ -276,10 +290,17 @@ function fundraiser_upsell_salesforce_salesforce_sync_pass_item($item, $result) 
  * Formats an Upsell Salesforce object.
  *
  * @param string $name
+ *   The name of the object.
  * @param int $upsold_did
+ *   The donation ID of the original single donation.
  * @param string $upsold_sfid
+ *   The Salesforce ID of the original single donation.
  * @param int $upsell_did
+ *   The donation ID of the recurring_donation object in the sustainer series.
+ *   Same as the master Donation ID.
  * @param string $upsell_recurring_donation_sfid
+ *   The Salesforce ID of recurring_donation object.  NOT the same as the
+ *   master donation donation ID.
  *
  * @return object
  *   The Salesforce object.
