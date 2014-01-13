@@ -10,6 +10,37 @@ require_once 'includes/sb_social.db.inc';
 require_once 'includes/sb_social.salesforce.inc';
 require_once 'includes/sb_social.ctools.inc';
 
+function sb_social_metatag_metatags_view_alter(&$output, $instance) {
+  //metatag_view_alter
+  $node = menu_get_object();
+  if (!$node) {
+    // is it a confirmation page?
+    $node = menu_get_object('webform_menu');
+    // if we still don't have a node id then we must assume this isn't a node
+    // or confirmation page and any settings that may be available will come
+    // from the current path.
+    $id = !$node ? current_path() : $node->nid;
+  }
+  else {
+    $id = $node->nid;
+  }
+
+  $sid = _sb_social_sid_by_id($id);
+  $settings = sb_social_settings_load($sid);
+  $plugins = sb_social_get_enabled_plugins();
+
+  // render button for each enabled service
+  foreach ($plugins as $service => $plugin) {
+    $vars['service'] = $service;
+    if (isset($plugin['metatag_view_alter'])) {
+      $func = $plugin['metatag_view_alter'];
+      if (function_exists($func)) {
+        $func($settings['data'][$service], $output);
+      }
+    }
+  }
+}
+
 /**
  * Implements hook_permission().
  */

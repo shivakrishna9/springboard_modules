@@ -12,7 +12,34 @@ $plugin = array(
   'uninstall' => 'facebook_uninstall', // uninstall hook: remove variables, etc.
   'token_info' => facebook_token_info(),
   'token_replace' => 'facebook_token_replace',
+  'metatag_view_alter' => 'facebook_metatag_view_alter',
 );
+
+/**
+ * Alter Metatag Opengraph tags.
+ *
+ * @param $output
+ *   Metatag view output.
+ *
+ * @param $settings
+ *   Share content configuration settings.
+ */
+function facebook_metatag_view_alter($settings, &$output) {
+  if (module_exists('metatag_opengraph')) {
+    $meta = array(
+      'og:title' => !empty($settings['title']) ? $settings['title'] : '',
+      'og:description' => !empty($settings['description']) ? $settings['description'] : '',
+      'og:image' => !empty($facebook['image']) ? $settings['image'] : '',
+    );
+    // If we have values remove Metatag Opengraph's corresponding tag.
+    // This prevents duplicate tags.
+    foreach ($meta as $key => $value) {
+      if ($value && isset($output[$key])) {
+        unset($output[$key]);
+      }
+    }
+  }
+}
 
 function facebook_token_info() {
   $facebook_tokens = array();
@@ -186,13 +213,15 @@ function facebook_share_opengraph_config($settings, $node = FALSE, $sid = FALSE)
   $meta = array(
     'title' => !empty($facebook['title']) ? $facebook['title'] : '',
     'description' => !empty($facebook['description']) ? $facebook['description'] : '',
-    'image' => $facebook['image'],
   );
+  // Facebook gets angry if you output an empty image opengraph tag.
+  if (!empty($facebook['image'])) {
+    $meta['image'] = $facebook['image'];
+  }
 
   foreach ($meta as $field => $value) {
     $meta[$field] = _sb_social_replace_tokens($value, $node, $sid);
   }
-
   foreach ($meta as $id => $content) {
     $data = array(
       '#type' => 'html_tag',
