@@ -1000,3 +1000,17 @@ function fundraiser_upsell_set_acceptance_cookie() {
   $cookie_lifetime = variable_get('fundraiser_upsell_acceptance_lifetime', 0);
   setcookie('fundraiser_upsell_acceptance', 1, REQUEST_TIME + 3600 * 24 * $cookie_lifetime, "/");
 }
+
+/**
+ * Get the donation ID of the upsold donation given the master donation ID.
+ *
+ * @param $upsell_did
+ *   The donation ID of the master donation in the upsell sustainer series.
+ *
+ * @return int|bool
+ *   The donation ID of the original upsold donation, or FALSE.
+ */
+function fundraiser_upsell_get_upsold_did($upsell_did) {
+  return db_query("SELECT related_did FROM fundraiser_upsell_donation WHERE did = :upsell_did", array(':upsell_did' => $upsell_did))
+    ->fetchField();
+}
