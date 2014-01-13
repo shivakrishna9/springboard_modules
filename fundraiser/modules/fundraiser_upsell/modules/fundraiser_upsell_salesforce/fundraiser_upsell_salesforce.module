@@ -205,3 +205,118 @@ function fundraiser_upsell_salesforce_node_record($node) {
     'campaign_id' => $node->fundraiser_upsell_salesforce['campaign_id'],
   );
 }
+
+/**
+ * Implements hook_salesforce_sync_pass_item().
+ */
+function fundraiser_upsell_salesforce_salesforce_sync_pass_item($item, $result) {
+  $name = 'Upsell';
+  $sobject = NULL;
+
+  if ($item->delta == 'recurring_donation' && fundraiser_upsell_donation_record_exists($item->drupal_id)) {
+    watchdog('upsell', 'recurring donation object: ' . var_export($item, TRUE));
+    $upsell_did = $item->drupal_id;
+    $upsell_recurring_donation_sfid = $result->id;
+    $upsold_did = fundraiser_upsell_get_upsold_did($upsell_did);
+
+    // Lookup an sfid for the upsold donation.
+    // If we find one, create the upsell Salesforce object.
+    // See if we have the recurring donation sfid.
+    $upsold_map = salesforce_sync_load_map(array(
+        'module' => 'salesforce_donation',
+        'delta' => 'donation',
+        'drupal_id' => $upsold_did,
+        'object_type' => 'Opportunity',
+      ));
+
+    // Bail if the other object isn't mapped.
+    if ($upsold_map === FALSE) {
+      return;
+    }
+    $upsold_sfid = $upsold_map->sfid;
+
+    $sobject = fundraiser_upsell_salesforce_create_upsell_sobject($name, $upsold_did, $upsold_sfid, $upsell_did, $upsell_recurring_donation_sfid);
+  }
+
+  if ($item->delta == 'donation') {
+    $donation = fundraiser_donation_get_donation($item->drupal_id);
+    if (isset($donation->fundraiser_upsell->type) && $donation->fundraiser_upsell->type == 'upsold_donation') {
+      // This object is an upsold donation.
+      // See if the recurring donation has been synced and get its sfid.
+      $upsold_did = $donation->did;
+      $upsold_sfid = $result->id;
+      $upsell_did = $donation->fundraiser_upsell->related_did;
+
+      // See if we have the recurring donation sfid.
+      $recurring_map = salesforce_sync_load_map(array(
+          'module' => 'fundraiser_sustainers',
+          'delta' => 'recurring_donation',
+          'drupal_id' => $upsell_did,
+          'object_type' => 'npe03__Recurring_Donation__c',
+        ));
+
+      // Bail if the other object isn't mapped.
+      if ($recurring_map === FALSE) {
+        return;
+      }
+
+      $upsell_recurring_donation_sfid = $recurring_map->sfid;
+      $sobject = fundraiser_upsell_salesforce_create_upsell_sobject($name, $upsold_did, $upsold_sfid, $upsell_did, $upsell_recurring_donation_sfid);
+
+    }
+  }
+
+  // Add to the queue.
+  if (is_object($sobject)) {
+    fundraiser_upsell_salesforce_queue_upsell($sobject);
+  }
+}
+
+/**
+ * Formats an Upsell Salesforce object.
+ *
+ * @param string $name
+ * @param int $upsold_did
+ * @param string $upsold_sfid
+ * @param int $upsell_did
+ * @param string $upsell_recurring_donation_sfid
+ *
+ * @return object
+ *   The Salesforce object.
+ */
+function fundraiser_upsell_salesforce_create_upsell_sobject($name, $upsold_did, $upsold_sfid, $upsell_did, $upsell_recurring_donation_sfid) {
+  $sobject = new stdClass();
+  $sobject->type = 'Donation_Upsell__c';
+  $sobject->fields = array(
+    'Name' => $name,
+    'Upsell_Order_Id__c' => $upsell_did,
+    'Upsell_Recurring_Donation__c' => $upsell_recurring_donation_sfid,
+    'Upsold_Donation__c' => $upsold_sfid,
+    'Upsold_Order_Id__c' => $upsold_did,
+  );
+
+  return $sobject;
+}
+
+/**
+ * Adds the Upsell Salesforce object to the salesforce queue.
+ *
+ * @param object $sobject
+ *   The Upsell Salesforce object.
+ *
+ * @return bool|int
+ *   SAVED_NEW or SAVED_UPDATED or FALSE on failure.
+ */
+function fundraiser_upsell_salesforce_queue_upsell($sobject) {
+  $item = array(
+    'drupal_id' => $sobject->fields['Upsold_Order_Id__c'],
+    'module' => 'fundraiser_upsell_salesforce',
+    'delta' => 'upsell',
+    'object_type' => $sobject->type,
+    'operation' => 'CREATE',
+    'sobject' => $sobject,
+  );
+
+  $queue = salesforce_queue_load();
+  return $queue->createItem($item);
+}
