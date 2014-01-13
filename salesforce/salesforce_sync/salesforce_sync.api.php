@@ -15,7 +15,7 @@
  *
  * @param object $item
  *   Queue item
- * @param varchar $result
+ * @param object $result
  *   The Salesforce response after the call was made
  */
 function hook_salesforce_sync_pass_item($item, $result) {
