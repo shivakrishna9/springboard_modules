@@ -365,6 +365,44 @@ function fundraiser_tickets_fundraiser_commerce_generate_line_items($donation, $
 }
 
 /**
+ * Implements hook_fundraiser_donation_success().
+ */
+function fundraiser_tickets_fundraiser_donation_success($donation) {
+  // If this donation contains a ticketed donation handle the add-on donation value
+  if (isset($donation->donation['ticket_box']) && is_array($donation->donation['ticket_box']) && count($donation->donation['ticket_box'])){
+    $node_wrapper = entity_metadata_wrapper('node', $donation->node);
+
+    // Loop through each of the ticket options looking for the extra donation key
+    foreach ($donation->donation['ticket_box'] as $offset => $serialized_value){
+      $form_row = unserialize($serialized_value);
+      list ($key, $quantity) = each($form_row);
+      $product_id = _fundraiser_tickets_get_product_id_from_form_element_name($key);
+
+      if ($key == 'fundraiser-tickets-extra-donation'){
+        // The extra donation amount is stored in the quantity field
+        $amount = $quantity;
+        if ($amount > 0) {
+          // Clone the original donation, only a few values will change
+          $extra_donation = clone $donation;
+
+          // Set the amount
+          $extra_donation->donation['amount'] = $amount;
+
+          // Important to remove this
+          unset($extra_donation->donation['ticket_box']);
+
+          // Create the new donation
+          fundraiser_donation_create($extra_donation);
+
+          // Fire off the success hooks for this donation, no need to process since its already been charged
+          fundraiser_donation_success($extra_donation);
+        }
+      }
+    }
+  }
+}
+
+/**
 * Helper function: parse the product id out of the form element name.
 */
 function _fundraiser_tickets_get_product_id_from_form_element_name($name){
