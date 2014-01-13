@@ -106,15 +106,34 @@ function fundraiser_upsell_schema() {
         'not null' => TRUE,
         'default' => 300,
       ),
-      'campaign_id' => array(
-        'description' => 'The Salesforce campaign id for this upsell recurring donation.',
+    ),
+    'primary key' => array('nid'),
+  );
+
+  $schema['fundraiser_upsell_donation'] = array(
+    'description' => 'Stores data for fundraiser_upsell donations.',
+    'fields' => array(
+      'did' => array(
+        'description' => 'The donation ID.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => 'A string describing what this donation is in regards to upsell.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
+      'related_did' => array(
+        'description' => 'The donation ID that is related to this donation.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
     ),
-    'primary key' => array('nid'),
+    'primary key' => array('did'),
   );
 
   return $schema;
@@ -151,4 +170,44 @@ function fundraiser_upsell_update_7001() {
   );
 
   db_add_field('fundraiser_upsell', 'thankyou', $thankyou_field);
+}
+
+/**
+ * Drops the campaign_id field.
+ */
+function fundraiser_upsell_update_7002() {
+  db_drop_field('fundraiser_upsell', 'campaign_id');
+}
+
+/**
+ * Create the fundraiser_upsell_donation table.
+ */
+function fundraiser_upsell_update_7003() {
+  $schema = array(
+    'description' => 'Stores data for fundraiser_upsell donations.',
+    'fields' => array(
+      'did' => array(
+        'description' => 'The donation ID.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => 'A string describing what this donation is in regards to upsell.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'related_did' => array(
+        'description' => 'The donation ID that is related to this donation.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('did'),
+  );
+
+  db_create_table('fundraiser_upsell_donation', $schema);
 }
