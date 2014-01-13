@@ -458,14 +458,13 @@ function _fundraiser_tickets_ticket_settings_form_organize($form, $form_state){
     $form['closed']['fr_tickets_closed_is_closed'] = $form['fr_tickets_closed_is_closed'];
     $form['closed']['fr_tickets_closed_close_date'] = $form['fr_tickets_closed_close_date'];
     $form['closed']['fr_tickets_closed_options'] = $form['fr_tickets_closed_options'];
-
-    $form['closed']['fr_tickets_closed_redirect'] = $form['fr_tickets_closed_redirect'];
-    $form['closed']['fr_tickets_closed_redirect']['#states'] = array(
+    $form['fr_tickets_closed_redirect']['#states'] = array(
       'visible' => array(
         ':input[name="fr_tickets_closed_options[und]"]' => array('value' => 'redirect'),
       ),
     );
-
+    // Move the closed redirect right after the closed redirect radio button.
+    $form['closed']['fr_tickets_closed_options'][LANGUAGE_NONE]['redirect']['#suffix'] = drupal_render($form['fr_tickets_closed_redirect']);
     $form['closed']['fr_tickets_closed_message'] = $form['fr_tickets_closed_message'];
     $form['closed']['fr_tickets_closed_message']['#states'] = array(
       'visible' => array(
@@ -485,13 +484,13 @@ function _fundraiser_tickets_ticket_settings_form_organize($form, $form_state){
       '#weight' => '-1'
     );
     $form['soldout']['fr_tickets_soldout_options'] = $form['fr_tickets_soldout_options'];
-
-    $form['soldout']['fr_tickets_soldout_redirect'] = $form['fr_tickets_soldout_redirect'];
-    $form['soldout']['fr_tickets_soldout_redirect']['#states'] = array(
+    $form['fr_tickets_soldout_redirect']['#states'] = array(
       'visible' => array(
         ':input[name="fr_tickets_soldout_options[und]"]' => array('value' => 'redirect'),
       ),
     );
+    // Move the sold out redirect right after the sold out redirect radio button.
+    $form['soldout']['fr_tickets_soldout_options'][LANGUAGE_NONE]['redirect']['#suffix'] = drupal_render($form['fr_tickets_soldout_redirect']);
 
     $form['soldout']['fr_tickets_soldout_message'] = $form['fr_tickets_soldout_message'];
     $form['soldout']['fr_tickets_soldout_message']['#states'] = array(
