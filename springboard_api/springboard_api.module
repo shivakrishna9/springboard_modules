@@ -358,6 +358,7 @@ function _springboard_api_parse_component_fapi(&$save, $fapi) {
   $save = array(
     'label' => isset($fapi['#title']) ? $fapi["#title"] : '',
     'type' => isset($fapi['#type']) ? $fapi['#type'] : '',
+    'description' => isset($fapi['#description']) ? $fapi['#description'] : '',
     'default value' => isset($fapi['#default_value']) ? $fapi['#default_value'] : '',
     'accepted values' => isset($fapi['#options']) ? $fapi['#options'] : '',
     'required' => isset($fapi['#required']) ? $fapi['#required'] : 0,
