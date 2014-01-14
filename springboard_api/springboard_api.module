@@ -332,7 +332,7 @@ function springboard_api_get_form_details($nid) {
         $fapi = $func($component);
         $save = &$form_details['fields'][$component['form_key']];
         $save['form_key'] = $component['form_key'];
-        _springboard_api_parse_component_fapi($save, $fapi);
+        _springboard_api_parse_component_fapi($save, $fapi, $component['type']);
       }
     }
     return $form_details;
@@ -351,7 +351,7 @@ function springboard_api_get_form_details($nid) {
  * @param mixed $fapi
  *   Form API array data to parse.
  */
-function _springboard_api_parse_component_fapi(&$save, $fapi) {
+function _springboard_api_parse_component_fapi(&$save, $fapi, $component_type = NULL) {
   if ($fapi['#type'] == 'date') {
     $fapi = form_process_date($fapi);
   }
@@ -363,15 +363,21 @@ function _springboard_api_parse_component_fapi(&$save, $fapi) {
     'accepted values' => isset($fapi['#options']) ? $fapi['#options'] : '',
     'required' => isset($fapi['#required']) ? $fapi['#required'] : 0,
   );
-
   // If component default hasn't been found check #value
   if (empty($save['default value'])) {
     $save['default value'] = isset($fapi['#value']) ? $fapi['#value'] : '';
   }
+  // Grid components rely on a theme function to render, so we're stashing
+  // the extra info contained in the form api definition here.
+  if ($component_type == 'grid') {
+    $save['grid questions'] = isset($fapi['#grid_questions']) ? $fapi['#grid_questions'] : array();
+    $save['grid options'] = isset($fapi['#grid_options']) ? $fapi['#grid_options'] : array();
+  }
+
   // Recursion on any nested elements.
   $children = element_children($fapi);
   foreach ($children as $key) {
-    _springboard_api_parse_component_fapi($save[$key], $fapi[$key]);
+    _springboard_api_parse_component_fapi($save[$key], $fapi[$key], $component_type);
   }
 }
 
