@@ -408,9 +408,11 @@ function _sb_social_get_settings_by_sid($submission_id) {
 /**
  * Lookup webform node id from webform submission ID.
  *
- * @staticvar array $data
- * @param type $sid
- * @return type
+ * @param int $sid
+ *   Webform submission id.
+ *
+ * @return int
+ *   Node id of the webform associated with this submission.
  */
 function _sb_social_get_nid_by_sid($sid) {
   static $data = array();
