@@ -68,6 +68,7 @@ function springboard_api_form_action_submit($nid, $submission) {
   // Typecast in case the submission was JSON encoded as an object.
   $submission = (array) $submission;
   if (is_numeric($nid) && is_array($submission)) {
+    $node = node_load($nid);
     // TODO: find a long term solution here. We have to have the exact text of
     // the submission button on the form when submitting.
     // This value is added to the form by post process function or after build.
@@ -81,7 +82,6 @@ function springboard_api_form_action_submit($nid, $submission) {
       $submit_text = t('Submit');
     }
     $form_id = 'webform_client_form_' . $nid;
-    $node = node_load($nid);
     $form_state['webform_completed'] = 1;
     $form_state['values'] = array(
       'submit' => $submit_text,
