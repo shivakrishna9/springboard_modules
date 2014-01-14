@@ -2,10 +2,9 @@
 
 /**
  * @file
- *
  * Test management service plugin.
- *
- * Provides simplistic authentication, tracking, and throttling for use when debugging.
+ * Provides simplistic authentication, tracking, and throttling for use when
+ * debugging.
  */
 
 $plugin = array(
@@ -17,18 +16,26 @@ $plugin = array(
   'admin_settings' => 'springboard_api_test_service_settings',
 );
 
-
+/**
+ * Authentication callback.
+ */
 function springboard_api_test_service_authenticate($op, $data) {
   return TRUE;
 }
 
+/**
+ * API usage tracking callback.
+ */
 function springboard_api_test_service_track($endpoint, $data = '') {
   springboard_api_log_service_usage($endpoint, $data);
 }
 
+/**
+ * API usage throttling callback.
+ */
 function springboard_api_test_service_throttle() {
   if (variable_get('springboard_api_test_service_enable_throttling', 0)) {
-    // throttling enabled, check conditions
+    // Throttling enabled, check conditions.
     $limit = variable_get('springboard_api_test_service_throttle_limit', 0);
     if ($limit > 0) {
       $count = _springboard_api_tracker_count();
@@ -41,6 +48,9 @@ function springboard_api_test_service_throttle() {
   }
 }
 
+/**
+ * Admin settings form for plugin.
+ */
 function springboard_api_test_service_settings(&$form, $form_state) {
   $form['additional_settings'] = array(
     '#type' => 'fieldset',
@@ -65,11 +75,14 @@ function springboard_api_test_service_settings(&$form, $form_state) {
   $form['additional_settings']['springboard_api_test_service_throttle_limit'] = array(
     '#type' => 'textfield',
     '#title' => t('Max API calls per minute.'),
-    '#description' => t(''),
+    '#description' => t('Maximum number of API calls per endpoint in 60 seconds.'),
     '#default_value' => variable_get('springboard_api_test_service_throttle_limit', 0),
   );
 }
 
+/**
+ * Get endpoint usage in the last minute.
+ */
 function _springboard_api_tracker_count() {
   $end = time();
   $start = $end - 60;

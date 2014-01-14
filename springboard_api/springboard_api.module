@@ -303,7 +303,7 @@ function springboard_api_get_form_details($nid) {
     $lang = $node->language;
     $internal_name = isset($node->field_fundraiser_internal_name) ? $node->field_fundraiser_internal_name[$lang][0]['safe_value'] : '';
     // High level form node details.
-    // Go ahead and pre-load csrf token so it's available when the form is submitted.
+    // Pre-load CSRF token so its available for any followup submit calls.
     $form_details = array(
       'nid' => $node->nid,
       'title' => $node->title,
@@ -319,12 +319,14 @@ function springboard_api_get_form_details($nid) {
       if ($component['type'] == 'fieldset') {
         continue;
       }
-      // Each webform component type has a render function that generates the form api array
-      // for that component type.
-      // We're using this function to generate the form api code for each component in the webform.
-      // The fapi array is then parsed for information like type, required, default value, etc.
-      // In this way we can analyze standard and custom component types regardless of what modules
-      // created them.
+      // Each webform component type has a render function that generates the
+      // form api array for that component type.
+      // We're using this function to generate the form api code for each
+      // component in the webform.
+      // The fapi array is then parsed for information like type, required,
+      // default value, etc.
+      // In this way we can analyze standard and custom component types
+      // regardless of what modules created them.
       $func = '_webform_render_' . $component['type'];
       if (function_exists($func)) {
         $fapi = $func($component);
@@ -343,10 +345,10 @@ function springboard_api_get_form_details($nid) {
 /**
  * Examine the Form API array generated for a given webform component.
  *
- * @param $save
+ * @param array $save
  *   Storage variable, passed by reference to permit recursion.
  *
- * @param $fapi
+ * @param mixed $fapi
  *   Form API array data to parse.
  */
 function _springboard_api_parse_component_fapi(&$save, $fapi) {
@@ -361,11 +363,11 @@ function _springboard_api_parse_component_fapi(&$save, $fapi) {
     'required' => isset($fapi['#required']) ? $fapi['#required'] : 0,
   );
 
-  // if component default hasn't been found check #value
+  // If component default hasn't been found check #value
   if (empty($save['default value'])) {
     $save['default value'] = isset($fapi['#value']) ? $fapi['#value'] : '';
   }
-  // recurse on any nested elements.
+  // Recursion on any nested elements.
   $children = element_children($fapi);
   foreach ($children as $key) {
     _springboard_api_parse_component_fapi($save[$key], $fapi[$key]);
@@ -375,7 +377,7 @@ function _springboard_api_parse_component_fapi(&$save, $fapi) {
 /**
  * Unpack webform component "extra" data.
  *
- * @param $items
+ * @param string $items
  *   Raw "extra" string.
  *
  * @return mixed
@@ -394,11 +396,11 @@ function _springboard_api_parse_extra_items($items) {
 /**
  * Lookup payment method field information.
  *
- * @param $component
- * Payment methods webform component.
+ * @param array $component
+ *   Payment methods webform component.
  *
  * @return mixed
- * Returns payment field array or FALSE if no payment methods are found.
+ *   Returns payment field array or FALSE if no payment methods are found.
  */
 function _springboard_api_get_payment_field_info($component) {
   $payment_methods = array_filter($component['extra']['payment_methods'], '_fundraiser_webform_payment_method_array_filter_enabled');
@@ -419,14 +421,15 @@ function _springboard_api_get_payment_field_info($component) {
 /**
  * Log API request.
  *
- * @param $endpoint
+ * @param string $op
+ *   API operation being requested (index, retrieve, submit).
  * @param null $data
+ *   Optional data passed by Services.
  */
 function springboard_api_log_service_usage($op, $data = NULL) {
-  // TODO:$_SERVER['HTTP_X_FORWARDED_FOR'] to capture ip behind proxy
   $record = array(
     'time' => time(),
-    'remote_ip' => isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : 'unknown',
+    'remote_ip' => ip_address(),
     'referrer' => isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'unknown',
     'endpoint' => $op,
     'data' => serialize($data),
