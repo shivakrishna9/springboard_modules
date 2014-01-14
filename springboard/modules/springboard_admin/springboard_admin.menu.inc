@@ -238,6 +238,16 @@ function springboard_admin_admin_menu_items() {
     'customized' => 1,
     'weight' => 2,
   );
+  
+  // Marketing & Analytics > Goals
+  $items['admin/springboard/marketing-analytics']['_children']['admin/config/content/webform_goals'] = array(
+    'link_path' => 'admin/config/content/webform_goals',
+    'link_title' => 'Goals',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 3,
+  );
 
   // Top Level: Results
   $items['admin/springboard/results'] = array(
@@ -259,6 +269,26 @@ function springboard_admin_admin_menu_items() {
     'expanded' => 1,
     'customized' => 1,
     'weight' => 0,
+  );
+  
+  // Marketing & Analytics > Donations
+  $items['admin/springboard/results']['_children']['admin/commerce/orders'] = array(
+    'link_path' => 'admin/commerce/orders',
+    'link_title' => 'Donations',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 1,
+  );
+  
+  // Marketing & Analytics > Donors
+  $items['admin/springboard/results']['_children']['admin/people'] = array(
+    'link_path' => 'admin/people',
+    'link_title' => 'Donors',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 2,
   );
 
   // Top Level: Options
