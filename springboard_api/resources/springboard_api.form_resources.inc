@@ -7,8 +7,13 @@
 
 
 /**
+ * Supplies detailed information on single forms.
  *
+ * @param int $nid
+ *   Node id of the requested form.
  *
+ * @param bool $op
+ *   Experimental: if set, function returns rendered markup.
  */
 function springboard_api_form_resource_retrieve($nid, $op = NULL) {
 
@@ -25,8 +30,10 @@ function springboard_api_form_resource_retrieve($nid, $op = NULL) {
 }
 
 /**
+ * List webforms.
  *
- *
+ * @param string $node_type
+ *   Optional, filter webform list by node type.
  */
 function springboard_api_form_resource_index($node_type = NULL) {
   $form_types = variable_get('webform_node_types', array('webform'));
@@ -48,15 +55,24 @@ function springboard_api_form_resource_index($node_type = NULL) {
 }
 
 /**
+ * Programmatically submit a webform.
  *
+ * @param int $nid
+ *   Node id of webform to submit.
  *
+ * @param array $submission
+ *   Associative array of webform component form_keys and their submitted
+ *   values.
  */
 function springboard_api_form_action_submit($nid, $submission) {
-  $submission = (array) $submission; // typecast in case the submission was encoded as an object.
-  // TODO: find a long term solution here. We have to have the exact text of the submission button on
-  // the form when submitting. This value is added to the form by a post process function or after build,
-  // making it potentially expensive to go through all the steps required to generate the full form
-  // programmatically so we can then crawl the form api array looking for the submit button title.
+  // Typecast in case the submission was encoded as an object.
+  $submission = (array) $submission;
+  // TODO: find a long term solution here. We have to have the exact text of
+  // the submission button on the form when submitting.
+  // This value is added to the form by a post process function or after build.
+  // It is potentially expensive to go through all the steps required to
+  // generate the full form programmatically so we can then crawl the form api
+  // array looking for the submit button title.
   if (module_exists('fundraiser') && fundraiser_is_donation_type($node->type)) {
     $submit_text = t('Donate');
   }
@@ -72,8 +88,8 @@ function springboard_api_form_action_submit($nid, $submission) {
       'op' => $submit_text,
       'details' => array(
         'nid' => $nid,
-        'sid' =>  '',
-        'uid' => 0, // fundraiser should figure this out by email address.
+        'sid' => '',
+        'uid' => 0,
         'page_num' => 1,
         'page_count' => 1,
         'finished' => 0,
@@ -83,35 +99,29 @@ function springboard_api_form_action_submit($nid, $submission) {
     $form_state['values']['submitted'] = springboard_api_submission_tree_build($submission, $node->webform['components'], $tree, 0);
     $webform_submission = array(
       'nid' => $nid,
-      'uid' => 0, // assume anonymous, webform user should pick up the slack.
+      'uid' => 0,
       'submitted' => time(),
-      'remote_addr' => $_SERVER['REMOTE_ADDR'],
+      'remote_addr' => ip_address(),
       'data' => array(),
     );
     foreach ($node->webform['components'] as $cid => $component) {
       if ($component['type'] != 'fieldset') {
         $fields[] = $component['form_key'];
-      //  if ($component['type'] == 'payment_fields') {
-      //    $form_state['values']['submitted']['payment_information']['payment_fields'] = isset($submission[$component['form_key']]) ? $submission[$component['form_key']] : '';
-      //  }
-      //  else {
-      //    $form_state['values']['submitted'][$cid] = isset($submission[$component['form_key']]) ? $submission[$component['form_key']] : '';
-      //  }
         if (isset($submission[$component['form_key']]) && !is_array($submission[$component['form_key']])) {
-          $webform_submission['data'][$cid]['value'][] =  $submission[$component['form_key']];
+          $webform_submission['data'][$cid]['value'][] = $submission[$component['form_key']];
         }
         elseif (isset($submission[$component['form_key']])) {
           $webform_submission['data'][$cid]['value'] = $submission[$component['form_key']];
         }
         else {
-          // backfill with null data to match what webform does.
+          // Backfill with null data to match what Webform does.
           $webform_submission['data'][$cid]['value'][] = '';
         }
       }
     }
     drupal_form_submit($form_id, $form_state, $node, $webform_submission);
-    // taken from node_resources.inc, if errors are encountered during form submission we
-    // return a 406 HTTP response code and any errors encountered.
+    // Taken from node_resources.inc, if errors are encountered during form
+    // submission we return a 406 HTTP response code and any errors encountered.
     if ($errors = form_get_errors()) {
       return services_error(implode(" ", $errors), 406, array('form_errors' => $errors));
     }
@@ -121,6 +131,11 @@ function springboard_api_form_action_submit($nid, $submission) {
   }
 }
 
+/**
+ * Render Form markup for a given webform.
+ *
+ * @return string
+ */
 function springboard_api_form_action_render() {
   $args = func_get_args();
   $nid = $args[0];
@@ -132,6 +147,15 @@ function springboard_api_form_action_render() {
   return render($form);
 }
 
+/**
+ * @param array $submission
+ *   Associative array of webform component form keys and their values.
+ * @param array $src
+ *   webform components organized by component id.
+ * @param array $tree
+ * @param $parent
+ * @return mixed
+ */
 function springboard_api_submission_tree_build($submission, $src, &$tree, $parent) {
 
   foreach ($src as $cid => $component) {
