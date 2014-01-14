@@ -283,7 +283,7 @@ function springboard_api_form_resource_access($op, $data) {
     $request_ok = $func();
     if (!$request_ok) {
       // Bail out, throttle limit has been reached.
-      return services_error(t('API usage limit has been reached. Try your request again later.', array('@type' => $node_type)), 406);
+      return services_error(t('API usage limit has been reached. Try your request again later.'), 406);
     }
   }
   if (isset($service['authentication_callback']) && function_exists($service['authentication_callback'])) {
@@ -330,6 +330,18 @@ function springboard_api_get_form_details($nid) {
       $func = '_webform_render_' . $component['type'];
       if (function_exists($func)) {
         $fapi = $func($component);
+        // Time and grid components have an additional process functions that
+        // render their child form elements.
+        if ($component['type'] == 'time' || $component['type'] == 'grid') {
+          foreach ($fapi['#process'] as $process) {
+            $fapi = $process($fapi);
+          }
+        }
+        if ($component['type'] == 'date') {
+          if (!isset($fapi['#attributes'])) {
+            $fapi['#attributes'] = NULL;
+          }
+        }
         $save = &$form_details['fields'][$component['form_key']];
         $save['form_key'] = $component['form_key'];
         _springboard_api_parse_component_fapi($save, $fapi, $component['type']);
