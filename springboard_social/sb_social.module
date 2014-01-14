@@ -347,13 +347,15 @@ function sb_social_init() {
     'pubid' => variable_get('springboard_social_addthis_profile_id'),
     'market_source' => '',
   );
-
   if (isset($_GET['sid']) && is_numeric($_GET['sid'])) {
     $submission_id = $_GET['sid'];
-    $js_settings['submission_id'] = $_GET['sid'];
-   // $js_settings['id_type'] = 'sid';
+    // Load the original webform as we can't trust that confirmation redirects
+    // to a url that contains it's node id.
+    $nid = _sb_social_get_nid_by_sid($submission_id);
+    $node = node_load($nid);
+    $js_settings['submission_id'] = $submission_id;
   }
-  if (arg(0) == 'node' && is_numeric(arg(1))) { // TODO: replace this with a valid core hook
+  if (!$node && arg(0) == 'node' && is_numeric(arg(1))) {
     $node = node_load(arg(1));
 
     $id = is_object($node) ? $node->nid : FALSE;
@@ -554,7 +556,7 @@ function sb_social_token_info() {
  */
 function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
 
-  if ($type = 'sb_social') {
+  if ($type == 'sb_social') {
     $replacements = array();
     $node = !empty($data['node']) ? $data['node'] : FALSE;
 
@@ -571,7 +573,12 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
     $settings = sb_social_settings_load($sid);
     $enabled_plugins = sb_social_get_enabled_plugins();
     $submission_id = (isset($_GET['sid']) && is_numeric($_GET['sid'])) ? $_GET['sid'] : FALSE;
-
+    if ($submission_id) {
+      // We want values from the original webform, which may not be the current
+      // node.
+      $nid = _sb_social_get_nid_by_sid($submission_id);
+      $node = node_load($nid);
+    }
     foreach ($enabled_plugins as $service => $plugin) {
       if (!empty($plugin['token_replace'])) {
         $func = $plugin['token_replace'];
