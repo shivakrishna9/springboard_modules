@@ -96,6 +96,7 @@ function springboard_api_form_action_submit($nid, $submission) {
       ),
       'values' => array(),
     );
+    $form_state['clicked_button']['#parents'] = NULL;
     $form_state['values']['submitted'] = springboard_api_submission_tree_build($submission, $node->webform['components'], $tree, 0);
     $webform_submission = array(
       'nid' => $nid,
