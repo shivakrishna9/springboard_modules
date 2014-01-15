@@ -457,7 +457,7 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
 
   }
   else {
-    watchdog('fundraiser_upsell', 'Upsell failed for the original donation %did.', array('%did' => $donation->did), WATCHDOG_NOTICE);
+    watchdog('fundraiser_upsell', 'Upsell failed for the original donation %did.', array('%did' => $upsold_donation->did), WATCHDOG_NOTICE);
     return 'There was a problem processing your donation. Please try again.';
   }
 
@@ -976,14 +976,17 @@ function fundraiser_upsell_create_master_donation($upsold_donation, $new_amount)
 /**
  * Check to see if a donation was successfully added as a recurring.
  *
+ * This means we should have a record for the master donation and then one
+ *   or more sustainer donations.
+ *
  * @param int $did
- *   The donation ID of the master donation..
+ *   The donation ID of the master donation.
  *
  * @return bool
  *   Whether the donation has sustainer records (is recurring).
  */
 function fundraiser_upsell_check_recurring($did) {
-  return (fundraiser_sustainers_count_donations_in_series($did) > 0);
+  return (fundraiser_sustainers_count_donations_in_series($did) > 1);
 }
 
 /**
