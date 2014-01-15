@@ -272,8 +272,8 @@ function springboard_admin_admin_menu_items() {
   );
   
   // Marketing & Analytics > Donations
-  $items['admin/springboard/results']['_children']['admin/commerce/orders'] = array(
-    'link_path' => 'admin/commerce/orders',
+  $items['admin/springboard/results']['_children']['admin/reports/salesforce/donations'] = array(
+    'link_path' => 'admin/reports/salesforce/donations',
     'link_title' => 'Donations',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
