@@ -177,6 +177,11 @@ function springboard_admin_custom_theme() {
   if (in_array($_GET['q'], $paths)) {
     return 'springboard_backend';
   }
+  // Adding user profile pages to use the admin theme
+  // @TODO this should be a SB setting to include paths
+  else if (preg_match("/^user\/[0-9]+/",$_GET['q']) || preg_match("/^user\/[0-9]+\/[a-z]+/",$_GET['q'])) {
+    return 'springboard_backend';
+  }
 }
 
 /**
