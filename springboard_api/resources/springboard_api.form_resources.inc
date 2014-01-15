@@ -127,7 +127,10 @@ function springboard_api_form_action_submit($nid, $submission) {
       return services_error(implode(" ", $errors), 406, array('form_errors' => $errors));
     }
     else {
-      return t('Submission successful');
+      // Since $form_state is passed by reference, we have full access to all
+      // of the additional data that Webform and Fundraiser have added.
+      $sid = $form_state['values']['details']['sid'];
+      return array('status' => t('Submission successful'), 'submission id' => $sid);
     }
   }
 }
