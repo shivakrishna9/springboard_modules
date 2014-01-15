@@ -167,8 +167,23 @@ function fundraiser_upsell_send_thank_you($donation) {
   $mail = email_wrappers_mail_load($params);
   // Modify the "to:" information to match the donation.
   $mail->recipients = "$to_email <$to_name>";
+
+  // Replace tokens in the subject.
+  $mail->subject = token_replace(
+    $mail->subject,
+    array('donation' => $donation),
+    array('clear => TRUE')
+  );
   // Modify the messages to replace tokens.
-  $mail->html_message = token_replace($mail->html_message, array('donation' => $donation), array('clear' => TRUE));
-  $mail->text_message = token_replace($mail->text_message, array('donation' => $donation), array('clear' => TRUE));
+  $mail->html_message = token_replace(
+    $mail->html_message,
+    array('donation' => $donation),
+    array('clear' => TRUE)
+  );
+  $mail->text_message = token_replace(
+    $mail->text_message,
+    array('donation' => $donation),
+    array('clear' => TRUE)
+  );
   email_wrappers_send_mail($mail, $params);
 }
