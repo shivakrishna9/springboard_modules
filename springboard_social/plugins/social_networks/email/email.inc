@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Plugin for AddThis email feature.
+ */
 
 $plugin = array(
   'name' => 'email',

@@ -115,7 +115,7 @@ function sb_social_menu() {
     'type' => MENU_CALLBACK,
   );
   $items['node/%node/share_settings'] = array(
-    'title' => t('Social'),
+    'title' => 'Social',
     'description' => '',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('sb_social_node_settings', 1),
@@ -795,18 +795,18 @@ function sb_social_salesforce_sync_pass_item($item, $result) {
   }
 
   if ($item->object_type === 'Social_Share__c' && !empty($item->drupal_id) && $item->operation == 'CREATE') {
-    // stash the returned salesforce id in the sb_social_shares table. This
+    // Stash the returned salesforce id in the sb_social_shares table. This
     // does duplicate data in {salesforce_sync_map} but it may come in handy later
     // to have everything in one place. This may let us sidestep future performance issues
     // as {salesforce_sync_map} has a ton of records.
     sb_social_update_sf_share_id($item, $result);
 
-    // check for donations related to this share event and resync them with the
-    // correct sfid for the share event
+    // Check for donations related to this share event and resync them with the
+    // correct sfid for the share event.
     $donation_ids = sb_social_load_related_donation_ids($item->drupal_id);
 
-    // requeue, alter hook should add the sfid of the share.
-    foreach($donation_ids as $donation_id) {
+    // Requeue, alter hook should add the sfid of the share.
+    foreach ($donation_ids as $donation_id) {
       $donation = fundraiser_donation_get_donation($donation_id, TRUE);
       salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
     }

@@ -490,7 +490,7 @@ function _sb_social_sid_by_id($id) {
  */
 function sb_social_get_path_id($path) {
   $query = db_select('sb_social_path', 'p');
-  $query->fields('p',array('pid'));
+  $query->fields('p', array('pid'));
 
   if (is_array($path)) {
     $or = db_or();

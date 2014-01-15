@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @file
+ * Plugin for Facebook/OpenGraph.
+ */
+
 $plugin = array(
   'name' => 'facebook', // internal service name
   'title' => t('Facebook'), // Human-readable service name
