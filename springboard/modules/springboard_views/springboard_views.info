@@ -6,6 +6,7 @@ package = "Jackson River Springboard"
 dependencies[] = "views"
 dependencies[] = "date_api"
 dependencies[] = "views_bulk_operations"
+dependencies[] = "views_watchdog"
 files[] = springboard_views.views.inc
 files[] = handlers/fundraiser_handler_field_donation_amounts.inc
 files[] = handlers/queue_api_handler_field_batch_id.inc

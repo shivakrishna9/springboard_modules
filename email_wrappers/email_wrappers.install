@@ -333,6 +333,7 @@ function _email_wrappers_create_fields() {
       'locked' => 0,
       'status' => 0,
       'title_label' => st('Internal Title'),
+      'node_submitted' => 0,
     );
     $type = node_type_set_defaults($type);
     node_type_save($type);
