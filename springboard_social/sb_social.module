@@ -685,22 +685,6 @@ function theme_sb_social_share_image_preview($variables) {
   }
 }
 
-/**
- * Provides list of market source fields to exclude on administration pages.
- */
-function _sb_social_component_blacklist() {
-  return array(
-    'referrer',
-    'initial_referrer',
-    'search_engine',
-    'search_string',
-    'user_agent',
-    'social_referer_transaction',
-    'social_referer_network',
-    'social_referer_contact',
-  );
-}
-
 // TODO: find somewhere other than this module for the springboard tracking cookie to live.
 function _sb_social_set_tracking_cookie($uid, $mail, $sid) {
   $payload = $uid . '::' . $mail . '::' . $sid;
@@ -839,4 +823,35 @@ function sb_social_fundraiser_donation_success($donation) {
   }
 }
 
+
 // TODO: Future development - add similar tracker for petitions and other webform submissions?
+
+/**
+ * List share-enabled market source fields.
+ *
+ * @return array
+ */
+function _sb_social_list_share_enabled_market_source_fields() {
+  $enabled_fields = array();
+  $default_fields = variable_get('sb_social_market_source_default_fields', array());
+  $custom_fields = variable_get('sb_social_market_source_custom_fields', array());
+  $fields = array_merge($default_fields, $custom_fields);
+
+  foreach ($fields as $key => $value) {
+    // Fiddling required due to quirks in how Market Source presents data during form submission.
+    // ms and cid fields are not indexed by their actual form key, so we have to do a quick conversion.
+    switch ($key) {
+      case 'market_source':
+        $key = 'ms';
+        break;
+      case 'campaign':
+        $key = 'cid';
+        break;
+    }
+    if ($value['share_enabled'] === 1) {
+      $enabled_fields[] = $key;
+    }
+  }
+  return $enabled_fields;
+}
+
