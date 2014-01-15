@@ -167,8 +167,8 @@ function springboard_admin_admin_menu_items() {
    );*/
 
   // Forms > Form Settings
-  $items['admin/springboard/forms/webforms']['_children']['admin/springboard/forms/webforms'] = array(
-    'link_path' => 'admin/springboard/forms/webforms',
+  $items['admin/springboard/forms/webforms']['_children']['admin/config/content/webform'] = array(
+    'link_path' => 'admin/config/content/webform',
     'link_title' => 'Form Settings',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
