@@ -304,7 +304,6 @@ function fundraiser_upsell_page_alter(&$page) {
   // Added by upsell's webform submit handler.
   if (!empty($_SESSION['upsell'])) {
     // Add the upsell to the page.
-    $modal = array();
     $did = fundraiser_donation_get_did_by_sid($_SESSION['upsell']['sid']);
     // !== because we could get a did of 0.
     if ($did !== FALSE) {
@@ -312,10 +311,14 @@ function fundraiser_upsell_page_alter(&$page) {
 
       $modal = fundraiser_upsell_create_modal_variables($donation->node);
       $modal['#did'] = $did;
-    }
 
-    // Add the modal to the bottom of the page.
-    $page['footer']['message-modal'] = $modal;
+      // Replace tokens in the content.
+      $modal['#content'] = token_replace($modal['#content'], array('donation' => $donation));
+
+      // Add the modal to the bottom of the page.
+      $page['footer']['message-modal'] = $modal;
+
+    }
 
     // Remove the upsell session data.
     $_SESSION['upsell'] = NULL;
@@ -793,13 +796,17 @@ function fundraiser_upsell_create_modal_variables($node) {
   if (!empty($node->fundraiser_upsell['modal_theme']['class'])) {
     $modal['#class'] = $node->fundraiser_upsell['modal_theme']['class'];
   }
-  if (!empty($node->fundraiser_upsell['content'])) {
+
+  // Using isset instead of !empty so the content can be blank.
+  if (isset($node->fundraiser_upsell['content'])) {
     $modal['#content'] = $node->fundraiser_upsell['content'];
   }
   else {
     $modal['#content'] = variable_get('fundraiser_upsell_default_content', '');
   }
-  if (!empty($node->fundraiser_upsell['footer'])) {
+
+  // Using isset instead of !empty so the footer can be blank.
+  if (isset($node->fundraiser_upsell['footer'])) {
     $modal['#footer'] = $node->fundraiser_upsell['footer'];
   }
   else {
