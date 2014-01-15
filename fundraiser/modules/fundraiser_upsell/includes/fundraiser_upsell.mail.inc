@@ -166,7 +166,7 @@ function fundraiser_upsell_send_thank_you($donation) {
   // Load the email wrappers options.
   $mail = email_wrappers_mail_load($params);
   // Modify the "to:" information to match the donation.
-  $mail->recipients = "$to_email <$to_name>";
+  $mail->recipients = "$to_name <$to_email>";
 
   // Replace tokens in the subject.
   $mail->subject = token_replace(
