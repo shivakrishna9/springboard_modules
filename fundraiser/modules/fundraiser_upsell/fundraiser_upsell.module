@@ -412,7 +412,7 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
   $different_user = ($user->uid != $upsold_donation->uid) ? TRUE : FALSE;
   // If the donation is already recurring, then stop.
   if ($is_recurring) {
-    watchdog('fundraiser_upsell', 'Upsell failed - Donation %did is already part of a recurring series.', array('%did' => $donation->did), WATCHDOG_NOTICE);
+    watchdog('fundraiser_upsell', 'Upsell failed - Donation %did is already part of a recurring series.', array('%did' => $upsold_donation->did), WATCHDOG_NOTICE);
     return 'This is already a recurring donation. Thank you.';
   }
   // If the user is different then stop - skip anon users because we don't know.
