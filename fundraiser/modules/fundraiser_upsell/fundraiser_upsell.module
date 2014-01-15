@@ -200,7 +200,6 @@ function fundraiser_upsell_add_node_settings(&$form) {
   drupal_alter('upsell_node_settings', $form);
 
   $form['#validate'][] = 'fundraiser_upsell_node_form_validate';
-  $form['#submit'][] = 'fundraiser_upsell_node_form_submit';
 }
 
 /**
@@ -230,34 +229,37 @@ function fundraiser_upsell_node_form_validate($form, &$form_state) {
 //  }
 }
 
-function fundraiser_upsell_node_form_submit($form, &$form_state) {
-  if (module_exists('email_wrappers')) {
-    if (!empty($form_state['values']['nid'])) {
-      $delta = 'nid_' . $form_state['values']['nid'];
-    }
-    else {
-      $delta = 'thank_you_settings';
-    }
+/**
+ * Save the email wrapper settings for a node.
+ *
+ * @param int $nid
+ *   Node ID.
+ * @param array $values
+ *   The values from
+ *   $form_state['values']['fundraiser_upsell']['email_wrappers'].
+ */
+function fundraiser_upsell_save_email_wrapper_settings($nid, $values) {
+  $form = array();
+  $delta = 'nid_' . $nid;
 
-    // Need to fake a form state in order to save the mail settings.
-    $email_wrappers_form_state = array(
-      'values' => $form_state['values']['fundraiser_upsell']['email_wrappers'],
-    );
-    $email_wrappers_form_state['values']['delta'] = $delta;
-    $headers = $form_state['values']['fundraiser_upsell']['email_wrappers']['headers'];
-    $message = $form_state['values']['fundraiser_upsell']['email_wrappers']['message'];
-    $email_wrappers_form_state['values']['from_name'] = $headers['from_name'];
-    $email_wrappers_form_state['values']['from_mail'] = $headers['from_mail'];
-    $email_wrappers_form_state['values']['recipients'] = '';
-    $email_wrappers_form_state['values']['cc'] = '';
-    $email_wrappers_form_state['values']['bcc'] = '';
-    $email_wrappers_form_state['values']['subject'] = $message['subject'];
-    $email_wrappers_form_state['values']['html_body'] = $message['html_body'];
-    $email_wrappers_form_state['values']['text_body'] = $message['text_body'];
+  // Need to fake a form state in order to save the mail settings.
+  $email_wrappers_form_state = array(
+    'values' => $values,
+  );
+  $email_wrappers_form_state['values']['delta'] = $delta;
+  $headers = $values['headers'];
+  $message = $values['message'];
+  $email_wrappers_form_state['values']['from_name'] = $headers['from_name'];
+  $email_wrappers_form_state['values']['from_mail'] = $headers['from_mail'];
+  $email_wrappers_form_state['values']['recipients'] = '';
+  $email_wrappers_form_state['values']['cc'] = '';
+  $email_wrappers_form_state['values']['bcc'] = '';
+  $email_wrappers_form_state['values']['subject'] = $message['subject'];
+  $email_wrappers_form_state['values']['html_body'] = $message['html_body'];
+  $email_wrappers_form_state['values']['text_body'] = $message['text_body'];
 
-    module_load_include('inc', 'email_wrappers', 'email_wrappers.api');
-    email_wrappers_mail_form_submit($form, $email_wrappers_form_state);
-  }
+  module_load_include('inc', 'email_wrappers', 'email_wrappers.api');
+  email_wrappers_mail_form_submit($form, $email_wrappers_form_state);
 }
 
 /**
@@ -578,6 +580,8 @@ function fundraiser_upsell_node_insert($node) {
     // Insert the record.
     $record = fundraiser_upsell_node_record($node);
     drupal_write_record('fundraiser_upsell', $record);
+
+    fundraiser_upsell_save_email_wrapper_settings($node->nid, $node->fundraiser_upsell['email_wrappers']);
   }
 }
 
@@ -600,6 +604,8 @@ function fundraiser_upsell_node_update($node) {
     elseif (!empty($exists)) {
       drupal_write_record('fundraiser_upsell', $record, 'nid');
     }
+
+    fundraiser_upsell_save_email_wrapper_settings($node->nid, $node->fundraiser_upsell['email_wrappers']);
   }
 }
 
