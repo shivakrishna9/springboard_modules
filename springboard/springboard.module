@@ -147,7 +147,7 @@ function springboard_menu_alter(&$items) {
   // Add menu items from fundraiser.
   $types_added = array();
   if (module_exists('fundraiser')) {
-    //dynamically generate links to create fundraiser forms
+    // Dynamically generate links to create fundraiser forms.
     $types = fundraiser_get_donation_types();
     foreach ($types as $type => $status) {
       if (isset($status) && $status == 1) {
@@ -288,7 +288,7 @@ function springboard_menu_alter(&$items) {
 
   // Add menu items from webform.
   if (module_exists('webform')) {
-    //dynamically generate links to create non-fundraiser forms
+    // Dynamically generate links to create non-fundraiser forms.
     $types = webform_variable_get('webform_node_types');
     foreach ($types as $type) {
       if (!in_array($type, $types_added) && isset($items['node/add/' . $type])) {
