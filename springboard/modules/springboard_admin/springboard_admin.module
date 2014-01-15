@@ -18,21 +18,21 @@ function springboard_admin_menu() {
   $items['admin/springboard/results'] = array(
     'title' => 'Results',
     'type' => MENU_NORMAL_ITEM,
-    'access arguments' => array('administer springboard'),
+    'access arguments' => array('access springboard dashboard'),
     'page callback' => 'springboard_admin_aggregate_links_page',
     'page arguments' => array('admin/springboard/results'),
    );
    $items['admin/springboard/options'] = array(
     'title' => 'Options',
     'type' => MENU_NORMAL_ITEM,
-    'access arguments' => array('administer springboard'),
+    'access arguments' => array('access springboard dashboard'),
     'page callback' => 'springboard_admin_aggregate_links_page',
     'page arguments' => array('admin/springboard/options'),
    );
    $items['admin/springboard/tools'] = array(
     'title' => 'Other Tools',
     'type' => MENU_NORMAL_ITEM,
-    'access arguments' => array('administer springboard'),
+    'access arguments' => array('access springboard dashboard'),
     'page callback' => 'springboard_admin_aggregate_links_page',
     'page arguments' => array('admin/springboard/tools'),
    );
