@@ -1729,19 +1729,6 @@ function _fundraiser_commerce_decrypt($input) {
 
 /**
  * Implements hook_fundraiser_get_total_donations_by_nids().
- *
- * General purpose getting total donation for an array of nids.
- *   Does not take multiple currencies into account.  Assumes all USD.
- *
- * @param array $nids
- *   NIDs.
- * @param string|bool $start
- *   Start date.
- * @param string|bool $end
- *   End date.
- *
- * @return float
- *   Total amount of donations.
  */
 function fundraiser_commerce_fundraiser_get_total_donations_by_nids($nids, $start = FALSE, $end = FALSE) {
   // Since more than one goal may target this nid with differing date ranges we
