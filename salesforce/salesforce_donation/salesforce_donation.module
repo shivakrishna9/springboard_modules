@@ -297,7 +297,7 @@ function salesforce_donation_salesforce_genmap_info_alter(&$items) {
 /**
  * Implements hook_salesforce_genmap_map_fields().
  *
- * @param stdClass $donation
+ * @param object $donation
  *   A donation object
  * @param Entity $map
  *   A Salesforce map entity
@@ -506,7 +506,7 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
 /**
  * Implements hook_salesforce_genmap_map_field_info().
  *
- * @param stdClass $node
+ * @param object $node
  *   Provide a node object
  *
  * @return array
