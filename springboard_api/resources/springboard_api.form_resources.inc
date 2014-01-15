@@ -124,7 +124,8 @@ function springboard_api_form_action_submit($nid, $submission) {
     // Taken from node_resources.inc, if errors are encountered during form
     // submission we return a 406 HTTP response code and any errors encountered.
     if ($errors = form_get_errors()) {
-      return services_error(implode(" ", $errors), 406, array('form_errors' => $errors));
+      // Strip down error keys to form key
+      $formatted_errors = _springboard_api_reformat_errors($errors);
     }
     else {
       // Since $form_state is passed by reference, we have full access to all
@@ -133,6 +134,32 @@ function springboard_api_form_action_submit($nid, $submission) {
       return array('status' => t('Submission successful'), 'submission id' => $sid);
     }
   }
+}
+
+/**
+ * Reformat form errors.
+ *
+ * @param array $errors
+ *   Associative array of form errors.
+ *
+ * @return array
+ *   Returns array of form errors with error keys stripped down and organized
+ *   by form key.
+ */
+function _springboard_api_reformat_errors($errors) {
+  $formatted_errors = array();
+  foreach ($errors as $key => $value) {
+    $err = array();
+    if (strpos($key, '][') !== FALSE) {
+      $parts = explode('][', $key);
+      $form_key = end($parts);
+      $formatted_errors[$form_key][] = $value;
+    }
+    else {
+      $formatted_errors[$key][] = $value;
+    }
+  }
+  return $formatted_errors;
 }
 
 /**
