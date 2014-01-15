@@ -318,3 +318,29 @@ Array
 )
 
  */
+
+/**
+ * General purpose getting total donation amount for an array of nids.
+ *
+ * Does not take multiple currencies into account.  Assumes all USD.
+ *
+ * Although this is a hook, the calling function only uses the first
+ *   implementation it finds.  For almost all cases this should be
+ *   fundraiser_commerce_fundraiser_get_total_donations_by_nids().
+ *
+ * This documentation is here for completeness, but you generally should not
+ *   implement this hook.
+ *
+ * @param array $nids
+ *   Node IDs.
+ * @param int|bool $start
+ *   Start timestamp or FALSE for no range.
+ * @param int|bool $end
+ *   End timestamp or FALSE for no range..
+ *
+ * @return float
+ *   Total amount of donations.
+ */
+function hook_fundraiser_get_total_donations_by_nids($nids, $start, $end) {
+
+}

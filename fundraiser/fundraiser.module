@@ -2778,6 +2778,10 @@ function fundraiser_webform_token_selector_blacklist_alter(&$tokens) {
  *
  * @param array $nids
  *   Node IDs.
+ * @param int|bool $start
+ *   Start timestamp or FALSE for no range.
+ * @param int|bool $end
+ *   Ending timestamp or FALSE for no range.
  *
  * @return float|bool
  *   Total successful donation amount or FALSE if none found.
