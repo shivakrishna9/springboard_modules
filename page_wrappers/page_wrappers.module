@@ -1091,10 +1091,13 @@ function _page_wrapper_preview_form() {
 }
 
 /**
- * loads the template filename from the database
+ * Loads the template filename from the database
  *
- * @param $nid
+ * @param int $nid
  *   The page wrapper nid
+ *
+ * @return string
+ *   The template filename.
  */
 function _page_wrappers_template_filename($nid) {
   return db_query('SELECT template FROM {page_wrappers} WHERE nid = :nid', array(':nid' => $nid))->fetchField();
