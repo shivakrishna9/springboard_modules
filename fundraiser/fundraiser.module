@@ -2788,16 +2788,22 @@ function fundraiser_webform_token_selector_blacklist_alter(&$tokens) {
 }
 
 /**
- * ecommerce-agnostic lookup of total dollar amount donated via multiple
+ * Total donation amount donated across multiple forms.
+ *
+ * Ecommerce-agnostic lookup of total dollar amount donated via multiple
  *   donation forms.
  *
  * Looks up by multiple nids in the hopes of a single faster IN query.
  *
  * @param array $nids
- *   Node IDs
+ *   Node IDs.
+ * @param int|bool $start
+ *   Start timestamp or FALSE for no range.
+ * @param int|bool $end
+ *   Ending timestamp or FALSE for no range.
  *
  * @return float|bool
- *   Total successful donations or FALSE if none found.
+ *   Total successful donation amount or FALSE if none found.
  */
 function fundraiser_get_total_donations_by_nids($nids, $start = FALSE, $end = FALSE) {
   $total_donations = module_invoke_all('fundraiser_get_total_donations_by_nids', $nids, $start, $end);
