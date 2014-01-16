@@ -1,0 +1,68 @@
+<?php
+/**
+ * @file
+ * Calls the PSI SendUpsell API request.
+ */
+
+/**
+ * Implements hook_upsell_master_donation_alter().
+ *
+ * Makes a SendUpsell API call.
+ */
+function fundraiser_upsell_commerce_psi_upsell_master_donation_alter(&$donation) {
+  // If this is an upsell donation, send an upsell request to PSI.
+  // @todo Should this be done in addition to or instead of charging?
+  // If this needs to happen in addition to charging the order, then we're set.
+  // If it needs to happen instead of charging, then we need to
+  // stop the charge, somehow.  Most likely we could just remove the row
+  // in the fundraisers_sustainers table right here.
+  if (isset($donation->fundraiser_upsell->type) && $donation->fundraiser_upsell->type == 'master_donation') {
+    // From commerce_payment.module.
+    $payment_method = commerce_payment_method_instance_load($info['id']);
+    $upsell_data = fundraiser_upsell_commerce_psi_format_upsell_data($donation, $payment_method);
+    $result = commerce_psi_send_upsell($payment_method, $upsell_data);
+    // @todo Do some stuff with the result, like save it to the order.
+  }
+}
+
+/**
+ * Creates the upsell data array for passing to PSI's API.
+ *
+ * @param object $donation
+ *   The donation to get the data from.
+ * @param array $payment_method
+ *   A payment method instance array.
+ *
+ * @return array
+ *   The formatted upsell data for the API call.
+ */
+function fundraiser_upsell_commerce_psi_format_upsell_data($donation, $payment_method) {
+  // Translate from donation settings to the correct values.
+  $order = commerce_order_load($donation->did);
+  $wrapper = entity_metadata_wrapper('commerce_order', $order);
+  $charge = $wrapper->commerce_order_total->value();
+
+  $values = array();
+  $values['Amount'] = commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']);
+
+  $values['ClientTransactionId'] = $order->order_id;
+
+  $values['frequency'] = $donation->donation['recurs_monthly'] == TRUE ? 'Monthly' : NULL;
+
+  // @todo Figure out what to put here.
+  $values['PriorOneTimeTransactionId'] = '';
+
+  $values['MarketSource'] = drupal_substr(_commerce_psi_token_replace($payment_method['settings']['custom_fields']['market_source'], $order), 0, 100);
+
+  $values['PayCode'] = drupal_substr(_commerce_psi_token_replace($payment_method['settings']['custom_fields']['pay_code'], $order), 0, 20);
+
+  $values['ProcessDateTime'] = date('c');
+
+  // This is optional for the upsell request.
+  $values['ProgramCode'] = drupal_substr(_commerce_psi_token_replace($payment_method['settings']['custom_fields']['program_code'], $order), 0, 12);
+
+  // This is optional for the upsell request.
+  $nvp['SourceCode'] = drupal_substr(_commerce_psi_token_replace($payment_method['settings']['custom_fields']['source_code'], $order), 0, 12);
+
+  return $values;
+}

@@ -149,4 +149,34 @@ class PsiClient {
       );
     }
   }
+
+  /**
+   * Calls SendUpsell on the PSI API.
+   *
+   * @param array $upsell_data
+   *   The values that the SendUpsell API call expects.
+   *
+   * @todo Finish this.
+   */
+  public function SendUpsell($upsell_data) {
+
+    try {
+      $response = $this->soapclient->SendUpsell($this->credentials(), $upsell_data);
+    }
+    catch (Exception $ex) {
+      watchdog('commerce_psi', 'The PSI Commerce account @title failed to send an upsell: @error',
+        array(
+          '@title' => $this->getAccountSetting('title'),
+          '@error' => $ex->getMessage(),
+        ),
+        WATCHDOG_ERROR);
+    }
+
+    if (!empty($response)) {
+      return $response->SendUpsellResult;
+    }
+
+    return NULL;
+  }
+
 }
