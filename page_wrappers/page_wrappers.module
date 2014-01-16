@@ -117,7 +117,7 @@ function page_wrappers_preprocess_page(&$vars) {
           drupal_add_css($stylesheet['path'], $stylesheet['options']);
         }
       }
-      
+
       // if there's a css file add it; also see this module's hook_css_alter function
       if (isset($wrapper_node->page_wrappers_css) && count($wrapper_node->page_wrappers_css)) {
 
@@ -174,7 +174,7 @@ function page_wrappers_css_alter(&$css) {
         $keep[] = $css_file['path'];
       }
     }
-    
+
     // If a stylesheet has been added to the wrapper, don't remove it.
     if (!empty($css_files)) {
       foreach ($css_files as $css_file) {
@@ -1158,10 +1158,10 @@ if (module_exists('context')) {
 
 /**
  * List allowed CSS files.
- * 
+ *
  * @param $wrapper_node
  * The page wrapper node object.
- * 
+ *
  * @return associative array of css file and properties or FALSE if there are none.
  */
 

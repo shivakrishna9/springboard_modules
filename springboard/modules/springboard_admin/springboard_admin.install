@@ -21,7 +21,7 @@ function springboard_admin_install() {
     ->fields(array('weight' => 20))
     ->condition('name', 'springboard_admin', '=')
     ->execute();
- 
+
   // Define and save the Springboard Administration menu
   $sb_menu = springboard_admin_admin_menu();
   menu_save($sb_menu);
@@ -38,7 +38,7 @@ function springboard_admin_install() {
     $mlids = array();
     // save a top-level item
     $plid = menu_link_save($item);
-    
+
     // if save was successful, loop through child items
     if ($plid) {
       $mlids[] = $plid;
@@ -53,7 +53,7 @@ function springboard_admin_install() {
     }
   }
   // Set menu links as customized so they don't get wiped out in the router check
-  $result = db_update('menu_links') 
+  $result = db_update('menu_links')
   ->fields(array(
     'customized' => 1,
   ))

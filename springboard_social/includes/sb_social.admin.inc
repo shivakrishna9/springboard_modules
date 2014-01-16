@@ -429,7 +429,7 @@ function sb_social_node_settings($form, $edit, $node) {
   );
 
   $plugins = sb_social_list_plugins();
-   
+
   foreach ($enabled_services as $service) {
     if (!empty($plugins[$service]['settings'])) {
       $func = $plugins[$service]['settings'];
@@ -531,4 +531,3 @@ function _sb_social_settings_market_source(&$form, $settings) {
     }
   }
 }
-

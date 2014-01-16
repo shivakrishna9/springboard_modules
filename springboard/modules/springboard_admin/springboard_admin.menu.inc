@@ -44,7 +44,7 @@ function springboard_admin_admin_menu_items() {
     'weight' => 0,
     '_children' => array(),
   );
-  
+
   // Top Level: Donation Form
   $items['admin/springboard/forms/donations'] = array(
     'link_path' => 'admin/springboard/forms/donations',
@@ -148,7 +148,7 @@ function springboard_admin_admin_menu_items() {
 
   // Forms > Confirmation Templates
   $items['admin/springboard/forms/webforms']['_children']['admin/springboard/templates'] = array(
-    'link_path' => 'admin/springboard/templates', 
+    'link_path' => 'admin/springboard/templates',
     'link_title' => 'Confirmation Templates',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 0,
@@ -178,7 +178,7 @@ function springboard_admin_admin_menu_items() {
 
   // Top Level: Templates
   $items['admin/springboard/templates'] = array(
-    'link_path' => 'admin/springboard/templates', 
+    'link_path' => 'admin/springboard/templates',
     'link_title' => t('Templates'),
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
@@ -189,7 +189,7 @@ function springboard_admin_admin_menu_items() {
 
   // Templates > Page Templates
   $items['admin/springboard/templates']['_children']['admin/springboard/templates/page-templates'] = array(
-    'link_path' => 'admin/springboard/templates/page-templates', 
+    'link_path' => 'admin/springboard/templates/page-templates',
     'link_title' => 'Page Templates',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
@@ -199,7 +199,7 @@ function springboard_admin_admin_menu_items() {
 
   // Templates > Email Templates
   $items['admin/springboard/templates']['_children']['admin/springboard/templates/email-templates'] = array(
-    'link_path' => 'admin/springboard/templates/email-templates', 
+    'link_path' => 'admin/springboard/templates/email-templates',
     'link_title' => 'Email Templates',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
@@ -238,7 +238,7 @@ function springboard_admin_admin_menu_items() {
     'customized' => 1,
     'weight' => 2,
   );
-  
+
   // Marketing & Analytics > Goals
   $items['admin/springboard/marketing-analytics']['_children']['admin/config/content/webform_goals'] = array(
     'link_path' => 'admin/config/content/webform_goals',
@@ -270,7 +270,7 @@ function springboard_admin_admin_menu_items() {
     'customized' => 1,
     'weight' => 0,
   );
-  
+
   // Marketing & Analytics > Donations
   $items['admin/springboard/results']['_children']['admin/reports/salesforce/donations'] = array(
     'link_path' => 'admin/reports/salesforce/donations',
@@ -280,7 +280,7 @@ function springboard_admin_admin_menu_items() {
     'customized' => 1,
     'weight' => 1,
   );
-  
+
   // Marketing & Analytics > Donors
   $items['admin/springboard/results']['_children']['admin/people'] = array(
     'link_path' => 'admin/people',
@@ -314,24 +314,24 @@ function springboard_admin_admin_menu_items() {
 
   // Options > Settings
   $items['admin/springboard/options']['_children']['admin/springboard/options/springboard'] = array(
-    'link_path' => 'admin/springboard/options/springboard', 
+    'link_path' => 'admin/springboard/options/springboard',
     'link_title' => 'Settings',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
     'customized' => 1,
     'weight' => 1,
   );
-  
+
   // Options > Salesforce Authentication
   $items['admin/springboard/options']['_children']['admin/config/salesforce/authorize'] = array(
-    'link_path' => 'admin/config/salesforce/authorize', 
+    'link_path' => 'admin/config/salesforce/authorize',
     'link_title' => 'Salesforce Authorization',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
     'customized' => 1,
     'weight' => 1,
   );
-  
+
   // Options > Configure Dashboard
   $items['admin/springboard/options']['_children']['admin/springboard/options/dashboard'] = array(
     'link_path' => 'admin/springboard/options/dashboard',
@@ -371,7 +371,7 @@ function springboard_admin_admin_menu_items() {
     'customized' => 1,
     'weight' => 1,
   );
-  
+
   $items['admin/springboard/tools']['_children']['logout'] = array(
     'link_path' => 'user/logout',
     'link_title' => 'Logout',

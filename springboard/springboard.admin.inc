@@ -3,7 +3,7 @@
  * @file
  * Provides Springboard administrative forms.
  */
- 
+
  /**
  * Dashboard settings form.
  */
@@ -26,8 +26,8 @@
     '#default_value' => variable_get('springboard_enabled_panes', array()),
   );
   $form['#submit'] = array('springboard_dashboard_config_save');
-  
-  $form['actions']['cancel'] = array( 
+
+  $form['actions']['cancel'] = array(
     '#type' => 'submit',
     '#value' => t('Return to Dashboard'),
     '#submit' => array('springboard_dashboard_config_cancel'),
@@ -2079,11 +2079,11 @@ function springboard_admin_ignore($form, $form_state) {
 /**
  * Submit handler for the Springboard Dashboard config
  */
- 
+
  function springboard_dashboard_config_save($form, &$form_state) {
    $form_state['redirect'] = 'admin/springboard';
  }
- 
+
 /**
  * Submit handler for the Springboard Dashbord config cancel button
  */

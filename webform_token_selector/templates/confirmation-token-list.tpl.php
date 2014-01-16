@@ -52,4 +52,3 @@
 
   <p><em>After you make your selection this dialog window will close and the token will be inserted at the cursor's current position.</em></p>
 </div>
-

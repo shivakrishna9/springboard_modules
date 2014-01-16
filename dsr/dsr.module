@@ -717,5 +717,3 @@ function _dsr_format_date_for_email($start_date, $end_date) {
 
   return date('M, d Y', strtotime($start_date)) . ' - ' . date('M, d Y', strtotime($end_date));
 }
-
-
