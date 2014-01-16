@@ -9,19 +9,23 @@
 /**
  * Drop this into your code to add/edit/delete mail settings.
  *
- * Be sure to provide module and name (unique per module, much like block deltas)
- *to ensure email wrappers can load your module-specific settings.
+ * Be sure to provide module and name (unique per module, much like block
+ * deltas) to ensure email wrappers can load your module-specific settings.
  *
  * @param $edit
- * Placeholder for form API edit cruft.
+ *   Placeholder for form API edit cruft.
  *
- * @param $params
- * Associative array of additional parameters. Supported values:
- * - module (required): your module name
- * - name (required): the name of your email configuration (unique per module, similar to block deltas)
- * - send_callback (optional): callback function to invoke after a mail is sent.
- * - recipient_callback (optional): callback function to invoke to get mail recipient
- *   address. This is required if you aren't hardcoding the recipient in the mail configuration.
+ * @param array $params
+ *   Associative array of additional parameters. Supported values:
+ *   - module (required): your module name
+ *   - name (required): The name of your email configuration
+ *     (unique per module, similar to block deltas).
+ *   - send_callback (optional): callback function to invoke
+ *     after a mail is sent.
+ *   - recipient_callback (optional): callback function to invoke
+ *     to get mail recipient.
+ *   - address. This is required if you aren't hardcoding the recipient
+ *     in the mail configuration.
  */
 function email_wrappers_mail_form($edit, $params = array()) {
   $settings = email_wrappers_mail_load($params);
@@ -57,20 +61,20 @@ function email_wrappers_mail_form($edit, $params = array()) {
   $form['headers'] = array(
     '#type' => 'fieldset',
     '#title' => t('mail headers'),
-    '#description' => t(''),
+    '#description' => '',
     '#collapsible' => TRUE,
   );
   $form['headers']['from_name'] = array(
     '#type' => 'textfield',
     '#title' => t('from name'),
-    '#description' => t(''),
+    '#description' => '',
     '#default_value' => isset($settings->from_name) ? $settings->from_name : '',
     '#required' => TRUE,
   );
   $form['headers']['from_mail'] = array(
     '#type' => 'textfield',
     '#title' => t('From mail'),
-    '#description' => t(''),
+    '#description' => '',
     '#default_value' => isset($settings->from_mail) ? $settings->from_mail : '',
     '#required' => TRUE,
   );
@@ -96,13 +100,13 @@ function email_wrappers_mail_form($edit, $params = array()) {
   $form['message'] = array(
     '#type' => 'fieldset',
     '#title' => t('mail body'),
-    '#description' => t(''),
+    '#description' => '',
     '#collapsible' => TRUE,
   );
   $form['message']['subject'] = array(
     '#type' => 'textfield',
     '#title' => t('Subject'),
-    '#description' => t(''),
+    '#description' => '',
     '#default_value' => isset($settings->subject) ? $settings->subject : '',
     '#required' => TRUE,
   );
@@ -115,8 +119,8 @@ function email_wrappers_mail_form($edit, $params = array()) {
   );
   $form['message']['html_body_format'] = array(
     '#type' => '',
-    '#title' => t(''),
-    '#description' => t(''),
+    '#title' => '',
+    '#description' => '',
     '#default_value' => isset($settings->html_message_format) ? $settings->html_message_format : '',
   );
   $form['message']['text_body'] = array(
@@ -134,6 +138,11 @@ function email_wrappers_mail_form($edit, $params = array()) {
   return $form;
 }
 
+/**
+ * Validate handler for the mail form.
+ *
+ * Checks email addresses look valid.
+ */
 function email_wrappers_mail_form_validate(&$form, $form_state) {
   if (!email_wrappers_validate_address($form_state['values']['from_mail'])) {
     form_set_error('from_mail', t('You have entered an invalid email address in the "from mail" field: %mail', array('%mail' => $form_state['values']['from_mail'])));
@@ -180,6 +189,11 @@ function email_wrappers_mail_form_validate(&$form, $form_state) {
   }
 }
 
+/**
+ * Submit handler for the mail form.
+ *
+ * Saves the email wrappers mail settings.
+ */
 function email_wrappers_mail_form_submit($form, $form_state) {
   $settings = _email_wrappers_concat_settings_from_submission($form_state['values']);
 
@@ -192,7 +206,13 @@ function email_wrappers_mail_form_submit($form, $form_state) {
 }
 
 /**
+ * Filters email addresses.
  *
+ * @param string $email
+ *   The email address to validate.
+ *
+ * @return string|bool
+ *   The filtered email address, or FALSE if the filter fails.
  */
 function email_wrappers_validate_address($mail) {
   return filter_var($mail, FILTER_VALIDATE_EMAIL);
@@ -200,6 +220,12 @@ function email_wrappers_validate_address($mail) {
 
 /**
  * Convert submitted form values into a mail object.
+ *
+ * @param array $values
+ *   The form values.
+ *
+ * @return object
+ *   The mail settings object.
  */
 function _email_wrappers_concat_settings_from_submission($values) {
   $settings = array(
@@ -228,11 +254,12 @@ function _email_wrappers_concat_settings_from_submission($values) {
 /**
  * Helper function, call this to send mail.
  *
- * @param $mail
- * mail object
+ * @param object $mail
+ *   Mail object
  *
- * @param $params
- * Optional associative array containing additional parameters to send to callback functions.
+ * @param array $params
+ *   Optional associative array containing additional parameters
+ *   to send to callback functions.
  */
 function email_wrappers_send_mail($mail, $params = array()) {
   global $user;
@@ -247,17 +274,29 @@ function email_wrappers_send_mail($mail, $params = array()) {
   $params['language'] = user_preferred_language($user);
 
   drupal_mail('email_wrappers', $key, $mail->recipients, $params['language'], $params, $params['from'], $send = TRUE);
-  // optionally call callback provided in $mail
+  // Optionally call callback provided in $mail.
   if (isset($mail->send_callback) && $mail->send_callback) {
     $function = $mail->send_callback;
     $function($mail, $params);
   }
 }
 
+/**
+ * Inserts email wrapper settings into the database.
+ *
+ * @param object|array $settings
+ *   The values to insert.
+ */
 function email_wrappers_save($settings) {
   drupal_write_record('email_wrappers', $settings);
 }
 
+/**
+ * Updates email wrapper settings in the database.
+ *
+ * @param object|array $settings
+ *   The values to update.
+ */
 function email_wrappers_update($settings) {
   drupal_write_record('email_wrappers', $settings, 'mid');
 }
