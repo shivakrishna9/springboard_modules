@@ -20,7 +20,7 @@ function springboard_views_views_default_views() {
   $view->core = 7;
   $view->api_version = '3.0';
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
-  
+
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');
   $handler->display->display_options['title'] = 'Recent Forms';
@@ -239,7 +239,7 @@ function springboard_views_views_default_views() {
     7 => 0,
     8 => 0,
   );
-  
+
   /* Display: Springboard Recent Forms */
   $handler = $view->new_display('block', 'Springboard Recent Forms', 'block');
   $handler->display->display_options['display_description'] = 'View configuration and submission information about Springboard forms.';
@@ -403,7 +403,7 @@ function springboard_views_views_default_views() {
     'webform' => 'webform',
   );
   $handler->display->display_options['filters']['type']['group'] = 1;
-  
+
   /* Display: Springboard Recent Donation Forms */
   $handler = $view->new_display('block', 'Springboard Recent Donation Forms', 'block_1');
   $handler->display->display_options['display_description'] = 'View configuration and submission information about Springboard forms.';
@@ -612,7 +612,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['filters']['type']['value'] = array(
     'donation_form' => 'donation_form',
   );
-  
+
   /* Display: Springboard Recent Forms Page */
   $handler = $view->new_display('page', 'Springboard Recent Forms Page', 'page_1');
   $handler->display->display_options['defaults']['pager'] = FALSE;
@@ -759,7 +759,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['menu']['description'] = 'View and edit all the available webforms on your site.';
   $handler->display->display_options['menu']['weight'] = '0';
   $handler->display->display_options['menu']['context'] = 0;
-  
+
   /* Display: Springboard Recent Donation Forms Page */
   $handler = $view->new_display('page', 'Springboard Recent Donation Forms Page', 'page_2');
   $handler->display->display_options['defaults']['pager'] = FALSE;
@@ -988,7 +988,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['menu']['description'] = 'View and edit all the available donations on your site.';
   $handler->display->display_options['menu']['weight'] = '0';
   $handler->display->display_options['menu']['context'] = 0;
-  
+
   /* Display: Fundraiser Gateway Switcher */
   $handler = $view->new_display('page', 'Fundraiser Gateway Switcher', 'page_3');
   $handler->display->display_options['defaults']['access'] = FALSE;
@@ -3686,6 +3686,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['pager']['options']['offset'] = '0';
   $handler->display->display_options['block_description'] = 'Unsynched Errors';
   $views[$view -> name] = $view;
-  
+
   return $views;
 }

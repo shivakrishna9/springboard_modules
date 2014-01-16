@@ -439,4 +439,3 @@ class WebformUserSetup extends DrupalWebTestCase {
     return $profile_fields;
   }
 }
-
