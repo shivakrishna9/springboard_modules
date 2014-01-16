@@ -160,12 +160,12 @@ function _commerce_psi_settings_form($settings) {
  * Construct an array of values for the donor.
  *
  * @param object $order
- *    Commerce order.
+ *   Commerce order.
  * @param array $payment_method
  *   Payment method.
  *
  * @return array
- *    An array ready to be submitted to the PSI API.
+ *   An array ready to be submitted to the PSI API.
  */
 function _commerce_psi_build_donor($order, $payment_method) {
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
@@ -253,4 +253,34 @@ function _commerce_psi_encrypt($input) {
  */
 function _commerce_psi_decrypt($input) {
   return decrypt($input);
+}
+
+/**
+ * Send an upsell request to PSI.
+ *
+ * @param array $payment_method
+ *   Payment method info.
+ * @param array $upsell_info
+ *   An associative array with the following items.
+ *     float Amount
+ *     string ClientTransactionId
+ *     string PriorOneTimeTransactionId
+ *     string Frequency
+ *     string MarketSource
+ *     string PayCode
+ *     string ProcessDateTime
+ *     string ProgramCode - Optional
+ *     string sourceCode - Optional
+ *
+ * @return object|NULL
+ *   The response object from PSI.
+ */
+function commerce_psi_send_upsell($payment_method, $upsell_data) {
+  $account_details = $payment_method['settings'];
+  $account_details['account_password'] = _commerce_psi_decrypt($payment_method['settings']['account_password']);
+  $account_details['title'] = $payment_method['title'];
+  $client = new PsiClient($account_details);
+  if (!empty($client)) {
+    return $client->SendUpsell($upsell_data);
+  }
 }
