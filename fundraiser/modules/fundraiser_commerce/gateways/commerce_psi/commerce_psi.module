@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Implements Payment Solutions, Inc. payment services for use in Drupal Commerce.
+ * Implements Payment Solutions Inc payment services for use in Drupal Commerce.
  */
 
 // PSI transaction mode definitions:
@@ -10,17 +10,17 @@ define('COMMERCE_PSI_MODE_STAGING', 'staging');
 define('COMMERCE_PSI_MODE_TEST', 'test');
 
 /**
- * Send a request to the PSI API
+ * Send a request to the PSI API.
  *
- * @param $payment_method Array
- *    Fully loaded commerce payment method
- * @param $nvp Array
- *    Array of values to send with the request
- * @param $type String
- *    Type of request, can be check or credit, defaults to credit
+ * @param array $payment_method
+ *   Fully loaded commerce payment method.
+ * @param array $nvp
+ *   Array of values to send with the request.
+ * @param string $type
+ *   Type of request, can be check or credit, defaults to credit.
  *
- * @return $object
- *    The response object from PSI
+ * @return object|NULL
+ *   The response object from PSI.
  */
 function _commerce_psi_request($payment_method, $nvp, $type = 'credit') {
   $account_details = $payment_method['settings'];
@@ -30,10 +30,15 @@ function _commerce_psi_request($payment_method, $nvp, $type = 'credit') {
   if (!empty($client)) {
     return $client->{$type . 'Request'}($nvp);
   }
+
+  return NULL;
 }
 
 /**
  * Returns the default settings for a Payment Solutions Inc. payment method.
+ *
+ * @return array
+ *   Default PSI settings.
  */
 function _commerce_psi_default_settings() {
   return array(
@@ -52,7 +57,13 @@ function _commerce_psi_default_settings() {
 }
 
 /**
- * Returns the standard fields for a PSI payment configuration form
+ * Returns the standard fields for a PSI payment configuration form.
+ *
+ * @param array $settings
+ *   Payment method settings.
+ *
+ * @return array
+ *   Drupal forms API array.
  */
 function _commerce_psi_settings_form($settings) {
   $form = array();
@@ -146,13 +157,15 @@ function _commerce_psi_settings_form($settings) {
 }
 
 /**
- * Construct an array of values for the donor
+ * Construct an array of values for the donor.
  *
- * @param $order Object
- *    Commerce order
+ * @param object $order
+ *    Commerce order.
+ * @param array $payment_method
+ *   Payment method.
  *
- * @return Array
- *    An array ready to be submitted to the PSI API
+ * @return array
+ *    An array ready to be submitted to the PSI API.
  */
 function _commerce_psi_build_donor($order, $payment_method) {
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
@@ -193,7 +206,15 @@ function _commerce_psi_build_donor($order, $payment_method) {
 }
 
 /**
- * Replace tokens in the custom fields
+ * Replace tokens in the custom fields.
+ *
+ * @param string $value
+ *   The text that needs token replacement.
+ * @param object $order
+ *   The order object needed to provide replacements.
+ *
+ * @return string
+ *   The text with tokens replaced.
  */
 function _commerce_psi_token_replace($value, $order) {
   $token_set = &drupal_static(__FUNCTION__ . $order->order_id, array());
@@ -216,6 +237,8 @@ function _commerce_psi_encrypt_settings_password($element, $input = FALSE, $form
   if (!empty($input)) {
     return _commerce_psi_encrypt($input);
   }
+
+  return NULL;
 }
 
 /**
