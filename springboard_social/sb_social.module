@@ -2,21 +2,24 @@
 
 
 /**
- * @file: core hooks
+ * @file
+ * Primary module file for Springboard Social, which integrates customized 
+ * share content with AddThis service and Salesforce.
  */
 
-// db helper functions
 require_once 'includes/sb_social.db.inc';
 require_once 'includes/sb_social.salesforce.inc';
 require_once 'includes/sb_social.ctools.inc';
 
+/**
+ * Implements hook_metatag_metatags_view_alter().
+ */
 function sb_social_metatag_metatags_view_alter(&$output, $instance) {
-  //metatag_view_alter
   $node = menu_get_object();
   if (!$node) {
-    // is it a confirmation page?
+    // Is it a confirmation page?
     $node = menu_get_object('webform_menu');
-    // if we still don't have a node id then we must assume this isn't a node
+    // If we still don't have a node id then we must assume this isn't a node
     // or confirmation page and any settings that may be available will come
     // from the current path.
     $id = !$node ? current_path() : $node->nid;
@@ -115,7 +118,7 @@ function sb_social_menu() {
     'type' => MENU_CALLBACK,
   );
   $items['node/%node/share_settings'] = array(
-    'title' => t('Social'),
+    'title' => 'Social',
     'description' => '',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('sb_social_node_settings', 1),
@@ -124,7 +127,7 @@ function sb_social_menu() {
     'file' => 'includes/sb_social.admin.inc',
     'type' => MENU_LOCAL_TASK,
   );
-  // service, id, type, market source
+  // Service, id, type, market source.
   $items['sb_social/share_event/%/%/%/%'] = array(
     'title' => '',
     'page callback' => 'sb_social_share_tracker',
@@ -143,14 +146,11 @@ function sb_social_menu() {
  * This permits admins to configure which Market Source fields show up
  * on the Social settings page, thereby limiting which fields can be used
  * in a social share link.
- *
- * @param $form
- * @param $form_state
  */
 function sb_social_form_market_source_admin_settings_form_alter(&$form, $form_state) {
   $default_fields_list = market_source_list_default_fields();
   $default_field_values = variable_get('sb_social_market_source_default_fields', array());
-  // add share enabled checkbox to default ms fields
+  // Add share enabled checkbox to default ms fields.
   foreach ($default_fields_list as $key => $field_name) {
     $form['market_source_default_fields']['default_fields_wrapper'][$key]['share_enabled'] = array(
       '#type' => 'checkbox',
@@ -165,7 +165,7 @@ function sb_social_form_market_source_admin_settings_form_alter(&$form, $form_st
   $custom_fields = &$form['market_source_global_fields']['custom_fields_wrapper'];
   $custom_field_values = &$form_state['values']['market_source_global_fields']['custom_fields_wrapper'];
   $custom_field_saved_state = variable_get('sb_social_market_source_custom_fields', array());
-  // add share enabled checkox to custom ms fields
+  // Add share enabled checkox to custom ms fields.
   foreach ($custom_field_values as $i => $field_value) {
     $key = isset($field_value['key']) ? $field_value['key'] : FALSE;
     $custom_fields[$i]['share_enabled'] = array(
@@ -184,9 +184,6 @@ function sb_social_form_market_source_admin_settings_form_alter(&$form, $form_st
  * Submit handler for Market Source admin settings screen.
  *
  * Save share enabled checkbox values.
- *
- * @param $form
- * @param $form_state
  */
 function sb_social_market_source_admin_settings_submit($form, $form_state) {
   $default_fields = array();
@@ -213,7 +210,7 @@ function sb_social_market_source_admin_settings_submit($form, $form_state) {
   variable_set('sb_social_market_source_custom_fields', $custom_fields);
 }
 
-/*
+/**
  * Implements hook_block_info().
  */
 function sb_social_block_info() {
@@ -230,9 +227,9 @@ function sb_social_block_view($delta = '') {
   if ($delta = 'social_sharing') {
     $node = menu_get_object();
     if (!$node) {
-      // is it a confirmation page?
+      // Is it a confirmation page?
       $node = menu_get_object('webform_menu');
-      // if we still don't have a node id then we must assume this isn't a node
+      // If we still don't have a node id then we must assume this isn't a node
       // or confirmation page and any settings that may be available will come
       // from the current path.
       $id = !$node ? current_path() : $node->nid;
@@ -245,7 +242,7 @@ function sb_social_block_view($delta = '') {
     $settings = sb_social_settings_load($sid);
     $plugins = sb_social_get_enabled_plugins();
 
-    // render button for each enabled service
+    // Render button for each enabled service.
     foreach ($plugins as $service => $plugin) {
       $vars['service'] = $service;
       $vars['extra'] = '';
@@ -300,17 +297,17 @@ function sb_social_list_plugins() {
  */
 function sb_social_access_node_settings($node) {
   global $user;
-  // hide share content settings tab on disabled content types
+  // Hide share content settings tab on disabled content types.
   $enabled_content_types = variable_get('springboard_social_enabled_content_types', array());
 
   if (empty($enabled_content_types[$node->type])) {
     return FALSE;
   }
-  // grant access to content owned by user that they have permissions to edit.
+  // Grant access to content owned by user that they have permissions to edit.
   if (user_access('edit own share content') && $node->uid == $user->uid && node_access('update', $node)) {
     return TRUE;
   }
-  // grant access to content user can edit regardless of ownership.
+  // Grant access to content user can edit regardless of ownership.
   elseif (user_access('edit any share content') && node_access('update', $node)) {
     return TRUE;
   }
@@ -319,23 +316,16 @@ function sb_social_access_node_settings($node) {
 
 
 /**
- * Implements hook_node_delete
+ * Implements hook_node_delete().
  *
- * purge share content settings when a node is deleted
+ * Purge share content settings when a node is deleted.
  */
- function sb_social_node_delete($node) {
-   sb_social_webform_settings_delete($node->nid);
+function sb_social_node_delete($node) {
+  sb_social_webform_settings_delete($node->nid);
 }
 
 /**
  * Implements hook_init().
- *
- * Add OpenGraph meta tags.
- *
- * Generate shortened url on confirmation page view.
- *
- * Package social tracking cookie value as javascript setting.
- *http://d7-springboard.dev/
  */
 function sb_social_init() {
   $node = FALSE;
@@ -347,13 +337,15 @@ function sb_social_init() {
     'pubid' => variable_get('springboard_social_addthis_profile_id'),
     'market_source' => '',
   );
-
   if (isset($_GET['sid']) && is_numeric($_GET['sid'])) {
     $submission_id = $_GET['sid'];
-    $js_settings['submission_id'] = $_GET['sid'];
-   // $js_settings['id_type'] = 'sid';
+    // Load the original webform as we can't trust that confirmation redirects
+    // to a url that contains it's node id.
+    $nid = _sb_social_get_nid_by_sid($submission_id);
+    $node = node_load($nid);
+    $js_settings['submission_id'] = $submission_id;
   }
-  if (arg(0) == 'node' && is_numeric(arg(1))) { // TODO: replace this with a valid core hook
+  if (!$node && arg(0) == 'node' && is_numeric(arg(1))) {
     $node = node_load(arg(1));
 
     $id = is_object($node) ? $node->nid : FALSE;
@@ -367,8 +359,8 @@ function sb_social_init() {
     }
   }
   else {
-    // social supports both internal paths and path aliases so
-    // we need to check both
+    // Social supports both internal paths and path aliases so
+    // we need to check both.
     $path = current_path();
     $alias = drupal_get_path_alias($path);
     $path = !empty($alias) ? array($path, $alias) : $path;
@@ -388,48 +380,31 @@ function sb_social_init() {
       $js_settings['market_source'] = $settings['data']['market_source']['ms'];
     }
     else {
-      // initialize to a non-null value
+      // Initialize to a non-null value.
       $js_settings['market_source'] = '0';
     }
     $plugins = sb_social_get_enabled_plugins();
     $path = drupal_get_path('module', 'sb_social');
 
     foreach ($plugins as $service => $plugin) {
-
-      // run config callbacks, this sets up js settings, opengraph tags, etc.
+      // Run config callbacks, this sets up js settings, opengraph tags, etc.
       $func = $plugin['share_config'];
       if (function_exists($func)) {
         $func($settings, $node, $submission_id);
       }
-
-      // if the plugin has a js file to add, include it here. Note: only one include per plugin is supported.
+      // If the plugin has a js file to add, include it here.
+      // Note: only one include per plugin is supported.
       if (!empty($plugin['js'])) {
         drupal_add_js($path . '/' . $plugin['js']);
       }
     }
-
     $prefix = !empty($_SERVER['HTTPS']) ? 'https://' : 'http://';
     drupal_add_js($prefix . 's7.addthis.com/js/250/addthis_widget.js', array('type' => 'external', 'scope' => 'footer'));
     drupal_add_js(drupal_get_path('module', 'sb_social') . '/scripts/sb_social.addthis.js', 'file');
-
   }
 
-
   drupal_add_js(array('sb_social' => $js_settings), 'setting');
-  // stash cookie payload in js
-  // TODO: this should probably live somewhere else.
-  /*
-  if (!empty($_COOKIE['sb_social_event_submission'])) {
-    $data = explode("::", $_COOKIE['sb_social_event_submission']);
-    drupal_add_js(array('sb_social' => array(
-        'uid' => $data[0],
-        'mail' => $data[1],
-        'sid' => $data[2],
-      )), 'setting');
-  }*/
 }
-
-
 
 /**
  * Implements hook_market_source_field_info().
@@ -437,7 +412,7 @@ function sb_social_init() {
 function sb_social_market_source_field_info() {
 
   $fields = array();
-  // transaction that generated the refered conversion (sid)
+  // Transaction that generated the refered conversion (sid).
   $fields['social_referer_transaction'] = array(
     '#title' => t('social referrer transaction'),
     '#type' => 'hidden',
@@ -482,20 +457,22 @@ function sb_social_market_source_external_field_keys() {
 /**
  * Implements hook_webform_submission_update().
  *
- * Set tracking cookie when anonymous user submits a webform user enabled webform.
- * hook_webform_submission_update() is invoked by webform user after setting the uid
- * in the submission.
+ * Set tracking cookie when anonymous user submits a webform user enabled
+ * webform.
+ * hook_webform_submission_update() is invoked by Webform User after setting
+ * the uid in the submission.
  */
 function sb_social_webform_submission_update($node, $submission) {
 
-  // update/set tracking cookie when a webform user enabled form is submitted.
+  // Update/set tracking cookie when a webform user enabled form is submitted.
   if (!empty($node->is_webform_user) && $node->is_webform_user) {
     global $user;
-    // prevent updating authenticated user's cookie when editing another user's submission.
+    // Prevent updating authenticated user's cookie when editing another
+    // user's submission.
     if ($user->uid && ($submission->uid != $user->uid)) {
       return;
     }
-    // find email field value
+    // Find email field value.
     // TODO: break dependency on fundraiser_webform.
     $component = _fundraiser_webform_get_component_by_nid_key($node->nid, 'mail');
     $mail = $submission->data[$component->cid]['value'][0];
@@ -509,8 +486,9 @@ function sb_social_webform_submission_update($node, $submission) {
  * Set tracking cookie when form is submitted by an authenticated user.
  * Since the submission has a valid UID, we can update the cookie.
  *
- * Anonymous webform submissions have to be handled during update since webform_user()
- * backfills the user id in the submission after it's been inserted.
+ * Anonymous webform submissions have to be handled during update since
+ * webform_user() backfills the user id in the submission after it's been
+ * inserted.
  */
 function sb_social_webform_submission_insert($node, $submission) {
   if (!empty($node->is_webform_user) && $node->is_webform_user) {
@@ -526,7 +504,6 @@ function sb_social_webform_submission_insert($node, $submission) {
 /**
  * Implements hook_token_info().
  */
-
 function sb_social_token_info() {
   $enabled_services = sb_social_get_enabled_services();
   $enabled_plugins = sb_social_get_enabled_plugins();
@@ -535,7 +512,7 @@ function sb_social_token_info() {
     'name' => t('Springboard Social'),
     'description' => t('Tokens related to Springboard Social sharing content.'),
   );
-  // share links, displays addthis div and share links as a bundle.
+  // Share links, displays addthis div and share links as a bundle.
   $info['tokens']['sb_social']['share_links'] = array(
     'name' => t('Share links'),
     'description' => t('Render standard addthis share links for all social services that are currently enabled.'),
@@ -554,7 +531,7 @@ function sb_social_token_info() {
  */
 function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
 
-  if ($type = 'sb_social') {
+  if ($type == 'sb_social') {
     $replacements = array();
     $node = !empty($data['node']) ? $data['node'] : FALSE;
 
@@ -562,7 +539,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
       $id = $node->nid;
     }
     else {
-      // attempt to load path settings
+      // Attempt to load path settings.
       $path = current_path();
       $alias = drupal_get_path_alias($path);
       $id = $alias ? array($path, $alias) : $path;
@@ -571,24 +548,27 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
     $settings = sb_social_settings_load($sid);
     $enabled_plugins = sb_social_get_enabled_plugins();
     $submission_id = (isset($_GET['sid']) && is_numeric($_GET['sid'])) ? $_GET['sid'] : FALSE;
-
+    if ($submission_id) {
+      // We want values from the original webform, which may not be the current
+      // node.
+      $nid = _sb_social_get_nid_by_sid($submission_id);
+      $node = node_load($nid);
+    }
     foreach ($enabled_plugins as $service => $plugin) {
       if (!empty($plugin['token_replace'])) {
         $func = $plugin['token_replace'];
-        // convolution required to establish "extra" url parameters when generating share links
         $extra = isset($plugin['button_extra']) ? $plugin['button_extra'] : FALSE;
         $func($tokens, $replacements, $settings, $node, $submission_id, $extra);
       }
     }
-    // do share links
     $keys = array_keys($tokens);
     if (in_array('share_links', $keys)) {
       foreach ($enabled_plugins as $service => $plugin) {
         $vars['service'] = $service;
         $vars['extra'] = '';
 
-        // Some buttons (like email) require additional html attributes. The button_extra callback
-        // provides these values.
+        // Some buttons (like email) require additional html attributes.
+        // The button_extra callback provides these values.
         if (isset($plugin['button_extra'])) {
           $func = $plugin['button_extra'];
           if (function_exists($func)) {
@@ -604,6 +584,9 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
   }
 }
 
+/**
+ * Implements hook_webform_confirmations_token_replace_alter().
+ */
 function sb_social_webform_confirmations_token_replace_alter(&$tokens, $sid) {
   $settings = _sb_social_get_settings_by_sid($sid);
 
@@ -626,7 +609,8 @@ function sb_social_theme($existing, $type, $theme, $path) {
     ),
     'template' => 'templates/sb_social.share_button',
   );
-  // TODO: redo fb image upload as an image picker of existing uploads with optional upload field and ajaxy UI.
+  // TODO: redo fb image upload as an image picker of existing uploads
+  // with optional upload field and ajaxy UI.
   $items['sb_social_share_image_preview'] = array(
     'render element' => 'element',
   );
@@ -635,23 +619,22 @@ function sb_social_theme($existing, $type, $theme, $path) {
 
 
 /**
- * Generate url for share tracking purposes
+ * Generate url for share tracking purposes.
  *
- * @param $share_id
- * Social share event id
+ * @param int $share_id
+ *   Social share event id
  *
- * @param $settings
- * an array of additional share settings
+ * @param mixed $settings
+ *   An array of additional share settings
  *
- * @param $url_path
- *
+ * @param string $url_path
+ *   Drupal internal path (eg. node/1)
  *
  * @return string
- * Returns an absolute url including share tracking id and market source values.
+ *   Returns an absolute url including share tracking id and
+ *   market source values.
  */
 function sb_social_share_tracker_url($share_id, $settings, $url_path) {
-  //$node = node_load($nid);
-
   $options = array(
     'absolute' => TRUE,
     'query' => array(
@@ -671,7 +654,9 @@ function sb_social_share_tracker_url($share_id, $settings, $url_path) {
   return $url;
 }
 
-// TODO: find time to get the image preview working.
+/**
+ * Theme callback for image preview.
+ */
 function theme_sb_social_share_image_preview($variables) {
   $element = $variables['element'];
 
@@ -685,7 +670,9 @@ function theme_sb_social_share_image_preview($variables) {
   }
 }
 
-// TODO: find somewhere other than this module for the springboard tracking cookie to live.
+/**
+ * Set tracking cookie values.
+ */
 function _sb_social_set_tracking_cookie($uid, $mail, $sid) {
   $payload = $uid . '::' . $mail . '::' . $sid;
   $set = setcookie("sb_social.event_submission", $payload, strtotime('+1 year'));
@@ -694,12 +681,17 @@ function _sb_social_set_tracking_cookie($uid, $mail, $sid) {
 /**
  * Token replacement.
  *
- * @param type $string
- * @param type $account
- * User object
- * @param type $node
- * Node object
- * @return string with tokens replaced
+ * @param string $string
+ *   String containing tokens to replace.
+ *
+ * @param mixed $node
+ *   Current node
+ *
+ * @param int $sid
+ *   Webform submission id.
+ *
+ * @return string
+ *   Returns string with tokens replaced.
  */
 function _sb_social_replace_tokens($string, $node, $sid = NULL) {
 
@@ -717,16 +709,13 @@ function _sb_social_replace_tokens($string, $node, $sid = NULL) {
     $string = str_replace($target, $value, $string);
   }
 
-  // Do token.module tokens
   $account = NULL;
   $donation = NULL;
-  // limit to actual donation forms.
+
   if ($sid && isset($node->type) && fundraiser_is_donation_type($node->type)) {
     $donation = _fundraiser_webform_get_donation_by_sid($sid);
     $account = user_load($donation->uid);
   }
-  // Do token replacement on body.
-
   $token_set = array(
     'node' => $node,
   );
@@ -736,7 +725,6 @@ function _sb_social_replace_tokens($string, $node, $sid = NULL) {
   if (!empty($account)) {
     $token_set['user'] = $account;
   }
-
   $token_set['node'] = $node;
   $string = token_replace($string, $token_set);
   return $string;
@@ -752,17 +740,15 @@ function _sb_social_replace_tokens($string, $node, $sid = NULL) {
  * going into the queue.
  *
  * If the original share event hasn't been synced yet (no sfid) we go ahead and
- * sync the opportunity anyway, when the share event syncs we'll requeue any applicable
- * donations and queue them for resync.
- *
- * @param mixed $item
- * Salesforce queue item array.
+ * sync the opportunity anyway, when the share event syncs we'll requeue any
+ * applicable donations.
  */
 function sb_social_salesforce_queue_create_item_alter(&$item) {
   if ($item['object_type'] == 'Opportunity') {
     if (!empty($item['sobject']->fields['Social_Referrer_Transaction__c'])) {
       $sfid = _sb_social_get_share_salesforce_id_from_map($item['sobject']->fields['Social_Referrer_Transaction__c']);
-      // the original share event has synced at some point, requeue with the sfid for the share event.
+      // The original share event has synced at some point,
+      // requeue with the sfid for the share event.
       if ($sfid) {
         $item['sobject']->fields['Social_Share__c'] = $sfid;
       }
@@ -773,14 +759,13 @@ function sb_social_salesforce_queue_create_item_alter(&$item) {
 
 
 /**
- * When an opportunity syncs successfully assign it's salesforce id to any
- * related share events.
+ * When an opportunity syncs  assign it's salesforce id to related shares.
  *
  * @param mixed $item
- * Salesforce queue item
+ *   Salesforce queue item
  *
  * @param object $result
- * Salesforce queue respons result
+ *   Salesforce queue respons result
  */
 function sb_social_salesforce_sync_pass_item($item, $result) {
   if ($item->object_type === 'Opportunity' && !empty($item->drupal_id)) {
@@ -788,18 +773,19 @@ function sb_social_salesforce_sync_pass_item($item, $result) {
   }
 
   if ($item->object_type === 'Social_Share__c' && !empty($item->drupal_id) && $item->operation == 'CREATE') {
-    // stash the returned salesforce id in the sb_social_shares table. This
-    // does duplicate data in {salesforce_sync_map} but it may come in handy later
-    // to have everything in one place. This may let us sidestep future performance issues
+    // Stash the returned salesforce id in the sb_social_shares table. This
+    // does duplicate data in {salesforce_sync_map} but it may come in handy
+    // later to have everything in one place.
+    // This may let us sidestep future performance issues
     // as {salesforce_sync_map} has a ton of records.
     sb_social_update_sf_share_id($item, $result);
 
-    // check for donations related to this share event and resync them with the
-    // correct sfid for the share event
+    // Check for donations related to this share event and resync them with the
+    // correct sfid for the share event.
     $donation_ids = sb_social_load_related_donation_ids($item->drupal_id);
 
-    // requeue, alter hook should add the sfid of the share.
-    foreach($donation_ids as $donation_id) {
+    // Requeue, alter hook should add the sfid of the share.
+    foreach ($donation_ids as $donation_id) {
       $donation = fundraiser_donation_get_donation($donation_id, TRUE);
       salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
     }
@@ -810,26 +796,23 @@ function sb_social_salesforce_sync_pass_item($item, $result) {
 /**
  * Implements hook_fundraiser_donation_success().
  *
- * On successful donation, if the donation came from a share url, we want to add that event
- * to the submissions table.
- *
- * @param $donation
+ * On successful donation, if the donation came from a share url, we want to add
+ * that event to the submissions table.
  */
 function sb_social_fundraiser_donation_success($donation) {
-  // social MS field has a share transaction value, submission
+  // Social MS field has a share transaction value, submission
   // is associated with a share.
   if (!empty($donation->donation['social_referer_transaction'])) {
     sb_social_submission_save($donation->donation['social_referer_transaction'], $donation->sid, $donation->did);
   }
 }
 
-
-// TODO: Future development - add similar tracker for petitions and other webform submissions?
-
 /**
  * List share-enabled market source fields.
  *
  * @return array
+ *   Returns a list of Market Source fields that have been enabled for inclusion
+ *   in share URLs.
  */
 function _sb_social_list_share_enabled_market_source_fields() {
   $enabled_fields = array();
@@ -838,15 +821,19 @@ function _sb_social_list_share_enabled_market_source_fields() {
   $fields = array_merge($default_fields, $custom_fields);
 
   foreach ($fields as $key => $value) {
-    // Fiddling required due to quirks in how Market Source presents data during form submission.
-    // ms and cid fields are not indexed by their actual form key, so we have to do a quick conversion.
+    // Fiddling required due to quirks in how Market Source presents data
+    // during form submission.
+    // ms and cid fields are not indexed by their form key, so we have to
+    // do a quick conversion.
     switch ($key) {
       case 'market_source':
         $key = 'ms';
         break;
+
       case 'campaign':
         $key = 'cid';
         break;
+
     }
     if ($value['share_enabled'] === 1) {
       $enabled_fields[] = $key;
@@ -854,4 +841,3 @@ function _sb_social_list_share_enabled_market_source_fields() {
   }
   return $enabled_fields;
 }
-
