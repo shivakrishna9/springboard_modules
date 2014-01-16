@@ -73,12 +73,14 @@ function commerce_psi_credit_fundraiser_commerce_charge($method_instance, $donat
   $wrapper = entity_metadata_wrapper('commerce_order', $order);
   $charge = $wrapper->commerce_order_total->value();
 
-  $pane_form = array(); // Not actually used anywhere in this system, so ignore it.
+  // Not actually used anywhere in this system, so ignore it.
+  $pane_form = array();
 
   $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
   $pane_values['frequency'] = $donation->donation['recurs_monthly'] == TRUE ? 'Monthly' : NULL;
 
-  // Execute call to PSI, only returns FALSE if the payment failed, returns nothing if successful
+  // Execute call to PSI, only returns FALSE if the payment failed,
+  // returns nothing if successful.
   $result = commerce_psi_credit_submit_form_submit($method_instance, $pane_form, $pane_values, $order, $charge);
   $success = FALSE;
   if ($result !== FALSE) {
