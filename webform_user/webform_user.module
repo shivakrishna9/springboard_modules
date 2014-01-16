@@ -970,6 +970,10 @@ function _webform_user_create_webform_components(&$node) {
             array('%name' => $field['title'])));
           $item = array();
           break;
+        default:
+          // We've exausted the list of available types with no match, field type must be unsupported.
+          drupal_set_message(t('Webform does not support %type fields, the %type field %name has not been added to this webform.', array('%type' => $item['type'], '%name' => $field['title'])));
+          $item = array();
       }
       if (!empty($item)) {
         // Add the component to the Webform.
@@ -1156,7 +1160,7 @@ function _webform_user_get_profile_fields() {
    * category_name - human readable profile field value
    */
   $fields = array();
-  $excluded = array('entityreference');
+  $excluded = array('entityreference', 'commerce_customer_profile_reference', 'commerce_line_item_reference', 'commerce_product_reference');
   // Add the e-mail field first.
   $mail_field = array(
     'name' => 'mail',
