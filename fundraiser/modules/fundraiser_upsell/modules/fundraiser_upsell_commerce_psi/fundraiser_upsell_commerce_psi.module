@@ -49,8 +49,19 @@ function fundraiser_upsell_commerce_psi_format_upsell_data($donation, $payment_m
 
   $values['frequency'] = $donation->donation['recurs_monthly'] == TRUE ? 'Monthly' : NULL;
 
-  // @todo Figure out what to put here.
-  $values['PriorOneTimeTransactionId'] = '';
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'commerce_payment_transaction')
+    ->propertyCondition('order_id', $order->order_id)
+    ->propertyCondition('status', 'success')
+    ->propertyOrderBy('created', 'DESC')
+    ->range(0, 1);
+  $result = $query->execute();
+  if (isset($result['commerce_payment_transaction'])) {
+    $transaction_ids = array_keys($result['commerce_payment_transaction']);
+    $transaction = entity_load('commerce_payment_transaction', $transaction_ids);
+
+    $values['PriorOneTimeTransactionId'] = $transaction->remote_id;
+  }
 
   $values['MarketSource'] = drupal_substr(_commerce_psi_token_replace($payment_method['settings']['custom_fields']['market_source'], $order), 0, 100);
 
