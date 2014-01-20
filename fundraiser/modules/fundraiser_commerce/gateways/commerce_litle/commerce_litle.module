@@ -235,7 +235,18 @@ function commerce_litle_cc_settings_form($settings = array()) {
     '#title' => 'Run in Sandbox Mode',
     '#default_value' => isset($settings['commerce_litle_settings_sandbox']) ? $settings['commerce_litle_settings_sandbox'] : '',
   );
-
+  if (module_exists('fundraiser_sustainers')) {
+    for ($i = 1; $i <= 36; ++$i) {
+      $options[$i] = $i;
+    }
+    $form['commerce_litle_settings_sustainer_series_start_count'] = array(
+      '#type' => 'select',
+      '#title' => t('Initial sustainer series charges.'),
+      '#description' => t('This represents the number of months in advance to create pending charge records when a sustaining donation is recorded.'),
+      '#options' => $options,
+      '#default_value' => isset($settings['commerce_litle_settings_sustainer_series_start_count']) ? $settings['commerce_litle_settings_sustainer_series_start_count'] : 24,
+    );
+  }
   if (module_exists('commerce_cardonfile')) {
     $form['cardonfile'] = array(
       '#type' => 'checkbox',
