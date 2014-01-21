@@ -563,7 +563,7 @@ function fundraiser_upsell_create_recurring_series($donation) {
     // Need to temporarily change this while the series is being created.
     $old_type = $donation->fundraiser_upsell->type;
     $donation->fundraiser_upsell->type = 'slave_donation';
-    _fundraiser_sustainers_create_future_orders($donation, $expires['month'], $expires['year'], $date_to_start);
+    _fundraiser_sustainers_create_future_orders($donation, $expires['month'], $expires['year'], NULL, $date_to_start);
     $donation->fundraiser_upsell->type = $old_type;
 
     if (fundraiser_upsell_check_recurring($donation->did)) {
