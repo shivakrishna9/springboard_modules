@@ -437,6 +437,7 @@ function fundraiser_upsell_upsell_ajax_submit($data) {
   $master_donation = fundraiser_upsell_create_master_donation($upsold_donation, $amount);
 
   // Add info about the master donation to the upsold donation.
+  $upsold_donation->fundraiser_upsell = new stdClass();
   $upsold_donation->fundraiser_upsell->type = 'upsold_donation';
   $upsold_donation->fundraiser_upsell->related_did = $master_donation->did;
   fundraiser_donation_update($upsold_donation);
@@ -549,26 +550,53 @@ function fundraiser_upsell_fundraiser_donation_get_donation($donation) {
  *
  * @return bool
  *   TRUE on successful creation of sustainers in the series.
- *
  */
 function fundraiser_upsell_create_recurring_series($donation) {
-  // Since this is decoupled, we need to set the start date to ensure that we
-  // advance the future donations by one month.
-  $date_to_start = $donation->recurring->next_charge;
+  $gateway_info = _fundraiser_get_donation_gateway($donation->did);
+  // Allows recurring.
+  if (_fundraiser_sustainers_supports_recurring($gateway_info['allow_recurring'], $donation->donation['payment_method'])) {
+    // Is not an offline recurring.
+    if (!_fundraiser_sustainers_offsite_recurring($gateway_info['offsite_recurring'], $donation->donation['payment_method'])) {
+      if (isset($gateway_info['expire callback'])) {
+        $expiration_func = $gateway_info['expire callback'];
+        if (function_exists($expiration_func)) {
+          $expires = $expiration_func($donation->donation);
+          if (isset($expires['month']) && isset($expires['year'])) {
+            // Need to temporarily change this while the series is being
+            // created.
+            $old_type = $donation->fundraiser_upsell->type;
+            $donation->fundraiser_upsell->type = 'slave_donation';
 
-  // Create the recurring donations.
-  // Get the expiration month and year out of the payment gateway.
-  $expires = fundraiser_commerce_get_payment_method_expiration_date_from_donation($donation);
-  if (!empty($expires)) {
-    // Need to temporarily change this while the series is being created.
-    $old_type = $donation->fundraiser_upsell->type;
-    $donation->fundraiser_upsell->type = 'slave_donation';
-    _fundraiser_sustainers_create_future_orders($donation, $expires['month'], $expires['year'], $date_to_start);
-    $donation->fundraiser_upsell->type = $old_type;
+            // We need to set the start date to ensure that we
+            // advance the future donations by one month.
+            $date_to_start = $donation->recurring->next_charge;
 
-    if (fundraiser_upsell_check_recurring($donation->did)) {
+            _fundraiser_sustainers_create_future_orders($donation, $expires['month'], $expires['year'], $date_to_start);
+
+            // Set the old type back.
+            $donation->fundraiser_upsell->type = $old_type;
+
+            if (fundraiser_upsell_check_recurring($donation->did)) {
+              return TRUE;
+            }
+          }
+        }
+      }
+    }
+    else {
+      // ALERT: This gateway does its own recurring stuff, so we skipped it
+      // here. But we should probably tell someone this was attempted.
+      watchdog('fundraiser_upsell', 'An offsite recurring donation was created, for master donation id @did',
+        array('@did' => $donation->did));
+
       return TRUE;
     }
+  }
+  else {
+    // ALERT: This gateway does not support recurring stuff, so we skipped it
+    // here. But we should probably tell someone this was attempted.
+    watchdog('fundraiser_upsell', 'A recurring donation for a non-recurring gateway was attempted, for master donation id @did',
+      array('@did' => $donation->did));
   }
 
   return FALSE;
@@ -952,6 +980,7 @@ function fundraiser_upsell_create_master_donation($upsold_donation, $new_amount)
   $master_donation->donation['amount'] = $new_amount;
 
   // Add the upsold did and upsell type.
+  $master_donation->fundraiser_upsell = new stdClass();
   $master_donation->fundraiser_upsell->type = 'master_donation';
   $master_donation->fundraiser_upsell->related_did = $upsold_donation->did;
 
