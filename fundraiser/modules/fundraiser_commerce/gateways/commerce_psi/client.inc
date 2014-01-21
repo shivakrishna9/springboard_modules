@@ -160,8 +160,9 @@ class PsiClient {
    */
   public function SendUpsell($upsell_data) {
 
+    $params = $this->credentials() + array('upsellInfo' => $upsell_data);
     try {
-      $response = $this->soapclient->SendUpsell($this->credentials(), $upsell_data);
+      $response = $this->soapclient->SendUpsell($params);
     }
     catch (Exception $ex) {
       watchdog('commerce_psi', 'The PSI Commerce account @title failed to send an upsell: @error',
