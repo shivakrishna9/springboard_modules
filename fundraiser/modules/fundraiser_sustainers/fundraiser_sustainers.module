@@ -1328,12 +1328,30 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
 }
 
 /**
- * Helper function, create recurring donations to the limits of the donation card expiration date.
- * If the recurring donations exist already update, cancelling those that are past expiration.
+ * Create recurring donations up until the date given.
+ *
+ * If the recurring donations exist already update,
+ * cancelling those that are past expiration.
+ *
+ * @param object $donation
+ *   The donation that will become the master donation.
+ * @param int $month
+ *   The month number to stop on.  Usually the credit card expiration.
+ * @param int $year
+ *   The year number to stop on.  Usually the credit card expiration.
+ * @param object $source_donation
+ *   The donation to copy if different than the master donation.
+ * @param int $start
+ *   The timestamp to start from.  If not set will default to now.
+ *   The first non-master donation will happen one month after the $start.
+ *
  */
-function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $source_donation = NULL) {
+function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $source_donation = NULL, $start = NULL) {
   // Handle the rest of the set based on the given donation.
-  $start = strtotime("now");
+  if (is_null($start)) {
+    $start = strtotime("now");
+  }
+
   $stop = mktime(0, 0, 0, $month, 1, $year);
   $months = ((idate('Y', $stop) * 12) + idate('m', $stop)) - ((idate('Y', $start) * 12) + idate('m', $start));
   $processed_months = 0;
@@ -1361,7 +1379,7 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
       unset($new_donation->reference_charge);
 
       fundraiser_donation_create($new_donation);
-      $next_charge = strtotime('+ ' . $processed_months . ' months');
+      $next_charge = strtotime('+ ' . $processed_months . ' months', $start);
       fundraiser_donation_comment($new_donation, 'Sustainer donation scheduled to be charged at @next_charge',
         array('@next_charge' => format_date($next_charge)));
       // After this, the donation did and donation data is set.
