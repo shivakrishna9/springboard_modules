@@ -1681,7 +1681,7 @@ function fundraiser_donation_success($donation) {
   _fundraiser_update_tracking_value($donation->nid, 'conversions');
   // Show gateay message if appropriate.
   $display_message = variable_get('fundraiser_gateway_messages', 1);
-  if ($display_message) {
+  if ($display_message && isset($donation->result['message'])) {
     drupal_set_message($donation->result['message']);
   }
   // Allow other modules to respond to the success.
