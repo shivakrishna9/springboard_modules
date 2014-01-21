@@ -28,7 +28,7 @@
                   "solo" : 0,
                   "switch" : 0
                 },
-                "cim_cardonfile" : 1,
+                "cardonfile" : 1,
                 "email_customer" : 0,
                 "log" : { "request" : "request", "response" : "response" }
               }
