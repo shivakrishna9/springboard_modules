@@ -848,6 +848,7 @@ function fundraiser_upsell_create_modal_variables($node) {
  * Process the upsell donation form from the POSTed ajax callback.
  */
 function fundraiser_upsell_ajax_process($node) {
+  // @todo Do something safer with this.
   $data = $_POST;
   if (isset($data['preview']) && $data['preview']) {
     // Generate the thank you content.
@@ -855,8 +856,9 @@ function fundraiser_upsell_ajax_process($node) {
     // since we don't have a donation.
     $content = $node->fundraiser_upsell['thankyou'];
   }
-  // Check the form token to be sure this is a valid callback.
-  elseif (!drupal_valid_token($data['form_token'], $data['form_id'], TRUE)) {
+  // If we have a form token and it's invalid, don't let anything happen.
+  // We normally won't have a form token for anonymous users.
+  elseif (isset($data['form_token']) && !drupal_valid_token($data['form_token'], $data['form_id'], TRUE)) {
     watchdog('fundraiser_upsell', 'Upsell donation %did failed because of an invalid form token.', array('%did' => $data['did']), WATCHDOG_NOTICE);
     $content = t('There was a problem with your donation. Please try again');
   }
