@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Commerce based hook for commerce_psi
+ * Commerce based hook for commerce_psi Credit.
  */
 
 /**
@@ -22,7 +22,7 @@ function commerce_psi_credit_fundraiser_commerce_fundraiser_gateway_info() {
 }
 
 /**
- * Returns the form fields for this method
+ * Returns the form fields for this method.
  */
 function commerce_psi_credit_fundraiser_commerce_submit_form($payment_method, $config) {
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
@@ -30,7 +30,7 @@ function commerce_psi_credit_fundraiser_commerce_submit_form($payment_method, $c
 }
 
 /**
- * Convert values to ones that Fundraiser Commerce is looking for
+ * Convert values to ones that Fundraiser Commerce is looking for.
  */
 function commerce_psi_credit_fundraiser_commerce_cleanup($submission_fields) {
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
@@ -38,7 +38,9 @@ function commerce_psi_credit_fundraiser_commerce_cleanup($submission_fields) {
 }
 
 /**
- * Callback function, return the user entered experation dates for this submission.
+ * Expiration callback function.
+ *
+ * Return the user entered expiration date for this submission.
  */
 function commerce_psi_credit_fundraiser_commerce_expire($submission_fields) {
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
@@ -54,7 +56,7 @@ function commerce_psi_credit_fundraiser_commerce_scrub($submission_fields) {
 }
 
 /**
- * Validate the submitted values with the commerce validate function
+ * Validate the submitted values with the commerce validate function.
  */
 function commerce_psi_credit_fundraiser_commerce_validate($submission_fields, $payment_fields) {
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
@@ -64,7 +66,15 @@ function commerce_psi_credit_fundraiser_commerce_validate($submission_fields, $p
 }
 
 /**
- * Submit the donation values to the PSI credit charge handler
+ * Submit the donation values to the PSI credit charge handler.
+ *
+ * @param array $method_instance
+ *    Commerce loaded method instance.
+ * @param object $donation
+ *    The donation to charge.
+ *
+ * @return bool
+ *   Whether the charge was successful.
  */
 function commerce_psi_credit_fundraiser_commerce_charge($method_instance, $donation) {
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
@@ -72,6 +82,15 @@ function commerce_psi_credit_fundraiser_commerce_charge($method_instance, $donat
   $order = commerce_order_load($donation->did);
   $wrapper = entity_metadata_wrapper('commerce_order', $order);
   $charge = $wrapper->commerce_order_total->value();
+
+  // See if we have an upsell master donation and if so call the SendUpsell
+  // API call instead of the usual charging.
+  // This will initiate an immediate charge as well as an offsite
+  // recurring series.
+  if (isset($donation->fundraiser_upsell->type) && $donation->fundraiser_upsell->type == 'master_donation') {
+    module_load_include('inc', 'fundraiser_commerce', 'gateways/commerce_psi_common');
+    return commerce_psi_common_master_donation_upsell_charge($method_instance, $donation, $order, $charge);
+  }
 
   // Not actually used anywhere in this system, so ignore it.
   $pane_form = array();
