@@ -364,7 +364,7 @@ function springboard_api_get_form_details($nid) {
  *   Form API array data to parse.
  */
 function _springboard_api_parse_component_fapi(&$save, $fapi, $component_type = NULL) {
-  if ($fapi['#type'] == 'date') {
+  if (isset($fapi['#type']) && $fapi['#type'] == 'date') {
     $fapi = form_process_date($fapi);
   }
   $save = array(
@@ -390,6 +390,70 @@ function _springboard_api_parse_component_fapi(&$save, $fapi, $component_type = 
   $children = element_children($fapi);
   foreach ($children as $key) {
     _springboard_api_parse_component_fapi($save[$key], $fapi[$key], $component_type);
+  }
+}
+
+/**
+ * Convert a flat array of submitted values into a nested array that webform
+ * can consume.
+ *
+ * @param $submission
+ *   Associative array of field keys and submitted values.
+ *
+ * @param $node
+ *   Webform node the data will be submitted to.
+ *
+ * @return array
+ *   Returns a nested array of submission values formatted for consumption by
+ *   the submit endpoint.
+ */
+function _springboard_api_convert_submission($submission, $node) {
+  $converted_submission = array();
+  foreach ($node->webform['components'] as $cid => $component) {
+    // Skip fieldsets & markup.
+    if ($component['type'] == 'fieldset' || $component['type'] == 'markup') {
+      continue;
+    }
+    // Building on the technique used in springboard_api_get_form_details(),
+    // here we analyze the structure of each form element for information on
+    // how to structure submission data sent as a flat array.
+    $func = '_webform_render_' . $component['type'];
+    if (function_exists($func)) {
+      $fapi = $func($component);
+      // Time and grid components have an additional process functions that
+      // render their child form elements.
+      if ($component['type'] == 'time' || $component['type'] == 'grid') {
+        foreach ($fapi['#process'] as $process) {
+          $fapi = $process($fapi);
+        }
+      }
+      if ($component['type'] == 'date') {
+        if (!isset($fapi['#attributes'])) {
+          $fapi['#attributes'] = NULL;
+        }
+      }
+      _springboard_api_convert_fapi($converted_submission, $fapi, $submission, $component['form_key']);
+    }
+  }
+  return $converted_submission;
+}
+
+/**
+ * The guts of the submission conversion function.
+ *
+ * Stuffed into another function because recursion.
+ */
+function _springboard_api_convert_fapi(&$converted_submission, $fapi, $submission, $form_key) {
+  // Current field key correlates with a value in the submission, add it to
+  // the data conversion array.
+  if (isset($submission[$form_key])) {
+    $converted_submission[$form_key] = $submission[$form_key];
+  }
+  $child_elements = element_children($fapi);
+  // This is how the nested data structure is built. Components that expect
+  // nested data have child elements in their rendered form api array.
+  foreach ($child_elements as $key) {
+    _springboard_api_convert_fapi($converted_submission[$form_key], $fapi[$key], $submission, $key);
   }
 }
 
