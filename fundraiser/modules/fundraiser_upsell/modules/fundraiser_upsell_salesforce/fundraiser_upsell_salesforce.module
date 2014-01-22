@@ -88,6 +88,15 @@ function fundraiser_upsell_salesforce_get_campaign_id($master_did) {
  *   before creating the recurring series.
  */
 function fundraiser_upsell_salesforce_upsell_master_donation_alter(&$donation) {
+
+  // If the donation's payment method uses offsite recurring,
+  // then there is no recurring_donation object in Salesforce
+  // and the donation object will be queued on donation success.
+  $info = _fundraiser_get_donation_gateway($donation->did);
+  if (_fundraiser_sustainers_offsite_recurring($info['offsite_recurring'], $donation->donation['payment_method'])) {
+    return;
+  }
+
   // Queue the recurring_donation object.
   salesforce_genmap_send_object_to_queue(
     'fundraiser_sustainers',
@@ -212,13 +221,23 @@ function fundraiser_upsell_salesforce_node_record($node) {
  * If we have all the data we need, we will create an Upsell sobject and send it
  *   to the Salesforce queue.
  *
- * There are two cases to take care of here.
+ * There are three cases to take care of here.
  *
- * First case, we have a recurring donation related to upsell.
+ * First case, we have a recurring donation object related to upsell.
  *   In this case, look up the upsold donation ID and see if it has an SFID.
+ *   If we're doing offsite recurring then this won't happen because there is
+ *   no recurring donation object.
  *
- * Second case, we have a donation that happens to be upsold.  Look up the
- *   related recurring donation and see if it has an SFID.
+ * Second case, we have a donation that is a master donation
+ *   (AKA upsell donation). If we're doing offsite recurring, then we look
+ *   for the related upsold donation's SFID.
+ *   If we're not doing offsite recurring, then we don't need to do anything
+ *    here.
+ *
+ * Third case, we have a donation that is the upsold donation.
+ *   If we're doing offsite recurring, look up the upsell donation's SFID.
+ *   If we're not doing offsite recurring, look up the recurring donation's
+ *   SFID.
  *
  * If both objects have SFIDs and DIDs then we know the prerequisites are met.
  *   Create an Upsell sobject and queue it up.
@@ -249,46 +268,102 @@ function fundraiser_upsell_salesforce_salesforce_sync_pass_item($item, $result) 
 
     // Need to load the donation to get the name.
     $donation = fundraiser_donation_get_donation($upsold_did);
-    $name = t('Donation Upsell - !first !last',
-      array(
-        '!first' => $donation->donation['first_name'],
-        '!last' => $donation->donation['last_name'],
-      ));
+    $name = fundraiser_upsell_salesforce_format_sobject_name($donation);
 
     $sobject = fundraiser_upsell_salesforce_create_upsell_sobject($name, $upsold_did, $upsold_sfid, $upsell_did, $upsell_recurring_donation_sfid);
   }
 
   if ($item->delta == 'donation') {
     $donation = fundraiser_donation_get_donation($item->drupal_id);
-    if (isset($donation->fundraiser_upsell->type) && $donation->fundraiser_upsell->type == 'upsold_donation') {
-      // This object is an upsold donation.
-      // See if the recurring donation has been synced and get its sfid.
-      $upsold_did = $donation->did;
-      $upsold_sfid = $result->id;
-      $upsell_did = $donation->fundraiser_upsell->related_did;
+    if (isset($donation->fundraiser_upsell->type)) {
+      if ($donation->fundraiser_upsell->type == 'master_donation') {
+        // This object is the master donation.
+        // If we're doing offsite recurring, then we need to send its sfid
+        // and the upsold donation's sfid in the upsell object.
+        $info = _fundraiser_get_donation_gateway($donation->did);
+        if (_fundraiser_sustainers_offsite_recurring($info['offsite_recurring'], $donation->donation['payment_method'])) {
+          // See if the upsold donation has synced.
+          $upsold_did = $donation->fundraiser_upsell->related_did;
+          $upsold_map = salesforce_sync_load_map(array(
+              'module' => 'salesforce_donation',
+              'delta' => 'donation',
+              'drupal_id' => $upsold_did,
+              'object_type' => 'Opportunity',
+            ));
 
-      // See if we have the recurring donation sfid.
-      $recurring_map = salesforce_sync_load_map(array(
-          'module' => 'fundraiser_sustainers',
-          'delta' => 'recurring_donation',
-          'drupal_id' => $upsell_did,
-          'object_type' => 'npe03__Recurring_Donation__c',
-        ));
+          // Bail if the other object isn't mapped.
+          if ($upsold_map === FALSE) {
+            return;
+          }
 
-      // Bail if the other object isn't mapped.
-      if ($recurring_map === FALSE) {
-        return;
+          // Both object have synced at this point.
+          $upsold_sfid = $upsold_map->sfid;
+          $upsell_did = $donation->did;
+          $upsell_sfid = $result->id;
+
+          $name = fundraiser_upsell_salesforce_format_sobject_name($donation);
+          $sobject = fundraiser_upsell_salesforce_create_upsell_sobject($name, $upsold_did, $upsold_sfid, $upsell_did, $upsell_sfid, TRUE);
+        }
+        else {
+          // Else don't do anything here because we need the recurring
+          // donation object to be synced instead.
+          return;
+        }
       }
+      elseif ($donation->fundraiser_upsell->type == 'upsold_donation') {
+        // This object is an upsold donation.
+        // If we are doing offsite recurring, see if the master donation
+        // has already been synced and get its sfid.
+        $info = _fundraiser_get_donation_gateway($donation->did);
+        if (_fundraiser_sustainers_offsite_recurring($info['offsite_recurring'], $donation->donation['payment_method'])) {
+          // See if the upsold donation has synced.
+          $upsell_did = $donation->fundraiser_upsell->related_did;
+          $upsell_map = salesforce_sync_load_map(array(
+              'module' => 'salesforce_donation',
+              'delta' => 'donation',
+              'drupal_id' => $upsell_did,
+              'object_type' => 'Opportunity',
+            ));
 
-      $upsell_recurring_donation_sfid = $recurring_map->sfid;
-      $name = t('Donation Upsell - !first !last',
-        array(
-          '!first' => $donation->donation['first_name'],
-          '!last' => $donation->donation['last_name'],
-        ));
+          // Bail if the other object isn't mapped.
+          if ($upsell_map === FALSE) {
+            return;
+          }
 
-      $sobject = fundraiser_upsell_salesforce_create_upsell_sobject($name, $upsold_did, $upsold_sfid, $upsell_did, $upsell_recurring_donation_sfid);
+          // Both object have synced at this point.
+          $upsell_sfid = $upsell_map->sfid;
+          $upsold_did = $donation->did;
+          $upsold_sfid = $result->id;
 
+          $name = fundraiser_upsell_salesforce_format_sobject_name($donation);
+          $sobject = fundraiser_upsell_salesforce_create_upsell_sobject($name, $upsold_did, $upsold_sfid, $upsell_did, $upsell_sfid, TRUE);
+        }
+        else {
+          // Else see if the recurring donation is synced and get its sfid.
+          $upsold_did = $donation->did;
+          $upsold_sfid = $result->id;
+          $upsell_did = $donation->fundraiser_upsell->related_did;
+
+          // See if we have the recurring donation sfid.
+          $recurring_map = salesforce_sync_load_map(array(
+              'module' => 'fundraiser_sustainers',
+              'delta' => 'recurring_donation',
+              'drupal_id' => $upsell_did,
+              'object_type' => 'npe03__Recurring_Donation__c',
+            ));
+
+          // Bail if the other object isn't mapped.
+          if ($recurring_map === FALSE) {
+            return;
+          }
+
+          $upsell_recurring_donation_sfid = $recurring_map->sfid;
+
+          $name = fundraiser_upsell_salesforce_format_sobject_name($donation);
+          $sobject = fundraiser_upsell_salesforce_create_upsell_sobject($name, $upsold_did, $upsold_sfid, $upsell_did, $upsell_recurring_donation_sfid);
+        }
+
+      }
     }
   }
 
@@ -296,6 +371,22 @@ function fundraiser_upsell_salesforce_salesforce_sync_pass_item($item, $result) 
   if (is_object($sobject)) {
     fundraiser_upsell_salesforce_queue_upsell($sobject);
   }
+}
+
+/**
+ * Returns a string to use as the upsell sobject name.
+ *
+ * @param object $donation
+ *
+ * @return null|string
+ *   The name to be used with the upsell sobject.
+ */
+function fundraiser_upsell_salesforce_format_sobject_name($donation) {
+  return t('Donation Upsell - !first !last',
+    array(
+      '!first' => $donation->donation['first_name'],
+      '!last' => $donation->donation['last_name'],
+    ));
 }
 
 /**
@@ -310,20 +401,25 @@ function fundraiser_upsell_salesforce_salesforce_sync_pass_item($item, $result) 
  * @param int $upsell_did
  *   The donation ID of the recurring_donation object in the sustainer series.
  *   Same as the master Donation ID.
- * @param string $upsell_recurring_donation_sfid
- *   The Salesforce ID of recurring_donation object.  NOT the same as the
- *   master donation donation ID.
+ * @param string $upsell_sfid
+ *   The Salesforce ID of recurring_donation object, if we're not using
+ *   offsite recurring.  If we are using offsite recurring, this should be
+ *   the sfid of the master donation object.
+ * @param bool $offsite
+ *   Whether offsite recurring is used.
  *
  * @return object
  *   The Salesforce object.
  */
-function fundraiser_upsell_salesforce_create_upsell_sobject($name, $upsold_did, $upsold_sfid, $upsell_did, $upsell_recurring_donation_sfid) {
+function fundraiser_upsell_salesforce_create_upsell_sobject($name, $upsold_did, $upsold_sfid, $upsell_did, $upsell_sfid, $offsite = FALSE) {
+  $key = $offsite ? 'Upsell_Donation__c' : 'Upsell_Recurring_Donation__c';
+
   $sobject = new stdClass();
   $sobject->type = 'Donation_Upsell__c';
   $sobject->fields = array(
     'Name' => $name,
     'Upsell_Order_Id__c' => $upsell_did,
-    'Upsell_Recurring_Donation__c' => $upsell_recurring_donation_sfid,
+    $key => $upsell_sfid,
     'Upsold_Donation__c' => $upsold_sfid,
     'Upsold_Order_Id__c' => $upsold_did,
   );
