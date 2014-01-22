@@ -571,7 +571,7 @@ function fundraiser_upsell_create_recurring_series($donation) {
             // advance the future donations by one month.
             $date_to_start = $donation->recurring->next_charge;
 
-            _fundraiser_sustainers_create_future_orders($donation, $expires['month'], $expires['year'], $date_to_start);
+            _fundraiser_sustainers_create_future_orders($donation, $expires['month'], $expires['year'], NULL, $date_to_start);
 
             // Set the old type back.
             $donation->fundraiser_upsell->type = $old_type;
