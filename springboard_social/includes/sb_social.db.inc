@@ -241,6 +241,14 @@ function sb_social_settings_load($sid) {
   return $settings[$sid];
 }
 
+
+/**
+ * Delete settings.
+ */
+function sb_social_webform_settings_delete($nid, $type = 'node') {
+  db_query('DELETE FROM {sb_social_settings} WHERE id = :id AND type = :type', array(':id' => $nid, ':type' => $type));
+}
+
 /**
  * Lookup ID associated with the share settings ID provided.
  *
@@ -315,9 +323,9 @@ function _sb_social_settings_defaults($service) {
 function _sb_social_market_source_defaults() {
   $market_source = array();
   $fields = market_source_field_info();
-  $blacklist = _sb_social_component_blacklist();
+  $share_enabled_fields = _sb_social_list_share_enabled_market_source_fields();
   foreach ($fields as $key => $field) {
-    if (in_array($key, $blacklist)) {
+    if (!in_array($key, $share_enabled_fields)) {
       continue;
     }
     $market_source[$key] = variable_get('springboard_social_ms_' . $key, '');
@@ -400,9 +408,11 @@ function _sb_social_get_settings_by_sid($submission_id) {
 /**
  * Lookup webform node id from webform submission ID.
  *
- * @staticvar array $data
- * @param type $sid
- * @return type
+ * @param int $sid
+ *   Webform submission id.
+ *
+ * @return int
+ *   Node id of the webform associated with this submission.
  */
 function _sb_social_get_nid_by_sid($sid) {
   static $data = array();
@@ -480,7 +490,7 @@ function _sb_social_sid_by_id($id) {
  */
 function sb_social_get_path_id($path) {
   $query = db_select('sb_social_path', 'p');
-  $query->fields('p',array('pid'));
+  $query->fields('p', array('pid'));
 
   if (is_array($path)) {
     $or = db_or();

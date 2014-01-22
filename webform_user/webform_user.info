@@ -11,4 +11,3 @@ files[] = tests/webform_user.setup.test
 files[] = tests/webform_user.config.test
 files[] = tests/webform_user.submission.test
 files[] = tests/webform_user.confirmation.test
-files[] = tests/webform_user.field_truncate.test

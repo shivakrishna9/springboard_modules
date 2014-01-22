@@ -1,6 +1,7 @@
 <?php
 /**
- * @file Admin settings forms.
+ * @file
+ * Admin settings forms.
  */
 
 /**

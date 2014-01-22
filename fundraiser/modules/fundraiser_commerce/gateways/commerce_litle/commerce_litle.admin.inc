@@ -283,10 +283,10 @@ function commerce_litle_cc_credit_form_submit($form, &$form_state) {
  * @param array $payment_method
  *   Uses the payment method settings to determine what to log.
  *
- * @param stdClass $transaction
+ * @param object $transaction
  *   The transaction object.
  *
- * @param stdClass $order
+ * @param object $order
  *   The order object.
  *
  * @param float $amount

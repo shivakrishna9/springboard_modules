@@ -56,9 +56,9 @@ function commerce_litle_menu() {
 /**
  * Determines menu access to the prior auth capture form for CC transactions.
  *
- * @param stdClass $order
+ * @param object $order
  *   The order the transaction is on.
- * @param stdClass $transaction
+ * @param object $transaction
  *   The payment transaction object to be captured.
  *
  * @return bool
@@ -86,9 +86,9 @@ function commerce_litle_cc_capture_access($order, $transaction) {
 /**
  * Determines menu access to the void form for Litle credit card transactions.
  *
- * @param stdClass $order
+ * @param object $order
  *   The order the transaction is on.
- * @param stdClass $transaction
+ * @param object $transaction
  *   The payment transaction object to be voided.
  *
  * @return bool
@@ -121,9 +121,9 @@ function commerce_litle_cc_void_access($order, $transaction) {
 /**
  * Determines menu access to the credit form for successful CC transactions.
  *
- * @param stdClass $order
+ * @param object $order
  *   The order the transaction is on.
- * @param stdClass $transaction
+ * @param object $transaction
  *   The payment transaction object to be credited.
  *
  * @return bool
@@ -1360,7 +1360,7 @@ function _commerce_litle_get_litle_config($gateway) {
 /**
  * Sends a request to Litle to register a token.
  *
- * @param stdClass $litle
+ * @param object $litle
  *   The litle object
  * @param array $litle_config
  *   The result of _commerce_litle_get_litle_config($payment_method)

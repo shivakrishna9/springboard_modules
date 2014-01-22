@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @file
+ * Admin settings form and associated functions.
+ */
+
+/**
  * Admin settings form
  */
 function sb_social_admin() {
@@ -68,11 +73,10 @@ function sb_social_admin() {
       '#description' => t('Optional Market Source values to include in share links'),
     );
     $fields = market_source_field_info();
-    // It doesn't make sense to list certain market source fields, like user agent.
-    // the blacklist lets us filter these out cleanly.
-    $blacklist = _sb_social_component_blacklist();
+    $share_enabled_fields = _sb_social_list_share_enabled_market_source_fields();
+
     foreach ($fields as $key => $field) {
-      if (in_array($key, $blacklist)) {
+      if (!in_array($key, $share_enabled_fields)) {
         continue;
       }
       // special handling for campaign ID
@@ -218,10 +222,10 @@ function sb_social_path_settings($form, $edit, $sid = NULL) {
   if (empty($enabled_services)) {
     $form['banner'] = array(
       '#prefix' => '<h2>' . t('No services enabled') . '</h2>',
-      '#markup' => '<p>' . t('No social media services have been enabled. To enable Social Media services, visit the !admin_screen', array('!admin_screen' => l('module administration page', 'admin/config/services/springboard_social'))) . '</p>',
+      '#markup' => '<p>' . t('No social media services have been enabled. To enable Social Media services, visit the !admin_screen', array('!admin_screen' => l(t('module administration page'), 'admin/config/services/springboard_social'))) . '</p>',
     );
   }
-  // defines record type in {sb_social_settings}
+  // Defines record type in {sb_social_settings}.
   $form['type'] = array(
     '#type' => 'value',
     '#value' => 'path',
@@ -245,7 +249,7 @@ function sb_social_path_settings($form, $edit, $sid = NULL) {
 
   // Each plugin should implement a settings callback function that provides the required
   // form elements to configure share content for this service.
-  foreach($plugins as $service => $plugin) {
+  foreach ($plugins as $service => $plugin) {
     $func = isset($plugin['settings']) ? $plugin['settings'] : FALSE;
     if ($func && function_exists($func)) {
       $func($form, $enabled_services, $settings['data'][$service], $token_set);
@@ -415,7 +419,7 @@ function sb_social_node_settings($form, $edit, $node) {
   if (empty($enabled_services)) {
     $form['banner'] = array(
       '#prefix' => '<h2>' . t('No services enabled') . '</h2>',
-      '#markup' => '<p>' . t('No social media services have been enabled. To enable Social Media services, visit the !admin_screen', array('!admin_screen' => l('module administration page', 'admin/config/services/springboard_social'))) . '</p>',
+      '#markup' => '<p>' . t('No social media services have been enabled. To enable Social Media services, visit the !admin_screen', array('!admin_screen' => l(t('module administration page'), 'admin/config/services/springboard_social'))) . '</p>',
     );
     return $form;
   }
@@ -430,7 +434,7 @@ function sb_social_node_settings($form, $edit, $node) {
   );
 
   $plugins = sb_social_list_plugins();
-   
+
   foreach ($enabled_services as $service) {
     if (!empty($plugins[$service]['settings'])) {
       $func = $plugins[$service]['settings'];
@@ -503,11 +507,11 @@ function _sb_social_settings_market_source(&$form, $settings) {
     '#description' => t('Optional Market Source values to include in share links'),
   );
   $fields = market_source_field_info();
-  // It doesn't make sense to list certain market source fields, like user agent.
-  // the blacklist lets us filter these out cleanly.
-  $blacklist = _sb_social_component_blacklist();
+  $share_enabled_fields = _sb_social_list_share_enabled_market_source_fields();
+
   foreach ($fields as $key => $field) {
-    if (in_array($key, $blacklist)) {
+    // skip market source fields that haven't been share enabled.
+    if (!in_array($key, $share_enabled_fields)) {
       continue;
     }
     if ($key == 'cid') {

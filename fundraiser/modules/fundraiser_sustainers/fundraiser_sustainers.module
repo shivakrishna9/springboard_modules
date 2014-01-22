@@ -44,6 +44,16 @@ function fundraiser_sustainers_permission() {
 }
 
 /**
+ * Implements hook_views_api().
+ */
+function fundraiser_sustainers_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'fundraiser_sustainers') . '/includes',
+  );
+}
+
+/**
  * Implements hook_menu().
  */
 function fundraiser_sustainers_menu() {
@@ -346,9 +356,9 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
     $map = $context['map'];
 
     // Add recurring item marker if recurring or not.
-    $fields['Is_Recurring_Donation__c'] = 'false';
+    $fields['Is_Recurring_Donation__c'] = FALSE;
     if ($donation->donation['recurs_monthly'] == TRUE) {
-      $fields['Is_Recurring_Donation__c'] = 'true';
+      $fields['Is_Recurring_Donation__c'] = TRUE;
     }
 
     // Add additional values for where not offsite recurring.
@@ -547,8 +557,20 @@ function fundraiser_sustainers_process_recurring_donations() {
   // Loop over the found orders
   foreach ($donations as $recurring) {
     if ($sustainer_key == $recurring->sustainer_key) {
+      // Prepare a log record.
+      $log_record = array(
+        'did' => $recurring->did,
+        'gateway' => $recurring->gateway,
+        'date_processed' => time(),
+        'lock_id' => $recurring->lock_id,
+      );
+
       // Get the donation information that we need.
       $donation = fundraiser_donation_get_donation($recurring->did);
+
+      // Set the reference charge flag to TRUE
+      $donation->reference_charge = TRUE;
+
       // Then go through each one of these to charge.
       // Since we already created the donation (and saved any CC info at that time).
       // All we need to do is process it and respond afterwards as needed.
@@ -561,13 +583,18 @@ function fundraiser_sustainers_process_recurring_donations() {
         fundraiser_donation_success($donation);
         // Record the success.
         $successes++;
+        $log_record['success'] = TRUE;
       }
       else {
         $donation->result['success'] = FALSE;
+        $log_record['success'] = FALSE;
         fundraiser_donation_decline($donation);
         // Record the fail.
         $fails++;
       }
+
+      // Write the log record.
+      drupal_write_record('fundraiser_sustainers_log', $log_record);
     }
     else {
       // TODO: Unlock the sustainer record. Currently the lock has not been ported from D6.
@@ -1049,7 +1076,12 @@ function fundraiser_sustainers_donation_amount_form_submit($form, &$form_state) 
     $old_amount = $donation->donation['amount'];
     $donation->donation['amount'] = $amount;
     $donation->donation['old_amount'] = $old_amount;
+
+    // Let other modules know the amount has been updated
+    $donation->update_amount = TRUE;
+
     fundraiser_donation_update($donation);
+
     // Add a comment.
     global $user;
     $username = isset($user->name) ? $user->name : 'Anonymous';
@@ -1225,17 +1257,46 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
   // Remove unnessecary values.
   unset($submission_fields['master_did']);
   unset($submission_fields['uid']);
-  $update_billing = TRUE;
+
+  // Set a flag for other modules to respond to the first order being updated in series
+  $sustainer_update_first = TRUE;
+
   foreach ($donations as $donation) {
     // Get the original donation.
     $donation = fundraiser_donation_get_donation($donation->did);
     // Update it.
     $donation->donation = array_merge($donation->donation, $submission_fields);
+
     // Mark the billing information as needing to be updated.
-    $donation->update_billing = $update_billing;
+    $donation->update_billing = TRUE;
+
+    // Mark the payment information as needing to be updated.
+    $donation->update_payment = TRUE;
+
+    // Let other modules know this is a sustainer update
+    $donation->sustainer_update = TRUE;
+
+    // Let other modules know the first donation being updated in the series
+    if ($sustainer_update_first) {
+      $sustainer_update_did = $donation->did;
+    }
+    else {
+      $donation->sustainer_update_did = $sustainer_update_did;
+    }
+
+    $donation->sustainer_update_first = $sustainer_update_first;
+
     // Save each donation.
     fundraiser_donation_update($donation);
-    $update_billing = FALSE; // Only update billing info once, save on API calls.
+
+    // The first donation will be used by the create recurring function
+    if ($sustainer_update_first) {
+      $source_donation = $donation;
+    }
+
+    // Set the first flag to false for the rest of the donations
+    $sustainer_update_first = FALSE;
+
     // Add a comment.
     global $user;
     $username = isset($user->name) ? $user->name : 'Anonymous';
@@ -1259,7 +1320,7 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
         // Set master donation amount to next recurring amount, so if we've updated amounts we get the right one.
         $master_donation->donation['amount'] = $donation->donation['amount'];
         // Create new orders.
-        _fundraiser_sustainers_create_future_orders($master_donation, $expires['month'], $expires['year']);
+        _fundraiser_sustainers_create_future_orders($master_donation, $expires['month'], $expires['year'], $source_donation);
       }
     }
   }
@@ -1270,7 +1331,7 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
  * Helper function, create recurring donations to the limits of the donation card expiration date.
  * If the recurring donations exist already update, cancelling those that are past expiration.
  */
-function _fundraiser_sustainers_create_future_orders($donation, $month, $year) {
+function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $source_donation = NULL) {
   // Handle the rest of the set based on the given donation.
   $start = strtotime("now");
   $stop = mktime(0, 0, 0, $month, 1, $year);
@@ -1287,11 +1348,18 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year) {
     $processed_months++;
     // Check if we have a donation for this next month.
     if (!isset($existing_recurring[$processed_months])) {
-      // Create a new one.
-      $new_donation = clone $donation;
+      // Create a new one donation from the source or master donation
+      $new_donation = !empty($source_donation) ? clone $source_donation : clone $donation;
       $new_donation->sid = 0; // Not actually submitted, it's automated, so no sid.
       // Create the new donation object, but do not process it. Processing doesn't occur till cron.
       // New donation has all of the old donation information already loaded.
+
+      // Add a flag so modules know this is being created by the sustainer system
+      $new_donation->sustainer_create = TRUE;
+
+      // Remove the reference charge flag
+      unset($new_donation->reference_charge);
+
       fundraiser_donation_create($new_donation);
       $next_charge = strtotime('+ ' . $processed_months . ' months');
       fundraiser_donation_comment($new_donation, 'Sustainer donation scheduled to be charged at @next_charge',
@@ -1737,7 +1805,7 @@ function _fundraiser_sustainers_get_donation_sets_recurr_by_uid($uid) {
     $next_charge = _fundraiser_sustainers_get_donations_next_charge($donation_set->master_did);
     if (isset($next_charge->next_charge)) {
       $donation_sets[$index]->next_charge = $next_charge->next_charge;
-      $donation_sets[$index]->status = isset($next_charge->cancellation_reason) ? t('Cancelled') : t('Active');
+      $donation_sets[$index]->status = empty($next_charge->cancellation_reason) ? t('Active') : t('Cancelled');
     }
     else {
       $donation_sets[$index]->next_charge = '';
@@ -1762,7 +1830,7 @@ function _fundraiser_sustainers_get_donation_sets() {
     $next_charge = _fundraiser_sustainers_get_donations_next_charge($donation_set->master_did);
     if (isset($next_charge->did)) {
       $donation_sets[$index]->next_charge = $next_charge->next_charge;
-      $donation_sets[$index]->status = isset($next_charge->cancellation_reason) ? 'cancelled' : 'active';
+      $donation_sets[$index]->status = empty($next_charge->cancellation_reason) ? t('active') : t('cancelled');
     }
   }
   return $donation_sets;
