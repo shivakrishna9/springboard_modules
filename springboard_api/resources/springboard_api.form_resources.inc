@@ -65,10 +65,13 @@ function springboard_api_form_resource_index($node_type = NULL) {
  *   values.
  */
 function springboard_api_form_action_submit($nid, $submission) {
-  // Typecast in case the submission was JSON encoded as an object.
-  $submission = (array) $submission;
-  if (is_numeric($nid) && is_array($submission)) {
+  if (is_numeric($nid))  {
     $node = node_load($nid);
+    // Typecast in case the submission was JSON encoded as an object.
+    $submission = (array) $submission;
+    // Convert submission values to nested array.
+    $submission = _springboard_api_convert_submission($submission, $node);
+
     // TODO: find a long term solution here. We have to have the exact text of
     // the submission button on the form when submitting.
     // This value is added to the form by post process function or after build.

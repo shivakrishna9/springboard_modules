@@ -432,6 +432,13 @@ function _springboard_api_convert_submission($submission, $node) {
           $fapi['#attributes'] = NULL;
         }
       }
+      // "checkboxes" and "select_multiple" components require even single
+      // values to be submitted as an array.
+      if (isset($submission[$component['form_key']]) && in_arra($component['type'], array('checkboxes', 'select_multiple'))) {
+        if (!is_array($submission[$component['form_key']])) {
+          $submission[$component['form_key']] = array($submission[$component['form_key']]);
+        }
+      }
       _springboard_api_convert_fapi($converted_submission, $fapi, $submission, $component['form_key']);
     }
   }
