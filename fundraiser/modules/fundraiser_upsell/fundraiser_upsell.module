@@ -316,7 +316,7 @@ function fundraiser_upsell_page_alter(&$page) {
       $modal['#content'] = token_replace($modal['#content'], array('donation' => $donation));
 
       // Add the modal to the bottom of the page.
-      $page['footer']['message-modal'] = $modal;
+      $page['page_bottom']['message-modal'] = $modal;
 
     }
 
