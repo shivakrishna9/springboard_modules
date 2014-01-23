@@ -25,9 +25,9 @@ function commerce_psi_eft_fundraiser_commerce_fundraiser_gateway_info() {
  * Returns the form fields for this method.
  *
  * @param string $payment_method
- *    Credit, bank account, paypal, etc.
+ *   Credit, bank account, paypal, etc.
  * @param array $config
- *    Configuration options for this field.
+ *   Configuration options for this field.
  */
 function commerce_psi_eft_fundraiser_commerce_submit_form($payment_method, $config) {
   $method_instance = commerce_payment_method_instance_load($config['id']);
@@ -69,9 +69,9 @@ function commerce_psi_eft_fundraiser_commerce_validate($submission_fields, $paym
  * Submit the donation values to the PSI EFT charge handler.
  *
  * @param array $method_instance
- *    Commerce loaded method instance.
+ *   Commerce loaded method instance.
  * @param object $donation
- *    The donation to charge.
+ *   The donation to charge.
  *
  * @return bool
  *   Whether the charge was successful.

@@ -6,9 +6,11 @@
  */
 
 /**
+ * A charge function that calls the SendUpsell API method.
+ *
  * @param array $payment_method
  *   Payment method data.
- * @param $donation
+ * @param object $donation
  *   The donation object for the donation that corresponds to the upsell
  *   recurring series.
  * @param object $order
@@ -110,7 +112,7 @@ function commerce_psi_common_format_upsell_data($payment_method, $order, $charge
 /**
  * Creates a new transaction and saves the response from the upsell request.
  *
- * @param $payment_method
+ * @param array $payment_method
  *   Used to save extra data to the transaction.
  * @param object $donation
  *   The related donation.
@@ -123,14 +125,14 @@ function commerce_psi_common_format_upsell_data($payment_method, $order, $charge
  *   Whether the response was successful.
  */
 function commerce_psi_common_save_upsell_response($payment_method, $donation, $charge, $response) {
-  // Prepare a transaction object
+  // Prepare a transaction object.
   $transaction = commerce_payment_transaction_new($donation->gateway['id'], $donation->did);
   $transaction->instance_id = $payment_method['instance_id'];
   $transaction->amount = $charge['amount'];
   $transaction->currency_code = $charge['currency_code'];
   $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
 
-  // If no response bail out and ask them to try again
+  // If no response bail out and ask them to try again.
   if (empty($response)) {
     $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
     $transaction->message = 'The PSI API did not respond.';
@@ -142,7 +144,7 @@ function commerce_psi_common_save_upsell_response($payment_method, $donation, $c
   $transaction->payload[REQUEST_TIME] = $response;
   $transaction->remote_id = $response->ClientTransactionId;
 
-  // Mark as success if we get back a 1 or 4
+  // Mark as success if we get back a 1 or 4.
   if (in_array((int) $response->ResponseCode, array(1, 4))) {
     $success = TRUE;
   }

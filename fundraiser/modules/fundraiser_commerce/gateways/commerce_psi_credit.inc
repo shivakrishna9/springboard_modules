@@ -69,9 +69,9 @@ function commerce_psi_credit_fundraiser_commerce_validate($submission_fields, $p
  * Submit the donation values to the PSI credit charge handler.
  *
  * @param array $method_instance
- *    Commerce loaded method instance.
+ *   Commerce loaded method instance.
  * @param object $donation
- *    The donation to charge.
+ *   The donation to charge.
  *
  * @return bool
  *   Whether the charge was successful.
