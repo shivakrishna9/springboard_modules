@@ -109,8 +109,8 @@ class SpringboardAPITestCase extends DrupalWebTestCase {
     }
     // Submit webform.
     module_load_include('inc', 'services', 'includes/services.runtime');
-    $this->submission = $this->_springboard_api_submit_webform($webform_components);
-    //$this->assertTrue(TRUE, print_r($this->submission, TRUE));
+    $this->submission = $this->_springboard_api_submit_webform();
+    // $this->assertTrue(TRUE, print_r($this->submission, TRUE));
     // Confirm data save.
     $this->assertTrue(isset($this->submission->sid) && isset($this->submission->nid), t('Submission record created'));
     // Confirm submission field values.
@@ -143,7 +143,7 @@ class SpringboardAPITestCase extends DrupalWebTestCase {
     }
   }
 
-  function _springboard_api_submit_webform($webform_components) {
+  function _springboard_api_submit_webform() {
     $values = array(
       'date' => array(
         'month' => '1',
