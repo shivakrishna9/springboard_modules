@@ -288,36 +288,31 @@ function commerce_sage_payments_cc_submit_form_submit($payment_method, $pane_for
     // First look to see if we already have cards on file for the user.
     $stored_cards = commerce_cardonfile_load_multiple_by_uid($order->uid, $payment_method['instance_id']);
 
-    // If we didn't find any, attempt to register a token now.
-    if (empty($stored_cards)) {
+    // Save the credit card in the Vault.
+    $vault_response = commerce_sage_payments_vault_request_insert($payment_method, $payment_details);
 
+    if (trim($vault_response->SUCCESS) == 'true') {
+      $guid = trim($vault_response->GUID);
 
-      // Try to save a credit card in the Vault.
-      $vault_response = commerce_sage_payments_vault_request_insert($payment_method, $payment_details);
+      // Store the token with cardonfile.
+      $card_data = commerce_cardonfile_new();
+      $card_data->uid = $order->uid;
+      $card_data->payment_method = $payment_method['method_id'];
+      $card_data->instance_id = $payment_method['instance_id'];
+      $card_data->remote_id = $guid;
+      $card_data->card_type = !empty($card_type) ? $card_type : 'card';
+      $card_data->card_name = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
+      $card_data->card_number = substr($pane_values['credit_card']['number'], -4);
+      $card_data->card_exp_month = $pane_values['credit_card']['exp_month'];
+      $card_data->card_exp_year = $pane_values['credit_card']['exp_year'];
+      $card_data->status = 1;
 
-      if (trim($vault_response->SUCCESS) == 'true') {
-        $guid = trim($vault_response->GUID);
-
-        // Store the token with cardonfile.
-        $card_data = commerce_cardonfile_new();
-        $card_data->uid = $order->uid;
-        $card_data->payment_method = $payment_method['method_id'];
-        $card_data->instance_id = $payment_method['instance_id'];
-        $card_data->remote_id = $guid;
-        $card_data->card_type = !empty($card_type) ? $card_type : 'card';
-        $card_data->card_name = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
-        $card_data->card_number = substr($pane_values['credit_card']['number'], -4);
-        $card_data->card_exp_month = $pane_values['credit_card']['exp_month'];
-        $card_data->card_exp_year = $pane_values['credit_card']['exp_year'];
-        $card_data->status = 1;
-
-        // Save and log the creation of the new card on file.
-        commerce_cardonfile_save($card_data);
-        watchdog('commerce_sage_payments', 'GUID @guid registered and saved to user @uid.', array('@guid' => $guid, '@uid' => $order->uid));
-      }
-      else {
-        // @todo Errored. What should we do here?
-      }
+      // Save and log the creation of the new card on file.
+      commerce_cardonfile_save($card_data);
+      watchdog('commerce_sage_payments', 'GUID @guid registered and saved to user @uid.', array('@guid' => $guid, '@uid' => $order->uid));
+    }
+    else {
+      // @todo Errored. What should we do here?
     }
   } // End if cardonfile.
 }
@@ -357,6 +352,7 @@ function commerce_sage_payments_cc_vault_submit_form_submit($payment_method, $pa
 function commerce_sage_payments_cc_vault_cardonfile_charge($payment_method, $card_data, $order, $charge = NULL) {
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
   $txn_type = COMMERCE_CREDIT_AUTH_CAPTURE;
+
 
   // Format order total for transaction.
   if (!isset($charge)) {
@@ -485,7 +481,7 @@ function commerce_sage_payments_cc_vault_cardonfile_update($form, &$form_state, 
 
     $request_parameters = array (
       'GUID' => $card_data->remote_id,
-      'EXPIRATION_DATE' => str_pad($form_state['values']['credit_card']['exp_month'], 2, 0, STR_PAD_LEFT) . substr($form_state['values']['credit_card']['exp_year'], 2, 2),
+      'EXPIRATION_DATE' => str_pad($card_data->card_exp_month, 2, 0, STR_PAD_LEFT) . substr($card_data->card_exp_year, 2, 2),
     );
     $request_parameters += _commerce_sage_payments_get_sage_payments_config($payment_method);
     $response = commerce_sage_payments_vault_request_update_expiration($payment_method, $request_parameters);
