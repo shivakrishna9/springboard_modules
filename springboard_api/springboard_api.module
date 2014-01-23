@@ -394,13 +394,12 @@ function _springboard_api_parse_component_fapi(&$save, $fapi, $component_type = 
 }
 
 /**
- * Convert a flat array of submitted values into a nested array that webform
- * can consume.
+ * Convert submission flat array to nested array.
  *
- * @param $submission
+ * @param array $submission
  *   Associative array of field keys and submitted values.
  *
- * @param $node
+ * @param mixed $node
  *   Webform node the data will be submitted to.
  *
  * @return array

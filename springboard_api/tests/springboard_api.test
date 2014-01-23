@@ -5,8 +5,14 @@
  * Primary test class for Springboard API module
  */
 
+/**
+ * Functional tests for Springboard API endpoint functions.
+ */
 class SpringboardAPITestCase extends DrupalWebTestCase {
 
+  /**
+   * Implementation of getIfo().
+   */
   public static function getInfo() {
     return array(
       'name' => 'Springboard API',
@@ -19,7 +25,12 @@ class SpringboardAPITestCase extends DrupalWebTestCase {
    * Implementation of setUp().
    */
   public function setUp() {
-    parent::setUp(array('webform', 'ctools', 'services', 'rest_server', 'springboard_api'));
+    parent::setUp(array(
+      'webform',
+      'ctools',
+      'services',
+      'rest_server',
+      'springboard_api'));
     $this->privileged_user = $this->drupalCreateUser(array(
       'administer site configuration',
       'create webform content',
@@ -30,7 +41,7 @@ class SpringboardAPITestCase extends DrupalWebTestCase {
     ));
     $this->drupalLogin($this->privileged_user);
 
-    // create service configuration:
+    // Create service configuration.
     $record = array(
       'eid' => '',
       'name' => 'springboard',
@@ -75,13 +86,16 @@ class SpringboardAPITestCase extends DrupalWebTestCase {
     drupal_write_record('services_endpoint', $record);
   }
 
+  /**
+   * Test form endpoints.
+   */
   public function testSpringboardApi() {
     $this->drupalLogin($this->privileged_user);
     $this->webform = $this->_springboard_api_create_webform();
 
     $form_types = variable_get('webform_node_types_primary', array('webform'));
     module_load_include('inc', 'springboard_api', 'resources/springboard_api.form_resources');
-    // list webforms
+    // List webforms.
     $list = springboard_api_form_resource_index();
     $this->assertTrue(count($list) == 1, t('Single record returned by list endpoint'));
     $item = (array) $list[0];
@@ -94,7 +108,7 @@ class SpringboardAPITestCase extends DrupalWebTestCase {
     // Retrieve details for webform.
     $details = springboard_api_form_resource_retrieve(1);
     // Confirm output.
-    //$this->assertTrue(TRUE, print_r($details, TRUE));
+    // $this->assertTrue(TRUE, print_r($details, TRUE));
     $keys = array_keys($details);
     $this->assertTrue((in_array('nid', $keys) && $details['nid'] == 1), t('node id correctly listed in retrieved details'));
     $this->assertTrue((in_array('title', $keys) && $details['title'] == t('Test Webform')), t('node title correctly listed in retreived details'));
@@ -104,7 +118,7 @@ class SpringboardAPITestCase extends DrupalWebTestCase {
 
     if (is_array($details['fields'])) {
       $webform_components = $this->_springboard_api_webform_components();
-      //$this->assertTrue(TRUE, print_r($webform_components, TRUE));
+      // $this->assertTrue(TRUE, print_r($webform_components, TRUE));
       $this->_springboard_api_validate_fields($details['fields'], $webform_components);
     }
     // Submit webform.
@@ -123,18 +137,34 @@ class SpringboardAPITestCase extends DrupalWebTestCase {
     $this->assertTrue($this->submission->data['7']['value'][0] == 'textfield value', t('Textfield field set correctly'));
   }
 
+  /**
+   * Validate field information output by retrieve endpoint.
+   *
+   * @param array $fields
+   *   Field info array.
+   *
+   * @param mixed $webform_components
+   *   Webform components associated with the retrieved node.
+   */
   function _springboard_api_validate_fields($fields, $webform_components) {
-    $standard_keys = array('label', 'type', 'default value', 'accepted values', 'required');
+    $standard_keys = array(
+      'label',
+      'type',
+      'default value',
+      'accepted values',
+      'required'
+    );
     foreach ($fields as $form_key => $field_info) {
       $component = isset($webform_components[$form_key]) ? $webform_components[$form_key] : FALSE;
       if (!$component) {
-        // component form key not present in the master list of components, this shouldn't be possible.
+        // Component form key not present in the master list of components,
+        // this shouldn't be possible.
         $this->assertTrue(FALSE, t('Bogus webform component detected: !form_key', array('!form_key' => $form_key)));
       }
       else {
-        // spot check the field label.
+        // Spot check the field label.
         $this->assertTrue((isset($field_info['label']) && $field_info['label'] == $webform_components[$form_key]['component']['name']), t('Component label correct for !form_key', array('!form_key' => $form_key)));
-        // required
+        // Required.
         $mandatory = isset($webform_components[$form_key]['component']['mandatory']) ? $webform_components[$form_key]['component']['mandatory'] : 0;
         if ($mandatory !== NULL) {
           $this->assertTrue((int) $field_info['required'] == (int) $mandatory, t('"Mandatory" field settings correct for !form_key', array('!form_key' => $form_key)));
@@ -143,6 +173,12 @@ class SpringboardAPITestCase extends DrupalWebTestCase {
     }
   }
 
+  /**
+   * Submit the test webform via the submission endpoint callback.
+   *
+   * @return mixed
+   *   returns the webform submission object that was created.
+   */
   function _springboard_api_submit_webform() {
     $values = array(
       'date' => array(
@@ -164,6 +200,9 @@ class SpringboardAPITestCase extends DrupalWebTestCase {
     return webform_get_submission(1, 1);
   }
 
+  /**
+   * Webform component details.
+   */
   function _springboard_api_webform_components() {
     $webform_components = array(
       // Test date components.
@@ -296,8 +335,14 @@ class SpringboardAPITestCase extends DrupalWebTestCase {
     return $webform_components;
   }
 
-  private function _springboard_api_create_webform() {
-    $webform_components =  $this->_springboard_api_webform_components();
+  /**
+   * Create a webform for use in testing.
+   *
+   * @return mixed
+   *   Returns the created node object.
+   */
+  function _springboard_api_create_webform() {
+    $webform_components = $this->_springboard_api_webform_components();
 
     $settings = array(
       'type' => 'webform',

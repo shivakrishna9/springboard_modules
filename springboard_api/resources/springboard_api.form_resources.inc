@@ -65,7 +65,7 @@ function springboard_api_form_resource_index($node_type = NULL) {
  *   values.
  */
 function springboard_api_form_action_submit($nid, $submission) {
-  if (is_numeric($nid))  {
+  if (is_numeric($nid)) {
     $node = node_load($nid);
     // Typecast in case the submission was JSON encoded as an object.
     $submission = (array) $submission;
@@ -127,7 +127,7 @@ function springboard_api_form_action_submit($nid, $submission) {
     // Taken from node_resources.inc, if errors are encountered during form
     // submission we return a 406 HTTP response code and any errors encountered.
     if ($errors = form_get_errors()) {
-      // Strip down error keys to form key
+      // Strip down error keys to form key.
       $formatted_errors = _springboard_api_reformat_errors($errors);
     }
     else {
@@ -169,6 +169,7 @@ function _springboard_api_reformat_errors($errors) {
  * Render Form markup for a given webform.
  *
  * @return string
+ *   Returns the full rendered form HTML.
  */
 function springboard_api_form_action_render() {
   $args = func_get_args();
@@ -182,13 +183,22 @@ function springboard_api_form_action_render() {
 }
 
 /**
+ * Build the webform submission tree.
+ *
  * @param array $submission
  *   Associative array of webform component form keys and their values.
+ *
  * @param array $src
  *   webform components organized by component id.
+ *
  * @param array $tree
- * @param $parent
+ *   Output storage.
+ *
+ * @param mixed $parent
+ *   Parent component (if any).
+ *
  * @return mixed
+ *   Returns the submitted values in a tree structure that Webform can parse.
  */
 function springboard_api_submission_tree_build($submission, $src, &$tree, $parent) {
 
