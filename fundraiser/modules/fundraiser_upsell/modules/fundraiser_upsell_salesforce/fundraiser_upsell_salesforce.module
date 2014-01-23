@@ -10,11 +10,10 @@
  * Adds the Salesforce campaign ID to the form.
  */
 function fundraiser_upsell_salesforce_upsell_node_settings_alter(&$form) {
-  $node = $form['#node'];
-
   $campaigns = market_source_get_campaigns();
 
   if (!empty($campaigns)) {
+    $node = $form['#node'];
     $campaign_options = array(
       '' => '(blank)',
     );
@@ -35,9 +34,10 @@ function fundraiser_upsell_salesforce_upsell_node_settings_alter(&$form) {
       '#default_value' => !empty($node->fundraiser_upsell_salesforce['campaign_id']) ? $node->fundraiser_upsell_salesforce['campaign_id'] : '',
       '#description' => t('Set the campaign to be used for upsold donations from this form. Please note that if this field is set to (blank), then all recurring donations will have blank campaign ids.'),
     );
-  }
 
-  $form['#submit'][] = 'fundraiser_upsell_salesforce_node_settings_submit';
+    // Only add the submit handler if there are campaigns to choose from.
+    $form['#submit'][] = 'fundraiser_upsell_salesforce_node_settings_submit';
+  }
 }
 
 /**
