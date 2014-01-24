@@ -7,14 +7,17 @@
 /**
  * Some definitions.
  *
- * Upsold Donation
- *   The original one-time donation.  This should always be in the past tense.
+ * Original Donation or Upsold Donation
+ *   The original one-time donation.
  *
  * Upsell Recurring Donation
  *   The recurring donation that is a result of being upsold.  In Salesforce
  *   terms this is the recurring donation object.  In Drupal terms this is
  *   the same as the upsell master donation.  Both objects have the same
- *   donation ID.
+ *   donation ID.  If using offsite recurring, then there is no recurring
+ *   donation object in Salesforces and the data that would be included in
+ *   the recurring donation object normally is instead stored on the master
+ *   donation.
  *
  * Upsell Master Donation
  *   The donation that is the first in the sustainer series and is copied
@@ -29,7 +32,7 @@
  * Add your own settings to the fundraiser upsell area.
  *
  * For example, adding custom salesforce and market source fields that would
- *   apply to only the upsell sustaienr series and not the original upsold
+ *   apply to only the upsell sustaienr series and not the original
  *   donation.  You'll need to add your own submit handler to modify or save
  *   the values.
  *
@@ -39,7 +42,13 @@
  *   Edit in place.
  */
 function hook_upsell_node_settings_alter(&$form) {
+  $form['fundraiser_upsell']['another setting'] = array(
+    '#type' => 'textfield',
+    '#title' => t('A setting'),
+  );
 
+  // Add a submit handler for your new fields.
+  $form['#submit'][] = 'fundraiser_upsell_my_extra_submit_handler';
 }
 
 /**
@@ -68,6 +77,9 @@ function hook_upsold_donation_alter(&$upsold_donation) {
  *
  * An example of this hook in use is to queue up the master donation as a
  *   recurring donation and as a donation/opportunity in Salesforce.
+ *
+ * Another example is to immediately process the master donation if offsite
+ *   recurring is used.
  *
  * @param object $master_donation
  *   The master donation object.
