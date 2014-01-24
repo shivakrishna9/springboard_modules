@@ -443,8 +443,8 @@ function fundraiser_upsell_salesforce_create_upsell_sobject($name, $upsold_did, 
     'Name' => $name,
     'Upsell_Order_Id__c' => $upsell_did,
     $key => $upsell_sfid,
-    'Upsold_Donation__c' => $upsold_sfid,
-    'Upsold_Order_Id__c' => $upsold_did,
+    'Original_Donation__c' => $upsold_sfid,
+    'Original_Order_Id__c' => $upsold_did,
   );
 
   return $sobject;
