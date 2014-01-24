@@ -83,6 +83,7 @@ function salesforce_donation_settings($form, &$form_state) {
   // nid x module handlers (here salesforce_donation). So to pull the default
   // back out, we just pull -1 nid for this module. Since, otherwise this
   // operates as 'normal', we shouldn't have to tweak the form mmuch.
+  $node = new stdClass();
   $node->nid = -1;
   module_load_include('inc', 'salesforce_genmap', 'includes/salesforce_genmap.map');
   $form_state['build_info']['args'][0] = $node;
