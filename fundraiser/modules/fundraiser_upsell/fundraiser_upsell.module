@@ -82,7 +82,8 @@ function fundraiser_upsell_form_alter(&$form, &$form_state, $form_id) {
     fundraiser_upsell_add_node_settings($form);
   }
   // View form - add the upsell submit function unless blocked by cookies.
-  elseif (!empty($form['#node'])
+  elseif (strpos($form_id, 'webform_client_form_') !== FALSE
+    && !empty($form['#node'])
     && fundraiser_upsell_is_enabled($form['#node'])
     && fundraiser_upsell_should_display_modal()) {
     $form['#submit'][] = 'fundraiser_upsell_webform_submit';
@@ -940,7 +941,7 @@ function fundraiser_upsell_should_display_modal() {
  */
 function fundraiser_upsell_is_enabled($node) {
   return (
-    !empty($node)
+    !empty($node->type)
     && fundraiser_is_donation_type($node->type)
     && !empty($node->fundraiser_upsell['enabled'])
     && $node->fundraiser_upsell['enabled']
@@ -1066,7 +1067,7 @@ function fundraiser_upsell_check_recurring($did) {
  * Determines if upsell should be available on this node.
  */
 function fundraiser_upsell_is_available($node) {
-  return (!empty($node) && fundraiser_is_donation_type($node->type));
+  return (!empty($node->type) && fundraiser_is_donation_type($node->type));
 }
 
 /**
