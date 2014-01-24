@@ -97,6 +97,16 @@ function fundraiser_upsell_form_alter(&$form, &$form_state, $form_id) {
  */
 function fundraiser_upsell_add_node_settings(&$form) {
   $node = $form['#node'];
+
+  // This is a new node, load some global defaults.
+  if (empty($form['#node']->nid)) {
+    $node->fundraiser_upsell = array(
+      'content' => variable_get('fundraiser_upsell_default_content', ''),
+      'footer' => variable_get('fundraiser_upsell_default_content_disclaimer', ''),
+      'thankyou' => variable_get('fundraiser_upsell_thank_you_content', ''),
+    );
+  }
+
   $form['fundraiser_upsell'] = array(
     '#type' => 'fieldset',
     '#title' => t('Upsell settings'),
