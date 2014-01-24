@@ -905,12 +905,21 @@ function fundraiser_upsell_access($node) {
  *   TRUE if the modal should be displayed.
  */
 function fundraiser_upsell_should_display_modal() {
-  $rejection = (!empty($_COOKIE['fundraiser_upsell_rejection'])) ? $_COOKIE['fundraiser_upsell_rejection'] : FALSE;
-  $acceptance = (!empty($_COOKIE['fundraiser_upsell_acceptance'])) ? $_COOKIE['fundraiser_upsell_acceptance'] : FALSE;
-  $debug = variable_get('fundraiser_upsell_debug', FALSE);
+  if (!variable_get('fundraiser_upsell_debug', FALSE)) {
+    foreach (array('acceptance', 'rejection') as $item) {
+      $key = 'fundraiser_upsell_' . $item;
+      $cookie = !empty($_COOKIE[$key]) ? $_COOKIE[$key] : FALSE;
+      // If the cookie is present and the cookie checking is enabled,
+      // then don't show the modal.
+      if ($cookie && variable_get($key . '_enabled', FALSE)) {
+        return FALSE;
+      }
+    }
+  }
 
-  // No cookies OR debug is on, then we should display the upsell.
-  return ((!$rejection && !$acceptance) || $debug);
+  // Either we're in debug mode, or no cookies are present
+  // or no cookie checking enabled, so default to TRUE.
+  return TRUE;
 }
 
 /**
