@@ -312,22 +312,32 @@ function fundraiser_upsell_webform_submit($form, &$form_state) {
 function fundraiser_upsell_page_alter(&$page) {
   // Check for upsell trigger.
   // Added by upsell's webform submit handler.
-  if (!empty($_SESSION['upsell'])) {
+  // Also make sure we're on the confirmation page.
+  if (!empty($_SESSION['upsell']) && arg(0) == 'node' && arg(2) == 'done') {
     // Add the upsell to the page.
     $did = fundraiser_donation_get_did_by_sid($_SESSION['upsell']['sid']);
     // !== because we could get a did of 0.
     if ($did !== FALSE) {
       $donation = fundraiser_donation_get_donation($did);
+      if (!empty($donation->status) && $donation->status = 'payment_received') {
+        // Make sure the payment method used supports recurring.
+        $info = _fundraiser_get_donation_gateway($donation->did);
+        if (_fundraiser_sustainers_supports_recurring($info['allow_recurring'], $donation->donation['payment_method'])) {
 
-      $modal = fundraiser_upsell_create_modal_variables($donation->node);
-      $modal['#did'] = $did;
+          // We're on the done page, the donation was successful,
+          // and the payment method supports recurring.
+          // Now we can show the modal!
+          $modal = fundraiser_upsell_create_modal_variables($donation->node);
+          $modal['#did'] = $did;
 
-      // Replace tokens in the content.
-      $modal['#content'] = token_replace($modal['#content'], array('donation' => $donation));
+          // Replace tokens in the content.
+          $modal['#content'] = token_replace($modal['#content'], array('donation' => $donation));
 
-      // Add the modal to the bottom of the page.
-      $page['page_bottom']['message-modal'] = $modal;
+          // Add the modal to the bottom of the page.
+          $page['page_bottom']['message-modal'] = $modal;
 
+        }
+      }
     }
 
     // Remove the upsell session data.
