@@ -1532,7 +1532,6 @@ function commerce_litle_fundraiser_sustainers_recurring_success($donation) {
       // We also need to requeue recurring donation so it has the correct
       // number of installments in Salesforce.
        if (module_exists('salesforce_genmap')) {
-         drupal_set_message('requeued master donation');
          $master_donation = fundraiser_donation_get_donation($donation->recurring->master_did, TRUE);
          salesforce_genmap_send_object_to_queue('fundraiser_sustainers', 'update', $master_donation->node, $master_donation->did, $master_donation, 'recurring_donation');
        }
