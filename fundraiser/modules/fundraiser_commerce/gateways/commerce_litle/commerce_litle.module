@@ -337,7 +337,6 @@ function commerce_litle_echeck_settings_form($settings = array()) {
     '#default_value' => isset($settings['commerce_litle_settings_sandbox']) ? $settings['commerce_litle_settings_sandbox'] : '',
   );
   if (module_exists('fundraiser_sustainers')) {
-    drupal_set_message('module is exist');
     for ($i = 1; $i <= 36; ++$i) {
       $options[$i] = $i;
     }
@@ -348,9 +347,6 @@ function commerce_litle_echeck_settings_form($settings = array()) {
       '#options' => $options,
       '#default_value' => isset($settings['commerce_litle_settings_sustainer_series_start_count']) ? $settings['commerce_litle_settings_sustainer_series_start_count'] : 24,
     );
-  }
-  else {
-    drupal_set_message('module no exist');
   }
   if (module_exists('commerce_cardonfile')) {
     $form['cardonfile'] = array(
@@ -1523,6 +1519,9 @@ function commerce_litle_reverse_txn_type($txn_type) {
 
 /**
  * Implements hook_fundraiser_sustainers_recurring_success().
+ *
+ * When a recurring donation is processed successfully using the echeck
+ * gateway, add another order to the end of the series.
  */
 function commerce_litle_fundraiser_sustainers_recurring_success($donation) {
   if ($donation->gateway['gateway_details']['base'] == 'commerce_litle_echeck') {
@@ -1530,6 +1529,14 @@ function commerce_litle_fundraiser_sustainers_recurring_success($donation) {
       $last_charge = _fundraiser_sustainers_get_donations_last_charge($donation->recurring->master_did);
       $next_charge = strtotime('+1 months', $last_charge->next_charge);
       fundraiser_sustainers_add_order_to_series($donation, $next_charge);
+      // We also need to requeue recurring donation so it has the correct
+      // number of installments in Salesforce.
+       if (module_exists('salesforce_genmap')) {
+         drupal_set_message('requeued master donation');
+         $master_donation = fundraiser_donation_get_donation($donation->recurring->master_did, TRUE);
+         salesforce_genmap_send_object_to_queue('fundraiser_sustainers', 'update', $master_donation->node, $master_donation->did, $master_donation, 'recurring_donation');
+       }
+
     }
   }
 }
