@@ -248,7 +248,6 @@ class SalesforceQueueProcessor {
       else {
         $this->leaseKey = $items[0]->leaseKey;
         $this->items = $items;
-        $this->leaseExpire = variable_get('salesforce_queue_' . $this->queueName . '_lease_expire', 0);
       }
     }
     return $this->items;
@@ -637,9 +636,10 @@ class SalesforceQueueProcessor {
     // sent to Salesforce twice, so we will not send items outside our lease or
     // when it is leased to someone else.
     $current_lease_key = variable_get('salesforce_queue_' . $this->queueName . '_lease_key', NULL);
-    if ($this->endStatus == SALESFORCE_QUEUE_PROCESS_FAIL_LEASE_EXPIRED || ($this->leaseExpire < time() && $current_lease_key == $this->leaseKey)) {
+    if ($this->endStatus == SALESFORCE_QUEUE_PROCESS_FAIL_LEASE_EXPIRED || !$this->queue->queueIsLeased() || $current_lease_key != $this->leaseKey) {
       // Lease expired, fail.
       $this->endStatus = SALESFORCE_QUEUE_PROCESS_FAIL_LEASE_EXPIRED;
+      watchdog('salesforce_queue', 'Processing batches incomplete due to expired lease.');
       $this->salesforceSync->failBatch($batch, SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_LEASE_EXPIRED);
     }
     else {
