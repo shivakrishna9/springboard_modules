@@ -108,8 +108,8 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
   );
 
   $form['fundraiser_upsell_default_charge_time'] = array(
-    '#title' => t('When to charge the first upsell donation.'),
-    '#description' => t('When to charge the upsell donation after the initial one time donation.'),
+    '#title' => t('Default value for when to charge the first upsell donation.'),
+    '#description' => t('The default charge time for the first upsell donation on donation forms.'),
     '#type' => 'radios',
     '#options' => array(
       'immediately' => t('Charge immediately after the initial one time donation.'),
