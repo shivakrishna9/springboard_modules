@@ -338,6 +338,14 @@ function fundraiser_upsell_page_alter(&$page) {
         $info = _fundraiser_get_donation_gateway($donation->did);
         if (_fundraiser_sustainers_supports_recurring($info['allow_recurring'], $donation->donation['payment_method'])) {
 
+          // If the donation is offsite recurring && charge time set to
+          // one month, don't show modal.
+          if (fundraiser_upsell_donation_is_offsite_recurring($donation)
+            && $donation->node->fundraiser_upsell['charge_time'] == 'one_month') {
+            $_SESSION['upsell'] = NULL;
+            return;
+          }
+
           // We're on the done page, the donation was successful,
           // and the payment method supports recurring.
           // Now we can show the modal!
@@ -1142,4 +1150,23 @@ function fundraiser_upsell_set_acceptance_cookie() {
 function fundraiser_upsell_get_upsold_did($upsell_did) {
   return db_query("SELECT related_did FROM fundraiser_upsell_donation WHERE did = :upsell_did", array(':upsell_did' => $upsell_did))
     ->fetchField();
+}
+
+/**
+ * Determine if a given donation is using an offiste recurring payment gateway.
+ *
+ * @param object $donation
+ *   The donation to check.
+ *
+ * @return bool
+ *   Whether this donation's payment method supports offsite recurring.
+ */
+function fundraiser_upsell_donation_is_offsite_recurring($donation) {
+  $info = _fundraiser_get_donation_gateway($donation->did);
+  if (_fundraiser_sustainers_offsite_recurring($info['offsite_recurring'], $donation->donation['payment_method'])) {
+
+    return TRUE;
+  }
+
+  return FALSE;
 }

@@ -101,7 +101,7 @@ function fundraiser_upsell_salesforce_upsell_master_donation_alter(&$donation) {
 
   // If the donation's payment method uses offsite recurring,
   // then there is no recurring_donation object in Salesforce.
-  if (!fundraiser_upsell_salesforce_donation_is_offsite_recurring($donation)) {
+  if (!fundraiser_upsell_donation_is_offsite_recurring($donation)) {
     // Queue the recurring_donation object.
     salesforce_genmap_send_object_to_queue(
       'fundraiser_sustainers',
@@ -261,7 +261,7 @@ function fundraiser_upsell_salesforce_salesforce_sync_pass_item($item, $result) 
   elseif ($item->delta == 'donation') {
     $donation = fundraiser_donation_get_donation($item->drupal_id);
     if (isset($donation->fundraiser_upsell->type)) {
-      $offsite = fundraiser_upsell_salesforce_donation_is_offsite_recurring($donation);
+      $offsite = fundraiser_upsell_donation_is_offsite_recurring($donation);
 
       // This donation object is the master donation.
       if ($donation->fundraiser_upsell->type == 'master_donation') {
@@ -330,25 +330,6 @@ function fundraiser_upsell_salesforce_salesforce_sync_pass_item($item, $result) 
   if (is_object($sobject)) {
     fundraiser_upsell_salesforce_queue_upsell($sobject);
   }
-}
-
-/**
- * Determine if a given donation is using an offiste recurring payment gateway.
- *
- * @param object $donation
- *   The donation to check.
- *
- * @return bool
- *   Whether this donation's payment method supports offsite recurring.
- */
-function fundraiser_upsell_salesforce_donation_is_offsite_recurring($donation) {
-  $info = _fundraiser_get_donation_gateway($donation->did);
-  if (_fundraiser_sustainers_offsite_recurring($info['offsite_recurring'], $donation->donation['payment_method'])) {
-
-    return TRUE;
-  }
-
-  return FALSE;
 }
 
 /**
