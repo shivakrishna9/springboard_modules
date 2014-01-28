@@ -106,6 +106,18 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
     '#prefix' => '<div class="add_more_button_wrapper">',
     '#suffix' => "</div>",
   );
+
+  $form['fundraiser_upsell_default_charge_time'] = array(
+    '#title' => t('When to charge the first upsell donation.'),
+    '#description' => t('When to charge the upsell donation after the initial one time donation.'),
+    '#type' => 'radios',
+    '#options' => array(
+      'immediately' => t('Charge immediately after the initial one time donation.'),
+      'one_month' => t('Charge one month from the initial one time donation.'),
+    ),
+    '#default_value' => variable_get('fundraiser_upsell_default_charge_time', 'one_month'),
+  );
+
   // Build the rest of the form.
   $form['fundraiser_upsell_default_content'] = array(
     '#title' => t('Default content for Upsell'),

@@ -105,6 +105,7 @@ function fundraiser_upsell_add_node_settings(&$form) {
       'content' => variable_get('fundraiser_upsell_default_content', ''),
       'footer' => variable_get('fundraiser_upsell_default_content_disclaimer', ''),
       'thankyou' => variable_get('fundraiser_upsell_thank_you_content', ''),
+      'charge_time' => variable_get('fundraiser_upsell_default_charge_time', 'one_month'),
     );
   }
 
@@ -122,6 +123,18 @@ function fundraiser_upsell_add_node_settings(&$form) {
     '#title' => t('Upsell enabled'),
     '#default_value' => !empty($node->fundraiser_upsell['enabled']) ? $node->fundraiser_upsell['enabled'] : '',
   );
+
+  $form['fundraiser_upsell']['charge_time'] = array(
+    '#title' => t('When to charge the first upsell donation.'),
+    '#description' => t('When to charge the upsell donation after the initial one time donation.'),
+    '#type' => 'radios',
+    '#options' => array(
+      'immediately' => t('Charge immediately after the initial one time donation.'),
+      'one_month' => t('Charge one month from the initial one time donation.'),
+    ),
+    '#default_value' => !empty($node->fundraiser_upsell['charge_time']) ? $node->fundraiser_upsell['charge_time'] : 'one_month',
+  );
+
   $form['fundraiser_upsell']['content'] = array(
     '#title' => t('Form specific Upsell Content'),
     '#type' => 'textarea',
@@ -700,6 +713,7 @@ function fundraiser_upsell_node_record($node) {
   return array(
     'nid' => $node->nid,
     'enabled' => $node->fundraiser_upsell['enabled'],
+    'charge_time' => $node->fundraiser_upsell['charge_time'],
     'content' => $node->fundraiser_upsell['content'],
     'footer' => $node->fundraiser_upsell['footer'],
     'thankyou' => $node->fundraiser_upsell['thankyou'],
@@ -721,6 +735,7 @@ function fundraiser_upsell_node_record($node) {
 function fundraiser_upsell_unflatten_record($upsell) {
   $unflat = array(
     'enabled' => $upsell['enabled'],
+    'charge_time' => $upsell['charge_time'],
     'content' => $upsell['content'],
     'footer' => $upsell['footer'],
     'thankyou' => $upsell['thankyou'],
@@ -1021,20 +1036,57 @@ function fundraiser_upsell_create_master_donation($upsold_donation, $new_amount)
   // Also creates a new order to go along with the donation.
   fundraiser_donation_create($master_donation);
 
-  $next_charge = strtotime('+1 month');
-  fundraiser_donation_comment($master_donation, 'Initial Upsell donation scheduled to be charged at @next_charge',
-    array('@next_charge' => format_date($next_charge)));
+  $charge_time = $upsold_donation->node->fundraiser_upsell['charge_time'];
 
-  // At this point, the donation did and donation data is set.
-  // Now we need to create a recurring record for it as the master donation.
-  $recurring_donation_record = array(
-    'master_did' => $master_donation->did,
-    'did' => $master_donation->did,
-    'next_charge' => $next_charge,
-    'sustainer_key' => fundraiser_sustainers_get_sustainer_key_value(),
-  );
-  // Update the recurring table.
-  _fundraiser_sustainers_create_recurring($recurring_donation_record);
+  // If we're charging in a month, save a sustainers record and add a comment.
+  if ($charge_time == 'one_month') {
+    $next_charge = strtotime('+1 month');
+    fundraiser_donation_comment($master_donation, 'Initial Upsell donation scheduled to be charged at @next_charge',
+      array('@next_charge' => format_date($next_charge)));
+
+    // At this point, the donation did and donation data is set.
+    // Now we need to create a recurring record for it as the master donation.
+    $recurring_donation_record = array(
+      'master_did' => $master_donation->did,
+      'did' => $master_donation->did,
+      'next_charge' => $next_charge,
+      'sustainer_key' => fundraiser_sustainers_get_sustainer_key_value(),
+    );
+    // Update the recurring table.
+    _fundraiser_sustainers_create_recurring($recurring_donation_record);
+  }
+  // If charging immediately, run through the normal process.
+  elseif ($charge_time == 'immediately') {
+
+    $next_charge = strtotime('+1 month');
+    fundraiser_donation_comment($master_donation, 'Initial Upsell donation scheduled to be charged at @next_charge',
+      array('@next_charge' => format_date($next_charge)));
+
+    // At this point, the donation did and donation data is set.
+    // Now we need to create a recurring record for it as the master donation.
+    $recurring_donation_record = array(
+      'master_did' => $master_donation->did,
+      'did' => $master_donation->did,
+      'next_charge' => $next_charge,
+      'sustainer_key' => fundraiser_sustainers_get_sustainer_key_value(),
+    );
+    // Update the recurring table.
+    _fundraiser_sustainers_create_recurring($recurring_donation_record);
+
+    // Process the donation.  Since it references the original donation,
+    // we don't need payment info.
+    fundraiser_donation_process($master_donation);
+    if (!isset($master_donation->result['message'])) {
+      $master_donation->result['message'] = '';
+    }
+    // The results should be at $donation->result.
+    if (isset($master_donation->result['success']) && $master_donation->result['success']) {
+      fundraiser_donation_success($master_donation);
+    }
+    else {
+      fundraiser_donation_decline($master_donation);
+    }
+  }
 
   // Reload the donation so the amount and other donation stuff gets refreshed.
   // Also this will cause it to get the recurring record.

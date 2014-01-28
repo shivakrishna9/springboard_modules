@@ -1,9 +1,0 @@
-name = Fundraiser upsell PSI gateway integration
-description = Sends the PSI payment gateway Upsell API call on upsells.
-core = 7.x
-package = Jackson River Springboard - extras
-dependencies[] = fundraiser
-dependencies[] = fundraiser_sustainers
-dependencies[] = fundraiser_upsell
-dependencies[] = commerce_psi
-version = 7.x-4.x-dev

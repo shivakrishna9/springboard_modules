@@ -70,6 +70,13 @@ function fundraiser_upsell_schema() {
         'default' => 0,
         'size' => 'tiny',
       ),
+      'charge_time' => array(
+        'description' => 'A string describing when to charge the first upsell donation in the series.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => 'one_month',
+      ),
       'content' => array(
         'description' => 'Node specific content to place on the upsell form',
         'type' => 'text',
@@ -210,4 +217,20 @@ function fundraiser_upsell_update_7003() {
   );
 
   db_create_table('fundraiser_upsell_donation', $schema);
+}
+
+/**
+ * Add the charge_time field.
+ */
+function fundraiser_upsell_update_7004() {
+  $field = array(
+    'description' => 'A string describing when to charge the first upsell donation in the series.',
+    'type' => 'varchar',
+    'length' => 255,
+    'not null' => TRUE,
+    'default' => 'one_month',
+    'initial' => 'one_month',
+  );
+
+  db_add_field('fundraiser_upsell', 'charge_time', $field);
 }

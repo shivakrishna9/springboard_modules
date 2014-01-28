@@ -89,24 +89,6 @@ function fundraiser_upsell_salesforce_get_campaign_id($master_did) {
  */
 function fundraiser_upsell_salesforce_upsell_master_donation_alter(&$donation) {
 
-  // If the donation's payment method uses offsite recurring,
-  // then there is no recurring_donation object in Salesforce
-  // and the donation object will be queued on donation success,
-  // which should happen immediately.
-  if (fundraiser_upsell_salesforce_donation_is_offsite_recurring($donation)) {
-    return;
-  }
-
-  // Queue the recurring_donation object.
-  salesforce_genmap_send_object_to_queue(
-    'fundraiser_sustainers',
-    'insert',
-    $donation->node,
-    $donation->did,
-    $donation,
-    'recurring_donation'
-  );
-
   // Queue the donation object.
   salesforce_genmap_send_object_to_queue(
     'salesforce_donation',
@@ -116,6 +98,21 @@ function fundraiser_upsell_salesforce_upsell_master_donation_alter(&$donation) {
     $donation,
     'donation'
   );
+
+  // If the donation's payment method uses offsite recurring,
+  // then there is no recurring_donation object in Salesforce.
+  if (!fundraiser_upsell_salesforce_donation_is_offsite_recurring($donation)) {
+    // Queue the recurring_donation object.
+    salesforce_genmap_send_object_to_queue(
+      'fundraiser_sustainers',
+      'insert',
+      $donation->node,
+      $donation->did,
+      $donation,
+      'recurring_donation'
+    );
+  }
+
 }
 
 /**
@@ -232,7 +229,7 @@ function fundraiser_upsell_salesforce_node_record($node) {
  *   (AKA upsell donation). If we're doing offsite recurring, then we look
  *   for the related upsold donation's SFID.
  *   If we're not doing offsite recurring, then we don't need to do anything
- *    here.
+ *   here.
  *
  * Third case, we have a donation that is the upsold donation.
  *   If we're doing offsite recurring, look up the upsell donation's SFID.
@@ -461,7 +458,7 @@ function fundraiser_upsell_salesforce_create_upsell_sobject($name, $upsold_did, 
  */
 function fundraiser_upsell_salesforce_queue_upsell($sobject) {
   $item = array(
-    'drupal_id' => $sobject->fields['Upsold_Order_Id__c'],
+    'drupal_id' => $sobject->fields['Original_Order_Id__c'],
     'module' => 'fundraiser_upsell_salesforce',
     'delta' => 'upsell',
     'object_type' => $sobject->type,
