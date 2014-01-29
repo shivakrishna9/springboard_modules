@@ -343,6 +343,7 @@ function fundraiser_upsell_page_alter(&$page) {
           if (fundraiser_upsell_donation_is_offsite_recurring($donation)
             && $donation->node->fundraiser_upsell['charge_time'] == 'one_month') {
             $_SESSION['upsell'] = NULL;
+            watchdog('fundraiser_upsell', 'The node nid ' . $donation->nid . ' received a donation through an offsite recurring payment gateway but upsell is configured to charge later, so no upsell modal was shown.');
             return;
           }
 
