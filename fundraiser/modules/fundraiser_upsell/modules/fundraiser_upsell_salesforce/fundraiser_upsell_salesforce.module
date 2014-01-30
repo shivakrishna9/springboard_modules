@@ -7,37 +7,55 @@
 /**
  * Implements hook_upsell_node_settings_alter().
  *
- * Adds the Salesforce campaign ID to the form.
+ * Adds the market source fields to the form.
  */
 function fundraiser_upsell_salesforce_upsell_node_settings_alter(&$form) {
-  $campaigns = market_source_get_campaigns();
 
-  if (!empty($campaigns)) {
-    $node = $form['#node'];
-    $campaign_options = array(
-      '' => '(blank)',
-    );
-
-    foreach ($campaigns as $id => $campaign) {
-      $campaign_options[$id] = $campaign['name'];
-    }
-
-    $form['fundraiser_upsell']['salesforce'] = array(
+  $upsell_ms_fields = fundraiser_upsell_salesforce_get_upsell_enabled_market_source_fields();
+  if (count($upsell_ms_fields)) {
+    $form['fundraiser_upsell']['market_source'] = array(
       '#type' => 'fieldset',
+      '#title' => t('Market source overrides for upsell donations.'),
+      '#description' => t('Optional Market Source values to override in the upsell donation'),
       '#tree' => TRUE,
-      '#title' => t('Salesforce values for upsold donations.'),
     );
-    $form['fundraiser_upsell']['salesforce']['campaign_id'] = array(
-      '#title' => t('Sustainer Salesforce Campaign ID'),
-      '#type' => 'select',
-      '#options' => $campaign_options,
-      '#default_value' => !empty($node->fundraiser_upsell_salesforce['campaign_id']) ? $node->fundraiser_upsell_salesforce['campaign_id'] : '',
-      '#description' => t('Set the campaign to be used for upsold donations from this form. Please note that if this field is set to (blank), then all recurring donations will have blank campaign ids.'),
-    );
+    $fields = market_source_field_info();
 
-    // Only add the submit handler if there are campaigns to choose from.
+    $node = $form['#node'];
+    $market_source = !empty($node->fundraiser_upsell_salesforce) ? $node->fundraiser_upsell_salesforce : array();
+
+    foreach ($fields as $key => $field) {
+      // skip market source fields that haven't been upsell enabled.
+      if (!in_array($key, $upsell_ms_fields)) {
+        continue;
+      }
+
+      if ($key == 'cid') {
+        $campaigns = market_source_get_campaigns(FALSE);
+        $campaign_options = array(
+          '' => '(blank)',
+        );
+        foreach ($campaigns as $campaign_id => $campaign) {
+          $campaign_options[$campaign_id] = $campaign['name'] . ' (' . $campaign_id . ')';
+        }
+        $form['fundraiser_upsell']['market_source']['cid'] = array(
+          '#type' => 'select',
+          '#title' => t('Campaign ID'),
+          '#options' => $campaign_options,
+          '#default_value' => (!empty($market_source[$key])) ? $market_source[$key] : '',
+        );
+      }
+      else {
+        $form['fundraiser_upsell']['market_source'][$key] = array(
+          '#type' => 'textfield',
+          '#title' => $field['#title'],
+          '#default_value' => (!empty($market_source[$key])) ? $market_source[$key] : '',
+        );
+      }
+    }
     $form['#submit'][] = 'fundraiser_upsell_salesforce_node_settings_submit';
   }
+
 }
 
 /**
@@ -46,39 +64,42 @@ function fundraiser_upsell_salesforce_upsell_node_settings_alter(&$form) {
  * Moves the values around so the nodeapi functions can find them.
  */
 function fundraiser_upsell_salesforce_node_settings_submit($form, &$form_state) {
-  $form_state['values']['fundraiser_upsell_salesforce'] = $form_state['values']['fundraiser_upsell']['salesforce'];
-  $form_state['values']['fundraiser_upsell']['salesforce'] = NULL;
+  $form_state['values']['fundraiser_upsell_salesforce'] = $form_state['values']['fundraiser_upsell']['market_source'];
+  $form_state['values']['fundraiser_upsell']['market_source'] = NULL;
 }
 
 /**
  * Implements hook_fundraiser_donation_create().
  *
  * Gets the donation ID for the master upsell donation and stores it
- *   with the Salesforce campaign ID from the node.
+ *   with the market source data from the node.
  */
 function fundraiser_upsell_salesforce_fundraiser_donation_create($donation) {
   if (isset($donation->fundraiser_upsell->type) && $donation->fundraiser_upsell->type == 'master_donation') {
-    // Insert a record for the recurring series and its campaign ID.
+    $data = $donation->node->fundraiser_upsell_salesforce;
+    // Insert a record for the recurring series and its market source.
     $record = array(
       'master_did' => $donation->did,
-      'campaign_id' => $donation->node->fundraiser_upsell_salesforce['campaign_id'],
+      'data' => $data,
     );
     drupal_write_record('fundraiser_upsell_salesforce_donation', $record);
   }
 }
 
 /**
- * Gets the campaign ID for a recurring donation series.
+ * Gets the market source data for a recurring donation series.
  *
  * @param int $master_did
  *   Donation ID of the master donation.
  *
- * @return int|bool
- *   Campaign ID or FALSE;
+ * @return array|bool
+ *   Market source data or FALSE;
  */
-function fundraiser_upsell_salesforce_get_campaign_id($master_did) {
-  return db_query("SELECT campaign_id FROM {fundraiser_upsell_salesforce_donation} WHERE master_did = :master_did", array(':master_did' => $master_did))
+function fundraiser_upsell_salesforce_get_market_source($master_did) {
+  $data = db_query("SELECT data FROM {fundraiser_upsell_salesforce_donation} WHERE master_did = :master_did", array(':master_did' => $master_did))
     ->fetchField();
+
+  return unserialize($data);
 }
 
 /**
@@ -118,12 +139,14 @@ function fundraiser_upsell_salesforce_upsell_master_donation_alter(&$donation) {
 /**
  * Implements hook_salesforce_queue_create_item_alter().
  *
- * Set the campaign ID if it's supposed to be different.
+ * Set the market source of upsell donations if it's supposed to be different.
  */
 function fundraiser_upsell_salesforce_salesforce_queue_create_item_alter(&$item) {
   if ($item['delta'] == 'donation') {
+
     $donation = fundraiser_donation_get_donation($item['drupal_id']);
     if (isset($donation->fundraiser_upsell->type)) {
+
       if ($donation->fundraiser_upsell->type == 'upsold_donation') {
         // @todo This case probably never runs.
         // The upsold donation doesn't get its type until an update.
@@ -131,16 +154,74 @@ function fundraiser_upsell_salesforce_salesforce_queue_create_item_alter(&$item)
         return;
       }
       elseif ($donation->fundraiser_upsell->type == 'master_donation') {
-        $master_did = $donation->did;
+        $market_source = fundraiser_upsell_salesforce_get_market_source($donation->did);
+        fundraiser_upsell_salesforce_update_item($item, $donation, $market_source);
       }
       else {
-        $master_did = $donation->master_did;
+        $market_source = fundraiser_upsell_salesforce_get_market_source($donation->master_did);
+        fundraiser_upsell_salesforce_update_item($item, $donation, $market_source);
       }
-      $campaign_id = fundraiser_upsell_salesforce_get_campaign_id($master_did);
-      if ($campaign_id !== FALSE) {
-        $item['sobject']->fields['CampaignId'] = $campaign_id;
+    }
+  }
+}
+
+/**
+ * Update a salesforce queue item with market source overrides.
+ *
+ * @param array $item
+ *   The item from the Salesforce queue.  Its sobject is directly modified.
+ * @param object $donation
+ *   The donation object.  Needed to get the map.
+ * @param array $market_source
+ *   The market source override data.
+ */
+function fundraiser_upsell_salesforce_update_item(&$item, $donation, $market_source) {
+  $map = salesforce_genmap_load_map($donation->nid, $item['module']);
+  $salesforce_webform_map = $map->field_map['salesforce_webform_map'];
+  $fields_to_override = fundraiser_upsell_salesforce_get_upsell_enabled_market_source_fields();
+
+  $default_fields = variable_get('market_source_default_fields', array());
+  $custom_fields = variable_get('market_source_custom_fields', array());
+  $all_fields = array_merge($default_fields, $custom_fields);
+
+  foreach ($fields_to_override as $key) {
+    if (array_key_exists($key, $salesforce_webform_map)) {
+      if (isset($item['sobject']->fields[$salesforce_webform_map[$key]])) {
+        $original = $item['sobject']->fields[$salesforce_webform_map[$key]];
+      }
+      else {
+        $original = '';
       }
 
+      if (!empty($market_source[$key])) {
+        $new = $market_source[$key];
+      }
+      else {
+        $new = '';
+      }
+
+      watchdog('upsell', "Original is $original and new is $new");
+
+      if (empty($original) && !empty($new)) {
+        // Always replace the value if an original value doesn't exist.
+        $item['sobject']->fields[$salesforce_webform_map[$key]] = $new;
+      }
+      elseif (!empty($original) && empty($new)) {
+        // Get the field persistence setting.
+        // if direct store the empty value.
+        $persistence = $all_fields[$key]['persistence'];
+        if ($persistence == 'direct') {
+          $item['sobject']->fields[$map[$field]] = $new;
+        }
+        else {
+          // otherwise don't change it.
+          continue;
+        }
+      }
+      elseif (!empty($original) && !empty($new)) {
+        // @todo What do we do here?  How does the persistence setting impact
+        // our decision?
+      }
     }
   }
 }
@@ -150,7 +231,7 @@ function fundraiser_upsell_salesforce_salesforce_queue_create_item_alter(&$item)
  */
 function fundraiser_upsell_salesforce_node_insert($node) {
   // Only process if upsell is enabled.
-  if (fundraiser_upsell_is_enabled($node)) {
+  if (fundraiser_upsell_is_available($node)) {
     // Insert the record.
     $record = fundraiser_upsell_salesforce_node_record($node);
     drupal_write_record('fundraiser_upsell_salesforce', $record);
@@ -162,14 +243,13 @@ function fundraiser_upsell_salesforce_node_insert($node) {
  */
 function fundraiser_upsell_salesforce_node_update($node) {
   // If this isn't a fundraiser type, ignore it.
-  if (fundraiser_is_donation_type($node->type)) {
+  if (fundraiser_upsell_is_available($node)) {
     // Check if the upsell data already exists.
     $exists = db_query('SELECT nid FROM {fundraiser_upsell_salesforce} WHERE nid = :nid',
       array(':nid' => $node->nid)
     )->fetchField();
     $record = fundraiser_upsell_salesforce_node_record($node);
-    // Don't bother inserting a new record if upsell isn't enabled..
-    if (empty($exists) && fundraiser_upsell_is_enabled($node)) {
+    if (empty($exists)) {
       drupal_write_record('fundraiser_upsell_salesforce', $record);
     }
     // If the record does exist, then update it.
@@ -185,12 +265,12 @@ function fundraiser_upsell_salesforce_node_update($node) {
 function fundraiser_upsell_salesforce_node_load($nodes, $types) {
   foreach ($nodes as $node) {
     // If this isn't a fundraiser type, ignore it.
-    if (fundraiser_is_donation_type($node->type)) {
+    if (fundraiser_upsell_is_available($node)) {
       $data = db_query('
-        SELECT * FROM {fundraiser_upsell_salesforce} WHERE nid = :nid',
+        SELECT data FROM {fundraiser_upsell_salesforce} WHERE nid = :nid',
         array(':nid' => $node->nid)
       )->fetchAssoc();
-      $nodes[$node->nid]->fundraiser_upsell_salesforce = $data;
+      $nodes[$node->nid]->fundraiser_upsell_salesforce = unserialize($data['data']);
     }
   }
 }
@@ -199,16 +279,20 @@ function fundraiser_upsell_salesforce_node_load($nodes, $types) {
  * Implements hook_node_delete().
  */
 function fundraiser_upsell_salesforce_node_delete($node) {
-  db_query('DELETE FROM {fundraiser_upsell_salesforce} WHERE nid = :nid', array(':nid' => $node->nid));
+  db_delete('fundraiser_upsell_salesforce')
+    ->condition('nid', $node->nid)
+    ->execute();
 }
 
 /**
  * Output an array of the DB structure mapped to the $node object.
+ *
+ * Note that we don't serialize() here because drupal_write_record() handles it.
  */
 function fundraiser_upsell_salesforce_node_record($node) {
   return array(
     'nid' => $node->nid,
-    'campaign_id' => $node->fundraiser_upsell_salesforce['campaign_id'],
+    'data' => $node->fundraiser_upsell_salesforce,
   );
 }
 
@@ -449,4 +533,109 @@ function fundraiser_upsell_salesforce_queue_upsell($sobject) {
 
   $queue = salesforce_queue_load();
   return $queue->createItem($item);
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Add upsell overrideable checkboxes to market source fields.
+ * This permits admins to configure which Market Source fields show up
+ * in the upsell settings on a donation form.
+ */
+function fundraiser_upsell_salesforce_form_market_source_admin_settings_form_alter(&$form, $form_state) {
+  $default_fields_list = market_source_list_default_fields();
+  $default_field_values = variable_get('fundraiser_upsell_market_source_default_fields', array());
+  // Add upsell enabled checkbox to default ms fields.
+  foreach ($default_fields_list as $key => $field_name) {
+    $form['market_source_default_fields']['default_fields_wrapper'][$key]['fundraiser_upsell_enabled'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Fundraiser upsell'),
+      '#description' => t('Overridable for upsell donations.'),
+      '#prefix' => '<div class="container-inline">',
+      '#suffix' => '</div>',
+      '#default_value' => isset($default_field_values[$key]) ? $default_field_values[$key]['fundraiser_upsell_enabled'] : 0,
+    );
+  }
+
+  $custom_fields = &$form['market_source_global_fields']['custom_fields_wrapper'];
+  $custom_field_values = &$form_state['values']['market_source_global_fields']['custom_fields_wrapper'];
+  $custom_field_saved_state = variable_get('fundraiser_upsell_market_source_custom_fields', array());
+  // Add upsell enabled checkox to custom ms fields.
+  foreach ($custom_field_values as $i => $field_value) {
+    $key = isset($field_value['key']) ? $field_value['key'] : FALSE;
+    $custom_fields[$i]['fundraiser_upsell_enabled'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Fundraiser upsell'),
+      '#description' => t('Overridable for upsell donations.'),
+      '#prefix' => '<div class="container-inline">',
+      '#suffix' => '</div>',
+      '#default_value' => ($key && isset($custom_field_saved_state[$key])) ? $custom_field_saved_state[$key]['fundraiser_upsell_enabled'] : 0,
+    );
+  }
+  $form['#submit'][] = 'fundraiser_upsell_salesforce_market_source_admin_settings_submit';
+}
+
+/**
+ * Submit handler for Market Source admin settings screen.
+ *
+ * Save upsell enabled checkbox values.
+ */
+function fundraiser_upsell_salesforce_market_source_admin_settings_submit($form, $form_state) {
+  $default_fields = array();
+  $values = $form_state['values'];
+  if (!empty($values['market_source_default_fields']['default_fields_wrapper'])) {
+    foreach ($values['market_source_default_fields']['default_fields_wrapper'] as $key => $default_values) {
+      $default_fields[$key] = array(
+        'fundraiser_upsell_enabled' => $default_values['fundraiser_upsell_enabled'],
+      );
+    }
+  }
+  variable_set('fundraiser_upsell_market_source_default_fields', $default_fields);
+  // Save all the custom fields.
+  $custom_fields = array();
+  if (!empty($values['market_source_global_fields']['custom_fields_wrapper'])) {
+    foreach ($values['market_source_global_fields']['custom_fields_wrapper'] as $i => $field) {
+      if (!empty($field['key']) && !empty($field['name'])) {
+        $custom_fields[$field['key']] = array(
+          'fundraiser_upsell_enabled' => $field['fundraiser_upsell_enabled'],
+        );
+      }
+    }
+  }
+  variable_set('fundraiser_upsell_market_source_custom_fields', $custom_fields);
+}
+
+/**
+ * List upsell-enabled market source fields.
+ *
+ * @return array
+ *   Returns a list of Market Source fields that have been enabled to be
+ *   overridable in upsell donations.
+ */
+function fundraiser_upsell_salesforce_get_upsell_enabled_market_source_fields() {
+  $enabled_fields = array();
+  $default_fields = variable_get('fundraiser_upsell_market_source_default_fields', array());
+  $custom_fields = variable_get('fundraiser_upsell_market_source_custom_fields', array());
+  $fields = array_merge($default_fields, $custom_fields);
+
+  foreach ($fields as $key => $value) {
+    // Fiddling required due to quirks in how Market Source presents data
+    // during form submission.
+    // ms and cid fields are not indexed by their form key, so we have to
+    // do a quick conversion.
+    switch ($key) {
+      case 'market_source':
+        $key = 'ms';
+        break;
+
+      case 'campaign':
+        $key = 'cid';
+        break;
+
+    }
+    if ($value['fundraiser_upsell_enabled'] === 1) {
+      $enabled_fields[] = $key;
+    }
+  }
+  return $enabled_fields;
 }
