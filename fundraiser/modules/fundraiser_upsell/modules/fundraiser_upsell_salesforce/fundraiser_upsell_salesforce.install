@@ -17,32 +17,32 @@ function fundraiser_upsell_salesforce_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
-      'campaign_id' => array(
-        'description' => 'The Salesforce campaign id to use for upsold donations against this node.',
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
+      'data' => array(
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of Salesforce data to apply to upsell donations made through this node.',
       ),
     ),
     'primary key' => array('nid'),
   );
 
   $schema['fundraiser_upsell_salesforce_donation'] = array(
-    'description' => 'Stores Salesforce specific data for upsold donations.',
+    'description' => 'Stores Salesforce specific data for upsell donations.',
     'fields' => array(
       'master_did' => array(
-        'description' => 'The recurring donation ID.',
+        'description' => 'The recurring donation master ID.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
-      'campaign_id' => array(
-        'description' => 'The Salesforce campaign ID for the recurring donation.',
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
+      'data' => array(
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of Salesforce data to apply to upsell donations that have this master donation.',
       ),
     ),
     'primary key' => array('master_did'),
