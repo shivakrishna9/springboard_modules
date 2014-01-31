@@ -75,6 +75,7 @@ function fundraiser_menu() {
     'access arguments' => array('administer fundraiser'),
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'file' => 'fundraiser.admin.inc',
+    'weight' => -10,
   );
   return $items;
 }

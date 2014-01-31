@@ -1,0 +1,50 @@
+<?php
+
+/**
+ * @file
+ * Primary module file for Fundraiser Date Mode. Contains required hook implementations and associated helper functions. 
+ */
+
+/**
+ * Implements hook_permission().
+ */
+function fundraiser_date_mode_permission() {
+  return array(
+    'administer fundraiser date mode' => array(
+      'title' => t('Administer Fundraiser date mode'),
+      'description' => t('Configure sustainer series charge dates.'),
+    ),
+  );
+}
+
+
+/**
+ * Implements hook_menu().
+ */
+function fundraiser_date_mode_menu() {
+  $items['admin/config/system/fundraiser/date-mode'] = array(
+    'title' => 'Date Mode settings',
+    'description' => 'Configure sustainer series charge date mode.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_date_mode_admin'),
+    'access arguments' => array('administer fundraiser date mode'),
+    'file' => 'fundraiser_date_mode.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  return $items;
+}
+
+/**
+ * Return a count of total pending future sustainer orders.
+ */
+function fundraiser_date_mode_max_records() {
+  $result = db_query('
+    SELECT COUNT(master_did)
+    FROM {fundraiser_sustainers}
+    WHERE
+      next_charge > UNIX_TIMESTAMP(NOW())
+    AND
+      gateway_resp IS NULL'
+  );
+  return $result->fetchField();
+}
