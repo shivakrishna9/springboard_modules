@@ -200,8 +200,6 @@ function fundraiser_upsell_salesforce_update_item(&$item, $donation, $market_sou
         $new = '';
       }
 
-      watchdog('upsell', "Original is $original and new is $new");
-
       if (empty($original) && !empty($new)) {
         // Always replace the value if an original value doesn't exist.
         $item['sobject']->fields[$salesforce_webform_map[$key]] = $new;
@@ -220,7 +218,9 @@ function fundraiser_upsell_salesforce_update_item(&$item, $donation, $market_sou
       }
       elseif (!empty($original) && !empty($new)) {
         // @todo What do we do here?  How does the persistence setting impact
-        // our decision?
+        // our decision, if at all?
+        // For now we override.
+        $item['sobject']->fields[$salesforce_webform_map[$key]] = $new;
       }
     }
   }
