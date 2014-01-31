@@ -339,7 +339,7 @@ function fundraiser_upsell_page_alter(&$page) {
     // !== because we could get a did of 0.
     if ($did !== FALSE) {
       $donation = fundraiser_donation_get_donation($did);
-      if (!empty($donation->status) && $donation->status = 'payment_received') {
+      if (!empty($donation->status) && $donation->status == 'payment_received') {
         // Make sure the payment method used supports recurring.
         $info = _fundraiser_get_donation_gateway($donation->did);
         if (_fundraiser_sustainers_supports_recurring($info['allow_recurring'], $donation->donation['payment_method'])) {
