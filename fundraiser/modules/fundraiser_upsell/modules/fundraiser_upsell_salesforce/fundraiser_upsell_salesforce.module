@@ -50,6 +50,7 @@ function fundraiser_upsell_salesforce_upsell_node_settings_alter(&$form) {
           '#type' => 'textfield',
           '#title' => $field['#title'],
           '#default_value' => (!empty($market_source[$key])) ? $market_source[$key] : '',
+          '#description' => t('Custom value for upsell donations. Note that this can be overridden by URL query string parameters.'),
         );
       }
     }
@@ -166,6 +167,30 @@ function fundraiser_upsell_salesforce_salesforce_queue_create_item_alter(&$item)
 }
 
 /**
+ * Implements hook_init().
+ *
+ * Captures upsell market source values from the URL and stores them in the
+ *   session for later.  Only stores fields that are overriddeable by upsell.
+ */
+function fundraiser_upsell_salesforce_init() {
+  $fields_to_override = fundraiser_upsell_salesforce_get_upsell_enabled_market_source_fields();
+  $market_source = array();
+
+  $query = drupal_get_query_parameters();
+  foreach ($fields_to_override as $key) {
+    $upsell_key = 'us_' . $key;
+    if (isset($query[$upsell_key])) {
+      // Don't save the key prefix.
+      $market_source[$key] = $query[$upsell_key];
+    }
+  }
+
+  if (!empty($market_source)) {
+    $_SESSION['fundraiser_upsell_salesforce'] = $market_source;
+  }
+}
+
+/**
  * Update a salesforce queue item with market source overrides.
  *
  * @param array $item
@@ -186,6 +211,8 @@ function fundraiser_upsell_salesforce_update_item(&$item, $donation, $market_sou
 
   foreach ($fields_to_override as $key) {
     if (array_key_exists($key, $salesforce_webform_map)) {
+
+      // Standardize the original value.
       if (isset($item['sobject']->fields[$salesforce_webform_map[$key]])) {
         $original = $item['sobject']->fields[$salesforce_webform_map[$key]];
       }
@@ -193,38 +220,117 @@ function fundraiser_upsell_salesforce_update_item(&$item, $donation, $market_sou
         $original = '';
       }
 
-      if (!empty($market_source[$key])) {
+      // Standardize the new value.
+      // Prefer session values over the configured overrides.
+      if (isset($_SESSION['fundraiser_upsell_salesforce'][$key])) {
+        $new = $_SESSION['fundraiser_upsell_salesforce'][$key];
+      }
+      elseif (isset($market_source[$key])) {
         $new = $market_source[$key];
       }
       else {
         $new = '';
       }
 
-      if (empty($original) && !empty($new)) {
-        // Always replace the value if an original value doesn't exist.
-        $item['sobject']->fields[$salesforce_webform_map[$key]] = $new;
-      }
-      elseif (!empty($original) && empty($new)) {
-        // Get the field persistence setting.
-        // if direct store the empty value.
-        $persistence = $all_fields[$key]['persistence'];
-        if ($persistence == 'direct') {
-          $item['sobject']->fields[$map[$field]] = $new;
-        }
-        else {
-          // otherwise don't change it.
-          continue;
-        }
-      }
-      elseif (!empty($original) && !empty($new)) {
-        // @todo What do we do here?  How does the persistence setting impact
-        // our decision, if at all?
-        // For now we override.
+      $persistence = $all_fields[$key]['persistence'];
+
+      if (fundraiser_upsell_salesforce_should_override_market_source_value($original, $new, $persistence)); {
         $item['sobject']->fields[$salesforce_webform_map[$key]] = $new;
       }
     }
   }
 }
+
+/**
+ * Determine if we should override the original market source value.
+ *
+ * Persistent -- earlier value set (in session), override not set
+ *   -- retain earlier.
+ * Persistent -- no earlier value set (in session), override set
+ *   -- use override.
+ * Persistent -- earlier value set (in session), override set
+ *   -- retain earlier.
+ * Last seen -- earlier value set (in session), override not set
+ *   -- retain earlier.
+ * Last seen -- earlier value not set (in session), override set
+ *   -- use override.
+ * Last seen -- earlier value set (in session), override set
+ *   -- use override.
+ * Direct -- earlier value set (in session), override not set
+ *   -- use blank.
+ * Direct -- earlier value not set (in session), override set
+ *   -- use override.
+ * Direct -- earlier value set (in session), override set
+ *   -- use override.
+ *
+ * @param string $original
+ *   The original market source value.
+ * @param string $new
+ *   The market source value for the override.
+ * @param string $persistence
+ *   Persistence setting for the market source field.
+ *   'on' for Persistence
+ *   'off' for Last seen
+ *   'direct' for Direct
+ *
+ * @return bool
+ *   TRUE if we should use the new value.
+ *   False if we should use the old value.
+ */
+function fundraiser_upsell_salesforce_should_override_market_source_value($original, $new, $persistence) {
+
+  if (empty($original) && empty($new)) {
+    return FALSE;
+  }
+
+  // I realize this isn't the most elegant or efficient way to do this,
+  // but I wanted to match the language of this feature to ensure the logic
+  // matches.
+  switch ($persistence) {
+    case 'on':
+
+      if (empty($original) && !empty($new)) {
+        return FALSE;
+      }
+      elseif (!empty($original) && empty($new)) {
+        return TRUE;
+      }
+      elseif (!empty($original) && !empty($new)) {
+        return FALSE;
+      }
+
+      break;
+    case 'off':
+
+      if (empty($original) && !empty($new)) {
+        return TRUE;
+      }
+      elseif (!empty($original) && empty($new)) {
+        return FALSE;
+      }
+      elseif (!empty($original) && !empty($new)) {
+        return TRUE;
+      }
+
+      break;
+    case 'direct':
+
+      if (empty($original) && !empty($new)) {
+        return TRUE;
+      }
+      elseif (!empty($original) && empty($new)) {
+        return TRUE;
+      }
+      elseif (!empty($original) && !empty($new)) {
+        return TRUE;
+      }
+
+      break;
+  }
+
+  return FALSE;
+}
+
 
 /**
  * Implements hook_node_insert().
