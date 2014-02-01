@@ -207,8 +207,8 @@ function commerce_sage_payments_cc_submit_form_submit($payment_method, $pane_for
     // Mask secure data.
     $log_request_parameters = $request_parameters;
     $log_request_parameters['M_KEY'] = str_repeat('X', strlen($log_request_parameters['M_KEY']));
-    if (!empty($log_request_parameters['C_NUM'])) {
-      $log_request_parameters['C_NUM'] = str_repeat('X', strlen($log_request_parameters['C_NUM']) - 4) . substr($log_request_parameters['C_NUM'], -4);
+    if (!empty($log_request_parameters['C_CARDNUMBER'])) {
+      $log_request_parameters['C_CARDNUMBER'] = str_repeat('X', strlen($log_request_parameters['C_CARDNUMBER']) - 4) . substr($log_request_parameters['C_CARDNUMBER'], -4);
     }
     if (!empty($log_request_parameters['C_CCV'])) {
       $log_request_parameters['C_CCV'] = str_repeat('X', strlen($log_request_parameters['CCV']));
@@ -400,23 +400,14 @@ function commerce_sage_payments_cc_vault_cardonfile_charge($payment_method, $car
 
   // Log the request if specified.
   if ($payment_method['settings']['log']['request'] === 'request') {
-    // Mask secure data.
-    $log_request_parameters = $request_parameters;
-    $log_request_parameters['M_KEY'] = str_repeat('X', strlen($log_request_parameters['M_KEY']));
-    if (!empty($log_request_parameters['C_NUM'])) {
-      $log_request_parameters['C_NUM'] = str_repeat('X', strlen($log_request_parameters['C_NUM']) - 4) . substr($log_request_parameters['C_NUM'], -4);
-    }
-    if (!empty($log_request_parameters['C_CCV'])) {
-      $log_request_parameters['C_CCV'] = str_repeat('X', strlen($log_request_parameters['CCV']));
-    }
-    watchdog('commerce_sage_payments', 'Sage Payments request: !param', array('!param' => '<pre>' . check_plain(print_r($log_request_parameters, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+    watchdog('commerce_sage_payments', 'Sage Payments Vault sale request: !param', array('!param' => '<pre>' . check_plain(print_r($request_data, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
   }
 
   $transaction_response = _commerce_sage_payments_vault_request_sale($payment_method, $request_parameters);
 
   // Log the response if specified.
   if ($payment_method['settings']['log']['response'] === 'response') {
-    watchdog('commerce_sage_payments', 'Sage Payments Sale response: !param', array('!param' => '<pre>' . check_plain(print_r($transaction_response, TRUE)) . '</pre>', WATCHDOG_DEBUG));
+    watchdog('commerce_sage_payments', 'Sage Payments Vault sale response: !param', array('!param' => '<pre>' . check_plain(print_r($transaction_response, TRUE)) . '</pre>', WATCHDOG_DEBUG));
   }
 
   // If we didn't get an approval response code...

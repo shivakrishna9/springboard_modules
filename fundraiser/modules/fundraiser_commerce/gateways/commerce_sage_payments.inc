@@ -244,7 +244,6 @@ function commerce_sage_payments_fundraiser_commerce_update($donation, $card_data
 
       // Set the value on the donation
       $donation->data['cardonfile'] = $card_data->card_id;
-      watchdog('commerce_authnet', 'CIM Customer Profile @profile_id created and saved to user @uid.', array('@profile_id' => (string) $response->customerProfileId, '@uid' => $order->uid));
       return $new_data;
     }
   }
