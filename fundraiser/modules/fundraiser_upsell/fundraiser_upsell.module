@@ -353,17 +353,29 @@ function fundraiser_upsell_page_alter(&$page) {
             return;
           }
 
-          // We're on the done page, the donation was successful,
-          // and the payment method supports recurring.
-          // Now we can show the modal!
-          $modal = fundraiser_upsell_create_modal_variables($donation->node);
-          $modal['#did'] = $did;
+          // Check that the payment method doesn't expire this month.
+          if (isset($info['expire callback'])) {
+            $expiration_func = $info['expire callback'];
+            if (function_exists($expiration_func)) {
+              $expires = $expiration_func($donation->donation);
+              if (isset($expires['month']) && isset($expires['year'])) {
+                // Expiration must not happen in this month.
+                if ($expires['month'] != date('m') || $expires['year'] != date('Y')) {
+                  // We're on the done page, the donation was successful,
+                  // and the payment method supports recurring.
+                  // Now we can show the modal!
+                  $modal = fundraiser_upsell_create_modal_variables($donation->node);
+                  $modal['#did'] = $did;
 
-          // Replace tokens in the content.
-          $modal['#content'] = token_replace($modal['#content'], array('donation' => $donation));
+                  // Replace tokens in the content.
+                  $modal['#content'] = token_replace($modal['#content'], array('donation' => $donation));
 
-          // Add the modal to the bottom of the page.
-          $page['page_bottom']['message-modal'] = $modal;
+                  // Add the modal to the bottom of the page.
+                  $page['page_bottom']['message-modal'] = $modal;
+                }
+              }
+            }
+          }
 
         }
       }
