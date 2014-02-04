@@ -244,7 +244,7 @@ function commerce_sage_payments_fundraiser_commerce_update($donation, $card_data
 
       // Set the value on the donation
       $donation->data['cardonfile'] = $card_data->card_id;
-      return $new_data;
+      return $card_data;
     }
   }
 }
