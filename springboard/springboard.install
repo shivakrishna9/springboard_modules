@@ -12,7 +12,7 @@ function springboard_install() {
   variable_set('springboard_needs_config', TRUE);
   // Add a message about configuring Springboard
   drupal_set_message(st('The Springboard module was successfully enabled. !link',
-    array('!link' => l(st('Please configure Springboard now.'), 'admin/springboard/settings/springboard'))));
+    array('!link' => l(st('Please configure Springboard now.'), 'admin/springboard/options/springboard'))));
 }
 
 /**

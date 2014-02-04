@@ -210,7 +210,7 @@ function market_source_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
- * #after_build callback for user registration form.
+ * An #after_build callback for the user registration form.
  */
 function market_source_user_register_after_build($form, &$form_state) {
   if ($form_state['submitted']) {
@@ -231,7 +231,7 @@ function market_source_user_register_after_build($form, &$form_state) {
 }
 
 /**
- * #after_build callback for all webforms.
+ * An #after_build callback for all webforms.
  */
 function market_source_webform_after_build($form, &$form_state) {
   if ($form_state['submitted']) {
@@ -267,7 +267,7 @@ function market_source_webform_after_build($form, &$form_state) {
 }
 
 /**
- * #after_build callback for generic forms.
+ * An #after_build callback for generic forms.
  */
 function market_source_generic_form_after_build($form, &$form_state) {
   if ($form_state['submitted']) {

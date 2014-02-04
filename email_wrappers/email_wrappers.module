@@ -8,13 +8,12 @@
 module_load_include('inc', 'webform', 'includes/webform.components');
 require_once 'email_wrappers.mail.inc';
 
-function email_wrappers_perm() {
-
-}
-
+/**
+ * Implements hook_menu().
+ */
 function email_wrappers_menu() {
-// TODO: replace this menu item with a View.
- /* $items['admin/content/email-wrappers'] = array(
+  // TODO: replace this menu item with a View.
+  /* $items['admin/content/email-wrappers'] = array(
     'title' => 'Confirmation Email Templates',
     'description' => '',
     'page callback' => 'email_wrappers_template_list',
@@ -43,7 +42,12 @@ function email_wrappers_menu() {
   return $items;
 }
 
-// Modal display window for email preview. At some point this should be converted to one or more theme functions/templates.
+/**
+ * Modal display window for email preview.
+ *
+ * At some point this should be converted to one or more theme
+ * functions/templates.
+ */
 function email_wrappers_preview_modal() {
   ctools_include('ajax');
   ctools_include('modal');
@@ -86,8 +90,8 @@ function email_wrappers_preview_modal() {
 /**
  * Implements hook_form_FORM_ID_alter().
  *
- * For donation forms, set default "to" email address to donation form email address component
- * on webform email add form.
+ * For donation forms, set default "to" email address to donation form email
+ * address component on webform email add form.
  */
 function email_wrappers_form_webform_emails_form_alter(&$form, $form_state) {
   if (module_exists('fundraiser') && fundraiser_is_donation_type($form['#node']->type)) {
@@ -103,7 +107,8 @@ function email_wrappers_form_webform_emails_form_alter(&$form, $form_state) {
 /**
  * Implements hook_form_FORM_ID_alter().
  *
- * Adds mail template UI to Fundraiser donation form and webform confirmation settings form.
+ * Adds mail template UI to Fundraiser donation form and webform confirmation
+ * settings form.
  */
 function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state, $form_id) {
 
@@ -175,7 +180,8 @@ function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state,
       '#value' => isset($defaults['bcc_email']) ? $defaults['bcc_email'] : '',
     );
 
-    // Throw some defaults at webform's built in templating system since it's being overridden anyway.
+    // Throw some defaults at webform's built in templating system since
+    // it's being overridden anyway.
     if ((isset($form_state['input']['email_wrappers_email_template']) && $form_state['input']['email_wrappers_email_template']) || isset($defaults['html_message'])) {
 
       $form['template']['template_option']['#access'] = FALSE;
@@ -202,7 +208,8 @@ function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state,
       $form['template']['tokens']['#weight'] = 9;
       $form['template']['components']['#weight'] = 10;
 
-      // Unset $form_state['input'] values so imported template defaults aren't overwritten by $_POST values during ajax
+      // Unset $form_state['input'] values so imported template defaults
+      // aren't overwritten by $_POST values during ajax
       // @see:http://drupal.org/node/990502
       unset($form_state['input']['email_wrappers_html_message']);
       unset($form_state['input']['email_wrappers_text_message']);
@@ -230,7 +237,6 @@ function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state,
     $form['#submit'][] = 'email_wrappers_delete_callback';
   }
 }
-
 
 /**
  * Validation callback for webform email edit form.
@@ -274,6 +280,7 @@ function email_wrappers_delete_callback($form, $form_state) {
   $eid = $form_state['values']['email']['eid'];
   email_wrappers_delete_settings($nid, $eid);
 }
+
 /**
  * Delete settings for a given webform email
  *
@@ -293,30 +300,30 @@ function email_wrappers_delete_settings($nid, $eid) {
 /**
  * Save webform email settings
  *
- * @param $nid
- * Webform node id.
+ * @param int $nid
+ *   Webform node id.
  *
- * @param $eid
- * Email id.
+ * @param int $eid
+ *   Email id.
  *
- * @param $settings
- * associative array of settings.
- * valid keys:
- * tid: template node id
- * bcc: comma separated list of BCC email addresses
- * html_message: html version of the email message body, should not include structural markup defined in the template.
- * text_message: text-only version of the email message body.
+ * @param array $settings
+ *   Associative array of settings.
+ *   Valid keys:
+ *     tid: template node id
+ *     bcc: comma separated list of BCC email addresses
+ *     html_message: html version of the email message body,
+ *     should not include structural markup defined in the template.
+ *     text_message: text-only version of the email message body.
  */
 function email_wrappers_save_settings($nid, $eid, array $settings) {
   drupal_write_record('email_wrappers_webform', $settings);
 }
 
-
 /**
  * Fetch an array of email wrapper node ids.
  *
- * @return
- * An indexed array of email_wrapper node ids.
+ * @return array
+ *   An indexed array of email_wrapper node ids.
  */
 function email_wrappers_get_nodes() {
   $result = db_select('node', 'n')
@@ -326,7 +333,6 @@ function email_wrappers_get_nodes() {
 
   return $result->fetchCol();
 }
-
 
 /**
  * Implements hook_mail().
@@ -354,8 +360,9 @@ function email_wrappers_mail($key, &$message, $params) {
 /**
  * Implements hook_mail_alter().
  *
- * Halt processing of the original email and re-process using Email Wrappers implementation
- * of MailSystemInterface. Required to send HTML email since core strips HTML.
+ * Halt processing of the original email and re-process using Email Wrappers
+ * implementation of MailSystemInterface. Required to send HTML email
+ * since core strips HTML.
  */
 function email_wrappers_mail_alter(&$message) {
   global $user;
@@ -416,17 +423,17 @@ function email_wrappers_mail_alter(&$message) {
  *
  * Concat message & template content fragments and perform token replacement.
  *
- * @param $eid
- * Webform email id.
+ * @param int $eid
+ *   Webform email id.
  *
- * @param $message
- * Email message array.
+ * @param array $message
+ *   Email message array.
  *
- * @param $settings
- * Email Wrappers settings for this email.
+ * @param array $settings
+ *   Email Wrappers settings for this email.
  *
  * @return
- * Email message body, formatted for multipart MIME.
+ *   Email message body, formatted for multipart MIME.
  */
 function email_wrappers_render_email_body($eid, $message, $settings = array()) {
 
@@ -473,8 +480,8 @@ $html_raw
 /**
  * List available email template nodes.
  *
- * @return
- * An array of node titles keyed to nid.
+ * @return array
+ *   An array of node titles keyed to nid.
  */
 function _email_wrappers_list_templates() {
   $options = array('0' => t('- Select -'));
@@ -491,22 +498,24 @@ function _email_wrappers_list_templates() {
 /**
  * Load template settings for a specific webform & email
  *
- * @param $nid
- * Webform node id
+ * @param int $nid
+ *   Webform node id
  *
- * @param $eid
- * Webform email id
+ * @param int $eid
+ *   Webform email id
  *
- * @return
- * Keyed array of settings. Array keys:
- *   nid - Webform node id
- *   eid - Webform email id
- *   tid - email template node id
- *   html_message - HTML version of the message portion of this email.
- *   html_template - HTML template value, shared by any emails that use a given template
- *   text_message - plaintext version of the message portion of this email.
- *   text_template - plaintext template value, shared by any emails that use a given template
- *   extra - serialized array of additional settings
+ * @return array
+ *   Keyed array of settings. Array keys:
+ *     nid - Webform node id
+ *     eid - Webform email id
+ *     tid - email template node id
+ *     html_message - HTML version of the message portion of this email.
+ *     html_template - HTML template value, shared by any emails
+ *     that use a given template
+ *     text_message - plaintext version of the message portion of this email.
+ *     text_template - plaintext template value, shared by any emails that
+ *     use a given template
+ *     extra - serialized array of additional settings
  */
 function email_wrappers_load_settings($nid, $eid = FALSE) {
 
@@ -583,16 +592,15 @@ function email_wrappers_mail_load($params = array()) {
 /**
  * Load email settings from db.
  *
- * @param $nid
- * Node id.
+ * @param int $nid
+ *   Node id.
  *
- * @return
- * associative array of defaults taken from the template node.
+ * @return array
+ *   Associative array of defaults taken from the template node.
  */
 function email_wrappers_load_defaults_from_template($nid) {
 
   $node = node_load($nid);
-
 
   // So appaently retrieving field values can't just rely on the node->lang property.
   // When the node language is set (example: en) these fields still store values under 'und'.
@@ -631,11 +639,11 @@ function email_wrappers_load_defaults_from_template($nid) {
 /**
  * Translate template node BCC field values into a comma-separated list.
  *
- * @param $node
- * email template node object.
+ * @param object $node
+ *   Email template node object.
  *
- * @return
- * returns BCC field values as a comma-separated string.
+ * @return string
+ *   Returns BCC field values as a comma-separated string.
  */
 function _email_wrappers_concat_bcc($node) {
   $bccs = array();
@@ -652,14 +660,14 @@ function _email_wrappers_concat_bcc($node) {
  * Webform does some interesting things with form elements in the "email header details" section
  * of the e-mail add/edit form.
  *
- * @param $form
- * form array
+ * @param array $form
+ *   Form array
  *
- * @param $field_key
- * Valid options: subject, from_name, from_address
+ * @param string $field_key
+ *   Valid options: subject, from_name, from_address
  *
  * @param $value
- * default value for the "custom" textfield.
+ *   Default value for the "custom" textfield.
  */
 function _email_wrappers_webform_option_defaults(&$form, $field_key, $value) {
   $form[$field_key . '_option']['default']['#value'] = '';
@@ -673,7 +681,6 @@ function _email_wrappers_webform_option_defaults(&$form, $field_key, $value) {
 function email_wrappers_email_ajax($form, $form_state) {
   return $form;
 }
-
 
 /**
  * Generate modal preview.

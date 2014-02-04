@@ -629,8 +629,12 @@ class SalesforceSync {
             if ($this->isValidTimestamp($value)) {
               $item->sobject->fields[$field_name] = date('Y-m-d', $value);
             }
-            else {
+            elseif ($value != '') {
               $item->sobject->fields[$field_name] = date('Y-m-d', strtotime($value));
+            }
+            else {
+              unset($item->sobject->fields[$field_name]);
+              $item->sobject->fieldsToNull[] = $field_name;
             }
             break;
 
