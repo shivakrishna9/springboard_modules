@@ -409,6 +409,22 @@ function fundraiser_tickets_fundraiser_donation_success($donation) {
 }
 
 /**
+ * Alter an item before it is added to the queue.
+ *
+ * @param array $item
+ *   Array of values to be added to the queue
+ */
+function fundraiser_tickets_salesforce_queue_create_item_alter(&$item) {
+  // Connect a ticket line item to the donation opportunity
+  if ($item['module'] == 'commerce_line_item' && $item['delta'] == 'ticket') {
+    $line_item = commerce_line_item_load($item['drupal_id']);
+    $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
+
+    $item['sobject']->fields['Opportunity__c'] = sprintf('[Opportunity:donation:%d]', $line_item->order_id);
+  }
+}
+
+/**
 * Helper function: parse the product id out of the form element name.
 */
 function _fundraiser_tickets_get_product_id_from_form_element_name($name){
