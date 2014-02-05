@@ -29,15 +29,19 @@ function salesforce_queue_admin_page() {
 function salesforce_queue_admin_form($form, &$form_state) {
   $form = array();
 
-  try {
-    $sfapi = salesforce_get_api();
-    $sf_objects = _sfq_salesforce_object_list($sfapi);
+  $sfapi = salesforce_get_api();
+  if (!$sfapi->isAuthorized()) {
+    return array(
+      'no_sfapi' => array(
+        '#markup' => '<p>' . t('Cannot connect to Salesforce, preventing the ability to configure the Salesforce queue.  !ConfigureSalesforce',
+            array('!ConfigureSalesforce' => l(t('Configure Salesforce'), 'admin/config/salesforce/authorize'))) . '</p>',
+        '#prefix' => '<div class="salesforce-map-error salesforce-map-error-salesforce">',
+        '#suffix' => '</div>',
+      ),
+    );
   }
-  catch (Exception $e) {
-    drupal_set_message(t('Unable to get the object list: @message You will be unable to configure the queue until this is resolved.', array('@message' => $e->getMessage())), 'error');
 
-    return $form;
-  }
+  $sf_objects = _sfq_salesforce_object_list($sfapi);
 
   // Variable salesforce_queue_max_items.
   $form['max_items'] = array(
