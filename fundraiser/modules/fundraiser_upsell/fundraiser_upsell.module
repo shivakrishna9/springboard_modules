@@ -330,6 +330,7 @@ function fundraiser_upsell_webform_submit($form, &$form_state) {
  * Adds the modal to the page if needed.
  */
 function fundraiser_upsell_page_alter(&$page) {
+  $add_modal = FALSE;
   // Check for upsell trigger.
   // Added by upsell's webform submit handler.
   // Also make sure we're on the confirmation page.
@@ -361,24 +362,35 @@ function fundraiser_upsell_page_alter(&$page) {
               if (isset($expires['month']) && isset($expires['year'])) {
                 // Expiration must not happen in this month.
                 if ($expires['month'] != date('m') || $expires['year'] != date('Y')) {
-                  // We're on the done page, the donation was successful,
-                  // and the payment method supports recurring.
-                  // Now we can show the modal!
-                  $modal = fundraiser_upsell_create_modal_variables($donation->node);
-                  $modal['#did'] = $did;
-
-                  // Replace tokens in the content.
-                  $modal['#content'] = token_replace($modal['#content'], array('donation' => $donation));
-
-                  // Add the modal to the bottom of the page.
-                  $page['page_bottom']['message-modal'] = $modal;
+                  $add_modal = TRUE;
                 }
               }
             }
+            // The expire callback function does not exist.
+            else {
+              $add_modal = TRUE;
+            }
           }
-
+          // There is no expire callback defined.
+          else {
+            $add_modal = TRUE;
+          }
         }
       }
+    }
+
+    if ($add_modal) {
+      // We're on the done page, the donation was successful,
+      // and the payment method supports recurring.
+      // Now we can show the modal!
+      $modal = fundraiser_upsell_create_modal_variables($donation->node);
+      $modal['#did'] = $did;
+
+      // Replace tokens in the content.
+      $modal['#content'] = token_replace($modal['#content'], array('donation' => $donation));
+
+      // Add the modal to the bottom of the page.
+      $page['page_bottom']['message-modal'] = $modal;
     }
 
     // Remove the upsell session data.
