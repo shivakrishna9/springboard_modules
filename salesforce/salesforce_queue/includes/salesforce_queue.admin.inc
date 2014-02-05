@@ -29,6 +29,16 @@ function salesforce_queue_admin_page() {
 function salesforce_queue_admin_form($form, &$form_state) {
   $form = array();
 
+  try {
+    $sfapi = salesforce_get_api();
+    $sf_objects = _sfq_salesforce_object_list($sfapi);
+  }
+  catch (Exception $e) {
+    drupal_set_message(t('Unable to get the object list: @message You will be unable to configure the queue until this is resolved.', array('@message' => $e->getMessage())), 'error');
+
+    return $form;
+  }
+
   // Variable salesforce_queue_max_items.
   $form['max_items'] = array(
     '#id' => 'salesforce-queue-max-items',
@@ -125,8 +135,6 @@ function salesforce_queue_admin_form($form, &$form_state) {
   );
 
   $object_order = _sfq_get_value('object_order', $form_state);
-  $sfapi = salesforce_get_api();
-  $sf_objects = _sfq_salesforce_object_list($sfapi);
 
   // Get the labels from the Salesforce object list, then append the remaining
   // Salesforce objects to the end of the list.
@@ -305,7 +313,7 @@ function _sfq_get_value($field, $form_state) {
         // Now just make a simple array to save because everything that uses
         // this var assumes it is a simple array.
         $value = array();
-        foreach ($weights as $weights => $objects) {
+        foreach ($weights as $objects) {
           foreach ($objects as $object => $object_info) {
             $value[] = $object;
           }
@@ -365,7 +373,7 @@ function _sfq_get_value($field, $form_state) {
  * @param Salesforce $sfapi
  *   A Salesforce API object
  *
- * @return Array
+ * @return array
  *   Array of Salesforce objects keyed by the object's name and the label as the
  *   value
  */
