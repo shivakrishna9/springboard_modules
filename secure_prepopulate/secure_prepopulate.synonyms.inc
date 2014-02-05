@@ -1,11 +1,15 @@
 <?php
+/**
+ * @file
+ * CRUD and UI for managing secure prepopulate synonyms.
+ */
 
 /**
  * Synonym admin configuration form.
  */
 function secure_prepopulate_synonyms($form, $form_state) {
 
-  $synonyms = secure_prepopulate_load_synonyms();
+  $records = secure_prepopulate_load_synonyms();
 
   $variables['header'] = array(
     'Token key',
@@ -19,8 +23,8 @@ function secure_prepopulate_synonyms($form, $form_state) {
   $variables['sticky'] = array();
   $variables['empty'] = '';
 
-  if (is_array($synonyms)) {
-    foreach ($synonyms as $token_key => $synonyms) {
+  if (is_array($records)) {
+    foreach ($records as $token_key => $synonyms) {
       $actions = _secure_prepopulate_synonym_actions($token_key);
       $row = array($token_key, implode(',', $synonyms), $actions);
       $variables['rows'][] = $row;
@@ -28,7 +32,7 @@ function secure_prepopulate_synonyms($form, $form_state) {
   }
   $form['table'] = array(
     '#type' => 'markup',
-    '#markup' => theme_table($variables),
+    '#markup' => theme('table', $variables),
   );
   $form['synonyms'] = array(
     '#type' => 'fieldset',
@@ -52,14 +56,18 @@ function secure_prepopulate_synonyms($form, $form_state) {
   );
   $form['#validate'][] = 'secure_prepopulate_validate_synonym';
   $form['#submit'][] = 'secure_prepopulate_submit_synonym';
+
   return $form;
 }
 
+/**
+ * Validate function for the add synonym form and edit synonym form.
+ */
 function secure_prepopulate_validate_synonym(&$form, $form_state) {
-  $synonyms = secure_prepopulate_load_synonyms();
+  $records = secure_prepopulate_load_synonyms();
   $form_keys = array();
-  foreach ($synonyms as $token_key => $synonyms) {
-    // ignore edited synonym cluster when validating the edit form.
+  foreach ($records as $token_key => $synonyms) {
+    // Ignore edited synonym cluster when validating the edit form.
     if (empty($form_state['values']['synonym_edit']) || $token_key != $form_state['values']['token_key']) {
       $token_keys[] = $token_key;
       $form_keys = array_merge($synonyms, $form_keys);
@@ -73,6 +81,7 @@ function secure_prepopulate_validate_synonym(&$form, $form_state) {
   }
 
   $submitted_form_keys = explode(',', $form_state['values']['synonyms']);
+  $submitted_keys = array();
   foreach ($submitted_form_keys as $form_key) {
     $submitted_keys[] = trim($form_key);
   }
@@ -87,14 +96,20 @@ function secure_prepopulate_validate_synonym(&$form, $form_state) {
   }
 }
 
+/**
+ * Submit handler for the add synonym form.
+ */
 function secure_prepopulate_submit_synonym($form, $form_state) {
   $settings = array(
-    'token_key' => $form_state['values']['form_key'],
+    'token_key' => $form_state['values']['token_key'],
     'synonyms' => $form_state['values']['synonyms'],
   );
   secure_prepopulate_save_synonym($settings);
 }
 
+/**
+ * The edit form for synonyms.
+ */
 function secure_prepopulate_edit_synonym($form, $form_state, $synonym = NULL) {
 
   $form['original_token_key'] = array(
@@ -128,6 +143,7 @@ function secure_prepopulate_edit_synonym($form, $form_state, $synonym = NULL) {
   );
   $form['#validate'][] = 'secure_prepopulate_validate_synonym';
   $form['#submit'][] = 'secure_prepopulate_submit_edit_synonym';
+
   return $form;
 }
 
@@ -144,6 +160,9 @@ function secure_prepopulate_submit_edit_synonym($form, &$form_state) {
   $form_state['redirect'] = array('admin/config/system/secure-prepopulate/synonyms');
 }
 
+/**
+ * Delete synonym form.
+ */
 function secure_prepopulate_delete_synonym_form($form, $form_state, $synonym = NULL) {
 
   $form['token_key'] = array(
@@ -170,6 +189,9 @@ function secure_prepopulate_delete_synonym_form($form, $form_state, $synonym = N
   return $form;
 }
 
+/**
+ * Submit form handler for deleting a synonym.
+ */
 function secure_prepopulate_delete_synonym_form_submit($form, &$form_state) {
   secure_prepopulate_delete_synonym($form_state['values']['token_key']);
   drupal_set_message('Synonym group has been deleted.');
@@ -212,15 +234,13 @@ function secure_prepopulate_save_synonym($settings, $update = array()) {
  * DB Function, delete synonym.
  */
 function secure_prepopulate_delete_synonym($token_key) {
-  db_query('
-    DELETE FROM {secure_prepopulate_synonyms}
-    WHERE token_key = :token_key
-  ', array(':token_key' => $token_key));
+  db_delete('secure_prepopulate_synonyms')
+    ->condition('token_key', $token_key)
+    ->execute();
 }
 
 /**
  * Helper function, generate edit & delete links for a synonym group.
- *
  */
 function _secure_prepopulate_synonym_actions($token_key) {
   $actions = l(t('edit'), "admin/config/system/secure-prepopulate/synonyms/$token_key/edit");
