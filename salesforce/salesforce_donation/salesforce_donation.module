@@ -83,13 +83,19 @@ function salesforce_donation_settings($form, &$form_state) {
   // nid x module handlers (here salesforce_donation). So to pull the default
   // back out, we just pull -1 nid for this module. Since, otherwise this
   // operates as 'normal', we shouldn't have to tweak the form mmuch.
+  $node = new stdClass();
   $node->nid = -1;
   module_load_include('inc', 'salesforce_genmap', 'includes/salesforce_genmap.map');
   $form_state['build_info']['args'][0] = $node;
   $form += salesforce_genmap_map_form($form, $form_state, $node, 'salesforce_donation');
   $form['salesforce_object_info']['#description'] = t('Provide a default map for Salesforce donations.');
   // Swap out the afterbuild function to avoid errs from failed include file.
-  $form['#after_build'] = array_diff($form['#after_build'], array('salesforce_genmap_map_form_after_build'));
+  if (isset($form['#after_build']) && is_array($form['#after_build'])) {
+    $form['#after_build'] = array_diff($form['#after_build'], array('salesforce_genmap_map_form_after_build'));
+  }
+  else {
+    $form['#after_build'] = array();
+  }
   $form['#after_build'][] = 'salesforce_donation_map_form_after_build';
   return $form;
 }
@@ -393,10 +399,10 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
       }
       $fields[$sf_field] = t('Donation - !first !last (!date)',
         array(
-        '!first' => $donation->donation['first_name'],
-        '!last' => $donation->donation['last_name'],
-        '!date' => gmdate('Y-m-d H:i:s\Z', $date),
-      ));
+          '!first' => $donation->donation['first_name'],
+          '!last' => $donation->donation['last_name'],
+          '!date' => gmdate('Y-m-d H:i:s\Z', $date),
+        ));
     }
   }
 
