@@ -1362,6 +1362,14 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
 
       fundraiser_donation_create($new_donation);
       $next_charge = strtotime('+ ' . $processed_months . ' months');
+
+      $context = array(
+        'master_did' => $donation->did,
+        'did' => $new_donation->did,
+      );
+      // Allow other modules to adjust next_charge as needed.
+      drupal_alter('fundraiser_sustainers_recurring_next_charge', $next_charge, $context);
+
       fundraiser_donation_comment($new_donation, 'Sustainer donation scheduled to be charged at @next_charge',
         array('@next_charge' => format_date($next_charge)));
       // After this, the donation did and donation data is set.

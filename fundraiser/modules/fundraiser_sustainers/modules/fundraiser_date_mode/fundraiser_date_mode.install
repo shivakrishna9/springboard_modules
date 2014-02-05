@@ -32,6 +32,7 @@ function fundraiser_date_mode_schema() {
       ),
     ),
     'primary key' => array('did'),
+    'indexes' => array('master_did' => array('master_did')),
   );
   return $schema;
 }

@@ -58,11 +58,19 @@ function fundraiser_date_mode_admin_submit($form, $form_state) {
 
   $mode_changed = !($date_mode_setting == $form_state['values']['fundraiser_date_mode_set_date_mode']);
   $date_changed = !($date_setting == $form_state['values']['fundraiser_date_mode_set_dates']);
+  if ($mode_changed && $form_state['values']['fundraiser_date_mode_set_date_mode']) {
+    $op = 'date_mode_enabled';
+  }
+  elseif ($mode_changed && !$form_state['values']['fundraiser_date_mode_set_date_mode']) {
+    $op = 'date_mode_disabled';
+  }
+  elseif ($date_changed && $form_state['values']['fundraiser_date_mode_set_date_mode']) {
+    $op = 'date_mode_date_changed';
+  }
 
   // Date mode setting has changed or date mode is enabled and the process date has changed.
   if ($mode_changed || ($form_state['values']['fundraiser_date_mode_set_date_mode'] && $date_changed)) {
-    drupal_set_message('date mode settings changed, batch em up');
-    $batch = fundraiser_date_mode_update_date_mode_batch($form_state['values']['fundraiser_date_mode_set_date_mode'], $form_state['values']['fundraiser_date_mode_set_dates']);
+    $batch = fundraiser_date_mode_update_date_mode_batch($op, $form_state['values']['fundraiser_date_mode_set_date_mode'], $form_state['values']['fundraiser_date_mode_set_dates']);
     batch_set($batch);
 
   }
@@ -74,58 +82,75 @@ function fundraiser_date_mode_admin_submit($form, $form_state) {
  * @param $date
  * @return array
  */
-function fundraiser_date_mode_update_date_mode_batch($mode, $date) {
+function fundraiser_date_mode_update_date_mode_batch($op, $date) {
   $time = '01:01:01'; // One minute, one second after 1am.
   $operations = array();
-  $now = strtotime('now');
+  $now = time();
   $series_data = fundraiser_date_mode_get_sustainer_series_data();
   $master_ids = array_keys($series_data);
   $max = count($master_ids);
   foreach ($master_ids as $master_id) {
     // we pass mode, date, and time to every operation call even though they don't change.
-    // The reason is because we cana't seem to be able to set $context['sandbox'] otherwise.
-    $operations[] = array('fundraiser_date_mode_update_date_mode_operation', array($mode, $date, $time, $master_id, $max, $series_data[$master_id]));
+    $operations[] = array('fundraiser_date_mode_update_date_mode_operation', array($op, $date, $time, $master_id, $max, $series_data[$master_id]));
   }
 
   $batch = array(
     'operations' => $operations,
     'finished' => 'fundraiser_date_mode_update_date_mode_finished',
-    // We can define custom messages instead of the default ones.
     'title' => t('Processing sustainers for date mode update'),
     'init_message' => t('Date mode update is starting.'),
     'progress_message' => t('Processed @current sustainer sets out of @total.'),
     'error_message' => t('The date mode update has encountered an error.'),
-  );
+  );continue
   return $batch;
 }
 
-function fundraiser_date_mode_update_date_mode_operation($mode, $date, $time, $master_did, $max, $data) {
-  $master_order = $data['master_order'];
-  $series_orders = $data['series'];
-  drupal_set_message('original next charge:' . date('m/d/Y G:i:s', $master_order['next_charge']));
-  drupal_set_message('new day:' . $date);
-  $time_delta = _fundraiser_date_mode_calculate_delta($mode, $master_order['next_charge'], $date);
-  drupal_set_message('time delta:' . $time_delta);
-  $orders_to_process = _fundraiser_date_mode_orders_to_change($series_orders, $time_delta);
-  dsm($orders_to_process, 'orders to process');
-  fundraiser_date_mode_update_sustainer_dates($time_delta, $master_did, array_keys($orders_to_process));
-  // 86400 seconds in a day.
-  return;
-
-
+function fundraiser_date_mode_update_date_mode_operation($op, $date, $time, $master_did, $max, $data) {
   // initialize some sandbox values
   if (!isset($context['sandbox']['progress'])) {
     // Use the $context['sandbox'] at your convenience to store the
     // information needed to track progression between successive calls.
-    $context['sandbox']['mode'] = $mode;
+    $context['sandbox']['op'] = $op;
     $context['sandbox']['date'] = $date;
-    $context['sandbox']['time'] = $time;
     $context['sandbox']['now'] = strtotime('now');
     // count the number of sustainers to process
     $context['sandbox']['progress'] = 0;
-    $context['sandbox']['max'] = $max;
     $contents['sandbox']['data'] = $data;
   }
+  $master_order = $data['master_order'];
+  $series_orders = $data['series'];
+  drupal_set_message('original next charge:' . date('m/d/Y G:i:s', $master_order['next_charge']));
+  drupal_set_message('new day:' . $date);
+
+  switch ($op) {
+    case 'date_mode_enabled':
+      // Store existing next_charge dates in case date mode is disabled. This
+      // guarantees we have the original charge dates when rolling back changes
+      // made when date mode is enabled.
+      fundraiser_date_mode_save_series_charge_dates($master_did);
+      _fundraiser_date_mode_alter_next_charge($date, $master_order, $series_orders);
+      break;
+    case 'date_mode_disabled':
+      // Revert to original dates.
+     _fundraiser_date_mode_revert_sustainer_dates($master_order, $series_orders);
+      break;
+    case 'date_mode_date_changed':
+      // modify converted dates
+      _fundraiser_date_mode_alter_next_charge($date, $master_order, $series_orders);
+      break;
+    default:
+      return;
+  }
+
+  $time_delta = _fundraiser_date_mode_calculate_delta($master_order['next_charge'], $date);
+  drupal_set_message('delta:' . $time_delta/86400);
+  if ($time_delta == 0) {
+   $time_delta = _fundraiser_date_mode_calculate_delta($series_orders[0]['next_charge'], $date);
+    drupal_set_message('delta recalculated:' . $time_delta/86400);
+  }
+
+  // 86400 seconds in a day.
+  return;
 
   // offset number of months from the baseline date
   $increment = 0;
@@ -144,37 +169,8 @@ function fundraiser_date_mode_update_date_mode_operation($mode, $date, $time, $m
     }
     else {
 
-      //$original_date = fundraiser_date_mode_get_original_next_charge($order['did']);
     }
     return;
-    // skip past orders
-    if ($order['next_charge'] < $now) {
-      continue;
-    }
-
-    // if the next charge is in this month, leave it alone.
-    // This should prevent sliding charges into the past.
-    if ($order_time['year'] == $current_time['year'] && $order_time['month'] == $current_time['month']) {
-      continue;
-    }
-
-    // Skip future failed and canceled orders.
-    // This also shouldn't happen, $data should only contain orders with
-    // NULL gateway_resp.
-    if (in_array($order['gateway_resp'], array('failed', 'canceled'))) {
-      continue;
-    }
-
-    // No change, skip it.
-    if ($order['next_charge'] == $new_date) {
-      continue;
-    }
-
-    // do the update
-    fundraiser_date_mode_update_sustainer_date($timestamo, $order_id);
-    db_query('UPDATE {fundraiser_recurring} ' .
-      'SET next_charge = %d ' .
-      'WHERE order_id = %d', $new_date, $order['order_id']);
 
     // update the order in salesforce
     if (module_exists('sf_donation')) {
@@ -206,98 +202,38 @@ function fundraiser_date_mode_update_date_mode_finised() {
 }
 
 
-function fundraiser_date_mode_get_sustainer_series_data($master_did) {
-  $results = db_query('
-    SELECT *
-    FROM {fundraiser_sustainers}
-    WHERE
-      master_did = :master_did
-  ', array(':master_did' => $master_did));
 
-  while ($row = $results->fetchAssoc()) {
-    if ($row['master_did'] == $row['did']) {
-      $data[$row['master_did']]['master_order'] = $row;
+function _fundraiser_date_mode_alter_next_charge($date, $master_order, $series_orders) {
+  $orders_to_process = _fundraiser_date_mode_orders_to_change($series_orders, $date);
+
+  $master_order_date = _fundraiser_date_mode_explode_date($master_order['next_charge']);
+  $orders_on_same_day = _fundraiser_date_mode_validate_order_dates($orders_to_process, $master_order_date['day']);
+
+  if (count($orders_to_process) == 0) {
+    return;
+  }
+  else {
+    // Some of the sustainer series next_charge dates need to be
+    // moved to the day sustainers will be processed on. They all currently
+    // fall on the same day of the month so they can be updated in bulk.
+    if  ($orders_on_same_day) {
+      // Do mass date conversion.
+      $time_delta = _fundraiser_date_mode_calculate_delta($master_order['next_charge'], $date);
+      fundraiser_date_mode_update_sustainer_date($time_delta, $master_order['master_did'], $orders_to_process);
     }
     else {
-      if ($row['next_charge'] > time() && empty($row['gateway_resp'])) {
-        $data[$row['master_did']]['series'][] = $row;
+      // Some of the next_charge dates in this series are on different days
+      // of the month. This means we have to calculate time_delta for orders
+      // individually to make sure they all get updated correctly.
+      // TODO: add max to context to prevent partial conversions.
+      foreach ($series_orders as $order) {
+        $time_delta = _fundraiser_date_mode_calculate_delta($order['next_charge'], $date);
+        fundraiser_date_mode_update_sustainer_date($time_delta, $order['master_did'], $order['did']);
       }
     }
   }
-  return $data;
-}
-/*
- *     AND
-      did != master_did
-    AND
-      next_charge > UNIX_TIMESTAMP(NOW())
-    AND
-      gateway_resp IS NULL
- */
-
-function fundraiser_date_mode_update_sustainer_dates($time_delta, $master_did, $dids) {
-  $operator = $time_delta < 0 ? '-' : '+';
-  $query = db_update('fundraiser_sustainers') // Table name no longer needs {}
-    ->expression('next_charge', 'next_charge ' . $operator . ' :delta', array(':delta' => $time_delta))
-    ->condition('master_did', $master_did, '=')
-    ->condition('did', $dids, 'IN');
-  dsm($query->__toString(), 'update query');
-  dsm($query->arguments(), 'arguments');
-  $query->execute();
 }
 
-function fudnraiser_date_mode_save_original_date($master_did, $did, $timestamp) {
 
-}
 
-function _fundraiser_date_mode_explode_date($timestamp) {
-  $date_string = date('Y/n/j/G/i/s', $timestamp);
-  $date = explode('/', $date_string);
-  $time = array(
-    'year' => $date[0],
-    'month' => $date[1],
-    'day' => $date[2],
-    'hour' => $date[3],
-    'minute' => $date[4],
-    'second' => $date[5],
-  );
-  return $time;
-}
 
-function _fundraiser_date_mode_orders_to_change($orders, $time_delta) {
-  $selected_orders = array();
-  $current_time = _fundraiser_date_mode_explode_date(time());
-
-  foreach ($orders as $order) {
-    $order_time = _fundraiser_date_mode_explode_date($order['next_charge']);
-    // Ignore orders that are ready to process.
-    if ($order['next_charge'] < $current_time) {
-      continue;
-    }
-    // if the next charge is in this month, leave it alone.
-    // This should prevent sliding charges into the past.
-    if ($order_time['year'] == $current_time['year'] && $order_time['month'] == $current_time['month']) {
-      continue;
-    }
-
-    // Skip future failed and canceled orders.
-    // This also shouldn't happen, $data should only contain orders with
-    // NULL gateway_resp.
-    if (in_array($order['gateway_resp'], array('failed', 'canceled'))) {
-      continue;
-    }
-    // No change, skip it.
-    if ($order['next_charge'] == $new_date) {
-      continue;
-    }
-    $selected_orders[$order['did']] = $order;
-  }
-  return $orders;
-}
-
-function _fundraiser_date_mode_calculate_delta($mode, $charge_time, $date) {
-  $original_charge_date = _fundraiser_date_mode_explode_date($charge_time);
-  // 86400 seconds in 24 hours.
-  $delta = ($original_charge_date['day'] - $date) * 86400;
-  return $delta;
-}
