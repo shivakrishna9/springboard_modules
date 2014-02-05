@@ -148,12 +148,12 @@ function form_layout_delete($machine_name) {
 function form_layout_fundraiser_field_info() {
   $fields = array();
 
-  $fields['left_sidebar'] = array(
-    '#title' => t('Left sidebar'),
-    '#type' => 'fieldset',
-    '#required' => 0,
-    '#display_callback' => 'form_layout_left_sidebar_display',
-  );
+  // $fields['left_sidebar'] = array(
+  //   '#title' => t('Left sidebar'),
+  //   '#type' => 'fieldset',
+  //   '#required' => 0,
+  //   '#display_callback' => 'form_layout_left_sidebar_display',
+  // );
 
   $fields['top_region'] = array(
     '#title' => t('Top region'),
@@ -183,12 +183,12 @@ function form_layout_fundraiser_field_info() {
     '#display_callback' => 'form_layout_bottom_region_display',
   );
 
-  $fields['right_sidebar'] = array(
-    '#title' => t('Right sidebar'),
-    '#type' => 'fieldset',
-    '#required' => 0,
-    '#display_callback' => 'form_layout_right_sidebar_display',
-  );
+  // $fields['right_sidebar'] = array(
+  //   '#title' => t('Right sidebar'),
+  //   '#type' => 'fieldset',
+  //   '#required' => 0,
+  //   '#display_callback' => 'form_layout_right_sidebar_display',
+  // );
 
   return $fields;
 }
@@ -242,7 +242,7 @@ function theme_form_layout_region($variables) {
 
   element_set_attributes($element, array('id'));
 
-  $output = '<div' . drupal_attributes($element['#attributes']) . '>';
+  $output = '<div' . drupal_attributes($element['#attributes']) . '><div class="inner">';
   if (!empty($element['#title'])) {
     $output .= '<div class="div-title">' . $element['#title'] . '</div>';
   }
@@ -253,7 +253,7 @@ function theme_form_layout_region($variables) {
   if (isset($element['#value'])) {
     $output .= $element['#value'];
   }
-  $output .= "</div>\n";
+  $output .= "</div></div>\n";
   return $output;
 }
 
@@ -265,19 +265,19 @@ function theme_form_layout_region($variables) {
  * @return array
  *   The modified field array.
  */
-function form_layout_left_sidebar_display($form, $form_state, $field) {
-  $sidebar_class = form_layout_get_sidebar_class_name($form['#node']);
-  // Note that we're intentionally removing other classes here.
-  $field['#attributes']['class'] = array('fieldset', 'left-sidebar', 'span3');
-  $field['#title'] = '';
-  $field['#weight'] = -60;
-  $field['#theme_wrappers'][] = 'form_layout_region';
-  // These are closed in the bottom region suffix.
-  $field['#prefix'] = '<div class="' . $sidebar_class . '">';
-  $field['#prefix'] .= '<div class="container"><div class="row"><div class="span12">';
+// function form_layout_left_sidebar_display($form, $form_state, $field) {
+//   $sidebar_class = form_layout_get_sidebar_class_name($form['#node']);
+//   // Note that we're intentionally removing other classes here.
+//   $field['#attributes']['class'] = array('fieldset', 'left-sidebar', 'span3');
+//   $field['#title'] = '';
+//   $field['#weight'] = -60;
+//   $field['#theme_wrappers'][] = 'form_layout_region';
+//   // These are closed in the bottom region suffix.
+//   $field['#prefix'] = '<div class="' . $sidebar_class . '">';
+//   $field['#prefix'] .= '<div class="container"><div class="layout-row"><div class="span12">';
 
-  return $field;
-}
+//   return $field;
+// }
 
 /**
  * Display callback for the right sidebar.
@@ -287,18 +287,18 @@ function form_layout_left_sidebar_display($form, $form_state, $field) {
  * @return array
  *   The modified field array.
  */
-function form_layout_right_sidebar_display($form, $form_state, $field) {
-  // Note that we're intentionally removing other classes here.
-  $field['#attributes']['class'] = array('fieldset', 'right-sidebar', 'span3');
-  $field['#title'] = '';
-  $field['#weight'] = -55;
-  $field['#theme_wrappers'][] = 'form_layout_region';
+// function form_layout_right_sidebar_display($form, $form_state, $field) {
+//   // Note that we're intentionally removing other classes here.
+//   $field['#attributes']['class'] = array('fieldset', 'right-sidebar', 'span3');
+//   $field['#title'] = '';
+//   $field['#weight'] = -55;
+//   $field['#theme_wrappers'][] = 'form_layout_region';
 
-  // Closed in bottom region.
-  $field['#prefix'] = '<div class="middle-right-sidebar">';
+//   // Closed in bottom region.
+//   $field['#prefix'] = '<div class="middle-right-sidebar">';
 
-  return $field;
-}
+//   return $field;
+// }
 
 /**
  * Display callback for the top region.
@@ -310,9 +310,9 @@ function form_layout_right_sidebar_display($form, $form_state, $field) {
  */
 function form_layout_top_region_display($form, $form_state, $field) {
   // Note that we're intentionally removing other classes here.
-  $field['#attributes']['class'] = array('span12', 'fieldset');
+  $field['#attributes']['class'] = array('span12', 'fieldset', 'form-layouts');
   $field['#title'] = '';
-  $field['#prefix'] = '<div class="center-area"><div class="row">';
+  $field['#prefix'] = '<div class="center-area"><div class="layout-row">';
   $field['#suffix'] = '</div>';
   $field['#weight'] = -50;
   $field['#theme_wrappers'][] = 'form_layout_region';
@@ -329,11 +329,11 @@ function form_layout_top_region_display($form, $form_state, $field) {
  */
 function form_layout_left_region_display($form, $form_state, $field) {
   // Note that we're intentionally removing other classes here.
-  $field['#attributes']['class'] = array('span6', 'fieldset');
+  $field['#attributes']['class'] = array('span6', 'fieldset', 'form-layouts');
   $field['#title'] = '';
 
   // This div gets closed after the right region.
-  $field['#prefix'] = '<div class="row">';
+  $field['#prefix'] = '<div class="layout-row">';
 
   $field['#weight'] = -49;
 
@@ -351,7 +351,7 @@ function form_layout_left_region_display($form, $form_state, $field) {
  */
 function form_layout_right_region_display($form, $form_state, $field) {
   // Note that we're intentionally removing other classes here.
-  $field['#attributes']['class'] = array('span6', 'fieldset');
+  $field['#attributes']['class'] = array('span6', 'fieldset', 'form-layouts');
   $field['#title'] = '';
 
   // This div was opened before the left region.
@@ -374,9 +374,9 @@ function form_layout_right_region_display($form, $form_state, $field) {
  */
 function form_layout_bottom_region_display($form, $form_state, $field) {
   // Note that we're intentionally removing other classes here.
-  $field['#attributes']['class'] = array('span12', 'fieldset');
+  $field['#attributes']['class'] = array('span12', 'fieldset', 'form-layouts');
   $field['#title'] = '';
-  $field['#prefix'] = '<div class="row">';
+  $field['#prefix'] = '<div class="layout-row">';
 
   // Closes row
   $field['#suffix'] = '</div>';
@@ -385,14 +385,14 @@ function form_layout_bottom_region_display($form, $form_state, $field) {
   $field['#suffix'] .= '</div>';
 
   // Closes middle-right-sidebar.
-  $field['#suffix'] .= '</div>';
+  // $field['#suffix'] .= '</div>';
 
   // These divs are opened in left sidebar prefix.
   // span12, row, container
-  $field['#suffix'] .= '</div></div></div>';
+  // $field['#suffix'] .= '</div></div></div>';
 
   // Closes both-sidebars
-  $field['#suffix'] .= '</div>';
+  // $field['#suffix'] .= '</div>';
 
   $field['#weight'] = -47;
 
@@ -693,50 +693,50 @@ function form_layout_get_node_layout($nid) {
  * @return string
  *   The CSS class name.
  */
-function form_layout_get_sidebar_class_name($node) {
-  $sidebar_cids = form_layout_get_sidebar_cids($node);
-  $has_content = array(
-    'left_sidebar' => FAlSE,
-    'right_sidebar' => FALSE,
-  );
-  foreach ($node->webform['components'] as $component) {
-    foreach ($sidebar_cids as $form_key => $cid) {
-      if ($component['pid'] == $cid) {
-        $has_content[$form_key] = TRUE;
-      }
-    }
-  }
+// function form_layout_get_sidebar_class_name($node) {
+//   $sidebar_cids = form_layout_get_sidebar_cids($node);
+//   $has_content = array(
+//     'left_sidebar' => FAlSE,
+//     'right_sidebar' => FALSE,
+//   );
+//   foreach ($node->webform['components'] as $component) {
+//     foreach ($sidebar_cids as $form_key => $cid) {
+//       if ($component['pid'] == $cid) {
+//         $has_content[$form_key] = TRUE;
+//       }
+//     }
+//   }
 
-  if ($has_content['left_sidebar'] && $has_content['right_sidebar']) {
-    return 'both-sidebars';
-  }
-  elseif ($has_content['left_sidebar'] || $has_content['right_sidebar']) {
-    return 'single-sidebar';
-  }
+//   if ($has_content['left_sidebar'] && $has_content['right_sidebar']) {
+//     return 'both-sidebars';
+//   }
+//   elseif ($has_content['left_sidebar'] || $has_content['right_sidebar']) {
+//     return 'single-sidebar';
+//   }
 
-  return '';
-}
+//   return '';
+// }
 
-/**
- * Gets the component IDs of the left and right sidebar fieldsets.
- *
- * @param object $node
- *   Webform node.
- *
- * @return array
- *   An array of webform component IDs, keyed by form_key
- */
-function form_layout_get_sidebar_cids($node) {
-  $cids = array();
-  foreach ($node->webform['components'] as $component) {
-    if (in_array($component['form_key'], array('left_sidebar', 'right_sidebar'))) {
-      $cids[$component['form_key']] = $component['cid'];
+// /**
+//  * Gets the component IDs of the left and right sidebar fieldsets.
+//  *
+//  * @param object $node
+//  *   Webform node.
+//  *
+//  * @return array
+//  *   An array of webform component IDs, keyed by form_key
+//  */
+// function form_layout_get_sidebar_cids($node) {
+//   $cids = array();
+//   foreach ($node->webform['components'] as $component) {
+//     if (in_array($component['form_key'], array('left_sidebar', 'right_sidebar'))) {
+//       $cids[$component['form_key']] = $component['cid'];
 
-      if (count($cids) == 2) {
-        return $cids;
-      }
-    }
-  }
+//       if (count($cids) == 2) {
+//         return $cids;
+//       }
+//     }
+//   }
 
-  return $cids;
-}
+//   return $cids;
+// }

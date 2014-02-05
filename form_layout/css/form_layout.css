@@ -1,4 +1,4 @@
-form .left-sidebar {
+/*form .left-sidebar {
   float: left;
   min-height: 600px;
 }
@@ -11,22 +11,30 @@ form .right-sidebar {
 .both-sidebars [class*="span"],
 .both-sidebars .row {
   margin-left: 0;
-}
+}*/
 
 .center-area {
   overflow: hidden;
 }
-
+/*
 .middle-right-sidebar {
   overflow: hidden;
 }
 
-form .both-sidebars .center-area .span12 {
+form .both-sidebars .center-area .layout-full {
   width: 100%;
   clear: both;
 }
 
-form .both-sidebars .center-area .span6 {
+form .both-sidebars .center-area .layout-half {
   width: 50%;
   clear: none;
+}*/
+
+div#webform-component-left-region {
+  float:left;
+}
+
+div#webform-component-right-region {
+  float:right;
 }
