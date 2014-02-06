@@ -242,13 +242,13 @@ function fundraiser_upsell_node_form_validate($form, &$form_state) {
   // @todo Maybe get email wrappers validate happening.
   // Validate email wrappers won't work because they're conditional on
   // upsell being enabled.
-//  if (module_exists('email_wrappers')) {
-//    $email_wrappers_form_state = array(
-//      'values' => $form_state['values']['fundraiser_upsell']['email_wrappers'],
-//    );
-//    module_load_include('inc', 'email_wrappers', 'email_wrappers.api');
-//    email_wrappers_mail_form_validate($form, $email_wrappers_form_state);
-//  }
+  //  if (module_exists('email_wrappers')) {
+  //    $email_wrappers_form_state = array(
+  //      'values' => $form_state['values']['fundraiser_upsell']['email_wrappers'],
+  //    );
+  //    module_load_include('inc', 'email_wrappers', 'email_wrappers.api');
+  //    email_wrappers_mail_form_validate($form, $email_wrappers_form_state);
+  //  }
 }
 
 /**
@@ -284,6 +284,15 @@ function fundraiser_upsell_save_email_wrapper_settings($nid, $values) {
   email_wrappers_mail_form_submit($form, $email_wrappers_form_state);
 }
 
+/**
+ * Retrieve the upsell mail settings for the given node.
+ *
+ * @param int $nid
+ *   Node ID
+ *
+ * @return bool|object
+ *   The mail settings or FALSE.
+ */
 function fundraiser_upsell_load_email_wrapper_settings($nid) {
   $params = array(
     'module' => 'fundraiser_upsell',
@@ -816,6 +825,7 @@ function fundraiser_upsell_theme() {
  * Theme callback for the upsell modal.
  *
  * @param array $variables
+ *   The theme variables.
  *
  * @return string
  *   The HTML for the modal.
@@ -1099,7 +1109,7 @@ function fundraiser_upsell_create_master_donation($upsold_donation, $new_amount)
   // If charging immediately, run through the normal process.
   elseif ($charge_time == 'immediately') {
 
-    $next_charge = strtotime('+1 month');
+    $next_charge = strtotime('now');
     fundraiser_donation_comment($master_donation, 'Initial Upsell donation scheduled to be charged at @next_charge',
       array('@next_charge' => format_date($next_charge)));
 
@@ -1113,6 +1123,10 @@ function fundraiser_upsell_create_master_donation($upsold_donation, $new_amount)
     );
     // Update the recurring table.
     _fundraiser_sustainers_create_recurring($recurring_donation_record);
+
+    // Reload the donation before processing it so the recurring property
+    // gets added.
+    $master_donation = fundraiser_donation_get_donation($master_donation->did, TRUE);
 
     // Process the donation.  Since it references the original donation,
     // we don't need payment info.
@@ -1174,7 +1188,7 @@ function fundraiser_upsell_set_acceptance_cookie() {
 /**
  * Get the donation ID of the upsold donation given the master donation ID.
  *
- * @param $upsell_did
+ * @param int $upsell_did
  *   The donation ID of the master donation in the upsell sustainer series.
  *
  * @return int|bool
