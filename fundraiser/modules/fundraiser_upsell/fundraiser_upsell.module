@@ -894,10 +894,6 @@ function theme_fundraiser_upsell_modal($variables) {
   $content .= '<div id="message-modal" class="live-modal ' . $variables['class'];
   $content .= '" style="' . $upsell_size . '">';
 
-  if ($variables['preview']) {
-    $content .= '<p><strong>' . t('Preview.  Accepting this upsell will not create any donations.') . '</strong></p>';
-  }
-
   $content .= '<div class="message-content">' . $variables['content'] . '</div>';
 
   $form = drupal_get_form('fundraiser_upsell_donation_form', $variables['did'], $variables['preview']);
