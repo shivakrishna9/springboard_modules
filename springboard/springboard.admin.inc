@@ -194,6 +194,8 @@ function springboard_admin_config(&$form, $form_state) {
     }
     // Configure user profiles
     springboard_admin_config_profile($form, $form_state);
+    // Configure secure prepopulate synonyms
+    springboard_admin_configure_prepopulate_synonyms();
     // Configure a default fundraiser type
     springboard_admin_config_donation_form_type($form, $form_state);
     set_time_limit(300);
@@ -230,6 +232,7 @@ function springboard_admin_config_modules($form, $form_state) {
     'springboard_views',
     'springboard_version',
     'clone', // Temp comment out, pending add to build script. Node clone support.
+    'secure_prepopulate',
   );
   if ($form_state['values']['order_handling'] == 'ubercart') {
     $modules[] = 'fundraiser_ubercart';
@@ -1443,6 +1446,33 @@ function springboard_admin_config_salesforce($form, $form_state) {
   $mapping = entity_import('salesforce_mapping', $default_map_user_to_contact);
   entity_save('salesforce_mapping', $mapping);
   drupal_set_message('Drupal user entity has been mapped to Salesforce Contact object.');
+}
+
+/**
+ * Configure a default set of secure prepopulate synonyms
+ * to working with donation forms and webform user forms.
+ */
+function springboard_admin_configure_prepopulate_synonyms() {
+  $synonyms = array(
+    'first_name' => 'sbp_first_name',
+    'last_name' => 'sbp_last_name',
+    'address' => 'sbp_address',
+    'address_line_2' => 'sbp_address_line_2',
+    'city' => 'sbp_city',
+    'state' => 'sbp_state',
+    'zip' => 'sbp_zip',
+    'country' => 'sbp_country',
+  );
+
+  if (module_exists('secure_prepopulate')) {
+    foreach ($synonyms as $form_key => $synonym) {
+      $settings = array(
+        'token_key' => $form_key,
+        'synonyms' => $synonym,
+      );
+      secure_prepopulate_save_synonym($settings);
+    }
+  }
 }
 
 /**
