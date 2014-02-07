@@ -894,14 +894,20 @@ function theme_fundraiser_upsell_modal($variables) {
   $content .= '<div id="message-modal" class="live-modal ' . $variables['class'];
   $content .= '" style="' . $upsell_size . '">';
 
+  $content .= '<div class="modal-body">';
   $content .= '<div class="message-content">' . $variables['content'] . '</div>';
 
   $form = drupal_get_form('fundraiser_upsell_donation_form', $variables['did'], $variables['preview']);
   $content .= drupal_render($form);
 
   $content .= '<div id="message-footer">' . $variables['footer'] . '</div>';
-  $content .= '</div></div>';
+  // Closes modal-body.
+  $content .= '</div>';
 
+  // Closes live modal.
+  $content .= '</div>';
+
+  $content .= '</div>';
   return $content;
 }
 
@@ -976,22 +982,41 @@ function fundraiser_upsell_create_modal_variables($node) {
 function fundraiser_upsell_ajax_process($node) {
   // @todo Do something safer with this.
   $data = $_POST;
-  if (isset($data['preview']) && $data['preview']) {
+
+  // Default to showing the close button unless we need to display the
+  // form again.
+  $show_close = TRUE;
+
+  // If we have a form token and it's invalid, don't let anything happen.
+  // We normally won't have a form token for anonymous users.
+  if (isset($data['form_token']) && !drupal_valid_token($data['form_token'], $data['form_id'], TRUE)) {
+    watchdog('fundraiser_upsell', 'Upsell donation %did failed because of an invalid form token.', array('%did' => $data['did']), WATCHDOG_NOTICE);
+    $content = t('There was a problem with your donation. Please try again');
+  }
+  elseif ($data['amount'] < $node->minimum_donation_amount) {
+    $content = '<p>' . t('Please enter a minimum donation amount of @amount', array('@amount' => '$' . number_format($node->minimum_donation_amount, 2)));
+    $form = drupal_get_form('fundraiser_upsell_donation_form', $data['did'], $data['preview']);
+
+    $content .= drupal_render($form);
+    // Don't show the close button because we have to rerender the form.
+    $show_close = FALSE;
+  }
+  elseif (isset($data['preview']) && $data['preview']) {
     // Generate the thank you content.
     // Note that token replacement doesn't happen on a preview
     // since we don't have a donation.
     $content = $node->fundraiser_upsell['thankyou'];
   }
-  // If we have a form token and it's invalid, don't let anything happen.
-  // We normally won't have a form token for anonymous users.
-  elseif (isset($data['form_token']) && !drupal_valid_token($data['form_token'], $data['form_id'], TRUE)) {
-    watchdog('fundraiser_upsell', 'Upsell donation %did failed because of an invalid form token.', array('%did' => $data['did']), WATCHDOG_NOTICE);
-    $content = t('There was a problem with your donation. Please try again');
-  }
   else {
     $content = fundraiser_upsell_upsell_ajax_submit($data);
   }
-  drupal_json_output($content);
+
+  $response = array(
+    'content' => $content,
+    'showClose' => $show_close,
+  );
+
+  drupal_json_output($response);
 }
 
 /**
