@@ -126,7 +126,7 @@ function fundraiser_upsell_add_node_settings(&$form) {
 
   $form['fundraiser_upsell']['charge_time'] = array(
     '#title' => t('When to charge the first upsell donation.'),
-    '#description' => t('When to charge the upsell donation after the initial one time donation.'),
+    '#description' => t('When to charge the upsell donation after the initial one time donation.  Note that charging in one month does not work for offsite recurring payment methods and the upsell modal will not display in those cases.'),
     '#type' => 'radios',
     '#options' => array(
       'immediately' => t('Charge immediately after the initial one time donation.'),
