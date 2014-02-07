@@ -572,6 +572,8 @@ function fundraiser_commerce_fundraiser_get_credit_encryption_path() {
 function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
   // Load the order object, line items and profile.
   $order = commerce_order_load($donation->did);
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+
   // Data from order.
   $donation->donation['mail'] = isset($order->mail) ? $order->mail : '';
   // Reverse the work done by commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency'])
@@ -580,17 +582,19 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
     $order->commerce_order_total[LANGUAGE_NONE][0]['currency_code']);
   $donation->donation['quantity'] = 1;
   $donation->donation['hostname'] = $order->hostname;
-  $found = commerce_line_item_load_multiple(array(), array('order_id' => $order->order_id));
-  $line_item_id = -1;
-  foreach ($found as $id => $found) {
-    $line_item_id = $id;
+
+  // Check for a donation line item that may contain a quantity
+  foreach ($order_wrapper->commerce_line_items as $line_item_wrapper) {
+    if ($line_item_wrapper->type->value() == 'donation' && $line_item_wrapper->quantity->value() > 1) {
+      // Reset the donation amount and quantity from this line item
+      $donation->donation['quantity'] = $line_item_wrapper->quantity->value();
+      $donation->donation['amount'] = commerce_currency_amount_to_decimal(
+        $line_item_wrapper->commerce_unit_price->amount->value(),
+        $line_item_wrapper->commerce_unit_price->currency_code->value()
+      );
+    }
   }
-  if ($line_item_id != -1) {
-    $line_item = commerce_line_item_load($line_item_id);
-    $donation->donation['quantity'] = $line_item->quantity;
-    $donation->donation['amount'] = commerce_currency_amount_to_decimal($line_item->commerce_unit_price[LANGUAGE_NONE][0]['amount'],
-      $line_item->commerce_unit_price[LANGUAGE_NONE][0]['currency_code']);
-  }
+
   // Data from profile.
   if (isset($order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'])) {
     $profile = commerce_customer_profile_load($order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id']);
@@ -688,30 +692,38 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   // Create new order.
   $order = commerce_order_new($user->uid, 'pending', 'commerce_order');
   commerce_order_save($order);
-  $order->email = isset($donation->donation['mail']) ? $donation->donation['mail'] : '';
 
-  // Create a line item for this order. Contains order amount info.
-  $line_item = commerce_line_item_new('donation', $order->order_id);
-  $line_item->line_item_label = t('Donation');
-  $line_item->quantity = $quantity;
-  $line_item->commerce_unit_price[LANGUAGE_NONE][0] = array(
-    'amount' => commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency']),
-    'currency_code' => $donation->donation['currency'],
-  );
-  // Make sure the line item will be included in the update for order total.
-  $line_item->commerce_unit_price[LANGUAGE_NONE][0]['data'] = commerce_price_component_add(
-    $line_item->commerce_unit_price[LANGUAGE_NONE][0],
-    'base_price',
-    array(
-      'amount' => commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency']),
-      'currency_code' => $donation->donation['currency'],
-      'data' => array(),
-    ),
-    TRUE
-  );
-  commerce_line_item_save($line_item);
-  // Add the line item to the order.
-  $order->commerce_line_items[LANGUAGE_NONE][0]['line_item_id'] = $line_item->line_item_id;
+  // Give other modules an opportunity to create the line items.
+  $line_items_created = FALSE;
+  foreach (module_implements('fundraiser_commerce_generate_line_items') as $module) {
+    $function = $module . '_fundraiser_commerce_generate_line_items';
+    $line_items_created = $function($donation, $order);
+    if ($line_items_created == TRUE){
+      break;
+    }
+  }
+
+  if (!$line_items_created) {
+    // If no other module has, create a line item for this order.
+    $line_item = commerce_line_item_new('donation', $order->order_id);
+    $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
+    $line_item_wrapper->quantity = $quantity;
+    $line_item_wrapper->commerce_unit_price->amount = commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency']);
+    $line_item_wrapper->commerce_unit_price->currency_code = $donation->donation['currency'];
+
+    $line_item_wrapper->commerce_unit_price->data = commerce_price_component_add(
+      $line_item_wrapper->commerce_unit_price->value(),
+      'base_price',
+      $line_item_wrapper->commerce_unit_price->value(),
+      TRUE
+    );
+
+    // Save the donation line item
+    commerce_line_item_save($line_item_wrapper->value());
+
+    // Add the line item to the order.
+    $order->commerce_line_items[LANGUAGE_NONE][0]['line_item_id'] = $line_item->line_item_id;
+  }
 
   // Save the customer information. Contains billing info.
   // Look up the profile by user id or email, then if not found make a new profile.
@@ -1293,42 +1305,27 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
 
   // Get the original order.
   $order = commerce_order_load($donation->did);
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
   // Update the amount
   if (!empty($donation->update_amount)) {
-    // Update the existing line item(s) with the new value.
-    $found = commerce_line_item_load_multiple(array(), array('order_id' => $order->order_id));
-    $line_item_id = -1;
-    foreach ($found as $id => $found) {
-      $line_item_id = $id;
+    // Update the existing donation line item with the new value.
+    foreach ($order_wrapper->commerce_line_items as $line_item_wrapper) {
+      if ($line_item_wrapper->type->value() == 'donation') {
+        $line_item_wrapper->quantity = $quantity;
+        $line_item_wrapper->commerce_unit_price->amount = commerce_currency_decimal_to_amount(
+          $donation->donation['amount'],
+          $donation->donation['currency']
+        );
+        $line_item_wrapper->commerce_unit_price->currency_code = $donation->donation['currency'];
+
+        // Recalculate the price
+        commerce_line_item_rebase_unit_price($line_item_wrapper->value());
+
+        // Save the donation line item
+        commerce_line_item_save($line_item_wrapper->value());
+      }
     }
-    if ($line_item_id != -1) {
-      $line_item = commerce_line_item_load($line_item_id);
-    }
-    else {
-      $line_item = commerce_line_item_new('donation', $order->order_id);
-    }
-    // Update line item with the new amount information as needed.
-    $line_item->line_item_label = t('Donation');
-    $line_item->quantity = $quantity;
-    $line_item->commerce_unit_price[LANGUAGE_NONE][0] = array(
-      'amount' => commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency']),
-      'currency_code' => $donation->donation['currency'],
-    );
-    // Make sure the line item will be included in the update for order total.
-    $line_item->commerce_unit_price[LANGUAGE_NONE][0]['data'] = commerce_price_component_add(
-      $line_item->commerce_unit_price[LANGUAGE_NONE][0],
-      'base_price',
-      array(
-        'amount' => commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency']),
-        'currency_code' => $donation->donation['currency'],
-        'data' => array(),
-      ),
-      TRUE
-    );
-    commerce_line_item_save($line_item);
-    // Add the line item to the order.
-    $order->commerce_line_items[LANGUAGE_NONE][0]['line_item_id'] = $line_item->line_item_id;
   }
 
   // Update the billing information
