@@ -3,13 +3,14 @@
 Drupal.behaviors.fundraiser_upsell = {
     attach: function(context, settings) {
         // Get the modal window size
-        modalWidth = $('#message-modal').css('width');
-        modalHeight = $('#message-modal').css('height');
+        var modal = $('#message-modal');
+        modalWidth = modal.css('width');
+        modalHeight = modal.css('height');
         // Get the days for the rejection cookie
         rejectionDays = Drupal.settings.fundraiser_upsell.rejectionDays;
         // Pop up the modal on the page load
         $.blockUI({
-            message: $('#message-modal'),
+            message: modal,
             centerY : 0,
             css: {
                 width: modalWidth,
@@ -21,12 +22,7 @@ Drupal.behaviors.fundraiser_upsell = {
         });
         // Assign an ID to the blockUI message
         $('.blockUI.blockMsg').attr('id', 'upsell-modal');
-        // Unblock the UI after the ajax call no matter what happens
-        $( document ).ajaxStop(function() {
-            setTimeout(function() {
-                $.unblockUI();
-            }, 3000);
-        });
+
         // Submit live form
         $('.live-modal #fundraiser-upsell-donation-form').submit(function(e) {
             // Stop the default form submit
@@ -36,7 +32,8 @@ Drupal.behaviors.fundraiser_upsell = {
             path = $(this).attr('action');
             // Update the block message
             var modalMessage = Drupal.t('Processing your sustainer gift...');
-            $('#message-modal').hide().html('<div class="message-content"><h1>' + modalMessage + '</h1></div>').fadeIn(750);
+            $('#message-modal').hide().html('<div class="message-body"><h1>' + modalMessage + '</h1></div>').fadeIn(750);
+            var closeText = Drupal.t('Close');
             // Post the form and process
             $.ajax({
                 type: 'post',
@@ -46,8 +43,18 @@ Drupal.behaviors.fundraiser_upsell = {
                 dataType: 'json',
                 // Display the thank you message if successful
                 success: function(response) {
-                    $('#message-modal .message-content').hide().html(response).fadeIn(750);
-                    $('#message-modal').addClass('thank-you');
+                    if (response.showClose) {
+                        $('#message-modal').append('<div id="modal-close">' + closeText + '</div>');
+                        $('#modal-close').click(function(e) {
+                            e.preventDefault();
+                            $.unblockUI();
+                        });
+                    }
+                    else {
+                        $('#modal-close').remove();
+                    }
+                    $('.message-body', '#message-modal').hide().html(response.content).fadeIn(750);
+                    //$('#message-modal').addClass('thank-you');
                 },
                 // Log the error if there is a problem
                 error: function(msg) {
@@ -64,30 +71,7 @@ Drupal.behaviors.fundraiser_upsell = {
             $.unblockUI();
             return false;
         });
-        // Preview submit function
-        $('.preview-modal #edit-submit').click(function() {
-            // update the block message
-            $.blockUI({
-                message: $('#message-return').html(),
-                centerY : 0,
-                timeout: 3000,
-                css: {
-                    width: modalWidth,
-                    height: modalHeight,
-                    textAlign: 'left',
-                    padding: '1em',
-                    top: '10em'
-                }
-            });
-            // Assign an ID to the blockUI message
-            $('.blockUI.blockMsg').attr('id', 'upsell-modal');
-            return false;
-        });
-        // Preview close button
-        $('.preview-modal #edit-close').click(function() {
-            $.unblockUI();
-            return false;
-        });
+
     }
 };
 
