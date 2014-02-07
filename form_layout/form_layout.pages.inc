@@ -68,7 +68,7 @@ function form_layout_edit($form, &$form_state, $layout) {
 
   $form['submit'] = array(
     '#type' => 'submit',
-    '#value' => 'Edit',
+    '#value' => 'Save',
   );
 
   return $form;
@@ -119,7 +119,6 @@ function form_layout_form($machine_name = NULL, $layout = NULL) {
   $elements = form_layout_get_fieldset_keys();
 
   foreach ($elements as $element) {
-
     if (isset($layout['layout'])) {
       $default_region_value = form_layout_find_region_value_by_element($element, $layout['layout']);
     }
@@ -264,9 +263,11 @@ function form_layout_machine_name_exists($name) {
  *   The region name
  */
 function form_layout_find_region_value_by_element($needle, $haystack) {
-  foreach ($haystack as $region) {
-    if (isset($region[$needle])) {
-      return $region[$needle];
+  foreach ($haystack as $region => $fieldset) {
+    foreach($fieldset as $index => $field) {
+      if ($haystack[$region][$index] == $needle) {
+        return $region;
+      }
     }
   }
   return '';

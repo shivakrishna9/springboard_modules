@@ -242,7 +242,7 @@ function theme_form_layout_region($variables) {
 
   element_set_attributes($element, array('id'));
 
-  $output = '<div' . drupal_attributes($element['#attributes']) . '><div class="inner">';
+  $output = '<div' . drupal_attributes($element['#attributes']) . '>';
   if (!empty($element['#title'])) {
     $output .= '<div class="div-title">' . $element['#title'] . '</div>';
   }
@@ -253,7 +253,7 @@ function theme_form_layout_region($variables) {
   if (isset($element['#value'])) {
     $output .= $element['#value'];
   }
-  $output .= "</div></div>\n";
+  $output .= "</div>\n";
   return $output;
 }
 
@@ -432,6 +432,15 @@ function form_layout_preprocess_webform_form(&$variables) {
  */
 function form_layout_form_node_form_alter(&$form, &$form_state, $form_id) {
   if (fundraiser_is_donation_type($form['#node']->type)) {
+
+    $easy_edit = variable_get('webform_easy_edit_nodes', array());
+    if(module_exists('webform_easy_edit') && in_array($form['#node']->nid, $easy_edit)) {
+      $disabled = TRUE;
+    }
+    else {
+      $disabled = FALSE;
+    }
+
     $form['form_layout'] = array(
       '#type' => 'fieldset',
       '#title' => t('Form Layout'),
@@ -452,7 +461,8 @@ function form_layout_form_node_form_alter(&$form, &$form_state, $form_id) {
       '#title' => t('Layout'),
       '#options' => $options,
       '#default_value' => $default_value,
-      '#description' => 'Choose a layout for the form.',
+      '#description' => $disabled ? 'This layout is now managed by the Webform Easy Edit module. This value cannot be changed' : 'Choose a layout for the form.',
+      '#disabled' => $disabled,
     );
 
     $options = form_layout_get_region_options();
@@ -466,7 +476,8 @@ function form_layout_form_node_form_alter(&$form, &$form_state, $form_id) {
       '#title' => t('Submit button position'),
       '#options' => $options,
       '#default_value' => $default_value,
-      '#description' => 'Choose where the submit should be placed.',
+      '#description' => $disabled ? 'This layout is now managed by the Webform Easy Edit module. This value cannot be changed' : 'Choose where the submit should be placed.',
+      '#disabled' => $disabled,
     );
   }
   $form['#submit'][] = 'form_layout_node_form_submit';
@@ -602,6 +613,12 @@ function form_layout_node_load($nodes, $types) {
  * Implements hook_node_update().
  */
 function form_layout_node_update($node) {
+  
+  $easy_edit = variable_get('webform_easy_edit_nodes', array());
+  if(module_exists('webform_easy_edit') && in_array($node->nid, $easy_edit)) {
+    return;
+  }
+
   if (fundraiser_is_donation_type($node->type) && !empty($node->form_layout)) {
     form_layout_save_node_layout($node->nid, $node->form_layout, $node->submit_position);
   }

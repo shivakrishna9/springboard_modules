@@ -33,8 +33,37 @@ form .both-sidebars .center-area .layout-half {
 
 div#webform-component-left-region {
   float:left;
+  width: 50%;
+
 }
 
 div#webform-component-right-region {
   float:right;
+  width:50%;
+}
+
+div[id$="-donation-amount"] .control-group {
+  width:auto;
+  clear:none;
+  margin-right:10px;
+}
+div[id$="-donation-amount"]  .control-group input {
+  margin-top:3px;
+}
+    .control-group label.option {
+  margin-left:4px;
+  float: left;
+}
+
+fieldset[id$="--donation"] label[for$="-other-amount"] {
+  float:left;
+  clear:none;
+  margin-right: 12px;
+  margin-top: 5px;
+}
+fieldset[id$="--donation"] .field-prefix {
+  float: left;
+  clear: none;
+  margin-top: 5px;
+  margin-right: 4px;
 }
