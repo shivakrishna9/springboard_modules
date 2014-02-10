@@ -147,12 +147,14 @@ function page_wrappers_preprocess_page(&$vars) {
  * Remove region blocks to save on performance
  */
 function page_wrappers_block_list_alter(&$blocks) {
+/* @TODO: make configurable via Performance admin  - OR -  skip regions named "wrapper_*"
   if ($node = _page_wrappers_page_node()) {
     $assigned_wrapper = _page_wrappers_node_assigned_wrapper($node);
     if (!empty($assigned_wrapper)) {
       $blocks = array();
     }
   }
+*/
 }
 
 /**
