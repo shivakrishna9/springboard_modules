@@ -1,23 +1,16 @@
-.blockMsg {
-  cursor: auto !important;
-}
-
-#message_wrapper .hidden {
-  display: none;
-}
-
-#message-modal #modal-close {
+.ctools-close-modal {
   cursor: pointer;
   margin-top: 1em;
   text-align: right;
 }
 
-#message-modal .modal-body {
+#ctools-modal .modal-content,
+#ctools .modal-header {
   margin: 0;
   padding: 0;
 }
 
-#message-modal h2, #message-modal h3 {
+#ctools-modal h2, #ctools-modal h3 {
   margin: 0;
 }
 

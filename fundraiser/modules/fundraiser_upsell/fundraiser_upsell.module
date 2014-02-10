@@ -37,24 +37,24 @@ function fundraiser_upsell_menu() {
     'file' => 'includes/fundraiser_upsell.mail.inc',
   );
   // Give admins an easy way to preview the upsell & thank you content.
-  $items['node/%node/upsell'] = array(
+  $items['node/%node/fundraiser_upsell_preview'] = array(
     'title' => 'Upsell preview',
     'type' => MENU_LOCAL_TASK,
-    'page callback' => 'fundraiser_upsell_content_preview',
+    'page callback' => 'fundraiser_upsell_modal_preview',
     'page arguments' => array(1),
     'access callback' => 'fundraiser_upsell_preview_access',
     'access arguments' => array(1),
   );
-  // Callback to process the POSTed modal upsell form.
-  $items['node/%node/upsell/process'] = array(
-    'title' => 'Process upsell form',
-    'description' => 'Ajax callback to process the fundraiser upsell donation form',
-    'type' => MENU_CALLBACK,
-    'page callback' => 'fundraiser_upsell_ajax_process',
-    'page arguments' => array(1),
+
+  // Arg 3 is either a did or 'preview'.
+  $items['node/%node/fundraiser_upsell/%/%ctools_js'] = array(
+    'page callback' => 'fundraiser_upsell_modal',
+    'page arguments' => array(1, 3, 4),
     'access callback' => 'fundraiser_upsell_access',
     'access arguments' => array(1),
+    'type' => MENU_CALLBACK,
   );
+
   return $items;
 }
 
@@ -368,7 +368,7 @@ function fundraiser_upsell_webform_submit($form, &$form_state) {
   }
 
   if (!$recurring) {
-    // Add the upsell nid, sid, & uid to the session data so the modal can
+    // Add the upsell sid to the session data so the modal can
     // be added to the page later in another hook.
     $_SESSION['upsell'] = array(
       'sid' => $form_state['values']['details']['sid'],
@@ -431,18 +431,12 @@ function fundraiser_upsell_page_alter(&$page) {
       }
     }
 
-    if ($add_modal) {
-      // We're on the done page, the donation was successful,
-      // and the payment method supports recurring.
-      // Now we can show the modal!
-      $modal = fundraiser_upsell_create_modal_variables($donation->node);
-      $modal['#did'] = $did;
-
-      // Replace tokens in the content.
-      $modal['#content'] = token_replace($modal['#content'], array('donation' => $donation));
+    if ($add_modal && isset($donation)) {
 
       // Add the modal to the bottom of the page.
-      $page['page_bottom']['message-modal'] = $modal;
+      $page['page_bottom']['fundraiser_upsell'] = array(
+        '#markup' => fundraiser_upsell_modal_link($donation->node, $did),
+      );
     }
 
     // Remove the upsell session data.
@@ -452,34 +446,29 @@ function fundraiser_upsell_page_alter(&$page) {
 
 /**
  * Upsell donation form for the modal.
- *
- * @param array $form
- *   Forms API array.
- * @param array $form_state
- *   The form state.
- * @param int $did
- *   Donation ID.
- * @param bool $preview
- *   Whether this is the preview form.
- *
- * @return array
- *   Form API array.
  */
-function fundraiser_upsell_donation_form($form, &$form_state, $did = NULL, $preview = FALSE) {
+function fundraiser_upsell_donation_form($form, &$form_state) {
+  $did = $form_state['did'];
+  $nid = $form_state['nid'];
+  $preview = $form_state['preview'];
   if (!is_null($did) && $donation = fundraiser_donation_get_donation($did)) {
     $suggested_amount = fundraiser_upsell_find_suggested_amount($donation->amount);
     $nid = $donation->nid;
   }
   else {
-    $suggested_amount = '10';
+    $suggested_amount = 'preview';
     $did = '';
-
-    // In preview the nid will be arg(1).
-    $nid = arg(1);
+    $donation = NULL;
   }
 
-  // Build the form.
-  $form = array();
+  $node = node_load($nid);
+
+  // Replace tokens in the content.
+  $content = token_replace($node->fundraiser_upsell['content'], array('donation' => $donation));
+  $form['content'] = array(
+    '#markup' => $content,
+    '#weight' => 0,
+  );
 
   $form['amount'] = array(
     '#title' => t('Monthly donation'),
@@ -487,37 +476,78 @@ function fundraiser_upsell_donation_form($form, &$form_state, $did = NULL, $prev
     '#size' => 5,
     '#field_prefix' => '$',
     '#default_value' => $suggested_amount,
-    '#weight' => -10,
+    '#weight' => 10,
   );
 
-  // These have to be hidden instead of value since we're submitting this form
-  // in a weird way.  It's a custom form action submitted via ajax() in
-  // the upsell JS.
+  $form['nid'] = array(
+    '#type' => 'value',
+    '#value' => $nid,
+  );
+
   $form['did'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => $did,
   );
+
   $form['preview'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => $preview,
   );
 
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Yes, Sign Me Up!'),
-    '#attributes' => array('id' => 'edit-submit'),
-  );
-  $form['close'] = array(
-    '#type' => 'button',
-    '#value' => t('No Thanks'),
-    '#weight' => 1,
-    '#attributes' => array('id' => 'edit-close'),
+  $form['actions'] = array(
+    '#type' => 'actions',
+    '#weight' => 50,
   );
 
-  // I think we're using a custom action since this form doesn't have a
-  // specific page callback.
-  $form['#action'] = url('node/' . $nid . '/upsell/process');
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Yes, Sign Me Up!'),
+  );
+
+  $form['actions']['cancel'] = array(
+    '#markup' => l(t('No thanks.'), '#',
+      array(
+        'attributes' => array(
+          'class' => 'ctools-close-modal',
+        ),
+        'external' => TRUE,
+      )
+    ),
+  );
+
+  $form['footer'] = array(
+    '#markup' => $node->fundraiser_upsell['footer'],
+    '#weight' => 100,
+  );
+
   return $form;
+}
+
+/**
+ * Validate function for the upsell donation form.
+ */
+function fundraiser_upsell_donation_form_validate($form, &$form_state) {
+  if (!is_numeric($form_state['values']['amount'])) {
+    form_set_error('amount', t('Amount must be numerice'));
+  }
+  $node = node_load($form_state['values']['nid']);
+  if ($form_state['values']['amount'] < $node->minimum_donation_amount) {
+    form_set_error('amount', t('Amount must not be less than @amount', array('@amount' => '$' . number_format($node->minimum_donation_amount, 2))));
+  }
+}
+
+/**
+ * Submit function for the upsell donation form.
+ */
+function fundraiser_upsell_donation_form_submit($form, &$form_state) {
+
+  if ($form_state['values']['preview']) {
+    $node = node_load($form_state['values']['nid']);
+    $form_state['storage']['thankyou_message'] = $node->fundraiser_upsell['thankyou'];
+  }
+  else {
+    $form_state['storage']['thankyou_message'] = fundraiser_upsell_upsell_ajax_submit($form_state['values']['did'], $form_state['values']['amount']);
+  }
 }
 
 /**
@@ -527,24 +557,26 @@ function fundraiser_upsell_donation_form($form, &$form_state, $did = NULL, $prev
  * donation to create a sustainer series, sets acceptance cookie,
  * sends thankyou email, and returns the content for the thankyou modal.
  *
- * @param array $data
- *   The submitted upsell form data.
+ * @param int $did
+ *   The donation ID of the original donation.
+ * @param float $amount
+ *   The amount to for the new donation series.
  *
  * @return string
  *   Thank you content.
  */
-function fundraiser_upsell_upsell_ajax_submit($data) {
+function fundraiser_upsell_upsell_ajax_submit($did, $amount) {
   // Set the default values.
   global $user;
-  $amount = $data['amount'];
-  $upsold_donation = fundraiser_donation_get_donation($data['did']);
-  $is_recurring = fundraiser_upsell_check_recurring($upsold_donation->did);
+  $upsold_donation = fundraiser_donation_get_donation($did);
+  $is_recurring = fundraiser_upsell_check_recurring($did);
   $different_user = ($user->uid != $upsold_donation->uid) ? TRUE : FALSE;
   // If the donation is already recurring, then stop.
   if ($is_recurring) {
     watchdog('fundraiser_upsell', 'Upsell failed - Donation %did is already part of a recurring series.', array('%did' => $upsold_donation->did), WATCHDOG_NOTICE);
     return 'This is already a recurring donation. Thank you.';
   }
+
   // If the user is different then stop - skip anon users because we don't know.
   if ($different_user && $user->uid != 0) {
     $replacements = array(
@@ -843,75 +875,6 @@ function fundraiser_upsell_unflatten_record($upsell) {
 }
 
 /**
- * Implements hook_theme().
- */
-function fundraiser_upsell_theme() {
-  $theme = array(
-    'fundraiser_upsell_modal' => array(
-      'variables' => array(
-        'width' => 400,
-        'height' => 300,
-        'class' => '',
-        'rejection_days' => '180',
-        'content' => '',
-        'footer' => '',
-        'did' => NULL,
-        'preview' => FALSE,
-      ),
-    ),
-  );
-
-  return $theme;
-}
-
-/**
- * Theme callback for the upsell modal.
- *
- * @param array $variables
- *   The theme variables.
- *
- * @return string
- *   The HTML for the modal.
- */
-function theme_fundraiser_upsell_modal($variables) {
-  // Add the css & js.
-  $path = drupal_get_path('module', 'fundraiser_upsell');
-  drupal_add_css($path . '/css/fundraiser_upsell.css');
-  drupal_add_js($path . '/js/fundraiser_upsell.js');
-  drupal_add_js($path . '/js/jquery.blockUI.js');
-
-  $settings = array(
-    'width' => $variables['width'],
-    'height' => $variables['height'],
-    'rejectionDays' => $variables['rejection_days'],
-  );
-  drupal_add_js(array('fundraiser_upsell' => $settings), 'setting');
-
-  $upsell_size = 'width:' . $variables['width'] . 'px;height:' . $variables['height'] . 'px;';
-
-  $content = '<div id="message-wrapper" class="hidden">';
-
-  $content .= '<div id="message-modal" class="live-modal ' . $variables['class'];
-  $content .= '" style="' . $upsell_size . '">';
-
-  $content .= '<div class="modal-body">';
-  $content .= '<div class="message-content">' . $variables['content'] . '</div>';
-
-  $form = drupal_get_form('fundraiser_upsell_donation_form', $variables['did'], $variables['preview']);
-  $content .= drupal_render($form);
-
-  $content .= '<div id="message-footer">' . $variables['footer'] . '</div>';
-  // Closes modal-body.
-  $content .= '</div>';
-
-  // Closes live modal.
-  $content .= '</div>';
-
-  $content .= '</div>';
-  return $content;
-}
-
-/**
  * Page callback for the upsell preview.
  *
  * @param object $node
@@ -920,103 +883,122 @@ function theme_fundraiser_upsell_modal($variables) {
  * @return array
  *   A render array for generating the content.
  */
-function fundraiser_upsell_content_preview($node) {
-  $modal = fundraiser_upsell_create_modal_variables($node);
-
-  // No donation ID in preview.
-  $modal['#did'] = '';
-  $modal['#preview'] = TRUE;
-
-  return $modal;
+function fundraiser_upsell_modal_preview($node) {
+  return fundraiser_upsell_modal_link($node, 'preview');
 }
 
 /**
- * Creates a default render array for an upsell modal.
+ * Adds all of the CSS and JS and settings for the modal.
  *
  * @param object $node
- *   The node object with the upsell settings.
+ *   The node that this modal applies to.
+ * @param int|string $did
+ *   The donation ID, or 'preview' if this is the preview.
  *
- * @return array
- *   The modal render array with sane default values.
+ * @return string
+ *   The html anchor tag that gets clicked on document ready.
  */
-function fundraiser_upsell_create_modal_variables($node) {
-  $modal = array(
-    '#theme' => 'fundraiser_upsell_modal',
-    '#rejection_days' => variable_get('fundraiser_upsell_rejection_lifetime', '180'),
-    '#preview' => FALSE,
+function fundraiser_upsell_modal_link($node, $did) {
+
+  // Load the modal library and add the modal javascript.
+  ctools_include('modal');
+  ctools_modal_add_js();
+  ctools_add_js('ajax-responder');
+  ctools_add_js('fundraiser_upsell', 'fundraiser_upsell');
+
+  drupal_add_js(array(
+      'fundraiser-upsell' => array(
+        'rejectionDays' => (int) variable_get('fundraiser_upsell_rejection_lifetime', 180),
+        'modalClass' => $node->fundraiser_upsell['modal_theme']['class'],
+        'modalSize' => array(
+          'type' => 'fixed',
+          'width' => (int) $node->fundraiser_upsell['modal_theme']['width'],
+          'height' => (int) $node->fundraiser_upsell['modal_theme']['height'],
+        ),
+        'modalTheme' => 'fundraiserUpsellModal',
+        'modalOptions' => array(
+          'opacity' => .7,
+          'background' => '#000',
+        ),
+        'animation' => 'fadeIn',
+        'animationSpeed' => 'slow',
+        'closeText' => '',
+        'closeImage' => '',
+        'loadingText' => t('Loading'),
+      ),
+    ), 'setting');
+
+  $options = array(
+    'attributes' => array(
+      'class' => array(
+        'ctools-use-modal',
+        'ctools-modal-fundraiser-upsell',
+        'hidden',
+      ),
+    ),
   );
 
-  // Override defaults.
-  if (!empty($node->fundraiser_upsell['modal_theme']['width'])) {
-    $modal['#width'] = $node->fundraiser_upsell['modal_theme']['width'];
-  }
-  if (!empty($node->fundraiser_upsell['modal_theme']['height'])) {
-    $modal['#height'] = $node->fundraiser_upsell['modal_theme']['height'];
-  }
-  if (!empty($node->fundraiser_upsell['modal_theme']['class'])) {
-    $modal['#class'] = $node->fundraiser_upsell['modal_theme']['class'];
-  }
-
-  // Using isset instead of !empty so the content can be blank.
-  if (isset($node->fundraiser_upsell['content'])) {
-    $modal['#content'] = $node->fundraiser_upsell['content'];
-  }
-  else {
-    $modal['#content'] = variable_get('fundraiser_upsell_default_content', '');
-  }
-
-  // Using isset instead of !empty so the footer can be blank.
-  if (isset($node->fundraiser_upsell['footer'])) {
-    $modal['#footer'] = $node->fundraiser_upsell['footer'];
-  }
-  else {
-    $modal['#footer'] = variable_get('fundraiser_upsell_default_content_disclaimer', '');
-  }
-
-  return $modal;
+  return l('', 'node/' . $node->nid . '/fundraiser_upsell/' . $did . '/nojs', $options);
 }
 
 /**
- * Process the upsell donation form from the POSTed ajax callback.
+ * Modal page callback.
+ *
+ * This prints out the ajax commands for pages in the modal.
+ *
+ * @param object $node
+ *   The node that the modal applies to.
+ * @param int|string $did
+ *   Either the donation ID, or 'preview' if this is a preview.
+ * @param string $ajax
+ *   Only out stuff if this ajax is supported.
  */
-function fundraiser_upsell_ajax_process($node) {
-  // @todo Do something safer with this.
-  $data = $_POST;
+function fundraiser_upsell_modal($node, $did, $ajax) {
+  if ($ajax) {
+    ctools_include('ajax');
+    ctools_include('modal');
 
-  // Default to showing the close button unless we need to display the
-  // form again.
-  $show_close = TRUE;
+    $preview = FALSE;
+    if ($did == 'preview') {
+      $did = NULL;
+      $preview = TRUE;
+    }
 
-  // If we have a form token and it's invalid, don't let anything happen.
-  // We normally won't have a form token for anonymous users.
-  if (isset($data['form_token']) && !drupal_valid_token($data['form_token'], $data['form_id'], TRUE)) {
-    watchdog('fundraiser_upsell', 'Upsell donation %did failed because of an invalid form token.', array('%did' => $data['did']), WATCHDOG_NOTICE);
-    $content = t('There was a problem with your donation. Please try again');
+    $form_state = array(
+      'ajax' => TRUE,
+      // 'title' => '',
+      'did' => $did,
+      'nid' => $node->nid,
+      'preview' => $preview,
+    );
+
+    // Use ctools to generate ajax instructions for the browser to create
+    // a form in a modal popup.
+    $output = ctools_modal_form_wrapper('fundraiser_upsell_donation_form', $form_state);
+
+    if (!empty($form_state['executed'])) {
+      $content = '';
+      // If there are messages for the form, render them.
+      if ($messages = theme('status_messages')) {
+        $content = $messages;
+      }
+
+      $content .= '<div>';
+
+      // This comes from the form submit handler.
+      $content .= $form_state['storage']['thankyou_message'];
+
+      $content .= '</div>';
+
+      $content .= '<div><a href="#" class="ctools-close-modal">Close</a></div>';
+      $output = array();
+
+      $output[] = ctools_modal_command_display('', $content);
+    }
+
+    // Return the ajax instructions to the browser via ajax_render().
+    print ajax_render($output);
   }
-  elseif ($data['amount'] < $node->minimum_donation_amount) {
-    $content = '<p>' . t('Please enter a minimum donation amount of @amount', array('@amount' => '$' . number_format($node->minimum_donation_amount, 2)));
-    $form = drupal_get_form('fundraiser_upsell_donation_form', $data['did'], $data['preview']);
-
-    $content .= drupal_render($form);
-    // Don't show the close button because we have to rerender the form.
-    $show_close = FALSE;
-  }
-  elseif (isset($data['preview']) && $data['preview']) {
-    // Generate the thank you content.
-    // Note that token replacement doesn't happen on a preview
-    // since we don't have a donation.
-    $content = $node->fundraiser_upsell['thankyou'];
-  }
-  else {
-    $content = fundraiser_upsell_upsell_ajax_submit($data);
-  }
-
-  $response = array(
-    'content' => $content,
-    'showClose' => $show_close,
-  );
-
-  drupal_json_output($response);
 }
 
 /**
