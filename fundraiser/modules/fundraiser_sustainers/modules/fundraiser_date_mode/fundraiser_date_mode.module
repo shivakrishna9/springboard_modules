@@ -346,7 +346,6 @@ function fundraiser_date_mode_update_sustainer_date($time_delta, $master_did, $d
     $operator = '+';
   }
 
-  drupal_set_message("operator:$operator time delta:$time_delta");
   $query = db_update('fundraiser_sustainers') // Table name no longer needs {}
     ->expression('next_charge', '( next_charge ' . $operator . ' :delta )', array(':delta' => $time_delta))
     ->condition('master_did', $master_did, '=');
@@ -357,11 +356,101 @@ function fundraiser_date_mode_update_sustainer_date($time_delta, $master_did, $d
     $query->condition('did', $dids, '=');
   }
   $query->execute();
+
+  // If Salesforce integration is available, requeue affected orders for
+  // resync to Salesforce. 
+  if (module_exists('salesforce_genmap')) {
+    if (!is_array($dids)) {
+      $did = $dids;
+      $sf_donation = fundraiser_donation_get_donation($did, TRUE);
+      salesforce_genmap_send_object_to_queue('salesforce_donation', 'update',
+        $sf_donation->node, $sf_donation->did, $sf_donation, 'donation');
+    }
+    else {
+      foreach ($dids as $did) {
+        $sf_donation = fundraiser_donation_get_donation($did, TRUE);
+        salesforce_genmap_send_object_to_queue('salesforce_donation', 'update',
+          $sf_donation->node, $sf_donation->did, $sf_donation, 'donation');
+      }
+    }
+  }
 }
 
 /**
- * @param $master_did
+ * Operation callback, updates next_charge for orders in a sustainer series.
  */
-function fudnraiser_date_mode_save_original_dates($master_did) {
+function fundraiser_date_mode_update_date_mode_operation($op, $date, $time, $master_did, $max, $data) {
+  // initialize some sandbox values
+  if (!isset($context['sandbox']['progress'])) {
+    // Use the $context['sandbox'] at your convenience to store the
+    // information needed to track progression between successive calls.
+    $context['sandbox']['op'] = $op;
+    $context['sandbox']['date'] = $date;
+    $context['sandbox']['now'] = strtotime('now');
+    // count the number of sustainers to process
+    $context['sandbox']['progress'] = 0;
+    $context['sandbox']['data'] = $data;
+  }
+  $master_order = $data['master_order'];
+  $series_orders = $data['series'];
 
+  switch ($op) {
+    case 'date_mode_enabled':
+      // Store existing next_charge dates in case date mode is disabled. This
+      // guarantees we have the original charge dates when rolling back changes
+      // made when date mode is enabled.
+      fundraiser_date_mode_save_series_charge_dates($master_did);
+      // Alter charge dates.
+      _fundraiser_date_mode_alter_next_charge($date, $master_order, $series_orders);
+      break;
+    case 'date_mode_disabled':
+      // Revert to original dates.
+      _fundraiser_date_mode_revert_sustainer_dates($master_order, $series_orders);
+      break;
+    case 'date_mode_date_changed':
+      // Modify converted dates.
+      _fundraiser_date_mode_alter_next_charge($date, $master_order, $series_orders);
+      break;
+    default:
+      return;
+  }
+  // TODO: requeue objects for resync to SF.
+
+  // Update our progress information.
+  $context['sandbox']['progress']++;
+  $context['message'] = 'Master Order ID ' . $master_did;
+}
+
+function fundraiser_date_mode_update_date_mode_finished() {
+  return t('all done');
+}
+
+function _fundraiser_date_mode_alter_next_charge($date, $master_order, $series_orders) {
+  $orders_to_process = _fundraiser_date_mode_orders_to_change($series_orders, $date);
+
+  $master_order_date = _fundraiser_date_mode_explode_date($master_order['next_charge']);
+  $orders_on_same_day = _fundraiser_date_mode_validate_order_dates($orders_to_process, $master_order_date['day']);
+
+  if (count($orders_to_process) == 0) {
+    return;
+  }
+  else {
+    // Some of the sustainer series next_charge dates need to be
+    // moved to the day sustainers will be processed on. They all currently
+    // fall on the same day of the month so they can be updated in bulk.
+    if  ($orders_on_same_day) {
+      // Do mass date conversion.
+      $time_delta = _fundraiser_date_mode_calculate_delta($master_order['next_charge'], $date);
+      fundraiser_date_mode_update_sustainer_date($time_delta, $master_order['master_did'], $orders_to_process);
+    }
+    else {
+      // Some of the next_charge dates in this series are on different days
+      // of the month. This means we have to calculate time_delta for orders
+      // individually to make sure they all get updated correctly.
+      foreach ($series_orders as $order) {
+        $time_delta = _fundraiser_date_mode_calculate_delta($order['next_charge'], $date);
+        fundraiser_date_mode_update_sustainer_date($time_delta, $order['master_did'], $order['did']);
+      }
+    }
+  }
 }
