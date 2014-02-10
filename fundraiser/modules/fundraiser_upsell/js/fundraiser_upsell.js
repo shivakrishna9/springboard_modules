@@ -3,7 +3,7 @@
     Drupal.theme.prototype.fundraiserUpsellModal = function () {
         var html = ''
         html += '  <div id="ctools-modal">';
-        html += '    <div class="ctools-modal-content" class="' + Drupal.settings['fundraiser-upsell'].modalClass + '">'; // panels-modal-content
+        html += '    <div class="ctools-modal-content ' + Drupal.settings['fundraiser-upsell'].modalClass + '">'; // panels-modal-content
         html += '      <div class="modal-header">';
         html += '        <span id="modal-title" class="modal-title">&nbsp;</span>';
         html += '      </div>';
