@@ -41,6 +41,13 @@ function salesforce_genmap_node_insert($node) {
       unset($map->mid);
       $map->nid = $node->nid;
       salesforce_genmap_save_map($map, 'webform');
+      // Check for webform user and clone it's settings.
+      if (module_exists('webform_user') && _webform_user_is_webform_user_node($node)) {
+        // Add the field name to the webform_user_reference_fields array.
+        $webform_user_reference_fields = variable_get('webform_user_reference_fields', array());
+        $webform_user_reference_fields[$node->nid] = $webform_user_reference_fields[$node->clone_from_original_nid];
+        variable_set('webform_user_reference_fields', $webform_user_reference_fields);
+      }
     }
   }
 }
