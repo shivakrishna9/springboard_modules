@@ -504,11 +504,18 @@ function fundraiser_upsell_donation_form($form, &$form_state) {
     '#value' => t('Yes, Sign Me Up!'),
   );
 
+  $modal_class = $preview ? 'preview' : 'rejection';
+
   $form['actions']['cancel'] = array(
+    '#prefix' => '<div class="close-modal-wrapper">',
+    '#suffix' => '</div>',
     '#markup' => l(t('No thanks.'), '#',
       array(
         'attributes' => array(
-          'class' => 'ctools-close-modal',
+          'class' => array(
+            'ctools-close-modal',
+            $modal_class,
+          ),
         ),
         'external' => TRUE,
       )
@@ -990,7 +997,7 @@ function fundraiser_upsell_modal($node, $did, $ajax) {
 
       $content .= '</div>';
 
-      $content .= '<div><a href="#" class="ctools-close-modal">Close</a></div>';
+      $content .= '<div class="close-modal-wrapper"><a href="#" class="ctools-close-modal">Close</a></div>';
       $output = array();
 
       $output[] = ctools_modal_command_display('', $content);

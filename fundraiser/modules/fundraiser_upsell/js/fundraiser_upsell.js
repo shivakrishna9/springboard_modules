@@ -19,15 +19,25 @@
        $('.ctools-modal-fundraiser-upsell').click();
     });
 
-    // Close button
-    // @todo This doesn't work because the link won't be added until later.
-    $('.ctools-close-modal').click(function() {
-        // Get the days for the rejection cookie
-        var rejectionDays = Drupal.settings['fundraiser-upsell'].rejectionDays;
-        var exdate=new Date();
-        exdate.setDate(exdate.getDate() + rejectionDays);
-        var c_value = "1;path=/" + ((rejectionDays==null) ? "" : ";expires="+exdate.toUTCString());
-        document.cookie='fundraiser_upsell_rejection' + "=" + c_value;
-    });
+})(jQuery);
+
+
+(function ($) {
+    Drupal.behaviors.fundraiser_upsell = {
+        attach: function (context, settings) {
+            $('.ctools-close-modal.rejection', context).click(function() {
+                // Get the days for the rejection cookie
+                var rejectionDays = Drupal.settings['fundraiser-upsell'].rejectionDays;
+                var exdate=new Date();
+                exdate.setDate(exdate.getDate() + rejectionDays);
+                var c_value = "1;path=/" + ((rejectionDays==null) ? "" : ";expires="+exdate.toUTCString());
+                document.cookie='fundraiser_upsell_rejection' + "=" + c_value;
+            });
+
+            $('.ctools-modal-content form', context).on('submit', function() {
+               $('.ctools-close-modal', context).hide();
+            });
+        }
+    }
 
 })(jQuery);

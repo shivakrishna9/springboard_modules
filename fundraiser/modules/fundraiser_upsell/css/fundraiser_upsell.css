@@ -1,7 +1,10 @@
+.close-modal-wrapper {
+  margin: 1em;
+  text-align: right;
+}
+
 .ctools-close-modal {
   cursor: pointer;
-  margin-top: 1em;
-  text-align: right;
 }
 
 #ctools-modal .modal-content,
