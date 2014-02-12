@@ -125,10 +125,12 @@ class FundraiserDateModeTest extends DrupalWebTestCase {
      foreach ($new_series_data[1]['series'] as $current_sustainer) {
        $next_charge_date = _fundraiser_date_mode_explode_date($current_sustainer['next_charge']);
        $message = array(
+         '!original_timestamp' => $original_series_data[1]['series'][$current_sustainer['did']]['next_charge'],
          '!original_date' => date('m/d/Y G:i:s', $original_series_data[1]['series'][$current_sustainer['did']]['next_charge']),
          '!new_date' => date('m/d/Y G:i:s', $current_sustainer['next_charge']),
+         '!new_timestamp' => $current_sustainer['next_charge'],
        );
-       $this->assertTrue($next_charge_date['day'] == $date, t('Sustainer order for !original_date correctly modified to !new_date', $message));
+       $this->assertTrue($next_charge_date['day'] == $date, t('Sustainer order for !original_date ( !original_timestamp ) correctly modified to !new_date (!new_timestamp)', $message));
      }
      // create new sustainer series.
 

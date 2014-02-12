@@ -6,6 +6,61 @@
  */
 
 /**
+ * Implements hook_cron_queue_info().
+ *
+ * Queue runs on cron unless configured to skip.
+ *
+ * Queue may also be processed manually via fundraiser_date_mode/queue callback.
+ */
+function fundraiser_date_mode_cron_queue_info() {
+  $queues = array();
+  $queues['sustainerQueue'] = array(
+    'worker callback' => 'fundraiser_date_mode_process_queue_item',
+    'time' => variable_get('fundraiser_date_mode_set_seconds', 30),
+    'skip on cron' => variable_get('fundraiser_date_mode_skip_on_cron', TRUE),
+  );
+  return $queues;
+}
+
+/**
+ * Implements hook_fundraiser_sustainers_process_recurring_alter().
+ */
+function fundraiser_date_mode_fundraiser_sustainers_process_recurring_alter(&$process_recurring) {
+  // When date mode is enabled all sustaining orders for a given month process
+  // on the same day. Fundraiser Sustainers will attempt to process all of
+  // these orders at the same time resulting in timeouts, missed charges, and
+  // other mayhem.
+  //
+  // To prevent this we turn off Fundraiser Sustainer's recurring order process
+  // when date mode is enabled and use Date Mode's processor, which uses a
+  // queue.
+  if (variable_get('fundraiser_date_mode_set_date_mode', FALSE)) {
+    $process_recurring = FALSE;
+    $queue = DrupalQueue::get('sustainerQueue');
+    $queue->createQueue();
+    // Selects a maximum of 1000 sustainer records pending processing & locks
+    // these records in the db.
+    $donations = _fundraiser_sustainers_cron_get_recurring();
+    $sustainer_key = fundraiser_sustainers_get_sustainer_key_value();
+    // Loop over the found orders
+    foreach ($donations as $recurring) {
+      if ($sustainer_key == $recurring->sustainer_key) {
+        $queue->createItem($recurring);
+      }
+      else {
+        // Skip record & unlock.
+        db_query('
+         UPDATE {fundraiser_sustainers}
+         SET lock_id = 0
+         WHERE did = :did',
+          array(':did' => $recurring->did)
+        );
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_permission().
  */
 function fundraiser_date_mode_permission() {
@@ -289,6 +344,7 @@ function _fundraiser_date_mode_revert_sustainer_dates($master_order, $series_ord
   dsm($original_dates, 'original dates');
   dsm($orders_to_revert, 'orders to revert');
   foreach ($orders_to_revert as $did ) {
+    // TODO: confirm original_next_charge is available before attempting to revert.
     db_update('fundraiser_sustainers')
       ->fields(array(
         'next_charge' => $original_dates[$did]['original_next_charge'],
@@ -358,7 +414,7 @@ function fundraiser_date_mode_update_sustainer_date($time_delta, $master_did, $d
   $query->execute();
 
   // If Salesforce integration is available, requeue affected orders for
-  // resync to Salesforce. 
+  // resync to Salesforce.
   if (module_exists('salesforce_genmap')) {
     if (!is_array($dids)) {
       $did = $dids;
@@ -452,5 +508,19 @@ function _fundraiser_date_mode_alter_next_charge($date, $master_order, $series_o
         fundraiser_date_mode_update_sustainer_date($time_delta, $order['master_did'], $order['did']);
       }
     }
+  }
+}
+
+/**
+ * Process a single item from the sustainer queue.
+ * @param $item
+ */
+function fundraiser_date_mode_process_queue_item($item) {
+  $sustainer_key = fundraiser_sustainers_get_sustainer_key_value();
+  $recurring = $item;
+  if ($sustainer_key == $recurring->sustainer_key) {
+    $log = array();
+    fundraiser_sustainers_process_single_recurring_donation($log, $recurring, $sustainer_key);
+    // TODO: do something with the log.
   }
 }

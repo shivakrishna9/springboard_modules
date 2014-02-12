@@ -26,9 +26,18 @@ function fundraiser_date_mode_admin() {
     '#multiple' => FALSE,
     '#default_value' => variable_get('fundraiser_date_mode_set_dates', '15'),
   );
-
+  $form['cron_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Sustainer processing'),
+  );
+  $form['cron_settings']['fundraiser_date_mode_skip_on_cron'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Skip sustainer processing queue on cron'),
+    '#description' => t('If this is checked the sustainer order queue will not be processed when cron is run.'),
+    '#default_value' => variable_get('fundraiser_date_mode_skip_on_cron', TRUE),
+  );
   $seconds = array_combine(range(1, 60), range(1, 60));
-  $form['fundraiser_date_mode_set_seconds'] = array(
+  $form['cron_settings']['fundraiser_date_mode_set_seconds'] = array(
     '#type' => 'select',
     '#title' => t('Seconds spent'),
     '#description' => t('Set how many seconds for each drupal queue run to spend on the queue processing sustainer charges. '.
