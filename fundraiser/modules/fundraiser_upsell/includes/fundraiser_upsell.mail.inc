@@ -77,6 +77,11 @@ function fundraiser_upsell_admin_thank_you_settings() {
     '#submit' => array('fundraiser_upsell_send_test'),
     '#weight' => 2,
   );
+  $form['email']['headers']['fundraiser_upsell_send_note'] = array(
+    '#markup' => t('Test emails will not have replaced tokens.'),
+    '#weight' => 3,
+  );
+
   // Modify the message section.
   $form['email']['message']['#title'] = "Mail body";
   $form['email']['message']['#weight'] = -6;
