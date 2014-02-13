@@ -139,7 +139,7 @@ function fundraiser_upsell_add_node_settings(&$form) {
     '#title' => t('Form specific Upsell Content'),
     '#type' => 'textarea',
     '#default_value' => !empty($node->fundraiser_upsell['content']) ? $node->fundraiser_upsell['content'] : '',
-    '#description' => t('If no content is given the default will be used.'),
+    '#description' => t('Content for the initial upsell page.'),
   );
 
   $form['fundraiser_upsell']['content_tokens'] = array(
@@ -922,6 +922,8 @@ function fundraiser_upsell_modal_link($node, $did) {
           'type' => 'fixed',
           'width' => (int) $node->fundraiser_upsell['modal_theme']['width'],
           'height' => (int) $node->fundraiser_upsell['modal_theme']['height'],
+          'contentRight' => 0,
+          'contentBottom' => 0,
         ),
         'modalTheme' => 'fundraiserUpsellModal',
         'modalOptions' => array(
