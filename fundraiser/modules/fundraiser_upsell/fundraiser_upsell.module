@@ -887,11 +887,12 @@ function fundraiser_upsell_unflatten_record($upsell) {
  * @param object $node
  *   The webform donation node object.
  *
- * @return array
- *   A render array for generating the content.
+ * @return string
+ *   A string with the preview warning message and the html for the modal.
  */
 function fundraiser_upsell_modal_preview($node) {
-  return fundraiser_upsell_modal_link($node, 'preview');
+  $message = t('Note that tokens will not be replaced in preview mode and no donations will be created.');
+  return $message . fundraiser_upsell_modal_link($node, 'preview');
 }
 
 /**
