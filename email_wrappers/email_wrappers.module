@@ -445,7 +445,6 @@ function email_wrappers_render_email_body($eid, $message, $settings = array()) {
     $text_raw = str_replace('%text_message', $settings['text_message'], $settings['text_template']);
   }
   else {
-    drupal_set_message('formatting one-off email');
     $html_raw = $message['params']['mail']->html_message;
     $text_raw = $message['params']['mail']->text_message;
   }
