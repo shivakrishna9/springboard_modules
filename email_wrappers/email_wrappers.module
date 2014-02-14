@@ -408,13 +408,20 @@ function email_wrappers_mail_alter(&$message) {
   }
 
   // Processing an email constructed via the dev API.
-  if ($message['module'] = 'email_wrappers' && isset($message['params']['module'], $message['params']['delta'])) {
+  if ($message['module'] == 'email_wrappers' && isset($message['params']['module'], $message['params']['delta'])) {
     // format body & headers
     $message['params']['boundary'] = '----=_NextPart_' . md5(uniqid());
     $message['headers']['MIME-version'] = '1.0';
     $message['headers']['Content-Type'] = 'multipart/alternative; boundary="' . $message['params']['boundary'] . '"';
     $message['subject'] = $message['params']['mail']->subject;
     $message['body'] = array(email_wrappers_render_email_body(FALSE, $message));
+
+    // Add Cc and Bcc headers if needed.
+    foreach (array('cc', 'bcc') as $item) {
+      if (!empty($message['params']['mail']->$item)) {
+        $message['headers'][ucfirst($item)] = $message['params']['mail']->$item;
+      }
+    }
   }
 }
 
