@@ -12,7 +12,7 @@
  * Be sure to provide module and name (unique per module, much like block
  * deltas) to ensure email wrappers can load your module-specific settings.
  *
- * @param $edit
+ * @param array $edit
  *   Placeholder for form API edit cruft.
  *
  * @param array $params
@@ -90,11 +90,13 @@ function email_wrappers_mail_form($edit, $params = array()) {
     '#description' => t('Email addresses to CC when sending this mail. For more than one address, addresses should be separated by a comma. Example: test3@example.com,test4@example.com'),
     '#default_value' => isset($settings->cc) ? $settings->cc : '',
   );
+
+  // @todo Add check on setting to mail send, format html body using appropriate
+  // core filter.
   $form['headers']['bcc'] = array(
     '#type' => 'textfield',
     '#title' => t('BCC email address'),
-    '#description' => t('Email  // TODO: add check on setting to mail send, format html body using appropriate
-  // core filter. addresses to BCC when sending this mail. For more than one address, addresses should be separated by a comma. Example: test5@example.com,test6@example.com'),
+    '#description' => t('Email addresses to BCC when sending this mail. For more than one address, addresses should be separated by a comma. Example: test5@example.com,test6@example.com'),
     '#default_value' => isset($settings->bcc) ? $settings->bcc : '',
   );
   $form['message'] = array(
