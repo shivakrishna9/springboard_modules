@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Provides Salesforce fields that need to be customized for upsell donations.
+ * Provides Salesforce fields that can be customized for upsell donations.
  */
 
 /**
@@ -10,7 +10,6 @@
  * Adds the market source fields to the form.
  */
 function fundraiser_upsell_salesforce_upsell_node_settings_alter(&$form) {
-
   $upsell_ms_fields = fundraiser_upsell_salesforce_get_upsell_enabled_market_source_fields();
   if (count($upsell_ms_fields)) {
     $form['fundraiser_upsell']['market_source'] = array(
@@ -25,7 +24,7 @@ function fundraiser_upsell_salesforce_upsell_node_settings_alter(&$form) {
     $market_source = !empty($node->fundraiser_upsell_salesforce) ? $node->fundraiser_upsell_salesforce : array();
 
     foreach ($fields as $key => $field) {
-      // skip market source fields that haven't been upsell enabled.
+      // Skip market source fields that haven't been upsell enabled.
       if (!in_array($key, $upsell_ms_fields)) {
         continue;
       }
@@ -56,7 +55,6 @@ function fundraiser_upsell_salesforce_upsell_node_settings_alter(&$form) {
     }
     $form['#submit'][] = 'fundraiser_upsell_salesforce_node_settings_submit';
   }
-
 }
 
 /**
@@ -134,7 +132,6 @@ function fundraiser_upsell_salesforce_upsell_master_donation_alter(&$donation) {
       'recurring_donation'
     );
   }
-
 }
 
 /**
@@ -144,10 +141,8 @@ function fundraiser_upsell_salesforce_upsell_master_donation_alter(&$donation) {
  */
 function fundraiser_upsell_salesforce_salesforce_queue_create_item_alter(&$item) {
   if ($item['delta'] == 'donation') {
-
     $donation = fundraiser_donation_get_donation($item['drupal_id']);
     if (isset($donation->fundraiser_upsell->type)) {
-
       if ($donation->fundraiser_upsell->type == 'upsold_donation') {
         // @todo This case probably never runs.
         // The upsold donation doesn't get its type until an update.
@@ -234,7 +229,7 @@ function fundraiser_upsell_salesforce_update_item(&$item, $donation, $market_sou
 
       $persistence = $all_fields[$key]['persistence'];
 
-      if (fundraiser_upsell_salesforce_should_override_market_source_value($original, $new, $persistence)); {
+      if (fundraiser_upsell_salesforce_should_override_market_source_value($original, $new, $persistence)) {
         $item['sobject']->fields[$salesforce_webform_map[$key]] = $new;
       }
     }
@@ -300,6 +295,7 @@ function fundraiser_upsell_salesforce_should_override_market_source_value($origi
       }
 
       break;
+
     case 'off':
 
       if (empty($original) && !empty($new)) {
@@ -313,6 +309,7 @@ function fundraiser_upsell_salesforce_should_override_market_source_value($origi
       }
 
       break;
+
     case 'direct':
 
       if (empty($original) && !empty($new)) {

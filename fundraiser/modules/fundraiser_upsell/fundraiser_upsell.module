@@ -283,15 +283,6 @@ function fundraiser_upsell_node_form_validate($form, &$form_state) {
   }
 
   // @todo Maybe get email wrappers validate happening.
-  // Validate email wrappers won't work because they're conditional on
-  // upsell being enabled.
-  //  if (module_exists('email_wrappers')) {
-  //    $email_wrappers_form_state = array(
-  //      'values' => $form_state['values']['fundraiser_upsell']['email_wrappers'],
-  //    );
-  //    module_load_include('inc', 'email_wrappers', 'email_wrappers.api');
-  //    email_wrappers_mail_form_validate($form, $email_wrappers_form_state);
-  //  }
 }
 
 /**
@@ -1073,15 +1064,11 @@ function fundraiser_upsell_is_enabled($node) {
 /**
  * Get the suggested amount from the admin bracket settings.
  *
- * @param int $amount
+ * @param float $amount
  *   The given amount.
  *
- * @todo Is amount an int or float?
- *
- * @return int
+ * @return float
  *   The suggested amount to upsell to.
- *
- * @todo Is the return value an int or float?
  */
 function fundraiser_upsell_find_suggested_amount($amount) {
   $default_upsell = 10;

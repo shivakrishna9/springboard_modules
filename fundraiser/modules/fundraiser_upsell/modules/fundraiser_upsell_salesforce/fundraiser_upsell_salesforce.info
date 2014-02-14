@@ -1,5 +1,5 @@
 name = Fundraiser upsell salesforce integration
-description = Sets fields values for upsold and recurring donations in Salesforce.
+description = Sets field values for upsold and recurring donations in Salesforce.
 core = 7.x
 package = Jackson River Springboard - extras
 dependencies[] = fundraiser

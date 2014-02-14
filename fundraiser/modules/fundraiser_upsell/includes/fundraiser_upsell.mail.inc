@@ -124,7 +124,6 @@ function fundraiser_upsell_admin_thank_you_submit($form, $form_state) {
  * Button submit callback, triggers mail send when clicked.
  */
 function fundraiser_upsell_send_test($form, $form_state) {
-  // @todo When sending a test email we don't have a donation.
   $donation = NULL;
   // Run it through the normal submit functions to save values.
   email_wrappers_mail_form_submit($form, $form_state);

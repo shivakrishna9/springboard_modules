@@ -605,15 +605,30 @@ function email_wrappers_mail_delete($params) {
   $mid = isset($params['mid']) ? $params['mid'] : FALSE;
 
   if ($mid) {
-    db_query('DELETE FROM {email_wrappers} WHERE mid = :mid', array(':mid' => $mid));
+    db_delete('email_wrappers')
+      ->condition('mid', $mid)
+      ->execute();
   }
   elseif (isset($params['module']) && isset($params['delta'])) {
-    $values = array(
-      ':module' => $params['module'],
-      ':delta' => $params['delta'],
-    );
-    db_query('DELETE FROM {email_wrappers} WHERE module = :module AND delta = :delta', $values);
+    db_delete('email_wrappers')
+      ->condition('module', $params['module'])
+      ->condition('delta', $params['delta'])
+      ->execute();
   }
+}
+
+/**
+ * Delete all email wrappers mail configurations defined by a module.
+ *
+ * Mainly used for cleanup during a module uninstall.
+ *
+ * @param string $module
+ *   The module name.
+ */
+function email_wrappers_mail_delete_all($module) {
+  db_delete('email_wrappers')
+    ->condition('module', $module)
+    ->execute();
 }
 
 /**

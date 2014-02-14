@@ -125,8 +125,6 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
     '#default_value' => variable_get('fundraiser_upsell_default_content', $default_content),
   );
 
-  // @todo Allow WYSIWYG format selection.
-  // @todo Add in the token list.
   $form['fundraiser_upsell_default_content_disclaimer'] = array(
     '#title' => t('Default disclaimer for Upsell content'),
     '#type' => 'textfield',

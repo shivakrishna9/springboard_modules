@@ -31,29 +31,29 @@ function fundraiser_upsell_install() {
 /**
  * Implements hook_uninstall().
  */
-function funsraiser_upsell_uninstall() {
-  variable_del('fundraiser_upsell_acceptance_enabled');
-  variable_del('fundraiser_upsell_acceptance_lifetime');
-  variable_del('fundraiser_upsell_brackets');
-  variable_del('fundraiser_upsell_debug');
+function fundraiser_upsell_uninstall() {
+
   variable_del('fundraiser_upsell_default_content');
   variable_del('fundraiser_upsell_default_content_disclaimer');
-  variable_del('fundraiser_upsell_email_bcc');
-  variable_del('fundraiser_upsell_email_from');
-  variable_del('fundraiser_upsell_email_subject');
-  variable_del('fundraiser_upsell_rejection_enabled');
-  variable_del('fundraiser_upsell_rejection_lifetime');
-  variable_del('fundraiser_upsell_sf_campaign_id');
   variable_del('fundraiser_upsell_thank_you_content');
-  variable_del('fundraiser_upsell_thank_you_email_html');
-  variable_del('fundraiser_upsell_thank_you_email_text');
+  variable_del('fundraiser_upsell_default_charge_time');
+  variable_del('fundraiser_upsell_rejection_lifetime');
+  variable_del('fundraiser_upsell_debug');
+  variable_del('fundraiser_upsell_acceptance_enabled');
+  variable_del('fundraiser_upsell_rejection_enabled');
+  variable_del('fundraiser_upsell_brackets');
+  variable_del('fundraiser_upsell_acceptance_lifetime');
+
+  // Remove the email wrappers settings for upsell and upsell enabled nodes.
+  if (module_exists('email_wrappers')) {
+    email_wrappers_mail_delete_all('fundraiser_upsell');
+  }
 }
 
 /**
  * Implements hook_schema().
  */
 function fundraiser_upsell_schema() {
-
   $schema['fundraiser_upsell'] = array(
     'description' => 'Stores data for fundraiser_upsell donation form nodes.',
     'fields' => array(
@@ -102,12 +102,14 @@ function fundraiser_upsell_schema() {
         'default' => '',
       ),
       'modal_width' => array(
+        'description' => 'The modal width in pixels.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 400,
       ),
       'modal_height' => array(
+        'description' => 'The modal height in pixels.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
