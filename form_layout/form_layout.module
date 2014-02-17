@@ -147,6 +147,11 @@ function form_layout_delete($machine_name) {
  */
 function form_layout_fundraiser_field_info() {
   $fields = array();
+  $node = menu_get_object();
+
+  if ((isset($_SESSION['form_layout']) && $_SESSION['form_layout'] == 'none') || (!isset($node->form_layout) || $node->form_layout == 'none')) {
+   return $fields;
+  } 
 
   // $fields['left_sidebar'] = array(
   //   '#title' => t('Left sidebar'),
@@ -189,7 +194,7 @@ function form_layout_fundraiser_field_info() {
   //   '#required' => 0,
   //   '#display_callback' => 'form_layout_right_sidebar_display',
   // );
-
+ 
   return $fields;
 }
 
@@ -204,7 +209,6 @@ function form_layout_fundraiser_field_info() {
  */
 function form_layout_fundraiser_field_info_alter(&$info) {
   if (isset($_SESSION['form_layout']) && $_SESSION['form_layout'] != 'none') {
-
     $layout = form_layout_load($_SESSION['form_layout']);
 
     foreach ($layout['layout'] as $region => $content) {
@@ -218,7 +222,7 @@ function form_layout_fundraiser_field_info_alter(&$info) {
   }
 
   // Remove the session var.
-  unset($_SESSION['form_layouts']);
+  unset($_SESSION['form_layout']);
 }
 
 /**
@@ -408,7 +412,7 @@ function form_layout_bottom_region_display($form, $form_state, $field) {
  *   form_layout_form_webform_client_form_alter(&$form, &$form_state, $form_id)
  */
 function form_layout_preprocess_webform_form(&$variables) {
-  $submit_position = $variables['form']['#node']->submit_position;
+  $submit_position = isset($variables['form']['#node']->submit_position) ? $variables['form']['#node']->submit_position : NULL;
 
   if (empty($submit_position)) {
     return;
@@ -434,7 +438,7 @@ function form_layout_form_node_form_alter(&$form, &$form_state, $form_id) {
   if (fundraiser_is_donation_type($form['#node']->type)) {
 
     $easy_edit = variable_get('webform_easy_edit_nodes', array());
-    if(module_exists('webform_easy_edit') && in_array($form['#node']->nid, $easy_edit)) {
+    if(module_exists('webform_easy_edit') && isset($form['#node']->nid) && in_array($form['#node']->nid, $easy_edit)) {
       $disabled = TRUE;
     }
     else {
@@ -530,9 +534,11 @@ function form_layout_get_region_options() {
  * It will all get saved later on as part of being an entity.
  */
 function form_layout_node_form_submit($form, &$form_state) {
+
   $layout_name = $form_state['values']['form_layout'];
   if ($layout_name == 'none') {
     // Don't make a change.
+    $_SESSION['form_layout'] = $layout_name;
     return;
   }
 
@@ -591,7 +597,9 @@ function form_layout_key_cids_by_form_key($components) {
  * Save the form layout.
  */
 function form_layout_node_insert($node) {
-  form_layout_node_update($node);
+  if(!empty($node->form_layout) && $node->form_layout != 'none') {
+    form_layout_node_update($node);
+  }
 }
 
 /**
@@ -619,8 +627,10 @@ function form_layout_node_update($node) {
     return;
   }
 
-  if (fundraiser_is_donation_type($node->type) && !empty($node->form_layout)) {
+  if (fundraiser_is_donation_type($node->type) && !empty($node->form_layout) && $node->form_layout != 'none') {
     form_layout_save_node_layout($node->nid, $node->form_layout, $node->submit_position);
+  } elseif (!empty($node->form_layout) && $node->form_layout == 'none') {
+     form_layout_delete_node_layout($node->nid);
   }
 }
 
