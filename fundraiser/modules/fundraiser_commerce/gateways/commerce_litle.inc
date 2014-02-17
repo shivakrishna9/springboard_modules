@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Commerce based hook for commerce_litle
+ * Commerce based hook for commerce_litle.
  */
 
 /**
@@ -10,7 +10,8 @@
  */
 function commerce_litle_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
-    // Create the payment_method array with the commerce gateway method info name as the key
+    // Create the payment_method array with the commerce gateway
+    // method info name as the key.
     'payment_method' => array('commerce_litle_cc' => 'credit', 'commerce_litle_echeck' => 'bank account'),
     // @todo bank account (echeck) recurring is not yet fully implemented.
     'allow_recurring' => array('credit'),
@@ -26,7 +27,7 @@ function commerce_litle_fundraiser_commerce_fundraiser_gateway_info() {
 }
 
 /**
- * Returns the form fields for this method
+ * Returns the form fields for this method.
  */
 function commerce_litle_fundraiser_commerce_submit_form($payment_method) {
   if ($payment_method == 'credit') {
@@ -40,7 +41,7 @@ function commerce_litle_fundraiser_commerce_submit_form($payment_method) {
 }
 
 /**
- * Convert values to ones that Fundraiser Commerce is looking for
+ * Convert values to ones that Fundraiser Commerce is looking for.
  */
 function commerce_litle_fundraiser_commerce_cleanup($submission_fields, $payment_method) {
   if ($payment_method == 'credit') {
@@ -51,12 +52,14 @@ function commerce_litle_fundraiser_commerce_cleanup($submission_fields, $payment
 }
 
 /**
- * Callback function, return the user entered expiration dates for this submission.
+ * Callback function.
+ *
+ * Return the user entered expiration dates for this submission.
  */
 function commerce_litle_fundraiser_commerce_expire($submission_fields) {
 
   if ($submission_fields['payment_method'] == 'bank account') {
-    // pretend expiration date for sustainers
+    // Pretend expiration date for sustainers.
     $exp_timestamp = strtotime('+12 months');
 
     return array(
@@ -78,7 +81,7 @@ function commerce_litle_fundraiser_commerce_scrub($submission_fields, $payment_m
     return _fundraiser_commerce_credit_card_scrub($submission_fields);
   }
   elseif ($payment_method == 'bank account') {
-    // Scrub sensitive donation fields if they exists.
+    // Scrub sensitive donation fields if they exist.
     if (isset($submission_fields['bank account']['accNum'])) {
       $submission_fields['bank account']['accNum'] = substr($submission_fields['bank account']['accNum'], -3);
     }
@@ -90,10 +93,10 @@ function commerce_litle_fundraiser_commerce_scrub($submission_fields, $payment_m
 }
 
 /**
- * Validate the submitted values with the commerce validate function
+ * Validate the submitted values with the commerce validate function.
  */
 function commerce_litle_fundraiser_commerce_validate($submission_fields, $payment_fields, $payment_method) {
-  // Pass the values to the validation scripts
+  // Pass the values to the validation scripts.
   if ($payment_method == 'credit') {
     $form_parents = array_merge($payment_fields['#parents'], array('credit'));
     module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
@@ -101,7 +104,7 @@ function commerce_litle_fundraiser_commerce_validate($submission_fields, $paymen
   }
   elseif ($payment_method == 'bank account') {
     $form_parents = array_merge($payment_fields['#parents'], array('bank account'));
-    // Pass the values array with the key the litle module expects
+    // Pass the values array with the key the litle module expects.
     $values = array('echeck' => $submission_fields['payment_fields']['bank account']);
     commerce_litle_echeck_submit_form_validate(NULL, $payment_fields, $values, NULL, $form_parents);
   }
@@ -110,7 +113,7 @@ function commerce_litle_fundraiser_commerce_validate($submission_fields, $paymen
 }
 
 /**
- * Submit the donation values to the Litle charge handler
+ * Submit the donation values to the Litle charge handler.
  */
 function commerce_litle_fundraiser_commerce_charge($method_instance, $donation) {
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
@@ -119,17 +122,20 @@ function commerce_litle_fundraiser_commerce_charge($method_instance, $donation) 
   $wrapper = entity_metadata_wrapper('commerce_order', $order);
   $charge = $wrapper->commerce_order_total->value();
 
-  $pane_form = array(); // Not actually used anywhere in this system, so ignore it.
+  // Not actually used anywhere in this system, so ignore it.
+  $pane_form = array();
 
-  // Execute call to Litle depending on what payment method we have
+  // Execute call to Litle depending on what payment method we have.
   if ($donation->donation['payment_method'] == 'credit') {
     $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
 
     $method_instance['settings']['cardonfile'] = FALSE;
 
     if (module_exists('commerce_cardonfile')) {
-      $method_instance['settings']['cardonfile'] = TRUE; // Card on file,
-      $pane_values['credit_card']['cardonfile_store'] = TRUE; // And store it please.
+      // Card on file,
+      $method_instance['settings']['cardonfile'] = TRUE;
+      // And store it please.
+      $pane_values['credit_card']['cardonfile_store'] = TRUE;
       $pane_values['cardonfile'] = commerce_litle_get_cardonfile_pane_value($donation->uid, $method_instance['instance_id']);
     }
 
@@ -141,15 +147,17 @@ function commerce_litle_fundraiser_commerce_charge($method_instance, $donation) 
     $method_instance['settings']['cardonfile'] = FALSE;
 
     if (module_exists('commerce_cardonfile')) {
-      $method_instance['settings']['cardonfile'] = TRUE; // Card on file,
-      $pane_values['echeck']['cardonfile_store'] = TRUE; // And store it please.
+      // Card on file,
+      $method_instance['settings']['cardonfile'] = TRUE;
+      // And store it please.
+      $pane_values['echeck']['cardonfile_store'] = TRUE;
       $pane_values['cardonfile'] = commerce_litle_get_cardonfile_pane_value($donation->uid, $method_instance['instance_id']);
     }
 
     $result = commerce_litle_echeck_submit_form_submit($method_instance, $pane_form, $pane_values, $order, $charge);
   }
 
-  // Returns FALSE if the payment failed, returns nothing if successful
+  // Returns FALSE if the payment failed, returns nothing if successful.
   $success = FALSE;
   if ($result !== FALSE) {
     $success = TRUE;
@@ -158,13 +166,17 @@ function commerce_litle_fundraiser_commerce_charge($method_instance, $donation) 
 }
 
 /**
- * Returns the card_id of an unexpired, active card on file,
- * or 'new' if there isn't one.
+ * Returns the card_id of an unexpired, active card on file.
  *
- * @param int $uid  User ID
- * @param int $instance_id  Payment method instance ID
+ * If there isn't one, returns 'new'.
  *
- * @return string  The string 'new' or a card_id from cardonfile.
+ * @param int $uid
+ *   User ID.
+ * @param int $instance_id
+ *   Payment method instance ID.
+ *
+ * @return string
+ *   The string 'new' or a card_id from cardonfile.
  */
 function commerce_litle_get_cardonfile_pane_value($uid, $instance_id) {
   // Make a new token unless we already have one on record.
@@ -178,7 +190,7 @@ function commerce_litle_get_cardonfile_pane_value($uid, $instance_id) {
 
   // Filter out expired cards.
   foreach ($stored_cards as $card_id => $card_data) {
-    // special case for echecks
+    // Special case for echecks.
     if ($card_data->card_exp_year == 0 && $card_data->card_exp_month == 0) {
       continue;
     }
@@ -200,13 +212,16 @@ function commerce_litle_get_cardonfile_pane_value($uid, $instance_id) {
 }
 
 /**
- * Refund callback for Litle, wraps the admin form used for refund with our own system.
+ * Refund callback for Litle.
+ *
+ * Wraps the admin form used for refund with our own system.
  */
 function commerce_litle_fundraiser_commerce_refund($payment_method, $refund) {
   // Retrieve data.
   $refunding_order = commerce_order_load($refund->did);
   $transactions = commerce_payment_transaction_load_multiple(array(), $conditions = array('order_id' => $refunding_order->order_id));
-  $transaction = array_shift($transactions); // The first one is the original donation.
+  // The first one is the original donation.
+  $transaction = array_shift($transactions);
 
   // Set up the values needed for the transaction to go through.
   $payment_method = commerce_payment_method_instance_load($transaction->instance_id);
