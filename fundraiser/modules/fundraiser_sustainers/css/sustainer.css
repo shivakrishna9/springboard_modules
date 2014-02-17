@@ -37,18 +37,20 @@
 }
 
 #payment-info dl dd {
-  display:block;
+  display:inline-block;
   margin:0;
+  margin-right:2em;
 }
 
 #payment-info dl dt {
-  width:210px;
-  float:left;
+  width:20%;
+  display:inline-block;
 }
 
+
 #orders .recurring-order td a {
- display:block;
-padding-left:4px;
+  display:block;
+  padding-left:4px;
 }
 
 #orders .recurring-order td a:hover {
