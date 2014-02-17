@@ -2,10 +2,7 @@
 
 /**
  * @file
- * Sustainer page callbacks for the fundraiser module.
- *
- * Why? Footprint again. Not all sites need recurring / sustainer maintained fundraising.
- * (Use this module to model behavior and actions for peer-to-peer and other fundraiser types.)
+ * Core hooks and helper funcctions for Fundraiser Sustainers.
  */
 
 require_once 'includes/fundraiser_sustainers.goals.inc';
@@ -558,8 +555,8 @@ function fundraiser_sustainers_process_recurring_donations() {
   // And after all of that is done, provide a hook to allow for modules to respond.
   module_invoke_all('fundraiser_donation_recurring');
   $log = array(
-    $successes => 0,
-    $fails => 0,
+    'successes' => 0,
+    'fails' => 0,
   );
   $donations = _fundraiser_sustainers_cron_get_recurring();
   $sustainer_key = fundraiser_sustainers_get_sustainer_key_value();

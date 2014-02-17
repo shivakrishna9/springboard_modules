@@ -5,19 +5,22 @@
  * Admin settings form and associated functions.
  */
 
+/**
+ * Admin settings form.
+ */
 function fundraiser_date_mode_admin() {
   $form['fundraiser_date_mode_set_date_mode'] = array(
     '#type' => 'checkbox',
     '#title' => t('Set date mode'),
     '#default_value' => variable_get('fundraiser_date_mode_set_date_mode', FALSE),
-    '#description' => t('Process all sustainer charges on a set date each month. ' .
-      'If this checkbox is left unchecked, sustainers will instead be processed ' .
-      'on the date of their anniversary. NOTE: Turning this feature on will convert ' .
-      'current sustainers to the new date for all future (and only future) charges. '.
-      'Turning this feature off thereafter will revert future charges to anniversary.'),
+    '#description' => t('Process all sustainer charges on a set date each month
+      If this checkbox is left unchecked, sustainers will instead be processed
+      on the date of their anniversary. NOTE: Turning this feature on will convert
+      current sustainers to the new date for all future (and only future) charges.
+      Turning this feature off thereafter will revert future charges to anniversary.'),
   );
-
-  $dates = array_combine(range(1, 28), range(1, 28)); // Why 28? Feb.
+  // Date capped at 28 because of Feb.
+  $dates = array_combine(range(1, 28), range(1, 28));
   $form['fundraiser_date_mode_set_dates'] = array(
     '#type' => 'select',
     '#title' => t('Process date'),
@@ -40,9 +43,9 @@ function fundraiser_date_mode_admin() {
   $form['cron_settings']['fundraiser_date_mode_set_seconds'] = array(
     '#type' => 'select',
     '#title' => t('Seconds spent'),
-    '#description' => t('Set how many seconds for each drupal queue run to spend on the queue processing sustainer charges. '.
-      'If drupal queue is running as part of drupal cron, leave this at about 30 seconds or less so it won\'t time out.' .
-      'If drupal queue is running standalone through drush then this can be higher to process more sustainers in a single run.'),
+    '#description' => t('Set how many seconds for each drupal queue run to spend on the queue processing sustainer charges.
+      If drupal queue is running as part of drupal cron, leave this at about 30 seconds or less so it won\'t time out.
+      If drupal queue is running standalone through drush then this can be higher to process more sustainers in a single run.'),
     '#options' => $seconds,
     '#default_value' => variable_get('fundraiser_date_mode_set_seconds', 30),
   );
@@ -66,7 +69,6 @@ function fundraiser_date_mode_admin() {
  *
  * Generates batch and performs batch operations as needed when date mode
  * settings call for updating next_charge dates.
- *
  */
 function fundraiser_date_mode_admin_submit($form, $form_state) {
   $date_mode_setting = variable_get('fundraiser_date_mode_set_date_mode', FALSE);
@@ -83,10 +85,10 @@ function fundraiser_date_mode_admin_submit($form, $form_state) {
   elseif ($date_changed && $form_state['values']['fundraiser_date_mode_set_date_mode']) {
     $op = 'date_mode_date_changed';
   }
-
-  // Date mode setting has changed or date mode is enabled and the process date has changed.
+  // Date mode setting has changed or date mode is enabled and the process date
+  // has changed.
   if ($mode_changed || ($form_state['values']['fundraiser_date_mode_set_date_mode'] && $date_changed)) {
-    $batch = fundraiser_date_mode_update_date_mode_batch($op, $form_state['values']['fundraiser_date_mode_set_date_mode'], $form_state['values']['fundraiser_date_mode_set_dates']);
+    $batch = fundraiser_date_mode_update_date_mode_batch($op, $form_state['values']['fundraiser_date_mode_set_dates']);
     batch_set($batch);
   }
 }
@@ -95,15 +97,25 @@ function fundraiser_date_mode_admin_submit($form, $form_state) {
  * Creates a batch of sustainer series that need next_charge dates updated.
  */
 function fundraiser_date_mode_update_date_mode_batch($op, $date) {
-  $time = '01:01:01'; // One minute, one second after 1am.
+  // TODO: do we need $time for anything?
+  $time = '01:01:01';
   $operations = array();
   $now = time();
   $series_data = fundraiser_date_mode_get_sustainer_series_data();
   $master_ids = array_keys($series_data);
   $max = count($master_ids);
   foreach ($master_ids as $master_id) {
-    // we pass mode, date, and time to every operation call even though they don't change.
-    $operations[] = array('fundraiser_date_mode_update_date_mode_operation', array($op, $date, $time, $master_id, $max, $series_data[$master_id]));
+    // We pass mode, date, and time to every operation call even though they
+    // don't change.
+    $params = array(
+      $op,
+      $date,
+      $time,
+      $master_id,
+      $max,
+      $series_data[$master_id],
+    );
+    $operations[] = array('fundraiser_date_mode_update_date_mode_operation', $params);
   }
 
   $batch = array(
@@ -116,8 +128,3 @@ function fundraiser_date_mode_update_date_mode_batch($op, $date) {
   );
   return $batch;
 }
-
-
-
-
-
