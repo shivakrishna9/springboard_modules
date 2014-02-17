@@ -1000,12 +1000,10 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
         $component['pid'] = $orig_field->pid; // Keep the original parentage, could be set by user.
         $component['name'] = $orig_field->name; // Keep the original name, could be set by user.
 
-        // Need to get description, prefix, and suffix, and keep original ones.
+        // Pass through customizations of the extra configurations
         $orig_field->extra = unserialize($orig_field->extra);
-        foreach (array('description', 'field_prefix', 'field_suffix') as $extra_field) {
-          if (!empty($orig_field->extra[$extra_field])) {
-            $component['extra'][$extra_field] = $orig_field->extra[$extra_field];
-          }
+        foreach ($orig_field->extra as $extra_field => $config) {
+          $component['extra'][$extra_field] = $orig_field->extra[$extra_field];
         }
 
         if (!$reset_value) {

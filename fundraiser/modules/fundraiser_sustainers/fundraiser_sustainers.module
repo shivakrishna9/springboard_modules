@@ -765,6 +765,26 @@ function _fundraiser_sustainers_recurs_monthly_field_display($form, $form_state,
 }
 
 /**
+ * Add validation to the recurring component edit form
+ */
+function fundraiser_sustainers_form_webform_component_edit_form_alter(&$form, $form_state) {
+  list($node, $component, $clone) =  $form_state['build_info']['args'];
+  if (fundraiser_is_donation_type($node->type)
+   && $component['form_key'] == 'recurs_monthly') {
+    $form['#validate'][] = '_fundraiser_sustainers_form_webform_component_edit_form_validate';
+  }
+}
+
+/**
+ * Validates the recurring component edit form to ensure the 'recurs' value is in the Options
+ */
+function _fundraiser_sustainers_form_webform_component_edit_form_validate(&$form, $form_state) {
+  if (strpos($form_state['values']['extra']['items'], 'recurs|') === FALSE) {
+    form_set_error('extra][items', t('The Options for this field must contain the value \'recurs\'.'));
+  }
+}
+
+/**
  * Implements hook_fundraiser_donation_information_table_alter().
  */
 function fundraiser_sustainers_fundraiser_donation_information_table_alter(&$variables, $donation) {
