@@ -209,6 +209,7 @@ function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) 
         $donation->donation['payment_fields']['credit']['card_type'] : '';
     }
   }
+
   // Replace the given tokens.
   $replacements = array();
   foreach ($tokens as $key => $token) {
@@ -216,12 +217,17 @@ function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) 
       $replacements[$token] = $data[$key];
     }
   }
-  if ($node_tokens = token_find_with_prefix($tokens, 'node')) {
-    $replacements += token_generate('node', $node_tokens, array('node' => $donation->node), $options);
+
+  // If we have a donation object add the node and user tokens as well
+  if (!empty($donation)) {
+    if ($node_tokens = token_find_with_prefix($tokens, 'node')) {
+      $replacements += token_generate('node', $node_tokens, array('node' => $donation->node), $options);
+    }
+    if ($user_tokens = token_find_with_prefix($tokens, 'user')) {
+      $replacements += token_generate('user', $user_tokens, array('user' => $donation->user), $options);
+    }
   }
-  if ($user_tokens = token_find_with_prefix($tokens, 'user')) {
-    $replacements += token_generate('user', $user_tokens, array('user' => $donation->user), $options);
-  }
+
   return $replacements;
 }
 
