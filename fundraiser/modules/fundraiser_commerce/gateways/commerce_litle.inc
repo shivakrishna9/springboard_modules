@@ -23,6 +23,7 @@ function commerce_litle_fundraiser_commerce_fundraiser_gateway_info() {
     'expire callback' => 'commerce_litle_fundraiser_commerce_expire',
     'charge callback' => 'commerce_litle_fundraiser_commerce_charge',
     'refund callback' => 'commerce_litle_fundraiser_commerce_refund',
+    'cardonfile callback' => 'commerce_litle_fundraiser_commerce_cardonfile',
   );
 }
 
@@ -129,14 +130,14 @@ function commerce_litle_fundraiser_commerce_charge($method_instance, $donation) 
   if ($donation->donation['payment_method'] == 'credit') {
     $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
 
+    // Add fundraiser commerce data to the pane values array
+    _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
+
     $method_instance['settings']['cardonfile'] = FALSE;
 
     if (module_exists('commerce_cardonfile')) {
       // Card on file,
       $method_instance['settings']['cardonfile'] = TRUE;
-      // And store it please.
-      $pane_values['credit_card']['cardonfile_store'] = TRUE;
-      $pane_values['cardonfile'] = commerce_litle_get_cardonfile_pane_value($donation->uid, $method_instance['instance_id']);
     }
 
     $result = commerce_litle_cc_submit_form_submit($method_instance, $pane_form, $pane_values, $order, $charge);
@@ -162,11 +163,46 @@ function commerce_litle_fundraiser_commerce_charge($method_instance, $donation) 
   if ($result !== FALSE) {
     $success = TRUE;
   }
+
+  // Perform post processing functions.
+  _fundraiser_commerce_charge_submit_form_process($success, $method_instance, $pane_values, $donation);
+
   return $success;
 }
 
 /**
+ * Card on file callback.
+ *
+ * We use a custom callback since we may need to update an existing vault
+ * profile.
+ */
+function commerce_litle_fundraiser_commerce_cardonfile($donation) {
+  // Use standard function to setup the card on file fields
+  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+  $cardonfile_fields = _fundraiser_commerce_credit_card_cardonfile_fields($donation);
+
+  // @todo Does litle care about expiration date?
+  // So we need to search locally to see if we have an existing profile for
+  // a card number.
+  // Only perform this when we're in an active non-reference charge.
+//  if (isset($donation->reference_charge) && $donation->reference_charge === FALSE) {
+//    // Query the db for an existing record
+//    $card_data = _fundraiser_commerce_cardonfile_exp_date_mismatch($cardonfile_fields);
+//
+//    // If we have a profile for this user update it in the CIM
+//    if ($card_data) {
+//      // Make the update request to authorize.net
+//      commerce_authnet_fundraiser_commerce_update($donation, $card_data);
+//    }
+//  }
+
+  return $cardonfile_fields;
+}
+
+/**
  * Returns the card_id of an unexpired, active card on file.
+ *
+ * @deprecated
  *
  * If there isn't one, returns 'new'.
  *
