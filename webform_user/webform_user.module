@@ -907,6 +907,8 @@ function _webform_user_create_webform_components(&$node) {
       // TODO handle:
       // 'taxonomy_term_reference'
       switch ($item['type']) {
+        case 'email':
+          break;
         case 'checkbox':
         // From list_field_info().
         case 'list_boolean':
