@@ -160,7 +160,7 @@ function fundraiser_token_info() {
  */
 function _fundraiser_donation_token_info($fields = NULL, $tokens = array()) {
   if ($fields == NULL) {
-    $fields = fundraiser_field_info();
+    $fields = _fundraiser_field_info();
   }
   $children = element_children($fields);
   foreach ($children as $child) {
@@ -886,7 +886,7 @@ function _fundraiser_donation_settings_form_amounts(&$form, &$form_state) {
  * Provides a list of fields to be defined by the display module.
  * Requests additional field information from other modules that need to define them.
  */
-function fundraiser_field_info($refresh = FALSE) {
+function _fundraiser_field_info($refresh = FALSE) {
   static $fields;
   // Cache fundraiser content types during page execution.
   if (empty($fields) || $refresh == TRUE) {
@@ -1250,7 +1250,7 @@ function fundraiser_update_form_field($calling_module, $form, $field_key, $new_f
  */
 function fundraiser_display_form_fields($calling_module, &$form, $form_state, $field_info = NULL) {
   if ($field_info == NULL) {
-    $field_info = fundraiser_field_info();
+    $field_info = _fundraiser_field_info();
   }
   $children = element_children($field_info);
   foreach ($children as $child) {
@@ -1273,7 +1273,7 @@ function fundraiser_display_form_fields($calling_module, &$form, $form_state, $f
 function fundraiser_validate_form_fields($form, $form_state, $submission_fields, $field_info = NULL, $errors = FALSE) {
   // Grab field info, we'll use this all the way down.
   if ($field_info == NULL) {
-    $field_info = fundraiser_field_info();
+    $field_info = _fundraiser_field_info();
   }
   // Check for errors by field info array.
   $children = element_children($field_info);
@@ -2290,7 +2290,7 @@ function _fundraiser_update_form_field($form, $field_key, $new_field) {
  */
 function _fundraiser_get_field_keys($field_info = NULL, $keys = array()) {
   if ($field_info == NULL) {
-    $field_info = fundraiser_field_info();
+    $field_info = _fundraiser_field_info();
   }
   $children = element_children($field_info);
   $keys = array_merge($keys, $children);
@@ -2308,7 +2308,7 @@ function _fundraiser_get_field_keys($field_info = NULL, $keys = array()) {
  */
 function _fundraiser_get_field_fields($field_info = NULL, $fields = array()) {
   if ($field_info == NULL) {
-    $field_info = fundraiser_field_info();
+    $field_info = _fundraiser_field_info();
   }
   $children = element_children($field_info);
   foreach ($children as $child) {

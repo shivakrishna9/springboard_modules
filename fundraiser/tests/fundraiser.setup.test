@@ -367,7 +367,7 @@ class FundraiserSetup extends DrupalWebTestCase {
    * Create an example Fundraiser node.
    */
   protected function createDonationForm($node_configs = '') {
-    $fields = fundraiser_field_info(TRUE);
+    $fields = _fundraiser_field_info(TRUE);
     // Create the node.
     $node = new stdClass();
     $node->is_new = 1;

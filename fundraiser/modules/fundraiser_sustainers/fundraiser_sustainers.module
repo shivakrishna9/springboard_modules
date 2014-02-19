@@ -1147,7 +1147,7 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
   );
 
   // The rest of this is based on fields generated from fundraiser.
-  $field_info = fundraiser_field_info();
+  $field_info = _fundraiser_field_info();
   // The parts we need to allow for updating: donor info, billing and credit card.
   $form['billing_information'] = array(
     '#type' => 'fieldset',
@@ -1241,7 +1241,7 @@ function _fundraiser_sustainers_create_field_from_info($donation, $field_key, $f
  */
 function fundraiser_sustainers_billing_update_form_validate($form, &$form_state) {
   $donation = $form['#donation'];
-  // Submission fields are keyed according to the fields in fundraiser_field_info().
+  // Submission fields are keyed according to the fields in _fundraiser_field_info().
   // Select only the ones we want to validate with fundraiser.
   $submission_fields = $form_state['values'];
   // Clean up the gateway information as needed on validation.

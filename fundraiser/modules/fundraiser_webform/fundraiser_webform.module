@@ -554,7 +554,7 @@ function fundraiser_webform_fundraiser_donation_form_after_build($form, $form_st
  * Implements hook_fundraiser_donation_validate().
  */
 function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
-  // Submission fields are keyed according to the fields in fundraiser_field_info().
+  // Submission fields are keyed according to the fields in _fundraiser_field_info().
   $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted']);
   // Get the gateway that goes with this payment method.
   $payment_method_component = _fundraiser_webform_get_component_by_nid_key($form['#node']->nid, array('payment_method'));
@@ -631,7 +631,7 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
  */
 function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $donation) {
   // Given the set of fields defined in fundraiser, grab results here that match those fields.
-  // Since we used the fundraiser_field_info keys to generate our webform components with the same form keys
+  // Since we used the _fundraiser_field_info keys to generate our webform components with the same form keys
   // And we prevent those values from being overwritten, we can pass the results as an automatic map between the two.
   // Other modules will have to be more particular.
   $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted_tree']);
@@ -932,7 +932,7 @@ function &_fundraiser_webform_find_field(&$form, $path) {
  */
 function _fundraiser_webform_update_components($fundraiser) {
   // Poll other modules for the information they would normally provide to the donation form.
-  $fields = fundraiser_field_info();
+  $fields = _fundraiser_field_info();
   // Start creating fields based on the component.
   $components = array();
   $child_weight = 0;
@@ -1055,7 +1055,7 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
  */
 function _fundraiser_webform_get_nonfieldset_keys($field_info = NULL, $fields = array()) {
   if ($field_info == NULL) {
-    $field_info = fundraiser_field_info();
+    $field_info = _fundraiser_field_info();
   }
   $children = element_children($field_info);
   foreach ($children as $child) {
