@@ -640,7 +640,7 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
           break;
 
         case 'target':
-          $replacements[$token] = $data['webform_goal']['target_value'];
+          $replacements[$token] = isset($goal_progress['target']) ? $goal_progress['target'] : $data['webform_goal']['target_value'];
           break;
 
         case 'total':
