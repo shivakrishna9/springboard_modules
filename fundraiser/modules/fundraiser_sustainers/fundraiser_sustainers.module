@@ -547,7 +547,6 @@ function fundraiser_sustainers_fundraiser_donation_delete($donation) {
  * Helper function, kick off recurring donations for payment. Called on cron usually.
  */
 function fundraiser_sustainers_process_recurring_donations() {
-  drupal_set_message('processing recurring donations');
   // Provide a hook to allow for modules to respond.
   module_invoke_all('fundraiser_donation_recurring');
   $successes = 0;
@@ -572,7 +571,6 @@ function fundraiser_sustainers_process_recurring_donations() {
       // Since we already created the donation (and saved any CC info at that time).
       // All we need to do is process it and respond afterwards as needed.
       fundraiser_donation_process($donation);
-      drupal_set_message('processed donation');
       if (!isset($donation->result['message'])) {
         $donation->result['message'] = '';
       }
