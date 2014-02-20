@@ -173,7 +173,18 @@ function fundraiser_upsell_salesforce_init() {
 
   $query = drupal_get_query_parameters();
   foreach ($fields_to_override as $key) {
-    $upsell_key = 'us_' . $key;
+
+    if ($key == 'market_source') {
+      $query_key = 'ms';
+    }
+    elseif ($key == 'cammpaign') {
+      $query_key = 'cid';
+    }
+    else {
+      $query_key = $key;
+    }
+
+    $upsell_key = 'us_' . $query_key;
     if (isset($query[$upsell_key])) {
       // Don't save the key prefix.
       $market_source[$key] = $query[$upsell_key];
@@ -722,20 +733,6 @@ function fundraiser_upsell_salesforce_get_upsell_enabled_market_source_fields() 
   $fields = array_merge($default_fields, $custom_fields);
 
   foreach ($fields as $key => $value) {
-    // Fiddling required due to quirks in how Market Source presents data
-    // during form submission.
-    // ms and cid fields are not indexed by their form key, so we have to
-    // do a quick conversion.
-    switch ($key) {
-      case 'market_source':
-        $key = 'ms';
-        break;
-
-      case 'campaign':
-        $key = 'cid';
-        break;
-
-    }
     if ($value['fundraiser_upsell_enabled'] === 1) {
       $enabled_fields[] = $key;
     }
