@@ -443,7 +443,13 @@ function fundraiser_upsell_donation_form($form, &$form_state) {
   $nid = $form_state['nid'];
   $preview = $form_state['preview'];
   if (!is_null($did) && $donation = fundraiser_donation_get_donation($did)) {
-    $suggested_amount = fundraiser_upsell_find_suggested_amount($donation->amount);
+    if (!empty($donation->donation['quantity'])) {
+      $amount = $donation->amount / $donation->donation['quantity'];
+    }
+    else {
+      $amount = $donation->amount;
+    }
+    $suggested_amount = fundraiser_upsell_find_suggested_amount($amount);
     $nid = $donation->nid;
   }
   else {
