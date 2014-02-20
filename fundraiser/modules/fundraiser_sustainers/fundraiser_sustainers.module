@@ -251,9 +251,9 @@ function fundraiser_sustainers_tokens_alter(&$replacements, $context) {
   $options = $context['options'];
   if ($type = 'donation' && !empty($data['donation'])) {
     $donation = $data['donation'];
-    $replacements['recurs_monthly'] = t('No');
+    $replacements['[donation:recurs_monthly]'] = t('No');
     if (!empty($donation->donation['recurs_monthly']) && $donation->donation['recurs_monthly']) {
-      $replacements['recurs_monthly'] = t('Yes');
+      $replacements['[donation:recurs_monthly]'] = t('Yes');
     }
   }
 }
