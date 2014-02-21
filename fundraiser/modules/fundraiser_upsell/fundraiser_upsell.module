@@ -1182,6 +1182,7 @@ function fundraiser_upsell_create_master_donation($upsold_donation, $new_amount)
 
     // Process the donation.  Since it references the original donation,
     // we don't need payment info.
+    $master_donation->reference_charge = TRUE;
     fundraiser_donation_process($master_donation);
     if (!isset($master_donation->result['message'])) {
       $master_donation->result['message'] = '';
