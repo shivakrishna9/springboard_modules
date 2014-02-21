@@ -71,18 +71,50 @@ function fundraiser_upsell_salesforce_node_settings_submit($form, &$form_state) 
  * Implements hook_fundraiser_donation_create().
  *
  * Gets the donation ID for the master upsell donation and stores it
- *   with the market source data from the node.
+ *   with the market source data from the node, after being overridden
+ *   by any url parameters provided.
  */
 function fundraiser_upsell_salesforce_fundraiser_donation_create($donation) {
   if (isset($donation->fundraiser_upsell->type) && $donation->fundraiser_upsell->type == 'master_donation') {
-    $data = $donation->node->fundraiser_upsell_salesforce;
-    // Insert a record for the recurring series and its market source.
-    $record = array(
-      'master_did' => $donation->did,
-      'data' => $data,
-    );
-    drupal_write_record('fundraiser_upsell_salesforce_donation', $record);
+    $data = fundraiser_upsell_salesforce_update_market_source_with_url_overrides($donation->node->fundraiser_upsell_salesforce);
+    fundraiser_upsell_salesforce_set_market_source($donation->did, $data);
   }
+}
+
+/**
+ * Implements hook_fundraiser_donation_get_donation().
+ *
+ * Adds overridden market source values to the donation object.
+ */
+function fundraiser_upsell_salesforce_fundraiser_donation_get_donation($donation) {
+  if (isset($donation->fundraiser_upsell->type)) {
+    if ($donation->fundraiser_upsell->type == 'master_donation') {
+      $master_did = $donation->did;
+    }
+    else {
+      $master_did = $donation->fundraiser_upsell->related_did;
+    }
+
+    $donation->fundraiser_upsell_salesforce = fundraiser_upsell_salesforce_get_market_source($master_did);
+  }
+}
+
+/**
+ * Saves overridden market source data for the upsell donation series.
+ *
+ * @param int $master_did
+ *   Donation ID of the master donation in the series.
+ * @param array $data
+ *   The data that should override the original donation values in the
+ *   Salesforce object.
+ */
+function fundraiser_upsell_salesforce_set_market_source($master_did, $data) {
+  // Insert a record for the recurring series and its market source.
+  $record = array(
+    'master_did' => $master_did,
+    'data' => $data,
+  );
+  drupal_write_record('fundraiser_upsell_salesforce_donation', $record);
 }
 
 /**
@@ -162,18 +194,22 @@ function fundraiser_upsell_salesforce_salesforce_queue_create_item_alter(&$item)
 }
 
 /**
- * Implements hook_init().
+ * Get the upsell overrides from the URL query parameters.
  *
- * Captures upsell market source values from the URL and stores them in the
- *   session for later.  Only stores fields that are overriddeable by upsell.
+ * Parses upsell market source values from the URL.
+ *   Only gets fields that are overriddeable by upsell.
+ *
+ * @return array
+ *   An associative array with market source keys and values.
  */
-function fundraiser_upsell_salesforce_init() {
+function fundraiser_upsell_salesforce_get_url_overrides() {
   $fields_to_override = fundraiser_upsell_salesforce_get_upsell_enabled_market_source_fields();
   $market_source = array();
 
   $query = drupal_get_query_parameters();
   foreach ($fields_to_override as $key) {
 
+    // This should already be at ms and cid, but just in case...
     if ($key == 'market_source') {
       $query_key = 'ms';
     }
@@ -187,13 +223,26 @@ function fundraiser_upsell_salesforce_init() {
     $upsell_key = 'us_' . $query_key;
     if (isset($query[$upsell_key])) {
       // Don't save the key prefix.
-      $market_source[$key] = $query[$upsell_key];
+      $market_source[$query_key] = $query[$upsell_key];
     }
   }
 
-  if (!empty($market_source)) {
-    $_SESSION['fundraiser_upsell_salesforce'] = $market_source;
-  }
+  return $market_source;
+}
+
+/**
+ * Update upsell overrides from a node with overrides from the URL.
+ *
+ * @param array $data
+ *   The override data from the node.
+ *
+ * @return array
+ *   The market source data with URL overrides merged in.
+ */
+function fundraiser_upsell_salesforce_update_market_source_with_url_overrides($data) {
+  $overrides = fundraiser_upsell_salesforce_get_url_overrides();
+
+  return array_merge($data, $overrides);
 }
 
 /**
@@ -227,20 +276,14 @@ function fundraiser_upsell_salesforce_update_item(&$item, $donation, $market_sou
       }
 
       // Standardize the new value.
-      // Prefer session values over the configured overrides.
-      if (isset($_SESSION['fundraiser_upsell_salesforce'][$key])) {
-        $new = $_SESSION['fundraiser_upsell_salesforce'][$key];
-      }
-      elseif (isset($market_source[$key])) {
+      if (isset($market_source[$key])) {
         $new = $market_source[$key];
       }
       else {
         $new = '';
       }
 
-      $persistence = $all_fields[$key]['persistence'];
-
-      if (fundraiser_upsell_salesforce_should_override_market_source_value($original, $new, $persistence)) {
+      if (fundraiser_upsell_salesforce_should_override_market_source_value($original, $new, $all_fields[$key]['persistence'])) {
         $item['sobject']->fields[$salesforce_webform_map[$key]] = $new;
       }
     }
@@ -338,7 +381,6 @@ function fundraiser_upsell_salesforce_should_override_market_source_value($origi
 
   return FALSE;
 }
-
 
 /**
  * Implements hook_node_insert().
@@ -674,7 +716,7 @@ function fundraiser_upsell_salesforce_form_market_source_admin_settings_form_alt
   $custom_fields = &$form['market_source_global_fields']['custom_fields_wrapper'];
   $custom_field_values = &$form_state['values']['market_source_global_fields']['custom_fields_wrapper'];
   $custom_field_saved_state = variable_get('fundraiser_upsell_market_source_custom_fields', array());
-  // Add upsell enabled checkox to custom ms fields.
+  // Add upsell enabled checkbox to custom ms fields.
   foreach ($custom_field_values as $i => $field_value) {
     $key = isset($field_value['key']) ? $field_value['key'] : FALSE;
     $custom_fields[$i]['fundraiser_upsell_enabled'] = array(
@@ -722,6 +764,8 @@ function fundraiser_upsell_salesforce_market_source_admin_settings_submit($form,
 /**
  * List upsell-enabled market source fields.
  *
+ * This translate market_source to ms and campaign to cid.
+ *
  * @return array
  *   Returns a list of Market Source fields that have been enabled to be
  *   overridable in upsell donations.
@@ -734,6 +778,14 @@ function fundraiser_upsell_salesforce_get_upsell_enabled_market_source_fields() 
 
   foreach ($fields as $key => $value) {
     if ($value['fundraiser_upsell_enabled'] === 1) {
+
+      if ($key == 'market_source') {
+        $key = 'ms';
+      }
+      elseif ($key == 'campaign') {
+        $key = 'cid';
+      }
+
       $enabled_fields[] = $key;
     }
   }
