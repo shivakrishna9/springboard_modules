@@ -1,22 +1,30 @@
-/*form .left-sidebar {
+form .left-sidebar {
   float: left;
   min-height: 600px;
+  overflow: hidden;
+  margin-right: 10px;
 }
 
 form .right-sidebar {
   float: right;
   min-height: 600px;
+  overflow: hidden;
+  margin-left: 10px;
 }
 
 .both-sidebars [class*="span"],
 .both-sidebars .row {
   margin-left: 0;
-}*/
+}
 
 .center-area {
   overflow: hidden;
 }
-/*
+
+.span3.region-empty {
+  width: 0px;
+}
+
 .middle-right-sidebar {
   overflow: hidden;
 }
@@ -29,12 +37,21 @@ form .both-sidebars .center-area .layout-full {
 form .both-sidebars .center-area .layout-half {
   width: 50%;
   clear: none;
-}*/
+}
+
+div#webform-component-top-region {
+  float: left;
+  width: 100%;
+ }
+
+ div#webform-component-bottom-region {
+  float: left;
+  width: 100%;
+ }
 
 div#webform-component-left-region {
   float:left;
   width: 50%;
-
 }
 
 div#webform-component-right-region {
@@ -42,7 +59,7 @@ div#webform-component-right-region {
   width:50%;
 }
 
-div[id$="-donation-amount"] .control-group {
+div[id$="-amount"] .control-group {
   width:auto;
   clear:none;
   margin-right:10px;
