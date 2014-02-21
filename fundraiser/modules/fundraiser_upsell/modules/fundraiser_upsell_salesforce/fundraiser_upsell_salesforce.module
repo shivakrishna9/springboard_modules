@@ -74,30 +74,30 @@ function fundraiser_upsell_salesforce_node_settings_submit($form, &$form_state) 
  *   with the market source data from the node, after being overridden
  *   by any url parameters provided.
  */
-function fundraiser_upsell_salesforce_fundraiser_donation_create($donation) {
-  if (isset($donation->fundraiser_upsell->type) && $donation->fundraiser_upsell->type == 'master_donation') {
-    $data = fundraiser_upsell_salesforce_update_market_source_with_url_overrides($donation->node->fundraiser_upsell_salesforce);
-    fundraiser_upsell_salesforce_set_market_source($donation->did, $data);
-  }
-}
+//function fundraiser_upsell_salesforce_fundraiser_donation_create($donation) {
+//  if (isset($donation->fundraiser_upsell->type) && $donation->fundraiser_upsell->type == 'master_donation') {
+//    $data = fundraiser_upsell_salesforce_update_market_source_with_url_overrides($donation->node->fundraiser_upsell_salesforce);
+//    fundraiser_upsell_salesforce_set_market_source($donation->did, $data);
+//  }
+//}
 
 /**
  * Implements hook_fundraiser_donation_get_donation().
  *
  * Adds overridden market source values to the donation object.
  */
-function fundraiser_upsell_salesforce_fundraiser_donation_get_donation($donation) {
-  if (isset($donation->fundraiser_upsell->type)) {
-    if ($donation->fundraiser_upsell->type == 'master_donation') {
-      $master_did = $donation->did;
-    }
-    else {
-      $master_did = $donation->fundraiser_upsell->related_did;
-    }
-
-    $donation->fundraiser_upsell_salesforce = fundraiser_upsell_salesforce_get_market_source($master_did);
-  }
-}
+//function fundraiser_upsell_salesforce_fundraiser_donation_get_donation($donation) {
+//  if (isset($donation->fundraiser_upsell->type)) {
+//    if ($donation->fundraiser_upsell->type == 'master_donation') {
+//      $master_did = $donation->did;
+//    }
+//    else {
+//      $master_did = $donation->fundraiser_upsell->related_did;
+//    }
+//
+//    $donation->fundraiser_upsell_salesforce = fundraiser_upsell_salesforce_get_market_source($master_did);
+//  }
+//}
 
 /**
  * Saves overridden market source data for the upsell donation series.
@@ -140,6 +140,12 @@ function fundraiser_upsell_salesforce_get_market_source($master_did) {
  *   before creating the recurring series.
  */
 function fundraiser_upsell_salesforce_upsell_master_donation_alter(&$donation) {
+
+  // Save the market source values so they're available when the Salesforce
+  // queue item is created.
+  $node_overrides = $donation->node->fundraiser_upsell_salesforce;
+  $data = fundraiser_upsell_salesforce_update_market_source_with_url_overrides($node_overrides);
+  fundraiser_upsell_salesforce_set_market_source($donation->did, $data);
 
   // Queue the donation object.
   salesforce_genmap_send_object_to_queue(
