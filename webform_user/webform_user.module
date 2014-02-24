@@ -347,7 +347,6 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
     global $user;
     $user_data = user_load($user->uid);
     // If the user is logged in.
-    dsm($form_state, 'form_state in webform user');
     if ($form_state['programmed']) {
       drupal_set_message('programmatic submission detected');
     }
