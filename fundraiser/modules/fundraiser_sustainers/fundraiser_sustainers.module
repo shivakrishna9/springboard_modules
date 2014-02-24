@@ -1760,7 +1760,7 @@ function _fundraiser_sustainers_get_donation_sets_recurr_by_uid($uid) {
     $next_charge = _fundraiser_sustainers_get_donations_next_charge($donation_set->master_did);
     if (isset($next_charge->next_charge)) {
       $donation_sets[$index]->next_charge = $next_charge->next_charge;
-      $donation_sets[$index]->status = isset($next_charge->cancellation_reason) ? t('Cancelled') : t('Active');
+      $donation_sets[$index]->status = empty($next_charge->cancellation_reason) ? t('Active') : t('Cancelled');
     }
     else {
       $donation_sets[$index]->next_charge = '';
@@ -1785,7 +1785,7 @@ function _fundraiser_sustainers_get_donation_sets() {
     $next_charge = _fundraiser_sustainers_get_donations_next_charge($donation_set->master_did);
     if (isset($next_charge->did)) {
       $donation_sets[$index]->next_charge = $next_charge->next_charge;
-      $donation_sets[$index]->status = isset($next_charge->cancellation_reason) ? 'cancelled' : 'active';
+      $donation_sets[$index]->status = empty($next_charge->cancellation_reason) ? t('active') : t('cancelled');
     }
   }
   return $donation_sets;

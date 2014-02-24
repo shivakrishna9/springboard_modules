@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @file
+ * Plugin for AddThis + Twitter.
+ */
+
 $plugin = array(
   'name' => 'twitter',
   'title' => t('Twitter'),

@@ -25,6 +25,34 @@ function webform_form_salesforce_genmap_map_form_alter(&$form, &$form_state) {
 }
 
 /**
+ * Implements hook_node_insert().
+ *
+ * If the node is being cloned make a copy of it's fieldmap if the node is a
+ * webform enabled type and it has been mapped.
+ */
+function salesforce_genmap_node_insert($node) {
+  $webform_types = variable_get('webform_node_types', array('webform'));
+  if (!empty($node->clone_from_original_nid) && in_array($node->type, $webform_types)) {
+    $nid = $node->clone_from_original_nid;
+
+    $map = salesforce_genmap_load_map($nid, 'webform');
+    if (!empty($map)) {
+      // Copy the map to the node.
+      unset($map->mid);
+      $map->nid = $node->nid;
+      salesforce_genmap_save_map($map, 'webform');
+      // Check for webform user and clone it's settings.
+      if (module_exists('webform_user') && _webform_user_is_webform_user_node($node)) {
+        // Add the field name to the webform_user_reference_fields array.
+        $webform_user_reference_fields = variable_get('webform_user_reference_fields', array());
+        $webform_user_reference_fields[$node->nid] = $webform_user_reference_fields[$node->clone_from_original_nid];
+        variable_set('webform_user_reference_fields', $webform_user_reference_fields);
+      }
+    }
+  }
+}
+
+/**
  * @} core_drupal_hooks
  */
 

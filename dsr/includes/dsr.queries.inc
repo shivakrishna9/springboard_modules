@@ -1,22 +1,24 @@
 <?php
 
 /**
- * @file report queries.
+ * @file
+ * Report queries.
  */
 
 /**
- * ecommerce agnostic report select query
+ * Ecommerce agnostic report select query.
  *
  * @param string $status
- * Accepted values: 'payment_received', 'refunded', or 'partially_refunded'
+ *   Accepted values: 'payment_received', 'refunded', or 'partially_refunded'.
  *
  * @param int $start
- * Unix timestamp representing the report start date
+ *   Unix timestamp representing the report start date.
  *
  * @param int $end
- * Unix timestamp representing the report end date
+ *   Unix timestamp representing the report end date.
  *
- U* @return query results object or FALSE if no results found.
+ * @return object|array
+ *   Query results object or FALSE if no results found.
  */
 function dsr_select($status, $start, $end) {
   $results = db_query('

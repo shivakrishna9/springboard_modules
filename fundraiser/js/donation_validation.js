@@ -81,7 +81,6 @@
             }
           },
           onfocusout: function (element) {
-            $(element).valid();
             // Callback for real-time onfocusout of form elements
             var isValid = $(element).valid();
             //
