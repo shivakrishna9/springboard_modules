@@ -91,7 +91,7 @@ function theme_fundraiser_mapping_options($element) {
  */
 function theme_fundraiser_credit_card_expiration_date($element) {
   $element = $element['element'];
-  $element['card_expiration_month']['#title'] = t('Expiration date');
+  $element['card_expiration_month']['#title'] = $element['#title'];
   $element['card_expiration_year']['#title'] = '';
   $month = drupal_render($element['card_expiration_month']);
   $year = drupal_render($element['card_expiration_year']);
