@@ -202,7 +202,7 @@ function fundraiser_upsell_salesforce_get_url_overrides() {
     if ($key == 'market_source') {
       $query_key = 'ms';
     }
-    elseif ($key == 'cammpaign') {
+    elseif ($key == 'campaign') {
       $query_key = 'cid';
     }
     else {
