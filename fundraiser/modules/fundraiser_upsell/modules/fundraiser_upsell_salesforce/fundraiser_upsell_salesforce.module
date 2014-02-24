@@ -168,6 +168,21 @@ function fundraiser_upsell_salesforce_salesforce_queue_create_item_alter(&$item)
 }
 
 /**
+ * Implements hook_init().
+ *
+ * Stores the upsell overrides from the URL into a session variable.
+ */
+function fundraiser_upsell_salesforce_init() {
+  // @todo Not sure how to further limit this so it doesn't run all the time.
+  if (arg(0) == 'node' && is_numeric(arg(1))) {
+    $data = fundraiser_upsell_salesforce_get_url_overrides();
+    if (count($data)) {
+      $_SESSION['fundraiser_upsell_salesforce'] = $data;
+    }
+  }
+}
+
+/**
  * Get the upsell overrides from the URL query parameters.
  *
  * Parses upsell market source values from the URL.
@@ -214,9 +229,13 @@ function fundraiser_upsell_salesforce_get_url_overrides() {
  *   The market source data with URL overrides merged in.
  */
 function fundraiser_upsell_salesforce_update_market_source_with_url_overrides($data) {
-  $overrides = fundraiser_upsell_salesforce_get_url_overrides();
+  $url_overrides = array();
+  if (!empty($_SESSION['fundraiser_upsell_salesforce'])) {
+    $url_overrides = $_SESSION['fundraiser_upsell_salesforce'];
+  }
+  unset($_SESSION['fundraiser_upsell_salesforce']);
 
-  return array_merge($data, $overrides);
+  return array_merge($data, $url_overrides);
 }
 
 /**
