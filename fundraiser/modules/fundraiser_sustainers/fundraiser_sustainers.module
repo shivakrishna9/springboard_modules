@@ -232,6 +232,7 @@ function fundraiser_sustainers_standalone_cron() {
  */
 function fundraiser_sustainers_charge_now($did) {
   // Given a did, update the charge date to now.
+  $donation = new stdClass();
   $donation->did = $did;
   $donation->next_charge = strtotime('now');
   _fundraiser_sustainers_update_recurring($donation);

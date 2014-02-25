@@ -160,7 +160,7 @@ function commerce_litle_commerce_payment_method_info() {
     'cardonfile' => array(
       'charge callback' => 'commerce_litle_cc_vault_cardonfile_charge',
       // @todo Implement update and delete callbacks for cardonfile.
-      // 'update callback' => 'commerce_litle_cc_vault_cardonfile_update',
+      // 'update callback' => 'commerce_litle_cc_vault_cardonfile_register_token',
       // 'delete callback' => 'commerce_litle_cc_vault_cardonfile_delete',
     ),
   );
@@ -174,7 +174,7 @@ function commerce_litle_commerce_payment_method_info() {
       // @todo Fully implement charge callback.
       'charge callback' => 'commerce_litle_echeck_vault_cardonfile_charge',
       // @todo Implement update and delete callbacks for cardonfile.
-      // 'update callback' => 'commerce_litle_cc_vault_cardonfile_update',
+      // 'update callback' => 'commerce_litle_cc_vault_cardonfile_register_token',
       // 'delete callback' => 'commerce_litle_cc_vault_cardonfile_delete',
     ),
   );
@@ -1497,4 +1497,65 @@ function commerce_litle_reverse_txn_type($txn_type) {
       return t('Void');
 
   }
+}
+
+function commerce_litle_cc_vault_cardonfile_register_token($payment_method, $account_number, $card_validation_number, $order_id = NULL) {
+  $nvp = array();
+
+  // Config stored in a var because it's used again later.
+  $litle_config = _commerce_litle_get_litle_config($payment_method);
+  $nvp += $litle_config;
+
+  $init = _commerce_litle_get_litle();
+
+  // Log the request if specified.
+  if ($payment_method['settings']['log']['request'] === 'request') {
+    // Mask secure data.
+    $log_nvp = $nvp;
+    $log_nvp['password'] = str_repeat('X', strlen($log_nvp['password']));
+    $log_nvp['merchantId'] = str_repeat('X', strlen($log_nvp['merchantId']));
+    if (!empty($log_nvp['card']['number'])) {
+      $log_nvp['card']['number'] = str_repeat('X', strlen($log_nvp['card']['number']) - 4) . substr($log_nvp['card']['number'], -4);
+    }
+
+    if (!empty($log_nvp['card']['cardValidationNum'])) {
+      $log_nvp['card']['cardValidationNum'] = str_repeat('X', strlen($log_nvp['card']['cardValidationNum']));
+    }
+
+    watchdog('commerce_litle', 'Litle register token request: !param', array('!param' => '<pre>' . check_plain(print_r($log_nvp, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+  }
+
+  // Build a payment details array for the credit card.
+  $payment_details = array(
+    'accountNumber' => $account_number,
+    'cardValidationNum' => $card_validation_number,
+  );
+
+  if (!is_null($order_id)) {
+    $payment_details['orderId'] = $order_id;
+  }
+
+  // If we're in the sandbox, use the test data for registering a token.
+  // This should return an 801 response code.
+  if ($payment_method['settings']['commerce_litle_settings_sandbox'] == 1) {
+    $payment_details['accountNumber'] = '4457119922390123';
+    $payment_details['orderId'] = '50';
+  };
+
+  // Submit a registerTokenRequest.
+  return commerce_litle_register_token_request($init, $litle_config, $payment_details);
+}
+
+function commerce_litle_get_token_from_response($response) {
+  $token = NULL;
+  $response_code = XmlParser::getNode($response, 'response');
+
+  // Keep in mind tokenResponseCode is different than response.
+  // 801 Account numbeer was successfully registered.
+  // 802 Account number was previously registered.
+  if (in_array($response_code, array(801, 802))) {
+    $token = XmlParser::getNode($response, 'litleToken');
+  }
+
+  return $token;
 }
