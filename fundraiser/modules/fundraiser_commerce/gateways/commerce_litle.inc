@@ -127,6 +127,8 @@ function commerce_litle_fundraiser_commerce_charge($method_instance, $donation) 
   // Not actually used anywhere in this system, so ignore it.
   $pane_form = array();
 
+  $pane_values = array();
+
   // Execute call to Litle depending on what payment method we have.
   if ($donation->donation['payment_method'] == 'credit') {
     $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
