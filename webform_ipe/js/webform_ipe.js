@@ -1083,7 +1083,7 @@
               var type = component.get('type');
 
               //all new items need a pseudo pid so we can track them
-              component.set('pid', "new");
+              component.set('pid', 0);
 
               //create a phony and unique form_key so we can track this properly
               //and build CSS ids, classes and HTML attributes in the template
