@@ -827,6 +827,10 @@
             if(this.model.get('form_key').indexOf('default_key') != -1) {
               this.model.destroy()
             }
+            if($('#webform-ipe-unsaved-edits').length < 1) {
+              $('.save-and-preview').show();
+             $('#admin-bar').append('<div id = "webform-ipe-unsaved-edits">This form has unsaved changes</div>');
+            }
           },
 
           //made obsolete by the preceding ^^^^
