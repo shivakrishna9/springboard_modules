@@ -522,3 +522,7 @@ legend span.edit {
   overflow: auto;
   margin:20px;
 }
+
+div.error {
+  background-image: none;
+}
