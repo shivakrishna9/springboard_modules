@@ -225,7 +225,6 @@
               errs += 1;
             }
             if(errs.length > 0) {
-              console.log(message)
               $('[name="extra.items"] div.error').remove();
               $('[name="extra.items"]').prepend(message);
               return errs;
@@ -456,6 +455,7 @@
             optionItem['label'] = (_.isUndefined(optionItem['label'])) ? optionItem['val'] : optionItem['label'];
             options.push(optionItem);
           });
+          console.log(options)
           return options;
         }
 
@@ -645,6 +645,7 @@
             if (typeof(event)) {
               //event.stopPropagation();
             }
+            $('span.edit').remove();
 
             //append the edit and delete buttons
             var type = this.model.get('type');
