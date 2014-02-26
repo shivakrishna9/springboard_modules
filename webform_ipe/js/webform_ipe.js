@@ -1279,7 +1279,7 @@
 
                 //if we've changed the date field, go get the new html
                 //this ajax is here rather than in the view because of rerendering issues on "change"
-                if(type == 'date' && (form.model.hasChanged('extra.start_date') || form.model.hasChanged('extra.end_date'))) {
+                if(type == 'date' && (form.model.hasChanged('extra.start_date') || form.model.hasChanged('extra.end_date') || form.model.hasChanged('extra.datepicker') || form.model.hasChanged('extra.year_textfield'))) {
                   var callbackPath = Drupal.settings.webform_ipe.date_callback;
                   $('#editForm button').before('<div class="ajax-progress" style = "clear:both"><div class="throbber">&nbsp;</div>preparing date preview</div><p>');
                   $('.throbber').show();
