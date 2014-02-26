@@ -90,7 +90,7 @@
           },
           // Edit form schema
           schema: {
-            name: {type: 'Text', title: 'Label Text'},
+            name: {type: 'Text', title: 'Label Text', validators: ['required']},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
             mandatory: { type: 'Checkbox', title:'Mandatory'},
             'extra.description': {type: 'Text', title: 'Description Text'},
@@ -127,7 +127,7 @@
           },
           // Edit form schema
           schema: {
-            name: {type: 'Text', title: 'Label Text'},
+            name: {type: 'Text', title: 'Label Text', validators: ['required']},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
             mandatory: { type: 'Checkbox', title:'Mandatory'},
             'extra.description': {type: 'Text', title: 'Description Text'},
@@ -163,7 +163,7 @@
           },
           // Edit form schema
           schema: {
-            name: {type: 'Text', title: 'Label Text'},
+            name: {type: 'Text', title: 'Label Text', validators: ['required']},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
             mandatory: { type: 'Checkbox', title:'Mandatory'},
             'extra.description': {type: 'Text', title: 'Description Text'},
@@ -200,7 +200,7 @@
             type: 'select',
           },
           schema: {
-            name: {type: 'Text', title: 'Label Text'},
+            name: {type: 'Text', title: 'Label Text', validators: ['required']},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
             mandatory: { type: 'Checkbox', title:'Mandatory'},
             'extra.description': {type: 'Text', title: 'Description Text'},
@@ -254,7 +254,7 @@
             payment_html:'',
           },
           schema: {
-            name: {type: 'Text', title: 'Fieldset Name'},
+            name: {type: 'Text', title: 'Fieldset Name', validators: ['required']},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
             'extra.description': {type: 'Text', title: 'Description'},
             'extra.collapsible': { type: 'Checkbox', title:'Collapsible'},
@@ -297,7 +297,7 @@
           },
           // Edit form schema
           schema: {
-            name: {type: 'Text', title: 'Label Text'},
+            name: {type: 'Text', title: 'Label Text', validators: ['required']},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
              mandatory: { type: 'Checkbox', title:'Mandatory'},
             'extra.description': {type: 'Text', title: 'Description Text'},
@@ -360,7 +360,7 @@
           },
           // Edit form schema
           schema: {
-            name: {type: 'Text', title: 'Label Text'},
+            name: {type: 'Text', title: 'Label Text', validators: ['required']},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
             mandatory: { type: 'Checkbox', title:'Mandatory' },
             value: {type: 'Text', title: 'Default Value', help:'The default value of the field. Accepts any date in any GNU Date Input Format. Strings such as today, +2 months, and Dec 9 2004 are all valid.'},
@@ -401,7 +401,7 @@
           },
           // Edit form schema
           schema: {
-            name: {type: 'Text', title: 'Label Text'},
+            name: {type: 'Text', title: 'Label Text', validators: ['required']},
             value: {type: 'TextArea', title: 'Markup'},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
             'extra.attributes.class': {type: 'Text', title: 'Class'},
@@ -645,7 +645,10 @@
             if (typeof(event)) {
               //event.stopPropagation();
             }
-            $('span.edit').remove();
+
+            if($('span.edit').length > 1) {
+              $('span.edit').remove();
+            }
 
             //append the edit and delete buttons
             var type = this.model.get('type');

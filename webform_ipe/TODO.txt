@@ -2,7 +2,6 @@
 Easy Edit
 
 * Options get resorted in country and state dropdowns.
-* If you select a country from the country dropdown, after the ajax complete, multiple edit and delete buttons appear on form items
 
 Finished all the inline editor ToDo's except the following, which are not currently resolvable:
 
