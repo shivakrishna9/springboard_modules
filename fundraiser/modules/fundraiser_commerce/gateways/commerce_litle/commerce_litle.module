@@ -653,22 +653,16 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
 
       // If we're in the sandbox, use the test data for registering a token.
       // This should return an 801 response code.
-      if ($payment_method['settings']['commerce_litle_settings_sandbox'] == 1) {
-        $payment_details['accountNumber'] = '4457119922390123';
-        $payment_details['orderId'] = '50';
-      };
+//      if ($payment_method['settings']['commerce_litle_settings_sandbox'] == 1) {
+//        $payment_details['accountNumber'] = '4457119922390123';
+//        $payment_details['orderId'] = '50';
+//      };
 
       // Submit a registerTokenRequest.
       $token_response = commerce_litle_register_token_request($init, $litle_config, $payment_details);
 
-      $token_response_code = XmlParser::getNode($token_response, 'response');
-
-      // Keep in mind tokenResponseCode is different than response.
-      // 801 Account numbeer was successfully registered.
-      // 802 Account number was previously registered.
-      if (in_array($token_response_code, array(801, 802))) {
-        $litle_token = XmlParser::getNode($token_response, 'litleToken');
-
+      $litle_token = commerce_litle_get_token_from_response($token_response);
+      if (!empty($litle_token)) {
         // Store the token with cardonfile.
         $card_data = commerce_cardonfile_new();
         $card_data->uid = $order->uid;
@@ -752,11 +746,11 @@ function commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, 
 
   // If in the sandbox, use the test tokenized data for auth and sale requests.
   // This should return a 000 response code from both requests.
-  if ($payment_method['settings']['commerce_litle_settings_sandbox'] == 1) {
-    $request_data['token']['litleToken'] = '1111222233330196';
-    $request_data['token']['expDate'] = '1114';
-    $request_data['orderId'] = '58';
-  };
+//  if ($payment_method['settings']['commerce_litle_settings_sandbox'] == 1) {
+//    $request_data['token']['litleToken'] = '1111222233330196';
+//    $request_data['token']['expDate'] = '1114';
+//    $request_data['orderId'] = '58';
+//  };
 
   // Prepare the billing address for use in the request.
   // @todo Do we need to send billing address if we're providing a token?
@@ -1052,13 +1046,8 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
       // Submit a registerTokenRequest.
       $token_response = commerce_litle_register_token_request($init, $litle_config, $payment_details);
 
-      $token_response_code = XmlParser::getNode($token_response, 'response');
-
-      // Keep in mind tokenResponseCode is different than response.
-      // 801 Account numbeer was successfully registered.
-      // 802 Account number was previously registered.
-      if (in_array($token_response_code, array(801, 802))) {
-        $litle_token = XmlParser::getNode($token_response, 'litleToken');
+      $litle_token = commerce_litle_get_token_from_response($token_response);
+      if (!empty($litle_token)) {
 
         // Pretend expiration date for recurring.
         $exp_timestamp = strtotime('+12 months');
@@ -1537,10 +1526,10 @@ function commerce_litle_cc_vault_cardonfile_register_token($payment_method, $acc
 
   // If we're in the sandbox, use the test data for registering a token.
   // This should return an 801 response code.
-  if ($payment_method['settings']['commerce_litle_settings_sandbox'] == 1) {
-    $payment_details['accountNumber'] = '4457119922390123';
-    $payment_details['orderId'] = '50';
-  };
+//  if ($payment_method['settings']['commerce_litle_settings_sandbox'] == 1) {
+//    $payment_details['accountNumber'] = '4457119922390123';
+//    $payment_details['orderId'] = '50';
+//  };
 
   // Submit a registerTokenRequest.
   return commerce_litle_register_token_request($init, $litle_config, $payment_details);
