@@ -207,6 +207,7 @@
             'extra.items': { type: 'List', title: "Options", fieldClass:"option-items", validate:['required']},
             'extra.aslist': { type: 'Checkbox', title:'Select List', help:'Check this option if you want the select component to be displayed as a select list box instead of radio buttons or checkboxes.'},
             'extra.multiple': { type: 'Checkbox', title:'Multiple', help:'Check this option if the user should be allowed to choose multiple values.'},
+            'extra.optrand': { type: 'Checkbox', title:'Randomize', help:'Randomizes the order of the options when they are displayed in the form.'},
             'extra.title_display': {template: altFieldTemplate, type: 'Select', title: 'Label display', options: [{val:'before',label: 'Above'}, {val: 'none', label: 'None'}], help:'Determines the placement of the component\'s label.'},
             'extra.private': {template: altFieldTemplate, type: 'Checkbox', title:'Private', help:'Private fields are shown only to users with results access.'},
 
