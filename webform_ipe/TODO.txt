@@ -1,7 +1,9 @@
 
 Easy Edit
 
-* Options get resorted in country and state dropdowns.
+* Options get resorted in country and state dropdowns. this corrects itself after save but is disorienting.
+
+* field templates and styles for required fields.
 
 Finished all the inline editor ToDo's except the following, which are not currently resolvable:
 
