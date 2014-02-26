@@ -5,6 +5,8 @@ Easy Edit
 
 * field templates and styles for required fields.
 
+* other amount is getting put above amount, after global save in which amount fields themselves were not changed.
+
 Finished all the inline editor ToDo's except the following, which are not currently resolvable:
 
   "Label Display" option - not implemented for fieldsets, "inline" option omitted for other field types

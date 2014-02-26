@@ -220,8 +220,7 @@ function webform_ipe_js_alter(&$js) {
 function _webform_ipe_json_process($node, $op = 'update') {
   $components = $_POST['components'];
   $output = array();
-dd($components);
-  foreach ($components as $component) {
+    foreach ($components as $component) {
     //convert some javascript values to something Drupal/PHP understands
     //Drupal stores config as strings for DB compat.
     foreach ($component['extra'] as $name => $extra) {
@@ -241,12 +240,20 @@ dd($components);
     elseif($component['mandatory'] != 1) {
       $component['mandatory'] = "0";
     }
-    $component['weight'] = (string)$component['weight'];
+    if(isset($component['weight'])) {
+      $component['weight'] = (string)$component['weight'];
+    }
+    else {
+      if(module_exists('devel')) {
+        dd('No Weight:');
+        dd($component);
+      }
+    }
 
-    if(!is_array($component['extra']['attributes']['class'])) {
+    if(isset($component['extra']['attributes']) && !is_array($component['extra']['attributes']['class'])) {
       $component['extra']['attributes']['class'] = explode(' ', $component['extra']['attributes']['class']);
     }
-    if($component['type'] == 'select') {
+    if($component['type'] == 'select' && is_array($component['extra']['items'])) {
       $component['extra']['items'] = implode("\n", array_values($component['extra']['items']));
     }
 
