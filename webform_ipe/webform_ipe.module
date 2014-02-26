@@ -220,7 +220,7 @@ function webform_ipe_js_alter(&$js) {
 function _webform_ipe_json_process($node, $op = 'update') {
   $components = $_POST['components'];
   $output = array();
-
+dd($components);
   foreach ($components as $component) {
     //convert some javascript values to something Drupal/PHP understands
     //Drupal stores config as strings for DB compat.

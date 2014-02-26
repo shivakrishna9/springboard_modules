@@ -1608,7 +1608,7 @@
          */
 
         //add the connecting class
-        $('.webform-component-fieldset, div.fieldset.form-layouts, div.fieldset.right-sidebar, div.fieldset.left-sidebar,').not('[id$="payment-fields"]').addClass('webform-ipe-container');
+        $('.webform-component-fieldset, div.fieldset.form-layouts, div.fieldset.right-sidebar, div.fieldset.left-sidebar').not('[id$="payment-fields"]').addClass('webform-ipe-container');
         var has_form_layout =  $('div.fieldset.form-layouts.webform-ipe-container').length;
         if(has_form_layout == 0) {
           $('.webform-client-form').wrap('<div class = "fieldset form-layouts webform-ipe-container" data-cid = "0"></div>');
