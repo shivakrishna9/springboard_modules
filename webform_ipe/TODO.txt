@@ -7,7 +7,7 @@ Easy Edit
 
 Finished all the inline editor ToDo's except the following, which are not currently resolvable:
 
-  "Label Display" option - not implemented
+  "Label Display" option - not implemented for fieldsets, "inline" option omitted for other field types
     1. Springboard theme, bootstrap, or Drupal itself ignores "inline" option and rendors inline labels above form items.
     2. "none" option for fieldsets removes visual context for edit buttons.
 
@@ -15,15 +15,11 @@ Finished all the inline editor ToDo's except the following, which are not curren
   "date entry validation" - not implemented
     1. Webform does not actually validate date entry strings. If it can't parse them, it defaults to +/- two years. The GPL JS I found also does not throw an error for invalid dates.
 
+  "load pre-built" options on select model - "pre built" is enormous and won't fit in block UI and would also require an ajax call to generate options.
 
-  "load pre-built" and "randomize" options on select model - "pre built" is enormous and won't fit in block UI and would also require an ajax call to generate options. Randomize is probably a largely unused option.   
+  Fundraiser webform module needs to put a more specific ID/Name on donation amount fields than "amount"  and "other_amount" - this is breaking anything now, but in the wild fields with similar name would cause issue, and those two fields could conflict with one another if each was initially placed in a different fieldset. The problem is that most fields have a name structure [parent_id][parent_id][field_id]. Amount fields do not [parent_id][field_id][some_other_id].
 
-
-  Fundraiser webform module needs to put a more specific ID/Name on donation amount fields than "amount"  and "other_amount" - this is breaking anything now, but in the wild fields with similar name would cause issue, and those two fields could conflict with one another if each was initially placed in a different fieldset.
-
-
-  Some of the edit forms are so long that the only noticeable way to convey a validation failure message is with an alert(). Also springboard theme decorates div.error with numerous red X checkboxes, making error message unreadable.
-
+  Some of the edit forms are so long that the only noticeable way to convey a validation failure message is with an alert(). 
 
 
 form layouts:
