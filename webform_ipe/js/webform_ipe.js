@@ -204,7 +204,7 @@
             'extra.container': {type: 'Select', title: 'Container', options: {}},
             mandatory: { type: 'Checkbox', title:'Mandatory'},
             'extra.description': {type: 'Text', title: 'Description Text'},
-            'extra.items': { type: 'List', title: "Options", fieldClass:"option-items"},
+            'extra.items': { type: 'List', title: "Options", fieldClass:"option-items", validate:['required']},
             'extra.aslist': { type: 'Checkbox', title:'Select List', help:'Check this option if you want the select component to be displayed as a select list box instead of radio buttons or checkboxes.'},
             'extra.multiple': { type: 'Checkbox', title:'Multiple', help:'Check this option if the user should be allowed to choose multiple values.'},
             //'extra.title_display': {template: altFieldTemplate, type: 'Select', title: 'Label display', options: [{val:'before',label: 'Above'}, {val: 'inline', label: 'Inline'}, {val: 'none', label: 'None'}], help:'Determines the placement of the component\'s label.'},
@@ -213,20 +213,25 @@
           },
           validate: function(attr) {
             var errs = {};
+            var message = '';
             _.each(attr["extra.items"], function(value) {
               if(value.indexOf('|') == -1) {
+               message =  '<div class = "error">Options must be in the format "key|value"</div>'; 
                errs += 1;
               }
            });
+            if(attr["extra.items"].length < 1) {
+              message = '<div class = "error">Options cannot be blank</div>';
+              errs += 1;
+            }
             if(errs.length > 0) {
-              //alert ('Options must be in the format "key|value"');
-              $('[name="extra.items"]').prepend('<div class = "error">Options must be in the format "key|value"</div>');
-              errs.message = 'Options must be in the format "key|value"';
+              console.log(message)
+              $('[name="extra.items"] div.error').remove();
+              $('[name="extra.items"]').prepend(message);
               return errs;
             }
             else {
               $('[name="extra.items"] div.error').remove();
-
             }
           },
         });
