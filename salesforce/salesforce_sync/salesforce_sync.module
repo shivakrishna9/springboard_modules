@@ -237,7 +237,7 @@ function salesforce_sync_save_map($record) {
  * @param mixed $record
  *   Can be an array of values or a salesforce_sync_map entity object
  *
- * @return bool
+ * @return bool|object
  *   The entity object you requested
  */
 function salesforce_sync_load_map($record) {

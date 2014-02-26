@@ -55,7 +55,7 @@ class FundraiserTest extends FundraiserSetup {
       $keys[] = $component['form_key'];
       $webform_fields[$component['form_key']] = $component;
     }
-    $fields = fundraiser_field_info(TRUE);
+    $fields = _fundraiser_field_info(TRUE);
     $field_keys = _fundraiser_get_field_keys($fields); // Return flattened field keys.
     $field_info = _fundraiser_get_field_fields($fields); // Return flattened field info array.
     // Prepare a fundraiser node for the field callback settings below.

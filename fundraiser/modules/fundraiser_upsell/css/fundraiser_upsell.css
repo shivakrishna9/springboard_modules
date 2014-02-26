@@ -1,25 +1,35 @@
-#message_wrapper.hidden, .hidden {
-  display:none;
-}
-#message-modal h2, #message-modal h3 {
-  margin:0;
+.close-modal-wrapper {
+  margin: 1em;
+  text-align: right;
 }
 
-#fundraiser-upsell-donation-form label {
+.ctools-close-modal {
+  cursor: pointer;
+}
+
+#ctools-modal .modal-content,
+#ctools .modal-header {
+  margin: 0;
+  padding: 0;
+}
+
+#ctools-modal h2, #ctools-modal h3 {
+  margin: 0;
+}
+
+#fundraiser-upsell-admin-settings-form .upsell_low,
+#fundraiser-upsell-admin-settings-form .upsell_high,
+#fundraiser-upsell-admin-settings-form .upsell_upsell {
   float: left;
-  margin-right: 1em;
-  margin-top: 0.25em;
+  margin-right: 3em;
 }
 
-/* Move the currency symbol from the description into the input field */
-#fundraiser-upsell-donation-form .description {
-  height: 0px;
-  position: relative;
-  top: -1.9em;
-  font-size: 1em;
-  left: 9.7em;
+#fundraiser-upsell-admin-settings-form .upsell_low {
+  clear: left;
 }
 
-#fundraiser-upsell-donation-form #edit-amount {
-  padding-left: 1em;
+#fundraiser-upsell-admin-settings-form .add_more_button_wrapper {
+  float: left;
+  clear: both;
+  padding-top: 1em;
 }

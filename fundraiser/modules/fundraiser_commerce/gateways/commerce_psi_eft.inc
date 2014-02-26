@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Commerce based hook for commerce_psi
+ * Commerce based hook for commerce_psi EFT.
  */
 
 /**
@@ -22,12 +22,12 @@ function commerce_psi_eft_fundraiser_commerce_fundraiser_gateway_info() {
 }
 
 /**
- * Returns the form fields for this method
+ * Returns the form fields for this method.
  *
- * @param $payment_method String
- *    Credit, bank account, paypal, etc
- * @param $config Array
- *    Configuration options for this field
+ * @param string $payment_method
+ *   Credit, bank account, paypal, etc.
+ * @param array $config
+ *   Configuration options for this field.
  */
 function commerce_psi_eft_fundraiser_commerce_submit_form($payment_method, $config) {
   $method_instance = commerce_payment_method_instance_load($config['id']);
@@ -56,7 +56,7 @@ function commerce_psi_eft_fundraiser_commerce_scrub($fields) {
 }
 
 /**
- * Validate the submitted values with the psi_commerce validate function
+ * Validate the submitted values with the psi_commerce validate function.
  */
 function commerce_psi_eft_fundraiser_commerce_validate($submission_fields, $payment_fields) {
   $form_parents = array_merge($payment_fields['#parents'], array('bank account'));
@@ -66,12 +66,15 @@ function commerce_psi_eft_fundraiser_commerce_validate($submission_fields, $paym
 }
 
 /**
- * Submit the donation values to the PSI credit charge handler
+ * Submit the donation values to the PSI EFT charge handler.
  *
- * @param $method_instance Array
- *    Commerce loaded method instance
- * @param $donation Object
- *    Fundraiser donation object
+ * @param array $method_instance
+ *   Commerce loaded method instance.
+ * @param object $donation
+ *   The donation to charge.
+ *
+ * @return bool
+ *   Whether the charge was successful.
  */
 function commerce_psi_eft_fundraiser_commerce_charge($method_instance, $donation) {
   // Translate from donation settings to the correct values for the plugin.
@@ -79,14 +82,25 @@ function commerce_psi_eft_fundraiser_commerce_charge($method_instance, $donation
   $wrapper = entity_metadata_wrapper('commerce_order', $order);
   $charge = $wrapper->commerce_order_total->value();
 
-  $pane_form = array(); // Not actually used anywhere in this system, so ignore it.
+  // See if we have an upsell master donation and if so call the SendUpsell
+  // API call instead of the usual charging.
+  // This will initiate an immediate charge as well as an offsite
+  // recurring series.
+  if (isset($donation->fundraiser_upsell->type) && $donation->fundraiser_upsell->type == 'master_donation') {
+    module_load_include('inc', 'fundraiser_commerce', 'gateways/commerce_psi_common');
+    return commerce_psi_common_master_donation_upsell_charge($method_instance, $donation, $order, $charge);
+  }
+
+  // Not actually used anywhere in this system, so ignore it.
+  $pane_form = array();
 
   $pane_values = array(
     'bank_account' => $donation->donation['payment_fields']['bank account'],
     'frequency' => $donation->donation['recurs_monthly'] == TRUE ? 'Monthly' : NULL,
   );
 
-  // Execute call to PSI, only returns FALSE if the payment failed, returns nothing if successful
+  // Execute call to PSI, only returns FALSE if the payment failed,
+  // returns nothing if successful.
   $result = commerce_psi_eft_submit_form_submit($method_instance, $pane_form, $pane_values, $order, $charge);
   $success = FALSE;
   if ($result !== FALSE) {
