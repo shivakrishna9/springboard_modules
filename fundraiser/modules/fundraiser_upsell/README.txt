@@ -2,11 +2,14 @@
 
 * This module provides an upsell feature for fundraiser. It displays a modal
 window on the donation's confirmation page with an upsell form. If the user
-completes the form, it converts the single donation into a recurring donation.
+completes the form, it creates a recurring donation in additon to the single
+donation.
 
 -- REQUIREMENTS --
 
-* Fundraiser.
+* Fundraiser, Fundraiser Commerce, and Fundraiser Sustainers.
+* Email wrappers for sending thankyou emails.
+* Ctools for the modal itself.
 
 -- INSTALLATION --
 
@@ -14,19 +17,11 @@ completes the form, it converts the single donation into a recurring donation.
 
 -- CONFIGURATION --
 
-
--- TROUBLESHOOTING --
-
+* Visit admin/springboard/options/fundraiser/fundraiser_upsell
 
 -- CONTACT --
-Current maintainers:
-* Phillip Cave (pcave) - http://drupal.org/user/379888
-* Ron Northcutt (rlnorthcutt) - http://drupal.org/user/23506
-* Allen Freeman (afreeman) - http://http://drupal.org/user/450370
-* Sarah Hood (Bastlynn) - http://drupal.org/user/275249
-
 
 This project has been sponsored by:
 * Jackson River
   Cutting edge websites for progressive non-profit organizations.
-  Visit http://jacksonriver.com for more information.
+  Visit http://www.jacksonriver.com for more information.

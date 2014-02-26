@@ -96,7 +96,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *     - dedupe_field: Salesforce field to dedupe on during UPSERT operations
    *     - sobject: Salesforce sObject
    *
-   * @return bool
+   * @return bool|int
    *   If the item insert or update failed, returns FALSE. If it succeeded,
    *   returns SAVED_NEW or SAVED_UPDATED, depending on the operation performed.
    */

@@ -147,12 +147,14 @@ function page_wrappers_preprocess_page(&$vars) {
  * Remove region blocks to save on performance
  */
 function page_wrappers_block_list_alter(&$blocks) {
+/* @TODO: make configurable via Performance admin  - OR -  skip regions named "wrapper_*"
   if ($node = _page_wrappers_page_node()) {
     $assigned_wrapper = _page_wrappers_node_assigned_wrapper($node);
     if (!empty($assigned_wrapper)) {
       $blocks = array();
     }
   }
+*/
 }
 
 /**
@@ -920,6 +922,7 @@ function _page_wrappers_create_template($node) {
  *   The content that contains the tokens.
  */
 function _page_wrappers_tokens($content) {
+  // First replace special Page Wrapper tokens.
   $tokens = array('[title]', '[messages]', '[content]', '[styles]', '[scripts]');
   $replaces = array(
     '<?php if ($title): print \'<h1>\'. $title .\'</h1>\'; endif; ?>',
@@ -928,7 +931,19 @@ function _page_wrappers_tokens($content) {
     '<?php print $styles; ?>',
     '<?php print $scripts; ?>',
   );
-  return str_replace($tokens, $replaces, $content);
+  $content = str_replace($tokens, $replaces, $content);
+  
+  // Then look for possible Token tokens.
+  $candidates = token_scan($content);
+  foreach ($candidates as $type => $tokens) {
+    foreach ($tokens as $token) {
+      $data = ($type == 'node') ? '"node" => $node' : '';
+      $replacement = "<?php print token_replace('$token', array($data)) ?>";
+      $content = str_replace($token, $replacement, $content);
+    }
+  }
+  
+  return $content;
 }
 
 /**
