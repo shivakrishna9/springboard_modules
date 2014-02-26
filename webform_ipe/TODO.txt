@@ -5,7 +5,7 @@ Easy Edit
 
 * field templates and styles for required fields.
 
-* other amount is getting put above amount, after global save in which amount fields themselves were not changed.
+* other amount is getting put above amount, after fieldset is edited.
 
 Finished all the inline editor ToDo's except the following, which are not currently resolvable:
 

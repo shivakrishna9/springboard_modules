@@ -980,7 +980,6 @@
                 this.$el.attr('data-pid', model_pid);
                 this.$el.attr('id', fieldsetKey);
               }
-              this.$el.trigger('update-weight', [this, 0]); //recalculate field weights after insert
 
               //remove a duplicate fieldset
               if (type == 'payment_fields') {
@@ -992,8 +991,10 @@
                 _.each(childComponents, function(model) {      // Trigger the rerender for each model
                   model.trigger('fieldset:renderChild');
                 });
+                this.$el.trigger('update-weight', [this, 0]); //recalculate field weights after insert
               }
               else {
+                this.$el.trigger('update-weight', [this, 0]); //recalculate field weights after insert
                 return;
               }
             }//end fieldset
@@ -1019,6 +1020,7 @@
              //was causing infinite loop for new fieldsets, works now
               this.reRender();
             }
+
             return this;
           },
 
@@ -1182,6 +1184,7 @@
             //now update the weights
 
             this.collection.each(function (eachModel, index) {
+              console.log(eachModel)
               var form_key = eachModel.get('form_key');
               var id = form_key.replace(/_/g,'-');
               var type = eachModel.get('type');
@@ -1231,7 +1234,7 @@
             this.collection.where({pid: pid}).sort();
 
             //debug function
-             _.each(this.collection.where({pid: pid}), function(model) {
+             this.collection.each(function (model, index) {
               console.log(model.get('weight') + model.get('form_key'));
             });
           }
