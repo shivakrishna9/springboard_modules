@@ -205,8 +205,8 @@
             mandatory: { type: 'Checkbox', title:'Mandatory'},
             'extra.description': {type: 'Text', title: 'Description Text'},
             'extra.items': { type: 'List', title: "Options", fieldClass:"option-items"},
-            'extra.aslist': { type: 'Checkbox', title:'Select List', options:{yes:'1'}},
-            'extra.multiple': { type: 'Checkbox', title:'Multiple', options:{yes:'1'}},
+            'extra.aslist': { type: 'Checkbox', title:'Select List', help:'Check this option if you want the select component to be displayed as a select list box instead of radio buttons or checkboxes.'},
+            'extra.multiple': { type: 'Checkbox', title:'Multiple', help:'Check this option if the user should be allowed to choose multiple values.'},
             //'extra.title_display': {template: altFieldTemplate, type: 'Select', title: 'Label display', options: [{val:'before',label: 'Above'}, {val: 'inline', label: 'Inline'}, {val: 'none', label: 'None'}], help:'Determines the placement of the component\'s label.'},
             'extra.private': {template: altFieldTemplate, type: 'Checkbox', title:'Private', help:'Private fields are shown only to users with results access.'},
 
