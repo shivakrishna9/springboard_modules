@@ -253,8 +253,8 @@
             name: {type: 'Text', title: 'Fieldset Name'},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
             'extra.description': {type: 'Text', title: 'Description'},
-            'extra.collapsed': { type: 'Checkbox', title:'Collapsed'},
             'extra.collapsible': { type: 'Checkbox', title:'Collapsible'},
+            'extra.collapsed': { type: 'Checkbox', title:'Collapsed'},
             //'extra.title_display': {template: altFieldTemplate, type: 'Checkbox', title: 'Label display', help:'Determines the placement of the component\'s label.'},
             'extra.private': { template: altFieldTemplate, type: 'Checkbox', title:'Private', help:'Private fields are shown only to users with results access.'},
           },
@@ -742,6 +742,9 @@
             if (fkey == "recurs_monthly") {
               $('.option-items').hide();
             }
+            $('[name="extra_collapsed"]').click(function(){
+              $('[name="extra_collapsible"]').prop('checked', true);
+            });
 
             //hide some items that should not be editable
             var required = Drupal.settings.webform_ipe.required_fields;
