@@ -308,20 +308,19 @@ function commerce_litle_fundraiser_commerce_cardonfile($donation) {
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
   $cardonfile_fields = _fundraiser_commerce_credit_card_cardonfile_fields($donation);
 
-  // @todo Does litle care about expiration date?
   // So we need to search locally to see if we have an existing profile for
   // a card number.
   // Only perform this when we're in an active non-reference charge.
-//  if (isset($donation->reference_charge) && $donation->reference_charge === FALSE) {
-//    // Query the db for an existing record
-//    $card_data = _fundraiser_commerce_cardonfile_exp_date_mismatch($cardonfile_fields);
-//
-//    // If we have a profile for this user update it in the CIM
-//    if ($card_data) {
-//      // Make the update request to authorize.net
-//      commerce_authnet_fundraiser_commerce_update($donation, $card_data);
-//    }
-//  }
+  if (isset($donation->reference_charge) && $donation->reference_charge === FALSE) {
+    // Query the db for an existing record.
+    $card_data = _fundraiser_commerce_cardonfile_exp_date_mismatch($cardonfile_fields);
+
+    // If we have a profile for this user update it locally.
+    if ($card_data) {
+      // Make the update request to authorize.net
+      commerce_litle_fundraiser_commerce_update($donation, $card_data);
+    }
+  }
 
   return $cardonfile_fields;
 }
