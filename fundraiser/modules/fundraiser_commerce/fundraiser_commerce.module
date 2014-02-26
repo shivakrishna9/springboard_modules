@@ -1370,7 +1370,7 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
 
     // Update the gateway's stored data.
     // Gateways that allow recurring donation will have an update callback
-    $update_callback = isset($donation->gateway['update callback']) && function_exists($donation->gateway['update callback']) ? $donation->gateway['update callback'] : FALSE; 
+    $update_callback = isset($donation->gateway['update callback']) && function_exists($donation->gateway['update callback']) ? $donation->gateway['update callback'] : FALSE;
 
     // If we're in a sustainer update, and this is the first record update the stored payment information
     if (!empty($donation->sustainer_update) && !empty($donation->sustainer_update_first) && $update_callback) {
@@ -1859,6 +1859,29 @@ class FundraiserCommerceUIPaymentSettings extends RulesDataUI implements RulesDa
 }
 
 /**
+ * Given a donation, determine when the payment method expires.
+ *
+ * @param object $donation
+ *   The donation object.
+ *
+ * @return NULL|array
+ *   An array with 'month' and 'year' keys.
+ */
+function fundraiser_commerce_get_payment_method_expiration_date_from_donation($donation) {
+  if (isset($donation->gateway['expire callback'])) {
+    $expiration_func = $donation->gateway['expire callback'];
+    if (function_exists($expiration_func)) {
+      $expires = $expiration_func($donation->donation);
+      if (isset($expires['month']) && isset($expires['year'])) {
+        return $expires;
+      }
+    }
+  }
+
+  return NULL;
+}
+
+/**
  * Supported gateway hooks.
  * Some gateways in order to integrate with the fundraiser_commerce system must implement hooks.
  * As the /inc files for those gateways are not automatically included, we must include those hooks
@@ -1941,7 +1964,6 @@ function _fundraiser_commerce_submit_handler_pane_values(&$pane_values, $donatio
       }
     }
   }
-
   // Allow other modules to alter the pane values
   drupal_alter('fundraiser_commerce_submit_handler_pane_values', $pane_values, $donation);
 }

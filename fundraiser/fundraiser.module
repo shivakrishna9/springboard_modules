@@ -1687,7 +1687,7 @@ function fundraiser_donation_success($donation) {
   _fundraiser_update_tracking_value($donation->nid, 'conversions');
   // Show gateay message if appropriate.
   $display_message = variable_get('fundraiser_gateway_messages', 1);
-  if ($display_message) {
+  if ($display_message && isset($donation->result['message'])) {
     drupal_set_message($donation->result['message']);
   }
   // Allow other modules to respond to the success.
@@ -1806,10 +1806,12 @@ function fundraiser_donation_delete($donation) {
 /**
  * Utility function, given a donation id - get everything that goes with it.
  *
- * @param $did Numeric
- *    The ID of the donation
+ * @param int $did
+ *   The ID of the donation
+ * @param bool $refresh
+ *   If TRUE rebuild the entire donation even if it's statically cached.
  *
- * @return Mixed
+ * @return object|bool
  *    The fully loaded donation object or FALSE if no donation is found
  */
 function fundraiser_donation_get_donation($did, $refresh = FALSE) {
@@ -1858,6 +1860,23 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
   // Store the donation information into the cache.
   $donations[$did] = $donation;
   return $donation;
+}
+
+/**
+ * Get the first donation ID that matches the given submission ID.
+ *
+ * Be aware that multiple donations may have the same submission ID.
+ * For example, recurring donations will have the initial sid.
+ *
+ * @param int $sid
+ *   The submission ID.
+ *
+ * @return int|bool
+ *   The donation ID, or FALSE.
+ */
+function fundraiser_donation_get_did_by_sid($sid) {
+  return db_query("SELECT MIN(did) FROM {fundraiser_donation} WHERE sid = :sid", array(':sid' => $sid))
+    ->fetchField();
 }
 
 /**
