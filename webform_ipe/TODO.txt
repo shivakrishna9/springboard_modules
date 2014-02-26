@@ -5,14 +5,15 @@ Easy Edit
 
 * field templates and styles for required fields.
 
-* other amount is getting put above amount, after fieldset is edited.
+* if edit the amount field and change it to a dropdown, and then change it back to radios, the radios render vertically.
+
+* windows 7 IE9 & IE10, child fields disappear when fieldset is edited.
 
 Finished all the inline editor ToDo's except the following, which are not currently resolvable:
 
   "Label Display" option - not implemented for fieldsets, "inline" option omitted for other field types
-    1. Springboard theme, bootstrap, or Drupal itself ignores "inline" option and rendors inline labels above form items.
+    1. Springboard theme, bootstrap, or Drupal itself ignores "inline" option and renders inline labels above form items.
     2. "none" option for fieldsets removes visual context for edit buttons.
-
 
   "date entry validation" - not implemented
     1. Webform does not actually validate date entry strings. If it can't parse them, it defaults to +/- two years. The GPL JS I found also does not throw an error for invalid dates.
