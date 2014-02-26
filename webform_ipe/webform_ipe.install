@@ -1,0 +1,22 @@
+<?php
+/**
+ * @file
+ * webform_ipe.install
+ */
+
+/**
+ * Implements hook_requirements().
+ */
+function webform_ipe_requirements($phase) {
+  // @TODO: Check to see if sites/all/libraries/blockui/jquery.blockUI.js exists
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function webform_ipe_uninstall() {
+  variable_del('webform_ipe_node_types');
+  variable_del('webform_ipe_disallow_editing');
+  variable_del('webform_ipe_group_wrapper');
+  variable_del('webform_ipe_component_wrapper');
+}

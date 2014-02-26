@@ -1,0 +1,38 @@
+
+Easy Edit
+
+
+Finished all the inline editor ToDo's except the following, which are not currently resolvable:
+
+  "Label Display" option - not implemented
+    1. Springboard theme, bootstrap, or Drupal itself ignores "inline" option and rendors inline labels above form items.
+    2. "none" option for fieldsets removes visual context for edit buttons.
+
+
+  "date entry validation" - not implemented
+    1. Webform does not actually validate date entry strings. If it can't parse them, it defaults to +/- two years. The GPL JS I found also does not throw an error for invalid dates.
+
+
+  "load pre-built" and "randomize" options on select model - "pre built" is enormous and won't fit in block UI and would also require an ajax call to generate options. Randomize is probably a largely unused option.   
+
+
+  Fundraiser webform module needs to put a more specific ID/Name on donation amount fields than "amount"  and "other_amount" - this is breaking anything now, but in the wild fields with similar name would cause issue, and those two fields could conflict with one another if each was initially placed in a different fieldset.
+
+
+  Some of the edit forms are so long that the only noticeable way to convey a validation failure message is with an alert(). Also springboard theme decorates div.error with numerous red X checkboxes, making error message unreadable.
+
+
+
+form layouts:
+
+* add "override" option to form layout.
+
+* default checkbox on form layout config
+
+* remove none option replace with default
+
+* form layouts UI gone?
+
+* form_layouts admin menu item impossible to find
+
+* disable dragging of containers in webform UI

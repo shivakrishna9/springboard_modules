@@ -1,0 +1,79 @@
+Much of the "heavy lifting" for this module is on the front side. The actual
+back end is relatively simple. This document outlines the way to interact with
+the back end through jQuery.
+
+The JS and CSS files are already in the module and ready for you to populate.
+
+DRUPAL SETTINGS - COMPONENTS
+** Drupal.settings.webform_easy_edit.components **
+All of the component data for the current page is present in the Drupal.settings
+for your use. It is arranged by weight and parent, so it should match the
+current structure. You can easily use this to grab the objects for updating or
+deleting.
+
+DRUPAL SETTINGS - SETTINGS
+** Drupal.settings.webform_easy_edit.settings **
+These are the admin settings:
+- callback : the basic callback for the node you are on (needs the op argument)
+- disallow_editing : the form keys that should be "locked" to prevent editing.
+    (One per line)
+- group_wrapper : the jQuery selector for the groups that can be arranged and
+    edited. (.webform-component-fieldset)
+- component_wrapper : the jQuery selector for the components that can be
+    arranged and edited. (.webform-component)
+
+DRUPAL SETTINGS - TEMPLATES
+** Drupal.settings.webform_easy_edit.template **
+To make it easier to create new components, we have the 5 main types (textfield,
+textarea, select, fieldset, and markup) available as default objects. You can 
+copy each one to get started, and make the modifications you need.
+
+DRUPAL SETTInGS - HTML
+** Drupal.settings.webform_easy_edit.html **
+You may want to create the HTML for the buttons/admin for starting the page in
+the PHP code. We have the _webform_easy_edit_html_controls() function reserved
+for this. It might make sense to build the basic form, put in a hook, and then
+render the array before sending it to the page. This would give others the
+chance to override or modify it on the PHP side if needed.
+
+JSON CALLBACK
+The callback path is of the format /node/[nid]/webform/component/[op] where the
+operations are
+- insert (create new ones)
+- update (update existing components)
+- delete (remove components and all of the submitted data for them)
+You will need to POST an array of component objects, even if its just one.
+NOTE: the POST is expected to be named "components" - see example below
+
+CODE SAMPLES
+
+// Here is an example of creating a new component from the template.
+newComponent = Drupal.settings.webform_easy_edit.template.textfield;
+newComponent.form_key = 'new_form_component';
+newComponent.name = 'My new textfield';
+newComponent.value = 'default value here';
+newComponent.weight = 5;
+newComponent.pid = 3;
+
+
+// Here is an example of POSTing new componets to the callback as a simple array
+// of component objects that need to be sent. The same pattern applies for updates
+// and deletes as well.
+componentArray = [newComponent1, newComponent2, newComponent3];
+callbackPath = Drupal.settings.webform_easy_edit.callback;
+operation = 'insert';
+jQuery.ajax({
+  type: "POST",
+  url: callbackPath + operation,
+  data: {components: componentArray},
+  dataType: 'json',
+  success: function(data) {
+    var returnData = JSON.parse(data.responseText);
+    // Do what you want with the results. Insert will tell you the new cid.
+    // console.log(returnData);
+  },
+  error: function(xhr, textStatus, error){
+    // Do what you want with error handling (like display a message)
+    // console.log(error);
+  }
+});

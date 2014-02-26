@@ -1,0 +1,9 @@
+name = Webform IPE
+description = Provides a Backbone.js and jQuery UI powered interface for adding, editing, and reordering webform components.
+core = 7.x
+package = Webform
+dependencies[] = webform
+dependencies[] = fundraiser_webform
+dependencies[] = form_layout
+dependencies[] = jquery_update
+version =  7.x-1.0-dev

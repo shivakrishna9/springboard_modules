@@ -1,0 +1,256 @@
+<script id="componentTemplate" type="text/template">
+<%  console.log('TEMPLATE ACTIVE'); %>
+<%  console.log(extra); %>
+
+	<% if (type == 'fieldset' || type == 'payment_fields' || type == 'payment_method') { %>
+		<%  var attrs = buildId(form_key) %>
+		<% if (typeof(extra) != "undefined" && typeof(extra.description) != "undefined") { %>
+	   	<div class="description"><%= extra.description %></div>
+	  <% } %>
+		 <% if (type != 'payment_fields') { %>
+		   <legend><span class="fieldset-legend"><%= name %></span></legend>
+		 <% } %>     
+		 <div class="fieldset-wrapper">
+
+	     <% if (type == 'payment_fields') { %>
+	     	 <%  var html = stripWrapper(payment_html, 'payment') %>
+	       <%= html %>
+		   <% } %>
+
+		   
+		</div>
+	<% } %>
+
+	<% if (type == 'markup') { %>
+		<%  var attrs = buildId(form_key, 'markup') %>	
+	 <div id="<%= attrs.id %>" %>
+     <p><%= value %></p>
+   </div>
+ 	
+	<% } %>
+
+	<!-- text, email -->
+	<% if (type == 'textfield' || type == 'email') { %>
+    <%  var attrs = buildId(form_key) %>
+		<label for="<%= attrs.id %>">
+			<%= name %> 
+			<% if (mandatory == '1') { %>
+			<span class="form-required" title="This field is required.">*</span>
+			<% } %>
+		</label>
+		
+ 	 	<% if (typeof(extra) != "undefined" && extra.field_prefix) { %>
+			<div class="field-prefix"><%= extra.field_prefix %></div>
+		<% } %>
+
+	 	<input class="<%= attrs.cls %> <% if (mandatory == '1') { %>required<% } %>" placeholder="<%= extra.attributes.placeholder %>" type="<%= type %>" id="<%= attrs.id %>" name="<%= attrs.name %>" size="<%= attrs.size %>" value="<%= attrs.value %>">
+	 	
+ 	 	<% if (typeof(extra) != "undefined" && extra.field_suffix) { %>
+			<div class="field-suffix"><%= extra.field_suffix %></div>
+		<% } %>
+
+	 	<% if (typeof(extra) != "undefined" && typeof(extra.description) != "undefined") { %>
+	   	<div class="description"><%= extra.description %></div>
+	  <% } %>
+
+
+	<% } else if (type == 'number') { %>
+    <%  var attrs = buildId(form_key) %>
+		<label for="<%= attrs.id %>"><%= name %> <% if (mandatory == '1') { %><span class="form-required" title="This field is required.">*</span><% } %></label>
+		
+ 	 	<% if (typeof(extra) != "undefined" && extra.field_prefix) { %>
+			<div class="field-prefix"><%= extra.field_prefix %></div>
+		<% } %>
+ 	 	<% if (typeof(extra) != "undefined" && extra.type == 'textfield') { %>
+	 	<input class="<%= attrs.cls %> <% if (mandatory == '1') { %>required<% } %>" placeholder="<%= extra.attributes.placeholder %>" type="<%= type %>" id="<%= attrs.id %>" name="<%= attrs.name %>" size="<%= attrs.size %>" value="<%= attrs.value %>">
+	 	<% } else { %>
+		 <select id="<%= attrs.id %>" name="<%= attrs.name %>" class="<%= attrs.cls %> ">
+		   <% if (mandatory != '1') { %>
+		    <%  select_options[0] = '- None -' %>
+		   <% } %>
+			 <%= select_options %>
+		 </select>
+	 	<%}%>
+ 	 	<% if (typeof(extra) != "undefined" && extra.field_suffix) { %>
+			<div class="field-suffix"><%= extra.field_suffix %></div>
+		<% } %>
+
+	 	<% if (typeof(extra) != "undefined" && typeof(extra.description) != "undefined") { %>
+	   	<div class="description"><%= extra.description %></div>
+	<% } %>
+
+
+
+	<% } else if (type == 'textarea') { %>
+		  <%  var attrs = buildId(form_key) %>
+			<label for="<%= attrs.id %>">
+				<%= name %> 
+				<% if (mandatory == '1') { %>
+				<span class="form-required" title="This field is required.">*</span>
+				<% } %>
+			</label>
+			
+		 	<textarea id="<%= attrs.id %>" class="<%= extra.class %> <%= attrs.cls %> <% if (mandatory == '1') { %>required<% } %>" type="<%= type %>"  <% if (extra.disabled == '1') { %>readonly="readonly"<% } %> name="<%= attrs.name %>" resizable="<%= extra.resizable %>" cols="<%= extra.cols %>" rows="<%= extra.rows %>" value="<%= attrs.value %>"></textarea>
+
+		 	<% if (typeof(extra) != "undefined" && typeof(extra.description) != "undefined") { %>
+		   	<div class="description"><%= extra.description %></div>
+	<% } %>
+
+
+	<% } else if (type == 'date') { %>
+
+		  <%  var attrs = buildId(form_key) %>
+			<label for="<%= attrs.id %>">
+				<%= name %> 
+				<% if (mandatory == '1') { %>
+				<span class="form-required" title="This field is required.">*</span>
+				<% } %>
+			</label>
+
+			<%         
+        a = $(date_html);
+        a.find('label').remove();
+			  if (typeof(a[0]) !== "undefined" && a.length === 1)  { 
+			  	date_html = a[0].innerHTML;
+			  }
+			%>
+			<%= date_html %>
+		 	<% if (typeof(extra) != "undefined" && typeof(extra.description) != "undefined") { %>
+		   	<div class="description"><%= extra.description %></div>
+	<% } %>
+
+
+	<% } else if (type == 'select' && extra.aslist != 1 && extra.multiple == 0) { %>
+    	<!-- Radio -->
+    <%  var attrs = buildId(form_key, 'radio') %>
+    		<%//console.log(attrs) %>
+
+			<label for="<%= attrs.id %>"> <%= name %> 
+			<% if (mandatory == '1') { %>
+			<span class="form-required" title="This field is required.">*</span>
+			<% } %>
+			</label>
+
+			<div id="<%= attrs.id %>">
+				<% var options = optionList(extra.items) %>
+			  <% for (var num in options) { %>
+					<div class="control-group"> 
+						<input type="radio" id="<%= attrs.id %>-<%= num %>" name="<%= attrs.name %>"
+							value="<%= options[num]['val'] %>">
+						<label class="option" for=<%= attrs.id %>-<%= num %>> <%= options[num]['label'] %></label>
+					</div>
+
+				<% } %>
+
+			</div>
+			<% if (typeof(extra) != "undefined" && typeof(extra.description) != "undefined") { %>
+		   	<div class="description"><%= extra.description %></div>
+			<% } %>
+
+	<!-- Checkboxes -->
+	<% } else if (type == 'select' && (extra.aslist == 0 || extra.aslist == null)) { %>
+		<%  var attrs = buildId(form_key, 'radio') %>
+			<label for="<%= attrs.id %>"><%= name %>
+			<% if (mandatory == '1') { %>
+			<span class="form-required" title="This field is required.">*</span>
+			<% } %>
+			</label>
+	 		<div id="<%= attrs.id %>">
+
+			  <% var options = optionList(extra.items) %>
+			  <% for (var num in options) { %>
+			 		<div class="control-group"> 
+						<input type="checkbox" 
+						id="<%= attrs.id %>-<%= num %>" 
+						name="<%= attrs.name %>" 
+						value="<%= options[num]['val'] %>" class="form-checkbox">  
+						<label class="option" for="<%= attrs.id %>"><%= options[num]['label'] %></label>
+					</div>
+
+				<% } %>
+
+			</div>
+		 	<% if (typeof(extra) != "undefined" && typeof(extra.description) != "undefined") { %>
+		   	<div class="description"><%= extra.description %></div>
+			<% } %>
+
+	<!-- Select List -->
+	<% } else if (type == 'select' && extra.aslist == true) { %>
+
+    <%  attrs = buildId(form_key) %>
+
+		<div class="control-group">  
+			<label for="<%= attrs.id %>"><%= name %> 
+			<% if (mandatory == '1') { %>
+			<span class="form-required" title="This field is required.">*</span>
+			<% } %>
+			</label>
+
+		 <select id="<%= attrs.id %>" name="<%= attrs.name %>" class="<%= attrs.cls %> ">
+		   <% var options = optionList(extra.items) %>
+			 <% for (var num in options) { %>
+		 	   <option value="<%= options[num]['val'] %>"><%= options[num]['label'] %></option>
+			 <% } %>
+
+		 </select>
+			<% if (typeof(extra) != "undefined" && typeof(extra.description) != "undefined") { %>
+		   	<div class="description"><%= extra.description %></div>
+			<% } %>
+		</div>
+	<% } else if (type == 'payment_method') { %>
+
+
+<% } %>
+
+</script>
+
+
+<script id="editTemplate" type="text/template">
+	<span class="edit"><button class="edit-item btn btn-mini">Edit</button><button class="delete-item btn btn-mini">Delete</button></span>
+</script>
+
+<script id="adminBar" type="text/template">
+<div id="admin-bar" class="fixed">
+	<div class="accordion">
+		<div class="accordion-header closed">Inline Editor Toolbar</div>
+		<div class="accordion-options">
+			<ul>
+		    <li><a class="reorder-items-fieldsets" href="#"><span class="icon"></span>Reorder Items</a></li>
+          <ul id="sidebar-toggle">
+          	<li><a class="sidebars-hide" href="#"><span class="icon"><input id="sidebars-hide" type="checkbox" name="hide sidebars"></span>Display empty sidebars</a></li>
+          </ul>	
+		    <li><a class="menu-fixed" href="#"><span class="icon"><input id="admin-bar-fixed" type="checkbox" name="fixed menu" checked="checked"></span>Make menu fixed</a></li>
+			</ul>
+		</div>
+	</div>
+	<div class="accordion">
+		<div class="accordion-header closed">Add form element</div>
+		<div class="accordion-options">
+			<ul>
+		    <li><a class="add-textfield" href="#"><span class="icon"></span>Textfield</a></li>
+		    <li><a class="add-email" href="#"><span class="icon"></span>E-mail</a></li>
+		    <li><a class="add-textarea" href="#"><span class="icon"></span>Textarea</a></li>
+		    <li><a class="add-select" href="#"><span class="icon"></span>Select</a></li>
+		    <li><a class="add-fieldset" href="#"><span class="icon"></span>Fieldset</a></li>
+		    <li><a class="add-markup" href="#"><span class="icon"></span>Markup</a></li>
+		    <li><a class="add-number" href="#"><span class="icon"></span>Number</a></li>
+		    <li><a class="add-date" href="#"><span class="icon"></span>Date</a></li>
+			</ul>
+		</div>
+	</div>
+	<!--<div class="accordion preview">
+		<div class="accordion-header closed">Preview</div>
+		<div class="accordion-options">
+			<ul>
+		    <li><a class="desktop-preview" href="#"><span class="icon"></span>Desktop</a></li>
+		    <li><a class="landscape-preview" href="#"><span class="icon"></span>Tablet Landscape</a></li>
+		    <li><a class="portrait-preview" href="#"><span class="icon"></span>Tablet Portrait</a></li>
+		    <li><a class="mobile-preview" href="#"><span class="icon"></span>Mobile</a></li>
+			</ul>
+		</div>
+	</div>-->
+	<div class="save-all">
+		<button class="save-and-preview" href="#" >Save All Changes</button>
+	</div>
+</div>
+</script>

@@ -1,0 +1,412 @@
+<?php
+/**
+ * @file
+ * webform_ipe.module
+ */
+
+
+/**
+ * Implements hook_menu().
+ */
+function webform_ipe_menu() {
+  $items = array();
+  $items['admin/config/content/webform/ipe'] = array(
+    'title' => 'Webform IPE',
+    'description' => 'Configure settings for Webform IPE.',
+    'access arguments' => array('administer webform IPE'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('webform_ipe_admin_form'),
+    'file' => 'webform_ipe.admin.inc',
+  );
+
+  // Callback to process the JSON component
+  // POSTed JSON array of 1 or more component objects
+  $items['node/%node/webform/component'] = array(
+    'title' => 'Process JSON component',
+    'description' => 'Process the JSON component and update the database',
+    'type' => MENU_CALLBACK,
+    'page callback' => '_webform_ipe_json_process',
+    'page arguments' => array(1, 4),
+    'access arguments' => array('use webform IPE'),
+  );
+
+  //callback to generate date field html
+  $items['node/%node/webform/date'] = array(
+    'title' => 'Process JSON component',
+    'description' => 'Process the JSON component and update the database',
+    'type' => MENU_CALLBACK,
+    'page callback' => '_webform_ipe_date_process',
+    'page arguments' => array(1, 4),
+    'access arguments' => array('use webform IPE'),
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function webform_ipe_permission() {
+  return array(
+    'administer webform IPE' => array(
+      'title' => t('Administer Webform IPE'),
+      'description' => t('Configure the admin settings for Webform IPE.'),
+    ),
+    'use webform IPE' => array(
+      'title' => t('Use webform IPE'),
+      'description' => t('Use the Webform IPE tool for quick and limited component altering.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_preprocess_node().
+ *
+ * Add the JS, CSS, and the JSON data to the page for the front side.
+ * Convert Drupal numeric string config values to true or false
+ * Create the dummy html for payment fields and date fields
+ */
+function webform_ipe_preprocess_node(&$vars) {
+
+  // Make sure that editing is activated for this type and user.
+  $is_active = in_array($vars['type'], variable_get('webform_ipe_node_types', array()));
+
+  if ($is_active && user_access('use webform IPE')) {
+
+    $path = drupal_get_path('module', 'webform_ipe');
+    $nid = $vars['webform']['nid'];
+
+    // build the array of webform components to be added to drupal.settings
+    $json_data = array();
+    // Add the callback paths for ease of use.
+    $json_data['callback'] = '/node/' . $nid . '/webform/component/';
+    $json_data['date_callback'] = '/node/' . $nid . '/webform/date/';
+
+    // fields that should not be deleteable via backbone
+    $required_fields = array_keys(_fundraiser_webform_get_nonfieldset_keys());
+    $required_fieldsets = array('donation', 'donor_information', 'billing_information', 'payment_information');
+    $required = array_merge($required_fieldsets, $required_fields);
+    $json_data['required_fields'] = $required;
+
+    // Format and prepare the component data as objects.
+    foreach ($vars['webform']['components'] as $cid => $component) {
+      $json_data['components'][$cid] = (object) $component;
+      if($component['type'] == 'select') {                                // put select option items into an array
+        $json_data['components'][$cid]->extra['items'] = explode("\n", $json_data['components'][$cid]->extra['items']);
+        if($component['mandatory'] == 0 && !empty($component['aslist'])) {
+          array_unshift($json_data['components'][$cid]->extra['items'], array('| - None -'));
+        }
+      }
+
+      //get the html for payment fields
+      if($component['type'] == 'payment_fields') {
+        $form  = drupal_get_form('webform_client_form_' . $nid, $vars['node'],  NULL, FALSE);
+        $children = _webform_ipe_children_elements($form['submitted']);
+        foreach($children as $key => $child) {
+          if(isset($child['#webform_component']) && $child['#webform_component']['cid'] == $cid) {
+            $payment_html = render($child);
+            $json_data['components'][$cid]->payment_html = $payment_html;
+          }
+        }
+      }
+
+      //if a date field hasn't changed on edit, we use this instead of an ajax call to render it.
+      if($component['type'] == 'date') {
+        $form  = drupal_get_form('webform_client_form_' . $nid, $vars['node'],  NULL, FALSE);
+        $children = _webform_ipe_children_elements($form['submitted']);
+        foreach($children as $key => $child) {
+          if(isset($child['#webform_component']) && $child['#webform_component']['cid'] == $cid) {
+            $date_html = render($child);
+            $json_data['components'][$cid]->date_html = $date_html;
+          }
+        }
+      }
+    }
+
+    //upon edit, backbone will convert any (string) 1's or 0's to 'true' and any (int) 1's or 0's to true or false, thereby creating incorrect values a false "haschanged" attribute for the model
+    foreach ($json_data['components'] as $index => $component) {
+      foreach ($component as $name => $value) {
+        if (is_numeric($value)) {
+          if(!is_float($value) && $name == 'mandatory') {
+            if($value == 0) {
+              $component->$name = FALSE;
+            }
+            else if(($value == 1)) {
+              $component->$name = TRUE;
+            }
+          }
+        }
+      }
+
+      //upon edit, backbone will convert any (string) 1's or 0's to 'true' and any (int) 1's or 0's to true or false, thereby creating incorrect values and a false "haschanged" attribute for the model
+      $checkboxes =array('collapsed', 'collapsible', 'private', 'title_display', 'disabled', 'unique', 'optrand', 'datepicker', 'year_textfield', 'aslist', 'multiple');
+      foreach ($component->extra as $name => $extra) {
+        if (is_numeric($extra) && $name != 'start_date' && $name != 'end_date' && in_array($name, $checkboxes)) {
+          if(!is_float($extra)) {
+            if($extra == 0) {
+              $component->extra[$name] = FALSE;
+            }
+            else if($extra == 1) {
+              $component->extra[$name] = TRUE;
+            }
+          }
+        }
+      }
+      $json_data['components'][$index] = $component;
+    }
+
+    $json_data['settings'] = array(                                        // Format and prepare the settings.
+      'disallow_editing' => variable_get('webform_ipe_disallow_editing'),
+      'group_wrapper' => variable_get('webform_ipe_group_wrapper', '.webform-component-fieldset'),
+      'component_wrapper' => variable_get('webform_ipe_component_wrapper', '.webform-component'),
+    );
+
+    drupal_add_css($path . '/css/webform_ipe.css');
+
+    drupal_add_js($path . '/js/underscore.js');
+    drupal_add_js($path . '/js/actual.min.js');
+    drupal_add_js($path . '/js/backbone.js');
+    drupal_add_js($path . '/js/backbone-forms.min.js');
+    drupal_add_js($path . '/js/deep-model.min.js');
+    drupal_add_js($path . '/js/block.ui.min.js');
+    drupal_add_js($path . '/js/webform_ipe.js');
+    drupal_add_js(array('webform_ipe' => $json_data), 'setting');
+
+    // list.js needs '$'
+    drupal_add_js('$ = jQuery', array('type' => 'inline', 'scope' => 'footer', 'weight' => 998));
+    drupal_add_js($path . '/js/list.min.js', array('scope' => 'footer', 'weight' => 999));
+
+    drupal_add_library('system', 'ui.sortable');
+    drupal_add_library('system', 'drupal.collapse');
+    drupal_add_library('system', 'drupal.form');
+    drupal_add_library('system', 'drupal.ajax');
+
+  }
+}
+
+//helper function to generate payment field and date field html
+function _webform_ipe_children_elements($element) {
+  $results = array();
+  $children = element_children($element);
+  foreach($children as $key) {
+    $child = $element[$key];
+    if(is_array($child)) {
+      if(!empty($child['#type'])) {
+        $results[] = $child;
+        $results = array_merge($results, _webform_ipe_children_elements($child));
+      }
+      }
+      unset($child);
+    }
+  return $results;
+}
+
+//make sure the jquery upate version of UI is loaded, not springboard base
+function webform_ipe_js_alter(&$js) {
+  $jq_update_ui = isset($js['sites/all/modules/contrib/jquery_update/replace/ui/ui/minified/jquery.ui.core.min.js']);
+  $theme_ui = isset($js['sites/all/themes/springboard-themes/springboard_base/js/jquery-ui.min.js']);
+  if ($theme_ui && $jq_update_ui) {
+    $node = menu_get_object();
+    $type = isset($node->type) ? $node->type : array();
+    $is_active = in_array($type, variable_get('webform_ipe_node_types'));
+    if ($is_active && user_access('use webform IPE')) {
+      unset($js['sites/all/themes/springboard-themes/springboard_base/js/jquery-ui.min.js']);
+    }
+  }
+}
+
+/**
+ * Process the JSON callback and create, update, or delete the components.
+ */
+function _webform_ipe_json_process($node, $op = 'update') {
+  $components = $_POST['components'];
+  $output = array();
+
+  foreach ($components as $component) {
+    //convert some javascript values to something Drupal/PHP understands
+    //Drupal stores config as strings for DB compat.
+    foreach ($component['extra'] as $name => $extra) {
+      if ($extra == "null") {
+        $component['extra'][$name] = "";
+      }
+      if ($extra == 'false' || $extra === 0) {
+       $component['extra'][$name] = "0";
+      }
+      if ($extra == "true" || $extra === 1) {
+        $component['extra'][$name] = "1";
+      }
+    }
+    if($component['mandatory'] == 'true' || $component['mandatory'] === 1) {
+      $component['mandatory'] = "1";
+    }
+    elseif($component['mandatory'] != 1) {
+      $component['mandatory'] = "0";
+    }
+    $component['weight'] = (string)$component['weight'];
+
+    if(!is_array($component['extra']['attributes']['class'])) {
+      $component['extra']['attributes']['class'] = explode(' ', $component['extra']['attributes']['class']);
+    }
+    if($component['type'] == 'select') {
+      $component['extra']['items'] = implode("\n", array_values($component['extra']['items']));
+    }
+
+    //the only thing we want to process on payment fields is weight;
+    if($component['type'] == 'payment_fields') {
+       $orig_component = $node->webform['components'][$component['cid']];
+       $orig_component['weight'] = (string)$component['weight'];
+       $component = $orig_component;
+    }
+
+    //components added via backbone always have string "default_key" in form_key
+    $is_new = strpos($component['form_key'], "default_key");
+
+    //update existing components
+    if($is_new === FALSE && (!isset($component['deleted']) || (isset($component['deleted']) && $component['deleted'] == 0))) {
+      webform_component_update($component);
+    }
+    elseif (isset($component['deleted']) && $component['deleted'] == 1 && $is_new === FALSE) {
+       webform_component_delete($node, $component);
+    }
+    else { //creat new components
+      $component['cid'] = NULL;
+      $new_key = str_replace('-', '_', $component['name']);
+      $new_key = str_replace(' ', '_', $new_key);
+      $new_key = preg_replace('/[^a-z0-9_]i/', '', $new_key);
+      $component['form_key'] = str_replace('default_key', $new_key, $component['form_key']);
+      $component['nid'] = $node->nid;
+      $cid = webform_component_insert($component);
+      $output[$component['form_key']]['cid'] = $cid;
+    }
+    $output[$component['form_key']] = array('sucess' => 'true');
+  }
+
+  // variable stores node ID for retrieval by form_layouts module
+  // this can go away when form layout UI is removed.
+  $ipe_forms = variable_get('webform_ipe_nodes', array());
+  if(!in_array($node->nid, $ipe_forms)) {
+    $ipe_forms[] = $node->nid;
+    variable_set('webform_ipe_nodes', $ipe_forms);
+  }
+
+  return drupal_json_output($output);
+}
+
+//Ajax function to build new or altered date components
+function _webform_ipe_date_process($node) {
+  $component = array();
+  $component['nid'] = $node->nid;
+  $component['extra'] = $_POST['extra'];
+  $component['name'] =  $_POST['name'];
+  $component['pid'] =  $_POST['pid'];
+  $component['weight'] =  $_POST['weight'];
+  $component['form_key'] =  $_POST['form_key'];
+  $component['value'] =  $_POST['value'];
+  $component['mandatory'] = $_POST['mandatory'];
+  $output = array();
+  drupal_flush_all_caches(); //wish there was a better way
+  foreach ($component['extra'] as $name => $extra) {
+      if ($extra == "null") {
+        $component['extra'][$name] = "";
+      }
+      if ($extra == 'false' || $extra === 0) {
+       $component['extra'][$name] = "0";
+      }
+      if ($extra == "true" || $extra === 1) {
+        $component['extra'][$name] = "1";
+      }
+    }
+    if($component['mandatory'] == 'true' || $component['mandatory'] === 1) {
+      $component['mandatory'] = "1";
+    }
+    elseif($component['mandatory'] != 1) {
+      $component['mandatory'] = "0";
+    }
+  $component['weight'] = (string)$component['weight'];
+
+  $element = _webform_render_date($component, $value = NULL, $filter = TRUE);
+  $element = webform_expand_date($element);
+  $element = theme('webform_date', array('element' => $element));
+  $output[] = $element;
+  return drupal_json_output($output);
+}
+
+/*
+ * Add the templates to the form. This may be temporary until they are added to the drupal.settings below.
+ */
+function webform_ipe_form_alter(&$form, &$form_state, $form_id) {
+  $type = isset($form['#node']) ? $form['#node']->type : '';
+  $types = variable_get('webform_ipe_node_types', array());
+  $is_active = in_array($type, $types);
+  if ($is_active && strpos($form_id, 'webform_client_form_') !== FALSE && user_access('use webform IPE')) {
+    $path = drupal_get_path('module', 'webform_ipe');
+    $templates = file_get_contents($path . '/js/templates.html');
+    $form['webform_ipe_templates']['#markup'] = $templates;
+  }
+}
+
+//need to add identifying divs to markup components
+function webform_ipe_webform_component_render_alter(&$element, &$component) {
+  if($element['#webform_component']['type'] == 'markup') {
+    $markup = $element['#markup'];
+    $id = str_replace('_', '-', $element['#webform_component']['form_key']);
+    $element['#markup'] = '<div id="' . $id . '">' . $markup . '</div>';
+  }
+}
+
+/**
+ * Create a list of sample comonent objects so its easy to create them on the
+ * jQuery side.
+ *
+ * @param int $nid
+ *   The node id.
+ *
+ * @return array $templates
+ *   An array of component objects.
+ */
+/*
+function _webform_ipe_component_templates($nid) {
+  $base_template = array(
+    'nid' => $nid,
+    'pid' => 0,
+    'form_key' => 'form_key',
+    'name' => 'Name',
+    'type' => 'textfield',
+    'value' => '',
+    'extra' => array('description' => '', 'private' => 0),
+    'mandatory' => 0,
+    'weight' => 0,
+  );
+  $templates = array('textfield', 'textarea', 'select', 'fieldset', 'markup');
+  foreach ($templates as $key => $type) {
+    unset($templates[$key]);
+    $templates[$type] = (object) $base_template;
+    $templates[$type]->name = $type . ' template';
+    $templates[$type]->type = $type;
+    if ($type == 'select') {
+      $templates[$type]->extra['multiple'] = 0;
+      $templates[$type]->extra['items'] = 'key1|value1 key2|value2 key3|value3';
+      $templates[$type]->extra['aslist'] = 1;
+    }
+  }
+  return $templates;
+}
+*/
+
+/**
+ * Helper function to generate the HTML needed for the toolbar and buttons
+ *
+ * @return string $html
+ *   The HTML needed.
+ */
+/*
+function _webform_ipe_html_controls() {
+  $html = '';
+  return $html;
+}
+*/
+
+
+
+
+
+
