@@ -345,6 +345,8 @@ function sb_social_init() {
     $node = node_load($id);
     $sid = sb_social_get_sid_by_id($id, 'node');
     $js_settings['submission_id'] = $submission_id;
+    $js_settings['id'] = $id;
+    $js_settings['id_type'] = 'nid';
   }
   if (!$node && arg(0) == 'node' && is_numeric(arg(1))) {
     $node = node_load(arg(1));

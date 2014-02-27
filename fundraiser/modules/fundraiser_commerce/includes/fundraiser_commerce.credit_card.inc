@@ -22,6 +22,7 @@ function _fundraiser_commerce_credit_card_form() {
     '#salesforce_label' => t('Credit card last 4'),
   );
   $form['expiration_date']['#theme'] = 'fundraiser_credit_card_expiration_date';
+  $form['expiration_date']['#title'] = t('Expiration date');
   $months[1] = 'January';
   $months[2] = 'February';
   $months[3] = 'March';
