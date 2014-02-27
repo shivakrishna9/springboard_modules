@@ -346,7 +346,7 @@ function _fundraiser_date_mode_revert_sustainer_dates($master_order, $series_ord
   $orders_to_revert = _fundraiser_date_mode_orders_to_change($series_orders);
 
   foreach ($orders_to_revert as $did) {
-    if (!isset($original_dates[$did]['original_next_charge'])) {
+    if (isset($original_dates[$did]['original_next_charge'])) {
       db_update('fundraiser_sustainers')
         ->fields(array(
           'next_charge' => $original_dates[$did]['original_next_charge'],
