@@ -110,19 +110,22 @@ function fundraiser_generate_donations($nid, $count = 1, $type = 'single', $ms =
   }
   // Ensure that devel_generate code is available.
   module_load_include('inc', 'devel_generate', 'devel_generate');
-  if ($type == 'single') {
-    $recurs = FALSE;
-  }
-  elseif ($type == 'recurring') {
-    $recurs = TRUE;
-  }
-  else {
-    $recurs = (bool) rand(0, 1);
-  }
+
   // TODO - do this with the process system in fundraiser. No more form execute if possible.
   // Load up the donation form node.
   $donation_form_node = node_load($nid);
   for ($i = 0; $i < $count; $i++) {
+
+    if ($type == 'single') {
+      $recurs = FALSE;
+    }
+    elseif ($type == 'recurring') {
+      $recurs = 'recurs';
+    }
+    else {
+      $recurs = rand(0, 1) ? 'recurs' : FALSE;
+    }
+
     // Create some random strings using devel_generate functions.
     $url = parse_url($GLOBALS['base_url']);
     $first_name = devel_generate_word(mt_rand(4, 10)); // From devel_generate.module.
