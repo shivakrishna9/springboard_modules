@@ -656,6 +656,7 @@
               //event.stopPropagation();
             }
 
+            //country dropdown selector JS causes multiple buttons appear, after change
             if($('span.edit').length > 1) {
               $('span.edit').remove();
             }
@@ -709,7 +710,7 @@
             }
           },
 
-          drop: function(event, index) {
+          drop: function(event) {
             if (typeof(event)) {
               event.stopPropagation();
             }
@@ -717,7 +718,7 @@
               $('.save-and-preview').show();
               $('#admin-bar').append('<div id = "webform-ipe-unsaved-edits">This form has unsaved changes</div>');
             }
-            this.$el.trigger('update-weight', [this, index]); //recalculate field weights on drag and drop
+            this.$el.trigger('update-weight', [this]); //recalculate field weights on drag and drop
           },
 
           mouseleave: function(){
@@ -890,8 +891,12 @@
             if(_.isUndefined(item.get('weight'))) {
               item.set('weight', 0, {silent: true});
             }
-            console.log(this.model.attributes)
+
+
+            //console.log(this.$el.html())
             var field = this.$el.html(this.template(this.model.toJSON()));
+
+
 
             if (type != 'fieldset' && type != 'payment_fields' && type != 'payment_method') {
 
@@ -914,7 +919,7 @@
                 this.$el.attr('data-cid', cid);
 
               }
-              this.$el.trigger('update-weight', [this, 0]); //recalculate field weights after insert
+              this.$el.trigger('update-weight', [this]); //recalculate field weights after insert
 
             } else { // Re-render the fieldset
 
@@ -998,13 +1003,13 @@
               var childComponents = this.reorder(window.componentCollection.where({pid: cid}), 'weight'); // Get and re-order child components by weight
 
               if (childComponents.length > 0 ) {
-                _.each(childComponents, function(model) {      // Trigger the rerender for each model
+                _.each(childComponents, function(model, i) {      // Trigger the rerender for each model
                   model.trigger('fieldset:renderChild');
                 });
-                this.$el.trigger('update-weight', [this, 0]); //recalculate field weights after insert
+                this.$el.trigger('update-weight', [this]); //recalculate field weights after insert
               }
               else {
-                this.$el.trigger('update-weight', [this, 0]); //recalculate field weights after insert
+                this.$el.trigger('update-weight', [this]); //recalculate field weights after insert
                 return;
               }
             }//end fieldset
@@ -1017,6 +1022,7 @@
             pid = this.model.get('pid');
             var type = this.model.get('type');
 
+  
             if (type != 'fieldset' && type != 'payment_fields' && type != 'payment_method') {
 
               // Re-render. We don't really need to rerender, we could just append "this.el", 
@@ -1029,19 +1035,18 @@
               // BUT
               // calling reRender from here causes problems for all browsers:
               // You can't $('#select_this_field') from the template and template helper functions anymore:
-              // Why? It's no longer in the DOM??? Because you can't select it, you
-              // can't grab and re-applying the existing ID and attributes.
+              // Why? It's no longer in the DOM. You have to re-append it first.
 
              // So
 
-              if(this.$el.html() == ''){
-                this.reRender();
+              $('[data-cid="'+ pid +'"] .fieldset-wrapper').append(this.el);
+
+              if (this.$el.html() == '') {
+                 this.$el.html(this.template(this.model.toJSON()));
                 //OK, now we have some html for IE - but all the ID's and Atrributes are missing
                 // So the buildID function up above has a special section for IE.
               }
-
-              $('[data-cid="'+ pid +'"] .fieldset-wrapper').append(this.el);
-
+      
               // Rebind our component view events
               this.delegateEvents();
             } else {
@@ -1175,7 +1180,7 @@
              });
           },
 
-          updateWeight: function(event, field, position) {
+          updateWeight: function(event, field) {
             console.log('UPDATE WEIGHT');
 
            /* Update the PIDs and the form element weights (in the model)
@@ -1267,7 +1272,7 @@
 
             //debug function
              this.collection.each(function (model, index) {
-        //      console.log(model.get('weight') + model.get('form_key'));
+              console.log(model.get('weight') + model.get('form_key'));
             });
           }
         });
@@ -1691,7 +1696,7 @@
             stop: function (event, ui) {
               $(ui.item[0]).css({'height':'auto', 'overflow':'visible'})
               $(ui.item[0]).css({'width':'100%', 'overflow':'hidden'})
-              ui.item.trigger('drop', ui.item.index());
+              ui.item.trigger('drop');
               $('div.fieldset.form-layouts:not(:has("*"))').css('min-height', '290px');
               if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
                 $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
@@ -1719,7 +1724,7 @@
             stop: function (event, ui) {
               $(ui.item[0]).css({'height':'auto', 'overflow':'visible'})
               $(ui.item[0]).css({'width':'100%', 'overflow':'hidden'})
-              ui.item.trigger('drop', ui.item.index());
+              ui.item.trigger('drop');
               $('div.fieldset.form-layouts:not(:has("*"))').css('min-height', '290px')
               if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
                 $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()

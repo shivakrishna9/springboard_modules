@@ -5,10 +5,6 @@ Easy Edit
 
 * field templates and styles for required fields.
 
-* if edit the amount field and change it to a dropdown, and then change it back to radios, the radios render vertically.
-
-* windows 7 IE9 & IE10, child fields disappear when fieldset is edited.
-
 Finished all the inline editor ToDo's except the following, which are not currently resolvable:
 
   "Label Display" option - not implemented for fieldsets, "inline" option omitted for other field types
