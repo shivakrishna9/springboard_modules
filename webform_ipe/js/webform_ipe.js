@@ -40,7 +40,7 @@
               field_suffix: '',
               attributes: {
                 class: '',
-                placeholder: ''
+                placeholder: '',
               }
             },
             form_key: 'default_key',
@@ -479,6 +479,12 @@
               }
             }
             else { //everything else
+              
+              // It's possible in the wild that some themes may use the region/column specific ID for styling.
+              // Perhaps we should remove those IDs and classes here, and substitute the form_key, as we do in the
+              // new field section below. That way, there will be a visual cue that something has a dependency
+              // on a CSS selector tied to a specific position on the page, and when we move an item, the style is removed.
+              // For the moment, though, we are preserving the original selectors.
               existing.id  = $('[name*="['+ form_key +']"]').attr('id');
               existing.cls = $('[name*="['+ form_key +']"]').attr('class');
               existing.name = $('[name*="['+ form_key +']"]').attr('name');
@@ -489,6 +495,7 @@
               return existing;            
             }
             else {
+              // "this.el" is empty for IE in RenderChild
               var ieWorkAround = {};
               var id = form_key.replace(/_/g,'-');
               ieWorkAround.id  = '-'+id;
@@ -891,12 +898,10 @@
             if(_.isUndefined(item.get('weight'))) {
               item.set('weight', 0, {silent: true});
             }
-
-
-            //console.log(this.$el.html())
+            
+            //is this line even needed? For IE?
+            //Shouldn't it come *after* any prepends below?
             var field = this.$el.html(this.template(this.model.toJSON()));
-
-
 
             if (type != 'fieldset' && type != 'payment_fields' && type != 'payment_method') {
 
@@ -908,7 +913,7 @@
               }
               else if(extra_pid == 0) {
                 item.set('pid', 0, {silent: true});
-                $('.webform-client-form').prepend(field);
+                $('.webform-client-form').prepend(this.el);
                 this.$el.attr('data-pid', "0");
               }
 
@@ -919,6 +924,8 @@
                 this.$el.attr('data-cid', cid);
 
               }
+               console.log(this.$el.html(this.template(this.model.toJSON())));
+
               this.$el.trigger('update-weight', [this]); //recalculate field weights after insert
 
             } else { // Re-render the fieldset
@@ -982,7 +989,7 @@
               else {
                 if((extra_pid == "0" && extra_pid != model_pid)) {
                   item.set('pid', extra_pid, {silent: true});
-                  $('.webform-client-form').prepend(field); //new fieldset or moving an old one to top level
+                  $('.webform-client-form').prepend(this.el); //new fieldset or moving an old one to top level
                 }
               }
 
@@ -1122,8 +1129,6 @@
                   componentView.setElement($('div[data-cid="' + cid + '"]') );
                 }
                 else {
-                           //       console.log(component.get('name'))
-
                   componentView.setElement($('fieldset[data-cid="' + cid + '"]') );
                 }
               }
@@ -1173,8 +1178,6 @@
                    $('.ajax-progress').remove();
                    $('#webform-ipe-unsaved-edits').show();
                    $('.save-and-preview').show();
-
-
                    alert('An error occurred. Changes were not saved.')
                 }
              });

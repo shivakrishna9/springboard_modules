@@ -5,6 +5,10 @@ Easy Edit
 
 * field templates and styles for required fields.
 
+* might make sense if there's time to load the classes and IDs into the model along with the component settings
+
+* doesn;t work on IE8 - underscore.js error
+
 Finished all the inline editor ToDo's except the following, which are not currently resolvable:
 
   "Label Display" option - not implemented for fieldsets, "inline" option omitted for other field types

@@ -312,22 +312,22 @@ function _webform_ipe_date_process($node) {
   $output = array();
   drupal_flush_all_caches(); //wish there was a better way
   foreach ($component['extra'] as $name => $extra) {
-      if ($extra == "null") {
-        $component['extra'][$name] = "";
-      }
-      if ($extra == 'false' || $extra === 0) {
-       $component['extra'][$name] = "0";
-      }
-      if ($extra == "true" || $extra === 1) {
-        $component['extra'][$name] = "1";
-      }
+    if ($extra == "null") {
+      $component['extra'][$name] = "";
     }
-    if($component['mandatory'] == 'true' || $component['mandatory'] === 1) {
-      $component['mandatory'] = "1";
+    if ($extra == 'false' || $extra === 0) {
+     $component['extra'][$name] = "0";
     }
-    elseif($component['mandatory'] != 1) {
-      $component['mandatory'] = "0";
+    if ($extra == "true" || $extra === 1) {
+      $component['extra'][$name] = "1";
     }
+  }
+  if($component['mandatory'] == 'true' || $component['mandatory'] === 1) {
+    $component['mandatory'] = "1";
+  }
+  elseif($component['mandatory'] != 1) {
+    $component['mandatory'] = "0";
+  }
   $component['weight'] = (string)$component['weight'];
 
   $element = _webform_render_date($component, $value = NULL, $filter = TRUE);
