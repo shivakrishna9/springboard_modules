@@ -456,7 +456,7 @@
             optionItem['label'] = (_.isUndefined(optionItem['label'])) ? optionItem['val'] : optionItem['label'];
             options.push(optionItem);
           });
-          console.log(options)
+         // console.log(options)
           return options;
         }
 
@@ -469,8 +469,8 @@
               switch(type) {
                 case 'radio':
                 case 'checkbox':
-                existing.id  = $('[name*="'+ form_key +']"]').closest('.control-group').parent('[id*="edit-submit"]').attr('id');
-                existing.name = $('[name*="'+ form_key +']"]').attr('name');
+                existing.id  = $('[name*="['+ form_key +']"]').closest('.control-group').parent('[id*="edit-submit"]').attr('id');
+                existing.name = $('[name*="['+ form_key +']"]').attr('name');
                 break;
                 case 'markup':
                   var id = form_key.replace(/_/g,'-');
@@ -485,9 +485,19 @@
               existing.value = $('[name*="['+ form_key +']"]').attr('value');
               existing.size = $('[name*="['+ form_key +']"]').attr('size');
             }
-            if (!_.isEmpty(existing)) {
+            if (!_.isEmpty(existing) && !_.isUndefined(existing.id)) {
               return existing;            
             }
+            else {
+              var ieWorkAround = {};
+              var id = form_key.replace(/_/g,'-');
+              ieWorkAround.id  = '-'+id;
+              ieWorkAround.cls = '-'+id;
+              ieWorkAround.name = '[' + form_key + ']';
+              if (!_.isEmpty(ieWorkAround)) {
+                return ieWorkAround;            
+              }
+            }
           }
           else {
             //new fields
@@ -561,7 +571,6 @@
             }
             else return 'control-group';
           },
-
           template: App.Templates.template($('#componentTemplate').html()),
 
           attributes : function () {
@@ -881,6 +890,7 @@
             if(_.isUndefined(item.get('weight'))) {
               item.set('weight', 0, {silent: true});
             }
+            console.log(this.model.attributes)
             var field = this.$el.html(this.template(this.model.toJSON()));
 
             if (type != 'fieldset' && type != 'payment_fields' && type != 'payment_method') {
@@ -1003,15 +1013,35 @@
 
           renderChild: function(){ //causing radios to lose styling
             console.log('RENDER CHILD');
+
             pid = this.model.get('pid');
             var type = this.model.get('type');
+
             if (type != 'fieldset' && type != 'payment_fields' && type != 'payment_method') {
-              // Re-render
-              //Actually we don't need to rerender because the children have not changed
-              //this.$el.html(this.template(this.model.toJSON()));
-              // Append to parent fieldset
+
+              // Re-render. We don't really need to rerender, we could just append "this.el", 
+              // because the fieldset is the only changed item...
+
+              // BUT 
+              // Internet Explorer requires a rerender, because in
+              // IE "this.el" is empty, at least when attempting to access it from here!
+
+              // BUT
+              // calling reRender from here causes problems for all browsers:
+              // You can't $('#select_this_field') from the template and template helper functions anymore:
+              // Why? It's no longer in the DOM??? Because you can't select it, you
+              // can't grab and re-applying the existing ID and attributes.
+
+             // So
+
+              if(this.$el.html() == ''){
+                this.reRender();
+                //OK, now we have some html for IE - but all the ID's and Atrributes are missing
+                // So the buildID function up above has a special section for IE.
+              }
 
               $('[data-cid="'+ pid +'"] .fieldset-wrapper').append(this.el);
+
               // Rebind our component view events
               this.delegateEvents();
             } else {
@@ -1020,7 +1050,6 @@
              //was causing infinite loop for new fieldsets, works now
               this.reRender();
             }
-
             return this;
           },
 
@@ -1074,7 +1103,7 @@
             return this;
           },
           addComponent: function(component){
-            console.log('ALLCOMPONENTS_ADD');
+          //  console.log('ALLCOMPONENTS_ADD');
             var cid = component.get('cid');
             if (cid > 0) { //existing webform components
               if (!$('[data-cid="'+cid+'"]')[0]) return;
@@ -1082,11 +1111,14 @@
               var type = componentView.model.get('type');
               if (type != 'fieldset' && type != 'payment_fields' && type != 'payment_method') {
                 componentView.setElement($('div.control-group[data-cid="' + cid + '"]') );
+                //console.dir(componentView.el)
               } else {
                 if(type == 'payment_fields') {
                   componentView.setElement($('div[data-cid="' + cid + '"]') );
                 }
                 else {
+                           //       console.log(component.get('name'))
+
                   componentView.setElement($('fieldset[data-cid="' + cid + '"]') );
                 }
               }
@@ -1184,7 +1216,7 @@
             //now update the weights
 
             this.collection.each(function (eachModel, index) {
-              console.log(eachModel)
+          //    console.log(eachModel)
               var form_key = eachModel.get('form_key');
               var id = form_key.replace(/_/g,'-');
               var type = eachModel.get('type');
@@ -1235,7 +1267,7 @@
 
             //debug function
              this.collection.each(function (model, index) {
-              console.log(model.get('weight') + model.get('form_key'));
+        //      console.log(model.get('weight') + model.get('form_key'));
             });
           }
         });

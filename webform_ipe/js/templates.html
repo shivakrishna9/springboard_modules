@@ -44,7 +44,7 @@
  	 	<% if (typeof(extra) != "undefined" && extra.field_prefix) { %>
 			<div class="field-prefix"><%= extra.field_prefix %></div>
 		<% } %>
-
+    <% if (type == 'textfield') type = 'text'%>
 	 	<input class="<%= attrs.cls %> <% if (mandatory == '1') { %>required<% } %>" placeholder="<%= extra.attributes.placeholder %>" type="<%= type %>" id="<%= attrs.id %>" name="<%= attrs.name %>" size="<%= attrs.size %>" value="<%= attrs.value %>">
 	 	
  	 	<% if (typeof(extra) != "undefined" && extra.field_suffix) { %>
@@ -130,7 +130,7 @@
 	<% } else if (type == 'select' && extra.aslist != 1 && extra.multiple == 0) { %>
     	<!-- Radio -->
     <%  var attrs = buildId(form_key, 'radio') %>
-    		<%//console.log(attrs) %>
+    		<%console.log() %>
 
 			<label for="<%= attrs.id %>"> 
 			<% if (extra.title_display != 'none') { %>
