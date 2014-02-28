@@ -772,7 +772,7 @@ function fundraiser_upsell_node_insert($node) {
     $record = fundraiser_upsell_node_record($node);
     drupal_write_record('fundraiser_upsell', $record);
 
-    fundraiser_upsell_save_email_wrapper_settings($node->nid, $node->fundraiser_upsell['email_wrappers']);
+    fundraiser_upsell_save_email_wrapper_settings($node->nid, (array)$node->fundraiser_upsell['email_wrappers']);
   }
 }
 
@@ -796,7 +796,7 @@ function fundraiser_upsell_node_update($node) {
       drupal_write_record('fundraiser_upsell', $record, 'nid');
     }
 
-    fundraiser_upsell_save_email_wrapper_settings($node->nid, $node->fundraiser_upsell['email_wrappers']);
+    fundraiser_upsell_save_email_wrapper_settings($node->nid, (array)$node->fundraiser_upsell['email_wrappers']);
   }
 }
 
