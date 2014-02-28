@@ -12,8 +12,10 @@ function commerce_litle_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     // Create the payment_method array with the commerce gateway
     // method info name as the key.
-    'payment_method' => array('commerce_litle_cc' => 'credit', 'commerce_litle_echeck' => 'bank account'),
-    // @todo bank account (echeck) recurring is not yet fully implemented.
+    'payment_method' => array(
+      'commerce_litle_cc' => 'credit',
+      'commerce_litle_echeck' => 'bank account',
+    ),
     'allow_recurring' => array('credit'),
     'allow_refund' => array('credit'),
     'form callback' => 'commerce_litle_fundraiser_commerce_submit_form',
@@ -23,8 +25,8 @@ function commerce_litle_fundraiser_commerce_fundraiser_gateway_info() {
     'expire callback' => 'commerce_litle_fundraiser_commerce_expire',
     'charge callback' => 'commerce_litle_fundraiser_commerce_charge',
     'refund callback' => 'commerce_litle_fundraiser_commerce_refund',
-    'update callback'     => 'commerce_litle_fundraiser_commerce_update',
-    'cardonfile callback' => 'commerce_litle_fundraiser_commerce_cardonfile',
+    'update callback' => 'commerce_litle_fundraiser_commerce_update',
+    'cardonfile callback' => 'commerce_litle_cardonfile_fields',
   );
 }
 
@@ -50,6 +52,7 @@ function commerce_litle_fundraiser_commerce_cleanup($submission_fields) {
     module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
     return _fundraiser_commerce_credit_card_cleanup($submission_fields);
   }
+  // Pass through for echeck.
   return $submission_fields;
 }
 
@@ -88,7 +91,7 @@ function commerce_litle_fundraiser_commerce_scrub($submission_fields, $payment_m
       $submission_fields['bank account']['accNum'] = substr($submission_fields['bank account']['accNum'], -3);
     }
     if (isset($submission_fields['bank account']['account_number'])) {
-      $submission_fields['bank account']['accNum'] = substr($submission_fields['bank account']['accNum'], -3);
+      $submission_fields['bank account']['account_number'] = substr($submission_fields['bank account']['account_number'], -3);
     }
     return $submission_fields;
   }
@@ -108,6 +111,10 @@ function commerce_litle_fundraiser_commerce_validate($submission_fields, $paymen
     $form_parents = array_merge($payment_fields['#parents'], array('bank account'));
     // Pass the values array with the key the litle module expects.
     $values = array('echeck' => $submission_fields['payment_fields']['bank account']);
+    // @todo We need $payment_method (with settings) as the first param here.
+    // Passing NULL here means cardonfile will never be used in this case
+    // which is not a big deal as long as we don't allow cardonfile selection
+    // from the fundraiser forms.
     commerce_litle_echeck_submit_form_validate(NULL, $payment_fields, $values, NULL, $form_parents);
   }
 
@@ -127,11 +134,10 @@ function commerce_litle_fundraiser_commerce_charge($method_instance, $donation) 
   // Not actually used anywhere in this system, so ignore it.
   $pane_form = array();
 
-  $pane_values = array();
+  $pane_values = commerce_litle_pane_values($donation);
 
   // Execute call to Litle depending on what payment method we have.
   if ($donation->donation['payment_method'] == 'credit') {
-    $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
 
     // Add fundraiser commerce data to the pane values array.
     _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
@@ -146,16 +152,14 @@ function commerce_litle_fundraiser_commerce_charge($method_instance, $donation) 
     $result = commerce_litle_cc_submit_form_submit($method_instance, $pane_form, $pane_values, $order, $charge);
   }
   elseif ($donation->donation['payment_method'] == 'bank account') {
-    $pane_values['echeck'] = $donation->donation['payment_fields']['bank account'];
+
+    _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation, 'echeck');
 
     $method_instance['settings']['cardonfile'] = FALSE;
 
     if (module_exists('commerce_cardonfile')) {
       // Card on file,
       $method_instance['settings']['cardonfile'] = TRUE;
-      // And store it please.
-      $pane_values['echeck']['cardonfile_store'] = TRUE;
-      $pane_values['cardonfile'] = commerce_litle_get_cardonfile_pane_value($donation->uid, $method_instance['instance_id']);
     }
 
     $result = commerce_litle_echeck_submit_form_submit($method_instance, $pane_form, $pane_values, $order, $charge);
@@ -171,6 +175,61 @@ function commerce_litle_fundraiser_commerce_charge($method_instance, $donation) 
   _fundraiser_commerce_charge_submit_form_process($success, $method_instance, $pane_values, $donation);
 
   return $success;
+}
+
+/**
+ * Get Litle pane values from a donation.
+ *
+ * Checks which payment type is used and returns the correct values.
+ *
+ * @param object $donation
+ *   The donation to grab the pane values from.
+ *
+ * @return array
+ *   The pane values, keyed by credit_card or echeck.
+ */
+function commerce_litle_pane_values($donation) {
+  $pane_values = array();
+  if ($donation->donation['payment_method'] == 'credit') {
+    $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
+  }
+  elseif ($donation->donation['payment_method'] == 'bank account') {
+    $pane_values['echeck'] = $donation->donation['payment_fields']['bank account'];
+  }
+
+  return $pane_values;
+}
+
+/**
+ * Returns the values need to load a card on file profile for Litle.
+ *
+ * @param object $donation
+ *   Fundraiser donation object.
+ *
+ * @return array
+ *   Values ready to be passed into a card on file profile query.
+ */
+function commerce_litle_cardonfile_fields($donation) {
+  $data = array();
+  // Use the pane values function to the get the cc/echeck details.
+  $pane_values = commerce_litle_pane_values($donation);
+
+  if ($donation->donation['payment_method'] == 'credit') {
+    $data = array(
+      // Strip the card number down to the last four
+      // since thats all card on file will store.
+      'card_number' => substr($pane_values['credit_card']['number'], -4),
+      'card_exp_month' => $pane_values['credit_card']['exp_month'],
+      'card_exp_year' => $pane_values['credit_card']['exp_year'],
+    );
+  }
+  elseif ($donation->donation['payment_method'] == 'bank account') {
+    $data = array(
+      'card_number' => substr($pane_values['echeck']['accNum'], -4),
+    );
+  }
+
+  return $data + array('instance_id' => $donation->gateway['id'], 'uid' => $donation->uid);
 }
 
 /**
@@ -191,7 +250,7 @@ function commerce_litle_fundraiser_commerce_update($donation, $card_data = NULL)
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
   $payment_method = $donation->gateway['gateway_details'];
 
-  // If no card data was passed load the profile from the donation if its set.
+  // If no card data was passed load the profile from the donation if it's set.
   if (empty($card_data) && !empty($donation->data['cardonfile'])) {
     $card_data = commerce_cardonfile_load($donation->data['cardonfile']);
   }
@@ -208,10 +267,10 @@ function commerce_litle_fundraiser_commerce_update($donation, $card_data = NULL)
   }
 
   // Pull the new credit card values from the donation.
-  $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
+  $pane_values = commerce_litle_pane_values($donation);
 
   // Load the card on file values for this donation.
-  $cardonfile_fields = _fundraiser_commerce_credit_card_cardonfile_fields($donation);
+  $cardonfile_fields = commerce_litle_cardonfile_fields($donation);
 
   // Check the card number to see if it matches the current card data number.
   // If it does then we use the update function.
@@ -238,29 +297,92 @@ function commerce_litle_fundraiser_commerce_update($donation, $card_data = NULL)
   }
 
   if ($action == 'update') {
+    // This is last four digits.
     $card_data->card_number = $cardonfile_fields['card_number'];
-    $card_data->card_exp_month = $cardonfile_fields['card_exp_month'];
-    $card_data->card_exp_year = $cardonfile_fields['card_exp_year'];
 
-    $account_number = $pane_values['credit_card']['number'];
-    $card_validation_number = $pane_values['credit_card']['code'];
-    $response = commerce_litle_cc_vault_cardonfile_register_token($payment_method, $account_number, $card_validation_number);
+    // Only credit cards have an expiration date.
+    if ($donation->donation['payment_method'] == 'credit') {
+      $card_data->card_exp_month = $cardonfile_fields['card_exp_month'];
+      $card_data->card_exp_year = $cardonfile_fields['card_exp_year'];
 
-    $token = commerce_litle_get_token_from_response($response);
-    if (!empty($token)) {
-      $card_data->remote_id = $token;
-      commerce_cardonfile_save($card_data);
-      return $card_data;
+      // This is the full number.
+      $account_number = $pane_values['credit_card']['number'];
+      $card_validation_number = $pane_values['credit_card']['code'];
+      $response = commerce_litle_cc_vault_cardonfile_register_token($payment_method, $account_number, $card_validation_number, $donation->did);
+
+      $token = commerce_litle_get_token_from_response($response);
+      if (!empty($token)) {
+        $card_data->remote_id = $token;
+        commerce_cardonfile_save($card_data);
+        return $card_data;
+      }
     }
+    elseif ($donation->donation['payment_method'] == 'bank account') {
+      $card_data->card_exp_month = '';
+      $card_data->card_exp_year = '';
 
+      $routing_number = $pane_values['echeck']['routingNum'];
+      $account_number = $pane_values['echeck']['accNum'];
+      $response = commerce_litle_eheck_vault_cardonfile_register_token($payment_method, $routing_number, $account_number, $donation->did);
+
+      $token = commerce_litle_get_token_from_response($response);
+      if (!empty($token)) {
+        $remote_id = (string) $pane_values['echeck']['routingNum'] . '|' . (string) $token;
+        $card_data->remote_id = $remote_id;
+        commerce_cardonfile_save($card_data);
+        return $card_data;
+      }
+    }
   }
   // Create a new card on file record.
   elseif ($action == 'new') {
     $order = commerce_order_load($donation->did);
 
-    $account_number = $pane_values['credit_card']['number'];
-    $card_validation_number = $pane_values['credit_card']['code'];
-    $response = commerce_litle_cc_vault_cardonfile_register_token($payment_method, $account_number, $card_validation_number, $order->id);
+    if ($donation->donation['payment_method'] == 'credit') {
+
+      $account_number = $pane_values['credit_card']['number'];
+      $card_validation_number = $pane_values['credit_card']['code'];
+      $response = commerce_litle_cc_vault_cardonfile_register_token($payment_method, $account_number, $card_validation_number, $donation->did);
+
+      $token = commerce_litle_get_token_from_response($response);
+
+      // If the Vault token creation was a success,
+      // store the new card on file data locally.
+      if (!empty($token)) {
+
+        // Get the card type.
+        $card_type = commerce_payment_validate_credit_card_type($pane_values['credit_card']['number'], array_keys(commerce_payment_credit_card_types()));
+        $all_types = commerce_payment_credit_card_types();
+        $card_type = !empty($all_types[$card_type]) ? $all_types[$card_type] : 'card';
+
+        // Store the token with cardonfile.
+        $card_data = commerce_cardonfile_new();
+        $card_data->uid = $order->uid;
+        $card_data->payment_method = $payment_method['method_id'];
+        $card_data->instance_id = $payment_method['instance_id'];
+        $card_data->remote_id = $token;
+        $card_data->card_type = !empty($card_type) ? $card_type : 'card';
+        $card_data->card_name = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
+        $card_data->card_number = substr($pane_values['credit_card']['number'], -4);
+        $card_data->card_exp_month = $pane_values['credit_card']['exp_month'];
+        $card_data->card_exp_year = $pane_values['credit_card']['exp_year'];
+        $card_data->status = 1;
+
+        // Save and log the creation of the new card on file.
+        commerce_cardonfile_save($card_data);
+        watchdog('commerce_litle', 'GUID @guid registered and saved to user @uid.', array('@guid' => $guid, '@uid' => $order->uid));
+
+        // Set the value on the donation.
+        $donation->data['cardonfile'] = $card_data->card_id;
+        return $card_data;
+      }
+    }
+  }
+  elseif ($donation->donation['payment_method'] == 'bank account') {
+
+    $routing_number = $pane_values['echeck']['routingNum'];
+    $account_number = $pane_values['echeck']['accNum'];
+    $response = commerce_litle_eheck_vault_cardonfile_register_token($payment_method, $routing_number, $account_number, $donation->did);
 
     $token = commerce_litle_get_token_from_response($response);
 
@@ -268,22 +390,21 @@ function commerce_litle_fundraiser_commerce_update($donation, $card_data = NULL)
     // store the new card on file data locally.
     if (!empty($token)) {
 
-      // Get the card type.
-      $card_type = commerce_payment_validate_credit_card_type($pane_values['credit_card']['number'], array_keys(commerce_payment_credit_card_types()));
-      $all_types = commerce_payment_credit_card_types();
-      $card_type = !empty($all_types[$card_type]) ? $all_types[$card_type] : 'card';
+      // For echeck, card type is the account type.
+      $card_type = $pane_values['echeck']['accType'];
+      $remote_id = (string) $pane_values['echeck']['routingNum'] . '|' . (string) $token;
 
       // Store the token with cardonfile.
       $card_data = commerce_cardonfile_new();
       $card_data->uid = $order->uid;
       $card_data->payment_method = $payment_method['method_id'];
       $card_data->instance_id = $payment_method['instance_id'];
-      $card_data->remote_id = $token;
-      $card_data->card_type = !empty($card_type) ? $card_type : 'card';
+      $card_data->remote_id = $remote_id;
+      $card_data->card_type = $card_type;
       $card_data->card_name = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
-      $card_data->card_number = substr($pane_values['credit_card']['number'], -4);
-      $card_data->card_exp_month = $pane_values['credit_card']['exp_month'];
-      $card_data->card_exp_year = $pane_values['credit_card']['exp_year'];
+      $card_data->card_number = substr($account_number, -4);
+      $card_data->card_exp_month = '';
+      $card_data->card_exp_year = '';
       $card_data->status = 1;
 
       // Save and log the creation of the new card on file.
@@ -306,7 +427,7 @@ function commerce_litle_fundraiser_commerce_update($donation, $card_data = NULL)
 function commerce_litle_fundraiser_commerce_cardonfile($donation) {
   // Use standard function to setup the card on file fields.
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
-  $cardonfile_fields = _fundraiser_commerce_credit_card_cardonfile_fields($donation);
+  $cardonfile_fields = commerce_litle_cardonfile_fields($donation);
 
   // So we need to search locally to see if we have an existing profile for
   // a card number.
@@ -323,54 +444,6 @@ function commerce_litle_fundraiser_commerce_cardonfile($donation) {
   }
 
   return $cardonfile_fields;
-}
-
-/**
- * Returns the card_id of an unexpired, active card on file.
- *
- * @deprecated
- *
- * If there isn't one, returns 'new'.
- *
- * @param int $uid
- *   User ID.
- * @param int $instance_id
- *   Payment method instance ID.
- *
- * @return string
- *   The string 'new' or a card_id from cardonfile.
- */
-function commerce_litle_get_cardonfile_pane_value($uid, $instance_id) {
-  // Make a new token unless we already have one on record.
-  $return = 'new';
-
-  $stored_cards = commerce_cardonfile_load_multiple_by_uid($uid, $instance_id);
-
-  if ($stored_cards == FALSE) {
-    return $return;
-  }
-
-  // Filter out expired cards.
-  foreach ($stored_cards as $card_id => $card_data) {
-    // Special case for echecks.
-    if ($card_data->card_exp_year == 0 && $card_data->card_exp_month == 0) {
-      continue;
-    }
-
-    if ($card_data->card_exp_year < date('Y') ||
-      $card_data->card_exp_year == date('Y') && $card_data->card_exp_month < date('m')) {
-      unset($stored_cards[$card_id]);
-    }
-  }
-
-  if (!empty($stored_cards)) {
-    // Then grab the first one.
-    foreach ($stored_cards as $card_id => $card_data) {
-      $return = $card_id;
-    }
-  }
-
-  return $return;
 }
 
 /**
