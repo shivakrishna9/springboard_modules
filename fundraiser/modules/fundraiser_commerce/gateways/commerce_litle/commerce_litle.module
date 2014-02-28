@@ -394,21 +394,23 @@ function commerce_litle_cc_submit_form($payment_method = NULL, $pane_values = NU
 }
 
 /**
- * Payment method callback: checkout form.
+ * Payment method callback: echeck checkout form.
  */
 function commerce_litle_echeck_submit_form($payment_method = NULL, $pane_values = NULL, $checkout_pane = NULL, $order = NULL) {
-  $fields = array(
-    'code' => '',
-  );
-  $form['echeck']['accNum'] = array(
-    '#title' => 'Checking Account Number',
-    '#type' => 'textfield',
-    '#size' => 30,
+  $form['echeck']['accType'] = array(
+    '#title' => t('Account type'),
+    '#type' => 'select',
+    '#options' => commerce_litle_echeck_account_types(),
   );
   $form['echeck']['routingNum'] = array(
-    '#title' => 'Routing Number',
+    '#title' => t('Routing number'),
     '#type' => 'textfield',
     '#size' => 20,
+  );
+  $form['echeck']['accNum'] = array(
+    '#title' => t('Account number'),
+    '#type' => 'textfield',
+    '#size' => 30,
   );
   return $form;
 }
@@ -436,8 +438,6 @@ function commerce_litle_cc_submit_form_validate($payment_method, $pane_form, $pa
 
 /**
  * Payment method callback: checkout form validation.
- *
- * @todo Possibly incomplete and untested.
  */
 function commerce_litle_echeck_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
   // If the customer specified a card on file, skip the normal validation.
@@ -516,7 +516,6 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
   );
 
   $nvp['billToAddress'] = commerce_litle_format_bill_to_address($order_wrapper);
-
 
   // Config stored in a var because it's used again later.
   $litle_config = _commerce_litle_get_litle_config($payment_method);
@@ -800,7 +799,6 @@ function commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, 
 
 /**
  * Echeck checkout form submit handler.
- *
  */
 function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
   // If the customer specified payment using a card on file, attempt that now
@@ -818,7 +816,7 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
     'amount' => commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']),
     'echeck' => array(
       'accNum' => $pane_values['echeck']['accNum'],
-      'accType' => 'Checking',
+      'accType' => $pane_values['echeck']['accType'],
       'routingNum' => $pane_values['echeck']['routingNum'],
     ),
   );
@@ -840,20 +838,6 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
     'orderId' => $order->order_number,
     'customerId' => $order->uid,
   );
-
-  // Prepare the billing address for use in the request.
-  if ($order_wrapper->commerce_customer_billing->value()) {
-    $billing_address = $order_wrapper->commerce_customer_billing->commerce_customer_address->value();
-
-    if (empty($billing_address['first_name'])) {
-      $name_parts = explode(' ', $billing_address['name_line']);
-      $billing_address['first_name'] = array_shift($name_parts);
-      $billing_address['last_name'] = implode(' ', $name_parts);
-    }
-  }
-  else {
-    $billing_address = array();
-  }
 
   $nvp['billToAddress'] = commerce_litle_format_bill_to_address($order_wrapper);
 
@@ -934,6 +918,7 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
       'echeckForToken' => array(
         'accNum' => $pane_values['echeck']['accNum'],
         'routingNum' => $pane_values['echeck']['routingNum'],
+        'accType' => $pane_values['echeck']['accType'],
       ),
       'orderId' => $order->order_number,
     );
@@ -943,14 +928,6 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
 
     // If we didn't find any, attempt to register a token now.
     if (empty($stored_cards)) {
-
-      // If we're in the sandbox, use the test data for registering a token.
-      // This should return an 801 response code.
-      // if ($payment_method['settings']['commerce_litle_settings_sandbox'] == 1) {
-      //   $payment_details['echeckForToken']['accNum'] = '1099999998';
-      //   $payment_details['echeckForToken']['routingNum'] = '114567895';
-      //   $payment_details['orderId'] = '53';
-      // };
       // Submit a registerTokenRequest.
       $token_response = commerce_litle_register_token_request($init, $litle_config, $payment_details);
 
@@ -974,7 +951,7 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
         $card_data->payment_method = $payment_method['method_id'];
         $card_data->instance_id = $payment_method['instance_id'];
         $card_data->remote_id = $remote_id;
-        $card_data->card_type = !empty($card_type) ? $card_type : 'echeck';
+        $card_data->card_type = $payment_details['accType'];
         $card_data->card_name = !empty($card_name) ? $card_name : '';
         $card_data->card_number = substr($pane_values['echeck']['accNum'], -4);
         // @todo See if cardonfile cares if we don't pass an expiration date.
@@ -1026,8 +1003,7 @@ function commerce_litle_echeck_vault_submit_form_submit($payment_method, $pane_f
  *   If null the total value of the order is used.
  *
  * @return bool|NULL
- *   TRUE if the transaction was successful
- *
+ *   TRUE if the transaction was successful.
  */
 function commerce_litle_echeck_vault_cardonfile_charge($payment_method, $card_data, $order, $charge = NULL) {
 
@@ -1037,8 +1013,6 @@ function commerce_litle_echeck_vault_cardonfile_charge($payment_method, $card_da
   list($routing_num, $litle_token) = explode('|', $card_data->remote_id);
 
   // Build a data array for the transaction API request.
-  // @todo Implement account type.
-  // Options are Checking, Savings, Corporate, or Corp Savings
   $request_data = array(
     'orderSource' => 'ecommerce',
     // Order Information.
@@ -1048,7 +1022,7 @@ function commerce_litle_echeck_vault_cardonfile_charge($payment_method, $card_da
     'echeckToken' => array(
       'litleToken' => $litle_token,
       'routingNum' => $routing_num,
-      'accType' => 'Checking',
+      'accType' => $card_data->card_type,
     ),
   );
 
@@ -1252,7 +1226,7 @@ function _commerce_litle_get_litle_config($gateway) {
  *   Data to pass to the API call.
  *   Will vary depending on payment type (cc vs bank)
  *
- * @return
+ * @return object
  *   The registerTokenRequest Response
  */
 function commerce_litle_register_token_request($litle, $litle_config, $data) {
@@ -1612,4 +1586,19 @@ function commerce_litle_format_bill_to_address($order_wrapper) {
   }
 
   return $formatted;
+}
+
+/**
+ * Options list of echeck account types.
+ *
+ * @return array
+ *   The echeck account types, keyed by how Litle is expecting them.
+ */
+function commerce_litle_echeck_account_types() {
+  return array(
+    'Checking' => 'Checking',
+    'Savings' => 'Savings',
+    'Corporate' => 'Corporate',
+    'Corp Savings' => 'Corp Savings',
+  );
 }
