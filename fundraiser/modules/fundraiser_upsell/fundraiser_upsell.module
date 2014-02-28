@@ -303,16 +303,14 @@ function fundraiser_upsell_save_email_wrapper_settings($nid, $values) {
     'values' => $values,
   );
   $email_wrappers_form_state['values']['delta'] = $delta;
-  $headers = $values['headers'];
-  $message = $values['message'];
-  $email_wrappers_form_state['values']['from_name'] = $headers['from_name'];
-  $email_wrappers_form_state['values']['from_mail'] = $headers['from_mail'];
+  $email_wrappers_form_state['values']['from_name'] = $values['from_name'];
+  $email_wrappers_form_state['values']['from_mail'] = $values['from_mail'];
   $email_wrappers_form_state['values']['recipients'] = '';
   $email_wrappers_form_state['values']['cc'] = '';
   $email_wrappers_form_state['values']['bcc'] = '';
-  $email_wrappers_form_state['values']['subject'] = $message['subject'];
-  $email_wrappers_form_state['values']['html_body'] = $message['html_body'];
-  $email_wrappers_form_state['values']['text_body'] = $message['text_body'];
+  $email_wrappers_form_state['values']['subject'] = $values['subject'];
+  $email_wrappers_form_state['values']['html_body'] = $values['html_message'];
+  $email_wrappers_form_state['values']['text_body'] = $values['text_message'];
 
   module_load_include('inc', 'email_wrappers', 'email_wrappers.api');
   email_wrappers_mail_form_submit($form, $email_wrappers_form_state);

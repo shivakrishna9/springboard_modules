@@ -233,7 +233,7 @@ function _email_wrappers_concat_settings_from_submission($values) {
   $settings = array(
     'mid' => $values['mid'] ? $values['mid'] : NULL,
     // 'tid' => $values['tid'] ? $values['tid'] : NULL,
-    'name' => $values['name'],
+    'name' => isset($values['name']) ? $values['name'] : NULL,
     'module' => $values['module'],
     'delta' => $values['delta'],
     'from_name' => $values['from_name'],
