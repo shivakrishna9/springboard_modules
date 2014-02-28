@@ -943,7 +943,7 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
 
         // Build a remote ID that includes the Routing Number and the
         // token.
-        $remote_id = (string) $pane_values['echeck']['routingNum'] . '|' . (string) $litle_token;
+        $remote_id = commerce_litle_format_cardonfile_remote_id($pane_values, $litle_token);
 
         // Store the token with cardonfile.
         $card_data = commerce_cardonfile_new();
@@ -1601,4 +1601,25 @@ function commerce_litle_echeck_account_types() {
     'Corporate' => 'Corporate',
     'Corp Savings' => 'Corp Savings',
   );
+}
+
+/**
+ * Formats a Litle token to store in the local cardonfile data.
+ *
+ * Used to apply the routing number to the echeck token.
+ *
+ * @param array $pane_values
+ *   The pane values.
+ * @param string $token
+ *   The token from Litle.
+ *
+ * @return string
+ *   The remote ID to store with cardonfile.
+ */
+function commerce_litle_format_cardonfile_remote_id($pane_values, $token) {
+  if (isset($pane_values['echeck']['routingNum'])) {
+    return (string) $pane_values['echeck']['routingNum'] . '|' . (string) $token;
+  }
+
+  return $token;
 }

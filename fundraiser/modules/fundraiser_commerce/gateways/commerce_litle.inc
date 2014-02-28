@@ -327,8 +327,7 @@ function commerce_litle_fundraiser_commerce_update($donation, $card_data = NULL)
 
       $token = commerce_litle_get_token_from_response($response);
       if (!empty($token)) {
-        $remote_id = (string) $pane_values['echeck']['routingNum'] . '|' . (string) $token;
-        $card_data->remote_id = $remote_id;
+        $card_data->remote_id = commerce_litle_format_cardonfile_remote_id($pane_values, $token);
         commerce_cardonfile_save($card_data);
         return $card_data;
       }
@@ -336,7 +335,14 @@ function commerce_litle_fundraiser_commerce_update($donation, $card_data = NULL)
   }
   // Create a new card on file record.
   elseif ($action == 'new') {
+    $card_name = '';
     $order = commerce_order_load($donation->did);
+    $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+    // Card name is used to save the card name with the other card data..
+    if ($order_wrapper->commerce_customer_billing->value()) {
+      $billing_address = $order_wrapper->commerce_customer_billing->commerce_customer_address->value();
+      $card_name = $billing_address['name_line'];
+    }
 
     if ($donation->donation['payment_method'] == 'credit') {
 
@@ -362,10 +368,48 @@ function commerce_litle_fundraiser_commerce_update($donation, $card_data = NULL)
         $card_data->instance_id = $payment_method['instance_id'];
         $card_data->remote_id = $token;
         $card_data->card_type = !empty($card_type) ? $card_type : 'card';
-        $card_data->card_name = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
-        $card_data->card_number = substr($pane_values['credit_card']['number'], -4);
+        $card_data->card_name = $card_name;
+        $card_data->card_number = substr($account_number, -4);
         $card_data->card_exp_month = $pane_values['credit_card']['exp_month'];
         $card_data->card_exp_year = $pane_values['credit_card']['exp_year'];
+        $card_data->status = 1;
+
+        // Save and log the creation of the new card on file.
+        commerce_cardonfile_save($card_data);
+        watchdog('commerce_litle', 'Card on file registered and saved to user @uid.', array('@uid' => $order->uid));
+
+        // Set the value on the donation.
+        $donation->data['cardonfile'] = $card_data->card_id;
+        return $card_data;
+      }
+    }
+    elseif ($donation->donation['payment_method'] == 'bank account') {
+
+      $routing_number = $pane_values['echeck']['routingNum'];
+      $account_number = $pane_values['echeck']['accNum'];
+      $response = commerce_litle_eheck_vault_cardonfile_register_token($payment_method, $routing_number, $account_number, $donation->did);
+
+      $token = commerce_litle_get_token_from_response($response);
+
+      // If the Vault token creation was a success,
+      // store the new card on file data locally.
+      if (!empty($token)) {
+
+        // For echeck, card type is the account type.
+        $card_type = $pane_values['echeck']['accType'];
+        $remote_id = commerce_litle_format_cardonfile_remote_id($pane_values, $token);
+
+        // Store the token with cardonfile.
+        $card_data = commerce_cardonfile_new();
+        $card_data->uid = $order->uid;
+        $card_data->payment_method = $payment_method['method_id'];
+        $card_data->instance_id = $payment_method['instance_id'];
+        $card_data->remote_id = $remote_id;
+        $card_data->card_type = $card_type;
+        $card_data->card_name = $card_name;
+        $card_data->card_number = substr($account_number, -4);
+        $card_data->card_exp_month = '';
+        $card_data->card_exp_year = '';
         $card_data->status = 1;
 
         // Save and log the creation of the new card on file.
@@ -376,44 +420,6 @@ function commerce_litle_fundraiser_commerce_update($donation, $card_data = NULL)
         $donation->data['cardonfile'] = $card_data->card_id;
         return $card_data;
       }
-    }
-  }
-  elseif ($donation->donation['payment_method'] == 'bank account') {
-
-    $routing_number = $pane_values['echeck']['routingNum'];
-    $account_number = $pane_values['echeck']['accNum'];
-    $response = commerce_litle_eheck_vault_cardonfile_register_token($payment_method, $routing_number, $account_number, $donation->did);
-
-    $token = commerce_litle_get_token_from_response($response);
-
-    // If the Vault token creation was a success,
-    // store the new card on file data locally.
-    if (!empty($token)) {
-
-      // For echeck, card type is the account type.
-      $card_type = $pane_values['echeck']['accType'];
-      $remote_id = (string) $pane_values['echeck']['routingNum'] . '|' . (string) $token;
-
-      // Store the token with cardonfile.
-      $card_data = commerce_cardonfile_new();
-      $card_data->uid = $order->uid;
-      $card_data->payment_method = $payment_method['method_id'];
-      $card_data->instance_id = $payment_method['instance_id'];
-      $card_data->remote_id = $remote_id;
-      $card_data->card_type = $card_type;
-      $card_data->card_name = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
-      $card_data->card_number = substr($account_number, -4);
-      $card_data->card_exp_month = '';
-      $card_data->card_exp_year = '';
-      $card_data->status = 1;
-
-      // Save and log the creation of the new card on file.
-      commerce_cardonfile_save($card_data);
-      watchdog('commerce_litle', 'GUID @guid registered and saved to user @uid.', array('@guid' => $guid, '@uid' => $order->uid));
-
-      // Set the value on the donation.
-      $donation->data['cardonfile'] = $card_data->card_id;
-      return $card_data;
     }
   }
 }
