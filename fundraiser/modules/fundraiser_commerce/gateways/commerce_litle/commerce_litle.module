@@ -474,7 +474,6 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
 
   // Get the default transaction type from the payment method settings.
   // $txn_type = $payment_method['settings']['commerce_litle_settings_txn_type'];
-
   // If txn_type has been specified in the pane values array, such as through
   // the special select element we alter onto the payment terminal form, use
   // that instead.
@@ -1620,6 +1619,6 @@ function commerce_litle_format_cardonfile_remote_id($pane_values, $token) {
   if (isset($pane_values['echeck']['routingNum'])) {
     return (string) $pane_values['echeck']['routingNum'] . '|' . (string) $token;
   }
-
+  // Fall through for credit card.
   return $token;
 }

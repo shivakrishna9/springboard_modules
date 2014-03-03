@@ -133,15 +133,12 @@ function commerce_litle_fundraiser_commerce_charge($method_instance, $donation) 
 
   // Not actually used anywhere in this system, so ignore it.
   $pane_form = array();
-
   $pane_values = commerce_litle_pane_values($donation);
 
   // Execute call to Litle depending on what payment method we have.
   if ($donation->donation['payment_method'] == 'credit') {
-
     // Add fundraiser commerce data to the pane values array.
     _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
-
     $method_instance['settings']['cardonfile'] = FALSE;
 
     if (module_exists('commerce_cardonfile')) {
@@ -152,9 +149,7 @@ function commerce_litle_fundraiser_commerce_charge($method_instance, $donation) 
     $result = commerce_litle_cc_submit_form_submit($method_instance, $pane_form, $pane_values, $order, $charge);
   }
   elseif ($donation->donation['payment_method'] == 'bank account') {
-
     _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation, 'echeck');
-
     $method_instance['settings']['cardonfile'] = FALSE;
 
     if (module_exists('commerce_cardonfile')) {
@@ -242,8 +237,9 @@ function commerce_litle_cardonfile_fields($donation) {
  *   Card on file entity, this should be the current entity for the donation,
  *   new data should be passed in the donation object.
  *
- * @return object
+ * @return object|NULL
  *   Card on file entity for the new/updated card data.
+ *   NULL if no card data was found.
  */
 function commerce_litle_fundraiser_commerce_update($donation, $card_data = NULL) {
 
