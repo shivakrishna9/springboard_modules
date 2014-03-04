@@ -135,3 +135,14 @@ function webform_user_update_7001() {
 
   return t('Added indexes to {webform_user_component_map} table.');
 }
+
+function webform_user_update_7002() {
+  // Add the internal name content field to all fundraiser node types.
+  $types = node_type_get_types();
+  foreach ($types as $type => $type_info) {
+    if (_webform_user_is_webform_user_node_type($type)) {
+      module_load_include('inc', 'webform_user', 'includes/webform_user.fields');
+      _webform_user_add_default_fields($type);
+    }
+  }
+}

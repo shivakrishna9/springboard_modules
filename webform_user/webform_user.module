@@ -248,6 +248,11 @@ function webform_user_form_node_type_form_alter(&$form, &$form_state) {
 function webform_user_form_node_type_form_alter_submit(&$form, &$form_state) {
   // NOTE: we need to make sure if there are other things toggling this value not to untoggle it.
   _webform_user_toggle_webform($form_state['values']['type'], $form_state['values']['webform_user']);
+  if ($form_state['values']['webform_user'] == 1 && $form_state['values']['fundraiser'] != 0) {
+    //  node type uses webform user but not fundraiser, add "internal name" field
+    module_load_include('inc', 'webform_user', 'includes/webform_user.fields');
+    _webform_user_add_default_fields($form_state['values']['type']);
+  }
 }
 
 /**
