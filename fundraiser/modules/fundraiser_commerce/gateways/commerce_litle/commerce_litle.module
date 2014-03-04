@@ -1398,7 +1398,7 @@ function commerce_litle_get_token_from_response($response) {
   $response_code = XmlParser::getNode($response, 'response');
 
   // Keep in mind tokenResponseCode is different than response.
-  // 801 Account numbeer was successfully registered.
+  // 801 Account number was successfully registered.
   // 802 Account number was previously registered.
   if (in_array($response_code, array(801, 802))) {
     $token = XmlParser::getNode($response, 'litleToken');
