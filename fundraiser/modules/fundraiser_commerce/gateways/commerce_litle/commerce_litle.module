@@ -950,7 +950,7 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
         $card_data->payment_method = $payment_method['method_id'];
         $card_data->instance_id = $payment_method['instance_id'];
         $card_data->remote_id = $remote_id;
-        $card_data->card_type = $payment_details['accType'];
+        $card_data->card_type = $payment_details['echeckForToken']['accType'];
         $card_data->card_name = !empty($card_name) ? $card_name : '';
         $card_data->card_number = substr($pane_values['echeck']['accNum'], -4);
         // @todo See if cardonfile cares if we don't pass an expiration date.
