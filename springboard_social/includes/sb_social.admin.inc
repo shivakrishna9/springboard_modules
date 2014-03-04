@@ -20,6 +20,24 @@ function sb_social_admin() {
     '#title' => t('Enable debug mode'),
     '#default_value' => variable_get('springboard_social_debug_mode', 0),
   );
+
+  // Begin settings for users to customize block title and description.
+  $form['block_info'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Default Block Title and Description')
+  );
+  $form['block_info']['springboard_social_default_block_title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Default Block Title'),
+    '#default_value' => variable_get('springboard_social_default_block_title', ''),
+  );
+
+  $form['block_info']['springboard_social_default_block_description'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Default Block Description'),
+    '#default_value' => variable_get('springboard_social_default_block_description', ''),
+  );
+
   // Enable social settings tab on a per-content-type basis.
   $form['content_types'] = array(
     '#type' => 'fieldset',
@@ -442,6 +460,24 @@ function sb_social_node_settings($form, $edit, $node) {
     '#value' => 'node',
   );
 
+  // Begin settings for users to customize block title and description.
+  $form['block_info'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Block Title and Description'),
+    '#collapsible' => TRUE
+  );
+  $form['block_info']['title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Block Title'),
+    '#default_value' => array_key_exists('title', $settings['data']) ? $settings['data']['title'] : variable_get('springboard_social_default_block_title', ''),
+  );
+
+  $form['block_info']['description'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Block Description'),
+    '#default_value' => array_key_exists('description', $settings['data']) ? $settings['data']['description'] : variable_get('springboard_social_default_block_description', ''),
+  );
+
   $plugins = sb_social_list_plugins();
 
   foreach ($enabled_services as $service) {
@@ -492,6 +528,8 @@ function sb_social_settings_submit($form, $form_state) {
         }
       }
     }
+    $data['title'] = $form_state['values']['title'];
+    $data['description'] = $form_state['values']['description'];
     // Sid is handled in the save function.
     $record = array(
       'id' => $form_state['values']['id'],
