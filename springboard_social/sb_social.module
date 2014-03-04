@@ -314,6 +314,24 @@ function sb_social_access_node_settings($node) {
   return FALSE;
 }
 
+/**
+ * Implements hook_node_insert().
+ */
+function sb_social_node_insert($node) {
+  // clone social settings when a node with settings is cloned.
+  if (isset($node->clone_from_original_nid) && is_numeric($node->clone_from_original_nid)) {
+    $sid = sb_social_get_sid_by_id($node->clone_from_original_nid, 'node');
+    if ($sid) {
+      $settings = sb_social_settings_load($sid);
+      if ($settings) {
+        $settings['sid'] = '';
+        $settings['id'] = $node->nid;
+        sb_social_settings_save($settings);
+      }
+    }
+  }
+}
+
 
 /**
  * Implements hook_node_delete().
