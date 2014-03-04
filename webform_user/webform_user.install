@@ -136,6 +136,9 @@ function webform_user_update_7001() {
   return t('Added indexes to {webform_user_component_map} table.');
 }
 
+/**
+ * Adds internal name field to existing webform_user node types
+ */
 function webform_user_update_7002() {
   // Add the internal name content field to all fundraiser node types.
   $types = node_type_get_types();
