@@ -26,7 +26,7 @@ function commerce_litle_fundraiser_commerce_fundraiser_gateway_info() {
     'charge callback' => 'commerce_litle_fundraiser_commerce_charge',
     'refund callback' => 'commerce_litle_fundraiser_commerce_refund',
     'update callback' => 'commerce_litle_fundraiser_commerce_update',
-    'cardonfile callback' => 'commerce_litle_cardonfile_fields',
+    'cardonfile callback' => 'commerce_litle_fundraiser_commerce_cardonfile',
   );
 }
 
