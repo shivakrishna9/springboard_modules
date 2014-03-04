@@ -1,20 +1,25 @@
 <?php
 
+/**
+ * @file
+ * Plugin for AddThis + Twitter.
+ */
+
 $plugin = array(
   'name' => 'twitter',
   'title' => t('Twitter'),
-  'settings' => 'twitter_settings',
-  'admin_settings' => 'twitter_admin_settings',
-  'process' => 'twitter_process_settings',
-  'share_config' => 'twitter_share_js_config',
+  'settings' => 'sb_social_twitter_settings',
+  'admin_settings' => 'sb_social_twitter_admin_settings',
+  'process' => 'sb_social_twitter_process_settings',
+  'share_config' => 'sb_social_twitter_share_js_config',
   'js' => 'plugins/social_networks/twitter/twitter.share.js',
-  'defaults' => 'twitter_defaults',
-  'uninstall' => 'twitter_uninstall',
-  'token_info' => twitter_token_info(),
-  'token_replace' => 'twitter_token_replace',
+  'defaults' => 'sb_social_twitter_defaults',
+  'uninstall' => 'sb_social_twitter_uninstall',
+  'token_info' => sb_social_twitter_token_info(),
+  'token_replace' => 'sb_social_twitter_token_replace',
 );
 
-function twitter_token_info() {
+function sb_social_twitter_token_info() {
   $twitter_tokens['twitter_share_link'] = array(
     'name' => t('Twitter Share link'),
     'description' => t('AddThis Twitter tweet link'),
@@ -27,7 +32,7 @@ function twitter_token_info() {
   return $twitter_tokens;
 }
 
-function twitter_token_replace($tokens, &$replacements, $settings, $node = FALSE, $submission_id = FALSE, $extra = FALSE) {
+function sb_social_twitter_token_replace($tokens, &$replacements, $settings, $node = FALSE, $submission_id = FALSE, $extra = FALSE) {
   foreach ($tokens as $key => $token) {
     switch ($key) {
       case 'twitter_share_link':
@@ -47,16 +52,14 @@ function twitter_token_replace($tokens, &$replacements, $settings, $node = FALSE
   }
 }
 
-// TODO: add uninstall function to clear variables.
-
-function twitter_defaults() {
+function sb_social_twitter_defaults() {
   $settings = array(
     'message' => variable_get('springboard_social_twitter_message', '%title'),
   );
   return $settings;
 }
 
-function twitter_settings(&$form, $enabled_services = array(), $settings = array(), $token_set = array('all')) {
+function sb_social_twitter_settings(&$form, $enabled_services = array(), $settings = array(), $token_set = array('all')) {
   $form['twitter_settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('Twitter Settings'),
@@ -83,7 +86,7 @@ function twitter_settings(&$form, $enabled_services = array(), $settings = array
   );
 }
 
-function twitter_admin_settings(&$form) {
+function sb_social_twitter_admin_settings(&$form) {
   $form['services']['twitter'] = array(
     '#type' => 'fieldset',
     '#title' => t('Twitter'),
@@ -101,19 +104,19 @@ function twitter_admin_settings(&$form) {
   );
 }
 
-function twitter_process_settings(&$data, $form_state) {
+function sb_social_twitter_process_settings(&$data, $form_state) {
   $data['twitter'] = array(
     'message' => !empty($form_state['values']['twitter_message']) ? $form_state['values']['twitter_message'] : '',
   );
 }
 
-function twitter_share_js_config($settings, $node = FALSE, $sid = FALSE) {
+function sb_social_twitter_share_js_config($settings, $node = FALSE, $sid = FALSE) {
   $settings = array(
     'twitter_message' => _sb_social_replace_tokens($settings['data']['twitter']['message'], $node, $sid),
   );
   drupal_add_js(array('sb_social' => $settings), 'setting');
 }
 
-function twitter_uninstall() {
+function sb_social_twitter_uninstall() {
   variable_del('springboard_social_twitter_message');
 }

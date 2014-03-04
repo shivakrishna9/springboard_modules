@@ -43,4 +43,3 @@ function webform_goals_widget_display_embed($goal) {
   $output .= $embed;
   return ctools_modal_render('Embeddable', $output);
 }
-

@@ -1,17 +1,22 @@
 <?php
 
+/**
+ * @file
+ * Plugin for Facebook/OpenGraph.
+ */
+
 $plugin = array(
   'name' => 'facebook', // internal service name
   'title' => t('Facebook'), // Human-readable service name
-  'settings' => 'facebook_settings', // additions to path and node settings forms
-  'admin_settings' => 'facebook_admin_settings', // additions to admin defaults settings form
-  'process' => 'facebook_process_settings', // submit handler for node & path settings fields
-  'share_config' => 'facebook_share_opengraph_config', // render share settings required by AddThis
+  'settings' => 'sb_social_facebook_settings', // additions to path and node settings forms
+  'admin_settings' => 'sb_social_facebook_admin_settings', // additions to admin defaults settings form
+  'process' => 'sb_social_facebook_process_settings', // submit handler for node & path settings fields
+  'share_config' => 'sb_social_facebook_share_opengraph_config', // render share settings required by AddThis
   'js' => FALSE, // include js settings as needed
-  'defaults' => 'facebook_defaults', // provide default settings
-  'uninstall' => 'facebook_uninstall', // uninstall hook: remove variables, etc.
-  'token_info' => facebook_token_info(),
-  'token_replace' => 'facebook_token_replace',
+  'defaults' => 'sb_social_facebook_defaults', // provide default settings
+  'uninstall' => 'sb_social_facebook_uninstall', // uninstall hook: remove variables, etc.
+  'token_info' => sb_social_facebook_token_info(),
+  'token_replace' => 'sb_social_facebook_token_replace',
   'metatag_view_alter' => 'facebook_metatag_view_alter',
 );
 
@@ -41,7 +46,7 @@ function facebook_metatag_view_alter($settings, &$output) {
   }
 }
 
-function facebook_token_info() {
+function sb_social_facebook_token_info() {
   $facebook_tokens = array();
   $facebook_tokens['facebook_share_link'] = array(
     'name' => t('Facebook Share link'),
@@ -66,7 +71,7 @@ function facebook_token_info() {
   return $facebook_tokens;
 }
 
-function facebook_token_replace($tokens, &$replacements, $settings, $node = FALSE, $submission_id = FALSE, $extra = FALSE) {
+function sb_social_facebook_token_replace($tokens, &$replacements, $settings, $node = FALSE, $submission_id = FALSE, $extra = FALSE) {
   foreach ($tokens as $key => $token) {
     switch ($key) {
       case 'facebook_share_link':
@@ -94,7 +99,7 @@ function facebook_token_replace($tokens, &$replacements, $settings, $node = FALS
 
 }
 
-function facebook_defaults() {
+function sb_social_facebook_defaults() {
   $settings = array(
     'title' => variable_get('springboard_social_facebook_title', '%title'),
     'description' => variable_get('springboard_social_facebook_description', '%teaser'),
@@ -103,7 +108,7 @@ function facebook_defaults() {
   return $settings;
 }
 
-function facebook_admin_settings(&$form) {
+function sb_social_facebook_admin_settings(&$form) {
   $form['services']['facebook'] = array(
     '#type' => 'fieldset',
     '#title' => t('Facebook Settings'),
@@ -137,7 +142,7 @@ function facebook_admin_settings(&$form) {
   );
 }
 
-function facebook_settings(&$form, $enabled_services = array(), $settings = array(), $token_set = array('all')) {
+function sb_social_facebook_settings(&$form, $enabled_services = array(), $settings = array(), $token_set = array('all')) {
   $form['fb_settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('Facebook Settings'),
@@ -182,7 +187,7 @@ function facebook_settings(&$form, $enabled_services = array(), $settings = arra
   );
 }
 
-function facebook_process_settings(&$data, $form_state) {
+function sb_social_facebook_process_settings(&$data, $form_state) {
   $data['facebook'] = array(
     'title' => !empty($form_state['values']['fb_title']) ? $form_state['values']['fb_title'] : '',
     'description' => !empty($form_state['values']['fb_description']) ? $form_state['values']['fb_description'] : '',
@@ -208,7 +213,7 @@ function facebook_process_settings(&$data, $form_state) {
  * usual AddThis javascript configuration objects.
  *
  */
-function facebook_share_opengraph_config($settings, $node = FALSE, $sid = FALSE) {
+function sb_social_facebook_share_opengraph_config($settings, $node = FALSE, $sid = FALSE) {
   $facebook = $settings['data']['facebook'];
   $meta = array(
     'title' => !empty($facebook['title']) ? $facebook['title'] : '',
@@ -235,7 +240,7 @@ function facebook_share_opengraph_config($settings, $node = FALSE, $sid = FALSE)
   }
 }
 
-function facebook_uninstall() {
+function sb_social_facebook_uninstall() {
   // remove variables.
   variable_del('springboard_social_facebook_title');
   variable_del('springboard_social_facebook_description');

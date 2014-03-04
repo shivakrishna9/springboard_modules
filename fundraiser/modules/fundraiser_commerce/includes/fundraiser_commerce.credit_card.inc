@@ -22,6 +22,7 @@ function _fundraiser_commerce_credit_card_form() {
     '#salesforce_label' => t('Credit card last 4'),
   );
   $form['expiration_date']['#theme'] = 'fundraiser_credit_card_expiration_date';
+  $form['expiration_date']['#title'] = t('Expiration date');
   $months[1] = 'January';
   $months[2] = 'February';
   $months[3] = 'March';
@@ -236,4 +237,25 @@ function _fundraiser_commerce_credit_card_pane_values($donation) {
         $donation->donation['payment_fields']['credit']['card_cvv'] : '',
     ),
   );
+}
+
+/**
+ * Returns the values need to load a card on file profile
+ *
+ * @param $donation Object
+ *    Fundraiser donation object
+ *
+ * @return Array
+ *    Values ready to be passed into a card on file profile query
+ */
+function _fundraiser_commerce_credit_card_cardonfile_fields($donation) {
+  // Use the pane values function to the get the cc details
+  $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
+
+  return array(
+    // Strip the card number down to the last four since thats all card on file will store
+    'card_number' => substr($pane_values['credit_card']['number'], -4),
+    'card_exp_month' => $pane_values['credit_card']['exp_month'],
+    'card_exp_year' => $pane_values['credit_card']['exp_year'],
+  ) + array('instance_id' => $donation->gateway['id'], 'uid' => $donation->uid);
 }

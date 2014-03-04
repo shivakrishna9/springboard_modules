@@ -132,7 +132,7 @@ function hook_salesforce_queue_process_batch_alter(&$batch, SalesforceQueue $que
  * @param SalesforceQueueProcessor $processor
  *   SalesforceQueueProcessor object
  */
-function hook_salesforce_queue_finalize_batch(&$batch, SalesforceQueue $queue, SalesforceQueueProcessor $processor) {
+function hook_salesforce_queue_finalize_batch_alter(&$batch, SalesforceQueue $queue, SalesforceQueueProcessor $processor) {
 
 }
 

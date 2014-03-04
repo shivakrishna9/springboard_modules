@@ -40,7 +40,7 @@ function springboard_menu() {
     'type' => MENU_LOCAL_TASK,
     'weight' => -5,
     );
-    
+
   // Springboard forms admin.
   $items['admin/springboard/forms'] = array(
     'title' => 'Forms',
@@ -151,7 +151,7 @@ function springboard_menu_alter(&$items) {
   // Add menu items from fundraiser.
   $types_added = array();
   if (module_exists('fundraiser')) {
-    //dynamically generate links to create fundraiser forms
+    // Dynamically generate links to create fundraiser forms.
     $types = fundraiser_get_donation_types();
     foreach ($types as $type => $status) {
       if (isset($status) && $status == 1) {
@@ -292,7 +292,7 @@ function springboard_menu_alter(&$items) {
 
   // Add menu items from webform.
   if (module_exists('webform')) {
-    //dynamically generate links to create non-fundraiser forms
+    // Dynamically generate links to create non-fundraiser forms.
     $types = webform_variable_get('webform_node_types');
     foreach ($types as $type) {
       if (!in_array($type, $types_added) && isset($items['node/add/' . $type])) {
@@ -376,7 +376,7 @@ function springboard_admin_dashboard() {
   $panes = module_invoke_all('springboard_dashboard_panes');
   drupal_alter('springboard_dashboard_panes', $panes);
   $enabled_panes = variable_get('springboard_enabled_panes', array());
-  // Sort panes based on weight. Weight is current hard-coded. 
+  // Sort panes based on weight. Weight is current hard-coded.
   uasort($panes, 'drupal_sort_weight');
   $pane_count = 1;
   $column_left = '';
@@ -385,7 +385,7 @@ function springboard_admin_dashboard() {
     if (!empty($pane['content']) && !empty($enabled_panes[$pane_key])) {
       if($pane_count%2) {
         $column_left .= '<div class="springboard-pane odd ' . drupal_clean_css_identifier($pane_key) . '">' . $pane['content'] . '</div>';
-      }  
+      }
       else {
         $column_right .= '<div class="springboard-pane even ' . drupal_clean_css_identifier($pane_key) . '">' . $pane['content'] . '</div>';
       }
@@ -431,7 +431,7 @@ function springboard_block_info() {
   $blocks['springboard_sf_status'] = array(
     'info' => t('Salesforce Status'),
     'cache' => DRUPAL_NO_CACHE,
-    
+
   );
   return $blocks;
 }
@@ -590,4 +590,3 @@ function _springboard_update_form_field($form, $field_key, $new_field) {
   }
   return $form;
 }
-

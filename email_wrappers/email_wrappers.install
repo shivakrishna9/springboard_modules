@@ -1,7 +1,8 @@
 <?php
 
 /**
- * @file Email Wrappers install/uninstall/update functions.
+ * @file
+ * Email Wrappers install/uninstall/update functions.
  */
 
 /**
@@ -13,7 +14,8 @@ function email_wrappers_install() {
   }
   _email_wrappers_create_fields();
 
-  // we need to add an entry to the mail_system variable for our implementation of MailSystemInterface.
+  // We need to add an entry to the mail_system variable for our
+  // implementation of MailSystemInterface.
   // @see: http://drupal.org/node/900794
   $mail_system = variable_get('mail_system', array('default-system' => 'DefaultMailSystem'));
   $mail_system = array_merge($mail_system, array('email_wrappers' => 'EmailWrappersMailSystemInterface'));
@@ -23,25 +25,27 @@ function email_wrappers_install() {
 /**
  * Implements hook_uninstall().
  */
-
 function email_wrappers_uninstall() {
   variable_del('email_wrappers_og_filter');
-  // delete email_wrapper nodes.
+  // Delete email_wrapper nodes.
   _email_wrappers_delete_nodes();
 
-  // remove fields implemented by this module.
+  // Remove fields implemented by this module.
   _email_wrappers_delete_fields();
 
-  // delete the email wrapper content type.
+  // Delete the email wrapper content type.
   node_type_delete('email_wrapper');
   field_purge_batch(1000);
 
-  // back out changes to mail_system variable.
+  // Back out changes to mail_system variable.
   $mail_system = variable_get('mail_system', array('default-system' => 'DefaultMailSystem'));
   unset($mail_system['email_wrappers']);
   variable_set('mail_system', $mail_system);
 }
 
+/**
+ * Implements hook_schema().
+ */
 function email_wrappers_schema() {
   $schema['email_wrappers_webform'] = array(
     'description' => t('Stores data for donation_form nodes.'),
@@ -177,7 +181,8 @@ function email_wrappers_update_7001() {
     return $ret;
   }
   $ret = array();
-  // if email_confirmations.module was installed prior to migration, if not we bail.
+  // If email_confirmations.module was installed prior to migration,
+  // if not we bail.
   $ec_exists = db_table_exists('fundraiser_confirmations');
   if (!$ec_exists) {
     $ret[] = 'email confirmation not found';
@@ -280,7 +285,8 @@ function email_wrappers_update_7001() {
       ->execute();
   }
 
-  // move settings data from variable emaiL_confirmation_og_filter to email_wrapper_og_filter
+  // Move settings data from variable emaiL_confirmation_og_filter to
+  // email_wrapper_og_filter.
   $og_filter = variable_get('email_confirmation_og_filter');
   variable_set('email_wrapper_og_filter', $og_filter);
   variable_del('email_confirmation_og_filter');
@@ -290,7 +296,9 @@ function email_wrappers_update_7001() {
   // TODO: delete original email confirmation tables.
 }
 
-// Unpublish existing nodes
+/**
+ * Unpublish existing nodes.
+ */
 function email_wrappers_update_7002() {
   variable_set('node_options_email_wrapper', array());
   $results = db_select('node', 'n')

@@ -2,12 +2,13 @@
 
 /**
  * @file
- *
- * Defines a Views field handler for displaying values of webform hidden components.
+ * Defines a Views field handler for displaying values
+ *   of webform hidden components.
  */
 
 class springboard_webform_hidden_component_values extends views_handler_field {
-  //add an option to the field handler to choose which component's value is displayed.
+  // Add an option to the field handler to choose
+  // which component's value is displayed.
   public function option_definition() {
     $options = parent::option_definition();
     $options['webform_component_options'] = array('default' => NULL);
@@ -16,7 +17,8 @@ class springboard_webform_hidden_component_values extends views_handler_field {
 
   public function options_form(&$form, &$form_state) {
     parent::options_form($form, $form_state);
-    //Build a list of distinct hidden components defined by webform or other modules.
+    // Build a list of distinct hidden components
+    // defined by webform or other modules.
     $result = db_select('webform_component', 'wc')
       ->fields('wc', array('form_key', 'name'))
       ->condition('wc.type', 'hidden', '=')
@@ -26,7 +28,7 @@ class springboard_webform_hidden_component_values extends views_handler_field {
     while ($record = $result->fetchAssoc()) {
       $options[$record['form_key']] = $record['name'];
     }
-    //Create a form item of options for which component's value to display.
+    // Create a form item of options for which component's value to display.
     $form['webform_component_options'] = array(
       '#title' => t('Choose a component to display a value for'),
       '#type' => 'radios',
@@ -37,7 +39,8 @@ class springboard_webform_hidden_component_values extends views_handler_field {
   }
 
   public function query() {
-    //Join in an instance of the webform_component table for the form_key value chosen.
+    // Join in an instance of the webform_component table
+    // for the form_key value chosen.
     $this->ensure_my_table();
     $first = array(
       'left_table' => 'node',
@@ -61,7 +64,7 @@ class springboard_webform_hidden_component_values extends views_handler_field {
   }
 
   public function render($values) {
-    //output the value
+    // Output the value.
     $alias = 'webform_component_' . $this->options['webform_component_options'] . '_value';
     return check_plain($values->$alias);
   }
