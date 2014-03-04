@@ -57,15 +57,19 @@ function commerce_litle_test_endpoint() {
             case 'authorization':
               $xml = commerce_litle_test_authorization($node);
               break;
+
             case 'registerTokenRequest':
               $xml = commerce_litle_test_register_token($node);
               break;
+
             case 'echeckSale':
               $xml = commerce_litle_test_echeck_sale($node);
               break;
+
             case 'sale':
               $xml = commerce_litle_test_sale($node);
               break;
+
             case 'authReversal':
             case 'capture':
             case 'echeckVoid':
@@ -107,8 +111,10 @@ function commerce_litle_test_endpoint() {
  *   822 - Token was not found.
  *
  * @param DOMNode $node
+ *   The DOM node that contains the request.
  *
  * @return string
+ *   The xml to print.
  */
 function commerce_litle_test_register_token(DOMNode $node) {
   $values = array();
@@ -211,6 +217,15 @@ function commerce_litle_test_register_token(DOMNode $node) {
   return $xml;
 }
 
+/**
+ * A sale request.
+ *
+ * @param DOMNode $node
+ *   The DOM node that contains the request.
+ *
+ * @return string
+ *   The xml to print.
+ */
 function commerce_litle_test_sale(DOMNode $node) {
 
   $order_id = '0';
@@ -220,8 +235,6 @@ function commerce_litle_test_sale(DOMNode $node) {
       break;
     }
   }
-
-  // @todo Check for a token and do something different.
 
   $xml = "<litleOnlineResponse version='8.22' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
   $xml .= "<saleResponse id='ididid' reportGroup='rtpGrp' customerId='12345'>";
@@ -237,6 +250,15 @@ function commerce_litle_test_sale(DOMNode $node) {
   return $xml;
 }
 
+/**
+ * An echeckSale request.
+ *
+ * @param DOMNode $node
+ *   The DOM node that contains the request.
+ *
+ * @return string
+ *   The xml to print.
+ */
 function commerce_litle_test_echeck_sale(DOMNode $node) {
 
   $order_id = '0';
@@ -246,8 +268,6 @@ function commerce_litle_test_echeck_sale(DOMNode $node) {
       break;
     }
   }
-
-  // @todo Check for a token and do something different.
 
   $xml = "<litleOnlineResponse version='8.22' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
   $xml .= "<echeckSalesResponse id='ididid' reportGroup='rtpGrp' customerId='12345'>";
@@ -262,6 +282,15 @@ function commerce_litle_test_echeck_sale(DOMNode $node) {
   return $xml;
 }
 
+/**
+ * An authorization request.
+ *
+ * @param DOMNode $node
+ *   The DOM node that contains the request.
+ *
+ * @return string
+ *   The xml to print.
+ */
 function commerce_litle_test_authorization(DOMNode $node) {
   $xml = "<litleOnlineResponse version='8.22' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>
   <authorizationResponse id='ididid' reportGroup='rtpGrp' customerId='12345'>
@@ -278,6 +307,15 @@ function commerce_litle_test_authorization(DOMNode $node) {
   return $xml;
 }
 
+/**
+ * The response when a request hasn't been implemented here but is valid.
+ *
+ * @param DOMNode $node
+ *   The DOM node that contains the request.
+ *
+ * @return string
+ *   The xml to print.
+ */
 function commerce_litle_test_unimplemented_request(DOMNode $node) {
   $xml = "<litleOnlineResponse version='8.22' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
   $xml .= "<error>Tag is known but not implemented in this mock API:  $node->tagName</error>";
@@ -285,6 +323,15 @@ function commerce_litle_test_unimplemented_request(DOMNode $node) {
   return $xml;
 }
 
+/**
+ * The response when a request isn't valid.
+ *
+ * @param DOMNode $node
+ *   The DOM node that contains the request.
+ *
+ * @return string
+ *   The xml to print.
+ */
 function commerce_litle_test_unknown_request(DOMNode $node) {
   $xml = "<litleOnlineResponse version='8.22' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
   $xml .= "<error>Tag is unknown:  $node->tagName</error>";
@@ -292,6 +339,12 @@ function commerce_litle_test_unknown_request(DOMNode $node) {
   return $xml;
 }
 
+/**
+ * The response when we can't find a request in the usual places.
+ *
+ * @return string
+ *   The xml to print.
+ */
 function commerce_litle_test_no_request_found() {
   $xml = "<litleOnlineResponse version='8.22' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
 
@@ -305,6 +358,7 @@ function commerce_litle_test_no_request_found() {
   $xml .= var_export($_FILES, TRUE);
   $xml .= "]]></files>";
 
+  global $HTTP_RAW_POST_DATA;
   $xml .= "<rawPostData><![CDATA[";
   $xml .= var_export($HTTP_RAW_POST_DATA, TRUE);
   $xml .= "]]></rawPostData>";
@@ -314,6 +368,12 @@ function commerce_litle_test_no_request_found() {
   return $xml;
 }
 
+/**
+ * Formats a timestamp using Litle's formatting.
+ *
+ * @return string
+ *   The response time value.
+ */
 function commerce_litle_test_get_response_time() {
   $response_time = new DateTime('now');
   return $response_time->format('Y-m-d\TH:i:s');
