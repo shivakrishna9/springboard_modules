@@ -603,47 +603,38 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
       $payment_details['cardValidationNum'] = $pane_values['credit_card']['code'];
     }
 
-    // First look to see if we already have cards on file for the user.
-    $stored_cards = commerce_cardonfile_load_multiple_by_uid($order->uid, $payment_method['instance_id']);
+    // Submit a registerTokenRequest.
+    $token_response = commerce_litle_register_token_request($init, $litle_config, $payment_details);
 
-    // If we didn't find any, attempt to register a token now.
-    if (empty($stored_cards)) {
-
-      // Submit a registerTokenRequest.
-      $token_response = commerce_litle_register_token_request($init, $litle_config, $payment_details);
-
-      $litle_token = commerce_litle_get_token_from_response($token_response);
-      if (!empty($litle_token)) {
-
-        $card_name = '';
-
-        // Card name is used later for cardonfile.
-        if ($order_wrapper->commerce_customer_billing->value()) {
-          $billing_address = $order_wrapper->commerce_customer_billing->commerce_customer_address->value();
-          $card_name = $billing_address['name_line'];
-        }
-
-        // Store the token with cardonfile.
-        $card_data = commerce_cardonfile_new();
-        $card_data->uid = $order->uid;
-        $card_data->payment_method = $payment_method['method_id'];
-        $card_data->instance_id = $payment_method['instance_id'];
-        $card_data->remote_id = $litle_token;
-        $card_data->card_type = !empty($card_type) ? $card_type : 'card';
-        $card_data->card_name = !empty($card_name) ? $card_name : '';
-        $card_data->card_number = substr($pane_values['credit_card']['number'], -4);
-        $card_data->card_exp_month = $pane_values['credit_card']['exp_month'];
-        $card_data->card_exp_year = $pane_values['credit_card']['exp_year'];
-        $card_data->status = 1;
-
-        // Save and log the creation of the new card on file.
-        commerce_cardonfile_save($card_data);
-        watchdog('commerce_litle', 'Token @litleToken registered and saved to user @uid.', array('@litleToken' => $litle_token, '@uid' => $order->uid));
+    $litle_token = commerce_litle_get_token_from_response($token_response);
+    if (!empty($litle_token)) {
+      $card_name = '';
+      // Card name is used for cardonfile.
+      if ($order_wrapper->commerce_customer_billing->value()) {
+        $billing_address = $order_wrapper->commerce_customer_billing->commerce_customer_address->value();
+        $card_name = $billing_address['name_line'];
       }
-      else {
 
-        // @todo Not an 801 or 802, so may be an error. What should we do here?
-      }
+      // Store the token with cardonfile.
+      $card_data = commerce_cardonfile_new();
+      $card_data->uid = $order->uid;
+      $card_data->payment_method = $payment_method['method_id'];
+      $card_data->instance_id = $payment_method['instance_id'];
+      $card_data->remote_id = $litle_token;
+      $card_data->card_type = !empty($card_type) ? $card_type : 'card';
+      $card_data->card_name = $card_name;
+      $card_data->card_number = substr($pane_values['credit_card']['number'], -4);
+      $card_data->card_exp_month = $pane_values['credit_card']['exp_month'];
+      $card_data->card_exp_year = $pane_values['credit_card']['exp_year'];
+      $card_data->status = 1;
+
+      // Save and log the creation of the new card on file.
+      commerce_cardonfile_save($card_data);
+      watchdog('commerce_litle', 'Token @litleToken registered and saved to user @uid.', array('@litleToken' => $litle_token, '@uid' => $order->uid));
+    }
+    else {
+      // @todo Not an 801 or 802, so may be an error. What should we do here?
+      watchdog('commerce_litle', 'Unable to obtain a token for user @uid during order @oid.', array('@uid' => $order->uid, '@oid' => $order->id));
     }
   } // End if cardonfile.
 }
@@ -1499,8 +1490,13 @@ function commerce_litle_get_token_from_response($response) {
 function commerce_litle_log_request($request) {
   // Mask secure data.
   $log = $request;
-  $log['password'] = str_repeat('X', strlen($log['password']));
-  $log['merchantId'] = str_repeat('X', strlen($log['merchantId']));
+  if (!empty($log['password'])) {
+    $log['password'] = str_repeat('X', strlen($log['password']));
+  }
+
+  if (!empty($log['merchantId'])) {
+    $log['merchantId'] = str_repeat('X', strlen($log['merchantId']));
+  }
 
   if (!empty($log['card']['number'])) {
     $log['card']['number'] = commerce_litle_mask_string($log['card']['number']);
