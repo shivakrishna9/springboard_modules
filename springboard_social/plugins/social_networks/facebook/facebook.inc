@@ -199,7 +199,7 @@ function sb_social_facebook_process_settings(&$data, $form_state) {
     // so we have to load the full record and fish out the uri to generate
     // a usable image url.
     $file = file_load($form_state['values']['fb_image']);
-    $data['image'] = file_create_url($file->uri);
+    $data['facebook']['image'] = file_create_url($file->uri);
   }
 }
 
