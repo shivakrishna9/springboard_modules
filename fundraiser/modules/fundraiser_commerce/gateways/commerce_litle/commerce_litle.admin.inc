@@ -346,10 +346,6 @@ function commerce_litle_cc_credit_request($payment_method, $transaction, $order,
     $message = XmlParser::getNode($response, 'message');
     drupal_set_message(t('Credit failed: @reason', array('@reason' => check_plain($message))), 'error');
 
-    // Add an additional helper message if the transaction hadn't settled yet.
-    // if ($response[2] == 54) {
-    //   drupal_set_message(t('The transaction must be setted before a credit can be issued. This usually takes 24 hours'), 'error');
-    // }
     commerce_payment_transaction_save($transaction);
   }
 

@@ -265,18 +265,7 @@ function commerce_litle_cc_settings_form($settings = array()) {
     ),
     '#default_value' => isset($settings['log']) ? $settings['log'] : array('request' => '0', 'response' => '0'),
   );
-  /*
-  $form['commerce_litle_settings_txn_type'] = array(
-    '#type' => 'radios',
-    '#title' => t('Default credit card transaction type'),
-    '#description' => t('The default will be used to process transactions during checkout.'),
-    '#options' => array(
-      COMMERCE_CREDIT_AUTH_CAPTURE => t('Authorization and capture'),
-      COMMERCE_CREDIT_AUTH_ONLY => t('Authorization only (requires manual or automated capture after checkout)'),
-    ),
-    '#default_value' => $settings['commerce_litle_settings_txn_type'],
-  );
-  */
+
   return $form;
 }
 
@@ -367,18 +356,7 @@ function commerce_litle_echeck_settings_form($settings = array()) {
     ),
     '#default_value' => isset($settings['log']) ? $settings['log'] : array('request' => '0', 'response' => '0'),
   );
-  /*
-  $form['commerce_litle_settings_txn_type'] = array(
-    '#type' => 'radios',
-    '#title' => t('Default credit card transaction type'),
-    '#description' => t('The default will be used to process transactions during checkout.'),
-    '#options' => array(
-      COMMERCE_CREDIT_AUTH_CAPTURE => t('Authorization and capture'),
-      COMMERCE_CREDIT_AUTH_ONLY => t('Authorization only (requires manual or automated capture after checkout)'),
-    ),
-    '#default_value' => $settings['commerce_litle_settings_txn_type'],
-  );
-  */
+
   return $form;
 }
 
@@ -472,14 +450,6 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
 
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
-  // Get the default transaction type from the payment method settings.
-  // $txn_type = $payment_method['settings']['commerce_litle_settings_txn_type'];
-  // If txn_type has been specified in the pane values array, such as through
-  // the special select element we alter onto the payment terminal form, use
-  // that instead.
-  // if (!empty($pane_values['commerce_litle_settings_txn_type'])) {
-  //   $txn_type = $pane_values['commerce_litle_settings_txn_type'];
-  // }
   $txn_type = COMMERCE_CREDIT_AUTH_CAPTURE;
 
   $litle_card_type = _commerce_litle_cc_card_type_to_litle($card_type);
@@ -635,7 +605,7 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
     else {
       watchdog('commerce_litle', 'Unable to obtain a token for user @uid during order @oid.', array('@uid' => $order->uid, '@oid' => $order->id));
     }
-  } // End if cardonfile.
+  }
 }
 
 /**
@@ -726,15 +696,6 @@ function commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, 
 
   // @todo If the response is that the cardonfile isn't valid, deactivate it.
   // @todo Also need to remove the transaction.
-//  if ((string) $xml_response->messages->message->code == 'E00040') {
-//    // If the response indicated a non-existent profile, deactive it now.
-//    $card_data->status = 0;
-//    commerce_cardonfile_save($card_data);
-//
-//    drupal_set_message(t('The card you selected is no longer valid. Please use a different card to complete payment.'), 'error');
-//    return FALSE;
-//  }
-
   // If we didn't get an approval response code...
   if (XmlParser::getNode($sale_response, 'response') != '000') {
     // Create a failed transaction with the error message.
@@ -944,7 +905,7 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
     else {
       watchdog('commerce_litle', 'Unable to obtain a token for user @uid during order @oid.', array('@uid' => $order->uid, '@oid' => $order->id));
     }
-  } // end if cardonfile
+  }
 }
 
 /**
@@ -1100,14 +1061,14 @@ function commerce_litle_echeck_vault_cardonfile_delete() {
 
 /**
  * Litle request function wrapper.
+ *
+ * Example input
+ *   $input = array(
+ *     'litleTxnId'=>'100000000000000001',
+ *     'id'=> '456',
+ *   );
  */
 function _commerce_litle_request_capture($gateway, $input) {
-  /* Example input
-    $input = array(
-      'litleTxnId'=>'100000000000000001',
-      'id'=> '456',
-    );
-  */
   $litle = _commerce_litle_get_litle();
   $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
   return $litle->captureRequest($input);
@@ -1115,16 +1076,16 @@ function _commerce_litle_request_capture($gateway, $input) {
 
 /**
  * Litle request function wrapper.
+ *
+ * Example input
+ *   $input = array(
+ *     'partial'=>'true',
+ *     'id'=> '456',
+ *     'litleTxnId'=>'320000000000000001',
+ *     'amount'=>'5005'
+ *   );
  */
 function _commerce_litle_request_partial_capture($gateway, $input) {
-  /* Example input
-    $input = array(
-      'partial'=>'true',
-      'id'=> '456',
-      'litleTxnId'=>'320000000000000001',
-      'amount'=>'5005'
-    );
-  */
   $litle = _commerce_litle_get_litle();
   $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
   return $litle->captureRequest($input);
@@ -1141,15 +1102,15 @@ function _commerce_litle_request_sale($gateway, $input) {
 
 /**
  * Litle request function wrapper.
+ *
+ * Example input
+ *   $input = array(
+ *     'litleTxnId'=>'100000000000000002',
+ *     'id'=> '456',
+ *     'amount'=>'1010'
+ *   );
  */
 function _commerce_litle_request_credit($gateway, $input) {
-  /* Example input
-    $input = array(
-      'litleTxnId'=>'100000000000000002',
-      'id'=> '456',
-      'amount'=>'1010'
-    );
-  */
   $litle = _commerce_litle_get_litle();
   $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
   $input['id'] = $input['litleTxnId'];
@@ -1172,7 +1133,8 @@ function _commerce_litle_get_litle() {
  * Return gateway configuration values from a given gateway for hash_in values.
  */
 function _commerce_litle_get_litle_config($gateway) {
-  // Configure with the gateway values for the .ini value, merge with the credit info.
+  // Configure with the gateway values for the .ini value,
+  // merge with the credit info.
   $auth_info = array(
     'user' => !empty($gateway['settings']['commerce_litle_settings_user']) ? $gateway['settings']['commerce_litle_settings_user'] : '',
     'password' => !empty($gateway['settings']['commerce_litle_settings_password']) ? $gateway['settings']['commerce_litle_settings_password'] : '',
@@ -1239,28 +1201,6 @@ function _commerce_litle_cc_card_type_to_litle($type) {
 
   }
 }
-
-/**
- * Implements hook_form_FORM_ID_alter().
- */
-/*
-function commerce_litle_form_commerce_payment_order_transaction_add_form_alter(&$form, &$form_state) {
-  // If the payment terminal is displayed for an authnet_aim transaction...
-  if (!empty($form['payment_terminal']) && $form_state['payment_method']['method_id'] == 'authnet_aim') {
-    // Add a select list to let the administrator choose a different transaction
-    // type than the payment method's default.
-    $form['payment_terminal']['payment_details']['commerce_litle_settings_txn_type'] = array(
-        '#type' => 'select',
-        '#title' => t('Transaction type'),
-        '#options' => array(
-            COMMERCE_CREDIT_AUTH_ONLY => t('Authorization only'),
-            COMMERCE_CREDIT_AUTH_CAPTURE => t('Authorization and capture'),
-        ),
-        '#default_value' => $form_state['payment_method']['settings']['commerce_litle_settings_txn_type'],
-    );
-  }
-}
-*/
 
 /**
  * Translates commerce transaction type constants to the Litle equivalent.
@@ -1447,7 +1387,7 @@ function commerce_litle_vault_cardonfile_register_token($payment_method, $paymen
 /**
  * Parses out a token from a registerTokenRequest response.
  *
- * @param $response
+ * @param DOMDocument $response
  *   A Litle registerTokenResponse.
  *
  * @return null|string
@@ -1523,7 +1463,7 @@ function commerce_litle_mask_string($number, $show_count = 4) {
 /**
  * Records a Litle response to watchdog.
  *
- * @param $response
+ * @param DOMDocument $response
  *   A response from Litle.
  */
 function commerce_litle_log_response($response) {
@@ -1533,7 +1473,7 @@ function commerce_litle_log_response($response) {
 /**
  * Format order data into a billToAddress.
  *
- * @param $order_wrapper
+ * @param EntityMetadataWrapper $order_wrapper
  *   The order's order wrapper.
  *
  * @return array
