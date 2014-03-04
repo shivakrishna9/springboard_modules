@@ -633,7 +633,6 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
       watchdog('commerce_litle', 'Token @litleToken registered and saved to user @uid.', array('@litleToken' => $litle_token, '@uid' => $order->uid));
     }
     else {
-      // @todo Not an 801 or 802, so may be an error. What should we do here?
       watchdog('commerce_litle', 'Unable to obtain a token for user @uid during order @oid.', array('@uid' => $order->uid, '@oid' => $order->id));
     }
   } // End if cardonfile.
@@ -913,50 +912,37 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
       'orderId' => $order->order_number,
     );
 
-    // First look to see if we already have cards on file for the user.
-    $stored_cards = commerce_cardonfile_load_multiple_by_uid($order->uid, $payment_method['instance_id']);
+    // Submit a registerTokenRequest.
+    $token_response = commerce_litle_register_token_request($init, $litle_config, $payment_details);
 
-    // If we didn't find any, attempt to register a token now.
-    if (empty($stored_cards)) {
-      // Submit a registerTokenRequest.
-      $token_response = commerce_litle_register_token_request($init, $litle_config, $payment_details);
-
-      $litle_token = commerce_litle_get_token_from_response($token_response);
-      if (!empty($litle_token)) {
-        if ($order_wrapper->commerce_customer_billing->value()) {
-          $billing_address = $order_wrapper->commerce_customer_billing->commerce_customer_address->value();
-          $card_name = $billing_address['name_line'];
-        }
-
-        // Pretend expiration date for recurring.
-        $exp_timestamp = strtotime('+12 months');
-
-        // Build a remote ID that includes the Routing Number and the
-        // token.
-        $remote_id = commerce_litle_format_cardonfile_remote_id($pane_values, $litle_token);
-
-        // Store the token with cardonfile.
-        $card_data = commerce_cardonfile_new();
-        $card_data->uid = $order->uid;
-        $card_data->payment_method = $payment_method['method_id'];
-        $card_data->instance_id = $payment_method['instance_id'];
-        $card_data->remote_id = $remote_id;
-        $card_data->card_type = $payment_details['echeckForToken']['accType'];
-        $card_data->card_name = !empty($card_name) ? $card_name : '';
-        $card_data->card_number = substr($pane_values['echeck']['accNum'], -4);
-        // @todo See if cardonfile cares if we don't pass an expiration date.
-        // $card_data->card_exp_month = date('m', $exp_timestamp);
-        // $card_data->card_exp_year = date('Y', $exp_timestamp);
-        $card_data->status = 1;
-
-        // Save and log the creation of the new card on file.
-        commerce_cardonfile_save($card_data);
-        watchdog('commerce_litle', 'Token @litleToken registered and saved to user @uid.', array('@litleToken' => $litle_token, '@uid' => $order->uid));
+    $litle_token = commerce_litle_get_token_from_response($token_response);
+    if (!empty($litle_token)) {
+      $card_name = '';
+      if ($order_wrapper->commerce_customer_billing->value()) {
+        $billing_address = $order_wrapper->commerce_customer_billing->commerce_customer_address->value();
+        $card_name = $billing_address['name_line'];
       }
-      else {
 
-        // @todo Not an 801 or 802, so may be an error. What should we do here?
-      }
+      // Build a remote ID that includes the Routing Number and the token.
+      $remote_id = commerce_litle_format_cardonfile_remote_id($pane_values, $litle_token);
+
+      // Store the token with cardonfile.
+      $card_data = commerce_cardonfile_new();
+      $card_data->uid = $order->uid;
+      $card_data->payment_method = $payment_method['method_id'];
+      $card_data->instance_id = $payment_method['instance_id'];
+      $card_data->remote_id = $remote_id;
+      $card_data->card_type = $payment_details['echeckForToken']['accType'];
+      $card_data->card_name = $card_name;
+      $card_data->card_number = substr($pane_values['echeck']['accNum'], -4);
+      $card_data->status = 1;
+
+      // Save and log the creation of the new card on file.
+      commerce_cardonfile_save($card_data);
+      watchdog('commerce_litle', 'Token @litleToken registered and saved to user @uid.', array('@litleToken' => $litle_token, '@uid' => $order->uid));
+    }
+    else {
+      watchdog('commerce_litle', 'Unable to obtain a token for user @uid during order @oid.', array('@uid' => $order->uid, '@oid' => $order->id));
     }
   } // end if cardonfile
 }
@@ -1488,26 +1474,24 @@ function commerce_litle_get_token_from_response($response) {
  *   The request data array before it is sent to Litle.
  */
 function commerce_litle_log_request($request) {
-  // Mask secure data.
   $log = $request;
-  if (!empty($log['password'])) {
-    $log['password'] = str_repeat('X', strlen($log['password']));
+
+  foreach (array('password', 'merchantId') as $key) {
+    if (!empty($log[$key])) {
+      $log[$key] = str_repeat('X', strlen($log[$key]));
+    }
   }
 
-  if (!empty($log['merchantId'])) {
-    $log['merchantId'] = str_repeat('X', strlen($log['merchantId']));
+  foreach (array('number', 'cardValidationNum') as $key) {
+    if (!empty($log['card'][$key])) {
+      $log['card'][$key] = commerce_litle_mask_string($log['card'][$key]);
+    }
   }
 
-  if (!empty($log['card']['number'])) {
-    $log['card']['number'] = commerce_litle_mask_string($log['card']['number']);
-  }
-
-  if (!empty($log['card']['cardValidationNum'])) {
-    $log['card']['cardValidationNum'] = commerce_litle_mask_string($log['card']['cardValidationNum']);
-  }
-
-  if (!empty($log['echeck']['accNum'])) {
-    $log['card']['number'] = commerce_litle_mask_string($log['echeck']['accNum']);
+  foreach (array('routingNum', 'accNum') as $key) {
+    if (!empty($log['echeck'][$key])) {
+      $log['echeck'][$key] = commerce_litle_mask_string($log['echeck'][$key]);
+    }
   }
 
   watchdog('commerce_litle', 'Litle request: !param', array('!param' => '<pre>' . check_plain(print_r($log, TRUE)) . '</pre>'), WATCHDOG_DEBUG);

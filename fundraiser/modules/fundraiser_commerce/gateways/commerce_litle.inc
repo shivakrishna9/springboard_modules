@@ -282,7 +282,8 @@ function commerce_litle_fundraiser_commerce_update($donation, $card_data = NULL)
       $card_data = $existing;
     }
     // Check if we have a mismatched exp date record.
-    elseif ($mismatch = _fundraiser_commerce_cardonfile_exp_date_mismatch($cardonfile_fields)) {
+    // This only applies to credit cards.
+    elseif ($donation->donation['payment_method'] == 'credit' && ($mismatch = _fundraiser_commerce_cardonfile_exp_date_mismatch($cardonfile_fields))) {
       $donation->data['cardonfile'] = $mismatch->card_id;
       $card_data = $mismatch;
     }
@@ -435,8 +436,14 @@ function commerce_litle_fundraiser_commerce_cardonfile($donation) {
   // a card number.
   // Only perform this when we're in an active non-reference charge.
   if (isset($donation->reference_charge) && $donation->reference_charge === FALSE) {
-    // Query the db for an existing record.
-    $card_data = _fundraiser_commerce_cardonfile_exp_date_mismatch($cardonfile_fields);
+    if ($donation->donation['payment_method'] == 'credit') {
+      // Query the db for an existing record.
+      $card_data = _fundraiser_commerce_cardonfile_exp_date_mismatch($cardonfile_fields);
+    }
+    else {
+      // Echeck records never get updated.
+      $card_data = FALSE;
+    }
 
     // If we have a profile for this user update it locally.
     if ($card_data) {
