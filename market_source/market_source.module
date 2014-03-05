@@ -29,6 +29,7 @@ function market_source_menu() {
  * Implements hook_init().
  */
 function market_source_init() {
+  $server_name = isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : '';
   // Add JavaScript to each page load.
   drupal_add_js(drupal_get_path('module', 'market_source') . '/js/jquery-cookie.js');
   drupal_add_js(drupal_get_path('module', 'market_source') . '/js/market_source.js');
@@ -40,12 +41,18 @@ function market_source_init() {
   if (count(explode('.', $market_source_cookie_domain)) > 1 && !is_numeric(str_replace('.', '', $market_source_cookie_domain))) {
     $ms_cookie_domain = $market_source_cookie_domain;
   }
+  $settings = array(
+    'qs_keys' => _market_source_build_qs_keys(),
+    'maxlength' => MARKET_SOURCE_VALUE_MAXLENGTH,
+    'cookie_domain' => $market_source_cookie_domain,
+  );
+  // If the current domain does not contain the configured cookie domain, do not set a domain.
+  if (!empty($market_source_cookie_domain) && strpos($server_name, $market_source_cookie_domain) === FALSE) {
+    unset($settings['cookie_domain']);
+  }
+
   // Add other variables to the JS settings array.
-  drupal_add_js(array('market_source' => array(
-      'qs_keys' => _market_source_build_qs_keys(),
-      'maxlength' => MARKET_SOURCE_VALUE_MAXLENGTH,
-      'cookie_domain' => $market_source_cookie_domain,
-    )), 'setting');
+  drupal_add_js(array('market_source' => $settings), 'setting');
 }
 
 /**
@@ -172,7 +179,7 @@ function market_source_form_alter(&$form, &$form_state, $form_id) {
             $form['value']['#options'] = $select_options;
           }
           // Add a link to clear the cache
-          $form['value']['#suffix'] = l('Clear the campaign cache', current_path(), array('query' => array('campaign-cache-clear' => 1)));
+          $form['value']['#suffix'] = l(t('Clear the campaign cache'), current_path(), array('query' => array('campaign-cache-clear' => 1)));
           $form['value']['#suffix'] .= '<div>' . t("To update the list of campaigns in the dropdown click the link above to clear the campaign cache.") . '</div>';
         }
       }
