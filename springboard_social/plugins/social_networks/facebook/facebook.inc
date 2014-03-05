@@ -103,7 +103,7 @@ function sb_social_facebook_defaults() {
   $settings = array(
     'title' => variable_get('springboard_social_facebook_title', '%title'),
     'description' => variable_get('springboard_social_facebook_description', '%teaser'),
-    'image' => '', variable_get('springboard_social_facebook_image', ''),
+    'image' => variable_get('springboard_social_facebook_image', ''),
   );
   return $settings;
 }
