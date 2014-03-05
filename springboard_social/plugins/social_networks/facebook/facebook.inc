@@ -92,7 +92,7 @@ function sb_social_facebook_token_replace($tokens, &$replacements, $settings, $n
         break;
       case 'facebook_image':
         // TODO: image tag?
-        $replacements[$token] =  !empty($settings['data']['facebook']['image']) ? $settings['data']['facebook']['image'] : '';
+        $replacements[$token] =  !empty($settings['data']['facebook']['image']) ? file_create_url($settings['data']['facebook']['image']) : '';
         break;
     }
   }
@@ -109,6 +109,7 @@ function sb_social_facebook_defaults() {
 }
 
 function sb_social_facebook_admin_settings(&$form) {
+  $image = variable_get('springboard_social_facebook_image', FALSE);
   $form['services']['facebook'] = array(
     '#type' => 'fieldset',
     '#title' => t('Facebook Settings'),
@@ -133,7 +134,7 @@ function sb_social_facebook_admin_settings(&$form) {
     '#type' => 'managed_file',
     '#title' => 'Image upload',
     '#description' => t('Upload an image to display in share content'),
-    '#default_value' => variable_get('logo', ''),
+    '#default_value' => $image ? $image : variable_get('logo', ''),
     '#upload_location' => 'public://social_images',
     '#upload_validators' => array(
       'file_validate_extensions' => array('gif png jpg jpeg'),
@@ -143,6 +144,7 @@ function sb_social_facebook_admin_settings(&$form) {
 }
 
 function sb_social_facebook_settings(&$form, $enabled_services = array(), $settings = array(), $token_set = array('all')) {
+  $image = $settings['image'];
   $form['fb_settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('Facebook Settings'),
@@ -167,12 +169,13 @@ function sb_social_facebook_settings(&$form, $enabled_services = array(), $setti
   $form['fb_settings']['fb_image'] = array(
     '#type' => 'managed_file',
     '#title' => 'Image upload',
-    '#description' => t('Upload a custom image to display in share content'),
-    '#default_value' => variable_get('logo', ''),
+    '#description' => t('Upload an image to display in share content'),
+    '#default_value' => $image ? $image : variable_get('logo', ''),
     '#upload_location' => 'public://social_images',
     '#upload_validators' => array(
       'file_validate_extensions' => array('gif png jpg jpeg'),
     ),
+    '#theme' => 'sb_social_share_image_preview',
   );
   $form['fb_settings']['tokens'] = array(
     '#type' => 'fieldset',
@@ -199,7 +202,7 @@ function sb_social_facebook_process_settings(&$data, $form_state) {
     // so we have to load the full record and fish out the uri to generate
     // a usable image url.
     $file = file_load($form_state['values']['fb_image']);
-    $data['facebook']['image'] = file_create_url($file->uri);
+    $data['facebook']['image'] = $file->uri;
   }
 }
 
@@ -221,7 +224,7 @@ function sb_social_facebook_share_opengraph_config($settings, $node = FALSE, $si
   );
   // Facebook gets angry if you output an empty image opengraph tag.
   if (!empty($facebook['image'])) {
-    $meta['image'] = $facebook['image'];
+    $meta['image'] = file_create_url($facebook['image']);
   }
 
   foreach ($meta as $field => $value) {

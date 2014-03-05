@@ -680,10 +680,16 @@ function sb_social_share_tracker_url($share_id, $settings, $url_path) {
  */
 function theme_sb_social_share_image_preview($variables) {
   $element = $variables['element'];
-
+  if (!$element['#file'] && $element['#default_value']) {
+    $results = db_query('SELECT * FROM {file_managed} WHERE uri=:uri', array(':uri' => $element['#default_value']));
+    $file = $results->fetchObject();
+    if (is_object($file)) {
+      $element['#file'] = $file;
+    }
+  }
   if (isset($element['#file']->uri)) {
     $output = '<div id="edit-logo-ajax-wrapper"><div class="form-item form-type-managed-file form-item-logo"><span class="file">';
-    $output .= '<img height="50px" src="' . file_create_url($element['#file']->uri) . '" />';
+    $output .= '<img height="150px" src="' . file_create_url($element['#file']->uri) . '" />';
     $output .= '</span><input type="submit" id="edit-' . $element['#name'] . '-remove-button" name="' . $element['#name'] . '_remove_button" value="Remove" class="form-submit ajax-processed">';
     $output .= '<input type="hidden" name="' . $element['#name'] . '[fid]" value="' . $element['#file']->fid . '">';
 
