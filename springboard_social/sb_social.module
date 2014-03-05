@@ -3,7 +3,7 @@
 
 /**
  * @file
- * Primary module file for Springboard Social, which integrates customized 
+ * Primary module file for Springboard Social, which integrates customized
  * share content with AddThis service and Salesforce.
  */
 
@@ -318,7 +318,7 @@ function sb_social_access_node_settings($node) {
  * Implements hook_node_insert().
  */
 function sb_social_node_insert($node) {
-  // clone social settings when a node with settings is cloned.
+  // Clone social settings when a node with settings is cloned.
   if (isset($node->clone_from_original_nid) && is_numeric($node->clone_from_original_nid)) {
     $sid = sb_social_get_sid_by_id($node->clone_from_original_nid, 'node');
     if ($sid) {
@@ -643,13 +643,13 @@ function sb_social_theme($existing, $type, $theme, $path) {
  * Generate url for share tracking purposes.
  *
  * @param int $share_id
- *   Social share event id
+ *   Social share event id.
  *
  * @param mixed $settings
- *   An array of additional share settings
+ *   An array of additional share settings.
  *
  * @param string $url_path
- *   Drupal internal path (eg. node/1)
+ *   Drupal internal path (for example: node/1).
  *
  * @return string
  *   Returns an absolute url including share tracking id and
