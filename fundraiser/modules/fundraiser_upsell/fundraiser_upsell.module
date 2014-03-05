@@ -910,6 +910,8 @@ function fundraiser_upsell_modal_link($node, $did) {
   ctools_modal_add_js();
   ctools_add_js('ajax-responder');
   ctools_add_js('fundraiser_upsell', 'fundraiser_upsell');
+  $path = drupal_get_path('module', 'fundraiser_upsell');
+  drupal_add_css($path . '/css/fundraiser_upsell.css');
 
   drupal_add_js(array(
       'fundraiser-upsell' => array(
