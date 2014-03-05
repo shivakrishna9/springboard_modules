@@ -297,7 +297,6 @@ function fundraiser_upsell_node_form_validate($form, &$form_state) {
 function fundraiser_upsell_save_email_wrapper_settings($nid, $values) {
   $form = array();
   $delta = 'nid_' . $nid;
-
   // Need to fake a form state in order to save the mail settings.
   $email_wrappers_form_state = array(
     'values' => $values,
@@ -699,8 +698,11 @@ function fundraiser_upsell_donation_record_exists($did) {
 function fundraiser_upsell_fundraiser_donation_get_donation($donation) {
   $query = db_query("SELECT * FROM {fundraiser_upsell_donation} WHERE did = :did", array(':did' => $donation->did));
   $record = $query->fetchObject();
-  unset($record->did);
-  $donation->fundraiser_upsell = $record;
+
+  if ($record) {
+    unset($record->did);
+    $donation->fundraiser_upsell = $record;
+  }
 }
 
 /**
@@ -771,7 +773,6 @@ function fundraiser_upsell_node_insert($node) {
     // Insert the record.
     $record = fundraiser_upsell_node_record($node);
     drupal_write_record('fundraiser_upsell', $record);
-
     fundraiser_upsell_save_email_wrapper_settings($node->nid, $node->fundraiser_upsell['email_wrappers']);
   }
 }
@@ -795,7 +796,6 @@ function fundraiser_upsell_node_update($node) {
     elseif (!empty($exists)) {
       drupal_write_record('fundraiser_upsell', $record, 'nid');
     }
-
     fundraiser_upsell_save_email_wrapper_settings($node->nid, $node->fundraiser_upsell['email_wrappers']);
   }
 }
