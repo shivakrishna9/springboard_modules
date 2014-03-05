@@ -33,3 +33,22 @@
   clear: both;
   padding-top: 1em;
 }
+
+/* Move the prefix currency symbol inline with the input field */
+#fundraiser-upsell-donation-form .control-group .field-prefix {
+  float: left;
+  padding-right: 5px;
+  padding-top: 5px;
+  display: inline-block;
+}
+
+/* Adding some space between the form main text and the donation elements */
+#fundraiser-upsell-donation-form .control-group {
+  margin-top: 20px;
+}
+
+/* Override some basic bootstrap theming that is applied to the control group in the modal*/
+#fundraiser-upsell-donation-form .form-actions {
+  background: none;
+  border: none;
+}
