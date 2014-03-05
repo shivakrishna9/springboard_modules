@@ -319,23 +319,6 @@ function fundraiser_upsell_save_email_wrapper_settings($nid, $values) {
 }
 
 /**
- * Retrieve the upsell mail settings for the given node.
- *
- * @param int $nid
- *   Node ID
- *
- * @return bool|object
- *   The mail settings or FALSE.
- */
-function fundraiser_upsell_load_email_wrapper_settings($nid) {
-  $params = array(
-    'module' => 'fundraiser_upsell',
-    'delta' => 'nid_' . $nid,
-  );
-  return email_wrappers_mail_load($params);
-}
-
-/**
  * Extra donation form submit function to attach the upsell process.
  */
 function fundraiser_upsell_webform_submit($form, &$form_state) {
@@ -772,7 +755,11 @@ function fundraiser_upsell_node_insert($node) {
     $record = fundraiser_upsell_node_record($node);
     drupal_write_record('fundraiser_upsell', $record);
 
-    fundraiser_upsell_save_email_wrapper_settings($node->nid, $node->fundraiser_upsell['email_wrappers']);
+    // If we have email wrappers settings then we're coming from a form,
+    // so we need to save them.
+    if (is_array($node->fundraiser_upsell['email_wrappers'])) {
+      fundraiser_upsell_save_email_wrapper_settings($node->nid, $node->fundraiser_upsell['email_wrappers']);
+    }
   }
 }
 
@@ -796,7 +783,11 @@ function fundraiser_upsell_node_update($node) {
       drupal_write_record('fundraiser_upsell', $record, 'nid');
     }
 
-    fundraiser_upsell_save_email_wrapper_settings($node->nid, $node->fundraiser_upsell['email_wrappers']);
+    // If we have email wrappers settings then we're coming from a form,
+    // so we need to save them.
+    if (is_array($node->fundraiser_upsell['email_wrappers'])) {
+      fundraiser_upsell_save_email_wrapper_settings($node->nid, $node->fundraiser_upsell['email_wrappers']);
+    }
   }
 }
 
@@ -814,7 +805,6 @@ function fundraiser_upsell_node_load($nodes, $types) {
       // Merge data from upsell settings with node.
       $upsell = fundraiser_upsell_unflatten_record($upsell);
       $nodes[$node->nid]->fundraiser_upsell = $upsell;
-      $nodes[$node->nid]->fundraiser_upsell['email_wrappers'] = fundraiser_upsell_load_email_wrapper_settings($node->nid);
     }
   }
 }
