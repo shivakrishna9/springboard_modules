@@ -11,7 +11,7 @@
 function springboard_api_admin_settings($form, $form_state) {
   $available_services = springboard_api_list_management_services();
   $options = array_merge(array('0' => t('- select -')), $available_services);
-
+  dsm($options, 'options');
   $form['springboard_api_management_service'] = array(
     '#type' => 'select',
     '#title' => t('API Management Service'),
