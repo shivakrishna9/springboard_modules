@@ -44,11 +44,7 @@ function sb_social_email_token_replace($tokens, &$replacements, $settings, $node
     switch ($key) {
       case 'email_share_link':
         $vars['service'] = 'email';
-        $vars['extra'] = '';
-
-        if ($extra && function_exists($extra)) {
-          $vars['extra'] = $extra($settings['data']['email'], $node, $submission_id);
-        }
+        $vars['extra'] = sb_social_email_button_extra($settings['data']['email'], $node, $submission_id);
         $button = theme('sb_social_share_button', $vars);
         $replacements[$token] = theme('sb_social_share', array('buttons' => $button));
         break;
@@ -147,5 +143,5 @@ function sb_social_email_uninstall() {
 // by setting the title attribute in the link we override AddThis' default behavior which
 // is pulling in the <title></title> contents as the email subject.
 function sb_social_email_button_extra($settings, $node = FALSE, $submission_id = FALSE) {
-  return 'addthis:title="' . _sb_social_replace_tokens($settings['subject'], $node, $submission_id) . '"';
+   return 'addthis:title="' . _sb_social_replace_tokens($settings['subject'], $node, $submission_id) . '"';
 }

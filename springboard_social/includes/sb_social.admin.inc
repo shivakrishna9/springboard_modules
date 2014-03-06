@@ -186,6 +186,13 @@ function _sb_social_path_actions($sid) {
  * Why are we resetting a bunch of token cache stuff here?
  */
 function sb_social_admin_settings_submit($form, $form_state) {
+  $plugins = sb_social_list_plugins();
+  foreach ($plugins as $service => $plugin) {
+    $submit_func = isset($plugin['admin_setings_submit']) ? $plugin['admin_setings_submit'] : FALSE;
+    if ($submit_func && function_exists($submit_func)) {
+      $submit_func($form, $form_state);
+    }
+  }
   cache_clear_all('*', 'cache_token', TRUE);
   drupal_static_reset('token_get_info');
   drupal_static_reset('token_get_global_token_types');
