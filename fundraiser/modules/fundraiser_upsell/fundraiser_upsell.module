@@ -759,7 +759,7 @@ function fundraiser_upsell_node_insert($node) {
 
     // If we have email wrappers settings then we're coming from a form,
     // so we need to save them.
-    if (is_array($node->fundraiser_upsell['email_wrappers'])) {
+    if (isset($node->fundraiser_upsell['email_wrappers']) && is_array($node->fundraiser_upsell['email_wrappers'])) {
       fundraiser_upsell_save_email_wrapper_settings($node->nid, $node->fundraiser_upsell['email_wrappers']);
     }
   }
@@ -787,7 +787,7 @@ function fundraiser_upsell_node_update($node) {
 
     // If we have email wrappers settings then we're coming from a form,
     // so we need to save them.
-    if (is_array($node->fundraiser_upsell['email_wrappers'])) {
+    if (isset($node->fundraiser_upsell['email_wrappers']) && is_array($node->fundraiser_upsell['email_wrappers'])) {
       fundraiser_upsell_save_email_wrapper_settings($node->nid, $node->fundraiser_upsell['email_wrappers']);
     }
   }
