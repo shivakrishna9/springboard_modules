@@ -555,6 +555,9 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
   if ($type == 'sb_social') {
     $replacements = array();
     $node = !empty($data['node']) ? $data['node'] : FALSE;
+    if (!$node && arg(0) == 'node' && is_numeric(arg(1))) {
+      $node = node_load(arg(1));
+    }
 
     if (isset($node->nid) && $node->nid) {
       $id = $node->nid;
