@@ -23,6 +23,9 @@ function springboard_api_form_resource_retrieve($nid, $op = NULL) {
   $form_details = springboard_api_get_form_details($nid);
   if ($form_details) {
     return $form_details;
+    // $messages = $_SESSION['messages'];
+   // unset($_SESSION['messages']);
+   // return $messages;
   }
   else {
     return services_error("The requested form does not exist.", 404);
@@ -50,8 +53,7 @@ function springboard_api_form_resource_index($node_type = NULL) {
     $form_select->condition('type', $form_types, 'in');
   }
   $results = $form_select->execute();
-  return $results->fetchAll();
-
+  return  $results->fetchAll();
 }
 
 /**

@@ -21,7 +21,24 @@ $plugin = array(
  * Authentication callback.
  */
 function springboard_api_basic_service_authenticate($op, $data) {
-  return TRUE;
+  drupal_set_message('access callback invoked');
+  $api_key = FALSE;
+  switch($op) {
+    case 'index':
+      $api_key = !empty($data[1]) ? $data[1] : FALSE;
+      break;
+    case 'retrieve':
+      $api_key = !empty($data[2]) ? $data[2] : FALSE;
+      break;
+
+  }
+  if (!$api_key) {
+    return FALSE;
+  }
+  $api_keys = variable_get('springboard_api_basic_keys', array());
+  $valid_keys = array_keys($api_keys);
+  drupal_set_message('valid keys:' . print_r($valid_keys, TRUE));
+  return in_array($api_key, $valid_keys) ? TRUE : FALSE;
 }
 
 /**
@@ -53,32 +70,6 @@ function springboard_api_basic_service_throttle() {
  * Admin settings form for plugin.
  */
 function springboard_api_basic_service_settings(&$form, $form_state) {
-  $form['additional_settings'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Settings for Basic Service Management plugin'),
-    '#states' => array(
-      'visible' => array(
-        ':input[name="springboard_api_management_service"]' => array('value' => 'basic'),
-      ),
-    ),
-  );
-  $form['additional_settings']['springboard_api_basic_service_track_usage'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Track API usage'),
-    '#default_value' => variable_get('springboard_api_basic_service_track_usage', 0),
-  );
-  $form['additional_settings']['springboard_api_basic_service_enable_throttling'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Enable API Throttling'),
-    '#description' => t('Throttling attempts to limit the impact of API calls on your web server by limiting the number of calls that can be made over a period of time.'),
-    '#default_value' => variable_get('springboard_api_test_service_enable_throttling', 0),
-  );
-  $form['additional_settings']['springboard_api_basic_service_throttle_limit'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Max API calls per minute.'),
-    '#description' => t('Maximum number of API calls per endpoint in 60 seconds.'),
-    '#default_value' => variable_get('springboard_api_test_service_throttle_limit', 0),
-  );
   $form['api_keys'] = array(
     '#type' => 'fieldset',
     '#title' => t('App Keys'),
@@ -88,6 +79,47 @@ function springboard_api_basic_service_settings(&$form, $form_state) {
       ),
     ),
   );
+  $api_keys = variable_get('springboard_api_basic_keys', array());
+  $rows = array();
+  foreach ($api_keys as $key => $value) {
+    $links = _springboard_api_basic_service_links($key['id']);
+    $rows[] = array(
+      $value['name'],
+      $key,
+      $links,
+    );
+  }
+  if (count($rows)) {
+    $header = array(
+      t('App Name'),
+      t('API key'),
+      t('Enabled'),
+      t('Actions'),
+    );
+    $vars = array(
+      'header' => $header,
+      'rows' => $rows,
+      'attributes' => array(),
+      'colgroups' => array(),
+      'caption' => '',
+      'sticky' => FALSE,
+      'empty' => '',
+    );
+    $form['api_keys']['list'] = array(
+      '#type' => 'markup',
+      '#markup' => theme_table($vars),
+    );
+  }
+  $form['api_keys']['add_basic_app_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('App name'),
+  );
+  $form['api_keys']['add_submit'] = array(
+    '#type' => 'button',
+    '#value' => t('Add'),
+    '#executes_submit_callback' => TRUE,
+  );
+  $form['#submit'][] = '_springboard_api_basic_service_submit';
 }
 
 /**
@@ -108,4 +140,25 @@ function _springboard_api_tracker_count() {
  */
 function springboard_api_basic_service_menu_items(&$items) {
 
+}
+
+function _springboard_api_basic_service_links($id) {
+
+  $links = l(t('Edit'), '');
+  $links .= ' | ' . l(t('Delete'), '');
+  return $links;
+}
+
+function _springboard_api_basic_service_submit($form, $form_state) {
+  $api_keys = variable_get('springboard_api_basic_keys', array());
+  if (!empty($form_state['values']['add_basic_app_name'])) {
+    $app_name = $form_state['values']['add_basic_app_name'];
+    $keygen = md5($app_name . time());
+    // Indexed by api key so a quick array_keys() nets a full list of available
+    // keys for access checking without iterating the array.
+    $api_keys[$keygen] = array(
+      'name' => $app_name,
+    );
+    variable_set('springboard_api_basic_keys', $api_keys);
+  }
 }

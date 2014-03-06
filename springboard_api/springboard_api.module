@@ -11,18 +11,20 @@
  * Add support for CORS headers.
  */
 function springboard_api_init() {
-  $method = $_SERVER['REQUEST_METHOD'];
-  if (isset($_SERVER['HTTP_ORIGIN'])) {
-    drupal_add_http_header('Access-Control-Allow-Origin', $_SERVER['HTTP_ORIGIN']);
-  }
-  if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'])) {
-    drupal_add_http_header('Access-Control-Allow-Headers', $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']);
-  }
-  if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD'])) {
-    drupal_add_http_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  }
-  if ($method == 'OPTIONS') {
-    exit;
+  if (variable_get('springboard_api_enable_cors', FALSE)) {
+    $method = $_SERVER['REQUEST_METHOD'];
+    if (isset($_SERVER['HTTP_ORIGIN'])) {
+      drupal_add_http_header('Access-Control-Allow-Origin', $_SERVER['HTTP_ORIGIN']);
+    }
+    if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'])) {
+      drupal_add_http_header('Access-Control-Allow-Headers', $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']);
+    }
+    if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD'])) {
+      drupal_add_http_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    }
+    if ($method == 'OPTIONS') {
+      exit;
+    }
   }
 }
 
@@ -60,7 +62,7 @@ function springboard_api_menu() {
  */
 function springboard_api_services_resources() {
   $resource = array(
-    'springboard-donation' => array(
+    /*'springboard-donation' => array(
       'operations' => array(
         'create' => array(
           'help' => 'Create a donation',
@@ -84,7 +86,7 @@ function springboard_api_services_resources() {
           'access arguments append' => TRUE,
         ),
       ),
-    ),
+    ),*/
     'springboard-forms' => array(
       'operations' => array(
         'retrieve' => array(
@@ -114,10 +116,14 @@ function springboard_api_services_resources() {
               'optional' => TRUE,
               'default value' => array(),
             ),
+            array(
+              'name'         => 'api_key',
+              'type'         => 'string',
+              'description'  => t('API key.'),
+              'source'       => array('param' => 'app_id'),
+              'optional'     => TRUE,
+            ),
           ),
-          'access callback' => 'springboard_api_form_resource_access',
-          'access arguments' => array('view'),
-          'access arguments append' => TRUE,
         ),
         'index' => array(
           'help' => 'List avaialble forms',
@@ -136,6 +142,13 @@ function springboard_api_services_resources() {
               'type'         => 'int',
               'description'  => t('filter index values by the following node type.'),
               'source'       => array('param' => 'node_type'),
+              'optional'     => TRUE,
+            ),
+            array(
+              'name'         => 'api_key',
+              'type'         => 'string',
+              'description'  => t('API key.'),
+              'source'       => array('param' => 'app_id'),
               'optional'     => TRUE,
             ),
           ),
@@ -170,7 +183,7 @@ function springboard_api_services_resources() {
             ),
           ),
         ),
-        'render' => array(
+     /* 'render' => array(
           'help' => 'request a rendered form',
           'file' => array(
             'type' => 'inc',
@@ -196,8 +209,15 @@ function springboard_api_services_resources() {
               'description' => 'page wrapper id.',
               'type' => 'array',
             ),
+            array(
+              'name'         => 'api_key',
+              'type'         => 'string',
+              'description'  => t('API key.'),
+              'source'       => array('param' => 'app_id'),
+              'optional'     => TRUE,
+            ),
           ),
-        ),
+        ),*/
       ),
     ),
   );
@@ -276,19 +296,27 @@ function springboard_api_get_available_plugins() {
  *   Any other argument data passed by Services.
  */
 function springboard_api_form_resource_access($op, $data) {
-  springboard_api_log_service_usage($op, $data = NULL);
+  // springboard_api_log_service_usage($op, $data = NULL);
   $service = springboard_api_get_enabled_management_service();
-  if (isset($service['throttling_callback']) && function_exists($service['throttling_callback'])) {
+  drupal_set_message('op:' . $op);
+  drupal_set_message('data:' . print_r($data, TRUE));
+  /*if (isset($service['throttling_callback']) && function_exists($service['throttling_callback'])) {
     $func = $service['throttling_callback'];
     $request_ok = $func();
     if (!$request_ok) {
       // Bail out, throttle limit has been reached.
       return services_error(t('API usage limit has been reached. Try your request again later.'), 406);
     }
-  }
+  }*/
   if (isset($service['authentication_callback']) && function_exists($service['authentication_callback'])) {
     $func = $service['authentication_callback'];
-    return $func($op, $data);
+    $access = $func($op, $data);
+    if ($access) {
+      return TRUE;
+    }
+    else {
+      return services_error(t('Access denied.'), 406);
+    }
   }
   return TRUE;
 }
