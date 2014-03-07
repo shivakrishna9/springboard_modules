@@ -5,6 +5,22 @@
  */
 
 /**
+ * Implements hook_ctools_plugin_api().
+ */
+function springboard_p2p_ctools_plugin_api($module = NULL, $api = NULL) {
+  if ($module == "field_group" && $api == "field_group") {
+    return array("version" => "1");
+  }
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function springboard_p2p_views_api($module = NULL, $api = NULL) {
+  return array("api" => "3.0");
+}
+
+/**
  * Implements hook_node_info().
  */
 function springboard_p2p_node_info() {
