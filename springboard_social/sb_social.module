@@ -225,6 +225,9 @@ function sb_social_block_info() {
  */
 function sb_social_block_view($delta = '') {
   if ($delta = 'social_sharing') {
+    $block['subject'] = '';
+    $block['content'] = '';
+
     $node = menu_get_object();
     if (!$node) {
       // Is it a confirmation page?
@@ -237,27 +240,29 @@ function sb_social_block_view($delta = '') {
     else {
       $id = $node->nid;
     }
-
     $sid = _sb_social_sid_by_id($id);
-    $settings = sb_social_settings_load($sid);
-    $plugins = sb_social_get_enabled_plugins();
 
-    // Render button for each enabled service.
-    foreach ($plugins as $service => $plugin) {
-      $vars['service'] = $service;
-      $vars['extra'] = '';
+    if ($sid) {
+      $settings = sb_social_settings_load($sid);
+      $plugins = sb_social_get_enabled_plugins();
+      // Render button for each enabled service.
+      foreach ($plugins as $service => $plugin) {
+        $vars['service'] = $service;
+        $vars['extra'] = '';
+        $vars['contents'] = isset($plugin['button_contents']) ? $plugin['button_contents'] : '';
 
-      if (isset($plugin['button_extra'])) {
-        $func = $plugin['button_extra'];
-        if (function_exists($func)) {
-          $vars['extra'] = $func($settings['data'][$service], $node);
+        if (isset($plugin['button_extra'])) {
+          $func = $plugin['button_extra'];
+          if (function_exists($func)) {
+            $vars['extra'] = $func($settings['data'][$service], $node);
+          }
         }
+        $buttons[] = theme('sb_social_share_button', $vars);
       }
-      $buttons[] = theme('sb_social_share_button', $vars);
+      $buttons = implode("\n", $buttons);
+      $block['subject'] = NULL;
+      $block['content'] = theme('sb_social_share', array('buttons' => $buttons));
     }
-    $buttons = implode("\n", $buttons);
-    $block['subject'] = NULL;
-    $block['content'] = theme('sb_social_share', array('buttons' => $buttons));
     return $block;
   }
 }
@@ -581,7 +586,13 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
     foreach ($enabled_plugins as $service => $plugin) {
       if (!empty($plugin['token_replace'])) {
         $func = $plugin['token_replace'];
-        $extra = isset($plugin['button_extra']) ? $plugin['button_extra'] : FALSE;
+        $extra_func = isset($plugin['button_extra']) ? $plugin['button_extra'] : FALSE;
+        if ($extra_func && function_exists($extra_func)) {
+          $extra = $extra_func($settings['data'][$service], $node, $submission_id);
+        }
+        else {
+          $extra = FALSE;
+        }
         $func($tokens, $replacements, $settings, $node, $submission_id, $extra);
       }
     }
@@ -590,6 +601,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
       foreach ($enabled_plugins as $service => $plugin) {
         $vars['service'] = $service;
         $vars['extra'] = '';
+        $vars['contents'] = isset($plugin['button_contents']) ? $plugin['button_contents'] : '';
 
         // Some buttons (like email) require additional html attributes.
         // The button_extra callback provides these values.
@@ -724,7 +736,6 @@ function _sb_social_set_tracking_cookie($uid, $mail, $sid) {
  *   Returns string with tokens replaced.
  */
 function _sb_social_replace_tokens($string, $node, $sid = NULL) {
-
   $rep = array();
   if (strpos($string, '%title') !== FALSE) {
     $rep['%title'] = !empty($node->title) ? $node->title : drupal_get_title();
