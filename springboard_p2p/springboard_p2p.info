@@ -1,0 +1,6 @@
+name = Springboard peer to peer
+description = Peer to peer fundraising
+core = 7.x
+package = Springboard
+version = 7.x-4.x-dev
+features[features_api][] = api:2
