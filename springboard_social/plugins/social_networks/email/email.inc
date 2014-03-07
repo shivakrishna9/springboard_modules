@@ -9,11 +9,13 @@ $plugin = array(
   'title' => t('Email'),
   'settings' => 'sb_social_email_settings',
   'admin_settings' => 'sb_social_email_admin_settings',
+  'admin_setings_submit' => 'sb_social_email_admin_settings_submit',
   'process' => 'sb_social_email_process_settings',
   'share_config' => 'sb_social_email_share_js_config',
   'js' => 'plugins/social_networks/email/email.share.js',
   'defaults' => 'sb_social_email_defaults',
   'button_extra' => 'sb_social_email_button_extra',
+  'button_contents' => sb_social_email_custom_button_contents(),
   'uninstall' => 'sb_social_email_uninstall',
   'token_info' => sb_social_email_token_info(),
   'token_replace' => 'sb_social_email_token_replace',
@@ -45,6 +47,7 @@ function sb_social_email_token_replace($tokens, &$replacements, $settings, $node
       case 'email_share_link':
         $vars['service'] = 'email';
         $vars['extra'] = sb_social_email_button_extra($settings['data']['email'], $node, $submission_id);
+        $vars['contents'] = sb_social_email_custom_button_contents();
         $button = theme('sb_social_share_button', $vars);
         $replacements[$token] = theme('sb_social_share', array('buttons' => $button));
         break;
@@ -107,6 +110,27 @@ function sb_social_email_admin_settings(&$form) {
       ),
     ),
   );
+  $form['services']['email']['icon'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Custom icon settings'),
+  );
+  $form['services']['email']['icon']['springboard_social_email_custom_text'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Custom icon text'),
+    '#default_value' => variable_get('springboard_social_email_custom_text', ''),
+  );
+  $form['services']['email']['icon']['springboard_social_email_custom_icon'] = array(
+    '#type' => 'managed_file',
+    '#title' => t('Upload custom icon'),
+    '#description' => t('Custom share icon'),
+    '#default_value' => variable_get('springboard_social_email_custom_icon', ''),
+    '#upload_location' => 'public://social_images',
+    '#upload_validators' => array(
+      'file_validate_extensions' => array('gif png jpg jpeg'),
+    ),
+    '#theme' => 'sb_social_share_image_preview',
+  );
+
   $form['services']['email']['springboard_social_email_subject'] = array(
     '#type' => 'textfield',
     '#title' => t('Email subject'),
@@ -117,6 +141,18 @@ function sb_social_email_admin_settings(&$form) {
     '#title' => t('Email message'),
     '#default_value' => variable_get('springboard_social_email_message', ''),
   );
+}
+
+function sb_social_email_admin_settings_submit($form, $form_state) {
+  if ($form_state['values']['springboard_social_email_custom_icon']) {
+    $value = $form_state['values']['springboard_social_email_custom_icon'];
+    $file = file_load($value);
+    if ($file && !$file->status) {
+      $file->status = FILE_STATUS_PERMANENT;
+      file_save($file);
+      file_usage_add($file, 'sb_social', 'email_icon', 1);
+    }
+  }
 }
 
 function sb_social_email_process_settings(&$data, $form_state) {
@@ -144,4 +180,21 @@ function sb_social_email_uninstall() {
 // is pulling in the <title></title> contents as the email subject.
 function sb_social_email_button_extra($settings, $node = FALSE, $submission_id = FALSE) {
    return 'addthis:title="' . _sb_social_replace_tokens($settings['subject'], $node, $submission_id) . '"';
+}
+
+function sb_social_email_custom_button_contents() {
+  $contents = '';
+  $icon = variable_get('springboard_social_email_custom_icon', '');
+  $text = variable_get('springboard_social_email_custom_text', '');
+  if (!empty($icon)) {
+    $icon_file = file_load($icon);
+    if (isset($icon_file->uri)) {
+      $url = file_create_url($icon_file->uri);
+      $contents .= '<img src="' . $url . '">';
+    }
+  }
+  if ($text) {
+    $contents .= '<span>' . $text . '</span>';
+  }
+  return $contents;
 }

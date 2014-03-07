@@ -19,6 +19,7 @@ $plugin = array(
   'token_info' => sb_social_facebook_token_info(),
   'token_replace' => 'sb_social_facebook_token_replace',
   'metatag_view_alter' => 'facebook_metatag_view_alter',
+  'button_contents' => sb_social_facebook_custom_button_contents(),
 );
 
 /**
@@ -78,6 +79,7 @@ function sb_social_facebook_token_replace($tokens, &$replacements, $settings, $n
       case 'facebook_share_link':
         $vars['service'] = 'facebook';
         $vars['extra'] = '';
+        $vars['contents'] = sb_social_facebook_custom_button_contents();
 
         if (isset($extra) && function_exists($extra)) {
           $vars['extra'] = $extra($settings['data']['facebook']);
@@ -128,6 +130,26 @@ function sb_social_facebook_admin_settings(&$form) {
       ),
     ),
   );
+  $form['services']['facebook']['icon'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Custom icon settings'),
+  );
+  $form['services']['facebook']['icon']['springboard_social_facebook_custom_text'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Custom icon text'),
+    '#default_value' => variable_get('springboard_social_facebook_custom_text', ''),
+  );
+  $form['services']['facebook']['icon']['springboard_social_facebook_custom_icon'] = array(
+    '#type' => 'managed_file',
+    '#title' => t('Upload custom icon'),
+    '#description' => t('Custom share icon'),
+    '#default_value' => variable_get('springboard_social_facebook_custom_icon', ''),
+    '#upload_location' => 'public://social_images',
+    '#upload_validators' => array(
+      'file_validate_extensions' => array('gif png jpg jpeg'),
+    ),
+    '#theme' => 'sb_social_share_image_preview',
+  );
   $form['services']['facebook']['springboard_social_facebook_title'] = array(
     '#type' => 'textfield',
     '#title' => t('Default Facebook share title'),
@@ -159,6 +181,15 @@ function sb_social_facebook_admin_settings_submit($form, $form_state) {
       $file->status = FILE_STATUS_PERMANENT;
       file_save($file);
       file_usage_add($file, 'sb_social', 'admin_default', 1);
+    }
+  }
+  if ($form_state['values']['springboard_social_facebook_custom_icon']) {
+    $value = $form_state['values']['springboard_social_facebook_custom_icon'];
+    $file = file_load($value);
+    if ($file && !$file->status) {
+      $file->status = FILE_STATUS_PERMANENT;
+      file_save($file);
+      file_usage_add($file, 'sb_social', 'facebook_icon', 1);
     }
   }
 }
@@ -280,4 +311,19 @@ function sb_social_facebook_uninstall() {
 
 }
 
-
+function sb_social_facebook_custom_button_contents() {
+  $contents = '';
+  $icon = variable_get('springboard_social_facebook_custom_icon', '');
+  $text = variable_get('springboard_social_facebook_custom_text', '');
+  if (!empty($icon)) {
+    $icon_file = file_load($icon);
+    if (isset($icon_file->uri)) {
+      $url = file_create_url($icon_file->uri);
+      $contents .= '<img src="' . $url . '">';
+    }
+  }
+  if ($text) {
+    $contents .= '<span>' . $text . '</span>';
+  }
+  return $contents;
+}

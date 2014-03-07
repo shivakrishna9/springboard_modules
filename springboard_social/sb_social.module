@@ -594,6 +594,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
       foreach ($enabled_plugins as $service => $plugin) {
         $vars['service'] = $service;
         $vars['extra'] = '';
+        $vars['contents'] = isset($plugin['button_contents']) ? $plugin['button_contents'] : '';
 
         // Some buttons (like email) require additional html attributes.
         // The button_extra callback provides these values.
