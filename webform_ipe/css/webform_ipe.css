@@ -23,21 +23,60 @@ body.editor-on div#webform-component-right-region {
 }
 
 .webform-ipe-container.editor-on {
-  border: 1px dashed #999;
-  margin-top:2em;
+  border: 2px dashed #999;
+  padding:1%;
+/*  margin-top:2em;
   margin-bottom:2em;
-  padding:8px;
+  padding:8px;*/
   border-collapse: none;
 }
 
-.webform-ipe-container.editor-on legend{
-  float:left;
-  width: auto;
+.easy-edit-container.editor-on .editor-on {
+  border: 1px dashed #999;
+  width:97%;
 }
+.easy-edit-container.editor-on .editor-on .editor-on {
+  border-color: #cecece;
+}
+
+.easy-edit-container.editor-on legend{
+  float:left;
+  width:100%;
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin-bottom: 20px;
+  font-size: 21px;
+  line-height: 40px;
+  color: #333;
+  border: 0;
+  border-bottom: 1px solid #e5e5e5;
+  position: relative;
+}
+
 .webform-ipe-container.editor-on .fieldset-legend {
   margin-top: 0px;
   white-space: nowrap;
   float:left;
+}
+
+.easy-edit-container.editor-on .row .span12 {
+  width:98%;
+}
+
+.easy-edit-container.editor-on .control-group {
+  margin-top:5px;
+  margin-bottom:5px;
+}
+
+.easy-edit-container.editor-on .control-group.sortable {
+  background-color:#bfecff;
+}
+
+.easy-edit-container.webform-component-fieldset.editor-on {
+  float:none;
+  clear:both;
+  overflow: hidden;
 }
 
 .webform-ipe-container.webform-component-fieldset.editor-on fieldset {
@@ -45,7 +84,7 @@ body.editor-on div#webform-component-right-region {
   max-width: 90%;
 }
 
-body.editor-on .webform-component-fieldset.sortable:hover
+/*body.editor-on .webform-component-fieldset.sortable:hover
 .fieldset.sortable:hover {
   background-color:#f0f0f0;
   cursor: move;
@@ -77,7 +116,7 @@ body.editor-on .sortable:hover {
  body.editor-on .fieldset.ui-sortable-disabled .sortable:hover {
     background-color:transparent;
     cursor: default;
-  }
+  }*/
 
 .ui-state-highlight {
   width: 100%;
