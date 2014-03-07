@@ -1,5 +1,7 @@
 <?php
 /**
  * @file
- * Drupal needs this blank file.
+ * Code for the Springboard peer to peer feature.
  */
+
+include_once 'springboard_p2p.features.inc';
