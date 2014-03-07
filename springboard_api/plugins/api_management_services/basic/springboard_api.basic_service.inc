@@ -21,24 +21,23 @@ $plugin = array(
  * Authentication callback.
  */
 function springboard_api_basic_service_authenticate($op, $data) {
-  drupal_set_message('access callback invoked');
+
   $api_key = FALSE;
   switch($op) {
     case 'index':
+    case 'retrieve':
+    case 'submit':
       $api_key = !empty($data[1]) ? $data[1] : FALSE;
       break;
-    case 'retrieve':
-      $api_key = !empty($data[2]) ? $data[2] : FALSE;
-      break;
-
   }
   if (!$api_key) {
     return FALSE;
   }
   $api_keys = variable_get('springboard_api_basic_keys', array());
-  $valid_keys = array_keys($api_keys);
-  drupal_set_message('valid keys:' . print_r($valid_keys, TRUE));
-  return in_array($api_key, $valid_keys) ? TRUE : FALSE;
+  if (in_array($api_key, array_keys($api_keys)) && $api_keys[$api_key]['enabled']) {
+    return TRUE;
+  }
+  return services_error(t('Missing or invalid API key'), 406);
 }
 
 /**
@@ -79,11 +78,14 @@ function springboard_api_basic_service_settings(&$form, $form_state) {
       ),
     ),
   );
+
   $api_keys = variable_get('springboard_api_basic_keys', array());
   $rows = array();
+  $defaults = array();
   foreach ($api_keys as $key => $value) {
     $links = _springboard_api_basic_service_links($key['id']);
-    $rows[] = array(
+    $defaults[$key] = $value['enabled'] ? $key : 0;
+    $rows[$key] = array(
       $value['name'],
       $key,
       $links,
@@ -93,7 +95,6 @@ function springboard_api_basic_service_settings(&$form, $form_state) {
     $header = array(
       t('App Name'),
       t('API key'),
-      t('Enabled'),
       t('Actions'),
     );
     $vars = array(
@@ -105,9 +106,11 @@ function springboard_api_basic_service_settings(&$form, $form_state) {
       'sticky' => FALSE,
       'empty' => '',
     );
-    $form['api_keys']['list'] = array(
-      '#type' => 'markup',
-      '#markup' => theme_table($vars),
+    $form['api_keys']['api_key_list'] = array(
+      '#type' => 'tableselect',
+      '#header' => $header,
+      '#options' => $rows,
+      '#default_value' => $defaults,
     );
   }
   $form['api_keys']['add_basic_app_name'] = array(
@@ -132,16 +135,6 @@ function _springboard_api_tracker_count() {
   return $result->fetchField();
 }
 
-/**
- * Add menu paths to add/edit/delete api keys.
- *
- * @param array $items
- *   hook_menu() $items array.
- */
-function springboard_api_basic_service_menu_items(&$items) {
-
-}
-
 function _springboard_api_basic_service_links($id) {
 
   $links = l(t('Edit'), '');
@@ -151,6 +144,18 @@ function _springboard_api_basic_service_links($id) {
 
 function _springboard_api_basic_service_submit($form, $form_state) {
   $api_keys = variable_get('springboard_api_basic_keys', array());
+  $enabled = $form_state['values']['api_key_list'];
+  foreach ($api_keys as $key => $settings) {
+    /*
+    if ($key == '0' || !$key) {
+      unset($api_keys[$key]);
+      continue;
+    }*/
+    if (in_array($key, array_keys($enabled))) {
+      $api_keys[$key]['enabled'] = $enabled[$key] ? TRUE : FALSE;
+    }
+  }
+  variable_set('springboard_api_basic_keys', $api_keys);
   if (!empty($form_state['values']['add_basic_app_name'])) {
     $app_name = $form_state['values']['add_basic_app_name'];
     $keygen = md5($app_name . time());
@@ -158,6 +163,7 @@ function _springboard_api_basic_service_submit($form, $form_state) {
     // keys for access checking without iterating the array.
     $api_keys[$keygen] = array(
       'name' => $app_name,
+      'enabled' => 0,
     );
     variable_set('springboard_api_basic_keys', $api_keys);
   }

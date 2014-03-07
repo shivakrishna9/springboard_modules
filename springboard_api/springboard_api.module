@@ -62,6 +62,7 @@ function springboard_api_menu() {
  */
 function springboard_api_services_resources() {
   $resource = array(
+    // future development.
     /*'springboard-donation' => array(
       'operations' => array(
         'create' => array(
@@ -108,6 +109,8 @@ function springboard_api_services_resources() {
               'type' => 'int',
               'description' => 'The node id of the form to get',
             ),
+            // Future development.
+            /*
             array(
               'name' => 'op',
               'type' => 'array',
@@ -115,12 +118,12 @@ function springboard_api_services_resources() {
               'source' => array('param' => 'op'),
               'optional' => TRUE,
               'default value' => array(),
-            ),
+            ),*/
             array(
               'name'         => 'api_key',
               'type'         => 'string',
               'description'  => t('API key.'),
-              'source'       => array('param' => 'app_id'),
+              'source'       => array('param' => 'api_key'),
               'optional'     => TRUE,
             ),
           ),
@@ -148,7 +151,7 @@ function springboard_api_services_resources() {
               'name'         => 'api_key',
               'type'         => 'string',
               'description'  => t('API key.'),
-              'source'       => array('param' => 'app_id'),
+              'source'       => array('param' => 'api_key'),
               'optional'     => TRUE,
             ),
           ),
@@ -175,6 +178,13 @@ function springboard_api_services_resources() {
               'optional'     => FALSE,
             ),
             array(
+              'name'         => 'api_key',
+              'type'         => 'string',
+              'description'  => t('API key.'),
+              'source'       => array('param' => 'api_key'),
+              'optional'     => TRUE,
+            ),
+            array(
               'name' => 'submission',
               'optional' => FALSE,
               'source' => 'data',
@@ -183,6 +193,7 @@ function springboard_api_services_resources() {
             ),
           ),
         ),
+        // Future development.
      /* 'render' => array(
           'help' => 'request a rendered form',
           'file' => array(
@@ -204,7 +215,7 @@ function springboard_api_services_resources() {
             ),
             array(
               'name' => 'wrapper',
-              'optional' => TRUE,
+              'optional' => TRUE
               'source' => 'data',
               'description' => 'page wrapper id.',
               'type' => 'array',
@@ -297,24 +308,14 @@ function springboard_api_get_available_plugins() {
  */
 function springboard_api_form_resource_access($op, $data) {
   // springboard_api_log_service_usage($op, $data = NULL);
+  if ($op == 'submit' && !_springboard_api_is_secure()) {
+    return services_error(t('SSL is required to submit data.'), 406);
+  }
   $service = springboard_api_get_enabled_management_service();
-  drupal_set_message('op:' . $op);
-  drupal_set_message('data:' . print_r($data, TRUE));
-  /*if (isset($service['throttling_callback']) && function_exists($service['throttling_callback'])) {
-    $func = $service['throttling_callback'];
-    $request_ok = $func();
-    if (!$request_ok) {
-      // Bail out, throttle limit has been reached.
-      return services_error(t('API usage limit has been reached. Try your request again later.'), 406);
-    }
-  }*/
   if (isset($service['authentication_callback']) && function_exists($service['authentication_callback'])) {
     $func = $service['authentication_callback'];
     $access = $func($op, $data);
-    if ($access) {
-      return TRUE;
-    }
-    else {
+    if (!$access) {
       return services_error(t('Access denied.'), 406);
     }
   }
@@ -556,4 +557,11 @@ function springboard_api_log_service_usage($op, $data = NULL) {
     'data' => serialize($data),
   );
   drupal_write_record('springboard_api_tracker', $record);
+}
+
+/**
+ * Helper function. Check if the current page is SSL protected.
+ */
+function _springboard_api_is_secure() {
+  return (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') ? TRUE : FALSE;
 }

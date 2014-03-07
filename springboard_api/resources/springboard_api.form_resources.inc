@@ -66,7 +66,7 @@ function springboard_api_form_resource_index($node_type = NULL) {
  *   Associative array of webform component form_keys and their submitted
  *   values.
  */
-function springboard_api_form_action_submit($nid, $submission) {
+function springboard_api_form_action_submit($nid, $app_id = NULL, $submission) {
   if (is_numeric($nid)) {
     $node = node_load($nid);
     // Typecast in case the submission was JSON encoded as an object.
@@ -131,6 +131,7 @@ function springboard_api_form_action_submit($nid, $submission) {
     if ($errors = form_get_errors()) {
       // Strip down error keys to form key.
       $formatted_errors = _springboard_api_reformat_errors($errors);
+      return services_error($formatted_errors, 406);
     }
     else {
       // Since $form_state is passed by reference, we have full access to all
@@ -154,17 +155,20 @@ function springboard_api_form_action_submit($nid, $submission) {
 function _springboard_api_reformat_errors($errors) {
   $formatted_errors = array();
   foreach ($errors as $key => $value) {
+    if (empty($value)) {
+      continue;
+    }
     $err = array();
     if (strpos($key, '][') !== FALSE) {
       $parts = explode('][', $key);
       $form_key = end($parts);
-      $formatted_errors[$form_key][] = $value;
+      $formatted_errors[] = $form_key . '::' . $value;
     }
     else {
-      $formatted_errors[$key][] = $value;
+      $formatted_errors[] = $key . '::' . $value;
     }
   }
-  return $formatted_errors;
+  return implode(", ", $formatted_errors);
 }
 
 /**
