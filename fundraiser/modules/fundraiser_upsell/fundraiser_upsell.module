@@ -769,8 +769,6 @@ function fundraiser_upsell_create_recurring_series($donation) {
  */
 function fundraiser_upsell_node_insert($node) {
   // If the new node is a clone this data is already set
-
-
   if (fundraiser_upsell_is_available($node)) {
     // Insert the record.
     $record = fundraiser_upsell_node_record($node);
