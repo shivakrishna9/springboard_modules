@@ -170,13 +170,15 @@ function webform_ipe_preprocess_node(&$vars) {
     drupal_add_js($path . '/js/block.ui.min.js');
     drupal_add_js($path . '/js/jquery.sortable.js');
     drupal_add_js($path . '/js/webform_ipe.js');
+    drupal_add_js($path . '/js/html5sortable.js');
+
     drupal_add_js(array('webform_ipe' => $json_data), 'setting');
 
     // list.js needs '$'
     drupal_add_js('$ = jQuery', array('type' => 'inline', 'scope' => 'footer', 'weight' => 998));
     drupal_add_js($path . '/js/list.min.js', array('scope' => 'footer', 'weight' => 999));
 
-    drupal_add_library('system', 'ui.sortable');
+    //drupal_add_library('system', 'ui.sortable');
     drupal_add_library('system', 'drupal.collapse');
     drupal_add_library('system', 'drupal.form');
     drupal_add_library('system', 'drupal.ajax');
@@ -203,6 +205,8 @@ function _webform_ipe_children_elements($element) {
 
 //make sure the jquery upate version of UI is loaded, not springboard base
 function webform_ipe_js_alter(&$js) {
+        unset($js['sites/all/themes/springboard-themes/springboard_base/js/jquery-ui.min.js']);
+
   $jq_update_ui = isset($js['sites/all/modules/contrib/jquery_update/replace/ui/ui/minified/jquery.ui.core.min.js']);
   $theme_ui = isset($js['sites/all/themes/springboard-themes/springboard_base/js/jquery-ui.min.js']);
   if ($theme_ui && $jq_update_ui) {
@@ -210,7 +214,6 @@ function webform_ipe_js_alter(&$js) {
     $type = isset($node->type) ? $node->type : array();
     $is_active = in_array($type, variable_get('webform_ipe_node_types'));
     if ($is_active && user_access('use webform IPE')) {
-      unset($js['sites/all/themes/springboard-themes/springboard_base/js/jquery-ui.min.js']);
     }
   }
 }
@@ -286,14 +289,6 @@ function _webform_ipe_json_process($node, $op = 'update') {
       $output[$component['form_key']]['cid'] = $cid;
     }
     $output[$component['form_key']] = array('sucess' => 'true');
-  }
-
-  // variable stores node ID for retrieval by form_layouts module
-  // this can go away when form layout UI is removed.
-  $ipe_forms = variable_get('webform_ipe_nodes', array());
-  if(!in_array($node->nid, $ipe_forms)) {
-    $ipe_forms[] = $node->nid;
-    variable_set('webform_ipe_nodes', $ipe_forms);
   }
 
   return drupal_json_output($output);

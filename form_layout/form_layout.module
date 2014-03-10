@@ -440,54 +440,59 @@ function form_layout_preprocess_webform_form(&$variables) {
 function form_layout_form_node_form_alter(&$form, &$form_state, $form_id) {
   if (fundraiser_is_donation_type($form['#node']->type)) {
 
-    $easy_edit = variable_get('webform_easy_edit_nodes', array());
-    if(module_exists('webform_easy_edit') && isset($form['#node']->nid) && in_array($form['#node']->nid, $easy_edit)) {
+    $easy_edit = variable_get('webform_ipe_nodes', array());
+    if(module_exists('webform_ipe') && isset($form['#node']->nid) && in_array($form['#node']->nid, $easy_edit)) {
       $disabled = TRUE;
     }
     else {
       $disabled = FALSE;
     }
 
-    $form['form_layout'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Form Layout'),
-      '#description' => t('Select the form layout for this form.'),
-      '#collapsible' => TRUE,
-      '#collapsed' => FALSE,
-    );
+    //remove form layout  options for forms pre-existing the installation of form layouts
+    //until we figure out how to handle
+    if((isset($form['#node']->nid) && !empty($form['#node']->form_layout)) || !isset($form['#node']->nid)) {
 
-    $options = form_layout_get_layout_options();
-    $default_value = 'none';
+      $form['form_layout'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Form Layout'),
+        '#description' => t('Select the form layout for this form.'),
+        '#collapsible' => TRUE,
+        '#collapsed' => FALSE,
+      );
 
-    if (!empty($form['#node']->form_layout) && in_array($form['#node']->form_layout, array_keys($options))) {
-      $default_value = $form['#node']->form_layout;
+      $options = form_layout_get_layout_options();
+      $default_value = 'none';
+
+      if (!empty($form['#node']->form_layout) && in_array($form['#node']->form_layout, array_keys($options))) {
+        $default_value = $form['#node']->form_layout;
+      }
+
+      $form['form_layout']['form_layout'] = array(
+        '#type' => 'select',
+        '#title' => t('Layout'),
+        '#options' => $options,
+        '#default_value' => $default_value,
+        '#description' => $disabled ? 'This layout is now managed by the Webform In Place Editor. This value cannot be changed' : 'Choose a layout for the form.',
+        '#disabled' => $disabled,
+      );
+
+      $options = form_layout_get_region_options();
+      $default_value = 'bottom_region';
+      if (!empty($form['#node']->submit_position) && in_array($form['#node']->submit_position, array_keys($options))) {
+        $default_value = $form['#node']->submit_position;
+      }
+
+      $form['form_layout']['submit_position'] = array(
+        '#type' => 'select',
+        '#title' => t('Submit button position'),
+        '#options' => $options,
+        '#default_value' => $default_value,
+        '#description' => $disabled ? 'This layout is now managed by the Webform In Place Editor. This value cannot be changed' : 'Choose where the submit should be placed.',
+        '#disabled' => $disabled,
+      );
     }
-
-    $form['form_layout']['form_layout'] = array(
-      '#type' => 'select',
-      '#title' => t('Layout'),
-      '#options' => $options,
-      '#default_value' => $default_value,
-      '#description' => $disabled ? 'This layout is now managed by the Webform Easy Edit module. This value cannot be changed' : 'Choose a layout for the form.',
-      '#disabled' => $disabled,
-    );
-
-    $options = form_layout_get_region_options();
-    $default_value = 'bottom_region';
-    if (!empty($form['#node']->submit_position) && in_array($form['#node']->submit_position, array_keys($options))) {
-      $default_value = $form['#node']->submit_position;
-    }
-
-    $form['form_layout']['submit_position'] = array(
-      '#type' => 'select',
-      '#title' => t('Submit button position'),
-      '#options' => $options,
-      '#default_value' => $default_value,
-      '#description' => $disabled ? 'This layout is now managed by the Webform Easy Edit module. This value cannot be changed' : 'Choose where the submit should be placed.',
-      '#disabled' => $disabled,
-    );
+    $form['#submit'][] = 'form_layout_node_form_submit';
   }
-  $form['#submit'][] = 'form_layout_node_form_submit';
 }
 
 /**
@@ -543,6 +548,8 @@ function form_layout_node_form_submit($form, &$form_state) {
     // Don't make a change.
     return;
   }
+  // variable stores node ID for retrieval by form_layouts module
+  // this can go away when form layout UI is removed.
 
   if (is_null($form_state['values']['nid'])) {
     // New node, so rearrange fieldsets later.
@@ -550,6 +557,11 @@ function form_layout_node_form_submit($form, &$form_state) {
   }
   else {
     // Existing node, so rearrange fieldsets now.
+    $ipe_forms = variable_get('webform_ipe_nodes', array());
+    if(!in_array($form_state['values']['nid'], $ipe_forms)) {
+      $ipe_forms[] = $form_state['values']['nid'];
+      variable_set('webform_ipe_nodes', $ipe_forms);
+    }
     form_layout_update_layout($form_state['values']['webform']['components'], $layout_name);
   }
 }
@@ -599,6 +611,11 @@ function form_layout_key_cids_by_form_key($components) {
  * Save the form layout.
  */
 function form_layout_node_insert($node) {
+  $ipe_forms = variable_get('webform_ipe_nodes', array());
+  if(!in_array($node->nid, $ipe_forms)) {
+    $ipe_forms[] = $node->nid;
+    variable_set('webform_ipe_nodes', $ipe_forms);
+  }
   form_layout_node_update($node);
 }
 
@@ -622,8 +639,8 @@ function form_layout_node_load($nodes, $types) {
  */
 function form_layout_node_update($node) {
   
-  $easy_edit = variable_get('webform_easy_edit_nodes', array());
-  if(module_exists('webform_easy_edit') && in_array($node->nid, $easy_edit)) {
+  $easy_edit = variable_get('webform_ipe_nodes', array());
+  if(module_exists('webform_ipe') && in_array($node->nid, $easy_edit)) {
     return;
   }
 
