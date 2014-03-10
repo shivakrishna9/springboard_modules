@@ -14,8 +14,8 @@
           }  
         },
         afterCollapse:  function() {
-          var pre = $(this).parents('.views-field-sobject').find('pre')
-          if(pre) {
+          var pre = $(this).parents('.views-field-sobject').find('pre');
+          if(pre.length > 0) {
             pre.css('width', '150px');
           }
         },
