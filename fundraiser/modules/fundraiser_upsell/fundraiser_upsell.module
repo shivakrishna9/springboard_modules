@@ -300,7 +300,7 @@ function fundraiser_upsell_save_email_wrapper_settings($nid, $values) {
 
   // Need to fake a form state in order to save the mail settings.
   $email_wrappers_form_state = array(
-    'values' => (array) $values,
+    'values' => $values,
   );
 
   $email_wrappers_form_state['values']['delta'] = $delta;
@@ -333,8 +333,7 @@ function fundraiser_upsell_load_email_wrapper_settings($nid) {
     'module' => 'fundraiser_upsell',
     'delta' => 'nid_' . $nid,
   );
-  $ew = email_wrappers_mail_load($params);
-  return $ew;
+  return email_wrappers_mail_load($params);
 }
 
 /**
