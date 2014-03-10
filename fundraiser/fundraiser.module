@@ -1371,6 +1371,11 @@ function fundraiser_donation_form(&$form, &$form_state) {
     $other_amount['#attributes']['class'][] = 'input-medium';
     $form = _fundraiser_update_form_field($form, 'other_amount', $other_amount);
 
+    //Add minimum doantion into Drupal.settings for donation_validate.js
+    if(isset($form['#node']->minimum_donation_amount)) {
+      drupal_add_js(array('fundraiserWebform' => array('minimum_donation_amount' => $form['#node']->minimum_donation_amount)), 'setting');
+    }
+
     // Call hook to allow sub modules to add / manipulate the form.
     // NOTE: we are not using module_invoke_all on purpose here.
     // Node objects (common on webform objs) flag as recursive warnings.
