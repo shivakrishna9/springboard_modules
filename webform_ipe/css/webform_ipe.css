@@ -7,8 +7,16 @@
   clear: both;
   float: left;
   padding: 20px auto;
-
 }
+
+form .left-sidebar.region-empty,
+form .right-sidebar.region-empty {
+  margin:0;
+}
+
+/*.middle-right-sidebar .center-area {
+  overflow: visible;
+}*/
 
 body.editor-on div#webform-component-left-region {
   float:left;
@@ -18,34 +26,102 @@ body.editor-on div#webform-component-left-region {
 
 body.editor-on div#webform-component-right-region {
   float:right;
-  overflow: hidden;
-  width: 45%;
+  /*overflow: hidden;*/
+  width: 48%;
 }
 
 .webform-ipe-container.editor-on {
-  border: 1px dashed #999;
-  margin-top:2em;
-  margin-bottom:2em;
-  padding:8px;
-  border-collapse: none;
+  width: 99%;
 }
 
-.webform-ipe-container.editor-on legend{
-  float:left;
+.layout-row > .webform-ipe-container.editor-on {
+  float: left;
+  min-height: 60px;
+  margin-bottom: 20px;
+  border: 2px solid #ccc;
+}
+.layout-row > #webform-component-top-region,
+.layout-row > #webform-component-bottom-region {
+  width: 99%!important;
+}
+
+.layout-row > .webform-ipe-container.editor-on .webform-ipe-container.editor-on {
+  margin: 10px;
+  border: 1px dashed #ccc;
+  padding: 5px;
+  float: none;
+  width:auto;
+  min-height: 0;
+  position: relative;
+  padding-top:60px;
+}
+
+.webform-ipe-container.editor-on legend {
+  position: absolute; 
+  top:0;
+  left:0;
+  height:40px;
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin-bottom: 20px;
+  font-size: 21px;
+  line-height: 40px;
+  color: #333;
+  border: 0;
+  text-indent: 20px;
+  border-bottom: 1px solid #e5e5e5;
+  background-color:#f0f0f0;
+  cursor: move;
+}
+
+.editor-on .control-group {
+  margin: 5px;
+  padding: 5px;
+  cursor: move;
+  overflow: hidden;
+  float:none;
   width: auto;
 }
-.webform-ipe-container.editor-on .fieldset-legend {
+.editor-on .control-group:hover {
+  background-color:#f7f7f7;
+}
+.editor-on .disabled .control-group:hover {
+  background-color: transparent;
+  cursor: default;
+}
+
+/*.webform-ipe-container.editor-on .fieldset-legend {
   margin-top: 0px;
   white-space: nowrap;
   float:left;
+}*/
+/*
+.easy-edit-container.editor-on .row .span12 {
+  width:98%;
 }
 
-.webform-ipe-container.webform-component-fieldset.editor-on fieldset {
+.easy-edit-container.editor-on .control-group {
+  margin-top:5px;
+  margin-bottom:5px;
+}
+
+.easy-edit-container.editor-on .control-group.sortable {
+  background-color:#bfecff;
+}
+
+.easy-edit-container.webform-component-fieldset.editor-on {
+  float:none;
+  clear:both;
+  overflow: hidden;
+}*/
+
+/*.webform-ipe-container.webform-component-fieldset.editor-on fieldset {
   margin: 10px 0px;
   max-width: 90%;
-}
+}*/
 
-body.editor-on .webform-component-fieldset.sortable:hover
+/*body.editor-on .webform-component-fieldset.sortable:hover
 .fieldset.sortable:hover {
   background-color:#f0f0f0;
   cursor: move;
@@ -77,7 +153,7 @@ body.editor-on .sortable:hover {
  body.editor-on .fieldset.ui-sortable-disabled .sortable:hover {
     background-color:transparent;
     cursor: default;
-  }
+  }*/
 
 .ui-state-highlight {
   width: 100%;
@@ -87,6 +163,13 @@ body.editor-on .sortable:hover {
   height:45px;
   border:2px dashed #b5b5b5;
 }
+.sortable-placeholder {
+  height: 30px;
+  margin:10px;
+  padding:5px;
+  border:1px dotted #ccc;
+  background-color:#fbfaeb;
+} 
 
 .ui-sortable-helper {
   border:2px dotted #9a9a9a;
@@ -103,6 +186,7 @@ body.editor-on .sortable:hover {
   -khtml-opacity: 0.6;
   /* Good browsers */
   opacity: 0.6;
+  z-index: 100;
 }
 .ui-sortable-placeholder {
   border:2px dashed fuchsia;
@@ -131,6 +215,7 @@ webform-component-fieldset.ui-sortable-helper,
   -webkit-border-radius: 5px;
   -moz-border-radius: 5px;
   border-radius: 5px;
+  z-index: 10;
 }
 #admin-bar .accordion {
   background-color: transparent;
