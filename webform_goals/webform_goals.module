@@ -157,6 +157,22 @@ function webform_goals_cron() {
 }
 
 /**
+ * Implements hook_permission().
+ */
+function webform_goals_permission() {
+  $perms = array();
+  $perms['administer webform goals'] = array(
+    'title' => t("Administer Webform Goals"),
+    'restrict access' => TRUE
+    );
+  $perms['manage webform goals'] = array(
+    'title' => t('Manage Webform Goals'),
+    'description' => t('Create, edit, and delete goals. Assign goals to webforms.')
+    );
+  return $perms;
+}
+ 
+/**
  * Implements hook_menu().
  */
 function webform_goals_menu() {
@@ -165,7 +181,7 @@ function webform_goals_menu() {
     'description' => 'Assign and track goals on webforms',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('webform_goals_admin_list'),
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array('manage webform goals'),
     'type' => MENU_NORMAL_ITEM,
     'file' => 'webform_goals.admin.inc',
   );
@@ -174,7 +190,7 @@ function webform_goals_menu() {
     'description' => 'Assign and track goals on webforms',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('webform_goals_admin_list'),
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array('manage webform goals'),
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'file' => 'webform_goals.admin.inc',
   );
@@ -183,7 +199,7 @@ function webform_goals_menu() {
     'description' => 'Assign and track goals on webforms',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('webform_goals_admin_settings'),
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array('administer webform goals'),
     'type' => MENU_LOCAL_TASK,
     'file' => 'webform_goals.admin.inc',
   );
@@ -192,7 +208,7 @@ function webform_goals_menu() {
     'description' => '',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('webform_goals_add'),
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array('manage webform goals'),
     'type' => MENU_CALLBACK,
     'file' => 'webform_goals.forms.inc',
   );
@@ -201,7 +217,7 @@ function webform_goals_menu() {
     'description' => '',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('webform_goals_add', 4),
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array('manage webform goals'),
     'type' => MENU_CALLBACK,
     'file' => 'webform_goals.forms.inc',
   );
@@ -210,7 +226,7 @@ function webform_goals_menu() {
     'description' => '',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('webform_goals_delete', 4),
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array('manage webform goals'),
     'type' => MENU_CALLBACK,
     'file' => 'webform_goals.forms.inc',
   );
