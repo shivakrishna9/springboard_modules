@@ -1684,57 +1684,68 @@
          * Re-order Items
          */
         App.Handlers.reorderItems = function() {
-          $('fieldset.webform-component-fieldset').sortable({
-            connectWith: '.webform-component-fieldset, #block-system-main div.form-layouts, div.fieldset.right-sidebar, div.fieldset.left-sidebar',
+          // $('fieldset.webform-component-fieldset').sortable({
+          //   connectWith: '.webform-component-fieldset, #block-system-main div.form-layouts, div.fieldset.right-sidebar, div.fieldset.left-sidebar',
+          //   cancel: '.disabled',
+          //   placeholder: 'sortable-placeholder',
+          //   items: 'div.control-group:not(.disabled)',
+          //   cursorAt:  {left: 5},
+          //   over: function( event, ui ) {
+          //   },
+          //   start: function(event, ui) {
+          //     // $(ui.item[0]).css({'height':'90px', 'overflow':'hidden'})
+          //     // $(ui.item[0]).css({'width':'120px', 'overflow':'hidden'})
+          //   },
+          //   stop: function (event, ui) {
+          //     // $(ui.item[0]).css({'height':'auto', 'overflow':'visible'})
+          //     // $(ui.item[0]).css({'width':'100%', 'overflow':'hidden'})
+          //     ui.item.trigger('drop');
+          //     // $('div.fieldset.form-layouts:not(:has("*"))').css('min-height', '290px');
+          //     // if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
+          //     //   $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
+          //     // }
+          //   },
+          // });
+
+          $('.layout-row > .webform-ipe-container.editor-on, .layout-row > .webform-ipe-container.editor-on > .webform-ipe-container').sortable({
+            connectWith: '.editor-on',
             cancel: '.disabled',
-            placeholder: 'ui-state-highlight',
+            placeholder: 'sortable-placeholder',
             items: 'div.control-group:not(.disabled)',
-            cursorAt:  {left: 5},
-            over: function( event, ui ) {
-            },
-            start: function(event, ui) {
-              $(ui.item[0]).css({'height':'90px', 'overflow':'hidden'})
-              $(ui.item[0]).css({'width':'120px', 'overflow':'hidden'})
-            },
-            stop: function (event, ui) {
-              $(ui.item[0]).css({'height':'auto', 'overflow':'visible'})
-              $(ui.item[0]).css({'width':'100%', 'overflow':'hidden'})
-              ui.item.trigger('drop');
-              $('div.fieldset.form-layouts:not(:has("*"))').css('min-height', '290px');
-              if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
-                $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
-              }
-            },
           });
+
           $('.webform-component-fieldset').disableSelection();
         };
         /*
          * Re-order Fieldsets
          */
         App.Handlers.reorderFieldsets = function() {
-          $('#block-system-main div.form-layouts, div.fieldset.right-sidebar, div.fieldset.left-sidebar').sortable({
-            cancel:'.disabled',
-            placeholder: 'ui-state-highlight',
-            connectWith: '#block-system-main div.form-layouts, div.fieldset.right-sidebar, div.fieldset.left-sidebar',
-            items: 'fieldset.webform-component-fieldset, div.control-group:not(.disabled)',
-            cursorAt:  {left: 5},
-            start: function(event, ui) {
-              height = $(ui.item[0]).height();
-              $(ui.item[0]).css({'height':'90px', 'overflow':'hidden'})
-              $(ui.item[0]).css({'width':'120px', 'overflow':'hidden'})
-
-            },
-            stop: function (event, ui) {
-              $(ui.item[0]).css({'height':'auto', 'overflow':'visible'})
-              $(ui.item[0]).css({'width':'100%', 'overflow':'hidden'})
-              ui.item.trigger('drop');
-              $('div.fieldset.form-layouts:not(:has("*"))').css('min-height', '290px')
-              if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
-                $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
-              }
-             },
-          });
-
+            $('.layout-row > .webform-ipe-container.editor-on').sortableNew({
+              connectWith: '.layout-row > .webform-ipe-container.editor-on',
+              items: '.layout-row > .webform-ipe-container.editor-on > .webform-ipe-container.editor-on:not(.disabled)',
+              handle: 'legend'
+            });
+          // $('#block-system-main div.form-layouts, div.fieldset.right-sidebar, div.fieldset.left-sidebar').sortable({
+          //   cancel:'.disabled',
+          //   placeholder: 'sortable-placeholder',
+          //   connectWith: '#block-system-main div.form-layouts, div.fieldset.right-sidebar, div.fieldset.left-sidebar',
+          //   items: 'fieldset.webform-component-fieldset, div.control-group:not(.disabled)',
+          //   cursorAt:  {left: 5},
+          //   start: function(event, ui) {
+          //     // height = $(ui.item[0]).height();
+          //     // $(ui.item[0]).css({'height':'90px', 'overflow':'hidden'})
+          //     // $(ui.item[0]).css({'width':'120px', 'overflow':'hidden'})
+          //   },
+          //   stop: function (event, ui) {
+          //     // $(ui.item[0]).css({'height':'auto', 'overflow':'visible'})
+          //     // $(ui.item[0]).css({'width':'100%', 'overflow':'hidden'})
+          //     ui.item.trigger('drop');
+          //     // $('div.fieldset.form-layouts:not(:has("*"))').css('min-height', '290px')
+          //     // if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
+          //     //   $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
+          //     // }
+          //    },
+          // });
           $('#block-system-main div.form-layouts').disableSelection();
         };
 
@@ -1744,7 +1755,7 @@
           //turn sorting on
 
           $('.webform-component-fieldset, div.fieldset.form-layouts, .webform-component-fieldset, div.fieldset.right-sidebar, div.fieldset.left-sidebar, body').addClass('editor-on');
-          $('div.fieldset.form-layouts').not(':has("*")').css('min-height', '290px').show()
+          $('div.fieldset.form-layouts').not(':has("*")').show()
           $('div.fieldset.right-sidebar, div.fieldset.left-sidebar').not(':has("*")').css('min-height', '600px').show()
           $('div.fieldset.right-sidebar, div.fieldset.left-sidebar').not(':has("*")').hide();
           App.Handlers.addSortClasses();
