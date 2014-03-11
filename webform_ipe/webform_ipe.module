@@ -178,7 +178,7 @@ function webform_ipe_preprocess_node(&$vars) {
     drupal_add_js('$ = jQuery', array('type' => 'inline', 'scope' => 'footer', 'weight' => 998));
     drupal_add_js($path . '/js/list.min.js', array('scope' => 'footer', 'weight' => 999));
 
-    //drupal_add_library('system', 'ui.sortable');
+    drupal_add_library('system', 'ui.sortable');
     drupal_add_library('system', 'drupal.collapse');
     drupal_add_library('system', 'drupal.form');
     drupal_add_library('system', 'drupal.ajax');
