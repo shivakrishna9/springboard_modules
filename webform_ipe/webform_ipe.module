@@ -205,16 +205,8 @@ function _webform_ipe_children_elements($element) {
 
 //make sure the jquery upate version of UI is loaded, not springboard base
 function webform_ipe_js_alter(&$js) {
-        unset($js['sites/all/themes/springboard-themes/springboard_base/js/jquery-ui.min.js']);
-
-  $jq_update_ui = isset($js['sites/all/modules/contrib/jquery_update/replace/ui/ui/minified/jquery.ui.core.min.js']);
-  $theme_ui = isset($js['sites/all/themes/springboard-themes/springboard_base/js/jquery-ui.min.js']);
-  if ($theme_ui && $jq_update_ui) {
-    $node = menu_get_object();
-    $type = isset($node->type) ? $node->type : array();
-    $is_active = in_array($type, variable_get('webform_ipe_node_types'));
-    if ($is_active && user_access('use webform IPE')) {
-    }
+  if(isset($js['sites/all/themes/springboard-themes/springboard_base/js/jquery-ui.min.js'])) {
+    unset($js['sites/all/themes/springboard-themes/springboard_base/js/jquery-ui.min.js']);
   }
 }
 
