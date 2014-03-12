@@ -300,9 +300,8 @@ function fundraiser_upsell_save_email_wrapper_settings($nid, $values) {
 
   // Need to fake a form state in order to save the mail settings.
   $email_wrappers_form_state = array(
-    'values' => (array) $values,
+    'values' => $values,
   );
-
   $email_wrappers_form_state['values']['delta'] = $delta;
   $headers = $values['headers'];
   $message = $values['message'];
@@ -333,8 +332,7 @@ function fundraiser_upsell_load_email_wrapper_settings($nid) {
     'module' => 'fundraiser_upsell',
     'delta' => 'nid_' . $nid,
   );
-  $ew = email_wrappers_mail_load($params);
-  return $ew;
+  return email_wrappers_mail_load($params);
 }
 
 /**
@@ -769,25 +767,12 @@ function fundraiser_upsell_create_recurring_series($donation) {
  * Implements hook_node_insert().
  */
 function fundraiser_upsell_node_insert($node) {
-  // If the new node is a clone this data is already set
-
-
   if (fundraiser_upsell_is_available($node)) {
     // Insert the record.
     $record = fundraiser_upsell_node_record($node);
     drupal_write_record('fundraiser_upsell', $record);
 
-    // If in a clone process save new settings for email wrappers
-    if (!empty($node->clone_from_original_nid)) {
-      module_load_include('inc', 'email_wrappers', 'email_wrappers.api');
-      $settings = fundraiser_upsell_load_email_wrapper_settings($node->clone_from_original_nid);
-      unset($settings->mid);
-      $settings->delta = 'nid_' . $node->nid;
-      email_wrappers_save($settings);
-    }
-    else {
-      fundraiser_upsell_save_email_wrapper_settings($node->nid, $node->fundraiser_upsell['email_wrappers']);
-    }
+    fundraiser_upsell_save_email_wrapper_settings($node->nid, $node->fundraiser_upsell['email_wrappers']);
   }
 }
 
