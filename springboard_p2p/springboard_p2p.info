@@ -4,9 +4,6 @@ core = 7.x
 package = Springboard
 version = 7.x-4.0-dev
 project = springboard_p2p
-
-configure = admin/springboard/p2p/settings
-
 dependencies[] = ctools
 dependencies[] = entityreference
 dependencies[] = features
@@ -17,6 +14,7 @@ dependencies[] = options
 dependencies[] = text
 dependencies[] = video_embed_field
 dependencies[] = views
+configure = admin/springboard/p2p/settings
 features[ctools][] = field_group:field_group:1
 features[ctools][] = views:views_default:3.0
 features[features_api][] = api:2
