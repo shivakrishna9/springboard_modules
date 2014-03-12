@@ -25,6 +25,14 @@ function springboard_p2p_views_api($module = NULL, $api = NULL) {
  */
 function springboard_p2p_node_info() {
   $items = array(
+    'p2p_campaign' => array(
+      'name' => t('Peer to peer campaign'),
+      'base' => 'node_content',
+      'description' => t('This is a peer to peer campaign.'),
+      'has_title' => '1',
+      'title_label' => t('Name'),
+      'help' => t('Peer to peer campaign submission guidelines.'),
+    ),
     'p2p_category' => array(
       'name' => t('Peer to peer category'),
       'base' => 'node_content',
