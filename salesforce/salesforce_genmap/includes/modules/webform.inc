@@ -202,6 +202,54 @@ function webform_salesforce_genmap_permission() {
  * @} salesforce_genmap_hooks
  */
 
+/**
+ * @name salesforce_queue_hooks
+ * @{
+ */
+
+/**
+ * Implements hook_salesforce_queue_refresh_queue_item().
+ */
+function webform_salesforce_queue_refresh_queue_item($item) {
+  // Ensure the item is a webform submission.
+  if ($item->module == 'webform') {
+    // Load the node.
+    $nid = $item->delta;
+    $node = node_load($nid);
+
+    // Load the submission.
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    $sid = $item->drupal_id;
+    $submission = webform_get_submission($nid, $sid, TRUE);
+
+    if (!empty($submission)) {
+      // Requeue the submission.
+      switch ($item->operation) {
+        case 'CREATE':
+        case 'UPSERT':
+          salesforce_genmap_webform_submission_insert($node, $submission);
+          break;
+
+        case 'UPDATE':
+          salesforce_genmap_webform_submission_update($node, $submission);
+          break;
+
+        case 'DELETE':
+          salesforce_genmap_webform_submission_delete($node, $submission);
+          break;
+      }
+
+      // Assume it succeeded because salesforce_genmap_send_object_to_queue returns nothing.
+      return TRUE;
+    }
+    // Submission not found.
+    return FALSE;
+  }
+}
+
+/**
+ * @} salesforce_queue_hooks
+ */
 
 /**
  * Access callback to reach the mapping page.
