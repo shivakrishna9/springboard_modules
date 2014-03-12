@@ -30,7 +30,7 @@ function webform_form_salesforce_genmap_map_form_alter(&$form, &$form_state) {
           }
         }
       }
-      if(!empty($options)) {
+      if (!empty($options)) {
         $form['webform_user'] = array(
           '#type' => 'fieldset',
           '#title' => 'Webform User Configuration',
@@ -47,9 +47,8 @@ function webform_form_salesforce_genmap_map_form_alter(&$form, &$form_state) {
           '#default_value' => $default,
           '#description' => t('The user that is created during the form submission will be exported to Salesforce as a contact. Choose the field on the %type object that will relate the submission to the contact.', array('%type' => $sobject_type)),
         );
-
-        $form['#submit'][] = 'webform_user_assign_foreign_key';
       }
+      $form['#submit'][] = 'webform_user_assign_foreign_key';
     }
   }
 }
@@ -309,9 +308,16 @@ function webform_entity_update($entity, $type) {
  */
 function webform_user_assign_foreign_key($form, $form_state) {
   $nid = $form_state['build_info']['args'][0]->nid;
-  $field = $form_state['values']['webform_user']['webform_user_foreign_key'];
-  // Add the field name to the webform_user_reference_fields array.
+  $field = isset($form_state['values']['webform_user']['webform_user_foreign_key']) ? $form_state['values']['webform_user']['webform_user_foreign_key'] : FALSE;
   $webform_user_reference_fields = variable_get('webform_user_reference_fields', array());
-  $webform_user_reference_fields[$nid] = $field;
-  variable_set('webform_user_reference_fields', $webform_user_reference_fields);
+
+  if ($field && !empty($field)) {
+    // Add the field name to the webform_user_reference_fields array.
+    $webform_user_reference_fields[$nid] = $field;
+    variable_set('webform_user_reference_fields', $webform_user_reference_fields);
+  }
+  elseif (isset($webform_user_reference_fields[$nid])) {
+    unset($webform_user_reference_fields[$nid]);
+    variable_set('webform_user_reference_fields', $webform_user_reference_fields);
+  }
 }
