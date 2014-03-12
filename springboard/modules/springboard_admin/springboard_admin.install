@@ -22,6 +22,42 @@ function springboard_admin_install() {
     ->condition('name', 'springboard_admin', '=')
     ->execute();
 
+  // Set springboard_admin weight very high so it can force theme via hook_custom_theme
+  db_update('system')
+    ->fields(array('weight' => 9999))
+    ->condition('name', 'springboard_admin', '=')
+    ->execute();
+    
+  // Create the Springboard Admin Menu
+  springboard_admin_create_menu();
+}
+
+/**
+ * Implements hook_uninstall().
+ *
+ * Delete the custom drupal menu for the Springboard administration interface
+ */
+
+function springboard_admin_uninstall() {
+  $sb_menu = springboard_admin_admin_menu();
+  menu_delete($sb_menu);
+}
+
+/**  
+ * Rebuilds the Springboard Admin Menu to add new items
+ */
+function springboard_admin_update_7001() {
+  if($menu = menu_load('springboard_admin_menu')) {
+    menu_delete($menu);
+  }
+  springboard_admin_create_menu();
+}
+
+/**
+ * Helper function, creates the Springboard Admin Menu.
+ */
+
+function springboard_admin_create_menu() {
   // Define and save the Springboard Administration menu
   $sb_menu = springboard_admin_admin_menu();
   menu_save($sb_menu);
@@ -58,22 +94,5 @@ function springboard_admin_install() {
     'customized' => 1,
   ))
   ->condition('mlid', $mlids, 'IN')
-  ->execute();
-
-  // Set springboard_admin weight very high so it can force theme via hook_custom_theme
-  db_update('system')
-    ->fields(array('weight' => 9999))
-    ->condition('name', 'springboard_admin', '=')
-    ->execute();
-}
-
-/**
- * Implements hook_uninstall().
- *
- * Delete the custom drupal menu for the Springboard administration interface
- */
-
-function springboard_admin_uninstall() {
-  $sb_menu = springboard_admin_admin_menu();
-  menu_delete($sb_menu);
+  ->execute();  
 }
