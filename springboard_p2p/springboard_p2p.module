@@ -5,3 +5,52 @@
  */
 
 include_once 'springboard_p2p.features.inc';
+
+function springboard_p2p_permission() {
+  return array(
+    'administer springboard p2p' => array(
+      'title' => t('Administer springboard peer to peer.'),
+    ),
+  );
+}
+
+function springboard_p2p_menu() {
+  $items = array();
+
+  $items['admin/springboard/p2p'] = array(
+    'title' => 'Springboard peer to peer',
+    'page callback' => 'springboard_p2p_dashboard',
+    'file' => 'springboard_p2p.admin.inc',
+    'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
+    'access arguments' => array('administer springboard p2p'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['admin/springboard/p2p/dashboard'] = array(
+    'title' => 'Dashboard',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'access arguments' => array('administer springboard p2p'),
+  );
+
+  $items['admin/springboard/p2p/settings'] = array(
+    'title' => 'Settings',
+    'type' => MENU_LOCAL_TASK,
+    'access arguments' => array('administer springboard p2p'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_p2p_admin_settings'),
+    'file' => 'springboard_p2p.admin.inc',
+    'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
+  );
+
+  return $items;
+}
+
+function springboard_p2p_theme() {
+  return array(
+    'springboard_p2p_admin_settings' => array(
+      'render element' => 'form',
+      'file' => 'springboard_p2p.admin.inc',
+      'path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
+    ),
+  );
+}
