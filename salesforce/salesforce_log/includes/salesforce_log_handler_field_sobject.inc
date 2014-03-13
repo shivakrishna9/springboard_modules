@@ -17,7 +17,6 @@ class SalesforceLogHandlerFieldSobject extends views_handler_field {
    */
   public function render($values) {
     $value = $values->{$this->field_alias};
-
-    return '<pre>' . check_plain(print_r(json_decode($value), TRUE)) . '</pre>';
+    return '<pre style = "width:150px">' . check_plain(print_r(json_decode($value), TRUE)) . '</pre>';
   }
 }
