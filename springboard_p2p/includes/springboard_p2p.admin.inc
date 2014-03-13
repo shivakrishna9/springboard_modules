@@ -106,6 +106,7 @@ function springboard_p2p_admin_settings() {
     'fundraiser' => '<h2>Fundraising enabled types</h2>',
     'webform_user' => '<h2>Other form types</h2>',
   );
+
   $content_types = springboard_p2p_get_sorted_content_types();
   foreach (array('fundraiser', 'webform_user') as $form_type) {
     $form['form_types'][$form_type . '_items'] = array(
@@ -113,6 +114,7 @@ function springboard_p2p_admin_settings() {
     );
 
     if (count($content_types[$form_type])) {
+      $defaults = variable_get('springboard_p2p_' . $form_type . '_items', array());
       $form['form_types'][$form_type . '_items']['#prefix'] = $headings[$form_type];
 
       foreach ($content_types[$form_type] as $key => $name) {
@@ -122,10 +124,12 @@ function springboard_p2p_admin_settings() {
           'enabled' => array(
             '#type' => 'checkbox',
             '#title' => $name,
+            '#default_value' => isset($defaults[$key]['enabled']) ? $defaults[$key]['enabled'] : 0,
           ),
           'default_form' => array(
             '#type' => 'select',
             '#options' => $formatted_node_options,
+            '#default_value' => isset($defaults[$key]['default_form']) ? $defaults[$key]['default_form'] : '',
           ),
         );
       }
@@ -144,28 +148,39 @@ function springboard_p2p_admin_settings() {
 
   $fields = entity_get_all_property_info('user', 'user');
 
-  foreach ($fields as $key => $field) {
+  $defaults = variable_get('springboard_p2p_registration_fields', array());
+  $sorted_keys = springboard_p2p_sort_keys_by_weight($defaults);
+  $sorted_fields = array();
+  foreach ($sorted_keys as $key) {
+    $sorted_fields[$key] = $fields[$key];
+    unset($fields[$key]);
+  }
+  // Add in any leftover fields to the end.
+  $sorted_fields += $fields;
+
+  foreach ($sorted_fields as $key => $field) {
     if (springboard_p2p_is_blacklisted_registration_field($key)) {
       continue;
     }
 
     if (springboard_p2p_is_locked_registration_field($key)) {
-      $default_value = 1;
+      $default_enabled = 1;
       $disabled = TRUE;
     }
     else {
-      // @todo
-      $default_value = 0;
+      $default_enabled = isset($defaults[$key]['enabled']) ? $defaults[$key]['enabled'] : 0;
       $disabled = FALSE;
     }
+
+    $default_weight = isset($defaults[$key]['weight']) ? $defaults[$key]['weight'] : 0;
 
     $form['registration_fields']['registration_field_items'][$key] = array(
       'name' => array(
         '#markup' => check_plain($field['label']),
       ),
-      'show' => array(
+      'enabled' => array(
         '#type' => 'checkbox',
-        '#default_value' => $default_value,
+        '#default_value' => $default_enabled,
         '#disabled' => $disabled,
       ),
       'weight' => array(
@@ -173,6 +188,7 @@ function springboard_p2p_admin_settings() {
         '#title' => t('Weight'),
         '#delta' => 20,
         '#title_display' => 'invisible',
+        '#default_value' => $default_weight,
       ),
     );
   }
@@ -190,7 +206,12 @@ function springboard_p2p_admin_settings() {
 }
 
 function springboard_p2p_admin_settings_submit($form, &$form_state) {
-  dpm($form_state['values']);
+  variable_set('springboard_p2p_base_path', $form_state['values']['springboard_p2p_base_path']);
+  variable_set('springboard_p2p_fundraiser_items', $form_state['values']['fundraiser_items']);
+  variable_set('springboard_p2p_webform_user_items', $form_state['values']['webform_user_items']);
+  variable_set('springboard_p2p_registration_fields', $form_state['values']['registration_field_items']);
+
+  drupal_set_message('Settings saved.');
 }
 
 function theme_springboard_p2p_admin_settings($variables) {
@@ -237,7 +258,7 @@ function springboard_p2p_registration_fields_table_rows(&$form, $weight_class) {
     $rows[] = array(
       'data' => array(
         drupal_render($form['registration_fields']['registration_field_items'][$id]['name']),
-        drupal_render($form['registration_fields']['registration_field_items'][$id]['show']),
+        drupal_render($form['registration_fields']['registration_field_items'][$id]['enabled']),
         drupal_render($form['registration_fields']['registration_field_items'][$id]['weight']),
       ),
       'class' => array('draggable'),
@@ -329,4 +350,14 @@ function springboard_p2p_is_locked_registration_field($key) {
       'sbp_last_name',
       'mail',
   ));
+}
+
+function springboard_p2p_sort_keys_by_weight($items) {
+  $sort = array();
+  foreach (array_keys($items) as $key) {
+    $sort[$key] = $items[$key]['weight'];
+  }
+  asort($sort);
+
+  return array_keys($sort);
 }
