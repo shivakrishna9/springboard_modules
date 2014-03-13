@@ -102,64 +102,34 @@ function springboard_p2p_admin_settings() {
     '#weight' => -40,
   );
 
-  $form['form_types']['fundraiser_items'] = array(
-    '#tree' => TRUE,
-    '#prefix' => '<h2>Fundraising enabled types</h2>',
+  $headings = array(
+    'fundraiser' => '<h2>Fundraising enabled types</h2>',
+    'webform_user' => '<h2>Other form types</h2>',
   );
-
-  $fundraiser_enabled_content_types = array(
-    'blah1' => array(
-      'label' => 'Fundraiser enabled content type 1',
-    ),
-    'blah2' => array(
-      'label' => 'Fundraiser enabled content type 2',
-    ),
-  );
-
-  foreach ($fundraiser_enabled_content_types as $key => $type) {
-    $form['form_types']['fundraiser_items'][$key] = array(
-      'enabled' => array(
-        '#type' => 'checkbox',
-        '#title' => $type['label'],
-      ),
-      'default_form' => array(
-        '#type' => 'select',
-        '#options' => array(
-          'anode' => 'A fundraiser node',
-          'anothernode' => 'Another fundraiser node',
-        ),
-      ),
+  $content_types = springboard_p2p_get_sorted_content_types();
+  foreach (array('fundraiser', 'webform_user') as $form_type) {
+    $form['form_types'][$form_type . '_items'] = array(
+      '#tree' => TRUE,
     );
-  }
 
-  $form['form_types']['webform_user_items'] = array(
-    '#tree' => TRUE,
-    '#prefix' => '<h2>Other form types</h2>',
-  );
+    if (count($content_types[$form_type])) {
+      $form['form_types'][$form_type . '_items']['#prefix'] = $headings[$form_type];
 
-  $webform_user_enabled_content_types = array(
-    'blah1' => array(
-      'label' => 'Webform user content type 1',
-    ),
-    'blah2' => array(
-      'label' => 'Webform user content type 2',
-    ),
-  );
-
-  foreach ($webform_user_enabled_content_types as $key => $type) {
-    $form['form_types']['webform_user_items'][$key] = array(
-      'enabled' => array(
-        '#type' => 'checkbox',
-        '#title' => $type['label'],
-      ),
-      'default_form' => array(
-        '#type' => 'select',
-        '#options' => array(
-          'anode' => 'A webform user node',
-          'anothernode' => 'Another webform user node',
-        ),
-      ),
-    );
+      foreach ($content_types[$form_type] as $key => $name) {
+        $node_options = springboard_p2p_get_node_options_by_types($key);
+        $formatted_node_options = springboard_p2p_format_node_options($node_options);
+        $form['form_types'][$form_type . '_items'][$key] = array(
+          'enabled' => array(
+            '#type' => 'checkbox',
+            '#title' => $name,
+          ),
+          'default_form' => array(
+            '#type' => 'select',
+            '#options' => $formatted_node_options,
+          ),
+        );
+      }
+    }
   }
 
   $form['registration_fields'] = array(
@@ -216,10 +186,13 @@ function theme_springboard_p2p_admin_settings($variables) {
 
   $header = array(t('Type'), t('Default form'));
   foreach (array('fundraiser_items', 'webform_user_items') as $type) {
-    $form['form_types'][$type]['#markup'] = theme('table', array(
-        'header' => $header,
-        'rows' => springboard_p2p_form_types_table_rows($form, $type),
-      ));
+    $rows = springboard_p2p_form_types_table_rows($form, $type);
+    if (count($rows)) {
+      $form['form_types'][$type]['#markup'] = theme('table', array(
+          'header' => $header,
+          'rows' => $rows,
+        ));
+    }
   }
 
   $rows = array();
@@ -260,4 +233,44 @@ function springboard_p2p_form_types_table_rows($form, $type) {
     );
   }
   return $rows;
+}
+
+function springboard_p2p_get_sorted_content_types() {
+  $sorted_types = array(
+    'fundraiser' => array(),
+    'webform_user' => array(),
+  );
+
+  $node_types = node_type_get_names();
+
+  foreach ($node_types as $key => $name) {
+    if (fundraiser_is_donation_type($key)) {
+      $sorted_types['fundraiser'][$key] = $name;
+    }
+    elseif (_webform_user_is_webform_user_node_type($key)) {
+      $sorted_types['webform_user'][$key] = $name;
+    }
+  }
+
+  return $sorted_types;
+}
+
+function springboard_p2p_get_node_options_by_types($type) {
+  $result = db_select('node','n')
+    ->fields('n', array('nid', 'title'))
+    ->condition('type', $type, '=')
+    ->condition('status', 0,'>')
+    ->execute()
+    ->fetchAllAssoc('nid');
+
+  return $result;
+}
+
+function springboard_p2p_format_node_options($nodes) {
+  $options = array();
+  foreach ($nodes as $node) {
+    $options[$node->nid] = $node->title;
+  }
+
+  return $options;
 }
