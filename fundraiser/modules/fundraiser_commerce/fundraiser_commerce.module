@@ -506,10 +506,12 @@ function _fundraiser_commerce_client_state_ajax_submit($form, $form_state, &$mes
   // selected country.
   // After the replace event add focus to the state field. This makes for a smooth transition
   // in some browsers for users who tab between fields.
+  $build_array = fundraiser_get_form_field($form['#calling_module'], $form, 'state');
+
   return array(
     '#type' => 'ajax',
     '#commands' => array(
-      ajax_command_replace('#zone-select-wrapper', render(fundraiser_get_form_field($form['#calling_module'], $form, 'state'))),
+      ajax_command_replace('#zone-select-wrapper', render($build_array)),
       ajax_command_invoke('#edit-submitted-billing-information-state', 'focus'),
     ),
   );
