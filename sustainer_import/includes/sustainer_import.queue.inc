@@ -100,16 +100,17 @@ function sustainer_import_batch_queue_items() {
   $queue = sustainer_import_get_pending_queue_items();
 
   foreach($queue as $rid => $record) {
-    $operations[] = array('sustainer_import_process_batch_record', array($record));
+    $operations[] = array('sustainer_import_process_batch_record', array($record, $rid));
   }
   $batch = array(
     'operations' => $operations,
     'finished' => 'sustainer_import_batch_processing_complete',
+    'file' => drupal_get_path('module', 'sustainer_import') . '/includes/sustainer_import.queue.inc',
   );
   return $batch;
 }
 
-function sustainer_import_process_batch_record($record) {
+function sustainer_import_process_batch_record($record, $rid) {
   $errors = array();
   if (_sustainer_import_validate_account_record($record['user_info'], $errors)) {
     // passes validation, create or dedupe.
