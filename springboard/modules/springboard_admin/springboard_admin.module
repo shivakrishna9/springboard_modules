@@ -39,6 +39,18 @@ function springboard_admin_menu() {
   return $items;
 }
 
+/**
+ * Implements hook_menu_alter().
+ */
+function springboard_admin_menu_alter(&$items) {
+  if (module_exists('webform')) {
+    // Webform implements these paths as MENU_CALLBACK. This 
+    // causes local navigation to disappear on these pages.
+    $items['node/%webform_menu/webform/emails/%webform_menu_email']['type'] = MENU_LOCAL_TASK;
+    $items['node/%webform_menu/webform/emails/%webform_menu_email/delete']['type'] = MENU_LOCAL_TASK;
+  }
+}
+
  /**
  * Implements hook_permission().
  */
