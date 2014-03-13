@@ -130,6 +130,7 @@ function springboard_p2p_admin_settings() {
             '#type' => 'select',
             '#options' => $formatted_node_options,
             '#default_value' => isset($defaults[$key]['default_form']) ? $defaults[$key]['default_form'] : '',
+            '#empty_value' => '',
           ),
         );
       }
@@ -203,6 +204,18 @@ function springboard_p2p_admin_settings() {
   );
 
   return $form;
+}
+
+function springboard_p2p_admin_settings_validate($form, &$form_state) {
+  foreach (array('fundraiser_items', 'webform_user_items') as $type) {
+    foreach ($form_state['values'][$type] as $content_type => $item) {
+      if ($item['enabled'] && $item['default_form'] == '') {
+        $name = $form['form_types'][$type][$content_type]['enabled']['#title'];
+        $error = t('A default form must be selected for the enabled content type %content_type.', array('%content_type' => $name));
+        form_set_error($type . '][' . $content_type . '][default_form', $error);
+      }
+    }
+  }
 }
 
 function springboard_p2p_admin_settings_submit($form, &$form_state) {
