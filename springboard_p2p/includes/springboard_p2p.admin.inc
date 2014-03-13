@@ -143,13 +143,30 @@ function springboard_p2p_admin_settings() {
   );
 
   $fields = entity_get_all_property_info('user', 'user');
+
   foreach ($fields as $key => $field) {
+    if (springboard_p2p_is_blacklisted_registration_field($key)) {
+      continue;
+    }
+
+    if (springboard_p2p_is_locked_registration_field($key)) {
+      $default_value = 1;
+      $disabled = TRUE;
+    }
+    else {
+      // @todo
+      $default_value = 0;
+      $disabled = FALSE;
+    }
+
     $form['registration_fields']['registration_field_items'][$key] = array(
       'name' => array(
         '#markup' => check_plain($field['label']),
       ),
       'show' => array(
         '#type' => 'checkbox',
+        '#default_value' => $default_value,
+        '#disabled' => $disabled,
       ),
       'weight' => array(
         '#type' => 'weight',
@@ -178,12 +195,11 @@ function springboard_p2p_admin_settings_submit($form, &$form_state) {
 
 function theme_springboard_p2p_admin_settings($variables) {
   $form = $variables['form'];
-  $weight_class = 'registration-field-weight';
-  $table_id = 'registration-fields-table';
 
   $output = '';
   $output .= drupal_render($form['basic']);
 
+  // The content types tables.
   $header = array(t('Type'), t('Default form'));
   foreach (array('fundraiser_items', 'webform_user_items') as $type) {
     $rows = springboard_p2p_form_types_table_rows($form, $type);
@@ -195,10 +211,29 @@ function theme_springboard_p2p_admin_settings($variables) {
     }
   }
 
+  // The registration fields table and tabledrag.
+  $weight_class = 'registration-field-weight';
+  $table_id = 'registration-fields-table';
+  $rows = springboard_p2p_registration_fields_table_rows($form, $weight_class);
+  $header = array(t('Name'), t('Show on registration form'), t('Weight'));
+  $form['registration_fields']['registration_field_items']['#markup'] = theme('table', array(
+      'header' => $header,
+      'rows' => $rows,
+      'attributes' => array('id' => $table_id),
+    ));
+
+  drupal_add_tabledrag($table_id, 'order', 'sibling', $weight_class);
+
+  // Everything else.
+  $output .= drupal_render_children($form);
+
+  return $output;
+}
+
+function springboard_p2p_registration_fields_table_rows(&$form, $weight_class) {
   $rows = array();
-  // Iterate over each element in our $form['example_items'] array.
   foreach (element_children($form['registration_fields']['registration_field_items']) as $id) {
-    $form['registration_fields']['items'][$id]['weight']['#attributes']['class'] = array($weight_class);
+    $form['registration_fields']['registration_field_items'][$id]['weight']['#attributes']['class'] = array($weight_class);
     $rows[] = array(
       'data' => array(
         drupal_render($form['registration_fields']['registration_field_items'][$id]['name']),
@@ -208,21 +243,10 @@ function theme_springboard_p2p_admin_settings($variables) {
       'class' => array('draggable'),
     );
   }
-  $header = array(t('Name'), t('Show on registration form'), t('Weight'));
-  $form['registration_fields']['registration_field_items']['#markup'] = theme('table', array(
-      'header' => $header,
-      'rows' => $rows,
-      'attributes' => array('id' => $table_id),
-    ));
-
-  $output .= drupal_render_children($form);
-
-  drupal_add_tabledrag($table_id, 'order', 'sibling', $weight_class);
-
-  return $output;
+  return $rows;
 }
 
-function springboard_p2p_form_types_table_rows($form, $type) {
+function springboard_p2p_form_types_table_rows(&$form, $type) {
   $rows = array();
   foreach (element_children($form['form_types'][$type]) as $key) {
     $rows[] = array(
@@ -273,4 +297,34 @@ function springboard_p2p_format_node_options($nodes) {
   }
 
   return $options;
+}
+
+function springboard_p2p_is_blacklisted_registration_field($key) {
+  return in_array($key, array(
+    'uid',
+    'name',
+    'last_access',
+    'last_login',
+    'created',
+    'roles',
+    'status',
+    'theme',
+    'sbp_cid',
+    'sbp_ms',
+    'sbp_referrer',
+    'sbp_initial_referrer',
+    'sbp_search_engine',
+    'sbp_search_string',
+    'sbp_user_agent',
+    'sbp_salesforce_account_id',
+    'sbp_salesforce_contact_id',
+  ));
+}
+
+function springboard_p2p_is_locked_registration_field($key) {
+  return in_array($key, array(
+    'sbp_first_name',
+    'sbp_last_name',
+    'mail',
+  ));
 }
