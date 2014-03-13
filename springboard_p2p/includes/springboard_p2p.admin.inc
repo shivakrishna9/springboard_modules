@@ -5,11 +5,13 @@
  * Admin functions for peer to peer.
  */
 
+/**
+ * Page callback for the p2p dashboard.
+ */
 function springboard_p2p_dashboard() {
   $output = array();
 
-  $output['campaigns'] = array(
-  );
+  $output['campaigns'] = array();
 
   $output['campaigns']['heading'] = array(
     '#markup' => '<h2>Active peer to peer campaigns</h2>',
@@ -33,8 +35,7 @@ function springboard_p2p_dashboard() {
     ),
   );
 
-  $output['categories'] = array(
-  );
+  $output['categories'] = array();
 
   $output['categories']['heading'] = array(
     '#markup' => '<h2>Campaign categories</h2>',
@@ -58,8 +59,7 @@ function springboard_p2p_dashboard() {
     ),
   );
 
-  $output['personal_campaigns'] = array(
-  );
+  $output['personal_campaigns'] = array();
 
   $output['personal_campaigns']['heading'] = array(
     '#markup' => '<h2>Personal campaigns awaiting approval</h2>',
@@ -78,6 +78,9 @@ function springboard_p2p_dashboard() {
   return $output;
 }
 
+/**
+ * Form callback for the p2p global admin settings.
+ */
 function springboard_p2p_admin_settings() {
   $form = array();
 
@@ -206,6 +209,9 @@ function springboard_p2p_admin_settings() {
   return $form;
 }
 
+/**
+ * Validation handler for the p2p global admin settings.
+ */
 function springboard_p2p_admin_settings_validate($form, &$form_state) {
   foreach (array('fundraiser_items', 'webform_user_items') as $type) {
     foreach ($form_state['values'][$type] as $content_type => $item) {
@@ -218,6 +224,9 @@ function springboard_p2p_admin_settings_validate($form, &$form_state) {
   }
 }
 
+/**
+ * Submit handler for the p2p global admin settings.
+ */
 function springboard_p2p_admin_settings_submit($form, &$form_state) {
   variable_set('springboard_p2p_base_path', $form_state['values']['springboard_p2p_base_path']);
   variable_set('springboard_p2p_fundraiser_items', $form_state['values']['fundraiser_items']);
@@ -227,6 +236,9 @@ function springboard_p2p_admin_settings_submit($form, &$form_state) {
   drupal_set_message('Settings saved.');
 }
 
+/**
+ * Theme function for the p2p global admin settings.
+ */
 function theme_springboard_p2p_admin_settings($variables) {
   $form = $variables['form'];
 
@@ -264,6 +276,17 @@ function theme_springboard_p2p_admin_settings($variables) {
   return $output;
 }
 
+/**
+ * Generates a rows array for the registration fields table.
+ *
+ * @param array $form
+ *   The admin settings form api array.
+ * @param string $weight_class
+ *   The class to add to the weight column for tabledrag.
+ *
+ * @return array
+ *   An array of rows for the registration fields table.
+ */
 function springboard_p2p_registration_fields_table_rows(&$form, $weight_class) {
   $rows = array();
   foreach (element_children($form['registration_fields']['registration_field_items']) as $id) {
@@ -280,6 +303,18 @@ function springboard_p2p_registration_fields_table_rows(&$form, $weight_class) {
   return $rows;
 }
 
+/**
+ * Generates the table rows array for the form types tables.
+ *
+ * @param array $form
+ *   The admin settings form api array.
+ * @param string $type
+ *   The form_types form key.  Either 'fundraiser_items'
+ *   or 'webform_user_items' depending on which table this is.
+ *
+ * @return array
+ *   An array of rows ready for the table theming.
+ */
 function springboard_p2p_form_types_table_rows(&$form, $type) {
   $rows = array();
   foreach (element_children($form['form_types'][$type]) as $key) {
@@ -293,6 +328,22 @@ function springboard_p2p_form_types_table_rows(&$form, $type) {
   return $rows;
 }
 
+/**
+ * Returns a list of fundraiser and webform user enabled content types.
+ *
+ * The webform user enabled types exclude the fundraiser enabled types.
+ *
+ * @return array
+ *   Example.
+ *   array(
+ *     'fundraiser' => array(
+ *       'donation_form' => 'Donation form',
+ *     ),
+ *     'webform_user' => array(
+ *       'petition' => 'Petition',
+ *     ),
+ *   )
+ */
 function springboard_p2p_get_sorted_content_types() {
   $sorted_types = array(
     'fundraiser' => array(),
@@ -313,17 +364,36 @@ function springboard_p2p_get_sorted_content_types() {
   return $sorted_types;
 }
 
+/**
+ * Gets a list of node nids and titles that are of the given content type.
+ *
+ * @param string $type
+ *   The content type to search for.
+ *
+ * @return array|bool
+ *   An associative array of objects containing the node nids and titles.
+ */
 function springboard_p2p_get_node_options_by_types($type) {
-  $result = db_select('node','n')
+  $result = db_select('node', 'n')
     ->fields('n', array('nid', 'title'))
     ->condition('type', $type, '=')
-    ->condition('status', 0,'>')
+    ->condition('status', 0, '>')
     ->execute()
     ->fetchAllAssoc('nid');
 
   return $result;
 }
 
+/**
+ * Formats node objects in an array to be suitable for a form's select options.
+ *
+ * @param array $nodes
+ *   The array of objects as returned by
+ *   springboard_p2p_get_node_options_by_types().
+ *
+ * @return array
+ *   An associative array used for select options.
+ */
 function springboard_p2p_format_node_options($nodes) {
   $options = array();
   foreach ($nodes as $node) {
@@ -333,6 +403,15 @@ function springboard_p2p_format_node_options($nodes) {
   return $options;
 }
 
+/**
+ * Determine if a registration field should be not be shown on the settings.
+ *
+ * @param string $key
+ *   The key of the registration field.
+ *
+ * @return bool
+ *   TRUE if this field should not be displayed.
+ */
 function springboard_p2p_is_blacklisted_registration_field($key) {
   return in_array($key, array(
       'uid',
@@ -357,6 +436,15 @@ function springboard_p2p_is_blacklisted_registration_field($key) {
   ));
 }
 
+/**
+ * Determines if the user should not be allowed to disable a registration field.
+ *
+ * @param string $key
+ *   The registration field key.
+ *
+ * @return bool
+ *   TRUE if the field should not be disabled.
+ */
 function springboard_p2p_is_locked_registration_field($key) {
   return in_array($key, array(
       'sbp_first_name',
@@ -365,6 +453,15 @@ function springboard_p2p_is_locked_registration_field($key) {
   ));
 }
 
+/**
+ * Sorts an array by weight.
+ *
+ * @param array $items
+ *   Associative array of items, nested with a weight key.
+ *
+ * @return array
+ *   The item keys ordered by weight.
+ */
 function springboard_p2p_sort_keys_by_weight($items) {
   $sort = array();
   foreach (array_keys($items) as $key) {

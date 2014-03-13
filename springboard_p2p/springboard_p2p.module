@@ -6,6 +6,9 @@
 
 include_once 'springboard_p2p.features.inc';
 
+/**
+ * Implements hook_permission().
+ */
 function springboard_p2p_permission() {
   return array(
     'administer springboard p2p' => array(
@@ -14,6 +17,9 @@ function springboard_p2p_permission() {
   );
 }
 
+/**
+ * Implements hook_menu().
+ */
 function springboard_p2p_menu() {
   $items = array();
 
@@ -45,6 +51,9 @@ function springboard_p2p_menu() {
   return $items;
 }
 
+/**
+ * Implements hook_theme().
+ */
 function springboard_p2p_theme() {
   return array(
     'springboard_p2p_admin_settings' => array(
