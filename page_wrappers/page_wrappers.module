@@ -839,7 +839,7 @@ function _page_wrappers_page_node() {
   $node = NULL;
 
   // Check if this in ajax request form submit
-  if (!empty($_POST['form_build_id']) && $form = ajax_get_form()) {
+  if (arg(0) == 'system' && arg(1) == 'ajax' && !empty($_POST['form_build_id']) && $form = ajax_get_form()) {
     // Ensure we have a node in the form
     if (!empty($form[0]['#node']->nid)) {
       $node = $form[0]['#node'];
