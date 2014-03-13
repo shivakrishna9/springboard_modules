@@ -68,7 +68,7 @@ function sustainer_import_menu() {
     'page callback' => 'sustainer_import_queue_failure_report',
     'access arguments' => array('administer sustainer import'),
     'file' => 'includes/sustainer_import.admin.inc',
-    'type' => MENU_CALLBACK,
+    'type' => MENU_LOCAL_TASK,
   );
   $items['admin/config/development/sustainer_import/%sustainer_import_queue_record/edit'] = array(
     'title' => 'Edit sustainer import record',
