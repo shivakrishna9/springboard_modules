@@ -288,18 +288,23 @@ function salesforce_queue_cron() {
   // running during standard cron is disabled.
   $params = func_get_args();
   if (empty($params) && !variable_get('salesforce_queue_cron_enabled', 1)) {
+    watchdog('salesforce_queue', 'Processing queue during Drupal cron is disabled.', array(), WATCHDOG_DEBUG);
     return;
   }
 
   // Limit the running of the processor to a configured frequency.
   $cron_frequency = variable_get('salesforce_queue_cron_frequency', SALESFORCE_QUEUE_CRON_FREQUENCY_DEFAULT);
-  $cron_last = variable_get('salesforce_queue_cron_last', 0);
-  if (($cron_last + $cron_frequency) < REQUEST_TIME && salesforce_get_api()->isAuthorized()) {
+  $watchdog_options = array('@request_type' => (empty($params)  ? 'Drupal cron' : 'direct'));
+  if (!salesforce_get_api()->isAuthorized()) {
+    watchdog('salesforce_queue', 'Queue could not be processed during @request_type request because Salesforce is not authorized.', $watchdog_options, WATCHDOG_DEBUG);
+  }
+  elseif (lock_acquire('salesforce_queue_cron', $cron_frequency)){
+    watchdog('salesforce_queue', 'Processing queue via @request_type request.', $watchdog_options, WATCHDOG_DEBUG);
     $queue_name = (isset($params[0]) && !empty($params[0])) ? $params[0] : 'all';
     salesforce_queue_process_queue($queue_name);
-
-    // Set cron_last after process has completed.
-    variable_set('salesforce_queue_cron_last', time());
+  }
+  else {
+    watchdog('salesforce_queue', 'Queue not processed during @request_type request due to frequency limitation.', $watchdog_options, WATCHDOG_DEBUG);
   }
 }
 
