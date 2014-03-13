@@ -20,33 +20,35 @@ function webform_form_salesforce_genmap_map_form_alter(&$form, &$form_state) {
   if (module_exists('webform_user')) {
     if (!empty($form['#node']) && _webform_user_is_webform_user_node($form['#node'])) {
       $sobject_type = $form['salesforce_object_info']['salesforce_object_type']['#default_value'];
-      $sfapi = salesforce_get_api();
-      $options = array();
-      if ($sfapi->isAuthorized()) {
-        $object_info = $sfapi->objectDescribe($sobject_type);
-        foreach ($object_info['fields'] as $field) {
-          if ($field['type'] == 'reference' && $field['referenceTo'][0] == 'Contact') {
-            $options[$field['name']] = $field['name'];
+      if(!empty($sobject_type)) {
+        $sfapi = salesforce_get_api();
+        $options = array();
+        if ($sfapi->isAuthorized()) {
+          $object_info = $sfapi->objectDescribe($sobject_type);
+          foreach ($object_info['fields'] as $field) {
+            if ($field['type'] == 'reference' && $field['referenceTo'][0] == 'Contact') {
+              $options[$field['name']] = $field['label'];
+            }
           }
         }
-      }
-      if (!empty($options)) {
-        $form['webform_user'] = array(
-          '#type' => 'fieldset',
-          '#title' => 'Webform User Configuration',
-        );
-        $default = '';
-        $webform_user_reference_fields = variable_get('webform_user_reference_fields', array());
-        if (array_key_exists($form['#node']->nid, $webform_user_reference_fields)) {
-          $default = $webform_user_reference_fields[$form['#node']->nid];
+        if (!empty($options)) {
+          $form['webform_user'] = array(
+            '#type' => 'fieldset',
+            '#title' => 'Webform User Configuration',
+          );
+          $default = '';
+          $webform_user_reference_fields = variable_get('webform_user_reference_fields', array());
+          if (array_key_exists($form['#node']->nid, $webform_user_reference_fields)) {
+            $default = $webform_user_reference_fields[$form['#node']->nid];
+          }
+          $form['webform_user']['webform_user_foreign_key'] = array(
+            '#type' => 'select',
+            '#title' => t('Contact Field'),
+            '#options' => $options,
+            '#default_value' => $default,
+            '#description' => t('The user that is created during the form submission will be exported to Salesforce as a contact. Choose the field on the %type object that will relate the submission to the contact.', array('%type' => $sobject_type)),
+          );
         }
-        $form['webform_user']['webform_user_foreign_key'] = array(
-          '#type' => 'select',
-          '#title' => t('Contact Field'),
-          '#options' => $options,
-          '#default_value' => $default,
-          '#description' => t('The user that is created during the form submission will be exported to Salesforce as a contact. Choose the field on the %type object that will relate the submission to the contact.', array('%type' => $sobject_type)),
-        );
       }
       $form['#submit'][] = 'webform_user_assign_foreign_key';
     }
