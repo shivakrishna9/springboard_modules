@@ -37,6 +37,7 @@ function springboard_api_basic_service_authenticate($op, $data) {
   if (in_array($api_key, array_keys($api_keys)) && $api_keys[$api_key]['enabled']) {
     return TRUE;
   }
+  springboard_api_log_service_usage($op, FALSE, NULL, $api_key);
   return services_error(t('Missing or invalid API key'), 406);
 }
 

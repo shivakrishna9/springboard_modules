@@ -19,6 +19,17 @@ function springboard_api_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      'access' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'api_key' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
       'remote_ip' => array(
         'description' => 'IP of the remote requestor.',
         'type' => 'varchar',
@@ -54,4 +65,32 @@ function springboard_api_uninstall() {
   variable_del('springboard_api_test_service_track_usage');
   variable_del('springboard_api_test_service_enable_throttling');
   variable_del('springboard_api_test_service_throttle_limit');
+}
+
+/**
+ * Implements hook_update_N().
+ */
+
+/**
+ * Add API key and access columns to tracker table.
+ */
+function springboard_api_update_7001() {
+  $access = array(
+    'type' => 'int',
+    'size' => 'tiny',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+    'default' => 0,
+  );
+  db_add_field( 'springboard_api_tracker', 'access', $access);
+
+}
+
+function springboard_api_update_7002() {
+  $api_key = array(
+    'type' => 'varchar',
+    'length' => 255,
+    'not null' => TRUE,
+  );
+  db_add_field( 'springboard_api_tracker', 'api_key', $api_key);
 }

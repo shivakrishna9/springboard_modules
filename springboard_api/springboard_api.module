@@ -307,8 +307,10 @@ function springboard_api_get_available_plugins() {
  *   Any other argument data passed by Services.
  */
 function springboard_api_form_resource_access($op, $data) {
-  // springboard_api_log_service_usage($op, $data = NULL);
+  // TODO: track API key.
+  $api_key = !empty($data[1]) ? $data[1] : '';
   if ($op == 'submit' && !_springboard_api_is_secure()) {
+    springboard_api_log_service_usage($op, FALSE, NULL, $api_key);
     return services_error(t('SSL is required to submit data.'), 406);
   }
   $service = springboard_api_get_enabled_management_service();
@@ -316,9 +318,11 @@ function springboard_api_form_resource_access($op, $data) {
     $func = $service['authentication_callback'];
     $access = $func($op, $data);
     if (!$access) {
+      springboard_api_log_service_usage($op, FALSE, NULL, $api_key);
       return services_error(t('Access denied.'), 406);
     }
   }
+  springboard_api_log_service_usage($op, TRUE, NULL, $api_key);
   return TRUE;
 }
 
@@ -548,10 +552,12 @@ function _springboard_api_get_payment_field_info($component) {
  * @param null $data
  *   Optional data passed by Services.
  */
-function springboard_api_log_service_usage($op, $data = NULL) {
+function springboard_api_log_service_usage($op, $access, $data = NULL, $api_key = NULL) {
   $record = array(
     'time' => time(),
+    'access' => $access,
     'remote_ip' => ip_address(),
+    'api_key' => $api_key,
     'referrer' => isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'unknown',
     'endpoint' => $op,
     'data' => serialize($data),
