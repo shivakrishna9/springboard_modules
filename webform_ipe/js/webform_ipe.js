@@ -1712,6 +1712,9 @@
             cancel: '.disabled',
             placeholder: 'sortable-placeholder',
             items: 'div.control-group:not(.disabled)',
+            stop: function (event, ui) {
+              ui.item.trigger('drop');
+            },
           });
 
           $('.webform-component-fieldset').disableSelection();
@@ -1723,7 +1726,9 @@
             $('.layout-row > .webform-ipe-container.editor-on').sortableNew({
               connectWith: '.layout-row > .webform-ipe-container.editor-on',
               items: '.layout-row > .webform-ipe-container.editor-on > .webform-ipe-container.editor-on:not(.disabled)',
-              handle: 'legend'
+              handle: 'legend',
+            }).bind('sortupdate', function(event, ui) {
+               ui.item.trigger('drop');
             });
           // $('#block-system-main div.form-layouts, div.fieldset.right-sidebar, div.fieldset.left-sidebar').sortable({
           //   cancel:'.disabled',

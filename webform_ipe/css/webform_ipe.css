@@ -83,6 +83,11 @@ body.editor-on div#webform-component-right-region {
   float:none;
   width: auto;
 }
+.editor-on .disabled.control-group {
+  float:left;
+  padding:0;
+}
+
 .editor-on .control-group:hover {
   background-color:#f7f7f7;
 }
