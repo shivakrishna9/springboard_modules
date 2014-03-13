@@ -301,30 +301,32 @@ function springboard_p2p_format_node_options($nodes) {
 
 function springboard_p2p_is_blacklisted_registration_field($key) {
   return in_array($key, array(
-    'uid',
-    'name',
-    'last_access',
-    'last_login',
-    'created',
-    'roles',
-    'status',
-    'theme',
-    'sbp_cid',
-    'sbp_ms',
-    'sbp_referrer',
-    'sbp_initial_referrer',
-    'sbp_search_engine',
-    'sbp_search_string',
-    'sbp_user_agent',
-    'sbp_salesforce_account_id',
-    'sbp_salesforce_contact_id',
+      'uid',
+      'name',
+      'url',
+      'edit_url',
+      'last_access',
+      'last_login',
+      'created',
+      'roles',
+      'status',
+      'theme',
+      'sbp_cid',
+      'sbp_ms',
+      'sbp_referrer',
+      'sbp_initial_referrer',
+      'sbp_search_engine',
+      'sbp_search_string',
+      'sbp_user_agent',
+      'sbp_salesforce_account_id',
+      'sbp_salesforce_contact_id',
   ));
 }
 
 function springboard_p2p_is_locked_registration_field($key) {
   return in_array($key, array(
-    'sbp_first_name',
-    'sbp_last_name',
-    'mail',
+      'sbp_first_name',
+      'sbp_last_name',
+      'mail',
   ));
 }
