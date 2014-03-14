@@ -9,7 +9,13 @@
  * Display a table of recurring donations for admin users.
  */
 function fundraiser_sustainers_admin() {
-  $headers = array('Master Donation ID', 'User', 'Amount', 'Charge Date', 'Status');
+  $headers = array(
+    'Master Donation ID',
+    'User',
+    'Amount',
+    'Charge Date',
+    'Status',
+  );
   $rows = array();
   // Get the data.
   $donation_sets = _fundraiser_sustainers_get_donation_sets();
@@ -40,12 +46,27 @@ function fundraiser_sustainers_admin() {
  * Display a table of recurring donations for admin users by master donation id.
  */
 function fundraiser_sustainers_admin_view($did) {
-  
-  if(arg(4) == 'recurring' && arg(6) == 'view') {
-    $headers = array('Master ID', 'Donation ID', 'User', 'Amount', 'Charge Date', 'Sustainer Key', 'Status');
+
+  if (arg(4) == 'recurring' && arg(6) == 'view') {
+    $headers = array(
+      'Master ID',
+      'Donation ID',
+      'User',
+      'Amount',
+      'Charge Date',
+      'Sustainer Key',
+      'Status',
+    );
   }
   else {
-    $headers = array('Master ID', 'Donation ID', 'User', 'Amount', 'Charge Date', 'Status');
+    $headers = array(
+      'Master ID',
+      'Donation ID',
+      'User',
+      'Amount',
+      'Charge Date',
+      'Status',
+    );
   }
   $rows = array();
   // Get the data.
@@ -63,9 +84,9 @@ function fundraiser_sustainers_admin_view($did) {
       $row[] = $this_donation->user->name;
       $row[] = '$' . money_format('%i', $this_donation->donation['amount']);
       $row[] = date('m/d/y', $this_donation->recurring->next_charge);
-      if(arg(4) == 'recurring' && arg(6) == 'view') {
+      if (arg(4) == 'recurring' && arg(6) == 'view') {
         $row[] = $this_donation->recurring->sustainer_key;
-      }  
+      }
       $row[] = $this_donation->recurring->gateway_resp;
       $rows[] = $row;
     }
@@ -76,7 +97,7 @@ function fundraiser_sustainers_admin_view($did) {
 }
 
 /**
- * Menu callback, provide way for admins to edit a recurring donation info directly.
+ * Provides a way for admins to edit recurring donation info directly.
  */
 function fundraiser_sustainers_admin_edit($did) {
   if (is_numeric($did)) {
