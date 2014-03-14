@@ -170,7 +170,6 @@ function webform_ipe_preprocess_node(&$vars) {
     drupal_add_js($path . '/js/block.ui.min.js');
     drupal_add_js($path . '/js/jquery.sortable.js');
     drupal_add_js($path . '/js/webform_ipe.js');
-    drupal_add_js($path . '/js/html5sortable.js');
 
     drupal_add_js(array('webform_ipe' => $json_data), 'setting');
 
