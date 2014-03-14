@@ -46,7 +46,7 @@ function _webform_render_tickets($component, $value = NULL, $filter = TRUE) {
     '#type' => 'item',
     '#title' => $filter ? _webform_filter_xss($component['name']) : $component['name'],
     '#weight' => $component['weight'],
-    '#attributes' => array('class' => 'webform-component-tickets'),
+    '#attributes' => array('class' => array('webform-component-tickets')),
     '#title_display' => 'none',
     '#webform_component' => $component,
     '#theme' => 'fundraiser_tickets_webform_table',
