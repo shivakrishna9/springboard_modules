@@ -898,7 +898,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     $mh = curl_multi_init();
 
     $curl_array = array();
-    foreach($urls as $url) {
+    foreach ($urls as $url) {
       $ch = curl_copy_handle($this->curlHandle);
       curl_setopt($ch, CURLOPT_URL, $url);
       curl_multi_add_handle($mh, $ch);
@@ -912,7 +912,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
       usleep(10000);
     } while($active > 0);
 
-    foreach($urls as $i => $url){
+    foreach ($urls as $i => $url){
       curl_multi_remove_handle($mh, $curl_array[$i]);
     }
     curl_multi_close($mh);
