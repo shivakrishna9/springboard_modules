@@ -826,7 +826,6 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     // Set cron frequency to 0 and unset the last cron run so it doesn't get in
     // our way.
     variable_set('salesforce_queue_cron_frequency', 0);
-    variable_del('salesforce_queue_cron_last');
 
     // Add item to queue and ensure it is there.
     $queue = salesforce_queue_load();
@@ -847,5 +846,75 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
 
     // Remove the created items from Salesforce.
     $this->deleteItemsFromSalesforce($queue_items);
+  }
+
+  /**
+   * Ensure multiple processes cannot access queue simultaneously.
+   */
+  public function testQueueLock() {
+    $this->salesforceConnect();
+
+    // Unlock the cron frequency limitation.
+    lock_release('salesforce_queue_cron');
+
+    // Set the max items to process at one time to 5
+    variable_set('salesforce_queue_max_items', 5);
+
+    // Create some queue items.
+    $queue = salesforce_queue_load();
+    $queue_items = $this->createQueueItems($queue, 15, array('CREATE'), array('Opportunity'));
+    $count = $queue->numberOfItems();
+    $this->assertEqual(15, $count, "Count $count items after creating 15 items.");
+
+    // Set up to call queue processor twice.
+    $url = url('salesforce-queue/process', array('absolute' => TRUE));
+    $this->curlMulti(array($url, $url));
+
+    // Ensure only 5 items were processed.
+    $count = $queue->numberOfItems();
+    $this->assertEqual(10, $count, "Count $count items after processing 5 of 15 items.");
+
+    // Remove the cron lock to ensure the queue lock also works.
+    variable_set('salesforce_queue_cron_frequency', 0);
+    $this->curlMulti(array($url, $url));
+
+    // Ensure only 5 items remain.
+    $count = $queue->numberOfItems();
+    $this->assertEqual(5, $count, "Count $count items after processing 10 of 15 items.");
+
+    // Cleanup.
+    $this->deleteItemsFromSalesforce($queue_items);
+    variable_del('salesforce_queue_max_items');
+  }
+
+  /**
+   * Helper to execute multiple cURL threads simultaneously.
+   *
+   * @param array $urls
+   *   Array of URLs to hit.
+   */
+  protected function curlMulti($urls){
+    $this->curlInitialize();
+    $mh = curl_multi_init();
+
+    $curl_array = array();
+    foreach($urls as $url) {
+      $ch = curl_copy_handle($this->curlHandle);
+      curl_setopt($ch, CURLOPT_URL, $url);
+      curl_multi_add_handle($mh, $ch);
+      $curl_array[] = $ch;
+    }
+
+    $active = NULL;
+    do {
+      curl_multi_exec($mh, $active);
+      curl_multi_select($mh);
+      usleep(10000);
+    } while($active > 0);
+
+    foreach($urls as $i => $url){
+      curl_multi_remove_handle($mh, $curl_array[$i]);
+    }
+    curl_multi_close($mh);
   }
 }
