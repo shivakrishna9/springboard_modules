@@ -1,0 +1,65 @@
+<?php
+
+/**
+ * Implements hook_fundraiser_gateway_info().
+ */
+function fundraiser_commerce_payflow_fundraiser_gateway_info() {
+  /// Load all the methods available.
+  $methods = new stdClass();
+  $methods->payment_methods = array();
+  rules_invoke_all('commerce_payment_methods', $methods);
+  $fundraiser_gateways = array();
+  foreach ($methods->payment_methods as $id => $info) {
+    $this_gateway = array();
+    $method_instance = commerce_payment_method_instance_load($id); // From commerce_payment.module.
+    list($method_id, $rule_name) = explode('|', $method_instance['instance_id']);
+    // Make sure this is a commerce payflow rule
+    if (!empty($method_id) && !empty($rule_name) && $method_instance['module'] == 'commerce_payflow') {
+      $rule_config = rules_config_load($rule_name);
+      $this_gateway['id'] = $method_instance['instance_id'];
+      $this_gateway['module'] = 'fundraiser_commerce';
+      $this_gateway['module_name'] = t('Commerce');
+      $this_gateway['title'] = $rule_config->label;
+      $this_gateway['description'] = $method_instance['description'];
+      $this_gateway['payment_method'] = array('payflow');
+      $this_gateway['offsite_processing'] = array('payflow');
+      $this_gateway['redirect callback'] = 'fundraiser_commerce_payflow_redirect';
+      $this_gateway['allow_recurring'] = array('credit');
+      $this_gateway['form callback'] = 'fundraiser_commerce_payflow_submit_form';
+      $this_gateway['expire callback'] = 'fundraiser_commerce_payflow_expire';
+      $this_gateway['charge callback'] = 'fundraiser_commerce_payflow_charge';
+
+      // Add this to the main gateway
+      $fundraiser_gateways[$this_gateway['id']] = $this_gateway;
+    }
+  }
+
+  return $fundraiser_gateways;
+}
+
+function commerce_payflow_fundraiser_commerce_submit_form($payment_method, $config) {
+  $form = array();
+
+  if (!empty($method_instance['settings']['show_payment_instructions'])) {
+    $form['paypal_payflow_information'] = array(
+      '#markup' => '<span class="commerce-paypal-wps-info">' . t('After submitting the form you will be taken to a from to enter your payment details.') . '</span>',
+    );
+  }
+
+  return $form;
+}
+
+function commerce_payflow_fundraiser_commerce_redirect($method_instance, $donation, $order, $settings) {
+  $form = array();
+  $form_state = array();
+  $pane_form = array();
+  $pane_values = array();
+  $charge = NULL;
+
+  commerce_payflow_link_submit_form_submit($method_instance, $pane_form, $pane_values, $order, $charge);
+  $form = commerce_payflow_link_redirect_form($form, $form_state, $order, $method_instance);
+  dpm($form, 'form');
+  drupal_add_js(array('commercePayflow' => array('page' => 'review')), 'setting');
+  $form['#attached']['js'][] = drupal_get_path('module', 'commerce_payflow') . '/commerce_payflow.js';
+  return $form;
+}
