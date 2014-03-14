@@ -366,15 +366,18 @@ function email_wrappers_get_nodes() {
  */
 function email_wrappers_mail($key, &$message, $params) {
 
+  $token_set = array(
+    'node' => isset($params['node']) ? $params['node'] : NULL,
+  );
+  if (isset($params['donation'])) {
+   $token_set['donation'] = $params['donation'];
+  }
   if ($key == 'wf_submission') {
 
     // Fish the original message array out of params.
     $message = $params['message'];
     $message['module'] = 'email_wrappers';
-    $token_set = array(
-      'node' => isset($params['node']) ? $params['node'] : NULL,
-    );
-    $message['subject'] = token_replace($params['subject'], $token_set);
+    $message['subject'] = token_replace($params['subject'], $token_set, array('clear' => TRUE));
     $eid = $params['email']['eid'];
     $nid = $params['email']['nid'];
     $settings = $params['settings'];
@@ -390,10 +393,7 @@ function email_wrappers_mail($key, &$message, $params) {
     );
   }
   elseif(isset($params['mail']->subject)) {
-    $token_set = array(
-      'node' => isset($params['node']) ? $params['node'] : NULL,
-    );
-    $params['mail']->subject = token_replace($params['mail']->subject, $token_set);
+    $params['mail']->subject = token_replace($params['mail']->subject, $token_set, array('clear' => TRUE));
   }
 }
 
@@ -413,7 +413,7 @@ function email_wrappers_mail_alter(&$message) {
     $token_set = array(
       'node' => isset($nid) ? node_load($nid) : NULL,
     );
-    $message['subject'] = token_replace($message['subject'], $token_set);
+    $message['subject'] = token_replace($message['subject'], $token_set, array('clear' => TRUE));
     if (!isset($message['params']['settings'])) {
       $settings = email_wrappers_load_settings($nid, $eid);
     }
@@ -464,7 +464,7 @@ function email_wrappers_mail_alter(&$message) {
     $token_set = array(
       'node' => isset($message['params']['node']) ? $message['params']['node'] : NULL,
     );
-    $message['subject'] = token_replace($message['params']['mail']->subject, $token_set);
+    $message['subject'] = token_replace($message['params']['mail']->subject, $token_set, array('clear' => TRUE));
     $message['body'] = array(email_wrappers_render_email_body(FALSE, $message));
 
     // Add Cc and Bcc headers if needed.
@@ -528,8 +528,11 @@ $html_raw
   $token_set = array(
     'node' => isset($message['params']['node']) ? $message['params']['node'] : NULL,
   );
+  if (isset($message['params']['donation'])) {
+    $token_set['donation'] = $message['params']['donation'];
+  }
 
-  $multi_body = token_replace($multi_body, $token_set);
+  $multi_body = token_replace($multi_body, $token_set, array('clear' => TRUE));
   if ($eid) {
     $multi_body = _webform_filter_values($multi_body, $message['params']['node'], $message['params']['submission'], $message['params']['node']->webform['emails'][$eid], FALSE, TRUE);
   }

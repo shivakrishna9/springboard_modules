@@ -408,7 +408,7 @@ function _webform_confirmation_send_confirmation_mail($settings, $donation) {
     );
     $params['settings']['html_message'] = token_replace($params['settings']['html_message'], $token_set);
     $params['settings']['text_message'] = token_replace($params['settings']['text_message'], $token_set);
-    $params['subject'] = token_replace($params['subject'], $token_set);
+    $params['subject'] = token_replace($params['subject'], $token_set, array('clear' => TRUE));
     drupal_mail('email_wrappers', 'wf_submission', $message['to'], user_preferred_language($account), $params);
     unset($mail_queue[$nid][$eid]);
   }
