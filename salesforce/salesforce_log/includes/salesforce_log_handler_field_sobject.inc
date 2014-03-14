@@ -12,6 +12,10 @@
  */
 class SalesforceLogHandlerFieldSobject extends views_handler_field {
 
+  public function pre_render(&$values) {
+    $this->options['element_class'] .= " expander";
+  }
+
   /**
    * Render sObject.
    */
