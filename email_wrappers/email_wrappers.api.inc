@@ -60,13 +60,13 @@ function email_wrappers_mail_form($edit, $params = array()) {
   );
   $form['headers'] = array(
     '#type' => 'fieldset',
-    '#title' => t('mail headers'),
+    '#title' => t('Mail headers'),
     '#description' => '',
     '#collapsible' => TRUE,
   );
   $form['headers']['from_name'] = array(
     '#type' => 'textfield',
-    '#title' => t('from name'),
+    '#title' => t('From name'),
     '#description' => '',
     '#default_value' => isset($settings->from_name) ? $settings->from_name : '',
     '#required' => TRUE,
@@ -101,7 +101,7 @@ function email_wrappers_mail_form($edit, $params = array()) {
   );
   $form['message'] = array(
     '#type' => 'fieldset',
-    '#title' => t('mail body'),
+    '#title' => t('Mail body'),
     '#description' => '',
     '#collapsible' => TRUE,
   );
