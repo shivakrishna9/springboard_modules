@@ -309,6 +309,11 @@ function fundraiser_commerce_fundraiser_gateway_info() {
       // When referencing gateway info gathered under gateway_info hooks.
       module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
       $gateway_options = module_invoke($method_instance['module'], 'fundraiser_commerce_fundraiser_gateway_info');
+      // If nothing is returned this gateway is not configured to work with fundraiser
+      if (empty($gateway_options)) {
+        continue;
+      }
+
       // Some gateways support multiple payment methods and multiple payment processors
       // Check if it specifies support for each in the payment method array
       foreach ($gateway_options['payment_method'] as $key => $type) {
