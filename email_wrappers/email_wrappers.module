@@ -192,7 +192,7 @@ function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state,
       '#default_value' => isset($defaults['bcc_email']) ? $defaults['bcc_email'] : '',
       '#states' => array(
         'visible' => array(
-        ':input[name="email_wrappers_email_template"]' => array('!value' => '0'),
+          ':input[name="email_wrappers_email_template"]' => array('!value' => '0'),
         ),
       ),
     );
