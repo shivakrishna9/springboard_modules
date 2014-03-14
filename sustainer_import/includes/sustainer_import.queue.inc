@@ -433,6 +433,26 @@ function _sustainer_import_create_master_order($record, $account, &$errors) {
   return $donation;
 }
 
+
+/**
+ * Create cardonfile entry.
+ */
+function _sustainer_import_create_cardonfile($payment_method, $remote_id, $fields) {
+  $new_data = commerce_cardonfile_new();
+  $new_data->uid = $order->uid;
+  $new_data->payment_method = $payment_method['method_id'];
+  $new_data->instance_id = $payment_method['instance_id'];
+  $new_data->remote_id = $remote_id;
+  $new_data->card_type = $fields['card_type'];
+  $new_data->card_name = !empty($fields['card_name']) ? $card_data['card_name'] : '';
+  $new_data->card_number = $fields['card_number'];
+  $new_data->card_exp_month = $fields['card_exp_month'];
+  $new_data->card_exp_year = $fields['card_exp_year'];
+  $new_data->status = 1;
+  commerce_cardonfile_save($new_data);
+  return isset($new_data->card_id) ? $new_data->card_id : FALSE;
+}
+
 /**
  * Creates a record to map old and new order ids.
  *
@@ -656,7 +676,9 @@ function _sustainer_import_name_from_mail($email) {
  * @return stdClass
  */
 function _sustainer_import_build_donation_object($record, $account, $node) {
-
+  // TODO: format $fields for use with generating cardonfile entry.
+  $card = _sustainer_import_create_cardonfile($payment_method, $remote_id, $fields);
+  $donation->data['cardonfile'] = isset($card->card_id) ? $card->card_id : FALSE;
   $donation = new stdClass();
   $donation->created = $record['created'];
   $donation->changed = $record['created'];
