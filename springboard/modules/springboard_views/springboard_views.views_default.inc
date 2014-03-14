@@ -802,11 +802,7 @@ function springboard_views_views_default_views() {
     7 => 0,
     8 => 0,
   );
-  /* Filter criterion: Content: Type */
-  $handler -> display -> display_options['filters']['type']['id'] = 'type';
-  $handler -> display -> display_options['filters']['type']['table'] = 'node';
-  $handler -> display -> display_options['filters']['type']['field'] = 'type';
-  $handler -> display -> display_options['filters']['type']['value'] = array('webform' => 'webform', );
+
   $handler -> display -> display_options['path'] = 'admin/springboard/forms/webforms';
   $handler -> display -> display_options['menu']['type'] = 'tab';
   $handler -> display -> display_options['menu']['title'] = 'Webforms';
