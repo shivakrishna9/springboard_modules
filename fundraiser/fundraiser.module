@@ -830,7 +830,7 @@ function _fundraiser_form_amounts_validate($form, &$form_state) {
   // Checking the minimum amount.
   $minimum_donation_amount = $form_state['values']['amount_wrapper']['minimum_donation_amount'];
   foreach ($amounts as $amount) {
-    if(empty($amount['remove']) && $amount['amount'] !='') {
+    if (empty($amount['remove']) && $amount['amount'] !='') {
       $min = (isset($min) && $amount['amount'] > $min) ? $min : $amount['amount'];
     }
   }
@@ -1380,7 +1380,7 @@ function fundraiser_donation_form(&$form, &$form_state) {
     $form = _fundraiser_update_form_field($form, 'other_amount', $other_amount);
 
     //Add minimum doantion into Drupal.settings for donation_validate.js
-    if(isset($form['#node']->minimum_donation_amount)) {
+    if (isset($form['#node']->minimum_donation_amount)) {
       drupal_add_js(array('fundraiserWebform' => array('minimum_donation_amount' => $form['#node']->minimum_donation_amount)), 'setting');
     }
 
