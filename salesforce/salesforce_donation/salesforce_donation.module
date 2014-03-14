@@ -190,6 +190,30 @@ function salesforce_donation_node_delete($node) {
  */
 
 /**
+ * @name salesforce_queue_hooks
+ * @{
+ */
+
+/**
+ * Implements hook_salesforce_queue_refresh_queue_item().
+ */
+function salesforce_donation_salesforce_queue_refresh_queue_item($item) {
+  if ($item->module == 'salesforce_donation' && $item->delta == 'donation') {
+    $did = $item->drupal_id;
+    if ($donation = fundraiser_donation_get_donation($did)) {
+      // Simulate the original donation event to rebuild and requeue.
+      salesforce_donation_fundraiser_donation_success($donation);
+      return TRUE;
+    }
+    return FALSE;
+  }
+}
+
+/**
+ * @} salesforce_queue_hooks
+ */
+
+/**
  * @name salesforce_genmap_hooks
  * @{
  * @TODO: review these, we may need to act on create instead of success
