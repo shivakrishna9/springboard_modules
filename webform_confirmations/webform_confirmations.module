@@ -71,12 +71,14 @@ function webform_confirmations_preprocess_webform_confirmation(&$vars) {
  *  Conditionally add send on order success checkbox to webform email configuration forms.
  */
 function webform_confirmations_form_webform_email_edit_form_alter(&$form, $form_state, $form_id) {
-  if (module_exists('email_wrappers') && fundraiser_is_donation_type($form['node']['#value']->type)) {
+  $node = $form['node']['#value'];
+  $is_donation = fundraiser_is_donation_type($form['node']['#value']->type);
 
+  if (module_exists('email_wrappers') && !empty($is_donation)) {
     $node = $form['node']['#value'];
     $send_default = _webform_confirmation_send_on_settings($form_state);
     $send_options = array(
-      0 => t('Always'),
+      0 => t('Always (donation tokens disabled)'),
       1 => t('Donation succeeds'),
       2 => t('Donation fails'),
     );
@@ -89,6 +91,9 @@ function webform_confirmations_form_webform_email_edit_form_alter(&$form, $form_
       '#default_value' => $send_default,
       '#weight' => -49,
     );
+    $form['#validate'][] = '_webform_confirmations_email_edit_validate';
+  } 
+  if (module_exists('email_wrappers'))  {
     $form['template']['tokens'] = array(
       '#type' => 'fieldset',
       '#title' => t('Available tokens'),
@@ -104,12 +109,18 @@ function webform_confirmations_form_webform_email_edit_form_alter(&$form, $form_
       '#title' => t('Drupal tokens'),
       '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
     );
+    if(empty($is_donation)) {
+      $form['template']['tokens']['tokens']['#states'] = array(
+        'invisible' => array(
+          ':input[name="email_wrappers_email_template"]' => array('value' => 0),
+        ),
+      );
+    }
     $form['template']['tokens']['webform_tokens'] = array(
       '#type' => 'item',
       '#title' => t('Webform tokens'),
       '#description' => theme('webform_token_help', array()),
     );
-    $form['#validate'][] = '_webform_confirmations_email_edit_validate';
   }
 }
 
@@ -389,7 +400,7 @@ function _webform_confirmation_send_confirmation_mail($settings, $donation) {
   if (isset($mail_queue[$nid][$eid])) {
     $params = $mail_queue[$nid][$eid]['params'];
     $message = $params['message'];
-
+    $params['donation'] = $donation;
     // Email Wrappers handles webform token replacement so all we need to do is pick off order tokens.
     $token_set = array(
       'node' => node_load($nid),
@@ -397,7 +408,7 @@ function _webform_confirmation_send_confirmation_mail($settings, $donation) {
     );
     $params['settings']['html_message'] = token_replace($params['settings']['html_message'], $token_set);
     $params['settings']['text_message'] = token_replace($params['settings']['text_message'], $token_set);
-
+    $params['subject'] = token_replace($params['subject'], $token_set);
     drupal_mail('email_wrappers', 'wf_submission', $message['to'], user_preferred_language($account), $params);
     unset($mail_queue[$nid][$eid]);
   }
