@@ -810,19 +810,19 @@
               }
 
               //If nested fieldsets aren't allowed
-              //var regions = ['left_sidebar','right_sidebar','top_region','right_region','bottom_region','left_region'];
-              // if (type == 'fieldset' && regions.indexOf(optionKey) != -1) {
-              //   if(cid != optionCid) {
-              //     $('[name="extra_container"]').append('<option value ="' + optionCid + '">' + optionName + '</option>');
-              //   }
-              // } else if(type != 'fieldset' && cid != optionCid) {
-              //   $('[name="extra_container"]').append('<option value ="' + optionCid + '">' + optionName + '</option>');
-              // }
-
-              //if nested fieldsets are allowed
-              if(cid != optionCid) {
+              var regions = ['left_sidebar','right_sidebar','top_region','right_region','bottom_region','left_region'];
+              if (type == 'fieldset' && regions.indexOf(optionKey) != -1) {
+                if(cid != optionCid) {
+                  $('[name="extra_container"]').append('<option value ="' + optionCid + '">' + optionName + '</option>');
+                }
+              } else if(type != 'fieldset' && cid != optionCid) {
                 $('[name="extra_container"]').append('<option value ="' + optionCid + '">' + optionName + '</option>');
               }
+
+              //if nested fieldsets are allowed
+              // if(cid != optionCid) {
+              //   $('[name="extra_container"]').append('<option value ="' + optionCid + '">' + optionName + '</option>');
+              // }
 
             });
             //set default value
