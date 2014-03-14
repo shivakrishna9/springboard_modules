@@ -20,7 +20,7 @@ function webform_form_salesforce_genmap_map_form_alter(&$form, &$form_state) {
   if (module_exists('webform_user')) {
     if (!empty($form['#node']) && _webform_user_is_webform_user_node($form['#node'])) {
       $sobject_type = $form['salesforce_object_info']['salesforce_object_type']['#default_value'];
-      if(!empty($sobject_type)) {
+      if (!empty($sobject_type)) {
         $sfapi = salesforce_get_api();
         $options = array();
         if ($sfapi->isAuthorized()) {

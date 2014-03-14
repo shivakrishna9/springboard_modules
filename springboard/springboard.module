@@ -367,7 +367,7 @@ function springboard_admin_dashboard() {
   // Add our CSS for display.
   drupal_add_css(drupal_get_path('module', 'springboard') . '/css/springboard.css', 'module');
   $content = '<div class="springboard-dashboard dashboard">';
-  if(user_access('administer springboard dashboard')) {
+  if (user_access('administer springboard dashboard')) {
     $content = '<div class="springboard-dashboard-customize">';
     $content .= l(t('Customize Dashboard'), 'admin/springboard/options/dashboard', array('attributes' => array('class'=>array('button', 'options-task'))));
     $content .= '</div>';
@@ -383,7 +383,7 @@ function springboard_admin_dashboard() {
   $column_right = '';
   foreach ($panes as $pane_key => $pane) {
     if (!empty($pane['content']) && !empty($enabled_panes[$pane_key])) {
-      if($pane_count%2) {
+      if ($pane_count%2) {
         $column_left .= '<div class="springboard-pane odd ' . drupal_clean_css_identifier($pane_key) . '">' . $pane['content'] . '</div>';
       }
       else {
