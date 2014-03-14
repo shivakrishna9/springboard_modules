@@ -23,9 +23,10 @@ function springboard_p2p_field_group_info() {
     'label' => 'Personal campaign defaults',
     'weight' => '7',
     'children' => array(
-      0 => 'field_p2p_images',
-      1 => 'field_p2p_video_embed',
-      2 => 'field_p2p_content',
+      0 => 'field_p2p_campaigns_approval',
+      1 => 'field_p2p_images',
+      2 => 'field_p2p_video_embed',
+      3 => 'field_p2p_content',
     ),
     'format_type' => 'fieldset',
     'format_settings' => array(

@@ -37,7 +37,7 @@ function springboard_p2p_field_default_field_instances() {
     'entity_type' => 'node',
     'field_name' => 'body',
     'label' => 'Description',
-    'required' => 0,
+    'required' => 1,
     'settings' => array(
       'display_summary' => 1,
       'text_processing' => 1,
@@ -264,7 +264,7 @@ function springboard_p2p_field_default_field_instances() {
         'rows' => 5,
       ),
       'type' => 'text_textarea',
-      'weight' => 8,
+      'weight' => 7,
     ),
   );
 
@@ -364,7 +364,7 @@ function springboard_p2p_field_default_field_instances() {
         'progress_indicator' => 'throbber',
       ),
       'type' => 'image_image',
-      'weight' => 7,
+      'weight' => 6,
     ),
   );
 
@@ -491,7 +491,7 @@ function springboard_p2p_field_default_field_instances() {
       'module' => 'video_embed_field',
       'settings' => array(),
       'type' => 'video_embed_field_video',
-      'weight' => 6,
+      'weight' => 5,
     ),
   );
 
@@ -768,7 +768,7 @@ function springboard_p2p_field_default_field_instances() {
     'bundle' => 'p2p_category',
     'default_value' => NULL,
     'deleted' => 0,
-    'description' => '',
+    'description' => 'Enter a URL from YouTube to embed a video.',
     'display' => array(
       'default' => array(
         'label' => 'hidden',
@@ -807,6 +807,7 @@ function springboard_p2p_field_default_field_instances() {
   t('Category');
   t('Content');
   t('Description');
+  t('Enter a URL from YouTube to embed a video.');
   t('Form header');
   t('Images');
   t('New accounts require approval');
