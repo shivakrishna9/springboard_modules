@@ -679,8 +679,20 @@
                   var edit = $(this.$el[0]).find('legend span.edit');
                   if(edit.length == 0 && collapse != true) {
                     var buttonTarget = this.$el.find('.fieldset-legend');
+                    if($('.editor-on').length > 1) {
+                      var clone = buttonTarget.clone();
+                      clone.css('visibility','hidden').appendTo(this.el);
+                      var legendWidth = (clone.css({display: 'inline', width: 'auto'}).width()) + 10;
+                      clone.remove();
+                    }
                   } else if(edit.length == 0 && collapse == true) {
                     var buttonTarget = this.$el.find('span.summary');
+                    if($('.editor-on').length > 1) {
+                      var clone = buttonTarget.clone();
+                      clone.css('visibility','hidden').appendTo(this.el);
+                      var legendWidth = clone.css({display: 'inline', width: 'auto'}).width();
+                      clone.remove();
+                    }
                   }
                 }
               break;
@@ -708,6 +720,9 @@
             }
             if(!_.isUndefined(buttonTarget)) {
               buttonTarget.after(App.Templates.template($('#editTemplate').html()));
+              if($('.editor-on').length > 1 && typeof(legendWidth) !== "undefined") {
+                buttonTarget.parent().find('span.edit').css('left', legendWidth)
+              }
               var required = Drupal.settings.webform_ipe.required_fields;
               var formKey = this.model.get('form_key');
               if(required.indexOf(formKey) != -1) {
@@ -1713,6 +1728,9 @@
             items: 'div.control-group:not(.disabled)',
             stop: function (event, ui) {
               ui.item.trigger('drop');
+              if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
+                $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
+              }
             },
           });
 
@@ -1727,13 +1745,16 @@
               items: '.layout-row > .webform-ipe-container.editor-on > .webform-ipe-container.editor-on:not(.disabled)',
               handle: 'legend',
             }).bind('sortupdate', function(event, ui) {
-               ui.item.trigger('drop');
+              ui.item.trigger('drop');
+              if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
+                $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
+              }
             });
           // $('#block-system-main div.form-layouts, div.fieldset.right-sidebar, div.fieldset.left-sidebar').sortable({
           //   cancel:'.disabled',
           //   placeholder: 'sortable-placeholder',
           //   connectWith: '#block-system-main div.form-layouts, div.fieldset.right-sidebar.show, div.fieldset.left-sidebar.show',
-          //   items: 'fieldset.webform-component-fieldset, div.control-group:not(".disabled")',
+          //   items: 'fieldset.webform-component-fieldset, div.control-group:not("fieldset.webform-component-fieldset div.control-group")',
           //   start: function(event, ui) {
           //     height = $(ui.item[0]).height();
           //     $(ui.item[0]).css({'height':'20px', 'overflow':'hidden'})
@@ -1766,6 +1787,8 @@
           App.Handlers.reorderFieldsets();
         //  $('fieldset.webform-component-fieldset').sortable("option","disabled", false);
         //  $('#block-system-main div.form-layouts').sortable("option","disabled", false);
+            $('.layout-row .webform-ipe-container.editor-on.show, .layout-row > .webform-ipe-container.editor-on, .layout-row > .webform-ipe-container.editor-on > .webform-ipe-container').sortable("option","disabled", false);
+            $('.layout-row > .webform-ipe-container.editor-on, .layout-row  .webform-ipe-container.sidebar.editor-on').sortableNew('enable');
         }
 
         App.Handlers.sortOff = function(button) {
@@ -1773,9 +1796,11 @@
           //disable sorting
           $('div.fieldset.form-layouts, div.fieldset.right-sidebar, div.fieldset.left-sidebar').not(':has("*")').hide();
           //$('.span3.region-empty').not(':has("*")').css({'min-height': '0px', 'width': '0px'})
-          //$('fieldset.webform-component-fieldset, div.fieldset.form-layouts').sortable("option","disabled", true);
-        //  $('#block-system-main div.form-layouts').sortable("option","disabled", true);
+          $('.layout-row .webform-ipe-container.editor-on.show, .layout-row > .webform-ipe-container.editor-on, .layout-row > .webform-ipe-container.editor-on > .webform-ipe-container').sortable("option","disabled", true);
+          $('.layout-row > .webform-ipe-container.editor-on, .layout-row  .webform-ipe-container.sidebar.editor-on').sortableNew('disable');
           $('.webform-component-fieldset, div.fieldset.form-layouts, .webform-component-fieldset, div.fieldset.right-sidebar, div.fieldset.left-sidebar, body').removeClass('editor-on');
+          //$('fieldset.webform-component-fieldset, div.fieldset.form-layouts').sortable("option","disabled", true);
+          //  $('#block-system-main div.form-layouts').sortable("option","disabled", true);
         }
 
         App.Handlers.addSortClasses = function() {

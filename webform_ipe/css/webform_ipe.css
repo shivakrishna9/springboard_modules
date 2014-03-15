@@ -68,7 +68,7 @@ body.editor-on div#webform-component-right-region {
   padding: 0px;
   float: none;
   width:auto;
-  min-height: 0;
+  min-height: 90px;
 }
 
 .layout-row .sidebar.webform-ipe-container.editor-on .webform-ipe-container.editor-on fieldset-wrapper,
