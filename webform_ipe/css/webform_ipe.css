@@ -587,6 +587,12 @@ legend span.edit {
  overflow: hidden;
 }
 
+.editor-on legend span.edit {
+ display:block;
+ position: relative;
+ top: 15px;
+}
+
 .edit .delete-item,
 .edit .edit-item {
   padding: 1px 7px;
