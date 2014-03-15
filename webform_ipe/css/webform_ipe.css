@@ -20,7 +20,7 @@ form .right-sidebar.region-empty {
 
 body.editor-on div#webform-component-left-region {
   float:left;
-  overflow: hidden;
+/*  overflow: hidden;*/
   width: 45%;
 }
 
@@ -37,14 +37,30 @@ body.editor-on div#webform-component-right-region {
 .layout-row > .webform-ipe-container.editor-on {
   float: left;
   min-height: 60px;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
   border: 2px solid #ccc;
 }
+
+.layout-row .sidebar.webform-ipe-container.editor-on {
+  min-height: 360px;
+  margin-bottom: 30px;
+  border: 2px solid #ccc;
+}
+
+.layout-row .right-sidebar.webform-ipe-container.editor-on {
+   margin-left: 8px;
+}
+
+.layout-row .left-sidebar.webform-ipe-container.editor-on {
+   margin-right: 8px;
+}
+
 .layout-row > #webform-component-top-region,
 .layout-row > #webform-component-bottom-region {
   width: 99%!important;
 }
 
+.layout-row .sidebar.webform-ipe-container.editor-on .webform-ipe-container.editor-on,
 .layout-row > .webform-ipe-container.editor-on .webform-ipe-container.editor-on {
   margin: 10px;
   border: 1px dashed #ccc;
