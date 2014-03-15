@@ -1644,6 +1644,7 @@
               $(this).not(':has("*")').removeClass('show').hide()
             }
           });
+          App.Handlers.reorderItems();
         });
 
         /*
@@ -1685,30 +1686,28 @@
          */
         App.Handlers.reorderItems = function() {
           // $('fieldset.webform-component-fieldset').sortable({
-          //   connectWith: '.webform-component-fieldset, #block-system-main div.form-layouts, div.fieldset.right-sidebar, div.fieldset.left-sidebar',
+          //   connectWith: '.webform-component-fieldset, #block-system-main div.form-layouts, div.fieldset.right-sidebar.show, div.fieldset.left-sidebar.show',
           //   cancel: '.disabled',
           //   placeholder: 'sortable-placeholder',
           //   items: 'div.control-group:not(.disabled)',
-          //   cursorAt:  {left: 5},
-          //   over: function( event, ui ) {
-          //   },
+   
           //   start: function(event, ui) {
-          //     // $(ui.item[0]).css({'height':'90px', 'overflow':'hidden'})
-          //     // $(ui.item[0]).css({'width':'120px', 'overflow':'hidden'})
+          //     $(ui.item[0]).css({'height':'50px', 'overflow':'hidden'})
+          //     $(ui.item[0]).css({'width':'120px', 'overflow':'hidden'})
           //   },
           //   stop: function (event, ui) {
-          //     // $(ui.item[0]).css({'height':'auto', 'overflow':'visible'})
-          //     // $(ui.item[0]).css({'width':'100%', 'overflow':'hidden'})
+          //     $(ui.item[0]).css({'height':'auto', 'overflow':'visible'})
+          //     $(ui.item[0]).css({'width':'auto', 'overflow':'hidden'})
           //     ui.item.trigger('drop');
-          //     // $('div.fieldset.form-layouts:not(:has("*"))').css('min-height', '290px');
-          //     // if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
-          //     //   $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
-          //     // }
+          //     $('div.fieldset.form-layouts:not(:has("*"))').css('min-height', '60px');
+          //     if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
+          //       $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
+          //     }
           //   },
           // });
 
-          $('.layout-row > .webform-ipe-container.editor-on, .layout-row > .webform-ipe-container.editor-on > .webform-ipe-container').sortable({
-            connectWith: '.editor-on',
+          $('.layout-row .webform-ipe-container.editor-on.show, .layout-row > .webform-ipe-container.editor-on, .layout-row > .webform-ipe-container.editor-on > .webform-ipe-container').sortable({
+            connectWith: '.layout-row .webform-ipe-container.editor-on.show, .layout-row > .webform-ipe-container.editor-on, .layout-row > .webform-ipe-container.editor-on > .webform-ipe-container',
             cancel: '.disabled',
             placeholder: 'sortable-placeholder',
             items: 'div.control-group:not(.disabled)',
@@ -1723,8 +1722,8 @@
          * Re-order Fieldsets
          */
         App.Handlers.reorderFieldsets = function() {
-            $('.layout-row > .webform-ipe-container.editor-on').sortableNew({
-              connectWith: '.layout-row > .webform-ipe-container.editor-on',
+            $('.layout-row > .webform-ipe-container.editor-on, .layout-row  .webform-ipe-container.sidebar.editor-on').sortableNew({
+              connectWith: '.layout-row > .webform-ipe-container.editor-on, .layout-row  .webform-ipe-container.sidebar.editor-on',
               items: '.layout-row > .webform-ipe-container.editor-on > .webform-ipe-container.editor-on:not(.disabled)',
               handle: 'legend',
             }).bind('sortupdate', function(event, ui) {
@@ -1733,22 +1732,21 @@
           // $('#block-system-main div.form-layouts, div.fieldset.right-sidebar, div.fieldset.left-sidebar').sortable({
           //   cancel:'.disabled',
           //   placeholder: 'sortable-placeholder',
-          //   connectWith: '#block-system-main div.form-layouts, div.fieldset.right-sidebar, div.fieldset.left-sidebar',
-          //   items: 'fieldset.webform-component-fieldset, div.control-group:not(.disabled)',
-          //   cursorAt:  {left: 5},
+          //   connectWith: '#block-system-main div.form-layouts, div.fieldset.right-sidebar.show, div.fieldset.left-sidebar.show',
+          //   items: 'fieldset.webform-component-fieldset, div.control-group:not(".disabled")',
           //   start: function(event, ui) {
-          //     // height = $(ui.item[0]).height();
-          //     // $(ui.item[0]).css({'height':'90px', 'overflow':'hidden'})
-          //     // $(ui.item[0]).css({'width':'120px', 'overflow':'hidden'})
+          //     height = $(ui.item[0]).height();
+          //     $(ui.item[0]).css({'height':'20px', 'overflow':'hidden'})
+          //     $(ui.item[0]).css({'width':'120px', 'overflow':'hidden'})
           //   },
           //   stop: function (event, ui) {
-          //     // $(ui.item[0]).css({'height':'auto', 'overflow':'visible'})
-          //     // $(ui.item[0]).css({'width':'100%', 'overflow':'hidden'})
+          //     $(ui.item[0]).css({'height':'auto', 'overflow':'visible'})
+          //     $(ui.item[0]).css({'width':'auto', 'overflow':'hidden'})
           //     ui.item.trigger('drop');
-          //     // $('div.fieldset.form-layouts:not(:has("*"))').css('min-height', '290px')
-          //     // if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
-          //     //   $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
-          //     // }
+          //     $('div.fieldset.form-layouts:not(:has("*"))').css('min-height', '60px')
+          //     if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
+          //       $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
+          //     }
           //    },
           // });
           $('#block-system-main div.form-layouts').disableSelection();
@@ -1766,8 +1764,8 @@
           App.Handlers.addSortClasses();
           App.Handlers.reorderItems(); //initialize the sortables
           App.Handlers.reorderFieldsets();
-          $('fieldset.webform-component-fieldset').sortable("option","disabled", false);
-          $('#block-system-main div.form-layouts').sortable("option","disabled", false);
+        //  $('fieldset.webform-component-fieldset').sortable("option","disabled", false);
+        //  $('#block-system-main div.form-layouts').sortable("option","disabled", false);
         }
 
         App.Handlers.sortOff = function(button) {
@@ -1775,8 +1773,8 @@
           //disable sorting
           $('div.fieldset.form-layouts, div.fieldset.right-sidebar, div.fieldset.left-sidebar').not(':has("*")').hide();
           //$('.span3.region-empty').not(':has("*")').css({'min-height': '0px', 'width': '0px'})
-          $('fieldset.webform-component-fieldset, div.fieldset.form-layouts').sortable("option","disabled", true);
-          $('#block-system-main div.form-layouts').sortable("option","disabled", true);
+          //$('fieldset.webform-component-fieldset, div.fieldset.form-layouts').sortable("option","disabled", true);
+        //  $('#block-system-main div.form-layouts').sortable("option","disabled", true);
           $('.webform-component-fieldset, div.fieldset.form-layouts, .webform-component-fieldset, div.fieldset.right-sidebar, div.fieldset.left-sidebar, body').removeClass('editor-on');
         }
 
