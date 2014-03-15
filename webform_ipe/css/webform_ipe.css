@@ -30,9 +30,9 @@ body.editor-on div#webform-component-right-region {
   width: 48%;
 }
 
-.webform-ipe-container.editor-on {
+/*.webform-ipe-container.editor-on {
   width: 99%;
-}
+}*/
 
 .layout-row > .webform-ipe-container.editor-on {
   float: left;
@@ -63,21 +63,32 @@ body.editor-on div#webform-component-right-region {
 .layout-row .sidebar.webform-ipe-container.editor-on .webform-ipe-container.editor-on,
 .layout-row > .webform-ipe-container.editor-on .webform-ipe-container.editor-on {
   margin: 10px;
+  margin-top: -10px;
   border: 1px dashed #ccc;
-  padding: 5px;
+  padding: 0px;
   float: none;
   width:auto;
   min-height: 0;
-  position: relative;
-  padding-top:60px;
+}
+
+.layout-row .sidebar.webform-ipe-container.editor-on .webform-ipe-container.editor-on fieldset-wrapper,
+.layout-row > .webform-ipe-container.editor-on .webform-ipe-container.editor-on fieldset-wrapper {
+  padding: 5px;
 }
 
 .webform-ipe-container.editor-on legend {
-  position: absolute; 
-  top:0;
-  left:0;
+  position: relative; 
   height:40px;
   display: block;
+  cursor: move;
+}
+
+.webform-ipe-container.editor-on span.fieldset-legend {
+  display:block;
+  position: absolute;
+  width:100%;
+  top:20px;
+  left:0;
   width: 100%;
   padding: 0;
   margin-bottom: 20px;
@@ -88,7 +99,6 @@ body.editor-on div#webform-component-right-region {
   text-indent: 20px;
   border-bottom: 1px solid #e5e5e5;
   background-color:#f0f0f0;
-  cursor: move;
 }
 
 .editor-on .control-group {
