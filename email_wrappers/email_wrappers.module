@@ -43,6 +43,19 @@ function email_wrappers_menu() {
 }
 
 /**
+ * Implements hook_menu_alter().
+ */
+function email_wrappers_menu_alter(&$items) {
+  if (module_exists('webform')) {
+    // Webform implements these paths as MENU_CALLBACK. This 
+    // causes local navigation to disappear on these pages.
+    $items['node/%webform_menu/webform/emails/%webform_menu_email']['type'] = MENU_LOCAL_TASK;
+    $items['node/%webform_menu/webform/emails/%webform_menu_email/delete']['type'] = MENU_LOCAL_TASK;
+  }
+}
+
+
+/**
  * Modal display window for email preview.
  *
  * At some point this should be converted to one or more theme

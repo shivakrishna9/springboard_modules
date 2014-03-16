@@ -39,7 +39,7 @@ function springboard_admin_menu() {
   return $items;
 }
 
- /**
+/**
  * Implements hook_permission().
  */
 function springboard_admin_permission() {
