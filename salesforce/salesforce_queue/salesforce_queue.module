@@ -205,6 +205,13 @@ function salesforce_queue_action_info() {
       'configurable' => FALSE,
       'triggers' => array('any'),
     ),
+    'salesforce_queue_salesforce_queue_item_refresh_item_action' => array(
+      'description' => t('Refresh item'),
+      'label' => t('Refresh item'),
+      'type' => 'salesforce_queue_item',
+      'configurable' => FALSE,
+      'triggers' => array('any'),
+    ),
   );
 }
 
@@ -373,6 +380,25 @@ function salesforce_queue_salesforce_queue_item_requeue_action($item) {
   $new['sobject'] = json_decode($item->sobject);
   $queue = salesforce_queue_load();
   $queue->createItem($new);
+}
+
+/**
+ * Refresh queue item VBO action.
+ */
+function salesforce_queue_salesforce_queue_item_refresh_item_action($item) {
+  // Let the individual modules handle the actual object refreshing and queuing.
+  // Check for a TRUE return value because we'll want to leave the item
+  // alone if it is not requeued successfully.
+  $result = module_invoke_all('salesforce_queue_refresh_queue_item', $item);
+  if (!empty($result) && $result[0]) {
+    // Force the item back into the new queue.
+    db_query("UPDATE {salesforce_queue} SET queue = 'new', retries = 0 WHERE item_id = :item_id",
+      array(':item_id' => $item->item_id));
+  }
+  else {
+    drupal_set_message(t('Item with Drupal Id !id (!module|!delta) could not be refreshed. It was not moved back into the new queue.', array(
+      '!id' => $item->drupal_id, '!module' => $item->module, '!delta' => $item->delta)));
+  }
 }
 
 /**
