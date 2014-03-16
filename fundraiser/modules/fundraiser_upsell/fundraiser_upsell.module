@@ -760,6 +760,19 @@ function fundraiser_upsell_node_insert($node) {
     if (isset($node->fundraiser_upsell['email_wrappers']) && is_array($node->fundraiser_upsell['email_wrappers'])) {
       fundraiser_upsell_save_email_wrapper_settings($node->nid, $node->fundraiser_upsell['email_wrappers']);
     }
+    // Cloning another node.
+    elseif (isset($node->clone_from_original_nid)) {
+      module_load_include('inc', 'email_wrappers', 'email_wrappers.api');
+      $params = array(
+        'name' => 'fundraiser_upsell',
+        'module' => 'fundraiser_upsell',
+        'delta' => 'nid_' . $node->clone_from_original_nid,
+      );
+      $settings = email_wrappers_mail_load($params);
+      unset($settings->mid);
+      $settings->delta = 'nid_' . $node->nid;
+      email_wrappers_save($settings);
+    }
   }
 }
 
