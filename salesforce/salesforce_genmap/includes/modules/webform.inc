@@ -19,6 +19,37 @@ function webform_form_salesforce_genmap_map_form_alter(&$form, &$form_state) {
   // mapped Salesforce object for a foreign key to the contact object.
   if (module_exists('webform_user')) {
     if (!empty($form['#node']) && _webform_user_is_webform_user_node($form['#node'])) {
+      $sobject_type = $form['salesforce_object_info']['salesforce_object_type']['#default_value'];
+      if (!empty($sobject_type)) {
+        $sfapi = salesforce_get_api();
+        $options = array();
+        if ($sfapi->isAuthorized()) {
+          $object_info = $sfapi->objectDescribe($sobject_type);
+          foreach ($object_info['fields'] as $field) {
+            if ($field['type'] == 'reference' && $field['referenceTo'][0] == 'Contact') {
+              $options[$field['name']] = $field['label'];
+            }
+          }
+        }
+        if (!empty($options)) {
+          $form['webform_user'] = array(
+            '#type' => 'fieldset',
+            '#title' => 'Webform User Configuration',
+          );
+          $default = '';
+          $webform_user_reference_fields = variable_get('webform_user_reference_fields', array());
+          if (array_key_exists($form['#node']->nid, $webform_user_reference_fields)) {
+            $default = $webform_user_reference_fields[$form['#node']->nid];
+          }
+          $form['webform_user']['webform_user_foreign_key'] = array(
+            '#type' => 'select',
+            '#title' => t('Contact Field'),
+            '#options' => $options,
+            '#default_value' => $default,
+            '#description' => t('The user that is created during the form submission will be exported to Salesforce as a contact. Choose the field on the %type object that will relate the submission to the contact.', array('%type' => $sobject_type)),
+          );
+        }
+      }
       $form['#submit'][] = 'webform_user_assign_foreign_key';
     }
   }
@@ -202,6 +233,54 @@ function webform_salesforce_genmap_permission() {
  * @} salesforce_genmap_hooks
  */
 
+/**
+ * @name salesforce_queue_hooks
+ * @{
+ */
+
+/**
+ * Implements hook_salesforce_queue_refresh_queue_item().
+ */
+function webform_salesforce_queue_refresh_queue_item($item) {
+  // Ensure the item is a webform submission.
+  if ($item->module == 'webform') {
+    // Load the node.
+    $nid = $item->delta;
+    $node = node_load($nid);
+
+    // Load the submission.
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    $sid = $item->drupal_id;
+    $submission = webform_get_submission($nid, $sid, TRUE);
+
+    if (!empty($submission)) {
+      // Requeue the submission.
+      switch ($item->operation) {
+        case 'CREATE':
+        case 'UPSERT':
+          salesforce_genmap_webform_submission_insert($node, $submission);
+          break;
+
+        case 'UPDATE':
+          salesforce_genmap_webform_submission_update($node, $submission);
+          break;
+
+        case 'DELETE':
+          salesforce_genmap_webform_submission_delete($node, $submission);
+          break;
+      }
+
+      // Assume it succeeded because salesforce_genmap_send_object_to_queue returns nothing.
+      return TRUE;
+    }
+    // Submission not found.
+    return FALSE;
+  }
+}
+
+/**
+ * @} salesforce_queue_hooks
+ */
 
 /**
  * Access callback to reach the mapping page.
@@ -279,20 +358,16 @@ function webform_entity_update($entity, $type) {
  */
 function webform_user_assign_foreign_key($form, $form_state) {
   $nid = $form_state['build_info']['args'][0]->nid;
-  $sobject_type = $form_state['values']['salesforce_object_info']['salesforce_object_type'];
+  $field = isset($form_state['values']['webform_user']['webform_user_foreign_key']) ? $form_state['values']['webform_user']['webform_user_foreign_key'] : FALSE;
+  $webform_user_reference_fields = variable_get('webform_user_reference_fields', array());
 
-  $sfapi = salesforce_get_api();
-  if ($sfapi->isAuthorized()) {
-    $object_info = $sfapi->objectDescribe($sobject_type);
-    // Loop over each field and look for a reference field that references the
-    // contact object.
-    foreach ($object_info['fields'] as $field) {
-      if ($field['type'] == 'reference' && $field['referenceTo'][0] == 'Contact') {
-        // Add the field name to the webform_user_reference_fields array.
-        $webform_user_reference_fields = variable_get('webform_user_reference_fields', array());
-        $webform_user_reference_fields[$nid] = $field['name'];
-        variable_set('webform_user_reference_fields', $webform_user_reference_fields);
-      }
-    }
+  if ($field && !empty($field)) {
+    // Add the field name to the webform_user_reference_fields array.
+    $webform_user_reference_fields[$nid] = $field;
+    variable_set('webform_user_reference_fields', $webform_user_reference_fields);
+  }
+  elseif (isset($webform_user_reference_fields[$nid])) {
+    unset($webform_user_reference_fields[$nid]);
+    variable_set('webform_user_reference_fields', $webform_user_reference_fields);
   }
 }

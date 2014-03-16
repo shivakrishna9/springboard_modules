@@ -777,6 +777,13 @@ function salesforce_log_views_default_views() {
       'override_label' => 0,
       'label' => '',
     ),
+    'action::salesforce_queue_salesforce_queue_item_refresh_item_action' => array(
+      'selected' => 1,
+      'postpone_processing' => 0,
+      'skip_confirmation' => 0,
+      'override_label' => 0,
+      'label' => '',
+    ),
     'action::system_send_email_action' => array(
       'selected' => 0,
       'postpone_processing' => 0,

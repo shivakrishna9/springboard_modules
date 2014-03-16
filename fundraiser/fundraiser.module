@@ -829,6 +829,14 @@ function _fundraiser_form_amounts_validate($form, &$form_state) {
 
   // Checking the minimum amount.
   $minimum_donation_amount = $form_state['values']['amount_wrapper']['minimum_donation_amount'];
+  foreach ($amounts as $amount) {
+    if (empty($amount['remove']) && $amount['amount'] !='') {
+      $min = (isset($min) && $amount['amount'] > $min) ? $min : $amount['amount'];
+    }
+  }
+  if ($min < $minimum_donation_amount) {
+    form_set_error('amount_wrapper][minimum_donation_amount', t('The minimum donation amount must not be higher than the minimum ask amount.'));
+  }
   if (!empty($minimum_donation_amount) && !is_numeric($minimum_donation_amount)) {
     form_set_error('amount_wrapper][minimum_donation_amount', t('The minimum donation amount must be a numerical value.'));
   }
@@ -925,7 +933,7 @@ function fundraiser_fundraiser_field_info() {
       'field_prefix' => '$',
     ),
     '#allow_update' => 1,
-    '#reset_value' => 0,
+    '#reset_value' => 1,
     '#create_callback' => '_fundraiser_amount_field_create',
   );
   $fields['donation']['other_amount'] = array(
@@ -1370,6 +1378,11 @@ function fundraiser_donation_form(&$form, &$form_state) {
     $other_amount = _fundraiser_get_form_field($form, 'other_amount');
     $other_amount['#attributes']['class'][] = 'input-medium';
     $form = _fundraiser_update_form_field($form, 'other_amount', $other_amount);
+
+    //Add minimum doantion into Drupal.settings for donation_validate.js
+    if (isset($form['#node']->minimum_donation_amount)) {
+      drupal_add_js(array('fundraiserWebform' => array('minimum_donation_amount' => $form['#node']->minimum_donation_amount)), 'setting');
+    }
 
     // Call hook to allow sub modules to add / manipulate the form.
     // NOTE: we are not using module_invoke_all on purpose here.
