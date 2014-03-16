@@ -270,7 +270,8 @@ function webform_salesforce_queue_refresh_queue_item($item) {
           break;
       }
 
-      // Assume it succeeded because salesforce_genmap_send_object_to_queue returns nothing.
+      // Assume it succeeded because salesforce_genmap_send_object_to_queue
+      // returns nothing.
       return TRUE;
     }
     // Submission not found.

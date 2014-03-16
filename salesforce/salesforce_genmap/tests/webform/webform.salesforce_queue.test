@@ -55,7 +55,7 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
     parent::tearDown();
   }
 
-  /***
+  /**
    * Tests the VBO refresh item action for webform submissions.
    */
   public function testVBOItemRefresh() {
@@ -261,6 +261,8 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
   }
 
   /**
+   * Test that a requeued item create request is converted to an update request.
+   *
    * Test to ensure that when an exported item is re-added to the Salesforce
    * Queue as a CREATE operation that it gets correctly converted to an
    * UPDATE to prevent creating a duplicate record in Salesforce.
@@ -282,9 +284,9 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
     $processor = salesforce_queue_load_processor();
     $processor->process();
 
-    // Requeue the item as a CREATE and make sure it's operation is switched to UPDATE
-    // because it has already been exported and a record exists in the sync_map
-    // table.
+    // Requeue the item as a CREATE and make sure it's operation is switched to
+    // UPDATE because it has already been exported and a record exists in the
+    // sync_map table.
     module_load_include('inc', 'webform', 'includes/webform.submissions');
     $submission = webform_get_submission($this->webform1->nid, 1);
 
@@ -500,13 +502,11 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
    * Helper to delete a queue item.
    */
   public function deleteQueueItem($item) {
-    if (empty($item)) {
-      return;
+    if (!empty($item)) {
+      db_delete('salesforce_queue')
+      ->condition('item_id', $item['item_id'])
+      ->execute();
     }
-    db_delete('salesforce_queue')
-    ->condition('item_id', $item['item_id'])
-    ->execute();
-    return;
   }
 
   /**
