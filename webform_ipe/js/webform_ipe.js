@@ -720,8 +720,8 @@
             }
             if(!_.isUndefined(buttonTarget)) {
               buttonTarget.after(App.Templates.template($('#editTemplate').html()));
-              if($('.editor-on').length > 1 && typeof(legendWidth) !== "undefined") {
-                buttonTarget.parent().find('span.edit').css('left', legendWidth)
+              if($('.editor-on').length > 1 && typeof(legendWidth) !== "undefined" && type == 'fieldset') {
+                buttonTarget.parent().find('span.edit').css({position:'absolute', left:legendWidth})
               }
               var required = Drupal.settings.webform_ipe.required_fields;
               var formKey = this.model.get('form_key');
@@ -1660,6 +1660,7 @@
             }
           });
           App.Handlers.reorderItems();
+          App.Handlers.reorderFieldsets();
         });
 
         /*

@@ -78,6 +78,8 @@ body.editor-on div#webform-component-right-region {
 
 .webform-ipe-container.editor-on legend {
   position: relative; 
+  left:0;
+  width: 100%;
   height:40px;
   display: block;
   cursor: move;
