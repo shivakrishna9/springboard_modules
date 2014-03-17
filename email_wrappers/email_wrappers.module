@@ -247,7 +247,7 @@ function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state,
  */
 function email_wrappers_email_validate_callback(&$form, &$form_state) {
   // TODO: validate and clean up email addresses.
-  drupal_set_message('validate callback invoked');
+ 
   // Fix inconsistencies between submitted input and $form_state['values']
   // This is caused by setting #value on header detail fields. Note: simply
   // setting #default_value on these fields causes defaults to not render
