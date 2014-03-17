@@ -1654,7 +1654,7 @@
           var hideBar = $('div.fieldset.right-sidebar, div.fieldset.left-sidebar');
           hideBar.each(function( index ) {
             if (!$(this).hasClass('show') && $('.sidebars-hide','#admin-bar').hasClass('active')) {
-              $(this).not(':has("*")').css({'min-height': '600px', 'width': '270px'}).addClass('show').show()
+              $(this).css({'min-height': '600px', 'width': '270px'}).addClass('show').show()
             } else if(!$('.sidebars-hide','#admin-bar').hasClass('active')){
               $(this).not(':has("*")').removeClass('show').hide()
             }
@@ -1741,9 +1741,9 @@
          * Re-order Fieldsets
          */
         App.Handlers.reorderFieldsets = function() {
-            $('.layout-row > .webform-ipe-container.editor-on, .layout-row .webform-ipe-container.sidebar.show').sortableNew({
-              connectWith: '.layout-row > .webform-ipe-container.editor-on, .layout-row .webform-ipe-container.sidebar.show',
-              items: '.layout-row > .webform-ipe-container.editor-on > .webform-ipe-container.editor-on:not(".disabled")',
+            $('.layout-row > .webform-ipe-container.editor-on, .layout-row .webform-ipe-container.sidebar.editor-on.show').sortableNew({
+              connectWith: '.layout-row > .webform-ipe-container.editor-on, .layout-row .webform-ipe-container.sidebar.editor-on.show',
+              items: '.layout-row > .webform-ipe-container.editor-on > .webform-ipe-container.editor-on:not(".disabled"), .layout-row .webform-ipe-container.sidebar.editor-on.show > .webform-ipe-container.editor-on:not(".disabled")',
               handle: 'legend',
             }).bind('sortupdate', function(event, ui) {
               ui.item.trigger('drop');
@@ -1781,15 +1781,15 @@
 
           $('.webform-component-fieldset, div.fieldset.form-layouts, .webform-component-fieldset, div.fieldset.right-sidebar, div.fieldset.left-sidebar, body').addClass('editor-on');
           $('div.fieldset.form-layouts').not(':has("*")').show()
-          $('div.fieldset.right-sidebar, div.fieldset.left-sidebar').not(':has("*")').css('min-height', '600px').show()
-          $('div.fieldset.right-sidebar, div.fieldset.left-sidebar').not(':has("*")').hide();
+          $('div.fieldset.right-sidebar, div.fieldset.left-sidebar').addClass('show').css('min-height', '600px').show()
+          $('div.fieldset.right-sidebar, div.fieldset.left-sidebar').not(':has("*")').removeClass('show').hide();
           App.Handlers.addSortClasses();
           App.Handlers.reorderItems(); //initialize the sortables
           App.Handlers.reorderFieldsets();
         //  $('fieldset.webform-component-fieldset').sortable("option","disabled", false);
         //  $('#block-system-main div.form-layouts').sortable("option","disabled", false);
             $('.layout-row .webform-ipe-container.editor-on.show, .layout-row > .webform-ipe-container.editor-on, .layout-row > .webform-ipe-container.editor-on > .webform-ipe-container').sortable("option","disabled", false);
-            $('.layout-row > .webform-ipe-container.editor-on, .layout-row  .webform-ipe-container.sidebar.editor-on').sortableNew('enable');
+            $('.layout-row > .webform-ipe-container.editor-on, .layout-row .webform-ipe-container.sidebar.editor-on.show').sortableNew('enable');
         }
 
         App.Handlers.sortOff = function(button) {
