@@ -256,7 +256,6 @@ function email_wrappers_email_validate_callback(&$form, &$form_state) {
   foreach ($keys as $key) {
     $fields = array('option', 'custom', 'component');
     foreach ($fields as $field) {
-      drupal_set_message("key:$key - $field");
       $form_state['values'][$key . '_' . $field] = $form_state['input'][$key . '_' . $field];
     }
   }
@@ -266,7 +265,6 @@ function email_wrappers_email_validate_callback(&$form, &$form_state) {
  * Submit callback for webform email edit form.
  */
 function email_wrappers_email_submit_callback($form, $form_state) {
-  dsm($form_state, 'form state after validate');
   $values = $form_state['values'];
 
   // If any information has been added to "extra" by other modules,
