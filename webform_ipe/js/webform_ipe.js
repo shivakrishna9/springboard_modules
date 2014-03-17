@@ -1704,7 +1704,7 @@
           //   connectWith: '.webform-component-fieldset, #block-system-main div.form-layouts, div.fieldset.right-sidebar.show, div.fieldset.left-sidebar.show',
           //   cancel: '.disabled',
           //   placeholder: 'sortable-placeholder',
-          //   items: 'div.control-group:not(.disabled)',
+          //   items: 'div.control-group:not(".disabled")',
    
           //   start: function(event, ui) {
           //     $(ui.item[0]).css({'height':'50px', 'overflow':'hidden'})
@@ -1725,7 +1725,7 @@
             connectWith: '.layout-row .webform-ipe-container.editor-on.show, .layout-row > .webform-ipe-container.editor-on, .layout-row > .webform-ipe-container.editor-on > .webform-ipe-container',
             cancel: '.disabled',
             placeholder: 'sortable-placeholder',
-            items: 'div.control-group:not(.disabled)',
+            items: 'div.control-group:not(".disabled")',
             stop: function (event, ui) {
               ui.item.trigger('drop');
               if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
@@ -1740,9 +1740,9 @@
          * Re-order Fieldsets
          */
         App.Handlers.reorderFieldsets = function() {
-            $('.layout-row > .webform-ipe-container.editor-on, .layout-row  .webform-ipe-container.sidebar.editor-on').sortableNew({
-              connectWith: '.layout-row > .webform-ipe-container.editor-on, .layout-row  .webform-ipe-container.sidebar.editor-on',
-              items: '.layout-row > .webform-ipe-container.editor-on > .webform-ipe-container.editor-on:not(.disabled)',
+            $('.layout-row > .webform-ipe-container.editor-on, .layout-row .webform-ipe-container.sidebar.show').sortableNew({
+              connectWith: '.layout-row > .webform-ipe-container.editor-on, .layout-row .webform-ipe-container.sidebar.show',
+              items: '.layout-row > .webform-ipe-container.editor-on > .webform-ipe-container.editor-on:not(".disabled")',
               handle: 'legend',
             }).bind('sortupdate', function(event, ui) {
               ui.item.trigger('drop');
