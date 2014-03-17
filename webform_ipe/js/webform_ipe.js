@@ -677,7 +677,7 @@
                 if (type != 'payment_fields' && type != 'payment_method'){
                   var collapse = this.model.get('extra.collapsible');
                   var edit = $(this.$el[0]).find('legend span.edit');
-                  if(edit.length == 0 && collapse != true) {
+                  if(edit.length == 0 ) {
                     var buttonTarget = this.$el.find('.fieldset-legend');
                     if($('.editor-on').length > 1) {
                       var clone = buttonTarget.clone();
@@ -685,15 +685,7 @@
                       var legendWidth = (clone.css({display: 'inline', width: 'auto'}).width()) + 10;
                       clone.remove();
                     }
-                  } else if(edit.length == 0 && collapse == true) {
-                    var buttonTarget = this.$el.find('span.summary');
-                    if($('.editor-on').length > 1) {
-                      var clone = buttonTarget.clone();
-                      clone.css('visibility','hidden').appendTo(this.el);
-                      var legendWidth = clone.css({display: 'inline', width: 'auto'}).width();
-                      clone.remove();
-                    }
-                  }
+                  } 
                 }
               break;
               case 'select':
