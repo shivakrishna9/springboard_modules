@@ -61,5 +61,378 @@ function springboard_p2p_theme() {
       'file' => 'springboard_p2p.admin.inc',
       'path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
     ),
+    'springboard_p2p_campaign_goals' => array(
+      'render element' => 'springboard_p2p_campaign_goals',
+      'file' => 'springboard_p2p.widget.inc',
+      'path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
+    ),
   );
+}
+
+/**
+ * Implements hook_field_info().
+ */
+function springboard_p2p_field_info() {
+  return array(
+    'springboard_p2p_campaign_goals' => array(
+      'label' => t('Peer to peer goals configuration'),
+      'description' => t('Goals configuration for a peer to peer campaign.'),
+      'default_widget' => 'springboard_p2p_campaign_goals_widgett',
+      'default_formatter' => 'hidden',
+      'no_ui' => FALSE,
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_validate().
+ *
+ * This hook gives us a chance to validate content that's in our
+ * field. We're really only interested in the $items parameter, since
+ * it holds arrays representing content in the field we've defined.
+ * We want to verify that the items only contain RGB hex values like
+ * this: #RRGGBB. If the item validates, we do nothing. If it doesn't
+ * validate, we add our own error notification to the $errors parameter.
+ *
+ * @see field_example_field_widget_error()
+ */
+function springboard_p2p_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
+
+  foreach ($items as $delta => $item) {
+    $enabled_types = 0;
+    $no_form_selected = FALSE;
+    if (!empty($item['campaign_goals'])) {
+      foreach ($item['campaign_goals']['form_types'] as $form_type => $content_types) {
+        foreach ($content_types as $content_type) {
+          $enabled_types += $content_type['enabled'];
+
+          if ($content_type['enabled'] && $content_type['default_form'] == '') {
+            $no_form_selected = TRUE;
+          }
+        }
+      }
+
+      if ($enabled_types > 1) {
+        $errors[$field['field_name']][$langcode][$delta][] = array(
+          'error' => 'springboard_p2p_campaign_goals_too_many',
+          'message' => t('Select only one goal type.'),
+        );
+      }
+      elseif ($enabled_types < 1) {
+        $errors[$field['field_name']][$langcode][$delta][] = array(
+          'error' => 'springboard_p2p_campaign_goals_not_enough',
+          'message' => t('Select a goal type.'),
+        );
+      }
+      elseif ($no_form_selected) {
+        $errors[$field['field_name']][$langcode][$delta][] = array(
+          'error' => 'springboard_p2p_campaign_goals_no_nid',
+          'message' => t('Select a form for the enabled goal type.'),
+        );
+      }
+    }
+  }
+  // @todo This should be where we mangle the data so it can be saved.
+  dpm($items);
+}
+
+/**
+ * Implements hook_field_is_empty().
+ *
+ * If any of the rows are enabled and have a nid selected, then the field is
+ * not empty.
+ */
+function springboard_p2p_field_is_empty($item, $field) {
+  dpm($item);
+  foreach ($item['campaign_goals']['form_types'] as $form_type => $content_types) {
+    foreach ($content_types as $content_type) {
+      if ($content_type['enabled'] && $content_type['default_form'] != '') {
+        return FALSE;
+      }
+    }
+  }
+
+  return TRUE;
+}
+
+/**
+ * Implements hook_field_presave().
+ */
+function springboard_p2p_field_presave($entity_type, $entity, $field, $instance, $langcode, &$items) {
+  dpm($entity_type);
+  dpm($entity);
+  dpm($field);
+  dpm($instance);
+  dpm($langcode);
+  dpm($items);
+}
+
+/**
+ * Implements hook_field_widget_info().
+ *
+ * Three widgets are provided.
+ * - A simple text-only widget where the user enters the '#ffffff'.
+ * - A 3-textfield widget that gathers the red, green, and blue values
+ *   separately.
+ * - A farbtastic colorpicker widget that chooses the value graphically.
+ *
+ * These widget types will eventually show up in hook_field_widget_form,
+ * where we will have to flesh them out.
+ *
+ * @see field_example_field_widget_form()
+ */
+function springboard_p2p_field_widget_info() {
+  return array(
+    'springboard_p2p_campaign_goals_text' => array(
+      'label' => t('Peer to peer campaign goals'),
+      'field types' => array('springboard_p2p_campaign_goals'),
+      'behaviors' => array(
+        'default value' => FIELD_BEHAVIOR_NONE,
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_widget_form().
+ *
+ * hook_widget_form() is where Drupal tells us to create form elements for
+ * our field's widget.
+ *
+ * We provide one of three different forms, depending on the widget type of
+ * the Form API item provided.
+ *
+ * The 'field_example_colorpicker' and 'field_example_text' are essentially
+ * the same, but field_example_colorpicker adds a javascript colorpicker
+ * helper.
+ *
+ * field_example_3text displays three text fields, one each for red, green,
+ * and blue. However, the field type defines a single text column,
+ * rgb, which needs an HTML color spec. Define an element validate
+ * handler that converts our r, g, and b fields into a simulated single
+ * 'rgb' form element.
+ */
+function springboard_p2p_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+//  $value = isset($items[$delta]['rgb']) ? $items[$delta]['rgb'] : '';
+
+  $widget = $element;
+  $widget['#delta'] = $delta;
+
+  switch ($instance['widget']['type']) {
+    case 'springboard_p2p_campaign_goals_text':
+      $types = array(
+        'fundraiser' => '<h2>Fundraising types</h2>',
+        'webform_user' => '<h2>Other form types</h2>',
+      );
+
+      // Make this a fieldset with the three text fields.
+      $widget += array(
+        '#theme' => 'springboard_p2p_campaign_goals',
+        '#type' => 'fieldset',
+        // #delta is set so that the validation function will be able
+        // to access external value information which otherwise would be
+        // unavailable.
+        '#delta' => $delta,
+
+//        '#attached' => array(
+//          'css' => array(drupal_get_path('module', 'field_example') . '/field_example.css'),
+//        ),
+      );
+      $content_types = springboard_p2p_get_sorted_content_types();
+      foreach ($types as $form_type => $title) {
+        $goal_options = array();
+        if ($form_type == 'fundraiser') {
+          $goal_options['amount'] = t('Amount raised');
+        }
+        $goal_options['submissions'] = t('Number of submissions');
+
+        $widget['form_types'][$form_type] = array(
+          '#tree' => TRUE,
+        );
+
+        if (count($content_types[$form_type])) {
+          $defaults = variable_get('springboard_p2p_' . $form_type . '_items', array());
+          $widget['form_types'][$form_type]['#prefix'] = $title;
+
+          foreach ($content_types[$form_type] as $key => $name) {
+            $node_options = springboard_p2p_get_node_options_by_types($key);
+            $formatted_node_options = springboard_p2p_format_node_options($node_options);
+
+            $widget['form_types'][$form_type][$key] = array(
+              'enabled' => array(
+                '#type' => 'checkbox',
+                '#title' => $name,
+                '#default_value' => isset($defaults[$key]['enabled']) ? $defaults[$key]['enabled'] : 0,
+              ),
+              'default_form' => array(
+                '#type' => 'select',
+                '#options' => $formatted_node_options,
+                '#default_value' => isset($defaults[$key]['default_form']) ? $defaults[$key]['default_form'] : '',
+                '#empty_value' => '',
+              ),
+              'campaign_override' => array(
+                '#type' => 'select',
+                '#options' => array(),
+                '#default_value' => '',
+                '#empty_value' => '',
+                '#disabled' => TRUE,
+              ),
+              'goal_type' => array(
+                '#type' => 'select',
+                '#options' => $goal_options,
+                '#empty_value' => '',
+                '#default_value' => '',
+              ),
+              'goal' => array(
+                '#type' => 'textfield',
+                '#default_value' => '',
+              ),
+            );
+
+            if (module_exists('market_source')) {
+              $options = market_source_get_campaign_options();
+              $widget['form_types'][$form_type][$key]['campaign_override']['#options'] += $options;
+              $widget['form_types'][$form_type][$key]['campaign_override']['#disabled'] = FALSE;
+            }
+
+          }
+        }
+      }
+      break;
+  }
+
+  $element['campaign_goals'] = $widget;
+  return $element;
+}
+
+/**
+ * Implements hook_field_widget_error().
+ *
+ * hook_field_widget_error() lets us figure out what to do with errors
+ * we might have generated in hook_field_validate(). Generally, we'll just
+ * call form_error().
+ *
+ * @see field_example_field_validate()
+ * @see form_error()
+ */
+function springboard_p2p_field_widget_error($element, $error, $form, &$form_state) {
+  switch ($error['error']) {
+    case 'springboard_p2p_campaign_goals_no_nid':
+    case 'springboard_p2p_campaign_goals_too_many':
+    case 'springboard_p2p_campaign_goals_not_enough':
+      form_error($element, $error['message']);
+      break;
+  }
+}
+
+
+/**
+ * Returns a list of fundraiser and webform user enabled content types.
+ *
+ * The webform user enabled types exclude the fundraiser enabled types.
+ *
+ * @return array
+ *   Example.
+ *   array(
+ *     'fundraiser' => array(
+ *       'donation_form' => 'Donation form',
+ *     ),
+ *     'webform_user' => array(
+ *       'petition' => 'Petition',
+ *     ),
+ *   )
+ */
+function springboard_p2p_get_sorted_content_types() {
+  $sorted_types = array(
+    'fundraiser' => array(),
+    'webform_user' => array(),
+  );
+
+  $node_types = node_type_get_names();
+
+  foreach ($node_types as $key => $name) {
+    if (fundraiser_is_donation_type($key)) {
+      $sorted_types['fundraiser'][$key] = $name;
+    }
+    elseif (_webform_user_is_webform_user_node_type($key)) {
+      $sorted_types['webform_user'][$key] = $name;
+    }
+  }
+
+  return $sorted_types;
+}
+
+/**
+ * Gets a list of node nids and titles that are of the given content type.
+ *
+ * @param string $type
+ *   The content type to search for.
+ *
+ * @return array|bool
+ *   An associative array of objects containing the node nids and titles.
+ */
+function springboard_p2p_get_node_options_by_types($type) {
+  $result = db_select('node', 'n')
+    ->fields('n', array('nid', 'title'))
+    ->condition('type', $type, '=')
+    ->condition('status', 0, '>')
+    ->execute()
+    ->fetchAllAssoc('nid');
+
+  return $result;
+}
+
+/**
+ * Formats node objects in an array to be suitable for a form's select options.
+ *
+ * @param array $nodes
+ *   The array of objects as returned by
+ *   springboard_p2p_get_node_options_by_types().
+ *
+ * @return array
+ *   An associative array used for select options.
+ */
+function springboard_p2p_format_node_options($nodes) {
+  $options = array();
+  foreach ($nodes as $node) {
+    $options[$node->nid] = $node->title;
+  }
+
+  return $options;
+}
+
+/**
+ * Generates the table rows array for the form types tables.
+ *
+ * @param array $form
+ *   The admin settings form api array.
+ * @param string $type
+ *   The form_types form key.  Either 'fundraiser_items'
+ *   or 'webform_user_items' depending on which table this is.
+ *
+ * @return array
+ *   An array of rows ready for the table theming.
+ */
+function springboard_p2p_form_types_table_rows(&$form, $type) {
+  $rows = array();
+  $columns = array(
+    'enabled',
+    'default_form',
+    'campaign_override',
+    'goal_type',
+    'goal',
+  );
+  foreach (element_children($form['form_types'][$type]) as $key) {
+    $cells = array();
+    foreach ($columns as $field) {
+      if (isset($form['form_types'][$type][$key][$field])) {
+        $cells[] = drupal_render($form['form_types'][$type][$key][$field]);
+      }
+    }
+
+    $rows[] = array(
+      'data' => $cells,
+    );
+  }
+  return $rows;
 }
