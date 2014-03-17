@@ -233,7 +233,7 @@ function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state,
       '#attributes' => array('class' => array('ctools-use-modal')),
       '#weight' => 20,
     );
-
+    $form['#validate'][] = 'email_wrappers_email_validate_callback';
     $form['#submit'][] = 'email_wrappers_email_submit_callback';
   }
 
@@ -247,12 +247,26 @@ function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state,
  */
 function email_wrappers_email_validate_callback(&$form, &$form_state) {
   // TODO: validate and clean up email addresses.
+  drupal_set_message('validate callback invoked');
+  // Fix inconsistencies between submitted input and $form_state['values']
+  // This is caused by setting #value on header detail fields. Note: simply
+  // setting #default_value on these fields causes defaults to not render
+  // after the template select ajax event has executed.
+  $keys = array('subject', 'from_address', 'from_name',);
+  foreach ($keys as $key) {
+    $fields = array('option', 'custom', 'component');
+    foreach ($fields as $field) {
+      drupal_set_message("key:$key - $field");
+      $form_state['values'][$key . '_' . $field] = $form_state['input'][$key . '_' . $field];
+    }
+  }
 }
 
 /**
  * Submit callback for webform email edit form.
  */
 function email_wrappers_email_submit_callback($form, $form_state) {
+  dsm($form_state, 'form state after validate');
   $values = $form_state['values'];
 
   // If any information has been added to "extra" by other modules,
