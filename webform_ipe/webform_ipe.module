@@ -69,11 +69,13 @@ function webform_ipe_preprocess_node(&$vars) {
 
   // Make sure that editing is activated for this type and user.
   $is_active = in_array($vars['type'], variable_get('webform_ipe_node_types', array()));
-
-  if ($is_active && user_access('use webform IPE')) {
+  $nid = isset($vars['webform']['nid']) ? $vars['webform']['nid'] : NULL;
+  if(isset($nid)) {
+    $layout = form_layout_get_node_layout($nid);
+  }  
+  if ($is_active && user_access('use webform IPE') && !empty($layout)) {
 
     $path = drupal_get_path('module', 'webform_ipe');
-    $nid = $vars['webform']['nid'];
 
     // build the array of webform components to be added to drupal.settings
     $json_data = array();
