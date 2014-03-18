@@ -147,6 +147,16 @@ function form_layout_delete($machine_name) {
  * Provides the additional regions fields.
  */
 function form_layout_fundraiser_field_info() {
+
+   //don't load fields on non-form_layout webforms 
+   $node = menu_get_object();
+   if(isset($node->nid)) {
+    $layout = form_layout_get_node_layout($node->nid);
+    if(empty($layout)) {
+      return;
+    }
+   }
+
   $fields = array();
 
   $fields['left_sidebar'] = array(
@@ -643,6 +653,11 @@ function form_layout_node_update($node) {
         $ipe_forms[] = $node->nid;
        variable_set('webform_ipe_nodes', $ipe_forms);
       }
+    }
+  }
+  else {
+    if (fundraiser_is_donation_type($node->type) && !empty($node->form_layout)) {
+      form_layout_save_node_layout($node->nid, $node->form_layout, $node->submit_position);
     }
   }
 }
