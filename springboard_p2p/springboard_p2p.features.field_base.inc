@@ -91,6 +91,33 @@ function springboard_p2p_field_default_field_bases() {
     'type' => 'list_boolean',
   );
 
+  // Exported field_base: 'field_p2p_campaign_goals'
+  $field_bases['field_p2p_campaign_goals'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'field_p2p_campaign_goals',
+    'foreign keys' => array(
+      'goal_set_id' => array(
+        'columns' => array(
+          'goal_set_id' => 'goal_set_id',
+        ),
+        'table' => 'springboard_p2p_campaign_goals',
+      ),
+    ),
+    'indexes' => array(
+      'goal_set_id' => array(
+        0 => 'goal_set_id',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'springboard_p2p',
+    'settings' => array(),
+    'translatable' => 0,
+    'type' => 'springboard_p2p_campaign_goals',
+  );
+
   // Exported field_base: 'field_p2p_campaign_images'
   $field_bases['field_p2p_campaign_images'] = array(
     'active' => 1,

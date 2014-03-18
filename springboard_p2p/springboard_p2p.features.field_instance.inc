@@ -97,6 +97,41 @@ function springboard_p2p_field_default_field_instances() {
     ),
   );
 
+  // Exported field_instance: 'node-p2p_campaign-field_p2p_campaign_goals'
+  $field_instances['node-p2p_campaign-field_p2p_campaign_goals'] = array(
+    'bundle' => 'p2p_campaign',
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 11,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_p2p_campaign_goals',
+    'label' => 'Goals',
+    'required' => 1,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 0,
+      'module' => 'springboard_p2p',
+      'settings' => array(),
+      'type' => 'springboard_p2p_campaign_goals_text',
+      'weight' => 12,
+    ),
+  );
+
   // Exported field_instance: 'node-p2p_campaign-field_p2p_campaign_images'
   $field_instances['node-p2p_campaign-field_p2p_campaign_images'] = array(
     'bundle' => 'p2p_campaign',
@@ -314,7 +349,7 @@ function springboard_p2p_field_default_field_instances() {
         'progress_indicator' => 'throbber',
       ),
       'type' => 'image_image',
-      'weight' => 4,
+      'weight' => 13,
     ),
   );
 
@@ -809,6 +844,7 @@ function springboard_p2p_field_default_field_instances() {
   t('Description');
   t('Enter a URL from YouTube to embed a video.');
   t('Form header');
+  t('Goals');
   t('Images');
   t('New accounts require approval');
   t('Personal campaigns require approval');

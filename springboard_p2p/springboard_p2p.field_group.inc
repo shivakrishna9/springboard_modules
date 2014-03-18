@@ -24,9 +24,9 @@ function springboard_p2p_field_group_info() {
     'weight' => '7',
     'children' => array(
       0 => 'field_p2p_campaigns_approval',
-      1 => 'field_p2p_images',
-      2 => 'field_p2p_video_embed',
-      3 => 'field_p2p_content',
+      1 => 'field_p2p_content',
+      2 => 'field_p2p_images',
+      3 => 'field_p2p_video_embed',
     ),
     'format_type' => 'fieldset',
     'format_settings' => array(
@@ -110,19 +110,21 @@ function springboard_p2p_field_group_info() {
   $field_group->mode = 'form';
   $field_group->parent_name = '';
   $field_group->data = array(
-    'label' => 'Donation form',
+    'label' => 'Form configuration',
     'weight' => '5',
     'children' => array(
       0 => 'field_p2p_form_header',
+      1 => 'field_p2p_campaign_goals',
     ),
     'format_type' => 'fieldset',
     'format_settings' => array(
-      'formatter' => 'collapsible',
+      'label' => 'Form configuration',
       'instance_settings' => array(
-        'description' => '',
-        'classes' => 'group-p2p-donation-form field-group-fieldset',
         'required_fields' => 1,
+        'classes' => 'group-p2p-donation-form field-group-fieldset',
+        'description' => '',
       ),
+      'formatter' => 'collapsible',
     ),
   );
   $export['group_p2p_donation_form|node|p2p_campaign|form'] = $field_group;
