@@ -715,6 +715,12 @@
               if($('.editor-on').length > 1 && typeof(legendWidth) !== "undefined" && type == 'fieldset') {
                 buttonTarget.parent().find('span.edit').css({position:'absolute', left:legendWidth})
               }
+              // else if ($('.editor-on').length > 1  && type != 'fieldset'){
+              //   width = (buttonTarget.width()) - 15;
+              //   console.log(width)
+              //   buttonTarget.parent().css('position', 'relative')
+              //   buttonTarget.parent().find('span.edit').css({position:'absolute', left:width})
+              // }
               var required = Drupal.settings.webform_ipe.required_fields;
               var formKey = this.model.get('form_key');
               if(required.indexOf(formKey) != -1) {
@@ -1166,6 +1172,7 @@
              this.collection.each(function (model, index) {
                comps[index] = model.toJSON();
              });
+              //comps['ipe_form_action'] = $('div.form-actions').closest('.webform-ipe-container').attr('id').replace('webform-component-','').replace(/-/g, '_');
               var callbackPath = Drupal.settings.webform_ipe.callback;
               $('#admin-bar').append('<p><div class="ajax-progress"><div class="throbber">&nbsp;</div></div></p>');
               $('#webform-ipe-unsaved-edits').hide();
@@ -1693,39 +1700,39 @@
          * Re-order Items
          */
         App.Handlers.reorderItems = function() {
-          // $('fieldset.webform-component-fieldset').sortable({
-          //   connectWith: '.webform-component-fieldset, #block-system-main div.form-layouts, div.fieldset.right-sidebar.show, div.fieldset.left-sidebar.show',
-          //   cancel: '.disabled',
-          //   placeholder: 'sortable-placeholder',
-          //   items: 'div.control-group:not(".disabled")',
-   
-          //   start: function(event, ui) {
-          //     $(ui.item[0]).css({'height':'50px', 'overflow':'hidden'})
-          //     $(ui.item[0]).css({'width':'120px', 'overflow':'hidden'})
-          //   },
-          //   stop: function (event, ui) {
-          //     $(ui.item[0]).css({'height':'auto', 'overflow':'visible'})
-          //     $(ui.item[0]).css({'width':'auto', 'overflow':'hidden'})
-          //     ui.item.trigger('drop');
-          //     $('div.fieldset.form-layouts:not(:has("*"))').css('min-height', '60px');
-          //     if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
-          //       $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
-          //     }
-          //   },
-          // });
-
-          $('.layout-row .webform-ipe-container.editor-on.show, .layout-row > .webform-ipe-container.editor-on, .layout-row > .webform-ipe-container.editor-on > .webform-ipe-container').sortable({
-            connectWith: '.layout-row .webform-ipe-container.editor-on.show, .layout-row > .webform-ipe-container.editor-on, .layout-row > .webform-ipe-container.editor-on > .webform-ipe-container',
+          $('fieldset.webform-component-fieldset').sortable({
+            connectWith: '.webform-component-fieldset, #block-system-main div.form-layouts, div.fieldset.right-sidebar.show, div.fieldset.left-sidebar.show',
             cancel: '.disabled',
             placeholder: 'sortable-placeholder',
             items: 'div.control-group:not(".disabled")',
+            cursorAt: { left: 5 },
+            start: function(event, ui) {
+              $(ui.item[0]).css({'height':'50px', 'overflow':'hidden'})
+              $(ui.item[0]).css({'width':'120px', 'overflow':'hidden'})
+            },
             stop: function (event, ui) {
+              $(ui.item[0]).css({'height':'auto', 'overflow':'visible'})
+              $(ui.item[0]).css({'width':'auto', 'overflow':'hidden'})
               ui.item.trigger('drop');
+              $('div.fieldset.form-layouts:not(:has("*"))').css('min-height', '60px');
               if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
                 $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
               }
             },
           });
+
+          // $('.layout-row .webform-ipe-container.editor-on.show, .layout-row > .webform-ipe-container.editor-on, .layout-row > .webform-ipe-container.editor-on > .webform-ipe-container').sortable({
+          //   connectWith: '.layout-row .webform-ipe-container.editor-on.show, .layout-row > .webform-ipe-container.editor-on, .layout-row > .webform-ipe-container.editor-on > .webform-ipe-container',
+          //   cancel: '.disabled',
+          //   placeholder: 'sortable-placeholder',
+          //   items: 'div.control-group:not(".disabled")',
+          //   stop: function (event, ui) {
+          //     ui.item.trigger('drop');
+          //     if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
+          //       $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
+          //     }
+          //   },
+          // });
 
           $('.webform-component-fieldset').disableSelection();
         };
@@ -1733,36 +1740,36 @@
          * Re-order Fieldsets
          */
         App.Handlers.reorderFieldsets = function() {
-            $('.layout-row > .webform-ipe-container.editor-on, .layout-row .webform-ipe-container.sidebar.editor-on.show').sortableNew({
-              connectWith: '.layout-row > .webform-ipe-container.editor-on, .layout-row .webform-ipe-container.sidebar.editor-on.show',
-              items: '.layout-row > .webform-ipe-container.editor-on > .webform-ipe-container.editor-on:not(".disabled"), .layout-row .webform-ipe-container.sidebar.editor-on.show > .webform-ipe-container.editor-on:not(".disabled")',
-              handle: 'legend',
-            }).bind('sortupdate', function(event, ui) {
+            // $('.layout-row > .webform-ipe-container.editor-on, .layout-row .webform-ipe-container.sidebar.editor-on.show').sortableNew({
+            //   connectWith: '.layout-row > .webform-ipe-container.editor-on, .layout-row .webform-ipe-container.sidebar.editor-on.show',
+            //   items: '.layout-row > .webform-ipe-container.editor-on > .webform-ipe-container.editor-on:not(".disabled"), .layout-row .webform-ipe-container.sidebar.editor-on.show > .webform-ipe-container.editor-on:not(".disabled")',
+            //   handle: 'legend',
+            // }).bind('sortupdate', function(event, ui) {
+            //   ui.item.trigger('drop');
+            //   if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
+            //     $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
+            //   }
+            // });
+          $('#block-system-main div.form-layouts, div.fieldset.right-sidebar, div.fieldset.left-sidebar').sortable({
+            cancel:'.disabled',
+            placeholder: 'sortable-placeholder',
+            connectWith: '#block-system-main div.form-layouts, div.fieldset.right-sidebar.show, div.fieldset.left-sidebar.show',
+            items: 'fieldset.webform-component-fieldset, div.control-group:not("fieldset.webform-component-fieldset div.control-group")',
+            start: function(event, ui) {
+              height = $(ui.item[0]).height();
+              $(ui.item[0]).css({'height':'20px', 'overflow':'hidden'})
+              $(ui.item[0]).css({'width':'120px', 'overflow':'hidden'})
+            },
+            stop: function (event, ui) {
+              $(ui.item[0]).css({'height':'auto', 'overflow':'visible'})
+              $(ui.item[0]).css({'width':'auto', 'overflow':'hidden'})
               ui.item.trigger('drop');
+              $('div.fieldset.form-layouts:not(:has("*"))').css('min-height', '60px')
               if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
                 $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
               }
-            });
-          // $('#block-system-main div.form-layouts, div.fieldset.right-sidebar, div.fieldset.left-sidebar').sortable({
-          //   cancel:'.disabled',
-          //   placeholder: 'sortable-placeholder',
-          //   connectWith: '#block-system-main div.form-layouts, div.fieldset.right-sidebar.show, div.fieldset.left-sidebar.show',
-          //   items: 'fieldset.webform-component-fieldset, div.control-group:not("fieldset.webform-component-fieldset div.control-group")',
-          //   start: function(event, ui) {
-          //     height = $(ui.item[0]).height();
-          //     $(ui.item[0]).css({'height':'20px', 'overflow':'hidden'})
-          //     $(ui.item[0]).css({'width':'120px', 'overflow':'hidden'})
-          //   },
-          //   stop: function (event, ui) {
-          //     $(ui.item[0]).css({'height':'auto', 'overflow':'visible'})
-          //     $(ui.item[0]).css({'width':'auto', 'overflow':'hidden'})
-          //     ui.item.trigger('drop');
-          //     $('div.fieldset.form-layouts:not(:has("*"))').css('min-height', '60px')
-          //     if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
-          //       $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
-          //     }
-          //    },
-          // });
+             },
+          });
           $('#block-system-main div.form-layouts').disableSelection();
         };
 
@@ -1771,6 +1778,9 @@
           button.parent().toggleClass('active');
           //turn sorting on
 
+          //$('div.fundraiser_submit_message').wrap('<div class = "ipe-action sortable"><div>');
+          //$('div.form-actions').appendTo('.fundraiser_submit_message');
+  
           $('.webform-component-fieldset, div.fieldset.form-layouts, .webform-component-fieldset, div.fieldset.right-sidebar, div.fieldset.left-sidebar, body').addClass('editor-on');
           $('div.fieldset.form-layouts').not(':has("*")').show()
           $('div.fieldset.right-sidebar, div.fieldset.left-sidebar').addClass('show').css('min-height', '600px').show()
@@ -1778,10 +1788,10 @@
           App.Handlers.addSortClasses();
           App.Handlers.reorderItems(); //initialize the sortables
           App.Handlers.reorderFieldsets();
-        //  $('fieldset.webform-component-fieldset').sortable("option","disabled", false);
-        //  $('#block-system-main div.form-layouts').sortable("option","disabled", false);
-            $('.layout-row .webform-ipe-container.editor-on.show, .layout-row > .webform-ipe-container.editor-on, .layout-row > .webform-ipe-container.editor-on > .webform-ipe-container').sortable("option","disabled", false);
-            $('.layout-row > .webform-ipe-container.editor-on, .layout-row .webform-ipe-container.sidebar.editor-on.show').sortableNew('enable');
+         $('fieldset.webform-component-fieldset').sortable("option","disabled", false);
+         $('#block-system-main div.form-layouts').sortable("option","disabled", false);
+            // $('.layout-row .webform-ipe-container.editor-on.show, .layout-row > .webform-ipe-container.editor-on, .layout-row > .webform-ipe-container.editor-on > .webform-ipe-container').sortable("option","disabled", false);
+            // $('.layout-row > .webform-ipe-container.editor-on, .layout-row .webform-ipe-container.sidebar.editor-on.show').sortableNew('enable');
         }
 
         App.Handlers.sortOff = function(button) {
@@ -1789,11 +1799,11 @@
           //disable sorting
           $('div.fieldset.form-layouts, div.fieldset.right-sidebar, div.fieldset.left-sidebar').not(':has("*")').hide();
           //$('.span3.region-empty').not(':has("*")').css({'min-height': '0px', 'width': '0px'})
-          $('.layout-row .webform-ipe-container.editor-on.show, .layout-row > .webform-ipe-container.editor-on, .layout-row > .webform-ipe-container.editor-on > .webform-ipe-container').sortable("option","disabled", true);
-          $('.layout-row > .webform-ipe-container.editor-on, .layout-row  .webform-ipe-container.sidebar.editor-on').sortableNew('disable');
+          // $('.layout-row .webform-ipe-container.editor-on.show, .layout-row > .webform-ipe-container.editor-on, .layout-row > .webform-ipe-container.editor-on > .webform-ipe-container').sortable("option","disabled", true);
+          // $('.layout-row > .webform-ipe-container.editor-on, .layout-row  .webform-ipe-container.sidebar.editor-on').sortableNew('disable');
           $('.webform-component-fieldset, div.fieldset.form-layouts, .webform-component-fieldset, div.fieldset.right-sidebar, div.fieldset.left-sidebar, body').removeClass('editor-on');
-          //$('fieldset.webform-component-fieldset, div.fieldset.form-layouts').sortable("option","disabled", true);
-          //  $('#block-system-main div.form-layouts').sortable("option","disabled", true);
+          $('fieldset.webform-component-fieldset, div.fieldset.form-layouts').sortable("option","disabled", true);
+          $('#block-system-main div.form-layouts').sortable("option","disabled", true);
         }
 
         App.Handlers.addSortClasses = function() {
