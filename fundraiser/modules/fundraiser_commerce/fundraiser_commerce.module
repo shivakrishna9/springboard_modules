@@ -556,6 +556,9 @@ function _fundraiser_commerce_zone_field_display($form, $form_state, $field) {
   else {
     // If there are no zones to match, then fall back on a non-select solution.
     $field['#type'] = 'textfield';
+
+    // Unset the options to avoid validation errors
+    unset($field['#options']);
   }
   $field['#prefix'] = '<div id="zone-select-wrapper">';
   $field['#suffix'] = '</div>';
