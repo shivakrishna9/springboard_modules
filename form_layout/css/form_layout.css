@@ -49,12 +49,12 @@ div#webform-component-top-region {
 
 div#webform-component-left-region {
   float:left;
-  width: 50%;
+  width: 49%;
 }
 
 div#webform-component-right-region {
   float:right;
-  width:50%;
+  width:49%;
 }
 
 div[id$="-amount"] .control-group {
