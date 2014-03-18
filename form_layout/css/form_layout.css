@@ -2,6 +2,7 @@ form .left-sidebar {
   float: left;
   overflow: hidden;
   margin-right: 10px;
+  min-width:250px;
 }
 
 form .right-sidebar {
@@ -17,17 +18,18 @@ form .right-sidebar {
 
 .center-area {
   overflow: hidden;
+  min-width: 280px;
 }
 
 .span3.region-empty {
   width: 0px;
 }
 
-.middle-right-sidebar {
+/*.middle-right-sidebar {
   overflow: hidden;
-}
+}*/
 
-form .both-sidebars .center-area .layout-full {
+/*form .both-sidebars .center-area .layout-full {
   width: 100%;
   clear: both;
 }
@@ -35,7 +37,7 @@ form .both-sidebars .center-area .layout-full {
 form .both-sidebars .center-area .layout-half {
   width: 50%;
   clear: none;
-}
+}*/
 
 div#webform-component-top-region {
   float: left;
@@ -57,15 +59,43 @@ div#webform-component-right-region {
   width:49%;
 }
 
+
+@media only screen and (max-width: 1080px) {
+  .form-layout-both-sidebars div#webform-component-left-region {
+    float:none;
+    width: 100%;
+  }
+
+  .form-layout-both-sidebars div#webform-component-right-region {
+    float:none;
+    width:100%;
+  }
+}
+
+@media only screen and (max-width: 780px) {
+  .form-layout-single-sidebar div#webform-component-left-region {
+    float:none;
+    width: 100%;
+  }
+
+  .form-layout-single-sidebar div#webform-component-right-region {
+    float:none;
+    width:100%;
+  }
+}
+
+
 div[id$="-amount"] .control-group {
   width:auto;
   clear:none;
   margin-right:10px;
 }
+
 div[id$="-donation-amount"]  .control-group input {
   margin-top:3px;
 }
-    .control-group label.option {
+
+.control-group label.option {
   margin-left:4px;
   float: left;
 }
@@ -76,6 +106,7 @@ fieldset[id$="--donation"] label[for$="-other-amount"] {
   margin-right: 12px;
   margin-top: 5px;
 }
+
 fieldset[id$="--donation"] .field-prefix {
   float: left;
   clear: none;

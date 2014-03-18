@@ -776,10 +776,10 @@ function form_layout_get_sidebar_class_name($node) {
   }
 
   if ($has_content['left_sidebar'] && $has_content['right_sidebar']) {
-    return 'both-sidebars';
+    return 'form-layout-both-sidebars';
   }
   elseif ($has_content['left_sidebar'] || $has_content['right_sidebar']) {
-    return 'single-sidebar';
+    return 'form-layout-single-sidebar';
   }
 
   return '';
