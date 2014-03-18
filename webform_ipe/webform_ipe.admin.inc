@@ -51,7 +51,12 @@ function _webform_ipe_content_types() {
   foreach ($types as $type => $name) {
     $args = array(":type" => $type);
     $name = db_query('SELECT name FROM {node_type} WHERE type = :type', $args)->fetchField();
-    $types[$type] = $name;
+    if(fundraiser_is_donation_type($type)) {
+      $types[$type] = $name;
+    }
+    else {
+      unset($types[$type]);
+    }
   }
   return $types;
 }
