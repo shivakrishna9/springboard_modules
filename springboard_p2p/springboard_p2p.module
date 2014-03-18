@@ -302,9 +302,9 @@ function springboard_p2p_field_widget_form(&$form, &$form_state, $field, $instan
       $content_types = springboard_p2p_get_sorted_content_types();
       foreach ($types as $form_type => $title) {
         $goal_options = array();
+        $goal_type_default = NULL;
         if ($form_type == 'fundraiser') {
           $goal_options['amount'] = t('Amount raised');
-          $goal_type_default = isset($defaults[$key]['goal_type']) ? $defaults[$key]['goal_type'] : '';
         }
         else {
           // Non-fundraiser forms only support submissions.
@@ -321,12 +321,18 @@ function springboard_p2p_field_widget_form(&$form, &$form_state, $field, $instan
           $widget['form_types'][$form_type]['#prefix'] = $title;
 
           foreach ($content_types[$form_type] as $key => $name) {
+
+            if (is_null($goal_type_default)) {
+              $goal_type_default = isset($defaults[$key]['goal_type']) ? $defaults[$key]['goal_type'] : '';
+            }
+
             if (!isset($global_defaults[$key])) {
               $global_defaults[$key] = array(
                 'enabled' => 0,
                 'nid' => '',
               );
             }
+
             $node_options = springboard_p2p_get_node_options_by_types($key);
             $formatted_node_options = springboard_p2p_format_node_options($node_options);
 
