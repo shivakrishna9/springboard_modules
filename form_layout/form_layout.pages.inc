@@ -26,20 +26,21 @@ function form_layout_list() {
       '#header' => array('Region', 'Content'),
       '#rows' => form_layout_table_rows($layout),
     );
-
-    $output[$id]['links'] = array(
-      '#theme' => 'links',
-      '#links' => array(
-        'edit' => array(
-          'title' => 'Edit',
-          'href' => form_layout_menu_base_path() . '/' . $id . '/edit',
+    if($id != 'one_column') {
+      $output[$id]['links'] = array(
+        '#theme' => 'links',
+        '#links' => array(
+          'edit' => array(
+            'title' => 'Edit',
+            'href' => form_layout_menu_base_path() . '/' . $id . '/edit',
+          ),
+          'delete' => array(
+            'title' => 'Delete',
+            'href' => form_layout_menu_base_path() . '/' . $id . '/delete',
+          ),
         ),
-        'delete' => array(
-          'title' => 'Delete',
-          'href' => form_layout_menu_base_path() . '/' . $id . '/delete',
-        ),
-      ),
-    );
+      );
+    }
   }
 
   return $output;

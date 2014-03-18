@@ -1,13 +1,11 @@
 form .left-sidebar {
   float: left;
-  min-height: 600px;
   overflow: hidden;
   margin-right: 10px;
 }
 
 form .right-sidebar {
   float: right;
-  min-height: 600px;
   overflow: hidden;
   margin-left: 10px;
 }
