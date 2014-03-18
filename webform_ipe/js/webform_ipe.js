@@ -1666,12 +1666,6 @@
          * RE-ORDER ITEMS AND FIELDSETS
          */
 
-        //add the connecting class
-        $('.webform-component-fieldset, div.fieldset.form-layouts, div.fieldset.right-sidebar, div.fieldset.left-sidebar').not('[id$="payment-fields"]').addClass('webform-ipe-container');
-        var has_form_layout =  $('div.fieldset.form-layouts.webform-ipe-container').length;
-        if(has_form_layout == 0) {
-          $('.webform-client-form').wrap('<div class = "fieldset form-layouts webform-ipe-container" data-cid = "0"></div>');
-        }
         $('#sidebar-toggle').hide();
 
         $('.reorder-items-fieldsets', '#admin-bar').click(function(e) {
@@ -1705,7 +1699,7 @@
             cancel: '.disabled',
             placeholder: 'sortable-placeholder',
             items: 'div.control-group:not(".disabled")',
-            cursorAt: { left: 5 },
+            cursorAt: { left: 5, top: 15 },
             start: function(event, ui) {
               $(ui.item[0]).css({'height':'50px', 'overflow':'hidden'})
               $(ui.item[0]).css({'width':'120px', 'overflow':'hidden'})
@@ -1750,12 +1744,12 @@
             //     $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
             //   }
             // });
-          $('#block-system-main div.form-layouts, div.fieldset.right-sidebar, div.fieldset.left-sidebar').sortable({
+          $('.ipe-outer').sortable({
             cancel:'.disabled',
             placeholder: 'sortable-placeholder',
-            connectWith: '#block-system-main div.form-layouts, div.fieldset.right-sidebar.show, div.fieldset.left-sidebar.show',
-            items: 'fieldset.webform-component-fieldset, div.control-group:not("fieldset.webform-component-fieldset div.control-group")',
-            cursorAt: { left: 5 },
+            connectWith: '.ipe-outer',
+            //items: 'fieldset.webform-component-fieldset, div.control-group:not("fieldset.webform-component-fieldset div.control-group")',
+            cursorAt: { left: 5, top: 15 },
             start: function(event, ui) {
               height = $(ui.item[0]).height();
               $(ui.item[0]).css({'height':'20px', 'overflow':'hidden'})
@@ -1769,9 +1763,21 @@
               if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
                 $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
               }
+              App.Handlers.setItems();
              },
+             out: function (event, ui) {console.log('d')}
           });
           $('#block-system-main div.form-layouts').disableSelection();
+        };
+
+        App.Handlers.setItems = function() {
+          $('fieldset.webform-component-fieldset legend').on('mousedown', function(){
+            $(".ipe-outer").sortable( 'option', 'items', 'fieldset.webform-component-fieldset, div.control-group:not("fieldset.webform-component-fieldset div.control-group")');
+          });
+
+          $('.ipe-outer div.control-group:not("fieldset.webform-component-fieldset div.control-group")').on('mousedown', function(){
+            $( ".ipe-outer" ).sortable( "option", "items", "fieldset.webform-component-fieldset, div.control-group:not('.disabled')");
+          });
         };
 
         //turn the sort on and off
@@ -1789,6 +1795,7 @@
           App.Handlers.addSortClasses();
           App.Handlers.reorderItems(); //initialize the sortables
           App.Handlers.reorderFieldsets();
+          App.Handlers.setItems();
          $('fieldset.webform-component-fieldset').sortable("option","disabled", false);
          $('#block-system-main div.form-layouts').sortable("option","disabled", false);
             // $('.layout-row .webform-ipe-container.editor-on.show, .layout-row > .webform-ipe-container.editor-on, .layout-row > .webform-ipe-container.editor-on > .webform-ipe-container').sortable("option","disabled", false);
@@ -1808,7 +1815,14 @@
         }
 
         App.Handlers.addSortClasses = function() {
+          //add the connecting class
+          $('.webform-component-fieldset, div.fieldset.form-layouts, div.fieldset.right-sidebar, div.fieldset.left-sidebar').not('[id$="payment-fields"]').addClass('webform-ipe-container');
+          var has_form_layout =  $('div.fieldset.form-layouts.webform-ipe-container').length;
+          if(has_form_layout == 0) {
+            $('.webform-client-form').wrap('<div class = "fieldset form-layouts webform-ipe-container" data-cid = "0"></div>');
+          }
           $('.webform-component-fieldset  div.control-group, div.fieldset div.control-group').not('.fundraiser-payment-fields div.control-group').addClass('sortable');
+          $('#block-system-main div.form-layouts, div.fieldset.right-sidebar, div.fieldset.left-sidebar').addClass('ipe-outer');
           $('.webform-component-fieldset').disableSelection();
           $('div.control-group input[type="radio"]').parent().addClass('disabled');
           $('div.control-group input[type="checkbox"]').parent().addClass('disabled');

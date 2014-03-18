@@ -11,6 +11,10 @@ form .right-sidebar {
   margin-left: 10px;
 }
 
+form .sidebar.region-empty {
+  min-width: 0;
+}
+
 .both-sidebars [class*="span"],
 .both-sidebars .row {
   margin-left: 0;
