@@ -79,7 +79,7 @@ function springboard_p2p_field_info() {
       'description' => t('Goals configuration for a peer to peer campaign.'),
       'default_widget' => 'springboard_p2p_campaign_goals_widgett',
       'default_formatter' => 'hidden',
-      'no_ui' => FALSE,
+      'no_ui' => TRUE,
     ),
   );
 }
@@ -106,7 +106,7 @@ function springboard_p2p_field_validate($entity_type, $entity, $field, $instance
         foreach ($content_types as $content_type) {
           $enabled_types += $content_type['enabled'];
 
-          if ($content_type['enabled'] && $content_type['default_form'] == '') {
+          if ($content_type['enabled'] && $content_type['nid'] == '') {
             $no_form_selected = TRUE;
           }
         }
@@ -132,8 +132,6 @@ function springboard_p2p_field_validate($entity_type, $entity, $field, $instance
       }
     }
   }
-  // @todo This should be where we mangle the data so it can be saved.
-  dpm($items);
 }
 
 /**
@@ -143,10 +141,9 @@ function springboard_p2p_field_validate($entity_type, $entity, $field, $instance
  * not empty.
  */
 function springboard_p2p_field_is_empty($item, $field) {
-  dpm($item);
   foreach ($item['campaign_goals']['form_types'] as $form_type => $content_types) {
     foreach ($content_types as $content_type) {
-      if ($content_type['enabled'] && $content_type['default_form'] != '') {
+      if ($content_type['enabled'] || $content_type['nid'] != '') {
         return FALSE;
       }
     }
@@ -159,12 +156,63 @@ function springboard_p2p_field_is_empty($item, $field) {
  * Implements hook_field_presave().
  */
 function springboard_p2p_field_presave($entity_type, $entity, $field, $instance, $langcode, &$items) {
-  dpm($entity_type);
-  dpm($entity);
-  dpm($field);
-  dpm($instance);
-  dpm($langcode);
-  dpm($items);
+  $rows = array();
+  foreach ($items as $delta => $item) {
+    $goal_set_id = isset($item['campaign_goals']['goal_set_id']) ? $item['campaign_goals']['goal_set_id'] : NULL;
+    foreach ($item['campaign_goals']['form_types'] as $form_type => $content_types) {
+      foreach ($content_types as $content_type => $settings) {
+        // Format the data as a record for the DB.
+        $rows[$content_type] = $settings;
+        $rows[$content_type]['type'] = $content_type;
+      }
+    }
+
+    // Save the rows, get back a goal set id.
+    // Then set the item to that goal set id.
+    $items[$delta]['goal_set_id'] = springboard_p2p_campaign_goals_save($goal_set_id, $rows);
+  }
+
+}
+
+function springboard_p2p_field_delete($entity_type, $entity, $field, $instance, $langcode, &$items) {
+  foreach ($items as $item) {
+    springboard_p2p_campaign_goals_delete($item['goal_set_id']);
+  }
+}
+
+function springboard_p2p_campaign_goals_save($goal_set_id, $rows) {
+  $table = 'springboard_p2p_campaign_goals';
+  $create = FALSE;
+  if (is_null($goal_set_id)) {
+    $next_id = db_query("SELECT MAX(goal_set_id) FROM {springboard_p2p_campaign_goals}")->fetchField();
+    $goal_set_id = ++$next_id;
+    $create = TRUE;
+  }
+
+  foreach ($rows as $row) {
+    $row['goal_set_id'] = $goal_set_id;
+
+    if ($create) {
+      drupal_write_record($table, $row);
+    }
+    else {
+      drupal_write_record($table, $row, array('goal_set_id', 'type'));
+    }
+  }
+
+  // Return the ID so the field knows the reference to save.
+  return $goal_set_id;
+}
+
+function springboard_p2p_campaign_goals_load($goal_set_id) {
+  return db_query("SELECT * FROM {springboard_p2p_campaign_goals} WHERE goal_set_id = :id", array(':id' => $goal_set_id))
+    ->fetchAllAssoc('type', PDO::FETCH_ASSOC);
+}
+
+function springboard_p2p_campaign_goals_delete($goal_set_id) {
+  db_delete('springboard_p2p_campaign_goals')
+    ->condition('goal_set_id', $goal_set_id)
+    ->execute();
 }
 
 /**
@@ -213,10 +261,12 @@ function springboard_p2p_field_widget_info() {
  * 'rgb' form element.
  */
 function springboard_p2p_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
-//  $value = isset($items[$delta]['rgb']) ? $items[$delta]['rgb'] : '';
+  $goal_set_id = isset($items[$delta]['goal_set_id']) ? $items[$delta]['goal_set_id'] : NULL;
+  if (!is_null($goal_set_id)) {
+    $defaults = springboard_p2p_campaign_goals_load($goal_set_id);
+  }
 
   $widget = $element;
-  $widget['#delta'] = $delta;
 
   switch ($instance['widget']['type']) {
     case 'springboard_p2p_campaign_goals_text':
@@ -233,6 +283,10 @@ function springboard_p2p_field_widget_form(&$form, &$form_state, $field, $instan
         // to access external value information which otherwise would be
         // unavailable.
         '#delta' => $delta,
+        'goal_set_id' => array(
+          '#type' => 'value',
+          '#value' => $goal_set_id,
+        ),
 
 //        '#attached' => array(
 //          'css' => array(drupal_get_path('module', 'field_example') . '/field_example.css'),
@@ -251,7 +305,7 @@ function springboard_p2p_field_widget_form(&$form, &$form_state, $field, $instan
         );
 
         if (count($content_types[$form_type])) {
-          $defaults = variable_get('springboard_p2p_' . $form_type . '_items', array());
+          $global_defaults = variable_get('springboard_p2p_' . $form_type . '_items', array());
           $widget['form_types'][$form_type]['#prefix'] = $title;
 
           foreach ($content_types[$form_type] as $key => $name) {
@@ -262,18 +316,18 @@ function springboard_p2p_field_widget_form(&$form, &$form_state, $field, $instan
               'enabled' => array(
                 '#type' => 'checkbox',
                 '#title' => $name,
-                '#default_value' => isset($defaults[$key]['enabled']) ? $defaults[$key]['enabled'] : 0,
+                '#default_value' => isset($defaults[$key]['enabled']) ? $defaults[$key]['enabled'] : $global_defaults[$key]['enabled'],
               ),
-              'default_form' => array(
+              'nid' => array(
                 '#type' => 'select',
                 '#options' => $formatted_node_options,
-                '#default_value' => isset($defaults[$key]['default_form']) ? $defaults[$key]['default_form'] : '',
+                '#default_value' => isset($defaults[$key]['nid']) ? $defaults[$key]['nid'] : $global_defaults[$key]['nid'],
                 '#empty_value' => '',
               ),
-              'campaign_override' => array(
+              'campaign_id' => array(
                 '#type' => 'select',
                 '#options' => array(),
-                '#default_value' => '',
+                '#default_value' => isset($defaults[$key]['campaign_id']) ? $defaults[$key]['campaign_id'] : '',
                 '#empty_value' => '',
                 '#disabled' => TRUE,
               ),
@@ -281,11 +335,11 @@ function springboard_p2p_field_widget_form(&$form, &$form_state, $field, $instan
                 '#type' => 'select',
                 '#options' => $goal_options,
                 '#empty_value' => '',
-                '#default_value' => '',
+                '#default_value' => isset($defaults[$key]['goal_type']) ? $defaults[$key]['goal_type'] : '',
               ),
-              'goal' => array(
+              'goal_value' => array(
                 '#type' => 'textfield',
-                '#default_value' => '',
+                '#default_value' => isset($defaults[$key]['goal_value']) ? $defaults[$key]['goal_value'] : '',
               ),
             );
 
@@ -417,11 +471,12 @@ function springboard_p2p_form_types_table_rows(&$form, $type) {
   $rows = array();
   $columns = array(
     'enabled',
-    'default_form',
-    'campaign_override',
+    'nid',
+    'campaign_id',
     'goal_type',
-    'goal',
+    'goal_value',
   );
+
   foreach (element_children($form['form_types'][$type]) as $key) {
     $cells = array();
     foreach ($columns as $field) {

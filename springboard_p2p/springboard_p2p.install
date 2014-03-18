@@ -5,6 +5,16 @@
  */
 
 /**
+ * Implements hook_uninstall().
+ */
+function springboard_p2p_uninstall() {
+  variable_del('springboard_p2p_base_path');
+  variable_del('springboard_p2p_fundraiser_items');
+  variable_del('springboard_p2p_registration_fields');
+  variable_del('springboard_p2p_webform_user_items');
+}
+
+/**
  * Implements hook_schema().
  */
 function springboard_p2p_schema() {
@@ -57,8 +67,8 @@ function springboard_p2p_schema() {
       'goal_value' => array(
         'description' => 'The goal value.',
         'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
+        'not null' => FALSE,
+        'default' => NULL,
       ),
     ),
     'primary key' => array('goal_set_id', 'type'),
@@ -73,6 +83,8 @@ function springboard_p2p_schema() {
       ),
     ),
   );
+
+  return $schema;
 }
 
 /**

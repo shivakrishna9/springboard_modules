@@ -129,10 +129,10 @@ function springboard_p2p_admin_settings() {
             '#title' => $name,
             '#default_value' => isset($defaults[$key]['enabled']) ? $defaults[$key]['enabled'] : 0,
           ),
-          'default_form' => array(
+          'nid' => array(
             '#type' => 'select',
             '#options' => $formatted_node_options,
-            '#default_value' => isset($defaults[$key]['default_form']) ? $defaults[$key]['default_form'] : '',
+            '#default_value' => isset($defaults[$key]['nid']) ? $defaults[$key]['nid'] : '',
             '#empty_value' => '',
           ),
         );
@@ -215,10 +215,10 @@ function springboard_p2p_admin_settings() {
 function springboard_p2p_admin_settings_validate($form, &$form_state) {
   foreach (array('fundraiser_items', 'webform_user_items') as $type) {
     foreach ($form_state['values'][$type] as $content_type => $item) {
-      if ($item['enabled'] && $item['default_form'] == '') {
+      if ($item['enabled'] && $item['nid'] == '') {
         $name = $form['form_types'][$type][$content_type]['enabled']['#title'];
         $error = t('A default form must be selected for the enabled content type %content_type.', array('%content_type' => $name));
-        form_set_error($type . '][' . $content_type . '][default_form', $error);
+        form_set_error($type . '][' . $content_type . '][nid', $error);
       }
     }
   }
