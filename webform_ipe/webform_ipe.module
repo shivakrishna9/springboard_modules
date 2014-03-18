@@ -216,6 +216,17 @@ function _webform_ipe_json_process($node, $op = 'update') {
   $components = $_POST['components'];
   $output = array();
     foreach ($components as $component) {
+
+    // if(isset($component['ipe_form_action'])) {
+    //   //dd($component);
+    //   $submit_parent = $component;
+    //   //dd($submit_parent);
+    //   $layout = form_layout_get_node_layout($node->nid);
+    //   form_layout_save_node_layout($node->nid, $layout['layout_name'], $submit_parent);
+    //   unset($component['ipe_form_action']);
+    //   continue;
+    // }
+
     //convert some javascript values to something Drupal/PHP understands
     //Drupal stores config as strings for DB compat.
     foreach ($component['extra'] as $name => $extra) {
