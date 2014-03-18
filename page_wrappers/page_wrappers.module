@@ -839,11 +839,8 @@ function _page_wrappers_page_node() {
   $node = NULL;
 
   // Check if this in ajax request form submit
-  if (arg(0) == 'system' && arg(1) == 'ajax' && !empty($_POST['form_build_id']) && $form = ajax_get_form()) {
-    // Ensure we have a node in the form
-    if (!empty($form[0]['#node']->nid)) {
-      $node = $form[0]['#node'];
-    }
+  if (arg(0) == 'system' && arg(1) == 'ajax' && !empty($_POST['form_build_id'])) {
+    $node = _page_wrappers_cached_form_node($_POST['form_build_id']);
   }
   // If this is a node page load it up, also cover webform 'done' page
   elseif (arg(0) == 'node' && is_numeric(arg(1)) && (arg(2) == 'done' || !arg(2))) {
@@ -858,6 +855,25 @@ function _page_wrappers_page_node() {
   }
 
   return FALSE;
+}
+
+/**
+ * Helper function to return a node from a cached form
+ *
+ * @param string $form_build_id
+ *   A form build id to search the cache
+ *
+ * @return Object
+ *   Node object from a form array
+ */
+function _page_wrappers_cached_form_node($form_build_id) {
+  if ($cached = cache_get('form_' . $form_build_id, 'cache_form')) {
+    $form = $cached->data;
+    // Ensure we have a node in the form
+    if (!empty($form['#node']->nid)) {
+      return $form['#node'];
+    }
+  }
 }
 
 /**
