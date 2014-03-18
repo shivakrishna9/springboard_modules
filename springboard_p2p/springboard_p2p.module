@@ -174,12 +174,29 @@ function springboard_p2p_field_presave($entity_type, $entity, $field, $instance,
 
 }
 
+/**
+ * Implements hook_field_delete().
+ *
+ * Removes externally saved goal data when an entity is deleted.
+ */
 function springboard_p2p_field_delete($entity_type, $entity, $field, $instance, $langcode, &$items) {
   foreach ($items as $item) {
     springboard_p2p_campaign_goals_delete($item['goal_set_id']);
   }
 }
 
+/**
+ * Saves campaign goals settings to the DB.
+ *
+ * @param int|null $goal_set_id
+ *   If this is an existing set of records, the goal set ID.
+ *   If this is a new set, NULL.
+ * @param array $rows
+ *   Each row is an array keyed by column name.
+ *
+ * @return int
+ *   The goal set ID that the rows were saved with.
+ */
 function springboard_p2p_campaign_goals_save($goal_set_id, $rows) {
   $table = 'springboard_p2p_campaign_goals';
   $create = FALSE;
@@ -204,11 +221,26 @@ function springboard_p2p_campaign_goals_save($goal_set_id, $rows) {
   return $goal_set_id;
 }
 
+/**
+ * Get the campaign goals for the given goal set ID.
+ *
+ * @param int $goal_set_id
+ *   The goal set ID.
+ *
+ * @return array|bool
+ *   An associate array of the results keyed by type.
+ */
 function springboard_p2p_campaign_goals_load($goal_set_id) {
   return db_query("SELECT * FROM {springboard_p2p_campaign_goals} WHERE goal_set_id = :id", array(':id' => $goal_set_id))
     ->fetchAllAssoc('type', PDO::FETCH_ASSOC);
 }
 
+/**
+ * Delete the campaign goals for the given goal set ID.
+ *
+ * @param int $goal_set_id
+ *   The goal set ID to delete.
+ */
 function springboard_p2p_campaign_goals_delete($goal_set_id) {
   db_delete('springboard_p2p_campaign_goals')
     ->condition('goal_set_id', $goal_set_id)
@@ -218,14 +250,7 @@ function springboard_p2p_campaign_goals_delete($goal_set_id) {
 /**
  * Implements hook_field_widget_info().
  *
- * Three widgets are provided.
- * - A simple text-only widget where the user enters the '#ffffff'.
- * - A 3-textfield widget that gathers the red, green, and blue values
- *   separately.
- * - A farbtastic colorpicker widget that chooses the value graphically.
- *
- * These widget types will eventually show up in hook_field_widget_form,
- * where we will have to flesh them out.
+ * Defines the campaign goals widget for selecting goals on a p2p campaign.
  *
  * @see field_example_field_widget_form()
  */
@@ -244,21 +269,7 @@ function springboard_p2p_field_widget_info() {
 /**
  * Implements hook_field_widget_form().
  *
- * hook_widget_form() is where Drupal tells us to create form elements for
- * our field's widget.
- *
- * We provide one of three different forms, depending on the widget type of
- * the Form API item provided.
- *
- * The 'field_example_colorpicker' and 'field_example_text' are essentially
- * the same, but field_example_colorpicker adds a javascript colorpicker
- * helper.
- *
- * field_example_3text displays three text fields, one each for red, green,
- * and blue. However, the field type defines a single text column,
- * rgb, which needs an HTML color spec. Define an element validate
- * handler that converts our r, g, and b fields into a simulated single
- * 'rgb' form element.
+ * Defines a table of content types, default forms, goal types, and goals.
  */
 function springboard_p2p_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
   $goal_set_id = isset($items[$delta]['goal_set_id']) ? $items[$delta]['goal_set_id'] : NULL;
@@ -287,10 +298,6 @@ function springboard_p2p_field_widget_form(&$form, &$form_state, $field, $instan
           '#type' => 'value',
           '#value' => $goal_set_id,
         ),
-
-//        '#attached' => array(
-//          'css' => array(drupal_get_path('module', 'field_example') . '/field_example.css'),
-//        ),
       );
       $content_types = springboard_p2p_get_sorted_content_types();
       foreach ($types as $form_type => $title) {
@@ -373,10 +380,6 @@ function springboard_p2p_field_widget_form(&$form, &$form_state, $field, $instan
 /**
  * Implements hook_field_widget_error().
  *
- * hook_field_widget_error() lets us figure out what to do with errors
- * we might have generated in hook_field_validate(). Generally, we'll just
- * call form_error().
- *
  * @see field_example_field_validate()
  * @see form_error()
  */
@@ -389,7 +392,6 @@ function springboard_p2p_field_widget_error($element, $error, $form, &$form_stat
       break;
   }
 }
-
 
 /**
  * Returns a list of fundraiser and webform user enabled content types.
