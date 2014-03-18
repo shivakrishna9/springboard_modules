@@ -77,7 +77,7 @@ function springboard_p2p_field_info() {
     'springboard_p2p_campaign_goals' => array(
       'label' => t('Peer to peer goals configuration'),
       'description' => t('Goals configuration for a peer to peer campaign.'),
-      'default_widget' => 'springboard_p2p_campaign_goals_widgett',
+      'default_widget' => 'springboard_p2p_campaign_goals_widget',
       'default_formatter' => 'hidden',
       'no_ui' => TRUE,
     ),
@@ -231,8 +231,8 @@ function springboard_p2p_campaign_goals_delete($goal_set_id) {
  */
 function springboard_p2p_field_widget_info() {
   return array(
-    'springboard_p2p_campaign_goals_text' => array(
-      'label' => t('Peer to peer campaign goals'),
+    'springboard_p2p_campaign_goals_widget' => array(
+      'label' => t('Peer to peer campaign goals table'),
       'field types' => array('springboard_p2p_campaign_goals'),
       'behaviors' => array(
         'default value' => FIELD_BEHAVIOR_NONE,
@@ -269,7 +269,7 @@ function springboard_p2p_field_widget_form(&$form, &$form_state, $field, $instan
   $widget = $element;
 
   switch ($instance['widget']['type']) {
-    case 'springboard_p2p_campaign_goals_text':
+    case 'springboard_p2p_campaign_goals_widget':
       $types = array(
         'fundraiser' => '<h2>Fundraising types</h2>',
         'webform_user' => '<h2>Other form types</h2>',

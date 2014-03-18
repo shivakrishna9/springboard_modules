@@ -127,7 +127,7 @@ function springboard_p2p_field_default_field_instances() {
       'active' => 0,
       'module' => 'springboard_p2p',
       'settings' => array(),
-      'type' => 'springboard_p2p_campaign_goals_text',
+      'type' => 'springboard_p2p_campaign_goals_widget',
       'weight' => 12,
     ),
   );
