@@ -297,6 +297,11 @@ function springboard_p2p_field_widget_form(&$form, &$form_state, $field, $instan
         $goal_options = array();
         if ($form_type == 'fundraiser') {
           $goal_options['amount'] = t('Amount raised');
+          $goal_type_default = isset($defaults[$key]['goal_type']) ? $defaults[$key]['goal_type'] : '';
+        }
+        else {
+          // Non-fundraiser forms only support submissions.
+          $goal_type_default = 'submissions';
         }
         $goal_options['submissions'] = t('Number of submissions');
 
@@ -309,6 +314,12 @@ function springboard_p2p_field_widget_form(&$form, &$form_state, $field, $instan
           $widget['form_types'][$form_type]['#prefix'] = $title;
 
           foreach ($content_types[$form_type] as $key => $name) {
+            if (!isset($global_defaults[$key])) {
+              $global_defaults[$key] = array(
+                'enabled' => 0,
+                'nid' => '',
+              );
+            }
             $node_options = springboard_p2p_get_node_options_by_types($key);
             $formatted_node_options = springboard_p2p_format_node_options($node_options);
 
@@ -335,7 +346,7 @@ function springboard_p2p_field_widget_form(&$form, &$form_state, $field, $instan
                 '#type' => 'select',
                 '#options' => $goal_options,
                 '#empty_value' => '',
-                '#default_value' => isset($defaults[$key]['goal_type']) ? $defaults[$key]['goal_type'] : '',
+                '#default_value' => $goal_type_default,
               ),
               'goal_value' => array(
                 '#type' => 'textfield',
