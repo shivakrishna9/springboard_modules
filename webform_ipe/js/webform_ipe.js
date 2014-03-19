@@ -385,7 +385,7 @@
           }
         });
 
-     // Markup creates markup component
+        // Markup creates markup component
         App.Models.MarkupComponent = App.Models.Component.extend({
           defaults: {
             cid: '',
@@ -612,7 +612,7 @@
             'click .delete-item': 'destroy',
             'drop' : 'drop',
           },
-
+          // calculate step values for numbr fields
           makeNumber: function(){
             var type = this.model.get('type');
             var model = this.model;
@@ -1288,9 +1288,9 @@
             this.collection.where({pid: pid}).sort();
 
             //debug function
-             this.collection.each(function (model, index) {
-              console.log(model.get('weight') + model.get('form_key'));
-            });
+            //  this.collection.each(function (model, index) {
+            //   console.log(model.get('weight') + model.get('form_key'));
+            // });
           }
         });
 
@@ -1694,9 +1694,9 @@
          * Re-order Items
          */
         App.Handlers.reorderItems = function() {
-          $('fieldset.webform-component-fieldset').sortable({
-            connectWith: '.webform-component-fieldset, #block-system-main div.form-layouts, div.fieldset.right-sidebar.show, div.fieldset.left-sidebar.show',
-            cancel: '.disabled',
+          $('.ipe-inner').sortable({
+            connectWith: '.ipe-inner, #block-system-main div.form-layouts, div.fieldset.sidebar.show',
+            cancel: '.disabled, .dummy',
             placeholder: 'sortable-placeholder',
             items: 'div.control-group:not(".disabled")',
             cursorAt: { left: 5, top: 15 },
@@ -1712,6 +1712,11 @@
               if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
                 $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
               }
+              if($(this).find(".control-group").length == 0 &! $(this).hasClass('fake-wrapper')) {
+                $(this).append('<div class = "dummy" style="height: 40px"></div>')
+              }
+              ui.item.siblings(".dummy").remove();
+              App.Handlers.wrapOrphans();
             },
           });
 
@@ -1749,6 +1754,7 @@
             placeholder: 'sortable-placeholder',
             connectWith: '.ipe-outer',
             //items: 'fieldset.webform-component-fieldset, div.control-group:not("fieldset.webform-component-fieldset div.control-group")',
+            items: '.ipe-inner',
             cursorAt: { left: 5, top: 15 },
             start: function(event, ui) {
               height = $(ui.item[0]).height();
@@ -1763,21 +1769,23 @@
               if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
                 $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
               }
+              ui.item.siblings(".dummy").remove();
+              App.Handlers.wrapOrphans();
               App.Handlers.setItems();
              },
-             out: function (event, ui) {console.log('d')}
           });
           $('#block-system-main div.form-layouts').disableSelection();
         };
-
+         
+        //dynamically swap items to eliminate fieldset jitter 
         App.Handlers.setItems = function() {
-          $('fieldset.webform-component-fieldset legend').on('mousedown', function(){
-            $(".ipe-outer").sortable( 'option', 'items', 'fieldset.webform-component-fieldset, div.control-group:not("fieldset.webform-component-fieldset div.control-group")');
-          });
+     //      $('fieldset.webform-component-fieldset legend').on('mousedown', function(){
+     //        $(".ipe-outer").sortable( 'option', 'items', 'fieldset.webform-component-fieldset, div.control-group:not("fieldset.webform-component-fieldset div.control-group")');
+     //      });
 
-          $('.ipe-outer div.control-group:not("fieldset.webform-component-fieldset div.control-group")').on('mousedown', function(){
-            $( ".ipe-outer" ).sortable( "option", "items", "fieldset.webform-component-fieldset, div.control-group:not('.disabled')");
-          });
+     //      $('.ipe-outer div.control-group:not("fieldset.webform-component-fieldset div.control-group")').on('mousedown', function(){
+     //        $( ".ipe-outer" ).sortable( "option", "items", "fieldset.webform-component-fieldset, div.dummy, div.control-group:not('.disabled')");
+     //      });
         };
 
         //turn the sort on and off
@@ -1788,16 +1796,16 @@
           //$('div.fundraiser_submit_message').wrap('<div class = "ipe-action sortable"><div>');
           //$('div.form-actions').appendTo('.fundraiser_submit_message');
   
-          $('.webform-component-fieldset, div.fieldset.form-layouts, .webform-component-fieldset, div.fieldset.right-sidebar, div.fieldset.left-sidebar, body').addClass('editor-on');
           $('div.fieldset.form-layouts').not(':has("*")').show()
-          $('div.fieldset.right-sidebar, div.fieldset.left-sidebar').addClass('show').css('min-height', '600px').show()
-          $('div.fieldset.right-sidebar, div.fieldset.left-sidebar').not(':has("*")').removeClass('show').hide();
+          $('div.fieldset.sidebar').addClass('show').css('min-height', '600px').show()
+          $('div.fieldset.sidebar').not(':has("*")').removeClass('show').hide();
           App.Handlers.addSortClasses();
+          App.Handlers.wrapOrphans();
           App.Handlers.reorderItems(); //initialize the sortables
           App.Handlers.reorderFieldsets();
           App.Handlers.setItems();
-         $('fieldset.webform-component-fieldset').sortable("option","disabled", false);
-         $('#block-system-main div.form-layouts').sortable("option","disabled", false);
+          $('.ipe-inner').sortable("option","disabled", false);
+          $('.ipe-outer').sortable("option","disabled", false);
             // $('.layout-row .webform-ipe-container.editor-on.show, .layout-row > .webform-ipe-container.editor-on, .layout-row > .webform-ipe-container.editor-on > .webform-ipe-container').sortable("option","disabled", false);
             // $('.layout-row > .webform-ipe-container.editor-on, .layout-row .webform-ipe-container.sidebar.editor-on.show').sortableNew('enable');
         }
@@ -1805,24 +1813,25 @@
         App.Handlers.sortOff = function(button) {
           button.parent().toggleClass('active');
           //disable sorting
-          $('div.fieldset.form-layouts, div.fieldset.right-sidebar, div.fieldset.left-sidebar').not(':has("*")').hide();
           //$('.span3.region-empty').not(':has("*")').css({'min-height': '0px', 'width': '0px'})
           // $('.layout-row .webform-ipe-container.editor-on.show, .layout-row > .webform-ipe-container.editor-on, .layout-row > .webform-ipe-container.editor-on > .webform-ipe-container').sortable("option","disabled", true);
           // $('.layout-row > .webform-ipe-container.editor-on, .layout-row  .webform-ipe-container.sidebar.editor-on').sortableNew('disable');
-          $('.webform-component-fieldset, div.fieldset.form-layouts, .webform-component-fieldset, div.fieldset.right-sidebar, div.fieldset.left-sidebar, body').removeClass('editor-on');
-          $('fieldset.webform-component-fieldset, div.fieldset.form-layouts').sortable("option","disabled", true);
-          $('#block-system-main div.form-layouts').sortable("option","disabled", true);
+          $('div.fieldset.form-layouts, div.fieldset.sidebar').not(':has("*")').hide();
+          $('.webform-component-fieldset, div.fieldset.form-layouts, div.fieldset.sidebar, body').removeClass('editor-on');
+          $('.ipe-inner').sortable("option","disabled", true);
+          $('.ipe-outer').sortable("option","disabled", true);
         }
 
         App.Handlers.addSortClasses = function() {
-          //add the connecting class
-          $('.webform-component-fieldset, div.fieldset.form-layouts, div.fieldset.right-sidebar, div.fieldset.left-sidebar').not('[id$="payment-fields"]').addClass('webform-ipe-container');
-          var has_form_layout =  $('div.fieldset.form-layouts.webform-ipe-container').length;
-          if(has_form_layout == 0) {
-            $('.webform-client-form').wrap('<div class = "fieldset form-layouts webform-ipe-container" data-cid = "0"></div>');
-          }
+          // var has_form_layout =  $('div.fieldset.form-layouts.webform-ipe-container').length;
+          // if(has_form_layout == 0) {
+          //   $('.webform-client-form').wrap('<div class = "fieldset form-layouts webform-ipe-container" data-cid = "0"></div>');
+          // }
+          $('.webform-component-fieldset, div.fieldset.form-layouts, div.fieldset.sidebar').not('[id$="payment-fields"]').addClass('webform-ipe-container');
+          $('.webform-component-fieldset, div.fieldset.form-layouts, div.fieldset.sidebar, body').addClass('editor-on');
           $('.webform-component-fieldset  div.control-group, div.fieldset div.control-group').not('.fundraiser-payment-fields div.control-group').addClass('sortable');
-          $('#block-system-main div.form-layouts, div.fieldset.right-sidebar, div.fieldset.left-sidebar').addClass('ipe-outer');
+          $('#block-system-main div.form-layouts, div.fieldset.sidebar').addClass('ipe-outer');
+          $('fieldset.webform-component-fieldset').addClass('ipe-inner');
           $('.webform-component-fieldset').disableSelection();
           $('div.control-group input[type="radio"]').parent().addClass('disabled');
           $('div.control-group input[type="checkbox"]').parent().addClass('disabled');
@@ -1833,6 +1842,16 @@
           $('.fundraiser-payment-fields').addClass('disabled');
           $('.disabled').removeClass('sortable');
         }
+        App.Handlers.wrapOrphans = function() {
+          var orphan = $('.ipe-outer div.control-group:not("fieldset.webform-component-fieldset div.control-group")');
+          orphan.each(function(){
+            if(!$(this).parent().hasClass('fake-wrapper')) {
+              $(this).wrap('<div class = "ipe-inner fake-wrapper"></div>');
+            }
+          });
+          $('.fake-wrapper').not(':has("*")').remove();
+          App.Handlers.reorderItems();
+        }  
       }); // End window.ready
     }
   }
