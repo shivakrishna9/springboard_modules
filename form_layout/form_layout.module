@@ -165,7 +165,7 @@ function form_layout_fundraiser_field_info() {
     $layout = form_layout_get_node_layout($node->nid);
   } 
 
-  if((isset($node) && (empty($layout) || $node->form_layout == 'none')) || $_SESSION['form_layout'] == 'none') {
+  if((isset($node) && (empty($layout) || $node->form_layout == 'none')) || (isset($_SESSION['form_layout']) && $_SESSION['form_layout'] == 'none')) {
     return;
   }
    
