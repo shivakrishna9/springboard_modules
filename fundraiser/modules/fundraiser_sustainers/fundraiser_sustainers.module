@@ -1240,7 +1240,6 @@ function _fundraiser_sustainers_create_field_from_info($donation, $field_key, $f
  * Form validation handler for billing address update form.
  */
 function fundraiser_sustainers_billing_update_form_validate($form, &$form_state) {
-  $donation = $form['#donation'];
   // Submission fields are keyed according to the fields in _fundraiser_field_info().
   // Select only the ones we want to validate with fundraiser.
   $submission_fields = $form_state['values'];
@@ -1251,8 +1250,26 @@ function fundraiser_sustainers_billing_update_form_validate($form, &$form_state)
       $submission_fields = $validate_cleanup_func($submission_fields);
     }
   }
-  $errors = fundraiser_validate_form_fields($form, $form_state, $submission_fields); // From fundraiser.module.
-  if ($errors) {
+
+  // If it's a credit card, do some generic validation.
+  // This is because the gateway's validation doesn't happen during a
+  // billing update.
+  $credit_card_errors = array();
+  if ($submission_fields['payment_method'] == 'credit') {
+    // This returns an array.
+    $credit_card_errors = fundraiser_commerce_generic_credit_card_validate($submission_fields['payment_fields']);
+    if (count($credit_card_errors)) {
+      foreach ($credit_card_errors as $form_key => $message) {
+        form_set_error('payment_fields][credit][' . $form_key, $message);
+      }
+    }
+  }
+
+  // This returns a boolean.
+  // From fundraiser.module.
+  $errors = fundraiser_validate_form_fields($form, $form_state, $submission_fields);
+
+  if (form_get_errors() || count($credit_card_errors) || $errors) {
     // We've set a form_error by now.
     drupal_set_message(t('Unable to update credit card information.'));
   }
