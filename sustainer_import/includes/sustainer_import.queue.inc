@@ -71,13 +71,9 @@ function sustainer_import_queue_report() {
     $status_rows[] = array('data' => array($status_count['status'], $status_count['count'], $actions));
   }
   $headers = array(
-    array('data' => array('status')),
-    array('data' => array('count')),
-    array('data' => array('actions')),
-
+    'status', 'count', 'actions',
   );
   $table = theme('table', array('header' =>$headers, 'rows' =>$status_rows));
- // $pending_queue = sustainer_import_get_pending_queue_items();
 
   // generate report table
   return $table;
@@ -87,8 +83,13 @@ function sustainer_import_queue_report() {
  * Create import queue batch
  */
 function sustainer_import_process_queue() {
-
-  batch_set(sustainer_import_batch_queue_items());
+  $batch = sustainer_import_batch_queue_items();
+  if ($batch) {
+    batch_set(sustainer_import_batch_queue_items());
+  }
+  else {
+    drupal_set_message(t('There are no pending records in the import queue. Failed records are not processed.'), 'error');
+  }
 }
 
 /**
@@ -98,15 +99,18 @@ function sustainer_import_process_queue() {
  */
 function sustainer_import_batch_queue_items() {
   $queue = sustainer_import_get_pending_queue_items();
-
+  $batch = FALSE;
+  $operations = array();
   foreach($queue as $rid => $record) {
     $operations[] = array('sustainer_import_process_batch_record', array($record, $rid));
   }
-  $batch = array(
-    'operations' => $operations,
-    'finished' => 'sustainer_import_batch_processing_complete',
-    'file' => drupal_get_path('module', 'sustainer_import') . '/includes/sustainer_import.queue.inc',
-  );
+  if (count($operations)) {
+    $batch = array(
+      'operations' => $operations,
+      'finished' => 'sustainer_import_batch_processing_complete',
+      'file' => drupal_get_path('module', 'sustainer_import') . '/includes/sustainer_import.queue.inc',
+    );
+  }
   return $batch;
 }
 
@@ -353,7 +357,7 @@ function _sustainer_import_create_master_order($record, $account, &$errors) {
   }
   else {
     // log map error and bail
-    $errors[] = t('Unable to load node related to the payment gateway type: !type. Either this gateway type has not been mapped or the mapped node has been deleted.');
+    $errors[] = t('Unable to load node related to the payment gateway type:: !type . Either this gateway type has not been mapped or the mapped node has been deleted.', array('!type' => $record['payment_details']['gateway_type']));
     return FALSE;
   }
 
@@ -362,7 +366,6 @@ function _sustainer_import_create_master_order($record, $account, &$errors) {
   // Before we can save the donation record we need to get an updated SIM from
   // Authorize.net. If for any reason we can't get this value there is no point in
   // importing the donation record as we won't be able to charge until the SIM is updated.
-
   $payment_method = commerce_payment_method_instance_load($donation->gateway);
 
   // get updated sim
@@ -431,26 +434,6 @@ function _sustainer_import_create_master_order($record, $account, &$errors) {
   sustainer_import_map_ids($donation->did, $record['order_id']);
 
   return $donation;
-}
-
-
-/**
- * Create cardonfile entry.
- */
-function _sustainer_import_create_cardonfile($payment_method, $remote_id, $fields) {
-  $new_data = commerce_cardonfile_new();
-  $new_data->uid = $order->uid;
-  $new_data->payment_method = $payment_method['method_id'];
-  $new_data->instance_id = $payment_method['instance_id'];
-  $new_data->remote_id = $remote_id;
-  $new_data->card_type = $fields['card_type'];
-  $new_data->card_name = !empty($fields['card_name']) ? $card_data['card_name'] : '';
-  $new_data->card_number = $fields['card_number'];
-  $new_data->card_exp_month = $fields['card_exp_month'];
-  $new_data->card_exp_year = $fields['card_exp_year'];
-  $new_data->status = 1;
-  commerce_cardonfile_save($new_data);
-  return isset($new_data->card_id) ? $new_data->card_id : FALSE;
 }
 
 /**
@@ -676,8 +659,6 @@ function _sustainer_import_name_from_mail($email) {
  * @return stdClass
  */
 function _sustainer_import_build_donation_object($record, $account, $node) {
-  // TODO: format $fields for use with generating cardonfile entry.
-  $card = _sustainer_import_create_cardonfile($payment_method, $remote_id, $fields);
   $donation->data['cardonfile'] = isset($card->card_id) ? $card->card_id : FALSE;
   $donation = new stdClass();
   $donation->created = $record['created'];
@@ -769,7 +750,7 @@ function _sustainer_import_update_authnet_sim($payment_method, $cim_customer_pro
  * @param $record
  * @param $donation
  * @param $account
- * @return Ambigous
+ * @return Ambiguos
  */
 function _sustainer_import_save_cc_data($sim, $record, $donation, $account) {
   $preexisting_cards = commerce_cardonfile_load_multiple_by_uid($account->uid);
@@ -801,7 +782,6 @@ function _sustainer_import_save_cc_data($sim, $record, $donation, $account) {
   // Save and log the creation of the new card on file.
   commerce_cardonfile_save($card_data);
   return $card_data;
-
 }
 
 /**

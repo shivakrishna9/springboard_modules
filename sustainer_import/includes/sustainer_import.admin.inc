@@ -393,7 +393,7 @@ function sustainer_import_edit_queue_item_submit($form, $form_state) {
 function sustainer_import_queue_failure_report() {
   $failures = sustainer_import_get_failed_queue_items();
   $headers = array('master order id', 'date', 'id log', 'errors', 'actions');
-
+  $status_rows = array();
   foreach ($failures as $rid => $record) {
     $log = sustainer_import_get_log_entry($rid);
 
@@ -408,11 +408,11 @@ function sustainer_import_queue_failure_report() {
     );
   }
   $headers = array(
-    array('data' => array('Master order ID')),
-    array('data' => array('Date')),
-    array('data' => array('ID Log')),
-    array('data' => array('Errors')),
-    array('data' => array('Actions')),
+    'Master order ID',
+    'Date',
+    'ID Log',
+    'Errors',
+    'Actions',
   );
   $table = theme('table', array('header' => $headers, 'rows' => $status_rows));
   return $table;
