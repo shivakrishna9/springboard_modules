@@ -1753,8 +1753,8 @@
             cancel:'.disabled',
             placeholder: 'sortable-placeholder',
             connectWith: '.ipe-outer',
-            //items: 'fieldset.webform-component-fieldset, div.control-group:not("fieldset.webform-component-fieldset div.control-group")',
-            items: '.ipe-inner',
+            items: 'fieldset.webform-component-fieldset, div.control-group:not("fieldset.webform-component-fieldset div.control-group")',
+            //items: '.ipe-inner',
             cursorAt: { left: 5, top: 15 },
             start: function(event, ui) {
               height = $(ui.item[0]).height();
