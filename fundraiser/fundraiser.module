@@ -1330,6 +1330,13 @@ function fundraiser_donation_form(&$form, &$form_state) {
     drupal_get_path('module', 'fundraiser') . '/js/jquery.validate.min.js',
     drupal_get_path('module', 'fundraiser') . '/js/donation_validation.min.js',
   );
+  if(isset($form['#node']->minimum_donation_amount)) {
+    $min = array('minimum_donation_amount' => $form['#node']->minimum_donation_amount);
+    $form['#attached']['js'][] = array(
+    'data' => array('fundraiserWebform' => $min),
+    'type' => 'setting',
+    );
+  }
 
   // Check to see if the form is being accessed over HTTPS.
   if ((!_fundraiser_is_secure() && !variable_get('fundraiser_development_mode', 0))) {
@@ -1378,11 +1385,6 @@ function fundraiser_donation_form(&$form, &$form_state) {
     $other_amount = _fundraiser_get_form_field($form, 'other_amount');
     $other_amount['#attributes']['class'][] = 'input-medium';
     $form = _fundraiser_update_form_field($form, 'other_amount', $other_amount);
-
-    //Add minimum doantion into Drupal.settings for donation_validate.js
-    if (isset($form['#node']->minimum_donation_amount)) {
-      drupal_add_js(array('fundraiserWebform' => array('minimum_donation_amount' => $form['#node']->minimum_donation_amount)), 'setting');
-    }
 
     // Call hook to allow sub modules to add / manipulate the form.
     // NOTE: we are not using module_invoke_all on purpose here.
