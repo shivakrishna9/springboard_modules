@@ -345,9 +345,14 @@ function webform_ipe_form_alter(&$form, &$form_state, $form_id) {
   $types = variable_get('webform_ipe_node_types', array());
   $is_active = in_array($type, $types);
   if ($is_active && strpos($form_id, 'webform_client_form_') !== FALSE && user_access('use webform IPE')) {
-    $path = drupal_get_path('module', 'webform_ipe');
-    $templates = file_get_contents($path . '/js/templates.html');
-    $form['webform_ipe_templates']['#markup'] = $templates;
+    if(isset($form['#node']->nid)) {
+      $layout = form_layout_get_node_layout($form['#node']->nid);
+      if(!empty($layout)) {
+        $path = drupal_get_path('module', 'webform_ipe');
+        $templates = file_get_contents($path . '/js/templates.html');
+        $form['webform_ipe_templates']['#markup'] = $templates;
+      }
+    }  
   }
 }
 
