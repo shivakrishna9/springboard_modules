@@ -15,7 +15,6 @@ dependencies[] = text
 dependencies[] = video_embed_field
 dependencies[] = views
 configure = admin/springboard/p2p/settings
-
 features[ctools][] = field_group:field_group:1
 features[ctools][] = views:views_default:3.0
 features[features_api][] = api:2
@@ -61,4 +60,3 @@ features[node][] = p2p_campaign
 features[node][] = p2p_category
 features[views_view][] = p2p_campaigns
 features[views_view][] = p2p_categories
-

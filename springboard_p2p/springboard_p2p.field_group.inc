@@ -21,7 +21,7 @@ function springboard_p2p_field_group_info() {
   $field_group->parent_name = '';
   $field_group->data = array(
     'label' => 'Personal campaign defaults',
-    'weight' => '7',
+    'weight' => '6',
     'children' => array(
       0 => 'field_p2p_campaigns_approval',
       1 => 'field_p2p_content',
@@ -82,7 +82,7 @@ function springboard_p2p_field_group_info() {
   $field_group->parent_name = '';
   $field_group->data = array(
     'label' => 'Comment settings',
-    'weight' => '6',
+    'weight' => '5',
     'children' => array(
       0 => 'field_p2p_allow_donor_comments',
       1 => 'field_p2p_show_donor_comments',
@@ -111,7 +111,7 @@ function springboard_p2p_field_group_info() {
   $field_group->parent_name = '';
   $field_group->data = array(
     'label' => 'Form configuration',
-    'weight' => '5',
+    'weight' => '4',
     'children' => array(
       0 => 'field_p2p_form_header',
       1 => 'field_p2p_campaign_goals',
