@@ -32,7 +32,6 @@ function springboard_p2p_node_info() {
       'has_title' => '1',
       'title_label' => t('Name'),
       'help' => t('Peer to peer campaign submission guidelines.'),
-      'locked' => TRUE,
     ),
     'p2p_category' => array(
       'name' => t('Peer to peer category'),
@@ -41,7 +40,6 @@ function springboard_p2p_node_info() {
       'has_title' => '1',
       'title_label' => t('Name'),
       'help' => t('Peer to peer category submission guidelines.'),
-      'locked' => TRUE,
     ),
   );
   return $items;
