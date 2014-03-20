@@ -1,75 +1,43 @@
 (function ($) {
-  Drupal.behaviors.fundraiser_upsell = {
-    attach: function(context, settings) {
-      // Get the modal window size
-      modalWidth = $('#message-modal').width();
-      modalHeight = $('#message-modal').height();
-      // Pop up the modal on the page load
-      $.blockUI({
-        message: $('#message-modal'),
-        centerY : 0,
-        css: {
-          width: modalWidth,
-          height: modalHeight,
-          textAlign: 'left',
-          padding: '1em',
-          top: '10em'
+
+    Drupal.theme.prototype.fundraiserUpsellModal = function () {
+        var html = ''
+        html += '  <div id="ctools-modal">';
+        html += '    <div class="ctools-modal-content ' + Drupal.settings['fundraiser-upsell'].modalClass + '">'; // panels-modal-content
+        html += '      <div class="modal-header">';
+        html += '        <span id="modal-title" class="modal-title">&nbsp;</span>';
+        html += '      </div>';
+        html += '      <div id="modal-content" class="modal-content">';
+        html += '      </div>';
+        html += '    </div>';
+        html += '  </div>';
+
+        return html;
+    };
+
+    $('document').ready(function() {
+       $('.ctools-modal-fundraiser-upsell').click();
+    });
+
+})(jQuery);
+
+
+(function ($) {
+    Drupal.behaviors.fundraiser_upsell = {
+        attach: function (context, settings) {
+            $('.ctools-close-modal.rejection', context).click(function() {
+                // Get the days for the rejection cookie
+                var rejectionDays = Drupal.settings['fundraiser-upsell'].rejectionDays;
+                var exdate=new Date();
+                exdate.setDate(exdate.getDate() + rejectionDays);
+                var c_value = "1;path=/" + ((rejectionDays==null) ? "" : ";expires="+exdate.toUTCString());
+                document.cookie='fundraiser_upsell_rejection' + "=" + c_value;
+            });
+
+            $('.ctools-modal-content form', context).on('submit', function() {
+               $('.ctools-close-modal', context).hide();
+            });
         }
-      });
-      // Submit live form
-      $('.live #fundraiser-upsell-donation-form').submit(function(e) {
-        // Stop the default form submit
-        e.preventDefault();
-        // Grab the values
-        var sendData = $(this).serialize();
-        path = $(this).attr('action');
-        // Update the block message
-        $('#message-modal').hide().html('<h1>Processing your sustainer gift... </h1>').fadeIn(750);
-        // Post the form
-        req = $.ajax({
-          type: 'post',
-          url: path,
-          cache: false,
-          data: sendData,
-          dataType: 'json',
-        });
-        // Display the thank you messagfe if successful
-        req.done(function( data, textStatus, jqXHR ) {
-          $('#message-modal').hide().html(data).fadeIn(750);
-        });
-        // Log the error if there is a problem
-        req.fail(function( jqXHR, textStatus, errorThrown ) {
-          console.log(errorThrown);
-        });
-        // Unblock the UI no matter what happens
-        req.always(function( jqXHR, textStatus ) {
-          setTimeout(function() {
-            $.unblockUI();
-          }, 3000);
-        });
-      });
-      // Preview submit function
-      $('.preview #edit-submit').click(function() {
-        // update the block message
-        $.blockUI({
-          message: $('#message-return'),
-          centerY : 0,
-          timeout: 3000,
-          css: {
-            width: modalWidth,
-            height: modalHeight,
-            textAlign: 'left',
-            padding: '1em',
-            top: '10em'
-          }
-        });
-        return false;
-      });
-      // Close button
-      $('#edit-close').click(function() {
-        $.unblockUI();
-        return false;
-      });
     }
-  };
+
 })(jQuery);

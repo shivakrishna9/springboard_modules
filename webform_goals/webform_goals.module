@@ -429,7 +429,7 @@ function _webform_goals_list_webforms() {
 function webform_goals_get_readable_types($types) {
   $return = array();
   $results = db_query("SELECT type, name FROM {node_type} WHERE type IN (:types)", array(':types' => $types));
-  foreach($results as $result) {
+  foreach ($results as $result) {
     $return[$result->type] = $result->name;
   }
 
@@ -640,7 +640,7 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
           break;
 
         case 'target':
-          $replacements[$token] = $data['webform_goal']['target_value'];
+          $replacements[$token] = isset($goal_progress['target']) ? $goal_progress['target'] : $data['webform_goal']['target_value'];
           break;
 
         case 'total':

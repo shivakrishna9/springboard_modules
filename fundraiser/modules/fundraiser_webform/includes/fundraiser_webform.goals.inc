@@ -78,6 +78,8 @@ function fundraiser_webform_webform_goals_track_metric($goal, $params = array())
     webform_goals_calculate_progress($data, $goal);
     // Pretty format the donation amount..
     $data['count'] = number_format((float) $data['count'], 2);
+    // and the goal target..
+    $data['target'] = number_format((float) $goal['target_value'], 2);
     return $data;
   }
 }

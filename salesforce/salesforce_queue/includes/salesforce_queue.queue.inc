@@ -96,7 +96,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *     - dedupe_field: Salesforce field to dedupe on during UPSERT operations
    *     - sobject: Salesforce sObject
    *
-   * @return bool
+   * @return bool|int
    *   If the item insert or update failed, returns FALSE. If it succeeded,
    *   returns SAVED_NEW or SAVED_UPDATED, depending on the operation performed.
    */
@@ -283,19 +283,6 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   }
 
   /**
-   * Helper method to refresh current leases before refering to them.
-   */
-  protected function retreiveLeases() {
-    // Gather up the expire times for the leases of the various sub queues we
-    // could be working with.
-    $this->leases['all'] = variable_get('salesforce_queue_all_lease_expire', 0);
-    foreach ($this->trackedQueues as $queue) {
-      $this->leases[$queue] = variable_get('salesforce_queue_' . $queue . '_lease_expire', 0);
-    }
-    $this->leases[$this->queueName] = variable_get('salesforce_queue_' . $this->queueName . '_lease_expire', 0);
-  }
-
-  /**
    * Grab a batch of items from the queue and inform the queue is leased.
    *
    * DrupalQueue first selects a row and then tries to update the row, and
@@ -380,12 +367,11 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *   granted because the wrong key was granted.
    */
   public function releaseBatch($key, $force = FALSE) {
-    $prefix = 'salesforce_queue_' . $this->queueName . '_lease_';
-    $key_var = $prefix . 'key';
+    $lease_var = 'salesforce_queue_' . $this->queueName . '_lease';
+    $key_var = $lease_var . '_key';
     $current_key = variable_get($key_var, NULL);
-    if ($key == $current_key || is_null($current_key) || $force == TRUE) {
-      $expire_var = $prefix . 'expire';
-      variable_set($expire_var, 0);
+    if ($key == $current_key || $force) {
+      lock_release($lease_var);
       return TRUE;
     }
     return FALSE;
@@ -407,29 +393,18 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
       // Queue is leased, I cannot lease it.
       return FALSE;
     }
-    else {
-      $prefix = 'salesforce_queue_' . $this->queueName . '_lease_';
-      $lease_var = $prefix . 'expire';
-      $key_var = $prefix . 'key';
-
-      // We cannot rely on REQUEST_TIME because items might be claimed by a
-      // single consumer which runs longer than 1 second. If we continue to use
-      // REQUEST_TIME instead of the current time(), we steal time from the
-      // lease, and will tend to reset items before the lease should really
-      // expire.
-      $expire_time = time() + $lease_time;
-      variable_set($lease_var, $expire_time);
-
+    $lease_var = 'salesforce_queue_' . $this->queueName . '_lease';
+    if (lock_acquire($lease_var, $lease_time)) {
       // The process that requests the lease gets a unique identifier as a key
       // that allows them to be the only process to lock and unlock the queue.
       // Otherwise, if multiple processes get kicked off simultaneously, they
       // can mistakenly unlock the original process' lease and cause overlapping
       // processing of the queue.
-      $key = uniqid();
-      variable_set($key_var, $key);
-
+      $key = hash('md5', serialize($_SERVER) . uniqid());
+      variable_set($lease_var . '_key', $key);
       return $key;
     }
+    return FALSE;
   }
 
   /**
@@ -439,13 +414,11 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *   TRUE if the queue is leased, FALSE if the queue is not leased
    */
   public function queueIsLeased() {
-    $this->retreiveLeases();
-
     // If the 'all' queue has a lease, the queues the 'all' queue manages cannot
     // get a lease.
     $queues_can_block_all = $this->trackedQueues;
     $queues_can_block_all[] = 'all';
-    if ($this->leases['all'] > REQUEST_TIME && in_array($this->queueName, $queues_can_block_all)) {
+    if (in_array($this->queueName, $queues_can_block_all) && !lock_may_be_available('salesforce_queue_all_lease')) {
       // The current queue is tracked by 'all' and 'all' is leased.
       return TRUE;
     }
@@ -453,7 +426,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
     // If a queue is not a tracked queue, or 'all' is not leased, then all
     // we have to do is check that queue's lease time.
     if ($this->queueName != 'all') {
-      if ($this->leases[$this->queueName] < REQUEST_TIME) {
+      if (lock_may_be_available('salesforce_queue_' . $this->queueName . '_lease')) {
         // Current queue is not leased.
         return FALSE;
       }
@@ -463,8 +436,8 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
 
     // The 'all' queue cannot be leased when any of its tracked queues are
     // leased.
-    foreach ($this->trackedQueues as $queue) {
-      if ($this->leases[$queue] > REQUEST_TIME) {
+    foreach ($this->trackedQueues as $queue_name) {
+      if (!lock_may_be_available('salesforce_queue_' . $queue_name . '_lease')) {
         // This queue is leased.
         return TRUE;
       }

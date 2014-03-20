@@ -554,7 +554,7 @@ function fundraiser_webform_fundraiser_donation_form_after_build($form, $form_st
  * Implements hook_fundraiser_donation_validate().
  */
 function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
-  // Submission fields are keyed according to the fields in fundraiser_field_info().
+  // Submission fields are keyed according to the fields in _fundraiser_field_info().
   $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted']);
   // Get the gateway that goes with this payment method.
   $payment_method_component = _fundraiser_webform_get_component_by_nid_key($form['#node']->nid, array('payment_method'));
@@ -631,7 +631,7 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
  */
 function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $donation) {
   // Given the set of fields defined in fundraiser, grab results here that match those fields.
-  // Since we used the fundraiser_field_info keys to generate our webform components with the same form keys
+  // Since we used the _fundraiser_field_info keys to generate our webform components with the same form keys
   // And we prevent those values from being overwritten, we can pass the results as an automatic map between the two.
   // Other modules will have to be more particular.
   $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted_tree']);
@@ -768,7 +768,7 @@ function fundraiser_webform_fundraiser_update_fundraiser_alter($fundraiser) {
 /**
  * Implements hook_fundraiser_field_info_alter().
  */
-function fundraiser_webform_fundraiser_field_info_alter($fields) {
+function fundraiser_webform_fundraiser_field_info_alter(&$fields) {
   $email_map = array(
     'amount',
     'other_amount',
@@ -787,7 +787,15 @@ function fundraiser_webform_fundraiser_field_info_alter($fields) {
   foreach (element_children($fields) as $key) {
     $fields[$key] = _fundraiser_webform_fundraiser_field_info_alter($key, $fields[$key], $email_map);
   }
-  return $fields;
+
+  // Ensure amount and payment method extra configurations can be updated by the node form
+  if (!empty($fields['donation']['amount'])) {
+    $fields['donation']['amount']['#node_extra_settings'] = array('items' => TRUE);
+  }
+
+  if (!empty($fields['payment_information']['payment_method'])) {
+    $fields['payment_information']['payment_method']['#node_extra_settings'] = array('payment_methods' => TRUE);
+  }
 }
 
 /**
@@ -932,7 +940,7 @@ function &_fundraiser_webform_find_field(&$form, $path) {
  */
 function _fundraiser_webform_update_components($fundraiser) {
   // Poll other modules for the information they would normally provide to the donation form.
-  $fields = fundraiser_field_info();
+  $fields = _fundraiser_field_info();
   // Start creating fields based on the component.
   $components = array();
   $child_weight = 0;
@@ -995,15 +1003,16 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
     $orig_field = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, $component['form_key']);
     if (isset($orig_field->cid) && !empty($orig_field->cid)) {
       $cid = $orig_field->cid;
-      // Usually only fundraiser amount, and other amount fields are allowed to be updated.
+      // If the field allows updating proceed
       if ($allow_update) {
         $component['pid'] = $orig_field->pid; // Keep the original parentage, could be set by user.
         $component['name'] = $orig_field->name; // Keep the original name, could be set by user.
 
-        // Need to get description, prefix, and suffix, and keep original ones.
+        // Pass through customizations of the extra configurations
         $orig_field->extra = unserialize($orig_field->extra);
-        foreach (array('description', 'field_prefix', 'field_suffix') as $extra_field) {
-          if (!empty($orig_field->extra[$extra_field])) {
+        foreach ($orig_field->extra as $extra_field => $config) {
+          // If the extra config change cannot be updated by the node settings use the original component values
+          if (empty($field['#node_extra_settings'][$extra_field])) {
             $component['extra'][$extra_field] = $orig_field->extra[$extra_field];
           }
         }
@@ -1012,6 +1021,7 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
           $component['value'] = $orig_field->value; // Keep the original value, could be set by user.
         }
         $component = array_merge((array) $orig_field, (array) $component);
+
         webform_component_update($component);
       }
     }
@@ -1057,7 +1067,7 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
  */
 function _fundraiser_webform_get_nonfieldset_keys($field_info = NULL, $fields = array()) {
   if ($field_info == NULL) {
-    $field_info = fundraiser_field_info();
+    $field_info = _fundraiser_field_info();
   }
   $children = element_children($field_info);
   foreach ($children as $child) {

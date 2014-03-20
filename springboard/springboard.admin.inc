@@ -194,6 +194,8 @@ function springboard_admin_config(&$form, $form_state) {
     }
     // Configure user profiles
     springboard_admin_config_profile($form, $form_state);
+    // Configure secure prepopulate synonyms
+    springboard_admin_configure_prepopulate_synonyms();
     // Configure a default fundraiser type
     springboard_admin_config_donation_form_type($form, $form_state);
     set_time_limit(300);
@@ -230,6 +232,7 @@ function springboard_admin_config_modules($form, $form_state) {
     'springboard_views',
     'springboard_version',
     'clone', // Temp comment out, pending add to build script. Node clone support.
+    'secure_prepopulate',
   );
   if ($form_state['values']['order_handling'] == 'ubercart') {
     $modules[] = 'fundraiser_ubercart';
@@ -1446,6 +1449,33 @@ function springboard_admin_config_salesforce($form, $form_state) {
 }
 
 /**
+ * Configure a default set of secure prepopulate synonyms
+ * to working with donation forms and webform user forms.
+ */
+function springboard_admin_configure_prepopulate_synonyms() {
+  $synonyms = array(
+    'first_name' => 'sbp_first_name',
+    'last_name' => 'sbp_last_name',
+    'address' => 'sbp_address',
+    'address_line_2' => 'sbp_address_line_2',
+    'city' => 'sbp_city',
+    'state' => 'sbp_state',
+    'zip' => 'sbp_zip',
+    'country' => 'sbp_country',
+  );
+
+  if (module_exists('secure_prepopulate')) {
+    foreach ($synonyms as $form_key => $synonym) {
+      $settings = array(
+        'token_key' => $form_key,
+        'synonyms' => $synonym,
+      );
+      secure_prepopulate_save_synonym($settings);
+    }
+  }
+}
+
+/**
  * Configure a default set of User profile fields.
  */
 function springboard_admin_config_profile($form, $form_state) {
@@ -1905,7 +1935,7 @@ function springboard_admin_config_email_wrapper_add($form, $form_state) {
 function springboard_admin_config_donation_form_add($form, $form_state, $email_nid = NULL) {
   // Refresh field information defs. So that what was picked up if anything
   // earlier during module activation, is now configured right. Avoid static cache issues.
-  $fields = fundraiser_field_info(TRUE);
+  $fields = _fundraiser_field_info(TRUE);
   // Create the node.
   $node = new stdClass();
   $node->is_new = 1;

@@ -12,7 +12,7 @@
  * Be sure to provide module and name (unique per module, much like block
  * deltas) to ensure email wrappers can load your module-specific settings.
  *
- * @param $edit
+ * @param array $edit
  *   Placeholder for form API edit cruft.
  *
  * @param array $params
@@ -46,9 +46,9 @@ function email_wrappers_mail_form($edit, $params = array()) {
     '#value' => isset($settings->name) ? $settings->name : $params['name'],
   );
   // TODO: add template select with ajax import?
- /* $form['tid'] = array(
-    '#type' => 'value',
-    '#value' => isset($settings->tid) ? $settings->tid : 0,
+  /* $form['tid'] = array(
+  '#type' => 'value',
+  '#value' => isset($settings->tid) ? $settings->tid : 0,
   ); */
   $form['recipient_callback'] = array(
     '#type' => 'value',
@@ -60,13 +60,13 @@ function email_wrappers_mail_form($edit, $params = array()) {
   );
   $form['headers'] = array(
     '#type' => 'fieldset',
-    '#title' => t('mail headers'),
+    '#title' => t('Mail headers'),
     '#description' => '',
     '#collapsible' => TRUE,
   );
   $form['headers']['from_name'] = array(
     '#type' => 'textfield',
-    '#title' => t('from name'),
+    '#title' => t('From name'),
     '#description' => '',
     '#default_value' => isset($settings->from_name) ? $settings->from_name : '',
     '#required' => TRUE,
@@ -90,16 +90,18 @@ function email_wrappers_mail_form($edit, $params = array()) {
     '#description' => t('Email addresses to CC when sending this mail. For more than one address, addresses should be separated by a comma. Example: test3@example.com,test4@example.com'),
     '#default_value' => isset($settings->cc) ? $settings->cc : '',
   );
+
+  // @todo Add check on setting to mail send, format html body using appropriate
+  // core filter.
   $form['headers']['bcc'] = array(
     '#type' => 'textfield',
     '#title' => t('BCC email address'),
-    '#description' => t('Email  // TODO: add check on setting to mail send, format html body using appropriate
-  // core filter. addresses to BCC when sending this mail. For more than one address, addresses should be separated by a comma. Example: test5@example.com,test6@example.com'),
+    '#description' => t('Email addresses to BCC when sending this mail. For more than one address, addresses should be separated by a comma. Example: test5@example.com,test6@example.com'),
     '#default_value' => isset($settings->bcc) ? $settings->bcc : '',
   );
   $form['message'] = array(
     '#type' => 'fieldset',
-    '#title' => t('mail body'),
+    '#title' => t('Mail body'),
     '#description' => '',
     '#collapsible' => TRUE,
   );
@@ -208,7 +210,7 @@ function email_wrappers_mail_form_submit($form, $form_state) {
 /**
  * Filters email addresses.
  *
- * @param string $email
+ * @param string $mail
  *   The email address to validate.
  *
  * @return string|bool
@@ -230,7 +232,7 @@ function email_wrappers_validate_address($mail) {
 function _email_wrappers_concat_settings_from_submission($values) {
   $settings = array(
     'mid' => $values['mid'] ? $values['mid'] : NULL,
-    //'tid' => $values['tid'] ? $values['tid'] : NULL,
+    // 'tid' => $values['tid'] ? $values['tid'] : NULL,
     'name' => $values['name'],
     'module' => $values['module'],
     'delta' => $values['delta'],
@@ -269,6 +271,9 @@ function email_wrappers_send_mail($mail, $params = array()) {
   }
 
   $key = $mail->module . '_' . $mail->delta;
+
+  $mail->from_name = email_wrappers_sanitize_from_name($mail->from_name);
+
   $params['from'] = $mail->from_name . " <" . $mail->from_mail . ">";
   $params['mail'] = $mail;
   $params['language'] = user_preferred_language($user);
@@ -279,6 +284,24 @@ function email_wrappers_send_mail($mail, $params = array()) {
     $function = $mail->send_callback;
     $function($mail, $params);
   }
+}
+
+/**
+ * Trims leading and trailing quotes and wraps the string in double quotes.
+ *
+ * @param string $name
+ *   The from name as stored.
+ *
+ * @return string
+ *   A from name ready for the From email header.
+ *
+ * @todo Escape double quotes inside the string.
+ */
+function email_wrappers_sanitize_from_name($name) {
+  // Remove leading and trailing single and double quotes so we don't end up
+  // doubling up.
+  // Then wrap it in quotes for the actual from header.
+  return '"' . trim($name, '\'"') . '"';
 }
 
 /**

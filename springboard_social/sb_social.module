@@ -3,7 +3,7 @@
 
 /**
  * @file
- * Primary module file for Springboard Social, which integrates customized 
+ * Primary module file for Springboard Social, which integrates customized
  * share content with AddThis service and Salesforce.
  */
 
@@ -225,6 +225,9 @@ function sb_social_block_info() {
  */
 function sb_social_block_view($delta = '') {
   if ($delta = 'social_sharing') {
+    $block['subject'] = '';
+    $block['content'] = '';
+
     $node = menu_get_object();
     if (!$node) {
       // Is it a confirmation page?
@@ -237,27 +240,29 @@ function sb_social_block_view($delta = '') {
     else {
       $id = $node->nid;
     }
-
     $sid = _sb_social_sid_by_id($id);
-    $settings = sb_social_settings_load($sid);
-    $plugins = sb_social_get_enabled_plugins();
 
-    // Render button for each enabled service.
-    foreach ($plugins as $service => $plugin) {
-      $vars['service'] = $service;
-      $vars['extra'] = '';
+    if ($sid) {
+      $settings = sb_social_settings_load($sid);
+      $plugins = sb_social_get_enabled_plugins();
+      // Render button for each enabled service.
+      foreach ($plugins as $service => $plugin) {
+        $vars['service'] = $service;
+        $vars['extra'] = '';
+        $vars['contents'] = isset($plugin['button_contents']) ? $plugin['button_contents'] : '';
 
-      if (isset($plugin['button_extra'])) {
-        $func = $plugin['button_extra'];
-        if (function_exists($func)) {
-          $vars['extra'] = $func($settings['data'][$service], $node);
+        if (isset($plugin['button_extra'])) {
+          $func = $plugin['button_extra'];
+          if (function_exists($func)) {
+            $vars['extra'] = $func($settings['data'][$service], $node);
+          }
         }
+        $buttons[] = theme('sb_social_share_button', $vars);
       }
-      $buttons[] = theme('sb_social_share_button', $vars);
+      $buttons = implode("\n", $buttons);
+      $block['subject'] = NULL;
+      $block['content'] = theme('sb_social_share', array('buttons' => $buttons));
     }
-    $buttons = implode("\n", $buttons);
-    $block['subject'] = NULL;
-    $block['content'] = theme('sb_social_share', array('buttons' => $buttons));
     return $block;
   }
 }
@@ -314,6 +319,24 @@ function sb_social_access_node_settings($node) {
   return FALSE;
 }
 
+/**
+ * Implements hook_node_insert().
+ */
+function sb_social_node_insert($node) {
+  // Clone social settings when a node with settings is cloned.
+  if (isset($node->clone_from_original_nid) && is_numeric($node->clone_from_original_nid)) {
+    $sid = sb_social_get_sid_by_id($node->clone_from_original_nid, 'node');
+    if ($sid) {
+      $settings = sb_social_settings_load($sid);
+      if ($settings) {
+        $settings['sid'] = '';
+        $settings['id'] = $node->nid;
+        sb_social_settings_save($settings);
+      }
+    }
+  }
+}
+
 
 /**
  * Implements hook_node_delete().
@@ -341,14 +364,17 @@ function sb_social_init() {
     $submission_id = $_GET['sid'];
     // Load the original webform as we can't trust that confirmation redirects
     // to a url that contains it's node id.
-    $nid = _sb_social_get_nid_by_sid($submission_id);
-    $node = node_load($nid);
+    $id = _sb_social_get_nid_by_sid($submission_id);
+    $node = node_load($id);
+    $sid = sb_social_get_sid_by_id($id, 'node');
     $js_settings['submission_id'] = $submission_id;
+    $js_settings['id'] = $id;
+    $js_settings['id_type'] = 'nid';
   }
   if (!$node && arg(0) == 'node' && is_numeric(arg(1))) {
     $node = node_load(arg(1));
 
-    $id = is_object($node) ? $node->nid : FALSE;
+    $id = $node ? $node->nid : FALSE;
     if ($id) {
       $sid = sb_social_get_sid_by_id($id, 'node');
     }
@@ -358,7 +384,7 @@ function sb_social_init() {
       $js_settings['id_type'] = 'nid';
     }
   }
-  else {
+  if (!$node) {
     // Social supports both internal paths and path aliases so
     // we need to check both.
     $path = current_path();
@@ -534,6 +560,9 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
   if ($type == 'sb_social') {
     $replacements = array();
     $node = !empty($data['node']) ? $data['node'] : FALSE;
+    if (!$node && arg(0) == 'node' && is_numeric(arg(1))) {
+      $node = node_load(arg(1));
+    }
 
     if (isset($node->nid) && $node->nid) {
       $id = $node->nid;
@@ -557,7 +586,13 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
     foreach ($enabled_plugins as $service => $plugin) {
       if (!empty($plugin['token_replace'])) {
         $func = $plugin['token_replace'];
-        $extra = isset($plugin['button_extra']) ? $plugin['button_extra'] : FALSE;
+        $extra_func = isset($plugin['button_extra']) ? $plugin['button_extra'] : FALSE;
+        if ($extra_func && function_exists($extra_func)) {
+          $extra = $extra_func($settings['data'][$service], $node, $submission_id);
+        }
+        else {
+          $extra = FALSE;
+        }
         $func($tokens, $replacements, $settings, $node, $submission_id, $extra);
       }
     }
@@ -566,6 +601,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
       foreach ($enabled_plugins as $service => $plugin) {
         $vars['service'] = $service;
         $vars['extra'] = '';
+        $vars['contents'] = isset($plugin['button_contents']) ? $plugin['button_contents'] : '';
 
         // Some buttons (like email) require additional html attributes.
         // The button_extra callback provides these values.
@@ -622,13 +658,13 @@ function sb_social_theme($existing, $type, $theme, $path) {
  * Generate url for share tracking purposes.
  *
  * @param int $share_id
- *   Social share event id
+ *   Social share event id.
  *
  * @param mixed $settings
- *   An array of additional share settings
+ *   An array of additional share settings.
  *
  * @param string $url_path
- *   Drupal internal path (eg. node/1)
+ *   Drupal internal path (for example: node/1).
  *
  * @return string
  *   Returns an absolute url including share tracking id and
@@ -659,10 +695,16 @@ function sb_social_share_tracker_url($share_id, $settings, $url_path) {
  */
 function theme_sb_social_share_image_preview($variables) {
   $element = $variables['element'];
-
+  if (!$element['#file'] && $element['#default_value']) {
+    $results = db_query('SELECT * FROM {file_managed} WHERE uri=:uri', array(':uri' => $element['#default_value']));
+    $file = $results->fetchObject();
+    if (is_object($file)) {
+      $element['#file'] = $file;
+    }
+  }
   if (isset($element['#file']->uri)) {
     $output = '<div id="edit-logo-ajax-wrapper"><div class="form-item form-type-managed-file form-item-logo"><span class="file">';
-    $output .= '<img height="50px" src="' . file_create_url($element['#file']->uri) . '" />';
+    $output .= '<img height="150px" src="' . file_create_url($element['#file']->uri) . '" />';
     $output .= '</span><input type="submit" id="edit-' . $element['#name'] . '-remove-button" name="' . $element['#name'] . '_remove_button" value="Remove" class="form-submit ajax-processed">';
     $output .= '<input type="hidden" name="' . $element['#name'] . '[fid]" value="' . $element['#file']->fid . '">';
 
@@ -694,7 +736,6 @@ function _sb_social_set_tracking_cookie($uid, $mail, $sid) {
  *   Returns string with tokens replaced.
  */
 function _sb_social_replace_tokens($string, $node, $sid = NULL) {
-
   $rep = array();
   if (strpos($string, '%title') !== FALSE) {
     $rep['%title'] = !empty($node->title) ? $node->title : drupal_get_title();

@@ -40,7 +40,7 @@ function salesforce_sync_ui_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('salesforce_sync_ui_sync_confirm', 2, 3, 4),
     'access arguments' => array('manually sync items'),
-    'type' => MENU_LOCAL_TASK,
+    'type' => MENU_CALLBACK,
     'context' => MENU_CONTEXT_NONE,
   );
 

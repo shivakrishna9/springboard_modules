@@ -160,7 +160,7 @@ function fundraiser_token_info() {
  */
 function _fundraiser_donation_token_info($fields = NULL, $tokens = array()) {
   if ($fields == NULL) {
-    $fields = fundraiser_field_info();
+    $fields = _fundraiser_field_info();
   }
   $children = element_children($fields);
   foreach ($children as $child) {
@@ -209,6 +209,7 @@ function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) 
         $donation->donation['payment_fields']['credit']['card_type'] : '';
     }
   }
+
   // Replace the given tokens.
   $replacements = array();
   foreach ($tokens as $key => $token) {
@@ -216,12 +217,17 @@ function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) 
       $replacements[$token] = $data[$key];
     }
   }
-  if ($node_tokens = token_find_with_prefix($tokens, 'node')) {
-    $replacements += token_generate('node', $node_tokens, array('node' => $donation->node), $options);
+
+  // If we have a donation object add the node and user tokens as well
+  if (!empty($donation)) {
+    if ($node_tokens = token_find_with_prefix($tokens, 'node')) {
+      $replacements += token_generate('node', $node_tokens, array('node' => $donation->node), $options);
+    }
+    if ($user_tokens = token_find_with_prefix($tokens, 'user')) {
+      $replacements += token_generate('user', $user_tokens, array('user' => $donation->user), $options);
+    }
   }
-  if ($user_tokens = token_find_with_prefix($tokens, 'user')) {
-    $replacements += token_generate('user', $user_tokens, array('user' => $donation->user), $options);
-  }
+
   return $replacements;
 }
 
@@ -823,6 +829,14 @@ function _fundraiser_form_amounts_validate($form, &$form_state) {
 
   // Checking the minimum amount.
   $minimum_donation_amount = $form_state['values']['amount_wrapper']['minimum_donation_amount'];
+  foreach ($amounts as $amount) {
+    if (empty($amount['remove']) && $amount['amount'] !='') {
+      $min = (isset($min) && $amount['amount'] > $min) ? $min : $amount['amount'];
+    }
+  }
+  if ($min < $minimum_donation_amount) {
+    form_set_error('amount_wrapper][minimum_donation_amount', t('The minimum donation amount must not be higher than the minimum ask amount.'));
+  }
   if (!empty($minimum_donation_amount) && !is_numeric($minimum_donation_amount)) {
     form_set_error('amount_wrapper][minimum_donation_amount', t('The minimum donation amount must be a numerical value.'));
   }
@@ -886,7 +900,7 @@ function _fundraiser_donation_settings_form_amounts(&$form, &$form_state) {
  * Provides a list of fields to be defined by the display module.
  * Requests additional field information from other modules that need to define them.
  */
-function fundraiser_field_info($refresh = FALSE) {
+function _fundraiser_field_info($refresh = FALSE) {
   static $fields;
   // Cache fundraiser content types during page execution.
   if (empty($fields) || $refresh == TRUE) {
@@ -919,7 +933,7 @@ function fundraiser_fundraiser_field_info() {
       'field_prefix' => '$',
     ),
     '#allow_update' => 1,
-    '#reset_value' => 0,
+    '#reset_value' => 1,
     '#create_callback' => '_fundraiser_amount_field_create',
   );
   $fields['donation']['other_amount'] = array(
@@ -1250,7 +1264,7 @@ function fundraiser_update_form_field($calling_module, $form, $field_key, $new_f
  */
 function fundraiser_display_form_fields($calling_module, &$form, $form_state, $field_info = NULL) {
   if ($field_info == NULL) {
-    $field_info = fundraiser_field_info();
+    $field_info = _fundraiser_field_info();
   }
   $children = element_children($field_info);
   foreach ($children as $child) {
@@ -1273,7 +1287,7 @@ function fundraiser_display_form_fields($calling_module, &$form, $form_state, $f
 function fundraiser_validate_form_fields($form, $form_state, $submission_fields, $field_info = NULL, $errors = FALSE) {
   // Grab field info, we'll use this all the way down.
   if ($field_info == NULL) {
-    $field_info = fundraiser_field_info();
+    $field_info = _fundraiser_field_info();
   }
   // Check for errors by field info array.
   $children = element_children($field_info);
@@ -1316,6 +1330,13 @@ function fundraiser_donation_form(&$form, &$form_state) {
     drupal_get_path('module', 'fundraiser') . '/js/jquery.validate.min.js',
     drupal_get_path('module', 'fundraiser') . '/js/donation_validation.min.js',
   );
+  if(isset($form['#node']->minimum_donation_amount)) {
+    $min = array('minimum_donation_amount' => $form['#node']->minimum_donation_amount);
+    $form['#attached']['js'][] = array(
+    'data' => array('fundraiserWebform' => $min),
+    'type' => 'setting',
+    );
+  }
 
   // Check to see if the form is being accessed over HTTPS.
   if ((!_fundraiser_is_secure() && !variable_get('fundraiser_development_mode', 0))) {
@@ -1681,7 +1702,7 @@ function fundraiser_donation_success($donation) {
   _fundraiser_update_tracking_value($donation->nid, 'conversions');
   // Show gateay message if appropriate.
   $display_message = variable_get('fundraiser_gateway_messages', 1);
-  if ($display_message) {
+  if ($display_message && isset($donation->result['message'])) {
     drupal_set_message($donation->result['message']);
   }
   // Allow other modules to respond to the success.
@@ -1800,10 +1821,12 @@ function fundraiser_donation_delete($donation) {
 /**
  * Utility function, given a donation id - get everything that goes with it.
  *
- * @param $did Numeric
- *    The ID of the donation
+ * @param int $did
+ *   The ID of the donation
+ * @param bool $refresh
+ *   If TRUE rebuild the entire donation even if it's statically cached.
  *
- * @return Mixed
+ * @return object|bool
  *    The fully loaded donation object or FALSE if no donation is found
  */
 function fundraiser_donation_get_donation($did, $refresh = FALSE) {
@@ -1852,6 +1875,23 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
   // Store the donation information into the cache.
   $donations[$did] = $donation;
   return $donation;
+}
+
+/**
+ * Get the first donation ID that matches the given submission ID.
+ *
+ * Be aware that multiple donations may have the same submission ID.
+ * For example, recurring donations will have the initial sid.
+ *
+ * @param int $sid
+ *   The submission ID.
+ *
+ * @return int|bool
+ *   The donation ID, or FALSE.
+ */
+function fundraiser_donation_get_did_by_sid($sid) {
+  return db_query("SELECT MIN(did) FROM {fundraiser_donation} WHERE sid = :sid", array(':sid' => $sid))
+    ->fetchField();
 }
 
 /**
@@ -2290,7 +2330,7 @@ function _fundraiser_update_form_field($form, $field_key, $new_field) {
  */
 function _fundraiser_get_field_keys($field_info = NULL, $keys = array()) {
   if ($field_info == NULL) {
-    $field_info = fundraiser_field_info();
+    $field_info = _fundraiser_field_info();
   }
   $children = element_children($field_info);
   $keys = array_merge($keys, $children);
@@ -2308,7 +2348,7 @@ function _fundraiser_get_field_keys($field_info = NULL, $keys = array()) {
  */
 function _fundraiser_get_field_fields($field_info = NULL, $fields = array()) {
   if ($field_info == NULL) {
-    $field_info = fundraiser_field_info();
+    $field_info = _fundraiser_field_info();
   }
   $children = element_children($field_info);
   foreach ($children as $child) {

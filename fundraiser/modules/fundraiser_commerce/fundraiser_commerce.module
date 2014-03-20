@@ -309,6 +309,11 @@ function fundraiser_commerce_fundraiser_gateway_info() {
       // When referencing gateway info gathered under gateway_info hooks.
       module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
       $gateway_options = module_invoke($method_instance['module'], 'fundraiser_commerce_fundraiser_gateway_info');
+      // If nothing is returned this gateway is not configured to work with fundraiser
+      if (empty($gateway_options)) {
+        continue;
+      }
+
       // Some gateways support multiple payment methods and multiple payment processors
       // Check if it specifies support for each in the payment method array
       foreach ($gateway_options['payment_method'] as $key => $type) {
@@ -429,29 +434,51 @@ function _fundraiser_commerce_payment_fields_validate($form, $form_state, $submi
     return;
   }
 
-  // TODO this should probably be driven down to the gateway level.
+  // If we don't have a gateway validate callback, use generic credit card
+  // validation.
   if ($payment_method == 'credit') {
-    module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card'); // Include the file with the validation info.
-    $number = $value['credit']['card_number'];
-    if ($number != '0000000000000000') {
-      $valid = commerce_payment_validate_credit_card_number($number);
-      if ($valid !== TRUE || !ctype_digit($number) || drupal_strlen($number) < 10) {
-        return array('card_number' => t('You have entered an invalid credit card number.'));
-      }
-      $cvv = $value['credit']['card_cvv'];
-      $valid = commerce_payment_validate_credit_card_security_code($number, $cvv);
-      if ($valid !== TRUE && !empty($cvv)) {
-        return array('card_cvv' => t('You have entered an invalid CVV number.'));
-      }
-      $cc_expiration_month = $value['credit']['card_expiration_month'];
-      $cc_expiration_year = $value['credit']['card_expiration_year'];
-      $valid = commerce_payment_validate_credit_card_exp_date($cc_expiration_month, $cc_expiration_year);
-      if ($valid !== TRUE && !empty($cc_expiration_month) && !empty($cc_expiration_year)) {
-        return array(
-          'card_expiration_month' => t('The credit card you entered has expired.'),
-          'card_expiration_year' => '',
-        );
-      }
+    return fundraiser_commerce_generic_credit_card_validate($value);
+  }
+}
+
+/**
+ * Does some basic credit card validation.
+ *
+ * @param array $value
+ *   The credit card data in the following format.
+ *   array('credit' =>
+ *     'card_number' => 1234,
+ *     'card_cvv' => 123,
+ *     'card_expiration_month' => 1,
+ *     'card_expiration_year' => 2014,
+ *   )
+ *
+ * @return array
+ *   An array with form key and error message.
+ */
+function fundraiser_commerce_generic_credit_card_validate($value) {
+  // @todo This should probably be driven down to the gateway level.
+  // Include the file with the validation info.
+  module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+  $number = $value['credit']['card_number'];
+  if ($number != '0000000000000000') {
+    $valid = commerce_payment_validate_credit_card_number($number);
+    if ($valid !== TRUE || !ctype_digit($number) || drupal_strlen($number) < 10) {
+      return array('card_number' => t('You have entered an invalid credit card number.'));
+    }
+    $cvv = $value['credit']['card_cvv'];
+    $valid = commerce_payment_validate_credit_card_security_code($number, $cvv);
+    if ($valid !== TRUE && !empty($cvv)) {
+      return array('card_cvv' => t('You have entered an invalid CVV number.'));
+    }
+    $cc_expiration_month = $value['credit']['card_expiration_month'];
+    $cc_expiration_year = $value['credit']['card_expiration_year'];
+    $valid = commerce_payment_validate_credit_card_exp_date($cc_expiration_month, $cc_expiration_year);
+    if ($valid !== TRUE && !empty($cc_expiration_month) && !empty($cc_expiration_year)) {
+      return array(
+        'card_expiration_month' => t('The credit card you entered has expired.'),
+        'card_expiration_year' => '',
+      );
     }
   }
 }
@@ -1370,7 +1397,7 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
 
     // Update the gateway's stored data.
     // Gateways that allow recurring donation will have an update callback
-    $update_callback = isset($donation->gateway['update callback']) && function_exists($donation->gateway['update callback']) ? $donation->gateway['update callback'] : FALSE; 
+    $update_callback = isset($donation->gateway['update callback']) && function_exists($donation->gateway['update callback']) ? $donation->gateway['update callback'] : FALSE;
 
     // If we're in a sustainer update, and this is the first record update the stored payment information
     if (!empty($donation->sustainer_update) && !empty($donation->sustainer_update_first) && $update_callback) {
@@ -1859,6 +1886,29 @@ class FundraiserCommerceUIPaymentSettings extends RulesDataUI implements RulesDa
 }
 
 /**
+ * Given a donation, determine when the payment method expires.
+ *
+ * @param object $donation
+ *   The donation object.
+ *
+ * @return NULL|array
+ *   An array with 'month' and 'year' keys.
+ */
+function fundraiser_commerce_get_payment_method_expiration_date_from_donation($donation) {
+  if (isset($donation->gateway['expire callback'])) {
+    $expiration_func = $donation->gateway['expire callback'];
+    if (function_exists($expiration_func)) {
+      $expires = $expiration_func($donation->donation);
+      if (isset($expires['month']) && isset($expires['year'])) {
+        return $expires;
+      }
+    }
+  }
+
+  return NULL;
+}
+
+/**
  * Supported gateway hooks.
  * Some gateways in order to integrate with the fundraiser_commerce system must implement hooks.
  * As the /inc files for those gateways are not automatically included, we must include those hooks
@@ -1941,7 +1991,6 @@ function _fundraiser_commerce_submit_handler_pane_values(&$pane_values, $donatio
       }
     }
   }
-
   // Allow other modules to alter the pane values
   drupal_alter('fundraiser_commerce_submit_handler_pane_values', $pane_values, $donation);
 }
