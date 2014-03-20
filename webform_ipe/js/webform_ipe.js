@@ -712,9 +712,9 @@
             }
             if(!_.isUndefined(buttonTarget)) {
               buttonTarget.after(App.Templates.template($('#editTemplate').html()));
-              if($('.editor-on').length > 1 && typeof(legendWidth) !== "undefined" && type == 'fieldset') {
-                buttonTarget.closest('fieldset').find('span.edit').css({position:'absolute', left:legendWidth})
-              }
+              // if($('.editor-on').length > 1 && typeof(legendWidth) !== "undefined" && type == 'fieldset') {
+              //   buttonTarget.closest('fieldset').find('span.edit').css({position:'absolute', left:legendWidth})
+              // }
               // else if ($('.editor-on').length > 1  && type != 'fieldset'){
               //   width = (buttonTarget.width()) - 15;
               //   console.log(width)
@@ -1753,8 +1753,8 @@
             cancel:'.disabled',
             placeholder: 'sortable-placeholder',
             connectWith: '.ipe-outer',
-            items: 'fieldset.webform-component-fieldset, div.control-group:not("fieldset.webform-component-fieldset div.control-group")',
-            //items: '.ipe-inner',
+            //items: '.ipe-inner, div.control-group:not("fieldset.webform-component-fieldset div.control-group")',
+            items: '.ipe-inner',
             cursorAt: { left: 5, top: 15 },
             start: function(event, ui) {
               height = $(ui.item[0]).height();
@@ -1851,6 +1851,8 @@
           });
           $('.fake-wrapper').not(':has("*")').remove();
           App.Handlers.reorderItems();
+          App.Handlers.reorderFieldsets();
+
         }  
       }); // End window.ready
     }
