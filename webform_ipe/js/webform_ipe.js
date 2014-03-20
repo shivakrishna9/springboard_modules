@@ -719,7 +719,7 @@
                 buttonTarget.closest('fieldset').find('span.edit').css({position:'absolute', left:legendWidth})
               }
               else if ($('.editor-on').length > 1  && type != 'fieldset'){
-                buttonTarget.parent().find('span.edit').css({ display:'block', float:'left'})
+                //buttonTarget.parent().find('span.edit').css({ display:'block', float:'left'})
               }
               var required = Drupal.settings.webform_ipe.required_fields;
               var formKey = this.model.get('form_key');
@@ -1655,16 +1655,16 @@
           var hideBar = $('div.fieldset.right-sidebar, div.fieldset.left-sidebar');
           hideBar.each(function( index ) {
             if (!$(this).hasClass('show') && $('.sidebars-hide','#admin-bar').hasClass('active')) {
+              $('body').addClass('ipe-both-sidebars');
               $(this).css({'min-height': '600px', 'width': '270px'}).addClass('show').show()
-              $('body').addClass('ipe-both-sidebars')
             } else if(!$('.sidebars-hide','#admin-bar').hasClass('active')){
-              $(this).not(':has("*")').removeClass('show').hide();
               var num = $(this).not(':has("*")').length;
+              $(this).not(':has("*")').removeClass('show').hide();
               if(num == 0) {
-                $('body').removeClass('ipe-both-sidebars')
+                $('body').removeClass('ipe-both-sidebars');
               } else if (num == 1) {
-                $('body').removeClass('ipe-both-sidebars')
-                $('body').addClass('ipe-one-sidebar')
+                $('body').removeClass('ipe-both-sidebars');
+                $('body').addClass('ipe-one-sidebar');
               }
             }
           });
@@ -1719,14 +1719,14 @@
               $(ui.item[0]).css({'width':'auto', 'overflow':'hidden'})
               ui.item.trigger('drop');
               $('div.fieldset.form-layouts:not(:has("*"))').css('min-height', '60px');
-              if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
-                $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
-              }
               if($(this).find(".control-group").length == 0 &! $(this).hasClass('fake-wrapper')) {
                 $(this).append('<div class = "dummy" style="height: 40px"></div>')
               }
               ui.item.siblings(".dummy").remove();
               App.Handlers.wrapOrphans();
+              if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
+                $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
+              }
             },
           });
 
@@ -1777,11 +1777,11 @@
               $(ui.item[0]).css({'width':'auto', 'overflow':'hidden'})
               ui.item.trigger('drop');
               $('div.fieldset.form-layouts:not(:has("*"))').css('min-height', '60px')
+              ui.item.siblings(".dummy").remove();
+              App.Handlers.wrapOrphans();
               if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
                 $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
               }
-              ui.item.siblings(".dummy").remove();
-              App.Handlers.wrapOrphans();
               App.Handlers.setItems();
              },
           });
