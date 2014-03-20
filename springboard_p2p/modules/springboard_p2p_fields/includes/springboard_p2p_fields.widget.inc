@@ -9,8 +9,8 @@
 /**
  * Theme function for the p2p campaign goals widget.
  */
-function theme_springboard_p2p_campaign_goals($variables) {
-  $widget = $variables['springboard_p2p_campaign_goals'];
+function theme_springboard_p2p_fields_campaign_goals($variables) {
+  $widget = $variables['springboard_p2p_fields_campaign_goals'];
 
   $output = '';
 
@@ -23,7 +23,7 @@ function theme_springboard_p2p_campaign_goals($variables) {
     t('Goal'),
   );
   foreach (array('fundraiser', 'webform_user') as $type) {
-    $rows = springboard_p2p_form_types_table_rows($widget, $type);
+    $rows = springboard_p2p_fields_form_types_table_rows($widget, $type);
     if (count($rows)) {
       $widget['form_types'][$type]['#markup'] = theme('table', array(
           'header' => $header,

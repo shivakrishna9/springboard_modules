@@ -90,7 +90,7 @@ function springboard_p2p_admin_settings() {
     '#weight' => -50,
   );
 
-  $form['basic']['springboard_p2p_base_path'] = array(
+  $form['basic']['base_path'] = array(
     '#type' => 'textfield',
     '#title' => t('Base path for personal campaign pages'),
     '#default_value' => variable_get('springboard_p2p_base_path', 'springboard_p2p'),
@@ -110,7 +110,7 @@ function springboard_p2p_admin_settings() {
     'webform_user' => '<h2>Other form types</h2>',
   );
 
-  $content_types = springboard_p2p_get_sorted_content_types();
+  $content_types = springboard_p2p_fields_get_sorted_content_types();
   foreach (array('fundraiser', 'webform_user') as $form_type) {
     $form['form_types'][$form_type . '_items'] = array(
       '#tree' => TRUE,
@@ -121,8 +121,8 @@ function springboard_p2p_admin_settings() {
       $form['form_types'][$form_type . '_items']['#prefix'] = $headings[$form_type];
 
       foreach ($content_types[$form_type] as $key => $name) {
-        $node_options = springboard_p2p_get_node_options_by_types($key);
-        $formatted_node_options = springboard_p2p_format_node_options($node_options);
+        $node_options = springboard_p2p_fields_get_node_options_by_types($key);
+        $formatted_node_options = springboard_p2p_fields_format_node_options($node_options);
         $form['form_types'][$form_type . '_items'][$key] = array(
           'enabled' => array(
             '#type' => 'checkbox',
@@ -214,11 +214,13 @@ function springboard_p2p_admin_settings() {
  */
 function springboard_p2p_admin_settings_validate($form, &$form_state) {
   foreach (array('fundraiser_items', 'webform_user_items') as $type) {
-    foreach ($form_state['values'][$type] as $content_type => $item) {
-      if ($item['enabled'] && $item['nid'] == '') {
-        $name = $form['form_types'][$type][$content_type]['enabled']['#title'];
-        $error = t('A default form must be selected for the enabled content type %content_type.', array('%content_type' => $name));
-        form_set_error($type . '][' . $content_type . '][nid', $error);
+    if (isset($form_state['values'][$type])) {
+      foreach ($form_state['values'][$type] as $content_type => $item) {
+        if ($item['enabled'] && $item['nid'] == '') {
+          $name = $form['form_types'][$type][$content_type]['enabled']['#title'];
+          $error = t('A default form must be selected for the enabled content type %content_type.', array('%content_type' => $name));
+          form_set_error($type . '][' . $content_type . '][nid', $error);
+        }
       }
     }
   }
@@ -228,10 +230,17 @@ function springboard_p2p_admin_settings_validate($form, &$form_state) {
  * Submit handler for the p2p global admin settings.
  */
 function springboard_p2p_admin_settings_submit($form, &$form_state) {
-  variable_set('springboard_p2p_base_path', $form_state['values']['springboard_p2p_base_path']);
-  variable_set('springboard_p2p_fundraiser_items', $form_state['values']['fundraiser_items']);
-  variable_set('springboard_p2p_webform_user_items', $form_state['values']['webform_user_items']);
-  variable_set('springboard_p2p_registration_fields', $form_state['values']['registration_field_items']);
+  $keys = array(
+    'base_path',
+    'fundraiser_items',
+    'webform_user_items',
+    'registration_field_items',
+  );
+
+  foreach ($keys as $key) {
+    $value = isset($form_state['values'][$key]) ? $form_state['values'][$key] : array();
+    variable_set('springboard_p2p_' . $key, $value);
+  }
 
   drupal_set_message('Settings saved.');
 }
@@ -248,7 +257,7 @@ function theme_springboard_p2p_admin_settings($variables) {
   // The content types tables.
   $header = array(t('Type'), t('Default form'));
   foreach (array('fundraiser_items', 'webform_user_items') as $type) {
-    $rows = springboard_p2p_form_types_table_rows($form, $type);
+    $rows = springboard_p2p_fields_form_types_table_rows($form, $type);
     if (count($rows)) {
       $form['form_types'][$type]['#markup'] = theme('table', array(
           'header' => $header,

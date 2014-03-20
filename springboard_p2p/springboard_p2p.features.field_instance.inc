@@ -125,10 +125,10 @@ function springboard_p2p_field_default_field_instances() {
     ),
     'widget' => array(
       'active' => 0,
-      'module' => 'springboard_p2p',
+      'module' => 'springboard_p2p_fields',
       'settings' => array(),
-      'type' => 'springboard_p2p_campaign_goals_widget',
-      'weight' => 12,
+      'type' => 'springboard_p2p_fields_campaign_goals_widget',
+      'weight' => 16,
     ),
   );
 
@@ -349,7 +349,7 @@ function springboard_p2p_field_default_field_instances() {
         'progress_indicator' => 'throbber',
       ),
       'type' => 'image_image',
-      'weight' => 13,
+      'weight' => 17,
     ),
   );
 

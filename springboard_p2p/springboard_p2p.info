@@ -11,6 +11,7 @@ dependencies[] = field_group
 dependencies[] = image
 dependencies[] = list
 dependencies[] = options
+dependencies[] = springboard_p2p_fields
 dependencies[] = text
 dependencies[] = video_embed_field
 dependencies[] = views
