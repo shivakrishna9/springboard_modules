@@ -60,6 +60,10 @@ body.editor-on div#webform-component-right-region {
   width: 99%!important;
 }
 
+fieldset div.webform-component-fieldset.editor-on {
+  float:none;
+}
+
 .layout-row .sidebar.webform-ipe-container.editor-on .webform-ipe-container.editor-on,
 .layout-row > .webform-ipe-container.editor-on .webform-ipe-container.editor-on {
   margin: 10px;
