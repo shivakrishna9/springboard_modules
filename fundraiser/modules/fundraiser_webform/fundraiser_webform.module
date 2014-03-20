@@ -768,7 +768,7 @@ function fundraiser_webform_fundraiser_update_fundraiser_alter($fundraiser) {
 /**
  * Implements hook_fundraiser_field_info_alter().
  */
-function fundraiser_webform_fundraiser_field_info_alter($fields) {
+function fundraiser_webform_fundraiser_field_info_alter(&$fields) {
   $email_map = array(
     'amount',
     'other_amount',
@@ -787,7 +787,15 @@ function fundraiser_webform_fundraiser_field_info_alter($fields) {
   foreach (element_children($fields) as $key) {
     $fields[$key] = _fundraiser_webform_fundraiser_field_info_alter($key, $fields[$key], $email_map);
   }
-  return $fields;
+
+  // Ensure amount and payment method extra configurations can be updated by the node form
+  if (!empty($fields['donation']['amount'])) {
+    $fields['donation']['amount']['#node_extra_settings'] = array('items' => TRUE);
+  }
+
+  if (!empty($fields['payment_information']['payment_method'])) {
+    $fields['payment_information']['payment_method']['#node_extra_settings'] = array('payment_methods' => TRUE);
+  }
 }
 
 /**
@@ -995,7 +1003,7 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
     $orig_field = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, $component['form_key']);
     if (isset($orig_field->cid) && !empty($orig_field->cid)) {
       $cid = $orig_field->cid;
-      // Usually only fundraiser amount, and other amount fields are allowed to be updated.
+      // If the field allows updating proceed
       if ($allow_update) {
         $component['pid'] = $orig_field->pid; // Keep the original parentage, could be set by user.
         $component['name'] = $orig_field->name; // Keep the original name, could be set by user.
@@ -1003,13 +1011,17 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
         // Pass through customizations of the extra configurations
         $orig_field->extra = unserialize($orig_field->extra);
         foreach ($orig_field->extra as $extra_field => $config) {
-          $component['extra'][$extra_field] = $orig_field->extra[$extra_field];
+          // If the extra config change cannot be updated by the node settings use the original component values
+          if (empty($field['#node_extra_settings'][$extra_field])) {
+            $component['extra'][$extra_field] = $orig_field->extra[$extra_field];
+          }
         }
 
         if (!$reset_value) {
           $component['value'] = $orig_field->value; // Keep the original value, could be set by user.
         }
         $component = array_merge((array) $orig_field, (array) $component);
+
         webform_component_update($component);
       }
     }

@@ -222,7 +222,7 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
       '#type' => 'textfield',
       '#required' => 0,
     );
-    $new_fields = fundraiser_webform_fundraiser_field_info_alter($fields);
+    fundraiser_webform_fundraiser_field_info_alter($fields);
     $this->assertEqual(!isset($new_fields['non_key']['#email']), TRUE, 'fundraiser_webform_fundraiser_field_info_alter() altered fields correctly.', 'testFundraiserWebformComponentFunctions');
     $this->assertEqual($new_fields['amount']['#email'], 1, 'fundraiser_webform_fundraiser_field_info_alter() altered fields correctly.', 'testFundraiserWebformComponentFunctions');
   }
