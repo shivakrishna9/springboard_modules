@@ -1754,7 +1754,7 @@
             connectWith: '.ipe-outer',
             items: '.ipe-inner, div.control-group:not("fieldset.webform-component-fieldset div.control-group")',
             //items: '.ipe-inner',
-            //handle: 'legend',
+            handle: 'legend',
             cursorAt: { left: 5, top: 15 },
             start: function(event, ui) {
               height = $(ui.item[0]).height();
