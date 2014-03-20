@@ -711,22 +711,21 @@
                 var buttonTarget = this.$el.find('input, textarea, p, select').last();
             }
             if(!_.isUndefined(buttonTarget)) {
-              buttonTarget.after(App.Templates.template($('#editTemplate').html()));
-              // if($('.editor-on').length > 1 && typeof(legendWidth) !== "undefined" && type == 'fieldset') {
-              //   buttonTarget.closest('fieldset').find('span.edit').css({position:'absolute', left:legendWidth})
-              // }
-              // else if ($('.editor-on').length > 1  && type != 'fieldset'){
-              //   width = (buttonTarget.width()) - 15;
-              //   console.log(width)
-              //   buttonTarget.parent().css('position', 'relative')
-              //   buttonTarget.parent().find('span.edit').css({position:'absolute', left:width})
-              // }
+              if($('.sortable-placeholder').length == 0 ) {
+                buttonTarget.after(App.Templates.template($('#editTemplate').html()));
+              }
+              if($('.editor-on').length > 1 && typeof(legendWidth) !== "undefined" && type == 'fieldset') {
+                buttonTarget.closest('fieldset').find('span.edit').css({position:'absolute', left:legendWidth})
+              }
+
               var required = Drupal.settings.webform_ipe.required_fields;
               var formKey = this.model.get('form_key');
               if(required.indexOf(formKey) != -1) {
                 this.$el.find('button.delete-item').remove();
               }
-              this.$el.find('span.edit').show(400);
+              if($('.sortable-placeholder').length == 0 ) {
+                this.$el.find('span.edit').show(400);
+              }
             }
           },
 
@@ -1755,7 +1754,7 @@
             connectWith: '.ipe-outer',
             items: '.ipe-inner, div.control-group:not("fieldset.webform-component-fieldset div.control-group")',
             //items: '.ipe-inner',
-            handle: 'legend',
+            //handle: 'legend',
             cursorAt: { left: 5, top: 15 },
             start: function(event, ui) {
               height = $(ui.item[0]).height();
