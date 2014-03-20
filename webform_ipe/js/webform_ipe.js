@@ -710,6 +710,7 @@
               default:
                 var buttonTarget = this.$el.find('input, textarea, p, select').last();
             }
+
             if(!_.isUndefined(buttonTarget)) {
               if($('.sortable-placeholder').length == 0 ) {
                 buttonTarget.after(App.Templates.template($('#editTemplate').html()));
@@ -717,7 +718,9 @@
               if($('.editor-on').length > 1 && typeof(legendWidth) !== "undefined" && type == 'fieldset') {
                 buttonTarget.closest('fieldset').find('span.edit').css({position:'absolute', left:legendWidth})
               }
-
+              else if ($('.editor-on').length > 1  && type != 'fieldset'){
+                buttonTarget.parent().find('span.edit').css({ display:'block', float:'left'})
+              }
               var required = Drupal.settings.webform_ipe.required_fields;
               var formKey = this.model.get('form_key');
               if(required.indexOf(formKey) != -1) {
@@ -1653,8 +1656,16 @@
           hideBar.each(function( index ) {
             if (!$(this).hasClass('show') && $('.sidebars-hide','#admin-bar').hasClass('active')) {
               $(this).css({'min-height': '600px', 'width': '270px'}).addClass('show').show()
+              $('body').addClass('ipe-both-sidebars')
             } else if(!$('.sidebars-hide','#admin-bar').hasClass('active')){
-              $(this).not(':has("*")').removeClass('show').hide()
+              $(this).not(':has("*")').removeClass('show').hide();
+              var num = $(this).not(':has("*")').length;
+              if(num == 0) {
+                $('body').removeClass('ipe-both-sidebars')
+              } else if (num == 1) {
+                $('body').removeClass('ipe-both-sidebars')
+                $('body').addClass('ipe-one-sidebar')
+              }
             }
           });
           App.Handlers.reorderItems();

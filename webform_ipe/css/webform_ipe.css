@@ -400,7 +400,24 @@ webform-component-fieldset.ui-sortable-helper,
   margin: 0 auto 4px;
   font-size: 0.9em;
 }
+.editor-on .sidebar .control-group input,
+.editor-on .sidebar .control-group select {
+  max-width: 70%;
+}
 
+.editor-on .form-layout-single-sidebar .webform-component-right-region .control-group input,
+.editor-on .form-layout-single-sidebar .webform-component-right-region.control-group select
+.editor-on .form-layout-single-sidebar .webform-component-left-region .control-group input,
+.editor-on .form-layout-single-sidebar .webform-component-left-region .control-group select {
+  max-width: 80%;
+}
+
+.editor-on .form-layout-both-sidebars .control-group input,
+.editor-on .form-layout-both-sidebars .control-group select,
+.editor-on.ipe-both-sidebars .control-group select,
+.editor-on.ipe-both-sidebars .control-group input {
+  max-width: 75% !important;
+}
 
 /* BlockUI Form styles */
 
