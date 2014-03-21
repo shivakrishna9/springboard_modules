@@ -7,7 +7,7 @@
 
 
 function form_layout_system_info_alter(&$info, $file, $type) {
-  if($info['name'] == 'Donation form layouts') {
+  if(isset($info['name']) && $info['name'] == 'Donation form layouts') {
     $result = db_query("SELECT layout_name, submit_position FROM {form_layout_node}");
     if ($result->rowCount() > 0) {
       $info['required'] = TRUE;
@@ -228,9 +228,9 @@ function form_layout_fundraiser_field_info() {
 function form_layout_fundraiser_field_info_alter(&$info) {
   $node = menu_get_object();
 
-  if(isset($node)) {
+  if(isset($node->nid)) {
     $layout = form_layout_get_node_layout($node->nid);
-    if($node->nid && empty($layout)) {
+    if(empty($layout)) {
       return;
     }
   }
@@ -248,8 +248,8 @@ function form_layout_fundraiser_field_info_alter(&$info) {
   }
 
   // Remove the session var.
-  if(isset($_SESSION['form_layouts'])) {
-    unset($_SESSION['form_layouts']);
+  if(isset($_SESSION['form_layout'])) {
+    unset($_SESSION['form_layout']);
   }
 }
 
@@ -531,7 +531,6 @@ function form_layout_form_node_form_alter(&$form, &$form_state, $form_id) {
  */
 function form_layout_get_layout_options() {
   $options = array();
-  //$options['none'] = t('None/No Change');
   $layouts = form_layout_load();
 
   foreach ($layouts as $id => $layout) {
@@ -572,11 +571,11 @@ function form_layout_get_region_options() {
 function form_layout_node_form_submit($form, &$form_state) {
   if(isset($form_state['values']['form_layout'])) {
     $layout_name = $form_state['values']['form_layout'];
-    if ($layout_name == 'none') {
-      $_SESSION['form_layout'] = $layout_name;
-      // Don't make a change.
-      return;
-    }
+    // if ($layout_name == 'none') {
+    //   $_SESSION['form_layout'] = $layout_name;
+    //   // Don't make a change.
+    //   return;
+    // }
     // variable stores node ID for retrieval by form_layouts module
     // this can go away when form layout UI is removed.
 
@@ -658,11 +657,9 @@ function form_layout_node_load($nodes, $types) {
  * Implements hook_node_update().
  */
 function form_layout_node_update($node) {
-
   if (fundraiser_is_donation_type($node->type) && !empty($node->form_layout)) {
     form_layout_save_node_layout($node->nid, $node->form_layout, $node->submit_position);
   }
-
 }
 
 /**
