@@ -383,6 +383,34 @@ function salesforce_mapping_form_alter_submit($form, &$form_state) {
  * @} salesforce_mapping_alter_form
  */
 
+/**
+ * @name salesforce_queue_hooks
+ * @{
+ */
+
+/**
+ * Implements hook_salesforce_queue_refresh_queue_item().
+ */
+function salesforce_genmap_salesforce_queue_refresh_queue_item($item) {
+  // Grab the map for this particular module/delta combination.
+  $mappings = salesforce_mapping_load_multiple(array(
+    'drupal_entity_type' => $item->module,
+    'drupal_bundle' => $item->delta,
+  ));
+
+  // If we have any mappings then this item is handled by entity interation.
+  if (!empty($mappings)) {
+    $item_entity = entity_load($item->module, array($item->drupal_id));
+    // salesforce_mapping_send_entity_to_queue doesn't always return a value
+    // so we'll assume it actually worked.
+    salesforce_mapping_send_entity_to_queue($item_entity[$item->drupal_id], $item->module, $item->operation);
+    return TRUE;
+  }
+}
+
+/**
+ * @} salesforce_queue_hooks
+ */
 
 /**
  * @name salesforce_mapping_alter_queue Sending entity mapping to Queue

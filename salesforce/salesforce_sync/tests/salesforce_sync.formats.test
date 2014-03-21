@@ -55,6 +55,7 @@ class SalesforceSyncFormatsTestCase extends SalesforceQueueTestCase {
 
     $batch = $this->queue->claimBatch();
     $item = $batch[0];
+    $this->queue->releaseBatch($item->leaseKey);
 
     // Run item through conversion process.
     $this->processor->salesforceSync->convertToSalesforceFormat($item);
@@ -72,6 +73,7 @@ class SalesforceSyncFormatsTestCase extends SalesforceQueueTestCase {
 
     $batch = $this->queue->claimBatch();
     $item = $batch[0];
+    $this->queue->releaseBatch($item->leaseKey);
 
     // Run item through conversion process.
     $this->processor->salesforceSync->convertToSalesforceFormat($item);
