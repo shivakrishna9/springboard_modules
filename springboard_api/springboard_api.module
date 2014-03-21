@@ -125,6 +125,7 @@ function springboard_api_services_resources() {
               'description'  => t('API key.'),
               'source'       => array('param' => 'api_key'),
               'optional'     => TRUE,
+              'default value' => NULL,
             ),
           ),
         ),
@@ -153,6 +154,7 @@ function springboard_api_services_resources() {
               'description'  => t('API key.'),
               'source'       => array('param' => 'api_key'),
               'optional'     => TRUE,
+              'default value' => NULL,
             ),
           ),
         ),
@@ -183,6 +185,7 @@ function springboard_api_services_resources() {
               'description'  => t('API key.'),
               'source'       => array('param' => 'api_key'),
               'optional'     => TRUE,
+              'default value' => NULL,
             ),
             array(
               'name' => 'submission',

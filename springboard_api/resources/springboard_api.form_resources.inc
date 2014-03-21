@@ -15,7 +15,7 @@
  * @param bool $op
  *   Experimental: if set, function returns rendered markup.
  */
-function springboard_api_form_resource_retrieve($nid, $op = NULL) {
+function springboard_api_form_resource_retrieve($nid, $api_key = NULL, $op = NULL) {
 
   if ($op) {
     return springboard_api_form_action_render($nid);
