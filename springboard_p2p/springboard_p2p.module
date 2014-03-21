@@ -63,3 +63,42 @@ function springboard_p2p_theme() {
     ),
   );
 }
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function springboard_p2p_form_p2p_campaign_node_form_alter(&$form, &$form_state, $form_id) {
+
+  $lang_code = $form['#node']->language;
+  $form['field_p2p_category'][$lang_code]['#ajax'] = array(
+    'callback' => 'springboard_p2p_category_ajax',
+    'wrapper' => 'p2p-category-ajax-wrapper',
+    'effect' => 'fade',
+  );
+
+  // Set ajax target div.
+  $form['#prefix'] = '<div id="p2p-category-ajax-wrapper">';
+  $form['#suffix'] = '</div>';
+
+  if (isset($form_state['input']['field_p2p_category'][$lang_code]) && is_numeric($form_state['input']['field_p2p_category'][$lang_code])) {
+    $nid = $form_state['input']['field_p2p_category'][$lang_code];
+    $category = node_load($nid);
+    $content = $category->field_p2p_content[$lang_code][0];
+
+    // This has value, format, safe_value.
+    dpm($category->field_p2p_content[$lang_code][0]);
+
+    $form['field_p2p_content'][$lang_code][0]['#value'] = $content['value'];
+    $form['field_p2p_content'][$lang_code][0]['#format'] = $content['format'];
+  }
+
+  // This has #default_value, #value, #format
+  dpm($form['field_p2p_content'][$lang_code][0]);
+}
+
+/**
+ * AJAX callback for prefilling content when a category is selected.
+ */
+function springboard_p2p_category_ajax($form, $form_state) {
+  return $form;
+}
