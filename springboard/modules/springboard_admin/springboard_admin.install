@@ -54,6 +54,18 @@ function springboard_admin_update_7001() {
 }
 
 /**
+ * Renames variable springboard_login_redirect_roles to 
+ * springboard_user_experience for coverage of more features.
+ */
+function springboard_admin_update_7002() {
+  $sb_ux_roles = variable_get('springboard_login_redirect_roles', false);
+  if($sb_ux_roles) {
+    variable_set('springboard_user_experience', $sb_ux_roles);
+    variable_del('springboard_login_redirect_roles');
+  }
+}
+
+/**
  * Helper function, creates the Springboard Admin Menu.
  */
 
