@@ -73,6 +73,7 @@ function springboard_api_basic_service_settings(&$form, $form_state) {
   $form['api_keys'] = array(
     '#type' => 'fieldset',
     '#title' => t('App Keys'),
+    '#description' => t('API keys control access to the API and allow requests to be associated with an individual application. API keys can be enabled or disabled via the checkbox to the left of the app name.'),
     '#states' => array(
       'visible' => array(
         ':input[name="springboard_api_management_service"]' => array('value' => 'basic'),
