@@ -6,7 +6,7 @@
  */
 
 /**
- * Admin settings form
+ * Admin settings form.
  */
 function sb_social_admin() {
   $form['springboard_social_addthis_profile_id'] = array(
@@ -20,7 +20,7 @@ function sb_social_admin() {
     '#title' => t('Enable debug mode'),
     '#default_value' => variable_get('springboard_social_debug_mode', 0),
   );
-  // enable social settings tab on a per-content-type basis
+  // Enable social settings tab on a per-content-type basis.
   $form['content_types'] = array(
     '#type' => 'fieldset',
     '#title' => t('Enable social sharing for the following content types'),
@@ -56,9 +56,9 @@ function sb_social_admin() {
     '#default_value' => variable_get('springboard_social_addthis_profile_id', ''),
   );
 
-  // Each plugin should implement an an admin settings callback that outputs the specific
-  // form fields required by the service. These fields are used to configure sitewide
-  // defaults for share content.
+  // Each plugin should implement an an admin settings callback that outputs
+  // the specific form fields required by the service. These fields are used to
+  // configure sitewide defaults for share content.
   foreach ($plugins as $service => $plugin) {
     $func = isset($plugin['admin_settings']) ? $plugin['admin_settings'] : FALSE;
     if (function_exists($func)) {
@@ -79,7 +79,7 @@ function sb_social_admin() {
       if (!in_array($key, $share_enabled_fields)) {
         continue;
       }
-      // special handling for campaign ID
+      // Special handling for campaign ID.
       if ($key == 'cid') {
         $campaigns = market_source_get_campaigns(FALSE);
         $select_options = array();
@@ -162,10 +162,11 @@ function _sb_social_add_path() {
 /**
  * Generate edit/delete links for path admin table.
  *
- * @param $sid
- * Settings ID
+ * @param int $sid
+ *   Settings ID
  *
- * @return bool|string
+ * @return string
+ *   Returns links to edit & delete forms for current path settings.
  */
 function _sb_social_path_actions($sid) {
   if (!$sid) {
@@ -180,9 +181,18 @@ function _sb_social_path_actions($sid) {
 }
 
 /**
+ * Submit handler for admin settings form.
+ *
  * Why are we resetting a bunch of token cache stuff here?
  */
 function sb_social_admin_settings_submit($form, $form_state) {
+  $plugins = sb_social_list_plugins();
+  foreach ($plugins as $service => $plugin) {
+    $submit_func = isset($plugin['admin_setings_submit']) ? $plugin['admin_setings_submit'] : FALSE;
+    if ($submit_func && function_exists($submit_func)) {
+      $submit_func($form, $form_state);
+    }
+  }
   cache_clear_all('*', 'cache_token', TRUE);
   drupal_static_reset('token_get_info');
   drupal_static_reset('token_get_global_token_types');
@@ -203,12 +213,13 @@ function sb_social_path_settings($form, $edit, $sid = NULL) {
   $enabled_services = sb_social_get_enabled_services();
   $settings = sb_social_settings_load($sid);
 
-  // differentiate add vs edit forms, prevents path validation from incorrectly flagging an edit form
-  // as a dupe on hook_validate.
+  // Differentiate add vs edit forms, prevents path validation from incorrectly
+  // flagging an edit form as a dupe on hook_validate.
   $edit['is_new'] = $sid === NULL ? TRUE : FALSE;
-  // since sb_social_settings_load() will load global defaults if no settings are currently available,
-  // we override the default ID for new paths. This prevents the url of the path add page from
-  // getting populated in the path field when creating new path settings.
+  // Since sb_social_settings_load() will load global defaults if no settings
+  // are currently available, we override the default ID for new paths. This
+  // prevents the url of the path add page from getting populated in the path
+  // field when creating new path settings.
   if ($edit['is_new']) {
     $settings['id'] = '';
     $form['is_new'] = array(
@@ -247,8 +258,8 @@ function sb_social_path_settings($form, $edit, $sid = NULL) {
 
   $plugins = sb_social_list_plugins();
 
-  // Each plugin should implement a settings callback function that provides the required
-  // form elements to configure share content for this service.
+  // Each plugin should implement a settings callback function that provides
+  // the required form elements to configure share content for this service.
   foreach ($plugins as $service => $plugin) {
     $func = isset($plugin['settings']) ? $plugin['settings'] : FALSE;
     if ($func && function_exists($func)) {
@@ -256,7 +267,7 @@ function sb_social_path_settings($form, $edit, $sid = NULL) {
     }
   }
 
-  // Market Source settings
+  // Market Source settings.
   if (module_exists('market_source')) {
     _sb_social_settings_market_source($form, $settings);
   }
@@ -272,16 +283,13 @@ function sb_social_path_settings($form, $edit, $sid = NULL) {
 
 /**
  * Validation callback for the path settings form.
- *
- * @param $form
- * @param $form_state
  */
 function sb_social_path_settings_validate(&$form, $form_state) {
 
   if ($form_state['is_new']) {
     $path_is_alias = FALSE;
     $path = $form_state['values']['path'];
-    // does path have an alias?
+    // Does path have an alias?
     $alias = drupal_get_path_alias($path);
     if (!$alias) {
       // No alias? Check to see if path is an alias.
@@ -290,7 +298,7 @@ function sb_social_path_settings_validate(&$form, $form_state) {
         $path_is_alias = TRUE;
       }
     }
-    // if path has an alias or is an alias, check both values for dupes.
+    // If path has an alias or is an alias, check both values for dupes.
     $id = $alias ? array($path, $alias) : $path;
 
     if ($sid = _sb_social_sid_by_id($id)) {
@@ -312,8 +320,10 @@ function sb_social_path_settings_validate(&$form, $form_state) {
 
 
 /**
- * Path settings submit callback, invokes social_networks plugin "process" callbacks to build data array and saves data
- * to db.
+ * Path settings submit callback.
+ *
+ * Invokes social_networks plugin "process" callbacks to build data array and
+ * saves data to db.
  */
 function sb_social_path_settings_submit($form, &$form_state) {
   $plugins = sb_social_list_plugins();
@@ -322,7 +332,8 @@ function sb_social_path_settings_submit($form, &$form_state) {
   $enabled_services = sb_social_get_enabled_services();
   $keys = array_keys($plugins);
 
-  // TODO: replace this code block and others like it with a helper function that executes the desired service callback(s).
+  // TODO: replace this code block and others like it with a helper function
+  // that executes the desired service callback(s).
   if (is_array($enabled_services)) {
     foreach ($enabled_services as $service) {
       if (in_array($service, $keys)) {
@@ -339,7 +350,8 @@ function sb_social_path_settings_submit($form, &$form_state) {
         }
       }
     }
-    // check for an existing path id, if none exists save path and use ID supplied.
+    // Check for an existing path id, if none exists save path and use ID
+    // supplied.
     $id  = sb_social_get_path_id($form_state['values']['path']);
     if (!$id) {
       $id = sb_social_save_path($form_state['values']['path']);
@@ -383,9 +395,6 @@ function sb_social_path_settings_delete_form($form, $form_state, $sid) {
 
 /**
  * Submit handler for path settings delete form.
- *
- * @param $form
- * @param $form_state
  */
 function sb_social_path_settings_delete_submit($form, &$form_state) {
   if (!empty($form_state['values']['sid'])) {
@@ -402,7 +411,7 @@ function _sb_social_path_delete_cancel() {
 }
 
 /**
- * Node level settings
+ * Node level settings.
  */
 function sb_social_node_settings($form, $edit, $node) {
 
@@ -410,7 +419,7 @@ function sb_social_node_settings($form, $edit, $node) {
   $sid = _sb_social_sid_by_id($node->nid);
   $settings = sb_social_settings_load($sid);
 
-  // setup for token replacement
+  // Setup for token replacement.
   $token_set = array('user', 'node');
   if (fundraiser_is_donation_type($node->type)) {
     $token_set[] = 'donation';
@@ -442,7 +451,7 @@ function sb_social_node_settings($form, $edit, $node) {
     }
   }
 
-  // Market Source settings
+  // Market Source settings.
   if (module_exists('market_source')) {
     _sb_social_settings_market_source($form, $settings);
   }
@@ -458,8 +467,8 @@ function sb_social_node_settings($form, $edit, $node) {
 /**
  * Node settings form submit handler.
  *
- * Invokes "process" callback for each enabled plugin, actual data handling happens
- * in these callbacks.
+ * Invokes "process" callback for each enabled plugin, actual data handling
+ * happens in these callbacks.
  */
 function sb_social_settings_submit($form, $form_state) {
   $plugins = sb_social_list_plugins();
@@ -483,7 +492,7 @@ function sb_social_settings_submit($form, $form_state) {
         }
       }
     }
-    // sid is handled in the save function.
+    // Sid is handled in the save function.
     $record = array(
       'id' => $form_state['values']['id'],
       'type' => $form_state['values']['type'],
@@ -497,8 +506,11 @@ function sb_social_settings_submit($form, $form_state) {
 /**
  * Generate market source fields for share settings forms.
  *
- * @param $form
- * @param $settings
+ * @param array $form
+ *   FAPI array.
+ *
+ * @param array $settings
+ *   Social settings for the current context.
  */
 function _sb_social_settings_market_source(&$form, $settings) {
   $form['market_source'] = array(
@@ -510,7 +522,7 @@ function _sb_social_settings_market_source(&$form, $settings) {
   $share_enabled_fields = _sb_social_list_share_enabled_market_source_fields();
 
   foreach ($fields as $key => $field) {
-    // skip market source fields that haven't been share enabled.
+    // Skip market source fields that haven't been share enabled.
     if (!in_array($key, $share_enabled_fields)) {
       continue;
     }

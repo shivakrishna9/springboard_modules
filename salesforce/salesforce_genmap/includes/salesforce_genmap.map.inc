@@ -264,16 +264,21 @@ function salesforce_genmap_map_form($form, &$form_state, $node, $module) {
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => 'Save',
+    '#weight' => 1,
+
   );
   $map = salesforce_genmap_load_map($node->nid, $module);
   if (!empty($map)) {
     $form['cancel'] = array(
       '#type' => 'submit',
       '#value' => 'Cancel',
+      '#weight' => 2,
+
     );
     $form['unmap'] = array(
       '#type' => 'submit',
       '#value' => 'Unmap',
+      '#weight' => 3,
     );
   }
 

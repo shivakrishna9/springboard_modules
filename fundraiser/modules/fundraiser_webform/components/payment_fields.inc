@@ -68,10 +68,10 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
         // Show/hide this fieldset dependent on the payment methods field
         '#states' => array(
           'visible' => array(
-            '.fundraiser-payment-methods input[type="radio"]' => array('value' => $payment_method),
+            'input[type="radio"].fundraiser-payment-methods' => array('value' => $payment_method),
           ),
           'required' => array(
-            '.fundraiser-payment-methods input[type="radio"]' => array('value' => $payment_method),
+            'input[type="radio"].fundraiser-payment-methods' => array('value' => $payment_method),
           ),
         ),
       );

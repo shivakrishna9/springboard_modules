@@ -67,19 +67,22 @@ function market_source_admin_settings_form($form, &$form_state) {
   }
   //set up fields to loop through
   $default_fields_list = market_source_list_default_fields();
-  //shortcut
+  // Shortcut.
   $default_fields_values = &$form_state['values']['market_source_default_fields']['default_fields_wrapper'];
 
   foreach ($default_fields_list as $key => $field_name) {
-    $persistence_field = ($key == 'referrer' || $key == 'initial_referrer') ?
-      // hidden field to force persistence for referrer fields
-      array(
+    if ($key == 'referrer' || $key == 'initial_referrer') {
+      // Hidden field to force persistence for referrer fields.
+      $persistence_field = array(
         '#type' => 'hidden',
         '#value' => 'direct',
-        '#title' => t('Persistent'),  // theme_market_source_admin_global_fields_table() needs this
-      ) :
-      // checkbox for all others
-      array(
+        // theme_market_source_admin_global_fields_table() needs this.
+        '#title' => t('Persistent'),
+      );
+    }
+    else {
+      // Checkbox for all others.
+      $persistence_field = array(
         '#type' => 'radios',
         '#title' => t('Persistence'),
         '#description' => t("Keep the first-seen page's query-string value?"),
@@ -89,8 +92,9 @@ function market_source_admin_settings_form($form, &$form_state) {
           'off' => t('Off (last-seen value)'),
           'direct' => t('Direct (value from the form page only)'),
         ),
-      )
-    ;
+      );
+    }
+
     $form['market_source_default_fields']['default_fields_wrapper'][$key] = array(
       'persistence' => $persistence_field,
       'name' => array(
