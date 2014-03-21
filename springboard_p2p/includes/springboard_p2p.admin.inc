@@ -140,13 +140,13 @@ function springboard_p2p_admin_settings() {
     }
   }
 
-  $form['registration_fields'] = array(
+  $form['registration_fields_fieldset'] = array(
     '#type' => 'fieldset',
     '#title' => 'Registration fields',
     '#weight' => -30,
   );
 
-  $form['registration_fields']['registration_field_items'] = array(
+  $form['registration_fields_fieldset']['registration_fields'] = array(
     '#tree' => TRUE,
   );
 
@@ -178,7 +178,7 @@ function springboard_p2p_admin_settings() {
 
     $default_weight = isset($defaults[$key]['weight']) ? $defaults[$key]['weight'] : 0;
 
-    $form['registration_fields']['registration_field_items'][$key] = array(
+    $form['registration_fields_fieldset']['registration_fields'][$key] = array(
       'name' => array(
         '#markup' => check_plain($field['label']),
       ),
@@ -234,7 +234,7 @@ function springboard_p2p_admin_settings_submit($form, &$form_state) {
     'base_path',
     'fundraiser_items',
     'webform_user_items',
-    'registration_field_items',
+    'registration_fields',
   );
 
   foreach ($keys as $key) {
@@ -255,7 +255,7 @@ function theme_springboard_p2p_admin_settings($variables) {
   $output .= drupal_render($form['basic']);
 
   // The content types tables.
-  $header = array(t('Type'), t('Default form'));
+  $header = array(t('Enabled'), t('Default form'));
   foreach (array('fundraiser_items', 'webform_user_items') as $type) {
     $rows = springboard_p2p_fields_form_types_table_rows($form, $type);
     if (count($rows)) {
@@ -271,7 +271,7 @@ function theme_springboard_p2p_admin_settings($variables) {
   $table_id = 'registration-fields-table';
   $rows = springboard_p2p_registration_fields_table_rows($form, $weight_class);
   $header = array(t('Name'), t('Show on registration form'), t('Weight'));
-  $form['registration_fields']['registration_field_items']['#markup'] = theme('table', array(
+  $form['registration_fields_fieldset']['registration_fields']['#markup'] = theme('table', array(
       'header' => $header,
       'rows' => $rows,
       'attributes' => array('id' => $table_id),
@@ -298,13 +298,13 @@ function theme_springboard_p2p_admin_settings($variables) {
  */
 function springboard_p2p_registration_fields_table_rows(&$form, $weight_class) {
   $rows = array();
-  foreach (element_children($form['registration_fields']['registration_field_items']) as $id) {
-    $form['registration_fields']['registration_field_items'][$id]['weight']['#attributes']['class'] = array($weight_class);
+  foreach (element_children($form['registration_fields_fieldset']['registration_fields']) as $id) {
+    $form['registration_fields_fieldset']['registration_fields'][$id]['weight']['#attributes']['class'] = array($weight_class);
     $rows[] = array(
       'data' => array(
-        drupal_render($form['registration_fields']['registration_field_items'][$id]['name']),
-        drupal_render($form['registration_fields']['registration_field_items'][$id]['enabled']),
-        drupal_render($form['registration_fields']['registration_field_items'][$id]['weight']),
+        drupal_render($form['registration_fields_fieldset']['registration_fields'][$id]['name']),
+        drupal_render($form['registration_fields_fieldset']['registration_fields'][$id]['enabled']),
+        drupal_render($form['registration_fields_fieldset']['registration_fields'][$id]['weight']),
       ),
       'class' => array('draggable'),
     );
