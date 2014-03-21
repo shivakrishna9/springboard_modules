@@ -26,7 +26,8 @@ function form_layout_list() {
       '#header' => array('Region', 'Content'),
       '#rows' => form_layout_table_rows($layout),
     );
-    if($id != 'one_column') {
+    $result = db_query("SELECT layout_name FROM {form_layout_node} WHERE layout_name = :name", array(':name' => $id));
+    if($id != 'one_column' && !$result->rowCount()) {
       $output[$id]['links'] = array(
         '#theme' => 'links',
         '#links' => array(
@@ -39,6 +40,13 @@ function form_layout_list() {
             'href' => form_layout_menu_base_path() . '/' . $id . '/delete',
           ),
         ),
+      );
+    }
+    else {
+      $output[$id]['in_use'] = array(
+        '#prefix' => '<div><p>',
+        '#markup' => t('This layout is in use and can not be edited'),
+        '#suffix' => '</p></div>',
       );
     }
   }
