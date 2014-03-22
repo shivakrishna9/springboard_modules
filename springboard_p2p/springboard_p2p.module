@@ -88,8 +88,9 @@ function springboard_p2p_form_p2p_campaign_node_form_alter(&$form, &$form_state,
     // This has value, format, safe_value.
 //    dpm($category->field_p2p_content[$lang_code][0]);
 
-    $form['field_p2p_content'][$lang_code][0]['#after_build'][] = 'springboard_p2p_filter_after_build';
-    $form['field_p2p_content'][$lang_code][0]['#value'] = $content['value'];
+    unset($form_state['input']['field_p2p_content'][$lang_code][0]['value']);
+    $form['field_p2p_content'][$lang_code][0]['#default_value'] = $content['value'];
+    unset($form_state['input']['field_p2p_content'][$lang_code][0]['format']);
     $form['field_p2p_content'][$lang_code][0]['#format'] = $content['format'];
   }
 
@@ -102,13 +103,4 @@ function springboard_p2p_form_p2p_campaign_node_form_alter(&$form, &$form_state,
  */
 function springboard_p2p_category_ajax($form, $form_state) {
   return $form['field_p2p_content'];
-}
-
-function springboard_p2p_filter_after_build($element) {
-  if ($element['#type'] == 'text_format') {
-    $element['format']['format']['#value'] = $element['format']['format']['#default_value'];
-    dpm($element['format']['format']);
-  }
-
-  return $element;
 }
