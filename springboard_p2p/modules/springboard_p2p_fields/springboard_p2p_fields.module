@@ -270,16 +270,12 @@ function springboard_p2p_fields_field_widget_form(&$form, &$form_state, $field, 
           $widget['form_types'][$form_type]['#prefix'] = $title;
 
           foreach ($content_types[$form_type] as $key => $name) {
+            if (!isset($global_defaults[$key]) || $global_defaults[$key]['enabled'] == 0) {
+              continue;
+            }
 
             if (is_null($goal_type_default)) {
               $goal_type_default = isset($defaults[$key]['goal_type']) ? $defaults[$key]['goal_type'] : '';
-            }
-
-            if (!isset($global_defaults[$key])) {
-              $global_defaults[$key] = array(
-                'enabled' => 0,
-                'nid' => '',
-              );
             }
 
             $node_options = springboard_p2p_fields_get_node_options_by_types($key);
@@ -289,7 +285,7 @@ function springboard_p2p_fields_field_widget_form(&$form, &$form_state, $field, 
               'enabled' => array(
                 '#type' => 'checkbox',
                 '#title' => $name,
-                '#default_value' => isset($defaults[$key]['enabled']) ? $defaults[$key]['enabled'] : $global_defaults[$key]['enabled'],
+                '#default_value' => isset($defaults[$key]['enabled']) ? $defaults[$key]['enabled'] : 0,
               ),
               'nid' => array(
                 '#type' => 'select',
