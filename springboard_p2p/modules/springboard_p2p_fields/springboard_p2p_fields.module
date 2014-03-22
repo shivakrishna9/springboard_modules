@@ -267,12 +267,13 @@ function springboard_p2p_fields_field_widget_form(&$form, &$form_state, $field, 
 
         if (count($content_types[$form_type])) {
           $global_defaults = variable_get('springboard_p2p_' . $form_type . '_items', array());
-          $widget['form_types'][$form_type]['#prefix'] = $title;
-
+          $display_title = FALSE;
           foreach ($content_types[$form_type] as $key => $name) {
             if (!isset($global_defaults[$key]) || $global_defaults[$key]['enabled'] == 0) {
               continue;
             }
+
+            $display_title = TRUE;
 
             if (is_null($goal_type_default)) {
               $goal_type_default = isset($defaults[$key]['goal_type']) ? $defaults[$key]['goal_type'] : '';
@@ -319,6 +320,10 @@ function springboard_p2p_fields_field_widget_form(&$form, &$form_state, $field, 
             }
 
           }
+          if ($display_title) {
+            $widget['form_types'][$form_type]['#prefix'] = $title;
+          }
+
         }
       }
       break;
