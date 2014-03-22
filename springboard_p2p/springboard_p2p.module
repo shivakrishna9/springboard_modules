@@ -84,19 +84,33 @@ function springboard_p2p_form_p2p_campaign_node_form_alter(&$form, &$form_state,
   if (isset($form_state['input']['field_p2p_category'][$lang_code]) && is_numeric($form_state['input']['field_p2p_category'][$lang_code])) {
     $nid = $form_state['input']['field_p2p_category'][$lang_code];
     $category = node_load($nid);
-//    dpm($category);
-    $content = $category->field_p2p_content[$lang_code][0];
-//    dpm($form_state['input']['field_p2p_form_header'][$lang_code][0]);
 
-    $form_header = $category->field_p2p_form_header[$lang_code][0];
-    unset($form_state['input']['field_p2p_form_header'][$lang_code][0]);
-    $form['field_p2p_form_header'][$lang_code][0]['#default_value']['fid'] = $form_header['fid'];
+    if (isset($category->field_p2p_content[$lang_code][0])) {
+      $content = $category->field_p2p_content[$lang_code][0];
+      unset($form_state['input']['field_p2p_content'][$lang_code][0]['value']);
+      $form['field_p2p_content'][$lang_code][0]['#default_value'] = $content['value'];
+      unset($form_state['input']['field_p2p_content'][$lang_code][0]['format']);
+      $form['field_p2p_content'][$lang_code][0]['#format'] = $content['format'];
+    }
+
+    if (isset($category->field_p2p_form_header[$lang_code][0])) {
+      $form_header = $category->field_p2p_form_header[$lang_code][0];
+      unset($form_state['input']['field_p2p_form_header'][$lang_code][0]);
+      $form['field_p2p_form_header'][$lang_code][0]['#default_value']['fid'] = $form_header['fid'];
+    }
+
+    if (isset($category->field_p2p_video_embed[$lang_code][0])) {
+      $video_embed = $category->field_p2p_video_embed[$lang_code][0];
+      unset($form_state['input']['field_p2p_video_embed'][$lang_code][0]);
+      $form['field_p2p_video_embed'][$lang_code][0]['video_url']['#default_value'] = $video_embed['video_url'];
+    }
 
     // Personal campaign default images.
     // Has multiple values.
-//    $images = $category->field_p2p_images[$lang_code];
+    // @todo This part.
+    if (isset($category->field_p2p_images[$lang_code])) {
+      $images = $category->field_p2p_images[$lang_code];
 //    dpm($images);
-//
 //    foreach ($form_state['input']['field_p2p_images'][$lang_code] as $delta => $file) {
 //      unset($form_state['input']['field_p2p_images'][$lang_code][$delta]);
 //    }
@@ -107,25 +121,9 @@ function springboard_p2p_form_p2p_campaign_node_form_alter(&$form, &$form_state,
 //        'fid' => $file['fid'],
 //      );
 //    }
-//    dpm($form['field_p2p_images'][$lang_code]);
-
-//    dpm($images);
-
-    $video_embed = $category->field_p2p_video_embed[$lang_code][0];
-    unset($form_state['input']['field_p2p_video_embed'][$lang_code][0]);
-    $form['field_p2p_video_embed'][$lang_code][0]['video_url']['#default_value'] = $video_embed['video_url'];
-
-    // This has value, format, safe_value.
-//    dpm($category->field_p2p_content[$lang_code][0]);
-
-    unset($form_state['input']['field_p2p_content'][$lang_code][0]['value']);
-    $form['field_p2p_content'][$lang_code][0]['#default_value'] = $content['value'];
-    unset($form_state['input']['field_p2p_content'][$lang_code][0]['format']);
-    $form['field_p2p_content'][$lang_code][0]['#format'] = $content['format'];
+    }
   }
 
-  // This has #default_value, #value, #format
-//  dpm($form['field_p2p_content'][$lang_code][0]);
 }
 
 /**
