@@ -204,7 +204,7 @@
             'extra.container': {type: 'Select', title: 'Container', options: {}},
             mandatory: { type: 'Checkbox', title:'Mandatory'},
             'extra.description': {type: 'Text', title: 'Description Text'},
-            'extra.items': { type: 'List', title: "Options", fieldClass:"option-items", validate:['required']},
+            'extra.items': { type: 'List', title: "Options", fieldClass:"option-items", validate:['required'], help:'Options must be entered in the format: key|value '},
             'extra.aslist': { type: 'Checkbox', title:'Select List', help:'Check this option if you want the select component to be displayed as a select list box instead of radio buttons or checkboxes.'},
             'extra.multiple': { type: 'Checkbox', title:'Multiple', help:'Check this option if the user should be allowed to choose multiple values.'},
             'extra.optrand': { type: 'Checkbox', title:'Randomize', help:'Randomizes the order of the options when they are displayed in the form.'},
