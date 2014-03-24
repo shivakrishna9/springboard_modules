@@ -1396,7 +1396,9 @@
                }
 
                 //if we've created new fields, add the classes for sorting
-                App.Handlers.addSortClasses();
+                if($('editor-on.length') > 0) {
+                  App.Handlers.addSortClasses();
+                }
                 console.log("FORM COMMIT")
 
                 //show the "save all changes" button
@@ -1863,8 +1865,67 @@
           $('.fake-wrapper').not(':has("*")').remove();
           App.Handlers.reorderItems();
           App.Handlers.reorderFieldsets();
-
         }  
+
+        /** popup previews **/
+
+        $('body').wrapInner('<div class = "zoot"></div>');
+        $('.landscape-preview').magnificPopup({
+          items: {
+              src: '.zoot',
+              type: 'inline',
+          },
+          mainClass: 'tabletland-preview',
+          callbacks: {
+            close: function() {
+              $('.zoot').removeClass('mfp-hide');
+            },
+          },
+                  });
+
+        $('.portrait-preview').magnificPopup({
+          items: {
+              src: '.zoot',
+              type: 'inline',
+          },
+          mainClass: 'portrait-preview',
+          callbacks: {
+            close: function() {
+              $('.zoot').removeClass('mfp-hide');
+            },
+          },
+
+        });
+        $('.desktop-preview').magnificPopup({
+          items: {
+              src: '.zoot',
+              type: 'inline',
+          },
+          mainClass: 'desktop-preview',
+          callbacks: {
+            close: function() {
+              $('.zoot').removeClass('mfp-hide');
+            },
+          },
+
+        });
+        $('.phone-preview').magnificPopup({
+          items: {
+              src: '.zoot',
+              type: 'inline',
+          },
+          mainClass: 'phone-preview',
+          callbacks: {
+            close: function() {
+              $('.zoot').removeClass('mfp-hide');
+            },
+          },
+
+        });
+        $('.ipe-popup').on('mousedown', function(e){
+          $.magnificPopup.close()
+          $(this).magnificPopup('open')
+        });
       }); // End window.ready
     }
   }

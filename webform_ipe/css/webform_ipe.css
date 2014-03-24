@@ -671,3 +671,120 @@ legend span.edit {
 div.error {
   background-image: none;
 }
+
+.mfp-hide {
+  visibility: visible;
+}
+
+.mfp-container  {
+  position: relative;
+}
+
+
+/* tablet portrait */
+
+.tabletland-preview .mfp-content {
+  width: 989px !important;
+  height: 603px !important;
+  margin: 0px auto;
+  background-image: url("../img/sb-prvw-portrait-tablet-800px-small.png");
+  background-position:top center;
+  background-repeat: no-repeat;
+}
+
+.tabletland-preview .mfp-content .zoot {
+  padding-right: 20px;
+  padding-left: 20px;
+  width: 728px !important;
+  height: 481px !important;
+  max-width: 768px !important;
+  margin: 0px;
+  position: relative;
+  left: 111px;
+  top: 64px;
+  overflow: scroll;
+  background-color: #FFF;
+}
+
+/* desktop  */
+
+
+.desktop-preview .mfp-content {
+ width: 980px !important;
+ height: 603px !important;
+ max-width: 980px !important;
+}
+
+
+.mfp-wrap.desktop-preview .mfp-content .zoot {
+  padding-right: 20px;
+  padding-left: 20px;
+  width: 940px;
+  height: 603px;
+  position: relative;
+  left: 0px;
+  top: 40px;
+  overflow: scroll;
+  background-color: #FFF;
+
+}
+
+/* phones to tablets */
+
+.portrait-preview .mfp-content .zoot {
+  padding-right: 20px;
+  padding-left: 20px;
+  width: 442px !important;
+  height: 770px !important;
+  max-width: 442px !important;
+  position: relative;
+  left: 62px;
+  top: 110px;
+  overflow: scroll;
+  background-color: #FFF;
+}
+
+
+.portrait-preview .mfp-content {
+  width: 603px !important;
+  height: 989px !important;
+  background-image: url("../img/sb-prvw-tablet-800px-small.png");
+  background-position:center center;
+  background-repeat: no-repeat;
+}
+
+/* phone */
+
+.phone-preview .mfp-content .zoot {
+  padding-right: 20px;
+  padding-left: 20px;
+  width: 310px !important;
+  height: 585px !important;
+  max-width: 310px !important;
+  width: 350px;
+  height: 585px;
+  position: relative;
+  left: 30px;
+  top: 103px;
+  overflow: scroll;
+  background-color: #FFF;
+}
+
+.phone-preview .mfp-content {
+  width: 414px !important;
+  height: 800px !important;
+  background-image: url("../img/sb-prvw-mobile-480px-small.png");
+  background-position:center center;
+  background-repeat: no-repeat;
+
+}
+
+.mfp-content .container {
+  width: auto;
+}
+
+.mfp-content ul.tabs {
+   display: none;
+ }
+
+
