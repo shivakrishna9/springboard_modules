@@ -909,7 +909,7 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
       watchdog('commerce_litle', 'Token @litleToken registered and saved to user @uid.', array('@litleToken' => $litle_token, '@uid' => $order->uid));
     }
     else {
-      watchdog('commerce_litle', 'Unable to obtain a token for user @uid during order @oid.', array('@uid' => $order->uid, '@oid' => $order->id));
+      watchdog('commerce_litle', 'Unable to obtain a token for user @uid during order @oid.', array('@uid' => $order->uid, '@oid' => $order->order_id));
     }
   }
 }
