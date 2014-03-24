@@ -804,7 +804,7 @@
             });
 
             //is this a "form layout" enabled form?
-            var has_form_layout =  $('div.fieldset.form-layouts.webform-ipe-container').length;
+            var has_form_layout =  $('div.fieldset.form-layouts').length;
             if(has_form_layout == 0) {
               $('[name="extra_container"]').append('<option value ="0">No Container</option>');
             }
@@ -1673,6 +1673,14 @@
           App.Handlers.reorderItems();
           App.Handlers.reorderFieldsets();
         });
+        
+        
+        //This class needs to be added on page load, not in functions bwlow  
+        $('.webform-component-fieldset, div.fieldset.form-layouts, div.fieldset.sidebar').not('[id$="payment-fields"]').addClass('webform-ipe-container');
+        // var has_form_layout =  $('div.fieldset.form-layouts.webform-ipe-container').length;
+        // if(has_form_layout == 0) {
+        //   $('.webform-client-form').wrap('<div class = "fieldset form-layouts webform-ipe-container" data-cid = "0"></div>');
+        // }
 
         /*
          * RE-ORDER ITEMS AND FIELDSETS
@@ -1836,11 +1844,7 @@
         }
 
         App.Handlers.addSortClasses = function() {
-          // var has_form_layout =  $('div.fieldset.form-layouts.webform-ipe-container').length;
-          // if(has_form_layout == 0) {
-          //   $('.webform-client-form').wrap('<div class = "fieldset form-layouts webform-ipe-container" data-cid = "0"></div>');
-          // }
-          $('.webform-component-fieldset, div.fieldset.form-layouts, div.fieldset.sidebar').not('[id$="payment-fields"]').addClass('webform-ipe-container');
+
           $('.webform-component-fieldset, div.fieldset.form-layouts, div.fieldset.sidebar, body').addClass('editor-on');
           $('.webform-component-fieldset  div.control-group, div.fieldset div.control-group').not('.fundraiser-payment-fields div.control-group').addClass('sortable');
           $('#block-system-main div.form-layouts, div.fieldset.sidebar').addClass('ipe-outer');
@@ -1922,6 +1926,7 @@
           },
 
         });
+
         $('.ipe-popup').on('mousedown', function(e){
           $.magnificPopup.close()
           $(this).magnificPopup('open')
