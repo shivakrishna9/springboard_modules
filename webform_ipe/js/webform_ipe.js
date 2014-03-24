@@ -544,7 +544,6 @@
          *  and now everywhere that model data is displayed in the UI, it is always immediately up to date.
          */
 
-
         /*
          * View for a single Component.
          * Handles the creation and update of individual components,
@@ -563,6 +562,7 @@
           },
 
           className: function(){
+
             var type = this.model.get('type');
             var form_key = this.model.get('form_key');
             if(type =='fieldset' || type == 'payment_fields' || type == 'payment_method') {
@@ -806,7 +806,7 @@
 
             //is this a "form layout" enabled form?
             var has_form_layout =  $('div.fieldset.form-layouts').length;
-            if(has_form_layout == 0) {
+            if(has_form_layout === 1) {
               $('[name="extra_container"]').append('<option value ="0">No Container</option>');
             }
 
@@ -1104,7 +1104,6 @@
           // }
         });
 
-
         /*
          * DEFINE A VIEW FOR ALL COMPONENTS,
          * This is called at the end of the "setup" function below.
@@ -1131,7 +1130,7 @@
             return this;
           },
           addComponent: function(component){
-          //  console.log('ALLCOMPONENTS_ADD');
+            console.log('ALLCOMPONENTS_ADD');
             var cid = component.get('cid');
             if (cid > 0) { //existing webform components
               if (!$('[data-cid="'+cid+'"]')[0]) return;
@@ -1536,6 +1535,7 @@
               var newModel = new App.Models.Component(item);
               break;
           }
+          console.log('')
           window.componentCollection.add(newModel);
         });
         /*
@@ -1678,10 +1678,10 @@
 
         //This class needs to be added on page load, not in functions bwlow  
         $('.webform-component-fieldset, div.fieldset.form-layouts, div.fieldset.sidebar').not('[id$="payment-fields"]').addClass('webform-ipe-container');
-        // var has_form_layout =  $('div.fieldset.form-layouts.webform-ipe-container').length;
-        // if(has_form_layout == 0) {
-        //   $('.webform-client-form').wrap('<div class = "fieldset form-layouts webform-ipe-container" data-cid = "0"></div>');
-        // }
+        var has_form_layout =  $('div.fieldset.form-layouts.webform-ipe-container').length;
+        if(has_form_layout == 0) {
+          $('.webform-client-form').wrap('<div class = "fieldset form-layouts webform-ipe-container" data-cid = "0"></div>');
+        }
 
         /*
          * RE-ORDER ITEMS AND FIELDSETS

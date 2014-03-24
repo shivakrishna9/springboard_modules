@@ -70,10 +70,11 @@ function webform_ipe_preprocess_node(&$vars) {
   // Make sure that editing is activated for this type and user.
   $is_active = in_array($vars['type'], variable_get('webform_ipe_node_types', array()));
   $nid = isset($vars['webform']['nid']) ? $vars['webform']['nid'] : NULL;
-  if(isset($nid)) {
-    $layout = form_layout_get_node_layout($nid);
-  }  
-  if ($is_active && user_access('use webform IPE') && !empty($layout)) {
+  // if(isset($nid)) {
+  //   $layout = form_layout_get_node_layout($nid);
+  // }  
+  //if ($is_active && user_access('use webform IPE') && !empty($layout)) {
+  if ($is_active && user_access('use webform IPE')) {
 
     $path = drupal_get_path('module', 'webform_ipe');
 
@@ -348,12 +349,12 @@ function webform_ipe_form_alter(&$form, &$form_state, $form_id) {
   $is_active = in_array($type, $types);
   if ($is_active && strpos($form_id, 'webform_client_form_') !== FALSE && user_access('use webform IPE')) {
     if(isset($form['#node']->nid)) {
-      $layout = form_layout_get_node_layout($form['#node']->nid);
-      if(!empty($layout)) {
+      //$layout = form_layout_get_node_layout($form['#node']->nid);
+      //if(!empty($layout)) {
         $path = drupal_get_path('module', 'webform_ipe');
         $templates = file_get_contents($path . '/js/templates.html');
         $form['webform_ipe_templates']['#markup'] = $templates;
-      }
+      //}
     }  
   }
 }
