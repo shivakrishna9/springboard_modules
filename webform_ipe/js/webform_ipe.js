@@ -390,6 +390,7 @@
           defaults: {
             cid: '',
             extra: {
+              format: 'full_html',
               attributes: {
                 class: '',
               }
@@ -1674,7 +1675,7 @@
           App.Handlers.reorderFieldsets();
         });
         
-        
+
         //This class needs to be added on page load, not in functions bwlow  
         $('.webform-component-fieldset, div.fieldset.form-layouts, div.fieldset.sidebar').not('[id$="payment-fields"]').addClass('webform-ipe-container');
         // var has_form_layout =  $('div.fieldset.form-layouts.webform-ipe-container').length;
