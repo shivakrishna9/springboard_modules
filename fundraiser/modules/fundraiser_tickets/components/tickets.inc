@@ -50,7 +50,8 @@ function _webform_render_tickets($component, $value = NULL, $filter = TRUE) {
     '#title_display' => 'none',
     '#webform_component' => $component,
     '#theme' => 'fundraiser_tickets_webform_table',
-    '#attached' => array('js' => array(drupal_get_path('module', 'fundraiser_tickets') . '/js/fundraiser_tickets.js'))
+    '#attached' => array('js' => array(drupal_get_path('module', 'fundraiser_tickets') . '/js/fundraiser_tickets.js')),
+    '#element_validate' => array('_fundraiser_tickets_validate_webform_field'),
   );
 
   $node = isset($component['nid']) ? node_load($component['nid']) : NULL;
@@ -113,6 +114,43 @@ function webform_tickets_prerender($element) {
   $element['#attributes']['id'] = $id;
   drupal_add_js(array('fundraiserTickets' => array('table' => array('id' => $id))), 'setting');
   return $element;
+}
+
+/**
+ * Validate the ticket fields to ensure at least one ticket type is selected
+ */
+function _fundraiser_tickets_validate_webform_field($element, &$form_state) {
+  $ticket_values = drupal_array_get_nested_value($form_state['values'], $element['#parents']);
+
+  // If the additional amount is set pull that from the ticket values and validate
+  if (!empty($ticket_values['fundraiser-tickets-extra-donation'])) {
+    $additional_amount = $ticket_values['fundraiser-tickets-extra-donation'];
+    if (!preg_match('/^\d*(\.\d*)?$/', $additional_amount)) {
+      form_set_error('fundraiser-tickets-extra-donation', t('Donation amount must be in a valid number format. No commas and only one decimal point.'));
+    }
+    unset($ticket_values['fundraiser-tickets-extra-donation']);
+  }
+
+  // Grab the selected values and verify we have at least one
+  $selected = array_filter($ticket_values);
+  if (empty($selected)) {
+    form_error($element, 'Please select at least one ticket type.');
+  }
+
+  // Verify we still have enough tickets to fulfill the order
+  foreach ($selected as $key => $quantity) {
+    $product_id = _fundraiser_tickets_get_product_id_from_form_element_name($key);
+
+    if ($product_id && $quantity > 0) {
+      $product_wrapper = entity_metadata_wrapper('commerce_product', commerce_product_load($product_id));
+
+      // Compute the available tickets
+      $available_tickets = $product_wrapper->fr_tickets_quantity->value() - $product_wrapper->fr_tickets_quantity_sold->value();
+      if ($quantity > $available_tickets) {
+        form_error($element, t('Your order could not be completed because only @quantity @type tickets remain.', array('@quantity' => $available_tickets, '@type' => $product_wrapper->title->value())));
+      }
+    }
+  }
 }
 
 /**
