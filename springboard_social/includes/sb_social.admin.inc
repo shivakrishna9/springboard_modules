@@ -466,16 +466,16 @@ function sb_social_node_settings($form, $edit, $node) {
     '#title' => t('Block Title and Description'),
     '#collapsible' => TRUE
   );
-  $form['block_info']['title'] = array(
+  $form['block_info']['block_title'] = array(
     '#type' => 'textfield',
     '#title' => t('Block Title'),
-    '#default_value' => array_key_exists('title', $settings['data']) ? $settings['data']['title'] : variable_get('springboard_social_default_block_title', ''),
+    '#default_value' => array_key_exists('block_title', $settings['data']) ? $settings['data']['block_title'] : variable_get('springboard_social_default_block_title', ''),
   );
 
-  $form['block_info']['description'] = array(
+  $form['block_info']['block_description'] = array(
     '#type' => 'textarea',
     '#title' => t('Block Description'),
-    '#default_value' => array_key_exists('description', $settings['data']) ? $settings['data']['description'] : variable_get('springboard_social_default_block_description', ''),
+    '#default_value' => array_key_exists('block_description', $settings['data']) ? $settings['data']['block_description'] : variable_get('springboard_social_default_block_description', ''),
   );
 
   $plugins = sb_social_list_plugins();
@@ -528,8 +528,8 @@ function sb_social_settings_submit($form, $form_state) {
         }
       }
     }
-    $data['title'] = $form_state['values']['title'];
-    $data['description'] = $form_state['values']['description'];
+    $data['block_title'] = $form_state['values']['block_title'];
+    $data['block_description'] = $form_state['values']['block_description'];
     // Sid is handled in the save function.
     $record = array(
       'id' => $form_state['values']['id'],

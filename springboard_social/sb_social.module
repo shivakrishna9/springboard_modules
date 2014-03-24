@@ -279,8 +279,9 @@ function sb_social_block_view($delta = '') {
         $buttons[] = theme('sb_social_share_button', $vars);
       }
       $buttons = implode("\n", $buttons);
-      $block['subject'] = NULL;
-      $block['content'] = theme('sb_social_share', array('buttons' => $buttons));
+      $block['subject'] = array_key_exists('block_title', $settings['data']) ? $settings['data']['block_title'] : variable_get('springboard_social_default_block_title', '');
+      $description = array_key_exists('block_description', $settings['data']) ? $settings['data']['block_description'] : variable_get('springboard_social_default_block_description', '');
+      $block['content'] = theme('sb_social_share', array('buttons' => $buttons, 'description' => $description));
     }
     $buttons = implode("\n", $buttons);
     $block['subject'] = array_key_exists('title', $settings['data']) ? $settings['data']['title'] : variable_get('springboard_social_default_block_title', '');
