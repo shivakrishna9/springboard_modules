@@ -402,15 +402,6 @@ function springboard_p2p_views_default_views() {
       'label' => '',
     ),
   );
-  /* Field: Content: Thumbnail */
-  $handler->display->display_options['fields']['field_p2p_thumbnail']['id'] = 'field_p2p_thumbnail';
-  $handler->display->display_options['fields']['field_p2p_thumbnail']['table'] = 'field_data_field_p2p_thumbnail';
-  $handler->display->display_options['fields']['field_p2p_thumbnail']['field'] = 'field_p2p_thumbnail';
-  $handler->display->display_options['fields']['field_p2p_thumbnail']['click_sort_column'] = 'fid';
-  $handler->display->display_options['fields']['field_p2p_thumbnail']['settings'] = array(
-    'image_style' => 'thumbnail',
-    'image_link' => 'content',
-  );
   /* Field: Content: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
   $handler->display->display_options['fields']['title']['table'] = 'node';
@@ -451,15 +442,6 @@ function springboard_p2p_views_default_views() {
   $handler->display->display_options['pager']['options']['items_per_page'] = '10';
   $handler->display->display_options['pager']['options']['offset'] = '0';
   $handler->display->display_options['defaults']['fields'] = FALSE;
-  /* Field: Content: Thumbnail */
-  $handler->display->display_options['fields']['field_p2p_thumbnail']['id'] = 'field_p2p_thumbnail';
-  $handler->display->display_options['fields']['field_p2p_thumbnail']['table'] = 'field_data_field_p2p_thumbnail';
-  $handler->display->display_options['fields']['field_p2p_thumbnail']['field'] = 'field_p2p_thumbnail';
-  $handler->display->display_options['fields']['field_p2p_thumbnail']['click_sort_column'] = 'fid';
-  $handler->display->display_options['fields']['field_p2p_thumbnail']['settings'] = array(
-    'image_style' => 'thumbnail',
-    'image_link' => 'content',
-  );
   /* Field: Content: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
   $handler->display->display_options['fields']['title']['table'] = 'node';

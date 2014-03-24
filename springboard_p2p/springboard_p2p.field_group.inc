@@ -54,9 +54,9 @@ function springboard_p2p_field_group_info() {
     'label' => 'Personal campaign defaults',
     'weight' => '5',
     'children' => array(
-      0 => 'field_p2p_video_embed',
+      0 => 'field_p2p_content',
       1 => 'field_p2p_images',
-      2 => 'field_p2p_content',
+      2 => 'field_p2p_video_embed',
     ),
     'format_type' => 'fieldset',
     'format_settings' => array(
@@ -140,7 +140,7 @@ function springboard_p2p_field_group_info() {
   $field_group->parent_name = '';
   $field_group->data = array(
     'label' => 'Donation form',
-    'weight' => '5',
+    'weight' => '4',
     'children' => array(
       0 => 'field_p2p_form_header',
     ),

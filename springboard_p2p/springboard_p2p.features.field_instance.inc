@@ -571,7 +571,7 @@ function springboard_p2p_field_default_field_instances() {
         'summary_rows' => 5,
       ),
       'type' => 'text_textarea_with_summary',
-      'weight' => -4,
+      'weight' => 1,
     ),
   );
 
@@ -613,7 +613,57 @@ function springboard_p2p_field_default_field_instances() {
         'display_label' => 1,
       ),
       'type' => 'options_onoff',
-      'weight' => -2,
+      'weight' => 3,
+    ),
+  );
+
+  // Exported field_instance: 'node-p2p_category-field_p2p_category_image'
+  $field_instances['node-p2p_category-field_p2p_category_image'] = array(
+    'bundle' => 'p2p_category',
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'image',
+        'settings' => array(
+          'image_link' => '',
+          'image_style' => '',
+        ),
+        'type' => 'image',
+        'weight' => 7,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_p2p_category_image',
+    'label' => 'Category image',
+    'required' => 1,
+    'settings' => array(
+      'alt_field' => 0,
+      'default_image' => 0,
+      'file_directory' => 'springboard_p2p',
+      'file_extensions' => 'png gif jpg jpeg',
+      'max_filesize' => '2 MB',
+      'max_resolution' => '',
+      'min_resolution' => '',
+      'title_field' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'image',
+      'settings' => array(
+        'preview_image_style' => 'thumbnail',
+        'progress_indicator' => 'throbber',
+      ),
+      'type' => 'image_image',
+      'weight' => 2,
     ),
   );
 
@@ -748,56 +798,6 @@ function springboard_p2p_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-p2p_category-field_p2p_thumbnail'
-  $field_instances['node-p2p_category-field_p2p_thumbnail'] = array(
-    'bundle' => 'p2p_category',
-    'deleted' => 0,
-    'description' => '',
-    'display' => array(
-      'default' => array(
-        'label' => 'hidden',
-        'module' => 'image',
-        'settings' => array(
-          'image_link' => '',
-          'image_style' => 'thumbnail',
-        ),
-        'type' => 'image',
-        'weight' => 1,
-      ),
-      'teaser' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 0,
-      ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'field_p2p_thumbnail',
-    'label' => 'Thumbnail',
-    'required' => 0,
-    'settings' => array(
-      'alt_field' => 0,
-      'default_image' => 0,
-      'file_directory' => 'springboard_p2p',
-      'file_extensions' => 'png gif jpg jpeg',
-      'max_filesize' => '2 MB',
-      'max_resolution' => '',
-      'min_resolution' => '',
-      'title_field' => 0,
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 1,
-      'module' => 'image',
-      'settings' => array(
-        'preview_image_style' => 'thumbnail',
-        'progress_indicator' => 'throbber',
-      ),
-      'type' => 'image_image',
-      'weight' => -3,
-    ),
-  );
-
   // Exported field_instance: 'node-p2p_category-field_p2p_video_embed'
   $field_instances['node-p2p_category-field_p2p_video_embed'] = array(
     'bundle' => 'p2p_category',
@@ -840,6 +840,7 @@ function springboard_p2p_field_default_field_instances() {
   // Included for use with string extractors like potx.
   t('Allow donor comments');
   t('Category');
+  t('Category image');
   t('Content');
   t('Description');
   t('Enter a URL from YouTube to embed a video.');
@@ -850,7 +851,6 @@ function springboard_p2p_field_default_field_instances() {
   t('Personal campaigns require approval');
   t('Show donor comments on personal campaign pages');
   t('Show donor scroll on personal campaign pages');
-  t('Thumbnail');
   t('Video embed');
   t('When enabled donors will be able to leave an additional comment that can be displayed on the personal campaign page.');
 
