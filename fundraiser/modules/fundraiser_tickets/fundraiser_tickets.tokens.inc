@@ -56,4 +56,12 @@ function fundraiser_tickets_tokens_alter(&$replacements, $context) {
       }
     }
   }
+
+  // For the ticket line items reformat the quantity
+  if ($context['type'] == 'commerce-line-item'
+   && !empty($context['data']['commerce-line-item'])
+   && $context['data']['commerce-line-item']->type == 'ticket') {
+    $quantity_token = $context['tokens']['quantity'];
+    $replacements[$quantity_token] = number_format($replacements[$quantity_token]);
+  }
 }
