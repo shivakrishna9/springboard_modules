@@ -1383,11 +1383,6 @@ function commerce_litle_vault_cardonfile_register_token($payment_method, $paymen
   $litle_config = _commerce_litle_get_litle_config($payment_method);
   $init = _commerce_litle_get_litle();
 
-  // Log the request if specified.
-  if ($payment_method['settings']['log']['request'] === 'request') {
-    commerce_litle_log_request($payment_details);
-  }
-
   // Submit a registerTokenRequest.
   return commerce_litle_register_token_request($init, $litle_config, $payment_details);
 }
