@@ -10,6 +10,7 @@ $plugin = array(
   'title' => t('Facebook'), // Human-readable service name
   'settings' => 'sb_social_facebook_settings', // additions to path and node settings forms
   'admin_settings' => 'sb_social_facebook_admin_settings', // additions to admin defaults settings form
+  'admin_setings_submit' => 'sb_social_facebook_admin_settings_submit',
   'process' => 'sb_social_facebook_process_settings', // submit handler for node & path settings fields
   'share_config' => 'sb_social_facebook_share_opengraph_config', // render share settings required by AddThis
   'js' => FALSE, // include js settings as needed
@@ -18,6 +19,7 @@ $plugin = array(
   'token_info' => sb_social_facebook_token_info(),
   'token_replace' => 'sb_social_facebook_token_replace',
   'metatag_view_alter' => 'facebook_metatag_view_alter',
+  'button_contents' => sb_social_facebook_custom_button_contents(),
 );
 
 /**
@@ -77,6 +79,7 @@ function sb_social_facebook_token_replace($tokens, &$replacements, $settings, $n
       case 'facebook_share_link':
         $vars['service'] = 'facebook';
         $vars['extra'] = '';
+        $vars['contents'] = sb_social_facebook_custom_button_contents();
 
         if (isset($extra) && function_exists($extra)) {
           $vars['extra'] = $extra($settings['data']['facebook']);
@@ -91,8 +94,15 @@ function sb_social_facebook_token_replace($tokens, &$replacements, $settings, $n
         $replacements[$token] =  !empty($settings['data']['facebook']['description']) ? _sb_social_replace_tokens($settings['data']['facebook']['description'], $node, $submission_id) : '';
         break;
       case 'facebook_image':
-        // TODO: image tag?
-        $replacements[$token] =  !empty($settings['data']['facebook']['image']) ? $settings['data']['facebook']['image'] : '';
+        $fid = $settings['data']['facebook']['image'];
+        $image_url = FALSE;
+        if ($fid) {
+          $file = file_load($fid);
+          if (isset($file->uri)) {
+            $image_url = file_create_url($file->uri);
+          }
+        }
+        $replacements[$token] =  $image_url ? $image_url : '';
         break;
     }
   }
@@ -103,12 +113,13 @@ function sb_social_facebook_defaults() {
   $settings = array(
     'title' => variable_get('springboard_social_facebook_title', '%title'),
     'description' => variable_get('springboard_social_facebook_description', '%teaser'),
-    'image' => '', variable_get('springboard_social_facebook_image', ''),
+    'image' => variable_get('springboard_social_facebook_image', ''),
   );
   return $settings;
 }
 
 function sb_social_facebook_admin_settings(&$form) {
+  $image = variable_get('springboard_social_facebook_image', FALSE);
   $form['services']['facebook'] = array(
     '#type' => 'fieldset',
     '#title' => t('Facebook Settings'),
@@ -118,6 +129,26 @@ function sb_social_facebook_admin_settings(&$form) {
         ':input[name="springboard_social_services[facebook]"]' => array('checked' => FALSE),
       ),
     ),
+  );
+  $form['services']['facebook']['icon'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Custom icon settings'),
+  );
+  $form['services']['facebook']['icon']['springboard_social_facebook_custom_text'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Custom icon text'),
+    '#default_value' => variable_get('springboard_social_facebook_custom_text', ''),
+  );
+  $form['services']['facebook']['icon']['springboard_social_facebook_custom_icon'] = array(
+    '#type' => 'managed_file',
+    '#title' => t('Upload custom icon'),
+    '#description' => t('Custom share icon'),
+    '#default_value' => variable_get('springboard_social_facebook_custom_icon', ''),
+    '#upload_location' => 'public://social_images',
+    '#upload_validators' => array(
+      'file_validate_extensions' => array('gif png jpg jpeg'),
+    ),
+    '#theme' => 'sb_social_share_image_preview',
   );
   $form['services']['facebook']['springboard_social_facebook_title'] = array(
     '#type' => 'textfield',
@@ -133,7 +164,7 @@ function sb_social_facebook_admin_settings(&$form) {
     '#type' => 'managed_file',
     '#title' => 'Image upload',
     '#description' => t('Upload an image to display in share content'),
-    '#default_value' => variable_get('logo', ''),
+    '#default_value' => $image ? $image : variable_get('logo', ''),
     '#upload_location' => 'public://social_images',
     '#upload_validators' => array(
       'file_validate_extensions' => array('gif png jpg jpeg'),
@@ -142,7 +173,29 @@ function sb_social_facebook_admin_settings(&$form) {
   );
 }
 
+function sb_social_facebook_admin_settings_submit($form, $form_state) {
+  if ($form_state['values']['springboard_social_facebook_image']) {
+    $value = $form_state['values']['springboard_social_facebook_image'];
+    $file = file_load($value);
+    if ($file && !$file->status) {
+      $file->status = FILE_STATUS_PERMANENT;
+      file_save($file);
+      file_usage_add($file, 'sb_social', 'admin_default', 1);
+    }
+  }
+  if ($form_state['values']['springboard_social_facebook_custom_icon']) {
+    $value = $form_state['values']['springboard_social_facebook_custom_icon'];
+    $file = file_load($value);
+    if ($file && !$file->status) {
+      $file->status = FILE_STATUS_PERMANENT;
+      file_save($file);
+      file_usage_add($file, 'sb_social', 'facebook_icon', 1);
+    }
+  }
+}
+
 function sb_social_facebook_settings(&$form, $enabled_services = array(), $settings = array(), $token_set = array('all')) {
+  $image = $settings['image'];
   $form['fb_settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('Facebook Settings'),
@@ -167,12 +220,13 @@ function sb_social_facebook_settings(&$form, $enabled_services = array(), $setti
   $form['fb_settings']['fb_image'] = array(
     '#type' => 'managed_file',
     '#title' => 'Image upload',
-    '#description' => t('Upload a custom image to display in share content'),
-    '#default_value' => variable_get('logo', ''),
+    '#description' => t('Upload an image to display in share content'),
+    '#default_value' => $image ? $image : variable_get('logo', ''),
     '#upload_location' => 'public://social_images',
     '#upload_validators' => array(
       'file_validate_extensions' => array('gif png jpg jpeg'),
     ),
+    '#theme' => 'sb_social_share_image_preview',
   );
   $form['fb_settings']['tokens'] = array(
     '#type' => 'fieldset',
@@ -195,22 +249,28 @@ function sb_social_facebook_process_settings(&$data, $form_state) {
   );
 
   if (!empty($form_state['values']['fb_image'])) {
-    // apparently the form api only passes the fid when a file has been uploaded
-    // so we have to load the full record and fish out the uri to generate
-    // a usable image url.
+    $id = is_numeric($form_state['values']['id']) ? $form_state['values']['id'] : time();
+    $value = $form_state['values']['fb_image'];
+    $file = file_load($value);
+    if ($file && !$file->status) {
+      $file->status = FILE_STATUS_PERMANENT;
+      file_save($file);
+      file_usage_add($file, 'sb_social', 'setting', $form_state['values']['id']);
+    }
+
     $file = file_load($form_state['values']['fb_image']);
-    $data['image'] = file_create_url($file->uri);
+    $data['facebook']['image'] = $file->fid;
   }
 }
 
 /**
  * Configure AddThis share buttons for Facebook.
  *
- * Add OpenGraph meta tags used by Facebook to define custom title, description, and image content on
- * shares.
+ * Add OpenGraph meta tags used by Facebook to define custom title, description,
+ * and image content on shares.
  *
- * Facebook and a few other services use opengraph tags to define custom share content instead of the
- * usual AddThis javascript configuration objects.
+ * Facebook and a few other services use opengraph tags to define custom share
+ * content instead of the usual AddThis javascript configuration objects.
  *
  */
 function sb_social_facebook_share_opengraph_config($settings, $node = FALSE, $sid = FALSE) {
@@ -221,7 +281,10 @@ function sb_social_facebook_share_opengraph_config($settings, $node = FALSE, $si
   );
   // Facebook gets angry if you output an empty image opengraph tag.
   if (!empty($facebook['image'])) {
-    $meta['image'] = $facebook['image'];
+    $file = file_load($facebook['image']);
+    if (isset($file->uri) && file_valid_uri($file->uri)) {
+      $meta['image'] = file_create_url($file->uri);
+    }
   }
 
   foreach ($meta as $field => $value) {
@@ -241,9 +304,26 @@ function sb_social_facebook_share_opengraph_config($settings, $node = FALSE, $si
 }
 
 function sb_social_facebook_uninstall() {
-  // remove variables.
+  // Remove variables.
   variable_del('springboard_social_facebook_title');
   variable_del('springboard_social_facebook_description');
   variable_del('springboard_social_facebook_image');
 
+}
+
+function sb_social_facebook_custom_button_contents() {
+  $contents = '';
+  $icon = variable_get('springboard_social_facebook_custom_icon', '');
+  $text = variable_get('springboard_social_facebook_custom_text', '');
+  if (!empty($icon)) {
+    $icon_file = file_load($icon);
+    if (isset($icon_file->uri)) {
+      $url = file_create_url($icon_file->uri);
+      $contents .= '<img src="' . $url . '">';
+    }
+  }
+  if ($text) {
+    $contents .= '<span>' . $text . '</span>';
+  }
+  return $contents;
 }

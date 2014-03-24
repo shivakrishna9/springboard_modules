@@ -175,10 +175,12 @@
                   return false;
               }
             },
-              amount: true,
-              messages: {
+            amount: true,
+            min: parseFloat(Drupal.settings.fundraiserWebform.minimum_donation_amount),
+            messages: {
               required: "This field is required",
-              amount: "Enter a valid amount"
+              amount: "Enter a valid amount",
+              min: "The amount entered is less than the minimum donation amount."
             }
           });
         }
