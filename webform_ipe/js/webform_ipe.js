@@ -705,7 +705,7 @@
                 buttonTarget.after(App.Templates.template($('#editTemplate').html()));
               }
               if($('.editor-on').length > 1 && typeof(legendWidth) !== "undefined" && type == 'fieldset') {
-                buttonTarget.closest('fieldset').find('legend span.edit').css({position:'absolute', left:legendWidth, top:'110'})
+                buttonTarget.closest('fieldset').find('legend span.edit').css({position:'absolute', left:legendWidth, top:'0.9em'})
               }
               else if ($('.editor-on').length > 1  && type != 'fieldset'){
                // buttonTarget.parent().find('span.edit').css({ display:'block', float:'left'})
