@@ -404,7 +404,7 @@
           // Edit form schema
           schema: {
             name: {editorClass:'required', type: 'Text', title: 'Label Text', validators: ['required']},
-            value: {type: 'TextArea', title: 'Markup'},
+            value: {editorClass:'required', type: 'TextArea', title: 'Markup', validators: ['required']},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
             'extra.attributes.class': {type: 'Text', title: 'Class'},
           },
@@ -525,11 +525,7 @@
          template.fn.stripWrapper = function(html, field) {
           if(field == 'payment') {
             trimmed = $(html).unwrap('fieldset.fundraiser-payment-fields');
-          } else if(field == 'date'){
-            //don't need this anymore
-            //trimmed = $(html).find('.webform-container-inline.webform-datepicker').html();
-            //return trimmed;
-          }
+          } 
           return trimmed[0].innerHTML;
         }
 
@@ -594,16 +590,8 @@
 
             this.model.on('change', this.reRender, this);
 
-            // When a fieldset is updated
-            //App.Events.on('fieldset:updated', this.fieldsetUpdated, this);
-
             // When a fieldset with children has changed, listen up kids
             this.listenTo(this.model, 'fieldset:renderChild', this.renderChild);
-
-            // Any item destroyed
-            // this.model.on('destroy', this.remove, this);
-            // Fieldset destroyed
-            // this.listenTo(this.model, 'fieldset:destroy', this.remove);
           },
 
           events: {
@@ -941,9 +929,7 @@
                 model_pid = this.model.get('pid');
                 this.$el.attr('data-pid', model_pid);
                 this.$el.attr('data-cid', cid);
-
               }
-               console.log(this.$el.html(this.template(this.model.toJSON())));
 
               this.$el.trigger('update-weight', [this]); //recalculate field weights after insert
 
@@ -1243,7 +1229,6 @@
             //now update the weights
 
             this.collection.each(function (eachModel, index) {
-          //    console.log(eachModel)
               var form_key = eachModel.get('form_key');
               var id = form_key.replace(/_/g,'-');
               var type = eachModel.get('type');
@@ -1449,8 +1434,6 @@
             return false;
           }
         }
-
-
 
 
         /*
@@ -1685,7 +1668,7 @@
         });
         
 
-        //This class needs to be added on page load, not in functions bwlow  
+        //This class needs to be added on page load, not in functions below  
         $('.webform-component-fieldset, div.fieldset.form-layouts, div.fieldset.sidebar').not('[id$="payment-fields"]').addClass('webform-ipe-container');
         var has_form_layout =  $('div.fieldset.form-layouts.webform-ipe-container').length;
         if(has_form_layout == 0) {
@@ -1731,12 +1714,12 @@
             items: 'div.control-group:not(".disabled")',
             cursorAt: { left: 5, top: 15 },
             start: function(event, ui) {
-              $(ui.item[0]).css({'height':'50px', 'overflow':'hidden'})
-              $(ui.item[0]).css({'width':'120px', 'overflow':'hidden'})
+              ui.item.css({'height':'50px', 'overflow':'hidden'})
+              ui.item.css({'width':'120px', 'overflow':'hidden'})
             },
             stop: function (event, ui) {
-              $(ui.item[0]).css({'height':'auto', 'overflow':'visible'})
-              $(ui.item[0]).css({'width':'auto', 'overflow':'hidden'})
+              ui.item.css({'height':'auto', 'overflow':'visible'})
+              ui.item.css({'width':'auto', 'overflow':'hidden'})
               ui.item.trigger('drop');
               $('div.fieldset.form-layouts:not(:has("*"))').css('min-height', '60px');
               if($(this).find(".control-group").length == 0 &! $(this).hasClass('fake-wrapper')) {
@@ -1750,35 +1733,12 @@
             },
           });
 
-          // $('.layout-row .webform-ipe-container.editor-on.show, .layout-row > .webform-ipe-container.editor-on, .layout-row > .webform-ipe-container.editor-on > .webform-ipe-container').sortable({
-          //   connectWith: '.layout-row .webform-ipe-container.editor-on.show, .layout-row > .webform-ipe-container.editor-on, .layout-row > .webform-ipe-container.editor-on > .webform-ipe-container',
-          //   cancel: '.disabled',
-          //   placeholder: 'sortable-placeholder',
-          //   items: 'div.control-group:not(".disabled")',
-          //   stop: function (event, ui) {
-          //     ui.item.trigger('drop');
-          //     if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
-          //       $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
-          //     }
-          //   },
-          // });
-
           $('.webform-component-fieldset').disableSelection();
         };
         /*
          * Re-order Fieldsets
          */
         App.Handlers.reorderFieldsets = function() {
-            // $('.layout-row > .webform-ipe-container.editor-on, .layout-row .webform-ipe-container.sidebar.editor-on.show').sortableNew({
-            //   connectWith: '.layout-row > .webform-ipe-container.editor-on, .layout-row .webform-ipe-container.sidebar.editor-on.show',
-            //   items: '.layout-row > .webform-ipe-container.editor-on > .webform-ipe-container.editor-on:not(".disabled"), .layout-row .webform-ipe-container.sidebar.editor-on.show > .webform-ipe-container.editor-on:not(".disabled")',
-            //   handle: 'legend',
-            // }).bind('sortupdate', function(event, ui) {
-            //   ui.item.trigger('drop');
-            //   if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
-            //     $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
-            //   }
-            // });
           $('.ipe-outer').sortable({
             cancel:'.disabled',
             placeholder: 'sortable-placeholder',
@@ -1789,12 +1749,12 @@
             cursorAt: { left: 5, top: 15 },
             start: function(event, ui) {
               height = $(ui.item[0]).height();
-              $(ui.item[0]).css({'height':'20px', 'overflow':'hidden'})
-              $(ui.item[0]).css({'width':'120px', 'overflow':'hidden'})
+              ui.item.css({'height':'20px', 'overflow':'hidden'})
+              ui.item.css({'width':'120px', 'overflow':'hidden'})
             },
             stop: function (event, ui) {
-              $(ui.item[0]).css({'height':'auto', 'overflow':'visible'})
-              $(ui.item[0]).css({'width':'auto', 'overflow':'hidden'})
+              ui.item.css({'height':'auto', 'overflow':'visible'})
+              ui.item.css({'width':'auto', 'overflow':'hidden'})
               ui.item.trigger('drop');
               $('div.fieldset.form-layouts:not(:has("*"))').css('min-height', '60px')
               ui.item.siblings(".dummy").remove();
@@ -1810,13 +1770,13 @@
          
         //dynamically swap items to eliminate fieldset jitter 
         App.Handlers.setItems = function() {
-     //      $('fieldset.webform-component-fieldset legend').on('mousedown', function(){
-     //        $(".ipe-outer").sortable( 'option', 'items', 'fieldset.webform-component-fieldset, div.control-group:not("fieldset.webform-component-fieldset div.control-group")');
-     //      });
+           //      $('fieldset.webform-component-fieldset legend').on('mousedown', function(){
+           //        $(".ipe-outer").sortable( 'option', 'items', 'fieldset.webform-component-fieldset, div.control-group:not("fieldset.webform-component-fieldset div.control-group")');
+           //      });
 
-     //      $('.ipe-outer div.control-group:not("fieldset.webform-component-fieldset div.control-group")').on('mousedown', function(){
-     //        $( ".ipe-outer" ).sortable( "option", "items", "fieldset.webform-component-fieldset, div.dummy, div.control-group:not('.disabled')");
-     //      });
+           //      $('.ipe-outer div.control-group:not("fieldset.webform-component-fieldset div.control-group")').on('mousedown', function(){
+           //        $( ".ipe-outer" ).sortable( "option", "items", "fieldset.webform-component-fieldset, div.dummy, div.control-group:not('.disabled')");
+           //      });
         };
 
         //turn the sort on and off
@@ -1869,6 +1829,7 @@
           $('.fundraiser-payment-fields').addClass('disabled');
           $('.disabled').removeClass('sortable');
         }
+
         App.Handlers.wrapOrphans = function() {
           var orphan = $('.ipe-outer div.control-group:not("fieldset.webform-component-fieldset div.control-group")');
           orphan.each(function(){
@@ -1886,8 +1847,8 @@
         $('body').wrapInner('<div class = "zoot"></div>');
         $('.landscape-preview').magnificPopup({
           items: {
-              src: '.zoot',
-              type: 'inline',
+            src: '.zoot',
+            type: 'inline',
           },
           mainClass: 'tabletland-preview',
           callbacks: {
@@ -1899,8 +1860,8 @@
 
         $('.portrait-preview').magnificPopup({
           items: {
-              src: '.zoot',
-              type: 'inline',
+            src: '.zoot',
+            type: 'inline',
           },
           mainClass: 'portrait-preview',
           callbacks: {
@@ -1912,8 +1873,8 @@
         });
         $('.desktop-preview').magnificPopup({
           items: {
-              src: '.zoot',
-              type: 'inline',
+            src: '.zoot',
+            type: 'inline',
           },
           mainClass: 'desktop-preview',
           callbacks: {
@@ -1925,8 +1886,8 @@
         });
         $('.phone-preview').magnificPopup({
           items: {
-              src: '.zoot',
-              type: 'inline',
+            src: '.zoot',
+            type: 'inline',
           },
           mainClass: 'phone-preview',
           callbacks: {
