@@ -248,6 +248,11 @@ function springboard_p2p_fields_field_widget_form(&$form, &$form_state, $field, 
           '#value' => $goal_set_id,
         ),
       );
+
+      $widget['#attached']['js'] = array(
+        drupal_get_path('module', 'springboard_p2p_fields') . '/springboard_p2p_fields.js',
+      );
+
       $content_types = springboard_p2p_fields_get_sorted_content_types();
       foreach ($types as $form_type => $title) {
         $goal_options = array();
@@ -277,6 +282,16 @@ function springboard_p2p_fields_field_widget_form(&$form, &$form_state, $field, 
 
             if (is_null($goal_type_default)) {
               $goal_type_default = isset($defaults[$key]['goal_type']) ? $defaults[$key]['goal_type'] : '';
+            }
+
+            $goal_value_prefix = '';
+            $goal_value_suffix = '';
+
+            if ($goal_type_default == 'submissions') {
+              $goal_value_suffix = ' submissions';
+            }
+            elseif ($goal_type_default == 'amount') {
+              $goal_value_prefix = '$ ';
             }
 
             $node_options = springboard_p2p_fields_get_node_options_by_types($key);
@@ -310,8 +325,14 @@ function springboard_p2p_fields_field_widget_form(&$form, &$form_state, $field, 
               'goal_value' => array(
                 '#type' => 'textfield',
                 '#default_value' => isset($defaults[$key]['goal_value']) ? $defaults[$key]['goal_value'] : '',
+                '#field_prefix' => $goal_value_prefix,
+                '#field_suffix' => $goal_value_suffix,
+                '#prefix' => '<div class="springboard_p2p_goal_value">',
+                '#suffix' => '</div>',
               ),
             );
+
+            $widget['form_types'][$form_type][$key]['goal_type']['#attributes']['class'][] = 'springboard_p2p_goal_type';
 
             if (module_exists('market_source')) {
               $options = market_source_get_campaign_options();
