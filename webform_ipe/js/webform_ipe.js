@@ -701,11 +701,19 @@
             }
 
             if(!_.isUndefined(buttonTarget)) {
-              if($('.sortable-placeholder').length == 0 ) {
+              if($('.sortable-placeholder').length == 0  && type != 'fieldset') {
                 buttonTarget.after(App.Templates.template($('#editTemplate').html()));
               }
+              else if ($('.sortable-placeholder').length == 0) {
+                buttonTarget.append(App.Templates.template($('#editTemplate').html()));
+              }
               if($('.editor-on').length > 1 && typeof(legendWidth) !== "undefined" && type == 'fieldset') {
-                buttonTarget.closest('fieldset').find('legend span.edit').css({position:'absolute', left:legendWidth, top:'0.9em'})
+                if(buttonTarget.closest('fieldset').width() > (legendWidth + 30)) {
+                  buttonTarget.closest('fieldset').find('legend span.edit').css({position:'absolute', left:legendWidth})
+                }
+                else {
+                  buttonTarget.closest('fieldset').find('legend span.edit').css({position:'absolute', left: 'auto', top: '-17px', right:'5px'})
+                }
               }
               else if ($('.editor-on').length > 1  && type != 'fieldset'){
                // buttonTarget.parent().find('span.edit').css({ display:'block', float:'left'})
@@ -1343,7 +1351,7 @@
                 }
 
                 //if we've created new fields, add the classes for sorting
-                if($('editor-on.length') > 0) {
+                if($('.editor-on').length > 0) {
                   App.Handlers.addSortClasses();
                 }
 
@@ -1818,7 +1826,7 @@
         }
 
         App.Handlers.addSortClasses = function() {
-
+          $('.webform-component-fieldset, div.fieldset.form-layouts, div.fieldset.sidebar').not('[id$="payment-fields"]').addClass('webform-ipe-container');
           $('.webform-component-fieldset, div.fieldset.form-layouts, div.fieldset.sidebar, body').addClass('editor-on');
           $('.webform-component-fieldset  div.control-group, div.fieldset div.control-group').not('.fundraiser-payment-fields div.control-group').addClass('sortable');
           $('#block-system-main div.form-layouts, div.fieldset.sidebar').addClass('ipe-outer');
