@@ -705,15 +705,15 @@
                 buttonTarget.after(App.Templates.template($('#editTemplate').html()));
               }
               if($('.editor-on').length > 1 && typeof(legendWidth) !== "undefined" && type == 'fieldset') {
-                buttonTarget.closest('fieldset').find('span.edit').css({position:'absolute', left:legendWidth})
+                buttonTarget.closest('fieldset').find('legend span.edit').css({position:'absolute', left:legendWidth, top:'110'})
               }
               else if ($('.editor-on').length > 1  && type != 'fieldset'){
-                //buttonTarget.parent().find('span.edit').css({ display:'block', float:'left'})
+               // buttonTarget.parent().find('span.edit').css({ display:'block', float:'left'})
               }
               var required = Drupal.settings.webform_ipe.required_fields;
               var formKey = this.model.get('form_key');
               if(required.indexOf(formKey) != -1) {
-                this.$el.find('button.delete-item').remove();
+                this.$el.find('i.delete-item').remove();
               }
               if($('.sortable-placeholder').length == 0 ) {
                 this.$el.find('span.edit').show(400);
@@ -852,6 +852,10 @@
               e.preventDefault();
               event.stopImmediatePropagation();
             }
+            var retVal = confirm("Delete this item? If you change your mind, you can reload the page (without saving) to recover deleted items.");
+            if( retVal == false ) {
+              return false;
+             }
             this.model.set('deleted', '1', {silent: true});
             if (!(this.model.get('type') == 'fieldset')) {
               this.$el.remove();
@@ -1743,7 +1747,7 @@
             cancel:'.disabled',
             placeholder: 'sortable-placeholder',
             connectWith: '.ipe-outer',
-            items: '.ipe-inner, div.control-group:not("fieldset.webform-component-fieldset div.control-group")',
+            items: '.ipe-inner, div.control-group:not("fieldset.webform-component-fieldset div.control-group"):not(".disabled")',
             //items: '.ipe-inner',
             handle: 'legend',
             cursorAt: { left: 5, top: 15 },
@@ -1762,22 +1766,22 @@
               if(!$('.sidebars-hide','#admin-bar').hasClass('active')) {
                 $('.fieldset.sidebar').not(':has("*")').removeClass('show').hide()
               }
-              App.Handlers.setItems();
+              //App.Handlers.setItems();
              },
           });
           $('#block-system-main div.form-layouts').disableSelection();
         };
          
         //dynamically swap items to eliminate fieldset jitter 
-        App.Handlers.setItems = function() {
-           //      $('fieldset.webform-component-fieldset legend').on('mousedown', function(){
-           //        $(".ipe-outer").sortable( 'option', 'items', 'fieldset.webform-component-fieldset, div.control-group:not("fieldset.webform-component-fieldset div.control-group")');
-           //      });
+     //    App.Handlers.setItems = function() {
+     //      $('fieldset.webform-component-fieldset legend').on('mousedown', function(){
+     //        $(".ipe-outer").sortable( 'option', 'items', 'fieldset.webform-component-fieldset, div.control-group:not("fieldset.webform-component-fieldset div.control-group")');
+     //      });
 
-           //      $('.ipe-outer div.control-group:not("fieldset.webform-component-fieldset div.control-group")').on('mousedown', function(){
-           //        $( ".ipe-outer" ).sortable( "option", "items", "fieldset.webform-component-fieldset, div.dummy, div.control-group:not('.disabled')");
-           //      });
-        };
+     //      $('.ipe-outer div.control-group:not("fieldset.webform-component-fieldset div.control-group")').on('mousedown', function(){
+     //        $( ".ipe-outer" ).sortable( "option", "items", "fieldset.webform-component-fieldset, div.dummy, div.control-group:not('.disabled')");
+     //      });
+     //    };
 
         //turn the sort on and off
         App.Handlers.sortOn = function(button) {
@@ -1794,7 +1798,7 @@
           App.Handlers.wrapOrphans();
           App.Handlers.reorderItems(); //initialize the sortables
           App.Handlers.reorderFieldsets();
-          App.Handlers.setItems();
+          //App.Handlers.setItems();
           $('.ipe-inner').sortable("option","disabled", false);
           $('.ipe-outer').sortable("option","disabled", false);
             // $('.layout-row .webform-ipe-container.editor-on.show, .layout-row > .webform-ipe-container.editor-on, .layout-row > .webform-ipe-container.editor-on > .webform-ipe-container').sortable("option","disabled", false);

@@ -613,7 +613,7 @@ webform-component-fieldset.ui-sortable-helper,
 }
 span.edit {
  position: relative;
- left: 1em;
+ left: 0.5em;
  display: none;
 }
 
@@ -624,6 +624,11 @@ legend span.edit {
  overflow: hidden;
 }
 
+fieldset.collapsible .fieldset-legend{
+  display: inline-block;
+}
+
+
 .editor-on legend span.edit {
  display:block;
  position: relative;
@@ -632,47 +637,16 @@ legend span.edit {
 
 .edit .delete-item,
 .edit .edit-item {
-  padding: 1px 7px;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
-  border: 1px solid #fbeed5;
-  -webkit-border-radius: 4px;
-  -moz-border-radius: 4px;
-  border-radius: 4px;
-  color: #3a87ad;
-  background-color: #d9edf7;
-  border-color: #bce8f1;
-  /* Opacity */
-  /* IE 8 */
-  -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=60)";
-  /* IE 5-7 */
-  filter: alpha(opacity=60);
-  /* Netscape */
-  -moz-opacity: 0.6;
-  /* Safari 1.x */
-  -khtml-opacity: 0.6;
-  /* Good browsers */
-  opacity: 0.6;
+  cursor: pointer;
+  vertical-align: middle;
+
   text-decoration: none;
 }
 .edit .delete-item {
-  color: #b94a48;
-  background-color: #f2dede;
-  border-color: #eed3d7;
-  margin-left:6px;
+  margin-left:10px;
 }
 .edit .delete-item:hover,
 .edit .edit-item:hover {
-  /* Opacity */
-  /* IE 8 */
-  -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=100)";
-  /* IE 5-7 */
-  filter: alpha(opacity=100);
-  /* Netscape */
-  -moz-opacity: 1;
-  /* Safari 1.x */
-  -khtml-opacity: 1;
-  /* Good browsers */
-  opacity: 1;
 }
 
 .json-data {
