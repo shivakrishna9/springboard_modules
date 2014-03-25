@@ -325,7 +325,7 @@ function fundraiser_upsell_salesforce_get_all_market_source_persistence() {
  * Last seen -- earlier value set (in session), override set
  *   -- use override.
  * Direct -- earlier value set (in session), override not set
- *   -- use blank.
+ *   -- retain earlier.
  * Direct -- earlier value not set (in session), override set
  *   -- use override.
  * Direct -- earlier value set (in session), override set
@@ -343,7 +343,7 @@ function fundraiser_upsell_salesforce_get_all_market_source_persistence() {
  *
  * @return bool
  *   TRUE if we should use the new value.
- *   False if we should use the old value.
+ *   FALSE if we should use the old value.
  */
 function fundraiser_upsell_salesforce_should_override_market_source_value($original, $new, $persistence) {
 
@@ -389,7 +389,7 @@ function fundraiser_upsell_salesforce_should_override_market_source_value($origi
         return TRUE;
       }
       elseif (!empty($original) && empty($new)) {
-        return TRUE;
+        return FALSE;
       }
       elseif (!empty($original) && !empty($new)) {
         return TRUE;
