@@ -1341,6 +1341,7 @@
               $('#editForm .save').click(function(e){
 
                 var success = form.commit({ validate: true });
+                console.log("FORM COMMIT")
 
                 //validation failure, keep the window open
                 if(!_.isEmpty(success)) {
@@ -1348,61 +1349,14 @@
                 }
 
                 var type = form.model.get('type');
-
-                //if we've changed the date field, go get the new html
-                //this ajax is here rather than in the view because of rerendering issues on "change"
-                if(type == 'date' && (form.model.hasChanged('extra.start_date') || form.model.hasChanged('extra.end_date') || form.model.hasChanged('extra.datepicker') || form.model.hasChanged('extra.year_textfield'))) {
-                  var callbackPath = Drupal.settings.webform_ipe.date_callback;
-                  $('#editForm button').before('<div class="ajax-progress" style = "clear:both"><div class="throbber">&nbsp;</div>preparing date preview</div><p>');
-                  $('.throbber').show();
-                  $('#editForm .save').hide();
-
-                  jQuery.ajax({
-                    type: "POST",
-                    url: callbackPath,
-                    data: {
-                      extra:form.model.get('extra'),
-                      name:form.model.get('name'),
-                      type:'date',
-                      pid:form.model.get('pid'),
-                      value:form.model.get('value'),
-                      mandatory: form.model.get('mandatory'),
-                      form_key: form.model.get('form_key'),
-                      weight: form.model.get('weight'),
-                    },
-                    dataType: 'json',
-                    success: function(data) {
-                      // return data[0];
-                        var form_key = form.model.get('form_key');
-                        html = $(data[0]);
-                        html.find('div.form-item').attr('name', '[' + form_key + ']');
-                        html.find('div.form-item').addClass('control-group').removeClass('form-item')
-                        //html.find('label').remove();
-                        form.model.set('date_html', html[0].innerHTML);
-                        $('.ajax-progress').remove();
-                        if($('#webform-ipe-unsaved-edits').length < 1) {
-                          $('.save-and-preview').show();
-                          $('#admin-bar').append('<div id = "webform-ipe-unsaved-edits">This form has unsaved changes</div>');
-                        }
-
-                    $.unblockUI();
-                    return false;
-                    },
-                    error: function(xhr, textStatus, error){
-                       form.model.set('date_html', '<div class ="control-group">Could not generate a date component.</div>');
-                       console.log(textStatus);
-                        $.unblockUI();
-                        return false;
-                    }
-                 });
-                 return false;
-               }
+                if (type == 'date') {
+                  App.Handlers.createDate(type, form);
+                }
 
                 //if we've created new fields, add the classes for sorting
                 if($('editor-on.length') > 0) {
                   App.Handlers.addSortClasses();
                 }
-                console.log("FORM COMMIT")
 
                 //show the "save all changes" button
                 if($('#webform-ipe-unsaved-edits').length < 1) {
@@ -1410,18 +1364,15 @@
                   $('#admin-bar').append('<div id = "webform-ipe-unsaved-edits">This form has unsaved changes</div>');
                 }
 
-                /*if (form.model.get('type') == 'fieldset') {
-                  App.Events.trigger('fieldset:updated', form.model.get('cid'));
-                }*/
-
-              // if we were going to allow saving of individual components, it would happen here
-              //  if(typeof($('#editNow input:checked').val()) !== "undefined") {
-              //   componentsView.save();
-              // }
+                // if we were going to allow saving of individual components, it would happen here
+                //  if(typeof($('#editNow input:checked').val()) !== "undefined") {
+                //   componentsView.save();
+                // }
 
                 $.unblockUI();
                 return false;
               });
+
               $('button[data-action="remove"]').on('click', function(){
                 //App.Handlers.blockMsgResize('remove');
               });
@@ -1445,6 +1396,61 @@
         }
         // Sets default cursor for modals
         $.blockUI.defaults.css.cursor = 'default';
+
+        // Ajax function to build date fields
+        App.Handlers.createDate = function(type, form) {
+          //if we've changed the date field, go get the new html
+          //Called from blockUIbuilder rather than from the view because of rerendering issues on "change"
+          if(type == 'date' && (form.model.hasChanged('extra.start_date') || form.model.hasChanged('extra.end_date') || form.model.hasChanged('extra.datepicker') || form.model.hasChanged('extra.year_textfield'))) {
+            var callbackPath = Drupal.settings.webform_ipe.date_callback;
+            $('#editForm button').before('<div class="ajax-progress" style = "clear:both"><div class="throbber">&nbsp;</div>preparing date preview</div><p>');
+            $('.throbber').show();
+            $('#editForm .save').hide();
+
+            jQuery.ajax({
+              type: "POST",
+              url: callbackPath,
+              async: false,
+              data: {
+                extra:form.model.get('extra'),
+                name:form.model.get('name'),
+                type:'date',
+                pid:form.model.get('pid'),
+                value:form.model.get('value'),
+                mandatory: form.model.get('mandatory'),
+                form_key: form.model.get('form_key'),
+                weight: form.model.get('weight'),
+              },
+              dataType: 'json',
+              success: function(data) {
+                // return data[0];
+                  var form_key = form.model.get('form_key');
+                  html = $(data[0]);
+                  html.find('div.form-item').attr('name', '[' + form_key + ']');
+                  html.find('div.form-item').addClass('control-group').removeClass('form-item')
+                  //html.find('label').remove();
+                  form.model.set('date_html', html[0].innerHTML);
+                  $('.ajax-progress').remove();
+                  if($('#webform-ipe-unsaved-edits').length < 1) {
+                    $('.save-and-preview').show();
+                    $('#admin-bar').append('<div id = "webform-ipe-unsaved-edits">This form has unsaved changes</div>');
+                  }
+
+              $.unblockUI();
+              return false;
+              },
+              error: function(xhr, textStatus, error){
+                 form.model.set('date_html', '<div class ="control-group">Could not generate a date component.</div>');
+                 console.log(textStatus);
+                  $.unblockUI();
+                  return false;
+              }
+            });
+            return false;
+          }
+        }
+
+
 
 
         /*
