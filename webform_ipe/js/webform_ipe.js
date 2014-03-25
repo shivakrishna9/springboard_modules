@@ -1823,6 +1823,7 @@
           $('.webform-component-fieldset, div.fieldset.form-layouts, div.fieldset.sidebar, body').removeClass('editor-on');
           $('.ipe-inner').sortable("option","disabled", true);
           $('.ipe-outer').sortable("option","disabled", true);
+          $('.webform-component-fieldset').css('width', '')
         }
 
         App.Handlers.addSortClasses = function() {
