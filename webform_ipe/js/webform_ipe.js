@@ -1831,7 +1831,7 @@
         }
 
         App.Handlers.wrapOrphans = function() {
-          var orphan = $('.ipe-outer div.control-group:not("fieldset.webform-component-fieldset div.control-group")');
+          var orphan = $('.ipe-outer div.control-group:not("fieldset.webform-component-fieldset div.control-group"):not(".disabled")');
           orphan.each(function(){
             if(!$(this).parent().hasClass('fake-wrapper')) {
               $(this).wrap('<div class = "ipe-inner fake-wrapper"></div>');
