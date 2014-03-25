@@ -120,6 +120,17 @@ fieldset div.webform-component-fieldset.editor-on {
   padding:0;
 }
 
+.editor-on .control-group input,
+.editor-on .control-group select,
+.editor-on .control-group label {
+    cursor: move;
+}
+.editor-on .disabled .control-group input,
+.editor-on .disabled .control-group select,
+.editor-on .disabled .control-group label {
+    cursor: default;
+}
+
 .editor-on .control-group:hover {
   background-color:#f7f7f7;
 }
@@ -127,6 +138,8 @@ fieldset div.webform-component-fieldset.editor-on {
   background-color: transparent;
   cursor: default;
 }
+
+
 
 /*.webform-ipe-container.editor-on .fieldset-legend {
   margin-top: 0px;
