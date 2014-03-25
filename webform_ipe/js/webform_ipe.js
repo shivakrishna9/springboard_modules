@@ -90,7 +90,7 @@
           },
           // Edit form schema
           schema: {
-            name: {type: 'Text', title: 'Label Text', validators: ['required']},
+            name: {editorClass:'required', type: 'Text', title: 'Label Text', validators: ['required']},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
             mandatory: { type: 'Checkbox', title:'Mandatory'},
             'extra.description': {type: 'Text', title: 'Description Text'},
@@ -127,7 +127,7 @@
           },
           // Edit form schema
           schema: {
-            name: {type: 'Text', title: 'Label Text', validators: ['required']},
+            name: {editorClass:'required', type: 'Text', title: 'Label Text', validators: ['required']},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
             mandatory: { type: 'Checkbox', title:'Mandatory'},
             'extra.description': {type: 'Text', title: 'Description Text'},
@@ -163,7 +163,7 @@
           },
           // Edit form schema
           schema: {
-            name: {type: 'Text', title: 'Label Text', validators: ['required']},
+            name: {editorClass:'required', type: 'Text', title: 'Label Text', validators: ['required']},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
             mandatory: { type: 'Checkbox', title:'Mandatory'},
             'extra.description': {type: 'Text', title: 'Description Text'},
@@ -200,11 +200,11 @@
             type: 'select',
           },
           schema: {
-            name: {type: 'Text', title: 'Label Text', validators: ['required']},
+            name: {editorClass:'required', type: 'Text', title: 'Label Text', validators: ['required']},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
             mandatory: { type: 'Checkbox', title:'Mandatory'},
             'extra.description': {type: 'Text', title: 'Description Text'},
-            'extra.items': { type: 'List', title: "Options", fieldClass:"option-items", validate:['required'], help:'Options must be entered in the format: key|value '},
+            'extra.items': { editorClass:'required', type: 'List', title: "Options", fieldClass:"option-items", validate:['required'], help:'Options must be entered in the format: key|value '},
             'extra.aslist': { type: 'Checkbox', title:'Select List', help:'Check this option if you want the select component to be displayed as a select list box instead of radio buttons or checkboxes.'},
             'extra.multiple': { type: 'Checkbox', title:'Multiple', help:'Check this option if the user should be allowed to choose multiple values.'},
             'extra.optrand': { type: 'Checkbox', title:'Randomize', help:'Randomizes the order of the options when they are displayed in the form.'},
@@ -255,7 +255,7 @@
             payment_html:'',
           },
           schema: {
-            name: {type: 'Text', title: 'Fieldset Name', validators: ['required']},
+            name: {editorClass:'required', type: 'Text', title: 'Fieldset Name', validators: ['required']},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
             'extra.description': {type: 'Text', title: 'Description'},
             'extra.collapsible': { type: 'Checkbox', title:'Collapsible'},
@@ -298,7 +298,7 @@
           },
           // Edit form schema
           schema: {
-            name: {type: 'Text', title: 'Label Text', validators: ['required']},
+            name: {editorClass:'required', type: 'Text', title: 'Label Text', validators: ['required']},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
              mandatory: { type: 'Checkbox', title:'Mandatory'},
             'extra.description': {type: 'Text', title: 'Description Text'},
@@ -361,12 +361,12 @@
           },
           // Edit form schema
           schema: {
-            name: {type: 'Text', title: 'Label Text', validators: ['required']},
+            name: {editorClass:'required', type: 'Text', title: 'Label Text', validators: ['required']},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
             mandatory: { type: 'Checkbox', title:'Mandatory' },
             value: {type: 'Text', title: 'Default Value', help:'The default value of the field. Accepts any date in any GNU Date Input Format. Strings such as today, +2 months, and Dec 9 2004 are all valid.'},
-            'extra.start_date': {type: 'Text', title: 'Start Date', help: "The earliest date that may be entered into the field. Accepts any date in any GNU Date Input Format"},
-            'extra.end_date': {type: 'Text', title: 'End Date', help:'The earliest date that may be entered into the field. Accepts any date in any GNU Date Input Format' },
+            'extra.start_date': {editorClass:'required', type: 'Text', title: 'Start Date', help: "The earliest date that may be entered into the field. Accepts any date in any GNU Date Input Format"},
+            'extra.end_date': {editorClass:'required', type: 'Text', title: 'End Date', help:'The earliest date that may be entered into the field. Accepts any date in any GNU Date Input Format' },
             'extra.year_textfield': { type: 'Checkbox', title:'Use a textfield for the year', help:'If checked, the generated date field will use a textfield for the year. Otherwise it will use a select list.'},
             'extra.timezone': {type: 'Radio', title: 'Timezone', help:'If using relative dates for a default value (e.g. "today") base the current day on this timezone.', options: {user:'User Timezone', site:'Site Timezone',}},
             'extra.datepicker': { type: 'Checkbox', title:'Enable popup calendar', help:'Enable a JavaScript date picker next to the date field.'},
@@ -403,7 +403,7 @@
           },
           // Edit form schema
           schema: {
-            name: {type: 'Text', title: 'Label Text', validators: ['required']},
+            name: {editorClass:'required', type: 'Text', title: 'Label Text', validators: ['required']},
             value: {type: 'TextArea', title: 'Markup'},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
             'extra.attributes.class': {type: 'Text', title: 'Class'},
@@ -849,6 +849,9 @@
             // Create the blockUI
             App.Handlers.blockUIBuilder(400, formHeight, form, form.model.get('name')); //make the popup window
             $('body .blockMsg #blockUIform').append($('#editForm'));
+            $('#editForm').find('.required').each(function(){
+               $('#editForm label[for="' + this.id + '"]').append(' <span class="form-required" title="This field is required.">*</span>');
+            });
           },
 
           destroy: function(e){
