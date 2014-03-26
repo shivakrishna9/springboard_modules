@@ -275,9 +275,10 @@ function page_wrappers_node_insert($node) {
         'template' => $template,
       ))
       ->execute();
+
+    // Nuke caches so page wrapper is applied to itself by the theme layer.
+    drupal_flush_all_caches();
   }
-  // Nuke caches so page wrapper is applied to itself by the theme layer.
-  drupal_flush_all_caches();
 }
 
 /**
