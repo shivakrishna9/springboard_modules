@@ -104,6 +104,7 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
  */
 function _fundraiser_component_payment_fields_pre_render($element) {
   // Add the id of the outer fieldset to the js settings
+  element_set_attributes($element, array('id'));
   drupal_add_js(array('fundraiserWebform' => array('components' => array('payment_fields' => array('id' => $element['#attributes']['id'])))), 'setting');
   return $element;
 }
