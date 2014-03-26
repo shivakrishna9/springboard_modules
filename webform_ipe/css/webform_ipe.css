@@ -445,14 +445,14 @@ webform-component-fieldset.ui-sortable-helper,
   font-weight: normal;*/
   background-color: rgba(3,113,184,0.8);
   color: #fff;
-  padding: 10px 0;
+  padding: 10px;
   margin: 0;
   font-family: 'Open Sans', sans-serif;
   text-transform: uppercase;
   font-size: 14px;
   font-weight: normal;
-  position: fixed;
-  width: 400px;
+  position: relative;
+  width: auto;
 }
 #blockUIform #editForm form > #editNow,
 #blockUIform #editForm form > fieldset > div {
@@ -566,7 +566,7 @@ webform-component-fieldset.ui-sortable-helper,
   cursor: pointer;
   position: absolute;
   top:10px;
-  right:10px;
+  right:0px;
 }
 .closeUI .fa-times {
   color: #fff;

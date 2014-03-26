@@ -543,7 +543,6 @@
           }
          });
         }
-        App.Handlers.clearValidation();
 
         /*  DEFINE THE VIEWS
          *  Backbone views don't determine anything about your HTML or CSS for you, but
@@ -733,7 +732,6 @@
               else if ($('.editor-on').length > 1  && type != 'fieldset'){
                // buttonTarget.parent().find('span.edit').css({ display:'block', float:'left'})
               }
-              App.Handlers.clearValidation(this.$el);
               var required = Drupal.settings.webform_ipe.required_fields;
               var formKey = this.model.get('form_key');
               if(required.indexOf(formKey) != -1) {
