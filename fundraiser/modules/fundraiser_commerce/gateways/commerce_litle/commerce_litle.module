@@ -232,7 +232,6 @@ function commerce_litle_cc_settings_form($settings = array()) {
     '#title' => 'Run in Sandbox Mode',
     '#default_value' => isset($settings['commerce_litle_settings_sandbox']) ? $settings['commerce_litle_settings_sandbox'] : '',
   );
-
   if (module_exists('commerce_cardonfile')) {
     $form['cardonfile'] = array(
       '#type' => 'checkbox',
@@ -323,7 +322,18 @@ function commerce_litle_echeck_settings_form($settings = array()) {
     '#title' => 'Run in Sandbox Mode',
     '#default_value' => isset($settings['commerce_litle_settings_sandbox']) ? $settings['commerce_litle_settings_sandbox'] : '',
   );
-
+  if (module_exists('fundraiser_sustainers')) {
+    for ($i = 1; $i <= 36; ++$i) {
+      $options[$i] = $i;
+    }
+    $form['commerce_litle_settings_sustainer_series_start_count'] = array(
+      '#type' => 'select',
+      '#title' => t('Initial sustainer series charges.'),
+      '#description' => t('This represents the number of months in advance to create pending charge records when a sustaining donation is recorded.'),
+      '#options' => $options,
+      '#default_value' => isset($settings['commerce_litle_settings_sustainer_series_start_count']) ? $settings['commerce_litle_settings_sustainer_series_start_count'] : 24,
+    );
+  }
   if (module_exists('commerce_cardonfile')) {
     $form['cardonfile'] = array(
       '#type' => 'checkbox',
@@ -1544,4 +1554,20 @@ function commerce_litle_format_cardonfile_remote_id($pane_values, $token) {
   }
   // Fall through for credit card.
   return $token;
+}
+
+/**
+ * Implements hook_fundraiser_sustainers_recurring_success().
+ *
+ * When a recurring donation is processed successfully using the echeck
+ * gateway, add another order to the end of the series.
+ */
+function commerce_litle_fundraiser_sustainers_recurring_success($donation) {
+  if ($donation->gateway['gateway_details']['base'] == 'commerce_litle_echeck') {
+    if (isset($donation->recurring->master_did)) {
+      $last_charge = _fundraiser_sustainers_get_donations_last_charge($donation->recurring->master_did);
+      $next_charge = strtotime('+1 months', $last_charge->next_charge);
+      fundraiser_sustainers_add_order_to_series($donation, $next_charge);
+    }
+  }
 }

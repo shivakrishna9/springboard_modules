@@ -548,7 +548,7 @@ function fundraiser_sustainers_fundraiser_donation_delete($donation) {
  * Helper function, kick off recurring donations for payment. Called on cron usually.
  */
 function fundraiser_sustainers_process_recurring_donations() {
-  // And after all of that is done, provide a hook to allow for modules to respond.
+  // Provide a hook to allow for modules to respond.
   module_invoke_all('fundraiser_donation_recurring');
   $successes = 0;
   $fails = 0;
@@ -585,6 +585,8 @@ function fundraiser_sustainers_process_recurring_donations() {
         // Record the success.
         $successes++;
         $log_record['success'] = TRUE;
+        // Perform any post-processing required by the gateway.
+        module_invoke_all('fundraiser_sustainers_recurring_success', $donation);
       }
       else {
         $donation->result['success'] = FALSE;
@@ -1457,6 +1459,42 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
 }
 
 /**
+ * Add a single record to a sustainer series.
+ *
+ * @param mixed $donation
+ *   Donation object from series.
+ *
+ * @param int $next_charge
+ *   UNIX timestamp representing the date this order should be charged.
+ */
+function fundraiser_sustainers_add_order_to_series($donation, $next_charge) {
+  $sustainer_key = fundraiser_sustainers_get_sustainer_key_value();
+  $new_donation = clone $donation;
+  $new_donation->sid = 0; // Not actually submitted, it's automated, so no sid.
+  // Create the new donation object, but do not process it. Processing doesn't occur till cron.
+  // New donation has all of the old donation information already loaded.
+  fundraiser_donation_create($new_donation);
+  fundraiser_donation_comment($new_donation, 'Sustainer donation scheduled to be charged at @next_charge',
+    array('@next_charge' => format_date($next_charge)));
+  // After this, the donation did and donation data is set.
+  // The new donation object, with new did, needs to be saved to recurring so we can grab it later.
+  $recurring_donation = array(
+    'master_did' => $donation->recurring->master_did,
+    'did' => $new_donation->did,
+    'next_charge' => $next_charge,
+    'sustainer_key' => $sustainer_key,
+  );
+  // Update the recurring table.
+  _fundraiser_sustainers_create_recurring($recurring_donation);
+  // Load the newly created individual donation into salesforce_donation.
+  if (module_exists('salesforce_genmap')) {
+    $sf_donation = fundraiser_donation_get_donation($new_donation->did, TRUE);
+    salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert',
+      $sf_donation->node, $sf_donation->did, $sf_donation, 'donation');
+  }
+}
+
+/**
  * Creates form to cancel donations.
  */
 function fundraiser_sustainers_cancel_form($form, &$form_state, $donation) {
@@ -1596,7 +1634,7 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
           if (isset($info['expire callback'])) {
             $expiration_func = $info['expire callback'];
             if (function_exists($expiration_func)) {
-              $expires = $expiration_func($donation->donation);
+              $expires = $expiration_func($donation->donation, $info);
               if (isset($expires['month']) && isset($expires['year'])) {
                 _fundraiser_sustainers_create_future_orders($donation, $expires['month'], $expires['year']);
               }
@@ -1914,6 +1952,19 @@ function _fundraiser_sustainers_get_donations_next_charge($master_did) {
     'WHERE master_did = :master_did ' .
     'AND next_charge > :now ' .
     'ORDER BY next_charge ASC ' .
+    'LIMIT 0, 1',
+    array(':master_did' => $master_did, ':now' => $now))->fetchObject();
+}
+
+/**
+ * Get last charge date for a donation set.
+ */
+function _fundraiser_sustainers_get_donations_last_charge($master_did) {
+  $now = strtotime('now');
+  return db_query('SELECT * FROM {fundraiser_sustainers} ' .
+    'WHERE master_did = :master_did ' .
+    'AND next_charge > :now ' .
+    'ORDER BY next_charge DESC ' .
     'LIMIT 0, 1',
     array(':master_did' => $master_did, ':now' => $now))->fetchObject();
 }

@@ -10,13 +10,10 @@
  */
 function commerce_litle_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
-    // Create the payment_method array with the commerce gateway
-    // method info name as the key.
-    'payment_method' => array(
-      'commerce_litle_cc' => 'credit',
-      'commerce_litle_echeck' => 'bank account',
-    ),
-    'allow_recurring' => array('credit'),
+    // Create the payment_method array with the commerce gateway method info name as the key
+    'payment_method' => array('commerce_litle_cc' => 'credit', 'commerce_litle_echeck' => 'bank account'),
+    // @todo bank account (echeck) recurring is not yet fully implemented.
+    'allow_recurring' => array('credit', 'bank account'),
     'allow_refund' => array('credit'),
     'form callback' => 'commerce_litle_fundraiser_commerce_submit_form',
     'cleanup callback' => 'commerce_litle_fundraiser_commerce_cleanup',
@@ -61,12 +58,17 @@ function commerce_litle_fundraiser_commerce_cleanup($submission_fields) {
  *
  * Return the user entered expiration dates for this submission.
  */
-function commerce_litle_fundraiser_commerce_expire($submission_fields) {
+function commerce_litle_fundraiser_commerce_expire($submission_fields, $info = NULL) {
 
   if ($submission_fields['payment_method'] == 'bank account') {
-    // Pretend expiration date for sustainers.
-    $exp_timestamp = strtotime('+12 months');
-
+    if (isset($info['gateway_details']['settings']['commerce_litle_settings_sustainer_series_start_count'])) {
+      $exp_month_count = $info['gateway_details']['settings']['commerce_litle_settings_sustainer_series_start_count'];
+      $exp_timestamp = strtotime('+' . $exp_month_count . ' months');
+    }
+    else {
+      // pretend expiration date for sustainers
+      $exp_timestamp = strtotime('+24 months');
+    }
     return array(
       'month' => date('m', $exp_timestamp),
       'year' => date('Y', $exp_timestamp),
