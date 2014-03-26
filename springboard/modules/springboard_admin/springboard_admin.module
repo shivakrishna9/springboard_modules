@@ -1,11 +1,14 @@
 <?php
+/**
+ * @file
+ * Custom admin interface for Springboard.
+ */
 
-include_once('springboard_admin.menu.inc');
+include_once 'springboard_admin.menu.inc';
 
 /**
  * Implements hook_menu().
  */
-
 function springboard_admin_menu() {
   $items = array();
   $items['admin/springboard/templates'] = array(
@@ -21,21 +24,21 @@ function springboard_admin_menu() {
     'access arguments' => array('access springboard dashboard'),
     'page callback' => 'springboard_admin_aggregate_links_page',
     'page arguments' => array('admin/springboard/results'),
-   );
-   $items['admin/springboard/options'] = array(
+  );
+  $items['admin/springboard/options'] = array(
     'title' => 'Options',
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('access springboard dashboard'),
     'page callback' => 'springboard_admin_aggregate_links_page',
     'page arguments' => array('admin/springboard/options'),
-   );
-   $items['admin/springboard/tools'] = array(
+  );
+  $items['admin/springboard/tools'] = array(
     'title' => 'Other Tools',
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('access springboard dashboard'),
     'page callback' => 'springboard_admin_aggregate_links_page',
     'page arguments' => array('admin/springboard/tools'),
-   );
+  );
   return $items;
 }
 
@@ -46,8 +49,8 @@ function springboard_admin_permission() {
   return array(
     'administer springboard theme' => array(
       'title' => t('Administer the Springboard theme'),
-      'description' => t('Administer configurations related to the display of the springboard_backend theme.')
-    )
+      'description' => t('Administer configurations related to the display of the springboard_backend theme.'),
+    ),
   );
 }
 
@@ -57,37 +60,36 @@ function springboard_admin_permission() {
  * Add options to springboard configuration for enabling/disabling the
  * springboard_backend theme.
  */
-
 function springboard_admin_form_springboard_admin_settings_alter(&$form, &$form_state) {
   if (user_access('administer springboard theme')) {
-  $form['admin'] = array(
-    '#type' => 'fieldset',
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-    '#title' => t('Springboard administration settings'),
-    '#description' => t('Configure how you administer Springboard.'),
-    '#weight' => -1,
-  );
-  $form['admin']['springboard_theme_enable'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Enable the Springboard administrative theme.'),
-    '#description' => t('Force the use of the springboard_backend theme on all Springboard-related administrative pages. The administrative theme set at admin/appearence will still be used for other Drupal administrative pages.'),
-    '#default_value' => variable_get('springboard_theme_enable', 1)
-   );
+    $form['admin'] = array(
+      '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#title' => t('Springboard administration settings'),
+      '#description' => t('Configure how you administer Springboard.'),
+      '#weight' => -1,
+    );
+    $form['admin']['springboard_theme_enable'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enable the Springboard administrative theme.'),
+      '#description' => t('Force the use of the springboard_backend theme on all Springboard-related administrative pages. The administrative theme set at admin/appearence will still be used for other Drupal administrative pages.'),
+      '#default_value' => variable_get('springboard_theme_enable', 1),
+    );
 
-   $form['admin']['springboard_drupal_path'] = array(
-     '#type' => 'textfield',
-     '#title' => t('Organization homepage'),
-     '#description' => t("Set the URL to the organization's main website."),
-     '#default_value' => variable_get('springboard_drupal_path', 'http://drupal.org'),
-   );
-   $roles = user_roles(TRUE, 'access springboard dashboard');
-   $form['admin']['springboard_user_experience'] = array(
-     '#type' => 'checkboxes',
-     '#title' => t('Springboard User Experience.'),
-     '#description' => t('Choose which user roles will be given the Springboard User Experience. This includes redirecting to the Dashboard on login and after performing some administration functions.'),
-     '#options' => $roles,
-     '#default_value' => variable_get('springboard_user_experience', array_keys($roles))
+    $form['admin']['springboard_drupal_path'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Organization homepage'),
+      '#description' => t("Set the URL to the organization's main website."),
+      '#default_value' => variable_get('springboard_drupal_path', 'http://drupal.org'),
+    );
+    $roles = user_roles(TRUE, 'access springboard dashboard');
+    $form['admin']['springboard_user_experience'] = array(
+      '#type' => 'checkboxes',
+      '#title' => t('Springboard User Experience.'),
+      '#description' => t('Choose which user roles will be given the Springboard User Experience. This includes redirecting to the Dashboard on login and after performing some administration functions.'),
+      '#options' => $roles,
+      '#default_value' => variable_get('springboard_user_experience', array_keys($roles)),
     );
   }
   $form['#validate'][] = 'springboard_drupal_path_validate';
@@ -95,9 +97,8 @@ function springboard_admin_form_springboard_admin_settings_alter(&$form, &$form_
 }
 
 /**
- * Validation function to check that the submitted URL is valid
+ * Validation function to check that the submitted URL is valid.
  */
-
 function springboard_drupal_path_validate(&$form, &$form_state) {
   if (!valid_url($form_state['values']['springboard_drupal_path'], TRUE)) {
     form_error($form['admin']['springboard_drupal_path'], 'Please submit a valid URL, including "http://"');
@@ -105,8 +106,10 @@ function springboard_drupal_path_validate(&$form, &$form_state) {
 }
 
 /**
+ * Submit function to update the org admin link.
+ *
  * Submit function to update the configurable link to the organization website
- * in the springboard_admin menu
+ * in the springboard_admin menu.
  *
  * We do this so that users who are allowed to administer Springboard can change
  * this menu item but not have control over menus in general.
@@ -127,7 +130,7 @@ function springboard_drupal_path_submit(&$form, &$form_state) {
 /**
  * Implements hook_user_login().
  *
- * redirects users to the Springboard Dashboard based on user role.
+ * Redirects users to the Springboard Dashboard based on user role.
  */
 function springboard_admin_user_login(&$edit, $account) {
   if (!isset($_POST['form_id']) || $_POST['form_id'] != 'user_pass_reset') {
@@ -139,7 +142,7 @@ function springboard_admin_user_login(&$edit, $account) {
       // If any role matches, change the redirect and end the function.
       if ($assigned_role && in_array($rid, $redirect_roles)) {
         $edit['redirect'] = 'admin/springboard';
-      return;
+        return;
       }
     }
   }
@@ -151,7 +154,6 @@ function springboard_admin_user_login(&$edit, $account) {
  * Force the use of springboard_backend theme on Springboard-related
  * administration pages.
  */
-
 function springboard_admin_custom_theme() {
   // If the springboard_backend theme is disabled, do nothing.
   if (variable_get('springboard_theme_enable', 1) == 0) {
@@ -163,12 +165,12 @@ function springboard_admin_custom_theme() {
     return;
   }
 
-  // Build an array of pages that the admin theme applies to
+  // Build an array of pages that the admin theme applies to.
   $sb_menu = springboard_admin_admin_menu_items();
   $paths = array();
   foreach ($sb_menu as $item) {
     $paths[] = $item['link_path'];
-    // as with the installation, if we ever need more than 2 levels of
+    // As with the installation, if we ever need more than 2 levels of
     // navigation, we will need real recursion here.
     foreach ($item['_children'] as $child) {
       $paths[] = $child['link_path'];
@@ -179,24 +181,23 @@ function springboard_admin_custom_theme() {
     return 'springboard_backend';
   }
   // Adding user profile pages to use the admin theme
-  // @TODO this should be a SB setting to include paths
-  else if (preg_match("/^user\/[0-9]+/",$_GET['q']) || preg_match("/^user\/[0-9]+\/[a-z]+/",$_GET['q'])) {
+  // @TODO This should be a SB setting to include paths.
+  elseif (preg_match("/^user\/[0-9]+/", $_GET['q']) || preg_match("/^user\/[0-9]+\/[a-z]+/", $_GET['q'])) {
     return 'springboard_backend';
   }
 }
 
 /**
- * Callback function.
+ * Access callback for Springboard admin pages.
+ *
  * Performs page access checks for Springboard administrative pages.
  *
- * @param $path
- * The page path.
+ * @param string $path
+ *   The page path.
  *
- * @return
- * Boolean to indicate if access is allowed.
- *
+ * @return bool
+ *   Boolean to indicate if access is allowed.
  */
-
 function springboard_admin_menu_access($path) {
   switch ($path) {
     case 'admin/springboard/templates':
@@ -206,22 +207,22 @@ function springboard_admin_menu_access($path) {
       else {
         return FALSE;
       }
-    break;
+      break;
   }
 }
 
 /**
- * Callback function.
+ * Page callback for the "Templates" admin page.
+ *
  * Renders page content for the "Templates" administrative page.
  *
- * @return
- * HTML output for the page.
+ * @return string
+ *   HTML output for the page.
  */
-
 function springboard_admin_template_page() {
   $output = '';
 
-  // load Page Templates view
+  // Load Page Templates view.
   $view = views_get_view('sbv_page_templates');
   $view->set_display('block_1');
   $view->set_arguments(array());
@@ -232,7 +233,7 @@ function springboard_admin_template_page() {
     $output .= $view->render();
   }
 
-  // load Email Templates view
+  // Load Email Templates view.
   $view = views_get_view('sbv_email_templates');
   $view->set_display('block_1');
   $view->set_arguments(array());
@@ -247,15 +248,13 @@ function springboard_admin_template_page() {
 }
 
 /**
- * Callback function.
- * Renders page content for admin pages that are aggregates of child page links.
+ * Page callback for admin pages that are aggregates of child page links.
  *
- * @return
- * HTML output for the page.
+ * @return string
+ *   HTML output for the page.
  */
-
 function springboard_admin_aggregate_links_page($path) {
-  // load the springboard admin menu so we know what links to render
+  // Load the springboard admin menu so we know what links to render.
   $menu = springboard_admin_admin_menu_items();
   $links = array();
   foreach ($menu[$path]['_children'] as $item) {
@@ -270,7 +269,13 @@ function springboard_admin_aggregate_links_page($path) {
     );
   }
 
-  return theme_links(array('links' => $links, 'attributes' => array('class' => array('aggregate-links')), 'heading' => ''));
+  return theme_links(array(
+    'links' => $links,
+    'attributes' => array(
+      'class' => array('aggregate-links'),
+    ),
+    'heading' => '',
+  ));
 }
 
 /**
@@ -280,27 +285,28 @@ function springboard_admin_aggregate_links_page($path) {
  * confirmation form.
  */
 function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
-  if($form_id == 'node_delete_confirm') {
+  if ($form_id == 'node_delete_confirm') {
     $form['actions']['delete']['#submit'][] = 'springboard_admin_node_delete';
   }
 }
 
 /**
- * Submit handler for the "delete" action on the node delete confirmation form.
+ * Sumbit handler for the "delete" action on the node delete confirmation form.
+ *
  * Redirects configured user roles to the Springboard Dashboard after a node is
  * deleted.
  */
-
 function springboard_admin_node_delete($form) {
-    global $user;
-    $redirect_roles = variable_get('springboard_user_experience', array());
-    // Check if the user has ones of the roles that gets redirected to the Sprinboard dashboard
-    foreach($user->roles as $rid => $assigned_role) {
-      // If any role matches, change the redirect.
-      if($assigned_role && in_array($rid, $redirect_roles)) {
-        $form_state['redirect'] = 'admin/springboard';
-        $_GET['destination'] = url('admin/springboard');
-        return;
-      }
+  global $user;
+  $redirect_roles = variable_get('springboard_user_experience', array());
+  // Check if the user has one of the roles that gets redirected to
+  // the Sprinboard dashboard.
+  foreach ($user->roles as $rid => $assigned_role) {
+    // If any role matches, change the redirect.
+    if ($assigned_role && in_array($rid, $redirect_roles)) {
+      $form_state['redirect'] = 'admin/springboard';
+      $_GET['destination'] = url('admin/springboard');
+      return;
     }
+  }
 }
