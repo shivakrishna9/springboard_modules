@@ -217,10 +217,18 @@ function _fundraiser_sustainers_user_has_recurring_donations($user) {
  */
 function fundraiser_sustainers_standalone_cron() {
   // Process recurring donations.
-  if (fundraiser_sustainers_processor_key_match()) {
+  $process_recurring = TRUE;
+  $processor_key_match = fundraiser_sustainers_processor_key_match();
+  drupal_alter('fundraiser_sustainers_process_recurring', $process_recurring);
+
+  if ($process_recurring && $processor_key_match) {
     fundraiser_sustainers_process_recurring_donations();
   }
-  else {
+  if (!$process_recurring) {
+    $message = t('Standalone sustainer processing has been disabled by another module.');
+    drupal_set_message($message);
+  }
+  if (!$processor_key_match) {
     $message = t('The fundraiser sustainer key has not been configured correctly. Recurring donations will not be processed.');
     drupal_set_message($message, 'warning');
     watchdog('fundraiser_cron', $message, NULL, WATCHDOG_CRITICAL);
@@ -549,67 +557,77 @@ function fundraiser_sustainers_fundraiser_donation_delete($donation) {
 function fundraiser_sustainers_process_recurring_donations() {
   // And after all of that is done, provide a hook to allow for modules to respond.
   module_invoke_all('fundraiser_donation_recurring');
-  $successes = 0;
-  $fails = 0;
+  $log = array(
+    'successes' => 0,
+    'fails' => 0,
+  );
   $donations = _fundraiser_sustainers_cron_get_recurring();
   $sustainer_key = fundraiser_sustainers_get_sustainer_key_value();
 
   // Loop over the found orders
   foreach ($donations as $recurring) {
-    if ($sustainer_key == $recurring->sustainer_key) {
-      // Prepare a log record.
-      $log_record = array(
-        'did' => $recurring->did,
-        'gateway' => $recurring->gateway,
-        'date_processed' => time(),
-        'lock_id' => $recurring->lock_id,
-      );
+    fundraiser_sustainers_process_single_recurring_donation($log, $recurring, $sustainer_key);
 
-      // Get the donation information that we need.
-      $donation = fundraiser_donation_get_donation($recurring->did);
-
-      // Set the reference charge flag to TRUE
-      $donation->reference_charge = TRUE;
-
-      // Then go through each one of these to charge.
-      // Since we already created the donation (and saved any CC info at that time).
-      // All we need to do is process it and respond afterwards as needed.
-      fundraiser_donation_process($donation);
-      if (!isset($donation->result['message'])) {
-        $donation->result['message'] = '';
-      }
-      // The results should be at $donation->result, ready to respond to the aftermath.
-      if (isset($donation->result['success']) && $donation->result['success']) {
-        fundraiser_donation_success($donation);
-        // Record the success.
-        $successes++;
-        $log_record['success'] = TRUE;
-      }
-      else {
-        $donation->result['success'] = FALSE;
-        $log_record['success'] = FALSE;
-        fundraiser_donation_decline($donation);
-        // Record the fail.
-        $fails++;
-      }
-
-      // Write the log record.
-      drupal_write_record('fundraiser_sustainers_log', $log_record);
-    }
-    else {
-      // TODO: Unlock the sustainer record. Currently the lock has not been ported from D6.
-      // Log the bad sustainer key check.
-      watchdog('fundraiser_sustainers', 'Sustainer order id !did not processed because of sustainer key mismatch. ' .
-      'Key file value (!key_file) did not match record value (!record_value).',
-      array('!did' => $recurring->did, '!key_file' => $sustainer_key, '!record_value' => $recurring->sustainer_key), WATCHDOG_CRITICAL);
-    } // End sustainer key match for individual donation.
   }
-  if ($successes > 0 || $fails > 0) {
+  if ($log['successes'] > 0 || $log['fails'] > 0) {
     watchdog('fundraiser_sustainers', '!successes recurring donations processed successfully; !fails failed.',
-      array('!successes' => $successes, '!fails' => $fails));
+      array('!successes' => $log['successes'], '!fails' => $log['fails']));
   }
   // And after all of that is done, provide a hook to allow for modules to respond.
   module_invoke_all('fundraiser_donation_post_recurring');
+}
+
+/**
+ * Process an individual sustainer record.
+ */
+function fundraiser_sustainers_process_single_recurring_donation(&$log, $recurring, $sustainer_key) {
+  if ($sustainer_key == $recurring->sustainer_key) {
+    // Prepare a log record.
+    $log_record = array(
+      'did' => $recurring->did,
+      'gateway' => $recurring->gateway,
+      'date_processed' => time(),
+      'lock_id' => $recurring->lock_id,
+    );
+
+    // Get the donation information that we need.
+    $donation = fundraiser_donation_get_donation($recurring->did);
+
+    // Set the reference charge flag to TRUE
+    $donation->reference_charge = TRUE;
+
+    // Then go through each one of these to charge.
+    // Since we already created the donation (and saved any CC info at that time).
+    // All we need to do is process it and respond afterwards as needed.
+    fundraiser_donation_process($donation);
+    if (!isset($donation->result['message'])) {
+      $donation->result['message'] = '';
+    }
+    // The results should be at $donation->result, ready to respond to the aftermath.
+    if (isset($donation->result['success']) && $donation->result['success']) {
+      fundraiser_donation_success($donation);
+      // Record the success.
+      $log['successes']++;
+      $log_record['success'] = TRUE;
+    }
+    else {
+      $donation->result['success'] = FALSE;
+      $log_record['success'] = FALSE;
+      fundraiser_donation_decline($donation);
+      // Record the fail.
+      $log['fails']++;
+    }
+
+    // Write the log record.
+    drupal_write_record('fundraiser_sustainers_log', $log_record);
+  }
+  else {
+    // TODO: Unlock the sustainer record. Currently the lock has not been ported from D6.
+    // Log the bad sustainer key check.
+    watchdog('fundraiser_sustainers', 'Sustainer order id !did not processed because of sustainer key mismatch. ' .
+      'Key file value (!key_file) did not match record value (!record_value).',
+      array('!did' => $recurring->did, '!key_file' => $sustainer_key, '!record_value' => $recurring->sustainer_key), WATCHDOG_CRITICAL);
+  }
 }
 
 /**
@@ -1416,7 +1434,15 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
       unset($new_donation->reference_charge);
 
       fundraiser_donation_create($new_donation);
-      $next_charge = strtotime('+ ' . $processed_months . ' months', $start);
+      $next_charge = strtotime('+ ' . $processed_months . ' months');
+
+      $context = array(
+        'master_did' => $donation->did,
+        'did' => $new_donation->did,
+      );
+      // Allow other modules to adjust next_charge as needed.
+      drupal_alter('fundraiser_sustainers_recurring_next_charge', $next_charge, $context);
+
       fundraiser_donation_comment($new_donation, 'Sustainer donation scheduled to be charged at @next_charge',
         array('@next_charge' => format_date($next_charge)));
       // After this, the donation did and donation data is set.
