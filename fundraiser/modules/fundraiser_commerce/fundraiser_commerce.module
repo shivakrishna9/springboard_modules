@@ -1945,43 +1945,53 @@ function fundraiser_commerce_commerce_paypal_ipn_process($order, $payment_method
 }
 
 /**
- * Add values to the pane_values array before they go to the commerce submit handler
+ * Add values to the pane_values array before it goes to the commerce submit handler.
  *
- * @param $pane_values Array
+ * @param array $pane_values
  *    Values to be sent to a commerce payment processor, passed by reference
- * @return nothing
+ * @param object $donation
+ *   The donation to use to get the cardonfile data.
+ * @param string $form_key
+ *   The pane values form key to store cardonfile data under.
+ *   Should be fine with 'credit_card' most of the time.  Mainly used for
+ *   echeck.
+ *
+ * @return void
  */
-function _fundraiser_commerce_submit_handler_pane_values(&$pane_values, $donation) {
-  // If card on file is enabled check if we should create a new profile
+function _fundraiser_commerce_submit_handler_pane_values(&$pane_values, $donation, $form_key = 'credit_card') {
+  // If card on file is enabled check if we should create a new profile.
   if (module_exists('commerce_cardonfile')) {
-    // Load any existing card data
+    // Load any existing card data.
     $card = _fundraiser_commerce_donation_cardonfile_card($donation);
 
-    // If this is not a reference charge be sure to store the card data and set the new flag
+    // If this is not a reference charge be sure to store the card data and
+    // set the new flag.
     if ($donation->reference_charge === FALSE) {
       // If there is not an existing card then set the store flag to TRUE
-      // This ensures card on file integrations create new profiles only for new cards
+      // This ensures card on file integrations create new profiles only
+      // for new cards.
       if (empty($card)) {
-        $pane_values['credit_card']['cardonfile_store'] = TRUE;
+        $pane_values[$form_key]['cardonfile_store'] = TRUE;
       }
       else {
-        $pane_values['credit_card']['cardonfile_store'] = FALSE;
+        $pane_values[$form_key]['cardonfile_store'] = FALSE;
 
         // Also set this value on the donation for saving later
         $donation->data['cardonfile'] = $card->card_id;
       }
 
-      // To avoid using a stored CIM to charge set this value to new even for existing cards
+      // To avoid using a stored CIM to charge set this value to new even for
+      // existing cards.
       $pane_values['cardonfile'] = 'new';
     }
-    // For reference charges add the cardonfile id
+    // For reference charges add the cardonfile id.
     elseif ($donation->reference_charge == TRUE) {
-      // Load the card on file card card data
+      // Load the card on file card card data.
       if (!empty($card)) {
         $pane_values['cardonfile'] = $card->card_id;
       }
       else {
-        // Log the missing card data
+        // Log the missing card data.
         watchdog(
           'fundraiser',
           'A reference charge was attempted on donation @id but no stored card data was found.',
@@ -1991,26 +2001,31 @@ function _fundraiser_commerce_submit_handler_pane_values(&$pane_values, $donatio
       }
     }
   }
-  // Allow other modules to alter the pane values
+  // Allow other modules to alter the pane values.
   drupal_alter('fundraiser_commerce_submit_handler_pane_values', $pane_values, $donation);
 }
 
 /**
- * Perform some standard functions after a commerce submit form has been processed
+ * Perform standard functions after a commerce submit form has been processed.
  *
- * @param $success Boolean
- *    TRUE or FALSE
- * @param $method_instance Array
- *    Details on the gateway
- * @param $pane_values Array
- *    Values passed to the commerce submit handler
- * @param $donation Object
- *    Fundraiser donation object
- * @return nothing
+ * Adds the cardonfile id to the donation object.
+ *
+ * @param bool $success
+ *   Whether the order was successful.
+ * @param array $method_instance
+ *   Details on the gateway.
+ * @param array $pane_values
+ *   Values passed to the commerce submit handler.
+ * @param object $donation
+ *   Fundraiser donation object.
+ * @param string $form_key
+ *   The form key under pane values where the cardonfile_store key exists.
+ *
+ * @return void
  */
-function _fundraiser_commerce_charge_submit_form_process($success, $method_instance, $pane_values, $donation) {
+function _fundraiser_commerce_charge_submit_form_process($success, $method_instance, $pane_values, $donation, $form_key = 'credit_card') {
   // If this charge resulted in a new card on file save that to the donation
-  if ($success && module_exists('commerce_cardonfile') && !empty($pane_values['credit_card']['cardonfile_store'])) {
+  if ($success && module_exists('commerce_cardonfile') && !empty($pane_values[$form_key]['cardonfile_store'])) {
     // Load up the cardonfile record for this donation and save it
     $card = _fundraiser_commerce_donation_cardonfile_card($donation);
     $donation->data['cardonfile'] = $card->card_id;
@@ -2047,7 +2062,7 @@ function _fundraiser_commerce_donation_cardonfile_card($donation, $active = TRUE
     return FALSE;
   }
 
-  return _fundraiser_commerce_cardonfile_match($cardonfile_fields, $active = TRUE);
+  return _fundraiser_commerce_cardonfile_match($cardonfile_fields, $active);
 }
 
 /**
