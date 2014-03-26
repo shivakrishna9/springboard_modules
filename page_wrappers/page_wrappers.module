@@ -113,7 +113,7 @@ function page_wrappers_preprocess_page(&$vars) {
 
       // if there is theme CSS allowed, add those files.
       if ($theme_css = _page_wrappers_get_theme_css($wrapper_node)) {
-        foreach($theme_css as $stylesheet) {
+        foreach ($theme_css as $stylesheet) {
           drupal_add_css($stylesheet['path'], $stylesheet['options']);
         }
       }
@@ -171,8 +171,8 @@ function page_wrappers_css_alter(&$css) {
     $css_files = field_get_items('node', $wrapper_node, 'page_wrappers_css');
     $keep = array();
     // If a stylesheet is from an allowed theme, don't remove it.
-    if($theme_css = _page_wrappers_get_theme_css($wrapper_node)) {
-      foreach($theme_css as $css_file) {
+    if ($theme_css = _page_wrappers_get_theme_css($wrapper_node)) {
+      foreach ($theme_css as $css_file) {
         $keep[] = $css_file['path'];
       }
     }
@@ -932,7 +932,7 @@ function _page_wrappers_tokens($content) {
     '<?php print $scripts; ?>',
   );
   $content = str_replace($tokens, $replaces, $content);
-  
+
   // Then look for possible Token tokens.
   $candidates = token_scan($content);
   foreach ($candidates as $type => $tokens) {
@@ -942,7 +942,7 @@ function _page_wrappers_tokens($content) {
       $content = str_replace($token, $replacement, $content);
     }
   }
-  
+
   return $content;
 }
 
@@ -1186,10 +1186,10 @@ function _page_wrappers_get_theme_css($wrapper_node) {
     $css = array();
     $allowed_themes = field_get_items('node', $wrapper_node, 'page_wrappers_theme_css');
     $themes_list = list_themes();
-      foreach($allowed_themes as $theme) {
+      foreach ($allowed_themes as $theme) {
         $style_sheets = $themes_list[$theme['value']]->stylesheets;
-        foreach($style_sheets as $media => $sheets) {
-          foreach($sheets as $uri) {
+        foreach ($style_sheets as $media => $sheets) {
+          foreach ($sheets as $uri) {
             $css[] = array('path' => $uri, 'options' => array('media' => $media));
           }
         }

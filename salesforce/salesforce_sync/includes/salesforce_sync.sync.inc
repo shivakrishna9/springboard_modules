@@ -403,8 +403,8 @@ class SalesforceSync {
       if (isset($sobject->tokens_replaced) && $sobject->tokens_replaced == FALSE) {
         // Fail the item.
         $this->failItem($batch['items'][$index], SALESFORCE_SYNC_ITEM_FAIL_TOKEN);
-        // Unset the object, and the item. Reset array indicies in each array to prevent
-        // Salesforce from throwing SOAP error.
+        // Unset the object, and the item. Reset array indicies in each array
+        // to prevent Salesforce from throwing SOAP error.
         unset($batch['sobjects'][$index]);
         $batch['sobjects'] = array_values($batch['sobjects']);
         unset($batch['items'][$index]);

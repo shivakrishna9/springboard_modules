@@ -31,6 +31,7 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
       'salesforce_sync',
       'salesforce_soap',
       'salesforce_queue',
+      'salesforce_log',
     ));
     parent::setUp($modules);
 
@@ -52,6 +53,74 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
     node_delete($this->webform1->nid);
 
     parent::tearDown();
+  }
+
+  /**
+   * Tests the VBO refresh item action for webform submissions.
+   */
+  public function testVBOItemRefresh() {
+    $edit = array(
+      'submitted[first_name]' => 'ExampleFirstName',
+      'submitted[last_name]' => 'ExampleLastName',
+      'submitted[email]' => 'webform2@email.com',
+    );
+
+    // Create a new submission.  The webform2 map has already been configured
+    // with a dedupe field so this should end up queued as an UPSERT.
+    $this->drupalPost($this->webformPath('submission', $this->webform2->nid), $edit, 'Submit');
+    $this->assertText('your submission has been received', 'There was not an obvious error submitting UPSERT.');
+
+    // Pull the item out and make sure it matches expectations.
+    $item = $this->fetchQueueItem();
+
+    $this->assertEqual($item['sobject']->fields['LastName'], 'ExampleLastName', 'Contact has a last name.');
+
+    // Much with the object to simulate a failure.
+    $item['sobject']->fields['FirstName'] = 'FirstNameChanged';
+    $item['sobject']->fields['LastName'] = '';
+    $item['sobject'] = json_encode($item['sobject']);
+    drupal_write_record('salesforce_queue', $item, array('item_id'));
+
+    // Process this queue item.
+    $this->salesforceConnect();
+    $processor = salesforce_queue_load_processor();
+    $processor->process();
+
+    // Grab the item again.
+    $item = $this->fetchQueueItem();
+
+    // Assert the item did fail.
+    $this->assertEqual($item['queue'], 'retry', 'Contact failed to export and is now in retry queue.');
+
+    // Assert item still has no last name.
+    $this->assertEqual($item['sobject']->fields['LastName'], '', 'Contact has no last name.');
+    $this->assertEqual($item['sobject']->fields['FirstName'], 'FirstNameChanged', 'Contact first name still altered.');
+
+    // Create and log in a user that has access to the queue log report.
+    $this->privileged_user = $this->drupalCreateUser(array(
+      'view salesforce batch logs',
+      ));
+    $this->drupalLogin($this->privileged_user);
+    $this->drupalGet('admin/reports/salesforce/queue');
+
+    $this->assertNoOptionSelected('edit-operation', 'action::salesforce_queue_salesforce_queue_item_refresh_item_action', 'Refresh VBO action exists but is not selected.');
+
+    $edit = array(
+      'operation' => 'action::salesforce_queue_salesforce_queue_item_refresh_item_action',
+      'views_bulk_operations[0]' => '1',
+    );
+    $this->drupalPost('admin/reports/salesforce/queue', $edit, 'Execute');
+    $this->drupalPost(NULL, NULL, 'Confirm');
+
+    $this->assertText('Performed Refresh item on 1 item.', 'The text "Performed Refresh item on 1 item." appears on the queue report page.');
+
+    // Fetch the item one last ime.
+    $item = $this->fetchQueueItem();
+
+    // Assert the item did fail.
+    $this->assertEqual($item['queue'], 'new', 'Contact moved back to new queue.');
+    $this->assertEqual($item['sobject']->fields['LastName'], 'ExampleLastName', 'Last name reverted to original value.');
+    $this->assertEqual($item['sobject']->fields['FirstName'], 'ExampleFirstName', 'First name reverted to original value.');
   }
 
   /**
@@ -192,6 +261,8 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
   }
 
   /**
+   * Test that a requeued item create request is converted to an update request.
+   *
    * Test to ensure that when an exported item is re-added to the Salesforce
    * Queue as a CREATE operation that it gets correctly converted to an
    * UPDATE to prevent creating a duplicate record in Salesforce.
@@ -213,9 +284,9 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
     $processor = salesforce_queue_load_processor();
     $processor->process();
 
-    // Requeue the item as a CREATE and make sure it's operation is switched to UPDATE
-    // because it has already been exported and a record exists in the sync_map
-    // table.
+    // Requeue the item as a CREATE and make sure it's operation is switched to
+    // UPDATE because it has already been exported and a record exists in the
+    // sync_map table.
     module_load_include('inc', 'webform', 'includes/webform.submissions');
     $submission = webform_get_submission($this->webform1->nid, 1);
 
@@ -431,13 +502,11 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
    * Helper to delete a queue item.
    */
   public function deleteQueueItem($item) {
-    if (empty($item)) {
-      return;
+    if (!empty($item)) {
+      db_delete('salesforce_queue')
+      ->condition('item_id', $item['item_id'])
+      ->execute();
     }
-    db_delete('salesforce_queue')
-    ->condition('item_id', $item['item_id'])
-    ->execute();
-    return;
   }
 
   /**

@@ -1,7 +1,8 @@
 <?php
 
 /**
- * @file chaos tools hooks.
+ * @file
+ * Chaos tools hooks.
  */
 
 /**
@@ -20,6 +21,5 @@ function sb_social_ctools_plugin_type() {
   $plugins['social_networks'] = array(
     'load themes' => TRUE,
   );
-
   return $plugins;
 }

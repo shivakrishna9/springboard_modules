@@ -12,7 +12,7 @@ include_once ('springboard_admin.menu.inc');
 
 function springboard_admin_install() {
   $themes = array_keys(list_themes());
-  if(in_array('springboard_backend',$themes)) {
+  if (in_array('springboard_backend', $themes)) {
     theme_enable(array('springboard_backend'));
   }
   // Set the weight of springboard_admin very high so our theme switch rules

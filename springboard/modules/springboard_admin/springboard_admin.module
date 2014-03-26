@@ -99,7 +99,7 @@ function springboard_admin_form_springboard_admin_settings_alter(&$form, &$form_
  */
 
 function springboard_drupal_path_validate(&$form, &$form_state) {
-  if(!valid_url($form_state['values']['springboard_drupal_path'], TRUE)) {
+  if (!valid_url($form_state['values']['springboard_drupal_path'], TRUE)) {
     form_error($form['admin']['springboard_drupal_path'], 'Please submit a valid URL, including "http://"');
   }
 }
@@ -112,7 +112,7 @@ function springboard_drupal_path_validate(&$form, &$form_state) {
  * this menu item but not have control over menus in general.
  */
 function springboard_drupal_path_submit(&$form, &$form_state) {
-  if($form['admin']['springboard_drupal_path']['#default_value'] != $form_state['values']['springboard_drupal_path']) {
+  if ($form['admin']['springboard_drupal_path']['#default_value'] != $form_state['values']['springboard_drupal_path']) {
     $update_menu = db_update('menu_links')
       ->fields(array(
         'link_path' => $form_state['values']['springboard_drupal_path'],
@@ -133,10 +133,11 @@ function springboard_admin_user_login(&$edit, $account) {
   if (!isset($_POST['form_id']) || $_POST['form_id'] != 'user_pass_reset') {
     $available_roles = user_roles(TRUE, 'access springboard dashboard');
     $redirect_roles = variable_get('springboard_user_experience', array_keys($available_roles));
-    // Check if the user has ones of the roles that gets redirected to the Sprinboard dashboard
-    foreach($account->roles as $rid => $assigned_role) {
+    // Check if the user has ones of the roles that gets redirected
+    // to the Sprinboard dashboard.
+    foreach ($account->roles as $rid => $assigned_role) {
       // If any role matches, change the redirect and end the function.
-      if($assigned_role && in_array($rid, $redirect_roles)) {
+      if ($assigned_role && in_array($rid, $redirect_roles)) {
         $edit['redirect'] = 'admin/springboard';
       return;
       }
@@ -226,7 +227,7 @@ function springboard_admin_template_page() {
   $view->set_arguments(array());
   $view->pre_execute();
   $view->execute();
-  if($view && $view->access('block_1') && !empty($view->result)) {
+  if ($view && $view->access('block_1') && !empty($view->result)) {
     $output .= '<h2>' . $view->get_title('block_1') . '</h2>';
     $output .= $view->render();
   }
@@ -237,7 +238,7 @@ function springboard_admin_template_page() {
   $view->set_arguments(array());
   $view->pre_execute();
   $view->execute();
-  if($view && $view->access('block_1') && !empty($view->result)) {
+  if ($view && $view->access('block_1') && !empty($view->result)) {
     $output .= '<h2>' . $view->get_title('block_1') . '</h2>';
     $output .= $view->render();
   }
@@ -259,7 +260,7 @@ function springboard_admin_aggregate_links_page($path) {
   $links = array();
   foreach ($menu[$path]['_children'] as $item) {
     $options = array();
-    if(isset($item['external'])) {
+    if (isset($item['external'])) {
       $options['external'] = $item['external'];
     }
     $links[] = array(
@@ -274,8 +275,8 @@ function springboard_admin_aggregate_links_page($path) {
 
 /**
  * Implements hook_form_alter().
- * 
- * Add addition submit function for the "delete" action on the node delete 
+ *
+ * Add addition submit function for the "delete" action on the node delete
  * confirmation form.
  */
 function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
@@ -286,7 +287,7 @@ function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
 
 /**
  * Submit handler for the "delete" action on the node delete confirmation form.
- * Redirects configured user roles to the Springboard Dashboard after a node is 
+ * Redirects configured user roles to the Springboard Dashboard after a node is
  * deleted.
  */
 
@@ -296,10 +297,10 @@ function springboard_admin_node_delete($form) {
     // Check if the user has ones of the roles that gets redirected to the Sprinboard dashboard
     foreach($user->roles as $rid => $assigned_role) {
       // If any role matches, change the redirect.
-      if($assigned_role && in_array($rid, $redirect_roles)) { 
+      if($assigned_role && in_array($rid, $redirect_roles)) {
         $form_state['redirect'] = 'admin/springboard';
         $_GET['destination'] = url('admin/springboard');
         return;
-      } 
+      }
     }
 }
