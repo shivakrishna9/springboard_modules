@@ -90,7 +90,12 @@ function salesforce_donation_settings($form, &$form_state) {
   $form += salesforce_genmap_map_form($form, $form_state, $node, 'salesforce_donation');
   $form['salesforce_object_info']['#description'] = t('Provide a default map for Salesforce donations.');
   // Swap out the afterbuild function to avoid errs from failed include file.
-  $form['#after_build'] = array_diff($form['#after_build'], array('salesforce_genmap_map_form_after_build'));
+  if (isset($form['#after_build']) && is_array($form['#after_build'])) {
+    $form['#after_build'] = array_diff($form['#after_build'], array('salesforce_genmap_map_form_after_build'));
+  }
+  else {
+    $form['#after_build'] = array();
+  }
   $form['#after_build'][] = 'salesforce_donation_map_form_after_build';
   return $form;
 }
@@ -418,10 +423,10 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
       }
       $fields[$sf_field] = t('Donation - !first !last (!date)',
         array(
-        '!first' => $donation->donation['first_name'],
-        '!last' => $donation->donation['last_name'],
-        '!date' => gmdate('Y-m-d H:i:s\Z', $date),
-      ));
+          '!first' => $donation->donation['first_name'],
+          '!last' => $donation->donation['last_name'],
+          '!date' => gmdate('Y-m-d H:i:s\Z', $date),
+        ));
     }
   }
 
