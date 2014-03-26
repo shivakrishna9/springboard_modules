@@ -529,6 +529,22 @@
           return trimmed[0].innerHTML;
         }
 
+        App.Handlers.clearValidation = function () {
+          var formItems = $("input, select, textarea" );
+          formItems.on( "blur", function() {
+            var menuOpen = $('.accordion-header:not(".closed")','#admin-bar').length;
+            if($('body').hasClass('editor-on') || $('body').hasClass('unsaved-ipe') || menuOpen > 0) {
+              $(formItems).each(function() {
+               $(this).removeClass('valid');
+               $(this).next('label.error').remove();
+               $(this).parents('.success').removeClass('success');
+               $(this).parents('.error').removeClass('error');
+            }); 
+          }
+         });
+        }
+        App.Handlers.clearValidation();
+
         /*  DEFINE THE VIEWS
          *  Backbone views don't determine anything about your HTML or CSS for you, but
          *  can be used with any JavaScript templating library. The general idea
@@ -656,7 +672,6 @@
             if($('span.edit').length > 1) {
               $('span.edit').remove();
             }
-            $('label.error').hide();
             //append the edit and delete buttons
             var type = this.model.get('type');
             switch (type) {
@@ -718,6 +733,7 @@
               else if ($('.editor-on').length > 1  && type != 'fieldset'){
                // buttonTarget.parent().find('span.edit').css({ display:'block', float:'left'})
               }
+              App.Handlers.clearValidation(this.$el);
               var required = Drupal.settings.webform_ipe.required_fields;
               var formKey = this.model.get('form_key');
               if(required.indexOf(formKey) != -1) {
@@ -1841,6 +1857,7 @@
         }
 
         App.Handlers.addSortClasses = function() {
+          App.Handlers.clearValidation();
           $('.webform-component-fieldset, div.fieldset.form-layouts, div.fieldset.sidebar').not('[id$="payment-fields"]').addClass('webform-ipe-container');
           $('.webform-component-fieldset, div.fieldset.form-layouts, div.fieldset.sidebar, body').addClass('editor-on');
           $('.webform-component-fieldset  div.control-group, div.fieldset div.control-group').not('.fundraiser-payment-fields div.control-group').addClass('sortable');
