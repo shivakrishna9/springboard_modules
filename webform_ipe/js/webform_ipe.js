@@ -14,6 +14,7 @@
           Templates: {},
           Handlers: {},
           Mixins: {},
+          Vars: {},
           Events: _.extend({}, Backbone.Events) //add the standard backbone event types to window.App  - http://backbonejs.org/#Events
         };
 
@@ -1563,30 +1564,39 @@
         } else if ($('body .container .webform-client-form')[0]) {
           $('body .container .webform-client-form').prepend(_.template($('#adminBar').html()));
         }
-
+        $('.accordion-header','#admin-bar').each(function(i){
+          App.Vars['accordion-'+i] = false;
+        });
         /*
          * Admin bar open/close of accordion menus
          */
         $('.accordion-header','#admin-bar').click(function(e){
+          var index = $(this).closest('.accordion').index();
+          if (App.Vars['accordion-'+index] == true) return;
+          App.Vars['accordion-'+index] = true;
           e.preventDefault();
           if ($(this).hasClass('closed')) {
             $(this).removeClass('closed');
             $(this).siblings('.accordion-options').animate({
               height: 'toggle'
-            }, 400);
+            }, 400,'swing',function(){ App.Vars['accordion-'+index] = false; });
           } else {
             $(this).addClass('closed');
             $(this).siblings('.accordion-options').animate({
               height: 'toggle'
-            }, 400);
+            }, 400, 'swing',function(){ App.Vars['accordion-'+index] = false; });
           }
         });
         // Initially close items
         $('.accordion-header','#admin-bar').each(function(){
+          var index = $(this).closest('.accordion').index();
+          if (App.Vars['accordion-'+index] == true) return;
+          App.Vars['accordion-'+index] = true;
+
           if ($(this).hasClass('closed')) {
             $(this).siblings('.accordion-options').animate({
               height: 'toggle'
-            }, 400);
+            }, 400, 'swing',function(){ App.Vars['accordion-'+index] = false; });
           }
         });
 
