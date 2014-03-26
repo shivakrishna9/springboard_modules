@@ -139,7 +139,28 @@ fieldset div.webform-component-fieldset.editor-on {
   cursor: default;
 }
 
+.editor-on label.error,
+.unsaved-ipe label.error {
+  display:none !important;
+}
 
+.unsaved-ipe .control-group.success .error.valid,
+.unsaved-ipe .control-group.error .error 
+.editor-on .control-group.success .error.valid,
+.editor-on  .control-group.error .error {
+  display:none;
+  float:none;
+  clear:none;
+}
+
+.unsaved-ipe .control-group.success .error.valid
+.editor-on .control-group.success .error.valid {
+  display:none;
+}
+.unsaved-ipe .control-group.error .error,
+.editor-on .control-group.error .error {
+  display: none;
+}
 
 /*.webform-ipe-container.editor-on .fieldset-legend {
   margin-top: 0px;

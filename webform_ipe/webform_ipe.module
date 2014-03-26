@@ -175,12 +175,9 @@ function webform_ipe_preprocess_node(&$vars) {
     drupal_add_js($path . '/js/jquery.sortable.js');
     drupal_add_js($path . '/js/magnific-popup.min.js');
     drupal_add_js($path . '/js/webform_ipe.js');
+    drupal_add_js($path . '/js/list.min.js');
 
     drupal_add_js(array('webform_ipe' => $json_data), 'setting');
-
-    // list.js needs '$'
-    //drupal_add_js('$ = jQuery', array('type' => 'inline', 'scope' => 'footer', 'weight' => 998));
-    drupal_add_js($path . '/js/list.min.js', array('scope' => 'footer', 'weight' => 999));
 
     drupal_add_library('system', 'ui.sortable');
     drupal_add_library('system', 'drupal.collapse');

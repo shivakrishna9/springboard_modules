@@ -656,7 +656,7 @@
             if($('span.edit').length > 1) {
               $('span.edit').remove();
             }
-
+            $('label.error').hide();
             //append the edit and delete buttons
             var type = this.model.get('type');
             switch (type) {
@@ -736,6 +736,7 @@
             if($('#webform-ipe-unsaved-edits').length < 1) {
               $('.save-and-preview').show();
               $('#admin-bar').append('<div id = "webform-ipe-unsaved-edits">This form has unsaved changes</div>');
+              $('body').addClass('unsaved-ipe');
             }
             this.$el.trigger('update-weight', [this]); //recalculate field weights on drag and drop
           },
@@ -878,7 +879,9 @@
             }
             if($('#webform-ipe-unsaved-edits').length < 1) {
               $('.save-and-preview').show();
-             $('#admin-bar').append('<div id = "webform-ipe-unsaved-edits">This form has unsaved changes</div>');
+              $('#admin-bar').append('<div id = "webform-ipe-unsaved-edits">This form has unsaved changes</div>');
+              $('body').addClass('unsaved-ipe');
+
             }
           },
 
@@ -1181,6 +1184,7 @@
               $('#webform-ipe-unsaved-edits').hide();
               $('.throbber').show();
               $('.save-and-preview').hide();
+              $('body').removeClass('unsaved-ipe');
 
               $.ajax({
                 type: "POST",
@@ -1195,6 +1199,7 @@
                    $('.ajax-progress').remove();
                    $('#webform-ipe-unsaved-edits').show();
                    $('.save-and-preview').show();
+                   $('body').addClass('unsaved-ipe');
                    alert('An error occurred. Changes were not saved.')
                 }
              });
@@ -1359,6 +1364,7 @@
                 if($('#webform-ipe-unsaved-edits').length < 1) {
                   $('.save-and-preview').show();
                   $('#admin-bar').append('<div id = "webform-ipe-unsaved-edits">This form has unsaved changes</div>');
+                  $('body').addClass('unsaved-ipe');
                 }
 
                 // if we were going to allow saving of individual components, it would happen here
@@ -1431,6 +1437,7 @@
                   if($('#webform-ipe-unsaved-edits').length < 1) {
                     $('.save-and-preview').show();
                     $('#admin-bar').append('<div id = "webform-ipe-unsaved-edits">This form has unsaved changes</div>');
+                    $('body').addClass('unsaved-ipe');
                   }
 
               $.unblockUI();
