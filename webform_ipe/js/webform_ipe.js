@@ -2,7 +2,6 @@
   Drupal.behaviors.WebformIPE = {
     attach: function (context, settings) {
       $(window).ready(function() {
-
        /*
         * Namespace (e.g., "App") the Backbone application
         * and create the backbone objects
@@ -93,7 +92,7 @@
           schema: {
             name: {editorClass:'required', type: 'Text', title: 'Label Text', validators: ['required']},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
-            mandatory: { type: 'Checkbox', title:'Mandatory'},
+            mandatory: { type: 'Checkbox', title:'Required'},
             'extra.description': {type: 'Text', title: 'Description Text'},
             'extra.unique': {template: altFieldTemplate, type: 'Checkbox', title:'Unique', help:'Check that all entered values for this field are unique. The same value is not allowed to be used twice.'},
             'extra.attributes.class': {type: 'Text', title: 'Class'},
@@ -130,7 +129,7 @@
           schema: {
             name: {editorClass:'required', type: 'Text', title: 'Label Text', validators: ['required']},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
-            mandatory: { type: 'Checkbox', title:'Mandatory'},
+            mandatory: { type: 'Checkbox', title:'Required'},
             'extra.description': {type: 'Text', title: 'Description Text'},
             'extra.unique': { type: 'Checkbox', title:'Unique', help:'Check that all entered values for this field are unique. The same value is not allowed to be used twice.'},
             'extra.attributes.class': {type: 'Text', title: 'Class'},
@@ -166,7 +165,7 @@
           schema: {
             name: {editorClass:'required', type: 'Text', title: 'Label Text', validators: ['required']},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
-            mandatory: { type: 'Checkbox', title:'Mandatory'},
+            mandatory: { type: 'Checkbox', title:'Required'},
             'extra.description': {type: 'Text', title: 'Description Text'},
             'extra.resizable': {type: 'Checkbox', title: 'Resizable'},
             'extra.rows': {type: 'Number', title: 'Height'},
@@ -203,7 +202,7 @@
           schema: {
             name: {editorClass:'required', type: 'Text', title: 'Label Text', validators: ['required']},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
-            mandatory: { type: 'Checkbox', title:'Mandatory'},
+            mandatory: { type: 'Checkbox', title:'Required'},
             'extra.description': {type: 'Text', title: 'Description Text'},
             'extra.items': { editorClass:'required', type: 'List', title: "Options", fieldClass:"option-items", validate:['required'], help:'Options must be entered in the format: key|value '},
             'extra.aslist': { type: 'Checkbox', title:'Select List', help:'Check this option if you want the select component to be displayed as a select list box instead of radio buttons or checkboxes.'},
@@ -301,7 +300,7 @@
           schema: {
             name: {editorClass:'required', type: 'Text', title: 'Label Text', validators: ['required']},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
-             mandatory: { type: 'Checkbox', title:'Mandatory'},
+             mandatory: { type: 'Checkbox', title:'Required'},
             'extra.description': {type: 'Text', title: 'Description Text'},
             'extra.decimals': {type: 'Select', title: 'Decimal places', help: 'Automatic will display up to 4 decimals places if needed. A value of "2" is common to format currency amounts.', options: ['Automatic', '0','1', '2', '3', '4', '5','6']},
             'extra.excludezero': {type: 'Checkbox', title: 'Exclude Zero', help: 'Exclude entries of zero (or blank) when counting submissions to calculate average and standard deviation.', options: {yes:'1'}},
@@ -364,7 +363,7 @@
           schema: {
             name: {editorClass:'required', type: 'Text', title: 'Label Text', validators: ['required']},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
-            mandatory: { type: 'Checkbox', title:'Mandatory' },
+            mandatory: { type: 'Checkbox', title:'Required' },
             value: {type: 'Text', title: 'Default Value', help:'The default value of the field. Accepts any date in any GNU Date Input Format. Strings such as today, +2 months, and Dec 9 2004 are all valid.'},
             'extra.start_date': {editorClass:'required', type: 'Text', title: 'Start Date', help: "The earliest date that may be entered into the field. Accepts any date in any GNU Date Input Format"},
             'extra.end_date': {editorClass:'required', type: 'Text', title: 'End Date', help:'The earliest date that may be entered into the field. Accepts any date in any GNU Date Input Format' },
@@ -1559,11 +1558,9 @@
          * ADD ADMIN BAR AND TOGGLE TO THE WEBFORM PAGE
          * The actual content of the bar lives in template.html
          */
-        if ($('.node .content')[0]) {
-          $('.webform-client-form').prepend(_.template($('#adminBar').html()));
-        } else if ($('body .container .webform-client-form')[0]) {
-          $('body .container .webform-client-form').prepend(_.template($('#adminBar').html()));
-        }
+
+        $('body').prepend(_.template($('#adminBar').html()));
+  
         $('.accordion-header','#admin-bar').each(function(i){
           App.Vars['accordion-'+i] = false;
         });
