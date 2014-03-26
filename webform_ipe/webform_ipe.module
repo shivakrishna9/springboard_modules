@@ -166,7 +166,7 @@ function webform_ipe_preprocess_node(&$vars) {
     drupal_add_css($path . '/css/webform_ipe.css');
     drupal_add_css($path . '/css/magnific-popup.css');
 
-    drupal_add_js($path . '/js/underscore.js');
+    drupal_add_js($path . '/js/underscore-min.js');
     drupal_add_js($path . '/js/actual.min.js');
     drupal_add_js($path . '/js/backbone.js');
     drupal_add_js($path . '/js/backbone-forms.min.js');
