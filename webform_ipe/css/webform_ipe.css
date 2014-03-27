@@ -458,7 +458,8 @@ webform-component-fieldset.ui-sortable-helper,
   width: auto;
 }
 #blockUIform #editForm {
-  height: 525px;
+  height: 565px;
+  overflow: hidden;
   overflow-y: auto;
   padding-top:20px;
 }
@@ -648,13 +649,22 @@ legend span.edit {
  overflow: hidden;
 }
 
+div[id$="recurs-monthly"] .control-group {
+  width: auto;
+  clear: none;
+  margin-right: 10px;
+}
+div[id$="recurs-monthly"] span.edit .edit-item{
+  vertical-align: top;
+}
+
 fieldset.collapsible .fieldset-legend{
   display: inline-block;
 }
 
 .editor-on legend span.edit {
- display:block;
- position: relative;
+  display:block;
+  position: relative;
 }
 
 .edit .delete-item,
@@ -665,9 +675,6 @@ fieldset.collapsible .fieldset-legend{
 }
 .edit .delete-item {
   margin-left:10px;
-}
-.edit .delete-item:hover,
-.edit .edit-item:hover {
 }
 
 .json-data {

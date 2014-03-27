@@ -795,9 +795,10 @@
             $('body #editForm').prepend(form.el).html();
             $('body #editForm').show();
 
-            var formHeight = $('body #editForm').actual('height') + 60;
-            if (formHeight > 720) {
-              formHeight = 720;
+            var formHeight = $('body #editForm').actual('height') + 20;
+            console.log(formHeight)
+            if (formHeight > 680) {
+              formHeight = 680;
             }
 
             var cid = this.model.get('cid');
@@ -1360,7 +1361,7 @@
          */
         App.Handlers.blockUIBuilder = function(width, height, form, title, afterBuild) {
           var blockWidth = width || 400;
-          var blockHeight = height || 630;
+          var blockHeight = height || 590;
           $.blockUI({
             message: '<div id="blockUIform"><h4>Edit ' + title + '<span class="closeUI"><i class="fa fa-times"></i></span></h4></div>',
             css: {
