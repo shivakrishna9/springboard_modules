@@ -912,7 +912,12 @@ function _page_wrappers_create_template($node) {
     }
     // Apply filters before doing token replacement, this prevents php generated for 
     // region tokens from getting stripped if filtered or full html is selected.
-    $html_template[0]['value'] = check_markup($html_template[0]['value'], $html_template[0]['format'], $langcode = '', FALSE);
+    if ($html_template[0]['format'] != 'php_code') {
+      // Full HTML input filter does not strip php start and end tags by default.
+      $html_template[0]['value'] = str_replace('<?php', '&lt;php?', $html_template[0]['value']);
+      $html_template[0]['value'] = str_replace('?>', '?&gt;', $html_template[0]['value']);  
+      $html_template[0]['value'] = check_markup($html_template[0]['value'], $html_template[0]['format'], $langcode = '', FALSE);
+    }
     $body = _page_wrappers_tokens($html_template[0]['value']);
 
     fputs($file, $body);
