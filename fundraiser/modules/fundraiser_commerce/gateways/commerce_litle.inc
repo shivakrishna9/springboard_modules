@@ -222,7 +222,7 @@ function commerce_litle_cardonfile_fields($donation) {
   }
   elseif ($donation->donation['payment_method'] == 'bank account') {
     $data = array(
-      'card_number' => substr($pane_values['echeck']['accNum'], -4),
+      'card_number' => substr($pane_values['echeck']['accNum'], -3),
     );
   }
 
@@ -406,7 +406,7 @@ function commerce_litle_fundraiser_commerce_update($donation, $card_data = NULL)
         $card_data->remote_id = $remote_id;
         $card_data->card_type = $card_type;
         $card_data->card_name = $card_name;
-        $card_data->card_number = substr($account_number, -4);
+        $card_data->card_number = substr($account_number, -3);
         $card_data->card_exp_month = '';
         $card_data->card_exp_year = '';
         $card_data->status = 1;
