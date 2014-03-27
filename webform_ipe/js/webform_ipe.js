@@ -1390,6 +1390,7 @@
                 var type = form.model.get('type');
                 if (type == 'date') {
                   App.Handlers.createDate(type, form);
+                  return false;
                 }
 
                 //if we've created new fields, add the classes for sorting
@@ -1450,7 +1451,7 @@
             jQuery.ajax({
               type: "POST",
               url: callbackPath,
-              async: false,
+              //async: false,
               data: {
                 extra:form.model.get('extra'),
                 name:form.model.get('name'),
