@@ -730,7 +730,9 @@
 
             if(!_.isUndefined(buttonTarget)) {
               if($('.sortable-placeholder').length == 0  && type != 'fieldset') {
-                buttonTarget.after(App.Templates.template($('#editTemplate').html()));
+                if(this.$el.find('span.edit').length == 0) {
+                  buttonTarget.after(App.Templates.template($('#editTemplate').html()));
+                }
               }
               else if ($('.sortable-placeholder').length == 0) {
                 buttonTarget.append(App.Templates.template($('#editTemplate').html()));
