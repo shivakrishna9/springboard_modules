@@ -202,7 +202,7 @@
 			<% } %>
 			</label>
 
-		 <select id="<%= attrs.id %>" name="<%= attrs.name %>" class="<%= attrs.cls %> ">
+		 <select id="<%= attrs.id %>" name="<%= attrs.name %>" class="<%= attrs.cls %>" <% if(extra.multiple) {%> multiple <%} %>">
 		   <% var options = optionList(extra.items) %>
 			 <% for (var num in options) { %>
 		 	   <option value="<%= options[num]['val'] %>"><%= options[num]['label'] %></option>
