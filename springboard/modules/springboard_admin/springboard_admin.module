@@ -40,6 +40,20 @@ function springboard_admin_menu() {
 }
 
 /**
+ * Implements hook_menu_alter().
+ * 
+ * Redirects a user role to admin/springboard if it is given the Springboard 
+ * User Experience option in Springboard Settings.
+ */
+function springboard_admin_menu_alter(&$items) {
+  global $user;
+  if(springboard_admin_user_gets_sbux($user)) {
+    $items['admin']['page callback'] = 'drupal_goto';
+    $items['admin']['page arguments'] = array('admin/springboard');
+  }
+}
+
+/**
  * Implements hook_permission().
  */
 function springboard_admin_permission() {
@@ -131,17 +145,24 @@ function springboard_drupal_path_submit(&$form, &$form_state) {
  */
 function springboard_admin_user_login(&$edit, $account) {
   if (!isset($_POST['form_id']) || $_POST['form_id'] != 'user_pass_reset') {
-    $available_roles = user_roles(TRUE, 'access springboard dashboard');
-    $redirect_roles = variable_get('springboard_user_experience', array_keys($available_roles));
-    // Check if the user has ones of the roles that gets redirected to the Sprinboard dashboard
-    foreach ($account->roles as $rid => $assigned_role) {
-      // If any role matches, change the redirect and end the function.
-      if ($assigned_role && in_array($rid, $redirect_roles)) {
-        $edit['redirect'] = 'admin/springboard';
-      return;
-      }
+    if (springboard_admin_user_gets_sbux($account)) {
+      $edit['redirect'] = 'admin/springboard';
     }
   }
+}
+
+function springboard_admin_user_gets_sbux($account) {
+  $available_roles = user_roles(TRUE, 'access springboard dashboard');
+  $redirect_roles = variable_get('springboard_user_experience', array_keys($available_roles));
+  // Check if the user has ones of the roles that gets redirected to the
+  // Sprinboard dashboard
+  foreach ($account->roles as $rid => $assigned_role) {
+    // If any role matches, change the redirect and end the function.
+    if ($assigned_role && in_array($rid, $redirect_roles)) {
+      return TRUE;
+    }
+  }
+  return FALSE;
 }
 
 /**
