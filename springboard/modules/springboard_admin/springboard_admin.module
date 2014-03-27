@@ -313,9 +313,24 @@ function springboard_admin_aggregate_links_page($path) {
  * confirmation form.
  */
 function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
-  if ($form_id == 'node_delete_confirm') {
-    $form['actions']['delete']['#submit'][] = 'springboard_admin_node_delete';
+  switch($form_id) {  
+    case 'clone_node_confirm' :
+      $form['#submit'][] = 'springboard_node_clone_form_submit';
+    break;
+    case 'node_delete_confirm' :
+      $form['actions']['delete']['#submit'][] = 'springboard_admin_node_delete';
+    break;
   }
+}
+
+/**
+ * Submit handler for the "clone" action on the node clone confirmation form.
+ * 
+ * Redirects users to the node edit page for the newly created node.
+ */
+function springboard_node_clone_form_submit(&$form, &$form_state) {
+  $_GET['destination'] = $form_state['redirect'];
+  return;
 }
 
 /**
