@@ -433,7 +433,9 @@ webform-component-fieldset.ui-sortable-helper,
 
 /* BlockUI Form styles */
 
-
+#blockUIform {
+  padding-bottom: 10px;
+}
 
 #blockUIform h4 {
 /*  background-color: #0084d9;
@@ -457,7 +459,8 @@ webform-component-fieldset.ui-sortable-helper,
 }
 #blockUIform #editForm {
   height: 525px;
-  overflow: scroll;
+  overflow-y: auto;
+  padding-top:20px;
 }
 #blockUIform #editForm form > #editNow,
 #blockUIform #editForm form > fieldset > div {
@@ -519,9 +522,7 @@ webform-component-fieldset.ui-sortable-helper,
 #blockUIform #editForm form > fieldset .option-items input[type="color"] {
   width:80%;
 }
-#blockUIform #editForm {
-  padding-top:60px;
-}
+
 #blockUIform #editForm form > fieldset .option-items button {
   border-radius: 3px;
   border: 0;
@@ -608,6 +609,23 @@ webform-component-fieldset.ui-sortable-helper,
   float:left;
 }
 
+/** Hide some fields on the blockUI edit form */
+
+#editForm.recurs_monthly .option-items,
+#editForm.recurs_monthly .random-field,
+#editForm.recurs_monthly .multiple-field,
+#editForm.recurs_monthly .aslist-field,
+#editForm.recurs_monthly .required-field,
+#editForm.state .option-items,
+#editForm.state .random-field,
+#editForm.state .aslist-field,
+#editForm.other_amount .description-field,
+#editForm.other_amount .required-field {
+  display:none;
+}
+
+
+/** edit buttons **/
 
 .control-group .manage-items {
   position: absolute;
@@ -662,6 +680,8 @@ fieldset.collapsible .fieldset-legend{
 div.error {
   background-image: none;
 }
+
+/* preview screens */
 
 .mfp-hide {
   visibility: visible;

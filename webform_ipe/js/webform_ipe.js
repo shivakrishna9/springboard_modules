@@ -92,8 +92,8 @@
           schema: {
             name: {editorClass:'required', type: 'Text', title: 'Label Text', validators: ['required']},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
-            mandatory: { type: 'Checkbox', title:'Required'},
-            'extra.description': {type: 'Text', title: 'Description Text'},
+            mandatory: { fieldClass:"required-field", type: 'Checkbox', title:'Required'},
+            'extra.description': { fieldClass:"description-field", type: 'Text', title: 'Description Text'},
             'extra.unique': {template: altFieldTemplate, type: 'Checkbox', title:'Unique', help:'Check that all entered values for this field are unique. The same value is not allowed to be used twice.'},
             'extra.attributes.class': {type: 'Text', title: 'Class'},
             'extra.attributes.placeholder': {type: 'Text', title: 'Placeholder'},
@@ -202,9 +202,9 @@
           schema: {
             name: {editorClass:'required', type: 'Text', title: 'Label Text', validators: ['required']},
             'extra.container': {type: 'Select', title: 'Container', options: {}},
-            mandatory: { type: 'Checkbox', title:'Required'},
-            'extra.description': {type: 'Text', title: 'Description Text'},
-            'extra.items': { editorClass:'required', type: 'List', title: "Options", fieldClass:"option-items", validate:['required'], help:'Options must be entered in the format: key|value, where "key" should contain only letters, numbers, or underscores - not spaces'},
+            mandatory: { fieldClass:"required-field", type: 'Checkbox', title:'Required'},
+            'extra.description': { fieldClass:"description-field", type: 'Text', title: 'Description Text'},
+            'extra.items': { fieldClass:"option-items", editorClass:'required', type: 'List', title: "Options", validate:['required'], help:'Options must be entered in the format: key|value, where "key" should contain only letters, numbers, or underscores - not spaces'},
             'extra.aslist': { fieldClass:"aslist-field", type: 'Checkbox', title:'Select List', help:'Check this option if you want the select component to be displayed as a select list box instead of radio buttons or checkboxes.'},
             'extra.multiple': { fieldClass:"multiple-field", type: 'Checkbox', title:'Multiple', help:'Check this option if the user should be allowed to choose multiple values.'},
             'extra.optrand': { fieldClass:"random-field", type: 'Checkbox', title:'Randomize', help:'Randomizes the order of the options when they are displayed in the form.'},
@@ -806,20 +806,16 @@
             var type = this.model.get('type');
 
             $('#editForm').addClass(fkey);
-            //don't allow options to be edited on recurring field
-            if (fkey == "recurs_monthly") {
-              $('.option-items').hide();
-            }
+
             if (fkey == "state") {
               $('.option-items').after('<div><label>Options</label><div>States are created from a pre-built list, and cannot be edited</div></div>');
-              $('.option-items').hide();
-              $('.random-field').hide();
-              $('.aslist-field').hide();
+              $('input[name="extra_multiple"]').closest('div').html('Multiple option is not allowed on this field');
+            }
+
+            if(fkey == 'amount') {
               $('input[name="extra_multiple"]').closest('div').html('Multiple option is not allowed on this field');
             }
             if (fkey == "country") {
-              // $('.option-items').after('<div><label>Options</label><div>States are created from a pre-built list, and cannot be edited</div></div>');
-              // $('.option-items').hide();
               $('input[name="extra_multiple"]').closest('div').html('Multiple option is not allowed on this field');
             }
 
