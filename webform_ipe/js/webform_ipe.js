@@ -205,9 +205,9 @@
             mandatory: { type: 'Checkbox', title:'Required'},
             'extra.description': {type: 'Text', title: 'Description Text'},
             'extra.items': { editorClass:'required', type: 'List', title: "Options", fieldClass:"option-items", validate:['required'], help:'Options must be entered in the format: key|value, where "key" should contain only letters, numbers, or underscores - not spaces'},
-            'extra.aslist': { type: 'Checkbox', title:'Select List', help:'Check this option if you want the select component to be displayed as a select list box instead of radio buttons or checkboxes.'},
-            'extra.multiple': { type: 'Checkbox', title:'Multiple', help:'Check this option if the user should be allowed to choose multiple values.'},
-            'extra.optrand': { type: 'Checkbox', title:'Randomize', help:'Randomizes the order of the options when they are displayed in the form.'},
+            'extra.aslist': { fieldClass:"aslist-field", type: 'Checkbox', title:'Select List', help:'Check this option if you want the select component to be displayed as a select list box instead of radio buttons or checkboxes.'},
+            'extra.multiple': { fieldClass:"multiple-field", type: 'Checkbox', title:'Multiple', help:'Check this option if the user should be allowed to choose multiple values.'},
+            'extra.optrand': { fieldClass:"random-field", type: 'Checkbox', title:'Randomize', help:'Randomizes the order of the options when they are displayed in the form.'},
             'extra.title_display': {template: altFieldTemplate, type: 'Select', title: 'Label display', options: [{val:'before',label: 'Above'}, {val: 'none', label: 'None'}], help:'Determines the placement of the component\'s label.'},
             'extra.private': {template: altFieldTemplate, type: 'Checkbox', title:'Private', help:'Private fields are shown only to users with results access.'},
 
@@ -805,10 +805,24 @@
             var fkey = this.model.get('form_key');
             var type = this.model.get('type');
 
+            $('#editForm').addClass(fkey);
             //don't allow options to be edited on recurring field
             if (fkey == "recurs_monthly") {
               $('.option-items').hide();
             }
+            if (fkey == "state") {
+              $('.option-items').after('<div><label>Options</label><div>States are created from a pre-built list, and cannot be edited</div></div>');
+              $('.option-items').hide();
+              $('.random-field').hide();
+              $('.aslist-field').hide();
+              $('input[name="extra_multiple"]').closest('div').html('Multiple option is not allowed on this field');
+            }
+            if (fkey == "country") {
+              // $('.option-items').after('<div><label>Options</label><div>States are created from a pre-built list, and cannot be edited</div></div>');
+              // $('.option-items').hide();
+              $('input[name="extra_multiple"]').closest('div').html('Multiple option is not allowed on this field');
+            }
+
             $('[name="extra_collapsed"]').click(function(){
               $('[name="extra_collapsible"]').prop('checked', true);
             });

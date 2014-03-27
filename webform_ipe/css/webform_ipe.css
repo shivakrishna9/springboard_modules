@@ -456,7 +456,7 @@ webform-component-fieldset.ui-sortable-helper,
   width: auto;
 }
 #blockUIform #editForm {
-  height: 550px;
+  height: 525px;
   overflow: scroll;
 }
 #blockUIform #editForm form > #editNow,
