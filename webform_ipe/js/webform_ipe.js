@@ -541,11 +541,13 @@
           } 
           return trimmed[0].innerHTML;
         }
+        var formItems = $("input, select, textarea" );
+           formItems.on( "blur", function() {
+             App.Handlers.clearValidation() 
+         });
 
         App.Handlers.clearValidation = function () {
-          var formItems = $("input, select, textarea" );
-          formItems.on( "blur", function() {
-            var menuOpen = $('.accordion-header:not(".closed")','#admin-bar').length;
+          var menuOpen = $('.accordion-header:not(".closed")','#admin-bar').length;
             if($('body').hasClass('editor-on') || $('body').hasClass('unsaved-ipe') || menuOpen > 0) {
               $(formItems).each(function() {
                $(this).removeClass('valid');
@@ -553,8 +555,7 @@
                $(this).parents('.success').removeClass('success');
                $(this).parents('.error').removeClass('error');
             }); 
-          }
-         });
+          }          
         }
 
         /*  DEFINE THE VIEWS
@@ -919,7 +920,7 @@
               $('.save-and-preview').show();
               $('#admin-bar').append('<div id = "webform-ipe-unsaved-edits">This form has unsaved changes</div>');
               $('body').addClass('unsaved-ipe');
-
+              App.Handlers.clearValidation();
             }
           },
 
@@ -1404,6 +1405,7 @@
                   $('.save-and-preview').show();
                   $('#admin-bar').append('<div id = "webform-ipe-unsaved-edits">This form has unsaved changes</div>');
                   $('body').addClass('unsaved-ipe');
+                  App.Handlers.clearValidation();
                 }
 
                 // if we were going to allow saving of individual components, it would happen here
@@ -1629,6 +1631,7 @@
               height: 'toggle'
             }, 400, 'swing',function(){ App.Vars['accordion-'+index] = false; });
           }
+          App.Handlers.clearValidation();
         });
         // Initially close items
         $('.accordion-header','#admin-bar').each(function(){
