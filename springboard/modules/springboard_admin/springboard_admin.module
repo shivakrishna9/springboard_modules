@@ -151,6 +151,14 @@ function springboard_admin_user_login(&$edit, $account) {
   }
 }
 
+/**
+ * Helper Function
+ * Checks if a user has a role that enforces the Springboard User Experieince
+ * as configured in the Springboard Settings.
+ *
+ * @return Boolean
+ * True if the user does get the SBUX.
+ */
 function springboard_admin_user_gets_sbux($account) {
   $available_roles = user_roles(TRUE, 'access springboard dashboard');
   $redirect_roles = variable_get('springboard_user_experience', array_keys($available_roles));
