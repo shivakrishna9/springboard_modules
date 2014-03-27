@@ -204,7 +204,7 @@
             'extra.container': {type: 'Select', title: 'Container', options: {}},
             mandatory: { type: 'Checkbox', title:'Required'},
             'extra.description': {type: 'Text', title: 'Description Text'},
-            'extra.items': { editorClass:'required', type: 'List', title: "Options", fieldClass:"option-items", validate:['required'], help:'Options must be entered in the format: key|value '},
+            'extra.items': { editorClass:'required', type: 'List', title: "Options", fieldClass:"option-items", validate:['required'], help:'Options must be entered in the format: key|value, where "key" should contain only letters, numbers, or underscores - not spaces'},
             'extra.aslist': { type: 'Checkbox', title:'Select List', help:'Check this option if you want the select component to be displayed as a select list box instead of radio buttons or checkboxes.'},
             'extra.multiple': { type: 'Checkbox', title:'Multiple', help:'Check this option if the user should be allowed to choose multiple values.'},
             'extra.optrand': { type: 'Checkbox', title:'Randomize', help:'Randomizes the order of the options when they are displayed in the form.'},
@@ -216,9 +216,22 @@
             var errs = {};
             var message = '';
             _.each(attr["extra.items"], function(value) {
-              if(value.indexOf('|') == -1) {
-               message =  '<div class = "error">Options must be in the format "key|value"</div>'; 
+              var matches = value.match(/^([^|]*)\|(.*)$/);
+              if(_.isNull(matches) || !matches[1] && !matches[2]) {                
+               message =  '<div class = "error">Options must be in the format "key|value", where "key" should contain only letters, numbers, or underscores - not spaces.</div>'; 
                errs += 1;
+              }
+              else if(matches[1].length > 128) {
+               message =  '<div class = "error">Keys cannot be longer that 128 characters.</div>'; 
+               errs += 1;               
+              }
+              else if(matches[1] && !matches[2]){
+                message =  '<div class = "error">You must specify a value</div>'; 
+                errs += 1;         
+              }
+              else if(matches[2] && !matches[1]){
+                message =  '<div class = "error">You must specify a key</div>'; 
+                errs += 1;         
               }
            });
             if(attr["extra.items"].length < 1) {

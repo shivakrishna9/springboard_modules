@@ -66,7 +66,7 @@ fieldset div.webform-component-fieldset.editor-on {
 
 .layout-row .sidebar.webform-ipe-container.editor-on .webform-ipe-container.editor-on,
 .layout-row > .webform-ipe-container.editor-on .webform-ipe-container.editor-on {
-  margin: 15px 10px;
+  margin: 10px;
   border: 1px dashed #ccc;
   padding: 0px;
   float: none;
