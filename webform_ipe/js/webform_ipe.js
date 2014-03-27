@@ -1867,6 +1867,7 @@
           $('div.control-group input[type="checkboxes"]').parent().addClass('disabled');
           $('[id*="payment-fields"]').addClass('disabled');
           $('[id*="payment-fields"] .control-group').addClass('disabled');
+          $('[id*="payment-method"]').parent().css('float', 'none').addClass('disabled');
           $(".date-field .control-group").addClass('disabled');
           $('.fundraiser-payment-fields').addClass('disabled');
           $('.disabled').removeClass('sortable');
