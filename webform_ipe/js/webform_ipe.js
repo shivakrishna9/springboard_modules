@@ -1341,7 +1341,7 @@
           $.blockUI({
             message: '<div id="blockUIform"><h4>Edit ' + title + '<span class="closeUI"><i class="fa fa-times"></i></span></h4></div>',
             css: {
-              overflow: 'auto',
+              overflow: 'hidden',
               top: App.Handlers.blockUITop(height) + '%',
               left: App.Handlers.blockUILeft(width) + '%',
               height: blockHeight + 'px',

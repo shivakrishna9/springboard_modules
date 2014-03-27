@@ -434,6 +434,8 @@ webform-component-fieldset.ui-sortable-helper,
 
 /* BlockUI Form styles */
 
+
+
 #blockUIform h4 {
 /*  background-color: #0084d9;
   color: #fff;
@@ -453,6 +455,10 @@ webform-component-fieldset.ui-sortable-helper,
   font-weight: normal;
   position: relative;
   width: auto;
+}
+#blockUIform #editForm {
+  height: 550px;
+  overflow: scroll;
 }
 #blockUIform #editForm form > #editNow,
 #blockUIform #editForm form > fieldset > div {
