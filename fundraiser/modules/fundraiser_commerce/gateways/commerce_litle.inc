@@ -251,17 +251,6 @@ function commerce_litle_fundraiser_commerce_update($donation, $card_data = NULL)
     $card_data = commerce_cardonfile_load($donation->data['cardonfile']);
   }
 
-  if (empty($card_data)) {
-    // Log the missing card data.
-    watchdog(
-      'fundraiser',
-      'A card update was attempted on donation @id but no stored card data was found.',
-      array('@id' => $donation->did),
-      WATCHDOG_CRITICAL
-    );
-    return;
-  }
-
   // Pull the new credit card values from the donation.
   $pane_values = commerce_litle_pane_values($donation);
 
@@ -272,7 +261,10 @@ function commerce_litle_fundraiser_commerce_update($donation, $card_data = NULL)
   // If it does then we use the update function.
   // if its a new card check if we should create a new vault profile.
   $action = 'update';
-  if ($cardonfile_fields['card_number'] != $card_data->card_number) {
+  if (empty($card_data)) {
+    $action = 'new';
+  }
+  elseif ($cardonfile_fields['card_number'] != $card_data->card_number) {
     // This is a new card for this donation,
     // make sure we don't have an existing profile.
     // First check with the card number and date.
@@ -294,7 +286,7 @@ function commerce_litle_fundraiser_commerce_update($donation, $card_data = NULL)
   }
 
   if ($action == 'update') {
-    // This is last four digits.
+    // This is last four digits for credit cards and last three for echecks.
     $card_data->card_number = $cardonfile_fields['card_number'];
 
     // Only credit cards have an expiration date.
@@ -411,7 +403,7 @@ function commerce_litle_fundraiser_commerce_update($donation, $card_data = NULL)
 
         // Save and log the creation of the new card on file.
         commerce_cardonfile_save($card_data);
-        watchdog('commerce_litle', 'GUID @guid registered and saved to user @uid.', array('@guid' => $guid, '@uid' => $order->uid));
+        watchdog('commerce_litle', 'Card on file registered and saved to user @uid.', array('@uid' => $order->uid));
 
         // Set the value on the donation.
         $donation->data['cardonfile'] = $card_data->card_id;
