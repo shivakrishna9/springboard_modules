@@ -137,7 +137,7 @@ function webform_user_update_7001() {
 }
 
 /**
- * Adds internal name field to existing webform_user node types
+ * Adds internal name field to existing webform_user node types.
  */
 function webform_user_update_7002() {
   // Add the internal name content field to all fundraiser node types.
