@@ -874,7 +874,6 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
       'echeckForToken' => array(
         'accNum' => $pane_values['echeck']['accNum'],
         'routingNum' => $pane_values['echeck']['routingNum'],
-        'accType' => $pane_values['echeck']['accType'],
       ),
       'orderId' => $order->order_number,
     );
@@ -899,9 +898,9 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
       $card_data->payment_method = $payment_method['method_id'];
       $card_data->instance_id = $payment_method['instance_id'];
       $card_data->remote_id = $remote_id;
-      $card_data->card_type = $payment_details['echeckForToken']['accType'];
+      $card_data->card_type = $pane_values['echeck']['accType'];
       $card_data->card_name = $card_name;
-      $card_data->card_number = substr($pane_values['echeck']['accNum'], -4);
+      $card_data->card_number = substr($pane_values['echeck']['accNum'], -3);
       $card_data->status = 1;
 
       // Save and log the creation of the new card on file.
@@ -1433,7 +1432,7 @@ function commerce_litle_log_request($request) {
 
   foreach (array('routingNum', 'accNum') as $key) {
     if (!empty($log['echeck'][$key])) {
-      $log['echeck'][$key] = commerce_litle_mask_string($log['echeck'][$key]);
+      $log['echeck'][$key] = commerce_litle_mask_string($log['echeck'][$key], 3);
     }
   }
 
