@@ -1685,7 +1685,7 @@
         $('.menu-fixed','#admin-bar').click(function(e){
           e.preventDefault();
           var checkBox = $("input#admin-bar-fixed", this);
-          checkBox.attr('checked', !checkBox.attr('checked'));
+          checkBox.prop('checked', !checkBox.prop('checked'));
           var adminBar = $(this).closest('#admin-bar');
           if (adminBar.hasClass('fixed')) {
             adminBar.removeClass('fixed');
@@ -1699,7 +1699,7 @@
           e.preventDefault();
           var hideBox = $("input#sidebars-hide", this);
           $('.sidebars-hide','#admin-bar').toggleClass('active')
-          hideBox.attr('checked', !hideBox.attr('checked'));
+          hideBox.prop('checked', !hideBox.prop('checked'));
           var hideBar = $('div.fieldset.right-sidebar, div.fieldset.left-sidebar');
           hideBar.each(function( index ) {
             if (!$(this).hasClass('show') && $('.sidebars-hide','#admin-bar').hasClass('active')) {
