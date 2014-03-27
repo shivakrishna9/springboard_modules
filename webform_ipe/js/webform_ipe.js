@@ -680,6 +680,8 @@
             if (typeof(event)) {
               //event.stopPropagation();
             }
+            $('input[type="radio"]').parent('.control-group').css({width:'auto'});
+            $('input[type="checkbox"]').parent('.control-group').css({width:'auto'});
 
             //country dropdown selector JS causes multiple buttons appear, after change
             if($('span.edit').length > 1) {
