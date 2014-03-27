@@ -1,6 +1,6 @@
 <?php
 
-include_once('springboard_admin.menu.inc');
+include_once ('springboard_admin.menu.inc');
 
 /**
  * Implements hook_menu().
@@ -21,33 +21,33 @@ function springboard_admin_menu() {
     'access arguments' => array('access springboard dashboard'),
     'page callback' => 'springboard_admin_aggregate_links_page',
     'page arguments' => array('admin/springboard/results'),
-   );
-   $items['admin/springboard/options'] = array(
+  );
+  $items['admin/springboard/options'] = array(
     'title' => 'Options',
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('access springboard dashboard'),
     'page callback' => 'springboard_admin_aggregate_links_page',
     'page arguments' => array('admin/springboard/options'),
-   );
-   $items['admin/springboard/tools'] = array(
+  );
+  $items['admin/springboard/tools'] = array(
     'title' => 'Other Tools',
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('access springboard dashboard'),
     'page callback' => 'springboard_admin_aggregate_links_page',
     'page arguments' => array('admin/springboard/tools'),
-   );
+  );
   return $items;
 }
 
 /**
  * Implements hook_menu_alter().
- * 
- * Redirects a user role to admin/springboard if it is given the Springboard 
+ *
+ * Redirects a user role to admin/springboard if it is given the Springboard
  * User Experience option in Springboard Settings.
  */
 function springboard_admin_menu_alter(&$items) {
   global $user;
-  if(springboard_admin_user_gets_sbux($user)) {
+  if (springboard_admin_user_gets_sbux($user)) {
     $items['admin']['page callback'] = 'drupal_goto';
     $items['admin']['page arguments'] = array('admin/springboard');
   }
@@ -57,12 +57,10 @@ function springboard_admin_menu_alter(&$items) {
  * Implements hook_permission().
  */
 function springboard_admin_permission() {
-  return array(
-    'administer springboard theme' => array(
+  return array('administer springboard theme' => array(
       'title' => t('Administer the Springboard theme'),
       'description' => t('Administer configurations related to the display of the springboard_backend theme.')
-    )
-  );
+    ));
 }
 
 /**
@@ -74,34 +72,34 @@ function springboard_admin_permission() {
 
 function springboard_admin_form_springboard_admin_settings_alter(&$form, &$form_state) {
   if (user_access('administer springboard theme')) {
-  $form['admin'] = array(
-    '#type' => 'fieldset',
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-    '#title' => t('Springboard administration settings'),
-    '#description' => t('Configure how you administer Springboard.'),
-    '#weight' => -1,
-  );
-  $form['admin']['springboard_theme_enable'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Enable the Springboard administrative theme.'),
-    '#description' => t('Force the use of the springboard_backend theme on all Springboard-related administrative pages. The administrative theme set at admin/appearence will still be used for other Drupal administrative pages.'),
-    '#default_value' => variable_get('springboard_theme_enable', 1)
-   );
+    $form['admin'] = array(
+      '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#title' => t('Springboard administration settings'),
+      '#description' => t('Configure how you administer Springboard.'),
+      '#weight' => -1,
+    );
+    $form['admin']['springboard_theme_enable'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enable the Springboard administrative theme.'),
+      '#description' => t('Force the use of the springboard_backend theme on all Springboard-related administrative pages. The administrative theme set at admin/appearence will still be used for other Drupal administrative pages.'),
+      '#default_value' => variable_get('springboard_theme_enable', 1)
+    );
 
-   $form['admin']['springboard_drupal_path'] = array(
-     '#type' => 'textfield',
-     '#title' => t('Organization homepage'),
-     '#description' => t("Set the URL to the organization's main website."),
-     '#default_value' => variable_get('springboard_drupal_path', 'http://drupal.org'),
-   );
-   $roles = user_roles(TRUE, 'access springboard dashboard');
-   $form['admin']['springboard_user_experience'] = array(
-     '#type' => 'checkboxes',
-     '#title' => t('Springboard User Experience.'),
-     '#description' => t('Choose which user roles will be given the Springboard User Experience. This includes redirecting to the Dashboard on login and after performing some administration functions.'),
-     '#options' => $roles,
-     '#default_value' => variable_get('springboard_user_experience', array_keys($roles))
+    $form['admin']['springboard_drupal_path'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Organization homepage'),
+      '#description' => t("Set the URL to the organization's main website."),
+      '#default_value' => variable_get('springboard_drupal_path', 'http://drupal.org'),
+    );
+    $roles = user_roles(TRUE, 'access springboard dashboard');
+    $form['admin']['springboard_user_experience'] = array(
+      '#type' => 'checkboxes',
+      '#title' => t('Springboard User Experience.'),
+      '#description' => t('Choose which user roles will be given the Springboard User Experience. This includes redirecting to the Dashboard on login and after performing some administration functions.'),
+      '#options' => $roles,
+      '#default_value' => variable_get('springboard_user_experience', array_keys($roles))
     );
   }
   $form['#validate'][] = 'springboard_drupal_path_validate';
@@ -127,13 +125,7 @@ function springboard_drupal_path_validate(&$form, &$form_state) {
  */
 function springboard_drupal_path_submit(&$form, &$form_state) {
   if ($form['admin']['springboard_drupal_path']['#default_value'] != $form_state['values']['springboard_drupal_path']) {
-    $update_menu = db_update('menu_links')
-      ->fields(array(
-        'link_path' => $form_state['values']['springboard_drupal_path'],
-      ))
-      ->condition('menu_name', "springboard_admin_menu", '=')
-      ->condition('link_path', $form['admin']['springboard_drupal_path']['#default_value'], '=')
-      ->execute();
+    $update_menu = db_update('menu_links') -> fields(array('link_path' => $form_state['values']['springboard_drupal_path'], )) -> condition('menu_name', "springboard_admin_menu", '=') -> condition('link_path', $form['admin']['springboard_drupal_path']['#default_value'], '=') -> execute();
     menu_rebuild();
   }
 }
@@ -208,7 +200,7 @@ function springboard_admin_custom_theme() {
   }
   // Adding user profile pages to use the admin theme
   // @TODO this should be a SB setting to include paths
-  else if (preg_match("/^user\/[0-9]+/",$_GET['q']) || preg_match("/^user\/[0-9]+\/[a-z]+/",$_GET['q'])) {
+  else if (preg_match("/^user\/[0-9]+/", $_GET['q']) || preg_match("/^user\/[0-9]+\/[a-z]+/", $_GET['q'])) {
     return 'springboard_backend';
   }
 }
@@ -227,14 +219,14 @@ function springboard_admin_custom_theme() {
 
 function springboard_admin_menu_access($path) {
   switch ($path) {
-    case 'admin/springboard/templates':
+    case 'admin/springboard/templates' :
       if (user_access('edit any page_wrapper content') || user_access('edit any email_wrapper content')) {
         return TRUE;
       }
       else {
         return FALSE;
       }
-    break;
+      break;
   }
 }
 
@@ -251,24 +243,24 @@ function springboard_admin_template_page() {
 
   // load Page Templates view
   $view = views_get_view('sbv_page_templates');
-  $view->set_display('block_1');
-  $view->set_arguments(array());
-  $view->pre_execute();
-  $view->execute();
-  if ($view && $view->access('block_1') && !empty($view->result)) {
-    $output .= '<h2>' . $view->get_title('block_1') . '</h2>';
-    $output .= $view->render();
+  $view -> set_display('block_1');
+  $view -> set_arguments(array());
+  $view -> pre_execute();
+  $view -> execute();
+  if ($view && $view -> access('block_1') && !empty($view -> result)) {
+    $output .= '<h2>' . $view -> get_title('block_1') . '</h2>';
+    $output .= $view -> render();
   }
 
   // load Email Templates view
   $view = views_get_view('sbv_email_templates');
-  $view->set_display('block_1');
-  $view->set_arguments(array());
-  $view->pre_execute();
-  $view->execute();
-  if ($view && $view->access('block_1') && !empty($view->result)) {
-    $output .= '<h2>' . $view->get_title('block_1') . '</h2>';
-    $output .= $view->render();
+  $view -> set_display('block_1');
+  $view -> set_arguments(array());
+  $view -> pre_execute();
+  $view -> execute();
+  if ($view && $view -> access('block_1') && !empty($view -> result)) {
+    $output .= '<h2>' . $view -> get_title('block_1') . '</h2>';
+    $output .= $view -> render();
   }
 
   return $output;
@@ -298,13 +290,17 @@ function springboard_admin_aggregate_links_page($path) {
     );
   }
 
-  return theme_links(array('links' => $links, 'attributes' => array('class' => array('aggregate-links')), 'heading' => ''));
+  return theme_links(array(
+    'links' => $links,
+    'attributes' => array('class' => array('aggregate-links')),
+    'heading' => ''
+  ));
 }
 
 /**
  * Implements hook_form_alter().
- * 
- * Add addition submit function for the "delete" action on the node delete 
+ *
+ * Add addition submit function for the "delete" action on the node delete
  * confirmation form.
  */
 function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
@@ -315,7 +311,7 @@ function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
 
 /**
  * Submit handler for the "delete" action on the node delete confirmation form.
- * Redirects configured user roles to the Springboard Dashboard after a node is 
+ * Redirects configured user roles to the Springboard Dashboard after a node is
  * deleted.
  */
 
