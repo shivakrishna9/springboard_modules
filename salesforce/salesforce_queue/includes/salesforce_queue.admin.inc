@@ -192,6 +192,13 @@ function salesforce_queue_admin_form($form, &$form_state) {
  */
 function theme_salesforce_queue_admin_form($variables) {
   $form = $variables['form'];
+
+  // Can't connect to Salesforce, so skip the custom theming of the rest
+  // of the form.
+  if (isset($form['no_sfapi'])) {
+    return drupal_render_children($form);
+  }
+
   $rows = array();
   foreach (element_children($form['object_order_fieldset']['object_order']) as $object) {
     $form['object_order_fieldset']['object_order'][$object]['weight']['#attributes']['class'] = array('salesforce-queue-object-order-weight');
