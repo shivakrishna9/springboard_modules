@@ -312,15 +312,10 @@ function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
  */
 
 function springboard_admin_node_delete($form) {
-    global $user;
-    $redirect_roles = variable_get('springboard_user_experience', array());
-    // Check if the user has ones of the roles that gets redirected to the Sprinboard dashboard
-    foreach ($user->roles as $rid => $assigned_role) {
-      // If any role matches, change the redirect.
-      if ($assigned_role && in_array($rid, $redirect_roles)) { 
-        $form_state['redirect'] = 'admin/springboard';
-        $_GET['destination'] = url('admin/springboard');
-        return;
-      } 
-    }
+  global $user;
+  if (springboard_admin_user_gets_sbux($user)) {
+    $form_state['redirect'] = 'admin/springboard';
+    $_GET['destination'] = url('admin/springboard');
+    return;
+  }
 }
