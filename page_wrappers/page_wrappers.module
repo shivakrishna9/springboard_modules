@@ -925,7 +925,23 @@ function _page_wrappers_create_template($node) {
 
     // build up template markup
     $html_template = field_get_items('node', $node, 'page_wrappers_html_template');
-
+    // CDN module alters image src attributes to point to CDN network. This is typically done via a
+    // callback that runs during hook_node_view_alter(). Since node view hooks are not called during
+    // template rendering, we call code to do image src replacement explicitly here. This ensures
+    // any images embedded in a page wrapper template should get the same treatment as images
+    // embedded in content.
+    if (module_exists('cdn')) {
+      cdn_load_include('fallback');
+      cdn_html_alter_image_urls($html_template[0]['value']);
+    }
+    // Apply filters before doing token replacement, this prevents php generated for 
+    // region tokens from getting stripped if filtered or full html is selected.
+    if ($html_template[0]['format'] != 'php_code') {
+      // Full HTML input filter does not strip php start and end tags by default.
+      $html_template[0]['value'] = str_replace('<?php', '&lt;php?', $html_template[0]['value']);
+      $html_template[0]['value'] = str_replace('?>', '?&gt;', $html_template[0]['value']);  
+      $html_template[0]['value'] = check_markup($html_template[0]['value'], $html_template[0]['format'], $langcode = '', FALSE);
+    }
     $body = _page_wrappers_tokens($html_template[0]['value']);
 
     fputs($file, $body);
