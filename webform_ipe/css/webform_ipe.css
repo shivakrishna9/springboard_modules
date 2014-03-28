@@ -677,7 +677,7 @@ div.error {
   position: relative;
   left: 111px;
   top: 64px;
-  overflow: scroll;
+  overflow: auto;
   background-color: #FFF;
 }
 
@@ -699,7 +699,7 @@ div.error {
   position: relative;
   left: 0px;
   top: 40px;
-  overflow: scroll;
+  overflow: auto;
   background-color: #FFF;
 
 }
@@ -715,7 +715,7 @@ div.error {
   position: relative;
   left: 62px;
   top: 110px;
-  overflow: scroll;
+  overflow: auto;
   background-color: #FFF;
 }
 
@@ -741,7 +741,7 @@ div.error {
   position: relative;
   left: 30px;
   top: 103px;
-  overflow: scroll;
+  overflow: auto;
   background-color: #FFF;
 }
 
@@ -758,8 +758,10 @@ div.error {
   width: auto;
 }
 
-.mfp-content ul.tabs {
+.mfp-content ul.tabs,
+.mfp-content span.edit {
    display: none;
  }
+
 
 

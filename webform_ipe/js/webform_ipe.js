@@ -730,7 +730,7 @@
                 var buttonTarget = this.$el.find('input, textarea, p, select').last();
             }
 
-            if(!_.isUndefined(buttonTarget)) {
+            if(!_.isUndefined(buttonTarget) && $('.mfp-content').length == 0) {
               if($('.sortable-placeholder').length == 0  && type != 'fieldset') {
                 if(this.$el.find('span.edit').length == 0) {
                   buttonTarget.after(App.Templates.template($('#editTemplate').html()));
@@ -1790,8 +1790,8 @@
               ui.item.css({'width':'120px', 'overflow':'hidden'})
             },
             stop: function (event, ui) {
-              ui.item.css({'height':'auto', 'overflow':'visible'})
-              ui.item.css({'width':'auto', 'overflow':'hidden'})
+              ui.item.css({'height':'', 'overflow':'visible'})
+              ui.item.css({'width':'', 'overflow':'hidden'})
               ui.item.trigger('drop');
               $('div.fieldset.form-layouts:not(:has("*"))').css('min-height', '60px');
               if($(this).find(".control-group").length == 0 &! $(this).hasClass('fake-wrapper')) {
@@ -1823,8 +1823,8 @@
               ui.item.css({'width':'120px', 'overflow':'hidden'})
             },
             stop: function (event, ui) {
-              ui.item.css({'height':'auto', 'overflow':'visible'})
-              ui.item.css({'width':'auto', 'overflow':'hidden'})
+              ui.item.css({'height':'', 'overflow':'visible'})
+              ui.item.css({'width':'', 'overflow':'hidden'})
               ui.item.trigger('drop');
               $('div.fieldset.form-layouts:not(:has("*"))').css('min-height', '60px')
               ui.item.siblings(".dummy").remove();
