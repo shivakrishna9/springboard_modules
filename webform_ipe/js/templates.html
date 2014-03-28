@@ -192,7 +192,6 @@
 
     <%  attrs = buildId(form_key) %>
 
-		<div class="control-group">  
 			<label for="<%= attrs.id %>">
 			<% if (extra.title_display != 'none') { %>
 			  <%= name %> 
@@ -202,7 +201,7 @@
 			<% } %>
 			</label>
 
-		 <select id="<%= attrs.id %>" name="<%= attrs.name %>" class="<%= attrs.cls %>" <% if(extra.multiple) {%> multiple <%} %>">
+		 <select id="<%= attrs.id %>" name="<%= attrs.name %>" class="<%= attrs.cls %>" <% if(extra.multiple) {%> multiple <%} %>>
 		   <% var options = optionList(extra.items) %>
 			 <% for (var num in options) { %>
 		 	   <option value="<%= options[num]['val'] %>"><%= options[num]['label'] %></option>
@@ -212,7 +211,6 @@
 			<% if (typeof(extra) != "undefined" && typeof(extra.description) != "undefined") { %>
 		   	<div class="description"><%= extra.description %></div>
 			<% } %>
-		</div>
 	<% } else if (type == 'payment_method') { %>
 
 
