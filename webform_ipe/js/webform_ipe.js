@@ -680,8 +680,8 @@
             if (typeof(event)) {
               //event.stopPropagation();
             }
-            $('input[type="radio"]').parent('.control-group').css({width:'auto'});
-            $('input[type="checkbox"]').parent('.control-group').css({width:'auto'});
+            // $('input[type="radio"]').parent('.control-group').css({width:'auto'});
+            // $('input[type="checkbox"]').parent('.control-group').css({width:'auto'});
 
             //country dropdown selector JS causes multiple buttons appear, after change
             if($('span.edit').length > 1) {
@@ -1804,8 +1804,6 @@
               }
             },
           });
-
-          $('.webform-component-fieldset').disableSelection();
         };
         /*
          * Re-order Fieldsets
@@ -1837,7 +1835,6 @@
               //App.Handlers.setItems();
              },
           });
-          $('#block-system-main div.form-layouts').disableSelection();
         };
          
         //dynamically swap items to eliminate fieldset jitter 
@@ -1869,16 +1866,10 @@
           //App.Handlers.setItems();
           $('.ipe-inner').sortable("option","disabled", false);
           $('.ipe-outer').sortable("option","disabled", false);
-            // $('.layout-row .webform-ipe-container.editor-on.show, .layout-row > .webform-ipe-container.editor-on, .layout-row > .webform-ipe-container.editor-on > .webform-ipe-container').sortable("option","disabled", false);
-            // $('.layout-row > .webform-ipe-container.editor-on, .layout-row .webform-ipe-container.sidebar.editor-on.show').sortableNew('enable');
         }
 
         App.Handlers.sortOff = function(button) {
           button.parent().toggleClass('active');
-          //disable sorting
-          //$('.span3.region-empty').not(':has("*")').css({'min-height': '0px', 'width': '0px'})
-          // $('.layout-row .webform-ipe-container.editor-on.show, .layout-row > .webform-ipe-container.editor-on, .layout-row > .webform-ipe-container.editor-on > .webform-ipe-container').sortable("option","disabled", true);
-          // $('.layout-row > .webform-ipe-container.editor-on, .layout-row  .webform-ipe-container.sidebar.editor-on').sortableNew('disable');
           $('div.fieldset.form-layouts, div.fieldset.sidebar').not(':has("*")').hide();
           $('.webform-component-fieldset, div.fieldset.form-layouts, div.fieldset.sidebar, body').removeClass('editor-on');
           $('.ipe-inner').sortable("option","disabled", true);
@@ -1893,7 +1884,6 @@
           $('.webform-component-fieldset  div.control-group, div.fieldset div.control-group').not('.fundraiser-payment-fields div.control-group').addClass('sortable');
           $('#block-system-main div.form-layouts, div.fieldset.sidebar').addClass('ipe-outer');
           $('fieldset.webform-component-fieldset').addClass('ipe-inner');
-          $('.webform-component-fieldset').disableSelection();
           $('div.control-group input[type="radio"]').parent().addClass('disabled');
           $('div.control-group input[type="checkbox"]').parent().addClass('disabled');
           $('div.control-group input[type="checkboxes"]').parent().addClass('disabled');
