@@ -866,7 +866,7 @@
               }
 
               //If nested fieldsets aren't allowed
-              var regions = ['left_sidebar','right_sidebar','top_region','right_region','bottom_region','left_region'];
+              var regions = ['top_region','right_region','bottom_region','left_region','left_sidebar','right_sidebar'];
               if (type == 'fieldset' && regions.indexOf(optionKey) != -1) {
                 if(cid != optionCid) {
                   $('[name="extra_container"]').append('<option value ="' + optionCid + '">' + optionName + '</option>');
@@ -882,7 +882,7 @@
 
             });
             //set default value
-            if (!_.isUndefined(pid)) {
+            if (!_.isUndefined(pid) && pid !== 0) {
               $('[name="extra_container"]').val(pid);
             }
 
