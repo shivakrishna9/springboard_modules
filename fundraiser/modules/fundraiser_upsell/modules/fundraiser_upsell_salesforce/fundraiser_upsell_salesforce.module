@@ -235,6 +235,15 @@ function fundraiser_upsell_salesforce_update_market_source_with_url_overrides($d
   }
   unset($_SESSION['fundraiser_upsell_salesforce']);
 
+  $persistence = fundraiser_upsell_salesforce_get_all_market_source_persistence();
+  foreach ($url_overrides as $key => $value) {
+    // For direct, always use upsell node settings over url overrides
+    // if the node settings are available.
+    if ($persistence[$key] == 'direct' && !empty($data[$key])) {
+      unset($url_overrides[$key]);
+    }
+  }
+
   return array_merge($data, $url_overrides);
 }
 
