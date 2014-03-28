@@ -67,6 +67,7 @@ fieldset div.webform-component-fieldset.editor-on {
 .layout-row .sidebar.webform-ipe-container.editor-on .webform-ipe-container.editor-on,
 .layout-row > .webform-ipe-container.editor-on .webform-ipe-container.editor-on {
   margin: 10px;
+  margin-top: 0;
   border: 1px dashed #ccc;
   padding: 0px;
   float: none;
@@ -138,70 +139,9 @@ fieldset div.webform-component-fieldset.editor-on {
   cursor: default;
 }
 
-
-/*.webform-ipe-container.editor-on .fieldset-legend {
-  margin-top: 0px;
-  white-space: nowrap;
-  float:left;
-}*/
-/*
-.easy-edit-container.editor-on .row .span12 {
-  width:98%;
+.fake-wrapper {
+  margin-top: 10px;
 }
-
-.easy-edit-container.editor-on .control-group {
-  margin-top:5px;
-  margin-bottom:5px;
-}
-
-.easy-edit-container.editor-on .control-group.sortable {
-  background-color:#bfecff;
-}
-
-.easy-edit-container.webform-component-fieldset.editor-on {
-  float:none;
-  clear:both;
-  overflow: hidden;
-}*/
-
-/*.webform-ipe-container.webform-component-fieldset.editor-on fieldset {
-  margin: 10px 0px;
-  max-width: 90%;
-}*/
-
-/*body.editor-on .webform-component-fieldset.sortable:hover
-.fieldset.sortable:hover {
-  background-color:#f0f0f0;
-  cursor: move;
-}
-
-.ui-sortable .webform-component-fieldset:hover .div-title,
-.ui-sortable .fieldset:hover .div-title {
-  background-color:#ccc;
-  cursor: move;
-}
-  .ui-sortable.ui-sortable-disabled .webform-component-fieldset:hover .div-title,
-  .ui-sortable.ui-sortable-disabled .fieldset:hover .div-title {
-    background-color:transparent;
-    cursor: default;
-  }
-.ui-sortable .webform-component-fieldset:hover,
-.ui-sortable .fieldset:hover {
-  background-color:#f6f6f6;
-}
-  .ui-sortable.ui-sortable-disabled .webform-component-fieldset:hover,
-  .ui-sortable.ui-sortable-disabled .fieldset:hover {
-    background-color:transparent;
-  }
-body.editor-on .sortable:hover {
-  background-color: #e7e7e7;
-  cursor: move;
-}
- body.editor-on  .webform-component-fieldset.ui-sortable-disabled .sortable:hover,
- body.editor-on .fieldset.ui-sortable-disabled .sortable:hover {
-    background-color:transparent;
-    cursor: default;
-  }*/
 
 .ui-state-highlight {
   width: 100%;
@@ -254,7 +194,7 @@ webform-component-fieldset.ui-sortable-helper,
 }
 #admin-bar {
   position: absolute;
-  top:60px;
+  top:70px;
   right:40px;
   font-family: 'Open Sans', sans-serif;
   width:203px;
@@ -621,7 +561,24 @@ webform-component-fieldset.ui-sortable-helper,
 #editForm.state .random-field,
 #editForm.state .aslist-field,
 #editForm.other_amount .description-field,
-#editForm.other_amount .required-field {
+#editForm.other_amount .required-field,
+#editForm.first_name .class-field,
+#editForm.first_name .placeholder-field,
+#editForm.last_name .class-field,
+#editForm.last_name .placeholder-field,
+#editForm.mail .class-field,
+#editForm.mail .placeholder-field,
+#editForm.address_line_2 .class-field,
+#editForm.address_line_2 .placeholder-field,
+#editForm.address .class-field,
+#editForm.address .placeholder-field,
+#editForm.city .class-field,
+#editForm.city .placeholder-field,
+#editForm.other_amount .class-field,
+#editForm.other_amount .placeholder-field,
+#editForm.zip .class-field,
+#editForm.zip .placeholder-field {
+
   display:none;
 }
 

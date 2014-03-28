@@ -95,8 +95,8 @@
             mandatory: { fieldClass:"required-field", type: 'Checkbox', title:'Required'},
             'extra.description': { fieldClass:"description-field", type: 'Text', title: 'Description Text'},
             'extra.unique': {template: altFieldTemplate, type: 'Checkbox', title:'Unique', help:'Check that all entered values for this field are unique. The same value is not allowed to be used twice.'},
-            'extra.attributes.class': {type: 'Text', title: 'Class'},
-            'extra.attributes.placeholder': {type: 'Text', title: 'Placeholder'},
+            'extra.attributes.class': {fieldClass:"class-field", type: 'Text', title: 'Class'},
+            'extra.attributes.placeholder': {fieldClass:"placeholder-field", type: 'Text', title: 'Placeholder'},
             'extra.title_display': {template: altFieldTemplate, type: 'Select', title: 'Label display', options: [{val:'before',label: 'Above'}, {val: 'none', label: 'None'}], help:'Determines the placement of the component\'s label.'},
             'extra.private': {template: altFieldTemplate, type: 'Checkbox', title:'Private', help:'Private fields are shown only to users with results access.'},
             'extra.field_prefix': {type: 'Text', title: 'Prefix Text'},
@@ -173,7 +173,7 @@
             'extra.disabled': {type: 'Checkbox', title: 'Disabled'},
             'extra.title_display': {type: 'Select', title: 'Label display', options: [{val:'before',label: 'Above'}, {val: 'none', label: 'None'}], help:'Determines the placement of the component\'s label.'},
             'extra.private': { type: 'Checkbox', title:'Private', help:'Private fields are shown only to users with results access.'},
-            'extra.attributes.class': {type: 'Text', title: 'Class'},
+            'extra.attributes.class': {fieldClass:"class-field", type: 'Text', title: 'Class'},
           },
         });
 
