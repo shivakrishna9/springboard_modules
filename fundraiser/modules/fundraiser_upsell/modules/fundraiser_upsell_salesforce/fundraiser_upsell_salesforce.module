@@ -475,7 +475,7 @@ function fundraiser_upsell_salesforce_node_load($nodes, $types) {
  *   Node ID.
  *
  * @return mixed|null
- *   The sdata array, or NULL.
+ *   The data array, or NULL.
  */
 function fundraiser_upsell_salesforce_get_node_settings($nid) {
   $return = NULL;
