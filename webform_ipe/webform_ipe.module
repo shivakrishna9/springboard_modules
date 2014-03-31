@@ -253,8 +253,8 @@ function _webform_ipe_json_process($node, $op = 'update') {
     }
     else {
       if(module_exists('devel')) {
-        dd('No Weight:');
-        dd($component);
+        // dd('No Weight:');
+        // dd($component);
       }
     }
 

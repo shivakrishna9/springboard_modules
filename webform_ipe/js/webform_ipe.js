@@ -814,7 +814,9 @@
             $('#editForm').addClass(fkey);
 
             if (fkey == "state") {
-              $('.option-items').after('<div><label>Options</label><div>States are created from a pre-built list, and cannot be edited</div></div>');
+              $('.option-items').html('');//firefox becomes unresponsive w/o this
+              $('.option-items').before('<div><label>Options</label><div>States are created from a pre-built list, and cannot be edited</div></div>');
+              $('.option-items').hide();
               $('input[name="extra_multiple"]').closest('div').html('Multiple option is not allowed on this field');
             }
 
