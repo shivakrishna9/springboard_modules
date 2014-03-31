@@ -284,10 +284,10 @@ function _webform_ipe_json_process($node, $op = 'update') {
     }
     else { //creat new components
       $component['cid'] = NULL;
-      $new_key = str_replace('-', '_', $component['name']);
-      $new_key = str_replace(' ', '_', $new_key);
-      $new_key = preg_replace('/[^a-z0-9_]i/', '', $new_key);
-      $component['form_key'] = str_replace('default_key', $new_key, $component['form_key']);
+      // $new_key = str_replace('-', '_', $component['name']);
+      // $new_key = str_replace(' ', '_', $new_key);
+      // $new_key = preg_replace('/[^a-z0-9_]i/', '', $new_key);
+      $component['form_key'] = str_replace('default_key_', $new_key, $component['form_key']);
       $component['nid'] = $node->nid;
       $cid = webform_component_insert($component);
       $output[$component['form_key']]['cid'] = $cid;
