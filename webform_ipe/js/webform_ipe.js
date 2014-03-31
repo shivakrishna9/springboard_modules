@@ -1223,6 +1223,7 @@
              this.collection.each(function (model, index) {
                comps[index] = model.toJSON();
              });
+             console.log(comps);
               //comps['ipe_form_action'] = $('div.form-actions').closest('.webform-ipe-container').attr('id').replace('webform-component-','').replace(/-/g, '_');
               var callbackPath = Drupal.settings.webform_ipe.callback;
               $('#admin-bar').append('<p><div class="ajax-progress"><div class="throbber">&nbsp;</div></div></p>');
