@@ -758,7 +758,8 @@ function fundraiser_webform_fundraiser_update_fundraiser_alter($fundraiser) {
         $donation_amounts[$amount_set[0]] = $amount_set[1];
       }
     }
-    ksort($donation_amounts, SORT_NUMERIC);
+    // Automatically updates ask amounts to ascending order, deprecate?
+    // ksort($donation_amounts, SORT_NUMERIC);
   }
   $fundraiser->donation_amounts = $donation_amounts;
   // Update the amount components for the fundraiser.
