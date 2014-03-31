@@ -481,3 +481,54 @@ function springboard_p2p_fields_format_node_options($nodes) {
 
   return $options;
 }
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function springboard_p2p_fields_field_formatter_info() {
+  return array(
+    'springboard_p2p_fields_default' => array(
+      'label' => t('Default'),
+      'description' => t('Displays campaign goals.'),
+      'field types' => array('springboard_p2p_fields_campaign_goals'),
+      'settings' => array(),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function springboard_p2p_fields_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $element = array();
+
+  if ($display['type'] == 'springboard_p2p_fields_default') {
+    foreach ($items as $delta => $value) {
+      $goals = springboard_p2p_fields_campaign_goals_load($value['goal_set_id']);
+      if ($goals) {
+        foreach ($goals as $type => $goal) {
+          if ($goal['enabled']) {
+            $prefix = '';
+            $suffix = '';
+
+            if ($goal['goal_type'] == 'amount') {
+              $prefix = '$ ';
+            }
+            elseif ($goal['goal_type'] == 'submissions') {
+              $suffix = ' submissions';
+            }
+
+            $element[$delta][$type] = array(
+              '#prefix' => $prefix,
+              '#suffix' => $suffix,
+              '#markup' => number_format($goal['goal_value']),
+            );
+
+          }
+        }
+      }
+    }
+  }
+
+  return $element;
+}
