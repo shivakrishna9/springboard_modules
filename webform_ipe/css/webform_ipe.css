@@ -576,7 +576,11 @@ webform-component-fieldset.ui-sortable-helper,
 #editForm.other_amount .class-field,
 #editForm.other_amount .placeholder-field,
 #editForm.zip .class-field,
-#editForm.zip .placeholder-field {
+#editForm.zip .placeholder-field,
+#editForm.quantity .random-field,
+#editForm.quantity .required-field,
+#editForm.quantity .multiple-field,
+#editForm.quantity .aslist-field {
 
   display:none;
 }
