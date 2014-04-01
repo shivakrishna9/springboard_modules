@@ -57,7 +57,7 @@ function fundraiser_date_mode_admin() {
       fundraiser_date_mode_max_records() .
       ' records will need to be updated.  These changes will affect future scheduled charges. ' .
       'However this will not include any scheduled charges in the current month ' .
-      'to prevent charges from being rescheduled into the past.' .
+      'to prevent charges from being rescheduled into the past. ' .
       'Beware that changing these settings repeatedly could have side effects.</p></div>',
   );
   $form['#submit'][] = 'fundraiser_date_mode_admin_submit';
