@@ -682,7 +682,10 @@
             }
             // $('input[type="radio"]').parent('.control-group').css({width:'auto'});
             // $('input[type="checkbox"]').parent('.control-group').css({width:'auto'});
-
+            var menuOpen = $('.accordion-header:not(".closed")','#admin-bar').length;
+             if(menuOpen == 0 ) {
+              return;
+             }
             //country dropdown selector JS causes multiple buttons appear, after change
             if($('span.edit').length > 1) {
               $('span.edit').remove();
