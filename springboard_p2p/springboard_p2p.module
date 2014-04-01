@@ -67,8 +67,14 @@ function springboard_p2p_theme() {
 /**
  * Implements hook_form_FORM_ID_alter().
  */
-function springboard_p2p_form_p2p_campaign_node_form_alter(&$form, &$form_state, $form_id) {
+function springboard_p2p_form_p2p_category_node_form_alter(&$form, &$form_state, $form_id) {
 
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function springboard_p2p_form_p2p_campaign_node_form_alter(&$form, &$form_state, $form_id) {
   $lang_code = $form['#node']->language;
 
   $form['field_p2p_category'][$lang_code]['#ajax'] = array(
@@ -85,12 +91,19 @@ function springboard_p2p_form_p2p_campaign_node_form_alter(&$form, &$form_state,
     $nid = $form_state['input']['field_p2p_category'][$lang_code];
     $category = node_load($nid);
 
-    if (isset($category->field_p2p_content[$lang_code][0])) {
-      $content = $category->field_p2p_content[$lang_code][0];
-      unset($form_state['input']['field_p2p_content'][$lang_code][0]['value']);
-      $form['field_p2p_content'][$lang_code][0]['#default_value'] = $content['value'];
-      unset($form_state['input']['field_p2p_content'][$lang_code][0]['format']);
-      $form['field_p2p_content'][$lang_code][0]['#format'] = $content['format'];
+    $textareas = array(
+      'field_p2p_personal_intro',
+      'field_p2p_org_intro',
+    );
+
+    foreach ($textareas as $field_name) {
+      if (isset($category->{$field_name}[$lang_code][0])) {
+        $content = $category->{$field_name}[$lang_code][0];
+        unset($form_state['input'][$field_name][$lang_code][0]['value']);
+        $form[$field_name][$lang_code][0]['#default_value'] = $content['value'];
+        unset($form_state['input'][$field_name][$lang_code][0]['format']);
+        $form[$field_name][$lang_code][0]['#format'] = $content['format'];
+      }
     }
 
     if (isset($category->field_p2p_form_header[$lang_code][0])) {
@@ -107,20 +120,56 @@ function springboard_p2p_form_p2p_campaign_node_form_alter(&$form, &$form_state,
 
     // Personal campaign default images.
     // Has multiple values.
-    // @todo This part.
-    if (isset($category->field_p2p_images[$lang_code])) {
-      $images = $category->field_p2p_images[$lang_code];
-//    dpm($images);
-//    foreach ($form_state['input']['field_p2p_images'][$lang_code] as $delta => $file) {
-//      unset($form_state['input']['field_p2p_images'][$lang_code][$delta]);
-//    }
-//    $image_field_array = $form['field_p2p_images'][$lang_code][0];
-//    foreach ($images as $delta => $file) {
-//      $form['field_p2p_images'][$lang_code][$delta] = $image_field_array;
-//      $form['field_p2p_images'][$lang_code][$delta]['#default_value'] = array(
-//        'fid' => $file['fid'],
-//      );
-//    }
+    if (isset($category->field_p2p_images[$lang_code]) && count($category->field_p2p_images[$lang_code] > 1)) {
+      $category_images = $category->field_p2p_images[$lang_code];
+
+      // Remove the "upload a new file" row.
+      array_pop($category_images);
+
+//      dpm($category_images);
+
+      unset($form_state['input']['field_p2p_images'][$lang_code]);
+
+      // Get the "upload a new file" row before destroying everything.
+      $upload_row = array_pop($form['field_p2p_images'][$lang_code]);
+
+      // in #default_value
+      // set the fid, uid, filename
+      // remove display, description
+      // add uri, filemime, filesize, status, timestamp, rdf mapping
+      //
+      // set #weight to $delta
+      // remove #file_upload_delta, #theme, #theme_wrappers, #process, #title,
+      // #description, #field_name, #language, #display_field,
+      // #file_upload_title, #file_upload_description, #after_build,
+      // #field_parents
+      $image_row = $upload_row;
+      unset($image_row['#default_value']);
+      unset($image_row['#weight']);
+      unset($image_row['#file_upload_delta']);
+      unset($image_row['#theme']);
+      unset($image_row['#theme_wrappers']);
+      unset($image_row['#process']);
+      unset($image_row['#title']);
+      unset($image_row['#description']);
+      unset($image_row['#field_name']);
+      unset($image_row['#language']);
+      unset($image_row['#display_field']);
+      unset($image_row['#file_upload_title']);
+      unset($image_row['#file_upload_description']);
+      unset($image_row['#after_build']);
+
+      foreach ($category_images as $delta => $image) {
+        $form['field_p2p_images'][$lang_code][$delta] = $image_row;
+        $form['field_p2p_images'][$lang_code][$delta]['#default_value'] = $image;
+        $form['field_p2p_images'][$lang_code][$delta]['#weight'] = $delta;
+      }
+
+      // Put the last row back on.
+      $last_delta = count($form['field_p2p_images'][$lang_code]);
+      $form['field_p2p_images'][$lang_code][$last_delta] = $upload_row;
+      $form['field_p2p_images'][$lang_code][$last_delta]['#weight'] = $last_delta;
+
     }
   }
 
