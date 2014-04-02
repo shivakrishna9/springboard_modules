@@ -1150,7 +1150,7 @@ function fundraiser_upsell_create_master_donation($upsold_donation, $new_amount)
 
   // If we're charging in a month, save a sustainers record and add a comment.
   if ($charge_time == 'one_month') {
-    $next_charge = strtotime('+1 month');
+    $next_charge = fundraiser_sustainers_get_next_charge_time();
     fundraiser_donation_comment($master_donation, 'Initial Upsell donation scheduled to be charged at @next_charge',
       array('@next_charge' => format_date($next_charge)));
 
