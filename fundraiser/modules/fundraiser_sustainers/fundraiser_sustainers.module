@@ -1434,7 +1434,7 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
       unset($new_donation->reference_charge);
 
       fundraiser_donation_create($new_donation);
-      $next_charge = strtotime('+ ' . $processed_months . ' months');
+      $next_charge = strtotime('+ ' . $processed_months . ' months', $start);
 
       $context = array(
         'master_did' => $donation->did,
