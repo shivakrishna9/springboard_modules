@@ -125,14 +125,17 @@ function fundraiser_date_mode_fundraiser_sustainers_series_created($master_did) 
 function fundraiser_date_mode_fundraiser_sustainers_recurring_next_charge_alter(&$next_charge, $context) {
   if (variable_get('fundraiser_date_mode_set_date_mode', FALSE)) {
     $new_date = variable_get('fundraiser_date_mode_set_dates', 15);
-    // Save the original anniversary charge date calculated by
-    // fundraiser_sustainers.
-    $record = array(
-      'master_did' => $context['master_did'],
-      'did' => $context['did'],
-      'original_next_charge' => $next_charge,
-    );
-    drupal_write_record('fundraiser_date_mode_dates', $record);
+
+    if (isset($context['master_did']) && isset($context['did'])) {
+      // Save the original anniversary charge date calculated by
+      // fundraiser_sustainers.
+      $record = array(
+        'master_did' => $context['master_did'],
+        'did' => $context['did'],
+        'original_next_charge' => $next_charge,
+      );
+      drupal_write_record('fundraiser_date_mode_dates', $record);
+    }
 
     // Override anniversary date with date mode charge date.
     // If the next charge is in this month, leave it alone.

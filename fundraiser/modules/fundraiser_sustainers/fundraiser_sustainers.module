@@ -1407,6 +1407,8 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
     $start = strtotime("now");
   }
 
+  $previous_charge = $start;
+
   $stop = mktime(0, 0, 0, $month, 1, $year);
   $months = ((idate('Y', $stop) * 12) + idate('m', $stop)) - ((idate('Y', $start) * 12) + idate('m', $start));
   $processed_months = 0;
@@ -1434,14 +1436,15 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
       unset($new_donation->reference_charge);
 
       fundraiser_donation_create($new_donation);
-      $next_charge = strtotime('+ ' . $processed_months . ' months', $start);
 
+      // Build a context to determine the next charge date.
       $context = array(
         'master_did' => $donation->did,
         'did' => $new_donation->did,
       );
-      // Allow other modules to adjust next_charge as needed.
-      drupal_alter('fundraiser_sustainers_recurring_next_charge', $next_charge, $context);
+
+      $next_charge = fundraiser_sustainers_get_next_charge_time($previous_charge, $context);
+      $previous_charge = $next_charge;
 
       fundraiser_donation_comment($new_donation, 'Sustainer donation scheduled to be charged at @next_charge',
         array('@next_charge' => format_date($next_charge)));
@@ -1479,6 +1482,32 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
       array('@id' => $donation->did, '@user' => $user->name), WATCHDOG_DEBUG, NULL);
     fundraiser_donation_delete($this_donation);
   }
+}
+
+/**
+ * Determine the next_charge time taking any altering into account.
+ *
+ * @param null|int $time
+ *   A timestamp as provided by strtotime(), or NULL to use now.
+ *   Either the current time or the time of the previous charge
+ *   in order to get back the next scheduled time to charge.
+ * @param array $context
+ *   An associative array potentially including a 'master_did' and a new
+ *   donation 'did'.
+ *
+ * @return int
+ *   The timestamp of when to make a next charge.
+ */
+function fundraiser_sustainers_get_next_charge_time($time = NULL, $context = array()) {
+  if (is_null($time)) {
+    $time = strtotime('now');
+  }
+
+  $next_charge = strtotime('+1 month', $time);
+  // Allow other modules to adjust next_charge as needed.
+  drupal_alter('fundraiser_sustainers_recurring_next_charge', $next_charge, $context);
+
+  return $next_charge;
 }
 
 /**
