@@ -13,7 +13,7 @@ function fundraiser_date_mode_admin() {
     '#type' => 'checkbox',
     '#title' => t('Set date mode'),
     '#default_value' => variable_get('fundraiser_date_mode_set_date_mode', FALSE),
-    '#description' => t('Process all sustainer charges on a set date each month
+    '#description' => t('Process all sustainer charges on a set date each month.
       If this checkbox is left unchecked, sustainers will instead be processed
       on the date of their anniversary. NOTE: Turning this feature on will convert
       current sustainers to the new date for all future (and only future) charges.
@@ -57,7 +57,7 @@ function fundraiser_date_mode_admin() {
       fundraiser_date_mode_max_records() .
       ' records will need to be updated.  These changes will affect future scheduled charges. ' .
       'However this will not include any scheduled charges in the current month ' .
-      'to prevent charges from being rescheduled into the past.' .
+      'to prevent charges from being rescheduled into the past. ' .
       'Beware that changing these settings repeatedly could have side effects.</p></div>',
   );
   $form['#submit'][] = 'fundraiser_date_mode_admin_submit';
