@@ -1107,7 +1107,7 @@ function fundraiser_upsell_find_suggested_amount($amount) {
 /**
  * Creates a master donation from the original upsold donation.
  *
- * Copy the original donation to a new did and update the status and amount..
+ * Copy the original donation to a new did and update the status and amount.
  *
  * @param object $upsold_donation
  *   The original one time donation to use as the basis for the master.
