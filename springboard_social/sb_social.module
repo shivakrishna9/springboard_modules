@@ -140,6 +140,17 @@ function sb_social_menu() {
 }
 
 /**
+ * Implements hook_admin_paths().
+ */
+function sb_social_admin_paths() {
+  if (variable_get('node_admin_theme')) {
+    return array(
+      'node/*/share_settings' => TRUE
+    );
+  }
+}
+
+/**
  * Implements hook_form_FORM_ID_alter().
  *
  * Add share enabled checkboxes to default and custom market source fields.
