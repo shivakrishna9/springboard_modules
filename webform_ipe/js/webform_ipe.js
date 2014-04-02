@@ -907,7 +907,7 @@
             //So instead we'll just add a "deleted" property to the model
             if (e) {
               e.preventDefault();
-              event.stopImmediatePropagation();
+              e.stopImmediatePropagation();
             }
             var retVal = confirm("Delete this item? If you change your mind, you can reload the page (without saving) to recover deleted items.");
             if( retVal == false ) {
