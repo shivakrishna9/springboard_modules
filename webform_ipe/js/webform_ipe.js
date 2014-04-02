@@ -1226,14 +1226,12 @@
               this.collection.each(function (model, index) {
                 if(model.hasChanged()) {
                   model.unset('payment_html', {silent: true});
-                if(model.get('form_key') == 'state' || model.get('form_key') == 'country') {
-                  model.unset('extra.items', {silent: true});
-                }
+                  model.unset('container', {silent: true});
                   comps[index] = model;
                 }
               });
               comps = JSON.stringify(comps);
-              console.log(comps);
+              //console.log(comps);
               //comps['ipe_form_action'] = $('div.form-actions').closest('.webform-ipe-container').attr('id').replace('webform-component-','').replace(/-/g, '_');
               var callbackPath = Drupal.settings.webform_ipe.callback;
               $('#admin-bar').append('<p><div class="ajax-progress"><div class="throbber">&nbsp;</div></div></p>');
@@ -1248,8 +1246,9 @@
                 data: {components: comps},
                 dataType: 'json',
                 success: function(data) {
-                  console.log(data);
+                  //console.log(data);
                   location.reload(true);
+                  
                 },
                 error: function(xhr, textStatus, error){
                    console.log(error);
@@ -1260,7 +1259,6 @@
                    alert('An error occurred. Changes were not saved.')
                 }
              });
-
           },
 
           updateWeight: function(event, field) {
@@ -1613,7 +1611,6 @@
               var newModel = new App.Models.Component(item);
               break;
           }
-          console.log('')
           window.componentCollection.add(newModel);
         });
         /*
