@@ -215,7 +215,8 @@ function webform_ipe_js_alter(&$js) {
  * Process the JSON callback and create, update, or delete the components.
  */
 function _webform_ipe_json_process($node, $op = 'update') {
-  $components = $_POST['components'];
+  $components = json_decode($_POST['components'], true);
+  dd($components);
   $output = array();
     foreach ($components as $component) {
 
@@ -231,18 +232,32 @@ function _webform_ipe_json_process($node, $op = 'update') {
 
     //convert some javascript values to something Drupal/PHP understands
     //Drupal stores config as strings for DB compat.
+    $stings_not_integers = array('min', 'max', 'step');
     foreach ($component['extra'] as $name => $extra) {
-      if ($extra == "null") {
+      if ($extra === "null") {
         $component['extra'][$name] = "";
       }
-      if ($extra == 'false' || $extra === 0) {
-       $component['extra'][$name] = "0";
-      }
-      if ($extra == "true" || $extra === 1) {
-        $component['extra'][$name] = "1";
-      }
+      if(!in_array($name, $stings_not_integers)) {
+        if ($extra === "false" || $extra === 0 || $extra === FALSE) {
+         $component['extra'][$name] = 0;
+        }
+        if ($extra === "true" || $extra === 1 || $extra === TRUE) {
+          $component['extra'][$name] = 1;
+        }
+      } 
+      if(in_array($name, $stings_not_integers)) {
+        if ($extra === "false" || $extra === FALSE) {
+         $component['extra'][$name] = "0";
+        }
+        else if ($extra === "true" || $extra === TRUE) {
+          $component['extra'][$name] = "1";
+        }
+        else {
+          $component['extra'][$name] = (string)$extra;
+        }
+      } 
     }
-    if($component['mandatory'] == 'true' || $component['mandatory'] === 1) {
+    if($component['mandatory'] === "true" || $component['mandatory'] === 1) {
       $component['mandatory'] = "1";
     }
     elseif($component['mandatory'] != 1) {
@@ -294,7 +309,7 @@ function _webform_ipe_json_process($node, $op = 'update') {
     }
     $output[$component['form_key']] = array('sucess' => 'true');
   }
-
+$output['post'] = $_POST;
   return drupal_json_output($output);
 }
 

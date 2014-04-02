@@ -288,7 +288,7 @@
               disabled: 0,
               field_prefix: '',
               field_suffix: '',
-              decimals: 'Automatic',
+              decimals: '',
               excludezero: '',
               integer:0,
               max:'',
@@ -315,7 +315,7 @@
             'extra.container': {type: 'Select', title: 'Container', options: {}},
              mandatory: { type: 'Checkbox', title:'Required'},
             'extra.description': {type: 'Text', title: 'Description Text'},
-            'extra.decimals': {type: 'Select', title: 'Decimal places', help: 'Automatic will display up to 4 decimals places if needed. A value of "2" is common to format currency amounts.', options: ['Automatic', '0','1', '2', '3', '4', '5','6']},
+            'extra.decimals': {type: 'Select', title: 'Decimal places', help: 'Automatic will display up to 4 decimals places if needed. A value of "2" is common to format currency amounts.', options: {'':'Automatic', '0':'0','1':'1', '2':'2', '3':'3', '4':'4', '5':'5','6':'6'}},
             'extra.excludezero': {type: 'Checkbox', title: 'Exclude Zero', help: 'Exclude entries of zero (or blank) when counting submissions to calculate average and standard deviation.', options: {yes:'1'}},
             'extra.integer': {type: 'Checkbox', title: 'Integer', help: 'Permit only integer values as input. e.g. 12.34 would be invalid.', options: {yes:1}},
             'extra.type': {type: 'Radio', title: 'Element Type', help: '<br />A minimum and maximum value are required if displaying as a select.', options: {textfield:'Text Field', select:'Select List'}},
@@ -1223,10 +1223,17 @@
 
           save: function(){ //should be in App.Collections.Components
             var comps = {}
-             this.collection.each(function (model, index) {
-               comps[index] = model.toJSON();
-             });
-             console.log(comps);
+              this.collection.each(function (model, index) {
+                if(model.hasChanged()) {
+                  model.unset('payment_html', {silent: true});
+                if(model.get('form_key') == 'state' || model.get('form_key') == 'country') {
+                  model.unset('extra.items', {silent: true});
+                }
+                  comps[index] = model;
+                }
+              });
+              comps = JSON.stringify(comps);
+              console.log(comps);
               //comps['ipe_form_action'] = $('div.form-actions').closest('.webform-ipe-container').attr('id').replace('webform-component-','').replace(/-/g, '_');
               var callbackPath = Drupal.settings.webform_ipe.callback;
               $('#admin-bar').append('<p><div class="ajax-progress"><div class="throbber">&nbsp;</div></div></p>');
@@ -1241,6 +1248,7 @@
                 data: {components: comps},
                 dataType: 'json',
                 success: function(data) {
+                  console.log(data);
                   location.reload(true);
                 },
                 error: function(xhr, textStatus, error){
@@ -1252,6 +1260,7 @@
                    alert('An error occurred. Changes were not saved.')
                 }
              });
+
           },
 
           updateWeight: function(event, field) {
@@ -1295,46 +1304,49 @@
             //now update the weights
 
             this.collection.each(function (eachModel, index) {
-              var form_key = eachModel.get('form_key');
-              var id = form_key.replace(/_/g,'-');
-              var type = eachModel.get('type');
-              var pos;
-              switch (type) {
-                case 'fieldset':
-                case 'payment_method':
-                  pos = $('[id$="'+id+'"]');
-                break;
-                case 'payment_fields':
-                  pos = $('div[id$="'+id+'"]');
-                 break;
-                case 'markup':
-                  pos = $('div[id$="'+id+'"]').closest('.control-group');
+              var pid = field.model.get('pid'); //grab the updated pid
+              if(eachModel.get('pid') == pid) {
+                var form_key = eachModel.get('form_key');
+                var id = form_key.replace(/_/g,'-');
+                var type = eachModel.get('type');
+                var pos;
+                switch (type) {
+                  case 'fieldset':
+                  case 'payment_method':
+                    pos = $('[id$="'+id+'"]');
                   break;
-                case 'select':
-                  var multi = eachModel.get('extra.multiple');
-                  if(!_.isUndefined(multi) && multi == "true") {
-                    pos = $('div[id$="'+id+'"').closest('.control-group');
-                  }
-                  else if(form_key == 'recurs_monthly') {
-                    pos = $($('[name*="recurs"]').parents('.control-group')[1]);
-                  } else {
+                  case 'payment_fields':
+                    pos = $('div[id$="'+id+'"]');
+                   break;
+                  case 'markup':
+                    pos = $('div[id$="'+id+'"]').closest('.control-group');
+                    break;
+                  case 'select':
+                    var multi = eachModel.get('extra.multiple');
+                    if(!_.isUndefined(multi) && multi == "true") {
+                      pos = $('div[id$="'+id+'"').closest('.control-group');
+                    }
+                    else if(form_key == 'recurs_monthly') {
+                      pos = $($('[name*="recurs"]').parents('.control-group')[1]);
+                    } else {
+                      pos = $('[name$="['+form_key+']"]').closest('.control-group');
+                    }
+                  break;
+                  case 'date':
+                    if(form_key.indexOf('default_key') != -1) {
+                      pos = $($('label[for*="'+id+'"]').parents('.control-group')[0]);
+                    }
+                    else {
+                      pos = $($('[name*="['+form_key+']"]').parents('.control-group')[0]);
+                    }
+                  break;
+                  default:
                     pos = $('[name$="['+form_key+']"]').closest('.control-group');
-                  }
-                break;
-                case 'date':
-                  if(form_key.indexOf('default_key') != -1) {
-                    pos = $($('label[for*="'+id+'"]').parents('.control-group')[0]);
-                  }
-                  else {
-                    pos = $($('[name*="['+form_key+']"]').parents('.control-group')[0]);
-                  }
-                break;
-                default:
-                  pos = $('[name$="['+form_key+']"]').closest('.control-group');
-                break;
+                  break;
+                }
+                var weight = $('.webform-client-form div.control-group').add('.webform-client-form .webform-component-fieldset').index(pos);
+                eachModel.set('weight', weight,  {silent: true});
               }
-              var weight = $('.webform-client-form div.control-group').add('.webform-client-form .webform-component-fieldset').index(pos)
-              eachModel.set('weight', weight,  {silent: true});
             });
 
             //now sort everything *in the model* by weight, so that the renderChild function works properly
