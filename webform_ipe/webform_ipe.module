@@ -10,9 +10,9 @@
  */
 function webform_ipe_menu() {
   $items = array();
-  $items['admin/config/content/webform/ipe'] = array(
+  $items['admin/config/content/ipe'] = array(
     'title' => 'Webform IPE',
-    'description' => 'Configure settings for Webform IPE.',
+    'description' => 'Configure settings for Webform In-Place Editor.',
     'access arguments' => array('administer webform IPE'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('webform_ipe_admin_form'),
@@ -68,7 +68,8 @@ function webform_ipe_permission() {
 function webform_ipe_preprocess_node(&$vars) {
 
   // Make sure that editing is activated for this type and user.
-  $is_active = in_array($vars['type'], variable_get('webform_ipe_node_types', array()));
+  $node_types = variable_get('webform_ipe_node_types', array());
+  $is_active = isset($node_types[$vars['type']]) ? $node_types[$vars['type']] : 0;
   $nid = isset($vars['webform']['nid']) ? $vars['webform']['nid'] : NULL;
   // if(isset($nid)) {
   //   $layout = form_layout_get_node_layout($nid);
