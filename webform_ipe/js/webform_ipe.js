@@ -1595,9 +1595,13 @@
               var newModel = new App.Models.DateComponent(item);
               break;
             case 'select':
-              if(item.extra.aslist == true) {
+              if(item.extra.aslist == true && !item.extra.multiple ) {
                 $('[name$="['+item.form_key+']"]').closest('.control-group').attr('data-cid',item.cid);
                 $('[name$="['+item.form_key+']"]').closest('.control-group').attr('data-pid',item.pid);
+              }
+              else if(item.extra.aslist == true && item.extra.multiple ) {
+                $('[name$="['+item.form_key+'][]"]').closest('.control-group').attr('data-cid',item.cid);
+                $('[name$="['+item.form_key+'][]"]').closest('.control-group').attr('data-pid',item.pid);
               }
               else {
                 $('[name*="['+item.form_key+']"]').closest('.control-group').parents('.control-group').attr('data-cid',item.cid);
