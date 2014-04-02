@@ -60,6 +60,7 @@ function springboard_p2p_fields_schema() {
         'type' => 'int',
         'not null' => FALSE,
         'default' => NULL,
+        'unsigned' => TRUE,
       ),
     ),
     'primary key' => array('goal_set_id', 'type'),

@@ -329,6 +329,7 @@ function springboard_p2p_fields_field_widget_form(&$form, &$form_state, $field, 
                 '#field_suffix' => $goal_value_suffix,
                 '#prefix' => '<div class="springboard_p2p_goal_value">',
                 '#suffix' => '</div>',
+                '#maxlength' => 9,
               ),
             );
 
