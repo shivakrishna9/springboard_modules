@@ -2457,10 +2457,11 @@ function _fundraiser_create_fundraiser($fundraiser) {
   if (!$fundraiser_data) {
     // Implode donation amounds for saving.
     $imploded_amounts = array();
-    foreach ($fundraiser['donation_amounts'] as $donation_amount) {
-      $imploded_amounts[] = implode('|', $donation_amount);
+    foreach ($fundraiser['donation_amounts'] as $index => $donation_amount) {
+      $donation_amounts[$donation_amount['weight']] = $donation_amount['amount'] . '|' . $donation_amount['label'];
     }
-    $imploded_amounts = array_unique($imploded_amounts);
+    ksort($donation_amounts);
+    $imploded_amounts = array_unique($donation_amounts);
     // On getting fundraiser this will be exploded into the correct values.
     $fundraiser['donation_amounts'] = implode(',', $imploded_amounts);
     // TODO: we should also store the donation_default internally, instead of
