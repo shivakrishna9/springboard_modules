@@ -37,7 +37,7 @@ function fundraiser_date_mode_admin() {
     '#type' => 'textield',
     '#size' => 6,
     '#title' => t('# of records to batch per run'),
-    '#default_value' => variable_get('fundraiser_date_mode_batch_record_count', 1000);
+    '#default_value' => variable_get('fundraiser_date_mode_batch_record_count', 1000),
   );
   $form['cron_settings']['fundraiser_date_mode_skip_on_cron'] = array(
     '#type' => 'checkbox',
