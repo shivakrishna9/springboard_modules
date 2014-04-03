@@ -1682,6 +1682,13 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
 }
 
 /**
+ * Copy donation object without references to the original object
+ */
+function _fundraiser_donation_copy($donation) {
+  return unserialize(serialize($donation));
+}
+
+/**
  * Donation processing, a given donation needs to be processed.
  */
 function fundraiser_donation_process($donation) {

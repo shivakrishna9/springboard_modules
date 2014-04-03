@@ -1404,7 +1404,7 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
     // Check if we have a donation for this next month.
     if (!isset($existing_recurring[$processed_months])) {
       // Create a new one donation from the source or master donation
-      $new_donation = !empty($source_donation) ? clone $source_donation : clone $donation;
+      $new_donation = !empty($source_donation) ? _fundraiser_donation_copy($source_donation) : _fundraiser_donation_copy($donation);
       $new_donation->sid = 0; // Not actually submitted, it's automated, so no sid.
       // Create the new donation object, but do not process it. Processing doesn't occur till cron.
       // New donation has all of the old donation information already loaded.
