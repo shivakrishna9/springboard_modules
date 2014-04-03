@@ -1440,13 +1440,25 @@
               $('button[data-action="remove"]').on('click', function(){
                 //App.Handlers.blockMsgResize('remove');
               });
+
+              //if this is new and cancelled, destroy the model when the popup closes
+              var key = form.model.get('form_key');
+              var id = key.replace(/_/g,'-');
+              var cid  = form.model.get('cid');
+              var exists = $('#' + id).length;
               // Clicking on the x closes
               $('.closeUI').click(function(){
+                if(cid == key && !exists) {
+                  form.model.destroy();
+                }
                 $.unblockUI();
                 return false;
               });
               // Clicking off closes
               $('.blockOverlay').attr('title','Click to unblock').click(function(){
+                if(cid == key && !exists) {
+                  form.model.destroy();
+                }
                 $.unblockUI();
               });
               if (typeof(afterBuild) !== 'function') {
