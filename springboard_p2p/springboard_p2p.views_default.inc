@@ -295,6 +295,11 @@ function springboard_p2p_views_default_views() {
   $handler->display->display_options['relationships']['reverse_field_p2p_category_node']['table'] = 'node';
   $handler->display->display_options['relationships']['reverse_field_p2p_category_node']['field'] = 'reverse_field_p2p_category_node';
   $handler->display->display_options['relationships']['reverse_field_p2p_category_node']['label'] = 'Campaigns';
+  /* Relationship: Entity Reference: Referencing entity */
+  $handler->display->display_options['relationships']['reverse_field_p2p_campaign_node']['id'] = 'reverse_field_p2p_campaign_node';
+  $handler->display->display_options['relationships']['reverse_field_p2p_campaign_node']['table'] = 'node';
+  $handler->display->display_options['relationships']['reverse_field_p2p_campaign_node']['field'] = 'reverse_field_p2p_campaign_node';
+  $handler->display->display_options['relationships']['reverse_field_p2p_campaign_node']['relationship'] = 'reverse_field_p2p_category_node';
   /* Field: Bulk operations: Content */
   $handler->display->display_options['fields']['views_bulk_operations']['id'] = 'views_bulk_operations';
   $handler->display->display_options['fields']['views_bulk_operations']['table'] = 'node';
@@ -431,6 +436,13 @@ function springboard_p2p_views_default_views() {
   $handler->display->display_options['fields']['nid']['relationship'] = 'reverse_field_p2p_category_node';
   $handler->display->display_options['fields']['nid']['group_type'] = 'count_distinct';
   $handler->display->display_options['fields']['nid']['label'] = 'Campaigns';
+  /* Field: COUNT(DISTINCT Content: Nid) */
+  $handler->display->display_options['fields']['nid_1']['id'] = 'nid_1';
+  $handler->display->display_options['fields']['nid_1']['table'] = 'node';
+  $handler->display->display_options['fields']['nid_1']['field'] = 'nid';
+  $handler->display->display_options['fields']['nid_1']['relationship'] = 'reverse_field_p2p_campaign_node';
+  $handler->display->display_options['fields']['nid_1']['group_type'] = 'count_distinct';
+  $handler->display->display_options['fields']['nid_1']['label'] = 'Personal Campaigns';
   /* Field: Content: Published */
   $handler->display->display_options['fields']['status']['id'] = 'status';
   $handler->display->display_options['fields']['status']['table'] = 'node';
@@ -478,11 +490,13 @@ function springboard_p2p_views_default_views() {
   $handler->display->display_options['fields']['nid']['relationship'] = 'reverse_field_p2p_category_node';
   $handler->display->display_options['fields']['nid']['group_type'] = 'count_distinct';
   $handler->display->display_options['fields']['nid']['label'] = 'Campaigns';
-  /* Field: Content: Published */
-  $handler->display->display_options['fields']['status']['id'] = 'status';
-  $handler->display->display_options['fields']['status']['table'] = 'node';
-  $handler->display->display_options['fields']['status']['field'] = 'status';
-  $handler->display->display_options['fields']['status']['not'] = 0;
+  /* Field: COUNT(DISTINCT Content: Nid) */
+  $handler->display->display_options['fields']['nid_1']['id'] = 'nid_1';
+  $handler->display->display_options['fields']['nid_1']['table'] = 'node';
+  $handler->display->display_options['fields']['nid_1']['field'] = 'nid';
+  $handler->display->display_options['fields']['nid_1']['relationship'] = 'reverse_field_p2p_campaign_node';
+  $handler->display->display_options['fields']['nid_1']['group_type'] = 'count_distinct';
+  $handler->display->display_options['fields']['nid_1']['label'] = 'Personal campaigns';
   /* Field: Content: Edit link */
   $handler->display->display_options['fields']['edit_node']['id'] = 'edit_node';
   $handler->display->display_options['fields']['edit_node']['table'] = 'views_entity_node';
@@ -503,6 +517,106 @@ function springboard_p2p_views_default_views() {
   $handler->display->display_options['filters']['status']['field'] = 'status';
   $handler->display->display_options['filters']['status']['value'] = '1';
   $export['p2p_categories'] = $view;
+
+  $view = new view();
+  $view->name = 'p2p_user_approval';
+  $view->description = '';
+  $view->tag = 'default';
+  $view->base_table = 'springboard_p2p_private_campaign_approval';
+  $view->human_name = 'Peer to peer user approval';
+  $view->core = 7;
+  $view->api_version = '3.0';
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+
+  /* Display: Master */
+  $handler = $view->new_display('default', 'Master', 'default');
+  $handler->display->display_options['title'] = 'Peer to peer user approval';
+  $handler->display->display_options['use_more_always'] = FALSE;
+  $handler->display->display_options['access']['type'] = 'none';
+  $handler->display->display_options['cache']['type'] = 'none';
+  $handler->display->display_options['query']['type'] = 'views_query';
+  $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['pager']['type'] = 'full';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '10';
+  $handler->display->display_options['style_plugin'] = 'table';
+  /* Relationship: P2P Private Campaign Approvals: Private P2P campaign */
+  $handler->display->display_options['relationships']['nid']['id'] = 'nid';
+  $handler->display->display_options['relationships']['nid']['table'] = 'springboard_p2p_private_campaign_approval';
+  $handler->display->display_options['relationships']['nid']['field'] = 'nid';
+  $handler->display->display_options['relationships']['nid']['label'] = 'Campaign';
+  /* Relationship: P2P Private Campaign Approvals: User requesting approval. */
+  $handler->display->display_options['relationships']['uid']['id'] = 'uid';
+  $handler->display->display_options['relationships']['uid']['table'] = 'springboard_p2p_private_campaign_approval';
+  $handler->display->display_options['relationships']['uid']['field'] = 'uid';
+  /* Field: User: Name */
+  $handler->display->display_options['fields']['name']['id'] = 'name';
+  $handler->display->display_options['fields']['name']['table'] = 'users';
+  $handler->display->display_options['fields']['name']['field'] = 'name';
+  $handler->display->display_options['fields']['name']['relationship'] = 'uid';
+  /* Field: Content: Title */
+  $handler->display->display_options['fields']['title']['id'] = 'title';
+  $handler->display->display_options['fields']['title']['table'] = 'node';
+  $handler->display->display_options['fields']['title']['field'] = 'title';
+  $handler->display->display_options['fields']['title']['relationship'] = 'nid';
+  $handler->display->display_options['fields']['title']['label'] = 'Campaign';
+  /* Field: P2P Private Campaign Approvals: Requested time */
+  $handler->display->display_options['fields']['created']['id'] = 'created';
+  $handler->display->display_options['fields']['created']['table'] = 'springboard_p2p_private_campaign_approval';
+  $handler->display->display_options['fields']['created']['field'] = 'created';
+  $handler->display->display_options['fields']['created']['label'] = 'Date';
+  $handler->display->display_options['fields']['created']['date_format'] = 'short';
+  /* Field: P2P Private Campaign Approvals: Approval status */
+  $handler->display->display_options['fields']['status']['id'] = 'status';
+  $handler->display->display_options['fields']['status']['table'] = 'springboard_p2p_private_campaign_approval';
+  $handler->display->display_options['fields']['status']['field'] = 'status';
+  $handler->display->display_options['fields']['status']['label'] = 'Approved';
+  $handler->display->display_options['fields']['status']['type'] = 'unicode-yes-no';
+  $handler->display->display_options['fields']['status']['not'] = 0;
+  /* Sort criterion: P2P Private Campaign Approvals: Requested time */
+  $handler->display->display_options['sorts']['created']['id'] = 'created';
+  $handler->display->display_options['sorts']['created']['table'] = 'springboard_p2p_private_campaign_approval';
+  $handler->display->display_options['sorts']['created']['field'] = 'created';
+  $handler->display->display_options['sorts']['created']['order'] = 'DESC';
+
+  /* Display: Page */
+  $handler = $view->new_display('page', 'Page', 'page');
+  $handler->display->display_options['defaults']['title'] = FALSE;
+  $handler->display->display_options['title'] = 'Peer to peer private campaign users';
+  $handler->display->display_options['path'] = 'admin/springboard/p2p/approval/user';
+
+  /* Display: Block */
+  $handler = $view->new_display('block', 'Block', 'block');
+  $handler->display->display_options['defaults']['title'] = FALSE;
+  $handler->display->display_options['title'] = 'Users waiting approval';
+  $handler->display->display_options['defaults']['pager'] = FALSE;
+  $handler->display->display_options['pager']['type'] = 'some';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '10';
+  $handler->display->display_options['defaults']['fields'] = FALSE;
+  /* Field: User: Name */
+  $handler->display->display_options['fields']['name']['id'] = 'name';
+  $handler->display->display_options['fields']['name']['table'] = 'users';
+  $handler->display->display_options['fields']['name']['field'] = 'name';
+  $handler->display->display_options['fields']['name']['relationship'] = 'uid';
+  /* Field: Content: Title */
+  $handler->display->display_options['fields']['title']['id'] = 'title';
+  $handler->display->display_options['fields']['title']['table'] = 'node';
+  $handler->display->display_options['fields']['title']['field'] = 'title';
+  $handler->display->display_options['fields']['title']['relationship'] = 'nid';
+  $handler->display->display_options['fields']['title']['label'] = 'Campaign';
+  /* Field: P2P Private Campaign Approvals: Requested time */
+  $handler->display->display_options['fields']['created']['id'] = 'created';
+  $handler->display->display_options['fields']['created']['table'] = 'springboard_p2p_private_campaign_approval';
+  $handler->display->display_options['fields']['created']['field'] = 'created';
+  $handler->display->display_options['fields']['created']['label'] = 'Date';
+  $handler->display->display_options['fields']['created']['date_format'] = 'short';
+  $handler->display->display_options['defaults']['filter_groups'] = FALSE;
+  $handler->display->display_options['defaults']['filters'] = FALSE;
+  /* Filter criterion: P2P Private Campaign Approvals: Approval status */
+  $handler->display->display_options['filters']['status']['id'] = 'status';
+  $handler->display->display_options['filters']['status']['table'] = 'springboard_p2p_private_campaign_approval';
+  $handler->display->display_options['filters']['status']['field'] = 'status';
+  $handler->display->display_options['filters']['status']['value'] = '0';
+  $export['p2p_user_approval'] = $view;
 
   return $export;
 }

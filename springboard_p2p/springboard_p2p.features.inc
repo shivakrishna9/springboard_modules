@@ -44,6 +44,14 @@ function springboard_p2p_node_info() {
       'title_label' => t('Name'),
       'help' => t('Peer to peer category submission guidelines.'),
     ),
+    'p2p_personal_campaign' => array(
+      'name' => t('Peer to peer personal campaign'),
+      'base' => 'node_content',
+      'description' => '',
+      'has_title' => '1',
+      'title_label' => t('Title'),
+      'help' => '',
+    ),
   );
   return $items;
 }
