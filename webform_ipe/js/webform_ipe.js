@@ -892,7 +892,7 @@
             }
 
             // Create the blockUI
-            App.Handlers.blockUIBuilder(400, formHeight, form, form.model.get('name')); //make the popup window
+            App.Handlers.blockUIBuilder(400, formHeight, form, form.model.get('name'), this.$el); //make the popup window
             $('body .blockMsg #blockUIform').append($('#editForm'));
             $('#editForm').find('.required').each(function(){
                $('#editForm label[for="' + this.id + '"]').append(' <span class="form-required" title="This field is required.">*</span>');
@@ -963,23 +963,27 @@
             var type = item.get('type');
             var form_key = item.get('form_key');
             var extra = item.get('extra')
+            var dragged = item.get('draggable');
 
             //new fields need a weight assigned in case the form is saved, but never UI-sorted.
             if(_.isUndefined(item.get('weight'))) {
               item.set('weight', 0, {silent: true});
             }
-            
             //is this line even needed? For IE?
             //Shouldn't it come *after* any prepends below?
             var field = this.$el.html(this.template(this.model.toJSON()));
 
-            if (type != 'fieldset' && type != 'payment_fields' && type != 'payment_method') {
-
+            if (type != 'fieldset' && type != 'payment_fields' && type != 'payment_method' ) {
+        
               //this block processes changes to PID made via the "container" selector in the edit dialog
-              if ((!_.isUndefined(extra_pid) && extra_pid != 0) && model_pid != extra_pid) {
+              if ((!_.isUndefined(extra_pid) && extra_pid != 0) && model_pid != extra_pid && typeof(dragged) === "undefined") {
                 item.set('pid', extra_pid, {silent: true});
                  $('[data-cid="'+ extra_pid +'"]').prepend(this.el)
                  this.$el.attr('data-pid',extra_pid);
+              }
+              else if (dragged == 1 ) {
+                //$('.webform-client-form .ui-draggable').replaceWith(this.el);
+                 item.unset('draggable', {silent: true});
               }
               else if(extra_pid == 0) {
                 item.set('pid', 0, {silent: true});
@@ -1044,11 +1048,15 @@
               }
 
               //this block processes changes to PID made via the "container" selector in the edit dialog
-              if (!_.isUndefined(extra_pid) && extra_pid !=0) {
+              if (!_.isUndefined(extra_pid) && extra_pid !=0  && typeof(dragged) === "undefined") {
                 item.set('pid', extra_pid, {silent: true});
                 if(extra_pid != model_pid) {
                   $('[data-cid="'+ extra_pid +'"]').prepend(this.el); //this fieldset has a new parent
                 }
+              }
+              else if (dragged == 1 ) {
+                //$('.webform-client-form .ui-draggable').replaceWith(this.el);
+                 item.unset('draggable', {silent: true});
               }
               else if(model_pid != 0 && model_pid != "new" && _.isUndefined(extra_pid)) {//this would be a child fieldset which has never been edited via the gui
                 item.set('pid', model_pid, {silent: true});
@@ -1143,6 +1151,10 @@
           addNew: function(){
             console.log('ADD NEW');
             this.$el.html(this.template(this.model.toJSON()));
+            console.log(this.model)
+            if (this.model.get('draggable') == 1 ) {
+              $('.webform-client-form .ui-draggable').replaceWith(this.el);
+            }
             this.edit();
             return this;
           },
@@ -1354,9 +1366,9 @@
             this.collection.where({pid: pid}).sort();
 
             //debug function
-            //  this.collection.each(function (model, index) {
-            //   console.log(model.get('weight') + model.get('form_key'));
-            // });
+             this.collection.each(function (model, index) {
+              console.log(model.get('weight') + model.get('form_key'));
+            });
           }
         });
 
@@ -1380,7 +1392,7 @@
          * All blockUI items should be built with this function
          * afterBuild allows for a callback function to be passed
          */
-        App.Handlers.blockUIBuilder = function(width, height, form, title, afterBuild) {
+        App.Handlers.blockUIBuilder = function(width, height, form, title, el, afterBuild) {
           var blockWidth = width || 400;
           var blockHeight = height || 590;
           $.blockUI({
@@ -1448,16 +1460,21 @@
               var exists = $('#' + id).length;
               // Clicking on the x closes
               $('.closeUI').click(function(){
-                if(cid == key && !exists) {
+                if(cid == key && (!exists || form.model.get('draggable') == 1)) {
+                  console.log(form.model)
                   form.model.destroy();
+                  el.remove();
+                  $('.webform-client-form .ui-draggable').remove()
                 }
                 $.unblockUI();
                 return false;
               });
               // Clicking off closes
               $('.blockOverlay').attr('title','Click to unblock').click(function(){
-                if(cid == key && !exists) {
-                  form.model.destroy();
+                   if(cid == key && (!exists || form.model.get('draggable') == 1)) {
+                   form.model.destroy();
+                   el.remove();
+                  $('.webform-client-form .ui-draggable').remove()
                 }
                 $.unblockUI();
               });
@@ -1673,6 +1690,7 @@
           }
           else {
             $('ul.tabs, ul.action-links, div.alert').show(400);
+            App.Handlers.sortOff($('.reorder-items-fieldsets', '#admin-bar'));
           }
 
         });
@@ -1687,50 +1705,6 @@
               height: 'toggle'
             }, 400, 'swing',function(){ App.Vars['accordion-'+index] = false; });
           }
-        });
-
-        /*
-         * DEFINE THE ADMIN BAR DROPDOWN MENU CLICK EVENTS
-         */
-        $('.add-textfield','#admin-bar').click(function(e){
-          e.preventDefault();
-          var newModel = new App.Models.TextComponent();
-          window.componentCollection.add(newModel);
-        });
-        $('.add-email','#admin-bar').click(function(e){
-          e.preventDefault();
-          var newModel = new App.Models.MailComponent();
-          window.componentCollection.add(newModel);
-        });
-        $('.add-select','#admin-bar').click(function(e){
-          e.preventDefault();
-          var newModel = new App.Models.SelectComponent();
-          window.componentCollection.add(newModel);
-        });
-        $('.add-textarea','#admin-bar').click(function(e){
-          e.preventDefault();
-          var newModel = new App.Models.TextareaComponent();
-          window.componentCollection.add(newModel);
-        });
-        $('.add-fieldset','#admin-bar').click(function(e){
-          e.preventDefault();
-          var newModel = new App.Models.FieldsetComponent();
-          window.componentCollection.add(newModel);
-        });
-        $('.add-markup','#admin-bar').click(function(e){
-          e.preventDefault();
-          var newModel = new App.Models.MarkupComponent();
-          window.componentCollection.add(newModel);
-        });
-        $('.add-number','#admin-bar').click(function(e){
-          e.preventDefault();
-          var newModel = new App.Models.NumberComponent();
-          window.componentCollection.add(newModel);
-        });
-        $('.add-date','#admin-bar').click(function(e){
-          e.preventDefault();
-          var newModel = new App.Models.DateComponent();
-          window.componentCollection.add(newModel);
         });
 
         $('.save-and-preview','#admin-bar').click(function(e){
@@ -1801,19 +1775,34 @@
             $('.sidebars-hide','#admin-bar').removeClass('active')
             hideBox.attr('checked', false);
             $('div.fieldset.right-sidebar, div.fieldset.left-sidebar').not(':has("*")').removeClass('show').hide();
+            if(!$('.accordion-header.add-form-element','#admin-bar').hasClass('closed')) {
+              $('.accordion-header.add-form-element','#admin-bar').click();
+            } 
 
           } else {
             App.Handlers.sortOn($(this));
             $('#sidebar-toggle').show();
           }
         });
-        $('.dropdown-toggle').click(function(e) {
-          e.preventDefault();
-          if($('.reorder-items-fieldsets').parent().hasClass('active')) {
-            App.Handlers.sortOff($('.reorder-items-fieldsets'));
-          }
-        });
 
+        // $('.dropdown-toggle').click(function(e) {
+        //   e.preventDefault();
+        //   if($('.reorder-items-fieldsets').parent().hasClass('active')) {
+        //     App.Handlers.sortOff($('.reorder-items-fieldsets'));
+        //   }
+        // });
+
+        $('.add-form-element', '#admin-bar').click(function(e) {
+
+           if($('.accordion-header.ipe','#admin-bar').hasClass('closed') && !$(this).hasClass('closed')) {
+              $('.accordion-header.ipe','#admin-bar').click();
+            }            
+            if(!$(this).hasClass('closed') && !$('.reorder-items-fieldsets', '#admin-bar').parent().hasClass('active')) {
+              $('.reorder-items-fieldsets', '#admin-bar').click();
+            }
+          });
+        
+ 
         /*
          * Re-order Items
          */
@@ -1829,6 +1818,10 @@
               ui.item.css({'width':'120px', 'overflow':'hidden'})
             },
             stop: function (event, ui) {
+              if(ui.item.hasClass('ui-draggable')) {
+                App.Handlers.createDraggedField(ui);
+              }
+
               ui.item.css({'height':'', 'overflow':'visible'})
               ui.item.css({'width':'', 'overflow':'hidden'})
               ui.item.trigger('drop');
@@ -1862,6 +1855,10 @@
               ui.item.css({'width':'120px', 'overflow':'hidden'})
             },
             stop: function (event, ui) {
+              console.log('d')
+              if(ui.item.hasClass('ui-draggable')) {
+                App.Handlers.createDraggedField(ui);
+              }
               ui.item.css({'height':'', 'overflow':'visible'})
               ui.item.css({'width':'', 'overflow':'hidden'})
               ui.item.trigger('drop');
@@ -1875,17 +1872,29 @@
              },
           });
         };
-         
-        //dynamically swap items to eliminate fieldset jitter 
-     //    App.Handlers.setItems = function() {
-     //      $('fieldset.webform-component-fieldset legend').on('mousedown', function(){
-     //        $(".ipe-outer").sortable( 'option', 'items', 'fieldset.webform-component-fieldset, div.control-group:not("fieldset.webform-component-fieldset div.control-group")');
-     //      });
 
-     //      $('.ipe-outer div.control-group:not("fieldset.webform-component-fieldset div.control-group")').on('mousedown', function(){
-     //        $( ".ipe-outer" ).sortable( "option", "items", "fieldset.webform-component-fieldset, div.dummy, div.control-group:not('.disabled')");
-     //      });
-     //    };
+        App.Handlers.createDraggedField = function(ui) {
+          var type = ui.item.attr('data-model') + 'Component';
+          var fn = App.Models[type];
+          var newModel =  new fn()
+          newModel.set('draggable', '1', {silent: true});
+          window.componentCollection.add(newModel);
+          console.log(newModel)
+        }
+
+         $( ".accordion-options li.draggable").draggable({
+            connectToSortable: ".ipe-inner, .ipe-outer",
+            helper: "clone",
+            revert: false,
+            placeholder: 'sortable-placeholder',
+          });
+
+          $( ".accordion-options li.fieldset-draggable" ).draggable({
+            connectToSortable: ".ipe-outer",
+            helper: "clone",
+            revert: false,
+            placeholder: 'sortable-placeholder',
+          });
 
         //turn the sort on and off
         App.Handlers.sortOn = function(button) {
@@ -1908,7 +1917,9 @@
         }
 
         App.Handlers.sortOff = function(button) {
-          button.parent().toggleClass('active');
+          if(typeof(button) !== "undefined") {
+            button.parent().removeClass('active');
+          }
           $('div.fieldset.form-layouts, div.fieldset.sidebar').not(':has("*")').hide();
           $('.webform-component-fieldset, div.fieldset.form-layouts, div.fieldset.sidebar, body').removeClass('editor-on');
           $('.ipe-inner').sortable("option","disabled", true);

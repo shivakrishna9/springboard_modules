@@ -226,7 +226,7 @@
 <script id="adminBar" type="text/template">
 <div id="admin-bar" class="fixed">
 	<div class="accordion">
-		<div class="accordion-header closed">In-Place Editor</div>
+		<div class="accordion-header closed ipe">In-Place Editor</div>
 		<div class="accordion-options">
 			<ul>
 		    <li><a class="reorder-items-fieldsets" href="#"><span class="icon"></span>Reorder Items</a></li>
@@ -238,17 +238,17 @@
 		</div>
 	</div>
 	<div class="accordion">
-		<div class="accordion-header closed">Add form element</div>
+		<div class="accordion-header closed add-form-element">Add form element</div>
 		<div class="accordion-options">
 			<ul>
-		    <li><a class="add-textfield" href="#"><span class="icon"></span>Textfield</a></li>
-		    <li><a class="add-email" href="#"><span class="icon"></span>E-mail</a></li>
-		    <li><a class="add-textarea" href="#"><span class="icon"></span>Textarea</a></li>
-		    <li><a class="add-select" href="#"><span class="icon"></span>Select</a></li>
-		    <li><a class="add-fieldset" href="#"><span class="icon"></span>Fieldset</a></li>
-		    <li><a class="add-markup" href="#"><span class="icon"></span>Markup</a></li>
-		    <li><a class="add-number" href="#"><span class="icon"></span>Number</a></li>
-		    <li><a class="add-date" href="#"><span class="icon"></span>Date</a></li>
+		    <li data-model = 'Text' class = "draggable"><a class="add-textfield" href="#"><span class="icon"></span>Textfield</a></li>
+		    <li data-model = 'Mail' class = "draggable"><a class="add-email" href="#"><span class="icon"></span>E-mail</a></li>
+		    <li data-model = 'Textarea' class = "draggable"><a class="add-textarea" href="#"><span class="icon"></span>Textarea</a></li>
+		    <li data-model = 'Select' class = "draggable"><a class="add-select" href="#"><span class="icon"></span>Select</a></li>
+		    <li data-model = 'Fieldset' class = "fieldset-draggable"><a class="add-fieldset" href="#"><span class="icon"></span>Fieldset</a></li>
+		    <li data-model = 'Markup' class = "draggable"><a class="add-markup" href="#"><span class="icon"></span>Markup</a></li>
+		    <li data-model = 'Number' class = "draggable"><a class="add-number" href="#"><span class="icon"></span>Number</a></li>
+		    <li data-model = 'Date' class = "draggable"><a class="add-date" href="#"><span class="icon"></span>Date</a></li>
 			</ul>
 		</div>
 	</div>

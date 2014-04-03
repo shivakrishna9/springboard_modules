@@ -177,9 +177,9 @@ function webform_ipe_preprocess_node(&$vars) {
     drupal_add_js($path . '/js/magnific-popup.min.js');
     drupal_add_js($path . '/js/webform_ipe.js');
     drupal_add_js($path . '/js/list.min.js');
-
+    drupal_add_js($path . '/js/draggable.min.js');
     drupal_add_js(array('webform_ipe' => $json_data), 'setting');
-
+    //drupal_add_library('system', 'ui.draggable');
     drupal_add_library('system', 'ui.sortable');
     drupal_add_library('system', 'drupal.collapse');
     drupal_add_library('system', 'drupal.form');
