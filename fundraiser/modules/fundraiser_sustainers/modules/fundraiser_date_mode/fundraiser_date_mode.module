@@ -547,7 +547,10 @@ function fundraiser_date_mode_process_queue_item($item) {
   $sustainer_key = fundraiser_sustainers_get_sustainer_key_value();
   $recurring = $item;
   if ($sustainer_key == $recurring->sustainer_key) {
-    $log = array();
+    $log = array(
+      'successes' => 0,
+      'fails' => 0,
+    );
     fundraiser_sustainers_process_single_recurring_donation($log, $recurring, $sustainer_key);
     // TODO: do something with the log?
   }
