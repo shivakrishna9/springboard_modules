@@ -11,8 +11,9 @@ function fundraiser_commerce_payflow_fundraiser_gateway_info() {
   $fundraiser_gateways = array();
   foreach ($methods->payment_methods as $id => $info) {
     $this_gateway = array();
-    $method_instance = commerce_payment_method_instance_load($id); // From commerce_payment.module.
+    $method_instance = commerce_payment_method_instance_load($id);
     list($method_id, $rule_name) = explode('|', $method_instance['instance_id']);
+
     // Make sure this is a commerce payflow rule
     if (!empty($method_id) && !empty($rule_name) && $method_instance['module'] == 'commerce_payflow') {
       $rule_config = rules_config_load($rule_name);
@@ -21,13 +22,18 @@ function fundraiser_commerce_payflow_fundraiser_gateway_info() {
       $this_gateway['module_name'] = t('Commerce');
       $this_gateway['title'] = $rule_config->label;
       $this_gateway['description'] = $method_instance['description'];
-      $this_gateway['payment_method'] = array('payflow');
-      $this_gateway['offsite_processing'] = array('payflow');
-      $this_gateway['redirect callback'] = 'fundraiser_commerce_payflow_redirect';
+      $this_gateway['payment_method'] = array('credit', 'payflow recurring');
+      // For non-reference charges this is an offsite processor
+      // this has been left empty so we still go through the charge callback to support reference charges
+      $this_gateway['offsite_processing'] = array();
       $this_gateway['allow_recurring'] = array('credit');
-      $this_gateway['form callback'] = 'fundraiser_commerce_payflow_submit_form';
-      $this_gateway['expire callback'] = 'fundraiser_commerce_payflow_expire';
-      $this_gateway['charge callback'] = 'fundraiser_commerce_payflow_charge';
+      $this_gateway['offsite_recurring'] = array();
+      $this_gateway['charge callback'] = '_fundraiser_commerce_payflow_charge';
+      $this_gateway['redirect callback'] = '_fundraiser_commerce_payflow_redirect';
+      $this_gateway['form callback'] = '_fundraiser_commerce_payflow_submit_form';
+      $this_gateway['validate callback'] = '_fundraiser_commerce_payflow_validate';
+      $this_gateway['expire callback'] = '_fundraiser_commerce_payflow_expire';
+      $this_gateway['gateway_details'] = $method_instance;
 
       // Add this to the main gateway
       $fundraiser_gateways[$this_gateway['id']] = $this_gateway;
@@ -37,19 +43,81 @@ function fundraiser_commerce_payflow_fundraiser_gateway_info() {
   return $fundraiser_gateways;
 }
 
-function commerce_payflow_fundraiser_commerce_submit_form($payment_method, $config) {
-  $form = array();
+/**
+ * Implements hook_preprocess_webform_confirmation
+ */
+function fundraiser_commerce_payflow_preprocess_webform_confirmation(&$vars) {
+  $donation = _fundraiser_webform_get_donation_by_sid($vars['sid']);
 
+  // If this donation was handled by commerce payflow add the redirect script
+  if (!empty($donation->gateway['gateway_details']['module'])
+   && $donation->gateway['gateway_details']['module'] == 'commerce_payflow') {
+    // Use the payflow modules redirect script
+    drupal_add_js(drupal_get_path('module', 'commerce_payflow') . '/commerce_payflow.js');
+  }
+}
+
+/**
+ * Callback
+ */
+function _fundraiser_commerce_payflow_submit_form($payment_method, $config = NULL) {
+  $form = array();
+  if (!empty($config)) {
+    $method_instance = commerce_payment_method_instance_load($config['id']);
+  }
+
+  // Show instructions if thats configured
   if (!empty($method_instance['settings']['show_payment_instructions'])) {
-    $form['paypal_payflow_information'] = array(
+    $form['payflow_information'] = array(
       '#markup' => '<span class="commerce-paypal-wps-info">' . t('After submitting the form you will be taken to a from to enter your payment details.') . '</span>',
     );
   }
 
+  // On the recurring update form let admins know payflow doesn't support this
+  if (arg(2) == 'recurring_overview') {
+    $form['payflow_no_update'] = array(
+      '#markup' => '<span class="commerce-paypal-wps-info">' . t('Payflow does not support updating card data.') . '</span>',
+    );
+  }
+
+  // To avoid errors on form validation return a value
+  $form['payflow_flag'] = array(
+    '#type' => 'hidden',
+    '#value' => 1,
+  );
+
   return $form;
 }
 
-function commerce_payflow_fundraiser_commerce_redirect($method_instance, $donation, $order, $settings) {
+/**
+ * Donation form validate callback
+ *
+ * Nothing to validate since payflow data isn't submitted on the form
+ */
+function _fundraiser_commerce_payflow_validate() {
+  return;
+}
+
+/**
+ * Callback
+ */
+function _fundraiser_commerce_payflow_charge($payment_method, $donation) {
+  // If this is not a refernce charge use fundraiser's redirect functionality
+  if (empty($donation->reference_charge)) {
+    _fundraiser_commerce_fundraiser_donation_process_external($donation, $donation->gateway);
+  }
+  // For reference charges use our custom function
+  elseif ($donation->reference_charge == TRUE) {
+    return _fundraiser_commerce_payflow_reference_charge($donation);
+  }
+}
+
+/**
+ * Redirect form callback
+ *
+ * Returns a form for sending the user to payflow or an iframed cc form
+ */
+function _fundraiser_commerce_payflow_redirect($method_instance, $donation, $order, $settings) {
   $form = array();
   $form_state = array();
   $pane_form = array();
@@ -57,9 +125,123 @@ function commerce_payflow_fundraiser_commerce_redirect($method_instance, $donati
   $charge = NULL;
 
   commerce_payflow_link_submit_form_submit($method_instance, $pane_form, $pane_values, $order, $charge);
-  $form = commerce_payflow_link_redirect_form($form, $form_state, $order, $method_instance);
-  dpm($form, 'form');
-  drupal_add_js(array('commercePayflow' => array('page' => 'review')), 'setting');
-  $form['#attached']['js'][] = drupal_get_path('module', 'commerce_payflow') . '/commerce_payflow.js';
-  return $form;
+  // Save the order to store the redirect key
+  commerce_order_save($order);
+
+  // Build the form
+  return commerce_payflow_link_redirect_form($form, $form_state, $order, $method_instance);
+}
+
+/**
+ * Redirect submit callback
+ */
+function _fundraiser_commerce_payflow_redirect_submit($method_instance, $donation, $order) {
+  // Let the module complete the transaction
+  commerce_payflow_link_redirect_form_submit($order, $method_instance);
+
+  // Return true for a successful order
+  if (commerce_checkout_complete_access($order)) {
+    // Sustainers will not know if this is a recurring donation at this point so we need to reset that
+    $submission =  fundraiser_webform_get_submission($donation->sid);
+
+    if (empty($donation->donation['recurs_monthly'])
+     && !empty($submission['recurs_monthly']['value'][0])
+     && $submission['recurs_monthly']['value'][0] == 'recurs') {
+      $donation->donation['recurs_monthly'] = TRUE;
+    }
+
+    // Since the processing happens off site we set the payment fields here
+    $dates = str_split($_POST['EXPDATE'], 2);
+    $year = date_create_from_format('y', $dates[1]);
+    $donation->donation['payment_fields']['credit']['card_expiration_month'] = $dates[0];
+    $donation->donation['payment_fields']['credit']['card_expiration_year'] = $year->format('Y');
+    $donation->donation['payment_fields']['credit']['card_number'] = $_POST['ACCT'];
+
+    return TRUE;
+  }
+}
+
+/**
+ * Implements hook_commerce_payflow_api_request_alter
+ */
+function fundraiser_commerce_payflow_commerce_payflow_api_request_alter(&$nvp, $order, $payment_method) {
+  // If this request is for a form and is a fundraiser donation then change some of the values
+  if (!empty($nvp['RETURNURL']) && $donation = fundraiser_donation_get_donation($order->order_id)) {
+    $node = $donation->node;
+    $redirect_key = $order->data['payment_redirect_key'];
+    $options = array('absolute' => TRUE);
+    $nvp['RETURNURL'] = url('node/' . $donation->nid . '/fundraiser-return/' . $donation->did . '/' . $redirect_key, $options);
+    $nvp['CANCELURL'] = url('node/' . $donation->nid . '/fundraiser-cancel/' . $donation->did . '/' . $redirect_key, $options);
+    $nvp['ERRORURL'] = url('node/' . $donation->nid, $options);
+  }
+}
+
+/**
+ * Callback function, scrub the data before saving.
+ */
+function _fundraiser_commerce_payflow_expire($submission_fields) {
+  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+  return _fundraiser_commerce_credit_card_expire($submission_fields);
+}
+
+/**
+ * Submit handler: process a reference transaction via Payflow Pro.
+ */
+function _fundraiser_commerce_payflow_reference_charge($donation) {
+  $master = fundraiser_donation_get_donation($donation->recurring->master_did);
+  $method_instance = $donation->gateway['gateway_details'];
+  $order = commerce_order_load($donation->did);
+
+  // Prepare a name-value pair array to capture the requested amount.
+  $nvp = array(
+    'BUTTONSOURCE' => $method_instance['buttonsource'],
+    'TRXTYPE' => 'S',
+    'ORIGID' => $master->data['remote_id'],
+    'AMT' => $donation->amount,
+    'TENDER' => 'C',
+  );
+
+  // Submit the reference transaction request to Payflow Pro.
+  $response = commerce_payflow_api_request($method_instance, 'pro', $nvp, $order);
+
+  // Create a new transaction to represent the reference transaction.
+  $transaction = commerce_payment_transaction_new($method_instance['method_id'], $order->order_id);
+  $transaction->instance_id = $method_instance['instance_id'];
+  $transaction->amount = commerce_currency_decimal_to_amount($donation->amount, $donation->currency);
+  $transaction->currency_code = $donation->currency;
+  $transaction->payload[REQUEST_TIME] = $response;
+  $transaction->remote_id = $response['PNREF'];
+  $transaction->data['commerce_payflow']['pnref'] = $response['PNREF'];
+
+  if (!empty($response['PAYMENTSTATUS'])) {
+    $transaction->remote_status = commerce_payflow_paypal_remote_status($response['PAYMENTSTATUS']);
+  }
+
+  $message = array();
+
+  if (isset($response['RESULT']) && intval($response['RESULT']) === 0) {
+    $message[] = t('Reference transaction from @origid; master donation @did.', array('@origid' => $transaction->remote_id, '@did' => $master->did));
+
+    // Add the PayPal billing agreement ID and fees if given.
+    if (!empty($response['BAID'])) {
+      $message[] = t('Billing agreement ID: @baid', array('@baid' => $response['BAID']));
+    }
+    if (!empty($response['FEEAMT'])) {
+      $message[] = t('PayPal fees: @feeamt', array('@feeamt' => $response['FEEAMT']));
+    }
+
+    $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+    $success = TRUE;
+  }
+  else {
+    // Display an error message but leave the transaction pending.
+    $message[] = t('Failed reference transaction from @origid; master donation @did.', array('@origid' => $transaction->remote_id, '@did' => $master->did));
+    $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+    $success = FALSE;
+  }
+
+  // Save the transaction and return the success value
+  $transaction->message = implode('<br />', $message);
+  commerce_payment_transaction_save($transaction);
+  return $success;
 }
