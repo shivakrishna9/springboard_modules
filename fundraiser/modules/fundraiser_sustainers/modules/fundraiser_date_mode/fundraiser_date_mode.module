@@ -37,9 +37,9 @@ function fundraiser_date_mode_fundraiser_sustainers_process_recurring_alter(&$pr
     $process_recurring = FALSE;
     $queue = DrupalQueue::get('sustainerQueue');
     $queue->createQueue();
-    // Selects a maximum of 1000 sustainer records pending processing & locks
-    // these records in the db.
-    $donations = _fundraiser_sustainers_cron_get_recurring();
+    // Select records (up to configured maximum).
+    $record_count = variable_get('fundraiser_date_mode_batch_record_count', 1000);
+    $donations = _fundraiser_sustainers_cron_get_recurring($record_count);
     $sustainer_key = fundraiser_sustainers_get_sustainer_key_value();
     // Loop over the found orders.
     foreach ($donations as $recurring) {

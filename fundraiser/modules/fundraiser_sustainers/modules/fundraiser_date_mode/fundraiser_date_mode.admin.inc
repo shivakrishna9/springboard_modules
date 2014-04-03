@@ -33,6 +33,12 @@ function fundraiser_date_mode_admin() {
     '#type' => 'fieldset',
     '#title' => t('Sustainer processing'),
   );
+  $form['cron_settings']['fundraiser_date_mode_batch_record_count'] = array(
+    '#type' => 'textield',
+    '#size' => 6,
+    '#title' => t('# of records to batch per run'),
+    '#default_value' => variable_get('fundraiser_date_mode_batch_record_count', 1000);
+  );
   $form['cron_settings']['fundraiser_date_mode_skip_on_cron'] = array(
     '#type' => 'checkbox',
     '#title' => t('Skip sustainer processing queue on cron'),
