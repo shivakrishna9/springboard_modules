@@ -601,6 +601,20 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     }
     ++$index;
   }
+  // AJAX fix: reorder donation amounts in $form_state['input'] by weight.
+  // Corrects the display order of donation amounts when an ajax event is
+  // triggered.
+  if (isset($form_state['input']['amount_wrapper']['donation_amounts'])) {
+    $old_donation_amounts = $form_state['input']['amount_wrapper']['donation_amounts'];
+    unset($form_state['input']['amount_wrapper']['donation_amounts']);
+    foreach ($old_donation_amounts as $donation_amount) {
+      $new_donation_amounts[$donation_amount['weight']] = $donation_amount;
+    }
+    ksort($new_donation_amounts);
+    foreach ($new_donation_amounts as $donation_amount) {
+      $form_state['input']['amount_wrapper']['donation_amounts'][] = $donation_amount;
+    }
+  }
   $form['fundraiser_settings']['amount_wrapper']['help'] = array(
     '#value' => '<p>' . t('If you want the user to choose from a predetermined list donation amounts, enter them here. ' .
       'If no amounts are entered, a textbox will be displayed for the user to enter a custom amount.') . '</p>',
@@ -865,7 +879,6 @@ function _fundraiser_payment_method_weight_compare($a, $b) {
  * Generate donation ask amount fields, used by donation form
  */
 function _fundraiser_ask_form($amount_values = array(), $index, $node, $weight) {
-  drupal_set_message("building $index at weight $weight");
   $form['amount'] = array(
     '#type' => 'textfield',
     '#default_value' => isset($amount_values[0]) ? $amount_values[0] : '',
