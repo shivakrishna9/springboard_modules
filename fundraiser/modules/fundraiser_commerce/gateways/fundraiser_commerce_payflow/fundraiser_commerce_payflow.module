@@ -28,11 +28,13 @@ function fundraiser_commerce_payflow_fundraiser_gateway_info() {
       $this_gateway['offsite_processing'] = array();
       $this_gateway['allow_recurring'] = array('credit');
       $this_gateway['offsite_recurring'] = array();
+      $this_gateway['allow_refund'] = array('credit');
       $this_gateway['charge callback'] = '_fundraiser_commerce_payflow_charge';
       $this_gateway['redirect callback'] = '_fundraiser_commerce_payflow_redirect';
       $this_gateway['form callback'] = '_fundraiser_commerce_payflow_submit_form';
       $this_gateway['validate callback'] = '_fundraiser_commerce_payflow_validate';
       $this_gateway['expire callback'] = '_fundraiser_commerce_payflow_expire';
+      $this_gateway['refund callback'] = '_fundraiser_commerce_payflow_refund';
       $this_gateway['gateway_details'] = $method_instance;
 
       // Add this to the main gateway
@@ -244,4 +246,49 @@ function _fundraiser_commerce_payflow_reference_charge($donation) {
   $transaction->message = implode('<br />', $message);
   commerce_payment_transaction_save($transaction);
   return $success;
+}
+
+/**
+ * Submit handler: process a refund via Payflow Pro.
+ */
+function _fundraiser_commerce_payflow_refund($method_instance, $refund) {
+  $donation = fundraiser_donation_get_donation($refund->did);
+  $method_instance = $donation->gateway['gateway_details'];
+  $order = commerce_order_load($donation->did);
+
+  // Prepare a name-value pair array to capture the requested amount.
+  $nvp = array(
+    'TRXTYPE' => 'C',
+    'ORIGID' => $donation->data['remote_id'],
+    'AMT' => $refund->amount,
+  );
+
+  // Submit the refund request to Payflow Pro.
+  $response = commerce_payflow_api_request($method_instance, 'pro', $nvp, $order);
+
+  // If the credit succeeded...
+  if (intval($response['RESULT']) === 0) {
+    $credit_amount = commerce_currency_decimal_to_amount($refund->amount, $donation->currency);
+    drupal_set_message(t('Refund for @amount issued successfully.', array('@amount' => commerce_currency_format($credit_amount, $donation->currency))));
+
+    // Create a new transaction to record the credit.
+    $credit_transaction = commerce_payment_transaction_new($method_instance['method_id'], $order->order_id);
+    $credit_transaction->instance_id = $method_instance['instance_id'];
+    $credit_transaction->remote_id = $response['PNREF'];
+    $credit_transaction->amount = $credit_amount * -1;
+    $credit_transaction->currency_code = $donation->currency;
+    $credit_transaction->payload[REQUEST_TIME] = $response;
+    $credit_transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+    $credit_transaction->remote_status = 'C';
+    $credit_transaction->message = t('Refunded to @remote_id.', array('@remote_id' => $donation->data['remote_id']));
+
+    // Save the credit transaction.
+    commerce_payment_transaction_save($credit_transaction);
+    return TRUE;
+  }
+  else {
+    // Display a failure message and response reason from Payflow.
+    drupal_set_message(t('Refund failed: @reason', array('@reason' => $response['RESPMSG'])), 'error');
+    return FALSE;
+  }
 }
