@@ -34,7 +34,7 @@ function fundraiser_date_mode_admin() {
     '#title' => t('Sustainer processing'),
   );
   $form['cron_settings']['fundraiser_date_mode_batch_record_count'] = array(
-    '#type' => 'textield',
+    '#type' => 'textfield',
     '#size' => 6,
     '#title' => t('# of records to batch per run'),
     '#default_value' => variable_get('fundraiser_date_mode_batch_record_count', 1000),
