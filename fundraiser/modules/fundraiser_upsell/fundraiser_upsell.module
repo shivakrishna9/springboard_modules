@@ -297,7 +297,6 @@ function fundraiser_upsell_node_form_validate($form, &$form_state) {
 function fundraiser_upsell_save_email_wrapper_settings($nid, $values) {
   $form = array();
   $delta = 'nid_' . $nid;
-
   // Need to fake a form state in order to save the mail settings.
   $email_wrappers_form_state = array(
     'values' => $values,
@@ -682,8 +681,11 @@ function fundraiser_upsell_donation_record_exists($did) {
 function fundraiser_upsell_fundraiser_donation_get_donation($donation) {
   $query = db_query("SELECT * FROM {fundraiser_upsell_donation} WHERE did = :did", array(':did' => $donation->did));
   $record = $query->fetchObject();
-  unset($record->did);
-  $donation->fundraiser_upsell = $record;
+
+  if ($record) {
+    unset($record->did);
+    $donation->fundraiser_upsell = $record;
+  }
 }
 
 /**
@@ -759,6 +761,19 @@ function fundraiser_upsell_node_insert($node) {
     // so we need to save them.
     if (isset($node->fundraiser_upsell['email_wrappers']) && is_array($node->fundraiser_upsell['email_wrappers'])) {
       fundraiser_upsell_save_email_wrapper_settings($node->nid, $node->fundraiser_upsell['email_wrappers']);
+    }
+    // Cloning another node.
+    elseif (isset($node->clone_from_original_nid)) {
+      module_load_include('inc', 'email_wrappers', 'email_wrappers.api');
+      $params = array(
+        'name' => 'fundraiser_upsell',
+        'module' => 'fundraiser_upsell',
+        'delta' => 'nid_' . $node->clone_from_original_nid,
+      );
+      $settings = email_wrappers_mail_load($params);
+      unset($settings->mid);
+      $settings->delta = 'nid_' . $node->nid;
+      email_wrappers_save($settings);
     }
   }
 }
