@@ -69,7 +69,7 @@ function _fundraiser_commerce_payflow_submit_form($payment_method, $config = NUL
   // Show instructions if thats configured
   if (!empty($method_instance['settings']['show_payment_instructions'])) {
     $form['payflow_information'] = array(
-      '#markup' => '<span class="commerce-paypal-wps-info">' . t('After submitting the form you will be taken to a from to enter your payment details.') . '</span>',
+      '#markup' => '<span class="commerce-paypal-wps-info">' . t('After submitting this form you will be taken to another form to enter your payment details.') . '</span>',
     );
   }
 
