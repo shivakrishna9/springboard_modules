@@ -38,12 +38,11 @@ function springboard_p2p_schema() {
         'default' => 0,
       ),
       'status' => array(
-        'type' => 'int',
-        'unsigned' => TRUE,
+        'type' => 'varchar',
+        'length' => 32,
         'not null' => TRUE,
-        'description' => 'Whether the user is allowed to create personal campaigns in this campaign.',
-        'default' => 0,
-        'size' => 'tiny',
+        'description' => 'The state of the user\'s approval request.',
+        'default' => 'requested',
       ),
       'created' => array(
         'type' => 'int',

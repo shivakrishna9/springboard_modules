@@ -58,19 +58,19 @@ function springboard_p2p_views_data() {
     ),
     'status' => array(
       'title' => t('Approval status'),
-      'help' => t('Is the user able to create personal campaigns in this private campaign?'),
+      'help' => t('The state of the approval request.'),
       'field' => array(
-        'handler' => 'views_handler_field_boolean',
+        'handler' => 'views_handler_field',
         'click sortable' => TRUE,
       ),
       'filter' => array(
-        'handler' => 'views_handler_filter_boolean_operator',
-        'label' => t('Status'),
-        // 'type' => 'yes-no',
-        'use equal' => TRUE,
+        'handler' => 'views_handler_filter_string',
       ),
       'sort' => array(
         'handler' => 'views_handler_sort',
+      ),
+      'argument' => array(
+        'handler' => 'views_handler_argument_string',
       ),
     ),
     'created' => array(

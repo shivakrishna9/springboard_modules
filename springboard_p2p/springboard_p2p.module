@@ -48,6 +48,17 @@ function springboard_p2p_menu() {
     'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
   );
 
+  // @todo Development stuff.  Remove me eventually.
+  $items['admin/springboard/p2p/development'] = array(
+    'title' => 'Development',
+    'type' => MENU_LOCAL_TASK,
+    'access arguments' => array('administer springboard p2p'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_p2p_development_settings'),
+    'file' => 'springboard_p2p.development.inc',
+    'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
+  );
+
   return $items;
 }
 
