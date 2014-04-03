@@ -542,8 +542,8 @@
           return trimmed[0].innerHTML;
         }
         var formItems = $("input, select, textarea" );
-           formItems.on( "blur", function() {
-             App.Handlers.clearValidation() 
+        formItems.on( "blur", function() {
+            App.Handlers.clearValidation() 
          });
 
         App.Handlers.clearValidation = function () {
@@ -1667,6 +1667,14 @@
             }, 400, 'swing',function(){ App.Vars['accordion-'+index] = false; });
           }
           App.Handlers.clearValidation();
+          var menuOpen = $('.accordion-header:not(".closed")','#admin-bar').length;
+          if(menuOpen) {
+            $('ul.tabs, ul.action-links, div.alert').hide(400);
+          }
+          else {
+            $('ul.tabs, ul.action-links, div.alert').show(400);
+          }
+
         });
         // Initially close items
         $('.accordion-header','#admin-bar').each(function(){
