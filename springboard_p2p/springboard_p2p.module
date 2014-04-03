@@ -77,22 +77,25 @@ function springboard_p2p_form_p2p_category_node_form_alter(&$form, &$form_state,
 function springboard_p2p_form_p2p_campaign_node_form_alter(&$form, &$form_state, $form_id) {
 
   if (is_null($form['nid']['#value'])) {
+    $ajax_trigger = 'field_p2p_category';
+    $ajax_wrapper = 'p2p-category-ajax-wrapper';
+
     $lang_code = $form['#node']->language;
 
-    $form['field_p2p_category'][$lang_code]['#ajax'] = array(
-      'callback' => 'springboard_p2p_category_ajax',
-      'wrapper' => 'p2p-category-ajax-wrapper',
+    $form[$ajax_trigger][$lang_code]['#ajax'] = array(
+      'callback' => 'springboard_p2p_ajax',
+      'wrapper' => $ajax_wrapper,
       'effect' => 'fade',
     );
 
     // Set ajax target div.
-    $form['#prefix'] = '<div id="p2p-category-ajax-wrapper">';
+    $form['#prefix'] = '<div id="' . $ajax_wrapper . '">';
     $form['#suffix'] = '</div>';
 
     // If we're ajaxing from the category selection and it's a non-empty
     // category value.
-    if (isset($form_state['triggering_element']['#field_name']) && $form_state['triggering_element']['#field_name'] == 'field_p2p_category' && isset($form_state['input']['field_p2p_category'][$lang_code]) && is_numeric($form_state['input']['field_p2p_category'][$lang_code])) {
-      $category = node_load($form_state['input']['field_p2p_category'][$lang_code]);
+    if (isset($form_state['triggering_element']['#field_name']) && $form_state['triggering_element']['#field_name'] == $ajax_trigger && isset($form_state['input'][$ajax_trigger][$lang_code]) && is_numeric($form_state['input'][$ajax_trigger][$lang_code])) {
+      $category = node_load($form_state['input'][$ajax_trigger][$lang_code]);
 
       $checkboxes = array(
         'field_p2p_personal_intro_edit',
@@ -192,6 +195,15 @@ function springboard_p2p_form_p2p_campaign_node_form_alter(&$form, &$form_state,
 /**
  * AJAX callback for prefilling content when a category is selected.
  */
-function springboard_p2p_category_ajax($form, $form_state) {
+function springboard_p2p_ajax($form, $form_state) {
   return $form;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$form_state, $form_id) {
+  if (is_null($form['nid']['#value'])) {
+    // Node create form.
+  }
 }

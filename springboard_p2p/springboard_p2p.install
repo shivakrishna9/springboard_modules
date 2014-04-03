@@ -13,3 +13,60 @@ function springboard_p2p_uninstall() {
   variable_del('springboard_p2p_registration_fields');
   variable_del('springboard_p2p_webform_user_items');
 }
+
+/**
+ * Implements hook_schema().
+ */
+function springboard_p2p_schema() {
+  $schema = array();
+
+  $schema['springboard_p2p_private_campaign_approval'] = array(
+    'description' => 'Stores approval status for private campaigns.',
+    'fields' => array(
+      'uid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The {users}.uid.',
+        'default' => 0,
+      ),
+      'nid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The {node}.nid of the private campaign.',
+        'default' => 0,
+      ),
+      'status' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Whether the user is allowed to create personal campaigns in this campaign.',
+        'default' => 0,
+        'size' => 'tiny',
+      ),
+      'created' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => "Timestamp of when approval was requested.",
+      ),
+    ),
+    'indexes' => array(
+      'status' => array('status'),
+    ),
+    'primary key' => array('uid', 'nid'),
+    'foreign keys' => array(
+      'node_nid' => array(
+        'table' => 'node',
+        'columns' => array('nid' => 'nid'),
+      ),
+      'users_uid' => array(
+        'table' => 'users',
+        'columns' => array('uid' => 'uid'),
+      ),
+    ),
+  );
+
+  return $schema;
+}

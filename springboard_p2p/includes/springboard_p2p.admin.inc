@@ -59,18 +59,22 @@ function springboard_p2p_dashboard() {
     ),
   );
 
-  $output['personal_campaigns'] = array();
+  $output['user_approval'] = array();
 
-  $output['personal_campaigns']['heading'] = array(
-    '#markup' => '<h2>Personal campaigns awaiting approval</h2>',
+  $output['user_approval']['heading'] = array(
+    '#markup' => '<h2>Users awaiting approval</h2>',
   );
 
-  $output['personal_campaigns']['links'] = array(
+  $output['user_approval']['user_approval'] = array(
+    '#markup' => views_embed_view('p2p_user_approval', 'block'),
+  );
+
+  $output['user_approval']['links'] = array(
     '#theme' => 'links',
     '#links' => array(
-      'personal-campaigns-approval-queue' => array(
+      'user_approval' => array(
         'title' => t('Open approval queue'),
-        'href' => 'admin/springboard/p2p/approval_queue',
+        'href' => 'admin/springboard/p2p/approval/user',
       ),
     ),
   );
