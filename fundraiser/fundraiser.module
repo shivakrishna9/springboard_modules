@@ -2517,7 +2517,7 @@ function _fundraiser_update_fundraiser($fundraiser) {
     }
     $imploded_amounts = array_unique($imploded_amounts);
     // On getting fundraiser this will be exploded into the correct values.
-    $fundraiser['donation_amounts'] = implode(',', $imploded_amounts);
+    $fundraiser['donation_amounts'] = implode('|||', $imploded_amounts);
     // Serialize for storage, our configured gateway values for storage in components.
     $fundraiser['gateways'] = serialize($fundraiser['gateways']);
     $record = $fundraiser;
