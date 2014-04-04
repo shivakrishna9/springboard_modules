@@ -847,6 +847,7 @@ function _fundraiser_form_amounts_validate($form, &$form_state) {
 
   // Checking the minimum amount.
   $minimum_donation_amount = $form_state['values']['amount_wrapper']['minimum_donation_amount'];
+  $min = 0;
   foreach ($amounts as $amount) {
     if (empty($amount['remove']) && $amount['amount'] !='') {
       $min = (isset($min) && $amount['amount'] > $min) ? $min : $amount['amount'];
