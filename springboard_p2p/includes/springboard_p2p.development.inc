@@ -14,12 +14,29 @@ function springboard_p2p_development_settings($form, &$form_state) {
 
   $form['approval']['add'] = array();
 
-  foreach (array('uid', 'nid') as $key) {
-    $form['approval']['add'][$key] = array(
-      '#type' => 'textfield',
-      '#title' => $key,
-    );
+  $options = array();
+  $users = springboard_p2p_get_users();
+  foreach ($users as $user) {
+    $options[$user->uid] = $user->name;
   }
+
+  $form['approval']['add']['uid'] = array(
+    '#type' => 'select',
+    '#options' => $options,
+    '#title' => 'User',
+  );
+
+  $options = array();
+  $private_campaigns = springboard_p2p_get_private_campaigns();
+  foreach ($private_campaigns as $campaign) {
+    $options[$campaign->nid] = $campaign->title;
+  }
+
+  $form['approval']['add']['nid'] = array(
+    '#type' => 'select',
+    '#options' => $options,
+    '#title' => 'Private campaign',
+  );
 
   $form['approval']['add']['status'] = array(
     '#type' => 'select',
@@ -46,4 +63,21 @@ function springboard_p2p_development_settings_submit(&$form, &$form_state) {
 
     drupal_set_message('Added');
   }
+}
+
+function springboard_p2p_get_users() {
+  $users = array();
+
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'user')
+    ->propertyOrderBy('name', 'ASC');
+
+  $result = $query->execute();
+
+  if (isset($result['user'])) {
+    $uids = array_keys($result['user']);
+    $users = entity_load('user', $uids);
+  }
+
+  return $users;
 }
