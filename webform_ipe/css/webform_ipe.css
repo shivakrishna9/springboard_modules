@@ -251,6 +251,7 @@ webform-component-fieldset.ui-sortable-helper,
   height:35px !important;
   width: 200px !important;
   list-style-type: none;
+  background-color:#2b98de;
 }
 #admin-bar ul li a {
   display: block;
@@ -265,15 +266,18 @@ webform-component-fieldset.ui-sortable-helper,
   -ms-user-select: none;
   user-select: none;
   outline: none;
+  overflow: hidden;
 }
 #admin-bar ul li a:hover {
   text-decoration: none;
   outline: none;
+}
+#admin-bar .ipe ul li a:hover {
+  text-decoration: none;
+  outline: none;
   background-color: #2b98de;
 }
-#admin-bar ul li.draggable a:hover {
-  background: initial;
-}
+
 #admin-bar ul li a span.icon {
   display: block;
   height: 35px;

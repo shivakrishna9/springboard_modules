@@ -41,7 +41,7 @@
               attributes: {
                 class: '',
                 placeholder: '',
-              }
+              },
             },
             form_key: 'default_key',
             mandatory: 0,
@@ -91,7 +91,7 @@
           // Edit form schema
           schema: {
             name: {editorClass:'required', type: 'Text', title: 'Label Text', validators: ['required']},
-            'extra.container': {type: 'Select', title: 'Container', options: {}},
+            'extra.container': {fieldClass:"edit-container", type: 'Select', title: 'Container', options: {}},
             mandatory: { fieldClass:"required-field", type: 'Checkbox', title:'Required'},
             'extra.description': { fieldClass:"description-field", type: 'Text', title: 'Description Text'},
             'extra.unique': {template: altFieldTemplate, type: 'Checkbox', title:'Unique', help:'Check that all entered values for this field are unique. The same value is not allowed to be used twice.'},
@@ -128,7 +128,7 @@
           // Edit form schema
           schema: {
             name: {editorClass:'required', type: 'Text', title: 'Label Text', validators: ['required']},
-            'extra.container': {type: 'Select', title: 'Container', options: {}},
+            'extra.container': {fieldClass:"edit-container", type: 'Select', title: 'Container', options: {}},
             mandatory: { type: 'Checkbox', title:'Required'},
             'extra.description': {type: 'Text', title: 'Description Text'},
             'extra.unique': { type: 'Checkbox', title:'Unique', help:'Check that all entered values for this field are unique. The same value is not allowed to be used twice.'},
@@ -164,7 +164,7 @@
           // Edit form schema
           schema: {
             name: {editorClass:'required', type: 'Text', title: 'Label Text', validators: ['required']},
-            'extra.container': {type: 'Select', title: 'Container', options: {}},
+            'extra.container': {fieldClass:"edit-container", type: 'Select', title: 'Container', options: {}},
             mandatory: { type: 'Checkbox', title:'Required'},
             'extra.description': {type: 'Text', title: 'Description Text'},
             'extra.resizable': {type: 'Checkbox', title: 'Resizable'},
@@ -201,7 +201,7 @@
           },
           schema: {
             name: {editorClass:'required', type: 'Text', title: 'Label Text', validators: ['required']},
-            'extra.container': {type: 'Select', title: 'Container', options: {}},
+            'extra.container': {fieldClass:"edit-container", type: 'Select', title: 'Container', options: {}},
             mandatory: { fieldClass:"required-field", type: 'Checkbox', title:'Required'},
             'extra.description': { fieldClass:"description-field", type: 'Text', title: 'Description Text'},
             'extra.items': { fieldClass:"option-items", editorClass:'required', type: 'List', title: "Options", validate:['required'], help:'Options must be entered in the format: key|value, where "key" should contain only letters, numbers, or underscores - not spaces'},
@@ -269,7 +269,7 @@
           },
           schema: {
             name: {editorClass:'required', type: 'Text', title: 'Fieldset Name', validators: ['required']},
-            'extra.container': {type: 'Select', title: 'Container', options: {}},
+            'extra.container': {fieldClass:"edit-container", type: 'Select', title: 'Container', options: {}},
             'extra.description': {type: 'Text', title: 'Description'},
             'extra.collapsible': { type: 'Checkbox', title:'Collapsible'},
             'extra.collapsed': { type: 'Checkbox', title:'Collapsed'},
@@ -312,7 +312,7 @@
           // Edit form schema
           schema: {
             name: {editorClass:'required', type: 'Text', title: 'Label Text', validators: ['required']},
-            'extra.container': {type: 'Select', title: 'Container', options: {}},
+            'extra.container': {fieldClass:"edit-container", type: 'Select', title: 'Container', options: {}},
              mandatory: { type: 'Checkbox', title:'Required'},
             'extra.description': {type: 'Text', title: 'Description Text'},
             'extra.decimals': {type: 'Select', title: 'Decimal places', help: 'Automatic will display up to 4 decimals places if needed. A value of "2" is common to format currency amounts.', options: {'':'Automatic', '0':'0','1':'1', '2':'2', '3':'3', '4':'4', '5':'5','6':'6'}},
@@ -375,7 +375,7 @@
           // Edit form schema
           schema: {
             name: {editorClass:'required', type: 'Text', title: 'Label Text', validators: ['required']},
-            'extra.container': {type: 'Select', title: 'Container', options: {}},
+            'extra.container': {fieldClass:"edit-container", type: 'Select', title: 'Container', options: {}},
             mandatory: { type: 'Checkbox', title:'Required' },
             value: {type: 'Text', title: 'Default Value', help:'The default value of the field. Accepts any date in any GNU Date Input Format. Strings such as today, +2 months, and Dec 9 2004 are all valid.'},
             'extra.start_date': {editorClass:'required', type: 'Text', title: 'Start Date', help: "The earliest date that may be entered into the field. Accepts any date in any GNU Date Input Format"},
@@ -418,7 +418,7 @@
           schema: {
             name: {editorClass:'required', type: 'Text', title: 'Label Text', validators: ['required']},
             value: {editorClass:'required', type: 'TextArea', title: 'Markup', validators: ['required']},
-            'extra.container': {type: 'Select', title: 'Container', options: {}},
+            'extra.container': {fieldClass:"edit-container", type: 'Select', title: 'Container', options: {}},
             'extra.attributes.class': {type: 'Text', title: 'Class'},
           },
         });
@@ -842,7 +842,10 @@
                  $('.backbone-edit.field-'+ name).hide();
               });
             }
-
+             
+             if(this.model.get('draggable') == 1) {
+                $('.edit-container').hide();
+             }
             //prepare the "container" select box -  sort the options by cid
             var options = window.componentCollection.where({type: 'fieldset'});
             options = _.sortBy(options, function(option) {
