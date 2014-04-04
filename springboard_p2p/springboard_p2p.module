@@ -222,3 +222,31 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
 function springboard_p2p_form_is_node_create($form) {
   return empty($form['nid']['#value']) && (!isset($form['#node']->op));
 }
+
+function springboard_p2p_get_private_campaigns() {
+  $campaign_items = array();
+
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'p2p_campaign')
+    ->propertyCondition('status', 1)
+    ->fieldCondition('field_p2p_campaigns_approval', 'value', 1, '=')
+    ->propertyOrderBy('title', 'ASC');
+
+  $result = $query->execute();
+
+  if (isset($result['node'])) {
+    $campaign_items_nids = array_keys($result['node']);
+    $campaign_items = entity_load('node', $campaign_items_nids);
+  }
+
+  return $campaign_items;
+}
+
+function springboard_p2p_no_content_types_enabled() {
+
+  $fundraiser = variable_get('springboard_p2p_fundraiser_items', array());
+  $webform_user = variable_get('springboard_p2p_webform_user_items', array());
+
+  return (empty($fundraiser) && empty($webform_user));
+}
