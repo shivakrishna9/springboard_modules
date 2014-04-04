@@ -2538,13 +2538,21 @@ function _fundraiser_update_fundraiser($fundraiser) {
     $fundraiser = array_merge((array) $fundraiser_data, $fundraiser);
     // Implode donation amounds for saving.
     $imploded_amounts = array();
+    $donation_amounts = array();
     foreach ($fundraiser['donation_amounts'] as $index => $donation_amount) {
-      $donation_amounts[$donation_amount['weight']] = $donation_amount['amount'] . '|' . $donation_amount['label'];
+      if (isset($donation_amount['weight']) && isset($donation_amount['amount'])) {
+        $donation_amounts[$donation_amount['weight']] = $donation_amount['amount'] . '|' . $donation_amount['label'];
+      }
     }
-    ksort($donation_amounts);
-    $imploded_amounts = array_unique($donation_amounts);
-    // On getting fundraiser this will be exploded into the correct values.
-    $fundraiser['donation_amounts'] = implode(',', $imploded_amounts);
+    if (count($donation_amounts)) {
+      ksort($donation_amounts);
+      $imploded_amounts = array_unique($donation_amounts);
+      // On getting fundraiser this will be exploded into the correct values.
+      $fundraiser['donation_amounts'] = implode(',', $imploded_amounts);
+    }
+    else {
+      $fundraiser['donation_amounts'] = '';
+    }
     // Serialize for storage, our configured gateway values for storage in components.
     $fundraiser['gateways'] = serialize($fundraiser['gateways']);
     $record = $fundraiser;
