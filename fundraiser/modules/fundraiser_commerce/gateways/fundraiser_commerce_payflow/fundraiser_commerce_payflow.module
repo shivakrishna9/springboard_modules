@@ -75,10 +75,10 @@ function _fundraiser_commerce_payflow_submit_form($payment_method, $config = NUL
     );
   }
 
-  // On the recurring update form let admins know payflow doesn't support this
+  // On the recurring update form let users know payflow doesn't support updating card data
   if (arg(2) == 'recurring_overview') {
     $form['payflow_no_update'] = array(
-      '#markup' => '<span class="commerce-paypal-wps-info">' . t('Payflow does not support updating card data.') . '</span>',
+      '#markup' => '<span class="commerce-payflow-info">' . t('Please contact customer support to make changes to your card data.') . '</span>',
     );
   }
 
