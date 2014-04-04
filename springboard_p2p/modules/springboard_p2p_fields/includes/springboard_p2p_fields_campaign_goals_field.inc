@@ -281,10 +281,10 @@ class SpringboardP2pCampaignGoalsField {
     }
   }
 
-  public function formatterView($items, $display) {
+  public function formatterView($entity_type, $entity, $items, $display) {
     $element = array();
 
-    if ($display['type'] == 'springboard_p2p_fields_default') {
+    if ($display['type'] == 'springboard_p2p_fields_campaign_goals_default') {
       foreach ($items as $delta => $value) {
         $goals = $this->load($value['goal_set_id']);
         if ($goals) {

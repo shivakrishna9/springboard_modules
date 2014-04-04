@@ -178,7 +178,7 @@ function springboard_p2p_views_default_views() {
   $handler->display->display_options['fields']['field_p2p_campaign_goals_1']['id'] = 'field_p2p_campaign_goals_1';
   $handler->display->display_options['fields']['field_p2p_campaign_goals_1']['table'] = 'field_data_field_p2p_campaign_goals';
   $handler->display->display_options['fields']['field_p2p_campaign_goals_1']['field'] = 'field_p2p_campaign_goals';
-  $handler->display->display_options['fields']['field_p2p_campaign_goals_1']['type'] = 'springboard_p2p_fields_default';
+  $handler->display->display_options['fields']['field_p2p_campaign_goals_1']['type'] = 'springboard_p2p_fields_campaign_goals_default';
   /* Field: Content: Post date */
   $handler->display->display_options['fields']['created']['id'] = 'created';
   $handler->display->display_options['fields']['created']['table'] = 'node';
@@ -226,7 +226,7 @@ function springboard_p2p_views_default_views() {
   $handler->display->display_options['fields']['field_p2p_campaign_goals_1']['id'] = 'field_p2p_campaign_goals_1';
   $handler->display->display_options['fields']['field_p2p_campaign_goals_1']['table'] = 'field_data_field_p2p_campaign_goals';
   $handler->display->display_options['fields']['field_p2p_campaign_goals_1']['field'] = 'field_p2p_campaign_goals';
-  $handler->display->display_options['fields']['field_p2p_campaign_goals_1']['type'] = 'springboard_p2p_fields_default';
+  $handler->display->display_options['fields']['field_p2p_campaign_goals_1']['type'] = 'springboard_p2p_fields_campaign_goals_default';
   /* Field: Content: Post date */
   $handler->display->display_options['fields']['created']['id'] = 'created';
   $handler->display->display_options['fields']['created']['table'] = 'node';

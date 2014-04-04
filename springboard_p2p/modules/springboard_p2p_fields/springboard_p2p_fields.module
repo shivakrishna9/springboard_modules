@@ -30,6 +30,13 @@ function springboard_p2p_fields_field_info() {
       'default_formatter' => 'hidden',
       'no_ui' => FALSE,
     ),
+    'springboard_p2p_fields_personal_campaign_progress' => array(
+      'label' => t('Peer to peer personal campaign progress'),
+      'description' => t('Progress for a peer to peer personal campaign'),
+      'default_widget' => 'springboard_p2p_fields_personal_campaign_progress_widget',
+      'default_formatter' => 'hidden',
+      'no_ui' => FALSE,
+    ),
   );
 }
 
@@ -47,9 +54,8 @@ function springboard_p2p_fields_field_info() {
  */
 function springboard_p2p_fields_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
 
-  $goals = new SpringboardP2pCampaignGoalsField();
-  $goals->validate($field, $langcode, $items, $errors);
-
+  SpringboardP2pFieldsFactory::getField($field['type'])
+    ->validate($field, $langcode, $items, $errors);
 }
 
 /**
@@ -60,9 +66,8 @@ function springboard_p2p_fields_field_validate($entity_type, $entity, $field, $i
  */
 function springboard_p2p_fields_field_is_empty($item, $field) {
 
-  $goals = new SpringboardP2pCampaignGoalsField();
-  return $goals->isEmpty($item);
-
+  return SpringboardP2pFieldsFactory::getField($field['type'])
+    ->isEmpty($item);
 }
 
 /**
@@ -70,8 +75,8 @@ function springboard_p2p_fields_field_is_empty($item, $field) {
  */
 function springboard_p2p_fields_field_presave($entity_type, $entity, $field, $instance, $langcode, &$items) {
 
-  $goals = new SpringboardP2pCampaignGoalsField();
-  $goals->presave($items);
+  SpringboardP2pFieldsFactory::getField($field['type'])
+    ->presave($items);
 
 }
 
@@ -82,8 +87,8 @@ function springboard_p2p_fields_field_presave($entity_type, $entity, $field, $in
  */
 function springboard_p2p_fields_field_delete($entity_type, $entity, $field, $instance, $langcode, &$items) {
 
-  $goals = new SpringboardP2pCampaignGoalsField();
-  $goals->delete($items);
+  SpringboardP2pFieldsFactory::getField($field['type'])
+    ->delete($items);
 }
 
 /**
@@ -102,6 +107,13 @@ function springboard_p2p_fields_field_widget_info() {
         'default value' => FIELD_BEHAVIOR_NONE,
       ),
     ),
+    'springboard_p2p_fields_personal_campaign_progress_widget' => array(
+      'label' => t('Personal campaign progress widget'),
+      'field types' => array('springboard_p2p_fields_personal_campaign_progress'),
+      'behaviors' => array(
+        'default value' => FIELD_BEHAVIOR_NONE,
+      ),
+    ),
   );
 }
 
@@ -112,9 +124,8 @@ function springboard_p2p_fields_field_widget_info() {
  */
 function springboard_p2p_fields_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
 
-  $goals = new SpringboardP2pCampaignGoalsField();
-  return $goals->widgetForm($instance, $items, $delta, $element);
-
+  return SpringboardP2pFieldsFactory::getField($field['type'])
+    ->widgetForm($instance, $items, $delta, $element);
 }
 
 /**
@@ -124,8 +135,9 @@ function springboard_p2p_fields_field_widget_form(&$form, &$form_state, $field, 
  * @see form_error()
  */
 function springboard_p2p_fields_field_widget_error($element, $error, $form, &$form_state) {
-  $goals = new SpringboardP2pCampaignGoalsField();
-  $goals->widgetError($element, $error);
+
+  SpringboardP2pFieldsFactory::getField($field['type'])
+    ->widgetError($element, $error);
 }
 
 /**
@@ -245,10 +257,16 @@ function springboard_p2p_fields_format_node_options($nodes) {
  */
 function springboard_p2p_fields_field_formatter_info() {
   return array(
-    'springboard_p2p_fields_default' => array(
+    'springboard_p2p_fields_campaign_goals_default' => array(
       'label' => t('Default'),
       'description' => t('Displays campaign goals.'),
       'field types' => array('springboard_p2p_fields_campaign_goals'),
+      'settings' => array(),
+    ),
+    'springboard_p2p_fields_personal_campaign_progress_default' => array(
+      'label' => t('Default'),
+      'description' => t('Displays personal campaign progress.'),
+      'field types' => array('springboard_p2p_fields_personal_campaign_progress'),
       'settings' => array(),
     ),
   );
@@ -259,7 +277,6 @@ function springboard_p2p_fields_field_formatter_info() {
  */
 function springboard_p2p_fields_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
 
-  $goals = new SpringboardP2pCampaignGoalsField();
-
-  return $goals->formatterView($items, $display);
+  return SpringboardP2pFieldsFactory::getField($field['type'])
+    ->formatterView($entity_type, $entity, $items, $display);
 }
