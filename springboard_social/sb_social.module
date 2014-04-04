@@ -25,17 +25,14 @@ function sb_social_metatag_metatags_view_alter(&$output, $instance) {
     $id = !$node ? current_path() : $node->nid;
   }
   else {
-    $enabled_content_types = variable_get('springboard_social_enabled_content_types', array());
-    // If this node is not a supported node type do nothing
-    if (empty($enabled_content_types[$node->type])) {
-      return;
-    }
-
     $id = $node->nid;
   }
 
   $sid = _sb_social_sid_by_id($id);
   $settings = sb_social_settings_load($sid);
+  if (empty($settings)) {
+    return;
+  }
   $plugins = sb_social_get_enabled_plugins();
 
   // Check for metatag view alter callbacks in the plugins.
@@ -250,6 +247,10 @@ function sb_social_block_view($delta = '') {
 
     if ($sid) {
       $settings = sb_social_settings_load($sid);
+      if (empty($settings)) {
+        return;
+      }
+
       $plugins = sb_social_get_enabled_plugins();
       // Render button for each enabled service.
       foreach ($plugins as $service => $plugin) {
@@ -407,6 +408,9 @@ function sb_social_init() {
 
   if ($id) {
     $settings = sb_social_settings_load($sid);
+    if (empty($settings)) {
+      return;
+    }
 
     if (!empty($settings['data']['market_source']['ms'])) {
       $js_settings['market_source'] = $settings['data']['market_source']['ms'];
