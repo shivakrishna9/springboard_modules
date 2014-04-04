@@ -148,6 +148,9 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
     sb_social_add_share_to_queue($share_id);
   }
 
+  // Let modules react to the share event
+  module_invoke_all('sb_social_share_event_save', array('share_id' => $share_id, 'url' => $url) + $record);
+
   return $url;
 }
 
