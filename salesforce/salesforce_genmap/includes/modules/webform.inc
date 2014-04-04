@@ -66,7 +66,11 @@ function salesforce_genmap_node_insert($node) {
   $webform_types = variable_get('webform_node_types', array('webform'));
   if (!empty($node->clone_from_original_nid) && in_array($node->type, $webform_types)) {
     $nid = $node->clone_from_original_nid;
-
+    $webform_user_reference_fields = variable_get('webform_user_reference_fields', array());
+    if (array_key_exists($nid, $webform_user_reference_fields)) {
+      $webform_user_reference_fields[$node->nid] = $webform_user_reference_fields[$nid];
+      variable_set('webform_user_reference_fields', $webform_user_reference_fields);
+    }  
     $map = salesforce_genmap_load_map($nid, 'webform');
     if (!empty($map)) {
       // Copy the map to the node.
