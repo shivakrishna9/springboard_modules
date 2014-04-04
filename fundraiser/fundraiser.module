@@ -852,6 +852,10 @@ function _fundraiser_form_amounts_validate($form, &$form_state) {
       $min = (isset($min) && $amount['amount'] > $min) ? $min : $amount['amount'];
     }
   }
+  // If no min ask amount is found (no ask amounts set) default to
+  // the minimum donation amount. This prevents errors when all ask amounts
+  // are removed from a donation form.
+  $min = isset($min) ? $min : $minimum_donation_amount;
   if ($min < $minimum_donation_amount) {
     form_set_error('amount_wrapper][minimum_donation_amount', t('The minimum donation amount must not be higher than the minimum ask amount.'));
   }
