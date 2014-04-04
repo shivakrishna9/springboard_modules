@@ -9,6 +9,11 @@
  * Page callback for the p2p dashboard.
  */
 function springboard_p2p_dashboard() {
+
+  if (springboard_p2p_no_content_types_enabled()) {
+    drupal_set_message('No content types have been enabled for peer to peer.  Please visit the settings and configure them.', 'error');
+  }
+
   $output = array();
 
   $output['campaigns'] = array();
