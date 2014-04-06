@@ -86,20 +86,33 @@ class SpringboardP2pPersonalCampaignProgressField {
       $goal_set_id = $campaign->field_p2p_campaign_goals[$campaign->language][0]['goal_set_id'];
       $goals_field = new SpringboardP2pCampaignGoalsField();
       $goals = $goals_field->load($goal_set_id);
-      dpm($goals);
-      dpm($entity->type);
-      if (isset($goals[$entity->type])) {
-        $goal = $goals[$entity->type];
-        dpm($goal);
+
+      // @todo Only handles one goal type.
+      foreach ($goals as $goal) {
         if ($goal['enabled']) {
-          $goal_type = $goal['type'];
-          dpm($goal_type);
+          $enabled_goal = $goal;
         }
       }
 
       foreach ($items as $delta => $value) {
+
+        switch ($enabled_goal['goal_type']) {
+          case 'amount':
+            $value = '$ ' . $items[$delta]['amount'];
+            break;
+
+          case 'submissions':
+            $value = $items[$delta]['submissions'] . ' submissions';
+            break;
+
+          default:
+            $value = '';
+            break;
+
+        }
+
         $element[$delta]['campaign_progress'] = array(
-          '#markup' => '<div>' . $items[$delta]['submissions'] . ' submissions and $ ' . $items[$delta]['amount'] . ' raised.',
+          '#markup' => '<div>' . $value . ' raised.',
         );
       }
     }
