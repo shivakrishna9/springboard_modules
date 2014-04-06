@@ -24,6 +24,7 @@ function springboard_p2p_views_default_views() {
   $handler = $view->new_display('default', 'Master', 'default');
   $handler->display->display_options['title'] = 'Peer to peer campaigns';
   $handler->display->display_options['use_more_always'] = FALSE;
+  $handler->display->display_options['group_by'] = TRUE;
   $handler->display->display_options['access']['type'] = 'perm';
   $handler->display->display_options['cache']['type'] = 'none';
   $handler->display->display_options['query']['type'] = 'views_query';
@@ -45,6 +46,10 @@ function springboard_p2p_views_default_views() {
     ),
   );
   $handler->display->display_options['style_options']['sticky'] = TRUE;
+  /* Relationship: Entity Reference: Referencing entity */
+  $handler->display->display_options['relationships']['reverse_field_p2p_campaign_node']['id'] = 'reverse_field_p2p_campaign_node';
+  $handler->display->display_options['relationships']['reverse_field_p2p_campaign_node']['table'] = 'node';
+  $handler->display->display_options['relationships']['reverse_field_p2p_campaign_node']['field'] = 'reverse_field_p2p_campaign_node';
   /* Field: Bulk operations: Content */
   $handler->display->display_options['fields']['views_bulk_operations']['id'] = 'views_bulk_operations';
   $handler->display->display_options['fields']['views_bulk_operations']['table'] = 'node';
@@ -215,29 +220,6 @@ function springboard_p2p_views_default_views() {
   $handler->display->display_options['pager']['type'] = 'some';
   $handler->display->display_options['pager']['options']['items_per_page'] = '10';
   $handler->display->display_options['pager']['options']['offset'] = '0';
-  $handler->display->display_options['defaults']['fields'] = FALSE;
-  /* Field: Content: Title */
-  $handler->display->display_options['fields']['title']['id'] = 'title';
-  $handler->display->display_options['fields']['title']['table'] = 'node';
-  $handler->display->display_options['fields']['title']['field'] = 'title';
-  $handler->display->display_options['fields']['title']['alter']['word_boundary'] = FALSE;
-  $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
-  /* Field: Content: Goals */
-  $handler->display->display_options['fields']['field_p2p_campaign_goals_1']['id'] = 'field_p2p_campaign_goals_1';
-  $handler->display->display_options['fields']['field_p2p_campaign_goals_1']['table'] = 'field_data_field_p2p_campaign_goals';
-  $handler->display->display_options['fields']['field_p2p_campaign_goals_1']['field'] = 'field_p2p_campaign_goals';
-  $handler->display->display_options['fields']['field_p2p_campaign_goals_1']['type'] = 'springboard_p2p_fields_campaign_goals_default';
-  /* Field: Content: Post date */
-  $handler->display->display_options['fields']['created']['id'] = 'created';
-  $handler->display->display_options['fields']['created']['table'] = 'node';
-  $handler->display->display_options['fields']['created']['field'] = 'created';
-  $handler->display->display_options['fields']['created']['label'] = 'Age';
-  $handler->display->display_options['fields']['created']['date_format'] = 'raw time ago';
-  /* Field: Content: Edit link */
-  $handler->display->display_options['fields']['edit_node']['id'] = 'edit_node';
-  $handler->display->display_options['fields']['edit_node']['table'] = 'views_entity_node';
-  $handler->display->display_options['fields']['edit_node']['field'] = 'edit_node';
-  $handler->display->display_options['fields']['edit_node']['label'] = 'Edit';
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
   $handler->display->display_options['defaults']['filters'] = FALSE;
   /* Filter criterion: Content: Type */

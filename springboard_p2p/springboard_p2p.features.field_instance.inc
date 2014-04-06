@@ -1197,6 +1197,42 @@ function springboard_p2p_field_default_field_instances() {
     ),
   );
 
+  // Exported field_instance: 'node-p2p_personal_campaign-field_p2p_campaign_progress'
+  $field_instances['node-p2p_personal_campaign-field_p2p_campaign_progress'] = array(
+    'bundle' => 'p2p_personal_campaign',
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'hidden',
+        'module' => 'springboard_p2p_fields',
+        'settings' => array(),
+        'type' => 'springboard_p2p_fields_personal_campaign_progress_default',
+        'weight' => 2,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_p2p_campaign_progress',
+    'label' => 'Progress',
+    'required' => 0,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 0,
+      'module' => 'springboard_p2p_fields',
+      'settings' => array(),
+      'type' => 'springboard_p2p_fields_personal_campaign_progress_widget',
+      'weight' => 0,
+    ),
+  );
+
   // Translatables
   // Included for use with string extractors like potx.
   t('Allow donor comments');
@@ -1214,6 +1250,7 @@ function springboard_p2p_field_default_field_instances() {
   t('Organization introduction');
   t('Personal campaign introduction');
   t('Personal campaigns require approval');
+  t('Progress');
   t('Show donor comments on personal campaign pages');
   t('Show donor scroll on personal campaign pages');
   t('This content can be overridden by campaigner');

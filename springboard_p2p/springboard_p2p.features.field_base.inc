@@ -167,6 +167,22 @@ function springboard_p2p_field_default_field_bases() {
     'type' => 'image',
   );
 
+  // Exported field_base: 'field_p2p_campaign_progress'
+  $field_bases['field_p2p_campaign_progress'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'field_p2p_campaign_progress',
+    'foreign keys' => array(),
+    'indexes' => array(),
+    'locked' => 0,
+    'module' => 'springboard_p2p_fields',
+    'settings' => array(),
+    'translatable' => 0,
+    'type' => 'springboard_p2p_fields_personal_campaign_progress',
+  );
+
   // Exported field_base: 'field_p2p_campaigns_approval'
   $field_bases['field_p2p_campaigns_approval'] = array(
     'active' => 1,
