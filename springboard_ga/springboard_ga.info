@@ -5,7 +5,7 @@ package = "Jackson River Springboard - extras"
 core = 7.x
 version = 7.x-4.x-dev
 
-configure = admin/springboard/options/ga
+configure = springboard/options/ga
 
 dependencies[] = googleanalytics
 dependencies[] = webform_confirmations
