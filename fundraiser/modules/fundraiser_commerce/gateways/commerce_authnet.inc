@@ -399,7 +399,7 @@ function commerce_authnet_form_rules_ui_edit_element_alter(&$form, &$form_state)
 function fundraiser_commerce_commerce_authnet_aim_request_alter(&$nvp) {
   $donation = fundraiser_donation_get_donation($nvp['x_invoice_num']);
   $config = $donation->gateway['gateway_details']['settings'];
-  dpm($donation);
+  //dpm($donation);
   $nvp += array(
     'x_employer' => $donation->submission_data[$config['commerce_authnet_webform_field_x_employer']],
     'x_occupation' => $donation->submission_data[$config['commerce_authnet_webform_field_x_occupation']],
