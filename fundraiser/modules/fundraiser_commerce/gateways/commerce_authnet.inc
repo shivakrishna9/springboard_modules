@@ -73,6 +73,7 @@ function commerce_authnet_fundraiser_commerce_validate($submission_fields, $paym
 function commerce_authnet_fundraiser_commerce_charge($method_instance, $donation) {
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
   // Translate from donation settings to the correct values for the plugin.
+
   $order = commerce_order_load($donation->did);
   $wrapper = entity_metadata_wrapper('commerce_order', $order);
   $charge = $wrapper->commerce_order_total->value();
@@ -360,4 +361,55 @@ function commerce_authnet_fundraiser_commerce_refund($payment_method, $refund) {
     $success = TRUE;
   }
   return $success;
+}
+
+function commerce_authnet_form_rules_ui_edit_element_alter(&$form, &$form_state) {
+  if (isset($form['parameter']['payment_method']['settings']['payment_method']['method_id']['#value'])) {
+    $id = isset($form['parameter']['payment_method']['settings']['payment_method']['method_id']['#value']);
+    if ($id == 'authnet_aim') {
+      $rule = rules_config_load('commerce_payment_authnet_aim');
+      //if someone were to
+      foreach ($rule->actions() as $action) {
+        if($action->settings['payment_method']['method_id'] == 'authnet_aim') {
+         $settings[] = $action->settings;
+        }
+      }
+      $config = $settings[0]['payment_method']['settings'];
+      $form['parameter']['payment_method']['settings']['payment_method']['settings']['value_map'] = array(
+          '#type' => 'fieldset',
+          '#title' => t('Submission mapping'),
+          '#description' => t('During a transaction some additional data from the form submission may be passed along to Authorize.net. ' .
+            'See: https://developer.authorize.net/guides/AIM/wwhelp/wwhimpl/js/html/wwhelp.htm#href=3_TransDataReqs.html#1094346 ' .
+            'Please map up to five fields - by their webform field key to the correct field key as defined at Authorize.net. If you override '.
+            'any fields starting with "x_ship_to" please be sure you do not need to use shipping data on this site.'),
+          '#tree' => TRUE,
+        );
+      $available_fields = _commerce_authnet_extra_fields();
+      foreach ($available_fields as $field) {
+        $form['parameter']['payment_method']['settings']['payment_method']['settings']['commerce_authnet_webform_field_' . $field] = array(
+          '#title' => t('Enter webform field key to map to %i', array('%i' => $field)),
+          '#type' => 'textfield',
+          '#default_value' => !empty($config['commerce_authnet_webform_field_' . $field]) ? $config['commerce_authnet_webform_field_' . $field] : '',
+        );
+      }
+    }
+  }
+}
+
+function fundraiser_commerce_commerce_authnet_aim_request_alter(&$nvp) {
+  $donation = fundraiser_donation_get_donation($nvp['x_invoice_num']);
+  $config = $donation->gateway['gateway_details']['settings'];
+  dpm($donation);
+  $nvp += array(
+    'x_employer' => $donation->submission_data[$config['commerce_authnet_webform_field_x_employer']],
+    'x_occupation' => $donation->submission_data[$config['commerce_authnet_webform_field_x_occupation']],
+  );
+}
+
+function _commerce_authnet_extra_fields() {
+  $extra_fields = array(
+    'x_employer',
+    'x_occupation',
+  );
+  return $extra_fields;
 }
