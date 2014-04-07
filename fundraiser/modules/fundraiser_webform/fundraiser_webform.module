@@ -1034,6 +1034,10 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
     $orig_field = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, $component['form_key']);
     if (isset($orig_field->cid) && !empty($orig_field->cid)) {
       $cid = $orig_field->cid;
+
+      // For existing fields the weight remains the same
+      $component['weight'] = $orig_field->weight;
+
       // If the field allows updating proceed
       if ($allow_update) {
         $component['pid'] = $orig_field->pid; // Keep the original parentage, could be set by user.
