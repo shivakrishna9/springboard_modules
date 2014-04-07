@@ -39,6 +39,59 @@ function springboard_admin_menu() {
   return $items;
 }
 
+function springboard_admin_admin_menu_output_build(&$content) {
+  // Add new top-level item to the menu.
+  if (isset($content['menu'])) {
+    $content['menu']['springboard'] = array(
+      '#title' => t('Springboard'),
+      '#attributes' => array('class' => array('springboard_admin-springboard')),
+      '#href' => 'springboard',
+      '#options' => array(
+        'query' => drupal_get_destination(),
+        // Apply a class on the link (anchor).
+        'attributes' => array('class' => array('myitem-link-anchor')),
+      ),
+      // #weight controls the order of links in the resulting item list.
+      '#weight' => 50,
+    );
+  $sbadmin_menu = menu_tree('springboard_admin_menu');
+  $content['menu']['springboard'] += springboard_admin_build_admin_menu_subnav($sbadmin_menu);
+  }
+}
+
+function springboard_admin_build_admin_menu_subnav($items) {
+  $nav = array();
+  foreach($items as $key => $item) {
+    if(!preg_match('/^#.*$/', $key)) {
+      $nav[$item['#href']] = springboard_admin_build_admin_menu_item($item);
+      if(count($item['#below']) > 0) {
+        $nav[$item['#href']] += springboard_admin_build_admin_menu_subnav($item['#below']);
+      }
+    }
+  }
+  return $nav;
+}
+
+function springboard_admin_build_admin_menu_item($item) {
+  return array(
+    '#title' => $item['#title'],
+    '#href' => $item['#href'],
+    '#options' => $item['#localized_options'],
+    '#weight' => isset($item['#original_link']['#weight']) ? $item['#original_link']['#weight'] : 0,
+  );
+}
+
+function springboard_admin_admin_menu_output_alter(&$content) {
+  // remove lower-level springboard menu items from admin menu
+    foreach($content['menu'] as $key => $item) {
+      if(preg_match('/^springboard\/.*$/', $key)) {
+        unset($content['menu'][$key]);
+      }
+    }
+}
+
+
+
 /**
  * Implements hook_admin_paths().
  */
@@ -62,6 +115,8 @@ function springboard_admin_permission() {
     )
   );
 }
+
+
 
 /**
  * Implements hook_form_ID_alter().
