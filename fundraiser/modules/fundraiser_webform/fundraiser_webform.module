@@ -23,6 +23,19 @@ function fundraiser_webform_menu_alter(&$items) {
 }
 
 /**
+ * Implements hook_implements_alter
+ */
+function fundraiser_webform_module_implements_alter(&$implementations, $hook) {
+  // These hooks should run before others
+  $hooks = array('tokens_alter');
+  if (in_array($hook, $hooks) && isset($implementations['fundraiser_webform'])) {
+    $group['fundraiser_webform'] = $implementations['fundraiser_webform'];
+    unset($implementations['fundraiser_webform']);
+    $implementations = $group + $implementations;
+  }
+}
+
+/**
  * Menu callback for admin/content/webform. Displays all webforms on the site.
  * EXCEPT: for donation types.
  */
@@ -131,6 +144,26 @@ function fundraiser_webform_confirmation_page_tokens($node_type) {
     }
   }
   return $token_list;
+}
+
+/**
+ * Implements hook_tokens_alter
+ *
+ * Adds global donation tokens on webform confirmation pages
+ *
+ * @see fundraiser_webform_module_implements_alter, where this hook is set to run before others
+ */
+function fundraiser_webform_tokens_alter(&$replacements, &$context) {
+  // Load the donation from the sid
+  if ($context['type'] == 'donation' && empty($context['data']['donation']) && arg(0) == 'node' && arg(2) == 'done' && !empty($_GET['sid'])) {
+    // Add the donation to the context data array as well so other modules can use it
+    $context['data']['donation'] = $donation = _fundraiser_webform_get_donation_by_sid($_GET['sid']);
+  }
+
+  // If we have a donation object generate replacements for the donation tokens
+  if (!empty($donation)) {
+    $replacements += token_generate('donation', $context['tokens'], array('donation' => $donation), $context['options']);
+  }
 }
 
 /**

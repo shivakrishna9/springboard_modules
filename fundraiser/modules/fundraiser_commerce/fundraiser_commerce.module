@@ -110,6 +110,52 @@ function fundraiser_commerce_entity_view($entity, $type, $view_mode, $langcode) 
 }
 
 /**
+ * Implements hook_token_info_alter
+ */
+function fundraiser_commerce_token_info_alter(&$data) {
+  if (!empty($data['tokens']['donation'])) {
+    // Add Commerce related tokens
+    $data['tokens']['donation']['order'] = array(
+      'name' => t('Donation Order'),
+      'description' => t('Ther order used to process the donation.'),
+      'type' => 'commerce-order',
+    );
+    $data['tokens']['donation']['payment-transaction'] = array(
+      'name' => t('Donation Order Transaction'),
+      'description' => t('The transaction data from the payment processor.'),
+      'type' => 'commerce-payment-transaction',
+    );
+  }
+}
+
+/**
+ * Implements hook_tokens_alter
+ *
+ * Add support for order and transaction tokens from a donation
+ */
+function fundraiser_commerce_tokens_alter(&$replacements, $context) {
+  // Make sure we have a donation to work with
+  if ($context['type'] == 'donation' && !empty($context['data']['donation'])) {
+    $donation = $context['data']['donation'];
+
+    // Load the order and do token replacement on the order and transaction tokens
+    $order = !empty($donation->order) ? $donation->order : commerce_order_load($donation->did);
+
+    // Replace the order tokens
+    if (!empty($order) && $order_tokens = token_find_with_prefix($context['tokens'], 'order')) {
+      $replacements += token_generate('commerce-order', $order_tokens, array('commerce-order' => $order), $context['options']);
+    }
+
+    // Replace the transaction tokens using the latest transaction
+    if (!empty($order) && $transaction_tokens = token_find_with_prefix($context['tokens'], 'payment-transaction')) {
+      $transactions = commerce_payment_transaction_load_multiple(array(), array('order_id' => $order->order_id));
+      $transaction = reset($transactions);
+      $replacements += token_generate('commerce-payment-transaction', $transaction_tokens, array('commerce-payment-transaction' => $transaction), $context['options']);
+    }
+  }
+}
+
+/**
  * Implements fundraiser_donation_information_table_alter().
  */
 function fundraiser_commerce_fundraiser_donation_information_table_alter(&$variables, $donation) {
