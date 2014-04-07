@@ -80,24 +80,26 @@ function page_wrappers_preprocess_page(&$vars) {
   }
 
   // Allow context to optionally override this
-  if (module_exists('context') && $node = _page_wrappers_context_page_node()) {
+  if (module_exists('context')) {
     $contexts = context_active_contexts();
     foreach ($contexts as $context) {
       // Check if page_wrapper is a reaction for this context
       if (isset($context->reactions['page_wrappers'])) {
         $wrapper = array(
-          'nid' => $node->nid,
           'wrapper_nid' => $context->reactions['page_wrappers']['page_wrapper'],
           'ruleset' => 1,
           'weight' => -20,
         );
+        if ($node) {
+          $wrapper['nid'] = $node->nid;
+        }
       }
     }
   }
 
   if (!empty($wrapper)) {
-    // Some pages may not have a node set, we'll need it for the wrapper template
-    if (!isset($vars['node'])) {
+    // Some pages may not have a node set even though one is being viewed; we'll need it for the wrapper template
+    if (!isset($vars['node']) && $node) {
       $build = node_view_multiple(array($node->nid => $node), 'full');
       $vars['node'] = $build['nodes'][$node->nid]['#node'];
     }
