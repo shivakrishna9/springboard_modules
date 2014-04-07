@@ -247,8 +247,8 @@ function springboard_admin_admin_menu_items() {
   );
 
   // Marketing & Analytics > Social.
-  $items['admin/springboard/marketing-analytics']['_children']['admin/springboard/settings/sb-social'] = array(
-    'link_path' => 'admin/springboard/settings/sb-social',
+  $items['springboard/marketing-analytics']['_children']['springboard/settings/sb-social'] = array(
+    'link_path' => 'springboard/settings/sb-social',
     'link_title' => 'Social',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
@@ -257,7 +257,7 @@ function springboard_admin_admin_menu_items() {
   );
 
   // Marketing & Analytics > A/B Testing.
-  $items['admin/springboard/marketing-analytics']['_children']['admin/config/content/webform_ab'] = array(
+  $items['springboard/marketing-analytics']['_children']['admin/config/content/webform_ab'] = array(
     'link_path' => 'admin/config/content/webform_ab',
     'link_title' => 'A/B Testing',
     'menu_name' => 'springboard_admin_menu',
