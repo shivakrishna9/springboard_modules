@@ -8,35 +8,47 @@ include_once('springboard_admin.menu.inc');
 
 function springboard_admin_menu() {
   $items = array();
-  $items['admin/springboard/templates'] = array(
+  $items['springboard/templates'] = array(
     'title' => 'Templates',
     'type' => MENU_NORMAL_ITEM,
     'access callback' => 'springboard_admin_menu_access',
-    'access arguments' => array('admin/springboard/templates'),
+    'access arguments' => array('springboard/templates'),
     'page callback' => 'springboard_admin_template_page',
   );
-  $items['admin/springboard/results'] = array(
+  $items['springboard/results'] = array(
     'title' => 'Results',
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('access springboard dashboard'),
     'page callback' => 'springboard_admin_aggregate_links_page',
-    'page arguments' => array('admin/springboard/results'),
+    'page arguments' => array('springboard/results'),
    );
-   $items['admin/springboard/options'] = array(
+   $items['springboard/options'] = array(
     'title' => 'Options',
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('access springboard dashboard'),
     'page callback' => 'springboard_admin_aggregate_links_page',
-    'page arguments' => array('admin/springboard/options'),
+    'page arguments' => array('springboard/options'),
    );
-   $items['admin/springboard/tools'] = array(
+   $items['springboard/tools'] = array(
     'title' => 'Other Tools',
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('access springboard dashboard'),
     'page callback' => 'springboard_admin_aggregate_links_page',
-    'page arguments' => array('admin/springboard/tools'),
+    'page arguments' => array('springboard/tools'),
    );
   return $items;
+}
+
+/**
+ * Implements hook_admin_paths().
+ */
+function springboard_admin_admin_paths() {
+  return array(
+    'springboard/templates' => TRUE,
+    'springboard/results' => TRUE,
+    'springboard/options' => TRUE,
+    'springboard/tools' => TRUE,
+  );
 }
 
 /**
@@ -138,7 +150,7 @@ function springboard_admin_user_login(&$edit, $account) {
     foreach ($account->roles as $rid => $assigned_role) {
       // If any role matches, change the redirect and end the function.
       if ($assigned_role && in_array($rid, $redirect_roles)) {
-        $edit['redirect'] = 'admin/springboard';
+        $edit['redirect'] = 'springboard';
       return;
       }
     }
@@ -199,7 +211,7 @@ function springboard_admin_custom_theme() {
 
 function springboard_admin_menu_access($path) {
   switch ($path) {
-    case 'admin/springboard/templates':
+    case 'springboard/templates':
       if (user_access('edit any page_wrapper content') || user_access('edit any email_wrapper content')) {
         return TRUE;
       }
