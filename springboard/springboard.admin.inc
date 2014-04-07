@@ -206,7 +206,7 @@ function springboard_admin_config(&$form, $form_state) {
     drupal_flush_all_caches();
     menu_rebuild();
     drupal_set_message(t('Please be sure to set up the Encypt key path at !link',
-      array('!link' => l('Encrypt settings', 'admin/config/system/encrypt'))));
+      array('!link' => l(t('Encrypt settings'), 'admin/config/system/encrypt'))));
   }
   else {
     drupal_set_message(t('Springboard default configuration has already been set up.'));
@@ -1445,7 +1445,7 @@ function springboard_admin_config_salesforce($form, $form_state) {
   // Insert the default map, $default_map_user_to_contact into SF entity mappings.
   $mapping = entity_import('salesforce_mapping', $default_map_user_to_contact);
   entity_save('salesforce_mapping', $mapping);
-  drupal_set_message('Drupal user entity has been mapped to Salesforce Contact object.');
+  drupal_set_message(t('Drupal user entity has been mapped to Salesforce Contact object.'));
 }
 
 /**

@@ -17,8 +17,8 @@
 function springboard_admin_admin_menu() {
   return array(
     'menu_name' => 'springboard_admin_menu',
-    'title' => t('Springboard Administration'),
-    'description' => t('Menu for the custom Springboard administration interface')
+    'title' => 'Springboard Administration',
+    'description' => 'Menu for the custom Springboard administration interface'
   );
 }
 
