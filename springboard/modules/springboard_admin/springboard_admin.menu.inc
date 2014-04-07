@@ -268,11 +268,6 @@ function springboard_admin_admin_menu_items() {
 
   // Top Level: Results
   // @todo Create this page.
-  $items['admin/springboard/results'] = array(
-    'link_path' => 'admin/springboard/reports/dsr',
-    // admin/springboard/results
-  // Top Level: Results.
-  // @TODO create this page springboard/results
   $items['springboard/results'] = array(
     'link_path' => 'springboard/reports/dsr', 
     'link_title' => t('Results'),

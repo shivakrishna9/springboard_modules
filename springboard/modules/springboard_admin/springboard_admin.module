@@ -39,8 +39,6 @@ function springboard_admin_menu() {
     'page callback' => 'springboard_admin_aggregate_links_page',
     'page arguments' => array('springboard/tools'),
   );
-    'page arguments' => array('admin/springboard/tools'),
-  );
   $items['user/%/logout'] = array(
     'title' => 'Logout',
     'type' => MENU_LOCAL_TASK,
