@@ -206,7 +206,7 @@ function commerce_authnet_fundraiser_commerce_update($donation, $card_data = NUL
     $form_state['values']['credit_card']['state'] = isset($donation->donation['state']) ? $donation->donation['state'] : '';
     $form_state['values']['credit_card']['zip'] = isset($donation->donation['zip']) ? $donation->donation['zip'] : '';
     $form_state['values']['credit_card']['country'] = isset($donation->donation['country']) ? $donation->donation['country'] : '';
-
+ 
     $response = _commerce_authnet_fundraiser_commerce_authnet_cim_cardonfile_update($form, $form_state, $payment_method, $card_data);
 
     if ($response) {
@@ -329,10 +329,8 @@ function _commerce_authnet_fundraiser_commerce_authnet_cim_cardonfile_update($fo
       'customerPaymentProfileId' => $cim_payment_profile_id,
     ),
   );
-
   // Fetch the response from the API server and let Card on File know if the update was successful.
   $xml_response = commerce_authnet_cim_request($payment_method, 'updateCustomerPaymentProfileRequest', $api_request_data);
-
   return (string) $xml_response->messages->message->code == 'I00001';
 }
 
@@ -399,11 +397,17 @@ function commerce_authnet_form_rules_ui_edit_element_alter(&$form, &$form_state)
 function fundraiser_commerce_commerce_authnet_aim_request_alter(&$nvp) {
   $donation = fundraiser_donation_get_donation($nvp['x_invoice_num']);
   $config = $donation->gateway['gateway_details']['settings'];
-  //dpm($donation);
-  $nvp += array(
-    'x_employer' => $donation->submission_data[$config['commerce_authnet_webform_field_x_employer']],
-    'x_occupation' => $donation->submission_data[$config['commerce_authnet_webform_field_x_occupation']],
-  );
+  if (isset($donation->submission_data[$config['commerce_authnet_webform_field_x_employer']])) {
+    $nvp += array(
+      'x_employer' => $donation->submission_data[$config['commerce_authnet_webform_field_x_employer']],
+    );
+  }
+
+  if (isset($donation->submission_data[$config['commerce_authnet_webform_field_x_occupation']])) {
+     $nvp += array(
+      'x_occupation' => $donation->submission_data[$config['commerce_authnet_webform_field_x_occupation']],
+    );
+  }
 }
 
 function _commerce_authnet_extra_fields() {
