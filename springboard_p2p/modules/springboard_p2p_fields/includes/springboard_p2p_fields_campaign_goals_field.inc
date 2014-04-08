@@ -288,19 +288,6 @@ class SpringboardP2pCampaignGoalsField {
   }
 
   /**
-   * Widget error.
-   */
-  public function widgetError($element, $error) {
-    switch ($error['error']) {
-      case 'springboard_p2p_fields_campaign_goals_no_nid':
-      case 'springboard_p2p_fields_campaign_goals_too_many':
-      case 'springboard_p2p_fields_campaign_goals_not_enough':
-        form_error($element, $error['message']);
-        break;
-    }
-  }
-
-  /**
    * Formatter view.
    */
   public function formatterView($entity_type, $entity, $items, $display) {

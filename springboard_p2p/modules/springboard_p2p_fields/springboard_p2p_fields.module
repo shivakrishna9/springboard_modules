@@ -135,9 +135,7 @@ function springboard_p2p_fields_field_widget_form(&$form, &$form_state, $field, 
  * @see form_error()
  */
 function springboard_p2p_fields_field_widget_error($element, $error, $form, &$form_state) {
-
-  SpringboardP2pFieldsFactory::getField($field['type'])
-    ->widgetError($element, $error);
+  form_error($element, $error['message']);
 }
 
 /**

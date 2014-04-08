@@ -76,18 +76,10 @@ class SpringboardP2pPersonalCampaignProgressField {
   }
 
   /**
-   * Widget error.
-   */
-  public function widgetError($element, $error) {
-
-  }
-
-  /**
    * Formatter view.
    */
   public function formatterView($entity_type, $entity, $items, $display) {
     $element = array();
-    $enabled_goal = array('goal_type' => 'submissions');
 
     if ($display['type'] == 'springboard_p2p_fields_personal_campaign_progress_default') {
       $campaign = $entity->field_p2p_campaign[$entity->language][0]['entity'];
