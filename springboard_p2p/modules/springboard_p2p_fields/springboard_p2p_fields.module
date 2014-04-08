@@ -269,6 +269,12 @@ function springboard_p2p_fields_field_formatter_info() {
       'field types' => array('springboard_p2p_fields_personal_campaign_progress'),
       'settings' => array(),
     ),
+    'springboard_p2p_fields_personal_campaign_progress_count' => array(
+      'label' => t('Count'),
+      'description' => t('Displays personal campaign progress count.'),
+      'field types' => array('springboard_p2p_fields_personal_campaign_progress'),
+      'settings' => array(),
+    ),
   );
 }
 
@@ -280,3 +286,4 @@ function springboard_p2p_fields_field_formatter_view($entity_type, $entity, $fie
   return SpringboardP2pFieldsFactory::getField($field['type'])
     ->formatterView($entity_type, $entity, $items, $display);
 }
+

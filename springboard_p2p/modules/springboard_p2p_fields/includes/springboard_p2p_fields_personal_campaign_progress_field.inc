@@ -84,36 +84,27 @@ class SpringboardP2pPersonalCampaignProgressField {
 
     if ($display['type'] == 'springboard_p2p_fields_personal_campaign_progress_default') {
       $campaign = $entity->field_p2p_campaign[$entity->language][0]['entity'];
-      $goal_set_id = $campaign->field_p2p_campaign_goals[$campaign->language][0]['goal_set_id'];
-      $goals_field = new SpringboardP2pCampaignGoalsField();
-      $goals = $goals_field->load($goal_set_id);
-
-      // @todo Only handles one goal type.
-      foreach ($goals as $goal) {
-        if ($goal['enabled']) {
-          $enabled_goal = $goal;
-        }
-      }
+      $goal_type = springboard_p2p_get_goal_type_from_campaign($campaign);
 
       foreach ($items as $delta => $value) {
 
-        switch ($enabled_goal['goal_type']) {
-          case 'amount':
-            $value = '$ ' . $items[$delta]['amount'];
-            break;
-
-          case 'submissions':
-            $value = $items[$delta]['submissions'] . ' submissions';
-            break;
-
-          default:
-            $value = '';
-            break;
-
-        }
+        $value = springboard_p2p_format_progress($items[$delta], $goal_type);
 
         $element[$delta]['campaign_progress'] = array(
-          '#markup' => '<div>' . $value . ' raised.',
+          '#markup' => '<div>' . $value . '</div>',
+        );
+      }
+    }
+    elseif ($display['type'] == 'springboard_p2p_fields_personal_campaign_progress_count') {
+      $campaign = $entity->field_p2p_campaign[$entity->language][0]['entity'];
+      $goal_type = springboard_p2p_get_goal_type_from_campaign($campaign);
+
+      foreach ($items as $delta => $value) {
+
+        $value = springboard_p2p_format_progress($items[$delta], $goal_type, FALSE);
+
+        $element[$delta]['campaign_progress'] = array(
+          '#markup' => $value,
         );
       }
     }

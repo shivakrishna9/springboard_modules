@@ -243,10 +243,78 @@ function springboard_p2p_get_private_campaigns() {
   return $campaign_items;
 }
 
+function springboard_p2p_get_personal_campaigns($nid) {
+  $campaign_items = array();
+
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'p2p_personal_campaign')
+//    ->propertyCondition('status', 1)
+    ->fieldCondition('field_p2p_campaign', 'target_id', $nid, '=')
+    ->propertyOrderBy('created', 'DESC');
+
+  $result = $query->execute();
+
+  if (isset($result['node'])) {
+    $campaign_items_nids = array_keys($result['node']);
+    $campaign_items = entity_load('node', $campaign_items_nids);
+  }
+
+  return $campaign_items;
+}
+
 function springboard_p2p_no_content_types_enabled() {
 
   $fundraiser = variable_get('springboard_p2p_fundraiser_items', array());
   $webform_user = variable_get('springboard_p2p_webform_user_items', array());
 
   return (empty($fundraiser) && empty($webform_user));
+}
+
+function springboard_p2p_get_goal_type_from_campaign($campaign) {
+  $goal = springboard_p2p_get_goal_from_campaign($campaign);
+  return $goal['goal_type'];
+}
+
+function springboard_p2p_get_goal_value_from_campaign($campaign) {
+  $goal = springboard_p2p_get_goal_from_campaign($campaign);
+  return $goal['goal_value'];
+}
+
+function springboard_p2p_get_goal_from_campaign($campaign) {
+  $goal_set_id = $campaign->field_p2p_campaign_goals[$campaign->language][0]['goal_set_id'];
+  $goals_field = new SpringboardP2pCampaignGoalsField();
+  $goals = $goals_field->load($goal_set_id);
+  // @todo Only handles one goal type.
+  foreach ($goals as $goal) {
+    if ($goal['enabled']) {
+      return $goal;
+    }
+  }
+}
+
+function springboard_p2p_format_progress($progress, $type, $include_units = TRUE) {
+  $output = '';
+
+  switch ($type) {
+    case 'submissions':
+      $output .= number_format($progress['submissions']);
+      if ($include_units) {
+        $output .= ' submissions';
+      }
+      break;
+
+    case 'amount':
+      if ($include_units) {
+        $output .= '$ ';
+      }
+      $output .= number_format($progress['amount'], 2);
+      break;
+  }
+
+  return $output;
+}
+
+function springboard_p2p_format_percent($progress, $goal) {
+  return (int) ($progress / $goal * 100) . ' %';
 }

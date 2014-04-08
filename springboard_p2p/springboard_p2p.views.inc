@@ -4,16 +4,61 @@
  * Provides Springboard P2P data and relationships to Views.
  */
 
-
 /**
  * Implements hook_views_data().
  */
 function springboard_p2p_views_data() {
   $data = array();
 
+  $data['springboard_p2p_campaign_progress'] = array(
+    'table' => array(
+      'group' => t('P2P'),
+      'join' => array(
+        'node' => array(
+          'left_field' => 'nid',
+          'field' => 'nid',
+        ),
+      ),
+    ),
+    'progress' => array(
+      'title' => t('Campaign progress'),
+      'help' => t('The campaign progress'),
+      'field' => array(
+        'handler' => 'springboard_p2p_handler_field_campaign_progress',
+        'click sortable' => FALSE,
+      ),
+      'sort' => array(
+        'handler' => 'views_handler_sort',
+      ),
+    ),
+  );
+
+  $data['springboard_p2p_campaign_percent_complete'] = array(
+    'table' => array(
+      'group' => t('P2P'),
+      'join' => array(
+        'node' => array(
+          'left_field' => 'nid',
+          'field' => 'nid',
+        ),
+      ),
+    ),
+    'percent_complete' => array(
+      'title' => t('Campaign percent complete'),
+      'help' => t('The campaign percent complete'),
+      'field' => array(
+        'handler' => 'springboard_p2p_handler_field_campaign_progress_percent_complete',
+        'click sortable' => FALSE,
+      ),
+      'sort' => array(
+        'handler' => 'views_handler_sort',
+      ),
+    ),
+  );
+
   $data['springboard_p2p_private_campaign_approval'] = array(
     'table' => array(
-      'group' => t('P2P Private Campaign Approvals'),
+      'group' => t('P2P'),
       'base' => array(
         'field' => 'nid',
         'title' => t('P2P private campaign approvals'),
