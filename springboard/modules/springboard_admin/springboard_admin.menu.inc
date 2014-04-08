@@ -237,8 +237,8 @@ function springboard_admin_admin_menu_items() {
   );
 
   // Marketing & Analytics > Goals.
-  $items['springboard/marketing-analytics']['_children']['admin/config/content/webform_goals'] = array(
-    'link_path' => 'admin/config/content/webform_goals',
+  $items['springboard/marketing-analytics']['_children']['springboard/settings/webform-goals'] = array(
+    'link_path' => 'springboard/settings/webform-goals',
     'link_title' => 'Goals',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
