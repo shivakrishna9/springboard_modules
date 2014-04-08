@@ -376,9 +376,9 @@ function commerce_authnet_form_rules_ui_edit_element_alter(&$form, &$form_state)
       $form['parameter']['payment_method']['settings']['payment_method']['settings']['value_map'] = array(
           '#type' => 'fieldset',
           '#title' => t('Submission mapping'),
-          '#description' => t('If it is required that donor employer and occupation information be recorded with your payment provider, enter the form keys of the webform fields you will create, or have created.'),
+          '#description' => t('If it is required that donor employer and occupation information be recorded with your payment provider, enter the form keys of the webform fields you will create, or have created for that purpose.'),
           '#tree' => TRUE,
-        );
+      );
       $available_fields = _commerce_authnet_extra_fields();
       foreach ($available_fields as $field) {
         $form['parameter']['payment_method']['settings']['payment_method']['settings']['commerce_authnet_webform_field_' . $field] = array(
