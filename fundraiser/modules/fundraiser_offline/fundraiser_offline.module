@@ -9,7 +9,7 @@
 /**
  * Implements hook_permission().
  */
-function fundraiser_offline_permission() {
+/* function fundraiser_offline_permission() {
   return array(
     //'administer fundraiser offline' => array(
     //  'title' => t('Administer fundraiser offline'),
@@ -20,12 +20,12 @@ function fundraiser_offline_permission() {
       'description' => t('Access offline fundraiser.'),
     ),
   );
-}
+}*/
 
 /**
  * Implements hook_menu().
  */
-function fundraiser_offline_menu() {
+/*function fundraiser_offline_menu() {
   $items['admin/fundraiser_offline'] = array(
     'title' => 'Offline fundraisers',
     'page callback' => 'drupal_get_form',
@@ -39,7 +39,7 @@ function fundraiser_offline_menu() {
     'type' => MENU_CALLBACK,
   );
   return $items;
-}
+}*/
 
 /**
  * Implements menu callback page.
@@ -198,10 +198,22 @@ function fundraiser_offline_fundraiser_field_info_alter(&$fields) {
 }
 
 /**
+ * Implements hook_hook_fundraiser_donation_form_js_validation_alter().
+ *
+ * Disable client side validation on donation forms in offline mode.
+ */
+function fundraiser_offline_fundraiser_donation_form_js_validation_alter(&$settings, $node) {
+  if (isset($node->fundraiser_offline) && $node->fundraiser_offline) {
+    unset($settings['card_cvv']);
+  }
+}
+
+/**
  * Implements hook_fundraiser_donation_form(). Tweak display to remove confirmation submits.
  */
 function fundraiser_offline_fundraiser_donation_form($form, $form_state) {
-  if (_fundraiser_offline_is_offline()) {
+  if (isset($form['#node']->fundraiser_offline) && $form['#node']->fundraiser_offline) {
+    drupal_set_message('This form is currently in offline mode.');
     // Before we display an offline mode we need to check if this form is being displayed
     // from a normal path. If it is then we need to back out of offline mode asap.
     // Since that indicates a user was on an offline form, did not submit it, and has
@@ -256,10 +268,17 @@ function _fundraiser_offline_fundraiser_donation_form_submit($form, &$form_state
  * Implements hook_fundraiser_donation_submit().
  */
 function fundraiser_offline_fundraiser_donation_submit($form, $form_state, $donation) {
+  // BUG: resetting the uid and user in this function does not work for
+  // getting a new user account created from a submission. Webform User
+  // is responsible for creating users in SB4 and it is hardcoded to use
+  // global $user. To get this feature working we will need to make some changes
+  // to Webform User.
+
   // Check our offline state.
-  if (_fundraiser_offline_is_offline()) {
+  if (isset($form['#node']->fundraiser_offline) && $form['#node']->fundraiser_offline) {
     // Correct the uid, the logged in user is NOT the originating user.
     $donation->uid = 0;
+    $donation->user = user_load(0);
     if (!isset($donation->donation['mail'])) {
       // If the email has not been set, then we need to set it here.
       $donation->donation['mail'] = _fundraiser_offline_generate_email();
