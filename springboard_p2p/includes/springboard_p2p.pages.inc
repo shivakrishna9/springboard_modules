@@ -7,7 +7,7 @@
 /**
  * Page callback for the user registration page.
  *
- * @see user_register_form().
+ * @see user_register_form()
  */
 function springboard_p2p_register_page($form, &$form_state) {
   $form = array();
@@ -40,7 +40,7 @@ function springboard_p2p_register_page($form, &$form_state) {
 
   $form['new_account'] = springboard_p2p_user_register_form($form_state);
 
-  if(user_is_anonymous()) {
+  if (user_is_anonymous()) {
     $form['login'] = springboard_p2p_existing_user_login_form($form_state);
   }
 
@@ -61,6 +61,12 @@ function springboard_p2p_register_page_submit(&$form, &$form_state) {
 
 }
 
+/**
+ * Forms api array for registering users.
+ *
+ * Uses springboard_p2p_registration_fields to determine weights and
+ * enabledness of fields.
+ */
 function springboard_p2p_user_register_form(&$form_state) {
   $form = array(
     '#type' => 'fieldset',
@@ -123,6 +129,9 @@ function springboard_p2p_user_register_form(&$form_state) {
   return $form;
 }
 
+/**
+ * Forms api array for the social login form.
+ */
 function springboard_p2p_social_login_form(&$form_state) {
   $form = array(
     '#type' => 'fieldset',
@@ -141,6 +150,9 @@ function springboard_p2p_social_login_form(&$form_state) {
   return $form;
 }
 
+/**
+ * Forms api array for the existing user login form.
+ */
 function springboard_p2p_existing_user_login_form(&$form_state) {
   $form = array(
     '#type' => 'fieldset',
