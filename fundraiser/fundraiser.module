@@ -1312,10 +1312,61 @@ function fundraiser_validate_form_fields($form, $form_state, $submission_fields,
  */
 
 /**
+ * Default front end validation rules.
+ */
+function _fundraiser_donation_form_js_validation_config($node) {
+  // jQuery Validate rules are objects, typecast here to recreate the format.
+  // Zipcode validate
+  $zip = (object) array(
+    'required' => TRUE,
+    'zipcode' => TRUE,
+    'messages' => (object) array(
+      'required' => t('This field is required.'),
+      'zipcode' => t('Enter a valid zipcode.'),
+    ),
+  );
+  // CVV validation
+  $card_cvv = (object) array(
+    'required' => TRUE,
+    'number' => TRUE,
+    'minlength' => 3,
+    'maxlength' => 4,
+    'messages' => (object) array(
+      'required' => t('This field is required.'),
+      'number' => t('Must be a number.'),
+      'minlength' => t('Minimum of 3 characters.'),
+      'maxlength' => t('Maximum of 4 characters.'),
+    ),
+  );
+  // Credit card validation
+  $card_number = (object) array(
+    'required' => TRUE,
+    'number' => TRUE,
+    'creditcard' => TRUE,
+    'messages' => (object) array(
+      'required' => t('This field is required.'),
+      'number' => t('Must be a number.'),
+      'creditcard' => t('Enter a valid credit card number.'),
+    ),
+  );
+  $settings = array(
+    'zip' => $zip,
+    'card_cvv' => $card_cvv,
+    'card_number' => $card_number,
+  );
+  // Give 3rd party modules an opportunity to alter.
+  drupal_alter('fundraiser_donation_form_js_validation', $settings, $node);
+  drupal_add_js(array('fundraiser' => array('js_validation_settings' => $settings)), 'setting');
+  return $settings;
+}
+
+/**
  * Donation form, display routine on data returned from glue display module.
  * Must be called from glue display module when displaying the donation form.
  */
 function fundraiser_donation_form(&$form, &$form_state) {
+  $node = $form['#node'];
+  $form_validation_js_config = _fundraiser_donation_form_js_validation_config($node);
   // Attach the js files
   $form['#attached']['js'] = array(
     drupal_get_path('module', 'fundraiser') . '/js/jquery.alphanumeric.min.js',
