@@ -2136,7 +2136,7 @@ function fundraiser_commerce_commerce_authnet_cim_request_alter($api_request_ele
       $extra .= "&commerce_authnet_webform_field_x_employer=" . $donation->submission_data[$config['commerce_authnet_webform_field_x_employer']];
     }
     if (isset($donation->submission_data[$config['commerce_authnet_webform_field_x_occupation']])) {
-      $extra .= "commerce_authnet_webform_field_x_occupation=" . $donation->submission_data[$config['commerce_authnet_webform_field_x_occupation']];
+      $extra .= "&commerce_authnet_webform_field_x_occupation=" . $donation->submission_data[$config['commerce_authnet_webform_field_x_occupation']];
     }
     $api_request_element->extraOptions = '<![CDATA[' .  $extra . ']]>';
    }
