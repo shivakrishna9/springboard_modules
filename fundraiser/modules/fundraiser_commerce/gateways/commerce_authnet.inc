@@ -206,7 +206,7 @@ function commerce_authnet_fundraiser_commerce_update($donation, $card_data = NUL
     $form_state['values']['credit_card']['state'] = isset($donation->donation['state']) ? $donation->donation['state'] : '';
     $form_state['values']['credit_card']['zip'] = isset($donation->donation['zip']) ? $donation->donation['zip'] : '';
     $form_state['values']['credit_card']['country'] = isset($donation->donation['country']) ? $donation->donation['country'] : '';
- 
+
     $response = _commerce_authnet_fundraiser_commerce_authnet_cim_cardonfile_update($form, $form_state, $payment_method, $card_data);
 
     if ($response) {
@@ -376,17 +376,15 @@ function commerce_authnet_form_rules_ui_edit_element_alter(&$form, &$form_state)
       $form['parameter']['payment_method']['settings']['payment_method']['settings']['value_map'] = array(
           '#type' => 'fieldset',
           '#title' => t('Submission mapping'),
-          '#description' => t('During a transaction some additional data from the form submission may be passed along to Authorize.net. ' .
-            'See: https://developer.authorize.net/guides/AIM/wwhelp/wwhimpl/js/html/wwhelp.htm#href=3_TransDataReqs.html#1094346 ' .
-            'Please map up to five fields - by their webform field key to the correct field key as defined at Authorize.net. If you override '.
-            'any fields starting with "x_ship_to" please be sure you do not need to use shipping data on this site.'),
+          '#description' => t('If it is required that donor employer and occupation information be recorded with your payment provider, enter the form keys of the webform fields you will create, or have created.'),
           '#tree' => TRUE,
         );
       $available_fields = _commerce_authnet_extra_fields();
       foreach ($available_fields as $field) {
         $form['parameter']['payment_method']['settings']['payment_method']['settings']['commerce_authnet_webform_field_' . $field] = array(
-          '#title' => t('Enter webform field key to map to %i', array('%i' => $field)),
+          '#title' => t('Enter webform field key to map to Authorize.net field %i', array('%i' => $field)),
           '#type' => 'textfield',
+          '#description' => t('Example: field_name'),
           '#default_value' => !empty($config['commerce_authnet_webform_field_' . $field]) ? $config['commerce_authnet_webform_field_' . $field] : '',
         );
       }
