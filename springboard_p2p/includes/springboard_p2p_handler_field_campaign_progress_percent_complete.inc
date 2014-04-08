@@ -1,10 +1,26 @@
 <?php
 
+/**
+ * @file
+ * Views field handler to display the percent complete campaign progress.
+ */
+
+
 class springboard_p2p_handler_field_campaign_progress_percent_complete extends views_handler_field {
-  function query() {
+
+  /**
+   * Overload query().
+   */
+  public function query() {
   }
 
-  function render($values) {
+  /**
+   * Render the percent complete.
+   *
+   * Calculates and displays percent complete based across all
+   * personal campaigns in the campaign.
+   */
+  public function render($values) {
     $output = '';
     $progress_sums = array(
       'submissions' => 0,

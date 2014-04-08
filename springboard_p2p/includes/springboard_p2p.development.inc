@@ -4,6 +4,9 @@
  * Development and debugging things. @todo Remove me eventually.
  */
 
+/**
+ * Page callback for the Development local task.
+ */
 function springboard_p2p_development_settings($form, &$form_state) {
   $form = array();
 
@@ -56,6 +59,9 @@ function springboard_p2p_development_settings($form, &$form_state) {
   return $form;
 }
 
+/**
+ * Submit handler for the settings page.
+ */
 function springboard_p2p_development_settings_submit(&$form, &$form_state) {
   if (isset($form_state['values']['uid'])) {
     $approval = new SpringbaordP2pPrivateCampaignApproval($form_state['values']['uid'], $form_state['values']['nid']);
@@ -65,6 +71,12 @@ function springboard_p2p_development_settings_submit(&$form, &$form_state) {
   }
 }
 
+/**
+ * Loads all users.  Helper for the Development settings page.
+ *
+ * @return array
+ *   All loaded users.
+ */
 function springboard_p2p_get_users() {
   $users = array();
 

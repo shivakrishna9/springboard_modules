@@ -161,12 +161,12 @@ function springboard_p2p_form_p2p_campaign_node_form_alter(&$form, &$form_state,
         $max = max($children_keys);
         $upload_row = $form['field_p2p_images'][$lang_code][$max];
 
-        // in #default_value
+        // In #default_value
         // set the fid, uid, filename
         // remove display, description
         // add uri, filemime, filesize, status, timestamp, rdf mapping
         //
-        // set #weight to $delta
+        // Set #weight to $delta
         // remove #file_upload_delta, #theme, #theme_wrappers, #process, #title,
         // #description, #field_name, #language, #display_field,
         // #file_upload_title, #file_upload_description, #after_build,
@@ -174,19 +174,18 @@ function springboard_p2p_form_p2p_campaign_node_form_alter(&$form, &$form_state,
         $image_row = $upload_row;
         unset($image_row['#default_value']);
         unset($image_row['#weight']);
-//      unset($image_row['#file_upload_delta']);
-//      unset($image_row['#theme']);
-//      unset($image_row['#theme_wrappers']);
-//      unset($image_row['#process']);
-//      unset($image_row['#title']);
-//      unset($image_row['#description']);
-//      unset($image_row['#field_name']);
-//      unset($image_row['#language']);
-//      unset($image_row['#display_field']);
-//      unset($image_row['#file_upload_title']);
-//      unset($image_row['#file_upload_description']);
-//      unset($image_row['#after_build']);
-//
+        // unset($image_row['#file_upload_delta']);
+        // unset($image_row['#theme']);
+        // unset($image_row['#theme_wrappers']);
+        // unset($image_row['#process']);
+        // unset($image_row['#title']);
+        // unset($image_row['#description']);
+        // unset($image_row['#field_name']);
+        // unset($image_row['#language']);
+        // unset($image_row['#display_field']);
+        // unset($image_row['#file_upload_title']);
+        // unset($image_row['#file_upload_description']);
+        // unset($image_row['#after_build']);
         foreach ($category_images as $delta => $image) {
           $form['field_p2p_images'][$lang_code][$delta] = $image_row;
           $form['field_p2p_images'][$lang_code][$delta]['#default_value'] = $image;
@@ -196,8 +195,6 @@ function springboard_p2p_form_p2p_campaign_node_form_alter(&$form, &$form_state,
         // Put the last row back on.
         $last_delta = count($form['field_p2p_images'][$lang_code]);
         $form['field_p2p_images'][$lang_code][$last_delta] = $upload_row;
-//      $form['field_p2p_images'][$lang_code][$last_delta]['#weight'] = $last_delta;
-
       }
     }
   }
@@ -219,10 +216,25 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
   }
 }
 
+/**
+ * Determine if the form we're altering is a node create (and not edit) form.
+ *
+ * @param array $form
+ *   The forms api array.
+ *
+ * @return bool
+ *   TRUE if this is node create, not node edit, and not a preview.
+ */
 function springboard_p2p_form_is_node_create($form) {
   return empty($form['nid']['#value']) && (!isset($form['#node']->op));
 }
 
+/**
+ * Get all campaigns that are set to require approval.
+ *
+ * @return array
+ *   The loaded campaign entities, keyed by nid.
+ */
 function springboard_p2p_get_private_campaigns() {
   $campaign_items = array();
 
@@ -243,13 +255,21 @@ function springboard_p2p_get_private_campaigns() {
   return $campaign_items;
 }
 
+/**
+ * Get the personal campaigns related to a given campaign.
+ *
+ * @param int $nid
+ *   The nid of the p2p Campaign.
+ *
+ * @return array
+ *   The loaded personal campaign entities, keyed by nid.
+ */
 function springboard_p2p_get_personal_campaigns($nid) {
   $campaign_items = array();
 
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'node')
     ->entityCondition('bundle', 'p2p_personal_campaign')
-//    ->propertyCondition('status', 1)
     ->fieldCondition('field_p2p_campaign', 'target_id', $nid, '=')
     ->propertyOrderBy('created', 'DESC');
 
@@ -263,6 +283,12 @@ function springboard_p2p_get_personal_campaigns($nid) {
   return $campaign_items;
 }
 
+/**
+ * Checks if any content types have been enabled for p2p campaign goals.
+ *
+ * @return bool
+ *   TRUE if no content types are enabled for p2p goals.
+ */
 function springboard_p2p_no_content_types_enabled() {
 
   $fundraiser = variable_get('springboard_p2p_fundraiser_items', array());
@@ -271,28 +297,76 @@ function springboard_p2p_no_content_types_enabled() {
   return (empty($fundraiser) && empty($webform_user));
 }
 
+/**
+ * Get the enabled goal type from a campaign.
+ *
+ * @param object $campaign
+ *   The campaign node.
+ *
+ * @return string
+ *   'submissions' or 'amount'
+ */
 function springboard_p2p_get_goal_type_from_campaign($campaign) {
   $goal = springboard_p2p_get_goal_from_campaign($campaign);
   return $goal['goal_type'];
 }
 
+/**
+ * Get the goal value for the enabled goal from a campaign.
+ *
+ * @param object $campaign
+ *   The campaign node.
+ *
+ * @return int
+ *   Dollar amount or number of submissions.
+ */
 function springboard_p2p_get_goal_value_from_campaign($campaign) {
   $goal = springboard_p2p_get_goal_from_campaign($campaign);
   return $goal['goal_value'];
 }
 
+/**
+ * Get the enabled goal data from a campaign.
+ *
+ * @param object $campaign
+ *   The campaign node.
+ *
+ * @return array
+ *   An array with 'goal_type' and 'goal_value" keys, and optionally other
+ *   goal data.
+ *
+ * @todo This only handles a single enabled goal.
+ */
 function springboard_p2p_get_goal_from_campaign($campaign) {
   $goal_set_id = $campaign->field_p2p_campaign_goals[$campaign->language][0]['goal_set_id'];
   $goals_field = new SpringboardP2pCampaignGoalsField();
   $goals = $goals_field->load($goal_set_id);
-  // @todo Only handles one goal type.
   foreach ($goals as $goal) {
     if ($goal['enabled']) {
       return $goal;
     }
   }
+
+  // Somewhat safe default.
+  return array(
+    'goal_type' => 'submissions',
+    'goal_value' => 0,
+  );
 }
 
+/**
+ * Formats the goal progress according to its goal type.
+ *
+ * @param array $progress
+ *   An array with 'submissions' and 'amount' keys and their goal values.
+ * @param string $type
+ *   The goal type.
+ * @param bool $include_units
+ *   Whether to include a prefix/suffix with the goal units.
+ *
+ * @return string
+ *   The formatted value.
+ */
 function springboard_p2p_format_progress($progress, $type, $include_units = TRUE) {
   $output = '';
 
@@ -315,6 +389,17 @@ function springboard_p2p_format_progress($progress, $type, $include_units = TRUE
   return $output;
 }
 
+/**
+ * Formats the percent complete of a goal.
+ *
+ * @param int $progress
+ *   The number of submissions/amount of the current progress.
+ * @param int $goal
+ *   The goal value.
+ *
+ * @return string
+ *   The formatted integer value with a percent sign.
+ */
 function springboard_p2p_format_percent($progress, $goal) {
   return (int) ($progress / $goal * 100) . ' %';
 }

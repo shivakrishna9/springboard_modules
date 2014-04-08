@@ -1,10 +1,24 @@
 <?php
+/**
+ * @file
+ * Views field handler to calculate and display campaing progress.
+ */
+
 
 class springboard_p2p_handler_field_campaign_progress extends views_handler_field {
-  function query() {
+
+  /**
+   * Overload the query method.
+   */
+  public function query() {
   }
 
-  function render($values) {
+  /**
+   * Render the field value.
+   *
+   * Sums the progress across all personal campaigns in the campaign.
+   */
+  public function render($values) {
     $output = '';
     $progress_sums = array(
       'submissions' => 0,

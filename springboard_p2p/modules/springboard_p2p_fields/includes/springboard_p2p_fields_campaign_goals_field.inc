@@ -1,7 +1,14 @@
 <?php
+/**
+ * @file
+ * Field implementation code for the campaign goals field.
+ */
 
 class SpringboardP2pCampaignGoalsField {
 
+  /**
+   * Validation.
+   */
   public function validate($field, $langcode, $items, &$errors) {
     foreach ($items as $delta => $item) {
       $enabled_types = 0;
@@ -39,6 +46,9 @@ class SpringboardP2pCampaignGoalsField {
     }
   }
 
+  /**
+   * Item is empty.
+   */
   public function isEmpty($item) {
     foreach ($item['campaign_goals']['form_types'] as $form_type => $content_types) {
       foreach ($content_types as $content_type) {
@@ -51,6 +61,9 @@ class SpringboardP2pCampaignGoalsField {
     return TRUE;
   }
 
+  /**
+   * Presave of the field.
+   */
   public function presave(&$items) {
     $rows = array();
     foreach ($items as $delta => $item) {
@@ -136,6 +149,9 @@ class SpringboardP2pCampaignGoalsField {
     return FALSE;
   }
 
+  /**
+   * The widget form definition.
+   */
   public function widgetForm($instance, $items, $delta, $element) {
     $goal_set_id = isset($items[$delta]['goal_set_id']) ? $items[$delta]['goal_set_id'] : NULL;
     if (!is_null($goal_set_id)) {
@@ -271,6 +287,9 @@ class SpringboardP2pCampaignGoalsField {
     return $element;
   }
 
+  /**
+   * Widget error.
+   */
   public function widgetError($element, $error) {
     switch ($error['error']) {
       case 'springboard_p2p_fields_campaign_goals_no_nid':
@@ -281,6 +300,9 @@ class SpringboardP2pCampaignGoalsField {
     }
   }
 
+  /**
+   * Formatter view.
+   */
   public function formatterView($entity_type, $entity, $items, $display) {
     $element = array();
 

@@ -1,15 +1,28 @@
 <?php
+/**
+ * @file
+ * Filed api implementation code for the Personal Campaign progress field.
+ */
 
 class SpringboardP2pPersonalCampaignProgressField {
 
+  /**
+   * Validate.
+   */
   public function validate($field, $langcode, $items, &$errors) {
 
   }
 
+  /**
+   * Field is empty.
+   */
   public function isEmpty($item) {
     return FALSE;
   }
 
+  /**
+   * Presave.
+   */
   public function presave(&$items) {
     foreach ($items as $delta => $item) {
       $record = array(
@@ -22,21 +35,9 @@ class SpringboardP2pPersonalCampaignProgressField {
 
   }
 
-  // Probably not needed.
-  public function delete(&$items) {
-
-  }
-
-  // Not needed.
-  public function save($goal_set_id, $rows) {
-
-  }
-
-  // Not needed.
-  public function load($goal_set_id) {
-
-  }
-
+  /**
+   * Widget form.
+   */
   public function widgetForm($instance, $items, $delta, $element) {
     $widget = $element;
 
@@ -74,10 +75,16 @@ class SpringboardP2pPersonalCampaignProgressField {
     return $element;
   }
 
+  /**
+   * Widget error.
+   */
   public function widgetError($element, $error) {
 
   }
 
+  /**
+   * Formatter view.
+   */
   public function formatterView($entity_type, $entity, $items, $display) {
     $element = array();
     $enabled_goal = array('goal_type' => 'submissions');

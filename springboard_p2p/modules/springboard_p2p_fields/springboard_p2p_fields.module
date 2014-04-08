@@ -286,4 +286,3 @@ function springboard_p2p_fields_field_formatter_view($entity_type, $entity, $fie
   return SpringboardP2pFieldsFactory::getField($field['type'])
     ->formatterView($entity_type, $entity, $items, $display);
 }
-
