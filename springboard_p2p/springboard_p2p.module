@@ -14,6 +14,9 @@ function springboard_p2p_permission() {
     'administer springboard p2p' => array(
       'title' => t('Administer springboard peer to peer.'),
     ),
+    'register for springboard p2p' => array(
+      'title' => t('Register for springboard peer to peer.'),
+    ),
   );
 }
 
@@ -56,6 +59,16 @@ function springboard_p2p_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('springboard_p2p_development_settings'),
     'file' => 'springboard_p2p.development.inc',
+    'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
+  );
+
+  $items['springboard_p2p/register'] = array(
+    'title' => 'Register',
+    'type' => MENU_CALLBACK,
+    'access arguments' => array('register for springboard p2p'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_p2p_register_page'),
+    'file' => 'springboard_p2p.pages.inc',
     'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
   );
 
