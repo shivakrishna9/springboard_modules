@@ -629,8 +629,8 @@ class SalesforceQueueProcessor {
     // of two overlapping writes to Salesforce.
     $this->salesforceSync->sendBatchPrepare($batch);
 
-    // Invokes hook_salesforce_queue_finalize_batch(). Last chance.
-    module_invoke_all('salesforce_queue_finalize_batch', $batch, $this->queue, $this);
+    // Invokes hook_salesforce_queue_finalize_batch_alter(). Last chance.
+    drupal_alter('salesforce_queue_finalize_batch', $batch, $this->queue, $this);
 
     // Make sure we have enough time to send these items to Salesforce before
     // our lease expires. We do not want to risk the chance of items getting
