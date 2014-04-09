@@ -2126,7 +2126,7 @@ function _fundraiser_commerce_cardonfile_exp_date_mismatch($fields) {
  * Implements hook_commerce_authnet_cim_request_alter
  */
 function fundraiser_commerce_commerce_authnet_cim_request_alter($api_request_element) {
-  if (!empty($api_request_element->extraOptions)) {
+  if (!empty($api_request_element->transaction->profileTransAuthCapture->order->invoiceNumber)) {
     $did = (string) $api_request_element->transaction->profileTransAuthCapture->order->invoiceNumber;
     $donation = fundraiser_donation_get_donation($did);
     $config = $donation->gateway['gateway_details']['settings'];

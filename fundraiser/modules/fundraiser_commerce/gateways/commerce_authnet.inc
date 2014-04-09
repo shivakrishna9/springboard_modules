@@ -366,27 +366,29 @@ function commerce_authnet_form_rules_ui_edit_element_alter(&$form, &$form_state)
     $id = isset($form['parameter']['payment_method']['settings']['payment_method']['method_id']['#value']);
     if ($id == 'authnet_aim') {
       $rule = rules_config_load('commerce_payment_authnet_aim');
-      //if someone were to
-      foreach ($rule->actions() as $action) {
-        if($action->settings['payment_method']['method_id'] == 'authnet_aim') {
-         $settings[] = $action->settings;
+      $actions = $rule->actions();
+      if (!empty($actions)) {
+        foreach ($actions as $action) {
+          if($action->settings['payment_method']['method_id'] == 'authnet_aim') {
+           $settings[] = $action->settings;
+          }
         }
-      }
-      $config = $settings[0]['payment_method']['settings'];
-      $form['parameter']['payment_method']['settings']['payment_method']['settings']['value_map'] = array(
-          '#type' => 'fieldset',
-          '#title' => t('Submission mapping'),
-          '#description' => t('If it is required that donor employer and occupation information be recorded with your payment provider, enter the form keys of the webform fields you will create, or have created for that purpose.'),
-          '#tree' => TRUE,
-      );
-      $available_fields = _commerce_authnet_extra_fields();
-      foreach ($available_fields as $field) {
-        $form['parameter']['payment_method']['settings']['payment_method']['settings']['commerce_authnet_webform_field_' . $field] = array(
-          '#title' => t('Enter webform field key to map to Authorize.net field %i', array('%i' => $field)),
-          '#type' => 'textfield',
-          '#description' => t('Example: field_name'),
-          '#default_value' => !empty($config['commerce_authnet_webform_field_' . $field]) ? $config['commerce_authnet_webform_field_' . $field] : '',
+        $config = isset($settings[0]['payment_method']['settings']) ? $settings[0]['payment_method']['settings'] : '';
+        $form['parameter']['payment_method']['settings']['payment_method']['settings']['value_map'] = array(
+            '#type' => 'fieldset',
+            '#title' => t('Submission mapping'),
+            '#description' => t('If it is required that donor employer and occupation information be recorded with your payment provider, enter the form keys of the webform fields you will create, or have created for that purpose.'),
+            '#tree' => TRUE,
         );
+        $available_fields = _commerce_authnet_extra_fields();
+        foreach ($available_fields as $field) {
+          $form['parameter']['payment_method']['settings']['payment_method']['settings']['commerce_authnet_webform_field_' . $field] = array(
+            '#title' => t('Enter webform field key to map to Authorize.net field %i', array('%i' => $field)),
+            '#type' => 'textfield',
+            '#description' => t('Example: field_name'),
+            '#default_value' => !empty($config['commerce_authnet_webform_field_' . $field]) ? $config['commerce_authnet_webform_field_' . $field] : '',
+          );
+        }
       }
     }
   }
