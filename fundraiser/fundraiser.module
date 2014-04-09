@@ -2541,14 +2541,12 @@ function _fundraiser_update_fundraiser($fundraiser) {
   if (isset($fundraiser['nid'])) {
     $fundraiser_data = _fundraiser_get_fundraiser_by_nid($fundraiser['nid']);
   }
-  dsm($fundraiser_data, 'fundraiser data');
   if (!$fundraiser_data) {
     _fundraiser_create_fundraiser($fundraiser);
   }
   else {
     $fundraiser = array_merge((array) $fundraiser_data, $fundraiser);
     // Implode donation amounds for saving.
-    dsm($fundraiser, 'fundraiser');
     $imploded_amounts = array();
     $donation_amounts = array();
     foreach ($fundraiser['donation_amounts'] as $index => $donation_amount) {
@@ -2566,7 +2564,6 @@ function _fundraiser_update_fundraiser($fundraiser) {
         }
       }
     }
-    dsm($donation_amounts, 'donation amounts');
     if (count($donation_amounts)) {
       ksort($donation_amounts);
       $imploded_amounts = array_unique($donation_amounts);
