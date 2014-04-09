@@ -363,13 +363,14 @@ function commerce_authnet_fundraiser_commerce_refund($payment_method, $refund) {
 
 function commerce_authnet_form_rules_ui_edit_element_alter(&$form, &$form_state) {
   if (isset($form['parameter']['payment_method']['settings']['payment_method']['method_id']['#value'])) {
-    $id = isset($form['parameter']['payment_method']['settings']['payment_method']['method_id']['#value']);
-    if ($id == 'authnet_aim') {
+    $id = $form['parameter']['payment_method']['settings']['payment_method']['method_id']['#value'];
+    $is_com = isset($form['parameter']['commerce_order']) ? 1 : 0;
+    if ($id == 'authnet_aim' && $is_com) {
       $rule = rules_config_load('commerce_payment_authnet_aim');
       $actions = $rule->actions();
       if (!empty($actions)) {
         foreach ($actions as $action) {
-          if($action->settings['payment_method']['method_id'] == 'authnet_aim') {
+          if($action->settings['payment_method']['method_id'] == 'authnet_aim' && $action->elementId() == arg(7)) {
            $settings[] = $action->settings;
           }
         }
