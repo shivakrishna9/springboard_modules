@@ -727,7 +727,7 @@ function fundraiser_webform_fundraiser_create_fundraiser_alter($fundraiser) {
   if (!isset($fundraiser->clone_from_original_nid)) {
     $donation_amounts = array();
     if (isset($fundraiser->donation_amounts)) {
-      $amount_sets = explode(',', $fundraiser->donation_amounts);
+      $amount_sets = explode('|||', $fundraiser->donation_amounts);
       $amount_sets = array_unique($amount_sets);
       foreach ($amount_sets as $amount_set) {
         $amount_set = explode('|', $amount_set);
@@ -749,7 +749,7 @@ function fundraiser_webform_fundraiser_update_fundraiser_alter($fundraiser) {
   // Construct an array of donation amounts.
   $donation_amounts = array();
   if (isset($fundraiser->donation_amounts)) {
-    $amount_sets = explode(',', $fundraiser->donation_amounts);
+    $amount_sets = explode('|||', $fundraiser->donation_amounts);
     $amount_sets = array_unique($amount_sets);
     foreach ($amount_sets as $amount_set) {
       $amount_set = explode('|', $amount_set);
