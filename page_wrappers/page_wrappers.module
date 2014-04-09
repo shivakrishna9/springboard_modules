@@ -955,7 +955,7 @@ function _page_wrappers_tokens($content) {
   $candidates = token_scan($content);
   foreach ($candidates as $type => $tokens) {
     foreach ($tokens as $token) {
-      $data = ($type == 'node') ? '"node" => $node' : '';
+      $data = ($type == 'node') ? '"node" => isset($node) ? $node : null' : '';
       $replacement = "<?php print token_replace('$token', array($data)) ?>";
       $content = str_replace($token, $replacement, $content);
     }
