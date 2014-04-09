@@ -182,19 +182,16 @@ function fundraiser_offline_node_update($node) {
   }
 }
 
-/**
- * Implements hook_fundraiser_field_info_alter(). Tweak offline field states on the fly.
- */
+// Implements hook_fundraiser_field_info_alter();
 function fundraiser_offline_fundraiser_field_info_alter(&$fields) {
-  // Only tweak the settings if we are displaying from an offline form.
-  // Field information is cached on load but vanishes after page load.
-  // So this tweak is Only in effect for so long as the page is generated and processed.
-  if (_fundraiser_offline_is_offline()) {
-    drupal_set_message(t('This donation form is in offline mode.'));
-    $fields = array('mail', 'card_cvv');
-    _fundraiser_offline_form_not_validate($form, $fields);
+  if (arg(0) == 'node' && is_numeric(arg(1))) {
+    $node = node_load(arg(1));
+    if (isset($node->fundraiser_offline) && $node->fundraiser_offline) {
+      if (isset($fields['payment_information']['payment_fields']['#validate_callback'])) {
+        unset($fields['payment_information']['payment_fields']['#validate_callback']);
+      }
+    }
   }
-  return $fields;
 }
 
 /**
