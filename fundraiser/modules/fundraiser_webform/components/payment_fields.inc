@@ -70,8 +70,11 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
           'visible' => array(
             'input[type="radio"].fundraiser-payment-methods' => array('value' => $payment_method),
           ),
+          'optional' => array(
+            'input[type="radio"].fundraiser-payment-methods' => array('!value' => $payment_method),
+          ),
           'required' => array(
-            'input[type="radio"].fundraiser-payment-methods' => array('value' => $payment_method),
+            'input[type="hidden"].fundraiser-payment-methods' => array('value' => $payment_method),
           ),
         ),
       );
