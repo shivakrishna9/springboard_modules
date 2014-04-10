@@ -195,6 +195,23 @@ function fundraiser_offline_fundraiser_field_info_alter(&$fields) {
 }
 
 /**
+ * Implements hook_fundraiser_gateway_info_alter().
+ */
+function fundraiser_offline_fundraiser_gateway_info_alter(&$gateways) {
+  if (arg(0) == 'node' && is_numeric(arg(1))) {
+    $node = node_load(arg(1));
+    // If the current form is in offline mode we want to replace any validation
+    // callbacks associated with the payment gateways.
+    if (isset($node->fundraiser_offline) && $node->fundraiser_offline) {
+      $gateway_ids = array_keys($gateways);
+      foreach ($gateway_ids as $id) {
+        $gateways[$id]['validate callback']  = '_fundraiser_offline_fundraiser_commerce_validate';
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_hook_fundraiser_donation_form_js_validation_alter().
  *
  * Disable client side validation on donation forms in offline mode.
@@ -507,4 +524,47 @@ function _fundraiser_offline_get_by_title($string) {
     array(':string' => '%' . $string . '%')
   );
   return $results->fetchAll();
+}
+
+/**
+ * Validate the submitted values with the commerce validate function
+ */
+function _fundraiser_offline_fundraiser_commerce_validate($submission_fields, $payment_fields) {
+  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+  $form_parents = array_merge($payment_fields['#parents'], array('credit'));
+  _fundraiser_offline_credit_card_validate($submission_fields, $form_parents);
+  return $submission_fields;
+}
+
+/**
+ * _fundraiser_commerce_credit_card_validate() with CVV validation removed.
+ */
+function _fundraiser_offline_credit_card_validate($submission_fields, $form_parents) {
+  $prefix = implode('][', $form_parents) . '][';
+  // Include the file with the validation info.
+  module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+  $number = $submission_fields['payment_fields']['credit']['card_number'];
+  if (empty($number)) {
+    form_set_error($prefix . 'card_number', t('The credit card number is required.'));
+  }
+  else {
+    $valid = commerce_payment_validate_credit_card_number($number);
+    if ($valid !== TRUE || !ctype_digit($number) || drupal_strlen($number) < 10) {
+      form_set_error($prefix . 'card_number', t('You have entered an invalid credit card number.'));
+    }
+  }
+
+  $cc_expiration_month = $submission_fields['payment_fields']['credit']['card_expiration_month'];
+  $cc_expiration_year = $submission_fields['payment_fields']['credit']['card_expiration_year'];
+  if (empty($cc_expiration_month) || empty($cc_expiration_year)) {
+    form_set_error($prefix . 'expiration_date][card_expiration_month', t('The credit card expiration date is required.'));
+    form_set_error($prefix . 'expiration_date][card_expiration_year');
+  }
+  else {
+    $valid = commerce_payment_validate_credit_card_exp_date($cc_expiration_month, $cc_expiration_year);
+    if ($valid !== TRUE && !empty($cc_expiration_month) && !empty($cc_expiration_year)) {
+      form_set_error($prefix . 'expiration_date][card_expiration_month', t('The credit card you entered has expired.'));
+      form_set_error($prefix . 'expiration_date][card_expiration_year');
+    }
+  }
 }
