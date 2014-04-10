@@ -2172,21 +2172,26 @@ function _fundraiser_commerce_cardonfile_exp_date_mismatch($fields) {
  * Implements hook_commerce_authnet_cim_request_alter
  */
 function fundraiser_commerce_commerce_authnet_cim_request_alter($api_request_element) {
+
   if (!empty($api_request_element->transaction->profileTransAuthCapture->order->invoiceNumber)) {
     $did = (string) $api_request_element->transaction->profileTransAuthCapture->order->invoiceNumber;
     $donation = fundraiser_donation_get_donation($did);
     $config = $donation->gateway['gateway_details']['settings'];
     $extra = (string) $api_request_element->extraOptions;
     $extra = substr($extra, 9, -3);
-    if (isset($donation->submission_data[$config['commerce_authnet_webform_field_x_employer']])) {
-      $extra .= "&commerce_authnet_webform_field_x_employer=" . $donation->submission_data[$config['commerce_authnet_webform_field_x_employer']];
+    $fields = _commerce_authnet_extra_fields();
+    unset($fields[0]);
+    $i = 1;
+    foreach ($fields as $field) {
+      if (isset($donation->submission_data[$config['commerce_authnet_webform_field_' . $i]])) {
+        $name = $fields[$config['commerce_authnet_authorize_field_' . $i]];
+        $value =  $donation->submission_data[$config['commerce_authnet_webform_field_' . $i]];
+        $extra .= '&' . $name . '=' . trim(htmlspecialchars($value));
+      }
+      $i++;
     }
-    if (isset($donation->submission_data[$config['commerce_authnet_webform_field_x_occupation']])) {
-      $extra .= "&commerce_authnet_webform_field_x_occupation=" . $donation->submission_data[$config['commerce_authnet_webform_field_x_occupation']];
-    }
-    $api_request_element->extraOptions = '<![CDATA[' .  $extra . ']]>';
+    $api_request_element->extraOptions = '<![CDATA[' .  $extra ;
    }
-
   // Change the description to something unique so we get a new profile each time
   if (!empty($api_request_element->profile->description)) {
     $api_request_element->profile->description = substr(t('CIM request taking place at @date', array('@date' => format_date(time()))), 0, 255);

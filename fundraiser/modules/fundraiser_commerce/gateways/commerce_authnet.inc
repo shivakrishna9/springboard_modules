@@ -189,7 +189,6 @@ function commerce_authnet_fundraiser_commerce_update($donation, $card_data = NUL
       $action = 'new';
     }
   }
-
   if ($action == 'update') {
     $card_data->card_number = $cardonfile_fields['card_number'];
     $card_data->card_exp_month = $cardonfile_fields['card_exp_month'];
@@ -378,17 +377,27 @@ function commerce_authnet_form_rules_ui_edit_element_alter(&$form, &$form_state)
         $form['parameter']['payment_method']['settings']['payment_method']['settings']['value_map'] = array(
             '#type' => 'fieldset',
             '#title' => t('Submission mapping'),
-            '#description' => t('If it is required that donor employer and occupation information be recorded with your payment provider, enter the form keys of the webform fields you will create, or have created for that purpose.'),
+            '#description' => t('Enter the webform field keys to map to these authorize.net fields.'),
             '#tree' => TRUE,
         );
         $available_fields = _commerce_authnet_extra_fields();
+        unset($available_fields[0]);
+        $i = 1;
         foreach ($available_fields as $field) {
-          $form['parameter']['payment_method']['settings']['payment_method']['settings']['commerce_authnet_webform_field_' . $field] = array(
-            '#title' => t('Enter webform field key to map to Authorize.net field %i', array('%i' => $field)),
+          $form['parameter']['payment_method']['settings']['payment_method']['settings']['commerce_authnet_webform_field_' . $i] = array(
+            '#title' => t('Enter webform field #%i', array('%i' => $i)),
             '#type' => 'textfield',
             '#description' => t('Example: field_name'),
-            '#default_value' => !empty($config['commerce_authnet_webform_field_' . $field]) ? $config['commerce_authnet_webform_field_' . $field] : '',
+            '#default_value' => !empty($config['commerce_authnet_webform_field_' . $i]) ? $config['commerce_authnet_webform_field_' . $i] : '',
           );
+
+          $form['parameter']['payment_method']['settings']['payment_method']['settings']['commerce_authnet_authorize_field_' . $i] = array(
+            '#title' => t('Authorize field #%i', array('%i' => $i)),
+            '#type' => 'select',
+            '#options' => _commerce_authnet_extra_fields(),
+            '#default_value' => !empty($config['commerce_authnet_authorize_field_' . $i]) ? $config['commerce_authnet_authorize_field_' . $i] : '',
+          );
+          $i++;
         }
       }
     }
@@ -398,23 +407,33 @@ function commerce_authnet_form_rules_ui_edit_element_alter(&$form, &$form_state)
 function fundraiser_commerce_commerce_authnet_aim_request_alter(&$nvp) {
   $donation = fundraiser_donation_get_donation($nvp['x_invoice_num']);
   $config = $donation->gateway['gateway_details']['settings'];
-  if (isset($donation->submission_data[$config['commerce_authnet_webform_field_x_employer']])) {
-    $nvp += array(
-      'x_employer' => $donation->submission_data[$config['commerce_authnet_webform_field_x_employer']],
-    );
-  }
-
-  if (isset($donation->submission_data[$config['commerce_authnet_webform_field_x_occupation']])) {
-     $nvp += array(
-      'x_occupation' => $donation->submission_data[$config['commerce_authnet_webform_field_x_occupation']],
-    );
+  $fields = _commerce_authnet_extra_fields();
+  unset($fields[0]);
+  $i = 1;
+  foreach ($fields as $field) {
+    if (isset($donation->submission_data[$config['commerce_authnet_webform_field_' . $i]])) {
+      $nvp += array(
+        $fields[$config['commerce_authnet_authorize_field_' . $i]] => $donation->submission_data[$config['commerce_authnet_webform_field_' . $i]],
+      );
+    }
+    $i++;
   }
 }
 
 function _commerce_authnet_extra_fields() {
   $extra_fields = array(
-    'x_employer',
-    'x_occupation',
+   '', // Nothing.
+    // Normal overrides.
+    //'x_company',            // Up to 50 characters (no symbols)
+    'x_ship_to_company',    // Up to 50 characters (no symbols)
+    // Shipping fields, not recommended if your site needs to ship anything.
+    'x_ship_to_first_name', // Up to 50 characters (no symbols)
+    'x_ship_to_last_name',  // Up to 50 characters (no symbols)
+    'x_ship_to_address',    // Up to 60 characters (no symbols)
+    'x_ship_to_city',       // Up to 40 characters (no symbols)
+    'x_ship_to_state',      // Up to 40 characters (no symbols) or a valid two-character state code
+    'x_ship_to_zip',        // Up to 20 characters (no symbols)
+    'x_ship_to_country',    // Up to 60 characters (no symbols)
   );
   return $extra_fields;
 }
