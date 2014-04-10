@@ -24,15 +24,16 @@ function webform_form_salesforce_genmap_map_form_alter(&$form, &$form_state) {
       if (!empty($sobject_type)) {
         $sfapi = salesforce_get_api();
         $options = array();
+        $options[''] = '-- Please Select --';
         if ($sfapi->isAuthorized()) {
           $object_info = $sfapi->objectDescribe($sobject_type);
           foreach ($object_info['fields'] as $field) {
             if ($field['type'] == 'reference' && $field['referenceTo'][0] == 'Contact') {
               $options[$field['name']] = $field['label'];
             }
-          }
+          } 
         }
-        if (!empty($options)) {
+        if (!empty($options) && count($options) > 1) {
           $form['webform_user'] = array(
             '#type' => 'fieldset',
             '#title' => 'Webform User Configuration',
@@ -46,6 +47,7 @@ function webform_form_salesforce_genmap_map_form_alter(&$form, &$form_state) {
             '#type' => 'select',
             '#title' => t('Contact Field'),
             '#options' => $options,
+            '#required' => TRUE,
             '#default_value' => $default,
             '#description' => t('The user that is created during the form submission will be exported to Salesforce as a contact. Choose the field on the %type object that will relate the submission to the contact.', array('%type' => $sobject_type)),
           );
