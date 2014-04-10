@@ -72,6 +72,17 @@ function springboard_p2p_menu() {
     'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
   );
 
+  $items['springboard_p2p/dashboard/%user'] = array(
+    'title' => 'My dashboard',
+    'page callback' => 'springboard_p2p_personal_dashboard',
+    'page arguments' => array(2),
+    'access callback' => 'springboard_p2p_personal_dashboard_view_access',
+    'access arguments' => array(1),
+    'type' => MENU_CALLBACK,
+    'file' => 'springboard_p2p.pages.inc',
+    'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
+  );
+
   return $items;
 }
 
@@ -415,4 +426,15 @@ function springboard_p2p_format_progress($progress, $type, $include_units = TRUE
  */
 function springboard_p2p_format_percent($progress, $goal) {
   return (int) ($progress / $goal * 100) . ' %';
+}
+
+/**
+ * Access handler for personal campaign pages.
+ *
+ * @todo Implement view own p2p personal dashboard access control.
+ *
+ * @see user_view_access($account)
+ */
+function springboard_p2p_personal_dashboard_view_access($user) {
+  return TRUE;
 }
