@@ -412,6 +412,7 @@ function fundraiser_commerce_commerce_authnet_aim_request_alter(&$nvp) {
   $i = 1;
   foreach ($fields as $field) {
     if (isset($donation->submission_data[$config['commerce_authnet_webform_field_' . $i]])) {
+      unset($nvp[$fields[$config['commerce_authnet_authorize_field_' . $i]]]);
       $nvp += array(
         $fields[$config['commerce_authnet_authorize_field_' . $i]] => $donation->submission_data[$config['commerce_authnet_webform_field_' . $i]],
       );
@@ -424,7 +425,7 @@ function _commerce_authnet_extra_fields() {
   $extra_fields = array(
    '', // Nothing.
     // Normal overrides.
-    //'x_company',            // Up to 50 characters (no symbols)
+    'x_company',            // Up to 50 characters (no symbols)
     'x_ship_to_company',    // Up to 50 characters (no symbols)
     // Shipping fields, not recommended if your site needs to ship anything.
     'x_ship_to_first_name', // Up to 50 characters (no symbols)
