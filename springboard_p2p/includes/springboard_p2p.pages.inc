@@ -12,15 +12,10 @@
 function springboard_p2p_register_page($form, &$form_state) {
   $form = array();
 
-  if (isset($_GET['campaign']) && is_numeric($_GET['campaign'])) {
-    $campaign = node_load($_GET['campaign']);
-
+  $campaign_id = springboard_p2p_get_campaign_id_from_request();
+  if (!empty($campaign_id)) {
+    $campaign = node_load($campaign_id);
     if ($campaign->type == 'p2p_campaign' && isset($campaign->field_p2p_form_header) && !empty($campaign->field_p2p_form_header[$campaign->language])) {
-
-      $form['p2p_campaign_nid'] = array(
-        '#type' => 'value',
-        '#value' => $campaign->nid,
-      );
 
       $display = array(
         'settings' => array(
@@ -52,20 +47,6 @@ function springboard_p2p_register_page($form, &$form_state) {
 }
 
 /**
- * Validation handler for registration page.
- */
-function springboard_p2p_register_page_validate(&$form, &$form_state) {
-
-}
-
-/**
- * Sumibt handler for registration page.
- */
-function springboard_p2p_register_page_submit(&$form, &$form_state) {
-
-}
-
-/**
  * Forms api array for registering users.
  *
  * Uses springboard_p2p_registration_fields to determine weights and
@@ -76,6 +57,8 @@ function springboard_p2p_user_register_form($form, &$form_state) {
     '#type' => 'fieldset',
     '#title' => 'Create new account',
   );
+
+  springboard_p2p_campaign_id_form_element($form);
 
   // This validate handler fills in the name value with the email address,
   // and so needs to happen before the user module's validation.
@@ -185,9 +168,31 @@ function springboard_p2p_user_register_validate($form, &$form_state) {
 }
 
 /**
- * Submig handler. Changes the redirect after the user register submit handler.
+ * Submit handler.
+ *
+ * Saves the campaign approval status and changes the redirect
+ * after the user register submit handler.
  */
 function springboard_p2p_user_register_submit($form, &$form_state) {
+  $campaign_id = $form_state['values']['springboard_p2p_campaign_nid'];
+  if (!empty($campaign_id)) {
+    $campaign = node_load($campaign_id);
+    if ($campaign->type == 'p2p_campaign') {
+      $private = $campaign->field_p2p_campaigns_approval[$campaign->language][0]['value'];
+
+      $approval = new SpringbaordP2pPrivateCampaignApproval($form_state['uid'], $campaign_id);
+
+      if ($private) {
+        $approval->request();
+        drupal_set_message('You have been added to the approval queue for ' . $campaign->title);
+      }
+      else {
+        $approval->approve();
+        drupal_set_message('You can now create a personal campaign in ' . $campaign->title);
+      }
+    }
+  }
+
   $form_state['redirect'] = 'springboard_p2p/dashboard/' . $form_state['uid'];
 }
 
@@ -199,6 +204,8 @@ function springboard_p2p_social_login_form($form, &$form_state) {
     '#type' => 'fieldset',
     '#title' => 'Social login',
   );
+
+  springboard_p2p_campaign_id_form_element($form);
 
   $form['facebook'] = array(
     '#markup' => '<div style="height: 100px; width: 180px; margin: 30px 0 0 0; text-align: center; font-size: 100px; color: blue;">f</div>',
@@ -233,6 +240,8 @@ function springboard_p2p_existing_user_login_form($form, &$form_state) {
     '#type' => 'fieldset',
     '#title' => 'Existing user login',
   );
+
+  springboard_p2p_campaign_id_form_element($form);
 
   // Display login form:
   $form['name'] = array(
@@ -310,5 +319,32 @@ function springboard_p2p_personal_dashboard($user) {
     'comingsoon' => array(
       '#markup' => '<h2>Personal dashboard for ' . $user->name . ' coming soon</h2>',
     ),
+  );
+}
+
+/**
+ * Gets a campaign ID from the URL.
+ *
+ * @return int|null
+ *   The campaign ID, or NULL if one can't be found.
+ */
+function springboard_p2p_get_campaign_id_from_request() {
+  if (isset($_GET['campaign']) && is_numeric($_GET['campaign'])) {
+    return $_GET['campaign'];
+  }
+
+  return NULL;
+}
+
+/**
+ * Add the campaign ID value form element to a form.
+ *
+ * @param array $form
+ *   The form array to insert the element into.
+ */
+function springboard_p2p_campaign_id_form_element(&$form) {
+  $form['springboard_p2p_campaign_nid'] = array(
+    '#type' => 'value',
+    '#value' => springboard_p2p_get_campaign_id_from_request(),
   );
 }
