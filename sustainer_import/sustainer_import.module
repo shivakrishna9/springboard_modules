@@ -9,7 +9,7 @@ require_once('includes/sustainer_import.db.inc');
 /**
  * Implements hook_permission().
  */
-function sustainer_import_hook_permission() {
+function sustainer_import_permission() {
   $permissions['administer sustainer import'] = array(
     'title' => t('Administer Sustainer Import'),
     'description' => t('Configure sustainer import module and upload records to the import queue.'),
@@ -21,7 +21,7 @@ function sustainer_import_hook_permission() {
     'restrict access' => TRUE,
   );
 
-  return $permissions();
+  return $permissions;
 }
 
 /**
