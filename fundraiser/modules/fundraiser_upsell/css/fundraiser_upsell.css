@@ -13,6 +13,33 @@
   padding: 0;
 }
 
+#modalContent .modal-header {
+  background: transparent;
+  border: none;
+  color: #999;
+  padding: 0;
+  position: absolute;
+  top: 40%;
+  text-align: center;
+  width: 100%;
+}
+
+#modalContent .modal-header .modal-title {
+  color: #333;
+  font-family: Arial;
+}
+
+#modalContent #modal-throbber {
+  margin: 0 0 0 -20px;
+  position: absolute;
+  top: 50%;
+  width: 100%;
+}
+
+#modalContent #modal-throbber img {
+  margin-top: 0;
+}
+
 #ctools-modal h2, #ctools-modal h3 {
   margin: 0;
 }
