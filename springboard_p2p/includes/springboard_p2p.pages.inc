@@ -91,8 +91,13 @@ function springboard_p2p_user_register_form($form, &$form_state) {
 
   foreach (field_info_instances('user', 'user') as $field_name => $instance) {
     if (isset($fields_to_display[$field_name]['enabled'])) {
-      // @todo This requiredness isn't working.
-      // $form[$field_name]['#required'] = TRUE;
+
+      // Use the required settings from the p2p configuration.
+      // But if the field is required on the user entity leave it alone.
+      if (isset($fields_to_display[$field_name]['required']) && $fields_to_display[$field_name]['required']) {
+        springboard_p2p_make_registration_field_required($form, $field_name);
+      }
+
       $form[$field_name]['#weight'] = $fields_to_display[$field_name]['weight'];
     }
     else {
@@ -144,27 +149,10 @@ function springboard_p2p_user_register_form($form, &$form_state) {
  * Sets the name value so the username will be the email address.
  */
 function springboard_p2p_user_register_validate($form, &$form_state) {
-  $fields = springboard_p2p_get_enabled_registration_fields();
-
-  // Fill in username.
+  // Fill in the username with the email address.
+  // @todo See how webform user handles pluses and other characters that are
+  // okay in email addresses but not valid in usernames.
   $form_state['values']['name'] = $form_state['values']['mail'];
-
-  foreach ($fields as $key => $field) {
-    // Need to skip the mail field.
-    if ($key != 'mail') {
-      $lang_code = $form[$key]['#language'];
-      if (empty($form_state['values'][$key][$lang_code][0]['value'])) {
-        if (isset($form[$key][$lang_code][0]['#title'])) {
-          $title = $form[$key][$lang_code][0]['#title'];
-        }
-        else {
-          $title = $form[$key][$lang_code]['#title'];
-        }
-        form_set_error($key, $title . ' is required.');
-      }
-
-    }
-  }
 }
 
 /**
@@ -347,4 +335,27 @@ function springboard_p2p_campaign_id_form_element(&$form) {
     '#type' => 'value',
     '#value' => springboard_p2p_get_campaign_id_from_request(),
   );
+}
+
+/**
+ * Make a registration field on the p2p register page required.
+ *
+ * The registration fields are nested and weird, so I try to do this in a very
+ * general way to handle custom user profile fields.
+ *
+ * @param array $form
+ *   The form array for the p2p register page.
+ * @param string $field_name
+ *   The name of the field to make required.
+ */
+function springboard_p2p_make_registration_field_required(&$form, $field_name) {
+  $field_language = $form[$field_name]['#language'];
+  $form[$field_name][$field_language]['#required'] = TRUE;
+  $keys = element_children($form[$field_name][$field_language]);
+  foreach ($keys as $key) {
+    $form[$field_name][$field_language][$key]['#required'] = TRUE;
+    if (isset($form[$field_name][$field_language][$key]['value'])) {
+      $form[$field_name][$field_language][$key]['value']['#required'] = TRUE;
+    }
+  }
 }

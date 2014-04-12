@@ -177,15 +177,26 @@ function springboard_p2p_admin_settings() {
     }
 
     if (springboard_p2p_is_locked_registration_field($key)) {
-      $default_enabled = 1;
-      $disabled = TRUE;
+      $enabled_default_value = 1;
+      $enabled_disabled = TRUE;
     }
     else {
-      $default_enabled = isset($defaults[$key]['enabled']) ? $defaults[$key]['enabled'] : 0;
-      $disabled = FALSE;
+      $enabled_default_value = isset($defaults[$key]['enabled']) ? $defaults[$key]['enabled'] : 0;
+      $enabled_disabled = FALSE;
     }
 
-    $default_weight = isset($defaults[$key]['weight']) ? $defaults[$key]['weight'] : 0;
+    $weight_default_value = isset($defaults[$key]['weight']) ? $defaults[$key]['weight'] : 0;
+
+    if (springboard_p2p_registration_field_is_required($field)) {
+      $enabled_default_value = 1;
+      $enabled_disabled = TRUE;
+      $required_default_value = 1;
+      $required_disabled = TRUE;
+    }
+    else {
+      $required_default_value = isset($defaults[$key]['required']) ? $defaults[$key]['required'] : 0;
+      $required_disabled = FALSE;
+    }
 
     $form['registration_fields_fieldset']['registration_fields'][$key] = array(
       'name' => array(
@@ -193,15 +204,20 @@ function springboard_p2p_admin_settings() {
       ),
       'enabled' => array(
         '#type' => 'checkbox',
-        '#default_value' => $default_enabled,
-        '#disabled' => $disabled,
+        '#default_value' => $enabled_default_value,
+        '#disabled' => $enabled_disabled,
+      ),
+      'required' => array(
+        '#type' => 'checkbox',
+        '#default_value' => $required_default_value,
+        '#disabled' => $required_disabled,
       ),
       'weight' => array(
         '#type' => 'weight',
         '#title' => t('Weight'),
         '#delta' => 20,
         '#title_display' => 'invisible',
-        '#default_value' => $default_weight,
+        '#default_value' => $weight_default_value,
       ),
     );
   }
@@ -279,7 +295,13 @@ function theme_springboard_p2p_admin_settings($variables) {
   $weight_class = 'registration-field-weight';
   $table_id = 'registration-fields-table';
   $rows = springboard_p2p_registration_fields_table_rows($form, $weight_class);
-  $header = array(t('Name'), t('Show on registration form'), t('Weight'));
+  $header = array(
+    t('Name'),
+    t('Show on registration form'),
+    t('Required'),
+    t('Weight'),
+  );
+
   $form['registration_fields_fieldset']['registration_fields']['#markup'] = theme('table', array(
       'header' => $header,
       'rows' => $rows,
@@ -313,6 +335,7 @@ function springboard_p2p_registration_fields_table_rows(&$form, $weight_class) {
       'data' => array(
         drupal_render($form['registration_fields_fieldset']['registration_fields'][$id]['name']),
         drupal_render($form['registration_fields_fieldset']['registration_fields'][$id]['enabled']),
+        drupal_render($form['registration_fields_fieldset']['registration_fields'][$id]['required']),
         drupal_render($form['registration_fields_fieldset']['registration_fields'][$id]['weight']),
       ),
       'class' => array('draggable'),
@@ -388,4 +411,17 @@ function springboard_p2p_sort_keys_by_weight($items) {
   asort($sort);
 
   return array_keys($sort);
+}
+
+/**
+ * Returns whether the registration field is required by default.
+ *
+ * @param array $field
+ *   The field array.
+ *
+ * @return bool
+ *   TRUE if the field is defined as required.
+ */
+function springboard_p2p_registration_field_is_required($field) {
+  return isset($field['required']) && $field['required'];
 }
