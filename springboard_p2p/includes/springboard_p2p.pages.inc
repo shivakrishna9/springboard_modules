@@ -247,10 +247,6 @@ function springboard_p2p_social_login_form($form, &$form_state) {
 
   springboard_p2p_campaign_id_form_element($form);
 
-  $form['facebook'] = array(
-    '#markup' => '<div style="height: 100px; width: 180px; margin: 30px 0 0 0; text-align: center; font-size: 100px; color: blue;">f</div>',
-  );
-
   $form['actions'] = array(
     '#type' => 'actions',
   );
