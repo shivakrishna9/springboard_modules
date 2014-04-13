@@ -72,6 +72,18 @@ function springboard_p2p_menu() {
     'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
   );
 
+  if (module_exists('fboauth')) {
+    $items['springboard_p2p/fb'] = array(
+      'title' => 'Facebook',
+      'type' => MENU_CALLBACK,
+      'access arguments' => array('register for springboard p2p'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('springboard_p2p_fb_form'),
+      'file' => 'springboard_p2p.pages.inc',
+      'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
+    );
+  }
+
   $items['springboard_p2p/dashboard/%user'] = array(
     'title' => 'My Campaigns',
     'page callback' => 'springboard_p2p_personal_dashboard',

@@ -37,11 +37,27 @@ function springboard_p2p_register_page($form, &$form_state) {
 
   }
 
-  $form['social_login'] = drupal_get_form('springboard_p2p_social_login_form');
+  if (module_exists('fboauth')) {
+    $form['social_login'] = array(
+      '#type' => 'fieldset',
+      '#title' => 'Log in with Facebook',
+      'link' => array(
+        '#markup' => fboauth_action_display('connect', 'springboard_p2p/fb?campaign=' . $campaign_id),
+      ),
+    );
+  }
 
-  $form['new_account'] = drupal_get_form('springboard_p2p_user_register_form');
+  $form['new_account'] = array(
+    '#type' => 'fieldset',
+    '#title' => 'New account',
+    'form' => drupal_get_form('springboard_p2p_user_register_form'),
+  );
 
-  $form['login'] = drupal_get_form('springboard_p2p_existing_user_login_form');
+  $form['login'] = array(
+    '#type' => 'fieldset',
+    '#title' => 'Log in',
+    'form' => drupal_get_form('springboard_p2p_existing_user_login_form'),
+  );
 
   return $form;
 }
@@ -240,35 +256,6 @@ function springboard_p2p_user_register_submit($form, &$form_state) {
 }
 
 /**
- * Forms api array for the social login form.
- */
-function springboard_p2p_social_login_form($form, &$form_state) {
-  $form = array();
-
-  springboard_p2p_campaign_id_form_element($form);
-
-  $form['actions'] = array(
-    '#type' => 'actions',
-  );
-
-  $form['actions']['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Log in with Facebook'),
-    '#validate' => array('springboard_p2p_social_login_validate'),
-    '#submit' => array('springboard_p2p_social_login_submit'),
-  );
-
-  return $form;
-}
-
-/**
- * Submit handler for social login.
- */
-function springboard_p2p_social_login_submit($form, &$form_state) {
-  drupal_set_message('You clicked the log in with facebook button.');
-}
-
-/**
  * Forms api array for the existing user login form.
  */
 function springboard_p2p_existing_user_login_form($form, &$form_state) {
@@ -441,4 +428,17 @@ function springboard_p2p_validate_email_as_username($mail) {
     return t('The e-mail address %name is too long: it must be %max characters or less.', array('%name' => $mail, '%max' => USERNAME_MAX_LENGTH));
   }
 
+}
+
+/**
+ * Form where user goes after connecting with facebook oauth.
+ */
+function springboard_p2p_fb_form($form, &$form_state) {
+  $form = array();
+
+  $form['message'] = array(
+    '#markup' => 'Coming from fboauth. This is where you would either fill out additional fields, or go to your next destination.',
+  );
+
+  return $form;
 }
