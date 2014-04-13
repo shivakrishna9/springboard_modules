@@ -53,10 +53,7 @@ function springboard_p2p_register_page($form, &$form_state) {
  * enabledness of fields.
  */
 function springboard_p2p_user_register_form($form, &$form_state) {
-  $form = array(
-    '#type' => 'fieldset',
-    '#title' => 'Create new account',
-  );
+  $form = array();
 
   springboard_p2p_campaign_id_form_element($form);
 
@@ -115,27 +112,39 @@ function springboard_p2p_user_register_form($form, &$form_state) {
   );
 
   $form['#validate'][] = 'user_register_validate';
+
   // Add the final user registration form submit handler.
   $form['#submit'][] = 'user_register_submit';
 
-  // Change the redirect.
+  // This handler changes the redirect.
   $form['#submit'][] = 'springboard_p2p_user_register_submit';
 
-  // Mess with the default form.
   // Don't show the user the username field.
   $form['account']['name']['#access'] = FALSE;
 
-  // @todo Having some trouble with the submit function when mail is taken out
-  // of account.
-  // $form['mail'] = $form['account']['mail'];
-  // $form['mail']['#required'] = FALSE;
-  // $form['mail']['#weight'] = $fields_to_display['mail']['weight'];
-  // unset($form['account']['mail']);
-  // $form['account']['pass']['#required'] = FALSE;
+  // Need to move the mail field outside of account so we can weight it.
+  // This gets moved back in our first validate handler so user module can
+  // find it.  In our post validate function we move it back in the form.
+  $form['mail'] = $form['account']['mail'];
+  $form['mail']['#weight'] = $fields_to_display['mail']['weight'];
+  unset($form['account']['mail']);
 
+  // User doesn't need to see these.
   $form['account']['roles']['#access'] = FALSE;
   $form['account']['notify']['#access'] = FALSE;
   $form['account']['status']['#access'] = FALSE;
+
+  $form['#validate'][] = 'springboard_p2p_user_register_post_validate';
+
+  // Remove the validate callback added by user_account_form().
+  // We instead do that validation in our own validate handler.
+  $new_validate = array();
+  foreach ($form['#validate'] as $callback) {
+    if ($callback != 'user_account_form_validate') {
+      $new_validate[] = $callback;
+    }
+  }
+  $form['#validate'] = $new_validate;
 
   return $form;
 }
@@ -143,16 +152,62 @@ function springboard_p2p_user_register_form($form, &$form_state) {
 /**
  * Validation handler for user registration.
  *
- * Does its own requiredness checking because I can't get the normal drupal
- * required working on the profile fields.
+ * Validates that the email will be a valid username.
  *
  * Sets the name value so the username will be the email address.
+ *
+ * Moves the mail element back to where user module expects it.
+ *
+ * @see user_account_form_validate()
  */
-function springboard_p2p_user_register_validate($form, &$form_state) {
-  // Fill in the username with the email address.
-  // @todo See how webform user handles pluses and other characters that are
-  // okay in email addresses but not valid in usernames.
-  $form_state['values']['name'] = $form_state['values']['mail'];
+function springboard_p2p_user_register_validate(&$form, &$form_state) {
+  $account = $form['#user'];
+
+  // Trim whitespace from mail, to prevent confusing 'e-mail not valid'
+  // warnings often caused by cutting and pasting.
+  $mail = trim($form_state['values']['mail']);
+  form_set_value($form['mail'], $mail, $form_state);
+
+  // Validate the e-mail address.
+  if ($error = user_validate_mail($mail)) {
+    form_set_error('mail', $error);
+  }
+  // Validate that the e-mail address will make a valid username.
+  elseif ($error = springboard_p2p_validate_email_as_username($mail)) {
+    // Generic error message.
+    form_set_error('mail', $error);
+  }
+  // Check if mail is already registerd.
+  elseif ((bool) db_select('users')->fields('users', array('uid'))->condition('uid', $account->uid, '<>')->condition('mail', db_like($mail), 'LIKE')->range(0, 1)->execute()->fetchField()) {
+    // Format error message dependent on whether the user is logged in or not.
+    if ($GLOBALS['user']->uid) {
+      form_set_error('mail', t('The e-mail address %email is already taken.', array('%email' => $mail)));
+    }
+    else {
+      form_set_error('mail', t('The e-mail address %email is already registered. <a href="@password">Have you forgotten your password?</a>', array('%email' => $mail, '@password' => url('user/password'))));
+    }
+  }
+  // Check if mail exists as a username.
+  elseif ((bool) db_select('users')->fields('users', array('uid'))->condition('uid', $account->uid, '<>')->condition('name', db_like($mail), 'LIKE')->range(0, 1)->execute()->fetchField()) {
+    form_set_error('mail', t('The e-mail address %mail is already registered.', array('%mail' => $mail)));
+  }
+
+  // Set the username as the email address.
+  $form_state['values']['name'] = $mail;
+
+  // Move mail around so other user validate handlers will work.
+  $form['account']['mail'] = $form['mail'];
+  unset($form['mail']);
+}
+
+/**
+ * Last validate handler for the p2p register form.
+ *
+ * Moves the mail element back to where we want it in the form.
+ */
+function springboard_p2p_user_register_post_validate(&$form, &$form_state) {
+  $form['mail'] = $form['account']['mail'];
+  unset($form['account']['mail']);
 }
 
 /**
@@ -358,4 +413,42 @@ function springboard_p2p_make_registration_field_required(&$form, $field_name) {
       $form[$field_name][$field_language][$key]['value']['#required'] = TRUE;
     }
   }
+}
+
+/**
+ * Verify the email address will be a valid username.
+ *
+ * Returns email specific error messages.
+ *
+ * @param string $mail
+ *   The email address to check.
+ *
+ * @return string|NULL
+ *   The email specific error, or NULL for no errors.
+ *
+ * @see user_validate_name()
+ */
+function springboard_p2p_validate_email_as_username($mail) {
+  if (strpos($mail, '  ') !== FALSE) {
+    return t('The e-mail address cannot contain multiple spaces in a row.');
+  }
+  if (preg_match('/[^\x{80}-\x{F7} a-z0-9@_.\'-]/i', $mail)) {
+    return t('The e-mail address contains an illegal character.');
+  }
+  if (preg_match('/[\x{80}-\x{A0}' .         // Non-printable ISO-8859-1 + NBSP
+    '\x{AD}' .                // Soft-hyphen
+    '\x{2000}-\x{200F}' .     // Various space characters
+    '\x{2028}-\x{202F}' .     // Bidirectional text overrides
+    '\x{205F}-\x{206F}' .     // Various text hinting characters
+    '\x{FEFF}' .              // Byte order mark
+    '\x{FF01}-\x{FF60}' .     // Full-width latin
+    '\x{FFF9}-\x{FFFD}' .     // Replacement characters
+    '\x{0}-\x{1F}]/u',        // NULL byte and control characters
+    $mail)) {
+    return t('The e-mail address contains an illegal character.');
+  }
+  if (drupal_strlen($mail) > USERNAME_MAX_LENGTH) {
+    return t('The e-mail address %name is too long: it must be %max characters or less.', array('%name' => $mail, '%max' => USERNAME_MAX_LENGTH));
+  }
+
 }
