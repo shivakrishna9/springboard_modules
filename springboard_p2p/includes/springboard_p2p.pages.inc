@@ -243,10 +243,7 @@ function springboard_p2p_user_register_submit($form, &$form_state) {
  * Forms api array for the social login form.
  */
 function springboard_p2p_social_login_form($form, &$form_state) {
-  $form = array(
-    '#type' => 'fieldset',
-    '#title' => 'Social login',
-  );
+  $form = array();
 
   springboard_p2p_campaign_id_form_element($form);
 
@@ -279,10 +276,7 @@ function springboard_p2p_social_login_submit($form, &$form_state) {
  * Forms api array for the existing user login form.
  */
 function springboard_p2p_existing_user_login_form($form, &$form_state) {
-  $form = array(
-    '#type' => 'fieldset',
-    '#title' => 'Existing user login',
-  );
+  $form = array();
 
   springboard_p2p_campaign_id_form_element($form);
 
