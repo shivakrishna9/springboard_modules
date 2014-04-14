@@ -407,7 +407,6 @@ function commerce_authnet_form_rules_ui_edit_element_alter(&$form, &$form_state)
 function fundraiser_commerce_commerce_authnet_aim_request_alter(&$nvp) {
   $donation = fundraiser_donation_get_donation($nvp['x_invoice_num']);
   $config = $donation->gateway['gateway_details']['settings'];
-  dpm($config);
   $fields = _commerce_authnet_extra_fields();
   unset($fields[0]);
   $i = 1;
