@@ -1,0 +1,8 @@
+name = Fundraiser Ubercart Encryption Swap
+description = Swap encrypted donation data from one key to another.
+core = 6.x
+version = 6.x-3.0-dev
+package = Jackson River Springboard - development
+dependencies[] = uc_credit
+dependencies[] = uc_order
+dependencies[] = uc_store

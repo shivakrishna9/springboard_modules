@@ -1,0 +1,10 @@
+<?php
+
+/**
+ * @file
+ * Fundraiser Ubercart Encryption Swap
+ *
+ * Swap encrypted donation data from one key to another.
+ *
+ * This file exists only to enable the Drush command.
+ */
