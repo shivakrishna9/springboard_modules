@@ -2186,12 +2186,13 @@ function fundraiser_commerce_commerce_authnet_cim_request_alter($api_request_ele
       if (isset($donation->submission_data[$config['commerce_authnet_webform_field_' . $i]])) {
         $name = $fields[$config['commerce_authnet_authorize_field_' . $i]];
         $value =  $donation->submission_data[$config['commerce_authnet_webform_field_' . $i]];
-        $extra .= '&' . $name . '=' . trim(htmlspecialchars($value));
+        $value = str_replace(array("&","'"), array("%26","%27"), $value); 
+        $extra .= '&' . trim(htmlspecialchars($name)) . '=' . trim($value);
       }
       $i++;
     }
-    $api_request_element->extraOptions = '<![CDATA[' .  $extra ;
-   }
+    $api_request_element->extraOptions = '<![CDATA[' .  $extra . '&cms=Springboard]]>';
+  }
   // Change the description to something unique so we get a new profile each time
   if (!empty($api_request_element->profile->description)) {
     $api_request_element->profile->description = substr(t('CIM request taking place at @date', array('@date' => format_date(time()))), 0, 255);

@@ -365,7 +365,7 @@ function commerce_authnet_form_rules_ui_edit_element_alter(&$form, &$form_state)
     $id = $form['parameter']['payment_method']['settings']['payment_method']['method_id']['#value'];
     $is_com = isset($form['parameter']['commerce_order']) ? 1 : 0;
     if ($id == 'authnet_aim' && $is_com) {
-      $rule = rules_config_load('commerce_payment_authnet_aim');
+      $rule = rules_config_load(arg(5));
       $actions = $rule->actions();
       if (!empty($actions)) {
         foreach ($actions as $action) {
