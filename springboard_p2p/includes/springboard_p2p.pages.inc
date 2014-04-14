@@ -71,8 +71,6 @@ function springboard_p2p_register_page($form, &$form_state) {
 function springboard_p2p_user_register_form($form, &$form_state) {
   $form = array();
 
-  springboard_p2p_campaign_id_form_element($form);
-
   // This validate handler fills in the name value with the email address,
   // and so needs to happen before the user module's validation.
   $form['#validate'][] = 'springboard_p2p_user_register_validate';
@@ -132,9 +130,6 @@ function springboard_p2p_user_register_form($form, &$form_state) {
   // Add the final user registration form submit handler.
   $form['#submit'][] = 'user_register_submit';
 
-  // This handler changes the redirect.
-  $form['#submit'][] = 'springboard_p2p_user_register_submit';
-
   // Don't show the user the username field.
   $form['account']['name']['#access'] = FALSE;
 
@@ -161,6 +156,8 @@ function springboard_p2p_user_register_form($form, &$form_state) {
     }
   }
   $form['#validate'] = $new_validate;
+
+  springboard_p2p_campaign_id_form_element($form);
 
   return $form;
 }
@@ -229,30 +226,29 @@ function springboard_p2p_user_register_post_validate(&$form, &$form_state) {
 /**
  * Submit handler.
  *
- * Saves the campaign approval status and changes the redirect
- * after the user register submit handler.
+ * Saves the campaign approval status and changes the redirect.
  */
-function springboard_p2p_user_register_submit($form, &$form_state) {
-  $campaign_id = $form_state['values']['springboard_p2p_campaign_nid'];
-  if (!empty($campaign_id)) {
+function springboard_p2p_set_redirect($form, &$form_state) {
+  if (!empty($form_state['values']['springboard_p2p_campaign_nid'])) {
+    $campaign_id = $form_state['values']['springboard_p2p_campaign_nid'];
     $campaign = node_load($campaign_id);
     if ($campaign->type == 'p2p_campaign') {
-      $private = $campaign->field_p2p_campaigns_approval[$campaign->language][0]['value'];
+      $private = springboard_p2p_campaign_is_private($campaign);
 
       $approval = new SpringbaordP2pPrivateCampaignApproval($form_state['uid'], $campaign_id);
 
       if ($private) {
         $approval->request();
         drupal_set_message('You have been added to the approval queue for ' . $campaign->title);
+        $form_state['redirect'] = 'springboard_p2p/dashboard/' . $form_state['uid'];
       }
       else {
         $approval->approve();
         drupal_set_message('You can now create a personal campaign in ' . $campaign->title);
+        $form_state['redirect'] = 'springboard_p2p/development/create_personal_campaign' . $campaign_id;
       }
     }
   }
-
-  $form_state['redirect'] = 'springboard_p2p/dashboard/' . $form_state['uid'];
 }
 
 /**
@@ -260,8 +256,6 @@ function springboard_p2p_user_register_submit($form, &$form_state) {
  */
 function springboard_p2p_existing_user_login_form($form, &$form_state) {
   $form = array();
-
-  springboard_p2p_campaign_id_form_element($form);
 
   // Display login form:
   $form['name'] = array(
@@ -296,15 +290,11 @@ function springboard_p2p_existing_user_login_form($form, &$form_state) {
   );
 
   $form['#validate'] = user_login_default_validators();
-  $form['#submit'] = array('user_login_submit', 'springboard_p2p_existing_user_login_submit');
-  return $form;
-}
+  $form['#submit'][] = 'user_login_submit';
 
-/**
- * Submit handler for login.  Changes the redirect.
- */
-function springboard_p2p_existing_user_login_submit($form, &$form_state) {
-  $form_state['redirect'] = 'springboard_p2p/dashboard/' . $form_state['uid'];
+  springboard_p2p_campaign_id_form_element($form);
+
+  return $form;
 }
 
 /**
@@ -357,7 +347,10 @@ function springboard_p2p_get_campaign_id_from_request() {
 }
 
 /**
- * Add the campaign ID value form element to a form.
+ * Add the campaign ID value form element and submit handler to a form.
+ *
+ * The submit handler should happen last because it sets the redirect and should
+ * override any other redirects.  So call this near the end of the form.
  *
  * @param array $form
  *   The form array to insert the element into.
@@ -367,6 +360,9 @@ function springboard_p2p_campaign_id_form_element(&$form) {
     '#type' => 'value',
     '#value' => springboard_p2p_get_campaign_id_from_request(),
   );
+
+  // This handler changes the redirect.
+  $form['#submit'][] = 'springboard_p2p_set_redirect';
 }
 
 /**
@@ -451,8 +447,6 @@ function springboard_p2p_fb_form($form, &$form_state) {
     '#markup' => 'Coming from fboauth. This is where you would either fill out additional fields, or go to your next destination.',
   );
 
-  springboard_p2p_campaign_id_form_element($form);
-
   $admin = user_access('administer users');
 
   // Pass access information to the submit handler. Running an access check
@@ -511,6 +505,8 @@ function springboard_p2p_fb_form($form, &$form_state) {
   // Add the final user registration form submit handler.
   $form['#submit'][] = 'springboard_p2p_fb_user_register_submit';
 
+  springboard_p2p_campaign_id_form_element($form);
+
   if (!$show_fields) {
     drupal_goto('springboard_p2p/dashboard/' . $user->uid);
   }
@@ -549,8 +545,6 @@ function springboard_p2p_registration_field_is_empty($field) {
  * @see user_register_submit)
  */
 function springboard_p2p_fb_user_register_submit($form, &$form_state) {
-  $admin = $form_state['values']['administer_users'];
-
   // Remove unneeded values.
   form_state_values_clean($form_state);
 
@@ -571,6 +565,34 @@ function springboard_p2p_fb_user_register_submit($form, &$form_state) {
   }
   $form_state['user'] = $account;
   $form_state['values']['uid'] = $account->uid;
+}
 
-  $form_state['redirect'] = 'springboard_p2p/dashboard/' . $account->uid;
+/**
+ * Page placeholder for creating a new personal campaign under a campaign.
+ */
+function springboard_p2p_create_personal_campaign($campaign) {
+  $output = array(
+    'message' => array(
+      '#markup' => 'Placeholder page for creating a new personal campaign. The parent campaign is ' . l($campaign->title, 'node/' . $campaign->nid),
+    ),
+  );
+
+  return $output;
+}
+
+/**
+ * Determines if a p2p campaign node is private (approval required).
+ *
+ * @param object $campaign
+ *   The campaign node object.
+ *
+ * @return bool
+ *   TRUE if the campaign is private.
+ */
+function springboard_p2p_campaign_is_private($campaign) {
+  if (!empty($campaign->field_p2p_campaigns_approval[$campaign->language][0]['value'])) {
+    return (bool) $campaign->field_p2p_campaigns_approval[$campaign->language][0]['value'];
+  }
+
+  return FALSE;
 }

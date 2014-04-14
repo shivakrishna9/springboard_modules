@@ -95,6 +95,17 @@ function springboard_p2p_menu() {
     'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
   );
 
+  $items['springboard_p2p/development/create_personal_campaign/%node'] = array(
+    'title' => 'Crete personal campaign',
+    'page callback' => 'springboard_p2p_create_personal_campaign',
+    'page arguments' => array(3),
+    // @todo
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+    'file' => 'springboard_p2p.pages.inc',
+    'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
+  );
+
   return $items;
 }
 
