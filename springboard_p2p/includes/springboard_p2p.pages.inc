@@ -229,6 +229,9 @@ function springboard_p2p_user_register_post_validate(&$form, &$form_state) {
  * Saves the campaign approval status and changes the redirect.
  */
 function springboard_p2p_set_redirect($form, &$form_state) {
+  // Default destination if nothing else works.
+  $form_state['redirect'] = 'springboard_p2p/dashboard/' . $form_state['uid'];
+
   if (!empty($form_state['values']['springboard_p2p_campaign_nid'])) {
     $campaign_id = $form_state['values']['springboard_p2p_campaign_nid'];
     $campaign = node_load($campaign_id);
@@ -507,8 +510,15 @@ function springboard_p2p_fb_form($form, &$form_state) {
 
   springboard_p2p_campaign_id_form_element($form);
 
+  // Bypass this form and go to the next page.
   if (!$show_fields) {
-    drupal_goto('springboard_p2p/dashboard/' . $user->uid);
+    // Faking the form submission so the approval status will get saved
+    // and we can find out wehre to go next.
+    $form_state['values']['springboard_p2p_campaign_nid'] = $form['springboard_p2p_campaign_nid']['#value'];
+    $form_state['uid'] = $user->uid;
+    springboard_p2p_set_redirect($form, &$form_state);
+
+    drupal_goto($form_state['redirect']);
   }
 
   return $form;
