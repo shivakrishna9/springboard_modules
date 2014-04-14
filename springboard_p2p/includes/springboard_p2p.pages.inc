@@ -412,15 +412,24 @@ function springboard_p2p_validate_email_as_username($mail) {
   if (preg_match('/[^\x{80}-\x{F7} a-z0-9@_.\'-]/i', $mail)) {
     return t('The e-mail address contains an illegal character.');
   }
-  if (preg_match('/[\x{80}-\x{A0}' .         // Non-printable ISO-8859-1 + NBSP
-    '\x{AD}' .                // Soft-hyphen
-    '\x{2000}-\x{200F}' .     // Various space characters
-    '\x{2028}-\x{202F}' .     // Bidirectional text overrides
-    '\x{205F}-\x{206F}' .     // Various text hinting characters
-    '\x{FEFF}' .              // Byte order mark
-    '\x{FF01}-\x{FF60}' .     // Full-width latin
-    '\x{FFF9}-\x{FFFD}' .     // Replacement characters
-    '\x{0}-\x{1F}]/u',        // NULL byte and control characters
+  // Non-printable ISO-8859-1 + NBSP.
+  if (preg_match('/[\x{80}-\x{A0}' .
+    // Soft-hyphen.
+    '\x{AD}' .
+    // Various space characters.
+    '\x{2000}-\x{200F}' .
+    // Bidirectional text overrides.
+    '\x{2028}-\x{202F}' .
+    // Various text hinting characters.
+    '\x{205F}-\x{206F}' .
+    // Byte order mark.
+    '\x{FEFF}' .
+    // Full-width latin.
+    '\x{FF01}-\x{FF60}' .
+    // Replacement characters.
+    '\x{FFF9}-\x{FFFD}' .
+    // NULL byte and control characters.
+    '\x{0}-\x{1F}]/u',
     $mail)) {
     return t('The e-mail address contains an illegal character.');
   }
@@ -434,11 +443,134 @@ function springboard_p2p_validate_email_as_username($mail) {
  * Form where user goes after connecting with facebook oauth.
  */
 function springboard_p2p_fb_form($form, &$form_state) {
+  global $user;
+
   $form = array();
 
   $form['message'] = array(
     '#markup' => 'Coming from fboauth. This is where you would either fill out additional fields, or go to your next destination.',
   );
 
+  springboard_p2p_campaign_id_form_element($form);
+
+  $admin = user_access('administer users');
+
+  // Pass access information to the submit handler. Running an access check
+  // inside the submit function interferes with form processing and breaks
+  // hook_form_alter().
+  $form['administer_users'] = array(
+    '#type' => 'value',
+    '#value' => $admin,
+  );
+
+  $form['#user'] = $user;
+  $form['#user_category'] = 'account';
+
+  $form['#attached']['library'][] = array('system', 'jquery.cookie');
+  $form['#attributes']['class'][] = 'user-info-from-cookie';
+
+  $fields_to_display = springboard_p2p_get_enabled_registration_fields();
+
+  $show_fields = FALSE;
+  // Attach field widgets.
+  $langcode = entity_language('user', $form['#user']);
+  field_attach_form('user', user_load($user->uid), $form, $form_state, $langcode);
+
+  foreach (field_info_instances('user', 'user') as $field_name => $instance) {
+    if (isset($fields_to_display[$field_name]['enabled'])) {
+
+      // Use the required settings from the p2p configuration.
+      // But if the field is required on the user entity leave it alone.
+      if (isset($fields_to_display[$field_name]['required']) && $fields_to_display[$field_name]['required']) {
+        springboard_p2p_make_registration_field_required($form, $field_name);
+
+        // Field is required and empty.
+        if (springboard_p2p_registration_field_is_empty($form[$field_name])) {
+          $show_fields = TRUE;
+        }
+      }
+
+      $form[$field_name]['#weight'] = $fields_to_display[$field_name]['weight'];
+    }
+    else {
+      $form[$field_name]['#access'] = FALSE;
+    }
+  }
+
+  $form['actions'] = array(
+    '#type' => 'actions',
+  );
+
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+  );
+
+  $form['#validate'][] = 'user_register_validate';
+
+  // Add the final user registration form submit handler.
+  $form['#submit'][] = 'springboard_p2p_fb_user_register_submit';
+
+  if (!$show_fields) {
+    drupal_goto('springboard_p2p/dashboard/' . $user->uid);
+  }
+
   return $form;
+}
+
+/**
+ * Determine if a registration field from a form is empty.
+ *
+ * @param array $field
+ *   The field array from the form.
+ *
+ * @return bool
+ *   TRUE if the field does not have a #default_value set in the usual places.
+ */
+function springboard_p2p_registration_field_is_empty($field) {
+  $language = $field['#language'];
+
+  if (!empty($field[$language]['#default_value'])) {
+    return FALSE;
+  }
+
+  foreach (element_children($field[$language]) as $key) {
+    if (!empty($field[$language][$key]['value']['#default_value'])) {
+      return FALSE;
+    }
+  }
+
+  return TRUE;
+}
+
+/**
+ * Submit handler for the facebook user registration form.
+ *
+ * @see user_register_submit)
+ */
+function springboard_p2p_fb_user_register_submit($form, &$form_state) {
+  $admin = $form_state['values']['administer_users'];
+
+  // Remove unneeded values.
+  form_state_values_clean($form_state);
+
+  $account = $form['#user'];
+
+  entity_form_submit_build_entity('user', $account, $form, $form_state);
+
+  // Populate $edit with the properties of $account, which have been edited on
+  // this form by taking over all values, which appear in the form values too.
+  $edit = array_intersect_key((array) $account, $form_state['values']);
+  $account = user_save($account, $edit);
+
+  // Terminate if an error occurred during user_save().
+  if (!$account) {
+    drupal_set_message(t("Error saving user account."), 'error');
+    $form_state['redirect'] = '';
+    return;
+  }
+  $form_state['user'] = $account;
+  $form_state['values']['uid'] = $account->uid;
+
+  $form_state['redirect'] = 'springboard_p2p/dashboard/' . $account->uid;
 }

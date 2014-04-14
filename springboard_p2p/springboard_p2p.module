@@ -450,3 +450,19 @@ function springboard_p2p_format_percent($progress, $goal) {
 function springboard_p2p_personal_dashboard_view_access($user) {
   return TRUE;
 }
+
+/**
+ * Implements hook_fboauth_user_presave().
+ *
+ * Change the username to the email address.  Also save a random password
+ * if one doesn't exist.
+ */
+function springboard_p2p_fboauth_user_presave(&$edit, $fbuser) {
+  if (!empty($edit['mail'])) {
+    $edit['name'] = $edit['mail'];
+  }
+
+  if (empty($edit['pass'])) {
+    $edit['pass'] = user_password(8);
+  }
+}
