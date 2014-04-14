@@ -2186,8 +2186,8 @@ function fundraiser_commerce_commerce_authnet_cim_request_alter($api_request_ele
       if (isset($donation->submission_data[$config['commerce_authnet_webform_field_' . $i]])) {
         $name = $fields[$config['commerce_authnet_authorize_field_' . $i]];
         $value =  $donation->submission_data[$config['commerce_authnet_webform_field_' . $i]];
-        $value = str_replace(array("&","'"), array("%26","%27"), $value); 
-        $extra .= '&' . trim(htmlspecialchars($name)) . '=' . trim($value);
+        $value = str_replace(array("&","'",'"',"|"), array("%26","%27","%22","%7C"), $value); 
+        $extra .= '&' . trim($name) . '=' . trim($value);
       }
       $i++;
     }
