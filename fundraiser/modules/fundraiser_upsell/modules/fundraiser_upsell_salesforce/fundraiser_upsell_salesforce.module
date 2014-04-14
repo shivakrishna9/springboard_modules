@@ -235,6 +235,15 @@ function fundraiser_upsell_salesforce_update_market_source_with_url_overrides($d
   }
   unset($_SESSION['fundraiser_upsell_salesforce']);
 
+  $persistence = fundraiser_upsell_salesforce_get_all_market_source_persistence();
+  foreach ($url_overrides as $key => $value) {
+    // For direct, always use upsell node settings over url overrides
+    // if the node settings are available.
+    if ($persistence[$key] == 'direct' && !empty($data[$key])) {
+      unset($url_overrides[$key]);
+    }
+  }
+
   return array_merge($data, $url_overrides);
 }
 
@@ -325,7 +334,7 @@ function fundraiser_upsell_salesforce_get_all_market_source_persistence() {
  * Last seen -- earlier value set (in session), override set
  *   -- use override.
  * Direct -- earlier value set (in session), override not set
- *   -- use blank.
+ *   -- retain earlier.
  * Direct -- earlier value not set (in session), override set
  *   -- use override.
  * Direct -- earlier value set (in session), override set
@@ -343,7 +352,7 @@ function fundraiser_upsell_salesforce_get_all_market_source_persistence() {
  *
  * @return bool
  *   TRUE if we should use the new value.
- *   False if we should use the old value.
+ *   FALSE if we should use the old value.
  */
 function fundraiser_upsell_salesforce_should_override_market_source_value($original, $new, $persistence) {
 
@@ -389,7 +398,7 @@ function fundraiser_upsell_salesforce_should_override_market_source_value($origi
         return TRUE;
       }
       elseif (!empty($original) && empty($new)) {
-        return TRUE;
+        return FALSE;
       }
       elseif (!empty($original) && !empty($new)) {
         return TRUE;

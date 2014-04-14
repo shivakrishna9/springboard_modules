@@ -29,6 +29,20 @@ function salesforce_queue_admin_page() {
 function salesforce_queue_admin_form($form, &$form_state) {
   $form = array();
 
+  $sfapi = salesforce_get_api();
+  if (!$sfapi->isAuthorized()) {
+    return array(
+      'no_sfapi' => array(
+        '#markup' => '<p>' . t('Cannot connect to Salesforce, preventing the ability to configure the Salesforce queue.  !ConfigureSalesforce',
+            array('!ConfigureSalesforce' => l(t('Configure Salesforce'), 'admin/config/salesforce/authorize'))) . '</p>',
+        '#prefix' => '<div class="salesforce-map-error salesforce-map-error-salesforce">',
+        '#suffix' => '</div>',
+      ),
+    );
+  }
+
+  $sf_objects = _sfq_salesforce_object_list($sfapi);
+
   // Variable salesforce_queue_max_items.
   $form['max_items'] = array(
     '#id' => 'salesforce-queue-max-items',
@@ -125,8 +139,6 @@ function salesforce_queue_admin_form($form, &$form_state) {
   );
 
   $object_order = _sfq_get_value('object_order', $form_state);
-  $sfapi = salesforce_get_api();
-  $sf_objects = _sfq_salesforce_object_list($sfapi);
 
   // Get the labels from the Salesforce object list, then append the remaining
   // Salesforce objects to the end of the list.
@@ -180,6 +192,13 @@ function salesforce_queue_admin_form($form, &$form_state) {
  */
 function theme_salesforce_queue_admin_form($variables) {
   $form = $variables['form'];
+
+  // Can't connect to Salesforce, so skip the custom theming of the rest
+  // of the form.
+  if (isset($form['no_sfapi'])) {
+    return drupal_render_children($form);
+  }
+
   $rows = array();
   foreach (element_children($form['object_order_fieldset']['object_order']) as $object) {
     $form['object_order_fieldset']['object_order'][$object]['weight']['#attributes']['class'] = array('salesforce-queue-object-order-weight');
@@ -305,7 +324,7 @@ function _sfq_get_value($field, $form_state) {
         // Now just make a simple array to save because everything that uses
         // this var assumes it is a simple array.
         $value = array();
-        foreach ($weights as $weights => $objects) {
+        foreach ($weights as $objects) {
           foreach ($objects as $object => $object_info) {
             $value[] = $object;
           }
@@ -365,7 +384,7 @@ function _sfq_get_value($field, $form_state) {
  * @param Salesforce $sfapi
  *   A Salesforce API object
  *
- * @return Array
+ * @return array
  *   Array of Salesforce objects keyed by the object's name and the label as the
  *   value
  */

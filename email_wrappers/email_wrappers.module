@@ -81,7 +81,6 @@ function email_wrappers_preview_modal() {
   $keys = array_keys($output);
   foreach ($keys as $key) {
     if (is_array($output[$key])) {
-
       $preview .= '<fieldset id="field-' . $key . '"><label for="field-' . $key . '" style="font-weight:bold">' . ucfirst($key) . '</label>';
       $subkeys = array_keys($output[$key]);
       foreach ($subkeys as $subkey) {
@@ -507,7 +506,13 @@ function email_wrappers_mail_alter(&$message) {
  *   Email message body, formatted for multipart MIME.
  */
 function email_wrappers_render_email_body($eid, $message, $settings = array()) {
-
+  $token_set = array();
+  if (isset($message['params']['node'])) {
+    $token_set['node'] = $message['params']['node'];
+  }
+  if (isset($message['params']['donation'])) {
+    $token_set['donation'] = $message['params']['donation'];
+  }
   $eid = isset($message['params']['email']['eid']) ? $message['params']['email']['eid'] : FALSE;
   $boundary = $message['params']['boundary'];
   // TODO: filter HTML by field input type where appropriate.
@@ -519,7 +524,8 @@ function email_wrappers_render_email_body($eid, $message, $settings = array()) {
     $html_raw = $message['params']['mail']->html_message;
     $text_raw = $message['params']['mail']->text_message;
   }
-
+  $html_raw = token_replace($html_raw, $token_set, array('clear' => TRUE));
+  $text_raw = token_replace($text_raw, $token_set, array('clear' => TRUE));
   $multi_body  = "
 
 This is a multi-part message in MIME format.
@@ -593,11 +599,10 @@ function _email_wrappers_list_templates() {
  *     extra - serialized array of additional settings
  */
 function email_wrappers_load_settings($nid, $eid = FALSE) {
-
   if ($eid) {
     $query = db_select('email_wrappers_webform', 'e');
     $query->join('field_data_email_wrapper_html_template', 'f', 'e.tid = f.entity_id');
-    $query->join('field_data_email_wrapper_text_template', 't', 'e.tid = f.entity_id');
+    $query->join('field_data_email_wrapper_text_template', 't', 'e.tid = t.entity_id');
     $query->fields('e', array(
         'nid',
         'eid',
@@ -645,6 +650,7 @@ function email_wrappers_load_settings($nid, $eid = FALSE) {
     return count($data) ? $data : FALSE;
   }
 }
+
 
 /**
  * Mail configuration loader.

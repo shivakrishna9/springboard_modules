@@ -1107,7 +1107,7 @@ function fundraiser_upsell_find_suggested_amount($amount) {
 /**
  * Creates a master donation from the original upsold donation.
  *
- * Copy the original donation to a new did and update the status and amount..
+ * Copy the original donation to a new did and update the status and amount.
  *
  * @param object $upsold_donation
  *   The original one time donation to use as the basis for the master.
@@ -1150,7 +1150,7 @@ function fundraiser_upsell_create_master_donation($upsold_donation, $new_amount)
 
   // If we're charging in a month, save a sustainers record and add a comment.
   if ($charge_time == 'one_month') {
-    $next_charge = strtotime('+1 month');
+    $next_charge = fundraiser_sustainers_get_next_charge_time();
     fundraiser_donation_comment($master_donation, 'Initial Upsell donation scheduled to be charged at @next_charge',
       array('@next_charge' => format_date($next_charge)));
 
