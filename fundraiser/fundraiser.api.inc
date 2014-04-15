@@ -104,6 +104,53 @@ function hook_fundraiser_update_form_field($form, $field_key) {
 }
 
 /**
+ * Alter client side validation of webform fields.
+ *
+ * Fundraiser uses jQuery validation rules to handle client side validation
+ * of fields like zipcode, CVV, and card number. Implement this hook in your
+ * module to modify or extend these rules.
+ *
+ * Available validators:
+ *   required: "This field is required",
+ *   remote: "Please fix this field",
+ *   email: "Enter a valid email address",
+ *   url: "Enter a valid URL",
+ *   date: "Enter a valid date",
+ *   dateISO: "Enter a valid date (ISO)",
+ *   number: "Must be a number", // changed
+ *   digits: "Enter only digits",
+ *   creditcard: "Enter a valid credit card number",
+ *   equalTo: "Enter the same value again",
+ *   accept: "Enter a value with a valid extension",
+ *   maxlength: jQuery.validator.format("Enter no more than {0} characters"),
+ *   minlength: jQuery.validator.format("Enter at least {0} characters"),
+ *   rangelength: jQuery.validator.format("Enter a value between {0} and {1} characters long"),
+ *   range: jQuery.validator.format("Enter a value between {0} and {1}"),
+ *   max: jQuery.validator.format("Enter a value less than or equal to {0}"),
+ *   min: jQuery.validator.format("Enter a value greater than or equal to {0}")
+ *
+ * Note: the "messages" property stores the return message to display if a
+ * validator check fails.
+ *
+ * Example ruleset:
+ * $settings['card_cvv'] = (object) array(
+ *   'required' => TRUE,
+ *   'number' => TRUE,
+ *   'minlength' => 3,
+ *   'maxlength' => 4,
+ *   'messages' => (object) array(
+ *     'required' => t('This field is required.'),
+ *     'number' => t('Must be a number.'),
+ *     'minlength' => t('Minimum of 3 characters.'),
+ *     'maxlength' => t('Maximum of 4 characters.'),
+ *    ),
+ *  );
+ */
+function hook_fundraiser_donation_form_js_validation_alter(&$settings) {
+
+}
+
+/**
  * Provide any additional changes for the donation form display.
  *
  * For display glue modules.

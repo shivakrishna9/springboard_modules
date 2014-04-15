@@ -599,11 +599,10 @@ function _email_wrappers_list_templates() {
  *     extra - serialized array of additional settings
  */
 function email_wrappers_load_settings($nid, $eid = FALSE) {
-
   if ($eid) {
     $query = db_select('email_wrappers_webform', 'e');
     $query->join('field_data_email_wrapper_html_template', 'f', 'e.tid = f.entity_id');
-    $query->join('field_data_email_wrapper_text_template', 't', 'e.tid = f.entity_id');
+    $query->join('field_data_email_wrapper_text_template', 't', 'e.tid = t.entity_id');
     $query->fields('e', array(
         'nid',
         'eid',
@@ -651,6 +650,7 @@ function email_wrappers_load_settings($nid, $eid = FALSE) {
     return count($data) ? $data : FALSE;
   }
 }
+
 
 /**
  * Mail configuration loader.
