@@ -393,10 +393,8 @@ function _webform_confirmation_send_confirmation_mail($settings, $donation) {
   $nid = $settings['nid'];
   $eid = $settings['eid'];
   $account = $donation->user;
-
   // Pull the deferred mail queue in and see if we have any pending mails to send.
   $mail_queue = &drupal_static('email_wrappers_mail_queue');
-
   if (isset($mail_queue[$nid][$eid])) {
     $params = $mail_queue[$nid][$eid]['params'];
     $message = $params['message'];
@@ -411,5 +409,17 @@ function _webform_confirmation_send_confirmation_mail($settings, $donation) {
     $params['subject'] = token_replace($params['subject'], $token_set, array('clear' => TRUE));
     drupal_mail('email_wrappers', 'wf_submission', $message['to'], user_preferred_language($account), $params);
     unset($mail_queue[$nid][$eid]);
+  }
+  else { 
+    $deferred_mail = array('commerce_paypal_wps');
+    if (in_array($donation->gateway['gateway_details']['base'], $deferred_mail)) {
+      $node = node_load($nid);
+      module_load_include('inc', 'webform', 'includes/webform.submissions');
+      $submission = webform_get_submission($node->nid, $donation->sid);
+      $send_count = webform_submission_send_mail($node, $submission, $emails = NULL);
+      if ($send_count === 0) {
+        _webform_confirmation_send_confirmation_mail($settings, $donation);
+      }
+    }
   }
 }
