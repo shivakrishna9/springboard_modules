@@ -202,7 +202,7 @@ function sb_social_settings_load($sid) {
   // should cache.
   $settings = &drupal_static(__FUNCTION__);
 
-  if (empty($settings[$sid])) {
+  if (!isset($settings[$sid])) {
     $results = db_query('SELECT * FROM {sb_social_settings} WHERE sid = :sid', array(':sid' => $sid));
 
     $settings[$sid] = $results->fetchAssoc();
@@ -222,6 +222,12 @@ function sb_social_settings_load($sid) {
         $node = menu_get_object('webform_menu');
       }
       if (isset($node->nid)) {
+        $enabled_content_types = variable_get('springboard_social_enabled_content_types', array());
+        // If this node is not a supported node type return FALSE
+        if (empty($enabled_content_types[$node->type])) {
+          return $settings[$sid] = FALSE;
+        }
+
         $settings[$sid]['id'] = $node->nid;
         $settings[$sid]['type'] = 'node';
       }
