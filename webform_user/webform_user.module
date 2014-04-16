@@ -341,7 +341,7 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
   }
 
   // For the webform itself, we map the value of the given submission profile.
-  if (strpos($form_id, 'webform_client') !== FALSE) {
+  if (strpos($form_id, 'webform_client') !== FALSE && arg(2) != 'submission' && arg(4) != 'edit') {
     $node = node_load($form['#node']->nid);
     $components = $node->webform['components'];
     global $user;
