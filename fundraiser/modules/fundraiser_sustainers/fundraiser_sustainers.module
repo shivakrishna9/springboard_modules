@@ -1549,11 +1549,9 @@ function fundraiser_sustainers_get_next_charge_time(&$time = NULL, $context = ar
   }
 
   $next_charge = strtotime('+1 month', $time);
-  drupal_set_message('next charge:' . date('m/d/Y', $next_charge));
   // Allow other modules to adjust next_charge as needed.
   $time = $next_charge;
   drupal_alter('fundraiser_sustainers_recurring_next_charge', $next_charge, $context);
-  drupal_set_message('next charge after alter:' . date('m/d/Y', $next_charge));
   return $next_charge;
 }
 
