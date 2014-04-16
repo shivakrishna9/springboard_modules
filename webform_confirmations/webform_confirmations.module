@@ -396,30 +396,37 @@ function _webform_confirmation_send_confirmation_mail($settings, $donation) {
   // Pull the deferred mail queue in and see if we have any pending mails to send.
   $mail_queue = &drupal_static('email_wrappers_mail_queue');
   if (isset($mail_queue[$nid][$eid])) {
-    $params = $mail_queue[$nid][$eid]['params'];
-    $message = $params['message'];
-    $params['donation'] = $donation;
-    // Email Wrappers handles webform token replacement so all we need to do is pick off order tokens.
-    $token_set = array(
-      'node' => node_load($nid),
-      'donation' => $donation,
-    );
-    $params['settings']['html_message'] = token_replace($params['settings']['html_message'], $token_set);
-    $params['settings']['text_message'] = token_replace($params['settings']['text_message'], $token_set);
-    $params['subject'] = token_replace($params['subject'], $token_set, array('clear' => TRUE));
-    drupal_mail('email_wrappers', 'wf_submission', $message['to'], user_preferred_language($account), $params);
-    unset($mail_queue[$nid][$eid]);
+     _webform_confirmation_send_confirmation_mail_helper($settings, $donation, $nid, $eid, $account, $mail_queue);
   }
-  else { 
+  else {
     $deferred_mail = array('commerce_paypal_wps');
     if (in_array($donation->gateway['gateway_details']['base'], $deferred_mail)) {
       $node = node_load($nid);
       module_load_include('inc', 'webform', 'includes/webform.submissions');
       $submission = webform_get_submission($node->nid, $donation->sid);
-      $send_count = webform_submission_send_mail($node, $submission, $emails = NULL);
-      if ($send_count === 0) {
-        _webform_confirmation_send_confirmation_mail($settings, $donation);
+      if (!empty($submission)) {
+        $send_count = webform_submission_send_mail($node, $submission, array($node->webform['emails'][$eid]));
+        $mail_queue = &drupal_static('email_wrappers_mail_queue');
+        if ($send_count === 0 && isset($mail_queue[$nid][$eid])) {
+          _webform_confirmation_send_confirmation_mail_helper($settings, $donation, $nid, $eid, $account, $mail_queue);
+        }
       }
     }
   }
+}
+
+function _webform_confirmation_send_confirmation_mail_helper($settings, $donation, $nid, $eid, $account, $mail_queue) {
+  $params = $mail_queue[$nid][$eid]['params'];
+  $message = $params['message'];
+  $params['donation'] = $donation;
+  // Email Wrappers handles webform token replacement so all we need to do is pick off order tokens.
+  $token_set = array(
+    'node' => node_load($nid),
+    'donation' => $donation,
+  );
+  $params['settings']['html_message'] = token_replace($params['settings']['html_message'], $token_set);
+  $params['settings']['text_message'] = token_replace($params['settings']['text_message'], $token_set);
+  $params['subject'] = token_replace($params['subject'], $token_set, array('clear' => TRUE));
+  drupal_mail('email_wrappers', 'wf_submission', $message['to'], user_preferred_language($account), $params);
+  unset($mail_queue[$nid][$eid]);
 }
