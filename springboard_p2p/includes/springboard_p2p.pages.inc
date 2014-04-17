@@ -516,7 +516,7 @@ function springboard_p2p_fb_form($form, &$form_state) {
     // and we can find out wehre to go next.
     $form_state['values']['springboard_p2p_campaign_nid'] = $form['springboard_p2p_campaign_nid']['#value'];
     $form_state['uid'] = $user->uid;
-    springboard_p2p_set_redirect($form, &$form_state);
+    springboard_p2p_set_redirect($form, $form_state);
 
     drupal_goto($form_state['redirect']);
   }
@@ -605,4 +605,84 @@ function springboard_p2p_campaign_is_private($campaign) {
   }
 
   return FALSE;
+}
+
+/**
+ * Implements hook_mail().
+ */
+function springboard_p2p_mail($key, &$message, $params) {
+  switch ($key) {
+    case 'new_user':
+      springboard_p2p_new_user_mail($message, $params);
+      break;
+
+    case 'New_user_private_campaign':
+      springboard_p2p_new_user_private_campaign_mail($message, $params);
+      break;
+
+    case 'user_requests_approval':
+      springboard_p2p_user_requests_approval_mail($message, $params);
+      break;
+
+    case 'admin_approval_request':
+      springboard_p2p_admin_approval_request_mail($message, $params);
+      break;
+
+  }
+}
+
+/**
+ * Mail template to send to a user who registers for P2P.
+ *
+ * @see springboard_p2p_mail()
+ */
+function springboard_p2p_new_user_mail(&$message, $params) {
+  $options = array(
+    'langcode' => $message['language']->language,
+  );
+
+  $message['subject'] = t('Welcome to P2P', $options);
+  $message['body'][] = t('Thank you for creating a P2P account.', $options);
+}
+
+/**
+ * Mail template for a user registering for P2P coming from a private campaign.
+ *
+ * @see springboard_p2p_mail()
+ */
+function springboard_p2p_new_user_private_campaign_mail(&$message, $params) {
+  $options = array(
+    'langcode' => $message['language']->language,
+  );
+
+  $message['subject'] = t('Welcome to P2P', $options);
+  $message['body'][] = t('Thank you for creating a P2P account.  We will be in touch when you are approved.', $options);
+}
+
+/**
+ * Mail template when a P2P user requests approval from a private campaign.
+ *
+ * @see springboard_p2p_mail()
+ */
+function springboard_p2p_user_requests_approval_mail(&$message, $params) {
+  $options = array(
+    'langcode' => $message['language']->language,
+  );
+
+  $message['subject'] = t('Next steps', $options);
+  $message['body'][] = t('Thanks for showing interest in this campaign.  We will be in touch soon.', $options);
+}
+
+/**
+ * Mail template to an admin when a P2P user request private campaign approval.
+ *
+ * @see springboard_p2p_mail()
+ */
+function springboard_p2p_admin_approval_request_mail(&$message, $params) {
+  $options = array(
+    'langcode' => $message['language']->language,
+  );
+
+  $message['subject'] = t('User requests approval', $options);
+  $message['body'][] = t('A user has requested approval for a campaign.', $options);
 }
