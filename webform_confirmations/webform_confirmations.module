@@ -394,6 +394,7 @@ function _webform_confirmation_send_confirmation_mail($settings, $donation) {
   $eid = $settings['eid'];
   $sid = $donation->sid;
   $node = node_load($nid);
+  $success = $settings['extra']['send_on_donation_success'];
   $account = $donation->user;
   // Pull the deferred mail queue in and see if we have any pending mails to send.
   $mail_queue = &drupal_static('email_wrappers_mail_queue');
@@ -401,14 +402,14 @@ function _webform_confirmation_send_confirmation_mail($settings, $donation) {
     $mail_queue = $mail_queue[$nid][$eid]['params'];
      _webform_confirmation_send_confirmation_mail_helper($settings, $donation, $node, $eid, $account, $mail_queue);
      unset($mail_queue[$nid][$eid]);
-     _webform_confirmation_confirmation_mail_delete_cache($node, $sid);
+     _webform_confirmation_confirmation_mail_delete_cache($node, $eid, $sid, $success);
     }
   else {
     // there's no static cache, but if we're using paypal WPS or similar there will be a db cache entry.
     $mail_cache = cache_get('wrapper_mail_queue_'. $nid . '_' . $eid . '_' . $sid, 'cache_webform_confirm');
     if (isset($mail_cache->data)) {
       _webform_confirmation_send_confirmation_mail_helper($settings, $donation, $node, $eid, $account, $mail_cache->data['params']);
-      _webform_confirmation_confirmation_mail_delete_cache($node, $sid);
+      _webform_confirmation_confirmation_mail_delete_cache($node, $eid, $sid, $success);
     }      
   }
 }
@@ -418,7 +419,6 @@ function _webform_confirmation_send_confirmation_mail_helper($settings, $donatio
   $message = $params['message'];
   $params['donation'] = $donation;
   // Email Wrappers handles webform token replacement so all we need to do is pick off order tokens.
-  $params['node'] = $node;
   $token_set = array(
     'node' => $node,
     'donation' => $donation,
@@ -429,10 +429,19 @@ function _webform_confirmation_send_confirmation_mail_helper($settings, $donatio
   drupal_mail('email_wrappers', 'wf_submission', $message['to'], user_preferred_language($account), $params);
 }
 
-function _webform_confirmation_confirmation_mail_delete_cache($node, $sid) {
-  //clear this submission's cache ()
-  foreach ($node->webform['emails'] as $email) {
-    cache_clear_all('wrapper_mail_queue_'. $node->nid . '_' . $email['eid'] . '_' . $sid, 'cache_webform_confirm');
+function _webform_confirmation_confirmation_mail_delete_cache($node, $eid, $sid, $success) {
+
+  //clear this emails's cache ()
+  cache_clear_all('wrapper_mail_queue_'. $node->nid . '_' . $eid . '_' . $sid, 'cache_webform_confirm');
+
+  // If this was a success clear any decline messages and vice-versa
+  // If multiple success or decline messages are set
+  // don't touch cache of other items with same settings - they still need to be sent.
+  $settings = email_wrappers_load_settings($node->nid, NULL);
+  foreach ($settings as $setting) {
+    if ($setting['extra']['send_on_donation_success'] != $success) {
+      cache_clear_all('wrapper_mail_queue_'. $node->nid . '_' . $setting['eid'] . '_' . $sid, 'cache_webform_confirm');
+    }
   }
    //clear all expired submissions
    cache_clear_all(NULL, 'cache_webform_confirm');
