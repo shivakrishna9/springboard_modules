@@ -417,24 +417,6 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
         }
       }
 
-      // The ask amount has been changed for an existing donation, probably
-      // via the recurring donation edit form. Since this form only changes the
-      // ask amount, we only need to send the Amount field to Salesforce.
-      //
-      // _fundraiser_sustainers_get_donations_recurr_remaining() is called to
-      // generate the list of donations to update so we can be confident that
-      // only donations with pending charges are getting updates.
-      if (isset($donation->update_amount) && $donation->update_amount) {
-        $mapped_fields = array_keys($fields);
-        // back out all but the amount field.
-        foreach ($mapped_fields as $field) {
-          if ($field != 'Amount') {
-            unset($fields[$field]);
-          }
-        }
-      }
-      // TODO: skip first? $donation->sustainer_update_first
-      // TODO: confirm processed orders are skipped.
       // Billing information has been modified for this donation series.
       if (isset($donation->update_billing) && $donation->update_billing) {
         // Truncate card number.
