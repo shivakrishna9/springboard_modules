@@ -399,8 +399,8 @@ function _webform_confirmation_send_confirmation_mail($settings, $donation) {
   // Pull the deferred mail queue in and see if we have any pending mails to send.
   $mail_queue = &drupal_static('email_wrappers_mail_queue');
   if (isset($mail_queue[$nid][$eid])) {
-    $mail_queue = $mail_queue[$nid][$eid]['params'];
-     _webform_confirmation_send_confirmation_mail_helper($settings, $donation, $node, $eid, $account, $mail_queue);
+    $params = $mail_queue[$nid][$eid]['params'];
+     _webform_confirmation_send_confirmation_mail_helper($settings, $donation, $node, $eid, $account, $params);
      unset($mail_queue[$nid][$eid]);
      _webform_confirmation_confirmation_mail_delete_cache($node, $eid, $sid, $success);
     }
@@ -408,7 +408,8 @@ function _webform_confirmation_send_confirmation_mail($settings, $donation) {
     // there's no static cache, but if we're using paypal WPS or similar there will be a db cache entry.
     $mail_cache = cache_get('wrapper_mail_queue_'. $nid . '_' . $eid . '_' . $sid, 'cache_webform_confirm');
     if (isset($mail_cache->data)) {
-      _webform_confirmation_send_confirmation_mail_helper($settings, $donation, $node, $eid, $account, $mail_cache->data['params']);
+       $params = $mail_cache->data['params'];
+      _webform_confirmation_send_confirmation_mail_helper($settings, $donation, $node, $eid, $account, $params);
       _webform_confirmation_confirmation_mail_delete_cache($node, $eid, $sid, $success);
     }      
   }

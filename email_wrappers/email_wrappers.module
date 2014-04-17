@@ -466,7 +466,7 @@ function email_wrappers_mail_alter(&$message) {
         );
         if (module_exists('webform_confirmations')) {
           // deferred notification ala Paypal WPS
-          $cache_time = '+10 minutes';
+          $cache_time = '+1 hour';
           $expire = strtotime($cache_time, time());
           cache_set('wrapper_mail_queue_'. $nid . '_' . $eid. '_' . $sid, array('params' => $params), 'cache_webform_confirm', $expire);
         }
