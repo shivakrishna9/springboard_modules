@@ -567,9 +567,9 @@ function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
   $form['#calling_module'] = 'fundraiser_webform';
   fundraiser_display_form_fields('fundraiser_webform', $form, $form_state);
   $submit_text = !empty($node->webform['submit_text']) ? strtoupper($node->webform['submit_text']) : 'SUBMIT';
-  $text = variable_get('fundraiser_submit_text', array());
-  if(isset($text[$node->nid])) {
-    $message = $text[$node->nid];
+  $text = db_query('SELECT nid, message FROM {fundraiser_webform_messages} f WHERE f.nid = :nid', array(':nid' => $form['#node']->nid))->fetchAssoc();
+  if ($text['nid']) {
+    $message =  $text['message'];
   }
   else {
     $message = t('By clicking %submit_text your credit card will be securely processed.');
@@ -1245,26 +1245,38 @@ function fundraiser_webform_form_webform_configure_form_alter(&$form, &$form_sta
   //custom help text for submit button
   if(fundraiser_is_donation_type($form['#node']->type)) {
     if (isset($form['#node']->nid)) {
-      $text = variable_get('fundraiser_submit_text');
-      if (isset($text[$form['#node']->nid])) {
-        $value =  $text[$form['#node']->nid];
+      $text = db_query('SELECT nid, message FROM {fundraiser_webform_messages} f WHERE f.nid = :nid', array(':nid' => $form['#node']->nid))->fetchAssoc();
+      if ($text['nid']) {
+        $message =  $text['message'];
       }
     }
     $form['advanced']['submit_description'] = array(
       '#type' => 'textarea',
       '#title' => t('Custom help text for the submit button.'),
       '#description' => t('Enter help text that appears above the submit button. The token "%submit_text" may be used get the submit button\'s text value.' ),
-      '#default_value' => isset($value) ? $value : t('By clicking %submit_text your credit card will be securely processed.'),
+      '#default_value' => isset($message) ? $message : t('By clicking %submit_text your credit card will be securely processed.'),
     );
     $form['#submit'][] = 'fundraiser_webform_submit_text_submit';
   }
 }
 
 function fundraiser_webform_submit_text_submit(&$form, &$form_state) {
-    if (isset($form_state['values']['submit_description'])) {
-      variable_set('fundraiser_submit_text', array($form['#node']->nid => $form_state['values']['submit_description']));
+  if (isset($form_state['values']['submit_description'])) {
+    $fields = array('nid' => $form['#node']->nid, 'message' => $form_state['values']['submit_description']);
+    $nid = db_query('SELECT nid FROM {fundraiser_webform_messages} f WHERE f.nid = :nid', array(':nid' => $form['#node']->nid))->fetchField();
+    if (!$nid) {
+      db_insert('fundraiser_webform_messages')->fields($fields)->execute();
     }
     else {
-      variable_del('fundraiser_submit_text', array($form['#node']->nid));
+      db_update('fundraiser_webform_messages')
+      ->fields($fields)
+      ->condition('nid',$form['#node']->nid, '=')
+      ->execute();
     }
   }
+}
+
+function fundraiser_webform_node_delete($node) {
+  db_delete('fundraiser_webform_messages')->condition('nid', $node->nid)->execute();
+}
+
