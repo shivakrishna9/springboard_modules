@@ -363,19 +363,22 @@ function _sustainer_import_create_master_order($record, $account, &$errors) {
 
   $donation = _sustainer_import_build_donation_object($record, $account, $node);
 
-  // Before we can save the donation record we need to get an updated SIM from
-  // Authorize.net. If for any reason we can't get this value there is no point in
-  // importing the donation record as we won't be able to charge until the SIM is updated.
-  $payment_method = commerce_payment_method_instance_load($donation->gateway);
-
-  // get updated sim
-  $sim = _sustainer_import_update_authnet_sim($payment_method, $record['payment_details']['gateway_token']);
-  if ($sim) {
-    sustainer_import_log_value('sim', $sim, 'Retrieved payment gateway token from authorize.net');
-  }
-  else {
-    $errors[] = t('Unable to update payment gateway token. Import halted.');
-    return FALSE;
+  // Authorize.net sustainers need updated SIMs.
+  if ($record['payment_details']['gateway_type'] == 'Authorize.net') {
+    // Before we can save the donation record we need to get an updated SIM from
+    // Authorize.net. If for any reason we can't get this value there is no point in
+    // importing the donation record as we won't be able to charge until the SIM is updated.
+    $payment_method = commerce_payment_method_instance_load($donation->gateway);
+  
+    // get updated sim
+    $sim = _sustainer_import_update_authnet_sim($payment_method, $record['payment_details']['gateway_token']);
+    if ($sim) {
+      sustainer_import_log_value('sim', $sim, 'Retrieved payment gateway token from authorize.net');
+    }
+    else {
+      $errors[] = t('Unable to update payment gateway token. Import halted.');
+      return FALSE;
+    }
   }
 
 
