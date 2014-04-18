@@ -51,25 +51,3 @@ function page_wrappers_context_page_reaction() {
     $plugin->execute();
   }
 }
-
-
-/**
- * Find and load the current node
- *
- * @return Object
- *    A fully loaded node if this is a page request for node, else false
- */
-function _page_wrappers_context_page_node() {
-  // get out of here if we're not on a node page, or if we're on the node edit page
-  if (arg(0) != 'node' || (arg(0) == 'node' && arg(2) == 'edit')) {
-    return;
-  }
-  $node = NULL;
-  //if this is a node page load it up, also cover webform 'done' page
-  if (arg(0) == 'node' && is_numeric(arg(1)) && (arg(2) == 'done' || !arg(2))) {
-    $node = node_load(arg(1));
-    return $node;
-  }
-
-  return FALSE;
-}
