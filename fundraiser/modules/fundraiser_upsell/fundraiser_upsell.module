@@ -949,7 +949,12 @@ function fundraiser_upsell_modal_link($node, $did) {
         'animationSpeed' => 'slow',
         'closeText' => '',
         'closeImage' => '',
-        'loadingText' => t('Loading'),
+        'loadingText' => t('Please Wait'),
+        'throbber' => theme('image', array(
+          'path' => ctools_image_path('throbber.gif', 'fundraiser_upsell'),
+          'title' => t('Loading...'),
+          'alt' => t('Loading'),
+        )),
       ),
     ), 'setting');
 

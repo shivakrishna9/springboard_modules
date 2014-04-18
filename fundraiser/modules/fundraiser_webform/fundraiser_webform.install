@@ -5,6 +5,31 @@
  */
 
 /**
+ * Implements hook_schema().
+ */
+function fundraiser_webform_schema() {
+  $schema['fundraiser_webform_messages'] = array(
+    'description' => 'Stores the description text for submit buttons.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'Fundraiser node.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'message' => array(
+        'description' => 'The description for this button.',
+        'type' => 'text',
+        'not null' => TRUE,
+        'size' => 'big',
+      ),
+    ),
+    'primary key' => array('nid'),
+  );
+  return $schema;
+}
+
+/**
  * Implements hook_install().
  */
 function fundraiser_webform_install() {
@@ -68,4 +93,30 @@ function fundraiser_webform_disable() {
       }
     }
   }
+}
+
+/**
+ * Add table to store custom descriptions for submit buttons.
+ */
+function fundraiser_webform_update_7001() {
+  $schema_name = 'fundraiser_webform_messages';
+  $schema['fundraiser_webform_messages'] = array(
+    'description' => 'Stores the description text for submit buttons.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'Fundraiser node.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'message' => array(
+        'description' => 'The description for this button.',
+        'type' => 'text',
+        'not null' => TRUE,
+        'size' => 'big',
+      ),
+    ),
+    'primary key' => array('nid'),
+  );
+  db_create_table($schema_name, $schema[$schema_name]);
 }

@@ -156,6 +156,16 @@ function fundraiser_date_mode_fundraiser_sustainers_recurring_next_charge_alter(
 }
 
 /**
+ * Implements hook_fundraiser_donation_delete().
+ */
+function fundraiser_date_mode_fundraiser_donation_delete($donation) {
+  db_delete('fundraiser_date_mode_dates')
+  ->condition('master_did', $donation->master_did)
+  ->condition('did', $donation->did)
+  ->execute();
+}
+
+/**
  * Return a count of total pending future sustainer orders.
  */
 function fundraiser_date_mode_max_records() {

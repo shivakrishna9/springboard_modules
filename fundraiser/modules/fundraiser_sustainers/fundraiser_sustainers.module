@@ -418,6 +418,28 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
         }
       }
 
+      // Billing information has been modified for this donation series.
+      if (isset($donation->update_billing) && $donation->update_billing) {
+        // Truncate card number.
+        if (isset($fields['CC_Last_4__c'])) {
+          $fields['CC_Last_4__c'] = substr($fields['CC_Last_4__c'],-4,4);
+        }
+      }
+
+      // Corrects the StageName to whatever value is appropriate based on mapped stages.
+      if (isset($donation->donation_cancelled) && $donation->donation_cancelled) {
+        if (isset($fields['StageName'])) {
+          $stagename = 'Withdrawn';
+          if (module_exists('salesforce_donation')) {
+            $mapped_stages = array_flip(variable_get('salesforce_donation_mapped_stages', salesforce_donation_default_stage_map()));
+            if (isset($mapped_stages['cancelled'])) {
+              $stagename = $mapped_stages['cancelled'];
+            }
+          }
+
+          $fields['StageName'] = $stagename;
+        }
+      }
     }
   }
 }
@@ -1131,6 +1153,12 @@ function fundraiser_sustainers_donation_amount_form_submit($form, &$form_state) 
       '@date' => format_date(strtotime('now')),
       '@username' => $username,
     ));
+
+    // update sf queue.
+    if (module_exists('salesforce_genmap')) {
+      salesforce_genmap_send_object_to_queue('salesforce_donation', 'update',
+        $donation->node, $donation->did, $donation, 'donation');
+    }
   }
   drupal_set_message(t('The amount of all future donations has been updated to @amount.', array('@amount' => $amount)));
 }
@@ -1360,6 +1388,12 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
       array('@date' => format_date(strtotime('now')), '@username' => $username));
     watchdog('fundraiser_sustainers', 'Billing information updated for #@did.',
       array('@did' => $donation->did));
+
+    // Update salesforce.
+    if (module_exists('salesforce_genmap')) {
+      salesforce_genmap_send_object_to_queue('salesforce_donation', 'update',
+        $donation->node, $donation->did, $donation, 'donation');
+    }
   }
   // Load the master donation.
   $master_donation = fundraiser_donation_get_donation($master_did);
@@ -1376,7 +1410,7 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
         // Set master donation amount to next recurring amount, so if we've updated amounts we get the right one.
         $master_donation->donation['amount'] = $donation->donation['amount'];
         // Create new orders.
-        _fundraiser_sustainers_create_future_orders($master_donation, $expires['month'], $expires['year'], $source_donation);
+        _fundraiser_sustainers_create_future_orders($master_donation, $expires['month'], $expires['year'], $source_donation, $master_donation->recurring->next_charge);
       }
     }
   }
@@ -1419,6 +1453,7 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
   $create_limit = variable_get('fundraiser_sustainers_create_limit', 50);
   // Get existing donations, if they exist.
   $existing_recurring = _fundraiser_sustainers_get_donations_recurr_by_masterdid($donation->did);
+
   unset($existing_recurring[0]); // 0 is the master, we don't need to count it.
   while ($processed_months < $months && $processed_months < $create_limit) {
     $processed_months++;
@@ -1445,12 +1480,12 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
       );
 
       $next_charge = fundraiser_sustainers_get_next_charge_time($previous_charge, $context);
-      $previous_charge = $next_charge;
 
       fundraiser_donation_comment($new_donation, 'Sustainer donation scheduled to be charged at @next_charge',
         array('@next_charge' => format_date($next_charge)));
       // After this, the donation did and donation data is set.
-      // The new donation object, with new did, needs to be saved to recurring so we can grab it later.
+      // The new donation object, with new did, needs to be saved to recurring
+      // so we can grab it later.
       $recurring_donation = array(
         'master_did' => $donation->did,
         'did' => $new_donation->did,
@@ -1467,20 +1502,33 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
       }
     }
     else {
-      // Unset this from the existing recurring.
-      // By the time this loop is done, only recurring outside of our range wills till be in the set.
-      unset($existing_recurring[$processed_months]); // This donation existed already, mark it off.
+      // Unset this from the existing recurring. By the time this loop is done,
+      // only recurring orders outside of our range will still be in the set.
+      unset($existing_recurring[$processed_months]);
+      // If an existing recurring order is changed to use a card with a later
+      // expiration than the original card, we will need to add orders to the
+      // series. Iterating $previous_charge by a month for each existing order
+      // in the series keeps it in sync with the month as we advance through
+      // the existing orders.
+      $previous_charge = strtotime('+1 month', $previous_charge);
     }
   }
 
   // Done with the loop, everything has been created that needs to be created.
-  // But now we need to remove anything that existed in the set beyond our expiration date.
+  // But now we need to remove anything that existed in the set beyond our
+  // expiration date.
   global $user;
   foreach ($existing_recurring as $key => $recurring) {
     $this_donation = fundraiser_donation_get_donation($recurring->did);
     // Cancel the donation with an informative message.
     watchdog('fundraiser', 'Donation @id was deleted by @user while updating the card expiration date.',
       array('@id' => $donation->did, '@user' => $user->name), WATCHDOG_DEBUG, NULL);
+     // Requeue with cancelled flag, the fields alter hook should then update
+     // the StageName to the appropriate value based on current stage mapping.
+    $this_donation->donation_cancelled = TRUE;
+    if (module_exists('salesforce_genmap')) {
+      salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $this_donation->node, $this_donation->did, $this_donation, 'donation');
+    }
     fundraiser_donation_delete($this_donation);
   }
 }
@@ -1499,15 +1547,15 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
  * @return int
  *   The timestamp of when to make a next charge.
  */
-function fundraiser_sustainers_get_next_charge_time($time = NULL, $context = array()) {
+function fundraiser_sustainers_get_next_charge_time(&$time = NULL, $context = array()) {
   if (is_null($time)) {
     $time = strtotime('now');
   }
 
   $next_charge = strtotime('+1 month', $time);
   // Allow other modules to adjust next_charge as needed.
+  $time = $next_charge;
   drupal_alter('fundraiser_sustainers_recurring_next_charge', $next_charge, $context);
-
   return $next_charge;
 }
 
