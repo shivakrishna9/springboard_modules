@@ -832,7 +832,7 @@ function springboard_views_views_default_views() {
     6 => 0,
     7 => 0,
   );
-  $handler->display->display_options['path'] = 'admin/springboard/forms/webforms';
+  $handler->display->display_options['path'] = 'springboard/forms/webforms';
   $handler->display->display_options['menu']['type'] = 'tab';
   $handler->display->display_options['menu']['title'] = 'Webforms';
   $handler->display->display_options['menu']['description'] = 'View and edit all the available webforms on your site.';
@@ -1074,7 +1074,7 @@ function springboard_views_views_default_views() {
     7 => 0,
     8 => 0,
   );
-  $handler->display->display_options['path'] = 'admin/springboard/forms/donations';
+  $handler->display->display_options['path'] = 'springboard/forms/donations';
   $handler->display->display_options['menu']['type'] = 'tab';
   $handler->display->display_options['menu']['title'] = 'Donations';
   $handler->display->display_options['menu']['description'] = 'View and edit all the available donations on your site.';
@@ -1608,7 +1608,7 @@ function springboard_views_views_default_views() {
 
   /* Display: Page */
   $handler = $view -> new_display('page', 'Page', 'page');
-  $handler -> display -> display_options['path'] = 'admin/springboard/templates/page-templates';
+  $handler -> display -> display_options['path'] = 'springboard/templates/page-templates';
 
   /* Display: Block */
   $handler = $view -> new_display('block', 'Block', 'block_1');
@@ -1623,7 +1623,7 @@ function springboard_views_views_default_views() {
   $handler -> display -> display_options['footer']['area']['id'] = 'area';
   $handler -> display -> display_options['footer']['area']['table'] = 'views';
   $handler -> display -> display_options['footer']['area']['field'] = 'area';
-  $handler -> display -> display_options['footer']['area']['content'] = '<a href="/admin/springboard/templates/page-templates" class="button">View All Page Templates</a>';
+  $handler -> display -> display_options['footer']['area']['content'] = '<a href="/springboard/templates/page-templates" class="button">View All Page Templates</a>';
   $handler -> display -> display_options['footer']['area']['format'] = 'filtered_html';
   $views[$view -> name] = $view;
 
@@ -1784,7 +1784,7 @@ function springboard_views_views_default_views() {
 
   /* Display: Page */
   $handler = $view -> new_display('page', 'Page', 'page');
-  $handler -> display -> display_options['path'] = 'admin/springboard/templates/email-templates';
+  $handler -> display -> display_options['path'] = 'springboard/templates/email-templates';
 
   /* Display: Block */
   $handler = $view -> new_display('block', 'Block', 'block_1');
@@ -1799,7 +1799,7 @@ function springboard_views_views_default_views() {
   $handler -> display -> display_options['footer']['area']['id'] = 'area';
   $handler -> display -> display_options['footer']['area']['table'] = 'views';
   $handler -> display -> display_options['footer']['area']['field'] = 'area';
-  $handler -> display -> display_options['footer']['area']['content'] = '<a href="/admin/springboard/templates/email-templates" class="button">View All Email Templates</a>';
+  $handler -> display -> display_options['footer']['area']['content'] = '<a href="/springboard/templates/email-templates" class="button">View All Email Templates</a>';
   $handler -> display -> display_options['footer']['area']['format'] = 'filtered_html';
   $views[$view -> name] = $view;
 
@@ -1919,8 +1919,8 @@ function springboard_views_views_default_views() {
   $handler -> display -> display_options['filters']['type']['expose']['multiple'] = TRUE;
 
   /* Display: Page */
-  $handler = $view -> new_display('page', 'Page', 'page');
-  $handler -> display -> display_options['path'] = 'admin/springboard/reports/dblog';
+  $handler = $view->new_display('page', 'Page', 'page');
+  $handler->display->display_options['path'] = 'springboard/reports/dblog';
 
   /* Display: Springboard Dashboard Log */
   $handler = $view -> new_display('block', 'Springboard Dashboard Log', 'block_1');
@@ -2123,14 +2123,14 @@ function springboard_views_views_default_views() {
   $handler -> display -> display_options['filters']['message']['value'] = 'SOAP-ERROR';
 
   /* Display: Page */
-  $handler = $view -> new_display('page', 'Page', 'page');
-  $handler -> display -> display_options['path'] = 'admin/springboard/reports/salesforce-soap-errors';
-  $handler -> display -> display_options['menu']['type'] = 'normal';
-  $handler -> display -> display_options['menu']['title'] = 'Unsynched Errors';
-  $handler -> display -> display_options['menu']['weight'] = '0';
-  $handler -> display -> display_options['menu']['name'] = 'management';
-  $handler -> display -> display_options['menu']['context'] = 0;
-  $handler -> display -> display_options['menu']['context_only_inline'] = 0;
+  $handler = $view->new_display('page', 'Page', 'page');
+  $handler->display->display_options['path'] = 'springboard/reports/salesforce-soap-errors';
+  $handler->display->display_options['menu']['type'] = 'normal';
+  $handler->display->display_options['menu']['title'] = 'Unsynched Errors';
+  $handler->display->display_options['menu']['weight'] = '0';
+  $handler->display->display_options['menu']['name'] = 'management';
+  $handler->display->display_options['menu']['context'] = 0;
+  $handler->display->display_options['menu']['context_only_inline'] = 0;
 
   /* Display: Unsynched Errors Block */
   $handler = $view -> new_display('block', 'Unsynched Errors Block', 'block');

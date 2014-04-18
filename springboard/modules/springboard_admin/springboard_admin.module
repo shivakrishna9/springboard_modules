@@ -11,35 +11,119 @@ include_once 'springboard_admin.menu.inc';
  */
 function springboard_admin_menu() {
   $items = array();
-  $items['admin/springboard/templates'] = array(
+  $items['springboard/templates'] = array(
     'title' => 'Templates',
     'type' => MENU_NORMAL_ITEM,
     'access callback' => 'springboard_admin_menu_access',
-    'access arguments' => array('admin/springboard/templates'),
+    'access arguments' => array('springboard/templates'),
     'page callback' => 'springboard_admin_template_page',
   );
-  $items['admin/springboard/results'] = array(
+  $items['springboard/results'] = array(
     'title' => 'Results',
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('access springboard dashboard'),
     'page callback' => 'springboard_admin_aggregate_links_page',
-    'page arguments' => array('admin/springboard/results'),
-  );
-  $items['admin/springboard/options'] = array(
+    'page arguments' => array('springboard/results'),
+   );
+  $items['springboard/options'] = array(
     'title' => 'Options',
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('access springboard dashboard'),
     'page callback' => 'springboard_admin_aggregate_links_page',
-    'page arguments' => array('admin/springboard/options'),
+    'page arguments' => array('springboard/options'),
   );
-  $items['admin/springboard/tools'] = array(
+  $items['springboard/tools'] = array(
     'title' => 'Other Tools',
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('access springboard dashboard'),
     'page callback' => 'springboard_admin_aggregate_links_page',
-    'page arguments' => array('admin/springboard/tools'),
+    'page arguments' => array('springboard/tools'),
+  );
+  $items['user/%/logout'] = array(
+    'title' => 'Logout',
+    'type' => MENU_LOCAL_TASK,
+    'access arguments' => array('access content'),
+    'page callback' => 'drupal_goto',
+    'page arguments' => array('user/logout'),
   );
   return $items;
+}
+
+function springboard_admin_admin_menu_output_build(&$content) {
+  // Add new top-level item to the menu.
+  if (isset($content['menu'])) {
+    $content['menu']['springboard'] = array(
+      '#title' => t('Springboard'),
+      '#attributes' => array('class' => array('springboard_admin-springboard')),
+      '#href' => 'springboard',
+      '#options' => array(
+        'query' => drupal_get_destination(),
+        // Apply a class on the link (anchor).
+        'attributes' => array('class' => array('myitem-link-anchor')),
+      ),
+      // #weight controls the order of links in the resulting item list.
+      '#weight' => 50,
+    );
+  $sbadmin_menu = menu_tree('springboard_admin_menu');
+  $content['menu']['springboard'] += springboard_admin_build_admin_menu_subnav($sbadmin_menu);
+  }
+}
+
+function springboard_admin_build_admin_menu_subnav($items) {
+  $nav = array();
+  foreach ($items as $key => $item) {
+    if (!preg_match('/^#.*$/', $key)) {
+      $nav[$item['#href']] = springboard_admin_build_admin_menu_item($item);
+      if (count($item['#below']) > 0) {
+        $nav[$item['#href']] += springboard_admin_build_admin_menu_subnav($item['#below']);
+      }
+    }
+  }
+  return $nav;
+}
+
+function springboard_admin_build_admin_menu_item($item) {
+  return array(
+    '#title' => $item['#title'],
+    '#href' => $item['#href'],
+    '#options' => $item['#localized_options'],
+    '#weight' => isset($item['#original_link']['#weight']) ? $item['#original_link']['#weight'] : 0,
+  );
+}
+
+function springboard_admin_admin_menu_output_alter(&$content) {
+  // remove lower-level springboard menu items from admin menu
+    foreach ($content['menu'] as $key => $item) {
+      if (preg_match('/^springboard\/.*$/', $key)) {
+        unset($content['menu'][$key]);
+      }
+    }
+}
+
+/**
+ * Implements hook_admin_paths().
+ */
+function springboard_admin_admin_paths() {
+  return array(
+    'springboard/templates' => TRUE,
+    'springboard/results' => TRUE,
+    'springboard/options' => TRUE,
+    'springboard/tools' => TRUE,
+  );
+}
+
+/**
+ * Implements hook_menu_alter().
+ *
+ * Redirects a user role to admin/springboard if it is given the Springboard
+ * User Experience option in Springboard Settings.
+ */
+function springboard_admin_menu_alter(&$items) {
+  global $user;
+  if (springboard_admin_user_gets_sbux($user)) {
+    $items['admin']['page callback'] = 'drupal_goto';
+    $items['admin']['page arguments'] = array('admin/springboard');
+  }
 }
 
 /**
@@ -106,8 +190,6 @@ function springboard_drupal_path_validate(&$form, &$form_state) {
 }
 
 /**
- * Submit function to update the org admin link.
- *
  * Submit function to update the configurable link to the organization website
  * in the springboard_admin menu.
  *
@@ -134,18 +216,32 @@ function springboard_drupal_path_submit(&$form, &$form_state) {
  */
 function springboard_admin_user_login(&$edit, $account) {
   if (!isset($_POST['form_id']) || $_POST['form_id'] != 'user_pass_reset') {
-    $available_roles = user_roles(TRUE, 'access springboard dashboard');
-    $redirect_roles = variable_get('springboard_user_experience', array_keys($available_roles));
-    // Check if the user has ones of the roles that gets redirected
-    // to the Sprinboard dashboard.
-    foreach ($account->roles as $rid => $assigned_role) {
-      // If any role matches, change the redirect and end the function.
-      if ($assigned_role && in_array($rid, $redirect_roles)) {
-        $edit['redirect'] = 'admin/springboard';
-        return;
-      }
+    if (springboard_admin_user_gets_sbux($account)) {
+      $edit['redirect'] = 'admin/springboard';
     }
   }
+}
+
+/**
+ * Helper Function
+ * Checks if a user has a role that enforces the Springboard User Experieince
+ * as configured in the Springboard Settings.
+ *
+ * @return Boolean
+ * True if the user does get the SBUX.
+ */
+function springboard_admin_user_gets_sbux($account) {
+  $available_roles = user_roles(TRUE, 'access springboard dashboard');
+  $redirect_roles = variable_get('springboard_user_experience', array_keys($available_roles));
+  // Check if the user has ones of the roles that gets redirected to the
+  // Sprinboard dashboard
+  foreach ($account->roles as $rid => $assigned_role) {
+    // If any role matches, change the redirect and end the function.
+    if ($assigned_role && in_array($rid, $redirect_roles)) {
+      return TRUE;
+    }
+  }
+  return FALSE;
 }
 
 /**
@@ -200,7 +296,7 @@ function springboard_admin_custom_theme() {
  */
 function springboard_admin_menu_access($path) {
   switch ($path) {
-    case 'admin/springboard/templates':
+    case 'springboard/templates':
       if (user_access('edit any page_wrapper content') || user_access('edit any email_wrapper content')) {
         return TRUE;
       }
@@ -224,24 +320,24 @@ function springboard_admin_template_page() {
 
   // Load Page Templates view.
   $view = views_get_view('sbv_page_templates');
-  $view->set_display('block_1');
-  $view->set_arguments(array());
-  $view->pre_execute();
-  $view->execute();
-  if ($view && $view->access('block_1') && !empty($view->result)) {
-    $output .= '<h2>' . $view->get_title('block_1') . '</h2>';
-    $output .= $view->render();
+  $view -> set_display('block_1');
+  $view -> set_arguments(array());
+  $view -> pre_execute();
+  $view -> execute();
+  if ($view && $view -> access('block_1') && !empty($view -> result)) {
+    $output .= '<h2>' . $view -> get_title('block_1') . '</h2>';
+    $output .= $view -> render();
   }
 
   // Load Email Templates view.
   $view = views_get_view('sbv_email_templates');
-  $view->set_display('block_1');
-  $view->set_arguments(array());
-  $view->pre_execute();
-  $view->execute();
-  if ($view && $view->access('block_1') && !empty($view->result)) {
-    $output .= '<h2>' . $view->get_title('block_1') . '</h2>';
-    $output .= $view->render();
+  $view -> set_display('block_1');
+  $view -> set_arguments(array());
+  $view -> pre_execute();
+  $view -> execute();
+  if ($view && $view -> access('block_1') && !empty($view -> result)) {
+    $output .= '<h2>' . $view -> get_title('block_1') . '</h2>';
+    $output .= $view -> render();
   }
 
   return $output;
@@ -285,9 +381,24 @@ function springboard_admin_aggregate_links_page($path) {
  * confirmation form.
  */
 function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
-  if ($form_id == 'node_delete_confirm') {
-    $form['actions']['delete']['#submit'][] = 'springboard_admin_node_delete';
+  switch($form_id) {  
+    case 'clone_node_confirm' :
+      $form['#submit'][] = 'springboard_node_clone_form_submit';
+    break;
+    case 'node_delete_confirm' :
+      $form['actions']['delete']['#submit'][] = 'springboard_admin_node_delete';
+    break;
   }
+}
+
+/**
+ * Submit handler for the "clone" action on the node clone confirmation form.
+ * 
+ * Redirects users to the node edit page for the newly created node.
+ */
+function springboard_node_clone_form_submit(&$form, &$form_state) {
+  $_GET['destination'] = $form_state['redirect'];
+  return;
 }
 
 /**
@@ -298,15 +409,9 @@ function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
  */
 function springboard_admin_node_delete($form) {
   global $user;
-  $redirect_roles = variable_get('springboard_user_experience', array());
-  // Check if the user has one of the roles that gets redirected to
-  // the Sprinboard dashboard.
-  foreach ($user->roles as $rid => $assigned_role) {
-    // If any role matches, change the redirect.
-    if ($assigned_role && in_array($rid, $redirect_roles)) {
-      $form_state['redirect'] = 'admin/springboard';
-      $_GET['destination'] = url('admin/springboard');
-      return;
-    }
+  if (springboard_admin_user_gets_sbux($user)) {
+    $form_state['redirect'] = 'admin/springboard';
+    $_GET['destination'] = url('admin/springboard');
+    return;
   }
 }
