@@ -351,6 +351,8 @@ function _sustainer_import_validate_master_order($record, &$errors) {
  * @return stdClass
  */
 function _sustainer_import_create_master_order($record, $account, &$errors) {
+  static $country_abbreviations;
+  
   // create master order
   $gateway_map = variable_get('sustainer_import_gateway_map_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $record['payment_details']['gateway_type']), array());
 
@@ -383,6 +385,14 @@ function _sustainer_import_create_master_order($record, $account, &$errors) {
     }
   }
 
+  // Make sure the donation's country is a two-character abbreviation
+  if (!empty($donation->donation['country']) && (strlen($donation->donation['country']) > 2)) {
+    if (!isset($country_abbreviations)) {
+      include_once DRUPAL_ROOT . '/includes/locale.inc';
+      $country_abbreviations = array_flip(country_get_list());
+    }
+    $donation->donation['country'] = $country_abbreviations[ $donation->donation['country'] ];
+  }
 
   fundraiser_donation_create($donation);
   sustainer_import_log_value('did', $donation->did, 'Created the fundraiser master donation');
