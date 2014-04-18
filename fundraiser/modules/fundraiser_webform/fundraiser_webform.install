@@ -96,7 +96,7 @@ function fundraiser_webform_disable() {
 }
 
 /**
- * Add table to store custom descritpions for submit buttons.
+ * Add table to store custom descriptions for submit buttons.
  */
 function fundraiser_webform_update_7001() {
   $schema_name = 'fundraiser_webform_messages';
