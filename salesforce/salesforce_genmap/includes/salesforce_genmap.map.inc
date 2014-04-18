@@ -79,7 +79,7 @@ function salesforce_genmap_map_form($form, &$form_state, $node, $module) {
     '#node' => $node,
     '#module' => $module,
     '#prefix' => '<div id="salesforce-generic-map-ajax-sf-object">',
-    '#sufix' => '</div>',
+    '#suffix' => '</div>',
   );
 
   $form['salesforce_object_info'] = array(
