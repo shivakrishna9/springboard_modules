@@ -28,12 +28,13 @@ function sustainer_import_queue() {
   );
   $gateway_types = sustainer_import_queue_gateway_types();
   foreach ($gateway_types as $gateway_type) {
+    $gateway_type = preg_replace('/[^a-zA-Z0-9_]/', '_', $gateway_type);
     $defaults = variable_get('sustainer_import_gateway_map_' . $gateway_type, array());
     $form['gateway_map'][$gateway_type] = array(
       '#type' => 'fieldset',
       '#title' => t('Map ') . $gateway_type,
     );
-      $form['gateway_map'][$gateway_type][$gateway_type . '_id'] = array(
+    $form['gateway_map'][$gateway_type][$gateway_type . '_id'] = array(
       '#type' => 'select',
       '#title' => t('Select a payment gateway for this type'),
       '#options' => array_merge(array('0' => '- select -'), sustainer_import_list_payment_gateways()),
@@ -163,6 +164,7 @@ function sustainer_import_save_gateway_map($form, $form_state) {
   $gateway_types = sustainer_import_queue_gateway_types();
 
   foreach ($gateway_types as $gateway_type) {
+    $gateway_type = preg_replace('/[^a-zA-Z0-9_]/', '_', $gateway_type);
     $settings['gateway_id'] = $form_state['values'][$gateway_type . '_id'];
     $settings['nid'] = $form_state['values'][$gateway_type . '_nid'];
 
@@ -350,7 +352,7 @@ function _sustainer_import_validate_master_order($record, &$errors) {
  */
 function _sustainer_import_create_master_order($record, $account, &$errors) {
   // create master order
-  $gateway_map = variable_get('sustainer_import_gateway_map_' . $record['payment_details']['gateway_type'], array());
+  $gateway_map = variable_get('sustainer_import_gateway_map_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $record['payment_details']['gateway_type']), array());
 
   if (!empty($gateway_map['nid']) && is_numeric($gateway_map['nid'])) {
     $node = node_load($gateway_map['nid']);
@@ -680,7 +682,7 @@ function _sustainer_import_build_donation_object($record, $account, $node) {
 
   $donation->nid = $node->nid;
   $donation->node = $node;
-  $gateway_map = variable_get('sustainer_import_gateway_map_' . $record['payment_details']['gateway_type'], array());
+  $gateway_map = variable_get('sustainer_import_gateway_map_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $record['payment_details']['gateway_type']), array());
 
 
   // TODO: throw error if gateway id is not available.
