@@ -718,3 +718,20 @@ function springboard_p2p_set_redirect($form, &$form_state) {
     }
   }
 }
+
+/**
+ * Determines if a p2p campaign node is private (approval required).
+ *
+ * @param object $campaign
+ *   The campaign node object.
+ *
+ * @return bool
+ *   TRUE if the campaign is private.
+ */
+function springboard_p2p_campaign_is_private($campaign) {
+  if (!empty($campaign->field_p2p_campaigns_approval[$campaign->language][0]['value'])) {
+    return (bool) $campaign->field_p2p_campaigns_approval[$campaign->language][0]['value'];
+  }
+
+  return FALSE;
+}

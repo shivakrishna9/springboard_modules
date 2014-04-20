@@ -416,23 +416,6 @@ function springboard_p2p_create_personal_campaign($campaign) {
 }
 
 /**
- * Determines if a p2p campaign node is private (approval required).
- *
- * @param object $campaign
- *   The campaign node object.
- *
- * @return bool
- *   TRUE if the campaign is private.
- */
-function springboard_p2p_campaign_is_private($campaign) {
-  if (!empty($campaign->field_p2p_campaigns_approval[$campaign->language][0]['value'])) {
-    return (bool) $campaign->field_p2p_campaigns_approval[$campaign->language][0]['value'];
-  }
-
-  return FALSE;
-}
-
-/**
  * Implements hook_mail().
  */
 function springboard_p2p_mail($key, &$message, $params) {
