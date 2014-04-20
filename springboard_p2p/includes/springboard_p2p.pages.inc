@@ -224,37 +224,6 @@ function springboard_p2p_user_register_post_validate(&$form, &$form_state) {
 }
 
 /**
- * Submit handler.
- *
- * Saves the campaign approval status and changes the redirect.
- */
-function springboard_p2p_set_redirect($form, &$form_state) {
-  // Default destination if nothing else works.
-  $form_state['redirect'] = 'springboard_p2p/dashboard/' . $form_state['uid'];
-
-  if (!empty($form_state['values']['springboard_p2p_campaign_nid'])) {
-    $campaign_id = $form_state['values']['springboard_p2p_campaign_nid'];
-    $campaign = node_load($campaign_id);
-    if ($campaign->type == 'p2p_campaign') {
-      $private = springboard_p2p_campaign_is_private($campaign);
-
-      $approval = new SpringbaordP2pPrivateCampaignApproval($form_state['uid'], $campaign_id);
-
-      if ($private) {
-        $approval->request();
-        drupal_set_message('You have been added to the approval queue for ' . $campaign->title);
-        $form_state['redirect'] = 'springboard_p2p/dashboard/' . $form_state['uid'];
-      }
-      else {
-        $approval->approve();
-        drupal_set_message('You can now create a personal campaign in ' . $campaign->title);
-        $form_state['redirect'] = 'springboard_p2p/development/create_personal_campaign' . $campaign_id;
-      }
-    }
-  }
-}
-
-/**
  * Forms api array for the existing user login form.
  */
 function springboard_p2p_existing_user_login_form($form, &$form_state) {
@@ -301,24 +270,6 @@ function springboard_p2p_existing_user_login_form($form, &$form_state) {
 }
 
 /**
- * Get only the reg fields that have been enabled in the p2p settings.
- *
- * @return array
- *   The enabled profile fields.
- */
-function springboard_p2p_get_enabled_registration_fields() {
-  $fields = variable_get('springboard_p2p_registration_fields', array());
-
-  foreach ($fields as $key => $field) {
-    if (!$field['enabled']) {
-      unset($fields[$key]);
-    }
-  }
-
-  return $fields;
-}
-
-/**
  * Page callback for the personal dashboard.
  *
  * @param object $user
@@ -333,62 +284,6 @@ function springboard_p2p_personal_dashboard($user) {
       '#markup' => '<h2>Personal dashboard for ' . $user->name . ' coming soon</h2>',
     ),
   );
-}
-
-/**
- * Gets a campaign ID from the URL.
- *
- * @return int|null
- *   The campaign ID, or NULL if one can't be found.
- */
-function springboard_p2p_get_campaign_id_from_request() {
-  if (isset($_GET['campaign']) && is_numeric($_GET['campaign'])) {
-    return $_GET['campaign'];
-  }
-
-  return NULL;
-}
-
-/**
- * Add the campaign ID value form element and submit handler to a form.
- *
- * The submit handler should happen last because it sets the redirect and should
- * override any other redirects.  So call this near the end of the form.
- *
- * @param array $form
- *   The form array to insert the element into.
- */
-function springboard_p2p_campaign_id_form_element(&$form) {
-  $form['springboard_p2p_campaign_nid'] = array(
-    '#type' => 'value',
-    '#value' => springboard_p2p_get_campaign_id_from_request(),
-  );
-
-  // This handler changes the redirect.
-  $form['#submit'][] = 'springboard_p2p_set_redirect';
-}
-
-/**
- * Make a registration field on the p2p register page required.
- *
- * The registration fields are nested and weird, so I try to do this in a very
- * general way to handle custom user profile fields.
- *
- * @param array $form
- *   The form array for the p2p register page.
- * @param string $field_name
- *   The name of the field to make required.
- */
-function springboard_p2p_make_registration_field_required(&$form, $field_name) {
-  $field_language = $form[$field_name]['#language'];
-  $form[$field_name][$field_language]['#required'] = TRUE;
-  $keys = element_children($form[$field_name][$field_language]);
-  foreach ($keys as $key) {
-    $form[$field_name][$field_language][$key]['#required'] = TRUE;
-    if (isset($form[$field_name][$field_language][$key]['value'])) {
-      $form[$field_name][$field_language][$key]['value']['#required'] = TRUE;
-    }
-  }
 }
 
 /**
@@ -454,7 +349,7 @@ function springboard_p2p_fb_page() {
   if (!springboard_p2p_user_is_registered_for_p2p($uid)) {
     springboard_p2p_register_user_for_p2p($uid);
 
-    if (springboard_p2p_complete_profile_entity_has_empty_required_fields('user', $user)) {
+    if (springboard_p2p_complete_profile_user_has_empty_required_fields($user)) {
       $redirect = springboard_p2p_complete_profile_get_redirect();
       drupal_goto($redirect['path'], $redirect['options']);
     }

@@ -21,22 +21,21 @@ function springboard_p2p_complete_profile_form($form, &$form_state, $account) {
   $langcode = function_exists('entity_language') ? entity_language('user', $form['#user']) : NULL;
   field_attach_form('user', $account, $form, $form_state, $langcode);
 
-  $instances = field_info_instances('user', 'user');
+  $required_fields = springboard_p2p_get_required_registration_fields();
   foreach (element_children($form) as $key) {
-    if (!isset($instances[$key])) {
-      $form[$key]['#access'] = FALSE;
-    }
-    else {
-      if (!empty($instances[$key]['required'])) {
-        // If the user has already filled out a value for this field, hide it.
-        if (!springboard_p2p_complete_profile_field_is_empty('user', $account, $key)) {
-          $form[$key]['#access'] = FALSE;
-        }
-      }
-      elseif (empty($instances[$key]['user_register_form'])) {
-        // Hide any fields not configured to show up on the registration form.
+    if (!empty($required_fields[$key])) {
+
+      // If the user has already filled out a value for this field, hide it.
+      if (!springboard_p2p_complete_profile_field_is_empty('user', $account, $key)) {
         $form[$key]['#access'] = FALSE;
       }
+      else {
+        springboard_p2p_make_registration_field_required($form, $key);
+        $form[$key]['#weight'] = $required_fields[$key]['weight'];
+      }
+    }
+    else {
+      $form[$key]['#access'] = FALSE;
     }
   }
 
@@ -54,6 +53,8 @@ function springboard_p2p_complete_profile_form($form, &$form_state, $account) {
   form_load_include($form_state, 'inc', 'user', 'user.pages');
   $form['#validate'][] = 'user_profile_form_validate';
   $form['#submit'][] = 'user_profile_form_submit';
+
+  springboard_p2p_campaign_id_form_element($form);
 
   return $form;
 }

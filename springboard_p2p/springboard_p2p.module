@@ -466,12 +466,10 @@ function springboard_p2p_format_percent($progress, $goal) {
 /**
  * Access handler for personal campaign pages.
  *
- * @todo Implement view own p2p personal dashboard access control.
- *
  * @see user_view_access($account)
  */
-function springboard_p2p_personal_dashboard_view_access($user) {
-  return TRUE;
+function springboard_p2p_personal_dashboard_view_access($account) {
+  return springboard_p2p_complete_profile_form_access($account);
 }
 
 /**
@@ -508,28 +506,27 @@ function springboard_p2p_complete_profile_form_access($account) {
 /**
  * Check if the entity has empty required fields.
  *
- * @param string $entity_type
- *   Usually 'user' for our purposes.
  * @param object $entity
  *   The user object.
  *
  * @return bool
- *   TRUE if the entity has empty fields that are required.
- *
- * @todo Modify this to check requireness using p2p settings instead of field
- *       settings.
+ *   TRUE if the user has empty fields that are required.
  */
-function springboard_p2p_complete_profile_entity_has_empty_required_fields($entity_type, $entity) {
+function springboard_p2p_complete_profile_user_has_empty_required_fields($entity) {
+  $entity_type = 'user';
+
   list(, , $bundle) = entity_extract_ids($entity_type, $entity);
   $instances = field_info_instances($entity_type, $bundle);
 
-  foreach ($instances as $instance) {
+  $required_fields = springboard_p2p_get_required_registration_fields();
+
+  foreach ($instances as $field_name => $instance) {
     // Only check required fields.
-    if (!empty($instance['required'])) {
+    if (!empty($required_fields[$field_name])) {
       // Check if the required field is empty.
       if (springboard_p2p_complete_profile_field_is_empty($entity_type, $entity, $instance['field_name'])) {
         // Check that the user can actually edit their missing field.
-        if (field_access('edit', field_info_field($instance['field_name']), $entity_type, $entity, $account)) {
+        if (field_access('edit', field_info_field($instance['field_name']), $entity_type, $entity, $entity)) {
           return TRUE;
         }
       }
@@ -585,4 +582,139 @@ function springboard_p2p_complete_profile_get_redirect() {
   $redirect['options']['query'] += $destination;
 
   return $redirect;
+}
+
+/**
+ * Get only the reg fields that have been enabled in the p2p settings.
+ *
+ * @return array
+ *   The enabled profile fields.
+ */
+function springboard_p2p_get_enabled_registration_fields() {
+  $fields = variable_get('springboard_p2p_registration_fields', array());
+
+  foreach ($fields as $key => $field) {
+    if (!$field['enabled']) {
+      unset($fields[$key]);
+    }
+  }
+
+  return $fields;
+}
+
+/**
+ * Get only the reg fields that are enabled and required in the p2p settings.
+ *
+ * @return array
+ *   The required profile fields.
+ */
+function springboard_p2p_get_required_registration_fields() {
+  $fields = springboard_p2p_get_enabled_registration_fields();
+
+  foreach ($fields as $key => $field) {
+    if (!$field['required']) {
+      unset($fields[$key]);
+    }
+  }
+
+  return $fields;
+}
+
+/**
+ * Make a registration field on the p2p register page required.
+ *
+ * The registration fields are nested and weird, so I try to do this in a very
+ * general way to handle custom user profile fields.
+ *
+ * @param array $form
+ *   The form array for the p2p register page.
+ * @param string $field_name
+ *   The name of the field to make required.
+ */
+function springboard_p2p_make_registration_field_required(&$form, $field_name) {
+  $field_language = $form[$field_name]['#language'];
+  $form[$field_name][$field_language]['#required'] = TRUE;
+  $keys = element_children($form[$field_name][$field_language]);
+  foreach ($keys as $key) {
+    $form[$field_name][$field_language][$key]['#required'] = TRUE;
+    if (isset($form[$field_name][$field_language][$key]['value'])) {
+      $form[$field_name][$field_language][$key]['value']['#required'] = TRUE;
+    }
+  }
+}
+
+/**
+ * Add the campaign ID value form element and submit handler to a form.
+ *
+ * The submit handler should happen last because it sets the redirect and should
+ * override any other redirects.  So call this near the end of the form.
+ *
+ * @param array $form
+ *   The form array to insert the element into.
+ */
+function springboard_p2p_campaign_id_form_element(&$form) {
+  $form['springboard_p2p_campaign_nid'] = array(
+    '#type' => 'value',
+    '#value' => springboard_p2p_get_campaign_id_from_request(),
+  );
+
+  // This handler changes the redirect.
+  $form['#submit'][] = 'springboard_p2p_set_redirect';
+}
+
+/**
+ * Gets a campaign ID from the URL.
+ *
+ * @return int|null
+ *   The campaign ID, or NULL if one can't be found.
+ */
+function springboard_p2p_get_campaign_id_from_request() {
+  if (isset($_GET['campaign']) && is_numeric($_GET['campaign'])) {
+    return $_GET['campaign'];
+  }
+
+  return NULL;
+}
+
+/**
+ * Submit handler.
+ *
+ * Saves the campaign approval status and changes the redirect.
+ */
+function springboard_p2p_set_redirect($form, &$form_state) {
+
+  if (!empty($form_state['uid'])) {
+    $uid = $form_state['uid'];
+  }
+  elseif (!empty($form_state['user'])) {
+    $uid = $form_state['user']->uid;
+  }
+  else {
+    // Bail!
+    return;
+  }
+
+  // Default destination if nothing else works.
+  $form_state['redirect'] = 'springboard_p2p/dashboard/' . $uid;
+
+  if (!empty($form_state['values']['springboard_p2p_campaign_nid'])) {
+    $campaign_id = $form_state['values']['springboard_p2p_campaign_nid'];
+    $campaign = node_load($campaign_id);
+    if ($campaign->type == 'p2p_campaign') {
+      $private = springboard_p2p_campaign_is_private($campaign);
+
+      $approval = new SpringbaordP2pPrivateCampaignApproval($uid, $campaign_id);
+
+      if ($private) {
+        $approval->request();
+        drupal_set_message('You have been added to the approval queue for ' . $campaign->title);
+        $form_state['redirect'] = 'springboard_p2p/dashboard/' . $uid;
+      }
+      else {
+        $approval->approve();
+        drupal_set_message('You can now create a personal campaign in ' . $campaign->title);
+        $form_state['redirect'] = 'springboard_p2p/development/create_personal_campaign' . $campaign_id;
+      }
+    }
+  }
 }
