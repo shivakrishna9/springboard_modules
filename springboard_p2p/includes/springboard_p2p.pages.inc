@@ -439,142 +439,72 @@ function springboard_p2p_validate_email_as_username($mail) {
 }
 
 /**
- * Form where user goes after connecting with facebook oauth.
+ * Page where user goes after connecting with facebook oauth.
+ *
+ * Checks if the user is already registered for p2p and if not, checks if
+ * he has filled out all required fields.  If not, goes to the complete profile
+ * page.
+ *
+ * If the user is already registered, go to the normal destination.
  */
-function springboard_p2p_fb_form($form, &$form_state) {
+function springboard_p2p_fb_page() {
   global $user;
+  $uid = $user->uid;
 
+  if (!springboard_p2p_user_is_registered_for_p2p($uid)) {
+    springboard_p2p_register_user_for_p2p($uid);
+
+    if (springboard_p2p_complete_profile_entity_has_empty_required_fields('user', $user)) {
+      $redirect = springboard_p2p_complete_profile_get_redirect();
+      drupal_goto($redirect['path'], $redirect['options']);
+    }
+  }
+
+  // Faking the form submission so the approval status will get saved
+  // if needed and we can find out where to go next.
   $form = array();
-
-  $form['message'] = array(
-    '#markup' => 'Coming from fboauth. This is where you would either fill out additional fields, or go to your next destination.',
+  $form_state = array(
+    'values' => array(
+      'springboard_p2p_campaign_nid' => springboard_p2p_get_campaign_id_from_request(),
+    ),
+    'uid' => $uid,
   );
+  springboard_p2p_set_redirect($form, $form_state);
 
-  $admin = user_access('administer users');
+  drupal_goto($form_state['redirect']);
 
-  // Pass access information to the submit handler. Running an access check
-  // inside the submit function interferes with form processing and breaks
-  // hook_form_alter().
-  $form['administer_users'] = array(
-    '#type' => 'value',
-    '#value' => $admin,
-  );
-
-  $form['#user'] = $user;
-  $form['#user_category'] = 'account';
-
-  $form['#attached']['library'][] = array('system', 'jquery.cookie');
-  $form['#attributes']['class'][] = 'user-info-from-cookie';
-
-  $fields_to_display = springboard_p2p_get_enabled_registration_fields();
-
-  $show_fields = FALSE;
-  // Attach field widgets.
-  $langcode = entity_language('user', $form['#user']);
-  field_attach_form('user', user_load($user->uid), $form, $form_state, $langcode);
-
-  foreach (field_info_instances('user', 'user') as $field_name => $instance) {
-    if (isset($fields_to_display[$field_name]['enabled'])) {
-
-      // Use the required settings from the p2p configuration.
-      // But if the field is required on the user entity leave it alone.
-      if (isset($fields_to_display[$field_name]['required']) && $fields_to_display[$field_name]['required']) {
-        springboard_p2p_make_registration_field_required($form, $field_name);
-
-        // Field is required and empty.
-        if (springboard_p2p_registration_field_is_empty($form[$field_name])) {
-          $show_fields = TRUE;
-        }
-      }
-
-      $form[$field_name]['#weight'] = $fields_to_display[$field_name]['weight'];
-    }
-    else {
-      $form[$field_name]['#access'] = FALSE;
-    }
-  }
-
-  $form['actions'] = array(
-    '#type' => 'actions',
-  );
-
-  $form['actions']['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Submit'),
-  );
-
-  $form['#validate'][] = 'user_register_validate';
-
-  // Add the final user registration form submit handler.
-  $form['#submit'][] = 'springboard_p2p_fb_user_register_submit';
-
-  springboard_p2p_campaign_id_form_element($form);
-
-  // Bypass this form and go to the next page.
-  if (!$show_fields) {
-    // Faking the form submission so the approval status will get saved
-    // and we can find out wehre to go next.
-    $form_state['values']['springboard_p2p_campaign_nid'] = $form['springboard_p2p_campaign_nid']['#value'];
-    $form_state['uid'] = $user->uid;
-    springboard_p2p_set_redirect($form, $form_state);
-
-    drupal_goto($form_state['redirect']);
-  }
-
-  return $form;
 }
 
 /**
- * Determine if a registration field from a form is empty.
+ * Is the user registered for p2p.
  *
- * @param array $field
- *   The field array from the form.
+ * @param int $uid
+ *   User ID.
  *
  * @return bool
- *   TRUE if the field does not have a #default_value set in the usual places.
+ *   TRUE if the user is registered for p2p.
  */
-function springboard_p2p_registration_field_is_empty($field) {
-  $language = $field['#language'];
+function springboard_p2p_user_is_registered_for_p2p($uid) {
+  $account = user_load($uid);
+  $role = user_role_load_by_name(SPRINGBOARD_P2P_ROLE);
 
-  if (!empty($field[$language]['#default_value'])) {
-    return FALSE;
-  }
-
-  foreach (element_children($field[$language]) as $key) {
-    if (!empty($field[$language][$key]['value']['#default_value'])) {
-      return FALSE;
-    }
-  }
-
-  return TRUE;
+  return in_array($role->rid, array_keys($account->roles));
 }
 
 /**
- * Submit handler for the facebook user registration form.
+ * Registers user for p2p.
  *
- * @see user_register_submit)
+ * @param int $uid
+ *   User ID.
  */
-function springboard_p2p_fb_user_register_submit($form, &$form_state) {
-  // Remove unneeded values.
-  form_state_values_clean($form_state);
-
-  $account = $form['#user'];
-
-  entity_form_submit_build_entity('user', $account, $form, $form_state);
-
-  // Populate $edit with the properties of $account, which have been edited on
-  // this form by taking over all values, which appear in the form values too.
-  $edit = array_intersect_key((array) $account, $form_state['values']);
-  $account = user_save($account, $edit);
-
-  // Terminate if an error occurred during user_save().
-  if (!$account) {
-    drupal_set_message(t("Error saving user account."), 'error');
-    $form_state['redirect'] = '';
-    return;
-  }
-  $form_state['user'] = $account;
-  $form_state['values']['uid'] = $account->uid;
+function springboard_p2p_register_user_for_p2p($uid) {
+  $role = user_role_load_by_name(SPRINGBOARD_P2P_ROLE);
+  $account = user_load($uid);
+  $roles = $account->roles + array($role->rid => $role->name);
+  // For efficiency manually save the original account before applying
+  // any changes.
+  $account->original = clone $account;
+  user_save($account, array('roles' => $roles));
 }
 
 /**

@@ -4,6 +4,8 @@
  * Code for the Springboard peer to peer feature.
  */
 
+define('SPRINGBOARD_P2P_ROLE', 'Springboard P2P campaigner');
+
 include_once 'springboard_p2p.features.inc';
 
 /**
@@ -77,8 +79,7 @@ function springboard_p2p_menu() {
       'title' => 'Facebook',
       'type' => MENU_CALLBACK,
       'access arguments' => array('register for springboard p2p'),
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('springboard_p2p_fb_form'),
+      'page callback' => 'springboard_p2p_fb_page',
       'file' => 'springboard_p2p.pages.inc',
       'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
     );
@@ -104,6 +105,17 @@ function springboard_p2p_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'springboard_p2p.pages.inc',
     'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
+  );
+
+  $items['user/%user/complete-p2p-profile'] = array(
+    'title' => 'Complete your profile',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_p2p_complete_profile_form', 1),
+    'access callback' => 'springboard_p2p_complete_profile_form_access',
+    'access arguments' => array(1),
+    'type' => MENU_CALLBACK,
+    'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
+    'file' => 'springboard_p2p.profile.inc',
   );
 
   return $items;
@@ -476,4 +488,101 @@ function springboard_p2p_fboauth_user_presave(&$edit, $fbuser) {
   if (empty($edit['pass'])) {
     $edit['pass'] = user_password(8);
   }
+}
+
+/**
+ * Access callback for the complete profile form.
+ */
+function springboard_p2p_complete_profile_form_access($account) {
+  if (empty($account->uid)) {
+    return FALSE;
+  }
+  elseif (user_access('administer users')) {
+    return TRUE;
+  }
+  else {
+    return $GLOBALS['user']->uid == $account->uid;
+  }
+}
+
+/**
+ * Check if the entity has empty required fields.
+ *
+ * @param string $entity_type
+ *   Usually 'user' for our purposes.
+ * @param object $entity
+ *   The user object.
+ *
+ * @return bool
+ *   TRUE if the entity has empty fields that are required.
+ *
+ * @todo Modify this to check requireness using p2p settings instead of field
+ *       settings.
+ */
+function springboard_p2p_complete_profile_entity_has_empty_required_fields($entity_type, $entity) {
+  list(, , $bundle) = entity_extract_ids($entity_type, $entity);
+  $instances = field_info_instances($entity_type, $bundle);
+
+  foreach ($instances as $instance) {
+    // Only check required fields.
+    if (!empty($instance['required'])) {
+      // Check if the required field is empty.
+      if (springboard_p2p_complete_profile_field_is_empty($entity_type, $entity, $instance['field_name'])) {
+        // Check that the user can actually edit their missing field.
+        if (field_access('edit', field_info_field($instance['field_name']), $entity_type, $entity, $account)) {
+          return TRUE;
+        }
+      }
+    }
+  }
+
+  return FALSE;
+}
+
+/**
+ * Check if a field module field is empty.
+ *
+ * @param string $entity_type
+ *   Should be 'user' for our purposes.
+ * @param object $entity
+ *   The user object.
+ * @param string $field_name
+ *   The name of the field to check.
+ *
+ * @return bool
+ *   TRUE if the field is empty.
+ */
+function springboard_p2p_complete_profile_field_is_empty($entity_type, $entity, $field_name) {
+  if (!isset($entity->{$field_name})) {
+    return TRUE;
+  }
+
+  if ($items = field_get_items($entity_type, $entity, $field_name)) {
+    // @todo Do we need to run filtering on values?
+    // $field = field_info_field($field_name);
+    // $items = _field_filter_items($field, $items);
+    return empty($items);
+  }
+
+  return TRUE;
+}
+
+/**
+ * Get the values for a drupal_goto() to the p2p complete profile page.
+ *
+ * @return array
+ *   An array with path and options keys for use in drupal_goto().
+ */
+function springboard_p2p_complete_profile_get_redirect() {
+  $redirect = array();
+  $redirect['path'] = 'user/' . $GLOBALS['user']->uid . '/complete-p2p-profile';
+  $redirect['options'] = array('query' => array());
+
+  $destination = drupal_get_destination();
+  // Unset the global destination since we don't want drupal_goto() to read
+  // it and since we're passing the destination into the query string again.
+  unset($_GET['destination']);
+  $redirect['options']['query'] += $destination;
+
+  return $redirect;
 }
