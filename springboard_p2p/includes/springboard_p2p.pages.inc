@@ -163,6 +163,16 @@ function springboard_p2p_user_register_form($form, &$form_state) {
 }
 
 /**
+ * Submit handler for the user register form.
+ *
+ * @todo Register the user for p2p, after we figure out how to get the uid here.
+ */
+function springboard_p2p_user_register_form_submit($form, &$form_state) {
+  dpm($form_state);
+  // springboard_p2p_register_user_for_p2p();
+}
+
+/**
  * Validation handler for user registration.
  *
  * Validates that the email will be a valid username.
@@ -368,38 +378,6 @@ function springboard_p2p_fb_page() {
 
   drupal_goto($form_state['redirect']);
 
-}
-
-/**
- * Is the user registered for p2p.
- *
- * @param int $uid
- *   User ID.
- *
- * @return bool
- *   TRUE if the user is registered for p2p.
- */
-function springboard_p2p_user_is_registered_for_p2p($uid) {
-  $account = user_load($uid);
-  $role = user_role_load_by_name(SPRINGBOARD_P2P_ROLE);
-
-  return in_array($role->rid, array_keys($account->roles));
-}
-
-/**
- * Registers user for p2p.
- *
- * @param int $uid
- *   User ID.
- */
-function springboard_p2p_register_user_for_p2p($uid) {
-  $role = user_role_load_by_name(SPRINGBOARD_P2P_ROLE);
-  $account = user_load($uid);
-  $roles = $account->roles + array($role->rid => $role->name);
-  // For efficiency manually save the original account before applying
-  // any changes.
-  $account->original = clone $account;
-  user_save($account, array('roles' => $roles));
 }
 
 /**

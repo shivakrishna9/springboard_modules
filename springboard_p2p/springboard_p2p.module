@@ -90,7 +90,7 @@ function springboard_p2p_menu() {
     'page callback' => 'springboard_p2p_personal_dashboard',
     'page arguments' => array(2),
     'access callback' => 'springboard_p2p_personal_dashboard_view_access',
-    'access arguments' => array(1),
+    'access arguments' => array(2),
     'type' => MENU_CALLBACK,
     'file' => 'springboard_p2p.pages.inc',
     'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
@@ -734,4 +734,36 @@ function springboard_p2p_campaign_is_private($campaign) {
   }
 
   return FALSE;
+}
+
+/**
+ * Is the user registered for p2p.
+ *
+ * @param int $uid
+ *   User ID.
+ *
+ * @return bool
+ *   TRUE if the user is registered for p2p.
+ */
+function springboard_p2p_user_is_registered_for_p2p($uid) {
+  $account = user_load($uid);
+  $role = user_role_load_by_name(SPRINGBOARD_P2P_ROLE);
+
+  return in_array($role->rid, array_keys($account->roles));
+}
+
+/**
+ * Registers user for p2p.
+ *
+ * @param int $uid
+ *   User ID.
+ */
+function springboard_p2p_register_user_for_p2p($uid) {
+  $role = user_role_load_by_name(SPRINGBOARD_P2P_ROLE);
+  $account = user_load($uid);
+  $roles = $account->roles + array($role->rid => $role->name);
+  // For efficiency manually save the original account before applying
+  // any changes.
+  $account->original = clone $account;
+  user_save($account, array('roles' => $roles));
 }
