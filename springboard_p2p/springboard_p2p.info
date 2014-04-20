@@ -83,6 +83,7 @@ features[field_instance][] = node-p2p_personal_campaign-field_p2p_campaign_progr
 features[node][] = p2p_campaign
 features[node][] = p2p_category
 features[node][] = p2p_personal_campaign
+features[user_role][] = Springboard P2P campaigner
 features[variable][] = field_bundle_settings_node__p2p_campaign
 features[variable][] = field_bundle_settings_node__p2p_category
 features[variable][] = field_bundle_settings_node__p2p_personal_campaign
