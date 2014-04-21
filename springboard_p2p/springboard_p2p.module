@@ -715,7 +715,7 @@ function springboard_p2p_set_redirect($form, &$form_state) {
       else {
         $approval->approve();
         drupal_set_message('You can now create a personal campaign in ' . $campaign->title);
-        $form_state['redirect'] = 'springboard_p2p/development/create_personal_campaign' . $campaign_id;
+        $form_state['redirect'] = 'springboard_p2p/development/create_personal_campaign/' . $campaign_id;
       }
     }
   }
