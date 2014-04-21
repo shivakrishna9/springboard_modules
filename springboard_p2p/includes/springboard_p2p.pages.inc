@@ -157,17 +157,19 @@ function springboard_p2p_user_register_form($form, &$form_state) {
 
   springboard_p2p_campaign_id_form_element($form);
 
+  $form['#submit'][] = 'springboard_p2p_register_for_p2p_submit';
+
   return $form;
 }
 
 /**
  * Submit handler for the user register form.
  *
- * @todo Register the user for p2p, after we figure out how to get the uid here.
+ * Registers the user for p2p.
  */
-function springboard_p2p_user_register_form_submit($form, &$form_state) {
+function springboard_p2p_register_for_p2p_submit($form, &$form_state) {
   dpm($form_state);
-  // springboard_p2p_register_user_for_p2p();
+  springboard_p2p_register_user_for_p2p($form_state['user']->uid);
 }
 
 /**
