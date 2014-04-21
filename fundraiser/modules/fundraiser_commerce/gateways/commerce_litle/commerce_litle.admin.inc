@@ -202,7 +202,7 @@ function commerce_litle_cc_void_form_submit($form, &$form_state) {
 /**
  * Form callback: allows the user to issue a credit on a prior transaction.
  */
-function commerce_litle_cc_credit_form($form, &$form_state, $order, $transaction) {
+function commerce_litle_credit_form($form, &$form_state, $order, $transaction) {
   $form_state['order'] = $order;
   $form_state['transaction'] = $transaction;
 
@@ -210,12 +210,19 @@ function commerce_litle_cc_credit_form($form, &$form_state, $order, $transaction
   $payment_method = commerce_payment_method_instance_load($transaction->instance_id);
   $form_state['payment_method'] = $payment_method;
 
+  if ($payment_method['method_id'] == 'commerce_litle_cc') {
+    $payment_display_name = 'credit card';
+  }
+  else {
+    $payment_display_name = 'bank account';
+  }
+
   $default_amount = commerce_currency_amount_to_decimal($transaction->amount, $transaction->currency_code);
 
   $form['amount'] = array(
     '#type' => 'textfield',
     '#title' => t('Credit amount'),
-    '#description' => t('Enter the amount to be credited back to the original credit card.'),
+    '#description' => t('Enter the amount to be credited back to the original %payment.', array('%payment' => $payment_display_name)),
     '#default_value' => $default_amount,
     '#field_suffix' => check_plain($transaction->currency_code),
     '#size' => 16,
@@ -236,7 +243,7 @@ function commerce_litle_cc_credit_form($form, &$form_state, $order, $transaction
 /**
  * Validate handler: check the credit amount before attempting credit request.
  */
-function commerce_litle_cc_credit_form_validate($form, &$form_state) {
+function commerce_litle_credit_form_validate($form, &$form_state) {
   $transaction = $form_state['transaction'];
   $amount = $form_state['values']['amount'];
 
@@ -261,19 +268,19 @@ function commerce_litle_cc_credit_form_validate($form, &$form_state) {
 /**
  * Submit handler: process a credit.
  */
-function commerce_litle_cc_credit_form_submit($form, &$form_state) {
+function commerce_litle_credit_form_submit($form, &$form_state) {
   $payment_method = $form_state['payment_method'];
   $transaction = $form_state['transaction'];
   $order = $form_state['order'];
   $amount = $form_state['values']['amount'];
 
-  commerce_litle_cc_credit_request($payment_method, $transaction, $order, $amount);
+  commerce_litle_credit_request($payment_method, $transaction, $order, $amount);
 
   $form_state['redirect'] = 'admin/commerce/orders/' . $order->order_id . '/payment';
 }
 
 /**
- * Makes the Credit request and handles transactions and logging.
+ * Makes the Credit/echeckCredit request and handles transactions and logging.
  *
  * Formats the request, makes it.
  * Logs response and request if needed.
@@ -295,7 +302,7 @@ function commerce_litle_cc_credit_form_submit($form, &$form_state) {
  * @return bool
  *   Whether the refund was successful.
  */
-function commerce_litle_cc_credit_request($payment_method, $transaction, $order, $amount) {
+function commerce_litle_credit_request($payment_method, $transaction, $order, $amount) {
   $credit_amount = commerce_currency_decimal_to_amount($amount, $transaction->currency_code);
 
   // Build a name-value pair array for this transaction.
@@ -311,7 +318,13 @@ function commerce_litle_cc_credit_request($payment_method, $transaction, $order,
   }
 
   // Submit the request to Litle.
-  $response = _commerce_litle_request_credit($payment_method, $nvp);
+  if ($payment_method['method_id'] == 'commerce_litle_cc') {
+    $response = _commerce_litle_request_credit($payment_method, $nvp);
+  }
+  else {
+    $response = _commerce_litle_request_echeck_credit($payment_method, $nvp);
+  }
+
   $response_string = XmlParser::getDomDocumentAsString($response);
   $response_code = XmlParser::getNode($response, 'response');
 

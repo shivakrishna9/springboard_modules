@@ -14,7 +14,7 @@ function commerce_litle_fundraiser_commerce_fundraiser_gateway_info() {
     'payment_method' => array('commerce_litle_cc' => 'credit', 'commerce_litle_echeck' => 'bank account'),
     // @todo bank account (echeck) recurring is not yet fully implemented.
     'allow_recurring' => array('credit', 'bank account'),
-    'allow_refund' => array('credit'),
+    'allow_refund' => array('credit', 'bank account'),
     'form callback' => 'commerce_litle_fundraiser_commerce_submit_form',
     'cleanup callback' => 'commerce_litle_fundraiser_commerce_cleanup',
     'scrub callback' => 'commerce_litle_fundraiser_commerce_scrub',
@@ -465,5 +465,5 @@ function commerce_litle_fundraiser_commerce_refund($payment_method, $refund) {
   $payment_method = commerce_payment_method_instance_load($transaction->instance_id);
   // Submit the donation form.
   module_load_include('inc', 'commerce_litle', 'commerce_litle.admin');
-  return commerce_litle_cc_credit_request($payment_method, $transaction, $refunding_order, $refund->amount);
+  return commerce_litle_credit_request($payment_method, $transaction, $refunding_order, $refund->amount);
 }

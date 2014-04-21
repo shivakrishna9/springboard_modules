@@ -38,11 +38,11 @@ function commerce_litle_menu() {
   );
 
   // Add a menu item for issuing credits.
-  $items['admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/litle-cc-credit'] = array(
+  $items['admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/litle-credit'] = array(
     'title' => 'Credit',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('commerce_litle_cc_credit_form', 3, 5),
-    'access callback' => 'commerce_litle_cc_credit_access',
+    'page arguments' => array('commerce_litle_credit_form', 3, 5),
+    'access callback' => 'commerce_litle_credit_access',
     'access arguments' => array(3, 5),
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'context' => MENU_CONTEXT_INLINE,
@@ -129,10 +129,14 @@ function commerce_litle_cc_void_access($order, $transaction) {
  * @return bool
  *   TRUE or FALSE indicating credit access.
  */
-function commerce_litle_cc_credit_access($order, $transaction) {
+function commerce_litle_credit_access($order, $transaction) {
   // Return FALSE if the transaction isn't for Litle, doesn't have a
   // success status or has an amount of 0 or less.
-  if ($transaction->payment_method != 'commerce_litle_cc' || $transaction->status != 'success' || $transaction->amount <= 0) {
+  if (!in_array($transaction->payment_method, array('commerce_litle_cc', 'commerce_litle_echeck'))) {
+    return FALSE;
+  }
+
+  if ($transaction->status != 'success' || $transaction->amount <= 0) {
     return FALSE;
   }
 
@@ -1132,6 +1136,23 @@ function _commerce_litle_request_credit($gateway, $input) {
   $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
   $input['id'] = $input['litleTxnId'];
   return $litle->creditRequest($input);
+}
+
+/**
+ * Litle echeck credit request function wrapper.
+ *
+ * Example input
+ *   $input = array(
+ *     'litleTxnId'=>'100000000000000002',
+ *     'id'=> '456',
+ *     'amount'=>'1010'
+ *   );
+ */
+function _commerce_litle_request_echeck_credit($gateway, $input) {
+  $litle = _commerce_litle_get_litle();
+  $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
+  $input['id'] = $input['litleTxnId'];
+  return $litle->echeckCreditRequest($input);
 }
 
 /**
