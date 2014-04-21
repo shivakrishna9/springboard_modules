@@ -1989,20 +1989,20 @@ function fundraiser_commerce_commerce_paypal_ipn_process($order, $payment_method
   // Finish up the submission to kick off success / decline triggers.
   _fundraiser_donation_submit_after_process($donation);
   if ($ipn['payment_status'] == 'Refunded') {
-    _fundraiser_commerce_ipn_refund($donation);
+    _fundraiser_commerce_ipn_refund($donation, $ipn);
   }
 }
 
-function _fundraiser_commerce_ipn_refund($donation) {
+function _fundraiser_commerce_ipn_refund($donation, $ipn) {
   // Set up the refund.
   $already_refunded = fundraiser_refund_get_refunds_by_did($donation->did, TRUE);
   $refunded_total = 0;
   if(!empty($already_refunded)) {
     foreach ($already_refunded as $prior) {
-     $refunded_total .= ($prior->amount * -1);
+     $refunded_total += ($prior->amount * -1);
     }
   }
-  $able_to_refund = $donation->donation['amount'] - $refunded_total;
+  $able_to_refund = ($donation->donation['amount'] - $refunded_total);
   $new_status = 'partially_refunded';
   // Partial refund
   $amount = $ipn['payment_gross'];
@@ -2028,7 +2028,7 @@ function _fundraiser_commerce_ipn_refund($donation) {
   }
   else {
     $donation->result['success'] = FALSE;
-    drupal_set_message(t('Your refund failed to be processed.'));
+    watchdog('ipn_refund_fail', '%ipn: Your refund failed to be processed.', array('%ipn', $ipn['item_name1']));
   }
 }
 
