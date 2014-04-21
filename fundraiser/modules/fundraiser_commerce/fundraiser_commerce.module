@@ -2010,10 +2010,6 @@ function _fundraiser_commerce_ipn_refund($donation) {
     $amount = $able_to_refund * -1;
     $new_status = 'refunded';
   }
-  else if (($amount * -1) == $able_to_refund) {
-    $amount = $able_to_refund * -1; 
-    $new_status = 'refunded';
-  }
 
   $refund = new stdClass();
   $refund->did = $donation->did;
