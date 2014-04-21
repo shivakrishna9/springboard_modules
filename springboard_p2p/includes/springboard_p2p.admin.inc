@@ -179,24 +179,17 @@ function springboard_p2p_admin_settings() {
     if (springboard_p2p_is_locked_registration_field($key)) {
       $enabled_default_value = 1;
       $enabled_disabled = TRUE;
-    }
-    else {
-      $enabled_default_value = isset($defaults[$key]['enabled']) ? $defaults[$key]['enabled'] : 0;
-      $enabled_disabled = FALSE;
-    }
-
-    $weight_default_value = isset($defaults[$key]['weight']) ? $defaults[$key]['weight'] : 0;
-
-    if (springboard_p2p_registration_field_is_required($field)) {
-      $enabled_default_value = 1;
-      $enabled_disabled = TRUE;
       $required_default_value = 1;
       $required_disabled = TRUE;
     }
     else {
+      $enabled_default_value = isset($defaults[$key]['enabled']) ? $defaults[$key]['enabled'] : 0;
+      $enabled_disabled = FALSE;
       $required_default_value = isset($defaults[$key]['required']) ? $defaults[$key]['required'] : 0;
       $required_disabled = FALSE;
     }
+
+    $weight_default_value = isset($defaults[$key]['weight']) ? $defaults[$key]['weight'] : 0;
 
     $form['registration_fields_fieldset']['registration_fields'][$key] = array(
       'name' => array(
@@ -411,17 +404,4 @@ function springboard_p2p_sort_keys_by_weight($items) {
   asort($sort);
 
   return array_keys($sort);
-}
-
-/**
- * Returns whether the registration field is required by default.
- *
- * @param array $field
- *   The field array.
- *
- * @return bool
- *   TRUE if the field is defined as required.
- */
-function springboard_p2p_registration_field_is_required($field) {
-  return isset($field['required']) && $field['required'];
 }

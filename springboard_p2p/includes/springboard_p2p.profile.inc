@@ -30,7 +30,7 @@ function springboard_p2p_complete_profile_form($form, &$form_state, $account) {
         $form[$key]['#access'] = FALSE;
       }
       else {
-        springboard_p2p_make_registration_field_required($form, $key);
+        springboard_p2p_set_registration_field_required($form, $key, TRUE);
         $form[$key]['#weight'] = $required_fields[$key]['weight'];
       }
     }

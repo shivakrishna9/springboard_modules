@@ -621,7 +621,7 @@ function springboard_p2p_get_required_registration_fields() {
 }
 
 /**
- * Make a registration field on the p2p register page required.
+ * Make a registration field on the p2p register page required or not.
  *
  * The registration fields are nested and weird, so I try to do this in a very
  * general way to handle custom user profile fields.
@@ -630,15 +630,17 @@ function springboard_p2p_get_required_registration_fields() {
  *   The form array for the p2p register page.
  * @param string $field_name
  *   The name of the field to make required.
+ * @param bool $required
+ *   The value for #required.
  */
-function springboard_p2p_make_registration_field_required(&$form, $field_name) {
+function springboard_p2p_set_registration_field_required(&$form, $field_name, $required = TRUE) {
   $field_language = $form[$field_name]['#language'];
-  $form[$field_name][$field_language]['#required'] = TRUE;
+  $form[$field_name][$field_language]['#required'] = $required;
   $keys = element_children($form[$field_name][$field_language]);
   foreach ($keys as $key) {
-    $form[$field_name][$field_language][$key]['#required'] = TRUE;
+    $form[$field_name][$field_language][$key]['#required'] = $required;
     if (isset($form[$field_name][$field_language][$key]['value'])) {
-      $form[$field_name][$field_language][$key]['value']['#required'] = TRUE;
+      $form[$field_name][$field_language][$key]['value']['#required'] = $required;
     }
   }
 }

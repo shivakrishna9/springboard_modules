@@ -103,11 +103,9 @@ function springboard_p2p_user_register_form($form, &$form_state) {
   foreach (field_info_instances('user', 'user') as $field_name => $instance) {
     if (isset($fields_to_display[$field_name]['enabled'])) {
 
-      // Use the required settings from the p2p configuration.
-      // But if the field is required on the user entity leave it alone.
-      if (isset($fields_to_display[$field_name]['required']) && $fields_to_display[$field_name]['required']) {
-        springboard_p2p_make_registration_field_required($form, $field_name);
-      }
+      // Set the required.
+      $required = isset($fields_to_display[$field_name]['required']) && $fields_to_display[$field_name]['required'];
+      springboard_p2p_set_registration_field_required($form, $field_name, $required);
 
       $form[$field_name]['#weight'] = $fields_to_display[$field_name]['weight'];
     }
