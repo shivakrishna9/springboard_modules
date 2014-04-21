@@ -74,6 +74,15 @@ function springboard_p2p_menu() {
     'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
   );
 
+  $items['springboard_p2p/welcome'] = array(
+    'title' => 'Welcome',
+    'type' => MENU_CALLBACK,
+    'access arguments' => array('register for springboard p2p'),
+    'page callback' => 'springboard_p2p_welcome_page',
+    'file' => 'springboard_p2p.pages.inc',
+    'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
+  );
+
   if (module_exists('fboauth')) {
     $items['springboard_p2p/fb'] = array(
       'title' => 'Facebook',
@@ -685,10 +694,15 @@ function springboard_p2p_get_campaign_id_from_request() {
  */
 function springboard_p2p_set_redirect($form, &$form_state) {
 
+  // Don't mess with the redirect.
+  if (isset($form_state['show_welcome']) && $form_state['show_welcome']) {
+    return;
+  }
+
   if (!empty($form_state['uid'])) {
     $uid = $form_state['uid'];
   }
-  elseif (!empty($form_state['user'])) {
+  elseif (!empty($form_state['user']->uid)) {
     $uid = $form_state['user']->uid;
   }
   else {

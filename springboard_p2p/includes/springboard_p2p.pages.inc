@@ -71,10 +71,6 @@ function springboard_p2p_register_page($form, &$form_state) {
 function springboard_p2p_user_register_form($form, &$form_state) {
   $form = array();
 
-  // This validate handler fills in the name value with the email address,
-  // and so needs to happen before the user module's validation.
-  $form['#validate'][] = 'springboard_p2p_user_register_validate';
-
   $admin = user_access('administer users');
 
   // Pass access information to the submit handler. Running an access check
@@ -123,11 +119,6 @@ function springboard_p2p_user_register_form($form, &$form_state) {
     '#value' => t('Create new account'),
   );
 
-  $form['#validate'][] = 'user_register_validate';
-
-  // Add the final user registration form submit handler.
-  $form['#submit'][] = 'user_register_submit';
-
   // Don't show the user the username field.
   $form['account']['name']['#access'] = FALSE;
 
@@ -143,7 +134,7 @@ function springboard_p2p_user_register_form($form, &$form_state) {
   $form['account']['notify']['#access'] = FALSE;
   $form['account']['status']['#access'] = FALSE;
 
-  $form['#validate'][] = 'springboard_p2p_user_register_post_validate';
+  $form['#validate'][] = 'springboard_p2p_user_register_validate';
 
   // Remove the validate callback added by user_account_form().
   // We instead do that validation in our own validate handler.
@@ -155,9 +146,9 @@ function springboard_p2p_user_register_form($form, &$form_state) {
   }
   $form['#validate'] = $new_validate;
 
-  springboard_p2p_campaign_id_form_element($form);
+  $form['#submit'][] = 'springboard_p2p_user_register_form_submit';
 
-  $form['#submit'][] = 'springboard_p2p_register_for_p2p_submit';
+  springboard_p2p_campaign_id_form_element($form);
 
   return $form;
 }
@@ -167,9 +158,23 @@ function springboard_p2p_user_register_form($form, &$form_state) {
  *
  * Registers the user for p2p.
  */
-function springboard_p2p_register_for_p2p_submit($form, &$form_state) {
-  dpm($form_state);
-  springboard_p2p_register_user_for_p2p($form_state['user']->uid);
+function springboard_p2p_user_register_form_submit($form, &$form_state) {
+
+  if ($form_state['new_account']) {
+    user_register_submit($form, $form_state);
+  }
+  else {
+    drupal_set_message('Existing account that is not registered for p2p.');
+    $form_state['show_welcome'] = TRUE;
+    $form_state['redirect'] = 'springboard_p2p/welcome';
+  }
+
+  if (!empty($form['#user']->uid)) {
+    springboard_p2p_register_user_for_p2p($form['#user']->uid);
+  }
+  elseif (!empty($form_state['user']->uid)) {
+    springboard_p2p_register_user_for_p2p($form_state['user']->uid);
+  }
 }
 
 /**
@@ -185,6 +190,7 @@ function springboard_p2p_register_for_p2p_submit($form, &$form_state) {
  */
 function springboard_p2p_user_register_validate(&$form, &$form_state) {
   $account = $form['#user'];
+  $form_state['new_account'] = TRUE;
 
   // Trim whitespace from mail, to prevent confusing 'e-mail not valid'
   // warnings often caused by cutting and pasting.
@@ -200,19 +206,43 @@ function springboard_p2p_user_register_validate(&$form, &$form_state) {
     // Generic error message.
     form_set_error('mail', $error);
   }
-  // Check if mail is already registerd.
-  elseif ((bool) db_select('users')->fields('users', array('uid'))->condition('uid', $account->uid, '<>')->condition('mail', db_like($mail), 'LIKE')->range(0, 1)->execute()->fetchField()) {
-    // Format error message dependent on whether the user is logged in or not.
-    if ($GLOBALS['user']->uid) {
-      form_set_error('mail', t('The e-mail address %email is already taken.', array('%email' => $mail)));
+  // Check for existing accounts.
+  else {
+    $uid = db_select('users')
+      ->fields('users', array('uid'))
+      ->condition('uid', $account->uid, '<>')
+      ->condition('mail', db_like($mail), 'LIKE')
+      ->range(0, 1)
+      ->execute()
+      ->fetchField();
+
+    if (!$uid) {
+      $uid = db_select('users')
+        ->fields('users', array('uid'))
+        ->condition('uid', $account->uid, '<>')
+        ->condition('name', db_like($mail), 'LIKE')
+        ->range(0, 1)
+        ->execute()
+        ->fetchField();
     }
-    else {
-      form_set_error('mail', t('The e-mail address %email is already registered. <a href="@password">Have you forgotten your password?</a>', array('%email' => $mail, '@password' => url('user/password'))));
+
+    if ($uid) {
+      if (springboard_p2p_user_is_registered_for_p2p($uid)) {
+        // Format error message dependent on whether the user is logged in.
+        if ($GLOBALS['user']->uid) {
+          form_set_error('mail', t('The e-mail address %email is already taken.', array('%email' => $mail)));
+        }
+        else {
+          form_set_error('mail', t('The e-mail address %email is already registered. <a href="@password">Have you forgotten your password?</a>', array('%email' => $mail, '@password' => url('user/password'))));
+        }
+      }
+      else {
+        // Existing user not registered for p2p.
+        // So remove the user register submit function and add our custom one.
+        $form_state['new_account'] = FALSE;
+        $form_state['user'] = user_load($uid);
+      }
     }
-  }
-  // Check if mail exists as a username.
-  elseif ((bool) db_select('users')->fields('users', array('uid'))->condition('uid', $account->uid, '<>')->condition('name', db_like($mail), 'LIKE')->range(0, 1)->execute()->fetchField()) {
-    form_set_error('mail', t('The e-mail address %mail is already registered.', array('%mail' => $mail)));
   }
 
   // Set the username as the email address.
@@ -221,14 +251,9 @@ function springboard_p2p_user_register_validate(&$form, &$form_state) {
   // Move mail around so other user validate handlers will work.
   $form['account']['mail'] = $form['mail'];
   unset($form['mail']);
-}
 
-/**
- * Last validate handler for the p2p register form.
- *
- * Moves the mail element back to where we want it in the form.
- */
-function springboard_p2p_user_register_post_validate(&$form, &$form_state) {
+  user_register_validate($form, $form_state);
+
   $form['mail'] = $form['account']['mail'];
   unset($form['account']['mail']);
 }
@@ -471,4 +496,15 @@ function springboard_p2p_admin_approval_request_mail(&$message, $params) {
 
   $message['subject'] = t('User requests approval', $options);
   $message['body'][] = t('A user has requested approval for a campaign.', $options);
+}
+
+/**
+ * Page callback for after the user registers but before the password is set.
+ */
+function springboard_p2p_welcome_page() {
+  $output = array(
+    '#markup' => 'Welcome. Your account must be verifed.  See the email for further instructions.',
+  );
+
+  return $output;
 }
