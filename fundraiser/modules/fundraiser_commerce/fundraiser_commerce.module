@@ -1988,6 +1988,52 @@ function fundraiser_commerce_commerce_paypal_ipn_process($order, $payment_method
   fundraiser_donation_update($donation);
   // Finish up the submission to kick off success / decline triggers.
   _fundraiser_donation_submit_after_process($donation);
+  if ($ipn['payment_status'] == 'Refunded') {
+    _fundraiser_commerce_ipn_refund($donation);
+  }
+}
+
+function _fundraiser_commerce_ipn_refund($donation) {
+  // Set up the refund.
+  $already_refunded = fundraiser_refund_get_refunds_by_did($donation->did, TRUE);
+  $refunded_total = 0;
+  if(!empty($already_refunded)) {
+    foreach ($already_refunded as $prior) {
+     $refunded_total .= ($prior->amount * -1);
+    }
+  }
+  $able_to_refund = $donation->donation['amount'] - $refunded_total;
+  $new_status = 'partially_refunded';
+  // Partial refund
+  $amount = $ipn['payment_gross'];
+  if (($amount * -1) >= $able_to_refund) {
+    $amount = $able_to_refund * -1;
+    $new_status = 'refunded';
+  }
+  else if (($amount * -1) == $able_to_refund) {
+    $amount = $able_to_refund * -1; 
+    $new_status = 'refunded';
+  }
+
+  $refund = new stdClass();
+  $refund->did = $donation->did;
+  $refund->amount =  $amount;
+  $refund->currency = $donation->currency;
+  $refund = fundraiser_refund_create($refund);
+  $refund->new_status = $new_status;
+  fundraiser_refund_process($refund);
+  // At this point $donation->result is set and responses can be handled.
+  if (!isset($refund->result['message'])) {
+    $refund->result['message'] = '';
+  }
+  // The results should be at $donation->result, ready to respond to the aftermath.
+  if (isset($refund->result['success']) && $refund->result['success'] == TRUE) {
+    fundraiser_refund_success($refund);
+  }
+  else {
+    $donation->result['success'] = FALSE;
+    drupal_set_message(t('Your refund failed to be processed.'));
+  }
 }
 
 /**

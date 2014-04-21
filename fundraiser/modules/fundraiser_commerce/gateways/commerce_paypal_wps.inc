@@ -17,6 +17,7 @@ function commerce_paypal_wps_fundraiser_commerce_fundraiser_gateway_info() {
     'scrub callback' => 'commerce_paypal_wps_fundraiser_commerce_scrub',
     // Validation callback is commerce_paypal_wps_fundraiser_commerce_redirect_validate
     // Submit callback is commerce_paypal_wps_fundraiser_commerce_redirect_submit
+    'refund callback' => 'commerce_paypal_wps_fundraiser_commerce_refund',
   );
 }
 
@@ -94,5 +95,12 @@ function commerce_paypal_wps_fundraiser_commerce_scrub($submission_fields) {
 function commerce_paypal_wps_fundraiser_commerce_redirect_submit($method_instance, $donation, $order) {
   // IMPORTANT: Transaction handling for Paypal is handled on a differnt URL, when Paypal returns the IPN tracsaction ID.
   // Therefore no additional transaction work occurs here.
+  return TRUE;
+}
+/**
+ * Callback function, refund the gateway.
+ * needed to enable completion of  _fundraiser_commerce_ipn_refund()
+ */
+function commerce_paypal_wps_fundraiser_commerce_refund($payment_method, $refund) {
   return TRUE;
 }
