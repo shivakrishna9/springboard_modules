@@ -1975,7 +1975,7 @@ function fundraiser_commerce_commerce_paypal_ipn_process($order, $payment_method
   }
   // Anything else, except Completed counts as a fail.
   $success = FALSE;
-  if ($ipn['payment_status'] == 'Completed') {
+ if ($ipn['payment_status'] == 'Completed' || $ipn['payment_status'] == 'Refunded') {
     $success = TRUE;
   }
   // Grab the donation object from the order.
