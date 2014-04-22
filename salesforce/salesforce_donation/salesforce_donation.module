@@ -511,11 +511,12 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
   }
   // Detect refund, if this is a donation object representing a refund:
   if (!empty($donation->is_refund) && $donation->is_refund == TRUE) {
+    $fields['Amount'] = $donation->donation['amount'];
     if (is_array($donation->refunds)) {
       // Get the latest reason and amount.
       foreach ($donation->refunds as $refund) {
         $fields['Cancellation_Reason__c'] = $refund->reason;
-        $fields['Amount']  = -1 * $refund->amount;
+        $fields['Amount'] = $fields['Amount'] - $refund->amount;
         $fields['Transaction_Date_Time__c']  = gmdate('c', $refund->changed);
         $fields['CloseDate']  = gmdate('c', $refund->changed);
       }
