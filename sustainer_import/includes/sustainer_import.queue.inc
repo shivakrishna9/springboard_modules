@@ -202,6 +202,17 @@ function _sustainer_import_create_account($account_details) {
 
     $account = user_save((object) $user_record);
     sustainer_import_log_value('uid', $account->uid, 'Created new user account.');
+    // if D6 password hash was exported, convert it to a D7 hash and save to new {user} record
+    if (!empty($account_details['pw_hash'])) {
+      require_once DRUPAL_ROOT . '/' . variable_get('password_inc', 'includes/password.inc');
+      $hash_count_log2 = 11;
+      $new_hash = user_hash_password($account_details['pw_hash'], $hash_count_log2);
+      if ($new_hash) {
+        // Indicate an updated password.
+        $new_hash  = 'U' . $new_hash;
+        db_update('users')->fields(array('pass' => $new_hash))->condition('uid', $account->uid)->execute();
+      }
+    }
     // if we have SF id's for the account, save them now.
     if ($account_details['sf_contact_id']) {
       _sustainer_import_save_account_sfids($account->uid, $account_details['sf_contact_id'], 'Contact');
