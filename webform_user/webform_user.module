@@ -1184,7 +1184,7 @@ function _webform_user_get_profile_fields() {
   }
   $results = db_query('SELECT i.id, i.field_name, i.data, c.data as extra, c.type FROM {field_config_instance} i ' .
     'INNER JOIN {field_config} c ON i.field_name = c.field_name ' .
-    'WHERE entity_type IN (:types)',
+    'WHERE entity_type IN (:types) AND i.deleted = 0',
     array(':types' => $entity_types)
   );
   foreach ($results as $result) {
