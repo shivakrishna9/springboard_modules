@@ -450,6 +450,7 @@ function email_wrappers_mail_alter(&$message) {
       $params = $message['params'];
       $params['settings'] = $settings;
       $params['message'] = $message;
+      $sid = $params['submission']->sid;
 
       // If email is not set send on submission we stash parameters required
       // to send in a static setting on the assumption that some other code
@@ -470,10 +471,17 @@ function email_wrappers_mail_alter(&$message) {
         drupal_mail('email_wrappers', 'wf_submission', $message['to'], user_preferred_language($account), $params);
       }
       else {
+        // //we set both a static cache and db cache
         $mail_queue = &drupal_static('email_wrappers_mail_queue');
         $mail_queue[$nid][$eid] = array(
           'params' => $params,
         );
+        if (module_exists('webform_confirmations')) {
+          // deferred notification ala Paypal WPS
+          $cache_time = '+1 hour';
+          $expire = strtotime($cache_time, time());
+          cache_set('wrapper_mail_queue_'. $nid . '_' . $eid. '_' . $sid, array('params' => $params), 'cache_webform_confirm', $expire);
+        }
       }
       $message['send'] = FALSE;
     }
