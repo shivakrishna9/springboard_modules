@@ -23,9 +23,11 @@ function webform_confirmations_schema() {
     ),
     'primary key' => array('nid'),
   );
-
+  $schema['cache_webform_confirm'] = drupal_get_schema_unprocessed('system', 'cache');
+  $schema['cache_webform_confirm']['description'] = 'Cache table for webform confirmations.';
   return $schema;
 }
+
 
 /**
  * Implements hook_install().
@@ -61,4 +63,13 @@ function webform_confirmations_install() {
     db_drop_field('fundraiser', 'confirmation_page_format');
     db_drop_field('fundraiser', 'redirect_url');
   }
+}
+/**
+ * Create the cache bin for webform confirmations.
+ */
+function webform_confirmations_update_7001() {
+  $schema_name = 'cache_webform_confirm';
+  $schema['cache_webform_confirm'] = drupal_get_schema_unprocessed('system', 'cache');
+  $schema['cache_webform_confirm']['description'] = 'Cache table for webform confirmations.';
+  db_create_table($schema_name, $schema[$schema_name]);
 }
