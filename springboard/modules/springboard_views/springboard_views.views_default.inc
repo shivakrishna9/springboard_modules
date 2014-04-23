@@ -2301,7 +2301,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['sbp_address']['table'] = 'field_data_sbp_address';
   $handler->display->display_options['fields']['sbp_address']['field'] = 'sbp_address';
   $handler->display->display_options['fields']['sbp_address']['relationship'] = 'uid';
-  $handler->display->display_options['fields']['sbp_address']['label'] = 'Street Address';
   /* Field: User: City */
   $handler->display->display_options['fields']['sbp_city']['id'] = 'sbp_city';
   $handler->display->display_options['fields']['sbp_city']['table'] = 'field_data_sbp_city';
@@ -2312,33 +2311,36 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['sbp_state']['table'] = 'field_data_sbp_state';
   $handler->display->display_options['fields']['sbp_state']['field'] = 'sbp_state';
   $handler->display->display_options['fields']['sbp_state']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_state']['label'] = 'State';
   /* Field: User: Postal Code */
   $handler->display->display_options['fields']['sbp_zip']['id'] = 'sbp_zip';
   $handler->display->display_options['fields']['sbp_zip']['table'] = 'field_data_sbp_zip';
   $handler->display->display_options['fields']['sbp_zip']['field'] = 'sbp_zip';
   $handler->display->display_options['fields']['sbp_zip']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_zip']['label'] = 'Zip';
   /* Field: User: Created date */
   $handler->display->display_options['fields']['created']['id'] = 'created';
   $handler->display->display_options['fields']['created']['table'] = 'users';
   $handler->display->display_options['fields']['created']['field'] = 'created';
   $handler->display->display_options['fields']['created']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['created']['label'] = 'Created';
   $handler->display->display_options['fields']['created']['date_format'] = 'custom';
-  $handler->display->display_options['fields']['created']['custom_date_format'] = 'm/j/Y';
+  $handler->display->display_options['fields']['created']['custom_date_format'] = 'm/j/y';
   /* Field: Commerce Customer Profile: Updated date */
   $handler->display->display_options['fields']['changed']['id'] = 'changed';
   $handler->display->display_options['fields']['changed']['table'] = 'commerce_customer_profile';
   $handler->display->display_options['fields']['changed']['field'] = 'changed';
+  $handler->display->display_options['fields']['changed']['label'] = 'Updated';
   $handler->display->display_options['fields']['changed']['date_format'] = 'custom';
-  $handler->display->display_options['fields']['changed']['custom_date_format'] = 'm/j/Y';
+  $handler->display->display_options['fields']['changed']['custom_date_format'] = 'm/j/y';
   /* Field: Global: Custom text */
   $handler->display->display_options['fields']['nothing']['id'] = 'nothing';
   $handler->display->display_options['fields']['nothing']['table'] = 'views';
   $handler->display->display_options['fields']['nothing']['field'] = 'nothing';
   $handler->display->display_options['fields']['nothing']['label'] = '';
-  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<ul>
-<li><a href="/user/[uid]/edit?destination=springboard/results/donor">Edit</a></li>
-<li><a href="/user/[uid]/recurring_overview?destination=springboard/results/donor">Recurring gifts</a></li>
-</ul>';
+  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/user/[uid]/edit?destination=springboard/results/donor">Edit</a>
+<a href="/user/[uid]/recurring_overview?destination=springboard/results/donor">Recurring gifts</a>
+';
   $handler->display->display_options['fields']['nothing']['element_label_colon'] = FALSE;
   /* Filter criterion: User: First name (sbp_first_name) */
   $handler->display->display_options['filters']['sbp_first_name_value']['id'] = 'sbp_first_name_value';
