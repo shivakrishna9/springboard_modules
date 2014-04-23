@@ -2366,7 +2366,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['filters']['sbp_last_name_value']['operator'] = 'contains';
   $handler->display->display_options['filters']['sbp_last_name_value']['exposed'] = TRUE;
   $handler->display->display_options['filters']['sbp_last_name_value']['expose']['operator_id'] = 'sbp_last_name_value_op';
-  $handler->display->display_options['filters']['sbp_last_name_value']['expose']['label'] = 'Last name (sbp_last_name)';
+  $handler->display->display_options['filters']['sbp_last_name_value']['expose']['label'] = 'Last name';
   $handler->display->display_options['filters']['sbp_last_name_value']['expose']['operator'] = 'sbp_last_name_value_op';
   $handler->display->display_options['filters']['sbp_last_name_value']['expose']['identifier'] = 'sbp_last_name_value';
   $handler->display->display_options['filters']['sbp_last_name_value']['expose']['remember_roles'] = array(
@@ -2383,7 +2383,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['filters']['sbp_state_value']['relationship'] = 'uid';
   $handler->display->display_options['filters']['sbp_state_value']['exposed'] = TRUE;
   $handler->display->display_options['filters']['sbp_state_value']['expose']['operator_id'] = 'sbp_state_value_op';
-  $handler->display->display_options['filters']['sbp_state_value']['expose']['label'] = 'State/Province (sbp_state)';
+  $handler->display->display_options['filters']['sbp_state_value']['expose']['label'] = 'State/Province';
   $handler->display->display_options['filters']['sbp_state_value']['expose']['operator'] = 'sbp_state_value_op';
   $handler->display->display_options['filters']['sbp_state_value']['expose']['identifier'] = 'sbp_state_value';
   $handler->display->display_options['filters']['sbp_state_value']['expose']['remember_roles'] = array(
