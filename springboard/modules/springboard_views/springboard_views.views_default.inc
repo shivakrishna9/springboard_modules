@@ -2149,7 +2149,9 @@ function springboard_views_views_default_views() {
   $handler -> display -> display_options['block_description'] = 'Unsynched Errors';
   $views[$view -> name] = $view;
 
-/* Results donors page */
+  /**
+   * View donors
+   */
 
   $view = new view();
   $view->name = 'donors';
@@ -2164,14 +2166,18 @@ function springboard_views_views_default_views() {
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');
   $handler->display->display_options['title'] = 'Donors';
-  $handler->display->display_options['css_class'] = 'donar-table-view';
+  $handler->display->display_options['css_class'] = 'donor-table-view';
+  $handler->display->display_options['use_ajax'] = TRUE;
   $handler->display->display_options['use_more_always'] = FALSE;
   $handler->display->display_options['access']['type'] = 'none';
   $handler->display->display_options['cache']['type'] = 'none';
   $handler->display->display_options['query']['type'] = 'views_query';
   $handler->display->display_options['exposed_form']['type'] = 'basic';
   $handler->display->display_options['pager']['type'] = 'full';
-  $handler->display->display_options['pager']['options']['items_per_page'] = '10';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '20';
+  $handler->display->display_options['pager']['options']['offset'] = '0';
+  $handler->display->display_options['pager']['options']['id'] = '0';
+  $handler->display->display_options['pager']['options']['quantity'] = '9';
   $handler->display->display_options['style_plugin'] = 'table';
   $handler->display->display_options['style_options']['columns'] = array(
     'uid' => 'uid',
@@ -2334,12 +2340,75 @@ function springboard_views_views_default_views() {
 <li><a href="/user/[uid]/recurring_overview?destination=springboard/results/donor">Recurring gifts</a></li>
 </ul>';
   $handler->display->display_options['fields']['nothing']['element_label_colon'] = FALSE;
+  /* Filter criterion: User: First name (sbp_first_name) */
+  $handler->display->display_options['filters']['sbp_first_name_value']['id'] = 'sbp_first_name_value';
+  $handler->display->display_options['filters']['sbp_first_name_value']['table'] = 'field_data_sbp_first_name';
+  $handler->display->display_options['filters']['sbp_first_name_value']['field'] = 'sbp_first_name_value';
+  $handler->display->display_options['filters']['sbp_first_name_value']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['sbp_first_name_value']['operator'] = 'contains';
+  $handler->display->display_options['filters']['sbp_first_name_value']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['sbp_first_name_value']['expose']['operator_id'] = 'sbp_first_name_value_op';
+  $handler->display->display_options['filters']['sbp_first_name_value']['expose']['label'] = 'First name';
+  $handler->display->display_options['filters']['sbp_first_name_value']['expose']['operator'] = 'sbp_first_name_value_op';
+  $handler->display->display_options['filters']['sbp_first_name_value']['expose']['identifier'] = 'sbp_first_name_value';
+  $handler->display->display_options['filters']['sbp_first_name_value']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
+  /* Filter criterion: User: Last name (sbp_last_name) */
+  $handler->display->display_options['filters']['sbp_last_name_value']['id'] = 'sbp_last_name_value';
+  $handler->display->display_options['filters']['sbp_last_name_value']['table'] = 'field_data_sbp_last_name';
+  $handler->display->display_options['filters']['sbp_last_name_value']['field'] = 'sbp_last_name_value';
+  $handler->display->display_options['filters']['sbp_last_name_value']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['sbp_last_name_value']['operator'] = 'contains';
+  $handler->display->display_options['filters']['sbp_last_name_value']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['sbp_last_name_value']['expose']['operator_id'] = 'sbp_last_name_value_op';
+  $handler->display->display_options['filters']['sbp_last_name_value']['expose']['label'] = 'Last name (sbp_last_name)';
+  $handler->display->display_options['filters']['sbp_last_name_value']['expose']['operator'] = 'sbp_last_name_value_op';
+  $handler->display->display_options['filters']['sbp_last_name_value']['expose']['identifier'] = 'sbp_last_name_value';
+  $handler->display->display_options['filters']['sbp_last_name_value']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
+  /* Filter criterion: User: State/Province (sbp_state) */
+  $handler->display->display_options['filters']['sbp_state_value']['id'] = 'sbp_state_value';
+  $handler->display->display_options['filters']['sbp_state_value']['table'] = 'field_data_sbp_state';
+  $handler->display->display_options['filters']['sbp_state_value']['field'] = 'sbp_state_value';
+  $handler->display->display_options['filters']['sbp_state_value']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['sbp_state_value']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['sbp_state_value']['expose']['operator_id'] = 'sbp_state_value_op';
+  $handler->display->display_options['filters']['sbp_state_value']['expose']['label'] = 'State/Province (sbp_state)';
+  $handler->display->display_options['filters']['sbp_state_value']['expose']['operator'] = 'sbp_state_value_op';
+  $handler->display->display_options['filters']['sbp_state_value']['expose']['identifier'] = 'sbp_state_value';
+  $handler->display->display_options['filters']['sbp_state_value']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
+  $handler->display->display_options['filters']['sbp_state_value']['group_info']['label'] = 'State/Province (sbp_state)';
+  $handler->display->display_options['filters']['sbp_state_value']['group_info']['identifier'] = 'sbp_state_value';
+  $handler->display->display_options['filters']['sbp_state_value']['group_info']['remember'] = FALSE;
+  $handler->display->display_options['filters']['sbp_state_value']['group_info']['group_items'] = array(
+    1 => array(),
+    2 => array(),
+    3 => array(),
+  );
 
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');
   $handler->display->display_options['path'] = 'springboard/results/donor';
 
-  /* //end donors page view */
+  /**
+   * // end View donors
+   */
 
   return $views;
 }
