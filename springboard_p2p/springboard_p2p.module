@@ -127,6 +127,26 @@ function springboard_p2p_menu() {
     'file' => 'springboard_p2p.profile.inc',
   );
 
+  $items['springboard_p2p/password/%user'] = array(
+    'title' => 'Password reset email',
+    'page callback' => 'springboard_p2p_request_password_reset_page',
+    'page arguments' => array(2),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+    'file' => 'springboard_p2p.pages.inc',
+    'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
+  );
+
+  $items['springboard_p2p/set_password/%/%/%'] = array(
+    'title' => 'Set password',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_p2p_set_password_form', 2, 3, 4),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+    'file' => 'springboard_p2p.pages.inc',
+    'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
+  );
+
   return $items;
 }
 
@@ -141,13 +161,6 @@ function springboard_p2p_theme() {
       'path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
     ),
   );
-}
-
-/**
- * Implements hook_form_FORM_ID_alter().
- */
-function springboard_p2p_form_p2p_category_node_form_alter(&$form, &$form_state, $form_id) {
-
 }
 
 /**
@@ -782,4 +795,117 @@ function springboard_p2p_register_user_for_p2p($uid) {
   // any changes.
   $account->original = clone $account;
   user_save($account, array('roles' => $roles));
+}
+
+/**
+ * Implements hook_mail().
+ */
+function springboard_p2p_mail($key, &$message, $params) {
+  switch ($key) {
+    case 'password_reset':
+      springboard_p2p_password_reset_mail($message, $params);
+      break;
+
+    case 'new_user':
+      springboard_p2p_new_user_mail($message, $params);
+      break;
+
+    case 'new_user_private_campaign':
+      springboard_p2p_new_user_private_campaign_mail($message, $params);
+      break;
+
+    case 'user_requests_approval':
+      springboard_p2p_user_requests_approval_mail($message, $params);
+      break;
+
+    case 'admin_approval_request':
+      springboard_p2p_admin_approval_request_mail($message, $params);
+      break;
+
+  }
+}
+
+/**
+ * Mail template to send to a user who needs a password reset.
+ *
+ * @see springboard_p2p_mail()
+ */
+function springboard_p2p_password_reset_mail(&$message, $params) {
+  $options = array(
+    'langcode' => $message['language']->language,
+  );
+
+  $message['subject'] = t('P2P password reset', $options);
+  $message['body'][] = t('Here is your password reset link.', $options);
+  $message['body'][] = springboard_p2p_set_password_url($params['account']);
+}
+
+/**
+ * Provides a custom url for setting a password in the context of p2p.
+ *
+ * @param object $account
+ *   The user that needs to set a password.
+ *
+ * @return string
+ *   The URL to the P2P set password page for the account.
+ */
+function springboard_p2p_set_password_url($account) {
+  $url = user_pass_reset_url($account);
+  return str_replace('user/reset/', 'springboard_p2p/set_password/', $url);
+}
+
+/**
+ * Mail template to send to a user who registers for P2P.
+ *
+ * @see springboard_p2p_mail()
+ */
+function springboard_p2p_new_user_mail(&$message, $params) {
+  $options = array(
+    'langcode' => $message['language']->language,
+  );
+
+  $message['subject'] = t('Welcome to P2P', $options);
+  $message['body'][] = t('Thank you for creating a P2P account.', $options);
+}
+
+/**
+ * Mail template for a user registering for P2P coming from a private campaign.
+ *
+ * @see springboard_p2p_mail()
+ */
+function springboard_p2p_new_user_private_campaign_mail(&$message, $params) {
+  $options = array(
+    'langcode' => $message['language']->language,
+  );
+
+  $message['subject'] = t('Welcome to P2P', $options);
+  $message['body'][] = t('Thank you for creating a P2P account.  We will be in touch when you are approved.', $options);
+}
+
+/**
+ * Mail template when a P2P user requests approval from a private campaign.
+ *
+ * @see springboard_p2p_mail()
+ */
+function springboard_p2p_user_requests_approval_mail(&$message, $params) {
+  $options = array(
+    'langcode' => $message['language']->language,
+  );
+
+  $message['subject'] = t('Next steps', $options);
+  $message['body'][] = t('Thanks for showing interest in this campaign.  We will be in touch soon.', $options);
+}
+
+/**
+ * Mail template to an admin when a P2P user request private campaign approval.
+ *
+ * @see springboard_p2p_mail()
+ */
+function springboard_p2p_admin_approval_request_mail(&$message, $params) {
+  $options = array(
+    'langcode' => $message['language']->language,
+  );
+
+  $message['subject'] = t('User requests approval', $options);
+  $message['body'][] = t('A user has requested approval for a campaign.', $options);
 }

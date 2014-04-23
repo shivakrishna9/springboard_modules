@@ -159,21 +159,25 @@ function springboard_p2p_user_register_form($form, &$form_state) {
  * Registers the user for p2p.
  */
 function springboard_p2p_user_register_form_submit($form, &$form_state) {
+  user_register_submit($form, $form_state);
 
-  if ($form_state['new_account']) {
-    user_register_submit($form, $form_state);
-  }
-  else {
-    drupal_set_message('Existing account that is not registered for p2p.');
-    $form_state['show_welcome'] = TRUE;
-    $form_state['redirect'] = 'springboard_p2p/welcome';
-  }
-
+  $uid = NULL;
   if (!empty($form['#user']->uid)) {
-    springboard_p2p_register_user_for_p2p($form['#user']->uid);
+    $uid = $form['#user']->uid;
   }
   elseif (!empty($form_state['user']->uid)) {
-    springboard_p2p_register_user_for_p2p($form_state['user']->uid);
+    $uid = $form_state['user']->uid;
+  }
+
+  if ($uid) {
+    springboard_p2p_register_user_for_p2p($uid);
+    $account = user_load($uid);
+    $params = array(
+      'account' => $account,
+    );
+    $to = $account->mail;
+    $language = user_preferred_language($account);
+    drupal_mail('springboard_p2p', 'new_user', $to, $language, $params);
   }
 }
 
@@ -227,20 +231,14 @@ function springboard_p2p_user_register_validate(&$form, &$form_state) {
     }
 
     if ($uid) {
-      if (springboard_p2p_user_is_registered_for_p2p($uid)) {
-        // Format error message dependent on whether the user is logged in.
-        if ($GLOBALS['user']->uid) {
-          form_set_error('mail', t('The e-mail address %email is already taken.', array('%email' => $mail)));
-        }
-        else {
-          form_set_error('mail', t('The e-mail address %email is already registered. <a href="@password">Have you forgotten your password?</a>', array('%email' => $mail, '@password' => url('user/password'))));
-        }
+      // Existing user is interested in p2p.
+      springboard_p2p_register_user_for_p2p($uid);
+      // Format error message dependent on whether the user is logged in.
+      if ($GLOBALS['user']->uid) {
+        form_set_error('mail', t('The e-mail address %email is already taken.', array('%email' => $mail)));
       }
       else {
-        // Existing user not registered for p2p.
-        // So remove the user register submit function and add our custom one.
-        $form_state['new_account'] = FALSE;
-        $form_state['user'] = user_load($uid);
+        form_set_error('mail', t('The e-mail address %email is already registered. <a href="@password">Send me a password reset email.</a>', array('%email' => $mail, '@password' => url('springboard_p2p/password/' . $uid))));
       }
     }
   }
@@ -419,91 +417,163 @@ function springboard_p2p_create_personal_campaign($campaign) {
 }
 
 /**
- * Implements hook_mail().
- */
-function springboard_p2p_mail($key, &$message, $params) {
-  switch ($key) {
-    case 'new_user':
-      springboard_p2p_new_user_mail($message, $params);
-      break;
-
-    case 'New_user_private_campaign':
-      springboard_p2p_new_user_private_campaign_mail($message, $params);
-      break;
-
-    case 'user_requests_approval':
-      springboard_p2p_user_requests_approval_mail($message, $params);
-      break;
-
-    case 'admin_approval_request':
-      springboard_p2p_admin_approval_request_mail($message, $params);
-      break;
-
-  }
-}
-
-/**
- * Mail template to send to a user who registers for P2P.
- *
- * @see springboard_p2p_mail()
- */
-function springboard_p2p_new_user_mail(&$message, $params) {
-  $options = array(
-    'langcode' => $message['language']->language,
-  );
-
-  $message['subject'] = t('Welcome to P2P', $options);
-  $message['body'][] = t('Thank you for creating a P2P account.', $options);
-}
-
-/**
- * Mail template for a user registering for P2P coming from a private campaign.
- *
- * @see springboard_p2p_mail()
- */
-function springboard_p2p_new_user_private_campaign_mail(&$message, $params) {
-  $options = array(
-    'langcode' => $message['language']->language,
-  );
-
-  $message['subject'] = t('Welcome to P2P', $options);
-  $message['body'][] = t('Thank you for creating a P2P account.  We will be in touch when you are approved.', $options);
-}
-
-/**
- * Mail template when a P2P user requests approval from a private campaign.
- *
- * @see springboard_p2p_mail()
- */
-function springboard_p2p_user_requests_approval_mail(&$message, $params) {
-  $options = array(
-    'langcode' => $message['language']->language,
-  );
-
-  $message['subject'] = t('Next steps', $options);
-  $message['body'][] = t('Thanks for showing interest in this campaign.  We will be in touch soon.', $options);
-}
-
-/**
- * Mail template to an admin when a P2P user request private campaign approval.
- *
- * @see springboard_p2p_mail()
- */
-function springboard_p2p_admin_approval_request_mail(&$message, $params) {
-  $options = array(
-    'langcode' => $message['language']->language,
-  );
-
-  $message['subject'] = t('User requests approval', $options);
-  $message['body'][] = t('A user has requested approval for a campaign.', $options);
-}
-
-/**
  * Page callback for after the user registers but before the password is set.
  */
 function springboard_p2p_welcome_page() {
   $output = array(
     '#markup' => 'Welcome. Your account must be verifed.  See the email for further instructions.',
+  );
+
+  return $output;
+}
+
+/**
+ * Form callback for the custom password reset page.
+ */
+function springboard_p2p_set_password_form($form, &$form_state, $uid, $timestamp, $hashed_pass) {
+
+  global $user;
+
+  $form = array();
+  $show_password_form = FALSE;
+
+  // When processing the one-time login link, we have to make sure that a user
+  // isn't already logged in.
+  if ($user->uid) {
+    // The existing user is already logged in.
+    if ($user->uid == $uid) {
+      drupal_set_message(t('You are logged in as %user.', array('%user' => $user->name)));
+      $account = $user;
+      $show_password_form = TRUE;
+    }
+    // A different user is already logged in on the computer.
+    else {
+      $reset_link_account = user_load($uid);
+      if (!empty($reset_link_account)) {
+        $form['invalid_link'] = array(
+          '#markup' => t('Another user (%other_user) is already logged into the site on this computer, but you tried to use a one-time link for user %resetting_user. Please <a href="!logout">logout</a> and try using the link again.',
+            array(
+              '%other_user' => $user->name,
+              '%resetting_user' => $reset_link_account->name,
+              '!logout' => url('user/logout'),
+            )
+          ),
+        );
+      }
+      else {
+        // Invalid one-time link specifies an unknown user.
+        $form['invalid_link'] = array(
+          '#markup' => t('The one-time login link you clicked is invalid.'),
+        );
+      }
+
+    }
+
+  }
+  else {
+    // Time out, in seconds, until login URL expires. Defaults to 24 hours =
+    // 86400 seconds.
+    $timeout = variable_get('user_password_reset_timeout', 86400);
+    $current = REQUEST_TIME;
+    // Some redundant checks for extra security ?
+    $users = user_load_multiple(array($uid), array('status' => '1'));
+    if ($timestamp <= $current && $account = reset($users)) {
+      // No time out for first time login.
+      if ($account->login && $current - $timestamp > $timeout) {
+        $form['expired_link'] = array(
+          '#markup' => t('You have tried to use a one-time login link that has expired. <a href="@password">Send a new password reset email.</a>', array('@password' => url('springboard_p2p/password/' . $uid))),
+        );
+
+      }
+      elseif ($account->uid && $timestamp >= $account->login && $timestamp <= $current && $hashed_pass == user_pass_rehash($account->pass, $timestamp, $account->login)) {
+
+        // Set the new user.
+        $user = $account;
+        // user_login_finalize() also updates the login timestamp of the
+        // user, which invalidates further use of the one-time login link.
+        user_login_finalize();
+        watchdog('user', 'User %name used one-time login link at time %timestamp.', array('%name' => $account->name, '%timestamp' => $timestamp));
+        drupal_set_message(t('You have just used your one-time login link. It is no longer necessary to use this link to log in. Please set your password.'));
+
+        $show_password_form = TRUE;
+
+      }
+      else {
+
+        $form['invalid_link'] = array(
+          '#markup' => t('You have tried to use a one-time login link that has either been used or is no longer valid. <a href="@password">Send a new password reset email.</a>', array('@password' => url('springboard_p2p/password/' . $uid))),
+        );
+
+      }
+    }
+    else {
+      // Deny access, no more clues.
+      // Everything will be in the watchdog's URL for the administrator to
+      // check.
+      drupal_access_denied();
+      drupal_exit();
+    }
+  }
+
+  if ($show_password_form) {
+    $form['#user'] = $account;
+    $form_state['user'] = $account;
+
+    // Account information.
+    $form['account'] = array(
+      '#type'   => 'container',
+      '#weight' => -10,
+    );
+
+    $form['account']['pass'] = array(
+      '#type' => 'password_confirm',
+      '#size' => 25,
+      '#description' => t('Provide a password for the new account in both fields.'),
+      '#required' => TRUE,
+    );
+
+    $form['actions'] = array('#type' => 'actions');
+    $form['actions']['submit'] = array('#type' => 'submit', '#value' => t('Set password'));
+
+    $form['#submit'][] = 'springboard_p2p_set_password_form_submit';
+  }
+
+  return $form;
+}
+
+/**
+ * Submit handler for the set password form.
+ */
+function springboard_p2p_set_password_form_submit($form, &$form_state) {
+
+  $account = $form_state['user'];
+  $edit = array(
+    'pass' => $form_state['values']['pass'],
+  );
+
+  user_save($account, $edit);
+
+  $form_state['redirect'] = 'springboard_p2p/dashboard/' . $account->uid;
+}
+
+/**
+ * Page callback to request a password reset email.
+ */
+function springboard_p2p_request_password_reset_page($account) {
+  if (!isset($account->uid) || !springboard_p2p_user_is_registered_for_p2p($account->uid)) {
+    return MENU_NOT_FOUND;
+  }
+
+  $params = array(
+    'account' => $account,
+  );
+  $to = $account->mail;
+  $language = user_preferred_language($account);
+  drupal_mail('springboard_p2p', 'password_reset', $to, $language, $params);
+
+  $output = array();
+  $output['message'] = array(
+    '#markup' => 'A password reset email has been sent',
   );
 
   return $output;
