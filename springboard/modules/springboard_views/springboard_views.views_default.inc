@@ -2408,6 +2408,8 @@ function springboard_views_views_default_views() {
   $handler = $view->new_display('page', 'Page', 'page');
   $handler->display->display_options['path'] = 'springboard/results/donor';
 
+  $views[$view -> name] = $view;
+
   /**
    * // end View donors
    */
