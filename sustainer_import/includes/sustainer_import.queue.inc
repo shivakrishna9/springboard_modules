@@ -379,6 +379,7 @@ function _sustainer_import_create_master_order($record, $account, &$errors) {
   $donation = _sustainer_import_build_donation_object($record, $account, $node);
 
   // Authorize.net sustainers need updated SIMs.
+  $gateway_token = $record['payment_details']['gateway_token'];
   if ($record['payment_details']['gateway_type'] == 'Authorize.net') {
     // Before we can save the donation record we need to get an updated SIM from
     // Authorize.net. If for any reason we can't get this value there is no point in
@@ -386,9 +387,9 @@ function _sustainer_import_create_master_order($record, $account, &$errors) {
     $payment_method = commerce_payment_method_instance_load($donation->gateway);
   
     // get updated sim
-    $sim = _sustainer_import_update_authnet_sim($payment_method, $record['payment_details']['gateway_token']);
-    if ($sim) {
-      sustainer_import_log_value('sim', $sim, 'Retrieved payment gateway token from authorize.net');
+    $gateway_token = _sustainer_import_update_authnet_sim($payment_method, $gateway_token);
+    if ($gateway_token) {
+      sustainer_import_log_value('sim', $gateway_token, 'Retrieved payment gateway token from authorize.net');
     }
     else {
       $errors[] = t('Unable to update payment gateway token. Import halted.');
@@ -426,7 +427,7 @@ function _sustainer_import_create_master_order($record, $account, &$errors) {
   _fundraiser_sustainers_create_recurring($recurring_donation);
 
   // store cardonfile entry.
-  $card_data = _sustainer_import_save_cc_data($sim, $record, $donation, $account);
+  $card_data = _sustainer_import_save_cc_data($gateway_token, $record, $donation, $account);
 
   // Create a payment transaction and update the order status
   sustainer_import_create_payment_transaction($donation);
