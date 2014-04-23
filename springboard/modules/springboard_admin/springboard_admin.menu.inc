@@ -299,8 +299,8 @@ function springboard_admin_admin_menu_items() {
   );
 
   // Marketing & Analytics > Donors.
-  $items['springboard/results']['_children']['admin/people'] = array(
-    'link_path' => 'admin/people',
+  $items['springboard/results']['_children']['springboard/results/donor'] = array(
+    'link_path' => 'springboard/results/donor',
     'link_title' => 'Donors',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
