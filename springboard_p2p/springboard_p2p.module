@@ -70,16 +70,7 @@ function springboard_p2p_menu() {
     'access arguments' => array('register for springboard p2p'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('springboard_p2p_register_page'),
-    'file' => 'springboard_p2p.pages.inc',
-    'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
-  );
-
-  $items['springboard_p2p/welcome'] = array(
-    'title' => 'Welcome',
-    'type' => MENU_CALLBACK,
-    'access arguments' => array('register for springboard p2p'),
-    'page callback' => 'springboard_p2p_welcome_page',
-    'file' => 'springboard_p2p.pages.inc',
+    'file' => 'springboard_p2p.register.inc',
     'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
   );
 
@@ -89,7 +80,7 @@ function springboard_p2p_menu() {
       'type' => MENU_CALLBACK,
       'access arguments' => array('register for springboard p2p'),
       'page callback' => 'springboard_p2p_fb_page',
-      'file' => 'springboard_p2p.pages.inc',
+      'file' => 'springboard_p2p.fboauth.inc',
       'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
     );
   }
@@ -133,7 +124,7 @@ function springboard_p2p_menu() {
     'page arguments' => array(2),
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
-    'file' => 'springboard_p2p.pages.inc',
+    'file' => 'springboard_p2p.password.inc',
     'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
   );
 
@@ -143,7 +134,7 @@ function springboard_p2p_menu() {
     'page arguments' => array('springboard_p2p_set_password_form', 2, 3, 4),
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
-    'file' => 'springboard_p2p.pages.inc',
+    'file' => 'springboard_p2p.password.inc',
     'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
   );
 
@@ -707,11 +698,6 @@ function springboard_p2p_get_campaign_id_from_request() {
  */
 function springboard_p2p_set_redirect($form, &$form_state) {
 
-  // Don't mess with the redirect.
-  if (isset($form_state['show_welcome']) && $form_state['show_welcome']) {
-    return;
-  }
-
   if (!empty($form_state['uid'])) {
     $uid = $form_state['uid'];
   }
@@ -908,4 +894,52 @@ function springboard_p2p_admin_approval_request_mail(&$message, $params) {
 
   $message['subject'] = t('User requests approval', $options);
   $message['body'][] = t('A user has requested approval for a campaign.', $options);
+}
+
+
+/**
+ * Verify the email address will be a valid username.
+ *
+ * Returns email specific error messages.
+ *
+ * @param string $mail
+ *   The email address to check.
+ *
+ * @return string|NULL
+ *   The email specific error, or NULL for no errors.
+ *
+ * @see user_validate_name()
+ */
+function springboard_p2p_validate_email_as_username($mail) {
+  if (strpos($mail, '  ') !== FALSE) {
+    return t('The e-mail address cannot contain multiple spaces in a row.');
+  }
+  if (preg_match('/[^\x{80}-\x{F7} a-z0-9@_.\'-]/i', $mail)) {
+    return t('The e-mail address contains an illegal character.');
+  }
+  // Non-printable ISO-8859-1 + NBSP.
+  if (preg_match('/[\x{80}-\x{A0}' .
+    // Soft-hyphen.
+    '\x{AD}' .
+    // Various space characters.
+    '\x{2000}-\x{200F}' .
+    // Bidirectional text overrides.
+    '\x{2028}-\x{202F}' .
+    // Various text hinting characters.
+    '\x{205F}-\x{206F}' .
+    // Byte order mark.
+    '\x{FEFF}' .
+    // Full-width latin.
+    '\x{FF01}-\x{FF60}' .
+    // Replacement characters.
+    '\x{FFF9}-\x{FFFD}' .
+    // NULL byte and control characters.
+    '\x{0}-\x{1F}]/u',
+    $mail)) {
+    return t('The e-mail address contains an illegal character.');
+  }
+  if (drupal_strlen($mail) > USERNAME_MAX_LENGTH) {
+    return t('The e-mail address %name is too long: it must be %max characters or less.', array('%name' => $mail, '%max' => USERNAME_MAX_LENGTH));
+  }
+
 }
