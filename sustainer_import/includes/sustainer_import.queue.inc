@@ -193,14 +193,16 @@ function _sustainer_import_create_account($account_details) {
 
   if (!$account) {
     // save user
-    $user_record = array(
+    $user_record = (object) array(
       'name' => _sustainer_import_name_from_mail($account_details['email']),
       'pass' => '',
       'mail' => $account_details['email'],
       'status' => 1,
     );
-
-    $account = user_save((object) $user_record);
+    $user_record->sbp_first_name[LANGUAGE_NONE][0]['value'] =  $account_details['first_name'];
+    $user_record->sbp_last_name[LANGUAGE_NONE][0]['value'] =  $account_details['last_name'];
+    
+    $account = user_save($user_record);
     sustainer_import_log_value('uid', $account->uid, 'Created new user account.');
     // if D6 password hash was exported, convert it to a D7 hash and save to new {user} record
     if (!empty($account_details['pw_hash'])) {
