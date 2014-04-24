@@ -29,7 +29,7 @@ function springboard_advocacy_get_petition_types() {
 
 
 function springboard_advocacy_node_insert($node) {
-  // If node is a donation type.
+  // If node is a petition type.
   if (springboard_advocacy_is_petition_type($node->type)) {
     // And if we have a default map.
     $nid = -1;
