@@ -724,6 +724,19 @@ function springboard_p2p_set_redirect($form, &$form_state) {
         $approval->request();
         drupal_set_message('You have been added to the approval queue for ' . $campaign->title);
         $form_state['redirect'] = 'springboard_p2p/dashboard/' . $uid;
+
+        $account = user_load($uid);
+        $to = $account->mail;
+        $language = user_preferred_language($account);
+        $params = array(
+          'account' => $account,
+          'campaign' => $campaign,
+        );
+        drupal_mail('springboard_p2p', 'user_requests_approval', $to, $language, $params);
+        $site_mail = variable_get('site_mail', '');
+        if ($site_mail) {
+          drupal_mail('springboard_p2p', 'admin_approval_request', $site_mail, language_default(), $params);
+        }
       }
       else {
         $approval->approve();
@@ -880,6 +893,8 @@ function springboard_p2p_user_requests_approval_mail(&$message, $params) {
 
   $message['subject'] = t('Next steps', $options);
   $message['body'][] = t('Thanks for showing interest in this campaign.  We will be in touch soon.', $options);
+  $message['body'][] = $params['campaign']->title;
+  $message['body'][] = $params['account']->mail;
 }
 
 /**
@@ -892,8 +907,12 @@ function springboard_p2p_admin_approval_request_mail(&$message, $params) {
     'langcode' => $message['language']->language,
   );
 
-  $message['subject'] = t('User requests approval', $options);
+  $message['subject'] = t('P2P User requests approval', $options);
   $message['body'][] = t('A user has requested approval for a campaign.', $options);
+  $message['body'][] = $params['campaign']->title;
+  $message['body'][] = $params['account']->mail;
+  $message['body'][] = url('user/' . $params['account']->uid, array('absolute' => TRUE));
+  $message['body'][] = url('admin/springboard/p2p/approval/user', array('absolute' => TRUE));
 }
 
 
