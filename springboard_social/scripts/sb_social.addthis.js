@@ -10,7 +10,6 @@ var addthis_share = {
   //$(document).ready(function() {
   Drupal.behaviors.sb_social = {
     attach: function (context, settings) {
-      Drupal.settings.sb_social.submitted = false;
       // AddThis requires some global configuration objects be populated
       // set up the AddThis account ID from admin settings
       if (typeof window.addthis_config !== "undefined") {
