@@ -1,0 +1,60 @@
+<?php
+/**
+ * @file
+ * Code for the Springboard Advocacy feature.
+ */
+
+include_once 'springboard_advocacy.features.inc';
+
+
+function springboard_advocacy_is_petition_type($type) {
+  static $petition_types;
+  // Cache fundraiser content types during page execution.
+  if (!isset($petition_types[$type])) {
+    $petition_types[$type] = variable_get('petition_' . $type, FALSE);
+  }
+  return $petition_types[$type];
+}
+
+/**
+ * Helper function, determine if this node type supports donation forms.
+ */
+function springboard_advocacy_get_petition_types() {
+  // For all types, check if they are a fundraiser type.
+  $types = node_type_get_types();
+  foreach ($types as $type => $type_info) {
+    $petition_types[$type] = variable_get('petition_' . $type, FALSE);
+  }
+  return $petition_types;
+}
+
+
+function springboard_advocacy_node_insert($node) {
+  // If node is a donation type.
+  if (springboard_advocacy_is_petition_type($node->type)) {
+    // And if we have a default map.
+    $nid = -1;
+    if (!empty($node->clone_from_original_nid)) {
+      $nid = $node->clone_from_original_nid;
+    }
+    $map = salesforce_genmap_load_map($nid, 'webform');
+    if (!empty($map)) {
+      // Copy the map to the node.
+      unset($map->mid);
+      $map->nid = $node->nid;
+      salesforce_genmap_save_map($map, 'webform');
+    }
+  }
+}
+
+/**
+ * Implements hook_node_delete().
+ *
+ * Insert a copy of the default map when a Fundraiser node is created.
+ */
+function springboard_advocacy_node_delete($node) {
+  // If node is a donation type.
+  if (fundraiser_is_donation_type($node->type)) {
+    salesforce_genmap_delete_map($node->nid, 'webform');
+  }
+}
