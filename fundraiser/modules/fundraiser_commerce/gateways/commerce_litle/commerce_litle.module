@@ -1586,8 +1586,10 @@ function commerce_litle_fundraiser_sustainers_recurring_success($donation) {
   if ($donation->gateway['gateway_details']['base'] == 'commerce_litle_echeck') {
     if (isset($donation->recurring->master_did)) {
       $last_charge = _fundraiser_sustainers_get_donations_last_charge($donation->recurring->master_did);
-      $next_charge = strtotime('+1 months', $last_charge->next_charge);
-      fundraiser_sustainers_add_order_to_series($donation, $next_charge);
+      if (is_object($last_charge) && isset($last_charge->next_charge)) {
+        $next_charge = strtotime('+1 months', $last_charge->next_charge);
+        fundraiser_sustainers_add_order_to_series($donation, $next_charge);
+      }
     }
   }
 }
