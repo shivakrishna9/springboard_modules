@@ -37,6 +37,9 @@ function springboard_advocacy_node_insert($node) {
     if (!empty($node->clone_from_original_nid)) {
       $nid = $node->clone_from_original_nid;
     }
+    $webform_user_reference_fields = variable_get('webform_user_reference_fields', array());
+    $webform_user_reference_fields[$node->nid] = 'Contact__c';
+    variable_set('webform_user_reference_fields', $webform_user_reference_fields);
     $map = salesforce_genmap_load_map($nid, 'webform');
     if (!empty($map)) {
       // Copy the map to the node.
@@ -54,7 +57,7 @@ function springboard_advocacy_node_insert($node) {
  */
 function springboard_advocacy_node_delete($node) {
   // If node is a donation type.
-  if (fundraiser_is_donation_type($node->type)) {
+  if (springboard_advocacy_is_petition($node->type)) {
     salesforce_genmap_delete_map($node->nid, 'webform');
   }
 }
