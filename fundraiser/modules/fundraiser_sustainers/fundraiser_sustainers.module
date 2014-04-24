@@ -632,6 +632,8 @@ function fundraiser_sustainers_process_single_recurring_donation(&$log, $recurri
       // Record the success.
       $log['successes']++;
       $log_record['success'] = TRUE;
+      // Perform any post-processing required by the gateway.
+      module_invoke_all('fundraiser_sustainers_recurring_success', $donation);
     }
     else {
       $donation->result['success'] = FALSE;
