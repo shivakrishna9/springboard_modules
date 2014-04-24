@@ -4,6 +4,12 @@
  */
 function springboard_advocacy_install() {
   variable_set('petition_springboard_petition', TRUE);
+  $webform_node_types = variable_get('webform_node_types', array());
+  $webform_node_types[] = 'springboard_petition';
+  variable_set($webform_node_types);
+  $webform_node_types_primary = variable_get('webform_node_types_primary', array());
+  $webform_node_types_priamry[] = 'springboard_petition';
+  variable_set($webform_node_types_primary);
   // Create default SF map insert into table.
   $map = array();
   $map = entity_create('salesforce_genmap_map', $map);

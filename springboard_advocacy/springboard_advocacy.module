@@ -6,7 +6,6 @@
 
 include_once 'springboard_advocacy.features.inc';
 
-
 function springboard_advocacy_is_petition_type($type) {
   static $petition_types;
   // Cache fundraiser content types during page execution.

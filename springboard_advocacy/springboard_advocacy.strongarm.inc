@@ -56,30 +56,5 @@ function springboard_advocacy_strongarm() {
   $strongarm->value = 0;
   $export['node_submitted_springboard_petition'] = $strongarm;
 
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'webform_node_types';
-  $strongarm->value = array(
-    0 => 'webform',
-    'webform' => FALSE,
-    1 => 'donation_form',
-    2 => 'springboard_petition',
-  );
-  $export['webform_node_types'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'webform_node_types_primary';
-  $strongarm->value = array(
-    0 => 'webform',
-    'webform' => FALSE,
-    1 => 'donation_form',
-    2 => 'petition',
-    3 => 'springboard_petition',
-  );
-  $export['webform_node_types_primary'] = $strongarm;
-
   return $export;
 }

@@ -17,5 +17,3 @@ features[variable][] = menu_parent_springboard_petition
 features[variable][] = node_options_springboard_petition
 features[variable][] = node_preview_springboard_petition
 features[variable][] = node_submitted_springboard_petition
-features[variable][] = webform_node_types
-features[variable][] = webform_node_types_primary
