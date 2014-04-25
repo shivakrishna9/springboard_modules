@@ -154,10 +154,20 @@ function springboard_p2p_theme() {
   );
 }
 
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Remove the Save button from the View.
+ */
 function springboard_p2p_form_views_form_p2p_user_approval_page_alter(&$form, &$form_state, $form_id) {
   unset($form['actions']['submit']);
 }
 
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Remove the Save button from the View.
+ */
 function springboard_p2p_form_views_form_p2p_user_approval_block_alter(&$form, &$form_state, $form_id) {
   unset($form['actions']['submit']);
 }
