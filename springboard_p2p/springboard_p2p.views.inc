@@ -132,6 +132,13 @@ function springboard_p2p_views_data() {
         'handler' => 'views_handler_filter_date',
       ),
     ),
+    'operations' => array(
+      'field' => array(
+        'title' => t('Operations links'),
+        'help' => t('Display approve and reject links.'),
+        'handler' => 'springboard_p2p_handler_field_campaign_approval_operations',
+      ),
+    ),
 
   );
 

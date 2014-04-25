@@ -108,3 +108,4 @@ features[views_view][] = p2p_user_approval
 files[] = includes/springboard_p2p_private_campaign_approval.inc
 files[] = includes/springboard_p2p_handler_field_campaign_progress.inc
 files[] = includes/springboard_p2p_handler_field_campaign_progress_percent_complete.inc
+files[] = includes/springboard_p2p_handler_field_campaign_approval_operations.inc
