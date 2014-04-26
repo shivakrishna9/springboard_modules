@@ -70,8 +70,9 @@ function springboard_p2p_dashboard() {
     '#markup' => '<h2>Users awaiting approval</h2>',
   );
 
+  // Need to use the page display because the views form won't submit otherwise.
   $output['user_approval']['user_approval'] = array(
-    '#markup' => views_embed_view('p2p_user_approval', 'block'),
+    '#markup' => views_embed_view('p2p_user_approval', 'page'),
   );
 
   $output['user_approval']['links'] = array(
