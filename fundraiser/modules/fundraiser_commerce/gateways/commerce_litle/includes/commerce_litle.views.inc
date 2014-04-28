@@ -10,12 +10,6 @@ function commerce_litle_views_data() {
     'weight' => -10,
   );
 
-  $data['commerce_litle_fraud']['table']['join'] = array(
-    'commerce_order' => array(
-      'left_field' => 'order_id',
-      'field' => 'order_id',
-    ),
-  );
 
   $data['commerce_litle_fraud']['order_id'] = array(
     'title' => t('Order ID'),
@@ -32,9 +26,18 @@ function commerce_litle_views_data() {
     'argument' => array(
       'handler' => 'views_handler_argument_string',
     ),
+    'relationship' => array(
+      'title' => t('Order'),
+      'help' => t("Relate this log to its full order"),
+      'handler' => 'views_handler_relationship',
+      'base' => 'commerce_order',
+      'base field' => 'order_id',
+      'field' => 'order_id',
+      'label' => t('Order'),
+    ),
   );
 
-  $data['example_table']['litle_txn_id'] = array(
+  $data['commerce_litle_fraud']['litle_txn_id'] = array(
     'title' => t('Transaction ID'),
     'field' => array(
       'handler' => 'views_handler_field_numeric',
