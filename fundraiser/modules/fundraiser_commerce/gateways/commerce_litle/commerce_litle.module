@@ -49,6 +49,16 @@ function commerce_litle_menu() {
     'weight' => 2,
     'file' => 'commerce_litle.admin.inc',
   );
+
+  $items['admin/commerce/config/payment-methods/advanced-fraud'] = array(
+    'title' => 'Commerce Litle Advanced Fraud Protection',
+    'description' => 'Configure advanced fraud protection methods for commerce litle',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('commerce_litle_fraud_settings_form'),
+    'access arguments' => array('administer payment methods'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
   return $items;
 }
 
@@ -231,6 +241,7 @@ function commerce_litle_cc_settings_form($settings = array()) {
     '#title' => t('Report group'),
     '#default_value' => isset($settings['commerce_litle_settings_reportGroup']) ? $settings['commerce_litle_settings_reportGroup'] : 'Default Report Group',
   );
+
   $form['commerce_litle_settings_sandbox'] = array(
     '#type' => 'checkbox',
     '#title' => 'Run in Sandbox Mode',
@@ -321,6 +332,7 @@ function commerce_litle_echeck_settings_form($settings = array()) {
     '#title' => t('Report group'),
     '#default_value' => isset($settings['commerce_litle_settings_reportGroup']) ? $settings['commerce_litle_settings_reportGroup'] : 'Default Report Group',
   );
+
   $form['commerce_litle_settings_sandbox'] = array(
     '#type' => 'checkbox',
     '#title' => 'Run in Sandbox Mode',
@@ -372,6 +384,42 @@ function commerce_litle_echeck_settings_form($settings = array()) {
   );
 
   return $form;
+}
+
+function commerce_litle_form_alter(&$form, &$form_state,$form_id){
+  if (module_exists('fundraiser') && isset($form['#node']) && fundraiser_is_donation_type($form['#node']->type)) {
+    $is_litle = FALSE;
+    $gateways = $form['#node']->gateways;
+    foreach($gateways as $gateway) {
+      if(strpos($gateway['id'], '_litle_') !== FALSE && $gateway['status'] == 1) {
+         $is_litle = TRUE;
+      }
+    }
+    if($is_litle == TRUE) {
+      $enabled = variable_get('commerce_litle_fraud', 0);
+      if($enabled) {
+              dpm('d');
+
+        $form['metrix'] = array(
+          '#markup' => _commerce_litle_fraud_markup(),
+        );
+      }
+    }
+  }
+}
+
+function _commerce_litle_fraud_markup() {
+  $prefix = variable_get('commerce_litle_fraud_idPrefix');
+  $org_id =   $prefix = variable_get('commerce_litle_fraud_merchID', 0);
+  $session_id = NULL;
+  $subdomain = variable_get('commerce_litle_fraud_subdomain', 0);
+
+  $markup = '<div style="background:url(https://h.online-metrix.net/fp/clear.png?org_id=' . $org_id . '&amp;session_id=' . $session_id . '&amp;m=1)"></div>';
+  $markup .= '<img src="https://' . $subdomain . '/fp/clear.png?org_id=' . $org_id . '&amp;session_id=' . $session_id . '&amp;m=2" />';
+  $markup .= '<script src="https://' . $subdomain . '/fp/check.js?org_id=' . $org_id . '&amp; session_id=' . $session_id . '&amp;pageid=##PAGEID##"></script>';
+  $markup .= '<object type="application/x-shockwave-flash" data="https://' . $subdomain . '/fp/fp.swf?org_id=' . $org_id . '&amp;session_id=' . $session_id . '" width="1" height="1">';
+  $markup .= '<param name="movie" value="https://' . $subdomain . '/fp/fp.swf?org_id=' . $org_id . '&amp;session_id=' . $session_id . '" /><param name="wmode" value="transparent" /> <div></div></object>';
+  return $markup;
 }
 
 /**
@@ -1592,4 +1640,61 @@ function commerce_litle_fundraiser_sustainers_recurring_success($donation) {
       }
     }
   }
+}
+
+function commerce_litle_fraud_settings_form() {
+
+  $form = array();
+
+  $form['fraud'] = array(
+    '#type' => 'fieldset',
+    '#title' => 'Advanced Fraud Protection',
+    '#description' => t('If you have provisioned the "ThreatMetrix TrustDefender Platform" enable it here.'),
+    '#collapsible' => FALSE,
+  );
+
+  $form['fraud']['commerce_litle_fraud'] = array(
+    '#type' => 'checkbox',
+    '#title' => 'Enable Advanced Fraud Protection',
+    '#default_value' => variable_get('commerce_litle_fraud',''),
+    '#prefix' => '<br />',
+  );
+
+  $form['fraud']['commerce_litle_fraud_idPrefix'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Session ID prefix'),
+    '#description' => t('A 5-character prefix, supplied by your Litle Implementation Consultant.'),
+    '#default_value' => variable_get('commerce_litle_fraud_idPrefix', ''),
+    '#states' => array(
+      'required' => array(
+        ':input[name="commerce_litle_fraud"]' => array('checked' => TRUE),
+      ),
+    ),
+  );
+
+  $form['fraud']['commerce_litle_fraud_merchID'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Merchant ID'),
+    '#default_value' => variable_get('commerce_litle_fraud_merchID', ''),
+    '#description' => t('Your Litle Merchant ID'),
+    '#states' => array(
+      'required' => array(
+        ':input[name="commerce_litle_fraud"]' => array('checked' => TRUE),
+      ),
+    ),
+  );
+
+  $form['fraud']['commerce_litle_fraud_subdomain'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subdomain redirect'),
+    '#description' => t('Your server administrator must configure a subdomain which redirects to ThreatMetrix\'s server: "h.online-metrix.net"'),
+    '#default_value' => variable_get('commerce_litle_fraud_subdomain', ''),
+    '#states' => array(
+      'required' => array(
+        ':input[name="commerce_litle_fraud"]' => array('checked' => TRUE),
+      ),
+    ),
+  );
+
+  return system_settings_form($form);
 }
