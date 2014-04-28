@@ -424,7 +424,7 @@ function commerce_lilte_add_fraud_form_elemets() {
 }
 
 function _commerce_litle_fraud_markup($session_id = NULL) {
-  $org_id =   $prefix = variable_get('commerce_litle_fraud_merchID', 0);
+  $org_id = variable_get('commerce_litle_fraud_merchID', 0);
   $subdomain = variable_get('commerce_litle_fraud_subdomain', 0);
 
   $markup = '<div style="background:url(https://h.online-metrix.net/fp/clear.png?org_id=' . $org_id . '&amp;session_id=' . $session_id . '&amp;m=1)"></div>';
