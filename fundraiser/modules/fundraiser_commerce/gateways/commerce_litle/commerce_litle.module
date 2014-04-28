@@ -426,8 +426,11 @@ function _commerce_litle_fraud_markup($session_id = NULL) {
 
 function _commerce_litle_fraud_session_id() {
   global $user;
-  $prefix = variable_get('commerce_litle_fraud_idPrefix');
-  $session_id = $prefix . hash('sha256', time() . drupal_random_key() . mt_rand());
+  static $session_id;
+  if (!$session_id) {
+    $prefix = variable_get('commerce_litle_fraud_idPrefix');
+    $session_id = $prefix . hash('sha256', time() . drupal_random_key() . mt_rand());
+  }
   return $session_id;
 }
 
