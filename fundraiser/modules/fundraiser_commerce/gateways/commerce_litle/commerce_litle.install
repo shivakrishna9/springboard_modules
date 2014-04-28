@@ -42,3 +42,47 @@ function commerce_litle_requirements($phase) {
 
   return $requirements;
 }
+
+/**
+ * Implements hook_schema().
+ */
+function commerce_litle_schema() {
+  $schema['commerce_litle_fraud'] = array(
+    'description' => 'Track responses from Threat Metrix',
+    'fields' => array(
+      'order_id' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+      ),
+      'litle_txn_id' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'avs_result' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'device_review_status' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'device_reputation_score' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('order_id'),
+  );
+  return $schema;
+}
+
+function commerce_litle_update_7001() {
+  drupal_install_schema('commerce_litle');
+}
