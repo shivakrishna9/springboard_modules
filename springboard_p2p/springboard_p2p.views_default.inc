@@ -670,6 +670,17 @@ function springboard_p2p_views_default_views() {
   $handler->display->display_options['filters']['status']['table'] = 'springboard_p2p_private_campaign_approval';
   $handler->display->display_options['filters']['status']['field'] = 'status';
   $handler->display->display_options['filters']['status']['value'] = 'requested';
+
+  /* Display: Page */
+  $handler = $view->new_display('page', 'Page', 'dashboard_page');
+  $handler->display->display_options['defaults']['filter_groups'] = FALSE;
+  $handler->display->display_options['defaults']['filters'] = FALSE;
+  /* Filter criterion: P2P: Approval status */
+  $handler->display->display_options['filters']['status']['id'] = 'status';
+  $handler->display->display_options['filters']['status']['table'] = 'springboard_p2p_private_campaign_approval';
+  $handler->display->display_options['filters']['status']['field'] = 'status';
+  $handler->display->display_options['filters']['status']['value'] = 'requested';
+  $handler->display->display_options['path'] = 'admin/springboard/p2p/dashboard_approval_queue';
   $export['p2p_user_approval'] = $view;
 
   return $export;

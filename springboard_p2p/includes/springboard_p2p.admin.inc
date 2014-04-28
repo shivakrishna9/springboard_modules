@@ -72,7 +72,7 @@ function springboard_p2p_dashboard() {
 
   // Need to use the page display because the views form won't submit otherwise.
   $output['user_approval']['user_approval'] = array(
-    '#markup' => views_embed_view('p2p_user_approval', 'page'),
+    '#markup' => views_embed_view('p2p_user_approval', 'dashboard_page'),
   );
 
   $output['user_approval']['links'] = array(
