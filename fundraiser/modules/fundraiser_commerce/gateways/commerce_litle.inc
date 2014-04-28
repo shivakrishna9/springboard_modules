@@ -33,12 +33,15 @@ function commerce_litle_fundraiser_commerce_fundraiser_gateway_info() {
 function commerce_litle_fundraiser_commerce_submit_form($payment_method) {
   if ($payment_method == 'credit') {
     module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
-    return _fundraiser_commerce_credit_card_form();
+    $form = _fundraiser_commerce_credit_card_form();
+    $form += commerce_lilte_add_fraud_form_elemets();
   }
   elseif ($payment_method == 'bank account') {
     $form = commerce_litle_echeck_submit_form();
-    return $form['echeck'];
+    $form = $form['echeck'];
+    $form += commerce_lilte_add_fraud_form_elemets();
   }
+  return $form;
 }
 
 /**

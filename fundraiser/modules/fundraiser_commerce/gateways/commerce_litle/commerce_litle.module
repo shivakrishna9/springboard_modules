@@ -397,33 +397,22 @@ function commerce_litle_echeck_settings_form($settings = array()) {
   return $form;
 }
 
-function commerce_litle_form_alter(&$form, &$form_state,$form_id){
-  if (module_exists('fundraiser') && isset($form['#node']) && fundraiser_is_donation_type($form['#node']->type)) {
-    $is_litle = FALSE;
-    $gateways = $form['#node']->gateways;
-    foreach($gateways as $gateway) {
-      if(strpos($gateway['id'], '_litle_') !== FALSE && $gateway['status'] == 1) {
-         $is_litle = TRUE;
-      }
-    }
-    if($is_litle == TRUE) {
-      $enabled = variable_get('commerce_litle_fraud', 0);
-      if($enabled) {
-        $session_id = _commerce_litle_fraud_session_id();
-        $form['metrix'] = array(
-          '#markup' => _commerce_litle_fraud_markup($session_id),
-        );
-        $form['session_id'] = array(
-          '#type' => 'hidden',
-          '#value' => $session_id,
-        );
-      }
-    }
+function commerce_lilte_add_fraud_form_elemets() {
+  $enabled = variable_get('commerce_litle_fraud', 0);
+  if($enabled) {
+    $session_id = _commerce_litle_fraud_session_id();
+    $form['metrix'] = array(
+      '#markup' => _commerce_litle_fraud_markup($session_id),
+    );
+    $form['session_id'] = array(
+      '#type' => 'hidden',
+      '#value' => $session_id,
+    );
   }
+  return $form;
 }
 
 function _commerce_litle_fraud_markup($session_id = NULL) {
-  $prefix = variable_get('commerce_litle_fraud_idPrefix');
   $org_id =   $prefix = variable_get('commerce_litle_fraud_merchID', 0);
   $subdomain = variable_get('commerce_litle_fraud_subdomain', 0);
 
@@ -436,7 +425,10 @@ function _commerce_litle_fraud_markup($session_id = NULL) {
 }
 
 function _commerce_litle_fraud_session_id() {
-  //return $session_id;
+  global $user;
+  $prefix = variable_get('commerce_litle_fraud_idPrefix');
+  $session_id = $prefix . hash('sha256', time() . drupal_random_key() . mt_rand());
+  return $session_id;
 }
 
 function _commerce_litle_fraud_sale_request_item($nvp, $session_id) {
@@ -506,12 +498,6 @@ function commerce_litle_cc_submit_form_validate($payment_method, $pane_form, $pa
  */
 function commerce_litle_echeck_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
 
-
-    dpm($pane_form);
-
-  dpm($pane_values);
-
-  dpm($order);
 
   // If the customer specified a card on file, skip the normal validation.
   if (module_exists('commerce_cardonfile') && !empty($payment_method['settings']['cardonfile']) &&
@@ -584,7 +570,7 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
   $nvp['billToAddress'] = commerce_litle_format_bill_to_address($order_wrapper);
  
   if (variable_get('commerce_litle_fraud', 0)) {
-    //$nvp = _commerce_litle_fraud_sale_request_item($nvp, $session_id)
+    $nvp = _commerce_litle_fraud_sale_request_item($nvp, $pane_values['session_id']);
   }
  
   // Config stored in a var because it's used again later.
@@ -855,6 +841,7 @@ function commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, 
  */
 function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
 
+
   // If the customer specified payment using a card on file, attempt that now
   // and simply return the result.
   if (module_exists('commerce_cardonfile') && $payment_method['settings']['cardonfile'] &&
@@ -898,7 +885,7 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
   $nvp['billToAddress'] = commerce_litle_format_bill_to_address($order_wrapper);
 
   if (variable_get('commerce_litle_fraud', 0)) {
-    //$nvp = _commerce_litle_fraud_sale_request_item($nvp, $session_id)
+    $nvp = _commerce_litle_fraud_sale_request_item($nvp, $pane_values['session_id']);
   }
 
 
