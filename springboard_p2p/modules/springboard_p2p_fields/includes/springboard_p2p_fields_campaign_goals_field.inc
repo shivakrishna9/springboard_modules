@@ -13,13 +13,19 @@ class SpringboardP2pCampaignGoalsField {
     foreach ($items as $delta => $item) {
       $enabled_types = 0;
       $no_form_selected = FALSE;
+      $goal_not_configured = FALSE;
       if (!empty($item['campaign_goals'])) {
         foreach ($item['campaign_goals']['form_types'] as $form_type => $content_types) {
           foreach ($content_types as $content_type) {
             $enabled_types += $content_type['enabled'];
 
-            if ($content_type['enabled'] && $content_type['nid'] == '') {
-              $no_form_selected = TRUE;
+            if ($content_type['enabled']) {
+              if ($content_type['nid'] == '') {
+                $no_form_selected = TRUE;
+              }
+              if (empty($content_type['goal_type']) || empty($content_type['goal_value'])) {
+                $goal_not_configured = TRUE;
+              }
             }
           }
         }
@@ -40,6 +46,12 @@ class SpringboardP2pCampaignGoalsField {
           $errors[$field['field_name']][$langcode][$delta][] = array(
             'error' => 'springboard_p2p_fields_campaign_goals_no_nid',
             'message' => t('Select a form for the enabled goal type.'),
+          );
+        }
+        elseif ($goal_not_configured) {
+          $errors[$field['field_name']][$langcode][$delta][] = array(
+            'error' => 'springboard_p2p_fields_campaign_goals_not_configured',
+            'message' => t('Configure the goal type and goal value for the enabled goal.'),
           );
         }
       }
