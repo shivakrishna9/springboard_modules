@@ -1,0 +1,81 @@
+<?php
+$view = new view();
+$view->name = 'litle_fraud_log';
+$view->description = '';
+$view->tag = 'default';
+$view->base_table = 'commerce_litle_fraud';
+$view->human_name = 'Litle Fraud Log';
+$view->core = 7;
+$view->api_version = '3.0';
+$view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+
+/* Display: Master */
+$handler = $view->new_display('default', 'Master', 'default');
+$handler->display->display_options['title'] = 'Litle Fraud Log';
+$handler->display->display_options['use_more_always'] = FALSE;
+$handler->display->display_options['access']['type'] = 'perm';
+$handler->display->display_options['access']['perm'] = 'administer commerce_order entities';
+$handler->display->display_options['cache']['type'] = 'none';
+$handler->display->display_options['query']['type'] = 'views_query';
+$handler->display->display_options['exposed_form']['type'] = 'basic';
+$handler->display->display_options['pager']['type'] = 'full';
+$handler->display->display_options['pager']['options']['items_per_page'] = '10';
+$handler->display->display_options['style_plugin'] = 'table';
+/* Relationship: Commerce Litle Fraud Log: Order */
+$handler->display->display_options['relationships']['order_id']['id'] = 'order_id';
+$handler->display->display_options['relationships']['order_id']['table'] = 'commerce_litle_fraud';
+$handler->display->display_options['relationships']['order_id']['field'] = 'order_id';
+/* Field: Commerce Litle Fraud Log: Order ID */
+$handler->display->display_options['fields']['order_id']['id'] = 'order_id';
+$handler->display->display_options['fields']['order_id']['table'] = 'commerce_litle_fraud';
+$handler->display->display_options['fields']['order_id']['field'] = 'order_id';
+$handler->display->display_options['fields']['order_id']['alter']['make_link'] = TRUE;
+$handler->display->display_options['fields']['order_id']['alter']['path'] = 'admin/commerce/orders/[order_id]';
+/* Field: Commerce Litle Fraud Log: AVS result */
+$handler->display->display_options['fields']['avs_result']['id'] = 'avs_result';
+$handler->display->display_options['fields']['avs_result']['table'] = 'commerce_litle_fraud';
+$handler->display->display_options['fields']['avs_result']['field'] = 'avs_result';
+$handler->display->display_options['fields']['avs_result']['separator'] = '';
+/* Field: Commerce Litle Fraud Log: Transaction ID */
+$handler->display->display_options['fields']['litle_txn_id']['id'] = 'litle_txn_id';
+$handler->display->display_options['fields']['litle_txn_id']['table'] = 'commerce_litle_fraud';
+$handler->display->display_options['fields']['litle_txn_id']['field'] = 'litle_txn_id';
+$handler->display->display_options['fields']['litle_txn_id']['separator'] = '';
+/* Field: Commerce Litle Fraud Log: Device Review Status */
+$handler->display->display_options['fields']['device_review_status']['id'] = 'device_review_status';
+$handler->display->display_options['fields']['device_review_status']['table'] = 'commerce_litle_fraud';
+$handler->display->display_options['fields']['device_review_status']['field'] = 'device_review_status';
+/* Field: Commerce Litle Fraud Log: Device Reputation Score */
+$handler->display->display_options['fields']['device_reputation_score']['id'] = 'device_reputation_score';
+$handler->display->display_options['fields']['device_reputation_score']['table'] = 'commerce_litle_fraud';
+$handler->display->display_options['fields']['device_reputation_score']['field'] = 'device_reputation_score';
+$handler->display->display_options['fields']['device_reputation_score']['separator'] = '';
+/* Field: Commerce Order: Order status */
+$handler->display->display_options['fields']['status']['id'] = 'status';
+$handler->display->display_options['fields']['status']['table'] = 'commerce_order';
+$handler->display->display_options['fields']['status']['field'] = 'status';
+$handler->display->display_options['fields']['status']['relationship'] = 'order_id';
+/* Field: Commerce Order: Billing information */
+$handler->display->display_options['fields']['commerce_customer_billing']['id'] = 'commerce_customer_billing';
+$handler->display->display_options['fields']['commerce_customer_billing']['table'] = 'field_data_commerce_customer_billing';
+$handler->display->display_options['fields']['commerce_customer_billing']['field'] = 'commerce_customer_billing';
+$handler->display->display_options['fields']['commerce_customer_billing']['relationship'] = 'order_id';
+/* Field: Commerce Order: E-mail */
+$handler->display->display_options['fields']['mail']['id'] = 'mail';
+$handler->display->display_options['fields']['mail']['table'] = 'commerce_order';
+$handler->display->display_options['fields']['mail']['field'] = 'mail';
+$handler->display->display_options['fields']['mail']['relationship'] = 'order_id';
+$handler->display->display_options['fields']['mail']['render_as_link'] = 0;
+/* Field: Commerce Order: Order total */
+$handler->display->display_options['fields']['commerce_order_total']['id'] = 'commerce_order_total';
+$handler->display->display_options['fields']['commerce_order_total']['table'] = 'field_data_commerce_order_total';
+$handler->display->display_options['fields']['commerce_order_total']['field'] = 'commerce_order_total';
+$handler->display->display_options['fields']['commerce_order_total']['relationship'] = 'order_id';
+$handler->display->display_options['fields']['commerce_order_total']['click_sort_column'] = 'amount';
+$handler->display->display_options['fields']['commerce_order_total']['settings'] = array(
+  'calculation' => FALSE,
+);
+
+/* Display: Page */
+$handler = $view->new_display('page', 'Page', 'page');
+$handler->display->display_options['path'] = 'admin/spring/reports/litle-fraud-log';

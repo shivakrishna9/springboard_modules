@@ -7,6 +7,17 @@
 define('COMMERCE_LITLE_CHECK_SALE', 'echeck_sale');
 
 /**
+ * Implements hook_views_api().
+ */
+
+function commerce_litle_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'commerce_litle') . '/includes',
+  );
+}
+
+/**
  * Implements hook_menu().
  */
 function commerce_litle_menu() {
