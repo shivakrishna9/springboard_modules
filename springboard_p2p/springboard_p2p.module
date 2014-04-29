@@ -537,7 +537,7 @@ function springboard_p2p_fboauth_user_presave(&$edit, $fbuser) {
   }
 
   if (empty($edit['pass'])) {
-    $edit['pass'] = user_password(8);
+    $edit['pass'] = user_password();
   }
 }
 
@@ -766,17 +766,9 @@ function springboard_p2p_set_redirect($form, &$form_state) {
         $form_state['redirect'] = 'springboard_p2p/dashboard/' . $uid;
 
         $account = user_load($uid);
-        $to = $account->mail;
-        $language = user_preferred_language($account);
-        $params = array(
-          'account' => $account,
-          'campaign' => $campaign,
-        );
-        drupal_mail('springboard_p2p', 'user_requests_approval', $to, $language, $params);
-        $site_mail = variable_get('site_mail', '');
-        if ($site_mail) {
-          drupal_mail('springboard_p2p', 'admin_approval_request', $site_mail, language_default(), $params);
-        }
+
+        $event = new SpringboardP2pEvents();
+        $event->userRequestsApprovalForPrivateCampaign($account, $campaign);
       }
       else {
         $approval->approve();

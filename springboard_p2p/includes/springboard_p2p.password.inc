@@ -18,6 +18,8 @@ function springboard_p2p_request_password_reset_page($account) {
   );
   $to = $account->mail;
   $language = user_preferred_language($account);
+
+  // @todo Change this to a Rules event so the email can be configured?
   drupal_mail('springboard_p2p', 'password_reset', $to, $language, $params);
 
   $output = array();
@@ -116,7 +118,7 @@ function springboard_p2p_set_password_form($form, &$form_state, $uid, $timestamp
     }
   }
 
-  if ($show_password_form) {
+  if ($show_password_form && isset($account)) {
     $form['#user'] = $account;
     $form_state['user'] = $account;
 

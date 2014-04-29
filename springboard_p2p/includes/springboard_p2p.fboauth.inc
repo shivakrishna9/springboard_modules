@@ -19,7 +19,8 @@ function springboard_p2p_fb_page() {
   $uid = $user->uid;
 
   if (!springboard_p2p_user_is_registered_for_p2p($uid)) {
-    springboard_p2p_register_user_for_p2p($uid);
+    $event = new SpringboardP2pEvents();
+    $event->userRegistersForP2P($user);
 
     if (springboard_p2p_complete_profile_user_has_empty_required_fields($user)) {
       $redirect = springboard_p2p_complete_profile_get_redirect();

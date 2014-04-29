@@ -237,23 +237,20 @@ function springboard_p2p_user_register_validate(&$form, &$form_state) {
 function springboard_p2p_user_register_form_submit($form, &$form_state) {
   user_register_submit($form, $form_state);
 
-  $uid = NULL;
-  if (!empty($form['#user']->uid)) {
-    $uid = $form['#user']->uid;
+  $account = NULL;
+  if (!empty($form['#user'])) {
+    $account = $form['#user'];
   }
-  elseif (!empty($form_state['user']->uid)) {
-    $uid = $form_state['user']->uid;
+  elseif (!empty($form_state['user'])) {
+    $account = $form_state['user'];
   }
 
-  if ($uid) {
-    springboard_p2p_register_user_for_p2p($uid);
-    $account = user_load($uid);
-    $params = array(
-      'account' => $account,
-    );
-    $to = $account->mail;
-    $language = user_preferred_language($account);
-    drupal_mail('springboard_p2p', 'new_user', $to, $language, $params);
+  if (!is_null($account)) {
+    // Reload user.
+    $account = user_load($account->uid);
+
+    $event = new SpringboardP2pEvents();
+    $event->userRegistersForP2P($account);
   }
 }
 
