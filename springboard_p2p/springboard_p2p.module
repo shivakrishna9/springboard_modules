@@ -166,10 +166,19 @@ function springboard_p2p_form_views_form_p2p_user_approval_page_alter(&$form, &$
 /**
  * Implements hook_form_FORM_ID_alter().
  *
- * Remove the Save button from the View.
+ * Remove the Save button from the View and add a submit function so it will
+ * redirect back to the admin dashboard.
  */
 function springboard_p2p_form_views_form_p2p_user_approval_dashboard_page_alter(&$form, &$form_state, $form_id) {
   unset($form['actions']['submit']);
+  $form['#submit'][] = 'springboard_p2p_form_views_form_p2p_user_approval_dashboard_page_submit';
+}
+
+/**
+ * Submit handler for the approval queue View to go back to the dashboard.
+ */
+function springboard_p2p_form_views_form_p2p_user_approval_dashboard_page_submit($form, &$form_state) {
+  $form_state['redirect'] = 'admin/springboard/p2p';
 }
 
 /**
