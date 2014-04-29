@@ -561,7 +561,7 @@ function _sustainer_import_create_sustainer_series_instance($instance_details, $
     'sf_recurring_id' => '', // field isn't used
     'sf_sync_status' => '', // field isn't used
     'gateway_resp' => $instance_details['status'], // ???
-    'attempts' => $instance_details['attempts'], // probably default to 1?
+    'attempts' => (isset($instance_details['attempts']) && is_numeric($instance_details['attempts'])) ? $instance_details['attempts'] : 0, // probably default to 1?
     'cancellation_reason' => '', // Not importing cancelled records
   );
   _fundraiser_sustainers_create_recurring($recurring_donation);
