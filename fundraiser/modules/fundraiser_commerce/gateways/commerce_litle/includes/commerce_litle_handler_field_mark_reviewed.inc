@@ -10,20 +10,20 @@
  */
 class commerce_litle_handler_field_mark_reviewed extends views_handler_field {
 
-  function construct() {
+  public function construct() {
     parent::construct();
     $this->additional_fields['mark_reviewed'] = 'mark_reviewed';
     $this->real_field = 'mark_reviewed';
   }
 
-  function render($values) {
+  public function render($values) {
     return '<!--form-item-' . $this->options['id'] . '--' . $this->view->row_index . '-->';
   }
 
   /**
    * Returns the form which replaces the placeholder from render().
    */
-  function views_form(&$form, &$form_state) {
+  public function views_form(&$form, &$form_state) {
     if (empty($this->view->result)) {
       return;
     }
@@ -49,11 +49,10 @@ class commerce_litle_handler_field_mark_reviewed extends views_handler_field {
     }
   }
 
-  function views_form_submit($form, &$form_state) {
+  public function views_form_submit($form, &$form_state) {
     $reviewed = $form_state['values']['mark_reviewed'];
     $id = $form_state['values']['order_id'];
     foreach ($reviewed as $index => $review) {
-
       $record = array('order_id' => $id[$index] , 'mark_reviewed' => $review);
       drupal_write_record('commerce_litle_fraud', $record , 'order_id');
     } 
