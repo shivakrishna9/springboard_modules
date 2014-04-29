@@ -1720,13 +1720,8 @@ function commerce_litle_fraud_settings_form() {
   $form['fraud']['commerce_litle_fraud_subdomain'] = array(
     '#type' => 'textfield',
     '#title' => t('Subdomain redirect'),
-    '#description' => t('Your server administrator must configure a subdomain which redirects to ThreatMetrix\'s server: "h.online-metrix.net"'),
+    '#description' => t('Your server administrator should configure a subdomain which redirects to ThreatMetrix\'s server: "h.online-metrix.net"'),
     '#default_value' => variable_get('commerce_litle_fraud_subdomain', ''),
-    '#states' => array(
-      'required' => array(
-        ':input[name="commerce_litle_fraud"]' => array('checked' => TRUE),
-      ),
-    ),
   );
 
   return system_settings_form($form);

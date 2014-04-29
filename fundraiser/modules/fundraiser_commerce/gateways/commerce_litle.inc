@@ -31,15 +31,20 @@ function commerce_litle_fundraiser_commerce_fundraiser_gateway_info() {
  * Returns the form fields for this method.
  */
 function commerce_litle_fundraiser_commerce_submit_form($payment_method) {
+  $enabled = variable_get('commerce_litle_fraud', 0);
   if ($payment_method == 'credit') {
     module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
     $form = _fundraiser_commerce_credit_card_form();
-    $form += commerce_lilte_add_fraud_form_elemets();
+    if($enabled) {
+      $form += commerce_lilte_add_fraud_form_elemets();
+    }
   }
   elseif ($payment_method == 'bank account') {
     $form = commerce_litle_echeck_submit_form();
     $form = $form['echeck'];
-    $form += commerce_lilte_add_fraud_form_elemets();
+    if($enabled) {
+      $form += commerce_lilte_add_fraud_form_elemets();
+    }  
   }
   return $form;
 }
