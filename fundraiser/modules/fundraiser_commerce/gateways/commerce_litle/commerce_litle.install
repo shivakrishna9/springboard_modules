@@ -73,7 +73,12 @@ function commerce_litle_schema() {
         'not null' => FALSE,
       ),
       'device_reputation_score' => array(
-        'type' => 'int',
+        'type' => 'tinyint',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+     'mark_reviewed' => array(
+        'type' => 'tinyint',
         'not null' => TRUE,
         'default' => 0,
       ),
