@@ -1,4 +1,5 @@
 <?php
+
 $view = new view();
 $view->name = 'litle_fraud_log';
 $view->description = '';
@@ -74,6 +75,48 @@ $handler->display->display_options['fields']['commerce_order_total']['relationsh
 $handler->display->display_options['fields']['commerce_order_total']['click_sort_column'] = 'amount';
 $handler->display->display_options['fields']['commerce_order_total']['settings'] = array(
   'calculation' => FALSE,
+);
+/* Field: Commerce Litle Fraud Log: Mark Reviewed */
+$handler->display->display_options['fields']['mark_reviewed']['id'] = 'mark_reviewed';
+$handler->display->display_options['fields']['mark_reviewed']['table'] = 'commerce_litle_fraud';
+$handler->display->display_options['fields']['mark_reviewed']['field'] = 'mark_reviewed';
+/* Sort criterion: Commerce Order: Order ID */
+$handler->display->display_options['sorts']['order_id']['id'] = 'order_id';
+$handler->display->display_options['sorts']['order_id']['table'] = 'commerce_order';
+$handler->display->display_options['sorts']['order_id']['field'] = 'order_id';
+$handler->display->display_options['sorts']['order_id']['relationship'] = 'order_id';
+$handler->display->display_options['sorts']['order_id']['order'] = 'DESC';
+/* Filter criterion: Commerce Litle Fraud Log: Mark reviewed */
+$handler->display->display_options['filters']['mark_reviewed']['id'] = 'mark_reviewed';
+$handler->display->display_options['filters']['mark_reviewed']['table'] = 'commerce_litle_fraud';
+$handler->display->display_options['filters']['mark_reviewed']['field'] = 'mark_reviewed';
+$handler->display->display_options['filters']['mark_reviewed']['exposed'] = TRUE;
+$handler->display->display_options['filters']['mark_reviewed']['expose']['operator_id'] = 'mark_reviewed_op';
+$handler->display->display_options['filters']['mark_reviewed']['expose']['label'] = 'Mark reviewed';
+$handler->display->display_options['filters']['mark_reviewed']['expose']['operator'] = 'mark_reviewed_op';
+$handler->display->display_options['filters']['mark_reviewed']['expose']['identifier'] = 'mark_reviewed';
+$handler->display->display_options['filters']['mark_reviewed']['is_grouped'] = TRUE;
+$handler->display->display_options['filters']['mark_reviewed']['group_info']['label'] = 'Reviewed Status';
+$handler->display->display_options['filters']['mark_reviewed']['group_info']['identifier'] = 'mark_reviewed';
+$handler->display->display_options['filters']['mark_reviewed']['group_info']['group_items'] = array(
+  1 => array(
+    'title' => 'Not Reviewed',
+    'operator' => '=',
+    'value' => array(
+      'value' => '0',
+      'min' => '',
+      'max' => '',
+    ),
+  ),
+  2 => array(
+    'title' => 'Reviewed',
+    'operator' => '=',
+    'value' => array(
+      'value' => '1',
+      'min' => '',
+      'max' => '',
+    ),
+  ),
 );
 
 /* Display: Page */

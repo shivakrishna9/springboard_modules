@@ -96,5 +96,20 @@ function commerce_litle_views_data() {
     ),
   );
 
+  $data['commerce_litle_fraud']['mark_reviewed'] = array(
+   'title' => t('Mark reviewed'),
+
+    'field' => array(
+      'title' => t('Mark Reviewed'),
+      'help' => t('Adds a checkbox to mark reviewed'),
+      'handler' => 'commerce_litle_handler_field_mark_reviewed',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_numeric',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
   return $data;
 }
