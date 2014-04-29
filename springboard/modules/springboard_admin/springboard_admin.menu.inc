@@ -104,8 +104,8 @@ function springboard_admin_admin_menu_items() {
   );
 
   // Top Level: Forms.
-  $items['springboard/forms/webforms'] = array(
-    'link_path' => 'springboard/forms/webforms',
+  $items['springboard/forms/all'] = array(
+    'link_path' => 'springboard/forms/all',
     'link_title' => t('Forms'),
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
@@ -115,8 +115,8 @@ function springboard_admin_admin_menu_items() {
   );
 
   // Forms > View All Forms.
-  $items['springboard/forms/webforms']['_children']['springboard/forms/webforms'] = array(
-    'link_path' => 'springboard/forms/webforms',
+  $items['springboard/forms/all']['_children']['springboard/forms/all'] = array(
+    'link_path' => 'springboard/forms/all',
     'link_title' => t('View All Forms'),
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
@@ -129,10 +129,11 @@ function springboard_admin_admin_menu_items() {
   $webforms = variable_get('webform_node_types', array());
   foreach ($webforms as $node_type) {
     if ($node_type && $node_type != 'donation_form') {
-      // Forms > $node_type
-      $items['springboard/forms/webforms']['_children']['node/add/' . $node_type] = array(
+      $type = node_type_load($node_type);
+      // Forms > $node_type.
+      $items['springboard/forms/all']['_children']['node/add/' . $node_type] = array(
         'link_path' => 'node/add/' . $node_type,
-        'link_title' => 'Create a ' . $node_type . ' Form',
+        'link_title' => 'Create a ' . $type->name,
         'menu_name' => 'springboard_admin_menu',
         'expanded' => 1,
         'customized' => 1,
@@ -142,7 +143,7 @@ function springboard_admin_admin_menu_items() {
   }
 
   // Forms > Confirmation Templates.
-  $items['springboard/forms/webforms']['_children']['springboard/templates'] = array(
+  $items['springboard/forms/all']['_children']['springboard/templates'] = array(
     'link_path' => 'springboard/templates',
     'link_title' => 'Confirmation Templates',
     'menu_name' => 'springboard_admin_menu',
@@ -164,7 +165,7 @@ function springboard_admin_admin_menu_items() {
   */
 
   // Forms > Form Settings.
-  $items['springboard/forms/webforms']['_children']['admin/config/content/webform'] = array(
+  $items['springboard/forms/all']['_children']['admin/config/content/webform'] = array(
     'link_path' => 'admin/config/content/webform',
     'link_title' => 'Form Settings',
     'menu_name' => 'springboard_admin_menu',

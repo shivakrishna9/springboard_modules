@@ -832,7 +832,7 @@ function springboard_views_views_default_views() {
     6 => 0,
     7 => 0,
   );
-  $handler->display->display_options['path'] = 'springboard/forms/webforms';
+  $handler->display->display_options['path'] = 'springboard/forms/all';
   $handler->display->display_options['menu']['type'] = 'tab';
   $handler->display->display_options['menu']['title'] = 'Webforms';
   $handler->display->display_options['menu']['description'] = 'View and edit all the available webforms on your site.';
