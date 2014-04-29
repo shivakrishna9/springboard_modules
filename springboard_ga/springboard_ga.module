@@ -11,7 +11,7 @@
  */
 function springboard_ga_menu() {
   $items = array();
-  $items['springboard/options/ga'] = array(
+  $items['springboard/settings/ga'] = array(
     'title' => 'Google Analytics Tracking Configuration',
     'description' => 'Configuration for the Springboard GA Tracking module.',
     'page callback' => 'drupal_get_form',
@@ -27,7 +27,7 @@ function springboard_ga_menu() {
  */
 function springboard_ga_upsell_admin_paths() {
   return array(
-    'springboard/options/ga' => TRUE,
+    'springboard/settings/ga' => TRUE,
   );
 }
 

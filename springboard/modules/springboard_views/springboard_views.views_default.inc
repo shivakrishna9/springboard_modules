@@ -1608,7 +1608,7 @@ function springboard_views_views_default_views() {
 
   /* Display: Page */
   $handler = $view -> new_display('page', 'Page', 'page');
-  $handler -> display -> display_options['path'] = 'springboard/templates/page-templates';
+  $handler -> display -> display_options['path'] = 'springboard/asset-library/page-templates';
 
   /* Display: Block */
   $handler = $view -> new_display('block', 'Block', 'block_1');
@@ -1623,7 +1623,7 @@ function springboard_views_views_default_views() {
   $handler -> display -> display_options['footer']['area']['id'] = 'area';
   $handler -> display -> display_options['footer']['area']['table'] = 'views';
   $handler -> display -> display_options['footer']['area']['field'] = 'area';
-  $handler -> display -> display_options['footer']['area']['content'] = '<a href="/springboard/templates/page-templates" class="button">View All Page Templates</a>';
+  $handler -> display -> display_options['footer']['area']['content'] = '<a href="/springboard/asset-library/page-templates" class="button">View All Page Templates</a>';
   $handler -> display -> display_options['footer']['area']['format'] = 'filtered_html';
   $views[$view -> name] = $view;
 
@@ -1784,7 +1784,7 @@ function springboard_views_views_default_views() {
 
   /* Display: Page */
   $handler = $view -> new_display('page', 'Page', 'page');
-  $handler -> display -> display_options['path'] = 'springboard/templates/email-templates';
+  $handler -> display -> display_options['path'] = 'springboard/asset-library/email-templates';
 
   /* Display: Block */
   $handler = $view -> new_display('block', 'Block', 'block_1');
@@ -1799,7 +1799,7 @@ function springboard_views_views_default_views() {
   $handler -> display -> display_options['footer']['area']['id'] = 'area';
   $handler -> display -> display_options['footer']['area']['table'] = 'views';
   $handler -> display -> display_options['footer']['area']['field'] = 'area';
-  $handler -> display -> display_options['footer']['area']['content'] = '<a href="/springboard/templates/email-templates" class="button">View All Email Templates</a>';
+  $handler -> display -> display_options['footer']['area']['content'] = '<a href="/springboard/asset-library/email-templates" class="button">View All Email Templates</a>';
   $handler -> display -> display_options['footer']['area']['format'] = 'filtered_html';
   $views[$view -> name] = $view;
 
@@ -2338,8 +2338,8 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['nothing']['table'] = 'views';
   $handler->display->display_options['fields']['nothing']['field'] = 'nothing';
   $handler->display->display_options['fields']['nothing']['label'] = '';
-  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/user/[uid]/edit?destination=springboard/results/donor">Edit</a>
-<a href="/user/[uid]/recurring_overview?destination=springboard/results/donor">Recurring gifts</a>
+  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/user/[uid]/edit?destination=springboard/reports/donor">Edit</a>
+<a href="/user/[uid]/recurring_overview?destination=springboard/reports/donor">Recurring gifts</a>
 ';
   $handler->display->display_options['fields']['nothing']['element_label_colon'] = FALSE;
   /* Filter criterion: User: First name (sbp_first_name) */
@@ -2406,7 +2406,7 @@ function springboard_views_views_default_views() {
 
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');
-  $handler->display->display_options['path'] = 'springboard/results/donor';
+  $handler->display->display_options['path'] = 'springboard/reports/donor';
 
   $views[$view -> name] = $view;
 
