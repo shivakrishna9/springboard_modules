@@ -50,40 +50,58 @@ function commerce_litle_schema() {
   $schema['commerce_litle_fraud'] = array(
     'description' => 'Track responses from Threat Metrix',
     'fields' => array(
-      'order_id' => array(
-        'type' => 'varchar',
-        'length' => '255',
+      'rid' => array(
+        'type' => 'serial',
         'not null' => TRUE,
+        'description' => 'Primary Key.',
+      ),
+      'order_id' => array(
+        'type' => 'int',
+        'not null' => FALSE,
+        'description' => 'commerce order id',
       ),
       'litle_txn_id' => array(
         'type' => 'int',
         'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
+        'not null' => FALSE,
+      ),
+      'response_time' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'description' => 'timestamp of response',
       ),
       'avs_result' => array(
         'type' => 'int',
         'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
+        'not null' => FALSE,
+        'description' => 'three digit apporval code',
       ),
       'device_review_status' => array(
         'type' => 'varchar',
-        'length' => '255',
+        'length' => '24',
         'not null' => FALSE,
+        'description' => 'Possible values are pass, fail, review, invalid_session, and unavailable',
       ),
       'device_reputation_score' => array(
-        'type' => 'tinyint',
-        'not null' => TRUE,
-        'default' => 0,
+        'type' => 'int',
+        'not null' => FALSE,
+        'description' => 'fraud score -100 to 100',
+      ),
+      'message' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+        'description' => 'Approve, decline status',
       ),
      'mark_reviewed' => array(
-        'type' => 'tinyint',
-        'not null' => TRUE,
-        'default' => 0,
+        'type' => 'int',
+        'not null' => FALSE,
+        'size' => 'tiny',
+        'description' => 'Checkbox to denote review status',
       ),
     ),
-    'primary key' => array('order_id'),
+    'primary key' => array('rid'),
   );
   return $schema;
 }

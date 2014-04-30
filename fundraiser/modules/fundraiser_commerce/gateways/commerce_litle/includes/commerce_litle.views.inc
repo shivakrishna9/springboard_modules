@@ -54,6 +54,21 @@ function commerce_litle_views_data() {
     ),
   );
 
+  $data['commerce_litle_fraud']['response_time'] = array(
+    'title' => t('Response Time'),
+    'help' => t('Response timestamp'),
+    'field' => array(
+      'handler' => 'views_handler_field_date',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_date',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
+
   $data['commerce_litle_fraud']['avs_result'] = array(
     'title' => t('AVS result'),
     'help' => t('Credit card security code validation field'),
@@ -66,6 +81,24 @@ function commerce_litle_views_data() {
     ),
     'sort' => array(
       'handler' => 'views_handler_sort',
+    ),
+  );
+
+  $data['commerce_litle_fraud']['message'] = array(
+    'title' => t('Response Message'),
+    'help' => t('Approved, declined, etc.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE, // This is use by the table display plugin.
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_string',
     ),
   );
 
