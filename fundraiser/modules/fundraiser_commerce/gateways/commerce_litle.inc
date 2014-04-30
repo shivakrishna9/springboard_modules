@@ -132,7 +132,9 @@ function commerce_litle_fundraiser_commerce_charge($method_instance, $donation) 
   // Execute call to Litle depending on what payment method we have
   if ($donation->donation['payment_method'] == 'credit') {
     $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
-    $pane_values['session_id'] = $donation->donation['payment_fields']['credit']['session_id'];
+    if (variable_get('commerce_litle_fraud', 0)) {
+      $pane_values['session_id'] = $donation->donation['payment_fields']['credit']['session_id'];
+    }  
     $method_instance['settings']['cardonfile'] = FALSE;
 
     if (module_exists('commerce_cardonfile')) {
