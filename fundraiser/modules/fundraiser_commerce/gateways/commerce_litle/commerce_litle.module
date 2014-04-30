@@ -447,7 +447,7 @@ function _commerce_litle_fraud_session_id() {
 
 function _commerce_litle_fraud_sale_request_item($nvp, $session_id) {
  $nvp['advancedFraudChecks']  = array(
-   'threatMetrixSessionId' => $session_id
+   'threatMetrixSessionId' => $session_id,
  );
  return $nvp;
 }
@@ -997,11 +997,9 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
     'orderId' => $order->order_number,
     'customerId' => $order->uid,
   );
-
   if (variable_get('commerce_litle_fraud', 0)) {
-    $nvp = _commerce_litle_fraud_sale_request_item($nvp, $pane_values['session_id']);
+    $nvp = _commerce_litle_fraud_sale_request_item($nvp, $pane_values['echeck']['session_id']);
   }
-
   // Prepare the billing address for use in the request.
   if ($order_wrapper->commerce_customer_billing->value()) {
     $billing_address = $order_wrapper->commerce_customer_billing->commerce_customer_address->value();
@@ -1067,6 +1065,27 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
   // Log the response if specified.
   if ($payment_method['settings']['log']['response'] === 'response') {
     watchdog('commerce_litle', 'Litle response: !param', array('!param' => '<pre>' . check_plain(XmlParser::getDomDocumentAsString($sale_response)) . '</pre>', WATCHDOG_DEBUG));
+    if (variable_get('commerce_litle_fraud', 0)) {
+
+       $order_id = XmlParser::getNode($sale_response, 'orderId');
+       $litle_txn_id = XmlParser::getNode($sale_response, 'litleTxnId');
+       $response_time = strtotime(XmlParser::getNode($sale_response, 'responseTime'));
+       $message = XmlParser::getNode($sale_response, 'message');
+       $avs_result = XmlParser::getNode($sale_response, 'avsResult');
+       $device_review_status = XmlParser::getNode($sale_response, 'deviceReviewStatus');
+       $device_reputation_score = XmlParser::getNode($sale_response, 'deviceReputationScore');
+
+      $data = array(
+       'order_id' => !empty($order_id) ? $order_id : NULL,
+       'litle_txn_id' => !empty($litle_txn_id) ? $litle_txn_id : NULL,
+       'response_time' => $response_time,
+       'message' => XmlParser::getNode($sale_response, 'message'),
+       'avs_result' => !empty($avs_result) ? $avs_result : NULL,
+       'device_review_status' => XmlParser::getNode($sale_response, 'deviceReviewStatus'),
+       'device_reputation_score' => !empty($device_reputation_score) ? $device_reputation_score : NULL,
+      );
+      drupal_write_record('commerce_litle_fraud', $data);
+    }
   }
 
   // If we didn't get an approval response code...
