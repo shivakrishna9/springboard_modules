@@ -408,7 +408,7 @@ function commerce_litle_echeck_settings_form($settings = array()) {
   return $form;
 }
 
-function commerce_lilte_add_fraud_form_elemets() {
+function commerce_litle_add_fraud_form_elements() {
   $enabled = variable_get('commerce_litle_fraud', 0);
   if($enabled) {
     $session_id = _commerce_litle_fraud_session_id();
