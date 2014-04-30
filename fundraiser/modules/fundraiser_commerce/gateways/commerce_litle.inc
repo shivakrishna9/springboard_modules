@@ -34,14 +34,14 @@ function commerce_litle_fundraiser_commerce_submit_form($payment_method) {
     module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
     $form = _fundraiser_commerce_credit_card_form();
     if($enabled) {
-      $form += commerce_lilte_add_fraud_form_elemets();
+      $form += commerce_litle_add_fraud_form_elements();
     }
   }
   elseif ($payment_method == 'bank account') {
     $form = commerce_litle_echeck_submit_form();
     $form = $form['echeck'];
     if($enabled) {
-      $form += commerce_lilte_add_fraud_form_elemets();
+      $form += commerce_litle_add_fraud_form_elements();
     }  
   }
   return $form;
