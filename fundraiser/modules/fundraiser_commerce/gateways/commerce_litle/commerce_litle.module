@@ -436,7 +436,6 @@ function _commerce_litle_fraud_markup($session_id = NULL) {
 }
 
 function _commerce_litle_fraud_session_id() {
-  global $user;
   static $session_id;
   if (!$session_id) {
     $prefix = variable_get('commerce_litle_fraud_idPrefix');
@@ -592,7 +591,7 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
   );
 
   if (variable_get('commerce_litle_fraud', 0)) {
-    $nvp = _commerce_litle_fraud_sale_request_item($nvp, $pane_values['session_id']);
+    $nvp = _commerce_litle_fraud_sale_request_item($nvp, $pane_values['credit_card']['session_id']);
   }
   // Prepare the billing address for use in the request.
   if ($order_wrapper->commerce_customer_billing->value()) {
