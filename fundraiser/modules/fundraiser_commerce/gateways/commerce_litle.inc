@@ -149,6 +149,7 @@ function commerce_litle_fundraiser_commerce_charge($method_instance, $donation) 
   if ($donation->donation['payment_method'] == 'credit') {
     // Add fundraiser commerce data to the pane values array.
     _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
+    $pane_values['session_id'] = $donation->donation['payment_fields']['credit']['session_id'];
     $method_instance['settings']['cardonfile'] = FALSE;
 
     if (module_exists('commerce_cardonfile')) {
