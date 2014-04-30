@@ -1140,21 +1140,75 @@ function springboard_p2p_field_default_field_instances() {
     ),
     'entity_type' => 'node',
     'field_name' => 'body',
-    'label' => 'Body',
-    'required' => FALSE,
+    'label' => 'Campaign Introduction',
+    'required' => 1,
     'settings' => array(
-      'display_summary' => TRUE,
+      'display_summary' => 1,
       'text_processing' => 1,
       'user_register_form' => FALSE,
     ),
     'widget' => array(
+      'active' => 1,
       'module' => 'text',
       'settings' => array(
         'rows' => 20,
         'summary_rows' => 5,
       ),
       'type' => 'text_textarea_with_summary',
-      'weight' => -4,
+      'weight' => 2,
+    ),
+  );
+
+  // Exported field_instance: 'node-p2p_personal_campaign-field_fundraising_deadline'
+  $field_instances['node-p2p_personal_campaign-field_fundraising_deadline'] = array(
+    'bundle' => 'p2p_personal_campaign',
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'date',
+        'settings' => array(
+          'format_type' => 'long',
+          'fromto' => 'both',
+          'multiple_from' => '',
+          'multiple_number' => '',
+          'multiple_to' => '',
+        ),
+        'type' => 'date_default',
+        'weight' => 5,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_fundraising_deadline',
+    'label' => 'Fundraising Deadline',
+    'required' => 0,
+    'settings' => array(
+      'default_value' => 'now',
+      'default_value2' => 'same',
+      'default_value_code' => '',
+      'default_value_code2' => '',
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'date',
+      'settings' => array(
+        'increment' => 15,
+        'input_format' => 'm/d/Y - H:i:s',
+        'input_format_custom' => '',
+        'label_position' => 'above',
+        'text_parts' => array(),
+        'year_range' => '-3:+3',
+      ),
+      'type' => 'date_text',
+      'weight' => 5,
     ),
   );
 
@@ -1193,7 +1247,57 @@ function springboard_p2p_field_default_field_instances() {
       'module' => 'options',
       'settings' => array(),
       'type' => 'options_select',
-      'weight' => -3,
+      'weight' => 3,
+    ),
+  );
+
+  // Exported field_instance: 'node-p2p_personal_campaign-field_p2p_campaign_images'
+  $field_instances['node-p2p_personal_campaign-field_p2p_campaign_images'] = array(
+    'bundle' => 'p2p_personal_campaign',
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'image',
+        'settings' => array(
+          'image_link' => '',
+          'image_style' => '',
+        ),
+        'type' => 'image',
+        'weight' => 6,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_p2p_campaign_images',
+    'label' => 'Upload a Campaign Image',
+    'required' => 0,
+    'settings' => array(
+      'alt_field' => 0,
+      'default_image' => 0,
+      'file_directory' => '',
+      'file_extensions' => 'png gif jpg jpeg',
+      'max_filesize' => '',
+      'max_resolution' => '',
+      'min_resolution' => '',
+      'title_field' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'image',
+      'settings' => array(
+        'preview_image_style' => 'thumbnail',
+        'progress_indicator' => 'throbber',
+      ),
+      'type' => 'image_image',
+      'weight' => 7,
     ),
   );
 
@@ -1229,15 +1333,99 @@ function springboard_p2p_field_default_field_instances() {
       'module' => 'springboard_p2p_fields',
       'settings' => array(),
       'type' => 'springboard_p2p_fields_personal_campaign_progress_widget',
-      'weight' => 0,
+      'weight' => 4,
+    ),
+  );
+
+  // Exported field_instance: 'node-p2p_personal_campaign-field_p2p_video_embed'
+  $field_instances['node-p2p_personal_campaign-field_p2p_video_embed'] = array(
+    'bundle' => 'p2p_personal_campaign',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'video_embed_field',
+        'settings' => array(
+          'description' => 1,
+          'description_position' => 'bottom',
+          'video_style' => 'normal',
+        ),
+        'type' => 'video_embed_field',
+        'weight' => 7,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_p2p_video_embed',
+    'label' => 'Upload a Campaign Video',
+    'required' => 0,
+    'settings' => array(
+      'description_field' => 0,
+      'description_length' => 128,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 0,
+      'module' => 'video_embed_field',
+      'settings' => array(),
+      'type' => 'video_embed_field_video',
+      'weight' => 9,
+    ),
+  );
+
+  // Exported field_instance: 'node-p2p_personal_campaign-field_personal_campaign_url'
+  $field_instances['node-p2p_personal_campaign-field_personal_campaign_url'] = array(
+    'bundle' => 'p2p_personal_campaign',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'text',
+        'settings' => array(),
+        'type' => 'text_default',
+        'weight' => 4,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_personal_campaign_url',
+    'label' => 'Campaign URL',
+    'required' => 0,
+    'settings' => array(
+      'text_processing' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'text',
+      'settings' => array(
+        'size' => 60,
+      ),
+      'type' => 'text_textfield',
+      'weight' => 1,
     ),
   );
 
   // Translatables
   // Included for use with string extractors like potx.
   t('Allow donor comments');
-  t('Body');
   t('Campaign');
+  t('Campaign Introduction');
+  t('Campaign URL');
   t('Campaign images');
   t('Category');
   t('Category image');
@@ -1245,6 +1433,7 @@ function springboard_p2p_field_default_field_instances() {
   t('Description');
   t('Donation form header image');
   t('Enter a URL from YouTube to embed a video.');
+  t('Fundraising Deadline');
   t('Goals');
   t('Images');
   t('Organization introduction');
@@ -1254,6 +1443,8 @@ function springboard_p2p_field_default_field_instances() {
   t('Show donor comments on personal campaign pages');
   t('Show donor scroll on personal campaign pages');
   t('This content can be overridden by campaigner');
+  t('Upload a Campaign Image');
+  t('Upload a Campaign Video');
   t('Video embed');
   t('When enabled donors will be able to leave an additional comment that can be displayed on the personal campaign page.');
 

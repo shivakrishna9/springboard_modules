@@ -320,7 +320,89 @@ function springboard_p2p_ajax($form, $form_state) {
  */
 function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$form_state, $form_id) {
   if (springboard_p2p_form_is_node_create($form)) {
-    // Node create form.
+    $campaign = isset($_GET['campaign']) ? $_GET['campaign'] : FALSE;
+    if ($campaign && is_numeric($campaign)) {
+      $campaign_node = node_load($campaign);
+      $form['title']['#default_value'] = $campaign_node->title;
+      $form['body'][$campaign_node->language][0]['#default_value'] = $campaign_node->field_p2p_personal_intro[$campaign_node->language][0]['value'];
+      $can_edit_body = $campaign_node->field_p2p_personal_intro_edit[$campaign_node->language][0]['value'];
+      if (!$can_edit_body) {
+       // $form['body'][$campaign_node->language][0]['#access'] = FALSE;
+        $form['body']['display'] = array(
+          '#title' => $form['body'][$campaign_node->language][0]['#title'],
+          '#type' => 'textarea',
+          '#default_value' => $form['body'][$campaign_node->language][0]['#default_value'],
+          '#disabled' => TRUE,
+        );
+      }
+      $form['field_p2p_campaign'][$campaign_node->language]['#default_value'] = $campaign_node->nid;
+      // images
+      $empty_image = $form['field_p2p_campaign_images'][$campaign_node->language][0];
+      foreach($campaign_node->field_p2p_campaign_images[$campaign_node->language] as $index => $image) {
+        if (!isset($form['field_p2p_campaign_images'][$campaign_node->language][$index])) {
+          $form['field_p2p_campaign_images'][$campaign_node->language][$index] = $form['field_p2p_campaign_images'][$campaign_node->language][0];
+        }
+        $form['field_p2p_campaign_images'][$campaign_node->language][$index]['#default_value']['fid'] = $image['fid'];
+        $form['field_p2p_campaign_images'][$campaign_node->language][$index]['#default_value']['display'] = TRUE;
+      }
+      $form['field_p2p_campaign_images'][$campaign_node->language][$index + 1] = $empty_image;
+    }
+  }
+  else {
+    $campaign_node = node_load($form['nid']['#value']);
+  }
+  $form['campaign_node'] = array(
+    '#type' => 'value',
+    '#value' => $campaign_node,
+  );
+  $form['field_personal_campaign_url'][$campaign_node->language][0]['value']['#field_prefix'] = '<span>' . $GLOBALS['base_url'] . '/</span>';
+  // Node create form.
+  $form['#validate'][] = 'springboard_p2p_personal_campaign_validate';
+  $form['#submit'][] = 'springboard_p2p_personal_campaign_submit';
+}
+
+function springboard_p2p_personal_campaign_validate(&$form, $form_state) {
+  // Validate campaign url alias for uniqueness.
+  $campaign_node = $form_state['values']['campaign_node'];
+  $path = $form_state['values']['field_personal_campaign_url'][$campaign_node->language][0]['value'];
+  if (drupal_lookup_path('source', $path)) {
+    form_set_error('field_personal_campaign_url', t('This url is already in use.'));
+  }
+}
+
+function springboard_p2p_personal_campaign_submit($form, $form_state) {
+
+}
+
+function springboard_p2p_node_insert($node) {
+  if ($node->type == 'p2p_personal_campaign') {
+    // manage url alias for personal campaign node type
+    $alias = $node->field_personal_campaign_url[$node->language][0]['value'];
+    if ($alias) {
+      $path = array(
+        'source' => 'node/' . $node->nid,
+        'alias' => $alias,
+      );
+      path_save($path);
+    }
+  }
+}
+
+function springboard_p2p_node_update($node) {
+  // manage url alias for personal campaign node type
+  if ($node->type == 'p2p_personal_campaign') {
+    $alias = $node->field_personal_campaign_url[$node->language][0]['value'];
+    if ($alias) {
+      $path = array(
+        'source' => 'node/' . $node->nid,
+        'alias' => $alias,
+      );
+      // Force an update if path settings already exist for this node.
+      if (isset($node->path['pid']) && $node->path['pid']) {
+        $path['pid'] = $node->path['pid'];
+      }
+      path_save($path);
+    }
   }
 }
 
