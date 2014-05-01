@@ -26,7 +26,7 @@ function commerce_litle_fundraiser_commerce_fundraiser_gateway_info() {
 }
 
 /**
- * Returns the form fields for this method
+ * Returns the form fields for this method.
  */
 function commerce_litle_fundraiser_commerce_submit_form($payment_method) {
   $enabled = variable_get('commerce_litle_fraud', 0);
@@ -34,7 +34,7 @@ function commerce_litle_fundraiser_commerce_submit_form($payment_method) {
   if ($payment_method == 'credit') {
     module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
     $form = _fundraiser_commerce_credit_card_form();
-    if($enabled && !$show_once) {
+    if ($enabled && !$show_once) {
       $form += commerce_litle_add_fraud_form_elements();
       $show_once = TRUE;
     }
@@ -42,10 +42,10 @@ function commerce_litle_fundraiser_commerce_submit_form($payment_method) {
   elseif ($payment_method == 'bank account') {
     $form = commerce_litle_echeck_submit_form();
     $form = $form['echeck'];
-    if($enabled && !$show_once) {
+    if ($enabled && !$show_once) {
       $form += commerce_litle_add_fraud_form_elements();
       $show_once = TRUE;
-    }  
+    }
   }
   return $form;
 }
