@@ -18,8 +18,8 @@ function springboard_p2p_default_rules_default_rules_configuration() {
       "DO" : [
         { "mail" : {
             "to" : [ "site:mail" ],
-            "subject" : "User requesting approval to a private campaign",
-            "message" : "A user has requested approval to a private campaign.",
+            "subject" : "User approval for private campaign",
+            "message" : "A user, [account:name], [account:mail] has requested permission to participate in the following campaign: [campaign:title], [campaign:url].\\r\\n\\r\\nTo approve the account please visit the approval queue: https:\\/\\/p2p.qa.jacksonriverdev.com\\/admin\\/springboard\\/p2p\\/approval\\/user.",
             "language" : [ "" ]
           }
         }
@@ -35,8 +35,8 @@ function springboard_p2p_default_rules_default_rules_configuration() {
       "DO" : [
         { "mail" : {
             "to" : [ "account:mail" ],
-            "subject" : "Thanks for requesting approval for a private campaign.",
-            "message" : "Thanks for requesting approval for a private campaign.  You will receive an email when you are approved.",
+            "subject" : "Thanks for your interest",
+            "message" : "Dear [account:sbp-first-name]:\\r\\n\\r\\nThanks for your interest in participating in our campaign. We\\u0027ll be in touch soon. \\r\\n\\r\\nIn the meantime, access your dashboard and check out other campaigns here: http:\\/\\/springboard_p2p\\/dashboard\\/%uid",
             "language" : [ "" ]
           }
         }
@@ -53,7 +53,7 @@ function springboard_p2p_default_rules_default_rules_configuration() {
         { "mail" : {
             "to" : [ "account:mail" ],
             "subject" : "You have been approved",
-            "message" : "You have been approved for a private campaign.",
+            "message" : "Dear [account:sbp-first-name]:\\r\\n\\r\\nYour account has been approved and you can start building your peer to peer campaign. Click here to create you campaign: [campaign:edit-url]. \\r\\n",
             "language" : [ "" ]
           }
         }
@@ -69,8 +69,8 @@ function springboard_p2p_default_rules_default_rules_configuration() {
       "DO" : [
         { "mail" : {
             "to" : [ "account:mail" ],
-            "subject" : "You have been rejected",
-            "message" : "You have been rejected for a private campaign.",
+            "subject" : "Your registration",
+            "message" : "Dear [account:sbp_first_name]:\\r\\n\\r\\nWe can\\u0027t accept your registration at this time, but check out [site:url] for other ways you can get involved. ",
             "language" : [ "" ]
           }
         }
@@ -86,8 +86,8 @@ function springboard_p2p_default_rules_default_rules_configuration() {
       "DO" : [
         { "mail" : {
             "to" : [ "account:mail" ],
-            "subject" : "Welcome to P2P",
-            "message" : "Welcome to P2P. You can now log in and create campaigns.",
+            "subject" : "Thanks for registering",
+            "message" : "Dear [account:sbp-first-name]:\\r\\n\\r\\nThanks for registering. You can go here to create you campaign:  [campaign:edit-url]\\r\\n",
             "language" : [ "" ]
           }
         }
