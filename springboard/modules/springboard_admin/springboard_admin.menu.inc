@@ -298,7 +298,6 @@ function springboard_admin_admin_menu_items() {
   );
 
   // Reports > Contacts.
-  /* @TODO: make this page */
   $items['springboard/reports']['_children']['springboard/reports/contacts'] = array(
     'link_path' => 'springboard/reports/contacts',
     'link_title' => 'Contacts',

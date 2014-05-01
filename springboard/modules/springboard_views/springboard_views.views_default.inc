@@ -2150,22 +2150,22 @@ function springboard_views_views_default_views() {
   $views[$view -> name] = $view;
 
   /**
-   * View donors
+   * View sbv_donors
    */
 
   $view = new view();
-  $view->name = 'donors';
+  $view->name = 'sbv_contacts';
   $view->description = '';
   $view->tag = 'default';
   $view->base_table = 'commerce_customer_profile';
-  $view->human_name = 'Donors';
+  $view->human_name = 'Contacts';
   $view->core = 7;
   $view->api_version = '3.0';
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
 
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');
-  $handler->display->display_options['title'] = 'Donors';
+  $handler->display->display_options['title'] = 'Contacts';
   $handler->display->display_options['css_class'] = 'donor-table-view';
   $handler->display->display_options['use_ajax'] = TRUE;
   $handler->display->display_options['use_more_always'] = FALSE;
@@ -2406,7 +2406,7 @@ function springboard_views_views_default_views() {
 
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');
-  $handler->display->display_options['path'] = 'springboard/reports/donor';
+  $handler->display->display_options['path'] = 'springboard/reports/contacts';
 
   $views[$view -> name] = $view;
 
