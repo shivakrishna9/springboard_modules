@@ -414,22 +414,26 @@ function springboard_admin_dashboard() {
   $enabled_panes = variable_get('springboard_enabled_panes', array());
   // Sort panes based on weight. Weight is current hard-coded.
   uasort($panes, 'drupal_sort_weight');
-  $pane_count = 1;
   $column_left = '';
   $column_right = '';
+  $column_bottom = '';
   foreach ($panes as $pane_key => $pane) {
     if (!empty($pane['content']) && !empty($enabled_panes[$pane_key])) {
-      if ($pane_count%2) {
-        $column_left .= '<div class="springboard-pane odd ' . drupal_clean_css_identifier($pane_key) . '">' . $pane['content'] . '</div>';
+      
+      if ($pane['position'] == 'column_left') {
+        $column_left .= '<div class="springboard-pane ' . drupal_clean_css_identifier($pane_key) . '">' . $pane['content'] . '</div>';
+      }
+      else if ($pane['position'] == 'column_right') {
+        $column_right .= '<div class="springboard-pane ' . drupal_clean_css_identifier($pane_key) . '">' . $pane['content'] . '</div>';
       }
       else {
-        $column_right .= '<div class="springboard-pane even ' . drupal_clean_css_identifier($pane_key) . '">' . $pane['content'] . '</div>';
+        $column_bottom .= '<div class="springboard-pane ' . drupal_clean_css_identifier($pane_key) . '">' . $pane['content'] . '</div>';
       }
-      $pane_count++;
     }
   }
   $content .= '<div class="springboard-column sb-col-left">' . $column_left . "</div>";
   $content .= '<div class="springboard-column sb-col-right">' . $column_right . "</div>";
+  $content .= '<div class="springboard-column sb-col-bottom"' . $column_bottom . "</div>";
   $content .= '</div>';
   return $content;
 }
@@ -487,6 +491,7 @@ function springboard_springboard_dashboard_panes() {
     'label' => $sf_status ['subject'],
     'description' => $sf_status ['subject'],
     'content' => $sf_status['content'],
+    'position' => 'column_right',
     'weight' => 1,
   );
   return $panes;
