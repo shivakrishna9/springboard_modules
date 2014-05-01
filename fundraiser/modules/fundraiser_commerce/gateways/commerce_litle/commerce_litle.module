@@ -432,10 +432,11 @@ function commerce_litle_add_fraud_form_elements() {
 function _commerce_litle_fraud_markup($session_id = NULL) {
   $org_id = variable_get('commerce_litle_fraud_merchID', 0);
   $subdomain = variable_get('commerce_litle_fraud_subdomain', 0);
-
+  $node = menu_get_object();
+  $page_id = isset($node->nid) ? $node->nid : '1';
   $markup = '<div style="background:url(https://' . $subdomain . '/fp/clear.png?org_id=' . $org_id . '&amp;session_id=' . $session_id . '&amp;m=1)"></div>';
   $markup .= '<img src="https://' . $subdomain . '/fp/clear.png?org_id=' . $org_id . '&amp;session_id=' . $session_id . '&amp;m=2" />';
-  $markup .= '<script src="https://' . $subdomain . '/fp/check.js?org_id=' . $org_id . '&amp; session_id=' . $session_id . '&amp;pageid=##PAGEID##"></script>';
+  $markup .= '<script src="https://' . $subdomain . '/fp/check.js?org_id=' . $org_id . '&amp; session_id=' . $session_id . '&amp;pageid=##' . $page_id . '##"></script>';
   $markup .= '<object type="application/x-shockwave-flash" data="https://' . $subdomain . '/fp/fp.swf?org_id=' . $org_id . '&amp;session_id=' . $session_id . '" width="1" height="1">';
   $markup .= '<param name="movie" value="https://' . $subdomain . '/fp/fp.swf?org_id=' . $org_id . '&amp;session_id=' . $session_id . '" /><param name="wmode" value="transparent" /> <div></div></object>';
   return $markup;
