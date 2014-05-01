@@ -366,6 +366,7 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
 
       // Images.
       $empty_image = $form['field_p2p_campaign_images'][$campaign_node->language][0];
+      $index = 0;
       foreach ($campaign_node->field_p2p_campaign_images[$campaign_node->language] as $index => $image) {
         if (!isset($form['field_p2p_campaign_images'][$campaign_node->language][$index])) {
           $form['field_p2p_campaign_images'][$campaign_node->language][$index] = $form['field_p2p_campaign_images'][$campaign_node->language][0];
@@ -374,6 +375,11 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
         $form['field_p2p_campaign_images'][$campaign_node->language][$index]['#default_value']['display'] = TRUE;
       }
       $form['field_p2p_campaign_images'][$campaign_node->language][$index + 1] = $empty_image;
+    }
+    else {
+      // We have something passed in but it's not a valid campaign.
+      // Need to spit out an error and send the user back to another page.
+      // @todo
     }
   }
   else {
