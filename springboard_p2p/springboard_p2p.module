@@ -386,7 +386,6 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
   $form['field_personal_campaign_url'][$campaign_node->language][0]['value']['#field_prefix'] = '<span>' . $GLOBALS['base_url'] . '/</span>';
   // Node create form.
   $form['#validate'][] = 'springboard_p2p_personal_campaign_validate';
-  $form['#submit'][] = 'springboard_p2p_personal_campaign_submit';
 }
 
 /**
@@ -399,15 +398,6 @@ function springboard_p2p_personal_campaign_validate(&$form, $form_state) {
   if (drupal_lookup_path('source', $path)) {
     form_set_error('field_personal_campaign_url', t('This url is already in use.'));
   }
-}
-
-/**
- * Submit handler for the personal campaign node form.
- *
- * @deprecated
- */
-function springboard_p2p_personal_campaign_submit($form, $form_state) {
-
 }
 
 /**
