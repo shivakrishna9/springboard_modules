@@ -11,26 +11,26 @@ include_once 'springboard_admin.menu.inc';
  */
 function springboard_admin_menu() {
   $items = array();
-  $items['springboard/templates'] = array(
+  $items['springboard/asset-library'] = array(
     'title' => 'Templates',
     'type' => MENU_NORMAL_ITEM,
     'access callback' => 'springboard_admin_menu_access',
-    'access arguments' => array('springboard/templates'),
+    'access arguments' => array('springboard/asset-library'),
     'page callback' => 'springboard_admin_template_page',
   );
-  $items['springboard/results'] = array(
-    'title' => 'Results',
+  $items['springboard/reports'] = array(
+    'title' => 'Reports',
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('access springboard dashboard'),
     'page callback' => 'springboard_admin_aggregate_links_page',
-    'page arguments' => array('springboard/results'),
+    'page arguments' => array('springboard/reports'),
    );
-  $items['springboard/options'] = array(
+  $items['springboard/settings'] = array(
     'title' => 'Options',
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('access springboard dashboard'),
     'page callback' => 'springboard_admin_aggregate_links_page',
-    'page arguments' => array('springboard/options'),
+    'page arguments' => array('springboard/settings'),
   );
   $items['springboard/tools'] = array(
     'title' => 'Other Tools',
@@ -105,9 +105,9 @@ function springboard_admin_admin_menu_output_alter(&$content) {
  */
 function springboard_admin_admin_paths() {
   return array(
-    'springboard/templates' => TRUE,
-    'springboard/results' => TRUE,
-    'springboard/options' => TRUE,
+    'springboard/asset-library' => TRUE,
+    'springboard/reports' => TRUE,
+    'springboard/settings' => TRUE,
     'springboard/tools' => TRUE,
   );
 }
@@ -296,7 +296,7 @@ function springboard_admin_custom_theme() {
  */
 function springboard_admin_menu_access($path) {
   switch ($path) {
-    case 'springboard/templates':
+    case 'springboard/asset-library':
       if (user_access('edit any page_wrapper content') || user_access('edit any email_wrapper content')) {
         return TRUE;
       }

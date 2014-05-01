@@ -832,7 +832,7 @@ function springboard_views_views_default_views() {
     6 => 0,
     7 => 0,
   );
-  $handler->display->display_options['path'] = 'springboard/forms/webforms';
+  $handler->display->display_options['path'] = 'springboard/forms/all';
   $handler->display->display_options['menu']['type'] = 'tab';
   $handler->display->display_options['menu']['title'] = 'Webforms';
   $handler->display->display_options['menu']['description'] = 'View and edit all the available webforms on your site.';
@@ -1608,7 +1608,7 @@ function springboard_views_views_default_views() {
 
   /* Display: Page */
   $handler = $view -> new_display('page', 'Page', 'page');
-  $handler -> display -> display_options['path'] = 'springboard/templates/page-templates';
+  $handler -> display -> display_options['path'] = 'springboard/asset-library/page-templates';
 
   /* Display: Block */
   $handler = $view -> new_display('block', 'Block', 'block_1');
@@ -1623,7 +1623,7 @@ function springboard_views_views_default_views() {
   $handler -> display -> display_options['footer']['area']['id'] = 'area';
   $handler -> display -> display_options['footer']['area']['table'] = 'views';
   $handler -> display -> display_options['footer']['area']['field'] = 'area';
-  $handler -> display -> display_options['footer']['area']['content'] = '<a href="/springboard/templates/page-templates" class="button">View All Page Templates</a>';
+  $handler -> display -> display_options['footer']['area']['content'] = '<a href="/springboard/asset-library/page-templates" class="button">View All Page Templates</a>';
   $handler -> display -> display_options['footer']['area']['format'] = 'filtered_html';
   $views[$view -> name] = $view;
 
@@ -1784,7 +1784,7 @@ function springboard_views_views_default_views() {
 
   /* Display: Page */
   $handler = $view -> new_display('page', 'Page', 'page');
-  $handler -> display -> display_options['path'] = 'springboard/templates/email-templates';
+  $handler -> display -> display_options['path'] = 'springboard/asset-library/email-templates';
 
   /* Display: Block */
   $handler = $view -> new_display('block', 'Block', 'block_1');
@@ -1799,7 +1799,7 @@ function springboard_views_views_default_views() {
   $handler -> display -> display_options['footer']['area']['id'] = 'area';
   $handler -> display -> display_options['footer']['area']['table'] = 'views';
   $handler -> display -> display_options['footer']['area']['field'] = 'area';
-  $handler -> display -> display_options['footer']['area']['content'] = '<a href="/springboard/templates/email-templates" class="button">View All Email Templates</a>';
+  $handler -> display -> display_options['footer']['area']['content'] = '<a href="/springboard/asset-library/email-templates" class="button">View All Email Templates</a>';
   $handler -> display -> display_options['footer']['area']['format'] = 'filtered_html';
   $views[$view -> name] = $view;
 
@@ -2148,6 +2148,271 @@ function springboard_views_views_default_views() {
   $handler -> display -> display_options['pager']['options']['offset'] = '0';
   $handler -> display -> display_options['block_description'] = 'Unsynched Errors';
   $views[$view -> name] = $view;
+
+  /**
+   * View sbv_donors
+   */
+
+  $view = new view();
+  $view->name = 'sbv_contacts';
+  $view->description = '';
+  $view->tag = 'default';
+  $view->base_table = 'commerce_customer_profile';
+  $view->human_name = 'Contacts';
+  $view->core = 7;
+  $view->api_version = '3.0';
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+
+  /* Display: Master */
+  $handler = $view->new_display('default', 'Master', 'default');
+  $handler->display->display_options['title'] = 'Contacts';
+  $handler->display->display_options['css_class'] = 'donor-table-view';
+  $handler->display->display_options['use_ajax'] = TRUE;
+  $handler->display->display_options['use_more_always'] = FALSE;
+  $handler->display->display_options['access']['type'] = 'none';
+  $handler->display->display_options['cache']['type'] = 'none';
+  $handler->display->display_options['query']['type'] = 'views_query';
+  $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['pager']['type'] = 'full';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '20';
+  $handler->display->display_options['pager']['options']['offset'] = '0';
+  $handler->display->display_options['pager']['options']['id'] = '0';
+  $handler->display->display_options['pager']['options']['quantity'] = '9';
+  $handler->display->display_options['style_plugin'] = 'table';
+  $handler->display->display_options['style_options']['columns'] = array(
+    'uid' => 'uid',
+    'sbp_first_name' => 'sbp_first_name',
+    'sbp_last_name' => 'sbp_last_name',
+    'mail' => 'mail',
+    'sbp_address' => 'sbp_address',
+    'sbp_city' => 'sbp_city',
+    'sbp_state' => 'sbp_state',
+    'sbp_zip' => 'sbp_zip',
+    'edit_node' => 'edit_node',
+    'created' => 'created',
+    'changed' => 'changed',
+  );
+  $handler->display->display_options['style_options']['default'] = '-1';
+  $handler->display->display_options['style_options']['info'] = array(
+    'uid' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'sbp_first_name' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'sbp_last_name' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'mail' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'sbp_address' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'sbp_city' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'sbp_state' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'sbp_zip' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'edit_node' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'created' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'changed' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+  );
+  /* Relationship: Commerce Customer Profile: Owner */
+  $handler->display->display_options['relationships']['uid']['id'] = 'uid';
+  $handler->display->display_options['relationships']['uid']['table'] = 'commerce_customer_profile';
+  $handler->display->display_options['relationships']['uid']['field'] = 'uid';
+  /* Field: User: Uid */
+  $handler->display->display_options['fields']['uid']['id'] = 'uid';
+  $handler->display->display_options['fields']['uid']['table'] = 'users';
+  $handler->display->display_options['fields']['uid']['field'] = 'uid';
+  $handler->display->display_options['fields']['uid']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['uid']['label'] = 'ID';
+  $handler->display->display_options['fields']['uid']['link_to_user'] = FALSE;
+  /* Field: User: First name */
+  $handler->display->display_options['fields']['sbp_first_name']['id'] = 'sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['table'] = 'field_data_sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['field'] = 'sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['relationship'] = 'uid';
+  /* Field: User: Last name */
+  $handler->display->display_options['fields']['sbp_last_name']['id'] = 'sbp_last_name';
+  $handler->display->display_options['fields']['sbp_last_name']['table'] = 'field_data_sbp_last_name';
+  $handler->display->display_options['fields']['sbp_last_name']['field'] = 'sbp_last_name';
+  $handler->display->display_options['fields']['sbp_last_name']['relationship'] = 'uid';
+  /* Field: User: E-mail */
+  $handler->display->display_options['fields']['mail']['id'] = 'mail';
+  $handler->display->display_options['fields']['mail']['table'] = 'users';
+  $handler->display->display_options['fields']['mail']['field'] = 'mail';
+  $handler->display->display_options['fields']['mail']['relationship'] = 'uid';
+  /* Field: User: Address */
+  $handler->display->display_options['fields']['sbp_address']['id'] = 'sbp_address';
+  $handler->display->display_options['fields']['sbp_address']['table'] = 'field_data_sbp_address';
+  $handler->display->display_options['fields']['sbp_address']['field'] = 'sbp_address';
+  $handler->display->display_options['fields']['sbp_address']['relationship'] = 'uid';
+  /* Field: User: City */
+  $handler->display->display_options['fields']['sbp_city']['id'] = 'sbp_city';
+  $handler->display->display_options['fields']['sbp_city']['table'] = 'field_data_sbp_city';
+  $handler->display->display_options['fields']['sbp_city']['field'] = 'sbp_city';
+  $handler->display->display_options['fields']['sbp_city']['relationship'] = 'uid';
+  /* Field: User: State/Province */
+  $handler->display->display_options['fields']['sbp_state']['id'] = 'sbp_state';
+  $handler->display->display_options['fields']['sbp_state']['table'] = 'field_data_sbp_state';
+  $handler->display->display_options['fields']['sbp_state']['field'] = 'sbp_state';
+  $handler->display->display_options['fields']['sbp_state']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_state']['label'] = 'State';
+  /* Field: User: Postal Code */
+  $handler->display->display_options['fields']['sbp_zip']['id'] = 'sbp_zip';
+  $handler->display->display_options['fields']['sbp_zip']['table'] = 'field_data_sbp_zip';
+  $handler->display->display_options['fields']['sbp_zip']['field'] = 'sbp_zip';
+  $handler->display->display_options['fields']['sbp_zip']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_zip']['label'] = 'Zip';
+  /* Field: User: Created date */
+  $handler->display->display_options['fields']['created']['id'] = 'created';
+  $handler->display->display_options['fields']['created']['table'] = 'users';
+  $handler->display->display_options['fields']['created']['field'] = 'created';
+  $handler->display->display_options['fields']['created']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['created']['label'] = 'Created';
+  $handler->display->display_options['fields']['created']['date_format'] = 'custom';
+  $handler->display->display_options['fields']['created']['custom_date_format'] = 'm/j/y';
+  /* Field: Commerce Customer Profile: Updated date */
+  $handler->display->display_options['fields']['changed']['id'] = 'changed';
+  $handler->display->display_options['fields']['changed']['table'] = 'commerce_customer_profile';
+  $handler->display->display_options['fields']['changed']['field'] = 'changed';
+  $handler->display->display_options['fields']['changed']['label'] = 'Updated';
+  $handler->display->display_options['fields']['changed']['date_format'] = 'custom';
+  $handler->display->display_options['fields']['changed']['custom_date_format'] = 'm/j/y';
+  /* Field: Global: Custom text */
+  $handler->display->display_options['fields']['nothing']['id'] = 'nothing';
+  $handler->display->display_options['fields']['nothing']['table'] = 'views';
+  $handler->display->display_options['fields']['nothing']['field'] = 'nothing';
+  $handler->display->display_options['fields']['nothing']['label'] = '';
+  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/user/[uid]/edit?destination=springboard/reports/donor">Edit</a>
+<a href="/user/[uid]/recurring_overview?destination=springboard/reports/donor">Recurring gifts</a>
+';
+  $handler->display->display_options['fields']['nothing']['element_label_colon'] = FALSE;
+  /* Filter criterion: User: First name (sbp_first_name) */
+  $handler->display->display_options['filters']['sbp_first_name_value']['id'] = 'sbp_first_name_value';
+  $handler->display->display_options['filters']['sbp_first_name_value']['table'] = 'field_data_sbp_first_name';
+  $handler->display->display_options['filters']['sbp_first_name_value']['field'] = 'sbp_first_name_value';
+  $handler->display->display_options['filters']['sbp_first_name_value']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['sbp_first_name_value']['operator'] = 'contains';
+  $handler->display->display_options['filters']['sbp_first_name_value']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['sbp_first_name_value']['expose']['operator_id'] = 'sbp_first_name_value_op';
+  $handler->display->display_options['filters']['sbp_first_name_value']['expose']['label'] = 'First name';
+  $handler->display->display_options['filters']['sbp_first_name_value']['expose']['operator'] = 'sbp_first_name_value_op';
+  $handler->display->display_options['filters']['sbp_first_name_value']['expose']['identifier'] = 'sbp_first_name_value';
+  $handler->display->display_options['filters']['sbp_first_name_value']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
+  /* Filter criterion: User: Last name (sbp_last_name) */
+  $handler->display->display_options['filters']['sbp_last_name_value']['id'] = 'sbp_last_name_value';
+  $handler->display->display_options['filters']['sbp_last_name_value']['table'] = 'field_data_sbp_last_name';
+  $handler->display->display_options['filters']['sbp_last_name_value']['field'] = 'sbp_last_name_value';
+  $handler->display->display_options['filters']['sbp_last_name_value']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['sbp_last_name_value']['operator'] = 'contains';
+  $handler->display->display_options['filters']['sbp_last_name_value']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['sbp_last_name_value']['expose']['operator_id'] = 'sbp_last_name_value_op';
+  $handler->display->display_options['filters']['sbp_last_name_value']['expose']['label'] = 'Last name';
+  $handler->display->display_options['filters']['sbp_last_name_value']['expose']['operator'] = 'sbp_last_name_value_op';
+  $handler->display->display_options['filters']['sbp_last_name_value']['expose']['identifier'] = 'sbp_last_name_value';
+  $handler->display->display_options['filters']['sbp_last_name_value']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
+  /* Filter criterion: User: State/Province (sbp_state) */
+  $handler->display->display_options['filters']['sbp_state_value']['id'] = 'sbp_state_value';
+  $handler->display->display_options['filters']['sbp_state_value']['table'] = 'field_data_sbp_state';
+  $handler->display->display_options['filters']['sbp_state_value']['field'] = 'sbp_state_value';
+  $handler->display->display_options['filters']['sbp_state_value']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['sbp_state_value']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['sbp_state_value']['expose']['operator_id'] = 'sbp_state_value_op';
+  $handler->display->display_options['filters']['sbp_state_value']['expose']['label'] = 'State/Province';
+  $handler->display->display_options['filters']['sbp_state_value']['expose']['operator'] = 'sbp_state_value_op';
+  $handler->display->display_options['filters']['sbp_state_value']['expose']['identifier'] = 'sbp_state_value';
+  $handler->display->display_options['filters']['sbp_state_value']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
+  $handler->display->display_options['filters']['sbp_state_value']['group_info']['label'] = 'State/Province (sbp_state)';
+  $handler->display->display_options['filters']['sbp_state_value']['group_info']['identifier'] = 'sbp_state_value';
+  $handler->display->display_options['filters']['sbp_state_value']['group_info']['remember'] = FALSE;
+  $handler->display->display_options['filters']['sbp_state_value']['group_info']['group_items'] = array(
+    1 => array(),
+    2 => array(),
+    3 => array(),
+  );
+
+  /* Display: Page */
+  $handler = $view->new_display('page', 'Page', 'page');
+  $handler->display->display_options['path'] = 'springboard/reports/contacts';
+
+  $views[$view -> name] = $view;
+
+  /**
+   * // end View donors
+   */
 
   return $views;
 }
