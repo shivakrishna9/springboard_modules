@@ -543,6 +543,9 @@ function _sustainer_import_create_sustainer_series_instance($instance_details, $
   // Stage 1: create the donation and order objects for the sustainer charge.
   $new_donation = clone $donation;
   $new_donation->sid = 0; // Not actually submitted, it's automated, so no sid.
+  if (!empty($instance_details['amount'])) {
+    $new_donation->donation['amount'] = commerce_currency_amount_to_decimal($instance_details['amount'] * 100, 'USD');
+  }
   // save the donation object for the sustainer series instance
   fundraiser_donation_create($new_donation);
   // compile next charge timestamp from month, day, and year.
