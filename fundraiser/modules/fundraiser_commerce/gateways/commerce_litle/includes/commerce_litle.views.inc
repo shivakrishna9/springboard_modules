@@ -1,11 +1,14 @@
 <?php
 
+/**
+ * Implements hook_views_data.
+ */
 function commerce_litle_views_data() {
 
   $data['commerce_litle_fraud']['table']['group'] = t('Commerce Litle Fraud Log');
 
   $data['commerce_litle_fraud']['table']['base'] = array(
-    'field' => 'order_id', // This is the identifier field for the view.
+    'field' => 'order_id',
     'title' => t('Fraud Log'),
     'weight' => -10,
     'help' => t('Table for fraud log data'),
@@ -17,7 +20,7 @@ function commerce_litle_views_data() {
     'help' => t('OrderId'),
     'field' => array(
       'handler' => 'views_handler_field',
-      'click sortable' => TRUE, // This is use by the table display plugin.
+      'click sortable' => TRUE,
     ),
     'sort' => array(
       'handler' => 'views_handler_sort',
@@ -89,7 +92,7 @@ function commerce_litle_views_data() {
     'help' => t('Approved, declined, etc.'),
     'field' => array(
       'handler' => 'views_handler_field',
-      'click sortable' => TRUE, // This is use by the table display plugin.
+      'click sortable' => TRUE,
     ),
     'sort' => array(
       'handler' => 'views_handler_sort',
@@ -107,7 +110,7 @@ function commerce_litle_views_data() {
     'help' => t('Pass, Fail, statuses.'),
     'field' => array(
       'handler' => 'views_handler_field',
-      'click sortable' => TRUE, // This is use by the table display plugin.
+      'click sortable' => TRUE,
     ),
     'sort' => array(
       'handler' => 'views_handler_sort',
