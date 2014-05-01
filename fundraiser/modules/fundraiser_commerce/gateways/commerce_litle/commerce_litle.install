@@ -48,17 +48,17 @@ function commerce_litle_requirements($phase) {
  */
 function commerce_litle_schema() {
   $schema['commerce_litle_fraud'] = array(
-    'description' => 'Track responses from Threat Metrix',
+    'description' => 'Track responses from Threat Metrix.',
     'fields' => array(
       'rid' => array(
         'type' => 'serial',
         'not null' => TRUE,
-        'description' => 'Primary Key.',
+        'description' => 'Primary Key',
       ),
       'order_id' => array(
         'type' => 'int',
         'not null' => FALSE,
-        'description' => 'commerce order id',
+        'description' => 'Commerce order id',
       ),
       'litle_txn_id' => array(
         'type' => 'int',
@@ -69,13 +69,13 @@ function commerce_litle_schema() {
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => FALSE,
-        'description' => 'timestamp of response',
+        'description' => 'Timestamp of response',
       ),
       'avs_result' => array(
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => FALSE,
-        'description' => 'three digit apporval code',
+        'description' => 'Three digit approval code',
       ),
       'device_review_status' => array(
         'type' => 'varchar',
@@ -86,7 +86,7 @@ function commerce_litle_schema() {
       'device_reputation_score' => array(
         'type' => 'int',
         'not null' => FALSE,
-        'description' => 'fraud score -100 to 100',
+        'description' => 'Fraud score -100 to 100',
       ),
       'message' => array(
         'type' => 'varchar',
