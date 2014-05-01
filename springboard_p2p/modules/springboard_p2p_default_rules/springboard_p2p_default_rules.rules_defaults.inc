@@ -13,8 +13,8 @@ function springboard_p2p_default_rules_default_rules_configuration() {
       "LABEL" : "Send admin email about requesting approval to a private campaign",
       "PLUGIN" : "reaction rule",
       "TAGS" : [ "Springboard P2P" ],
-      "REQUIRES" : [ "rules", "entity" ],
-      "ON" : [ "commerce_cardonfile_delete" ],
+      "REQUIRES" : [ "rules", "springboard_p2p" ],
+      "ON" : [ "springboard_p2p_user_requests_approval" ],
       "DO" : [
         { "mail" : {
             "to" : [ "site:mail" ],
