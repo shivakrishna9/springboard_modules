@@ -90,7 +90,12 @@ function salesforce_donation_settings($form, &$form_state) {
   $form += salesforce_genmap_map_form($form, $form_state, $node, 'salesforce_donation');
   $form['salesforce_object_info']['#description'] = t('Provide a default map for Salesforce donations.');
   // Swap out the afterbuild function to avoid errs from failed include file.
-  $form['#after_build'] = array_diff($form['#after_build'], array('salesforce_genmap_map_form_after_build'));
+  if (isset($form['#after_build']) && is_array($form['#after_build'])) {
+    $form['#after_build'] = array_diff($form['#after_build'], array('salesforce_genmap_map_form_after_build'));
+  }
+  else {
+    $form['#after_build'] = array();
+  }
   $form['#after_build'][] = 'salesforce_donation_map_form_after_build';
   return $form;
 }
@@ -188,6 +193,30 @@ function salesforce_donation_node_delete($node) {
 
 /**
  * @} core_drupal_hooks
+ */
+
+/**
+ * @name salesforce_queue_hooks
+ * @{
+ */
+
+/**
+ * Implements hook_salesforce_queue_refresh_queue_item().
+ */
+function salesforce_donation_salesforce_queue_refresh_queue_item($item) {
+  if ($item->module == 'salesforce_donation' && $item->delta == 'donation') {
+    $did = $item->drupal_id;
+    if ($donation = fundraiser_donation_get_donation($did)) {
+      // Simulate the original donation event to rebuild and requeue.
+      salesforce_donation_fundraiser_donation_success($donation);
+      return TRUE;
+    }
+    return FALSE;
+  }
+}
+
+/**
+ * @} salesforce_queue_hooks
  */
 
 /**
@@ -394,10 +423,10 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
       }
       $fields[$sf_field] = t('Donation - !first !last (!date)',
         array(
-        '!first' => $donation->donation['first_name'],
-        '!last' => $donation->donation['last_name'],
-        '!date' => gmdate('Y-m-d H:i:s\Z', $date),
-      ));
+          '!first' => $donation->donation['first_name'],
+          '!last' => $donation->donation['last_name'],
+          '!date' => gmdate('Y-m-d H:i:s\Z', $date),
+        ));
     }
   }
 
@@ -482,16 +511,17 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
   }
   // Detect refund, if this is a donation object representing a refund:
   if (!empty($donation->is_refund) && $donation->is_refund == TRUE) {
+    $fields['Amount'] = $donation->donation['amount'];
     if (is_array($donation->refunds)) {
       // Get the latest reason and amount.
       foreach ($donation->refunds as $refund) {
         $fields['Cancellation_Reason__c'] = $refund->reason;
-        $fields['Amount']  = -1 * $refund->amount;
+        $fields['Amount'] = $fields['Amount'] - $refund->amount;
         $fields['Transaction_Date_Time__c']  = gmdate('c', $refund->changed);
         $fields['CloseDate']  = gmdate('c', $refund->changed);
       }
       $fields['StageName'] = 'Refunded';
-      $fields['Parent_Donation__c'] = '[Opportunity:donation:' . $donation->did . ']';
+      //$fields['Parent_Donation__c'] = '[Opportunity:donation:' . $donation->did . ']';
       $fields['Probability'] = 0;
       // Remove the donation id mapping if it's been set. No dupes for refunds!
       if (isset($map->field_map['salesforce_donation_map']['did'])) {

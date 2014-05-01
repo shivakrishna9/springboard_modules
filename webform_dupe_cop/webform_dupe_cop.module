@@ -143,11 +143,25 @@ function webform_dupe_cop_submission_hash($values) {
 }
 
 /**
- * Helper function, returns an array of request and response headers for the current request.
+ * Helper function, returns an array of request and response headers for the
+ * current request.
+ *
+ * Uses Apache-specific functions which do not work under FastCGI in versions
+ * of PHP prior to 5.4. To prevent WSODs, these calls are wrapped in
+ * function_exists() conditions.
+ *
+ * @return
+ *    If Apache environment, JSON-encoded array of request and response
+ *    headers. Otherwise, empty string.
  */
 function webform_dupe_cop_fetch_headers() {
-  return json_encode(array(
-    'request' => apache_request_headers(),
-    'response' => apache_response_headers(),
-  ));
+  if (function_exists('apache_request_headers') && function_exists('apache_response_headers')) {
+    return json_encode(array(
+      'request' => apache_request_headers(),
+      'response' => apache_response_headers(),
+    ));
+  }
+  else {
+    return '';
+  }
 }

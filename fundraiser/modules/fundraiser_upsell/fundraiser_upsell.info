@@ -9,4 +9,4 @@ dependencies[] = email_wrappers
 dependencies[] = ctools
 version = 7.x-4.x-dev
 
-configure = admin/springboard/options/fundraiser/fundraiser_upsell
+configure = springboard/options/fundraiser/fundraiser_upsell

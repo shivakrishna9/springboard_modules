@@ -9,7 +9,7 @@
  */
 function fundraiser_upsell_menu() {
   $items = array();
-  $items['admin/springboard/options/fundraiser/fundraiser_upsell'] = array(
+  $items['springboard/options/fundraiser/fundraiser_upsell'] = array(
     'title' => 'Sustainer upsell settings',
     'description' => 'Administer fundraiser upsell settings.',
     'access arguments' => array('administer fundraiser upsells'),
@@ -18,7 +18,7 @@ function fundraiser_upsell_menu() {
     'type' => MENU_NORMAL_ITEM,
     'file' => 'includes/fundraiser_upsell.admin.inc',
   );
-  $items['admin/springboard/options/fundraiser/fundraiser_upsell/general'] = array(
+  $items['springboard/options/fundraiser/fundraiser_upsell/general'] = array(
     'title' => 'General settings',
     'description' => 'Administer fundraiser upsell settings.',
     'access arguments' => array('administer fundraiser upsells'),
@@ -27,7 +27,7 @@ function fundraiser_upsell_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'file' => 'includes/fundraiser_upsell.admin.inc',
   );
-  $items['admin/springboard/options/fundraiser/fundraiser_upsell/thank-you'] = array(
+  $items['springboard/options/fundraiser/fundraiser_upsell/thank-you'] = array(
     'title' => 'Thank you settings',
     'description' => 'Administer fundraiser upsell "thank you" settings.',
     'access arguments' => array('administer fundraiser upsells'),
@@ -56,6 +56,17 @@ function fundraiser_upsell_menu() {
   );
 
   return $items;
+}
+
+/**
+ * Implements hook_admin_paths().
+ */
+function fundraiser_upsell_admin_paths() {
+  return array(
+    'springboard/options/fundraiser/fundraiser_upsell' => TRUE,
+    'springboard/options/fundraiser/fundraiser_upsell/general' => TRUE,
+    'springboard/options/fundraiser/fundraiser_upsell/thank-you' => TRUE,
+  );
 }
 
 /**
@@ -297,7 +308,6 @@ function fundraiser_upsell_node_form_validate($form, &$form_state) {
 function fundraiser_upsell_save_email_wrapper_settings($nid, $values) {
   $form = array();
   $delta = 'nid_' . $nid;
-
   // Need to fake a form state in order to save the mail settings.
   $email_wrappers_form_state = array(
     'values' => $values,
@@ -316,23 +326,6 @@ function fundraiser_upsell_save_email_wrapper_settings($nid, $values) {
 
   module_load_include('inc', 'email_wrappers', 'email_wrappers.api');
   email_wrappers_mail_form_submit($form, $email_wrappers_form_state);
-}
-
-/**
- * Retrieve the upsell mail settings for the given node.
- *
- * @param int $nid
- *   Node ID
- *
- * @return bool|object
- *   The mail settings or FALSE.
- */
-function fundraiser_upsell_load_email_wrapper_settings($nid) {
-  $params = array(
-    'module' => 'fundraiser_upsell',
-    'delta' => 'nid_' . $nid,
-  );
-  return email_wrappers_mail_load($params);
 }
 
 /**
@@ -699,8 +692,11 @@ function fundraiser_upsell_donation_record_exists($did) {
 function fundraiser_upsell_fundraiser_donation_get_donation($donation) {
   $query = db_query("SELECT * FROM {fundraiser_upsell_donation} WHERE did = :did", array(':did' => $donation->did));
   $record = $query->fetchObject();
-  unset($record->did);
-  $donation->fundraiser_upsell = $record;
+
+  if ($record) {
+    unset($record->did);
+    $donation->fundraiser_upsell = $record;
+  }
 }
 
 /**
@@ -772,7 +768,24 @@ function fundraiser_upsell_node_insert($node) {
     $record = fundraiser_upsell_node_record($node);
     drupal_write_record('fundraiser_upsell', $record);
 
-    fundraiser_upsell_save_email_wrapper_settings($node->nid, $node->fundraiser_upsell['email_wrappers']);
+    // If we have email wrappers settings then we're coming from a form,
+    // so we need to save them.
+    if (isset($node->fundraiser_upsell['email_wrappers']) && is_array($node->fundraiser_upsell['email_wrappers'])) {
+      fundraiser_upsell_save_email_wrapper_settings($node->nid, $node->fundraiser_upsell['email_wrappers']);
+    }
+    // Cloning another node.
+    elseif (isset($node->clone_from_original_nid)) {
+      module_load_include('inc', 'email_wrappers', 'email_wrappers.api');
+      $params = array(
+        'name' => 'fundraiser_upsell',
+        'module' => 'fundraiser_upsell',
+        'delta' => 'nid_' . $node->clone_from_original_nid,
+      );
+      $settings = email_wrappers_mail_load($params);
+      unset($settings->mid);
+      $settings->delta = 'nid_' . $node->nid;
+      email_wrappers_save($settings);
+    }
   }
 }
 
@@ -796,7 +809,11 @@ function fundraiser_upsell_node_update($node) {
       drupal_write_record('fundraiser_upsell', $record, 'nid');
     }
 
-    fundraiser_upsell_save_email_wrapper_settings($node->nid, $node->fundraiser_upsell['email_wrappers']);
+    // If we have email wrappers settings then we're coming from a form,
+    // so we need to save them.
+    if (isset($node->fundraiser_upsell['email_wrappers']) && is_array($node->fundraiser_upsell['email_wrappers'])) {
+      fundraiser_upsell_save_email_wrapper_settings($node->nid, $node->fundraiser_upsell['email_wrappers']);
+    }
   }
 }
 
@@ -814,7 +831,6 @@ function fundraiser_upsell_node_load($nodes, $types) {
       // Merge data from upsell settings with node.
       $upsell = fundraiser_upsell_unflatten_record($upsell);
       $nodes[$node->nid]->fundraiser_upsell = $upsell;
-      $nodes[$node->nid]->fundraiser_upsell['email_wrappers'] = fundraiser_upsell_load_email_wrapper_settings($node->nid);
     }
   }
 }
@@ -933,7 +949,12 @@ function fundraiser_upsell_modal_link($node, $did) {
         'animationSpeed' => 'slow',
         'closeText' => '',
         'closeImage' => '',
-        'loadingText' => t('Loading'),
+        'loadingText' => t('Please Wait'),
+        'throbber' => theme('image', array(
+          'path' => ctools_image_path('throbber.gif', 'fundraiser_upsell'),
+          'title' => t('Loading...'),
+          'alt' => t('Loading'),
+        )),
       ),
     ), 'setting');
 
@@ -1102,7 +1123,7 @@ function fundraiser_upsell_find_suggested_amount($amount) {
 /**
  * Creates a master donation from the original upsold donation.
  *
- * Copy the original donation to a new did and update the status and amount..
+ * Copy the original donation to a new did and update the status and amount.
  *
  * @param object $upsold_donation
  *   The original one time donation to use as the basis for the master.
@@ -1145,7 +1166,7 @@ function fundraiser_upsell_create_master_donation($upsold_donation, $new_amount)
 
   // If we're charging in a month, save a sustainers record and add a comment.
   if ($charge_time == 'one_month') {
-    $next_charge = strtotime('+1 month');
+    $next_charge = fundraiser_sustainers_get_next_charge_time();
     fundraiser_donation_comment($master_donation, 'Initial Upsell donation scheduled to be charged at @next_charge',
       array('@next_charge' => format_date($next_charge)));
 

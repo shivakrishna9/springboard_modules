@@ -43,6 +43,19 @@ function email_wrappers_menu() {
 }
 
 /**
+ * Implements hook_menu_alter().
+ */
+function email_wrappers_menu_alter(&$items) {
+  if (module_exists('webform')) {
+    // Webform implements these paths as MENU_CALLBACK. This
+    // causes local navigation to disappear on these pages.
+    $items['node/%webform_menu/webform/emails/%webform_menu_email']['type'] = MENU_LOCAL_TASK;
+    $items['node/%webform_menu/webform/emails/%webform_menu_email/delete']['type'] = MENU_LOCAL_TASK;
+  }
+}
+
+
+/**
  * Modal display window for email preview.
  *
  * At some point this should be converted to one or more theme
@@ -68,7 +81,6 @@ function email_wrappers_preview_modal() {
   $keys = array_keys($output);
   foreach ($keys as $key) {
     if (is_array($output[$key])) {
-
       $preview .= '<fieldset id="field-' . $key . '"><label for="field-' . $key . '" style="font-weight:bold">' . ucfirst($key) . '</label>';
       $subkeys = array_keys($output[$key]);
       foreach ($subkeys as $subkey) {
@@ -83,9 +95,31 @@ function email_wrappers_preview_modal() {
     }
   }
   ctools_modal_render($title, $preview);
-
 }
 
+function email_wrappers_form_email_wrapper_node_form_alter(&$form, &$form_state, $form_id) {
+  $token_set = array('node');
+  $form['tokenset'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Available tokens'),
+    '#description' => t('Tokens may be used in the "Subject," "HTML Message" and "Text Message" Fields.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#weight' => 15,
+  );
+
+  // Then add any other token set as needed.
+  $form['tokenset']['tokens'] = array(
+    '#type' => 'item',
+    '#title' => t('Drupal tokens'),
+    '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
+  );
+  $form['tokenset']['webform_tokens'] = array(
+    '#type' => 'item',
+    '#title' => t('Webform tokens'),
+    '#description' => theme('webform_token_help', array()),
+  );
+}
 
 /**
  * Implements hook_form_FORM_ID_alter().
@@ -179,7 +213,7 @@ function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state,
       '#default_value' => isset($defaults['bcc_email']) ? $defaults['bcc_email'] : '',
       '#states' => array(
         'visible' => array(
-        ':input[name="email_wrappers_email_template"]' => array('!value' => '0'),
+          ':input[name="email_wrappers_email_template"]' => array('!value' => '0'),
         ),
       ),
     );
@@ -233,7 +267,7 @@ function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state,
       '#attributes' => array('class' => array('ctools-use-modal')),
       '#weight' => 20,
     );
-
+    $form['#validate'][] = 'email_wrappers_email_validate_callback';
     $form['#submit'][] = 'email_wrappers_email_submit_callback';
   }
 
@@ -247,6 +281,18 @@ function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state,
  */
 function email_wrappers_email_validate_callback(&$form, &$form_state) {
   // TODO: validate and clean up email addresses.
+ 
+  // Fix inconsistencies between submitted input and $form_state['values']
+  // This is caused by setting #value on header detail fields. Note: simply
+  // setting #default_value on these fields causes defaults to not render
+  // after the template select ajax event has executed.
+  $keys = array('subject', 'from_address', 'from_name',);
+  foreach ($keys as $key) {
+    $fields = array('option', 'custom', 'component');
+    foreach ($fields as $field) {
+      $form_state['values'][$key . '_' . $field] = $form_state['input'][$key . '_' . $field];
+    }
+  }
 }
 
 /**
@@ -344,12 +390,18 @@ function email_wrappers_get_nodes() {
  */
 function email_wrappers_mail($key, &$message, $params) {
 
+  $token_set = array(
+    'node' => isset($params['node']) ? $params['node'] : NULL,
+  );
+  if (isset($params['donation'])) {
+   $token_set['donation'] = $params['donation'];
+  }
   if ($key == 'wf_submission') {
 
     // Fish the original message array out of params.
     $message = $params['message'];
     $message['module'] = 'email_wrappers';
-
+    $message['subject'] = token_replace($params['subject'], $token_set, array('clear' => TRUE));
     $eid = $params['email']['eid'];
     $nid = $params['email']['nid'];
     $settings = $params['settings'];
@@ -364,7 +416,9 @@ function email_wrappers_mail($key, &$message, $params) {
       email_wrappers_render_email_body($eid, $message, $settings),
     );
   }
-
+  elseif(isset($params['mail']->subject)) {
+    $params['mail']->subject = token_replace($params['mail']->subject, $token_set, array('clear' => TRUE));
+  }
 }
 
 /**
@@ -380,7 +434,10 @@ function email_wrappers_mail_alter(&$message) {
   if ($message['id'] == 'webform_submission' && $message['module'] == 'webform') {
     $eid = $message['params']['email']['eid'];
     $nid = $message['params']['email']['nid'];
-
+    $token_set = array(
+      'node' => isset($nid) ? node_load($nid) : NULL,
+    );
+    $message['subject'] = token_replace($message['subject'], $token_set, array('clear' => TRUE));
     if (!isset($message['params']['settings'])) {
       $settings = email_wrappers_load_settings($nid, $eid);
     }
@@ -393,6 +450,7 @@ function email_wrappers_mail_alter(&$message) {
       $params = $message['params'];
       $params['settings'] = $settings;
       $params['message'] = $message;
+      $sid = $params['submission']->sid;
 
       // If email is not set send on submission we stash parameters required
       // to send in a static setting on the assumption that some other code
@@ -413,10 +471,17 @@ function email_wrappers_mail_alter(&$message) {
         drupal_mail('email_wrappers', 'wf_submission', $message['to'], user_preferred_language($account), $params);
       }
       else {
+        // //we set both a static cache and db cache
         $mail_queue = &drupal_static('email_wrappers_mail_queue');
         $mail_queue[$nid][$eid] = array(
           'params' => $params,
         );
+        if (module_exists('webform_confirmations')) {
+          // deferred notification ala Paypal WPS
+          $cache_time = '+1 hour';
+          $expire = strtotime($cache_time, time());
+          cache_set('wrapper_mail_queue_'. $nid . '_' . $eid. '_' . $sid, array('params' => $params), 'cache_webform_confirm', $expire);
+        }
       }
       $message['send'] = FALSE;
     }
@@ -428,7 +493,10 @@ function email_wrappers_mail_alter(&$message) {
     $message['params']['boundary'] = '----=_NextPart_' . md5(uniqid());
     $message['headers']['MIME-version'] = '1.0';
     $message['headers']['Content-Type'] = 'multipart/alternative; boundary="' . $message['params']['boundary'] . '"';
-    $message['subject'] = $message['params']['mail']->subject;
+    $token_set = array(
+      'node' => isset($message['params']['node']) ? $message['params']['node'] : NULL,
+    );
+    $message['subject'] = token_replace($message['params']['mail']->subject, $token_set, array('clear' => TRUE));
     $message['body'] = array(email_wrappers_render_email_body(FALSE, $message));
 
     // Add Cc and Bcc headers if needed.
@@ -458,7 +526,13 @@ function email_wrappers_mail_alter(&$message) {
  *   Email message body, formatted for multipart MIME.
  */
 function email_wrappers_render_email_body($eid, $message, $settings = array()) {
-
+  $token_set = array();
+  if (isset($message['params']['node'])) {
+    $token_set['node'] = $message['params']['node'];
+  }
+  if (isset($message['params']['donation'])) {
+    $token_set['donation'] = $message['params']['donation'];
+  }
   $eid = isset($message['params']['email']['eid']) ? $message['params']['email']['eid'] : FALSE;
   $boundary = $message['params']['boundary'];
   // TODO: filter HTML by field input type where appropriate.
@@ -470,7 +544,8 @@ function email_wrappers_render_email_body($eid, $message, $settings = array()) {
     $html_raw = $message['params']['mail']->html_message;
     $text_raw = $message['params']['mail']->text_message;
   }
-
+  $html_raw = token_replace($html_raw, $token_set, array('clear' => TRUE));
+  $text_raw = token_replace($text_raw, $token_set, array('clear' => TRUE));
   $multi_body  = "
 
 This is a multi-part message in MIME format.
@@ -489,9 +564,14 @@ $html_raw
 
 ";
 
-  // @todo If we need to do token module token replacement,
-  // this would probably be a good place for it.
-  // perform webform token replacement.
+  $token_set = array(
+    'node' => isset($message['params']['node']) ? $message['params']['node'] : NULL,
+  );
+  if (isset($message['params']['donation'])) {
+    $token_set['donation'] = $message['params']['donation'];
+  }
+
+  $multi_body = token_replace($multi_body, $token_set, array('clear' => TRUE));
   if ($eid) {
     $multi_body = _webform_filter_values($multi_body, $message['params']['node'], $message['params']['submission'], $message['params']['node']->webform['emails'][$eid], FALSE, TRUE);
   }
@@ -539,11 +619,10 @@ function _email_wrappers_list_templates() {
  *     extra - serialized array of additional settings
  */
 function email_wrappers_load_settings($nid, $eid = FALSE) {
-
   if ($eid) {
     $query = db_select('email_wrappers_webform', 'e');
     $query->join('field_data_email_wrapper_html_template', 'f', 'e.tid = f.entity_id');
-    $query->join('field_data_email_wrapper_text_template', 't', 'e.tid = f.entity_id');
+    $query->join('field_data_email_wrapper_text_template', 't', 'e.tid = t.entity_id');
     $query->fields('e', array(
         'nid',
         'eid',
@@ -591,6 +670,7 @@ function email_wrappers_load_settings($nid, $eid = FALSE) {
     return count($data) ? $data : FALSE;
   }
 }
+
 
 /**
  * Mail configuration loader.

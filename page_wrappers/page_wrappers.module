@@ -80,24 +80,26 @@ function page_wrappers_preprocess_page(&$vars) {
   }
 
   // Allow context to optionally override this
-  if (module_exists('context') && $node = _page_wrappers_context_page_node()) {
+  if (module_exists('context')) {
     $contexts = context_active_contexts();
     foreach ($contexts as $context) {
       // Check if page_wrapper is a reaction for this context
       if (isset($context->reactions['page_wrappers'])) {
         $wrapper = array(
-          'nid' => $node->nid,
           'wrapper_nid' => $context->reactions['page_wrappers']['page_wrapper'],
           'ruleset' => 1,
           'weight' => -20,
         );
+        if ($node) {
+          $wrapper['nid'] = $node->nid;
+        }
       }
     }
   }
 
   if (!empty($wrapper)) {
-    // Some pages may not have a node set, we'll need it for the wrapper template
-    if (!isset($vars['node'])) {
+    // Some pages may not have a node set even though one is being viewed; we'll need it for the wrapper template
+    if (!isset($vars['node']) && $node) {
       $build = node_view_multiple(array($node->nid => $node), 'full');
       $vars['node'] = $build['nodes'][$node->nid]['#node'];
     }
@@ -113,7 +115,7 @@ function page_wrappers_preprocess_page(&$vars) {
 
       // if there is theme CSS allowed, add those files.
       if ($theme_css = _page_wrappers_get_theme_css($wrapper_node)) {
-        foreach($theme_css as $stylesheet) {
+        foreach ($theme_css as $stylesheet) {
           drupal_add_css($stylesheet['path'], $stylesheet['options']);
         }
       }
@@ -171,8 +173,8 @@ function page_wrappers_css_alter(&$css) {
     $css_files = field_get_items('node', $wrapper_node, 'page_wrappers_css');
     $keep = array();
     // If a stylesheet is from an allowed theme, don't remove it.
-    if($theme_css = _page_wrappers_get_theme_css($wrapper_node)) {
-      foreach($theme_css as $css_file) {
+    if ($theme_css = _page_wrappers_get_theme_css($wrapper_node)) {
+      foreach ($theme_css as $css_file) {
         $keep[] = $css_file['path'];
       }
     }
@@ -275,9 +277,10 @@ function page_wrappers_node_insert($node) {
         'template' => $template,
       ))
       ->execute();
+
+    // Nuke caches so page wrapper is applied to itself by the theme layer.
+    drupal_flush_all_caches();
   }
-  // Nuke caches so page wrapper is applied to itself by the theme layer.
-  drupal_flush_all_caches();
 }
 
 /**
@@ -836,21 +839,44 @@ function _page_wrappers_node_assigned_wrapper($node) {
  *    A fully loaded node if this is a page request for a page wrapper enabled node, else false
  */
 function _page_wrappers_page_node() {
-  // get out of here if we're not on a node page, or if we're on the node edit page
-  if (arg(0) != 'node' || (arg(0) == 'node' && arg(2) == 'edit')) {
-    return;
-  }
   $node = NULL;
-  //if this is a node page load it up, also cover webform 'done' page
-  if (arg(0) == 'node' && is_numeric(arg(1)) && (arg(2) == 'done' || !arg(2))) {
+
+  // Check if this in ajax request form submit
+  if (arg(0) == 'system' && arg(1) == 'ajax' && !empty($_POST['form_build_id'])) {
+    $node = _page_wrappers_cached_form_node($_POST['form_build_id']);
+  }
+  // If this is a node page load it up, also cover webform 'done' page
+  elseif (arg(0) == 'node' && is_numeric(arg(1)) && (arg(2) == 'done' || !arg(2))) {
     $node = node_load(arg(1));
   }
+
+  // Allow other modules to set or unset the node
+  drupal_alter('page_wrappers_page_node', $node);
 
   if ($node && _page_wrappers_enabled_type($node, TRUE)) {
     return $node;
   }
 
   return FALSE;
+}
+
+/**
+ * Helper function to return a node from a cached form
+ *
+ * @param string $form_build_id
+ *   A form build id to search the cache
+ *
+ * @return Object
+ *   Node object from a form array
+ */
+function _page_wrappers_cached_form_node($form_build_id) {
+  if ($cached = cache_get('form_' . $form_build_id, 'cache_form')) {
+    $form = $cached->data;
+    // Ensure we have a node in the form
+    if (!empty($form['#node']->nid)) {
+      return $form['#node'];
+    }
+  }
 }
 
 /**
@@ -901,7 +927,23 @@ function _page_wrappers_create_template($node) {
 
     // build up template markup
     $html_template = field_get_items('node', $node, 'page_wrappers_html_template');
-
+    // CDN module alters image src attributes to point to CDN network. This is typically done via a
+    // callback that runs during hook_node_view_alter(). Since node view hooks are not called during
+    // template rendering, we call code to do image src replacement explicitly here. This ensures
+    // any images embedded in a page wrapper template should get the same treatment as images
+    // embedded in content.
+    if (module_exists('cdn')) {
+      cdn_load_include('fallback');
+      cdn_html_alter_image_urls($html_template[0]['value']);
+    }
+    // Apply filters before doing token replacement, this prevents php generated for 
+    // region tokens from getting stripped if filtered or full html is selected.
+    if ($html_template[0]['format'] != 'php_code') {
+      // Full HTML input filter does not strip php start and end tags by default.
+      $html_template[0]['value'] = str_replace('<?php', '&lt;php?', $html_template[0]['value']);
+      $html_template[0]['value'] = str_replace('?>', '?&gt;', $html_template[0]['value']);  
+      $html_template[0]['value'] = check_markup($html_template[0]['value'], $html_template[0]['format'], $langcode = '', FALSE);
+    }
     $body = _page_wrappers_tokens($html_template[0]['value']);
 
     fputs($file, $body);
@@ -932,17 +974,17 @@ function _page_wrappers_tokens($content) {
     '<?php print $scripts; ?>',
   );
   $content = str_replace($tokens, $replaces, $content);
-  
+
   // Then look for possible Token tokens.
   $candidates = token_scan($content);
   foreach ($candidates as $type => $tokens) {
     foreach ($tokens as $token) {
-      $data = ($type == 'node') ? '"node" => $node' : '';
+      $data = ($type == 'node') ? '"node" => isset($node) ? $node : null' : '';
       $replacement = "<?php print token_replace('$token', array($data)) ?>";
       $content = str_replace($token, $replacement, $content);
     }
   }
-  
+
   return $content;
 }
 
@@ -1186,10 +1228,10 @@ function _page_wrappers_get_theme_css($wrapper_node) {
     $css = array();
     $allowed_themes = field_get_items('node', $wrapper_node, 'page_wrappers_theme_css');
     $themes_list = list_themes();
-      foreach($allowed_themes as $theme) {
+      foreach ($allowed_themes as $theme) {
         $style_sheets = $themes_list[$theme['value']]->stylesheets;
-        foreach($style_sheets as $media => $sheets) {
-          foreach($sheets as $uri) {
+        foreach ($style_sheets as $media => $sheets) {
+          foreach ($sheets as $uri) {
             $css[] = array('path' => $uri, 'options' => array('media' => $media));
           }
         }

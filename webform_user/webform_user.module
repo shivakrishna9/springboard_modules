@@ -248,6 +248,11 @@ function webform_user_form_node_type_form_alter(&$form, &$form_state) {
 function webform_user_form_node_type_form_alter_submit(&$form, &$form_state) {
   // NOTE: we need to make sure if there are other things toggling this value not to untoggle it.
   _webform_user_toggle_webform($form_state['values']['type'], $form_state['values']['webform_user']);
+  if ($form_state['values']['webform_user'] == 1 && $form_state['values']['fundraiser'] != 1) {
+    //  node type uses webform user but not fundraiser, add "internal name" field
+    module_load_include('inc', 'webform_user', 'includes/webform_user.fields');
+    _webform_user_add_default_fields($form_state['values']['type']);
+  }
 }
 
 /**
@@ -341,7 +346,7 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
   }
 
   // For the webform itself, we map the value of the given submission profile.
-  if (strpos($form_id, 'webform_client') !== FALSE) {
+  if (strpos($form_id, 'webform_client') !== FALSE && arg(2) != 'submission' && arg(4) != 'edit') {
     $node = node_load($form['#node']->nid);
     $components = $node->webform['components'];
     global $user;
@@ -1066,8 +1071,11 @@ function _webform_user_save_profile_map($uid, &$map) {
         case 'checkbox':
         case 'checkboxes':
         case 'list_boolean':
-          // These take integers. Always set them T or F.
-          $profile_values[$field['name']] = !empty($map[$field['name']]) ? 1 : 0;
+          // We only want to set this value if the field is present in the map.
+          if (isset($map[$field['name']])) {
+            // These take integers. Always set them T or F.
+            $profile_values[$field['name']] = !empty($map[$field['name']]) ? 1 : 0;
+          }
           break;
         default:
           // Only add the profile result if the name is in the keys.
@@ -1176,7 +1184,7 @@ function _webform_user_get_profile_fields() {
   }
   $results = db_query('SELECT i.id, i.field_name, i.data, c.data as extra, c.type FROM {field_config_instance} i ' .
     'INNER JOIN {field_config} c ON i.field_name = c.field_name ' .
-    'WHERE entity_type IN (:types)',
+    'WHERE entity_type IN (:types) AND i.deleted = 0',
     array(':types' => $entity_types)
   );
   foreach ($results as $result) {

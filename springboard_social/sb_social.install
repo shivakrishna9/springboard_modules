@@ -20,10 +20,21 @@ function sb_social_uninstall() {
   variable_del('springboard_social_debug_mode');
   variable_del('springboard_social_enabled_content_types');
 
-  db_query("DELETE FROM {variable} WHERE name LIKE 'springboard_social_facebook%'");
-  db_query("DELETE FROM {variable} WHERE name LIKE 'springboard_social_twitter%'");
-  db_query("DELETE FROM {variable} WHERE name LIKE 'springboard_social_email%'");
-  db_query("DELETE FROM {variable} WHERE name LIKE 'springboard_social_ms%'");
+  db_query('DELETE FROM {variable} WHERE name LIKE :name', array(':name' => 'springboard_social_facebook%'));
+  db_query('DELETE FROM {variable} WHERE name LIKE :name', array(':name' => 'springboard_social_twittere%'));
+  db_query('DELETE FROM {variable} WHERE name LIKE :name', array(':name' => 'springboard_social_email%'));
+  db_query('DELETE FROM {variable} WHERE name LIKE :name', array(':name' => 'sb_social_market_source%'));
+  db_query('DELETE FROM {variable} WHERE name LIKE :name', array(':name' => 'springboard_social_ms%'));
+
+  // Purge any uploaded images associated with Social.
+  $result = db_query('SELECT fid FROM {file_usage} WHERE module = :module', array(':module' => 'sb_social'));
+  foreach ($result as $record) {
+    $file = file_load($record->fid);
+    if ($file) {
+      file_usage_delete($file, 'sb_social', NULL, NULL, 0);
+      file_delete($file);
+    }
+  }
 }
 /**
  * Implements hook_schema().

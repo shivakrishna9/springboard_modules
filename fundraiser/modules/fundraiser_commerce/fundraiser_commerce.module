@@ -110,6 +110,52 @@ function fundraiser_commerce_entity_view($entity, $type, $view_mode, $langcode) 
 }
 
 /**
+ * Implements hook_token_info_alter
+ */
+function fundraiser_commerce_token_info_alter(&$data) {
+  if (!empty($data['tokens']['donation'])) {
+    // Add Commerce related tokens
+    $data['tokens']['donation']['order'] = array(
+      'name' => t('Donation Order'),
+      'description' => t('Ther order used to process the donation.'),
+      'type' => 'commerce-order',
+    );
+    $data['tokens']['donation']['payment-transaction'] = array(
+      'name' => t('Donation Order Transaction'),
+      'description' => t('The transaction data from the payment processor.'),
+      'type' => 'commerce-payment-transaction',
+    );
+  }
+}
+
+/**
+ * Implements hook_tokens_alter
+ *
+ * Add support for order and transaction tokens from a donation
+ */
+function fundraiser_commerce_tokens_alter(&$replacements, $context) {
+  // Make sure we have a donation to work with
+  if ($context['type'] == 'donation' && !empty($context['data']['donation'])) {
+    $donation = $context['data']['donation'];
+
+    // Load the order and do token replacement on the order and transaction tokens
+    $order = !empty($donation->order) ? $donation->order : commerce_order_load($donation->did);
+
+    // Replace the order tokens
+    if (!empty($order) && $order_tokens = token_find_with_prefix($context['tokens'], 'order')) {
+      $replacements += token_generate('commerce-order', $order_tokens, array('commerce-order' => $order), $context['options']);
+    }
+
+    // Replace the transaction tokens using the latest transaction
+    if (!empty($order) && $transaction_tokens = token_find_with_prefix($context['tokens'], 'payment-transaction')) {
+      $transactions = commerce_payment_transaction_load_multiple(array(), array('order_id' => $order->order_id));
+      $transaction = reset($transactions);
+      $replacements += token_generate('commerce-payment-transaction', $transaction_tokens, array('commerce-payment-transaction' => $transaction), $context['options']);
+    }
+  }
+}
+
+/**
  * Implements fundraiser_donation_information_table_alter().
  */
 function fundraiser_commerce_fundraiser_donation_information_table_alter(&$variables, $donation) {
@@ -309,6 +355,11 @@ function fundraiser_commerce_fundraiser_gateway_info() {
       // When referencing gateway info gathered under gateway_info hooks.
       module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
       $gateway_options = module_invoke($method_instance['module'], 'fundraiser_commerce_fundraiser_gateway_info');
+      // If nothing is returned this gateway is not configured to work with fundraiser
+      if (empty($gateway_options)) {
+        continue;
+      }
+
       // Some gateways support multiple payment methods and multiple payment processors
       // Check if it specifies support for each in the payment method array
       foreach ($gateway_options['payment_method'] as $key => $type) {
@@ -429,29 +480,51 @@ function _fundraiser_commerce_payment_fields_validate($form, $form_state, $submi
     return;
   }
 
-  // TODO this should probably be driven down to the gateway level.
+  // If we don't have a gateway validate callback, use generic credit card
+  // validation.
   if ($payment_method == 'credit') {
-    module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card'); // Include the file with the validation info.
-    $number = $value['credit']['card_number'];
-    if ($number != '0000000000000000') {
-      $valid = commerce_payment_validate_credit_card_number($number);
-      if ($valid !== TRUE || !ctype_digit($number) || drupal_strlen($number) < 10) {
-        return array('card_number' => t('You have entered an invalid credit card number.'));
-      }
-      $cvv = $value['credit']['card_cvv'];
-      $valid = commerce_payment_validate_credit_card_security_code($number, $cvv);
-      if ($valid !== TRUE && !empty($cvv)) {
-        return array('card_cvv' => t('You have entered an invalid CVV number.'));
-      }
-      $cc_expiration_month = $value['credit']['card_expiration_month'];
-      $cc_expiration_year = $value['credit']['card_expiration_year'];
-      $valid = commerce_payment_validate_credit_card_exp_date($cc_expiration_month, $cc_expiration_year);
-      if ($valid !== TRUE && !empty($cc_expiration_month) && !empty($cc_expiration_year)) {
-        return array(
-          'card_expiration_month' => t('The credit card you entered has expired.'),
-          'card_expiration_year' => '',
-        );
-      }
+    return fundraiser_commerce_generic_credit_card_validate($value);
+  }
+}
+
+/**
+ * Does some basic credit card validation.
+ *
+ * @param array $value
+ *   The credit card data in the following format.
+ *   array('credit' =>
+ *     'card_number' => 1234,
+ *     'card_cvv' => 123,
+ *     'card_expiration_month' => 1,
+ *     'card_expiration_year' => 2014,
+ *   )
+ *
+ * @return array
+ *   An array with form key and error message.
+ */
+function fundraiser_commerce_generic_credit_card_validate($value) {
+  // @todo This should probably be driven down to the gateway level.
+  // Include the file with the validation info.
+  module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+  $number = $value['credit']['card_number'];
+  if ($number != '0000000000000000') {
+    $valid = commerce_payment_validate_credit_card_number($number);
+    if ($valid !== TRUE || !ctype_digit($number) || drupal_strlen($number) < 10) {
+      return array('card_number' => t('You have entered an invalid credit card number.'));
+    }
+    $cvv = $value['credit']['card_cvv'];
+    $valid = commerce_payment_validate_credit_card_security_code($number, $cvv);
+    if ($valid !== TRUE && !empty($cvv)) {
+      return array('card_cvv' => t('You have entered an invalid CVV number.'));
+    }
+    $cc_expiration_month = $value['credit']['card_expiration_month'];
+    $cc_expiration_year = $value['credit']['card_expiration_year'];
+    $valid = commerce_payment_validate_credit_card_exp_date($cc_expiration_month, $cc_expiration_year);
+    if ($valid !== TRUE && !empty($cc_expiration_month) && !empty($cc_expiration_year)) {
+      return array(
+        'card_expiration_month' => t('The credit card you entered has expired.'),
+        'card_expiration_year' => '',
+      );
     }
   }
 }
@@ -467,6 +540,18 @@ function _fundraiser_commerce_country_field_display($form, $form_state, $field) 
   if (array_key_exists('country', $fields)) {
     $field['#default_value'] = $fields['country'];
   }
+  else {
+    // Provide a default based on the form values.
+    $country_field = fundraiser_get_form_field($form['#calling_module'], $form, 'country');
+    // Filter options down to just the zones available for this country.
+    if (isset($country_field['#default_value']) && !empty($country_field['#default_value'])) {
+      $field['#default_value'] = $country_field['#default_value'];
+    }
+    elseif(isset($country_field['#webform_component']['value'])) {
+      $field['#default_value'] = $country_field['#webform_component']['value'];
+    }  
+  }
+
   // Add interface elements to the field display.
   $field['#ajax'] = array(
     'callback' => '_fundraiser_commerce_client_state_ajax_submit',
@@ -501,10 +586,12 @@ function _fundraiser_commerce_client_state_ajax_submit($form, $form_state, &$mes
   // selected country.
   // After the replace event add focus to the state field. This makes for a smooth transition
   // in some browsers for users who tab between fields.
+  $build_array = fundraiser_get_form_field($form['#calling_module'], $form, 'state');
+
   return array(
     '#type' => 'ajax',
     '#commands' => array(
-      ajax_command_replace('#zone-select-wrapper', render(fundraiser_get_form_field($form['#calling_module'], $form, 'state'))),
+      ajax_command_replace('#zone-select-wrapper', render($build_array)),
       ajax_command_invoke('#edit-submitted-billing-information-state', 'focus'),
     ),
   );
@@ -534,10 +621,12 @@ function _fundraiser_commerce_zone_field_display($form, $form_state, $field) {
     // Filter options down to just the zones available for this country.
     if (isset($country_field['#default_value'])) {
       $default = $country_field['#default_value'];
-      $default = $default;
-      if (isset($countries->countries[$default])) {
-        $available_zones = $countries->countries[$default]->zones;
-      }
+    }
+    elseif(isset($country_field['#webform_component']['value'])) {
+      $default = $country_field['#webform_component']['value'];
+    }  
+    if (isset($default) && isset($countries->countries[$default])) {
+      $available_zones = $countries->countries[$default]->zones;
     }
   }
   // Given available zones, filter the dropdown to match.
@@ -551,6 +640,9 @@ function _fundraiser_commerce_zone_field_display($form, $form_state, $field) {
   else {
     // If there are no zones to match, then fall back on a non-select solution.
     $field['#type'] = 'textfield';
+
+    // Unset the options to avoid validation errors
+    unset($field['#options']);
   }
   $field['#prefix'] = '<div id="zone-select-wrapper">';
   $field['#suffix'] = '</div>';
@@ -572,6 +664,8 @@ function fundraiser_commerce_fundraiser_get_credit_encryption_path() {
 function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
   // Load the order object, line items and profile.
   $order = commerce_order_load($donation->did);
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+
   // Data from order.
   $donation->donation['mail'] = isset($order->mail) ? $order->mail : '';
   // Reverse the work done by commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency'])
@@ -580,17 +674,19 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
     $order->commerce_order_total[LANGUAGE_NONE][0]['currency_code']);
   $donation->donation['quantity'] = 1;
   $donation->donation['hostname'] = $order->hostname;
-  $found = commerce_line_item_load_multiple(array(), array('order_id' => $order->order_id));
-  $line_item_id = -1;
-  foreach ($found as $id => $found) {
-    $line_item_id = $id;
+
+  // Check for a donation line item that may contain a quantity
+  foreach ($order_wrapper->commerce_line_items as $line_item_wrapper) {
+    if ($line_item_wrapper->type->value() == 'donation' && $line_item_wrapper->quantity->value() > 1) {
+      // Reset the donation amount and quantity from this line item
+      $donation->donation['quantity'] = $line_item_wrapper->quantity->value();
+      $donation->donation['amount'] = commerce_currency_amount_to_decimal(
+        $line_item_wrapper->commerce_unit_price->amount->value(),
+        $line_item_wrapper->commerce_unit_price->currency_code->value()
+      );
+    }
   }
-  if ($line_item_id != -1) {
-    $line_item = commerce_line_item_load($line_item_id);
-    $donation->donation['quantity'] = $line_item->quantity;
-    $donation->donation['amount'] = commerce_currency_amount_to_decimal($line_item->commerce_unit_price[LANGUAGE_NONE][0]['amount'],
-      $line_item->commerce_unit_price[LANGUAGE_NONE][0]['currency_code']);
-  }
+
   // Data from profile.
   if (isset($order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'])) {
     $profile = commerce_customer_profile_load($order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id']);
@@ -688,30 +784,38 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   // Create new order.
   $order = commerce_order_new($user->uid, 'pending', 'commerce_order');
   commerce_order_save($order);
-  $order->email = isset($donation->donation['mail']) ? $donation->donation['mail'] : '';
 
-  // Create a line item for this order. Contains order amount info.
-  $line_item = commerce_line_item_new('donation', $order->order_id);
-  $line_item->line_item_label = t('Donation');
-  $line_item->quantity = $quantity;
-  $line_item->commerce_unit_price[LANGUAGE_NONE][0] = array(
-    'amount' => commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency']),
-    'currency_code' => $donation->donation['currency'],
-  );
-  // Make sure the line item will be included in the update for order total.
-  $line_item->commerce_unit_price[LANGUAGE_NONE][0]['data'] = commerce_price_component_add(
-    $line_item->commerce_unit_price[LANGUAGE_NONE][0],
-    'base_price',
-    array(
-      'amount' => commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency']),
-      'currency_code' => $donation->donation['currency'],
-      'data' => array(),
-    ),
-    TRUE
-  );
-  commerce_line_item_save($line_item);
-  // Add the line item to the order.
-  $order->commerce_line_items[LANGUAGE_NONE][0]['line_item_id'] = $line_item->line_item_id;
+  // Give other modules an opportunity to create the line items.
+  $line_items_created = FALSE;
+  foreach (module_implements('fundraiser_commerce_generate_line_items') as $module) {
+    $function = $module . '_fundraiser_commerce_generate_line_items';
+    $line_items_created = $function($donation, $order);
+    if ($line_items_created == TRUE){
+      break;
+    }
+  }
+
+  if (!$line_items_created) {
+    // If no other module has, create a line item for this order.
+    $line_item = commerce_line_item_new('donation', $order->order_id);
+    $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
+    $line_item_wrapper->quantity = $quantity;
+    $line_item_wrapper->commerce_unit_price->amount = commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency']);
+    $line_item_wrapper->commerce_unit_price->currency_code = $donation->donation['currency'];
+
+    $line_item_wrapper->commerce_unit_price->data = commerce_price_component_add(
+      $line_item_wrapper->commerce_unit_price->value(),
+      'base_price',
+      $line_item_wrapper->commerce_unit_price->value(),
+      TRUE
+    );
+
+    // Save the donation line item
+    commerce_line_item_save($line_item_wrapper->value());
+
+    // Add the line item to the order.
+    $order->commerce_line_items[LANGUAGE_NONE][0]['line_item_id'] = $line_item->line_item_id;
+  }
 
   // Save the customer information. Contains billing info.
   // Look up the profile by user id or email, then if not found make a new profile.
@@ -1293,42 +1397,27 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
 
   // Get the original order.
   $order = commerce_order_load($donation->did);
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
   // Update the amount
   if (!empty($donation->update_amount)) {
-    // Update the existing line item(s) with the new value.
-    $found = commerce_line_item_load_multiple(array(), array('order_id' => $order->order_id));
-    $line_item_id = -1;
-    foreach ($found as $id => $found) {
-      $line_item_id = $id;
+    // Update the existing donation line item with the new value.
+    foreach ($order_wrapper->commerce_line_items as $line_item_wrapper) {
+      if ($line_item_wrapper->type->value() == 'donation') {
+        $line_item_wrapper->quantity = $quantity;
+        $line_item_wrapper->commerce_unit_price->amount = commerce_currency_decimal_to_amount(
+          $donation->donation['amount'],
+          $donation->donation['currency']
+        );
+        $line_item_wrapper->commerce_unit_price->currency_code = $donation->donation['currency'];
+
+        // Recalculate the price
+        commerce_line_item_rebase_unit_price($line_item_wrapper->value());
+
+        // Save the donation line item
+        commerce_line_item_save($line_item_wrapper->value());
+      }
     }
-    if ($line_item_id != -1) {
-      $line_item = commerce_line_item_load($line_item_id);
-    }
-    else {
-      $line_item = commerce_line_item_new('donation', $order->order_id);
-    }
-    // Update line item with the new amount information as needed.
-    $line_item->line_item_label = t('Donation');
-    $line_item->quantity = $quantity;
-    $line_item->commerce_unit_price[LANGUAGE_NONE][0] = array(
-      'amount' => commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency']),
-      'currency_code' => $donation->donation['currency'],
-    );
-    // Make sure the line item will be included in the update for order total.
-    $line_item->commerce_unit_price[LANGUAGE_NONE][0]['data'] = commerce_price_component_add(
-      $line_item->commerce_unit_price[LANGUAGE_NONE][0],
-      'base_price',
-      array(
-        'amount' => commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency']),
-        'currency_code' => $donation->donation['currency'],
-        'data' => array(),
-      ),
-      TRUE
-    );
-    commerce_line_item_save($line_item);
-    // Add the line item to the order.
-    $order->commerce_line_items[LANGUAGE_NONE][0]['line_item_id'] = $line_item->line_item_id;
   }
 
   // Update the billing information
@@ -1902,7 +1991,7 @@ function fundraiser_commerce_commerce_paypal_ipn_process($order, $payment_method
   }
   // Anything else, except Completed counts as a fail.
   $success = FALSE;
-  if ($ipn['payment_status'] == 'Completed') {
+  if ($ipn['payment_status'] == 'Completed' || $ipn['payment_status'] == 'Refunded') {
     $success = TRUE;
   }
   // Grab the donation object from the order.
@@ -1915,46 +2004,98 @@ function fundraiser_commerce_commerce_paypal_ipn_process($order, $payment_method
   fundraiser_donation_update($donation);
   // Finish up the submission to kick off success / decline triggers.
   _fundraiser_donation_submit_after_process($donation);
+  if ($ipn['payment_status'] == 'Refunded') {
+    _fundraiser_commerce_ipn_refund($donation, $ipn);
+  }
+}
+
+function _fundraiser_commerce_ipn_refund($donation, $ipn) {
+  // Set up the refund.
+  $already_refunded = fundraiser_refund_get_refunds_by_did($donation->did, TRUE);
+  $refunded_total = 0;
+  if(!empty($already_refunded)) {
+    foreach ($already_refunded as $prior) {
+     $refunded_total += ($prior->amount * -1);
+    }
+  }
+  $able_to_refund = ($donation->donation['amount'] - $refunded_total);
+  $new_status = 'partially_refunded';
+  // Partial refund
+  $amount = $ipn['payment_gross'];
+  if (($amount * -1) >= $able_to_refund) {
+    $amount = $able_to_refund * -1;
+    $new_status = 'refunded';
+  }
+
+  $refund = new stdClass();
+  $refund->did = $donation->did;
+  $refund->amount =  $amount;
+  $refund->currency = $donation->currency;
+  $refund = fundraiser_refund_create($refund);
+  $refund->new_status = $new_status;
+  fundraiser_refund_process($refund);
+  // At this point $donation->result is set and responses can be handled.
+  if (!isset($refund->result['message'])) {
+    $refund->result['message'] = '';
+  }
+  // The results should be at $donation->result, ready to respond to the aftermath.
+  if (isset($refund->result['success']) && $refund->result['success'] == TRUE) {
+    fundraiser_refund_success($refund);
+  }
+  else {
+    $donation->result['success'] = FALSE;
+    watchdog('ipn_refund_fail', '%ipn: Your refund failed to be processed.', array('%ipn', $ipn['item_name1']));
+  }
 }
 
 /**
- * Add values to the pane_values array before they go to the commerce submit handler
+ * Add values to the pane_values array before it goes to the commerce submit handler.
  *
- * @param $pane_values Array
+ * @param array $pane_values
  *    Values to be sent to a commerce payment processor, passed by reference
- * @return nothing
+ * @param object $donation
+ *   The donation to use to get the cardonfile data.
+ * @param string $form_key
+ *   The pane values form key to store cardonfile data under.
+ *   Should be fine with 'credit_card' most of the time.  Mainly used for
+ *   echeck.
+ *
+ * @return void
  */
-function _fundraiser_commerce_submit_handler_pane_values(&$pane_values, $donation) {
-  // If card on file is enabled check if we should create a new profile
+function _fundraiser_commerce_submit_handler_pane_values(&$pane_values, $donation, $form_key = 'credit_card') {
+  // If card on file is enabled check if we should create a new profile.
   if (module_exists('commerce_cardonfile')) {
-    // Load any existing card data
+    // Load any existing card data.
     $card = _fundraiser_commerce_donation_cardonfile_card($donation);
 
-    // If this is not a reference charge be sure to store the card data and set the new flag
+    // If this is not a reference charge be sure to store the card data and
+    // set the new flag.
     if ($donation->reference_charge === FALSE) {
       // If there is not an existing card then set the store flag to TRUE
-      // This ensures card on file integrations create new profiles only for new cards
+      // This ensures card on file integrations create new profiles only
+      // for new cards.
       if (empty($card)) {
-        $pane_values['credit_card']['cardonfile_store'] = TRUE;
+        $pane_values[$form_key]['cardonfile_store'] = TRUE;
       }
       else {
-        $pane_values['credit_card']['cardonfile_store'] = FALSE;
+        $pane_values[$form_key]['cardonfile_store'] = FALSE;
 
         // Also set this value on the donation for saving later
         $donation->data['cardonfile'] = $card->card_id;
       }
 
-      // To avoid using a stored CIM to charge set this value to new even for existing cards
+      // To avoid using a stored CIM to charge set this value to new even for
+      // existing cards.
       $pane_values['cardonfile'] = 'new';
     }
-    // For reference charges add the cardonfile id
+    // For reference charges add the cardonfile id.
     elseif ($donation->reference_charge == TRUE) {
-      // Load the card on file card card data
+      // Load the card on file card card data.
       if (!empty($card)) {
         $pane_values['cardonfile'] = $card->card_id;
       }
       else {
-        // Log the missing card data
+        // Log the missing card data.
         watchdog(
           'fundraiser',
           'A reference charge was attempted on donation @id but no stored card data was found.',
@@ -1964,26 +2105,31 @@ function _fundraiser_commerce_submit_handler_pane_values(&$pane_values, $donatio
       }
     }
   }
-  // Allow other modules to alter the pane values
+  // Allow other modules to alter the pane values.
   drupal_alter('fundraiser_commerce_submit_handler_pane_values', $pane_values, $donation);
 }
 
 /**
- * Perform some standard functions after a commerce submit form has been processed
+ * Perform standard functions after a commerce submit form has been processed.
  *
- * @param $success Boolean
- *    TRUE or FALSE
- * @param $method_instance Array
- *    Details on the gateway
- * @param $pane_values Array
- *    Values passed to the commerce submit handler
- * @param $donation Object
- *    Fundraiser donation object
- * @return nothing
+ * Adds the cardonfile id to the donation object.
+ *
+ * @param bool $success
+ *   Whether the order was successful.
+ * @param array $method_instance
+ *   Details on the gateway.
+ * @param array $pane_values
+ *   Values passed to the commerce submit handler.
+ * @param object $donation
+ *   Fundraiser donation object.
+ * @param string $form_key
+ *   The form key under pane values where the cardonfile_store key exists.
+ *
+ * @return void
  */
-function _fundraiser_commerce_charge_submit_form_process($success, $method_instance, $pane_values, $donation) {
+function _fundraiser_commerce_charge_submit_form_process($success, $method_instance, $pane_values, $donation, $form_key = 'credit_card') {
   // If this charge resulted in a new card on file save that to the donation
-  if ($success && module_exists('commerce_cardonfile') && !empty($pane_values['credit_card']['cardonfile_store'])) {
+  if ($success && module_exists('commerce_cardonfile') && !empty($pane_values[$form_key]['cardonfile_store'])) {
     // Load up the cardonfile record for this donation and save it
     $card = _fundraiser_commerce_donation_cardonfile_card($donation);
     $donation->data['cardonfile'] = $card->card_id;
@@ -2020,7 +2166,7 @@ function _fundraiser_commerce_donation_cardonfile_card($donation, $active = TRUE
     return FALSE;
   }
 
-  return _fundraiser_commerce_cardonfile_match($cardonfile_fields, $active = TRUE);
+  return _fundraiser_commerce_cardonfile_match($cardonfile_fields, $active);
 }
 
 /**
@@ -2099,6 +2245,27 @@ function _fundraiser_commerce_cardonfile_exp_date_mismatch($fields) {
  * Implements hook_commerce_authnet_cim_request_alter
  */
 function fundraiser_commerce_commerce_authnet_cim_request_alter($api_request_element) {
+
+  if (!empty($api_request_element->transaction->profileTransAuthCapture->order->invoiceNumber)) {
+    $did = (string) $api_request_element->transaction->profileTransAuthCapture->order->invoiceNumber;
+    $donation = fundraiser_donation_get_donation($did);
+    $config = $donation->gateway['gateway_details']['settings'];
+    $extra = (string) $api_request_element->extraOptions;
+    $extra = substr($extra, 9, -3);
+    $fields = _commerce_authnet_extra_fields();
+    unset($fields[0]);
+    $i = 1;
+    foreach ($fields as $field) {
+      if (isset($config['commerce_authnet_webform_field_' . $i]) && isset($donation->submission_data[$config['commerce_authnet_webform_field_' . $i]])) {
+        $name = $fields[$config['commerce_authnet_authorize_field_' . $i]];
+        $value =  $donation->submission_data[$config['commerce_authnet_webform_field_' . $i]];
+        $value = str_replace(array("&","'",'"',"|"), array("%26","%27","%22","%7C"), $value); 
+        $extra .= '&' . trim($name) . '=' . trim($value);
+      }
+      $i++;
+    }
+    $api_request_element->extraOptions = '<![CDATA[' .  $extra . '&cms=Springboard]]>';
+  }
   // Change the description to something unique so we get a new profile each time
   if (!empty($api_request_element->profile->description)) {
     $api_request_element->profile->description = substr(t('CIM request taking place at @date', array('@date' => format_date(time()))), 0, 255);

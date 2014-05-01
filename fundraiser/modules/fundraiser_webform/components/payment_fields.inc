@@ -68,10 +68,13 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
         // Show/hide this fieldset dependent on the payment methods field
         '#states' => array(
           'visible' => array(
-            '.fundraiser-payment-methods input[type="radio"]' => array('value' => $payment_method),
+            'input[type="radio"].fundraiser-payment-methods' => array('value' => $payment_method),
+          ),
+          'optional' => array(
+            'input[type="radio"].fundraiser-payment-methods' => array('!value' => $payment_method),
           ),
           'required' => array(
-            '.fundraiser-payment-methods input[type="radio"]' => array('value' => $payment_method),
+            'input[type="hidden"].fundraiser-payment-methods' => array('value' => $payment_method),
           ),
         ),
       );
@@ -104,6 +107,9 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
  */
 function _fundraiser_component_payment_fields_pre_render($element) {
   // Add the id of the outer fieldset to the js settings
+  if(!isset($element['#attributes']['id'])) {
+    element_set_attributes($element, array('id'));
+  }
   drupal_add_js(array('fundraiserWebform' => array('components' => array('payment_fields' => array('id' => $element['#attributes']['id'])))), 'setting');
   return $element;
 }
