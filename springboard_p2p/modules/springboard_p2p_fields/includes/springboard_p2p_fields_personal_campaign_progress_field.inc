@@ -24,14 +24,6 @@ class SpringboardP2pPersonalCampaignProgressField {
    * Presave.
    */
   public function presave(&$items) {
-    foreach ($items as $delta => $item) {
-      $record = array(
-        'submissions' => $items[$delta]['campaign_progress']['submissions'],
-        'amount' => $items[$delta]['campaign_progress']['amount'],
-      );
-
-      $items[$delta] = $record;
-    }
 
   }
 
@@ -71,7 +63,7 @@ class SpringboardP2pPersonalCampaignProgressField {
         break;
     }
 
-    $element['campaign_progress'] = $widget;
+    $element = $widget;
     return $element;
   }
 
