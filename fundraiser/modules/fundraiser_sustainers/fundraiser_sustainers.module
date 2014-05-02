@@ -1800,7 +1800,7 @@ function fundraiser_sustainers_fundraiser_donation_decline($donation) {
         }
       }
       if (isset($stage)) {
-        $donation->recurring->sf_stagename = $commerce_name;
+        $donation->recurring->sf_stagename = $stage;
       }
       else {
         $donation->recurring->sf_stagename = 'Donation failed, but stage could not be mapped.';
