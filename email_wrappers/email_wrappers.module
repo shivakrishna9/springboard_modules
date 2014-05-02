@@ -100,8 +100,10 @@ function email_wrappers_preview_modal() {
 /**
  *  Implements hook_form_FORMID_alter 
  *
- * $message['send'] = FALSE in email_wrappers_mail_alter causes improper error message to appear to site admins on resend.
- * We need to unset webform's resend submit function in order to check whether an email has a wrapper.
+ * $message['send'] = FALSE in email_wrappers_mail_alter causes 
+ * improper error message to appear to site admins on resend.
+ * We need to unset webform's resend submit function in order to check 
+ * whether an email has a wrapper.
  * If it does, suppress messages here, and recompose them in the mail_alter function
  */
 function email_wrappers_form_webform_submission_resend_alter(&$form, &$form_state) {
