@@ -74,7 +74,15 @@ class SpringboardP2pPersonalCampaignProgressField {
     $element = array();
 
     if ($display['type'] == 'springboard_p2p_fields_personal_campaign_progress_default') {
-      $campaign = $entity->field_p2p_campaign[$entity->language][0]['entity'];
+
+      if (isset($entity->field_p2p_campaign[$entity->language][0]['entity'])) {
+        $campaign = $entity->field_p2p_campaign[$entity->language][0]['entity'];
+      }
+      else {
+        $nid = $entity->field_p2p_campaign[$entity->language][0]['target_id'];
+        $campaign = node_load($nid);
+      }
+
       $goal_type = springboard_p2p_get_goal_type_from_campaign($campaign);
 
       foreach ($items as $delta => $value) {
