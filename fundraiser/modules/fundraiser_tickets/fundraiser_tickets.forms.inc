@@ -10,8 +10,12 @@ function fundraiser_tickets_order_ticket_types_form($form, &$form_state, $node){
 
   if (! empty($node->fr_tickets_ticket_types)){
     $node_wrapper = entity_metadata_wrapper('node', $node);
-    $products_wrapper = $node_wrapper->language($language->language)->fr_tickets_ticket_types;
-    $products = $products_wrapper->value();
+
+    // Create an array from the products
+    foreach ($node_wrapper->fr_tickets_ticket_types as $product_wrapper) {
+      $products[] = $product_wrapper;
+    }
+
     uasort($products, '_fundraiser_tickets_weight_sort');
   }
 
@@ -29,10 +33,9 @@ function fundraiser_tickets_order_ticket_types_form($form, &$form_state, $node){
   if (! empty($products)){
 
     // create the form elements for each product
-    foreach ($products as $key => $product) {
-      $product_wrapper = entity_metadata_wrapper('commerce_product', $product);
+    foreach ($products as $key => $product_wrapper) {
       $form['tickets'][$key]['price'] = array(
-        '#markup' => commerce_currency_format($product_wrapper->commerce_price->amount->value(), $product_wrapper->commerce_price->currency_code->value(), $product)
+        '#markup' => commerce_currency_format($product_wrapper->commerce_price->amount->value(), $product_wrapper->commerce_price->currency_code->value(), $product_wrapper->value())
       );
       $form['tickets'][$key]['title'] = array(
         '#markup' => check_plain($product_wrapper->title->value()),
@@ -142,7 +145,7 @@ function fundraiser_tickets_order_ticket_types_form_submit($form, &$form_state) 
 // Custom array sort function by weight.
 function _fundraiser_tickets_weight_sort($a, $b) {
   if (isset($a->fr_tickets_weight) && isset($b->fr_tickets_weight)) {
-    return $a->fr_tickets_weight['und'][0]['value'] < $b->fr_tickets_weight['und'][0]['value'] ? -1 : 1;
+    return $a->fr_tickets_weight->value() < $b->fr_tickets_weight->value() ? -1 : 1;
   }
   return 0;
 }
