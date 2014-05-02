@@ -1787,13 +1787,25 @@ function fundraiser_sustainers_fundraiser_donation_decline($donation) {
     // Get the number of times this order has been attempted
     $attempt_count = db_query('SELECT attempts FROM {fundraiser_sustainers} WHERE did = :did',
       array(':did' => $donation->did))->fetchColumn();
+
     if ($attempt_count == 3) {
       // Final attempt, add debug alert.
 
     // update sf queue.
     if (module_exists('salesforce_genmap')) {
+      $stages = variable_get('salesforce_donation_mapped_stages','');
+      foreach ($stages as $salesforce_name => $commerce_name) {
+        if ($commerce_name == 'failed') {
+           $stage = $saleforce_name;
+        }
+      }
+      if (isset($stage)) {
+        $donation->recurring->sf_stagename = $commerce_name;
+      }
+      else {
+        $donation->recurring->sf_stagename = 'Donation failed, but stage could not be mapped.';
+      }
       salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
-      dpm('doh');
     }
 
       watchdog('fundraiser_sustainers', 'Payment for recurring donation @id has failed 3 times. ' .
