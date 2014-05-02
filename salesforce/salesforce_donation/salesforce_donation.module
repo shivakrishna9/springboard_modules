@@ -50,13 +50,18 @@ function salesforce_donation_settings($form, &$form_state) {
       successfully processed are mapped to Stage Posted. If those settings are
       all you need, then you do not need to map additional stages.'),
   );
-  $stages = array(
-    'Posted',
-    'Withdrawn',
-    'Pledged',
-    'Partially Refunded',
-    'Refunded',
-  );
+
+  $sfapi = salesforce_get_api();
+  $object_info = $sfapi->objectDescribe('Opportunity');
+  $stages = array();
+  foreach ($object_info['fields'] as $field) {
+    if ($field['name'] == 'StageName') {
+      foreach ($field['picklistValues'] as $pick) {
+        $stages[] = $pick['label'];
+      }
+    }
+  }
+
   $available_statuses = module_invoke_all('salesforce_donation_statuses');
   if (empty($available_statuses)) {
     $available_statuses = array();
@@ -112,26 +117,34 @@ function salesforce_donation_map_form_after_build($form, &$form_state) {
  * Default commerce stage map.
  */
 function salesforce_donation_default_stage_map() {
-  return array(
-    'Posted' => 'payment_received',
-    'Withdrawn' => 'canceled',
-    'Pledged' => 'pending_future_payment',
-    'Partially Refunded' => 'partially_refunded',
-    'Refunded' => 'refunded',
-  );
+  $sfapi = salesforce_get_api();
+  $object_info = $sfapi->objectDescribe('Opportunity');
+  $stages = array();
+  foreach ($object_info['fields'] as $field) {
+    if ($field['name'] == 'StageName') {
+      foreach ($field['picklistValues'] as $pick) {
+        $stages[] = $pick['label'];
+      }
+    }
+  }
+  return $stages;
 }
 
 /**
  * Submit callback for settings form.
  */
 function salesforce_donation_settings_stage_map_submit($form, &$form_state) {
-  $stages = array(
-    'Posted',
-    'Withdrawn',
-    'Pledged',
-    'Partially Refunded',
-    'Refunded',
-  );
+  $sfapi = salesforce_get_api();
+  $object_info = $sfapi->objectDescribe('Opportunity');
+  $stages = array();
+  foreach ($object_info['fields'] as $field) {
+    if ($field['name'] == 'StageName') {
+      foreach ($field['picklistValues'] as $pick) {
+        $stages[] = $pick['label'];
+      }
+    }
+  }
+
   $mapped_stages = array();
   foreach ($stages as $stage) {
     $mapped_stages[$stage] = isset($form_state['values']['sf_donation_stages']['sf_donation_' . $stage]) ?

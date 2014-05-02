@@ -1789,6 +1789,13 @@ function fundraiser_sustainers_fundraiser_donation_decline($donation) {
       array(':did' => $donation->did))->fetchColumn();
     if ($attempt_count == 3) {
       // Final attempt, add debug alert.
+
+    // update sf queue.
+    if (module_exists('salesforce_genmap')) {
+      salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
+      dpm('doh');
+    }
+
       watchdog('fundraiser_sustainers', 'Payment for recurring donation @id has failed 3 times. ' .
         'The donation will not be submitted for payment again. Gateway message: @message',
         array('@id' => $donation->did, '@message' => $donation->result['message']), WATCHDOG_DEBUG);
