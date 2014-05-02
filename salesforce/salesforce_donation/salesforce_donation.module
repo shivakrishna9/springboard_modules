@@ -57,11 +57,10 @@ function salesforce_donation_settings($form, &$form_state) {
   foreach ($object_info['fields'] as $field) {
     if ($field['name'] == 'StageName') {
       foreach ($field['picklistValues'] as $pick) {
-        $stages[] = $pick['label'];
+        $stages[] = $pick['value'];
       }
     }
   }
-
   $available_statuses = module_invoke_all('salesforce_donation_statuses');
   if (empty($available_statuses)) {
     $available_statuses = array();
@@ -123,7 +122,7 @@ function salesforce_donation_default_stage_map() {
   foreach ($object_info['fields'] as $field) {
     if ($field['name'] == 'StageName') {
       foreach ($field['picklistValues'] as $pick) {
-        $stages[] = $pick['label'];
+        $stages[] = $pick['value'];
       }
     }
   }
@@ -140,7 +139,7 @@ function salesforce_donation_settings_stage_map_submit($form, &$form_state) {
   foreach ($object_info['fields'] as $field) {
     if ($field['name'] == 'StageName') {
       foreach ($field['picklistValues'] as $pick) {
-        $stages[] = $pick['label'];
+        $stages[] = $pick['value'];
       }
     }
   }
