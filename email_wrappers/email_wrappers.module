@@ -132,8 +132,8 @@ function email_wrappers_form_webform_submission_resend_submit($form, &$form_stat
     $sent_count = webform_submission_send_mail($node, $submission, array($mail));
     $wrapped = db_query("SELECT nid FROM {email_wrappers_webform} WHERE nid = :nid AND eid = :eid", array(':nid' => $mail['nid'], ':eid' => $mail['eid']))->fetchfield();
     if(!$wrapped) {
+      $address = webform_format_email_address($mail['email'], NULL, $node, $submission, TRUE, FALSE, 'short');
       if ($sent_count) {
-        $address = webform_format_email_address($mail['email'], NULL, $node, $submission, TRUE, FALSE, 'short');
         drupal_set_message(t('Successfully re-sent submission #@sid to @add.', array('@sid' => $submission->sid, '@add' => $address[0])));
       }
       else {
