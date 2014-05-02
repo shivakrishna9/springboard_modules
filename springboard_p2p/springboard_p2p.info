@@ -111,6 +111,7 @@ features[variable][] = node_submitted_p2p_category
 features[variable][] = node_submitted_p2p_personal_campaign
 features[views_view][] = p2p_campaigns
 features[views_view][] = p2p_categories
+features[views_view][] = p2p_personal_campaigns_by_campaign
 features[views_view][] = p2p_personal_campaigns_by_campaigner
 features[views_view][] = p2p_user_approval
 files[] = includes/springboard_p2p_private_campaign_approval.inc
