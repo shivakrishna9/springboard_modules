@@ -109,9 +109,9 @@ function email_wrappers_preview_modal() {
 function email_wrappers_form_webform_submission_resend_alter(&$form, &$form_state) {
     $form['#submission']->resend = TRUE;
     foreach ($form['#submit'] as $index => $submit) {
-    if($submit == 'webform_submission_resend_submit') {
-      $form['#submit'][$index] = 'email_wrappers_form_webform_submission_resend_submit';
-    }
+      if($submit == 'webform_submission_resend_submit') {
+        $form['#submit'][$index] = 'email_wrappers_form_webform_submission_resend_submit';
+      }
   }
 }
 /**
