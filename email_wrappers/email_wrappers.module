@@ -525,7 +525,7 @@ function email_wrappers_mail_alter(&$message) {
           // we intercepted error messages in the resend form alter above
           //because the "$message['send'] = FALSE;" below causes an erroneous
           //error message to be displayed to site administrator.
-          if ($response['result']) {
+          if (isset($response['result']) && $response['result']) {
             drupal_set_message(t('Successfully re-sent confirmation to @add', array('@add' => $message['to'])));      
           }
           else {
