@@ -1090,3 +1090,82 @@ function springboard_p2p_menu_local_tasks_alter(&$data, $router_item, $root_path
     }
   }
 }
+
+function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
+  if (isset($_GET['campaign']) && is_numeric($_GET['campaign']) && strpos($form_id, 'webform_client_form_') !== FALSE && !empty($form['#node'])) {
+    $type = $form['#node']->type;
+    $campaign_id = $_GET['campaign'];
+
+    if (_webform_user_is_webform_user_node_type($type) || fundraiser_is_donation_type($type)) {
+      $personal_campaign = node_load($campaign_id);
+      if (is_object($personal_campaign) && $personal_campaign->type == 'p2p_personal_campaign') {
+        $owner = user_load($personal_campaign->uid);
+        $owner_language = !empty($owner->language) ? $owner->language : 'und';
+        $owner_name = $owner->sbp_first_name[$owner_language][0]['safe_value'] . ' ' . $owner->sbp_last_name[$owner_language][0]['safe_value'];
+
+        $form['submitted']['springboard_p2p'] = array(
+          '#type' => 'container',
+          '#weight' => -100,
+          'owner' => array(
+            '#markup' => '<h2>' . $owner_name . '</h2>',
+          ),
+        );
+
+        drupal_set_title($personal_campaign->title);
+
+        $campaign = node_load($personal_campaign->field_p2p_campaign[$personal_campaign->language][0]['target_id']);
+
+        $header = springbaord_p2p_format_campaign_form_header($campaign);
+        if (count($header)) {
+          $form['submitted']['springboard_p2p']['header'] = $header;
+        }
+
+        $form['#springboard_p2p'] = array(
+          'personal_campaign' => $personal_campaign,
+          'campaign' => $campaign,
+        );
+
+        $form['#submit'][] = 'springboard_p2p_webform_client_form_submit';
+      }
+
+    }
+
+  }
+}
+
+function springboard_p2p_webform_client_form_submit($form, &$form_state) {
+
+}
+
+/**
+ * Takes a campaign and returns the form element for its header image.
+ *
+ * @param object $campaign
+ *   The campaign node.
+ *
+ * @return array
+ *   The form element for the header image.
+ */
+function springbaord_p2p_format_campaign_form_header($campaign) {
+  if ($campaign->type == 'p2p_campaign' && isset($campaign->field_p2p_form_header) && !empty($campaign->field_p2p_form_header[$campaign->language])) {
+
+    $display = array(
+      'settings' => array(
+        'image_link' => 'content',
+        'image_style' => 'large',
+      ),
+    );
+
+    return image_field_formatter_view(
+      'p2p_campaign',
+      $campaign,
+      array(),
+      array(),
+      $campaign->language,
+      $campaign->field_p2p_form_header[$campaign->language],
+      $display
+    );
+  }
+
+  return array();
+}

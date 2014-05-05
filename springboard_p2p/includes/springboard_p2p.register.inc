@@ -16,26 +16,10 @@ function springboard_p2p_register_page($form, &$form_state) {
   $campaign_id = springboard_p2p_get_campaign_id_from_request();
   if (!empty($campaign_id)) {
     $campaign = node_load($campaign_id);
-    if ($campaign->type == 'p2p_campaign' && isset($campaign->field_p2p_form_header) && !empty($campaign->field_p2p_form_header[$campaign->language])) {
-
-      $display = array(
-        'settings' => array(
-          'image_link' => 'content',
-          'image_style' => 'large',
-        ),
-      );
-
-      $form['header'] = image_field_formatter_view(
-        'p2p_campaign',
-        $campaign,
-        array(),
-        array(),
-        $campaign->language,
-        $campaign->field_p2p_form_header[$campaign->language],
-        $display
-      );
+    $header = springbaord_p2p_format_campaign_form_header($campaign);
+    if (count($header)) {
+      $form['header'] = $header;
     }
-
   }
 
   if (module_exists('fboauth')) {
