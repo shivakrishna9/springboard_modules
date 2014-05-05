@@ -1798,8 +1798,19 @@ function commerce_litle_fraud_settings_form() {
     '#type' => 'textfield',
     '#title' => t('Subdomain redirect'),
     '#description' => t('Your server administrator should configure a subdomain which redirects to ThreatMetrix\'s server: "h.online-metrix.net"'),
-    '#default_value' => variable_get('commerce_litle_fraud_subdomain', ''),
+    '#default_value' => variable_get('commerce_litle_fraud_subdomain', 'h.online-metrix.net'),
   );
-
+  $form['#validate'][] = 'commerce_litle_fraud_settings_form_validate';
   return system_settings_form($form);
+}
+
+function commerce_litle_fraud_settings_form_validate($form, &$form_state) {
+  if($form_state['values']['commerce_litle_fraud'] == 1) {
+    if ($form_state['values']['commerce_litle_fraud_id_prefix'] == '') {
+      form_set_error('commerce_litle_fraud_id_prefix', t('Session ID prefix is a required field'));
+    }
+    if ($form_state['values']['commerce_litle_fraud_merchID'] == '') {
+      form_set_error('commerce_litle_fraud_merchID', t('Merchant ID is a required_field'));
+    }
+  }
 }
