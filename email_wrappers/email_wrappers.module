@@ -435,7 +435,6 @@ function email_wrappers_get_nodes() {
  * Implements hook_mail().
  */
 function email_wrappers_mail($key, &$message, $params) {
-
   $token_set = array(
     'node' => isset($params['node']) ? $params['node'] : NULL,
   );
@@ -503,6 +502,13 @@ function email_wrappers_mail_alter(&$message) {
       $params['settings'] = $settings;
       $params['message'] = $message;
       $sid = $params['submission']->sid;
+      if ($resend) {
+        if (module_exists('fundraiser_webform')) {
+          $donation = _fundraiser_webform_get_donation_by_sid($sid);
+          $params['donation'] = $donation;  //needed for subject line in email_wrappers_mail
+          $params['message']['params']['donation'] = $donation;  //needed for body in email_wrappers_render_email_body
+        }
+      }
 
       // If email is not set send on submission we stash parameters required
       // to send in a static setting on the assumption that some other code
