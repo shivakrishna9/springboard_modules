@@ -1634,7 +1634,7 @@ function fundraiser_commerce_fundraiser_refund_decline($refund) {
 function fundraiser_commerce_salesforce_donation_statuses() {
   // Get a list of available statuses, and return that list to salesforce donation.
   $available_statuses = array();
-  $order_statuses = commerce_order_statuses();
+  $order_statuses = fundraiser_commerce_commerce_order_status_info();
   foreach ($order_statuses as $name => $order_status) {
     $available_statuses[$name] = $order_status['title'] . ' (' . t('Commerce') . ')';
   }
