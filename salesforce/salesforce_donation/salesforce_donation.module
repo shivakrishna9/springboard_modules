@@ -54,10 +54,12 @@ function salesforce_donation_settings($form, &$form_state) {
   $sfapi = salesforce_get_api();
   $object_info = $sfapi->objectDescribe('Opportunity');
   $stages = array();
-  foreach ($object_info['fields'] as $field) {
-    if ($field['name'] == 'StageName') {
-      foreach ($field['picklistValues'] as $pick) {
-        $stages[] = $pick['value'];
+  if (isset($object_info['fields'])) {
+    foreach ($object_info['fields'] as $field) {
+      if (isset($field['name']) && $field['name'] == 'StageName' && isset($field['picklistValues'])) {
+        foreach ($field['picklistValues'] as $pick) {
+          $stages[] = $pick['value'];
+        }
       }
     }
   }
@@ -116,17 +118,13 @@ function salesforce_donation_map_form_after_build($form, &$form_state) {
  * Default commerce stage map.
  */
 function salesforce_donation_default_stage_map() {
-  $sfapi = salesforce_get_api();
-  $object_info = $sfapi->objectDescribe('Opportunity');
-  $stages = array();
-  foreach ($object_info['fields'] as $field) {
-    if ($field['name'] == 'StageName') {
-      foreach ($field['picklistValues'] as $pick) {
-        $stages[] = $pick['value'];
-      }
-    }
-  }
-  return $stages;
+  return array(
+    'Posted' => 'payment_received',
+    'Withdrawn' => 'canceled',
+    'Pledged' => 'pending_future_payment',
+    'Partially Refunded' => 'partially_refunded',
+    'Refunded' => 'refunded',
+  );
 }
 
 /**
@@ -136,10 +134,12 @@ function salesforce_donation_settings_stage_map_submit($form, &$form_state) {
   $sfapi = salesforce_get_api();
   $object_info = $sfapi->objectDescribe('Opportunity');
   $stages = array();
-  foreach ($object_info['fields'] as $field) {
-    if ($field['name'] == 'StageName') {
-      foreach ($field['picklistValues'] as $pick) {
-        $stages[] = $pick['value'];
+  if (isset($object_info['fields'])) {
+    foreach ($object_info['fields'] as $field) {
+      if (isset($field['name']) && $field['name'] == 'StageName' && isset($field['picklistValues'])) {
+        foreach ($field['picklistValues'] as $pick) {
+          $stages[] = $pick['value'];
+        }
       }
     }
   }
@@ -404,6 +404,7 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
       $sf_field = $map->field_map['salesforce_donation_map']['probability'];
       $fields[$sf_field] = 100;
     }
+
     if (isset($map->field_map['salesforce_donation_map']['stage'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['stage'];
       $stage = 'Posted';
@@ -411,6 +412,7 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
       if (!empty($mapped_stages)) {
         if (in_array($donation->status, $mapped_stages)) {
           $flipped_stages = array_flip($mapped_stages);
+
           $stage = $flipped_stages[$donation->status];
         }
       }
