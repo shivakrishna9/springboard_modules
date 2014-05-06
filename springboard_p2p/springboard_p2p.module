@@ -598,6 +598,13 @@ function springboard_p2p_get_goal_from_campaign($campaign) {
 function springboard_p2p_format_progress($progress, $type, $include_units = TRUE) {
   $output = '';
 
+  // If only a value is passed in.
+  if (!is_array($progress)) {
+    $progress = array(
+      $type => $progress,
+    );
+  }
+
   switch ($type) {
     case 'submissions':
       $output .= number_format($progress['submissions']);
@@ -1113,14 +1120,28 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
       $personal_campaign = node_load($campaign_id);
 
       if (is_object($personal_campaign) && $personal_campaign->type == 'p2p_personal_campaign') {
-
+        drupal_set_title($personal_campaign->title);
         $form['springboard_p2p_personal_campaign_nid']['#value'] = $personal_campaign->nid;
 
         $owner = user_load($personal_campaign->uid);
         $owner_language = !empty($owner->language) ? $owner->language : 'und';
+        $owner_name = '';
         if (!empty($owner->sbp_first_name[$owner_language][0]['safe_value']) && !empty($owner->sbp_last_name[$owner_language][0]['safe_value'])) {
           $owner_name = $owner->sbp_first_name[$owner_language][0]['safe_value'] . ' ' . $owner->sbp_last_name[$owner_language][0]['safe_value'];
+        }
 
+        $campaign = node_load($personal_campaign->field_p2p_campaign[$personal_campaign->language][0]['target_id']);
+        if (!empty($campaign) && $campaign->type == 'p2p_campaign') {
+
+          // @todo Confirm that this donation form nid is selected from the
+          // campaign goals.
+          // $header = springbaord_p2p_format_campaign_form_header($campaign);
+          // if (count($header)) {
+          // $form['submitted']['springboard_p2p']['header'] = $header;
+          // }
+          $goal_type = springboard_p2p_get_goal_type_from_campaign($campaign);
+          $formatted_progress = springboard_p2p_format_progress($personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0], $goal_type);
+          $formatted_goal = springboard_p2p_format_progress($personal_campaign->field_p2p_personal_campaign_goal[$personal_campaign->language][0]['value'], $goal_type);
           $form['submitted']['springboard_p2p'] = array(
             '#type' => 'container',
             '#tree' => TRUE,
@@ -1128,26 +1149,20 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
             'owner' => array(
               '#markup' => '<h2>' . $owner_name . '</h2>',
             ),
+            'progress' => array(
+              '#prefix' => '<div>' . t('Progress') . ' ',
+              '#markup' => $formatted_progress,
+              '#suffix' => '</div>',
+            ),
+            'goal' => array(
+              '#prefix' => '<div>' . t('Goal') . ' ',
+              '#markup' => $formatted_goal,
+              '#suffix' => '</div>',
+            ),
           );
-
         }
-
-        drupal_set_title($personal_campaign->title);
-
-        // $campaign = node_load($personal_campaign->field_p2p_campaign[$personal_campaign->language][0]['target_id']);
-
-        // @todo Confirm that this donation form nid is selected from the
-        // campaign goals.
-
-        // $header = springbaord_p2p_format_campaign_form_header($campaign);
-        // if (count($header)) {
-          // $form['submitted']['springboard_p2p']['header'] = $header;
-        // }
-
       }
-
     }
-
   }
 }
 

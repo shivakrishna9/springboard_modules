@@ -284,3 +284,33 @@ function springboard_p2p_fields_field_formatter_view($entity_type, $entity, $fie
   return SpringboardP2pFieldsFactory::getField($field['type'])
     ->formatterView($entity_type, $entity, $items, $display);
 }
+
+/**
+ * Format a goal value based on its type and get a render array.
+ *
+ * @param array $goal
+ *   Array with goal_type and goal_value keys.
+ *
+ * @return array
+ *   Render array for the goal.
+ */
+function springboard_p2p_fields_format_campaign_goal_value($goal) {
+  $prefix = '';
+  $suffix = '';
+  $markup = '';
+
+  if ($goal['goal_type'] == 'amount') {
+    $prefix = '$ ';
+    $markup = number_format($goal['goal_value'], 2);
+  }
+  elseif ($goal['goal_type'] == 'submissions') {
+    $markup = number_format($goal['goal_value']);
+    $suffix = ' submissions';
+  }
+
+  return array(
+    '#prefix' => $prefix,
+    '#suffix' => $suffix,
+    '#markup' => $markup,
+  );
+}
