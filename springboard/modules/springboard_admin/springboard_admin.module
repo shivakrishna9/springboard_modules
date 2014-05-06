@@ -129,7 +129,7 @@ function springboard_admin_menu_alter(&$items) {
   $types = node_type_get_types();
   foreach ($types as $type) {
     if (_webform_user_is_webform_user_node_type($type->type) || fundraiser_is_donation_type($type->type)) {
-      $items['springboard/add/' . $type->type] = $items['node/add/' . $type->type];
+      $items['springboard/add/' . preg_replace('/_/', '-', $type->type)] = $items['node/add/' . preg_replace('/_/', '-', $type->type)];
     }
   }
 }
@@ -466,9 +466,10 @@ function springboard_admin_node_type_delete($info) {
  *   matches.
  */
 function springboard_admin_menu_find_link($sbadmin_path, $plid = -1) {
+  // Load all link items from the Springboard Admin Menu
   $sb_menu = menu_load_links('springboard_admin_menu');
-  // If parent link ID is specified, return only a menu item with the defined path
-  // and defined plid
+  // If parent link ID is specified, return the first menu item with the defined 
+  // path and defined plid
   if ($plid >= 0) {
     foreach ($sb_menu as $item) {
       if ($item['link_path'] == $sbadmin_path && $item['plid'] == $plid) {
@@ -476,6 +477,8 @@ function springboard_admin_menu_find_link($sbadmin_path, $plid = -1) {
       }
     }
   }
+  // If a plid is not specified, return the first link in the menu that matches
+  // the specified path.
   else {
     foreach ($sb_menu as $item) {
       if ($sbadmin_path == $item['link_path']) {
@@ -483,6 +486,7 @@ function springboard_admin_menu_find_link($sbadmin_path, $plid = -1) {
       }
     }
   }
+  // If no item is found that matches the specified criteria, return FALSE.
   return FALSE;
 }
 
@@ -498,24 +502,32 @@ function springboard_admin_menu_find_link($sbadmin_path, $plid = -1) {
  *   created.
  */
 function springboard_admin_menu_node_add_link($type) {
+  // Get menu item definitions for the Donations and Forms parent links.
   $forms_menu_item = springboard_admin_menu_find_link('springboard/forms/all', 0);
   $donations_menu_item = springboard_admin_menu_find_link('springboard/forms/donations', 0);
+  // Set up vars we need.
   $menu_link = array();
-
-  if ((_webform_user_is_webform_user_node_type($type->type) || fundraiser_is_donation_type($type->type)) && !springboard_admin_menu_find_link('springboard/add/' . $type->type)) {
+  $mlid = FALSE;
+  // If node type is either useing Webform User or Fundraiser, and is not already
+  // in the Springboard Admin Menu, create a menu item for it.
+  if ((_webform_user_is_webform_user_node_type($type->type) || fundraiser_is_donation_type($type->type)) && !springboard_admin_menu_find_link('springboard/add/' . preg_replace('/_/', '-', $type->type))) {
     $menu_link = array(
-      'link_path' => 'springboard/add/' . $type->type,
+      'link_path' => 'springboard/add/' . preg_replace('/_/', '-', $type->type),
       'link_title' => 'Create a ' . $type->name,
       'menu_name' => 'springboard_admin_menu',
       'weight' => '1',
-      'plid' => fundraiser_is_donation_type($type->type) ? $forms_menu_item['mlid'] : $donations_menu_item['mlid'],
+      // If the node type is using Fundraiser, put it under the "Donations" item.
+      // Otherwise, the parent item is "Forms".
+      'plid' => fundraiser_is_donation_type($type->type) ? $donations_menu_item['mlid'] : $forms_menu_item['mlid'],
     );
-      
+    // Save that menu link.
     $mlid = menu_link_save($menu_link);
+    // If saving the link fails, return a helpful error message.
     if (!$mlid) {
       watchdog('springboard_admin', "A Springboard Admin Menu item for node types %t could not be created.", array('%t' => $type->name));
       drupal_set_message(t('Please rebuild the Springboard Admin Menu by uninstalling and reinstalling the Springboard Admin module.'), 'warning');
     }
+    // Otherwise, log the creation of the menu item.
     else {
       watchdog('springboard_admin', "Springboard Admin Menu items for node types %t were created.", array('%t' => $type->name));
     }
@@ -535,11 +547,14 @@ function springboard_admin_menu_node_add_link($type) {
  *   found in the Springboard Admin Menu.
  */
 function springboard_admin_menu_node_delete_link($type) {
-    $link = springboard_admin_menu_find_link('springboard/add/' . $type->type);
+    // Get the definition for the "add content" link for this node type.
+    $link = springboard_admin_menu_find_link('springboard/add/' . preg_replace('/_/', '-', $type->type));
+    // Delete the link if it exists.
     if ($link) {
       menu_link_delete($link['mlid']);
       return TRUE;
     }
+    // Otherwise, return FALSE.
     else {
       return FALSE;
     }

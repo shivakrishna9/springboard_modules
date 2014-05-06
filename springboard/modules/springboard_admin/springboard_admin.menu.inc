@@ -148,7 +148,8 @@ function springboard_admin_admin_menu_items() {
   // In the future, we will use an intermediate page to choose the form type.
   $types = node_type_get_types();
   foreach ($types as $type) {
-    if ($type && _webform_user_is_webform_user_node_type($type->type)) {
+    // Only create the item if the node type uses Webform User but not Fundraiser.
+    if ($type && _webform_user_is_webform_user_node_type($type->type) && !fundraiser_is_donation_type($type->type)) {
       // Forms > $type->type.
       $items['springboard/forms/all']['_children']['springboard/add/' . $type->type] = array(
         'link_path' => 'springboard/add/' . $type->type,
