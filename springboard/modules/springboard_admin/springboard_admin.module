@@ -18,6 +18,20 @@ function springboard_admin_menu() {
     'access arguments' => array('springboard/asset-library'),
     'page callback' => 'springboard_admin_template_page',
   );
+  $items['springboard/donation-forms'] = array(
+    'title' => 'Donation Forms',
+    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('access springboard dashboard'),
+    'page callback' => 'springboard_admin_forms_page',
+    'page arguments' => array('fundraiser')
+  );
+  $items['springboard/forms'] = array(
+    'title' => 'Forms',
+    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('access springboard dashboard'),
+    'page callback' => 'springboard_admin_forms_page',
+    'page arguments' => array('webform_user')
+  );
   $items['springboard/reports'] = array(
     'title' => 'Reports',
     'type' => MENU_NORMAL_ITEM,
@@ -349,6 +363,59 @@ function springboard_admin_template_page() {
   }
 
   return $output;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function springboard_admin_theme($existing, $type, $theme, $path) {
+  return array(
+    'springboard_donation_forms_page' => array(
+      'variables' => array('tables' => array(), 'types' => array()),
+      'template' => drupal_get_path('theme', $theme) . '/templates/springboard-donation-forms-page',
+    ),
+    'springboard_forms_page' => array(
+      'variables' => array('tables' => array(), 'types' => array()),
+      'template' => drupal_get_path('theme', $theme) . '/templates/springboard-forms-page',
+    ),
+   );
+}
+
+function springboard_admin_forms_page($springboard_type) {
+  $node_types = node_type_get_types();
+  $display_types = array();
+  $tables = array();
+  foreach ($node_types as $type) {
+    switch ($springboard_type) {
+      case 'fundraiser':
+        if(fundraiser_is_donation_type($type->type)) {
+          $display_types[$type->type] = $type;
+        }
+      break;
+      case 'webform_user':
+        if(_webform_user_is_webform_user_node_type($type->type) && !fundraiser_is_donation_type($type->type)) {
+          $display_types[$type->type] = $type;
+        }
+      break;
+      default:
+        if(!_webform_user_is_webform_user_node_type($type->type) && !fundraiser_is_donation_type($type->type)) {
+          $display_types[$type->type] = $type;
+        }
+      break;
+    }
+  }
+  foreach($display_types as $type) {
+    
+    $view = views_get_view('sbv_forms');
+    $view -> set_display('block_2');
+    $view -> set_arguments(array($type->type));
+    $view -> pre_execute();
+    $view -> execute();
+    if ($view && $view -> access('block_2') && !empty($view -> result)) {
+      $tables[$type->type] = $view -> render();
+    }
+  }
+  return theme('springboard_donation_forms_page', array('types'=> $display_types, 'tables' => $tables));
 }
 
 /**

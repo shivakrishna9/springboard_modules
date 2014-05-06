@@ -65,8 +65,8 @@ function springboard_admin_admin_menu_items() {
   );
 
   // Top Level: Donation Form.
-  $items['springboard/forms/donations'] = array(
-    'link_path' => 'springboard/forms/donations',
+  $items['springboard/donation-forms'] = array(
+    'link_path' => 'springboard/donation-forms',
     'link_title' => t('Donation Forms'),
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
@@ -76,8 +76,8 @@ function springboard_admin_admin_menu_items() {
   );
 
   // Donation Forms > View All Donation Forms.
-  $items['springboard/forms/donations']['_children']['springboard/forms/donations'] = array(
-    'link_path' => 'springboard/forms/donations',
+  $items['springboard/donation-forms']['_children']['springboard/donation-forms/all'] = array(
+    'link_path' => 'springboard/donation-forms/all',
     'link_title' => t('View All Donation Forms'),
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
@@ -91,7 +91,7 @@ function springboard_admin_admin_menu_items() {
   foreach ($types as $type) {
     if ($type && fundraiser_is_donation_type($type->type)) {
       // Donation Forms > $type->type
-      $items['springboard/forms/donations']['_children']['springboard/add/' . $type->type] = array(
+      $items['springboard/donation-forms']['_children']['springboard/add/' . $type->type] = array(
         'link_path' => 'springboard/add/' . $type->type,
         'link_title' => 'Create a ' . $type->name,
         'menu_name' => 'springboard_admin_menu',
@@ -103,7 +103,7 @@ function springboard_admin_admin_menu_items() {
   }
 
   // Donation Forms > Donation Reports.
-  $items['springboard/forms/donations']['_children']['springboard/reports/dsr'] = array(
+  $items['springboard/donation-forms']['_children']['springboard/reports/dsr'] = array(
     'link_path' => 'springboard/reports/dsr',
     'link_title' => 'Donation Reports',
     'menu_name' => 'springboard_admin_menu',
@@ -114,7 +114,7 @@ function springboard_admin_admin_menu_items() {
 
   // Donation Forms > Donation Settings.
   /* @TODO Not in the menu mockup.
-   * $items['springboard/forms/donations']['_children']['admin/config/salesforce/salesforce-donation'] = array(
+   * $items['springboard/donation-forms']['_children']['admin/config/salesforce/salesforce-donation'] = array(
     'link_path' => 'admin/config/salesforce/salesforce-donation',
     'link_title' => 'Donation Settings',
     'menu_name' => 'springboard_admin_menu',
