@@ -1208,7 +1208,7 @@ function springboard_p2p_field_default_field_instances() {
         'year_range' => '-3:+3',
       ),
       'type' => 'date_text',
-      'weight' => 5,
+      'weight' => 6,
     ),
   );
 
@@ -1337,6 +1337,52 @@ function springboard_p2p_field_default_field_instances() {
     ),
   );
 
+  // Exported field_instance: 'node-p2p_personal_campaign-field_p2p_personal_campaign_goal'
+  $field_instances['node-p2p_personal_campaign-field_p2p_personal_campaign_goal'] = array(
+    'bundle' => 'p2p_personal_campaign',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'number',
+        'settings' => array(
+          'decimal_separator' => '.',
+          'prefix_suffix' => TRUE,
+          'scale' => 2,
+          'thousand_separator' => ' ',
+        ),
+        'type' => 'number_decimal',
+        'weight' => 8,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_p2p_personal_campaign_goal',
+    'label' => 'Fundraising Goal',
+    'required' => 1,
+    'settings' => array(
+      'max' => 99999999,
+      'min' => 0,
+      'prefix' => '',
+      'suffix' => '',
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 0,
+      'module' => 'number',
+      'settings' => array(),
+      'type' => 'number',
+      'weight' => 5,
+    ),
+  );
+
   // Exported field_instance: 'node-p2p_personal_campaign-field_p2p_video_embed'
   $field_instances['node-p2p_personal_campaign-field_p2p_video_embed'] = array(
     'bundle' => 'p2p_personal_campaign',
@@ -1376,7 +1422,7 @@ function springboard_p2p_field_default_field_instances() {
       'module' => 'video_embed_field',
       'settings' => array(),
       'type' => 'video_embed_field_video',
-      'weight' => 9,
+      'weight' => 8,
     ),
   );
 
@@ -1434,6 +1480,7 @@ function springboard_p2p_field_default_field_instances() {
   t('Donation form header image');
   t('Enter a URL from YouTube to embed a video.');
   t('Fundraising Deadline');
+  t('Fundraising Goal');
   t('Goals');
   t('Images');
   t('Organization introduction');

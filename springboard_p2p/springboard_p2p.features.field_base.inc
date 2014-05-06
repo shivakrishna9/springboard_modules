@@ -427,6 +427,26 @@ function springboard_p2p_field_default_field_bases() {
     'type' => 'text_long',
   );
 
+  // Exported field_base: 'field_p2p_personal_campaign_goal'
+  $field_bases['field_p2p_personal_campaign_goal'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'field_p2p_personal_campaign_goal',
+    'foreign keys' => array(),
+    'indexes' => array(),
+    'locked' => 0,
+    'module' => 'number',
+    'settings' => array(
+      'decimal_separator' => '.',
+      'precision' => 10,
+      'scale' => 2,
+    ),
+    'translatable' => 0,
+    'type' => 'number_decimal',
+  );
+
   // Exported field_base: 'field_p2p_personal_intro'
   $field_bases['field_p2p_personal_intro'] = array(
     'active' => 1,
