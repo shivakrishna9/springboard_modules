@@ -1118,16 +1118,19 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
 
         $owner = user_load($personal_campaign->uid);
         $owner_language = !empty($owner->language) ? $owner->language : 'und';
-        $owner_name = $owner->sbp_first_name[$owner_language][0]['safe_value'] . ' ' . $owner->sbp_last_name[$owner_language][0]['safe_value'];
+        if (!empty($owner->sbp_first_name[$owner_language][0]['safe_value']) && !empty($owner->sbp_last_name[$owner_language][0]['safe_value'])) {
+          $owner_name = $owner->sbp_first_name[$owner_language][0]['safe_value'] . ' ' . $owner->sbp_last_name[$owner_language][0]['safe_value'];
 
-        $form['submitted']['springboard_p2p'] = array(
-          '#type' => 'container',
-          '#tree' => TRUE,
-          '#weight' => -100,
-          'owner' => array(
-            '#markup' => '<h2>' . $owner_name . '</h2>',
-          ),
-        );
+          $form['submitted']['springboard_p2p'] = array(
+            '#type' => 'container',
+            '#tree' => TRUE,
+            '#weight' => -100,
+            'owner' => array(
+              '#markup' => '<h2>' . $owner_name . '</h2>',
+            ),
+          );
+
+        }
 
         drupal_set_title($personal_campaign->title);
 
