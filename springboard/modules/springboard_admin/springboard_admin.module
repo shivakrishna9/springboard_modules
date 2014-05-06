@@ -46,6 +46,7 @@ function springboard_admin_menu() {
     'page callback' => 'drupal_goto',
     'page arguments' => array('user/logout'),
   );
+  
   return $items;
 }
 
@@ -123,6 +124,13 @@ function springboard_admin_menu_alter(&$items) {
   if (springboard_admin_user_gets_sbux($user)) {
     $items['admin']['page callback'] = 'drupal_goto';
     $items['admin']['page arguments'] = array('springboard');
+  }
+  // Create a Springboard router item for each node add form
+  $types = node_type_get_types();
+  foreach ($types as $type) {
+    if (_webform_user_is_webform_user_node_type($type->type) || fundraiser_is_donation_type($type->type)) {
+      $items['springboard/add/' . $type->type] = $items['node/add/' . $type->type];
+    }
   }
 }
 
@@ -381,7 +389,7 @@ function springboard_admin_aggregate_links_page($path) {
  * confirmation form.
  */
 function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
-  switch($form_id) {  
+  switch ($form_id) {  
     case 'clone_node_confirm' :
       $form['#submit'][] = 'springboard_node_clone_form_submit';
     break;
@@ -393,7 +401,7 @@ function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
 
 /**
  * Submit handler for the "clone" action on the node clone confirmation form.
- * 
+ *
  * Redirects users to the node edit page for the newly created node.
  */
 function springboard_node_clone_form_submit(&$form, &$form_state) {
@@ -414,4 +422,125 @@ function springboard_admin_node_delete($form) {
     $_GET['destination'] = url('springboard');
     return;
   }
+}
+
+/**
+ * Implements hook_node_type_insert().
+ *
+ * Adds a link to the springboard admin menu to create a new node of this 
+ * content type if it is Fundraiser or Webform User enabled.
+ */
+function springboard_admin_node_type_insert($info) {
+  $mlid = springboard_admin_menu_node_add_link($info);
+}
+
+/**
+ * Implements hook_node_type_update.
+ *
+ * Deletes the existing node add link (if applicable) and creates a new node
+ * add link for this content type if it is Fundraiser or Webform User enabled.
+ */
+function springboard_admin_node_type_update($info) {
+  springboard_admin_menu_node_delete_link($info);
+  $mlid = springboard_admin_menu_node_add_link($info);
+}
+
+/**
+ * Implements hook_node_type_delete().
+ *
+ * Deletes the springboard admin menu link to create a node of this type.
+ */
+function springboard_admin_node_type_delete($info) {
+  springboard_admin_menu_node_delete_link($info);
+}
+
+/**
+ * Helper function. Returns a menu link item from the Springboard Admin Menu.
+ *
+ * @param string sbadmin_path
+ *   The link_path value of the menu item to return.
+ * @param int plid 
+ *   The parent ID of the menu item to return.
+ * @return array
+ *   An associative array as required for menu_link_save() or FALSE if no item
+ *   matches.
+ */
+function springboard_admin_menu_find_link($sbadmin_path, $plid = -1) {
+  $sb_menu = menu_load_links('springboard_admin_menu');
+  // If parent link ID is specified, return only a menu item with the defined path
+  // and defined plid
+  if ($plid >= 0) {
+    foreach ($sb_menu as $item) {
+      if ($item['link_path'] == $sbadmin_path && $item['plid'] == $plid) {
+        return $item;
+      }
+    }
+  }
+  else {
+    foreach ($sb_menu as $item) {
+      if ($sbadmin_path == $item['link_path']) {
+        return $item;
+      }
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Helper Function. Creates an "add content" item in the Springboard Admin Menu 
+ * for new content types if they are Fundraiser or Webform User enabled.
+ *
+ * @param object $type
+ *    A node type object.
+ *
+ * @return int
+ *   The menu link ID of the new menu item or FALSE if a menu item could not be
+ *   created.
+ */
+function springboard_admin_menu_node_add_link($type) {
+  $forms_menu_item = springboard_admin_menu_find_link('springboard/forms/all', 0);
+  $donations_menu_item = springboard_admin_menu_find_link('springboard/forms/donations', 0);
+  $menu_link = array();
+
+  if ((_webform_user_is_webform_user_node_type($type->type) || fundraiser_is_donation_type($type->type)) && !springboard_admin_menu_find_link('springboard/add/' . $type->type)) {
+    $menu_link = array(
+      'link_path' => 'springboard/add/' . $type->type,
+      'link_title' => 'Create a ' . $type->name,
+      'menu_name' => 'springboard_admin_menu',
+      'weight' => '1',
+      'plid' => fundraiser_is_donation_type($type->type) ? $forms_menu_item['mlid'] : $donations_menu_item['mlid'],
+    );
+      
+    $mlid = menu_link_save($menu_link);
+    if (!$mlid) {
+      watchdog('springboard_admin', "A Springboard Admin Menu item for node types %t could not be created.", array('%t' => $type->name));
+      drupal_set_message(t('Please rebuild the Springboard Admin Menu by uninstalling and reinstalling the Springboard Admin module.'), 'warning');
+    }
+    else {
+      watchdog('springboard_admin', "Springboard Admin Menu items for node types %t were created.", array('%t' => $type->name));
+    }
+  }
+  return $mlid;
+}
+
+/**
+ * Helper function. Deletes a "add content" menu item from the Springboard
+ * Admin Menu.
+ *
+ * @param object $type
+ *   A node type object.
+ *
+ * @return bool
+ *   TRUE if the link is successfully deleted, FALSE if the link cannot be
+ *   found in the Springboard Admin Menu.
+ */
+function springboard_admin_menu_node_delete_link($type) {
+    $link = springboard_admin_menu_find_link('springboard/add/' . $type->type);
+    if ($link) {
+      menu_link_delete($link['mlid']);
+      return TRUE;
+    }
+    else {
+      return FALSE;
+    }
 }

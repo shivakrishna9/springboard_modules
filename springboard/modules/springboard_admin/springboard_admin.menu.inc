@@ -41,7 +41,7 @@ function springboard_admin_admin_menu_items() {
     'weight' => 0,
     '_children' => array(),
   );
-  
+
   // Springboard > Your Website
   $items['springboard']['_children']['website'] = array(
     'link_path' => 'http://drupal.org',
@@ -63,7 +63,7 @@ function springboard_admin_admin_menu_items() {
     'customized' => 1,
     'weight' => 1,
   );
-  
+
   // Top Level: Donation Form.
   $items['springboard/forms/donations'] = array(
     'link_path' => 'springboard/forms/donations',
@@ -85,15 +85,22 @@ function springboard_admin_admin_menu_items() {
     'weight' => 0,
   );
 
-  // Donation Forms > Create Donation Form.
-  $items['springboard/forms/donations']['_children']['node/add/donation-form'] = array(
-    'link_path' => 'node/add/donation-form',
-    'link_title' => 'Create a Donation Form',
-    'menu_name' => 'springboard_admin_menu',
-    'expanded' => 1,
-    'customized' => 1,
-    'weight' => 1,
-  );
+  // Create a menu item for each type of webform.
+  // In the future, we will use an intermediate page to choose the form type.
+  $types = node_type_get_types();
+  foreach ($types as $type) {
+    if ($type && fundraiser_is_donation_type($type->type)) {
+      // Donation Forms > $type->type
+      $items['springboard/forms/donations']['_children']['springboard/add/' . $type->type] = array(
+        'link_path' => 'springboard/add/' . $type->type,
+        'link_title' => 'Create a ' . $type->name,
+        'menu_name' => 'springboard_admin_menu',
+        'expanded' => 1,
+        'customized' => 1,
+        'weight' => 1,
+      );
+    }
+  }
 
   // Donation Forms > Donation Reports.
   $items['springboard/forms/donations']['_children']['springboard/reports/dsr'] = array(
@@ -139,13 +146,12 @@ function springboard_admin_admin_menu_items() {
 
   // Create a menu item for each type of webform.
   // In the future, we will use an intermediate page to choose the form type.
-  $webforms = variable_get('webform_node_types', array());
-  foreach ($webforms as $node_type) {
-    if ($node_type && $node_type != 'donation_form') {
-      $type = node_type_load($node_type);
-      // Forms > $node_type.
-      $items['springboard/forms/all']['_children']['node/add/' . $node_type] = array(
-        'link_path' => 'node/add/' . $node_type,
+  $types = node_type_get_types();
+  foreach ($types as $type) {
+    if ($type && _webform_user_is_webform_user_node_type($type->type)) {
+      // Forms > $type->type.
+      $items['springboard/forms/all']['_children']['springboard/add/' . $type->type] = array(
+        'link_path' => 'springboard/add/' . $type->type,
         'link_title' => 'Create a ' . $type->name,
         'menu_name' => 'springboard_admin_menu',
         'expanded' => 1,
@@ -199,7 +205,7 @@ function springboard_admin_admin_menu_items() {
     'customized' => 1,
     'weight' => 0,
   );
-  
+
   // Asset Library > Page Templates.
   $items['springboard/asset-library']['_children']['springboard/asset-library/page-templates'] = array(
     'link_path' => 'springboard/asset-library/page-templates',
@@ -213,7 +219,7 @@ function springboard_admin_admin_menu_items() {
   // Top Level: Marketing & Analytics.
   // @TODO create this page springboard/marketing-analytics
   $items['springboard/marketing-analytics'] = array(
-    'link_path' => 'springboard/marketing-analytics', 
+    'link_path' => 'springboard/marketing-analytics',
     'link_title' => t('Marketing & Analytics'),
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
@@ -231,7 +237,7 @@ function springboard_admin_admin_menu_items() {
     'customized' => 1,
     'weight' => 0,
   );
-  
+
   // Marketing & Analytics > Multivariate Testing.
   $items['springboard/marketing-analytics']['_children']['admin/config/content/webform_ab'] = array(
     'link_path' => 'admin/config/content/webform_ab',
@@ -241,7 +247,7 @@ function springboard_admin_admin_menu_items() {
     'customized' => 1,
     'weight' => 5,
   );
-  
+
   // Marketing & Analytics > Social.
   $items['springboard/marketing-analytics']['_children']['springboard/settings/sb-social'] = array(
     'link_path' => 'springboard/settings/sb-social',
@@ -271,14 +277,14 @@ function springboard_admin_admin_menu_items() {
     'customized' => 1,
     'weight' => 4,
   );
- 
+
   // Marketing & Analytics > Metatags
   // @TODO where does this go?
 
   // Top Level: Reports
   // @TODO Create this page.
   $items['springboard/reports'] = array(
-    'link_path' => 'springboard/reports', 
+    'link_path' => 'springboard/reports',
     'link_title' => t('Reports'),
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
@@ -306,7 +312,7 @@ function springboard_admin_admin_menu_items() {
     'customized' => 1,
     'weight' => 1,
   );
-  
+
   // Reports > Integration Reports.
   $items['springboard/reports']['_children']['springboard/reports/integration-reports'] = array(
     'link_path' => 'springboard/reports/integration-reports',
@@ -338,17 +344,17 @@ function springboard_admin_admin_menu_items() {
     'customized' => 1,
     'weight' => 0,
   );
-  
+
   // Settings > Administrators
   /* @TODO create this page */
-     $items['springboard/settings']['_children']['springboard/settings/administrators'] = array(
+  $items['springboard/settings']['_children']['springboard/settings/administrators'] = array(
     'link_path' => 'springboard/settings/administrators',
     'link_title' => 'Administrators',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
     'customized' => 1,
     'weight' => 1,
-    );
+  );
 
   // Settings > Settings.
   $items['springboard/settings']['_children']['springboard/settings/springboard'] = array(
