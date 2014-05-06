@@ -276,21 +276,35 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['defaults']['style_plugin'] = FALSE;
   $handler->display->display_options['style_plugin'] = 'table';
   $handler->display->display_options['style_options']['columns'] = array(
+    'field_webform_user_internal_name' => 'field_webform_user_internal_name',
+    'field_fundraiser_internal_name' => 'field_webform_user_internal_name',
     'title' => 'title',
     'nid' => 'nid',
     'path' => 'path',
     'webform_submission_count_node' => 'webform_submission_count_node',
     'clone_node' => 'clone_node',
-    'edit_node' => 'edit_node',
+    'edit_node' => 'clone_node',
     'view_node' => 'view_node',
     'changed' => 'changed',
-    'webform_results' => 'webform_results',
+    'webform_results' => 'clone_node',
     'status' => 'status',
-    'field_webform_user_internal_name' => 'field_webform_user_internal_name',
-    'field_fundraiser_internal_name' => 'field_webform_user_internal_name',
   );
   $handler->display->display_options['style_options']['default'] = '-1';
   $handler->display->display_options['style_options']['info'] = array(
+    'field_webform_user_internal_name' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'field_fundraiser_internal_name' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
     'title' => array(
       'sortable' => 1,
       'default_sort_order' => 'asc',
@@ -317,7 +331,7 @@ function springboard_views_views_default_views() {
     ),
     'clone_node' => array(
       'align' => '',
-      'separator' => '',
+      'separator' => '|',
       'empty_column' => 0,
     ),
     'edit_node' => array(
@@ -344,20 +358,6 @@ function springboard_views_views_default_views() {
     ),
     'status' => array(
       'sortable' => 1,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'field_webform_user_internal_name' => array(
-      'sortable' => 1,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'field_fundraiser_internal_name' => array(
-      'sortable' => 0,
       'default_sort_order' => 'asc',
       'align' => '',
       'separator' => '',
@@ -402,12 +402,14 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['webform_submission_count_node']['id'] = 'webform_submission_count_node';
   $handler->display->display_options['fields']['webform_submission_count_node']['table'] = 'node';
   $handler->display->display_options['fields']['webform_submission_count_node']['field'] = 'webform_submission_count_node';
+  $handler->display->display_options['fields']['webform_submission_count_node']['label'] = 'Submissions';
   $handler->display->display_options['fields']['webform_submission_count_node']['element_label_colon'] = FALSE;
   /* Field: Content: Clone link */
   $handler->display->display_options['fields']['clone_node']['id'] = 'clone_node';
   $handler->display->display_options['fields']['clone_node']['table'] = 'node';
   $handler->display->display_options['fields']['clone_node']['field'] = 'clone_node';
-  $handler->display->display_options['fields']['clone_node']['label'] = 'Clone';
+  $handler->display->display_options['fields']['clone_node']['label'] = 'Action';
+  $handler->display->display_options['fields']['clone_node']['element_class'] = 'table-actions';
   $handler->display->display_options['fields']['clone_node']['element_label_colon'] = FALSE;
   /* Field: Content: Edit link */
   $handler->display->display_options['fields']['edit_node']['id'] = 'edit_node';
@@ -474,8 +476,11 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['defaults']['style_plugin'] = FALSE;
   $handler->display->display_options['style_plugin'] = 'table';
   $handler->display->display_options['style_options']['columns'] = array(
+    'field_fundraiser_internal_name_1' => 'field_fundraiser_internal_name_1',
     'title' => 'title',
     'webform_submission_count_node' => 'webform_submission_count_node',
+    'clone_node' => 'clone_node',
+    'edit_node_1' => 'clone_node',
     'field_fundraiser_internal_name' => 'field_fundraiser_internal_name',
     'nid' => 'nid',
     'value' => 'value',
@@ -483,12 +488,18 @@ function springboard_views_views_default_views() {
     'path' => 'path',
     'changed' => 'changed',
     'view_node' => 'view_node',
-    'edit_node' => 'edit_node',
-    'clone_node' => 'clone_node',
+    'webform_results' => 'clone_node',
     'status' => 'status',
   );
   $handler->display->display_options['style_options']['default'] = '-1';
   $handler->display->display_options['style_options']['info'] = array(
+    'field_fundraiser_internal_name_1' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
     'title' => array(
       'sortable' => 1,
       'default_sort_order' => 'asc',
@@ -497,6 +508,16 @@ function springboard_views_views_default_views() {
       'empty_column' => 0,
     ),
     'webform_submission_count_node' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'clone_node' => array(
+      'align' => '',
+      'separator' => '|',
+      'empty_column' => 0,
+    ),
+    'edit_node_1' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -546,12 +567,7 @@ function springboard_views_views_default_views() {
       'separator' => ' ',
       'empty_column' => 0,
     ),
-    'edit_node' => array(
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'clone_node' => array(
+    'webform_results' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -585,18 +601,8 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['webform_submission_count_node']['id'] = 'webform_submission_count_node';
   $handler->display->display_options['fields']['webform_submission_count_node']['table'] = 'node';
   $handler->display->display_options['fields']['webform_submission_count_node']['field'] = 'webform_submission_count_node';
+  $handler->display->display_options['fields']['webform_submission_count_node']['label'] = 'Submissions';
   $handler->display->display_options['fields']['webform_submission_count_node']['element_label_colon'] = FALSE;
-  /* Field: Content: Clone link */
-  $handler->display->display_options['fields']['clone_node']['id'] = 'clone_node';
-  $handler->display->display_options['fields']['clone_node']['table'] = 'node';
-  $handler->display->display_options['fields']['clone_node']['field'] = 'clone_node';
-  $handler->display->display_options['fields']['clone_node']['label'] = 'Clone';
-  $handler->display->display_options['fields']['clone_node']['element_label_colon'] = FALSE;
-  /* Field: Content: Edit link */
-  $handler->display->display_options['fields']['edit_node_1']['id'] = 'edit_node_1';
-  $handler->display->display_options['fields']['edit_node_1']['table'] = 'views_entity_node';
-  $handler->display->display_options['fields']['edit_node_1']['field'] = 'edit_node';
-  $handler->display->display_options['fields']['edit_node_1']['label'] = 'Edit';
   /* Field: Content: Internal Name */
   $handler->display->display_options['fields']['field_fundraiser_internal_name']['id'] = 'field_fundraiser_internal_name';
   $handler->display->display_options['fields']['field_fundraiser_internal_name']['table'] = 'field_data_field_fundraiser_internal_name';
@@ -639,11 +645,22 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['changed']['exclude'] = TRUE;
   $handler->display->display_options['fields']['changed']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['changed']['date_format'] = 'short';
+  /* Field: Content: Clone link */
+  $handler->display->display_options['fields']['clone_node']['id'] = 'clone_node';
+  $handler->display->display_options['fields']['clone_node']['table'] = 'node';
+  $handler->display->display_options['fields']['clone_node']['field'] = 'clone_node';
+  $handler->display->display_options['fields']['clone_node']['label'] = 'Action';
+  $handler->display->display_options['fields']['clone_node']['element_class'] = 'table-actions';
+  $handler->display->display_options['fields']['clone_node']['element_label_colon'] = FALSE;
+  /* Field: Content: Edit link */
+  $handler->display->display_options['fields']['edit_node_1']['id'] = 'edit_node_1';
+  $handler->display->display_options['fields']['edit_node_1']['table'] = 'views_entity_node';
+  $handler->display->display_options['fields']['edit_node_1']['field'] = 'edit_node';
+  $handler->display->display_options['fields']['edit_node_1']['label'] = 'Edit';
   /* Field: Content: Link */
   $handler->display->display_options['fields']['view_node']['id'] = 'view_node';
   $handler->display->display_options['fields']['view_node']['table'] = 'views_entity_node';
   $handler->display->display_options['fields']['view_node']['field'] = 'view_node';
-  $handler->display->display_options['fields']['view_node']['label'] = 'Action';
   $handler->display->display_options['fields']['view_node']['exclude'] = TRUE;
   $handler->display->display_options['fields']['view_node']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['view_node']['text'] = 'view';
@@ -678,6 +695,94 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['pager']['options']['offset'] = '0';
   $handler->display->display_options['pager']['options']['id'] = '0';
   $handler->display->display_options['pager']['options']['quantity'] = '9';
+  $handler->display->display_options['defaults']['style_plugin'] = FALSE;
+  $handler->display->display_options['style_plugin'] = 'table';
+  $handler->display->display_options['style_options']['columns'] = array(
+    'field_webform_user_internal_name' => 'field_webform_user_internal_name',
+    'field_fundraiser_internal_name' => 'field_webform_user_internal_name',
+    'title' => 'title',
+    'nid' => 'nid',
+    'status' => 'status',
+    'created' => 'created',
+    'path' => 'path',
+    'webform_submission_count_node' => 'webform_submission_count_node',
+    'clone_node' => 'clone_node',
+    'edit_node' => 'clone_node',
+    'view_node' => 'clone_node',
+  );
+  $handler->display->display_options['style_options']['default'] = '-1';
+  $handler->display->display_options['style_options']['info'] = array(
+    'field_webform_user_internal_name' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'field_fundraiser_internal_name' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'title' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'nid' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'status' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'created' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'path' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'webform_submission_count_node' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'clone_node' => array(
+      'align' => '',
+      'separator' => '|',
+      'empty_column' => 0,
+    ),
+    'edit_node' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'view_node' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+  );
+  $handler->display->display_options['defaults']['style_options'] = FALSE;
+  $handler->display->display_options['defaults']['row_plugin'] = FALSE;
+  $handler->display->display_options['defaults']['row_options'] = FALSE;
   $handler->display->display_options['defaults']['fields'] = FALSE;
   /* Field: Content: Internal Name */
   $handler->display->display_options['fields']['field_webform_user_internal_name']['id'] = 'field_webform_user_internal_name';
@@ -735,6 +840,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['clone_node']['table'] = 'node';
   $handler->display->display_options['fields']['clone_node']['field'] = 'clone_node';
   $handler->display->display_options['fields']['clone_node']['label'] = 'Action';
+  $handler->display->display_options['fields']['clone_node']['element_class'] = 'table-actions';
   /* Field: Content: Edit link */
   $handler->display->display_options['fields']['edit_node']['id'] = 'edit_node';
   $handler->display->display_options['fields']['edit_node']['table'] = 'views_entity_node';
@@ -744,7 +850,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['view_node']['id'] = 'view_node';
   $handler->display->display_options['fields']['view_node']['table'] = 'views_entity_node';
   $handler->display->display_options['fields']['view_node']['field'] = 'view_node';
-  $handler->display->display_options['fields']['view_node']['label'] = 'Action';
   $handler->display->display_options['fields']['view_node']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['view_node']['text'] = 'view';
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
@@ -857,9 +962,9 @@ function springboard_views_views_default_views() {
     'created' => 'created',
     'path' => 'path',
     'webform_submission_count_node' => 'webform_submission_count_node',
-    'view_node' => 'view_node',
-    'edit_node' => 'view_node',
-    'clone_node' => 'view_node',
+    'clone_node' => 'clone_node',
+    'edit_node' => 'clone_node',
+    'view_node' => 'clone_node',
   );
   $handler->display->display_options['style_options']['default'] = '-1';
   $handler->display->display_options['style_options']['info'] = array(
@@ -908,9 +1013,9 @@ function springboard_views_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
-    'view_node' => array(
+    'clone_node' => array(
       'align' => '',
-      'separator' => ' ',
+      'separator' => '|',
       'empty_column' => 0,
     ),
     'edit_node' => array(
@@ -918,7 +1023,7 @@ function springboard_views_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
-    'clone_node' => array(
+    'view_node' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -974,22 +1079,24 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['webform_submission_count_node']['field'] = 'webform_submission_count_node';
   $handler->display->display_options['fields']['webform_submission_count_node']['label'] = 'Submissions';
   $handler->display->display_options['fields']['webform_submission_count_node']['element_label_colon'] = FALSE;
-  /* Field: Content: Link */
-  $handler->display->display_options['fields']['view_node']['id'] = 'view_node';
-  $handler->display->display_options['fields']['view_node']['table'] = 'views_entity_node';
-  $handler->display->display_options['fields']['view_node']['field'] = 'view_node';
-  $handler->display->display_options['fields']['view_node']['label'] = 'Action';
-  $handler->display->display_options['fields']['view_node']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['view_node']['text'] = 'view';
+  /* Field: Content: Clone link */
+  $handler->display->display_options['fields']['clone_node']['id'] = 'clone_node';
+  $handler->display->display_options['fields']['clone_node']['table'] = 'node';
+  $handler->display->display_options['fields']['clone_node']['field'] = 'clone_node';
+  $handler->display->display_options['fields']['clone_node']['label'] = 'Action';
+  $handler->display->display_options['fields']['clone_node']['element_class'] = 'table-actions';
   /* Field: Content: Edit link */
   $handler->display->display_options['fields']['edit_node']['id'] = 'edit_node';
   $handler->display->display_options['fields']['edit_node']['table'] = 'views_entity_node';
   $handler->display->display_options['fields']['edit_node']['field'] = 'edit_node';
   $handler->display->display_options['fields']['edit_node']['label'] = 'Edit';
-  /* Field: Content: Clone link */
-  $handler->display->display_options['fields']['clone_node']['id'] = 'clone_node';
-  $handler->display->display_options['fields']['clone_node']['table'] = 'node';
-  $handler->display->display_options['fields']['clone_node']['field'] = 'clone_node';
+  /* Field: Content: Link */
+  $handler->display->display_options['fields']['view_node']['id'] = 'view_node';
+  $handler->display->display_options['fields']['view_node']['table'] = 'views_entity_node';
+  $handler->display->display_options['fields']['view_node']['field'] = 'view_node';
+  $handler->display->display_options['fields']['view_node']['element_class'] = 'table-actions';
+  $handler->display->display_options['fields']['view_node']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['view_node']['text'] = 'view';
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
   $handler->display->display_options['defaults']['filters'] = FALSE;
   /* Filter criterion: Content: Type */
@@ -1153,7 +1260,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['menu']['weight'] = '0';
   $handler->display->display_options['menu']['context'] = 0;
   $handler->display->display_options['menu']['context_only_inline'] = 0;
-
 
   $views[$view->name] = $view;
   /**
@@ -2406,12 +2512,155 @@ function springboard_views_views_default_views() {
 
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');
+  $handler->display->display_options['defaults']['fields'] = FALSE;
+  /* Field: User: Uid */
+  $handler->display->display_options['fields']['uid']['id'] = 'uid';
+  $handler->display->display_options['fields']['uid']['table'] = 'users';
+  $handler->display->display_options['fields']['uid']['field'] = 'uid';
+  $handler->display->display_options['fields']['uid']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['uid']['label'] = 'ID';
+  $handler->display->display_options['fields']['uid']['link_to_user'] = FALSE;
+  /* Field: User: First name */
+  $handler->display->display_options['fields']['sbp_first_name']['id'] = 'sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['table'] = 'field_data_sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['field'] = 'sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['relationship'] = 'uid';
+  /* Field: User: Last name */
+  $handler->display->display_options['fields']['sbp_last_name']['id'] = 'sbp_last_name';
+  $handler->display->display_options['fields']['sbp_last_name']['table'] = 'field_data_sbp_last_name';
+  $handler->display->display_options['fields']['sbp_last_name']['field'] = 'sbp_last_name';
+  $handler->display->display_options['fields']['sbp_last_name']['relationship'] = 'uid';
+  /* Field: User: E-mail */
+  $handler->display->display_options['fields']['mail']['id'] = 'mail';
+  $handler->display->display_options['fields']['mail']['table'] = 'users';
+  $handler->display->display_options['fields']['mail']['field'] = 'mail';
+  $handler->display->display_options['fields']['mail']['relationship'] = 'uid';
+  /* Field: User: Address */
+  $handler->display->display_options['fields']['sbp_address']['id'] = 'sbp_address';
+  $handler->display->display_options['fields']['sbp_address']['table'] = 'field_data_sbp_address';
+  $handler->display->display_options['fields']['sbp_address']['field'] = 'sbp_address';
+  $handler->display->display_options['fields']['sbp_address']['relationship'] = 'uid';
+  /* Field: User: City */
+  $handler->display->display_options['fields']['sbp_city']['id'] = 'sbp_city';
+  $handler->display->display_options['fields']['sbp_city']['table'] = 'field_data_sbp_city';
+  $handler->display->display_options['fields']['sbp_city']['field'] = 'sbp_city';
+  $handler->display->display_options['fields']['sbp_city']['relationship'] = 'uid';
+  /* Field: User: State/Province */
+  $handler->display->display_options['fields']['sbp_state']['id'] = 'sbp_state';
+  $handler->display->display_options['fields']['sbp_state']['table'] = 'field_data_sbp_state';
+  $handler->display->display_options['fields']['sbp_state']['field'] = 'sbp_state';
+  $handler->display->display_options['fields']['sbp_state']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_state']['label'] = 'State';
+  /* Field: User: Postal Code */
+  $handler->display->display_options['fields']['sbp_zip']['id'] = 'sbp_zip';
+  $handler->display->display_options['fields']['sbp_zip']['table'] = 'field_data_sbp_zip';
+  $handler->display->display_options['fields']['sbp_zip']['field'] = 'sbp_zip';
+  $handler->display->display_options['fields']['sbp_zip']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_zip']['label'] = 'Zip';
+  /* Field: User: Created date */
+  $handler->display->display_options['fields']['created']['id'] = 'created';
+  $handler->display->display_options['fields']['created']['table'] = 'users';
+  $handler->display->display_options['fields']['created']['field'] = 'created';
+  $handler->display->display_options['fields']['created']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['created']['label'] = 'Created';
+  $handler->display->display_options['fields']['created']['date_format'] = 'custom';
+  $handler->display->display_options['fields']['created']['custom_date_format'] = 'm/j/y';
+  /* Field: Commerce Customer Profile: Updated date */
+  $handler->display->display_options['fields']['changed']['id'] = 'changed';
+  $handler->display->display_options['fields']['changed']['table'] = 'commerce_customer_profile';
+  $handler->display->display_options['fields']['changed']['field'] = 'changed';
+  $handler->display->display_options['fields']['changed']['label'] = 'Updated';
+  $handler->display->display_options['fields']['changed']['date_format'] = 'custom';
+  $handler->display->display_options['fields']['changed']['custom_date_format'] = 'm/j/y';
+  /* Field: Global: Custom text */
+  $handler->display->display_options['fields']['nothing']['id'] = 'nothing';
+  $handler->display->display_options['fields']['nothing']['table'] = 'views';
+  $handler->display->display_options['fields']['nothing']['field'] = 'nothing';
+  $handler->display->display_options['fields']['nothing']['label'] = 'Action';
+  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/user/[uid]/edit?destination=springboard/reports/donor">Edit</a> |
+<a href="/user/[uid]/recurring_overview?destination=springboard/reports/donor">Recurring gifts</a>
+';
+  $handler->display->display_options['fields']['nothing']['element_class'] = 'table-actions';
+  $handler->display->display_options['fields']['nothing']['element_label_colon'] = FALSE;
+  $handler->display->display_options['defaults']['filter_groups'] = FALSE;
+  $handler->display->display_options['defaults']['filters'] = FALSE;
+  /* Filter criterion: Global: Combine fields filter */
+  $handler->display->display_options['filters']['combine']['id'] = 'combine';
+  $handler->display->display_options['filters']['combine']['table'] = 'views';
+  $handler->display->display_options['filters']['combine']['field'] = 'combine';
+  $handler->display->display_options['filters']['combine']['operator'] = 'contains';
+  $handler->display->display_options['filters']['combine']['group'] = 1;
+  $handler->display->display_options['filters']['combine']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['combine']['expose']['operator_id'] = 'combine_op';
+  $handler->display->display_options['filters']['combine']['expose']['label'] = 'Search';
+  $handler->display->display_options['filters']['combine']['expose']['operator'] = 'combine_op';
+  $handler->display->display_options['filters']['combine']['expose']['identifier'] = 'combine';
+  $handler->display->display_options['filters']['combine']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
+  $handler->display->display_options['filters']['combine']['fields'] = array(
+    'sbp_first_name' => 'sbp_first_name',
+    'sbp_last_name' => 'sbp_last_name',
+    'mail' => 'mail',
+  );
+  /* Filter criterion: User: State/Province (sbp_state) */
+  $handler->display->display_options['filters']['sbp_state_value']['id'] = 'sbp_state_value';
+  $handler->display->display_options['filters']['sbp_state_value']['table'] = 'field_data_sbp_state';
+  $handler->display->display_options['filters']['sbp_state_value']['field'] = 'sbp_state_value';
+  $handler->display->display_options['filters']['sbp_state_value']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['sbp_state_value']['group'] = 1;
+  $handler->display->display_options['filters']['sbp_state_value']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['sbp_state_value']['expose']['operator_id'] = 'sbp_state_value_op';
+  $handler->display->display_options['filters']['sbp_state_value']['expose']['label'] = 'State/Province';
+  $handler->display->display_options['filters']['sbp_state_value']['expose']['operator'] = 'sbp_state_value_op';
+  $handler->display->display_options['filters']['sbp_state_value']['expose']['identifier'] = 'sbp_state_value';
+  $handler->display->display_options['filters']['sbp_state_value']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
+  $handler->display->display_options['filters']['sbp_state_value']['group_info']['label'] = 'State/Province (sbp_state)';
+  $handler->display->display_options['filters']['sbp_state_value']['group_info']['identifier'] = 'sbp_state_value';
+  $handler->display->display_options['filters']['sbp_state_value']['group_info']['remember'] = FALSE;
+  $handler->display->display_options['filters']['sbp_state_value']['group_info']['group_items'] = array(
+    1 => array(),
+    2 => array(),
+    3 => array(),
+  );
+  /* Filter criterion: Date: Date (users) */
+  $handler->display->display_options['filters']['date_filter']['id'] = 'date_filter';
+  $handler->display->display_options['filters']['date_filter']['table'] = 'users';
+  $handler->display->display_options['filters']['date_filter']['field'] = 'date_filter';
+  $handler->display->display_options['filters']['date_filter']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['date_filter']['operator'] = 'between';
+  $handler->display->display_options['filters']['date_filter']['group'] = 1;
+  $handler->display->display_options['filters']['date_filter']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['date_filter']['expose']['operator_id'] = 'date_filter_op';
+  $handler->display->display_options['filters']['date_filter']['expose']['operator'] = 'date_filter_op';
+  $handler->display->display_options['filters']['date_filter']['expose']['identifier'] = 'date_filter';
+  $handler->display->display_options['filters']['date_filter']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
+  $handler->display->display_options['filters']['date_filter']['form_type'] = 'date_popup';
+  $handler->display->display_options['filters']['date_filter']['date_fields'] = array(
+    'users.created' => 'users.created',
+  );
   $handler->display->display_options['path'] = 'springboard/reports/contacts';
 
   $views[$view -> name] = $view;
 
   /**
-   * // end View donors
+   * end sbv_contacts
    */
 
   return $views;

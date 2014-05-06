@@ -433,7 +433,7 @@ function springboard_admin_dashboard() {
   }
   $content .= '<div class="springboard-column sb-col-left">' . $column_left . "</div>";
   $content .= '<div class="springboard-column sb-col-right">' . $column_right . "</div>";
-  $content .= '<div class="springboard-column sb-col-bottom"' . $column_bottom . "</div>";
+  $content .= '<div class="springboard-column sb-col-bottom">' . $column_bottom . "</div>";
   $content .= '</div>';
   return $content;
 }
