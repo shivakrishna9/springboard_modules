@@ -40,19 +40,6 @@ function springboard_menu() {
     'type' => MENU_LOCAL_TASK,
     'weight' => -5,
     );
-
-  // Springboard forms admin.
-  $items['springboard/forms'] = array(
-    'title' => 'Forms',
-    'description' => 'Create, edit and analyze Springboard forms.',
-    'page callback' => 'system_admin_menu_block_page',
-    'module' => 'system',
-    'file path' => drupal_get_path('module', 'system'),
-    'file' => 'system.admin.inc',
-    'access arguments' => array('administer springboard'),
-    'type' => MENU_NORMAL_ITEM,
-    'weight' => -4,
-  );
   // Springboard reports admin.
   $items['springboard/reports'] = array(
     'title' => 'Reports',
