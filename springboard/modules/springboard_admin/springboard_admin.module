@@ -370,21 +370,31 @@ function springboard_admin_template_page() {
  */
 function springboard_admin_theme($existing, $type, $theme, $path) {
   return array(
-    'springboard_donation_forms_page' => array(
+    'springboard_admin_forms_page' => array(
       'variables' => array('tables' => array(), 'types' => array()),
-      'template' => drupal_get_path('theme', $theme) . '/templates/springboard-donation-forms-page',
+      'template' => drupal_get_path('theme', $theme) . '/templates/springboard-admin-forms-page',
     ),
-    'springboard_forms_page' => array(
-      'variables' => array('tables' => array(), 'types' => array()),
-      'template' => drupal_get_path('theme', $theme) . '/templates/springboard-forms-page',
-    ),
-   );
+  );
 }
 
+/**
+ * Page callback for the "Donation Forms" and "Forms" admin pages.
+ *
+ * Renders page content for the "Donation Forms" and "Forms" administrative 
+ * pages.
+ *
+ * @param $springboard_type
+ *   'fundraiser' to show forms that utilize the Fundraiser module, 
+ *   'webform_user' to show forms that utilize the Webform User module. If no
+ *   type is specified, all other content types are displayed.
+ * @return string
+ *   HTML output for the page.
+ */
 function springboard_admin_forms_page($springboard_type) {
   $node_types = node_type_get_types();
   $display_types = array();
   $tables = array();
+  // Get an appropriate set of content types to display nodes for.
   foreach ($node_types as $type) {
     switch ($springboard_type) {
       case 'fundraiser':
@@ -404,8 +414,8 @@ function springboard_admin_forms_page($springboard_type) {
       break;
     }
   }
+  // Render the views tables for the appropriate set of content types.
   foreach($display_types as $type) {
-    
     $view = views_get_view('sbv_forms');
     $view -> set_display('block_2');
     $view -> set_arguments(array($type->type));
@@ -415,7 +425,7 @@ function springboard_admin_forms_page($springboard_type) {
       $tables[$type->type] = $view -> render();
     }
   }
-  return theme('springboard_donation_forms_page', array('types'=> $display_types, 'tables' => $tables));
+  return theme('springboard_admin_forms_page', array('types'=> $display_types, 'tables' => $tables));
 }
 
 /**
