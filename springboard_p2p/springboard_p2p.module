@@ -348,49 +348,125 @@ function springboard_p2p_ajax($form, $form_state) {
 function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$form_state, $form_id) {
   if (springboard_p2p_form_is_node_create($form)) {
     $campaign = isset($_GET['campaign']) ? $_GET['campaign'] : FALSE;
-    if ($campaign && is_numeric($campaign)) {
-      $campaign_node = node_load($campaign);
-      $form['title']['#default_value'] = $campaign_node->title;
-      $form['body'][$campaign_node->language][0]['#default_value'] = $campaign_node->field_p2p_personal_intro[$campaign_node->language][0]['value'];
-      $can_edit_body = $campaign_node->field_p2p_personal_intro_edit[$campaign_node->language][0]['value'];
-      if (!$can_edit_body) {
-        // $form['body'][$campaign_node->language][0]['#access'] = FALSE;
-        $form['body']['display'] = array(
-          '#title' => $form['body'][$campaign_node->language][0]['#title'],
-          '#type' => 'textarea',
-          '#default_value' => $form['body'][$campaign_node->language][0]['#default_value'],
-          '#disabled' => TRUE,
-        );
-      }
-      $form['field_p2p_campaign'][$campaign_node->language]['#default_value'] = $campaign_node->nid;
+    $ajax = FALSE;
+    if (isset($form_state['parent_campaign'])) {
+      $campaign = $form_state['parent_campaign'];
+      $ajax = TRUE;
+    }
+    $form_state['campaign'] = $campaign;
+    $language = $form['language']['#value'];
+    $campaign_node = FALSE;
 
-      // Images.
-      $empty_image = $form['field_p2p_campaign_images'][$campaign_node->language][0];
-      $index = 0;
-      foreach ($campaign_node->field_p2p_campaign_images[$campaign_node->language] as $index => $image) {
-        if (!isset($form['field_p2p_campaign_images'][$campaign_node->language][$index])) {
-          $form['field_p2p_campaign_images'][$campaign_node->language][$index] = $form['field_p2p_campaign_images'][$campaign_node->language][0];
-        }
-        $form['field_p2p_campaign_images'][$campaign_node->language][$index]['#default_value']['fid'] = $image['fid'];
-        $form['field_p2p_campaign_images'][$campaign_node->language][$index]['#default_value']['display'] = TRUE;
-      }
-      $form['field_p2p_campaign_images'][$campaign_node->language][$index + 1] = $empty_image;
+    // Someone has accidentally stumbled onto the personal campaign add form
+    // without a campaign id in the url.
+    if (!$campaign) {
+      // Prefix added as a formality so ajax events have something to target.
+      // Ajax callback redirects to form with campaign id in url.
+      $form['#prefix'] = '<div id="personal-campaign-wrapper">';
+      $form['#suffix'] = '</div>';
+      $form['field_p2p_campaign'][$language]['#ajax'] = array(
+        'callback' => 'springboard_p2p_personal_campaign_ajax',
+        'wrapper' => 'personal-campaign-wrapper',
+      );
     }
     else {
-      // We have something passed in but it's not a valid campaign.
-      // Need to spit out an error and send the user back to another page.
-      // @todo
+      $form_state['parent_campaign'] = $campaign;
+    }
+
+    // If a campaign node id is available in the url, fill in form with defaults
+    // from the campaign.
+    if ($campaign && is_numeric($campaign)) {
+      global $user;
+      $campaign_node = node_load($campaign);
+      // If campaign_node is not a valid campaign node type, revert to blank
+      // form.
+      if (!isset($campaign_node->type) || (isset($campaign_node->type) && $campaign_node->type != 'p2p_campaign')) {
+        // TODO: throw visible error? Watchdog?
+        drupal_goto('node/add/p2p-personal-campaign');
+      }
+      $language = $campaign_node->language;
+      $private_campaign = springboard_p2p_campaign_is_private($campaign_node);
+      // If a user attempts to create a personal campaign from a private
+      // campaign that they have not been granted access to,
+      // replace form with message and action button.
+      if ($private_campaign && !springboard_p2p_private_campaign_user_is_authorized($campaign_node->nid, $user->uid)) {
+        $node = $form['#node'];
+        $parents = $form['#parents'];
+        $tree = $form['#tree'];
+         $form = array(
+           '#parents' => $parents,
+           '#node' => $node,
+           '#tree' => $tree,
+           '#array_parents' => array(),
+         );
+        $form_state['process_input'] = FALSE;
+        // TODO: add link to request access.
+        $form['unauthorized'] = array(
+          '#markup' => '<p>' . t('You have selected a private campaign. You will need to request and be granted access before you may create your personal campaign.') . '</p>',
+        );
+        return;
+      }
+      // Campaign name, default from parent campaign.
+      $form['title']['#default_value'] = $campaign_node->title;
+      // Campaign intro, default from parent campaign, display disabled content
+      // preview if edit is disabled.
+      if (isset($campaign_node->field_p2p_personal_intro[$language][0]['value'])) {
+        $form['body'][$language][0]['#default_value'] = $campaign_node->field_p2p_personal_intro[$language][0]['value'];
+      }
+      else {
+        // No intro is set on the parent campaign so we need to make sure body is editable.
+        $campaign_node->field_p2p_personal_intro_edit[$language][0]['value'] = TRUE;
+      }
+
+      // Hide campaign select box if campaign has been provided in the url.
+      $form['field_p2p_campaign'][$language]['#default_value'] = $campaign_node->nid;
+      $form['field_p2p_campaign'][$language]['#access'] = FALSE;
+
+      // Images, default values from parent campaign, hide if edit is disabled.
+      if (!$ajax) {
+        $empty_image = $form['field_p2p_campaign_images'][$language][0];
+        $images_editable = $campaign_node->field_p2p_images_edit[$language][0]['value'] ? TRUE : FALSE;
+        foreach($campaign_node->field_p2p_images[$language] as $index => $image) {
+          if (!isset($form['field_p2p_campaign_images'][$language][$index])) {
+            $form['field_p2p_campaign_images'][$language][$index] = $form['field_p2p_campaign_images'][$language][0];
+          }
+          $form['field_p2p_campaign_images'][$language][$index]['#default_value']['fid'] = $image['fid'];
+          $form['field_p2p_campaign_images'][$language][$index]['#default_value']['display'] = TRUE;
+        }
+        $form['field_p2p_campaign_images'][$language][$index + 1] = $empty_image;
+      }
+      // Embedded video, default values from parent campaign, hide if edit
+      // is disabled.
+      $video_editable = $campaign_node->field_p2p_video_embed_edit[$language][0]['value'] ? TRUE : FALSE;
+      $form['field_p2p_video_embed'][$language][0]['video_url']['#default_value'] = $campaign_node->field_p2p_video_embed[$language][0]['video_url'];
     }
   }
   else {
-    $campaign_node = node_load($form['nid']['#value']);
+    // Node edit of some variety. We'll need to load the original campaign
+    // node to control visibility of conditionally editable fields.
+    $language = $form['language']['#value'];
+    $campaign_node = node_load($form['field_p2p_campaign'][$language]['#default_value'][0]);
+
   }
-  $form['campaign_node'] = array(
-    '#type' => 'value',
-    '#value' => $campaign_node,
-  );
-  $form['field_personal_campaign_url'][$campaign_node->language][0]['value']['#field_prefix'] = '<span>' . $GLOBALS['base_url'] . '/</span>';
-  // Node create form.
+  // Hide uneditable fields
+  if ($campaign_node) {
+    $video_editable = $campaign_node->field_p2p_video_embed_edit[$language][0]['value'] ? TRUE : FALSE;
+    $images_editable = $campaign_node->field_p2p_images_edit[$language][0]['value'] ? TRUE : FALSE;
+    $can_edit_body = $campaign_node->field_p2p_personal_intro_edit[$language][0]['value'];
+    // Hide the campaign select box.
+    $form['field_p2p_campaign'][$language]['#access'] = FALSE;
+    if (!$can_edit_body) {
+      $form['body'][$campaign_node->language]['#access'] = FALSE;
+      $form['body']['display'] = array(
+        '#title' => $form['body'][$campaign_node->language][0]['#title'],
+        '#type' => 'textarea',
+        '#default_value' => $form['body'][$campaign_node->language][0]['#default_value'],
+        '#disabled' => TRUE,
+      );
+    }
+    $form['field_p2p_campaign_images']['#access'] = $images_editable;
+    $form['field_p2p_video_embed']['#access'] = $video_editable;
+  }
   $form['#validate'][] = 'springboard_p2p_personal_campaign_validate';
 }
 
@@ -399,11 +475,33 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
  */
 function springboard_p2p_personal_campaign_validate(&$form, $form_state) {
   // Validate campaign url alias for uniqueness.
-  $campaign_node = $form_state['values']['campaign_node'];
-  $path = $form_state['values']['field_personal_campaign_url'][$campaign_node->language][0]['value'];
-  if (drupal_lookup_path('source', $path)) {
-    form_set_error('field_personal_campaign_url', t('This url is already in use.'));
+  $language = $form_state['values']['language'];
+  $alias = $form_state['values']['field_personal_campaign_url'][$language][0]['value'];
+  if ($path = drupal_lookup_path('source', $alias)) {
+    // We only want to throw a validation error if the campaign url is in use
+    // by some other path.
+    if (isset($form_state['node']) && $path != 'node/' . $form_state['node']->nid) {
+      form_set_error('field_personal_campaign_url', t('This url is already in use.'));
+    }
   }
+}
+
+/**
+ * Redirect to personal campaign node add form with campaign in url.
+ */
+function springboard_p2p_personal_campaign_ajax(&$form, &$form_state) {
+  $language = $form_state['values']['language'];
+  $campaign = $form_state['values']['field_p2p_campaign'][$language][0]['target_id'];
+  ctools_include('ajax');
+  ctools_add_js('ajax-responder');
+  $options = array(
+    'query' => array(
+      'campaign' => $campaign,
+    ),
+  );
+  $commands[] = ctools_ajax_command_redirect('node/add/p2p-personal-campaign', 0, $options);
+  print ajax_render($commands);
+  exit;
 }
 
 /**
@@ -411,9 +509,10 @@ function springboard_p2p_personal_campaign_validate(&$form, $form_state) {
  */
 function springboard_p2p_node_insert($node) {
   if ($node->type == 'p2p_personal_campaign') {
-    // Manage url alias for personal campaign node type.
-    $alias = $node->field_personal_campaign_url[$node->language][0]['value'];
-    if ($alias) {
+    // manage url alias for personal campaign node type
+    $alias = isset($node->field_personal_campaign_url[$node->language][0]['value']) ? $node->field_personal_campaign_url[$node->language][0]['value'] : FALSE;
+    // Discard existing alias settings if the node is being cloned.
+    if ($alias && !isset($node->clone_from_original_nid)) {
       $path = array(
         'source' => 'node/' . $node->nid,
         'alias' => $alias,
@@ -427,9 +526,12 @@ function springboard_p2p_node_insert($node) {
  * Implements hook_node_update().
  */
 function springboard_p2p_node_update($node) {
-  // Manage url alias for personal campaign node type.
+  // manage url alias for personal campaign node type
   if ($node->type == 'p2p_personal_campaign') {
-    $alias = $node->field_personal_campaign_url[$node->language][0]['value'];
+    $alias = FALSE;
+    if (isset($node->field_personal_campaign_url[$node->language]) && is_array($node->field_personal_campaign_url[$node->language])) {
+      $alias = count($node->field_personal_campaign_url[$node->language]) ? $node->field_personal_campaign_url[$node->language][0]['value'] : FALSE;
+    }
     if ($alias) {
       $path = array(
         'source' => 'node/' . $node->nid,
@@ -442,6 +544,73 @@ function springboard_p2p_node_update($node) {
       path_save($path);
     }
   }
+  // Propagate changes to campaign fields to personal campaigns when fields are
+  // flagged "uneditable" by personal campaign owners.
+  if ($node->type == 'p2p_campaign') {
+    $update_settings = array();
+    $language = $node->language;
+    // campaign intro
+    if (!$node->field_p2p_personal_intro_edit[$language][0]['value']) {
+      $update_settings['body'] = $node->field_p2p_personal_intro[$language][0]['value'];
+    }
+    // images
+    if (!$node->field_p2p_images_edit[$language][0]['value']) {
+      $update_settings['field_p2p_campaign_images'] = $node->field_p2p_images[$language];
+    }
+    // video
+    if (!$node->field_p2p_video_embed_edit[$language][0]['value']) {
+      $update_settings['field_p2p_video_embed'] = $node->field_p2p_video_embed[$language][0];
+    }
+    if (count($update_settings)) {
+      $associated_private_campaigns = springboard_p2p_get_personal_campaigns($node->nid);
+      foreach($associated_private_campaigns as $nid => $private_campaign) {
+        $private_campaign = (array) $private_campaign;
+        $node_changed = FALSE;
+        foreach ($update_settings as $field_key => $field_settings) {
+          switch ($field_key) {
+            // Intentional fallthrough, both fields structure data similarly.
+            case 'body':
+            case 'field_p2p_video_embed':
+              if (!isset($private_campaign[$field_key][$language][0]['value']) || $private_campaign[$field_key][$language][0]['value'] != $field_settings) {
+                $private_campaign[$field_key][$language][0]['value'] = $field_settings;
+                $node_changed = TRUE;
+              }
+              break;
+            case 'field_p2p_campaign_images':
+              if ($private_campaign['field_p2p_campaign_images'][$language] != $field_settings) {
+                $private_campaign['field_p2p_campaign_images'][$language] = $field_settings;
+                $node_changed = TRUE;
+              }
+              break;
+          }
+        }
+        if ($node_changed) {
+          node_save((object) $private_campaign);
+          $link = l(t($private_campaign['title']), 'node/' . $private_campaign['nid']);
+          drupal_set_message(t('Updated private campaign: !link', array('!link' => $link)));
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Checks campaign for user authorization to create a personal campaign.
+ *
+ * @param int $nid
+ *   Node id of the campaign.
+ *
+ * @param int $uid
+ *   User id.
+ *
+ * @return bool
+ *   Returns TRUE if the user account is authorized for this campaign,
+ *   FALSE otherwise.
+ */
+function springboard_p2p_private_campaign_user_is_authorized($nid, $uid) {
+  $result = db_query('SELECT status FROM {springboard_p2p_private_campaign_approval} WHERE uid = :uid AND nid = :nid', array(':uid' => $uid, ':nid' => $nid));
+  $status = $result->fetchField();
+  return $status == 'approved' ? TRUE : FALSE;
 }
 
 /**
