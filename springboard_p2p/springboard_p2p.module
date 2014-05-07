@@ -767,6 +767,13 @@ function springboard_p2p_get_goal_from_campaign($campaign) {
 function springboard_p2p_format_progress($progress, $type, $include_units = TRUE) {
   $output = '';
 
+  // If only a value is passed in.
+  if (!is_array($progress)) {
+    $progress = array(
+      $type => $progress,
+    );
+  }
+
   switch ($type) {
     case 'submissions':
       $output .= number_format($progress['submissions']);
@@ -1260,50 +1267,199 @@ function springboard_p2p_menu_local_tasks_alter(&$data, $router_item, $root_path
   }
 }
 
+/**
+ * Implements hook_form_alter().
+ *
+ * Adds extra data to a p2p enabled form if a personal campaign ID is passed in.
+ */
 function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
   if (isset($_GET['campaign']) && is_numeric($_GET['campaign']) && strpos($form_id, 'webform_client_form_') !== FALSE && !empty($form['#node'])) {
     $type = $form['#node']->type;
     $campaign_id = $_GET['campaign'];
 
-    if (_webform_user_is_webform_user_node_type($type) || fundraiser_is_donation_type($type)) {
-      $personal_campaign = node_load($campaign_id);
-      if (is_object($personal_campaign) && $personal_campaign->type == 'p2p_personal_campaign') {
-        $owner = user_load($personal_campaign->uid);
-        $owner_language = !empty($owner->language) ? $owner->language : 'und';
-        $owner_name = $owner->sbp_first_name[$owner_language][0]['safe_value'] . ' ' . $owner->sbp_last_name[$owner_language][0]['safe_value'];
+    $is_fundraiser_type = fundraiser_is_donation_type($type);
+    $is_webform_user_type = _webform_user_is_webform_user_node_type($type);
+    if ($is_fundraiser_type || $is_webform_user_type) {
 
-        $form['submitted']['springboard_p2p'] = array(
-          '#type' => 'container',
-          '#weight' => -100,
-          'owner' => array(
-            '#markup' => '<h2>' . $owner_name . '</h2>',
+      $personal_campaign = node_load($campaign_id);
+
+      if (is_object($personal_campaign) && $personal_campaign->type == 'p2p_personal_campaign') {
+
+        $campaign_nid = $personal_campaign->field_p2p_campaign[$personal_campaign->language][0]['target_id'];
+
+        $form['#submit'][] = 'springboard_p2p_webform_client_form_submit';
+
+        if ($is_fundraiser_type) {
+          $action_type = 'fundraiser';
+        }
+        else {
+          $action_type = 'webform_user';
+        }
+
+        $form['springboard_p2p_personal_campaign_action'] = array(
+          '#type' => 'fieldset',
+          '#title' => 'P2P',
+          '#tree' => TRUE,
+          'action_type' => array(
+            '#type' => 'value',
+            '#value' => $action_type,
           ),
+          'category_nid' => array(
+            '#type' => 'value',
+            '#value' => '',
+          ),
+          'campaign_nid' => array(
+            '#type' => 'value',
+            '#value' => $campaign_nid,
+          ),
+          'personal_campaign_nid' => array(
+            '#type' => 'value',
+            '#value' => $personal_campaign->nid,
+          ),
+          'personal_campaign_uid' => array(
+            '#type' => 'value',
+            '#value' => $personal_campaign->uid,
+          ),
+          'form_nid' => array(
+            '#type' => 'value',
+            '#value' => $form['#node']->nid,
+          ),
+        );
+
+        $form['springboard_p2p_personal_campaign_action']['show_name'] = array(
+          '#type' => 'checkbox',
+          '#title' => t('Show my name on the campaign page'),
+        );
+
+        $form['springboard_p2p_personal_campaign_action']['comment'] = array(
+          '#type' => 'textarea',
+          '#title' => t('Comment'),
         );
 
         drupal_set_title($personal_campaign->title);
 
-        $campaign = node_load($personal_campaign->field_p2p_campaign[$personal_campaign->language][0]['target_id']);
-
-        $header = springbaord_p2p_format_campaign_form_header($campaign);
-        if (count($header)) {
-          $form['submitted']['springboard_p2p']['header'] = $header;
+        $owner = user_load($personal_campaign->uid);
+        $owner_language = !empty($owner->language) ? $owner->language : 'und';
+        $owner_name = '';
+        if (!empty($owner->sbp_first_name[$owner_language][0]['safe_value']) && !empty($owner->sbp_last_name[$owner_language][0]['safe_value'])) {
+          $owner_name = $owner->sbp_first_name[$owner_language][0]['safe_value'] . ' ' . $owner->sbp_last_name[$owner_language][0]['safe_value'];
         }
 
-        $form['#springboard_p2p'] = array(
-          'personal_campaign' => $personal_campaign,
-          'campaign' => $campaign,
-        );
+        $campaign = node_load($campaign_nid);
+        if (!empty($campaign) && $campaign->type == 'p2p_campaign') {
 
-        $form['#submit'][] = 'springboard_p2p_webform_client_form_submit';
+          $category_nid = $campaign->field_p2p_campaign[$campaign->language][0]['target_id'];
+          $form['springboard_p2p_personal_campaign_action']['category_nid']['#value'] = $category_nid;
+
+          // @todo Confirm that this donation form nid is selected from the
+          // campaign goals.
+          // $header = springbaord_p2p_format_campaign_form_header($campaign);
+          // if (count($header)) {
+          // $form['submitted']['springboard_p2p']['header'] = $header;
+          // }
+          $goal_type = springboard_p2p_get_goal_type_from_campaign($campaign);
+          $formatted_progress = springboard_p2p_format_progress($personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0], $goal_type);
+          $formatted_goal = springboard_p2p_format_progress($personal_campaign->field_p2p_personal_campaign_goal[$personal_campaign->language][0]['value'], $goal_type);
+          $form['submitted']['springboard_p2p'] = array(
+            '#type' => 'container',
+            '#tree' => TRUE,
+            '#weight' => -100,
+            'owner' => array(
+              '#markup' => '<h2>' . $owner_name . '</h2>',
+            ),
+            'progress' => array(
+              '#prefix' => '<div>' . t('Progress') . ' ',
+              '#markup' => $formatted_progress,
+              '#suffix' => '</div>',
+            ),
+            'goal' => array(
+              '#prefix' => '<div>' . t('Goal') . ' ',
+              '#markup' => $formatted_goal,
+              '#suffix' => '</div>',
+            ),
+          );
+        }
       }
-
     }
-
   }
 }
 
+/**
+ * Submit function for the p2p enabled form.
+ *
+ * Increments the submissions counter for the personal campaign. We do this here
+ * instead of in the post_submit below so we can count submissions on
+ * non-fundraiser forms.
+ */
 function springboard_p2p_webform_client_form_submit($form, &$form_state) {
 
+  if (!empty($form_state['values']['springboard_p2p_personal_campaign_action'])) {
+    if ($form_state['values']['springboard_p2p_personal_campaign_action']['action_type'] == 'webform_user') {
+
+      if (!empty($form_state['values']['springboard_p2p_personal_campaign_action']['personal_campaign_nid'])) {
+        $personal_campaign = node_load($form_state['values']['springboard_p2p_personal_campaign_action']['personal_campaign_nid']);
+        ++$personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0]['submissions'];
+        node_save($personal_campaign);
+      }
+
+      springboard_p2p_save_personal_campaign_action($form_state['values']['springboard_p2p_personal_campaign_action']);
+    }
+  }
+}
+
+/**
+ * Implements hook_fundraiser_donation_post_submit().
+ *
+ * Adds the initial donation amount to the personal campaign progress.
+ */
+function springboard_p2p_fundraiser_donation_post_submit($form, $form_state, $donation) {
+
+  if (!empty($donation->recurring) && ($donation->recurring->master_did != $donation->did)) {
+    return;
+  }
+
+  if (!$donation->result['success']) {
+    return;
+  }
+
+  if (!empty($form_state['values']['springboard_p2p_personal_campaign_action'])) {
+    if ($form_state['values']['springboard_p2p_personal_campaign_action']['action_type'] == 'fundraiser') {
+
+      if (!empty($form_state['values']['springboard_p2p_personal_campaign_action']['personal_campaign_nid'])) {
+        $personal_campaign = node_load($form_state['values']['springboard_p2p_personal_campaign_action']['personal_campaign_nid']);
+        ++$personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0]['submissions'];
+
+        $amount = $donation->donation['amount'];
+        if (!empty($donation->donation['quantity'])) {
+          $amount = $amount * $donation->donation['quantity'];
+        }
+        $personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0]['amount'] += $amount;
+
+        node_save($personal_campaign);
+
+        $form_state['values']['springboard_p2p_personal_campaign_action']['amount'] = $amount * 100;
+      }
+
+      springboard_p2p_save_personal_campaign_action($form_state['values']['springboard_p2p_personal_campaign_action']);
+    }
+  }
+
+}
+
+/**
+ * Saves a new personal campaign action record.
+ *
+ * @param array $record
+ *   The record to write to the table.
+ */
+function springboard_p2p_save_personal_campaign_action($record) {
+  $record = (array) $record;
+
+  if (empty($record['created'])) {
+    $record['created'] = REQUEST_TIME;
+  }
+
+  drupal_write_record('springboard_p2p_personal_campaign_action', $record);
 }
 
 /**

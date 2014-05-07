@@ -111,4 +111,11 @@ class SpringboardP2pPersonalCampaignProgressField {
     return $element;
   }
 
+  /**
+   * Don't need to delete anything extra.
+   */
+  public function delete(&$items) {
+
+  }
+
 }

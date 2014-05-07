@@ -311,25 +311,7 @@ class SpringboardP2pCampaignGoalsField {
         if ($goals) {
           foreach ($goals as $type => $goal) {
             if ($goal['enabled']) {
-              $prefix = '';
-              $suffix = '';
-              $markup = '';
-
-              if ($goal['goal_type'] == 'amount') {
-                $prefix = '$ ';
-                $markup = number_format($goal['goal_value'], 2);
-              }
-              elseif ($goal['goal_type'] == 'submissions') {
-                $markup = number_format($goal['goal_value']);
-                $suffix = ' submissions';
-              }
-
-              $element[$delta][$type] = array(
-                '#prefix' => $prefix,
-                '#suffix' => $suffix,
-                '#markup' => $markup,
-              );
-
+              $element[$delta][$type] = springboard_p2p_fields_format_campaign_goal_value($goal);
             }
           }
         }
