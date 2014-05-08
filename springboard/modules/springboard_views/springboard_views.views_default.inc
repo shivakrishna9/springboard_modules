@@ -10,7 +10,7 @@
 function springboard_views_views_default_views() {
   /**
    * View sbv_forms
-   */
+   */ 
   $view = new view();
   $view->name = 'sbv_forms';
   $view->description = 'Springboard form summaries';
@@ -19,8 +19,8 @@ function springboard_views_views_default_views() {
   $view->human_name = 'sbv_forms';
   $view->core = 7;
   $view->api_version = '3.0';
-  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
-
+  $view->disabled = FALSE;
+  /* Edit this to true to make a default view disabled initially */
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');
   $handler->display->display_options['title'] = 'Recent Forms';
@@ -196,9 +196,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['filters']['type_1']['id'] = 'type_1';
   $handler->display->display_options['filters']['type_1']['table'] = 'node';
   $handler->display->display_options['filters']['type_1']['field'] = 'type';
-  $handler->display->display_options['filters']['type_1']['value'] = array(
-    'donation_form' => 'donation_form',
-  );
+  $handler->display->display_options['filters']['type_1']['value'] = array('donation_form' => 'donation_form', );
   $handler->display->display_options['filters']['type_1']['group'] = 1;
   $handler->display->display_options['filters']['type_1']['expose']['operator_id'] = 'type_1_op';
   $handler->display->display_options['filters']['type_1']['expose']['label'] = 'Type';
@@ -255,7 +253,6 @@ function springboard_views_views_default_views() {
     7 => 0,
     8 => 0,
   );
-
   /* Display: Springboard Recent Forms */
   $handler = $view->new_display('block', 'Springboard Recent Forms', 'block');
   $handler->display->display_options['display_description'] = 'View configuration and submission information about Springboard forms.';
@@ -448,9 +445,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['filters']['type']['id'] = 'type';
   $handler->display->display_options['filters']['type']['table'] = 'node';
   $handler->display->display_options['filters']['type']['field'] = 'type';
-  $handler->display->display_options['filters']['type']['value'] = array(
-    'webform' => 'webform',
-  );
+  $handler->display->display_options['filters']['type']['value'] = array('webform' => 'webform', );
   $handler->display->display_options['filters']['type']['group'] = 1;
   /* Filter criterion: Global: Combine fields filter */
   $handler->display->display_options['filters']['combine']['id'] = 'combine';
@@ -472,7 +467,6 @@ function springboard_views_views_default_views() {
     'field_webform_user_internal_name' => 'field_webform_user_internal_name',
     'title' => 'title',
   );
-
   /* Display: Springboard Recent Donation Forms */
   $handler = $view->new_display('block', 'Springboard Recent Donation Forms', 'block_1');
   $handler->display->display_options['display_description'] = 'View configuration and submission information about Springboard forms.';
@@ -702,9 +696,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['filters']['type']['id'] = 'type';
   $handler->display->display_options['filters']['type']['table'] = 'node';
   $handler->display->display_options['filters']['type']['field'] = 'type';
-  $handler->display->display_options['filters']['type']['value'] = array(
-    'donation_form' => 'donation_form',
-  );
+  $handler->display->display_options['filters']['type']['value'] = array('donation_form' => 'donation_form', );
   /* Filter criterion: Global: Combine fields filter */
   $handler->display->display_options['filters']['combine']['id'] = 'combine';
   $handler->display->display_options['filters']['combine']['table'] = 'views';
@@ -725,7 +717,6 @@ function springboard_views_views_default_views() {
     'field_fundraiser_internal_name_1' => 'field_fundraiser_internal_name_1',
     'title' => 'title',
   );
-
   /* Display: Springboard Recent Forms Page */
   $handler = $view->new_display('page', 'Springboard Recent Forms Page', 'page_1');
   $handler->display->display_options['defaults']['pager'] = FALSE;
@@ -926,16 +917,13 @@ function springboard_views_views_default_views() {
     5 => 0,
   );
   $handler->display->display_options['filters']['date_filter']['form_type'] = 'date_popup';
-  $handler->display->display_options['filters']['date_filter']['date_fields'] = array(
-    'node_revision.timestamp' => 'node_revision.timestamp',
-  );
+  $handler->display->display_options['filters']['date_filter']['date_fields'] = array('node_revision.timestamp' => 'node_revision.timestamp', );
   $handler->display->display_options['path'] = 'springboard/forms/all';
   $handler->display->display_options['menu']['type'] = 'tab';
   $handler->display->display_options['menu']['title'] = 'Webforms';
   $handler->display->display_options['menu']['description'] = 'View and edit all the available webforms on your site.';
   $handler->display->display_options['menu']['weight'] = '0';
   $handler->display->display_options['menu']['context'] = 0;
-
   /* Display: Springboard Recent Donation Forms Page */
   $handler = $view->new_display('page', 'Springboard Recent Donation Forms Page', 'page_2');
   $handler->display->display_options['defaults']['title'] = FALSE;
@@ -1097,9 +1085,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['filters']['type_1']['id'] = 'type_1';
   $handler->display->display_options['filters']['type_1']['table'] = 'node';
   $handler->display->display_options['filters']['type_1']['field'] = 'type';
-  $handler->display->display_options['filters']['type_1']['value'] = array(
-    'donation_form' => 'donation_form',
-  );
+  $handler->display->display_options['filters']['type_1']['value'] = array('donation_form' => 'donation_form', );
   $handler->display->display_options['filters']['type_1']['group'] = 1;
   $handler->display->display_options['filters']['type_1']['expose']['operator_id'] = 'type_1_op';
   $handler->display->display_options['filters']['type_1']['expose']['label'] = 'Type';
@@ -1153,16 +1139,13 @@ function springboard_views_views_default_views() {
     5 => 0,
   );
   $handler->display->display_options['filters']['date_filter']['form_type'] = 'date_popup';
-  $handler->display->display_options['filters']['date_filter']['date_fields'] = array(
-    'node_revision.timestamp' => 'node_revision.timestamp',
-  );
+  $handler->display->display_options['filters']['date_filter']['date_fields'] = array('node_revision.timestamp' => 'node_revision.timestamp', );
   $handler->display->display_options['path'] = 'springboard/donation-forms/all';
   $handler->display->display_options['menu']['type'] = 'tab';
   $handler->display->display_options['menu']['title'] = 'Donations';
   $handler->display->display_options['menu']['description'] = 'View and edit all the available donations on your site.';
   $handler->display->display_options['menu']['weight'] = '0';
   $handler->display->display_options['menu']['context'] = 0;
-
   /* Display: Fundraiser Gateway Switcher */
   $handler = $view->new_display('page', 'Fundraiser Gateway Switcher', 'page_3');
   $handler->display->display_options['defaults']['access'] = FALSE;
@@ -1183,15 +1166,13 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['views_bulk_operations']['vbo_settings']['enable_select_all_pages'] = 1;
   $handler->display->display_options['fields']['views_bulk_operations']['vbo_settings']['force_single'] = 0;
   $handler->display->display_options['fields']['views_bulk_operations']['vbo_settings']['entity_load_capacity'] = '10';
-  $handler->display->display_options['fields']['views_bulk_operations']['vbo_operations'] = array(
-    'action::_fundraiser_gateway_switch_action' => array(
+  $handler->display->display_options['fields']['views_bulk_operations']['vbo_operations'] = array('action::_fundraiser_gateway_switch_action' => array(
       'selected' => 1,
       'postpone_processing' => 0,
       'skip_confirmation' => 0,
       'override_label' => 0,
       'label' => '',
-    ),
-  );
+    ), );
   /* Field: Content: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
   $handler->display->display_options['fields']['title']['table'] = 'node';
@@ -1235,13 +1216,13 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['menu']['weight'] = '0';
   $handler->display->display_options['menu']['context'] = 0;
   $handler->display->display_options['menu']['context_only_inline'] = 0;
-
   /* Display: Springboard Recent by type */
   $handler = $view->new_display('block', 'Springboard Recent by type', 'block_2');
   $handler->display->display_options['display_description'] = 'View configuration and submission information about Springboard forms.';
+  $handler->display->display_options['defaults']['use_ajax'] = FALSE;
+  $handler->display->display_options['use_ajax'] = TRUE;
   $handler->display->display_options['defaults']['hide_admin_links'] = FALSE;
   $handler->display->display_options['defaults']['use_more'] = FALSE;
-  $handler->display->display_options['use_more'] = TRUE;
   $handler->display->display_options['defaults']['use_more_always'] = FALSE;
   $handler->display->display_options['defaults']['use_more_always'] = FALSE;
   $handler->display->display_options['use_more_always'] = TRUE;
@@ -1471,6 +1452,28 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['arguments']['type']['limit'] = '0';
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
   $handler->display->display_options['defaults']['filters'] = FALSE;
+  /* Filter criterion: Global: Combine fields filter */
+  $handler->display->display_options['filters']['combine']['id'] = 'combine';
+  $handler->display->display_options['filters']['combine']['table'] = 'views';
+  $handler->display->display_options['filters']['combine']['field'] = 'combine';
+  $handler->display->display_options['filters']['combine']['operator'] = 'contains';
+  $handler->display->display_options['filters']['combine']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['combine']['expose']['operator_id'] = 'combine_op';
+  $handler->display->display_options['filters']['combine']['expose']['label'] = 'Search';
+  $handler->display->display_options['filters']['combine']['expose']['operator'] = 'combine_op';
+  $handler->display->display_options['filters']['combine']['expose']['identifier'] = 'combine';
+  $handler->display->display_options['filters']['combine']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
+  $handler->display->display_options['filters']['combine']['fields'] = array(
+    'field_fundraiser_internal_name_1' => 'field_fundraiser_internal_name_1',
+    'title' => 'title',
+    'field_fundraiser_internal_name' => 'field_fundraiser_internal_name',
+  );
   $views[$view->name] = $view;
   
   /**
