@@ -2267,11 +2267,8 @@ function fundraiser_commerce_commerce_authnet_cim_request_alter($api_request_ele
     $api_request_element->extraOptions = '<![CDATA[' .  $extra . '&cms=Springboard]]>';
   }
   if(isset($api_request_element->validationMode)) {
-    $mode = (string) $api_request_element->validationMode;
-    if ($mode == 'liveMode') {
       $api_request_element->validationMode = 'none';
     }
-  }
   // Change the description to something unique so we get a new profile each time
   if (!empty($api_request_element->profile->description)) {
     $api_request_element->profile->description = substr(t('CIM request taking place at @date', array('@date' => format_date(time()))), 0, 255);
