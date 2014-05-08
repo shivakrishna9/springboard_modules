@@ -1348,7 +1348,7 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
         $campaign = node_load($campaign_nid);
         if (!empty($campaign) && $campaign->type == 'p2p_campaign') {
 
-          $category_nid = $campaign->field_p2p_campaign[$campaign->language][0]['target_id'];
+          $category_nid = $campaign->field_p2p_category[$campaign->language][0]['target_id'];
           $form['springboard_p2p_personal_campaign_action']['category_nid']['#value'] = $category_nid;
 
           // @todo Confirm that this donation form nid is selected from the
@@ -1394,15 +1394,9 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
 function springboard_p2p_webform_client_form_submit($form, &$form_state) {
 
   if (!empty($form_state['values']['springboard_p2p_personal_campaign_action'])) {
-    if ($form_state['values']['springboard_p2p_personal_campaign_action']['action_type'] == 'webform_user') {
-
-      if (!empty($form_state['values']['springboard_p2p_personal_campaign_action']['personal_campaign_nid'])) {
-        $personal_campaign = node_load($form_state['values']['springboard_p2p_personal_campaign_action']['personal_campaign_nid']);
-        ++$personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0]['submissions'];
-        node_save($personal_campaign);
-      }
-
-      springboard_p2p_save_personal_campaign_action($form_state['values']['springboard_p2p_personal_campaign_action']);
+    $action = $form_state['values']['springboard_p2p_personal_campaign_action'];
+    if ($action['action_type'] == 'webform_user') {
+      springboard_p2p_submit_personal_campaign_action($action);
     }
   }
 }
@@ -1423,27 +1417,43 @@ function springboard_p2p_fundraiser_donation_post_submit($form, $form_state, $do
   }
 
   if (!empty($form_state['values']['springboard_p2p_personal_campaign_action'])) {
-    if ($form_state['values']['springboard_p2p_personal_campaign_action']['action_type'] == 'fundraiser') {
-
-      if (!empty($form_state['values']['springboard_p2p_personal_campaign_action']['personal_campaign_nid'])) {
-        $personal_campaign = node_load($form_state['values']['springboard_p2p_personal_campaign_action']['personal_campaign_nid']);
-        ++$personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0]['submissions'];
-
-        $amount = $donation->donation['amount'];
-        if (!empty($donation->donation['quantity'])) {
-          $amount = $amount * $donation->donation['quantity'];
-        }
-        $personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0]['amount'] += $amount;
-
-        node_save($personal_campaign);
-
-        $form_state['values']['springboard_p2p_personal_campaign_action']['amount'] = $amount * 100;
-      }
-
-      springboard_p2p_save_personal_campaign_action($form_state['values']['springboard_p2p_personal_campaign_action']);
+    $action = $form_state['values']['springboard_p2p_personal_campaign_action'];
+    if ($action['action_type'] == 'fundraiser') {
+      springboard_p2p_submit_personal_campaign_action($action, $donation);
     }
   }
 
+}
+
+/**
+ * Increment the personal campaign progress and save the action.
+ *
+ * @param array $action
+ *   The action array as it came from form_state.
+ * @param object|null $donation
+ *   If this is a fundraiser action, pass in the donation.
+ */
+function springboard_p2p_submit_personal_campaign_action($action, $donation = NULL) {
+  if (!empty($action['personal_campaign_nid'])) {
+    $personal_campaign = node_load($action['personal_campaign_nid']);
+
+    // Incremenet the submissions progress.
+    ++$personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0]['submissions'];
+
+    // If a donation was passed in then we have a fundraiser action
+    // and should increment the amount progress.
+    if (!is_null(($donation))) {
+      $amount = $donation->donation['amount'];
+      if (!empty($donation->donation['quantity'])) {
+        $amount = $amount * $donation->donation['quantity'];
+      }
+      $personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0]['amount'] += $amount;
+      $action['amount'] = $amount * 100;
+    }
+    node_save($personal_campaign);
+  }
+
+  springboard_p2p_save_personal_campaign_action($action);
 }
 
 /**
