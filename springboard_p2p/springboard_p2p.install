@@ -109,7 +109,7 @@ function springboard_p2p_schema() {
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
-        'description' => 'The type of the action. Either donation or submission.',
+        'description' => 'The type of the action. Either fundraiser or webform_user.',
         'default' => 'requested',
       ),
       'uid' => array(
@@ -132,7 +132,6 @@ function springboard_p2p_schema() {
         'type' => 'text',
         'not null' => TRUE,
         'size' => 'big',
-        'default' => '',
       ),
       'amount' => array(
         'description' => 'The donation amount if this is a donation.',
@@ -150,7 +149,7 @@ function springboard_p2p_schema() {
     'indexes' => array(
       'personal_campaign_nid' => array('personal_campaign_nid'),
     ),
-    'primary key' => array('form_nid', 'donor_uid', 'created'),
+    'primary key' => array('form_nid', 'uid', 'created'),
     'foreign keys' => array(
       'category_nid' => array(
         'table' => 'node',
