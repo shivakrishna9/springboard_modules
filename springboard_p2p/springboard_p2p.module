@@ -9,6 +9,15 @@ define('SPRINGBOARD_P2P_ROLE', 'Springboard P2P campaigner');
 include_once 'springboard_p2p.features.inc';
 
 /**
+ * Implements hook_ctools_plugin_directory().
+ */
+function springboard_p2p_ctools_plugin_directory($owner, $plugin_type) {
+  if ($owner == 'ctools' && ($plugin_type == 'content_types')) {
+    return 'plugins/' . $plugin_type;
+  }
+}
+
+/**
  * Implements hook_permission().
  */
 function springboard_p2p_permission() {
