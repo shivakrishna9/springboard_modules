@@ -97,6 +97,56 @@ function springboard_p2p_field_default_field_instances() {
     ),
   );
 
+  // Exported field_instance: 'node-p2p_campaign-field_p2p_campaign_banner'
+  $field_instances['node-p2p_campaign-field_p2p_campaign_banner'] = array(
+    'bundle' => 'p2p_campaign',
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'image',
+        'settings' => array(
+          'image_link' => '',
+          'image_style' => '',
+        ),
+        'type' => 'image',
+        'weight' => 17,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_p2p_campaign_banner',
+    'label' => 'Campaign banner',
+    'required' => 1,
+    'settings' => array(
+      'alt_field' => 0,
+      'default_image' => 0,
+      'file_directory' => 'springboard_p2p',
+      'file_extensions' => 'png gif jpg jpeg',
+      'max_filesize' => '2 MB',
+      'max_resolution' => '',
+      'min_resolution' => '',
+      'title_field' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'image',
+      'settings' => array(
+        'preview_image_style' => 'thumbnail',
+        'progress_indicator' => 'throbber',
+      ),
+      'type' => 'image_image',
+      'weight' => 17,
+    ),
+  );
+
   // Exported field_instance: 'node-p2p_campaign-field_p2p_campaign_goals'
   $field_instances['node-p2p_campaign-field_p2p_campaign_goals'] = array(
     'bundle' => 'p2p_campaign',
@@ -132,8 +182,8 @@ function springboard_p2p_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-p2p_campaign-field_p2p_campaign_images'
-  $field_instances['node-p2p_campaign-field_p2p_campaign_images'] = array(
+  // Exported field_instance: 'node-p2p_campaign-field_p2p_campaign_slider'
+  $field_instances['node-p2p_campaign-field_p2p_campaign_slider'] = array(
     'bundle' => 'p2p_campaign',
     'deleted' => 0,
     'description' => '',
@@ -143,10 +193,10 @@ function springboard_p2p_field_default_field_instances() {
         'module' => 'image',
         'settings' => array(
           'image_link' => '',
-          'image_style' => 'thumbnail',
+          'image_style' => '',
         ),
         'type' => 'image',
-        'weight' => 1,
+        'weight' => 18,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -156,9 +206,59 @@ function springboard_p2p_field_default_field_instances() {
       ),
     ),
     'entity_type' => 'node',
-    'field_name' => 'field_p2p_campaign_images',
-    'label' => 'Campaign images',
-    'required' => 0,
+    'field_name' => 'field_p2p_campaign_slider',
+    'label' => 'Landing page slider',
+    'required' => 1,
+    'settings' => array(
+      'alt_field' => 0,
+      'default_image' => 0,
+      'file_directory' => 'springboard_p2p',
+      'file_extensions' => 'png gif jpg jpeg',
+      'max_filesize' => '2 MB',
+      'max_resolution' => '',
+      'min_resolution' => '',
+      'title_field' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'image',
+      'settings' => array(
+        'preview_image_style' => 'thumbnail',
+        'progress_indicator' => 'throbber',
+      ),
+      'type' => 'image_image',
+      'weight' => 4,
+    ),
+  );
+
+  // Exported field_instance: 'node-p2p_campaign-field_p2p_campaign_thumbnail'
+  $field_instances['node-p2p_campaign-field_p2p_campaign_thumbnail'] = array(
+    'bundle' => 'p2p_campaign',
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'image',
+        'settings' => array(
+          'image_link' => '',
+          'image_style' => '',
+        ),
+        'type' => 'image',
+        'weight' => 16,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_p2p_campaign_thumbnail',
+    'label' => 'Campaign thumbnail',
+    'required' => 1,
     'settings' => array(
       'alt_field' => 0,
       'default_image' => 0,
@@ -260,52 +360,6 @@ function springboard_p2p_field_default_field_instances() {
       'settings' => array(),
       'type' => 'options_select',
       'weight' => 0,
-    ),
-  );
-
-  // Exported field_instance: 'node-p2p_campaign-field_p2p_form_header'
-  $field_instances['node-p2p_campaign-field_p2p_form_header'] = array(
-    'bundle' => 'p2p_campaign',
-    'deleted' => 0,
-    'description' => '',
-    'display' => array(
-      'default' => array(
-        'label' => 'hidden',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 5,
-      ),
-      'teaser' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 0,
-      ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'field_p2p_form_header',
-    'label' => 'Default campaign page header',
-    'required' => 0,
-    'settings' => array(
-      'alt_field' => 0,
-      'default_image' => 0,
-      'file_directory' => 'springboard_p2p',
-      'file_extensions' => 'png gif jpg jpeg',
-      'max_filesize' => '2 MB',
-      'max_resolution' => '',
-      'min_resolution' => '',
-      'title_field' => 0,
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 1,
-      'module' => 'image',
-      'settings' => array(
-        'preview_image_style' => 'thumbnail',
-        'progress_indicator' => 'throbber',
-      ),
-      'type' => 'image_image',
-      'weight' => 17,
     ),
   );
 
@@ -726,6 +780,56 @@ function springboard_p2p_field_default_field_instances() {
     ),
   );
 
+  // Exported field_instance: 'node-p2p_category-field_p2p_campaign_banner'
+  $field_instances['node-p2p_category-field_p2p_campaign_banner'] = array(
+    'bundle' => 'p2p_category',
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'image',
+        'settings' => array(
+          'image_link' => '',
+          'image_style' => '',
+        ),
+        'type' => 'image',
+        'weight' => 13,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_p2p_campaign_banner',
+    'label' => 'Default campaign banner',
+    'required' => 0,
+    'settings' => array(
+      'alt_field' => 0,
+      'default_image' => 0,
+      'file_directory' => 'springboard_p2p',
+      'file_extensions' => 'png gif jpg jpeg',
+      'max_filesize' => '2 MB',
+      'max_resolution' => '',
+      'min_resolution' => '',
+      'title_field' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'image',
+      'settings' => array(
+        'preview_image_style' => 'thumbnail',
+        'progress_indicator' => 'throbber',
+      ),
+      'type' => 'image_image',
+      'weight' => 10,
+    ),
+  );
+
   // Exported field_instance: 'node-p2p_category-field_p2p_category_image'
   $field_instances['node-p2p_category-field_p2p_category_image'] = array(
     'bundle' => 'p2p_category',
@@ -777,52 +881,6 @@ function springboard_p2p_field_default_field_instances() {
       ),
       'type' => 'image_image',
       'weight' => 2,
-    ),
-  );
-
-  // Exported field_instance: 'node-p2p_category-field_p2p_form_header'
-  $field_instances['node-p2p_category-field_p2p_form_header'] = array(
-    'bundle' => 'p2p_category',
-    'deleted' => 0,
-    'description' => '',
-    'display' => array(
-      'default' => array(
-        'label' => 'hidden',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 3,
-      ),
-      'teaser' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 0,
-      ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'field_p2p_form_header',
-    'label' => 'Donation form header image',
-    'required' => 0,
-    'settings' => array(
-      'alt_field' => 0,
-      'default_image' => 0,
-      'file_directory' => 'springboard_p2p',
-      'file_extensions' => 'png gif jpg jpeg',
-      'max_filesize' => '2 MB',
-      'max_resolution' => '',
-      'min_resolution' => '',
-      'title_field' => 0,
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 1,
-      'module' => 'image',
-      'settings' => array(
-        'preview_image_style' => 'thumbnail',
-        'progress_indicator' => 'throbber',
-      ),
-      'type' => 'image_image',
-      'weight' => -1,
     ),
   );
 
@@ -1472,17 +1530,18 @@ function springboard_p2p_field_default_field_instances() {
   t('Campaign');
   t('Campaign Introduction');
   t('Campaign URL');
-  t('Campaign images');
+  t('Campaign banner');
+  t('Campaign thumbnail');
   t('Category');
   t('Category image');
-  t('Default campaign page header');
+  t('Default campaign banner');
   t('Description');
-  t('Donation form header image');
   t('Enter a URL from YouTube to embed a video.');
   t('Fundraising Deadline');
   t('Fundraising Goal');
   t('Goals');
   t('Images');
+  t('Landing page slider');
   t('Organization introduction');
   t('Personal campaign introduction');
   t('Personal campaigns require approval');
