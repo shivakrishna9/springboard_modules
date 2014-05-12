@@ -36,6 +36,25 @@ function springboard_leftronic_push_stats($leftronic, $donation) {
   $leftronic->pushNumber("totalDonationAmountToday", $total_amount);
   $leftronic->pushNumber("numberOfDonationsToday", $stats->total_count);
   $leftronic->pushNumber("averageDonationAmountToday", $average);
+
+  if (module_exists("springboard_geo")) {
+    springboard_leftronic_push_geocode($leftronic, $donation);
+  }
+
+}
+
+/**
+ * Push donations by geography.
+ */
+function springboard_leftronic_push_geocode($leftronic, $donation) {
+  $result = db_query("SELECT latitude, longitude FROM {springboard_geo} WHERE oid = :did", array(':did' => $donation->did));
+
+  $geo = $result->fetchObject();
+  $color = $donation->donation['recurs_monthly'] ? 'green' : 'blue';
+
+  if (!empty($geo)) {
+    $leftronic->pushGeo("geoDonations", $geo->latitude, $geo->longitude, $color);
+  }
 }
 
 /**
@@ -81,8 +100,8 @@ function springboard_leftronic_calculate_daily_stats() {
       sum(amount) as total_amount,
       count(*) as total_count,
       avg(amount) as average
-    FROM commerce_payment_transaction cpt
-    INNER JOIN commerce_order c on c.order_id = cpt.order_id
+    FROM {commerce_payment_transaction} cpt
+    INNER JOIN {commerce_order} c on c.order_id = cpt.order_id
     WHERE c.status = 'payment_received'
     AND c.created between :start_date and :end_date",
     array(':start_date' => mktime(00, 00, 00, $month, $day, $year), ':end_date' => mktime(23, 23, 59, $month, $day, $year))

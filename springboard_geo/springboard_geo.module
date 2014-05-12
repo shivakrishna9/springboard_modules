@@ -6,45 +6,38 @@
  *
  */
 
-
 /**
  * Implements hook_fundraiser_donation_post_submit().
  */
-function springboard_geo_fundraiser_donation_post_submit($form, $form_state, $donation) {
- 
- // Handle behavior if donation succeeds
-  if (isset($donation->result['success'])) {
+function springboard_geo_fundraiser_donation_post_create($donation) {
+  // Technically, this should be done in some sort of success hook, because at
+  // post create we don't know if it succeeded. But this is ok for DOPE.
 	$address = $donation->donation['address'];
 	$city = $donation->donation['city'];
 	$state = $donation->donation['state'];
 	$zip = $donation->donation['zip'];
 	$oid = $donation->did; //order ID
 
-	// building the JSON URL string for Google API call 
-    $google_address = str_replace(' ', '+', trim($address)).",";
-    $google_city  = '+'.str_replace(' ', '+', trim($city)).",";
-    $google_state = '+'.str_replace(' ', '+', trim($state));
-    $google_zip = isset($zip)? '+'.str_replace(' ', '', trim($zip)) : '';
+	// building the JSON URL string for Google API call
+  $google_address = str_replace(' ', '+', trim($address)).",";
+  $google_city  = '+'.str_replace(' ', '+', trim($city)).",";
+  $google_state = '+'.str_replace(' ', '+', trim($state));
+  $google_zip = isset($zip)? '+'.str_replace(' ', '', trim($zip)) : '';
 
     //combining values and creating google string
-	$google_addr_str = $google_address.$google_city.$google_state.$google_zip;       
+	$google_addr_str = $google_address.$google_city.$google_state.$google_zip;
 	$url = "http://maps.google.com/maps/api/geocode/json?address=$google_addr_str&sensor=false";
-	
+
 	//pulling data
 	$jsonData   = file_get_contents($url);
 	$data = json_decode($jsonData);
 
-    //retrieving lat and long
+  //retrieving lat and long
 	$xlat = $data->{'results'}[0]->{'geometry'}->{'location'}->{'lat'};
 	$xlong = $data->{'results'}[0]->{'geometry'}->{'location'}->{'lng'};
-	
-	//confirm address and geocode by printing to screen
-	// print "<h1>ADDRESS = $address $city $state $zip</h1>";
-	// print "<h1> LAT/LONG = " . $xlat.",".$xlong . "</h1>";
-	// print "<h1>OID = $oid</h1>";
-	
-    springboard_geo_save($xlat, $xlong, $oid);
-  }
+
+
+  springboard_geo_save($xlat, $xlong, $oid);
 }
 
 
@@ -58,7 +51,7 @@ function springboard_geo_fundraiser_donation_post_submit($form, $form_state, $do
  */
 function springboard_geo_save($latitude, $longitude, $oid) {
   $record = array(
-    'oid' => $oid, 
+    'oid' => $oid,
     'latitude' => $latitude,
     'longitude' => $longitude,
   );
