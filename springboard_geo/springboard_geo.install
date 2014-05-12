@@ -7,7 +7,7 @@
 /**
  * Implements hook_schema().
  */
-function springboard_ga_schema() {
+function springboard_geo_schema() {
   $schema['springboard_geo'] = array(
     'description' => 'Stores data for geocoding donation nodes.',
     'fields' => array(
