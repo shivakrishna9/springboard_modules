@@ -45,7 +45,6 @@ function springboard_geo_fundraiser_donation_post_submit($form, $form_state, $do
 	
     springboard_geo_save($xlat, $xlong, $oid);
   }
-  return $form_state;
 }
 
 
