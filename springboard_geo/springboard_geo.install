@@ -26,8 +26,8 @@ function springboard_geo_schema() {
       'longitude' => array(
         'description' => 'Donor\'s address longitude.',
         'type' => 'text',
-        'not null' => FALSE,
-        'serialize' => TRUE,
+        'unsigned' => FALSE,
+        'not null' => TRUE,
       ),
     ),
     'primary key' => array('oid'),
