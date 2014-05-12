@@ -17,6 +17,18 @@ function springboard_leftronic_fundraiser_donation_success($donation) {
   springboard_leftronic_push_donation($leftronic, $donation);
   springboard_leftronic_push_donor($leftronic, $donation);
   springboard_leftronic_push_sustainers($leftronic, $donation);
+  springboard_leftronic_push_leaderboard($leftronic, $donation);
+  if (module_exists("springboard_geo")) {
+    springboard_leftronic_push_geocode($leftronic, $donation);
+  }
+}
+
+/**
+ * Push to form leaderboard.
+ */
+function springboard_leftronic_push_leaderboard($leftronic, $donation) {
+  $stats = springboard_leftronic_calculate_form_stats();
+  $leftronic->pushLeaderboard("formLeaderboard", $stats);
 }
 
 /**
@@ -36,11 +48,6 @@ function springboard_leftronic_push_stats($leftronic, $donation) {
   $leftronic->pushNumber("totalDonationAmountToday", $total_amount);
   $leftronic->pushNumber("numberOfDonationsToday", $stats->total_count);
   $leftronic->pushNumber("averageDonationAmountToday", $average);
-
-  if (module_exists("springboard_geo")) {
-    springboard_leftronic_push_geocode($leftronic, $donation);
-  }
-
 }
 
 /**
@@ -85,6 +92,30 @@ function springboard_leftronic_push_donor($leftronic, $donation) {
   $donor_name = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
   $donor_email = $donation->donation['mail'];
   $leftronic->pushText('latestDonors', $donor_name, $donor_email);
+}
+
+/**
+ * Calculates donation amount and counts per form.
+ */
+function springboard_leftronic_calculate_form_stats() {
+  $result = db_query(
+    "SELECT
+      n.title,
+      sum(amount) as amount,
+      count(*) as count
+    FROM {fundraiser_donation} fd
+    INNER JOIN {node} n on n.nid = fd.nid
+    WHERE fd.status = 'payment_received' AND fd.created BETWEEN unix_timestamp(SUBDATE(CURDATE(), INTERVAL 1 WEEK)) AND unix_timestamp(NOW())
+    GROUP BY n.title"
+  );
+
+  $stats = array();
+
+  foreach ($result as $record) {
+    $stats[] = array('name' => $record->title, 'value' => $record->amount, 'prefix' => '$');
+  }
+
+  return $stats;
 }
 
 /**
