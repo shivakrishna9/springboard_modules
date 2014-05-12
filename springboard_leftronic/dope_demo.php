@@ -7,8 +7,10 @@ $amounts = array(10, 25, 50, 100, 250);
 
 if(($handle = fopen($filename, 'r')) !== FALSE)
 {
+
   while(($row = fgetcsv($handle, 0, ',')) !== FALSE)
   {
+
     $first_name = trim($row[0]);
     $last_name = trim($row[1]);
     $email = trim($row[2]);
@@ -17,6 +19,22 @@ if(($handle = fopen($filename, 'r')) !== FALSE)
     $state = trim($row[5]);
     $zip = trim($row[6]);
 
+    print 'Creating donation for ' . $first_name . "\n";
+
+    $payload = 'amount=' . $amounts[rand(0,4)] . '&';
+    $payload .= 'other_amount=&';
+    $payload .= 'quantity=1&';
+    $payload .= 'first_name=' . $first_name . '&';
+    $payload .= 'last_name=' . $last_name . '&';
+    $payload .= 'mail=' . $email . '&';
+    $payload .= 'address=' . $address . '&';
+    $payload .= 'city=' . $city . '&';
+    $payload .= 'country=US&';
+    $payload .= 'state=' . $state . '&';
+    $payload .= 'zip=' . $zip . '&';
+    $payload .= 'payment_method=credit&card_number=4111111111111111&card_expiration_date=6&card_expiration_year=2014&card_cvv=111&recurs_monthly=false';
+
+    /*
     $submission = array(
       'amount' => 10,
       'other_amount' => '',
@@ -52,6 +70,7 @@ if(($handle = fopen($filename, 'r')) !== FALSE)
 
     $payload = json_encode($submission);
     print_r($payload);
+    */
 
     //open connection
     $ch = curl_init();
@@ -63,7 +82,7 @@ if(($handle = fopen($filename, 'r')) !== FALSE)
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, array('X-CSRF-TOKEN: bTQ5V4d9ArYCSQORv7mdcV5Qgyc7WAKcqmKYexhvpIU', 'Content-Type: application/json', 'Content-Length: ' . strlen($payload)));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array('X-CSRF-TOKEN: bTQ5V4d9ArYCSQORv7mdcV5Qgyc7WAKcqmKYexhvpIU', 'Content-Type: application/x-www-form-urlencoded', 'Content-Length: ' . strlen($payload)));
     //execute post
     $result = curl_exec($ch);
     print_r($result);
