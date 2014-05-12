@@ -1,0 +1,39 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions for the springboard_geo module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function springboard_geo_schema() {
+  $schema['springboard_geo'] = array(
+    'description' => 'Stores data for geocoding donation nodes.',
+    'fields' => array(
+      'oid' => array(
+        'description' => 'The order id.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'latitude' => array(
+        'description' => 'Donor\'s address latitude.',
+        'type' => 'text',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+      ),
+      'longitude' => array(
+        'description' => 'Donor\'s address longitude.',
+        'type' => 'text',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('oid'),
+  );
+  return $schema;
+}
+
+function springboard_geo_uninstall() {
+}

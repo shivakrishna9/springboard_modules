@@ -1,0 +1,66 @@
+<?php
+
+/**
+ * @file
+ * This is the file description for springboard_geo module.
+ *
+ */
+
+
+/**
+ * Implements hook_fundraiser_donation_post_submit().
+ */
+function springboard_geo_fundraiser_donation_post_submit($form, $form_state, $donation) {
+ 
+ // Handle behavior if donation succeeds
+  if (isset($donation->result['success'])) {
+	$address = $donation->donation['address'];
+	$city = $donation->donation['city'];
+	$state = $donation->donation['state'];
+	$zip = $donation->donation['zip'];
+	$oid = $donation->did; //order ID
+
+	// building the JSON URL string for Google API call 
+    $google_address = str_replace(' ', '+', trim($address)).",";
+    $google_city  = '+'.str_replace(' ', '+', trim($city)).",";
+    $google_state = '+'.str_replace(' ', '+', trim($state));
+    $google_zip = isset($zip)? '+'.str_replace(' ', '', trim($zip)) : '';
+
+    //combining values and creating google string
+	$google_addr_str = $google_address.$google_city.$google_state.$google_zip;       
+	$url = "http://maps.google.com/maps/api/geocode/json?address=$google_addr_str&sensor=false";
+	
+	//pulling data
+	$jsonData   = file_get_contents($url);
+	$data = json_decode($jsonData);
+
+    //retrieving lat and long
+	$xlat = $data->{'results'}[0]->{'geometry'}->{'location'}->{'lat'};
+	$xlong = $data->{'results'}[0]->{'geometry'}->{'location'}->{'lng'};
+	
+	//confirm address and geocode by printing to screen
+	// print "<h1>ADDRESS = $address $city $state $zip</h1>";
+	// print "<h1> LAT/LONG = " . $xlat.",".$xlong . "</h1>";
+	// print "<h1>OID = $oid</h1>";
+	
+    springboard_geo_save($xlat, $xlong, $oid);
+  }
+}
+
+
+/**
+ * Save latitude and longitude to database
+ *
+ * @param string $latitude
+ *   Latitude of donation.
+ * @param null $data
+ *   Longitude of donation.
+ */
+function springboard_geo_save($latitude, $longitude, $oid) {
+  $record = array(
+    'oid' => $oid, 
+    'latitude' => $latitude,
+    'longitude' => $longitude,
+  );
+  drupal_write_record('springboard_geo', $record);
+}

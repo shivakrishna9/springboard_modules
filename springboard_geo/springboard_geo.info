@@ -1,0 +1,11 @@
+name = "Springboard Geocoding"
+description = "Provides geocoding for fundraiser submitted data"
+package = "Jackson River Springboard - extras"
+
+core = 7.x
+version = 7.x-4.x-dev
+
+# configure = springboard/options/geo
+
+dependencies[] = fundraiser
+
