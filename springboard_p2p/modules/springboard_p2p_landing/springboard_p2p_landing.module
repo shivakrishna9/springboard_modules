@@ -1,0 +1,20 @@
+<?php
+/**
+ * @file
+ * Code for the springboard P2P Landing feature.
+ */
+
+include_once 'springboard_p2p_landing.features.inc';
+
+
+/**
+ * Specified ctools plugins overrides
+ *
+ * Implements hook_ctools_plugin_directory();
+ */
+function springboard_p2p_landing_ctools_plugin_directory($owner, $plugin_type) {
+  $modules = array('panels', 'ctools');
+  if (in_array($owner, $modules) && !empty($plugin_type)) {
+    return "plugins/$plugin_type";
+  }
+}

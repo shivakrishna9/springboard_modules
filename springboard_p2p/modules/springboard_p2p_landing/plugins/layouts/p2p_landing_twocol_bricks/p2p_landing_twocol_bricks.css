@@ -1,0 +1,47 @@
+
+.panel-2col-bricks {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.panel-2col-bricks .panel-col-top,
+.panel-2col-bricks .panel-col-middle,
+.panel-2col-bricks .panel-col-bottom { 
+  width: 99.9%; 
+  clear: both;
+}
+
+.panel-2col-bricks .panel-col-top .inside,
+.panel-2col-bricks .panel-col-middle .inside {
+  margin-bottom: .5em;
+}
+
+.panel-2col-bricks .panel-col-first {
+  display: inline-block;
+  vertical-align: top;
+  width: 71.1%;
+}
+* html .panel-2col-bricks .panel-col-first {
+  width: 70.9%;
+}
+
+.panel-2col-bricks .panel-col-first .inside { 
+  margin: 0 .5em .5em 0;
+}
+
+.panel-2col-bricks .panel-col-last {
+  display: inline-block;
+  vertical-align: top;
+  width: 28.5%;
+}
+* html .panel-2col-bricks .panel-col-last {
+  width: 28.5%;
+}
+
+.panel-2col-bricks .panel-col-last .inside { 
+  margin: 0 0 .5em .5em;
+}
+
+.panel-2col-bricks .panel-separator {
+  margin: 0 0 1em 0;
+}
