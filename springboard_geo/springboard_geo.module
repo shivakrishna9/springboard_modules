@@ -34,7 +34,8 @@ function springboard_geo_fundraiser_donation_post_submit($form, $form_state, $do
 	$city = $donation->donation['city'];
 	$state = $donation->donation['state'];
 	$zip = $donation->donation['zip'];
-	
+	$oid = $donation->did; //order ID
+
 	// building the JSON URL string for Google API call 
     $google_address = str_replace(' ', '+', trim($address)).",";
     $google_city  = '+'.str_replace(' ', '+', trim($city)).",";
@@ -54,11 +55,30 @@ function springboard_geo_fundraiser_donation_post_submit($form, $form_state, $do
 	$xlong = $data->{'results'}[0]->{'geometry'}->{'location'}->{'lng'};
 	
 	//confirm address and geocode
-	print "<h1>ADDRESS = $address $city $state $country $zip</h1>";
+	print "<h1>ADDRESS = $address $city $state $zip</h1>";
 	print "<h1> LAT/LONG = " . $xlat.",".$xlong . "</h1>";
+	print "<h1>OID = $oid</h1>";
+	
+    springboard_geo_save($xlat, $xlong, $oid);
+
   }
   return $form_state;
 }
 
 
-
+/**
+ * Save latitude and longitude to database
+ *
+ * @param string $latitude
+ *   Latitude of donation.
+ * @param null $data
+ *   Longitude of donation.
+ */
+function springboard_geo_save($latitude, $longitude, $oid) {
+  $record = array(
+    'oid' => $oid, 
+    'latitude' => $latitude,
+    'longitude' => $longitude,
+  );
+  drupal_write_record('springboard_geo', $record);
+}
