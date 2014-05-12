@@ -6,8 +6,6 @@
 
 define('SPRINGBOARD_P2P_ROLE', 'Springboard P2P campaigner');
 
-include_once 'springboard_p2p.features.inc';
-
 /**
  * Implements hook_ctools_plugin_directory().
  */
