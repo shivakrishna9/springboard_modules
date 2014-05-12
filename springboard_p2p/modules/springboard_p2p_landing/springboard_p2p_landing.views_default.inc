@@ -22,6 +22,7 @@ function springboard_p2p_landing_views_default_views() {
 
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');
+  $handler->display->display_options['css_class'] = 'campaign-landing-view';
   $handler->display->display_options['use_more_always'] = FALSE;
   $handler->display->display_options['access']['type'] = 'perm';
   $handler->display->display_options['cache']['type'] = 'none';
@@ -29,7 +30,8 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['exposed_form']['type'] = 'basic';
   $handler->display->display_options['pager']['type'] = 'some';
   $handler->display->display_options['pager']['options']['items_per_page'] = '5';
-  $handler->display->display_options['style_plugin'] = 'default';
+  $handler->display->display_options['style_plugin'] = 'list';
+  $handler->display->display_options['style_options']['class'] = 'campaign-landing-grid';
   $handler->display->display_options['row_plugin'] = 'fields';
   /* No results behavior: Global: Text area */
   $handler->display->display_options['empty']['area']['id'] = 'area';
@@ -49,13 +51,21 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['fields']['title']['label'] = '';
   $handler->display->display_options['fields']['title']['alter']['word_boundary'] = FALSE;
   $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
+  $handler->display->display_options['fields']['title']['element_type'] = 'h2';
+  $handler->display->display_options['fields']['title']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['title']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['title']['link_to_node'] = FALSE;
   /* Field: Content: Upload a Campaign Image */
   $handler->display->display_options['fields']['field_p2p_campaign_images']['id'] = 'field_p2p_campaign_images';
   $handler->display->display_options['fields']['field_p2p_campaign_images']['table'] = 'field_data_field_p2p_campaign_images';
   $handler->display->display_options['fields']['field_p2p_campaign_images']['field'] = 'field_p2p_campaign_images';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['element_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['element_wrapper_type'] = '0';
   $handler->display->display_options['fields']['field_p2p_campaign_images']['click_sort_column'] = 'fid';
   $handler->display->display_options['fields']['field_p2p_campaign_images']['settings'] = array(
-    'image_style' => '',
+    'image_style' => 'campaign_image_landing',
     'image_link' => '',
   );
   $handler->display->display_options['fields']['field_p2p_campaign_images']['delta_limit'] = '1';
