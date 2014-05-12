@@ -10,13 +10,13 @@
 function springboard_p2p_personal_campaign_field_default_field_bases() {
   $field_bases = array();
 
-  // Exported field_base: 'field_fundraising_deadline'
-  $field_bases['field_fundraising_deadline'] = array(
+  // Exported field_base: 'field_p2p_fundraising_deadline'
+  $field_bases['field_p2p_fundraising_deadline'] = array(
     'active' => 1,
     'cardinality' => 1,
     'deleted' => 0,
     'entity_types' => array(),
-    'field_name' => 'field_fundraising_deadline',
+    'field_name' => 'field_p2p_fundraising_deadline',
     'foreign keys' => array(),
     'indexes' => array(),
     'locked' => 0,
@@ -151,13 +151,13 @@ function springboard_p2p_personal_campaign_field_default_field_bases() {
     'type' => 'number_decimal',
   );
 
-  // Exported field_base: 'field_personal_campaign_url'
-  $field_bases['field_personal_campaign_url'] = array(
+  // Exported field_base: 'field_p2p_personal_campaign_url'
+  $field_bases['field_p2p_personal_campaign_url'] = array(
     'active' => 1,
     'cardinality' => 1,
     'deleted' => 0,
     'entity_types' => array(),
-    'field_name' => 'field_personal_campaign_url',
+    'field_name' => 'field_p2p_personal_campaign_url',
     'foreign keys' => array(
       'format' => array(
         'columns' => array(

@@ -55,8 +55,8 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-p2p_personal_campaign-field_fundraising_deadline'
-  $field_instances['node-p2p_personal_campaign-field_fundraising_deadline'] = array(
+  // Exported field_instance: 'node-p2p_personal_campaign-field_p2p_fundraising_deadline'
+  $field_instances['node-p2p_personal_campaign-field_p2p_fundraising_deadline'] = array(
     'bundle' => 'p2p_personal_campaign',
     'deleted' => 0,
     'description' => '',
@@ -82,7 +82,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
       ),
     ),
     'entity_type' => 'node',
-    'field_name' => 'field_fundraising_deadline',
+    'field_name' => 'field_p2p_fundraising_deadline',
     'label' => 'Fundraising Deadline',
     'required' => 0,
     'settings' => array(
@@ -322,8 +322,8 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-p2p_personal_campaign-field_personal_campaign_url'
-  $field_instances['node-p2p_personal_campaign-field_personal_campaign_url'] = array(
+  // Exported field_instance: 'node-p2p_personal_campaign-field_p2p_personal_campaign_url'
+  $field_instances['node-p2p_personal_campaign-field_p2p_personal_campaign_url'] = array(
     'bundle' => 'p2p_personal_campaign',
     'default_value' => NULL,
     'deleted' => 0,
@@ -344,7 +344,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
       ),
     ),
     'entity_type' => 'node',
-    'field_name' => 'field_personal_campaign_url',
+    'field_name' => 'field_p2p_personal_campaign_url',
     'label' => 'Campaign URL',
     'required' => 0,
     'settings' => array(

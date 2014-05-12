@@ -276,10 +276,10 @@ function springboard_p2p_form_p2p_campaign_node_form_alter(&$form, &$form_state,
         }
       }
 
-      if (isset($category->field_p2p_form_header[$lang_code][0])) {
-        $form_header = $category->field_p2p_form_header[$lang_code][0];
-        unset($form_state['input']['field_p2p_form_header'][$lang_code][0]);
-        $form['field_p2p_form_header'][$lang_code][0]['#default_value']['fid'] = $form_header['fid'];
+      if (isset($category->field_p2p_campaign_banner[$lang_code][0])) {
+        $form_header = $category->field_p2p_campaign_banner[$lang_code][0];
+        unset($form_state['input']['field_p2p_campaign_banner'][$lang_code][0]);
+        $form['field_p2p_campaign_banner'][$lang_code][0]['#default_value']['fid'] = $form_header['fid'];
       }
 
       if (isset($category->field_p2p_video_embed[$lang_code][0])) {
@@ -483,12 +483,13 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
 function springboard_p2p_personal_campaign_validate(&$form, $form_state) {
   // Validate campaign url alias for uniqueness.
   $language = $form_state['values']['language'];
-  $alias = $form_state['values']['field_personal_campaign_url'][$language][0]['value'];
+
+  $alias = $form_state['values']['field_p2p_personal_campaign_url'][$language][0]['value'];
   if ($path = drupal_lookup_path('source', $alias)) {
     // We only want to throw a validation error if the campaign url is in use
     // by some other path.
     if (isset($form_state['node']) && $path != 'node/' . $form_state['node']->nid) {
-      form_set_error('field_personal_campaign_url', t('This url is already in use.'));
+      form_set_error('field_p2p_personal_campaign_url', t('This url is already in use.'));
     }
   }
 }
@@ -517,7 +518,8 @@ function springboard_p2p_personal_campaign_ajax(&$form, &$form_state) {
 function springboard_p2p_node_insert($node) {
   if ($node->type == 'p2p_personal_campaign') {
     // manage url alias for personal campaign node type
-    $alias = isset($node->field_personal_campaign_url[$node->language][0]['value']) ? $node->field_personal_campaign_url[$node->language][0]['value'] : FALSE;
+
+    $alias = isset($node->field_p2p_personal_campaign_url[$node->language][0]['value']) ? $node->field_p2p_personal_campaign_url[$node->language][0]['value'] : FALSE;
     // Discard existing alias settings if the node is being cloned.
     if ($alias && !isset($node->clone_from_original_nid)) {
       $path = array(
@@ -536,8 +538,8 @@ function springboard_p2p_node_update($node) {
   // manage url alias for personal campaign node type
   if ($node->type == 'p2p_personal_campaign') {
     $alias = FALSE;
-    if (isset($node->field_personal_campaign_url[$node->language]) && is_array($node->field_personal_campaign_url[$node->language])) {
-      $alias = count($node->field_personal_campaign_url[$node->language]) ? $node->field_personal_campaign_url[$node->language][0]['value'] : FALSE;
+    if (isset($node->field_p2p_personal_campaign_url[$node->language]) && is_array($node->field_p2p_personal_campaign_url[$node->language])) {
+      $alias = count($node->field_p2p_personal_campaign_url[$node->language]) ? $node->field_p2p_personal_campaign_url[$node->language][0]['value'] : FALSE;
     }
     if ($alias) {
       $path = array(
@@ -1489,7 +1491,7 @@ function springboard_p2p_save_personal_campaign_action($record) {
  *   The form element for the header image.
  */
 function springbaord_p2p_format_campaign_form_header($campaign) {
-  if ($campaign->type == 'p2p_campaign' && isset($campaign->field_p2p_form_header) && !empty($campaign->field_p2p_form_header[$campaign->language])) {
+  if ($campaign->type == 'p2p_campaign' && isset($campaign->field_p2p_campaign_banner) && !empty($campaign->field_p2p_campaign_banner[$campaign->language])) {
 
     $display = array(
       'settings' => array(
@@ -1504,7 +1506,7 @@ function springbaord_p2p_format_campaign_form_header($campaign) {
       array(),
       array(),
       $campaign->language,
-      $campaign->field_p2p_form_header[$campaign->language],
+      $campaign->field_p2p_campaign_banner[$campaign->language],
       $display
     );
   }
