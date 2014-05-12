@@ -1,0 +1,12 @@
+name = Springboard Leftronic
+description = Pushes Springboard activites to Leftronic's Real-time Dashboards
+package = Jackson River Springboard - extras
+core = 7.x
+version = 7.x-4.x
+configure = admin/config/services/springboard_leftronic
+
+dependencies[] = fundraiser
+
+files[] = includes/leftronic.php
+
+php = 5.3

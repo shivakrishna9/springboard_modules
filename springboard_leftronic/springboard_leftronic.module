@@ -1,0 +1,100 @@
+<?php
+
+/**
+ * @file
+ * Provides Springboard integration with Leftronic's Real-time Dashboards.
+ */
+
+function springboard_leftronic_fundraiser_donation_post_submit($form, $form_state, $donation) {
+  dsm($donation);
+}
+
+/**
+ * Implements hook_fundraiser_donation_success().
+ */
+function springboard_leftronic_fundraiser_donation_success($donation) {
+  // Get a reference to a Leftronic object.
+  $leftronic = new Leftronic("EBctDdIVjUtDDp2Z1Oa0WgHZuzRDxil8");
+
+  // Push.
+  springboard_leftronic_push_stats($leftronic, $donation);
+  springboard_leftronic_push_donation($leftronic, $donation);
+  springboard_leftronic_push_donor($leftronic, $donation);
+  springboard_leftronic_push_sustainers($leftronic, $donation);
+}
+
+/**
+ * Push daily stats (total, count, average).
+ */
+function springboard_leftronic_push_stats($leftronic, $donation) {
+  $stats = springboard_leftronic_calculate_daily_stats();
+
+  $total_amount = new stdClass();
+  $total_amount->prefix = '$';
+  $total_amount->number = $stats->total_amount;
+
+  $average = new stdClass();
+  $average->prefix = '$';
+  $average->number = $stats->average;
+
+  $leftronic->pushNumber("totalDonationAmountToday", $total_amount);
+  $leftronic->pushNumber("numberOfDonationsToday", $stats->total_count);
+  $leftronic->pushNumber("averageDonationAmountToday", $average);
+}
+
+/**
+ * Push sustainer count.
+ */
+function springboard_leftronic_push_sustainers($leftronic, $donation) {
+  if ($donation->donation['recurs_monthly']) {
+    $sustainers = new stdClass();
+    $sustainers->delta = 1;
+    $leftronic->pushNumber('todaysSustainers', $sustainers);
+  }
+}
+
+/**
+ * Push donation amount.
+ */
+function springboard_leftronic_push_donation($leftronic, $donation) {
+  $amount = new stdClass();
+  $amount->prefix = '$';
+  $amount->number = $donation->donation['amount'];
+  $leftronic->pushNumber("todaysDonations", $amount);
+}
+
+/**
+ * Push donor info.
+ */
+function springboard_leftronic_push_donor($leftronic, $donation) {
+  $donor_name = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
+  $donor_email = $donation->donation['mail'];
+  $leftronic->pushText('latestDonors', $donor_name, $donor_email);
+}
+
+/**
+ * Calculates donation statistics for the current date.
+ */
+function springboard_leftronic_calculate_daily_stats() {
+  $month = date('n');
+  $day = date('j');
+  $year = date('Y');
+
+  $result = db_query(
+    "SELECT
+      sum(amount) as total_amount,
+      count(*) as total_count,
+      avg(amount) as average
+    FROM commerce_payment_transaction cpt
+    INNER JOIN commerce_order c on c.order_id = cpt.order_id
+    WHERE c.status = 'payment_received'
+    AND c.created between :start_date and :end_date",
+    array(':start_date' => mktime(00, 00, 00, $month, $day, $year), ':end_date' => mktime(23, 23, 59, $month, $day, $year))
+  );
+
+  $stats = $result->fetchObject();
+  $stats->total_amount = commerce_currency_amount_to_decimal($stats->total_amount, 'USD');
+  $stats->average = commerce_currency_amount_to_decimal($stats->average, 'USD');
+
+  return $stats;
+}
