@@ -5,10 +5,6 @@
  * Provides Springboard integration with Leftronic's Real-time Dashboards.
  */
 
-function springboard_leftronic_fundraiser_donation_post_submit($form, $form_state, $donation) {
-  dsm($donation);
-}
-
 /**
  * Implements hook_fundraiser_donation_success().
  */
