@@ -19,8 +19,8 @@ function springboard_ga_schema() {
       ),
       'latitude' => array(
         'description' => 'Donor\'s address latitude.',
-        'type' => 'int',
-        'unsigned' => TRUE,
+        'type' => 'text',
+        'unsigned' => FALSE,
         'not null' => TRUE,
       ),
       'longitude' => array(
