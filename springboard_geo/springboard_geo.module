@@ -6,22 +6,6 @@
  *
  */
 
-/**
- * Implements hook_menu().
- */
-// function springboard_ga_menu() {
-//   $items = array();
-//   $items['springboard/options/geo'] = array(
-//     'title' => 'Springboard Geocoding Configuration',
-//     'description' => 'Configuration for the Springboard Geocoding  module.',
-//     'page callback' => 'drupal_get_form',
-//     'page arguments' => array('springboard_geo_settings_form'),
-//     'access arguments' => array('administer springboard'),
-//     'type' => MENU_NORMAL_ITEM,
-//   );
-//   return $items;
-// }
-
 
 /**
  * Implements hook_fundraiser_donation_post_submit().
@@ -54,13 +38,12 @@ function springboard_geo_fundraiser_donation_post_submit($form, $form_state, $do
 	$xlat = $data->{'results'}[0]->{'geometry'}->{'location'}->{'lat'};
 	$xlong = $data->{'results'}[0]->{'geometry'}->{'location'}->{'lng'};
 	
-	//confirm address and geocode
-	print "<h1>ADDRESS = $address $city $state $zip</h1>";
-	print "<h1> LAT/LONG = " . $xlat.",".$xlong . "</h1>";
-	print "<h1>OID = $oid</h1>";
+	//confirm address and geocode by printing to screen
+	// print "<h1>ADDRESS = $address $city $state $zip</h1>";
+	// print "<h1> LAT/LONG = " . $xlat.",".$xlong . "</h1>";
+	// print "<h1>OID = $oid</h1>";
 	
     springboard_geo_save($xlat, $xlong, $oid);
-
   }
   return $form_state;
 }
