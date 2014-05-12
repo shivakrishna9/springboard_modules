@@ -60,8 +60,10 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['fields']['field_p2p_campaign_images']['id'] = 'field_p2p_campaign_images';
   $handler->display->display_options['fields']['field_p2p_campaign_images']['table'] = 'field_data_field_p2p_campaign_images';
   $handler->display->display_options['fields']['field_p2p_campaign_images']['field'] = 'field_p2p_campaign_images';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['label'] = '';
   $handler->display->display_options['fields']['field_p2p_campaign_images']['element_type'] = '0';
   $handler->display->display_options['fields']['field_p2p_campaign_images']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['field_p2p_campaign_images']['element_wrapper_type'] = '0';
   $handler->display->display_options['fields']['field_p2p_campaign_images']['click_sort_column'] = 'fid';
   $handler->display->display_options['fields']['field_p2p_campaign_images']['settings'] = array(
@@ -70,6 +72,27 @@ function springboard_p2p_landing_views_default_views() {
   );
   $handler->display->display_options['fields']['field_p2p_campaign_images']['delta_limit'] = '1';
   $handler->display->display_options['fields']['field_p2p_campaign_images']['delta_offset'] = '0';
+  /* Field: Content: Body */
+  $handler->display->display_options['fields']['body']['id'] = 'body';
+  $handler->display->display_options['fields']['body']['table'] = 'field_data_body';
+  $handler->display->display_options['fields']['body']['field'] = 'body';
+  $handler->display->display_options['fields']['body']['label'] = '';
+  $handler->display->display_options['fields']['body']['alter']['max_length'] = '160';
+  $handler->display->display_options['fields']['body']['alter']['trim'] = TRUE;
+  $handler->display->display_options['fields']['body']['element_type'] = 'p';
+  $handler->display->display_options['fields']['body']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['body']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['body']['element_wrapper_type'] = '0';
+  /* Field: Content: Link */
+  $handler->display->display_options['fields']['view_node']['id'] = 'view_node';
+  $handler->display->display_options['fields']['view_node']['table'] = 'views_entity_node';
+  $handler->display->display_options['fields']['view_node']['field'] = 'view_node';
+  $handler->display->display_options['fields']['view_node']['label'] = '';
+  $handler->display->display_options['fields']['view_node']['element_type'] = 'span';
+  $handler->display->display_options['fields']['view_node']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['view_node']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['view_node']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['view_node']['text'] = 'Get Started';
   /* Contextual filter: Content: Nid */
   $handler->display->display_options['arguments']['nid']['id'] = 'nid';
   $handler->display->display_options['arguments']['nid']['table'] = 'node';

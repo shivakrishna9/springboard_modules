@@ -6,7 +6,6 @@
 
 include_once 'springboard_p2p_landing.features.inc';
 
-
 /**
  * Specified ctools plugins overrides
  *
