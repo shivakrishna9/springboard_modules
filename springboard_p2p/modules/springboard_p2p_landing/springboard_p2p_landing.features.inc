@@ -25,7 +25,7 @@ function springboard_p2p_landing_image_default_styles() {
   // Exported image style: campaign_image_landing.
   $styles['campaign_image_landing'] = array(
     'name' => 'campaign_image_landing',
-    'label' => 'Campaign Image Landing',
+    'label' => 'Campaign Image Thumb',
     'effects' => array(
       1 => array(
         'label' => 'Scale',
@@ -41,7 +41,23 @@ function springboard_p2p_landing_image_default_styles() {
           'height' => '',
           'upscale' => 0,
         ),
-        'weight' => 1,
+        'weight' => -10,
+      ),
+      3 => array(
+        'label' => 'Crop',
+        'help' => 'Cropping will remove portions of an image to make it the specified dimensions.',
+        'effect callback' => 'image_crop_effect',
+        'dimensions callback' => 'image_resize_dimensions',
+        'form callback' => 'image_crop_form',
+        'summary theme' => 'image_crop_summary',
+        'module' => 'image',
+        'name' => 'image_crop',
+        'data' => array(
+          'width' => 370,
+          'height' => 170,
+          'anchor' => 'center-center',
+        ),
+        'weight' => -9,
       ),
     ),
   );

@@ -79,3 +79,81 @@ span.slide-wrapper {
   background: #fffe00;
   color: #333;
 }
+
+
+/* -- FLUID GRID STYLES -- */
+
+
+ul.campaign-landing-grid {
+  margin-bottom: 40px;
+  text-align: justify;
+  font-size: 0.1px;
+}
+
+ul.campaign-landing-grid * {
+  text-align: left;
+}
+
+ul.campaign-landing-grid h2.p2p-thumb-title {
+  color: #444;
+  font-size: 22px;
+  line-height: 1.2em;
+}
+
+ul.campaign-landing-grid p,
+ul.campaign-landing-grid a {
+  font-size: 14px;
+}
+
+.view-content .campaign-landing-grid li {
+  position: relative;
+  display: inline-block;
+  margin-bottom: .5%;
+  vertical-align: top;
+}
+
+.campaign-landing-grid:after {
+  display: inline-block;
+  width: 100%;
+  content: '';
+}
+
+.campaign-landing-grid .placeholder {
+  padding: 0;
+}
+
+span.node-edit {
+  display: block;
+}
+
+.campaign-node-link a {
+  padding: 4px 8px;
+  background: #646464;
+  color: #fff;
+}
+
+
+/******************  Media queries, these should go last */
+@media (min-width: 769px) {
+
+  .view-content .campaign-landing-grid li {
+    width: 44%;
+  }
+
+}
+
+@media (max-width: 768px) {
+
+  .view-content .campaign-landing-grid li {
+    width: 44%;
+  }
+
+}
+
+@media (max-width: 480px) {
+
+  .view-content .campaign-landing-grid li {
+    width: 99%;
+  }
+
+}
