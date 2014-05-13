@@ -108,8 +108,10 @@ ul.campaign-landing-grid a {
 .view-content .campaign-landing-grid li {
   position: relative;
   display: inline-block;
-  margin-bottom: .5%;
   vertical-align: top;
+  border: 1px solid #a6a6a6;
+  padding: 9px;
+  margin: 2% 0;
 }
 
 .campaign-landing-grid:after {
