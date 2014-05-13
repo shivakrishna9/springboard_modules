@@ -22,6 +22,7 @@ function springboard_p2p_landing_views_default_views() {
 
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');
+  $handler->display->display_options['css_class'] = 'p2p-campaign-landing-slideshow';
   $handler->display->display_options['use_more_always'] = FALSE;
   $handler->display->display_options['access']['type'] = 'perm';
   $handler->display->display_options['cache']['type'] = 'none';
@@ -38,6 +39,18 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['relationships']['reverse_field_p2p_slide_show_node']['id'] = 'reverse_field_p2p_slide_show_node';
   $handler->display->display_options['relationships']['reverse_field_p2p_slide_show_node']['table'] = 'node';
   $handler->display->display_options['relationships']['reverse_field_p2p_slide_show_node']['field'] = 'reverse_field_p2p_slide_show_node';
+  /* Field: Content: Link */
+  $handler->display->display_options['fields']['view_node']['id'] = 'view_node';
+  $handler->display->display_options['fields']['view_node']['table'] = 'views_entity_node';
+  $handler->display->display_options['fields']['view_node']['field'] = 'view_node';
+  $handler->display->display_options['fields']['view_node']['label'] = '';
+  $handler->display->display_options['fields']['view_node']['element_type'] = 'h2';
+  $handler->display->display_options['fields']['view_node']['element_class'] = 'slide-link';
+  $handler->display->display_options['fields']['view_node']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['view_node']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['view_node']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['view_node']['element_default_classes'] = FALSE;
+  $handler->display->display_options['fields']['view_node']['text'] = 'Get Started';
   /* Field: Content: Landing page slider */
   $handler->display->display_options['fields']['field_p2p_campaign_slider']['id'] = 'field_p2p_campaign_slider';
   $handler->display->display_options['fields']['field_p2p_campaign_slider']['table'] = 'field_data_field_p2p_campaign_slider';
@@ -87,8 +100,8 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['filters']['field_p2p_slide_show_target_id']['field'] = 'field_p2p_slide_show_target_id';
   $handler->display->display_options['filters']['field_p2p_slide_show_target_id']['operator'] = 'not empty';
 
-  /* Display: Content pane */
-  $handler = $view->new_display('panel_pane', 'Content pane', 'panel_pane_1');
+  /* Display: Slideshow */
+  $handler = $view->new_display('panel_pane', 'Slideshow', 'panel_pane_1');
   $export['p2p_campaign_landing_slideshow'] = $view;
 
   $view = new view();

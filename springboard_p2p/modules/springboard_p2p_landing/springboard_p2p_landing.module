@@ -125,4 +125,32 @@ function springboard_p2p_landing_page_alter(&$cache, $vars) {
   );
   drupal_render($p2p_landing_scripts);
 
+  // Custom css.
+  $p2p_landing_css = array(
+    '#attached' => array(
+      'css' => array(
+        $mod_path . '/css/p2p-landing.css' => array(
+          'group' => CSS_THEME,
+          'weight' => 9999,
+        ),
+      ),
+    ),
+  );
+  drupal_render($p2p_landing_css);
+
+// Check to see if springboard_frontend is the active theme. if not, add font awesome in.
+  global $custom_theme;
+  $custom_theme = variable_get('theme_default', 'springboard_frontend');
+  $theme = $custom_theme;
+  $theme_key = $theme;
+
+// If not springboard_frontend, add font awesome cdn.
+  if ($theme_key == 'springboard_frontend') {
+  }
+  else {
+    drupal_add_css('//netdna.bootstrapcdn.com/font-awesome/4.0.1/css/font-awesome.css', array(
+        'type' => 'external',
+      ));
+  }
+
 }

@@ -15,12 +15,13 @@
             animation: "slide",
             controlNav: false,
             pauseOnHover: true,
-            slideshowSpeed: 6000,
-            animationSpeed: 200
+            slideshowSpeed: 336000,
+            animationSpeed: 200,
+            prevText: "",           //String: Set the text for the "previous" directionNav item
+            nextText: ""              //String: Set the text for the "next" directionNav item
           });
         });
       }
-
 
       // end jquery.
     }};
