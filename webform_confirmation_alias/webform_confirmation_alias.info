@@ -1,0 +1,7 @@
+name = Fundraiser Webform Confirmation Aliases
+description = This implements custom aliased confirmation paths per webform.
+core = 7.x
+package = Jackson River Springboard
+dependencies[] = webform
+dependencies[] = fundraiser
+version = 7.x-4.x-dev
