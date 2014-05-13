@@ -17,13 +17,6 @@ function springboard_p2p_landing_ctools_plugin_api($module = NULL, $api = NULL) 
 }
 
 /**
- * Implements hook_views_api().
- */
-function springboard_p2p_landing_views_api($module = NULL, $api = NULL) {
-  return array("api" => "3.0");
-}
-
-/**
  * Implements hook_image_default_styles().
  */
 function springboard_p2p_landing_image_default_styles() {

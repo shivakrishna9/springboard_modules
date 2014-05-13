@@ -9,18 +9,13 @@
       // End drupal calls.
 
       // Instantiate Flexslider.
-      if ($().flexslider) {
-        $('.flexslider').once(function () {
-          $(this).flexslider({
-            animation: "slide",
-            controlNav: false,
-            pauseOnHover: true,
-            slideshowSpeed: 6000,
-            animationSpeed: 200
+      if($().flexslider) {
+        $(window).load(function () {
+          $('.flexslider').once(function () {
+            $(this).flexslider({prevText: "", nextText: "", controlNav: false,  pauseOnHover: true, slideshowSpeed: 6000});
           });
         });
       }
-
 
       // end jquery.
     }};
