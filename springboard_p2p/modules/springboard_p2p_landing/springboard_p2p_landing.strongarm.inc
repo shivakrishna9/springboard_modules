@@ -96,6 +96,20 @@ function springboard_p2p_landing_strongarm() {
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
+  $strongarm->name = 'panelizer_node:p2p_campaign_landing:default_selection';
+  $strongarm->value = 'node:p2p_campaign_landing:default:default';
+  $export['panelizer_node:p2p_campaign_landing:default_selection'] = $strongarm;
+
+  $strongarm = new stdClass();
+  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
+  $strongarm->api_version = 1;
+  $strongarm->name = 'panelizer_node:p2p_campaign_landing:page_manager_selection';
+  $strongarm->value = 'node:p2p_campaign_landing:default';
+  $export['panelizer_node:p2p_campaign_landing:page_manager_selection'] = $strongarm;
+
+  $strongarm = new stdClass();
+  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
+  $strongarm->api_version = 1;
   $strongarm->name = 'panelizer_node:p2p_campaign_landing_allowed_layouts';
   $strongarm->value = 'O:22:"panels_allowed_layouts":4:{s:9:"allow_new";b:1;s:11:"module_name";s:35:"panelizer_node:p2p_campaign_landing";s:23:"allowed_layout_settings";a:9:{s:8:"flexible";b:1;s:14:"twocol_stacked";b:1;s:13:"twocol_bricks";b:1;s:6:"twocol";b:1;s:25:"threecol_33_34_33_stacked";b:1;s:17:"threecol_33_34_33";b:1;s:25:"threecol_25_50_25_stacked";b:1;s:17:"threecol_25_50_25";b:1;s:6:"onecol";b:1;}s:10:"form_state";N;}';
   $export['panelizer_node:p2p_campaign_landing_allowed_layouts'] = $strongarm;

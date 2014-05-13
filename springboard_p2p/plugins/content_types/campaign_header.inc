@@ -25,8 +25,20 @@ $plugin = array(
  * Render a single content pane.
  */
 function springboard_p2p_campaign_header_render($subtype, $conf, $panel_args, $context) {
+  $campaign = NULL;
   if (empty($context) || empty($context->data)) {
-    return;
+    if (isset($_GET['pcid']) && is_numeric($_GET['pcid'])) {
+      $node = node_load($_GET['pcid']);
+      if ($node->type == 'p2p_personal_campaign' && isset($node->field_p2p_campaign[$node->language][0]['target_id'])) {
+        $campaign = node_load($node->field_p2p_campaign[$node->language][0]['target_id']);
+      }
+      else {
+        return;
+      }
+    }
+    else {
+      return;
+    }
   }
 
   $node = $context->data;
@@ -37,15 +49,15 @@ function springboard_p2p_campaign_header_render($subtype, $conf, $panel_args, $c
   elseif ($node->type == 'p2p_personal_campaign' && isset($node->field_p2p_campaign[$node->language][0]['target_id'])) {
     $campaign = node_load($node->field_p2p_campaign[$node->language][0]['target_id']);
   }
-  else {
-    return;
+
+  if (!is_null($campaign)) {
+    // Build the content type block.
+    $block = new stdClass();
+    $block->title = 'Campaign header';
+    $block->content = springbaord_p2p_format_campaign_form_header($campaign);
+    return $block;
   }
 
-  // Build the content type block.
-  $block = new stdClass();
-  $block->title = 'Campaign header';
-  $block->content = springbaord_p2p_format_campaign_form_header($campaign);
-  return $block;
 }
 
 /**

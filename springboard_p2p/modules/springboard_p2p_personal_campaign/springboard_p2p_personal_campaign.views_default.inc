@@ -148,11 +148,11 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['fields']['field_p2p_campaign_progress']['click_sort_column'] = 'amount';
   $handler->display->display_options['fields']['field_p2p_campaign_progress']['type'] = 'springboard_p2p_fields_personal_campaign_progress_default';
   /* Field: Content: Fundraising Deadline */
-  $handler->display->display_options['fields']['field_fundraising_deadline']['id'] = 'field_fundraising_deadline';
-  $handler->display->display_options['fields']['field_fundraising_deadline']['table'] = 'field_data_field_fundraising_deadline';
-  $handler->display->display_options['fields']['field_fundraising_deadline']['field'] = 'field_fundraising_deadline';
-  $handler->display->display_options['fields']['field_fundraising_deadline']['label'] = 'Deadline';
-  $handler->display->display_options['fields']['field_fundraising_deadline']['settings'] = array(
+  $handler->display->display_options['fields']['field_p2p_fundraising_deadline']['id'] = 'field_p2p_fundraising_deadline';
+  $handler->display->display_options['fields']['field_p2p_fundraising_deadline']['table'] = 'field_data_field_p2p_fundraising_deadline';
+  $handler->display->display_options['fields']['field_p2p_fundraising_deadline']['field'] = 'field_p2p_fundraising_deadline';
+  $handler->display->display_options['fields']['field_p2p_fundraising_deadline']['label'] = 'Deadline';
+  $handler->display->display_options['fields']['field_p2p_fundraising_deadline']['settings'] = array(
     'format_type' => 'long',
     'fromto' => 'both',
     'multiple_number' => '',

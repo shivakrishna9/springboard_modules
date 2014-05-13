@@ -131,36 +131,6 @@ function springboard_p2p_personal_campaign_field_default_field_bases() {
     'type' => 'springboard_p2p_fields_personal_campaign_progress',
   );
 
-  // Exported field_base: 'field_p2p_fundraising_deadline'
-  $field_bases['field_p2p_fundraising_deadline'] = array(
-    'active' => 1,
-    'cardinality' => 1,
-    'deleted' => 0,
-    'entity_types' => array(),
-    'field_name' => 'field_p2p_fundraising_deadline',
-    'foreign keys' => array(),
-    'indexes' => array(),
-    'locked' => 0,
-    'module' => 'date',
-    'settings' => array(
-      'cache_count' => 4,
-      'cache_enabled' => 0,
-      'granularity' => array(
-        'day' => 'day',
-        'hour' => 0,
-        'minute' => 0,
-        'month' => 'month',
-        'second' => 0,
-        'year' => 'year',
-      ),
-      'timezone_db' => '',
-      'todate' => '',
-      'tz_handling' => 'none',
-    ),
-    'translatable' => 0,
-    'type' => 'datetime',
-  );
-
   // Exported field_base: 'field_p2p_personal_campaign_goal'
   $field_bases['field_p2p_personal_campaign_goal'] = array(
     'active' => 1,
