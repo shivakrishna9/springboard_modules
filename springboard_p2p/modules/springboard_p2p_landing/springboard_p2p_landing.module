@@ -171,7 +171,7 @@ function springboard_p2p_landing_page_alter(&$cache, $vars) {
  */
 function springboard_p2p_landing_features_export_alter(&$export, $module_name) {
   // Override the default path for views.
-  if ($module_name == 'unicef_views' && !empty($export['features']['ctools']['views:views_default:3.0'])) {
+  if ($module_name == 'springboard_p2p_landing' && !empty($export['features']['ctools']['views:views_default:3.0'])) {
     unset($export['features']['ctools']['views:views_default:3.0']);
   }
 }
