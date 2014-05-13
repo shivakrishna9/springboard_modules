@@ -1,0 +1,106 @@
+<?php
+
+/**
+ * Implements hook_salesforce_genmap_map_field_info_alter().
+
+ */
+function salesforce_sync_tokens_salesforce_genmap_map_field_info_alter(&$fields, $node, $module) {
+  // Return a placeholder for our token field
+  $fields['tokens'] = array(
+    '#type' => 'tokens',
+    '#label' => t('Tokens'),
+    '#dedupe' => FALSE,
+    '#fields' => array(
+      'new-token' => t('Tokens'),
+    ),
+  );
+
+  // Add any current mappings
+  $map = salesforce_genmap_load_map($node->nid, $module);
+  if (!empty($map->field_map['tokens'])) {
+    foreach ($map->field_map['tokens'] as $token => $sf_field) {
+      $fields['tokens']['#fields'][$token] = $token;
+    }
+  }
+}
+
+function salesforce_sync_tokens_form_salesforce_genmap_map_form_alter(&$form, $form_state) {
+
+  $node = $form_state['build_info']['args'][0];
+  $map = salesforce_genmap_load_map($node->nid, $form['#module']);
+
+  //unset($form['field_map']['tokens']['#rows']['new-token']['label']['data']['#markup']);
+  unset($form['field_map']['tokens']['new-token']['label']['#markup']);
+  $form['field_map']['tokens']['new-token']['label'] += array(
+    '#type' => 'textfield',
+    '#parents' => array('field_map', 'tokens', 'new-token', 'token'),
+  );
+
+  // Add our submit handler
+  $form['#submit'][] = 'salesforce_sync_tokens_form_genmap_map_form_submit';
+}
+
+function salesforce_sync_tokens_form_genmap_map_form_submit($form, &$form_state) {
+  $node = $form_state['build_info']['args'][0];
+
+  $input_vars = $form_state['input']['field_map']['tokens'];
+
+  // New tokens will be found in the input values
+  if (!empty($form_state['input']['field_map']['tokens']['new-token']['token'])) {
+    $tokens[ $form_state['input']['field_map']['tokens']['new-token']['token'] ] = $form_state['input']['field_map']['tokens']['new-token']['sf_field'];
+  }
+
+  // Previous tokens will be found in the values
+  if (!empty($form_state['values']['field_map']['tokens'])) {
+    unset($form_state['values']['field_map']['tokens']['new-token']);
+    foreach ($form_state['values']['field_map']['tokens'] as $previous => $value) {
+      // doh, the unset values are only capture in the input, and with funky keys
+      $input_lookup = substr($previous, 0, -1);
+      $form_state['input']['field_map']['tokens'][$input_lookup];
+      if (!empty($form_state['input']['field_map']['tokens'][$input_lookup])) {
+        $tokens[ $previous ] = $value['sf_field'];
+      }
+    }
+  }
+
+  if (!empty($tokens)) {
+    // Load the map
+    $map = salesforce_genmap_load_map($node->nid, $form['#module']);
+
+    // Clear any previously mapped values
+    $map->field_map['tokens'] = array();
+
+    // loop through the tokens and make sure they are valid, add them to the map
+    foreach ($tokens as $token => $sf_field) {
+      $valid = token_scan($token);
+      if (!empty($valid)) {
+        $map->field_map['tokens'][$token] = $sf_field;
+      }
+    }
+
+    // Save the map
+    salesforce_genmap_save_map($map, $form['#module']);
+  }
+}
+
+function salesforce_sync_tokens_salesforce_genmap_map_fields_alter(&$fields, $context) {
+  if (empty($context['map']->field_map['tokens'])) {
+    return;
+  }
+
+  // Create a token set from the values, handle some known types
+  $token_set = array();
+  if ($context['module'] == 'salesforce_donation') {
+    $token_set['donation'] = $context['object'];
+    $token_set['node'] = $context['object']->node;
+  }
+  elseif (!empty($context['node'])) {
+    $token_set['node'] = $context['node'];
+  }
+
+  // Loop through each token array and perform the token replace
+  foreach ($context['map']->field_map['tokens'] as $token => $sf_field) {
+    $value = token_replace($token, $token_set, array('clear' => TRUE));
+    $fields[$sf_field] = $value;
+  }
+}

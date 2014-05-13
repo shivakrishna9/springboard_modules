@@ -1,0 +1,5 @@
+name = Salesforce Sync Tokens
+description = Use tokens in SF Sync maps
+package = Salesforce
+core = 7.x
+version = 7.x-1.x-dev
