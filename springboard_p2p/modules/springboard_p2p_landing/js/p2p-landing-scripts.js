@@ -12,7 +12,7 @@
       if($().flexslider) {
         $(window).load(function () {
           $('.flexslider').once(function () {
-            $(this).flexslider({prevText: "", nextText: ""});
+            $(this).flexslider({prevText: "", nextText: "", controlNav: false,  pauseOnHover: true, slideshowSpeed: 6000});
           });
         });
       }
