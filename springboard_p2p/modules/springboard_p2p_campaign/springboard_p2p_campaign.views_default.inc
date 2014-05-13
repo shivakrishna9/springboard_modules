@@ -181,16 +181,6 @@ function springboard_p2p_campaign_views_default_views() {
   $handler->display->display_options['fields']['field_p2p_campaign_goals_1']['field'] = 'field_p2p_campaign_goals';
   $handler->display->display_options['fields']['field_p2p_campaign_goals_1']['label'] = 'Goal';
   $handler->display->display_options['fields']['field_p2p_campaign_goals_1']['type'] = 'springboard_p2p_fields_campaign_goals_default';
-  /* Field: P2P: Campaign progress */
-  $handler->display->display_options['fields']['progress']['id'] = 'progress';
-  $handler->display->display_options['fields']['progress']['table'] = 'springboard_p2p_campaign_progress';
-  $handler->display->display_options['fields']['progress']['field'] = 'progress';
-  $handler->display->display_options['fields']['progress']['label'] = 'Progress';
-  /* Field: P2P: Campaign percent complete */
-  $handler->display->display_options['fields']['percent_complete']['id'] = 'percent_complete';
-  $handler->display->display_options['fields']['percent_complete']['table'] = 'springboard_p2p_campaign_percent_complete';
-  $handler->display->display_options['fields']['percent_complete']['field'] = 'percent_complete';
-  $handler->display->display_options['fields']['percent_complete']['label'] = 'Percent complete';
   /* Field: Content: Post date */
   $handler->display->display_options['fields']['created']['id'] = 'created';
   $handler->display->display_options['fields']['created']['table'] = 'node';
