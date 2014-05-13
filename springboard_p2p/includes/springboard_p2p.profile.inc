@@ -58,11 +58,3 @@ function springboard_p2p_complete_profile_form($form, &$form_state, $account) {
 
   return $form;
 }
-
-
-/**
- * Page callback for personal campaign dashboard.
- */
-function springboard_p2p_personal_campaigns_page($account) {
-
-}
