@@ -109,7 +109,7 @@ function springboard_p2p_schema() {
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
-        'description' => 'The type of the action. Either fundraiser or webform_user.',
+        'description' => 'The type of the action. Either donation or submission.',
         'default' => 'requested',
       ),
       'uid' => array(

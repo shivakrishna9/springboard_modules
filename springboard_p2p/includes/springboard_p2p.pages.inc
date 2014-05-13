@@ -15,9 +15,13 @@
  *   Render array.
  */
 function springboard_p2p_personal_dashboard($user) {
+  $dashboard_content = views_embed_view('p2p_personal_campaigns_by_campaigner', 'page');
   return array(
     'comingsoon' => array(
-      '#markup' => '<h2>Personal dashboard for ' . $user->name . ' coming soon</h2>',
+      '#markup' => '<h2>Personal campaign dashboard for ' . $user->name . '</h2>',
+    ),
+    'content' => array(
+      '#markup' => $dashboard_content,
     ),
   );
 }
