@@ -415,21 +415,6 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
       $form['field_p2p_campaign'][$language]['#default_value'] = $campaign_node->nid;
       $form['field_p2p_campaign'][$language]['#access'] = FALSE;
 
-      // Manage personal campaign goal fields.
-      $goal_type = springboard_p2p_get_goal_type_from_campaign($campaign_node);
-
-      switch ($goal_type) {
-        case 'amount':
-          $form['field_p2p_personal_submit_goal']['#access'] = FALSE;
-          break;
-
-        case 'submissions':
-          $form['field_p2p_personal_campaign_goal']['#access'] = FALSE;
-          break;
-        default:
-          break;
-      }
-
       // Images, default values from parent campaign, hide if edit is disabled.
       if (!$ajax) {
         $empty_image = $form['field_p2p_campaign_images'][$language][0];
@@ -460,6 +445,21 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
   }
   // Hide uneditable fields
   if ($campaign_node) {
+    // Manage personal campaign goal fields.
+    $goal_type = springboard_p2p_get_goal_type_from_campaign($campaign_node);
+
+    switch ($goal_type) {
+      case 'amount':
+        $form['field_p2p_personal_submit_goal']['#access'] = FALSE;
+        break;
+
+      case 'submissions':
+        $form['field_p2p_personal_campaign_goal']['#access'] = FALSE;
+        break;
+      default:
+        break;
+    }
+
     $video_editable = $campaign_node->field_p2p_video_embed_edit[$language][0]['value'] ? TRUE : FALSE;
     $images_editable = $campaign_node->field_p2p_images_edit[$language][0]['value'] ? TRUE : FALSE;
     $can_edit_body = $campaign_node->field_p2p_personal_intro_edit[$language][0]['value'];
@@ -486,8 +486,8 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
 function springboard_p2p_personal_campaign_validate(&$form, $form_state) {
   // Validate campaign url alias for uniqueness.
   $language = $form_state['values']['language'];
-  $alias = $form_state['values']['field_personal_campaign_url'][$language][0]['value'];
-  if ($path = drupal_lookup_path('source', $alias)) {
+  $alias = isset($form_state['values']['field_personal_campaign_url'][$language][0]['value']) ? $form_state['values']['field_personal_campaign_url'][$language][0]['value'] : FALSE;
+  if ($alias && $path = drupal_lookup_path('source', $alias)) {
     // We only want to throw a validation error if the campaign url is in use
     // by some other path.
     if (isset($form_state['node']) && $path != 'node/' . $form_state['node']->nid) {
