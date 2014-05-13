@@ -131,6 +131,10 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['fields']['title']['alter']['word_boundary'] = FALSE;
   $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
   $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
+  /* Field: Content: Submission Goal */
+  $handler->display->display_options['fields']['field_p2p_personal_submit_goal']['id'] = 'field_p2p_personal_submit_goal';
+  $handler->display->display_options['fields']['field_p2p_personal_submit_goal']['table'] = 'field_data_field_p2p_personal_submit_goal';
+  $handler->display->display_options['fields']['field_p2p_personal_submit_goal']['field'] = 'field_p2p_personal_submit_goal';
   /* Field: Content: Fundraising Goal */
   $handler->display->display_options['fields']['field_p2p_personal_campaign_goal']['id'] = 'field_p2p_personal_campaign_goal';
   $handler->display->display_options['fields']['field_p2p_personal_campaign_goal']['table'] = 'field_data_field_p2p_personal_campaign_goal';
@@ -191,6 +195,7 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['arguments']['uid']['validate']['type'] = 'user';
   $handler->display->display_options['arguments']['uid']['validate_options']['restrict_roles'] = TRUE;
   $handler->display->display_options['arguments']['uid']['validate_options']['roles'] = array(
+    3 => '3',
     6 => '6',
   );
   $handler->display->display_options['arguments']['uid']['validate']['fail'] = 'empty';
