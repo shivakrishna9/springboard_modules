@@ -73,6 +73,11 @@ function springboard_p2p_landing_ctools_plugin_directory($owner, $plugin_type) {
  */
 function springboard_p2p_landing_page_alter(&$cache, $vars) {
 
+  // Global node.
+  $node = menu_get_object();
+  // Only for p2p_campaign_landing page view.
+  if (!empty($node) && ($node->type == 'p2p_campaign_landing') && (arg(2) == NULL)) {
+
   // Define the library path with libraries present and without.
   if (function_exists('libraries_get_path')) {
     $library_path_flexsliderjs = libraries_get_path('flexslider');
@@ -92,7 +97,7 @@ function springboard_p2p_landing_page_alter(&$cache, $vars) {
       'js' => array(
         $library_path_flexsliderjs . '/jquery.flexslider.js' => array(
           'group' => JS_THEME,
-          'weight' => 999,
+          'weight' => 9998,
         ),
       ),
     ),
@@ -105,7 +110,7 @@ function springboard_p2p_landing_page_alter(&$cache, $vars) {
       'css' => array(
         $library_path_flexslidercss . '/flexslider.css' => array(
           'group' => CSS_THEME,
-          'weight' => 999,
+          'weight' => 9999,
         ),
       ),
     ),
@@ -118,7 +123,7 @@ function springboard_p2p_landing_page_alter(&$cache, $vars) {
       'js' => array(
         $mod_path . '/js/p2p-landing-scripts.js' => array(
           'group' => JS_THEME,
-          'weight' => 999,
+          'weight' => 9999,
         ),
       ),
     ),
@@ -153,8 +158,9 @@ function springboard_p2p_landing_page_alter(&$cache, $vars) {
       ));
   }
 
-}
+  }
 
+}
 
 /**
  * Implements hook_features_export_alter().
