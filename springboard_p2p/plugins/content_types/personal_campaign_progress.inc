@@ -26,11 +26,13 @@ $plugin = array(
  */
 function springboard_p2p_personal_campaign_progress_render($subtype, $conf, $panel_args, $context) {
   $campaign = NULL;
+  $personal_campaign = NULL;
   if (empty($context) || empty($context->data)) {
     if (isset($_GET['pcid']) && is_numeric($_GET['pcid'])) {
       $node = node_load($_GET['pcid']);
       if ($node->type == 'p2p_personal_campaign' && isset($node->field_p2p_campaign[$node->language][0]['target_id'])) {
         $campaign = node_load($node->field_p2p_campaign[$node->language][0]['target_id']);
+        $personal_campaign = $node;
       }
       else {
         return;
@@ -43,18 +45,35 @@ function springboard_p2p_personal_campaign_progress_render($subtype, $conf, $pan
 
   $node = $context->data;
 
-  if ($node->type == 'p2p_campaign') {
-    $campaign = $node;
-  }
-  elseif ($node->type == 'p2p_personal_campaign' && isset($node->field_p2p_campaign[$node->language][0]['target_id'])) {
+  if ($node->type == 'p2p_personal_campaign' && isset($node->field_p2p_campaign[$node->language][0]['target_id'])) {
     $campaign = node_load($node->field_p2p_campaign[$node->language][0]['target_id']);
+    $personal_campaign = $node;
   }
 
-  if (!is_null($campaign)) {
+  if (!is_null($campaign) && !is_null($personal_campaign)) {
+    $output = array();
+    $goal_type = springboard_p2p_get_goal_type_from_campaign($campaign);
+
+    $formatted_progress = springboard_p2p_format_progress($personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0], $goal_type);
+
+    $output[] = '<div class="personal-campaign-progress-container">';
+
+    $output[] = '<div class="personal-campaign-progress"><span>Progress:</span> ' . $formatted_progress . '</div>';
+    if ($goal_type == 'submissions') {
+      $formatted_goal = springboard_p2p_format_progress($personal_campaign->field_p2p_personal_submit_goal[$personal_campaign->language][0]['value'], $goal_type);
+      $output[] = '<div class="personal-campaign-goal"><span>Goal:</span> ' . $formatted_goal . '</div>';
+    }
+    elseif ($goal_type == 'amount') {
+      $formatted_goal = springboard_p2p_format_progress($personal_campaign->field_p2p_personal_campaign_goal[$personal_campaign->language][0]['value'], $goal_type);
+      $output[] = '<div class="personal-campaign-goal"><span>Goal:</span> ' . $formatted_goal . '</div>';
+    }
+
+    $output[] = '</div>';
+
     // Build the content type block.
     $block = new stdClass();
-    $block->title = 'Campaign header';
-    $block->content = springbaord_p2p_format_campaign_form_header($campaign);
+    $block->title = 'Personal campaign progress';
+    $block->content = implode('', $output);
     return $block;
   }
 }
