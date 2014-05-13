@@ -16,9 +16,11 @@ function springboard_p2p_register_page($form, &$form_state) {
   $campaign_id = springboard_p2p_get_campaign_id_from_request();
   if (!empty($campaign_id)) {
     $campaign = node_load($campaign_id);
-    $header = springbaord_p2p_format_campaign_form_header($campaign);
-    if (count($header)) {
-      $form['header'] = $header;
+    if (!empty($campaign)) {
+      $header = springbaord_p2p_format_campaign_form_header($campaign);
+      if (count($header)) {
+        $form['header'] = $header;
+      }
     }
   }
 

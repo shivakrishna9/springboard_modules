@@ -169,13 +169,6 @@ function springboard_p2p_theme() {
 }
 
 /**
- * Access callback for personal campaign dashboard.
- */
-function springboard_p2p_access_personal_campaign_dashboard() {
-  return TRUE;
-}
-
-/**
  * Implements hook_form_FORM_ID_alter().
  *
  * Remove the Save button from the View.
@@ -1063,12 +1056,12 @@ function springboard_p2p_set_redirect($form, &$form_state) {
   }
 
   // Default destination if nothing else works.
-  $form_state['redirect'] = 'springboard_p2p/dashboard/' . $uid;
+  $form_state['redirect'] = 'user/' . $uid . '/personal-campaigns';
 
   if (!empty($form_state['values']['springboard_p2p_campaign_nid'])) {
     $campaign_id = $form_state['values']['springboard_p2p_campaign_nid'];
     $campaign = node_load($campaign_id);
-    if ($campaign->type == 'p2p_campaign') {
+    if (is_object($campaign) && $campaign->type == 'p2p_campaign') {
       $private = springboard_p2p_campaign_is_private($campaign);
 
       $approval = new SpringbaordP2pPrivateCampaignApproval($uid, $campaign_id);
@@ -1076,7 +1069,7 @@ function springboard_p2p_set_redirect($form, &$form_state) {
       if ($private) {
         $approval->request();
         drupal_set_message('You have been added to the approval queue for ' . $campaign->title);
-        $form_state['redirect'] = 'springboard_p2p/dashboard/' . $uid;
+        $form_state['redirect'] = 'user/' . $uid . '/personal-campaigns';
 
         $account = user_load($uid);
 
@@ -1086,7 +1079,16 @@ function springboard_p2p_set_redirect($form, &$form_state) {
       else {
         $approval->approve();
         drupal_set_message('You can now create a personal campaign in ' . $campaign->title);
-        $form_state['redirect'] = 'node/add/p2p_personal_campaign?campaign=' . $campaign_id;
+
+        $form_state['redirect'] = array(
+          'node/add/p2p-personal-campaign',
+          array(
+            'query' => array(
+              'campaign' => $campaign_id,
+            ),
+          ),
+        );
+
       }
     }
   }
