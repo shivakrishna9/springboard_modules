@@ -95,6 +95,25 @@ function springboard_p2p_landing_panelizer_defaults() {
     $pane->uuid = '2b715f39-4aca-4454-b3ba-ee14443b1274';
     $display->content['new-2b715f39-4aca-4454-b3ba-ee14443b1274'] = $pane;
     $display->panels['middle_right'][0] = 'new-2b715f39-4aca-4454-b3ba-ee14443b1274';
+    $pane = new stdClass();
+    $pane->pid = 'new-9bb0248f-6996-43d9-bfae-970ef5cf9e44';
+    $pane->panel = 'top';
+    $pane->type = 'views_panes';
+    $pane->subtype = 'p2p_campaign_landing_slideshow-panel_pane_1';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array();
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 0;
+    $pane->locks = array();
+    $pane->uuid = '9bb0248f-6996-43d9-bfae-970ef5cf9e44';
+    $display->content['new-9bb0248f-6996-43d9-bfae-970ef5cf9e44'] = $pane;
+    $display->panels['top'][0] = 'new-9bb0248f-6996-43d9-bfae-970ef5cf9e44';
   $display->hide_title = PANELS_TITLE_FIXED;
   $display->title_pane = 'new-75fdd4db-bb0b-4436-b8ea-5454fc55fbf9';
   $panelizer->display = $display;

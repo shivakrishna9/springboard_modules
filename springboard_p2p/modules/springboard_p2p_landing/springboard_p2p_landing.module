@@ -12,8 +12,117 @@ include_once 'springboard_p2p_landing.features.inc';
  * Implements hook_ctools_plugin_directory();
  */
 function springboard_p2p_landing_ctools_plugin_directory($owner, $plugin_type) {
+  // Define the custom panels templates folder.
   $modules = array('panels', 'ctools');
   if (in_array($owner, $modules) && !empty($plugin_type)) {
     return "plugins/$plugin_type";
   }
+}
+
+/**
+ * Perform alterations before a page is rendered.
+ *
+ * Use this hook when you want to remove or alter elements at the page
+ * level, or add elements at the page level that depend on an other module's
+ * elements (this hook runs after hook_page_build().
+ *
+ * If you are making changes to entities such as forms, menus, or user
+ * profiles, use those objects' native alter hooks instead (hook_form_alter(),
+ * for example).
+ *
+ * The $page array contains top level elements for each block region:
+ *
+ * @code
+ *   $page['page_top']
+ *   $page['header']
+ *   $page['sidebar_first']
+ *   $page['content']
+ *   $page['sidebar_second']
+ *   $page['page_bottom']
+ * @endcode
+ *
+ * The 'content' element contains the main content of the current page, and its
+ * structure will vary depending on what module is responsible for building the
+ * page. Some legacy modules may not return structured content at all: their
+ * pre-rendered markup will be located in $page['content']['main']['#markup'].
+ *
+ * Pages built by Drupal's core Node and Blog modules use a standard structure:
+ *
+ * @code
+ *   // Node body.
+ *   $page['content']['system_main']['nodes'][$nid]['body']
+ *   // Array of links attached to the node (add comments, read more).
+ *   $page['content']['system_main']['nodes'][$nid]['links']
+ *   // The node object itself.
+ *   $page['content']['system_main']['nodes'][$nid]['#node']
+ *   // The results pager.
+ *   $page['content']['system_main']['pager']
+ * @endcode
+ *
+ * Blocks may be referenced by their module/delta pair within a region:
+ * @code
+ *   // The login block in the first sidebar region.
+ *   $page['sidebar_first']['user_login']['#block'];
+ * @endcode
+ *
+ * @param $page
+ *   Nested array of renderable elements that make up the page.
+ *
+ * @see hook_page_build()
+ * @see drupal_render_page()
+ */
+function springboard_p2p_landing_page_alter(&$cache, $vars) {
+
+  // Define the library path with libraries present and without.
+  if (function_exists('libraries_get_path')) {
+    $library_path_flexsliderjs = libraries_get_path('flexslider');
+    $library_path_flexslidercss = libraries_get_path('flexslider');
+  }
+  else {
+    $library_path_flexsliderjs = 'sites/all/libraries/flexslider/jquery.flexslider.js';
+    $library_path_flexslidercss = 'sites/all/libraries/flexslider/flexslider.css';
+  }
+
+  // Define the module path.
+  $mod_path = drupal_get_path('module', 'springboard_p2p_landing');
+
+  // Flexslider js.
+  $flexslider = array(
+    '#attached' => array(
+      'js' => array(
+        $library_path_flexsliderjs . '/jquery.flexslider.js' => array(
+          'group' => JS_LIBRARY,
+          'weight' => -999,
+        ),
+      ),
+    ),
+  );
+  drupal_render($flexslider);
+
+  // Flexslider css.
+  $flexslidercss = array(
+    '#attached' => array(
+      'css' => array(
+        $library_path_flexslidercss . '/flexslider.css' => array(
+          'group' => CSS_THEME,
+          'weight' => 999,
+        ),
+      ),
+    ),
+  );
+  drupal_render($flexslidercss);
+
+  // Custom scripts, let's load this last.
+  $p2p_landing_scripts = array(
+    '#attached' => array(
+      'js' => array(
+        $mod_path . '/js/p2p-landing-scripts.js' => array(
+          'group' => JS_THEME,
+          'weight' => 999,
+        ),
+      ),
+    ),
+  );
+  drupal_render($p2p_landing_scripts);
+
 }

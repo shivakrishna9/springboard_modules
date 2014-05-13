@@ -31,6 +31,8 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['pager']['options']['items_per_page'] = '6';
   $handler->display->display_options['pager']['options']['offset'] = '0';
   $handler->display->display_options['style_plugin'] = 'list';
+  $handler->display->display_options['style_options']['class'] = 'slides';
+  $handler->display->display_options['style_options']['wrapper_class'] = 'flexslider';
   $handler->display->display_options['row_plugin'] = 'fields';
   /* Relationship: Entity Reference: Referencing entity */
   $handler->display->display_options['relationships']['reverse_field_p2p_slide_show_node']['id'] = 'reverse_field_p2p_slide_show_node';
@@ -47,13 +49,14 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['fields']['field_p2p_campaign_slider']['element_wrapper_type'] = '0';
   $handler->display->display_options['fields']['field_p2p_campaign_slider']['click_sort_column'] = 'fid';
   $handler->display->display_options['fields']['field_p2p_campaign_slider']['settings'] = array(
-    'image_style' => '',
+    'image_style' => 'campaign_image_slideshow',
     'image_link' => '',
   );
   /* Contextual filter: Content: Nid */
   $handler->display->display_options['arguments']['nid']['id'] = 'nid';
   $handler->display->display_options['arguments']['nid']['table'] = 'node';
   $handler->display->display_options['arguments']['nid']['field'] = 'nid';
+  $handler->display->display_options['arguments']['nid']['relationship'] = 'reverse_field_p2p_slide_show_node';
   $handler->display->display_options['arguments']['nid']['default_action'] = 'default';
   $handler->display->display_options['arguments']['nid']['default_argument_type'] = 'node';
   $handler->display->display_options['arguments']['nid']['summary']['number_of_records'] = '0';
