@@ -1292,19 +1292,19 @@ function springboard_p2p_menu_local_tasks_alter(&$data, $router_item, $root_path
  * Adds extra data to a p2p enabled form if a personal campaign ID is passed in.
  */
 function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
-  if (isset($_GET['campaign']) && is_numeric($_GET['campaign']) && strpos($form_id, 'webform_client_form_') !== FALSE && !empty($form['#node'])) {
+  if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid']) && strpos($form_id, 'webform_client_form_') !== FALSE && !empty($form['#node'])) {
     $type = $form['#node']->type;
-    $campaign_id = $_GET['campaign'];
+    $personal_campaign_id = $_GET['p2p_pcid'];
 
     $is_fundraiser_type = fundraiser_is_donation_type($type);
     $is_webform_user_type = _webform_user_is_webform_user_node_type($type);
     if ($is_fundraiser_type || $is_webform_user_type) {
 
-      $personal_campaign = node_load($campaign_id);
+      $personal_campaign = node_load($personal_campaign_id);
 
-      if (is_object($personal_campaign) && $personal_campaign->type == 'p2p_personal_campaign') {
+      if ($personal_campaign->type == 'p2p_personal_campaign') {
 
-        $campaign_nid = $personal_campaign->field_p2p_campaign[$personal_campaign->language][0]['target_id'];
+        $campaign_id = $personal_campaign->field_p2p_campaign[$personal_campaign->language][0]['target_id'];
 
         $form['#submit'][] = 'springboard_p2p_webform_client_form_submit';
 
@@ -1329,7 +1329,7 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
           ),
           'campaign_nid' => array(
             '#type' => 'value',
-            '#value' => $campaign_nid,
+            '#value' => $campaign_id,
           ),
           'personal_campaign_nid' => array(
             '#type' => 'value',
@@ -1358,17 +1358,13 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
         drupal_set_title($personal_campaign->title);
 
         $owner = user_load($personal_campaign->uid);
-        $owner_language = !empty($owner->language) ? $owner->language : 'und';
-        $owner_name = '';
-        if (!empty($owner->sbp_first_name[$owner_language][0]['safe_value']) && !empty($owner->sbp_last_name[$owner_language][0]['safe_value'])) {
-          $owner_name = $owner->sbp_first_name[$owner_language][0]['safe_value'] . ' ' . $owner->sbp_last_name[$owner_language][0]['safe_value'];
-        }
+        $owner_name = springboard_p2p_format_user_full_name($owner);
 
-        $campaign = node_load($campaign_nid);
+        $campaign = node_load($campaign_id);
         if (!empty($campaign) && $campaign->type == 'p2p_campaign') {
 
-          $category_nid = $campaign->field_p2p_category[$campaign->language][0]['target_id'];
-          $form['springboard_p2p_personal_campaign_action']['category_nid']['#value'] = $category_nid;
+          $category_id = $campaign->field_p2p_category[$campaign->language][0]['target_id'];
+          $form['springboard_p2p_personal_campaign_action']['category_nid']['#value'] = $category_id;
 
           // @todo Confirm that this donation form nid is selected from the
           // campaign goals.
@@ -1382,7 +1378,7 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
           $form['submitted']['springboard_p2p'] = array(
             '#type' => 'container',
             '#tree' => TRUE,
-            '#weight' => -100,
+            '#weight' => -200,
             'owner' => array(
               '#markup' => '<h2>' . $owner_name . '</h2>',
             ),
@@ -1442,6 +1438,16 @@ function springboard_p2p_fundraiser_donation_post_submit($form, $form_state, $do
     }
   }
 
+}
+
+function springboard_p2p_format_user_full_name($account) {
+  $language = !empty($account->language) ? $account->language : 'und';
+  $full_name = '';
+  if (!empty($account->sbp_first_name[$language][0]['safe_value']) && !empty($account->sbp_last_name[$language][0]['safe_value'])) {
+    $full_name = $account->sbp_first_name[$language][0]['safe_value'] . ' ' . $account->sbp_last_name[$language][0]['safe_value'];
+  }
+
+  return $full_name;
 }
 
 /**
@@ -1522,4 +1528,28 @@ function springbaord_p2p_format_campaign_form_header($campaign) {
   }
 
   return array();
+}
+
+function springboard_p2p_page_alter(&$page) {
+  if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid']) && arg(0) == 'node' && is_numeric(arg(1)) && is_null(arg(2))) {
+    $personal_campaign_id = $_GET['p2p_pcid'];
+
+    $node = node_load(arg(1));
+    $type = $node->type;
+    $is_fundraiser_type = fundraiser_is_donation_type($type);
+    $is_webform_user_type = _webform_user_is_webform_user_node_type($type);
+    if ($is_fundraiser_type || $is_webform_user_type) {
+      $personal_campaign = node_load($personal_campaign_id);
+      if ($personal_campaign->type == 'p2p_personal_campaign') {
+
+        $campaign_id = $personal_campaign->field_p2p_campaign[$personal_campaign->language][0]['target_id'];
+        $campaign = node_load($campaign_id);
+        if (!empty($campaign) && $campaign->type == 'p2p_campaign') {
+
+          $page['page_top']['springboard_p2p_banner'] = springbaord_p2p_format_campaign_form_header($campaign);
+        }
+      }
+    }
+  }
+
 }

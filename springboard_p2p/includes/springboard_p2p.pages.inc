@@ -17,7 +17,11 @@
 function springboard_p2p_personal_dashboard($user) {
   $dashboard_content = views_embed_view('p2p_personal_campaigns_by_campaigner', 'page', $user->uid);
 
-  drupal_set_title('Personal campaign dashboard for ' . $user->name);
+  $full_name = springboard_p2p_format_user_full_name($user);
+  if (!empty($full_name)) {
+    drupal_set_title('Personal campaign dashboard for ' . $full_name);
+  }
+
   return array(
     'content' => array(
       '#markup' => $dashboard_content,
