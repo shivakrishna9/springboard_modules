@@ -531,8 +531,8 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
 function springboard_p2p_personal_campaign_validate(&$form, $form_state) {
   // Validate campaign url alias for uniqueness.
   $language = $form_state['values']['language'];
-  $alias = $form_state['values']['field_personal_campaign_url'][$language][0]['value'];
-  if ($path = drupal_lookup_path('source', $alias)) {
+  $alias = isset($form_state['values']['field_personal_campaign_url'][$language][0]['value']) ? $form_state['values']['field_personal_campaign_url'][$language][0]['value'] : FALSE;
+  if ($alias && $path = drupal_lookup_path('source', $alias)) {
     // We only want to throw a validation error if the campaign url is in use
     // by some other path.
     if (isset($form_state['node']) && $path != 'node/' . $form_state['node']->nid) {
