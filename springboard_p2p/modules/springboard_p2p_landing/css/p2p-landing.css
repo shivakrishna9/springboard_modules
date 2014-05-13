@@ -51,8 +51,24 @@
   left: -1px;
 }
 
-.p2p-campaign-landing-slideshow  h2.slide-link {
+span.slide-wrapper {
+  position: relative;
+  width: 100%;
+  text-align: center;
+  display: block;
+}
+
+.p2p-campaign-landing-slideshow h2.slide-link {
   position: absolute;
-  top: 50%;
-  text-align: left;
+  top: 60%;
+  text-align: center;
+  left: 0;
+  z-index: 600;
+  width: 100%;
+}
+
+.p2p-campaign-landing-slideshow h2.slide-link a {
+  background: #fffe00;
+  padding: 4px 10px;
+  color: #333;
 }

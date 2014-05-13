@@ -91,8 +91,8 @@ function springboard_p2p_landing_page_alter(&$cache, $vars) {
     '#attached' => array(
       'js' => array(
         $library_path_flexsliderjs . '/jquery.flexslider.js' => array(
-          'group' => JS_LIBRARY,
-          'weight' => -999,
+          'group' => JS_THEME,
+          'weight' => 999,
         ),
       ),
     ),
@@ -153,4 +153,38 @@ function springboard_p2p_landing_page_alter(&$cache, $vars) {
       ));
   }
 
+}
+
+
+/**
+ * Implements hook_features_export_alter().
+ *
+ * Alter the final export array just prior to the rendering of
+ * defaults.
+ * FORBID the hook_views_api, we are going to add that ourself.
+ *
+ * @param array &$export
+ *   By reference. An array of all components to be exported with a given
+ *   feature.
+ * @param array $module_name
+ *   The name of the feature module to be generated.
+ */
+function springboard_p2p_landing_features_export_alter(&$export, $module_name) {
+  // Override the default path for views.
+  if ($module_name == 'unicef_views' && !empty($export['features']['ctools']['views:views_default:3.0'])) {
+    unset($export['features']['ctools']['views:views_default:3.0']);
+  }
+}
+
+/**
+ * Implements hook_views_api().
+ * We are specifying this here as we want to include a views
+ * template directory.
+ */
+function springboard_p2p_landing_views_api() {
+  // Create our own views template path.
+  return array(
+    "version" => "3.0",
+    'template path' => drupal_get_path('module', 'springboard_p2p_landing') . '/templates',
+  );
 }

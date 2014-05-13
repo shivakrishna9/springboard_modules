@@ -9,16 +9,10 @@
       // End drupal calls.
 
       // Instantiate Flexslider.
-      if ($().flexslider) {
-        $('.flexslider').once(function () {
-          $(this).flexslider({
-            animation: "slide",
-            controlNav: false,
-            pauseOnHover: true,
-            slideshowSpeed: 336000,
-            animationSpeed: 200,
-            prevText: "",           //String: Set the text for the "previous" directionNav item
-            nextText: ""              //String: Set the text for the "next" directionNav item
+      if($().flexslider) {
+        $(window).load(function () {
+          $('.flexslider').once(function () {
+            $(this).flexslider({prevText: "", nextText: ""});
           });
         });
       }
