@@ -47,11 +47,16 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['fields']['field_p2p_campaign_slider']['element_label_type'] = '0';
   $handler->display->display_options['fields']['field_p2p_campaign_slider']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['field_p2p_campaign_slider']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_campaign_slider']['hide_empty'] = TRUE;
   $handler->display->display_options['fields']['field_p2p_campaign_slider']['click_sort_column'] = 'fid';
   $handler->display->display_options['fields']['field_p2p_campaign_slider']['settings'] = array(
     'image_style' => 'campaign_image_slideshow',
     'image_link' => '',
   );
+  /* Sort criterion: Content: Slide Show (field_p2p_slide_show) */
+  $handler->display->display_options['sorts']['field_p2p_slide_show_target_id']['id'] = 'field_p2p_slide_show_target_id';
+  $handler->display->display_options['sorts']['field_p2p_slide_show_target_id']['table'] = 'field_data_field_p2p_slide_show';
+  $handler->display->display_options['sorts']['field_p2p_slide_show_target_id']['field'] = 'field_p2p_slide_show_target_id';
   /* Contextual filter: Content: Nid */
   $handler->display->display_options['arguments']['nid']['id'] = 'nid';
   $handler->display->display_options['arguments']['nid']['table'] = 'node';
@@ -76,6 +81,11 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['filters']['type']['value'] = array(
     'p2p_campaign' => 'p2p_campaign',
   );
+  /* Filter criterion: Content: Slide Show (field_p2p_slide_show) */
+  $handler->display->display_options['filters']['field_p2p_slide_show_target_id']['id'] = 'field_p2p_slide_show_target_id';
+  $handler->display->display_options['filters']['field_p2p_slide_show_target_id']['table'] = 'field_data_field_p2p_slide_show';
+  $handler->display->display_options['filters']['field_p2p_slide_show_target_id']['field'] = 'field_p2p_slide_show_target_id';
+  $handler->display->display_options['filters']['field_p2p_slide_show_target_id']['operator'] = 'not empty';
 
   /* Display: Content pane */
   $handler = $view->new_display('panel_pane', 'Content pane', 'panel_pane_1');
