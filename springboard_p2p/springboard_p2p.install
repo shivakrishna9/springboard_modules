@@ -67,7 +67,13 @@ function springboard_p2p_schema() {
     ),
   );
 
-  $schema['springboard_p2p_personal_campaign_action'] = array(
+  $schema['springboard_p2p_personal_campaign_action'] = springboard_p2p_personal_campaign_action_schema();
+
+  return $schema;
+}
+
+function springboard_p2p_personal_campaign_action_schema() {
+  return array(
     'description' => 'Stores data about a user completing a form for a personal campaign.',
     'fields' => array(
       'category_nid' => array(
@@ -177,6 +183,11 @@ function springboard_p2p_schema() {
       ),
     ),
   );
+}
 
-  return $schema;
+/**
+ * Adds the springboard_p2p_personal_campaign_action table.
+ */
+function springboard_p2p_update_7001() {
+  db_create_table('springboard_p2p_personal_campaign_action', springboard_p2p_personal_campaign_action_schema());
 }
