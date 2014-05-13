@@ -38,6 +38,7 @@ features[variable][] = panelizer_node:p2p_campaign_landing_allowed_layouts
 features[variable][] = panelizer_node:p2p_campaign_landing_allowed_layouts_default
 features[variable][] = panelizer_node:p2p_campaign_landing_allowed_types_default
 features[variable][] = panelizer_node:p2p_campaign_landing_default
+features[views_view][] = p2p_campaign_landing_slideshow
 features[views_view][] = p2p_referenced_campaigns
 features_exclude[dependencies][ctools] = ctools
 project path = sites/all/modules/springboard/springboard_p2p/modules
