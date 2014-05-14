@@ -39,6 +39,11 @@ function springboard_p2p_fb_page() {
   );
   springboard_p2p_set_redirect($form, $form_state);
 
-  drupal_goto($form_state['redirect'][0], $form_state['redirect'][1]);
+  if (is_array($form_state['redirect'])) {
+    drupal_goto($form_state['redirect'][0], $form_state['redirect'][1]);
+  }
+  else {
+    drupal_goto($form_state['redirect']);
+  }
 
 }
