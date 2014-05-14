@@ -53,7 +53,7 @@ function springboard_p2p_default_rules_default_rules_configuration() {
         { "mail" : {
             "to" : [ "account:mail" ],
             "subject" : "You have been approved",
-            "message" : "Dear [account:sbp-first-name]:\\r\\n\\r\\nYour account has been approved and you can start building your peer to peer campaign. Click here to create you campaign: [campaign:edit-url]. \\r\\n",
+            "message" : "Dear [account:sbp-first-name]:\\r\\n\\r\\nYour account has been approved and you can start building your peer to peer campaign. Click here to create you campaign: [node\\/add\\/p2p-personal-campaign?campaign=%nid] \\r\\n",
             "language" : [ "" ]
           }
         }
