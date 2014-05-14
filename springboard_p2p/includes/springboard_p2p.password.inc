@@ -156,5 +156,5 @@ function springboard_p2p_set_password_form_submit($form, &$form_state) {
 
   user_save($account, $edit);
 
-  $form_state['redirect'] = 'springboard_p2p/dashboard/' . $account->uid;
+  $form_state['redirect'] = 'user/' . $account->uid . '/personal-campaigns';
 }
