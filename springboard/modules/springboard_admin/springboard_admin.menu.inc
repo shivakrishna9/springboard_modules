@@ -207,10 +207,10 @@ function springboard_admin_admin_menu_items() {
     'weight' => 0,
   );
 
-  // Asset Library > Page Templates.
-  $items['springboard/asset-library']['_children']['springboard/asset-library/page-templates'] = array(
-    'link_path' => 'springboard/asset-library/page-templates',
-    'link_title' => 'Page Templates',
+  // Asset Library > Page Wrappers.
+  $items['springboard/asset-library']['_children']['springboard/asset-library/page-wrappers'] = array(
+    'link_path' => 'springboard/asset-library/page-wrappers',
+    'link_title' => 'Page Wrappers',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
     'customized' => 1,

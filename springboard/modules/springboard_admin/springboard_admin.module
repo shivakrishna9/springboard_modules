@@ -340,8 +340,8 @@ function springboard_admin_menu_access($path) {
 function springboard_admin_template_page() {
   $output = '';
 
-  // Load Page Templates view.
-  $view = views_get_view('sbv_page_templates');
+  // Load Page Wrappers view.
+  $view = views_get_view('sbv_page_wrappers');
   $view -> set_display('block_1');
   $view -> set_arguments(array());
   $view -> pre_execute();

@@ -1306,14 +1306,14 @@ function springboard_views_views_default_views() {
   $handler -> display -> display_options['path'] = 'admin/reports/salesforce/donations';
   $views[$view -> name] = $view;
   /**
-   * View sbv_page_templates
+   * View sbv_page_wrappers
    */
   $view = new view();
-  $view -> name = 'sbv_page_templates';
+  $view -> name = 'sbv_page_wrappers';
   $view -> description = '';
   $view -> tag = 'default';
   $view -> base_table = 'node';
-  $view -> human_name = 'Springboard Page Templates';
+  $view -> human_name = 'Springboard Page Wrappers';
   $view -> core = 7;
   $view -> api_version = '3.0';
   $view -> disabled = FALSE;
@@ -1321,7 +1321,7 @@ function springboard_views_views_default_views() {
 
   /* Display: Master */
   $handler = $view -> new_display('default', 'Master', 'default');
-  $handler -> display -> display_options['title'] = 'Page Templates';
+  $handler -> display -> display_options['title'] = 'Page Wrappers';
   $handler -> display -> display_options['use_ajax'] = TRUE;
   $handler -> display -> display_options['use_more_always'] = FALSE;
   $handler -> display -> display_options['access']['type'] = 'perm';
@@ -1390,13 +1390,13 @@ function springboard_views_views_default_views() {
   $handler -> display -> display_options['header']['area']['id'] = 'area';
   $handler -> display -> display_options['header']['area']['table'] = 'views';
   $handler -> display -> display_options['header']['area']['field'] = 'area';
-  $handler -> display -> display_options['header']['area']['content'] = '<a href="/node/add/page-wrapper" class="button">Create Page Template</a>';
+  $handler -> display -> display_options['header']['area']['content'] = '<a href="/node/add/page-wrapper" class="button">Create Page Wrapper</a>';
   $handler -> display -> display_options['header']['area']['format'] = 'full_html';
   /* Field: Content: Title */
   $handler -> display -> display_options['fields']['title']['id'] = 'title';
   $handler -> display -> display_options['fields']['title']['table'] = 'node';
   $handler -> display -> display_options['fields']['title']['field'] = 'title';
-  $handler -> display -> display_options['fields']['title']['label'] = 'Template Name';
+  $handler -> display -> display_options['fields']['title']['label'] = 'Wrapper Name';
   $handler -> display -> display_options['fields']['title']['alter']['word_boundary'] = FALSE;
   $handler -> display -> display_options['fields']['title']['alter']['ellipsis'] = FALSE;
   /* Field: Content: Published */
@@ -1454,7 +1454,7 @@ function springboard_views_views_default_views() {
   $handler -> display -> display_options['filters']['keys']['group'] = 1;
   $handler -> display -> display_options['filters']['keys']['exposed'] = TRUE;
   $handler -> display -> display_options['filters']['keys']['expose']['operator_id'] = 'keys_op';
-  $handler -> display -> display_options['filters']['keys']['expose']['label'] = 'Search templates';
+  $handler -> display -> display_options['filters']['keys']['expose']['label'] = 'Search wrappers';
   $handler -> display -> display_options['filters']['keys']['expose']['operator'] = 'keys_op';
   $handler -> display -> display_options['filters']['keys']['expose']['identifier'] = 'keys';
   $handler -> display -> display_options['filters']['keys']['expose']['remember_roles'] = array(
@@ -1465,7 +1465,7 @@ function springboard_views_views_default_views() {
 
   /* Display: Page */
   $handler = $view -> new_display('page', 'Page', 'page');
-  $handler -> display -> display_options['path'] = 'springboard/asset-library/page-templates';
+  $handler -> display -> display_options['path'] = 'springboard/asset-library/page-wrappers';
 
   /* Display: Block */
   $handler = $view -> new_display('block', 'Block', 'block_1');
@@ -1480,7 +1480,7 @@ function springboard_views_views_default_views() {
   $handler -> display -> display_options['footer']['area']['id'] = 'area';
   $handler -> display -> display_options['footer']['area']['table'] = 'views';
   $handler -> display -> display_options['footer']['area']['field'] = 'area';
-  $handler -> display -> display_options['footer']['area']['content'] = '<a href="/springboard/asset-library/page-templates" class="button">View All Page Templates</a>';
+  $handler -> display -> display_options['footer']['area']['content'] = '<a href="/springboard/asset-library/page-wrappers" class="button">View All Page Wrappers</a>';
   $handler -> display -> display_options['footer']['area']['format'] = 'filtered_html';
   $views[$view -> name] = $view;
 
