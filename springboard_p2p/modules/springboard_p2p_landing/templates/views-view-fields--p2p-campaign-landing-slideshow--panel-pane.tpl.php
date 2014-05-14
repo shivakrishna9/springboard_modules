@@ -26,6 +26,9 @@
 ?>
 
 <span class="slide-wrapper">
+
+<h2 class="slide-title"><span><?php print $fields['title']->content ?></span></h2>
 <?php print $fields['view_node']->content ?>
 <?php print $fields['field_p2p_campaign_slider']->content ?>
+
 </span>

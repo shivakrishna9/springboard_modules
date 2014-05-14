@@ -65,24 +65,43 @@ span.slide-wrapper {
   text-align: center;
 }
 
-.p2p-campaign-landing-slideshow h2.slide-link {
+.p2p-campaign-landing-slideshow span.slide-link {
   position: absolute;
   top: 60%;
   left: 0;
-  z-index: 600;
   width: 100%;
   text-align: center;
 }
 
-.p2p-campaign-landing-slideshow h2.slide-link a {
+.p2p-campaign-landing-slideshow span.slide-link a {
   padding: 4px 10px;
   background: #fffe00;
   color: #333;
+  font-weight: bold;
+  font-size: 26px;
 }
 
+.p2p-campaign-landing-slideshow span.slide-link a:hover {
+  text-decoration: none;
+  background: #888;
+  color: #fffe00;
+}
+
+.p2p-campaign-landing-slideshow h2.slide-title {
+  position: absolute;
+  top: 1%;
+  width: 100%;
+  color: #eaeaea;
+  text-align: center;
+  font-size: 26px;
+}
+
+.p2p-campaign-landing-slideshow h2.slide-title span {
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.6);
+}
 
 /* -- FLUID GRID STYLES -- */
-
 
 ul.campaign-landing-grid {
   margin-bottom: 40px;
@@ -108,10 +127,10 @@ ul.campaign-landing-grid a {
 .view-content .campaign-landing-grid li {
   position: relative;
   display: inline-block;
-  vertical-align: top;
-  border: 1px solid #a6a6a6;
-  padding: 9px;
   margin: 2% 0;
+  padding: 9px;
+  border: 1px solid #a6a6a6;
+  vertical-align: top;
 }
 
 .campaign-landing-grid:after {
