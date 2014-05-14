@@ -73,7 +73,7 @@ class SpringboardP2pPersonalCampaignProgressField {
   public function formatterView($entity_type, $entity, $items, $display) {
     $element = array();
 
-    if ($display['type'] == 'springboard_p2p_fields_personal_campaign_progress_default') {
+    if ($display['type'] == 'springboard_p2p_fields_personal_campaign_progress_auto') {
 
       if (isset($entity->field_p2p_campaign[$entity->language][0]['entity'])) {
         $campaign = $entity->field_p2p_campaign[$entity->language][0]['entity'];
@@ -104,6 +104,20 @@ class SpringboardP2pPersonalCampaignProgressField {
 
         $element[$delta]['campaign_progress'] = array(
           '#markup' => $value,
+        );
+      }
+    }
+    elseif ($display['type'] == 'springboard_p2p_fields_personal_campaign_progress_amount') {
+      foreach ($items as $delta => $value) {
+        $element[$delta]['campaign_progress'] = array(
+          '#markup' => springboard_p2p_format_progress($items[$delta], 'amount'),
+        );
+      }
+    }
+    elseif ($display['type'] == 'springboard_p2p_fields_personal_campaign_progress_submissions') {
+      foreach ($items as $delta => $value) {
+        $element[$delta]['campaign_progress'] = array(
+          '#markup' => springboard_p2p_format_progress($items[$delta], 'submissions'),
         );
       }
     }

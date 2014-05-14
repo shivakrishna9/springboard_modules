@@ -261,9 +261,21 @@ function springboard_p2p_fields_field_formatter_info() {
       'field types' => array('springboard_p2p_fields_campaign_goals'),
       'settings' => array(),
     ),
-    'springboard_p2p_fields_personal_campaign_progress_default' => array(
-      'label' => t('Default'),
-      'description' => t('Displays personal campaign progress.'),
+    'springboard_p2p_fields_personal_campaign_progress_auto' => array(
+      'label' => t('Auto'),
+      'description' => t('Displays personal campaign progress by either amount or submissions, based on the parent campaign goal type.'),
+      'field types' => array('springboard_p2p_fields_personal_campaign_progress'),
+      'settings' => array(),
+    ),
+    'springboard_p2p_fields_personal_campaign_progress_amount' => array(
+      'label' => t('Amount'),
+      'description' => t('Displays personal campaign progress fundraising amount.'),
+      'field types' => array('springboard_p2p_fields_personal_campaign_progress'),
+      'settings' => array(),
+    ),
+    'springboard_p2p_fields_personal_campaign_progress_submissions' => array(
+      'label' => t('Submissions'),
+      'description' => t('Displays personal campaign submissions count.'),
       'field types' => array('springboard_p2p_fields_personal_campaign_progress'),
       'settings' => array(),
     ),
