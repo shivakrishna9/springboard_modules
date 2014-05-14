@@ -82,9 +82,9 @@ span.slide-wrapper {
 }
 
 .p2p-campaign-landing-slideshow span.slide-link a:hover {
-  text-decoration: none;
   background: #888;
   color: #fffe00;
+  text-decoration: none;
 }
 
 .p2p-campaign-landing-slideshow h2.slide-title {
@@ -101,6 +101,10 @@ span.slide-wrapper {
   background: rgba(0, 0, 0, 0.6);
 }
 
+#slideshow-panel {
+  margin-bottom: 30px;
+}
+
 /* -- FLUID GRID STYLES -- */
 
 ul.campaign-landing-grid {
@@ -114,6 +118,7 @@ ul.campaign-landing-grid * {
 }
 
 ul.campaign-landing-grid h2.p2p-thumb-title {
+  margin: 2px 0 12px 0;
   color: #444;
   font-size: 22px;
   line-height: 1.2em;
@@ -127,7 +132,7 @@ ul.campaign-landing-grid a {
 .view-content .campaign-landing-grid li {
   position: relative;
   display: inline-block;
-  margin: 2% 0;
+  margin: 0 0 4% 0;
   padding: 9px;
   border: 1px solid #a6a6a6;
   vertical-align: top;
@@ -153,12 +158,59 @@ span.node-edit {
   color: #fff;
 }
 
+/* Search widget */
+
+.landing-search-form input[type="text"] {
+  width: 138px;
+}
+
+.landing-search-form .views-exposed-widget {
+  display: inline-block;
+  float: none;
+}
+
+.control-group,
+.control-group input {
+  display: inherit;
+  margin: 0;
+}
+
+.landing-search-form .views-exposed-widget {
+  display: inline-block;
+  vertical-align: top;
+}
+
+.landing-search-view .views-submit-button,
+.landing-search-view  .views-reset-button {
+  width: 30%;
+}
+
+.p2p-panelizer-campaign-landing form {
+  margin: 0;
+}
+
+.views-exposed-form {
+  padding: 14px 0 0 0;
+}
+
+.views-exposed-form .views-exposed-widget {
+  float: none;
+  padding: 0 0 0 4px;
+}
+
+.p2p-panelizer-campaign-landing h2,
+.p2p-panelizer-campaign-landing h3 {
+  margin: 0 0 12px 0;
+  color: #444;
+  font-size: 22px;
+  line-height: 1.2em;
+}
 
 /******************  Media queries, these should go last */
 @media (min-width: 769px) {
 
   .view-content .campaign-landing-grid li {
-    width: 44%;
+    width: 45%;
   }
 
 }
@@ -166,7 +218,7 @@ span.node-edit {
 @media (max-width: 768px) {
 
   .view-content .campaign-landing-grid li {
-    width: 44%;
+    width: 45%;
   }
 
 }
