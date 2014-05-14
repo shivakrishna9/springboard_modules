@@ -23,6 +23,7 @@ function springboard_p2p_landing_views_default_views() {
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');
   $handler->display->display_options['css_class'] = 'p2p-campaign-landing-slideshow';
+  $handler->display->display_options['use_ajax'] = TRUE;
   $handler->display->display_options['use_more_always'] = FALSE;
   $handler->display->display_options['access']['type'] = 'perm';
   $handler->display->display_options['cache']['type'] = 'none';
@@ -41,6 +42,10 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['relationships']['reverse_field_p2p_slide_show_node']['id'] = 'reverse_field_p2p_slide_show_node';
   $handler->display->display_options['relationships']['reverse_field_p2p_slide_show_node']['table'] = 'node';
   $handler->display->display_options['relationships']['reverse_field_p2p_slide_show_node']['field'] = 'reverse_field_p2p_slide_show_node';
+  /* Relationship: Entity Reference: Referenced Entity */
+  $handler->display->display_options['relationships']['field_p2p_slide_show_target_id']['id'] = 'field_p2p_slide_show_target_id';
+  $handler->display->display_options['relationships']['field_p2p_slide_show_target_id']['table'] = 'field_data_field_p2p_slide_show';
+  $handler->display->display_options['relationships']['field_p2p_slide_show_target_id']['field'] = 'field_p2p_slide_show_target_id';
   /* Field: Content: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
   $handler->display->display_options['fields']['title']['table'] = 'node';
@@ -79,11 +84,12 @@ function springboard_p2p_landing_views_default_views() {
     'image_style' => 'campaign_image_slideshow',
     'image_link' => '',
   );
-  /* Sort criterion: Content: Slide Show (field_p2p_slide_show) */
-  $handler->display->display_options['sorts']['field_p2p_slide_show_target_id']['id'] = 'field_p2p_slide_show_target_id';
-  $handler->display->display_options['sorts']['field_p2p_slide_show_target_id']['table'] = 'field_data_field_p2p_slide_show';
-  $handler->display->display_options['sorts']['field_p2p_slide_show_target_id']['field'] = 'field_p2p_slide_show_target_id';
-  $handler->display->display_options['sorts']['field_p2p_slide_show_target_id']['order'] = 'DESC';
+  /* Sort criterion: Content: Slide Show (field_p2p_slide_show:delta) */
+  $handler->display->display_options['sorts']['delta']['id'] = 'delta';
+  $handler->display->display_options['sorts']['delta']['table'] = 'field_data_field_p2p_slide_show';
+  $handler->display->display_options['sorts']['delta']['field'] = 'delta';
+  $handler->display->display_options['sorts']['delta']['relationship'] = 'field_p2p_slide_show_target_id';
+  $handler->display->display_options['sorts']['delta']['order'] = 'DESC';
   /* Contextual filter: Content: Nid */
   $handler->display->display_options['arguments']['nid']['id'] = 'nid';
   $handler->display->display_options['arguments']['nid']['table'] = 'node';
@@ -153,6 +159,10 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['relationships']['reverse_field_p2p_referenced_campaigns_node']['id'] = 'reverse_field_p2p_referenced_campaigns_node';
   $handler->display->display_options['relationships']['reverse_field_p2p_referenced_campaigns_node']['table'] = 'node';
   $handler->display->display_options['relationships']['reverse_field_p2p_referenced_campaigns_node']['field'] = 'reverse_field_p2p_referenced_campaigns_node';
+  /* Relationship: Entity Reference: Referenced Entity */
+  $handler->display->display_options['relationships']['field_p2p_referenced_campaigns_target_id']['id'] = 'field_p2p_referenced_campaigns_target_id';
+  $handler->display->display_options['relationships']['field_p2p_referenced_campaigns_target_id']['table'] = 'field_data_field_p2p_referenced_campaigns';
+  $handler->display->display_options['relationships']['field_p2p_referenced_campaigns_target_id']['field'] = 'field_p2p_referenced_campaigns_target_id';
   /* Field: Content: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
   $handler->display->display_options['fields']['title']['table'] = 'node';
@@ -240,8 +250,132 @@ function springboard_p2p_landing_views_default_views() {
     'p2p_campaign' => 'p2p_campaign',
   );
 
-  /* Display: Content pane */
-  $handler = $view->new_display('panel_pane', 'Content pane', 'panel_pane_1');
+  /* Display: Your P2P (Grid) */
+  $handler = $view->new_display('panel_pane', 'Your P2P (Grid)', 'panel_pane_1');
+  $handler->display->display_options['defaults']['empty'] = FALSE;
+  $handler->display->display_options['defaults']['sorts'] = FALSE;
+  /* Sort criterion: Content: Start your own campaign (field_p2p_referenced_campaigns) */
+  $handler->display->display_options['sorts']['field_p2p_referenced_campaigns_target_id']['id'] = 'field_p2p_referenced_campaigns_target_id';
+  $handler->display->display_options['sorts']['field_p2p_referenced_campaigns_target_id']['table'] = 'field_data_field_p2p_referenced_campaigns';
+  $handler->display->display_options['sorts']['field_p2p_referenced_campaigns_target_id']['field'] = 'field_p2p_referenced_campaigns_target_id';
+  $handler->display->display_options['sorts']['field_p2p_referenced_campaigns_target_id']['relationship'] = 'field_p2p_referenced_campaigns_target_id';
+  $handler->display->display_options['sorts']['field_p2p_referenced_campaigns_target_id']['order'] = 'DESC';
+
+  /* Display: Featured Personal */
+  $handler = $view->new_display('panel_pane', 'Featured Personal', 'panel_pane_2');
+  $handler->display->display_options['defaults']['css_class'] = FALSE;
+  $handler->display->display_options['defaults']['pager'] = FALSE;
+  $handler->display->display_options['pager']['type'] = 'some';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '3';
+  $handler->display->display_options['pager']['options']['offset'] = '0';
+  $handler->display->display_options['defaults']['relationships'] = FALSE;
+  /* Relationship: Entity Reference: Referencing entity */
+  $handler->display->display_options['relationships']['reverse_field_p2p_feature_pers_campaigns_node']['id'] = 'reverse_field_p2p_feature_pers_campaigns_node';
+  $handler->display->display_options['relationships']['reverse_field_p2p_feature_pers_campaigns_node']['table'] = 'node';
+  $handler->display->display_options['relationships']['reverse_field_p2p_feature_pers_campaigns_node']['field'] = 'reverse_field_p2p_feature_pers_campaigns_node';
+  /* Relationship: Entity Reference: Referenced Entity */
+  $handler->display->display_options['relationships']['field_p2p_feature_pers_campaigns_target_id']['id'] = 'field_p2p_feature_pers_campaigns_target_id';
+  $handler->display->display_options['relationships']['field_p2p_feature_pers_campaigns_target_id']['table'] = 'field_data_field_p2p_feature_pers_campaigns';
+  $handler->display->display_options['relationships']['field_p2p_feature_pers_campaigns_target_id']['field'] = 'field_p2p_feature_pers_campaigns_target_id';
+  $handler->display->display_options['defaults']['fields'] = FALSE;
+  /* Field: Content: Title */
+  $handler->display->display_options['fields']['title']['id'] = 'title';
+  $handler->display->display_options['fields']['title']['table'] = 'node';
+  $handler->display->display_options['fields']['title']['field'] = 'title';
+  $handler->display->display_options['fields']['title']['label'] = '';
+  $handler->display->display_options['fields']['title']['alter']['word_boundary'] = FALSE;
+  $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
+  $handler->display->display_options['fields']['title']['element_type'] = 'h2';
+  $handler->display->display_options['fields']['title']['element_class'] = 'p2p-thumb-title';
+  $handler->display->display_options['fields']['title']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['title']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['title']['element_default_classes'] = FALSE;
+  /* Field: Content: Campaign thumbnail */
+  $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['id'] = 'field_p2p_campaign_thumbnail';
+  $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['table'] = 'field_data_field_p2p_campaign_thumbnail';
+  $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['field'] = 'field_p2p_campaign_thumbnail';
+  $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['label'] = '';
+  $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['element_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['click_sort_column'] = 'fid';
+  $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['settings'] = array(
+    'image_style' => 'campaign_image_landing',
+    'image_link' => '',
+  );
+  /* Field: Content: Body */
+  $handler->display->display_options['fields']['body']['id'] = 'body';
+  $handler->display->display_options['fields']['body']['table'] = 'field_data_body';
+  $handler->display->display_options['fields']['body']['field'] = 'body';
+  $handler->display->display_options['fields']['body']['label'] = '';
+  $handler->display->display_options['fields']['body']['alter']['max_length'] = '120';
+  $handler->display->display_options['fields']['body']['alter']['trim'] = TRUE;
+  $handler->display->display_options['fields']['body']['element_type'] = 'p';
+  $handler->display->display_options['fields']['body']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['body']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['body']['element_wrapper_type'] = '0';
+  /* Field: Content: Link */
+  $handler->display->display_options['fields']['view_node']['id'] = 'view_node';
+  $handler->display->display_options['fields']['view_node']['table'] = 'views_entity_node';
+  $handler->display->display_options['fields']['view_node']['field'] = 'view_node';
+  $handler->display->display_options['fields']['view_node']['label'] = '';
+  $handler->display->display_options['fields']['view_node']['element_type'] = 'span';
+  $handler->display->display_options['fields']['view_node']['element_class'] = 'campaign-node-link';
+  $handler->display->display_options['fields']['view_node']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['view_node']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['view_node']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['view_node']['element_default_classes'] = FALSE;
+  $handler->display->display_options['fields']['view_node']['text'] = 'Get Started';
+  /* Field: Content: Edit link */
+  $handler->display->display_options['fields']['edit_node']['id'] = 'edit_node';
+  $handler->display->display_options['fields']['edit_node']['table'] = 'views_entity_node';
+  $handler->display->display_options['fields']['edit_node']['field'] = 'edit_node';
+  $handler->display->display_options['fields']['edit_node']['label'] = '';
+  $handler->display->display_options['fields']['edit_node']['element_type'] = 'span';
+  $handler->display->display_options['fields']['edit_node']['element_class'] = 'node-edit';
+  $handler->display->display_options['fields']['edit_node']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['edit_node']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['edit_node']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['edit_node']['element_default_classes'] = FALSE;
+  /* Field: Content: Upload a Campaign Image */
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['id'] = 'field_p2p_campaign_images';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['table'] = 'field_data_field_p2p_campaign_images';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['field'] = 'field_p2p_campaign_images';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['click_sort_column'] = 'fid';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['settings'] = array(
+    'image_style' => 'campaign_image_landing',
+    'image_link' => '',
+  );
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['delta_offset'] = '0';
+  $handler->display->display_options['defaults']['arguments'] = FALSE;
+  /* Contextual filter: Content: Nid */
+  $handler->display->display_options['arguments']['nid']['id'] = 'nid';
+  $handler->display->display_options['arguments']['nid']['table'] = 'node';
+  $handler->display->display_options['arguments']['nid']['field'] = 'nid';
+  $handler->display->display_options['arguments']['nid']['relationship'] = 'reverse_field_p2p_feature_pers_campaigns_node';
+  $handler->display->display_options['arguments']['nid']['default_action'] = 'default';
+  $handler->display->display_options['arguments']['nid']['default_argument_type'] = 'node';
+  $handler->display->display_options['arguments']['nid']['summary']['number_of_records'] = '0';
+  $handler->display->display_options['arguments']['nid']['summary']['format'] = 'default_summary';
+  $handler->display->display_options['arguments']['nid']['summary_options']['items_per_page'] = '25';
+  $handler->display->display_options['defaults']['filter_groups'] = FALSE;
+  $handler->display->display_options['defaults']['filters'] = FALSE;
+  /* Filter criterion: Content: Published */
+  $handler->display->display_options['filters']['status']['id'] = 'status';
+  $handler->display->display_options['filters']['status']['table'] = 'node';
+  $handler->display->display_options['filters']['status']['field'] = 'status';
+  $handler->display->display_options['filters']['status']['value'] = 1;
+  $handler->display->display_options['filters']['status']['group'] = 1;
+  $handler->display->display_options['filters']['status']['expose']['operator'] = FALSE;
+  /* Filter criterion: Content: Type */
+  $handler->display->display_options['filters']['type']['id'] = 'type';
+  $handler->display->display_options['filters']['type']['table'] = 'node';
+  $handler->display->display_options['filters']['type']['field'] = 'type';
+  $handler->display->display_options['filters']['type']['value'] = array(
+    'p2p_personal_campaign' => 'p2p_personal_campaign',
+  );
   $export['p2p_referenced_campaigns'] = $view;
 
   $view = new view();

@@ -10,6 +10,49 @@
 function springboard_p2p_landing_field_default_field_instances() {
   $field_instances = array();
 
+  // Exported field_instance: 'node-p2p_campaign_landing-field_p2p_feature_pers_campaigns'
+  $field_instances['node-p2p_campaign_landing-field_p2p_feature_pers_campaigns'] = array(
+    'bundle' => 'p2p_campaign_landing',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'entityreference',
+        'settings' => array(
+          'link' => FALSE,
+        ),
+        'type' => 'entityreference_label',
+        'weight' => 3,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_p2p_feature_pers_campaigns',
+    'label' => 'Featured Personal Campaigns',
+    'required' => 0,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'entityreference',
+      'settings' => array(
+        'match_operator' => 'CONTAINS',
+        'path' => '',
+        'size' => 60,
+      ),
+      'type' => 'entityreference_autocomplete',
+      'weight' => 3,
+    ),
+  );
+
   // Exported field_instance: 'node-p2p_campaign_landing-field_p2p_referenced_campaigns'
   $field_instances['node-p2p_campaign_landing-field_p2p_referenced_campaigns'] = array(
     'bundle' => 'p2p_campaign_landing',
@@ -49,7 +92,7 @@ function springboard_p2p_landing_field_default_field_instances() {
         'size' => 60,
       ),
       'type' => 'entityreference_autocomplete',
-      'weight' => -3,
+      'weight' => 2,
     ),
   );
 
@@ -89,7 +132,7 @@ function springboard_p2p_landing_field_default_field_instances() {
         'size' => 60,
       ),
       'type' => 'blockreference_autocomplete',
-      'weight' => -2,
+      'weight' => 4,
     ),
   );
 
@@ -132,7 +175,7 @@ function springboard_p2p_landing_field_default_field_instances() {
         'size' => 60,
       ),
       'type' => 'entityreference_autocomplete',
-      'weight' => -4,
+      'weight' => 1,
     ),
   );
 
@@ -141,6 +184,7 @@ function springboard_p2p_landing_field_default_field_instances() {
   t('Choose a block to reference. (Typing bring up suggestions.)');
   t('Choose nodes to reference from Peer to peer campaigns for the slideshow. (Typing bring up suggestions.)');
   t('Choose nodes to reference from Peer to peer campaigns. (Typing bring up suggestions.)');
+  t('Featured Personal Campaigns');
   t('Side Block');
   t('Slide Show');
   t('Start your own campaign');
