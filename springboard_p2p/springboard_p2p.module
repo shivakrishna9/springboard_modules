@@ -764,8 +764,9 @@ function springboard_p2p_get_goal_from_campaign($campaign) {
 /**
  * Formats the goal progress according to its goal type.
  *
- * @param array $progress
+ * @param array|number $progress
  *   An array with 'submissions' and 'amount' keys and their goal values.
+ *   Or a single value.
  * @param string $type
  *   The goal type.
  * @param bool $include_units
@@ -1552,4 +1553,9 @@ function springboard_p2p_page_alter(&$page) {
     }
   }
 
+}
+
+function springboard_p2p_get_personal_campaign_comments($nid) {
+  $query = db_query("SELECT action_type, uid, show_name, amount, comment, created FROM {springboard_p2p_personal_campaign_action} WHERE personal_campaign_nid = :nid ORDER BY created DESC", array(':nid' => $nid));
+  return $query->fetchAll(PDO::FETCH_ASSOC);
 }
