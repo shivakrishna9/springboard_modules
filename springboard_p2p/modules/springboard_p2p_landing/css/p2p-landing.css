@@ -108,7 +108,6 @@ span.slide-wrapper {
 /* -- FLUID GRID STYLES -- */
 
 ul.campaign-landing-grid {
-  margin-bottom: 40px;
   text-align: justify;
   font-size: 0.1px;
 }
@@ -209,15 +208,19 @@ span.node-edit {
 /******************  Media queries, these should go last */
 @media (min-width: 769px) {
 
-  .view-content .campaign-landing-grid li {
+  ul.campaign-landing-grid li {
     width: 45%;
+  }
+
+  .campaign-landing-featured-view ul.campaign-landing-grid li {
+    width: 30%;
   }
 
 }
 
 @media (max-width: 768px) {
 
-  .view-content .campaign-landing-grid li {
+  ul.campaign-landing-grid li {
     width: 45%;
   }
 
@@ -225,7 +228,7 @@ span.node-edit {
 
 @media (max-width: 480px) {
 
-  .view-content .campaign-landing-grid li {
+  ul.campaign-landing-grid li {
     width: 99%;
   }
 

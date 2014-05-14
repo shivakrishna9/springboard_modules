@@ -83,6 +83,22 @@ function springboard_p2p_landing_image_default_styles() {
         ),
         'weight' => 1,
       ),
+      4 => array(
+        'label' => 'Crop',
+        'help' => 'Cropping will remove portions of an image to make it the specified dimensions.',
+        'effect callback' => 'image_crop_effect',
+        'dimensions callback' => 'image_resize_dimensions',
+        'form callback' => 'image_crop_form',
+        'summary theme' => 'image_crop_summary',
+        'module' => 'image',
+        'name' => 'image_crop',
+        'data' => array(
+          'width' => 1170,
+          'height' => 360,
+          'anchor' => 'center-center',
+        ),
+        'weight' => 2,
+      ),
     ),
   );
 

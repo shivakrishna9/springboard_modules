@@ -264,6 +264,7 @@ function springboard_p2p_landing_views_default_views() {
   /* Display: Featured Personal */
   $handler = $view->new_display('panel_pane', 'Featured Personal', 'panel_pane_2');
   $handler->display->display_options['defaults']['css_class'] = FALSE;
+  $handler->display->display_options['css_class'] = 'campaign-landing-featured-view';
   $handler->display->display_options['defaults']['pager'] = FALSE;
   $handler->display->display_options['pager']['type'] = 'some';
   $handler->display->display_options['pager']['options']['items_per_page'] = '3';
@@ -291,11 +292,27 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['title']['element_wrapper_type'] = '0';
   $handler->display->display_options['fields']['title']['element_default_classes'] = FALSE;
+  $handler->display->display_options['fields']['title']['link_to_node'] = FALSE;
+  /* Field: Content: Upload a Campaign Image */
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['id'] = 'field_p2p_campaign_images';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['table'] = 'field_data_field_p2p_campaign_images';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['field'] = 'field_p2p_campaign_images';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['element_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['click_sort_column'] = 'fid';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['settings'] = array(
+    'image_style' => 'campaign_image_landing',
+    'image_link' => '',
+  );
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['delta_limit'] = '1';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['delta_offset'] = '0';
   /* Field: Content: Campaign thumbnail */
   $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['id'] = 'field_p2p_campaign_thumbnail';
   $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['table'] = 'field_data_field_p2p_campaign_thumbnail';
   $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['field'] = 'field_p2p_campaign_thumbnail';
   $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['label'] = '';
+  $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['exclude'] = TRUE;
   $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['element_type'] = '0';
   $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['element_label_type'] = '0';
   $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['element_label_colon'] = FALSE;
@@ -339,16 +356,6 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['fields']['edit_node']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['edit_node']['element_wrapper_type'] = '0';
   $handler->display->display_options['fields']['edit_node']['element_default_classes'] = FALSE;
-  /* Field: Content: Upload a Campaign Image */
-  $handler->display->display_options['fields']['field_p2p_campaign_images']['id'] = 'field_p2p_campaign_images';
-  $handler->display->display_options['fields']['field_p2p_campaign_images']['table'] = 'field_data_field_p2p_campaign_images';
-  $handler->display->display_options['fields']['field_p2p_campaign_images']['field'] = 'field_p2p_campaign_images';
-  $handler->display->display_options['fields']['field_p2p_campaign_images']['click_sort_column'] = 'fid';
-  $handler->display->display_options['fields']['field_p2p_campaign_images']['settings'] = array(
-    'image_style' => 'campaign_image_landing',
-    'image_link' => '',
-  );
-  $handler->display->display_options['fields']['field_p2p_campaign_images']['delta_offset'] = '0';
   $handler->display->display_options['defaults']['arguments'] = FALSE;
   /* Contextual filter: Content: Nid */
   $handler->display->display_options['arguments']['nid']['id'] = 'nid';

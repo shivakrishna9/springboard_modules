@@ -49,6 +49,86 @@ function springboard_p2p_landing_field_default_field_instances() {
         'size' => 60,
       ),
       'type' => 'entityreference_autocomplete',
+      'weight' => 5,
+    ),
+  );
+
+  // Exported field_instance: 'node-p2p_campaign_landing-field_p2p_featured_title'
+  $field_instances['node-p2p_campaign_landing-field_p2p_featured_title'] = array(
+    'bundle' => 'p2p_campaign_landing',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'text',
+        'settings' => array(),
+        'type' => 'text_default',
+        'weight' => 5,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_p2p_featured_title',
+    'label' => 'Featured Title',
+    'required' => 1,
+    'settings' => array(
+      'text_processing' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'text',
+      'settings' => array(
+        'size' => 60,
+      ),
+      'type' => 'text_textfield',
+      'weight' => 4,
+    ),
+  );
+
+  // Exported field_instance: 'node-p2p_campaign_landing-field_p2p_grid_title'
+  $field_instances['node-p2p_campaign_landing-field_p2p_grid_title'] = array(
+    'bundle' => 'p2p_campaign_landing',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'text',
+        'settings' => array(),
+        'type' => 'text_default',
+        'weight' => 4,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_p2p_grid_title',
+    'label' => 'Grid Title',
+    'required' => 1,
+    'settings' => array(
+      'text_processing' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'text',
+      'settings' => array(
+        'size' => 60,
+      ),
+      'type' => 'text_textfield',
       'weight' => 3,
     ),
   );
@@ -92,7 +172,7 @@ function springboard_p2p_landing_field_default_field_instances() {
         'size' => 60,
       ),
       'type' => 'entityreference_autocomplete',
-      'weight' => 2,
+      'weight' => 4,
     ),
   );
 
@@ -132,7 +212,7 @@ function springboard_p2p_landing_field_default_field_instances() {
         'size' => 60,
       ),
       'type' => 'blockreference_autocomplete',
-      'weight' => 4,
+      'weight' => 5,
     ),
   );
 
@@ -175,7 +255,7 @@ function springboard_p2p_landing_field_default_field_instances() {
         'size' => 60,
       ),
       'type' => 'entityreference_autocomplete',
-      'weight' => 1,
+      'weight' => 12,
     ),
   );
 
@@ -185,6 +265,8 @@ function springboard_p2p_landing_field_default_field_instances() {
   t('Choose nodes to reference from Peer to peer campaigns for the slideshow. (Typing bring up suggestions.)');
   t('Choose nodes to reference from Peer to peer campaigns. (Typing bring up suggestions.)');
   t('Featured Personal Campaigns');
+  t('Featured Title');
+  t('Grid Title');
   t('Side Block');
   t('Slide Show');
   t('Start your own campaign');

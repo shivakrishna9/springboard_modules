@@ -21,6 +21,9 @@ function springboard_p2p_landing_strongarm() {
         'title' => array(
           'weight' => '0',
         ),
+        'path' => array(
+          'weight' => '6',
+        ),
       ),
       'display' => array(),
     ),
