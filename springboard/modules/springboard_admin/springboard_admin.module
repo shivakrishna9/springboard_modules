@@ -18,14 +18,14 @@ function springboard_admin_menu() {
     'access arguments' => array('springboard/asset-library'),
     'page callback' => 'springboard_admin_template_page',
   );
-  $items['springboard/donation-forms'] = array(
+  $items['springboard/donation-forms/all'] = array(
     'title' => 'Donation Forms',
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('access springboard dashboard'),
     'page callback' => 'springboard_admin_forms_page',
     'page arguments' => array('fundraiser')
   );
-  $items['springboard/forms'] = array(
+  $items['springboard/forms/all'] = array(
     'title' => 'Forms',
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('access springboard dashboard'),

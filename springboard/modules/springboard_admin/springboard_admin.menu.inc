@@ -65,8 +65,8 @@ function springboard_admin_admin_menu_items() {
   );
 
   // Top Level: Donation Form.
-  $items['springboard/donation-forms'] = array(
-    'link_path' => 'springboard/donation-forms',
+  $items['springboard/donation-forms/all'] = array(
+    'link_path' => 'springboard/donation-forms/all',
     'link_title' => t('Donation Forms'),
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
@@ -76,7 +76,7 @@ function springboard_admin_admin_menu_items() {
   );
 
   // Donation Forms > View All Donation Forms.
-  $items['springboard/donation-forms']['_children']['springboard/donation-forms/all'] = array(
+  $items['springboard/donation-forms/all']['_children']['springboard/donation-forms/all'] = array(
     'link_path' => 'springboard/donation-forms/all',
     'link_title' => t('View All Donation Forms'),
     'menu_name' => 'springboard_admin_menu',
@@ -91,7 +91,7 @@ function springboard_admin_admin_menu_items() {
   foreach ($types as $type) {
     if ($type && fundraiser_is_donation_type($type->type)) {
       // Donation Forms > $type->type
-      $items['springboard/donation-forms']['_children']['springboard/add/' . $type->type] = array(
+      $items['springboard/donation-forms/all']['_children']['springboard/add/' . $type->type] = array(
         'link_path' => 'springboard/add/' . $type->type,
         'link_title' => 'Create a ' . $type->name,
         'menu_name' => 'springboard_admin_menu',
@@ -103,7 +103,7 @@ function springboard_admin_admin_menu_items() {
   }
 
   // Donation Forms > Donation Reports.
-  $items['springboard/donation-forms']['_children']['springboard/reports/dsr'] = array(
+  $items['springboard/donation-forms/all']['_children']['springboard/reports/dsr'] = array(
     'link_path' => 'springboard/reports/dsr',
     'link_title' => 'Donation Reports',
     'menu_name' => 'springboard_admin_menu',
@@ -114,7 +114,7 @@ function springboard_admin_admin_menu_items() {
 
   // Donation Forms > Donation Settings.
   /* @TODO Not in the menu mockup.
-   * $items['springboard/donation-forms']['_children']['admin/config/salesforce/salesforce-donation'] = array(
+   * $items['springboard/donation-forms/all']['_children']['admin/config/salesforce/salesforce-donation'] = array(
     'link_path' => 'admin/config/salesforce/salesforce-donation',
     'link_title' => 'Donation Settings',
     'menu_name' => 'springboard_admin_menu',
@@ -124,8 +124,8 @@ function springboard_admin_admin_menu_items() {
   ); */
 
   // Top Level: Forms.
-  $items['springboard/forms'] = array(
-    'link_path' => 'springboard/forms',
+  $items['springboard/forms/all'] = array(
+    'link_path' => 'springboard/forms/all',
     'link_title' => t('Forms'),
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
@@ -135,7 +135,7 @@ function springboard_admin_admin_menu_items() {
   );
 
   // Forms > View All Forms.
-  $items['springboard/forms']['_children']['springboard/forms/all'] = array(
+  $items['springboard/forms/all']['_children']['springboard/forms/all'] = array(
     'link_path' => 'springboard/forms/all',
     'link_title' => t('View All Forms'),
     'menu_name' => 'springboard_admin_menu',
@@ -151,7 +151,7 @@ function springboard_admin_admin_menu_items() {
     // Only create the item if the node type uses Webform User but not Fundraiser.
     if ($type && _webform_user_is_webform_user_node_type($type->type) && !fundraiser_is_donation_type($type->type)) {
       // Forms > $type->type.
-      $items['springboard/forms']['_children']['springboard/add/' . $type->type] = array(
+      $items['springboard/forms/all']['_children']['springboard/add/' . $type->type] = array(
         'link_path' => 'springboard/add/' . $type->type,
         'link_title' => 'Create a ' . $type->name,
         'menu_name' => 'springboard_admin_menu',
@@ -164,7 +164,7 @@ function springboard_admin_admin_menu_items() {
 
   // Placeholder: Forms >  Form Reports.
   /*
-  $items['springboard/forms']['_children'][] = array (
+  $items['springboard/forms/all']['_children'][] = array (
     'link_path' => '',
     'link_title' => 'Form Reports',
     'menu_name' => 'springboard_admin_menu',
@@ -176,7 +176,7 @@ function springboard_admin_admin_menu_items() {
 
   // Forms > Form Settings.
   /* @TODO Not in the menu mockup.
-  $items['springboard/forms']['_children']['admin/config/content/webform'] = array(
+  $items['springboard/forms/all']['_children']['admin/config/content/webform'] = array(
     'link_path' => 'admin/config/content/webform',
     'link_title' => 'Form Settings',
     'menu_name' => 'springboard_admin_menu',
