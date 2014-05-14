@@ -1031,8 +1031,8 @@ function springboard_p2p_campaign_id_form_element(&$form) {
  *   The campaign ID, or NULL if one can't be found.
  */
 function springboard_p2p_get_campaign_id_from_request() {
-  if (isset($_GET['campaign']) && is_numeric($_GET['campaign'])) {
-    return $_GET['campaign'];
+  if (isset($_GET['p2p_cid']) && is_numeric($_GET['p2p_cid'])) {
+    return $_GET['p2p_cid'];
   }
 
   return NULL;
