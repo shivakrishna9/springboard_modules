@@ -132,7 +132,7 @@ ul.campaign-landing-grid * {
 
 ul.campaign-landing-grid h2.p2p-thumb-title {
   margin: 2px 0 12px 0;
-  color: #444;
+  color: #5b5b5b;
   font-size: 22px;
   line-height: 1.2em;
 }
@@ -222,10 +222,63 @@ ul.campaign-landing-grid a {
 .p2p-panelizer-campaign-landing h2,
 .p2p-panelizer-campaign-landing h3 {
   margin: 0 0 12px 0;
-  color: #444;
+  color: #5b5b5b;
   font-size: 22px;
   line-height: 1.2em;
 }
+
+/* Top campaigns */
+
+.p2p-panelizer-campaign-landing table {
+  width: 100%;
+}
+
+.p2p-panelizer-campaign-landing table tbody tr {
+  border: 1px solid #ccc;
+}
+
+.p2p-panelizer-campaign-landing table th {
+  border-bottom: none;
+  padding: 1px 0 3px 6px;
+}
+
+.p2p-panelizer-campaign-landing table tr.even {
+  background-color: #eee;
+}
+
+.p2p-panelizer-campaign-landing table tr.odd {
+  background-color: #fcfcfc;
+}
+
+.p2p-panelizer-campaign-landing table td {
+  padding: 3px 3px 0 6px;
+}
+
+.top-personal-campaigns-view {
+  border: 1px solid #eaeaea;
+}
+
+.top-personal-campaigns-view .attachment ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.top-personal-campaigns-view .attachment ul li {
+  margin: 0;
+  padding: 0;
+}
+
+.top-personal-campaigns-view  h3.highest-campaign {
+  background: #ccc;
+  padding: 2px 1px 2px 6px;
+  margin: 0;
+}
+
+.top-personal-campaigns-view h4.highest-progress-title {
+  padding-left: 6px;
+}
+
 
 /******************  Media queries, these should go last */
 @media (min-width: 769px) {
