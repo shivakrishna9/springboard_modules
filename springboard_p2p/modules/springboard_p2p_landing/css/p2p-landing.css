@@ -1,4 +1,15 @@
+/* some basic deafults, we can move these to springboard_frontend if needbe */
 
+html body {
+  color: #5b5b5b;
+}
+
+body h2 a:hover,
+body h3 a:hover {
+  text-decoration: none;
+}
+
+/* end defaults */
 
 /* flexslider tweaks, use font awesome. */
 
@@ -202,7 +213,7 @@ ul.campaign-landing-grid a {
 }
 
 .landing-search-view .views-submit-button,
-.landing-search-view  .views-reset-button {
+.landing-search-view .views-reset-button {
   width: 30%;
 }
 
@@ -227,6 +238,10 @@ ul.campaign-landing-grid a {
   line-height: 1.2em;
 }
 
+.p2p-panelizer-campaign-landing h4 {
+  color: #5b5b5b;
+}
+
 /* Top campaigns */
 
 .p2p-panelizer-campaign-landing table {
@@ -239,7 +254,7 @@ ul.campaign-landing-grid a {
 
 .p2p-panelizer-campaign-landing table th {
   border-bottom: none;
-  padding: 1px 0 3px 6px;
+  padding: 4px 0 3px 6px;
 }
 
 .p2p-panelizer-campaign-landing table tr.even {
@@ -258,6 +273,10 @@ ul.campaign-landing-grid a {
   border: 1px solid #eaeaea;
 }
 
+.top-personal-campaigns-view .attachment.attachment-before {
+  border-bottom: 1px solid #a6a6a6
+}
+
 .top-personal-campaigns-view .attachment ul {
   list-style: none;
   margin: 0;
@@ -269,16 +288,23 @@ ul.campaign-landing-grid a {
   padding: 0;
 }
 
-.top-personal-campaigns-view  h3.highest-campaign {
+.top-personal-campaigns-view h3.highest-campaign {
   background: #ccc;
-  padding: 2px 1px 2px 6px;
+  padding: 2px 1px 4px 6px;
   margin: 0;
+}
+
+.top-personal-campaigns-view h3.highest-campaign:hover {
+  background: #888;
+}
+
+.top-personal-campaigns-view h3.highest-campaign a:hover {
+  color: #eaeaea;
 }
 
 .top-personal-campaigns-view h4.highest-progress-title {
   padding-left: 6px;
 }
-
 
 /******************  Media queries, these should go last */
 @media (min-width: 769px) {
