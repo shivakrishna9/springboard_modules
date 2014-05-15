@@ -459,7 +459,6 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
       default:
         break;
     }
-
     $video_editable = $campaign_node->field_p2p_video_embed_edit[$language][0]['value'] ? TRUE : FALSE;
     $images_editable = $campaign_node->field_p2p_images_edit[$language][0]['value'] ? TRUE : FALSE;
     $can_edit_body = $campaign_node->field_p2p_personal_intro_edit[$language][0]['value'];
@@ -477,6 +476,8 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
     $form['field_p2p_campaign_images']['#access'] = $images_editable;
     $form['field_p2p_video_embed']['#access'] = $video_editable;
   }
+  // Hide revision UI
+  $form['revision_information']['#access'] = FALSE;
   $form['#validate'][] = 'springboard_p2p_personal_campaign_validate';
 }
 
