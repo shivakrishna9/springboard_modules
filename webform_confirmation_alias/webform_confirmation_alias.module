@@ -32,7 +32,7 @@ function webform_confirmation_alias_menu() {
  * and create a brand new alias.
  */
 function webform_confirmation_alias_node_insert($node) {
-	$webform_node_types = variable_get('webform_node_types', array());
+  $webform_node_types = variable_get('webform_node_types', array());
   if (in_array($node->type, $webform_node_types) && $node->webform['redirect_url'] == '<confirmation>') {
     if ($webform_alias = drupal_lookup_path('alias', 'node/' . $node->nid)) {
       $confirmation_alias_append = variable_get('webform_confirmation_alias_append', 'thank-you');
@@ -49,7 +49,7 @@ function webform_confirmation_alias_node_insert($node) {
  * and either update the confirmation alias or create a brand new one.
  */
 function webform_confirmation_alias_node_update($node) {
-	$webform_node_types = variable_get('webform_node_types', array());
+  $webform_node_types = variable_get('webform_node_types', array());
   if (in_array($node->type, $webform_node_types) && $node->webform['redirect_url'] == '<confirmation>') {
     if ($webform_alias = drupal_lookup_path('alias', 'node/' . $node->nid)) {
       $confirmation_alias_append = variable_get('webform_confirmation_alias_append', 'thank-you');
@@ -72,7 +72,7 @@ function webform_confirmation_alias_node_update($node) {
  * and remove the appropriate record from the 'url_alias' table.
  */
 function webform_confirmation_alias_node_delete($node) {
-	$webform_node_types = variable_get('webform_node_types', array());
+  $webform_node_types = variable_get('webform_node_types', array());
   if (in_array($node->type, $webform_node_types)) {
     webform_confirmation_alias_remove($node->nid);
   }

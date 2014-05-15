@@ -58,9 +58,9 @@ function webform_confirmation_alias_admin_settings() {
  * it will run the 'Bulk Generate' function.
  */
 function webform_confirmation_alias_second_submitter($form, &$form_state) {
-	if ($form_state['values']['webform_confirmation_alias_bulkupdate'] == 1) {
-		webform_confirmation_alias_bulk_generate_aliases($form_state['values']['webform_confirmation_alias_append']);
-	}
+  if ($form_state['values']['webform_confirmation_alias_bulkupdate'] == 1) {
+    webform_confirmation_alias_bulk_generate_aliases($form_state['values']['webform_confirmation_alias_append']);
+  }
 }
 
 /**
