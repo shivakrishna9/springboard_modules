@@ -726,8 +726,8 @@ function springboard_views_views_default_views() {
     'title' => 'title',
   );
 
-  /* Display: Springboard Recent Donation Forms Page */
-  $handler = $view->new_display('block', 'Springboard Recent Donation Forms Page', 'block_2');
+  /* Display: Springboard Recent Forms by Type */
+  $handler = $view->new_display('block', 'Springboard Recent Forms by Type', 'block_2');
   $handler->display->display_options['defaults']['title'] = FALSE;
   $handler->display->display_options['title'] = 'Recent Forms by Type';
   $handler->display->display_options['defaults']['use_ajax'] = FALSE;
@@ -751,6 +751,7 @@ function springboard_views_views_default_views() {
     'clone_node' => 'clone_node',
     'edit_node' => 'clone_node',
     'view_node' => 'clone_node',
+    'field_webform_user_internal_name' => 'field_fundraiser_internal_name',
   );
   $handler->display->display_options['style_options']['default'] = '-1';
   $handler->display->display_options['style_options']['info'] = array(
@@ -803,13 +804,17 @@ function springboard_views_views_default_views() {
       'align' => '',
       'separator' => '|',
       'empty_column' => 0,
-    ),
     'edit_node' => array(
+    ),
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
     ),
     'view_node' => array(
+    ),
+    'field_webform_user_internal_name' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -883,6 +888,12 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['view_node']['element_class'] = 'table-actions';
   $handler->display->display_options['fields']['view_node']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['view_node']['text'] = 'view';
+  /* Field: Content: Internal Name */
+  $handler->display->display_options['fields']['field_webform_user_internal_name']['id'] = 'field_webform_user_internal_name';
+  $handler->display->display_options['fields']['field_webform_user_internal_name']['table'] = 'field_data_field_webform_user_internal_name';
+  $handler->display->display_options['fields']['field_webform_user_internal_name']['field'] = 'field_webform_user_internal_name';
+  $handler->display->display_options['fields']['field_webform_user_internal_name']['label'] = '';
+  $handler->display->display_options['fields']['field_webform_user_internal_name']['element_label_colon'] = FALSE;
   $handler->display->display_options['defaults']['arguments'] = FALSE;
   /* Contextual filter: Content: Type */
   $handler->display->display_options['arguments']['type']['id'] = 'type';
