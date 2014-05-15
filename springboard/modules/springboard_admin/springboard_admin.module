@@ -138,14 +138,41 @@ function springboard_admin_admin_paths() {
  *
  * Redirects a user role to /springboard if it is given the Springboard
  * User Experience option in Springboard Settings.
+ * 
+ * Set up multiple new menu router items based on exisitng items, so that 
+ * Springboard administrative pages can be accessed from /springboard/% in lieu
+ * of /admin/%.
  */
 function springboard_admin_menu_alter(&$items) {
+  // Springboard UX Redirects
   global $user;
   if (springboard_admin_user_gets_sbux($user)) {
     $items['admin']['page callback'] = 'drupal_goto';
     $items['admin']['page arguments'] = array('springboard');
   }
-  // Create a Springboard router item for each node add form
+  // Springboard UX Duplicate Router Items
+  
+  /** 
+  * Create multiple Springboard router items for each node type.
+  *   node/add/type  -> springboard/add/type
+  *   node/%/view -> springboard/node/%/view
+  *   node/%/edit -> springboard/node/%/edit
+  *   node/%/salesforce -> /springboard/node/%/salesforce
+  *   node/%/webform -> /springboard/node/%/form-components
+  *     node/%/webform/emails -> /springboard/node/%/form/confirmation-emails
+  *     node/%/webform/configure -> /springboard/node/%/form/confirmation-page-settings
+  *   node/%/webform-results ->  /springboard/node/%/results
+  *     node/%/webform-results/analysis ->  /springboard/node/%/results/analysis
+  *     node/%/webform-results/table ->  /springboard/node/%/results/table
+  *     node/%/webform-results/download ->  /springboard/node/%/results/download
+  *     node/%/webform-results/clear ->  /springboard/node/%/results/clear
+  **/
+  $items['springboard/node/%node/view'] = $items['node/%node/view'];
+  $items['springboard/node/%node/view']['page arguments'][0] = 2;
+  
+  $items['springboard/node/%node/edit'] = $items['node/%node/edit'];
+  $items['springboard/node/%node/edit']['page arguments'][0] = 2;
+  
   $types = node_type_get_types();
   foreach ($types as $type) {
     if (_webform_user_is_webform_user_node_type($type->type) || fundraiser_is_donation_type($type->type)) {
