@@ -1095,7 +1095,7 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
       $state_field['#prefix'] = '<div id="zone-select-wrapper">';
       $state_field['#suffix'] = '</div>';
 
-      // preload any fields if the user is logged in and if offline exists, when not in offline mode 
+      // preload any fields if the user is logged in and if offline exists, when not in offline mode
       if (user_is_logged_in() &&
         ( !function_exists('_fundraiser_offline_is_offline') || (function_exists('_fundraiser_offline_is_offline') && !_fundraiser_offline_is_offline()) )
         ) {
@@ -2158,6 +2158,8 @@ function fundraiser_update_user_profile($uid, $nid, $sid) {
           $updates[$row['name']] = $map[$row['name']];
         }
       }
+      // Give us the chance to alter the data before its saved
+      drupal_alter('fundraiser_save_profile', $updates, $cat['name']);
       // save profile
       _fundraiser_profile_save_profile($updates, $update_user, $cat['name']);
     }

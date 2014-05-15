@@ -458,7 +458,7 @@ function webform_user_mapping_form($form_state, $node) {
         '#type' => 'item',
         '#description' => t($component['name'] . " - (" . $component['type'] . ")"),
       );
-      
+
       $form['mapping']['mandatory'][$cid] = array(
         '#type' => 'item',
         '#description' => $component['mandatory'] ? '<span class="form-required">*</span>' . t('required') :'',
@@ -862,6 +862,8 @@ function _webform_user_save_profile_map($uid, &$map) {
             }
           }
         }
+        // Give us the chance to alter the data before its saved
+        drupal_alter('webform_user_save_profile', $updates);
         // save profile
         _webform_user_profile_save_profile($updates, $user_to_update->uid);
       }
