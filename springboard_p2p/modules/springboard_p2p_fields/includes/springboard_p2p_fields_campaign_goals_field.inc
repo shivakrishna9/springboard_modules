@@ -202,13 +202,14 @@ class SpringboardP2pCampaignGoalsField {
           $goal_options = array();
           $goal_type_default = NULL;
           if ($form_type == 'fundraiser') {
-            $goal_options['amount'] = t('Amount raised');
+            $goal_type_default = 'amount';
+            $goal_options['amount'] = t('Amount Raised');
           }
           else {
             // Non-fundraiser forms only support submissions.
             $goal_type_default = 'submissions';
+            $goal_options['submissions'] = t('Submission Count');
           }
-          $goal_options['submissions'] = t('Number of submissions');
 
           $widget['form_types'][$form_type] = array(
             '#tree' => TRUE,
