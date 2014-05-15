@@ -271,7 +271,10 @@ function springboard_p2p_landing_panelizer_defaults() {
     $pane->style = array(
       'settings' => NULL,
     );
-    $pane->css = array();
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'landing-side-block',
+    );
     $pane->extras = array();
     $pane->position = 5;
     $pane->locks = array();

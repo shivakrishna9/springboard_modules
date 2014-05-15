@@ -194,3 +194,24 @@ function springboard_p2p_landing_views_api() {
     'template path' => drupal_get_path('module', 'springboard_p2p_landing') . '/templates',
   );
 }
+
+/**
+ * Alter CSS files before they are output on the page.
+ *
+ * @param $css
+ *   An array of all CSS items (files and inline CSS) being requested on the page.
+ *
+ * @see drupal_add_css()
+ * @see drupal_get_css()
+ */
+function springboard_p2p_landing_css_alter(&$css) {
+  $node = menu_get_object();
+  if (!empty($node) && $node->type == 'p2p_campaign_landing' && arg(2) === NULL) {
+
+    // Exclude system.theme.
+    $exclude = array(
+      'modules/system/system.theme.css' => FALSE,
+    );
+    $css = array_diff_key($css, $exclude);
+  }
+}
