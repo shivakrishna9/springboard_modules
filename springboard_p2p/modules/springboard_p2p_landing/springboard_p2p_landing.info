@@ -13,6 +13,7 @@ dependencies[] = panelizer
 dependencies[] = strongarm
 dependencies[] = views
 dependencies[] = views_content
+features[ctools][] = field_group:field_group:1
 features[ctools][] = panelizer:panelizer:1
 features[ctools][] = strongarm:strongarm:1
 features[features_api][] = api:2
