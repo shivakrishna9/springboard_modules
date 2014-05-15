@@ -84,6 +84,17 @@ function springboard_p2p_landing_views_default_views() {
     'image_style' => 'campaign_image_slideshow',
     'image_link' => '',
   );
+  /* Field: Content: Edit link */
+  $handler->display->display_options['fields']['edit_node']['id'] = 'edit_node';
+  $handler->display->display_options['fields']['edit_node']['table'] = 'views_entity_node';
+  $handler->display->display_options['fields']['edit_node']['field'] = 'edit_node';
+  $handler->display->display_options['fields']['edit_node']['label'] = '';
+  $handler->display->display_options['fields']['edit_node']['element_type'] = 'span';
+  $handler->display->display_options['fields']['edit_node']['element_class'] = 'node-edit';
+  $handler->display->display_options['fields']['edit_node']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['edit_node']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['edit_node']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['edit_node']['element_default_classes'] = FALSE;
   /* Sort criterion: Content: Slide Show (field_p2p_slide_show:delta) */
   $handler->display->display_options['sorts']['delta']['id'] = 'delta';
   $handler->display->display_options['sorts']['delta']['table'] = 'field_data_field_p2p_slide_show';

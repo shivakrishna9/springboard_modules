@@ -81,6 +81,20 @@ span.slide-wrapper {
   font-size: 26px;
 }
 
+.p2p-campaign-landing-slideshow span.node-edit {
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  width: 100%;
+  text-align: left;
+}
+
+.p2p-campaign-landing-slideshow span.node-edit a {
+  padding: 4px 6px;
+  background: #ccc;
+  color: #555;
+}
+
 .p2p-campaign-landing-slideshow span.slide-link a:hover {
   background: #888;
   color: #fffe00;
@@ -147,8 +161,16 @@ ul.campaign-landing-grid a {
   padding: 0;
 }
 
-span.node-edit {
-  display: block;
+.campaign-landing-grid span.node-edit {
+  position: absolute;
+  right: 0;
+  bottom: -3px;
+}
+
+.campaign-landing-grid span.node-edit a {
+  padding: 4px 6px;
+  background: #ccc;
+  color: #555;
 }
 
 .campaign-node-link a {
