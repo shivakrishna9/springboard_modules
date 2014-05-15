@@ -213,7 +213,7 @@ span.node-edit {
   }
 
   .campaign-landing-featured-view ul.campaign-landing-grid li {
-    width: 30%;
+    width: 29%;
   }
 
 }
@@ -224,11 +224,19 @@ span.node-edit {
     width: 45%;
   }
 
+  .campaign-landing-featured-view ul.campaign-landing-grid li {
+    width: 45%;
+  }
+
 }
 
 @media (max-width: 480px) {
 
   ul.campaign-landing-grid li {
+    width: 99%;
+  }
+
+  .campaign-landing-featured-view ul.campaign-landing-grid li {
     width: 99%;
   }
 

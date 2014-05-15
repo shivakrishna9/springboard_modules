@@ -48,13 +48,23 @@
         });
       }
 
-      // Now set the equal height on the thumb grid.
+      // Now set equal height on the grids.
+
       $(window).load(function () {
-        equalheight('.view-content .campaign-landing-grid li');
+        equalheight('.campaign-landing-view ul.campaign-landing-grid li');
+        equalheight('.campaign-landing-view .p2p-thumb-title');
+
+        equalheight('.campaign-landing-featured-view ul.campaign-landing-grid li');
+        equalheight('.campaign-landing-featured-view .p2p-thumb-title');
+
       });
 
       $(window).resize(function () {
-        equalheight('.view-content .campaign-landing-grid li');
+        equalheight('.campaign-landing-view ul.campaign-landing-grid li');
+        equalheight('.campaign-landing-view .p2p-thumb-title');
+
+        equalheight('.campaign-landing-featured-view ul.campaign-landing-grid li');
+        equalheight('.campaign-landing-featured-view .p2p-thumb-title');
       });
 
 
