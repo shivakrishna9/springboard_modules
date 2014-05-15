@@ -6,8 +6,8 @@ html body {
 
 body ul,
 body ol {
-  padding: 0;
   margin: 0;
+  padding: 0;
 }
 
 body h2 a:hover,
@@ -263,8 +263,8 @@ ul.campaign-landing-grid a {
 }
 
 .p2p-panelizer-campaign-landing table th {
-  border-bottom: none;
   padding: 4px 0 3px 6px;
+  border-bottom: none;
 }
 
 .p2p-panelizer-campaign-landing table tr.even {
@@ -288,9 +288,9 @@ ul.campaign-landing-grid a {
 }
 
 .top-personal-campaigns-view .attachment ul {
-  list-style: none;
   margin: 0;
   padding: 0;
+  list-style: none;
 }
 
 .top-personal-campaigns-view .attachment ul li {
@@ -299,11 +299,11 @@ ul.campaign-landing-grid a {
 }
 
 .top-personal-campaigns-view h3.highest-campaign {
-  background: #888;
-  padding: 2px 1px 4px 6px;
   margin: 0;
-  font-size: 19px;
+  padding: 2px 1px 4px 6px;
+  background: #888;
   text-align: center;
+  font-size: 19px;
 }
 
 .top-personal-campaigns-view h3.highest-campaign a {
@@ -318,23 +318,21 @@ ul.campaign-landing-grid a {
   padding-left: 6px;
 }
 
-
-
-.p2p-panelizer-campaign-landing .landing-side-block ul,
-.p2p-panelizer-campaign-landing .view-search-for-a-campaign ul{
+.p2p-panelizer-campaign-landing .landing-side-block .content ul,
+.p2p-panelizer-campaign-landing .view-search-for-a-campaign .view-content ul{
   margin: 0;
 }
 
-.p2p-panelizer-campaign-landing .landing-side-block ul li,
-.p2p-panelizer-campaign-landing .view-search-for-a-campaign ul li {
+.p2p-panelizer-campaign-landing .landing-side-block .content ul li,
+.p2p-panelizer-campaign-landing .view-search-for-a-campaign .view-content ul li {
   position: relative;
   left: 28px;
-  list-style: none;
   margin-bottom: 4px;
+  list-style: none;
 }
 
-.p2p-panelizer-campaign-landing .landing-side-block ul li:before,
-.p2p-panelizer-campaign-landing .view-search-for-a-campaign ul li:before{
+.p2p-panelizer-campaign-landing .landing-side-block .content ul li:before,
+.p2p-panelizer-campaign-landing .view-search-for-a-campaign .view-content ul li:before{
   position: absolute;
   top: 2px;
   left: -16px;
