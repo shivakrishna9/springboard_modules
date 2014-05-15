@@ -339,6 +339,7 @@ function springboard_p2p_ajax($form, $form_state) {
  * Implements hook_form_FORM_ID_alter().
  */
 function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$form_state, $form_id) {
+
   if (springboard_p2p_form_is_node_create($form)) {
     $campaign = isset($_GET['campaign']) ? $_GET['campaign'] : FALSE;
     $ajax = FALSE;
@@ -478,6 +479,8 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
   }
   // Hide revision UI
   $form['revision_information']['#access'] = FALSE;
+  // Hide progress fields
+  $form['field_p2p_campaign_progress']['#access'] = FALSE;
   $form['#validate'][] = 'springboard_p2p_personal_campaign_validate';
 }
 
