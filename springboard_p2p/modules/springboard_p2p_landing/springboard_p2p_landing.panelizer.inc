@@ -48,6 +48,31 @@ function springboard_p2p_landing_panelizer_defaults() {
   $display->content = array();
   $display->panels = array();
     $pane = new stdClass();
+    $pane->pid = 'new-0d094ea0-7fa7-4402-9e68-8752e0860753';
+    $pane->panel = 'bottom';
+    $pane->type = 'custom';
+    $pane->subtype = 'custom';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'admin_title' => '',
+      'title' => '',
+      'body' => '<h2>%node:field_p2p_featured_title</h2>',
+      'format' => 'full_html',
+      'substitute' => 1,
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 0;
+    $pane->locks = array();
+    $pane->uuid = '0d094ea0-7fa7-4402-9e68-8752e0860753';
+    $display->content['new-0d094ea0-7fa7-4402-9e68-8752e0860753'] = $pane;
+    $display->panels['bottom'][0] = 'new-0d094ea0-7fa7-4402-9e68-8752e0860753';
+    $pane = new stdClass();
     $pane->pid = 'new-ea8fe52b-8cca-41bc-8b77-0952f6299084';
     $pane->panel = 'bottom';
     $pane->type = 'views_panes';
@@ -61,11 +86,36 @@ function springboard_p2p_landing_panelizer_defaults() {
     );
     $pane->css = array();
     $pane->extras = array();
-    $pane->position = 0;
+    $pane->position = 1;
     $pane->locks = array();
     $pane->uuid = 'ea8fe52b-8cca-41bc-8b77-0952f6299084';
     $display->content['new-ea8fe52b-8cca-41bc-8b77-0952f6299084'] = $pane;
-    $display->panels['bottom'][0] = 'new-ea8fe52b-8cca-41bc-8b77-0952f6299084';
+    $display->panels['bottom'][1] = 'new-ea8fe52b-8cca-41bc-8b77-0952f6299084';
+    $pane = new stdClass();
+    $pane->pid = 'new-0c63d3b8-5e94-4147-96e5-226e34539acf';
+    $pane->panel = 'middle_left';
+    $pane->type = 'custom';
+    $pane->subtype = 'custom';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'admin_title' => 'Grid Title',
+      'title' => '',
+      'body' => '<h2>%node:field-p2p-grid-title</h2>',
+      'format' => 'full_html',
+      'substitute' => 1,
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 0;
+    $pane->locks = array();
+    $pane->uuid = '0c63d3b8-5e94-4147-96e5-226e34539acf';
+    $display->content['new-0c63d3b8-5e94-4147-96e5-226e34539acf'] = $pane;
+    $display->panels['middle_left'][0] = 'new-0c63d3b8-5e94-4147-96e5-226e34539acf';
     $pane = new stdClass();
     $pane->pid = 'new-75fdd4db-bb0b-4436-b8ea-5454fc55fbf9';
     $pane->panel = 'middle_left';
@@ -80,11 +130,11 @@ function springboard_p2p_landing_panelizer_defaults() {
     );
     $pane->css = array();
     $pane->extras = array();
-    $pane->position = 0;
+    $pane->position = 1;
     $pane->locks = array();
     $pane->uuid = '75fdd4db-bb0b-4436-b8ea-5454fc55fbf9';
     $display->content['new-75fdd4db-bb0b-4436-b8ea-5454fc55fbf9'] = $pane;
-    $display->panels['middle_left'][0] = 'new-75fdd4db-bb0b-4436-b8ea-5454fc55fbf9';
+    $display->panels['middle_left'][1] = 'new-75fdd4db-bb0b-4436-b8ea-5454fc55fbf9';
     $pane = new stdClass();
     $pane->pid = 'new-809ad633-6e77-417c-b8a6-67e55c1b0c0e';
     $pane->panel = 'middle_right';
