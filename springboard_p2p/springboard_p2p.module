@@ -341,7 +341,7 @@ function springboard_p2p_ajax($form, $form_state) {
 function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$form_state, $form_id) {
 
   if (springboard_p2p_form_is_node_create($form)) {
-    $campaign = isset($_GET['campaign']) ? $_GET['campaign'] : FALSE;
+    $campaign = isset($_GET['p2p_cid']) ? $_GET['p2p_cid'] : FALSE;
     $ajax = FALSE;
     if (isset($form_state['parent_campaign'])) {
       $campaign = $form_state['parent_campaign'];
@@ -1089,7 +1089,7 @@ function springboard_p2p_set_redirect($form, &$form_state) {
           'node/add/p2p-personal-campaign',
           array(
             'query' => array(
-              'campaign' => $campaign_id,
+              'p2p_cid' => $campaign_id,
             ),
           ),
         );
