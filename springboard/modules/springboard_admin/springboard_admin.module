@@ -32,6 +32,12 @@ function springboard_admin_menu() {
     'page callback' => 'springboard_admin_forms_page',
     'page arguments' => array('webform_user')
   );
+  $items['springboard/marketing-analytics'] = array(
+    'title' => 'Marketing & Analytics',
+    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('access springboard dashboard'),
+    'page callback' => 'springboard_admin_marketing_analytics_page'
+   );
   $items['springboard/reports'] = array(
     'title' => 'Reports',
     'type' => MENU_NORMAL_ITEM,
@@ -428,6 +434,17 @@ function springboard_admin_forms_page($springboard_type) {
   return theme('springboard_admin_forms_page', array('types'=> $display_types, 'tables' => $tables));
 }
 
+/**
+ * Page callback for Marketing & Analytics landing page.
+ */
+function springboard_admin_marketing_analytics_page() {
+
+  if(module_exists('webform_goals')) {
+    include_once(drupal_get_path('module', 'webform_goals') . '/webform_goals.admin.inc');
+    $output = drupal_get_form('webform_goals_admin_list');
+  }
+  return $output;
+}
 /**
  * Page callback for admin pages that are aggregates of child page links.
  *
