@@ -4,16 +4,20 @@
  * Sets custom aliases per webform confirmation path.
  */
 
+/**************************************************************************************************************//*
+ * Drupal Hooks
+*****************************************************************************************************************/
+
 /**
  * Implements hook_menu().
  */
 function webform_confirmation_alias_menu() {
-  $items['admin/config/webform-confirmation-alias'] = array(
+  $items['admin/config/content/webform/webform-confirmation-alias'] = array(
     'title' => t('Confirmation Page Aliases'),
     'description' => t('Bulk update confirmation page url aliases.'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('webform_confirmation_alias_admin_settings'),
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array('access site configuration'),
     'type' => MENU_NORMAL_ITEM,
     'file' => 'webform_confirmation_alias.admin.inc', 
   );
@@ -21,71 +25,41 @@ function webform_confirmation_alias_menu() {
 }
 
 /**
- * Implements hook_form_alter().
- */
-function webform_confirmation_alias_form_alter(&$form, $form_state, $form_id) {
-  // When webform settings page is saved, add a submit handler
-  // to generate an alias for the redirect url (if needed).
-  if ($form_id == 'webform_configure_form') {
-    $form['#submit'][] = 'webform_confirmation_alias_create_alias';
-  }
-}
-
-/**
- * Generate url alias for Action Factory confirmation page redirect urls.
- */
-function webform_confirmation_alias_create_alias($form, $form_state) {
-  if (!empty($form_state['values']['redirect_url'])) {
-    $nid = $form_state['values']['nid'];
-    $redirect_url = $form_state['values']['redirect_url']; 
-    // Action Factory style redirect url, no pre-existing url alias for the redirect. 
-    if ($redirect_url == 'node/' . $nid . '/thank-you' && !drupal_lookup_path('alias', $redirect_url)) {
-      $dst = drupal_lookup_path('alias', 'node/' . $nid);
-      // Parent node has an alias but the redirect url doesn't, create.
-      if ($dst) {
-        $settings = array(
-          'pid' => '',
-          'src' => $redirect_url,
-          'dst' => $dst . '/thank-you',
-          'language' => 'en',
-        );
-        drupal_write_record('url_alias', $settings);
-      }
-    }
-  }
-}
-
-/**
- * Implements hook_node_presave().
- */
-function webform_confirmation_alias_node_presave($node) {
-	$webform_node_types = variable_get('webform_node_types', array());
-  if (in_array($node->type, $webform_node_types) && isset($node->clone_from_original_nid)) {
-    $node->pathauto_perform_alias = TRUE;
-  }
-}
-
-/**
  * Implements hook_node_insert().
+ *
+ * If it is a 'webform' node type, check that the 'redirect_url' parameter is '<confirmation>',
+ * and then check whether the node has an alias. If so, find the 'append' text
+ * and create a brand new alias.
  */
 function webform_confirmation_alias_node_insert($node) {
 	$webform_node_types = variable_get('webform_node_types', array());
-  if (in_array($node->type, $webform_node_types) && isset($node->clone_from_original_nid)) {
-    $redirect_url = $node->webform['redirect_url'];
-    if ($redirect_url == 'node/' . $node->clone_from_original_nid . '/thank-you') {
-      $node->webform['redirect_url'] = 'node/' . $node->nid . '/thank-you';
-      $redirect_url = $node->webform['redirect_url'];
+  if (in_array($node->type, $webform_node_types) && $node->webform['redirect_url'] == '<confirmation>') {
+    if ($webform_alias = drupal_lookup_path('alias', 'node/' . $node->nid)) {
+      $confirmation_alias_append = variable_get('webform_confirmation_alias_append', 'thank-you');
+      webform_confirmation_alias_add($node->nid, $webform_alias, $confirmation_alias_append, TRUE);
     }
-    if ($redirect_url == 'node/' . $node->nid . '/thank-you') {
-      $dst = drupal_lookup_path('alias', 'node/' . $node->nid);
-      if ($dst) {
-        $settings = array(
-          'pid' => '',
-          'src' => 'node/' . $node->nid . '/thank-you',
-          'dst' => $dst . '/thank-you',
-          'language' => 'en',
-        );
-        drupal_write_record('url_alias', $settings);
+  }
+}
+
+/**
+ * Implements hook_node_update().
+ *
+ * If it's a 'webform' node type, check that the 'redirect_url' parameter is '<confirmation>',
+ * and then check whether the node has an alias. If so, find the 'append' text
+ * and either update the confirmation alias or create a brand new one.
+ */
+function webform_confirmation_alias_node_update($node) {
+	$webform_node_types = variable_get('webform_node_types', array());
+  if (in_array($node->type, $webform_node_types) && $node->webform['redirect_url'] == '<confirmation>') {
+    if ($webform_alias = drupal_lookup_path('alias', 'node/' . $node->nid)) {
+      $confirmation_alias_append = variable_get('webform_confirmation_alias_append', 'thank-you');
+      
+      // Now that we know this is a webform with an alias, we have to check whether 
+      // to add or update the confirmation alias.
+      if (webform_confirmation_alias_check_for_existing($node->nid) >= 1) {
+	      webform_confirmation_alias_update($node->nid, $webform_alias, $confirmation_alias_append, TRUE);
+      } else {
+        webform_confirmation_alias_add($node->nid, $webform_alias, $confirmation_alias_append, TRUE);
       }
     }
   }
@@ -100,16 +74,73 @@ function webform_confirmation_alias_node_insert($node) {
 function webform_confirmation_alias_node_delete($node) {
 	$webform_node_types = variable_get('webform_node_types', array());
   if (in_array($node->type, $webform_node_types)) {
-    webform_confirmation_alias_remove_alias($node->nid);
+    webform_confirmation_alias_remove($node->nid);
   }
   break;
 }
 
+/**************************************************************************************************************//*
+ * Custom functions
+*****************************************************************************************************************/
+
 /**
- * Small helper function to delete confirmation page aliases.
+ * Query to find confirmation aliases for the exising Webform NID.
+ * Return the rowCount(), which will be "1" if one exists and "0" if it's not there.
  */
-function webform_confirmation_alias_remove_alias($nid) {
-  db_delete('url_alias')
-    ->condition('src', 'node/' . $nid . '/thank-you')
-    ->execute();
+function webform_confirmation_alias_check_for_existing($webform_nid) {
+  $query = db_select('url_alias', 'u');
+  $query->fields('u', array('source', 'alias'));
+  $query->condition('u.source', 'node/' . $webform_nid . '/done');
+  $get_aliases = $query->execute();
+  return $get_aliases->rowCount();
 }
+
+/**
+ * Add a new confirmation alias.
+ * Check whether to show the 'success' message. (We skip it on 
+ * bulk alias generation because it would be annoying.)
+ */
+function webform_confirmation_alias_add($webform_nid, $webform_alias, $confirmation_alias_append, $show_message) {
+  db_insert('url_alias')
+    ->fields(array(
+      'source' => 'node/' . $webform_nid . '/done',
+      'alias' => $webform_alias . '/' . $confirmation_alias_append,
+      'language' => 'en',
+    ))
+    ->execute();
+    
+  if ($show_message) {
+    drupal_set_message('Added a new confirmation alias.');
+  }
+}
+
+/**
+ * Update a confirmation alias.
+ * Check whether to show the 'success' message. (We skip it on 
+ * bulk alias generation because it would be annoying.)
+ */
+function webform_confirmation_alias_update($webform_nid, $webform_alias, $confirmation_alias_append, $show_message) {
+  db_update('url_alias')
+    ->fields(array(
+      'source' => 'node/' . $webform_nid . '/done',
+      'alias' => $webform_alias . '/' . $confirmation_alias_append,
+      'language' => 'en',
+    ))
+    ->condition('source', 'node/' . $webform_nid . '/done')
+    ->execute();
+    
+  if ($show_message) {
+    drupal_set_message('Updated a confirmation alias.');
+  }
+}
+
+/**
+ * Delete a confirmation page alias.
+ */
+function webform_confirmation_alias_remove($webform_nid) {
+  db_delete('url_alias')
+    ->condition('source', 'node/' . $webform_nid . '/done')
+    ->execute();
+  drupal_set_message('Deleted the confirmation alias.');
+}
+

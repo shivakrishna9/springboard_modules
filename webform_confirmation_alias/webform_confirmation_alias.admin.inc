@@ -5,68 +5,99 @@
  */
 
 /**
- * Admin settings form for ACLU Confirmation Alias.
+ * Admin settings form for Webform Confirmation Alias.
  *
  * Provides interface to bulk add aliases to existing webforms.
+ * Also, allows site admins to set the confirmation 'append' text, site-wide.
  */
 function webform_confirmation_alias_admin_settings() {
-  // set page title.
-  $form['description'] = array(
-    '#type' => 'markup',
-    '#value' => '<p>' . t('This module generates url aliases for webform confirmation urls. Any webforms with configured confirmation urls that existed before this
-      module was installed will not have aliases created by this module. Click on the button below to automatically generate aliases for all existing webforms.') . '</p>',
+  global $base_url;
+  $form['generate_aliases'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Bulk Generate Aliases'),
+    '#description' => '<p>' . t('This module generates url "aliases" for webform confirmation URLs. Only forms with the default "confirmation page" setting will be affected 
+      by this module. <br />Click on the button below to generate aliases for all existing forms or to update all forms if you changed the text in the field below.') . '</p>',
   );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Generate aliases'),
+    $form['generate_aliases']['generate'] = array(
+      '#type' => 'submit',
+      '#value' => t('Bulk Generate'),
+      '#submit' => array('webform_confirmation_alias_bulk_generate_aliases'),
+    );
+  
+  $form['general_module_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('URL Alias settings'),
   );
-  $form['#submit'][] = 'webform_confirmation_alias_generate_aliases';
-  return $form;
+    $form['general_module_settings']['webform_confirmation_alias_append'] = array(
+      '#attributes' => array('class' => array('format-numeric')),
+      '#required' => TRUE,
+      '#size' => 40,
+      '#type' => 'textfield',
+      '#title' => t('Text to Append to Create the Confirmation URL'),
+      '#description' => 'Enter the text to append to the form URL when generating the confirmation URL (e.g. "thank-you" or "success").<br />For example, if you choose "success", a form whose URL is "' . $base_url . '/donate" will have the confirmation URL of "' . $base_url . '/donate/thank-you".',
+      '#default_value' => variable_get('webform_confirmation_alias_append', 'thank-you'),
+    );
+    $form['general_module_settings']['webform_confirmation_alias_bulkupdate'] = array(
+      '#attributes' => array('class' => array('format-numeric')),
+      '#required' => FALSE,
+      '#type' => 'checkbox',
+      '#title' => t('Update confirmation aliases for all existing forms?'),
+      '#default_value' => 0,
+      '#description' => 'Checking this box will activate the "Bulk Generate" function. If you leave this unchecked, your changes will only affect future forms.',
+    );
+    
+    // Second submit handler to check whether we should bulk generate aliases.
+    $form['#submit'][] = 'webform_confirmation_alias_second_submitter';
+
+  return system_settings_form($form);
+}
+
+/**
+ * Second submit handler for confirmation form above.
+ * If 'update confirmation aliases' checkbox is checked,
+ * it will run the 'Bulk Generate' function.
+ */
+function webform_confirmation_alias_second_submitter($form, &$form_state) {
+	if ($form_state['values']['webform_confirmation_alias_bulkupdate'] == 1) {
+		webform_confirmation_alias_bulk_generate_aliases($form_state['values']['webform_confirmation_alias_append']);
+	}
 }
 
 /**
  * Bulk-add url aliases for webform confirmation redirect urls.
- * Get list of webforms that need url aliases for confirmation pages.
- * Criteria:
- * - webform is set to redirect to a custom url.
- * - redirect url ends with /thank-you.
- * - there is currently no alias for this redirect url.
+ * Called from 'Bulk Generate' button above, as well as the alternate submit handler for the same form.
+ * Gets list of webforms that need url aliases for confirmation pages.
+ *
+ * Procedure: 
+ * We're going to query to find all webforms that have <confirmation> as the redirect_url.
+ * JOIN to find their alias. We'll use that alias later when we're 
+ * inserting/updating the confirmation aliases.
+ * Then, we'll add or update each alias, as appropriate.
  */
-function webform_confirmation_alias_generate_aliases() {
+function webform_confirmation_alias_bulk_generate_aliases($confirmation_alias_append = NULL) {
+  $count = 0;
   
-  $results = db_query("
-    SELECT
-      nid,
-      redirect_url
-    FROM {webform}
-    WHERE
-      redirect_url LIKE '%thank-you'
-    AND redirect_url NOT IN (
-      SELECT src FROM url_alias WHERE src like '%thank-you'
-   )");
-   
-  $results = db_select('webform', 'w')
-    ->fields('w', array('nid', 'redirect_url'))
-    ->condition(db_and()
-      ->condition('redirect_url', db_like('%thank-you'), 'LIKE')
-      ->condition()
-  	)
+  // If $confirmation_alias_append didn't get passed through, find its value here.
+  if (!isset($confirmation_alias_append)) {
+    $confirmation_alias_append = variable_get('webform_confirmation_alias_append', 'thank-you');
+  }
+  
+  $query = db_select('webform', 'w');
+  $query->join('url_alias', 'u', 'CONCAT(\'node/\', w.nid) = u.source');
+  $query->fields('w', array('nid', 'redirect_url'));
+  $query->fields('u', array('source', 'alias'));
+  $query->condition('w.redirect_url', '<confirmation>', '=');
+  $get_webforms = $query->execute();  
+  foreach($get_webforms as $webform) {    
+    $count++;
     
-  // Generate alias for redirect url for each webform in the list.
-  while ($webform = db_fetch_object($results)) {
-    $src = 'node/' . $webform->nid;
-    // Crib off of existing url alias. If none exists for this node, skip it.
-    $base_alias = db_result(db_query("SELECT dst FROM {url_alias} WHERE src = '%s'", $src));
-    if ($base_alias) {
-      $new_dst = $base_alias . '/thank-you';
-      $settings = array(
-        'pid' => '',
-        'src' => $src . '/thank-you',
-        'dst' => $new_dst,
-        'language' => 'en',
-      );
-      drupal_write_record('url_alias', $settings);
+    // Now find any existing confirmation aliases. If we find one ($result_count > 0), 
+    // update it. If not, insert it.
+    if (webform_confirmation_alias_check_for_existing($webform->nid) >= 1) {
+	    webform_confirmation_alias_update($webform->nid, $webform->alias, $confirmation_alias_append, FALSE);
+    } else {
+      webform_confirmation_alias_add($webform->nid, $webform->alias, $confirmation_alias_append, FALSE);
     }
   }
-  drupal_set_message(t('URL aliases have been added for existing webform redirect urls.'));
+  drupal_set_message(t('Added or updated ' . $count . ' confirmation URL aliases.'));
 }
