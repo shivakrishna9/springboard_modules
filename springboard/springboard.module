@@ -123,6 +123,7 @@ function springboard_admin_paths() {
     'springboard/options/fundraiser/fundraiser_upsell/thank-you' => TRUE,
     'springboard' => TRUE,
     'springboard/forms' => TRUE,
+    'springboard/forms/donations' => TRUE,
     'springboard/reports' => TRUE,
     'springboard/options' => TRUE,
     'springboard/options/springboard' => TRUE,
