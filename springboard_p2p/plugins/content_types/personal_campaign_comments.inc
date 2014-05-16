@@ -27,8 +27,8 @@ $plugin = array(
 function springboard_p2p_personal_campaign_comments_render($subtype, $conf, $panel_args, $context) {
   $personal_campaign = NULL;
   if (empty($context) || empty($context->data)) {
-    if (isset($_GET['pcid']) && is_numeric($_GET['pcid'])) {
-      $personal_campaign = node_load($_GET['pcid']);
+    if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid'])) {
+      $personal_campaign = node_load($_GET['p2p_pcid']);
     }
     else {
       return;
