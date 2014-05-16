@@ -510,12 +510,12 @@ function springboard_p2p_personal_campaign_ajax(&$form, &$form_state) {
   ctools_add_js('ajax-responder');
   $options = array(
     'query' => array(
-      'campaign' => $campaign,
+      'p2p_cid' => $campaign,
     ),
   );
   $commands[] = ctools_ajax_command_redirect('node/add/p2p-personal-campaign', 0, $options);
   print ajax_render($commands);
-  exit;
+  drupal_exit();
 }
 
 /**
