@@ -56,7 +56,7 @@ function webform_confirmation_alias_node_update($node) {
       
       // Now that we know this is a webform with an alias, we have to check whether 
       // to add or update the confirmation alias.
-      if (webform_confirmation_alias_check_for_existing($node->nid) >= 1) {
+      if (webform_confirmation_alias_exists($node->nid) >= 1) {
 	      webform_confirmation_alias_update($node->nid, $webform_alias, $confirmation_alias_append, TRUE);
       } else {
         webform_confirmation_alias_add($node->nid, $webform_alias, $confirmation_alias_append, TRUE);
@@ -84,10 +84,10 @@ function webform_confirmation_alias_node_delete($node) {
 *****************************************************************************************************************/
 
 /**
- * Query to find confirmation aliases for the exising Webform NID.
+ * Query to find confirmation aliases for a given Webform NID.
  * Return the rowCount(), which will be "1" if one exists and "0" if it's not there.
  */
-function webform_confirmation_alias_check_for_existing($webform_nid) {
+function webform_confirmation_alias_exists($webform_nid) {
   $query = db_select('url_alias', 'u');
   $query->fields('u', array('source', 'alias'));
   $query->condition('u.source', 'node/' . $webform_nid . '/done');
