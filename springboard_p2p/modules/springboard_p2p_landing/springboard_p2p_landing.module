@@ -231,3 +231,51 @@ function springboard_p2p_landing_css_alter(&$css) {
     $css = array_diff_key($css, $exclude);
   }
 }
+
+/**
+ * Alter a menu router item right after it has been retrieved from the database or cache.
+ *
+ * This hook is invoked by menu_get_item() and allows for run-time alteration of router
+ * information (page_callback, title, and so on) before it is translated and checked for
+ * access. The passed-in $router_item is statically cached for the current request, so this
+ * hook is only invoked once for any router item that is retrieved via menu_get_item().
+ *
+ * Usually, modules will only want to inspect the router item and conditionally
+ * perform other actions (such as preparing a state for the current request).
+ * Note that this hook is invoked for any router item that is retrieved by
+ * menu_get_item(), which may or may not be called on the path itself, so implementations
+ * should check the $path parameter if the alteration should fire for the current request
+ * only.
+ *
+ * @param $router_item
+ *   The menu router item for $path.
+ * @param $path
+ *   The originally passed path, for which $router_item is responsible.
+ * @param $original_map
+ *   The path argument map, as contained in $path.
+ *
+ * @see menu_get_item()
+ */
+function springboard_p2p_landing_menu_get_item_alter(&$router_item, $path, $original_map) {
+    // Define the path of the personal campaign node/edit or node/add
+  if ($router_item['path'] == 'node/%/edit' || $router_item['path'] == 'node/add/p2p-personal-campaign') {
+    $router_item['theme_callback'] = '_springboard_p2p_landing_menu_theme_callback';
+  }
+}
+
+/**
+ * Our custom function theme callback from above.
+ */
+function _springboard_p2p_landing_menu_theme_callback() {
+
+  // Define node.
+  $node = menu_get_object();
+
+  //Only if p2p_personal_campaign.
+  if ((!empty($node) && $node->type == 'p2p_personal_campaign') || (arg(0) === 'node' && arg(1) === 'add' && arg(2)===  'p2p-personal-campaign')) {
+    // define the front end theme.
+    //@Todo it would be better to define the current default theme rather than hard coding, i.e. aspca.
+    return 'springboard_frontend';
+  }
+
+}
