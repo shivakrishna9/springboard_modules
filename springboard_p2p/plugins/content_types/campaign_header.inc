@@ -27,8 +27,8 @@ $plugin = array(
 function springboard_p2p_campaign_header_render($subtype, $conf, $panel_args, $context) {
   $campaign = NULL;
   if (empty($context) || empty($context->data)) {
-    if (isset($_GET['pcid']) && is_numeric($_GET['pcid'])) {
-      $node = node_load($_GET['pcid']);
+    if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid'])) {
+      $node = node_load($_GET['p2p_pcid']);
       if ($node->type == 'p2p_personal_campaign' && isset($node->field_p2p_campaign[$node->language][0]['target_id'])) {
         $campaign = node_load($node->field_p2p_campaign[$node->language][0]['target_id']);
       }
