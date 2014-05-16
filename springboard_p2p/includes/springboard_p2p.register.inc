@@ -6,50 +6,6 @@
  */
 
 /**
- * Page callback for the user registration page.
- *
- * @see user_register_form()
- */
-function springboard_p2p_register_page($form, &$form_state) {
-  $form = array();
-
-  $campaign_id = springboard_p2p_get_campaign_id_from_request();
-  if (!empty($campaign_id)) {
-    $campaign = node_load($campaign_id);
-    if (!empty($campaign)) {
-      $header = springbaord_p2p_format_campaign_form_header($campaign);
-      if (count($header)) {
-        $form['header'] = $header;
-      }
-    }
-  }
-
-  if (module_exists('fboauth')) {
-    $form['social_login'] = array(
-      '#type' => 'fieldset',
-      '#title' => 'Log in with Facebook',
-      'link' => array(
-        '#markup' => fboauth_action_display('connect', 'springboard_p2p/fb?campaign=' . $campaign_id),
-      ),
-    );
-  }
-
-  $form['new_account'] = array(
-    '#type' => 'fieldset',
-    '#title' => 'New account',
-    'form' => drupal_get_form('springboard_p2p_user_register_form'),
-  );
-
-  $form['login'] = array(
-    '#type' => 'fieldset',
-    '#title' => 'Log in',
-    'form' => drupal_get_form('springboard_p2p_existing_user_login_form'),
-  );
-
-  return $form;
-}
-
-/**
  * Forms api array for registering users.
  *
  * Uses springboard_p2p_registration_fields to determine weights and

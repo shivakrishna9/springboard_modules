@@ -18,6 +18,13 @@ function springboard_p2p_ctools_plugin_directory($owner, $plugin_type) {
 }
 
 /**
+ * Implements hook_views_api().
+ */
+function springboard_p2p_views_api($module = NULL, $api = NULL) {
+  return array("api" => "3.0");
+}
+
+/**
  * Implements hook_permission().
  */
 function springboard_p2p_permission() {
@@ -88,16 +95,6 @@ function springboard_p2p_menu() {
       'file' => 'rules_admin.inc',
     );
   }
-
-  $items['springboard_p2p/register'] = array(
-    'title' => 'Register',
-    'type' => MENU_CALLBACK,
-    'access arguments' => array('register for springboard p2p'),
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('springboard_p2p_register_page'),
-    'file' => 'springboard_p2p.register.inc',
-    'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
-  );
 
   if (module_exists('fboauth')) {
     $items['springboard_p2p/fb'] = array(
