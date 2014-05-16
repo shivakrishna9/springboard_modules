@@ -19,6 +19,25 @@ body a {
   color: #0285b0;
 }
 
+.pager {
+  margin: 10px 0;
+}
+
+.pager li {
+  display: inline;
+  margin: 0 4px;
+}
+
+.pager li > a,
+.pager li > span {
+  display: inline-block;
+  padding: 5px 14px;
+  border: 1px solid #ddd;
+  -webkit-border-radius: 0;
+  border-radius: 0 -moz-border-radius : 0;
+  background-color: #fff;
+}
+
 /* end defaults */
 
 /* flexslider tweaks, use font awesome. */
@@ -265,6 +284,7 @@ ul.campaign-landing-grid a {
 .p2p-panelizer-campaign-landing table th {
   padding: 4px 0 3px 6px;
   border-bottom: none;
+  text-align: left;
 }
 
 .p2p-panelizer-campaign-landing table tr.even {
@@ -319,7 +339,7 @@ ul.campaign-landing-grid a {
 }
 
 .p2p-panelizer-campaign-landing .landing-side-block .content ul,
-.p2p-panelizer-campaign-landing .view-search-for-a-campaign .view-content ul{
+.p2p-panelizer-campaign-landing .view-search-for-a-campaign .view-content ul {
   margin: 0;
 }
 
@@ -332,7 +352,7 @@ ul.campaign-landing-grid a {
 }
 
 .p2p-panelizer-campaign-landing .landing-side-block .content ul li:before,
-.p2p-panelizer-campaign-landing .view-search-for-a-campaign .view-content ul li:before{
+.p2p-panelizer-campaign-landing .view-search-for-a-campaign .view-content ul li:before {
   position: absolute;
   top: 2px;
   left: -16px;

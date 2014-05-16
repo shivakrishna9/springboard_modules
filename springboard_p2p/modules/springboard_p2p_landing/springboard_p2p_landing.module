@@ -6,6 +6,22 @@
 
 include_once 'springboard_p2p_landing.features.inc';
 
+function springboard_p2p_landing_preprocess_html(&$vars, $hook) {
+
+
+  $host = parse_url(PHP_URL_HOST);
+  if($host == '/p2p*/i') {
+    $vars['classes_array'][] = 'foobar';
+  }
+
+  $pattern = "/(?:p2p)?/i";
+
+  if (stripos($_SERVER['REQUEST_URI'], $pattern) !== false) {
+    $vars['classes_array'][] = 'foobar';
+  }
+
+}
+
 /**
  * Specified ctools plugins overrides
  *
