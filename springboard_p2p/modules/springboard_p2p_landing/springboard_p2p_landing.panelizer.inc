@@ -78,7 +78,25 @@ function springboard_p2p_landing_panelizer_defaults() {
     $pane->type = 'views_panes';
     $pane->subtype = 'p2p_referenced_campaigns-panel_pane_2';
     $pane->shown = TRUE;
-    $pane->access = array();
+    $pane->access = array(
+      'plugins' => array(
+        0 => array(
+          'name' => 'entity_field_value:node:p2p_campaign_landing:field_p2p_choose_featured_type',
+          'settings' => array(
+            'field_p2p_choose_featured_type' => array(
+              'und' => array(
+                0 => array(
+                  'value' => 'automated',
+                ),
+              ),
+            ),
+            'field_p2p_choose_featured_type_value' => 'automated',
+          ),
+          'context' => 'panelizer',
+          'not' => FALSE,
+        ),
+      ),
+    );
     $pane->configuration = array();
     $pane->cache = array();
     $pane->style = array(
@@ -91,6 +109,53 @@ function springboard_p2p_landing_panelizer_defaults() {
     $pane->uuid = 'ea8fe52b-8cca-41bc-8b77-0952f6299084';
     $display->content['new-ea8fe52b-8cca-41bc-8b77-0952f6299084'] = $pane;
     $display->panels['bottom'][1] = 'new-ea8fe52b-8cca-41bc-8b77-0952f6299084';
+    $pane = new stdClass();
+    $pane->pid = 'new-be82ca65-44c8-4215-b1ae-0556f5e9c346';
+    $pane->panel = 'bottom';
+    $pane->type = 'entity_field';
+    $pane->subtype = 'node:field_p2p_featured_choose_blocks';
+    $pane->shown = TRUE;
+    $pane->access = array(
+      'plugins' => array(
+        0 => array(
+          'name' => 'entity_field_value:node:p2p_campaign_landing:field_p2p_choose_featured_type',
+          'settings' => array(
+            'field_p2p_choose_featured_type' => array(
+              'und' => array(
+                0 => array(
+                  'value' => 'custom_blocks',
+                ),
+              ),
+            ),
+            'field_p2p_choose_featured_type_value' => 'custom_blocks',
+          ),
+          'context' => 'panelizer',
+          'not' => FALSE,
+        ),
+      ),
+    );
+    $pane->configuration = array(
+      'label' => 'title',
+      'formatter' => 'blockreference_without_title',
+      'delta_limit' => '0',
+      'delta_offset' => '0',
+      'delta_reversed' => 0,
+      'formatter_settings' => array(),
+      'context' => 'panelizer',
+      'override_title' => 1,
+      'override_title_text' => '',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 2;
+    $pane->locks = array();
+    $pane->uuid = 'be82ca65-44c8-4215-b1ae-0556f5e9c346';
+    $display->content['new-be82ca65-44c8-4215-b1ae-0556f5e9c346'] = $pane;
+    $display->panels['bottom'][2] = 'new-be82ca65-44c8-4215-b1ae-0556f5e9c346';
     $pane = new stdClass();
     $pane->pid = 'new-0c63d3b8-5e94-4147-96e5-226e34539acf';
     $pane->panel = 'middle_left';

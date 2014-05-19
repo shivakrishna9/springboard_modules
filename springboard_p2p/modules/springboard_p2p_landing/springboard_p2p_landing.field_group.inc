@@ -25,6 +25,8 @@ function springboard_p2p_landing_field_group_info() {
     'children' => array(
       0 => 'field_p2p_feature_pers_campaigns',
       1 => 'field_p2p_featured_title',
+      2 => 'field_p2p_featured_choose_blocks',
+      3 => 'field_p2p_choose_featured_type',
     ),
     'format_type' => 'htab',
     'format_settings' => array(
