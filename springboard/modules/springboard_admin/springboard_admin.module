@@ -64,6 +64,141 @@ function springboard_admin_menu() {
   return $items;
 }
 
+/**
+ * Implements hook_url_inbound_alter().
+ * 
+ * Implements administrative url aliases for the Springboard UX.
+ */
+function springboard_admin_url_inbound_alter(&$path, $original_path, $path_language) {
+  // Node add pages for all types.
+  if (preg_match('|^springboard/add(/.*)?|', $path, $matches)) {
+    $path = 'node/add' . $matches[1] . $query;
+  }
+  /**
+   * Node edit pages.
+   */ 
+  elseif (preg_match('|^springboard/node/([0-9]*)((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $matches)) {
+    /**
+     * Webform configuration pages.
+     */
+    if (preg_match('|^springboard/node/([0-9]*)/form-components?|', $path, $m1)) {
+
+      // /springboard/node/%/form/confirmation-emails. -> node/%/webform/emails 
+      if (preg_match('|^springboard/node/([0-9]*)/form-components/confirmation-emails?|', $path, $m2)) {
+        $path = 'node/' . $m2[1] . '/webform/emails';
+      }
+      // /springboard/node/%/form/confirmation-page-settings -> node/%/webform/configure
+      elseif (preg_match('|^springboard/node/([0-9]*)/form-components/confirmation-page-settings?|', $path, $m2)) {
+        $path = 'node/' . $m2[1] . '/webform/configure';
+      }
+      // All other pages under springboard/node/%/form-components.
+      elseif (preg_match('|^springboard/node/([0-9]*)/form-components((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m2)) {
+        $path = 'node/' . $m2[1] . '/webform' . $m2[2];
+      }
+      // springboard/node/%/form-components -> node/%/webform
+      else {
+        $path = 'node/' . $m1[1] . '/webform';
+      }
+    }
+    /**
+     * Webform results pages.
+     */
+    elseif (preg_match('|^springboard/node/([0-9]*)/results?|', $path, $m1)){
+      // Everything under springboard/node/%/results
+      if (preg_match('|^springboard/node/([0-9]*)/results((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m2)){
+        $path = 'node/' . $m2[1] . '/webform-results' . $m2[2];
+      }
+      // springboard/node/%/results -> node/%/webform-results
+      else {
+        $path = 'node/' . $m1[1] . '/webform-results';
+      }
+    }
+    // All other pages under springboard/node/%
+    else { 
+      $path = 'node/' . $matches[1] . $matches[2];
+    }  
+  }  
+}
+
+/**
+ * Implements hook_init().
+ * 
+ * Checks to see if the current user recieves the Springboard UX. If so, make 
+ * sure they are always redirected to the Springboard admin path rather than the 
+ * Drupal admin path.
+ * 
+ * To add a new item, follow this template:
+ * elseif (preg_match([Regex to match the path(s)], $path, $matches)) {
+      drupal_goto([String to match the new path(s)] . $matches[1] . [Any additional matches from the regex], array('query' => $query, 'alias' => TRUE));
+    }
+ */
+function springboard_admin_init() {
+  global $user;
+  // If user is to have the Springboard Admin UX, make sure they are redirecitng
+  // to the proper admin interface.
+  if (springboard_admin_user_gets_sbux($user)) {
+    // If a redirect destination is included in the query string, clear it from
+    // $_GET and it will be added back to the path later.
+    if (isset($_GET['destination'])) {
+      unset($_GET['destination']);
+    }
+    // Set up any query string that might exist for use in drupal_goto().
+    parse_str($_SERVER['QUERY_STRING'], $query);
+    
+    // Set up requested path.
+    $path = request_uri();
+    
+    // Node add pages,
+    if (preg_match('|^/node/add(/.*)?|', $path, $matches)) {
+      drupal_goto('springboard/add' . $matches[1], array('query' => $query, 'alias' => TRUE));
+    }
+    
+    /*
+     * Node edit pages.
+     */ 
+    elseif (preg_match('|^/node/([0-9]*)((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $matches)) {
+      /**
+       * Webform configuration pages.
+       */
+      if (preg_match('|^/node/([0-9]*)/webform?|', $path, $m1)) {
+        // node/%/webform/emails -> /springboard/node/%/form/confirmation-emails.
+        if (preg_match('|^/node/([0-9]*)/webform/emails?|',  $path, $m2)) {
+          drupal_goto('springboard/node/' . $m2[1] . '/form-components/confirmation-emails', array('query' => $query, 'alias' => TRUE));
+        }
+        // node/%/webform/configure -> /springboard/node/%/form/confirmation-page-settings.
+        elseif (preg_match('|^/node/([0-9]*)/webform/configure?|',  $path, $m2)) {
+          drupal_goto('springboard/node/' . $m2[1] . '/form-components/confirmation-page-settings', array('query' => $query, 'alias' => TRUE));
+        }
+        /**
+         * Webform results pages.
+         */
+        elseif (preg_match('|^/node/([0-9]*)/webform-results?|',  $path, $m2)) {
+          // EVerything under node/%/webform-results
+          if (preg_match('|^/node/([0-9]*)/webform-results((?:/[a-zA-Z0-9_\-]*)*)?|',  $path, $m3)) {
+            drupal_goto('springboard/node/' . $m3[1] . '/results' . $m3[2], array('query' => $query, 'alias' => TRUE));
+          }
+          // node/%/webform-results -> springboard/node/%/results
+          else {
+            drupal_goto('springboard/node/' . $m2[1] . '/results' . $m2[2], array('query' => $query, 'alias' => TRUE));
+          }
+        }
+        // All other pages under node/%/webform.
+        elseif (preg_match('|^/node/([0-9]*)/webform((?:/[a-zA-Z0-9_\-]*)*)?|',  $path, $m2)) {
+          drupal_goto('springboard/node/' . $m2[1] . '/form-components' . $m2[2], array('query' => $query, 'alias' => TRUE));
+        }
+        // node/%/webform -> /springboard/node/%/form-components.
+        else {
+          drupal_goto('springboard/node/' . $m1[1] . '/form-components', array('query' => $query, 'alias' => TRUE));
+        }
+      }
+      // All other pages under node/%
+      else {
+        drupal_goto('springboard/node/' . $matches[1] . $matches[2], array('query' => $query, 'alias' => TRUE));
+      }
+    }    
+  }
+}
+
 function springboard_admin_admin_menu_output_build(&$content) {
   // Add new top-level item to the menu.
   if (isset($content['menu'])) {
@@ -138,13 +273,6 @@ function springboard_admin_menu_alter(&$items) {
   if (springboard_admin_user_gets_sbux($user)) {
     $items['admin']['page callback'] = 'drupal_goto';
     $items['admin']['page arguments'] = array('springboard');
-  }
-  // Create a Springboard router item for each node add form
-  $types = node_type_get_types();
-  foreach ($types as $type) {
-    if (_webform_user_is_webform_user_node_type($type->type) || fundraiser_is_donation_type($type->type)) {
-      $items['springboard/add/' . preg_replace('/_/', '-', $type->type)] = $items['node/add/' . preg_replace('/_/', '-', $type->type)];
-    }
   }
 }
 
@@ -282,8 +410,14 @@ function springboard_admin_custom_theme() {
   if (!isset($themes['springboard_backend'])) {
     return;
   }
+  
+  // If the path begins with /springboard, we know the theme applies
+  if (preg_match("/\/springboard.*/", request_uri())) {
+    return 'springboard_backend';
+  }
 
-  // Build an array of pages that the admin theme applies to.
+  // Double check that the theme is applied to pages in the springboard admin 
+  // menu.
   $sb_menu = springboard_admin_admin_menu_items();
   $paths = array();
   foreach ($sb_menu as $item) {
@@ -299,7 +433,8 @@ function springboard_admin_custom_theme() {
     return 'springboard_backend';
   }
   // Adding user profile pages to use the admin theme
-  // @TODO This should be a SB setting to include paths.
+  // @TODO This should be removed once springboard aliases for the pages are 
+  // set up.
   elseif (preg_match("/^user\/[0-9]+/", $_GET['q']) || preg_match("/^user\/[0-9]+\/[a-z]+/", $_GET['q'])) {
     return 'springboard_backend';
   }
