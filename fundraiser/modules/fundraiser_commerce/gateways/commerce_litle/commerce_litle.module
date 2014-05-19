@@ -916,7 +916,6 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
   );
 
   $nvp['billToAddress'] = commerce_litle_format_bill_to_address($order_wrapper);
-
   if (variable_get('commerce_litle_fraud', 0)) {
     $nvp = _commerce_litle_fraud_sale_request_item($nvp, $pane_values['echeck']['session_id']);
   }
@@ -1814,3 +1813,4 @@ function commerce_litle_fraud_settings_form_validate($form, &$form_state) {
     }
   }
 }
+
