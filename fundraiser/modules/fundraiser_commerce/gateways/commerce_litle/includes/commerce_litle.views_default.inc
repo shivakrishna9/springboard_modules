@@ -98,6 +98,14 @@ $handler->display->display_options['style_options']['info'] = array(
     'empty_column' => 0,
   ),
 );
+/* No results behavior: Global: Text area */
+$handler->display->display_options['empty']['area']['id'] = 'area';
+$handler->display->display_options['empty']['area']['table'] = 'views';
+$handler->display->display_options['empty']['area']['field'] = 'area';
+$handler->display->display_options['empty']['area']['label'] = 'No results';
+$handler->display->display_options['empty']['area']['empty'] = TRUE;
+$handler->display->display_options['empty']['area']['content'] = 'There are no items for this report. A Litle account with Advanced Fraud Protection is required.';
+$handler->display->display_options['empty']['area']['format'] = 'filtered_html';
 /* Relationship: Commerce Litle Fraud Log: Order */
 $handler->display->display_options['relationships']['order_id']['id'] = 'order_id';
 $handler->display->display_options['relationships']['order_id']['table'] = 'commerce_litle_fraud';
@@ -241,4 +249,10 @@ $handler->display->display_options['filters']['device_review_status']['group_inf
 
 /* Display: Page */
 $handler = $view->new_display('page', 'Page', 'page');
-$handler->display->display_options['path'] = 'admin/springboard/reports/litle-fraud-log';
+$handler->display->display_options['path'] = 'springboard/reports/litle-fraud-log';
+$handler->display->display_options['menu']['type'] = 'normal';
+$handler->display->display_options['menu']['title'] = 'Advanced Fraud Log';
+$handler->display->display_options['menu']['weight'] = '0';
+$handler->display->display_options['menu']['name'] = 'management';
+$handler->display->display_options['menu']['context'] = 0;
+$handler->display->display_options['menu']['context_only_inline'] = 0;

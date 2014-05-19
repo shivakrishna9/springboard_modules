@@ -439,7 +439,7 @@ function _commerce_litle_fraud_session_id() {
   static $session_id;
   if (!$session_id) {
     $prefix = variable_get('commerce_litle_fraud_id_prefix');
-    $session_id = $prefix . hash('sha256', time() . drupal_random_key() . mt_rand());
+    $session_id = $prefix . '-' . hash('sha256', time() . drupal_random_key() . mt_rand());
   }
   return $session_id;
 }
@@ -1772,7 +1772,7 @@ function commerce_litle_fraud_settings_form() {
   $form['fraud']['commerce_litle_fraud_id_prefix'] = array(
     '#type' => 'textfield',
     '#title' => t('Session ID prefix'),
-    '#description' => t('A 5-character prefix, supplied by your Litle Implementation Consultant.'),
+    '#description' => t('A 5-character prefix, supplied by your Litle Implementation Consultant. Do not include the "-"'),
     '#default_value' => variable_get('commerce_litle_fraud_id_prefix', ''),
     '#states' => array(
       'required' => array(
@@ -1796,7 +1796,7 @@ function commerce_litle_fraud_settings_form() {
   $form['fraud']['commerce_litle_fraud_subdomain'] = array(
     '#type' => 'textfield',
     '#title' => t('Subdomain redirect'),
-    '#description' => t('Your server administrator should configure a subdomain which redirects to ThreatMetrix\'s server: "h.online-metrix.net"'),
+    '#description' => t('Your server administrator can configure a subdomain which redirects to ThreatMetrix\'s server: "h.online-metrix.net". This step is optional; otherwise leave as is.'),
     '#default_value' => variable_get('commerce_litle_fraud_subdomain', 'h.online-metrix.net'),
   );
   $form['#validate'][] = 'commerce_litle_fraud_settings_form_validate';
