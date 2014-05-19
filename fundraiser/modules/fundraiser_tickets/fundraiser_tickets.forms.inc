@@ -141,14 +141,3 @@ function fundraiser_tickets_order_ticket_types_form_submit($form, &$form_state) 
     }
   }
 }
-
-// Custom array sort function by weight.
-function _fundraiser_tickets_weight_sort($a, $b) {
-  if (isset($a->fr_tickets_weight) && isset($b->fr_tickets_weight)) {
-    return $a->fr_tickets_weight->value() < $b->fr_tickets_weight->value() ? -1 : 1;
-  }
-  return 0;
-}
-
-
-
