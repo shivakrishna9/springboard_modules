@@ -55,59 +55,6 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-p2p_personal_campaign-field_fundraising_deadline'
-  $field_instances['node-p2p_personal_campaign-field_fundraising_deadline'] = array(
-    'bundle' => 'p2p_personal_campaign',
-    'deleted' => 0,
-    'description' => '',
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'module' => 'date',
-        'settings' => array(
-          'format_type' => 'long',
-          'fromto' => 'both',
-          'multiple_from' => '',
-          'multiple_number' => '',
-          'multiple_to' => '',
-        ),
-        'type' => 'date_default',
-        'weight' => 5,
-      ),
-      'teaser' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 0,
-      ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'field_fundraising_deadline',
-    'label' => 'Fundraising Deadline',
-    'required' => 0,
-    'settings' => array(
-      'default_value' => 'now',
-      'default_value2' => 'same',
-      'default_value_code' => '',
-      'default_value_code2' => '',
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 1,
-      'module' => 'date',
-      'settings' => array(
-        'increment' => 15,
-        'input_format' => 'm/d/Y - H:i:s',
-        'input_format_custom' => '',
-        'label_position' => 'above',
-        'text_parts' => array(),
-        'year_range' => '-3:+3',
-      ),
-      'type' => 'date_text',
-      'weight' => 6,
-    ),
-  );
-
   // Exported field_instance: 'node-p2p_personal_campaign-field_p2p_campaign'
   $field_instances['node-p2p_personal_campaign-field_p2p_campaign'] = array(
     'bundle' => 'p2p_personal_campaign',
@@ -281,7 +228,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
         'text_parts' => array(),
         'year_range' => '-3:+3',
       ),
-      'type' => 'date_text',
+      'type' => 'date_popup',
       'weight' => 6,
     ),
   );
@@ -452,46 +399,6 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
       'settings' => array(),
       'type' => 'video_embed_field_video',
       'weight' => 9,
-    ),
-  );
-
-  // Exported field_instance: 'node-p2p_personal_campaign-field_personal_campaign_url'
-  $field_instances['node-p2p_personal_campaign-field_personal_campaign_url'] = array(
-    'bundle' => 'p2p_personal_campaign',
-    'default_value' => NULL,
-    'deleted' => 0,
-    'description' => '',
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'module' => 'text',
-        'settings' => array(),
-        'type' => 'text_default',
-        'weight' => 4,
-      ),
-      'teaser' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 0,
-      ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'field_personal_campaign_url',
-    'label' => 'Campaign URL',
-    'required' => 0,
-    'settings' => array(
-      'text_processing' => 0,
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 1,
-      'module' => 'text',
-      'settings' => array(
-        'size' => 60,
-      ),
-      'type' => 'text_textfield',
-      'weight' => 1,
     ),
   );
 
