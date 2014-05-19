@@ -1,0 +1,60 @@
+/* some basic deafults, we can move these to springboard_frontend if needbe */
+
+html body {
+  color: #5b5b5b;
+}
+
+body ul,
+body ol {
+  margin: 0;
+  padding: 0;
+}
+
+body h2 a:hover,
+body h3 a:hover {
+  text-decoration: none;
+}
+
+body a {
+  color: #0285b0;
+}
+
+.pager {
+  margin: 10px 0;
+}
+
+.pager li {
+  display: inline;
+  margin: 0 4px;
+}
+
+.pager li > a,
+.pager li > span {
+  display: inline-block;
+  padding: 5px 14px;
+  border: 1px solid #ddd;
+  -webkit-border-radius: 0;
+  border-radius: 0 -moz-border-radius : 0;
+  background-color: #fff;
+}
+
+/* end defaults */
+
+
+/******************  Media queries, these should go last */
+@media (min-width: 769px) {
+
+
+
+}
+
+@media (max-width: 768px) {
+
+
+}
+
+@media (max-width: 480px) {
+
+
+
+}
