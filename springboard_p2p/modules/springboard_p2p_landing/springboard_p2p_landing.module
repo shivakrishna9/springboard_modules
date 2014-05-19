@@ -16,85 +16,85 @@ function springboard_p2p_landing_page_alter(&$cache, $vars) {
   // Only for p2p_campaign_landing page view.
   if (!empty($node) && ($node->type == 'p2p_campaign_landing') && (arg(2) == NULL)) {
 
-  // Define the library path with libraries present and without.
-  if (function_exists('libraries_get_path')) {
-    $library_path_flexsliderjs = libraries_get_path('flexslider');
-    $library_path_flexslidercss = libraries_get_path('flexslider');
-  }
-  else {
-    $library_path_flexsliderjs = 'sites/all/libraries/flexslider/jquery.flexslider.js';
-    $library_path_flexslidercss = 'sites/all/libraries/flexslider/flexslider.css';
-  }
+    // Define the module path.
+    $mod_path = drupal_get_path('module', 'springboard_p2p_landing');
 
-  // Define the module path.
-  $mod_path = drupal_get_path('module', 'springboard_p2p_landing');
+    // Define the library path with libraries present and without.
+    if (function_exists('libraries_get_path')) {
+      $library_path_flexsliderjs = libraries_get_path('flexslider');
+      $library_path_flexslidercss = libraries_get_path('flexslider');
+    }
+    else {
+      $library_path_flexsliderjs = 'sites/all/libraries/flexslider/jquery.flexslider.js';
+      $library_path_flexslidercss = 'sites/all/libraries/flexslider/flexslider.css';
+    }
 
-  // Flexslider js.
-  $flexslider = array(
-    '#attached' => array(
-      'js' => array(
-        $library_path_flexsliderjs . '/jquery.flexslider.js' => array(
-          'group' => JS_THEME,
-          'weight' => 9998,
+    // Flexslider js.
+    $flexslider = array(
+      '#attached' => array(
+        'js' => array(
+          $library_path_flexsliderjs . '/jquery.flexslider.js' => array(
+            'group' => JS_THEME,
+            'weight' => 9998,
+          ),
         ),
       ),
-    ),
-  );
-  drupal_render($flexslider);
+    );
+    drupal_render($flexslider);
 
-  // Flexslider css.
-  $flexslidercss = array(
-    '#attached' => array(
-      'css' => array(
-        $library_path_flexslidercss . '/flexslider.css' => array(
-          'group' => CSS_THEME,
-          'weight' => 9999,
+    // Flexslider css.
+    $flexslidercss = array(
+      '#attached' => array(
+        'css' => array(
+          $library_path_flexslidercss . '/flexslider.css' => array(
+            'group' => CSS_THEME,
+            'weight' => 9999,
+          ),
         ),
       ),
-    ),
-  );
-  drupal_render($flexslidercss);
+    );
+    drupal_render($flexslidercss);
 
-  // Custom scripts, let's load this last.
-  $p2p_landing_scripts = array(
-    '#attached' => array(
-      'js' => array(
-        $mod_path . '/js/p2p-landing-scripts.js' => array(
-          'group' => JS_THEME,
-          'weight' => 9999,
+    // Custom scripts, let's load this last.
+    $p2p_landing_scripts = array(
+      '#attached' => array(
+        'js' => array(
+          $mod_path . '/js/p2p-landing-scripts.js' => array(
+            'group' => JS_THEME,
+            'weight' => 9999,
+          ),
         ),
       ),
-    ),
-  );
-  drupal_render($p2p_landing_scripts);
+    );
+    drupal_render($p2p_landing_scripts);
 
-  // Custom css.
-  $p2p_landing_css = array(
-    '#attached' => array(
-      'css' => array(
-        $mod_path . '/css/p2p-landing.css' => array(
-          'group' => CSS_THEME,
-          'weight' => 9999,
+    // Custom css.
+    $p2p_landing_css = array(
+      '#attached' => array(
+        'css' => array(
+          $mod_path . '/css/p2p-landing.css' => array(
+            'group' => CSS_THEME,
+            'weight' => 9999,
+          ),
         ),
       ),
-    ),
-  );
-  drupal_render($p2p_landing_css);
+    );
+    drupal_render($p2p_landing_css);
 
-// Check to see if springboard_frontend is the active theme. if not, add font awesome in.
-  global $custom_theme;
-  $custom_theme = variable_get('theme_default', 'springboard_frontend');
-  $theme = $custom_theme;
-  $theme_key = $theme;
+    // Check to see if springboard_frontend is the active theme. if not, add font awesome in.
+    global $custom_theme;
+    $custom_theme = variable_get('theme_default', 'springboard_frontend');
+    $theme = $custom_theme;
+    $theme_key = $theme;
 
-// If not springboard_frontend, add font awesome cdn.
-  if ($theme_key == 'springboard_frontend') {
-  }
-  else {
-    drupal_add_css('//netdna.bootstrapcdn.com/font-awesome/4.0.1/css/font-awesome.css', array(
+    // If not springboard_frontend, add font awesome cdn.
+    if ($theme_key == 'springboard_frontend') {
+    }
+    else {
+      drupal_add_css('//netdna.bootstrapcdn.com/font-awesome/4.0.1/css/font-awesome.css', array(
         'type' => 'external',
       ));
-  }
+    }
 
   }
 

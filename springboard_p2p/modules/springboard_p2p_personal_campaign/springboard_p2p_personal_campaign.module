@@ -6,6 +6,56 @@
 
 include_once 'springboard_p2p_personal_campaign.features.inc';
 
+/**
+ * Implements hook_page_alter().
+ */
+function springboard_p2p_personal_campaign_page_alter(&$cache, $vars) {
+
+  // Global node.
+  $node = menu_get_object();
+  // Only for p2p_personal_campaign page view.
+  if (!empty($node) && ($node->type == 'p2p_personal_campaign') && (arg(2) == NULL)) {
+
+    // Define the module path.
+    $mod_path = drupal_get_path('module', 'springboard_p2p_personal_campaign');
+
+    // Define the library path with libraries present and without.
+    if (function_exists('libraries_get_path')) {
+      $library_path_fitvids = libraries_get_path('fitvids');
+    }
+    else {
+      $library_path_fitvids = 'sites/all/libraries/fitvids/jquery.fitvids.js';
+    }
+
+    // Flexslider js.
+    $fitvids = array(
+      '#attached' => array(
+        'js' => array(
+          $library_path_fitvids . '/jquery.fitvids.js' => array(
+            'group' => JS_THEME,
+            'weight' => 99,
+          ),
+        ),
+      ),
+    );
+    drupal_render($fitvids);
+
+    // Custom scripts, let's load this last.
+    $p2p_personal_scripts = array(
+      '#attached' => array(
+        'js' => array(
+          $mod_path . '/js/p2p-personal-scripts.js' => array(
+            'group' => JS_THEME,
+            'weight' => 9999,
+          ),
+        ),
+      ),
+    );
+    drupal_render($p2p_personal_scripts);
+
+  }
+
+}
 
 /**
  * Alter a menu router item right after it has been retrieved from the database or cache.
@@ -47,10 +97,9 @@ function _springboard_p2p_personal_campaign_menu_theme_callback() {
   $node = menu_get_object();
 
   //Only if p2p_personal_campaign.
-  if ((!empty($node) && $node->type == 'p2p_personal_campaign') || (arg(0) === 'node' && arg(1) === 'add' && arg(2)===  'p2p-personal-campaign')) {
+  if ((!empty($node) && $node->type == 'p2p_personal_campaign') || (arg(0) === 'node' && arg(1) === 'add' && arg(2) === 'p2p-personal-campaign')) {
     // define the front end theme.
     //@Todo it would be better to define the current default theme rather than hard coding, i.e. aspca.
     return 'springboard_frontend';
   }
-
 }
