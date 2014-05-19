@@ -65,6 +65,26 @@ function springboard_admin_menu() {
 }
 
 /**
+ * Implements hook_menu_alter().
+ *
+ * Alterations to menu items to maintain the Springboard User Experience.
+ */
+function springboard_admin_menu_alter(&$items) {
+  global $user;
+  if (springboard_admin_user_gets_sbux($user)) {
+    // Redirect to /admin to /springboard
+    $items['admin']['page callback'] = 'drupal_goto';
+    $items['admin']['page arguments'] = array('springboard');
+    
+    // Customizations to menu item titles
+    $items['node/%webform_menu/webform']['title'] = 'Form components';
+    $items['node/%webform_menu/webform/components']['title'] = 'Form fields';
+    $items['node/%webform_menu/webform/emails']['title'] = 'Confirmation emails';
+    $items['node/%webform_menu/webform/configure']['title'] = 'Confirmation page & settings';
+  }
+}
+
+/**
  * Implements hook_url_inbound_alter().
  * 
  * Implements administrative url aliases for the Springboard UX.
@@ -83,11 +103,11 @@ function springboard_admin_url_inbound_alter(&$path, $original_path, $path_langu
      */
     if (preg_match('|^springboard/node/([0-9]*)/form-components?|', $path, $m1)) {
 
-      // /springboard/node/%/form/confirmation-emails. -> node/%/webform/emails 
+      // /springboard/node/%/form-components/confirmation-emails. -> node/%/webform/emails 
       if (preg_match('|^springboard/node/([0-9]*)/form-components/confirmation-emails?|', $path, $m2)) {
         $path = 'node/' . $m2[1] . '/webform/emails';
       }
-      // /springboard/node/%/form/confirmation-page-settings -> node/%/webform/configure
+      // /springboard/node/%/form-components/confirmation-page-settings -> node/%/webform/configure
       elseif (preg_match('|^springboard/node/([0-9]*)/form-components/confirmation-page-settings?|', $path, $m2)) {
         $path = 'node/' . $m2[1] . '/webform/configure';
       }
@@ -260,20 +280,6 @@ function springboard_admin_admin_paths() {
     'springboard/settings' => TRUE,
     'springboard/tools' => TRUE,
   );
-}
-
-/**
- * Implements hook_menu_alter().
- *
- * Redirects a user role to /springboard if it is given the Springboard
- * User Experience option in Springboard Settings.
- */
-function springboard_admin_menu_alter(&$items) {
-  global $user;
-  if (springboard_admin_user_gets_sbux($user)) {
-    $items['admin']['page callback'] = 'drupal_goto';
-    $items['admin']['page arguments'] = array('springboard');
-  }
 }
 
 /**
