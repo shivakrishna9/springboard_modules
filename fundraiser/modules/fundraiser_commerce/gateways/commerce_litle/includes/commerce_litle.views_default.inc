@@ -23,29 +23,33 @@ $handler->display->display_options['pager']['options']['items_per_page'] = '10';
 $handler->display->display_options['style_plugin'] = 'table';
 $handler->display->display_options['style_options']['columns'] = array(
   'order_id' => 'order_id',
+  'message' => 'message',
   'avs_result' => 'avs_result',
   'litle_txn_id' => 'litle_txn_id',
   'device_review_status' => 'device_review_status',
   'device_reputation_score' => 'device_reputation_score',
   'status' => 'status',
-  'commerce_customer_billing' => 'status',
-  'mail' => 'status',
-  'commerce_order_total' => 'status',
-  'response_time' => 'response_time',
-  'message' => 'message',
-  'mark_reviewed' => 'mark_reviewed',
+  'mail' => 'mail',
+  'commerce_order_total' => 'commerce_order_total',
 );
-$handler->display->display_options['style_options']['default'] = '-1';
+$handler->display->display_options['style_options']['default'] = 'order_id';
 $handler->display->display_options['style_options']['info'] = array(
   'order_id' => array(
-    'sortable' => 0,
+    'sortable' => 1,
+    'default_sort_order' => 'desc',
+    'align' => '',
+    'separator' => '',
+    'empty_column' => 0,
+  ),
+  'message' => array(
+    'sortable' => 1,
     'default_sort_order' => 'asc',
     'align' => '',
     'separator' => '',
     'empty_column' => 0,
   ),
   'avs_result' => array(
-    'sortable' => 0,
+    'sortable' => 1,
     'default_sort_order' => 'asc',
     'align' => '',
     'separator' => '',
@@ -59,28 +63,21 @@ $handler->display->display_options['style_options']['info'] = array(
     'empty_column' => 0,
   ),
   'device_review_status' => array(
-    'sortable' => 0,
+    'sortable' => 1,
     'default_sort_order' => 'asc',
     'align' => '',
     'separator' => '',
     'empty_column' => 0,
   ),
   'device_reputation_score' => array(
-    'sortable' => 0,
+    'sortable' => 1,
     'default_sort_order' => 'asc',
     'align' => '',
     'separator' => '',
     'empty_column' => 0,
   ),
   'status' => array(
-    'sortable' => 0,
-    'default_sort_order' => 'asc',
-    'align' => '',
-    'separator' => '',
-    'empty_column' => 0,
-  ),
-  'commerce_customer_billing' => array(
-    'sortable' => 0,
+    'sortable' => 1,
     'default_sort_order' => 'asc',
     'align' => '',
     'separator' => '',
@@ -100,25 +97,6 @@ $handler->display->display_options['style_options']['info'] = array(
     'separator' => '',
     'empty_column' => 0,
   ),
-  'response_time' => array(
-    'sortable' => 0,
-    'default_sort_order' => 'asc',
-    'align' => '',
-    'separator' => '',
-    'empty_column' => 0,
-  ),
-  'message' => array(
-    'sortable' => 0,
-    'default_sort_order' => 'asc',
-    'align' => '',
-    'separator' => '',
-    'empty_column' => 0,
-  ),
-  'mark_reviewed' => array(
-    'align' => '',
-    'separator' => '',
-    'empty_column' => 0,
-  ),
 );
 /* Relationship: Commerce Litle Fraud Log: Order */
 $handler->display->display_options['relationships']['order_id']['id'] = 'order_id';
@@ -130,6 +108,11 @@ $handler->display->display_options['fields']['order_id']['table'] = 'commerce_li
 $handler->display->display_options['fields']['order_id']['field'] = 'order_id';
 $handler->display->display_options['fields']['order_id']['alter']['make_link'] = TRUE;
 $handler->display->display_options['fields']['order_id']['alter']['path'] = 'admin/commerce/orders/[order_id]';
+/* Field: Commerce Litle Fraud Log: Response Message */
+$handler->display->display_options['fields']['message']['id'] = 'message';
+$handler->display->display_options['fields']['message']['table'] = 'commerce_litle_fraud';
+$handler->display->display_options['fields']['message']['field'] = 'message';
+$handler->display->display_options['fields']['message']['label'] = 'Message';
 /* Field: Commerce Litle Fraud Log: AVS result */
 $handler->display->display_options['fields']['avs_result']['id'] = 'avs_result';
 $handler->display->display_options['fields']['avs_result']['table'] = 'commerce_litle_fraud';
@@ -154,11 +137,6 @@ $handler->display->display_options['fields']['status']['id'] = 'status';
 $handler->display->display_options['fields']['status']['table'] = 'commerce_order';
 $handler->display->display_options['fields']['status']['field'] = 'status';
 $handler->display->display_options['fields']['status']['relationship'] = 'order_id';
-/* Field: Commerce Order: Billing information */
-$handler->display->display_options['fields']['commerce_customer_billing']['id'] = 'commerce_customer_billing';
-$handler->display->display_options['fields']['commerce_customer_billing']['table'] = 'field_data_commerce_customer_billing';
-$handler->display->display_options['fields']['commerce_customer_billing']['field'] = 'commerce_customer_billing';
-$handler->display->display_options['fields']['commerce_customer_billing']['relationship'] = 'order_id';
 /* Field: Commerce Order: E-mail */
 $handler->display->display_options['fields']['mail']['id'] = 'mail';
 $handler->display->display_options['fields']['mail']['table'] = 'commerce_order';
@@ -174,64 +152,93 @@ $handler->display->display_options['fields']['commerce_order_total']['click_sort
 $handler->display->display_options['fields']['commerce_order_total']['settings'] = array(
   'calculation' => FALSE,
 );
-/* Field: Commerce Litle Fraud Log: Response Time */
-$handler->display->display_options['fields']['response_time']['id'] = 'response_time';
-$handler->display->display_options['fields']['response_time']['table'] = 'commerce_litle_fraud';
-$handler->display->display_options['fields']['response_time']['field'] = 'response_time';
-$handler->display->display_options['fields']['response_time']['date_format'] = 'long';
-/* Field: Commerce Litle Fraud Log: Response Message */
-$handler->display->display_options['fields']['message']['id'] = 'message';
-$handler->display->display_options['fields']['message']['table'] = 'commerce_litle_fraud';
-$handler->display->display_options['fields']['message']['field'] = 'message';
-/* Field: Commerce Litle Fraud Log: Mark Reviewed */
-$handler->display->display_options['fields']['mark_reviewed']['id'] = 'mark_reviewed';
-$handler->display->display_options['fields']['mark_reviewed']['table'] = 'commerce_litle_fraud';
-$handler->display->display_options['fields']['mark_reviewed']['field'] = 'mark_reviewed';
-/* Sort criterion: Commerce Order: Order ID */
+/* Sort criterion: Commerce Litle Fraud Log: Order ID */
 $handler->display->display_options['sorts']['order_id']['id'] = 'order_id';
-$handler->display->display_options['sorts']['order_id']['table'] = 'commerce_order';
+$handler->display->display_options['sorts']['order_id']['table'] = 'commerce_litle_fraud';
 $handler->display->display_options['sorts']['order_id']['field'] = 'order_id';
-$handler->display->display_options['sorts']['order_id']['relationship'] = 'order_id';
 $handler->display->display_options['sorts']['order_id']['order'] = 'DESC';
-/* Filter criterion: Commerce Litle Fraud Log: Mark reviewed */
-$handler->display->display_options['filters']['mark_reviewed']['id'] = 'mark_reviewed';
-$handler->display->display_options['filters']['mark_reviewed']['table'] = 'commerce_litle_fraud';
-$handler->display->display_options['filters']['mark_reviewed']['field'] = 'mark_reviewed';
-$handler->display->display_options['filters']['mark_reviewed']['exposed'] = TRUE;
-$handler->display->display_options['filters']['mark_reviewed']['expose']['operator_id'] = 'mark_reviewed_op';
-$handler->display->display_options['filters']['mark_reviewed']['expose']['label'] = 'Mark reviewed';
-$handler->display->display_options['filters']['mark_reviewed']['expose']['operator'] = 'mark_reviewed_op';
-$handler->display->display_options['filters']['mark_reviewed']['expose']['identifier'] = 'mark_reviewed';
-$handler->display->display_options['filters']['mark_reviewed']['is_grouped'] = TRUE;
-$handler->display->display_options['filters']['mark_reviewed']['group_info']['label'] = 'Reviewed Status';
-$handler->display->display_options['filters']['mark_reviewed']['group_info']['identifier'] = 'mark_reviewed';
-$handler->display->display_options['filters']['mark_reviewed']['group_info']['group_items'] = array(
+/* Filter criterion: Commerce Litle Fraud Log: Response Message */
+$handler->display->display_options['filters']['message']['id'] = 'message';
+$handler->display->display_options['filters']['message']['table'] = 'commerce_litle_fraud';
+$handler->display->display_options['filters']['message']['field'] = 'message';
+$handler->display->display_options['filters']['message']['operator'] = 'contains';
+$handler->display->display_options['filters']['message']['exposed'] = TRUE;
+$handler->display->display_options['filters']['message']['expose']['operator_id'] = 'message_op';
+$handler->display->display_options['filters']['message']['expose']['label'] = 'Response Message';
+$handler->display->display_options['filters']['message']['expose']['use_operator'] = TRUE;
+$handler->display->display_options['filters']['message']['expose']['operator'] = 'message_op';
+$handler->display->display_options['filters']['message']['expose']['identifier'] = 'message';
+$handler->display->display_options['filters']['message']['expose']['remember_roles'] = array(
+  2 => '2',
+  1 => 0,
+  3 => 0,
+  4 => 0,
+  5 => 0,
+);
+$handler->display->display_options['filters']['message']['group_info']['label'] = 'Response Message';
+$handler->display->display_options['filters']['message']['group_info']['identifier'] = 'message';
+$handler->display->display_options['filters']['message']['group_info']['group_items'] = array(
   1 => array(
-    'title' => 'Not Reviewed',
+    'title' => 'Approved',
     'operator' => '=',
-    'value' => array(
-      'value' => '0',
-      'min' => '',
-      'max' => '',
-    ),
+    'value' => 'Approved',
   ),
   2 => array(
-    'title' => 'Reviewed',
+    'title' => 'Declined',
     'operator' => '=',
-    'value' => array(
-      'value' => '1',
-      'min' => '',
-      'max' => '',
-    ),
+    'value' => 'Declined',
+  ),
+  3 => array(
+    'title' => 'Failed',
+    'operator' => '=',
+    'value' => 'Failed',
+  ),
+);
+/* Filter criterion: Commerce Litle Fraud Log: Device Review Status */
+$handler->display->display_options['filters']['device_review_status']['id'] = 'device_review_status';
+$handler->display->display_options['filters']['device_review_status']['table'] = 'commerce_litle_fraud';
+$handler->display->display_options['filters']['device_review_status']['field'] = 'device_review_status';
+$handler->display->display_options['filters']['device_review_status']['exposed'] = TRUE;
+$handler->display->display_options['filters']['device_review_status']['expose']['operator_id'] = 'device_review_status_op';
+$handler->display->display_options['filters']['device_review_status']['expose']['label'] = 'Device Review Status';
+$handler->display->display_options['filters']['device_review_status']['expose']['operator'] = 'device_review_status_op';
+$handler->display->display_options['filters']['device_review_status']['expose']['identifier'] = 'device_review_status';
+$handler->display->display_options['filters']['device_review_status']['is_grouped'] = TRUE;
+$handler->display->display_options['filters']['device_review_status']['group_info']['label'] = 'Device Review Status';
+$handler->display->display_options['filters']['device_review_status']['group_info']['identifier'] = 'device_review_status';
+$handler->display->display_options['filters']['device_review_status']['group_info']['group_items'] = array(
+  1 => array(
+    'title' => 'pass',
+    'operator' => '=',
+    'value' => 'pass',
+  ),
+  2 => array(
+    'title' => 'fail',
+    'operator' => '=',
+    'value' => 'fail',
+  ),
+  3 => array(
+    'title' => 'review',
+    'operator' => '=',
+    'value' => 'review',
+  ),
+  4 => array(
+    'title' => 'unavailable',
+    'operator' => '=',
+    'value' => 'unavailable',
+  ),
+  5 => array(
+    'title' => 'invalid_session',
+    'operator' => '=',
+    'value' => 'invalid_session',
+  ),
+  6 => array(
+    'title' => 'unknown_session',
+    'operator' => '=',
+    'value' => 'unknown_session',
   ),
 );
 
 /* Display: Page */
 $handler = $view->new_display('page', 'Page', 'page');
 $handler->display->display_options['path'] = 'admin/springboard/reports/litle-fraud-log';
-$handler->display->display_options['menu']['type'] = 'normal';
-$handler->display->display_options['menu']['title'] = 'Litle Advanced Fraud Log';
-$handler->display->display_options['menu']['weight'] = '0';
-$handler->display->display_options['menu']['name'] = 'management';
-$handler->display->display_options['menu']['context'] = 0;
-$handler->display->display_options['menu']['context_only_inline'] = 0;

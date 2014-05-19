@@ -247,6 +247,7 @@ function commerce_litle_cc_settings_form($settings = array()) {
     '#title' => t('Version'),
     '#default_value' => isset($settings['commerce_litle_settings_version']) ? $settings['commerce_litle_settings_version'] : 8.15,
   );
+
   $form['commerce_litle_settings_reportGroup'] = array(
     '#type' => 'textfield',
     '#title' => t('Report group'),
@@ -696,7 +697,6 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
 
     // Submit a registerTokenRequest.
     $token_response = commerce_litle_register_token_request($init, $litle_config, $payment_details);
-
     $litle_token = commerce_litle_get_token_from_response($token_response);
     if (!empty($litle_token)) {
       $card_name = '';
