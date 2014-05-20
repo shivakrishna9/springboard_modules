@@ -53,9 +53,9 @@ body a {
 }
 
 #p2p-comment-pane .pane-content ul li {
-  list-style: none;
   margin: 0;
   padding: 0;
+  list-style: none;
 }
 
 .p2p-comment-name-amount {
@@ -73,6 +73,40 @@ body a {
 
 .p2p-comment-amount {
 
+}
+
+.panel-pane-wrapper.pane-progress {
+  padding: 10px;
+  border: 1px solid #888;
+}
+
+.field-name-field-p2p-campaign-images {
+  margin-bottom: 10px;
+}
+
+.personal-campaign-call-to-action {
+  text-align: center;
+}
+
+.personal-campaign-call-to-action a {
+  display: inline-block;
+  margin: 8px 0 4px 0;
+  padding: 4px 12px;
+  background: #646464;
+  color: #fff;
+  font-size: 16px;
+}
+
+.personal-campaign-call-to-action a:hover {
+  background: #888;
+  color: #fffe00;
+  text-decoration: none;
+}
+
+.personal-campaign-progress {
+  margin: 0 0 10px 0;
+  font-weight: bold;
+  font-size: 18px;
 }
 
 /******************  Media queries, these should go last */

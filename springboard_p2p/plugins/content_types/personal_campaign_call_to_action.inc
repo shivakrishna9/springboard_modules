@@ -58,7 +58,7 @@ function springboard_p2p_personal_campaign_call_to_action_render($subtype, $conf
 
     $label = t('Submit');
     if ($goal['goal_type'] == 'amount') {
-      $label = t('Donate');
+      $label = t('Donate Now');
     }
 
     $output[] = l($label, 'node/' . $goal['nid'], array(

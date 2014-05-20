@@ -117,7 +117,10 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->style = array(
       'settings' => NULL,
     );
-    $pane->css = array();
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'donate-button',
+    );
     $pane->extras = array();
     $pane->position = 1;
     $pane->locks = array();
@@ -173,7 +176,10 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->style = array(
       'settings' => NULL,
     );
-    $pane->css = array();
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'donate-button',
+    );
     $pane->extras = array();
     $pane->position = 3;
     $pane->locks = array();
@@ -233,7 +239,7 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
           'suffix' => '',
         ),
         'content' => array(
-          'prefix' => '<div class="panel-pane-wrapper">',
+          'prefix' => '<div class="panel-pane-wrapper pane-progress">',
           'suffix' => '',
         ),
         'theme' => 0,
@@ -315,7 +321,7 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
         ),
         'content' => array(
           'prefix' => '',
-          'suffix' => '</div>',
+          'suffix' => '',
         ),
         'theme' => 0,
       ),
@@ -328,6 +334,43 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->uuid = 'd4ef12a9-ee7d-44ff-8747-3e42752e1988';
     $display->content['new-d4ef12a9-ee7d-44ff-8747-3e42752e1988'] = $pane;
     $display->panels['middle_right'][3] = 'new-d4ef12a9-ee7d-44ff-8747-3e42752e1988';
+    $pane = new stdClass();
+    $pane->pid = 'new-57cfe285-650a-4b86-9b80-a4bece44752c';
+    $pane->panel = 'middle_right';
+    $pane->type = 'personal_campaign_call_to_action';
+    $pane->subtype = 'personal_campaign_call_to_action';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'context' => 'panelizer',
+      'override_title' => 1,
+      'override_title_text' => '',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => array(
+        'title' => array(
+          'prefix' => '',
+          'suffix' => '',
+        ),
+        'content' => array(
+          'prefix' => '',
+          'suffix' => '</div>',
+        ),
+        'theme' => 0,
+      ),
+      'style' => 'wrapper_raw',
+    );
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'donate-button',
+    );
+    $pane->extras = array();
+    $pane->position = 4;
+    $pane->locks = array();
+    $pane->uuid = '57cfe285-650a-4b86-9b80-a4bece44752c';
+    $display->content['new-57cfe285-650a-4b86-9b80-a4bece44752c'] = $pane;
+    $display->panels['middle_right'][4] = 'new-57cfe285-650a-4b86-9b80-a4bece44752c';
     $pane = new stdClass();
     $pane->pid = 'new-c4839f2b-7028-4f6a-b12d-d21c3004d8f1';
     $pane->panel = 'top';
