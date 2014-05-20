@@ -47,7 +47,11 @@
 }
 
 .panel-2col-bricks .panel-separator {
-  margin: 0 0 1em 0;
+  margin: 0;
+}
+
+.panel-pane {
+  margin: 0 0 10px 0;
 }
 
 /* Media queries */

@@ -204,6 +204,7 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->cache = array();
     $pane->style = array(
       'settings' => NULL,
+      'style' => 'naked',
     );
     $pane->css = array();
     $pane->extras = array();
@@ -272,6 +273,7 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->cache = array();
     $pane->style = array(
       'settings' => NULL,
+      'style' => 'default',
     );
     $pane->css = array();
     $pane->extras = array();
@@ -280,39 +282,6 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->uuid = '680839c7-6c53-41bf-bbf8-400322b078da';
     $display->content['new-680839c7-6c53-41bf-bbf8-400322b078da'] = $pane;
     $display->panels['middle_right'][2] = 'new-680839c7-6c53-41bf-bbf8-400322b078da';
-    $pane = new stdClass();
-    $pane->pid = 'new-c8617b25-8dae-48c6-bd81-cea6fc4df20d';
-    $pane->panel = 'middle_right';
-    $pane->type = 'entity_field';
-    $pane->subtype = 'node:field_fundraising_deadline';
-    $pane->shown = TRUE;
-    $pane->access = array();
-    $pane->configuration = array(
-      'label' => 'above',
-      'formatter' => 'date_default',
-      'delta_limit' => 0,
-      'delta_offset' => '0',
-      'delta_reversed' => FALSE,
-      'formatter_settings' => array(
-        'format_type' => 'long',
-        'fromto' => 'both',
-        'multiple_from' => '',
-        'multiple_number' => '',
-        'multiple_to' => '',
-      ),
-      'context' => 'panelizer',
-    );
-    $pane->cache = array();
-    $pane->style = array(
-      'settings' => NULL,
-    );
-    $pane->css = array();
-    $pane->extras = array();
-    $pane->position = 3;
-    $pane->locks = array();
-    $pane->uuid = 'c8617b25-8dae-48c6-bd81-cea6fc4df20d';
-    $display->content['new-c8617b25-8dae-48c6-bd81-cea6fc4df20d'] = $pane;
-    $display->panels['middle_right'][3] = 'new-c8617b25-8dae-48c6-bd81-cea6fc4df20d';
     $pane = new stdClass();
     $pane->pid = 'new-d4ef12a9-ee7d-44ff-8747-3e42752e1988';
     $pane->panel = 'middle_right';
@@ -354,11 +323,11 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     );
     $pane->css = array();
     $pane->extras = array();
-    $pane->position = 4;
+    $pane->position = 3;
     $pane->locks = array();
     $pane->uuid = 'd4ef12a9-ee7d-44ff-8747-3e42752e1988';
     $display->content['new-d4ef12a9-ee7d-44ff-8747-3e42752e1988'] = $pane;
-    $display->panels['middle_right'][4] = 'new-d4ef12a9-ee7d-44ff-8747-3e42752e1988';
+    $display->panels['middle_right'][3] = 'new-d4ef12a9-ee7d-44ff-8747-3e42752e1988';
     $pane = new stdClass();
     $pane->pid = 'new-c4839f2b-7028-4f6a-b12d-d21c3004d8f1';
     $pane->panel = 'top';

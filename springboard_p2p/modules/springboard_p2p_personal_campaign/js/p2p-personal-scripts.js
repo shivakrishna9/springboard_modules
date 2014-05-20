@@ -13,6 +13,8 @@
         $(".embedded-video").fitVids();
       });
 
+      $(".panel-separator").remove();
+
       // end jquery.
     }};
 })
