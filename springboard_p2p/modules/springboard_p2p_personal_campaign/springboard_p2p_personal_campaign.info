@@ -9,6 +9,7 @@ dependencies[] = entityreference
 dependencies[] = number
 dependencies[] = options
 dependencies[] = panelizer
+dependencies[] = panels_extra_styles
 dependencies[] = springboard_p2p_category
 dependencies[] = springboard_p2p_fields
 dependencies[] = views_content
