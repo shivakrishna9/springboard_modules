@@ -51,43 +51,48 @@ function springboard_p2p_personal_campaign_comments_render($subtype, $conf, $pan
   $comments = springboard_p2p_get_personal_campaign_comments($personal_campaign->nid);
 
   $output = array();
-  $output[] = '<div class="personal-campaign-comments">';
 
+  // Start the count.
+  $zebra = 0;
   foreach ($comments as $comment) {
-    $output[] = '<hr>';
-    $output[] = '<div class="personal-campaign-comment">';
+
+    // Define odd / even for use in the definition list.
+    $zebra_class = ($zebra % 2) ? 'odd' : 'even';
+
+    $output[] = '<dl class="personal-campaign-comment-list ' . $zebra_class .'">';
 
     if ($comment['show_name']) {
-      $output[] = '<div>';
+      $output[] = '<dt>';
       $output[] = springboard_p2p_format_user_full_name(user_load($comment['uid']));
-      $output[] = '</div>';
+      $output[] = '</dt>';
     }
     else {
-      $output[] = '<div>';
+      $output[] = '<dt>';
       $output[] = t('Anonymous');
-      $output[] = '</div>';
+      $output[] = '</dt>';
     }
 
-    $output[] = '<div>';
-    $output[] = format_date($comment['created']);
-    $output[] = '</div>';
+    $output[] = '<dd>';
+    // Custom Date format.
+    $output[] = format_date($comment['created'], "custom", "n/j/y");
+    $output[] = '</dd>';
 
     if ($comment['action_type'] == 'fundraiser' && !empty($comment['amount'])) {
-      $output[] = '<div>';
+      $output[] = '<dd>';
       $output[] = springboard_p2p_format_progress($comment['amount'] / 100, 'amount');
-      $output[] = '</div>';
+      $output[] = '</dd>';
     }
 
     if (!empty($comment['comment'])) {
-      $output[] = '<div>';
+      $output[] = '<dd>';
       $output[] = check_plain($comment['comment']);
-      $output[] = '</div>';
+      $output[] = '</dd>';
     }
 
-    $output[] = '</div>';
+    $output[] = '</dl>';
+    $zebra++;
   }
 
-  $output[] = '</div>';
 
   // Build the content type block.
   $block = new stdClass();

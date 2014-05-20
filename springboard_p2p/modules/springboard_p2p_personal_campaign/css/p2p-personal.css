@@ -44,6 +44,10 @@ body a {
   max-width: 93%;
 }
 
+#p2p-comment-pane {
+  margin: 0 0 20px 0;
+}
+
 
 /******************  Media queries, these should go last */
 @media (min-width: 769px) {

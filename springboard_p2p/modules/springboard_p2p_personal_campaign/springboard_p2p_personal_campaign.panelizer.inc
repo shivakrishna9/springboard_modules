@@ -47,6 +47,32 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
   $display->content = array();
   $display->panels = array();
     $pane = new stdClass();
+    $pane->pid = 'new-9e7adff4-77d7-4c34-b2fb-417c130de880';
+    $pane->panel = 'bottom';
+    $pane->type = 'personal_campaign_comments';
+    $pane->subtype = 'personal_campaign_comments';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'context' => 'panelizer',
+      'override_title' => 0,
+      'override_title_text' => '',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array(
+      'css_id' => 'p2p-comment-pane',
+      'css_class' => '',
+    );
+    $pane->extras = array();
+    $pane->position = 0;
+    $pane->locks = array();
+    $pane->uuid = '9e7adff4-77d7-4c34-b2fb-417c130de880';
+    $display->content['new-9e7adff4-77d7-4c34-b2fb-417c130de880'] = $pane;
+    $display->panels['bottom'][0] = 'new-9e7adff4-77d7-4c34-b2fb-417c130de880';
+    $pane = new stdClass();
     $pane->pid = 'new-0cd4f51e-4ba7-474d-a3ad-e1a931ded90f';
     $pane->panel = 'middle_left';
     $pane->type = 'entity_field';
