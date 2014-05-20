@@ -39,7 +39,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
     'label' => 'Campaign Introduction',
     'required' => 1,
     'settings' => array(
-      'display_summary' => 1,
+      'display_summary' => 0,
       'text_processing' => 1,
       'user_register_form' => FALSE,
     ),

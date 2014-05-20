@@ -40,6 +40,10 @@ body a {
 
 /* end defaults */
 
+.embedded-video {
+  max-width: 93%;
+}
+
 
 /******************  Media queries, these should go last */
 @media (min-width: 769px) {

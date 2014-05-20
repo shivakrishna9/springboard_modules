@@ -67,6 +67,19 @@ function springboard_p2p_personal_campaign_page_alter(&$cache, $vars) {
     );
     drupal_render($p2p_personal_scripts);
 
+    // Custom css.
+    $p2p_personal_css = array(
+      '#attached' => array(
+        'css' => array(
+          $mod_path . '/css/p2p-personal.css' => array(
+            'group' => CSS_THEME,
+            'weight' => 9999,
+          ),
+        ),
+      ),
+    );
+    drupal_render($p2p_personal_css);
+
   }
 
 }
