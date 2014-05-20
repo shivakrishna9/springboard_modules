@@ -108,7 +108,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'module' => 'image',
         'settings' => array(
           'image_link' => '',
-          'image_style' => '',
+          'image_style' => 'p2p_campaign_image_slideshow',
         ),
         'type' => 'image',
         'weight' => 17,

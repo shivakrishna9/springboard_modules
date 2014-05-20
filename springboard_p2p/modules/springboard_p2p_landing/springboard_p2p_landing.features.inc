@@ -25,12 +25,12 @@ function springboard_p2p_landing_ctools_plugin_api($module = NULL, $api = NULL) 
 function springboard_p2p_landing_image_default_styles() {
   $styles = array();
 
-  // Exported image style: campaign_image_landing.
-  $styles['campaign_image_landing'] = array(
-    'name' => 'campaign_image_landing',
-    'label' => 'Campaign Image Thumb',
+  // Exported image style: p2p_campaign_image_landing.
+  $styles['p2p_campaign_image_landing'] = array(
+    'name' => 'p2p_campaign_image_landing',
+    'label' => 'P2P Campaign Image Thumb',
     'effects' => array(
-      1 => array(
+      5 => array(
         'label' => 'Scale',
         'help' => 'Scaling will maintain the aspect-ratio of the original image. If only a single dimension is specified, the other dimension will be calculated.',
         'effect callback' => 'image_scale_effect',
@@ -46,7 +46,7 @@ function springboard_p2p_landing_image_default_styles() {
         ),
         'weight' => -10,
       ),
-      3 => array(
+      6 => array(
         'label' => 'Crop',
         'help' => 'Cropping will remove portions of an image to make it the specified dimensions.',
         'effect callback' => 'image_crop_effect',
@@ -65,12 +65,12 @@ function springboard_p2p_landing_image_default_styles() {
     ),
   );
 
-  // Exported image style: campaign_image_slideshow.
-  $styles['campaign_image_slideshow'] = array(
-    'name' => 'campaign_image_slideshow',
-    'label' => 'Campaign Image Slideshow',
+  // Exported image style: p2p_campaign_image_slideshow.
+  $styles['p2p_campaign_image_slideshow'] = array(
+    'name' => 'p2p_campaign_image_slideshow',
+    'label' => 'P2P Campaign Image Slideshow',
     'effects' => array(
-      2 => array(
+      3 => array(
         'label' => 'Scale',
         'help' => 'Scaling will maintain the aspect-ratio of the original image. If only a single dimension is specified, the other dimension will be calculated.',
         'effect callback' => 'image_scale_effect',

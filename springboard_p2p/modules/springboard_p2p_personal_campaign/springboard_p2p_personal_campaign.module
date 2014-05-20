@@ -21,6 +21,21 @@ function springboard_p2p_landing_ctools_plugin_directory($owner, $plugin_type) {
 }
 
 /**
+ * Implements hook_preprocess_page().
+ */
+function springboard_p2p_personal_campaign_process_page(&$vars) {
+
+  // Global node.
+  $node = menu_get_object();
+
+  // Unset the node title for p2p_personal_campaign page view.
+  if (!empty($node) && ($node->type == 'p2p_personal_campaign') && (arg(2) == NULL)) {
+    $vars['title'] = NULL;
+  }
+
+}
+
+/**
  * Implements hook_page_alter().
  */
 function springboard_p2p_personal_campaign_page_alter(&$cache, $vars) {
@@ -108,25 +123,25 @@ function springboard_p2p_personal_campaign_page_alter(&$cache, $vars) {
  *
  * @see menu_get_item()
  */
-//function springboard_p2p_personal_campaign_menu_get_item_alter(&$router_item, $path, $original_map) {
-//  // Define the path of the personal campaign node/edit or node/add
-//  if ($router_item['path'] == 'node/%/edit' || $router_item['path'] == 'node/add/p2p-personal-campaign') {
-//    $router_item['theme_callback'] = '_springboard_p2p_personal_campaign_menu_theme_callback';
-//  }
-//}
-//
-///**
-// * Our custom function theme callback from above.
-// */
-//function _springboard_p2p_personal_campaign_menu_theme_callback() {
-//
-//  // Define node.
-//  $node = menu_get_object();
-//
-//  //Only if p2p_personal_campaign.
-//  if ((!empty($node) && $node->type == 'p2p_personal_campaign') || (arg(0) === 'node' && arg(1) === 'add' && arg(2) === 'p2p-personal-campaign')) {
-//    // define the front end theme.
-//    //@Todo it would be better to define the current default theme rather than hard coding, i.e. aspca.
-//    return 'springboard_frontend';
-//  }
-//}
+function springboard_p2p_personal_campaign_menu_get_item_alter(&$router_item, $path, $original_map) {
+  // Define the path of the personal campaign node/edit or node/add
+  if ($router_item['path'] == 'node/%/edit' || $router_item['path'] == 'node/add/p2p-personal-campaign') {
+    $router_item['theme_callback'] = '_springboard_p2p_personal_campaign_menu_theme_callback';
+  }
+}
+
+/**
+ * Our custom function theme callback from above.
+ */
+function _springboard_p2p_personal_campaign_menu_theme_callback() {
+
+  // Define node.
+  $node = menu_get_object();
+
+  //Only if p2p_personal_campaign.
+  if ((!empty($node) && $node->type == 'p2p_personal_campaign') || (arg(0) === 'node' && arg(1) === 'add' && arg(2) === 'p2p-personal-campaign')) {
+    // define the front end theme.
+    //@Todo it would be better to define the current default theme rather than hard coding, i.e. aspca.
+    return 'springboard_frontend';
+  }
+}
