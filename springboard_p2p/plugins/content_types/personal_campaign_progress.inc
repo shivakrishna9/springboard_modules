@@ -52,23 +52,34 @@ function springboard_p2p_personal_campaign_progress_render($subtype, $conf, $pan
 
   if (!is_null($campaign) && !is_null($personal_campaign)) {
     $output = array();
+    $language = $personal_campaign->language;
     $goal_type = springboard_p2p_get_goal_type_from_campaign($campaign);
+    $percent = 0;
+    $progress_text = '';
 
-    $formatted_progress = springboard_p2p_format_progress($personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0], $goal_type);
+    $progress_field = $personal_campaign->field_p2p_campaign_progress[$language][0];
+    $progress_with_units = springboard_p2p_format_progress($progress_field, $goal_type);
 
-    $output[] = '<div class="personal-campaign-progress-container">';
-
-    $output[] = '<div class="personal-campaign-progress"><span>Progress:</span> ' . $formatted_progress . '</div>';
     if ($goal_type == 'submissions') {
-      $formatted_goal = springboard_p2p_format_progress($personal_campaign->field_p2p_personal_submit_goal[$personal_campaign->language][0]['value'], $goal_type);
-      $output[] = '<div class="personal-campaign-goal"><span>Goal:</span> ' . $formatted_goal . '</div>';
+      $submissions_goal_value = $personal_campaign->field_p2p_personal_submit_goal[$language][0]['value'];
+      $percent = springboard_p2p_format_percent($progress_field['submissions'], $submissions_goal_value, FALSE, FALSE);
+      $progress_text = t('@progress to date', array('@progress' => $progress_with_units));
     }
     elseif ($goal_type == 'amount') {
-      $formatted_goal = springboard_p2p_format_progress($personal_campaign->field_p2p_personal_campaign_goal[$personal_campaign->language][0]['value'], $goal_type);
-      $output[] = '<div class="personal-campaign-goal"><span>Goal:</span> ' . $formatted_goal . '</div>';
+      $amount_goal_value = $personal_campaign->field_p2p_personal_campaign_goal[$language][0]['value'];
+      $percent = springboard_p2p_format_percent($progress_field['amount'], $amount_goal_value, FALSE, FALSE);
+      $progress_text = t('@progress raised to date', array('@progress' => $progress_with_units));
     }
 
+    $output[] = '<div class="personal-campaign-progress-container">';
+    $output[] = '<div class="personal-campaign-progress">' . $progress_text . '</div>';
+    $output[] = '<div class="progress-bar-wrapper">';
+    $output[] = '<div class="progress-bar" style="width:' . $percent . '%"></div>';
     $output[] = '</div>';
+
+    $output[] = '</div>';
+
+    drupal_add_css(drupal_get_path('module', 'springboard_p2p') . '/css/springboard_p2p.css');
 
     // Build the content type block.
     $block = new stdClass();

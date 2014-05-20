@@ -1,0 +1,10 @@
+div.personal-campaign-progress-container div.progress-bar-wrapper {
+  border: 1px solid #aaa;
+  height: 16px;
+}
+
+div.personal-campaign-progress-container div.progress-bar {
+  width: 0;
+  background-color: #888;
+  height: 16px;
+}

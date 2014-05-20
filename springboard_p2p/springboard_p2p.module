@@ -819,16 +819,29 @@ function springboard_p2p_format_progress($progress, $type, $include_units = TRUE
  *   The number of submissions/amount of the current progress.
  * @param int $goal
  *   The goal value.
+ * @param bool $include_units
+ *   Whether to include the percent sign.
+ * @param bool $include_overage
+ *   Whether to cap the percent at 100.  Useful for CSS.
  *
  * @return string
- *   The formatted integer value with a percent sign.
+ *   The formatted integer value optionally with a percent sign.
  */
-function springboard_p2p_format_percent($progress, $goal) {
+function springboard_p2p_format_percent($progress, $goal, $include_units = TRUE, $include_overage = TRUE) {
+  $result = '0';
   if ($goal > 0) {
-    return (int) ($progress / $goal * 100) . ' %';
+    $result = (int) ($progress / $goal * 100);
   }
 
-  return '0 %';
+  if ($result > 100 && !$include_overage) {
+    $result = 100;
+  }
+
+  if ($include_units) {
+    $result .= ' %';
+  }
+
+  return $result;
 }
 
 /**
