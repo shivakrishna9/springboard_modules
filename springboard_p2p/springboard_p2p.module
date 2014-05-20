@@ -1522,7 +1522,7 @@ function springbaord_p2p_format_campaign_form_header($campaign) {
     $display = array(
       'settings' => array(
         'image_link' => 'content',
-        'image_style' => 'large',
+        'image_style' => 'p2p_top_banner',
       ),
     );
 

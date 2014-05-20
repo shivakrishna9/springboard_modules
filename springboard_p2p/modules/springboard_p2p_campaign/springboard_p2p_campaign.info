@@ -43,6 +43,7 @@ features[field_instance][] = node-p2p_campaign-field_p2p_show_donor_comments
 features[field_instance][] = node-p2p_campaign-field_p2p_show_donor_scroll
 features[field_instance][] = node-p2p_campaign-field_p2p_video_embed
 features[field_instance][] = node-p2p_campaign-field_p2p_video_embed_edit
+features[image][] = p2p_top_banner
 features[node][] = p2p_campaign
 features[variable][] = field_bundle_settings_node__p2p_campaign
 features[variable][] = menu_options_p2p_campaign
