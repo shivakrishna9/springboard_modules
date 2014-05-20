@@ -372,6 +372,29 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $display->content['new-57cfe285-650a-4b86-9b80-a4bece44752c'] = $pane;
     $display->panels['middle_right'][4] = 'new-57cfe285-650a-4b86-9b80-a4bece44752c';
     $pane = new stdClass();
+    $pane->pid = 'new-6a1e2843-d844-482f-bfda-bc47c4921c4c';
+    $pane->panel = 'middle_right';
+    $pane->type = 'personal_campaign_roll';
+    $pane->subtype = 'personal_campaign_roll';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'context' => 'panelizer',
+      'override_title' => 1,
+      'override_title_text' => '',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 5;
+    $pane->locks = array();
+    $pane->uuid = '6a1e2843-d844-482f-bfda-bc47c4921c4c';
+    $display->content['new-6a1e2843-d844-482f-bfda-bc47c4921c4c'] = $pane;
+    $display->panels['middle_right'][5] = 'new-6a1e2843-d844-482f-bfda-bc47c4921c4c';
+    $pane = new stdClass();
     $pane->pid = 'new-c4839f2b-7028-4f6a-b12d-d21c3004d8f1';
     $pane->panel = 'top';
     $pane->type = 'campaign_header';
