@@ -120,6 +120,14 @@ h3.p2p-comment-name {
   font-weight: bold;
 }
 
+#p2p-comment-pane h2 {
+  margin: 0 0 20px 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #a6a6a6;
+}
+
+/* progress side bar */
+
 .panel-pane-wrapper.pane-progress {
   padding: 10px;
   border: 1px solid #888;
@@ -152,6 +160,26 @@ h3.p2p-comment-name {
   margin: 0 0 10px 0;
   font-weight: bold;
   font-size: 18px;
+}
+
+/* donor roll */
+
+.pane-personal-campaign-roll {
+  margin: 10px 0 0 0;
+  padding: 10px;
+  border: 1px solid #a6a6a6;
+}
+
+li.personal-campaign-roll-donor {
+  list-style: none;
+}
+
+.node-type-p2p-personal-campaign h2,
+.node-type-p2p-personal-campaign h3 {
+  margin: 0 0 12px 0;
+  color: #5b5b5b;
+  font-size: 22px;
+  line-height: 1.2em;
 }
 
 /******************  Media queries, these should go last */
