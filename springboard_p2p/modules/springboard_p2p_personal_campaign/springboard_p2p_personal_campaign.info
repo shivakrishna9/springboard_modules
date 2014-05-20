@@ -5,6 +5,7 @@ package = Springboard P2P
 version = 7.x-4.0-dev
 project = springboard_p2p_personal_campaign
 dependencies[] = date
+dependencies[] = date_popup
 dependencies[] = entityreference
 dependencies[] = number
 dependencies[] = options
