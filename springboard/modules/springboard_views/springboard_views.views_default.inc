@@ -1476,7 +1476,7 @@ function springboard_views_views_default_views() {
 
   /* Display: Page */
   $handler = $view -> new_display('page', 'Page', 'page');
-  $handler -> display -> display_options['path'] = 'springboard/asset-library/page-wrappers';
+  $handler -> display -> display_options['path'] = 'admin/springboard/asset-library/page-wrappers';
 
   /* Display: Block */
   $handler = $view -> new_display('block', 'Block', 'block_1');
@@ -1491,7 +1491,7 @@ function springboard_views_views_default_views() {
   $handler -> display -> display_options['footer']['area']['id'] = 'area';
   $handler -> display -> display_options['footer']['area']['table'] = 'views';
   $handler -> display -> display_options['footer']['area']['field'] = 'area';
-  $handler -> display -> display_options['footer']['area']['content'] = '<a href="/springboard/asset-library/page-wrappers" class="button">View All Page Wrappers</a>';
+  $handler -> display -> display_options['footer']['area']['content'] = '<a href="admin/springboard/asset-library/page-wrappers" class="button">View All Page Wrappers</a>';
   $handler -> display -> display_options['footer']['area']['format'] = 'filtered_html';
   $views[$view -> name] = $view;
 
@@ -1652,7 +1652,7 @@ function springboard_views_views_default_views() {
 
   /* Display: Page */
   $handler = $view -> new_display('page', 'Page', 'page');
-  $handler -> display -> display_options['path'] = 'springboard/asset-library/email-templates';
+  $handler -> display -> display_options['path'] = 'admin/springboard/asset-library/email-templates';
 
   /* Display: Block */
   $handler = $view -> new_display('block', 'Block', 'block_1');
@@ -1667,7 +1667,7 @@ function springboard_views_views_default_views() {
   $handler -> display -> display_options['footer']['area']['id'] = 'area';
   $handler -> display -> display_options['footer']['area']['table'] = 'views';
   $handler -> display -> display_options['footer']['area']['field'] = 'area';
-  $handler -> display -> display_options['footer']['area']['content'] = '<a href="/springboard/asset-library/email-templates" class="button">View All Email Templates</a>';
+  $handler -> display -> display_options['footer']['area']['content'] = '<a href="admin/springboard/asset-library/email-templates" class="button">View All Email Templates</a>';
   $handler -> display -> display_options['footer']['area']['format'] = 'filtered_html';
   $views[$view -> name] = $view;
 
@@ -1788,7 +1788,7 @@ function springboard_views_views_default_views() {
 
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');
-  $handler->display->display_options['path'] = 'springboard/reports/dblog';
+  $handler->display->display_options['path'] = 'admin/springboard/reports/dblog';
 
   /* Display: Springboard Dashboard Log */
   $handler = $view -> new_display('block', 'Springboard Dashboard Log', 'block_1');
@@ -1992,7 +1992,7 @@ function springboard_views_views_default_views() {
 
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');
-  $handler->display->display_options['path'] = 'springboard/reports/salesforce-soap-errors';
+  $handler->display->display_options['path'] = 'admin/springboard/reports/salesforce-soap-errors';
   $handler->display->display_options['menu']['type'] = 'normal';
   $handler->display->display_options['menu']['title'] = 'Unsynched Errors';
   $handler->display->display_options['menu']['weight'] = '0';
@@ -2206,8 +2206,8 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['nothing']['table'] = 'views';
   $handler->display->display_options['fields']['nothing']['field'] = 'nothing';
   $handler->display->display_options['fields']['nothing']['label'] = '';
-  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/user/[uid]/edit?destination=springboard/reports/donor">Edit</a>
-<a href="/user/[uid]/recurring_overview?destination=springboard/reports/donor">Recurring gifts</a>
+  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/user/[uid]/edit?destination=admin/springboard/reports/donor">Edit</a>
+<a href="/user/[uid]/recurring_overview?destination=admin/springboard/reports/donor">Recurring gifts</a>
 ';
   $handler->display->display_options['fields']['nothing']['element_label_colon'] = FALSE;
   /* Filter criterion: User: First name (sbp_first_name) */
@@ -2339,8 +2339,8 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['nothing']['table'] = 'views';
   $handler->display->display_options['fields']['nothing']['field'] = 'nothing';
   $handler->display->display_options['fields']['nothing']['label'] = 'Action';
-  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/user/[uid]/edit?destination=springboard/reports/donor">Edit</a> |
-<a href="/user/[uid]/recurring_overview?destination=springboard/reports/donor">Recurring gifts</a>
+  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/user/[uid]/edit?destination=admin/springboard/reports/donor">Edit</a> |
+<a href="/user/[uid]/recurring_overview?destination=admin/springboard/reports/donor">Recurring gifts</a>
 ';
   $handler->display->display_options['fields']['nothing']['element_class'] = 'table-actions';
   $handler->display->display_options['fields']['nothing']['element_label_colon'] = FALSE;
@@ -2417,7 +2417,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['filters']['date_filter']['date_fields'] = array(
     'users.created' => 'users.created',
   );
-  $handler->display->display_options['path'] = 'springboard/reports/contacts';
+  $handler->display->display_options['path'] = 'admin/springboard/reports/contacts';
 
   $views[$view -> name] = $view;
 

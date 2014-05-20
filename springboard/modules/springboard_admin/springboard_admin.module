@@ -11,47 +11,47 @@ include_once 'springboard_admin.menu.inc';
  */
 function springboard_admin_menu() {
   $items = array();
-  $items['springboard/asset-library'] = array(
+  $items['admin/springboard/asset-library'] = array(
     'title' => 'Templates',
     'type' => MENU_NORMAL_ITEM,
     'access callback' => 'springboard_admin_menu_access',
-    'access arguments' => array('springboard/asset-library'),
+    'access arguments' => array('admin/springboard/asset-library'),
     'page callback' => 'springboard_admin_template_page',
   );
-  $items['springboard/donation-forms/all'] = array(
+  $items['admin/springboard/donation-forms/all'] = array(
     'title' => 'Donation Forms',
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('access springboard dashboard'),
     'page callback' => 'springboard_admin_forms_page',
     'page arguments' => array('fundraiser')
   );
-  $items['springboard/forms/all'] = array(
+  $items['admin/springboard/forms/all'] = array(
     'title' => 'Forms',
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('access springboard dashboard'),
     'page callback' => 'springboard_admin_forms_page',
     'page arguments' => array('webform_user')
   );
-  $items['springboard/reports'] = array(
+  $items['admin/springboard/reports'] = array(
     'title' => 'Reports',
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('access springboard dashboard'),
     'page callback' => 'springboard_admin_aggregate_links_page',
-    'page arguments' => array('springboard/reports'),
+    'page arguments' => array('admin/springboard/reports'),
    );
-  $items['springboard/settings'] = array(
+  $items['admin/springboard/settings'] = array(
     'title' => 'Options',
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('access springboard dashboard'),
     'page callback' => 'springboard_admin_aggregate_links_page',
-    'page arguments' => array('springboard/settings'),
+    'page arguments' => array('admin/springboard/settings'),
   );
-  $items['springboard/tools'] = array(
+  $items['admin/springboard/tools'] = array(
     'title' => 'Other Tools',
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('access springboard dashboard'),
     'page callback' => 'springboard_admin_aggregate_links_page',
-    'page arguments' => array('springboard/tools'),
+    'page arguments' => array('admin/springboard/tools'),
   );
   $items['user/%/logout'] = array(
     'title' => 'Logout',
@@ -94,6 +94,7 @@ function springboard_admin_url_inbound_alter(&$path, $original_path, $path_langu
   if (preg_match('|^springboard/add(/.*)?|', $path, $matches)) {
     $path = 'node/add' . $matches[1] . $query;
   }
+    
   /**
    * Node edit pages.
    */ 
@@ -138,6 +139,14 @@ function springboard_admin_url_inbound_alter(&$path, $original_path, $path_langu
       $path = 'node/' . $matches[1] . $matches[2];
     }  
   }  
+  elseif (preg_match('|^springboard((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $matches)) {
+    if (preg_match('|^springboard$|', $path)) {
+      $path = 'admin/springboard';
+    }
+    else {
+      $path = 'admin/springboard' . $matches[1];
+    } 
+  }
 }
 
 /**
@@ -149,7 +158,7 @@ function springboard_admin_url_inbound_alter(&$path, $original_path, $path_langu
  * 
  * To add a new item, follow this template:
  * elseif (preg_match([Regex to match the path(s)], $path, $matches)) {
-      drupal_goto([String to match the new path(s)] . $matches[1] . [Any additional matches from the regex], array('query' => $query, 'alias' => TRUE));
+      $goto_path = [String to match the new path(s)] . $matches[1] . [Any additional matches from the regex];
     }
  */
 function springboard_admin_init() {
@@ -165,12 +174,13 @@ function springboard_admin_init() {
     // Set up any query string that might exist for use in drupal_goto().
     parse_str($_SERVER['QUERY_STRING'], $query);
     
-    // Set up requested path.
-    $path = request_uri();
+    // Set up requested path and goto path.
+    $path = request_uri();    
+    $goto_path = FALSE;
     
     // Node add pages,
     if (preg_match('|^/node/add(/.*)?|', $path, $matches)) {
-      drupal_goto('springboard/add' . $matches[1], array('query' => $query, 'alias' => TRUE));
+      $goto_path = 'springboard/add' . $matches[1];
     }
     
     /*
@@ -183,11 +193,11 @@ function springboard_admin_init() {
       if (preg_match('|^/node/([0-9]*)/webform?|', $path, $m1)) {
         // node/%/webform/emails -> /springboard/node/%/form/confirmation-emails.
         if (preg_match('|^/node/([0-9]*)/webform/emails?|',  $path, $m2)) {
-          drupal_goto('springboard/node/' . $m2[1] . '/form-components/confirmation-emails', array('query' => $query, 'alias' => TRUE));
+          $goto_path = 'springboard/node/' . $m2[1] . '/form-components/confirmation-emails';
         }
         // node/%/webform/configure -> /springboard/node/%/form/confirmation-page-settings.
         elseif (preg_match('|^/node/([0-9]*)/webform/configure?|',  $path, $m2)) {
-          drupal_goto('springboard/node/' . $m2[1] . '/form-components/confirmation-page-settings', array('query' => $query, 'alias' => TRUE));
+          $goto_path = 'springboard/node/' . $m2[1] . '/form-components/confirmation-page-settings';
         }
         /**
          * Webform results pages.
@@ -195,37 +205,48 @@ function springboard_admin_init() {
         elseif (preg_match('|^/node/([0-9]*)/webform-results?|',  $path, $m2)) {
           // EVerything under node/%/webform-results
           if (preg_match('|^/node/([0-9]*)/webform-results((?:/[a-zA-Z0-9_\-]*)*)?|',  $path, $m3)) {
-            drupal_goto('springboard/node/' . $m3[1] . '/results' . $m3[2], array('query' => $query, 'alias' => TRUE));
+            $goto_path = 'springboard/node/' . $m3[1] . '/results' . $m3[2];
           }
           // node/%/webform-results -> springboard/node/%/results
           else {
-            drupal_goto('springboard/node/' . $m2[1] . '/results' . $m2[2], array('query' => $query, 'alias' => TRUE));
+            $goto_path = 'springboard/node/' . $m2[1] . '/results' . $m2[2];
           }
         }
         // All other pages under node/%/webform.
         elseif (preg_match('|^/node/([0-9]*)/webform((?:/[a-zA-Z0-9_\-]*)*)?|',  $path, $m2)) {
-          drupal_goto('springboard/node/' . $m2[1] . '/form-components' . $m2[2], array('query' => $query, 'alias' => TRUE));
+          $goto_path = 'springboard/node/' . $m2[1] . '/form-components' . $m2[2];
         }
         // node/%/webform -> /springboard/node/%/form-components.
         else {
-          drupal_goto('springboard/node/' . $m1[1] . '/form-components', array('query' => $query, 'alias' => TRUE));
+          $goto_path = 'springboard/node/' . $m1[1] . '/form-components';
         }
       }
       // All other pages under node/%
       else {
-        drupal_goto('springboard/node/' . $matches[1] . $matches[2], array('query' => $query, 'alias' => TRUE));
+        $goto_path = 'springboard/node/' . $matches[1] . $matches[2];
       }
-    }    
+    }
+    elseif (preg_match('|^/admin/springboard((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $matches)) {
+      if (preg_match('|^/admin/springboard$|', $path)) {
+        $goto_path = 'springboard';
+      }
+      else {
+        $goto_path = 'springboard' . $matches[1];
+      }
+    }
+    if ($goto_path) {
+      drupal_goto($goto_path, array('query' => $query, 'alias' => TRUE));
+    } 
   }
 }
 
 function springboard_admin_admin_menu_output_build(&$content) {
   // Add new top-level item to the menu.
   if (isset($content['menu'])) {
-    $content['menu']['springboard'] = array(
+    $content['menu']['admin/springboard'] = array(
       '#title' => t('Springboard'),
       '#attributes' => array('class' => array('springboard_admin-springboard')),
-      '#href' => 'springboard',
+      '#href' => 'admin/springboard',
       '#options' => array(
         'query' => drupal_get_destination(),
         // Apply a class on the link (anchor).
@@ -235,7 +256,7 @@ function springboard_admin_admin_menu_output_build(&$content) {
       '#weight' => 50,
     );
   $sbadmin_menu = menu_tree('springboard_admin_menu');
-  $content['menu']['springboard'] += springboard_admin_build_admin_menu_subnav($sbadmin_menu);
+  $content['menu']['admin/springboard'] += springboard_admin_build_admin_menu_subnav($sbadmin_menu);
   }
 }
 
@@ -268,11 +289,12 @@ function springboard_admin_admin_menu_output_alter(&$content) {
         unset($content['menu'][$key]);
       }
     }
+    dpm($content);
 }
 
 /**
  * Implements hook_admin_paths().
- */
+
 function springboard_admin_admin_paths() {
   return array(
     'springboard/asset-library' => TRUE,
@@ -280,7 +302,7 @@ function springboard_admin_admin_paths() {
     'springboard/settings' => TRUE,
     'springboard/tools' => TRUE,
   );
-}
+} */
 
 /**
  * Implements hook_permission().
@@ -459,7 +481,7 @@ function springboard_admin_custom_theme() {
  */
 function springboard_admin_menu_access($path) {
   switch ($path) {
-    case 'springboard/asset-library':
+    case 'admin/springboard/asset-library':
       if (user_access('edit any page_wrapper content') || user_access('edit any email_wrapper content')) {
         return TRUE;
       }
@@ -721,16 +743,16 @@ function springboard_admin_menu_find_link($sbadmin_path, $plid = -1) {
  */
 function springboard_admin_menu_node_add_link($type) {
   // Get menu item definitions for the Donations and Forms parent links.
-  $forms_menu_item = springboard_admin_menu_find_link('springboard/forms/all', 0);
-  $donations_menu_item = springboard_admin_menu_find_link('springboard/forms/donations', 0);
+  $forms_menu_item = springboard_admin_menu_find_link('admin/springboard/forms/all', 0);
+  $donations_menu_item = springboard_admin_menu_find_link('admin/springboard/forms/donations', 0);
   // Set up vars we need.
   $menu_link = array();
   $mlid = FALSE;
   // If node type is either useing Webform User or Fundraiser, and is not already
   // in the Springboard Admin Menu, create a menu item for it.
-  if ((_webform_user_is_webform_user_node_type($type->type) || fundraiser_is_donation_type($type->type)) && !springboard_admin_menu_find_link('springboard/add/' . preg_replace('/_/', '-', $type->type))) {
+  if ((_webform_user_is_webform_user_node_type($type->type) || fundraiser_is_donation_type($type->type)) && !springboard_admin_menu_find_link('node/add/' . preg_replace('/_/', '-', $type->type))) {
     $menu_link = array(
-      'link_path' => 'springboard/add/' . preg_replace('/_/', '-', $type->type),
+      'link_path' => 'node/add/' . preg_replace('/_/', '-', $type->type),
       'link_title' => 'Create a ' . $type->name,
       'menu_name' => 'springboard_admin_menu',
       'weight' => '1',
@@ -766,7 +788,7 @@ function springboard_admin_menu_node_add_link($type) {
  */
 function springboard_admin_menu_node_delete_link($type) {
     // Get the definition for the "add content" link for this node type.
-    $link = springboard_admin_menu_find_link('springboard/add/' . preg_replace('/_/', '-', $type->type));
+    $link = springboard_admin_menu_find_link('node/add/' . preg_replace('/_/', '-', $type->type));
     // Delete the link if it exists.
     if ($link) {
       menu_link_delete($link['mlid']);
