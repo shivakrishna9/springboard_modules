@@ -23,7 +23,7 @@ function springboard_version_permission() {
  */
 function springboard_version_menu() {
   $items = array();
-  $items['springboard/version'] = array(
+  $items['admin/springboard/version'] = array(
     'title' => 'Springboard version',
     'description' => 'Access Springboard version report.',
     'access arguments' => array('access springboard version'),
@@ -31,15 +31,6 @@ function springboard_version_menu() {
     'type' => MENU_LOCAL_TASK,
   );
   return $items;
-}
-
-/**
- * Implements hook_admin_paths().
- */
-function springboard_version_upsell_admin_paths() {
-  return array(
-    'springboard/version' => TRUE,
-  );
 }
 
 /**
