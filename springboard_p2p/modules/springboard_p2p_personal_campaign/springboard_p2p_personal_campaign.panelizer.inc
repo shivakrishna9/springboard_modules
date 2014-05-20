@@ -61,6 +61,8 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
       'delta_reversed' => FALSE,
       'formatter_settings' => array(),
       'context' => 'panelizer',
+      'override_title' => 1,
+      'override_title_text' => '',
     );
     $pane->cache = array();
     $pane->style = array(
@@ -97,22 +99,26 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $display->content['new-8321c063-28f8-4398-9b2c-9b56bf78395f'] = $pane;
     $display->panels['middle_left'][1] = 'new-8321c063-28f8-4398-9b2c-9b56bf78395f';
     $pane = new stdClass();
-    $pane->pid = 'new-cd2b586f-36a8-4776-bd9d-773c7f27dfc8';
+    $pane->pid = 'new-a6baa2cb-e251-4a0e-9f6b-83446a4dcdf3';
     $pane->panel = 'middle_left';
     $pane->type = 'entity_field';
-    $pane->subtype = 'node:field_p2p_campaign';
+    $pane->subtype = 'node:field_p2p_video_embed';
     $pane->shown = TRUE;
     $pane->access = array();
     $pane->configuration = array(
-      'label' => 'above',
-      'formatter' => 'entityreference_label',
+      'label' => 'hidden',
+      'formatter' => 'video_embed_field',
       'delta_limit' => 0,
       'delta_offset' => '0',
       'delta_reversed' => FALSE,
       'formatter_settings' => array(
-        'link' => FALSE,
+        'description' => 1,
+        'description_position' => 'bottom',
+        'video_style' => 'p2p_video',
       ),
       'context' => 'panelizer',
+      'override_title' => 1,
+      'override_title_text' => '',
     );
     $pane->cache = array();
     $pane->style = array(
@@ -122,28 +128,20 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->extras = array();
     $pane->position = 2;
     $pane->locks = array();
-    $pane->uuid = 'cd2b586f-36a8-4776-bd9d-773c7f27dfc8';
-    $display->content['new-cd2b586f-36a8-4776-bd9d-773c7f27dfc8'] = $pane;
-    $display->panels['middle_left'][2] = 'new-cd2b586f-36a8-4776-bd9d-773c7f27dfc8';
+    $pane->uuid = 'a6baa2cb-e251-4a0e-9f6b-83446a4dcdf3';
+    $display->content['new-a6baa2cb-e251-4a0e-9f6b-83446a4dcdf3'] = $pane;
+    $display->panels['middle_left'][2] = 'new-a6baa2cb-e251-4a0e-9f6b-83446a4dcdf3';
     $pane = new stdClass();
-    $pane->pid = 'new-a6baa2cb-e251-4a0e-9f6b-83446a4dcdf3';
+    $pane->pid = 'new-75d8ae89-2d28-4f1a-bcf6-79221fe83d2f';
     $pane->panel = 'middle_left';
-    $pane->type = 'entity_field';
-    $pane->subtype = 'node:field_p2p_video_embed';
+    $pane->type = 'personal_campaign_call_to_action';
+    $pane->subtype = 'personal_campaign_call_to_action';
     $pane->shown = TRUE;
     $pane->access = array();
     $pane->configuration = array(
-      'label' => 'above',
-      'formatter' => 'video_embed_field',
-      'delta_limit' => 0,
-      'delta_offset' => '0',
-      'delta_reversed' => FALSE,
-      'formatter_settings' => array(
-        'description' => 1,
-        'description_position' => 'bottom',
-        'video_style' => 'normal',
-      ),
       'context' => 'panelizer',
+      'override_title' => 1,
+      'override_title_text' => '',
     );
     $pane->cache = array();
     $pane->style = array(
@@ -153,9 +151,9 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->extras = array();
     $pane->position = 3;
     $pane->locks = array();
-    $pane->uuid = 'a6baa2cb-e251-4a0e-9f6b-83446a4dcdf3';
-    $display->content['new-a6baa2cb-e251-4a0e-9f6b-83446a4dcdf3'] = $pane;
-    $display->panels['middle_left'][3] = 'new-a6baa2cb-e251-4a0e-9f6b-83446a4dcdf3';
+    $pane->uuid = '75d8ae89-2d28-4f1a-bcf6-79221fe83d2f';
+    $display->content['new-75d8ae89-2d28-4f1a-bcf6-79221fe83d2f'] = $pane;
+    $display->panels['middle_left'][3] = 'new-75d8ae89-2d28-4f1a-bcf6-79221fe83d2f';
     $pane = new stdClass();
     $pane->pid = 'new-c8617b25-8dae-48c6-bd81-cea6fc4df20d';
     $pane->panel = 'middle_right';
