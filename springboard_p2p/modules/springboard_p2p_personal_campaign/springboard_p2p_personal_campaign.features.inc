@@ -14,6 +14,9 @@ function springboard_p2p_personal_campaign_ctools_plugin_api($module = NULL, $ap
   if ($module == "strongarm" && $api == "strongarm") {
     return array("version" => "1");
   }
+  if ($module == "video_embed_field" && $api == "default_video_embed_styles") {
+    return array("version" => "1");
+  }
 }
 
 /**
