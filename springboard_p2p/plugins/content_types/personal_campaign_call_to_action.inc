@@ -29,7 +29,7 @@ function springboard_p2p_personal_campaign_call_to_action_render($subtype, $conf
   $personal_campaign = NULL;
   if (empty($context) || empty($context->data)) {
     if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid'])) {
-      $node = node_load($_GET['pcid']);
+      $node = node_load($_GET['p2p_pcid']);
       if ($node->type == 'p2p_personal_campaign' && isset($node->field_p2p_campaign[$node->language][0]['target_id'])) {
         $campaign = node_load($node->field_p2p_campaign[$node->language][0]['target_id']);
         $personal_campaign = $node;
