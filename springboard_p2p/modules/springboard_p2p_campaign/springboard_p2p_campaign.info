@@ -1,4 +1,4 @@
-name = Springboard P2P campaign
+name = Springboard P2P Campaign
 description = Campaign content type and related features.
 core = 7.x
 package = Springboard P2P
