@@ -63,7 +63,7 @@ function springboard_p2p_personal_campaign_comments_render($subtype, $conf, $pan
 
     $output[] = '<li class="personal-campaign-comment-list ' . $zebra_class .'">';
 
-    $output[] = '<span class="p2p-comment-name-amount">';
+    $output[] = '<span class="p2p-comment-name-amount-wrapper">';
 
     if ($comment['show_name']) {
       $output[] = '<h3 class="p2p-comment-name">';
@@ -82,18 +82,23 @@ function springboard_p2p_personal_campaign_comments_render($subtype, $conf, $pan
       $output[] = '</span>';
     }
 
-    $output[] = '</span>';
-
     $output[] = '<span class="p2p-comment-date">';
     // Custom Date format.
-    $output[] = format_date($comment['created'], "custom", "n/j/y");
+    $output[] = format_date($comment['created'], "custom", "n / j / y");
     $output[] = '</span>';
 
+    $output[] = '</span>'; // p2p-comment-name-amount
+
+    $output[] = '<span class="p2p-comment-text-wrapper">';
+
     if (!empty($comment['comment'])) {
-      $output[] = '<p class="p2p-comment-body">';
+      $output[] = '<span class="comment-arrow"></span>';
+      $output[] = '<p class="p2p-comment-text">';
       $output[] = check_plain($comment['comment']);
       $output[] = '</p>';
     }
+
+    $output[] = '</span>'; // p2p-comment-text-wrapper"
 
     $output[] = '</li>';
     $zebra++;

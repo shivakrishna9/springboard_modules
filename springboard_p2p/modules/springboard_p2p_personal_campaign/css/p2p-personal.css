@@ -49,7 +49,7 @@ body a {
 /* Comments */
 
 #p2p-comment-pane {
-  margin: 0 0 20px 0;
+  margin: 0 0 60px 0;
 }
 
 #p2p-comment-pane .pane-content ul li {
@@ -58,21 +58,66 @@ body a {
   list-style: none;
 }
 
-.p2p-comment-name-amount {
+#p2p-comment-pane .pane-content ul li.personal-campaign-comment-list {
+  margin: 0 0 28px 0;
+}
+
+.p2p-comment-name-amount-wrapper {
+  display: inline-block;
+  width: 20%;
+  vertical-align: top;
+}
+
+.comment-arrow {
+  position: absolute;
+  display: block;
+  margin-top: 5px;
+  margin-left: -47px;
+  width: 20px;
+  height: 40px;
+  border-right: 1px solid #fff;
+  border-left: 1px solid #fff;
+  background: url('../images/comment-arrow.gif') no-repeat 0 center transparent;
+}
+
+span.p2p-comment-date {
+  display: block;
+  margin: 6px 0 0 0;
+  font-weight: bold;
+}
+
+.p2p-comment-text-wrapper {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 10px 10px 4px 25px;
+  min-height: 56px;
+  width: 60%;
+  border: 1px solid #d3d7d9;
+  vertical-align: top;
+}
+
+.p2p-comment-date span {
   display: block;
 }
 
 .p2p-comment-name,
 .p2p-comment-amount {
-  display: inline-block;
+  display: block;
 }
 
-.p2p-comment-name {
-  padding: 0 1% 0 0;
+h3.p2p-comment-name {
+  margin: 0 0 6px 0;
+  padding: 0;
+  font-size: 20px;
+  line-height: 28px;
 }
 
 .p2p-comment-amount {
-
+  display: table;
+  padding: 4px 10px;
+  background: #888;
+  color: #fff;
+  font-weight: bold;
 }
 
 .panel-pane-wrapper.pane-progress {
