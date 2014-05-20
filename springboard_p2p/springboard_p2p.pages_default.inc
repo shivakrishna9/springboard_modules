@@ -28,6 +28,8 @@ function springboard_p2p_default_page_manager_pages() {
       ),
     ),
     'logic' => 'and',
+    'type' => 'none',
+    'settings' => NULL,
   );
   $page->menu = array();
   $page->arguments = array();
@@ -142,7 +144,7 @@ function springboard_p2p_default_page_manager_pages() {
   $display->title_pane = 'new-98c8de5f-7ec0-4e9a-a90a-133af5b6c99c';
   $handler->conf['display'] = $display;
   $page->default_handlers[$handler->name] = $handler;
-  $pages['p2p_reg_page'] = $page;
+  $pages['p2p_registration_page'] = $page;
 
   return $pages;
 

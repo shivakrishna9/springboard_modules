@@ -49,54 +49,62 @@ function springboard_p2p_personal_campaign_comments_render($subtype, $conf, $pan
   }
 
   $comments = springboard_p2p_get_personal_campaign_comments($personal_campaign->nid);
-
   $output = array();
 
   // Start the count.
   $zebra = 0;
+
+  $output[] = '<ul class="comment-wrapper">';
+
   foreach ($comments as $comment) {
 
-    // Define odd / even for use in the definition list.
+    // Define ospan/ even for use in the definition list.
     $zebra_class = ($zebra % 2) ? 'odd' : 'even';
 
-    $output[] = '<dl class="personal-campaign-comment-list ' . $zebra_class .'">';
+    $output[] = '<li class="personal-campaign-comment-list ' . $zebra_class .'">';
+
+    $output[] = '<span class="p2p-comment-name-amount">';
 
     if ($comment['show_name']) {
-      $output[] = '<dt>';
+      $output[] = '<h3 class="p2p-comment-name">';
       $output[] = springboard_p2p_format_user_full_name(user_load($comment['uid']));
-      $output[] = '</dt>';
+      $output[] = '</h3>';
     }
     else {
-      $output[] = '<dt>';
+      $output[] = '<h3 class="p2p-comment-name">';
       $output[] = t('Anonymous');
-      $output[] = '</dt>';
+      $output[] = '</h3>';
     }
-
-    $output[] = '<dd>';
-    // Custom Date format.
-    $output[] = format_date($comment['created'], "custom", "n/j/y");
-    $output[] = '</dd>';
 
     if ($comment['action_type'] == 'fundraiser' && !empty($comment['amount'])) {
-      $output[] = '<dd>';
+      $output[] = '<span class="p2p-comment-amount">';
       $output[] = springboard_p2p_format_progress($comment['amount'] / 100, 'amount');
-      $output[] = '</dd>';
+      $output[] = '</span>';
     }
+
+    $output[] = '</span>';
+
+    $output[] = '<span class="p2p-comment-date">';
+    // Custom Date format.
+    $output[] = format_date($comment['created'], "custom", "n/j/y");
+    $output[] = '</span>';
 
     if (!empty($comment['comment'])) {
-      $output[] = '<dd>';
+      $output[] = '<p class="p2p-comment-body">';
       $output[] = check_plain($comment['comment']);
-      $output[] = '</dd>';
+      $output[] = '</p>';
     }
 
-    $output[] = '</dl>';
+    $output[] = '</li>';
     $zebra++;
   }
+
+  $output[] = ' </ul>';
 
 
   // Build the content type block.
   $block = new stdClass();
-  $block->title = 'Personal campaign comments';
+  $block->title = 'Comments From Donors';
   $block->content = implode('', $output);
   return $block;
 

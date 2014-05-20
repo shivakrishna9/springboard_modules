@@ -40,13 +40,40 @@ body a {
 
 /* end defaults */
 
+/* Video */
+
 .embedded-video {
   max-width: 93%;
 }
 
+/* Comments */
+
 #p2p-comment-pane {
   margin: 0 0 20px 0;
 }
+
+#p2p-comment-pane .pane-content ul li {
+
+}
+
+.p2p-comment-name-amount {
+  display: block;
+}
+
+.p2p-comment-name,
+.p2p-comment-amount {
+  display: inline-block;
+}
+
+.p2p-comment-name {
+  padding: 0 1% 0 0;
+}
+
+.p2p-comment-amount {
+
+}
+
+
 
 
 /******************  Media queries, these should go last */
