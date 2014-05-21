@@ -52,8 +52,8 @@ function springboard_p2p_personal_campaign_roll_render($subtype, $conf, $panel_a
   $comments = springboard_p2p_get_personal_campaign_comments($personal_campaign->nid);
 
   $output = array();
-  $output[] = '<ul class="personal-campaign-roll">';
-
+  $output[] = '<table class="personal-campaign-roll">';
+  $output[] = '<thead><tr><td>Name</td><td>Amount</td></tr></thead>';
   // Start the count.
   $zebra = 0;
 
@@ -62,30 +62,30 @@ function springboard_p2p_personal_campaign_roll_render($subtype, $conf, $panel_a
     // Define ospan/ even for use in the definition list.
     $zebra_class = ($zebra % 2) ? 'odd' : 'even';
 
-    $output[] = '<li class="personal-campaign-roll-donor ' . $zebra_class .'">';
+    $output[] = '<tr class="personal-campaign-roll-donor ' . $zebra_class .'">';
 
     if ($comment['show_name']) {
-      $output[] = '<span>';
+      $output[] = '<td>';
       $output[] = springboard_p2p_format_user_full_name(user_load($comment['uid']));
-      $output[] = '</span>';
+      $output[] = '</td>';
     }
     else {
-      $output[] = '<span>';
+      $output[] = '<td>';
       $output[] = t('Anonymous');
-      $output[] = '</span>';
+      $output[] = '</td>';
     }
 
     if ($comment['action_type'] == 'fundraiser' && !empty($comment['amount'])) {
-      $output[] = '<span>';
+      $output[] = '<td>';
       $output[] = springboard_p2p_format_progress($comment['amount'] / 100, 'amount');
-      $output[] = '</span>';
+      $output[] = '</td>';
     }
 
-    $output[] = '</li>';
+    $output[] = '</tr>';
     $zebra++;
   }
 
-  $output[] = '</ul>';
+  $output[] = '</table>';
 
   // Build the content type block.
   $block = new stdClass();

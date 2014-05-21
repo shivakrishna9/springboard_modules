@@ -25,7 +25,7 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
   $panelizer->relationships = array();
   $panelizer->access = array();
   $panelizer->view_mode = 'page_manager';
-  $panelizer->css_class = '';
+  $panelizer->css_class = 'p2p-panelizer-personal-campaign';
   $panelizer->title_element = 'H2';
   $panelizer->link_to_entity = TRUE;
   $panelizer->extra = array();

@@ -1577,6 +1577,57 @@ function springboard_p2p_page_alter(&$page) {
     }
   }
 
+  // Define the module path for use below.
+  $mod_path = drupal_get_path('module', 'springboard_p2p');
+
+   // Define targeted node types, add more as needed.
+  $node_types = array(
+    'p2p_personal_campaign',
+    'p2p_campaign_landing',
+  );
+
+  // Global node.
+  $node = menu_get_object();
+
+  // Global p2p css file.
+  if (!empty($node) && in_array($node->type, $node_types)) {
+    $p2p_css = array(
+      '#attached' => array(
+        'css' => array(
+          $mod_path . '/css/springboard_p2p.css' => array(
+            'group' => CSS_THEME,
+            'weight' => 9999,
+          ),
+        ),
+      ),
+    );
+    drupal_render($p2p_css);
+  }
+
+}
+
+/**
+ * Override or insert variables into the html templates.
+ *
+ * @param $vars
+ *   An array of variables to pass to the theme template.
+ * @param $hook
+ *   The name of the template being rendered ("html" in this case.)
+ */
+function springboard_p2p_preprocess_html(&$vars, $hook) {
+  // Define targeted node types, add more as needed.
+  $node_types = array(
+    'p2p_personal_campaign',
+    'p2p_campaign_landing',
+  );
+
+  // Global node.
+  $node = menu_get_object();
+  if (!empty($node) && in_array($node->type, $node_types)) {
+    // Add a global body class if it's a p2p page, add more types above as needed.
+    $vars['classes_array'][] = 'p2p-page-type';
+  }
+
 }
 
 function springboard_p2p_get_personal_campaign_comments($nid) {

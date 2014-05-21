@@ -79,8 +79,6 @@ function springboard_p2p_personal_campaign_progress_render($subtype, $conf, $pan
 
     $output[] = '</div>';
 
-    drupal_add_css(drupal_get_path('module', 'springboard_p2p') . '/css/springboard_p2p.css');
-
     // Build the content type block.
     $block = new stdClass();
     $block->title = 'Personal campaign progress';

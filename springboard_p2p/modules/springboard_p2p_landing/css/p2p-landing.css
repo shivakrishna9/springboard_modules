@@ -1,45 +1,3 @@
-/* some basic deafults, we can move these to springboard_frontend if needbe */
-
-html body {
-  color: #5b5b5b;
-}
-
-body ul,
-body ol {
-  margin: 0;
-  padding: 0;
-}
-
-body h2 a:hover,
-body h3 a:hover {
-  text-decoration: none;
-}
-
-body a {
-  color: #0285b0;
-}
-
-.pager {
-  margin: 10px 0;
-}
-
-.pager li {
-  display: inline;
-  margin: 0 4px;
-}
-
-.pager li > a,
-.pager li > span {
-  display: inline-block;
-  padding: 5px 14px;
-  border: 1px solid #ddd;
-  -webkit-border-radius: 0;
-  border-radius: 0 -moz-border-radius : 0;
-  background-color: #fff;
-}
-
-/* end defaults */
-
 /* flexslider tweaks, use font awesome. */
 
 .flexslider {
@@ -259,45 +217,11 @@ ul.campaign-landing-grid a {
   padding: 0 0 0 4px;
 }
 
-.p2p-panelizer-campaign-landing h2,
-.p2p-panelizer-campaign-landing h3 {
-  margin: 0 0 12px 0;
-  color: #5b5b5b;
-  font-size: 22px;
-  line-height: 1.2em;
-}
-
 .p2p-panelizer-campaign-landing h4 {
   color: #5b5b5b;
 }
 
 /* Top campaigns */
-
-.p2p-panelizer-campaign-landing table {
-  width: 100%;
-}
-
-.p2p-panelizer-campaign-landing table tbody tr {
-  border: 1px solid #ccc;
-}
-
-.p2p-panelizer-campaign-landing table th {
-  padding: 4px 0 3px 6px;
-  border-bottom: none;
-  text-align: left;
-}
-
-.p2p-panelizer-campaign-landing table tr.even {
-  background-color: #f5f5f5;
-}
-
-.p2p-panelizer-campaign-landing table tr.odd {
-  background-color: #fcfcfc;
-}
-
-.p2p-panelizer-campaign-landing table td {
-  padding: 3px 3px 3px 6px;
-}
 
 .top-personal-campaigns-view {
   border: 1px solid #eaeaea;
