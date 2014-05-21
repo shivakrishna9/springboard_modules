@@ -58,12 +58,18 @@ function _webform_render_tickets($component, $value = NULL, $filter = TRUE) {
   $node_wrapper = entity_metadata_wrapper('node', $node);
   if (fundraiser_tickets_is_ticket_type($node->type)){
 
-    $ticket_types = $node_wrapper->fr_tickets_ticket_types->value();
+    if (!empty($node_wrapper->fr_tickets_ticket_types)) {
+      // Create an array from the ticket products
+      foreach ($node_wrapper->fr_tickets_ticket_types as $product_wrapper) {
+        $ticket_types[] = $product_wrapper;
+      }
+    }
 
-    if (! empty($ticket_types)){
+    if (!empty($ticket_types)){
+      uasort($ticket_types, '_fundraiser_tickets_weight_sort');
+
       // Loop through the element and output the children fields as rows
-      foreach ($ticket_types as $i => $ticket_type) {
-        $product_wrapper = entity_metadata_wrapper('commerce_product', $ticket_type);
+      foreach ($ticket_types as $product_wrapper) {
         if ($product_wrapper->status->value() == FALSE){
           continue;
         }
