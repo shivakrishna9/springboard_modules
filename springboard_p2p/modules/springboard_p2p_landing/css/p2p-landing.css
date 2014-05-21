@@ -80,6 +80,8 @@ span.slide-wrapper {
 }
 
 .p2p-campaign-landing-slideshow span.slide-link a:after {
+  position: relative;
+  top: 1px;
   padding: 0px 0 0 10px;
   color: #333;
   content: "\f061";
@@ -87,8 +89,6 @@ span.slide-wrapper {
   font-weight: normal;
   font-style: normal;
   font-family: FontAwesome;
-  position: relative;
-  top: 1px;
 }
 
 .p2p-campaign-landing-slideshow span.slide-link a:hover:after {
@@ -205,6 +205,8 @@ ul.campaign-landing-grid a {
 }
 
 .campaign-node-link a:after {
+  position: relative;
+  top: 1px;
   padding: 0px 0 0 10px;
   color: #fffe00;
   content: "\f061";
@@ -212,8 +214,6 @@ ul.campaign-landing-grid a {
   font-weight: normal;
   font-style: normal;
   font-family: FontAwesome;
-  position: relative;
-  top: 1px;
 }
 
 .p2p-panelizer-campaign-landing h4 {
@@ -252,7 +252,6 @@ ul.campaign-landing-grid a {
   text-align: center;
   font-size: 19px;
 }
-
 .top-personal-campaigns-view h3.highest-campaign a {
   color: #fff;
 }
@@ -294,8 +293,8 @@ ul.campaign-landing-grid a {
 /* FAQ */
 
 .landing-side-block  {
-  background: #eaeaea;
   padding: 8px;
+  background: #eaeaea;
 }
 
 /******************  Media queries, these should go last */

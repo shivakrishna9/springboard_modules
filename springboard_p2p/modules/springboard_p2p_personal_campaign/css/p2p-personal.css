@@ -101,9 +101,9 @@ h3.p2p-comment-name {
 }
 
 .panel-pane-wrapper.pane-progress {
+  margin: 0 0 20px 0;
   padding: 10px;
   border: 1px solid #a6a6a6;
-  margin: 0 0 20px 0;
 }
 
 .field-name-field-p2p-campaign-images {
@@ -129,6 +129,8 @@ h3.p2p-comment-name {
 }
 
 .personal-campaign-call-to-action a:after {
+  position: relative;
+  top: 1px;
   padding: 0px 0 0 10px;
   color: #fffe00;
   content: "\f061";
@@ -136,8 +138,6 @@ h3.p2p-comment-name {
   font-weight: normal;
   font-style: normal;
   font-family: FontAwesome;
-  position: relative;
-  top: 1px;
 }
 
 .personal-campaign-call-to-action a:hover {

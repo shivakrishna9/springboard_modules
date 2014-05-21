@@ -13,8 +13,10 @@
         $(".embedded-video").fitVids();
       });
 
+      // Remove the panel seperator.
       $(".panel-separator").remove();
 
+      // Get rid of label colons.
       $('.field-label').each(function() {
         var text = $(this).html();
         $(this).html( text.replace(':', '') );
