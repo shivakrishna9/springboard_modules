@@ -103,6 +103,7 @@ h3.p2p-comment-name {
 .panel-pane-wrapper.pane-progress {
   padding: 10px;
   border: 1px solid #a6a6a6;
+  margin: 0 0 20px 0;
 }
 
 .field-name-field-p2p-campaign-images {
@@ -154,7 +155,7 @@ h3.p2p-comment-name {
 /* donor roll */
 
 .panel-pane.pane-recent-donors {
-  margin-top: 20px;
+  margin: 0 0 20px 0;
   padding: 6px;
   border: 1px solid #a6a6a6;
 }

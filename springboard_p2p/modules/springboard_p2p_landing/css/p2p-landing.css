@@ -223,7 +223,11 @@ ul.campaign-landing-grid a {
 /* Top campaigns */
 
 .top-personal-campaigns-view {
-  border: 1px solid #eaeaea;
+  border: 1px solid #a6a6a6;
+}
+
+.pane-top-campaigns {
+  margin: 0 0 20px 0;
 }
 
 .top-personal-campaigns-view .attachment.attachment-before {
@@ -243,8 +247,8 @@ ul.campaign-landing-grid a {
 
 .top-personal-campaigns-view h3.highest-campaign {
   margin: 0;
-  padding: 2px 1px 4px 6px;
-  background: #888;
+  padding: 6px 0px 8px 0;
+  background: #859596;
   text-align: center;
   font-size: 19px;
 }
@@ -254,7 +258,7 @@ ul.campaign-landing-grid a {
 }
 
 .top-personal-campaigns-view h3.highest-campaign a:hover {
-  color: #eaeaea;
+  color: #fffe00;
 }
 
 .top-personal-campaigns-view h4.highest-progress-title {
@@ -285,6 +289,13 @@ ul.campaign-landing-grid a {
   font-weight: normal;
   font-style: normal;
   font-family: FontAwesome;
+}
+
+/* FAQ */
+
+.landing-side-block  {
+  background: #eaeaea;
+  padding: 8px;
 }
 
 /******************  Media queries, these should go last */
