@@ -1,8 +1,18 @@
-
 /* Video */
 
 .embedded-video {
-  max-width: 96%;
+
+}
+
+.pane-video,
+#p2p-comment-pane {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px dotted #acacac;
+}
+
+.donate-button {
+  margin: 10px 0;
 }
 
 /* Comments */
@@ -50,7 +60,7 @@ span.p2p-comment-date {
   margin-top: 8px;
   padding: 10px 10px 4px 25px;
   min-height: 56px;
-  width: 60%;
+  width: 76%;
   border: 1px solid #d3d7d9;
   vertical-align: top;
 }
@@ -82,7 +92,6 @@ h3.p2p-comment-name {
 #p2p-comment-pane h2 {
   margin: 0 0 20px 0;
   padding-bottom: 10px;
-  border-bottom: 1px solid #a6a6a6;
 }
 
 /* progress side bar */
@@ -101,17 +110,22 @@ h3.p2p-comment-name {
 }
 
 .personal-campaign-call-to-action a {
+  position: relative;
   display: inline-block;
   margin: 8px 0 4px 0;
-  padding: 4px 12px;
-  background: #646464;
+  padding: 5px 10px;
+  border: 0;
+  background: #859596;
   color: #fff;
+  vertical-align: top;
+  text-align: center;
   font-size: 16px;
+  cursor: pointer;
 }
 
 .personal-campaign-call-to-action a:hover {
-  background: #888;
-  color: #fffe00;
+  outline: none;
+  background: #2980b9;
   text-decoration: none;
 }
 
@@ -124,19 +138,19 @@ h3.p2p-comment-name {
 /* donor roll */
 
 .panel-pane.pane-recent-donors {
-  border: 1px solid #a6a6a6;
   margin-top: 20px;
   padding: 6px;
+  border: 1px solid #a6a6a6;
 }
 
 .field-name-field-p2p-campaign-images.field-type-image {
-  border: 1px solid #a6a6a6;
   padding: 5px;
+  border: 1px solid #a6a6a6;
 }
 
 .goal-label {
-  font-weight: bold;
   margin: 6px 0 0 0;
+  font-weight: bold;
 }
 
 .panel-pane.pane-personal-campaign-goal {
@@ -144,7 +158,16 @@ h3.p2p-comment-name {
 }
 
 /******************  Media queries, these should go last */
+
 @media (min-width: 769px) {
+
+}
+
+@media (max-width: 980px) {
+
+  .p2p-comment-text-wrapper {
+    width: 74%;
+  }
 
 }
 
@@ -158,10 +181,16 @@ h3.p2p-comment-name {
     width: 28%;
   }
 
+  .comment-arrow {
+    display: none;
+  }
+
+  .p2p-comment-text-wrapper {
+    width: 95%;
+  }
+
 }
 
 @media (max-width: 480px) {
-
-
 
 }

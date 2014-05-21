@@ -18,7 +18,8 @@
 
 .panel-2col-bricks .panel-col-first {
   display: inline-block;
-  width: 71.1%;
+  padding-right: 2%;
+  width: 69.1%;
   vertical-align: top;
 }
 
@@ -48,10 +49,6 @@
 
 .panel-2col-bricks .panel-separator {
   margin: 0;
-}
-
-.panel-pane {
-  margin: 0 0 20px 0;
 }
 
 .panel-middle-top-left {

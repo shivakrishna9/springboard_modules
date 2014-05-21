@@ -172,49 +172,20 @@ ul.campaign-landing-grid a {
 }
 
 .campaign-node-link a {
-  padding: 4px 8px;
-  background: #646464;
+  position: relative;
+  padding: 5px 10px;
+  border: 0;
+  background: #859596;
   color: #fff;
-}
-
-/* Search widget */
-
-.landing-search-form input[type="text"] {
-  width: 138px;
-}
-
-.landing-search-form .views-exposed-widget {
-  display: inline-block;
-  float: none;
-}
-
-.control-group,
-.control-group input {
-  display: inherit;
-  margin: 0;
-}
-
-.landing-search-form .views-exposed-widget {
-  display: inline-block;
   vertical-align: top;
+  text-align: center;
+  cursor: pointer;
 }
 
-.landing-search-view .views-submit-button,
-.landing-search-view .views-reset-button {
-  width: 30%;
-}
-
-.p2p-panelizer-campaign-landing form {
-  margin: 0;
-}
-
-.views-exposed-form {
-  padding: 14px 0 0 0;
-}
-
-.views-exposed-form .views-exposed-widget {
-  float: none;
-  padding: 0 0 0 4px;
+.campaign-node-link a:hover {
+  outline: none;
+  background: #2980b9;
+  text-decoration: none;
 }
 
 .p2p-panelizer-campaign-landing h4 {

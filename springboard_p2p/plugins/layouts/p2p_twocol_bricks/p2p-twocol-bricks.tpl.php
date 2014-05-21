@@ -27,11 +27,11 @@
 } ?>>
 
   <?php if ($content['top']): ?>
-  <div class="panels-top-wrapper">
-    <div class="panel-panel panel-col-top">
-      <div class="inside"><?php print $content['top']; ?></div>
+    <div class="panels-top-wrapper">
+      <div class="panel-panel panel-col-top">
+        <div class="inside"><?php print $content['top']; ?></div>
+      </div>
     </div>
-  </div>
   <?php endif; ?>
 
   <div class="center-wrapper">
@@ -40,32 +40,32 @@
       <div class="inside">
 
         <?php if ($content['middle_top_left'] || $content['middle_top_right']): ?>
-        <div class="panel-panel panel-middle-top-wrapper">
-          <div class="panel-middle-top-left"><?php print $content['middle_top_left']; ?></div>
-          <div class="panel-middle-top-right"><?php print $content['middle_top_right']; ?></div>
-        </div>
+          <div class="panel-panel panel-middle-top-wrapper">
+            <div class="panel-middle-top-left"><?php print $content['middle_top_left']; ?></div>
+            <div class="panel-middle-top-right"><?php print $content['middle_top_right']; ?></div>
+          </div>
         <?php endif; ?>
 
         <?php if ($content['middle_left']): ?>
-        <?php print $content['middle_left']; ?>
+          <?php print $content['middle_left']; ?>
         <?php endif; ?>
 
       </div>
     </div>
 
     <?php if ($content['middle_right']): ?>
-    <div class="panel-panel panel-col-last">
-      <div class="inside"><?php print $content['middle_right']; ?></div>
-    </div>
+      <div class="panel-panel panel-col-last">
+        <div class="inside"><?php print $content['middle_right']; ?></div>
+      </div>
     <?php endif; ?>
 
   </div>
   <!-- // center-wrapper-->
 
   <?php if ($content['bottom']): ?>
-  <div class="panel-panel panel-col-bottom">
-    <div class="inside"><?php print $content['bottom']; ?></div>
-  </div>
+    <div class="panel-panel panel-col-bottom">
+      <div class="inside"><?php print $content['bottom']; ?></div>
+    </div>
   <?php endif; ?>
 
 </div>
