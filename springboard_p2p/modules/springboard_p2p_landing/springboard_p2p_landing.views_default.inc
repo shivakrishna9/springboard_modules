@@ -179,6 +179,8 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['fields']['nid']['element_class'] = 'slide-link';
   $handler->display->display_options['fields']['nid']['element_label_type'] = '0';
   $handler->display->display_options['fields']['nid']['element_wrapper_type'] = '0';
+  $handler->display->display_options['pane_category']['name'] = 'Springboard P2P';
+  $handler->display->display_options['pane_category']['weight'] = '0';
   $export['p2p_campaign_landing_slideshow'] = $view;
 
   $view = new view();
@@ -380,6 +382,8 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['sorts']['field_p2p_referenced_campaigns_target_id']['field'] = 'field_p2p_referenced_campaigns_target_id';
   $handler->display->display_options['sorts']['field_p2p_referenced_campaigns_target_id']['relationship'] = 'field_p2p_referenced_campaigns_target_id';
   $handler->display->display_options['sorts']['field_p2p_referenced_campaigns_target_id']['order'] = 'DESC';
+  $handler->display->display_options['pane_category']['name'] = 'Springboard P2P';
+  $handler->display->display_options['pane_category']['weight'] = '0';
 
   /* Display: Featured Personal */
   $handler = $view->new_display('panel_pane', 'Featured Personal', 'panel_pane_2');
@@ -503,6 +507,8 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['filters']['type']['value'] = array(
     'p2p_personal_campaign' => 'p2p_personal_campaign',
   );
+  $handler->display->display_options['pane_category']['name'] = 'Springboard P2P';
+  $handler->display->display_options['pane_category']['weight'] = '0';
   $export['p2p_referenced_campaigns'] = $view;
 
   $view = new view();
@@ -627,6 +633,8 @@ function springboard_p2p_landing_views_default_views() {
     5 => 0,
     6 => 0,
   );
+  $handler->display->display_options['pane_category']['name'] = 'Springboard P2P';
+  $handler->display->display_options['pane_category']['weight'] = '0';
   $handler->display->display_options['link_to_view'] = '0';
   $handler->display->display_options['inherit_panels_path'] = '1';
 
