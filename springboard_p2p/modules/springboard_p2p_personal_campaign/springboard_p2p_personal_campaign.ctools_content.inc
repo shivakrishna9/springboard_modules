@@ -26,5 +26,21 @@ function springboard_p2p_personal_campaign_default_ctools_custom_content() {
   );
   $export['fundraising_title_pane'] = $content;
 
+  $content = new stdClass();
+  $content->disabled = FALSE; /* Edit this to true to make a default content disabled initially */
+  $content->api_version = 1;
+  $content->name = 'pane_search_link';
+  $content->admin_title = 'Search Link Pane';
+  $content->admin_description = '';
+  $content->category = 'Springboard P2P';
+  $content->settings = array(
+    'admin_title' => '',
+    'title' => '',
+    'body' => '<a href="/peer-to-peer-campaign-search">View all campaigns</a>',
+    'format' => 'filtered_html',
+    'substitute' => 1,
+  );
+  $export['pane_search_link'] = $content;
+
   return $export;
 }

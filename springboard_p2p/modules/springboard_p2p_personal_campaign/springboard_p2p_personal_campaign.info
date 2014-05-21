@@ -21,6 +21,7 @@ features[ctools][] = strongarm:strongarm:1
 features[ctools][] = video_embed_field:default_video_embed_styles:1
 features[ctools][] = views:views_default:3.0
 features[ctools_custom_content][] = fundraising_title_pane
+features[ctools_custom_content][] = pane_search_link
 features[features_api][] = api:2
 features[field_base][] = field_p2p_campaign
 features[field_base][] = field_p2p_campaign_images

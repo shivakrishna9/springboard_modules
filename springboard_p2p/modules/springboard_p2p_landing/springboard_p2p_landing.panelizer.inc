@@ -308,6 +308,7 @@ function springboard_p2p_landing_panelizer_defaults() {
       'body' => '<a href="/peer-to-peer-campaign-search">View all campaigns</a>',
       'format' => 'filtered_html',
       'substitute' => 1,
+      'name' => 'pane_search_link',
     );
     $pane->cache = array();
     $pane->style = array(
