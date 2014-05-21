@@ -79,6 +79,22 @@ span.slide-wrapper {
   font-size: 26px;
 }
 
+.p2p-campaign-landing-slideshow span.slide-link a:after {
+  padding: 0px 0 0 10px;
+  color: #333;
+  content: "\f061";
+  text-decoration: inherit;
+  font-weight: normal;
+  font-style: normal;
+  font-family: FontAwesome;
+  position: relative;
+  top: 1px;
+}
+
+.p2p-campaign-landing-slideshow span.slide-link a:hover:after {
+  color: #fff;
+}
+
 .p2p-campaign-landing-slideshow span.node-edit {
   position: absolute;
   bottom: 2px;
@@ -186,6 +202,18 @@ ul.campaign-landing-grid a {
   outline: none;
   background: #2980b9;
   text-decoration: none;
+}
+
+.campaign-node-link a:after {
+  padding: 0px 0 0 10px;
+  color: #fffe00;
+  content: "\f061";
+  text-decoration: inherit;
+  font-weight: normal;
+  font-style: normal;
+  font-family: FontAwesome;
+  position: relative;
+  top: 1px;
 }
 
 .p2p-panelizer-campaign-landing h4 {

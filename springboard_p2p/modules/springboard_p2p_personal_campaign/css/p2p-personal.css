@@ -123,6 +123,18 @@ h3.p2p-comment-name {
   cursor: pointer;
 }
 
+.personal-campaign-call-to-action a:after {
+  padding: 0px 0 0 10px;
+  color: #fffe00;
+  content: "\f061";
+  text-decoration: inherit;
+  font-weight: normal;
+  font-style: normal;
+  font-family: FontAwesome;
+  position: relative;
+  top: 1px;
+}
+
 .personal-campaign-call-to-action a:hover {
   outline: none;
   background: #2980b9;
