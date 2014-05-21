@@ -89,7 +89,7 @@ h3.p2p-comment-name {
 
 .panel-pane-wrapper.pane-progress {
   padding: 10px;
-  border: 1px solid #888;
+  border: 1px solid #a6a6a6;
 }
 
 .field-name-field-p2p-campaign-images {
@@ -132,6 +132,15 @@ h3.p2p-comment-name {
 .field-name-field-p2p-campaign-images.field-type-image {
   border: 1px solid #a6a6a6;
   padding: 5px;
+}
+
+.goal-label {
+  font-weight: bold;
+  margin: 6px 0 0 0;
+}
+
+.panel-pane.pane-personal-campaign-goal {
+  margin: 0 0 10px 0;
 }
 
 /******************  Media queries, these should go last */

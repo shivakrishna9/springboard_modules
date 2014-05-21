@@ -15,6 +15,11 @@
 
       $(".panel-separator").remove();
 
+      $('.field-label').each(function() {
+        var text = $(this).html();
+        $(this).html( text.replace(':', '') );
+      });
+
       // end jquery.
     }};
 })

@@ -63,15 +63,18 @@ function springboard_p2p_personal_campaign_goal_render($subtype, $conf, $panel_a
     }
     elseif ($goal_type == 'amount') {
       $goal_value = $personal_campaign->field_p2p_personal_campaign_goal[$language][0]['value'];
-      $title = t('Fundraising Goal');
+     $title = t('Personal Fundraising Goal');
     }
 
+    $output[] = '<div class="goal-label">' . $title . '</div>';
+    $output[] = '<span class="goal-amount">';
     $output[] = springboard_p2p_format_progress($goal_value, $goal_type);
+    $output[] = '</span>';
 
     // Build the content type block.
     $block = new stdClass();
-    $block->title = $title;
-    $block->content = implode('', $output);
+    $block->title = '';
+    $block->content = implode($output);
     return $block;
   }
 }
