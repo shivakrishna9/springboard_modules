@@ -96,6 +96,10 @@ h3.p2p-comment-name {
 
 /* progress side bar */
 
+.pane-progress .panel-pane {
+  margin: 8px 0 6px 0;
+}
+
 .panel-pane-wrapper.pane-progress {
   padding: 10px;
   border: 1px solid #a6a6a6;
