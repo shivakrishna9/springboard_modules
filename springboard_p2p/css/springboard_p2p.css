@@ -119,7 +119,8 @@ input[type="submit"]:hover {
 }
 
 .landing-search-form input[type="text"] {
-  width: 138px;
+  width: 86%;
+  margin: 0 0 10px 0;
 }
 
 .landing-search-form .views-exposed-widget {
@@ -147,13 +148,13 @@ input[type="submit"]:hover {
   margin: 0;
 }
 
-.views-exposed-form {
-  padding: 14px 0 0 0;
-}
-
 .views-exposed-form .views-exposed-widget {
   float: none;
   padding: 0 0 0 4px;
+}
+
+#edit-title-wrapper {
+  display: block;
 }
 
 .panel-pane-wrapper {
