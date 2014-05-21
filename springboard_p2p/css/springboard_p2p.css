@@ -110,6 +110,14 @@ input[type="submit"]:hover {
 
 /* Search widget */
 
+.panel-pane.pane-search-title {
+  margin-top: 10px;
+}
+
+.panel-pane.pane-search-title h3 {
+  margin: 0;
+}
+
 .landing-search-form input[type="text"] {
   width: 138px;
 }

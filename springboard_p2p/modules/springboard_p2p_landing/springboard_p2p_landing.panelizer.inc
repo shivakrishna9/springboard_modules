@@ -40,6 +40,8 @@ function springboard_p2p_landing_panelizer_defaults() {
       'middle_left' => NULL,
       'middle_right' => NULL,
       'bottom' => NULL,
+      'middle_top_left' => NULL,
+      'middle_top_right' => NULL,
     ),
   );
   $display->cache = array();
@@ -232,12 +234,16 @@ function springboard_p2p_landing_panelizer_defaults() {
       'body' => '<h3>Search for a fundraising campaign</h3>',
       'format' => 'full_html',
       'substitute' => 1,
+      'name' => 'fundraising_title_pane',
     );
     $pane->cache = array();
     $pane->style = array(
       'settings' => NULL,
     );
-    $pane->css = array();
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'pane-search-title',
+    );
     $pane->extras = array();
     $pane->position = 1;
     $pane->locks = array();
