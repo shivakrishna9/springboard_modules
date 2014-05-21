@@ -78,7 +78,7 @@ function springboard_p2p_campaign_image_default_styles() {
 function springboard_p2p_campaign_node_info() {
   $items = array(
     'p2p_campaign' => array(
-      'name' => t('Peer to peer campaign'),
+      'name' => t('Peer to Peer Campaign'),
       'base' => 'node_content',
       'description' => t('This is a peer to peer campaign.'),
       'has_title' => '1',
