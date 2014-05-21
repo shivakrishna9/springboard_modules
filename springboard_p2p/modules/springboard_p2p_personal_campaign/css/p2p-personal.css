@@ -2,7 +2,7 @@
 /* Video */
 
 .embedded-video {
-  max-width: 93%;
+  max-width: 96%;
 }
 
 /* Comments */
@@ -129,6 +129,11 @@ h3.p2p-comment-name {
   padding: 6px;
 }
 
+.field-name-field-p2p-campaign-images.field-type-image {
+  border: 1px solid #a6a6a6;
+  padding: 5px;
+}
+
 /******************  Media queries, these should go last */
 @media (min-width: 769px) {
 
@@ -136,8 +141,18 @@ h3.p2p-comment-name {
 
 @media (max-width: 768px) {
 
+  .field-name-field-p2p-campaign-images.field-type-image {
+    border: none;
+  }
+
+  .p2p-comment-name-amount-wrapper {
+    width: 28%;
+  }
+
 }
 
 @media (max-width: 480px) {
+
+
 
 }

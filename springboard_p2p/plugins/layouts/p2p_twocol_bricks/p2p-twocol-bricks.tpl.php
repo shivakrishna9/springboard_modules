@@ -23,7 +23,8 @@
  */
 ?>
 <div class="panel-display panel-2col-bricks clearfix" <?php if (!empty($css_id)) {
-  print "id=\"$css_id\""; } ?>>
+  print "id=\"$css_id\"";
+} ?>>
 
   <div class="project-top-wrapper">
     <div class="panel-panel panel-col-top">
@@ -34,14 +35,23 @@
   <div class="center-wrapper">
 
     <div class="panel-panel panel-col-first">
-      <div class="inside"><?php print $content['middle_left']; ?></div>
+      <div class="inside">
+
+        <div class="panel-panel panel-middle-top-wrapper">
+          <div class="panel-middle-top-left"><?php print $content['middle_top_left']; ?></div>
+          <div class="panel-middle-top-right"><?php print $content['middle_top_right']; ?></div>
+        </div>
+        <?php print $content['middle_left']; ?>
+
+      </div>
     </div>
 
     <div class="panel-panel panel-col-last">
       <div class="inside"><?php print $content['middle_right']; ?></div>
     </div>
 
-  </div><!-- // center-wrapper-->
+  </div>
+  <!-- // center-wrapper-->
 
   <div class="panel-panel panel-col-bottom">
     <div class="inside"><?php print $content['bottom']; ?></div>
