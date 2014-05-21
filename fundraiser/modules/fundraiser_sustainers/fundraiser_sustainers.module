@@ -617,6 +617,26 @@ function fundraiser_sustainers_process_single_recurring_donation(&$log, $recurri
 
     // Set the reference charge flag to TRUE
     $donation->reference_charge = TRUE;
+    
+    // We can't handle the "processing" status from inside a transaction, so if any are open 
+    // then pop them off, forcing them to commit.
+    $connection = Database::getConnection();
+    if ($connection->inTransaction()) {
+      $connection->popTransaction('drupal_transaction');
+    }
+    
+    // Make sure this charge wasn't partially processed already (e.g., cron 
+    // crashed awaiting response from the gateway).
+    if ('processing' == db_query("SELECT gateway_resp FROM {fundraiser_sustainers} WHERE did=:did;", array(':did' => $recurring->did))->fetchField()) {
+      watchdog('fundraiser_sustainers', 'Sustainer order id !did tried to process for a second time! Skipped.',
+        array('!did' => $recurring->did), 
+        WATCHDOG_CRITICAL
+      );
+      return FALSE;
+    }
+    
+    // Update the sustainer record to "processing"
+    db_query("UPDATE {fundraiser_sustainers} SET gateway_resp='processing' WHERE did=:did;", array(':did' => $recurring->did));
 
     // Then go through each one of these to charge.
     // Since we already created the donation (and saved any CC info at that time).
