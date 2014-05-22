@@ -560,8 +560,8 @@ function springboard_p2p_personal_campaign_url_ajax(&$form, $form_state) {
   $commands = array();
 
   // Add other commands
-  $commands[] = ajax_command_remove('div#personal-campaign-url-wrapper div.messages');
-  $commands[] = ajax_command_prepend('div#personal-campaign-url-wrapper', theme('status_messages'));
+  $commands[] = ajax_command_remove('div#personal-campaign-url-wrapper div.alert');
+  $commands[] = ajax_command_append('div#personal-campaign-url-wrapper', theme('status_messages'));
   unset($_SESSION['messages']);
 return array('#type' => 'ajax', '#commands' => $commands);
 }
