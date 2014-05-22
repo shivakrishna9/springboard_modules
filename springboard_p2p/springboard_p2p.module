@@ -483,6 +483,16 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
   }
   // Hide revision UI
   $form['revision_information']['#access'] = FALSE;
+
+  // Add ajax lookup to campaign url field
+  $form['field_p2p_personal_campaign_url'][$language]['#prefix'] = '<div id="personal-campaign-url-wrapper">';
+  $form['field_p2p_personal_campaign_url'][$language]['#suffix'] = '</div>';
+  $form['field_p2p_personal_campaign_url'][$language][0]['value']['#ajax'] = array(
+    'callback' => 'springboard_p2p_personal_campaign_url_ajax',
+    'wrapper' => 'personal-campaign-url-wrapper',
+  );
+
+
   // Hide progress fields
   $form['field_p2p_campaign_progress']['#access'] = FALSE;
   $form['#validate'][] = 'springboard_p2p_personal_campaign_validate';
@@ -520,6 +530,47 @@ function springboard_p2p_personal_campaign_ajax(&$form, &$form_state) {
   $commands[] = ctools_ajax_command_redirect('node/add/p2p-personal-campaign', 0, $options);
   print ajax_render($commands);
   drupal_exit();
+}
+
+/**
+ * Ajax callback validates campaign url field.
+ */
+function springboard_p2p_personal_campaign_url_ajax(&$form, $form_state) {
+  $nid = $form_state['values']['nid'];
+  $language = $form_state['values']['language'];
+  $path = $form_state['values']['field_p2p_personal_campaign_url'][$language][0]['value'];
+  $alias_exists = drupal_lookup_path('source', $path);
+  $target = 'field_p2p_personal_campaign_url[' . $language. '][0][value]';
+  if ($alias_exists) {
+    // New node creation form, alias is in use by a pre-existing form.
+    if (!$nid) {
+       form_set_error($target, t('This URL is already in use.'));
+    }
+    // Editing existing node, alias in use by some other node.
+    if ($nid && $alias_exists != 'node/' . $nid) {
+      form_set_error($target, t('This URL is already in use.'));
+    }
+  }
+  else {
+    drupal_set_message(t('URL ok.'));
+  }
+ // return theme('status_message'drupal_render($form['field_p2p_personal_campaign_url'][$language]);
+ // unset($_SESSION['messages']);
+
+  $commands = array();
+
+  // Add other commands
+  $commands[] = ajax_command_remove('div#personal-campaign-url-wrapper div.messages');
+  $commands[] = ajax_command_prepend('div#personal-campaign-url-wrapper', theme('status_messages'));
+  unset($_SESSION['messages']);
+return array('#type' => 'ajax', '#commands' => $commands);
+}
+
+/**
+ * Implements hook_sb_social_share_ur_alter().
+ */
+function springboard_p2p_sb_social_share_ur($url, $node) {
+  // identify
 }
 
 /**
@@ -1337,7 +1388,10 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
         else {
           $action_type = 'webform_user';
         }
-
+        $form['personal_campaign_id'] = array(
+          '#type' => 'value',
+          '#value' => $personal_campaign_id,
+        );
         $form['springboard_p2p_personal_campaign_action'] = array(
           '#type' => 'fieldset',
           '#title' => 'P2P',
@@ -1455,6 +1509,61 @@ function springboard_p2p_webform_client_form_submit($form, &$form_state) {
     if ($action['action_type'] == 'webform_user') {
       springboard_p2p_submit_personal_campaign_action($action);
     }
+  }
+  // Pass personal campaign id to Social for use when constructing share URLs.
+  if (module_exists('sb_social') && !empty($form_state['values']['personal_campaign_id'])) {
+    $url_context = array(
+      'personal_campaign_id' => $form_state['values']['personal_campaign_id'],
+    );
+    $_SESSION['sb_social_url_context'] = $url_context;
+  }
+}
+
+/**
+ * Implements hook_sb_social_share_url_alter().
+ */
+function springboard_p2p_sb_social_share_url_alter(&$url, $node, $url_context) {
+  // If personal campaign id is available in context, we want share urls
+  // to point to the personal campaign node instead of the donation form.
+  if ($url_context && isset($url_context['personal_campaign_id'])) {
+    $node = node_load($url_context['personal_campaign_id']);
+    if ($node->type == 'p2p_personal_campaign') {
+      $url_parsed = parse_url($url);
+      $alias = drupal_lookup_path('alias', 'node/' . $node->nid);
+      $url_parsed['path'] = $alias ? $alias : 'node/' . $node->nid;
+
+      // Reconstruction
+      $url = $url_parsed['scheme'] . '://';
+      $url .= $url_parsed['host'] . '/' . $url_parsed['path'];
+      $url .= '?' . $url_parsed['query'];
+    }
+  }
+}
+
+/**
+ * Implements hook_sb_social_init_settings_load_alter().
+ */
+function springboard_p2p_sb_social_init_settings_load_alter(&$settings) {
+  $personal_campaign = isset($_SESSION['sb_social_url_context']['personal_campaign_id']) ? $_SESSION['sb_social_url_context']['personal_campaign_id'] : FALSE;
+  // Personal campaign id should only be set when a donation form is submitted
+  // with a personal campaign association. Under these conditions we want to use
+  // Social settings from the personal campaign node.
+  if ($personal_campaign) {
+    $sid = sb_social_get_sid_by_id($personal_campaign, 'node');
+    $settings = sb_social_settings_load($sid);
+  }
+}
+
+/**
+ * Implements hook_sb_social_tokens_data().
+ */
+function springboard_p2p_sb_social_tokens_data_alter(&$node) {
+  $personal_campaign = isset($_SESSION['sb_social_url_context']['personal_campaign_id']) ? $_SESSION['sb_social_url_context']['personal_campaign_id'] : FALSE;
+
+  if ($personal_campaign) {
+    $node = node_load($personal_campaign);
+    // Shut down the session variable since it is no longer needed.
+    $_SESSION['sb_social_url_context']['personal_campaign_id'] = FALSE;
   }
 }
 
