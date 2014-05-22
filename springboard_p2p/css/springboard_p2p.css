@@ -51,6 +51,7 @@ body a {
 input[type="submit"] {
   position: relative;
   padding: 5px 30px 5px 10px;
+  width: 96px;
   border: 0;
   background: #859596;
   color: #fff;
@@ -188,4 +189,45 @@ input[type="submit"]:hover {
 
 .pane-node-title h1 {
   margin: 20px 0;
+}
+
+.landing-search-form .ajax-progress .throbber {
+  position: absolute;
+  top: 0;
+  left: 210px;
+  display: block;
+  padding: 4px;
+  width: 24px;
+  height: 34px;
+  -webkit-border-radius: 0;
+  -moz-border-radius: 0;
+  border-radius: 0;
+  background: #fff url("../images/spinner.gif") no-repeat;
+  opacity: .9;
+}
+
+/******************  Media queries, these should go last */
+
+@media (max-width: 980px) {
+
+  .landing-search-form .views-exposed-widget.views-reset-button {
+    margin-top: 10px;
+  }
+
+  .landing-search-form .ajax-progress .throbber {
+    left: 120px;
+  }
+
+}
+
+@media (max-width: 768px) {
+
+  .landing-search-form .views-exposed-widget.views-reset-button {
+    margin-top: 0;
+  }
+
+  .landing-search-form .ajax-progress .throbber {
+    left: 220px;
+  }
+
 }
