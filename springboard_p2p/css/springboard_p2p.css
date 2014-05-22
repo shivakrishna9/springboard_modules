@@ -93,13 +93,13 @@ input[type="submit"]:hover {
 /* Progress bar */
 
 .personal-campaign-progress-container div.progress-bar-wrapper {
-  height: 16px;
+  height: 30px;
   border: 1px solid #aaa;
 }
 
 .personal-campaign-progress-container div.progress-bar {
   width: 0;
-  height: 16px;
+  height: 30px;
   background-color: #888;
 }
 
