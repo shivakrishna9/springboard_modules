@@ -553,7 +553,10 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->style = array(
       'settings' => NULL,
     );
-    $pane->css = array();
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'pane-node-title',
+    );
     $pane->extras = array();
     $pane->position = 1;
     $pane->locks = array();
