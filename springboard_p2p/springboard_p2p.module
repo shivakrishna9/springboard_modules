@@ -1328,6 +1328,7 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
 
         $campaign_id = $personal_campaign->field_p2p_campaign[$personal_campaign->language][0]['target_id'];
 
+        $form['#validate'][] = 'springboard_p2p_webform_client_form_validate';
         $form['#submit'][] = 'springboard_p2p_webform_client_form_submit';
 
         if ($is_fundraiser_type) {
@@ -1397,6 +1398,7 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
           // $form['submitted']['springboard_p2p']['header'] = $header;
           // }
           $goal_type = springboard_p2p_get_goal_type_from_campaign($campaign);
+
           $formatted_progress = springboard_p2p_format_progress($personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0], $goal_type);
           $formatted_goal = springboard_p2p_format_progress($personal_campaign->field_p2p_personal_campaign_goal[$personal_campaign->language][0]['value'], $goal_type);
           $form['submitted']['springboard_p2p'] = array(
@@ -1419,6 +1421,21 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
           );
         }
       }
+    }
+  }
+}
+
+/**
+ * Validate function.  Changes the market source campaign id when in p2p mode.
+ */
+function springboard_p2p_webform_client_form_validate($form, &$form_state) {
+  if (!empty($form_state['values']['springboard_p2p_personal_campaign_action'])) {
+    $action = $form_state['values']['springboard_p2p_personal_campaign_action'];
+    $campaign = node_load($action['campaign_nid']);
+    $goal = springboard_p2p_get_goal_from_campaign($campaign);
+
+    if (isset($goal['campaign_id'])) {
+      $form_state['values']['submitted']['cid'] = $goal['campaign_id'];
     }
   }
 }
