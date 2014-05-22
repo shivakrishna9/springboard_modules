@@ -299,7 +299,7 @@ a.get-started-link:hover {
 
 /* Share */
 
-.at16nc {
+:not(.ie8) .at16nc {
   display: inline-block;
   height: 32px;
   width: 32px;
@@ -311,17 +311,17 @@ a.get-started-link:hover {
   margin: 0 6px 0 0;
 }
 
-.at16nc.at16t_twitter {
+:not(.ie8) .at16nc.at16t_twitter {
   background: #00aced url("../images/twitter-64.png") 0 0 no-repeat;
   background-size: 32px 32px;
 }
 
-.at16nc.at16t_facebook{
+:not(.ie8) .at16nc.at16t_facebook{
   background: #3b5998 url("../images/facebook-64.png") 0 0 no-repeat;
   background-size: 32px 32px;
 }
 
-.at16nc.at16t_email {
+:not(.ie8) .at16nc.at16t_email {
   background: #dd4b39 url("../images/email-64.png") 0 0 no-repeat;
   background-size: 32px 32px;
 }
