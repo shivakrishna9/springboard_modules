@@ -101,6 +101,58 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $display->content['new-8321c063-28f8-4398-9b2c-9b56bf78395f'] = $pane;
     $display->panels['middle_left'][0] = 'new-8321c063-28f8-4398-9b2c-9b56bf78395f';
     $pane = new stdClass();
+    $pane->pid = 'new-1dfeee97-1a59-4f64-9da7-601b11a32735';
+    $pane->panel = 'middle_left';
+    $pane->type = 'org_intro';
+    $pane->subtype = 'org_intro';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'context' => 'panelizer',
+      'override_title' => 0,
+      'override_title_text' => '',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'pane-org-intro',
+    );
+    $pane->extras = array();
+    $pane->position = 1;
+    $pane->locks = array();
+    $pane->uuid = '1dfeee97-1a59-4f64-9da7-601b11a32735';
+    $display->content['new-1dfeee97-1a59-4f64-9da7-601b11a32735'] = $pane;
+    $display->panels['middle_left'][1] = 'new-1dfeee97-1a59-4f64-9da7-601b11a32735';
+    $pane = new stdClass();
+    $pane->pid = 'new-75d8ae89-2d28-4f1a-bcf6-79221fe83d2f';
+    $pane->panel = 'middle_left';
+    $pane->type = 'personal_campaign_call_to_action';
+    $pane->subtype = 'personal_campaign_call_to_action';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'context' => 'panelizer',
+      'override_title' => 1,
+      'override_title_text' => '',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'donate-button',
+    );
+    $pane->extras = array();
+    $pane->position = 2;
+    $pane->locks = array();
+    $pane->uuid = '75d8ae89-2d28-4f1a-bcf6-79221fe83d2f';
+    $display->content['new-75d8ae89-2d28-4f1a-bcf6-79221fe83d2f'] = $pane;
+    $display->panels['middle_left'][2] = 'new-75d8ae89-2d28-4f1a-bcf6-79221fe83d2f';
+    $pane = new stdClass();
     $pane->pid = 'new-a6baa2cb-e251-4a0e-9f6b-83446a4dcdf3';
     $pane->panel = 'middle_left';
     $pane->type = 'entity_field';
@@ -131,13 +183,13 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
       'css_class' => 'pane-video',
     );
     $pane->extras = array();
-    $pane->position = 1;
+    $pane->position = 3;
     $pane->locks = array();
     $pane->uuid = 'a6baa2cb-e251-4a0e-9f6b-83446a4dcdf3';
     $display->content['new-a6baa2cb-e251-4a0e-9f6b-83446a4dcdf3'] = $pane;
-    $display->panels['middle_left'][1] = 'new-a6baa2cb-e251-4a0e-9f6b-83446a4dcdf3';
+    $display->panels['middle_left'][3] = 'new-a6baa2cb-e251-4a0e-9f6b-83446a4dcdf3';
     $pane = new stdClass();
-    $pane->pid = 'new-75d8ae89-2d28-4f1a-bcf6-79221fe83d2f';
+    $pane->pid = 'new-fa2ee32b-a7bc-417e-9e5c-2ba674f867ff';
     $pane->panel = 'middle_left';
     $pane->type = 'personal_campaign_call_to_action';
     $pane->subtype = 'personal_campaign_call_to_action';
@@ -157,11 +209,37 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
       'css_class' => 'donate-button',
     );
     $pane->extras = array();
-    $pane->position = 2;
+    $pane->position = 4;
     $pane->locks = array();
-    $pane->uuid = '75d8ae89-2d28-4f1a-bcf6-79221fe83d2f';
-    $display->content['new-75d8ae89-2d28-4f1a-bcf6-79221fe83d2f'] = $pane;
-    $display->panels['middle_left'][2] = 'new-75d8ae89-2d28-4f1a-bcf6-79221fe83d2f';
+    $pane->uuid = 'fa2ee32b-a7bc-417e-9e5c-2ba674f867ff';
+    $display->content['new-fa2ee32b-a7bc-417e-9e5c-2ba674f867ff'] = $pane;
+    $display->panels['middle_left'][4] = 'new-fa2ee32b-a7bc-417e-9e5c-2ba674f867ff';
+    $pane = new stdClass();
+    $pane->pid = 'new-6a286485-ca59-4bae-a049-ed3af09e6767';
+    $pane->panel = 'middle_right';
+    $pane->type = 'personal_campaign_share';
+    $pane->subtype = 'personal_campaign_share';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'context' => 'panelizer',
+      'override_title' => 1,
+      'override_title_text' => '',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'pane-social-links',
+    );
+    $pane->extras = array();
+    $pane->position = 0;
+    $pane->locks = array();
+    $pane->uuid = '6a286485-ca59-4bae-a049-ed3af09e6767';
+    $display->content['new-6a286485-ca59-4bae-a049-ed3af09e6767'] = $pane;
+    $display->panels['middle_right'][0] = 'new-6a286485-ca59-4bae-a049-ed3af09e6767';
     $pane = new stdClass();
     $pane->pid = 'new-a713082a-f1f9-4e4b-9fa9-eaedeef71bf1';
     $pane->panel = 'middle_right';
@@ -191,11 +269,11 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     );
     $pane->css = array();
     $pane->extras = array();
-    $pane->position = 0;
+    $pane->position = 1;
     $pane->locks = array();
     $pane->uuid = 'a713082a-f1f9-4e4b-9fa9-eaedeef71bf1';
     $display->content['new-a713082a-f1f9-4e4b-9fa9-eaedeef71bf1'] = $pane;
-    $display->panels['middle_right'][0] = 'new-a713082a-f1f9-4e4b-9fa9-eaedeef71bf1';
+    $display->panels['middle_right'][1] = 'new-a713082a-f1f9-4e4b-9fa9-eaedeef71bf1';
     $pane = new stdClass();
     $pane->pid = 'new-c46d449f-8ba5-4326-aeb6-3306b172ef4d';
     $pane->panel = 'middle_right';
@@ -214,11 +292,11 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     );
     $pane->css = array();
     $pane->extras = array();
-    $pane->position = 1;
+    $pane->position = 2;
     $pane->locks = array();
     $pane->uuid = 'c46d449f-8ba5-4326-aeb6-3306b172ef4d';
     $display->content['new-c46d449f-8ba5-4326-aeb6-3306b172ef4d'] = $pane;
-    $display->panels['middle_right'][1] = 'new-c46d449f-8ba5-4326-aeb6-3306b172ef4d';
+    $display->panels['middle_right'][2] = 'new-c46d449f-8ba5-4326-aeb6-3306b172ef4d';
     $pane = new stdClass();
     $pane->pid = 'new-d4ef12a9-ee7d-44ff-8747-3e42752e1988';
     $pane->panel = 'middle_right';
@@ -260,11 +338,11 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     );
     $pane->css = array();
     $pane->extras = array();
-    $pane->position = 2;
+    $pane->position = 3;
     $pane->locks = array();
     $pane->uuid = 'd4ef12a9-ee7d-44ff-8747-3e42752e1988';
     $display->content['new-d4ef12a9-ee7d-44ff-8747-3e42752e1988'] = $pane;
-    $display->panels['middle_right'][2] = 'new-d4ef12a9-ee7d-44ff-8747-3e42752e1988';
+    $display->panels['middle_right'][3] = 'new-d4ef12a9-ee7d-44ff-8747-3e42752e1988';
     $pane = new stdClass();
     $pane->pid = 'new-57cfe285-650a-4b86-9b80-a4bece44752c';
     $pane->panel = 'middle_right';
@@ -297,11 +375,11 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
       'css_class' => 'donate-button',
     );
     $pane->extras = array();
-    $pane->position = 3;
+    $pane->position = 4;
     $pane->locks = array();
     $pane->uuid = '57cfe285-650a-4b86-9b80-a4bece44752c';
     $display->content['new-57cfe285-650a-4b86-9b80-a4bece44752c'] = $pane;
-    $display->panels['middle_right'][3] = 'new-57cfe285-650a-4b86-9b80-a4bece44752c';
+    $display->panels['middle_right'][4] = 'new-57cfe285-650a-4b86-9b80-a4bece44752c';
     $pane = new stdClass();
     $pane->pid = 'new-6a1e2843-d844-482f-bfda-bc47c4921c4c';
     $pane->panel = 'middle_right';
@@ -323,11 +401,11 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
       'css_class' => 'pane-recent-donors',
     );
     $pane->extras = array();
-    $pane->position = 4;
+    $pane->position = 5;
     $pane->locks = array();
     $pane->uuid = '6a1e2843-d844-482f-bfda-bc47c4921c4c';
     $display->content['new-6a1e2843-d844-482f-bfda-bc47c4921c4c'] = $pane;
-    $display->panels['middle_right'][4] = 'new-6a1e2843-d844-482f-bfda-bc47c4921c4c';
+    $display->panels['middle_right'][5] = 'new-6a1e2843-d844-482f-bfda-bc47c4921c4c';
     $pane = new stdClass();
     $pane->pid = 'new-21eaa0fe-da1c-4af1-bd6e-48527364618d';
     $pane->panel = 'middle_right';
@@ -362,11 +440,11 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
       'css_class' => 'pane-search-title',
     );
     $pane->extras = array();
-    $pane->position = 5;
+    $pane->position = 6;
     $pane->locks = array();
     $pane->uuid = '21eaa0fe-da1c-4af1-bd6e-48527364618d';
     $display->content['new-21eaa0fe-da1c-4af1-bd6e-48527364618d'] = $pane;
-    $display->panels['middle_right'][5] = 'new-21eaa0fe-da1c-4af1-bd6e-48527364618d';
+    $display->panels['middle_right'][6] = 'new-21eaa0fe-da1c-4af1-bd6e-48527364618d';
     $pane = new stdClass();
     $pane->pid = 'new-9550449a-d33f-4361-8a43-6d0f35c52c39';
     $pane->panel = 'middle_right';
@@ -388,11 +466,11 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
       'css_class' => 'landing-search-form',
     );
     $pane->extras = array();
-    $pane->position = 6;
+    $pane->position = 7;
     $pane->locks = array();
     $pane->uuid = '9550449a-d33f-4361-8a43-6d0f35c52c39';
     $display->content['new-9550449a-d33f-4361-8a43-6d0f35c52c39'] = $pane;
-    $display->panels['middle_right'][6] = 'new-9550449a-d33f-4361-8a43-6d0f35c52c39';
+    $display->panels['middle_right'][7] = 'new-9550449a-d33f-4361-8a43-6d0f35c52c39';
     $pane = new stdClass();
     $pane->pid = 'new-29f978eb-08d6-4603-8baa-7d5c3fba1ae8';
     $pane->panel = 'middle_right';
@@ -407,11 +485,11 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     );
     $pane->css = array();
     $pane->extras = array();
-    $pane->position = 7;
+    $pane->position = 8;
     $pane->locks = array();
     $pane->uuid = '29f978eb-08d6-4603-8baa-7d5c3fba1ae8';
     $display->content['new-29f978eb-08d6-4603-8baa-7d5c3fba1ae8'] = $pane;
-    $display->panels['middle_right'][7] = 'new-29f978eb-08d6-4603-8baa-7d5c3fba1ae8';
+    $display->panels['middle_right'][8] = 'new-29f978eb-08d6-4603-8baa-7d5c3fba1ae8';
     $pane = new stdClass();
     $pane->pid = 'new-af37ece0-1376-4a72-a3f6-31c0f0829987';
     $pane->panel = 'middle_right';
@@ -443,11 +521,11 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     );
     $pane->css = array();
     $pane->extras = array();
-    $pane->position = 8;
+    $pane->position = 9;
     $pane->locks = array();
     $pane->uuid = 'af37ece0-1376-4a72-a3f6-31c0f0829987';
     $display->content['new-af37ece0-1376-4a72-a3f6-31c0f0829987'] = $pane;
-    $display->panels['middle_right'][8] = 'new-af37ece0-1376-4a72-a3f6-31c0f0829987';
+    $display->panels['middle_right'][9] = 'new-af37ece0-1376-4a72-a3f6-31c0f0829987';
     $pane = new stdClass();
     $pane->pid = 'new-bf2d7ebf-2189-4680-a416-29053702fe54';
     $pane->panel = 'middle_right';
@@ -469,11 +547,11 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
       'css_class' => 'side-gray-shaded pane-get-started',
     );
     $pane->extras = array();
-    $pane->position = 9;
+    $pane->position = 10;
     $pane->locks = array();
     $pane->uuid = 'bf2d7ebf-2189-4680-a416-29053702fe54';
     $display->content['new-bf2d7ebf-2189-4680-a416-29053702fe54'] = $pane;
-    $display->panels['middle_right'][9] = 'new-bf2d7ebf-2189-4680-a416-29053702fe54';
+    $display->panels['middle_right'][10] = 'new-bf2d7ebf-2189-4680-a416-29053702fe54';
     $pane = new stdClass();
     $pane->pid = 'new-0cd4f51e-4ba7-474d-a3ad-e1a931ded90f';
     $pane->panel = 'middle_top_left';

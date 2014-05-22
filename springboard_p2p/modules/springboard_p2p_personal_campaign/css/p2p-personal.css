@@ -5,7 +5,8 @@
 }
 
 .pane-video,
-#p2p-comment-pane {
+#p2p-comment-pane,
+.pane-org-intro {
   margin-top: 20px;
   padding-top: 20px;
   border-top: 1px dotted #acacac;
@@ -181,6 +182,12 @@ h3.p2p-comment-name {
 
 .panel-pane.pane-personal-campaign-goal {
   margin: 0 0 10px 0;
+}
+
+/* org intro */
+
+.pane-org-intro {
+
 }
 
 /******************  Media queries, these should go last */

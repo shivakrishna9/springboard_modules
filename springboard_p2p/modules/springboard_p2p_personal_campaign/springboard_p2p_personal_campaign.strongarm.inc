@@ -164,5 +164,39 @@ function springboard_p2p_personal_campaign_strongarm() {
   );
   $export['panelizer_node:p2p_personal_campaign_default'] = $strongarm;
 
+  $strongarm = new stdClass();
+  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
+  $strongarm->api_version = 1;
+  $strongarm->name = 'springboard_social_enabled_content_types';
+  $strongarm->value = array(
+    'p2p_personal_campaign' => 'p2p_personal_campaign',
+    'p2p_campaign' => 0,
+    'p2p_category' => 0,
+    'p2p_campaign_landing' => 0,
+    'webform_ab' => 0,
+    'advocacy' => 0,
+    'article' => 0,
+    'donation_form' => 0,
+    'email_sign_up' => 0,
+    'email_wrapper' => 0,
+    'page' => 0,
+    'page_wrapper' => 0,
+    'petition' => 0,
+    'ticketed_event' => 0,
+    'webform' => 0,
+  );
+  $export['springboard_social_enabled_content_types'] = $strongarm;
+
+  $strongarm = new stdClass();
+  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
+  $strongarm->api_version = 1;
+  $strongarm->name = 'springboard_social_services';
+  $strongarm->value = array(
+    'twitter' => 'twitter',
+    'facebook' => 'facebook',
+    'email' => 'email',
+  );
+  $export['springboard_social_services'] = $strongarm;
+
   return $export;
 }
