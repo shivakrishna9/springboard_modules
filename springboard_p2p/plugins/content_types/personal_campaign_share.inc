@@ -74,6 +74,8 @@ function springboard_p2p_personal_campaign_share_render($subtype, $conf, $panel_
   }
   $buttons = implode("\n", $buttons);
 
+
+  $output[] = '<i class="fa fa-share-alt share-icon"></i>';
   $output[] = theme('sb_social_share', array('buttons' => $buttons));
 
   // Build the content type block.
