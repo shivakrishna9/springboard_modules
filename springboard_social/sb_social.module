@@ -419,6 +419,8 @@ function sb_social_init() {
 
   if ($id) {
     $settings = sb_social_settings_load($sid);
+    // Let 3rd party modules get into the act.
+    drupal_alter('sb_social_init_settings_load', $settings);
     if (empty($settings)) {
       return;
     }
@@ -604,6 +606,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
       $nid = _sb_social_get_nid_by_sid($submission_id);
       $node = node_load($nid);
     }
+    drupal_alter('sb_social_tokens_data', $node);
     foreach ($enabled_plugins as $service => $plugin) {
       if (!empty($plugin['token_replace'])) {
         $func = $plugin['token_replace'];
