@@ -25,6 +25,11 @@ $plugin = array(
  * Render a single content pane.
  */
 function springboard_p2p_personal_campaign_share_render($subtype, $conf, $panel_args, $context) {
+
+  if (!module_exists('sb_social')) {
+    return;
+  }
+
   $personal_campaign = NULL;
   if (empty($context) || empty($context->data)) {
     if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid'])) {

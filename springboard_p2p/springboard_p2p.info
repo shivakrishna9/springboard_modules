@@ -8,7 +8,6 @@ dependencies[] = ctools
 dependencies[] = features
 dependencies[] = fundraiser
 dependencies[] = page_manager
-dependencies[] = sb_social
 dependencies[] = springboard_p2p_campaign
 dependencies[] = springboard_p2p_category
 dependencies[] = springboard_p2p_personal_campaign
