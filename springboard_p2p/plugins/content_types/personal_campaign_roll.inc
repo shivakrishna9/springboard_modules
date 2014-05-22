@@ -52,6 +52,9 @@ function springboard_p2p_personal_campaign_roll_render($subtype, $conf, $panel_a
   $comments = springboard_p2p_get_personal_campaign_comments($personal_campaign->nid, FALSE);
 
   $output = array();
+
+  $output[] = '<i class="fa fa-user donor-icon"></i>';
+
   $output[] = '<table class="personal-campaign-roll">';
   $output[] = '<thead><tr><td>Name</td><td>Amount</td></tr></thead>';
   // Start the count.

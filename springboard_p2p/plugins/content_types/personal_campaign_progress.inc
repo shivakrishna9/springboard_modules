@@ -71,6 +71,8 @@ function springboard_p2p_personal_campaign_progress_render($subtype, $conf, $pan
       $progress_text = t('@progress raised to date', array('@progress' => $progress_with_units));
     }
 
+    $output[] = '<i class="fa fa-calendar amount-icon"></i>';
+
     $output[] = '<div class="personal-campaign-progress-container">';
     $output[] = '<div class="personal-campaign-progress">' . $progress_text . '</div>';
     $output[] = '<div class="progress-bar-wrapper">';

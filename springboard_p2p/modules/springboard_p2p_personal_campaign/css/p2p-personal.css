@@ -106,6 +106,17 @@ h3.p2p-comment-name {
 
 /* progress side bar */
 
+.fa-calendar.amount-icon {
+  position: absolute;
+  top: 10px;
+  left: 200px;
+  display: block;
+  width: 50px;
+  height: 50px;
+  color: #859596;
+  font-size: 19px;
+}
+
 .pane-progress .panel-pane {
   margin: 8px 0 6px 0;
 }
@@ -114,6 +125,7 @@ h3.p2p-comment-name {
   margin: 0 0 20px 0;
   padding: 10px;
   border: 1px solid #a6a6a6;
+  position: relative;
 }
 
 .field-name-field-p2p-campaign-images {
@@ -165,6 +177,7 @@ h3.p2p-comment-name {
 /* donor roll */
 
 .panel-pane.pane-recent-donors {
+  position: relative;
   margin: 0 0 20px 0;
   padding: 6px;
   border: 1px solid #a6a6a6;
@@ -178,6 +191,17 @@ h3.p2p-comment-name {
 .goal-label {
   margin: 6px 0 0 0;
   font-weight: bold;
+}
+
+.fa-user.donor-icon {
+  position: absolute;
+  top: 7px;
+  left: 172px;
+  display: block;
+  width: 50px;
+  height: 50px;
+  color: #859596;
+  font-size: 23px;
 }
 
 .panel-pane.pane-personal-campaign-goal {
@@ -202,6 +226,10 @@ h3.p2p-comment-name {
     width: 74%;
   }
 
+  .fa-calendar.amount-icon {
+    left: 170px;
+  }
+
 }
 
 @media (max-width: 768px) {
@@ -220,6 +248,10 @@ h3.p2p-comment-name {
 
   .p2p-comment-text-wrapper {
     width: 95%;
+  }
+
+  .fa-calendar.amount-icon {
+    left: 200px;
   }
 
 }
