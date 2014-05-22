@@ -108,13 +108,14 @@ h3.p2p-comment-name {
 
 .fa-calendar.amount-icon {
   position: absolute;
-  top: 10px;
-  left: 200px;
+  top: 8px;
+  right: 7px;
   display: block;
   width: 50px;
   height: 50px;
   color: #859596;
   font-size: 19px;
+  text-align: right;
 }
 
 .pane-progress .panel-pane {
@@ -195,13 +196,14 @@ h3.p2p-comment-name {
 
 .fa-user.donor-icon {
   position: absolute;
-  top: 7px;
-  left: 172px;
+  top: 6px;
+  right: 6px;
   display: block;
   width: 50px;
   height: 50px;
   color: #859596;
   font-size: 23px;
+  text-align: right;
 }
 
 .panel-pane.pane-personal-campaign-goal {
@@ -226,10 +228,6 @@ h3.p2p-comment-name {
     width: 74%;
   }
 
-  .fa-calendar.amount-icon {
-    left: 170px;
-  }
-
 }
 
 @media (max-width: 768px) {
@@ -248,10 +246,6 @@ h3.p2p-comment-name {
 
   .p2p-comment-text-wrapper {
     width: 95%;
-  }
-
-  .fa-calendar.amount-icon {
-    left: 200px;
   }
 
 }
