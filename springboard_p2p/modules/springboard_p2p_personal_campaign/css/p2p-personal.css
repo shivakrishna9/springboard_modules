@@ -28,25 +28,15 @@
 }
 
 #p2p-comment-pane .pane-content ul li.personal-campaign-comment-list {
+  position: relative;
   margin: 0 0 28px 0;
 }
 
 .p2p-comment-name-amount-wrapper {
   display: inline-block;
-  width: 20%;
+  padding-right: 3%;
+  width: 17%;
   vertical-align: top;
-}
-
-.comment-arrow {
-  position: absolute;
-  display: block;
-  margin-top: 5px;
-  margin-left: -47px;
-  width: 20px;
-  height: 40px;
-  border-right: 1px solid #fff;
-  border-left: 1px solid #fff;
-  background: url('../images/comment-arrow.gif') no-repeat 0 center transparent;
 }
 
 span.p2p-comment-date {
@@ -56,6 +46,7 @@ span.p2p-comment-date {
 }
 
 .p2p-comment-text-wrapper {
+  position: relative;
   display: inline-block;
   margin-top: 8px;
   padding: 10px 10px 4px 25px;
@@ -63,6 +54,24 @@ span.p2p-comment-date {
   width: 76%;
   border: 1px solid #d3d7d9;
   vertical-align: top;
+}
+
+.p2p-comment-text-wrapper:before {
+  position: absolute;
+  top: 24px;
+  left: 11px;
+  color: #0285b0;
+  content: "\f0e5";
+  font-size: 41px;
+  font-family: FontAwesome;
+  -webkit-transform: scaleX(-1);
+  -moz-transform: scaleX(-1);
+  -ms-transform: scaleX(-1);
+  transform: scaleX(-1);
+}
+
+p.p2p-comment-text {
+  margin: 0 0 0 45px;
 }
 
 .p2p-comment-date span {
@@ -84,7 +93,7 @@ h3.p2p-comment-name {
 .p2p-comment-amount {
   display: table;
   padding: 4px 10px;
-  background: #d35400;
+  background: #e67e22;
   color: #fff;
   font-weight: bold;
 }

@@ -1663,3 +1663,29 @@ function springboard_p2p_campaign_should_show_comments($campaign) {
 function springboard_p2p_campaign_allows_comments($campaign) {
   return (bool) $campaign->field_p2p_allow_donor_comments[$campaign->language][0]['value'];
 }
+
+/**
+ * Alter CSS files before they are output on the page.
+ *
+ * @param $css
+ *   An array of all CSS items (files and inline CSS) being requested on the page.
+ *
+ * @see drupal_add_css()
+ * @see drupal_get_css()
+ */
+function springboard_p2p_css_alter(&$css) {
+
+  // Define targeted node types, add more as needed.
+  $node_types = array(
+    'p2p_personal_campaign',
+    'p2p_campaign_landing',
+  );
+
+  if (!empty($node) && in_array($node->type, $node_types)) {
+    // Exclude system.theme.css
+    $exclude = array(
+      'modules/system/system.theme.css' => FALSE,
+    );
+    $css = array_diff_key($css, $exclude);
+  }
+}

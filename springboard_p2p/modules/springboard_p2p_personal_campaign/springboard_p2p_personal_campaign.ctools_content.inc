@@ -36,7 +36,7 @@ function springboard_p2p_personal_campaign_default_ctools_custom_content() {
   $content->settings = array(
     'admin_title' => '',
     'title' => '',
-    'body' => '<a href="/peer-to-peer-campaign-search">View all campaigns</a>',
+    'body' => '<a class="view-all-search" href="/peer-to-peer-campaign-search">View all campaigns</a>',
     'format' => 'filtered_html',
     'substitute' => 1,
   );

@@ -133,6 +133,63 @@ input[type="submit"]:hover {
 
 /* Search widget */
 
+a.view-all-search {
+position: relative;
+  display: block;
+  margin-top: 10px;
+  padding: 5px 30px 5px 10px;
+  width: 160px;
+  background: #859596;
+  color: #fff;
+  vertical-align: top;
+  text-align: center;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+a.view-all-search:hover {
+  outline: none;
+  background: #2980b9;
+  text-decoration: none;
+}
+
+a.view-all-search:after {
+  position: absolute;
+  top: 6px;
+  right: 11px;
+  color: #fffe00;
+  content: "\f00e";
+  font-weight: normal;
+  font-size: 15px;
+  font-family: FontAwesome;
+  pointer-events: none;
+}
+
+.search-wrapper .view-content ul{
+  margin: 0;
+}
+
+.p2p-panelizer-campaign-landing .landing-side-block .content ul li,
+.search-wrapper .view-content ul li {
+  position: relative;
+  left: 14px;
+  margin-bottom: 4px;
+  list-style: none;
+}
+
+.p2p-panelizer-campaign-landing .landing-side-block .content ul li:before,
+.search-wrapper .view-content ul li:before {
+  position: absolute;
+  top: 2px;
+  left: -16px;
+  color: #ccc;
+  content: "\f054";
+  text-decoration: inherit;
+  font-weight: normal;
+  font-style: normal;
+  font-family: FontAwesome;
+}
+
 .panel-pane.pane-search-title {
   margin-top: 10px;
 }
@@ -174,7 +231,7 @@ input[type="submit"]:hover {
 .views-exposed-form .views-exposed-widget {
   position: relative;
   float: none;
-  padding: 0 0 0 4px;
+  padding: 0 4px 0 0;
 }
 
 #edit-title-wrapper {
@@ -218,6 +275,11 @@ input[type="submit"]:hover {
     left: 120px;
   }
 
+  a.view-all-search {
+    width: 134px;
+    font-size: 15px;
+  }
+
 }
 
 @media (max-width: 768px) {
@@ -228,6 +290,11 @@ input[type="submit"]:hover {
 
   .landing-search-form .ajax-progress .throbber {
     left: 220px;
+  }
+
+  a.view-all-search {
+    width: 160px;
+    font-size: 16px;
   }
 
 }
