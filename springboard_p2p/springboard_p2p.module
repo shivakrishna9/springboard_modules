@@ -1434,7 +1434,8 @@ function springboard_p2p_webform_client_form_validate($form, &$form_state) {
     $campaign = node_load($action['campaign_nid']);
     $goal = springboard_p2p_get_goal_from_campaign($campaign);
 
-    if (isset($goal['campaign_id'])) {
+    // Only override if a value is provided.
+    if (!empty($goal['campaign_id'])) {
       $form_state['values']['submitted']['cid'] = $goal['campaign_id'];
     }
   }
