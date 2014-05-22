@@ -370,7 +370,7 @@ function springboard_p2p_landing_panelizer_defaults() {
     );
     $pane->css = array(
       'css_id' => '',
-      'css_class' => 'landing-side-block',
+      'css_class' => 'landing-side-block side-gray-shaded',
     );
     $pane->extras = array();
     $pane->position = 5;

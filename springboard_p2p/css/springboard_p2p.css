@@ -172,7 +172,7 @@ a.view-all-search:after {
 .p2p-panelizer-campaign-landing .landing-side-block .content ul li,
 .search-wrapper .view-content ul li {
   position: relative;
-  left: 14px;
+  left: 24px;
   margin-bottom: 4px;
   list-style: none;
 }
@@ -261,6 +261,37 @@ a.view-all-search:after {
   border-radius: 0;
   background: #fff url("../images/spinner.gif") no-repeat;
   opacity: .9;
+}
+
+.side-gray-shaded  {
+  padding: 8px;
+  background: #eaeaea;
+}
+
+a.get-started-link {
+  position: relative;
+  display: block;
+  margin-top: 10px;
+  padding: 5px 10px 5px 10px;
+  background: #859596;
+  color: #fff;
+  vertical-align: top;
+  text-align: center;
+  text-decoration: none;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+a.get-started-link:hover {
+  outline: none;
+  background: #2980b9;
+  text-decoration: none;
+}
+
+.get-started-spinner {
+  margin: 0 0 0 10px;
+  color: #fffe00;
+  font-size: 20px;
 }
 
 /******************  Media queries, these should go last */

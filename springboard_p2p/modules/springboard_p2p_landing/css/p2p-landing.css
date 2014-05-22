@@ -268,13 +268,6 @@ ul.campaign-landing-grid a {
   margin: 0;
 }
 
-/* FAQ */
-
-.landing-side-block  {
-  padding: 8px;
-  background: #eaeaea;
-}
-
 /******************  Media queries, these should go last */
 @media (min-width: 769px) {
 
