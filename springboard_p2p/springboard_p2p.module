@@ -1648,9 +1648,16 @@ function springboard_p2p_preprocess_html(&$vars, $hook) {
 
 }
 
-function springboard_p2p_get_personal_campaign_comments($nid) {
-  $query = db_query("SELECT action_type, uid, show_name, amount, comment, created FROM {springboard_p2p_personal_campaign_action} WHERE personal_campaign_nid = :nid ORDER BY created DESC", array(':nid' => $nid));
-  return $query->fetchAll(PDO::FETCH_ASSOC);
+function springboard_p2p_get_personal_campaign_comments($nid, $exclude_empty_comments = FALSE) {
+  $query = "SELECT action_type, uid, show_name, amount, comment, created FROM {springboard_p2p_personal_campaign_action} WHERE personal_campaign_nid = :nid";
+
+  if ($exclude_empty_comments) {
+    $query .= " AND comment != ''";
+  }
+
+  $query .= " ORDER BY created DESC";
+
+  return db_query($query, array(':nid' => $nid))->fetchAll(PDO::FETCH_ASSOC);
 }
 
 function springboard_p2p_campaign_should_show_donor_roll($campaign) {

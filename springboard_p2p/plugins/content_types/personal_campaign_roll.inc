@@ -49,7 +49,7 @@ function springboard_p2p_personal_campaign_roll_render($subtype, $conf, $panel_a
     }
   }
 
-  $comments = springboard_p2p_get_personal_campaign_comments($personal_campaign->nid);
+  $comments = springboard_p2p_get_personal_campaign_comments($personal_campaign->nid, FALSE);
 
   $output = array();
   $output[] = '<table class="personal-campaign-roll">';

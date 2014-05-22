@@ -48,7 +48,7 @@ function springboard_p2p_personal_campaign_comments_render($subtype, $conf, $pan
     }
   }
 
-  $comments = springboard_p2p_get_personal_campaign_comments($personal_campaign->nid);
+  $comments = springboard_p2p_get_personal_campaign_comments($personal_campaign->nid, TRUE);
   $output = array();
 
   // Start the count.
