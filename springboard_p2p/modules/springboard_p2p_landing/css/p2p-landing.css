@@ -268,6 +268,16 @@ ul.campaign-landing-grid a {
   margin: 0;
 }
 
+/* ie8 hacks - ie renders at 940px wide fixed. */
+
+.ie8 ul.campaign-landing-grid li {
+  width: 45%;
+}
+
+.ie8 .campaign-landing-featured-view ul.campaign-landing-grid li {
+  width: 29%;
+}
+
 /******************  Media queries, these should go last */
 @media (min-width: 769px) {
 
