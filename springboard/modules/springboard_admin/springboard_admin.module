@@ -201,7 +201,7 @@ function springboard_admin_url_inbound_alter(&$path, $original_path, $path_langu
       $path = 'admin/config/search/metatags';
     }
     elseif (preg_match('|^springboard/reports/contacts$|', $path)) {
-      $path = 'admin/reports/springboard/contacts';
+      $path = 'admin/springboard/reports/contacts';
     }
     elseif (preg_match('|^springboard/reports/integration-reports((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
       if (preg_match('|^springboard/reports/integration-reports$|', $path)) {
@@ -352,7 +352,7 @@ function springboard_admin_init() {
     elseif (preg_match('|^/admin/config/search/metatags$|', $path)) {
       $goto_path = 'springboard/metatags';
     }
-    elseif (preg_match('|^/admin/reports/springboard/contacts$|', $path)) {
+    elseif (preg_match('|^/admin/springboard/reports/contacts$|', $path)) {
       $goto_path = 'springboard/reports/contacts';
     }
     elseif (preg_match('|^/admin/reports/salesforce((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
