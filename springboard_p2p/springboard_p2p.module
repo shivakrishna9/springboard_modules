@@ -448,6 +448,7 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
     $campaign_node = node_load($form['field_p2p_campaign'][$language]['#default_value'][0]);
 
   }
+
   // Hide uneditable fields
   if ($campaign_node) {
     // Manage personal campaign goal fields.
@@ -485,7 +486,7 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
   $form['revision_information']['#access'] = FALSE;
 
   // Add styles and ajax lookup to campaign url field
-  $form['field_p2p_personal_campaign_url'][$language][0]['value']['#field_prefix'] = url(NULL, array('absolute' => TRUE));
+  $form['field_p2p_personal_campaign_url'][$language][0]['value']['#field_prefix'] = url(variable_get('springboard_p2p_base_path', 'springboard_p2p'), array('absolute' => TRUE)) . '/';
   $form['field_p2p_personal_campaign_url'][$language][0]['value']['#attributes'] = array('class' => array('container-inline'));
   $form['field_p2p_personal_campaign_url'][$language]['#prefix'] = '<div id="personal-campaign-url-wrapper">';
   $form['field_p2p_personal_campaign_url'][$language]['#suffix'] = '</div>';
@@ -493,7 +494,6 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
     'callback' => 'springboard_p2p_personal_campaign_url_ajax',
     'wrapper' => 'personal-campaign-url-wrapper',
   );
-
 
   // Hide progress fields
   $form['field_p2p_campaign_progress']['#access'] = FALSE;
@@ -506,12 +506,15 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
 function springboard_p2p_personal_campaign_validate(&$form, $form_state) {
   // Validate campaign url alias for uniqueness.
   $language = $form_state['values']['language'];
-  $alias = isset($form_state['values']['field_personal_campaign_url'][$language][0]['value']) ? $form_state['values']['field_personal_campaign_url'][$language][0]['value'] : FALSE;
-  if ($alias && $path = drupal_lookup_path('source', $alias)) {
+  $alias = isset($form_state['values']['field_p2p_personal_campaign_url'][$language][0]['value']) ? $form_state['values']['field_p2p_personal_campaign_url'][$language][0]['value'] : FALSE;
+  if ($alias) {
+    $alias = variable_get('springboard_p2p_base_path', 'springboard_p2p') . '/' . $alias;
+
+    $path = drupal_lookup_path('source', $alias);
     // We only want to throw a validation error if the campaign url is in use
     // by some other path.
-    if (isset($form_state['node']) && $path != 'node/' . $form_state['node']->nid) {
-      form_set_error('field_personal_campaign_url', t('This url is already in use.'));
+    if ($path && isset($form_state['node']) && $path != 'node/' . $form_state['node']->nid) {
+      form_set_error('field_p2p_personal_campaign_url', t('This url is already in use.'));
     }
   }
 }
@@ -540,7 +543,9 @@ function springboard_p2p_personal_campaign_ajax(&$form, &$form_state) {
 function springboard_p2p_personal_campaign_url_ajax(&$form, $form_state) {
   $nid = $form_state['values']['nid'];
   $language = $form_state['values']['language'];
-  $path = $form_state['values']['field_p2p_personal_campaign_url'][$language][0]['value'];
+  $path = variable_get('springboard_p2p_base_path', 'springboard_p2p') . '/';
+  $path .= $form_state['values']['field_p2p_personal_campaign_url'][$language][0]['value'];
+
   $alias_exists = drupal_lookup_path('source', $path);
   $target = 'field_p2p_personal_campaign_url[' . $language. '][0][value]';
   if ($alias_exists) {
@@ -581,9 +586,10 @@ function springboard_p2p_sb_social_share_ur($url, $node) {
 function springboard_p2p_node_insert($node) {
   if ($node->type == 'p2p_personal_campaign') {
     // manage url alias for personal campaign node type
-    $alias = isset($node->field_personal_campaign_url[$node->language][0]['value']) ? $node->field_personal_campaign_url[$node->language][0]['value'] : FALSE;
+    $alias = isset($node->field_p2p_personal_campaign_url[$node->language][0]['value']) ? $node->field_p2p_personal_campaign_url[$node->language][0]['value'] : FALSE;
     // Discard existing alias settings if the node is being cloned.
     if ($alias && !isset($node->clone_from_original_nid)) {
+      $alias = variable_get('springboard_p2p_base_path', 'springboard_p2p') . '/' . $alias;
       $path = array(
         'source' => 'node/' . $node->nid,
         'alias' => $alias,
@@ -600,10 +606,12 @@ function springboard_p2p_node_update($node) {
   // manage url alias for personal campaign node type
   if ($node->type == 'p2p_personal_campaign') {
     $alias = FALSE;
-    if (isset($node->field_personal_campaign_url[$node->language]) && is_array($node->field_personal_campaign_url[$node->language])) {
-      $alias = count($node->field_personal_campaign_url[$node->language]) ? $node->field_personal_campaign_url[$node->language][0]['value'] : FALSE;
+    if (isset($node->field_p2p_personal_campaign_url[$node->language]) && is_array($node->field_p2p_personal_campaign_url[$node->language])) {
+      $alias = count($node->field_p2p_personal_campaign_url[$node->language]) ? $node->field_p2p_personal_campaign_url[$node->language][0]['value'] : FALSE;
     }
+
     if ($alias) {
+      $alias = variable_get('springboard_p2p_base_path', 'springboard_p2p') . '/' . $alias;
       $path = array(
         'source' => 'node/' . $node->nid,
         'alias' => $alias,
