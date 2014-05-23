@@ -26,40 +26,28 @@ $plugin = array(
  */
 function springboard_p2p_org_intro_render($subtype, $conf, $panel_args, $context) {
   $campaign = NULL;
-  $personal_campaign = NULL;
+
   if (empty($context) || empty($context->data)) {
     if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid'])) {
       $node = node_load($_GET['p2p_pcid']);
-      if ($node->type == 'p2p_personal_campaign' && isset($node->field_p2p_campaign[$node->language][0]['target_id'])) {
-        $campaign = node_load($node->field_p2p_campaign[$node->language][0]['target_id']);
-        $personal_campaign = $node;
-      }
-      else {
-        return;
-      }
     }
     else {
       return;
     }
   }
-
-  $node = $context->data;
+  else {
+    $node = $context->data;
+  }
 
   if ($node->type == 'p2p_personal_campaign' && isset($node->field_p2p_campaign[$node->language][0]['target_id'])) {
     $campaign = node_load($node->field_p2p_campaign[$node->language][0]['target_id']);
-    $personal_campaign = $node;
   }
 
-  if (!is_null($campaign) && !is_null($personal_campaign)) {
-
-    $output = array();
-
-    $output[] = $campaign->field_p2p_org_intro[$campaign->language][0]['safe_value'];
-
+  if (!is_null($campaign) && isset($campaign->field_p2p_org_intro[$campaign->language][0]['safe_value'])) {
     // Build the content type block.
     $block = new stdClass();
     $block->title = '';
-    $block->content = implode($output);
+    $block->content = $campaign->field_p2p_org_intro[$campaign->language][0]['safe_value'];
     return $block;
   }
 }
