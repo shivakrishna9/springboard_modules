@@ -57,13 +57,16 @@ function springboard_p2p_personal_campaign_goal_render($subtype, $conf, $panel_a
     $language = $personal_campaign->language;
     $goal_type = springboard_p2p_get_goal_type_from_campaign($campaign);
 
-    if ($goal_type == 'submissions') {
+    if ($goal_type == 'submissions' && isset($personal_campaign->field_p2p_personal_submit_goal[$language][0]['value'])) {
       $goal_value = $personal_campaign->field_p2p_personal_submit_goal[$language][0]['value'];
       $title = t('Submission Goal');
     }
-    elseif ($goal_type == 'amount') {
+    elseif ($goal_type == 'amount' && isset($personal_campaign->field_p2p_personal_campaign_goal[$language][0]['value'])) {
       $goal_value = $personal_campaign->field_p2p_personal_campaign_goal[$language][0]['value'];
-     $title = t('Personal Fundraising Goal');
+      $title = t('Personal Fundraising Goal');
+    }
+    else {
+      return;
     }
 
     $output[] = '<div class="goal-label">' . $title . '</div>';
