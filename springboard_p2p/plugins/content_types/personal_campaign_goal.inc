@@ -51,8 +51,6 @@ function springboard_p2p_personal_campaign_goal_render($subtype, $conf, $panel_a
   }
 
   if (!is_null($campaign) && !is_null($personal_campaign)) {
-    $title = '';
-    $goal_value = 0;
     $output = array();
     $language = $personal_campaign->language;
     $goal_type = springboard_p2p_get_goal_type_from_campaign($campaign);
