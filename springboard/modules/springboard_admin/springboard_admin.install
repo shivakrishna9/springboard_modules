@@ -110,7 +110,7 @@ function springboard_admin_create_menu_item($item, &$mlids, $plid = 0, $parent =
     $mlids[] = $mlid;  
     if(!empty($children)) {
       foreach ($children as $key => $child) {
-        springboard_admin_create_menu_item($child, &$mlids, $mlid, $item);
+        springboard_admin_create_menu_item($child, $mlids, $mlid, $item);
       }
     }
   }
