@@ -77,30 +77,14 @@ function springboard_admin_create_menu() {
   menu_save($sb_menu);
   // Define and add default menu items to the Springboard Administration menu.
   $sb_menu_items = springboard_admin_admin_menu_items();
-
   /*
    * Iterate through each item. Save the parent and then the children using the
    * parent's newly assign mlid as the child's plid. If the menu ever advances
    * to more than two levels, we will need to rewrite this to be recursive.
    */
+  $mlids = array();
   foreach ($sb_menu_items as $key => $item) {
-    $children = isset($item['_children']) ? $item['_children'] : array();
-    $mlids = array();
-    // Save a top-level item.
-    $plid = menu_link_save($item);
-
-    // If save was successful, loop through child items.
-    if ($plid) {
-      $mlids[] = $plid;
-      foreach ($children as $key => $child) {
-        $children[$key]['plid'] = $plid;
-        $mlid = menu_link_save($children[$key], array(), array($plid => $item));
-        $mlids[] = $mlid;
-      }
-    }
-    else {
-      drupal_set_message(t('springboard admin menu item @item and its children were not created due to an error', array('@item' => check_plain($item['title']))), 'warning');
-    }
+    springboard_admin_create_menu_item($item, $mlids);
   }
   // Set menu links as customized so they don't get wiped out in the
   // router check.
@@ -110,4 +94,27 @@ function springboard_admin_create_menu() {
   ))
   ->condition('mlid', $mlids, 'IN')
   ->execute();
+}
+
+function springboard_admin_create_menu_item($item, &$mlids, $plid = 0, $parent = array()) {
+  $children = isset($item['_children']) ? $item['_children'] : array();
+  // Set the item' parent ID if applicable
+  if ($plid > 0) {
+    $item['plid'] = $plid;  
+  }
+  // Save a the item.
+  $mlid = menu_link_save($item, array(), array($plid => $parent));
+  $mlids[] = $mlid;
+  // If save was successful, loop through child items.
+  if ($mlid) {
+    $mlids[] = $mlid;  
+    if(!empty($children)) {
+      foreach ($children as $key => $child) {
+        springboard_admin_create_menu_item($child, &$mlids, $mlid, $item);
+      }
+    }
+  }
+  else {
+    drupal_set_message(t('springboard admin menu item @item and its children were not created due to an error', array('@item' => check_plain($item['title']))), 'warning');
+  }
 }

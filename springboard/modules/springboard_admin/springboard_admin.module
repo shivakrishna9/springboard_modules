@@ -594,32 +594,65 @@ function springboard_admin_forms_page($springboard_type) {
 /**
  * Page callback for admin pages that are aggregates of child page links.
  *
+ * @param string path
+ *   The path to the current page that is an aggregate of child links.
+ * 
+ * @param array parents
+ *   An array of paths to parent pages in the Springboard Admin Menu definition. 
+ *   In order of least to most depth.
+ * 
  * @return string
  *   HTML output for the page.
  */
-function springboard_admin_aggregate_links_page($path) {
+function springboard_admin_aggregate_links_page($path, $parents = array()) {
   // Load the springboard admin menu so we know what links to render.
   $menu = springboard_admin_admin_menu_items();
-  $links = array();
-  foreach ($menu[$path]['_children'] as $item) {
-    $options = array();
-    if (isset($item['external'])) {
-      $options['external'] = $item['external'];
+  $item = array();
+  // If there are parents, iterate through the menu heirarchy to find the right
+  // set of links to render.
+  if (!empty($parents)) {
+    foreach($parents as $key => $parent_path) {
+      if ($key == 0) {
+        $parent = $menu[$parent_path];
+      }
+      else {
+        $parent = $parent['_children'][$parent_path];
+      }
     }
-    $links[] = array(
-      'title' => $item['link_title'],
-      'href' => $item['link_path'],
-      'options' => $options,
-    );
+    $item = isset($parent['_children'][$path]) ? $parent['_children'][$path] : array();
+  // If there are no parents, then load a top-level menu item.
+  } 
+  else {
+    $item = isset($menu[$path]) ? $menu[$path] : array();
   }
-
-  return theme_links(array(
-    'links' => $links,
-    'attributes' => array(
-      'class' => array('aggregate-links'),
-    ),
-    'heading' => '',
-  ));
+  
+  // Build our array of links if applicable.
+  $links = array();
+  if(isset($item['_children'])) {
+    foreach ($item['_children'] as $child) {
+      $options = array();
+      if (isset($child['external'])) {
+        $options['external'] = $child['external'];
+      }
+      $links[] = array(
+        'title' => $child['link_title'],
+        'href' => $child['link_path'],
+        'options' => $options,
+      );
+    }
+  }
+  if (!empty($links)) {
+    return theme_links(array(
+      'links' => $links,
+      'attributes' => array(
+        'class' => array('aggregate-links'),
+      ),
+      'heading' => '',
+    ));
+  }
+  else {
+    return t('There was an error rendering this page, please choose a different option from the administrative menu');
+  }
 }
 
 /**
