@@ -622,7 +622,7 @@ function springboard_p2p_node_update($node) {
     $language = $node->language;
     // campaign intro
     if (!$node->field_p2p_personal_intro_edit[$language][0]['value']) {
-      $update_settings['body'] = $node->field_p2p_personal_intro[$language][0]['value'];
+      $update_settings['body'] = isset($node->field_p2p_personal_intro[$language][0]['value']) ? $node->field_p2p_personal_intro[$language][0]['value'] : '';
     }
     // images
     if (!$node->field_p2p_images_edit[$language][0]['value']) {
@@ -630,7 +630,16 @@ function springboard_p2p_node_update($node) {
     }
     // video
     if (!$node->field_p2p_video_embed_edit[$language][0]['value']) {
-      $update_settings['field_p2p_video_embed'] = $node->field_p2p_video_embed[$language][0];
+
+      $empty_video_field = array (
+        'video_url' => '',
+        'thumbnail_path' => '',
+        'video_data' => NULL,
+        'embed_code' => NULL,
+        'description' => NULL,
+      );
+
+      $update_settings['field_p2p_video_embed'] = isset($node->field_p2p_video_embed[$language][0]) ? $node->field_p2p_video_embed[$language][0] : $empty_video_field;
     }
     if (count($update_settings)) {
       $associated_private_campaigns = springboard_p2p_get_personal_campaigns($node->nid);
@@ -639,16 +648,20 @@ function springboard_p2p_node_update($node) {
         $node_changed = FALSE;
         foreach ($update_settings as $field_key => $field_settings) {
           switch ($field_key) {
-            // Intentional fallthrough, both fields structure data similarly.
             case 'body':
-            case 'field_p2p_video_embed':
               if (!isset($private_campaign[$field_key][$language][0]['value']) || $private_campaign[$field_key][$language][0]['value'] != $field_settings) {
                 $private_campaign[$field_key][$language][0]['value'] = $field_settings;
                 $node_changed = TRUE;
               }
               break;
+            case 'field_p2p_video_embed':
+              if (!isset($private_campaign[$field_key][$language][0]) || $private_campaign[$field_key][$language][0] != $field_settings) {
+                $private_campaign[$field_key][$language][0] = $field_settings;
+                $node_changed = TRUE;
+              }
+              break;
             case 'field_p2p_campaign_images':
-              if ($private_campaign['field_p2p_campaign_images'][$language] != $field_settings) {
+              if (!isset($private_campaign['field_p2p_campaign_images'][$language]) || $private_campaign['field_p2p_campaign_images'][$language] != $field_settings) {
                 $private_campaign['field_p2p_campaign_images'][$language] = $field_settings;
                 $node_changed = TRUE;
               }
@@ -657,7 +670,7 @@ function springboard_p2p_node_update($node) {
         }
         if ($node_changed) {
           node_save((object) $private_campaign);
-          $link = l(t($private_campaign['title']), 'node/' . $private_campaign['nid']);
+          $link = l($private_campaign['title'], 'node/' . $private_campaign['nid']);
           drupal_set_message(t('Updated private campaign: !link', array('!link' => $link)));
         }
       }
