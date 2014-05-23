@@ -1257,7 +1257,7 @@ function springboard_p2p_password_reset_mail(&$message, $params) {
 
   $message['subject'] = t('P2P password reset', $options);
   $message['body'][] = t('Here is your password reset link.', $options);
-  $message['body'][] = springboard_p2p_set_password_url($params['account']);
+  $message['body'][] = springboard_p2p_set_password_url($params['account'], $params['p2p_cid']);
 }
 
 /**
@@ -1269,9 +1269,13 @@ function springboard_p2p_password_reset_mail(&$message, $params) {
  * @return string
  *   The URL to the P2P set password page for the account.
  */
-function springboard_p2p_set_password_url($account) {
+function springboard_p2p_set_password_url($account, $cid = NULL) {
   $url = user_pass_reset_url($account);
-  return str_replace('user/reset/', 'springboard_p2p/set_password/', $url);
+  $url = str_replace('user/reset/', 'springboard_p2p/set_password/', $url);
+  if (!is_null(($cid)) && is_numeric($cid)) {
+    $url .= '?p2p_cid=' . $cid;
+  }
+  return $url;
 }
 
 /**

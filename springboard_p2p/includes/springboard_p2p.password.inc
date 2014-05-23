@@ -13,8 +13,16 @@ function springboard_p2p_request_password_reset_page($account) {
     return MENU_NOT_FOUND;
   }
 
+  if (isset($_GET['p2p_cid']) && is_numeric($_GET['p2p_cid'])) {
+    $cid = $_GET['p2p_cid'];
+  }
+  else {
+    $cid = NULL;
+  }
+
   $params = array(
     'account' => $account,
+    'p2p_cid' => $cid,
   );
   $to = $account->mail;
   $language = user_preferred_language($account);
@@ -139,6 +147,8 @@ function springboard_p2p_set_password_form($form, &$form_state, $uid, $timestamp
     $form['actions']['submit'] = array('#type' => 'submit', '#value' => t('Set password'));
 
     $form['#submit'][] = 'springboard_p2p_set_password_form_submit';
+
+    springboard_p2p_campaign_id_form_element(&$form);
   }
 
   return $form;
@@ -155,6 +165,4 @@ function springboard_p2p_set_password_form_submit($form, &$form_state) {
   );
 
   user_save($account, $edit);
-
-  $form_state['redirect'] = 'user/' . $account->uid . '/personal-campaigns';
 }

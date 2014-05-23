@@ -153,7 +153,14 @@ function springboard_p2p_user_register_validate(&$form, &$form_state) {
         form_set_error('mail', t('The e-mail address %email is already taken.', array('%email' => $mail)));
       }
       else {
-        form_set_error('mail', t('The e-mail address %email is already registered. <a href="@password">Send me a password reset email.</a>', array('%email' => $mail, '@password' => url('springboard_p2p/password/' . $uid))));
+
+        $password_reset_request_url = url('springboard_p2p/password/' . $uid, array(
+            'query' => array(
+              'p2p_cid' => $form_state['values']['springboard_p2p_campaign_nid'],
+            ),
+          ));
+
+        form_set_error('mail', t('The e-mail address %email is already registered. <a href="@password">Send me a password reset email.</a>', array('%email' => $mail, '@password' => $password_reset_request_url)));
       }
     }
   }
