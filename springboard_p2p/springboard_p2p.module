@@ -484,7 +484,9 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
   // Hide revision UI
   $form['revision_information']['#access'] = FALSE;
 
-  // Add ajax lookup to campaign url field
+  // Add styles and ajax lookup to campaign url field
+  $form['field_p2p_personal_campaign_url'][$language][0]['value']['#field_prefix'] = url(NULL, array('absolute' => TRUE));
+  $form['field_p2p_personal_campaign_url'][$language][0]['value']['#attributes'] = array('class' => array('container-inline'));
   $form['field_p2p_personal_campaign_url'][$language]['#prefix'] = '<div id="personal-campaign-url-wrapper">';
   $form['field_p2p_personal_campaign_url'][$language]['#suffix'] = '</div>';
   $form['field_p2p_personal_campaign_url'][$language][0]['value']['#ajax'] = array(
