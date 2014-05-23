@@ -92,7 +92,7 @@ function springboard_admin_menu_alter(&$items) {
 function springboard_admin_url_inbound_alter(&$path, $original_path, $path_language) {
   // Node add pages for all types.
   if (preg_match('|^springboard/add(/.*)?|', $path, $matches)) {
-    $path = 'node/add' . $matches[1] . $query;
+    $path = 'node/add' . $matches[1];
   }
     
   /**
@@ -138,14 +138,92 @@ function springboard_admin_url_inbound_alter(&$path, $original_path, $path_langu
     else { 
       $path = 'node/' . $matches[1] . $matches[2];
     }  
-  }  
+  }
+  /**
+   * User paths.
+   */
+  elseif (preg_match('|^springboard/user?|', $path, $matches)) {
+    if (preg_match('|^springboard/user/([0-9]*)?|', $path, $m1)) {
+      if (preg_match('|^springboard/user/([0-9]*)((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m2)) {
+        $path = 'user/' . $m2[1] . $m2[2];
+      }
+      else {
+        $path = 'user/' . $m1[1];
+      }
+    }
+    else {
+      $path = 'user';
+    }
+  }
+  /**
+   * All other springboard paths.
+   */
   elseif (preg_match('|^springboard((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $matches)) {
     if (preg_match('|^springboard$|', $path)) {
       $path = 'admin/springboard';
     }
+    /** 
+     * Springboard paths that don't match the pattern.
+     */
+    elseif (preg_match('|^springboard/reports/donations$|', $path)) {
+      $path = 'admin/reports/salesforce/donations';
+    }
+    elseif (preg_match('|^springboard/goals$|', $path)) {
+      $path = 'admin/config/content/webform_goals';
+    }
+    elseif (preg_match('|^springboard/multivariate-testing$|', $path)) {
+      $path = 'admin/config/content/webform_ab';
+    }
+    elseif (preg_match('|^springboard/sb-social$|', $path)) {
+      $path = 'admin/config/services/springboard_social';
+    }
+    elseif (preg_match('|^springboard/market-source$|', $path)) {
+      $path = 'admin/config/search/market-source';
+    }
+    elseif (preg_match('|^springboard/ga$|', $path)) {
+      $path = 'admin/config/system/googleanalytics';
+    }
+    elseif (preg_match('|^springboard/metatags$|', $path)) {
+      $path = 'admin/config/search/metatags';
+    }
+    elseif (preg_match('|^springboard/reports/contacts$|', $path)) {
+      $path = 'admin/reports/springboard/contacts';
+    }
+    elseif (preg_match('|^springboard/reports/integration-reports((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
+      if (preg_match('|^springboard/reports/integration-reports$|', $path)) {
+        $path = 'admin/reports/salesforce';
+      }
+      else {
+        $path = 'admin/reports/salesforce' . $m1[1];
+      }
+    } 
+    elseif (preg_match('|^springboard/administrators$|', $path)) {
+      $path = 'admin/springboard/settings/administrators';
+    }
+    elseif (preg_match('|^springboard/settings/config$|', $path)) {
+      $path = 'admin/springboard/settings/config';
+    }
+    elseif (preg_match('|^springboard/settings/config/upsell$|', $path)) {
+      $path = 'admin/springboard/options/fundraiser/fundraiser_upsell';
+    }
+    elseif (preg_match('|^springboard/settings/config/upsell-thank-you$|', $path)) {
+      $path = 'admin/springboard/options/fundraiser/fundraiser_upsell/thank-you';
+    }
+    elseif (preg_match('|^springboard/settings/config/mappings$|', $path)) {
+      $path = 'admin/structure/salesforce/mappings';
+    }
+    elseif (preg_match('|^springboard/settings/config/mappings-add$|', $path)) {
+      $path = 'admin/structure/salesforce/mappings/add';
+    }
+    elseif (preg_match('|^springboard/settings/config/mappings-import$|', $path)) {
+      $path = 'admin/structure/salesforce/mappings/import';
+    }
+    /**
+     * All other springboard paths.
+     */
     else {
       $path = 'admin/springboard' . $matches[1];
-    } 
+    }    
   }
 }
 
@@ -177,7 +255,6 @@ function springboard_admin_init() {
     // Set up requested path and goto path.
     $path = request_uri();    
     $goto_path = FALSE;
-    
     // Node add pages,
     if (preg_match('|^/node/add(/.*)?|', $path, $matches)) {
       $goto_path = 'springboard/add' . $matches[1];
@@ -216,6 +293,18 @@ function springboard_admin_init() {
         elseif (preg_match('|^/node/([0-9]*)/webform((?:/[a-zA-Z0-9_\-]*)*)?|',  $path, $m2)) {
           $goto_path = 'springboard/node/' . $m2[1] . '/form-components' . $m2[2];
         }
+ * Implements hook_admin_paths().
+
+function springboard_admin_admin_paths() {
+  return array(
+    'springboard/asset-library' => TRUE,
+    'springboard/reports' => TRUE,
+    'springboard/settings' => TRUE,
+    'springboard/tools' => TRUE,
+  );
+} */
+
+/**
         // node/%/webform -> /springboard/node/%/form-components.
         else {
           $goto_path = 'springboard/node/' . $m1[1] . '/form-components';
@@ -226,18 +315,88 @@ function springboard_admin_init() {
         $goto_path = 'springboard/node/' . $matches[1] . $matches[2];
       }
     }
+    /**
+     * Admin paths that match the admin/springboard pattern.
+     */
     elseif (preg_match('|^/admin/springboard((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $matches)) {
       if (preg_match('|^/admin/springboard$|', $path)) {
         $goto_path = 'springboard';
+      }
+      elseif (preg_match('|^/admin/springboard/settings/administrators$|', $path)) {
+        $goto_path = 'springboard/administrators';
       }
       else {
         $goto_path = 'springboard' . $matches[1];
       }
     }
+    elseif (preg_match('|^/admin/reports/salesforce/donations$|', $path)) {
+      $goto_path = 'springboard/reports/donations';
+    }
+    elseif (preg_match('|^/admin/config/content/webform_goals$|', $path)) {
+      $goto_path = 'springboard/goals';
+    }
+    elseif (preg_match('|^/admin/config/content/webform_ab$|', $path)) {
+      $goto_path = 'springboard/multivariate-testing';
+    }
+    elseif (preg_match('|^/admin/config/services/springboard_social$|', $path)) {
+      $goto_path = 'springboard/sb-social';
+    }
+    elseif (preg_match('|^/admin/config/search/market-source$|', $path)) {
+      $goto_path = 'springboard/market-source';
+    }
+    elseif (preg_match('|^/admin/config/system/googleanalytics$|', $path)) {
+      $goto_path = 'springboard/ga';
+    }
+    elseif (preg_match('|^/admin/config/search/metatags$|', $path)) {
+      $goto_path = 'springboard/metatags';
+    }
+    elseif (preg_match('|^/admin/reports/springboard/contacts$|', $path)) {
+      $goto_path = 'springboard/reports/contacts';
+    }
+    elseif (preg_match('|^/admin/reports/salesforce((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
+      if (preg_match('|^/admin/reports/salesforce$|', $path)) {
+        $goto_path = 'springboard/reports/integration-reports';
+      }
+      else {
+        $goto_path = 'springboard/reports/integration-reports' . $m1[1];
+      }
+    }
+    
+    elseif (preg_match('|^/admin/springboard/options/fundraiser/fundraiser_upsell$|', $path)) {
+      $goto_path = 'springboard/settings/config/upsell';
+    }
+    elseif (preg_match('|^/admin/springboard/options/fundraiser/fundraiser_upsell/thank-you$|', $path)) {
+      $goto_path = 'springboard/settings/config/upsell-thank-you';
+    }
+    elseif (preg_match('|^/admin/structure/salesforce/mappings$|', $path)) {
+      $goto_path = 'springboard/settings/config/mappings';
+    }
+    elseif (preg_match('|^/admin/structure/salesforce/mappings/add$|', $path)) {
+      $goto_path = 'springboard/settings/config/mappings-add';
+    }
+    elseif (preg_match('|^/admin/structure/salesforce/mappings/import$|', $path)) {
+      $goto_path = 'springboard/settings/config/mappings-import';
+    }
+    /**
+     * User paths.
+     */
+    elseif (preg_match('|^/user?|', $path)) {
+      if (preg_match('|^/user/([0-9]*)?|', $path, $matches)) {
+        if (preg_match('|^/user/([0-9]*)((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
+          $goto_path = 'springboard/user/' . $m1[1] . $m1[2];
+        }
+        else {
+          $goto_path = 'springboard/user/' . $matches[1];
+        }
+      }
+      else {
+        $goto_path = 'springboard/user';
+      }
+    }
     if ($goto_path) {
       drupal_goto($goto_path, array('query' => $query, 'alias' => TRUE));
     } 
-  }
+  }  
 }
 
 function springboard_admin_admin_menu_output_build(&$content) {
@@ -289,20 +448,7 @@ function springboard_admin_admin_menu_output_alter(&$content) {
         unset($content['menu'][$key]);
       }
     }
-    dpm($content);
 }
-
-/**
- * Implements hook_admin_paths().
-
-function springboard_admin_admin_paths() {
-  return array(
-    'springboard/asset-library' => TRUE,
-    'springboard/reports' => TRUE,
-    'springboard/settings' => TRUE,
-    'springboard/tools' => TRUE,
-  );
-} */
 
 /**
  * Implements hook_permission().
