@@ -85,6 +85,16 @@ function springboard_p2p_dashboard() {
     ),
   );
 
+  $output['personal_campaigns'] = array();
+
+  $output['personal_campaigns']['heading'] = array(
+    '#markup' => '<h2>Personal campaigns</h2>',
+  );
+
+  $output['personal_campaigns']['personal_campaigns'] = array(
+    '#markup' => views_embed_view('p2p_personal_campaigns_admin', 'page'),
+  );
+
   return $output;
 }
 
