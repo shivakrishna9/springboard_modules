@@ -61,7 +61,7 @@ function springboard_p2p_campaign_header_render($subtype, $conf, $panel_args, $c
 }
 
 /**
- * Settings form
+ * Settings form.
  */
 function springboard_p2p_campaign_header_edit_form($form, &$form_state) {
   // No settings beyond context, which has already been handled.

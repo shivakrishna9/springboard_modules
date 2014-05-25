@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Plugin to display a get started pane.
+ */
 
 $plugin = array(
   'single' => TRUE,
@@ -28,8 +32,9 @@ function springboard_p2p_get_started_edit_form($form, &$form_state) {
 }
 
 /**
- * Run-time rendering of the body of the block (content type)
- * See ctools_plugin_examples for more advanced info
+ * Run-time rendering of the body of the block (content type).
+ *
+ * See ctools_plugin_examples for more advanced info.
  */
 function springboard_p2p_get_started_render($subtype, $conf, $args, $contexts) {
 
@@ -41,7 +46,7 @@ function springboard_p2p_get_started_render($subtype, $conf, $args, $contexts) {
   // Title.
   $title = t('Start Your Own Campaign');
 
-  // define the reg link.
+  // Define the reg link.
   $getstarted_link = "/springboard_p2p/register";
 
   // Define the site name.
@@ -50,10 +55,10 @@ function springboard_p2p_get_started_render($subtype, $conf, $args, $contexts) {
   $output = array();
 
   // Create the output to be rendered.
-  $output[] = '<p>' . t('Want to Start your own fundraising campaign for ') .  $site_name .  t('?') . '</p>';
+  $output[] = '<p>' . t('Want to start your own fundraising campaign for @site_name?', array('@site_name' => $site_name)) . '</p>';
   $output[] = '<a class="get-started-link" href=" ' .  $getstarted_link  . ' ">' . t('Get Started') . '<i class="fa fa-cog fa-spin get-started-spinner"></i></a>';
 
-  // initial content is blank.
+  // Initial content is blank.
   // Build the content type block.
   $block = new stdClass();
   $block->title = $title;
