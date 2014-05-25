@@ -29,7 +29,7 @@ function springboard_p2p_register_render($subtype, $conf, $panel_args, $context)
 
   // Build the content type block.
   $block = new stdClass();
-  $block->title = 'New account';
+  $block->title = 'Create a new account';
   $block->content = drupal_get_form('springboard_p2p_user_register_form');
 
   return $block;

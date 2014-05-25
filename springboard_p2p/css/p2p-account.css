@@ -1,0 +1,157 @@
+/* Some basic deafults for p2p pages */
+
+html body {
+  color: #5b5b5b;
+}
+
+body ul,
+body ol {
+  margin: 0;
+  padding: 0;
+}
+
+body h2 a:hover,
+body h3 a:hover {
+  text-decoration: none;
+}
+
+body a {
+  color: #0285b0;
+}
+
+.pager {
+  margin: 10px 0;
+}
+
+.pager li {
+  display: inline;
+  margin: 0 4px;
+}
+
+.pager li > a,
+.pager li > span {
+  display: inline-block;
+  padding: 5px 14px;
+  border: 1px solid #ddd;
+  -webkit-border-radius: 0;
+  border-radius: 0;
+  -moz-border-radius : 0;
+  background-color: #fff;
+}
+
+.p2p-page-type h2,
+.p2p-page-type h3 {
+  margin: 0 0 12px 0;
+  color: #5b5b5b;
+  font-size: 22px;
+  line-height: 1.1em;
+}
+
+/* user account */
+
+.p2p-page-type h2,
+.p2p-page-type h3 {
+  margin: 0 0 12px 0;
+  color: #5b5b5b;
+  font-size: 22px;
+  line-height: 1.1em;
+}
+
+.reg-pane,
+.pane-social-login {
+  padding: 14px 0 8px 14px;
+  border: 1px solid #a6a6a6;
+}
+
+.reg-pane{
+  padding: 14px 0 8px 11%;
+}
+
+.reg-pane .form-wrapper {
+  width: 48%;
+  display: inline-block;
+  vertical-align: top;
+}
+
+.reg-pane .control-group {
+  width: 48%;
+  clear: none;
+  float: none;
+  display: inline-block;
+}
+
+.reg-pane #edit-account {
+  width: 99%;
+}
+
+.reg-pane #edit-account .control-group {
+  width: 99%;
+}
+
+.reg-pane #edit-account .control-group  .control-group {
+  width: 48%;
+  display: inline-block;
+  vertical-align: top;
+}
+
+.reg-pane .password-strength {
+  width: 70%;
+  float: none;
+  margin: 1.4em 0;
+}
+
+.reg-pane .control-group.confirm-parent {
+  margin-top: 44px;
+}
+
+.reg-pane div.password-confirm {
+  float: none;
+  margin-top: 0;
+  visibility: hidden;
+  width: 100%;
+  position: relative;
+  top: -18px;
+}
+
+.reg-pane .control-group.email-wrapper .description {
+  font-size: 13px;
+  width: 84%;
+  line-height: 1.4em;
+}
+
+.pane-social-login {
+
+}
+
+
+/******************  Media queries, these should go last */
+
+@media (max-width: 980px) {
+
+  .control-group select,
+  .control-group input {
+    width: 170px;
+  }
+
+  .reg-pane{
+    padding: 14px 0 8px 4%;
+  }
+
+}
+
+@media (max-width: 768px) {
+
+  .control-group select,
+  .control-group input {
+    width: 90%;
+  }
+
+  .reg-pane .form-wrapper {
+    width: 99%;
+  }
+
+  .reg-pane .control-group {
+    width: 99%;
+  }
+
+}

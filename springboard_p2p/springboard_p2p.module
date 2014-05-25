@@ -1813,7 +1813,7 @@ function springboard_p2p_page_alter(&$page) {
     $p2p_css = array(
       '#attached' => array(
         'css' => array(
-          $mod_path . '/css/springboard_p2p.css' => array(
+          $mod_path . '/css/springboard-p2p.css' => array(
             'group' => CSS_THEME,
             'weight' => 9999,
           ),
@@ -1822,6 +1822,33 @@ function springboard_p2p_page_alter(&$page) {
     );
     drupal_render($p2p_css);
   }
+
+  //@Todo - make this more specific
+    $p2p_account_css = array(
+      '#attached' => array(
+        'css' => array(
+          $mod_path . '/css/p2p-account.css' => array(
+            'group' => CSS_THEME,
+            'weight' => 9999,
+          ),
+        ),
+      ),
+    );
+    drupal_render($p2p_account_css);
+
+  // Custom scripts, let's load this last.
+  //@Todo - make this more specific
+  $p2p_account_js = array(
+    '#attached' => array(
+      'js' => array(
+        $mod_path . '/js/springboard-p2p.js' => array(
+          'group' => JS_THEME,
+          'weight' => 9999,
+        ),
+      ),
+    ),
+  );
+  drupal_render($p2p_account_js);
 
 }
 

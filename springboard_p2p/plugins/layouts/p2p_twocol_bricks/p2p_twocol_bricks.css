@@ -67,15 +67,9 @@
 
 @media (max-width: 768px) {
 
-  html .panel-2col-bricks .panel-panel {
-    width: 99.8%;
-  }
-
-  .panel-middle-top-left {
-    width: 99%;
-  }
-
-  .panel-middle-top-right {
+  html .panel-2col-bricks .panel-panel,
+  .panel-middle-top-left,
+  .panel-middle-top-right{
     width: 99%;
   }
 
