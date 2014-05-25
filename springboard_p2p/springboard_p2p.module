@@ -391,12 +391,12 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
         $node = $form['#node'];
         $parents = $form['#parents'];
         $tree = $form['#tree'];
-         $form = array(
-           '#parents' => $parents,
-           '#node' => $node,
-           '#tree' => $tree,
-           '#array_parents' => array(),
-         );
+        $form = array(
+          '#parents' => $parents,
+          '#node' => $node,
+          '#tree' => $tree,
+          '#array_parents' => array(),
+        );
         $form_state['process_input'] = FALSE;
         // TODO: add link to request access.
         $form['unauthorized'] = array(
@@ -424,7 +424,7 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
       if (!$ajax) {
         $empty_image = $form['field_p2p_campaign_images'][$language][0];
         $images_editable = $campaign_node->field_p2p_images_edit[$language][0]['value'] ? TRUE : FALSE;
-        foreach($campaign_node->field_p2p_images[$language] as $index => $image) {
+        foreach ($campaign_node->field_p2p_images[$language] as $index => $image) {
           if (!isset($form['field_p2p_campaign_images'][$language][$index])) {
             $form['field_p2p_campaign_images'][$language][$index] = $form['field_p2p_campaign_images'][$language][0];
           }
@@ -462,6 +462,7 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
       case 'submissions':
         $form['field_p2p_personal_campaign_goal']['#access'] = FALSE;
         break;
+
       default:
         break;
     }
@@ -547,11 +548,11 @@ function springboard_p2p_personal_campaign_url_ajax(&$form, $form_state) {
   $path .= $form_state['values']['field_p2p_personal_campaign_url'][$language][0]['value'];
 
   $alias_exists = drupal_lookup_path('source', $path);
-  $target = 'field_p2p_personal_campaign_url[' . $language. '][0][value]';
+  $target = 'field_p2p_personal_campaign_url[' . $language . '][0][value]';
   if ($alias_exists) {
     // New node creation form, alias is in use by a pre-existing form.
     if (!$nid) {
-       form_set_error($target, t('This URL is already in use.'));
+      form_set_error($target, t('This URL is already in use.'));
     }
     // Editing existing node, alias in use by some other node.
     if ($nid && $alias_exists != 'node/' . $nid) {
@@ -561,8 +562,8 @@ function springboard_p2p_personal_campaign_url_ajax(&$form, $form_state) {
   else {
     drupal_set_message(t('URL ok.'));
   }
- // return theme('status_message'drupal_render($form['field_p2p_personal_campaign_url'][$language]);
- // unset($_SESSION['messages']);
+  // return theme('status_message'drupal_render($form['field_p2p_personal_campaign_url'][$language]);
+  // unset($_SESSION['messages']);
 
   $commands = array();
 
@@ -570,7 +571,7 @@ function springboard_p2p_personal_campaign_url_ajax(&$form, $form_state) {
   $commands[] = ajax_command_remove('div#personal-campaign-url-wrapper div.alert');
   $commands[] = ajax_command_append('div#personal-campaign-url-wrapper', theme('status_messages'));
   unset($_SESSION['messages']);
-return array('#type' => 'ajax', '#commands' => $commands);
+  return array('#type' => 'ajax', '#commands' => $commands);
 }
 
 /**
@@ -650,7 +651,7 @@ function springboard_p2p_node_update($node) {
     // video
     if (!$node->field_p2p_video_embed_edit[$language][0]['value']) {
 
-      $empty_video_field = array (
+      $empty_video_field = array(
         'video_url' => '',
         'thumbnail_path' => '',
         'video_data' => NULL,
@@ -662,7 +663,7 @@ function springboard_p2p_node_update($node) {
     }
     if (count($update_settings)) {
       $associated_private_campaigns = springboard_p2p_get_personal_campaigns($node->nid);
-      foreach($associated_private_campaigns as $nid => $private_campaign) {
+      foreach ($associated_private_campaigns as $nid => $private_campaign) {
         $private_campaign = (array) $private_campaign;
         $node_changed = FALSE;
         foreach ($update_settings as $field_key => $field_settings) {
@@ -673,12 +674,14 @@ function springboard_p2p_node_update($node) {
                 $node_changed = TRUE;
               }
               break;
+
             case 'field_p2p_video_embed':
               if (!isset($private_campaign[$field_key][$language][0]) || $private_campaign[$field_key][$language][0] != $field_settings) {
                 $private_campaign[$field_key][$language][0] = $field_settings;
                 $node_changed = TRUE;
               }
               break;
+
             case 'field_p2p_campaign_images':
               if (!isset($private_campaign['field_p2p_campaign_images'][$language]) || $private_campaign['field_p2p_campaign_images'][$language] != $field_settings) {
                 $private_campaign['field_p2p_campaign_images'][$language] = $field_settings;
@@ -1683,6 +1686,15 @@ function springboard_p2p_fundraiser_donation_post_submit($form, $form_state, $do
 
 }
 
+/**
+ * Formats a user's full name using the first name and last name fields.
+ *
+ * @param object $account
+ *   User account.
+ *
+ * @return string
+ *   The full name of the user.
+ */
 function springboard_p2p_format_user_full_name($account) {
   $language = !empty($account->language) ? $account->language : 'und';
   $full_name = '';
@@ -1774,6 +1786,11 @@ function springbaord_p2p_format_campaign_form_header($campaign) {
   return array();
 }
 
+/**
+ * Implements hook_page_alter().
+ *
+ * Adds customizations to the p2p webform.
+ */
 function springboard_p2p_page_alter(&$page) {
   if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid']) && arg(0) == 'node' && is_numeric(arg(1)) && is_null(arg(2))) {
     $personal_campaign_id = $_GET['p2p_pcid'];
@@ -1799,7 +1816,7 @@ function springboard_p2p_page_alter(&$page) {
   // Define the module path for use below.
   $mod_path = drupal_get_path('module', 'springboard_p2p');
 
-   // Define targeted node types, add more as needed.
+  // Define targeted node types, add more as needed.
   $node_types = array(
     'p2p_personal_campaign',
     'p2p_campaign_landing',
@@ -1823,21 +1840,21 @@ function springboard_p2p_page_alter(&$page) {
     drupal_render($p2p_css);
   }
 
-  //@Todo - make this more specific
-    $p2p_account_css = array(
-      '#attached' => array(
-        'css' => array(
-          $mod_path . '/css/p2p-account.css' => array(
-            'group' => CSS_THEME,
-            'weight' => 9999,
-          ),
+  // @todo - make this more specific
+  $p2p_account_css = array(
+    '#attached' => array(
+      'css' => array(
+        $mod_path . '/css/p2p-account.css' => array(
+          'group' => CSS_THEME,
+          'weight' => 9999,
         ),
       ),
-    );
-    drupal_render($p2p_account_css);
+    ),
+  );
+  drupal_render($p2p_account_css);
 
   // Custom scripts, let's load this last.
-  //@Todo - make this more specific
+  // @todo - make this more specific
   $p2p_account_js = array(
     '#attached' => array(
       'js' => array(
@@ -1853,14 +1870,11 @@ function springboard_p2p_page_alter(&$page) {
 }
 
 /**
- * Override or insert variables into the html templates.
+ * Implements hook_preprocess_HOOK().
  *
- * @param $vars
- *   An array of variables to pass to the theme template.
- * @param $hook
- *   The name of the template being rendered ("html" in this case.)
+ * Override or insert variables into the html templates.
  */
-function springboard_p2p_preprocess_html(&$vars, $hook) {
+function springboard_p2p_preprocess_html(&$vars) {
   // Define targeted node types, add more as needed.
   $node_types = array(
     'p2p_personal_campaign',
@@ -1876,6 +1890,17 @@ function springboard_p2p_preprocess_html(&$vars, $hook) {
 
 }
 
+/**
+ * Retrieve personal campaign comments for a given personal campaign nid.
+ *
+ * @param int $nid
+ *   The node id of the personal campaign.
+ * @param bool $exclude_empty_comments
+ *   Don't include empty actions with empty comments.
+ *
+ * @return mixed
+ *   An array of personal campaign actions, keyed by column name.
+ */
 function springboard_p2p_get_personal_campaign_comments($nid, $exclude_empty_comments = FALSE) {
   $query = "SELECT action_type, uid, show_name, amount, comment, created FROM {springboard_p2p_personal_campaign_action} WHERE personal_campaign_nid = :nid";
 
@@ -1888,26 +1913,47 @@ function springboard_p2p_get_personal_campaign_comments($nid, $exclude_empty_com
   return db_query($query, array(':nid' => $nid))->fetchAll(PDO::FETCH_ASSOC);
 }
 
+/**
+ * Determines if the given campaign has the donor roll enabled.
+ *
+ * @param object $campaign
+ *   The campaign node.
+ *
+ * @return bool
+ *   Whether the campaign has the donor roll/scroll enabled.
+ */
 function springboard_p2p_campaign_should_show_donor_roll($campaign) {
   return (bool) $campaign->field_p2p_show_donor_scroll[$campaign->language][0]['value'];
 }
 
+/**
+ * Determines if the given campaign has comment display enabled.
+ *
+ * @param object $campaign
+ *   The campaign node.
+ *
+ * @return bool
+ *   Whether the campaign has comment display enabled.
+ */
 function springboard_p2p_campaign_should_show_comments($campaign) {
   return (bool) $campaign->field_p2p_show_donor_comments[$campaign->language][0]['value'];
 }
 
+/**
+ * Determines if the given campaign allows new comments.
+ *
+ * @param object $campaign
+ *   The campaign node.
+ *
+ * @return bool
+ *   Whether the campaign allows commenting.
+ */
 function springboard_p2p_campaign_allows_comments($campaign) {
   return (bool) $campaign->field_p2p_allow_donor_comments[$campaign->language][0]['value'];
 }
 
 /**
- * Alter CSS files before they are output on the page.
- *
- * @param $css
- *   An array of all CSS items (files and inline CSS) being requested on the page.
- *
- * @see drupal_add_css()
- * @see drupal_get_css()
+ * Implements hook_css_alter().
  */
 function springboard_p2p_css_alter(&$css) {
 
