@@ -78,7 +78,7 @@ function springboard_p2p_personal_campaign_call_to_action_render($subtype, $conf
 }
 
 /**
- * Settings form
+ * Settings form.
  */
 function springboard_p2p_personal_campaign_call_to_action_edit_form($form, &$form_state) {
   // No settings beyond context, which has already been handled.

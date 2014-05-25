@@ -74,7 +74,6 @@ function springboard_p2p_personal_campaign_share_render($subtype, $conf, $panel_
   }
   $buttons = implode("\n", $buttons);
 
-
   $output[] = '<i class="fa fa-share-alt share-icon"></i>';
   $output[] = theme('sb_social_share', array('buttons' => $buttons));
 
@@ -87,7 +86,7 @@ function springboard_p2p_personal_campaign_share_render($subtype, $conf, $panel_
 }
 
 /**
- * Settings form
+ * Settings form.
  */
 function springboard_p2p_personal_campaign_share_edit_form($form, &$form_state) {
   // No settings beyond context, which has already been handled.

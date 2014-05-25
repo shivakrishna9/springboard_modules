@@ -65,7 +65,7 @@ function springboard_p2p_personal_campaign_roll_render($subtype, $conf, $panel_a
     // Define ospan/ even for use in the definition list.
     $zebra_class = ($zebra % 2) ? 'odd' : 'even';
 
-    $output[] = '<tr class="personal-campaign-roll-donor ' . $zebra_class .'">';
+    $output[] = '<tr class="personal-campaign-roll-donor ' . $zebra_class . '">';
 
     if ($comment['show_name']) {
       $output[] = '<td>';
@@ -99,7 +99,7 @@ function springboard_p2p_personal_campaign_roll_render($subtype, $conf, $panel_a
 }
 
 /**
- * Settings form
+ * Settings form.
  */
 function springboard_p2p_personal_campaign_roll_edit_form($form, &$form_state) {
   // No settings beyond context, which has already been handled.

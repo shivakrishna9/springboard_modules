@@ -18,7 +18,7 @@ $plugin = array(
   // or we'll loose the context and title settings.
   'edit form' => 'springboard_p2p_login_edit_form',
   'render callback' => 'springboard_p2p_login_render',
-//  'required context' => new ctools_context_required(t('Node'), 'node'),
+  // 'required context' => new ctools_context_required(t('Node'), 'node'),
 );
 
 /**
@@ -35,7 +35,7 @@ function springboard_p2p_login_render($subtype, $conf, $panel_args, $context) {
 }
 
 /**
- * Settings form
+ * Settings form.
  */
 function springboard_p2p_login_edit_form($form, &$form_state) {
   // No settings beyond context, which has already been handled.

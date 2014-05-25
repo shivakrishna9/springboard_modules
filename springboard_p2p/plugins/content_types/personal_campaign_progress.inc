@@ -91,7 +91,7 @@ function springboard_p2p_personal_campaign_progress_render($subtype, $conf, $pan
 }
 
 /**
- * Settings form
+ * Settings form.
  */
 function springboard_p2p_personal_campaign_progress_edit_form($form, &$form_state) {
   // No settings beyond context, which has already been handled.

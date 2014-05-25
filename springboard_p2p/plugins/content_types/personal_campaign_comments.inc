@@ -61,7 +61,7 @@ function springboard_p2p_personal_campaign_comments_render($subtype, $conf, $pan
     // Define ospan/ even for use in the definition list.
     $zebra_class = ($zebra % 2) ? 'odd' : 'even';
 
-    $output[] = '<li class="personal-campaign-comment-list ' . $zebra_class .'">';
+    $output[] = '<li class="personal-campaign-comment-list ' . $zebra_class . '">';
 
     $output[] = '<span class="p2p-comment-name-amount-wrapper">';
 
@@ -87,7 +87,8 @@ function springboard_p2p_personal_campaign_comments_render($subtype, $conf, $pan
     $output[] = format_date($comment['created'], "custom", "n / j / y");
     $output[] = '</span>';
 
-    $output[] = '</span>'; // p2p-comment-name-amount
+    // p2p-comment-name-amount
+    $output[] = '</span>';
 
     $output[] = '<span class="p2p-comment-text-wrapper">';
 
@@ -98,14 +99,14 @@ function springboard_p2p_personal_campaign_comments_render($subtype, $conf, $pan
       $output[] = '</p>';
     }
 
-    $output[] = '</span>'; // p2p-comment-text-wrapper"
+    // p2p-comment-text-wrapper
+    $output[] = '</span>';
 
     $output[] = '</li>';
     $zebra++;
   }
 
   $output[] = ' </ul>';
-
 
   // Build the content type block.
   $block = new stdClass();
@@ -116,7 +117,7 @@ function springboard_p2p_personal_campaign_comments_render($subtype, $conf, $pan
 }
 
 /**
- * Settings form
+ * Settings form.
  */
 function springboard_p2p_personal_campaign_comments_edit_form($form, &$form_state) {
   // No settings beyond context, which has already been handled.

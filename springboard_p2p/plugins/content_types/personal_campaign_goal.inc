@@ -81,7 +81,7 @@ function springboard_p2p_personal_campaign_goal_render($subtype, $conf, $panel_a
 }
 
 /**
- * Settings form
+ * Settings form.
  */
 function springboard_p2p_personal_campaign_goal_edit_form($form, &$form_state) {
   // No settings beyond context, which has already been handled.

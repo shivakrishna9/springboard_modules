@@ -53,7 +53,7 @@ function springboard_p2p_org_intro_render($subtype, $conf, $panel_args, $context
 }
 
 /**
- * Settings form
+ * Settings form.
  */
 function springboard_p2p_org_intro_edit_form($form, &$form_state) {
   // No settings beyond context, which has already been handled.
