@@ -8,9 +8,9 @@ include_once 'springboard_p2p_personal_campaign.features.inc';
 
 
 /**
- * Specified ctools plugins overrides
+ * Specified ctools plugins overrides.
  *
- * Implements hook_ctools_plugin_directory();
+ * Implements hook_ctools_plugin_directory().
  */
 function springboard_p2p_landing_ctools_plugin_directory($owner, $plugin_type) {
   // Define the custom panels templates folder.
@@ -138,10 +138,10 @@ function _springboard_p2p_personal_campaign_menu_theme_callback() {
   // Define node.
   $node = menu_get_object();
 
-  //Only if p2p_personal_campaign.
+  // Only if p2p_personal_campaign.
   if ((!empty($node) && $node->type == 'p2p_personal_campaign') || (arg(0) === 'node' && arg(1) === 'add' && arg(2) === 'p2p-personal-campaign')) {
-    // define the front end theme.
-    //@Todo it would be better to define the current default theme rather than hard coding, i.e. aspca.
+    // Define the front end theme.
+    // @todo it would be better to define the current default theme rather than hard coding.
     return 'springboard_frontend';
   }
 }
