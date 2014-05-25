@@ -72,6 +72,12 @@ function springboard_p2p_schema() {
   return $schema;
 }
 
+/**
+ * The schema definition for the personal campaign action table.
+ *
+ * @return array
+ *   Schema definition.
+ */
 function springboard_p2p_personal_campaign_action_schema() {
   return array(
     'description' => 'Stores data about a user completing a form for a personal campaign.',
