@@ -586,7 +586,13 @@ function springboard_p2p_sb_social_share_ur($url, $node) {
 function springboard_p2p_node_insert($node) {
   if ($node->type == 'p2p_personal_campaign') {
     // manage url alias for personal campaign node type
-    $alias = isset($node->field_p2p_personal_campaign_url[$node->language][0]['value']) ? $node->field_p2p_personal_campaign_url[$node->language][0]['value'] : FALSE;
+    $alias = isset($node->field_p2p_personal_campaign_url[$node->language][0]['value']) ? $node->field_p2p_personal_campaign_url[$node->language][0]['value'] : '';
+    $alias = trim($alias);
+
+    if ($alias == '') {
+      $alias = springboard_p2p_create_alias_from_title($node->title);
+    }
+
     // Discard existing alias settings if the node is being cloned.
     if ($alias && !isset($node->clone_from_original_nid)) {
       $alias = variable_get('springboard_p2p_base_path', 'springboard_p2p') . '/' . $alias;
@@ -605,9 +611,14 @@ function springboard_p2p_node_insert($node) {
 function springboard_p2p_node_update($node) {
   // manage url alias for personal campaign node type
   if ($node->type == 'p2p_personal_campaign') {
-    $alias = FALSE;
+    $alias = '';
     if (isset($node->field_p2p_personal_campaign_url[$node->language]) && is_array($node->field_p2p_personal_campaign_url[$node->language])) {
-      $alias = count($node->field_p2p_personal_campaign_url[$node->language]) ? $node->field_p2p_personal_campaign_url[$node->language][0]['value'] : FALSE;
+      $alias = count($node->field_p2p_personal_campaign_url[$node->language]) ? $node->field_p2p_personal_campaign_url[$node->language][0]['value'] : '';
+    }
+    $alias = trim($alias);
+
+    if ($alias == '') {
+      $alias = springboard_p2p_create_alias_from_title($node->title);
     }
 
     if ($alias) {
@@ -684,6 +695,60 @@ function springboard_p2p_node_update($node) {
       }
     }
   }
+}
+
+/**
+ * Creates a URL safe path from the node title.
+ *
+ * @todo There's probably an easier way or built in function to do this.
+ *
+ * @param string $title
+ *   The node title.
+ *
+ * @return mixed|string
+ *   A URL safe path.
+ */
+function springboard_p2p_create_alias_from_title($title) {
+
+  $replacements = array(
+    ' ' => '-',
+    '"' => '',
+    "'" => '',
+    '`' => '',
+    ',' => '',
+    '.' => '',
+    '_' => '-',
+    ':' => '',
+    ';' => '',
+    '|' => '',
+    '{' => '',
+    '}' => '',
+    '[' => '',
+    ']' => '',
+    '+' => '',
+    '=' => '',
+    '*' => '',
+    '&' => '',
+    '%' => '',
+    '^' => '',
+    '$' => '',
+    '#' => '',
+    '@' => '',
+    '!' => '',
+    '~' => '',
+    '(' => '',
+    ')' => '',
+    '?' => '',
+    '<' => '',
+    '>' => '',
+    '/' => '',
+    '\\' => '',
+  );
+
+  $title = drupal_strtolower(trim($title));
+  $title = str_replace(array_keys($replacements), array_values($replacements), $title);
+
+  return $title;
 }
 
 /**
