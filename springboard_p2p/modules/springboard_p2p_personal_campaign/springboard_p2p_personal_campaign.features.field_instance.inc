@@ -343,7 +343,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
     'entity_type' => 'node',
     'field_name' => 'field_p2p_personal_submit_goal',
     'label' => 'Submission Goal',
-    'required' => 0,
+    'required' => 1,
     'settings' => array(
       'text_processing' => 0,
       'user_register_form' => FALSE,
