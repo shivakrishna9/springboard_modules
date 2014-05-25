@@ -148,7 +148,7 @@ function springboard_p2p_set_password_form($form, &$form_state, $uid, $timestamp
 
     $form['#submit'][] = 'springboard_p2p_set_password_form_submit';
 
-    springboard_p2p_campaign_id_form_element(&$form);
+    springboard_p2p_campaign_id_form_element($form);
   }
 
   return $form;
