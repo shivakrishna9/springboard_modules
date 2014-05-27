@@ -63,12 +63,8 @@ body p {
 
 .reg-pane,
 .pane-social-login {
-  padding: 6px 0 8px 14px;
+  padding: 6px 0 8px 3%;
   border: 1px solid #a6a6a6;
-}
-
-.reg-pane {
-  padding: 6px 0 8px 7%;
 }
 
 .reg-pane .form-wrapper {
@@ -123,37 +119,48 @@ body p {
   line-height: 1.4em;
 }
 
-.pane-social-login {
-
-}
-
 .pane-campaign-header {
   margin: 0 0 20px 0;
 }
 
 /******************  Media queries, these should go last */
 
-@media (max-width: 980px) {
+@media (max-width: 1169px) {
 
   .control-group select,
   .control-group input {
-    width: 170px;
+    width: 160px;
   }
 
-  .reg-pane {
-    padding: 14px 0 8px 4%;
+  .reg-pane,
+  .pane-social-login  {
+    padding: 14px 0 8px 7%;
   }
 
-  .reg-pane .form-wrapper {
-    width: 46%;
+  /*.reg-pane .form-wrapper {*/
+    /*width: 46%;*/
+  /*}*/
+
+  /*.reg-pane .control-group {*/
+    /*width: 46%;*/
+  /*}*/
+
+  /*.reg-pane #edit-account .control-group .control-group {*/
+    /*width: 46%;*/
+  /*}*/
+
+}
+
+@media (max-width: 980px) {
+
+  .reg-pane,
+  .pane-social-login  {
+    padding: 14px 0 8px 2%;
   }
 
-  .reg-pane .control-group {
-    width: 46%;
-  }
-
-  .reg-pane #edit-account .control-group .control-group {
-    width: 46%;
+  .control-group select,
+  .control-group input {
+    width: 120px;
   }
 
 }
@@ -165,10 +172,7 @@ body p {
     width: 90%;
   }
 
-  .reg-pane .form-wrapper {
-    width: 99%;
-  }
-
+  .reg-pane .form-wrapper,
   .reg-pane .control-group {
     width: 99%;
   }
