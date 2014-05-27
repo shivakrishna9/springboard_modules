@@ -12,7 +12,6 @@
  * enabledness of fields.
  */
 function springboard_p2p_user_register_form($form, &$form_state) {
-  form_load_include($form_state, 'inc', 'springboard_p2p', 'includes/springboard_p2p.register');
   $form = array();
 
   $admin = user_access('administer users');
@@ -95,19 +94,28 @@ function springboard_p2p_user_register_form($form, &$form_state) {
   springboard_p2p_campaign_id_form_element($form);
 
   if (isset($form['sbp_state']) && isset($form['sbp_country'])) {
-    $form['sbp_country'][$form['sbp_country']['#language']]['#ajax'] = array(
-      'callback' => 'springboard_p2p_register_form_state_ajax_submit',
-      'wrapper' => 'zone-select-wrapper',
-      'method' => 'replace',
-      'effect' => 'fade',
-    );
-
-    $form['sbp_state'][$form['sbp_state']['#language']]['#prefix'] = '<div id="zone-select-wrapper">';
-    $form['sbp_state'][$form['sbp_state']['#language']]['#suffix'] = '</div>';
-
+    form_load_include($form_state, 'inc', 'springboard_p2p', 'includes/springboard_p2p.register');
+    springboard_p2p_add_state_and_country_ajax($form);
   }
 
   return $form;
+}
+
+/**
+ * Adds ajax and wrapper class around state and country user fields.
+ *
+ * @param array $form
+ */
+function springboard_p2p_add_state_and_country_ajax(&$form) {
+  $form['sbp_country'][$form['sbp_country']['#language']]['#ajax'] = array(
+    'callback' => 'springboard_p2p_register_form_state_ajax_submit',
+    'wrapper' => 'zone-select-wrapper',
+    'method' => 'replace',
+    'effect' => 'fade',
+  );
+
+  $form['sbp_state'][$form['sbp_state']['#language']]['#prefix'] = '<div id="zone-select-wrapper">';
+  $form['sbp_state'][$form['sbp_state']['#language']]['#suffix'] = '</div>';
 }
 
 /**

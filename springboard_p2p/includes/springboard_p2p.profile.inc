@@ -56,5 +56,10 @@ function springboard_p2p_complete_profile_form($form, &$form_state, $account) {
 
   springboard_p2p_campaign_id_form_element($form);
 
+  if (isset($form['sbp_state']) && isset($form['sbp_country'])) {
+    form_load_include($form_state, 'inc', 'springboard_p2p', 'includes/springboard_p2p.register');
+    springboard_p2p_add_state_and_country_ajax($form);
+  }
+
   return $form;
 }
