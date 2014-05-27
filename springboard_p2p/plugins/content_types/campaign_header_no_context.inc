@@ -11,7 +11,7 @@
  */
 $plugin = array(
   'single' => TRUE,
-  'title' => t('Campaign header (No context)'),
+  'title' => t('Campaign header (Node context)'),
   'description' => t('Displays the P2P campaign header image.'),
   'category' => t('Springboard P2P'),
   // Despite having no "settings" we need this function to pass back a form,
@@ -47,7 +47,7 @@ function springboard_p2p_campaign_header_no_context_render($subtype, $conf, $pan
   if (!is_null($campaign)) {
     // Build the content type block.
     $block = new stdClass();
-    $block->title = 'Campaign header';
+    $block->title = '';
     $block->content = springbaord_p2p_format_campaign_form_header($campaign);
     return $block;
   }

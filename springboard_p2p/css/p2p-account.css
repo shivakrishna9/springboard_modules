@@ -35,7 +35,7 @@ body a {
   border: 1px solid #ddd;
   -webkit-border-radius: 0;
   border-radius: 0;
-  -moz-border-radius : 0;
+  -moz-border-radius: 0;
   background-color: #fff;
 }
 
@@ -45,6 +45,10 @@ body a {
   color: #5b5b5b;
   font-size: 22px;
   line-height: 1.1em;
+}
+
+body p {
+  margin: 10px 0 0 0;
 }
 
 /* user account */
@@ -59,22 +63,22 @@ body a {
 
 .reg-pane,
 .pane-social-login {
-  padding: 14px 0 8px 14px;
+  padding: 6px 0 8px 14px;
   border: 1px solid #a6a6a6;
 }
 
-.reg-pane{
-  padding: 14px 0 8px 11%;
+.reg-pane {
+  padding: 6px 0 8px 7%;
 }
 
 .reg-pane .form-wrapper {
-  width: 48%;
+  width: 49%;
   display: inline-block;
   vertical-align: top;
 }
 
 .reg-pane .control-group {
-  width: 48%;
+  width: 49%;
   clear: none;
   float: none;
   display: inline-block;
@@ -88,8 +92,8 @@ body a {
   width: 99%;
 }
 
-.reg-pane #edit-account .control-group  .control-group {
-  width: 48%;
+.reg-pane #edit-account .control-group .control-group {
+  width: 49%;
   display: inline-block;
   vertical-align: top;
 }
@@ -123,6 +127,9 @@ body a {
 
 }
 
+.pane-campaign-header {
+  margin: 0 0 20px 0;
+}
 
 /******************  Media queries, these should go last */
 
@@ -133,7 +140,7 @@ body a {
     width: 170px;
   }
 
-  .reg-pane{
+  .reg-pane {
     padding: 14px 0 8px 4%;
   }
 

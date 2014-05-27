@@ -990,6 +990,73 @@ function springboard_p2p_fboauth_user_presave(&$edit, $fbuser) {
 }
 
 /**
+ * Alter the theme registry information returned from hook_theme().
+ *
+ * The theme registry stores information about all available theme hooks,
+ * including which callback functions those hooks will call when triggered,
+ * what template files are exposed by these hooks, and so on.
+ *
+ * Note that this hook is only executed as the theme cache is re-built.
+ * Changes here will not be visible until the next cache clear.
+ *
+ * The $theme_registry array is keyed by theme hook name, and contains the
+ * information returned from hook_theme(), as well as additional properties
+ * added by _theme_process_registry().
+ *
+ * For example:
+ * @code
+ * $theme_registry['user_profile'] = array(
+ *   'variables' => array(
+ *     'account' => NULL,
+ *   ),
+ *   'template' => 'modules/user/user-profile',
+ *   'file' => 'modules/user/user.pages.inc',
+ *   'type' => 'module',
+ *   'theme path' => 'modules/user',
+ *   'preprocess functions' => array(
+ *     0 => 'template_preprocess',
+ *     1 => 'template_preprocess_user_profile',
+ *   ),
+ * );
+ * @endcode
+ *
+ * @param $theme_registry
+ *   The entire cache of theme registry information, post-processing.
+ *
+ * @see hook_theme()
+ * @see _theme_process_registry()
+ */
+function springboard_p2p_theme_registry_alter(&$theme_registry) {
+  //dsm($theme_registry);
+
+  // Override fboauth's theme function, create a custom function for overriding below.
+  if (!empty($theme_registry['fboauth_action__connect']['function'])) {
+    $theme_registry['fboauth_action__connect']['function'] = '_springboard_p2p_fboauth_image';
+  }
+
+}
+
+/** Custom fboauth_action__connect function created above
+ */
+function _springboard_p2p_fboauth_image($variables) {
+
+  // Define the module path.
+  $mod_path = drupal_get_path('module', 'springboard_p2p');
+
+  // Ripped out and modified from fboauth.module.
+  $action = $variables['action'];
+  $link = $variables['properties'];
+  $url = url($link['href'], array('query' => $link['query']));
+  $link['attributes']['class'] = isset($link['attributes']['class']) ? $link['attributes']['class'] : 'facebook-action-connect';
+  $link['attributes']['rel'] = 'nofollow';
+  $attributes = isset($link['attributes']) ? drupal_attributes($link['attributes']) : '';
+  $src = '/' . $mod_path . '/images/fb-connect.png';
+  return '<a ' . $attributes . ' href="' . $url . '"><img title ="Login with Facebook" src="' . $src . '" alt="Login with Facebook" /></a>
+  <p class="fb-text">We\'ll never post anything without your permission.</p>';
+
+}
+
+/**
  * Access callback for the complete profile form.
  */
 function springboard_p2p_complete_profile_form_access($account) {
