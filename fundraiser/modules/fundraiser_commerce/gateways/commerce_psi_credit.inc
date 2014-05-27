@@ -23,6 +23,21 @@ function commerce_psi_credit_fundraiser_commerce_fundraiser_gateway_info() {
 }
 
 /**
+ * Implements hook_fundraiser_donation_form_config_check().
+ */
+function commerce_psi_credit_fundraiser_donation_form_config_check($node) {
+  foreach ($node->gateways as $method => $gateway) {
+    if (!empty($gateway['id'])) {
+      $gateway_config = _fundraiser_gateway_info($gateway['id']);
+      if ($gateway_config['gateway_details']['method_id'] == 'commerce_psi_credit' &&
+        $gateway_config['gateway_details']['settings']['txn_mode'] != COMMERCE_PSI_MODE_LIVE) {
+        return array(t('The PSI credit payment gateway is currently in !mode mode and will not process live transactions.', array('!mode' => $gateway_config['gateway_details']['settings']['txn_mode'])));
+      }
+    }
+  }
+}
+
+/**
  * Returns the form fields for this method.
  */
 function commerce_psi_credit_fundraiser_commerce_submit_form($payment_method, $config) {

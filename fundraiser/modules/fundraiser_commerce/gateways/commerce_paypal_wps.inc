@@ -22,6 +22,21 @@ function commerce_paypal_wps_fundraiser_commerce_fundraiser_gateway_info() {
 }
 
 /**
+ * Implements hook_fundraiser_donation_form_config_check().
+ */
+function commerce_paypal_wps_fundraiser_donation_form_config_check($node) {
+  foreach ($node->gateways as $method => $gateway) {
+    if (!empty($gateway['id'])) {
+      $gateway_config = _fundraiser_gateway_info($gateway['id']);
+      if ($gateway_config['gateway_details']['method_id'] == 'paypal_wps' &&
+        $gateway_config['gateway_details']['settings']['server'] == 'sandbox') {
+        return array(t('The PayPal WPS payment gateway is currently in sandbox mode and will not process live transactions.'));
+      }
+    }
+  }
+}
+
+/**
  * Callback function, use this form for the given gateway.
  */
 function commerce_paypal_wps_fundraiser_commerce_form($payment_method, $config) {

@@ -26,6 +26,22 @@ function commerce_authnet_fundraiser_commerce_fundraiser_gateway_info() {
 }
 
 /**
+ * Implements hook_fundraiser_donation_form_config_check().
+ */
+function commerce_authnet_fundraiser_donation_form_config_check($node) {
+  foreach ($node->gateways as $method => $gateway) {
+    if (!empty($gateway['id'])) {
+      $gateway_config = _fundraiser_gateway_info($gateway['id']);
+      dsm($gateway_config);
+      if ($gateway_config['gateway_details']['method_id'] == 'authnet_aim' &&
+        $gateway_config['gateway_details']['settings']['txn_mode'] != AUTHNET_TXN_MODE_LIVE) {
+        return array(t('The authorize.net payment gateway is currently in test mode and will not process live transactions.'));
+      }
+    }
+  }
+}
+
+/**
  * Callback function, use this form for the given gateway.
  */
 function commerce_authnet_fundraiser_commerce_form($payment_method) {
