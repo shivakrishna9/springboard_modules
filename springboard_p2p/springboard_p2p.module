@@ -277,9 +277,6 @@ function springboard_p2p_form_p2p_campaign_node_form_alter(&$form, &$form_state,
       if (isset($category->field_p2p_images[$lang_code]) && count($category->field_p2p_images[$lang_code] > 1)) {
         $category_images = $category->field_p2p_images[$lang_code];
 
-        // Remove the "upload a new file" row.
-        array_pop($category_images);
-
         unset($form_state['input']['field_p2p_images']);
 
         // Get the "upload a new file" row before destroying everything.
@@ -287,31 +284,10 @@ function springboard_p2p_form_p2p_campaign_node_form_alter(&$form, &$form_state,
         $max = max($children_keys);
         $upload_row = $form['field_p2p_images'][$lang_code][$max];
 
-        // In #default_value
-        // set the fid, uid, filename
-        // remove display, description
-        // add uri, filemime, filesize, status, timestamp, rdf mapping
-        //
-        // Set #weight to $delta
-        // remove #file_upload_delta, #theme, #theme_wrappers, #process, #title,
-        // #description, #field_name, #language, #display_field,
-        // #file_upload_title, #file_upload_description, #after_build,
-        // #field_parents
         $image_row = $upload_row;
         unset($image_row['#default_value']);
         unset($image_row['#weight']);
-        // unset($image_row['#file_upload_delta']);
-        // unset($image_row['#theme']);
-        // unset($image_row['#theme_wrappers']);
-        // unset($image_row['#process']);
-        // unset($image_row['#title']);
-        // unset($image_row['#description']);
-        // unset($image_row['#field_name']);
-        // unset($image_row['#language']);
-        // unset($image_row['#display_field']);
-        // unset($image_row['#file_upload_title']);
-        // unset($image_row['#file_upload_description']);
-        // unset($image_row['#after_build']);
+
         foreach ($category_images as $delta => $image) {
           $form['field_p2p_images'][$lang_code][$delta] = $image_row;
           $form['field_p2p_images'][$lang_code][$delta]['#default_value'] = $image;
@@ -320,6 +296,8 @@ function springboard_p2p_form_p2p_campaign_node_form_alter(&$form, &$form_state,
 
         // Put the last row back on.
         $last_delta = count($form['field_p2p_images'][$lang_code]);
+        $upload_row['#weight'] = $last_delta;
+        $upload_row['#delta'] = $last_delta;
         $form['field_p2p_images'][$lang_code][$last_delta] = $upload_row;
       }
     }
