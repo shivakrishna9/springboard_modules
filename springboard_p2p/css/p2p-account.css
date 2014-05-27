@@ -63,7 +63,7 @@ body p {
 
 .reg-pane,
 .pane-social-login {
-  padding: 6px 0 8px 3%;
+  padding: 6px 0 8px 6%;
   border: 1px solid #a6a6a6;
 }
 
@@ -125,7 +125,7 @@ body p {
 
 /******************  Media queries, these should go last */
 
-@media (max-width: 1169px) {
+@media (max-width: 1170px) {
 
   .control-group select,
   .control-group input {
@@ -137,17 +137,9 @@ body p {
     padding: 14px 0 8px 7%;
   }
 
-  /*.reg-pane .form-wrapper {*/
-    /*width: 46%;*/
-  /*}*/
-
-  /*.reg-pane .control-group {*/
-    /*width: 46%;*/
-  /*}*/
-
-  /*.reg-pane #edit-account .control-group .control-group {*/
-    /*width: 46%;*/
-  /*}*/
+  .pane-social-login img.fb-image {
+    max-width: 97%;
+  }
 
 }
 
