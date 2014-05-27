@@ -12,6 +12,7 @@
  * enabledness of fields.
  */
 function springboard_p2p_user_register_form($form, &$form_state) {
+  form_load_include($form_state, 'inc', 'springboard_p2p', 'includes/springboard_p2p.register');
   $form = array();
 
   $admin = user_access('administer users');
@@ -93,7 +94,53 @@ function springboard_p2p_user_register_form($form, &$form_state) {
 
   springboard_p2p_campaign_id_form_element($form);
 
+  if (isset($form['sbp_state']) && isset($form['sbp_country'])) {
+    $form['sbp_country'][$form['sbp_country']['#language']]['#ajax'] = array(
+      'callback' => 'springboard_p2p_register_form_state_ajax_submit',
+      'wrapper' => 'zone-select-wrapper',
+      'method' => 'replace',
+      'effect' => 'fade',
+    );
+
+    $form['sbp_state'][$form['sbp_state']['#language']]['#prefix'] = '<div id="zone-select-wrapper">';
+    $form['sbp_state'][$form['sbp_state']['#language']]['#suffix'] = '</div>';
+
+  }
+
   return $form;
+}
+
+/**
+ * AJAX callback for country field changes.
+ *
+ * Replace the state field with an updated version with the state list for the
+ * selected country.
+ */
+function springboard_p2p_register_form_state_ajax_submit($form, $form_state) {
+  $countries = fundraiser_commerce_get_countries();
+  $country_id = $form_state['values']['sbp_country'][$form['sbp_country']['#language']][0]['value'];
+  $state_select = $form['sbp_state'][$form['sbp_state']['#language']];
+
+  // Filter options down to just the zones available for this country.
+  if (isset($countries->countries[$country_id])) {
+    $available_zones = $countries->countries[$country_id]->zones;
+
+    // Given available zones, filter the dropdown to match.
+    if (!empty($available_zones)) {
+      $new_zone_options = array();
+      foreach ($available_zones as $zone) {
+        $new_zone_options[$zone->iso] = $zone->zone_name;
+      }
+      $state_select['#options'] = $new_zone_options;
+    }
+  }
+
+  return array(
+    '#type' => 'ajax',
+    '#commands' => array(
+      ajax_command_replace('#zone-select-wrapper', render($state_select)),
+    ),
+  );
 }
 
 /**
