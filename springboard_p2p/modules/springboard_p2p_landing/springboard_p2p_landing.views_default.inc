@@ -801,13 +801,45 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['pager']['options']['offset'] = '0';
   $handler->display->display_options['pager']['options']['id'] = '0';
   $handler->display->display_options['pager']['options']['quantity'] = '9';
+  $handler->display->display_options['defaults']['style_plugin'] = FALSE;
+  $handler->display->display_options['style_plugin'] = 'table';
+  $handler->display->display_options['style_options']['columns'] = array(
+    'title' => 'title',
+    'sbp_first_name' => 'sbp_first_name',
+    'sbp_last_name' => 'sbp_first_name',
+  );
+  $handler->display->display_options['style_options']['default'] = '-1';
+  $handler->display->display_options['style_options']['info'] = array(
+    'title' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => 'views-align-left',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'sbp_first_name' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => 'views-align-left',
+      'separator' => ' ',
+      'empty_column' => 0,
+    ),
+    'sbp_last_name' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+  );
+  $handler->display->display_options['defaults']['style_options'] = FALSE;
+  $handler->display->display_options['defaults']['row_plugin'] = FALSE;
+  $handler->display->display_options['defaults']['row_options'] = FALSE;
   $handler->display->display_options['defaults']['fields'] = FALSE;
   /* Field: Content: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
   $handler->display->display_options['fields']['title']['table'] = 'node';
   $handler->display->display_options['fields']['title']['field'] = 'title';
-  $handler->display->display_options['fields']['title']['label'] = '';
-  $handler->display->display_options['fields']['title']['exclude'] = TRUE;
   $handler->display->display_options['fields']['title']['alter']['word_boundary'] = FALSE;
   $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
   $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
@@ -816,8 +848,7 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['fields']['sbp_first_name']['table'] = 'field_data_sbp_first_name';
   $handler->display->display_options['fields']['sbp_first_name']['field'] = 'sbp_first_name';
   $handler->display->display_options['fields']['sbp_first_name']['relationship'] = 'uid_1';
-  $handler->display->display_options['fields']['sbp_first_name']['label'] = '';
-  $handler->display->display_options['fields']['sbp_first_name']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['sbp_first_name']['label'] = 'Name';
   $handler->display->display_options['fields']['sbp_first_name']['element_type'] = '0';
   $handler->display->display_options['fields']['sbp_first_name']['element_label_type'] = '0';
   $handler->display->display_options['fields']['sbp_first_name']['element_label_colon'] = FALSE;
@@ -828,8 +859,6 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['fields']['sbp_last_name']['field'] = 'sbp_last_name';
   $handler->display->display_options['fields']['sbp_last_name']['relationship'] = 'uid_1';
   $handler->display->display_options['fields']['sbp_last_name']['label'] = '';
-  $handler->display->display_options['fields']['sbp_last_name']['alter']['alter_text'] = TRUE;
-  $handler->display->display_options['fields']['sbp_last_name']['alter']['text'] = '[title] - [sbp_first_name] [sbp_last_name]';
   $handler->display->display_options['fields']['sbp_last_name']['element_type'] = '0';
   $handler->display->display_options['fields']['sbp_last_name']['element_label_type'] = '0';
   $handler->display->display_options['fields']['sbp_last_name']['element_label_colon'] = FALSE;
