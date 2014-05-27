@@ -1073,7 +1073,8 @@ function _springboard_p2p_fboauth_image($variables) {
   $link['attributes']['rel'] = 'nofollow';
   $attributes = isset($link['attributes']) ? drupal_attributes($link['attributes']) : '';
   $src = '/' . $mod_path . '/images/fb-connect.png';
-  return '<a ' . $attributes . ' href="' . $url . '"><img title ="Login with Facebook" src="' . $src . '" alt="Login with Facebook" /></a>';
+  return '<a ' . $attributes . ' href="' . $url . '"><img title ="Login with Facebook" src="' . $src . '" alt="Login with Facebook" /></a>
+  <p class="fb-text">We\'ll never post anything without your permission.</p>';
 
 }
 
