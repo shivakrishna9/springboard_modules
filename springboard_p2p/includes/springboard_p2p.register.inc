@@ -59,7 +59,7 @@ function springboard_p2p_user_register_form($form, &$form_state) {
 
   $form['actions']['submit'] = array(
     '#type' => 'submit',
-    '#value' => t('Create new account'),
+    '#value' => t('Create a new account'),
   );
 
   // Don't show the user the username field.

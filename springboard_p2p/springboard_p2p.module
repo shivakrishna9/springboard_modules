@@ -1861,6 +1861,11 @@ function springboard_p2p_page_alter(&$page) {
   // Define the module path for use below.
   $mod_path = drupal_get_path('module', 'springboard_p2p');
 
+  // Set a var for SB register
+     if (arg(0) == "springboard_p2p" && arg(1) == "register") {
+       $regpath = '';
+     }
+
   // Define targeted node types, add more as needed.
   $node_types = array(
     'p2p_personal_campaign',
@@ -1871,7 +1876,7 @@ function springboard_p2p_page_alter(&$page) {
   $node = menu_get_object();
 
   // Global p2p css file.
-  if (!empty($node) && in_array($node->type, $node_types)) {
+  if ((!empty($node) && in_array($node->type, $node_types)) || (isset($regpath))) {
     $p2p_css = array(
       '#attached' => array(
         'css' => array(

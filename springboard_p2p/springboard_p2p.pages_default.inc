@@ -70,7 +70,7 @@ function springboard_p2p_default_page_manager_pages() {
     ),
   );
   $display->cache = array();
-  $display->title = '';
+  $display->title = 'Sign up for an Account';
   $display->uuid = '67bb0998-9a48-4122-99a9-08f2b979df70';
   $display->content = array();
   $display->panels = array();
@@ -149,7 +149,7 @@ function springboard_p2p_default_page_manager_pages() {
     $display->content['new-770ce805-317b-4423-8075-448f5441d6b9'] = $pane;
     $display->panels['top'][0] = 'new-770ce805-317b-4423-8075-448f5441d6b9';
   $display->hide_title = PANELS_TITLE_FIXED;
-  $display->title_pane = 'new-98c8de5f-7ec0-4e9a-a90a-133af5b6c99c';
+  $display->title_pane = '0';
   $handler->conf['display'] = $display;
   $page->default_handlers[$handler->name] = $handler;
   $pages['p2p_registration_page'] = $page;
