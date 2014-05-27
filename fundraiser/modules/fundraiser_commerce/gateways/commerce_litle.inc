@@ -60,12 +60,16 @@ function commerce_litle_fundraiser_donation_form_config_check($node) {
 function commerce_litle_fundraiser_commerce_submit_form($payment_method) {
   if ($payment_method == 'credit') {
     module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
-    return _fundraiser_commerce_credit_card_form();
+    $form = _fundraiser_commerce_credit_card_form();
   }
   elseif ($payment_method == 'bank account') {
     $form = commerce_litle_echeck_submit_form();
-    return $form['echeck'];
+    $form = $form['echeck'];
   }
+  if (variable_get('commerce_litle_fraud', 0)) {
+    $form += commerce_litle_add_fraud_form_elements();
+  }
+  return $form;
 }
 
 /**
@@ -168,6 +172,9 @@ function commerce_litle_fundraiser_commerce_charge($method_instance, $donation) 
   if ($donation->donation['payment_method'] == 'credit') {
     // Add fundraiser commerce data to the pane values array.
     _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
+    if (variable_get('commerce_litle_fraud', 0)) {
+      $pane_values['session_id'] = $donation->donation['payment_fields']['credit']['session_id'];
+    }  
     $method_instance['settings']['cardonfile'] = FALSE;
 
     if (module_exists('commerce_cardonfile')) {
