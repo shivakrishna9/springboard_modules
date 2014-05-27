@@ -16,7 +16,7 @@
 .panel-3col-stacked .panel-col-first {
   display: inline-block;
   vertical-align: top;
-  width: 15%;
+  width: 24%;
 }
 
 .panel-3col-stacked .panel-col .inside { 
@@ -26,7 +26,7 @@
 .panel-3col-stacked .panel-col {
   display: inline-block;
   vertical-align: top;
-  width: 64%;
+  width: 51%;
 }
 
 .panel-3col-stacked .panel-col .inside { 
@@ -36,7 +36,7 @@
 .panel-3col-stacked .panel-col-last {
   display: inline-block;
   vertical-align: top;
-  width: 20%;
+  width: 23%;
 }
 
 .panel-3col-stacked .panel-col-last .inside { 

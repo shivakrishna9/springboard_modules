@@ -57,7 +57,7 @@ function springboard_p2p_default_page_manager_pages() {
     'relationships' => array(),
   );
   $display = new panels_display();
-  $display->layout = 'threecol_25_50_25_stacked';
+  $display->layout = 'p2p_threecol_stacked';
   $display->layout_settings = array();
   $display->panel_settings = array(
     'style_settings' => array(
@@ -89,7 +89,10 @@ function springboard_p2p_default_page_manager_pages() {
     $pane->style = array(
       'settings' => NULL,
     );
-    $pane->css = array();
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'pane-social-login',
+    );
     $pane->extras = array();
     $pane->position = 0;
     $pane->locks = array();
@@ -111,7 +114,10 @@ function springboard_p2p_default_page_manager_pages() {
     $pane->style = array(
       'settings' => NULL,
     );
-    $pane->css = array();
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'reg-pane',
+    );
     $pane->extras = array();
     $pane->position = 0;
     $pane->locks = array();
@@ -119,16 +125,15 @@ function springboard_p2p_default_page_manager_pages() {
     $display->content['new-4258aeae-338f-463f-862a-64f2b307951a'] = $pane;
     $display->panels['middle'][0] = 'new-4258aeae-338f-463f-862a-64f2b307951a';
     $pane = new stdClass();
-    $pane->pid = 'new-45414851-728d-451b-8ec7-da80f1db95bc';
-    $pane->panel = 'right';
-    $pane->type = 'login';
-    $pane->subtype = 'login';
+    $pane->pid = 'new-770ce805-317b-4423-8075-448f5441d6b9';
+    $pane->panel = 'top';
+    $pane->type = 'campaign_header_no_context';
+    $pane->subtype = 'campaign_header_no_context';
     $pane->shown = TRUE;
-    $pane->access = array();
-    $pane->configuration = array(
-      'override_title' => 0,
-      'override_title_text' => '',
+    $pane->access = array(
+      'plugins' => array(),
     );
+    $pane->configuration = array();
     $pane->cache = array();
     $pane->style = array(
       'settings' => NULL,
@@ -137,9 +142,9 @@ function springboard_p2p_default_page_manager_pages() {
     $pane->extras = array();
     $pane->position = 0;
     $pane->locks = array();
-    $pane->uuid = '45414851-728d-451b-8ec7-da80f1db95bc';
-    $display->content['new-45414851-728d-451b-8ec7-da80f1db95bc'] = $pane;
-    $display->panels['right'][0] = 'new-45414851-728d-451b-8ec7-da80f1db95bc';
+    $pane->uuid = '770ce805-317b-4423-8075-448f5441d6b9';
+    $display->content['new-770ce805-317b-4423-8075-448f5441d6b9'] = $pane;
+    $display->panels['top'][0] = 'new-770ce805-317b-4423-8075-448f5441d6b9';
   $display->hide_title = PANELS_TITLE_FIXED;
   $display->title_pane = 'new-98c8de5f-7ec0-4e9a-a90a-133af5b6c99c';
   $handler->conf['display'] = $display;

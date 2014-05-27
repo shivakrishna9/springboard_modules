@@ -70,7 +70,7 @@ function springboard_p2p_personal_campaign_node_info() {
     'p2p_personal_campaign' => array(
       'name' => t('Peer to peer personal campaign'),
       'base' => 'node_content',
-      'description' => '',
+      'description' => t('Peer to Peer personal campaign page. '),
       'has_title' => '1',
       'title_label' => t('Campaign Name'),
       'help' => '',
