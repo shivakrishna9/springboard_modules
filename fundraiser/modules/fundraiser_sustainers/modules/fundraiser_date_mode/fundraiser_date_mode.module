@@ -566,7 +566,7 @@ function fundraiser_date_mode_process_queue_item($item) {
     );
     fundraiser_sustainers_process_single_recurring_donation($log, $recurring, $sustainer_key);
     // If we get to here the transaction has been completed.
-    watchdog('fundraiser_sustainers_date_mode', 'Sustainer order id !did has been finished processing.', array('!did' => $recurring->did), WATCHDOG_NOTICE);
+    watchdog('fundraiser_sustainers_date_mode', 'Sustainer order id !did has finished processing.', array('!did' => $recurring->did), WATCHDOG_NOTICE);
   }
   else {
     watchdog('fundraiser_sustainers_date_mode', 'Sustainer key value for order id !did (!record_key) did not match the site\'s sustainer key (!site_key).',
