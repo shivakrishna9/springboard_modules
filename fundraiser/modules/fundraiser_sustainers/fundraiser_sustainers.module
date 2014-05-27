@@ -2157,7 +2157,7 @@ function _fundraiser_sustainers_cron_get_recurring($limit = 1000) {
   $donations = db_query('SELECT r.did FROM {fundraiser_sustainers} r ' .
     'WHERE (r.gateway_resp IS NULL OR r.gateway_resp = \'failed\') ' .
     'AND r.next_charge < :now ' .
-    'AND r.attempts < 3 ' . // If already been tried 3 times, Stop Trying.
+    'AND (r.attempts < 3 OR r.attempts IS NULL) ' . // If already been tried 3 times, Stop Trying.
     'AND r.lock_id = 0 ' . // And not locked.
     'LIMIT 0, ' . $limit,
     array(':now' => $now)
