@@ -1,0 +1,32 @@
+<?php
+/**
+ * @file
+ * Adds statistical tally fields to Springboard donation forms and webforms.
+ */
+
+/**
+ * Implements hook_node_type_insert
+ */
+function springboard_stats_node_type_insert($type) {
+  springboard_stats_add_fields($type->type);
+}
+
+/**
+ * Implements hook_node_type_update
+ */
+function springboard_stats_node_type_update($type) {
+  springboard_stats_add_fields($type->type);
+}
+
+/**
+ * Checks whether given node type name is for a Webform or Fundraiser type, and if so add stats fields.
+ */
+function springboard_stats_add_fields($type_name) {
+  if (in_array($type_name, webform_variable_get('webform_node_types'))) {
+    module_load_include('inc', 'springboard_stats', 'springboard_stats.fields');
+    _springboard_stats_add_default_fields($type_name);
+  }
+  if (fundraiser_is_donation_type($type_name)) {
+    _springboard_stats_add_default_fields($type_name, TRUE);
+  }
+}

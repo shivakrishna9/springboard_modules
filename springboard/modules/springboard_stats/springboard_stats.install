@@ -1,0 +1,39 @@
+<?php
+/**
+ * @file
+ * Install, uninstall, and update hooks for the springboard_admin module.
+ */
+
+include_once 'springboard_stats.fields.inc';
+
+/**
+ * Implements hook_install().
+ *
+ * Add stats fields to existing Fundraiser and Webform node types, and populate with initial values.
+ */
+function springboard_stats_install() {
+  foreach (array_keys(node_type_get_names()) as $type_name) {
+    springboard_stats_add_fields($type_name);
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ *
+ * Delete stats fields from all Fundraiser and Webform node types.
+ */
+function springboard_stats_uninstall() {
+  $field_names = array_merge(array_keys(_springboard_stats_webform_fields_settings('')), array_keys(_springboard_stats_fundraiser_fields_settings('')));
+  $type_names = array_keys(node_type_get_names());
+  foreach ($field_names as $field_name) {
+    if ($field = field_info_field($field_name)) {
+      foreach ($type_names as $type_name) {
+        if ($field_instance = field_info_instance('node', $field_name, $type_name)) {
+          field_delete_instance($field_instance);
+        }
+      }
+      field_delete_field($field['field_name']);
+    }
+  }
+  drupal_set_message('Springboard Statistics fields deleted from all Webform and Fundraiser node types.');
+}
