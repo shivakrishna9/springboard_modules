@@ -615,26 +615,28 @@ function fundraiser_sustainers_process_single_recurring_donation(&$log, $recurri
     // Get the donation information that we need.
     $donation = fundraiser_donation_get_donation($recurring->did);
 
+    // Release the lock on the order so processing doesn't get wrapped in a transaction.
+    entity_get_controller('commerce_order')->resetCache(array($recurring->did));
+
     // Set the reference charge flag to TRUE
     $donation->reference_charge = TRUE;
-    
-    // We can't handle the "processing" status from inside a transaction, so if any are open 
-    // then pop them off, forcing them to commit.
-    $connection = Database::getConnection();
-    if ($connection->inTransaction()) {
-      $connection->popTransaction('drupal_transaction');
-    }
-    
-    // Make sure this charge wasn't partially processed already (e.g., cron 
+
+    // Make sure this charge wasn't partially processed already (e.g., cron
     // crashed awaiting response from the gateway).
     if ('processing' == db_query("SELECT gateway_resp FROM {fundraiser_sustainers} WHERE did=:did;", array(':did' => $recurring->did))->fetchField()) {
       watchdog('fundraiser_sustainers', 'Sustainer order id !did tried to process for a second time! Skipped.',
-        array('!did' => $recurring->did), 
+        array('!did' => $recurring->did),
         WATCHDOG_CRITICAL
       );
+
+      // Invoke a rules event so that an email can be configured when a dupe is discovered.
+      if (module_exists("rules")) {
+        rules_invoke_event("fundraiser_sustainer_duplicate_charge_attempt_detected", $donation->did);
+      }
+
       return FALSE;
     }
-    
+
     // Update the sustainer record to "processing"
     db_query("UPDATE {fundraiser_sustainers} SET gateway_resp='processing' WHERE did=:did;", array(':did' => $recurring->did));
 
