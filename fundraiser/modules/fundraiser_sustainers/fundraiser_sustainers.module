@@ -1781,6 +1781,7 @@ function fundraiser_sustainers_fundraiser_donation_decline($donation) {
     // Update data internal to fundraiser. TODO move this db stuff.
     db_query('UPDATE {fundraiser_sustainers} SET ' .
       'gateway_resp = \'failed\', attempts = attempts + 1, ' .
+      'lock_id = 0, ' .
       'next_charge = unix_timestamp(timestampadd(DAY, 1, from_unixtime(next_charge))) ' .
       'WHERE did = :did', array(':did' => $donation->did)
     );
