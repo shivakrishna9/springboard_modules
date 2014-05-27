@@ -144,6 +144,18 @@ body p {
     padding: 14px 0 8px 4%;
   }
 
+  .reg-pane .form-wrapper {
+    width: 46%;
+  }
+
+  .reg-pane .control-group {
+    width: 46%;
+  }
+
+  .reg-pane #edit-account .control-group .control-group {
+    width: 46%;
+  }
+
 }
 
 @media (max-width: 768px) {

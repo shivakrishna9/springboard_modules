@@ -540,6 +540,14 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['pager']['options']['offset'] = '0';
   $handler->display->display_options['style_plugin'] = 'list';
   $handler->display->display_options['row_plugin'] = 'fields';
+  /* Relationship: P2P: User requesting approval. */
+  $handler->display->display_options['relationships']['uid']['id'] = 'uid';
+  $handler->display->display_options['relationships']['uid']['table'] = 'springboard_p2p_private_campaign_approval';
+  $handler->display->display_options['relationships']['uid']['field'] = 'uid';
+  /* Relationship: Content: Author */
+  $handler->display->display_options['relationships']['uid_1']['id'] = 'uid_1';
+  $handler->display->display_options['relationships']['uid_1']['table'] = 'node';
+  $handler->display->display_options['relationships']['uid_1']['field'] = 'uid';
   /* Field: Content: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
   $handler->display->display_options['fields']['title']['table'] = 'node';
@@ -559,7 +567,7 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['filters']['type']['table'] = 'node';
   $handler->display->display_options['filters']['type']['field'] = 'type';
   $handler->display->display_options['filters']['type']['value'] = array(
-    'p2p_campaign' => 'p2p_campaign',
+    'p2p_personal_campaign' => 'p2p_personal_campaign',
   );
   /* Filter criterion: Content: Title */
   $handler->display->display_options['filters']['title']['id'] = 'title';
@@ -587,6 +595,44 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['defaults']['use_more_always'] = FALSE;
   $handler->display->display_options['use_more_always'] = TRUE;
   $handler->display->display_options['defaults']['use_more_text'] = FALSE;
+  $handler->display->display_options['defaults']['pager'] = FALSE;
+  $handler->display->display_options['pager']['type'] = 'some';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '4';
+  $handler->display->display_options['pager']['options']['offset'] = '0';
+  $handler->display->display_options['defaults']['style_plugin'] = FALSE;
+  $handler->display->display_options['style_plugin'] = 'table';
+  $handler->display->display_options['style_options']['columns'] = array(
+    'title' => 'title',
+    'sbp_first_name' => 'sbp_first_name',
+    'sbp_last_name' => 'sbp_first_name',
+  );
+  $handler->display->display_options['style_options']['default'] = '-1';
+  $handler->display->display_options['style_options']['info'] = array(
+    'title' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => 'views-align-left',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'sbp_first_name' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => 'views-align-left',
+      'separator' => ' ',
+      'empty_column' => 0,
+    ),
+    'sbp_last_name' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+  );
+  $handler->display->display_options['defaults']['style_options'] = FALSE;
+  $handler->display->display_options['defaults']['row_plugin'] = FALSE;
+  $handler->display->display_options['defaults']['row_options'] = FALSE;
   $handler->display->display_options['exposed_block'] = TRUE;
   $handler->display->display_options['defaults']['header'] = FALSE;
   /* Header: Global: Text area */
@@ -596,18 +642,46 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['header']['area']['content'] = '<h4 class="search-results">Search results</h4>';
   $handler->display->display_options['header']['area']['format'] = 'full_html';
   $handler->display->display_options['defaults']['footer'] = FALSE;
+  $handler->display->display_options['defaults']['relationships'] = FALSE;
+  /* Relationship: P2P: User requesting approval. */
+  $handler->display->display_options['relationships']['uid_1']['id'] = 'uid_1';
+  $handler->display->display_options['relationships']['uid_1']['table'] = 'springboard_p2p_private_campaign_approval';
+  $handler->display->display_options['relationships']['uid_1']['field'] = 'uid';
+  /* Relationship: Content: Author */
+  $handler->display->display_options['relationships']['uid']['id'] = 'uid';
+  $handler->display->display_options['relationships']['uid']['table'] = 'node';
+  $handler->display->display_options['relationships']['uid']['field'] = 'uid';
   $handler->display->display_options['defaults']['fields'] = FALSE;
   /* Field: Content: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
   $handler->display->display_options['fields']['title']['table'] = 'node';
   $handler->display->display_options['fields']['title']['field'] = 'title';
-  $handler->display->display_options['fields']['title']['label'] = '';
   $handler->display->display_options['fields']['title']['alter']['word_boundary'] = FALSE;
   $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
   $handler->display->display_options['fields']['title']['element_type'] = '0';
   $handler->display->display_options['fields']['title']['element_label_type'] = '0';
   $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['title']['element_wrapper_type'] = '0';
+  /* Field: User: First name */
+  $handler->display->display_options['fields']['sbp_first_name']['id'] = 'sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['table'] = 'field_data_sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['field'] = 'sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_first_name']['label'] = 'Name';
+  $handler->display->display_options['fields']['sbp_first_name']['element_type'] = '0';
+  $handler->display->display_options['fields']['sbp_first_name']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['sbp_first_name']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['sbp_first_name']['element_wrapper_type'] = '0';
+  /* Field: User: Last name */
+  $handler->display->display_options['fields']['sbp_last_name']['id'] = 'sbp_last_name';
+  $handler->display->display_options['fields']['sbp_last_name']['table'] = 'field_data_sbp_last_name';
+  $handler->display->display_options['fields']['sbp_last_name']['field'] = 'sbp_last_name';
+  $handler->display->display_options['fields']['sbp_last_name']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_last_name']['label'] = '';
+  $handler->display->display_options['fields']['sbp_last_name']['element_type'] = '0';
+  $handler->display->display_options['fields']['sbp_last_name']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['sbp_last_name']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['sbp_last_name']['element_wrapper_type'] = '0';
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
   $handler->display->display_options['defaults']['filters'] = FALSE;
   /* Filter criterion: Content: Published */
@@ -622,24 +696,29 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['filters']['type']['table'] = 'node';
   $handler->display->display_options['filters']['type']['field'] = 'type';
   $handler->display->display_options['filters']['type']['value'] = array(
-    'p2p_campaign' => 'p2p_campaign',
+    'p2p_personal_campaign' => 'p2p_personal_campaign',
   );
-  /* Filter criterion: Content: Title */
-  $handler->display->display_options['filters']['title']['id'] = 'title';
-  $handler->display->display_options['filters']['title']['table'] = 'node';
-  $handler->display->display_options['filters']['title']['field'] = 'title';
-  $handler->display->display_options['filters']['title']['operator'] = 'contains';
-  $handler->display->display_options['filters']['title']['exposed'] = TRUE;
-  $handler->display->display_options['filters']['title']['expose']['operator_id'] = 'title_op';
-  $handler->display->display_options['filters']['title']['expose']['operator'] = 'title_op';
-  $handler->display->display_options['filters']['title']['expose']['identifier'] = 'title';
-  $handler->display->display_options['filters']['title']['expose']['remember_roles'] = array(
+  /* Filter criterion: Global: Combine fields filter */
+  $handler->display->display_options['filters']['combine']['id'] = 'combine';
+  $handler->display->display_options['filters']['combine']['table'] = 'views';
+  $handler->display->display_options['filters']['combine']['field'] = 'combine';
+  $handler->display->display_options['filters']['combine']['operator'] = 'contains';
+  $handler->display->display_options['filters']['combine']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['combine']['expose']['operator_id'] = 'combine_op';
+  $handler->display->display_options['filters']['combine']['expose']['operator'] = 'combine_op';
+  $handler->display->display_options['filters']['combine']['expose']['identifier'] = 'combine';
+  $handler->display->display_options['filters']['combine']['expose']['remember_roles'] = array(
     2 => '2',
     1 => 0,
     3 => 0,
     4 => 0,
     5 => 0,
     6 => 0,
+  );
+  $handler->display->display_options['filters']['combine']['fields'] = array(
+    'title' => 'title',
+    'sbp_first_name' => 'sbp_first_name',
+    'sbp_last_name' => 'sbp_last_name',
   );
   $handler->display->display_options['pane_category']['name'] = 'Springboard P2P';
   $handler->display->display_options['pane_category']['weight'] = '0';
@@ -682,7 +761,7 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['filters']['type']['table'] = 'node';
   $handler->display->display_options['filters']['type']['field'] = 'type';
   $handler->display->display_options['filters']['type']['value'] = array(
-    'p2p_campaign' => 'p2p_campaign',
+    'p2p_personal_campaign' => 'p2p_personal_campaign',
   );
   /* Filter criterion: Content: Title */
   $handler->display->display_options['filters']['title']['id'] = 'title';
@@ -714,29 +793,48 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['use_more_always'] = TRUE;
   $handler->display->display_options['defaults']['use_more_text'] = FALSE;
   $handler->display->display_options['use_more_text'] = '';
+  $handler->display->display_options['defaults']['exposed_form'] = FALSE;
+  $handler->display->display_options['exposed_form']['type'] = 'basic';
   $handler->display->display_options['defaults']['pager'] = FALSE;
   $handler->display->display_options['pager']['type'] = 'full';
   $handler->display->display_options['pager']['options']['items_per_page'] = '8';
   $handler->display->display_options['pager']['options']['offset'] = '0';
   $handler->display->display_options['pager']['options']['id'] = '0';
   $handler->display->display_options['pager']['options']['quantity'] = '9';
+  $handler->display->display_options['defaults']['fields'] = FALSE;
+  /* Field: Content: Title */
+  $handler->display->display_options['fields']['title']['id'] = 'title';
+  $handler->display->display_options['fields']['title']['table'] = 'node';
+  $handler->display->display_options['fields']['title']['field'] = 'title';
+  $handler->display->display_options['fields']['title']['label'] = '';
+  $handler->display->display_options['fields']['title']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['title']['alter']['word_boundary'] = FALSE;
+  $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
+  $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
+  /* Field: User: First name */
+  $handler->display->display_options['fields']['sbp_first_name']['id'] = 'sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['table'] = 'field_data_sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['field'] = 'sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['relationship'] = 'uid_1';
+  $handler->display->display_options['fields']['sbp_first_name']['label'] = '';
+  $handler->display->display_options['fields']['sbp_first_name']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['sbp_first_name']['element_type'] = '0';
+  $handler->display->display_options['fields']['sbp_first_name']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['sbp_first_name']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['sbp_first_name']['element_wrapper_type'] = '0';
+  /* Field: User: Last name */
+  $handler->display->display_options['fields']['sbp_last_name']['id'] = 'sbp_last_name';
+  $handler->display->display_options['fields']['sbp_last_name']['table'] = 'field_data_sbp_last_name';
+  $handler->display->display_options['fields']['sbp_last_name']['field'] = 'sbp_last_name';
+  $handler->display->display_options['fields']['sbp_last_name']['relationship'] = 'uid_1';
+  $handler->display->display_options['fields']['sbp_last_name']['label'] = '';
+  $handler->display->display_options['fields']['sbp_last_name']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['sbp_last_name']['alter']['text'] = '[title] - [sbp_first_name] [sbp_last_name]';
+  $handler->display->display_options['fields']['sbp_last_name']['element_type'] = '0';
+  $handler->display->display_options['fields']['sbp_last_name']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['sbp_last_name']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['sbp_last_name']['element_wrapper_type'] = '0';
   $handler->display->display_options['defaults']['arguments'] = FALSE;
-  $handler->display->display_options['defaults']['filter_groups'] = FALSE;
-  $handler->display->display_options['defaults']['filters'] = FALSE;
-  /* Filter criterion: Content: Published */
-  $handler->display->display_options['filters']['status']['id'] = 'status';
-  $handler->display->display_options['filters']['status']['table'] = 'node';
-  $handler->display->display_options['filters']['status']['field'] = 'status';
-  $handler->display->display_options['filters']['status']['value'] = 1;
-  $handler->display->display_options['filters']['status']['group'] = 1;
-  $handler->display->display_options['filters']['status']['expose']['operator'] = FALSE;
-  /* Filter criterion: Content: Type */
-  $handler->display->display_options['filters']['type']['id'] = 'type';
-  $handler->display->display_options['filters']['type']['table'] = 'node';
-  $handler->display->display_options['filters']['type']['field'] = 'type';
-  $handler->display->display_options['filters']['type']['value'] = array(
-    'p2p_campaign' => 'p2p_campaign',
-  );
   $handler->display->display_options['path'] = 'peer-to-peer-campaign-search';
   $export['search_for_a_campaign'] = $view;
 
