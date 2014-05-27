@@ -303,16 +303,10 @@ function fundraiser_tickets_fundraiser_commerce_generate_line_items($donation, $
 
         commerce_line_item_save($line_item);
 
-        // Update the qauntity on the node
-        _fundraiser_tickets_update_quantity_sold($product_wrapper, $quantity);
-
         // Add the line item to the order, this will be saved by fundraiser_commerce
         $order_wrapper->commerce_line_items[] = $line_item;
       }
     }
-
-    // Update the inventory
-    fundraiser_tickets_update_inventory($node_wrapper);
 
     // Let fundraiser commerce know that we created line items
     return TRUE;
@@ -326,38 +320,27 @@ function fundraiser_tickets_fundraiser_commerce_generate_line_items($donation, $
  * Implements hook_fundraiser_donation_success().
  */
 function fundraiser_tickets_fundraiser_donation_success($donation) {
-  // If this donation contains a ticketed donation handle the add-on donation value
-  if (isset($donation->donation['ticket_box']) && is_array($donation->donation['ticket_box']) && count($donation->donation['ticket_box'])){
-    $node_wrapper = entity_metadata_wrapper('node', $donation->node);
+  // Only proceed if this donation is a ticketed event
+  if (empty($donation->node) || !fundraiser_tickets_is_ticket_type($donation->node->type)) {
+    return;
+  }
 
-    // Loop through each of the ticket options looking for the extra donation key
-    foreach ($donation->donation['ticket_box'] as $offset => $serialized_value){
-      $form_row = unserialize($serialized_value);
-      list ($key, $quantity) = each($form_row);
-      $product_id = _fundraiser_tickets_get_product_id_from_form_element_name($key);
+  // Load up the commerce order and wrapper
+  $order = commerce_order_load($donation->did);
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
-      if ($key == 'fundraiser-tickets-extra-donation'){
-        // The extra donation amount is stored in the quantity field
-        $amount = $quantity;
-        if ($amount > 0) {
-          // Clone the original donation, only a few values will change
-          $extra_donation = clone $donation;
-
-          // Set the amount
-          $extra_donation->donation['amount'] = $amount;
-
-          // Important to remove this
-          unset($extra_donation->donation['ticket_box']);
-
-          // Create the new donation
-          fundraiser_donation_create($extra_donation);
-
-          // Fire off the success hooks for this donation, no need to process since its already been charged
-          fundraiser_donation_success($extra_donation);
-        }
-      }
+  // Ensure we have line items
+  if (!empty($order_wrapper->commerce_line_items)) {
+    // Resave the line items to have them sent to the queue and update totals
+    foreach ($order_wrapper->commerce_line_items as $line_item_wrapper) {
+      commerce_line_item_save($line_item_wrapper->value());
     }
   }
+
+  $node_wrapper = entity_metadata_wrapper('node', $donation->node);
+
+  // Update the inventory on the node
+  fundraiser_tickets_update_inventory($node_wrapper);
 }
 
 /**
@@ -377,6 +360,56 @@ function fundraiser_tickets_salesforce_queue_create_item_alter(&$item) {
 }
 
 /**
+ * Implements hook_salesforce_mapping_confirm_entity_for_queue
+ *
+ * Stop ticket line items from syncing till the order has charged
+ */
+function fundraiser_tickets_salesforce_mapping_confirm_entity_for_queue($entity, $entity_type, $op) {
+  // Only bother with commerce entities
+  if ($entity_type != 'commerce_line_item') {
+    return;
+  }
+
+  $line_item = $entity;
+  if ($line_item->type == 'ticket' && !empty($line_item->order_id)) {
+    $order = commerce_order_load($line_item->order_id);
+    if (empty($order->data['commerce_payment_order_paid_in_full_invoked'])) {
+      return FALSE;
+    }
+  }
+}
+
+/**
+ * Implements hook_commerce_line_item_insert
+ */
+function fundraiser_tickets_commerce_line_item_insert($line_item) {
+  if ($line_item->type == 'ticket') {
+    $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
+    _fundraiser_tickets_update_quantity_sold($line_item_wrapper->commerce_product->value());
+  }
+}
+
+/**
+ * Implements hook_commerce_line_item_update
+ */
+function fundraiser_tickets_commerce_line_item_update($line_item) {
+  if ($line_item->type == 'ticket') {
+    $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
+    _fundraiser_tickets_update_quantity_sold($line_item_wrapper->commerce_product->value());
+  }
+}
+
+/**
+ * Implements hook_commerce_line_item_delete
+ */
+function fundraiser_tickets_commerce_line_item_delete($line_item) {
+  if ($line_item->type == 'ticket') {
+    $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
+    _fundraiser_tickets_update_quantity_sold($line_item_wrapper->commerce_product->value());
+  }
+}
+
+/**
 * Helper function: parse the product id out of the form element name.
 */
 function _fundraiser_tickets_get_product_id_from_form_element_name($name){
@@ -391,8 +424,13 @@ function _fundraiser_tickets_get_product_id_from_form_element_name($name){
 /**
 * Helper function: updates the number of tickets sold.
 */
-function _fundraiser_tickets_update_quantity_sold($product_wrapper, $quantity){
-  $product_wrapper->fr_tickets_quantity_sold->set($product_wrapper->fr_tickets_quantity_sold->value() + $quantity);
+function _fundraiser_tickets_update_quantity_sold($product) {
+  // Get the quantity
+  $quantity = _fundraiser_tickets_product_total_purchased($product->product_id);
+
+  // Update the product; the node is updated when the product is saved
+  $product_wrapper = entity_metadata_wrapper('commerce_product', $product);
+  $product_wrapper->fr_tickets_quantity_sold->set(round($quantity));
   $product_wrapper->save();
 }
 
@@ -682,10 +720,10 @@ function fundraiser_tickets_clone_node_alter(&$node, $context) {
  */
 function fundraiser_tickets_form_commerce_product_ui_product_form_alter(&$form, &$form_state) {
   $product = $form_state['commerce_product'];
+
   if ($product->type == 'fundraiser_ticket'){
-    $form['sku']['#access'] = FALSE;
     $form['fr_tickets_weight']['#access'] = FALSE;
-    $form['fr_tickets_quantity_sold']['#access'] = FALSE;
+    $form['fr_tickets_quantity_sold']['#disabled'] = TRUE;
     $form['#validate'][] = 'fundraiser_tickets_form_commerce_product_ui_product_form_validate';
     unset($form['actions']['save_continue']);
   }
@@ -719,35 +757,46 @@ function fundraiser_tickets_form_commerce_product_ui_product_form_validate($form
 }
 
 /**
- * Implements hook_entity_insert().
+ * Implements hook_commerce_product_insert().
  *
  * Save an entity reference associating ticket products with the pages they are sold on.
  * Also update the total available tickets on the associated ticket page node.
  */
-function fundraiser_tickets_entity_insert($entity, $type) {
-  if ($type == 'commerce_product' && $entity->type =='fundraiser_ticket'){
+function fundraiser_tickets_commerce_product_insert($product) {
+  if ($product->type == 'fundraiser_ticket') {
     $destination = drupal_get_destination();
     preg_match('/node\/(\\d+)\/tickets\/tickets/' , $destination['destination'], $matches);
     if (isset($matches[1])){
       $node_wrapper = entity_metadata_wrapper('node', node_load($matches[1]));
-      $node_wrapper->fr_tickets_ticket_types[] = $entity->product_id;
-      $node_wrapper->save();
+      $node_wrapper->fr_tickets_ticket_types[] = $product->product_id;
       fundraiser_tickets_update_inventory($node_wrapper);
     }
   }
 }
 
 /**
- * Implements hook_entity_update().
+ * Implements hook_commerce_product_update
  *
  * Update the total available tickets available on the associated ticket page node.
  */
-function fundraiser_tickets_entity_update($entity, $type) {
-  if ($type == 'commerce_product' && $entity->type =='fundraiser_ticket'){
-    $destination = drupal_get_destination();
-    preg_match('/node\/(\\d+)\/tickets\/tickets/' , $destination['destination'], $matches);
-    if (isset($matches[1])){
-      $node_wrapper = entity_metadata_wrapper('node', node_load($matches[1]));
+function fundraiser_tickets_commerce_product_update($product) {
+  if ($product->type == 'fundraiser_ticket') {
+    if ($nid = _fundraiser_tickets_find_product_node($product->product_id)) {
+      $node_wrapper = entity_metadata_wrapper('node', node_load($nid));
+      fundraiser_tickets_update_inventory($node_wrapper);
+    }
+  }
+}
+
+/**
+ * Implements hook_commerce_product_delete
+ *
+ * Update the total available tickets available on the associated ticket page node.
+ */
+function fundraiser_tickets_commerce_product_delete($product) {
+  if ($product->type == 'fundraiser_ticket') {
+    if ($nid = _fundraiser_tickets_find_product_node($product->product_id)) {
+      $node_wrapper = entity_metadata_wrapper('node', node_load($nid));
       fundraiser_tickets_update_inventory($node_wrapper);
     }
   }
@@ -758,14 +807,23 @@ function fundraiser_tickets_entity_update($entity, $type) {
  */
 function fundraiser_tickets_update_inventory($node_wrapper){
   $ticket_types = $node_wrapper->fr_tickets_ticket_types->value();
+
   if (is_array($ticket_types)){
     $inventory_initial = 0;
     $inventory_purchased = 0;
+
+    // Loop through the ticket products and calculate the numbers
     foreach ($ticket_types as $offset => $ticket_level){
       $ticket_level_wrapper = entity_metadata_wrapper('commerce_product', $ticket_level);
-      $inventory_initial   += $ticket_level_wrapper->fr_tickets_quantity->value();
-      $inventory_purchased += $ticket_level_wrapper->fr_tickets_quantity_sold->value();
+
+      // Only include active tickets
+      if ($ticket_level_wrapper->status->value() == 1) {
+        $inventory_initial   += $ticket_level_wrapper->fr_tickets_quantity->value();
+        $inventory_purchased += $ticket_level_wrapper->fr_tickets_quantity_sold->value();
+      }
     }
+
+    // Set these numbers on the node and save
     $node_wrapper->fr_tickets_inventory_initial->set($inventory_initial);
     $node_wrapper->fr_tickets_inventory_purchased->set($inventory_purchased);
     $node_wrapper->fr_tickets_inventory_available->set($inventory_initial - $inventory_purchased);
@@ -846,3 +904,72 @@ function fundraiser_tickets_is_sold_out($node) {
   }
   return $sold_out;
 }
+
+/**
+ * Calculate the sum of purchased tickets for a product
+ *
+ * @param $product_id Numeric
+ *    The numeric id of the product
+ *
+ * @return numeric
+ *    The sum of all purchased tickets
+ */
+function _fundraiser_tickets_product_total_purchased($product_id) {
+  // We need to get a SUM of all the current line items for this product where the orders are complete
+  $sql = "SELECT SUM(commerce_line_item.quantity) AS commerce_line_item_quantity FROM {commerce_line_item} commerce_line_item";
+  // Join the order
+  $sql .= " INNER JOIN {commerce_order} commerce_order_commerce_line_item ON commerce_line_item.order_id = commerce_order_commerce_line_item.order_id";
+  // Join the commerce product field
+  $sql .= " LEFT JOIN {field_data_commerce_product} field_data_commerce_product ON commerce_line_item.line_item_id = field_data_commerce_product.entity_id";
+  $sql .= " AND (field_data_commerce_product.entity_type = 'commerce_line_item' AND field_data_commerce_product.deleted = '0')";
+  // Join the commerce product
+  $sql .= " INNER JOIN {commerce_product} commerce_product_field_data_commerce_product ON field_data_commerce_product.commerce_product_product_id = commerce_product_field_data_commerce_product.product_id";
+
+  // Where conditions
+  $sql .= " WHERE ((";
+  // Product id
+  $sql .= " (commerce_line_item.type IN ('ticket')) AND (field_data_commerce_product.commerce_product_product_id = :product_id) ";
+  // Order in payment_received status
+  $sql .= " AND (commerce_order_commerce_line_item.status IN ('payment_received'))";
+  // Active products
+  $sql .= " AND (commerce_product_field_data_commerce_product.status <> '0')";
+  $sql .= " ))";
+
+  return db_query($sql, array(':product_id' => $product_id))->fetchField();
+}
+
+/**
+ * Find the node that references a product
+ *
+ * @param $product_id Numeric
+ *    The numeric id of the product
+ *
+ * @return MIXED
+ *    The node id or FALSE if nothing is found
+ */
+function _fundraiser_tickets_find_product_node($product_id) {
+  $query = new EntityFieldQuery();
+
+  // Find the node that references this product
+  $query
+    ->entityCondition('entity_type', 'node', '=')
+    ->fieldCondition('fr_tickets_ticket_types', 'product_id', $product_id, '=')
+    ->range(0, 1);
+
+  $result = $query->execute();
+  if (!empty($result['node'])) {
+    $node = reset($result['node']);
+    return $node->nid;
+  }
+
+  return FALSE;
+}
+
+// Custom array sort function by weight.
+function _fundraiser_tickets_weight_sort($a, $b) {
+  if (isset($a->fr_tickets_weight) && isset($b->fr_tickets_weight)) {
+    return $a->fr_tickets_weight->value() < $b->fr_tickets_weight->value() ? -1 : 1;
+  }
+  return 0;
+}
+
