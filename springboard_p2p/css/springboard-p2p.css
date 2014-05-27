@@ -358,6 +358,30 @@ a.get-started-link:hover {
   margin-top: 20px;
 }
 
+.pane-messages ul {
+  /*margin: 4px 16px;*/
+  position: relative;
+}
+
+.pane-messages ul li  {
+  position: relative;
+  left: 24px;
+  margin-bottom: 4px;
+  list-style: none;
+}
+
+.pane-messages ul li:before {
+  position: absolute;
+  top: 2px;
+  left: -16px;
+  color: #ff0000;
+  content: "\f054";
+  text-decoration: inherit;
+  font-weight: normal;
+  font-style: normal;
+  font-family: FontAwesome;
+}
+
 /******************  Media queries, these should go last */
 
 @media (max-width: 980px) {

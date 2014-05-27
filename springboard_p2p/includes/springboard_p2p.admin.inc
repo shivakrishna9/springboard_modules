@@ -119,6 +119,26 @@ function springboard_p2p_admin_settings() {
     '#field_prefix' => url(NULL, array('absolute' => TRUE)) . (variable_get('clean_url', 0) ? '' : '?q='),
   );
 
+  $form['login_message'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Login Message'),
+    '#weight' => -45,
+  );
+
+  // Login message text area.
+  // We set a var here, otherwise drupal complians about htmlspecialchars, this is a known bug with text_format FAPI.
+  $textformat = variable_get('springboard_p2p_login_message_area', array('value' => '', 'format' => NULL));
+  // Now render the form item.
+  $form['login_message']['login_message_area'] = array(
+    '#type' => 'text_format',
+    '#title' => t('P2P Login message'),
+    '#required' => TRUE,
+    '#rows' => 5,
+    '#format' => $textformat['format'],
+    '#default_value' => $textformat['value'],
+    '#description' => t('Use this area to set a P2P Login message that will appear on the registration page for your users located at /springboard_p2p/register.'),
+  );
+
   $form['form_types'] = array(
     '#type' => 'fieldset',
     '#title' => 'Peer to peer enabled form types',
@@ -261,6 +281,7 @@ function springboard_p2p_admin_settings_validate($form, &$form_state) {
 function springboard_p2p_admin_settings_submit($form, &$form_state) {
   $keys = array(
     'base_path',
+    'login_message_area',
     'fundraiser_items',
     'webform_user_items',
     'registration_fields',

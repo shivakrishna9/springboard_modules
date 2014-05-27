@@ -148,6 +148,28 @@ function springboard_p2p_default_page_manager_pages() {
     $pane->uuid = '770ce805-317b-4423-8075-448f5441d6b9';
     $display->content['new-770ce805-317b-4423-8075-448f5441d6b9'] = $pane;
     $display->panels['top'][0] = 'new-770ce805-317b-4423-8075-448f5441d6b9';
+    $pane = new stdClass();
+    $pane->pid = 'new-667571e6-db71-468f-a95b-ccba6761872a';
+    $pane->panel = 'top';
+    $pane->type = 'page_messages';
+    $pane->subtype = 'page_messages';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array();
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'pane-messages',
+    );
+    $pane->extras = array();
+    $pane->position = 1;
+    $pane->locks = array();
+    $pane->uuid = '667571e6-db71-468f-a95b-ccba6761872a';
+    $display->content['new-667571e6-db71-468f-a95b-ccba6761872a'] = $pane;
+    $display->panels['top'][1] = 'new-667571e6-db71-468f-a95b-ccba6761872a';
   $display->hide_title = PANELS_TITLE_FIXED;
   $display->title_pane = '0';
   $handler->conf['display'] = $display;
