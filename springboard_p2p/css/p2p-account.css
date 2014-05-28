@@ -62,7 +62,8 @@ body p {
 }
 
 .reg-pane,
-.pane-social-login {
+.pane-social-login,
+.pane-login {
   padding: 6px 0 8px 6%;
   border: 1px solid #a6a6a6;
 }
@@ -150,6 +151,10 @@ body p {
   border-top: none;
 }
 
+.pane-social-login img.fb-image {
+  max-width: 97%;
+}
+
 /******************  Media queries, these should go last */
 
 @media (max-width: 1170px) {
@@ -162,10 +167,6 @@ body p {
   .reg-pane,
   .pane-social-login {
     padding: 14px 0 8px 7%;
-  }
-
-  .pane-social-login img.fb-image {
-    max-width: 97%;
   }
 
 }
