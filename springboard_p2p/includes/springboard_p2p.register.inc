@@ -285,6 +285,17 @@ function springboard_p2p_existing_user_login_form($form, &$form_state) {
     '#required' => TRUE,
   );
 
+  $path = 'springboard_p2p/password';
+  $options = array();
+  if (isset($_GET['p2p_cid']) && is_numeric($_GET['p2p_cid'])) {
+    $options['query'] = array(
+      'p2p_cid' => $_GET['p2p_cid'],
+    );
+  }
+  $form['forgot_password'] => array(
+    '#markup' => l('Forgot your password?', $path, $options),
+  );
+
   $form['actions'] = array(
     '#type' => 'actions',
   );
