@@ -14,9 +14,8 @@
       // end jquery.
     }};
 
-
-  // Get rid of inline styles.
-  $('.panel-display').attr('style', '');
+    // Get rid of inline styles.
+   $('.panel-display p').attr('style', '');
 
 })
 (jQuery);

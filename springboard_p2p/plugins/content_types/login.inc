@@ -28,7 +28,7 @@ function springboard_p2p_login_render($subtype, $conf, $panel_args, $context) {
   module_load_include('inc', 'springboard_p2p', 'includes/springboard_p2p.register');
   // Build the content type block.
   $block = new stdClass();
-  $block->title = 'Log in';
+  $block->title = '';
   $block->content = drupal_get_form('springboard_p2p_existing_user_login_form');
 
   return $block;

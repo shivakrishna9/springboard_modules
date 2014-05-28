@@ -44,7 +44,8 @@ function springboard_p2p_login_intro_render($subtype, $conf, $args, $contexts) {
   }
 
   // Define the site name.
-  $site_name = variable_get('site_name');
+  // @todo - do we need this? 
+  //$site_name = variable_get('site_name');
 
   // Title.
   $title = t('Already a Supporter?');
@@ -73,7 +74,9 @@ function springboard_p2p_login_intro_render($subtype, $conf, $args, $contexts) {
   }
 
   // Render the login message text.
+  $output[] = '<div class="login-text-wrapper"> ';
   $output[] = $logintext['value'];
+  $output[] = '</div>';
 
   // Initial content is blank.
   // Build the content type block.
