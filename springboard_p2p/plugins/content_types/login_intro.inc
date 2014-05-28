@@ -47,23 +47,31 @@ function springboard_p2p_login_intro_render($subtype, $conf, $args, $contexts) {
   $site_name = variable_get('site_name');
 
   // Title.
-  $title = t('Already a Spporter?');
+  $title = t('Already a Supporter?');
 
   // Pull the login message text from P2P Settings.
-  $logintext= variable_get('springboard_p2p_login_message_area');
-
-  // Query the url string campaign id.
-  if ($_GET['p2p_cid']) {
-    $urlstring = $_GET['p2p_cid'];
-  }
+  $logintext = variable_get('springboard_p2p_login_message_area');
 
   // Define the reg link passing the string id.
-  $loginlink = '/springboard_p2p/logn?p2p_cid=' . $urlstring;
+  $loginlink = '/springboard_p2p/logn';
+
+  // Query the url string campaign id if it's not empty.
+  if (!empty($_GET['p2p_cid'])) {
+    $urlstring = $_GET['p2p_cid'];
+    $loginlinkid = '?p2p_cid=' . $urlstring;
+  }
 
   $output = array();
 
   // Create the output to be rendered.
-  $output[] = '<a class="get-started-link" href=" ' .  $loginlink  . ' ">' . t('Login') . '<i class="fa fa-cog fa-spin get-started-spinner"></i></a>';
+  if (empty($_GET['p2p_cid'])) {
+    $output[] = '<a class="get-started-link" href=" ' . $loginlink . ' ">' . t('Login') . '<i class="fa fa-cog fa-spin get-started-spinner"></i></a>';
+  }
+
+  else {
+    $output[] = '<a class="get-started-link" href=" ' . $loginlink . $loginlinkid . ' ">' . t('Login') . '<i class="fa fa-cog fa-spin get-started-spinner"></i></a>';
+  }
+
   // Render the login message text.
   $output[] = $logintext['value'];
 
