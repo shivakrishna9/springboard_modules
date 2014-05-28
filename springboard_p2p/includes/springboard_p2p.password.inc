@@ -6,12 +6,10 @@
  */
 
 /**
- * Page callback to request a password reset email.
+ * Form callback to request a password reset email.
  */
-function springboard_p2p_request_password_reset_page($account) {
-  if (!isset($account->uid) || !springboard_p2p_user_is_registered_for_p2p($account->uid)) {
-    return MENU_NOT_FOUND;
-  }
+function springboard_p2p_request_password_reset_form($form, &$form_state) {
+  $form = array();
 
   if (isset($_GET['p2p_cid']) && is_numeric($_GET['p2p_cid'])) {
     $cid = $_GET['p2p_cid'];
@@ -20,22 +18,102 @@ function springboard_p2p_request_password_reset_page($account) {
     $cid = NULL;
   }
 
-  $params = array(
-    'account' => $account,
-    'p2p_cid' => $cid,
+  $uid = arg(2);
+  if ($uid) {
+    $account = user_load($uid);
+
+    if (!isset($account->uid) || !springboard_p2p_user_is_registered_for_p2p($account->uid)) {
+      return MENU_NOT_FOUND;
+    }
+
+    springboard_p2p_send_password_reset_mail($account, $cid);
+    drupal_set_message(t('Further instructions have been sent to your e-mail address.'));
+
+    $options = array();
+    if (!is_null($cid)) {
+      $options['query'] = array(
+        'p2p_cid' => $cid,
+      );
+    }
+
+    drupal_goto('springboard_p2p/register', $options);
+
+  }
+  else {
+    global $user;
+
+    $form['name'] = array(
+      '#type' => 'textfield',
+      '#title' => t('E-mail address'),
+      '#size' => 60,
+      '#maxlength' => max(USERNAME_MAX_LENGTH, EMAIL_MAX_LENGTH),
+      '#required' => TRUE,
+      '#default_value' => isset($_GET['name']) ? $_GET['name'] : '',
+    );
+
+    // Allow logged in users to request this also.
+    if ($user->uid > 0) {
+      $form['name']['#type'] = 'value';
+      $form['name']['#value'] = $user->mail;
+      $form['mail'] = array(
+        '#prefix' => '<p>',
+        '#markup' =>  t('Password reset instructions will be mailed to %email. You must log out to use the password reset link in the e-mail.', array('%email' => $user->mail)),
+        '#suffix' => '</p>',
+      );
+    }
+    $form['actions'] = array('#type' => 'actions');
+    $form['actions']['submit'] = array('#type' => 'submit', '#value' => t('E-mail new password'));
+
+  }
+
+  $form['p2p_cid'] = array(
+    '#type' => 'value',
+    '#value' => $cid,
   );
-  $to = $account->mail;
-  $language = user_preferred_language($account);
 
-  // @todo Change this to a Rules event so the email can be configured?
-  drupal_mail('springboard_p2p', 'password_reset', $to, $language, $params);
+  return $form;
+}
 
-  $output = array();
-  $output['message'] = array(
-    '#markup' => 'A password reset email has been sent',
-  );
+/**
+ * Form validation for requesting a new password.
+ */
+function springboard_p2p_request_password_reset_form_validate($form, &$form_state) {
+  $name = trim($form_state['values']['name']);
+  // Try to load by email.
+  $users = user_load_multiple(array(), array('mail' => $name, 'status' => '1'));
+  $account = reset($users);
+  if (!$account) {
+    // No success, try to load by name.
+    $users = user_load_multiple(array(), array('name' => $name, 'status' => '1'));
+    $account = reset($users);
+  }
 
-  return $output;
+  if (isset($account->uid)) {
+    form_set_value(array('#parents' => array('account')), $account, $form_state);
+  }
+  else {
+    form_set_error('name', t('Sorry, %name is not recognized as a registered e-mail address.', array('%name' => $name)));
+  }
+}
+
+/**
+ * Form submission for requesting a new password.
+ */
+function springboard_p2p_request_password_reset_form_submit($form, &$form_state) {
+  $account = $form_state['values']['account'];
+  $cid = $form_state['values']['p2p_cid'];
+
+  $url_options = array();
+  if (!empty($cid)) {
+    $url_options['query'] = array(
+      'p2p_cid' => $cid,
+    );
+  }
+
+  springboard_p2p_send_password_reset_mail($account, $cid);
+  drupal_set_message(t('Further instructions have been sent to your e-mail address.'));
+
+  $form_state['redirect'] = array('springboard_p2p/register', $url_options);
 }
 
 /**
@@ -165,4 +243,33 @@ function springboard_p2p_set_password_form_submit($form, &$form_state) {
   );
 
   user_save($account, $edit);
+}
+
+/**
+ * Sends the password reset email.
+ *
+ * @param object $account
+ *   The user to send the mail to.
+ * @param $cid
+ *   The p2p campaign id to append to the reset url.
+ *
+ * @return array
+ *   The result from drupal_mail().
+ */
+function springboard_p2p_send_password_reset_mail($account, $cid) {
+  $params = array(
+    'account' => $account,
+    'p2p_cid' => $cid,
+  );
+  $to = $account->mail;
+  $language = user_preferred_language($account);
+
+  // @todo Change this to a Rules event so the email can be configured?
+  $mail = drupal_mail('springboard_p2p', 'password_reset', $to, $language, $params);
+
+  if (!empty($mail['result'])) {
+    watchdog('user', 'Password reset instructions mailed to %name at %email.', array('%name' => $account->name, '%email' => $account->mail));
+  }
+
+  return $mail;
 }
