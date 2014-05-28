@@ -118,7 +118,7 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     );
     $pane->css = array(
       'css_id' => '',
-      'css_class' => 'pane-org-intro',
+      'css_class' => '',
     );
     $pane->extras = array();
     $pane->position = 1;
@@ -144,7 +144,7 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     );
     $pane->css = array(
       'css_id' => '',
-      'css_class' => 'donate-button',
+      'css_class' => 'donate-button org-intro-button',
     );
     $pane->extras = array();
     $pane->position = 2;
@@ -194,7 +194,19 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->type = 'personal_campaign_call_to_action';
     $pane->subtype = 'personal_campaign_call_to_action';
     $pane->shown = TRUE;
-    $pane->access = array();
+    $pane->access = array(
+      'plugins' => array(
+        0 => array(
+          'name' => 'node_field_populated',
+          'settings' => array(
+            'node_field' => 'p2p_personal_campaign:field_p2p_video_embed',
+            'label' => 'Peer to peer personal campaign - Upload a Campaign Video',
+          ),
+          'context' => 'panelizer',
+          'not' => FALSE,
+        ),
+      ),
+    );
     $pane->configuration = array(
       'context' => 'panelizer',
       'override_title' => 1,
@@ -206,7 +218,7 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     );
     $pane->css = array(
       'css_id' => '',
-      'css_class' => 'donate-button',
+      'css_class' => 'donate-button video-pane-button',
     );
     $pane->extras = array();
     $pane->position = 4;

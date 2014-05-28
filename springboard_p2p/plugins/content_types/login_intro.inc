@@ -53,7 +53,7 @@ function springboard_p2p_login_intro_render($subtype, $conf, $args, $contexts) {
   $logintext = variable_get('springboard_p2p_login_message_area');
 
   // Define the reg link passing the string id.
-  $loginlink = '/springboard_p2p/logn';
+  $loginlink = '/springboard_p2p/login';
 
   // Query the url string campaign id if it's not empty.
   if (!empty($_GET['p2p_cid'])) {

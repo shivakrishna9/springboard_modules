@@ -46,7 +46,7 @@ function springboard_p2p_default_page_manager_pages() {
   $handler->handler = 'panel_context';
   $handler->weight = 0;
   $handler->conf = array(
-    'title' => 'Panel',
+    'title' => 'Registration',
     'no_blocks' => 0,
     'pipeline' => 'standard',
     'body_classes_to_remove' => '',
@@ -201,6 +201,101 @@ function springboard_p2p_default_page_manager_pages() {
   $handler->conf['display'] = $display;
   $page->default_handlers[$handler->name] = $handler;
   $pages['p2p_registration_page'] = $page;
+
+  $page = new stdClass();
+  $page->disabled = FALSE; /* Edit this to true to make a default page disabled initially */
+  $page->api_version = 1;
+  $page->name = 'springboard_p2p_login_page';
+  $page->task = 'page';
+  $page->admin_title = 'Springboard P2P Login page';
+  $page->admin_description = '';
+  $page->path = 'springboard_p2p/login';
+  $page->access = array();
+  $page->menu = array();
+  $page->arguments = array();
+  $page->conf = array(
+    'admin_paths' => FALSE,
+  );
+  $page->default_handlers = array();
+  $handler = new stdClass();
+  $handler->disabled = FALSE; /* Edit this to true to make a default handler disabled initially */
+  $handler->api_version = 1;
+  $handler->name = 'page_springboard_p2p_login_page_panel_context';
+  $handler->task = 'page';
+  $handler->subtask = 'springboard_p2p_login_page';
+  $handler->handler = 'panel_context';
+  $handler->weight = 0;
+  $handler->conf = array(
+    'title' => 'Panel',
+    'no_blocks' => 0,
+    'pipeline' => 'standard',
+    'body_classes_to_remove' => '',
+    'body_classes_to_add' => 'p2p-page-type',
+    'css_id' => '',
+    'css' => '',
+    'contexts' => array(),
+    'relationships' => array(),
+  );
+  $display = new panels_display();
+  $display->layout = 'onecol';
+  $display->layout_settings = array();
+  $display->panel_settings = array(
+    'style_settings' => array(
+      'default' => NULL,
+      'middle' => NULL,
+    ),
+  );
+  $display->cache = array();
+  $display->title = '';
+  $display->uuid = '8c9c3eb7-fd3b-4739-b087-ccb9e2fa6e82';
+  $display->content = array();
+  $display->panels = array();
+    $pane = new stdClass();
+    $pane->pid = 'new-8c4878a3-7ad3-43eb-99ea-be1ab11e3358';
+    $pane->panel = 'middle';
+    $pane->type = 'campaign_header_no_context';
+    $pane->subtype = 'campaign_header_no_context';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array();
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 0;
+    $pane->locks = array();
+    $pane->uuid = '8c4878a3-7ad3-43eb-99ea-be1ab11e3358';
+    $display->content['new-8c4878a3-7ad3-43eb-99ea-be1ab11e3358'] = $pane;
+    $display->panels['middle'][0] = 'new-8c4878a3-7ad3-43eb-99ea-be1ab11e3358';
+    $pane = new stdClass();
+    $pane->pid = 'new-bc08a237-4d8b-4f09-9b18-9922f550802b';
+    $pane->panel = 'middle';
+    $pane->type = 'login';
+    $pane->subtype = 'login';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'override_title' => 0,
+      'override_title_text' => '',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 1;
+    $pane->locks = array();
+    $pane->uuid = 'bc08a237-4d8b-4f09-9b18-9922f550802b';
+    $display->content['new-bc08a237-4d8b-4f09-9b18-9922f550802b'] = $pane;
+    $display->panels['middle'][1] = 'new-bc08a237-4d8b-4f09-9b18-9922f550802b';
+  $display->hide_title = PANELS_TITLE_FIXED;
+  $display->title_pane = '0';
+  $handler->conf['display'] = $display;
+  $page->default_handlers[$handler->name] = $handler;
+  $pages['springboard_p2p_login_page'] = $page;
 
   return $pages;
 

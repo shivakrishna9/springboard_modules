@@ -22,6 +22,7 @@
         $(this).html( text.replace(':', '') );
       });
 
+
       // end jquery.
     }};
 })

@@ -13,5 +13,10 @@
 
       // end jquery.
     }};
+
+
+  // Get rid of inline styles.
+  $('.panel-display').attr('style', '');
+
 })
 (jQuery);
