@@ -2016,9 +2016,14 @@ function springboard_p2p_css_alter(&$css) {
   // Global node.
   $node = menu_get_object();
   if (!empty($node) && in_array($node->type, $node_types)) {
+
+    // Define the views module path.
+    $viewsmodpath = drupal_get_path('module', 'views') . '/css';
+
     // Exclude system.theme.css
     $exclude = array(
       'modules/system/system.theme.css' => FALSE,
+      $viewsmodpath .  '/views.css' => FALSE,
     );
     $css = array_diff_key($css, $exclude);
   }
