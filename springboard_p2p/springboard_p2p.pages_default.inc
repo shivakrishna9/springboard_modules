@@ -125,6 +125,32 @@ function springboard_p2p_default_page_manager_pages() {
     $display->content['new-4258aeae-338f-463f-862a-64f2b307951a'] = $pane;
     $display->panels['middle'][0] = 'new-4258aeae-338f-463f-862a-64f2b307951a';
     $pane = new stdClass();
+    $pane->pid = 'new-3f8ff8a6-0965-475e-aeee-484ec16ba512';
+    $pane->panel = 'right';
+    $pane->type = 'login_intro';
+    $pane->subtype = 'login_intro';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'text' => '',
+      'override_title' => 0,
+      'override_title_text' => '',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'pane-login',
+    );
+    $pane->extras = array();
+    $pane->position = 0;
+    $pane->locks = array();
+    $pane->uuid = '3f8ff8a6-0965-475e-aeee-484ec16ba512';
+    $display->content['new-3f8ff8a6-0965-475e-aeee-484ec16ba512'] = $pane;
+    $display->panels['right'][0] = 'new-3f8ff8a6-0965-475e-aeee-484ec16ba512';
+    $pane = new stdClass();
     $pane->pid = 'new-770ce805-317b-4423-8075-448f5441d6b9';
     $pane->panel = 'top';
     $pane->type = 'campaign_header_no_context';
