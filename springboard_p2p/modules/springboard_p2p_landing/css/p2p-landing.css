@@ -278,6 +278,11 @@ ul.campaign-landing-grid a {
   width: 29%;
 }
 
+span.campaign-node-link {
+  margin: 10px 0;
+  display: block;
+}
+
 /******************  Media queries, these should go last */
 @media (min-width: 769px) {
 
