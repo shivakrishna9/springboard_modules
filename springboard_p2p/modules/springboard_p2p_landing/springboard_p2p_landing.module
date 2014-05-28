@@ -96,6 +96,8 @@ function springboard_p2p_landing_page_alter(&$cache, $vars) {
           'type' => 'external',
         )
       );
+    }
+
   }
 
 }
