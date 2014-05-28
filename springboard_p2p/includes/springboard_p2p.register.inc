@@ -105,6 +105,7 @@ function springboard_p2p_user_register_form($form, &$form_state) {
  * Adds ajax and wrapper class around state and country user fields.
  *
  * @param array $form
+ *   The form array to add the elements to.
  */
 function springboard_p2p_add_state_and_country_ajax(&$form) {
   $form['sbp_country'][$form['sbp_country']['#language']]['#ajax'] = array(
@@ -292,8 +293,8 @@ function springboard_p2p_existing_user_login_form($form, &$form_state) {
       'p2p_cid' => $_GET['p2p_cid'],
     );
   }
-  $form['forgot_password'] => array(
-    '#markup' => l('Forgot your password?', $path, $options),
+  $form['forgot_password'] = array(
+    '#markup' => l(t('Forgot your password?'), $path, $options),
   );
 
   $form['actions'] = array(
