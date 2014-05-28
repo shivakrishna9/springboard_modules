@@ -12,14 +12,10 @@ define('SPRINGBOARD_P2P_ROLE', 'Springboard P2P campaigner');
  * Implements hook_ctools_plugin_directory().
  */
 function springboard_p2p_ctools_plugin_directory($owner, $plugin_type) {
-  if ($owner == 'ctools' && ($plugin_type == 'content_types')) {
-    return 'plugins/' . $plugin_type;
-  }
-
-  // Define the custom panels templates folder in plugins (layouts).
+  // Call the various ctools plugin types.
   $modules = array('panels', 'ctools');
-  if (in_array($owner, $modules) && !empty($plugin_type)) {
-    return "plugins/$plugin_type";
+  if (in_array($owner, $modules) && !empty($plugin_type) && ($plugin_type == 'content_types' || $plugin_type == 'access' || $plugin_type == 'layouts')) {
+    return 'plugins/' . $plugin_type;
   }
 
 }
@@ -1861,7 +1857,7 @@ function springboard_p2p_page_alter(&$page) {
   // Define the module path for use below.
   $mod_path = drupal_get_path('module', 'springboard_p2p');
 
-  // Set a var for SB register
+  // Set a var for SB register.
      if (arg(0) == "springboard_p2p" && arg(1) == "register") {
        $regpath = '';
      }
@@ -1890,18 +1886,20 @@ function springboard_p2p_page_alter(&$page) {
     drupal_render($p2p_css);
   }
 
-  // @todo - make this more specific
-  $p2p_account_css = array(
-    '#attached' => array(
-      'css' => array(
-        $mod_path . '/css/p2p-account.css' => array(
-          'group' => CSS_THEME,
-          'weight' => 9999,
+  if (isset($regpath)) {
+    // @todo - make this more specific
+    $p2p_account_css = array(
+      '#attached' => array(
+        'css' => array(
+          $mod_path . '/css/p2p-account.css' => array(
+            'group' => CSS_THEME,
+            'weight' => 9999,
+          ),
         ),
       ),
-    ),
-  );
-  drupal_render($p2p_account_css);
+    );
+    drupal_render($p2p_account_css);
+  }
 
   // Custom scripts, let's load this last.
   // @todo - make this more specific

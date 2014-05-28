@@ -8,9 +8,8 @@
     attach: function (context, settings) {
 // End drupal calls.
 
-
+      // Add a class to the parent for better theming.
       $('#edit-mail').parent('.control-group').addClass('email-wrapper');
-
 
       // end jquery.
     }};
