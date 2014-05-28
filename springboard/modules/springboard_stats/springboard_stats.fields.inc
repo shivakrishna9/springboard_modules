@@ -124,24 +124,24 @@ function _springboard_stats_fundraiser_fields_settings($type) {
     'field_instance' => array(
       'bundle' => $type,
       'default_value' => 0.0,
-      'description' => $t('The total amount of completed commerce transactions that resulted from submissions per form.'),
+      'description' => $t('The dollar total of all completed commerce transactions per form.'),
       'display' => array(
         'default' => array(
           'label' => 'above',
           'settings' => array(),
           'type' => 'hidden',
-          'weight' => '2',
+//          'weight' => '2',
         ),
         'teaser' => array(
           'label' => 'above',
           'settings' => array(),
           'type' => 'hidden',
-          'weight' => 0,
+//          'weight' => 0,
         ),
       ),
       'entity_type' => 'node',
       'field_name' => 'sbstats_total_transactions',
-      'label' => $t('Total of Transactions'),
+      'label' => $t('Dollar Total of Transactions'),
       'required' => FALSE,
       'settings' => array(
         'text_processing' => FALSE,
@@ -157,6 +157,338 @@ function _springboard_stats_fundraiser_fields_settings($type) {
  *        'weight' => '0',
  *      ),
  */
+    ),
+  );
+
+  $fields['sbstats_count_conversions'] = array(
+    'field_config' => array(
+      'type' => 'number_integer',
+      'cardinality' => 1,
+      'locked' => TRUE,
+      'settings' => array(
+        'min' => '0',
+      ),
+      'entity_types' => array(),
+      'field_name' => 'sbstats_count_conversions',
+      'foreign keys' => array(),
+      'indexes' => array(),
+      'translatable' => FALSE,
+    ),
+    'field_instance' => array(
+      'bundle' => $type,
+      'default_value' => 0,
+      'description' => $t('The total number of completed commerce transactions per form.'),
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+        ),
+        'teaser' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'sbstats_count_conversions',
+      'label' => $t('Total Number of Conversions'),
+      'required' => FALSE,
+      'settings' => array(
+        'text_processing' => FALSE,
+        'user_register_form' => FALSE,
+      ),
+    ),
+  );
+
+  $fields['sbstats_count_sustainers'] = array(
+    'field_config' => array(
+      'type' => 'number_integer',
+      'cardinality' => 1,
+      'locked' => TRUE,
+      'settings' => array(
+        'min' => '0',
+      ),
+      'entity_types' => array(),
+      'field_name' => 'sbstats_count_sustainers',
+      'foreign keys' => array(),
+      'indexes' => array(),
+      'translatable' => FALSE,
+    ),
+    'field_instance' => array(
+      'bundle' => $type,
+      'default_value' => 0,
+      'description' => $t('The total number of completed recurring commerce transactions per form.'),
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+        ),
+        'teaser' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'sbstats_count_sustainers',
+      'label' => $t('Total Number of Sustainers'),
+      'required' => FALSE,
+      'settings' => array(
+        'text_processing' => FALSE,
+        'user_register_form' => FALSE,
+      ),
+    ),
+  );
+
+  $fields['sbstats_total_sustainers'] = array(
+    'field_config' => array(
+      'type' => 'number_decimal',
+      'cardinality' => 1,
+      'locked' => TRUE,
+      'settings' => array(
+        'precision' => 10,
+        'scale' => 2,
+      ),
+      'entity_types' => array(),
+      'field_name' => 'sbstats_total_sustainers',
+      'foreign keys' => array(),
+      'indexes' => array(),
+      'translatable' => FALSE,
+    ),
+    'field_instance' => array(
+      'bundle' => $type,
+      'default_value' => 0,
+      'description' => $t('The dollar total of completed recurring commerce transactions per form.'),
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+        ),
+        'teaser' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'sbstats_total_sustainers',
+      'label' => $t('Dollar Total of Sustainers'),
+      'required' => FALSE,
+      'settings' => array(
+        'text_processing' => FALSE,
+        'user_register_form' => FALSE,
+      ),
+    ),
+  );
+
+  $fields['sbstats_total_sustainers'] = array(
+    'field_config' => array(
+      'type' => 'number_decimal',
+      'cardinality' => 1,
+      'locked' => TRUE,
+      'settings' => array(
+        'precision' => 10,
+        'scale' => 2,
+      ),
+      'entity_types' => array(),
+      'field_name' => 'sbstats_total_sustainers',
+      'foreign keys' => array(),
+      'indexes' => array(),
+      'translatable' => FALSE,
+    ),
+    'field_instance' => array(
+      'bundle' => $type,
+      'default_value' => 0,
+      'description' => $t('The dollar total of completed recurring commerce transactions per form.'),
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+        ),
+        'teaser' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'sbstats_total_sustainers',
+      'label' => $t('Dollar Total of Sustainers'),
+      'required' => FALSE,
+      'settings' => array(
+        'text_processing' => FALSE,
+        'user_register_form' => FALSE,
+      ),
+    ),
+  );
+
+  $fields['sbstats_count_failures'] = array(
+    'field_config' => array(
+      'type' => 'number_integer',
+      'cardinality' => 1,
+      'locked' => TRUE,
+      'settings' => array(
+        'min' => '0',
+      ),
+      'entity_types' => array(),
+      'field_name' => 'sbstats_count_failures',
+      'foreign keys' => array(),
+      'indexes' => array(),
+      'translatable' => FALSE,
+    ),
+    'field_instance' => array(
+      'bundle' => $type,
+      'default_value' => 0,
+      'description' => $t('The total number of failed commerce transactions per form.'),
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+        ),
+        'teaser' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'sbstats_count_failures',
+      'label' => $t('Total Number of Failures'),
+      'required' => FALSE,
+      'settings' => array(
+        'text_processing' => FALSE,
+        'user_register_form' => FALSE,
+      ),
+    ),
+  );
+
+  $fields['sbstats_total_failures'] = array(
+    'field_config' => array(
+      'type' => 'number_decimal',
+      'cardinality' => 1,
+      'locked' => TRUE,
+      'settings' => array(
+        'precision' => 10,
+        'scale' => 2,
+      ),
+      'entity_types' => array(),
+      'field_name' => 'sbstats_total_failures',
+      'foreign keys' => array(),
+      'indexes' => array(),
+      'translatable' => FALSE,
+    ),
+    'field_instance' => array(
+      'bundle' => $type,
+      'default_value' => 0,
+      'description' => $t('The dollar total of failed commerce transactions per form.'),
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+        ),
+        'teaser' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'sbstats_total_failures',
+      'label' => $t('Dollar Total of Failures'),
+      'required' => FALSE,
+      'settings' => array(
+        'text_processing' => FALSE,
+        'user_register_form' => FALSE,
+      ),
+    ),
+  );
+
+  $fields['sbstats_count_pending'] = array(
+    'field_config' => array(
+      'type' => 'number_integer',
+      'cardinality' => 1,
+      'locked' => TRUE,
+      'settings' => array(
+        'min' => '0',
+      ),
+      'entity_types' => array(),
+      'field_name' => 'sbstats_count_pending',
+      'foreign keys' => array(),
+      'indexes' => array(),
+      'translatable' => FALSE,
+    ),
+    'field_instance' => array(
+      'bundle' => $type,
+      'default_value' => 0,
+      'description' => $t('The total number of pending commerce transactions per form.'),
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+        ),
+        'teaser' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'sbstats_count_pending',
+      'label' => $t('Total Number of Transactions Pending'),
+      'required' => FALSE,
+      'settings' => array(
+        'text_processing' => FALSE,
+        'user_register_form' => FALSE,
+      ),
+    ),
+  );
+
+  $fields['sbstats_total_pending'] = array(
+    'field_config' => array(
+      'type' => 'number_decimal',
+      'cardinality' => 1,
+      'locked' => TRUE,
+      'settings' => array(
+        'precision' => 10,
+        'scale' => 2,
+      ),
+      'entity_types' => array(),
+      'field_name' => 'sbstats_total_pending',
+      'foreign keys' => array(),
+      'indexes' => array(),
+      'translatable' => FALSE,
+    ),
+    'field_instance' => array(
+      'bundle' => $type,
+      'default_value' => 0,
+      'description' => $t('The dollar total of pending commerce transactions per form.'),
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+        ),
+        'teaser' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'sbstats_total_pending',
+      'label' => $t('Dollar Total of Transactions Pending'),
+      'required' => FALSE,
+      'settings' => array(
+        'text_processing' => FALSE,
+        'user_register_form' => FALSE,
+      ),
     ),
   );
 
