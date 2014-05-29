@@ -2017,3 +2017,12 @@ function springboard_p2p_css_alter(&$css) {
     $css = array_diff_key($css, $exclude);
   }
 }
+
+function springboard_p2p_preprocess_page(&$vars) {
+
+  // Unset the h1 title for the login page, we set it in a custom pane.
+  if (arg(0) == 'springboard_p2p' && arg(1) == 'login') {
+    $vars['title'] = '';
+  }
+
+}

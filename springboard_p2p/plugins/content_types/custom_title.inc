@@ -64,6 +64,7 @@ function springboard_p2p_custom_title_render($subtype, $conf, $args, $contexts) 
 
   // Initial content is blank.
   $block = new stdClass();
+  $block->title = '';
   $block->content = implode('', $output);
 
   return $block;

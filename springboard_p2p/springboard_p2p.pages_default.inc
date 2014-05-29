@@ -235,6 +235,8 @@ function springboard_p2p_default_page_manager_pages() {
     'css' => '',
     'contexts' => array(),
     'relationships' => array(),
+    'panels_page_title_state' => 0,
+    'panels_page_title' => '',
   );
   $display = new panels_display();
   $display->layout = 'onecol';
@@ -246,7 +248,7 @@ function springboard_p2p_default_page_manager_pages() {
     ),
   );
   $display->cache = array();
-  $display->title = '';
+  $display->title = 'Login';
   $display->uuid = '8c9c3eb7-fd3b-4739-b087-ccb9e2fa6e82';
   $display->content = array();
   $display->panels = array();
@@ -273,6 +275,28 @@ function springboard_p2p_default_page_manager_pages() {
     $display->content['new-8c4878a3-7ad3-43eb-99ea-be1ab11e3358'] = $pane;
     $display->panels['middle'][0] = 'new-8c4878a3-7ad3-43eb-99ea-be1ab11e3358';
     $pane = new stdClass();
+    $pane->pid = 'new-02324aa6-20f2-4e6d-b2df-09b5f9b6225c';
+    $pane->panel = 'middle';
+    $pane->type = 'page_messages';
+    $pane->subtype = 'page_messages';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array();
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'pane-messages',
+    );
+    $pane->extras = array();
+    $pane->position = 1;
+    $pane->locks = array();
+    $pane->uuid = '02324aa6-20f2-4e6d-b2df-09b5f9b6225c';
+    $display->content['new-02324aa6-20f2-4e6d-b2df-09b5f9b6225c'] = $pane;
+    $display->panels['middle'][1] = 'new-02324aa6-20f2-4e6d-b2df-09b5f9b6225c';
+    $pane = new stdClass();
     $pane->pid = 'new-ec87ad4b-670e-4f49-bac0-a7130a8ce60c';
     $pane->panel = 'middle';
     $pane->type = 'custom_title';
@@ -293,33 +317,11 @@ function springboard_p2p_default_page_manager_pages() {
       'css_class' => 'pane-title-wrapper',
     );
     $pane->extras = array();
-    $pane->position = 1;
+    $pane->position = 2;
     $pane->locks = array();
     $pane->uuid = 'ec87ad4b-670e-4f49-bac0-a7130a8ce60c';
     $display->content['new-ec87ad4b-670e-4f49-bac0-a7130a8ce60c'] = $pane;
-    $display->panels['middle'][1] = 'new-ec87ad4b-670e-4f49-bac0-a7130a8ce60c';
-    $pane = new stdClass();
-    $pane->pid = 'new-02324aa6-20f2-4e6d-b2df-09b5f9b6225c';
-    $pane->panel = 'middle';
-    $pane->type = 'page_messages';
-    $pane->subtype = 'page_messages';
-    $pane->shown = TRUE;
-    $pane->access = array();
-    $pane->configuration = array();
-    $pane->cache = array();
-    $pane->style = array(
-      'settings' => NULL,
-    );
-    $pane->css = array(
-      'css_id' => '',
-      'css_class' => 'pane-messages',
-    );
-    $pane->extras = array();
-    $pane->position = 2;
-    $pane->locks = array();
-    $pane->uuid = '02324aa6-20f2-4e6d-b2df-09b5f9b6225c';
-    $display->content['new-02324aa6-20f2-4e6d-b2df-09b5f9b6225c'] = $pane;
-    $display->panels['middle'][2] = 'new-02324aa6-20f2-4e6d-b2df-09b5f9b6225c';
+    $display->panels['middle'][2] = 'new-ec87ad4b-670e-4f49-bac0-a7130a8ce60c';
     $pane = new stdClass();
     $pane->pid = 'new-b59ab21a-1e06-4fd3-8250-ced0257e94d7';
     $pane->panel = 'middle';
@@ -420,8 +422,8 @@ function springboard_p2p_default_page_manager_pages() {
     $pane->uuid = 'bc08a237-4d8b-4f09-9b18-9922f550802b';
     $display->content['new-bc08a237-4d8b-4f09-9b18-9922f550802b'] = $pane;
     $display->panels['middle'][5] = 'new-bc08a237-4d8b-4f09-9b18-9922f550802b';
-  $display->hide_title = PANELS_TITLE_NONE;
-  $display->title_pane = '0';
+  $display->hide_title = PANELS_TITLE_FIXED;
+  $display->title_pane = 'new-ec87ad4b-670e-4f49-bac0-a7130a8ce60c';
   $handler->conf['display'] = $display;
   $page->default_handlers[$handler->name] = $handler;
   $pages['springboard_p2p_login_page'] = $page;
