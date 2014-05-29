@@ -664,6 +664,7 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['fields']['field_p2p_campaign_images']['field'] = 'field_p2p_campaign_images';
   $handler->display->display_options['fields']['field_p2p_campaign_images']['label'] = '';
   $handler->display->display_options['fields']['field_p2p_campaign_images']['element_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['element_class'] = 'personal-campaign-image';
   $handler->display->display_options['fields']['field_p2p_campaign_images']['element_label_type'] = '0';
   $handler->display->display_options['fields']['field_p2p_campaign_images']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['field_p2p_campaign_images']['element_wrapper_type'] = '0';
