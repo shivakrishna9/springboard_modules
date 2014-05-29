@@ -56,9 +56,15 @@ function springboard_p2p_custom_title_edit_form_submit(&$form, &$form_state) {
  */
 function springboard_p2p_custom_title_render($subtype, $conf, $args, $contexts) {
 
+  // Define the output array.
+  $output = array();
+
+  // Render the textfield as an h1 tag since panels core does not work for that.
+  $output[] =  '<h1>' . $conf['text'] . '</h1>';
+
   // Initial content is blank.
   $block = new stdClass();
-  $block->content = '<h1>' . $conf['text'] . '</h1>';
+  $block->content = implode('', $output);
 
   return $block;
 }
