@@ -74,28 +74,9 @@ function _page_wrappers_insert_after_first_element(&$a, $element) {
  * Replace standard site theme with pagewrapper template for nodes that have page wrappers assigned.
  */
 function page_wrappers_preprocess_page(&$vars) {
-  $wrapper = NULL;
-  if ($node = _page_wrappers_page_node()) {
-    $wrapper = _page_wrappers_node_assigned_wrapper($node);
-  }
-
-  // Allow context to optionally override this
-  if (module_exists('context')) {
-    $contexts = context_active_contexts();
-    foreach ($contexts as $context) {
-      // Check if page_wrapper is a reaction for this context
-      if (isset($context->reactions['page_wrappers'])) {
-        $wrapper = array(
-          'wrapper_nid' => $context->reactions['page_wrappers']['page_wrapper'],
-          'ruleset' => 1,
-          'weight' => -20,
-        );
-        if ($node) {
-          $wrapper['nid'] = $node->nid;
-        }
-      }
-    }
-  }
+  $wrapper_data = _page_wrapper_check();
+  $wrapper = $wrapper_data['wrapper'];
+  $node = $wrapper_data['node'];
 
   if (!empty($wrapper)) {
     // Some pages may not have a node set even though one is being viewed; we'll need it for the wrapper template
@@ -163,13 +144,12 @@ function page_wrappers_block_list_alter(&$blocks) {
  * Implements of hook_css_alter().
  */
 function page_wrappers_css_alter(&$css) {
-  if ($node = _page_wrappers_page_node()) {
-    $assigned_wrapper = _page_wrappers_node_assigned_wrapper($node);
-  }
+  $wrapper_data = _page_wrapper_check();
+  $wrapper = $wrapper_data['wrapper'];
 
   // If this is a node that has a wrapper assigned remove all the theme stylesheets
-  if (!empty($assigned_wrapper)) {
-    $wrapper_node = node_load($assigned_wrapper['wrapper_nid']);
+  if (!empty($wrapper)) {
+    $wrapper_node = node_load($wrapper['wrapper_nid']);
     $css_files = field_get_items('node', $wrapper_node, 'page_wrappers_css');
     $keep = array();
     // If a stylesheet is from an allowed theme, don't remove it.
@@ -936,12 +916,12 @@ function _page_wrappers_create_template($node) {
       cdn_load_include('fallback');
       cdn_html_alter_image_urls($html_template[0]['value']);
     }
-    // Apply filters before doing token replacement, this prevents php generated for 
+    // Apply filters before doing token replacement, this prevents php generated for
     // region tokens from getting stripped if filtered or full html is selected.
     if ($html_template[0]['format'] != 'php_code') {
       // Full HTML input filter does not strip php start and end tags by default.
       $html_template[0]['value'] = str_replace('<?php', '&lt;php?', $html_template[0]['value']);
-      $html_template[0]['value'] = str_replace('?>', '?&gt;', $html_template[0]['value']);  
+      $html_template[0]['value'] = str_replace('?>', '?&gt;', $html_template[0]['value']);
       $html_template[0]['value'] = check_markup($html_template[0]['value'], $html_template[0]['format'], $langcode = '', FALSE);
     }
     $body = _page_wrappers_tokens($html_template[0]['value']);
@@ -1238,4 +1218,36 @@ function _page_wrappers_get_theme_css($wrapper_node) {
       }
     }
   return $css;
+}
+
+/**
+ * Check if there is a page wrapper being set for the current page
+ * @return array|mixed|null
+ */
+function _page_wrapper_check() {
+  $wrapper = NULL;
+  $node = NULL;
+  if ($node = _page_wrappers_page_node()) {
+    $wrapper = _page_wrappers_node_assigned_wrapper($node);
+  }
+
+  // Allow context to optionally override this
+  if (module_exists('context')) {
+    $contexts = context_active_contexts();
+    foreach ($contexts as $context) {
+      // Check if page_wrapper is a reaction for this context
+      if (isset($context->reactions['page_wrappers'])) {
+        $wrapper = array(
+          'wrapper_nid' => $context->reactions['page_wrappers']['page_wrapper'],
+          'ruleset' => 1,
+          'weight' => -20,
+        );
+        if ($node) {
+          $wrapper['nid'] = $node->nid;
+        }
+      }
+    }
+  }
+
+  return array('node' => $node, 'wrapper' => $wrapper);
 }
