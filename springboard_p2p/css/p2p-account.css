@@ -54,12 +54,13 @@ body p {
 /* user account */
 
 .reg-pane,
-.pane-social-login {
+.pane-social-login,
+.pane-login {
   padding: 6px 6% 8px 6%;
   border: 1px solid #a6a6a6;
 }
 
-.p2p-login-page .pane-login {
+.p2p-page-type.p2p-login-page .pane-login {
   padding: 6px 2% 8px 2%;
   border: 1px solid #a6a6a6;
   width: 310px;
