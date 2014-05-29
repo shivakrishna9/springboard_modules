@@ -20,7 +20,13 @@ function springboard_p2p_fb_page() {
 
   if (!springboard_p2p_user_is_registered_for_p2p($uid)) {
     $event = new SpringboardP2pEvents();
-    $event->userRegistersForP2P($user);
+
+    $campaign = NULL;
+    if (!empty($_GET['p2p_cid']) && is_numeric($_GET['p2p_cid'])) {
+      $campaign = node_load($_GET['p2p_cid']);
+    }
+
+    $event->userRegistersForP2P($user, $campaign);
 
     if (springboard_p2p_complete_profile_user_has_empty_required_fields($user)) {
       $redirect = springboard_p2p_complete_profile_get_redirect();

@@ -1209,11 +1209,20 @@ function springboard_p2p_set_registration_field_required(&$form, $field_name, $r
  *
  * @param array $form
  *   The form array to insert the element into.
+ * @param array $form_state
+ *   Form state.
  */
-function springboard_p2p_campaign_id_form_element(&$form) {
+function springboard_p2p_campaign_id_form_element(&$form, $form_state) {
+  if (!empty($form_state['values']['springboard_p2p_campaign_nid'])) {
+    $value = $form_state['values']['springboard_p2p_campaign_nid'];
+  }
+  else {
+    $value = springboard_p2p_get_campaign_id_from_request();
+  }
+
   $form['springboard_p2p_campaign_nid'] = array(
     '#type' => 'value',
-    '#value' => springboard_p2p_get_campaign_id_from_request(),
+    '#value' => $value,
   );
 
   // This handler changes the redirect.
@@ -1228,7 +1237,10 @@ function springboard_p2p_campaign_id_form_element(&$form) {
  */
 function springboard_p2p_get_campaign_id_from_request() {
   if (isset($_GET['p2p_cid']) && is_numeric($_GET['p2p_cid'])) {
-    return $_GET['p2p_cid'];
+    $node = node_load($_GET['p2p_cid']);
+    if (isset($node->type) && $node->type == 'p2p_campaign') {
+      return $node->nid;
+    }
   }
 
   return NULL;

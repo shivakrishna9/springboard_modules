@@ -57,7 +57,7 @@ function springboard_p2p_request_password_reset_form($form, &$form_state) {
       $form['name']['#value'] = $user->mail;
       $form['mail'] = array(
         '#prefix' => '<p>',
-        '#markup' =>  t('Password reset instructions will be mailed to %email. You must log out to use the password reset link in the e-mail.', array('%email' => $user->mail)),
+        '#markup' => t('Password reset instructions will be mailed to %email. You must log out to use the password reset link in the e-mail.', array('%email' => $user->mail)),
         '#suffix' => '</p>',
       );
     }
@@ -226,7 +226,7 @@ function springboard_p2p_set_password_form($form, &$form_state, $uid, $timestamp
 
     $form['#submit'][] = 'springboard_p2p_set_password_form_submit';
 
-    springboard_p2p_campaign_id_form_element($form);
+    springboard_p2p_campaign_id_form_element($form, $form_state);
   }
 
   return $form;
@@ -250,7 +250,7 @@ function springboard_p2p_set_password_form_submit($form, &$form_state) {
  *
  * @param object $account
  *   The user to send the mail to.
- * @param $cid
+ * @param int $cid
  *   The p2p campaign id to append to the reset url.
  *
  * @return array

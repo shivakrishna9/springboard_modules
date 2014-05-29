@@ -91,7 +91,7 @@ function springboard_p2p_user_register_form($form, &$form_state) {
 
   $form['#submit'][] = 'springboard_p2p_user_register_form_submit';
 
-  springboard_p2p_campaign_id_form_element($form);
+  springboard_p2p_campaign_id_form_element($form, $form_state);
 
   if (isset($form['sbp_state']) && isset($form['sbp_country'])) {
     form_load_include($form_state, 'inc', 'springboard_p2p', 'includes/springboard_p2p.register');
@@ -258,7 +258,13 @@ function springboard_p2p_user_register_form_submit($form, &$form_state) {
     $account = user_load($account->uid);
 
     $event = new SpringboardP2pEvents();
-    $event->userRegistersForP2P($account);
+
+    $campaign = NULL;
+    if (!empty($form_state['values']['springboard_p2p_campaign_nid'])) {
+      $campaign = node_load($form_state['values']['springboard_p2p_campaign_nid']);
+    }
+
+    $event->userRegistersForP2P($account, $campaign);
   }
 }
 
@@ -314,7 +320,7 @@ function springboard_p2p_existing_user_login_form($form, &$form_state) {
   $form['#validate'] = user_login_default_validators();
   $form['#submit'][] = 'user_login_submit';
 
-  springboard_p2p_campaign_id_form_element($form);
+  springboard_p2p_campaign_id_form_element($form, $form_state);
 
   return $form;
 }

@@ -54,7 +54,7 @@ function springboard_p2p_complete_profile_form($form, &$form_state, $account) {
   $form['#validate'][] = 'user_profile_form_validate';
   $form['#submit'][] = 'user_profile_form_submit';
 
-  springboard_p2p_campaign_id_form_element($form);
+  springboard_p2p_campaign_id_form_element($form, $form_state);
 
   if (isset($form['sbp_state']) && isset($form['sbp_country'])) {
     form_load_include($form_state, 'inc', 'springboard_p2p', 'includes/springboard_p2p.register');
