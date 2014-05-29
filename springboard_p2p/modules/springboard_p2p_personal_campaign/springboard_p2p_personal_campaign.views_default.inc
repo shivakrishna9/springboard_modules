@@ -669,7 +669,7 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['fields']['field_p2p_campaign_images']['element_wrapper_type'] = '0';
   $handler->display->display_options['fields']['field_p2p_campaign_images']['click_sort_column'] = 'fid';
   $handler->display->display_options['fields']['field_p2p_campaign_images']['settings'] = array(
-    'image_style' => 'campaign_image_landing',
+    'image_style' => 'p2p_campaign_image_landing',
     'image_link' => '',
   );
   $handler->display->display_options['fields']['field_p2p_campaign_images']['delta_limit'] = '1';
