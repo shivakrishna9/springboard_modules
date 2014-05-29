@@ -27,13 +27,13 @@ Drupal.
 Adding a new page to the Springboard UX (utilizing a path alias) requires 3 
 steps:
 
-1. Create new alias in springboard_admin_inbound_path_alter (springboard_admin.module)
-   - The path alias should begin with 'springboard/'
+1. Create new alias in springboard_admin_inbound_path_alter (implementation of hook_inbound_path_alter in springboard_admin.module)
+   - The path alias should begin with 'springboard/'. For example 'springboard/node/%/form-components'is an alias for 'node/%/webform'
    - Example:
      if (preg_match([regex for alias], $path, $matches)) {
        $path = [actual path];
      }
-2. Add redirect in springboard_admin_init (springboard_admin.module)
+2. Add redirect in springboard_admin_init (implementation of hook_admin_init in springboard_admin.module)
    - If user reaches a page via the Drupal admin path, redirect them to the 
      Springboard alias.
    - Be aware of the potential for infinite redirect loops.
