@@ -163,8 +163,27 @@ function page_wrappers_block_list_alter(&$blocks) {
  * Implements of hook_css_alter().
  */
 function page_wrappers_css_alter(&$css) {
+  $assigned_wrapper = NULL;
   if ($node = _page_wrappers_page_node()) {
     $assigned_wrapper = _page_wrappers_node_assigned_wrapper($node);
+  }
+
+  // Allow context to optionally override this
+  if (module_exists('context')) {
+    $contexts = context_active_contexts();
+    foreach ($contexts as $context) {
+      // Check if page_wrapper is a reaction for this context
+      if (isset($context->reactions['page_wrappers'])) {
+        $assigned_wrapper = array(
+          'wrapper_nid' => $context->reactions['page_wrappers']['page_wrapper'],
+          'ruleset' => 1,
+          'weight' => -20,
+        );
+        if ($node) {
+          $assigned_wrapper['nid'] = $node->nid;
+        }
+      }
+    }
   }
 
   // If this is a node that has a wrapper assigned remove all the theme stylesheets
