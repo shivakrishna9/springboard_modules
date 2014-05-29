@@ -60,7 +60,7 @@ function springboard_p2p_custom_title_render($subtype, $conf, $args, $contexts) 
   $output = array();
 
   // Render the textfield as an h1 tag since panels core does not work for that.
-  $output[] =  '<h1>' . $conf['text'] . '</h1>';
+  $output[] =  '<h1 class="pane-title">' . $conf['text'] . '</h1>';
 
   // Initial content is blank.
   $block = new stdClass();
