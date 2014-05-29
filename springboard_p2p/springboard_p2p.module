@@ -1619,6 +1619,17 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ */
+function springboard_p2p_form_springboard_p2p_user_register_form_alter(&$form, &$form_state) {
+
+  // Unset the email description field on reg.
+  unset($form['mail']['#description']);
+
+}
+
+/**
  * Validate function.  Changes the market source campaign id when in p2p mode.
  */
 function springboard_p2p_webform_client_form_validate($form, &$form_state) {
@@ -1861,7 +1872,7 @@ function springboard_p2p_page_alter(&$page) {
   $mod_path = drupal_get_path('module', 'springboard_p2p');
 
   // Set a var for SB register / login.
-     if ((arg(0) == "springboard_p2p" && arg(1) == "register") || (arg(0) == "springboard_p2p" && arg(1) == "login")) {
+     if ((arg(0) == "springboard_p2p" && arg(1) == "register") || (arg(0) == "springboard_p2p" && arg(1) == "login") || (arg(0) == "springboard_p2p" && arg(1) == "password")) {
        $regpath = '';
      }
 
@@ -1874,7 +1885,7 @@ function springboard_p2p_page_alter(&$page) {
   // Global node.
   $node = menu_get_object();
 
-  // Global p2p css file.
+  // Global p2p css file, global nodes and regpath.
   if ((!empty($node) && in_array($node->type, $node_types)) || (isset($regpath))) {
     $p2p_css = array(
       '#attached' => array(
@@ -1889,8 +1900,23 @@ function springboard_p2p_page_alter(&$page) {
     drupal_render($p2p_css);
   }
 
+  // Global p2p css file, global nodes and regpath.
+  if ((!empty($node) && in_array($node->type, $node_types)) || (isset($regpath))) {
+    $p2p_js = array(
+      '#attached' => array(
+        'js' => array(
+          $mod_path . '/js/springboard-p2p.js' => array(
+            'group' => JS_THEME,
+            'weight' => 9999,
+          ),
+        ),
+      ),
+    );
+    drupal_render($p2p_js);
+  }
+
+  // Regpath for account pages (login, register, password).
   if (isset($regpath)) {
-    // @todo - make this more specific
     $p2p_account_css = array(
       '#attached' => array(
         'css' => array(
@@ -1903,20 +1929,6 @@ function springboard_p2p_page_alter(&$page) {
     );
     drupal_render($p2p_account_css);
   }
-
-  // Custom scripts, let's load this last.
-  // @todo - make this more specific
-  $p2p_account_js = array(
-    '#attached' => array(
-      'js' => array(
-        $mod_path . '/js/springboard-p2p.js' => array(
-          'group' => JS_THEME,
-          'weight' => 9999,
-        ),
-      ),
-    ),
-  );
-  drupal_render($p2p_account_js);
 
 }
 

@@ -60,11 +60,28 @@ body p {
   border: 1px solid #a6a6a6;
 }
 
-.p2p-page-type.p2p-login-page .pane-login {
+/* login page */
+
+.p2p-login-page .pane-login {
   padding: 6px 2% 8px 2%;
   border: 1px solid #a6a6a6;
   width: 310px;
   margin: 0 auto;
+}
+
+.p2p-login-page .pane-login #edit-actions {
+  position: relative;
+}
+
+.p2p-login-page .pane-login #edit-actions:after {
+  content: "\f007";
+  position: absolute;
+  top: 36px;
+  right: 11px;
+  color: #fffe00;
+  font-size: 13px;
+  font-family: FontAwesome;
+  pointer-events: none;
 }
 
 .p2p-login-page .pane-title-wrapper {
@@ -99,6 +116,8 @@ body p {
   padding-bottom: 16px;
 }
 
+/* Registration page */
+
 .reg-pane .form-wrapper {
   width: 49%;
   display: inline-block;
@@ -118,6 +137,10 @@ body p {
 
 .reg-pane #edit-account .control-group {
   width: 99%;
+}
+
+.reg-pane #edit-actions {
+  width: 100%;
 }
 
 .reg-pane #edit-account .control-group .control-group {
