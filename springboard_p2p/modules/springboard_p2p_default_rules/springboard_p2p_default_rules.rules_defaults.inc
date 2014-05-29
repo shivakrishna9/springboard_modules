@@ -19,7 +19,7 @@ function springboard_p2p_default_rules_default_rules_configuration() {
         { "mail" : {
             "to" : [ "site:mail" ],
             "subject" : "User approval for private campaign",
-            "message" : "A user, [account:name], [account:mail] has requested permission to participate in the following campaign: [campaign:title], [campaign:url].\\r\\n\\r\\nTo approve the account please visit the approval queue: https:\\/\\/p2p.qa.jacksonriverdev.com\\/admin\\/springboard\\/p2p\\/approval\\/user.",
+            "message" : "A user, [account:sbp-first-name] [account:sbp-last-name], [account:mail] has requested permission to participate in the following campaign: [campaign:title], [campaign:url].\\r\\n\\r\\nTo approve the account please visit the approval queue: [site:url]\\/admin\\/springboard\\/p2p\\/approval\\/user.",
             "language" : [ "" ]
           }
         }
@@ -36,7 +36,7 @@ function springboard_p2p_default_rules_default_rules_configuration() {
         { "mail" : {
             "to" : [ "account:mail" ],
             "subject" : "Thanks for your interest",
-            "message" : "Dear [account:sbp-first-name]:\\r\\n\\r\\nThanks for your interest in participating in our campaign. We\\u0027ll be in touch soon. \\r\\n\\r\\nIn the meantime, access your dashboard and check out other campaigns here: http:\\/\\/springboard_p2p\\/dashboard\\/%uid",
+            "message" : "Dear [account:sbp-first-name]:\\r\\n\\r\\nThanks for your interest in participating in our campaign. We\\u0027ll be in touch soon. \\r\\n\\r\\nIn the meantime, access your dashboard and check out other campaigns here: [dashboard-url:value]",
             "language" : [ "" ]
           }
         }
@@ -53,7 +53,7 @@ function springboard_p2p_default_rules_default_rules_configuration() {
         { "mail" : {
             "to" : [ "account:mail" ],
             "subject" : "You have been approved",
-            "message" : "Dear [account:sbp-first-name]:\\r\\n\\r\\nYour account has been approved and you can start building your peer to peer campaign. Click here to create you campaign: [node\\/add\\/p2p-personal-campaign?campaign=%nid] \\r\\n",
+            "message" : "Dear [account:sbp-first-name]:\\r\\n\\r\\nYour account has been approved and you can start building your peer to peer campaign. Click here to create you campaign: [create-personal-campaign-url:value]\\r\\n",
             "language" : [ "" ]
           }
         }
@@ -87,7 +87,7 @@ function springboard_p2p_default_rules_default_rules_configuration() {
         { "mail" : {
             "to" : [ "account:mail" ],
             "subject" : "Thanks for registering",
-            "message" : "Dear [account:sbp-first-name]:\\r\\n\\r\\nThanks for registering. You can go here to create you campaign:  [campaign:edit-url]\\r\\n",
+            "message" : "Dear [account:sbp-first-name]:\\r\\n\\r\\nThanks for registering. You can go here to create you campaign:  [dashboard-url:value]\\r\\n",
             "language" : [ "" ]
           }
         }
