@@ -28,10 +28,17 @@ function springboard_p2p_fboauth_login_render($subtype, $conf, $panel_args, $con
   if (module_exists('fboauth')) {
     $campaign_id = springboard_p2p_get_campaign_id_from_request();
 
+    $output = array();
+
+    // Wrap the button using an output array.
+    $output[] = '<div class="fb-oauth-wrapper">';
+    $output[] = fboauth_action_display('connect', 'springboard_p2p/fb?p2p_cid=' . $campaign_id);
+    $output[] = '</div>';
+
     // Build the content type block.
     $block = new stdClass();
     $block->title = 'Social login';
-    $block->content = fboauth_action_display('connect', 'springboard_p2p/fb?p2p_cid=' . $campaign_id);
+    $block->content = implode('', $output);
 
     return $block;
   }

@@ -230,7 +230,7 @@ function springboard_p2p_default_page_manager_pages() {
     'no_blocks' => 0,
     'pipeline' => 'standard',
     'body_classes_to_remove' => '',
-    'body_classes_to_add' => 'p2p-page-type',
+    'body_classes_to_add' => 'p2p-page-type p2p-login-page',
     'css_id' => '',
     'css' => '',
     'contexts' => array(),
@@ -295,6 +295,70 @@ function springboard_p2p_default_page_manager_pages() {
     $display->content['new-02324aa6-20f2-4e6d-b2df-09b5f9b6225c'] = $pane;
     $display->panels['middle'][1] = 'new-02324aa6-20f2-4e6d-b2df-09b5f9b6225c';
     $pane = new stdClass();
+    $pane->pid = 'new-b59ab21a-1e06-4fd3-8250-ced0257e94d7';
+    $pane->panel = 'middle';
+    $pane->type = 'fboauth_login';
+    $pane->subtype = 'fboauth_login';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'override_title' => 1,
+      'override_title_text' => '',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => array(
+        'title' => array(
+          'prefix' => '',
+          'suffix' => '',
+        ),
+        'content' => array(
+          'prefix' => '<div class="panel-pane-wrapper pane-login">',
+          'suffix' => '',
+        ),
+        'theme' => 0,
+      ),
+      'style' => 'wrapper_raw',
+    );
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'pane-fb-login',
+    );
+    $pane->extras = array();
+    $pane->position = 2;
+    $pane->locks = array();
+    $pane->uuid = 'b59ab21a-1e06-4fd3-8250-ced0257e94d7';
+    $display->content['new-b59ab21a-1e06-4fd3-8250-ced0257e94d7'] = $pane;
+    $display->panels['middle'][2] = 'new-b59ab21a-1e06-4fd3-8250-ced0257e94d7';
+    $pane = new stdClass();
+    $pane->pid = 'new-706eea80-ee1a-4f5f-8450-42c0358c5cd1';
+    $pane->panel = 'middle';
+    $pane->type = 'custom';
+    $pane->subtype = 'custom';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'admin_title' => '',
+      'title' => '',
+      'body' => '<p>OR</p>',
+      'format' => 'full_html',
+      'substitute' => TRUE,
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'pane-or',
+    );
+    $pane->extras = array();
+    $pane->position = 3;
+    $pane->locks = array();
+    $pane->uuid = '706eea80-ee1a-4f5f-8450-42c0358c5cd1';
+    $display->content['new-706eea80-ee1a-4f5f-8450-42c0358c5cd1'] = $pane;
+    $display->panels['middle'][3] = 'new-706eea80-ee1a-4f5f-8450-42c0358c5cd1';
+    $pane = new stdClass();
     $pane->pid = 'new-bc08a237-4d8b-4f09-9b18-9922f550802b';
     $pane->panel = 'middle';
     $pane->type = 'login';
@@ -307,18 +371,29 @@ function springboard_p2p_default_page_manager_pages() {
     );
     $pane->cache = array();
     $pane->style = array(
-      'settings' => NULL,
+      'settings' => array(
+        'title' => array(
+          'prefix' => '',
+          'suffix' => '',
+        ),
+        'content' => array(
+          'prefix' => '',
+          'suffix' => '</div>',
+        ),
+        'theme' => 0,
+      ),
+      'style' => 'wrapper_raw',
     );
     $pane->css = array(
       'css_id' => '',
-      'css_class' => 'pane-login',
+      'css_class' => '',
     );
     $pane->extras = array();
-    $pane->position = 2;
+    $pane->position = 4;
     $pane->locks = array();
     $pane->uuid = 'bc08a237-4d8b-4f09-9b18-9922f550802b';
     $display->content['new-bc08a237-4d8b-4f09-9b18-9922f550802b'] = $pane;
-    $display->panels['middle'][2] = 'new-bc08a237-4d8b-4f09-9b18-9922f550802b';
+    $display->panels['middle'][4] = 'new-bc08a237-4d8b-4f09-9b18-9922f550802b';
   $display->hide_title = PANELS_TITLE_FIXED;
   $display->title_pane = '0';
   $handler->conf['display'] = $display;
