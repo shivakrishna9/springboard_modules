@@ -1039,8 +1039,7 @@ function _springboard_p2p_fboauth_image($variables) {
   $link['attributes']['rel'] = 'nofollow';
   $attributes = isset($link['attributes']) ? drupal_attributes($link['attributes']) : '';
   $src = '/' . $mod_path . '/images/fb-connect.png';
-  return '<a ' . $attributes . ' href="' . $url . '"><img class="fb-image" title ="Login with Facebook" src="' . $src . '" alt="Login with Facebook" /></a>
-  <p class="fb-text">We\'ll never post anything without your permission.</p>';
+  return '<a ' . $attributes . ' href="' . $url . '"><img class="fb-image" title ="Login with Facebook" src="' . $src . '" alt="Login with Facebook" /></a>';
 
 }
 
@@ -2029,4 +2028,13 @@ function springboard_p2p_css_alter(&$css) {
     );
     $css = array_diff_key($css, $exclude);
   }
+}
+
+function springboard_p2p_preprocess_page(&$vars) {
+
+  // Unset the h1 title for the login page, we set it in a custom pane.
+  if (arg(0) == 'springboard_p2p' && arg(1) == 'login') {
+    $vars['title'] = '';
+  }
+
 }

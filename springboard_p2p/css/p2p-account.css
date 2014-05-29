@@ -54,16 +54,36 @@ body p {
 /* user account */
 
 .reg-pane,
-.pane-social-login {
+.pane-social-login,
+.pane-login {
   padding: 6px 6% 8px 6%;
   border: 1px solid #a6a6a6;
 }
 
-.p2p-login-page .pane-login {
+.p2p-page-type.p2p-login-page .pane-login {
   padding: 6px 2% 8px 2%;
   border: 1px solid #a6a6a6;
-  width: 30%;
+  width: 310px;
   margin: 0 auto;
+}
+
+.p2p-login-page .pane-title-wrapper {
+  padding: 6px 0 8px 0;
+  width: 310px;
+  margin: 0 auto;
+}
+
+.p2p-login-page .pane-title-wrapper h1 {
+  font-size: 31px;
+  text-align: center;
+}
+
+.p2p-login-page .panel-pane-wrapper.pane-login input {
+  width: 96%;
+}
+
+.p2p-login-page .panel-pane-wrapper.pane-login input#edit-submit {
+  width: 100%;
 }
 
 .p2p-login-page .fb-oauth-wrapper {
@@ -74,7 +94,7 @@ body p {
 .p2p-login-page .pane-or p {
   font-size: 1.5rem;
   text-align: center;
-  margin: 14px 0;
+  margin: 18px 0;
   border-bottom: 1px dotted #333;
   padding-bottom: 16px;
 }
