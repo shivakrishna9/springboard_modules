@@ -21,19 +21,19 @@ Springboard Path Aliases
 ------------------------------------------------------------------------------
 Springboard incorporates a number of custom and contributed modules to provide
 its features. Path aliases to various modules configuration and related pages
-are utilized to create the appearence of a contained platform separate from 
+are utilized to create the appearance of a contained platform separate from 
 Drupal. 
 
 Adding a new page to the Springboard UX (utilizing a path alias) requires 3 
 steps:
 
-1. Create new alias in hook_inbound_path_alter (springboard_admin.module)
+1. Create new alias in springboard_admin_inbound_path_alter (springboard_admin.module)
    - The path alias should begin with 'springboard/'
    - Example:
      if (preg_match([regex for alias], $path, $matches)) {
        $path = [actual path];
      }
-2. Add redirect in hook_init (springboard_admin.module)
+2. Add redirect in springboard_admin_init (springboard_admin.module)
    - If user reaches a page via the Drupal admin path, redirect them to the 
      Springboard alias.
    - Be aware of the potential for infinite redirect loops.
