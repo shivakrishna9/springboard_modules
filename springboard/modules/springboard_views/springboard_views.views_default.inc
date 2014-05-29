@@ -2020,13 +2020,12 @@ function springboard_views_views_default_views() {
   /**
    * View sbv_donors
    */
-
   $view = new view();
   $view->name = 'sbv_contacts';
   $view->description = '';
   $view->tag = 'default';
   $view->base_table = 'commerce_customer_profile';
-  $view->human_name = 'Contacts';
+  $view->human_name = 'sbv_contacts';
   $view->core = 7;
   $view->api_version = '3.0';
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
@@ -2034,7 +2033,7 @@ function springboard_views_views_default_views() {
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');
   $handler->display->display_options['title'] = 'Contacts';
-  $handler->display->display_options['css_class'] = 'donor-table-view';
+  $handler->display->display_options['css_class'] = 'donor-table-view sbadmin-table-min sbadmin-table-min-x';
   $handler->display->display_options['use_ajax'] = TRUE;
   $handler->display->display_options['use_more_always'] = FALSE;
   $handler->display->display_options['access']['type'] = 'none';
@@ -2207,8 +2206,8 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['nothing']['field'] = 'nothing';
   $handler->display->display_options['fields']['nothing']['label'] = '';
   $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/user/[uid]/edit?destination=admin/springboard/reports/donor">Edit</a>
-<a href="/user/[uid]/recurring_overview?destination=admin/springboard/reports/donor">Recurring gifts</a>
-';
+  <a href="/user/[uid]/recurring_overview?destination=admin/springboard/reports/donor">Recurring gifts</a>
+  ';
   $handler->display->display_options['fields']['nothing']['element_label_colon'] = FALSE;
   /* Filter criterion: User: First name (sbp_first_name) */
   $handler->display->display_options['filters']['sbp_first_name_value']['id'] = 'sbp_first_name_value';
@@ -2297,6 +2296,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['mail']['table'] = 'users';
   $handler->display->display_options['fields']['mail']['field'] = 'mail';
   $handler->display->display_options['fields']['mail']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['mail']['link_to_user'] = '0';
   /* Field: User: Address */
   $handler->display->display_options['fields']['sbp_address']['id'] = 'sbp_address';
   $handler->display->display_options['fields']['sbp_address']['table'] = 'field_data_sbp_address';
@@ -2313,12 +2313,19 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['sbp_state']['field'] = 'sbp_state';
   $handler->display->display_options['fields']['sbp_state']['relationship'] = 'uid';
   $handler->display->display_options['fields']['sbp_state']['label'] = 'State';
+  $handler->display->display_options['fields']['sbp_state']['type'] = 'list_key';
   /* Field: User: Postal Code */
   $handler->display->display_options['fields']['sbp_zip']['id'] = 'sbp_zip';
   $handler->display->display_options['fields']['sbp_zip']['table'] = 'field_data_sbp_zip';
   $handler->display->display_options['fields']['sbp_zip']['field'] = 'sbp_zip';
   $handler->display->display_options['fields']['sbp_zip']['relationship'] = 'uid';
   $handler->display->display_options['fields']['sbp_zip']['label'] = 'Zip';
+  /* Field: User: Country */
+  $handler->display->display_options['fields']['sbp_country']['id'] = 'sbp_country';
+  $handler->display->display_options['fields']['sbp_country']['table'] = 'field_data_sbp_country';
+  $handler->display->display_options['fields']['sbp_country']['field'] = 'sbp_country';
+  $handler->display->display_options['fields']['sbp_country']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_country']['type'] = 'list_key';
   /* Field: User: Created date */
   $handler->display->display_options['fields']['created']['id'] = 'created';
   $handler->display->display_options['fields']['created']['table'] = 'users';
@@ -2334,16 +2341,13 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['changed']['label'] = 'Updated';
   $handler->display->display_options['fields']['changed']['date_format'] = 'custom';
   $handler->display->display_options['fields']['changed']['custom_date_format'] = 'm/j/y';
-  /* Field: Global: Custom text */
-  $handler->display->display_options['fields']['nothing']['id'] = 'nothing';
-  $handler->display->display_options['fields']['nothing']['table'] = 'views';
-  $handler->display->display_options['fields']['nothing']['field'] = 'nothing';
-  $handler->display->display_options['fields']['nothing']['label'] = 'Action';
-  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/user/[uid]/edit?destination=admin/springboard/reports/donor">Edit</a> |
-<a href="/user/[uid]/recurring_overview?destination=admin/springboard/reports/donor">Recurring gifts</a>
-';
-  $handler->display->display_options['fields']['nothing']['element_class'] = 'table-actions';
-  $handler->display->display_options['fields']['nothing']['element_label_colon'] = FALSE;
+  /* Field: User: Edit link */
+  $handler->display->display_options['fields']['edit_node']['id'] = 'edit_node';
+  $handler->display->display_options['fields']['edit_node']['table'] = 'users';
+  $handler->display->display_options['fields']['edit_node']['field'] = 'edit_node';
+  $handler->display->display_options['fields']['edit_node']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['edit_node']['label'] = 'Action';
+  $handler->display->display_options['fields']['edit_node']['element_label_colon'] = FALSE;
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
   $handler->display->display_options['defaults']['filters'] = FALSE;
   /* Filter criterion: Global: Combine fields filter */
@@ -2404,6 +2408,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['filters']['date_filter']['group'] = 1;
   $handler->display->display_options['filters']['date_filter']['exposed'] = TRUE;
   $handler->display->display_options['filters']['date_filter']['expose']['operator_id'] = 'date_filter_op';
+  $handler->display->display_options['filters']['date_filter']['expose']['label'] = 'Creation Date';
   $handler->display->display_options['filters']['date_filter']['expose']['operator'] = 'date_filter_op';
   $handler->display->display_options['filters']['date_filter']['expose']['identifier'] = 'date_filter';
   $handler->display->display_options['filters']['date_filter']['expose']['remember_roles'] = array(
@@ -2418,12 +2423,8 @@ function springboard_views_views_default_views() {
     'users.created' => 'users.created',
   );
   $handler->display->display_options['path'] = 'admin/springboard/reports/contacts';
-
+  
   $views[$view -> name] = $view;
-
-  /**
-   * end sbv_contacts
-   */
 
   return $views;
 }
