@@ -16,7 +16,7 @@ function springboard_admin_menu() {
     'type' => MENU_NORMAL_ITEM,
     'access callback' => 'springboard_admin_menu_access',
     'access arguments' => array('admin/springboard/asset-library'),
-    'page callback' => 'springboard_admin_template_page',
+    'page callback' => 'springboard_admin_asset_page',
   );
   $items['admin/springboard/donation-forms/all'] = array(
     'title' => 'Donation Forms',
@@ -108,7 +108,6 @@ function springboard_admin_url_inbound_alter(&$path, $original_path, $path_langu
   if (preg_match('|^springboard/add(/.*)?|', $path, $matches)) {
     $path = 'node/add' . $matches[1];
   }
-    
   /**
    * Node edit pages.
    */ 
@@ -331,6 +330,9 @@ function springboard_admin_init() {
         $goto_path = 'springboard' . $matches[1];
       }
     }
+    /**
+     * Other paths that don't match a pattern.
+     */
     elseif (preg_match('|^/admin/reports/salesforce/donations$|', $path)) {
       $goto_path = 'springboard/reports/donations';
     }
@@ -501,6 +503,24 @@ function springboard_admin_form_springboard_admin_settings_alter(&$form, &$form_
       '#options' => $roles,
       '#default_value' => variable_get('springboard_user_experience', array_keys($roles)),
     );
+    $node_types = node_type_get_types();
+    $allowed_types = array();
+    foreach($node_types as $type) {
+      if(_webform_user_is_webform_user_node_type($type->type) || fundraiser_is_donation_type($type->type)) {
+        unset($node_types[$type->type]);
+      }
+      else {
+        $allowed_types[$type->type] = $type->name;
+      }
+    }
+    $form['admin']['springboard_asset_library'] = array(
+      '#type' => 'checkboxes',
+      '#title' => t('Springboard Asset Library.'),
+      '#description' => t('Choose which content types are listed in the Springboard Asset Library.'),
+      '#options' => $allowed_types,
+      '#default_value' => variable_get('springboard_asset_library', array('page_wrapper', 'email_wrapper')),
+    );
+    dpm(array_keys($allowed_types));
   }
   $form['#validate'][] = 'springboard_drupal_path_validate';
   $form['#submit'][] = 'springboard_drupal_path_submit';
@@ -662,6 +682,10 @@ function springboard_admin_theme($existing, $type, $theme, $path) {
       'variables' => array('tables' => array(), 'types' => array()),
       'template' => drupal_get_path('theme', $theme) . '/templates/springboard-admin-forms-page',
     ),
+    'springboard_admin_asset_page' => array(
+      'variables' => array('tables' => array(), 'types' => array()),
+      'template' => drupal_get_path('theme', $theme) . '/templates/springboard-admin-asset-page',
+    ),
   );
 }
 
@@ -714,6 +738,37 @@ function springboard_admin_forms_page($springboard_type) {
     }
   }
   return theme('springboard_admin_forms_page', array('types'=> $display_types, 'tables' => $tables));
+}
+
+/**
+ * Page callback for the "Asset Library" admin page.
+ *
+ * Renders page content for the "Asset Library" administrative page.
+ *
+ * @return string
+ *   HTML output for the page.
+ */
+function springboard_admin_asset_page() {
+  $node_types = node_type_get_types();
+  $set_types = variable_get('springboard_asset_library', array('page_wrapper', 'email_wrapper'));
+  $used_types = array();
+  $tables = array();
+
+  // Render the views tables for the appropriate set of content types.
+  foreach($set_types as $key => $type) {
+    if($type !== 0) {
+      $used_types[$type] = $node_types[$type];
+      $view = views_get_view('sbv_assets');
+      $view -> set_display('block_1');
+      $view -> set_arguments(array($type));
+      $view -> pre_execute();
+      $view -> execute();
+      if ($view && $view -> access('block_1') && !empty($view -> result)) {
+        $tables[$type] = $view -> render();
+      }
+    }
+  }
+  return theme('springboard_admin_forms_page', array('types'=> $used_types, 'tables' => $tables));
 }
 
 /**

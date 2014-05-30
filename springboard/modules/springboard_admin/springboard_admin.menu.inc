@@ -198,8 +198,8 @@ function springboard_admin_admin_menu_items() {
   );
 
   // Asset Library > Email Templates.
-  $items['admin/springboard/asset-library']['_children']['admin/springboard/asset-library/email-templates'] = array(
-    'link_path' => 'admin/springboard/asset-library/email-templates',
+  $items['admin/springboard/asset-library']['_children']['admin/springboard/asset-library/email_wrapper'] = array(
+    'link_path' => 'admin/springboard/asset-library/email_wrapper',
     'link_title' => 'Email Templates',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
@@ -208,8 +208,8 @@ function springboard_admin_admin_menu_items() {
   );
 
   // Asset Library > Page Wrappers.
-  $items['admin/springboard/asset-library']['_children']['admin/springboard/asset-library/page-wrappers'] = array(
-    'link_path' => 'admin/springboard/asset-library/page-wrappers',
+  $items['admin/springboard/asset-library']['_children']['admin/springboard/asset-library/page_wrapper'] = array(
+    'link_path' => 'admin/springboard/asset-library/page_wrapper',
     'link_title' => 'Page Wrappers',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
