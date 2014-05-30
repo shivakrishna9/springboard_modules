@@ -12,8 +12,30 @@ include_once 'springboard_stats.fields.inc';
  * Add stats fields to existing Fundraiser and Webform node types, and populate with initial values.
  */
 function springboard_stats_install() {
+  // Add stats fields to all Webform and Fundraiser node types.
   foreach (array_keys(node_type_get_names()) as $type_name) {
     springboard_stats_add_fields($type_name);
+  }
+  
+  // Populate stats fields for all existing nodes of any Webform or Fundraiser type.
+  $webform_types = array();
+  $fundraiser_types = array();
+  foreach (webform_variable_get('webform_node_types') as $type) {
+    if (fundraiser_is_donation_type($type)) {
+      $fundraiser_types[] = $type;
+    } else {
+      $webform_types[] = $type;
+    }
+  }
+  $q = db_query("SELECT nid FROM {node} WHERE type IN (:types);", array(':types' => $webform_types));
+  while ($r = $q->fetchAssoc()) {
+    $node = node_load($r['nid']);
+    springboard_stats_update_field($node, 'count_submissions');
+  }
+  $q = db_query("SELECT nid FROM {node} WHERE type IN (:types);", array(':types' => $fundraiser_types));
+  while ($r = $q->fetchAssoc()) {
+    $node = node_load($r['nid']);
+    springboard_stats_update_all_fields($node);
   }
 }
 

@@ -41,6 +41,7 @@ function springboard_stats_update_field($node, $field_name) {
   // Calculate the field's new value.
   switch ($field_name) {
     case 'count_submissions':
+      module_load_include('inc', 'webform', 'includes/webform.submissions');
       $value = webform_get_submission_count($node->nid);
       break;
     case 'count_conversions':
