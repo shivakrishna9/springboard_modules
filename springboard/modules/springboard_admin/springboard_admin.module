@@ -520,7 +520,6 @@ function springboard_admin_form_springboard_admin_settings_alter(&$form, &$form_
       '#options' => $allowed_types,
       '#default_value' => variable_get('springboard_asset_library', array('page_wrapper', 'email_wrapper')),
     );
-    dpm(array_keys($allowed_types));
   }
   $form['#validate'][] = 'springboard_drupal_path_validate';
   $form['#submit'][] = 'springboard_drupal_path_submit';
