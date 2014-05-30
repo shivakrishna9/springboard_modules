@@ -36,7 +36,7 @@ function springboard_stats_add_fields($type_name) {
  */
 function springboard_stats_update_field($node, $field_name) {
   // Default to current value.
-  $value = $node->{"sbstats_$field_name"}[LANGUAGE_NONE][0]['value'];
+  $value = !empty($node->{"sbstats_$field_name"}) ? $node->{"sbstats_$field_name"}[LANGUAGE_NONE][0]['value'] : 0;
   
   // Calculate the field's new value.
   switch ($field_name) {
@@ -51,7 +51,7 @@ function springboard_stats_update_field($node, $field_name) {
       break;
     case 'total_transactions':
       $value = db_query(
-        "SELECT SUM(ROUND(amount*100)/100) FROM {fundraiser_donation} WHERE nid=:nid AND status='payment_received';",
+        "SELECT SUM(ROUND(amount,2)) FROM {fundraiser_donation} WHERE nid=:nid AND status='payment_received';",
         array(':nid' => $node->nid)
       )->fetchField();
       break;
@@ -63,7 +63,7 @@ function springboard_stats_update_field($node, $field_name) {
       break;
     case 'total_failures':
       $value = db_query(
-        "SELECT SUM(ROUND(amount*100)/100) FROM {fundraiser_donation} WHERE nid=:nid AND status='failed';",
+        "SELECT SUM(ROUND(amount,2)) FROM {fundraiser_donation} WHERE nid=:nid AND status='failed';",
         array(':nid' => $node->nid)
       )->fetchField();
       break;
@@ -75,7 +75,7 @@ function springboard_stats_update_field($node, $field_name) {
       break;
     case 'total_pending':
       $value = db_query(
-        "SELECT SUM(ROUND(amount*100)/100) FROM {fundraiser_donation} WHERE nid=:nid AND status='pending_future_payment';",
+        "SELECT SUM(ROUND(amount,2)) FROM {fundraiser_donation} WHERE nid=:nid AND status='pending_future_payment';",
         array(':nid' => $node->nid)
       )->fetchField();
       break;
@@ -91,11 +91,12 @@ function springboard_stats_update_field($node, $field_name) {
     case 'total_sustainers':
       if (!module_exists('fundraiser_sustainers')) return;
       $value = db_query(
-        "SELECT SUM(ROUND(fd.amount*100)/100)
+        "SELECT SUM(ROUND(fd.amount,2))
           FROM {fundraiser_donation} AS fd INNER JOIN {fundraiser_sustainers} AS fs ON fs.did=fd.did
           WHERE nid=:nid AND status='payment_received';",
         array(':nid' => $node->nid)
       )->fetchField();
+      if (!is_numeric($value)) $value = 0;
       break;
   }
   
@@ -104,6 +105,53 @@ function springboard_stats_update_field($node, $field_name) {
   field_attach_update('node', $node);
 }
 
+/**
+ * Calculates and saves all stats fields for a particular node.
+ * More performant than calling springboard_stats_update_field() for more than a couple of fields.
+ */
+function springboard_stats_update_all_fields($node) {
+  // Count webform submissions.
+  $node->sbstats_count_submissions[LANGUAGE_NONE][0]['value'] = webform_get_submission_count($node->nid);
+  
+  // Count conversions.
+  $node->sbstats_count_conversions[LANGUAGE_NONE][0]['value'] = db_query(
+    "SELECT COUNT(*) FROM (SELECT sid FROM {fundraiser_donation} WHERE status='payment_received' AND nid=:nid) AS unique_sids;",
+    array(':nid' => $node->nid)
+  )->fetchField();
+  
+  // Count and total up straight donation rows.
+  $q = db_query(
+    "SELECT status, COUNT(*) AS count, SUM(ROUND(amount,2)) AS total
+      FROM {fundraiser_donation}
+      WHERE nid=:nid AND status IN ('payment_received', 'pending_future_payment', 'failed')
+      GROUP BY status;",
+    array(':nid' => $node->nid)
+  );
+  $status = array(
+    'payment_received' => 'transactions',
+    'pending_future_payment' => 'pending',
+    'failed' => 'failures',
+  );
+  while ($r = $q->fetchAssoc()) {
+    $node->{'sbstats_count_' . $status[$r['status']]}[LANGUAGE_NONE][0]['value'] = $r['count'];
+    $node->{'sbstats_total_' . $status[$r['status']]}[LANGUAGE_NONE][0]['value'] = $r['total'];
+  }
+  
+  // Count and total up sustainers.
+  if (module_exists('fundraiser_sustainers')) {
+    $r = db_query(
+      "SELECT COUNT(*) AS count, SUM(ROUND(fd.amount,2)) AS total
+        FROM {fundraiser_donation} AS fd INNER JOIN {fundraiser_sustainers} AS fs ON fs.did=fd.did
+        WHERE nid=:nid AND status='payment_received';",
+      array(':nid' => $node->nid)
+    )->fetchAssoc();
+    $node->sbstats_count_sustainers[LANGUAGE_NONE][0]['value'] = $r['count'];
+    $node->sbstats_total_sustainers[LANGUAGE_NONE][0]['value'] = is_numeric($r['total']) ? $r['total'] : 0;
+  }
+  
+  // Save the updated fields data.
+  field_attach_update('node', $node);
+}
 
 /****************************************
  * HOOKS TO RESPOND TO FORM SUBMISSIONS *
@@ -124,22 +172,6 @@ function springboard_stats_webform_submission_delete($node, $submission) {
 }
 
 /**
- * Implements hook_fundraiser_donation_success().
- */
-function springboard_stats_fundraiser_donation_success($donation) {
-  $node = node_load($donation->nid);
-  springboard_stats_update_field($node, 'count_conversions');
-}
-
-/**
- * Implements hook_fundraiser_donation_decline().
- */
-function springboard_stats_fundraiser_donation_decline($donation) {
-  $node = node_load($donation->nid);
-  springboard_stats_update_field($node, 'count_failures');
-}
-
-/**
  * Implements hook_fundraiser_donation_post_create().
  */
 function springboard_stats_fundraiser_donation_post_create($donation) {
@@ -153,11 +185,7 @@ function springboard_stats_fundraiser_donation_post_create($donation) {
  */
 function springboard_stats_fundraiser_donation_post_update($donation) {
   $node = node_load($donation->nid);
-  springboard_stats_update_field($node, 'count_sustainers');
-  springboard_stats_update_field($node, 'total_transactions');
-  springboard_stats_update_field($node, 'total_sustainers');
-  springboard_stats_update_field($node, 'total_failures');
-  springboard_stats_update_field($node, 'total_pending');
+  springboard_stats_update_all_fields($node);
 }
 
 /**
@@ -165,8 +193,5 @@ function springboard_stats_fundraiser_donation_post_update($donation) {
  */
 function springboard_stats_fundraiser_donation_delete($donation) {
   $node = node_load($donation->nid);
-  springboard_stats_update_field($node, 'count_conversions');
-  springboard_stats_update_field($node, 'count_sustainers');
-  springboard_stats_update_field($node, 'count_failures');
-  springboard_stats_update_field($node, 'count_pending');
+  springboard_stats_update_all_fields($node);
 }
