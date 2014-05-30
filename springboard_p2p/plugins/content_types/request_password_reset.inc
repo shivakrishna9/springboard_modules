@@ -24,7 +24,7 @@ $plugin = array(
 /**
  * Render a single content pane.
  */
-function springboard_p2p_password_request_reset_render($subtype, $conf, $panel_args, $context) {
+function springboard_p2p_password_reset_request_render($subtype, $conf, $panel_args, $context) {
   module_load_include('inc', 'springboard_p2p', 'includes/springboard_p2p.password');
   // Build the content type block.
   $block = new stdClass();
