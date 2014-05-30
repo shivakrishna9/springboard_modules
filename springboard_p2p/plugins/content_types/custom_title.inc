@@ -3,19 +3,15 @@
 $plugin = array(
   'single' => TRUE,
   // Just do this one, it is needed.
-  'title' => t('P2P Custom Pane Title'),
-  // Title to show up on the pane screen.
-  'description' => t('ER MAH GERD, ERT DERS THINS'),
-  // Description to show up on the pane screen.
+  'title' => t('Custom Pane Title'),
+  'description' => t('Custom title override pane'),
   'category' => t('Springboard P2P'),
   'edit form' => 'springboard_p2p_custom_title_edit_form',
-  // A function that will return the settings form for the pane.
   'render callback' => 'springboard_p2p_custom_title_render',
-  // A function that will return the renderable content.
-  'admin info' => 'springboard_p2p_custom_title_admin_info',
-  // A function that will return the information displayed on the admin screen (optional).
   'defaults' => array( // Array of defaults for the settings form.
     'text' => '',
+    'override_title' => FALSE,
+    'override_title_text' => '<no title>',
   ),
   'all contexts' => TRUE,
   // This is NEEDED to be able to use substitution strings in your pane.
@@ -27,11 +23,24 @@ $plugin = array(
 function springboard_p2p_custom_title_edit_form($form, &$form_state) {
   $conf = $form_state['conf'];
 
+  // Hide the pane title  / override, we don't want it and it's not a required field.
+  $form['override_title_text'] = array(
+    '#type' => '',
+  );
+
+  $form['override_title'] = array(
+    '#type' => '',
+  );
+
+  $form['override_title_markup'] = array(
+    '#markup' => t(''),
+  );
+
   // Custom textfield for our <h1> title.
   $form['text'] = array(
     '#type' => 'textfield',
     '#title' => t('Panel Text'),
-    '#description' => t('Text to display, it may use substitution strings'),
+    '#description' => t('Use this textbox for an h1 title pane.'),
     '#default_value' => $conf['text'],
   );
 
@@ -59,7 +68,7 @@ function springboard_p2p_custom_title_render($subtype, $conf, $args, $contexts) 
   // Define the output array.
   $output = array();
 
-  // Render the textfield as an h1 tag since panels core does not work for that.
+  // Render the textfield as an h1 tag since panels core does not work for that too well.
   $output[] =  '<h1 class="pane-title">' . $conf['text'] . '</h1>';
 
   // Initial content is blank.
