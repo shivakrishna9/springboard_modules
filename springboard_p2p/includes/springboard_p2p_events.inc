@@ -97,6 +97,40 @@ class SpringboardP2pEvents {
   }
 
   /**
+   * Gets called when a user requests a password reset via the p2p pages.
+   *
+   * @param object $account
+   *   User account.
+   * @param object|null $campaign
+   *   The campaign node, if one is being tracked.
+   */
+  public function userRequestsPasswordReset($account, $campaign = NULL) {
+
+    if (module_exists('rules')) {
+
+      if (!is_null($campaign) && isset($campaign->nid)) {
+        $cid = $campaign->nid;
+      }
+      else {
+        $cid = NULL;
+      }
+
+      rules_invoke_event(
+        'springboard_p2p_user_requests_password_reset',
+        $account,
+        $this->resetUrl($account, $cid)
+      );
+    }
+
+    $replacements = array(
+      '%first' => $account->sbp_first_name,
+      '%last' => $account->sbp_last_name,
+      '%email' => $account->mail,
+    );
+    watchdog('Springboard P2P', 'Password reset request made by %first %last at %email.', $replacements);
+  }
+
+  /**
    * Provides the user P2P dashboard URL.
    *
    * @param int $uid
@@ -129,4 +163,18 @@ class SpringboardP2pEvents {
     return url('node/add/p2p-personal-campaign', $options);
   }
 
+  /**
+   * Provides the password reset url.
+   *
+   * @param object $account
+   *   The user account.
+   * @param null|int $cid
+   *   Campaign ID.
+   *
+   * @return string
+   *   The URL.
+   */
+  protected function resetUrl($account, $cid = NULL) {
+    return springboard_p2p_set_password_url($account, $cid);
+  }
 }

@@ -26,6 +26,23 @@ function springboard_p2p_default_rules_default_rules_configuration() {
       ]
     }
   }');
+  $items['rules_p2p_password_reset_mail'] = entity_import('rules_config', '{ "rules_p2p_password_reset_mail" : {
+      "LABEL" : "Send user a P2P password reset mail",
+      "PLUGIN" : "reaction rule",
+      "TAGS" : [ "Springboard P2P" ],
+      "REQUIRES" : [ "rules", "springboard_p2p" ],
+      "ON" : [ "springboard_p2p_user_requests_password_reset" ],
+      "DO" : [
+        { "mail" : {
+            "to" : [ "account:mail" ],
+            "subject" : "Password reset",
+            "message" : "Here is your one time password reset URL:  [reset-url:value]",
+            "language" : [ "" ]
+          }
+        }
+      ]
+    }
+  }');
   $items['rules_p2p_user_email_private_campaign_approval_request'] = entity_import('rules_config', '{ "rules_p2p_user_email_private_campaign_approval_request" : {
       "LABEL" : "Send user email about requesting approval to a private P2P campaign",
       "PLUGIN" : "reaction rule",

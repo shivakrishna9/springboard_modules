@@ -9,6 +9,7 @@ dependencies[] = rules
 dependencies[] = springboard_p2p
 features[features_api][] = api:2
 features[rules_config][] = rules_p2p_admin_email_private_campaign_approval
+features[rules_config][] = rules_p2p_password_reset_mail
 features[rules_config][] = rules_p2p_user_email_private_campaign_approval_request
 features[rules_config][] = rules_p2p_user_email_private_campaign_approved
 features[rules_config][] = rules_p2p_user_email_private_campaign_rejected

@@ -16,6 +16,17 @@ function springboard_p2p_rules_event_info() {
   );
 
   return array(
+    'springboard_p2p_user_requests_password_reset' => $defaults + array(
+      'label' => t('After a user requests a password reset via the P2P UI.'),
+      'variables' => array(
+        'account' => array('type' => 'user', 'label' => t('User requesting a password reset')),
+        'reset_url' => array(
+          'type' => 'uri',
+          'label' => t('Password reset URL'),
+          'description' => t("The URL to the P2P password reset page."),
+        ),
+      ),
+    ),
     'springboard_p2p_user_register' => $defaults + array(
       'label' => t('After a user registers for P2P'),
       'variables' => array(

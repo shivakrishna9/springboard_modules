@@ -1357,35 +1357,6 @@ function springboard_p2p_register_user_for_p2p($uid) {
 }
 
 /**
- * Implements hook_mail().
- *
- * @todo Should we move the password reset email to rules?
- */
-function springboard_p2p_mail($key, &$message, $params) {
-  switch ($key) {
-    case 'password_reset':
-      springboard_p2p_password_reset_mail($message, $params);
-      break;
-
-  }
-}
-
-/**
- * Mail template to send to a user who needs a password reset.
- *
- * @see springboard_p2p_mail()
- */
-function springboard_p2p_password_reset_mail(&$message, $params) {
-  $options = array(
-    'langcode' => $message['language']->language,
-  );
-
-  $message['subject'] = t('P2P password reset', $options);
-  $message['body'][] = t('Here is your password reset link.', $options);
-  $message['body'][] = springboard_p2p_set_password_url($params['account'], $params['p2p_cid']);
-}
-
-/**
  * Provides a custom url for setting a password in the context of p2p.
  *
  * @param object $account
