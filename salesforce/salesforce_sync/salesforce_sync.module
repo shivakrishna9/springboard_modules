@@ -165,6 +165,36 @@ function salesforce_sync_salesforce_queue_create_item_alter(&$item) {
 }
 
 /**
+ * Implements hook_user_delete().
+ *
+ * This will be used to pass information to the function which will
+ * delete the salesforce_sync_map entity when a user is deleted.
+ */
+function salesforce_sync_user_delete($account) {
+  salesforce_sync_delete_salesforce_sync_map($account->uid, 'user');
+}
+
+/**
+ * Implements hook_fundraiser_donation_delete().
+ *
+ * This will be used to pass information to the function which will
+ * delete the salesforce_sync_map entity when a donation is deleted.
+ */
+function salesforce_sync_fundraiser_donation_delete($donation) {
+  salesforce_sync_delete_salesforce_sync_map($donation->did, 'salesforce_donation');
+}
+
+/**
+ * Implements hook_webform_submission_delete().
+ *
+ * This will be used to pass information to the function which will
+ * delete the salesforce_sync_map entity when a Webform submission is deleted.
+ */
+function salesforce_sync_webform_submission_update($node, $submission) {
+  salesforce_sync_delete_salesforce_sync_map($submission->sid, 'webform');
+}
+
+/**
  * Implements hook_salesforce_sync_pass_item().
  */
 function salesforce_sync_salesforce_sync_pass_item($item, $result) {
@@ -270,6 +300,28 @@ function salesforce_sync_delete_map($record) {
       return FALSE;
     }
     return TRUE;
+  }
+}
+
+/**
+ * Deletes a salesforce_sync_map entity when passed the Drupal item ID
+ * (e.g. Webform submission SID, Donation DID, User UID) and the 'module' property.
+ * This function uses EntityFieldQuery to look up the salesforce_sync_map
+ * entity by the 'drupal_id' property.
+ */
+function salesforce_sync_delete_salesforce_sync_map($drupal_id, $module) {
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'salesforce_sync_map')
+    ->propertyCondition('drupal_id', $drupal_id)
+    ->propertyCondition('module', $module)
+    ->range(0, 1);
+  $result = $query->execute();
+  
+  // If we find something that matches, reset() the array to find the first item,
+  // since we'll only ever return one. Once we know the 'rmid', delete the entity.  
+  if (!empty($result)) {
+    $salesforce_sync_map_id = reset($result['salesforce_sync_map']);
+    $result = entity_delete('salesforce_sync_map', $salesforce_sync_map_id->rmid);
   }
 }
 
