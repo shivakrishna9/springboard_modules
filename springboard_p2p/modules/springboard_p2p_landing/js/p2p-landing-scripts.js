@@ -48,25 +48,29 @@
         });
       }
 
-      // Now set equal height on the grids.
+      // Now set equal height on the grids for various conditons.
 
       $(window).load(function () {
         equalheight('.campaign-landing-view ul.campaign-landing-grid li');
         equalheight('.campaign-landing-view .p2p-thumb-title');
-
         equalheight('.campaign-landing-featured-view ul.campaign-landing-grid li');
         equalheight('.campaign-landing-featured-view .p2p-thumb-title');
-
       });
 
       $(window).resize(function () {
         equalheight('.campaign-landing-view ul.campaign-landing-grid li');
         equalheight('.campaign-landing-view .p2p-thumb-title');
-
         equalheight('.campaign-landing-featured-view ul.campaign-landing-grid li');
         equalheight('.campaign-landing-featured-view .p2p-thumb-title');
       });
 
+      // account for ajax pager.
+      $('ul.pager').ajaxComplete(function() {
+        equalheight('.campaign-landing-view ul.campaign-landing-grid li');
+        equalheight('.campaign-landing-view .p2p-thumb-title');
+        equalheight('.campaign-landing-featured-view ul.campaign-landing-grid li');
+        equalheight('.campaign-landing-featured-view .p2p-thumb-title');
+      });
 
       // end jquery.
     }};
