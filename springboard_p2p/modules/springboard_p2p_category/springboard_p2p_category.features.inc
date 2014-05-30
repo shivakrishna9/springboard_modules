@@ -29,7 +29,7 @@ function springboard_p2p_category_views_api($module = NULL, $api = NULL) {
 function springboard_p2p_category_node_info() {
   $items = array(
     'p2p_category' => array(
-      'name' => t('Peer to peer category'),
+      'name' => t('Peer to Peer Category'),
       'base' => 'node_content',
       'description' => t('A peer to peer category.'),
       'has_title' => '1',

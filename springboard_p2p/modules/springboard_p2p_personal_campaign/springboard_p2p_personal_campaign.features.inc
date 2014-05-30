@@ -50,11 +50,27 @@ function springboard_p2p_personal_campaign_image_default_styles() {
         'module' => 'image',
         'name' => 'image_scale',
         'data' => array(
-          'width' => 370,
+          'width' => 340,
           'height' => '',
-          'upscale' => 0,
+          'upscale' => 1,
         ),
         'weight' => 1,
+      ),
+      8 => array(
+        'label' => 'Crop',
+        'help' => 'Cropping will remove portions of an image to make it the specified dimensions.',
+        'effect callback' => 'image_crop_effect',
+        'dimensions callback' => 'image_resize_dimensions',
+        'form callback' => 'image_crop_form',
+        'summary theme' => 'image_crop_summary',
+        'module' => 'image',
+        'name' => 'image_crop',
+        'data' => array(
+          'width' => 340,
+          'height' => 226,
+          'anchor' => 'center-top',
+        ),
+        'weight' => 2,
       ),
     ),
   );
@@ -68,7 +84,7 @@ function springboard_p2p_personal_campaign_image_default_styles() {
 function springboard_p2p_personal_campaign_node_info() {
   $items = array(
     'p2p_personal_campaign' => array(
-      'name' => t('Peer to peer personal campaign'),
+      'name' => t('Peer to Peer Personal Campaign'),
       'base' => 'node_content',
       'description' => t('Peer to Peer personal campaign page. '),
       'has_title' => '1',

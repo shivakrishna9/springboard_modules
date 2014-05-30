@@ -210,7 +210,10 @@ function springboard_p2p_default_page_manager_pages() {
   $page->admin_title = 'Springboard P2P Login page';
   $page->admin_description = '';
   $page->path = 'springboard_p2p/login';
-  $page->access = array();
+  $page->access = array(
+    'type' => 'none',
+    'settings' => NULL,
+  );
   $page->menu = array();
   $page->arguments = array();
   $page->conf = array(
@@ -436,7 +439,10 @@ function springboard_p2p_default_page_manager_pages() {
   $page->admin_title = 'Springboard P2P password page';
   $page->admin_description = '';
   $page->path = 'springboard_p2p/password';
-  $page->access = array();
+  $page->access = array(
+    'type' => 'none',
+    'settings' => NULL,
+  );
   $page->menu = array();
   $page->arguments = array();
   $page->conf = array(

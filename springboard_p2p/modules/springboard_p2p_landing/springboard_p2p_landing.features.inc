@@ -42,7 +42,7 @@ function springboard_p2p_landing_image_default_styles() {
         'data' => array(
           'width' => 370,
           'height' => '',
-          'upscale' => 0,
+          'upscale' => 1,
         ),
         'weight' => -10,
       ),
@@ -57,8 +57,8 @@ function springboard_p2p_landing_image_default_styles() {
         'name' => 'image_crop',
         'data' => array(
           'width' => 370,
-          'height' => 170,
-          'anchor' => 'center-center',
+          'height' => 190,
+          'anchor' => 'center-top',
         ),
         'weight' => -9,
       ),

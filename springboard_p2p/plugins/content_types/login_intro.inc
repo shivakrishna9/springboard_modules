@@ -7,7 +7,7 @@
 $plugin = array(
   'single' => TRUE,
   'title' => t('Custom Login Pane'),
-  'description' => t('Custom Login pane'),
+  'description' => t('Login Intro'),
   'category' => t('Springboard P2P'),
   // A category to put this under.
   'edit form' => 'springboard_p2p_login_intro_edit_form',

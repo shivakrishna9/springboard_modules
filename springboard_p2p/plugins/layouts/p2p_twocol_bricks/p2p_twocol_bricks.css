@@ -63,6 +63,14 @@
   vertical-align: top;
 }
 
+.page-admin-structure-pages .panel-panel.panel-middle-top-wrapper {
+  margin-bottom: 10px;
+}
+
+.page-admin-structure-pages .panel-middle-top-right {
+  width: 36.3%;
+}
+
 /* Media queries */
 
 @media (max-width: 768px) {

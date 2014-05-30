@@ -101,7 +101,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
   $field_instances['node-p2p_campaign-field_p2p_campaign_banner'] = array(
     'bundle' => 'p2p_campaign',
     'deleted' => 0,
-    'description' => '',
+    'description' => 'Upload a campaign banner. The minimum size should be 1170 x 240 pixels.',
     'display' => array(
       'default' => array(
         'label' => 'above',
@@ -131,7 +131,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
       'file_extensions' => 'png gif jpg jpeg',
       'max_filesize' => '2 MB',
       'max_resolution' => '',
-      'min_resolution' => '',
+      'min_resolution' => '1170x240',
       'title_field' => 1,
       'user_register_form' => FALSE,
     ),
@@ -186,7 +186,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
   $field_instances['node-p2p_campaign-field_p2p_campaign_slider'] = array(
     'bundle' => 'p2p_campaign',
     'deleted' => 0,
-    'description' => '',
+    'description' => 'Upload a slideshow image. The minimum size should be 1170 x 360 pixels.',
     'display' => array(
       'default' => array(
         'label' => 'above',
@@ -216,7 +216,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
       'file_extensions' => 'png gif jpg jpeg',
       'max_filesize' => '2 MB',
       'max_resolution' => '',
-      'min_resolution' => '',
+      'min_resolution' => '1170x360',
       'title_field' => 1,
       'user_register_form' => FALSE,
     ),
@@ -236,7 +236,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
   $field_instances['node-p2p_campaign-field_p2p_campaign_thumbnail'] = array(
     'bundle' => 'p2p_campaign',
     'deleted' => 0,
-    'description' => '',
+    'description' => 'Upload a campaign Thumbnail. The minimum size should be 370 x 190 pixels.',
     'display' => array(
       'default' => array(
         'label' => 'above',
@@ -266,7 +266,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
       'file_extensions' => 'png gif jpg jpeg',
       'max_filesize' => '2 MB',
       'max_resolution' => '',
-      'min_resolution' => '',
+      'min_resolution' => '370x190',
       'title_field' => 1,
       'user_register_form' => FALSE,
     ),
@@ -367,7 +367,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
   $field_instances['node-p2p_campaign-field_p2p_images'] = array(
     'bundle' => 'p2p_campaign',
     'deleted' => 0,
-    'description' => '',
+    'description' => 'Upload personal campaign images. The minimum size should be 340 x 226 pixels.',
     'display' => array(
       'default' => array(
         'label' => 'above',
@@ -393,7 +393,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
       'file_extensions' => 'png gif jpg jpeg',
       'max_filesize' => '2 MB',
       'max_resolution' => '',
-      'min_resolution' => '',
+      'min_resolution' => '340x226',
       'title_field' => 1,
       'user_register_form' => FALSE,
     ),
@@ -751,6 +751,10 @@ function springboard_p2p_campaign_field_default_field_instances() {
   t('Show donor comments on personal campaign pages');
   t('Show donor scroll on personal campaign pages');
   t('This content can be overridden by campaigner');
+  t('Upload a campaign Thumbnail. The minimum size should be 370 x 190 pixels.');
+  t('Upload a campaign banner. The minimum size should be 1170 x 240 pixels.');
+  t('Upload a slideshow image. The minimum size should be 1170 x 360 pixels.');
+  t('Upload personal campaign images. The minimum size should be 340 x 226 pixels.');
   t('Video embed');
   t('When enabled donors will be able to leave an additional comment that can be displayed on the personal campaign page.');
 

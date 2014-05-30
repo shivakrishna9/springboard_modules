@@ -25,6 +25,10 @@ $plugin = array(
  * Render a single content pane.
  */
 function springboard_p2p_org_intro_render($subtype, $conf, $panel_args, $context) {
+
+  // Global node.
+  $node = menu_get_object();
+
   $campaign = NULL;
   $personal_campaign = NULL;
 
