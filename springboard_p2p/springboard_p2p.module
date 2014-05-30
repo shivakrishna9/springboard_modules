@@ -2042,3 +2042,23 @@ function springboard_p2p_preprocess_page(&$vars) {
   }
 
 }
+
+/**
+ * Implements hook_mail().
+ *
+ * Used for the password reset mail if rules is not enabled.
+ */
+function springboard_p2p_mail($key, &$message, $params) {
+  switch ($key) {
+    case 'password_reset':
+      $options = array(
+        'langcode' => $message['language']->language,
+      );
+
+      $message['subject'] = t('Password reset', $options);
+      $message['body'][] = t('Here is your password reset link.', $options);
+      $message['body'][] = springboard_p2p_set_password_url($params['account'], $params['p2p_cid']);
+      break;
+
+  }
+}

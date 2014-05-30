@@ -106,20 +106,29 @@ class SpringboardP2pEvents {
    */
   public function userRequestsPasswordReset($account, $campaign = NULL) {
 
+    if (!is_null($campaign) && isset($campaign->nid)) {
+      $cid = $campaign->nid;
+    }
+    else {
+      $cid = NULL;
+    }
+
+    // Use rules if it's enabled. Otherwise use the default drupal mail.
     if (module_exists('rules')) {
-
-      if (!is_null($campaign) && isset($campaign->nid)) {
-        $cid = $campaign->nid;
-      }
-      else {
-        $cid = NULL;
-      }
-
       rules_invoke_event(
         'springboard_p2p_user_requests_password_reset',
         $account,
         $this->resetUrl($account, $cid)
       );
+    }
+    else {
+      $params = array(
+        'account' => $account,
+        'p2p_cid' => $cid,
+      );
+      $to = $account->mail;
+      $language = user_preferred_language($account);
+      drupal_mail('springboard_p2p', 'password_reset', $to, $language, $params);
     }
 
     $replacements = array(
