@@ -38,10 +38,6 @@ function springboard_p2p_get_started_edit_form($form, &$form_state) {
  */
 function springboard_p2p_get_started_render($subtype, $conf, $args, $contexts) {
 
-  // Update the strings to allow contexts.
-  if (!empty($contexts)) {
-    $content = ctools_context_keyword_substitute($conf['text'], array(), $contexts);
-  }
 
   // Title.
   $title = t('Start Your Own Campaign');

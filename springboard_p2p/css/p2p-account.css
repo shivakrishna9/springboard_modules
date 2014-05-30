@@ -209,6 +209,50 @@ body p {
   max-width: 97%;
 }
 
+/* password page */
+
+.pane-password {
+  padding: 6px 2% 8px 2%;
+  border: 1px solid #a6a6a6;
+  width: 310px;
+  margin: 0 auto;
+}
+
+.pane-password p {
+  font-size: 17px;
+  line-height: 1.5em;
+}
+
+.p2p-password-page .pane-title-wrapper {
+  padding: 6px 0 8px 0;
+  width: 310px;
+  margin: 0 auto;
+}
+
+.p2p-password-page input#edit-submit {
+  width: 100%;
+}
+
+.p2p-password-page .form-actions {
+  padding: 20px 0 0 0;
+  margin: 4px 0 0 0;
+}
+
+.pane-password .form-actions.form-wrapper {
+  position: relative;
+}
+
+.pane-password .form-actions.form-wrapper:after {
+  content: "\f007";
+  position: absolute;
+  top: 36px;
+  right: 11px;
+  color: #fffe00;
+  font-size: 13px;
+  font-family: FontAwesome;
+  pointer-events: none;
+}
+
 /******************  Media queries, these should go last */
 
 @media (max-width: 1170px) {
