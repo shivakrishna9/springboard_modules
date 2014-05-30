@@ -1509,6 +1509,10 @@ function springboard_p2p_menu_local_tasks_alter(&$data, $router_item, $root_path
  * Adds extra data to a p2p enabled form if a personal campaign ID is passed in.
  */
 function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
+
+//  dsm($form_id);
+//  dsm($form);
+
   if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid']) && strpos($form_id, 'webform_client_form_') !== FALSE && !empty($form['#node'])) {
     $type = $form['#node']->type;
     $personal_campaign_id = $_GET['p2p_pcid'];
@@ -1633,6 +1637,18 @@ function springboard_p2p_form_springboard_p2p_user_register_form_alter(&$form, &
   unset($form['mail']['#description']);
 
 }
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ */
+function springboard_p2p_form_springboard_p2p_request_password_reset_form_alter(&$form, &$form_state) {
+
+  // Alter submit button text.
+  $form['actions']['submit']['#value'] = t('Send new password request');
+}
+
+
 
 /**
  * Validate function.  Changes the market source campaign id when in p2p mode.
