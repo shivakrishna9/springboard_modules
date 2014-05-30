@@ -26,28 +26,51 @@ $plugin = array(
  */
 function springboard_p2p_org_intro_render($subtype, $conf, $panel_args, $context) {
   $campaign = NULL;
+  $personal_campaign = NULL;
 
   if (empty($context) || empty($context->data)) {
     if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid'])) {
-      $node = node_load($_GET['p2p_pcid']);
+      $personal_campaign = node_load($_GET['p2p_pcid']);
     }
     else {
       return;
     }
   }
   else {
-    $node = $context->data;
+    $personal_campaign = $context->data;
   }
 
-  if ($node->type == 'p2p_personal_campaign' && isset($node->field_p2p_campaign[$node->language][0]['target_id'])) {
+  if ($personal_campaign->type == 'p2p_personal_campaign' && isset($personal_campaign->field_p2p_campaign[$personal_campaign->language][0]['target_id'])) {
     $campaign = node_load($node->field_p2p_campaign[$node->language][0]['target_id']);
   }
 
   if (!is_null($campaign) && isset($campaign->field_p2p_org_intro[$campaign->language][0]['safe_value'])) {
+    $output = array();
+
+    $output[] = $campaign->field_p2p_org_intro[$campaign->language][0]['safe_value'];
+
+    if (!is_null($personal_campaign)) {
+      $goal = springboard_p2p_get_goal_from_campaign($campaign);
+      $output[] = '<div class="personal-campaign-call-to-action">';
+
+      $label = t('Submit');
+      if ($goal['goal_type'] == 'amount') {
+        $label = t('Donate Now');
+      }
+      $output[] = l($label, 'node/' . $goal['nid'], array(
+          'query' => array(
+            'p2p_pcid' => $personal_campaign->nid,
+          ),
+        ));
+
+      $output[] = '</div>';
+    }
+
     // Build the content type block.
     $block = new stdClass();
     $block->title = '';
-    $block->content = $campaign->field_p2p_org_intro[$campaign->language][0]['safe_value'];
+    $block->content = implode('', $output);
+
     return $block;
   }
 }
