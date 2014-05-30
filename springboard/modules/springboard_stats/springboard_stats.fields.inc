@@ -40,6 +40,7 @@ function _springboard_stats_webform_fields_settings($type) {
   $fields = array();
   $t = get_t();
   
+  // Total Number of Submissions
   $fields['sbstats_count_submissions'] = array(
     'field_config' => array(
       'type' => 'number_integer',

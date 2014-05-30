@@ -30,3 +30,116 @@ function springboard_stats_add_fields($type_name) {
     _springboard_stats_add_default_fields($type_name, TRUE);
   }
 }
+
+/**
+ * Calculates and saves a particular stats field for a particular node.
+ */
+function springboard_stats_update_field($node, $field_name) {
+  // Default to current value.
+  $value = $node->{"sbstats_$field_name"}[LANGUAGE_NONE][0]['value'];
+  
+  // Calculate the field's new value.
+  switch ($field_name) {
+    case 'count_submissions':
+      $value = webform_get_submission_count($node->nid);
+      break;
+    case 'count_conversions':
+      $tracking = _fundraiser_get_tracking_by_nid($node->nid);
+      $value = $tracking->conversions;
+      break;
+    case 'total_transactions':
+      $value = db_query(
+        "SELECT SUM(ROUND(amount*100)/100) FROM fundraiser_donation WHERE nid=:nid AND status='payment_received';",
+        array(':nid' => $node->nid)
+      )->fetchField();
+      break;
+    case 'count_failures':
+      $tracking = _fundraiser_get_tracking_by_nid($node->nid);
+      $value = $tracking->gateway_failures;
+      break;
+    case 'total_failures':
+      $value = db_query(
+        "SELECT SUM(ROUND(amount*100)/100) FROM fundraiser_donation WHERE nid=:nid AND status='failed';",
+        array(':nid' => $node->nid)
+      )->fetchField();
+      break;
+    case 'count_pending':
+      break;
+    case 'total_pending':
+      $value = db_query(
+        "SELECT SUM(ROUND(amount*100)/100) FROM fundraiser_donation WHERE nid=:nid AND status='pending_future_payment';",
+        array(':nid' => $node->nid)
+      )->fetchField();
+      break;
+  }
+  
+  // Save the updated field data.
+  $node->{"sbstats_$field_name"}[LANGUAGE_NONE][0]['value'] = $value;
+  field_attach_update('node', $node);
+}
+
+
+/****************************************
+ * HOOKS TO RESPOND TO FORM SUBMISSIONS *
+ ****************************************/
+
+/**
+ * Implements hook_webform_submission_insert().
+ */
+function springboard_stats_webform_submission_insert($node, $submission) {
+  springboard_stats_update_field($node, 'count_submissions');
+}
+
+/**
+ * Implements hook_webform_submission_delete().
+ */
+function springboard_stats_webform_submission_delete($node, $submission) {
+  springboard_stats_update_field($node, 'count_submissions');
+}
+
+/**
+ * Implements hook_fundraiser_donation_success().
+ */
+function springboard_stats_fundraiser_donation_success($donation) {
+  $node = node_load($donation->nid);
+  springboard_stats_update_field($node, 'count_conversions');
+}
+
+/**
+ * Implements hook_fundraiser_donation_decline().
+ */
+function springboard_stats_fundraiser_donation_decline($donation) {
+  $node = node_load($donation->nid);
+  springboard_stats_update_field($node, 'count_failures');
+}
+
+/**
+ * Implements hook_fundraiser_donation_post_create().
+ */
+function springboard_stats_fundraiser_donation_post_create($donation) {
+  $node = node_load($donation->nid);
+  springboard_stats_update_field($node, 'count_pending');
+  springboard_stats_update_field($node, 'total_pending');
+}
+
+/**
+ * Implements hook_fundraiser_donation_post_update().
+ */
+function springboard_stats_fundraiser_donation_post_update($donation) {
+  $node = node_load($donation->nid);
+  springboard_stats_update_field($node, 'total_transactions');
+  springboard_stats_update_field($node, 'total_sustainers');
+  springboard_stats_update_field($node, 'total_failures');
+  springboard_stats_update_field($node, 'total_pending');
+}
+
+/**
+ * Implements hook_fundraiser_donation_delete().
+ */
+function springboard_stats_fundraiser_donation_delete($donation) {
+  $node = node_load($donation->nid);
+  springboard_stats_update_field($node, 'count_conversions');
+  springboard_stats_update_field($node, 'count_sustainers');
+  springboard_stats_update_field($node, 'count_failures');
+  springboard_stats_update_field($node, 'count_pending');
+}
