@@ -48,7 +48,7 @@ function springboard_p2p_campaign_header_no_context_render($subtype, $conf, $pan
     // Build the content type block.
     $block = new stdClass();
     $block->title = '';
-    $block->content = springboard_p2p_format_campaign_form_header($campaign);
+    $block->content = springbaord_p2p_format_campaign_form_header($campaign);
     return $block;
   }
 
