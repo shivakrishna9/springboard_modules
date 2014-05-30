@@ -1809,7 +1809,7 @@ function springboard_p2p_save_personal_campaign_action($record) {
  * @return array
  *   The form element for the header image.
  */
-function springbaord_p2p_format_campaign_form_header($campaign) {
+function springboard_p2p_format_campaign_form_header($campaign) {
   if ($campaign->type == 'p2p_campaign' && isset($campaign->field_p2p_campaign_banner) && !empty($campaign->field_p2p_campaign_banner[$campaign->language])) {
 
     $display = array(
