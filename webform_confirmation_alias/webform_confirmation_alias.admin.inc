@@ -12,6 +12,14 @@
  */
 function webform_confirmation_alias_admin_settings() {
   global $base_url;
+  
+  $options = array(
+    'attributes' => array(
+      'target' => '_blank',
+    ),
+  );
+  drupal_set_message('These settings will only affect forms that have URL aliases. See information on ' . l('Drupal.org', 'https://drupal.org/node/120631', $options) . ' and the ' . l('Pathauto module', 'https://drupal.org/project/pathauto', $options) . ' for more information.', 'warning');
+  
   $form['generate_aliases'] = array(
     '#type' => 'fieldset',
     '#title' => t('Bulk Generate Aliases'),
