@@ -480,7 +480,12 @@ function springboard_p2p_personal_campaign_validate(&$form, $form_state) {
     $path = drupal_lookup_path('source', $alias);
     // We only want to throw a validation error if the campaign url is in use
     // by some other path.
-    if ($path && isset($form_state['node']) && $path != 'node/' . $form_state['node']->nid) {
+    if ($path && isset($form_state['node']->nid) && $path != 'node/' . $form_state['node']->nid) {
+      form_set_error('field_p2p_personal_campaign_url', t('This url is already in use.'));
+    }
+    // On the node add form we also want to avoid trying to use an existing
+    // campaign url.
+    if ($path && !isset($form_state['node']->nid)) {
       form_set_error('field_p2p_personal_campaign_url', t('This url is already in use.'));
     }
   }
