@@ -190,7 +190,7 @@ function salesforce_sync_fundraiser_donation_delete($donation) {
  * This will be used to pass information to the function which will
  * delete the salesforce_sync_map entity when a Webform submission is deleted.
  */
-function salesforce_sync_webform_submission_update($node, $submission) {
+function salesforce_sync_webform_submission_delete($node, $submission) {
   salesforce_sync_delete_salesforce_sync_map($submission->sid, 'webform');
 }
 
