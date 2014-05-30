@@ -107,6 +107,7 @@ function _springboard_stats_fundraiser_fields_settings($type) {
   $fields = array();
   $t = get_t();
   
+  // Dollar Total of Transactions
   $fields['sbstats_total_transactions'] = array(
     'field_config' => array(
       'type' => 'number_decimal',
@@ -125,7 +126,7 @@ function _springboard_stats_fundraiser_fields_settings($type) {
     'field_instance' => array(
       'bundle' => $type,
       'default_value' => 0.0,
-      'description' => $t('The dollar total of all completed commerce transactions per form.'),
+      'description' => $t('The dollar total of all payment-received donations per form.'),
       'display' => array(
         'default' => array(
           'label' => 'above',
@@ -161,6 +162,7 @@ function _springboard_stats_fundraiser_fields_settings($type) {
     ),
   );
 
+  // Total Number of Conversions
   $fields['sbstats_count_conversions'] = array(
     'field_config' => array(
       'type' => 'number_integer',
@@ -178,7 +180,7 @@ function _springboard_stats_fundraiser_fields_settings($type) {
     'field_instance' => array(
       'bundle' => $type,
       'default_value' => 0,
-      'description' => $t('The total number of completed commerce transactions per form.'),
+      'description' => $t('The total number of successful donations received per form.'),
       'display' => array(
         'default' => array(
           'label' => 'above',
@@ -202,6 +204,7 @@ function _springboard_stats_fundraiser_fields_settings($type) {
     ),
   );
 
+  // Total Number of Sustainers Payments
   $fields['sbstats_count_sustainers'] = array(
     'field_config' => array(
       'type' => 'number_integer',
@@ -219,7 +222,7 @@ function _springboard_stats_fundraiser_fields_settings($type) {
     'field_instance' => array(
       'bundle' => $type,
       'default_value' => 0,
-      'description' => $t('The total number of completed recurring commerce transactions per form.'),
+      'description' => $t('The total number of successful recurring-donation payments received per form.'),
       'display' => array(
         'default' => array(
           'label' => 'above',
@@ -234,7 +237,7 @@ function _springboard_stats_fundraiser_fields_settings($type) {
       ),
       'entity_type' => 'node',
       'field_name' => 'sbstats_count_sustainers',
-      'label' => $t('Total Number of Sustainers'),
+      'label' => $t('Total Number of Sustainers Payments'),
       'required' => FALSE,
       'settings' => array(
         'text_processing' => FALSE,
@@ -243,6 +246,7 @@ function _springboard_stats_fundraiser_fields_settings($type) {
     ),
   );
 
+  // Dollar Total of Sustainers Payments
   $fields['sbstats_total_sustainers'] = array(
     'field_config' => array(
       'type' => 'number_decimal',
@@ -261,7 +265,7 @@ function _springboard_stats_fundraiser_fields_settings($type) {
     'field_instance' => array(
       'bundle' => $type,
       'default_value' => 0,
-      'description' => $t('The dollar total of completed recurring commerce transactions per form.'),
+      'description' => $t('The dollar total of successful recurring-donation payments received per form.'),
       'display' => array(
         'default' => array(
           'label' => 'above',
@@ -276,7 +280,7 @@ function _springboard_stats_fundraiser_fields_settings($type) {
       ),
       'entity_type' => 'node',
       'field_name' => 'sbstats_total_sustainers',
-      'label' => $t('Dollar Total of Sustainers'),
+      'label' => $t('Dollar Total of Sustainers Payments'),
       'required' => FALSE,
       'settings' => array(
         'text_processing' => FALSE,
@@ -285,48 +289,7 @@ function _springboard_stats_fundraiser_fields_settings($type) {
     ),
   );
 
-  $fields['sbstats_total_sustainers'] = array(
-    'field_config' => array(
-      'type' => 'number_decimal',
-      'cardinality' => 1,
-      'locked' => TRUE,
-      'settings' => array(
-        'precision' => 10,
-        'scale' => 2,
-      ),
-      'entity_types' => array(),
-      'field_name' => 'sbstats_total_sustainers',
-      'foreign keys' => array(),
-      'indexes' => array(),
-      'translatable' => FALSE,
-    ),
-    'field_instance' => array(
-      'bundle' => $type,
-      'default_value' => 0,
-      'description' => $t('The dollar total of completed recurring commerce transactions per form.'),
-      'display' => array(
-        'default' => array(
-          'label' => 'above',
-          'settings' => array(),
-          'type' => 'hidden',
-        ),
-        'teaser' => array(
-          'label' => 'above',
-          'settings' => array(),
-          'type' => 'hidden',
-        ),
-      ),
-      'entity_type' => 'node',
-      'field_name' => 'sbstats_total_sustainers',
-      'label' => $t('Dollar Total of Sustainers'),
-      'required' => FALSE,
-      'settings' => array(
-        'text_processing' => FALSE,
-        'user_register_form' => FALSE,
-      ),
-    ),
-  );
-
+  // Total Number of Failures
   $fields['sbstats_count_failures'] = array(
     'field_config' => array(
       'type' => 'number_integer',
@@ -344,7 +307,7 @@ function _springboard_stats_fundraiser_fields_settings($type) {
     'field_instance' => array(
       'bundle' => $type,
       'default_value' => 0,
-      'description' => $t('The total number of failed commerce transactions per form.'),
+      'description' => $t('The total number of payment-failed donations submitted per form.'),
       'display' => array(
         'default' => array(
           'label' => 'above',
@@ -368,6 +331,7 @@ function _springboard_stats_fundraiser_fields_settings($type) {
     ),
   );
 
+  // Dollar Total of Failures
   $fields['sbstats_total_failures'] = array(
     'field_config' => array(
       'type' => 'number_decimal',
@@ -386,7 +350,7 @@ function _springboard_stats_fundraiser_fields_settings($type) {
     'field_instance' => array(
       'bundle' => $type,
       'default_value' => 0,
-      'description' => $t('The dollar total of failed commerce transactions per form.'),
+      'description' => $t('The dollar total of failed donation payments per form.'),
       'display' => array(
         'default' => array(
           'label' => 'above',
@@ -410,6 +374,7 @@ function _springboard_stats_fundraiser_fields_settings($type) {
     ),
   );
 
+  // Total Number of Transactions Pending
   $fields['sbstats_count_pending'] = array(
     'field_config' => array(
       'type' => 'number_integer',
@@ -427,7 +392,7 @@ function _springboard_stats_fundraiser_fields_settings($type) {
     'field_instance' => array(
       'bundle' => $type,
       'default_value' => 0,
-      'description' => $t('The total number of pending commerce transactions per form.'),
+      'description' => $t('The total number of donations pending payment receipt per form.'),
       'display' => array(
         'default' => array(
           'label' => 'above',
@@ -451,6 +416,7 @@ function _springboard_stats_fundraiser_fields_settings($type) {
     ),
   );
 
+  // Dollar Total of Transactions Pending
   $fields['sbstats_total_pending'] = array(
     'field_config' => array(
       'type' => 'number_decimal',
@@ -469,7 +435,7 @@ function _springboard_stats_fundraiser_fields_settings($type) {
     'field_instance' => array(
       'bundle' => $type,
       'default_value' => 0,
-      'description' => $t('The dollar total of pending commerce transactions per form.'),
+      'description' => $t('The dollar total of donations payments pending per form.'),
       'display' => array(
         'default' => array(
           'label' => 'above',

@@ -44,30 +44,56 @@ function springboard_stats_update_field($node, $field_name) {
       $value = webform_get_submission_count($node->nid);
       break;
     case 'count_conversions':
-      $tracking = _fundraiser_get_tracking_by_nid($node->nid);
-      $value = $tracking->conversions;
+      $value = db_query(
+        "SELECT COUNT(*) FROM (SELECT sid FROM {fundraiser_donation} WHERE status='payment_received' AND nid=:nid) AS unique_sids;",
+        array(':nid' => $node->nid)
+      )->fetchField();
       break;
     case 'total_transactions':
       $value = db_query(
-        "SELECT SUM(ROUND(amount*100)/100) FROM fundraiser_donation WHERE nid=:nid AND status='payment_received';",
+        "SELECT SUM(ROUND(amount*100)/100) FROM {fundraiser_donation} WHERE nid=:nid AND status='payment_received';",
         array(':nid' => $node->nid)
       )->fetchField();
       break;
     case 'count_failures':
-      $tracking = _fundraiser_get_tracking_by_nid($node->nid);
-      $value = $tracking->gateway_failures;
+      $value = db_query(
+        "SELECT COUNT(*) FROM {fundraiser_donation} WHERE nid=:nid AND status='failed';",
+        array(':nid' => $node->nid)
+      )->fetchField();
       break;
     case 'total_failures':
       $value = db_query(
-        "SELECT SUM(ROUND(amount*100)/100) FROM fundraiser_donation WHERE nid=:nid AND status='failed';",
+        "SELECT SUM(ROUND(amount*100)/100) FROM {fundraiser_donation} WHERE nid=:nid AND status='failed';",
         array(':nid' => $node->nid)
       )->fetchField();
       break;
     case 'count_pending':
+      $value = db_query(
+        "SELECT COUNT(*) FROM {fundraiser_donation} WHERE nid=:nid AND status='pending_future_payment';",
+        array(':nid' => $node->nid)
+      )->fetchField();
       break;
     case 'total_pending':
       $value = db_query(
-        "SELECT SUM(ROUND(amount*100)/100) FROM fundraiser_donation WHERE nid=:nid AND status='pending_future_payment';",
+        "SELECT SUM(ROUND(amount*100)/100) FROM {fundraiser_donation} WHERE nid=:nid AND status='pending_future_payment';",
+        array(':nid' => $node->nid)
+      )->fetchField();
+      break;
+    case 'count_sustainers':
+      if (!module_exists('fundraiser_sustainers')) return;
+      $value = db_query(
+        "SELECT COUNT(*)
+          FROM {fundraiser_donation} AS fd INNER JOIN {fundraiser_sustainers} AS fs ON fs.did=fd.did
+          WHERE nid=:nid AND status='payment_received';",
+        array(':nid' => $node->nid)
+      )->fetchField();
+      break;
+    case 'total_sustainers':
+      if (!module_exists('fundraiser_sustainers')) return;
+      $value = db_query(
+        "SELECT SUM(ROUND(fd.amount*100)/100)
+          FROM {fundraiser_donation} AS fd INNER JOIN {fundraiser_sustainers} AS fs ON fs.did=fd.did
+          WHERE nid=:nid AND status='payment_received';",
         array(':nid' => $node->nid)
       )->fetchField();
       break;
@@ -127,6 +153,7 @@ function springboard_stats_fundraiser_donation_post_create($donation) {
  */
 function springboard_stats_fundraiser_donation_post_update($donation) {
   $node = node_load($donation->nid);
+  springboard_stats_update_field($node, 'count_sustainers');
   springboard_stats_update_field($node, 'total_transactions');
   springboard_stats_update_field($node, 'total_sustainers');
   springboard_stats_update_field($node, 'total_failures');
