@@ -241,16 +241,45 @@ function springboard_p2p_user_register_validate(&$form, &$form_state) {
  * Submit handler for the user register form.
  *
  * Registers the user for p2p.
+ *
+ * @see user_register_submit()
  */
 function springboard_p2p_user_register_form_submit($form, &$form_state) {
-  user_register_submit($form, $form_state);
+  // Ripped off from user_register_submit().
+  $pass = $form_state['values']['pass'];
 
-  $account = NULL;
-  if (!empty($form['#user'])) {
-    $account = $form['#user'];
+  // Remove unneeded values.
+  form_state_values_clean($form_state);
+
+  $form_state['values']['pass'] = $pass;
+  $form_state['values']['init'] = $form_state['values']['mail'];
+
+  $account = $form['#user'];
+
+  entity_form_submit_build_entity('user', $account, $form, $form_state);
+
+  // Populate $edit with the properties of $account, which have been edited on
+  // this form by taking over all values, which appear in the form values too.
+  $edit = array_intersect_key((array) $account, $form_state['values']);
+  $account = user_save($account, $edit);
+
+  // Terminate if an error occurred during user_save().
+  if (!$account) {
+    drupal_set_message(t("Error saving user account."), 'error');
+    $form_state['redirect'] = '';
+    return;
   }
-  elseif (!empty($form_state['user'])) {
-    $account = $form_state['user'];
+
+  $form_state['user'] = $account;
+  $form_state['values']['uid'] = $account->uid;
+
+  watchdog('user', 'New user: %name (%email).', array('%name' => $form_state['values']['name'], '%email' => $form_state['values']['mail']), WATCHDOG_NOTICE, l(t('edit'), 'user/' . $account->uid . '/edit'));
+
+  // No e-mail verification required; log in user immediately.
+  if ($account->status) {
+    $form_state['uid'] = $account->uid;
+    user_login_submit(array(), $form_state);
+    drupal_set_message(t('Registration successful. You are now logged in.'));
   }
 
   if (!is_null($account)) {
