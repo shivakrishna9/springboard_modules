@@ -2062,3 +2062,25 @@ function springboard_p2p_mail($key, &$message, $params) {
 
   }
 }
+
+/**
+ * Implements hook_user_cancel().
+ *
+ * Deletes all of the private campaign approval records when a user account is
+ * canceled, regardless of the cancellation method.
+ *
+ * @see user_cancel_methods()
+ */
+function springboard_p2p_user_cancel($edit, $account, $method) {
+  SpringbaordP2pPrivateCampaignApproval::deleteAll($account->uid);
+}
+
+/**
+ * Implements hook_user_delete().
+ *
+ * Delets all of the private campaign approval records when a user account is
+ * deleted.
+ */
+function springboard_p2p_user_delete($account) {
+  SpringbaordP2pPrivateCampaignApproval::deleteAll($account->uid);
+}

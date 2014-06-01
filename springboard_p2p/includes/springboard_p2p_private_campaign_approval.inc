@@ -47,6 +47,18 @@ class SpringbaordP2pPrivateCampaignApproval {
   }
 
   /**
+   * Delete all approval records for a user account.
+   *
+   * @param int $uid
+   *   The user id.
+   */
+  static public function deleteAll($uid) {
+    db_delete('springboard_p2p_private_campaign_approval')
+      ->condition('uid', $uid)
+      ->execute();
+  }
+
+  /**
    * Delete the record from the table.
    */
   protected function delete() {
