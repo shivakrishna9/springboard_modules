@@ -118,8 +118,15 @@ function springboard_admin_url_inbound_alter(&$path, $original_path, $path_langu
     if (preg_match('|^springboard/node/([0-9]*)/form-components?|', $path, $m1)) {
 
       // /springboard/node/%/form-components/confirmation-emails. -> node/%/webform/emails 
-      if (preg_match('|^springboard/node/([0-9]*)/form-components/confirmation-emails?|', $path, $m2)) {
-        $path = 'node/' . $m2[1] . '/webform/emails';
+      if (preg_match('|^springboard/node/([0-9]*)/form-components/confirmation-emails((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m2)) {
+        // /springboard/node/%/form-components/confirmation-emails. -> node/%/webform/emails 
+        if(preg_match('|^springboard/node/([0-9]*)/form-components/confirmation-emails$|', $path, $m3)) {
+          $path = 'node/' . $m3[1] . '/webform/emails';
+        }
+        // Everything Under /springboard/node/%/form-components/confirmation-emails/* -> node/%/webform/emails/*
+        else {
+          $path = 'node/' . $m2[1] . '/webform/emails' . $m2[2];
+          }
       }
       // /springboard/node/%/form-components/confirmation-page-settings -> node/%/webform/configure
       elseif (preg_match('|^springboard/node/([0-9]*)/form-components/confirmation-page-settings?|', $path, $m2)) {
@@ -282,8 +289,15 @@ function springboard_admin_init() {
        */
       if (preg_match('|^/node/([0-9]*)/webform?|', $path, $m1)) {
         // node/%/webform/emails -> /springboard/node/%/form/confirmation-emails.
-        if (preg_match('|^/node/([0-9]*)/webform/emails?|',  $path, $m2)) {
-          $goto_path = 'springboard/node/' . $m2[1] . '/form-components/confirmation-emails';
+        if (preg_match('|^/node/([0-9]*)/webform/emails((?:/[a-zA-Z0-9_\-]*)*)?|',  $path, $m2)) {
+          // node/%/webform/emails
+          if (preg_match('|^/node/([0-9]*)/webform/emails$|',  $path, $m3)) {
+            $goto_path = 'springboard/node/' . $m3[1] . '/form-components/confirmation-emails';
+          }
+          // Everything under node/&/webform/emails
+          else {
+            $goto_path = 'springboard/node/' . $m2[1] . '/form-components/confirmation-emails' . $m2[2];
+          }
         }
         // node/%/webform/configure -> /springboard/node/%/form/confirmation-page-settings.
         elseif (preg_match('|^/node/([0-9]*)/webform/configure?|',  $path, $m2)) {
