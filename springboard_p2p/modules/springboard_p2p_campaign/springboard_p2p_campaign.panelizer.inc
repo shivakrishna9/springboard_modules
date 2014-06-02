@@ -47,6 +47,25 @@ function springboard_p2p_campaign_panelizer_defaults() {
   $display->content = array();
   $display->panels = array();
     $pane = new stdClass();
+    $pane->pid = 'new-3514bef7-441f-4f7c-8098-057048f1a136';
+    $pane->panel = 'bottom';
+    $pane->type = 'views_panes';
+    $pane->subtype = 'p2p_referenced_campaigns-panel_pane_2';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array();
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 0;
+    $pane->locks = array();
+    $pane->uuid = '3514bef7-441f-4f7c-8098-057048f1a136';
+    $display->content['new-3514bef7-441f-4f7c-8098-057048f1a136'] = $pane;
+    $display->panels['bottom'][0] = 'new-3514bef7-441f-4f7c-8098-057048f1a136';
+    $pane = new stdClass();
     $pane->pid = 'new-5c0b9c01-b1ae-4bdb-8808-77979ea83c35';
     $pane->panel = 'middle_left';
     $pane->type = 'views_panes';

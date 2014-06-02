@@ -55,7 +55,8 @@
 
 @media (max-width: 768px) {
 
-  html .p2p-panelizer-campaign-landing .panel-2col-bricks .panel-panel {
+  html .p2p-panelizer-campaign-landing .panel-2col-bricks .panel-panel,
+  .p2p-campaign-page .panel-2col-bricks .panel-panel {
     width: 99.8%;
   }
 
