@@ -1570,10 +1570,7 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
           // if (count($header)) {
           // $form['submitted']['springboard_p2p']['header'] = $header;
           // }
-          $goal_type = springboard_p2p_get_goal_type_from_campaign($campaign);
 
-          $formatted_progress = springboard_p2p_format_progress($personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0], $goal_type);
-          $formatted_goal = springboard_p2p_format_progress($personal_campaign->field_p2p_personal_campaign_goal[$personal_campaign->language][0]['value'], $goal_type);
           $form['submitted']['springboard_p2p'] = array(
             '#type' => 'container',
             '#tree' => TRUE,
@@ -1582,14 +1579,7 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
               '#markup' => '<h2>' . $owner_name . '</h2>',
             ),
             'progress' => array(
-              '#prefix' => '<div>' . t('Progress') . ' ',
-              '#markup' => $formatted_progress,
-              '#suffix' => '</div>',
-            ),
-            'goal' => array(
-              '#prefix' => '<div>' . t('Goal') . ' ',
-              '#markup' => $formatted_goal,
-              '#suffix' => '</div>',
+              '#markup' => springboard_p2p_personal_campaign_progress_box($campaign, $personal_campaign),
             ),
           );
         }
@@ -2093,4 +2083,54 @@ function springboard_p2p_user_cancel($edit, $account, $method) {
  */
 function springboard_p2p_user_delete($account) {
   SpringbaordP2pPrivateCampaignApproval::deleteAll($account->uid);
+}
+
+/**
+ * Creates a progress and goal box.
+ *
+ * @param object $campaign
+ *   The p2p campaign.
+ * @param object $personal_campaign
+ *   The personal campaign.
+ *
+ * @return string
+ *   The html for the progress bar.
+ */
+function springboard_p2p_personal_campaign_progress_box($campaign, $personal_campaign) {
+  if (!is_null($campaign) && !is_null($personal_campaign)) {
+    $output = array();
+    $language = $personal_campaign->language;
+    $goal_type = springboard_p2p_get_goal_type_from_campaign($campaign);
+
+    $progress_field = $personal_campaign->field_p2p_campaign_progress[$language][0];
+    $progress_with_units = springboard_p2p_format_progress($progress_field, $goal_type);
+
+    if ($goal_type == 'submissions' && isset($personal_campaign->field_p2p_personal_submit_goal[$language][0]['value'])) {
+      $submissions_goal_value = $personal_campaign->field_p2p_personal_submit_goal[$language][0]['value'];
+      $percent = springboard_p2p_format_percent($progress_field['submissions'], $submissions_goal_value, FALSE, FALSE);
+      $progress_text = t('@progress to date', array('@progress' => $progress_with_units));
+    }
+    elseif ($goal_type == 'amount' && isset($personal_campaign->field_p2p_personal_campaign_goal[$language][0]['value'])) {
+      $amount_goal_value = $personal_campaign->field_p2p_personal_campaign_goal[$language][0]['value'];
+      $percent = springboard_p2p_format_percent($progress_field['amount'], $amount_goal_value, FALSE, FALSE);
+      $progress_text = t('@progress raised to date', array('@progress' => $progress_with_units));
+    }
+    else {
+      return '';
+    }
+
+    $output[] = '<i class="fa fa-calendar amount-icon"></i>';
+
+    $output[] = '<div class="personal-campaign-progress-container">';
+    $output[] = '<div class="personal-campaign-progress">' . $progress_text . '</div>';
+    $output[] = '<div class="progress-bar-wrapper">';
+    $output[] = '<div class="progress-bar" style="width:' . $percent . '%"></div>';
+    $output[] = '</div>';
+
+    $output[] = '</div>';
+
+    return implode('', $output);
+  }
+
+  return '';
 }
