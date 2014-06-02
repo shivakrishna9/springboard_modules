@@ -1484,9 +1484,6 @@ function springboard_p2p_menu_local_tasks_alter(&$data, $router_item, $root_path
  */
 function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
 
-//  dsm($form_id);
-//  dsm($form);
-
   if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid']) && strpos($form_id, 'webform_client_form_') !== FALSE && !empty($form['#node'])) {
     $type = $form['#node']->type;
     $personal_campaign_id = $_GET['p2p_pcid'];
