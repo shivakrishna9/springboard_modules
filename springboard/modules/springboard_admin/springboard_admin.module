@@ -7,244 +7,142 @@
 include_once 'springboard_admin.menu.inc';
 
 /**
- * Implements hook_menu().
- */
-function springboard_admin_menu() {
-  $items = array();
-  $items['admin/springboard/asset-library'] = array(
-    'title' => 'Templates',
-    'type' => MENU_NORMAL_ITEM,
-    'access callback' => 'springboard_admin_menu_access',
-    'access arguments' => array('admin/springboard/asset-library'),
-    'page callback' => 'springboard_admin_asset_page',
-  );
-  $items['admin/springboard/donation-forms/all'] = array(
-    'title' => 'Donation Forms',
-    'type' => MENU_NORMAL_ITEM,
-    'access arguments' => array('access springboard dashboard'),
-    'page callback' => 'springboard_admin_forms_page',
-    'page arguments' => array('fundraiser')
-  );
-  $items['admin/springboard/forms/all'] = array(
-    'title' => 'Forms',
-    'type' => MENU_NORMAL_ITEM,
-    'access arguments' => array('access springboard dashboard'),
-    'page callback' => 'springboard_admin_forms_page',
-    'page arguments' => array('webform_user')
-  );
-  $items['admin/springboard/marketing-analytics'] = array(
-    'title' => 'Marketing & Analytics',
-    'type' => MENU_NORMAL_ITEM,
-    'access arguments' => array('access springboard dashboard'),
-    'page callback' => 'springboard_admin_aggregate_links_page',
-    'page arguments' => array('admin/springboard/marketing-analytics'),
-   );
-  $items['admin/springboard/reports'] = array(
-    'title' => 'Reports',
-    'type' => MENU_NORMAL_ITEM,
-    'access arguments' => array('access springboard dashboard'),
-    'page callback' => 'springboard_admin_aggregate_links_page',
-    'page arguments' => array('admin/springboard/reports'),
-   );
-  $items['admin/springboard/settings'] = array(
-    'title' => 'Options',
-    'type' => MENU_NORMAL_ITEM,
-    'access arguments' => array('access springboard dashboard'),
-    'page callback' => 'springboard_admin_aggregate_links_page',
-    'page arguments' => array('admin/springboard/settings'),
-  );
-  $items['admin/springboard/settings/config'] = array(
-    'title' => 'Configuration',
-    'type' => MENU_NORMAL_ITEM,
-    'access arguments' => array('access springboard dashboard'),
-    'page callback' => 'springboard_admin_aggregate_links_page',
-    'page arguments' => array('admin/springboard/settings/config', array('admin/springboard/settings')),
-  );
-  $items['admin/springboard/tools'] = array(
-    'title' => 'Other Tools',
-    'type' => MENU_NORMAL_ITEM,
-    'access arguments' => array('access springboard dashboard'),
-    'page callback' => 'springboard_admin_aggregate_links_page',
-    'page arguments' => array('admin/springboard/tools'),
-  );
-  $items['user/%/logout'] = array(
-    'title' => 'Logout',
-    'type' => MENU_LOCAL_TASK,
-    'access arguments' => array('access content'),
-    'page callback' => 'drupal_goto',
-    'page arguments' => array('user/logout'),
-  );
-  
-  return $items;
-}
-
-/**
- * Implements hook_menu_alter().
- *
- * Alterations to menu items to maintain the Springboard User Experience.
- */
-function springboard_admin_menu_alter(&$items) {
-  global $user;
-  if (springboard_admin_user_gets_sbux($user)) {
-    // Redirect to /admin to /springboard
-    $items['admin']['page callback'] = 'drupal_goto';
-    $items['admin']['page arguments'] = array('springboard');
-    
-    // Customizations to menu item titles
-    $items['node/%webform_menu/webform']['title'] = 'Form components';
-    $items['node/%webform_menu/webform/components']['title'] = 'Form fields';
-    $items['node/%webform_menu/webform/emails']['title'] = 'Confirmation emails';
-    $items['node/%webform_menu/webform/configure']['title'] = 'Confirmation page & settings';
-  }
-}
-
-/**
- * Implements hook_url_inbound_alter().
+ * Implements hook_admin_menu_output_build().
  * 
- * Implements administrative url aliases for the Springboard UX.
+ * Creates a custom top-level menu item and its children for the admin_menu
+ * module.
  */
-function springboard_admin_url_inbound_alter(&$path, $original_path, $path_language) {
-  // Node add pages for all types.
-  if (preg_match('|^springboard/add(/.*)?|', $path, $matches)) {
-    $path = 'node/add' . $matches[1];
+function springboard_admin_admin_menu_output_build(&$content) {
+  // Add new top-level item to the menu.
+  if (isset($content['menu'])) {
+    $content['menu']['admin/springboard'] = array(
+      '#title' => t('Springboard'),
+      '#attributes' => array('class' => array('springboard_admin-springboard')),
+      '#href' => 'admin/springboard',
+      '#options' => array(
+        'query' => drupal_get_destination(),
+        // Apply a class on the link (anchor).
+        'attributes' => array('class' => array('myitem-link-anchor')),
+      ),
+      // #weight controls the order of links in the resulting item list.
+      '#weight' => 50,
+    );
+  $sbadmin_menu = menu_tree('springboard_admin_menu');
+  $content['menu']['admin/springboard'] += springboard_admin_build_admin_menu_subnav($sbadmin_menu);
   }
-  /**
-   * Node edit pages.
-   */ 
-  elseif (preg_match('|^springboard/node/([0-9]*)((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $matches)) {
-    /**
-     * Webform configuration pages.
-     */
-    if (preg_match('|^springboard/node/([0-9]*)/form-components?|', $path, $m1)) {
+}
 
-      // /springboard/node/%/form-components/confirmation-emails. -> node/%/webform/emails 
-      if (preg_match('|^springboard/node/([0-9]*)/form-components/confirmation-emails((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m2)) {
-        // /springboard/node/%/form-components/confirmation-emails. -> node/%/webform/emails 
-        if(preg_match('|^springboard/node/([0-9]*)/form-components/confirmation-emails$|', $path, $m3)) {
-          $path = 'node/' . $m3[1] . '/webform/emails';
-        }
-        // Everything Under /springboard/node/%/form-components/confirmation-emails/* -> node/%/webform/emails/*
-        else {
-          $path = 'node/' . $m2[1] . '/webform/emails' . $m2[2];
-          }
-      }
-      // /springboard/node/%/form-components/confirmation-page-settings -> node/%/webform/configure
-      elseif (preg_match('|^springboard/node/([0-9]*)/form-components/confirmation-page-settings?|', $path, $m2)) {
-        $path = 'node/' . $m2[1] . '/webform/configure';
-      }
-      // All other pages under springboard/node/%/form-components.
-      elseif (preg_match('|^springboard/node/([0-9]*)/form-components((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m2)) {
-        $path = 'node/' . $m2[1] . '/webform' . $m2[2];
-      }
-      // springboard/node/%/form-components -> node/%/webform
-      else {
-        $path = 'node/' . $m1[1] . '/webform';
+/**
+ * Implements hook_admin_menu_output_alter().
+ * 
+ * Removes extraneous Springboard-releated menu items from the admin_menu menu.
+ */
+function springboard_admin_admin_menu_output_alter(&$content) {
+  // remove lower-level springboard menu items from admin menu
+    foreach ($content['menu'] as $key => $item) {
+      if (preg_match('/^springboard\/.*$/', $key)) {
+        unset($content['menu'][$key]);
       }
     }
-    /**
-     * Webform results pages.
-     */
-    elseif (preg_match('|^springboard/node/([0-9]*)/results?|', $path, $m1)){
-      // Everything under springboard/node/%/results
-      if (preg_match('|^springboard/node/([0-9]*)/results((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m2)){
-        $path = 'node/' . $m2[1] . '/webform-results' . $m2[2];
-      }
-      // springboard/node/%/results -> node/%/webform-results
-      else {
-        $path = 'node/' . $m1[1] . '/webform-results';
-      }
-    }
-    // All other pages under springboard/node/%
-    else { 
-      $path = 'node/' . $matches[1] . $matches[2];
-    }  
+}
+
+/**
+ * Implements hook_custom_theme().
+ *
+ * Force the use of springboard_backend theme on Springboard-related
+ * administration pages.
+ */
+function springboard_admin_custom_theme() {
+  // If the springboard_backend theme is disabled, do nothing.
+  if (variable_get('springboard_theme_enable', 1) == 0) {
+    return;
   }
-  /**
-   * User paths.
-   */
-  elseif (preg_match('|^springboard/user?|', $path, $matches)) {
-    if (preg_match('|^springboard/user/([0-9]*)?|', $path, $m1)) {
-      if (preg_match('|^springboard/user/([0-9]*)((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m2)) {
-        $path = 'user/' . $m2[1] . $m2[2];
+  // If the springboard_backend theme does not exist, we can do nothing.
+  $themes = list_themes();
+  if (!isset($themes['springboard_backend'])) {
+    return;
+  }
+  
+  // If the path begins with /springboard, we know the theme applies
+  if (preg_match("|^\/springboard.*?|", request_uri())) {
+    return 'springboard_backend';
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ *
+ * Add addition submit function for the "delete" action on the node delete
+ * confirmation form.
+ */
+function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
+  switch ($form_id) {  
+    case 'clone_node_confirm' :
+      $form['#submit'][] = 'springboard_node_clone_form_submit';
+    break;
+    case 'node_delete_confirm' :
+      $form['actions']['delete']['#submit'][] = 'springboard_admin_node_delete';
+    break;
+  }
+}
+
+/**
+ * Implements hook_form_ID_alter().
+ *
+ * Add options to springboard configuration for enabling/disabling the
+ * springboard_backend theme.
+ */
+function springboard_admin_form_springboard_admin_settings_alter(&$form, &$form_state) {
+  if (user_access('administer springboard theme')) {
+    $form['admin'] = array(
+      '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#title' => t('Springboard administration settings'),
+      '#description' => t('Configure how you administer Springboard.'),
+      '#weight' => -1,
+    );
+    $form['admin']['springboard_theme_enable'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enable the Springboard administrative theme.'),
+      '#description' => t('Force the use of the springboard_backend theme on all Springboard-related administrative pages. The administrative theme set at admin/appearence will still be used for other Drupal administrative pages.'),
+      '#default_value' => variable_get('springboard_theme_enable', 1),
+    );
+
+    $form['admin']['springboard_drupal_path'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Organization homepage'),
+      '#description' => t("Set the URL to the organization's main website."),
+      '#default_value' => variable_get('springboard_drupal_path', 'http://drupal.org'),
+    );
+    $roles = user_roles(TRUE, 'access springboard dashboard');
+    $form['admin']['springboard_user_experience'] = array(
+      '#type' => 'checkboxes',
+      '#title' => t('Springboard User Experience.'),
+      '#description' => t('Choose which user roles will be given the Springboard User Experience. This includes redirecting to the Dashboard on login and after performing some administration functions.'),
+      '#options' => $roles,
+      '#default_value' => variable_get('springboard_user_experience', array_keys($roles)),
+    );
+    $node_types = node_type_get_types();
+    $allowed_types = array();
+    foreach ($node_types as $type) {
+      if (_webform_user_is_webform_user_node_type($type->type) || fundraiser_is_donation_type($type->type)) {
+        unset($node_types[$type->type]);
       }
       else {
-        $path = 'user/' . $m1[1];
+        $allowed_types[$type->type] = $type->name;
       }
     }
-    else {
-      $path = 'user';
-    }
+    $form['admin']['springboard_asset_library'] = array(
+      '#type' => 'checkboxes',
+      '#title' => t('Springboard Asset Library.'),
+      '#description' => t('Choose which content types are listed in the Springboard Asset Library.'),
+      '#options' => $allowed_types,
+      '#default_value' => variable_get('springboard_asset_library', array('page_wrapper', 'email_wrapper')),
+    );
   }
-  /**
-   * All other springboard paths.
-   */
-  elseif (preg_match('|^springboard((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $matches)) {
-    if (preg_match('|^springboard$|', $path)) {
-      $path = 'admin/springboard';
-    }
-    /** 
-     * Springboard paths that don't match the pattern.
-     */
-    elseif (preg_match('|^springboard/reports/donations$|', $path)) {
-      $path = 'admin/reports/salesforce/donations';
-    }
-    elseif (preg_match('|^springboard/goals$|', $path)) {
-      $path = 'admin/config/content/webform_goals';
-    }
-    elseif (preg_match('|^springboard/multivariate-testing$|', $path)) {
-      $path = 'admin/config/content/webform_ab';
-    }
-    elseif (preg_match('|^springboard/sb-social$|', $path)) {
-      $path = 'admin/config/services/springboard_social';
-    }
-    elseif (preg_match('|^springboard/market-source$|', $path)) {
-      $path = 'admin/config/search/market-source';
-    }
-    elseif (preg_match('|^springboard/ga$|', $path)) {
-      $path = 'admin/config/system/googleanalytics';
-    }
-    elseif (preg_match('|^springboard/metatags$|', $path)) {
-      $path = 'admin/config/search/metatags';
-    }
-    elseif (preg_match('|^springboard/reports/contacts$|', $path)) {
-      $path = 'admin/springboard/reports/contacts';
-    }
-    elseif (preg_match('|^springboard/reports/integration-reports((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
-      if (preg_match('|^springboard/reports/integration-reports$|', $path)) {
-        $path = 'admin/reports/salesforce';
-      }
-      else {
-        $path = 'admin/reports/salesforce' . $m1[1];
-      }
-    } 
-    elseif (preg_match('|^springboard/administrators$|', $path)) {
-      $path = 'admin/springboard/settings/administrators';
-    }
-    elseif (preg_match('|^springboard/settings/config$|', $path)) {
-      $path = 'admin/springboard/settings/config';
-    }
-    elseif (preg_match('|^springboard/settings/config/upsell$|', $path)) {
-      $path = 'admin/springboard/options/fundraiser/fundraiser_upsell';
-    }
-    elseif (preg_match('|^springboard/settings/config/upsell-thank-you$|', $path)) {
-      $path = 'admin/springboard/options/fundraiser/fundraiser_upsell/thank-you';
-    }
-    elseif (preg_match('|^springboard/settings/config/mappings$|', $path)) {
-      $path = 'admin/structure/salesforce/mappings';
-    }
-    elseif (preg_match('|^springboard/settings/config/mappings-add$|', $path)) {
-      $path = 'admin/structure/salesforce/mappings/add';
-    }
-    elseif (preg_match('|^springboard/settings/config/mappings-import$|', $path)) {
-      $path = 'admin/structure/salesforce/mappings/import';
-    }
-    /**
-     * All other springboard paths.
-     */
-    else {
-      $path = 'admin/springboard' . $matches[1];
-    }    
-  }
+  $form['#validate'][] = 'springboard_drupal_path_validate';
+  $form['#submit'][] = 'springboard_drupal_path_submit';
 }
 
 /**
@@ -417,55 +315,126 @@ function springboard_admin_init() {
   }  
 }
 
-function springboard_admin_admin_menu_output_build(&$content) {
-  // Add new top-level item to the menu.
-  if (isset($content['menu'])) {
-    $content['menu']['admin/springboard'] = array(
-      '#title' => t('Springboard'),
-      '#attributes' => array('class' => array('springboard_admin-springboard')),
-      '#href' => 'admin/springboard',
-      '#options' => array(
-        'query' => drupal_get_destination(),
-        // Apply a class on the link (anchor).
-        'attributes' => array('class' => array('myitem-link-anchor')),
-      ),
-      // #weight controls the order of links in the resulting item list.
-      '#weight' => 50,
-    );
-  $sbadmin_menu = menu_tree('springboard_admin_menu');
-  $content['menu']['admin/springboard'] += springboard_admin_build_admin_menu_subnav($sbadmin_menu);
-  }
-}
-
-function springboard_admin_build_admin_menu_subnav($items) {
-  $nav = array();
-  foreach ($items as $key => $item) {
-    if (!preg_match('/^#.*$/', $key)) {
-      $nav[$item['#href']] = springboard_admin_build_admin_menu_item($item);
-      if (count($item['#below']) > 0) {
-        $nav[$item['#href']] += springboard_admin_build_admin_menu_subnav($item['#below']);
-      }
-    }
-  }
-  return $nav;
-}
-
-function springboard_admin_build_admin_menu_item($item) {
-  return array(
-    '#title' => $item['#title'],
-    '#href' => $item['#href'],
-    '#options' => $item['#localized_options'],
-    '#weight' => isset($item['#original_link']['#weight']) ? $item['#original_link']['#weight'] : 0,
+/**
+ * Implements hook_menu().
+ */
+function springboard_admin_menu() {
+  $items = array();
+  $items['admin/springboard/asset-library'] = array(
+    'title' => 'Templates',
+    'type' => MENU_NORMAL_ITEM,
+    'access callback' => 'springboard_admin_menu_access',
+    'access arguments' => array('admin/springboard/asset-library'),
+    'page callback' => 'springboard_admin_asset_page',
   );
+  $items['admin/springboard/donation-forms/all'] = array(
+    'title' => 'Donation Forms',
+    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('access springboard dashboard'),
+    'page callback' => 'springboard_admin_forms_page',
+    'page arguments' => array('fundraiser')
+  );
+  $items['admin/springboard/forms/all'] = array(
+    'title' => 'Forms',
+    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('access springboard dashboard'),
+    'page callback' => 'springboard_admin_forms_page',
+    'page arguments' => array('webform_user')
+  );
+  $items['admin/springboard/marketing-analytics'] = array(
+    'title' => 'Marketing & Analytics',
+    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('access springboard dashboard'),
+    'page callback' => 'springboard_admin_aggregate_links_page',
+    'page arguments' => array('admin/springboard/marketing-analytics'),
+   );
+  $items['admin/springboard/reports'] = array(
+    'title' => 'Reports',
+    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('access springboard dashboard'),
+    'page callback' => 'springboard_admin_aggregate_links_page',
+    'page arguments' => array('admin/springboard/reports'),
+   );
+  $items['admin/springboard/settings'] = array(
+    'title' => 'Options',
+    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('access springboard dashboard'),
+    'page callback' => 'springboard_admin_aggregate_links_page',
+    'page arguments' => array('admin/springboard/settings'),
+  );
+  $items['admin/springboard/settings/config'] = array(
+    'title' => 'Configuration',
+    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('access springboard dashboard'),
+    'page callback' => 'springboard_admin_aggregate_links_page',
+    'page arguments' => array('admin/springboard/settings/config', array('admin/springboard/settings')),
+  );
+  $items['admin/springboard/tools'] = array(
+    'title' => 'Other Tools',
+    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('access springboard dashboard'),
+    'page callback' => 'springboard_admin_aggregate_links_page',
+    'page arguments' => array('admin/springboard/tools'),
+  );
+  $items['user/%/logout'] = array(
+    'title' => 'Logout',
+    'type' => MENU_LOCAL_TASK,
+    'access arguments' => array('access content'),
+    'page callback' => 'drupal_goto',
+    'page arguments' => array('user/logout'),
+  );
+  
+  return $items;
 }
 
-function springboard_admin_admin_menu_output_alter(&$content) {
-  // remove lower-level springboard menu items from admin menu
-    foreach ($content['menu'] as $key => $item) {
-      if (preg_match('/^springboard\/.*$/', $key)) {
-        unset($content['menu'][$key]);
-      }
-    }
+/**
+ * Implements hook_menu_alter().
+ *
+ * Alterations to menu items to maintain the Springboard User Experience.
+ */
+function springboard_admin_menu_alter(&$items) {
+  global $user;
+  if (springboard_admin_user_gets_sbux($user)) {
+    // Redirect to /admin to /springboard
+    $items['admin']['page callback'] = 'drupal_goto';
+    $items['admin']['page arguments'] = array('springboard');
+    
+    // Customizations to menu item titles
+    $items['node/%webform_menu/webform']['title'] = 'Form components';
+    $items['node/%webform_menu/webform/components']['title'] = 'Form fields';
+    $items['node/%webform_menu/webform/emails']['title'] = 'Confirmation emails';
+    $items['node/%webform_menu/webform/configure']['title'] = 'Confirmation page & settings';
+  }
+}
+
+/**
+ * Implements hook_node_type_delete().
+ *
+ * Deletes the springboard admin menu link to create a node of this type.
+ */
+function springboard_admin_node_type_delete($info) {
+  springboard_admin_menu_node_delete_link($info);
+}
+
+/**
+ * Implements hook_node_type_insert().
+ *
+ * Adds a link to the springboard admin menu to create a new node of this 
+ * content type if it is Fundraiser or Webform User enabled.
+ */
+function springboard_admin_node_type_insert($info) {
+  $mlid = springboard_admin_menu_node_add_link($info);
+}
+
+/**
+ * Implements hook_node_type_update.
+ *
+ * Deletes the existing node add link (if applicable) and creates a new node
+ * add link for this content type if it is Fundraiser or Webform User enabled.
+ */
+function springboard_admin_node_type_update($info) {
+  springboard_admin_menu_node_delete_link($info);
+  $mlid = springboard_admin_menu_node_add_link($info);
 }
 
 /**
@@ -481,90 +450,167 @@ function springboard_admin_permission() {
 }
 
 /**
- * Implements hook_form_ID_alter().
- *
- * Add options to springboard configuration for enabling/disabling the
- * springboard_backend theme.
+ * Implements hook_theme().
  */
-function springboard_admin_form_springboard_admin_settings_alter(&$form, &$form_state) {
-  if (user_access('administer springboard theme')) {
-    $form['admin'] = array(
-      '#type' => 'fieldset',
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-      '#title' => t('Springboard administration settings'),
-      '#description' => t('Configure how you administer Springboard.'),
-      '#weight' => -1,
-    );
-    $form['admin']['springboard_theme_enable'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Enable the Springboard administrative theme.'),
-      '#description' => t('Force the use of the springboard_backend theme on all Springboard-related administrative pages. The administrative theme set at admin/appearence will still be used for other Drupal administrative pages.'),
-      '#default_value' => variable_get('springboard_theme_enable', 1),
-    );
+function springboard_admin_theme($existing, $type, $theme, $path) {
+  return array(
+    'springboard_admin_forms_page' => array(
+      'variables' => array('tables' => array(), 'types' => array()),
+      'template' => drupal_get_path('theme', $theme) . '/templates/springboard-admin-forms-page',
+    ),
+    'springboard_admin_asset_page' => array(
+      'variables' => array('tables' => array(), 'types' => array()),
+      'template' => drupal_get_path('theme', $theme) . '/templates/springboard-admin-asset-page',
+    ),
+  );
+}
 
-    $form['admin']['springboard_drupal_path'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Organization homepage'),
-      '#description' => t("Set the URL to the organization's main website."),
-      '#default_value' => variable_get('springboard_drupal_path', 'http://drupal.org'),
-    );
-    $roles = user_roles(TRUE, 'access springboard dashboard');
-    $form['admin']['springboard_user_experience'] = array(
-      '#type' => 'checkboxes',
-      '#title' => t('Springboard User Experience.'),
-      '#description' => t('Choose which user roles will be given the Springboard User Experience. This includes redirecting to the Dashboard on login and after performing some administration functions.'),
-      '#options' => $roles,
-      '#default_value' => variable_get('springboard_user_experience', array_keys($roles)),
-    );
-    $node_types = node_type_get_types();
-    $allowed_types = array();
-    foreach($node_types as $type) {
-      if(_webform_user_is_webform_user_node_type($type->type) || fundraiser_is_donation_type($type->type)) {
-        unset($node_types[$type->type]);
+/**
+ * Implements hook_url_inbound_alter().
+ * 
+ * Implements administrative url aliases for the Springboard UX.
+ */
+function springboard_admin_url_inbound_alter(&$path, $original_path, $path_language) {
+  // Node add pages for all types.
+  if (preg_match('|^springboard/add(/.*)?|', $path, $matches)) {
+    $path = 'node/add' . $matches[1];
+  }
+  /**
+   * Node edit pages.
+   */ 
+  elseif (preg_match('|^springboard/node/([0-9]*)((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $matches)) {
+    /**
+     * Webform configuration pages.
+     */
+    if (preg_match('|^springboard/node/([0-9]*)/form-components?|', $path, $m1)) {
+
+      // /springboard/node/%/form-components/confirmation-emails. -> node/%/webform/emails 
+      if (preg_match('|^springboard/node/([0-9]*)/form-components/confirmation-emails((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m2)) {
+        // /springboard/node/%/form-components/confirmation-emails. -> node/%/webform/emails 
+        if (preg_match('|^springboard/node/([0-9]*)/form-components/confirmation-emails$|', $path, $m3)) {
+          $path = 'node/' . $m3[1] . '/webform/emails';
+        }
+        // Everything Under /springboard/node/%/form-components/confirmation-emails/* -> node/%/webform/emails/*
+        else {
+          $path = 'node/' . $m2[1] . '/webform/emails' . $m2[2];
+          }
       }
+      // /springboard/node/%/form-components/confirmation-page-settings -> node/%/webform/configure
+      elseif (preg_match('|^springboard/node/([0-9]*)/form-components/confirmation-page-settings?|', $path, $m2)) {
+        $path = 'node/' . $m2[1] . '/webform/configure';
+      }
+      // All other pages under springboard/node/%/form-components.
+      elseif (preg_match('|^springboard/node/([0-9]*)/form-components((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m2)) {
+        $path = 'node/' . $m2[1] . '/webform' . $m2[2];
+      }
+      // springboard/node/%/form-components -> node/%/webform
       else {
-        $allowed_types[$type->type] = $type->name;
+        $path = 'node/' . $m1[1] . '/webform';
       }
     }
-    $form['admin']['springboard_asset_library'] = array(
-      '#type' => 'checkboxes',
-      '#title' => t('Springboard Asset Library.'),
-      '#description' => t('Choose which content types are listed in the Springboard Asset Library.'),
-      '#options' => $allowed_types,
-      '#default_value' => variable_get('springboard_asset_library', array('page_wrapper', 'email_wrapper')),
-    );
+    /**
+     * Webform results pages.
+     */
+    elseif (preg_match('|^springboard/node/([0-9]*)/results?|', $path, $m1)) {
+      // Everything under springboard/node/%/results
+      if (preg_match('|^springboard/node/([0-9]*)/results((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m2)) {
+        $path = 'node/' . $m2[1] . '/webform-results' . $m2[2];
+      }
+      // springboard/node/%/results -> node/%/webform-results
+      else {
+        $path = 'node/' . $m1[1] . '/webform-results';
+      }
+    }
+    // All other pages under springboard/node/%
+    else { 
+      $path = 'node/' . $matches[1] . $matches[2];
+    }  
   }
-  $form['#validate'][] = 'springboard_drupal_path_validate';
-  $form['#submit'][] = 'springboard_drupal_path_submit';
-}
-
-/**
- * Validation function to check that the submitted URL is valid.
- */
-function springboard_drupal_path_validate(&$form, &$form_state) {
-  if (!valid_url($form_state['values']['springboard_drupal_path'], TRUE)) {
-    form_error($form['admin']['springboard_drupal_path'], 'Please submit a valid URL, including "http://"');
+  /**
+   * User paths.
+   */
+  elseif (preg_match('|^springboard/user?|', $path, $matches)) {
+    if (preg_match('|^springboard/user/([0-9]*)?|', $path, $m1)) {
+      if (preg_match('|^springboard/user/([0-9]*)((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m2)) {
+        $path = 'user/' . $m2[1] . $m2[2];
+      }
+      else {
+        $path = 'user/' . $m1[1];
+      }
+    }
+    else {
+      $path = 'user';
+    }
   }
-}
-
-/**
- * Submit function to update the configurable link to the organization website
- * in the springboard_admin menu.
- *
- * We do this so that users who are allowed to administer Springboard can change
- * this menu item but not have control over menus in general.
- */
-function springboard_drupal_path_submit(&$form, &$form_state) {
-  if ($form['admin']['springboard_drupal_path']['#default_value'] != $form_state['values']['springboard_drupal_path']) {
-    $update_menu = db_update('menu_links')
-      ->fields(array(
-        'link_path' => $form_state['values']['springboard_drupal_path'],
-      ))
-      ->condition('menu_name', "springboard_admin_menu", '=')
-      ->condition('link_path', $form['admin']['springboard_drupal_path']['#default_value'], '=')
-      ->execute();
-    menu_rebuild();
+  /**
+   * All other springboard paths.
+   */
+  elseif (preg_match('|^springboard((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $matches)) {
+    if (preg_match('|^springboard$|', $path)) {
+      $path = 'admin/springboard';
+    }
+    /** 
+     * Springboard paths that don't match the pattern.
+     */
+    elseif (preg_match('|^springboard/reports/donations$|', $path)) {
+      $path = 'admin/reports/salesforce/donations';
+    }
+    elseif (preg_match('|^springboard/goals$|', $path)) {
+      $path = 'admin/config/content/webform_goals';
+    }
+    elseif (preg_match('|^springboard/multivariate-testing$|', $path)) {
+      $path = 'admin/config/content/webform_ab';
+    }
+    elseif (preg_match('|^springboard/sb-social$|', $path)) {
+      $path = 'admin/config/services/springboard_social';
+    }
+    elseif (preg_match('|^springboard/market-source$|', $path)) {
+      $path = 'admin/config/search/market-source';
+    }
+    elseif (preg_match('|^springboard/ga$|', $path)) {
+      $path = 'admin/config/system/googleanalytics';
+    }
+    elseif (preg_match('|^springboard/metatags$|', $path)) {
+      $path = 'admin/config/search/metatags';
+    }
+    elseif (preg_match('|^springboard/reports/contacts$|', $path)) {
+      $path = 'admin/springboard/reports/contacts';
+    }
+    elseif (preg_match('|^springboard/reports/integration-reports((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
+      if (preg_match('|^springboard/reports/integration-reports$|', $path)) {
+        $path = 'admin/reports/salesforce';
+      }
+      else {
+        $path = 'admin/reports/salesforce' . $m1[1];
+      }
+    } 
+    elseif (preg_match('|^springboard/administrators$|', $path)) {
+      $path = 'admin/springboard/settings/administrators';
+    }
+    elseif (preg_match('|^springboard/settings/config$|', $path)) {
+      $path = 'admin/springboard/settings/config';
+    }
+    elseif (preg_match('|^springboard/settings/config/upsell$|', $path)) {
+      $path = 'admin/springboard/options/fundraiser/fundraiser_upsell';
+    }
+    elseif (preg_match('|^springboard/settings/config/upsell-thank-you$|', $path)) {
+      $path = 'admin/springboard/options/fundraiser/fundraiser_upsell/thank-you';
+    }
+    elseif (preg_match('|^springboard/settings/config/mappings$|', $path)) {
+      $path = 'admin/structure/salesforce/mappings';
+    }
+    elseif (preg_match('|^springboard/settings/config/mappings-add$|', $path)) {
+      $path = 'admin/structure/salesforce/mappings/add';
+    }
+    elseif (preg_match('|^springboard/settings/config/mappings-import$|', $path)) {
+      $path = 'admin/structure/salesforce/mappings/import';
+    }
+    /**
+     * All other springboard paths.
+     */
+    else {
+      $path = 'admin/springboard' . $matches[1];
+    }    
   }
 }
 
@@ -578,51 +624,6 @@ function springboard_admin_user_login(&$edit, $account) {
     if (springboard_admin_user_gets_sbux($account)) {
       $edit['redirect'] = 'springboard';
     }
-  }
-}
-
-/**
- * Helper Function
- * Checks if a user has a role that enforces the Springboard User Experieince
- * as configured in the Springboard Settings.
- *
- * @return Boolean
- * True if the user does get the SBUX.
- */
-function springboard_admin_user_gets_sbux($account) {
-  $available_roles = user_roles(TRUE, 'access springboard dashboard');
-  $redirect_roles = variable_get('springboard_user_experience', array_keys($available_roles));
-  // Check if the user has ones of the roles that gets redirected to the
-  // Sprinboard dashboard
-  foreach ($account->roles as $rid => $assigned_role) {
-    // If any role matches, change the redirect and end the function.
-    if ($assigned_role && in_array($rid, $redirect_roles)) {
-      return TRUE;
-    }
-  }
-  return FALSE;
-}
-
-/**
- * Implements hook_custom_theme().
- *
- * Force the use of springboard_backend theme on Springboard-related
- * administration pages.
- */
-function springboard_admin_custom_theme() {
-  // If the springboard_backend theme is disabled, do nothing.
-  if (variable_get('springboard_theme_enable', 1) == 0) {
-    return;
-  }
-  // If the springboard_backend theme does not exist, we can do nothing.
-  $themes = list_themes();
-  if (!isset($themes['springboard_backend'])) {
-    return;
-  }
-  
-  // If the path begins with /springboard, we know the theme applies
-  if (preg_match("|^\/springboard.*?|", request_uri())) {
-    return 'springboard_backend';
   }
 }
 
@@ -648,6 +649,152 @@ function springboard_admin_menu_access($path) {
       }
       break;
   }
+}
+
+/**
+ * Page callback for the "Asset Library" admin page.
+ *
+ * Renders page content for the "Asset Library" administrative page.
+ *
+ * @return string
+ *   HTML output for the page.
+ */
+function springboard_admin_asset_page() {
+  $node_types = node_type_get_types();
+  $set_types = variable_get('springboard_asset_library', array('page_wrapper', 'email_wrapper'));
+  $used_types = array();
+  $tables = array();
+
+  // Render the views tables for the appropriate set of content types.
+  foreach ($set_types as $key => $type) {
+    if ($type !== 0) {
+      $used_types[$type] = $node_types[$type];
+      $view = views_get_view('sbv_assets');
+      $view -> set_display('block_1');
+      $view -> set_arguments(array($type));
+      $view -> pre_execute();
+      $view -> execute();
+      if ($view && $view -> access('block_1') && !empty($view -> result)) {
+        $tables[$type] = $view -> render();
+      }
+    }
+  }
+  return theme('springboard_admin_forms_page', array('types' => $used_types, 'tables' => $tables));
+}
+
+/**
+ * Page callback for admin pages that are aggregates of child page links.
+ *
+ * @param string path
+ *   The path to the current page that is an aggregate of child links.
+ * 
+ * @param array parents
+ *   An array of paths to parent pages in the Springboard Admin Menu definition. 
+ *   In order of least to most depth.
+ * 
+ * @return string
+ *   HTML output for the page.
+ */
+function springboard_admin_aggregate_links_page($path, $parents = array()) {
+  // Load the springboard admin menu so we know what links to render.
+  $menu = springboard_admin_admin_menu_items();
+  $item = array();
+  // If there are parents, iterate through the menu heirarchy to find the right
+  // set of links to render.
+  if (!empty($parents)) {
+    foreach ($parents as $key => $parent_path) {
+      if ($key == 0) {
+        $parent = $menu[$parent_path];
+      }
+      else {
+        $parent = $parent['_children'][$parent_path];
+      }
+    }
+    $item = isset($parent['_children'][$path]) ? $parent['_children'][$path] : array();
+  // If there are no parents, then load a top-level menu item.
+  } 
+  else {
+    $item = isset($menu[$path]) ? $menu[$path] : array();
+  }
+  
+  // Build our array of links if applicable.
+  $links = array();
+  if (isset($item['_children'])) {
+    foreach ($item['_children'] as $child) {
+      $options = array();
+      if (isset($child['external'])) {
+        $options['external'] = $child['external'];
+      }
+      $links[] = array(
+        'title' => $child['link_title'],
+        'href' => $child['link_path'],
+        'options' => $options,
+      );
+    }
+  }
+  if (!empty($links)) {
+    return theme_links(array(
+      'links' => $links,
+      'attributes' => array(
+        'class' => array('aggregate-links'),
+      ),
+      'heading' => '',
+    ));
+  }
+  else {
+    return t('There was an error rendering this page, please choose a different option from the administrative menu');
+  }
+}
+
+/**
+ * Page callback for the "Donation Forms" and "Forms" admin pages.
+ *
+ * Renders page content for the "Donation Forms" and "Forms" administrative 
+ * pages.
+ *
+ * @param $springboard_type
+ *   'fundraiser' to show forms that utilize the Fundraiser module, 
+ *   'webform_user' to show forms that utilize the Webform User module. If no
+ *   type is specified, all other content types are displayed.
+ * @return string
+ *   HTML output for the page.
+ */
+function springboard_admin_forms_page($springboard_type) {
+  $node_types = node_type_get_types();
+  $display_types = array();
+  $tables = array();
+  // Get an appropriate set of content types to display nodes for.
+  foreach ($node_types as $type) {
+    switch ($springboard_type) {
+      case 'fundraiser':
+        if (fundraiser_is_donation_type($type->type)) {
+          $display_types[$type->type] = $type;
+        }
+      break;
+      case 'webform_user':
+        if (_webform_user_is_webform_user_node_type($type->type) && !fundraiser_is_donation_type($type->type)) {
+          $display_types[$type->type] = $type;
+        }
+      break;
+      default:
+        if (!_webform_user_is_webform_user_node_type($type->type) && !fundraiser_is_donation_type($type->type)) {
+          $display_types[$type->type] = $type;
+        }
+      break;
+    }
+  }
+  // Render the views tables for the appropriate set of content types.
+  foreach ($display_types as $type) {
+    $view = views_get_view('sbv_forms');
+    $view -> set_display('block_2');
+    $view -> set_arguments(array($type->type));
+    $view -> pre_execute();
+    $view -> execute();
+    if ($view && $view -> access('block_2') && !empty($view -> result)) {
+      $tables[$type->type] = $view -> render();
+    }
+  }
+  return theme('springboard_admin_forms_page', array('types' => $display_types, 'tables' => $tables));
 }
 
 /**
@@ -687,185 +834,6 @@ function springboard_admin_template_page() {
 }
 
 /**
- * Implements hook_theme().
- */
-function springboard_admin_theme($existing, $type, $theme, $path) {
-  return array(
-    'springboard_admin_forms_page' => array(
-      'variables' => array('tables' => array(), 'types' => array()),
-      'template' => drupal_get_path('theme', $theme) . '/templates/springboard-admin-forms-page',
-    ),
-    'springboard_admin_asset_page' => array(
-      'variables' => array('tables' => array(), 'types' => array()),
-      'template' => drupal_get_path('theme', $theme) . '/templates/springboard-admin-asset-page',
-    ),
-  );
-}
-
-/**
- * Page callback for the "Donation Forms" and "Forms" admin pages.
- *
- * Renders page content for the "Donation Forms" and "Forms" administrative 
- * pages.
- *
- * @param $springboard_type
- *   'fundraiser' to show forms that utilize the Fundraiser module, 
- *   'webform_user' to show forms that utilize the Webform User module. If no
- *   type is specified, all other content types are displayed.
- * @return string
- *   HTML output for the page.
- */
-function springboard_admin_forms_page($springboard_type) {
-  $node_types = node_type_get_types();
-  $display_types = array();
-  $tables = array();
-  // Get an appropriate set of content types to display nodes for.
-  foreach ($node_types as $type) {
-    switch ($springboard_type) {
-      case 'fundraiser':
-        if(fundraiser_is_donation_type($type->type)) {
-          $display_types[$type->type] = $type;
-        }
-      break;
-      case 'webform_user':
-        if(_webform_user_is_webform_user_node_type($type->type) && !fundraiser_is_donation_type($type->type)) {
-          $display_types[$type->type] = $type;
-        }
-      break;
-      default:
-        if(!_webform_user_is_webform_user_node_type($type->type) && !fundraiser_is_donation_type($type->type)) {
-          $display_types[$type->type] = $type;
-        }
-      break;
-    }
-  }
-  // Render the views tables for the appropriate set of content types.
-  foreach($display_types as $type) {
-    $view = views_get_view('sbv_forms');
-    $view -> set_display('block_2');
-    $view -> set_arguments(array($type->type));
-    $view -> pre_execute();
-    $view -> execute();
-    if ($view && $view -> access('block_2') && !empty($view -> result)) {
-      $tables[$type->type] = $view -> render();
-    }
-  }
-  return theme('springboard_admin_forms_page', array('types'=> $display_types, 'tables' => $tables));
-}
-
-/**
- * Page callback for the "Asset Library" admin page.
- *
- * Renders page content for the "Asset Library" administrative page.
- *
- * @return string
- *   HTML output for the page.
- */
-function springboard_admin_asset_page() {
-  $node_types = node_type_get_types();
-  $set_types = variable_get('springboard_asset_library', array('page_wrapper', 'email_wrapper'));
-  $used_types = array();
-  $tables = array();
-
-  // Render the views tables for the appropriate set of content types.
-  foreach($set_types as $key => $type) {
-    if($type !== 0) {
-      $used_types[$type] = $node_types[$type];
-      $view = views_get_view('sbv_assets');
-      $view -> set_display('block_1');
-      $view -> set_arguments(array($type));
-      $view -> pre_execute();
-      $view -> execute();
-      if ($view && $view -> access('block_1') && !empty($view -> result)) {
-        $tables[$type] = $view -> render();
-      }
-    }
-  }
-  return theme('springboard_admin_forms_page', array('types'=> $used_types, 'tables' => $tables));
-}
-
-/**
- * Page callback for admin pages that are aggregates of child page links.
- *
- * @param string path
- *   The path to the current page that is an aggregate of child links.
- * 
- * @param array parents
- *   An array of paths to parent pages in the Springboard Admin Menu definition. 
- *   In order of least to most depth.
- * 
- * @return string
- *   HTML output for the page.
- */
-function springboard_admin_aggregate_links_page($path, $parents = array()) {
-  // Load the springboard admin menu so we know what links to render.
-  $menu = springboard_admin_admin_menu_items();
-  $item = array();
-  // If there are parents, iterate through the menu heirarchy to find the right
-  // set of links to render.
-  if (!empty($parents)) {
-    foreach($parents as $key => $parent_path) {
-      if ($key == 0) {
-        $parent = $menu[$parent_path];
-      }
-      else {
-        $parent = $parent['_children'][$parent_path];
-      }
-    }
-    $item = isset($parent['_children'][$path]) ? $parent['_children'][$path] : array();
-  // If there are no parents, then load a top-level menu item.
-  } 
-  else {
-    $item = isset($menu[$path]) ? $menu[$path] : array();
-  }
-  
-  // Build our array of links if applicable.
-  $links = array();
-  if(isset($item['_children'])) {
-    foreach ($item['_children'] as $child) {
-      $options = array();
-      if (isset($child['external'])) {
-        $options['external'] = $child['external'];
-      }
-      $links[] = array(
-        'title' => $child['link_title'],
-        'href' => $child['link_path'],
-        'options' => $options,
-      );
-    }
-  }
-  if (!empty($links)) {
-    return theme_links(array(
-      'links' => $links,
-      'attributes' => array(
-        'class' => array('aggregate-links'),
-      ),
-      'heading' => '',
-    ));
-  }
-  else {
-    return t('There was an error rendering this page, please choose a different option from the administrative menu');
-  }
-}
-
-/**
- * Implements hook_form_alter().
- *
- * Add addition submit function for the "delete" action on the node delete
- * confirmation form.
- */
-function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
-  switch ($form_id) {  
-    case 'clone_node_confirm' :
-      $form['#submit'][] = 'springboard_node_clone_form_submit';
-    break;
-    case 'node_delete_confirm' :
-      $form['actions']['delete']['#submit'][] = 'springboard_admin_node_delete';
-    break;
-  }
-}
-
-/**
  * Submit handler for the "clone" action on the node clone confirmation form.
  *
  * Redirects users to the node edit page for the newly created node.
@@ -891,33 +859,74 @@ function springboard_admin_node_delete($form) {
 }
 
 /**
- * Implements hook_node_type_insert().
+ * Submit handler for springboard_admin_settings form. Updates the 
+ * configurable link to the organization website in the springboard_admin menu.
  *
- * Adds a link to the springboard admin menu to create a new node of this 
- * content type if it is Fundraiser or Webform User enabled.
+ * We do this so that users who are allowed to administer Springboard can change
+ * this menu item but not have control over menus in general.
  */
-function springboard_admin_node_type_insert($info) {
-  $mlid = springboard_admin_menu_node_add_link($info);
+function springboard_drupal_path_submit(&$form, &$form_state) {
+  if ($form['admin']['springboard_drupal_path']['#default_value'] != $form_state['values']['springboard_drupal_path']) {
+    $update_menu = db_update('menu_links')
+      ->fields(array(
+        'link_path' => $form_state['values']['springboard_drupal_path'],
+      ))
+      ->condition('menu_name', "springboard_admin_menu", '=')
+      ->condition('link_path', $form['admin']['springboard_drupal_path']['#default_value'], '=')
+      ->execute();
+    menu_rebuild();
+  }
 }
 
 /**
- * Implements hook_node_type_update.
- *
- * Deletes the existing node add link (if applicable) and creates a new node
- * add link for this content type if it is Fundraiser or Webform User enabled.
+ * Validation handler for springboard_admin_settings form. Checks that the 
+ * submitted URL is valid.
  */
-function springboard_admin_node_type_update($info) {
-  springboard_admin_menu_node_delete_link($info);
-  $mlid = springboard_admin_menu_node_add_link($info);
+function springboard_drupal_path_validate(&$form, &$form_state) {
+  if (!valid_url($form_state['values']['springboard_drupal_path'], TRUE)) {
+    form_error($form['admin']['springboard_drupal_path'], 'Please submit a valid URL, including "http://"');
+  }
 }
 
 /**
- * Implements hook_node_type_delete().
- *
- * Deletes the springboard admin menu link to create a node of this type.
+ * Helper function.
+ * 
+ * Builds an associative array of menu items from the Springboard Admin Menu, 
+ * as needed by hook_admin_menu_output_build.
+ * 
+ * @param $items
+ *   The menu tree as returned by menu_tree() for the menu to be built out.
+ * 
+ * @return $nav
+ *   An associative array of child menu items as required by 
+ *   hook_admin_menu_output_build.
  */
-function springboard_admin_node_type_delete($info) {
-  springboard_admin_menu_node_delete_link($info);
+function springboard_admin_build_admin_menu_subnav($items) {
+  $nav = array();
+  foreach ($items as $key => $item) {
+    if (!preg_match('/^#.*$/', $key)) {
+      $nav[$item['#href']] = springboard_admin_build_admin_menu_item($item);
+      if (count($item['#below']) > 0) {
+        $nav[$item['#href']] += springboard_admin_build_admin_menu_subnav($item['#below']);
+      }
+    }
+  }
+  return $nav;
+}
+
+/**
+ * Helper function.
+ * 
+ * Constructs an associative array of properties needed for an admin_menu menu
+ * item from the output given by Drupal's menu_tree() function.
+ */
+function springboard_admin_build_admin_menu_item($item) {
+  return array(
+    '#title' => $item['#title'],
+    '#href' => $item['#href'],
+    '#options' => $item['#localized_options'],
+    '#weight' => isset($item['#original_link']['#weight']) ? $item['#original_link']['#weight'] : 0,
+  );
 }
 
 /**
@@ -1024,4 +1033,26 @@ function springboard_admin_menu_node_delete_link($type) {
     else {
       return FALSE;
     }
+}
+
+/**
+ * Helper Function
+ * Checks if a user has a role that enforces the Springboard User Experieince
+ * as configured in the Springboard Settings.
+ *
+ * @return Boolean
+ * True if the user does get the SBUX.
+ */
+function springboard_admin_user_gets_sbux($account) {
+  $available_roles = user_roles(TRUE, 'access springboard dashboard');
+  $redirect_roles = variable_get('springboard_user_experience', array_keys($available_roles));
+  // Check if the user has ones of the roles that gets redirected to the
+  // Sprinboard dashboard
+  foreach ($account->roles as $rid => $assigned_role) {
+    // If any role matches, change the redirect and end the function.
+    if ($assigned_role && in_array($rid, $redirect_roles)) {
+      return TRUE;
+    }
+  }
+  return FALSE;
 }

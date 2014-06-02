@@ -108,7 +108,7 @@ function springboard_admin_create_menu_item($item, &$mlids, $plid = 0, $parent =
   // If save was successful, loop through child items.
   if ($mlid) {
     $mlids[] = $mlid;  
-    if(!empty($children)) {
+    if (!empty($children)) {
       foreach ($children as $key => $child) {
         springboard_admin_create_menu_item($child, $mlids, $mlid, $item);
       }

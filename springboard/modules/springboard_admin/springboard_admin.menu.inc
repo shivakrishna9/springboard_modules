@@ -91,8 +91,8 @@ function springboard_admin_admin_menu_items() {
   foreach ($types as $type) {
     if ($type && fundraiser_is_donation_type($type->type)) {
       // Donation Forms > $type->type
-      $items['admin/springboard/donation-forms/all']['_children']['node/add/' . preg_replace('/_/', '-',$type->type)] = array(
-        'link_path' => 'node/add/' . preg_replace('/_/', '-',$type->type),
+      $items['admin/springboard/donation-forms/all']['_children']['node/add/' . preg_replace('/_/', '-', $type->type)] = array(
+        'link_path' => 'node/add/' . preg_replace('/_/', '-', $type->type),
         'link_title' => 'Create a ' . $type->name,
         'menu_name' => 'springboard_admin_menu',
         'expanded' => 1,
@@ -151,8 +151,8 @@ function springboard_admin_admin_menu_items() {
     // Only create the item if the node type uses Webform User but not Fundraiser.
     if ($type && _webform_user_is_webform_user_node_type($type->type) && !fundraiser_is_donation_type($type->type)) {
       // Forms > $type->type.
-      $items['admin/springboard/forms/all']['_children']['node/add/' . preg_replace('/_/', '-',$type->type)] = array(
-        'link_path' => 'node/add/' . preg_replace('/_/', '-',$type->type),
+      $items['admin/springboard/forms/all']['_children']['node/add/' . preg_replace('/_/', '-', $type->type)] = array(
+        'link_path' => 'node/add/' . preg_replace('/_/', '-', $type->type),
         'link_title' => 'Create a ' . $type->name,
         'menu_name' => 'springboard_admin_menu',
         'expanded' => 1,
