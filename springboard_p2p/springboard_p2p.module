@@ -389,14 +389,17 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
       if (!$ajax) {
         $empty_image = $form['field_p2p_campaign_images'][$language][0];
         $images_editable = $campaign_node->field_p2p_images_edit[$language][0]['value'] ? TRUE : FALSE;
-        foreach ($campaign_node->field_p2p_images[$language] as $index => $image) {
-          if (!isset($form['field_p2p_campaign_images'][$language][$index])) {
-            $form['field_p2p_campaign_images'][$language][$index] = $form['field_p2p_campaign_images'][$language][0];
+        // Check for available images before we try to interact with this field.
+        if (isset($campaign_node->field_p2p_images[$language])) {
+          foreach ($campaign_node->field_p2p_images[$language] as $index => $image) {
+            if (!isset($form['field_p2p_campaign_images'][$language][$index])) {
+              $form['field_p2p_campaign_images'][$language][$index] = $form['field_p2p_campaign_images'][$language][0];
+            }
+            $form['field_p2p_campaign_images'][$language][$index]['#default_value']['fid'] = $image['fid'];
+            $form['field_p2p_campaign_images'][$language][$index]['#default_value']['display'] = TRUE;
           }
-          $form['field_p2p_campaign_images'][$language][$index]['#default_value']['fid'] = $image['fid'];
-          $form['field_p2p_campaign_images'][$language][$index]['#default_value']['display'] = TRUE;
+          $form['field_p2p_campaign_images'][$language][$index + 1] = $empty_image;
         }
-        $form['field_p2p_campaign_images'][$language][$index + 1] = $empty_image;
       }
       // Embedded video, default values from parent campaign, hide if edit
       // is disabled.
