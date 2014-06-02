@@ -1828,7 +1828,7 @@ function springbaord_p2p_format_campaign_form_header($campaign) {
  *
  * Adds customizations to the p2p webform.
  */
-function springboard_p2p_page_alter(&$page) {
+function springboard_p2p_page_alter(&$page, $form) {
   if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid']) && arg(0) == 'node' && is_numeric(arg(1)) && is_null(arg(2))) {
     $personal_campaign_id = $_GET['p2p_pcid'];
 
@@ -1854,12 +1854,20 @@ function springboard_p2p_page_alter(&$page) {
   // Not admin page.
   if (!path_is_admin(current_path())) {
 
+    // Global node.
+    $node = menu_get_object();
+
     // Define the module path for use below.
     $mod_path = drupal_get_path('module', 'springboard_p2p');
 
-    // Set a var for SB register / login.
+    // Query the url string to see if it's a p2p donation form.
+    if (!empty($_GET['p2p_pcid']) && (fundraiser_is_donation_type($node->type))) {
+      $p2p_donation_path = '';
+    }
+
+    // Define register / login / password page paths.
     if ((arg(0) == "springboard_p2p" && arg(1) == "register") || (arg(0) == "springboard_p2p" && arg(1) == "login") || (arg(0) == "springboard_p2p" && arg(1) == "password")) {
-      $regpath = '';
+      $p2p_path = '';
     }
 
     // Define targeted node types, add more as needed.
@@ -1869,11 +1877,9 @@ function springboard_p2p_page_alter(&$page) {
       'p2p_campaign',
     );
 
-    // Global node.
-    $node = menu_get_object();
-
     // Global p2p css file, global nodes and regpath.
-    if ((!empty($node) && in_array($node->type, $node_types)) || (isset($regpath))) {
+    if ((!empty($node) && in_array($node->type, $node_types)) || (isset($p2p_path)) || (isset($p2p_donation_path))) {
+
       $p2p_css = array(
         '#attached' => array(
           'css' => array(
@@ -1885,10 +1891,8 @@ function springboard_p2p_page_alter(&$page) {
         ),
       );
       drupal_render($p2p_css);
-    }
 
     // Global p2p css file, global nodes and regpath.
-    if ((!empty($node) && in_array($node->type, $node_types)) || (isset($regpath))) {
       $p2p_js = array(
         '#attached' => array(
           'js' => array(
@@ -1903,7 +1907,7 @@ function springboard_p2p_page_alter(&$page) {
     }
 
     // Regpath for account pages (login, register, password).
-    if (isset($regpath)) {
+    if (isset($p2p_path)) {
       $p2p_account_css = array(
         '#attached' => array(
           'css' => array(
