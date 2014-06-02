@@ -12,6 +12,26 @@
  * enabledness of fields.
  */
 function springboard_p2p_user_register_form($form, &$form_state) {
+  if (user_is_logged_in()) {
+    // Faking the form submission so the approval status will get saved
+    // if needed and we can find out where to go next.
+    $form = array();
+    $form_state = array(
+      'values' => array(
+        'springboard_p2p_campaign_nid' => springboard_p2p_get_campaign_id_from_request(),
+      ),
+      'uid' => $GLOBALS['user']->uid,
+    );
+    springboard_p2p_set_redirect($form, $form_state);
+
+    if (is_array($form_state['redirect'])) {
+      drupal_goto($form_state['redirect'][0], $form_state['redirect'][1]);
+    }
+    else {
+      drupal_goto($form_state['redirect']);
+    }
+  }
+
   $form = array();
 
   $admin = user_access('administer users');
