@@ -127,32 +127,6 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $display->content['new-1dfeee97-1a59-4f64-9da7-601b11a32735'] = $pane;
     $display->panels['middle_left'][1] = 'new-1dfeee97-1a59-4f64-9da7-601b11a32735';
     $pane = new stdClass();
-    $pane->pid = 'new-75d8ae89-2d28-4f1a-bcf6-79221fe83d2f';
-    $pane->panel = 'middle_left';
-    $pane->type = 'personal_campaign_call_to_action';
-    $pane->subtype = 'personal_campaign_call_to_action';
-    $pane->shown = TRUE;
-    $pane->access = array();
-    $pane->configuration = array(
-      'context' => 'panelizer',
-      'override_title' => 1,
-      'override_title_text' => '',
-    );
-    $pane->cache = array();
-    $pane->style = array(
-      'settings' => NULL,
-    );
-    $pane->css = array(
-      'css_id' => '',
-      'css_class' => 'donate-button org-intro-button',
-    );
-    $pane->extras = array();
-    $pane->position = 2;
-    $pane->locks = array();
-    $pane->uuid = '75d8ae89-2d28-4f1a-bcf6-79221fe83d2f';
-    $display->content['new-75d8ae89-2d28-4f1a-bcf6-79221fe83d2f'] = $pane;
-    $display->panels['middle_left'][2] = 'new-75d8ae89-2d28-4f1a-bcf6-79221fe83d2f';
-    $pane = new stdClass();
     $pane->pid = 'new-a6baa2cb-e251-4a0e-9f6b-83446a4dcdf3';
     $pane->panel = 'middle_left';
     $pane->type = 'entity_field';
@@ -183,11 +157,11 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
       'css_class' => 'pane-video',
     );
     $pane->extras = array();
-    $pane->position = 3;
+    $pane->position = 2;
     $pane->locks = array();
     $pane->uuid = 'a6baa2cb-e251-4a0e-9f6b-83446a4dcdf3';
     $display->content['new-a6baa2cb-e251-4a0e-9f6b-83446a4dcdf3'] = $pane;
-    $display->panels['middle_left'][3] = 'new-a6baa2cb-e251-4a0e-9f6b-83446a4dcdf3';
+    $display->panels['middle_left'][2] = 'new-a6baa2cb-e251-4a0e-9f6b-83446a4dcdf3';
     $pane = new stdClass();
     $pane->pid = 'new-fa2ee32b-a7bc-417e-9e5c-2ba674f867ff';
     $pane->panel = 'middle_left';
@@ -221,11 +195,11 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
       'css_class' => 'donate-button video-pane-button',
     );
     $pane->extras = array();
-    $pane->position = 4;
+    $pane->position = 3;
     $pane->locks = array();
     $pane->uuid = 'fa2ee32b-a7bc-417e-9e5c-2ba674f867ff';
     $display->content['new-fa2ee32b-a7bc-417e-9e5c-2ba674f867ff'] = $pane;
-    $display->panels['middle_left'][4] = 'new-fa2ee32b-a7bc-417e-9e5c-2ba674f867ff';
+    $display->panels['middle_left'][3] = 'new-fa2ee32b-a7bc-417e-9e5c-2ba674f867ff';
     $pane = new stdClass();
     $pane->pid = 'new-6a286485-ca59-4bae-a049-ed3af09e6767';
     $pane->panel = 'middle_right';

@@ -30,7 +30,7 @@ function springboard_p2p_landing_panelizer_defaults() {
   $panelizer->link_to_entity = TRUE;
   $panelizer->extra = array();
   $display = new panels_display();
-  $display->layout = 'p2p_twocol_bricks';
+  $display->layout = 'p2p_landing_twocol_bricks';
   $display->layout_settings = array();
   $display->panel_settings = array(
     'style_settings' => array(

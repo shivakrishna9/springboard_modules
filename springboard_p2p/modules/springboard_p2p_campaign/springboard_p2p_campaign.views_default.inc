@@ -52,6 +52,7 @@ function springboard_p2p_campaign_views_default_views() {
   $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['element_label_type'] = '0';
   $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['element_default_classes'] = FALSE;
   $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['click_sort_column'] = 'fid';
   $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['settings'] = array(
     'image_style' => 'p2p_pers_campaign_image_thumb',
@@ -80,6 +81,7 @@ function springboard_p2p_campaign_views_default_views() {
   $handler->display->display_options['fields']['nid']['element_label_type'] = '0';
   $handler->display->display_options['fields']['nid']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['nid']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['nid']['element_default_classes'] = FALSE;
   /* Sort criterion: Content: Post date */
   $handler->display->display_options['sorts']['created']['id'] = 'created';
   $handler->display->display_options['sorts']['created']['table'] = 'node';

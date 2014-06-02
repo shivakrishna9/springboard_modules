@@ -2042,6 +2042,11 @@ function springboard_p2p_css_alter(&$css) {
   }
 }
 
+/**
+ * Implements template_preprocess_page
+ *
+ * Add convenience variables and template suggestions.
+ */
 function springboard_p2p_preprocess_page(&$vars) {
 
   // Unset the h1 title for the login page, we set it in a custom pane.

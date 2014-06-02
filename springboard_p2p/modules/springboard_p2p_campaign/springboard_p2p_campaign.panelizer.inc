@@ -25,7 +25,7 @@ function springboard_p2p_campaign_panelizer_defaults() {
   $panelizer->relationships = array();
   $panelizer->access = array();
   $panelizer->view_mode = 'page_manager';
-  $panelizer->css_class = 'p2p-page-type';
+  $panelizer->css_class = 'p2p-page-type p2p-campaign-page';
   $panelizer->title_element = 'H2';
   $panelizer->link_to_entity = TRUE;
   $panelizer->extra = array();
@@ -58,7 +58,10 @@ function springboard_p2p_campaign_panelizer_defaults() {
     $pane->style = array(
       'settings' => NULL,
     );
-    $pane->css = array();
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'pane-p2p-content panel-pane-wrapper',
+    );
     $pane->extras = array();
     $pane->position = 0;
     $pane->locks = array();
@@ -77,13 +80,55 @@ function springboard_p2p_campaign_panelizer_defaults() {
     $pane->style = array(
       'settings' => NULL,
     );
-    $pane->css = array();
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'pane-top-campaigns',
+    );
     $pane->extras = array();
     $pane->position = 0;
     $pane->locks = array();
     $pane->uuid = '19ad46df-6219-453a-b6bc-2426c9092b4e';
     $display->content['new-19ad46df-6219-453a-b6bc-2426c9092b4e'] = $pane;
     $display->panels['middle_right'][0] = 'new-19ad46df-6219-453a-b6bc-2426c9092b4e';
+    $pane = new stdClass();
+    $pane->pid = 'new-481d1177-ebe1-491a-8e47-de25d4e13d31';
+    $pane->panel = 'middle_right';
+    $pane->type = 'custom';
+    $pane->subtype = 'fundraising_title_pane';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'admin_title' => '',
+      'title' => '',
+      'body' => '',
+      'format' => 'filtered_html',
+      'substitute' => TRUE,
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => array(
+        'title' => array(
+          'prefix' => '',
+          'suffix' => '',
+        ),
+        'content' => array(
+          'prefix' => '<div class="panel-pane-wrapper search-wrapper">',
+          'suffix' => '',
+        ),
+        'theme' => 0,
+      ),
+      'style' => 'wrapper_raw',
+    );
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'pane-search-title',
+    );
+    $pane->extras = array();
+    $pane->position = 1;
+    $pane->locks = array();
+    $pane->uuid = '481d1177-ebe1-491a-8e47-de25d4e13d31';
+    $display->content['new-481d1177-ebe1-491a-8e47-de25d4e13d31'] = $pane;
+    $display->panels['middle_right'][1] = 'new-481d1177-ebe1-491a-8e47-de25d4e13d31';
     $pane = new stdClass();
     $pane->pid = 'new-9f85f546-7f9c-4847-8315-a98b4835fff9';
     $pane->panel = 'middle_right';
@@ -100,13 +145,36 @@ function springboard_p2p_campaign_panelizer_defaults() {
     $pane->style = array(
       'settings' => NULL,
     );
-    $pane->css = array();
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'landing-search-form',
+    );
     $pane->extras = array();
-    $pane->position = 1;
+    $pane->position = 2;
     $pane->locks = array();
     $pane->uuid = '9f85f546-7f9c-4847-8315-a98b4835fff9';
     $display->content['new-9f85f546-7f9c-4847-8315-a98b4835fff9'] = $pane;
-    $display->panels['middle_right'][1] = 'new-9f85f546-7f9c-4847-8315-a98b4835fff9';
+    $display->panels['middle_right'][2] = 'new-9f85f546-7f9c-4847-8315-a98b4835fff9';
+    $pane = new stdClass();
+    $pane->pid = 'new-86d7e57f-ef28-4822-9b16-7aedb4af3c10';
+    $pane->panel = 'middle_right';
+    $pane->type = 'views_panes';
+    $pane->subtype = 'search_for_a_campaign-panel_pane_1';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array();
+    $pane->cache = array();
+    $pane->style = array(
+      'style' => 'default',
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 3;
+    $pane->locks = array();
+    $pane->uuid = '86d7e57f-ef28-4822-9b16-7aedb4af3c10';
+    $display->content['new-86d7e57f-ef28-4822-9b16-7aedb4af3c10'] = $pane;
+    $display->panels['middle_right'][3] = 'new-86d7e57f-ef28-4822-9b16-7aedb4af3c10';
     $pane = new stdClass();
     $pane->pid = 'new-728990ea-0369-4f19-ba3c-be7af0dc1543';
     $pane->panel = 'middle_right';
@@ -123,34 +191,26 @@ function springboard_p2p_campaign_panelizer_defaults() {
     );
     $pane->cache = array();
     $pane->style = array(
-      'settings' => NULL,
+      'settings' => array(
+        'title' => array(
+          'prefix' => '',
+          'suffix' => '',
+        ),
+        'content' => array(
+          'prefix' => '',
+          'suffix' => '</div>',
+        ),
+        'theme' => 0,
+      ),
+      'style' => 'wrapper_raw',
     );
     $pane->css = array();
     $pane->extras = array();
-    $pane->position = 2;
+    $pane->position = 4;
     $pane->locks = array();
     $pane->uuid = '728990ea-0369-4f19-ba3c-be7af0dc1543';
     $display->content['new-728990ea-0369-4f19-ba3c-be7af0dc1543'] = $pane;
-    $display->panels['middle_right'][2] = 'new-728990ea-0369-4f19-ba3c-be7af0dc1543';
-    $pane = new stdClass();
-    $pane->pid = 'new-86d7e57f-ef28-4822-9b16-7aedb4af3c10';
-    $pane->panel = 'middle_right';
-    $pane->type = 'views_panes';
-    $pane->subtype = 'search_for_a_campaign-panel_pane_1';
-    $pane->shown = TRUE;
-    $pane->access = array();
-    $pane->configuration = array();
-    $pane->cache = array();
-    $pane->style = array(
-      'settings' => NULL,
-    );
-    $pane->css = array();
-    $pane->extras = array();
-    $pane->position = 3;
-    $pane->locks = array();
-    $pane->uuid = '86d7e57f-ef28-4822-9b16-7aedb4af3c10';
-    $display->content['new-86d7e57f-ef28-4822-9b16-7aedb4af3c10'] = $pane;
-    $display->panels['middle_right'][3] = 'new-86d7e57f-ef28-4822-9b16-7aedb4af3c10';
+    $display->panels['middle_right'][4] = 'new-728990ea-0369-4f19-ba3c-be7af0dc1543';
     $pane = new stdClass();
     $pane->pid = 'new-fb351353-71d7-4a33-85d9-b9c30d616b33';
     $pane->panel = 'top';
@@ -176,7 +236,10 @@ function springboard_p2p_campaign_panelizer_defaults() {
     $pane->style = array(
       'settings' => NULL,
     );
-    $pane->css = array();
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'pane-top-banner',
+    );
     $pane->extras = array();
     $pane->position = 0;
     $pane->locks = array();
