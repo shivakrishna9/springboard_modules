@@ -17,7 +17,7 @@
         });
       }
 
-      // Responsive equal heights for boxes in a grid.
+      // Responsive equal heights function for boxes in a grid.
       equalheight = function (container) {
         var currentTallest = 0,
           currentRowStart = 0,

@@ -35,7 +35,7 @@ function springboard_p2p_campaign_strongarm() {
     'extra_fields' => array(
       'form' => array(
         'title' => array(
-          'weight' => '1',
+          'weight' => '0',
         ),
       ),
       'display' => array(),
@@ -63,7 +63,6 @@ function springboard_p2p_campaign_strongarm() {
   $strongarm->name = 'node_options_p2p_campaign';
   $strongarm->value = array(
     0 => 'status',
-    1 => 'revision',
   );
   $export['node_options_p2p_campaign'] = $strongarm;
 

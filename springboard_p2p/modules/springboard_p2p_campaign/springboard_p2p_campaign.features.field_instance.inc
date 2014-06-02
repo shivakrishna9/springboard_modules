@@ -143,7 +143,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'progress_indicator' => 'throbber',
       ),
       'type' => 'image_image',
-      'weight' => 17,
+      'weight' => 4,
     ),
   );
 
@@ -178,7 +178,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
       'module' => 'springboard_p2p_fields',
       'settings' => array(),
       'type' => 'springboard_p2p_fields_campaign_goals_widget',
-      'weight' => 16,
+      'weight' => 3,
     ),
   );
 
@@ -228,7 +228,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'progress_indicator' => 'throbber',
       ),
       'type' => 'image_image',
-      'weight' => 4,
+      'weight' => 5,
     ),
   );
 
@@ -278,7 +278,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'progress_indicator' => 'throbber',
       ),
       'type' => 'image_image',
-      'weight' => 3,
+      'weight' => 6,
     ),
   );
 
@@ -359,7 +359,50 @@ function springboard_p2p_campaign_field_default_field_instances() {
       'module' => 'options',
       'settings' => array(),
       'type' => 'options_select',
-      'weight' => 0,
+      'weight' => 1,
+    ),
+  );
+
+  // Exported field_instance: 'node-p2p_campaign-field_p2p_feature_pers_campaigns'
+  $field_instances['node-p2p_campaign-field_p2p_feature_pers_campaigns'] = array(
+    'bundle' => 'p2p_campaign',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'entityreference',
+        'settings' => array(
+          'link' => FALSE,
+        ),
+        'type' => 'entityreference_label',
+        'weight' => 19,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_p2p_feature_pers_campaigns',
+    'label' => 'Featured Personal Campaigns',
+    'required' => 0,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'entityreference',
+      'settings' => array(
+        'match_operator' => 'CONTAINS',
+        'path' => '',
+        'size' => 60,
+      ),
+      'type' => 'entityreference_autocomplete',
+      'weight' => 9,
     ),
   );
 
@@ -742,6 +785,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
   t('Campaign thumbnail');
   t('Category');
   t('Description');
+  t('Featured Personal Campaigns');
   t('Goals');
   t('Images');
   t('Landing page slider');

@@ -38,15 +38,6 @@ function springboard_p2p_login_intro_edit_form($form, &$form_state) {
  */
 function springboard_p2p_login_intro_render($subtype, $conf, $args, $contexts) {
 
-  // Update the strings to allow contexts.
-  if (!empty($contexts)) {
-    $content = ctools_context_keyword_substitute($conf['text'], array(), $contexts);
-  }
-
-  // Define the site name.
-  // @todo - do we need this? 
-  //$site_name = variable_get('site_name');
-
   // Title.
   $title = t('Already a Supporter?');
 

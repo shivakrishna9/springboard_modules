@@ -1863,66 +1863,71 @@ function springboard_p2p_page_alter(&$page) {
     }
   }
 
-  // Define the module path for use below.
-  $mod_path = drupal_get_path('module', 'springboard_p2p');
+  // Not admin page.
+  if (!path_is_admin(current_path())) {
 
-  // Set a var for SB register / login.
-     if ((arg(0) == "springboard_p2p" && arg(1) == "register") || (arg(0) == "springboard_p2p" && arg(1) == "login") || (arg(0) == "springboard_p2p" && arg(1) == "password")) {
-       $regpath = '';
-     }
+    // Define the module path for use below.
+    $mod_path = drupal_get_path('module', 'springboard_p2p');
 
-  // Define targeted node types, add more as needed.
-  $node_types = array(
-    'p2p_personal_campaign',
-    'p2p_campaign_landing',
-  );
+    // Set a var for SB register / login.
+    if ((arg(0) == "springboard_p2p" && arg(1) == "register") || (arg(0) == "springboard_p2p" && arg(1) == "login") || (arg(0) == "springboard_p2p" && arg(1) == "password")) {
+      $regpath = '';
+    }
 
-  // Global node.
-  $node = menu_get_object();
+    // Define targeted node types, add more as needed.
+    $node_types = array(
+      'p2p_personal_campaign',
+      'p2p_campaign_landing',
+      'p2p_campaign',
+    );
 
-  // Global p2p css file, global nodes and regpath.
-  if ((!empty($node) && in_array($node->type, $node_types)) || (isset($regpath))) {
-    $p2p_css = array(
-      '#attached' => array(
-        'css' => array(
-          $mod_path . '/css/springboard-p2p.css' => array(
-            'group' => CSS_THEME,
-            'weight' => 9999,
+    // Global node.
+    $node = menu_get_object();
+
+    // Global p2p css file, global nodes and regpath.
+    if ((!empty($node) && in_array($node->type, $node_types)) || (isset($regpath))) {
+      $p2p_css = array(
+        '#attached' => array(
+          'css' => array(
+            $mod_path . '/css/springboard-p2p.css' => array(
+              'group' => CSS_THEME,
+              'weight' => 9999,
+            ),
           ),
         ),
-      ),
-    );
-    drupal_render($p2p_css);
-  }
+      );
+      drupal_render($p2p_css);
+    }
 
-  // Global p2p css file, global nodes and regpath.
-  if ((!empty($node) && in_array($node->type, $node_types)) || (isset($regpath))) {
-    $p2p_js = array(
-      '#attached' => array(
-        'js' => array(
-          $mod_path . '/js/springboard-p2p.js' => array(
-            'group' => JS_THEME,
-            'weight' => 9999,
+    // Global p2p css file, global nodes and regpath.
+    if ((!empty($node) && in_array($node->type, $node_types)) || (isset($regpath))) {
+      $p2p_js = array(
+        '#attached' => array(
+          'js' => array(
+            $mod_path . '/js/springboard-p2p.js' => array(
+              'group' => JS_THEME,
+              'weight' => 9999,
+            ),
           ),
         ),
-      ),
-    );
-    drupal_render($p2p_js);
-  }
+      );
+      drupal_render($p2p_js);
+    }
 
-  // Regpath for account pages (login, register, password).
-  if (isset($regpath)) {
-    $p2p_account_css = array(
-      '#attached' => array(
-        'css' => array(
-          $mod_path . '/css/p2p-account.css' => array(
-            'group' => CSS_THEME,
-            'weight' => 9999,
+    // Regpath for account pages (login, register, password).
+    if (isset($regpath)) {
+      $p2p_account_css = array(
+        '#attached' => array(
+          'css' => array(
+            $mod_path . '/css/p2p-account.css' => array(
+              'group' => CSS_THEME,
+              'weight' => 9999,
+            ),
           ),
         ),
-      ),
-    );
-    drupal_render($p2p_account_css);
+      );
+      drupal_render($p2p_account_css);
+    }
   }
 
 }
