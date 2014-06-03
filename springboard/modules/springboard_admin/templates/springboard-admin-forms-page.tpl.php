@@ -1,28 +1,13 @@
-<?php
-/* Start the count. */
-$zebra = 0;
-$num_items = count($types);
-$i = 0;
-?>
+<?php /* Start the count. */ $zebra = 0; ?>
 
 <?php foreach ($types as $type) : ?>
 
   <?php
   // Define odd / even for use in the definition list.
   $zebra_class = ($zebra % 2) ? 'even' : 'odd';
-  $i++;
-
-  // Define first / last.
-  if ($i == 1) {
-    $attributes = 'first';
-  }
-
-  if ($i == $num_items) {
-  $attributes = 'last';
-  }
 
   ?>
-  <div class="types-wrapper <?php print $zebra_class; ?> <?php print $attributes ; ?>">
+  <div class="types-wrapper <?php print $zebra_class; ?>">
     <h2 class="types"><?php print $type->name; ?></h2>
 
     <div class="buttons-wrapper">
