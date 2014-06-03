@@ -1,5 +1,28 @@
 <?php foreach ($types as $type) : ?>
-   <h2><?php print $type->name; ?>s</h2>
-   <a href="/springboard/add/<?php print preg_replace('/_/', '-', $type->type); ?>" class="button">Create <?php print $type->name; ?></a>
+<div class="types-header">
+  <h2 class="types"><?php print $type->name; ?></h2>
+
+  <div class="buttons-wrapper">
+
+  <!-- bootstrap drop list widget -->
+    <div class="btn-group">
+      <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+        <?php print t('Options'); ?>
+        <span class="caret"></span>
+      </button>
+
+      <?php // @todo make the menu below dynamic or contextual? ?>
+      <ul class="dropdown-menu views-widget-dropdown">
+        <li><a href="/admin/reports/salesforce/donations"><?php print t('Search Donations'); ?></a></li>
+        <li><a href="/springboard/asset-library"><?php print t('Templates & Wrappers'); ?></a></li>
+        <li><a href="#"><?php print t('Donation Settings'); ?></a></li>
+      </ul>
+    </div><!--// btn-group -->
+
+    <a href="/springboard/add/<?php print preg_replace('/_/', '-', $type->type); ?>" class="button add-button">Create <?php print $type->name; ?></a>
+
+  </div><!-- // buttons-wrapper -->
+
    <?php print($tables[$type->type]); ?>
+</div>
 <?php endforeach; ?>
