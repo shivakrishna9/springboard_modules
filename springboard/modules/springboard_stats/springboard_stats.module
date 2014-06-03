@@ -151,6 +151,7 @@ function springboard_stats_update_field($node, $field_name) {
  */
 function springboard_stats_update_all_fields($node) {
   // Count webform submissions.
+  module_load_include('inc', 'webform', 'includes/webform.submissions');
   $node->sbstats_count_submissions[LANGUAGE_NONE][0]['value'] = webform_get_submission_count($node->nid);
   
   // Count conversions.
