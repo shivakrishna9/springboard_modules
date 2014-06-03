@@ -287,7 +287,7 @@ function springboard_views_springboard_dashboard_panes() {
    'description' => t('Configuration and submissions summary for recently created or updated springboard donation forms.'),
    'content' => '<h2>' . t('Recent donation forms ') .  '</h2>' .
      (module_exists('webform') ? l(t('Create donation form'), $base_url . '/node/add/donation-form', array('attributes' => array('class' => array('button', 'add-button')))) : '' ) .
-     (module_exists('views') ? views_embed_view('sbv_forms', 'block_3', $fundraiser_types[0]) : t('Please enable the Views module to improve your Springboard experience.')) . 
+     (module_exists('views') ? views_embed_view('sbv_forms', 'block_3', implode('+', $fundraiser_types)) : t('Please enable the Views module to improve your Springboard experience.')) . 
      l(t('View All Donation Forms'), 'admin/springboard/donation-forms/all', array('attributes' => array('class' => array('more-link')))),
    'position' => 'column_left',
    'weight' => 0,
