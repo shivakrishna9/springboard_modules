@@ -54,6 +54,22 @@ function springboard_stats_permission() {
 }
 
 /**
+ * Implements hook_node_presave().
+ */
+function springboard_stats_node_presave($node) {
+  if (fundraiser_is_donation_type($node->type) || in_array($node->type, webform_variable_get('webform_node_types'))) {
+    // If sbstats fields have no data, populate them with zeroes.
+    foreach ($node as $name => $value) {
+      if (substr($name, 0, 8) == 'sbstats_') {
+        if (empty($node->{$name}[LANGUAGE_NONE]) || empty($node->{$name}[LANGUAGE_NONE][0]['value'])) {
+          $node->{$name}[LANGUAGE_NONE][0]['value'] = 0;
+        }
+      }
+    }
+  }
+}
+
+/**
  * Calculates and saves a particular stats field for a particular node.
  */
 function springboard_stats_update_field($node, $field_name) {
