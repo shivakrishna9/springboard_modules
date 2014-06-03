@@ -35,8 +35,9 @@ function springboard_stats_add_fields($type_name) {
  * Implements hook_field_access().
  */
 function springboard_stats_field_access($op, $field, $entity_type, $entity, $account) {
-  if (substr($field['field_name'], 0, 8) == 'sbstats_' && $op == 'edit') {
-    return user_access('edit springboard stats', $account);
+  if (substr($field['field_name'], 0, 8) == 'sbstats_') {
+    if ($op == 'edit') { return FALSE; }
+    if ($op == 'view') { return user_access('view springboard stats', $account); }
   }
   return TRUE;
 }
@@ -46,9 +47,9 @@ function springboard_stats_field_access($op, $field, $entity_type, $entity, $acc
  */
 function springboard_stats_permission() {
   return array(
-    'edit springboard stats' => array(
-      'title' => t('Edit Springboard Statistics'),
-      'description' => t('Change the values of Springboard Statistics fields.'),
+    'view springboard stats' => array(
+      'title' => t('View Springboard Statistics'),
+      'description' => t('See the values of Springboard Statistics fields.'),
     ),
   );
 }
