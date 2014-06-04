@@ -33,5 +33,8 @@
 
     <?php print($tables[$type->type]); ?>
     <?php $zebra++; ?>
+    <a class="button more-button" href="/springboard/asset-library/<?php print $type->type; ?>"><?php print t('View all');?> <?php print $type->name; ?><?php print t('s');?> </a>
+
   </div>
+
 <?php endforeach; ?>
