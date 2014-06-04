@@ -234,23 +234,33 @@ body p {
 }
 
 .p2p-password-page .form-actions {
-  padding: 20px 0 0 0;
-  margin: 4px 0 0 0;
+  padding: 0px 0 0 0;
+  margin: 0px 0 0 0;
 }
 
 .pane-password .form-actions.form-wrapper {
   position: relative;
 }
 
+.pane-password .form-wrapper {
+  position: relative;
+  clear: both;
+  margin: 4px 0;
+}
+
 .pane-password .form-actions.form-wrapper:after {
   content: "\f007";
   position: absolute;
-  top: 36px;
+  top: 16px;
   right: 11px;
   color: #fffe00;
   font-size: 13px;
   font-family: FontAwesome;
   pointer-events: none;
+}
+
+.pane-password input#edit-name {
+  width: 96%;
 }
 
 /******************  Media queries, these should go last */
