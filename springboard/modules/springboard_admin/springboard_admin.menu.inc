@@ -51,6 +51,7 @@ function springboard_admin_admin_menu_items() {
     'external' => 1,
     'customized' => 1,
     'weight' => 0,
+    'options' => array('attributes' => array('target' => '_blank')),
   );
 
   // Springboard > Salesforce.com
@@ -62,6 +63,7 @@ function springboard_admin_admin_menu_items() {
     'external' => 1,
     'customized' => 1,
     'weight' => 1,
+    'options' => array('attributes' => array('target' => '_blank')),
   );
 
   // Top Level: Donation Form.
