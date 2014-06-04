@@ -332,11 +332,19 @@ function springboard_views_views_default_views() {
     ),
     'clone_node' => array(
       'align' => '',
+      'separator' => ' | ',
+      'empty_column' => 0,
+    ),
+    'edit_node' => array(
+      'align' => '',
       'separator' => '',
       'empty_column' => 0,
-      'edit_node' => array(),
     ),
-    'view_node' => array(),
+    'view_node' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
     'field_webform_user_internal_name' => array(
       'sortable' => 0,
       'default_sort_order' => 'asc',
@@ -441,6 +449,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['filters']['combine']['operator'] = 'contains';
   $handler->display->display_options['filters']['combine']['exposed'] = TRUE;
   $handler->display->display_options['filters']['combine']['expose']['operator_id'] = 'combine_op';
+  $handler->display->display_options['filters']['combine']['expose']['label'] = 'Search';
   $handler->display->display_options['filters']['combine']['expose']['operator'] = 'combine_op';
   $handler->display->display_options['filters']['combine']['expose']['identifier'] = 'combine';
   $handler->display->display_options['filters']['combine']['expose']['remember_roles'] = array(
