@@ -749,6 +749,7 @@ function springboard_admin_aggregate_links_page($path, $parents = array()) {
         'title' => $child['link_title'],
         'href' => $child['link_path'],
         'options' => $options,
+        'weight' => $child['weight'],
       );
     }
   }
