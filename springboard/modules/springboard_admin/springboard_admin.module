@@ -428,6 +428,9 @@ function springboard_admin_menu_alter(&$items) {
     $items['node/%webform_menu/webform/components']['title'] = 'Form fields';
     $items['node/%webform_menu/webform/emails']['title'] = 'Confirmation emails';
     $items['node/%webform_menu/webform/configure']['title'] = 'Confirmation page & settings';
+    
+    // Disable the User Orders tab since it's irrelevant
+    unset($items['user/%views_arg/orders']);
   }
 }
 
