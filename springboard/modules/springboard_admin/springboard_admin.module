@@ -736,6 +736,7 @@ function springboard_admin_aggregate_links_page($path, $parents = array()) {
     }
   }
   if (!empty($links)) {
+    uasort($links, 'drupal_sort_weight');
     return theme_links(array(
       'links' => $links,
       'attributes' => array(
