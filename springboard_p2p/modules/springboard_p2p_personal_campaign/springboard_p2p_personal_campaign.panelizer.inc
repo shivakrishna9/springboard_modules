@@ -95,7 +95,7 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     );
     $pane->css = array(
       'css_id' => '',
-      'css_class' => 'donate-button foobar1',
+      'css_class' => 'donate-button',
     );
     $pane->extras = array();
     $pane->position = 0;
