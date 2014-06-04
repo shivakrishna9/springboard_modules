@@ -1,0 +1,16 @@
+<?php
+
+/**
+ * @file
+ * Provides peer to peer integration support for Salesforce.
+ */
+
+/**
+ * Implements hook_salesforce_queue_create_item_alter()
+ */
+function salesforce_p2p_salesforce_queue_create_item_alter($item) {
+  // TODO: Check item to see if it is a peer to peer campaign. If
+  // it is we'll need to alter in the relationship token for the
+  // peer to peer category. Same goes for personal campaigns.
+  // drupal_set_message('<pre>' . print_r($item, true) . '</pre>');
+}
