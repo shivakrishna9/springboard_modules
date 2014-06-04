@@ -559,7 +559,7 @@ function _email_wrappers_delete_fields() {
     $field = field_info_instance('node', $field_name, 'email_wrapper');
     field_delete_instance($field);
     $field = field_info_field($field_name);
-    field_delete_field($field);
+    field_delete_field($field_name);
   }
   drupal_set_message('Email Wrapper fields deleted.');
 }
