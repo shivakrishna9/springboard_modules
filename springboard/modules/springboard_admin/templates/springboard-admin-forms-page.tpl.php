@@ -21,9 +21,7 @@
 
         <?php // @todo make the menu below dynamic or contextual? ?>
         <ul class="dropdown-menu views-widget-dropdown">
-          <li><a href="/admin/reports/salesforce/donations"><?php print t('Search Donations'); ?></a></li>
           <li><a href="/springboard/asset-library"><?php print t('Templates & Wrappers'); ?></a></li>
-          <li><a href="#"><?php print t('Donation Settings'); ?></a></li>
         </ul>
       </div><!--// btn-group -->
 

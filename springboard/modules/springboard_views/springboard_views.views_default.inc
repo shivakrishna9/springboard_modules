@@ -332,11 +332,19 @@ function springboard_views_views_default_views() {
     ),
     'clone_node' => array(
       'align' => '',
+      'separator' => ' | ',
+      'empty_column' => 0,
+    ),
+    'edit_node' => array(
+      'align' => '',
       'separator' => '',
       'empty_column' => 0,
-      'edit_node' => array(),
     ),
-    'view_node' => array(),
+    'view_node' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
     'field_webform_user_internal_name' => array(
       'sortable' => 0,
       'default_sort_order' => 'asc',
