@@ -359,7 +359,6 @@ function springboard_admin_admin_menu_items() {
   );
 
   // Settings > Administrators
-  /* @TODO create this page */
   $items['admin/springboard/settings']['_children']['admin/springboard/settings/administrators'] = array(
     'link_path' => 'admin/springboard/settings/administrators',
     'link_title' => 'Administrators',
@@ -374,7 +373,7 @@ function springboard_admin_admin_menu_items() {
     'link_path' => 'admin/springboard/settings/config',
     'link_title' => 'Settings',
     'menu_name' => 'springboard_admin_menu',
-    'expanded' => 1,
+    'expanded' => 0,
     'customized' => 1,
     'weight' => 2,
     '_children' => array(),
@@ -385,7 +384,7 @@ function springboard_admin_admin_menu_items() {
     'link_path' => 'admin/springboard/options/fundraiser/fundraiser_upsell',
     'link_title' => 'Import salesforce mapping',
     'menu_name' => 'springboard_admin_menu',
-    'expanded' => 1,
+    'expanded' => 0,
     'customized' => 1,
     'weight' => 0,
   );
@@ -395,7 +394,7 @@ function springboard_admin_admin_menu_items() {
     'link_path' => 'admin/springboard/options/fundraiser/fundraiser_upsell/thank-you',
     'link_title' => 'Sustainer upsell confirmations',
     'menu_name' => 'springboard_admin_menu',
-    'expanded' => 1,
+    'expanded' => 0,
     'customized' => 1,
     'weight' => 1,
   );
@@ -405,7 +404,7 @@ function springboard_admin_admin_menu_items() {
     'link_path' => 'admin/structure/salesforce/mappings',
     'link_title' => 'Fieldmaps',
     'menu_name' => 'springboard_admin_menu',
-    'expanded' => 1,
+    'expanded' => 0,
     'customized' => 1,
     'weight' => 2,
   );
@@ -415,7 +414,7 @@ function springboard_admin_admin_menu_items() {
     'link_path' => 'admin/structure/salesforce/mappings/add',
     'link_title' => 'Add salesforce mapping',
     'menu_name' => 'springboard_admin_menu',
-    'expanded' => 1,
+    'expanded' => 0,
     'customized' => 1,
     'weight' => 2,
   );
@@ -425,7 +424,7 @@ function springboard_admin_admin_menu_items() {
     'link_path' => 'admin/structure/salesforce/mappings/import',
     'link_title' => 'Add salesforce mapping',
     'menu_name' => 'springboard_admin_menu',
-    'expanded' => 1,
+    'expanded' => 0,
     'customized' => 1,
     'weight' => 3,
   );
@@ -434,7 +433,7 @@ function springboard_admin_admin_menu_items() {
     'link_path' => 'admin/config/salesforce/authorize',
     'link_title' => 'Salesforce Authorization',
     'menu_name' => 'springboard_admin_menu',
-    'expanded' => 1,
+    'expanded' => 0,
     'customized' => 1,
     'weight' => 4,
   );
@@ -444,7 +443,7 @@ function springboard_admin_admin_menu_items() {
     'link_path' => 'admin/springboard/settings/springboard',
     'link_title' => 'Springboard Configuration',
     'menu_name' => 'springboard_admin_menu',
-    'expanded' => 1,
+    'expanded' => 0,
     'customized' => 1,
     'weight' => 5,
   ); 
