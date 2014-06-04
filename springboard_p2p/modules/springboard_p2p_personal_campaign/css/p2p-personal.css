@@ -238,11 +238,41 @@ ul.bjqs-controls.v-centered li a {
 }
 
 ul.bjqs-controls.v-centered li.bjqs-next a {
-  right: 0;
+  right: 6px;
+}
+
+ul.bjqs-controls.v-centered li a:hover {
+  text-decoration: none;
+}
+
+ul.bjqs-controls.v-centered li.bjqs-next a:after {
+  position: relative;
+  top: 1px;
+  padding: 0px 0 0 10px;
+  color: #fffe00;
+  content: "\f054";
+  text-decoration: inherit;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 34px;
+  font-family: FontAwesome;
 }
 
 ul.bjqs-controls.v-centered li.bjqs-prev a {
   left: 0;
+}
+
+ul.bjqs-controls.v-centered li.bjqs-prev a:after {
+  position: relative;
+  top: 1px;
+  padding: 0px 0 0 10px;
+  color: #fffe00;
+  content: "\f053";
+  text-decoration: inherit;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 34px;
+  font-family: FontAwesome;
 }
 
 ol.bjqs-markers {
@@ -269,8 +299,12 @@ p.bjqs-caption {
   bottom: 0;
   display: block;
   margin: 0;
-  padding: 2%;
-  width: 96%;
+  padding: 2px 0 2px 9px;
+  width: 100%;
+  background: #c6d2d3;
+  color: #5b5b5b;
+  font-weight: bold;
+  font-size: 15px;
 }
 
 .field.field-name-body {

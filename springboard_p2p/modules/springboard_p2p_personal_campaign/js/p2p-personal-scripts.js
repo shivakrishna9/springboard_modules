@@ -25,8 +25,12 @@
       // personal campaign slideshow.
       $('#slide-show').bjqs({
         height : 400,
-        animspeed : 5000,
-        responsive  : true
+        animspeed : 511000,
+        responsive  : true,
+        nexttext : '',
+        prevtext : '',
+        usecaptions : true,
+        showmarkers : false
       });
 
       // end jquery.
