@@ -199,6 +199,10 @@ function springboard_admin_init() {
      * Node edit pages.
      */ 
     elseif (preg_match('|^/node/([0-9]*)((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $matches)) {
+      if (preg_match('|^/node/([0-9]*)$|', $path) || preg_match('|^/node/([0-9]*)/view$|', $path)) {
+        // If we're viewing the node, bypass any aliasing.
+        return; 
+      }
       /**
        * Webform configuration pages.
        */
