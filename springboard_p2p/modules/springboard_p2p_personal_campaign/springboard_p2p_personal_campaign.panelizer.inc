@@ -42,6 +42,9 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
       'middle_top_left' => NULL,
       'middle_top_right' => NULL,
     ),
+    'middle_top_right' => array(
+      'style' => '-1',
+    ),
   );
   $display->cache = array();
   $display->title = '%node:title';
@@ -92,7 +95,7 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     );
     $pane->css = array(
       'css_id' => '',
-      'css_class' => 'donate-button',
+      'css_class' => 'donate-button foobar1',
     );
     $pane->extras = array();
     $pane->position = 0;
@@ -560,7 +563,10 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->style = array(
       'settings' => NULL,
     );
-    $pane->css = array();
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'pane-campaign-text',
+    );
     $pane->extras = array();
     $pane->position = 0;
     $pane->locks = array();
@@ -591,9 +597,12 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->cache = array();
     $pane->style = array(
       'settings' => NULL,
-      'style' => 'naked',
+      'style' => 'default',
     );
-    $pane->css = array();
+    $pane->css = array(
+      'css_id' => 'pane-slide-show',
+      'css_class' => 'pane-campaign-images',
+    );
     $pane->extras = array();
     $pane->position = 0;
     $pane->locks = array();

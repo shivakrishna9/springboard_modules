@@ -42,6 +42,11 @@ function springboard_p2p_personal_campaign_page_alter(&$cache, $vars) {
 
   // Global node.
   $node = menu_get_object();
+
+  // Not admin page.
+  if (!path_is_admin(current_path())) {
+
+
   // Only for p2p_personal_campaign page view.
   if (!empty($node) && ($node->type == 'p2p_personal_campaign') && (arg(2) == NULL)) {
 
@@ -50,24 +55,32 @@ function springboard_p2p_personal_campaign_page_alter(&$cache, $vars) {
 
     // Define the library path with libraries present and without.
     if (function_exists('libraries_get_path')) {
-      $library_path_fitvids = libraries_get_path('fitvids');
-    }
-    else {
-      $library_path_fitvids = 'sites/all/libraries/fitvids/jquery.fitvids.js';
+      $library_path = libraries_get_path('fitvids');
     }
 
     // Flexslider js.
     $fitvids = array(
       '#attached' => array(
         'js' => array(
-          $library_path_fitvids . '/jquery.fitvids.js' => array(
+          $library_path . '/jquery.fitvids.js' => array(
             'group' => JS_THEME,
-            'weight' => 99,
           ),
         ),
       ),
     );
     drupal_render($fitvids);
+
+    // jquery basic slideshow.
+    $p2p_jqslide= array(
+      '#attached' => array(
+        'js' => array(
+          $mod_path . '/js/bjqs-1.3.js' => array(
+            'group' => JS_THEME,
+          ),
+        ),
+      ),
+    );
+    drupal_render($p2p_jqslide);
 
     // Custom scripts, let's load this last.
     $p2p_personal_scripts = array(
@@ -95,6 +108,7 @@ function springboard_p2p_personal_campaign_page_alter(&$cache, $vars) {
     );
     drupal_render($p2p_personal_css);
 
+  }
   }
 
 }

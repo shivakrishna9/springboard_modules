@@ -22,6 +22,13 @@
         $(this).html( text.replace(':', '') );
       });
 
+      $('#slide-show').bjqs({
+        height : 400,
+        animspeed : 5000,
+        responsive  : true
+      });
+
+
       // end jquery.
     }};
 })
