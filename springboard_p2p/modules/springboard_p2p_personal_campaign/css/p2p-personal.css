@@ -114,8 +114,8 @@ h3.p2p-comment-name {
   width: 50px;
   height: 50px;
   color: #859596;
-  font-size: 19px;
   text-align: right;
+  font-size: 19px;
 }
 
 .pane-progress .panel-pane {
@@ -123,10 +123,10 @@ h3.p2p-comment-name {
 }
 
 .panel-pane-wrapper.pane-progress {
+  position: relative;
   margin: 0 0 20px 0;
   padding: 10px;
   border: 1px solid #a6a6a6;
-  position: relative;
 }
 
 .field-name-field-p2p-campaign-images {
@@ -202,8 +202,8 @@ h3.p2p-comment-name {
   width: 50px;
   height: 50px;
   color: #859596;
-  font-size: 23px;
   text-align: right;
+  font-size: 23px;
 }
 
 .panel-pane.pane-personal-campaign-goal {
@@ -214,11 +214,11 @@ h3.p2p-comment-name {
 
 ul.bjqs {
   position: relative;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  overflow: hidden;
   display: none;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 li.bjqs-slide {
@@ -227,10 +227,10 @@ li.bjqs-slide {
 }
 
 ul.bjqs-controls {
-  list-style: none;
+  z-index: 9999;
   margin: 0;
   padding: 0;
-  z-index: 9999;
+  list-style: none;
 }
 
 ul.bjqs-controls.v-centered li a {
@@ -246,10 +246,10 @@ ul.bjqs-controls.v-centered li.bjqs-prev a {
 }
 
 ol.bjqs-markers {
-  list-style: none;
-  padding: 0;
   margin: 0;
+  padding: 0;
   width: 100%;
+  list-style: none;
 }
 
 ol.bjqs-markers.h-centered {
@@ -265,12 +265,12 @@ ol.bjqs-markers li a {
 }
 
 p.bjqs-caption {
-  display: block;
-  width: 96%;
-  margin: 0;
-  padding: 2%;
   position: absolute;
   bottom: 0;
+  display: block;
+  margin: 0;
+  padding: 2%;
+  width: 96%;
 }
 
 .field.field-name-body {

@@ -40,10 +40,10 @@
       <div class="inside">
 
         <?php if ($content['middle_top_left'] || $content['middle_top_right']): ?>
-
-            <div class="panel-panel panel-middle-top-left"><?php print $content['middle_top_left']; ?></div>
-            <div class="panel-panel panel-middle-top-right"><?php print $content['middle_top_right']; ?></div>
-
+          <div class="panel-panel panel-middle-top-wrapper">
+            <div class="panel-middle-top-left"><?php print $content['middle_top_left']; ?></div>
+            <div class="panel-middle-top-right"><?php print $content['middle_top_right']; ?></div>
+          </div>
         <?php endif; ?>
 
         <?php if ($content['middle_left']): ?>
