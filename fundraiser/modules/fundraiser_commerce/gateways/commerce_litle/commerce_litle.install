@@ -61,8 +61,8 @@ function commerce_litle_schema() {
         'description' => 'Commerce order id',
       ),
       'litle_txn_id' => array(
-        'type' => 'int',
-        'unsigned' => TRUE,
+        'type' => 'text',
+        'size' => 'big',
         'not null' => FALSE,
       ),
       'response_time' => array(
@@ -90,7 +90,7 @@ function commerce_litle_schema() {
       ),
       'message' => array(
         'type' => 'varchar',
-        'length' => '255',
+        'length' => '512',
         'not null' => FALSE,
         'description' => 'Approve, decline status',
       ),
@@ -108,4 +108,22 @@ function commerce_litle_schema() {
 
 function commerce_litle_update_7001() {
   drupal_install_schema('commerce_litle');
+}
+/*
+ * alter db tables
+ */
+function commerce_litle_update_7002() {
+  // Rename the timestamp column to changed.
+  db_change_field('commerce_litle_fraud', 'litle_txn_id', 'litle_txn_id', array(
+    'type' => 'text',
+    'not null' => FALSE,
+    'size' => 'big',
+  ));
+  db_change_field('commerce_litle_fraud', 'message', 'message', array(
+    'type' => 'varchar',
+    'length' => '512',
+    'not null' => FALSE,
+    'description' => 'Approve, decline status',
+    )
+  );
 }
