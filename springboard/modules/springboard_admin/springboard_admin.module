@@ -273,8 +273,11 @@ function springboard_admin_init() {
       if (preg_match('|^/admin/reports/salesforce$|', $path)) {
         $goto_path = 'springboard/reports/integration-reports';
       }
+      elseif (preg_match('|^/admin/reports/salesforce/integration-reports((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m2)) {
+        $goto_path = 'springboard/reports/integration-reports' . $m2[1];
+      }
       else {
-        $goto_path = 'springboard/reports/integration-reports' . $m1[1];
+        $goto_path = 'springboard/reports' . $m1[1];
       }
     }
     
