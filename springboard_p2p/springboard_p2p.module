@@ -1597,6 +1597,32 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
       }
     }
   }
+
+  // Only work with webforms.
+  if (strstr($form_id, 'webform_client_form') === FALSE) {
+    return;
+  }
+
+  if (fundraiser_is_donation_type($form['#node']->type)) {
+
+    // Order payment fields using fundraiser_webform_fundraiser_get_form_field.
+    $payment_method = fundraiser_webform_fundraiser_get_form_field($form, 'payment_method');
+    $payment_fields = fundraiser_webform_fundraiser_get_form_field($form, 'payment_fields');
+    $recurs_monthly = fundraiser_webform_fundraiser_get_form_field($form, 'recurs_monthly');
+
+    // Alters.
+    $payment_fields['credit']['card_cvv']['#title'] = t('CVV Number');
+
+    $payment_method['#weight'] = 10;
+    $payment_fields['#weight'] = 50;
+    $recurs_monthly['#weight'] = 100;
+
+  }
+
+  // Update the altered fields from above.
+  $form = fundraiser_webform_fundraiser_update_form_field($form, 'payment_fields', $payment_fields);
+  $form = fundraiser_webform_fundraiser_update_form_field($form, 'payment_method', $payment_method);
+  $form = fundraiser_webform_fundraiser_update_form_field($form, 'recurs_monthly', $recurs_monthly);
 }
 
 /**
@@ -1891,7 +1917,7 @@ function springboard_p2p_page_alter(&$page, $form) {
       'p2p_campaign',
     );
 
-    // Global p2p css file, global nodes and regpath.
+    // Global p2p css file - nodes, p2p reg, p2p donation.
     if ((!empty($node) && in_array($node->type, $node_types)) || (isset($p2p_path)) || (isset($p2p_donation_path))) {
 
       $p2p_css = array(
@@ -1934,6 +1960,21 @@ function springboard_p2p_page_alter(&$page, $form) {
       );
       drupal_render($p2p_account_css);
     }
+
+  }
+
+  if (isset($p2p_donation_path)) {
+    $p2p_donation = array(
+      '#attached' => array(
+        'css' => array(
+          $mod_path . '/css/p2p-donation.css' => array(
+            'group' => CSS_THEME,
+            'weight' => 999,
+          ),
+        ),
+      ),
+    );
+    drupal_render($p2p_donation);
   }
 
 }

@@ -2,6 +2,10 @@
 
 /* Some basic deafults for p2p pages */
 
+body {
+  font-family: "Open Sans", arial, sans-serif;
+}
+
 html body {
   color: #5b5b5b;
 }
@@ -369,7 +373,6 @@ a.get-started-link:hover {
 }
 
 .pane-messages ul {
-  /*margin: 4px 16px;*/
   position: relative;
 }
 
