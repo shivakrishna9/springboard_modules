@@ -610,6 +610,29 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $display->content['new-8c5c3580-a2e6-475f-92ce-03ecdb6df16a'] = $pane;
     $display->panels['middle_top_right'][0] = 'new-8c5c3580-a2e6-475f-92ce-03ecdb6df16a';
     $pane = new stdClass();
+    $pane->pid = 'new-55cccd38-79cf-4dff-99c5-e7777784c29d';
+    $pane->panel = 'top';
+    $pane->type = 'top_links';
+    $pane->subtype = 'top_links';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'text' => '',
+      'override_title' => 1,
+      'override_title_text' => '',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 0;
+    $pane->locks = array();
+    $pane->uuid = '55cccd38-79cf-4dff-99c5-e7777784c29d';
+    $display->content['new-55cccd38-79cf-4dff-99c5-e7777784c29d'] = $pane;
+    $display->panels['top'][0] = 'new-55cccd38-79cf-4dff-99c5-e7777784c29d';
+    $pane = new stdClass();
     $pane->pid = 'new-c4839f2b-7028-4f6a-b12d-d21c3004d8f1';
     $pane->panel = 'top';
     $pane->type = 'campaign_header';
@@ -627,11 +650,11 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     );
     $pane->css = array();
     $pane->extras = array();
-    $pane->position = 0;
+    $pane->position = 1;
     $pane->locks = array();
     $pane->uuid = 'c4839f2b-7028-4f6a-b12d-d21c3004d8f1';
     $display->content['new-c4839f2b-7028-4f6a-b12d-d21c3004d8f1'] = $pane;
-    $display->panels['top'][0] = 'new-c4839f2b-7028-4f6a-b12d-d21c3004d8f1';
+    $display->panels['top'][1] = 'new-c4839f2b-7028-4f6a-b12d-d21c3004d8f1';
     $pane = new stdClass();
     $pane->pid = 'new-4a068a70-4475-49cf-8535-196ca8fd9f22';
     $pane->panel = 'top';
@@ -657,11 +680,11 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
       'css_class' => 'pane-node-title',
     );
     $pane->extras = array();
-    $pane->position = 1;
+    $pane->position = 2;
     $pane->locks = array();
     $pane->uuid = '4a068a70-4475-49cf-8535-196ca8fd9f22';
     $display->content['new-4a068a70-4475-49cf-8535-196ca8fd9f22'] = $pane;
-    $display->panels['top'][1] = 'new-4a068a70-4475-49cf-8535-196ca8fd9f22';
+    $display->panels['top'][2] = 'new-4a068a70-4475-49cf-8535-196ca8fd9f22';
   $display->hide_title = PANELS_TITLE_FIXED;
   $display->title_pane = 'new-0cd4f51e-4ba7-474d-a3ad-e1a931ded90f';
   $panelizer->display = $display;

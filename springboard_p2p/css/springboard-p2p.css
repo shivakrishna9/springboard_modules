@@ -296,6 +296,14 @@ a.get-started-link {
   cursor: pointer;
 }
 
+a.get-started-link.account-link {
+  margin: 0 0 10px 0;
+  padding: 2px 0;
+  width: 332px;
+  float: right;
+  font-size: 15px;
+}
+
 a.get-started-link:hover {
   outline: none;
   background: #2980b9;
@@ -419,3 +427,13 @@ a.get-started-link:hover {
   }
 
 }
+
+@media (max-width: 480px) {
+
+  a.get-started-link.account-link {
+    width: 100%;
+  }
+
+}
+
+
