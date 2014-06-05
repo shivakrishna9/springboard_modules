@@ -173,6 +173,10 @@ function springboard_stats_update_all_fields($node) {
     'pending_future_payment' => 'pending',
     'failed' => 'failures',
   );
+  foreach ($status as $stat_name) {  // default to zeroes
+    $node->{"sbstats_count_$stat_name"}[LANGUAGE_NONE][0]['value'] = 0;
+    $node->{"sbstats_total_$stat_name"}[LANGUAGE_NONE][0]['value'] = 0;
+  }
   while ($r = $q->fetchAssoc()) {
     $node->{'sbstats_count_' . $status[$r['status']]}[LANGUAGE_NONE][0]['value'] = $r['count'];
     $node->{'sbstats_total_' . $status[$r['status']]}[LANGUAGE_NONE][0]['value'] = $r['total'];
