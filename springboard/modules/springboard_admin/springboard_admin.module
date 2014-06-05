@@ -320,7 +320,7 @@ function springboard_admin_init() {
     /**
      * User paths.
      */
-    elseif (preg_match('|^/user?|', $path)) {
+    elseif (preg_match('|^/user?|', $path) && !preg_match('|^/user/logout$|', $path)) {
       if (preg_match('|^/user/([0-9]*)?|', $path, $matches)) {
         if (preg_match('|^/user/([0-9]*)((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
           $goto_path = 'springboard/user/' . $m1[1] . $m1[2];
@@ -556,7 +556,7 @@ function springboard_admin_url_inbound_alter(&$path, $original_path, $path_langu
   /**
    * User paths.
    */
-  elseif (preg_match('|^springboard/user?|', $path, $matches)) {
+  elseif (preg_match('|^springboard/user((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $matches)) {
     if (preg_match('|^springboard/user/([0-9]*)?|', $path, $m1)) {
       if (preg_match('|^springboard/user/([0-9]*)((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m2)) {
         $path = 'user/' . $m2[1] . $m2[2];
@@ -566,7 +566,7 @@ function springboard_admin_url_inbound_alter(&$path, $original_path, $path_langu
       }
     }
     else {
-      $path = 'user';
+      $path = 'user' . $matches[1];
     }
   }
   /**
