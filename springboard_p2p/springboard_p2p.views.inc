@@ -139,7 +139,148 @@ function springboard_p2p_views_data() {
         'handler' => 'springboard_p2p_handler_field_campaign_approval_operations',
       ),
     ),
+  );
 
+  $data['springboard_p2p_personal_campaign_action'] = array(
+    'table' => array(
+      'group' => t('P2P action'),
+      'base' => array(
+        'field' => 'personal_campaign_nid',
+        'title' => t('P2P personal campaign node'),
+        'help' => t('Personal campaign node.'),
+        'weight' => -10,
+      ),
+      'join' => array(
+        'node' => array(
+          'left_field' => 'nid',
+          'field' => 'personal_campaign_nid',
+        ),
+        'users' => array(
+          'left_field' => 'uid',
+          'field' => 'personal_campaign_uid',
+        ),
+      ),
+    ),
+    'category_nid' => array(
+      'title' => t('P2P Category'),
+      'help' => t('The P2P category.'),
+      'relationship' => array(
+        'base' => 'node',
+        'base field' => 'nid',
+        'handler' => 'views_handler_relationship',
+        'label' => t('P2P Category'),
+        'title' => t('P2P Category'),
+        'help' => t('The P2P Category.'),
+      ),6
+    ),
+    'campaign_nid' => array(
+      'title' => t('P2P campaign'),
+      'help' => t('The P2P campaign.'),
+      'relationship' => array(
+        'base' => 'node',
+        'base field' => 'nid',
+        'handler' => 'views_handler_relationship',
+        'label' => t('P2P campaign'),
+        'title' => t('P2P campaign'),
+        'help' => t('The P2P campaign.'),
+      ),
+    ),
+    'personal_campaign_nid' => array(
+      'title' => t('P2P personal campaign'),
+      'help' => t('The P2P personal campaign.'),
+      'relationship' => array(
+        'base' => 'node',
+        'base field' => 'nid',
+        'handler' => 'views_handler_relationship',
+        'label' => t('P2P personal campaign'),
+        'title' => t('P2P personal campaign'),
+        'help' => t('The P2P personal campaign.'),
+      ),
+    ),
+    'personal_campaign_uid' => array(
+      'title' => t('Personal campaign user'),
+      'help' => t('The user who owns this personal campaign.'),
+      'relationship' => array(
+        'base' => 'users',
+        'base field' => 'uid',
+        'handler' => 'views_handler_relationship',
+        'label' => t('User requesting approval'),
+        'title' => t('User requesting approval.'),
+        'help' => t('User who owns this personal campaign.'),
+      ),
+    ),
+    'form_nid' => array(
+      'title' => t('P2P campaign form'),
+      'help' => t('The P2P campaign form.'),
+      'relationship' => array(
+        'base' => 'node',
+        'base field' => 'nid',
+        'handler' => 'views_handler_relationship',
+        'label' => t('Campaign form'),
+        'title' => t('Campaign form'),
+        'help' => t('The P2P personal campaign.'),
+      ),
+    ),
+    'action_type' => array(
+      'title' => t('Action type'),
+      'help' => t('What type of action was taken by the user.'),
+      'field' => array(
+        'handler' => 'views_handler_field',
+        'click sortable' => TRUE,
+      ),
+      'filter' => array(
+        'handler' => 'views_handler_filter_string',
+      ),
+      'sort' => array(
+        'handler' => 'views_handler_sort',
+      ),
+      'argument' => array(
+        'handler' => 'views_handler_argument_string',
+      ),
+    ),
+    'uid' => array(
+      'title' => t('User'),
+      'help' => t('User who acted on the form.'),
+      'relationship' => array(
+        'base' => 'users',
+        'base field' => 'uid',
+        'handler' => 'views_handler_relationship',
+        'label' => t('User'),
+        'title' => t('User.'),
+        'help' => t('User who acted on the form.'),
+      ),
+    ),
+    'amount' => array(
+      'title' => t('Action amount'),
+      'help' => t('Action amount.'),
+      'field' => array(
+        'handler' => 'springboard_p2p_handler_p2p_action_amount',
+        'click sortable' => TRUE,
+      ),
+      'filter' => array(
+        'handler' => 'views_handler_filter_string',
+      ),
+      'sort' => array(
+        'handler' => 'views_handler_sort',
+      ),
+      'argument' => array(
+        'handler' => 'views_handler_argument_string',
+      ),
+    ),
+    'created' => array(
+      'title' => t('Date'),
+      'help' => t('The date.'),
+      'field' => array(
+        'handler' => 'views_handler_field_date',
+        'click sortable' => TRUE,
+      ),
+      'sort' => array(
+        'handler' => 'views_handler_sort_date',
+      ),
+      'filter' => array(
+        'handler' => 'views_handler_filter_date',
+      ),
+    ),
   );
 
   return $data;

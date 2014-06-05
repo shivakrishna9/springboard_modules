@@ -6,6 +6,29 @@
 
 include_once 'springboard_p2p_personal_campaign.features.inc';
 
+/**
+ * Implements hook_menu().
+ */
+function springboard_p2p_personal_campaign_menu() {
+  $items['user/%user/personal-campaigns/campaign-donors/%node'] = array(
+    'title' => 'Campaign Donors',
+    'page callback' => 'springboard_p2p_personal_campaign_donors_dashboard',
+    'page arguments' => array(1, 4),
+    'access callback' => 'springboard_p2p_personal_dashboard_donors_view_access',
+    'access arguments' => array(1, 4),
+    'type' => MENU_CALLBACK,
+    'file' => 'springboard_p2p_personal_campaign.pages.inc',
+    'file path' => drupal_get_path('module', 'springboard_p2p_personal_campaign') . '/includes',
+  );
+  return $items;
+}
+
+/**
+ * Access handler for personal campaign donor dashboard.
+ */
+function springboard_p2p_personal_dashboard_donors_view_access($account, $node) {
+  return springboard_p2p_complete_profile_form_access($account) && node_access('update', $node, $account);
+}
 
 /**
  * Specified ctools plugins overrides.

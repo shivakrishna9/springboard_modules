@@ -295,6 +295,7 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['title'] = 'Personal campaigns by campaigner';
   $handler->display->display_options['hide_admin_links'] = TRUE;
   $handler->display->display_options['use_more_always'] = FALSE;
+  $handler->display->display_options['group_by'] = TRUE;
   $handler->display->display_options['access']['type'] = 'perm';
   $handler->display->display_options['cache']['type'] = 'none';
   $handler->display->display_options['query']['type'] = 'views_query';
@@ -304,6 +305,12 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['style_plugin'] = 'table';
   $handler->display->display_options['style_options']['columns'] = array(
     'title' => 'title',
+    'field_p2p_personal_submit_goal' => 'field_p2p_personal_submit_goal',
+    'field_p2p_personal_campaign_goal' => 'field_p2p_personal_campaign_goal',
+    'field_p2p_campaign_progress' => 'field_p2p_campaign_progress',
+    'field_p2p_fundraising_deadline' => 'field_p2p_fundraising_deadline',
+    'edit_node' => 'nid',
+    'nid' => 'nid',
   );
   $handler->display->display_options['style_options']['default'] = '-1';
   $handler->display->display_options['style_options']['info'] = array(
@@ -314,6 +321,46 @@ function springboard_p2p_personal_campaign_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
+    'field_p2p_personal_submit_goal' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'field_p2p_personal_campaign_goal' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'field_p2p_campaign_progress' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'field_p2p_fundraising_deadline' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'edit_node' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'nid' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => ' | ',
+      'empty_column' => 0,
+    ),
   );
   /* No results behavior: Global: Text area */
   $handler->display->display_options['empty']['area']['id'] = 'area';
@@ -322,6 +369,10 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['empty']['area']['empty'] = TRUE;
   $handler->display->display_options['empty']['area']['content'] = 'No personal campaigns found.';
   $handler->display->display_options['empty']['area']['format'] = 'filtered_html';
+  /* Relationship: P2P action: Campaign form */
+  $handler->display->display_options['relationships']['form_nid']['id'] = 'form_nid';
+  $handler->display->display_options['relationships']['form_nid']['table'] = 'springboard_p2p_personal_campaign_action';
+  $handler->display->display_options['relationships']['form_nid']['field'] = 'form_nid';
   /* Field: Content: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
   $handler->display->display_options['fields']['title']['table'] = 'node';
@@ -349,7 +400,8 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['fields']['field_p2p_campaign_progress']['table'] = 'field_data_field_p2p_campaign_progress';
   $handler->display->display_options['fields']['field_p2p_campaign_progress']['field'] = 'field_p2p_campaign_progress';
   $handler->display->display_options['fields']['field_p2p_campaign_progress']['click_sort_column'] = 'amount';
-  $handler->display->display_options['fields']['field_p2p_campaign_progress']['type'] = 'springboard_p2p_fields_personal_campaign_progress_default';
+  $handler->display->display_options['fields']['field_p2p_campaign_progress']['type'] = 'springboard_p2p_fields_personal_campaign_progress_auto';
+  $handler->display->display_options['fields']['field_p2p_campaign_progress']['group_column'] = 'amount';
   /* Field: Content: Fundraising Deadline */
   $handler->display->display_options['fields']['field_p2p_fundraising_deadline']['id'] = 'field_p2p_fundraising_deadline';
   $handler->display->display_options['fields']['field_p2p_fundraising_deadline']['table'] = 'field_data_field_p2p_fundraising_deadline';
@@ -368,14 +420,15 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['fields']['edit_node']['field'] = 'edit_node';
   $handler->display->display_options['fields']['edit_node']['label'] = '';
   $handler->display->display_options['fields']['edit_node']['element_label_colon'] = FALSE;
-  /* Field: Content: Delete link */
-  $handler->display->display_options['fields']['delete_node']['id'] = 'delete_node';
-  $handler->display->display_options['fields']['delete_node']['table'] = 'views_entity_node';
-  $handler->display->display_options['fields']['delete_node']['field'] = 'delete_node';
-  $handler->display->display_options['fields']['delete_node']['label'] = '';
-  $handler->display->display_options['fields']['delete_node']['alter']['make_link'] = TRUE;
-  $handler->display->display_options['fields']['delete_node']['alter']['absolute'] = TRUE;
-  $handler->display->display_options['fields']['delete_node']['element_label_colon'] = FALSE;
+  /* Field: Content: Nid */
+  $handler->display->display_options['fields']['nid']['id'] = 'nid';
+  $handler->display->display_options['fields']['nid']['table'] = 'node';
+  $handler->display->display_options['fields']['nid']['field'] = 'nid';
+  $handler->display->display_options['fields']['nid']['relationship'] = 'form_nid';
+  $handler->display->display_options['fields']['nid']['label'] = 'Actions';
+  $handler->display->display_options['fields']['nid']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['nid']['alter']['text'] = '<a href="/user/!1/personal-campaigns/campaign-donors/[nid]">Donors</a>';
+  $handler->display->display_options['fields']['nid']['alter']['alt'] = 'Donors';
   /* Sort criterion: Content: Post date */
   $handler->display->display_options['sorts']['created']['id'] = 'created';
   $handler->display->display_options['sorts']['created']['table'] = 'node';
@@ -692,6 +745,135 @@ function springboard_p2p_personal_campaign_views_default_views() {
     'page' => 0,
   );
   $export['p2p_top_personal_campaigns_by_category'] = $view;
+
+  $view = new view();
+  $view->name = 'personal_campaign_donor_dashboard';
+  $view->description = '';
+  $view->tag = 'default';
+  $view->base_table = 'node';
+  $view->human_name = 'Personal Campaign Donor Dashboard';
+  $view->core = 7;
+  $view->api_version = '3.0';
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+
+  /* Display: Master */
+  $handler = $view->new_display('default', 'Master', 'default');
+  $handler->display->display_options['use_more_always'] = FALSE;
+  $handler->display->display_options['access']['type'] = 'perm';
+  $handler->display->display_options['cache']['type'] = 'none';
+  $handler->display->display_options['query']['type'] = 'views_query';
+  $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['pager']['type'] = 'full';
+  $handler->display->display_options['style_plugin'] = 'table';
+  $handler->display->display_options['style_options']['columns'] = array(
+    'sbp_first_name' => 'sbp_last_name',
+    'sbp_last_name' => 'sbp_last_name',
+    'amount' => 'amount',
+    'created' => 'created',
+    'mail' => 'mail',
+  );
+  $handler->display->display_options['style_options']['default'] = '-1';
+  $handler->display->display_options['style_options']['info'] = array(
+    'sbp_first_name' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'sbp_last_name' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => ' ',
+      'empty_column' => 0,
+    ),
+    'amount' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'created' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'mail' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+  );
+  /* No results behavior: Global: Text area */
+  $handler->display->display_options['empty']['area']['id'] = 'area';
+  $handler->display->display_options['empty']['area']['table'] = 'views';
+  $handler->display->display_options['empty']['area']['field'] = 'area';
+  $handler->display->display_options['empty']['area']['label'] = 'No results found';
+  $handler->display->display_options['empty']['area']['empty'] = TRUE;
+  $handler->display->display_options['empty']['area']['content'] = 'We got nothing here.';
+  $handler->display->display_options['empty']['area']['format'] = 'filtered_html';
+  /* Relationship: P2P action: User. */
+  $handler->display->display_options['relationships']['uid']['id'] = 'uid';
+  $handler->display->display_options['relationships']['uid']['table'] = 'springboard_p2p_personal_campaign_action';
+  $handler->display->display_options['relationships']['uid']['field'] = 'uid';
+  $handler->display->display_options['relationships']['uid']['label'] = 'Personal Campaign action user';
+  /* Relationship: P2P action: Campaign form */
+  $handler->display->display_options['relationships']['form_nid']['id'] = 'form_nid';
+  $handler->display->display_options['relationships']['form_nid']['table'] = 'springboard_p2p_personal_campaign_action';
+  $handler->display->display_options['relationships']['form_nid']['field'] = 'form_nid';
+  /* Field: User: First name */
+  $handler->display->display_options['fields']['sbp_first_name']['id'] = 'sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['table'] = 'field_data_sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['field'] = 'sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['relationship'] = 'uid';
+  /* Field: User: Last name */
+  $handler->display->display_options['fields']['sbp_last_name']['id'] = 'sbp_last_name';
+  $handler->display->display_options['fields']['sbp_last_name']['table'] = 'field_data_sbp_last_name';
+  $handler->display->display_options['fields']['sbp_last_name']['field'] = 'sbp_last_name';
+  $handler->display->display_options['fields']['sbp_last_name']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_last_name']['label'] = 'Name';
+  /* Field: P2P action: Action amount */
+  $handler->display->display_options['fields']['amount']['id'] = 'amount';
+  $handler->display->display_options['fields']['amount']['table'] = 'springboard_p2p_personal_campaign_action';
+  $handler->display->display_options['fields']['amount']['field'] = 'amount';
+  /* Field: P2P action: Date */
+  $handler->display->display_options['fields']['created']['id'] = 'created';
+  $handler->display->display_options['fields']['created']['table'] = 'springboard_p2p_personal_campaign_action';
+  $handler->display->display_options['fields']['created']['field'] = 'created';
+  $handler->display->display_options['fields']['created']['date_format'] = 'custom';
+  $handler->display->display_options['fields']['created']['custom_date_format'] = 'm/d/Y';
+  /* Field: User: E-mail */
+  $handler->display->display_options['fields']['mail']['id'] = 'mail';
+  $handler->display->display_options['fields']['mail']['table'] = 'users';
+  $handler->display->display_options['fields']['mail']['field'] = 'mail';
+  $handler->display->display_options['fields']['mail']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['mail']['alter']['text'] = '<a href="mailto:[mail]">email</a>';
+  /* Sort criterion: Content: Post date */
+  $handler->display->display_options['sorts']['created']['id'] = 'created';
+  $handler->display->display_options['sorts']['created']['table'] = 'node';
+  $handler->display->display_options['sorts']['created']['field'] = 'created';
+  $handler->display->display_options['sorts']['created']['order'] = 'DESC';
+  /* Contextual filter: Content: Nid */
+  $handler->display->display_options['arguments']['nid']['id'] = 'nid';
+  $handler->display->display_options['arguments']['nid']['table'] = 'node';
+  $handler->display->display_options['arguments']['nid']['field'] = 'nid';
+  $handler->display->display_options['arguments']['nid']['relationship'] = 'form_nid';
+  $handler->display->display_options['arguments']['nid']['default_action'] = 'empty';
+  $handler->display->display_options['arguments']['nid']['default_argument_type'] = 'fixed';
+  $handler->display->display_options['arguments']['nid']['summary']['number_of_records'] = '0';
+  $handler->display->display_options['arguments']['nid']['summary']['format'] = 'default_summary';
+  $handler->display->display_options['arguments']['nid']['summary_options']['items_per_page'] = '25';
+
+  /* Display: Page */
+  $handler = $view->new_display('page', 'Page', 'page_1');
+  $handler->display->display_options['path'] = 'springboard_p2p_personal_campaign_donor_dashboard';
+  $export['personal_campaign_donor_dashboard'] = $view;
 
   return $export;
 }
