@@ -114,8 +114,8 @@ h3.p2p-comment-name {
   width: 50px;
   height: 50px;
   color: #859596;
-  font-size: 19px;
   text-align: right;
+  font-size: 19px;
 }
 
 .pane-progress .panel-pane {
@@ -123,10 +123,10 @@ h3.p2p-comment-name {
 }
 
 .panel-pane-wrapper.pane-progress {
+  position: relative;
   margin: 0 0 20px 0;
   padding: 10px;
   border: 1px solid #a6a6a6;
-  position: relative;
 }
 
 .field-name-field-p2p-campaign-images {
@@ -202,18 +202,118 @@ h3.p2p-comment-name {
   width: 50px;
   height: 50px;
   color: #859596;
-  font-size: 23px;
   text-align: right;
+  font-size: 23px;
 }
 
 .panel-pane.pane-personal-campaign-goal {
   margin: 0 0 10px 0;
 }
 
-/* org intro */
+/* Basic jQuery Slider essential styles */
 
-.pane-org-intro {
+ul.bjqs {
+  position: relative;
+  display: none;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
 
+li.bjqs-slide {
+  position: absolute;
+  display: none;
+}
+
+ul.bjqs-controls {
+  z-index: 9999;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+ul.bjqs-controls.v-centered li a {
+  position: absolute;
+}
+
+ul.bjqs-controls.v-centered li.bjqs-next a {
+  right: 6px;
+}
+
+ul.bjqs-controls.v-centered li a:hover {
+  text-decoration: none;
+}
+
+ul.bjqs-controls.v-centered li.bjqs-next a:after {
+  position: relative;
+  top: 1px;
+  padding: 0px 0 0 10px;
+  color: #fffe00;
+  content: "\f054";
+  text-decoration: inherit;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 34px;
+  font-family: FontAwesome;
+}
+
+ul.bjqs-controls.v-centered li.bjqs-next a:hover:after,
+ul.bjqs-controls.v-centered li.bjqs-prev a:hover:after {
+  color: #ccc;
+}
+
+ul.bjqs-controls.v-centered li.bjqs-prev a {
+  left: 0;
+}
+
+ul.bjqs-controls.v-centered li.bjqs-prev a:after {
+  position: relative;
+  top: 1px;
+  padding: 0px 0 0 10px;
+  color: #fffe00;
+  content: "\f053";
+  text-decoration: inherit;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 34px;
+  font-family: FontAwesome;
+}
+
+ol.bjqs-markers {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  list-style: none;
+}
+
+ol.bjqs-markers.h-centered {
+  text-align: center;
+}
+
+ol.bjqs-markers li {
+  display: inline;
+}
+
+ol.bjqs-markers li a {
+  display: inline-block;
+}
+
+p.bjqs-caption {
+  position: absolute;
+  bottom: 0;
+  display: block;
+  margin: 0;
+  padding: 2px 0 2px 9px;
+  width: 100%;
+  background: #c6d2d3;
+  color: #5b5b5b;
+  font-weight: bold;
+  font-size: 15px;
+}
+
+.field.field-name-body {
+  padding: 0 5% 0 0;
 }
 
 /******************  Media queries, these should go last */

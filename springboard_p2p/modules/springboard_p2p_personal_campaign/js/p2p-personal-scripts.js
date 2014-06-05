@@ -22,6 +22,17 @@
         $(this).html( text.replace(':', '') );
       });
 
+      // personal campaign slideshow.
+      $('#slide-show').bjqs({
+        height : 400,
+        animspeed : 511000,
+        responsive  : true,
+        nexttext : '',
+        prevtext : '',
+        usecaptions : true,
+        showmarkers : false
+      });
+
       // end jquery.
     }};
 })

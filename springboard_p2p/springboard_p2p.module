@@ -148,7 +148,16 @@ function springboard_p2p_menu() {
 /**
  * Implements hook_theme().
  */
-function springboard_p2p_theme() {
+function springboard_p2p_theme($existing, $theme) {
+
+  // Look for theme templates in springboard_p2p.
+  $path  = drupal_get_path('module', 'springboard_p2p');
+  $templates = drupal_find_theme_functions($existing, array($theme));
+  $templates += drupal_find_theme_templates($existing, '.tpl.php', $path);
+  return $templates;
+
+  // @TODO - why is there an "unreachable statement" message on the code below. it goes away if the code above is not there.
+
   return array(
     'springboard_p2p_admin_settings' => array(
       'render element' => 'form',
@@ -156,6 +165,7 @@ function springboard_p2p_theme() {
       'path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
     ),
   );
+
 }
 
 /**
@@ -1023,12 +1033,13 @@ function springboard_p2p_fboauth_user_presave(&$edit, $fbuser) {
  * @see _theme_process_registry()
  */
 function springboard_p2p_theme_registry_alter(&$theme_registry) {
-  //dsm($theme_registry);
 
   // Override fboauth's theme function, create a custom function for overriding below.
   if (!empty($theme_registry['fboauth_action__connect']['function'])) {
     $theme_registry['fboauth_action__connect']['function'] = '_springboard_p2p_fboauth_image';
   }
+
+
 
 }
 
@@ -1603,13 +1614,16 @@ function springboard_p2p_form_springboard_p2p_user_register_form_alter(&$form, &
  * Implements hook_form_FORM_ID_alter().
  *
  */
-function springboard_p2p_form_springboard_p2p_request_password_reset_form_alter(&$form, &$form_state) {
+function springboard_p2p_form_springboard_p2p_request_password_reset_form_alter(&$form, &$form_state, $form_id) {
 
   // Alter submit button text.
+  $form['name']['#prefix'] = '<div class="form-wrapper">';
+  $form['name']['#suffix'] = '</div>';
+  $form['actions']['#prefix'] = '<div class="form-wrapper">';
+  $form['actions']['#suffix'] = '</div>';
   $form['actions']['submit']['#value'] = t('Send new password request');
+
 }
-
-
 
 /**
  * Validate function.  Changes the market source campaign id when in p2p mode.

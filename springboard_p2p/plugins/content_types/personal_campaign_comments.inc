@@ -58,7 +58,7 @@ function springboard_p2p_personal_campaign_comments_render($subtype, $conf, $pan
 
   foreach ($comments as $comment) {
 
-    // Define ospan/ even for use in the definition list.
+    // Define odd / even for use in the definition list.
     $zebra_class = ($zebra % 2) ? 'odd' : 'even';
 
     $output[] = '<li class="personal-campaign-comment-list ' . $zebra_class . '">';

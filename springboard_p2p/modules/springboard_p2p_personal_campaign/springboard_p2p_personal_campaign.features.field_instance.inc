@@ -122,14 +122,14 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
     'label' => 'Upload a Campaign Image',
     'required' => 0,
     'settings' => array(
-      'alt_field' => 0,
+      'alt_field' => 1,
       'default_image' => 0,
       'file_directory' => '',
       'file_extensions' => 'png gif jpg jpeg',
       'max_filesize' => '1500 KB',
       'max_resolution' => '',
       'min_resolution' => '340x226',
-      'title_field' => 0,
+      'title_field' => 1,
       'user_register_form' => FALSE,
     ),
     'widget' => array(
