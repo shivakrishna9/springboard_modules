@@ -26,6 +26,7 @@
 #zone-select-wrapper,
 .expiration-date-wrapper,
 .fundraiser-payment-fields.form-wrapper select {
+  position: relative;
   display: inline-block;
   float: none;
   clear: both;
@@ -170,6 +171,7 @@ legend {
 }
 
 .form-actions {
+  position: relative;
   margin: 10px 0;
   padding: 0;
   border-top: none;
@@ -177,7 +179,24 @@ legend {
 }
 
 input#edit-submit {
+  padding: 20px;
   width: 100%;
+  font-size: 28px;
+}
+
+#edit-actions:after {
+  position: absolute;
+  top: 28px;
+  right: 10px;
+  padding: 0px 0 0 10px;
+  color: #fffe00;
+  content: "\f061";
+  text-decoration: inherit;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 33px;
+  font-family: FontAwesome;
+  pointer-events: none;
 }
 
 .fundraiser_submit_message {
@@ -208,6 +227,7 @@ input#edit-submit {
   position: relative;
   top: 3px;
   left: 0;
+  margin-right: 11px;
   color: #7eae48;
   content: "\f023";
   text-decoration: inherit;
@@ -215,7 +235,19 @@ input#edit-submit {
   font-style: normal;
   font-size: 21px;
   font-family: FontAwesome;
-  margin-right: 11px;
+}
+
+.p2p-donation-form .ajax-progress .throbber {
+  position: absolute;
+  top: 32px;
+  right: 10%;
+  z-index: 300;
+  display: inline-block;
+  float: none;
+  margin: 2px;
+  width: 37px;
+  height: 37px;
+  background: transparent url('../images/spinner.gif') no-repeat;
 }
 
 /* media queries */
