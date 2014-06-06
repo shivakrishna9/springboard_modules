@@ -266,6 +266,16 @@ input#edit-submit {
   background: transparent url('../images/spinner.gif') no-repeat;
 }
 
+.pane-body p {
+  margin: 10px 2% 0 0;
+  font-size: 15px;
+  line-height: 1.4em;
+}
+
+.pane-sidebar h2 {
+  margin: 10px 0 0 0;
+}
+
 /* media queries */
 @media (max-width: 768px) {
 
