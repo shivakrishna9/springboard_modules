@@ -80,8 +80,8 @@ input[type='text']:focus, input[type='email']:focus {
 }
 
 .edit-submitted-payment-information-payment-method .control-group {
-  width: inherit;
   display: inherit;
+  width: inherit;
 }
 
 .control-group.success select,
@@ -149,11 +149,12 @@ input[type='text']:focus, input[type='email']:focus {
   background: url('../images/sprite_p2p.png') no-repeat -135px -146px;
 }
 
-h2,
-span.fieldset-legend {
+h2, span.fieldset-legend {
+  display: block;
+  padding: 0 0 12px 0;
   color: #888;
   font-weight: normal;
-  font-size: 35px;
+  font-size: 36px;
 }
 
 .webform-component-fieldset {
@@ -170,7 +171,7 @@ legend {
 
 /* media queries */
 @media (max-width: 768px) {
-  
+
   .fieldset-wrapper .control-group,
   #zone-select-wrapper,
   .expiration-date-wrapper,
