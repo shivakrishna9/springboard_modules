@@ -117,6 +117,13 @@ function springboard_p2p_personal_campaign_action_schema() {
         'description' => 'The {node}.nid of the webform user or fundraiser node.',
         'default' => 0,
       ),
+      'sid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The submission id of the action.',
+        'default' => 0,
+      ),
       'action_type' => array(
         'type' => 'varchar',
         'length' => 32,
@@ -196,4 +203,18 @@ function springboard_p2p_personal_campaign_action_schema() {
  */
 function springboard_p2p_update_7001() {
   db_create_table('springboard_p2p_personal_campaign_action', springboard_p2p_personal_campaign_action_schema());
+}
+
+/**
+ * Adds sid to the springboard_p2p_personal_campaign_action table.
+ */
+function springboard_p2p_update_7002() {
+  $field = array(
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+    'description' => 'The submission id of the action.',
+    'default' => 0,
+  );
+  db_add_field( 'springboard_p2p_personal_campaign_action', 'sid', $field);
 }

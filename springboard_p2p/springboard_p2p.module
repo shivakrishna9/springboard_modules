@@ -1801,6 +1801,7 @@ function springboard_p2p_submit_personal_campaign_action($action, $donation = NU
     // and should increment the amount progress.
     if (!is_null(($donation))) {
       $action['uid'] = $donation->uid;
+      $action['sid'] = $donation->sid;
       $amount = $donation->donation['amount'];
       if (!empty($donation->donation['quantity'])) {
         $amount = $amount * $donation->donation['quantity'];
