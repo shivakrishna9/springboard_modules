@@ -150,7 +150,9 @@ input[type='text']:focus, input[type='email']:focus {
   background: url('../images/sprite_p2p.png') no-repeat -137px -146px;
 }
 
-h2, span.fieldset-legend {
+h2,
+span.fieldset-legend {
+  position: relative;
   display: block;
   padding: 0 0 12px 0;
   color: #888;
@@ -158,8 +160,22 @@ h2, span.fieldset-legend {
   font-size: 36px;
 }
 
+span.fieldset-legend:after {
+  position: relative;
+  top: -4px;
+  right: -7px;
+  padding: 0px 0 0 10px;
+  color: #888;
+  content: "\f040";
+  text-decoration: inherit;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 22px;
+  font-family: FontAwesome;
+}
+
 .webform-component-fieldset {
-  margin-top: 18px;
+  margin-top: 12px;
 }
 
 legend {
