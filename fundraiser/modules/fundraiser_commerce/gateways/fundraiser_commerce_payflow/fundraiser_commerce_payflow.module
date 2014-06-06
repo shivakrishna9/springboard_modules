@@ -1,6 +1,6 @@
 <?php
 
-// Include the payment method functions
+// Include the commerce payment method functions file
 module_load_include('inc', 'fundraiser_commerce_payflow', 'includes/fundraiser_commerce_payflow.payflow_cc');
 
 /**
@@ -13,67 +13,69 @@ function fundraiser_commerce_payflow_fundraiser_gateway_info() {
   rules_invoke_all('commerce_payment_methods', $methods);
   $fundraiser_gateways = array();
 
+  // Loop through the configured payment rules and look for payflow rules
   foreach ($methods->payment_methods as $id => $info) {
     $this_gateway = array();
     $method_instance = commerce_payment_method_instance_load($id);
     list($method_id, $rule_name) = explode('|', $method_instance['instance_id']);
 
-    // Make sure this is a commerce payflow rule.
-    if (!empty($method_id) && !empty($rule_name) && $method_instance['module'] == 'commerce_payflow') {
-      $rule_config = rules_config_load($rule_name);
-      $this_gateway['id'] = $method_instance['instance_id'];
-      $this_gateway['module'] = 'fundraiser_commerce_payflow';
-      $this_gateway['module_name'] = t('Fundraiser Commerce Payflow');
-      $this_gateway['title'] = $rule_config->label;
-      $this_gateway['description'] = $method_instance['description'];
-      $this_gateway['payment_method'] = array('credit');
-      // For non-reference charges this is an offsite processor
-      // this has been left empty so we still go through the charge callback to support reference charges
-      $this_gateway['offsite_processing'] = array();
-      $this_gateway['allow_recurring'] = array('credit');
-      $this_gateway['offsite_recurring'] = array();
-      $this_gateway['allow_refund'] = array('credit');
+    $payflow_link_types = array('payflow_link', 'paypal_ppa');
+    // Add gateway information for a commerce payflow rule
+    if (!empty($method_id) && !empty($rule_name) && in_array($method_instance['method_id'], $payflow_link_types)) {
+      // Add the standard info for a payflow gateway
+      $this_gateway = _fundraiser_commerce_payflow_standard_gateway_settings($rule_name, $method_instance);
+
+      // Add the specific callbacks to support the payflow link processing
       $this_gateway['form callback'] = '_fundraiser_commerce_payflow_submit_form';
       $this_gateway['charge callback'] = '_fundraiser_commerce_payflow_charge';
       $this_gateway['redirect callback'] = '_fundraiser_commerce_payflow_redirect';
       $this_gateway['validate callback'] = '_fundraiser_commerce_payflow_validate';
-      $this_gateway['expire callback'] = '_fundraiser_commerce_payflow_expire';
-      $this_gateway['refund callback'] = '_fundraiser_commerce_payflow_refund';
-      $this_gateway['gateway_details'] = $method_instance;
 
       // Add this to the main gateway
       $fundraiser_gateways[$this_gateway['id']] = $this_gateway;
     }
+    // Add gateway information for a fundriaser commerce payflow rule
+    elseif (!empty($method_id) && !empty($rule_name) && $method_instance['method_id'] == 'fundraiser_commerce_payflow_cc') {
+      // Add the standard info for a payflow gateway
+      $this_gateway = _fundraiser_commerce_payflow_standard_gateway_settings($rule_name, $method_instance);
 
-    // Make sure this is a commerce payflow rule.
-    if (!empty($method_id) && !empty($rule_name) && $method_instance['module'] == 'fundraiser_commerce_payflow') {
-      $rule_config = rules_config_load($rule_name);
-      $this_gateway['id'] = $method_instance['instance_id'];
-      $this_gateway['module'] = 'fundraiser_commerce_payflow';
-      $this_gateway['module_name'] = t('Fundraiser Commerce Payflow');
-      $this_gateway['title'] = $rule_config->label;
-      $this_gateway['description'] = $method_instance['description'];
-      $this_gateway['payment_method'] = array('credit');
-      // For non-reference charges this is an offsite processor
-      // this has been left empty so we still go through the charge callback to support reference charges
-      $this_gateway['offsite_processing'] = array();
-      $this_gateway['allow_recurring'] = array('credit');
-      $this_gateway['offsite_recurring'] = array();
-      $this_gateway['allow_refund'] = array('credit');
+      // Add the specific callbacks to support the direct cc processing
       $this_gateway['form callback'] = '_fundraiser_commerce_payflow_cc_submit_form';
       $this_gateway['charge callback'] = '_fundraiser_commerce_payflow_cc_charge';
       $this_gateway['validate callback'] = '_fundraiser_commerce_payflow_cc_validate';
       $this_gateway['cleanup callback'] = '_fundraiser_commerce_payflow_cc_cleanup';
       $this_gateway['scrub callback'] = '_fundraiser_commerce_payflow_cc_scrub';
-      $this_gateway['expire callback'] = '_fundraiser_commerce_payflow_expire';
-      $this_gateway['refund callback'] = '_fundraiser_commerce_payflow_refund';
-      $this_gateway['gateway_details'] = $method_instance;
 
       // Add this to the main gateway
       $fundraiser_gateways[$this_gateway['id']] = $this_gateway;
     }
   }
+
   return $fundraiser_gateways;
+}
+
+/**
+ * Assembles the standard gateway config for the payflow gateway settings
+ */
+function _fundraiser_commerce_payflow_standard_gateway_settings($rule_name, $method_instance) {
+  $rule_config = rules_config_load($rule_name);
+  return array(
+    'id' => $method_instance['instance_id'],
+    'module' => 'fundraiser_commerce_payflow',
+    'module_name' => t('Fundraiser Commerce Payflow'),
+    'title' => $rule_config->label,
+    'description' => $method_instance['description'],
+    'payment_method' => array('credit'),
+    'allow_recurring' => array('credit'),
+    // Important note: While payflow_link is an offsite processor, reference charges are handled onsite
+    // We handle that switch in the charge callback
+    'offsite_processing' => array(),
+    'offsite_recurring' => array(),
+    'expire callback' => '_fundraiser_commerce_payflow_expire',
+    'refund callback' => '_fundraiser_commerce_payflow_refund',
+    'allow_refund' => array('credit'),
+    'gateway_details' => $method_instance,
+  );
 }
 
 /**
