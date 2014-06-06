@@ -1885,7 +1885,7 @@ function springboard_p2p_page_alter(&$page, $form) {
         if (!empty($campaign) && $campaign->type == 'p2p_campaign') {
 
           // Place the banner in the springboard_frontend theme header region.
-          $page['header']['springboard_p2p_banner'] = springbaord_p2p_format_campaign_form_header($campaign);
+        //  $page['page_top']['springboard_p2p_banner'] = springbaord_p2p_format_campaign_form_header($campaign);
         }
       }
     }

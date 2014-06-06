@@ -5,6 +5,421 @@
  */
 
 /**
+ * Implements hook_default_page_manager_handlers().
+ */
+function springboard_p2p_default_page_manager_handlers() {
+  $export = array();
+
+  $handler = new stdClass();
+  $handler->disabled = FALSE; /* Edit this to true to make a default handler disabled initially */
+  $handler->api_version = 1;
+  $handler->name = 'node_edit_panel_context';
+  $handler->task = 'node_edit';
+  $handler->subtask = '';
+  $handler->handler = 'panel_context';
+  $handler->weight = 0;
+  $handler->conf = array(
+    'title' => 'Personal campaign node edit / add',
+    'no_blocks' => 0,
+    'pipeline' => 'standard',
+    'body_classes_to_remove' => '',
+    'body_classes_to_add' => 'p2p-node-edit-add',
+    'css_id' => '',
+    'css' => '',
+    'contexts' => array(),
+    'relationships' => array(),
+    'access' => array(
+      'plugins' => array(
+        0 => array(
+          'name' => 'node_type',
+          'settings' => array(
+            'type' => array(
+              'p2p_personal_campaign' => 'p2p_personal_campaign',
+            ),
+          ),
+          'context' => 'argument_node_edit_1',
+          'not' => FALSE,
+        ),
+        1 => array(
+          'name' => 'role',
+          'settings' => array(
+            'rids' => array(
+              0 => 3,
+            ),
+          ),
+          'context' => 'logged-in-user',
+          'not' => TRUE,
+        ),
+      ),
+      'logic' => 'or',
+    ),
+  );
+  $display = new panels_display();
+  $display->layout = 'p2p_landing_twocol_bricks';
+  $display->layout_settings = array();
+  $display->panel_settings = array(
+    'style_settings' => array(
+      'default' => NULL,
+      'top' => NULL,
+      'middle_top_left' => NULL,
+      'middle_top_right' => NULL,
+      'middle_left' => NULL,
+      'middle_right' => NULL,
+      'bottom' => NULL,
+    ),
+  );
+  $display->cache = array();
+  $display->title = '';
+  $display->uuid = 'dbcca079-3645-42ad-9628-b95dbeec6f04';
+  $display->content = array();
+  $display->panels = array();
+    $pane = new stdClass();
+    $pane->pid = 'new-42ddcb49-5a06-4bbb-9cba-a2b5ad3bba73';
+    $pane->panel = 'middle_left';
+    $pane->type = 'node_form_title';
+    $pane->subtype = 'node_form_title';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'context' => 'argument_node_edit_1',
+      'override_title' => 0,
+      'override_title_text' => '',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 0;
+    $pane->locks = array();
+    $pane->uuid = '42ddcb49-5a06-4bbb-9cba-a2b5ad3bba73';
+    $display->content['new-42ddcb49-5a06-4bbb-9cba-a2b5ad3bba73'] = $pane;
+    $display->panels['middle_left'][0] = 'new-42ddcb49-5a06-4bbb-9cba-a2b5ad3bba73';
+    $pane = new stdClass();
+    $pane->pid = 'new-83a38941-2305-4626-ae87-60916e5c3a9c';
+    $pane->panel = 'middle_left';
+    $pane->type = 'entity_form_field';
+    $pane->subtype = 'node:field_p2p_personal_campaign_url';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'label' => '',
+      'formatter' => '',
+      'context' => 'argument_node_edit_1',
+      'override_title' => 0,
+      'override_title_text' => '',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 1;
+    $pane->locks = array();
+    $pane->uuid = '83a38941-2305-4626-ae87-60916e5c3a9c';
+    $display->content['new-83a38941-2305-4626-ae87-60916e5c3a9c'] = $pane;
+    $display->panels['middle_left'][1] = 'new-83a38941-2305-4626-ae87-60916e5c3a9c';
+    $pane = new stdClass();
+    $pane->pid = 'new-77b65726-5fdc-40ce-91d8-219aa4a0f175';
+    $pane->panel = 'middle_left';
+    $pane->type = 'entity_form_field';
+    $pane->subtype = 'node:body';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'label' => '',
+      'formatter' => '',
+      'context' => 'argument_node_edit_1',
+      'override_title' => 0,
+      'override_title_text' => '',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 2;
+    $pane->locks = array();
+    $pane->uuid = '77b65726-5fdc-40ce-91d8-219aa4a0f175';
+    $display->content['new-77b65726-5fdc-40ce-91d8-219aa4a0f175'] = $pane;
+    $display->panels['middle_left'][2] = 'new-77b65726-5fdc-40ce-91d8-219aa4a0f175';
+    $pane = new stdClass();
+    $pane->pid = 'new-a00b7083-cc27-4a9a-9ac4-d333e51f77d7';
+    $pane->panel = 'middle_left';
+    $pane->type = 'entity_form_field';
+    $pane->subtype = 'node:field_p2p_fundraising_deadline';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'label' => '',
+      'formatter' => '',
+      'context' => 'argument_node_edit_1',
+      'override_title' => 0,
+      'override_title_text' => '',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 3;
+    $pane->locks = array();
+    $pane->uuid = 'a00b7083-cc27-4a9a-9ac4-d333e51f77d7';
+    $display->content['new-a00b7083-cc27-4a9a-9ac4-d333e51f77d7'] = $pane;
+    $display->panels['middle_left'][3] = 'new-a00b7083-cc27-4a9a-9ac4-d333e51f77d7';
+    $pane = new stdClass();
+    $pane->pid = 'new-df8892f2-d8e4-4efa-8d08-b9863027bc9e';
+    $pane->panel = 'middle_left';
+    $pane->type = 'entity_form_field';
+    $pane->subtype = 'node:field_p2p_personal_campaign_goal';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'label' => '',
+      'formatter' => '',
+      'context' => 'argument_node_edit_1',
+      'override_title' => 0,
+      'override_title_text' => '',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 4;
+    $pane->locks = array();
+    $pane->uuid = 'df8892f2-d8e4-4efa-8d08-b9863027bc9e';
+    $display->content['new-df8892f2-d8e4-4efa-8d08-b9863027bc9e'] = $pane;
+    $display->panels['middle_left'][4] = 'new-df8892f2-d8e4-4efa-8d08-b9863027bc9e';
+    $pane = new stdClass();
+    $pane->pid = 'new-484bfb5f-f9be-457c-b8cb-bc88334bec9d';
+    $pane->panel = 'middle_left';
+    $pane->type = 'entity_form_field';
+    $pane->subtype = 'node:field_p2p_campaign_images';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'label' => '',
+      'formatter' => '',
+      'context' => 'argument_node_edit_1',
+      'override_title' => 0,
+      'override_title_text' => '',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 5;
+    $pane->locks = array();
+    $pane->uuid = '484bfb5f-f9be-457c-b8cb-bc88334bec9d';
+    $display->content['new-484bfb5f-f9be-457c-b8cb-bc88334bec9d'] = $pane;
+    $display->panels['middle_left'][5] = 'new-484bfb5f-f9be-457c-b8cb-bc88334bec9d';
+    $pane = new stdClass();
+    $pane->pid = 'new-cac1c486-05f3-495e-8194-5ffda678e1f8';
+    $pane->panel = 'middle_left';
+    $pane->type = 'entity_form_field';
+    $pane->subtype = 'node:field_p2p_video_embed';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'label' => '',
+      'formatter' => '',
+      'context' => 'argument_node_edit_1',
+      'override_title' => 0,
+      'override_title_text' => '',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 6;
+    $pane->locks = array();
+    $pane->uuid = 'cac1c486-05f3-495e-8194-5ffda678e1f8';
+    $display->content['new-cac1c486-05f3-495e-8194-5ffda678e1f8'] = $pane;
+    $display->panels['middle_left'][6] = 'new-cac1c486-05f3-495e-8194-5ffda678e1f8';
+    $pane = new stdClass();
+    $pane->pid = 'new-15ce72b0-b6fc-446b-8ab7-fb0e09c153a5';
+    $pane->panel = 'middle_left';
+    $pane->type = 'node_form_publishing';
+    $pane->subtype = 'node_form_publishing';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'context' => 'argument_node_edit_1',
+      'override_title' => 0,
+      'override_title_text' => '',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 7;
+    $pane->locks = array();
+    $pane->uuid = '15ce72b0-b6fc-446b-8ab7-fb0e09c153a5';
+    $display->content['new-15ce72b0-b6fc-446b-8ab7-fb0e09c153a5'] = $pane;
+    $display->panels['middle_left'][7] = 'new-15ce72b0-b6fc-446b-8ab7-fb0e09c153a5';
+    $pane = new stdClass();
+    $pane->pid = 'new-3b1545d4-c84e-40b0-8803-62459c67a020';
+    $pane->panel = 'middle_left';
+    $pane->type = 'node_form_buttons';
+    $pane->subtype = 'node_form_buttons';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'context' => 'argument_node_edit_1',
+      'override_title' => 0,
+      'override_title_text' => '',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 8;
+    $pane->locks = array();
+    $pane->uuid = '3b1545d4-c84e-40b0-8803-62459c67a020';
+    $display->content['new-3b1545d4-c84e-40b0-8803-62459c67a020'] = $pane;
+    $display->panels['middle_left'][8] = 'new-3b1545d4-c84e-40b0-8803-62459c67a020';
+  $display->hide_title = PANELS_TITLE_FIXED;
+  $display->title_pane = '0';
+  $handler->conf['display'] = $display;
+  $export['node_edit_panel_context'] = $handler;
+
+  $handler = new stdClass();
+  $handler->disabled = FALSE; /* Edit this to true to make a default handler disabled initially */
+  $handler->api_version = 1;
+  $handler->name = 'node_view_panel_context';
+  $handler->task = 'node_view';
+  $handler->subtask = '';
+  $handler->handler = 'panel_context';
+  $handler->weight = -99;
+  $handler->conf = array(
+    'title' => 'P2P Donation',
+    'no_blocks' => 0,
+    'pipeline' => 'standard',
+    'body_classes_to_remove' => '',
+    'body_classes_to_add' => '',
+    'css_id' => '',
+    'css' => '',
+    'contexts' => array(),
+    'relationships' => array(),
+    'access' => array(
+      'logic' => 'and',
+      'plugins' => array(
+        0 => array(
+          'name' => 'donation_form',
+          'settings' => NULL,
+          'context' => 'argument_entity_id:node_1',
+          'not' => FALSE,
+        ),
+      ),
+    ),
+  );
+  $display = new panels_display();
+  $display->layout = 'p2p_landing_twocol_bricks';
+  $display->layout_settings = array();
+  $display->panel_settings = array(
+    'style_settings' => array(
+      'default' => NULL,
+      'center' => NULL,
+      'top' => NULL,
+      'middle_left' => NULL,
+      'middle_right' => NULL,
+      'bottom' => NULL,
+    ),
+  );
+  $display->cache = array();
+  $display->title = '';
+  $display->uuid = '9e04c4cd-58c0-46b0-abeb-edeb642c28de';
+  $display->content = array();
+  $display->panels = array();
+    $pane = new stdClass();
+    $pane->pid = 'new-8a8ff94b-c489-4458-8e3c-a097a7f8d45d';
+    $pane->panel = 'middle_left';
+    $pane->type = 'entity_field_extra';
+    $pane->subtype = 'node:webform';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'view_mode' => 'full',
+      'context' => 'argument_entity_id:node_1',
+      'override_title' => 0,
+      'override_title_text' => '',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 0;
+    $pane->locks = array();
+    $pane->uuid = '8a8ff94b-c489-4458-8e3c-a097a7f8d45d';
+    $display->content['new-8a8ff94b-c489-4458-8e3c-a097a7f8d45d'] = $pane;
+    $display->panels['middle_left'][0] = 'new-8a8ff94b-c489-4458-8e3c-a097a7f8d45d';
+    $pane = new stdClass();
+    $pane->pid = 'new-28d2ef7f-477b-47b6-ac8b-826f5e8c6e09';
+    $pane->panel = 'middle_right';
+    $pane->type = 'personal_campaign_progress';
+    $pane->subtype = 'personal_campaign_progress';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'context' => 'argument_entity_id:node_1',
+      'override_title' => 0,
+      'override_title_text' => '',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 0;
+    $pane->locks = array();
+    $pane->uuid = '28d2ef7f-477b-47b6-ac8b-826f5e8c6e09';
+    $display->content['new-28d2ef7f-477b-47b6-ac8b-826f5e8c6e09'] = $pane;
+    $display->panels['middle_right'][0] = 'new-28d2ef7f-477b-47b6-ac8b-826f5e8c6e09';
+    $pane = new stdClass();
+    $pane->pid = 'new-96263c63-c874-4a00-8dfb-0eafb7f64c75';
+    $pane->panel = 'top';
+    $pane->type = 'campaign_header_no_context';
+    $pane->subtype = 'campaign_header_no_context';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array();
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 0;
+    $pane->locks = array();
+    $pane->uuid = '96263c63-c874-4a00-8dfb-0eafb7f64c75';
+    $display->content['new-96263c63-c874-4a00-8dfb-0eafb7f64c75'] = $pane;
+    $display->panels['top'][0] = 'new-96263c63-c874-4a00-8dfb-0eafb7f64c75';
+  $display->hide_title = PANELS_TITLE_FIXED;
+  $display->title_pane = '0';
+  $handler->conf['display'] = $display;
+  $export['node_view_panel_context'] = $handler;
+
+  return $export;
+}
+
+/**
  * Implements hook_default_page_manager_pages().
  */
 function springboard_p2p_default_page_manager_pages() {

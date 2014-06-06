@@ -38,11 +38,18 @@ function springboard_p2p_donation_form_ctools_access_check($conf, $context) {
     return FALSE;
   }
 
-  // Query the url string to see if it belongs to P2P.
-  if (empty($_GET['p2p_pcid'])) {
-    return FALSE;
+  // Define the node object.
+  $node = menu_get_object();
+
+  // First, check to see if we are on any kind of donation form.
+  if (fundraiser_is_donation_type($node->type)) {
+
+    // Query the url string to see if it belongs to P2P.
+    if (empty($_GET['p2p_pcid'])) {
+      return FALSE;
+    }
+    return TRUE;
   }
-  return TRUE;
 
 }
 
@@ -60,10 +67,10 @@ function springboard_p2p_donation_form_ctools_summary($conf, $context) {
  */
 function springboard_p2p_donation_form_ctools_settings($form, &$form_state, $conf) {
 
-//  $form['settings'] = array(
-//    '#type' => 'prefix',
-//    '#description' => t('Optional. In the menu, the heavier items will sink and the lighter items will be positioned nearer the top.'),
-//  );
+  //  $form['settings'] = array(
+  //    '#type' => 'prefix',
+  //    '#description' => t('Optional. In the menu, the heavier items will sink and the lighter items will be positioned nearer the top.'),
+  //  );
 
   return $form;
 
