@@ -33,6 +33,14 @@
   vertical-align: top;
 }
 
+.fundraiser-payment-fields.form-wrapper select {
+  width: 38%;
+}
+
+.expiration-date-wrapper .control-group {
+  width: 100%;
+}
+
 .form-textarea-wrapper textarea,
 input[type='text'],
 input[type='email'] {
@@ -158,4 +166,20 @@ legend {
 
 #edit-submitted-payment-information-payment-fields-credit-card-cvv {
   width: 100px;
+}
+
+/* media queries */
+@media (max-width: 768px) {
+  
+  .fieldset-wrapper .control-group,
+  #zone-select-wrapper,
+  .expiration-date-wrapper,
+  .fundraiser-payment-fields.form-wrapper select {
+    display: inline-block;
+    float: none;
+    clear: both;
+    width: 99%;
+    vertical-align: top;
+  }
+
 }

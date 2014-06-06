@@ -1,6 +1,6 @@
 /**
  * @file
- * Misc JQuery scripts in this file
+ * Misc JQuery P2P scripts in this file.
  */
 (function ($) {
   // Add drupal 7 code.
@@ -14,7 +14,30 @@
     // Get rid of inline styles.
    $('.panel-display p').attr('style', '');
 
-/* P2P donation form */
+/* P2P donation form ***********/
+
+      // Set a media width to react on.
+      var jRes = jRespond([
+        {
+          label: 'narrow',
+          enter: 0,
+          exit: 980
+        }
+      ]);
+
+      // set a var for the p2p donation form page type.
+      var p2pd = '.p2p-donation-form';
+
+      // Initialize the jres function to swap divs on breakpoints.
+      jRes.addFunc({
+        breakpoint: 'narrow',
+        enter: function() {
+          $(p2pd  + " " +  '.panel-col-last').insertBefore(p2pd  + " " + '.panel-col-first');
+        },
+        exit: function() {
+          $(p2pd  + " " +  '.panel-col-first').insertBefore(p2pd  + " " + '.panel-col-last');
+        }
+      });
 
       // Add meaningful classes to webform radio buttons & labels.
       $('input[type=checkbox]').addClass('checkbox-input');

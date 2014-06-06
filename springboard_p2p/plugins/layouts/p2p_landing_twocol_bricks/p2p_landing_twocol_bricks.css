@@ -61,3 +61,17 @@
   }
 
 }
+
+@media (max-width: 980px) {
+
+  .p2p-donation-form .panel-2col-bricks .panel-col-first,
+  .p2p-donation-form .panel-2col-bricks .panel-col-last {
+    width: 99%;
+  }
+
+  .p2p-donation-form .panel-2col-bricks .panel-col-last .inside {
+    margin: 0 0 .5em 0;
+  }
+
+}
+

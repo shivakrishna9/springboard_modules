@@ -67,13 +67,9 @@ function springboard_p2p_donation_form_ctools_summary($conf, $context) {
  */
 function springboard_p2p_donation_form_ctools_settings($form, &$form_state, $conf) {
 
-  //  $form['settings'] = array(
-  //    '#type' => 'prefix',
-  //    '#description' => t('Optional. In the menu, the heavier items will sink and the lighter items will be positioned nearer the top.'),
-  //  );
+  // Add some default text with a P2P message.
+  $form['#prefix'] = '<h2 style="margin: 0 0 20px 0;">' . t('This plugin has no settings, it simply tests for true or false on a p2p donation form.') . '</h2>';
 
   return $form;
 
 }
-
-

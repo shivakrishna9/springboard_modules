@@ -310,7 +310,7 @@ function springboard_p2p_default_page_manager_handlers() {
     'no_blocks' => 0,
     'pipeline' => 'standard',
     'body_classes_to_remove' => '',
-    'body_classes_to_add' => '',
+    'body_classes_to_add' => 'p2p-donation-form',
     'css_id' => '',
     'css' => '',
     'contexts' => array(),
@@ -370,7 +370,7 @@ function springboard_p2p_default_page_manager_handlers() {
     $display->content['new-8a8ff94b-c489-4458-8e3c-a097a7f8d45d'] = $pane;
     $display->panels['middle_left'][0] = 'new-8a8ff94b-c489-4458-8e3c-a097a7f8d45d';
     $pane = new stdClass();
-    $pane->pid = 'new-28d2ef7f-477b-47b6-ac8b-826f5e8c6e09';
+    $pane->pid = 'new-f12b3637-071a-420b-a82e-aad634b71afd';
     $pane->panel = 'middle_right';
     $pane->type = 'personal_campaign_progress';
     $pane->subtype = 'personal_campaign_progress';
@@ -389,9 +389,34 @@ function springboard_p2p_default_page_manager_handlers() {
     $pane->extras = array();
     $pane->position = 0;
     $pane->locks = array();
-    $pane->uuid = '28d2ef7f-477b-47b6-ac8b-826f5e8c6e09';
-    $display->content['new-28d2ef7f-477b-47b6-ac8b-826f5e8c6e09'] = $pane;
-    $display->panels['middle_right'][0] = 'new-28d2ef7f-477b-47b6-ac8b-826f5e8c6e09';
+    $pane->uuid = 'f12b3637-071a-420b-a82e-aad634b71afd';
+    $display->content['new-f12b3637-071a-420b-a82e-aad634b71afd'] = $pane;
+    $display->panels['middle_right'][0] = 'new-f12b3637-071a-420b-a82e-aad634b71afd';
+    $pane = new stdClass();
+    $pane->pid = 'new-d40acda3-2b67-4b0b-aa7b-bbc315ffffb3';
+    $pane->panel = 'middle_right';
+    $pane->type = 'custom';
+    $pane->subtype = 'custom';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'admin_title' => '',
+      'title' => 'Sidebar',
+      'body' => 'The sidebar goals widget will be here.',
+      'format' => 'filtered_html',
+      'substitute' => 1,
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 1;
+    $pane->locks = array();
+    $pane->uuid = 'd40acda3-2b67-4b0b-aa7b-bbc315ffffb3';
+    $display->content['new-d40acda3-2b67-4b0b-aa7b-bbc315ffffb3'] = $pane;
+    $display->panels['middle_right'][1] = 'new-d40acda3-2b67-4b0b-aa7b-bbc315ffffb3';
     $pane = new stdClass();
     $pane->pid = 'new-96263c63-c874-4a00-8dfb-0eafb7f64c75';
     $pane->panel = 'top';
