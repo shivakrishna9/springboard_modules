@@ -267,13 +267,17 @@ input#edit-submit {
 }
 
 .pane-body p {
-  margin: 10px 2% 0 0;
+  margin: 0 2% 10px 0;
   font-size: 15px;
   line-height: 1.4em;
 }
 
+.pane-top-banner {
+  margin-bottom: 20px;
+}
+
 .pane-sidebar h2 {
-  margin: 10px 0 0 0;
+  margin: 0;
 }
 
 /* media queries */

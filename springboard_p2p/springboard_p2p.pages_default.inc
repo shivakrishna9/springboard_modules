@@ -444,7 +444,7 @@ function springboard_p2p_default_page_manager_handlers() {
     );
     $pane->css = array(
       'css_id' => '',
-      'css_class' => 'pane-sidebar',
+      'css_class' => 'pane-sidebar panel-pane-wrapper',
     );
     $pane->extras = array();
     $pane->position = 1;
