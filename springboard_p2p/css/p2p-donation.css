@@ -146,7 +146,7 @@ input[type='text']:focus, input[type='email']:focus {
 }
 
 .checkbox-label.checked:before {
-  background: url('../images/sprite_p2p.png') no-repeat -135px -146px;
+  background: url('../images/sprite_p2p.png') no-repeat -137px -146px;
 }
 
 h2, span.fieldset-legend {
@@ -167,6 +167,55 @@ legend {
 
 #edit-submitted-payment-information-payment-fields-credit-card-cvv {
   width: 100px;
+}
+
+.form-actions {
+  margin: 10px 0;
+  padding: 0;
+  border-top: none;
+  background-color: #fff;
+}
+
+input#edit-submit {
+  width: 100%;
+}
+
+.fundraiser_submit_message {
+  margin: 10px 0 10px 0;
+  padding: 20px 0 10px 0;
+  border-top: 1px dashed #acacac;
+}
+
+#comment-wrapper {
+  float: none;
+  clear: both;
+}
+
+#comment-wrapper .control-group {
+  display: block;
+  width: 100%;
+}
+
+#comment-wrapper textarea {
+  width: 99%;
+}
+
+.panel-display.panel-2col-bricks {
+  margin-bottom: 30px;
+}
+
+.fundraiser_submit_message:before {
+  position: relative;
+  top: 3px;
+  left: 0;
+  color: #7eae48;
+  content: "\f023";
+  text-decoration: inherit;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 21px;
+  font-family: FontAwesome;
+  margin-right: 11px;
 }
 
 /* media queries */

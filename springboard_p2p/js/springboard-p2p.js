@@ -74,6 +74,9 @@
         });
       });
 
+      // Remove the padlock icon, we replace with font-awesome.
+      $('.fundraiser_submit_message img ').remove();
+
 
       // end jquery.
     }};

@@ -1552,6 +1552,8 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
           ),
         );
 
+        $form['springboard_p2p_personal_campaign_action']['#prefix'] = '<div id ="comment-wrapper">';
+
         $form['springboard_p2p_personal_campaign_action']['show_name'] = array(
           '#type' => 'checkbox',
           '#title' => t('Show my name on the campaign page'),
@@ -1567,10 +1569,12 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
 
           $form['springboard_p2p_personal_campaign_action']['comment'] = array(
             '#type' => 'textarea',
-            '#title' => t('Comment'),
+            '#title' => t('Add a comment below. (optional)'),
             '#default_value' => '',
             '#access' => springboard_p2p_campaign_allows_comments($campaign),
           );
+
+          $form['springboard_p2p_personal_campaign_action']['#suffix'] = '</div>';
 
           $category_id = $campaign->field_p2p_category[$campaign->language][0]['target_id'];
           $form['springboard_p2p_personal_campaign_action']['category_nid']['#value'] = $category_id;
@@ -1604,7 +1608,7 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
   }
 
   if (fundraiser_is_donation_type($form['#node']->type)) {
-
+    
     // Order payment fields using fundraiser_webform_fundraiser_get_form_field.
     $payment_method = fundraiser_webform_fundraiser_get_form_field($form, 'payment_method');
     $payment_fields = fundraiser_webform_fundraiser_get_form_field($form, 'payment_fields');
