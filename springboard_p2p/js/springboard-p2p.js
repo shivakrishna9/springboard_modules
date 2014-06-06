@@ -77,6 +77,14 @@
       // Remove the padlock icon, we replace with font-awesome.
       $('.fundraiser_submit_message img ').remove();
 
+      // Show / hide other amount input box when other amount is clicked / touched.
+      $('.webform-client-form .option.radio-other.radio-label').click(function() {
+        $('#other-wrapper').css('display', 'inline-block');
+      });
+
+      $('.webform-client-form .option.radio-label:not(".radio-other")').click(function () {
+          $('#other-wrapper').css('display', 'none');
+      });
 
       // end jquery.
     }};

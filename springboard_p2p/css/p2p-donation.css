@@ -25,13 +25,22 @@
 .fieldset-wrapper .control-group,
 #zone-select-wrapper,
 .expiration-date-wrapper,
-.fundraiser-payment-fields.form-wrapper select {
+.fundraiser-payment-fields.form-wrapper select,
+#other-wrapper {
   position: relative;
   display: inline-block;
   float: none;
   clear: both;
   width: 47%;
   vertical-align: top;
+}
+
+#other-wrapper {
+  display: none;
+}
+
+.fieldset-wrapper  #other-wrapper .control-group {
+  width: 100%;
 }
 
 .fundraiser-payment-fields.form-wrapper select {
@@ -286,12 +295,29 @@ input#edit-submit {
   .fieldset-wrapper .control-group,
   #zone-select-wrapper,
   .expiration-date-wrapper,
-  .fundraiser-payment-fields.form-wrapper select {
+  .fundraiser-payment-fields.form-wrapper select,
+  #other-wrapper {
     display: inline-block;
     float: none;
     clear: both;
     width: 99%;
     vertical-align: top;
+  }
+
+  .form-textarea-wrapper textarea,
+  input[type='text'],
+  input[type='email'] {
+    width: 90%;
+    padding: 10px 0 10px 10px;
+    font-size: 16px;
+  }
+
+  select {
+    width: 90%;
+  }
+
+  .control-group .spacer {
+    margin-left: 0;
   }
 
 }
