@@ -4,7 +4,7 @@
  * A class for managing private campaign approvals.
  */
 
-class SpringbaordP2pPrivateCampaignApproval {
+class SpringboardP2pPrivateCampaignApproval {
 
   protected $record = array();
 

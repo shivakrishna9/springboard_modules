@@ -1291,7 +1291,7 @@ function springboard_p2p_set_redirect($form, &$form_state) {
     if (is_object($campaign) && $campaign->type == 'p2p_campaign') {
       $private = springboard_p2p_campaign_is_private($campaign);
 
-      $approval = new SpringbaordP2pPrivateCampaignApproval($uid, $campaign_id);
+      $approval = new SpringboardP2pPrivateCampaignApproval($uid, $campaign_id);
 
       if ($private) {
         $approval->request();
@@ -1581,7 +1581,7 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
 
           // @todo Confirm that this donation form nid is selected from the
           // campaign goals.
-          // $header = springbaord_p2p_format_campaign_form_header($campaign);
+          // $header = springboard_p2p_format_campaign_form_header($campaign);
           // if (count($header)) {
           // $form['submitted']['springboard_p2p']['header'] = $header;
           // }
@@ -1848,7 +1848,7 @@ function springboard_p2p_save_personal_campaign_action($record) {
  * @return array
  *   The form element for the header image.
  */
-function springbaord_p2p_format_campaign_form_header($campaign) {
+function springboard_p2p_format_campaign_form_header($campaign) {
   if ($campaign->type == 'p2p_campaign' && isset($campaign->field_p2p_campaign_banner) && !empty($campaign->field_p2p_campaign_banner[$campaign->language])) {
 
     $display = array(
@@ -1894,7 +1894,7 @@ function springboard_p2p_page_alter(&$page, $form) {
         if (!empty($campaign) && $campaign->type == 'p2p_campaign') {
 
           // Place the banner in the springboard_frontend theme header region.
-        //  $page['page_top']['springboard_p2p_banner'] = springbaord_p2p_format_campaign_form_header($campaign);
+        //  $page['page_top']['springboard_p2p_banner'] = springboard_p2p_format_campaign_form_header($campaign);
         }
       }
     }
@@ -2154,7 +2154,7 @@ function springboard_p2p_mail($key, &$message, $params) {
  * @see user_cancel_methods()
  */
 function springboard_p2p_user_cancel($edit, $account, $method) {
-  SpringbaordP2pPrivateCampaignApproval::deleteAll($account->uid);
+  SpringboardP2pPrivateCampaignApproval::deleteAll($account->uid);
 }
 
 /**
@@ -2164,7 +2164,7 @@ function springboard_p2p_user_cancel($edit, $account, $method) {
  * deleted.
  */
 function springboard_p2p_user_delete($account) {
-  SpringbaordP2pPrivateCampaignApproval::deleteAll($account->uid);
+  SpringboardP2pPrivateCampaignApproval::deleteAll($account->uid);
 }
 
 /**

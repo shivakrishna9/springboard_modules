@@ -80,7 +80,7 @@ class springboard_p2p_handler_field_campaign_approval_operations extends views_h
     foreach (element_children($form[$field_name]) as $row_id) {
       if ($form_state['triggering_element']['#name'] == 'approve-' . $row_id) {
         $data = $form[$field_name][$row_id]['approve'];
-        $approval = new SpringbaordP2pPrivateCampaignApproval($data['#uid'], $data['#nid']);
+        $approval = new SpringboardP2pPrivateCampaignApproval($data['#uid'], $data['#nid']);
         $approval->approve();
 
         $event = new SpringboardP2pEvents();
@@ -88,7 +88,7 @@ class springboard_p2p_handler_field_campaign_approval_operations extends views_h
       }
       elseif ($form_state['triggering_element']['#name'] == 'reject-' . $row_id) {
         $data = $form[$field_name][$row_id]['reject'];
-        $approval = new SpringbaordP2pPrivateCampaignApproval($data['#uid'], $data['#nid']);
+        $approval = new SpringboardP2pPrivateCampaignApproval($data['#uid'], $data['#nid']);
         $approval->reject();
 
         $event = new SpringboardP2pEvents();
