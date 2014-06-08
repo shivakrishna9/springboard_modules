@@ -2216,3 +2216,20 @@ function springboard_p2p_personal_campaign_progress_box($campaign, $personal_cam
 
   return '';
 }
+
+/**
+ * Determine if the state and country fields exist and are shown on the form.
+ *
+ * @param array $form
+ *   Form array.
+ *
+ * @return bool
+ *   TRUE if the ajax stuff should be added to the form.
+ */
+function springboard_p2p_should_add_state_and_country_ajax($form) {
+  return
+    isset($form['sbp_state']) &&
+    isset($form['sbp_country']) &&
+    $form['sbp_state']['#access'] &&
+    $form['sbp_country']['#access'];
+}

@@ -113,7 +113,7 @@ function springboard_p2p_user_register_form($form, &$form_state) {
 
   springboard_p2p_campaign_id_form_element($form, $form_state);
 
-  if (isset($form['sbp_state']) && isset($form['sbp_country'])) {
+  if (springboard_p2p_should_add_state_and_country_ajax($form)) {
     form_load_include($form_state, 'inc', 'springboard_p2p', 'includes/springboard_p2p.register');
     springboard_p2p_add_state_and_country_ajax($form);
   }
