@@ -149,16 +149,7 @@ function springboard_p2p_menu() {
  * Implements hook_theme().
  */
 function springboard_p2p_theme($existing, $theme) {
-
-  // Look for theme templates in springboard_p2p.
-  $path  = drupal_get_path('module', 'springboard_p2p');
-  $templates = drupal_find_theme_functions($existing, array($theme));
-  $templates += drupal_find_theme_templates($existing, '.tpl.php', $path);
-  return $templates;
-
-  // @TODO - why is there an "unreachable statement" message on the code below. it goes away if the code above is not there.
-
-  return array(
+  $templates = array(
     'springboard_p2p_admin_settings' => array(
       'render element' => 'form',
       'file' => 'springboard_p2p.admin.inc',
@@ -166,6 +157,12 @@ function springboard_p2p_theme($existing, $theme) {
     ),
   );
 
+  // Look for theme templates in springboard_p2p.
+  $path  = drupal_get_path('module', 'springboard_p2p');
+  $templates += drupal_find_theme_functions($existing, array($theme));
+  $templates += drupal_find_theme_templates($existing, '.tpl.php', $path);
+
+  return $templates;
 }
 
 /**
