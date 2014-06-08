@@ -202,7 +202,117 @@ function springboard_p2p_personal_campaign_action_schema() {
  * Adds the springboard_p2p_personal_campaign_action table.
  */
 function springboard_p2p_update_7001() {
-  db_create_table('springboard_p2p_personal_campaign_action', springboard_p2p_personal_campaign_action_schema());
+  $table = array(
+    'description' => 'Stores data about a user completing a form for a personal campaign.',
+    'fields' => array(
+      'category_nid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The {node}.nid of the p2p category.',
+        'default' => 0,
+      ),
+      'campaign_nid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The {node}.nid of the p2p campaign.',
+        'default' => 0,
+      ),
+      'personal_campaign_nid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The {node}.nid of the private campaign.',
+        'default' => 0,
+      ),
+      'personal_campaign_uid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The {users}.uid of the campaigner.',
+        'default' => 0,
+      ),
+      'form_nid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The {node}.nid of the webform user or fundraiser node.',
+        'default' => 0,
+      ),
+      'action_type' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'description' => 'The type of the action. Either donation or submission.',
+        'default' => 'requested',
+      ),
+      'uid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The {users}.uid of the submitter.',
+        'default' => 0,
+      ),
+      'show_name' => array(
+        'description' => 'Boolean indicating whether show the submitter\'s name.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'size' => 'tiny',
+        'default' => 0,
+      ),
+      'comment' => array(
+        'description' => 'The comment.',
+        'type' => 'text',
+        'not null' => TRUE,
+        'size' => 'big',
+      ),
+      'amount' => array(
+        'description' => 'The donation amount if this is a donation.',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when this action was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'indexes' => array(
+      'personal_campaign_nid' => array('personal_campaign_nid'),
+    ),
+    'primary key' => array('form_nid', 'uid', 'created'),
+    'foreign keys' => array(
+      'category_nid' => array(
+        'table' => 'node',
+        'columns' => array('category_nid' => 'nid'),
+      ),
+      'campaign_nid' => array(
+        'table' => 'node',
+        'columns' => array('campaign_nid' => 'nid'),
+      ),
+      'personal_campaign_nid' => array(
+        'table' => 'node',
+        'columns' => array('personal_campaign_nid' => 'nid'),
+      ),
+      'personal_campaign_uid' => array(
+        'table' => 'users',
+        'columns' => array('personal_campaign_uid' => 'uid'),
+      ),
+      'form_nid' => array(
+        'table' => 'node',
+        'columns' => array('form_nid' => 'nid'),
+      ),
+      'uid_uid' => array(
+        'table' => 'users',
+        'columns' => array('uid' => 'uid'),
+      ),
+    ),
+  );
+  db_create_table('springboard_p2p_personal_campaign_action', $table);
 }
 
 /**
@@ -216,5 +326,5 @@ function springboard_p2p_update_7002() {
     'description' => 'The submission id of the action.',
     'default' => 0,
   );
-  db_add_field( 'springboard_p2p_personal_campaign_action', 'sid', $field);
+  db_add_field('springboard_p2p_personal_campaign_action', 'sid', $field);
 }
