@@ -6,11 +6,19 @@
  */
 
 /**
- * Implements hook_salesforce_queue_create_item_alter()
+ * Implements hook_salesforce_queue_create_item_alter().
  */
 function salesforce_p2p_salesforce_queue_create_item_alter($item) {
   // TODO: Check item to see if it is a peer to peer campaign. If
   // it is we'll need to alter in the relationship token for the
   // peer to peer category. Same goes for personal campaigns.
   // drupal_set_message('<pre>' . print_r($item, true) . '</pre>');
+
+  if ($item['delta'] == 'donation') {
+    $donation = fundraiser_donation_get_donation($item['drupal_id']);
+    $action = springboard_p2p_get_personal_campaign_action_by_sid($donation->sid);
+    if ($action) {
+      // @todo What do we need to add to the donation to relate it to whatever?
+    }
+  }
 }
