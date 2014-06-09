@@ -131,9 +131,11 @@ class SpringboardP2pEvents {
       drupal_mail('springboard_p2p', 'password_reset', $to, $language, $params);
     }
 
+    $language = !empty($account->language) ? $account->language : 'und';
+
     $replacements = array(
-      '%first' => $account->sbp_first_name,
-      '%last' => $account->sbp_last_name,
+      '%first' => $account->sbp_first_name[$language][0]['safe_value'],
+      '%last' => $account->sbp_last_name[$language][0]['safe_value'],
       '%email' => $account->mail,
     );
     watchdog('Springboard P2P', 'Password reset request made by %first %last at %email.', $replacements);
