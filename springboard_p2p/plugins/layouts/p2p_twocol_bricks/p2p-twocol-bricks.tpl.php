@@ -39,12 +39,16 @@
     <div class="panel-panel panel-col-first">
       <div class="inside">
 
-        <?php if ($content['middle_top_left'] || $content['middle_top_right']): ?>
           <div class="panel-panel panel-middle-top-wrapper">
+            <?php if ($content['middle_top_left']): ?>
             <div class="panel-middle-top-left"><?php print $content['middle_top_left']; ?></div>
-            <div class="panel-middle-top-right"><?php print $content['middle_top_right']; ?></div>
+            <?php endif; ?>
+
+            <?php if ($content['middle_top_right']): ?>
+              <div class="panel-middle-top-right"><?php print $content['middle_top_right']; ?></div>
+            <?php endif; ?>
+
           </div>
-        <?php endif; ?>
 
         <?php if ($content['middle_left']): ?>
           <?php print $content['middle_left']; ?>

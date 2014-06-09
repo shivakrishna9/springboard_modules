@@ -33,6 +33,11 @@
         showmarkers : false
       });
 
+      if ($('.panel-middle-top-right').length === 0){
+        // do something here
+        $('.panel-middle-top-left').addClass('no-middle-top-right');
+      }
+
       // end jquery.
     }};
 })

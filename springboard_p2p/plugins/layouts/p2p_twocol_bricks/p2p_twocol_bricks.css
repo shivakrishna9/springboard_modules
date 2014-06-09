@@ -57,6 +57,10 @@
   vertical-align: top;
 }
 
+.panel-middle-top-left.no-middle-top-right {
+  width: 99%;
+}
+
 .panel-middle-top-right {
   display: inline-block;
   width: 45.5%;
