@@ -33,9 +33,15 @@
         showmarkers : false
       });
 
-      // Adsd a class to the panel if its adjacent one is empty.
+      // Add a class to the panel if its adjacent one is empty.
       if ($('.panel-middle-top-right').length === 0){
         $('.panel-middle-top-left').addClass('no-middle-top-right');
+      }
+
+      // Remove the comment title if there are no comments.
+      if ($('ul.comment-wrapper').is(':empty')) {
+        console.log('it is empty');
+        $('#p2p-comment-pane h2.pane-title').remove();
       }
 
       // end jquery.

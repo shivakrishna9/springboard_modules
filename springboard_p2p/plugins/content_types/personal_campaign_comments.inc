@@ -106,7 +106,7 @@ function springboard_p2p_personal_campaign_comments_render($subtype, $conf, $pan
     $zebra++;
   }
 
-  $output[] = ' </ul>';
+  $output[] = '</ul>';
 
   // Build the content type block.
   $block = new stdClass();
