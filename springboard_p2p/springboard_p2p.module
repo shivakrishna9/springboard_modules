@@ -573,6 +573,8 @@ function springboard_p2p_node_insert($node) {
 
     if ($alias == '') {
       $alias = springboard_p2p_create_alias_from_title($node->title);
+      $node->field_p2p_personal_campaign_url[$node->language][0]['value'] = $alias;
+      node_save($node);
     }
 
     // Discard existing alias settings if the node is being cloned.
@@ -601,6 +603,8 @@ function springboard_p2p_node_update($node) {
 
     if ($alias == '') {
       $alias = springboard_p2p_create_alias_from_title($node->title);
+      $node->field_p2p_personal_campaign_url[$node->language][0]['value'] = $alias;
+      node_save($node);
     }
 
     if ($alias) {
