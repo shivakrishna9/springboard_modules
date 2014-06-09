@@ -12,8 +12,8 @@
  * Implements hook_menu().
  */
 function webform_confirmation_alias_menu() {
-  $items['admin/config/content/webform/webform-confirmation-alias'] = array(
-    'title' => t('Confirmation Page Aliases'),
+  $items['admin/config/content/webform-confirmation-alias'] = array(
+    'title' => t('Webform Confirmation Page Aliases'),
     'description' => t('Bulk update confirmation page url aliases.'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('webform_confirmation_alias_admin_settings'),
