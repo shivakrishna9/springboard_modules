@@ -1743,8 +1743,9 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
     $donation_record['amount'] = $donation->amount;
   } else if (!empty($donation->donation['amount'])) {
     $donation_record['amount'] = $donation->donation['amount'];
+    // was a quantity (of > 1) specified?
     if (isset($donation->donation['quantity']) && $donation->donation['quantity'] > 1) {
-      // multiply amount by quantity if we haven't done so already
+      // multiply base donation amount by quantity to get the donation total
       $donation_record['amount'] = number_format($donation->donation['amount'] * $donation->donation['quantity'], 2);
     }
   }
