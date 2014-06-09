@@ -11,14 +11,14 @@
       // set a var for the p2p donation form page type.
       var p2pd = '.p2p-donation-form';
 
-      // Instanstiate jquery mediacheck.
+      // Define an instance of jquery mediacheck.
       mediaCheck({
         media: '(max-width: 980px)',
         entry: function() {
           // < 980 sidebar is first
           $(p2pd  + " " +  '.panel-col-last').insertBefore(p2pd  + " " + '.panel-col-first');
           // Move the ssl cert over to the sidebar when < 980.
-          $('#ssl-cert').after('.fundraiser_submit_message');
+          $('#ssl-cert').insertAfter('.fundraiser_submit_message');
         },
         exit: function() {
          // > 980 sidebar is last.
