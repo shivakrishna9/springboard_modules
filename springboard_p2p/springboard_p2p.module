@@ -1593,44 +1593,37 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
             'owner' => array(
               '#markup' => '<h2>' . $owner_name . '</h2>',
             ),
-            'progress' => array(
-              '#markup' => springboard_p2p_personal_campaign_progress_box($campaign, $personal_campaign),
-            ),
           );
         }
       }
+
     }
+
+    if ($is_fundraiser_type) {
+      // Retrieve various webform fields using
+      // fundraiser_webform_fundraiser_get_form_field.
+      $donation = fundraiser_webform_fundraiser_get_form_field($form, 'donation');
+      $payment_method = fundraiser_webform_fundraiser_get_form_field($form, 'payment_method');
+      $payment_fields = fundraiser_webform_fundraiser_get_form_field($form, 'payment_fields');
+      $recurs_monthly = fundraiser_webform_fundraiser_get_form_field($form, 'recurs_monthly');
+
+      // Alters.
+      $donation['other_amount']['#prefix'] = '<div id="other-wrapper"> ';
+      $donation['other_amount']['#suffix'] = '</div> ';
+      $payment_fields['credit']['card_cvv']['#title'] = t('CVV Number');
+
+      $payment_method['#weight'] = 10;
+      $payment_fields['#weight'] = 50;
+      $recurs_monthly['#weight'] = 100;
+
+      // Update the altered fields from above.
+      $form = fundraiser_webform_fundraiser_update_form_field($form, 'donation', $donation);
+      $form = fundraiser_webform_fundraiser_update_form_field($form, 'payment_fields', $payment_fields);
+      $form = fundraiser_webform_fundraiser_update_form_field($form, 'payment_method', $payment_method);
+      $form = fundraiser_webform_fundraiser_update_form_field($form, 'recurs_monthly', $recurs_monthly);
+    }
+
   }
-
-  // Only work with webforms.
-  if (strstr($form_id, 'webform_client_form') === FALSE) {
-    return;
-  }
-
-  if (fundraiser_is_donation_type($form['#node']->type)) {
-
-    // Retrieve various webform fields using fundraiser_webform_fundraiser_get_form_field.
-    $donation = fundraiser_webform_fundraiser_get_form_field($form, 'donation');
-    $payment_method = fundraiser_webform_fundraiser_get_form_field($form, 'payment_method');
-    $payment_fields = fundraiser_webform_fundraiser_get_form_field($form, 'payment_fields');
-    $recurs_monthly = fundraiser_webform_fundraiser_get_form_field($form, 'recurs_monthly');
-
-    // Alters.
-    $donation['other_amount']['#prefix'] = '<div id="other-wrapper"> ';
-    $donation['other_amount']['#suffix'] = '</div> ';
-    $payment_fields['credit']['card_cvv']['#title'] = t('CVV Number');
-
-    $payment_method['#weight'] = 10;
-    $payment_fields['#weight'] = 50;
-    $recurs_monthly['#weight'] = 100;
-
-  }
-
-  // Update the altered fields from above.
-  $form = fundraiser_webform_fundraiser_update_form_field($form, 'donation', $donation);
-  $form = fundraiser_webform_fundraiser_update_form_field($form, 'payment_fields', $payment_fields);
-  $form = fundraiser_webform_fundraiser_update_form_field($form, 'payment_method', $payment_method);
-  $form = fundraiser_webform_fundraiser_update_form_field($form, 'recurs_monthly', $recurs_monthly);
 }
 
 /**
