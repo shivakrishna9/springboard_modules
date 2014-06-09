@@ -16,6 +16,10 @@
 
 /* P2P donation form ***********/
 
+
+      // jresond only on donation form.
+      if ($('body').hasClass('p2p-donation-form')) {
+
       // Set a media width to react on.
       var jRes = jRespond([
         {
@@ -38,6 +42,8 @@
           $(p2pd  + " " +  '.panel-col-first').insertBefore(p2pd  + " " + '.panel-col-last');
         }
       });
+
+      } // end
 
       // Add meaningful classes to webform radio buttons & labels.
       $('input[type=checkbox]').addClass('checkbox-input');
