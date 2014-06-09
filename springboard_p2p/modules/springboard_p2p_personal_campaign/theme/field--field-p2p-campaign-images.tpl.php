@@ -42,8 +42,10 @@
  * @see theme_field()
  *
  * @ingroup themeable
+ * Custom field template for campaign images.
  */
 ?>
+
 
 <div id="slide-show">
   <ul class="slide-list bjqs"<?php print $content_attributes; ?>>

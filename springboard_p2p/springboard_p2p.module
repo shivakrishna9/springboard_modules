@@ -148,7 +148,7 @@ function springboard_p2p_menu() {
 /**
  * Implements hook_theme().
  */
-function springboard_p2p_theme($existing, $theme) {
+function springboard_p2p_theme($existing, $type, $theme) {
   $templates = array(
     'springboard_p2p_admin_settings' => array(
       'render element' => 'form',
