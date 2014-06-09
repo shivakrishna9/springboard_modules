@@ -5,6 +5,13 @@
  */
 
 /**
+ * Implements hook_install().
+ */
+function springboard_p2p_install() {
+  springboard_p2p_add_donation_form_content_type();
+}
+
+/**
  * Implements hook_uninstall().
  */
 function springboard_p2p_uninstall() {
@@ -199,6 +206,52 @@ function springboard_p2p_personal_campaign_action_schema() {
 }
 
 /**
+ * Create the p2p_donation_form content type.
+ */
+function springboard_p2p_add_donation_form_content_type() {
+  $type = node_type_set_defaults();
+  $type->name = t('Peer to peer Donation Form');
+  $type->type = 'p2p_donation_form';
+  $type->description = t('Springboard provided P2P donation form type.');
+  $type->title_label = t('Title');
+  $type->has_title = ($type->title_label != '');
+  $type->base = 'node_content';
+  $type->custom = TRUE;
+  $type->modified = TRUE;
+  $type->module = 'springboard_p2p';
+  // Save or reset persistent variable values.
+  $variables = array(
+    'node_submitted' => 0,
+    'comment' => COMMENT_NODE_HIDDEN,
+    'fundraiser' => 1,
+    'webform_user' => 1,
+    'webform_user_default_fields' => array(
+      'webform_user_all_profile_fields' => 'webform_user_all_profile_fields',
+    ),
+  );
+  foreach ($variables as $key => $value) {
+    $variable_new = $key . '_' . $type->type;
+    if (is_array($value)) {
+      $value = array_keys(array_filter($value));
+    }
+    variable_set($variable_new, $value);
+  }
+  node_type_save($type);
+  node_types_rebuild();
+  node_add_body_field($type);
+  // Add as a webform.
+  $webform_node_types = variable_get('webform_node_types', array('webform'));
+  $webform_node_types_primary = variable_get('webform_node_types_primary', array('webform'));
+  $webform_node_types = array_merge($webform_node_types, array('p2p_donation_form'));
+  $webform_node_types_primary = array_merge($webform_node_types_primary, array('p2p_donation_form'));
+  variable_set('webform_node_types', array_unique($webform_node_types));
+  variable_set('webform_node_types_primary', array_unique($webform_node_types_primary));
+  // Done.
+  drupal_set_message(t('The content type <em>p2p_donation_form</em> has been added.'));
+  watchdog('springboard_p2p', 'Added content type p2p_donation_form.');
+}
+
+/**
  * Adds the springboard_p2p_personal_campaign_action table.
  */
 function springboard_p2p_update_7001() {
@@ -327,4 +380,11 @@ function springboard_p2p_update_7002() {
     'default' => 0,
   );
   db_add_field('springboard_p2p_personal_campaign_action', 'sid', $field);
+}
+
+/**
+ * Adds the default p2p_donation_form content type.
+ */
+function springboard_p2p_update_7003() {
+  springboard_p2p_add_donation_form_content_type();
 }
