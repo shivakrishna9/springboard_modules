@@ -25,7 +25,7 @@
       // personal campaign slideshow.
       $('#slide-show').bjqs({
         height : 400,
-        animspeed : 511000,
+        animspeed : 5800,
         responsive  : true,
         nexttext : '',
         prevtext : '',
@@ -39,6 +39,7 @@
       }
 
       // Remove the comment title if there are no comments.
+      // @TODO - this should be done with php in personal_campaign_comments.inc
       if ($('ul.comment-wrapper').is(':empty')) {
         console.log('it is empty');
         $('#p2p-comment-pane h2.pane-title').remove();
