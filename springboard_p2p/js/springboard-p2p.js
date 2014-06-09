@@ -10,6 +10,7 @@
 
       // Add a class to the parent for better theming.
       $('#edit-mail').parent('.control-group').addClass('email-wrapper');
+      $('#edit-mail').parent('.form-item').addClass('email-wrapper');
 
     // Get rid of inline styles.
    $('.panel-display p').attr('style', '');

@@ -41,11 +41,12 @@
 }
 
 .fieldset-wrapper #other-wrapper .control-group,
-.fieldset-wrapper #other-wrapper .fomr-item {
+.fieldset-wrapper #other-wrapper .form-item {
   width: 100%;
 }
 
 .fundraiser-payment-fields.form-wrapper select {
+  margin-right: 8px;
   width: 38%;
 }
 
@@ -81,12 +82,16 @@ input[type='text']:focus, input[type='email']:focus {
 }
 
 .control-group .checkbox-input,
-.control-group .radio-button-input {
+.control-group .radio-button-input,
+.form-item .checkbox-input,
+.form-item .radio-button-input {
   display: none;
 }
 
 .control-group select,
-.control-group input {
+.control-group input,
+.form-item select,
+.form-item input {
   float: none;
   clear: both;
   color: #828385;
@@ -99,20 +104,25 @@ input[type='text']:focus, input[type='email']:focus {
 }
 
 .control-group.success select,
-.control-group.success input {
+.control-group.success input,
+.form-item.success select,
+.form-item.success input {
   float: left;
   clear: left;
 }
 
-.control-group.error .error {
+.control-group.error .error,
+.form-item.error .error {
   margin: 0;
 }
 
-.control-group.success .error.valid {
+.control-group.success .error.valid,
+.form-item.success .error.valid {
   display: inline-block;
 }
 
-.control-group.success:after {
+.control-group.success:after,
+.form-item.success:after {
   position: relative;
   top: 6px;
   left: -7px;
@@ -125,7 +135,8 @@ input[type='text']:focus, input[type='email']:focus {
   font-family: FontAwesome;
 }
 
-.control-group.success .error.valid {
+.control-group.success .error.valid,
+.form-item.success .error.valid {
   background: none;
 }
 
@@ -247,6 +258,7 @@ input#edit-submit {
 
 #comment-wrapper textarea {
   width: 99%;
+  min-height: 106px;
 }
 
 .panel-display.panel-2col-bricks {
@@ -325,8 +337,8 @@ input#edit-submit {
   .form-textarea-wrapper textarea,
   input[type='text'],
   input[type='email'] {
-    width: 90%;
     padding: 10px 0 10px 10px;
+    width: 90%;
     font-size: 16px;
   }
 

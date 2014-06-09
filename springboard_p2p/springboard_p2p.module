@@ -1599,7 +1599,12 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
 
     }
 
-    if ($is_fundraiser_type) {
+    // Test for donation form and if a p2p form.
+    if (($is_fundraiser_type) || (!empty($_GET['p2p_pcid']))) {
+
+      // Get rid of the grippie.
+      $form["springboard_p2p_personal_campaign_action"]['comment']['#resizable'] = FALSE;
+
       // Retrieve various webform fields using
       // fundraiser_webform_fundraiser_get_form_field.
       $donation = fundraiser_webform_fundraiser_get_form_field($form, 'donation');
