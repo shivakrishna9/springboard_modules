@@ -124,7 +124,8 @@ body p {
   vertical-align: top;
 }
 
-.reg-pane .control-group {
+.reg-pane .control-group,
+.reg-pane .form-item {
   width: 49%;
   clear: none;
   float: none;
@@ -135,7 +136,8 @@ body p {
   width: 99%;
 }
 
-.reg-pane #edit-account .control-group {
+.reg-pane #edit-account .control-group,
+.reg-pane #edit-account .form-item {
   width: 99%;
 }
 
@@ -143,7 +145,8 @@ body p {
   width: 100%;
 }
 
-.reg-pane #edit-account .control-group .control-group {
+.reg-pane #edit-account .control-group .control-group,
+.reg-pane #edit-account .form-item .form-item{
   width: 49%;
   display: inline-block;
   vertical-align: top;
@@ -155,7 +158,8 @@ body p {
   margin: 1.4em 0;
 }
 
-.reg-pane .control-group.confirm-parent {
+.reg-pane .control-group.confirm-parent,
+.reg-pane .form-item.confirm-parent {
   margin-top: 44px;
 }
 
@@ -168,7 +172,8 @@ body p {
   top: -18px;
 }
 
-.reg-pane .control-group.email-wrapper .description {
+.reg-pane .control-group.email-wrapper .description,
+.reg-pane .form-item.email-wrapper .description {
   font-size: 13px;
   width: 84%;
   line-height: 1.4em;
@@ -268,7 +273,9 @@ body p {
 @media (max-width: 1170px) {
 
   .control-group select,
-  .control-group input {
+  .control-group input,
+  .form-item select,
+  .form-item input {
     width: 160px;
   }
 
@@ -289,7 +296,9 @@ body p {
   }
 
   .control-group select,
-  .control-group input {
+  .control-group input,
+  .form-item select,
+  .form-item input {
     width: 120px;
   }
 
@@ -298,12 +307,15 @@ body p {
 @media (max-width: 768px) {
 
   .control-group select,
-  .control-group input {
+  .control-group input,
+  .form-item select,
+  .form-item input {
     width: 90%;
   }
 
   .reg-pane .form-wrapper,
-  .reg-pane .control-group {
+  .reg-pane .control-group,
+  .reg-pane .form-item {
     width: 99%;
   }
 
