@@ -15,15 +15,18 @@
       mediaCheck({
         media: '(max-width: 980px)',
         entry: function() {
+          // < 980 sidebar is first
           $(p2pd  + " " +  '.panel-col-last').insertBefore(p2pd  + " " + '.panel-col-first');
+          // Move the ssl cert over to the sidebar when < 980.
+          $('#ssl-cert').after('.fundraiser_submit_message');
         },
         exit: function() {
+         // > 980 sidebar is last.
           $(p2pd  + " " +  '.panel-col-first').insertBefore(p2pd  + " " + '.panel-col-last');
+          // Move the ssl cert over to the sidebar when > 980.
+          $('#ssl-cert').appendTo('.panel-panel.panel-col-last .inside');
         }
       });
-
-      // Move the ssl cert over to the sidebar.
-      $('#ssl-cert').appendTo('.panel-panel.panel-col-last .inside');
 
       // Add meaningful classes to webform radio buttons & labels.
       $('input[type=checkbox]').addClass('checkbox-input');
