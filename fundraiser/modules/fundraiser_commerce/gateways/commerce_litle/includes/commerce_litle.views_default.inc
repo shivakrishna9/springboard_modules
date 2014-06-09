@@ -1,4 +1,5 @@
 <?php
+function commerce_litle_views_default_views() {
 $view = new view();
 $view->name = 'litle_fraud_log';
 $view->description = '';
@@ -130,7 +131,6 @@ $handler->display->display_options['fields']['avs_result']['separator'] = '';
 $handler->display->display_options['fields']['litle_txn_id']['id'] = 'litle_txn_id';
 $handler->display->display_options['fields']['litle_txn_id']['table'] = 'commerce_litle_fraud';
 $handler->display->display_options['fields']['litle_txn_id']['field'] = 'litle_txn_id';
-$handler->display->display_options['fields']['litle_txn_id']['separator'] = '';
 /* Field: Commerce Litle Fraud Log: Device Review Status */
 $handler->display->display_options['fields']['device_review_status']['id'] = 'device_review_status';
 $handler->display->display_options['fields']['device_review_status']['table'] = 'commerce_litle_fraud';
@@ -256,3 +256,8 @@ $handler->display->display_options['menu']['weight'] = '0';
 $handler->display->display_options['menu']['name'] = 'management';
 $handler->display->display_options['menu']['context'] = 0;
 $handler->display->display_options['menu']['context_only_inline'] = 0;
+
+  $views['commerce_litle_fraud'] = $view;
+
+   return $views;
+  }
