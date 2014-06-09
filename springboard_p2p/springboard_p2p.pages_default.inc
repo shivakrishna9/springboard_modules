@@ -310,7 +310,7 @@ function springboard_p2p_default_page_manager_handlers() {
     'no_blocks' => 0,
     'pipeline' => 'standard',
     'body_classes_to_remove' => '',
-    'body_classes_to_add' => 'p2p-donation-form',
+    'body_classes_to_add' => 'p2p-donation-form p2p-page-type',
     'css_id' => '',
     'css' => '',
     'contexts' => array(),
@@ -417,41 +417,16 @@ function springboard_p2p_default_page_manager_handlers() {
     $pane->style = array(
       'settings' => NULL,
     );
-    $pane->css = array();
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'pane-sidebar panel-pane-wrapper',
+    );
     $pane->extras = array();
     $pane->position = 0;
     $pane->locks = array();
     $pane->uuid = 'f12b3637-071a-420b-a82e-aad634b71afd';
     $display->content['new-f12b3637-071a-420b-a82e-aad634b71afd'] = $pane;
     $display->panels['middle_right'][0] = 'new-f12b3637-071a-420b-a82e-aad634b71afd';
-    $pane = new stdClass();
-    $pane->pid = 'new-d40acda3-2b67-4b0b-aa7b-bbc315ffffb3';
-    $pane->panel = 'middle_right';
-    $pane->type = 'custom';
-    $pane->subtype = 'custom';
-    $pane->shown = TRUE;
-    $pane->access = array();
-    $pane->configuration = array(
-      'admin_title' => '',
-      'title' => 'Sidebar',
-      'body' => 'The sidebar goals widget will be here.',
-      'format' => 'filtered_html',
-      'substitute' => 1,
-    );
-    $pane->cache = array();
-    $pane->style = array(
-      'settings' => NULL,
-    );
-    $pane->css = array(
-      'css_id' => '',
-      'css_class' => 'pane-sidebar panel-pane-wrapper',
-    );
-    $pane->extras = array();
-    $pane->position = 1;
-    $pane->locks = array();
-    $pane->uuid = 'd40acda3-2b67-4b0b-aa7b-bbc315ffffb3';
-    $display->content['new-d40acda3-2b67-4b0b-aa7b-bbc315ffffb3'] = $pane;
-    $display->panels['middle_right'][1] = 'new-d40acda3-2b67-4b0b-aa7b-bbc315ffffb3';
     $pane = new stdClass();
     $pane->pid = 'new-96263c63-c874-4a00-8dfb-0eafb7f64c75';
     $pane->panel = 'top';

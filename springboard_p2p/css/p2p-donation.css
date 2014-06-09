@@ -289,6 +289,18 @@ input#edit-submit {
   margin: 0;
 }
 
+.fa-calendar.amount-icon {
+  position: absolute;
+  top: 8px;
+  right: 7px;
+  display: block;
+  width: 50px;
+  height: 50px;
+  color: #859596;
+  text-align: right;
+  font-size: 19px;
+}
+
 /* media queries */
 @media (max-width: 768px) {
 

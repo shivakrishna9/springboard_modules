@@ -258,6 +258,7 @@ a.view-all-search:after {
   margin: 0 0 20px 0;
   padding: 10px;
   border: 1px solid #a6a6a6;
+  position: relative;
 }
 
 .pane-node-title h1 {

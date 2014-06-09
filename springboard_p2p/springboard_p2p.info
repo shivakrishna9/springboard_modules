@@ -9,7 +9,6 @@ dependencies[] = features
 dependencies[] = fundraiser
 dependencies[] = fundraiser_commerce
 dependencies[] = page_manager
-dependencies[] = springboard_p2p
 dependencies[] = springboard_p2p_campaign
 dependencies[] = springboard_p2p_category
 dependencies[] = springboard_p2p_personal_campaign
