@@ -12,6 +12,20 @@
  */
 function webform_confirmation_alias_admin_settings() {
   global $base_url;
+  
+  // Display warning message letting the admin know that forms must be aliased for this to work.
+  $options = array(
+    'attributes' => array(
+      'target' => '_blank',
+    ),
+  );
+  $message = t('These settings will only affect forms that have URL aliases. See information on !drupalorg and !pathauto for more information.', array(
+    '!drupalorg' => l('Drupal.org', 'https://drupal.org/node/120631', $options),
+    '!pathauto' => l('the Pathauto module', 'https://drupal.org/project/pathauto', $options)
+  ));
+  drupal_set_message($message, 'warning');
+  
+  // Now generate the form.
   $form['generate_aliases'] = array(
     '#type' => 'fieldset',
     '#title' => t('Bulk Generate Aliases'),
