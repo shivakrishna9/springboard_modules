@@ -33,8 +33,8 @@
         showmarkers : false
       });
 
+      // Adsd a class to the panel if its adjacent one is empty.
       if ($('.panel-middle-top-right').length === 0){
-        // do something here
         $('.panel-middle-top-left').addClass('no-middle-top-right');
       }
 
