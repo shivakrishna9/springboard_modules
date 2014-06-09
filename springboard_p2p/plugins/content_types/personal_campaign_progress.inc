@@ -45,6 +45,17 @@ function springboard_p2p_personal_campaign_progress_render($subtype, $conf, $pan
 
   $node = $context->data;
 
+  if ($node->type != 'p2p_personal_campaign' && isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid'])) {
+    $node = node_load($_GET['p2p_pcid']);
+    if ($node->type == 'p2p_personal_campaign' && isset($node->field_p2p_campaign[$node->language][0]['target_id'])) {
+      $campaign = node_load($node->field_p2p_campaign[$node->language][0]['target_id']);
+      $personal_campaign = $node;
+    }
+    else {
+      return;
+    }
+  }
+
   if ($node->type == 'p2p_personal_campaign' && isset($node->field_p2p_campaign[$node->language][0]['target_id'])) {
     $campaign = node_load($node->field_p2p_campaign[$node->language][0]['target_id']);
     $personal_campaign = $node;
