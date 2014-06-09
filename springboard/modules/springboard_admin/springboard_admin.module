@@ -235,10 +235,14 @@ function springboard_admin_init() {
             $goto_path = 'springboard/node/' . $m2[1] . '/results' . $m2[2];
           }
         }
+        // Webform_ab list of associated Webforms
+        elseif (preg_match('|^/node/([0-9]*)/webforms((?:/[a-zA-Z0-9_\-]*)*)?|',  $path, $m2)) {
+          $goto_path = 'springboard/node/' . $m2[1] . '/included-forms' . $m2[2];
+        }
         // All other pages under node/%/webform.
         elseif (preg_match('|^/node/([0-9]*)/webform((?:/[a-zA-Z0-9_\-]*)*)?|',  $path, $m2)) {
           $goto_path = 'springboard/node/' . $m2[1] . '/form-components' . $m2[2];
-        }
+        }        
         // node/%/webform -> /springboard/node/%/form-components.
         else {
           $goto_path = 'springboard/node/' . $m1[1] . '/form-components';
@@ -547,6 +551,12 @@ function springboard_admin_url_inbound_alter(&$path, $original_path, $path_langu
       else {
         $path = 'node/' . $m1[1] . '/webform-results';
       }
+    }
+    /**
+     * Webform AB list of related webforms.
+     */
+    else if (preg_match('|^springboard/node/([0-9]*)/included-forms((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
+      $path = 'node/' . $m1[1] . '/webforms' . $m1[2];
     }
     // All other pages under springboard/node/%
     else { 
