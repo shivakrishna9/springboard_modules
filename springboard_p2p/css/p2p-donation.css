@@ -23,6 +23,7 @@
 }
 
 .fieldset-wrapper .control-group,
+.fieldset-wrapper .form-item,
 #zone-select-wrapper,
 .expiration-date-wrapper,
 .fundraiser-payment-fields.form-wrapper select,
@@ -39,7 +40,8 @@
   display: none;
 }
 
-.fieldset-wrapper  #other-wrapper .control-group {
+.fieldset-wrapper #other-wrapper .control-group,
+.fieldset-wrapper #other-wrapper .fomr-item {
   width: 100%;
 }
 
@@ -47,7 +49,8 @@
   width: 38%;
 }
 
-.expiration-date-wrapper .control-group {
+.expiration-date-wrapper .control-group,
+.expiration-date-wrapper .form-item {
   width: 100%;
 }
 
@@ -89,7 +92,8 @@ input[type='text']:focus, input[type='email']:focus {
   color: #828385;
 }
 
-.edit-submitted-payment-information-payment-method .control-group {
+.edit-submitted-payment-information-payment-method .control-group,
+.edit-submitted-payment-information-payment-method .form-item {
   display: inherit;
   width: inherit;
 }
@@ -235,7 +239,8 @@ input#edit-submit {
   clear: both;
 }
 
-#comment-wrapper .control-group {
+#comment-wrapper .control-group,
+#comment-wrapper .form-item {
   display: block;
   width: 100%;
 }
@@ -305,6 +310,7 @@ input#edit-submit {
 @media (max-width: 768px) {
 
   .fieldset-wrapper .control-group,
+  .fieldset-wrapper .form-item,
   #zone-select-wrapper,
   .expiration-date-wrapper,
   .fundraiser-payment-fields.form-wrapper select,
@@ -328,7 +334,8 @@ input#edit-submit {
     width: 90%;
   }
 
-  .control-group .spacer {
+  .control-group .spacer,
+  .form-item .spacer {
     margin-left: 0;
   }
 
