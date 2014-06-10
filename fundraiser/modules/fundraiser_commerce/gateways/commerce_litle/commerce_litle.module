@@ -1854,7 +1854,7 @@ function commerce_litle_fraud_settings_form() {
     '#default_value' => variable_get('commerce_litle_fraud_dev_mode_id', ''),
     '#states' => array(
       'required' => array(
-        ':input[name="commerce_litle_fraud"]' => array('checked' => TRUE),
+        ':input[name="commerce_litle_fraud_dev_mode"]' => array('checked' => TRUE),
       ),
     ),
   );
