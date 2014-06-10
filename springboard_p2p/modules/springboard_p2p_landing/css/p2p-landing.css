@@ -66,6 +66,7 @@ span.slide-wrapper {
 span.slider-teaser {
   display: block;
   padding: 4px 0;
+  min-height: 20px;
   background: #444;
   color: #fff;
   font-size: 16px;
