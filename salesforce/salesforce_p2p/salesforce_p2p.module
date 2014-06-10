@@ -6,19 +6,124 @@
  */
 
 /**
- * Implements hook_salesforce_queue_create_item_alter().
+ * Implements hook_salesforce_queue_create_item_alter()
  */
 function salesforce_p2p_salesforce_queue_create_item_alter($item) {
+
+  // Add a token for the peer to peer category to the peer to peer campaign
+  if ($item['module'] == 'node' && $item['delta'] == 'p2p_campaign') {
+    // Load up the campaign node (TODO: check for cache)
+    $node = node_load($item['drupal_id']);
+    // Wrap the entity to make it easier to work with.
+    $wrapper = entity_metadata_wrapper('node', $node);
+    // Calling raw() will get us the id of the category instead of loading the enire entity.
+    $category_id = $wrapper->field_p2p_category->raw();
+
+    $item['sobject']->fields['P2P_Category__c'] = sprintf('[P2P__c:p2p_category:%d]', $category_id);
+
+  }
+
+  // Add a token for peer to peer campaign to the personal campaign.
+  if ($item['module'] == 'node' && $item['delta'] == 'p2p_personal_campaign') {
+    // Load up personal campaign node
+    $node = node_load($item['drupal_id']);
+    // Wrap the entity to make it easier to work with.
+    $wrapper = entity_metadata_wrapper('node', $node);
+    // Calling raw() will get us the id of the category instead of loading the enire entity.
+    $campaign_id = $wrapper->field_p2p_campaign->raw();
+
+    // Relate peer to peer campaign.
+    $item['sobject']->fields['P2P_Campaign__c'] = sprintf('[P2P_Campaign__c:p2p_campaign:%d]', $campaign_id);
+
+    // Relate peer to peer campaigner.
+    $item['sobject']->fields['P2P_Campaigner__c'] = sprintf('[Contact:user:%d]', $node->uid);
+
+  }
+
+  // Donation.
+  if ($item['module'] == 'salesforce_donation' && $item['delta'] == 'donation') {
+    // TODO: The springboard_p2p_personal_campaign_action record does not exist
+    // yet. Please shoot me.
+    $result = db_query("
+      SELECT
+        sa.personal_campaign_nid,
+        sa.campaign_nid,
+        sa.category_nid
+      FROM {fundraiser_donation} fd
+      INNER JOIN {springboard_p2p_personal_campaign_action} sa
+      ON sa.sid = fd.sid
+      WHERE fd.did = :did AND sa.action_type = :action_type
+      ", array(':did' => 18, ':action_type' => 'fundraiser'));
+
+    drupal_set_message('<pre>' . print_r($item['drupal_id'], true) . '</pre>');
+    $action = $result->fetchObject();
+    drupal_set_message('<pre>' . print_r($action, true) . '</pre>');
+    if (!empty($action)) {
+      $item['sobject']->fields['P2P_Personal_Campaign__c'] = sprintf('[P2P_Personal_Campaign__c:p2p_personal_campaign:%d]', $action->personal_campaign_nid);
+    }
+
+  }
+
+
   // TODO: Check item to see if it is a peer to peer campaign. If
   // it is we'll need to alter in the relationship token for the
   // peer to peer category. Same goes for personal campaigns.
   // drupal_set_message('<pre>' . print_r($item, true) . '</pre>');
+  /*
+  Array
+  (
+      [drupal_id] => 1
+      [module] => user
+      [delta] => user
+      [object_type] => Contact
+      [operation] => UPSERT
+      [dedupe_field] => Email
+      [sobject] => SalesforceObject Object
+          (
+              [Id] =>
+              [type] => Contact
+              [record] =>
+              [fields] => Array
+                  (
+                      [Drupal_User_ID__c] => 1
+                      [Email] => phillip.cave@jacksonriver.com
+                      [FirstName] => Phillip
+                      [LastName] => Cave
+                      [MailingStreet] =>
+                      [MailingCity] =>
+                      [MailingState] =>
+                      [MailingPostalCode] =>
+                      [MailingCountry] =>
+                      [Market_Source__c] =>
+                      [Referrer__c] =>
+                      [Initial_Referrer__c] =>
+                      [recordTypeId] =>
+                  )
 
-  if ($item['delta'] == 'donation') {
-    $donation = fundraiser_donation_get_donation($item['drupal_id']);
-    $action = springboard_p2p_get_personal_campaign_action_by_sid($donation->sid);
-    if ($action) {
-      // @todo What do we need to add to the donation to relate it to whatever?
-    }
-  }
+              [fieldsToNull] => Array
+                  (
+                  )
+
+          )
+
+      [sync_rules] => Array
+          (
+              [Drupal_User_ID__c] => always
+              [Email] => always
+              [FirstName] => always
+              [LastName] => always
+              [MailingStreet] => always
+              [MailingCity] => always
+              [MailingState] => always
+              [MailingPostalCode] => always
+              [MailingCountry] => always
+              [Market_Source__c] => blank
+              [Referrer__c] => blank
+              [Initial_Referrer__c] => blank
+          )
+
+      [queue] => new
+      [created] => 1401907921
+  )
+  */
 }

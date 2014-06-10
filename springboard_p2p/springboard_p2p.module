@@ -1493,6 +1493,33 @@ function springboard_p2p_menu_local_tasks_alter(&$data, $router_item, $root_path
 }
 
 /**
+ * Implements hook_fundraiser_donation_post_create().
+ *
+ * At this point in the process there is enough information
+ * to determine if the donation is being made to a personal
+ * campaign. Let's go ahead and record that fact here because
+ * downstream processing might need it.
+ */
+function springboard_p2p_fundraiser_donation_post_create($donation) {
+  // Check to see if donation is being made to a personal campaign.
+  if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid'])) {
+    // Add the peer to peer personal campaign id to the donation
+    // object so that it can be utilized downstream.
+    $donation->p2p_pcid = $_GET['p2p_pcid'];
+
+    // Create a minimum action record. This record be completed in
+    // springboard_p2p_fundraiser_donation_post_submit.
+    $record['sid'] = $donation->sid;
+    $record['form_nid'] = $donation->nid;
+    $record['personal_campaign_nid'] = $_GET['p2p_pcid'];
+    $record['action_type'] = 'fundraiser';
+    $record['comment'] = '';
+
+    springboard_p2p_save_personal_campaign_action($record);
+  }
+}
+
+/**
  * Implements hook_form_alter().
  *
  * Adds extra data to a p2p enabled form if a personal campaign ID is passed in.
@@ -1802,6 +1829,7 @@ function springboard_p2p_format_user_full_name($account) {
  */
 function springboard_p2p_submit_personal_campaign_action($action, $donation = NULL) {
   if (!empty($action['personal_campaign_nid'])) {
+    $key = NULL;
     $personal_campaign = node_load($action['personal_campaign_nid']);
 
     // Incremenet the submissions progress.
@@ -1810,6 +1838,11 @@ function springboard_p2p_submit_personal_campaign_action($action, $donation = NU
     // If a donation was passed in then we have a fundraiser action
     // and should increment the amount progress.
     if (!is_null(($donation))) {
+      // In the case of a donation, an action record will have been
+      // created in springboard_p2p_fundraiser_donation_post_create.
+      // Set the $key to sid so the record will get updated with the
+      // remaining information.
+      $key = array('sid');
       $action['uid'] = $donation->uid;
       $action['sid'] = $donation->sid;
       $amount = $donation->donation['amount'];
@@ -1822,7 +1855,7 @@ function springboard_p2p_submit_personal_campaign_action($action, $donation = NU
     node_save($personal_campaign);
   }
 
-  springboard_p2p_save_personal_campaign_action($action);
+  springboard_p2p_save_personal_campaign_action($action, $key);
 }
 
 /**
@@ -1830,15 +1863,22 @@ function springboard_p2p_submit_personal_campaign_action($action, $donation = NU
  *
  * @param array $record
  *   The record to write to the table.
+ * @param array $key
+ *   The primary key. Use to perform an update on an existing record.
  */
-function springboard_p2p_save_personal_campaign_action($record) {
+function springboard_p2p_save_personal_campaign_action($record, $key = NULL) {
   $record = (array) $record;
 
   if (empty($record['created'])) {
     $record['created'] = REQUEST_TIME;
   }
 
-  drupal_write_record('springboard_p2p_personal_campaign_action', $record);
+  if (!empty($key)) {
+    drupal_write_record('springboard_p2p_personal_campaign_action', $record, $key);
+  }
+  else {
+    drupal_write_record('springboard_p2p_personal_campaign_action', $record);
+  }
 }
 
 /**
