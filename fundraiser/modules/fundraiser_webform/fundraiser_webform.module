@@ -422,6 +422,10 @@ function fundraiser_webform_form_alter(&$form, &$form_state, $form_id) {
       // From fundraiser.module, calls hooks to create form and submission paths.
       fundraiser_donation_form($form, $form_state); // From fundraiser.module.
     }
+    
+    // Modify webforms to add second validation handler that prevents
+    // sending a recurring donation to a non-recurring-enabled payment gateway. 
+    $form['#validate'][] = 'fundraiser_webform_recurring_conflict_validate';
   }
 
   // Do not allow users to muck with defined form keys in component editting form.
@@ -459,6 +463,64 @@ function fundraiser_webform_form_alter(&$form, &$form_state, $form_id) {
     }
   }
   return $form;
+}
+
+/**
+ * Validation callback for donation webforms.
+ *
+ * This function checks whether the visitor chose to make a monthly
+ * recurring donation and also chose a payment method that does not
+ * support recurring payments. This should be caught by clientside
+ * validation but this catches any submission that makes it through.
+ */
+function fundraiser_webform_recurring_conflict_validate(&$form, &$form_state) {
+  
+  $recurring_donation = FALSE;
+    
+  // Loop through submitted data to see if 'recurring' and 'paypal' were both chosen.
+  // Only could happen if JS was turned off.
+  foreach ($form_state['values']['submitted'] as $key => $submitted_data) {
+    // If a key within the 'submitted' array is also an array, loop through it.
+    if (is_array($submitted_data)) {
+      foreach ($submitted_data as $fieldset_key => $fieldset_data) {
+        // If a key within the 'submitted' array is called 'recurs_monthly', check its value.
+        if ($fieldset_key == 'recurs_monthly' && in_array('recurs', $fieldset_data)) {
+          $recurring_donation = TRUE;
+        }
+        // Then check whether the key is called 'payment_method'.
+        if ($fieldset_key == 'payment_method') {
+          $payment_method = _fundraiser_webform_get_gateway_details($fieldset_data);
+        }
+      }
+    } 
+    // Do the same process for these fields that aren't nested within another array.
+    if ($key == 'recurs_monthly' && in_array('recurs', $submitted_data)) {
+      $recurring_donation = TRUE;
+    }
+    if ($key == 'payment_method') {
+      $payment_method = _fundraiser_webform_get_gateway_details($submitted_data);
+    }
+  }
+  
+  // Check now and return error if necessary.
+  // We can't have a recurring donation coupled with a 
+  // payment method that doesn't support recurring.
+  if ($recurring_donation === TRUE && !isset($payment_method['allows_recurring'])) {
+    $error_message = t('Thank you for choosing a monthly donation! However, @payment_method does not support recurring monthly payments. Please choose a different method and submit the donation form again.', array('@payment_method' => $payment_method['details']['gateway_details']['display_title']));
+    form_set_error('recurs_monthly', $error_message);
+  }
+}
+
+/**
+ * Get gateway details and find out if it supports recurring payments.
+ */
+function _fundraiser_webform_get_gateway_details($payment_method_name) {
+  $payment_method = array();
+  $payment_method['details'] = fundraiser_gateway_info_by_methodname($payment_method_name);
+  if (isset($payment_method['details']['allow_recurring']) && _fundraiser_sustainers_supports_recurring($payment_method['details']['allow_recurring'], $payment_method_name)) {
+    $payment_method['allows_recurring'] = TRUE;
+  }
+  return $payment_method;
 }
 
 /**
@@ -1140,6 +1202,14 @@ function _fundraiser_webform_get_donation_by_sid($sid) {
     }
   }
   return FALSE;
+}
+
+/**
+ * Helper function, find out if a node has recurring payments as an option.
+ */
+function _fundraiser_webform_has_exposed_recurring_field($nid) {
+  $webform_node = node_load($nid);
+  return ($webform_node->recurring_setting == 'user_choice' ? TRUE : FALSE);
 }
 
 /**

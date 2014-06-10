@@ -214,6 +214,10 @@ function theme_fundraiser_webform_component_payment_methods($variables) {
 
 /**
  * Implements _webform_render_component().
+ *
+ * Render the enabled Payment Method fields for this form.
+ * When rendering, use States API JS to show/hide them based
+ * on recurring-payment ability.
  */
 function _webform_render_payment_method($component, $value = NULL, $filter = TRUE) {
   // Use the default select list function to build the element
@@ -240,7 +244,28 @@ function _webform_render_payment_method($component, $value = NULL, $filter = TRU
       $element['#title'] = '';
     }
     else {
+      // Find out whether the form has a checkbox/radio field called 'recurs_monthly'.
+      // Only add the States API code below if such a field exists.      
+      $form_has_exposed_recurring_field = _fundraiser_webform_has_exposed_recurring_field($component['nid']);
+      
       foreach ($payment_methods as $payment_method) {
+        // Check if the gateway allows recurring payments, and use the States API if it doesn't.
+        // This process performs the show/hide on payment method options when the
+        // "recurs_monthly" field is selected.
+        $this_gateway = _fundraiser_gateway_info($payment_method['id']);
+        if (!isset($this_gateway['allow_recurring']) || !_fundraiser_sustainers_supports_recurring($this_gateway['allow_recurring'], $payment_method['method'])) {
+          if ($form_has_exposed_recurring_field) {
+            $payment_method_name = $payment_method['method'];
+            $element[$payment_method_name] = array(
+              '#states' => array(
+                'invisible' => array(
+                  ':input[name*=recurs_monthly]' => array('value' => "recurs"),
+                ),
+              ),
+            );
+          }
+        }
+        
         // Set the option label as the custom label or the hard-coded label
         $options[$payment_method['method']] = !empty($payment_method['label']) ? $payment_method['label'] : $payment_method['method'];
         $default = !empty($payment_method['default']) ? $payment_method['method'] : $default;
