@@ -437,9 +437,14 @@ function _commerce_litle_fraud_markup($session_id = NULL) {
  */
 function _commerce_litle_fraud_session_id() {
   static $session_id;
-  if (!$session_id) {
+  $dev_mode = variable_get('commerce_litle_fraud_dev_mode', 0);
+  if (!$session_id && !$dev_mode) {
     $prefix = variable_get('commerce_litle_fraud_id_prefix');
     $session_id = $prefix . '-' . hash('sha256', time() . drupal_random_key() . mt_rand());
+  }
+  elseif(!$session_id) {
+    $prefix = variable_get('commerce_litle_fraud_id_prefix');
+    $session_id = $prefix . '-' . variable_get('commerce_litle_fraud_dev_mode_id', '');
   }
   return $session_id;
 }
@@ -1831,6 +1836,29 @@ function commerce_litle_fraud_settings_form() {
     '#description' => t('Your server administrator can configure a subdomain which redirects to ThreatMetrix\'s server: "h.online-metrix.net". This step is optional; otherwise leave as is.'),
     '#default_value' => variable_get('commerce_litle_fraud_subdomain', 'h.online-metrix.net'),
   );
+
+  $form['fraud']['commerce_litle_fraud_dev_mode'] = array(
+    '#type' => 'checkbox',
+    '#title' => 'Enable Development mode',
+    '#default_value' => variable_get('commerce_litle_fraud_dev_mode', 0),
+    '#description' => t('Run Litle tests using the session ID string entered below.'),
+
+    '#prefix' => '<br />',
+  );
+
+  $form['fraud']['commerce_litle_fraud_dev_mode_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Dev Mode ID'),
+    '#description' => t('A session id string found in the Litle XML documentation. Do not include the prefix or hyphen, they are added automatically.'),
+    '#default_value' => variable_get('commerce_litle_fraud_dev_mode_id', ''),
+    '#states' => array(
+      'required' => array(
+        ':input[name="commerce_litle_fraud"]' => array('checked' => TRUE),
+      ),
+    ),
+  );
+
+
   $form['#validate'][] = 'commerce_litle_fraud_settings_form_validate';
   return system_settings_form($form);
 }
