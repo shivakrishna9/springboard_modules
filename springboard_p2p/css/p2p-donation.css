@@ -106,6 +106,13 @@ input[type='text']:focus, input[type='email']:focus {
   display: none;
 }
 
+.ie8 .control-group .checkbox-input,
+.ie8 .control-group .radio-button-input,
+.ie8 .form-item .checkbox-input,
+.ie8 .form-item .radio-button-input {
+  display: inline-block;
+}
+
 .control-group select,
 .control-group input,
 .form-item select,
@@ -194,6 +201,15 @@ input[type='text']:focus, input[type='email']:focus {
 
 .checkbox-label.checked:before {
   background: url('../images/sprite_p2p.png') no-repeat -137px -146px;
+}
+
+.ie8 .checkbox-label:before,
+.ie8 .radio-label:before {
+  background: none;
+}
+
+.ie8 #other-wrapper {
+  display: inline-block !important;
 }
 
 h2,

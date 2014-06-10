@@ -15,7 +15,7 @@
       mediaCheck({
         media: '(max-width: 980px)',
         entry: function() {
-          // < 980 sidebar is first
+          // < 980 sidebar is first.
           $(p2pd  + " " +  '.panel-col-last').insertBefore(p2pd  + " " + '.panel-col-first');
           // Move the ssl cert over to the sidebar when < 980.
           $('#ssl-cert').insertAfter('.fundraiser_submit_message');
@@ -75,18 +75,21 @@
         $('#other-wrapper').css('display', 'none');
       });
 
+      // Only on default form output, not on springboard.
+      if ($('div.form-item').length) {
       // Add classes to enhance default forms that don't have bootstrap classes.
-      $('.fundraiser-donation-form').validate({
-        onfocusout: function (element) {
-          $(element).valid();
-        },
-        highlight: function(element) {
-          $(element).closest('.form-item').removeClass('success').addClass('error');
-        },
-        success: function(element) {
-          element.text('OK').addClass('valid').closest('.form-item').removeClass('error').addClass('success');
-        }
-      });
+        $('.fundraiser-donation-form').validate({
+          onfocusout: function (element) {
+            $(element).valid();
+          },
+          highlight: function (element) {
+            $(element).closest('.form-item').removeClass('success').addClass('error');
+          },
+          success: function (element) {
+            element.text('OK').addClass('valid').closest('.form-item').removeClass('error').addClass('success');
+          }
+        });
+      }
 
       // end jquery.
     }};
