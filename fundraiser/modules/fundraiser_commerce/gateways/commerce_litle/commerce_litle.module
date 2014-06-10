@@ -444,7 +444,7 @@ function _commerce_litle_fraud_session_id() {
   }
   elseif(!$session_id) {
     drupal_set_message('Please note: commerce Litle Advanced Fraud Protection is running in development mode.', 'warning', TRUE);
-    $prefix = variable_get('Commerce_litle_fraud_id_prefix');
+    $prefix = variable_get('commerce_litle_fraud_id_prefix');
     $session_id = $prefix . '-' . variable_get('commerce_litle_fraud_dev_mode_id', '');
   }
   return $session_id;
