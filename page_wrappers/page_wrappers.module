@@ -74,7 +74,7 @@ function _page_wrappers_insert_after_first_element(&$a, $element) {
  * Replace standard site theme with pagewrapper template for nodes that have page wrappers assigned.
  */
 function page_wrappers_preprocess_page(&$vars) {
-  $wrapper_data = _page_wrapper_check();
+  $wrapper_data = page_wrappers_check();
   $wrapper = $wrapper_data['wrapper'];
   $node = $wrapper_data['node'];
 
@@ -144,7 +144,7 @@ function page_wrappers_block_list_alter(&$blocks) {
  * Implements of hook_css_alter().
  */
 function page_wrappers_css_alter(&$css) {
-  $wrapper_data = _page_wrapper_check();
+  $wrapper_data = page_wrappers_check();
   $wrapper = $wrapper_data['wrapper'];
 
   // If this is a node that has a wrapper assigned remove all the theme stylesheets
@@ -1224,7 +1224,7 @@ function _page_wrappers_get_theme_css($wrapper_node) {
  * Check if there is a page wrapper being set for the current page
  * @return array|mixed|null
  */
-function _page_wrapper_check() {
+function page_wrappers_check() {
   $wrapper = NULL;
   $node = NULL;
   if ($node = _page_wrappers_page_node()) {
