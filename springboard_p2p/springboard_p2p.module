@@ -1719,6 +1719,9 @@ function springboard_p2p_webform_client_form_submit($form, &$form_state) {
     if ($action['action_type'] == 'webform_user') {
       springboard_p2p_submit_personal_campaign_action($action);
     }
+
+    $form_state['redirect'][1]['query']['p2p_pcid'] = $form_state['values']['springboard_p2p_personal_campaign_action']['personal_campaign_nid'];
+
   }
   // Pass personal campaign id to Social for use when constructing share URLs.
   if (module_exists('sb_social') && !empty($form_state['values']['personal_campaign_id'])) {
