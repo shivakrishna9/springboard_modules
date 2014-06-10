@@ -179,6 +179,17 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['fields']['nid']['element_class'] = 'slide-link';
   $handler->display->display_options['fields']['nid']['element_label_type'] = '0';
   $handler->display->display_options['fields']['nid']['element_wrapper_type'] = '0';
+  /* Field: Content: Landing page slider teaser */
+  $handler->display->display_options['fields']['field_landing_page_slider_text']['id'] = 'field_landing_page_slider_text';
+  $handler->display->display_options['fields']['field_landing_page_slider_text']['table'] = 'field_data_field_landing_page_slider_text';
+  $handler->display->display_options['fields']['field_landing_page_slider_text']['field'] = 'field_landing_page_slider_text';
+  $handler->display->display_options['fields']['field_landing_page_slider_text']['label'] = '';
+  $handler->display->display_options['fields']['field_landing_page_slider_text']['element_type'] = 'span';
+  $handler->display->display_options['fields']['field_landing_page_slider_text']['element_class'] = 'slider-teaser';
+  $handler->display->display_options['fields']['field_landing_page_slider_text']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['field_landing_page_slider_text']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_landing_page_slider_text']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['field_landing_page_slider_text']['element_default_classes'] = FALSE;
   $handler->display->display_options['pane_category']['name'] = 'Springboard P2P';
   $handler->display->display_options['pane_category']['weight'] = '0';
   $export['p2p_campaign_landing_slideshow'] = $view;

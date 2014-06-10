@@ -63,6 +63,14 @@ span.slide-wrapper {
   text-align: center;
 }
 
+span.slider-teaser {
+  display: block;
+  padding: 4px 0;
+  background: #444;
+  color: #fff;
+  font-size: 16px;
+}
+
 .p2p-campaign-landing-slideshow span.slide-link {
   position: absolute;
   top: 60%;
@@ -97,16 +105,16 @@ span.slide-wrapper {
 
 .p2p-campaign-landing-slideshow span.node-edit {
   position: absolute;
-  bottom: 2px;
+  bottom: 4px;
   left: 0;
   width: 100%;
   text-align: left;
 }
 
 .p2p-campaign-landing-slideshow span.node-edit a {
-  padding: 4px 6px;
-  background: #ccc;
-  color: #555;
+  padding: 5px 6px;
+  background: #000;
+  color: #fff;
 }
 
 .p2p-campaign-landing-slideshow span.slide-link a:hover {
@@ -380,6 +388,18 @@ span.campaign-node-link {
 
   .campaign-landing-featured-view ul.campaign-landing-grid li {
     width: 99%;
+  }
+
+  .flex-direction-nav .flex-next, .flex-direction-nav .flex-prev {
+    display: none;
+  }
+
+  .p2p-campaign-landing-slideshow span.node-edit {
+    display: none;
+  }
+
+  .p2p-campaign-landing-slideshow span.slide-link {
+    top: 47%;
   }
 
 }

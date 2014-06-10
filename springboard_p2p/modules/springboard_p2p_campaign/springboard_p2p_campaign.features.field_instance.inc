@@ -55,6 +55,46 @@ function springboard_p2p_campaign_field_default_field_instances() {
     ),
   );
 
+  // Exported field_instance: 'node-p2p_campaign-field_landing_page_slider_text'
+  $field_instances['node-p2p_campaign-field_landing_page_slider_text'] = array(
+    'bundle' => 'p2p_campaign',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'text',
+        'settings' => array(),
+        'type' => 'text_default',
+        'weight' => 20,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_landing_page_slider_text',
+    'label' => 'Landing page slider teaser',
+    'required' => 0,
+    'settings' => array(
+      'text_processing' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'text',
+      'settings' => array(
+        'size' => 60,
+      ),
+      'type' => 'text_textfield',
+      'weight' => 6,
+    ),
+  );
+
   // Exported field_instance: 'node-p2p_campaign-field_p2p_allow_donor_comments'
   $field_instances['node-p2p_campaign-field_p2p_allow_donor_comments'] = array(
     'bundle' => 'p2p_campaign',
@@ -278,7 +318,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'progress_indicator' => 'throbber',
       ),
       'type' => 'image_image',
-      'weight' => 6,
+      'weight' => 7,
     ),
   );
 
@@ -529,7 +569,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'rows' => 5,
       ),
       'type' => 'text_textarea',
-      'weight' => 6,
+      'weight' => 5,
     ),
   );
 
@@ -611,46 +651,6 @@ function springboard_p2p_campaign_field_default_field_instances() {
       ),
       'type' => 'options_onoff',
       'weight' => 7,
-    ),
-  );
-
-  // Exported field_instance: 'node-p2p_campaign-field_p2p_private_access_message'
-  $field_instances['node-p2p_campaign-field_p2p_private_access_message'] = array(
-    'bundle' => 'p2p_campaign',
-    'default_value' => NULL,
-    'deleted' => 0,
-    'description' => 'A brief message to display if a user attempts to create a personal campaign without prior authorization.',
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'module' => 'text',
-        'settings' => array(),
-        'type' => 'text_default',
-        'weight' => 20,
-      ),
-      'teaser' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 0,
-      ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'field_p2p_private_access_message',
-    'label' => 'Authorization required message',
-    'required' => 0,
-    'settings' => array(
-      'text_processing' => 0,
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 1,
-      'module' => 'text',
-      'settings' => array(
-        'rows' => 5,
-      ),
-      'type' => 'text_textarea',
-      'weight' => 5,
     ),
   );
 
@@ -820,9 +820,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
 
   // Translatables
   // Included for use with string extractors like potx.
-  t('A brief message to display if a user attempts to create a personal campaign without prior authorization.');
   t('Allow donor comments');
-  t('Authorization required message');
   t('Campaign banner');
   t('Campaign thumbnail');
   t('Category');
@@ -831,6 +829,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
   t('Goals');
   t('Images');
   t('Landing page slider');
+  t('Landing page slider teaser');
   t('Organization introduction');
   t('Personal campaign introduction');
   t('Personal campaigns require approval');

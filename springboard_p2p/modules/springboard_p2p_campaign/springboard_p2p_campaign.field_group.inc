@@ -25,7 +25,6 @@ function springboard_p2p_campaign_field_group_info() {
     'children' => array(
       0 => 'field_p2p_campaigns_approval',
       1 => 'field_p2p_org_intro',
-      2 => 'field_p2p_private_access_message',
     ),
     'format_type' => 'htab',
     'format_settings' => array(
@@ -90,6 +89,7 @@ function springboard_p2p_campaign_field_group_info() {
       2 => 'field_p2p_campaign_banner',
       3 => 'field_p2p_campaign_slider',
       4 => 'field_p2p_campaign_thumbnail',
+      5 => 'field_landing_page_slider_text',
     ),
     'format_type' => 'htab',
     'format_settings' => array(

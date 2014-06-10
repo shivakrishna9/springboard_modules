@@ -58,6 +58,10 @@
   display: none;
 }
 
+.ie8 #other-wrapper {
+  display: inline-block !important;
+}
+
 .fieldset-wrapper #other-wrapper .control-group,
 .fieldset-wrapper #other-wrapper .form-item {
   width: 100%;
@@ -206,10 +210,6 @@ input[type='text']:focus, input[type='email']:focus {
 .ie8 .checkbox-label:before,
 .ie8 .radio-label:before {
   background: none;
-}
-
-.ie8 #other-wrapper {
-  display: inline-block !important;
 }
 
 h2,
