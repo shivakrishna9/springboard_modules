@@ -211,7 +211,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
     'label' => 'Fundraising Deadline',
     'required' => 0,
     'settings' => array(
-      'default_value' => 'now',
+      'default_value' => 'blank',
       'default_value2' => 'same',
       'default_value_code' => '',
       'default_value_code2' => '',
