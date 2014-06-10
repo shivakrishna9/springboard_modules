@@ -95,16 +95,59 @@ function springboard_p2p_default_rules_default_rules_configuration() {
     }
   }');
   $items['rules_p2p_user_email_registration'] = entity_import('rules_config', '{ "rules_p2p_user_email_registration" : {
-      "LABEL" : "Send user email about new P2P registration",
+      "LABEL" : "Send user email about new P2P registration (no campaign)",
       "PLUGIN" : "reaction rule",
       "TAGS" : [ "Springboard P2P" ],
-      "REQUIRES" : [ "rules", "springboard_p2p" ],
+      "REQUIRES" : [ "springboard_p2p", "rules" ],
       "ON" : [ "springboard_p2p_user_register" ],
+      "IF" : [
+        { "springboard_p2p_condition_passed_in_campaign" : { "campaign" : [ "campaign" ], "value" : "not provided" } }
+      ],
       "DO" : [
         { "mail" : {
             "to" : [ "account:mail" ],
             "subject" : "Thanks for registering",
             "message" : "Dear [account:sbp-first-name]:\\r\\n\\r\\nThanks for registering. You can go here to create you campaign:  [dashboard-url:value]\\r\\n",
+            "language" : [ "" ]
+          }
+        }
+      ]
+    }
+  }');
+  $items['rules_p2p_user_email_registration_private_campaign'] = entity_import('rules_config', '{ "rules_p2p_user_email_registration_private_campaign" : {
+      "LABEL" : "Send user email about new P2P registration (private campaign)",
+      "PLUGIN" : "reaction rule",
+      "TAGS" : [ "Springboard P2P" ],
+      "REQUIRES" : [ "springboard_p2p", "rules" ],
+      "ON" : [ "springboard_p2p_user_register" ],
+      "IF" : [
+        { "springboard_p2p_condition_passed_in_campaign" : { "campaign" : [ "campaign" ], "value" : "private" } }
+      ],
+      "DO" : [
+        { "mail" : {
+            "to" : [ "account:mail" ],
+            "subject" : "Thanks for registering",
+            "message" : "Dear [account:sbp-first-name]:\\r\\n\\r\\nThanks for registering. You need to be approved. You\\u0027ll get an email when you are.\\r\\n\\r\\n",
+            "language" : [ "" ]
+          }
+        }
+      ]
+    }
+  }');
+  $items['rules_p2p_user_email_registration_public_campaign'] = entity_import('rules_config', '{ "rules_p2p_user_email_registration_public_campaign" : {
+      "LABEL" : "Send user email about new P2P registration (public campaign)",
+      "PLUGIN" : "reaction rule",
+      "TAGS" : [ "Springboard P2P" ],
+      "REQUIRES" : [ "springboard_p2p", "rules" ],
+      "ON" : [ "springboard_p2p_user_register" ],
+      "IF" : [
+        { "springboard_p2p_condition_passed_in_campaign" : { "campaign" : [ "campaign" ], "value" : "public" } }
+      ],
+      "DO" : [
+        { "mail" : {
+            "to" : [ "account:mail" ],
+            "subject" : "Thanks for registering",
+            "message" : "Dear [account:sbp-first-name]:\\r\\n\\r\\nThanks for registering. You can create a campaign here.\\r\\n\\r\\n[create-personal-campaign-url:value]\\r\\n\\r\\n\\r\\n",
             "language" : [ "" ]
           }
         }

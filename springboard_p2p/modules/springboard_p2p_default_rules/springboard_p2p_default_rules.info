@@ -14,4 +14,6 @@ features[rules_config][] = rules_p2p_user_email_private_campaign_approval_reques
 features[rules_config][] = rules_p2p_user_email_private_campaign_approved
 features[rules_config][] = rules_p2p_user_email_private_campaign_rejected
 features[rules_config][] = rules_p2p_user_email_registration
+features[rules_config][] = rules_p2p_user_email_registration_private_campaign
+features[rules_config][] = rules_p2p_user_email_registration_public_campaign
 project path = sites/all/modules/springboard/springboard_p2p/modules
