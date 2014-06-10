@@ -224,7 +224,7 @@ function springboard_p2p_personal_campaign_action_schema() {
  */
 function springboard_p2p_add_donation_form_content_type() {
   $type = node_type_set_defaults();
-  $type->name = t('Peer to peer Donation Form');
+  $type->name = t('Peer to Peer Donation Form');
   $type->type = 'p2p_donation_form';
   $type->description = t('Springboard provided P2P donation form type.');
   $type->title_label = t('Title');
