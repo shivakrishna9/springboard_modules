@@ -27,8 +27,9 @@ class SpringboardP2pEvents {
       rules_invoke_event(
         'springboard_p2p_user_register',
         $account,
-        $dashboard_url,
-        $create_personal_campaign_url
+        $campaign,
+        $create_personal_campaign_url,
+        $dashboard_url
       );
     }
   }
@@ -47,9 +48,9 @@ class SpringboardP2pEvents {
       rules_invoke_event(
         'springboard_p2p_user_requests_approval',
         $account,
-        $this->dashboardUrl($account->uid),
+        $campaign,
         $this->createUrl($campaign->nid),
-        $campaign
+        $this->dashboardUrl($account->uid)
       );
     }
   }
@@ -68,9 +69,9 @@ class SpringboardP2pEvents {
       rules_invoke_event(
         'springboard_p2p_user_is_approved',
         $account,
-        $this->dashboardUrl($account->uid),
+        $campaign,
         $this->createUrl($campaign->nid),
-        $campaign
+        $this->dashboardUrl($account->uid)
       );
     }
   }
@@ -89,9 +90,9 @@ class SpringboardP2pEvents {
       rules_invoke_event(
         'springboard_p2p_user_is_rejected',
         $account,
-        $this->dashboardUrl($account->uid),
+        $campaign,
         $this->createUrl($campaign->nid),
-        $campaign
+        $this->dashboardUrl($account->uid)
       );
     }
   }
@@ -118,6 +119,7 @@ class SpringboardP2pEvents {
       rules_invoke_event(
         'springboard_p2p_user_requests_password_reset',
         $account,
+        $campaign,
         $this->resetUrl($account, $cid)
       );
     }
