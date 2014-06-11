@@ -1977,9 +1977,16 @@ function springboard_p2p_page_alter(&$page, $form) {
     // Define the module path for use below.
     $mod_path = drupal_get_path('module', 'springboard_p2p');
 
-    // Query the url string to see if it's a p2p donation form.
-    if (!empty($_GET['p2p_pcid']) && (fundraiser_is_donation_type($node->type))) {
-      $p2p_donation_path = '';
+    // Query the url string to see if it's a p2p donation form but not the thank you page.
+    if (empty($_GET['sid'])) {
+      if (!empty($_GET['p2p_pcid']) && fundraiser_is_donation_type($node->type)) {
+        $p2p_donation_path = '';
+      }
+    }
+
+    // Check for a p2p donation thank you page.
+    if (!empty($_GET['sid']) && ($_GET['p2p_pcid'])) {
+      $p2p_thanks_path = '';
     }
 
     // Define register / login / password page paths.
@@ -1995,7 +2002,7 @@ function springboard_p2p_page_alter(&$page, $form) {
     );
 
     // Global p2p css file - nodes, p2p reg, p2p donation.
-    if ((!empty($node) && in_array($node->type, $node_types)) || (isset($p2p_path)) || (isset($p2p_donation_path))) {
+    if ((!empty($node) && in_array($node->type, $node_types)) || (isset($p2p_path)) || (isset($p2p_donation_path)) || (isset($p2p_thanks_path))) {
 
       $p2p_css = array(
         '#attached' => array(
@@ -2009,7 +2016,7 @@ function springboard_p2p_page_alter(&$page, $form) {
       );
       drupal_render($p2p_css);
 
-    // Global p2p css file, global nodes and regpath.
+      // Global p2p css file, global nodes and regpath.
       $p2p_js = array(
         '#attached' => array(
           'js' => array(
@@ -2038,44 +2045,43 @@ function springboard_p2p_page_alter(&$page, $form) {
       drupal_render($p2p_account_css);
     }
 
-  }
-
-  // Just the p2p donation path.
-  if (isset($p2p_donation_path)) {
-    $p2p_donation_css = array(
-      '#attached' => array(
-        'css' => array(
-          $mod_path . '/css/p2p-donation.css' => array(
-            'group' => CSS_THEME,
-            'weight' => 999,
+    // Just the p2p donation path.
+    if ((isset($p2p_donation_path)) || (isset($p2p_thanks_path))) {
+      $p2p_donation_css = array(
+        '#attached' => array(
+          'css' => array(
+            $mod_path . '/css/p2p-donation.css' => array(
+              'group' => CSS_THEME,
+              'weight' => 999,
+            ),
           ),
         ),
-      ),
-    );
-    drupal_render($p2p_donation_css);
+      );
+      drupal_render($p2p_donation_css);
 
-    $p2p_jrespond = array(
-      '#attached' => array(
-        'js' => array(
-          $mod_path . '/js/mediaCheck.js' => array(
-            'group' => JS_LIBRARY,
+      $p2p_jrespond = array(
+        '#attached' => array(
+          'js' => array(
+            $mod_path . '/js/mediaCheck.js' => array(
+              'group' => JS_LIBRARY,
+            ),
           ),
         ),
-      ),
-    );
-    drupal_render($p2p_jrespond);
+      );
+      drupal_render($p2p_jrespond);
 
-    $p2p_donation_js = array(
-      '#attached' => array(
-        'js' => array(
-          $mod_path . '/js/p2p-donation.js' => array(
-            'group' => JS_THEME,
-            'weight' => 999,
+      $p2p_donation_js = array(
+        '#attached' => array(
+          'js' => array(
+            $mod_path . '/js/p2p-donation.js' => array(
+              'group' => JS_THEME,
+              'weight' => 999,
+            ),
           ),
         ),
-      ),
-    );
-    drupal_render($p2p_donation_js);
+      );
+      drupal_render($p2p_donation_js);
+    }
   }
 
 }
