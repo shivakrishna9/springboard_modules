@@ -801,6 +801,7 @@ function springboard_admin_aggregate_links_page($path, $parents = array()) {
 function springboard_admin_forms_page($springboard_type) {
   $node_types = node_type_get_types();
   $display_types = array();
+  $display = ($springboard_type == 'fundraiser') ? 'block_1' : 'block_2';
   $tables = array();
   // Get an appropriate set of content types to display nodes for.
   foreach ($node_types as $type) {
@@ -825,11 +826,11 @@ function springboard_admin_forms_page($springboard_type) {
   // Render the views tables for the appropriate set of content types.
   foreach ($display_types as $type) {
     $view = views_get_view('sbv_forms');
-    $view -> set_display('block_2');
+    $view -> set_display($display);
     $view -> set_arguments(array($type->type));
     $view -> pre_execute();
     $view -> execute();
-    if ($view && $view -> access('block_2') && !empty($view -> result)) {
+    if ($view && $view -> access($display) && !empty($view -> result)) {
       $tables[$type->type] = $view -> render();
     }
   }
