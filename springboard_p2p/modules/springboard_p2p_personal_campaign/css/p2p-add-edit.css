@@ -54,6 +54,11 @@ input[type="checkbox"] {
   margin: 4px 10px 0 0;
 }
 
+h2,
+legend {
+  border-bottom: 1px dashed #acacac;
+}
+
 textarea {
   width: 95%;
   height: 150px;
@@ -232,3 +237,33 @@ span.fieldset-legend:after {
 }
 
 
+.alert ul {
+  position: relative;
+}
+
+.alert ul li  {
+  position: relative;
+  left: 24px;
+  margin-bottom: 4px;
+  list-style: none;
+}
+
+.alert ul li:before {
+  position: absolute;
+  top: 2px;
+  left: -16px;
+  color: #7eae48;
+  content: "\f054";
+  text-decoration: inherit;
+  font-weight: normal;
+  font-style: normal;
+  font-family: FontAwesome;
+}
+
+.alert.error ul li:before {
+  color: #ca0219;
+}
+
+.pane-node-field-p2p-personal-donation textarea {
+  height: inherit;
+}

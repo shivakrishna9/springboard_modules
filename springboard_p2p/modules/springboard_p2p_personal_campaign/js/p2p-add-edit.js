@@ -17,6 +17,12 @@
       $(this).parent('.control-group').addClass('image-widget-wrapper');
       });
 
+      // Remove the panel seperator.
+      $(".panel-separator").remove();
+
+      // add the missing required date label.
+      $('.date-padding label').append('<span class="form-required" title="This field is required.">*</span>');
+
       // end jquery.
     }};
 })
