@@ -25,6 +25,7 @@ function springboard_p2p_campaign_field_group_info() {
     'children' => array(
       0 => 'field_p2p_campaigns_approval',
       1 => 'field_p2p_org_intro',
+      2 => 'field_p2p_private_access_message',
     ),
     'format_type' => 'htab',
     'format_settings' => array(
@@ -74,6 +75,34 @@ function springboard_p2p_campaign_field_group_info() {
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
   $field_group->api_version = 1;
+  $field_group->identifier = 'group_p2p_donation_amount|node|p2p_campaign|form';
+  $field_group->group_name = 'group_p2p_donation_amount';
+  $field_group->entity_type = 'node';
+  $field_group->bundle = 'p2p_campaign';
+  $field_group->mode = 'form';
+  $field_group->parent_name = 'group_tabs';
+  $field_group->data = array(
+    'label' => 'Personal Campaign suggested donation amount',
+    'weight' => '10',
+    'children' => array(
+      0 => 'field_this_content_can_be_overri',
+      1 => 'field_p2p_suggested_donation',
+    ),
+    'format_type' => 'fieldset',
+    'format_settings' => array(
+      'formatter' => 'collapsible',
+      'instance_settings' => array(
+        'description' => '',
+        'classes' => 'group-p2p-donation-amount field-group-fieldset',
+        'required_fields' => 1,
+      ),
+    ),
+  );
+  $export['group_p2p_donation_amount|node|p2p_campaign|form'] = $field_group;
+
+  $field_group = new stdClass();
+  $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
+  $field_group->api_version = 1;
   $field_group->identifier = 'group_p2p_donation_form|node|p2p_campaign|form';
   $field_group->group_name = 'group_p2p_donation_form';
   $field_group->entity_type = 'node';
@@ -116,7 +145,7 @@ function springboard_p2p_campaign_field_group_info() {
   $field_group->parent_name = 'group_tabs';
   $field_group->data = array(
     'label' => 'Personal campaign images',
-    'weight' => '11',
+    'weight' => '12',
     'children' => array(
       0 => 'field_p2p_images',
       1 => 'field_p2p_images_edit',
@@ -177,7 +206,7 @@ function springboard_p2p_campaign_field_group_info() {
   $field_group->parent_name = 'group_tabs';
   $field_group->data = array(
     'label' => 'Video embed',
-    'weight' => '10',
+    'weight' => '11',
     'children' => array(
       0 => 'field_p2p_video_embed',
       1 => 'field_p2p_video_embed_edit',
@@ -207,7 +236,7 @@ function springboard_p2p_campaign_field_group_info() {
   $field_group->parent_name = '';
   $field_group->data = array(
     'label' => 'Tabs',
-    'weight' => '5',
+    'weight' => '2',
     'children' => array(
       0 => 'group_p2p_campaign_defaults',
       1 => 'group_p2p_comment_settings',
@@ -215,6 +244,7 @@ function springboard_p2p_campaign_field_group_info() {
       3 => 'group_p2p_images',
       4 => 'group_p2p_personal_intro',
       5 => 'group_p2p_video_embed',
+      6 => 'group_p2p_donation_amount',
     ),
     'format_type' => 'htabs',
     'format_settings' => array(

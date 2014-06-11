@@ -140,7 +140,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
         'progress_indicator' => 'throbber',
       ),
       'type' => 'image_image',
-      'weight' => 8,
+      'weight' => 9,
     ),
   );
 
@@ -319,6 +319,46 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
     ),
   );
 
+  // Exported field_instance: 'node-p2p_personal_campaign-field_p2p_personal_donation'
+  $field_instances['node-p2p_personal_campaign-field_p2p_personal_donation'] = array(
+    'bundle' => 'p2p_personal_campaign',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'text',
+        'settings' => array(),
+        'type' => 'text_default',
+        'weight' => 9,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_p2p_personal_donation',
+    'label' => 'Suggested Donation Amount',
+    'required' => 0,
+    'settings' => array(
+      'text_processing' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'text',
+      'settings' => array(
+        'rows' => 5,
+      ),
+      'type' => 'text_textarea',
+      'weight' => 7,
+    ),
+  );
+
   // Exported field_instance: 'node-p2p_personal_campaign-field_p2p_personal_submit_goal'
   $field_instances['node-p2p_personal_campaign-field_p2p_personal_submit_goal'] = array(
     'bundle' => 'p2p_personal_campaign',
@@ -355,7 +395,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
         'size' => 60,
       ),
       'type' => 'text_textfield',
-      'weight' => 6,
+      'weight' => 8,
     ),
   );
 
@@ -398,7 +438,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
       'module' => 'video_embed_field',
       'settings' => array(),
       'type' => 'video_embed_field_video',
-      'weight' => 9,
+      'weight' => 10,
     ),
   );
 
@@ -411,6 +451,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
   t('Fundraising Goal');
   t('Progress');
   t('Submission Goal');
+  t('Suggested Donation Amount');
   t('Upload a Campaign Image');
   t('Upload a Campaign Video');
   t('Upload a campaign thumbnail image. ');
