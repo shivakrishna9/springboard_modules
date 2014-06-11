@@ -27,7 +27,10 @@ function springboard_p2p_request_password_reset_form($form, &$form_state) {
     }
 
     $event = new SpringboardP2pEvents();
-    $event->userRequestsPasswordReset($account, node_load($cid));
+    $campaign = node_load($cid);
+    // Convert any FALSE value to NULL.  For rules.
+    $campaign = $campaign ? $campaign : NULL;
+    $event->userRequestsPasswordReset($account, $campaign);
     drupal_set_message(t('Further instructions have been sent to your e-mail address.'));
 
     $options = array();
@@ -112,7 +115,10 @@ function springboard_p2p_request_password_reset_form_submit($form, &$form_state)
   }
 
   $event = new SpringboardP2pEvents();
-  $event->userRequestsPasswordReset($account, node_load($cid));
+  $campaign = node_load($cid);
+  // Convert any FALSE value to NULL.  For rules.
+  $campaign = $campaign ? $campaign : NULL;
+  $event->userRequestsPasswordReset($account, $campaign);
   drupal_set_message(t('Further instructions have been sent to your e-mail address.'));
 
   $form_state['redirect'] = array('springboard_p2p/register', $url_options);
