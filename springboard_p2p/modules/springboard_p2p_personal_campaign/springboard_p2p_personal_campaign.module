@@ -320,9 +320,9 @@ function _springboard_p2p_personal_campaign_lookup_personal_campaign($submission
       break;
     }
   }
-  if ($personal_campaign) {
+  if (isset($personal_campaign)) {
     $personal_campaign_node = node_load($personal_campaign);
-    if ($personal_campaign_node->type == 'p2p_personal_campaign') {
+    if (isset($personal_campaign_node->type) && $personal_campaign_node->type == 'p2p_personal_campaign') {
       return $personal_campaign_node;
     }
   }
