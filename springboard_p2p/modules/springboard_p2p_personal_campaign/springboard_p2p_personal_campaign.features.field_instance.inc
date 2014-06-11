@@ -209,7 +209,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
     'entity_type' => 'node',
     'field_name' => 'field_p2p_fundraising_deadline',
     'label' => 'Fundraising Deadline',
-    'required' => 0,
+    'required' => 1,
     'settings' => array(
       'default_value' => 'blank',
       'default_value2' => 'same',
@@ -303,7 +303,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
     'entity_type' => 'node',
     'field_name' => 'field_p2p_personal_campaign_url',
     'label' => 'Campaign URL',
-    'required' => 0,
+    'required' => 1,
     'settings' => array(
       'text_processing' => 0,
       'user_register_form' => FALSE,
@@ -352,7 +352,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
       'active' => 1,
       'module' => 'text',
       'settings' => array(
-        'rows' => 5,
+        'rows' => 1,
       ),
       'type' => 'text_textarea',
       'weight' => 7,

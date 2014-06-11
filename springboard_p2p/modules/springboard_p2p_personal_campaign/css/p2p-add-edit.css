@@ -54,6 +54,11 @@ input[type="checkbox"] {
   margin: 4px 10px 0 0;
 }
 
+h2,
+legend {
+  border-bottom: 1px dashed #acacac;
+}
+
 textarea {
   width: 95%;
   height: 150px;
@@ -117,9 +122,9 @@ i.fa.fa-file-text-o {
   position: absolute;
   top: 6px;
   left: 6px;
+  color: #2980b9;
   font-size: 50px;
   cursor: pointer;
-  color: #2980b9;
 }
 
 #edit-actions .btn {
@@ -149,8 +154,8 @@ table {
 }
 
 th {
-  border-bottom: none;
   margin: 0 0 10px 0;
+  border-bottom: none;
   font-weight: bold;
   font-size: 19px;
 }
@@ -210,13 +215,13 @@ span.fieldset-legend:after {
   top: -1px;
   right: -7px;
   padding: 0px 0 0 10px;
+  color: #2980b9;
   content: "\f040";
   text-decoration: inherit;
   font-weight: normal;
   font-style: normal;
   font-size: 32px;
   font-family: FontAwesome;
-  color: #2980b9;
 }
 
 .pane-node-field-p2p-fundraising-deadline span.fieldset-legend:after {
@@ -232,3 +237,33 @@ span.fieldset-legend:after {
 }
 
 
+.alert ul {
+  position: relative;
+}
+
+.alert ul li  {
+  position: relative;
+  left: 24px;
+  margin-bottom: 4px;
+  list-style: none;
+}
+
+.alert ul li:before {
+  position: absolute;
+  top: 2px;
+  left: -16px;
+  color: #7eae48;
+  content: "\f054";
+  text-decoration: inherit;
+  font-weight: normal;
+  font-style: normal;
+  font-family: FontAwesome;
+}
+
+.alert.error ul li:before {
+  color: #ca0219;
+}
+
+.pane-node-field-p2p-personal-donation textarea {
+  height: inherit;
+}

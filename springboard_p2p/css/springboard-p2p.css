@@ -54,6 +54,30 @@ body a {
   text-transform: capitalize;
 }
 
+
+.alert ul {
+  position: relative;
+}
+
+.alert ul li  {
+  position: relative;
+  left: 24px;
+  margin-bottom: 4px;
+  list-style: none;
+}
+
+.alert ul li:before {
+  position: absolute;
+  top: 2px;
+  left: -16px;
+  color: #7eae48;
+  content: "\f054";
+  text-decoration: inherit;
+  font-weight: normal;
+  font-style: normal;
+  font-family: FontAwesome;
+}
+
 input[type="submit"],
 input[type="submit"].btn {
   position: relative;
