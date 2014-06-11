@@ -265,5 +265,5 @@ span.fieldset-legend:after {
 }
 
 .pane-node-field-p2p-personal-donation textarea {
-  height: inherit;
+  height: 40px;
 }
