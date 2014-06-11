@@ -1,16 +1,15 @@
 /* Personal campaign node add / edit css */
 
-textarea {
-  width: 100%;
-  height: 150px;
+body {
+  color: #888;
 }
 
 h1 {
   margin: 0 0 12px 0;
   color: #5b5b5b;
+  text-transform: capitalize;
   font-size: 36px;
   line-height: 1.1em;
-  text-transform: capitalize;
 }
 
 input[type="date"],
@@ -24,9 +23,50 @@ input[type="text"],
 input[type="time"],
 input[type="url"],
 input[type="week"] {
-  width: 99%;
+  width: 95%;
   height: 40px;
+  color: #888;
+}
 
+input[type="submit"] {
+  position: relative;
+  padding: 5px 20px;
+  border: 0;
+  -webkit-border-radius: 0;
+  -moz-border-radius: 0;
+  border-radius: 0;
+  background: #859596;
+  color: #fff;
+  vertical-align: top;
+  text-align: center;
+  text-shadow: none;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+input[type="submit"]:hover,
+#edit-actions .btn:hover {
+  outline: none;
+  background: #2980b9;
+}
+
+input[type="checkbox"] {
+  margin: 4px 10px 0 0;
+}
+
+textarea {
+  width: 95%;
+  height: 150px;
+  color: #888;
+}
+
+.field-name-field-p2p-campaign-images input[type="submit"] {
+  margin: 10px 0 0 0;
+  width: 200px;
+}
+
+.field-name-field-p2p-campaign-images img {
+  margin: 10px 0 0 0;
 }
 
 select,
@@ -34,3 +74,161 @@ textarea,
 input  {
   font-size: 16px !important;
 }
+
+.form-actions {
+  margin: 0;
+  padding: 0;
+  border-top: none;
+  background-color: #fff;
+}
+
+.field-name-field-p2p-campaign-images .fieldset-wrapper {
+  padding: 10px;
+  border: 1px solid #acacac;
+}
+
+h2, span.fieldset-legend {
+  position: relative;
+  display: block;
+  padding: 0 0 12px 0;
+  color: #888;
+  font-weight: normal;
+  font-size: 36px;
+}
+
+input[type="file"] {
+  position: relative;
+  z-index: 2;
+  display: inline-block;
+  width: 50px;
+  height: 30px;
+  text-align: right;
+  opacity: 0;
+  filter: alpha(opacity:0);
+  cursor: pointer;
+  -moz-opacity: 0;
+}
+
+.image-widget-data {
+  position: relative;
+}
+
+i.fa.fa-file-text-o {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  font-size: 50px;
+  cursor: pointer;
+  color: #2980b9;
+}
+
+#edit-actions .btn {
+  position: relative;
+  display: block;
+  margin: 20px 0 4px 0;
+  padding: 5px 10px 5px 10px;
+  width: 100%;
+  height: 40px;
+  border: none;
+  -webkit-border-radius: 0;
+  -moz-border-radius: 0;
+  border-radius: 0;
+  background: #859596;
+  color: #fff;
+  vertical-align: top;
+  text-align: center;
+  text-decoration: none;
+  text-shadow: none;
+  text-shadow: none;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+table {
+  border-color: #fff;
+}
+
+th {
+  border-bottom: none;
+  margin: 0 0 10px 0;
+  font-weight: bold;
+  font-size: 19px;
+}
+
+td {
+  vertical-align: top;
+}
+
+tr.even,
+tr.odd {
+  padding: 0.1em 0.6em;
+  border-bottom: none;
+  background-color: #fff;
+}
+
+label,
+.fieldset-description {
+  display: block;
+  margin: 0 0 10px 0;
+  color: #888;
+  font-weight: bold;
+  font-size: 19px;
+}
+
+.ui-datepicker th {
+  margin: inherit;
+  color: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+}
+
+label[for="edit-field-p2p-campaign-images-und-1"] {
+  margin: 20px 0 0 0;
+}
+
+.image-widget-data .form-select {
+  margin: 30px 0 0 0;
+}
+
+.image-widget-data .description {
+  width: 290px;
+}
+
+.image-widget-data input {
+  width: 290px;
+}
+
+.image-widget-wrapper {
+  margin: 25px 0 0 -10px;
+  padding: 0 0 10px 10px;
+  border: 1px solid #acacac;
+}
+
+h1:after,
+span.fieldset-legend:after {
+  position: relative;
+  top: -1px;
+  right: -7px;
+  padding: 0px 0 0 10px;
+  content: "\f040";
+  text-decoration: inherit;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 32px;
+  font-family: FontAwesome;
+  color: #2980b9;
+}
+
+.pane-node-field-p2p-fundraising-deadline span.fieldset-legend:after {
+  content: "\f073";
+}
+
+.pane-node-field-p2p-campaign-images span.fieldset-legend:after {
+  content: "\f03e";
+}
+
+.container-inline-date .date-padding {
+  padding: 0;
+}
+
+

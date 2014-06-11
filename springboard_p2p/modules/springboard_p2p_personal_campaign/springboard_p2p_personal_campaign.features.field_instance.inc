@@ -136,7 +136,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
       'active' => 1,
       'module' => 'image',
       'settings' => array(
-        'preview_image_style' => 'thumbnail',
+        'preview_image_style' => 'medium',
         'progress_indicator' => 'throbber',
       ),
       'type' => 'image_image',

@@ -146,6 +146,19 @@ function springboard_p2p_personal_campaign_page_alter(&$cache, $vars) {
       ),
     );
     drupal_render($p2p_add_edit);
+
+    $p2p_add_edit_js = array(
+      '#attached' => array(
+        'js' => array(
+          $mod_path . '/js/p2p-add-edit.js' => array(
+            'group' => JS_THEME,
+            'weight' => 9999,
+          ),
+        ),
+      ),
+    );
+    drupal_render($p2p_add_edit_js);
+
   }
 
 }
@@ -358,6 +371,10 @@ function springboard_p2p_personal_campaign_market_source_external_field_keys() {
  */
 function springboard_p2p_personal_campaign_form_p2p_personal_campaign_node_form_alter(&$form, &$form_state, $form_id) {
 
+  // Create a function to unset the filter choice and tips area.
+  //@Todo - this may need a role tweak so this does not happen for everyone.
+  $form['body']['#after_build'][] = '_filter_tips_p2p_personal_body_form';
+
   // Define the personal campaign.
 //  if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid'])) {
 //    $personal_campaign = node_load($_GET['p2p_pcid']);
@@ -370,4 +387,12 @@ function springboard_p2p_personal_campaign_form_p2p_personal_campaign_node_form_
   // Now set the node add title with the name.
 //  drupal_set_title($owner_name . t(', Create Your Campaign'));
 
+}
+
+/**
+ * Our custom filter tips function from above.
+ */
+function _filter_tips_p2p_personal_body_form(&$form) {
+  $form['und'][0]['format']['#access'] = FALSE;
+  return $form;
 }
