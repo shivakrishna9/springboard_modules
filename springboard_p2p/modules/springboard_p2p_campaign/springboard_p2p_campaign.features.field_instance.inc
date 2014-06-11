@@ -569,7 +569,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'rows' => 5,
       ),
       'type' => 'text_textarea',
-      'weight' => 5,
+      'weight' => 6,
     ),
   );
 
@@ -651,6 +651,46 @@ function springboard_p2p_campaign_field_default_field_instances() {
       ),
       'type' => 'options_onoff',
       'weight' => 7,
+    ),
+  );
+
+  // Exported field_instance: 'node-p2p_campaign-field_p2p_private_access_message'
+  $field_instances['node-p2p_campaign-field_p2p_private_access_message'] = array(
+    'bundle' => 'p2p_campaign',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => 'A brief message to display if a user attempts to create a personal campaign without prior authorization.',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'text',
+        'settings' => array(),
+        'type' => 'text_default',
+        'weight' => 20,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_p2p_private_access_message',
+    'label' => 'Authorization required message',
+    'required' => 0,
+    'settings' => array(
+      'text_processing' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'text',
+      'settings' => array(
+        'rows' => 5,
+      ),
+      'type' => 'text_textarea',
+      'weight' => 5,
     ),
   );
 
@@ -738,6 +778,49 @@ function springboard_p2p_campaign_field_default_field_instances() {
     ),
   );
 
+  // Exported field_instance: 'node-p2p_campaign-field_p2p_suggested_donation'
+  $field_instances['node-p2p_campaign-field_p2p_suggested_donation'] = array(
+    'bundle' => 'p2p_campaign',
+    'default_value' => array(
+      0 => array(
+        'value' => 0,
+      ),
+    ),
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'list',
+        'settings' => array(),
+        'type' => 'list_default',
+        'weight' => 22,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_p2p_suggested_donation',
+    'label' => 'Suggested donation amount',
+    'required' => 0,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'options',
+      'settings' => array(
+        'display_label' => 0,
+      ),
+      'type' => 'options_onoff',
+      'weight' => 14,
+    ),
+  );
+
   // Exported field_instance: 'node-p2p_campaign-field_p2p_video_embed'
   $field_instances['node-p2p_campaign-field_p2p_video_embed'] = array(
     'bundle' => 'p2p_campaign',
@@ -818,9 +901,54 @@ function springboard_p2p_campaign_field_default_field_instances() {
     ),
   );
 
+  // Exported field_instance: 'node-p2p_campaign-field_this_content_can_be_overri'
+  $field_instances['node-p2p_campaign-field_this_content_can_be_overri'] = array(
+    'bundle' => 'p2p_campaign',
+    'default_value' => array(
+      0 => array(
+        'value' => 0,
+      ),
+    ),
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'list',
+        'settings' => array(),
+        'type' => 'list_default',
+        'weight' => 21,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_this_content_can_be_overri',
+    'label' => 'This content can be overridden by campaigner',
+    'required' => 0,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'options',
+      'settings' => array(
+        'display_label' => 0,
+      ),
+      'type' => 'options_onoff',
+      'weight' => 13,
+    ),
+  );
+
   // Translatables
   // Included for use with string extractors like potx.
+  t('A brief message to display if a user attempts to create a personal campaign without prior authorization.');
   t('Allow donor comments');
+  t('Authorization required message');
   t('Campaign banner');
   t('Campaign thumbnail');
   t('Category');
@@ -835,6 +963,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
   t('Personal campaigns require approval');
   t('Show donor comments on personal campaign pages');
   t('Show donor scroll on personal campaign pages');
+  t('Suggested donation amount');
   t('This content can be overridden by campaigner');
   t('Upload a campaign Thumbnail. The minimum size should be 370 x 190 pixels.');
   t('Upload a campaign banner. The minimum size should be 1170 x 240 pixels.');
