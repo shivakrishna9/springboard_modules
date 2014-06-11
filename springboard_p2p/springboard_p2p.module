@@ -1287,6 +1287,13 @@ function springboard_p2p_set_redirect($form, &$form_state) {
     return;
   }
 
+  if (isset($form_state['values']['registering_for_p2p'])) {
+    $registering_for_p2p = $form_state['values']['registering_for_p2p'];
+  }
+  else {
+    $registering_for_p2p = FALSE;
+  }
+
   // Default destination if nothing else works.
   $form_state['redirect'] = 'user/' . $uid . '/personal-campaigns';
 
@@ -1306,7 +1313,7 @@ function springboard_p2p_set_redirect($form, &$form_state) {
         $account = user_load($uid);
 
         $event = new SpringboardP2pEvents();
-        $event->userRequestsApprovalForPrivateCampaign($account, $campaign);
+        $event->userRequestsApprovalForPrivateCampaign($account, $campaign, $registering_for_p2p);
       }
       else {
         $approval->approve();

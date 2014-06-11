@@ -40,6 +40,7 @@ function springboard_p2p_fb_page() {
   $form_state = array(
     'values' => array(
       'springboard_p2p_campaign_nid' => springboard_p2p_get_campaign_id_from_request(),
+      'registering_for_p2p' => TRUE,
     ),
     'uid' => $uid,
   );

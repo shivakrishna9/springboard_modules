@@ -42,7 +42,7 @@ class SpringboardP2pEvents {
    * @param object $campaign
    *   The private campaign node.
    */
-  public function userRequestsApprovalForPrivateCampaign($account, $campaign) {
+  public function userRequestsApprovalForPrivateCampaign($account, $campaign, $registering_for_p2p = FALSE) {
 
     if (module_exists('rules')) {
       rules_invoke_event(
@@ -50,7 +50,8 @@ class SpringboardP2pEvents {
         $account,
         $campaign,
         $this->createUrl($campaign->nid),
-        $this->dashboardUrl($account->uid)
+        $this->dashboardUrl($account->uid),
+        $registering_for_p2p
       );
     }
   }

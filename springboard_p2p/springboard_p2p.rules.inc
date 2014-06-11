@@ -120,6 +120,11 @@ function springboard_p2p_rules_event_info() {
           'label' => t('User P2P dashboard URL'),
           'description' => t("The URL to the user's list of personal campaigns."),
         ),
+        'account_is_registering_for_p2p' => array(
+          'type' => 'boolean',
+          'label' => t('User is also registering for P2P.'),
+          'description' => t('The user is registering for P2P as well as requesting approval.'),
+        ),
       ),
     ),
     'springboard_p2p_user_is_approved' => $defaults + array(

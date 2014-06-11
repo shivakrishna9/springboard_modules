@@ -56,6 +56,13 @@ function springboard_p2p_complete_profile_form($form, &$form_state, $account) {
 
   springboard_p2p_campaign_id_form_element($form, $form_state);
 
+  // A flag to tell us later in the process that the user is registering
+  // for p2p for the first time.
+  $form['registering_for_p2p'] = array(
+    '#type' => 'value',
+    '#value' => TRUE,
+  );
+
   if (springboard_p2p_should_add_state_and_country_ajax($form)) {
     form_load_include($form_state, 'inc', 'springboard_p2p', 'includes/springboard_p2p.register');
     springboard_p2p_add_state_and_country_ajax($form);

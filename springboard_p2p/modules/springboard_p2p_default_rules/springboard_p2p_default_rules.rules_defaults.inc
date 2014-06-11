@@ -49,6 +49,9 @@ function springboard_p2p_default_rules_default_rules_configuration() {
       "TAGS" : [ "Springboard P2P" ],
       "REQUIRES" : [ "rules", "springboard_p2p" ],
       "ON" : [ "springboard_p2p_user_requests_approval" ],
+      "IF" : [
+        { "data_is" : { "data" : [ "account-is-registering-for-p2p" ], "value" : 0 } }
+      ],
       "DO" : [
         { "mail" : {
             "to" : [ "account:mail" ],
