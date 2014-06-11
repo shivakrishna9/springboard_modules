@@ -612,14 +612,6 @@ function springboard_admin_url_inbound_alter(&$path, $original_path, $path_langu
     }
     elseif (preg_match('|^springboard/reports/contacts$|', $path)) {
       $path = 'admin/springboard/reports/contacts';
-    }
-    elseif (preg_match('|^springboard/reports/integration-reports((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
-      if (preg_match('|^springboard/reports/integration-reports$|', $path)) {
-        $path = 'admin/reports/salesforce';
-      }
-      else {
-        $path = 'admin/reports/salesforce' . $m1[1];
-      }
     } 
     elseif (preg_match('|^springboard/administrators$|', $path)) {
       $path = 'admin/springboard/settings/administrators';
