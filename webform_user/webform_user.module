@@ -1511,6 +1511,10 @@ function _webform_components_form_rows($node, $cid, $component, $level, &$form, 
  */
 function _webform_user_mail_in_use($mail, $uid) {
   $result = db_query('SELECT uid FROM {users} WHERE mail = :mail', array(':mail' => $mail));
-  return $uid == $result->fetchField() ? FALSE : TRUE;
+  $existing_uid = $result->fetchField();
+  if ($existing_uid && $existing_uid != $uid) {
+    return TRUE;
+  }
+  return FALSE;
 }
 
