@@ -3105,6 +3105,7 @@ function springboard_views_views_default_views() {
   $handler = $view->new_display('default', 'Master', 'default');
   $handler->display->display_options['title'] = 'Batch log';
   $handler->display->display_options['use_more_always'] = FALSE;
+  $handler->display->display_options['css_class'] = 'views-data-table';
   $handler->display->display_options['access']['type'] = 'perm';
   $handler->display->display_options['access']['perm'] = 'view salesforce batch logs';
   $handler->display->display_options['cache']['type'] = 'none';
@@ -3386,6 +3387,7 @@ function springboard_views_views_default_views() {
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');
   $handler->display->display_options['title'] = 'Queue';
+  $handler->display->display_options['css_class'] = 'views-data-table';
   $handler->display->display_options['use_more_always'] = FALSE;
   $handler->display->display_options['access']['type'] = 'perm';
   $handler->display->display_options['access']['perm'] = 'view salesforce batch logs';

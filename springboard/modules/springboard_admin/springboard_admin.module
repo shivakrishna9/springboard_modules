@@ -296,16 +296,12 @@ function springboard_admin_init() {
     }
     elseif (preg_match('|^/admin/reports/salesforce((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
       if (preg_match('|^/admin/reports/salesforce$|', $path)) {
-        $goto_path = 'springboard/reports/integration-reports';
-      }
-      elseif (preg_match('|^/admin/reports/salesforce/integration-reports((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m2)) {
-        $goto_path = 'springboard/reports/integration-reports' . $m2[1];
+        $goto_path = 'admin/springboard/reports/integration-reports';
       }
       else {
-        $goto_path = 'springboard/reports' . $m1[1];
+        $goto_path = 'admin/springboard/reports/integration-reports' . $m1[1];
       }
     }
-    
     elseif (preg_match('|^/admin/springboard/options/fundraiser/fundraiser_upsell$|', $path)) {
       $goto_path = 'springboard/settings/config/upsell';
     }
@@ -382,6 +378,13 @@ function springboard_admin_menu() {
     'access arguments' => array('access springboard dashboard'),
     'page callback' => 'springboard_admin_aggregate_links_page',
     'page arguments' => array('admin/springboard/reports'),
+   );
+   $items['admin/springboard/reports/integration-reports'] = array(
+    'title' => 'Integration Reports',
+    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('access springboard dashboard'),
+    'page callback' => 'springboard_admin_aggregate_links_page',
+    'page arguments' => array('admin/springboard/reports/integration-reports', array('admin/springboard/reports')),
    );
   $items['admin/springboard/settings'] = array(
     'title' => 'Options',

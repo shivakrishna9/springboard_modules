@@ -327,17 +327,45 @@ function springboard_admin_admin_menu_items() {
   );
 
   // Reports > Integration Reports.
-  $items['admin/springboard/reports']['_children']['admin/reports/salesforce'] = array(
-    'link_path' => 'admin/reports/salesforce',
+  $items['admin/springboard/reports']['_children']['admin/springboard/reports/integration-reports'] = array(
+    'link_path' => 'admin/springboard/reports/integration-reports',
     'link_title' => 'Integration Reports',
     'menu_name' => 'springboard_admin_menu',
-    'expanded' => 1,
+    'expanded' => 0,
+    'customized' => 1,
+    'weight' => 2,
+    '_children' => array(),
+  );
+  // Reports > Integration Reports > Batch Log.
+  $items['admin/springboard/reports']['_children']['admin/springboard/reports/integration-reports']['_children']['admin/springboard/reports/integration-reports/batch'] = array(
+    'link_path' => 'admin/springboard/reports/integration-reports/batch',
+    'link_title' => 'Batch Log',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 0,
+    'customized' => 1,
+    'weight' => 0,
+  );
+  // Reports > Integration Reports > Batch Item Log.
+  $items['admin/springboard/reports']['_children']['admin/springboard/reports/integration-reports']['_children']['admin/springboard/reports/integration-reports/item'] = array(
+    'link_path' => 'admin/springboard/reports/integration-reports/item',
+    'link_title' => 'Item Log',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 0,
+    'customized' => 1,
+    'weight' => 1,
+  );
+  
+  // Reports > Integration Reports > Queue.
+  $items['admin/springboard/reports']['_children']['admin/springboard/reports/integration-reports']['_children']['admin/springboard/reports/integration-reports/queue'] = array(
+    'link_path' => 'admin/springboard/reports/integration-reports/queue',
+    'link_title' => 'Queue',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 0,
     'customized' => 1,
     'weight' => 2,
   );
 
   // Top Level: Settings.
-  /* @TODO: Create this page. */
   $items['admin/springboard/settings'] = array(
     'link_path' => 'admin/springboard/settings',
     'link_title' => t('Options'),
