@@ -216,12 +216,8 @@ function theme_fundraiser_tickets_webform_table($variables) {
     array('data' => '', 'class' => 'ticket_warning'),
     array('data' => t('Amount'), 'class' => 'fundraiser-ticket-type-total', 'align' => 'right')
   );
- // $attributes = array('class' => $element['#attributes']['class'], 'id' => $id, 'width' => '100%');
+  // $attributes = array('class' => $element['#attributes']['class'], 'id' => $id, 'width' => '100%');
   
-  
-  $attributes = array(
-    'class' => array('ticket_box'),
-  );
   // Add the JS for the settings too
   drupal_add_js(array('fundraiserTickets' => array('ticketPrices' => $ticket_prices)), 'setting');
 
