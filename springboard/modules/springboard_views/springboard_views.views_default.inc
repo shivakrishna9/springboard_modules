@@ -4125,6 +4125,115 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['path'] = 'admin/springboard/settings/administrators';
 $views[$view->name] = $view;
 
+  /**
+   * View sbv_notes
+   */
+
+  $view = new view();
+  $view->name = 'sbv_notes';
+  $view->description = '';
+  $view->tag = 'default';
+  $view->base_table = 'aggregator_item';
+  $view->human_name = 'sbv_notes';
+  $view->core = 7;
+  $view->api_version = '3.0';
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+
+  /* Display: Master */
+  $handler = $view->new_display('default', 'Master', 'default');
+  $handler->display->display_options['title'] = 'sbv_notes';
+  $handler->display->display_options['css_class'] = 'sbv-notes-view';
+  $handler->display->display_options['use_ajax'] = TRUE;
+  $handler->display->display_options['use_more_always'] = FALSE;
+  $handler->display->display_options['access']['type'] = 'none';
+  $handler->display->display_options['cache']['type'] = 'none';
+  $handler->display->display_options['query']['type'] = 'views_query';
+  $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['pager']['type'] = 'mini';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '3';
+  $handler->display->display_options['pager']['options']['offset'] = '0';
+  $handler->display->display_options['pager']['options']['id'] = '0';
+  $handler->display->display_options['style_plugin'] = 'list';
+  $handler->display->display_options['style_options']['class'] = 'notes-feed-list';
+  $handler->display->display_options['row_plugin'] = 'fields';
+  /* Field: Aggregator: Timestamp */
+  $handler->display->display_options['fields']['timestamp']['id'] = 'timestamp';
+  $handler->display->display_options['fields']['timestamp']['table'] = 'aggregator_item';
+  $handler->display->display_options['fields']['timestamp']['field'] = 'timestamp';
+  $handler->display->display_options['fields']['timestamp']['label'] = '';
+  $handler->display->display_options['fields']['timestamp']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['timestamp']['element_type'] = 'span';
+  $handler->display->display_options['fields']['timestamp']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['timestamp']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['timestamp']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['timestamp']['date_format'] = 'custom';
+  $handler->display->display_options['fields']['timestamp']['custom_date_format'] = 'j';
+  /* Field: Aggregator: Timestamp */
+  $handler->display->display_options['fields']['timestamp_1']['id'] = 'timestamp_1';
+  $handler->display->display_options['fields']['timestamp_1']['table'] = 'aggregator_item';
+  $handler->display->display_options['fields']['timestamp_1']['field'] = 'timestamp';
+  $handler->display->display_options['fields']['timestamp_1']['label'] = '';
+  $handler->display->display_options['fields']['timestamp_1']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['timestamp_1']['alter']['text'] = '<span class="notes-date">
+<span class="notes-day">[timestamp]</span>
+<span class="notes-month">[timestamp_1]</span>
+</span>';
+  $handler->display->display_options['fields']['timestamp_1']['element_type'] = '0';
+  $handler->display->display_options['fields']['timestamp_1']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['timestamp_1']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['timestamp_1']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['timestamp_1']['element_default_classes'] = FALSE;
+  $handler->display->display_options['fields']['timestamp_1']['date_format'] = 'custom';
+  $handler->display->display_options['fields']['timestamp_1']['custom_date_format'] = 'M';
+  /* Field: Aggregator: Title */
+  $handler->display->display_options['fields']['title']['id'] = 'title';
+  $handler->display->display_options['fields']['title']['table'] = 'aggregator_item';
+  $handler->display->display_options['fields']['title']['field'] = 'title';
+  $handler->display->display_options['fields']['title']['label'] = '';
+  $handler->display->display_options['fields']['title']['element_type'] = 'h3';
+  $handler->display->display_options['fields']['title']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['title']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['title']['element_default_classes'] = FALSE;
+  $handler->display->display_options['fields']['title']['display_as_link'] = FALSE;
+  /* Field: Aggregator: Body */
+  $handler->display->display_options['fields']['description']['id'] = 'description';
+  $handler->display->display_options['fields']['description']['table'] = 'aggregator_item';
+  $handler->display->display_options['fields']['description']['field'] = 'description';
+  $handler->display->display_options['fields']['description']['label'] = '';
+  $handler->display->display_options['fields']['description']['element_type'] = '0';
+  $handler->display->display_options['fields']['description']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['description']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['description']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['description']['element_default_classes'] = FALSE;
+  /* Field: Aggregator: Link */
+  $handler->display->display_options['fields']['link']['id'] = 'link';
+  $handler->display->display_options['fields']['link']['table'] = 'aggregator_item';
+  $handler->display->display_options['fields']['link']['field'] = 'link';
+  $handler->display->display_options['fields']['link']['label'] = '';
+  $handler->display->display_options['fields']['link']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['link']['alter']['text'] = '<a class="button" href="[link]" target="_blank">Read more</a>';
+  $handler->display->display_options['fields']['link']['element_type'] = '0';
+  $handler->display->display_options['fields']['link']['element_class'] = 'button';
+  $handler->display->display_options['fields']['link']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['link']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['link']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['link']['display_as_link'] = FALSE;
+  /* Sort criterion: Aggregator: Timestamp */
+  $handler->display->display_options['sorts']['timestamp']['id'] = 'timestamp';
+  $handler->display->display_options['sorts']['timestamp']['table'] = 'aggregator_item';
+  $handler->display->display_options['sorts']['timestamp']['field'] = 'timestamp';
+  $handler->display->display_options['sorts']['timestamp']['order'] = 'DESC';
+  /* Filter criterion: Aggregator feed: Feed ID */
+  $handler->display->display_options['filters']['fid']['id'] = 'fid';
+  $handler->display->display_options['filters']['fid']['table'] = 'aggregator_feed';
+  $handler->display->display_options['filters']['fid']['field'] = 'fid';
+  $handler->display->display_options['filters']['fid']['value']['value'] = '1';
+
+  /* Display: Dashboard Notes View */
+  $handler = $view->new_display('block', 'Dashboard Notes View', 'block');
+  $views[$view->name] = $view;
+
   // Return all the views.
   return $views;
 }
