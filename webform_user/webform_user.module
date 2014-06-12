@@ -414,13 +414,14 @@ function webform_user_webform_validate($form, &$form_state) {
   $node = node_load($form_state['values']['details']['nid']);
   $fields = _webform_user_flatten_tree($form_state['values']['submitted'], $node->nid);
   $mail = isset($fields['mail']) ? trim($fields['mail']) : '';
+  $skip_user_check = isset($form_state['webform_user_skip_user_check']) ? $form_state['webform_user_skip_user_check'] : FALSE;
 
   if (_webform_user_is_webform_user_node($node) && !_webform_user_validate_email($mail)) {
     form_set_error('mail', t('Please enter a valid email address.'));
   }
   // When user is logged in make sure email isn't updated to 
   // a value already in use by another account.
-  if (isset($user->mail)) {
+  if (!$skip_user_check && isset($user->mail)) {
     // Mail is being updated, confirm the supplied value isn't already in use.
     if (!empty($mail) && $mail != $user->mail) {
       if (_webform_user_mail_in_use($mail, $user->uid)) {
