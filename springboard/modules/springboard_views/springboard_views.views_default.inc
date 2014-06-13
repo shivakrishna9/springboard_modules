@@ -4157,7 +4157,6 @@ $views[$view->name] = $view;
   /**
    * View sbv_notes
    */
-
   $view = new view();
   $view->name = 'sbv_notes';
   $view->description = '';
@@ -4185,6 +4184,12 @@ $views[$view->name] = $view;
   $handler->display->display_options['style_plugin'] = 'list';
   $handler->display->display_options['style_options']['class'] = 'notes-feed-list';
   $handler->display->display_options['row_plugin'] = 'fields';
+  /* Footer: Global: Text area */
+  $handler->display->display_options['footer']['area']['id'] = 'area';
+  $handler->display->display_options['footer']['area']['table'] = 'views';
+  $handler->display->display_options['footer']['area']['field'] = 'area';
+  $handler->display->display_options['footer']['area']['content'] = '<a class="button all-notes"  href="http://www.jacksonriver.com/taxonomy/term/69" target="_blank">Read more Springboard notes</a>';
+  $handler->display->display_options['footer']['area']['format'] = 'filtered_html';
   /* Field: Aggregator: Timestamp */
   $handler->display->display_options['fields']['timestamp']['id'] = 'timestamp';
   $handler->display->display_options['fields']['timestamp']['table'] = 'aggregator_item';
@@ -4241,9 +4246,8 @@ $views[$view->name] = $view;
   $handler->display->display_options['fields']['link']['field'] = 'link';
   $handler->display->display_options['fields']['link']['label'] = '';
   $handler->display->display_options['fields']['link']['alter']['alter_text'] = TRUE;
-  $handler->display->display_options['fields']['link']['alter']['text'] = '<a class="button" href="[link]" target="_blank">Read more</a>';
+  $handler->display->display_options['fields']['link']['alter']['text'] = '<a class="button more-notes" href="[link]" target="_blank">Read more</a>';
   $handler->display->display_options['fields']['link']['element_type'] = '0';
-  $handler->display->display_options['fields']['link']['element_class'] = 'button';
   $handler->display->display_options['fields']['link']['element_label_type'] = '0';
   $handler->display->display_options['fields']['link']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['link']['element_wrapper_type'] = '0';
