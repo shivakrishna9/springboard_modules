@@ -108,8 +108,12 @@ function springboard_p2p_default_page_manager_handlers() {
     $pane->cache = array();
     $pane->style = array(
       'settings' => NULL,
+      'style' => 'default',
     );
-    $pane->css = array();
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'custom-pane-title',
+    );
     $pane->extras = array();
     $pane->position = 1;
     $pane->locks = array();
@@ -363,7 +367,10 @@ function springboard_p2p_default_page_manager_handlers() {
     $pane->style = array(
       'settings' => NULL,
     );
-    $pane->css = array();
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'pane-video',
+    );
     $pane->extras = array();
     $pane->position = 11;
     $pane->locks = array();

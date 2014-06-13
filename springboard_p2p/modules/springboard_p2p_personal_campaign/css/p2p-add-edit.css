@@ -50,19 +50,6 @@ input[type="submit"]:hover,
   background: #2980b9;
 }
 
-.control-group {
-  float: none;
-}
-
-input[type="checkbox"] {
-  margin: 4px 10px 0 0;
-}
-
-#personal-campaign-url-wrapper .alert {
-  margin-top: 66px;
-  width: 94%;
-}
-
 h2,
 legend {
   border-bottom: 1px dashed #acacac;
@@ -215,7 +202,6 @@ label[for="edit-field-p2p-campaign-images-und-1"] {
 .image-widget-wrapper {
   margin: 25px 0 0 -10px;
   padding: 0 0 10px 10px;
-  /*border: 1px solid #acacac;*/
 }
 
 h1:after,
@@ -233,6 +219,10 @@ span.fieldset-legend:after {
   font-family: FontAwesome;
 }
 
+.pane-video span.fieldset-legend:after {
+  content: "\f03d";
+}
+
 .pane-node-field-p2p-fundraising-deadline span.fieldset-legend:after {
   content: "\f073";
 }
@@ -241,17 +231,52 @@ span.fieldset-legend:after {
   content: "\f03e";
 }
 
+.control-group {
+  float: none;
+}
+
+input[type="checkbox"] {
+  margin: 4px 10px 0 0;
+}
+
+#personal-campaign-url-wrapper .alert {
+  margin-top: 66px;
+  width: 94%;
+}
+
+.pane-video {
+  margin: 20px 0 0 0;
+}
+
+.panel-pane.custom-pane-title h2:after{
+  position: relative;
+  top: -1px;
+  right: -7px;
+  padding: 0px 0 0 10px;
+  color: #2980b9;
+  content: "\f05a";
+  text-decoration: inherit;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 32px;
+  font-family: FontAwesome;
+}
+
+.custom-pane-title {
+  margin-bottom: 20px;
+}
+
 .container-inline-date .date-padding {
   padding: 0;
 }
 
 .panel-pane-wrapper {
   position: relative;
+  float: none;
+  clear: both;
   margin: 0 0 20px 0;
   padding: 10px;
   border: 1px solid #a6a6a6;
-  clear: both;
-  float: none;
 }
 
 .alert ul {
