@@ -119,17 +119,17 @@ function springboard_p2p_admin_settings() {
     '#field_prefix' => url(NULL, array('absolute' => TRUE)) . (variable_get('clean_url', 0) ? '' : '?q='),
   );
 
-  $form['login_message'] = array(
+  $form['help_message'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Login Message'),
-    '#weight' => -45,
+    '#title' => t('Messages'),
+    '#weight' => 225,
   );
 
   // Login message text area.
   // We set a var here, otherwise drupal complians about htmlspecialchars, this is a known bug with text_format FAPI.
   $textformat = variable_get('springboard_p2p_login_message_area', array('value' => '', 'format' => NULL));
   // Now render the form item.
-  $form['login_message']['login_message_area'] = array(
+  $form['help_message']['login_message_area'] = array(
     '#type' => 'text_format',
     '#title' => t('P2P Login message'),
     '#required' => TRUE,
@@ -137,6 +137,20 @@ function springboard_p2p_admin_settings() {
     '#format' => $textformat['format'],
     '#default_value' => $textformat['value'],
     '#description' => t('Use this area to set a P2P Login message that will appear on the registration page for your users located at /springboard_p2p/register.'),
+  );
+
+  // Login message text area.
+  // We set a var here, otherwise drupal complians about htmlspecialchars, this is a known bug with text_format FAPI.
+  $textformat = variable_get('springboard_p2p_help_message_area', array('value' => '', 'format' => NULL));
+  // Now render the form item.
+  $form['help_message']['help_message_area'] = array(
+    '#type' => 'text_format',
+    '#title' => t('P2P help message'),
+    '#required' => TRUE,
+    '#rows' => 5,
+    '#format' => $textformat['format'],
+    '#default_value' => $textformat['value'],
+    '#description' => t('This creates a block with a help message.'),
   );
 
   $form['form_types'] = array(
@@ -281,10 +295,11 @@ function springboard_p2p_admin_settings_validate($form, &$form_state) {
 function springboard_p2p_admin_settings_submit($form, &$form_state) {
   $keys = array(
     'base_path',
-    'login_message_area',
     'fundraiser_items',
     'webform_user_items',
     'registration_fields',
+    'login_message_area',
+    'help_message_area',
   );
 
   foreach ($keys as $key) {

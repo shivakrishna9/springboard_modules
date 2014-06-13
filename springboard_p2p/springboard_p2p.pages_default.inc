@@ -108,8 +108,12 @@ function springboard_p2p_default_page_manager_handlers() {
     $pane->cache = array();
     $pane->style = array(
       'settings' => NULL,
+      'style' => 'default',
     );
-    $pane->css = array();
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'custom-pane-title',
+    );
     $pane->extras = array();
     $pane->position = 1;
     $pane->locks = array();
@@ -363,7 +367,10 @@ function springboard_p2p_default_page_manager_handlers() {
     $pane->style = array(
       'settings' => NULL,
     );
-    $pane->css = array();
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'pane-video',
+    );
     $pane->extras = array();
     $pane->position = 11;
     $pane->locks = array();
@@ -439,6 +446,32 @@ function springboard_p2p_default_page_manager_handlers() {
     $pane->uuid = '3b1545d4-c84e-40b0-8803-62459c67a020';
     $display->content['new-3b1545d4-c84e-40b0-8803-62459c67a020'] = $pane;
     $display->panels['middle_left'][14] = 'new-3b1545d4-c84e-40b0-8803-62459c67a020';
+    $pane = new stdClass();
+    $pane->pid = 'new-23e31be4-587c-4714-b87c-2846e075affb';
+    $pane->panel = 'middle_right';
+    $pane->type = 'help_message';
+    $pane->subtype = 'help_message';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'text' => '',
+      'override_title' => 1,
+      'override_title_text' => 'hello',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'panel-pane-wrapper',
+    );
+    $pane->extras = array();
+    $pane->position = 0;
+    $pane->locks = array();
+    $pane->uuid = '23e31be4-587c-4714-b87c-2846e075affb';
+    $display->content['new-23e31be4-587c-4714-b87c-2846e075affb'] = $pane;
+    $display->panels['middle_right'][0] = 'new-23e31be4-587c-4714-b87c-2846e075affb';
   $display->hide_title = PANELS_TITLE_FIXED;
   $display->title_pane = '0';
   $handler->conf['display'] = $display;

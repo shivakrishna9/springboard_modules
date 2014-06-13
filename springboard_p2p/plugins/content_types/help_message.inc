@@ -6,15 +6,15 @@
 
 $plugin = array(
   'single' => TRUE,
-  'title' => t('Get Started'),
-  'description' => t('Get started pane'),
+  'title' => t('Custom Help Message'),
+  'description' => t('Help Message'),
   'category' => t('Springboard P2P'),
   // A category to put this under.
-  'edit form' => 'springboard_p2p_get_started_edit_form',
+  'edit form' => 'springboard_p2p_help_message_edit_form',
   // A function that will return the settings form for the pane.
-  'render callback' => 'springboard_p2p_get_started_render',
+  'render callback' => 'springboard_p2p_help_message_render',
   // A function that will return the renderable content.
-  'admin info' => 'springboard_p2p_get_started_admin_info',
+  'admin info' => 'springboard_p2p_help_message_admin_info',
   // A function that will return the information displayed on the admin screen (optional).
   'defaults' => array( // Array of defaults for the settings form.
     'text' => '',
@@ -26,7 +26,7 @@ $plugin = array(
 /**
  * An edit form for the pane's settings.
  */
-function springboard_p2p_get_started_edit_form($form, &$form_state) {
+function springboard_p2p_help_message_edit_form($form, &$form_state) {
   // No settings beyond context, which has already been handled.
   return $form;
 }
@@ -36,22 +36,25 @@ function springboard_p2p_get_started_edit_form($form, &$form_state) {
  *
  * See ctools_plugin_examples for more advanced info.
  */
-function springboard_p2p_get_started_render($subtype, $conf, $args, $contexts) {
+function springboard_p2p_help_message_render($subtype, $conf, $args, $contexts) {
 
-  // Title.
-  $title = t('Start Your Own Campaign');
+  // Provide a default title
+  $title = t('Need Help?');
 
-  // Define the reg link.
-  $getstarted_link = "/springboard_p2p/register";
+  // provide for an overidden title.
+  if ($conf['override_title'] && !empty($conf['override_title_text'])) {
+    $title = filter_xss_admin($conf['override_title_text']);
+  }
 
-  // Define the site name.
-  $site_name = variable_get('site_name');
+  // Pull the help message text from P2P Settings.
+  $helptext = variable_get('springboard_p2p_help_message_area');
 
   $output = array();
 
   // Create the output to be rendered.
-  $output[] = '<p>' . t('Want to start your own fundraising campaign for @site_name?', array('@site_name' => $site_name)) . '</p>';
-  $output[] = '<a class="get-started-link" href=" ' .  $getstarted_link  . ' ">' . t('Get Started') . '<i class="fa fa-cog fa-spin get-started-spinner"></i></a>';
+  $output[] = '<div class="help-text-wrapper"> ';
+  $output[] = $helptext['value'];
+  $output[] = '</div>';
 
   // Initial content is blank.
   // Build the content type block.
