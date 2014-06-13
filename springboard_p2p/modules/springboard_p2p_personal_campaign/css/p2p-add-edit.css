@@ -23,7 +23,7 @@ input[type="text"],
 input[type="time"],
 input[type="url"],
 input[type="week"] {
-  width: 95%;
+  width: 99%;
   height: 40px;
   color: #888;
 }
@@ -50,8 +50,17 @@ input[type="submit"]:hover,
   background: #2980b9;
 }
 
+.control-group {
+  float: none;
+}
+
 input[type="checkbox"] {
   margin: 4px 10px 0 0;
+}
+
+#personal-campaign-url-wrapper .alert {
+  margin-top: 66px;
+  width: 94%;
 }
 
 h2,
@@ -60,7 +69,7 @@ legend {
 }
 
 textarea {
-  width: 95%;
+  width: 99%;
   height: 150px;
   color: #888;
 }
@@ -206,7 +215,7 @@ label[for="edit-field-p2p-campaign-images-und-1"] {
 .image-widget-wrapper {
   margin: 25px 0 0 -10px;
   padding: 0 0 10px 10px;
-  border: 1px solid #acacac;
+  /*border: 1px solid #acacac;*/
 }
 
 h1:after,
@@ -236,6 +245,14 @@ span.fieldset-legend:after {
   padding: 0;
 }
 
+.panel-pane-wrapper {
+  position: relative;
+  margin: 0 0 20px 0;
+  padding: 10px;
+  border: 1px solid #a6a6a6;
+  clear: both;
+  float: none;
+}
 
 .alert ul {
   position: relative;
@@ -258,6 +275,10 @@ span.fieldset-legend:after {
   font-weight: normal;
   font-style: normal;
   font-family: FontAwesome;
+}
+
+.image-widget.form-managed-file.clearfix {
+  min-height: 66px;
 }
 
 .alert.error ul li:before {

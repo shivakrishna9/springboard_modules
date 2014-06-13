@@ -10,6 +10,7 @@ $plugin = array(
   'render callback' => 'springboard_p2p_custom_title_render',
   'defaults' => array( // Array of defaults for the settings form.
     'text' => '',
+    'markup_tag' => '',
     'override_title' => FALSE,
     'override_title_text' => '<no title>',
   ),
@@ -22,6 +23,9 @@ $plugin = array(
  */
 function springboard_p2p_custom_title_edit_form($form, &$form_state) {
   $conf = $form_state['conf'];
+
+  // Set the array for possible title tags.
+  $options = array('h1' => 'h1', 'h2' => 'h2', 'h3' => 'h3');
 
   // Hide the pane title  / override, we don't want it and it's not a required field.
   $form['override_title_text'] = array(
@@ -36,7 +40,15 @@ function springboard_p2p_custom_title_edit_form($form, &$form_state) {
     '#markup' => t(''),
   );
 
-  // Custom textfield for our <h1> title.
+  // Sets the heading tag.
+  $form['markup_tag'] = array(
+    '#title' => t('Title tag'),
+    '#type' => 'select',
+    '#options' => $options,
+    '#default_value' => $conf['markup_tag'],
+  );
+
+  // Custom textfield for our title.
   $form['text'] = array(
     '#type' => 'textfield',
     '#title' => t('Panel Text'),
@@ -68,8 +80,8 @@ function springboard_p2p_custom_title_render($subtype, $conf, $args, $contexts) 
   // Define the output array.
   $output = array();
 
-  // Render the textfield as an h1 tag since panels core does not work for that too well.
-  $output[] =  '<h1 class="pane-title">' . $conf['text'] . '</h1>';
+  // Render the textfield wrapped by the heading wthat has been selected.
+ $output[] =  '<' . $conf['markup_tag'] . ' class="pane-title">' . $conf['text'] . '</' . $conf['markup_tag'] . '>';
 
   // Initial content is blank.
   $block = new stdClass();

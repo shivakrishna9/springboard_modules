@@ -132,32 +132,36 @@ function springboard_p2p_personal_campaign_page_alter(&$cache, $vars) {
     }
   }
 
-  // Only if p2p_personal_campaign node edit or add.
-  if ((!empty($node) && $node->type == 'p2p_personal_campaign') || (arg(0) === 'node' && arg(1) === 'add' && arg(2) === 'p2p-personal-campaign')) {
-    // p2p node edit add for
-    $p2p_add_edit = array(
-      '#attached' => array(
-        'css' => array(
-          $mod_path . '/css/p2p-add-edit.css' => array(
-            'group' => CSS_THEME,
-            'weight' => 9999,
-          ),
-        ),
-      ),
-    );
-    drupal_render($p2p_add_edit);
+  // admin page.
+  if (path_is_admin(current_path())) {
 
-    $p2p_add_edit_js = array(
-      '#attached' => array(
-        'js' => array(
-          $mod_path . '/js/p2p-add-edit.js' => array(
-            'group' => JS_THEME,
-            'weight' => 9999,
+    // Only if p2p_personal_campaign node edit or add.
+    if ((!empty($node) && $node->type == 'p2p_personal_campaign') || (arg(0) === 'node' && arg(1) === 'add' && arg(2) === 'p2p-personal-campaign')) {
+      // p2p node edit add for
+      $p2p_add_edit = array(
+        '#attached' => array(
+          'css' => array(
+            $mod_path . '/css/p2p-add-edit.css' => array(
+              'group' => CSS_THEME,
+              'weight' => 9999,
+            ),
           ),
         ),
-      ),
-    );
-    drupal_render($p2p_add_edit_js);
+      );
+      drupal_render($p2p_add_edit);
+
+      $p2p_add_edit_js = array(
+        '#attached' => array(
+          'js' => array(
+            $mod_path . '/js/p2p-add-edit.js' => array(
+              'group' => JS_THEME,
+              'weight' => 9999,
+            ),
+          ),
+        ),
+      );
+      drupal_render($p2p_add_edit_js);
+    }
 
   }
 
