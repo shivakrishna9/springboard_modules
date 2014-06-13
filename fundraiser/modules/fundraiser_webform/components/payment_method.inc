@@ -246,24 +246,33 @@ function _webform_render_payment_method($component, $value = NULL, $filter = TRU
     else {
       // Find out whether the form has a checkbox/radio field called 'recurs_monthly'.
       // Only add the States API code below if such a field exists.      
-      $form_has_exposed_recurring_field = _fundraiser_webform_has_exposed_recurring_field($component['nid']);
+      $recurring_field = _fundraiser_webform_has_exposed_recurring_field($component['nid']);
       
+      // Set up the values that we're going to require in the States array.
+      // If it's a select list or radio buttons (multple == 0), check for 'value'.
+      // Otherwise, it's a checkbox, so check for 'checked' == FALSE.
+      if ($recurring_field['visible'] == TRUE) {
+        if ($recurring_field['settings']['type'] == 'select' || $recurring_field['settings']['type'] == 'radios') {
+          $required_values = array('!value' => 'recurs');
+        } else {
+          $required_values = array('checked' => FALSE);
+        }
+      }
+            
       foreach ($payment_methods as $payment_method) {
-        // Check if the gateway allows recurring payments, and use the States API if it doesn't.
-        // This process performs the show/hide on payment method options when the
-        // "recurs_monthly" field is selected.
+        // Check if the gateway allows recurring payments, and also whether the "recurs_monthly" field is shown,
+        // and use the States API if it doesn't. This process performs the show/hide on payment method
+        // options when the "recurs_monthly" field is selected.
         $this_gateway = _fundraiser_gateway_info($payment_method['id']);
-        if (!isset($this_gateway['allow_recurring']) || !_fundraiser_sustainers_supports_recurring($this_gateway['allow_recurring'], $payment_method['method'])) {
-          if ($form_has_exposed_recurring_field) {
-            $payment_method_name = $payment_method['method'];
-            $element[$payment_method_name] = array(
-              '#states' => array(
-                'invisible' => array(
-                  ':input[name*=recurs_monthly]' => array('value' => "recurs"),
-                ),
+        if ((!isset($this_gateway['allow_recurring']) || !_fundraiser_sustainers_supports_recurring($this_gateway['allow_recurring'], $payment_method['method'])) && $recurring_field['visible'] == TRUE) {
+          $payment_method_name = $payment_method['method'];
+          $element[$payment_method_name] = array(
+            '#states' => array(
+              'visible' => array(
+                ':input[name*=recurs_monthly]' => $required_values
               ),
-            );
-          }
+            ),
+          );
         }
         
         // Set the option label as the custom label or the hard-coded label
