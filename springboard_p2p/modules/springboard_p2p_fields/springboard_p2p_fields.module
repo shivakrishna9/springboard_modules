@@ -19,32 +19,6 @@ function springboard_p2p_fields_theme() {
 }
 
 /**
- * Callback for getting field property values.
- *
- * @todo I don't think this gets called, but I stole it from somewhere.
- *       Further research needed.
- */
-function springboard_p2p_fields_property_field_campaign_goals_get($entity, array $options, $name, $entity_type, $info) {
-  watchdog('p2p', 'in campaign goals get');
-  $field = field_info_field($name);
-  $columns = array_keys($field['columns']);
-  $langcode = isset($options['language']) ? $options['language']->language : LANGUAGE_NONE;
-  $langcode = entity_metadata_field_get_language($entity_type, $entity, $field, $langcode, TRUE);
-  $values = array();
-  if (isset($entity->{$name}[$langcode])) {
-    foreach ($entity->{$name}[$langcode] as $delta => $data) {
-      $values[$delta] = $data[$columns[0]];
-      if ($info['type'] == 'boolean' || $info['type'] == 'list<boolean>') {
-        // Ensure that we have a clean boolean data type.
-        $values[$delta] = (boolean) $values[$delta];
-      }
-    }
-  }
-  // For an empty single-valued field, we have to return NULL.
-  return $field['cardinality'] == 1 ? ($values ? reset($values) : NULL) : $values;
-}
-
-/**
  * Implements hook_field_info().
  */
 function springboard_p2p_fields_field_info() {
@@ -89,30 +63,48 @@ function springboard_p2p_fields_property_field_campaign_goals_info() {
     'goal_type' => array(
       'type' => 'text',
       'label' => t('Goal type'),
-      'getter callback' => 'springboard_p2p_entity_metadata_field_campaign_goal_type_get',
     ),
     'goal_value' => array(
       'type' => 'text',
       'label' => t('Goal value'),
-      'getter callback' => 'springboard_p2p_entity_metadata_field_campaign_goal_value_get',
     ),
   );
 }
 
 /**
- * Callback for getting the goal type of campaign goals fields.
+ * Callback for getting field property values.
  */
-function springboard_p2p_entity_metadata_field_campaign_goal_type_get($item) {
-  return db_query("SELECT goal_type FROM {springboard_p2p_fields_campaign_goals} WHERE goal_set_id = :id", array(':id' => $item))
-    ->fetchField();
+function springboard_p2p_fields_property_field_campaign_goals_get($entity, array $options, $name, $entity_type, $info) {
+  return springboard_p2p_fields_get_goal_from_entity($entity);
 }
 
 /**
- * Callback for getting the goal value of campaign goals fields.
+ * Get the enabled goal data from an entity.
+ *
+ * @param object $entity
+ *   The entity.
+ *
+ * @return array
+ *   An array with 'goal_type' and 'goal_value" keys, and optionally other
+ *   goal data.
+ *
+ * @todo This only handles a single enabled goal.
  */
-function springboard_p2p_entity_metadata_field_campaign_goal_value_get($item) {
-  return db_query("SELECT goal_value FROM {springboard_p2p_fields_campaign_goals} WHERE goal_set_id = :id", array(':id' => $item))
-    ->fetchField();
+function springboard_p2p_fields_get_goal_from_entity($entity) {
+  $goal_set_id = $entity->field_p2p_campaign_goals[$entity->language][0]['goal_set_id'];
+  $goals_field = new SpringboardP2pCampaignGoalsField();
+  $goals = $goals_field->load($goal_set_id);
+  foreach ($goals as $goal) {
+    if ($goal['enabled']) {
+      return $goal;
+    }
+  }
+
+  // Somewhat safe default.
+  return array(
+    'goal_type' => 'submissions',
+    'goal_value' => 0,
+  );
 }
 
 /**

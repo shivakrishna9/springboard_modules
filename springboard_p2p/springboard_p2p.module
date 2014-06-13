@@ -850,7 +850,7 @@ function springboard_p2p_no_content_types_enabled() {
  *   'submissions' or 'amount'
  */
 function springboard_p2p_get_goal_type_from_campaign($campaign) {
-  $goal = springboard_p2p_get_goal_from_campaign($campaign);
+  $goal = springboard_p2p_fields_get_goal_from_entity($campaign);
   return $goal['goal_type'];
 }
 
@@ -864,37 +864,21 @@ function springboard_p2p_get_goal_type_from_campaign($campaign) {
  *   Dollar amount or number of submissions.
  */
 function springboard_p2p_get_goal_value_from_campaign($campaign) {
-  $goal = springboard_p2p_get_goal_from_campaign($campaign);
+  $goal = springboard_p2p_fields_get_goal_from_entity($campaign);
   return $goal['goal_value'];
 }
 
 /**
- * Get the enabled goal data from a campaign.
+ * Get the goal data for the enabled goal from a campaign.
  *
  * @param object $campaign
  *   The campaign node.
  *
  * @return array
- *   An array with 'goal_type' and 'goal_value" keys, and optionally other
- *   goal data.
- *
- * @todo This only handles a single enabled goal.
+ *   An array with 'goal_type' and 'goal_value' and other goal data.
  */
 function springboard_p2p_get_goal_from_campaign($campaign) {
-  $goal_set_id = $campaign->field_p2p_campaign_goals[$campaign->language][0]['goal_set_id'];
-  $goals_field = new SpringboardP2pCampaignGoalsField();
-  $goals = $goals_field->load($goal_set_id);
-  foreach ($goals as $goal) {
-    if ($goal['enabled']) {
-      return $goal;
-    }
-  }
-
-  // Somewhat safe default.
-  return array(
-    'goal_type' => 'submissions',
-    'goal_value' => 0,
-  );
+  return springboard_p2p_fields_get_goal_from_entity($campaign);
 }
 
 /**
