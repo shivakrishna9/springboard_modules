@@ -156,6 +156,10 @@ function _webform_user_component_access($op, $node) {
  */
 function webform_user_webform_submission_presave($node, &$submission) {
   if (_webform_user_is_webform_user_node($node) && isset($submission->sid)) {
+    // Offline or similar processing is taking place, so we skip all checks on user id.
+    if (isset($submission->webform_user_skip_user_check) && $submission->webform_user_skip_user_check) {
+      return;
+    }
     $results = db_query('SELECT uid FROM {webform_submissions} where sid = :sid', array(':sid' => $submission->sid));
     $uid = $results->fetchColumn();
     if ($uid) {
@@ -472,6 +476,10 @@ function webform_user_webform_submit($form, &$form_state) {
       _webform_user_save_profile_map($account->uid, $map);
       $submission = webform_get_submission($node->nid, $form_state['values']['details']['sid']);
       $submission->uid = $account->uid;
+      // Setting this flag skips uid checking during presave. 
+      if ($skip_user_check) {
+        $submission->webform_user_skip_user_check = TRUE;
+      }
       webform_submission_update($node, $submission);
       // Send the e-mail through the user module.
       if ($node->send_new_user_email) {
