@@ -65,6 +65,7 @@ function springboard_p2p_complete_profile_form($form, &$form_state, $account) {
 
   if (springboard_p2p_should_add_state_and_country_ajax($form)) {
     form_load_include($form_state, 'inc', 'springboard_p2p', 'includes/springboard_p2p.register');
+    springboard_p2p_set_country_and_state_defaults_and_options($form, $form_state);
     springboard_p2p_add_state_and_country_ajax($form);
   }
 
