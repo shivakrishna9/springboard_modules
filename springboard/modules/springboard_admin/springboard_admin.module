@@ -91,15 +91,28 @@ function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
  * Implements hook_form_ID_alter().
  * views exposed form
  */
-function springboard_admin_form_views_exposed_form_alter (&$form, &$form_state, $form_id) {
-
-  // Alter the date range min / max labels.
-  $form['date_filter']['min']['#title'] = 'Published between:';
-  $form['date_filter']['max']['#title'] = 'and:';
+function springboard_admin_form_views_exposed_form_alter(&$form, &$form_state, $form_id) {
 
   // Alter the date format.
   $form['date_filter']['min']['#date_format'] = 'n/j/Y';
   $form['date_filter']['max']['#date_format'] = 'n/j/Y';
+
+  // for sbv_donations - admin/reports/salesforce/donations
+  if (arg(1) == "reports" && arg(2) == "salesforce" && arg(3) == 'donations') {
+
+    // Alter the date range min / max labels.
+    $form['date_filter']['min']['#title'] = 'Order between';
+    $form['date_filter']['max']['#title'] = 'and';
+
+  }
+
+  else {
+
+    // Alter the date range min / max labels.
+    $form['date_filter']['min']['#title'] = 'Published between';
+    $form['date_filter']['max']['#title'] = 'and';
+
+  }
 
 }
 
