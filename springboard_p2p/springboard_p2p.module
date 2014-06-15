@@ -827,6 +827,30 @@ function springboard_p2p_get_personal_campaigns($nid) {
 }
 
 /**
+ * Get all of the personal campaigns.
+ *
+ * @return array
+ *   The loaded personal campaign entities, keyed by nid.
+ */
+function springboard_p2p_get_all_personal_campaigns() {
+  $items = array();
+
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'p2p_personal_campaign')
+    ->propertyOrderBy('created', 'DESC');
+
+  $result = $query->execute();
+
+  if (isset($result['node'])) {
+    $nids = array_keys($result['node']);
+    $items = entity_load('node', $nids);
+  }
+
+  return $items;
+}
+
+/**
  * Checks if any content types have been enabled for p2p campaign goals.
  *
  * @return bool

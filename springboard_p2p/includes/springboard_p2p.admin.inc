@@ -110,14 +110,39 @@ function springboard_p2p_admin_settings() {
     '#weight' => -50,
   );
 
+  $current_base_path = variable_get('springboard_p2p_base_path', 'springboard_p2p');
+
+  $form['basic']['current_base_path'] = array(
+    '#type' => 'value',
+    '#value' => $current_base_path,
+  );
+
   $form['basic']['base_path'] = array(
     '#type' => 'textfield',
     '#title' => t('Base path for personal campaign pages'),
-    '#default_value' => variable_get('springboard_p2p_base_path', 'springboard_p2p'),
+    '#default_value' => $current_base_path,
     '#size' => 40,
     '#required' => TRUE,
     '#field_prefix' => url(NULL, array('absolute' => TRUE)) . (variable_get('clean_url', 0) ? '' : '?q='),
   );
+
+  $form['basic']['base_path_personal_campaigns'] = array(
+    '#type' => 'radios',
+    '#title' => t('What to do with existing personal campaigns'),
+    '#description' => t('If changing the base path, what should happen to existing personal campaign paths?'),
+    '#default_value' => 'none',
+    '#options' => array(
+      'none' => 'Leave existing paths unchanged.',
+      'update_paths' => 'Update existing paths with the new base path.',
+    ),
+  );
+
+  if (module_exists('redirect')) {
+    $form['basic']['base_path_personal_campaigns']['#options']['add_redirects'] = 'Update existing paths with the new base path and create redirects from the old paths';
+  }
+  else {
+    $form['basic']['base_path_personal_campaigns']['#description'] .= ' ' . t('To add redirects for the old paths, install the Redirect module first and then the option to add redirects will become available.');
+  }
 
   $form['help_message'] = array(
     '#type' => 'fieldset',
@@ -307,6 +332,12 @@ function springboard_p2p_admin_settings_submit($form, &$form_state) {
     variable_set('springboard_p2p_' . $key, $value);
   }
 
+  springboard_p2p_modify_base_path(
+    $form_state['values']['current_base_path'],
+    $form_state['values']['base_path'],
+    $form_state['values']['base_path_personal_campaigns']
+  );
+
   drupal_set_message('Settings saved.');
 }
 
@@ -451,4 +482,37 @@ function springboard_p2p_sort_keys_by_weight($items) {
   asort($sort);
 
   return array_keys($sort);
+}
+
+/**
+ * If the base path has changed, update existing campaigns based on the setting.
+ *
+ * @param string $old
+ *   The old/current base path.
+ * @param string $new
+ *   The new base path.
+ * @param string $update_existing
+ *   How to handle existing personal campaigns.
+ *   Can be 'none', 'update_paths', or 'add_redirects'.
+ */
+function springboard_p2p_modify_base_path($old, $new, $update_existing) {
+  if ($old != $new) {
+    switch ($update_existing) {
+      case 'none':
+        drupal_set_message('The base path was updated. No changes were made to existing personal campaigns.');
+        break;
+
+      case 'update_paths':
+        drupal_set_message('This is only a test. If this had been real, the following personal campaigns would get updated.');
+        $nodes = springboard_p2p_get_all_personal_campaigns();
+        foreach ($nodes as $node) {
+          drupal_set_message(l($node->title, 'node/' . $node->nid));
+        }
+        break;
+
+      case 'add_redirects':
+        drupal_set_message('This is where we would add the redirects. Under construction.');
+        break;
+    }
+  }
 }
