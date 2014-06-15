@@ -14,12 +14,11 @@ function springboard_p2p_install() {
   springboard_p2p_add_donation_form_content_type();
   $node = springboard_p2p_add_example_donation_form();
 
-  $default_items = array (
-    'p2p_donation_form' =>
-      array (
-        'enabled' => 1,
-        'nid' => $node->nid,
-      ),
+  $default_items = array(
+    'p2p_donation_form' => array(
+      'enabled' => 1,
+      'nid' => $node->nid,
+    ),
   );
 
   variable_set('springboard_p2p_fundraiser_items', $default_items);
@@ -297,15 +296,13 @@ function springboard_p2p_add_example_donation_form() {
     'in, feugiat ac, molestie eget, wisi.';
   $node->body[$node->language][0]['format'] = 'filtered_html';
   $node->webform = array(
-    'confirmation' => 'Thank you [donation:first_name] [donation:last_name] for your donation of [donation:amount] USD.' . "\n" .
-      "\n" .
-      'The email address we have for you is: [donation:mail]' . "\n" .
-      "\n" .
+    'confirmation' =>
+      'Thank you [donation:first_name] [donation:last_name] for your donation of [donation:amount] USD.' . "\n\n" .
+      'The email address we have for you is: [donation:mail]' . "\n\n" .
       'The address we have on record for you is:' . "\n" .
       '[donation:address] [donation:address_line_2]' . "\n" .
       '[donation:city], [donation:state] [donation:zip]' . "\n" .
-      '[donation:country]' . "\n" .
-      "\n" .
+      '[donation:country]' . "\n\n" .
       'Your card ending in [donation:card_number], expires [donation:card_expiration_month] / [donation:card_expiration_year]',
     'confirmation_format' => 'filtered_html',
     'redirect_url' => '<confirmation>',
@@ -552,7 +549,7 @@ function springboard_p2p_update_7004() {
 }
 
 /**
- * Changes the primary key in the springboard_p2p_personal_campaign_action table.
+ * Changes the primary key in the personal_campaign_action table.
  */
 function springboard_p2p_update_7005() {
   db_drop_primary_key('springboard_p2p_personal_campaign_action');
