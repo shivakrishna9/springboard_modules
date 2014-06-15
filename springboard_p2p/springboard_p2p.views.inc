@@ -171,7 +171,7 @@ function springboard_p2p_views_data() {
         'label' => t('P2P Category'),
         'title' => t('P2P Category'),
         'help' => t('The P2P Category.'),
-      ),6
+      ),
     ),
     'campaign_nid' => array(
       'title' => t('P2P campaign'),
