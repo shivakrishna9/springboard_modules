@@ -33,7 +33,8 @@ $plugin = array(
  * Callback, Check if this is a p2p donation form or not.
  */
 function springboard_p2p_donation_form_ctools_access_check($conf, $context) {
-  // If for some unknown reason that $context isn't set, we just want to be sure.
+  // If for some unknown reason that $context isn't set,
+  // we just want to be sure.
   if (empty($context) || empty($context->data)) {
     return FALSE;
   }

@@ -25,12 +25,13 @@ $plugin = array(
  * Check for access.
  */
 function springboard_p2p_node_field_populated_ctools_access_check($conf, $context) {
-  // If for some unknown reason that $context isn't set, we just want to be sure.
+  // If for some unknown reason that $context isn't set,
+  // we just want to be sure.
   if (empty($context) || empty($context->data)) {
     return FALSE;
   }
 
-  // Check if the node field has a value
+  // Check if the node field has a value.
   list($node_type, $field_name) = explode(':', $conf['node_field']);
   if (($context->data->type != $node_type) || empty($context->data->$field_name)) {
     return FALSE;
@@ -45,7 +46,7 @@ function springboard_p2p_node_field_populated_ctools_settings($form, &$form_stat
   $entities = entity_get_info('node');
   $options = array();
 
-  // Loop through the node entities adding each field as an option
+  // Loop through the node entities adding each field as an option.
   foreach ($entities['bundles'] as $node_type => $bundle) {
     $instances   = field_info_instances('node', $node_type);
     foreach ($instances as $field_name => $field) {
@@ -61,7 +62,7 @@ function springboard_p2p_node_field_populated_ctools_settings($form, &$form_stat
     '#options' => $options,
   );
 
-  // Pass the labels so we an easily match them upon submission
+  // Pass the labels so we an easily match them upon submission.
   $form['settings']['node_field_labels'] = array(
     '#type' => 'value',
     '#value' => $options,
@@ -71,7 +72,7 @@ function springboard_p2p_node_field_populated_ctools_settings($form, &$form_stat
 }
 
 /**
- * Custom submit handler to save the pretty label in the conf array
+ * Custom submit handler to save the pretty label in the conf array.
  */
 function springboard_p2p_node_field_populated_ctools_settings_submit($form, &$form_state) {
   $form_state['values']['settings']['label'] = $form_state['values']['settings']['node_field_labels'][$form_state['values']['settings']['node_field']];
@@ -82,6 +83,6 @@ function springboard_p2p_node_field_populated_ctools_settings_submit($form, &$fo
  * Provide a summary description based upon the age.
  */
 function springboard_p2p_node_field_populated_ctools_summary($conf, $context) {
-  // Here we use the label value so its pretty
+  // Here we use the label value so it's pretty.
   return t('@label has been populated', array('@label' => $conf['label']));
 }
