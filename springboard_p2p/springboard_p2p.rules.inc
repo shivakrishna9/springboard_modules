@@ -32,6 +32,12 @@ function springboard_p2p_rules_condition_info() {
   );
 }
 
+/**
+ * Options list for the passed in campaign Rules condition.
+ *
+ * @return array
+ *   The options array.
+ */
 function springboard_p2p_rules_campaign_options_list() {
   return array(
     'not provided' => 'is not provided',
@@ -40,6 +46,18 @@ function springboard_p2p_rules_campaign_options_list() {
   );
 }
 
+/**
+ * The condition evaluation for passed in campaign.
+ *
+ * @param object|NULL $campaign
+ *   The campaign node, or NULL if one isn't passed in.
+ * @param string $value
+ *   The value to compare the campaign to.
+ *   Can be one of 'not provided', 'private', or 'public'.
+ *
+ * @return bool
+ *   TRUE if the condition passes.
+ */
 function springboard_p2p_condition_passed_in_campaign($campaign, $value) {
   if (is_null($campaign)) {
     if ($value == 'not provided') {
