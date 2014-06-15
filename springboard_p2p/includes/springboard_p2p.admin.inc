@@ -151,7 +151,8 @@ function springboard_p2p_admin_settings() {
   );
 
   // Login message text area.
-  // We set a var here, otherwise drupal complians about htmlspecialchars, this is a known bug with text_format FAPI.
+  // We set a var here, otherwise drupal complains about htmlspecialchars.
+  // This is a known bug with text_format FAPI.
   $textformat = variable_get('springboard_p2p_login_message_area', array('value' => '', 'format' => NULL));
   // Now render the form item.
   $form['help_message']['login_message_area'] = array(
@@ -164,8 +165,9 @@ function springboard_p2p_admin_settings() {
     '#description' => t('Use this area to set a P2P Login message that will appear on the registration page for your users located at /springboard_p2p/register.'),
   );
 
-  // Login message text area.
-  // We set a var here, otherwise drupal complians about htmlspecialchars, this is a known bug with text_format FAPI.
+  // Help message text area.
+  // We set a var here, otherwise drupal complains about htmlspecialchars.
+  // This is a known bug with text_format FAPI.
   $textformat = variable_get('springboard_p2p_help_message_area', array('value' => '', 'format' => NULL));
   // Now render the form item.
   $form['help_message']['help_message_area'] = array(
