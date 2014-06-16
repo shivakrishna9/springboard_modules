@@ -505,10 +505,24 @@ function springboard_p2p_modify_base_path($old, $new, $update_existing) {
         break;
 
       case 'update_paths':
-        drupal_set_message('This is only a test. If this had been real, the following personal campaigns would get updated.');
+        drupal_set_message('The URLs of the following personal campaigns have been updated.');
         $nodes = springboard_p2p_get_all_personal_campaigns();
         foreach ($nodes as $node) {
-          drupal_set_message(l($node->title, 'node/' . $node->nid));
+          $internal_path = 'node/' . $node->nid;
+
+          // Load the current path, change the alias, and save it.
+          $path = path_load($internal_path);
+
+          // If there's no existing path leave it alone.
+          if ($path) {
+            // Make sure we're only replacing the beginning of the path.
+            $path_parts = explode('/', $path['alias']);
+            $path_parts[0] = $new;
+            $path['alias'] = implode('/', $path_parts);
+            path_save($path);
+            drupal_set_message(l($node->title, $internal_path));
+          }
+
         }
         break;
 
