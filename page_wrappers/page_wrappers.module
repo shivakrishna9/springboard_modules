@@ -149,6 +149,9 @@ function page_wrappers_css_alter(&$css) {
 
   // If this is a node that has a wrapper assigned remove all the theme stylesheets
   if (!empty($wrapper)) {
+    // @todo This node_load() might not be needed because page_wrappers_check()
+    // provides a node.  Test if the two nodes are the same and if so replace
+    // this with the one from $wrapper_data['node'].
     $wrapper_node = node_load($wrapper['wrapper_nid']);
     $css_files = field_get_items('node', $wrapper_node, 'page_wrappers_css');
     $keep = array();
