@@ -505,30 +505,74 @@ function springboard_p2p_modify_base_path($old, $new, $update_existing) {
         break;
 
       case 'update_paths':
-        drupal_set_message('The URLs of the following personal campaigns have been updated.');
-        $nodes = springboard_p2p_get_all_personal_campaigns();
-        foreach ($nodes as $node) {
-          $internal_path = 'node/' . $node->nid;
-
-          // Load the current path, change the alias, and save it.
-          $path = path_load($internal_path);
-
-          // If there's no existing path leave it alone.
-          if ($path) {
-            // Make sure we're only replacing the beginning of the path.
-            $path_parts = explode('/', $path['alias']);
-            $path_parts[0] = $new;
-            $path['alias'] = implode('/', $path_parts);
-            path_save($path);
-            drupal_set_message(l($node->title, $internal_path));
-          }
-
-        }
+        springboard_p2p_change_peronsal_campaign_paths($new, FALSE);
         break;
 
       case 'add_redirects':
-        drupal_set_message('This is where we would add the redirects. Under construction.');
+
+        springboard_p2p_change_peronsal_campaign_paths($new, TRUE);
         break;
     }
   }
+}
+
+/**
+ * Changes the personal campaign paths for all personal campaigns.
+ *
+ * @param string $new_base_path
+ *   The new base path to use.
+ * @param bool $add_redirects
+ *   Whether to add redirects for the old paths to the new paths.
+ *   Requires the Redirect module.
+ */
+function springboard_p2p_change_peronsal_campaign_paths($new_base_path, $add_redirects = FALSE) {
+  // Sanity check.  This really shouldn't happen because the option won't
+  // exist if the module does not exist.
+  if ($add_redirects && !module_exists('redirect')) {
+    drupal_set_message('The Redirect module is not enabled.');
+    return;
+  }
+
+  drupal_set_message('The following personal campaigns have been updated.');
+
+  $nodes = springboard_p2p_get_all_personal_campaigns();
+
+  // Temporarily change this variable so that Redirect will automaitcallly
+  // add redirects when the path is changed.
+  if ($add_redirects) {
+    $current_auto_redirect = variable_get('redirect_auto_redirect', TRUE);
+    variable_set('redirect_auto_redirect', TRUE);
+  }
+
+  foreach ($nodes as $node) {
+    $internal_path = 'node/' . $node->nid;
+
+    // Load the current path, change the alias, and save it.
+    $path = path_load($internal_path);
+
+    // If there's no existing path leave it alone.
+    if ($path) {
+      $path['original'] = $path;
+
+      // Make sure we're only replacing the beginning of the path.
+      $path_parts = explode('/', $path['alias']);
+      $path_parts[0] = $new_base_path;
+      $path['alias'] = implode('/', $path_parts);
+
+      // Create a redirect using the redirect module.
+      // When the auto redirect variable is on, we can control whether
+      // Redirect makes a redirect by settings this value.
+      $path['redirect'] = $add_redirects;
+
+      path_save($path);
+
+      drupal_set_message(l($node->title, $internal_path));
+    }
+  }
+
+  // Set the auto redirect variable back to its previous value.
+  if ($add_redirects) {
+    variable_set('redirect_auto_redirect', $current_auto_redirect);
+  }
+
 }
