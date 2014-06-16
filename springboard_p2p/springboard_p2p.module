@@ -527,10 +527,20 @@ function springboard_p2p_personal_campaign_ajax(&$form, &$form_state) {
  * Ajax callback validates campaign url field.
  */
 function springboard_p2p_personal_campaign_url_ajax(&$form, $form_state) {
+  $commands = array();
   $nid = $form_state['values']['nid'];
   $language = $form_state['values']['language'];
-  $path = variable_get('springboard_p2p_base_path', 'springboard_p2p') . '/';
-  $path .= $form_state['values']['field_p2p_personal_campaign_url'][$language][0]['value'];
+  $campaign_path = $form_state['values']['field_p2p_personal_campaign_url'][$language][0]['value'];
+
+  // No value provided, so don't do anything.
+  if (trim($campaign_path) == '') {
+    $commands[] = ajax_command_remove('div#personal-campaign-url-wrapper div.alert');
+
+    return array('#type' => 'ajax', '#commands' => $commands);
+  }
+
+  $base_path = variable_get('springboard_p2p_base_path', 'springboard_p2p') . '/';
+  $path = $base_path . '/' . $campaign_path;
 
   $alias_exists = drupal_lookup_path('source', $path);
   $target = 'field_p2p_personal_campaign_url[' . $language . '][0][value]';
@@ -547,10 +557,6 @@ function springboard_p2p_personal_campaign_url_ajax(&$form, $form_state) {
   else {
     drupal_set_message(t('URL ok.'));
   }
-  // return theme('status_message'drupal_render($form['field_p2p_personal_campaign_url'][$language]);
-  // unset($_SESSION['messages']);
-
-  $commands = array();
 
   // Add other commands.
   $commands[] = ajax_command_remove('div#personal-campaign-url-wrapper div.alert');
