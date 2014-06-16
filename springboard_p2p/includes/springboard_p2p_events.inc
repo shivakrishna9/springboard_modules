@@ -16,22 +16,21 @@ class SpringboardP2pEvents {
   public function userRegistersForP2P($account, $campaign = NULL) {
     springboard_p2p_register_user_for_p2p($account->uid);
 
-    if (module_exists('rules')) {
-      $dashboard_url = $this->dashboardUrl($account->uid);
-      $create_personal_campaign_url = $dashboard_url;
+    $dashboard_url = $this->dashboardUrl($account->uid);
+    $create_personal_campaign_url = $dashboard_url;
 
-      if (!is_null($campaign) && isset($campaign->nid)) {
-        $create_personal_campaign_url = $this->createUrl($campaign->nid);
-      }
-
-      rules_invoke_event(
-        'springboard_p2p_user_register',
-        $account,
-        $campaign,
-        $create_personal_campaign_url,
-        $dashboard_url
-      );
+    if (!is_null($campaign) && isset($campaign->nid)) {
+      $create_personal_campaign_url = $this->createUrl($campaign->nid);
     }
+
+    rules_invoke_event(
+      'springboard_p2p_user_register',
+      $account,
+      $campaign,
+      $create_personal_campaign_url,
+      $dashboard_url
+    );
+
   }
 
   /**
@@ -44,16 +43,15 @@ class SpringboardP2pEvents {
    */
   public function userRequestsApprovalForPrivateCampaign($account, $campaign, $registering_for_p2p = FALSE) {
 
-    if (module_exists('rules')) {
-      rules_invoke_event(
-        'springboard_p2p_user_requests_approval',
-        $account,
-        $campaign,
-        $this->createUrl($campaign->nid),
-        $this->dashboardUrl($account->uid),
-        $registering_for_p2p
-      );
-    }
+    rules_invoke_event(
+      'springboard_p2p_user_requests_approval',
+      $account,
+      $campaign,
+      $this->createUrl($campaign->nid),
+      $this->dashboardUrl($account->uid),
+      $registering_for_p2p
+    );
+
   }
 
   /**
@@ -66,15 +64,14 @@ class SpringboardP2pEvents {
    */
   public function userIsApproved($account, $campaign) {
 
-    if (module_exists('rules')) {
-      rules_invoke_event(
-        'springboard_p2p_user_is_approved',
-        $account,
-        $campaign,
-        $this->createUrl($campaign->nid),
-        $this->dashboardUrl($account->uid)
-      );
-    }
+    rules_invoke_event(
+      'springboard_p2p_user_is_approved',
+      $account,
+      $campaign,
+      $this->createUrl($campaign->nid),
+      $this->dashboardUrl($account->uid)
+    );
+
   }
 
   /**
@@ -87,15 +84,14 @@ class SpringboardP2pEvents {
    */
   public function userIsRejected($account, $campaign) {
 
-    if (module_exists('rules')) {
-      rules_invoke_event(
-        'springboard_p2p_user_is_rejected',
-        $account,
-        $campaign,
-        $this->createUrl($campaign->nid),
-        $this->dashboardUrl($account->uid)
-      );
-    }
+    rules_invoke_event(
+      'springboard_p2p_user_is_rejected',
+      $account,
+      $campaign,
+      $this->createUrl($campaign->nid),
+      $this->dashboardUrl($account->uid)
+    );
+
   }
 
   /**
@@ -115,24 +111,12 @@ class SpringboardP2pEvents {
       $cid = NULL;
     }
 
-    // Use rules if it's enabled. Otherwise use the default drupal mail.
-    if (module_exists('rules')) {
-      rules_invoke_event(
-        'springboard_p2p_user_requests_password_reset',
-        $account,
-        $campaign,
-        $this->resetUrl($account, $cid)
-      );
-    }
-    else {
-      $params = array(
-        'account' => $account,
-        'p2p_cid' => $cid,
-      );
-      $to = $account->mail;
-      $language = user_preferred_language($account);
-      drupal_mail('springboard_p2p', 'password_reset', $to, $language, $params);
-    }
+    rules_invoke_event(
+      'springboard_p2p_user_requests_password_reset',
+      $account,
+      $campaign,
+      $this->resetUrl($account, $cid)
+    );
 
     $language = !empty($account->language) ? $account->language : 'und';
 
