@@ -418,6 +418,7 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
         $form['field_p2p_video_embed'][$language][0]['video_url']['#default_value'] = $campaign_node->field_p2p_video_embed[$language][0]['video_url'];
       }
     }
+
   }
   else {
     // Node edit of some variety. We'll need to load the original campaign
@@ -566,29 +567,35 @@ function springboard_p2p_sb_social_share_ur($url, $node) {
 }
 
 /**
+ * Implements hook_node_presave().
+ *
+ * Populates the personal campaign url field if needed.  This is done here
+ * instead of node_insert and node_update because the node can't be modified
+ * in those hooks.
+ */
+function springboard_p2p_node_presave($node) {
+  if ($node->type != 'p2p_personal_campaign') {
+    return;
+  }
+
+  $alias = isset($node->field_p2p_personal_campaign_url[$node->language][0]['value']) ? $node->field_p2p_personal_campaign_url[$node->language][0]['value'] : '';
+  $alias = trim($alias);
+
+  if ($alias == '') {
+    $base_path = variable_get('springboard_p2p_base_path', 'springboard_p2p');
+    $alias = springboard_p2p_create_alias_from_title($base_path, $node->title);
+  }
+
+  $node->field_p2p_personal_campaign_url[$node->language][0]['value'] = $alias;
+}
+
+/**
  * Implements hook_node_insert().
  */
 function springboard_p2p_node_insert($node) {
+  // Manage url alias for personal campaign node type.
   if ($node->type == 'p2p_personal_campaign') {
-    // Manage url alias for personal campaign node type.
-    $alias = isset($node->field_p2p_personal_campaign_url[$node->language][0]['value']) ? $node->field_p2p_personal_campaign_url[$node->language][0]['value'] : '';
-    $alias = trim($alias);
-
-    if ($alias == '') {
-      $alias = springboard_p2p_create_alias_from_title($node->title);
-      $node->field_p2p_personal_campaign_url[$node->language][0]['value'] = $alias;
-      node_save($node);
-    }
-
-    // Discard existing alias settings if the node is being cloned.
-    if ($alias && !isset($node->clone_from_original_nid)) {
-      $alias = variable_get('springboard_p2p_base_path', 'springboard_p2p') . '/' . $alias;
-      $path = array(
-        'source' => 'node/' . $node->nid,
-        'alias' => $alias,
-      );
-      path_save($path);
-    }
+    springboard_p2p_save_personal_campaign_path($node);
   }
 }
 
@@ -598,30 +605,7 @@ function springboard_p2p_node_insert($node) {
 function springboard_p2p_node_update($node) {
   // Manage url alias for personal campaign node type.
   if ($node->type == 'p2p_personal_campaign') {
-    $alias = '';
-    if (isset($node->field_p2p_personal_campaign_url[$node->language]) && is_array($node->field_p2p_personal_campaign_url[$node->language])) {
-      $alias = count($node->field_p2p_personal_campaign_url[$node->language]) ? $node->field_p2p_personal_campaign_url[$node->language][0]['value'] : '';
-    }
-    $alias = trim($alias);
-
-    if ($alias == '') {
-      $alias = springboard_p2p_create_alias_from_title($node->title);
-      $node->field_p2p_personal_campaign_url[$node->language][0]['value'] = $alias;
-      node_save($node);
-    }
-
-    if ($alias) {
-      $alias = variable_get('springboard_p2p_base_path', 'springboard_p2p') . '/' . $alias;
-      $path = array(
-        'source' => 'node/' . $node->nid,
-        'alias' => $alias,
-      );
-      // Force an update if path settings already exist for this node.
-      if (isset($node->path['pid']) && $node->path['pid']) {
-        $path['pid'] = $node->path['pid'];
-      }
-      path_save($path);
-    }
+    springboard_p2p_save_personal_campaign_path($node);
   }
   // Propagate changes to campaign fields to personal campaigns when fields are
   // flagged "uneditable" by personal campaign owners.
@@ -689,17 +673,51 @@ function springboard_p2p_node_update($node) {
 }
 
 /**
+ * Gets the alias to use from the campaign url field and saves the path.
+ *
+ * @param object $node
+ *   The personal campaign node.
+ *
+ * @return bool
+ *   TRUE if the path was saved.
+ */
+function springboard_p2p_save_personal_campaign_path($node) {
+  // This should always be set by the node presave.
+  $alias = $node->field_p2p_personal_campaign_url[$node->language][0]['value'];
+
+  // Discard existing alias settings if the node is being cloned.
+  if ($alias && !isset($node->clone_from_original_nid)) {
+    $base_path = variable_get('springboard_p2p_base_path', 'springboard_p2p');
+    $path = array(
+      'source' => 'node/' . $node->nid,
+      'alias' => $base_path . '/' . $alias,
+    );
+
+    // Force an update if path settings already exist for this node.
+    if (isset($node->path['pid']) && $node->path['pid']) {
+      $path['pid'] = $node->path['pid'];
+    }
+
+    path_save($path);
+
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+/**
  * Creates a URL safe path from the node title.
  *
- * @todo There's probably an easier way or built in function to do this.
- *
+ * @param string $base_path
+ *   The p2p base path.
  * @param string $title
  *   The node title.
  *
  * @return mixed|string
  *   A URL safe path.
  */
-function springboard_p2p_create_alias_from_title($title) {
+function springboard_p2p_create_alias_from_title($base_path, $title) {
 
   $replacements = array(
     ' ' => '-',
@@ -739,7 +757,43 @@ function springboard_p2p_create_alias_from_title($title) {
   $title = drupal_strtolower(trim($title));
   $title = str_replace(array_keys($replacements), array_values($replacements), $title);
 
+  $counter = -1;
+  while (springboard_p2p_full_alias_exists($base_path, $title, $counter)) {
+    $counter++;
+  }
+
+  if ($counter > -1) {
+    $title .= '_' . $counter;
+  }
+
   return $title;
+}
+
+/**
+ * Determine if a full p2p alias already exists.
+ *
+ * @param string $base_path
+ *   The p2p base path.
+ * @param string $alias
+ *   The part of the alias that does not include the base path.
+ * @param int $counter
+ *   A number to suffix on the path to make it unique.
+ *   Use -1 for no suffix.
+ *
+ * @return bool
+ *   TRUE if the full alias already exists.
+ */
+function springboard_p2p_full_alias_exists($base_path, $alias, $counter = -1) {
+  $path = $base_path . '/' . $alias;
+  if ($counter > -1) {
+    $path .= '_' . $counter;
+  }
+  $alias_exists = drupal_lookup_path('source', $path);
+  if ($alias_exists !== FALSE) {
+    return TRUE;
+  }
+
+  return FALSE;
 }
 
 /**
