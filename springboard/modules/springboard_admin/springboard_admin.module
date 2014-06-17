@@ -286,8 +286,13 @@ function springboard_admin_init() {
     elseif (preg_match('|^/admin/reports/salesforce/donations$|', $path)) {
       $goto_path = 'springboard/reports/donations';
     }
-    elseif (preg_match('|^/admin/config/content/webform_goals$|', $path)) {
-      $goto_path = 'springboard/goals';
+    elseif (preg_match('|^/admin/config/content/webform_goals((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
+      if (preg_match('|^/admin/config/content/webform_goals$|', $path)) {
+        $goto_path = 'springboard/goals';
+      } 
+      else {
+        $goto_path = 'springboard/goals' . $m1[1];  
+      }
     }
     elseif (preg_match('|^/admin/config/content/webform_ab$|', $path)) {
       $goto_path = 'springboard/multivariate-testing';
@@ -608,8 +613,13 @@ function springboard_admin_url_inbound_alter(&$path, $original_path, $path_langu
     elseif (preg_match('|^springboard/reports/donations$|', $path)) {
       $path = 'admin/reports/salesforce/donations';
     }
-    elseif (preg_match('|^springboard/goals$|', $path)) {
-      $path = 'admin/config/content/webform_goals';
+    elseif (preg_match('|^springboard/goals((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
+      if (preg_match('|^springboard/goals$|', $path)) {
+        $path = 'admin/config/content/webform_goals';
+      } 
+      else {
+        $path = 'admin/config/content/webform_goals' . $m1[1];
+      }
     }
     elseif (preg_match('|^springboard/multivariate-testing$|', $path)) {
       $path = 'admin/config/content/webform_ab';
