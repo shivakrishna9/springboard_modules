@@ -239,8 +239,20 @@ function springboard_p2p_personal_campaign_token_info() {
     'name' => t('Node ID of the donation form for this campaign'),
     'description' => t(''),
   );
-  $info['tokens']['p2p_personal_campaign']['campaign_goal'] = array(
-    'name' => t('Personal campaign goal'),
+  $info['tokens']['p2p_personal_campaign']['campaign_goal_amount'] = array(
+    'name' => t('Personal campaign goal: total donation amount'),
+    'description' => t(''),
+  );
+  $info['tokens']['p2p_personal_campaign']['campaign_goal_submissions'] = array(
+    'name' => t('Personal campaign goal: total submissions'),
+    'description' => t(''),
+  );
+  $info['tokens']['p2p_personal_campaign']['goal_progress_amount'] = array(
+    'name' => t('Donation amount goal progress.'),
+    'description' => t(''),
+  );
+  $info['tokens']['p2p_personal_campaign']['goal_progress_submissions'] = array(
+    'name' => t('Total submissions goal progress.'),
     'description' => t(''),
   );
   $info['tokens']['p2p_personal_campaign']['campaign_deadline'] = array(
@@ -275,7 +287,10 @@ function springboard_p2p_personal_campaign_tokens($type, $tokens, $data = array(
     $data['personal_campaign_nid'] = $personal_campaign->nid;
     $deadline = isset($personal_campaign->field_p2p_fundraising_deadline[$language][0]['value']) ? $personal_campaign->field_p2p_fundraising_deadline[$language][0]['value'] : FALSE;
     $data['campaign_deadline'] = $deadline ? format_date(strtotime($deadline))  : '';
-    $data['campaign_goal'] = _springboard_p2p_personal_campaign_format_goal($personal_campaign);
+    $data['campaign_goal_amount'] = isset($personal_campaign->field_p2p_personal_campaign_goal[$language][0]['value']) ? $personal_campaign->field_p2p_personal_campaign_goal[$language][0]['value'] : '';
+    $data['campaign_goal_submissions'] = isset($personal_campaign->field_p2p_personal_submit_goal[$language][0]['value']) ? $personal_campaign->field_p2p_personal_submit_goal[$language][0]['value'] : ';';
+    $data['goal_progress_amount'] = isset($personal_campaign->field_p2p_campaign_progress[$language][0]['amount']) ? $personal_campaign->field_p2p_campaign_progress[$language][0]['amount'] : 0;
+    $data['goal_progress_submissions'] = isset($personal_campaign->field_p2p_campaign_progress[$language][0]['submissions']) ? $personal_campaign->field_p2p_campaign_progress[$language][0]['submissions'] : 0;
     foreach ($tokens as $key => $token) {
       if (isset($data[$key])) {
         $replacements[$token] = $data[$key];
@@ -285,9 +300,6 @@ function springboard_p2p_personal_campaign_tokens($type, $tokens, $data = array(
   }
 }
 
-function _springboard_p2p_personal_campaign_format_goal($node) {
-  $language = $node->language;
-}
 
 /**
  * Implements hook_webform_confirmations_token_replace_alter().
