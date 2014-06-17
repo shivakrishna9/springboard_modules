@@ -32,6 +32,8 @@ function springboard_p2p_starter_create_content() {
   $campaign_ids = springboard_p2p_starter_create_campaigns($category_ids);
 
   springboard_p2p_starter_create_personal_campaigns($campaign_ids);
+
+  return 'done.';
 }
 
 /**
@@ -57,6 +59,8 @@ function springboard_p2p_starter_create_personal_campaigns($campaign_ids) {
   $personal_campaigns = springboard_p2p_starter_personal_campaigns();
   $personal_campaign_ids = array();
 
+  $deadline = date('Y-m-d', strtotime('+1 month'));
+
   foreach ($personal_campaigns as $campaign => $personal_campaign) {
     foreach ($personal_campaign as $personal_campaign_title) {
       $node = new stdClass();
@@ -69,8 +73,27 @@ function springboard_p2p_starter_create_personal_campaigns($campaign_ids) {
       $node->body[$node->language][0]['format'] = 'filtered_html';
       $node->field_p2p_personal_campaign_goal[$node->language][0]['value'] = rand(500, 1000);
 
-      // @todo This blows up!
-      //   Probably because of the fancy inheritence we're doing.
+      // The deadline field is required.
+      $node->field_p2p_fundraising_deadline = array(
+        $node->language => array(
+          0 => array(
+            'value' => $deadline,
+            'timezone' => 'UTC',
+            'timezone_db' => 'UTC',
+            'date_type' => 'datetime',
+          ),
+        ),
+      );
+
+      $node->field_p2p_campaign_progress => array(
+        $node->language => array(
+          0 => array(
+            'amount' => '0',
+            'submissions' => '0',
+          ),
+        ),
+      );
+
       node_save($node);
       $personal_campaign_ids[$personal_campaign_title] = $node->nid;
     }
