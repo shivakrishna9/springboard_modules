@@ -85,7 +85,7 @@ function springboard_p2p_starter_create_personal_campaigns($campaign_ids) {
         ),
       );
 
-      $node->field_p2p_campaign_progress => array(
+      $node->field_p2p_campaign_progress = array(
         $node->language => array(
           0 => array(
             'amount' => '0',
