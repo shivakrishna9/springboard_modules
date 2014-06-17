@@ -145,11 +145,17 @@ function springboard_p2p_set_country_and_state_defaults_and_options(&$form, $for
     $default_country_id = 'US';
   }
 
-  $form['sbp_country'][$form['sbp_country']['#language']]['#options'] = array(
-    '_none' => '- None -',
-    'US' => 'United States',
-    'CA' => 'Canada',
-  );
+  $countries = fundraiser_commerce_get_countries();
+  $include_all_countries = variable_get('fundraiser_all_countries', 0);
+
+  if ($include_all_countries) {
+    $default_available = array();
+  }
+  else {
+    $default_available = array('US', 'CA');
+  }
+
+  $form['sbp_country'][$country_language]['#options'] = fundraiser_commerce_get_country_options($countries->countries, $default_available);
 
   $form['sbp_country'][$country_language]['#default_value'] = $default_country_id;
   $new_options = springboard_p2p_filter_state_options_by_country($default_country_id);
@@ -219,9 +225,7 @@ function springboard_p2p_filter_state_options_by_country($country_id) {
 
     // Given available zones, filter the dropdown to match.
     if (!empty($available_zones)) {
-      foreach ($available_zones as $zone) {
-        $new_options[$zone->iso] = $zone->zone_name;
-      }
+      $new_options = fundraiser_commerce_get_zones_options($available_zones);
     }
   }
 
