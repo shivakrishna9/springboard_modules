@@ -838,11 +838,12 @@ function springboard_admin_forms_page($springboard_type) {
     $view -> set_arguments(array($type->type));
     $view -> pre_execute();
     $view -> execute();
+
     if ($view && $view -> access($display) && !empty($view -> result)) {
       $tables[$type->type] = $view -> render();
     }
   }
-  return theme('springboard_admin_forms_page', array('types' => $display_types, 'tables' => $tables));
+  return theme('springboard_admin_forms_page', array('types' => $display_types, 'springboard_type' => $springboard_type, 'tables' => $tables));
 }
 
 /**
