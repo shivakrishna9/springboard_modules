@@ -288,9 +288,6 @@ function springboard_admin_init() {
     elseif (preg_match('|^/admin/config/system/googleanalytics$|', $path)) {
       $goto_path = 'springboard/ga';
     }
-    elseif (preg_match('|^/admin/config/search/metatags$|', $path)) {
-      $goto_path = 'springboard/metatags';
-    }
     elseif (preg_match('|^/admin/springboard/reports/contacts$|', $path)) {
       $goto_path = 'springboard/reports/contacts';
     }
@@ -316,6 +313,9 @@ function springboard_admin_init() {
     }
     elseif (preg_match('|^/admin/structure/salesforce/mappings/import$|', $path)) {
       $goto_path = 'springboard/settings/config/mappings-import';
+    }
+    elseif (preg_match('|^/admin/commerce/orders((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
+      $goto_path = 'springboard/donations' . $m1[1];
     }
     /**
      * User paths.
@@ -610,9 +610,6 @@ function springboard_admin_url_inbound_alter(&$path, $original_path, $path_langu
     elseif (preg_match('|^springboard/ga$|', $path)) {
       $path = 'admin/config/system/googleanalytics';
     }
-    elseif (preg_match('|^springboard/metatags$|', $path)) {
-      $path = 'admin/config/search/metatags';
-    }
     elseif (preg_match('|^springboard/reports/contacts$|', $path)) {
       $path = 'admin/springboard/reports/contacts';
     } 
@@ -636,6 +633,9 @@ function springboard_admin_url_inbound_alter(&$path, $original_path, $path_langu
     }
     elseif (preg_match('|^springboard/settings/config/mappings-import$|', $path)) {
       $path = 'admin/structure/salesforce/mappings/import';
+    }
+    elseif (preg_match('|^springboard/donations((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
+      $path = 'admin/commerce/orders' . $m1[1];
     }
     /**
      * All other springboard paths.

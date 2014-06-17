@@ -281,21 +281,7 @@ function springboard_admin_admin_menu_items() {
     'weight' => 4,
   );
   
-  // Marketing & Analytics > Metatags.
-  $items['admin/springboard/marketing-analytics']['_children']['admin/config/search/metatags'] = array(
-    'link_path' => 'admin/config/search/metatags',
-    'link_title' => 'Metatags',
-    'menu_name' => 'springboard_admin_menu',
-    'expanded' => 1,
-    'customized' => 1,
-    'weight' => 5,
-  );
-
-  // Marketing & Analytics > Metatags
-  // @TODO where does this go?
-
   // Top Level: Reports
-  // @TODO Create this page.
   $items['admin/springboard/reports'] = array(
     'link_path' => 'admin/springboard/reports',
     'link_title' => t('Reports'),
