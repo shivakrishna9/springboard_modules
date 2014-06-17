@@ -1,0 +1,12 @@
+<?php
+
+/**
+ * @file
+ * Installs a set of default content to demonstrate Springboard Peer to Peer.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function springboard_p2p_starter_install() {}
+
