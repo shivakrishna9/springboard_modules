@@ -9,6 +9,8 @@
  */
 function springboard_p2p_starter_menu() {
   // @todo This probably should be a button somewhere.
+  // Probably change this to a form/page under p2p settings with a button to
+  // create content.
   $items['p2p-start'] = array(
     'title' => 'Jump Start P2P',
     'description' => 'Install default content for Springboard Peer to Peer.',
@@ -26,25 +28,104 @@ function springboard_p2p_starter_menu() {
  * P2P Campaigns
  * P2P Personal Campaigns
  * P2P Landing Pages
+ *
+ * @todo We should batch this.
  */
 function springboard_p2p_starter_create_content() {
   $category_ids = springboard_p2p_starter_create_categories();
   $campaign_ids = springboard_p2p_starter_create_campaigns($category_ids);
 
-  springboard_p2p_starter_create_personal_campaigns($campaign_ids);
+  $personal_campaign_ids = springboard_p2p_starter_create_personal_campaigns($campaign_ids);
 
-  return 'done.';
+  $nid = springboard_p2p_starter_create_campaign_landing($campaign_ids, $personal_campaign_ids);
+
+  drupal_set_message('New content has been created.');
+  drupal_goto('node/' . $nid);
 }
 
 /**
  * Creates a default campaign landing page node.
  */
-function springboard_p2p_starter_create_campaign_landing() {
+function springboard_p2p_starter_create_campaign_landing($campaign_ids, $personal_campaign_ids) {
   $node = new stdClass();
   $node->type = 'p2p_campaign_landing';
   node_object_prepare($node);
 
+  $node->title = '';
+  $node->language = LANGUAGE_NONE;
+
+  $node->field_p2p_side_block = array();
+
+  $references = array(
+    // Campaigns.
+    'field_p2p_slide_show' => $campaign_ids,
+    // Personal campaigns.
+    'field_p2p_feature_pers_campaigns' => $personal_campaign_ids,
+    // Campaigns.
+    'field_p2p_referenced_campaigns' => $campaign_ids,
+  );
+
+  foreach ($references as $field_name => $nids) {
+    $node->$field_name = springboard_p2p_starter_create_entity_reference_field($node->language, $nids);
+  }
+
+  $node->field_p2p_featured_title = array(
+    $node->language => array(
+      0 => array(
+        'value' => 'Featured campaigns',
+        'format' => NULL,
+        'safe_value' => 'Featured campaigns',
+      ),
+    ),
+  );
+
+  $node->field_p2p_choose_featured_type = array(
+    $node->language => array(
+      0 => array(
+        'value' => 'automated',
+      ),
+    ),
+  );
+
+  $node->field_p2p_grid_title = array(
+    $node->language => array(
+      0 => array(
+        'value' => 'Featured causes',
+        'format' => NULL,
+        'safe_value' => 'Featured causes',
+      ),
+    ),
+  );
+
+  $node->field_p2p_featured_choose_blocks = array();
+
   node_save($node);
+
+  return $node->nid;
+}
+
+/**
+ * Create an entity reference field value.
+ *
+ * @param string $language
+ *   The language to use for the field key.
+ * @param array $nids
+ *   And array of node IDs to reference.
+ *
+ * @return array
+ *   An array ready fto be used as an entity reference field.
+ */
+function springboard_p2p_starter_create_entity_reference_field($language, $nids) {
+
+  $items = array();
+  foreach ($nids as $nid) {
+    $items[] = array('target_id' => $nid);
+  }
+
+  return array(
+    $language => $items,
+  );
+
 }
 
 /**
@@ -135,7 +216,13 @@ function springboard_p2p_starter_create_campaigns($category_ids) {
       $node->field_p2p_personal_intro[$node->language][0]['value'] = springboard_p2p_starter_create_greeking(50);
 
       // @todo Figure out how to deal with the video embed field.
-      // $node->field_p2p_video_embed[$node->language][0]['video_url'] = 'www.youtube.com/watch?v=OVICu9-FfNU';
+      $node->field_p2p_video_embed = array(
+        $node->language => array(
+          0 => array(
+            'video_url' => 'http://www.youtube.com/watch?v=OVICu9-FfNU',
+          ),
+        ),
+      );
 
       // Image fields.
       $node->field_p2p_campaign_thumbnail[$node->language][0] = (array) $campaign_thumbnail;
