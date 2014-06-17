@@ -246,7 +246,7 @@ function _springboard_sf_status() {
         ->execute();
       $batch = $query->fetchObject();
       if ($batch) {
-        $batch_status = t('Batch # @id of @record_count items processed with <span class="successes">@success_count successes</span> and <span class="failures">@fail_count failures</span>.',
+        $batch_status = t('<a href="/springboard/reports/integration-reports/item?bid=@id">Batch # @id</a> of @record_count items processed with <span class="successes">@success_count successes</span> and <span class="failures">@fail_count failures</span>.',
           array(
           '@id' => $batch->bid,
           '@record_count' => $batch->count,

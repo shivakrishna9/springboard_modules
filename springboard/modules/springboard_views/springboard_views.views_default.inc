@@ -678,6 +678,14 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['webform_submission_count_node']['field'] = 'webform_submission_count_node';
   $handler->display->display_options['fields']['webform_submission_count_node']['label'] = 'Submissions';
   $handler->display->display_options['fields']['webform_submission_count_node']['element_label_colon'] = FALSE;
+  /* Field: Content: Published */
+  $handler->display->display_options['fields']['status']['id'] = 'status';
+  $handler->display->display_options['fields']['status']['table'] = 'node';
+  $handler->display->display_options['fields']['status']['field'] = 'status';
+  $handler->display->display_options['fields']['status']['label'] = 'Status';
+  $handler->display->display_options['fields']['status']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['status']['type'] = 'published-notpublished';
+  $handler->display->display_options['fields']['status']['not'] = 0;
   /* Field: Content: Clone link */
   $handler->display->display_options['fields']['clone_node']['id'] = 'clone_node';
   $handler->display->display_options['fields']['clone_node']['table'] = 'node';
@@ -695,14 +703,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['webform_results']['field'] = 'webform_results';
   $handler->display->display_options['fields']['webform_results']['label'] = '';
   $handler->display->display_options['fields']['webform_results']['element_label_colon'] = FALSE;
-  /* Field: Content: Published */
-  $handler->display->display_options['fields']['status']['id'] = 'status';
-  $handler->display->display_options['fields']['status']['table'] = 'node';
-  $handler->display->display_options['fields']['status']['field'] = 'status';
-  $handler->display->display_options['fields']['status']['label'] = 'Status';
-  $handler->display->display_options['fields']['status']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['status']['type'] = 'published-notpublished';
-  $handler->display->display_options['fields']['status']['not'] = 0;
   $handler->display->display_options['defaults']['arguments'] = FALSE;
   /* Contextual filter: Content: Type */
   $handler->display->display_options['arguments']['type']['id'] = 'type';
@@ -1112,6 +1112,14 @@ function springboard_views_views_default_views() {
     'scale' => '2',
     'prefix_suffix' => 1,
   );
+  /* Field: Content: Published */
+  $handler->display->display_options['fields']['status']['id'] = 'status';
+  $handler->display->display_options['fields']['status']['table'] = 'node';
+  $handler->display->display_options['fields']['status']['field'] = 'status';
+  $handler->display->display_options['fields']['status']['label'] = 'Status';
+  $handler->display->display_options['fields']['status']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['status']['type'] = 'published-notpublished';
+  $handler->display->display_options['fields']['status']['not'] = 0;
   /* Field: Content: Clone link */
   $handler->display->display_options['fields']['clone_node']['id'] = 'clone_node';
   $handler->display->display_options['fields']['clone_node']['table'] = 'node';
@@ -1129,14 +1137,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['webform_results']['field'] = 'webform_results';
   $handler->display->display_options['fields']['webform_results']['label'] = '';
   $handler->display->display_options['fields']['webform_results']['element_label_colon'] = FALSE;
-  /* Field: Content: Published */
-  $handler->display->display_options['fields']['status']['id'] = 'status';
-  $handler->display->display_options['fields']['status']['table'] = 'node';
-  $handler->display->display_options['fields']['status']['field'] = 'status';
-  $handler->display->display_options['fields']['status']['label'] = 'Status';
-  $handler->display->display_options['fields']['status']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['status']['type'] = 'published-notpublished';
-  $handler->display->display_options['fields']['status']['not'] = 0;
   $handler->display->display_options['defaults']['arguments'] = FALSE;
   /* Contextual filter: Content: Type */
   $handler->display->display_options['arguments']['type']['id'] = 'type';
@@ -1180,294 +1180,323 @@ function springboard_views_views_default_views() {
    * View 'sbv_donations'
    */
   $view = new view();
-  $view -> name = 'sbv_donations';
-  $view -> description = 'Donations currently in the system';
-  $view -> tag = 'springboard_views';
-  $view -> base_table = 'fundraiser_donation';
-  $view -> human_name = 'sbv_donations';
-  $view -> core = 7;
-  $view -> api_version = '3.0';
-  $view -> disabled = FALSE;
-  /* Edit this to true to make a default view disabled initially */
+  $view->name = 'sbv_donations';
+  $view->description = 'Donations currently in the system';
+  $view->tag = 'springboard_views';
+  $view->base_table = 'fundraiser_donation';
+  $view->human_name = 'sbv_donations';
+  $view->core = 7;
+  $view->api_version = '3.0';
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
 
   /* Display: Master */
-  $handler = $view -> new_display('default', 'Master', 'default');
-  $handler -> display -> display_options['title'] = 'Donations';
-  $handler -> display -> display_options['use_more_always'] = FALSE;
-  $handler -> display -> display_options['access']['type'] = 'perm';
-  $handler -> display -> display_options['access']['perm'] = 'administer fundraiser';
-  $handler -> display -> display_options['cache']['type'] = 'none';
-  $handler -> display -> display_options['query']['type'] = 'views_query';
-  $handler -> display -> display_options['exposed_form']['type'] = 'basic';
-  $handler -> display -> display_options['pager']['type'] = 'full';
-  $handler -> display -> display_options['pager']['options']['items_per_page'] = '35';
-  $handler -> display -> display_options['style_plugin'] = 'table';
-  $handler -> display -> display_options['style_options']['columns'] = array(
-    'gateway_1' => 'gateway_1',
-    'txn_id' => 'txn_id',
-    'billing_first_name' => 'billing_first_name',
-    'billing_last_name' => 'billing_first_name',
-    'billing_street1' => 'billing_street1',
-    'billing_street2' => 'billing_street1',
-    'billing_city' => 'billing_street1',
-    'country_name' => 'billing_street1',
-    'zone_name' => 'billing_street1',
-    'zone_code' => 'billing_street1',
+  $handler = $view->new_display('default', 'Master', 'default');
+  $handler->display->display_options['title'] = 'Donations';
+  $handler->display->display_options['use_ajax'] = TRUE;
+  $handler->display->display_options['use_more_always'] = FALSE;
+  $handler->display->display_options['access']['type'] = 'perm';
+  $handler->display->display_options['access']['perm'] = 'administer fundraiser';
+  $handler->display->display_options['cache']['type'] = 'none';
+  $handler->display->display_options['query']['type'] = 'views_query';
+  $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['pager']['type'] = 'full';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '35';
+  $handler->display->display_options['style_plugin'] = 'table';
+  $handler->display->display_options['style_options']['columns'] = array(
+    'order_id' => 'order_id',
+    'amount' => 'amount',
+    'created' => 'created',
+    'sbp_first_name' => 'sbp_first_name',
+    'sbp_last_name' => 'sbp_last_name',
+    'mail' => 'mail',
+    'title' => 'title',
+    'field_fundraiser_internal_name' => 'field_fundraiser_internal_name',
+    'status' => 'status',
+    'view_order' => 'view_order',
+    'view_submission' => 'view_order',
+    'transaction_id' => 'transaction_id',
+    'nothing' => 'view_order',
   );
-  $handler -> display -> display_options['style_options']['default'] = '-1';
-  $handler -> display -> display_options['style_options']['info'] = array(
-    'gateway_1' => array(
+  $handler->display->display_options['style_options']['default'] = '-1';
+  $handler->display->display_options['style_options']['info'] = array(
+    'order_id' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'amount' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'created' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'sbp_first_name' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'sbp_last_name' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'mail' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'title' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'field_fundraiser_internal_name' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'status' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'view_order' => array(
+      'align' => '',
+      'separator' => ' | ',
+      'empty_column' => 0,
+    ),
+    'view_submission' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'transaction_id' => array(
       'sortable' => 0,
       'default_sort_order' => 'asc',
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
     ),
-    'txn_id' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'billing_first_name' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => ' ',
-      'empty_column' => 0,
-    ),
-    'billing_last_name' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'billing_street1' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '</br>',
-      'empty_column' => 0,
-    ),
-    'billing_street2' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'billing_city' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'country_name' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'zone_name' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'zone_code' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
+    'nothing' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
     ),
   );
   /* Relationship: Fundraiser donations: Donating user */
-  $handler -> display -> display_options['relationships']['uid']['id'] = 'uid';
-  $handler -> display -> display_options['relationships']['uid']['table'] = 'fundraiser_donation';
-  $handler -> display -> display_options['relationships']['uid']['field'] = 'uid';
+  $handler->display->display_options['relationships']['uid']['id'] = 'uid';
+  $handler->display->display_options['relationships']['uid']['table'] = 'fundraiser_donation';
+  $handler->display->display_options['relationships']['uid']['field'] = 'uid';
   /* Relationship: Fundraiser donations: Fundraiser node */
-  $handler -> display -> display_options['relationships']['nid']['id'] = 'nid';
-  $handler -> display -> display_options['relationships']['nid']['table'] = 'fundraiser_donation';
-  $handler -> display -> display_options['relationships']['nid']['field'] = 'nid';
-  /* Relationship: Fundraiser donations: Donation order */
-  $handler -> display -> display_options['relationships']['did']['id'] = 'did';
-  $handler -> display -> display_options['relationships']['did']['table'] = 'fundraiser_donation';
-  $handler -> display -> display_options['relationships']['did']['field'] = 'did';
-  /* Field: Content: Nid */
-  $handler -> display -> display_options['fields']['nid']['id'] = 'nid';
-  $handler -> display -> display_options['fields']['nid']['table'] = 'node';
-  $handler -> display -> display_options['fields']['nid']['field'] = 'nid';
-  $handler -> display -> display_options['fields']['nid']['relationship'] = 'nid';
-  /* Field: Content: Title */
-  $handler -> display -> display_options['fields']['title']['id'] = 'title';
-  $handler -> display -> display_options['fields']['title']['table'] = 'node';
-  $handler -> display -> display_options['fields']['title']['field'] = 'title';
-  $handler -> display -> display_options['fields']['title']['relationship'] = 'nid';
-  /* Field: Content: Type */
-  $handler -> display -> display_options['fields']['type']['id'] = 'type';
-  $handler -> display -> display_options['fields']['type']['table'] = 'node';
-  $handler -> display -> display_options['fields']['type']['field'] = 'type';
-  $handler -> display -> display_options['fields']['type']['relationship'] = 'nid';
-  /* Field: User: Uid */
-  $handler -> display -> display_options['fields']['uid']['id'] = 'uid';
-  $handler -> display -> display_options['fields']['uid']['table'] = 'users';
-  $handler -> display -> display_options['fields']['uid']['field'] = 'uid';
-  $handler -> display -> display_options['fields']['uid']['relationship'] = 'uid';
-  /* Field: User: Name */
-  $handler -> display -> display_options['fields']['name']['id'] = 'name';
-  $handler -> display -> display_options['fields']['name']['table'] = 'users';
-  $handler -> display -> display_options['fields']['name']['field'] = 'name';
-  $handler -> display -> display_options['fields']['name']['relationship'] = 'uid';
+  $handler->display->display_options['relationships']['nid']['id'] = 'nid';
+  $handler->display->display_options['relationships']['nid']['table'] = 'fundraiser_donation';
+  $handler->display->display_options['relationships']['nid']['field'] = 'nid';
+  /* Relationship: Fundraiser donations: Commerce order */
+  $handler->display->display_options['relationships']['did']['id'] = 'did';
+  $handler->display->display_options['relationships']['did']['table'] = 'fundraiser_donation';
+  $handler->display->display_options['relationships']['did']['field'] = 'did';
+  /* Relationship: Commerce Order: Owner */
+  $handler->display->display_options['relationships']['uid_1']['id'] = 'uid_1';
+  $handler->display->display_options['relationships']['uid_1']['table'] = 'commerce_order';
+  $handler->display->display_options['relationships']['uid_1']['field'] = 'uid';
+  $handler->display->display_options['relationships']['uid_1']['relationship'] = 'did';
+  /* Relationship: Commerce Order: Payment Transaction */
+  $handler->display->display_options['relationships']['payment_transaction']['id'] = 'payment_transaction';
+  $handler->display->display_options['relationships']['payment_transaction']['table'] = 'commerce_order';
+  $handler->display->display_options['relationships']['payment_transaction']['field'] = 'payment_transaction';
+  $handler->display->display_options['relationships']['payment_transaction']['relationship'] = 'did';
+  /* Relationship: Fundraiser donations: Donation submission */
+  $handler->display->display_options['relationships']['sid_2']['id'] = 'sid_2';
+  $handler->display->display_options['relationships']['sid_2']['table'] = 'fundraiser_donation';
+  $handler->display->display_options['relationships']['sid_2']['field'] = 'sid';
+  /* Field: Commerce Order: Order ID */
+  $handler->display->display_options['fields']['order_id']['id'] = 'order_id';
+  $handler->display->display_options['fields']['order_id']['table'] = 'commerce_order';
+  $handler->display->display_options['fields']['order_id']['field'] = 'order_id';
+  $handler->display->display_options['fields']['order_id']['relationship'] = 'did';
+  /* Field: Commerce Order: Created date */
+  $handler->display->display_options['fields']['created']['id'] = 'created';
+  $handler->display->display_options['fields']['created']['table'] = 'commerce_order';
+  $handler->display->display_options['fields']['created']['field'] = 'created';
+  $handler->display->display_options['fields']['created']['relationship'] = 'did';
+  $handler->display->display_options['fields']['created']['label'] = 'Date';
+  $handler->display->display_options['fields']['created']['date_format'] = 'custom';
+  $handler->display->display_options['fields']['created']['custom_date_format'] = 'n/j/Y';
+  /* Field: Commerce Payment Transaction: Amount */
+  $handler->display->display_options['fields']['amount']['id'] = 'amount';
+  $handler->display->display_options['fields']['amount']['table'] = 'commerce_payment_transaction';
+  $handler->display->display_options['fields']['amount']['field'] = 'amount';
+  $handler->display->display_options['fields']['amount']['relationship'] = 'payment_transaction';
+  /* Field: User: First name */
+  $handler->display->display_options['fields']['sbp_first_name']['id'] = 'sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['table'] = 'field_data_sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['field'] = 'sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['relationship'] = 'uid';
+  /* Field: User: Last name */
+  $handler->display->display_options['fields']['sbp_last_name']['id'] = 'sbp_last_name';
+  $handler->display->display_options['fields']['sbp_last_name']['table'] = 'field_data_sbp_last_name';
+  $handler->display->display_options['fields']['sbp_last_name']['field'] = 'sbp_last_name';
+  $handler->display->display_options['fields']['sbp_last_name']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_last_name']['label'] = 'Last Name';
+  $handler->display->display_options['fields']['sbp_last_name']['element_label_colon'] = FALSE;
   /* Field: User: E-mail */
-  $handler -> display -> display_options['fields']['mail']['id'] = 'mail';
-  $handler -> display -> display_options['fields']['mail']['table'] = 'users';
-  $handler -> display -> display_options['fields']['mail']['field'] = 'mail';
-  $handler -> display -> display_options['fields']['mail']['relationship'] = 'uid';
-  /* Field: Order: Billing address: First name */
-  $handler -> display -> display_options['fields']['billing_first_name']['id'] = 'billing_first_name';
-  $handler -> display -> display_options['fields']['billing_first_name']['table'] = 'uc_orders';
-  $handler -> display -> display_options['fields']['billing_first_name']['field'] = 'billing_first_name';
-  $handler -> display -> display_options['fields']['billing_first_name']['relationship'] = 'did';
-  /* Field: Order: Billing address: Last name */
-  $handler -> display -> display_options['fields']['billing_last_name']['id'] = 'billing_last_name';
-  $handler -> display -> display_options['fields']['billing_last_name']['table'] = 'uc_orders';
-  $handler -> display -> display_options['fields']['billing_last_name']['field'] = 'billing_last_name';
-  $handler -> display -> display_options['fields']['billing_last_name']['relationship'] = 'did';
-  /* Field: Order: Billing address: Street address 1 */
-  $handler -> display -> display_options['fields']['billing_street1']['id'] = 'billing_street1';
-  $handler -> display -> display_options['fields']['billing_street1']['table'] = 'uc_orders';
-  $handler -> display -> display_options['fields']['billing_street1']['field'] = 'billing_street1';
-  $handler -> display -> display_options['fields']['billing_street1']['relationship'] = 'did';
-  /* Field: Order: Billing address: Street address 2 */
-  $handler -> display -> display_options['fields']['billing_street2']['id'] = 'billing_street2';
-  $handler -> display -> display_options['fields']['billing_street2']['table'] = 'uc_orders';
-  $handler -> display -> display_options['fields']['billing_street2']['field'] = 'billing_street2';
-  $handler -> display -> display_options['fields']['billing_street2']['relationship'] = 'did';
-  /* Field: Order: Billing address: City */
-  $handler -> display -> display_options['fields']['billing_city']['id'] = 'billing_city';
-  $handler -> display -> display_options['fields']['billing_city']['table'] = 'uc_orders';
-  $handler -> display -> display_options['fields']['billing_city']['field'] = 'billing_city';
-  $handler -> display -> display_options['fields']['billing_city']['relationship'] = 'did';
-  /* Field: Order: Billing address: Country */
-  $handler -> display -> display_options['fields']['country_name']['id'] = 'country_name';
-  $handler -> display -> display_options['fields']['country_name']['table'] = 'billing_countries';
-  $handler -> display -> display_options['fields']['country_name']['field'] = 'country_name';
-  $handler -> display -> display_options['fields']['country_name']['relationship'] = 'did';
-  /* Field: Order: Billing address: State/Province */
-  $handler -> display -> display_options['fields']['zone_name']['id'] = 'zone_name';
-  $handler -> display -> display_options['fields']['zone_name']['table'] = 'billing_zones';
-  $handler -> display -> display_options['fields']['zone_name']['field'] = 'zone_name';
-  $handler -> display -> display_options['fields']['zone_name']['relationship'] = 'did';
-  /* Field: Order: Billing address: State/Province code */
-  $handler -> display -> display_options['fields']['zone_code']['id'] = 'zone_code';
-  $handler -> display -> display_options['fields']['zone_code']['table'] = 'billing_zones';
-  $handler -> display -> display_options['fields']['zone_code']['field'] = 'zone_code';
-  $handler -> display -> display_options['fields']['zone_code']['relationship'] = 'did';
-  /* Field: Fundraiser donations: Transaction ID */
-  $handler -> display -> display_options['fields']['txn_id']['id'] = 'txn_id';
-  $handler -> display -> display_options['fields']['txn_id']['table'] = 'fundraiser_donation';
-  $handler -> display -> display_options['fields']['txn_id']['field'] = 'txn_id';
-  /* Field: Fundraiser donations: Gateway */
-  $handler -> display -> display_options['fields']['gateway_1']['id'] = 'gateway_1';
-  $handler -> display -> display_options['fields']['gateway_1']['table'] = 'fundraiser_donation';
-  $handler -> display -> display_options['fields']['gateway_1']['field'] = 'gateway';
+  $handler->display->display_options['fields']['mail']['id'] = 'mail';
+  $handler->display->display_options['fields']['mail']['table'] = 'users';
+  $handler->display->display_options['fields']['mail']['field'] = 'mail';
+  $handler->display->display_options['fields']['mail']['relationship'] = 'uid';
+  /* Field: Content: Title */
+  $handler->display->display_options['fields']['title']['id'] = 'title';
+  $handler->display->display_options['fields']['title']['table'] = 'node';
+  $handler->display->display_options['fields']['title']['field'] = 'title';
+  $handler->display->display_options['fields']['title']['relationship'] = 'nid';
+  $handler->display->display_options['fields']['title']['exclude'] = TRUE;
+  /* Field: Content: Internal Name */
+  $handler->display->display_options['fields']['field_fundraiser_internal_name']['id'] = 'field_fundraiser_internal_name';
+  $handler->display->display_options['fields']['field_fundraiser_internal_name']['table'] = 'field_data_field_fundraiser_internal_name';
+  $handler->display->display_options['fields']['field_fundraiser_internal_name']['field'] = 'field_fundraiser_internal_name';
+  $handler->display->display_options['fields']['field_fundraiser_internal_name']['relationship'] = 'nid';
+  $handler->display->display_options['fields']['field_fundraiser_internal_name']['label'] = 'Form';
+  $handler->display->display_options['fields']['field_fundraiser_internal_name']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['field_fundraiser_internal_name']['alter']['text'] = '[title] ([field_fundraiser_internal_name-value])';
+  /* Field: Commerce Order: Order status */
+  $handler->display->display_options['fields']['status']['id'] = 'status';
+  $handler->display->display_options['fields']['status']['table'] = 'commerce_order';
+  $handler->display->display_options['fields']['status']['field'] = 'status';
+  $handler->display->display_options['fields']['status']['relationship'] = 'did';
+  /* Field: Commerce Order: Link */
+  $handler->display->display_options['fields']['view_order']['id'] = 'view_order';
+  $handler->display->display_options['fields']['view_order']['table'] = 'commerce_order';
+  $handler->display->display_options['fields']['view_order']['field'] = 'view_order';
+  $handler->display->display_options['fields']['view_order']['relationship'] = 'did';
+  $handler->display->display_options['fields']['view_order']['label'] = 'Actions';
+  $handler->display->display_options['fields']['view_order']['text'] = 'View order';
+  /* Field: Array: View link */
+  $handler->display->display_options['fields']['view_submission']['id'] = 'view_submission';
+  $handler->display->display_options['fields']['view_submission']['table'] = 'webform_submissions';
+  $handler->display->display_options['fields']['view_submission']['field'] = 'view_submission';
+  $handler->display->display_options['fields']['view_submission']['relationship'] = 'sid_2';
+  $handler->display->display_options['fields']['view_submission']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['view_submission']['text'] = 'View submission';
+  /* Field: Commerce Payment Transaction: Transaction ID */
+  $handler->display->display_options['fields']['transaction_id']['id'] = 'transaction_id';
+  $handler->display->display_options['fields']['transaction_id']['table'] = 'commerce_payment_transaction';
+  $handler->display->display_options['fields']['transaction_id']['field'] = 'transaction_id';
+  $handler->display->display_options['fields']['transaction_id']['relationship'] = 'payment_transaction';
+  $handler->display->display_options['fields']['transaction_id']['label'] = '';
+  $handler->display->display_options['fields']['transaction_id']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['transaction_id']['element_label_colon'] = FALSE;
+  /* Field: Global: Custom text */
+  $handler->display->display_options['fields']['nothing']['id'] = 'nothing';
+  $handler->display->display_options['fields']['nothing']['table'] = 'views';
+  $handler->display->display_options['fields']['nothing']['field'] = 'nothing';
+  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/admin/commerce/orders/[order_id]/payment/[transaction_id]/refund">Refund</a>';
+  /* Filter criterion: Global: Combine fields filter */
+  $handler->display->display_options['filters']['combine']['id'] = 'combine';
+  $handler->display->display_options['filters']['combine']['table'] = 'views';
+  $handler->display->display_options['filters']['combine']['field'] = 'combine';
+  $handler->display->display_options['filters']['combine']['operator'] = 'contains';
+  $handler->display->display_options['filters']['combine']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['combine']['expose']['operator_id'] = 'combine_op';
+  $handler->display->display_options['filters']['combine']['expose']['label'] = 'Donor Name';
+  $handler->display->display_options['filters']['combine']['expose']['operator'] = 'combine_op';
+  $handler->display->display_options['filters']['combine']['expose']['identifier'] = 'combine';
+  $handler->display->display_options['filters']['combine']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
+  $handler->display->display_options['filters']['combine']['fields'] = array(
+    'sbp_last_name' => 'sbp_last_name',
+    'sbp_first_name' => 'sbp_first_name',
+  );
   /* Filter criterion: Content: Title */
-  $handler -> display -> display_options['filters']['title']['id'] = 'title';
-  $handler -> display -> display_options['filters']['title']['table'] = 'node';
-  $handler -> display -> display_options['filters']['title']['field'] = 'title';
-  $handler -> display -> display_options['filters']['title']['relationship'] = 'nid';
-  $handler -> display -> display_options['filters']['title']['exposed'] = TRUE;
-  $handler -> display -> display_options['filters']['title']['expose']['operator_id'] = 'title_op';
-  $handler -> display -> display_options['filters']['title']['expose']['label'] = 'Title';
-  $handler -> display -> display_options['filters']['title']['expose']['use_operator'] = TRUE;
-  $handler -> display -> display_options['filters']['title']['expose']['operator'] = 'title_op';
-  $handler -> display -> display_options['filters']['title']['expose']['identifier'] = 'title';
-  $handler -> display -> display_options['filters']['title']['expose']['remember'] = TRUE;
-  $handler -> display -> display_options['filters']['title']['expose']['remember_roles'] = array(
+  $handler->display->display_options['filters']['title']['id'] = 'title';
+  $handler->display->display_options['filters']['title']['table'] = 'node';
+  $handler->display->display_options['filters']['title']['field'] = 'title';
+  $handler->display->display_options['filters']['title']['relationship'] = 'nid';
+  $handler->display->display_options['filters']['title']['operator'] = 'contains';
+  $handler->display->display_options['filters']['title']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['title']['expose']['operator_id'] = 'title_op';
+  $handler->display->display_options['filters']['title']['expose']['label'] = 'Form Title';
+  $handler->display->display_options['filters']['title']['expose']['operator'] = 'title_op';
+  $handler->display->display_options['filters']['title']['expose']['identifier'] = 'title';
+  $handler->display->display_options['filters']['title']['expose']['remember_roles'] = array(
     2 => '2',
     1 => 0,
     3 => 0,
+    4 => 0,
+    5 => 0,
   );
-  /* Filter criterion: Content: Type */
-  $handler -> display -> display_options['filters']['type']['id'] = 'type';
-  $handler -> display -> display_options['filters']['type']['table'] = 'node';
-  $handler -> display -> display_options['filters']['type']['field'] = 'type';
-  $handler -> display -> display_options['filters']['type']['relationship'] = 'nid';
-  $handler -> display -> display_options['filters']['type']['exposed'] = TRUE;
-  $handler -> display -> display_options['filters']['type']['expose']['operator_id'] = 'type_op';
-  $handler -> display -> display_options['filters']['type']['expose']['label'] = 'Type';
-  $handler -> display -> display_options['filters']['type']['expose']['use_operator'] = TRUE;
-  $handler -> display -> display_options['filters']['type']['expose']['operator'] = 'type_op';
-  $handler -> display -> display_options['filters']['type']['expose']['identifier'] = 'type';
-  $handler -> display -> display_options['filters']['type']['expose']['remember'] = TRUE;
-  $handler -> display -> display_options['filters']['type']['expose']['multiple'] = TRUE;
-  $handler -> display -> display_options['filters']['type']['expose']['remember_roles'] = array(
+  /* Filter criterion: User: E-mail */
+  $handler->display->display_options['filters']['mail']['id'] = 'mail';
+  $handler->display->display_options['filters']['mail']['table'] = 'users';
+  $handler->display->display_options['filters']['mail']['field'] = 'mail';
+  $handler->display->display_options['filters']['mail']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['mail']['operator'] = 'contains';
+  $handler->display->display_options['filters']['mail']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['mail']['expose']['operator_id'] = 'mail_op';
+  $handler->display->display_options['filters']['mail']['expose']['label'] = 'E-mail';
+  $handler->display->display_options['filters']['mail']['expose']['operator'] = 'mail_op';
+  $handler->display->display_options['filters']['mail']['expose']['identifier'] = 'mail';
+  $handler->display->display_options['filters']['mail']['expose']['remember_roles'] = array(
     2 => '2',
     1 => 0,
     3 => 0,
+    4 => 0,
+    5 => 0,
   );
-  /* Filter criterion: Fundraiser donations: Gateway */
-  $handler -> display -> display_options['filters']['gateway']['id'] = 'gateway';
-  $handler -> display -> display_options['filters']['gateway']['table'] = 'fundraiser_donation';
-  $handler -> display -> display_options['filters']['gateway']['field'] = 'gateway';
-  $handler -> display -> display_options['filters']['gateway']['exposed'] = TRUE;
-  $handler -> display -> display_options['filters']['gateway']['expose']['operator_id'] = 'gateway_op';
-  $handler -> display -> display_options['filters']['gateway']['expose']['label'] = 'Gateway';
-  $handler -> display -> display_options['filters']['gateway']['expose']['use_operator'] = TRUE;
-  $handler -> display -> display_options['filters']['gateway']['expose']['operator'] = 'gateway_op';
-  $handler -> display -> display_options['filters']['gateway']['expose']['identifier'] = 'gateway';
-  $handler -> display -> display_options['filters']['gateway']['expose']['remember'] = TRUE;
-  $handler -> display -> display_options['filters']['gateway']['expose']['remember_roles'] = array(
+  /* Filter criterion: Date: Date (node) */
+  $handler->display->display_options['filters']['date_filter']['id'] = 'date_filter';
+  $handler->display->display_options['filters']['date_filter']['table'] = 'node';
+  $handler->display->display_options['filters']['date_filter']['field'] = 'date_filter';
+  $handler->display->display_options['filters']['date_filter']['relationship'] = 'nid';
+  $handler->display->display_options['filters']['date_filter']['operator'] = 'between';
+  $handler->display->display_options['filters']['date_filter']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['date_filter']['expose']['operator_id'] = 'date_filter_op';
+  $handler->display->display_options['filters']['date_filter']['expose']['operator'] = 'date_filter_op';
+  $handler->display->display_options['filters']['date_filter']['expose']['identifier'] = 'date_filter';
+  $handler->display->display_options['filters']['date_filter']['expose']['remember_roles'] = array(
     2 => '2',
     1 => 0,
     3 => 0,
+    4 => 0,
+    5 => 0,
   );
-  /* Filter criterion: Fundraiser donations: Transaction ID */
-  $handler -> display -> display_options['filters']['txn_id']['id'] = 'txn_id';
-  $handler -> display -> display_options['filters']['txn_id']['table'] = 'fundraiser_donation';
-  $handler -> display -> display_options['filters']['txn_id']['field'] = 'txn_id';
-  $handler -> display -> display_options['filters']['txn_id']['exposed'] = TRUE;
-  $handler -> display -> display_options['filters']['txn_id']['expose']['operator_id'] = 'txn_id_op';
-  $handler -> display -> display_options['filters']['txn_id']['expose']['label'] = 'Transaction ID';
-  $handler -> display -> display_options['filters']['txn_id']['expose']['use_operator'] = TRUE;
-  $handler -> display -> display_options['filters']['txn_id']['expose']['operator'] = 'txn_id_op';
-  $handler -> display -> display_options['filters']['txn_id']['expose']['identifier'] = 'txn_id';
-  $handler -> display -> display_options['filters']['txn_id']['expose']['remember'] = TRUE;
-  $handler -> display -> display_options['filters']['txn_id']['expose']['remember_roles'] = array(
-    2 => '2',
-    1 => 0,
-    3 => 0,
-  );
-  /* Filter criterion: User: Name */
-  $handler -> display -> display_options['filters']['uid']['id'] = 'uid';
-  $handler -> display -> display_options['filters']['uid']['table'] = 'users';
-  $handler -> display -> display_options['filters']['uid']['field'] = 'uid';
-  $handler -> display -> display_options['filters']['uid']['relationship'] = 'uid';
-  $handler -> display -> display_options['filters']['uid']['value'] = '';
-  $handler -> display -> display_options['filters']['uid']['exposed'] = TRUE;
-  $handler -> display -> display_options['filters']['uid']['expose']['operator_id'] = 'uid_op';
-  $handler -> display -> display_options['filters']['uid']['expose']['label'] = 'Name';
-  $handler -> display -> display_options['filters']['uid']['expose']['use_operator'] = TRUE;
-  $handler -> display -> display_options['filters']['uid']['expose']['operator'] = 'uid_op';
-  $handler -> display -> display_options['filters']['uid']['expose']['identifier'] = 'uid';
-  $handler -> display -> display_options['filters']['uid']['expose']['remember'] = TRUE;
-  $handler -> display -> display_options['filters']['uid']['expose']['remember_roles'] = array(
-    2 => '2',
-    1 => 0,
-    3 => 0,
+  $handler->display->display_options['filters']['date_filter']['form_type'] = 'date_popup';
+  $handler->display->display_options['filters']['date_filter']['date_fields'] = array(
+    'fundraiser_donation.created' => 'fundraiser_donation.created',
   );
 
   /* Display: Page */
-  $handler = $view -> new_display('page', 'Page', 'page');
-  $handler -> display -> display_options['defaults']['hide_admin_links'] = FALSE;
-  $handler -> display -> display_options['path'] = 'admin/reports/salesforce/donations';
+  $handler = $view->new_display('page', 'Page', 'page');
+  $handler->display->display_options['defaults']['hide_admin_links'] = FALSE;
+  $handler->display->display_options['path'] = 'admin/reports/salesforce/donations';
   $views[$view -> name] = $view;
+
   /**
    * View sbv_page_wrappers
    */
@@ -4124,6 +4153,119 @@ function springboard_views_views_default_views() {
   );
   $handler->display->display_options['path'] = 'admin/springboard/settings/administrators';
 $views[$view->name] = $view;
+
+  /**
+   * View sbv_notes
+   */
+  $view = new view();
+  $view->name = 'sbv_notes';
+  $view->description = '';
+  $view->tag = 'default';
+  $view->base_table = 'aggregator_item';
+  $view->human_name = 'sbv_notes';
+  $view->core = 7;
+  $view->api_version = '3.0';
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+
+  /* Display: Master */
+  $handler = $view->new_display('default', 'Master', 'default');
+  $handler->display->display_options['title'] = 'sbv_notes';
+  $handler->display->display_options['css_class'] = 'sbv-notes-view';
+  $handler->display->display_options['use_ajax'] = TRUE;
+  $handler->display->display_options['use_more_always'] = FALSE;
+  $handler->display->display_options['access']['type'] = 'none';
+  $handler->display->display_options['cache']['type'] = 'none';
+  $handler->display->display_options['query']['type'] = 'views_query';
+  $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['pager']['type'] = 'mini';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '3';
+  $handler->display->display_options['pager']['options']['offset'] = '0';
+  $handler->display->display_options['pager']['options']['id'] = '0';
+  $handler->display->display_options['style_plugin'] = 'list';
+  $handler->display->display_options['style_options']['class'] = 'notes-feed-list';
+  $handler->display->display_options['row_plugin'] = 'fields';
+  /* Footer: Global: Text area */
+  $handler->display->display_options['footer']['area']['id'] = 'area';
+  $handler->display->display_options['footer']['area']['table'] = 'views';
+  $handler->display->display_options['footer']['area']['field'] = 'area';
+  $handler->display->display_options['footer']['area']['content'] = '<a class="button all-notes"  href="http://www.jacksonriver.com/taxonomy/term/69" target="_blank">Read more Springboard notes</a>';
+  $handler->display->display_options['footer']['area']['format'] = 'filtered_html';
+  /* Field: Aggregator: Timestamp */
+  $handler->display->display_options['fields']['timestamp']['id'] = 'timestamp';
+  $handler->display->display_options['fields']['timestamp']['table'] = 'aggregator_item';
+  $handler->display->display_options['fields']['timestamp']['field'] = 'timestamp';
+  $handler->display->display_options['fields']['timestamp']['label'] = '';
+  $handler->display->display_options['fields']['timestamp']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['timestamp']['element_type'] = 'span';
+  $handler->display->display_options['fields']['timestamp']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['timestamp']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['timestamp']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['timestamp']['date_format'] = 'custom';
+  $handler->display->display_options['fields']['timestamp']['custom_date_format'] = 'j';
+  /* Field: Aggregator: Timestamp */
+  $handler->display->display_options['fields']['timestamp_1']['id'] = 'timestamp_1';
+  $handler->display->display_options['fields']['timestamp_1']['table'] = 'aggregator_item';
+  $handler->display->display_options['fields']['timestamp_1']['field'] = 'timestamp';
+  $handler->display->display_options['fields']['timestamp_1']['label'] = '';
+  $handler->display->display_options['fields']['timestamp_1']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['timestamp_1']['alter']['text'] = '<span class="notes-date">
+<span class="notes-day">[timestamp]</span>
+<span class="notes-month">[timestamp_1]</span>
+</span>';
+  $handler->display->display_options['fields']['timestamp_1']['element_type'] = '0';
+  $handler->display->display_options['fields']['timestamp_1']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['timestamp_1']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['timestamp_1']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['timestamp_1']['element_default_classes'] = FALSE;
+  $handler->display->display_options['fields']['timestamp_1']['date_format'] = 'custom';
+  $handler->display->display_options['fields']['timestamp_1']['custom_date_format'] = 'M';
+  /* Field: Aggregator: Title */
+  $handler->display->display_options['fields']['title']['id'] = 'title';
+  $handler->display->display_options['fields']['title']['table'] = 'aggregator_item';
+  $handler->display->display_options['fields']['title']['field'] = 'title';
+  $handler->display->display_options['fields']['title']['label'] = '';
+  $handler->display->display_options['fields']['title']['element_type'] = 'h3';
+  $handler->display->display_options['fields']['title']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['title']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['title']['element_default_classes'] = FALSE;
+  $handler->display->display_options['fields']['title']['display_as_link'] = FALSE;
+  /* Field: Aggregator: Body */
+  $handler->display->display_options['fields']['description']['id'] = 'description';
+  $handler->display->display_options['fields']['description']['table'] = 'aggregator_item';
+  $handler->display->display_options['fields']['description']['field'] = 'description';
+  $handler->display->display_options['fields']['description']['label'] = '';
+  $handler->display->display_options['fields']['description']['element_type'] = '0';
+  $handler->display->display_options['fields']['description']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['description']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['description']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['description']['element_default_classes'] = FALSE;
+  /* Field: Aggregator: Link */
+  $handler->display->display_options['fields']['link']['id'] = 'link';
+  $handler->display->display_options['fields']['link']['table'] = 'aggregator_item';
+  $handler->display->display_options['fields']['link']['field'] = 'link';
+  $handler->display->display_options['fields']['link']['label'] = '';
+  $handler->display->display_options['fields']['link']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['link']['alter']['text'] = '<a class="button more-notes" href="[link]" target="_blank">Read more</a>';
+  $handler->display->display_options['fields']['link']['element_type'] = '0';
+  $handler->display->display_options['fields']['link']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['link']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['link']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['link']['display_as_link'] = FALSE;
+  /* Sort criterion: Aggregator: Timestamp */
+  $handler->display->display_options['sorts']['timestamp']['id'] = 'timestamp';
+  $handler->display->display_options['sorts']['timestamp']['table'] = 'aggregator_item';
+  $handler->display->display_options['sorts']['timestamp']['field'] = 'timestamp';
+  $handler->display->display_options['sorts']['timestamp']['order'] = 'DESC';
+  /* Filter criterion: Aggregator feed: Feed ID */
+  $handler->display->display_options['filters']['fid']['id'] = 'fid';
+  $handler->display->display_options['filters']['fid']['table'] = 'aggregator_feed';
+  $handler->display->display_options['filters']['fid']['field'] = 'fid';
+  $handler->display->display_options['filters']['fid']['value']['value'] = '1';
+
+  /* Display: Dashboard Notes View */
+  $handler = $view->new_display('block', 'Dashboard Notes View', 'block');
+  $views[$view->name] = $view;
 
   // Return all the views.
   return $views;
