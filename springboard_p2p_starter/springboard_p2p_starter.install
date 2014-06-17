@@ -8,5 +8,6 @@
 /**
  * Implements hook_install().
  */
-function springboard_p2p_starter_install() {}
+function springboard_p2p_starter_install() {
 
+}

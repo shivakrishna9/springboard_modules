@@ -4,4 +4,3 @@ core = 7.x
 package = Springboard P2P
 version = 7.x-4.0-dev
 dependencies[] = springboard_p2p
-files[] = includes/springboard_p2p_starter.content.inc

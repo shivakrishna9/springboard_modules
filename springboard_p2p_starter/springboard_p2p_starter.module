@@ -1,10 +1,14 @@
 <?php
+/**
+ * @file
+ * Provides some starter content for Springboard Peer to Peer.
+ */
 
 /**
- * Implementation of hook_menu().
+ * Implements hook_menu().
  */
 function springboard_p2p_starter_menu() {
-  // TODO: This probably should be a button somewhere.
+  // @todo This probably should be a button somewhere.
   $items['p2p-start'] = array(
     'title' => 'Jump Start P2P',
     'description' => 'Install default content for Springboard Peer to Peer.',
@@ -42,10 +46,11 @@ function springboard_p2p_starter_create_campaign_landing() {
 }
 
 /**
- * Creates personal campaigns and randomly assigns them to the
- * passed in campaigns.
+ * Creates personal campaigns.
  *
- * @param array $campaigns
+ * This randomly assigns them to the passed in campaigns.
+ *
+ * @param array $campaign_ids
  *   The campaigns to assign the personal campaigns to.
  */
 function springboard_p2p_starter_create_personal_campaigns($campaign_ids) {
@@ -64,7 +69,8 @@ function springboard_p2p_starter_create_personal_campaigns($campaign_ids) {
       $node->body[$node->language][0]['format'] = 'filtered_html';
       $node->field_p2p_personal_campaign_goal[$node->language][0]['value'] = rand(500, 1000);
 
-      // TODO: This blows up! Probably because of the fancy inheritence we're doing.
+      // @todo This blows up!
+      //   Probably because of the fancy inheritence we're doing.
       node_save($node);
       $personal_campaign_ids[$personal_campaign_title] = $node->nid;
     }
@@ -76,7 +82,7 @@ function springboard_p2p_starter_create_personal_campaigns($campaign_ids) {
 /**
  * Creates peer to peer campaigns.
  *
- * @param array $cateogry_ids
+ * @param array $category_ids
  *   The categories to assign the campaigns to.
  */
 function springboard_p2p_starter_create_campaigns($category_ids) {
@@ -105,13 +111,13 @@ function springboard_p2p_starter_create_campaigns($category_ids) {
       $node->field_p2p_org_intro[$node->language][0]['value'] = springboard_p2p_starter_create_greeking(100);
       $node->field_p2p_personal_intro[$node->language][0]['value'] = springboard_p2p_starter_create_greeking(50);
 
-      // TODO: Figure out how to deal with the video embed field.
-      //$node->field_p2p_video_embed[$node->language][0]['video_url'] = 'www.youtube.com/watch?v=OVICu9-FfNU';
+      // @todo Figure out how to deal with the video embed field.
+      // $node->field_p2p_video_embed[$node->language][0]['video_url'] = 'www.youtube.com/watch?v=OVICu9-FfNU';
 
-      // Image fields
-      $node->field_p2p_campaign_thumbnail[$node->language][0] = (array)$campaign_thumbnail;
-      $node->field_p2p_campaign_slider[$node->language][0] = (array)$campaign_landing_page_slider;
-      $node->field_p2p_campaign_banner[$node->language][0] = (array)$campaign_banner;
+      // Image fields.
+      $node->field_p2p_campaign_thumbnail[$node->language][0] = (array) $campaign_thumbnail;
+      $node->field_p2p_campaign_slider[$node->language][0] = (array) $campaign_landing_page_slider;
+      $node->field_p2p_campaign_banner[$node->language][0] = (array) $campaign_banner;
 
       // Create a goal.
       $next_id = db_query("SELECT MAX(goal_set_id) FROM {springboard_p2p_fields_campaign_goals}")->fetchField();
@@ -244,7 +250,7 @@ function springboard_p2p_starter_create_file($image_path) {
 }
 
 /**
- * Stolen from devel generate :)
+ * Stolen from devel generate :).
  */
 function springboard_p2p_starter_create_greeking($word_count, $title = FALSE) {
   $dictionary = array("abbas", "abdo", "abico", "abigo", "abluo", "accumsan",
