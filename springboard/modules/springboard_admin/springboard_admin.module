@@ -724,7 +724,7 @@ function springboard_admin_asset_page() {
       }
     }
   }
-  return theme('springboard_admin_forms_page', array('types' => $used_types, 'tables' => $tables));
+  return theme('springboard_admin_asset_page', array('types' => $used_types, 'tables' => $tables));
 }
 
 /**
