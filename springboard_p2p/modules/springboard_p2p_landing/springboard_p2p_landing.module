@@ -29,34 +29,30 @@ function springboard_p2p_landing_page_alter(&$cache, $vars) {
       // Define the module path.
       $mod_path = drupal_get_path('module', 'springboard_p2p_landing');
 
-      // Define the flexslider library path.
-      $library_path_flexslider = libraries_get_path('flexslider');
-
       // Flexslider js.
-      $flexslider = array(
+      $flexslider_js = array(
         '#attached' => array(
           'js' => array(
-            $library_path_flexslider . '/jquery.flexslider.js' => array(
-              'group' => JS_THEME,
-              'weight' => 9998,
+            $mod_path . '/js/jquery.flexslider.js' => array(
+              'group' => JS_LIBRARY,
             ),
           ),
         ),
       );
-      drupal_render($flexslider);
+      drupal_render($flexslider_js);
 
       // Flexslider css.
-      $flexslidercss = array(
+      $flexslider_css = array(
         '#attached' => array(
           'css' => array(
-            $library_path_flexslider . '/flexslider.css' => array(
+            $mod_path . '/flexslider.css' => array(
               'group' => CSS_THEME,
               'weight' => 9999,
             ),
           ),
         ),
       );
-      drupal_render($flexslidercss);
+      drupal_render($flexslider_css);
 
       // Custom scripts, let's load this last.
       $p2p_landing_scripts = array(
