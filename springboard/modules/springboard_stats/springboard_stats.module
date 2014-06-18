@@ -22,8 +22,8 @@ function springboard_stats_node_type_update($type) {
  * Checks whether given node type name is for a Webform or Fundraiser type, and if so add stats fields.
  */
 function springboard_stats_add_fields($type_name) {
+  module_load_include('inc', 'springboard_stats', 'springboard_stats.fields');
   if (in_array($type_name, webform_variable_get('webform_node_types'))) {
-    module_load_include('inc', 'springboard_stats', 'springboard_stats.fields');
     _springboard_stats_add_default_fields($type_name);
   }
   if (fundraiser_is_donation_type($type_name)) {
