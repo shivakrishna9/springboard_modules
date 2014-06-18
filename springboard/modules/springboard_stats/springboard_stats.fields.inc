@@ -501,7 +501,7 @@ function _springboard_stats_fundraiser_fields_settings($type) {
     ),
   );
 
-  // Dollar Total of Transactions Pending
+  // Dollar Total of Refunds
   $fields['sbstats_total_refunds'] = array(
     'field_config' => array(
       'type' => 'number_decimal',
