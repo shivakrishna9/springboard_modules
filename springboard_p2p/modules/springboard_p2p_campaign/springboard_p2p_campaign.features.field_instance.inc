@@ -55,6 +55,97 @@ function springboard_p2p_campaign_field_default_field_instances() {
     ),
   );
 
+  // Exported field_instance: 'node-p2p_campaign-field_external_link_'
+  $field_instances['node-p2p_campaign-field_external_link_'] = array(
+    'bundle' => 'p2p_campaign',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'list',
+        'settings' => array(),
+        'type' => 'list_default',
+        'weight' => 24,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_external_link_',
+    'label' => 'External Link?',
+    'required' => 1,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'options',
+      'settings' => array(),
+      'type' => 'options_select',
+      'weight' => 17,
+    ),
+  );
+
+  // Exported field_instance: 'node-p2p_campaign-field_landing_page_slider_link'
+  $field_instances['node-p2p_campaign-field_landing_page_slider_link'] = array(
+    'bundle' => 'p2p_campaign',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'link',
+        'settings' => array(),
+        'type' => 'link_default',
+        'weight' => 23,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_landing_page_slider_link',
+    'label' => 'Landing page slider optional external link',
+    'required' => 0,
+    'settings' => array(
+      'attributes' => array(
+        'class' => '',
+        'configurable_title' => 0,
+        'rel' => '',
+        'target' => '_blank',
+        'title' => '',
+      ),
+      'display' => array(
+        'url_cutoff' => 80,
+      ),
+      'enable_tokens' => 1,
+      'rel_remove' => 'rel_remove_external',
+      'title' => 'required',
+      'title_maxlength' => 128,
+      'title_value' => '',
+      'url' => 0,
+      'user_register_form' => FALSE,
+      'validate_url' => 1,
+    ),
+    'widget' => array(
+      'active' => 0,
+      'module' => 'link',
+      'settings' => array(),
+      'type' => 'link_field',
+      'weight' => 18,
+    ),
+  );
+
   // Exported field_instance: 'node-p2p_campaign-field_landing_page_slider_text'
   $field_instances['node-p2p_campaign-field_landing_page_slider_text'] = array(
     'bundle' => 'p2p_campaign',
@@ -91,7 +182,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'size' => 60,
       ),
       'type' => 'text_textfield',
-      'weight' => 6,
+      'weight' => 19,
     ),
   );
 
@@ -268,7 +359,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'progress_indicator' => 'throbber',
       ),
       'type' => 'image_image',
-      'weight' => 5,
+      'weight' => 16,
     ),
   );
 
@@ -318,7 +409,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'progress_indicator' => 'throbber',
       ),
       'type' => 'image_image',
-      'weight' => 7,
+      'weight' => 8,
     ),
   );
 
@@ -953,10 +1044,12 @@ function springboard_p2p_campaign_field_default_field_instances() {
   t('Campaign thumbnail');
   t('Category');
   t('Description');
+  t('External Link?');
   t('Featured Personal Campaigns');
   t('Goals');
   t('Images');
   t('Landing page slider');
+  t('Landing page slider optional external link');
   t('Landing page slider teaser');
   t('Organization introduction');
   t('Personal campaign introduction');
