@@ -629,6 +629,8 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['title']['table'] = 'node';
   $handler->display->display_options['fields']['title']['field'] = 'title';
   $handler->display->display_options['fields']['title']['label'] = 'Form Name';
+  $handler->display->display_options['fields']['title']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['title']['alter']['text'] = '<a href="[path]" target="_blank">[title]</a>';
   $handler->display->display_options['fields']['title']['alter']['word_boundary'] = FALSE;
   $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
   $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
@@ -1475,6 +1477,8 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['title']['table'] = 'node';
   $handler->display->display_options['fields']['title']['field'] = 'title';
   $handler->display->display_options['fields']['title']['label'] = 'Form Name';
+  $handler->display->display_options['fields']['title']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['title']['alter']['text'] = '<a href="[path]" target="_blank">[title]</a>';
   $handler->display->display_options['fields']['title']['alter']['word_boundary'] = FALSE;
   $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
   $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
@@ -4741,6 +4745,12 @@ $views[$view->name] = $view;
   $handler->display->display_options['style_plugin'] = 'list';
   $handler->display->display_options['style_options']['class'] = 'notes-feed-list';
   $handler->display->display_options['row_plugin'] = 'fields';
+  /* Header: Global: Text area */
+  $handler->display->display_options['header']['area']['id'] = 'area';
+  $handler->display->display_options['header']['area']['table'] = 'views';
+  $handler->display->display_options['header']['area']['field'] = 'area';
+  $handler->display->display_options['header']['area']['content'] = '<h2>Springboard Notes</h2>';
+  $handler->display->display_options['header']['area']['format'] = 'full_html';
   /* Footer: Global: Text area */
   $handler->display->display_options['footer']['area']['id'] = 'area';
   $handler->display->display_options['footer']['area']['table'] = 'views';
@@ -4752,30 +4762,14 @@ $views[$view->name] = $view;
   $handler->display->display_options['fields']['timestamp']['table'] = 'aggregator_item';
   $handler->display->display_options['fields']['timestamp']['field'] = 'timestamp';
   $handler->display->display_options['fields']['timestamp']['label'] = '';
-  $handler->display->display_options['fields']['timestamp']['exclude'] = TRUE;
   $handler->display->display_options['fields']['timestamp']['element_type'] = 'span';
+  $handler->display->display_options['fields']['timestamp']['element_class'] = 'notes-timestamp';
   $handler->display->display_options['fields']['timestamp']['element_label_type'] = '0';
   $handler->display->display_options['fields']['timestamp']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['timestamp']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['timestamp']['element_default_classes'] = FALSE;
   $handler->display->display_options['fields']['timestamp']['date_format'] = 'custom';
-  $handler->display->display_options['fields']['timestamp']['custom_date_format'] = 'j';
-  /* Field: Aggregator: Timestamp */
-  $handler->display->display_options['fields']['timestamp_1']['id'] = 'timestamp_1';
-  $handler->display->display_options['fields']['timestamp_1']['table'] = 'aggregator_item';
-  $handler->display->display_options['fields']['timestamp_1']['field'] = 'timestamp';
-  $handler->display->display_options['fields']['timestamp_1']['label'] = '';
-  $handler->display->display_options['fields']['timestamp_1']['alter']['alter_text'] = TRUE;
-  $handler->display->display_options['fields']['timestamp_1']['alter']['text'] = '<span class="notes-date">
-<span class="notes-day">[timestamp]</span>
-<span class="notes-month">[timestamp_1]</span>
-</span>';
-  $handler->display->display_options['fields']['timestamp_1']['element_type'] = '0';
-  $handler->display->display_options['fields']['timestamp_1']['element_label_type'] = '0';
-  $handler->display->display_options['fields']['timestamp_1']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['timestamp_1']['element_wrapper_type'] = '0';
-  $handler->display->display_options['fields']['timestamp_1']['element_default_classes'] = FALSE;
-  $handler->display->display_options['fields']['timestamp_1']['date_format'] = 'custom';
-  $handler->display->display_options['fields']['timestamp_1']['custom_date_format'] = 'M';
+  $handler->display->display_options['fields']['timestamp']['custom_date_format'] = 'n/j/Y';
   /* Field: Aggregator: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
   $handler->display->display_options['fields']['title']['table'] = 'aggregator_item';

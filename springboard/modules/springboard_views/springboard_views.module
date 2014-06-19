@@ -258,7 +258,7 @@ function springboard_views_springboard_dashboard_panes() {
   $panes['springboard_notes_feed'] = array(
     'label' => t('Springboard Notes'),
     'description' => t('XML feed view from jr.com'),
-    'content' => '<h2>' . t('Springboard Notes') . '</h2>' .
+    'content' => '' .
       (module_exists('views') ? views_embed_view('sbv_notes', 'block') : t('Please enable the Views module to improve your Springboard experience.')),
     'position' => 'column_right',
     'weight' => 3,
