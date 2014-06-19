@@ -1935,13 +1935,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['view_order']['relationship'] = 'did';
   $handler->display->display_options['fields']['view_order']['label'] = 'Actions';
   $handler->display->display_options['fields']['view_order']['text'] = 'View order';
-  /* Field: Array: View link */
-  $handler->display->display_options['fields']['view_submission']['id'] = 'view_submission';
-  $handler->display->display_options['fields']['view_submission']['table'] = 'webform_submissions';
-  $handler->display->display_options['fields']['view_submission']['field'] = 'view_submission';
-  $handler->display->display_options['fields']['view_submission']['relationship'] = 'sid_2';
-  $handler->display->display_options['fields']['view_submission']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['view_submission']['text'] = 'View submission';
   /* Field: Commerce Payment Transaction: Transaction ID */
   $handler->display->display_options['fields']['transaction_id']['id'] = 'transaction_id';
   $handler->display->display_options['fields']['transaction_id']['table'] = 'commerce_payment_transaction';
@@ -2035,13 +2028,12 @@ function springboard_views_views_default_views() {
     4 => 0,
     5 => 0,
   );
-  /* Filter criterion: Date: Date (node) */
+  /* Filter criterion: Date: Date (commerce_order) */
   $handler->display->display_options['filters']['date_filter']['id'] = 'date_filter';
-  $handler->display->display_options['filters']['date_filter']['table'] = 'node';
+  $handler->display->display_options['filters']['date_filter']['table'] = 'commerce_order';
   $handler->display->display_options['filters']['date_filter']['field'] = 'date_filter';
-  $handler->display->display_options['filters']['date_filter']['relationship'] = 'nid';
+  $handler->display->display_options['filters']['date_filter']['relationship'] = 'did';
   $handler->display->display_options['filters']['date_filter']['operator'] = 'between';
-  $handler->display->display_options['filters']['date_filter']['group'] = 1;
   $handler->display->display_options['filters']['date_filter']['exposed'] = TRUE;
   $handler->display->display_options['filters']['date_filter']['expose']['operator_id'] = 'date_filter_op';
   $handler->display->display_options['filters']['date_filter']['expose']['operator'] = 'date_filter_op';
@@ -2055,7 +2047,7 @@ function springboard_views_views_default_views() {
   );
   $handler->display->display_options['filters']['date_filter']['form_type'] = 'date_popup';
   $handler->display->display_options['filters']['date_filter']['date_fields'] = array(
-    'fundraiser_donation.created' => 'fundraiser_donation.created',
+    'commerce_order.created' => 'commerce_order.created',
   );
   $handler->display->display_options['path'] = 'admin/reports/salesforce/donations';
   $views[$view -> name] = $view;
