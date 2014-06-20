@@ -132,15 +132,15 @@ function springboard_p2p_admin_settings() {
     '#description' => t('If changing the base path, what should happen to existing personal campaign paths?'),
     '#default_value' => 'none',
     '#options' => array(
-      'none' => 'Leave existing paths unchanged.',
-      'update_paths' => 'Update existing paths with the new base path.',
+      'none' => t('Leave existing paths unchanged.'),
     ),
   );
 
   if (module_exists('redirect')) {
-    $form['basic']['base_path_personal_campaigns']['#options']['add_redirects'] = 'Update existing paths with the new base path and create redirects from the old paths';
+    $form['basic']['base_path_personal_campaigns']['#options']['add_redirects'] = t('Update existing paths with the new base path and create redirects from the old paths');
   }
   else {
+    $form['basic']['base_path_personal_campaigns']['#options']['update_paths'] = t('Update existing paths with the new base path. Be aware that his does not create redirects so the old paths will no longer be valid.');
     $form['basic']['base_path_personal_campaigns']['#description'] .= ' ' . t('To add redirects for the old paths, install the Redirect module first and then the option to add redirects will become available.');
   }
 
