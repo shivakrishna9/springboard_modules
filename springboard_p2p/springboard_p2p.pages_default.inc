@@ -634,6 +634,102 @@ function springboard_p2p_default_page_manager_handlers() {
   $handler->conf['display'] = $display;
   $export['node_view_panel_context'] = $handler;
 
+  $handler = new stdClass();
+  $handler->disabled = FALSE; /* Edit this to true to make a default handler disabled initially */
+  $handler->api_version = 1;
+  $handler->name = 'pm_existing_pages_webform_confirmation_panel_context';
+  $handler->task = 'pm_existing_pages';
+  $handler->subtask = 'webform_confirmation';
+  $handler->handler = 'panel_context';
+  $handler->weight = 0;
+  $handler->conf = array(
+    'title' => 'Donation Thank You',
+    'no_blocks' => 0,
+    'pipeline' => 'standard',
+    'body_classes_to_remove' => '',
+    'body_classes_to_add' => '',
+    'css_id' => '',
+    'css' => '',
+    'contexts' => array(),
+    'relationships' => array(),
+    'access' => array(
+      'logic' => 'or',
+      'plugins' => array(
+        0 => array(
+          'name' => 'donation_thank_you',
+          'settings' => NULL,
+          'context' => 'argument_entity_id:node_1',
+          'not' => TRUE,
+        ),
+      ),
+    ),
+  );
+  $display = new panels_display();
+  $display->layout = 'p2p_landing_twocol_bricks';
+  $display->layout_settings = array();
+  $display->panel_settings = array(
+    'style_settings' => array(
+      'default' => NULL,
+      'center' => NULL,
+      'top' => NULL,
+      'middle_left' => NULL,
+      'middle_right' => NULL,
+      'bottom' => NULL,
+    ),
+  );
+  $display->cache = array();
+  $display->title = '';
+  $display->uuid = '78059b1d-cc5a-49a3-9d54-57685c7f82f5';
+  $display->content = array();
+  $display->panels = array();
+    $pane = new stdClass();
+    $pane->pid = 'new-bcec0694-5531-400c-8d05-d7521fb72c98';
+    $pane->panel = 'top';
+    $pane->type = 'campaign_header_no_context';
+    $pane->subtype = 'campaign_header_no_context';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array();
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 0;
+    $pane->locks = array();
+    $pane->uuid = 'bcec0694-5531-400c-8d05-d7521fb72c98';
+    $display->content['new-bcec0694-5531-400c-8d05-d7521fb72c98'] = $pane;
+    $display->panels['top'][0] = 'new-bcec0694-5531-400c-8d05-d7521fb72c98';
+    $pane = new stdClass();
+    $pane->pid = 'new-a179f976-122c-4cd6-af6e-f4e0ab7e609b';
+    $pane->panel = 'top';
+    $pane->type = 'custom_title';
+    $pane->subtype = 'custom_title';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'text' => 'Thank you for donating to my campaign',
+      'markup_tag' => 'h1',
+      'override_title' => FALSE,
+      'override_title_text' => '<no title>',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 1;
+    $pane->locks = array();
+    $pane->uuid = 'a179f976-122c-4cd6-af6e-f4e0ab7e609b';
+    $display->content['new-a179f976-122c-4cd6-af6e-f4e0ab7e609b'] = $pane;
+    $display->panels['top'][1] = 'new-a179f976-122c-4cd6-af6e-f4e0ab7e609b';
+  $display->hide_title = PANELS_TITLE_NONE;
+  $display->title_pane = '0';
+  $handler->conf['display'] = $display;
+  $export['pm_existing_pages_webform_confirmation_panel_context'] = $handler;
+
   return $export;
 }
 
