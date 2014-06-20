@@ -158,6 +158,15 @@ function form_layouts_form_layouts_info() {
     'css' => array(drupal_get_path('module', 'form_layouts') . '/css/two_column_donation.css'),
     'preprocess function' => 'form_layouts_preprocess_two_column_donation',
   );
+  $templates['two_column_hybrid_donation'] = array(
+    'name' => t('Hybrid two column: donation form'),
+    'theme' => 'two_column_hybrid_donation',
+    'pattern' => 'two_column_hybrid_donation_\'0-9\'+',
+    'template' => 'two-column-hybrid-donation',
+    'path' => drupal_get_path('module', 'form_layouts') . '/templates/',
+    'css' => array(drupal_get_path('module', 'form_layouts') . '/css/two_column_donation.css'),
+    'preprocess function' => 'form_layouts_preprocess_two_column_hybrid_donation',
+  );
   $templates['two_column_left_right'] = array(
     'name' => t('Two column: left-right fieldsets'),
     'theme' => 'two_column_left_right',
@@ -231,6 +240,20 @@ function _form_layouts_variable_name($nid) {
  * Breaks the form into easily digestable chunks.
  */
 function form_layouts_preprocess_two_column_donation(&$vars) {
+  if (isset($vars['element']['submitted']['donation'])) {
+    $vars['donation_fieldset'] = drupal_render($vars['element']['submitted']['donation']);
+    $vars['donor_information_fieldset'] = drupal_render($vars['element']['submitted']['donor_information']);
+    $vars['billing_address_fieldset'] = drupal_render($vars['element']['submitted']['billing_information']);
+    $vars['credit_card_fieldset'] = drupal_render($vars['element']['submitted']['payment_information']);
+    // Do Not Loop This Process.
+    // We don't want to keep trying to render this theme.
+    unset($vars['element']['#theme']);
+    // Place in a location the end template can pick up.
+    $vars['form'] = $vars['element'];
+  }
+}
+
+function form_layouts_preprocess_two_column_hybrid_donation(&$vars) {
   if (isset($vars['element']['submitted']['donation'])) {
     $vars['donation_fieldset'] = drupal_render($vars['element']['submitted']['donation']);
     $vars['donor_information_fieldset'] = drupal_render($vars['element']['submitted']['donor_information']);
