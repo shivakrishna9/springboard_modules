@@ -623,6 +623,8 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['field_webform_user_internal_name']['table'] = 'field_data_field_webform_user_internal_name';
   $handler->display->display_options['fields']['field_webform_user_internal_name']['field'] = 'field_webform_user_internal_name';
   $handler->display->display_options['fields']['field_webform_user_internal_name']['label'] = '';
+  $handler->display->display_options['fields']['field_webform_user_internal_name']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['field_webform_user_internal_name']['alter']['text'] = '<span class="form-internal-name truncate">[field_webform_user_internal_name]</span>';
   $handler->display->display_options['fields']['field_webform_user_internal_name']['element_label_colon'] = FALSE;
   /* Field: Content: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
@@ -784,7 +786,7 @@ function springboard_views_views_default_views() {
     ),
     'clone_node' => array(
       'align' => '',
-      'separator' => '',
+      'separator' => ' | ',
       'empty_column' => 0,
     ),
     'edit_node' => array(
@@ -904,7 +906,7 @@ function springboard_views_views_default_views() {
   /* Display: Springboard Recent Donation Forms by Type Page */
   $handler = $view->new_display('page', 'Springboard Recent Donation Forms by Type Page', 'page_1');
   $handler->display->display_options['defaults']['title'] = FALSE;
-  $handler->display->display_options['title'] = 'Recent Forms by Type';
+  $handler->display->display_options['title'] = 'Recent forms by type';
   $handler->display->display_options['defaults']['use_ajax'] = FALSE;
   $handler->display->display_options['use_ajax'] = TRUE;
   $handler->display->display_options['defaults']['pager'] = FALSE;
@@ -979,7 +981,7 @@ function springboard_views_views_default_views() {
     ),
     'clone_node' => array(
       'align' => '',
-      'separator' => '',
+      'separator' => ' | ',
       'empty_column' => 0,
     ),
     'edit_node' => array(
@@ -1085,7 +1087,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['arguments']['type']['table'] = 'node';
   $handler->display->display_options['arguments']['type']['field'] = 'type';
   $handler->display->display_options['arguments']['type']['title_enable'] = TRUE;
-  $handler->display->display_options['arguments']['type']['title'] = 'Recent %1s';
+  $handler->display->display_options['arguments']['type']['title'] = '%1s';
   $handler->display->display_options['arguments']['type']['default_argument_type'] = 'fixed';
   $handler->display->display_options['arguments']['type']['summary']['number_of_records'] = '0';
   $handler->display->display_options['arguments']['type']['summary']['format'] = 'default_summary';
@@ -1101,6 +1103,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['filters']['combine']['operator'] = 'contains';
   $handler->display->display_options['filters']['combine']['exposed'] = TRUE;
   $handler->display->display_options['filters']['combine']['expose']['operator_id'] = 'combine_op';
+  $handler->display->display_options['filters']['combine']['expose']['label'] = 'Search';
   $handler->display->display_options['filters']['combine']['expose']['operator'] = 'combine_op';
   $handler->display->display_options['filters']['combine']['expose']['identifier'] = 'combine';
   $handler->display->display_options['filters']['combine']['expose']['remember_roles'] = array(
@@ -1471,6 +1474,8 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['field_webform_user_internal_name']['table'] = 'field_data_field_webform_user_internal_name';
   $handler->display->display_options['fields']['field_webform_user_internal_name']['field'] = 'field_webform_user_internal_name';
   $handler->display->display_options['fields']['field_webform_user_internal_name']['label'] = '';
+  $handler->display->display_options['fields']['field_webform_user_internal_name']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['field_webform_user_internal_name']['alter']['text'] = '<span class="form-internal-name truncate">[field_fundraiser_internal_name]</span>';
   $handler->display->display_options['fields']['field_webform_user_internal_name']['element_label_colon'] = FALSE;
   /* Field: Content: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
