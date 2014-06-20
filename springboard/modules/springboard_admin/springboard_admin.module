@@ -295,6 +295,9 @@ function springboard_admin_init() {
       }
     }
     elseif (preg_match('|^/admin/config/content/webform_ab$|', $path)) {
+      $goto_path = 'springboard/settings/config/multivariate-testing';
+    }
+    elseif (preg_match('|^/admin/content/webform_ab$|', $path)) {
       $goto_path = 'springboard/multivariate-testing';
     }
     elseif (preg_match('|^/admin/config/services/springboard_social$|', $path)) {
@@ -622,6 +625,9 @@ function springboard_admin_url_inbound_alter(&$path, $original_path, $path_langu
       }
     }
     elseif (preg_match('|^springboard/multivariate-testing$|', $path)) {
+      $path = 'admin/content/webform_ab';
+    }
+    elseif (preg_match('|^springboard/settings/config/multivariate-testing$|', $path)) {
       $path = 'admin/config/content/webform_ab';
     }
     elseif (preg_match('|^springboard/sb-social$|', $path)) {
