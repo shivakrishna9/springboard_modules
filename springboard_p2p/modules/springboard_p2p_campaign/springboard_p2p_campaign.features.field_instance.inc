@@ -228,6 +228,49 @@ function springboard_p2p_campaign_field_default_field_instances() {
     ),
   );
 
+  // Exported field_instance: 'node-p2p_campaign-field_p2p_ask_amount_edit'
+  $field_instances['node-p2p_campaign-field_p2p_ask_amount_edit'] = array(
+    'bundle' => 'p2p_campaign',
+    'default_value' => array(
+      0 => array(
+        'value' => 0,
+      ),
+    ),
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'list',
+        'settings' => array(),
+        'type' => 'list_default',
+        'weight' => 25,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_p2p_ask_amount_edit',
+    'label' => 'This content can be overridden by campaigner',
+    'required' => 0,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'options',
+      'settings' => array(
+        'display_label' => 1,
+      ),
+      'type' => 'options_onoff',
+      'weight' => 20,
+    ),
+  );
+
   // Exported field_instance: 'node-p2p_campaign-field_p2p_campaign_banner'
   $field_instances['node-p2p_campaign-field_p2p_campaign_banner'] = array(
     'bundle' => 'p2p_campaign',
@@ -254,7 +297,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
     'entity_type' => 'node',
     'field_name' => 'field_p2p_campaign_banner',
     'label' => 'Campaign banner',
-    'required' => 0,
+    'required' => 1,
     'settings' => array(
       'alt_field' => 1,
       'default_image' => 0,
@@ -339,7 +382,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
     'entity_type' => 'node',
     'field_name' => 'field_p2p_campaign_slider',
     'label' => 'Landing page slider',
-    'required' => 0,
+    'required' => 1,
     'settings' => array(
       'alt_field' => 1,
       'default_image' => 0,
@@ -389,7 +432,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
     'entity_type' => 'node',
     'field_name' => 'field_p2p_campaign_thumbnail',
     'label' => 'Campaign thumbnail',
-    'required' => 0,
+    'required' => 1,
     'settings' => array(
       'alt_field' => 1,
       'default_image' => 0,
@@ -872,20 +915,16 @@ function springboard_p2p_campaign_field_default_field_instances() {
   // Exported field_instance: 'node-p2p_campaign-field_p2p_suggested_donation'
   $field_instances['node-p2p_campaign-field_p2p_suggested_donation'] = array(
     'bundle' => 'p2p_campaign',
-    'default_value' => array(
-      0 => array(
-        'value' => 0,
-      ),
-    ),
+    'default_value' => NULL,
     'deleted' => 0,
     'description' => '',
     'display' => array(
       'default' => array(
         'label' => 'above',
-        'module' => 'list',
+        'module' => 'text',
         'settings' => array(),
-        'type' => 'list_default',
-        'weight' => 22,
+        'type' => 'text_default',
+        'weight' => 26,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -899,16 +938,17 @@ function springboard_p2p_campaign_field_default_field_instances() {
     'label' => 'Suggested donation amount',
     'required' => 0,
     'settings' => array(
+      'text_processing' => 0,
       'user_register_form' => FALSE,
     ),
     'widget' => array(
       'active' => 1,
-      'module' => 'options',
+      'module' => 'text',
       'settings' => array(
-        'display_label' => 1,
+        'rows' => 5,
       ),
-      'type' => 'options_onoff',
-      'weight' => 14,
+      'type' => 'text_textarea',
+      'weight' => 21,
     ),
   );
 
@@ -989,49 +1029,6 @@ function springboard_p2p_campaign_field_default_field_instances() {
       ),
       'type' => 'options_onoff',
       'weight' => 11,
-    ),
-  );
-
-  // Exported field_instance: 'node-p2p_campaign-field_this_content_can_be_overri'
-  $field_instances['node-p2p_campaign-field_this_content_can_be_overri'] = array(
-    'bundle' => 'p2p_campaign',
-    'default_value' => array(
-      0 => array(
-        'value' => 0,
-      ),
-    ),
-    'deleted' => 0,
-    'description' => '',
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'module' => 'list',
-        'settings' => array(),
-        'type' => 'list_default',
-        'weight' => 21,
-      ),
-      'teaser' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 0,
-      ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'field_this_content_can_be_overri',
-    'label' => 'This content can be overridden by campaigner',
-    'required' => 0,
-    'settings' => array(
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 1,
-      'module' => 'options',
-      'settings' => array(
-        'display_label' => 1,
-      ),
-      'type' => 'options_onoff',
-      'weight' => 13,
     ),
   );
 

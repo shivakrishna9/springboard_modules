@@ -85,8 +85,8 @@ function springboard_p2p_campaign_field_group_info() {
     'label' => 'Personal Campaign suggested donation amount',
     'weight' => '11',
     'children' => array(
-      0 => 'field_p2p_suggested_donation',
-      1 => 'field_this_content_can_be_overri',
+      0 => 'field_p2p_ask_amount_edit',
+      1 => 'field_p2p_suggested_donation',
     ),
     'format_type' => 'fieldset',
     'format_settings' => array(
@@ -114,8 +114,8 @@ function springboard_p2p_campaign_field_group_info() {
     'weight' => '6',
     'children' => array(
       0 => 'body',
-      1 => 'field_p2p_campaign_goals',
-      2 => 'field_p2p_campaign_banner',
+      1 => 'field_p2p_campaign_banner',
+      2 => 'field_p2p_campaign_goals',
       3 => 'field_p2p_campaign_thumbnail',
     ),
     'format_type' => 'htab',
@@ -175,9 +175,9 @@ function springboard_p2p_campaign_field_group_info() {
     'label' => 'Personal campaign introduction',
     'weight' => '10',
     'children' => array(
-      0 => 'field_p2p_personal_intro',
-      1 => 'field_p2p_personal_intro_edit',
-      2 => 'field_p2p_feature_pers_campaigns',
+      0 => 'field_p2p_feature_pers_campaigns',
+      1 => 'field_p2p_personal_intro',
+      2 => 'field_p2p_personal_intro_edit',
     ),
     'format_type' => 'htab',
     'format_settings' => array(
@@ -236,10 +236,10 @@ function springboard_p2p_campaign_field_group_info() {
     'label' => 'Landing page slideshow',
     'weight' => '9',
     'children' => array(
-      0 => 'field_p2p_campaign_slider',
-      1 => 'field_landing_page_slider_text',
-      2 => 'field_landing_page_slider_link',
-      3 => 'field_external_link',
+      0 => 'field_external_link_',
+      1 => 'field_landing_page_slider_link',
+      2 => 'field_landing_page_slider_text',
+      3 => 'field_p2p_campaign_slider',
     ),
     'format_type' => 'htab',
     'format_settings' => array(
