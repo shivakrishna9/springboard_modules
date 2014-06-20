@@ -659,7 +659,7 @@ function springboard_p2p_default_page_manager_handlers() {
           'name' => 'donation_thank_you',
           'settings' => NULL,
           'context' => 'argument_entity_id:node_1',
-          'not' => TRUE,
+          'not' => FALSE,
         ),
       ),
     ),
@@ -678,7 +678,7 @@ function springboard_p2p_default_page_manager_handlers() {
     ),
   );
   $display->cache = array();
-  $display->title = '';
+  $display->title = 'Thank you for donating to my campaign';
   $display->uuid = '78059b1d-cc5a-49a3-9d54-57685c7f82f5';
   $display->content = array();
   $display->panels = array();
@@ -725,8 +725,57 @@ function springboard_p2p_default_page_manager_handlers() {
     $pane->uuid = 'a179f976-122c-4cd6-af6e-f4e0ab7e609b';
     $display->content['new-a179f976-122c-4cd6-af6e-f4e0ab7e609b'] = $pane;
     $display->panels['top'][1] = 'new-a179f976-122c-4cd6-af6e-f4e0ab7e609b';
-  $display->hide_title = PANELS_TITLE_NONE;
-  $display->title_pane = '0';
+    $pane = new stdClass();
+    $pane->pid = 'new-ee048603-b569-4e46-b3c7-a65191b2a187';
+    $pane->panel = 'top';
+    $pane->type = 'custom_title';
+    $pane->subtype = 'custom_title';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'text' => 'Help me spread the word. Share my campaign with your friends.',
+      'markup_tag' => 'h2',
+      'override_title' => FALSE,
+      'override_title_text' => '<no title>',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 2;
+    $pane->locks = array();
+    $pane->uuid = 'ee048603-b569-4e46-b3c7-a65191b2a187';
+    $display->content['new-ee048603-b569-4e46-b3c7-a65191b2a187'] = $pane;
+    $display->panels['top'][2] = 'new-ee048603-b569-4e46-b3c7-a65191b2a187';
+    $pane = new stdClass();
+    $pane->pid = 'new-c431f9ac-3369-41b1-93d1-4ac7aab4970e';
+    $pane->panel = 'top';
+    $pane->type = 'custom';
+    $pane->subtype = 'custom';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'admin_title' => '',
+      'title' => '',
+      'body' => '<table><tbody><tr><td>First Name:</td><td>[donation:first_name]</td></tr><tr><td>Last Name:</td><td>[donation:last_name]</td></tr><tr><td>Email:</td><td>[donation:user:mail]</td></tr><tr><td>Street1:</td><td>[donation:address]</td></tr><tr><td>City:</td><td>[donation:city]</td></tr><tr><td>State/Province:</td><td>[donation:state]</td></tr><tr><td>Amount:</td><td>$[donation:amount]</td></tr><tr class="card-type"><td>Card Type:</td><td>[donation:card_type]</td></tr><tr class="card-number"><td>Card Number:</td><td>************[donation:card_number]</td></tr><tr class="card-expiry"><td>Expiration Date:</td><td>[donation:card_expiration_month] / [donation:card_expiration_year]</td></tr><tr class="echeck-acct"><td>eCheck account number:</td><td>********[donation:bank_account]</td></tr><tr class="echeck-routing"><td>eCheck routing number:</td><td>[donation:bank_routing]</td></tr><tr class="paypal-payment"><td>PayPal:</td><td>[donation:paypal_paid]</td></tr></tbody></table>',
+      'format' => 'full_html',
+      'substitute' => 1,
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 3;
+    $pane->locks = array();
+    $pane->uuid = 'c431f9ac-3369-41b1-93d1-4ac7aab4970e';
+    $display->content['new-c431f9ac-3369-41b1-93d1-4ac7aab4970e'] = $pane;
+    $display->panels['top'][3] = 'new-c431f9ac-3369-41b1-93d1-4ac7aab4970e';
+  $display->hide_title = PANELS_TITLE_FIXED;
+  $display->title_pane = 'new-a179f976-122c-4cd6-af6e-f4e0ab7e609b';
   $handler->conf['display'] = $display;
   $export['pm_existing_pages_webform_confirmation_panel_context'] = $handler;
 

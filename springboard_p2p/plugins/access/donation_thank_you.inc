@@ -13,9 +13,9 @@
 $plugin = array(
 
   // Plugin user-friendly name.
-  'title' => t('Check for P2P Donation Thank you page'),
+  'title' => t('Check for P2P donation thank you page'),
   // Plugin description.
-  'description' => t('Access Control that tests if the donation thank you page belongs to P2P'),
+  'description' => t('Access control that tests if the donation thank you page belongs to P2P'),
   // Without required context plugin will now be shown in Panels UI.
   'required context' => new ctools_context_required(t('Node'), 'node'),
   // Function which will allow or restrict access.
@@ -39,22 +39,11 @@ function springboard_p2p_donation_thank_you_ctools_access_check($conf, $context)
     return FALSE;
   }
 
-  // Define the node object.
- // $node = menu_get_object();
-
-  // First, check to see if we are on any kind of donation form.
-//  if (fundraiser_is_donation_type($node->type)) {
-
-    // Query the url string to see if it belongs to P2P.
-      if (!empty($_GET['p2p_pcid']) && !empty($_GET['sid'])) {
-
-        return TRUE;
-      }
-
-  return FALSE;
-
- // }
-
+  // Query the url string to see if it belongs to P2P.
+  if (empty($_GET['p2p_pcid'])) {
+    return FALSE;
+  }
+  return TRUE;
 }
 
 /**

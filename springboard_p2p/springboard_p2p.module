@@ -2040,8 +2040,10 @@ function springboard_p2p_page_alter(&$page, $form) {
     }
 
     // Check for a p2p donation thank you page.
-    if (!empty($_GET['sid']) && ($_GET['p2p_pcid'])) {
+    if (!empty($_GET['sid'])) {
+      if (!empty($_GET['p2p_pcid'])) {
       $p2p_thanks_path = '';
+      }
     }
 
     // Define register / login / password page paths.
@@ -2260,7 +2262,7 @@ function springboard_p2p_css_alter(&$css) {
 function springboard_p2p_preprocess_page(&$vars) {
 
   // Unset the h1 title for the login page, we set it in a custom pane.
-  if (arg(0) == 'springboard_p2p' && arg(1) == 'login') {
+  if ((arg(0) == 'springboard_p2p' && arg(1) == 'login') || (arg(2) == 'done')) {
     $vars['title'] = '';
   }
 
