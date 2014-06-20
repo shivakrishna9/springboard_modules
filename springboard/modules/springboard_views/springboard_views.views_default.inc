@@ -1586,29 +1586,21 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['style_plugin'] = 'table';
   $handler->display->display_options['style_options']['columns'] = array(
     'order_id' => 'order_id',
-    'amount' => 'amount',
     'created' => 'created',
+    'amount' => 'amount',
     'sbp_first_name' => 'sbp_first_name',
-    'sbp_last_name' => 'sbp_last_name',
+    'sbp_last_name' => 'sbp_first_name',
     'mail' => 'mail',
     'title' => 'title',
     'field_fundraiser_internal_name' => 'field_fundraiser_internal_name',
     'status' => 'status',
     'view_order' => 'view_order',
-    'view_submission' => 'view_order',
     'transaction_id' => 'transaction_id',
     'nothing' => 'view_order',
   );
   $handler->display->display_options['style_options']['default'] = '-1';
   $handler->display->display_options['style_options']['info'] = array(
     'order_id' => array(
-      'sortable' => 1,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'amount' => array(
       'sortable' => 1,
       'default_sort_order' => 'asc',
       'align' => '',
@@ -1622,11 +1614,18 @@ function springboard_views_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
-    'sbp_first_name' => array(
+    'amount' => array(
       'sortable' => 1,
       'default_sort_order' => 'asc',
       'align' => '',
       'separator' => '',
+      'empty_column' => 0,
+    ),
+    'sbp_first_name' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '  ',
       'empty_column' => 0,
     ),
     'sbp_last_name' => array(
@@ -1667,11 +1666,6 @@ function springboard_views_views_default_views() {
     'view_order' => array(
       'align' => '',
       'separator' => ' | ',
-      'empty_column' => 0,
-    ),
-    'view_submission' => array(
-      'align' => '',
-      'separator' => '',
       'empty_column' => 0,
     ),
     'transaction_id' => array(
@@ -1875,6 +1869,8 @@ function springboard_views_views_default_views() {
 
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');
+  $handler->display->display_options['defaults']['css_class'] = FALSE;
+  $handler->display->display_options['css_class'] = 'views-data-table';
   $handler->display->display_options['defaults']['hide_admin_links'] = FALSE;
   $handler->display->display_options['defaults']['fields'] = FALSE;
   /* Field: Commerce Order: Order ID */
@@ -1900,6 +1896,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['sbp_first_name']['table'] = 'field_data_sbp_first_name';
   $handler->display->display_options['fields']['sbp_first_name']['field'] = 'sbp_first_name';
   $handler->display->display_options['fields']['sbp_first_name']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_first_name']['label'] = 'Name';
   /* Field: User: Last name */
   $handler->display->display_options['fields']['sbp_last_name']['id'] = 'sbp_last_name';
   $handler->display->display_options['fields']['sbp_last_name']['table'] = 'field_data_sbp_last_name';
@@ -1926,7 +1923,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['field_fundraiser_internal_name']['relationship'] = 'nid';
   $handler->display->display_options['fields']['field_fundraiser_internal_name']['label'] = 'Form';
   $handler->display->display_options['fields']['field_fundraiser_internal_name']['alter']['alter_text'] = TRUE;
-  $handler->display->display_options['fields']['field_fundraiser_internal_name']['alter']['text'] = '[title] ([field_fundraiser_internal_name-value])';
+  $handler->display->display_options['fields']['field_fundraiser_internal_name']['alter']['text'] = '<span class="form-name-title truncate">[title]</span> <span class="form-internal-name">([field_fundraiser_internal_name-value])</span>';
   /* Field: Commerce Order: Order status */
   $handler->display->display_options['fields']['status']['id'] = 'status';
   $handler->display->display_options['fields']['status']['table'] = 'commerce_order';
