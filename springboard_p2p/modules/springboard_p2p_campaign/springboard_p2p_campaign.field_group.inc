@@ -239,7 +239,7 @@ function springboard_p2p_campaign_field_group_info() {
       0 => 'field_p2p_campaign_slider',
       1 => 'field_landing_page_slider_text',
       2 => 'field_landing_page_slider_link',
-      3 => 'field_external_link_',
+      3 => 'field_external_link',
     ),
     'format_type' => 'htab',
     'format_settings' => array(

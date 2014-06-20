@@ -10,13 +10,13 @@
 function springboard_p2p_campaign_field_default_field_bases() {
   $field_bases = array();
 
-  // Exported field_base: 'field_external_link_'
-  $field_bases['field_external_link_'] = array(
+  // Exported field_base: 'field_external_link'
+  $field_bases['field_external_link'] = array(
     'active' => 1,
     'cardinality' => 1,
     'deleted' => 0,
     'entity_types' => array(),
-    'field_name' => 'field_external_link_',
+    'field_name' => 'field_external_link',
     'foreign keys' => array(),
     'indexes' => array(
       'value' => array(

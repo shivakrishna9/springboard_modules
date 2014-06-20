@@ -26,9 +26,18 @@
 ?>
 
 <span class="slide-wrapper">
-<h2 class="slide-title"><span><?php print $fields['title']->content ?></span></h2>
-<?php print $fields['nid']->content ?>
-<?php print $fields['field_p2p_campaign_slider']->content ?>
-<?php print $fields['field_landing_page_slider_text']->content ?>
-<?php print $fields['edit_node']->content ?>
+
+<h2 class="slide-title">
+  <span><?php print $fields['title']->content ?></span>
+</h2>
+
+  <?php
+  // The views condtional output is logic based on the conditions set in views ui.
+  print $fields['views_conditional']->content
+  ?>
+
+  <?php print $fields['field_p2p_campaign_slider']->content ?>
+  <?php print $fields['field_landing_page_slider_text']->content ?>
+  <?php print $fields['edit_node']->content ?>
+
 </span>

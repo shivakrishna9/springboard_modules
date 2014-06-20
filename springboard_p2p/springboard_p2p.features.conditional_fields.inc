@@ -14,7 +14,7 @@ function springboard_p2p_conditional_fields_default_fields() {
     'entity' => 'node',
     'bundle' => 'p2p_campaign',
     'dependent' => 'field_landing_page_slider_link',
-    'dependee' => 'field_external_link_',
+    'dependee' => 'field_external_link',
     'options' => array(
       'state' => 'visible',
       'condition' => 'value',

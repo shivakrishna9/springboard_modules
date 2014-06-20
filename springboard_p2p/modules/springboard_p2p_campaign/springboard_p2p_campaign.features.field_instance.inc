@@ -55,8 +55,8 @@ function springboard_p2p_campaign_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-p2p_campaign-field_external_link_'
-  $field_instances['node-p2p_campaign-field_external_link_'] = array(
+  // Exported field_instance: 'node-p2p_campaign-field_external_link'
+  $field_instances['node-p2p_campaign-field_external_link'] = array(
     'bundle' => 'p2p_campaign',
     'default_value' => NULL,
     'deleted' => 0,
@@ -77,7 +77,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
       ),
     ),
     'entity_type' => 'node',
-    'field_name' => 'field_external_link_',
+    'field_name' => 'field_external_link',
     'label' => 'External Link?',
     'required' => 1,
     'settings' => array(
