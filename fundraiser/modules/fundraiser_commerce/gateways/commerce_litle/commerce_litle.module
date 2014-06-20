@@ -1821,9 +1821,9 @@ function commerce_litle_fraud_settings_form() {
 
   $form['fraud']['commerce_litle_fraud_merchID'] = array(
     '#type' => 'textfield',
-    '#title' => t('Merchant ID'),
+    '#title' => t('Organization ID'),
     '#default_value' => variable_get('commerce_litle_fraud_merchID', ''),
-    '#description' => t('Your Litle Merchant ID'),
+    '#description' => t('Your Threat Metrix Organization ID'),
     '#states' => array(
       'required' => array(
         ':input[name="commerce_litle_fraud"]' => array('checked' => TRUE),
