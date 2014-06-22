@@ -2277,7 +2277,8 @@ function springboard_p2p_preprocess_page(&$vars) {
  * settings.
  */
 function springboard_p2p_form_user_profile_form_alter(&$form, $form_state) {
-  if (springboard_p2p_user_is_registered_for_p2p($form['#user']->uid)) {
+  global $user;
+  if (!user_access('administer springboard') && springboard_p2p_user_is_registered_for_p2p($user->uid)) {
     springboard_p2p_filter_account_fields_for_p2p($form);
   }
 }
