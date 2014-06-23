@@ -242,8 +242,8 @@ function springboard_admin_admin_menu_items() {
   );
 
   // Marketing & Analytics > Multivariate Testing.
-  $items['admin/springboard/marketing-analytics']['_children']['admin/config/content/webform_ab'] = array(
-    'link_path' => 'admin/config/content/webform_ab',
+  $items['admin/springboard/marketing-analytics']['_children']['admin/content/webform_ab'] = array(
+    'link_path' => 'admin/content/webform_ab',
     'link_title' => 'Multivariate Testing',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
@@ -407,6 +407,16 @@ function springboard_admin_admin_menu_items() {
   $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/springboard/options/fundraiser/fundraiser_upsell/thank-you'] = array(
     'link_path' => 'admin/springboard/options/fundraiser/fundraiser_upsell/thank-you',
     'link_title' => 'Sustainer upsell confirmations',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 0,
+    'customized' => 1,
+    'weight' => 1,
+  );
+  
+  // Settings > Settings > Multivariate Testing.
+  $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/config/content/webform_ab'] = array(
+    'link_path' => 'admin/config/content/webform_ab',
+    'link_title' => 'Multivariate Testing',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 0,
     'customized' => 1,
