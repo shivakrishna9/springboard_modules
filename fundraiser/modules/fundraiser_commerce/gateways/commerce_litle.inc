@@ -28,17 +28,48 @@ function commerce_litle_fundraiser_commerce_fundraiser_gateway_info() {
 }
 
 /**
+ * Implements hook_fundraiser_donation_form_config_check().
+ */
+function commerce_litle_fundraiser_donation_form_config_check($node) {
+  $messages = array();
+
+  foreach ($node->gateways as $method => $gateway) {
+    if (!empty($gateway['id'])) {
+      $gateway_config = _fundraiser_gateway_info($gateway['id']);
+
+      // Check the credit payment method.
+      if ($gateway_config['gateway_details']['method_id'] == 'commerce_litle_cc' &&
+        $gateway_config['gateway_details']['settings']['commerce_litle_settings_sandbox']) {
+        $messages[] = t('The Litle credit card payment method is currently in sandbox mode and will not process live transactions.');
+      }
+
+      // Check the echeck payment method.
+      if ($gateway_config['gateway_details']['method_id'] == 'commerce_litle_echeck' &&
+        $gateway_config['gateway_details']['settings']['commerce_litle_settings_sandbox']) {
+        $messages[] = t('The Litle echeck payment method is currently in sandbox mode and will not process live transactions.');
+      }
+    }
+  }
+
+  return $messages;
+}
+
+/**
  * Returns the form fields for this method.
  */
 function commerce_litle_fundraiser_commerce_submit_form($payment_method) {
   if ($payment_method == 'credit') {
     module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
-    return _fundraiser_commerce_credit_card_form();
+    $form = _fundraiser_commerce_credit_card_form();
   }
   elseif ($payment_method == 'bank account') {
     $form = commerce_litle_echeck_submit_form();
-    return $form['echeck'];
+    $form = $form['echeck'];
   }
+  if (variable_get('commerce_litle_fraud', 0)) {
+    $form += commerce_litle_add_fraud_form_elements();
+  }
+  return $form;
 }
 
 /**
@@ -141,6 +172,9 @@ function commerce_litle_fundraiser_commerce_charge($method_instance, $donation) 
   if ($donation->donation['payment_method'] == 'credit') {
     // Add fundraiser commerce data to the pane values array.
     _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
+    if (variable_get('commerce_litle_fraud', 0) && isset($donation->donation['payment_fields']['credit']['session_id'])) {
+      $pane_values['session_id'] = $donation->donation['payment_fields']['credit']['session_id'];
+    }  
     $method_instance['settings']['cardonfile'] = FALSE;
 
     if (module_exists('commerce_cardonfile')) {

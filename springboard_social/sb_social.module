@@ -230,6 +230,7 @@ function sb_social_market_source_admin_settings_submit($form, $form_state) {
 function sb_social_block_info() {
   $blocks['social_sharing'] = array(
     'info' => t('Social Sharing'),
+    'cache' => DRUPAL_CACHE_PER_PAGE,
   );
   return $blocks;
 }
@@ -278,8 +279,9 @@ function sb_social_block_view($delta = '') {
         $buttons[] = theme('sb_social_share_button', $vars);
       }
       $buttons = implode("\n", $buttons);
-      $block['subject'] = NULL;
-      $block['content'] = theme('sb_social_share', array('buttons' => $buttons));
+      $block['subject'] = array_key_exists('block_title', $settings['data']) ? $settings['data']['block_title'] : variable_get('springboard_social_default_block_title', '');
+      $description = array_key_exists('block_description', $settings['data']) ? $settings['data']['block_description'] : variable_get('springboard_social_default_block_description', '');
+      $block['content'] = theme('sb_social_share', array('buttons' => $buttons, 'description' => $description));
     }
     return $block;
   }
