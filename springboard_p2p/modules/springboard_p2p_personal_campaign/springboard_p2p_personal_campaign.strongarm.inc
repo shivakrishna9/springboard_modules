@@ -170,13 +170,14 @@ function springboard_p2p_personal_campaign_strongarm() {
   $strongarm->name = 'springboard_social_enabled_content_types';
   $strongarm->value = array(
     'p2p_personal_campaign' => 'p2p_personal_campaign',
+    'donation_form' => 'donation_form',
+    'p2p_donation_form' => 'p2p_donation_form',
     'p2p_campaign' => 0,
     'p2p_category' => 0,
     'p2p_campaign_landing' => 0,
     'webform_ab' => 0,
     'advocacy' => 0,
     'article' => 0,
-    'donation_form' => 0,
     'email_sign_up' => 0,
     'email_wrapper' => 0,
     'page' => 0,

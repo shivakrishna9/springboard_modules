@@ -91,6 +91,13 @@
         });
       }
 
+      // odd even for confirmation page table.
+      $(".pane-p2p-confirmation table tr:visible:even").addClass("even");
+      $(".pane-p2p-confirmation table tr:visible:odd").addClass("odd");
+
+      // Remove the panel seperator.
+      $(".panel-separator").remove();
+
       // end jquery.
     }};
 })

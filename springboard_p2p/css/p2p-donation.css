@@ -332,6 +332,10 @@ input#edit-submit {
   font-size: 19px;
 }
 
+.pane-p2p-confirmation table {
+
+}
+
 /* media queries */
 @media (max-width: 768px) {
 
