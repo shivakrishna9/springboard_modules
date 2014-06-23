@@ -88,14 +88,16 @@ function springboard_p2p_campaign_field_group_info() {
       0 => 'field_p2p_ask_amount_edit',
       1 => 'field_p2p_suggested_donation',
     ),
-    'format_type' => 'fieldset',
+    'format_type' => 'htab',
     'format_settings' => array(
-      'formatter' => 'collapsible',
+      'label' => 'Personal Campaign suggested donation amount',
       'instance_settings' => array(
-        'description' => '',
-        'classes' => 'group-p2p-donation-amount field-group-fieldset',
         'required_fields' => 1,
+        'id' => '',
+        'classes' => 'group-p2p-donation-amount field-group-fieldset',
+        'description' => '',
       ),
+      'formatter' => 'open',
     ),
   );
   $export['group_p2p_donation_amount|node|p2p_campaign|form'] = $field_group;
@@ -114,8 +116,8 @@ function springboard_p2p_campaign_field_group_info() {
     'weight' => '6',
     'children' => array(
       0 => 'body',
-      1 => 'field_p2p_campaign_banner',
-      2 => 'field_p2p_campaign_goals',
+      1 => 'field_p2p_campaign_goals',
+      2 => 'field_p2p_campaign_banner',
       3 => 'field_p2p_campaign_thumbnail',
     ),
     'format_type' => 'htab',
@@ -175,9 +177,9 @@ function springboard_p2p_campaign_field_group_info() {
     'label' => 'Personal campaign introduction',
     'weight' => '10',
     'children' => array(
-      0 => 'field_p2p_feature_pers_campaigns',
-      1 => 'field_p2p_personal_intro',
-      2 => 'field_p2p_personal_intro_edit',
+      0 => 'field_p2p_personal_intro',
+      1 => 'field_p2p_personal_intro_edit',
+      2 => 'field_p2p_feature_pers_campaigns',
     ),
     'format_type' => 'htab',
     'format_settings' => array(
@@ -236,10 +238,10 @@ function springboard_p2p_campaign_field_group_info() {
     'label' => 'Landing page slideshow',
     'weight' => '9',
     'children' => array(
-      0 => 'field_external_link',
-      1 => 'field_landing_page_slider_link',
-      2 => 'field_landing_page_slider_text',
-      3 => 'field_p2p_campaign_slider',
+      0 => 'field_p2p_campaign_slider',
+      1 => 'field_landing_page_slider_text',
+      2 => 'field_landing_page_slider_link',
+      3 => 'field_external_link',
     ),
     'format_type' => 'htab',
     'format_settings' => array(

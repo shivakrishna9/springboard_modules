@@ -58,7 +58,11 @@ function springboard_p2p_campaign_field_default_field_instances() {
   // Exported field_instance: 'node-p2p_campaign-field_external_link'
   $field_instances['node-p2p_campaign-field_external_link'] = array(
     'bundle' => 'p2p_campaign',
-    'default_value' => NULL,
+    'default_value' => array(
+      0 => array(
+        'value' => 'no',
+      ),
+    ),
     'deleted' => 0,
     'description' => '',
     'display' => array(
