@@ -1144,6 +1144,7 @@ function springboard_p2p_default_page_manager_pages() {
       'text' => 'Already Registered?',
       'override_title' => 1,
       'override_title_text' => '<No Title>',
+      'markup_tag' => 'h1',
     );
     $pane->cache = array();
     $pane->style = array(
@@ -1346,6 +1347,7 @@ function springboard_p2p_default_page_manager_pages() {
       'text' => 'Password Reset',
       'override_title' => 1,
       'override_title_text' => '<no title>',
+      'markup_tag' => 'h1',
     );
     $pane->cache = array();
     $pane->style = array(
