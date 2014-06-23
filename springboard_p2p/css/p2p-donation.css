@@ -336,6 +336,21 @@ input#edit-submit {
 
 }
 
+.p2p-confirmation h1,
+.p2p-confirmation h2 {
+  text-align: center;
+}
+
+.p2p-social-pane ul {
+  text-align: center;
+}
+
+.p2p-social-pane li {
+  display: inline-block;
+  height: 42px;
+  list-style: none;
+}
+
 /* media queries */
 @media (max-width: 768px) {
 

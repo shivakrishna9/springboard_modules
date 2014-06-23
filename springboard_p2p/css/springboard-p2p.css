@@ -40,8 +40,8 @@ body a {
   padding: 5px 14px;
   border: 1px solid #ddd;
   -webkit-border-radius: 0;
-  border-radius: 0;
   -moz-border-radius : 0;
+  border-radius: 0;
   background-color: #fff;
 }
 
@@ -49,9 +49,9 @@ body a {
 .p2p-page-type h3 {
   margin: 0 0 12px 0;
   color: #5b5b5b;
+  text-transform: capitalize;
   font-size: 21px;
   line-height: 1.1em;
-  text-transform: capitalize;
 }
 
 
@@ -84,16 +84,16 @@ input[type="submit"].btn {
   padding: 5px 20px;
   /*width: 96px;*/
   border: 0;
+  -webkit-border-radius: 0;
+  -moz-border-radius: 0;
+  border-radius: 0;
   background: #859596;
   color: #fff;
   vertical-align: top;
   text-align: center;
+  text-shadow: none;
   font-size: 18px;
   cursor: pointer;
-  text-shadow: none;
-  -webkit-border-radius: 0;
-  -moz-border-radius: 0;
-  border-radius: 0;
 }
 
 .landing-search-form input[type="submit"] {
@@ -279,10 +279,10 @@ a.view-all-search:after {
 }
 
 .panel-pane-wrapper {
+  position: relative;
   margin: 0 0 20px 0;
   padding: 10px;
   border: 1px solid #a6a6a6;
-  position: relative;
 }
 
 .pane-node-title h1 {
@@ -326,10 +326,10 @@ a.get-started-link {
 }
 
 a.get-started-link.account-link {
+  float: right;
   margin: 0 0 10px 0;
   padding: 2px 0;
   width: 332px;
-  float: right;
   font-size: 15px;
 }
 
@@ -349,14 +349,14 @@ a.get-started-link:hover {
 
 :not(.ie8) .at16nc {
   display: inline-block;
-  height: 32px;
-  width: 32px;
-  background-size: 32px 32px;
-  background-position: center center;
-  background-repeat: no-repeat;
   margin: 5px;
-  text-indent: -9999em;
   margin: 0 6px 0 0;
+  width: 32px;
+  height: 32px;
+  background-position: center center;
+  background-size: 32px 32px;
+  background-repeat: no-repeat;
+  text-indent: -9999em;
 }
 
 :not(.ie8) .at16nc.at16t_twitter {
@@ -364,7 +364,7 @@ a.get-started-link:hover {
   background-size: 32px 32px;
 }
 
-:not(.ie8) .at16nc.at16t_facebook{
+:not(.ie8) .at16nc.at16t_facebook {
   background: #3b5998 url("../images/facebook-64.png") 0 0 no-repeat;
   background-size: 32px 32px;
 }
@@ -374,22 +374,44 @@ a.get-started-link:hover {
   background-size: 32px 32px;
 }
 
+.p2p-confirmation :not(.ie8) .at16nc {
+  display: inline-block;
+  width: 64px;
+  height: 64px;
+  background-size: 64px 64px;
+}
+
+.p2p-confirmation .p2p-social-pane {
+  margin: 0 0 10px 0;
+  min-height: 70px;
+}
+
+.p2p-confirmation :not(.ie8) .at16nc.at16t_twitter {
+  background: #00aced url("../images/twitter-64.png") 0 0 no-repeat;
+  background-size: 64px 64px;
+}
+
+.p2p-confirmation :not(.ie8) .at16nc.at16t_facebook {
+  background: #3b5998 url("../images/facebook-64.png") 0 0 no-repeat;
+  background-size: 64px 64px;
+}
+
 .pane-social-links {
-  margin-bottom: 20px;
-  background: #c6d2d3;
-  padding: 8px;
   position: relative;
+  margin-bottom: 20px;
+  padding: 8px;
+  background: #c6d2d3;
 }
 
 .fa-share-alt.share-icon {
   position: absolute;
-  color: #fff;
-  width: 50px;
-  height: 50px;
-  display: block;
+  top: 5px;
   left: 80px;
   z-index: 6000;
-  top: 5px;
+  display: block;
+  width: 50px;
+  height: 50px;
+  color: #fff;
   font-size: 31px;
 }
 
