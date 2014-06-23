@@ -647,13 +647,13 @@ function springboard_p2p_default_page_manager_handlers() {
     'no_blocks' => 0,
     'pipeline' => 'standard',
     'body_classes_to_remove' => '',
-    'body_classes_to_add' => '',
+    'body_classes_to_add' => 'p2p-page-type',
     'css_id' => '',
     'css' => '',
     'contexts' => array(),
     'relationships' => array(),
     'access' => array(
-      'logic' => 'or',
+      'logic' => 'and',
       'plugins' => array(
         0 => array(
           'name' => 'donation_thank_you',
@@ -717,8 +717,12 @@ function springboard_p2p_default_page_manager_handlers() {
     $pane->cache = array();
     $pane->style = array(
       'settings' => NULL,
+      'style' => 'naked',
     );
-    $pane->css = array();
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'confirm-title',
+    );
     $pane->extras = array();
     $pane->position = 1;
     $pane->locks = array();
@@ -741,6 +745,7 @@ function springboard_p2p_default_page_manager_handlers() {
     $pane->cache = array();
     $pane->style = array(
       'settings' => NULL,
+      'style' => 'naked',
     );
     $pane->css = array();
     $pane->extras = array();
@@ -750,7 +755,7 @@ function springboard_p2p_default_page_manager_handlers() {
     $display->content['new-ee048603-b569-4e46-b3c7-a65191b2a187'] = $pane;
     $display->panels['top'][2] = 'new-ee048603-b569-4e46-b3c7-a65191b2a187';
     $pane = new stdClass();
-    $pane->pid = 'new-c431f9ac-3369-41b1-93d1-4ac7aab4970e';
+    $pane->pid = 'new-74ca6fd2-c234-4242-8e6d-48033fb76985';
     $pane->panel = 'top';
     $pane->type = 'custom';
     $pane->subtype = 'custom';
@@ -759,7 +764,7 @@ function springboard_p2p_default_page_manager_handlers() {
     $pane->configuration = array(
       'admin_title' => '',
       'title' => '',
-      'body' => '<table><tbody><tr><td>First Name:</td><td>[donation:first_name]</td></tr><tr><td>Last Name:</td><td>[donation:last_name]</td></tr><tr><td>Email:</td><td>[donation:user:mail]</td></tr><tr><td>Street1:</td><td>[donation:address]</td></tr><tr><td>City:</td><td>[donation:city]</td></tr><tr><td>State/Province:</td><td>[donation:state]</td></tr><tr><td>Amount:</td><td>$[donation:amount]</td></tr><tr class="card-type"><td>Card Type:</td><td>[donation:card_type]</td></tr><tr class="card-number"><td>Card Number:</td><td>************[donation:card_number]</td></tr><tr class="card-expiry"><td>Expiration Date:</td><td>[donation:card_expiration_month] / [donation:card_expiration_year]</td></tr><tr class="echeck-acct"><td>eCheck account number:</td><td>********[donation:bank_account]</td></tr><tr class="echeck-routing"><td>eCheck routing number:</td><td>[donation:bank_routing]</td></tr><tr class="paypal-payment"><td>PayPal:</td><td>[donation:paypal_paid]</td></tr></tbody></table>',
+      'body' => '<ul><li>[sb_social:facebook_share_link]</li><li>[sb_social:twitter_share_link]</li></ul>',
       'format' => 'full_html',
       'substitute' => 1,
     );
@@ -771,9 +776,37 @@ function springboard_p2p_default_page_manager_handlers() {
     $pane->extras = array();
     $pane->position = 3;
     $pane->locks = array();
+    $pane->uuid = '74ca6fd2-c234-4242-8e6d-48033fb76985';
+    $display->content['new-74ca6fd2-c234-4242-8e6d-48033fb76985'] = $pane;
+    $display->panels['top'][3] = 'new-74ca6fd2-c234-4242-8e6d-48033fb76985';
+    $pane = new stdClass();
+    $pane->pid = 'new-c431f9ac-3369-41b1-93d1-4ac7aab4970e';
+    $pane->panel = 'top';
+    $pane->type = 'custom';
+    $pane->subtype = 'custom';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'admin_title' => '',
+      'title' => 'Transaction Summary',
+      'body' => '<table><tbody><tr><td>First Name:</td><td>[p2p_personal_campaign:user:sbp-first-name]</td></tr><tr><td>Last Name:</td><td>[p2p_personal_campaign:user:sbp-last-name]</td></tr><tr><td>Email:</td><td>[donation:user:mail]</td></tr><tr><td>Street1:</td><td>[donation:address]</td></tr><tr><td>City:</td><td>[donation:city]</td></tr><tr><td>State/Province:</td><td>[donation:state]</td></tr><tr><td>Amount:</td><td>$[donation:amount]</td></tr><tr><td>Card Type:</td><td>[donation:card_type]</td></tr><tr><td>Card Number:</td><td>************[donation:card_number]</td></tr><tr><td>Expiration Date:</td><td>[donation:card_expiration_month] / [donation:card_expiration_year]</td></tr><tr><td>eCheck account number:</td><td>********[donation:bank_account]</td></tr><tr><td>eCheck routing number:</td><td>[donation:bank_routing]</td></tr><tr><td>PayPal:</td><td>[donation:paypal_paid]</td></tr><tr><td>Campaign deadline:</td><td>[p2p_personal_campaign:campaign_deadline]</td></tr><tr><td>Campaign landing url:</td><td>[p2p_personal_campaign:campaign_landing_url]</td></tr><tr><td>Donation url:</td><td>[p2p_personal_campaign:campaign_donation_url]</td></tr><tr><td>Personal campaign nid:</td><td>[p2p_personal_campaign:personal_campaign_nid]</td></tr><tr><td>Donation url:</td><td>[p2p_personal_campaign:campaign_donation_url]</td></tr><tr><td>Personal campaign goal:</td><td>[p2p_personal_campaign:campaign_goal]</td></tr><tr><td>Personal campaign title:</td><td>[p2p_personal_campaign:campaign_title]</td></tr></tbody></table>',
+      'format' => 'full_html',
+      'substitute' => 1,
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'pane-p2p-confirmation',
+    );
+    $pane->extras = array();
+    $pane->position = 4;
+    $pane->locks = array();
     $pane->uuid = 'c431f9ac-3369-41b1-93d1-4ac7aab4970e';
     $display->content['new-c431f9ac-3369-41b1-93d1-4ac7aab4970e'] = $pane;
-    $display->panels['top'][3] = 'new-c431f9ac-3369-41b1-93d1-4ac7aab4970e';
+    $display->panels['top'][4] = 'new-c431f9ac-3369-41b1-93d1-4ac7aab4970e';
   $display->hide_title = PANELS_TITLE_FIXED;
   $display->title_pane = 'new-a179f976-122c-4cd6-af6e-f4e0ab7e609b';
   $handler->conf['display'] = $display;
