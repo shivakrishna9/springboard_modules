@@ -38,30 +38,37 @@ function springboard_p2p_top_links_edit_form($form, &$form_state) {
  */
 function springboard_p2p_top_links_render($subtype, $conf, $args, $contexts) {
 
+  // Global node.
+  $node = menu_get_object();
+
   // Define the reg link passing the string id.
   $loginlink = '/springboard_p2p/login';
 
   // Define the user.
   global $user;
   $account = $user->uid;
-  $accountlink =  '/user/' . $account . '/personal-campaigns';
+  $accountlink = '/user/' . $account . '/personal-campaigns';
 
   $output = array();
 
   // Create the output to be rendered.
 
   if ($user->uid == 0) {
-    $message = t('Is this your campaign? Login to manage it.');
-
     // Logged out.
-      $output[] = '<a class="get-started-link account-link" href=" ' . $loginlink . ' ">' . $message . '<i class="fa fa-cog get-started-spinner"></i></a>';
+    if (!empty($node) && $node->type == 'p2p_personal_campaign' && arg(2) === NULL) {
+      $message = t('Is this your campaign? Login to manage it.');
+    }
+    else {
+      $message = t('Login to start a campaign!');
     }
 
-  else {
-    $message = t('Go to your account');
+    $output[] = '<a class="get-started-link account-link" href=" ' . $loginlink . ' ">' . $message . '<i class="fa fa-cog get-started-spinner"></i></a>';
+  }
 
+  else {
     // Logged in.
-      $output[] = '<a class="get-started-link account-link" href=" ' . $accountlink . ' ">' . $message . '<i class="fa fa-cog get-started-spinner"></i></a>';
+    $message = t('Go to your account');
+    $output[] = '<a class="get-started-link account-link" href=" ' . $accountlink . ' ">' . $message . '<i class="fa fa-cog get-started-spinner"></i></a>';
   }
 
   // Initial content is blank.
@@ -70,5 +77,4 @@ function springboard_p2p_top_links_render($subtype, $conf, $args, $contexts) {
   $block->title = '';
   $block->content = implode('', $output);
   return $block;
-
 }

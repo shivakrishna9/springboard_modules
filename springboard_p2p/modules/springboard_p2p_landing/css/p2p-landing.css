@@ -140,6 +140,7 @@ span.slider-teaser {
 
 #slideshow-panel {
   margin-bottom: 30px;
+  clear: both;
 }
 
 /* -- FLUID GRID STYLES -- */
