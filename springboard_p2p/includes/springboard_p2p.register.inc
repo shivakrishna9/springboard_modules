@@ -135,14 +135,16 @@ function springboard_p2p_user_register_form($form, &$form_state) {
  * Hardcodes US and CA in country, gives it a default value, and filters the
  * states down.
  */
-function springboard_p2p_set_country_and_state_defaults_and_options(&$form, $form_state) {
+function springboard_p2p_set_country_and_state_defaults_and_options(&$form, $form_state, $default_country_id = '') {
   $country_language = $form['sbp_country']['#language'];
 
-  if (isset($form_state['values']['sbp_country'])) {
-    $default_country_id = $form_state['values']['sbp_country'][$country_language][0]['value'];
-  }
-  else {
-    $default_country_id = 'US';
+  if (empty($default_country_id)) {
+    if (isset($form_state['values']['sbp_country'])) {
+      $default_country_id = $form_state['values']['sbp_country'][$country_language][0]['value'];
+    }
+    else {
+      $default_country_id = 'US';
+    }
   }
 
   $countries = fundraiser_commerce_get_countries();
