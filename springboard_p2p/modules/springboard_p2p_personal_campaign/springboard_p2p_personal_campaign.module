@@ -27,7 +27,7 @@ function springboard_p2p_personal_campaign_menu() {
  * Access handler for personal campaign donor dashboard.
  */
 function springboard_p2p_personal_dashboard_donors_view_access($account, $node) {
-  return springboard_p2p_complete_profile_form_access($account) && node_access('update', $node, $account);
+  return springboard_p2p_complete_profile_form_access($account);
 }
 
 /**
