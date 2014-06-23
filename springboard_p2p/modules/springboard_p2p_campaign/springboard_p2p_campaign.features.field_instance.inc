@@ -321,7 +321,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'progress_indicator' => 'throbber',
       ),
       'type' => 'image_image',
-      'weight' => 4,
+      'weight' => 11,
     ),
   );
 
@@ -456,7 +456,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'progress_indicator' => 'throbber',
       ),
       'type' => 'image_image',
-      'weight' => 8,
+      'weight' => 12,
     ),
   );
 
@@ -605,7 +605,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
     ),
     'entity_type' => 'node',
     'field_name' => 'field_p2p_images',
-    'label' => 'Images',
+    'label' => 'Personal campaign images',
     'required' => 0,
     'settings' => array(
       'alt_field' => 1,
@@ -626,7 +626,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'progress_indicator' => 'throbber',
       ),
       'type' => 'image_image',
-      'weight' => 10,
+      'weight' => 13,
     ),
   );
 
@@ -668,7 +668,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'display_label' => 1,
       ),
       'type' => 'options_onoff',
-      'weight' => 9,
+      'weight' => 12,
     ),
   );
 
@@ -1048,11 +1048,11 @@ function springboard_p2p_campaign_field_default_field_instances() {
   t('External Link?');
   t('Featured Personal Campaigns');
   t('Goals');
-  t('Images');
   t('Landing page slider');
   t('Landing page slider optional external link');
   t('Landing page slider teaser');
   t('Organization introduction');
+  t('Personal campaign images');
   t('Personal campaign introduction');
   t('Personal campaigns require approval');
   t('Show donor comments on personal campaign pages');

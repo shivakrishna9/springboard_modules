@@ -117,8 +117,6 @@ function springboard_p2p_campaign_field_group_info() {
     'children' => array(
       0 => 'body',
       1 => 'field_p2p_campaign_goals',
-      2 => 'field_p2p_campaign_banner',
-      3 => 'field_p2p_campaign_thumbnail',
     ),
     'format_type' => 'htab',
     'format_settings' => array(
@@ -144,15 +142,17 @@ function springboard_p2p_campaign_field_group_info() {
   $field_group->mode = 'form';
   $field_group->parent_name = 'group_tabs';
   $field_group->data = array(
-    'label' => 'Personal campaign images',
+    'label' => 'Media',
     'weight' => '13',
     'children' => array(
-      0 => 'field_p2p_images',
-      1 => 'field_p2p_images_edit',
+      0 => 'field_p2p_campaign_banner',
+      1 => 'field_p2p_campaign_thumbnail',
+      2 => 'group_slideshow',
+      3 => 'group_personal_campaign_images',
     ),
     'format_type' => 'htab',
     'format_settings' => array(
-      'label' => 'Personal campaign images',
+      'label' => 'Media',
       'instance_settings' => array(
         'required_fields' => 1,
         'id' => '',
@@ -228,12 +228,40 @@ function springboard_p2p_campaign_field_group_info() {
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
   $field_group->api_version = 1;
+  $field_group->identifier = 'group_personal_campaign_images|node|p2p_campaign|form';
+  $field_group->group_name = 'group_personal_campaign_images';
+  $field_group->entity_type = 'node';
+  $field_group->bundle = 'p2p_campaign';
+  $field_group->mode = 'form';
+  $field_group->parent_name = 'group_p2p_images';
+  $field_group->data = array(
+    'label' => 'Personal Campaign Images',
+    'weight' => '10',
+    'children' => array(
+      0 => 'field_p2p_images',
+      1 => 'field_p2p_images_edit',
+    ),
+    'format_type' => 'fieldset',
+    'format_settings' => array(
+      'formatter' => 'collapsible',
+      'instance_settings' => array(
+        'description' => '',
+        'classes' => 'group-personal-campaign-images field-group-fieldset',
+        'required_fields' => 1,
+      ),
+    ),
+  );
+  $export['group_personal_campaign_images|node|p2p_campaign|form'] = $field_group;
+
+  $field_group = new stdClass();
+  $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
+  $field_group->api_version = 1;
   $field_group->identifier = 'group_slideshow|node|p2p_campaign|form';
   $field_group->group_name = 'group_slideshow';
   $field_group->entity_type = 'node';
   $field_group->bundle = 'p2p_campaign';
   $field_group->mode = 'form';
-  $field_group->parent_name = 'group_tabs';
+  $field_group->parent_name = 'group_p2p_images';
   $field_group->data = array(
     'label' => 'Landing page slideshow',
     'weight' => '9',
@@ -243,16 +271,14 @@ function springboard_p2p_campaign_field_group_info() {
       2 => 'field_landing_page_slider_link',
       3 => 'field_external_link',
     ),
-    'format_type' => 'htab',
+    'format_type' => 'fieldset',
     'format_settings' => array(
-      'label' => 'Landing page slideshow',
+      'formatter' => 'collapsible',
       'instance_settings' => array(
-        'required_fields' => 1,
-        'id' => '',
-        'classes' => 'group-slideshow field-group-htab',
         'description' => '',
+        'classes' => '',
+        'required_fields' => 1,
       ),
-      'formatter' => 'open',
     ),
   );
   $export['group_slideshow|node|p2p_campaign|form'] = $field_group;
@@ -277,7 +303,6 @@ function springboard_p2p_campaign_field_group_info() {
       4 => 'group_p2p_images',
       5 => 'group_p2p_personal_intro',
       6 => 'group_p2p_video_embed',
-      7 => 'group_slideshow',
     ),
     'format_type' => 'htabs',
     'format_settings' => array(
