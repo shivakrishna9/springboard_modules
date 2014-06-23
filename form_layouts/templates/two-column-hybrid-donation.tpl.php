@@ -29,6 +29,7 @@
       <?php print $billing_address_fieldset; ?>
     </div>
     <div id="right" class="span6">
+      <?php print $tribute_fieldset; ?>
       <?php print $credit_card_fieldset; ?>
       <div id="donation-form-footer">
         <?php print drupal_render($form); ?>
