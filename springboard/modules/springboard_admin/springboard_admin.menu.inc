@@ -436,7 +436,7 @@ function springboard_admin_admin_menu_items() {
   // Settings > Settings > Add salesforce mapping.
   $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/structure/salesforce/mappings/add'] = array(
     'link_path' => 'admin/structure/salesforce/mappings/add',
-    'link_title' => 'Add salesforce mapping',
+    'link_title' => 'Add Salesforce Mapping',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 0,
     'customized' => 1,
@@ -446,12 +446,62 @@ function springboard_admin_admin_menu_items() {
   // Settings > Settings > Import salesforce mapping.
   $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/structure/salesforce/mappings/import'] = array(
     'link_path' => 'admin/structure/salesforce/mappings/import',
-    'link_title' => 'Add salesforce mapping',
+    'link_title' => 'Import Salesforce Mapping',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 0,
     'customized' => 1,
     'weight' => 3,
   );
+  // Marketing & Analytics > Goals.
+  $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/config/content/webform_goals'] = array(
+    'link_path' => 'admin/config/content/webform_goals',
+    'link_title' => 'Goals',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 4,
+  );
+
+  // Marketing & Analytics > Multivariate Testing.
+  $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/content/webform_ab'] = array(
+    'link_path' => 'admin/content/webform_ab',
+    'link_title' => 'Multivariate Testing',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 5,
+  );
+
+  // Marketing & Analytics > Social.
+  $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/config/services/springboard_social'] = array(
+    'link_path' => 'admin/config/services/springboard_social',
+    'link_title' => 'Social Share',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 6,
+  );
+
+  // Marketing & Analytics > Source Codes.
+  $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/config/search/market-source'] = array(
+    'link_path' => 'admin/config/search/market-source',
+    'link_title' => 'Source Codes',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 7,
+  );
+
+  // Marketing & Analytics > Analytics Integraiton.
+  $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/config/system/googleanalytics'] = array(
+    'link_path' => 'admin/config/system/googleanalytics',
+    'link_title' => 'Analytics Integration',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 8,
+  ); 
+  
   // Settings > Salesforce Authentication.
    $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/config/salesforce/authorize'] = array(
     'link_path' => 'admin/config/salesforce/authorize',
