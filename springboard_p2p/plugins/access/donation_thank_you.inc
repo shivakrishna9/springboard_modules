@@ -35,10 +35,10 @@ $plugin = array(
 function springboard_p2p_donation_thank_you_ctools_access_check($conf, $context) {
 
 // Query the url string to see if it belongs to P2P.
-  if (empty($_GET['p2p_pcid']) && (arg(2) == 'done')) {
-    return FALSE;
+  if (!empty($_GET['p2p_pcid']) && (arg(2) == 'done')) {
+    return TRUE;
   }
-  return TRUE;
+  return FALSE;
 }
 
 /**
