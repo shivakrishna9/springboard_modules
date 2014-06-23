@@ -591,7 +591,7 @@ function springboard_p2p_default_page_manager_handlers() {
     $pane->configuration = array(
       'context' => 'argument_entity_id:node_1',
       'override_title' => 0,
-      'override_title_text' => '',
+      'override_title_text' => 'fff',
     );
     $pane->cache = array();
     $pane->style = array(
@@ -607,6 +607,29 @@ function springboard_p2p_default_page_manager_handlers() {
     $pane->uuid = 'f12b3637-071a-420b-a82e-aad634b71afd';
     $display->content['new-f12b3637-071a-420b-a82e-aad634b71afd'] = $pane;
     $display->panels['middle_right'][0] = 'new-f12b3637-071a-420b-a82e-aad634b71afd';
+    $pane = new stdClass();
+    $pane->pid = 'new-1dbcc50f-6bbe-4808-a871-7f850969cca9';
+    $pane->panel = 'middle_right';
+    $pane->type = 'personal_campaign_goal';
+    $pane->subtype = 'personal_campaign_goal';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'context' => 'argument_entity_id:node_1',
+      'override_title' => 0,
+      'override_title_text' => '',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 1;
+    $pane->locks = array();
+    $pane->uuid = '1dbcc50f-6bbe-4808-a871-7f850969cca9';
+    $display->content['new-1dbcc50f-6bbe-4808-a871-7f850969cca9'] = $pane;
+    $display->panels['middle_right'][1] = 'new-1dbcc50f-6bbe-4808-a871-7f850969cca9';
     $pane = new stdClass();
     $pane->pid = 'new-96263c63-c874-4a00-8dfb-0eafb7f64c75';
     $pane->panel = 'top';
@@ -1121,6 +1144,7 @@ function springboard_p2p_default_page_manager_pages() {
       'text' => 'Already Registered?',
       'override_title' => 1,
       'override_title_text' => '<No Title>',
+      'markup_tag' => 'h1',
     );
     $pane->cache = array();
     $pane->style = array(
@@ -1323,6 +1347,7 @@ function springboard_p2p_default_page_manager_pages() {
       'text' => 'Password Reset',
       'override_title' => 1,
       'override_title_text' => '<no title>',
+      'markup_tag' => 'h1',
     );
     $pane->cache = array();
     $pane->style = array(
