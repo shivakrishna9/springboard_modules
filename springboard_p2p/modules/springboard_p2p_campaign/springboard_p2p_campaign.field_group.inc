@@ -236,7 +236,7 @@ function springboard_p2p_campaign_field_group_info() {
     'label' => 'Landing page slideshow',
     'weight' => '9',
     'children' => array(
-      0 => 'field_external_link_',
+      0 => 'field_external_link',
       1 => 'field_landing_page_slider_link',
       2 => 'field_landing_page_slider_text',
       3 => 'field_p2p_campaign_slider',
