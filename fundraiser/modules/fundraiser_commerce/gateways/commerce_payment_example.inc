@@ -10,7 +10,7 @@
  */
 function commerce_payment_example_fundraiser_donation_form_config_check($node) {
   foreach ($node->gateways as $method => $gateway) {
-    if (!empty($gateway['id'])) {
+    if (!empty($gateway['id']) && !empty($gateway['status'])) {
       $gateway_config = _fundraiser_gateway_info($gateway['id']);
       if ($gateway_config['gateway_details']['method_id'] == 'commerce_payment_example') {
         return array(t('This form is using the example credit payment gateway and will not process live transactions.'));

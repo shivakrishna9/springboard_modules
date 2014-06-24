@@ -34,7 +34,7 @@ function commerce_litle_fundraiser_donation_form_config_check($node) {
   $messages = array();
 
   foreach ($node->gateways as $method => $gateway) {
-    if (!empty($gateway['id'])) {
+    if (!empty($gateway['id'])  && !empty($gateway['status'])) {
       $gateway_config = _fundraiser_gateway_info($gateway['id']);
 
       // Check the credit payment method.

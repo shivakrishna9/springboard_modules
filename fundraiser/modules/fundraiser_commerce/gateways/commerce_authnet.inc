@@ -30,7 +30,7 @@ function commerce_authnet_fundraiser_commerce_fundraiser_gateway_info() {
  */
 function commerce_authnet_fundraiser_donation_form_config_check($node) {
   foreach ($node->gateways as $method => $gateway) {
-    if (!empty($gateway['id'])) {
+    if (!empty($gateway['id']) && !empty($gateway['status'])) {
       $gateway_config = _fundraiser_gateway_info($gateway['id']);
       if ($gateway_config['gateway_details']['method_id'] == 'authnet_aim' &&
         $gateway_config['gateway_details']['settings']['txn_mode'] != AUTHNET_TXN_MODE_LIVE) {
