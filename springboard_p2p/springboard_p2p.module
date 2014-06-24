@@ -2281,48 +2281,12 @@ function springboard_p2p_preprocess_page(&$vars) {
  * settings.
  */
 function springboard_p2p_form_user_profile_form_alter(&$form, $form_state) {
-  global $user;
-  if (!user_access('administer users') && springboard_p2p_user_is_registered_for_p2p($user->uid)) {
-    springboard_p2p_filter_account_fields_for_p2p($form);
-  }
-
   if (springboard_p2p_should_add_state_and_country_ajax($form)) {
     $default_country = $form['sbp_country'][$form['sbp_country']['#language']]['#default_value'][0];
     form_load_include($form_state, 'inc', 'springboard_p2p', 'includes/springboard_p2p.register');
     springboard_p2p_set_country_and_state_defaults_and_options($form, $form_state, $default_country);
     springboard_p2p_add_state_and_country_ajax($form);
   }
-}
-
-/**
- * Filters a form with user account fields to hide fields from the user.
- *
- * @param array $form
- *   The user forms api array.
- */
-function springboard_p2p_filter_account_fields_for_p2p(&$form) {
-  $display_fields = springboard_p2p_get_enabled_registration_fields();
-
-  $ignore_fields = array(
-    'account',
-    'signature_settings',
-    'picture',
-    'redirect',
-    'actions',
-    'form_build_id',
-    'form_id',
-    'form_token',
-  );
-
-  foreach (element_children($form) as $field_name) {
-    if (in_array($field_name, $ignore_fields) || isset($display_fields[$field_name])) {
-      continue;
-    }
-    else {
-      $form[$field_name]['#access'] = FALSE;
-    }
-  }
-
 }
 
 /**

@@ -116,7 +116,7 @@ function springboard_menu() {
  * Implements hook_admin_paths().
  */
 function springboard_admin_paths() {
- 
+
   $admin_paths = array(
     'springboard/options/fundraiser/fundraiser_upsell' => TRUE,
     'springboard/options/fundraiser/fundraiser_upsell/general' => TRUE,
@@ -128,20 +128,20 @@ function springboard_admin_paths() {
     'springboard/options/springboard' => TRUE,
     'springboard/options/dashboard' => TRUE,
     'springboard/help' => TRUE,
-    'springboard/options/market-source' => TRUE, 
+    'springboard/options/market-source' => TRUE,
     'springboard/options/page-wrappers' => TRUE,
     'springboard/options/salesforce' => TRUE,
-    'springboard/options/salesforce-donation' => TRUE, 
-    'springboard/reports/history' => TRUE, 
-    'springboard/reports/queue' => TRUE, 
-    'springboard/reports/queue-retry' => TRUE, 
-    'springboard/reports/queue-fail' => TRUE, 
+    'springboard/options/salesforce-donation' => TRUE,
+    'springboard/reports/history' => TRUE,
+    'springboard/reports/queue' => TRUE,
+    'springboard/reports/queue-retry' => TRUE,
+    'springboard/reports/queue-fail' => TRUE,
     'springboard/options/mappings' => TRUE,
-    'springboard/options/secure-prepopulate' => TRUE, 
+    'springboard/options/secure-prepopulate' => TRUE,
     'springboard/forms/webforms' => TRUE,
-    'springboard/options/webform' => TRUE,    
+    'springboard/options/webform' => TRUE,
     'springboard/options/webform-dupe' => TRUE,
-    'springboard/settings/sb-social' => TRUE, 
+    'springboard/settings/sb-social' => TRUE,
     'springboard/settings/webform-goals' => TRUE,
   );
   // Dynamically add create pages for non-fundraiser forms.
@@ -150,7 +150,7 @@ function springboard_admin_paths() {
       $type = str_replace('_', '-', $type);
       $admin_paths[] = 'springboard/forms/create-' . $type;
   }
-  return $admin_paths; 
+  return $admin_paths;
 }
 
 /**
@@ -163,7 +163,7 @@ function springboard_menu_alter(&$items) {
   views_menu_alter($views_paths);
 
   // Add menu items from dsr.
-  if (module_exists('dsr')) {  
+  if (module_exists('dsr')) {
     // DSR reports
     $items['springboard/reports/dsr'] = $items['admin/reports/dsr'];
     $items['springboard/reports/dsr']['type'] = MENU_NORMAL_ITEM;
@@ -621,4 +621,25 @@ function _springboard_update_form_field($form, $field_key, $new_field) {
     }
   }
   return $form;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Hides default and custom market source fields from users on the user edit
+ * page.
+ */
+function springboard_form_user_profile_form_alter(&$form, $form_state) {
+
+  // User with permission can view the hidden groups
+  if (user_access('administer users')) {
+    return;
+  }
+  $group = 'group_profile_admin';
+  if (!empty($form['#groups'][$group]->children)) {
+    foreach ($form['#groups'][$group]->children as $field_name) {
+      $form[$field_name]['#access'] = FALSE;
+    }
+  }
+
 }
