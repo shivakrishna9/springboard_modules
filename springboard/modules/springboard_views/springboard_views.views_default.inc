@@ -272,7 +272,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['defaults']['style_plugin'] = FALSE;
   $handler->display->display_options['style_plugin'] = 'table';
   $handler->display->display_options['style_options']['columns'] = array(
-    'field_fundraiser_internal_name' => 'field_fundraiser_internal_name',
+    'field_webform_user_internal_name' => 'field_webform_user_internal_name',
     'title' => 'title',
     'nid' => 'nid',
     'status' => 'status',
@@ -282,11 +282,10 @@ function springboard_views_views_default_views() {
     'clone_node' => 'clone_node',
     'edit_node' => 'clone_node',
     'view_node' => 'clone_node',
-    'field_webform_user_internal_name' => 'field_fundraiser_internal_name',
   );
   $handler->display->display_options['style_options']['default'] = '-1';
   $handler->display->display_options['style_options']['info'] = array(
-    'field_fundraiser_internal_name' => array(
+    'field_webform_user_internal_name' => array(
       'sortable' => 1,
       'default_sort_order' => 'asc',
       'align' => '',
@@ -333,14 +332,15 @@ function springboard_views_views_default_views() {
     ),
     'clone_node' => array(
       'align' => '',
+      'separator' => ' | ',
+      'empty_column' => 0,
+    ),
+    'edit_node' => array(
+      'align' => '',
       'separator' => '',
       'empty_column' => 0,
-      'edit_node' => array(),
     ),
-    'view_node' => array(),
-    'field_webform_user_internal_name' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
+    'view_node' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -351,17 +351,19 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['defaults']['row_options'] = FALSE;
   $handler->display->display_options['defaults']['fields'] = FALSE;
   /* Field: Content: Internal Name */
-  $handler->display->display_options['fields']['field_fundraiser_internal_name']['id'] = 'field_fundraiser_internal_name';
-  $handler->display->display_options['fields']['field_fundraiser_internal_name']['table'] = 'field_data_field_fundraiser_internal_name';
-  $handler->display->display_options['fields']['field_fundraiser_internal_name']['field'] = 'field_fundraiser_internal_name';
-  $handler->display->display_options['fields']['field_fundraiser_internal_name']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_webform_user_internal_name']['id'] = 'field_webform_user_internal_name';
+  $handler->display->display_options['fields']['field_webform_user_internal_name']['table'] = 'field_data_field_webform_user_internal_name';
+  $handler->display->display_options['fields']['field_webform_user_internal_name']['field'] = 'field_webform_user_internal_name';
+  $handler->display->display_options['fields']['field_webform_user_internal_name']['alter']['max_length'] = '30';
+  $handler->display->display_options['fields']['field_webform_user_internal_name']['alter']['trim'] = TRUE;
+  $handler->display->display_options['fields']['field_webform_user_internal_name']['element_label_colon'] = FALSE;
   /* Field: Content: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
   $handler->display->display_options['fields']['title']['table'] = 'node';
   $handler->display->display_options['fields']['title']['field'] = 'title';
   $handler->display->display_options['fields']['title']['label'] = 'Form Name';
-  $handler->display->display_options['fields']['title']['alter']['word_boundary'] = FALSE;
-  $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
+  $handler->display->display_options['fields']['title']['alter']['max_length'] = '30';
+  $handler->display->display_options['fields']['title']['alter']['trim'] = TRUE;
   $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['title']['link_to_node'] = FALSE;
   /* Field: Content: Nid */
@@ -414,12 +416,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['view_node']['element_class'] = 'table-actions';
   $handler->display->display_options['fields']['view_node']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['view_node']['text'] = 'view';
-  /* Field: Content: Internal Name */
-  $handler->display->display_options['fields']['field_webform_user_internal_name']['id'] = 'field_webform_user_internal_name';
-  $handler->display->display_options['fields']['field_webform_user_internal_name']['table'] = 'field_data_field_webform_user_internal_name';
-  $handler->display->display_options['fields']['field_webform_user_internal_name']['field'] = 'field_webform_user_internal_name';
-  $handler->display->display_options['fields']['field_webform_user_internal_name']['label'] = '';
-  $handler->display->display_options['fields']['field_webform_user_internal_name']['element_label_colon'] = FALSE;
   $handler->display->display_options['defaults']['arguments'] = FALSE;
   /* Contextual filter: Content: Type */
   $handler->display->display_options['arguments']['type']['id'] = 'type';
