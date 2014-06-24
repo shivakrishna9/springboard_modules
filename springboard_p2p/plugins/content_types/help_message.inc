@@ -38,10 +38,10 @@ function springboard_p2p_help_message_edit_form($form, &$form_state) {
  */
 function springboard_p2p_help_message_render($subtype, $conf, $args, $contexts) {
 
-  // Provide a default title
+  // Provide a default title.
   $title = t('Need Help?');
 
-  // provide for an overidden title.
+  // Provide for an overidden title.
   if ($conf['override_title'] && !empty($conf['override_title_text'])) {
     $title = filter_xss_admin($conf['override_title_text']);
   }

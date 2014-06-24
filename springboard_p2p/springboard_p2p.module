@@ -2381,8 +2381,6 @@ function springboard_p2p_personal_campaign_progress_box($campaign, $personal_cam
       return '';
     }
 
-    $output[] = '<i class="fa fa-calendar amount-icon"></i>';
-
     $output[] = '<div class="personal-campaign-progress-container">';
     $output[] = '<div class="personal-campaign-progress">' . $progress_text . '</div>';
     $output[] = '<div class="progress-bar-wrapper">';

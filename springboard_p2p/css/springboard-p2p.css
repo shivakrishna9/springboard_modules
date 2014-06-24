@@ -46,14 +46,15 @@ body a {
 }
 
 .p2p-page-type h2,
-.p2p-page-type h3 {
+.p2p-page-type h3,
+.panel-pane-wrapper h2{
   margin: 0 0 12px 0;
   color: #5b5b5b;
   text-transform: capitalize;
   font-size: 21px;
   line-height: 1.1em;
+  padding: 0;
 }
-
 
 .alert ul {
   position: relative;
@@ -435,6 +436,17 @@ a.get-started-link:hover {
   font-weight: normal;
   font-style: normal;
   font-family: FontAwesome;
+}
+
+.personal-campaign-progress {
+  margin: 0 0 10px 0;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.goal-label {
+  margin: 6px 0 0 0;
+  font-weight: bold;
 }
 
 /******************  Media queries, these should go last */

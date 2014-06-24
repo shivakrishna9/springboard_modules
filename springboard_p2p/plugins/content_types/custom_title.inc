@@ -80,7 +80,7 @@ function springboard_p2p_custom_title_render($subtype, $conf, $args, $contexts) 
   // Define the output array.
   $output = array();
 
-  // Render the textfield wrapped by the heading wthat has been selected.
+  // Render the textfield wrapped by the heading that has been selected.
  $output[] =  '<' . $conf['markup_tag'] . ' class="pane-title">' . $conf['text'] . '</' . $conf['markup_tag'] . '>';
 
   // Initial content is blank.

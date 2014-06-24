@@ -455,7 +455,7 @@ function springboard_p2p_default_page_manager_handlers() {
     $pane->access = array();
     $pane->configuration = array(
       'text' => '',
-      'override_title' => 1,
+      'override_title' => 0,
       'override_title_text' => 'hello',
     );
     $pane->cache = array();
@@ -591,15 +591,26 @@ function springboard_p2p_default_page_manager_handlers() {
     $pane->configuration = array(
       'context' => 'argument_entity_id:node_1',
       'override_title' => 0,
-      'override_title_text' => 'fff',
+      'override_title_text' => 'test1',
     );
     $pane->cache = array();
     $pane->style = array(
-      'settings' => NULL,
+      'settings' => array(
+        'title' => array(
+          'prefix' => '',
+          'suffix' => '',
+        ),
+        'content' => array(
+          'prefix' => '<div class="panel-pane-wrapper">',
+          'suffix' => '',
+        ),
+        'theme' => 0,
+      ),
+      'style' => 'wrapper_raw',
     );
     $pane->css = array(
       'css_id' => '',
-      'css_class' => 'pane-sidebar panel-pane-wrapper',
+      'css_class' => 'pane-sidebar ',
     );
     $pane->extras = array();
     $pane->position = 0;
@@ -621,7 +632,18 @@ function springboard_p2p_default_page_manager_handlers() {
     );
     $pane->cache = array();
     $pane->style = array(
-      'settings' => NULL,
+      'settings' => array(
+        'title' => array(
+          'prefix' => '',
+          'suffix' => '',
+        ),
+        'content' => array(
+          'prefix' => '',
+          'suffix' => '</div>',
+        ),
+        'theme' => 0,
+      ),
+      'style' => 'wrapper_raw',
     );
     $pane->css = array();
     $pane->extras = array();
