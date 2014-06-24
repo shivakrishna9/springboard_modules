@@ -53,7 +53,7 @@ function springboard_p2p_personal_campaign_preprocess_page(&$vars) {
 
   // Unset the node title for p2p_personal_campaign page view.
   if (!empty($node) && ($node->type == 'p2p_personal_campaign') && (arg(2) == NULL)) {
-    $vars['title'] = NULL;
+    $vars['title'] = '';
   }
 
 }
