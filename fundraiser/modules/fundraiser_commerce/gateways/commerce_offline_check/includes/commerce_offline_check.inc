@@ -46,13 +46,8 @@ function commerce_offline_check_submit_form($payment_method, $pane_values) {
 function commerce_offline_check_fundraiser_commerce_charge($payment_method, $donation) {
   $order = commerce_order_load($donation->did);
   $charge = $order->commerce_order_total[LANGUAGE_NONE][0];
-  if (TRUE == FALSE) {
-    $success = FALSE;
-  }
-  else {
-    $success = TRUE;
-    commerce_offline_check_transaction($payment_method, $order, $charge, $donation);
-  }
+  $success = TRUE;
+  commerce_offline_check_transaction($payment_method, $order, $charge, $donation);
   return $success;
 }
 
@@ -63,13 +58,4 @@ function commerce_offline_check_transaction($payment_method, $order, $charge, $d
   $transaction->currency_code = $charge['currency_code'];
   $transaction->status = 'offline_check';
   commerce_payment_transaction_save($transaction);
-  // $data = array(
-  //   'tid' => $transaction->transaction_id,
-  //   'did' => $donation->did,
-  //   'oid' => $order->order_id,
-  //   'message' => $donation->donation['payment_fields']['offline_check']['message'],
-  //   'check_number' => $donation->donation['payment_fields']['offline_check']['check_number'],
-
-  // );
-  // drupal_write_record('commerce_offline_check', $data);
 }
