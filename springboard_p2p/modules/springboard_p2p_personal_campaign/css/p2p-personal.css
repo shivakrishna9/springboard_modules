@@ -169,12 +169,6 @@ h3.p2p-comment-name {
   text-decoration: none;
 }
 
-.personal-campaign-progress {
-  margin: 0 0 10px 0;
-  font-weight: bold;
-  font-size: 18px;
-}
-
 /* donor roll */
 
 .panel-pane.pane-recent-donors {
@@ -187,11 +181,6 @@ h3.p2p-comment-name {
 .field-name-field-p2p-campaign-images.field-type-image {
   padding: 5px;
   border: 1px solid #a6a6a6;
-}
-
-.goal-label {
-  margin: 6px 0 0 0;
-  font-weight: bold;
 }
 
 .fa-user.donor-icon {

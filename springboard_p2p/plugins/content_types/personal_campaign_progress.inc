@@ -24,18 +24,36 @@ $plugin = array(
 /**
  * Render a single content pane.
  */
-function springboard_p2p_personal_campaign_progress_render($subtype, $conf, $panel_args, $context) {
+function springboard_p2p_personal_campaign_progress_render($subtype, $conf,  $panel_args, $context) {
   $personal_campaign = springboard_p2p_get_personal_campaign_from_context_or_url($context);
 
   if (is_object($personal_campaign)) {
     $campaign = springboard_p2p_get_campaign_from_personal_campaign($personal_campaign);
     if (is_object($campaign)) {
 
+      // Set the output array.
+      $output = array();
+
+      // Provide for an overidden title.
+      // @todo -  for some reason when this option is picked, the overridden title renders twice.
+      if ($conf['override_title'] && !empty($conf['override_title_text'])) {
+        $title = filter_xss_admin($conf['override_title_text']);
+        $output[] = '<h2>' . $title . '</h2>';
+      }
+      else {
+        $title = t('Personal campaign progress');
+        $output[] = '<h2>' . $title . '</h2>';
+      }
+
+      // Render the output array with html.
+      $output[] = '<div class="goal-progress">';
+      $output[] = springboard_p2p_personal_campaign_progress_box($campaign, $personal_campaign);
+      $output[] = '</div>';
+
       // Build the content type block.
       $block = new stdClass();
-      $block->title = 'Personal campaign progress';
-      $block->content = springboard_p2p_personal_campaign_progress_box($campaign, $personal_campaign);;
-
+      $block->title = '';
+      $block->content = implode('', $output);
       return $block;
 
     }

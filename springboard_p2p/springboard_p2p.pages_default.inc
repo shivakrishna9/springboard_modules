@@ -144,21 +144,15 @@ function springboard_p2p_default_page_manager_handlers() {
     $display->content['new-42ddcb49-5a06-4bbb-9cba-a2b5ad3bba73'] = $pane;
     $display->panels['middle_left'][2] = 'new-42ddcb49-5a06-4bbb-9cba-a2b5ad3bba73';
     $pane = new stdClass();
-    $pane->pid = 'new-6f6bc66c-af40-4bf0-a6c2-4d5c7bd6957e';
+    $pane->pid = 'new-9aede3e7-265a-4017-91cc-6080dcc82355';
     $pane->panel = 'middle_left';
-    $pane->type = 'entity_field';
-    $pane->subtype = 'node:field_p2p_category';
+    $pane->type = 'entity_form_field';
+    $pane->subtype = 'node:field_p2p_campaign';
     $pane->shown = TRUE;
     $pane->access = array();
     $pane->configuration = array(
-      'label' => 'title',
-      'formatter' => 'entityreference_label',
-      'delta_limit' => 0,
-      'delta_offset' => '0',
-      'delta_reversed' => FALSE,
-      'formatter_settings' => array(
-        'link' => 0,
-      ),
+      'label' => '',
+      'formatter' => '',
       'context' => 'argument_node_edit_1',
       'override_title' => 0,
       'override_title_text' => '',
@@ -171,9 +165,9 @@ function springboard_p2p_default_page_manager_handlers() {
     $pane->extras = array();
     $pane->position = 3;
     $pane->locks = array();
-    $pane->uuid = '6f6bc66c-af40-4bf0-a6c2-4d5c7bd6957e';
-    $display->content['new-6f6bc66c-af40-4bf0-a6c2-4d5c7bd6957e'] = $pane;
-    $display->panels['middle_left'][3] = 'new-6f6bc66c-af40-4bf0-a6c2-4d5c7bd6957e';
+    $pane->uuid = '9aede3e7-265a-4017-91cc-6080dcc82355';
+    $display->content['new-9aede3e7-265a-4017-91cc-6080dcc82355'] = $pane;
+    $display->panels['middle_left'][3] = 'new-9aede3e7-265a-4017-91cc-6080dcc82355';
     $pane = new stdClass();
     $pane->pid = 'new-83a38941-2305-4626-ae87-60916e5c3a9c';
     $pane->panel = 'middle_left';
@@ -455,7 +449,7 @@ function springboard_p2p_default_page_manager_handlers() {
     $pane->access = array();
     $pane->configuration = array(
       'text' => '',
-      'override_title' => 1,
+      'override_title' => 0,
       'override_title_text' => 'hello',
     );
     $pane->cache = array();
@@ -591,15 +585,26 @@ function springboard_p2p_default_page_manager_handlers() {
     $pane->configuration = array(
       'context' => 'argument_entity_id:node_1',
       'override_title' => 0,
-      'override_title_text' => 'fff',
+      'override_title_text' => 'test1',
     );
     $pane->cache = array();
     $pane->style = array(
-      'settings' => NULL,
+      'settings' => array(
+        'title' => array(
+          'prefix' => '',
+          'suffix' => '',
+        ),
+        'content' => array(
+          'prefix' => '<div class="panel-pane-wrapper">',
+          'suffix' => '',
+        ),
+        'theme' => 0,
+      ),
+      'style' => 'wrapper_raw',
     );
     $pane->css = array(
       'css_id' => '',
-      'css_class' => 'pane-sidebar panel-pane-wrapper',
+      'css_class' => 'pane-sidebar ',
     );
     $pane->extras = array();
     $pane->position = 0;
@@ -621,7 +626,18 @@ function springboard_p2p_default_page_manager_handlers() {
     );
     $pane->cache = array();
     $pane->style = array(
-      'settings' => NULL,
+      'settings' => array(
+        'title' => array(
+          'prefix' => '',
+          'suffix' => '',
+        ),
+        'content' => array(
+          'prefix' => '',
+          'suffix' => '</div>',
+        ),
+        'theme' => 0,
+      ),
+      'style' => 'wrapper_raw',
     );
     $pane->css = array();
     $pane->extras = array();
