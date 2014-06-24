@@ -2413,3 +2413,52 @@ function springboard_p2p_should_add_state_and_country_ajax($form) {
     $form['sbp_state']['#access'] &&
     $form['sbp_country']['#access'];
 }
+
+/**
+ * For panels panes, get the personal campaign.
+ *
+ * Looks in the pane context and the URL query param.
+ *
+ * @param object $context
+ *   The context provided to the panels pane.
+ *
+ * @return bool|object
+ *   The personal campaign node or FALSE.
+ */
+function springboard_p2p_get_personal_campaign_from_context_or_url($context) {
+  if (empty($context) || empty($context->data) || $context->data->type != 'p2p_personal_campaign') {
+    if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid'])) {
+      $node = node_load($_GET['p2p_pcid']);
+    }
+    else {
+      return FALSE;
+    }
+  }
+  else {
+    $node = $context->data;
+  }
+
+  if (isset($node->type) && $node->type == 'p2p_personal_campaign') {
+    return $node;
+  }
+
+  return FALSE;
+}
+
+/**
+ * Get the campaign for the given personal campaign.
+ *
+ * @param object $personal_campaign
+ *   The personal campaign node.
+ *
+ * @return bool|object
+ *   The campaign node or FALSE.
+ */
+function springboard_p2p_get_campaign_from_personal_campaign($personal_campaign) {
+  $language = $personal_campaign->language;
+  if (isset($personal_campaign->field_p2p_campaign[$language][0]['target_id'])) {
+    return node_load($personal_campaign->field_p2p_campaign[$language][0]['target_id']);
+  }
+
+  return FALSE;
+}
