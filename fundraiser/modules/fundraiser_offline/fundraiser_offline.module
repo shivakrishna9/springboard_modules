@@ -338,6 +338,13 @@ function _fundraiser_offline_fundraiser_donation_form_submit($form, &$form_state
   $form['redirect'] = url('admin/fundraiser_offline/' . $form['#node']->nid);
 }
 
+function fundraiser_conditional_gateways_payment_method_fields_alter(&$element, $payment_method, $context) {
+  $offline_only = $context['config']['offline_only'];
+  if ($offline_only) {
+    $element['#access'] = FALSE;
+  }
+}
+
 /**
  * Implements hook_fundraiser_webform_payment_component_payment_methods_alter().
  *

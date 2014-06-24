@@ -234,6 +234,7 @@ function _webform_render_payment_method($component, $value = NULL, $filter = TRU
     $default = NULL;
     // If there is only one method this field is hidden
     if (count($payment_methods) == 1) {
+      reset($payment_methods);
       $element['#type'] = 'hidden';
       $element['#value'] = key($payment_methods);
       // Remove the radio theme function and title
@@ -250,7 +251,6 @@ function _webform_render_payment_method($component, $value = NULL, $filter = TRU
       }
     }
   }
-
   return $element;
 }
 
