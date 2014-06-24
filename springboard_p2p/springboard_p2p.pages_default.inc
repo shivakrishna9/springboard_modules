@@ -795,7 +795,10 @@ function springboard_p2p_default_page_manager_handlers() {
     $pane->style = array(
       'settings' => NULL,
     );
-    $pane->css = array();
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'p2p-social-pane',
+    );
     $pane->extras = array();
     $pane->position = 3;
     $pane->locks = array();

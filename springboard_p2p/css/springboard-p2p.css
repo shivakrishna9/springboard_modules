@@ -381,11 +381,6 @@ a.get-started-link:hover {
   background-size: 64px 64px;
 }
 
-.p2p-confirmation .p2p-social-pane {
-  margin: 0 0 10px 0;
-  min-height: 70px;
-}
-
 .p2p-confirmation :not(.ie8) .at16nc.at16t_twitter {
   background: #00aced url("../images/twitter-64.png") 0 0 no-repeat;
   background-size: 64px 64px;
