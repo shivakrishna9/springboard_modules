@@ -2262,15 +2262,10 @@ function springboard_p2p_css_alter(&$css) {
  * Implements template_preprocess_page().
  *
  * Hide the h1 title for the login page, we set it in a custom pane.
- *
- * Filter out user fields that aren't enabled in the p2p settings.
  */
 function springboard_p2p_preprocess_page(&$vars) {
   if ((arg(0) == 'springboard_p2p' && arg(1) == 'login') || (arg(2) == 'done')) {
     $vars['title'] = '';
-  }
-  elseif (arg(0) == 'user' && is_numeric(arg(1)) && is_null(arg(2))) {
-    springboard_p2p_filter_account_fields_for_p2p($vars['page']['content']['system_main']);
   }
 }
 
