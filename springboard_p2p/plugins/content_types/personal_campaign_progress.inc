@@ -35,6 +35,7 @@ function springboard_p2p_personal_campaign_progress_render($subtype, $conf,  $pa
       $output = array();
 
       // Provide for an overidden title.
+      // @todo -  for some reason when this option is picked, the overridden title renders twice.
       if ($conf['override_title'] && !empty($conf['override_title_text'])) {
         $title = filter_xss_admin($conf['override_title_text']);
         $output[] = '<h2>' . $title . '</h2>';
@@ -45,10 +46,9 @@ function springboard_p2p_personal_campaign_progress_render($subtype, $conf,  $pa
       }
 
       // Render the output array with html.
-
-      $output[] = '<span class="goal-progress">';
+      $output[] = '<div class="goal-progress">';
       $output[] = springboard_p2p_personal_campaign_progress_box($campaign, $personal_campaign);
-      $output[] = '</span>';
+      $output[] = '</div>';
 
       // Build the content type block.
       $block = new stdClass();
