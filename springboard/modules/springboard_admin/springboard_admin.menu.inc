@@ -413,10 +413,10 @@ function springboard_admin_admin_menu_items() {
     'weight' => 1,
   );
   
-  // Settings > Settings > Multivariate Testing.
+  // Settings > Settings > Multivariate Testing Settings.
   $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/config/content/webform_ab'] = array(
     'link_path' => 'admin/config/content/webform_ab',
-    'link_title' => 'Multivariate Testing',
+    'link_title' => 'Multivariate Testing Settings',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 0,
     'customized' => 1,
@@ -443,10 +443,10 @@ function springboard_admin_admin_menu_items() {
     'weight' => 2,
   );
   
-  // Settings > Settings > Import salesforce mapping.
+  // Settings > Settings > Sustainer Upsell Settings.
   $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/structure/salesforce/mappings/import'] = array(
     'link_path' => 'admin/structure/salesforce/mappings/import',
-    'link_title' => 'Import Salesforce Mapping',
+    'link_title' => 'Sustainer Upsell Settings',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 0,
     'customized' => 1,
