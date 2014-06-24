@@ -396,7 +396,7 @@ function springboard_admin_admin_menu_items() {
   // Settings > Settings > Sustainer Upsell.
   $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/springboard/options/fundraiser/fundraiser_upsell'] = array(
     'link_path' => 'admin/springboard/options/fundraiser/fundraiser_upsell',
-    'link_title' => 'Import salesforce mapping',
+    'link_title' => 'Sustainer Upsell Settings',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 0,
     'customized' => 1,
@@ -443,10 +443,10 @@ function springboard_admin_admin_menu_items() {
     'weight' => 2,
   );
   
-  // Settings > Settings > Sustainer Upsell Settings.
+  // Settings > Settings > Import salesforce mapping.
   $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/structure/salesforce/mappings/import'] = array(
     'link_path' => 'admin/structure/salesforce/mappings/import',
-    'link_title' => 'Sustainer Upsell Settings',
+    'link_title' => 'Import Salesforce Mapping',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 0,
     'customized' => 1,
