@@ -84,7 +84,7 @@ function springboard_p2p_personal_campaign_comments_render($subtype, $conf, $pan
 
     $output[] = '<span class="p2p-comment-date">';
     // Custom Date format.
-    $output[] = format_date($comment['created'], "custom", "n / j / y");
+    $output[] = format_date($comment['created'], "custom", "m / j / Y");
     $output[] = '</span>';
 
     // p2p-comment-name-amount
