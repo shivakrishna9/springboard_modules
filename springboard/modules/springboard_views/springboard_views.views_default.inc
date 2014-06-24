@@ -811,14 +811,16 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['field_fundraiser_internal_name']['id'] = 'field_fundraiser_internal_name';
   $handler->display->display_options['fields']['field_fundraiser_internal_name']['table'] = 'field_data_field_fundraiser_internal_name';
   $handler->display->display_options['fields']['field_fundraiser_internal_name']['field'] = 'field_fundraiser_internal_name';
+  $handler->display->display_options['fields']['field_fundraiser_internal_name']['alter']['max_length'] = '30';
+  $handler->display->display_options['fields']['field_fundraiser_internal_name']['alter']['trim'] = TRUE;
   $handler->display->display_options['fields']['field_fundraiser_internal_name']['element_label_colon'] = FALSE;
   /* Field: Content: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
   $handler->display->display_options['fields']['title']['table'] = 'node';
   $handler->display->display_options['fields']['title']['field'] = 'title';
   $handler->display->display_options['fields']['title']['label'] = 'Form Name';
-  $handler->display->display_options['fields']['title']['alter']['word_boundary'] = FALSE;
-  $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
+  $handler->display->display_options['fields']['title']['alter']['max_length'] = '30';
+  $handler->display->display_options['fields']['title']['alter']['trim'] = TRUE;
   $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['title']['link_to_node'] = FALSE;
   /* Field: Content: Nid */
@@ -847,6 +849,8 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['sbstats_total_transactions']['table'] = 'field_data_sbstats_total_transactions';
   $handler->display->display_options['fields']['sbstats_total_transactions']['field'] = 'sbstats_total_transactions';
   $handler->display->display_options['fields']['sbstats_total_transactions']['label'] = '$ Raised';
+  $handler->display->display_options['fields']['sbstats_total_transactions']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['sbstats_total_transactions']['alter']['text'] = '$ [sbstats_total_transactions]';
   $handler->display->display_options['fields']['sbstats_total_transactions']['settings'] = array(
     'thousand_separator' => ',',
     'decimal_separator' => '.',
