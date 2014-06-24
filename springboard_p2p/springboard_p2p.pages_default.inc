@@ -806,6 +806,34 @@ function springboard_p2p_default_page_manager_handlers() {
     $display->content['new-74ca6fd2-c234-4242-8e6d-48033fb76985'] = $pane;
     $display->panels['top'][3] = 'new-74ca6fd2-c234-4242-8e6d-48033fb76985';
     $pane = new stdClass();
+    $pane->pid = 'new-1aa6f706-2978-4bc9-8bda-7afcc18d304a';
+    $pane->panel = 'top';
+    $pane->type = 'custom';
+    $pane->subtype = 'custom';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'admin_title' => 'signup',
+      'title' => '',
+      'body' => '<p><a href="/springboard_p2p/register">Sign up here to start your own campaign.</a></p>',
+      'format' => 'full_html',
+      'substitute' => 1,
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array(
+      'css_id' => '',
+      'css_class' => 'pane-signup',
+    );
+    $pane->extras = array();
+    $pane->position = 4;
+    $pane->locks = array();
+    $pane->uuid = '1aa6f706-2978-4bc9-8bda-7afcc18d304a';
+    $display->content['new-1aa6f706-2978-4bc9-8bda-7afcc18d304a'] = $pane;
+    $display->panels['top'][4] = 'new-1aa6f706-2978-4bc9-8bda-7afcc18d304a';
+    $pane = new stdClass();
     $pane->pid = 'new-c431f9ac-3369-41b1-93d1-4ac7aab4970e';
     $pane->panel = 'top';
     $pane->type = 'custom';
@@ -828,11 +856,11 @@ function springboard_p2p_default_page_manager_handlers() {
       'css_class' => 'pane-p2p-confirmation',
     );
     $pane->extras = array();
-    $pane->position = 4;
+    $pane->position = 5;
     $pane->locks = array();
     $pane->uuid = 'c431f9ac-3369-41b1-93d1-4ac7aab4970e';
     $display->content['new-c431f9ac-3369-41b1-93d1-4ac7aab4970e'] = $pane;
-    $display->panels['top'][4] = 'new-c431f9ac-3369-41b1-93d1-4ac7aab4970e';
+    $display->panels['top'][5] = 'new-c431f9ac-3369-41b1-93d1-4ac7aab4970e';
   $display->hide_title = PANELS_TITLE_FIXED;
   $display->title_pane = 'new-a179f976-122c-4cd6-af6e-f4e0ab7e609b';
   $handler->conf['display'] = $display;
