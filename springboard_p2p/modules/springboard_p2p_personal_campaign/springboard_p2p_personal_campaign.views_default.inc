@@ -421,13 +421,19 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['fields']['edit_node']['label'] = '';
   $handler->display->display_options['fields']['edit_node']['element_label_colon'] = FALSE;
   /* Field: Content: Nid */
+  $handler->display->display_options['fields']['nid_1']['id'] = 'nid_1';
+  $handler->display->display_options['fields']['nid_1']['table'] = 'node';
+  $handler->display->display_options['fields']['nid_1']['field'] = 'nid';
+  $handler->display->display_options['fields']['nid_1']['label'] = 'personal campaign nid';
+  $handler->display->display_options['fields']['nid_1']['exclude'] = TRUE;
+  /* Field: Content: Nid */
   $handler->display->display_options['fields']['nid']['id'] = 'nid';
   $handler->display->display_options['fields']['nid']['table'] = 'node';
   $handler->display->display_options['fields']['nid']['field'] = 'nid';
   $handler->display->display_options['fields']['nid']['relationship'] = 'form_nid';
   $handler->display->display_options['fields']['nid']['label'] = 'Actions';
   $handler->display->display_options['fields']['nid']['alter']['alter_text'] = TRUE;
-  $handler->display->display_options['fields']['nid']['alter']['text'] = '<a href="/user/!1/personal-campaigns/campaign-donors/[nid]">Donors</a>';
+  $handler->display->display_options['fields']['nid']['alter']['text'] = '<a href="/user/!1/personal-campaigns/campaign-donors/[nid]/[nid_1]">Donors</a>';
   $handler->display->display_options['fields']['nid']['alter']['alt'] = 'Donors';
   /* Sort criterion: Content: Post date */
   $handler->display->display_options['sorts']['created']['id'] = 'created';
@@ -827,6 +833,10 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['relationships']['form_nid']['id'] = 'form_nid';
   $handler->display->display_options['relationships']['form_nid']['table'] = 'springboard_p2p_personal_campaign_action';
   $handler->display->display_options['relationships']['form_nid']['field'] = 'form_nid';
+  /* Relationship: P2P action: P2P personal campaign */
+  $handler->display->display_options['relationships']['personal_campaign_nid']['id'] = 'personal_campaign_nid';
+  $handler->display->display_options['relationships']['personal_campaign_nid']['table'] = 'springboard_p2p_personal_campaign_action';
+  $handler->display->display_options['relationships']['personal_campaign_nid']['field'] = 'personal_campaign_nid';
   /* Field: User: First name */
   $handler->display->display_options['fields']['sbp_first_name']['id'] = 'sbp_first_name';
   $handler->display->display_options['fields']['sbp_first_name']['table'] = 'field_data_sbp_first_name';
@@ -869,6 +879,16 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['arguments']['nid']['summary']['number_of_records'] = '0';
   $handler->display->display_options['arguments']['nid']['summary']['format'] = 'default_summary';
   $handler->display->display_options['arguments']['nid']['summary_options']['items_per_page'] = '25';
+  /* Contextual filter: Content: Nid */
+  $handler->display->display_options['arguments']['nid_1']['id'] = 'nid_1';
+  $handler->display->display_options['arguments']['nid_1']['table'] = 'node';
+  $handler->display->display_options['arguments']['nid_1']['field'] = 'nid';
+  $handler->display->display_options['arguments']['nid_1']['relationship'] = 'personal_campaign_nid';
+  $handler->display->display_options['arguments']['nid_1']['default_action'] = 'empty';
+  $handler->display->display_options['arguments']['nid_1']['default_argument_type'] = 'fixed';
+  $handler->display->display_options['arguments']['nid_1']['summary']['number_of_records'] = '0';
+  $handler->display->display_options['arguments']['nid_1']['summary']['format'] = 'default_summary';
+  $handler->display->display_options['arguments']['nid_1']['summary_options']['items_per_page'] = '25';
 
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page_1');
