@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Plugin to display a get started pane.
+ * Plugin to display the help message as a content pane within panels.
  */
 
 $plugin = array(

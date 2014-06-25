@@ -2,14 +2,13 @@
 
 /**
  * @file
- * Ctools access plugin for checking if a node field has been populated
+ * Ctools access plugin for checking if we are on a p2p donation page.
  */
 
 /**
  * Plugins are described by creating a $plugin array which will
  * be used by the system that includes the file.
  */
-
 $plugin = array(
 
   // Plugin user-friendly name.
