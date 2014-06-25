@@ -381,14 +381,10 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
       $form['title']['#default_value'] = $campaign_node->title;
       // Campaign intro, default from parent campaign, display disabled content
       // preview if edit is disabled.
+      $form['body'][$language][0]['#required'] = FALSE;
       if (isset($campaign_node->field_p2p_personal_intro[$language][0]['value'])) {
         $form['body'][$language][0]['#default_value'] = $campaign_node->field_p2p_personal_intro[$language][0]['value'];
         $form['body'][$language][0]['#format'] = $campaign_node->field_p2p_personal_intro[$language][0]['format'];
-      }
-      else {
-        // No intro is set on the parent campaign so we need to make sure
-        // body is editable.
-        $campaign_node->field_p2p_personal_intro_edit[$language][0]['value'] = TRUE;
       }
 
       // Hide campaign select box if campaign has been provided in the url.
