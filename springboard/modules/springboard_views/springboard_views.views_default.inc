@@ -1214,11 +1214,19 @@ function springboard_views_views_default_views() {
     ),
     'clone_node' => array(
       'align' => '',
+      'separator' => ' | ',
+      'empty_column' => 0,
+    ),
+    'edit_node' => array(
+      'align' => '',
       'separator' => '',
       'empty_column' => 0,
-      'edit_node' => array(),
     ),
-    'view_node' => array(),
+    'view_node' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
     'field_webform_user_internal_name' => array(
       'sortable' => 0,
       'default_sort_order' => 'asc',
@@ -1307,7 +1315,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['arguments']['type']['table'] = 'node';
   $handler->display->display_options['arguments']['type']['field'] = 'type';
   $handler->display->display_options['arguments']['type']['title_enable'] = TRUE;
-  $handler->display->display_options['arguments']['type']['title'] = 'Recent %1s';
+  $handler->display->display_options['arguments']['type']['title'] = '%1s';
   $handler->display->display_options['arguments']['type']['default_argument_type'] = 'fixed';
   $handler->display->display_options['arguments']['type']['summary']['number_of_records'] = '0';
   $handler->display->display_options['arguments']['type']['summary']['format'] = 'default_summary';
@@ -1323,6 +1331,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['filters']['combine']['operator'] = 'contains';
   $handler->display->display_options['filters']['combine']['exposed'] = TRUE;
   $handler->display->display_options['filters']['combine']['expose']['operator_id'] = 'combine_op';
+  $handler->display->display_options['filters']['combine']['expose']['label'] = 'Search';
   $handler->display->display_options['filters']['combine']['expose']['operator'] = 'combine_op';
   $handler->display->display_options['filters']['combine']['expose']['identifier'] = 'combine';
   $handler->display->display_options['filters']['combine']['expose']['remember_roles'] = array(
