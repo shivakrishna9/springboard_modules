@@ -3020,6 +3020,8 @@ function springboard_views_views_default_views() {
 
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');
+  $handler->display->display_options['defaults']['css_class'] = FALSE;
+  $handler->display->display_options['css_class'] = 'donor-table-view sbadmin-table-min sbadmin-table-min-x views-data-table';
   $handler->display->display_options['defaults']['access'] = FALSE;
   $handler->display->display_options['access']['type'] = 'perm';
   $handler->display->display_options['access']['perm'] = 'access springboard dashboard';
@@ -3046,6 +3048,10 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['mail']['table'] = 'users';
   $handler->display->display_options['fields']['mail']['field'] = 'mail';
   $handler->display->display_options['fields']['mail']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['mail']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['mail']['alter']['text'] = '<a href="/user/[uid]">[mail]</a> ';
+  $handler->display->display_options['fields']['mail']['alter']['max_length'] = '38';
+  $handler->display->display_options['fields']['mail']['alter']['trim'] = TRUE;
   $handler->display->display_options['fields']['mail']['link_to_user'] = '0';
   /* Field: User: Address */
   $handler->display->display_options['fields']['sbp_address']['id'] = 'sbp_address';
@@ -3122,32 +3128,6 @@ function springboard_views_views_default_views() {
     'sbp_first_name' => 'sbp_first_name',
     'sbp_last_name' => 'sbp_last_name',
     'mail' => 'mail',
-  );
-  /* Filter criterion: User: State/Province (sbp_state) */
-  $handler->display->display_options['filters']['sbp_state_value']['id'] = 'sbp_state_value';
-  $handler->display->display_options['filters']['sbp_state_value']['table'] = 'field_data_sbp_state';
-  $handler->display->display_options['filters']['sbp_state_value']['field'] = 'sbp_state_value';
-  $handler->display->display_options['filters']['sbp_state_value']['relationship'] = 'uid';
-  $handler->display->display_options['filters']['sbp_state_value']['group'] = 1;
-  $handler->display->display_options['filters']['sbp_state_value']['exposed'] = TRUE;
-  $handler->display->display_options['filters']['sbp_state_value']['expose']['operator_id'] = 'sbp_state_value_op';
-  $handler->display->display_options['filters']['sbp_state_value']['expose']['label'] = 'State/Province';
-  $handler->display->display_options['filters']['sbp_state_value']['expose']['operator'] = 'sbp_state_value_op';
-  $handler->display->display_options['filters']['sbp_state_value']['expose']['identifier'] = 'sbp_state_value';
-  $handler->display->display_options['filters']['sbp_state_value']['expose']['remember_roles'] = array(
-    2 => '2',
-    1 => 0,
-    3 => 0,
-    4 => 0,
-    5 => 0,
-  );
-  $handler->display->display_options['filters']['sbp_state_value']['group_info']['label'] = 'State/Province (sbp_state)';
-  $handler->display->display_options['filters']['sbp_state_value']['group_info']['identifier'] = 'sbp_state_value';
-  $handler->display->display_options['filters']['sbp_state_value']['group_info']['remember'] = FALSE;
-  $handler->display->display_options['filters']['sbp_state_value']['group_info']['group_items'] = array(
-    1 => array(),
-    2 => array(),
-    3 => array(),
   );
   /* Filter criterion: Date: Date (users) */
   $handler->display->display_options['filters']['date_filter']['id'] = 'date_filter';
