@@ -10,10 +10,10 @@ include_once 'springboard_p2p_personal_campaign.features.inc';
  * Implements hook_menu().
  */
 function springboard_p2p_personal_campaign_menu() {
-  $items['user/%user/personal-campaigns/campaign-donors/%node'] = array(
+  $items['user/%user/personal-campaigns/campaign-donors/%node/%node'] = array(
     'title' => 'Campaign Donors',
     'page callback' => 'springboard_p2p_personal_campaign_donors_dashboard',
-    'page arguments' => array(1, 4),
+    'page arguments' => array(1, 4, 5),
     'access callback' => 'springboard_p2p_personal_dashboard_donors_view_access',
     'access arguments' => array(1, 4),
     'type' => MENU_CALLBACK,
