@@ -59,7 +59,7 @@ function springboard_p2p_category_field_default_field_instances() {
   $field_instances['node-p2p_category-field_p2p_campaign_banner'] = array(
     'bundle' => 'p2p_category',
     'deleted' => 0,
-    'description' => '',
+    'description' => 'Upload a default campaign banner. Suggested size is 1170 x 240 pixels.',
     'display' => array(
       'default' => array(
         'label' => 'above',
@@ -85,11 +85,11 @@ function springboard_p2p_category_field_default_field_instances() {
     'settings' => array(
       'alt_field' => 0,
       'default_image' => 0,
-      'file_directory' => 'springboard_p2p',
+      'file_directory' => 'p2p-campaign-banner',
       'file_extensions' => 'png gif jpg jpeg',
       'max_filesize' => '2 MB',
       'max_resolution' => '',
-      'min_resolution' => '',
+      'min_resolution' => '800x240',
       'title_field' => 0,
       'user_register_form' => FALSE,
     ),
@@ -109,7 +109,7 @@ function springboard_p2p_category_field_default_field_instances() {
   $field_instances['node-p2p_category-field_p2p_category_image'] = array(
     'bundle' => 'p2p_category',
     'deleted' => 0,
-    'description' => '',
+    'description' => 'Upload a campaign category image. Ideal size is 380 x 240 pixels.',
     'display' => array(
       'default' => array(
         'label' => 'hidden',
@@ -139,11 +139,11 @@ function springboard_p2p_category_field_default_field_instances() {
     'settings' => array(
       'alt_field' => 0,
       'default_image' => 0,
-      'file_directory' => 'springboard_p2p',
+      'file_directory' => 'p2p-category-image',
       'file_extensions' => 'png gif jpg jpeg',
       'max_filesize' => '2 MB',
       'max_resolution' => '',
-      'min_resolution' => '',
+      'min_resolution' => '380x240',
       'title_field' => 0,
       'user_register_form' => FALSE,
     ),
@@ -155,7 +155,7 @@ function springboard_p2p_category_field_default_field_instances() {
         'progress_indicator' => 'throbber',
       ),
       'type' => 'image_image',
-      'weight' => 2,
+      'weight' => 7,
     ),
   );
 
@@ -457,6 +457,8 @@ function springboard_p2p_category_field_default_field_instances() {
   t('Organization introduction');
   t('Personal campaign introduction');
   t('This content can be overridden by campaigner');
+  t('Upload a campaign category image. Ideal size is 380 x 240 pixels.');
+  t('Upload a default campaign banner. Suggested size is 1170 x 240 pixels.');
   t('Video embed');
 
   return $field_instances;
