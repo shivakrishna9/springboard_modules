@@ -78,8 +78,8 @@ textarea {
 }
 
 span.file {
-  margin: 0 0 10px 0;
   display: block;
+  margin: 0 0 10px 0;
 }
 
 .field-name-field-p2p-campaign-images img {
@@ -88,7 +88,7 @@ span.file {
 
 select,
 textarea,
-input  {
+input {
   font-size: 16px !important;
 }
 
@@ -203,8 +203,8 @@ label[for="edit-field-p2p-campaign-images-und-1"] {
   margin: 20px 0 10px 0;
 }
 
-.image-widget-data .form-select {
-  margin: 30px 0 0 0;
+.image-widget-data .selector {
+  margin: 10px 0 0 0;
 }
 
 .image-widget-data .description {
@@ -264,7 +264,7 @@ input[type="checkbox"] {
   margin: 20px 0 0 0;
 }
 
-.panel-pane.custom-pane-title h2:after{
+.panel-pane.custom-pane-title h2:after {
   position: relative;
   top: -1px;
   right: -7px;
@@ -299,7 +299,7 @@ input[type="checkbox"] {
   position: relative;
 }
 
-.alert ul li  {
+.alert ul li {
   position: relative;
   left: 24px;
   margin-bottom: 4px;
@@ -354,6 +354,7 @@ div.selector select {
 /* left */
 
 div.selector {
+  margin: 0 0 0 -4px;
   background-position: 0 -100px;
   font-size: 12px;
 }
@@ -404,16 +405,16 @@ div.uploader span.filename {
 
 .control-group select,
 .control-group input {
-   display: inline-block;
-   float: none;
-   clear: none;
+  display: inline-block;
+  float: none;
+  clear: none;
 }
 
 div.uploader span.action {
-  text-shadow: rgba(255, 255, 255, 0.5) 0px 1px 0px;
   background-color: #fff;
-  font-weight: bold;
   color: #444;
+  text-shadow: rgba(255, 255, 255, 0.5) 0px 1px 0px;
+  font-weight: bold;
 }
 
 div.uploader {
