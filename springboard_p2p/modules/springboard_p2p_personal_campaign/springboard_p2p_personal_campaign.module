@@ -68,6 +68,7 @@ function springboard_p2p_personal_campaign_page_alter(&$cache, $vars) {
 
   // Define the module path.
   $mod_path = drupal_get_path('module', 'springboard_p2p_personal_campaign');
+  $p2p_path = drupal_get_path('module', 'springboard_p2p');
 
   // Not admin page.
   if (!path_is_admin(current_path())) {
@@ -137,6 +138,7 @@ function springboard_p2p_personal_campaign_page_alter(&$cache, $vars) {
 
     // Only if p2p_personal_campaign node edit or add.
     if ((!empty($node) && $node->type == 'p2p_personal_campaign') || (arg(0) === 'node' && arg(1) === 'add' && arg(2) === 'p2p-personal-campaign')) {
+
       // p2p node edit add for
       $p2p_add_edit = array(
         '#attached' => array(
@@ -161,6 +163,30 @@ function springboard_p2p_personal_campaign_page_alter(&$cache, $vars) {
         ),
       );
       drupal_render($p2p_add_edit_js);
+      // Global p2p css file, global nodes and regpath.
+      $uniform_js = array(
+        '#attached' => array(
+          'js' => array(
+            $p2p_path . '/js/jquery.uniform.js' => array(
+              'group' => JS_LIBRARY,
+            ),
+          ),
+        ),
+      );
+      drupal_render($uniform_js);
+
+      $uniform_css = array(
+        '#attached' => array(
+          'css' => array(
+            $p2p_path . '/css/uniform_base.css' => array(
+              'group' => CSS_THEME,
+            ),
+          ),
+        ),
+      );
+      drupal_render($uniform_css);
+      // End global.
+
     }
 
   }

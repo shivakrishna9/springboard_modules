@@ -2081,6 +2081,31 @@ function springboard_p2p_page_alter(&$page, $form) {
         ),
       );
       drupal_render($p2p_js);
+
+      // Global p2p css file, global nodes and regpath.
+      $uniform_js = array(
+        '#attached' => array(
+          'js' => array(
+            $mod_path . '/js/jquery.uniform.js' => array(
+              'group' => JS_LIBRARY,
+            ),
+          ),
+        ),
+      );
+      drupal_render($uniform_js);
+
+      $uniform_css = array(
+        '#attached' => array(
+          'css' => array(
+            $mod_path . '/css/uniform_base.css' => array(
+              'group' => CSS_THEME,
+            ),
+          ),
+        ),
+      );
+      drupal_render($uniform_css);
+
+      // End global.
     }
 
     // Regpath for account pages (login, register, password).

@@ -68,8 +68,18 @@ textarea {
 }
 
 .field-name-field-p2p-campaign-images input[type="submit"] {
-  margin: 10px 0 0 0;
+  margin: 10px 0;
+  padding: 8px 20px;
   width: 200px;
+}
+
+.image-widget-wrapper input[type="submit"] {
+  margin: 0 !important;
+}
+
+span.file {
+  margin: 0 0 10px 0;
+  display: block;
 }
 
 .field-name-field-p2p-campaign-images img {
@@ -190,7 +200,7 @@ label,
 }
 
 label[for="edit-field-p2p-campaign-images-und-1"] {
-  margin: 20px 0 0 0;
+  margin: 20px 0 10px 0;
 }
 
 .image-widget-data .form-select {
@@ -323,4 +333,97 @@ input[type="checkbox"] {
 .panel-2col-bricks .panel-col-first {
   padding-right: 2%;
   width: 69.1%;
+}
+
+/* Uniform global */
+
+div.selector,
+div.selector span {
+  height: 40px;
+  background-image: url('../../../images/select-sprite.png');
+  background-repeat: no-repeat;
+  line-height: 40px;
+  -webkit-font-smoothing: antialiased;
+}
+
+div.selector select {
+  border: none;
+  font-family: inherit;
+}
+
+/* left */
+
+div.selector {
+  background-position: 0 -100px;
+  font-size: 12px;
+}
+
+div.selector.hover.active,
+div.selector.focus.active,
+div.selector.hover,
+div.selector.focus {
+  background-position: 0 -144px;
+}
+
+/* right */
+
+div.selector.hover span,
+div.selector.focus span {
+  background-position: right -45px;
+}
+
+div.uploader {
+  margin: 0 10px 0 0;
+  width: 264px;
+  border: 1px dotted #333;
+}
+
+div.uploader span.filename {
+  width: 116px;
+}
+
+div.uploader span.action {
+  width: 110px;
+}
+
+div.uploader span.action:after {
+  position: relative;
+  left: 8px;
+  color: #333;
+  content: "\f0f6";
+  text-decoration: inherit;
+  font-weight: normal;
+  font-style: normal;
+  font-family: FontAwesome;
+}
+
+div.uploader span.filename {
+  color: #333;
+  font-weight: bold;
+}
+
+.control-group select,
+.control-group input {
+   display: inline-block;
+   float: none;
+   clear: none;
+}
+
+div.uploader span.action {
+  text-shadow: rgba(255, 255, 255, 0.5) 0px 1px 0px;
+  background-color: #fff;
+  font-weight: bold;
+  color: #444;
+}
+
+div.uploader {
+  height: 33px;
+}
+
+div.checker span,
+div.radio span, div.uploader,
+div.uploader span.action,
+div.button,
+div.button span {
+  background-image: none;
 }
