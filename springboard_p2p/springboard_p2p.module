@@ -48,7 +48,7 @@ function springboard_p2p_menu() {
   $items = array();
 
   $items['admin/springboard/p2p'] = array(
-    'title' => 'Springboard peer to peer',
+    'title' => 'Springboard Peer to Peer',
     'page callback' => 'springboard_p2p_dashboard',
     'file' => 'springboard_p2p.admin.inc',
     'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
