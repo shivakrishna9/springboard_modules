@@ -98,7 +98,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
   $field_instances['node-p2p_personal_campaign-field_p2p_campaign_images'] = array(
     'bundle' => 'p2p_personal_campaign',
     'deleted' => 0,
-    'description' => 'Upload a campaign thumbnail image. Ideal size is 340 x 240 pixels.',
+    'description' => 'Upload a campaign thumbnail image. Ideal size is 380 x 240 pixels.',
     'display' => array(
       'default' => array(
         'label' => 'hidden',
@@ -462,7 +462,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
   t('Suggested Donation Amount');
   t('Upload a Campaign Image');
   t('Upload a Campaign Video');
-  t('Upload a campaign thumbnail image. Ideal size is 340 x 240 pixels.');
+  t('Upload a campaign thumbnail image. Ideal size is 380 x 240 pixels.');
 
   return $field_instances;
 }

@@ -250,13 +250,6 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['style_plugin'] = 'list';
   $handler->display->display_options['style_options']['class'] = 'campaign-landing-grid';
   $handler->display->display_options['row_plugin'] = 'fields';
-  /* No results behavior: Global: Text area */
-  $handler->display->display_options['empty']['area']['id'] = 'area';
-  $handler->display->display_options['empty']['area']['table'] = 'views';
-  $handler->display->display_options['empty']['area']['field'] = 'area';
-  $handler->display->display_options['empty']['area']['empty'] = TRUE;
-  $handler->display->display_options['empty']['area']['content'] = 'sorry';
-  $handler->display->display_options['empty']['area']['format'] = 'filtered_html';
   /* Relationship: Entity Reference: Referencing entity */
   $handler->display->display_options['relationships']['reverse_field_p2p_referenced_campaigns_node']['id'] = 'reverse_field_p2p_referenced_campaigns_node';
   $handler->display->display_options['relationships']['reverse_field_p2p_referenced_campaigns_node']['table'] = 'node';

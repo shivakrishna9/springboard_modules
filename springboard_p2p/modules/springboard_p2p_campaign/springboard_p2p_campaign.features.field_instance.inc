@@ -321,7 +321,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'progress_indicator' => 'throbber',
       ),
       'type' => 'image_image',
-      'weight' => 11,
+      'weight' => 15,
     ),
   );
 
@@ -456,7 +456,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'progress_indicator' => 'throbber',
       ),
       'type' => 'image_image',
-      'weight' => 12,
+      'weight' => 16,
     ),
   );
 
@@ -614,7 +614,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
       'file_extensions' => 'png gif jpg jpeg',
       'max_filesize' => '2 MB',
       'max_resolution' => '',
-      'min_resolution' => '340x226',
+      'min_resolution' => '380x226',
       'title_field' => 1,
       'user_register_form' => FALSE,
     ),

@@ -147,8 +147,9 @@ function springboard_p2p_campaign_field_group_info() {
     'children' => array(
       0 => 'field_p2p_campaign_banner',
       1 => 'field_p2p_campaign_thumbnail',
-      2 => 'group_slideshow',
-      3 => 'group_personal_campaign_images',
+      2 => 'group_p2p_video_embed',
+      3 => 'group_slideshow',
+      4 => 'group_personal_campaign_images',
     ),
     'format_type' => 'htab',
     'format_settings' => array(
@@ -203,24 +204,22 @@ function springboard_p2p_campaign_field_group_info() {
   $field_group->entity_type = 'node';
   $field_group->bundle = 'p2p_campaign';
   $field_group->mode = 'form';
-  $field_group->parent_name = 'group_tabs';
+  $field_group->parent_name = 'group_p2p_images';
   $field_group->data = array(
     'label' => 'Video embed',
-    'weight' => '12',
+    'weight' => '17',
     'children' => array(
       0 => 'field_p2p_video_embed',
       1 => 'field_p2p_video_embed_edit',
     ),
-    'format_type' => 'htab',
+    'format_type' => 'fieldset',
     'format_settings' => array(
-      'label' => 'Video embed',
+      'formatter' => 'collapsible',
       'instance_settings' => array(
-        'required_fields' => 1,
-        'id' => '',
-        'classes' => '',
         'description' => '',
+        'classes' => '',
+        'required_fields' => 1,
       ),
-      'formatter' => 'open',
     ),
   );
   $export['group_p2p_video_embed|node|p2p_campaign|form'] = $field_group;
@@ -236,7 +235,7 @@ function springboard_p2p_campaign_field_group_info() {
   $field_group->parent_name = 'group_p2p_images';
   $field_group->data = array(
     'label' => 'Personal Campaign Images',
-    'weight' => '10',
+    'weight' => '14',
     'children' => array(
       0 => 'field_p2p_images',
       1 => 'field_p2p_images_edit',
@@ -264,7 +263,7 @@ function springboard_p2p_campaign_field_group_info() {
   $field_group->parent_name = 'group_p2p_images';
   $field_group->data = array(
     'label' => 'Landing page slideshow',
-    'weight' => '9',
+    'weight' => '13',
     'children' => array(
       0 => 'field_p2p_campaign_slider',
       1 => 'field_landing_page_slider_text',
@@ -302,7 +301,6 @@ function springboard_p2p_campaign_field_group_info() {
       3 => 'group_p2p_donation_form',
       4 => 'group_p2p_images',
       5 => 'group_p2p_personal_intro',
-      6 => 'group_p2p_video_embed',
     ),
     'format_type' => 'htabs',
     'format_settings' => array(
