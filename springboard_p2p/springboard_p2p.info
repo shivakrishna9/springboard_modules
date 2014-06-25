@@ -15,6 +15,7 @@ dependencies[] = pm_existing_pages
 dependencies[] = rules
 dependencies[] = springboard_p2p_campaign
 dependencies[] = springboard_p2p_category
+dependencies[] = springboard_p2p_default_rules
 dependencies[] = springboard_p2p_personal_campaign
 dependencies[] = strongarm
 dependencies[] = views_conditional
