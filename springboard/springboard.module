@@ -127,8 +127,6 @@ function springboard_theme($existing, $type, $theme, $path) {
  * Menu callback. Springboard dashboard page.
  */
 function springboard_admin_dashboard() {
-  // Add our CSS for display.
-
   $content = '<div class="springboard-dashboard dashboard row-fluid">';
   // Load the enabled panes for the dashboard.
   $panes = module_invoke_all('springboard_dashboard_panes');
