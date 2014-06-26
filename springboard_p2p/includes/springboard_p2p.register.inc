@@ -135,16 +135,21 @@ function springboard_p2p_user_register_form($form, &$form_state) {
  * Hardcodes US and CA in country, gives it a default value, and filters the
  * states down.
  */
-function springboard_p2p_set_country_and_state_defaults_and_options(&$form, $form_state, $default_country_id = '') {
+function springboard_p2p_set_country_and_state_defaults_and_options(&$form, $form_state) {
   $country_language = $form['sbp_country']['#language'];
 
-  if (empty($default_country_id)) {
-    if (isset($form_state['values']['sbp_country'])) {
-      $default_country_id = $form_state['values']['sbp_country'][$country_language][0]['value'];
-    }
-    else {
-      $default_country_id = 'US';
-    }
+  // If we're ajaxing from the country selection.
+  if (isset($form_state['triggering_element']['#field_name']) && $form_state['triggering_element']['#field_name'] == 'sbp_country' && isset($form_state['input']['sbp_country'][$country_language])) {
+    $default_country_id = $form_state['input']['sbp_country'][$country_language];
+  }
+  elseif (isset($form_state['values']['sbp_country'])) {
+    $default_country_id = $form_state['values']['sbp_country'][$country_language][0]['value'];
+  }
+  elseif (isset($form['sbp_country'][$country_language]['#default_value'][0])) {
+    $default_country_id = $form['sbp_country'][$country_language]['#default_value'][0];
+  }
+  else {
+    $default_country_id = 'US';
   }
 
   $countries = fundraiser_commerce_get_countries();
@@ -192,20 +197,8 @@ function springboard_p2p_add_state_and_country_ajax(&$form) {
  * selected country.
  */
 function springboard_p2p_register_form_state_ajax_submit($form, $form_state) {
-  $country_id = $form_state['values']['sbp_country'][$form['sbp_country']['#language']][0]['value'];
-  $state_select = $form['sbp_state'][$form['sbp_state']['#language']];
-  $new_options = springboard_p2p_filter_state_options_by_country($country_id);
 
-  if (count($new_options)) {
-    $state_select['#options'] = $new_options;
-  }
-
-  return array(
-    '#type' => 'ajax',
-    '#commands' => array(
-      ajax_command_replace('#zone-select-wrapper', render($state_select)),
-    ),
-  );
+  return $form['sbp_state'];
 }
 
 /**
