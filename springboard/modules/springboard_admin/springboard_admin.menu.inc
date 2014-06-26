@@ -406,7 +406,7 @@ function springboard_admin_admin_menu_items() {
   // Settings > Settings > Sustainer upsell confirmations.
   $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/springboard/options/fundraiser/fundraiser_upsell/thank-you'] = array(
     'link_path' => 'admin/springboard/options/fundraiser/fundraiser_upsell/thank-you',
-    'link_title' => 'Sustainer upsell confirmations',
+    'link_title' => 'Sustainer Upsell Confirmations',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 0,
     'customized' => 1,
@@ -501,36 +501,6 @@ function springboard_admin_admin_menu_items() {
     'customized' => 1,
     'weight' => 8,
   ); 
-  
-  // Settings > Salesforce Authentication.
-   $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/config/salesforce/authorize'] = array(
-    'link_path' => 'admin/config/salesforce/authorize',
-    'link_title' => 'Salesforce Authorization',
-    'menu_name' => 'springboard_admin_menu',
-    'expanded' => 0,
-    'customized' => 1,
-    'weight' => 4,
-  );
-  
-  // Settings > Salesforce Authentication.
-   $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/springboard/settings/springboard'] = array(
-    'link_path' => 'admin/springboard/settings/springboard',
-    'link_title' => 'Springboard Configuration',
-    'menu_name' => 'springboard_admin_menu',
-    'expanded' => 0,
-    'customized' => 1,
-    'weight' => 5,
-  ); 
-
-  // Settings > Configure Dashboard.
-  $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/springboard/settings/dashboard'] = array(
-    'link_path' => 'admin/springboard/settings/dashboard',
-    'link_title' => 'Configure Dashboard',
-    'menu_name' => 'springboard_admin_menu',
-    'expanded' => 0,
-    'customized' => 1,
-    'weight' => 6,
-  );
 
   //Settings > Logout.
   $items['admin/springboard/settings']['_children']['logout'] = array(
