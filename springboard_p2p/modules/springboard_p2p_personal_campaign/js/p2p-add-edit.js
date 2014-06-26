@@ -8,11 +8,6 @@
     attach: function (context, settings) {
 // End drupal calls.
 
-      // Add a file icon to the upload button.
-      $('input[type="file"]').once(function() {
-        $(this).after('<i class="fa fa-file-text-o"></i>');
-      });
-
       $('.image-widget.form-managed-file').each(function() {
       $(this).parent('.control-group').addClass('image-widget-wrapper');
       });
@@ -24,6 +19,12 @@
       $('.date-padding label').once(function() {
       $(this).append('<span class="form-required" title="This field is required.">*</span>');
       });
+
+      // Add uniform to selects
+      $("select").uniform();
+
+      // Add uniform to file upload.
+      $('input[type=file]').uniform();
 
       // end jquery.
     }};

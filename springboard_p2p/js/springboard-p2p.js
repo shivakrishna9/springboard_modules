@@ -15,6 +15,12 @@
     // Get rid of inline styles.
    $('.panel-display p').attr('style', '');
 
+      // Add uniform to selects
+      $("select").uniform();
+
+      // Add uniform to file upload.
+      $('input[type=file]').uniform();
+
       // end jquery.
     }};
 })

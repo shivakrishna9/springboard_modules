@@ -48,7 +48,7 @@ function springboard_p2p_menu() {
   $items = array();
 
   $items['admin/springboard/p2p'] = array(
-    'title' => 'Springboard peer to peer',
+    'title' => 'Springboard Peer to Peer',
     'page callback' => 'springboard_p2p_dashboard',
     'file' => 'springboard_p2p.admin.inc',
     'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
@@ -2081,6 +2081,31 @@ function springboard_p2p_page_alter(&$page, $form) {
         ),
       );
       drupal_render($p2p_js);
+
+      // Global p2p css file, global nodes and regpath.
+      $uniform_js = array(
+        '#attached' => array(
+          'js' => array(
+            $mod_path . '/js/jquery.uniform.js' => array(
+              'group' => JS_LIBRARY,
+            ),
+          ),
+        ),
+      );
+      drupal_render($uniform_js);
+
+      $uniform_css = array(
+        '#attached' => array(
+          'css' => array(
+            $mod_path . '/css/uniform_base.css' => array(
+              'group' => CSS_THEME,
+            ),
+          ),
+        ),
+      );
+      drupal_render($uniform_css);
+
+      // End global.
     }
 
     // Regpath for account pages (login, register, password).

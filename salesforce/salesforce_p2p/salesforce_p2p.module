@@ -29,7 +29,7 @@ function salesforce_p2p_salesforce_queue_create_item_alter($item) {
     $node = node_load($item['drupal_id']);
     // Wrap the entity to make it easier to work with.
     $wrapper = entity_metadata_wrapper('node', $node);
-    // Calling raw() will get us the id of the category instead of loading the enire entity.
+    // Calling raw() will get us the id of the category instead of loading the entire entity.
     $campaign_id = $wrapper->field_p2p_campaign->raw();
 
     // Relate peer to peer campaign.
@@ -38,6 +38,13 @@ function salesforce_p2p_salesforce_queue_create_item_alter($item) {
     // Relate peer to peer campaigner.
     $item['sobject']->fields['P2P_Campaigner__c'] = sprintf('[Contact:user:%d]', $node->uid);
 
+    // Relate to the category.
+    // TODO: This node load might be a bit heavy here. Maybe look for a better solution.
+    $category_node = node_load($campaign_id);
+    $wrapper = entity_metadata_wrapper('node', $category_node);
+    $category_id = $wrapper->field_p2p_category->raw();
+
+    $item['sobject']->fields['P2P_Category__c'] = sprintf('[P2P__c:p2p_category:%d]', $category_id);
   }
 
   // Donation.

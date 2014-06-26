@@ -250,13 +250,6 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['style_plugin'] = 'list';
   $handler->display->display_options['style_options']['class'] = 'campaign-landing-grid';
   $handler->display->display_options['row_plugin'] = 'fields';
-  /* No results behavior: Global: Text area */
-  $handler->display->display_options['empty']['area']['id'] = 'area';
-  $handler->display->display_options['empty']['area']['table'] = 'views';
-  $handler->display->display_options['empty']['area']['field'] = 'area';
-  $handler->display->display_options['empty']['area']['empty'] = TRUE;
-  $handler->display->display_options['empty']['area']['content'] = 'sorry';
-  $handler->display->display_options['empty']['area']['format'] = 'filtered_html';
   /* Relationship: Entity Reference: Referencing entity */
   $handler->display->display_options['relationships']['reverse_field_p2p_referenced_campaigns_node']['id'] = 'reverse_field_p2p_referenced_campaigns_node';
   $handler->display->display_options['relationships']['reverse_field_p2p_referenced_campaigns_node']['table'] = 'node';
@@ -716,6 +709,12 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['fields']['sbp_last_name']['element_label_type'] = '0';
   $handler->display->display_options['fields']['sbp_last_name']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['sbp_last_name']['element_wrapper_type'] = '0';
+  /* Field: User: E-mail */
+  $handler->display->display_options['fields']['mail']['id'] = 'mail';
+  $handler->display->display_options['fields']['mail']['table'] = 'users';
+  $handler->display->display_options['fields']['mail']['field'] = 'mail';
+  $handler->display->display_options['fields']['mail']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['mail']['exclude'] = TRUE;
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
   $handler->display->display_options['defaults']['filters'] = FALSE;
   /* Filter criterion: Content: Published */
@@ -753,6 +752,7 @@ function springboard_p2p_landing_views_default_views() {
     'title' => 'title',
     'sbp_first_name' => 'sbp_first_name',
     'sbp_last_name' => 'sbp_last_name',
+    'mail' => 'mail',
   );
   $handler->display->display_options['pane_category']['name'] = 'Springboard P2P';
   $handler->display->display_options['pane_category']['weight'] = '0';
