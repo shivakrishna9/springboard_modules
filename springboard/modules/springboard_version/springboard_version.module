@@ -190,7 +190,7 @@ function springboard_version_springboard_dashboard_panes() {
   $panes['springboard_sb_version'] = array(
     'label' => t('Springboard Version'),
     'description' => t('Displays the current version of the Springboard codebase.'),
-    'content' => '<h2>' . t('Springboard Version') . '</h2><p class="sb-version-info">' . ltrim($version_info['springboard_version']['version'], $version_info['springboard_version']['core'] . '-') . '</p>',
+    'content' => '<p class="sb-version-info"><strong>' . t('Springboard Version') . ': </strong>' . ltrim($version_info['springboard_version']['version'], $version_info['springboard_version']['core'] . '-') . '</p>',
     'position' => 'column_right',
     'weight' => 2,
   );
