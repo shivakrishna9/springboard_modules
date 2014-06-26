@@ -26,7 +26,7 @@ function commerce_psi_eft_fundraiser_commerce_fundraiser_gateway_info() {
  */
 function commerce_psi_eft_fundraiser_donation_form_config_check($node) {
   foreach ($node->gateways as $method => $gateway) {
-    if (!empty($gateway['id'])) {
+    if (!empty($gateway['id']) && !empty($gateway['status'])) {
       $gateway_config = _fundraiser_gateway_info($gateway['id']);
       if ($gateway_config['gateway_details']['method_id'] == 'commerce_psi_eft' &&
         $gateway_config['gateway_details']['settings']['txn_mode'] != COMMERCE_PSI_MODE_LIVE) {
