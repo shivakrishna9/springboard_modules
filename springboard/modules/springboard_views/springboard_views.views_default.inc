@@ -1979,7 +1979,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['path'] = 'admin/reports/salesforce/donations';
 
   /* Display: Data Export Placeholder */
-  $handler = $view->new_display('views_data_export', 'Data Export Placeholder', 'views_data_export_1');
+  $handler = $view->new_display('views_data_export', 'Data export', 'views_data_export_1');
   $handler->display->display_options['defaults']['css_class'] = FALSE;
   $handler->display->display_options['css_class'] = 'views-data-table';
   $handler->display->display_options['defaults']['use_ajax'] = FALSE;
@@ -3296,8 +3296,9 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['style_plugin'] = 'views_data_export_csv';
   $handler->display->display_options['style_options']['attach_text'] = 'Download as .CSV';
   $handler->display->display_options['style_options']['image_link'] = 0;
-  $handler->display->display_options['style_options']['provide_file'] = 0;
-  $handler->display->display_options['style_options']['parent_sort'] = 0;
+  $handler->display->display_options['style_options']['provide_file'] = 1;
+  $handler->display->display_options['style_options']['filename'] = 'donation-export-%timestamp-full.csv';
+  $handler->display->display_options['style_options']['parent_sort'] = 1;
   $handler->display->display_options['style_options']['quote'] = 1;
   $handler->display->display_options['style_options']['trim'] = 0;
   $handler->display->display_options['style_options']['replace_newlines'] = 0;
