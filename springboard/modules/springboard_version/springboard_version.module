@@ -183,6 +183,21 @@ function springboard_version_info() {
 }
 
 /**
+ * Implements hook_springboard_dashboard_panes().
+ */
+function springboard_version_springboard_dashboard_panes() {
+  $version_info = springboard_version_info();
+  $panes['springboard_sb_version'] = array(
+    'label' => t('Springboard Version'),
+    'description' => t('Displays the current version of the Springboard codebase.'),
+    'content' => '<h2>' . t('Springboard Version') . '</h2><p class="sb-version-info">' . ltrim($version_info['springboard_version']['version'], $version_info['springboard_version']['core'] . '-') . '</p>',
+    'position' => 'column_right',
+    'weight' => 2,
+  );
+  return $panes;
+}
+
+/**
  * Helper function, compare versions to determine if the version given is compatible.
  * Springboard version is the min, so if installed is lesser return FALSE.
  */
