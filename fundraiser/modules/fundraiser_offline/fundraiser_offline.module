@@ -63,7 +63,21 @@ function fundraiser_offline_form_alter(&$form, $form_state, $form_id) {
         // a placeholder value for this field before Webform User's validation
         // throws an error on missing email address.
         _fundraiser_offline_form_not_required($form, array('mail'));
-        _fundraiser_offline_form_not_validate($form, array('mail'));
+        _fundraiser_offline_form_not_validate($form, array('mail', 'card_cvv'));
+        // On CC payment method, disable states that result in a "required"
+        // asterisk being set on the payment fields. Since states automatically
+        // apply this to all components in the fieldset, we need to re-add
+        // "required" to card number and expiration date fields.
+        $element = fundraiser_get_form_field('fundraiser_offline', $form, 'credit');
+        if ($element) {
+          unset($element['#states']['optional'], $element['#states']['required']);
+          foreach (element_children($element) as $child) {
+            if ($child == 'card_number') {
+              $element[$child]['#required'] = TRUE;
+            }
+          } 
+          $form = fundraiser_update_form_field('fundraiser_offline', $form, 'credit', $element);
+        }
         // We only need validation and submit handlers if the form is in
         // offline mode.
         $form['#submit'][] = 'fundraiser_offline_donation_form_submit';
@@ -98,7 +112,7 @@ function fundraiser_offline_form_alter(&$form, $form_state, $form_id) {
       $form['fundraiser']['fundraiser_payment_method_config_defaults'][$gateway]['offline_only'] = array(
         '#type' => 'checkbox',
         '#title' => t('offline only'),
-        '#default_value' => $defaults[$gateway]['offline_only'],
+        '#default_value' => isset($defaults[$gateway]['offline_only']) ? $defaults[$gateway]['offline_only'] : 0,
       );
     }
   }
@@ -211,12 +225,13 @@ function fundraiser_offline_node_insert($node) {
  * Implements hook_node_load().
  */
 function fundraiser_offline_node_load($nodes, $types) {
+  global $user;
+  $offline = isset($_GET['offline']) ? $_GET['offline'] : FALSE;
+  $can_offline = user_access('submit donations offline', $user);
   foreach ($nodes as $node) {
     // If this isn't a fundraiser type, ignore it.
-    if (fundraiser_is_donation_type($node->type)) {
-      // Get the fundraiser information.
-      $value = _fundraiser_offline_get_offline_by_nid($node->nid);
-      $nodes[$node->nid]->fundraiser_offline = (isset($value->status) && $value->status == 1) ? TRUE : FALSE;
+    if (fundraiser_is_donation_type($node->type)) { 
+      $nodes[$node->nid]->fundraiser_offline = $offline && $can_offline;
     }
   }
 }
@@ -303,8 +318,8 @@ function fundraiser_offline_fundraiser_donation_form($form, $form_state) {
     }
     // Otherwise, we're in the clear and still in offline mode.
     // Remove required flag for these fields.
-    $fields = array('mail', 'card_cvv');
-    // _fundraiser_offline_form_not_required($form, $fields);
+    //$fields = array('mail', 'card_cvv');
+    //_fundraiser_offline_form_not_required($form, $fields);
     // Expose these fields.
     $fields = array('cid', 'ms');
     _fundraiser_offline_form_not_hidden($form, $fields);
