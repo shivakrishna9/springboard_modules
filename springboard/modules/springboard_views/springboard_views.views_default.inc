@@ -3847,7 +3847,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['style_options']['columns'] = array(
     'bid' => 'bid',
     'module' => 'module',
-    'delta' => 'delta',
     'object_type' => 'object_type',
     'operation' => 'operation',
     'start' => 'start',
@@ -3866,13 +3865,6 @@ function springboard_views_views_default_views() {
       'empty_column' => 0,
     ),
     'module' => array(
-      'sortable' => 1,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'delta' => array(
       'sortable' => 1,
       'default_sort_order' => 'asc',
       'align' => '',
@@ -3945,11 +3937,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['module']['field'] = 'module';
   $handler->display->display_options['fields']['module']['label'] = 'SB Module';
   $handler->display->display_options['fields']['module']['element_label_colon'] = FALSE;
-  /* Field: Salesforce batch log: Delta */
-  $handler->display->display_options['fields']['delta']['id'] = 'delta';
-  $handler->display->display_options['fields']['delta']['table'] = 'salesforce_log_batch';
-  $handler->display->display_options['fields']['delta']['field'] = 'delta';
-  $handler->display->display_options['fields']['delta']['element_label_colon'] = FALSE;
   /* Field: Salesforce batch log: Object type */
   $handler->display->display_options['fields']['object_type']['id'] = 'object_type';
   $handler->display->display_options['fields']['object_type']['table'] = 'salesforce_log_batch';
@@ -4128,7 +4115,6 @@ function springboard_views_views_default_views() {
     'item_id' => 'item_id',
     'module' => 'module',
     'drupal_id' => 'drupal_id',
-    'delta' => 'delta',
     'object_type' => 'object_type',
     'operation' => 'operation',
     'queue' => 'queue',
@@ -4152,13 +4138,6 @@ function springboard_views_views_default_views() {
       'empty_column' => 0,
     ),
     'drupal_id' => array(
-      'sortable' => 1,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'delta' => array(
       'sortable' => 1,
       'default_sort_order' => 'asc',
       'align' => '',
@@ -4288,11 +4267,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['drupal_id']['label'] = 'SB ID';
   $handler->display->display_options['fields']['drupal_id']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['drupal_id']['separator'] = '';
-  /* Field: Salesforce queue: Delta */
-  $handler->display->display_options['fields']['delta']['id'] = 'delta';
-  $handler->display->display_options['fields']['delta']['table'] = 'salesforce_queue';
-  $handler->display->display_options['fields']['delta']['field'] = 'delta';
-  $handler->display->display_options['fields']['delta']['element_label_colon'] = FALSE;
   /* Field: Salesforce queue: Object type */
   $handler->display->display_options['fields']['object_type']['id'] = 'object_type';
   $handler->display->display_options['fields']['object_type']['table'] = 'salesforce_queue';
