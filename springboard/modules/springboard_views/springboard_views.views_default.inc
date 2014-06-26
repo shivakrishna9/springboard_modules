@@ -3570,13 +3570,15 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['filters']['bid']['relationship'] = 'bid';
   $handler->display->display_options['filters']['bid']['exposed'] = TRUE;
   $handler->display->display_options['filters']['bid']['expose']['operator_id'] = 'bid_op';
-  $handler->display->display_options['filters']['bid']['expose']['label'] = 'Batch ID';
+  $handler->display->display_options['filters']['bid']['expose']['label'] = 'Batch #';
   $handler->display->display_options['filters']['bid']['expose']['operator'] = 'bid_op';
   $handler->display->display_options['filters']['bid']['expose']['identifier'] = 'bid';
   $handler->display->display_options['filters']['bid']['expose']['remember_roles'] = array(
     2 => '2',
     1 => 0,
     3 => 0,
+    4 => 0,
+    5 => 0,
   );
   $handler->display->display_options['filters']['bid']['group_info']['label'] = 'Batch ID';
   $handler->display->display_options['filters']['bid']['group_info']['identifier'] = 'bid';
@@ -3592,7 +3594,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['filters']['item_id']['field'] = 'item_id';
   $handler->display->display_options['filters']['item_id']['exposed'] = TRUE;
   $handler->display->display_options['filters']['item_id']['expose']['operator_id'] = 'item_id_op';
-  $handler->display->display_options['filters']['item_id']['expose']['label'] = 'Queue Item ID';
+  $handler->display->display_options['filters']['item_id']['expose']['label'] = 'Item #';
   $handler->display->display_options['filters']['item_id']['expose']['operator'] = 'item_id_op';
   $handler->display->display_options['filters']['item_id']['expose']['identifier'] = 'item_id';
   $handler->display->display_options['filters']['item_id']['expose']['remember_roles'] = array(
@@ -3608,13 +3610,15 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['filters']['drupal_id']['field'] = 'drupal_id';
   $handler->display->display_options['filters']['drupal_id']['exposed'] = TRUE;
   $handler->display->display_options['filters']['drupal_id']['expose']['operator_id'] = 'drupal_id_op';
-  $handler->display->display_options['filters']['drupal_id']['expose']['label'] = 'Drupal ID';
+  $handler->display->display_options['filters']['drupal_id']['expose']['label'] = 'Springboard ID';
   $handler->display->display_options['filters']['drupal_id']['expose']['operator'] = 'drupal_id_op';
   $handler->display->display_options['filters']['drupal_id']['expose']['identifier'] = 'drupal_id';
   $handler->display->display_options['filters']['drupal_id']['expose']['remember_roles'] = array(
     2 => '2',
     1 => 0,
     3 => 0,
+    4 => 0,
+    5 => 0,
   );
   /* Filter criterion: Salesforce item log: Salesforce id */
   $handler->display->display_options['filters']['sfid']['id'] = 'sfid';
@@ -3623,13 +3627,15 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['filters']['sfid']['operator'] = 'contains';
   $handler->display->display_options['filters']['sfid']['exposed'] = TRUE;
   $handler->display->display_options['filters']['sfid']['expose']['operator_id'] = 'sfid_op';
-  $handler->display->display_options['filters']['sfid']['expose']['label'] = 'Salesforce id';
+  $handler->display->display_options['filters']['sfid']['expose']['label'] = 'Salesforce ID';
   $handler->display->display_options['filters']['sfid']['expose']['operator'] = 'sfid_op';
   $handler->display->display_options['filters']['sfid']['expose']['identifier'] = 'sfid';
   $handler->display->display_options['filters']['sfid']['expose']['remember_roles'] = array(
     2 => '2',
     1 => 0,
     3 => 0,
+    4 => 0,
+    5 => 0,
   );
   $handler->display->display_options['filters']['sfid']['group_info']['label'] = 'Salesforce id';
   $handler->display->display_options['filters']['sfid']['group_info']['identifier'] = 'sfid';
@@ -3664,8 +3670,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['menu']['weight'] = '1';
   $handler->display->display_options['menu']['name'] = 'management';
   $handler->display->display_options['menu']['context'] = 0;
-  $handler->display->display_options['menu']['context_only_inline'] = 0;
-  
+  $handler->display->display_options['menu']['context_only_inline'] = 0;  
   $views[$view->name] = $view;
   
   /**
@@ -4138,6 +4143,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['drupal_id']['id'] = 'drupal_id';
   $handler->display->display_options['fields']['drupal_id']['table'] = 'salesforce_queue';
   $handler->display->display_options['fields']['drupal_id']['field'] = 'drupal_id';
+  $handler->display->display_options['fields']['drupal_id']['label'] = 'SB ID';
   $handler->display->display_options['fields']['drupal_id']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['drupal_id']['separator'] = '';
   /* Field: Salesforce queue: Delta */
@@ -4185,13 +4191,15 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['filters']['item_id']['group'] = 1;
   $handler->display->display_options['filters']['item_id']['exposed'] = TRUE;
   $handler->display->display_options['filters']['item_id']['expose']['operator_id'] = 'item_id_op';
-  $handler->display->display_options['filters']['item_id']['expose']['label'] = 'Queue ID';
+  $handler->display->display_options['filters']['item_id']['expose']['label'] = 'Item #';
   $handler->display->display_options['filters']['item_id']['expose']['operator'] = 'item_id_op';
   $handler->display->display_options['filters']['item_id']['expose']['identifier'] = 'item_id';
   $handler->display->display_options['filters']['item_id']['expose']['remember_roles'] = array(
     2 => '2',
     1 => 0,
     3 => 0,
+    4 => 0,
+    5 => 0,
   );
   /* Filter criterion: Salesforce queue: Module */
   $handler->display->display_options['filters']['module']['id'] = 'module';
@@ -4215,13 +4223,15 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['filters']['drupal_id']['group'] = 1;
   $handler->display->display_options['filters']['drupal_id']['exposed'] = TRUE;
   $handler->display->display_options['filters']['drupal_id']['expose']['operator_id'] = 'drupal_id_op';
-  $handler->display->display_options['filters']['drupal_id']['expose']['label'] = 'Drupal ID';
+  $handler->display->display_options['filters']['drupal_id']['expose']['label'] = 'Springboard ID';
   $handler->display->display_options['filters']['drupal_id']['expose']['operator'] = 'drupal_id_op';
   $handler->display->display_options['filters']['drupal_id']['expose']['identifier'] = 'drupal_id';
   $handler->display->display_options['filters']['drupal_id']['expose']['remember_roles'] = array(
     2 => '2',
     1 => 0,
     3 => 0,
+    4 => 0,
+    5 => 0,
   );
   /* Filter criterion: Salesforce queue: Object type */
   $handler->display->display_options['filters']['object_type_1']['id'] = 'object_type_1';
@@ -4294,8 +4304,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['menu']['weight'] = '2';
   $handler->display->display_options['menu']['name'] = 'management';
   $handler->display->display_options['menu']['context'] = 0;
-  $handler->display->display_options['menu']['context_only_inline'] = 0;
-  
+  $handler->display->display_options['menu']['context_only_inline'] = 0;  
   $views[$view->name] = $view;
 
 /**
