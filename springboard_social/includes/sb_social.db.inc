@@ -105,6 +105,7 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
     $url_path = sb_social_get_path($id);
     $uid = $uid ? $uid : $user->uid;
     $settings_id = sb_social_get_sid_by_id($id, 'path');
+    $node = FALSE;
   }
 
   $settings = sb_social_settings_load($settings_id);
@@ -139,6 +140,12 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
   $share_id = $query->fields($record)->execute();
   // Generate url and update share record.
   $url = sb_social_share_tracker_url($share_id, $settings, $url_path);
+  // URL context is set in $_SESSION so any data set during a form submission
+  // is still available after Webform redirects to a confirmation page.
+  // This lets 3rd party modules set url context info during the form submission
+  // and then check for their data when the URL alter hook is executed.
+  $url_context = isset($_SESSION['sb_social_url_context']) ? $_SESSION['sb_social_url_context'] : FALSE;
+  drupal_alter('sb_social_share_url', $url, $node, $url_context);
 
   db_query('UPDATE {sb_social_shares} set url = :url WHERE share_id = :share_id', array(':url' => $url, ':share_id' => $share_id));
   watchdog('sb_social', 'share id:' . $share_id);
@@ -150,7 +157,6 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
 
   // Let modules react to the share event
   module_invoke_all('sb_social_share_event_save', array('share_id' => $share_id, 'url' => $url) + $record);
-
   return $url;
 }
 

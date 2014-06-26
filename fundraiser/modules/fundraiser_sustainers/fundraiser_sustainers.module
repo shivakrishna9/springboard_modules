@@ -619,6 +619,32 @@ function fundraiser_sustainers_process_single_recurring_donation(&$log, $recurri
     // Set the reference charge flag to TRUE
     $donation->reference_charge = TRUE;
 
+    // We can't handle the "processing" status from inside a transaction, so if any are open 
+    // then pop them off, forcing them to commit.
+    $connection = Database::getConnection();
+    if ($connection->inTransaction()) {
+      $connection->popTransaction('drupal_transaction');
+    }
+    
+    // Make sure this charge wasn't partially processed already (e.g., cron
+    // crashed awaiting response from the gateway).
+    if ('processing' == db_query("SELECT gateway_resp FROM {fundraiser_sustainers} WHERE did=:did;", array(':did' => $recurring->did))->fetchField()) {
+      watchdog('fundraiser_sustainers', 'Sustainer order id !did tried to process for a second time! Skipped.',
+        array('!did' => $recurring->did),
+        WATCHDOG_CRITICAL
+      );
+
+      // Invoke a rules event so that an email can be configured when a dupe is discovered.
+      if (module_exists("rules")) {
+        rules_invoke_event("fundraiser_sustainer_duplicate_charge_attempt_detected", $donation->did);
+      }
+
+      return FALSE;
+    }
+
+    // Update the sustainer record to "processing"
+    db_query("UPDATE {fundraiser_sustainers} SET gateway_resp='processing' WHERE did=:did;", array(':did' => $recurring->did));
+
     // Then go through each one of these to charge.
     // Since we already created the donation (and saved any CC info at that time).
     // All we need to do is process it and respond afterwards as needed.
@@ -1781,14 +1807,33 @@ function fundraiser_sustainers_fundraiser_donation_decline($donation) {
     // Update data internal to fundraiser. TODO move this db stuff.
     db_query('UPDATE {fundraiser_sustainers} SET ' .
       'gateway_resp = \'failed\', attempts = attempts + 1, ' .
+      'lock_id = 0, ' .
       'next_charge = unix_timestamp(timestampadd(DAY, 1, from_unixtime(next_charge))) ' .
       'WHERE did = :did', array(':did' => $donation->did)
     );
     // Get the number of times this order has been attempted
     $attempt_count = db_query('SELECT attempts FROM {fundraiser_sustainers} WHERE did = :did',
       array(':did' => $donation->did))->fetchColumn();
+
     if ($attempt_count == 3) {
       // Final attempt, add debug alert.
+
+    // update sf queue.
+    if (module_exists('salesforce_genmap')) {
+      $stages = variable_get('salesforce_donation_mapped_stages','');
+      foreach ($stages as $salesforce_name => $commerce_name) {
+        if ($commerce_name == 'failed') {
+           $stage = $saleforce_name;
+        }
+      }
+      if (isset($stage)) {
+        $donation->recurring->sf_stagename = $stage;
+      }
+      else {
+        $donation->recurring->sf_stagename = 'Donation failed, but stage could not be mapped.';
+      }
+      salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
+    }
       watchdog('fundraiser_sustainers', 'Payment for recurring donation @id has failed 3 times. ' .
         'The donation will not be submitted for payment again. Gateway message: @message',
         array('@id' => $donation->did, '@message' => $donation->result['message']), WATCHDOG_DEBUG);
@@ -2157,7 +2202,7 @@ function _fundraiser_sustainers_cron_get_recurring($limit = 1000) {
   $donations = db_query('SELECT r.did FROM {fundraiser_sustainers} r ' .
     'WHERE (r.gateway_resp IS NULL OR r.gateway_resp = \'failed\') ' .
     'AND r.next_charge < :now ' .
-    'AND r.attempts < 3 ' . // If already been tried 3 times, Stop Trying.
+    'AND (r.attempts < 3 OR r.attempts IS NULL) ' . // If already been tried 3 times, Stop Trying.
     'AND r.lock_id = 0 ' . // And not locked.
     'LIMIT 0, ' . $limit,
     array(':now' => $now)

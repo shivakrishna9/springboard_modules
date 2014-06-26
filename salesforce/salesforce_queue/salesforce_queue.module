@@ -378,6 +378,7 @@ function salesforce_queue_salesforce_queue_item_requeue_action($item) {
     $new[$value] = $item->{$value};
   }
   $new['sobject'] = json_decode($item->sobject);
+  $new['sobject']->fields = (array)$new['sobject']->fields;  // createItem() expects fields to be an array, not an object
   $queue = salesforce_queue_load();
   $queue->createItem($new);
 }

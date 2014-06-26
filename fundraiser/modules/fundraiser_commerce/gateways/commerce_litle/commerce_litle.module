@@ -7,6 +7,17 @@
 define('COMMERCE_LITLE_CHECK_SALE', 'echeck_sale');
 
 /**
+ * Implements hook_views_api().
+ */
+
+function commerce_litle_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'commerce_litle') . '/includes',
+  );
+}
+
+/**
  * Implements hook_menu().
  */
 function commerce_litle_menu() {
@@ -49,6 +60,16 @@ function commerce_litle_menu() {
     'weight' => 2,
     'file' => 'commerce_litle.admin.inc',
   );
+
+  $items['admin/commerce/config/payment-methods/advanced-fraud'] = array(
+    'title' => 'Commerce Litle Advanced Fraud Protection',
+    'description' => 'Configure advanced fraud protection methods for commerce litle',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('commerce_litle_fraud_settings_form'),
+    'access arguments' => array('administer payment methods'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
   return $items;
 }
 
@@ -226,11 +247,13 @@ function commerce_litle_cc_settings_form($settings = array()) {
     '#title' => t('Version'),
     '#default_value' => isset($settings['commerce_litle_settings_version']) ? $settings['commerce_litle_settings_version'] : 8.15,
   );
+
   $form['commerce_litle_settings_reportGroup'] = array(
     '#type' => 'textfield',
     '#title' => t('Report group'),
     '#default_value' => isset($settings['commerce_litle_settings_reportGroup']) ? $settings['commerce_litle_settings_reportGroup'] : 'Default Report Group',
   );
+
   $form['commerce_litle_settings_sandbox'] = array(
     '#type' => 'checkbox',
     '#title' => 'Run in Sandbox Mode',
@@ -321,6 +344,7 @@ function commerce_litle_echeck_settings_form($settings = array()) {
     '#title' => t('Report group'),
     '#default_value' => isset($settings['commerce_litle_settings_reportGroup']) ? $settings['commerce_litle_settings_reportGroup'] : 'Default Report Group',
   );
+
   $form['commerce_litle_settings_sandbox'] = array(
     '#type' => 'checkbox',
     '#title' => 'Run in Sandbox Mode',
@@ -373,6 +397,69 @@ function commerce_litle_echeck_settings_form($settings = array()) {
 
   return $form;
 }
+
+/**
+ * Adds threatmetrix tags to page, if enabled.
+ */
+function commerce_litle_add_fraud_form_elements() {
+  $enabled = variable_get('commerce_litle_fraud', 0);
+  if ($enabled) {
+    $session_id = _commerce_litle_fraud_session_id();
+    $form['metrix'] = array(
+      '#markup' => _commerce_litle_fraud_markup($session_id),
+    );
+    $form['session_id'] = array(
+      '#type' => 'hidden',
+      '#value' => $session_id,
+    );
+  }
+  return $form;
+}
+
+/**
+ * HTML for threatmetrix fraud tags.
+ */
+function _commerce_litle_fraud_markup($session_id = NULL) {
+  $org_id = variable_get('commerce_litle_fraud_merchID', 0);
+  $subdomain = variable_get('commerce_litle_fraud_subdomain', 0);
+  $node = menu_get_object();
+  $page_id = isset($node->nid) ? $node->nid : '1';
+  $markup = '<div style="background:url(https://' . $subdomain . '/fp/clear.png?org_id=' . $org_id . '&amp;session_id=' . $session_id . '&amp;m=1)"></div>';
+  $markup .= '<img src="https://' . $subdomain . '/fp/clear.png?org_id=' . $org_id . '&amp;session_id=' . $session_id . '&amp;m=2" />';
+  $markup .= '<script src="https://' . $subdomain . '/fp/check.js?org_id=' . $org_id . '&amp; session_id=' . $session_id . '&amp;pageid=##' . $page_id . '##"></script>';
+  $markup .= '<object type="application/x-shockwave-flash" data="https://' . $subdomain . '/fp/fp.swf?org_id=' . $org_id . '&amp;session_id=' . $session_id . '" width="1" height="1">';
+  $markup .= '<param name="movie" value="https://' . $subdomain . '/fp/fp.swf?org_id=' . $org_id . '&amp;session_id=' . $session_id . '" /><param name="wmode" value="transparent" /> <div></div></object>';
+  return $markup;
+}
+
+/**
+ * Generate a pseudo-session id to send to threatmetrix.
+ */
+function _commerce_litle_fraud_session_id() {
+  static $session_id;
+  $dev_mode = variable_get('commerce_litle_fraud_dev_mode', 0);
+  if (!$session_id && !$dev_mode) {
+    $prefix = variable_get('commerce_litle_fraud_id_prefix');
+    $session_id = $prefix . '-' . hash('sha256', time() . drupal_random_key() . mt_rand());
+  }
+  elseif(!$session_id) {
+    drupal_set_message('Please note: commerce Litle Advanced Fraud Protection is running in development mode.', 'warning', TRUE);
+    $prefix = variable_get('commerce_litle_fraud_id_prefix');
+    $session_id = $prefix . '-' . variable_get('commerce_litle_fraud_dev_mode_id', '');
+  }
+  return $session_id;
+}
+
+/**
+ * Add the pseudo-session ID to the litle xml request.
+ */
+function _commerce_litle_fraud_sale_request_item($nvp, $session_id) {
+ $nvp['advancedFraudChecks']  = array(
+   'threatMetrixSessionId' => $session_id,
+ );
+ return $nvp;
+}
+
 
 /**
  * Payment method callback: checkout form.
@@ -432,6 +519,7 @@ function commerce_litle_cc_submit_form_validate($payment_method, $pane_form, $pa
  * Payment method callback: checkout form validation.
  */
 function commerce_litle_echeck_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
+
   // If the customer specified a card on file, skip the normal validation.
   if (module_exists('commerce_cardonfile') && !empty($payment_method['settings']['cardonfile']) &&
     !empty($pane_values['cardonfile']) && $pane_values['cardonfile'] !== 'new') {
@@ -501,7 +589,11 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
   );
 
   $nvp['billToAddress'] = commerce_litle_format_bill_to_address($order_wrapper);
-
+ 
+  if (variable_get('commerce_litle_fraud', 0) && isset($pane_values['session_id'])) {
+    $nvp = _commerce_litle_fraud_sale_request_item($nvp, $pane_values['session_id']);
+  }
+ 
   // Config stored in a var because it's used again later.
   $litle_config = _commerce_litle_get_litle_config($payment_method);
   $nvp += $litle_config;
@@ -517,12 +609,40 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
   commerce_payment_transaction_save($transaction);
   $nvp['id'] = substr($transaction->transaction_id, 0, 20);
 
+  // Allow modules to alter the values sent to Litle
+  $context = array(
+    'payment_method' => $payment_method,
+    'type' => 'cc',
+  );
+
+  drupal_alter('commerce_litle_request', $nvp, $context);
+
   if ($payment_method['settings']['log']['request'] === 'request') {
     commerce_litle_log_request($nvp);
   }
 
   $sale_response = $init->saleRequest($nvp);
+  if (variable_get('commerce_litle_fraud', 0)) {
 
+    $order_id = XmlParser::getNode($sale_response, 'orderId');
+    $litle_txn_id = XmlParser::getNode($sale_response, 'litleTxnId');
+    $response_time = strtotime(XmlParser::getNode($sale_response, 'responseTime'));
+    $message = XmlParser::getNode($sale_response, 'message');
+    $avs_result = XmlParser::getNode($sale_response, 'avsResult');
+    $device_review_status = XmlParser::getNode($sale_response, 'deviceReviewStatus');
+    $device_reputation_score = XmlParser::getNode($sale_response, 'deviceReputationScore');
+
+    $data = array(
+      'order_id' => !empty($order_id) ? $order_id : NULL,
+      'litle_txn_id' => !empty($litle_txn_id) ? $litle_txn_id : NULL,
+      'response_time' => $response_time,
+      'message' => XmlParser::getNode($sale_response, 'message'),
+      'avs_result' => !empty($avs_result) ? $avs_result : NULL,
+      'device_review_status' => XmlParser::getNode($sale_response, 'deviceReviewStatus'),
+      'device_reputation_score' => !empty($device_reputation_score) ? $device_reputation_score : NULL,
+    );
+    drupal_write_record('commerce_litle_fraud', $data);
+  }
   // Log the response if specified.
   if ($payment_method['settings']['log']['response'] === 'response') {
     commerce_litle_log_response($sale_response);
@@ -591,7 +711,6 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
 
     // Submit a registerTokenRequest.
     $token_response = commerce_litle_register_token_request($init, $litle_config, $payment_details);
-
     $litle_token = commerce_litle_get_token_from_response($token_response);
     if (!empty($litle_token)) {
       $card_name = '';
@@ -699,6 +818,14 @@ function commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, 
   commerce_payment_transaction_save($transaction);
   $request_data['id'] = substr($transaction->transaction_id, 0, 20);
 
+  // Allow modules to alter the values sent to Litle
+  $context = array(
+    'payment_method' => $payment_method,
+    'type' => 'cc_vault',
+  );
+
+  drupal_alter('commerce_litle_request', $request_data, $context);
+
   // Log the request if specified.
   if ($payment_method['settings']['log']['request'] === 'request') {
     commerce_litle_log_request($request_data);
@@ -769,6 +896,7 @@ function commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, 
  * Echeck checkout form submit handler.
  */
 function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
+
   // If the customer specified payment using a card on file, attempt that now
   // and simply return the result.
   if (module_exists('commerce_cardonfile') && $payment_method['settings']['cardonfile'] &&
@@ -810,6 +938,9 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
   );
 
   $nvp['billToAddress'] = commerce_litle_format_bill_to_address($order_wrapper);
+  if (variable_get('commerce_litle_fraud', 0) && isset($pane_values['echeck']['session_id'])) {
+    $nvp = _commerce_litle_fraud_sale_request_item($nvp, $pane_values['echeck']['session_id']);
+  }
 
   $txn_type = COMMERCE_LITLE_CHECK_SALE;
 
@@ -827,16 +958,66 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
   commerce_payment_transaction_save($transaction);
   $nvp['id'] = substr($transaction->transaction_id, 0, 20);
 
+  // Allow modules to alter the values sent to Litle
+  $context = array(
+    'payment_method' => $payment_method,
+    'type' => 'echeck',
+  );
+
+  drupal_alter('commerce_litle_request', $nvp, $context);
+
   if ($payment_method['settings']['log']['request'] === 'request') {
     commerce_litle_log_request($nvp);
   }
 
   // Make the request.
   $sale_response = $init->echeckSaleRequest($nvp);
+  if (variable_get('commerce_litle_fraud', 0)) {
 
+    $order_id = XmlParser::getNode($sale_response, 'orderId');
+    $litle_txn_id = XmlParser::getNode($sale_response, 'litleTxnId');
+    $response_time = strtotime(XmlParser::getNode($sale_response, 'responseTime'));
+    $message = XmlParser::getNode($sale_response, 'message');
+    $avs_result = XmlParser::getNode($sale_response, 'avsResult');
+    $device_review_status = XmlParser::getNode($sale_response, 'deviceReviewStatus');
+    $device_reputation_score = XmlParser::getNode($sale_response, 'deviceReputationScore');
+
+    $data = array(
+      'order_id' => !empty($order_id) ? $order_id : NULL,
+      'litle_txn_id' => !empty($litle_txn_id) ? $litle_txn_id : NULL,
+      'response_time' => $response_time,
+      'message' => XmlParser::getNode($sale_response, 'message'),
+      'avs_result' => !empty($avs_result) ? $avs_result : NULL,
+      'device_review_status' => XmlParser::getNode($sale_response, 'deviceReviewStatus'),
+      'device_reputation_score' => !empty($device_reputation_score) ? $device_reputation_score : NULL,
+    );
+    drupal_write_record('commerce_litle_fraud', $data);
+  }
   // Log the response if specified.
   if ($payment_method['settings']['log']['response'] === 'response') {
     commerce_litle_log_response($sale_response);
+
+    if (variable_get('commerce_litle_fraud', 0)) {
+
+       $order_id = XmlParser::getNode($sale_response, 'orderId');
+       $litle_txn_id = XmlParser::getNode($sale_response, 'litleTxnId');
+       $response_time = strtotime(XmlParser::getNode($sale_response, 'responseTime'));
+       $message = XmlParser::getNode($sale_response, 'message');
+       $avs_result = XmlParser::getNode($sale_response, 'avsResult');
+       $device_review_status = XmlParser::getNode($sale_response, 'deviceReviewStatus');
+       $device_reputation_score = XmlParser::getNode($sale_response, 'deviceReputationScore');
+
+      $data = array(
+       'order_id' => !empty($order_id) ? $order_id : NULL,
+       'litle_txn_id' => !empty($litle_txn_id) ? $litle_txn_id : NULL,
+       'response_time' => $response_time,
+       'message' => XmlParser::getNode($sale_response, 'message'),
+       'avs_result' => !empty($avs_result) ? $avs_result : NULL,
+       'device_review_status' => XmlParser::getNode($sale_response, 'deviceReviewStatus'),
+       'device_reputation_score' => !empty($device_reputation_score) ? $device_reputation_score : NULL,
+      );
+      drupal_write_record('commerce_litle_fraud', $data);
+    }
   }
 
   // If we didn't get an approval response code...
@@ -1000,6 +1181,14 @@ function commerce_litle_echeck_vault_cardonfile_charge($payment_method, $card_da
   // Save the transaction information to get transaction id.
   commerce_payment_transaction_save($transaction);
   $request_data['id'] = substr($transaction->transaction_id, 0, 20);
+
+  // Allow modules to alter the values sent to Litle
+  $context = array(
+    'payment_method' => $payment_method,
+    'type' => 'echeck_vault',
+  );
+
+  drupal_alter('commerce_litle_request', $request_data, $context);
 
   // Log the request if specified.
   if ($payment_method['settings']['log']['request'] === 'request') {
@@ -1241,6 +1430,7 @@ function _commerce_litle_cc_card_type_to_litle($type) {
 }
 
 /**
+
  * Translates commerce transaction type constants to the Litle equivalent.
  *
  * Returns the transaction type string for Litle that corresponds to the
@@ -1593,3 +1783,95 @@ function commerce_litle_fundraiser_sustainers_recurring_success($donation) {
     }
   }
 }
+
+/* *
+ * Implements hook_settings_form
+ *
+ * Configuration form for Litle/Threatmetrix Advanced Fraud Protection
+ */
+function commerce_litle_fraud_settings_form() {
+
+  $form = array();
+
+  $form['fraud'] = array(
+    '#type' => 'fieldset',
+    '#title' => 'Advanced Fraud Protection',
+    '#description' => t('If you have provisioned the "ThreatMetrix TrustDefender Platform" support for the Litle Payment method, enable it here.'),
+    '#collapsible' => FALSE,
+  );
+
+  $form['fraud']['commerce_litle_fraud'] = array(
+    '#type' => 'checkbox',
+    '#title' => 'Enable Advanced Fraud Protection',
+    '#default_value' => variable_get('commerce_litle_fraud',''),
+    '#prefix' => '<br />',
+  );
+
+  $form['fraud']['commerce_litle_fraud_id_prefix'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Session ID prefix'),
+    '#description' => t('A 5-character prefix, supplied by your Litle Implementation Consultant. Do not include the "-"'),
+    '#default_value' => variable_get('commerce_litle_fraud_id_prefix', ''),
+    '#states' => array(
+      'required' => array(
+        ':input[name="commerce_litle_fraud"]' => array('checked' => TRUE),
+      ),
+    ),
+  );
+
+  $form['fraud']['commerce_litle_fraud_merchID'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Organization ID'),
+    '#default_value' => variable_get('commerce_litle_fraud_merchID', ''),
+    '#description' => t('Your Threat Metrix Organization ID'),
+    '#states' => array(
+      'required' => array(
+        ':input[name="commerce_litle_fraud"]' => array('checked' => TRUE),
+      ),
+    ),
+  );
+
+  $form['fraud']['commerce_litle_fraud_subdomain'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subdomain redirect'),
+    '#description' => t('Your server administrator can configure a subdomain which redirects to ThreatMetrix\'s server: "h.online-metrix.net". This step is optional; otherwise leave as is.'),
+    '#default_value' => variable_get('commerce_litle_fraud_subdomain', 'h.online-metrix.net'),
+  );
+
+  $form['fraud']['commerce_litle_fraud_dev_mode'] = array(
+    '#type' => 'checkbox',
+    '#title' => 'Enable Development mode',
+    '#default_value' => variable_get('commerce_litle_fraud_dev_mode', 0),
+    '#description' => t('Run Litle tests using the session ID string entered below.'),
+
+    '#prefix' => '<br />',
+  );
+
+  $form['fraud']['commerce_litle_fraud_dev_mode_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Dev Mode ID'),
+    '#description' => t('A session id string found in the Litle XML documentation. Do not include the prefix or hyphen, they are added automatically.'),
+    '#default_value' => variable_get('commerce_litle_fraud_dev_mode_id', ''),
+    '#states' => array(
+      'required' => array(
+        ':input[name="commerce_litle_fraud_dev_mode"]' => array('checked' => TRUE),
+      ),
+    ),
+  );
+
+
+  $form['#validate'][] = 'commerce_litle_fraud_settings_form_validate';
+  return system_settings_form($form);
+}
+
+function commerce_litle_fraud_settings_form_validate($form, &$form_state) {
+  if($form_state['values']['commerce_litle_fraud'] == 1) {
+    if ($form_state['values']['commerce_litle_fraud_id_prefix'] == '') {
+      form_set_error('commerce_litle_fraud_id_prefix', t('Session ID prefix is a required field'));
+    }
+    if ($form_state['values']['commerce_litle_fraud_merchID'] == '') {
+      form_set_error('commerce_litle_fraud_merchID', t('Merchant ID is a required_field'));
+    }
+  }
+}
+

@@ -168,6 +168,7 @@ function market_source_form_alter(&$form, &$form_state, $form_id) {
             $select_options[$campaign_id] = $campaign['name'] . ' (' . $campaign_id . ')';
           }
           if (is_array($campaigns)) {
+            asort($select_options);
             $form['value']['#type'] = 'select';
             $form['value']['#options'] = $select_options;
           }
