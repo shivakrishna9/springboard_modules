@@ -3345,7 +3345,7 @@ function springboard_views_views_default_views() {
   /**
    * sbv_sf_batch_items
    */
-    $view = new view();
+  $view = new view();
   $view->name = 'sbv_sf_batch_items';
   $view->description = '';
   $view->tag = 'salesforce log';
@@ -3374,16 +3374,16 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['pager']['options']['quantity'] = '9';
   $handler->display->display_options['style_plugin'] = 'table';
   $handler->display->display_options['style_options']['columns'] = array(
-    'lid' => 'lid',
+    'lid' => 'item_id',
     'item_id' => 'item_id',
     'bid' => 'bid',
     'start' => 'start',
     'status' => 'status',
+    'error_code' => 'error_code',
     'message' => 'message',
+    'sobject' => 'sobject',
     'sfid' => 'sfid',
     'drupal_id' => 'drupal_id',
-    'module' => 'module',
-    'delta' => 'delta',
     'queue' => 'queue',
     'retries' => 'retries',
   );
@@ -3424,9 +3424,21 @@ function springboard_views_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
+    'error_code' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
     'message' => array(
       'sortable' => 0,
       'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'sobject' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -3439,20 +3451,6 @@ function springboard_views_views_default_views() {
       'empty_column' => 0,
     ),
     'drupal_id' => array(
-      'sortable' => 1,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'module' => array(
-      'sortable' => 1,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'delta' => array(
       'sortable' => 1,
       'default_sort_order' => 'asc',
       'align' => '',
@@ -3483,18 +3481,11 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['relationships']['item_id']['id'] = 'item_id';
   $handler->display->display_options['relationships']['item_id']['table'] = 'salesforce_log_item';
   $handler->display->display_options['relationships']['item_id']['field'] = 'item_id';
-  /* Field: Salesforce item log: Log Item ID */
-  $handler->display->display_options['fields']['lid']['id'] = 'lid';
-  $handler->display->display_options['fields']['lid']['table'] = 'salesforce_log_item';
-  $handler->display->display_options['fields']['lid']['field'] = 'lid';
-  $handler->display->display_options['fields']['lid']['label'] = 'Item #';
-  $handler->display->display_options['fields']['lid']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['lid']['separator'] = '';
   /* Field: Salesforce item log: Item Queue ID */
   $handler->display->display_options['fields']['item_id']['id'] = 'item_id';
   $handler->display->display_options['fields']['item_id']['table'] = 'salesforce_log_item';
   $handler->display->display_options['fields']['item_id']['field'] = 'item_id';
-  $handler->display->display_options['fields']['item_id']['label'] = 'Queue ID';
+  $handler->display->display_options['fields']['item_id']['label'] = 'Item #';
   $handler->display->display_options['fields']['item_id']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['item_id']['separator'] = '';
   /* Field: Salesforce item log: Item Batch ID */
@@ -3549,12 +3540,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['drupal_id']['label'] = 'SB Id';
   $handler->display->display_options['fields']['drupal_id']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['drupal_id']['separator'] = '';
-  /* Field: Salesforce item log: Delta */
-  $handler->display->display_options['fields']['delta']['id'] = 'delta';
-  $handler->display->display_options['fields']['delta']['table'] = 'salesforce_log_item';
-  $handler->display->display_options['fields']['delta']['field'] = 'delta';
-  $handler->display->display_options['fields']['delta']['label'] = 'SB Object';
-  $handler->display->display_options['fields']['delta']['element_label_colon'] = FALSE;
   /* Field: Salesforce queue: Queue */
   $handler->display->display_options['fields']['queue']['id'] = 'queue';
   $handler->display->display_options['fields']['queue']['table'] = 'salesforce_queue';
@@ -3680,6 +3665,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['menu']['name'] = 'management';
   $handler->display->display_options['menu']['context'] = 0;
   $handler->display->display_options['menu']['context_only_inline'] = 0;
+  
   $views[$view->name] = $view;
   
   /**
@@ -4141,6 +4127,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['item_id']['id'] = 'item_id';
   $handler->display->display_options['fields']['item_id']['table'] = 'salesforce_queue';
   $handler->display->display_options['fields']['item_id']['field'] = 'item_id';
+  $handler->display->display_options['fields']['item_id']['label'] = 'Item #';
   $handler->display->display_options['fields']['item_id']['separator'] = '';
   /* Field: Salesforce queue: Module */
   $handler->display->display_options['fields']['module']['id'] = 'module';
@@ -4308,6 +4295,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['menu']['name'] = 'management';
   $handler->display->display_options['menu']['context'] = 0;
   $handler->display->display_options['menu']['context_only_inline'] = 0;
+  
   $views[$view->name] = $view;
 
 /**
