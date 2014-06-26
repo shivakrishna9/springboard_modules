@@ -380,11 +380,11 @@ function commerce_authnet_form_rules_ui_edit_element_alter(&$form, &$form_state)
     $id = $form['parameter']['payment_method']['settings']['payment_method']['method_id']['#value'];
     $is_com = isset($form['parameter']['commerce_order']) ? 1 : 0;
     if ($id == 'authnet_aim' && $is_com) {
-      $rule = rules_config_load(arg(5));
+      $rule = rules_config_load(arg(5));  //@TODO: is there a better way to get the rule name?
       $actions = $rule->actions();
       if (!empty($actions)) {
         foreach ($actions as $action) {
-          if($action->settings['payment_method']['method_id'] == 'authnet_aim' && $action->elementId() == arg(7)) {
+          if($action->settings['payment_method']['method_id'] == 'authnet_aim' && $action->elementId() == arg(7)) {  //@TODO: is there a better way to get the action ID?
            $settings[] = $action->settings;
           }
         }
@@ -454,4 +454,216 @@ function _commerce_authnet_extra_fields() {
     'x_ship_to_country',    // Up to 60 characters (no symbols)
   );
   return $extra_fields;
+}
+
+/**
+ * Definition of all Authorize.net response fields available for mapping.
+ * 
+ * Derived from http://www.authorize.net/support/merchant/wwhelp/wwhimpl/common/html/wwhelp.htm#context=Merchant_Integration_Guide&file=4_TransResponse.html
+ * Note that the actual payloads we get from AIM contain more fields than documented by Authorize.net,
+ * and the credit card fields' numeric indeces don't match the documentation.
+ */
+function _commerce_authnet_response_fields() {
+  return array(
+    'response_code' => array(
+      'index' => 0,
+      'name' => t('Response Code'),
+      'description' => t('The overall status of the transaction.'),
+    ),
+    'response_subcode' => array(
+      'index' => 1,
+      'name' => t('Response Subcode'),
+      'description' => t('A code used by the payment gateway for internal transaction tracking. Note: This field applies to CNP AIM only, and is obsolete.'),
+    ),
+    'response_reason_code' => array(
+      'index' => 2,
+      'name' => t('Response Reason Code'),
+      'description' => t('A code that represents more details about the result of the transaction.'),
+    ),
+    'response_reason_text' => array(
+      'index' => 3,
+      'name' => t('Response Reason Text'),
+      'description' => t('A brief description of the result, which corresponds with the response reason code.'),
+    ),
+    'authorization_code' => array(
+      'index' => 4,
+      'name' => t('Authorization Code'),
+      'description' => t('The authorization or approval code.'),
+    ),
+    'avs_reponse' => array(
+      'index' => 5,
+      'name' => t('AVS Response'),
+      'description' => t('The Address Verification Service (AVS) response code.'),
+    ),
+    'transaction_id' => array(
+      'index' => 6,
+      'name' => t('Transaction ID'),
+      'description' => t('The payment gateway assigned identification number for the transaction.'),
+    ),
+    'invoice_number' => array(
+      'index' => 7,
+      'name' => t('Invoice Number'),
+      'description' => t('The merchant assigned invoice number for the transaction.'),
+    ),
+    'description' => array(
+      'index' => 8,
+      'name' => t('Description'),
+      'description' => t('The transaction description.'),
+    ),
+    'amount' => array(
+      'index' => 9,
+      'name' => t('Amount'),
+      'description' => t('The amount of the transaction.'),
+    ),
+    'method' => array(
+      'index' => 10,
+      'name' => t('Method'),
+      'description' => t('The payment method.'),
+    ),
+    'transaction_type' => array(
+      'index' => 11,
+      'name' => t('Transaction Type'),
+      'description' => t('The type of credit card transaction.'),
+    ),
+    'customer_id' => array(
+      'index' => 12,
+      'name' => t('Customer ID'),
+      'description' => t('The merchant assigned customer ID.'),
+    ),
+    'first_name' => array(
+      'index' => 13,
+      'name' => t('First Name'),
+      'description' => t("The first name associated with the customer’s billing address."),
+    ),
+    'last_name' => array(
+      'index' => 14,
+      'name' => t('Last Name'),
+      'description' => t("The last name associated with the customer’s billing address."),
+    ),
+    'company' => array(
+      'index' => 15,
+      'name' => t('Company'),
+      'description' => t("The company associated with the customer’s billing address."),
+    ),
+    'address' => array(
+      'index' => 16,
+      'name' => t('Address'),
+      'description' => t("The customer’s billing address."),
+    ),
+    'city' => array(
+      'index' => 17,
+      'name' => t('City'),
+      'description' => t("The city of the customer’s billing address."),
+    ),
+    'state' => array(
+      'index' => 18,
+      'name' => t('State'),
+      'description' => t("The state of the customer’s billing address."),
+    ),
+    'zip' => array(
+      'index' => 19,
+      'name' => t('ZIP Code'),
+      'description' => t("The ZIP code of the customer’s billing address."),
+    ),
+    'country' => array(
+      'index' => 20,
+      'name' => t('Country'),
+      'description' => t("The country of the customer’s billing address."),
+    ),
+    'phone' => array(
+      'index' => 21,
+      'name' => t('Phone'),
+      'description' => t("The phone number associated with the customer’s billing address."),
+    ),
+    'fax' => array(
+      'index' => 22,
+      'name' => t('Fax'),
+      'description' => t("The fax number associated with the customer’s billing address."),
+    ),
+    'email' => array(
+      'index' => 23,
+      'name' => t('Email Address'),
+      'description' => t("The customer’s valid email address."),
+    ),
+    'ship_first_name' => array(
+      'index' => 24,
+      'name' => t('Ship To First Name'),
+      'description' => t("The first name associated with the customer’s shipping address."),
+    ),
+    'ship_last_name' => array(
+      'index' => 25,
+      'name' => t('Ship To Last Name'),
+      'description' => t("The last name associated with the customer’s shipping address."),
+    ),
+    'ship_company' => array(
+      'index' => 26,
+      'name' => t('Ship To Company'),
+      'description' => t("The company associated with the customer’s shipping address."),
+    ),
+    'ship_address' => array(
+      'index' => 27,
+      'name' => t('Ship To Address'),
+      'description' => t("The customer’s shipping address."),
+    ),
+    'ship_city' => array(
+      'index' => 28,
+      'name' => t('Ship To City'),
+      'description' => t("The city of the customer’s shipping address."),
+    ),
+    'ship_state' => array(
+      'index' => 29,
+      'name' => t('Ship To State'),
+      'description' => t("The state of the customer’s shipping address."),
+    ),
+    'ship_zip' => array(
+      'index' => 30,
+      'name' => t('Ship To ZIP Code'),
+      'description' => t("The ZIP code of the customer’s shipping address."),
+    ),
+    'ship_country' => array(
+      'index' => 31,
+      'name' => t('Ship To Country'),
+      'description' => t("The country of the customer’s shipping address."),
+    ),
+    'tax' => array(
+      'index' => 32,
+      'name' => t('Tax'),
+      'description' => t('The tax amount charged.'),
+    ),
+    'duty' => array(
+      'index' => 33,
+      'name' => t('Duty'),
+      'description' => t('The duty amount charged.'),
+    ),
+    'freight' => array(
+      'index' => 34,
+      'name' => t('Freight'),
+      'description' => t('The freight amount charged.'),
+    ),
+    'tax_exempt' => array(
+      'index' => 35,
+      'name' => t('Tax Exempt'),
+      'description' => t('The tax exempt status.'),
+    ),
+    'purchase_order_number' => array(
+      'index' => 36,
+      'name' => t('Purchase Order Number'),
+      'description' => t('The merchant assigned purchase order number.'),
+    ),
+    'md5_hash' => array(
+      'index' => 37,
+      'name' => t('MD5 Hash'),
+      'description' => t('The payment gateway generated MD5 hash value that can be used to authenticate the transaction response.'),
+    ),
+    'account_number' => array(
+      'index' => 50,
+      'name' => t('Account Number'),
+      'description' => t('Last 4 digits of the card provided.'),
+    ),
+    'card_type' => array(
+      'index' => 51,
+      'name' => t('Card Type'),
+      'description' => t('Visa, MasterCard, American Express, Discover, Diners Club, EnRoute, JCB.'),
+    ),
+  );
 }
