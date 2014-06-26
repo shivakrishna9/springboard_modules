@@ -137,11 +137,10 @@ function springboard_p2p_admin_settings() {
   );
 
   if (module_exists('redirect')) {
-    $form['basic']['base_path_personal_campaigns']['#options']['add_redirects'] = t('Update existing paths with the new base path and create redirects from the old paths');
+    $form['basic']['base_path_personal_campaigns']['#options']['add_redirects'] = t('Update existing paths with the new base path and add an automatic redirect. This option will cause all requests to the old path to automatically redirect to the new path.');
   }
   else {
-    $form['basic']['base_path_personal_campaigns']['#options']['update_paths'] = t('Update existing paths with the new base path. Be aware that his does not create redirects so the old paths will no longer be valid.');
-    $form['basic']['base_path_personal_campaigns']['#description'] .= ' ' . t('To add redirects for the old paths, install the Redirect module first and then the option to add redirects will become available.');
+    $form['basic']['base_path_personal_campaigns']['#options']['update_paths'] = t('Update existing paths with the new base path. <span class="error"><strong>Warning:</strong> by changing the base path, existing URLs will not redirect and will not be accessible (404 pages). If you would like to create redirects, you must first enable the redirect module on your site.</span>');
   }
 
   $form['help_message'] = array(
