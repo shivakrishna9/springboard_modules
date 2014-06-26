@@ -283,8 +283,8 @@ function springboard_admin_init() {
     /**
      * Other paths that don't match a pattern.
      */
-    elseif (preg_match('|^/admin/reports/salesforce/donations$|', $path)) {
-      $goto_path = 'springboard/reports/donations';
+    elseif (preg_match('|^/admin/reports/salesforce/donations?|', $path, $matches)) {
+      $goto_path = 'springboard/reports/donations' . $matches[1];
     }
     elseif (preg_match('|^/admin/config/content/webform_goals((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
       if (preg_match('|^/admin/config/content/webform_goals$|', $path)) {
