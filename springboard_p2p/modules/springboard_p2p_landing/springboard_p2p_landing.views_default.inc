@@ -709,6 +709,12 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['fields']['sbp_last_name']['element_label_type'] = '0';
   $handler->display->display_options['fields']['sbp_last_name']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['sbp_last_name']['element_wrapper_type'] = '0';
+  /* Field: User: E-mail */
+  $handler->display->display_options['fields']['mail']['id'] = 'mail';
+  $handler->display->display_options['fields']['mail']['table'] = 'users';
+  $handler->display->display_options['fields']['mail']['field'] = 'mail';
+  $handler->display->display_options['fields']['mail']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['mail']['exclude'] = TRUE;
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
   $handler->display->display_options['defaults']['filters'] = FALSE;
   /* Filter criterion: Content: Published */
@@ -746,6 +752,7 @@ function springboard_p2p_landing_views_default_views() {
     'title' => 'title',
     'sbp_first_name' => 'sbp_first_name',
     'sbp_last_name' => 'sbp_last_name',
+    'mail' => 'mail',
   );
   $handler->display->display_options['pane_category']['name'] = 'Springboard P2P';
   $handler->display->display_options['pane_category']['weight'] = '0';
