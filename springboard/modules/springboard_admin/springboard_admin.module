@@ -63,6 +63,12 @@ function springboard_admin_custom_theme() {
     return;
   }
   
+  // If the page is using a page wrapper, do nothing.
+  $wrapper = page_wrappers_check();
+  if(!empty($wrapper['wrapper'])) {
+    return;
+  }
+  
   // If the path begins with /springboard, we know the theme applies
   if (preg_match("|^\/springboard.*?|", request_uri())) {
     return 'springboard_backend';
