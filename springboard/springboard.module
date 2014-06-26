@@ -128,8 +128,8 @@ function springboard_theme($existing, $type, $theme, $path) {
  */
 function springboard_admin_dashboard() {
   // Add our CSS for display.
-  drupal_add_css(drupal_get_path('module', 'springboard') . '/css/springboard.css', 'module');
-  $content = '<div class="springboard-dashboard dashboard">';
+
+  $content = '<div class="springboard-dashboard dashboard row-fluid">';
   // Load the enabled panes for the dashboard.
   $panes = module_invoke_all('springboard_dashboard_panes');
   drupal_alter('springboard_dashboard_panes', $panes);
@@ -153,9 +153,9 @@ function springboard_admin_dashboard() {
       }
     }
   }
-  $content .= '<div class="springboard-column sb-col-left">' . $column_left . "</div>";
-  $content .= '<div class="springboard-column sb-col-right">' . $column_right . "</div>";
-  $content .= '<div class="springboard-column sb-col-bottom">' . $column_bottom . "</div>";
+  $content .= '<div class="springboard-col span8">' . $column_left . "</div>";
+  $content .= '<div class="springboard-col span4">' . $column_right . "</div>";
+  $content .= '<div class="springboard-col sb-col-bottom span12">' . $column_bottom . "</div>";
   $content .= '</div>';
   return $content;
 }
