@@ -12,11 +12,12 @@ function springboard_p2p_rules_condition_info() {
   return array(
     'springboard_p2p_condition_passed_in_campaign' => array(
       'label' => t('Passed in P2P campaign'),
+      'named parameter' => TRUE,
       'parameter' => array(
         'campaign' => array(
           'label' => t('Campaign'),
           'type' => 'node',
-          'bundle' => 'p2p_campaign',
+          'bundles' => array('p2p_campaign'),
           'optional' => TRUE,
           'default value' => NULL,
           'allow null' => TRUE,
@@ -58,7 +59,10 @@ function springboard_p2p_rules_campaign_options_list() {
  * @return bool
  *   TRUE if the condition passes.
  */
-function springboard_p2p_condition_passed_in_campaign($campaign, $value) {
+function springboard_p2p_condition_passed_in_campaign(array $params) {
+  $campaign = $params['campaign'];
+  $value = $params['value'];
+
   if (is_null($campaign)) {
     if ($value == 'not provided') {
       return TRUE;
