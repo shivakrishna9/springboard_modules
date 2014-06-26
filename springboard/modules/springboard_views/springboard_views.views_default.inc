@@ -1499,7 +1499,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['sbstats_total_transactions']['field'] = 'sbstats_total_transactions';
   $handler->display->display_options['fields']['sbstats_total_transactions']['label'] = '$ Raised';
   $handler->display->display_options['fields']['sbstats_total_transactions']['alter']['alter_text'] = TRUE;
-  $handler->display->display_options['fields']['sbstats_total_transactions']['alter']['text'] = '$ [sbstats_total_transactions]';
+  $handler->display->display_options['fields']['sbstats_total_transactions']['alter']['text'] = '<a href="/springboard/reports/donations/[nid]">$[sbstats_total_transactions]</a>';
   $handler->display->display_options['fields']['sbstats_total_transactions']['settings'] = array(
     'thousand_separator' => ',',
     'decimal_separator' => '.',
@@ -1570,7 +1570,7 @@ function springboard_views_views_default_views() {
   );
   $handler->display->display_options['block_description'] = 'Short Springboard Recent Donation Forms by Type';
   $views[$view->name] = $view;
-  
+
   /**
    * View 'sbv_donations'
    */
@@ -1978,7 +1978,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['defaults']['arguments'] = FALSE;
   $handler->display->display_options['path'] = 'admin/reports/salesforce/donations';
 
-  /* Display: Data Export Placeholder */
+  /* Display: Data export */
   $handler = $view->new_display('views_data_export', 'Data export', 'views_data_export_1');
   $handler->display->display_options['defaults']['css_class'] = FALSE;
   $handler->display->display_options['css_class'] = 'views-data-table';
@@ -2085,14 +2085,27 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['path'] = 'admin/reports/salesforce/donations/export';
   $handler->display->display_options['displays'] = array(
     'page' => 'page',
+    'page_1' => 'page_1',
     'default' => 0,
-    'page_1' => 0,
   );
   $handler->display->display_options['use_batch'] = 'batch';
   $handler->display->display_options['segment_size'] = '100';
 
   /* Display: Filtered Page */
   $handler = $view->new_display('page', 'Filtered Page', 'page_1');
+  $handler->display->display_options['defaults']['css_class'] = FALSE;
+  $handler->display->display_options['css_class'] = 'views-data-table';
+  $handler->display->display_options['defaults']['use_ajax'] = FALSE;
+  $handler->display->display_options['use_ajax'] = TRUE;
+  $handler->display->display_options['defaults']['hide_admin_links'] = FALSE;
+  $handler->display->display_options['defaults']['empty'] = FALSE;
+  /* No results behavior: Global: Text area */
+  $handler->display->display_options['empty']['area']['id'] = 'area';
+  $handler->display->display_options['empty']['area']['table'] = 'views';
+  $handler->display->display_options['empty']['area']['field'] = 'area';
+  $handler->display->display_options['empty']['area']['empty'] = TRUE;
+  $handler->display->display_options['empty']['area']['content'] = '<h2>Your search yielded no results</h2>';
+  $handler->display->display_options['empty']['area']['format'] = 'full_html';
   $handler->display->display_options['defaults']['fields'] = FALSE;
   /* Field: Commerce Order: Order ID */
   $handler->display->display_options['fields']['order_id']['id'] = 'order_id';
@@ -2117,6 +2130,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['sbp_first_name']['table'] = 'field_data_sbp_first_name';
   $handler->display->display_options['fields']['sbp_first_name']['field'] = 'sbp_first_name';
   $handler->display->display_options['fields']['sbp_first_name']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_first_name']['label'] = 'Name';
   /* Field: User: Last name */
   $handler->display->display_options['fields']['sbp_last_name']['id'] = 'sbp_last_name';
   $handler->display->display_options['fields']['sbp_last_name']['table'] = 'field_data_sbp_last_name';
@@ -2129,6 +2143,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['mail']['table'] = 'users';
   $handler->display->display_options['fields']['mail']['field'] = 'mail';
   $handler->display->display_options['fields']['mail']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['mail']['link_to_user'] = 'user';
   /* Field: Content: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
   $handler->display->display_options['fields']['title']['table'] = 'node';
@@ -2142,7 +2157,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['field_fundraiser_internal_name']['relationship'] = 'nid';
   $handler->display->display_options['fields']['field_fundraiser_internal_name']['label'] = 'Form';
   $handler->display->display_options['fields']['field_fundraiser_internal_name']['alter']['alter_text'] = TRUE;
-  $handler->display->display_options['fields']['field_fundraiser_internal_name']['alter']['text'] = '[title] ([field_fundraiser_internal_name-value])';
+  $handler->display->display_options['fields']['field_fundraiser_internal_name']['alter']['text'] = '<span class="form-name-title truncate">[title]</span> <span class="form-internal-name">([field_fundraiser_internal_name-value])</span>';
   /* Field: Commerce Order: Order status */
   $handler->display->display_options['fields']['status']['id'] = 'status';
   $handler->display->display_options['fields']['status']['table'] = 'commerce_order';
@@ -2155,13 +2170,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['view_order']['relationship'] = 'did';
   $handler->display->display_options['fields']['view_order']['label'] = 'Actions';
   $handler->display->display_options['fields']['view_order']['text'] = 'View order';
-  /* Field: Array: View link */
-  $handler->display->display_options['fields']['view_submission']['id'] = 'view_submission';
-  $handler->display->display_options['fields']['view_submission']['table'] = 'webform_submissions';
-  $handler->display->display_options['fields']['view_submission']['field'] = 'view_submission';
-  $handler->display->display_options['fields']['view_submission']['relationship'] = 'sid_2';
-  $handler->display->display_options['fields']['view_submission']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['view_submission']['text'] = 'View submission';
   /* Field: Commerce Payment Transaction: Transaction ID */
   $handler->display->display_options['fields']['transaction_id']['id'] = 'transaction_id';
   $handler->display->display_options['fields']['transaction_id']['table'] = 'commerce_payment_transaction';
@@ -2179,7 +2187,8 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['nid']['id'] = 'nid';
   $handler->display->display_options['fields']['nid']['table'] = 'node';
   $handler->display->display_options['fields']['nid']['field'] = 'nid';
-  $handler->display->display_options['fields']['nid']['relationship'] = 'nid';
+  $handler->display->display_options['fields']['nid']['relationship'] = 'sid_2';
+  $handler->display->display_options['fields']['nid']['exclude'] = TRUE;
   $handler->display->display_options['defaults']['arguments'] = FALSE;
   /* Contextual filter: Content: Nid */
   $handler->display->display_options['arguments']['nid']['id'] = 'nid';
