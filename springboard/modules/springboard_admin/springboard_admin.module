@@ -1050,7 +1050,7 @@ function springboard_admin_menu_find_link($sbadmin_path, $plid = -1) {
 function springboard_admin_menu_node_add_link($type) {
   // Get menu item definitions for the Donations and Forms parent links.
   $forms_menu_item = springboard_admin_menu_find_link('admin/springboard/forms/all', 0);
-  $donations_menu_item = springboard_admin_menu_find_link('admin/springboard/forms/donations', 0);
+  $donations_menu_item = springboard_admin_menu_find_link('admin/springboard/donation-forms/all', 0);
   // Set up vars we need.
   $menu_link = array();
   $mlid = FALSE;
