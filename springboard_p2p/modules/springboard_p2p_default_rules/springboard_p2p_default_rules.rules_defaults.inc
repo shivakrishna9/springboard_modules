@@ -14,7 +14,10 @@ function springboard_p2p_default_rules_default_rules_configuration() {
       "PLUGIN" : "reaction rule",
       "TAGS" : [ "Springboard P2P" ],
       "REQUIRES" : [ "rules", "springboard_p2p" ],
-      "ON" : [ "springboard_p2p_user_requests_approval" ],
+      "ON" : [
+        "springboard_p2p_user_requests_approval",
+        "springboard_p2p_user_register_private_campaign"
+      ],
       "DO" : [
         { "mail" : {
             "to" : [ "site:mail" ],
