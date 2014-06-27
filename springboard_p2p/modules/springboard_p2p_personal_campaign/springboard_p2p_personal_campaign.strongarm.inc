@@ -13,6 +13,13 @@ function springboard_p2p_personal_campaign_strongarm() {
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
+  $strongarm->name = 'additional_settings__active_tab_p2p_personal_campaign';
+  $strongarm->value = 'edit-submission';
+  $export['additional_settings__active_tab_p2p_personal_campaign'] = $strongarm;
+
+  $strongarm = new stdClass();
+  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
+  $strongarm->api_version = 1;
   $strongarm->name = 'field_bundle_settings_node__p2p_personal_campaign';
   $strongarm->value = array(
     'view_modes' => array(
@@ -51,6 +58,13 @@ function springboard_p2p_personal_campaign_strongarm() {
     ),
   );
   $export['field_bundle_settings_node__p2p_personal_campaign'] = $strongarm;
+
+  $strongarm = new stdClass();
+  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
+  $strongarm->api_version = 1;
+  $strongarm->name = 'fundraiser_p2p_personal_campaign';
+  $strongarm->value = 0;
+  $export['fundraiser_p2p_personal_campaign'] = $strongarm;
 
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
