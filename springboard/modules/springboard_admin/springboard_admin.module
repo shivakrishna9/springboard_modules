@@ -53,8 +53,10 @@ function springboard_admin_admin_menu_output_alter(&$content) {
  * administration pages.
  */
 function springboard_admin_custom_theme() {
-  // If the springboard_backend theme is disabled, do nothing.
-  if (variable_get('springboard_theme_enable', 1) == 0) {
+  // If the springboard_backend theme is disabled or the current user does not 
+  // get the Springboard UX, do nothing.
+  global $user;
+  if (variable_get('springboard_theme_enable', 1) == 0 || !springboard_admin_user_gets_sbux($user)) {
     return;
   }
   // If the springboard_backend theme does not exist, we can do nothing.
