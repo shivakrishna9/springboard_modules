@@ -20,7 +20,9 @@ function springboard_p2p_rules_admin_page() {
 
   $conditions = array(
     'event' => array(
-      'springboard_p2p_user_register',
+      'springboard_p2p_user_register_no_campaign',
+      'springboard_p2p_user_register_private_campaign',
+      'springboard_p2p_user_register_public_campaign',
       'springboard_p2p_user_requests_approval',
       'springboard_p2p_user_is_approved',
       'springboard_p2p_user_is_rejected',

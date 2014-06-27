@@ -49,9 +49,6 @@ function springboard_p2p_default_rules_default_rules_configuration() {
       "TAGS" : [ "Springboard P2P" ],
       "REQUIRES" : [ "rules", "springboard_p2p" ],
       "ON" : [ "springboard_p2p_user_requests_approval" ],
-      "IF" : [
-        { "data_is" : { "data" : [ "account-is-registering-for-p2p" ], "value" : 0 } }
-      ],
       "DO" : [
         { "mail" : {
             "to" : [ "account:mail" ],
@@ -101,11 +98,8 @@ function springboard_p2p_default_rules_default_rules_configuration() {
       "LABEL" : "Send user email about new P2P registration (no campaign)",
       "PLUGIN" : "reaction rule",
       "TAGS" : [ "Springboard P2P" ],
-      "REQUIRES" : [ "springboard_p2p", "rules" ],
-      "ON" : [ "springboard_p2p_user_register" ],
-      "IF" : [
-        { "springboard_p2p_condition_passed_in_campaign" : { "campaign" : [ "campaign" ], "value" : "not provided" } }
-      ],
+      "REQUIRES" : [ "rules", "springboard_p2p" ],
+      "ON" : [ "springboard_p2p_user_register_no_campaign" ],
       "DO" : [
         { "mail" : {
             "to" : [ "account:mail" ],
@@ -121,11 +115,8 @@ function springboard_p2p_default_rules_default_rules_configuration() {
       "LABEL" : "Send user email about new P2P registration (private campaign)",
       "PLUGIN" : "reaction rule",
       "TAGS" : [ "Springboard P2P" ],
-      "REQUIRES" : [ "springboard_p2p", "rules" ],
-      "ON" : [ "springboard_p2p_user_register" ],
-      "IF" : [
-        { "springboard_p2p_condition_passed_in_campaign" : { "campaign" : [ "campaign" ], "value" : "private" } }
-      ],
+      "REQUIRES" : [ "rules", "springboard_p2p" ],
+      "ON" : [ "springboard_p2p_user_register_private_campaign" ],
       "DO" : [
         { "mail" : {
             "to" : [ "account:mail" ],
@@ -141,11 +132,8 @@ function springboard_p2p_default_rules_default_rules_configuration() {
       "LABEL" : "Send user email about new P2P registration (public campaign)",
       "PLUGIN" : "reaction rule",
       "TAGS" : [ "Springboard P2P" ],
-      "REQUIRES" : [ "springboard_p2p", "rules" ],
-      "ON" : [ "springboard_p2p_user_register" ],
-      "IF" : [
-        { "springboard_p2p_condition_passed_in_campaign" : { "campaign" : [ "campaign" ], "value" : "public" } }
-      ],
+      "REQUIRES" : [ "rules", "springboard_p2p" ],
+      "ON" : [ "springboard_p2p_user_register_public_campaign" ],
       "DO" : [
         { "mail" : {
             "to" : [ "account:mail" ],

@@ -1357,8 +1357,13 @@ function springboard_p2p_set_redirect($form, &$form_state) {
 
         $account = user_load($uid);
 
-        $event = new SpringboardP2pEvents();
-        $event->userRequestsApprovalForPrivateCampaign($account, $campaign, $registering_for_p2p);
+        // Only trigger this event when the user is requesting approval
+        // when not registering for p2p.
+        if (!$registering_for_p2p) {
+          $event = new SpringboardP2pEvents();
+          $event->userRequestsApprovalForPrivateCampaign($account, $campaign);
+        }
+
       }
       else {
         $approval->approve();

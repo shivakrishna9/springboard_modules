@@ -16,42 +16,49 @@ class SpringboardP2pEvents {
   public function userRegistersForP2P($account, $campaign = NULL) {
     springboard_p2p_register_user_for_p2p($account->uid);
 
-    $dashboard_url = $this->dashboardUrl($account->uid);
-    $create_personal_campaign_url = $dashboard_url;
-
-    if (!is_null($campaign) && isset($campaign->nid)) {
-      $create_personal_campaign_url = $this->createUrl($campaign->nid);
-    }
-
-    rules_invoke_event(
-      'springboard_p2p_user_register',
-      $account,
-      $campaign,
-      $create_personal_campaign_url,
-      $dashboard_url
+    $args = array(
+      'account' => $account,
+      'dashboard_url' => $this->dashboardUrl($account->uid),
     );
 
+    if (is_null($campaign)) {
+      $event = 'springboard_p2p_user_register_no_campaign';
+    }
+    else {
+      $args['campaign'] = $campaign;
+      if (springboard_p2p_campaign_is_private($campaign)) {
+        $event = 'springboard_p2p_user_register_private_campaign';
+      }
+      else {
+        $event = 'springboard_p2p_user_register_public_campaign';
+        $args['create_personal_campaign_url'] = $this->createUrl($campaign->nid);
+      }
+    }
+
+    rules_invoke_event_by_args($event, $args);
   }
 
   /**
    * Gets called when the user requests approval for a private campaign.
+   *
+   * This only gets called when the user is not also registering for p2p in
+   * the same step.
    *
    * @param object $account
    *   User requesting approval.
    * @param object $campaign
    *   The private campaign node.
    */
-  public function userRequestsApprovalForPrivateCampaign($account, $campaign, $registering_for_p2p = FALSE) {
+  public function userRequestsApprovalForPrivateCampaign($account, $campaign) {
 
-    rules_invoke_event(
-      'springboard_p2p_user_requests_approval',
-      $account,
-      $campaign,
-      $this->createUrl($campaign->nid),
-      $this->dashboardUrl($account->uid),
-      $registering_for_p2p
+    $event = 'springboard_p2p_user_requests_approval';
+    $args = array(
+      'account' => $account,
+      'dashboard_url' => $this->dashboardUrl($account->uid),
+      'campaign' => $campaign,
     );
 
+    rules_invoke_event_by_args($event, $args);
   }
 
   /**
@@ -64,14 +71,15 @@ class SpringboardP2pEvents {
    */
   public function userIsApproved($account, $campaign) {
 
-    rules_invoke_event(
-      'springboard_p2p_user_is_approved',
-      $account,
-      $campaign,
-      $this->createUrl($campaign->nid),
-      $this->dashboardUrl($account->uid)
+    $event = 'springboard_p2p_user_is_approved';
+    $args = array(
+      'account' => $account,
+      'dashboard_url' => $this->dashboardUrl($account->uid),
+      'campaign' => $campaign,
+      'create_personal_campaign_url' => $this->createUrl($campaign->nid),
     );
 
+    rules_invoke_event_by_args($event, $args);
   }
 
   /**
@@ -83,15 +91,14 @@ class SpringboardP2pEvents {
    *   The private campaign node.
    */
   public function userIsRejected($account, $campaign) {
-
-    rules_invoke_event(
-      'springboard_p2p_user_is_rejected',
-      $account,
-      $campaign,
-      $this->createUrl($campaign->nid),
-      $this->dashboardUrl($account->uid)
+    $event = 'springboard_p2p_user_is_rejected';
+    $args = array(
+      'account' => $account,
+      'dashboard_url' => $this->dashboardUrl($account->uid),
+      'campaign' => $campaign,
     );
 
+    rules_invoke_event_by_args($event, $args);
   }
 
   /**
@@ -104,6 +111,7 @@ class SpringboardP2pEvents {
    */
   public function userRequestsPasswordReset($account, $campaign = NULL) {
 
+    // Using the cid so we can add it to the reset url.
     if (!is_null($campaign) && isset($campaign->nid)) {
       $cid = $campaign->nid;
     }
@@ -111,12 +119,12 @@ class SpringboardP2pEvents {
       $cid = NULL;
     }
 
-    rules_invoke_event(
-      'springboard_p2p_user_requests_password_reset',
-      $account,
-      $campaign,
-      $this->resetUrl($account, $cid)
+    $event = 'springboard_p2p_user_requests_password_reset';
+    $args = array(
+      'account' => $account,
+      'reset_url' => $this->resetUrl($account, $cid),
     );
+    rules_invoke_event_by_args($event, $args);
 
     $language = !empty($account->language) ? $account->language : 'und';
 
