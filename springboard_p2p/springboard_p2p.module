@@ -1814,6 +1814,9 @@ function springboard_p2p_sb_social_share_url_alter(&$url, $node, $url_context) {
  */
 function springboard_p2p_sb_social_init_settings_load_alter(&$settings) {
   $personal_campaign = isset($_SESSION['sb_social_url_context']['personal_campaign_id']) ? $_SESSION['sb_social_url_context']['personal_campaign_id'] : FALSE;
+  if (!$personal_campaign) {
+    $personal_campaign = isset($_GET['p2p_pcid']) ? $_GET['p2p_pcid'] : FALSE;
+  }
   // Personal campaign id should only be set when a donation form is submitted
   // with a personal campaign association. Under these conditions we want to use
   // Social settings from the personal campaign node.
