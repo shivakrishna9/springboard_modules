@@ -1844,6 +1844,7 @@ function fundraiser_webform_submit($form, &$form_state) {
   }
 
   // Store the gateway that was used to make the payment
+  drupal_alter('fundraiser_gateway', $node, $recurs);
   $order->data['gateway'] = $node->gateway;
 
   // cache the cc details stored by the handler.
