@@ -7,7 +7,7 @@
 /**
  * Implements hook_field_default_field_instances().
  */
-function springboard_advocacy_field_default_field_instances() {
+function springboard_petition_field_default_field_instances() {
   $field_instances = array();
 
   // Exported field_instance: 'node-springboard_petition-body'

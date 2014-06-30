@@ -7,7 +7,7 @@
 /**
  * Implements hook_field_default_field_bases().
  */
-function springboard_advocacy_field_default_field_bases() {
+function springboard_petition_field_default_field_bases() {
   $field_bases = array();
 
   // Exported field_base: 'body'

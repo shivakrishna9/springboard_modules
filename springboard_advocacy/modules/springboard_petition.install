@@ -2,7 +2,7 @@
 /**
  * Implements hook_install().
  */
-function springboard_advocacy_install() {
+function springboard_petition_install() {
   variable_set('petition_springboard_petition', TRUE);
   $webform_node_types = variable_get('webform_node_types', array());
   $webform_node_types[] = 'springboard_petition';

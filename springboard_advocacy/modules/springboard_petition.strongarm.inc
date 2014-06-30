@@ -7,7 +7,7 @@
 /**
  * Implements hook_strongarm().
  */
-function springboard_advocacy_strongarm() {
+function springboard_petition_strongarm() {
   $export = array();
 
   $strongarm = new stdClass();

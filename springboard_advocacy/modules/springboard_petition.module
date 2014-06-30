@@ -1,0 +1,86 @@
+<?php
+/**
+ * @file
+ * Code for the Springboard Advocacy feature.
+ */
+
+include_once 'springboard_petition.features.inc';
+
+function springboard_petition_is_petition_type($type) {
+  static $petition_types;
+  // Cache fundraiser content types during page execution.
+  if (!isset($petition_types[$type])) {
+    $petition_types[$type] = variable_get('petition_' . $type, FALSE);
+  }
+  return $petition_types[$type];
+}
+
+/**
+ * Helper function, determine if this node type supports donation forms.
+ */
+function springboard_petition_get_petition_types() {
+  // For all types, check if they are a fundraiser type.
+  $types = node_type_get_types();
+  foreach ($types as $type => $type_info) {
+    $petition_types[$type] = variable_get('petition_' . $type, FALSE);
+  }
+  return $petition_types;
+}
+
+
+function springboard_petition_node_insert($node) {
+  // If node is a petition type.
+  if (springboard_petition_is_petition_type($node->type)) {
+    // And if we have a default map.
+    $nid = -1;
+    if (!empty($node->clone_from_original_nid)) {
+      $nid = $node->clone_from_original_nid;
+    }
+    $webform_user_reference_fields = variable_get('webform_user_reference_fields', array());
+    $webform_user_reference_fields[$node->nid] = 'Contact__c';
+    variable_set('webform_user_reference_fields', $webform_user_reference_fields);
+    if(module_exists('salesforce_genmap')) {
+      $map = salesforce_genmap_load_map($nid, 'webform');
+      if (!empty($map)) {
+        // Copy the map to the node.
+        unset($map->mid);
+        $map->nid = $node->nid;
+        salesforce_genmap_save_map($map, 'webform');
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_node_delete().
+ *
+ * Insert a copy of the default map when a Fundraiser node is created.
+ */
+function springboard_petition_node_delete($node) {
+  // If node is a donation type.
+  if (springboard_petition_is_petition_type($node->type) && module_exists('salesforce_genmap')) {
+    salesforce_genmap_delete_map($node->nid, 'webform');
+  }
+}
+
+/**
+ * Prevents required webform components from being deleted. Right now it only protects
+ * the mail field. Add to the required fields array if there are other fields that
+ * need protecting.
+ */
+function springboard_petition_form_webform_component_delete_form_alter(&$form, &$form_state, $form_id) {
+  // Make sure we are dealing with a petition type.
+  if (springboard_petition_is_petition_type($form['node']['#value']->type)) {
+    // Check vs. required fields to make sure we can't delete them.
+    $required_fields = array('mail');
+    $cid = $form['component']['#value']['cid'];
+    $component = $form['node']['#value']->webform['components'][$cid];
+    // Check to see if the form_key is in our required fields array
+    if (in_array($component['form_key'], $required_fields)) {
+      $message = t('<strong>!name</strong> is a required petition field and cannot be deleted from this form.',
+        array('!name' => $component['name']));
+      $form['description']['#markup'] = $message;
+      unset($form['actions']['submit']);
+    }
+  }
+}

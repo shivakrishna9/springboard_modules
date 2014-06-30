@@ -7,7 +7,7 @@
 /**
  * Implements hook_ctools_plugin_api().
  */
-function springboard_advocacy_ctools_plugin_api($module = NULL, $api = NULL) {
+function springboard_petition_ctools_plugin_api($module = NULL, $api = NULL) {
   if ($module == "strongarm" && $api == "strongarm") {
     return array("version" => "1");
   }
@@ -16,7 +16,7 @@ function springboard_advocacy_ctools_plugin_api($module = NULL, $api = NULL) {
 /**
  * Implements hook_node_info().
  */
-function springboard_advocacy_node_info() {
+function springboard_petition_node_info() {
   $items = array(
     'springboard_petition' => array(
       'name' => t('Petition'),
