@@ -272,8 +272,8 @@ function springboard_admin_admin_menu_items() {
   );
 
   // Marketing & Analytics > Analytics Integraiton.
-  $items['admin/springboard/marketing-analytics']['_children']['admin/config/system/googleanalytics'] = array(
-    'link_path' => 'admin/config/system/googleanalytics',
+  $items['admin/springboard/marketing-analytics']['_children']['admin/springboard/options/ga'] = array(
+    'link_path' => 'admin/springboard/options/ga',
     'link_title' => 'Analytics Integration',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
@@ -492,15 +492,25 @@ function springboard_admin_admin_menu_items() {
     'weight' => 7,
   );
 
-  // Marketing & Analytics > Analytics Integraiton.
+  // Marketing & Analytics > Analytics Configuration.
   $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/config/system/googleanalytics'] = array(
     'link_path' => 'admin/config/system/googleanalytics',
-    'link_title' => 'Analytics Integration',
+    'link_title' => 'Analytics Configuration',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
     'customized' => 1,
     'weight' => 8,
   ); 
+  
+  // Marketing & Analytics > Analytics Integraiton.
+  $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/springboard/options/ga'] = array(
+    'link_path' => 'admin/springboard/options/ga',
+    'link_title' => 'Analytics Integration',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 8,
+  );
 
   //Settings > Logout.
   $items['admin/springboard/settings']['_children']['logout'] = array(
