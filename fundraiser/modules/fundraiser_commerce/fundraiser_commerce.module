@@ -2274,3 +2274,13 @@ function fundraiser_commerce_commerce_authnet_cim_request_alter($api_request_ele
     $api_request_element->profile->description = substr(t('CIM request taking place at @date', array('@date' => format_date(time()))), 0, 255);
   }
 }
+
+/**
+ * Element validator to make a nice, flat array of selected mappable response fields.
+ */
+function fundraiser_commerce_response_fields_validate($element, &$form_state, $form) {
+  //@TODO: I bet there's a more robust way of doing this.
+  $form_state['values']['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['mappable'] = 
+    array_keys($form_state['input']['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['all'])
+  ;
+}

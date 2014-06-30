@@ -426,20 +426,35 @@ function commerce_authnet_form_rules_ui_edit_element_alter(&$form, &$form_state)
           '#description' => t('The selected fields will be made available for mapping to exported donations.'),
           '#collapsible' => TRUE,
           '#collapsed' => FALSE,
+          '#element_validate' => array('fundraiser_commerce_response_fields_validate'),
         );
-        $options = array();
-        foreach (_commerce_authnet_response_fields() as $machine_name => $field) {
-          $options[$machine_name] = array(
-            'description' => t($field['name']) . '<p>' . $field['description'] . '</p>',
-          );
-        }
         $form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['mappable'] = array(
-          '#type' => 'tableselect',
+          '#type' => 'value',
+          '#value' => array(),
+        );
+        $form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['all'] = array(
+          '#theme' => 'table',
           '#header' => array(
+            'checkbox' => t('Available'),
             'description' => t('Authorize.net gateway response field')
           ),
-          '#options' => $options,
+          '#rows' => array(),
         );
+        foreach (_commerce_authnet_response_fields() as $machine_name => $field) {
+          $id = 'mappable_fields-' . $machine_name;
+          $form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['all'][$machine_name] = array(
+            '#id' => $id,
+            '#type' => 'checkbox',
+          );
+          $form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['all']['#rows'][$machine_name] = array(
+            'checkbox' => array(
+              // Tricky but it works: The table element's children (the checkboxes) will all have rendered as 
+              // form components by the time the table theme function picks them up by reference here.
+              'data' => &$form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['all'][$machine_name],
+            ),
+            'description' => '<label for="' . $id . '">' . $field['name'] . '</label><span>' . t($field['description']) . '</span>',
+          );
+        }
       }
     }
   }
