@@ -377,7 +377,22 @@ function springboard_p2p_default_page_manager_handlers() {
     $pane->type = 'node_form_publishing';
     $pane->subtype = 'node_form_publishing';
     $pane->shown = TRUE;
-    $pane->access = array();
+    $pane->access = array(
+      'plugins' => array(
+        0 => array(
+          'name' => 'role',
+          'settings' => array(
+            'rids' => array(
+              0 => 3,
+              1 => 4,
+              2 => 5,
+            ),
+          ),
+          'context' => 'logged-in-user',
+          'not' => FALSE,
+        ),
+      ),
+    );
     $pane->configuration = array(
       'context' => 'argument_node_edit_1',
       'override_title' => 0,
@@ -400,7 +415,22 @@ function springboard_p2p_default_page_manager_handlers() {
     $pane->type = 'node_form_author';
     $pane->subtype = 'node_form_author';
     $pane->shown = TRUE;
-    $pane->access = array();
+    $pane->access = array(
+      'plugins' => array(
+        0 => array(
+          'name' => 'role',
+          'settings' => array(
+            'rids' => array(
+              0 => 3,
+              1 => 4,
+              2 => 5,
+            ),
+          ),
+          'context' => 'logged-in-user',
+          'not' => FALSE,
+        ),
+      ),
+    );
     $pane->configuration = array(
       'context' => 'argument_node_edit_1',
       'override_title' => 0,
@@ -423,7 +453,22 @@ function springboard_p2p_default_page_manager_handlers() {
     $pane->type = 'node_form_path';
     $pane->subtype = 'node_form_path';
     $pane->shown = TRUE;
-    $pane->access = array();
+    $pane->access = array(
+      'plugins' => array(
+        0 => array(
+          'name' => 'role',
+          'settings' => array(
+            'rids' => array(
+              0 => 3,
+              1 => 4,
+              2 => 5,
+            ),
+          ),
+          'context' => 'logged-in-user',
+          'not' => FALSE,
+        ),
+      ),
+    );
     $pane->configuration = array(
       'context' => 'argument_node_edit_1',
       'override_title' => 0,
