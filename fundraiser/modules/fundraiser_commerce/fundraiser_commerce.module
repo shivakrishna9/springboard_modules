@@ -534,13 +534,19 @@ function fundraiser_commerce_generic_credit_card_validate($value) {
  */
 function _fundraiser_commerce_country_field_display($form, $form_state, $field) {
   // Set the default to a user default if set.
-  // Flatten form state array so we can get the user selection easier.
-  $fields = _fundraiser_commerce_submission_flatten($form_state);
-  // Set the default country if form_state has it.
-  if (array_key_exists('country', $fields)) {
-    $field['#default_value'] = $fields['country'];
+
+  // Look for the value passed from the form_state first
+  if (!empty($form_state['values']['submitted'])) {
+    // Flatten form state array
+    $fields = _fundraiser_commerce_submission_flatten($form_state['values']['submitted']);
+    // Set the default country if form_state has it.
+    if (array_key_exists('country', $fields)) {
+      $field['#default_value'] = $fields['country'];
+    }
   }
-  else {
+
+  // If no default value yet, get it from the field
+  if (empty($field['#default_value'])) {
     // Provide a default based on the form values.
     $country_field = fundraiser_get_form_field($form['#calling_module'], $form, 'country');
     // Filter options down to just the zones available for this country.
@@ -603,19 +609,25 @@ function _fundraiser_commerce_client_state_ajax_submit($form, $form_state, &$mes
 function _fundraiser_commerce_zone_field_display($form, $form_state, $field) {
   // Get countries.
   $countries = fundraiser_commerce_get_countries();
-  // Flatten form state array so we can get the user selection easier.
-  $fields = _fundraiser_commerce_submission_flatten($form_state);
-  // Country/state dependant drop down code
-  $available_zones = isset($countries->zones) ? $countries->zones : array();
-  // Filter the available zones by the set country.
-  if (array_key_exists('country', $fields)) {
-    $country_id = $fields['country'];
-    // Filter options down to just the zones available for this country.
-    if (isset($countries->countries[$country_id])) {
-      $available_zones = $countries->countries[$country_id]->zones;
+
+  // Look for the value passed from the form_state first
+  if (!empty($form_state['values']['submitted'])) {
+    // Flatten form state array
+    $fields = _fundraiser_commerce_submission_flatten($form_state['values']['submitted']);
+    // Country/state dependant drop down code
+    $available_zones = isset($countries->zones) ? $countries->zones : array();
+    // Filter the available zones by the set country.
+    if (array_key_exists('country', $fields)) {
+      $country_id = $fields['country'];
+      // Filter options down to just the zones available for this country.
+      if (isset($countries->countries[$country_id])) {
+        $available_zones = $countries->countries[$country_id]->zones;
+      }
     }
   }
-  else {
+
+  // If no zones yet, load from the field settings
+  if (empty($available_zones)) {
     // Provide a default based on the form values.
     $country_field = fundraiser_get_form_field($form['#calling_module'], $form, 'country');
     // Filter options down to just the zones available for this country.
