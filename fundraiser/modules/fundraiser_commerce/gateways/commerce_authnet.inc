@@ -445,6 +445,7 @@ function commerce_authnet_form_rules_ui_edit_element_alter(&$form, &$form_state)
           $form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['all'][$machine_name] = array(
             '#id' => $id,
             '#type' => 'checkbox',
+            '#default_value' => in_array($machine_name, !empty($config['response_fields']['mappable']) ? $config['response_fields']['mappable'] : array()),
           );
           $form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['all']['#rows'][$machine_name] = array(
             'checkbox' => array(
