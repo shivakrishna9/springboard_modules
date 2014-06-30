@@ -408,8 +408,8 @@ div.uploader span.filename {
 .p2p-node-edit-add.page-node-edit .form-actions.form-wrapper #edit-submit.btn,
 .p2p-node-edit-add.page-node-edit .form-actions.form-wrapper #edit-delete {
   display: inline-block;
-  width: 200px;
   margin: 0 10px 0 0;
+  width: 200px;
 }
 
 
@@ -430,4 +430,10 @@ div.uploader span.action,
 div.button,
 div.button span {
   background-image: none;
+}
+
+.control-group .image-widget.form-managed-file input {
+display: inline-block;
+float: none;
+clear: none;
 }

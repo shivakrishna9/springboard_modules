@@ -139,8 +139,8 @@ span.slider-teaser {
 }
 
 #slideshow-panel {
-  margin-bottom: 30px;
   clear: both;
+  margin-bottom: 30px;
 }
 
 /* -- FLUID GRID STYLES -- */
@@ -353,6 +353,34 @@ span.campaign-node-link {
   color: #fffe00;
   content: "\f061";
   font-size: 13px;
+  font-family: FontAwesome;
+  pointer-events: none;
+}
+
+.panel-panel.panel-col-last .panel-pane,
+.panel-panel.panel-col-last .panel-pane-wrapper {
+  margin: 0 0 20px .5em !important;
+}
+
+.panel-panel.panel-col-last .panel-pane-wrapper .panel-pane {
+  margin: 0 0 20px 0 !important;
+}
+
+.panel-2col-bricks .panel-col-last .inside {
+   margin: 0 0 .5em 0;
+}
+
+.pane-social-links h2:before {
+  position: absolute;
+  top: 10px;
+  left: 80px;
+  z-index: 6000;
+  display: block;
+  width: 50px;
+  height: 50px;
+  color: #fff;
+  content: "\f1e0";
+  font-size: 31px;
   font-family: FontAwesome;
   pointer-events: none;
 }
