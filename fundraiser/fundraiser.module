@@ -458,12 +458,22 @@ function fundraiser_node_view($node, $view_mode, $langcode) {
         $link = l('turn off', 'admin/config/system/fundraiser');
         drupal_set_message(t('Fundraiser is currently running in development mode. Remember to ' .
           '!link this feature on production websites.',
-           array('!link' => $link)));
+           array('!link' => $link)), 'warning');
       }
       // Throw a warning if no confirmation email has been configured.
       if (module_exists('email_wrappers') && !email_wrappers_load_settings($node->nid, NULL)) {
-        drupal_set_message(t('Warning: no confirmation emails have been configured for this donation form.' .
-          ' Users who submit a donation will not recieve an email confirming their donation.'), 'error');
+        drupal_set_message(t('No confirmation emails have been configured for this donation form.' .
+          ' Users who submit a donation will not recieve an email confirming their donation.'), 'warning');
+      }
+
+      // Allow other modules to throw up warnings on the donation form
+      // when it is not configured correctly.
+      $messages = module_invoke_all("fundraiser_donation_form_config_check", $node);
+
+      if (!empty($messages)) {
+        foreach($messages as $message) {
+          drupal_set_message($message, 'error');
+        }
       }
     }
 
@@ -1392,6 +1402,18 @@ function _fundraiser_donation_form_js_validation_config($node) {
     'card_cvv' => $card_cvv,
     'card_number' => $card_number,
   );
+  // Add validation to the amount textfield, which is only present
+  // when no donation amounts are configured.
+  if ($node->show_other_amount && count($node->donation_amounts) <= 1) {
+    $settings['amount'] = array(
+      'required' => TRUE,
+      'number' => TRUE,
+      'messages' => array(
+        'required' => t('This field is required.'),
+        'number' => t('Enter a valid amount.'),
+      ),
+    );
+  }
   // Give 3rd party modules an opportunity to alter.
   drupal_alter('fundraiser_donation_form_js_validation', $settings, $node);
   drupal_add_js(array('fundraiser' => array('js_validation_settings' => $settings)), 'setting');

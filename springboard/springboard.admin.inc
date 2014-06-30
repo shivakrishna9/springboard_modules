@@ -173,7 +173,7 @@ function springboard_admin_config(&$form, $form_state) {
     set_time_limit(300);
     variable_del('springboard_needs_config');
     drupal_set_message(t('Please see the !help page for additional help configuring Springboard.',
-      array('!help' => l(t('Help'), 'admin/springboard/help'))));
+      array('!help' => l(t('Help'), 'springboard/help'))));
     // This is where what used to be profile configuration in D6 went.
     // We dropped the profile support since it was, honestly, more hinderence than harm.
     // We would rather the Springboard suite be useful for all default profiles.
@@ -206,7 +206,7 @@ function springboard_admin_config(&$form, $form_state) {
     drupal_flush_all_caches();
     menu_rebuild();
     drupal_set_message(t('Please be sure to set up the Encypt key path at !link',
-      array('!link' => l('Encrypt settings', 'admin/config/system/encrypt'))));
+      array('!link' => l(t('Encrypt settings'), 'admin/config/system/encrypt'))));
   }
   else {
     drupal_set_message(t('Springboard default configuration has already been set up.'));
@@ -1445,7 +1445,7 @@ function springboard_admin_config_salesforce($form, $form_state) {
   // Insert the default map, $default_map_user_to_contact into SF entity mappings.
   $mapping = entity_import('salesforce_mapping', $default_map_user_to_contact);
   entity_save('salesforce_mapping', $mapping);
-  drupal_set_message('Drupal user entity has been mapped to Salesforce Contact object.');
+  drupal_set_message(t('Drupal user entity has been mapped to Salesforce Contact object.'));
 }
 
 /**
@@ -2103,7 +2103,7 @@ function springboard_admin_config_donation_form_add($form, $form_state, $email_n
 function springboard_admin_ignore($form, $form_state) {
   variable_del('springboard_needs_config');
   drupal_set_message(t('Please see the !help page for additional help configuring Springboard.',
-    array('!help' => l(t('Help'), 'admin/springboard/help'))));
+    array('!help' => l(t('Help'), 'springboard/help'))));
 }
 
 /**
@@ -2111,12 +2111,12 @@ function springboard_admin_ignore($form, $form_state) {
  */
 
  function springboard_dashboard_config_save($form, &$form_state) {
-   $form_state['redirect'] = 'admin/springboard';
+   $form_state['redirect'] = 'springboard';
  }
 
 /**
  * Submit handler for the Springboard Dashbord config cancel button
  */
 function springboard_dashboard_config_cancel($form, &$form_state) {
-  $form_state['redirect'] = 'admin/springboard';
+  $form_state['redirect'] = 'springboard';
 }

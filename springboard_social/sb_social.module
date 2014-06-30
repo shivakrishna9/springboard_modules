@@ -30,6 +30,9 @@ function sb_social_metatag_metatags_view_alter(&$output, $instance) {
 
   $sid = _sb_social_sid_by_id($id);
   $settings = sb_social_settings_load($sid);
+  if (empty($settings)) {
+    return;
+  }
   $plugins = sb_social_get_enabled_plugins();
 
   // Check for metatag view alter callbacks in the plugins.
@@ -227,6 +230,7 @@ function sb_social_market_source_admin_settings_submit($form, $form_state) {
 function sb_social_block_info() {
   $blocks['social_sharing'] = array(
     'info' => t('Social Sharing'),
+    'cache' => DRUPAL_CACHE_PER_PAGE,
   );
   return $blocks;
 }
@@ -255,6 +259,10 @@ function sb_social_block_view($delta = '') {
 
     if ($sid) {
       $settings = sb_social_settings_load($sid);
+      if (empty($settings)) {
+        return;
+      }
+
       $plugins = sb_social_get_enabled_plugins();
       // Render button for each enabled service.
       foreach ($plugins as $service => $plugin) {
@@ -271,8 +279,9 @@ function sb_social_block_view($delta = '') {
         $buttons[] = theme('sb_social_share_button', $vars);
       }
       $buttons = implode("\n", $buttons);
-      $block['subject'] = NULL;
-      $block['content'] = theme('sb_social_share', array('buttons' => $buttons));
+      $block['subject'] = array_key_exists('block_title', $settings['data']) ? $settings['data']['block_title'] : variable_get('springboard_social_default_block_title', '');
+      $description = array_key_exists('block_description', $settings['data']) ? $settings['data']['block_description'] : variable_get('springboard_social_default_block_description', '');
+      $block['content'] = theme('sb_social_share', array('buttons' => $buttons, 'description' => $description));
     }
     return $block;
   }
@@ -412,6 +421,11 @@ function sb_social_init() {
 
   if ($id) {
     $settings = sb_social_settings_load($sid);
+    // Let 3rd party modules get into the act.
+    drupal_alter('sb_social_init_settings_load', $settings);
+    if (empty($settings)) {
+      return;
+    }
 
     if (!empty($settings['data']['market_source']['ms'])) {
       $js_settings['market_source'] = $settings['data']['market_source']['ms'];
@@ -594,6 +608,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
       $nid = _sb_social_get_nid_by_sid($submission_id);
       $node = node_load($nid);
     }
+    drupal_alter('sb_social_tokens_data', $node);
     foreach ($enabled_plugins as $service => $plugin) {
       if (!empty($plugin['token_replace'])) {
         $func = $plugin['token_replace'];

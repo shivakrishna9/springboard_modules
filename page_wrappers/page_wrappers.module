@@ -74,30 +74,13 @@ function _page_wrappers_insert_after_first_element(&$a, $element) {
  * Replace standard site theme with pagewrapper template for nodes that have page wrappers assigned.
  */
 function page_wrappers_preprocess_page(&$vars) {
-  $wrapper = NULL;
-  if ($node = _page_wrappers_page_node()) {
-    $wrapper = _page_wrappers_node_assigned_wrapper($node);
-  }
-
-  // Allow context to optionally override this
-  if (module_exists('context') && $node = _page_wrappers_context_page_node()) {
-    $contexts = context_active_contexts();
-    foreach ($contexts as $context) {
-      // Check if page_wrapper is a reaction for this context
-      if (isset($context->reactions['page_wrappers'])) {
-        $wrapper = array(
-          'nid' => $node->nid,
-          'wrapper_nid' => $context->reactions['page_wrappers']['page_wrapper'],
-          'ruleset' => 1,
-          'weight' => -20,
-        );
-      }
-    }
-  }
+  $wrapper_data = page_wrappers_check();
+  $wrapper = $wrapper_data['wrapper'];
+  $node = $wrapper_data['node'];
 
   if (!empty($wrapper)) {
-    // Some pages may not have a node set, we'll need it for the wrapper template
-    if (!isset($vars['node'])) {
+    // Some pages may not have a node set even though one is being viewed; we'll need it for the wrapper template
+    if (!isset($vars['node']) && $node) {
       $build = node_view_multiple(array($node->nid => $node), 'full');
       $vars['node'] = $build['nodes'][$node->nid]['#node'];
     }
@@ -161,13 +144,15 @@ function page_wrappers_block_list_alter(&$blocks) {
  * Implements of hook_css_alter().
  */
 function page_wrappers_css_alter(&$css) {
-  if ($node = _page_wrappers_page_node()) {
-    $assigned_wrapper = _page_wrappers_node_assigned_wrapper($node);
-  }
+  $wrapper_data = page_wrappers_check();
+  $wrapper = $wrapper_data['wrapper'];
 
   // If this is a node that has a wrapper assigned remove all the theme stylesheets
-  if (!empty($assigned_wrapper)) {
-    $wrapper_node = node_load($assigned_wrapper['wrapper_nid']);
+  if (!empty($wrapper)) {
+    // @todo This node_load() might not be needed because page_wrappers_check()
+    // provides a node.  Test if the two nodes are the same and if so replace
+    // this with the one from $wrapper_data['node'].
+    $wrapper_node = node_load($wrapper['wrapper_nid']);
     $css_files = field_get_items('node', $wrapper_node, 'page_wrappers_css');
     $keep = array();
     // If a stylesheet is from an allowed theme, don't remove it.
@@ -275,9 +260,10 @@ function page_wrappers_node_insert($node) {
         'template' => $template,
       ))
       ->execute();
+
+    // Nuke caches so page wrapper is applied to itself by the theme layer.
+    drupal_flush_all_caches();
   }
-  // Nuke caches so page wrapper is applied to itself by the theme layer.
-  drupal_flush_all_caches();
 }
 
 /**
@@ -836,21 +822,44 @@ function _page_wrappers_node_assigned_wrapper($node) {
  *    A fully loaded node if this is a page request for a page wrapper enabled node, else false
  */
 function _page_wrappers_page_node() {
-  // get out of here if we're not on a node page, or if we're on the node edit page
-  if (arg(0) != 'node' || (arg(0) == 'node' && arg(2) == 'edit')) {
-    return;
-  }
   $node = NULL;
-  //if this is a node page load it up, also cover webform 'done' page
-  if (arg(0) == 'node' && is_numeric(arg(1)) && (arg(2) == 'done' || !arg(2))) {
+
+  // Check if this in ajax request form submit
+  if (arg(0) == 'system' && arg(1) == 'ajax' && !empty($_POST['form_build_id'])) {
+    $node = _page_wrappers_cached_form_node($_POST['form_build_id']);
+  }
+  // If this is a node page load it up, also cover webform 'done' page
+  elseif (arg(0) == 'node' && is_numeric(arg(1)) && (arg(2) == 'done' || !arg(2))) {
     $node = node_load(arg(1));
   }
+
+  // Allow other modules to set or unset the node
+  drupal_alter('page_wrappers_page_node', $node);
 
   if ($node && _page_wrappers_enabled_type($node, TRUE)) {
     return $node;
   }
 
   return FALSE;
+}
+
+/**
+ * Helper function to return a node from a cached form
+ *
+ * @param string $form_build_id
+ *   A form build id to search the cache
+ *
+ * @return Object
+ *   Node object from a form array
+ */
+function _page_wrappers_cached_form_node($form_build_id) {
+  if ($cached = cache_get('form_' . $form_build_id, 'cache_form')) {
+    $form = $cached->data;
+    // Ensure we have a node in the form
+    if (!empty($form['#node']->nid)) {
+      return $form['#node'];
+    }
+  }
 }
 
 /**
@@ -910,12 +919,12 @@ function _page_wrappers_create_template($node) {
       cdn_load_include('fallback');
       cdn_html_alter_image_urls($html_template[0]['value']);
     }
-    // Apply filters before doing token replacement, this prevents php generated for 
+    // Apply filters before doing token replacement, this prevents php generated for
     // region tokens from getting stripped if filtered or full html is selected.
     if ($html_template[0]['format'] != 'php_code') {
       // Full HTML input filter does not strip php start and end tags by default.
       $html_template[0]['value'] = str_replace('<?php', '&lt;php?', $html_template[0]['value']);
-      $html_template[0]['value'] = str_replace('?>', '?&gt;', $html_template[0]['value']);  
+      $html_template[0]['value'] = str_replace('?>', '?&gt;', $html_template[0]['value']);
       $html_template[0]['value'] = check_markup($html_template[0]['value'], $html_template[0]['format'], $langcode = '', FALSE);
     }
     $body = _page_wrappers_tokens($html_template[0]['value']);
@@ -953,7 +962,7 @@ function _page_wrappers_tokens($content) {
   $candidates = token_scan($content);
   foreach ($candidates as $type => $tokens) {
     foreach ($tokens as $token) {
-      $data = ($type == 'node') ? '"node" => $node' : '';
+      $data = ($type == 'node') ? '"node" => isset($node) ? $node : null' : '';
       $replacement = "<?php print token_replace('$token', array($data)) ?>";
       $content = str_replace($token, $replacement, $content);
     }
@@ -1212,4 +1221,36 @@ function _page_wrappers_get_theme_css($wrapper_node) {
       }
     }
   return $css;
+}
+
+/**
+ * Check if there is a page wrapper being set for the current page
+ * @return array|mixed|null
+ */
+function page_wrappers_check() {
+  $wrapper = NULL;
+  $node = NULL;
+  if ($node = _page_wrappers_page_node()) {
+    $wrapper = _page_wrappers_node_assigned_wrapper($node);
+  }
+
+  // Allow context to optionally override this
+  if (module_exists('context')) {
+    $contexts = context_active_contexts();
+    foreach ($contexts as $context) {
+      // Check if page_wrapper is a reaction for this context
+      if (isset($context->reactions['page_wrappers'])) {
+        $wrapper = array(
+          'wrapper_nid' => $context->reactions['page_wrappers']['page_wrapper'],
+          'ruleset' => 1,
+          'weight' => -20,
+        );
+        if ($node) {
+          $wrapper['nid'] = $node->nid;
+        }
+      }
+    }
+  }
+
+  return array('node' => $node, 'wrapper' => $wrapper);
 }

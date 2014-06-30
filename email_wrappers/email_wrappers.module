@@ -97,6 +97,52 @@ function email_wrappers_preview_modal() {
   ctools_modal_render($title, $preview);
 }
 
+/**
+ *  Implements hook_form_FORMID_alter 
+ *
+ * $message['send'] = FALSE in email_wrappers_mail_alter causes 
+ * improper error message to appear to site admins on resend.
+ * We need to unset webform's resend submit function in order to check 
+ * whether an email has a wrapper.
+ * If it does, suppress messages here, and recompose them in the mail_alter function
+ */
+function email_wrappers_form_webform_submission_resend_alter(&$form, &$form_state) {
+    $form['#submission']->resend = TRUE;
+    foreach ($form['#submit'] as $index => $submit) {
+      if($submit == 'webform_submission_resend_submit') {
+        $form['#submit'][$index] = 'email_wrappers_form_webform_submission_resend_submit';
+      }
+  }
+}
+/**
+ * Overrides webform_submission_resend_submit()
+ */
+function email_wrappers_form_webform_submission_resend_submit($form, &$form_state) {
+  $node = $form['#node'];
+  $submission = $form['#submission'];
+  $emails = array();
+  foreach ($form_state['values']['resend'] as $eid => $checked) {
+    if ($checked) {
+      $emails[] = $form['#node']->webform['emails'][$eid];
+    }
+  }
+  // we need to send individually in order to test for wrappers.
+  // webform natively submits the entire array all at once.
+  foreach($emails as $index => $mail) {
+    $sent_count = webform_submission_send_mail($node, $submission, array($mail));
+    $wrapped = db_query("SELECT nid FROM {email_wrappers_webform} WHERE nid = :nid AND eid = :eid", array(':nid' => $mail['nid'], ':eid' => $mail['eid']))->fetchfield();
+    if(!$wrapped) {
+      $address = webform_format_email_address($mail['email'], NULL, $node, $submission, TRUE, FALSE, 'short');
+      if ($sent_count) {
+        drupal_set_message(t('Successfully re-sent submission #@sid to @add.', array('@sid' => $submission->sid, '@add' => $address[0])));
+      }
+      else {
+        drupal_set_message(t('Server error. Submission #@sid was not resent to @add.', array('@sid' => $submission->sid, '@add' => $address[0])));
+      }
+    }
+  }
+}
+
 function email_wrappers_form_email_wrapper_node_form_alter(&$form, &$form_state, $form_id) {
   $token_set = array('node');
   $form['tokenset'] = array(
@@ -267,7 +313,7 @@ function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state,
       '#attributes' => array('class' => array('ctools-use-modal')),
       '#weight' => 20,
     );
-
+    $form['#validate'][] = 'email_wrappers_email_validate_callback';
     $form['#submit'][] = 'email_wrappers_email_submit_callback';
   }
 
@@ -281,6 +327,18 @@ function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state,
  */
 function email_wrappers_email_validate_callback(&$form, &$form_state) {
   // TODO: validate and clean up email addresses.
+ 
+  // Fix inconsistencies between submitted input and $form_state['values']
+  // This is caused by setting #value on header detail fields. Note: simply
+  // setting #default_value on these fields causes defaults to not render
+  // after the template select ajax event has executed.
+  $keys = array('subject', 'from_address', 'from_name',);
+  foreach ($keys as $key) {
+    $fields = array('option', 'custom', 'component');
+    foreach ($fields as $field) {
+      $form_state['values'][$key . '_' . $field] = $form_state['input'][$key . '_' . $field];
+    }
+  }
 }
 
 /**
@@ -377,7 +435,6 @@ function email_wrappers_get_nodes() {
  * Implements hook_mail().
  */
 function email_wrappers_mail($key, &$message, $params) {
-
   $token_set = array(
     'node' => isset($params['node']) ? $params['node'] : NULL,
   );
@@ -418,7 +475,14 @@ function email_wrappers_mail($key, &$message, $params) {
  */
 function email_wrappers_mail_alter(&$message) {
   global $user;
-  $account = $user;
+  $account = $user; //this is wrong value for resends, and perhaps other cases.
+  $resend = isset($message['params']['submission']->resend) ? $message['params']['submission']->resend : FALSE;
+  if ($resend && isset($message['to'])) {
+    $has_account = user_load_by_mail($message['to']);
+    if ($has_account) {
+      $account = $has_account;
+    }
+  }
   if ($message['id'] == 'webform_submission' && $message['module'] == 'webform') {
     $eid = $message['params']['email']['eid'];
     $nid = $message['params']['email']['nid'];
@@ -432,12 +496,19 @@ function email_wrappers_mail_alter(&$message) {
     else {
       $settings = $message['params']['settings'];
     }
-
     if ($settings) {
       $extra = $settings['extra'];
       $params = $message['params'];
       $params['settings'] = $settings;
       $params['message'] = $message;
+      $sid = $params['submission']->sid;
+      if ($resend) {
+        if (module_exists('fundraiser_webform')) {
+          $donation = _fundraiser_webform_get_donation_by_sid($sid);
+          $params['donation'] = $donation;  //needed for subject line in email_wrappers_mail
+          $params['message']['params']['donation'] = $donation;  //needed for body in email_wrappers_render_email_body
+        }
+      }
 
       // If email is not set send on submission we stash parameters required
       // to send in a static setting on the assumption that some other code
@@ -454,14 +525,32 @@ function email_wrappers_mail_alter(&$message) {
       //
       // Note: other modules may set extra['send_on_submission'] to FALSE
       // to defer sending an email.
-      if (!isset($extra['send_on_submission']) || $extra['send_on_submission'] === TRUE) {
-        drupal_mail('email_wrappers', 'wf_submission', $message['to'], user_preferred_language($account), $params);
+      if (!isset($extra['send_on_submission']) || $extra['send_on_submission'] === TRUE || $resend) {
+        $response = drupal_mail('email_wrappers', 'wf_submission', $message['to'], user_preferred_language($account), $params);
+        if ($resend) {
+          // we intercepted error messages in the resend form alter above
+          //because the "$message['send'] = FALSE;" below causes an erroneous
+          //error message to be displayed to site administrator.
+          if (isset($response['result']) && $response['result']) {
+            drupal_set_message(t('Successfully re-sent confirmation to @add', array('@add' => $message['to'])));      
+          }
+          else {
+            drupal_set_message(t('Confirmation was not sent to @add due to a server error.', array('@add' => $message['to'])), 'error');
+          }
+        }
       }
       else {
+        // //we set both a static cache and db cache
         $mail_queue = &drupal_static('email_wrappers_mail_queue');
         $mail_queue[$nid][$eid] = array(
           'params' => $params,
         );
+        if (module_exists('webform_confirmations')) {
+          // deferred notification ala Paypal WPS
+          $cache_time = '+1 hour';
+          $expire = strtotime($cache_time, time());
+          cache_set('wrapper_mail_queue_'. $nid . '_' . $eid. '_' . $sid, array('params' => $params), 'cache_webform_confirm', $expire);
+        }
       }
       $message['send'] = FALSE;
     }

@@ -9,7 +9,7 @@
  */
 function fundraiser_upsell_menu() {
   $items = array();
-  $items['admin/springboard/options/fundraiser/fundraiser_upsell'] = array(
+  $items['springboard/options/fundraiser/fundraiser_upsell'] = array(
     'title' => 'Sustainer upsell settings',
     'description' => 'Administer fundraiser upsell settings.',
     'access arguments' => array('administer fundraiser upsells'),
@@ -18,7 +18,7 @@ function fundraiser_upsell_menu() {
     'type' => MENU_NORMAL_ITEM,
     'file' => 'includes/fundraiser_upsell.admin.inc',
   );
-  $items['admin/springboard/options/fundraiser/fundraiser_upsell/general'] = array(
+  $items['springboard/options/fundraiser/fundraiser_upsell/general'] = array(
     'title' => 'General settings',
     'description' => 'Administer fundraiser upsell settings.',
     'access arguments' => array('administer fundraiser upsells'),
@@ -27,7 +27,7 @@ function fundraiser_upsell_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'file' => 'includes/fundraiser_upsell.admin.inc',
   );
-  $items['admin/springboard/options/fundraiser/fundraiser_upsell/thank-you'] = array(
+  $items['springboard/options/fundraiser/fundraiser_upsell/thank-you'] = array(
     'title' => 'Thank you settings',
     'description' => 'Administer fundraiser upsell "thank you" settings.',
     'access arguments' => array('administer fundraiser upsells'),
@@ -56,6 +56,17 @@ function fundraiser_upsell_menu() {
   );
 
   return $items;
+}
+
+/**
+ * Implements hook_admin_paths().
+ */
+function fundraiser_upsell_admin_paths() {
+  return array(
+    'springboard/options/fundraiser/fundraiser_upsell' => TRUE,
+    'springboard/options/fundraiser/fundraiser_upsell/general' => TRUE,
+    'springboard/options/fundraiser/fundraiser_upsell/thank-you' => TRUE,
+  );
 }
 
 /**
@@ -938,7 +949,12 @@ function fundraiser_upsell_modal_link($node, $did) {
         'animationSpeed' => 'slow',
         'closeText' => '',
         'closeImage' => '',
-        'loadingText' => t('Loading'),
+        'loadingText' => t('Please Wait'),
+        'throbber' => theme('image', array(
+          'path' => ctools_image_path('throbber.gif', 'fundraiser_upsell'),
+          'title' => t('Loading...'),
+          'alt' => t('Loading'),
+        )),
       ),
     ), 'setting');
 

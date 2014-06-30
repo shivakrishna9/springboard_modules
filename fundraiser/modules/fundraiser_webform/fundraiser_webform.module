@@ -410,7 +410,6 @@ function fundraiser_webform_form_node_form_alter(&$form, &$form_state, $form_id)
  * Implements hook_form_alter().
  */
 function fundraiser_webform_form_alter(&$form, &$form_state, $form_id) {
-
   // Alter the webform client form.
   // Why hook_form_alter and not hook_form_FORM_ID_alter? Because webform's form id varies: webform_client_form_NID.
   if (strstr($form_id, 'webform_client_form') !== FALSE) {
@@ -567,12 +566,23 @@ function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
   // Modify form displays according to callback settings.
   $form['#calling_module'] = 'fundraiser_webform';
   fundraiser_display_form_fields('fundraiser_webform', $form, $form_state);
-
+  $submit_text = !empty($node->webform['submit_text']) ? strtoupper($node->webform['submit_text']) : 'SUBMIT';
+  $text = db_query('SELECT nid, message FROM {fundraiser_webform_messages} f WHERE f.nid = :nid', array(':nid' => $form['#node']->nid))->fetchAssoc();
+  if ($text['nid']) {
+    $message =  $text['message'];
+  }
+  else {
+    $message = t('By clicking %submit_text your credit card will be securely processed.');
+  }
   // And lastly add a user facing message for submit.
-  $form['submit']['#suffix'] = '<div class="fundraiser_submit_message">' .
-    theme('image', array('path' => drupal_get_path('module', 'fundraiser_webform') . '/images/padlock.png')) .
-    t('By clicking SUBMIT DONATION your credit card will be securely processed.') .
-    '</div>';
+  if (isset($message) && strlen(trim($message)) > 0) {
+    $form['submit']['#suffix'] = '<div class="fundraiser_submit_message">' .
+      theme('image', array('path' => drupal_get_path('module', 'fundraiser_webform') . '/images/padlock.png')) .
+
+       str_replace('%submit_text', $submit_text, $message)
+       .
+      '</div>';
+  }
   $form['#after_build'][] = 'fundraiser_webform_fundraiser_donation_form_after_build';
   return $form;
 }
@@ -1034,6 +1044,10 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
     $orig_field = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, $component['form_key']);
     if (isset($orig_field->cid) && !empty($orig_field->cid)) {
       $cid = $orig_field->cid;
+
+      // For existing fields the weight remains the same
+      $component['weight'] = $orig_field->weight;
+
       // If the field allows updating proceed
       if ($allow_update) {
         $component['pid'] = $orig_field->pid; // Keep the original parentage, could be set by user.
@@ -1226,3 +1240,47 @@ function fundraiser_webform_get_submission($sid) {
 function _fundraiser_webform_payment_method_array_filter_enabled($method_settings) {
   return !empty($method_settings['status']);
 }
+
+/**
+ * Implements hook_form_BASE_FORM_ID_alter().
+ * Add custom submit button description text.
+ */
+function fundraiser_webform_form_webform_configure_form_alter(&$form, &$form_state) {
+  //custom help text for submit button
+  if(fundraiser_is_donation_type($form['#node']->type)) {
+    if (isset($form['#node']->nid)) {
+      $text = db_query('SELECT nid, message FROM {fundraiser_webform_messages} f WHERE f.nid = :nid', array(':nid' => $form['#node']->nid))->fetchAssoc();
+      if ($text['nid']) {
+        $message =  $text['message'];
+      }
+    }
+    $form['advanced']['submit_description'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Custom help text for the submit button.'),
+      '#description' => t('Enter help text that appears above the submit button. The token "%submit_text" may be used get the submit button\'s text value.' ),
+      '#default_value' => isset($message) ? $message : t('By clicking %submit_text your credit card will be securely processed.'),
+    );
+    $form['#submit'][] = 'fundraiser_webform_submit_text_submit';
+  }
+}
+
+function fundraiser_webform_submit_text_submit(&$form, &$form_state) {
+  if (isset($form_state['values']['submit_description'])) {
+    $fields = array('nid' => $form['#node']->nid, 'message' => $form_state['values']['submit_description']);
+    $nid = db_query('SELECT nid FROM {fundraiser_webform_messages} f WHERE f.nid = :nid', array(':nid' => $form['#node']->nid))->fetchField();
+    if (!$nid) {
+      db_insert('fundraiser_webform_messages')->fields($fields)->execute();
+    }
+    else {
+      db_update('fundraiser_webform_messages')
+      ->fields($fields)
+      ->condition('nid',$form['#node']->nid, '=')
+      ->execute();
+    }
+  }
+}
+
+function fundraiser_webform_node_delete($node) {
+  db_delete('fundraiser_webform_messages')->condition('nid', $node->nid)->execute();
+}
+

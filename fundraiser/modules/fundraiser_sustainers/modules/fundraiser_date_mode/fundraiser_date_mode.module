@@ -156,6 +156,16 @@ function fundraiser_date_mode_fundraiser_sustainers_recurring_next_charge_alter(
 }
 
 /**
+ * Implements hook_fundraiser_donation_delete().
+ */
+function fundraiser_date_mode_fundraiser_donation_delete($donation) {
+  db_delete('fundraiser_date_mode_dates')
+  ->condition('master_did', $donation->master_did)
+  ->condition('did', $donation->did)
+  ->execute();
+}
+
+/**
  * Return a count of total pending future sustainer orders.
  */
 function fundraiser_date_mode_max_records() {
@@ -544,6 +554,9 @@ function _fundraiser_date_mode_alter_next_charge($date, $master_order, $series_o
  * Process a single item from the sustainer queue.
  */
 function fundraiser_date_mode_process_queue_item($item) {
+  // Log that the item has been claimed from the queue for processing.
+  watchdog('fundraiser_sustainers_date_mode', 'Sustainer order id !did has been claimed from the queue for processing.', array('!did' => $item->did), WATCHDOG_NOTICE);
+
   $sustainer_key = fundraiser_sustainers_get_sustainer_key_value();
   $recurring = $item;
   if ($sustainer_key == $recurring->sustainer_key) {
@@ -552,7 +565,12 @@ function fundraiser_date_mode_process_queue_item($item) {
       'fails' => 0,
     );
     fundraiser_sustainers_process_single_recurring_donation($log, $recurring, $sustainer_key);
-    // TODO: do something with the log?
+    // If we get to here the transaction has been completed.
+    watchdog('fundraiser_sustainers_date_mode', 'Sustainer order id !did has finished processing.', array('!did' => $recurring->did), WATCHDOG_NOTICE);
+  }
+  else {
+    watchdog('fundraiser_sustainers_date_mode', 'Sustainer key value for order id !did (!record_key) did not match the site\'s sustainer key (!site_key).',
+      array('!did' => $recurring->did, '!record_key' => $recurring->sustainer_key, '!site_key' => $sustainer_key), WATCHDOG_NOTICE);
   }
 }
 
