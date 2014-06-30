@@ -58,7 +58,29 @@ function springboard_advocacy_node_insert($node) {
  */
 function springboard_advocacy_node_delete($node) {
   // If node is a donation type.
-  if (springboard_advocacy_is_petition($node->type) && module_exists('salesforce_genmap')) {
+  if (springboard_advocacy_is_petition_type($node->type) && module_exists('salesforce_genmap')) {
     salesforce_genmap_delete_map($node->nid, 'webform');
+  }
+}
+
+/**
+ * Prevents required webform components from being deleted. Right now it only protects
+ * the mail field. Add to the required fields array if there are other fields that
+ * need protecting.
+ */
+function springboard_advocacy_form_webform_component_delete_form_alter(&$form, &$form_state, $form_id) {
+  // Make sure we are dealing with a petition type.
+  if (springboard_advocacy_is_petition_type($form['node']['#value']->type)) {
+    // Check vs. required fields to make sure we can't delete them.
+    $required_fields = array('mail');
+    $cid = $form['component']['#value']['cid'];
+    $component = $form['node']['#value']->webform['components'][$cid];
+    // Check to see if the form_key is in our required fields array
+    if (in_array($component['form_key'], $required_fields)) {
+      $message = t('<strong>!name</strong> is a required petition field and cannot be deleted from this form.',
+        array('!name' => $component['name']));
+      $form['description']['#markup'] = $message;
+      unset($form['actions']['submit']);
+    }
   }
 }
