@@ -59,7 +59,7 @@ function springboard_p2p_top_links_render($subtype, $conf, $args, $contexts) {
       $message = t('Is this your campaign? Login to manage it.');
     }
     else {
-      $message = t('Login to start a campaign!');
+      $message = t('Already have a campaign? Click here to login.');
     }
 
     $output[] = '<a class="get-started-link account-link" href=" ' . $loginlink . ' ">' . $message . '<i class="fa fa-cog get-started-spinner"></i></a>';
