@@ -5,10 +5,8 @@
 .expiration-date-wrapper,
 .fundraiser-payment-fields.form-wrapper select,
 #other-wrapper {
-  position: relative;
-  display: inline-block;
-  float: none;
-  clear: both;
+  float: left;
+  clear: none;
   width: 47%;
   vertical-align: top;
 }
@@ -43,9 +41,16 @@
   width: 100%;
 }
 
-.fundraiser-payment-fields.form-wrapper select {
-  margin-right: 8px;
-  width: 38%;
+#uniform-edit-submitted-payment-information-payment-fields-bank-account-acctype {
+  width: 130px !important;
+}
+
+#uniform-edit-submitted-payment-information-payment-fields-bank-account-acctype span {
+  width: 100px !important;
+}
+
+#uniform-edit-submitted-payment-information-payment-fields-bank-account-acctype select {
+  width: 100%;
 }
 
 .expiration-date-wrapper .control-group,
@@ -157,6 +162,10 @@ input[type='text']:focus, input[type='email']:focus {
   font-size: 14px;
 }
 
+.webform-client-form label.error {
+  color: #8c2e0b;
+}
+
 .checkbox-label:before,
 .radio-label:before {
   position: relative;
@@ -165,22 +174,22 @@ input[type='text']:focus, input[type='email']:focus {
   padding-right: 7px;
   width: 21px;
   height: 19px;
-  background: url('../images/sprite_p2p.png') no-repeat -173px -146px;
+  background: url('../images/sprite_p2p.png') no-repeat 3px -3px;
   content: ' ';
   cursor: pointer;
   zoom: 1;
 }
 
 .radio-label.radio-checked:before {
-  background: url('../images/sprite_p2p.png') no-repeat -210px -146px;
+  background: url('../images/sprite_p2p.png') no-repeat -35px -3px;
 }
 
 .checkbox-label:before {
-  background: url('../images/sprite_p2p.png') no-repeat -103px -146px;
+  background: url('../images/sprite_p2p.png') no-repeat -74px -4px;
 }
 
 .checkbox-label.checked:before {
-  background: url('../images/sprite_p2p.png') no-repeat -137px -146px;
+  background: url('../images/sprite_p2p.png') no-repeat -111px -4px;
 }
 
 .ie8 .checkbox-label:before,

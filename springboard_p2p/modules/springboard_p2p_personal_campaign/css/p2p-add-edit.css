@@ -51,7 +51,8 @@ input[type="submit"] {
 }
 
 input[type="submit"]:hover,
-#edit-actions .btn:hover {
+#edit-actions .btn:hover,
+#edit-delete:hover {
   outline: none;
   background: #2980b9;
 }
@@ -139,7 +140,8 @@ i.fa.fa-file-text-o {
   cursor: pointer;
 }
 
-#edit-actions .btn {
+#edit-actions .btn,
+#edit-delete {
   position: relative;
   display: block;
   margin: 20px 0 4px 0;
@@ -403,12 +405,13 @@ div.uploader span.filename {
   font-weight: bold;
 }
 
-.control-group select,
-.control-group input {
+.p2p-node-edit-add.page-node-edit .form-actions.form-wrapper #edit-submit.btn,
+.p2p-node-edit-add.page-node-edit .form-actions.form-wrapper #edit-delete {
   display: inline-block;
-  float: none;
-  clear: none;
+  width: 200px;
+  margin: 0 10px 0 0;
 }
+
 
 div.uploader span.action {
   background-color: #fff;
