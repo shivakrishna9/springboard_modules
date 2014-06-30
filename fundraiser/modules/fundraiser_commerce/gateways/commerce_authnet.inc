@@ -22,6 +22,7 @@ function commerce_authnet_fundraiser_commerce_fundraiser_gateway_info() {
     'update callback' => 'commerce_authnet_fundraiser_commerce_update',
     'refund callback' => 'commerce_authnet_fundraiser_commerce_refund',
     'cardonfile callback' => 'commerce_authnet_fundraiser_commerce_cardonfile',
+    'response fields callback' => 'commerce_authnet_fundraiser_commerce_response_fields',
   );
 }
 
@@ -383,12 +384,15 @@ function commerce_authnet_form_rules_ui_edit_element_alter(&$form, &$form_state)
       $rule = rules_config_load(arg(5));  //@TODO: is there a better way to get the rule name?
       $actions = $rule->actions();
       if (!empty($actions)) {
+        // Find the settings for the Authorize.net gateway action.
         foreach ($actions as $action) {
           if($action->settings['payment_method']['method_id'] == 'authnet_aim' && $action->elementId() == arg(7)) {  //@TODO: is there a better way to get the action ID?
            $settings[] = $action->settings;
           }
         }
         $config = isset($settings[0]['payment_method']['settings']) ? $settings[0]['payment_method']['settings'] : '';
+        
+        // Add a fieldset of Authorize.net request fields available to have Webform field data mapped to them.
         $form['parameter']['payment_method']['settings']['payment_method']['settings']['value_map'] = array(
             '#type' => 'fieldset',
             '#title' => t('Submission mapping'),
@@ -414,6 +418,28 @@ function commerce_authnet_form_rules_ui_edit_element_alter(&$form, &$form_state)
           );
           $i++;
         }
+        
+        // Add a fieldset of Authorize.net response fields available to be mapped to donation fields.
+        $form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields'] = array(
+          '#type' => 'fieldset',
+          '#title' => t('Response Fields for Mapping'),
+          '#description' => t('The selected fields will be made available for mapping to exported donations.'),
+          '#collapsible' => TRUE,
+          '#collapsed' => FALSE,
+        );
+        $options = array();
+        foreach (_commerce_authnet_response_fields() as $machine_name => $field) {
+          $options[$machine_name] = array(
+            'description' => t($field['name']) . '<p>' . $field['description'] . '</p>',
+          );
+        }
+        $form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['mappable'] = array(
+          '#type' => 'tableselect',
+          '#header' => array(
+            'description' => t('Authorize.net gateway response field')
+          ),
+          '#options' => $options,
+        );
       }
     }
   }
@@ -454,6 +480,13 @@ function _commerce_authnet_extra_fields() {
     'x_ship_to_country',    // Up to 60 characters (no symbols)
   );
   return $extra_fields;
+}
+
+/**
+ * Callback for fundraiser_commerce to discover what gateway response fields are available for mapping.
+ */
+function commerce_authnet_fundraiser_commerce_response_fields($payment_rule) {
+  //@TODO
 }
 
 /**
