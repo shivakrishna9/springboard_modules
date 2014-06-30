@@ -163,7 +163,7 @@ function springboard_p2p_category_field_default_field_instances() {
   $field_instances['node-p2p_category-field_p2p_images'] = array(
     'bundle' => 'p2p_category',
     'deleted' => 0,
-    'description' => 'Upload a campaign thumbnail image. Ideal size is 340 x 240 pixels.',
+    'description' => 'Upload a campaign thumbnail image. Ideal size is 380 x 240 pixels.',
     'display' => array(
       'default' => array(
         'label' => 'hidden',
@@ -372,7 +372,7 @@ function springboard_p2p_category_field_default_field_instances() {
     'bundle' => 'p2p_category',
     'default_value' => NULL,
     'deleted' => 0,
-    'description' => 'Enter a URL from YouTube or Vimeo to embed a video. Example: https://www.youtube.com/watch?v=kJ4CYbCGhLA',
+    'description' => 'This is a Youtube or Vimeo video URL. Example: https://www.youtube.com/watch?v=kJ4CYbCGhLA',
     'display' => array(
       'default' => array(
         'label' => 'hidden',
@@ -452,13 +452,13 @@ function springboard_p2p_category_field_default_field_instances() {
   t('Category image');
   t('Default campaign banner');
   t('Description');
-  t('Enter a URL from YouTube or Vimeo to embed a video. Example: https://www.youtube.com/watch?v=kJ4CYbCGhLA');
   t('Images');
   t('Organization introduction');
   t('Personal campaign introduction');
   t('This content can be overridden by campaigner');
+  t('This is a Youtube or Vimeo video URL. Example: https://www.youtube.com/watch?v=kJ4CYbCGhLA');
   t('Upload a campaign category image. Ideal size is 380 x 240 pixels.');
-  t('Upload a campaign thumbnail image. Ideal size is 340 x 240 pixels.');
+  t('Upload a campaign thumbnail image. Ideal size is 380 x 240 pixels.');
   t('Upload a default campaign banner. Suggested size is 1170 x 240 pixels.');
   t('Video embed');
 

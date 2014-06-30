@@ -412,7 +412,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
     'bundle' => 'p2p_personal_campaign',
     'default_value' => NULL,
     'deleted' => 0,
-    'description' => '',
+    'description' => 'This is a Youtube or Vimeo video URL. Example: https://www.youtube.com/watch?v=kJ4CYbCGhLA',
     'display' => array(
       'default' => array(
         'label' => 'hidden',
@@ -460,6 +460,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
   t('Progress');
   t('Submission Goal');
   t('Suggested Donation Amount');
+  t('This is a Youtube or Vimeo video URL. Example: https://www.youtube.com/watch?v=kJ4CYbCGhLA');
   t('Upload a Campaign Image');
   t('Upload a Campaign Video');
   t('Upload a campaign thumbnail image. Ideal size is 380 x 240 pixels.');
