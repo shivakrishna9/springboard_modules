@@ -14,7 +14,7 @@ function springboard_p2p_personal_campaign_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'additional_settings__active_tab_p2p_personal_campaign';
-  $strongarm->value = 'edit-submission';
+  $strongarm->value = 'edit-panelizer';
   $export['additional_settings__active_tab_p2p_personal_campaign'] = $strongarm;
 
   $strongarm = new stdClass();
@@ -113,7 +113,7 @@ function springboard_p2p_personal_campaign_strongarm() {
       'page_manager' => array(
         'status' => 1,
         'default' => 1,
-        'choice' => 0,
+        'choice' => 1,
       ),
       'default' => array(
         'status' => 0,
