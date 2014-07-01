@@ -52,9 +52,11 @@ function springboard_p2p_help_message_render($subtype, $conf, $args, $contexts) 
   $output = array();
 
   // Create the output to be rendered.
-  $output[] = '<div class="help-text-wrapper"> ';
-  $output[] = $helptext['value'];
-  $output[] = '</div>';
+  if (isset($helptext['value'])) {
+    $output[] = '<div class="help-text-wrapper"> ';
+    $output[] = $helptext['value'];
+    $output[] = '</div>';
+  }
 
   // Initial content is blank.
   // Build the content type block.

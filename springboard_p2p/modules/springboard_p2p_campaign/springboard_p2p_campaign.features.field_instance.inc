@@ -541,6 +541,46 @@ function springboard_p2p_campaign_field_default_field_instances() {
     ),
   );
 
+  // Exported field_instance: 'node-p2p_campaign-field_p2p_expiration_message'
+  $field_instances['node-p2p_campaign-field_p2p_expiration_message'] = array(
+    'bundle' => 'p2p_campaign',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => 'Set a message to show when the campaign expires.',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'text',
+        'settings' => array(),
+        'type' => 'text_default',
+        'weight' => 27,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_p2p_expiration_message',
+    'label' => 'P2P Expiration Message',
+    'required' => 1,
+    'settings' => array(
+      'text_processing' => 1,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'text',
+      'settings' => array(
+        'rows' => 5,
+      ),
+      'type' => 'text_textarea',
+      'weight' => 7,
+    ),
+  );
+
   // Exported field_instance: 'node-p2p_campaign-field_p2p_feature_pers_campaigns'
   $field_instances['node-p2p_campaign-field_p2p_feature_pers_campaigns'] = array(
     'bundle' => 'p2p_campaign',
@@ -1052,9 +1092,11 @@ function springboard_p2p_campaign_field_default_field_instances() {
   t('Landing page slider optional external link');
   t('Landing page slider teaser');
   t('Organization introduction');
+  t('P2P Expiration Message');
   t('Personal campaign images');
   t('Personal campaign introduction');
   t('Personal campaigns require approval');
+  t('Set a message to show when the campaign expires.');
   t('Show donor comments on personal campaign pages');
   t('Show donor scroll on personal campaign pages');
   t('Suggested donation amount');

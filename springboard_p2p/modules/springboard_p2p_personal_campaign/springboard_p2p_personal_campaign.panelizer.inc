@@ -57,7 +57,16 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->type = 'personal_campaign_comments';
     $pane->subtype = 'personal_campaign_comments';
     $pane->shown = TRUE;
-    $pane->access = array();
+    $pane->access = array(
+      'plugins' => array(
+        0 => array(
+          'name' => 'donation_date_deadline',
+          'settings' => NULL,
+          'context' => 'panelizer',
+          'not' => FALSE,
+        ),
+      ),
+    );
     $pane->configuration = array(
       'context' => 'panelizer',
       'override_title' => 0,
@@ -83,7 +92,16 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->type = 'personal_campaign_call_to_action';
     $pane->subtype = 'personal_campaign_call_to_action';
     $pane->shown = TRUE;
-    $pane->access = array();
+    $pane->access = array(
+      'plugins' => array(
+        0 => array(
+          'name' => 'donation_date_deadline',
+          'settings' => NULL,
+          'context' => 'panelizer',
+          'not' => FALSE,
+        ),
+      ),
+    );
     $pane->configuration = array(
       'context' => 'panelizer',
       'override_title' => 1,
@@ -109,7 +127,16 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->type = 'org_intro';
     $pane->subtype = 'org_intro';
     $pane->shown = TRUE;
-    $pane->access = array();
+    $pane->access = array(
+      'plugins' => array(
+        0 => array(
+          'name' => 'donation_date_deadline',
+          'settings' => NULL,
+          'context' => 'panelizer',
+          'not' => FALSE,
+        ),
+      ),
+    );
     $pane->configuration = array(
       'context' => 'panelizer',
       'override_title' => 0,
@@ -135,7 +162,16 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->type = 'entity_field';
     $pane->subtype = 'node:field_p2p_video_embed';
     $pane->shown = TRUE;
-    $pane->access = array();
+    $pane->access = array(
+      'plugins' => array(
+        0 => array(
+          'name' => 'donation_date_deadline',
+          'settings' => NULL,
+          'context' => 'panelizer',
+          'not' => FALSE,
+        ),
+      ),
+    );
     $pane->configuration = array(
       'label' => 'hidden',
       'formatter' => 'video_embed_field',
@@ -182,6 +218,12 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
           'context' => 'panelizer',
           'not' => FALSE,
         ),
+        1 => array(
+          'name' => 'donation_date_deadline',
+          'settings' => NULL,
+          'context' => 'panelizer',
+          'not' => FALSE,
+        ),
       ),
     );
     $pane->configuration = array(
@@ -209,7 +251,16 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->type = 'personal_campaign_share';
     $pane->subtype = 'personal_campaign_share';
     $pane->shown = TRUE;
-    $pane->access = array();
+    $pane->access = array(
+      'plugins' => array(
+        0 => array(
+          'name' => 'donation_date_deadline',
+          'settings' => NULL,
+          'context' => 'panelizer',
+          'not' => FALSE,
+        ),
+      ),
+    );
     $pane->configuration = array(
       'context' => 'panelizer',
       'override_title' => 0,
@@ -235,7 +286,16 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->type = 'personal_campaign_progress';
     $pane->subtype = 'personal_campaign_progress';
     $pane->shown = TRUE;
-    $pane->access = array();
+    $pane->access = array(
+      'plugins' => array(
+        0 => array(
+          'name' => 'donation_date_deadline',
+          'settings' => NULL,
+          'context' => 'panelizer',
+          'not' => FALSE,
+        ),
+      ),
+    );
     $pane->configuration = array(
       'context' => 'panelizer',
       'override_title' => 1,
@@ -269,7 +329,16 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->type = 'personal_campaign_goal';
     $pane->subtype = 'personal_campaign_goal';
     $pane->shown = TRUE;
-    $pane->access = array();
+    $pane->access = array(
+      'plugins' => array(
+        0 => array(
+          'name' => 'donation_date_deadline',
+          'settings' => NULL,
+          'context' => 'panelizer',
+          'not' => FALSE,
+        ),
+      ),
+    );
     $pane->configuration = array(
       'context' => 'panelizer',
       'override_title' => 1,
@@ -292,7 +361,16 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->type = 'entity_field';
     $pane->subtype = 'node:field_p2p_fundraising_deadline';
     $pane->shown = TRUE;
-    $pane->access = array();
+    $pane->access = array(
+      'plugins' => array(
+        0 => array(
+          'name' => 'donation_date_deadline',
+          'settings' => NULL,
+          'context' => 'panelizer',
+          'not' => FALSE,
+        ),
+      ),
+    );
     $pane->configuration = array(
       'label' => 'above',
       'formatter' => 'date_default',
@@ -338,7 +416,16 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->type = 'personal_campaign_call_to_action';
     $pane->subtype = 'personal_campaign_call_to_action';
     $pane->shown = TRUE;
-    $pane->access = array();
+    $pane->access = array(
+      'plugins' => array(
+        0 => array(
+          'name' => 'donation_date_deadline',
+          'settings' => NULL,
+          'context' => 'panelizer',
+          'not' => FALSE,
+        ),
+      ),
+    );
     $pane->configuration = array(
       'context' => 'panelizer',
       'override_title' => 1,
@@ -375,7 +462,16 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->type = 'personal_campaign_roll';
     $pane->subtype = 'personal_campaign_roll';
     $pane->shown = TRUE;
-    $pane->access = array();
+    $pane->access = array(
+      'plugins' => array(
+        0 => array(
+          'name' => 'donation_date_deadline',
+          'settings' => NULL,
+          'context' => 'panelizer',
+          'not' => FALSE,
+        ),
+      ),
+    );
     $pane->configuration = array(
       'context' => 'panelizer',
       'override_title' => 0,
@@ -401,7 +497,9 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->type = 'custom';
     $pane->subtype = 'fundraising_title_pane';
     $pane->shown = TRUE;
-    $pane->access = array();
+    $pane->access = array(
+      'plugins' => array(),
+    );
     $pane->configuration = array(
       'admin_title' => '',
       'title' => '',
@@ -466,7 +564,9 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->type = 'views_panes';
     $pane->subtype = 'search_for_a_campaign-panel_pane_1';
     $pane->shown = TRUE;
-    $pane->access = array();
+    $pane->access = array(
+      'plugins' => array(),
+    );
     $pane->configuration = array();
     $pane->cache = array();
     $pane->style = array(
@@ -485,7 +585,16 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->type = 'custom';
     $pane->subtype = 'pane_search_link';
     $pane->shown = TRUE;
-    $pane->access = array();
+    $pane->access = array(
+      'plugins' => array(
+        0 => array(
+          'name' => 'donation_date_deadline',
+          'settings' => NULL,
+          'context' => 'panelizer',
+          'not' => FALSE,
+        ),
+      ),
+    );
     $pane->configuration = array(
       'admin_title' => '',
       'title' => '',
@@ -547,7 +656,16 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->type = 'entity_field';
     $pane->subtype = 'node:body';
     $pane->shown = TRUE;
-    $pane->access = array();
+    $pane->access = array(
+      'plugins' => array(
+        0 => array(
+          'name' => 'donation_date_deadline',
+          'settings' => NULL,
+          'context' => 'panelizer',
+          'not' => FALSE,
+        ),
+      ),
+    );
     $pane->configuration = array(
       'label' => 'hidden',
       'formatter' => 'text_default',
@@ -579,7 +697,16 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->type = 'entity_field';
     $pane->subtype = 'node:field_p2p_campaign_images';
     $pane->shown = TRUE;
-    $pane->access = array();
+    $pane->access = array(
+      'plugins' => array(
+        0 => array(
+          'name' => 'donation_date_deadline',
+          'settings' => NULL,
+          'context' => 'panelizer',
+          'not' => FALSE,
+        ),
+      ),
+    );
     $pane->configuration = array(
       'label' => 'hidden',
       'formatter' => 'image',
@@ -638,7 +765,9 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->type = 'campaign_header';
     $pane->subtype = 'campaign_header';
     $pane->shown = TRUE;
-    $pane->access = array();
+    $pane->access = array(
+      'plugins' => array(),
+    );
     $pane->configuration = array(
       'context' => 'panelizer',
       'override_title' => 1,
