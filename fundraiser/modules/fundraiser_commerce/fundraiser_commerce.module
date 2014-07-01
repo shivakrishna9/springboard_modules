@@ -1533,6 +1533,11 @@ function fundraiser_commerce_fundraiser_donation_success($donation) {
   $donation->status = 'payment_received';
   $donation->status_label = _fundraiser_commerce_get_label_by_status('payment_received');
   $donation->status_charged = _fundraiser_commerce_get_charged_by_status('payment_received');
+  
+  // If the payment gateway has a response save callback, invoke it now.
+  if (!empty($donation->gateway['response save callback'])) {
+    $donation->gateway['response save callback']($donation);
+  }
 }
 
 /**

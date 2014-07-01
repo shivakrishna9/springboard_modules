@@ -23,6 +23,7 @@ function commerce_authnet_fundraiser_commerce_fundraiser_gateway_info() {
     'refund callback' => 'commerce_authnet_fundraiser_commerce_refund',
     'cardonfile callback' => 'commerce_authnet_fundraiser_commerce_cardonfile',
     'response fields callback' => 'commerce_authnet_fundraiser_commerce_response_fields',
+    'response save callback' => 'commerce_authnet_fundraiser_commerce_response_save',
   );
 }
 
@@ -512,6 +513,34 @@ function commerce_authnet_fundraiser_commerce_response_fields($gateway_info) {
     }
   }
   return $mappable_fields;
+}
+
+/**
+ * Callback to save gateway response fields when a donation is successfully completed.
+ * 
+ * @param stdClass $donation
+ */
+function commerce_authnet_fundraiser_commerce_response_save($donation) {
+  // We only need to save the response fields once.
+  if (!db_query(
+    "SELECT COUNT(*) FROM {fundraiser_commerce_gateway_response} WHERE did=:did AND gateway_id=:gateway_id",
+    array(':did' => $donation->did, ':gateway_id' => $donation->gateway['id'])
+  )->fetchField()) {
+    // Find the raw gateway response string in the Commerce transaction.
+    $transaction = commerce_payment_transaction_load($donation->result['data']['transaction_id']);
+    $payload = $transaction->payload[ $transaction->created ];
+    if (!empty($payload)) {
+      foreach (_commerce_authnet_response_fields() as $machine_name => $field_info) {
+        $field_data = (object)array(
+          'did' => $donation->did,
+          'gateway_id' => $donation->gateway['id'],
+          'field_name' => $machine_name,
+          'value' => $payload[ $field_info['index'] ],
+        );
+        drupal_write_record('fundraiser_commerce_gateway_response', $field_data);
+      }
+    }
+  }
 }
 
 /**
