@@ -653,6 +653,17 @@ class SalesforceSync {
             $item->sobject->fields[$field_name] = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
             break;
 
+          // Numeric types cannot be null or they will throw a SOAP fault. Let's
+          // ensure these types are actually numeric before sending them.
+          case 'double':
+          case 'int':
+          case 'currency':
+            if (!is_numeric($value)) {
+              unset($item->sobject->fields[$field_name]);
+              $item->sobject->fieldsToNull[] = $field_name;
+            }
+            break;
+
           default:
             // Do nothing.
         }
