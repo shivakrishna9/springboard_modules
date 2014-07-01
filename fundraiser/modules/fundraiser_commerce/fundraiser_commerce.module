@@ -488,6 +488,32 @@ function _fundraiser_commerce_payment_fields_validate($form, $form_state, $submi
 }
 
 /**
+ * Implements hook_salesforce_genmap_map_field_info_alter().
+ */
+function fundraiser_commerce_salesforce_genmap_map_field_info_alter(&$fields, $node, $module) {
+  // We're only concerned with credit card methods.
+  if (empty($node->gateways['credit'])) return;
+  $gateway_info = _fundraiser_gateway_info($node->gateways['credit']['id']);
+
+  // If the credit card method has mappable response fields, add them to the mapping form.
+  if ($fields_callback = $gateway_info['response fields callback']) {
+    $response_fields = $fields_callback($gateway_info);
+    if (!empty($response_fields)) {
+      $fields['gateway_response_fields_map'] = array(
+        '#type' => 'fundraiser_commerce',
+        '#label' => t('Authorize.net Gateway Response Fields'),
+        '#dedupe' => FALSE,
+        '#fields' => array(),
+      );
+      foreach ($response_fields as $machine_name => $field_info) {
+        $fields['gateway_response_fields_map']['#fields'][$machine_name] = t($field_info['name']) . '<br />'
+          . '<small class="fundraiser-admin-description">' . t($field_info['description']) . '</small>';
+      }
+    }
+  } 
+}
+
+/**
  * Does some basic credit card validation.
  *
  * @param array $value

@@ -500,9 +500,18 @@ function _commerce_authnet_extra_fields() {
 
 /**
  * Callback for fundraiser_commerce to discover what gateway response fields are available for mapping.
+ * 
+ * @param array $gateway_info
  */
-function commerce_authnet_fundraiser_commerce_response_fields($payment_rule) {
-  //@TODO
+function commerce_authnet_fundraiser_commerce_response_fields($gateway_info) {
+  $mappable_fields = array();
+  $all_fields = _commerce_authnet_response_fields();
+  if (!empty($gateway_info['gateway_details']['settings']['response_fields']['mappable'])) {
+    foreach ($gateway_info['gateway_details']['settings']['response_fields']['mappable'] as $machine_name) {
+      $mappable_fields[$machine_name] = $all_fields[$machine_name];
+    }
+  }
+  return $mappable_fields;
 }
 
 /**
