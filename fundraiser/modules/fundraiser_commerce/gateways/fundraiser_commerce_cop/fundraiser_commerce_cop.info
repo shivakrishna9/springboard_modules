@@ -1,0 +1,7 @@
+name = Fundraiser Commerce Cop
+description = Integrates Commerce Cop with Fundraiser
+core = 7.x
+dependencies[] = commerce_cop
+dependencies[] = commerce_payment_fields
+
+

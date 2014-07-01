@@ -1,0 +1,63 @@
+<?php
+
+/**
+ * @file
+ * Code for the Bill Me Later feature.
+ */
+
+function fundraiser_commerce_cop_get_methods() {
+  $methods = new stdClass();
+  $methods->payment_methods = array();
+  rules_invoke_all('commerce_payment_methods', $methods);
+  $payment_methods = array();
+  foreach ($methods->payment_methods as $id => $info) {
+    $this_gateway = array();
+    $method_instance = commerce_payment_method_instance_load($id);
+    if($method_instance['module'] == 'commerce_cop') {
+    list($method_id, $rule_name) = explode('|', $method_instance['instance_id']);
+      $payment_methods[$rule_name] = $method_id;
+    }
+  }
+  return $methods;
+ }
+
+function fundraiser_commerce_cop_commerce_order_status_info() {
+  $methods = fundraiser_commerce_cop_get_methods();
+  $statuses = array();
+  foreach($methods as $name => $callback) {
+  $statuses[$name] = array(
+      'name' => $name,
+      'title' => $name,
+      'state' => 'pending',
+    );
+  }
+  return $statuses;
+}
+
+function fundraiser_commerce_cop_commerce_payment_transaction_status_info() {
+  $methods = fundraiser_commerce_cop_get_methods();
+  $statuses = array();
+  foreach($methods as $name => $callback) {
+  $statuses[$name] = array(
+      'status' => 'pending',
+      'title' => $name,
+      'icon' => '',
+      'total' => TRUE,
+    );
+  }
+  return $statuses;
+}
+
+/**
+ * Implements hook_fundraiser_donation_success().
+ */
+function fundraiser_commerce_cop_fundraiser_donation_success($donation) {
+      dpm($donation->gateway);
+
+  if($donation->gateway['gateway_details']['module'] == 'commerce_cop') {
+    _fundraiser_commerce_update_order_status($donation->gateway['title'], $donation->did);
+    $donation->status = $donation->gateway['title'];
+     $donation->status_label = _fundraiser_commerce_get_label_by_status($donation->gateway['title']);
+     $donation->status_charged = _fundraiser_commerce_get_charged_by_status($donation->gateway['title']);
+  }
+}
