@@ -814,6 +814,25 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->uuid = '4a068a70-4475-49cf-8535-196ca8fd9f22';
     $display->content['new-4a068a70-4475-49cf-8535-196ca8fd9f22'] = $pane;
     $display->panels['top'][2] = 'new-4a068a70-4475-49cf-8535-196ca8fd9f22';
+    $pane = new stdClass();
+    $pane->pid = 'new-5a231b84-dea1-4c4a-a386-df18d09cc825';
+    $pane->panel = 'top';
+    $pane->type = 'campaign_expiration_message';
+    $pane->subtype = 'campaign_expiration_message';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array();
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 3;
+    $pane->locks = array();
+    $pane->uuid = '5a231b84-dea1-4c4a-a386-df18d09cc825';
+    $display->content['new-5a231b84-dea1-4c4a-a386-df18d09cc825'] = $pane;
+    $display->panels['top'][3] = 'new-5a231b84-dea1-4c4a-a386-df18d09cc825';
   $display->hide_title = PANELS_TITLE_FIXED;
   $display->title_pane = 'new-0cd4f51e-4ba7-474d-a3ad-e1a931ded90f';
   $panelizer->display = $display;

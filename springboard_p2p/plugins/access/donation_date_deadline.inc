@@ -30,7 +30,7 @@ $plugin = array(
 /**
  * Custom callback defined by 'callback' in the $plugin array.
  *
- * Callback, Check if this is
+ * Callback, Check if the date on the p2p personal campaign has expired.
  */
 function springboard_p2p_donation_date_deadline_ctools_access_check($conf, $context) {
 
@@ -40,8 +40,7 @@ function springboard_p2p_donation_date_deadline_ctools_access_check($conf, $cont
   // Check if p2p_personal_campaign node.
   if ($node->type == 'p2p_personal_campaign') {
 
-    // If the age set in the panels visibility rule settings is different from the field_age_value.
-    // Access to the pane is denied.
+    // Pull in field_p2p_fundraising_deadline and check if it's a date that's expired already.
     $wrapper = entity_metadata_wrapper('node', $node);
     $end_date = date('Y-m-d', $wrapper->field_p2p_fundraising_deadline->value());
     // Make end date just before midnight.
