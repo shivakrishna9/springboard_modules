@@ -241,7 +241,7 @@ function springboard_p2p_personal_campaign_token_info() {
   );
   $info['tokens']['p2p_personal_campaign']['user'] = array(
     'name' => t('Personal Campaigner'),
-    'description' => t(''),
+    'description' => t('The user account of the personal campaign author.'),
     'type' => 'user',
   );
   $info['tokens']['p2p_personal_campaign']['campaign_title'] = array(
@@ -293,35 +293,60 @@ function springboard_p2p_personal_campaign_token_info() {
  */
 function springboard_p2p_personal_campaign_tokens($type, $tokens, $data = array(), $options = array()) {
   if ($type == 'p2p_personal_campaign') {
-    if (!isset($data['p2p_personal_campaign']['node'])) {
+    if (isset($data['p2p_personal_campaign']['node'])) {
+      $personal_campaign = $data['p2p_personal_campaign']['node'];
+    }
+    else {
+      $personal_campaign = springboard_p2p_get_personal_campaign_from_url();
+    }
+
+    if (!is_object($personal_campaign)) {
       return array();
     }
-    $personal_campaign = $data['p2p_personal_campaign']['node'];
+
     $language = $personal_campaign->language;
     $replacements = array();
-    $account = $data['p2p_personal_campaign']['user'];
-    $data['campaign_title'] = $personal_campaign->title;
-    $data['campaign_landing_url'] = url(drupal_get_path_alias('node/' . $personal_campaign->nid), array('absolute' => TRUE));
 
-    $path = drupal_get_path_alias('node/' . $data['node']->nid);
+    $data['campaign_title'] = $personal_campaign->title;
+    $data['campaign_landing_url'] = url('node/' . $personal_campaign->nid, array('absolute' => TRUE));
+
+    $campaign = springboard_p2p_get_campaign_from_personal_campaign($personal_campaign);
+    $goal = springboard_p2p_get_goal_from_campaign($campaign);
+    $path = 'node/' . $goal['nid'];
     $options = array(
       'absolute' => TRUE,
       'query' => array('p2p_pcid' => $personal_campaign->nid),
       'https' => TRUE,
     );
     $data['campaign_donation_url'] = url($path, $options);
+
     $data['personal_campaign_nid'] = $personal_campaign->nid;
-    $deadline = isset($personal_campaign->field_p2p_fundraising_deadline[$language][0]['value']) ? $personal_campaign->field_p2p_fundraising_deadline[$language][0]['value'] : FALSE;
-    $data['campaign_deadline'] = $deadline ? format_date(strtotime($deadline))  : '';
-    $data['campaign_goal_amount'] = isset($personal_campaign->field_p2p_personal_campaign_goal[$language][0]['value']) ? $personal_campaign->field_p2p_personal_campaign_goal[$language][0]['value'] : '';
-    $data['campaign_goal_submissions'] = isset($personal_campaign->field_p2p_personal_submit_goal[$language][0]['value']) ? $personal_campaign->field_p2p_personal_submit_goal[$language][0]['value'] : ';';
+
+    $wrapper = entity_metadata_wrapper('node', $personal_campaign);
+
+    $deadline = $wrapper->field_p2p_fundraising_deadline->value();
+    $data['campaign_deadline'] = $deadline ? format_date($deadline) : '';
+
+    $goal_amount = $wrapper->field_p2p_personal_campaign_goal->value();
+    $data['campaign_goal_amount'] = $goal_amount ? $goal_amount : '';
+
+    $goal_submissions = $wrapper->field_p2p_personal_submit_goal->value();
+    $data['campaign_goal_submissions'] = $goal_submissions ? $goal_submissions : '';
+
     $data['goal_progress_amount'] = isset($personal_campaign->field_p2p_campaign_progress[$language][0]['amount']) ? $personal_campaign->field_p2p_campaign_progress[$language][0]['amount'] : 0;
     $data['goal_progress_submissions'] = isset($personal_campaign->field_p2p_campaign_progress[$language][0]['submissions']) ? $personal_campaign->field_p2p_campaign_progress[$language][0]['submissions'] : 0;
+
     foreach ($tokens as $key => $token) {
       if (isset($data[$key])) {
         $replacements[$token] = $data[$key];
       }
     }
+
+    $account = user_load($personal_campaign->uid);
+    if ($user_tokens = token_find_with_prefix($tokens, 'user')) {
+      $replacements += token_generate('user', $user_tokens, array('user' => $account), $options);
+    }
+
     return $replacements;
   }
 }
