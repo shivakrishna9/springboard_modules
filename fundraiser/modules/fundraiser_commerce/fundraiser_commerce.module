@@ -501,7 +501,7 @@ function fundraiser_commerce_salesforce_genmap_map_field_info_alter(&$fields, $n
     if (!empty($response_fields)) {
       $fields['gateway_response_fields_map'] = array(
         '#type' => 'fundraiser_commerce',
-        '#label' => t('Authorize.net Gateway Response Fields'),
+        '#label' => t('Credit Card Gateway Response Field'),
         '#dedupe' => FALSE,
         '#fields' => array(),
       );
