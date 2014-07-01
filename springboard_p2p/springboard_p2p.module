@@ -2412,19 +2412,30 @@ function springboard_p2p_should_add_state_and_country_ajax($form) {
  */
 function springboard_p2p_get_personal_campaign_from_context_or_url($context) {
   if (empty($context) || empty($context->data) || $context->data->type != 'p2p_personal_campaign') {
-    if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid'])) {
-      $node = node_load($_GET['p2p_pcid']);
-    }
-    else {
-      return FALSE;
-    }
+    return springboard_p2p_get_personal_campaign_from_url();
   }
   else {
     $node = $context->data;
+    if (isset($node->type) && $node->type == 'p2p_personal_campaign') {
+      return $node;
+    }
   }
 
-  if (isset($node->type) && $node->type == 'p2p_personal_campaign') {
-    return $node;
+  return FALSE;
+}
+
+/**
+ * Get a personal campaign node from the URL query string.
+ *
+ * @return bool|object
+ *   The personal campaign node or FALSE.
+ */
+function springboard_p2p_get_personal_campaign_from_url() {
+  if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid'])) {
+    $node = node_load($_GET['p2p_pcid']);
+    if (isset($node->type) && $node->type == 'p2p_personal_campaign') {
+      return $node;
+    }
   }
 
   return FALSE;
