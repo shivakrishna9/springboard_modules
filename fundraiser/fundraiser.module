@@ -1503,13 +1503,6 @@ function fundraiser_donation_form(&$form, &$form_state) {
 }
 
 /**
- * Implements hook_form_alter()
- */
-function fundraiser_form_alter(&$form, &$form_state, $form_id) {
-  $form['actions']['submit']['#attributes']['class'][] = 'btn';
-}
-
-/**
  * Donation form, validation routine on data returned from glue display module.
  * Called from glue display module to validate additional data.
  */

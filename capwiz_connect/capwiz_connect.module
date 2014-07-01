@@ -6,7 +6,7 @@
  * Sync users and actions to Salesforce by querying the Capwiz Connect API
  */
 
-define('CAPWIZ_CONNECT_ADMIN_URL', 'springboard/capwiz_connect');
+define('CAPWIZ_CONNECT_ADMIN_URL', 'admin/springboard/capwiz_connect');
 
 /**
  * Implementats hook_help().
