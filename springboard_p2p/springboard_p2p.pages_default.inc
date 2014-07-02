@@ -939,7 +939,7 @@ function springboard_p2p_default_page_manager_handlers() {
   </tr>
   <tr>
     <td>Email</td>
-    <td>[donation:user:mail]</td>
+    <td><a href="mailto:[donation:user:mail]">[donation:user:mail]</a></td>
   </tr>
   <tr>
     <td>Street1</td>
