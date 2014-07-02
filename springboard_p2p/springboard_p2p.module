@@ -612,6 +612,42 @@ function springboard_p2p_node_insert($node) {
 }
 
 /**
+ * Implements hook_entity_insert().
+ *
+ * Triggers a P2P event if the user is creating his non-first personal campaign.
+ * Done here instead of node insert so the node will have all its stuff done.
+ */
+function springboard_p2p_entity_insert($entity, $type) {
+  if ($type == 'node' && isset($entity->type) && $entity->type == 'p2p_personal_campaign') {
+    if (springboard_p2p_account_has_created_a_personal_campaign($entity->uid)) {
+      $account = user_load($entity->uid);
+      $event = new SpringboardP2pEvents();
+      $event->userCreatesPersonalCampaign($account, $entity);
+    }
+  }
+}
+
+/**
+ * Check if the user account has previously created a personal campaign.
+ *
+ * @param int $uid
+ *   The account uid.
+ *
+ * @return bool
+ *   TRUE if the user has created a personal campaign.
+ */
+function springboard_p2p_account_has_created_a_personal_campaign($uid) {
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'p2p_personal_campaign')
+    ->propertyCondition('uid', $uid)
+    ->range(0, 1)
+    ->count();
+
+  return (bool) $query->execute();
+}
+
+/**
  * Implements hook_node_update().
  */
 function springboard_p2p_node_update($node) {

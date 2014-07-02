@@ -27,6 +27,7 @@ function springboard_p2p_rules_admin_page() {
       'springboard_p2p_user_is_approved',
       'springboard_p2p_user_is_rejected',
       'springboard_p2p_user_requests_password_reset',
+      'springboard_p2p_user_creates_campaign',
     ),
     'plugin' => 'reaction rule',
     'active' => TRUE,

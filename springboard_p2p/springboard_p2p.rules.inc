@@ -151,6 +151,25 @@ function springboard_p2p_rules_event_info() {
         ),
       ),
     ),
+    'springboard_p2p_user_creates_campaign' => $defaults + array(
+      'label' => t("After a user creates a personal campaign (excludes the user's first personal campaign)."),
+      'variables' => array(
+        'account' => array(
+          'type' => 'user',
+          'label' => t('User creating the campaign'),
+        ),
+        'dashboard_url' => array(
+          'type' => 'uri',
+          'label' => t('User P2P dashboard URL'),
+          'description' => t("The URL to the user's list of personal campaigns."),
+        ),
+        'personal_campaign' => array(
+          'type' => 'node',
+          'bundle' => 'p2p_personal_campaign',
+          'label' => t('Personal campaign node that was just created.'),
+        ),
+      ),
+    ),
   );
 }
 

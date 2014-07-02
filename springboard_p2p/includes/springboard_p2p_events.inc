@@ -137,6 +137,25 @@ class SpringboardP2pEvents {
   }
 
   /**
+   * User creates non-first personal campaign.
+   *
+   * @param object $account
+   *   The user account.
+   * @param object $personal_campaign
+   *   The personal campaign that was just created.
+   */
+  public function userCreatesPersonalCampaign($account, $personal_campaign) {
+    $event = 'springboard_p2p_user_creates_campaign';
+    $args = array(
+      'account' => $account,
+      'dashboard_url' => $this->dashboardUrl($account->uid),
+      'personal_campaign' => $personal_campaign,
+    );
+
+    rules_invoke_event_by_args($event, $args);
+  }
+
+  /**
    * Provides the user P2P dashboard URL.
    *
    * @param int $uid

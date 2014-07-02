@@ -46,6 +46,23 @@ function springboard_p2p_default_rules_default_rules_configuration() {
       ]
     }
   }');
+  $items['rules_p2p_user_email_personal_campaign_creation'] = entity_import('rules_config', '{ "rules_p2p_user_email_personal_campaign_creation" : {
+      "LABEL" : "Send user email after creating a personal campaign",
+      "PLUGIN" : "reaction rule",
+      "TAGS" : [ "Springboard P2P" ],
+      "REQUIRES" : [ "rules", "springboard_p2p" ],
+      "ON" : [ "springboard_p2p_user_creates_campaign" ],
+      "DO" : [
+        { "mail" : {
+            "to" : [ "account:mail" ],
+            "subject" : "You created a campaign!",
+            "message" : "Thanks for creating a personal campaign.\\r\\n\\r\\nView it here:  [personal-campaign:url]\\r\\n\\r\\nView your campaign dashboard:  [dashboard-url:value]\\r\\n",
+            "language" : [ "" ]
+          }
+        }
+      ]
+    }
+  }');
   $items['rules_p2p_user_email_private_campaign_approval_request'] = entity_import('rules_config', '{ "rules_p2p_user_email_private_campaign_approval_request" : {
       "LABEL" : "Send user email about requesting approval to a private P2P campaign",
       "PLUGIN" : "reaction rule",
