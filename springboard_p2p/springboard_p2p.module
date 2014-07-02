@@ -2290,12 +2290,15 @@ function springboard_p2p_css_alter(&$css) {
 /**
  * Implements template_preprocess_page().
  *
- * Hide the h1 title for the login page, we set it in a custom pane.
+ * Misc page preprocess functions.
  */
 function springboard_p2p_preprocess_page(&$vars) {
-  if ((arg(0) == 'springboard_p2p' && arg(1) == 'login') || (arg(2) == 'done')) {
+
+  // No title on login and donation thank you page, it's handled by panels.
+  if ((arg(0) == 'springboard_p2p' && arg(1) == 'login') || (!empty($_GET['p2p_pcid']) && (arg(2) == 'done'))) {
     $vars['title'] = '';
   }
+
 }
 
 /**
