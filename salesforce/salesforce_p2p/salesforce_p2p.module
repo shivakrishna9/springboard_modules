@@ -8,12 +8,12 @@
 /**
  * Implements hook_salesforce_queue_create_item_alter()
  */
-function salesforce_p2p_salesforce_queue_create_item_alter($item) {
+function salesforce_p2p_salesforce_queue_create_item_alter(&$item) {
 
   // Add a token for the peer to peer category to the peer to peer campaign
   if ($item['module'] == 'node' && $item['delta'] == 'p2p_campaign') {
-    // Load up the campaign node (TODO: check for cache)
-    $node = node_load($item['drupal_id']);
+    // Load up the campaign node. Use reset to ensure freshly saved values.
+    $node = node_load($item['drupal_id'], NULL, TRUE);
     // Wrap the entity to make it easier to work with.
     $wrapper = entity_metadata_wrapper('node', $node);
     // Calling raw() will get us the id of the category instead of loading the enire entity.
@@ -21,6 +21,8 @@ function salesforce_p2p_salesforce_queue_create_item_alter($item) {
 
     $item['sobject']->fields['P2P_Category__c'] = sprintf('[P2P_Category__c:p2p_category:%d]', $category_id);
 
+    // Allow the category to be updated during the sync.
+    $item['sync_rules']['P2P_Category__c'] = 'always';
   }
 
   // Add a token for peer to peer campaign to the personal campaign.
