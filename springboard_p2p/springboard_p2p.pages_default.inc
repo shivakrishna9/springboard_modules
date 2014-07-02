@@ -927,7 +927,64 @@ function springboard_p2p_default_page_manager_handlers() {
     $pane->configuration = array(
       'admin_title' => '',
       'title' => 'Transaction Summary',
-      'body' => '<table><tbody><tr><td>First Name:</td><td>[p2p_personal_campaign:user:sbp-first-name]</td></tr><tr><td>Last Name:</td><td>[p2p_personal_campaign:user:sbp-last-name]</td></tr><tr><td>Email:</td><td>[donation:user:mail]</td></tr><tr><td>Street1:</td><td>[donation:address]</td></tr><tr><td>City:</td><td>[donation:city]</td></tr><tr><td>State/Province:</td><td>[donation:state]</td></tr><tr><td>Amount:</td><td>$[donation:amount]</td></tr><tr><td>Card Type:</td><td>[donation:card_type]</td></tr><tr><td>Card Number:</td><td>************[donation:card_number]</td></tr><tr><td>Expiration Date:</td><td>[donation:card_expiration_month] / [donation:card_expiration_year]</td></tr><tr><td>eCheck account number:</td><td>********[donation:bank_account]</td></tr><tr><td>eCheck routing number:</td><td>[donation:bank_routing]</td></tr><tr><td>PayPal:</td><td>[donation:paypal_paid]</td></tr><tr><td>Campaign deadline:</td><td>[p2p_personal_campaign:campaign_deadline]</td></tr><tr><td>Campaign landing url:</td><td>[p2p_personal_campaign:campaign_landing_url]</td></tr><tr><td>Donation url:</td><td>[p2p_personal_campaign:campaign_donation_url]</td></tr><tr><td>Personal campaign nid:</td><td>[p2p_personal_campaign:personal_campaign_nid]</td></tr><tr><td>Donation url:</td><td>[p2p_personal_campaign:campaign_donation_url]</td></tr><tr><td>Personal campaign goal:</td><td>[p2p_personal_campaign:campaign_goal]</td></tr><tr><td>Personal campaign title:</td><td>[p2p_personal_campaign:campaign_title]</td></tr></tbody></table>',
+      'body' => '<table>
+  <tbody>
+  <tr>
+    <td>First Name</td>
+    <td>[p2p_personal_campaign:user:sbp-first-name]</td>
+  </tr>
+  <tr>
+    <td>Last Name</td>
+    <td>[p2p_personal_campaign:user:sbp-last-name]</td>
+  </tr>
+  <tr>
+    <td>Email</td>
+    <td>[donation:user:mail]</td>
+  </tr>
+  <tr>
+    <td>Street1</td>
+    <td>[donation:address]</td>
+  </tr>
+  <tr>
+    <td>City</td>
+    <td>[donation:city]</td>
+  </tr>
+  <tr>
+    <td>State/Province</td>
+    <td>[donation:state]</td>
+  </tr>
+  <tr>
+    <td>Amount:</td>
+    <td>$[donation:amount]</td>
+  </tr>
+  <tr>
+    <td>Donation url</td>
+    <td><a href="[p2p_personal_campaign:campaign_donation_url]">Link</a></td>
+  </tr>
+  <tr>
+    <td>Personal campaign submissions goal</td>
+    <td>[p2p_personal_campaign:campaign_goal_amount]</td>
+  </tr>
+  <tr>
+    <td>Personal campaign fundraising goal</td>
+    <td>[p2p_personal_campaign:campaign_goal_submissions]</td>
+  </tr>
+  <tr>
+    <td>Personal campaign submissions progress</td>
+    <td>[p2p_personal_campaign:goal_progress_submissions]</td>
+  </tr>
+  <tr>
+    <td>Personal campaign fundraising progress</td>
+    <td>[p2p_personal_campaign:goal_progress_amount]</td>
+  </tr>
+  <tr>
+    <td>Personal campaign donation nid</td>
+    <td>[p2p_personal_campaign:personal_campaign_donation_nid]</td>
+  </tr>
+  </tbody>
+</table>
+
+',
       'format' => 'full_html',
       'substitute' => 1,
     );
