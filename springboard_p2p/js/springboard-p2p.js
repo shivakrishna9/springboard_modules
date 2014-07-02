@@ -21,6 +21,9 @@
       // Add uniform to file upload.
       $('input[type=file]').uniform();
 
+      // Remove the panel seperator.
+      $(".panel-separator").remove();
+
       // end jquery.
     }};
 })

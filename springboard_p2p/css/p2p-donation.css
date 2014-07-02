@@ -368,6 +368,10 @@ div.donation-processing-wrapper {
 
 /* confirmation page */
 
+.pane-p2p-confirmation table tr td.first {
+  width: 36%;
+}
+
 .p2p-confirmation h1,
 .p2p-confirmation h2 {
   text-align: center;

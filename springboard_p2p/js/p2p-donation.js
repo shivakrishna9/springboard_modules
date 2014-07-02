@@ -95,8 +95,9 @@
       $(".pane-p2p-confirmation table tr:visible:even").addClass("even");
       $(".pane-p2p-confirmation table tr:visible:odd").addClass("odd");
 
-      // Remove the panel seperator.
-      $(".panel-separator").remove();
+      // first / last for confirmation table
+      $('.pane-p2p-confirmation table tr td:first-child').addClass('first');
+      $('.pane-p2p-confirmation table tr td:last-child').addClass('last');
 
       // end jquery.
     }};
