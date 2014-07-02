@@ -984,33 +984,35 @@ function fundraiser_tickets_module_implements_alter(&$implementations, $hook) {
 }
 
 function fundraiser_tickets_webform_submission_presave($node, $submission) {
+  $node_wrapper = entity_metadata_wrapper('node', $node);
 
-  //$nid = $node->addon_id;
-  $nid = 7;
- 
-  if(isset($nid) && $node->nid != $nid) {
-    $altSub = array();
+  $addons = $node_wrapper->fr_tickets_donation_donation->value();
+  if($addons) {
+    $nid = $node_wrapper->fr_tickets_donation_addon_form->value()->nid;
+    if(isset($nid) && $node->nid != $nid) {
+      $altSub = array();
 
-    foreach($node->webform['components'] as $id => $component) {
+      foreach($node->webform['components'] as $id => $component) {
 
-      if(isset($submission->data[$id])) {
-        if($component['form_key'] != 'payment_fields') {
-          $altSub[$component['form_key']] = $submission->data[$id]['value'][0];
+        if(isset($submission->data[$id])) {
+          if($component['form_key'] != 'payment_fields') {
+            $altSub[$component['form_key']] = $submission->data[$id]['value'][0];
+          }
+          else {
+            $altSub[$component['form_key']] = $submission->data[$id]['value'];
+          }
         }
-        else {
-          $altSub[$component['form_key']] = $submission->data[$id]['value'];
-        }
+
       }
 
+      $altSub['other_amount'] = intval($altSub['amount']);
+      $altSub['amount'] = 'other';
+      $altSub['blek'] = TRUE;
+      module_load_include('inc', 'services', 'services.runtime');
+      include_once(drupal_get_path('module', 'springboard_api') . '/resources/springboard_api.form_resources.inc');
+      
+      springboard_api_form_action_submit($nid,  NULL, $altSub);
     }
-
-    $altSub['other_amount'] = intval($altSub['amount']);
-    $altSub['amount'] = 'other';
-    $altSub['blek'] = TRUE;
-    module_load_include('inc', 'services', 'services.runtime');
-    include_once(drupal_get_path('module', 'springboard_api') . '/resources/springboard_api.form_resources.inc');
-    
-    springboard_api_form_action_submit($nid,  NULL, $altSub);
   }
 }
 
