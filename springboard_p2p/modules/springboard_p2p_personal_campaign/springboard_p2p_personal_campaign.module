@@ -312,6 +312,9 @@ function springboard_p2p_personal_campaign_tokens($type, $tokens, $data = array(
 
     $campaign = springboard_p2p_get_campaign_from_personal_campaign($personal_campaign);
     $goal = springboard_p2p_get_goal_from_campaign($campaign);
+
+    $data['personal_campaign_donation_nid'] = $goal['nid'];
+
     $path = 'node/' . $goal['nid'];
     $options = array(
       'absolute' => TRUE,
