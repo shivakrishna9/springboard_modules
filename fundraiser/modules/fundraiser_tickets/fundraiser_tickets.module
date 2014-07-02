@@ -973,3 +973,45 @@ function _fundraiser_tickets_weight_sort($a, $b) {
   return 0;
 }
 
+function fundraiser_tickets_module_implements_alter(&$implementations, $hook) {
+  if ($hook != 'webform_submission_presave') {
+    return;
+  }
+  $module = 'fundraiser_tickets';
+  $group = array($module => $implementations[$module]);
+  unset($implementations[$module]);
+  $implementations = $group + $implementations;
+}
+
+function fundraiser_tickets_webform_submission_presave($node, $submission) {
+
+  //$nid = $node->addon_id;
+  $nid = 7;
+ 
+  if(isset($nid) && $node->nid != $nid) {
+    $altSub = array();
+
+    foreach($node->webform['components'] as $id => $component) {
+
+      if(isset($submission->data[$id])) {
+        if($component['form_key'] != 'payment_fields') {
+          $altSub[$component['form_key']] = $submission->data[$id]['value'][0];
+        }
+        else {
+          $altSub[$component['form_key']] = $submission->data[$id]['value'];
+        }
+      }
+
+    }
+
+    $altSub['other_amount'] = intval($altSub['amount']);
+    $altSub['amount'] = 'other';
+    $altSub['blek'] = TRUE;
+    include_once(drupal_get_path('module', 'springboard_api') . '/resources/springboard_api.form_resources.inc');
+    
+    springboard_api_form_action_submit($nid,  NULL, $altSub);
+  }
+}
+
+
+
