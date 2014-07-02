@@ -820,7 +820,16 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->type = 'campaign_expiration_message';
     $pane->subtype = 'campaign_expiration_message';
     $pane->shown = TRUE;
-    $pane->access = array();
+    $pane->access = array(
+      'plugins' => array(
+        0 => array(
+          'name' => 'donation_date_deadline',
+          'settings' => NULL,
+          'context' => 'panelizer',
+          'not' => TRUE,
+        ),
+      ),
+    );
     $pane->configuration = array();
     $pane->cache = array();
     $pane->style = array(

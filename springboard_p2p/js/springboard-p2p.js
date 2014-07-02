@@ -13,7 +13,7 @@
       $('#edit-mail').parent('.form-item').addClass('email-wrapper');
 
     // Get rid of inline styles.
-   $('.panel-display p').attr('style', '');
+      $('p').removeAttr("style");
 
       // Add uniform to selects
       $("select").uniform();
