@@ -1007,6 +1007,7 @@ function fundraiser_tickets_webform_submission_presave($node, $submission) {
     $altSub['other_amount'] = intval($altSub['amount']);
     $altSub['amount'] = 'other';
     $altSub['blek'] = TRUE;
+    module_load_include('inc', 'services', 'services.runtime');
     include_once(drupal_get_path('module', 'springboard_api') . '/resources/springboard_api.form_resources.inc');
     
     springboard_api_form_action_submit($nid,  NULL, $altSub);

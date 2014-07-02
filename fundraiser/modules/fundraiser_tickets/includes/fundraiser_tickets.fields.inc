@@ -863,6 +863,84 @@ $fields['fr_tickets_soldout_redirect'] = array(
     )
   );
 
+$fields['fr_tickets_donation_addon_form'] = array(
+    'field_config' => array(
+      'active' => 1,
+      'cardinality' => 1,
+      'deleted' => 0,
+      'entity_types' => array(),
+      'field_name' => 'fr_tickets_donation_addon_form',
+      'foreign keys' => array(
+        'node' => array(
+          'columns' => array(
+            'target_id' => 'nid',
+          ),
+          'table' => 'node',
+        ),
+      ),
+      'indexes' => array(
+        'target_id' => array(
+          0 => 'target_id',
+        ),
+      ),
+      'locked' => 0,
+      'module' => 'entityreference',
+      'settings' => array(
+        'handler' => 'base',
+        'handler_settings' => array(
+          'behaviors' => array(
+            'views-select-list' => array(
+              'status' => 0,
+            ),
+          ),
+          'sort' => array(
+            'type' => 'none',
+          ),
+          'target_bundles' => array(
+            'webform' => 'donation_form',
+          ),
+        ),
+        'target_type' => 'node',
+      ),
+      'translatable' => 0,
+      'type' => 'entityreference',
+    ),
+    'field_instance' => array(
+      'bundle' => $type,
+      'default_value' => NULL,
+      'deleted' => 0,
+      'description' => '',
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 14,
+        ),
+        'teaser' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 0,
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'fr_tickets_donation_addon_form',
+      'label' => 'Donation Form to Use for Addons',
+      'required' => 0,
+      'settings' => array(
+        'user_register_form' => FALSE,
+      ),
+      'widget' => array(
+        'active' => 1,
+        'module' => 'options',
+        'settings' => array(),
+        'type' => 'options_select',
+        'weight' => 14,
+      ),
+    )
+  );
+
  $fields['fr_tickets_ticket_types'] = array(
     'field_config' => array(
       'active' => 1,
@@ -923,7 +1001,7 @@ $fields['fr_tickets_soldout_redirect'] = array(
         'module' => 'commerce_product_reference',
         'settings' => array(),
         'type' => 'commerce_product_reference_hidden',
-        'weight' => 14,
+        'weight' => 15,
       ),
     )
   );
