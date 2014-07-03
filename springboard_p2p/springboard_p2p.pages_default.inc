@@ -918,90 +918,31 @@ function springboard_p2p_default_page_manager_handlers() {
     $display->content['new-1aa6f706-2978-4bc9-8bda-7afcc18d304a'] = $pane;
     $display->panels['top'][4] = 'new-1aa6f706-2978-4bc9-8bda-7afcc18d304a';
     $pane = new stdClass();
-    $pane->pid = 'new-c431f9ac-3369-41b1-93d1-4ac7aab4970e';
+    $pane->pid = 'new-12ef7582-b921-4b36-a1d8-4092c1de8cb0';
     $pane->panel = 'top';
-    $pane->type = 'custom';
-    $pane->subtype = 'custom';
+    $pane->type = 'pm_existing_pages';
+    $pane->subtype = 'pm_existing_pages';
     $pane->shown = TRUE;
     $pane->access = array();
     $pane->configuration = array(
-      'admin_title' => '',
-      'title' => 'Transaction Summary',
-      'body' => '<table>
-  <tbody>
-  <tr>
-    <td>First Name</td>
-    <td>[p2p_personal_campaign:user:sbp-first-name]</td>
-  </tr>
-  <tr>
-    <td>Last Name</td>
-    <td>[p2p_personal_campaign:user:sbp-last-name]</td>
-  </tr>
-  <tr>
-    <td>Email</td>
-    <td><a href="mailto:[donation:user:mail]">[donation:user:mail]</a></td>
-  </tr>
-  <tr>
-    <td>Street1</td>
-    <td>[donation:address]</td>
-  </tr>
-  <tr>
-    <td>City</td>
-    <td>[donation:city]</td>
-  </tr>
-  <tr>
-    <td>State/Province</td>
-    <td>[donation:state]</td>
-  </tr>
-  <tr>
-    <td>Amount:</td>
-    <td>$[donation:amount]</td>
-  </tr>
-  <tr>
-    <td>Donation url</td>
-    <td><a href="[p2p_personal_campaign:campaign_donation_url]">Link</a></td>
-  </tr>
-  <tr>
-    <td>Personal campaign submissions goal</td>
-    <td>[p2p_personal_campaign:campaign_goal_amount]</td>
-  </tr>
-  <tr>
-    <td>Personal campaign fundraising goal</td>
-    <td>[p2p_personal_campaign:campaign_goal_submissions]</td>
-  </tr>
-  <tr>
-    <td>Personal campaign submissions progress</td>
-    <td>[p2p_personal_campaign:goal_progress_submissions]</td>
-  </tr>
-  <tr>
-    <td>Personal campaign fundraising progress</td>
-    <td>[p2p_personal_campaign:goal_progress_amount]</td>
-  </tr>
-  <tr>
-    <td>Personal campaign donation nid</td>
-    <td>[p2p_personal_campaign:personal_campaign_donation_nid]</td>
-  </tr>
-  </tbody>
-</table>
-
-',
-      'format' => 'full_html',
-      'substitute' => 1,
+      0 => 'task_id',
+      1 => 'pane_title_from_menu',
+      'task_id' => 'node_overview',
+      'pane_title_from_menu' => 0,
+      'override_title' => 1,
+      'override_title_text' => '',
     );
     $pane->cache = array();
     $pane->style = array(
       'settings' => NULL,
     );
-    $pane->css = array(
-      'css_id' => '',
-      'css_class' => 'pane-p2p-confirmation',
-    );
+    $pane->css = array();
     $pane->extras = array();
     $pane->position = 5;
     $pane->locks = array();
-    $pane->uuid = 'c431f9ac-3369-41b1-93d1-4ac7aab4970e';
-    $display->content['new-c431f9ac-3369-41b1-93d1-4ac7aab4970e'] = $pane;
-    $display->panels['top'][5] = 'new-c431f9ac-3369-41b1-93d1-4ac7aab4970e';
+    $pane->uuid = '12ef7582-b921-4b36-a1d8-4092c1de8cb0';
+    $display->content['new-12ef7582-b921-4b36-a1d8-4092c1de8cb0'] = $pane;
+    $display->panels['top'][5] = 'new-12ef7582-b921-4b36-a1d8-4092c1de8cb0';
   $display->hide_title = PANELS_TITLE_FIXED;
   $display->title_pane = 'new-a179f976-122c-4cd6-af6e-f4e0ab7e609b';
   $handler->conf['display'] = $display;
