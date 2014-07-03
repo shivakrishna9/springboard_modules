@@ -38,14 +38,16 @@ div#main {
   border: 1px solid #ccc;
 }
 
-.container, .navbar-static-top .container, .navbar-fixed-top .container, .navbar-fixed-bottom .container {
+.container, .navbar-static-top .container,
+.navbar-fixed-top .container,
+.navbar-fixed-bottom .container {
   max-width: 940px;
   width: inherit;
 }
 
 /* tabs */
 
-.tabs {
+ul.primary.tabs {
   position: relative;
   display: table;
   overflow: hidden;
@@ -55,7 +57,7 @@ div#main {
   background: #eff0f2;
 }
 
-.tabs li {
+ul.primary.tabs li {
   position: relative;
   float: left;
   overflow: hidden;
@@ -63,7 +65,7 @@ div#main {
   line-height: 38px;
 }
 
-.tabs a {
+ul.primary.tabs a {
   display: block;
   padding: 8px 16px;
   outline: none;
@@ -78,8 +80,21 @@ div#main {
   transition: all 0.2s ease-in-out;
 }
 
-.tabs .active a,
-.tabs a:hover {
+ul.primary li a {
+  border-color: inherit;
+  border-style: none;
+  border-width: 0;
+  height: auto;
+  margin-right: 0;
+}
+
+ul.primary li.active a {
+  border: 0;
+  border-bottom: 0;
+}
+
+ul.primary.tabs .active a,
+ul.primary.tabs a:hover {
   background: #c6d2d3;
   color: #fff;
   color: #333;
@@ -143,16 +158,17 @@ label,
 .field:nth-child(odd) {
   background-color: #f5f5f5;
 }
+
 .field:nth-child(even) {
   background-color: #fcfcfc;
 }
 
-.profile .field,
-.profile .field-label {
+body .profile .field,
+body .profile .field-label {
   font-size: 17px;
 }
 
-.form-actions {
+body .form-actions {
   position: relative;
   margin: 10px 0;
   padding: 0;
@@ -160,8 +176,8 @@ label,
   background-color: #fff;
 }
 
-input[type="submit"],
-input[type="submit"].btn {
+body input[type="submit"],
+body input[type="submit"].btn {
   position: relative;
   margin: 0 10px 0 0;
   padding: 6px 20px;
@@ -179,13 +195,26 @@ input[type="submit"].btn {
   cursor: pointer;
 }
 
-input[type="submit"]:hover,
-input[type="submit"].btn:hover {
+body input[type="submit"]:hover,
+body input[type="submit"].btn:hover {
   outline: none;
   background: #2980b9;
   -webkit-transition: all 0.2s ease-in-out;
   -moz-transition: all 0.2s ease-in-out;
   transition: all 0.2s ease-in-out;
+}
+
+body .control-group {
+  width: 100%;
+  clear: none;
+  float: none;
+}
+
+body .control-group select,
+body .control-group input {
+  display: block;
+  float: none;
+  clear: none;
 }
 
 @media (max-width: 979px) {
