@@ -1157,6 +1157,7 @@ $fields['fr_tickets_donation_addon_form'] = array(
   t('Body');
   t('Close event on');
   t('Enable add-on donation');
+  t('Donation Form to Use for Addons');
   t('Event is closed');
   t('Closed message');
   t('Sold out message');

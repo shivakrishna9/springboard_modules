@@ -197,7 +197,33 @@ function fundraiser_tickets_edit_settings($node){
  * Implements hook_form_alter().
  */
 function fundraiser_tickets_form_alter(&$form, &$form_state, $form_id) {
-
+  $node = isset($form['#node']) ? $form['#node']: FALSE;
+  if($node) {
+    if (fundraiser_tickets_is_ticket_type($node->type) && arg(2) == 'tickets') {
+      $form['fr_tickets_donation_addon_form']['#states'] = array(
+        'visible' => array(
+          ':input[name="fr_tickets_donation_donation[und]"]' => array('checked' => TRUE),
+        ),
+        'required' => array(
+          ':input[name="fr_tickets_donation_donation[und]"]' => array('checked' => TRUE),
+        ),
+      );
+      unset($form['fr_tickets_donation_addon_form'][LANGUAGE_NONE]['#options']['_none']);
+      $options = $form['fr_tickets_donation_addon_form'][LANGUAGE_NONE]['#options'];
+      foreach ($options as $nid => $title) {
+        if(is_numeric($nid)) {
+          $option = node_load($nid);
+          if (fundraiser_tickets_is_ticket_type($option->type)) {
+            unset($form['fr_tickets_donation_addon_form'][LANGUAGE_NONE]['#options'][$nid]);
+          }  
+          $mismatched_fields = fundraiser_tickets_check_addon_required_fields($nid, 'settinngs');
+          if($mismatched_fields) {
+            unset($form['fr_tickets_donation_addon_form'][LANGUAGE_NONE]['#options'][$nid]);
+          }
+        }
+      }
+    }
+  }
   // Do not allow users to muck with defined form keys in component editting form.
   // They're named what they're named for a reason and we need those keys to remain unharmed.
   if ($form_id == 'webform_component_edit_form') {
@@ -973,48 +999,100 @@ function _fundraiser_tickets_weight_sort($a, $b) {
   return 0;
 }
 
-function fundraiser_tickets_module_implements_alter(&$implementations, $hook) {
-  if ($hook != 'webform_submission_presave') {
-    return;
-  }
-  $module = 'fundraiser_tickets';
-  $group = array($module => $implementations[$module]);
-  unset($implementations[$module]);
-  $implementations = $group + $implementations;
-}
+function fundraiser_tickets_fundraiser_donation_process($donation) {
+  if (fundraiser_tickets_is_ticket_type($donation->node->type) && $donation->result['success']) {
 
-function fundraiser_tickets_webform_submission_presave($node, $submission) {
-  $node_wrapper = entity_metadata_wrapper('node', $node);
+    $node_wrapper = entity_metadata_wrapper('node', $donation->node);
+    if(isset($node_wrapper->fr_tickets_donation_donation)) {
+      $addons = $node_wrapper->fr_tickets_donation_donation->value();
+    }  
+    if(!empty($addons)) {
+      $nid = $node_wrapper->fr_tickets_donation_addon_form->value()->nid;
 
-  $addons = $node_wrapper->fr_tickets_donation_donation->value();
-  if($addons) {
-    $nid = $node_wrapper->fr_tickets_donation_addon_form->value()->nid;
-    if(isset($nid) && $node->nid != $nid) {
-      $altSub = array();
+      $compatible = fundraiser_tickets_check_addon_required_fields($nid, 'submit');
 
-      foreach($node->webform['components'] as $id => $component) {
-
-        if(isset($submission->data[$id])) {
-          if($component['form_key'] != 'payment_fields') {
-            $altSub[$component['form_key']] = $submission->data[$id]['value'][0];
-          }
-          else {
-            $altSub[$component['form_key']] = $submission->data[$id]['value'];
-          }
-        }
-
+      if(isset($nid) && $donation->node->nid != $nid && $compatible == TRUE) {
+        $donation->donation['other_amount'] = intval($donation->donation['amount']);
+        $donation->donation['amount'] = 'other';        
+        fundraiser_tickets_form_action_submit($nid,  NULL, $donation->donation);
       }
-
-      $altSub['other_amount'] = intval($altSub['amount']);
-      $altSub['amount'] = 'other';
-      $altSub['blek'] = TRUE;
-      module_load_include('inc', 'services', 'services.runtime');
-      include_once(drupal_get_path('module', 'springboard_api') . '/resources/springboard_api.form_resources.inc');
-      
-      springboard_api_form_action_submit($nid,  NULL, $altSub);
     }
   }
 }
 
+function fundraiser_tickets_check_addon_required_fields($nid, $type) {
+  $details = springboard_api_get_form_details($nid);
+  foreach ($details['fields'] as $name => $field) {
+    if($field['required'] == 1) {
+      if(!isset($donation->donation[$name]) || $donation->donation[$name] == '') {
+        if($type == 'submit') { 
+          drupal_set_message('Add on donation could not be processed. There was a problem with required field %field', array('%field' => $name), 'error');
+        }
+        return FALSE;
+      }
+    }
+  }
+  return TRUE;
+}
 
+function fundraiser_tickets_form_action_submit($nid, $app_id = NULL, $submission) {
+  include_once(drupal_get_path('module', 'springboard_api') . '/resources/springboard_api.form_resources.inc');
 
+  if (is_numeric($nid)) {
+    $node = node_load($nid);
+    $submission = (array) $submission;
+    $submission = _springboard_api_convert_submission($submission, $node);
+    $submit_text = db_query("SELECT submit_text FROM {webform} WHERE nid = :nid", array(':nid' => $nid))->fetchField();
+    if($submit_text == '') {
+      $submit_text = 'Submit';
+    }
+    $form_id = 'webform_client_form_' . $nid;
+    $form_state['webform_completed'] = 1;
+    $form_state['values'] = array(
+      'submit' => $submit_text,
+      'op' => $submit_text,
+      'details' => array(
+        'nid' => $nid,
+        'sid' => '',
+        'uid' => 0,
+        'page_num' => 1,
+        'page_count' => 1,
+        'finished' => 0,
+      ),
+      'values' => array(),
+    );
+    $form_state['clicked_button']['#parents'] = NULL;
+    $form_state['values']['submitted'] = springboard_api_submission_tree_build($submission, $node->webform['components'], $tree, 0);
+    $webform_submission = array(
+      'nid' => $nid,
+      'uid' => 0,
+      'submitted' => time(),
+      'remote_addr' => ip_address(),
+      'data' => array(),
+    );
+    foreach ($node->webform['components'] as $cid => $component) {
+      if ($component['type'] != 'fieldset') {
+        $fields[] = $component['form_key'];
+        if (isset($submission[$component['form_key']]) && !is_array($submission[$component['form_key']])) {
+          $webform_submission['data'][$cid]['value'][] = $submission[$component['form_key']];
+        }
+        elseif (isset($submission[$component['form_key']])) {
+          $webform_submission['data'][$cid]['value'] = $submission[$component['form_key']];
+        }
+        else {
+          // Backfill with null data to match what Webform does.
+          $webform_submission['data'][$cid]['value'][] = '';
+        }
+      }
+    }
+    drupal_form_submit($form_id, $form_state, $node, $webform_submission);
+
+    if ($errors = form_get_errors()) {
+      drupal_set_message('Add on donation could not be processed.', 'error');
+    }
+    else {
+      $sid = $form_state['values']['details']['sid'];
+      return array('status' => t('Submission successful'), 'submission id' => $sid);
+    }
+  }
+}
