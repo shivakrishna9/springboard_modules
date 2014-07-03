@@ -27,15 +27,19 @@ function springboard_stats_install() {
       $webform_types[] = $type;
     }
   }
-  $q = db_query("SELECT nid FROM {node} WHERE type IN (:types);", array(':types' => $webform_types));
-  while ($r = $q->fetchAssoc()) {
-    $node = node_load($r['nid']);
-    springboard_stats_update_field($node, 'count_submissions');
+  if(!empty($webform_types)) {
+    $q = db_query("SELECT nid FROM {node} WHERE type IN (:types)", array(':types' => $webform_types));
+    while ($r = $q->fetchAssoc()) {
+      $node = node_load($r['nid']);
+      springboard_stats_update_field($node, 'count_submissions');
+    }
   }
-  $q = db_query("SELECT nid FROM {node} WHERE type IN (:types);", array(':types' => $fundraiser_types));
-  while ($r = $q->fetchAssoc()) {
-    $node = node_load($r['nid']);
-    springboard_stats_update_all_fields($node);
+  if(!empty($fundraiser_types)) {
+    $q = db_query("SELECT nid FROM {node} WHERE type IN (:types)", array(':types' => $fundraiser_types));
+    while ($r = $q->fetchAssoc()) {
+      $node = node_load($r['nid']);
+      springboard_stats_update_all_fields($node);
+    }
   }
 }
 
