@@ -496,8 +496,8 @@ function fundraiser_commerce_salesforce_genmap_map_field_info_alter(&$fields, $n
   $gateway_info = _fundraiser_gateway_info($node->gateways['credit']['id']);
 
   // If the credit card method has mappable response fields, add them to the mapping form.
-  if ($fields_callback = $gateway_info['response fields callback']) {
-    $response_fields = $fields_callback($gateway_info);
+  if (!empty($gateway_info['response fields callback'])) {
+    $response_fields = $gateway_info['response fields callback']($gateway_info);
     if (!empty($response_fields)) {
       $fields['gateway_response_fields_map'] = array(
         '#type' => 'fundraiser_commerce',
