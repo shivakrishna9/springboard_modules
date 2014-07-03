@@ -90,7 +90,6 @@ function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
       $form['actions']['delete']['#submit'][] = 'springboard_admin_node_delete';
     break;
   }
-
 }
 
 /**
@@ -209,15 +208,7 @@ function springboard_admin_init() {
   global $user;
   // If user is to have the Springboard Admin UX, make sure they are redirecitng
   // to the proper admin interface.
-  if (springboard_admin_user_gets_sbux($user)) {
-    // If a redirect destination is included in the query string, clear it from
-    // $_GET and it will be added back to the path later.
-    if (isset($_GET['destination'])) {
-      unset($_GET['destination']);
-    }
-    // Set up any query string that might exist for use in drupal_goto().
-    parse_str($_SERVER['QUERY_STRING'], $query);
-    
+  if (springboard_admin_user_gets_sbux($user)) {    
     // Set up requested path and goto path.
     $path = request_uri();    
     $goto_path = FALSE;
@@ -356,6 +347,9 @@ function springboard_admin_init() {
     elseif (preg_match('|^/admin/commerce/orders((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
       $goto_path = 'springboard/donations' . $m1[1];
     }
+    elseif (preg_match('|^/admin/commerce/products((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)){
+      $goto_path = 'springboard/commerce/products' . $m1[1];
+    }
     /**
      * User paths.
      */
@@ -373,6 +367,13 @@ function springboard_admin_init() {
       }
     }
     if ($goto_path) {
+      // If a redirect destination is included in the query string, clear it from
+      // $_GET and it will be added back to the path later.
+      if (isset($_GET['destination'])) {
+        unset($_GET['destination']);
+      }
+      // Set up any query string that might exist for use in drupal_goto().
+      parse_str($_SERVER['QUERY_STRING'], $query);
       drupal_goto($goto_path, array('query' => $query, 'alias' => TRUE));
     } 
   }  
@@ -690,6 +691,9 @@ function springboard_admin_url_inbound_alter(&$path, $original_path, $path_langu
     }
     elseif (preg_match('|^springboard/donations((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
       $path = 'admin/commerce/orders' . $m1[1];
+    }
+    elseif (preg_match('|^springboard/commerce/products((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)){
+      $path = 'admin/commerce/products' . $m1[1];
     }
     /**
      * All other springboard paths.
