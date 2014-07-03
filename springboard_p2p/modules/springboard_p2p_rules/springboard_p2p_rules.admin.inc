@@ -15,7 +15,7 @@ function springboard_p2p_rules_admin_page() {
     'base path' => 'admin/springboard/p2p/rules',
   );
 
-  // Add the table for enabled payment method rules.
+  // Add the table for enabled P2P rules.
   $content['enabled']['title']['#markup'] = '<h3>' . t('Enabled P2P rules') . '</h3>';
 
   $conditions = array(

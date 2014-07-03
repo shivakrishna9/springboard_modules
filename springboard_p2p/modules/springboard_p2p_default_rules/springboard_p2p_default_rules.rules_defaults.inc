@@ -13,7 +13,7 @@ function springboard_p2p_default_rules_default_rules_configuration() {
       "LABEL" : "Send admin email about requesting approval to a private campaign",
       "PLUGIN" : "reaction rule",
       "TAGS" : [ "Springboard P2P" ],
-      "REQUIRES" : [ "rules", "springboard_p2p" ],
+      "REQUIRES" : [ "rules", "springboard_p2p_rules" ],
       "ON" : [
         "springboard_p2p_user_requests_approval",
         "springboard_p2p_user_register_private_campaign"
@@ -33,7 +33,7 @@ function springboard_p2p_default_rules_default_rules_configuration() {
       "LABEL" : "Send user a P2P password reset mail",
       "PLUGIN" : "reaction rule",
       "TAGS" : [ "Springboard P2P" ],
-      "REQUIRES" : [ "rules", "springboard_p2p" ],
+      "REQUIRES" : [ "rules", "springboard_p2p_rules" ],
       "ON" : [ "springboard_p2p_user_requests_password_reset" ],
       "DO" : [
         { "mail" : {
@@ -50,7 +50,7 @@ function springboard_p2p_default_rules_default_rules_configuration() {
       "LABEL" : "Send user email after creating a personal campaign",
       "PLUGIN" : "reaction rule",
       "TAGS" : [ "Springboard P2P" ],
-      "REQUIRES" : [ "rules", "springboard_p2p" ],
+      "REQUIRES" : [ "rules", "springboard_p2p_rules" ],
       "ON" : [ "springboard_p2p_user_creates_campaign" ],
       "DO" : [
         { "mail" : {
@@ -67,7 +67,7 @@ function springboard_p2p_default_rules_default_rules_configuration() {
       "LABEL" : "Send user email about requesting approval to a private P2P campaign",
       "PLUGIN" : "reaction rule",
       "TAGS" : [ "Springboard P2P" ],
-      "REQUIRES" : [ "rules", "springboard_p2p" ],
+      "REQUIRES" : [ "rules", "springboard_p2p_rules" ],
       "ON" : [ "springboard_p2p_user_requests_approval" ],
       "DO" : [
         { "mail" : {
@@ -84,7 +84,7 @@ function springboard_p2p_default_rules_default_rules_configuration() {
       "LABEL" : "Send user email about being approved for a private campaign",
       "PLUGIN" : "reaction rule",
       "TAGS" : [ "Springboard P2P" ],
-      "REQUIRES" : [ "rules", "springboard_p2p" ],
+      "REQUIRES" : [ "rules", "springboard_p2p_rules" ],
       "ON" : [ "springboard_p2p_user_is_approved" ],
       "DO" : [
         { "mail" : {
@@ -101,7 +101,7 @@ function springboard_p2p_default_rules_default_rules_configuration() {
       "LABEL" : "Send user email about being rejected for a private campaign",
       "PLUGIN" : "reaction rule",
       "TAGS" : [ "Springboard P2P" ],
-      "REQUIRES" : [ "rules", "springboard_p2p" ],
+      "REQUIRES" : [ "rules", "springboard_p2p_rules" ],
       "ON" : [ "springboard_p2p_user_is_rejected" ],
       "DO" : [
         { "mail" : {
@@ -118,7 +118,7 @@ function springboard_p2p_default_rules_default_rules_configuration() {
       "LABEL" : "Send user email about new P2P registration (no campaign)",
       "PLUGIN" : "reaction rule",
       "TAGS" : [ "Springboard P2P" ],
-      "REQUIRES" : [ "rules", "springboard_p2p" ],
+      "REQUIRES" : [ "rules", "springboard_p2p_rules" ],
       "ON" : [ "springboard_p2p_user_register_no_campaign" ],
       "DO" : [
         { "mail" : {
@@ -135,7 +135,7 @@ function springboard_p2p_default_rules_default_rules_configuration() {
       "LABEL" : "Send user email about new P2P registration (private campaign)",
       "PLUGIN" : "reaction rule",
       "TAGS" : [ "Springboard P2P" ],
-      "REQUIRES" : [ "rules", "springboard_p2p" ],
+      "REQUIRES" : [ "rules", "springboard_p2p_rules" ],
       "ON" : [ "springboard_p2p_user_register_private_campaign" ],
       "DO" : [
         { "mail" : {
@@ -152,7 +152,7 @@ function springboard_p2p_default_rules_default_rules_configuration() {
       "LABEL" : "Send user email about new P2P registration (public campaign)",
       "PLUGIN" : "reaction rule",
       "TAGS" : [ "Springboard P2P" ],
-      "REQUIRES" : [ "rules", "springboard_p2p" ],
+      "REQUIRES" : [ "rules", "springboard_p2p_rules" ],
       "ON" : [ "springboard_p2p_user_register_public_campaign" ],
       "DO" : [
         { "mail" : {

@@ -8,11 +8,11 @@
 /**
  * Implements hook_rules_event_info().
  */
-function springboard_p2p_rules_event_info() {
+function springboard_p2p_rules_rules_event_info() {
   $defaults = array(
     'group' => t('Springboard P2P'),
-    'module' => 'springboard_p2p',
-    'access callback' => 'springboard_p2p_integration_access',
+    'module' => 'springboard_p2p_rules',
+    'access callback' => 'springboard_p2p_rules_integration_access',
   );
 
   return array(
@@ -176,7 +176,7 @@ function springboard_p2p_rules_event_info() {
 /**
  * P2P integration access callback.
  */
-function springboard_p2p_integration_access($type, $name) {
+function springboard_p2p_rules_integration_access($type, $name) {
   if ($type == 'event') {
     return entity_access('view', 'user') && entity_access('view', 'node');
   }
