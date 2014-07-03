@@ -210,6 +210,7 @@ function fundraiser_tickets_form_alter(&$form, &$form_state, $form_id) {
       );
       unset($form['fr_tickets_donation_addon_form'][LANGUAGE_NONE]['#options']['_none']);
       $options = $form['fr_tickets_donation_addon_form'][LANGUAGE_NONE]['#options'];
+      $unmatched = array();
       foreach ($options as $nid => $title) {
         if(is_numeric($nid)) {
           $addon_node = node_load($nid);
@@ -219,9 +220,14 @@ function fundraiser_tickets_form_alter(&$form, &$form_state, $form_id) {
           $match_fields = fundraiser_tickets_check_addon_required_fields($nid, NULL, $node);
           if(!$match_fields) {
             unset($form['fr_tickets_donation_addon_form'][LANGUAGE_NONE]['#options'][$nid]);
+            $unmatched[] = $title;
           }
         }
       }
+      $unmatched = implode(', ', $unmatched);
+      $form['fr_tickets_donation_addon_form'][LANGUAGE_NONE]['#description'] = t('Donation form(s) "') . 
+        $unmatched . 
+        t('" have required fields which this form does not require, and have been omitted.');
     }
   }
   // Do not allow users to muck with defined form keys in component editting form.
