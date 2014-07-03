@@ -38,6 +38,7 @@ function page_wrappers_settings_form($form, $form_state) {
       // Set up field keys
       $fieldset_key = 'page_wrappers_' . $type . '_settings';
       $field_key = 'page_wrapper_default_' . $type . '_config';
+      $field_id = 'page-wrappers-' . $type . '-assignments';
       
       // To use the same ajax function as the node form we check for the node value
       if (!empty($form_state['node']->page_wrappers)) {
@@ -64,7 +65,7 @@ function page_wrappers_settings_form($form, $form_state) {
       );
       // Container for just the poll choices.
       $form[$fieldset_key][$field_key] = array(
-        '#prefix' => '<div id="page-wrappers-assignments">',
+        '#prefix' => '<div id="' . $field_id . '">',
         '#suffix' => '</div>',
         '#theme' => 'page_wrappers_node_assignments',
       );
@@ -98,7 +99,7 @@ function page_wrappers_settings_form($form, $form_state) {
           '#submit' => array('page_wrapper_add_assignment_submit'),
           '#ajax' => array(
             'callback' => '_page_wrappers_add_js',
-            'wrapper' => 'page-wrappers-assignments',
+            'wrapper' => $field_id,
             'effect' => 'fade',
           ),
         );
@@ -120,7 +121,9 @@ function page_wrappers_settings_form($form, $form_state) {
   }
 
   $form['#validate'][] = 'page_wrappers_settings_form_validate';
-
+  
+  dsm($form);
+  
   return system_settings_form($form);
 }
 
