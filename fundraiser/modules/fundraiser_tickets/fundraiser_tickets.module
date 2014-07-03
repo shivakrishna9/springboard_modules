@@ -213,11 +213,11 @@ function fundraiser_tickets_form_alter(&$form, &$form_state, $form_id) {
       foreach ($options as $nid => $title) {
         if(is_numeric($nid)) {
           $addon_node = node_load($nid);
-          if (fundraiser_tickets_is_ticket_type($option->type)) {
+          if (fundraiser_tickets_is_ticket_type($addon_node->type)) {
             unset($form['fr_tickets_donation_addon_form'][LANGUAGE_NONE]['#options'][$nid]);
           }  
-          $mismatched_fields = fundraiser_tickets_check_addon_required_fields($nid, NULL, $addon_node);
-          if($mismatched_fields) {
+          $match_fields = fundraiser_tickets_check_addon_required_fields($nid, NULL, $node);
+          if(!$match_fields) {
             unset($form['fr_tickets_donation_addon_form'][LANGUAGE_NONE]['#options'][$nid]);
           }
         }
@@ -1019,23 +1019,36 @@ function fundraiser_tickets_fundraiser_donation_process($donation) {
   }
 }
 
-function fundraiser_tickets_check_addon_required_fields($nid, $donation = NULL, $addon = NULL) {
-  $details = springboard_api_get_form_details($nid);
-  foreach ($details['fields'] as $name => $field) {
-    if($field['required'] == 1) {
-      if($donation) {
+function fundraiser_tickets_check_addon_required_fields($nid, $donation = NULL, $node = NULL) {
+  $addon_details = springboard_api_get_form_details($nid);
+  if($donation) {
+    //validate the submission
+    foreach ($addon_details['fields'] as $name => $field) {
+      if($field['required'] == 1) {
         if(!isset($donation->donation[$name]) || $donation->donation[$name] == '') {
           drupal_set_message(t('Add on donation could not be processed. There was a problem with required field %field', array('%field' => $name)), 'error');
           return FALSE;
         }  
       }
-      else {
-        //process node webform components
-      }
     }
   }
+  else {
+    //validate the settings form entity reference field
+    $components = array();
+    foreach($node->webform['components'] as $id => $component) {
+      $components[$component['form_key']] = $node->webform['components'][$id];
+    }
+    foreach ($addon_details['fields'] as $name => $field) {
+      if($field['required'] == 1 && $name != 'quantity') {
+        if(!isset($components[$name]) || $components[$name]['mandatory'] == '0' ) {
+          return FALSE;
+        }  
+      }
+    }
+  }  
   return TRUE;
 }
+
 
 function fundraiser_tickets_form_action_submit($nid, $app_id = NULL, $submission) {
   include_once(drupal_get_path('module', 'springboard_api') . '/resources/springboard_api.form_resources.inc');
