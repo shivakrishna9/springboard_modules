@@ -926,7 +926,7 @@ $fields['fr_tickets_donation_addon_form'] = array(
       ),
       'entity_type' => 'node',
       'field_name' => 'fr_tickets_donation_addon_form',
-      'label' => 'Donation Form to Use for Addons',
+      'label' => 'Donation form to Use for Add-ons',
       'required' => 0,
       'settings' => array(
         'user_register_form' => FALSE,
