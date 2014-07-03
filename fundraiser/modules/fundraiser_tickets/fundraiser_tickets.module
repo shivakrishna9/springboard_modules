@@ -1026,7 +1026,7 @@ function fundraiser_tickets_check_addon_required_fields($nid, $type) {
     if($field['required'] == 1) {
       if(!isset($donation->donation[$name]) || $donation->donation[$name] == '') {
         if($type == 'submit') { 
-          drupal_set_message('Add on donation could not be processed. There was a problem with required field %field', array('%field' => $name), 'error');
+          drupal_set_message(t('Add on donation could not be processed. There was a problem with required field %field', array('%field' => $name)), 'error');
         }
         return FALSE;
       }
@@ -1088,6 +1088,7 @@ function fundraiser_tickets_form_action_submit($nid, $app_id = NULL, $submission
     drupal_form_submit($form_id, $form_state, $node, $webform_submission);
 
     if ($errors = form_get_errors()) {
+      watchdog('fundsraiser_tickets', print_r($errors, TRUE), $variables = array(), WATCHDOG_ERROR);
       drupal_set_message('Add on donation could not be processed.', 'error');
     }
     else {
