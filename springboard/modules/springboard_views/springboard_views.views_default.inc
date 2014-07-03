@@ -3057,6 +3057,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['mail']['id'] = 'mail';
   $handler->display->display_options['fields']['mail']['table'] = 'users';
   $handler->display->display_options['fields']['mail']['field'] = 'mail';
+  $handler->display->display_options['fields']['mail']['link_to_user'] = 'user';
   /* Field: User: Address */
   $handler->display->display_options['fields']['sbp_address']['id'] = 'sbp_address';
   $handler->display->display_options['fields']['sbp_address']['table'] = 'field_data_sbp_address';
