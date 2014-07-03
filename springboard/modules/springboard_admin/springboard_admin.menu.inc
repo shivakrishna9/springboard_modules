@@ -44,7 +44,7 @@ function springboard_admin_admin_menu_items() {
 
   // Springboard > Your Website
   $items['admin/springboard']['_children']['website'] = array(
-    'link_path' => 'http://drupal.org',
+    'link_path' => variable_get('springboard_drupal_path', 'http://drupal.org'),
     'link_title' => 'Your Website',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
@@ -87,20 +87,22 @@ function springboard_admin_admin_menu_items() {
     'weight' => 0,
   );
 
-  // Create a menu item for each type of webform.
-  // In the future, we will use an intermediate page to choose the form type.
-  $types = node_type_get_types();
-  foreach ($types as $type) {
-    if ($type && fundraiser_is_donation_type($type->type)) {
-      // Donation Forms > $type->type
-      $items['admin/springboard/donation-forms/all']['_children']['node/add/' . preg_replace('/_/', '-', $type->type)] = array(
-        'link_path' => 'node/add/' . preg_replace('/_/', '-', $type->type),
-        'link_title' => 'Create a ' . $type->name,
-        'menu_name' => 'springboard_admin_menu',
-        'expanded' => 1,
-        'customized' => 1,
-        'weight' => 1,
-      );
+  if(module_exists('fundraiser')) {
+    // Create a menu item for each type of webform.
+    // In the future, we will use an intermediate page to choose the form type.
+    $types = node_type_get_types();
+    foreach ($types as $type) {
+      if ($type && fundraiser_is_donation_type($type->type)) {
+        // Donation Forms > $type->type
+        $items['admin/springboard/donation-forms/all']['_children']['node/add/' . preg_replace('/_/', '-', $type->type)] = array(
+          'link_path' => 'node/add/' . preg_replace('/_/', '-', $type->type),
+          'link_title' => 'Create a ' . $type->name,
+          'menu_name' => 'springboard_admin_menu',
+          'expanded' => 1,
+          'customized' => 1,
+          'weight' => 1,
+        );
+      }
     }
   }
 
@@ -113,17 +115,6 @@ function springboard_admin_admin_menu_items() {
     'customized' => 1,
     'weight' => 3,
   );
-
-  // Donation Forms > Donation Settings.
-  /* @TODO Not in the menu mockup.
-   * $items['admin/springboard/donation-forms/all']['_children']['admin/config/salesforce/salesforce-donation'] = array(
-    'link_path' => 'admin/config/salesforce/salesforce-donation',
-    'link_title' => 'Donation Settings',
-    'menu_name' => 'springboard_admin_menu',
-    'expanded' => 1,
-    'customized' => 1,
-    'weight' => 4,
-  ); */
 
   // Top Level: Forms.
   $items['admin/springboard/forms/all'] = array(
@@ -146,47 +137,25 @@ function springboard_admin_admin_menu_items() {
     'weight' => 0,
   );
 
-  // Create a menu item for each type of webform.
-  // In the future, we will use an intermediate page to choose the form type.
-  $types = node_type_get_types();
-  foreach ($types as $type) {
-    // Only create the item if the node type uses Webform User but not Fundraiser.
-    if ($type && _webform_user_is_webform_user_node_type($type->type) && !fundraiser_is_donation_type($type->type)) {
-      // Forms > $type->type.
-      $items['admin/springboard/forms/all']['_children']['node/add/' . preg_replace('/_/', '-', $type->type)] = array(
-        'link_path' => 'node/add/' . preg_replace('/_/', '-', $type->type),
-        'link_title' => 'Create a ' . $type->name,
-        'menu_name' => 'springboard_admin_menu',
-        'expanded' => 1,
-        'customized' => 1,
-        'weight' => 1,
-      );
+  if(module_exists('webform_user')) {
+    // Create a menu item for each type of webform.
+    // In the future, we will use an intermediate page to choose the form type.
+    $types = node_type_get_types();
+    foreach ($types as $type) {
+      // Only create the item if the node type uses Webform User but not Fundraiser.
+      if ($type && _webform_user_is_webform_user_node_type($type->type) && !fundraiser_is_donation_type($type->type)) {
+        // Forms > $type->type.
+        $items['admin/springboard/forms/all']['_children']['node/add/' . preg_replace('/_/', '-', $type->type)] = array(
+          'link_path' => 'node/add/' . preg_replace('/_/', '-', $type->type),
+          'link_title' => 'Create a ' . $type->name,
+          'menu_name' => 'springboard_admin_menu',
+          'expanded' => 1,
+          'customized' => 1,
+          'weight' => 1,
+        );
+      }
     }
   }
-
-  // Placeholder: Forms >  Form Reports.
-  /*
-  $items['admin/springboard/forms/all']['_children'][] = array (
-    'link_path' => '',
-    'link_title' => 'Form Reports',
-    'menu_name' => 'springboard_admin_menu',
-    'expanded' => 1,
-    'customized' => 1,
-    'weight' =>  3,
-  );
-  */
-
-  // Forms > Form Settings.
-  /* @TODO Not in the menu mockup.
-  $items['admin/springboard/forms/all']['_children']['admin/config/content/webform'] = array(
-    'link_path' => 'admin/config/content/webform',
-    'link_title' => 'Form Settings',
-    'menu_name' => 'springboard_admin_menu',
-    'expanded' => 1,
-    'customized' => 1,
-    'weight' => 4,
-  );
-  */
 
   // Top Level: Asset Library.
   $items['admin/springboard/asset-library'] = array(
@@ -522,4 +491,75 @@ function springboard_admin_admin_menu_items() {
     'weight' => 3,
   );
   return $items;
+}
+
+/**
+ * Helper function, deletes springboard admin menu if it already exists and 
+ * recreates it.
+ * 
+ * @TODD add option to preserve custom links that may have been manually added
+ * to the menu.
+ */
+
+function springboard_admin_recreate_menu() {
+   $sb_menu = springboard_admin_admin_menu();
+   if(menu_load($sb_menu['menu_name'])) {
+     menu_delete($sb_menu);
+   }
+   springboard_admin_create_menu(TRUE);
+   drupal_set_message('The Springboard Admin Menu has been rebuilt.');
+}
+
+/**
+ * Helper function, creates the Springboard Admin Menu.
+ */
+function springboard_admin_create_menu($rebuild = FALSE) {
+  // Define and save the Springboard Administration menu.
+  $sb_menu = springboard_admin_admin_menu();
+  menu_save($sb_menu);
+  // Define and add default menu items to the Springboard Administration menu.
+  $sb_menu_items = springboard_admin_admin_menu_items();
+  /*
+   * Iterate through each item. Save the parent and then the children using the
+   * parent's newly assign mlid as the child's plid. If the menu ever advances
+   * to more than two levels, we will need to rewrite this to be recursive.
+   */
+  $mlids = array();
+  foreach ($sb_menu_items as $key => $item) {
+    springboard_admin_create_menu_item($item, $mlids);
+  }
+  // Set menu links as customized so they don't get wiped out in the
+  // router check.
+  $result = db_update('menu_links')
+  ->fields(array(
+    'customized' => 1,
+  ))
+  ->condition('mlid', $mlids, 'IN')
+  ->execute();
+  if(!$rebuild) {
+    drupal_set_message('The Springboard Admin menu has been created. If you need to rebuild the menu for any reason, visit the <a href="/admin/springboard/settings/springboard">Springboard Configuration</a> page.');
+  }
+}
+
+function springboard_admin_create_menu_item($item, &$mlids, $plid = 0, $parent = array()) {
+  $children = isset($item['_children']) ? $item['_children'] : array();
+  // Set the item' parent ID if applicable
+  if ($plid > 0) {
+    $item['plid'] = $plid;  
+  }
+  // Save a the item.
+  $mlid = menu_link_save($item, array(), array($plid => $parent));
+  $mlids[] = $mlid;
+  // If save was successful, loop through child items.
+  if ($mlid) {
+    $mlids[] = $mlid;  
+    if (!empty($children)) {
+      foreach ($children as $key => $child) {
+        springboard_admin_create_menu_item($child, $mlids, $mlid, $item);
+      }
+    }
+  }
+  else {
+    drupal_set_message(t('springboard admin menu item @item and its children were not created due to an error', array('@item' => check_plain($item['title']))), 'warning');
+  }
 }
