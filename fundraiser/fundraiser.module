@@ -1328,6 +1328,7 @@ function fundraiser_validate_form_fields($form, $form_state, $submission_fields,
   // Grab field info, we'll use this all the way down.
   if ($field_info == NULL) {
     $field_info = _fundraiser_field_info();
+    drupal_alter('fundraiser_field_info_validate', $field_info, $form);
   }
   // Check for errors by field info array.
   $children = element_children($field_info);
