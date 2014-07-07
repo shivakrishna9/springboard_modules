@@ -55,13 +55,15 @@ ul.primary.tabs {
   width: 100%;
   border-bottom: 2px solid #c6d2d3;
   background: #eff0f2;
+  text-align: center;
 }
 
 ul.primary.tabs li {
   position: relative;
-  float: left;
+  display: inline-block;
   overflow: hidden;
   padding: 0;
+  vertical-align: top;
   line-height: 38px;
 }
 
@@ -81,11 +83,11 @@ ul.primary.tabs a {
 }
 
 ul.primary li a {
-  border-color: inherit;
-  border-style: none;
-  border-width: 0;
-  height: auto;
   margin-right: 0;
+  height: auto;
+  border-width: 0;
+  border-style: none;
+  border-color: inherit;
 }
 
 ul.primary li.active a {
@@ -204,23 +206,17 @@ body input[type="submit"].btn:hover {
   transition: all 0.2s ease-in-out;
 }
 
-body .control-group {
-  width: 100%;
-  clear: none;
-  float: none;
-}
-
-body .control-group select,
-body .control-group input {
-  display: block;
-  float: none;
-  clear: none;
-}
 
 @media (max-width: 979px) {
 
-  .tabs li {
-    float: none;
+  ul.primary.tabs {
+    text-align: left;
+  }
+
+  ul.primary.tabs li {
+    display: block;
+    border-bottom: 1px dotted #888;
+    line-height: 18px;
   }
 
   .tabs a {
