@@ -23,7 +23,7 @@ function springboard_version_permission() {
  */
 function springboard_version_menu() {
   $items = array();
-  $items['springboard/version'] = array(
+  $items['admin/springboard/version'] = array(
     'title' => 'Springboard version',
     'description' => 'Access Springboard version report.',
     'access arguments' => array('access springboard version'),
@@ -31,15 +31,6 @@ function springboard_version_menu() {
     'type' => MENU_LOCAL_TASK,
   );
   return $items;
-}
-
-/**
- * Implements hook_admin_paths().
- */
-function springboard_version_upsell_admin_paths() {
-  return array(
-    'springboard/version' => TRUE,
-  );
 }
 
 /**
@@ -189,6 +180,21 @@ function springboard_version_info() {
     $modules[$module]['hash'] = !empty($values['hash']) ? $values['hash'] : '';
   }
   return $modules;
+}
+
+/**
+ * Implements hook_springboard_dashboard_panes().
+ */
+function springboard_version_springboard_dashboard_panes() {
+  $version_info = springboard_version_info();
+  $panes['springboard_sb_version'] = array(
+    'label' => t('Springboard Version'),
+    'description' => t('Displays the current version of the Springboard codebase.'),
+    'content' => '<p class="sb-version-info"><strong>' . t('Springboard Version') . ': </strong>' . ltrim($version_info['springboard_version']['version'], $version_info['springboard_version']['core'] . '-') . '</p>',
+    'position' => 'column_right',
+    'weight' => 2,
+  );
+  return $panes;
 }
 
 /**

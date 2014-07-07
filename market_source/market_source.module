@@ -19,10 +19,22 @@ function market_source_menu() {
     'type' => MENU_NORMAL_ITEM,
     'page callback' => 'drupal_get_form',
     'page arguments' => array('market_source_admin_settings_form'),
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array('administer market source'),
     'file' => 'market_source.admin.inc',
   );
   return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function market_source_permission() {
+  return array (
+    'administer market source' => array(
+      'title' => t("Administer Market Source"),
+      'description' => t('Configure the Market Source module, create and edit source codes.'),
+    ),    
+  );
 }
 
 /**

@@ -173,7 +173,7 @@ function springboard_admin_config(&$form, $form_state) {
     set_time_limit(300);
     variable_del('springboard_needs_config');
     drupal_set_message(t('Please see the !help page for additional help configuring Springboard.',
-      array('!help' => l(t('Help'), 'springboard/help'))));
+      array('!help' => l(t('Help'), 'admin/springboard/help'))));
     // This is where what used to be profile configuration in D6 went.
     // We dropped the profile support since it was, honestly, more hinderence than harm.
     // We would rather the Springboard suite be useful for all default profiles.
@@ -2103,7 +2103,7 @@ function springboard_admin_config_donation_form_add($form, $form_state, $email_n
 function springboard_admin_ignore($form, $form_state) {
   variable_del('springboard_needs_config');
   drupal_set_message(t('Please see the !help page for additional help configuring Springboard.',
-    array('!help' => l(t('Help'), 'springboard/help'))));
+    array('!help' => l(t('Help'), 'admin/springboard/help'))));
 }
 
 /**
@@ -2111,12 +2111,12 @@ function springboard_admin_ignore($form, $form_state) {
  */
 
  function springboard_dashboard_config_save($form, &$form_state) {
-   $form_state['redirect'] = 'springboard';
+   $form_state['redirect'] = 'admin/springboard';
  }
 
 /**
  * Submit handler for the Springboard Dashbord config cancel button
  */
 function springboard_dashboard_config_cancel($form, &$form_state) {
-  $form_state['redirect'] = 'springboard';
+  $form_state['redirect'] = 'admin/springboard';
 }
