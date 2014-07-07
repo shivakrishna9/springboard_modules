@@ -288,7 +288,7 @@ function springboard_p2p_admin_settings() {
 
   $form['actions'] = array(
     '#type' => 'actions',
-    '#weight' => 50,
+    '#weight' => 250,
   );
   $form['actions']['submit'] = array(
     '#type' => 'submit',
