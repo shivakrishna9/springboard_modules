@@ -1,0 +1,34 @@
+<?php
+
+/**
+ * @file
+ * This module provides a client cookie to identify users returning to the site even if they are not logged into Drupal.
+ */
+
+/**
+ * Fetch the Springboard cookie, decrypt, and return.
+ */
+function springboard_cookie_get_cookie() {
+  // Static-persist the cookie's data if/when it is set.
+  $cookie_data = &drupal_static(__FUNCTION__);
+  
+  // First time? Look for the cookie.
+  if ($cookie_data === NULL) {
+    $cookie_data = array();
+    if (isset($_COOKIE['Springboard']) && !empty($_COOKIE['Springboard'])) {
+      // Attempt to decrypt and deserialize
+      if ($decrypted = secure_prepopulate_decrypt($_COOKIE['Springboard'])) {
+        // Unserialize and make sure we got an array.
+        $unserialized = unserialize($decrypted);
+        if (is_array($unserialized)) {
+          $cookie_data = $unserialized;
+        } else {
+          watchdog('Springboard cookie', t("Springboard cookie didn't unserialize to an array: %data", array('%data' => $decrypted)));
+        }
+      }
+    }
+  }
+  
+  // Return the cookie data.
+  return $cookie_data;
+}
