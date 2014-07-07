@@ -782,9 +782,11 @@ function fundraiser_upsell_node_insert($node) {
         'delta' => 'nid_' . $node->clone_from_original_nid,
       );
       $settings = email_wrappers_mail_load($params);
-      unset($settings->mid);
-      $settings->delta = 'nid_' . $node->nid;
-      email_wrappers_save($settings);
+      if ($settings != FALSE) {
+        unset($settings->mid);
+        $settings->delta = 'nid_' . $node->nid;
+        email_wrappers_save($settings);
+      }
     }
   }
 }
