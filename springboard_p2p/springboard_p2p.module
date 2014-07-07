@@ -2319,7 +2319,11 @@ function springboard_p2p_personal_campaign_progress_box($campaign, $personal_cam
     $language = $personal_campaign->language;
     $goal_type = springboard_p2p_get_goal_type_from_campaign($campaign);
 
-    $progress_field = $personal_campaign->field_p2p_campaign_progress[$language][0];
+    $progress_field = 0;
+    if (isset($personal_campaign->field_p2p_campaign_progress[$language][0])) {
+      $progress_field = $personal_campaign->field_p2p_campaign_progress[$language][0];
+    }
+
     $progress_with_units = springboard_p2p_format_progress($progress_field, $goal_type);
 
     if ($goal_type == 'submissions' && isset($personal_campaign->field_p2p_personal_submit_goal[$language][0]['value'])) {
