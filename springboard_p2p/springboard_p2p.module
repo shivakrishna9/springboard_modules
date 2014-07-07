@@ -33,10 +33,13 @@ function springboard_p2p_views_api($module = NULL, $api = NULL) {
 function springboard_p2p_permission() {
   return array(
     'administer springboard p2p' => array(
-      'title' => t('Administer springboard peer to peer.'),
+      'title' => t('Administer Springboard P2P.'),
     ),
     'register for springboard p2p' => array(
-      'title' => t('Register for springboard peer to peer.'),
+      'title' => t('Register for Springboard P2P.'),
+    ),
+    'create p2p starter content' => array(
+      'title' => t('Create Springboard P2P starter content.'),
     ),
   );
 }
@@ -69,6 +72,16 @@ function springboard_p2p_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('springboard_p2p_admin_settings'),
     'file' => 'springboard_p2p.admin.inc',
+    'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
+  );
+
+  $items['admin/springboard/p2p/starter'] = array(
+    'title' => 'Starter content',
+    'type' => MENU_LOCAL_TASK,
+    'access arguments' => array('create p2p starter content'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_p2p_starter_form'),
+    'file' => 'springboard_p2p.starter.inc',
     'file path' => drupal_get_path('module', 'springboard_p2p') . '/includes',
   );
 
