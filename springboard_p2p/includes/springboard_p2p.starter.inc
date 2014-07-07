@@ -10,10 +10,16 @@
 function springboard_p2p_starter_form($form, $form_state) {
   $form = array();
 
+  $form['help'] = array(
+    '#type' => 'markup',
+    '#prefix' => '<div>',
+    '#suffix' => '</div>',
+    '#markup' => t('Create starter content, including a landing page, categories, campaigns, and personal campaigns.'),
+  );
+
   $form['create_content'] = array(
     '#type' => 'submit',
     '#value' => t('Create content'),
-    '#description' => t('Creates starter content, including a landing page, categories, campaigns, and personal campaigns.'),
   );
 
   return $form;
@@ -23,40 +29,66 @@ function springboard_p2p_starter_form($form, $form_state) {
  * Form submit.
  */
 function springboard_p2p_starter_form_submit($form, &$form_state) {
-  $nid = springboard_p2p_create_starter_content();
 
-  drupal_set_message('New P2P content has been created.');
-
-  // Redirect to the newly created landing page.
-  $form_state['redirect'] = 'node/' . $nid;
+  // Batch up the content creation.
+  $batch = springboard_p2p_starter_content_batch();
+  form_load_include($form_state, 'inc', 'springboard_p2p', 'includes/springboard_p2p.starter');
+  batch_set($batch);
 }
 
 /**
- * Main function for creating all nessessary P2P content.
- *
- * P2P Categories
- * P2P Campaigns
- * P2P Personal Campaigns
- * P2P Landing Pages
- *
- * @return int
- *   Node id of the newly created landing page.
- *
- * @todo We should batch this.
+ * Batch definition for creating starter content.
  */
-function springboard_p2p_create_starter_content() {
-  $category_ids = springboard_p2p_create_starter_categories();
-  $campaign_ids = springboard_p2p_create_starter_campaigns($category_ids);
+function springboard_p2p_starter_content_batch() {
 
-  $personal_campaign_ids = springboard_p2p_create_starter_personal_campaigns($campaign_ids);
+  $operations = array();
+  $operations[] = array('springboard_p2p_create_starter_categories', array());
+  $operations[] = array('springboard_p2p_create_starter_campaigns', array());
+  $operations[] = array('springboard_p2p_create_starter_personal_campaigns', array());
+  $operations[] = array('springboard_p2p_create_starter_campaign_landing', array());
 
-  return springboard_p2p_create_starter_campaign_landing($campaign_ids, $personal_campaign_ids);
+  $batch = array(
+    'operations' => $operations,
+    'finished' => 'springboard_p2p_starter_content_batch_finished',
+    'title' => t('Creating starter content.'),
+    'file' => drupal_get_path('module', 'springboard_p2p') . '/includes/springboard_p2p.starter.inc',
+  );
+  return $batch;
+}
+
+/**
+ * Batch 'finished' callback.
+ */
+function springboard_p2p_starter_content_batch_finished($success, $results, $operations) {
+
+  if ($success) {
+    drupal_set_message(t('Content created.'));
+    // $results is an array of nids.
+    drupal_goto('node/' . $results['landing_page_nid']);
+  }
+  else {
+    // An error occurred.
+    // $operations contains the operations that remained unprocessed.
+    $error_operation = reset($operations);
+    drupal_set_message(
+      t('An error occurred while processing @operation with arguments : @args',
+        array(
+          '@operation' => $error_operation[0],
+          '@args' => print_r($error_operation[1], TRUE),
+        )
+      )
+    );
+  }
 }
 
 /**
  * Creates a default campaign landing page node.
  */
-function springboard_p2p_create_starter_campaign_landing($campaign_ids, $personal_campaign_ids) {
+function springboard_p2p_create_starter_campaign_landing(&$context) {
+  $context['message'] = t('Creating the campaign landing page.');
+  $campaign_ids = $context['results']['campaign_ids'];
+  $personal_campaign_ids = $context['results']['personal_campaign_ids'];
+
   $node = new stdClass();
   $node->type = 'p2p_campaign_landing';
   node_object_prepare($node);
@@ -111,7 +143,7 @@ function springboard_p2p_create_starter_campaign_landing($campaign_ids, $persona
 
   node_save($node);
 
-  return $node->nid;
+  $context['results']['landing_page_nid'] = $node->nid;
 }
 
 /**
@@ -143,10 +175,13 @@ function springboard_p2p_create_starter_entity_reference_field($language, $nids)
  *
  * This randomly assigns them to the passed in campaigns.
  *
- * @param array $campaign_ids
- *   The campaigns to assign the personal campaigns to.
+ * @param array $context
+ *   The drupal batch context.
  */
-function springboard_p2p_create_starter_personal_campaigns($campaign_ids) {
+function springboard_p2p_create_starter_personal_campaigns(&$context) {
+  $context['message'] = t('Creating personal campaigns');
+  $campaign_ids = $context['results']['campaign_ids'];
+
   $personal_campaigns = springboard_p2p_starter_personal_campaigns();
   $personal_campaign_ids = array();
 
@@ -186,20 +221,24 @@ function springboard_p2p_create_starter_personal_campaigns($campaign_ids) {
       );
 
       node_save($node);
+
       $personal_campaign_ids[$personal_campaign_title] = $node->nid;
     }
   }
 
-  return $personal_campaign_ids;
+  $context['results']['personal_campaign_ids'] = $personal_campaign_ids;
 }
 
 /**
  * Creates peer to peer campaigns.
  *
- * @param array $category_ids
- *   The categories to assign the campaigns to.
+ * @param array $context
+ *   The drupal batch context.
  */
-function springboard_p2p_create_starter_campaigns($category_ids) {
+function springboard_p2p_create_starter_campaigns(&$context) {
+  $context['message'] = t('Creating campaigns');
+  $category_ids = $context['results']['category_ids'];
+
   $campaigns = springboard_p2p_starter_campaigns();
   $campaign_ids = array();
 
@@ -269,17 +308,20 @@ function springboard_p2p_create_starter_campaigns($category_ids) {
       );
 
       node_save($node);
+
       $campaign_ids[$this_campaign] = $node->nid;
     }
   }
 
-  return $campaign_ids;
+  $context['results']['campaign_ids'] = $campaign_ids;
 }
 
 /**
  * Creates peer to peer categories.
  */
-function springboard_p2p_create_starter_categories() {
+function springboard_p2p_create_starter_categories(&$context) {
+  $context['message'] = t('Creating categories');
+
   $categories = springboard_p2p_starter_categories();
   $category_ids = array();
   foreach ($categories as $category) {
@@ -291,9 +333,11 @@ function springboard_p2p_create_starter_categories() {
     $node->body[$node->language][0]['value'] = springboard_p2p_create_starter_greeking(200);
     $node->body[$node->language][0]['format'] = 'filtered_html';
     node_save($node);
+
     $category_ids[$category] = $node->nid;
   }
-  return $category_ids;
+
+  $context['results']['category_ids'] = $category_ids;
 }
 
 
