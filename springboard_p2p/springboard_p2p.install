@@ -240,7 +240,6 @@ function springboard_p2p_add_donation_form_content_type() {
   // Save or reset persistent variable values.
   $variables = array(
     'node_submitted' => 0,
-    'comment' => COMMENT_NODE_HIDDEN,
     'fundraiser' => 1,
     'webform_user' => 1,
     'webform_user_default_fields' => array(
@@ -343,22 +342,22 @@ function springboard_p2p_add_example_donation_form() {
       '0' => array(
         'amount' => 10,
         'label' => '$10',
-        'remove' => 0,
+        'weight' => 0,
       ),
       '1' => array(
         'amount' => 20,
         'label' => '$20',
-        'remove' => 0,
+        'weight' => 1,
       ),
       '2' => array(
         'amount' => 50,
         'label' => '$50',
-        'remove' => 0,
+        'weight' => 2,
       ),
       '3' => array(
         'amount' => 100,
         'label' => '$100',
-        'remove' => 0,
+        'weight' => 3,
       ),
     ),
     'show_other_amount' => 1,
