@@ -46,11 +46,11 @@ tools:
                 unused_private_method:  true
                 unused_formal_parameter:  false
             naming_rules:
-                short_variable:       true
+                short_variable:
                     minimum:              3
-                long_variable:        true
+                long_variable:
                     maximum:              30
-                short_method:         true
+                short_method:
                     minimum:              3
                 constructor_conflict:  true
                 constant_naming:      true
