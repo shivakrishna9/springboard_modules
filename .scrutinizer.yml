@@ -77,6 +77,16 @@ tools:
             tab_width: '2'
             encoding: utf8
             standard: Drupal
+    php_cpd:
+        names:
+            - '*.php'
+            - '*.module'
+            - '*.install'
+            - '*.inc'
+            - '*.profile'
+            - '*.test'
+        filter:
+            excluded_paths: ['vendor/*', 'app/*', 'web/*']
 
     php_loc:
         names:
