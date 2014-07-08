@@ -15,7 +15,7 @@ function springboard_p2p_landing_update_7001() {
   );
   foreach ($fields_to_delete as $field_name) {
     field_delete_field($field_name);
-    watchdog('springboard_p2p_landing', 'Deleted the :field_name field from all content type instances.', array(':field_name' => $field_name));
+    watchdog('springboard_p2p_campaign', 'Deleted the :field_name field from all content type instances.', array(':field_name' => $field_name));
   }
 
   /**
@@ -26,5 +26,5 @@ function springboard_p2p_landing_update_7001() {
   field_purge_batch(count($fields_to_delete) + 5);
 
   // In case of field type change, revert the feature
-  features_revert(array('springboard_p2p_landing' => array('field')));
+  features_revert(array('springboard_p2p_campaign' => array('field')));
 }
