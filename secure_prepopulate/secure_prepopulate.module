@@ -521,7 +521,6 @@ function secure_prepopulate_encrypt($input) {
   mcrypt_generic_deinit($descriptor);
   mcrypt_module_close($descriptor);
   $cipher = base64_encode($cipher);
-  $cipher = urlencode($cipher);
   return $cipher;
 }
 

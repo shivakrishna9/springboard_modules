@@ -210,7 +210,7 @@ function secure_prepopulate_generate_af_string($input) {
   }
   $query_str = implode('&', $query_str);
   $crypt = secure_prepopulate_encrypt($query_str);
-  return 'af=' . $crypt;
+  return 'af=' . urlencode($crypt);
 }
 
 function secure_prepopulate_generate_gs_string($input) {
@@ -221,7 +221,7 @@ function secure_prepopulate_generate_gs_string($input) {
       $query_str .= '&default=' . $input['default_amount'];
     }
     $crypt = secure_prepopulate_encrypt($query_str);
-    return 'gs=' . $crypt;
+    return 'gs=' . urlencode($crypt);
   }
   return FALSE;
 }
