@@ -5,7 +5,7 @@
  *
  * Remove non-p2p prefaced fields and add the new ones.
  */
-function springboard_p2p_campaign_update_7001() {
+function springboard_p2p_campaign_update_7002() {
 
   // Delete the fields we don't want from the DB, we've created new ones and replaced them in the slideshow view as well.
   $fields_to_delete = array(
