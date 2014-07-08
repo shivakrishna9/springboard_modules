@@ -104,15 +104,7 @@ tools:
             - inc
             - profile
             - test
-    php_sim:
-        enabled: true
-        extensions:
-        - php
-        - module
-        - install
-        - inc
-        - profile
-        - test
+    php_sim: false
     php_changetracking: true
     php_analyzer:
         enabled: true
