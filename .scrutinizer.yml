@@ -106,7 +106,6 @@ tools:
         - profile
         - test
     sensiolabs_security_checker: false
-    php_cpd: fales
 
     # Runs the PHP CS Fixer (http://cs.sensiolabs.org/).
     php_cs_fixer:
