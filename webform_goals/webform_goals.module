@@ -22,14 +22,7 @@ function webform_goals_init() {
   static $loader_url = '';
 
   if (empty($loader_url)) {
-    $loader_url = (!empty($_SERVER['HTTPS'])) ? "https://" : "http://";
-    $loader_url .= $GLOBALS['base_url'];
-    if (variable_get('clean_url', TRUE)) {
-      $loader_url .= '/webform_goals_jsonp';
-    }
-    else {
-      $loader_url .= '/?q=webform_goals_jsonp';
-    }
+    $loader_url = url('webform_goals_jsonp', array('absolute' => TRUE));
   }
   // @todo Examine theme post-processing as a potential replacement for
   // js processing on the local site.
