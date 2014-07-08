@@ -13,7 +13,6 @@
  *    True if fundraiser-specific stats fields should be added. False if fields generic to all webform types should be.
  */
 function _springboard_stats_add_default_fields($type, $fundraiser_specific = FALSE) {
-watchdog('trace', "_springboard_stats_add_default_fields($type, $fundraiser_specific)");
   module_load_include('inc', 'field', 'field.crud');
   module_load_include('inc', 'field', 'field.info');
   
