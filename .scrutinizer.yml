@@ -94,7 +94,15 @@ tools:
             - inc
             - profile
             - test
-    php_sim: true
+    php_sim:
+        enabled: true
+        extensions:
+        - php
+        - module
+        - install
+        - inc
+        - profile
+        - test
     php_changetracking: true
     php_analyzer:
         enabled: true
@@ -150,7 +158,7 @@ checks:
         unused_methods: true
         unreachable_code: true
         sql_injection_vulnerabilities: true
-        security_vulnerabilities: true
+        security_vulnerabilities: false
         precedence_mistakes: true
         precedence_in_conditions: true
         parameter_non_unique: true
