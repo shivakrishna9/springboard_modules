@@ -8,6 +8,23 @@
 define('SPRINGBOARD_COOKIE_NAME_DEFAULT', 'Springboard');
 
 /**
+ * Implementation of hook_init().
+ */
+function springboard_cookie_init() {
+  if (variable_get('springboard_cookie_autologin', FALSE)) {
+    // Check for a Springboard cookie with a user email in the request.
+    $cookie_data = springboard_cookie_get_cookie();
+    if (!empty($cookie_data['email'])) {
+      $account = user_load_by_mail($cookie_data['email']);
+      if ($account) {
+        // Log in the user
+        secure_prepopulate_login_user($account->uid);
+      }
+    }
+  }
+}
+
+/**
  * Implmentation of hook_form_alter().
  */
 function springboard_cookie_form_alter(&$form, &$form_state, $form_id) {
