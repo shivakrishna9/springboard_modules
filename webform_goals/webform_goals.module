@@ -85,7 +85,7 @@ function webform_goals_init() {
  */
 function webform_goals_save_loader_file() {
 
-  if (empty($_SERVER['SERVER_NAME'])) {
+  if (empty($GLOBALS['base_url'])) {
     // We don't have a server name here.
     return FALSE;
   }
@@ -99,7 +99,7 @@ function webform_goals_save_loader_file() {
     $module_path = drupal_get_path('module', 'webform_goals');
     $loader = file_get_contents($module_path . '/webform_goals.loader.js');
 
-    $loader = str_replace('http://DOMAIN', 'http://' . $_SERVER['SERVER_NAME'], $loader);
+    $loader = str_replace('http://DOMAIN', $GLOBALS['base_url'], $loader);
     $result = file_unmanaged_save_data($loader, 'public://webform_goals/webform_goals.loader.js', FILE_EXISTS_REPLACE);
     if ($result == FALSE) {
       return FALSE;
