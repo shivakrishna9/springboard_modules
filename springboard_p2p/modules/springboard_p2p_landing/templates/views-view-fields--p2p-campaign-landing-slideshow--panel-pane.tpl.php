@@ -37,7 +37,7 @@
   ?>
 
   <?php print $fields['field_p2p_campaign_slider']->content ?>
-  <?php print $fields['field_landing_page_slider_text']->content ?>
+  <?php print $fields['field_p2p_landing_slider_text']->content ?>
   <?php print $fields['edit_node']->content ?>
 
 </span>

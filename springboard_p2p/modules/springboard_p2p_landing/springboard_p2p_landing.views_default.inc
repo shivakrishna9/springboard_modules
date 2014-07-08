@@ -179,34 +179,40 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['fields']['nid']['element_class'] = 'slide-link';
   $handler->display->display_options['fields']['nid']['element_label_type'] = '0';
   $handler->display->display_options['fields']['nid']['element_wrapper_type'] = '0';
-  /* Field: Content: Landing page slider teaser */
-  $handler->display->display_options['fields']['field_landing_page_slider_text']['id'] = 'field_landing_page_slider_text';
-  $handler->display->display_options['fields']['field_landing_page_slider_text']['table'] = 'field_data_field_landing_page_slider_text';
-  $handler->display->display_options['fields']['field_landing_page_slider_text']['field'] = 'field_landing_page_slider_text';
-  $handler->display->display_options['fields']['field_landing_page_slider_text']['label'] = '';
-  $handler->display->display_options['fields']['field_landing_page_slider_text']['element_type'] = 'span';
-  $handler->display->display_options['fields']['field_landing_page_slider_text']['element_class'] = 'slider-teaser';
-  $handler->display->display_options['fields']['field_landing_page_slider_text']['element_label_type'] = '0';
-  $handler->display->display_options['fields']['field_landing_page_slider_text']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['field_landing_page_slider_text']['element_wrapper_type'] = '0';
-  $handler->display->display_options['fields']['field_landing_page_slider_text']['element_default_classes'] = FALSE;
-  /* Field: Content: External Link? */
-  $handler->display->display_options['fields']['field_external_link']['id'] = 'field_external_link';
-  $handler->display->display_options['fields']['field_external_link']['table'] = 'field_data_field_external_link';
-  $handler->display->display_options['fields']['field_external_link']['field'] = 'field_external_link';
-  $handler->display->display_options['fields']['field_external_link']['exclude'] = TRUE;
-  /* Field: Content: Landing page slider optional external link */
-  $handler->display->display_options['fields']['field_landing_page_slider_link']['id'] = 'field_landing_page_slider_link';
-  $handler->display->display_options['fields']['field_landing_page_slider_link']['table'] = 'field_data_field_landing_page_slider_link';
-  $handler->display->display_options['fields']['field_landing_page_slider_link']['field'] = 'field_landing_page_slider_link';
-  $handler->display->display_options['fields']['field_landing_page_slider_link']['label'] = '';
-  $handler->display->display_options['fields']['field_landing_page_slider_link']['element_type'] = 'span';
-  $handler->display->display_options['fields']['field_landing_page_slider_link']['element_class'] = 'external-link';
-  $handler->display->display_options['fields']['field_landing_page_slider_link']['element_label_type'] = '0';
-  $handler->display->display_options['fields']['field_landing_page_slider_link']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['field_landing_page_slider_link']['element_wrapper_type'] = '0';
-  $handler->display->display_options['fields']['field_landing_page_slider_link']['element_default_classes'] = FALSE;
-  $handler->display->display_options['fields']['field_landing_page_slider_link']['click_sort_column'] = 'url';
+  /* Field: Content: Landing page slider teaser NEW */
+  $handler->display->display_options['fields']['field_p2p_landing_slider_text']['id'] = 'field_p2p_landing_slider_text';
+  $handler->display->display_options['fields']['field_p2p_landing_slider_text']['table'] = 'field_data_field_p2p_landing_slider_text';
+  $handler->display->display_options['fields']['field_p2p_landing_slider_text']['field'] = 'field_p2p_landing_slider_text';
+  $handler->display->display_options['fields']['field_p2p_landing_slider_text']['label'] = '';
+  $handler->display->display_options['fields']['field_p2p_landing_slider_text']['element_type'] = 'span';
+  $handler->display->display_options['fields']['field_p2p_landing_slider_text']['element_class'] = 'slider-teaser';
+  $handler->display->display_options['fields']['field_p2p_landing_slider_text']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_landing_slider_text']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_p2p_landing_slider_text']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_landing_slider_text']['element_default_classes'] = FALSE;
+  /* Field: Content: External Link? NEW */
+  $handler->display->display_options['fields']['field_p2p_external_link']['id'] = 'field_p2p_external_link';
+  $handler->display->display_options['fields']['field_p2p_external_link']['table'] = 'field_data_field_p2p_external_link';
+  $handler->display->display_options['fields']['field_p2p_external_link']['field'] = 'field_p2p_external_link';
+  $handler->display->display_options['fields']['field_p2p_external_link']['label'] = '';
+  $handler->display->display_options['fields']['field_p2p_external_link']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['field_p2p_external_link']['element_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_external_link']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_external_link']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_p2p_external_link']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_external_link']['element_default_classes'] = FALSE;
+  /* Field: Content: Landing page slider optional external link NEW */
+  $handler->display->display_options['fields']['field_p2p_landing_slider_link']['id'] = 'field_p2p_landing_slider_link';
+  $handler->display->display_options['fields']['field_p2p_landing_slider_link']['table'] = 'field_data_field_p2p_landing_slider_link';
+  $handler->display->display_options['fields']['field_p2p_landing_slider_link']['field'] = 'field_p2p_landing_slider_link';
+  $handler->display->display_options['fields']['field_p2p_landing_slider_link']['label'] = '';
+  $handler->display->display_options['fields']['field_p2p_landing_slider_link']['element_type'] = 'span';
+  $handler->display->display_options['fields']['field_p2p_landing_slider_link']['element_class'] = 'external-link';
+  $handler->display->display_options['fields']['field_p2p_landing_slider_link']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_landing_slider_link']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_p2p_landing_slider_link']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_landing_slider_link']['element_default_classes'] = FALSE;
+  $handler->display->display_options['fields']['field_p2p_landing_slider_link']['click_sort_column'] = 'url';
   /* Field: Views: Views Conditional */
   $handler->display->display_options['fields']['views_conditional']['id'] = 'views_conditional';
   $handler->display->display_options['fields']['views_conditional']['table'] = 'views_conditional';
@@ -217,10 +223,10 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['fields']['views_conditional']['element_label_type'] = '0';
   $handler->display->display_options['fields']['views_conditional']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['views_conditional']['element_wrapper_type'] = '0';
-  $handler->display->display_options['fields']['views_conditional']['if'] = 'field_external_link';
+  $handler->display->display_options['fields']['views_conditional']['if'] = 'field_p2p_external_link';
   $handler->display->display_options['fields']['views_conditional']['condition'] = '7';
   $handler->display->display_options['fields']['views_conditional']['equalto'] = 'yes';
-  $handler->display->display_options['fields']['views_conditional']['then'] = '[field_landing_page_slider_link]';
+  $handler->display->display_options['fields']['views_conditional']['then'] = '[field_p2p_landing_slider_link]';
   $handler->display->display_options['fields']['views_conditional']['or'] = '[nid]';
   $handler->display->display_options['pane_category']['name'] = 'Springboard P2P';
   $handler->display->display_options['pane_category']['weight'] = '0';
