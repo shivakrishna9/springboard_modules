@@ -744,6 +744,22 @@ function springboard_p2p_default_page_manager_handlers() {
   $handler = new stdClass();
   $handler->disabled = FALSE; /* Edit this to true to make a default handler disabled initially */
   $handler->api_version = 1;
+  $handler->name = 'pm_existing_pages_p2p_node_panelizer_node';
+  $handler->task = 'pm_existing_pages';
+  $handler->subtask = 'p2p_node';
+  $handler->handler = 'panelizer_node';
+  $handler->weight = -28;
+  $handler->conf = array(
+    'title' => 'P2P Panelizer',
+    'contexts' => array(),
+    'relationships' => array(),
+    'context' => 'argument_entity_id:node_1',
+  );
+  $export['pm_existing_pages_p2p_node_panelizer_node'] = $handler;
+
+  $handler = new stdClass();
+  $handler->disabled = FALSE; /* Edit this to true to make a default handler disabled initially */
+  $handler->api_version = 1;
   $handler->name = 'pm_existing_pages_webform_confirmation_panel_context';
   $handler->task = 'pm_existing_pages';
   $handler->subtask = 'webform_confirmation';
