@@ -23,7 +23,7 @@ function webform_goals_init() {
 
   if (empty($loader_url)) {
     $loader_url = (!empty($_SERVER['HTTPS'])) ? "https://" : "http://";
-    $loader_url .= $_SERVER['SERVER_NAME'];
+    $loader_url .= $GLOBALS['base_url'];
     if (variable_get('clean_url', TRUE)) {
       $loader_url .= '/webform_goals_jsonp';
     }
