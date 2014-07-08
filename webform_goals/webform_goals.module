@@ -85,7 +85,7 @@ function webform_goals_init() {
  */
 function webform_goals_save_loader_file() {
 
-  if (empty($GLOBALS['base_url'])) {
+  if (empty($_SERVER['SERVER_NAME'])) {
     // We don't have a server name here.
     return FALSE;
   }
