@@ -1957,7 +1957,7 @@ function fundraiser_order_accept($order_id, $transaction_id, $message = NULL, $a
       auth_code = '%s'
     WHERE
       order_id = %d",
-    $node->gateway, $transaction_id, $auth_code, $order_id);
+    $order->data['gateway'], $transaction_id, $auth_code, $order_id);
 
   // update the uid on the webform submission
   db_query("UPDATE {webform_submissions} SET uid = %d WHERE sid = %d", $order->uid, $webform->sid);
