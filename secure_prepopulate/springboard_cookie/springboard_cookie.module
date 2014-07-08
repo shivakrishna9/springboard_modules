@@ -5,6 +5,8 @@
  * This module provides a client cookie to identify users returning to the site even if they are not logged into Drupal.
  */
 
+define('SPRINGBOARD_COOKIE_COOKIE_NAME', 'Springboard');
+
 /**
  * Fetch the Springboard cookie, decrypt, and return.
  */
@@ -15,9 +17,10 @@ function springboard_cookie_get_cookie() {
   // First time? Look for the cookie.
   if ($cookie_data === NULL) {
     $cookie_data = array();
-    if (isset($_COOKIE['Springboard']) && !empty($_COOKIE['Springboard'])) {
+    if (isset($_COOKIE[SPRINGBOARD_COOKIE_COOKIE_NAME]) && !empty($_COOKIE[SPRINGBOARD_COOKIE_COOKIE_NAME])) {
       // Attempt to decrypt and deserialize
-      if ($decrypted = secure_prepopulate_decrypt($_COOKIE['Springboard'])) {
+      $decrypted = secure_prepopulate_decrypt($_COOKIE[SPRINGBOARD_COOKIE_COOKIE_NAME]);
+      if (!empty($decrypted)) {
         // Unserialize and make sure we got an array.
         $unserialized = unserialize($decrypted);
         if (is_array($unserialized)) {
@@ -31,4 +34,18 @@ function springboard_cookie_get_cookie() {
   
   // Return the cookie data.
   return $cookie_data;
+}
+
+/**
+ * Set the Springboard cookie, encrypting the given data array and adding it to the HTTP response.
+ */
+function springboard_cookie_set_cookie($cookie_data) {
+  // Update the getter's static cache.
+  $static_cache = &drupal_static('springboard_cookie_get_cookie');
+  $static_cache = $cookie_data;
+  
+  // Serialize, encrypt, and add to the response.
+  $serialized = serialize($cookie_data);
+  $encrypted = secure_prepopulate_encrypt($serialized);
+  setcookie(SPRINGBOARD_COOKIE_COOKIE_NAME, $encrypted, time() + 60*60*24*356, '/');
 }
