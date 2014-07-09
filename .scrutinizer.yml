@@ -107,7 +107,7 @@ tools:
     php_sim: false
     php_changetracking: true
     php_analyzer:
-        enabled: true
+        enabled: false
         extensions:
         - php
         - module
@@ -150,7 +150,7 @@ tools:
 checks:
     php:
         code_rating: true
-        duplication: true
+        duplication: false
         variable_existence: true
         useless_calls: true
         use_statement_alias_conflict: true
