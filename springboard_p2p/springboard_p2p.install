@@ -22,6 +22,7 @@ function springboard_p2p_install() {
   );
 
   variable_set('springboard_p2p_fundraiser_items', $default_items);
+  variable_set('springboard_p2p_base_path', 'p2p');
 
   variable_set('user_register', 1);
   variable_set('user_email_verification', 0);

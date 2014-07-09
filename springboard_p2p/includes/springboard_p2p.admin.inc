@@ -110,7 +110,7 @@ function springboard_p2p_admin_settings() {
     '#weight' => -50,
   );
 
-  $current_base_path = variable_get('springboard_p2p_base_path', 'springboard_p2p');
+  $current_base_path = variable_get('springboard_p2p_base_path', 'p2p');
 
   $form['basic']['current_base_path'] = array(
     '#type' => 'value',
