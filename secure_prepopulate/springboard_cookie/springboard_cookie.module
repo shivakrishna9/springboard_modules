@@ -24,6 +24,9 @@ function springboard_cookie_init() {
       }
     }
   }
+  
+  // Make sure this client has a cookie and a client_id.
+  springboard_cookie_tag_client();
 }
 
 /**
