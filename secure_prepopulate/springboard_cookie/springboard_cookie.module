@@ -12,6 +12,7 @@ define('SPRINGBOARD_COOKIE_EXPIRATION_DAYS_DEFAULT', 365);
  * Implementation of hook_init().
  */
 function springboard_cookie_init() {
+  // Is autologin enabled?
   if (variable_get('springboard_cookie_autologin', FALSE)) {
     // Check for a Springboard cookie with a user email in the request.
     $cookie_data = springboard_cookie_get_cookie();
