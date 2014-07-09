@@ -1,5 +1,10 @@
 <?php
 /**
+ * @file
+ * Sets up the petition module and content type.
+ */
+
+/**
  * Implements hook_install().
  */
 function springboard_petition_install() {
@@ -11,7 +16,7 @@ function springboard_petition_install() {
   $webform_node_types_primary[] = 'springboard_petition';
   variable_set('webform_node_types_primary', $webform_node_types_primary);
   // Create default SF map insert into table.
-  if(module_exists('salesforce_genmap')) {
+  if (module_exists('salesforce_genmap')) {
     $map = array();
     $map = entity_create('salesforce_genmap_map', $map);
     $map->nid = -1;
