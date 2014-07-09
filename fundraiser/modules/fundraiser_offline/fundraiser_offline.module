@@ -63,12 +63,24 @@ function fundraiser_offline_form_alter(&$form, $form_state, $form_id) {
         // a placeholder value for this field before Webform User's validation
         // throws an error on missing email address.
         _fundraiser_offline_form_not_required($form, array('mail'));
+        _fundraiser_offline_modify_type($form, array('mail'), 'textfield');
         _fundraiser_offline_form_not_validate($form, array('mail', 'card_cvv'));
-
         // We only need validation and submit handlers if the form is in
         // offline mode.
         $form['#submit'][] = 'fundraiser_offline_donation_form_submit';
         $form['#validate'][] = 'fundraiser_offline_donation_form_validate';
+        // Back out webform user's validation callback as it checks email.
+        $form['#validate'] = array_diff($form['#validate'], array('webform_user_webform_validate'));
+        // Alter field required states on CC payment fields.
+        if (isset($form['submitted']['payment_information']['payment_fields']['credit'])) {
+          unset($form['submitted']['payment_information']['payment_fields']['credit']['#states']['required']);
+          unset($form['submitted']['payment_information']['payment_fields']['credit']['#states']['optional']);
+          // Re-add required field flags for cc# and exp date
+          $form['submitted']['payment_information']['payment_fields']['credit']['card_number']['#required'] = TRUE;
+          foreach (element_children($form['submitted']['payment_information']['payment_fields']['credit']['expiration_date']) as $field) {
+            $form['submitted']['payment_information']['payment_fields']['credit']['expiration_date'][$field]['#required'] = TRUE;
+          }
+        }
       }
     }
   }
@@ -263,6 +275,7 @@ function fundraiser_offline_fundraiser_field_info_validate_alter(&$field_info, $
 /**
  * Implements hook_fundraiser_gateway_info_alter().
  */
+/*
 function fundraiser_offline_fundraiser_gateway_info_alter(&$gateways) {
   if (arg(0) == 'node' && is_numeric(arg(1))) {
     $node = node_load(arg(1));
@@ -275,7 +288,7 @@ function fundraiser_offline_fundraiser_gateway_info_alter(&$gateways) {
       }
     }
   }
-}
+}*/
 
 /**
  * Implements hook_hook_fundraiser_donation_form_js_validation_alter().
@@ -313,6 +326,7 @@ function fundraiser_offline_fundraiser_donation_form($form, $form_state) {
     // No confirmation submit for us.
     $remove = array('fundraiser_donation_confirmation');
     $form['#submit'] = array_diff($form['#submit'], $remove);
+
     // Add our own action and submit.
     // So if we fail, we return here with the node id pre-loaded.
     $form['#action'] = url('admin/fundraiser_offline/' . $form['#node']->nid);
@@ -340,12 +354,6 @@ function _fundraiser_offline_fundraiser_donation_form_submit($form, &$form_state
   $form['redirect'] = url('admin/fundraiser_offline/' . $form['#node']->nid);
 }
 
-function fundraiser_conditional_gateways_payment_method_fields_alter(&$element, $payment_method, $context) {
-  $offline_only = $context['config']['offline_only'];
-  if ($offline_only) {
-    $element['#access'] = FALSE;
-  }
-}
 
 /**
  * Implements hook_fundraiser_webform_payment_component_payment_methods_alter().
@@ -397,6 +405,7 @@ function fundraiser_offline_fundraiser_donation_submit($form, $form_state, $dona
       // If the email has not been set, then we need to set it here.
       $donation->donation['mail'] = _fundraiser_offline_generate_email();
     }
+    /*
     else {
       // If the email is set, see if we can locate the correct user to match the order.
       $found_user = user_load_by_mail($mail);
@@ -404,7 +413,7 @@ function fundraiser_offline_fundraiser_donation_submit($form, $form_state, $dona
         $donation->uid = $found_user->uid;
         $donation->user = $found_user;
       }
-    }
+    }*/
   }
 }
 
@@ -467,6 +476,16 @@ function _fundraiser_offline_form_not_required(&$form, $fields) {
   foreach ($fields as $field_name) {
     $field = fundraiser_get_form_field('fundraiser_offline', $form, $field_name);
     $field['#required'] = FALSE;
+    $field['#webform_component']['mandatory'] = 0;
+    $form = fundraiser_update_form_field('fundraiser_offline', $form, $field_name, $field);
+  }
+}
+
+function _fundraiser_offline_modify_type(&$form, $fields, $new_type) {
+  foreach ($fields as $field_name) {
+    $field = fundraiser_get_form_field('fundraiser_offline', $form, $field_name);
+    $field['#webform_component']['type'] = $new_type;
+    $field['#type'] = $new_type;
     $form = fundraiser_update_form_field('fundraiser_offline', $form, $field_name, $field);
   }
 }
@@ -625,47 +644,4 @@ function _fundraiser_offline_get_by_title($string) {
     array(':string' => '%' . $string . '%')
   );
   return $results->fetchAll();
-}
-
-/**
- * Validate the submitted values with the commerce validate function
- */
-function _fundraiser_offline_fundraiser_commerce_validate($submission_fields, $payment_fields) {
-  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
-  $form_parents = array_merge($payment_fields['#parents'], array('credit'));
-  _fundraiser_offline_credit_card_validate($submission_fields, $form_parents);
-  return $submission_fields;
-}
-
-/**
- * _fundraiser_commerce_credit_card_validate() with CVV validation removed.
- */
-function _fundraiser_offline_credit_card_validate($submission_fields, $form_parents) {
-  $prefix = implode('][', $form_parents) . '][';
-  // Include the file with the validation info.
-  module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
-  $number = $submission_fields['payment_fields']['credit']['card_number'];
-  if (empty($number)) {
-    form_set_error($prefix . 'card_number', t('The credit card number is required.'));
-  }
-  else {
-    $valid = commerce_payment_validate_credit_card_number($number);
-    if ($valid !== TRUE || !ctype_digit($number) || drupal_strlen($number) < 10) {
-      form_set_error($prefix . 'card_number', t('You have entered an invalid credit card number.'));
-    }
-  }
-
-  $cc_expiration_month = $submission_fields['payment_fields']['credit']['card_expiration_month'];
-  $cc_expiration_year = $submission_fields['payment_fields']['credit']['card_expiration_year'];
-  if (empty($cc_expiration_month) || empty($cc_expiration_year)) {
-    form_set_error($prefix . 'expiration_date][card_expiration_month', t('The credit card expiration date is required.'));
-    form_set_error($prefix . 'expiration_date][card_expiration_year');
-  }
-  else {
-    $valid = commerce_payment_validate_credit_card_exp_date($cc_expiration_month, $cc_expiration_year);
-    if ($valid !== TRUE && !empty($cc_expiration_month) && !empty($cc_expiration_year)) {
-      form_set_error($prefix . 'expiration_date][card_expiration_month', t('The credit card you entered has expired.'));
-      form_set_error($prefix . 'expiration_date][card_expiration_year');
-    }
-  }
 }
