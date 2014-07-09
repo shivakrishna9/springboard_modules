@@ -4,8 +4,6 @@
  * Code for the Springboard Advocacy feature.
  */
 
-include_once 'springboard_petition.features.inc';
-
 function springboard_petition_is_petition_type($type) {
   static $petition_types;
   // Cache fundraiser content types during page execution.
