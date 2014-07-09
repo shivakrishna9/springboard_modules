@@ -63,7 +63,8 @@ function fundraiser_offline_form_alter(&$form, $form_state, $form_id) {
         // a placeholder value for this field before Webform User's validation
         // throws an error on missing email address.
         _fundraiser_offline_form_not_required($form, array('mail'));
-        _fundraiser_offline_form_not_validate($form, array('mail'));
+        _fundraiser_offline_form_not_validate($form, array('mail', 'card_cvv'));
+
         // We only need validation and submit handlers if the form is in
         // offline mode.
         $form['#submit'][] = 'fundraiser_offline_donation_form_submit';
@@ -71,8 +72,42 @@ function fundraiser_offline_form_alter(&$form, $form_state, $form_id) {
       }
     }
   }
+  // Add "offline only" UI to payment methods on donation form edit screen.
+  if ($form_id == 'donation_form_node_form') {
+    $gateway_elements = element_children($form['fundraiser_settings']['gateways']);
+    // Only available on node edit forms, missing on node add form.
+    $node_gateways = isset($form_state['node']->gateways) ? $form_state['node']->gateways : FALSE;
+    if (!$node_gateways) {
+      // Must be an edit form, try for defaults:
+      $node_gateways = variable_get('fundraiser_payment_method_config_defaults', array());
+    }
+    $offline_only = 0;
+    foreach ($gateway_elements as $gateway) {
+      $form['fundraiser_settings']['gateways'][$gateway]['offline_only'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('offline only'),
+        '#default_value' => isset($node_gateways[$gateway]['offline_only']) ? $node_gateways[$gateway]['offline_only'] : 0,
+      );
+    }
+  }
+  // Add "offline only" UI to default payment method configuration on admin
+  // screen.
+  if ($form_id == 'fundraiser_admin_settings') {
+    $defaults = variable_get('fundraiser_payment_method_config_defaults', array());
+    $gateway_elements = element_children($form['fundraiser']['fundraiser_payment_method_config_defaults']);
+    foreach ($gateway_elements as $gateway) {
+      $form['fundraiser']['fundraiser_payment_method_config_defaults'][$gateway]['offline_only'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('offline only'),
+        '#default_value' => isset($defaults[$gateway]['offline_only']) ? $defaults[$gateway]['offline_only'] : 0,
+      );
+    }
+  }
 }
 
+/**
+ * Submission callback for donation forms.
+ */
 function fundraiser_offline_donation_form_submit($form, &$form_state) {
   $nid = $form['#node']->nid;
   $query = array(
@@ -177,12 +212,13 @@ function fundraiser_offline_node_insert($node) {
  * Implements hook_node_load().
  */
 function fundraiser_offline_node_load($nodes, $types) {
+  global $user;
+  $offline = isset($_GET['offline']) ? $_GET['offline'] : FALSE;
+  $can_offline = user_access('submit donations offline', $user);
   foreach ($nodes as $node) {
     // If this isn't a fundraiser type, ignore it.
-    if (fundraiser_is_donation_type($node->type)) {
-      // Get the fundraiser information.
-      $value = _fundraiser_offline_get_offline_by_nid($node->nid);
-      $nodes[$node->nid]->fundraiser_offline = (isset($value->status) && $value->status == 1) ? TRUE : FALSE;
+    if (fundraiser_is_donation_type($node->type)) { 
+      $nodes[$node->nid]->fundraiser_offline = $offline && $can_offline;
     }
   }
 }
@@ -269,8 +305,8 @@ function fundraiser_offline_fundraiser_donation_form($form, $form_state) {
     }
     // Otherwise, we're in the clear and still in offline mode.
     // Remove required flag for these fields.
-    $fields = array('mail', 'card_cvv');
-    // _fundraiser_offline_form_not_required($form, $fields);
+    //$fields = array('mail', 'card_cvv');
+    //_fundraiser_offline_form_not_required($form, $fields);
     // Expose these fields.
     $fields = array('cid', 'ms');
     _fundraiser_offline_form_not_hidden($form, $fields);
@@ -304,6 +340,40 @@ function _fundraiser_offline_fundraiser_donation_form_submit($form, &$form_state
   $form['redirect'] = url('admin/fundraiser_offline/' . $form['#node']->nid);
 }
 
+function fundraiser_conditional_gateways_payment_method_fields_alter(&$element, $payment_method, $context) {
+  $offline_only = $context['config']['offline_only'];
+  if ($offline_only) {
+    $element['#access'] = FALSE;
+  }
+}
+
+/**
+ * Implements hook_fundraiser_webform_payment_component_payment_methods_alter().
+ *
+ * Limits available payment method radio button values.
+ */
+function fundraiser_offline_fundraiser_webform_payment_component_payment_methods_alter(&$payment_methods) {
+  global $user;
+  $offline = isset($_GET['offline']) ? $_GET['offline'] : FALSE;
+  $user_may_offline = user_access('submit donations offline', $user);
+  foreach ($payment_methods as $type => $method) {
+    if ($method['offline_only']) {
+      if (!$offline || !$user_may_offline) {
+        unset($payment_methods[$type]);
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_fundraiser_webform_payment_method_component_methods_alter().
+ *
+ * Modify available payment methods when individual payment method components
+ * are rendered.
+ */
+function fundraiser_offline_fundraiser_webform_payment_method_component_methods_alter(&$payment_methods) {
+  fundraiser_offline_fundraiser_webform_payment_component_payment_methods_alter($payment_methods);
+}
 /**
  * Hooks to handle a donation as an offline donation.
  */

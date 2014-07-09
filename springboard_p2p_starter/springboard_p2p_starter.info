@@ -1,6 +1,0 @@
-name = Springboard P2P Starter Pack
-description = Configures and creates content for a basic Springboard P2P implementation
-core = 7.x
-package = Springboard P2P
-version = 7.x-4.0-dev
-dependencies[] = springboard_p2p

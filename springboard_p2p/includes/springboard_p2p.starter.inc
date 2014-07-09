@@ -5,48 +5,90 @@
  */
 
 /**
- * Implements hook_menu().
+ * Form callback for creating starter content.
  */
-function springboard_p2p_starter_menu() {
-  // @todo This probably should be a button somewhere.
-  // Probably change this to a form/page under p2p settings with a button to
-  // create content.
-  $items['p2p-start'] = array(
-    'title' => 'Jump Start P2P',
-    'description' => 'Install default content for Springboard Peer to Peer.',
-    'page callback' => 'springboard_p2p_starter_create_content',
-    'access callback' => TRUE,
+function springboard_p2p_starter_form($form, $form_state) {
+  $form = array();
+
+  $form['help'] = array(
+    '#type' => 'markup',
+    '#prefix' => '<div>',
+    '#suffix' => '</div>',
+    '#markup' => t('Create starter content, including a landing page, categories, campaigns, and personal campaigns.'),
   );
 
-  return $items;
+  $form['create_content'] = array(
+    '#type' => 'submit',
+    '#value' => t('Create content'),
+  );
+
+  return $form;
 }
 
 /**
- * Main function for creating all nessessary P2P content.
- *
- * P2P Categories
- * P2P Campaigns
- * P2P Personal Campaigns
- * P2P Landing Pages
- *
- * @todo We should batch this.
+ * Form submit.
  */
-function springboard_p2p_starter_create_content() {
-  $category_ids = springboard_p2p_starter_create_categories();
-  $campaign_ids = springboard_p2p_starter_create_campaigns($category_ids);
+function springboard_p2p_starter_form_submit($form, &$form_state) {
 
-  $personal_campaign_ids = springboard_p2p_starter_create_personal_campaigns($campaign_ids);
+  // Batch up the content creation.
+  $batch = springboard_p2p_starter_content_batch();
+  form_load_include($form_state, 'inc', 'springboard_p2p', 'includes/springboard_p2p.starter');
+  batch_set($batch);
+}
 
-  $nid = springboard_p2p_starter_create_campaign_landing($campaign_ids, $personal_campaign_ids);
+/**
+ * Batch definition for creating starter content.
+ */
+function springboard_p2p_starter_content_batch() {
 
-  drupal_set_message('New content has been created.');
-  drupal_goto('node/' . $nid);
+  $operations = array();
+  $operations[] = array('springboard_p2p_create_starter_categories', array());
+  $operations[] = array('springboard_p2p_create_starter_campaigns', array());
+  $operations[] = array('springboard_p2p_create_starter_personal_campaigns', array());
+  $operations[] = array('springboard_p2p_create_starter_campaign_landing', array());
+
+  $batch = array(
+    'operations' => $operations,
+    'finished' => 'springboard_p2p_starter_content_batch_finished',
+    'title' => t('Creating starter content.'),
+    'file' => drupal_get_path('module', 'springboard_p2p') . '/includes/springboard_p2p.starter.inc',
+  );
+  return $batch;
+}
+
+/**
+ * Batch 'finished' callback.
+ */
+function springboard_p2p_starter_content_batch_finished($success, $results, $operations) {
+
+  if ($success) {
+    drupal_set_message(t('Content created.'));
+    // $results is an array of nids.
+    drupal_goto('node/' . $results['landing_page_nid']);
+  }
+  else {
+    // An error occurred.
+    // $operations contains the operations that remained unprocessed.
+    $error_operation = reset($operations);
+    drupal_set_message(
+      t('An error occurred while processing @operation with arguments : @args',
+        array(
+          '@operation' => $error_operation[0],
+          '@args' => print_r($error_operation[1], TRUE),
+        )
+      )
+    );
+  }
 }
 
 /**
  * Creates a default campaign landing page node.
  */
-function springboard_p2p_starter_create_campaign_landing($campaign_ids, $personal_campaign_ids) {
+function springboard_p2p_create_starter_campaign_landing(&$context) {
+  $context['message'] = t('Creating the campaign landing page.');
+  $campaign_ids = $context['results']['campaign_ids'];
+  $personal_campaign_ids = $context['results']['personal_campaign_ids'];
+
   $node = new stdClass();
   $node->type = 'p2p_campaign_landing';
   node_object_prepare($node);
@@ -66,7 +108,7 @@ function springboard_p2p_starter_create_campaign_landing($campaign_ids, $persona
   );
 
   foreach ($references as $field_name => $nids) {
-    $node->$field_name = springboard_p2p_starter_create_entity_reference_field($node->language, $nids);
+    $node->$field_name = springboard_p2p_create_starter_entity_reference_field($node->language, $nids);
   }
 
   $node->field_p2p_featured_title = array(
@@ -101,7 +143,7 @@ function springboard_p2p_starter_create_campaign_landing($campaign_ids, $persona
 
   node_save($node);
 
-  return $node->nid;
+  $context['results']['landing_page_nid'] = $node->nid;
 }
 
 /**
@@ -115,7 +157,7 @@ function springboard_p2p_starter_create_campaign_landing($campaign_ids, $persona
  * @return array
  *   An array ready fto be used as an entity reference field.
  */
-function springboard_p2p_starter_create_entity_reference_field($language, $nids) {
+function springboard_p2p_create_starter_entity_reference_field($language, $nids) {
 
   $items = array();
   foreach ($nids as $nid) {
@@ -133,10 +175,13 @@ function springboard_p2p_starter_create_entity_reference_field($language, $nids)
  *
  * This randomly assigns them to the passed in campaigns.
  *
- * @param array $campaign_ids
- *   The campaigns to assign the personal campaigns to.
+ * @param array $context
+ *   The drupal batch context.
  */
-function springboard_p2p_starter_create_personal_campaigns($campaign_ids) {
+function springboard_p2p_create_starter_personal_campaigns(&$context) {
+  $context['message'] = t('Creating personal campaigns');
+  $campaign_ids = $context['results']['campaign_ids'];
+
   $personal_campaigns = springboard_p2p_starter_personal_campaigns();
   $personal_campaign_ids = array();
 
@@ -150,7 +195,7 @@ function springboard_p2p_starter_create_personal_campaigns($campaign_ids) {
       $node->title = $personal_campaign_title;
       $node->language = LANGUAGE_NONE;
       $node->field_p2p_campaign[$node->language][0]['target_id'] = $campaign_ids[$campaign];
-      $node->body[$node->language][0]['value'] = springboard_p2p_starter_create_greeking(150);
+      $node->body[$node->language][0]['value'] = springboard_p2p_create_starter_greeking(150);
       $node->body[$node->language][0]['format'] = 'filtered_html';
       $node->field_p2p_personal_campaign_goal[$node->language][0]['value'] = rand(500, 1000);
 
@@ -176,26 +221,30 @@ function springboard_p2p_starter_create_personal_campaigns($campaign_ids) {
       );
 
       node_save($node);
+
       $personal_campaign_ids[$personal_campaign_title] = $node->nid;
     }
   }
 
-  return $personal_campaign_ids;
+  $context['results']['personal_campaign_ids'] = $personal_campaign_ids;
 }
 
 /**
  * Creates peer to peer campaigns.
  *
- * @param array $category_ids
- *   The categories to assign the campaigns to.
+ * @param array $context
+ *   The drupal batch context.
  */
-function springboard_p2p_starter_create_campaigns($category_ids) {
+function springboard_p2p_create_starter_campaigns(&$context) {
+  $context['message'] = t('Creating campaigns');
+  $category_ids = $context['results']['category_ids'];
+
   $campaigns = springboard_p2p_starter_campaigns();
   $campaign_ids = array();
 
-  $campaign_thumbnail = springboard_p2p_starter_create_file('/includes/images/campaign_thumbnail.png');
-  $campaign_landing_page_slider = springboard_p2p_starter_create_file('/includes/images/campaign_landing_page_slider.png');
-  $campaign_banner = springboard_p2p_starter_create_file('/includes/images/personal_campaign_banner.png');
+  $campaign_thumbnail = springboard_p2p_create_starter_file('/images/starter/campaign_thumbnail.png');
+  $campaign_landing_page_slider = springboard_p2p_create_starter_file('/images/starter/campaign_landing_page_slider.png');
+  $campaign_banner = springboard_p2p_create_starter_file('/images/starter/personal_campaign_banner.png');
 
   foreach ($campaigns as $category => $campaign) {
     foreach ($campaign as $this_campaign) {
@@ -205,15 +254,15 @@ function springboard_p2p_starter_create_campaigns($category_ids) {
       $node->title = $this_campaign;
       $node->language = LANGUAGE_NONE;
       $node->field_p2p_category[$node->language][0]['target_id'] = $category_ids[$category];
-      $node->body[$node->language][0]['value'] = springboard_p2p_starter_create_greeking(200);
+      $node->body[$node->language][0]['value'] = springboard_p2p_create_starter_greeking(200);
       $node->body[$node->language][0]['format'] = 'filtered_html';
       $node->field_p2p_allow_donor_comments[$node->language][0]['value'] = 1;
       $node->field_p2p_show_donor_comments[$node->language][0]['value'] = 1;
       $node->field_p2p_show_donor_scroll[$node->language][0]['value'] = 1;
 
       $node->field_p2p_campaigns_approval[$node->language][0]['value'] = 0;
-      $node->field_p2p_org_intro[$node->language][0]['value'] = springboard_p2p_starter_create_greeking(100);
-      $node->field_p2p_personal_intro[$node->language][0]['value'] = springboard_p2p_starter_create_greeking(50);
+      $node->field_p2p_org_intro[$node->language][0]['value'] = springboard_p2p_create_starter_greeking(100);
+      $node->field_p2p_personal_intro[$node->language][0]['value'] = springboard_p2p_create_starter_greeking(50);
 
       // @todo Figure out how to deal with the video embed field.
       $node->field_p2p_video_embed = array(
@@ -259,17 +308,20 @@ function springboard_p2p_starter_create_campaigns($category_ids) {
       );
 
       node_save($node);
+
       $campaign_ids[$this_campaign] = $node->nid;
     }
   }
 
-  return $campaign_ids;
+  $context['results']['campaign_ids'] = $campaign_ids;
 }
 
 /**
  * Creates peer to peer categories.
  */
-function springboard_p2p_starter_create_categories() {
+function springboard_p2p_create_starter_categories(&$context) {
+  $context['message'] = t('Creating categories');
+
   $categories = springboard_p2p_starter_categories();
   $category_ids = array();
   foreach ($categories as $category) {
@@ -278,12 +330,14 @@ function springboard_p2p_starter_create_categories() {
     node_object_prepare($node);
     $node->title = $category;
     $node->language = LANGUAGE_NONE;
-    $node->body[$node->language][0]['value'] = springboard_p2p_starter_create_greeking(200);
+    $node->body[$node->language][0]['value'] = springboard_p2p_create_starter_greeking(200);
     $node->body[$node->language][0]['format'] = 'filtered_html';
     node_save($node);
+
     $category_ids[$category] = $node->nid;
   }
-  return $category_ids;
+
+  $context['results']['category_ids'] = $category_ids;
 }
 
 
@@ -343,8 +397,8 @@ function springboard_p2p_starter_personal_campaigns() {
 /**
  * Uploads image files.
  */
-function springboard_p2p_starter_create_file($image_path) {
-  $path = drupal_get_path('module', 'springboard_p2p_starter');
+function springboard_p2p_create_starter_file($image_path) {
+  $path = drupal_get_path('module', 'springboard_p2p');
   $filepath = drupal_realpath($path . $image_path);
   // Create managed File object and associate with Image field.
   $file = (object) array(
@@ -362,7 +416,7 @@ function springboard_p2p_starter_create_file($image_path) {
 /**
  * Stolen from devel generate :).
  */
-function springboard_p2p_starter_create_greeking($word_count, $title = FALSE) {
+function springboard_p2p_create_starter_greeking($word_count, $title = FALSE) {
   $dictionary = array("abbas", "abdo", "abico", "abigo", "abluo", "accumsan",
     "acsi", "ad", "adipiscing", "aliquam", "aliquip", "amet", "antehabeo",
     "appellatio", "aptent", "at", "augue", "autem", "bene", "blandit",

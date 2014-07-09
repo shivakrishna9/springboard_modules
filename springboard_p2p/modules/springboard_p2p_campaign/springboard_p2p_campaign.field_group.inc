@@ -24,9 +24,9 @@ function springboard_p2p_campaign_field_group_info() {
     'weight' => '8',
     'children' => array(
       0 => 'field_p2p_campaigns_approval',
-      1 => 'field_p2p_org_intro',
-      2 => 'field_p2p_private_access_message',
-      3 => 'field_p2p_expiration_message',
+      1 => 'field_p2p_expiration_message',
+      2 => 'field_p2p_org_intro',
+      3 => 'field_p2p_private_access_message',
     ),
     'format_type' => 'htab',
     'format_settings' => array(
@@ -149,8 +149,8 @@ function springboard_p2p_campaign_field_group_info() {
       0 => 'field_p2p_campaign_banner',
       1 => 'field_p2p_campaign_thumbnail',
       2 => 'group_p2p_video_embed',
-      3 => 'group_slideshow',
-      4 => 'group_personal_campaign_images',
+      3 => 'group_personal_campaign_images',
+      4 => 'group_slideshow',
     ),
     'format_type' => 'htab',
     'format_settings' => array(
@@ -179,9 +179,9 @@ function springboard_p2p_campaign_field_group_info() {
     'label' => 'Personal campaign introduction',
     'weight' => '10',
     'children' => array(
-      0 => 'field_p2p_personal_intro',
-      1 => 'field_p2p_personal_intro_edit',
-      2 => 'field_p2p_feature_pers_campaigns',
+      0 => 'field_p2p_feature_pers_campaigns',
+      1 => 'field_p2p_personal_intro',
+      2 => 'field_p2p_personal_intro_edit',
     ),
     'format_type' => 'htab',
     'format_settings' => array(
@@ -266,10 +266,13 @@ function springboard_p2p_campaign_field_group_info() {
     'label' => 'Landing page slideshow',
     'weight' => '13',
     'children' => array(
-      0 => 'field_p2p_campaign_slider',
-      1 => 'field_landing_page_slider_text',
-      2 => 'field_landing_page_slider_link',
-      3 => 'field_external_link',
+      0 => 'field_external_link',
+      1 => 'field_landing_page_slider_link',
+      2 => 'field_landing_page_slider_text',
+      3 => 'field_p2p_campaign_slider',
+      4 => 'field_p2p_external_link',
+      5 => 'field_p2p_landing_slider_link',
+      6 => 'field_p2p_landing_slider_text',
     ),
     'format_type' => 'fieldset',
     'format_settings' => array(

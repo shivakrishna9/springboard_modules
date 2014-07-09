@@ -6,7 +6,11 @@ core = 7.x
 version = 7.x-4.x-dev
 
 dependencies[] = "views"
+dependencies[] = "date"
 dependencies[] = "date_api"
+dependencies[] = "date_popup"
+dependencies[] = "date_views"
+dependencies[] = "springboard_stats"
 dependencies[] = "views_bulk_operations"
 dependencies[] = "views_watchdog"
 

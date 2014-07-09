@@ -12,6 +12,14 @@ function springboard_p2p_pm_existing_pages_info() {
 
   $pm_existing_page = new stdClass();
   $pm_existing_page->api_version = 1;
+  $pm_existing_page->name = 'p2p_node';
+  $pm_existing_page->label = 'P2P Node';
+  $pm_existing_page->context = 'entity|node|nid';
+  $pm_existing_page->paths = 'node';
+  $export['p2p_node'] = $pm_existing_page;
+
+  $pm_existing_page = new stdClass();
+  $pm_existing_page->api_version = 1;
   $pm_existing_page->name = 'webform_confirmation';
   $pm_existing_page->label = 'Webform Confirmation';
   $pm_existing_page->context = 'entity|node|nid';

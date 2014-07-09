@@ -542,13 +542,13 @@ function springboard_p2p_default_page_manager_handlers() {
   $handler = new stdClass();
   $handler->disabled = FALSE; /* Edit this to true to make a default handler disabled initially */
   $handler->api_version = 1;
-  $handler->name = 'node_view_panel_context';
-  $handler->task = 'node_view';
-  $handler->subtask = '';
+  $handler->name = 'pm_existing_pages_p2p_node_panel_context';
+  $handler->task = 'pm_existing_pages';
+  $handler->subtask = 'p2p_node';
   $handler->handler = 'panel_context';
-  $handler->weight = -99;
+  $handler->weight = -29;
   $handler->conf = array(
-    'title' => 'P2P Donation',
+    'title' => 'P2P Donation Form',
     'no_blocks' => 0,
     'pipeline' => 'standard',
     'body_classes_to_remove' => '',
@@ -739,7 +739,23 @@ function springboard_p2p_default_page_manager_handlers() {
   $display->hide_title = PANELS_TITLE_FIXED;
   $display->title_pane = '0';
   $handler->conf['display'] = $display;
-  $export['node_view_panel_context'] = $handler;
+  $export['pm_existing_pages_p2p_node_panel_context'] = $handler;
+
+  $handler = new stdClass();
+  $handler->disabled = FALSE; /* Edit this to true to make a default handler disabled initially */
+  $handler->api_version = 1;
+  $handler->name = 'pm_existing_pages_p2p_node_panelizer_node';
+  $handler->task = 'pm_existing_pages';
+  $handler->subtask = 'p2p_node';
+  $handler->handler = 'panelizer_node';
+  $handler->weight = -28;
+  $handler->conf = array(
+    'title' => 'P2P Panelizer',
+    'contexts' => array(),
+    'relationships' => array(),
+    'context' => 'argument_entity_id:node_1',
+  );
+  $export['pm_existing_pages_p2p_node_panelizer_node'] = $handler;
 
   $handler = new stdClass();
   $handler->disabled = FALSE; /* Edit this to true to make a default handler disabled initially */
