@@ -6,5 +6,5 @@ dependencies[] = secure_prepopulate
 
 version = 7.x-4.x-dev
 
-files[] = dynamic_gift_strings.install
-files[] = dynamic_gift_strings.module
+files[] = springboard_cookie.install
+files[] = springboard_cookie.module
