@@ -6,6 +6,7 @@
  */
 
 define('SPRINGBOARD_COOKIE_NAME_DEFAULT', 'Springboard');
+define('SPRINGBOARD_COOKIE_EXPIRATION_DAYS_DEFAULT', 365);
 
 /**
  * Implementation of hook_init().
@@ -43,6 +44,12 @@ function springboard_cookie_form_alter(&$form, &$form_state, $form_id) {
       '#default_value' => variable_get('springboard_cookie_name', SPRINGBOARD_COOKIE_NAME_DEFAULT),
       '#description' => t('This will be the name of the Springboard cookie in the client browser cache.'),
     );
+    $form['springboard_cookie']['springboard_cookie_expiration_days'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Days to expiration'),
+      '#default_value' => variable_get('springboard_cookie_expiration_days', SPRINGBOARD_COOKIE_EXPIRATION_DAYS_DEFAULT),
+      '#description' => t('The Springboard cookie will be set to expire after this number of days.'),
+    );
     $form['springboard_cookie']['springboard_cookie_autologin'] = array(
       '#type' => 'checkbox',
       '#title' => t('Automatic login'),
@@ -59,7 +66,11 @@ function springboard_cookie_form_alter(&$form, &$form_state, $form_id) {
 function springboard_cookie_settings_validate($form, &$form_state) {
   // Cookie name needs to be alphanumeric.
   if (!preg_match("|^[a-zA-Z0-9_\\.]+\$|", $form_state['values']['springboard_cookie_name'])) {
-    form_set_error('springboard_cookie_name', 'Springboard cookie name must be alphanumeric.');
+    form_set_error('springboard_cookie_name', t('Springboard cookie name must be alphanumeric.'));
+  }
+  $expiration_days = (float)$form_state['values']['springboard_cookie_expiration_days'];
+  if (!is_numeric($form_state['values']['springboard_cookie_expiration_days']) || $expiration_days < 0 || (int)$expiration_days != $expiration_days) {
+    form_set_error('springboard_cookie_expiration_days', t('Springboard cookie days to expiration must be an integer greater than zero.'));
   }
 }
 
@@ -105,5 +116,6 @@ function springboard_cookie_set_cookie($cookie_data) {
   $serialized = serialize($cookie_data);
   $encrypted = secure_prepopulate_encrypt($serialized);
   $cookie_name = variable_get('springboard_cookie_name', SPRINGBOARD_COOKIE_NAME_DEFAULT);
-  setcookie($cookie_name, $encrypted, time() + 60*60*24*356, '/');
+  $expiration_days = variable_get('springboard_cookie_expiration_days', SPRINGBOARD_COOKIE_EXPIRATION_DAYS_DEFAULT);
+  setcookie($cookie_name, $encrypted, time() + 60 * 60 * 24 * $expiration_days, '/');
 }
