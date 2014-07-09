@@ -1,0 +1,275 @@
+<?php
+/**
+ * @file
+ * Adds statistical tally fields to Springboard donation forms and webforms.
+ */
+
+/**
+ * Implements hook_node_type_insert
+ */
+function springboard_stats_node_type_insert($type) {
+  springboard_stats_add_fields($type->type);
+}
+
+/**
+ * Implements hook_node_type_update
+ */
+function springboard_stats_node_type_update($type) {
+  springboard_stats_add_fields($type->type);
+}
+
+/**
+ * Checks whether given node type name is for a Webform or Fundraiser type, and if so add stats fields.
+ */
+function springboard_stats_add_fields($type_name) {
+  module_load_include('inc', 'springboard_stats', 'springboard_stats.fields');
+  if (in_array($type_name, webform_variable_get('webform_node_types'))) {
+    _springboard_stats_add_default_fields($type_name);
+  }
+  if (fundraiser_is_donation_type($type_name)) {
+    _springboard_stats_add_default_fields($type_name, TRUE);
+  }
+}
+
+/**
+ * Implements hook_field_access().
+ */
+function springboard_stats_field_access($op, $field, $entity_type, $entity, $account) {
+  if (substr($field['field_name'], 0, 8) == 'sbstats_') {
+    if ($op == 'edit') { return FALSE; }
+    if ($op == 'view') { return user_access('view springboard stats', $account); }
+  }
+  return TRUE;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function springboard_stats_permission() {
+  return array(
+    'view springboard stats' => array(
+      'title' => t('View Springboard Statistics'),
+      'description' => t('See the values of Springboard Statistics fields.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_node_presave().
+ */
+function springboard_stats_node_presave($node) {
+  if (fundraiser_is_donation_type($node->type) || in_array($node->type, webform_variable_get('webform_node_types'))) {
+    // If sbstats fields have no data, populate them with zeroes.
+    foreach ($node as $name => $value) {
+      if (substr($name, 0, 8) == 'sbstats_') {
+        if (empty($node->{$name}[LANGUAGE_NONE]) || empty($node->{$name}[LANGUAGE_NONE][0]['value'])) {
+          $node->{$name}[LANGUAGE_NONE][0]['value'] = 0;
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Calculates and saves a particular stats field for a particular node.
+ */
+function springboard_stats_update_field($node, $field_name) {
+  // Default to current value.
+  $value = !empty($node->{"sbstats_$field_name"}) ? $node->{"sbstats_$field_name"}[LANGUAGE_NONE][0]['value'] : 0;
+  
+  // Calculate the field's new value.
+  switch ($field_name) {
+    case 'count_submissions':
+      module_load_include('inc', 'webform', 'includes/webform.submissions');
+      $value = webform_get_submission_count($node->nid);
+      break;
+    case 'count_conversions':
+      $value = db_query(
+        "SELECT COUNT(*) FROM (
+          SELECT sid FROM {fundraiser_donation} 
+           WHERE status IN ('payment_received', 'partially_refunded', 'refunded') AND nid=:nid
+         ) AS unique_sids;",
+        array(':nid' => $node->nid)
+      )->fetchField();
+      break;
+    case 'total_transactions':
+      $value = db_query(
+        "SELECT SUM(ROUND(amount,2)) FROM {fundraiser_donation} 
+          WHERE nid=:nid AND status IN ('payment_received', 'partially_refunded', 'refunded');",
+        array(':nid' => $node->nid)
+      )->fetchField();
+      break;
+    case 'count_failures':
+      $value = db_query(
+        "SELECT COUNT(*) FROM {fundraiser_donation} WHERE nid=:nid AND status='failed';",
+        array(':nid' => $node->nid)
+      )->fetchField();
+      break;
+    case 'total_failures':
+      $value = db_query(
+        "SELECT SUM(ROUND(amount,2)) FROM {fundraiser_donation} WHERE nid=:nid AND status='failed';",
+        array(':nid' => $node->nid)
+      )->fetchField();
+      break;
+    case 'count_pending':
+      $value = db_query(
+        "SELECT COUNT(*) FROM {fundraiser_donation} WHERE nid=:nid AND status='pending_future_payment';",
+        array(':nid' => $node->nid)
+      )->fetchField();
+      break;
+    case 'total_pending':
+      $value = db_query(
+        "SELECT SUM(ROUND(amount,2)) FROM {fundraiser_donation} WHERE nid=:nid AND status='pending_future_payment';",
+        array(':nid' => $node->nid)
+      )->fetchField();
+      break;
+    case 'count_sustainers':
+      if (!module_exists('fundraiser_sustainers')) return;
+      $value = db_query(
+        "SELECT COUNT(*)
+          FROM {fundraiser_donation} AS fd INNER JOIN {fundraiser_sustainers} AS fs ON fs.did=fd.did
+          WHERE nid=:nid AND status='payment_received';",
+        array(':nid' => $node->nid)
+      )->fetchField();
+      break;
+    case 'total_sustainers':
+      if (!module_exists('fundraiser_sustainers')) return;
+      $value = db_query(
+        "SELECT SUM(ROUND(fd.amount,2))
+          FROM {fundraiser_donation} AS fd INNER JOIN {fundraiser_sustainers} AS fs ON fs.did=fd.did
+          WHERE nid=:nid AND status IN ('payment_received', 'partially_refunded', 'refunded');",
+        array(':nid' => $node->nid)
+      )->fetchField();
+      if (!is_numeric($value)) $value = 0;
+      break;
+    case 'count_refunds':
+      $value = db_query(
+        "SELECT COUNT(*) FROM {fundraiser_donation} d INNER JOIN {fundraiser_refund} r ON r.did=d.did 
+          WHERE d.nid=:nid;",
+        array(':nid' => $node->nid)
+      )->fetchField();
+      break;
+    case 'total_refunds':
+      $value = db_query(
+        "SELECT SUM(ROUND(r.amount,2)) FROM {fundraiser_donation} d INNER JOIN {fundraiser_refund} r ON r.did=d.did 
+          WHERE nid=:nid;",
+        array(':nid' => $node->nid)
+      )->fetchField();
+      break;
+  }
+  
+  // Save the updated field data.
+  $node->{"sbstats_$field_name"}[LANGUAGE_NONE][0]['value'] = $value;
+  field_attach_update('node', $node);
+}
+
+/**
+ * Calculates and saves all stats fields for a particular node.
+ * More performant than calling springboard_stats_update_field() for more than a couple of fields.
+ */
+function springboard_stats_update_all_fields($node) {
+  // Count webform submissions.
+  module_load_include('inc', 'webform', 'includes/webform.submissions');
+  $node->sbstats_count_submissions[LANGUAGE_NONE][0]['value'] = webform_get_submission_count($node->nid);
+  
+  // Count conversions.
+  $node->sbstats_count_conversions[LANGUAGE_NONE][0]['value'] = db_query(
+    "SELECT COUNT(*) FROM (
+      SELECT sid FROM {fundraiser_donation} 
+        WHERE status IN ('payment_received', 'partially_refunded', 'refunded') AND nid=:nid
+    ) AS unique_sids;",
+    array(':nid' => $node->nid)
+  )->fetchField();
+  
+  // Count and total up straight donation rows.
+  $q = db_query(
+    "SELECT status, COUNT(*) AS count, SUM(ROUND(amount,2)) AS total
+      FROM {fundraiser_donation}
+      WHERE nid=:nid AND status IN ('payment_received', 'pending_future_payment', 'failed', 'partially_refunded', 'refunded')
+      GROUP BY status;",
+    array(':nid' => $node->nid)
+  );
+  $status = array(
+    'payment_received' => 'transactions',
+    'partially_refunded' => 'transactions',
+    'refunded' => 'transactions',
+    'pending_future_payment' => 'pending',
+    'failed' => 'failures',
+  );
+  foreach ($status as $stat_name) {  // default to zeroes
+    $node->{"sbstats_count_$stat_name"}[LANGUAGE_NONE][0]['value'] = 0;
+    $node->{"sbstats_total_$stat_name"}[LANGUAGE_NONE][0]['value'] = 0;
+  }
+  while ($r = $q->fetchAssoc()) {
+    $node->{'sbstats_count_' . $status[$r['status']]}[LANGUAGE_NONE][0]['value'] += $r['count'];
+    $node->{'sbstats_total_' . $status[$r['status']]}[LANGUAGE_NONE][0]['value'] += $r['total'];
+  }
+  
+  // Count and total up sustainers.
+  if (module_exists('fundraiser_sustainers')) {
+    $r = db_query(
+      "SELECT COUNT(*) AS count, SUM(ROUND(fd.amount,2)) AS total
+        FROM {fundraiser_donation} AS fd INNER JOIN {fundraiser_sustainers} AS fs ON fs.did=fd.did
+        WHERE nid=:nid AND status='payment_received';",
+      array(':nid' => $node->nid)
+    )->fetchAssoc();
+    $node->sbstats_count_sustainers[LANGUAGE_NONE][0]['value'] = $r['count'];
+    $node->sbstats_total_sustainers[LANGUAGE_NONE][0]['value'] = is_numeric($r['total']) ? $r['total'] : 0;
+  }
+  
+  // Count and total up refunds.
+  $r = db_query(
+    "SELECT COUNT(*) AS count, SUM(ROUND(r.amount,2)) AS total 
+      FROM {fundraiser_donation} d INNER JOIN {fundraiser_refund} r ON r.did=d.did
+      WHERE nid=:nid;",
+    array(':nid' => $node->nid)
+  )->fetchAssoc();
+  $node->sbstats_count_refunds[LANGUAGE_NONE][0]['value'] = $r['count'];
+  $node->sbstats_total_refunds[LANGUAGE_NONE][0]['value'] = is_numeric($r['total']) ? $r['total'] : 0;
+  
+  // Save the updated fields data.
+  field_attach_update('node', $node);
+}
+
+/****************************************
+ * HOOKS TO RESPOND TO FORM SUBMISSIONS *
+ ****************************************/
+
+/**
+ * Implements hook_webform_submission_insert().
+ */
+function springboard_stats_webform_submission_insert($node, $submission) {
+  springboard_stats_update_field($node, 'count_submissions');
+}
+
+/**
+ * Implements hook_webform_submission_delete().
+ */
+function springboard_stats_webform_submission_delete($node, $submission) {
+  springboard_stats_update_field($node, 'count_submissions');
+}
+
+/**
+ * Implements hook_fundraiser_donation_post_create().
+ */
+function springboard_stats_fundraiser_donation_post_create($donation) {
+  $node = node_load($donation->nid);
+  springboard_stats_update_field($node, 'count_pending');
+  springboard_stats_update_field($node, 'total_pending');
+}
+
+/**
+ * Implements hook_fundraiser_donation_post_update().
+ */
+function springboard_stats_fundraiser_donation_post_update($donation) {
+  $node = node_load($donation->nid);
+  springboard_stats_update_all_fields($node);
+}
+
+/**
+ * Implements hook_fundraiser_donation_delete().
+ */
+function springboard_stats_fundraiser_donation_delete($donation) {
+  $node = node_load($donation->nid);
+  springboard_stats_update_all_fields($node);
+}

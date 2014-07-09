@@ -1504,13 +1504,6 @@ function fundraiser_donation_form(&$form, &$form_state) {
 }
 
 /**
- * Implements hook_form_alter()
- */
-function fundraiser_form_alter(&$form, &$form_state, $form_id) {
-  $form['actions']['submit']['#attributes']['class'][] = 'btn';
-}
-
-/**
  * Donation form, validation routine on data returned from glue display module.
  * Called from glue display module to validate additional data.
  */
@@ -1752,6 +1745,13 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
   }
   if (isset($donation->amount) && !empty($donation->amount)) {
     $donation_record['amount'] = $donation->amount;
+  } else if (!empty($donation->donation['amount'])) {
+    $donation_record['amount'] = $donation->donation['amount'];
+    // was a quantity (of > 1) specified?
+    if (isset($donation->donation['quantity']) && $donation->donation['quantity'] > 1) {
+      // multiply base donation amount by quantity to get the donation total
+      $donation_record['amount'] = number_format($donation->donation['amount'] * $donation->donation['quantity'], 2);
+    }
   }
   if (isset($donation->currency) && !empty($donation->currency)) {
     $donation_record['currency'] = $donation->currency;

@@ -76,7 +76,6 @@ function webform_confirmation_alias_node_delete($node) {
   if (in_array($node->type, $webform_node_types)) {
     webform_confirmation_alias_remove($node->nid);
   }
-  break;
 }
 
 /**************************************************************************************************************//*
