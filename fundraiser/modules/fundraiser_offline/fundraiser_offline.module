@@ -97,7 +97,7 @@ function fundraiser_offline_form_alter(&$form, $form_state, $form_id) {
     foreach ($gateway_elements as $gateway) {
       $form['fundraiser_settings']['gateways'][$gateway]['offline_only'] = array(
         '#type' => 'checkbox',
-        '#title' => t('offline only'),
+        '#title' => t('Offline Only'),
         '#default_value' => isset($node_gateways[$gateway]['offline_only']) ? $node_gateways[$gateway]['offline_only'] : 0,
       );
     }
@@ -110,7 +110,7 @@ function fundraiser_offline_form_alter(&$form, $form_state, $form_id) {
     foreach ($gateway_elements as $gateway) {
       $form['fundraiser']['fundraiser_payment_method_config_defaults'][$gateway]['offline_only'] = array(
         '#type' => 'checkbox',
-        '#title' => t('offline only'),
+        '#title' => t('Offline Only'),
         '#default_value' => isset($defaults[$gateway]['offline_only']) ? $defaults[$gateway]['offline_only'] : 0,
       );
     }
@@ -365,7 +365,7 @@ function fundraiser_offline_fundraiser_webform_payment_component_payment_methods
   $offline = isset($_GET['offline']) ? $_GET['offline'] : FALSE;
   $user_may_offline = user_access('submit donations offline', $user);
   foreach ($payment_methods as $type => $method) {
-    if ($method['offline_only']) {
+    if (isset($method['offline_only']) && $method['offline_only']) {
       if (!$offline || !$user_may_offline) {
         unset($payment_methods[$type]);
       }
