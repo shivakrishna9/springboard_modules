@@ -349,6 +349,8 @@ function springboard_p2p_personal_campaign_tokens($type, $tokens, $data = array(
     if ($user_tokens = token_find_with_prefix($tokens, 'user')) {
       $replacements += token_generate('user', $user_tokens, array('user' => $account), $options);
     }
+    // 
+     $_SESSION['sb_social_url_context']['personal_campaign_id'] = FALSE;
 
     return $replacements;
   }
