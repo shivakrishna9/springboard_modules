@@ -75,6 +75,35 @@ function springboard_cookie_settings_validate($form, &$form_state) {
 }
 
 /**
+ * Tag the client with Springboard cookie data.
+ * If the client doesn't have a Springboard cookie, one will be created, including a client ID.
+ */
+function springboard_cookie_tag_client($new_data = array()) {
+  $extant_cookie = $new_cookie = springboard_cookie_get_cookie();
+  foreach ($new_data as $name => $value) {
+    if (isset($new_cookie[$name])) {
+      if ($new_cookie[$name] != $new_data[$name]) {
+        // New data doesn't match data already in the client's cookie, so throw out the old cookie data and start fresh.
+        $new_cookie = $new_data;
+        break;
+      }
+    }
+    else {
+      // Add new data to the cookie.
+      $new_cookie[$name] = $new_data[$name];
+    } 
+  }
+  // Make sure the cookie has a client ID.
+  if (!isset($new_cookie['client_id'])) {
+    $new_cookie['client_id'] = uniqid();
+  }
+  // Send the cookie to the client if it's different from what they already have.
+  if ($extant_cookie != $new_cookie) {
+    springboard_cookie_set_cookie($new_cookie);
+  }
+}
+
+/**
  * Fetch the Springboard cookie, decrypt, and return.
  */
 function springboard_cookie_get_cookie() {
