@@ -86,6 +86,18 @@ function springboard_cookie_fundraiser_donation_post_submit($form, $form_state, 
 }
 
 /**
+ * Implementation of hook_sb_social_share_event_save().
+ */
+function springboard_cookie_sb_social_share_event_save($share_data) {
+  if (!empty($share_data['share_id'])) {
+    // Tag the client with this share_id.
+    springboard_cookie_tag_client(array(
+      'share_ids' => array($share_data['share_id'])
+    ));
+  }
+}
+
+/**
  * Implmentation of hook_form_alter().
  */
 function springboard_cookie_form_alter(&$form, &$form_state, $form_id) {
@@ -198,7 +210,11 @@ function springboard_cookie_tag_client($new_data = array()) {
   $extant_cookie = $new_cookie = springboard_cookie_get_cookie();
   foreach ($new_data as $name => $value) {
     if (isset($new_cookie[$name])) {
-      if ($new_cookie[$name] != $new_data[$name]) {
+      if (is_array($new_cookie[$name]) && is_array($new_data[$name])) {
+        // If the existing and new values are arrays, simply combine them.
+        $new_cookie[$name] = array_unique(array_merge($new_cookie[$name], $new_data[$name]));
+      }
+      else if ($new_cookie[$name] != $new_data[$name]) {
         // New data doesn't match data already in the client's cookie, so throw out the old cookie data and start fresh.
         $new_cookie = $new_data;
         break;
