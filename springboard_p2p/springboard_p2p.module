@@ -2273,6 +2273,8 @@ function springboard_p2p_css_alter(&$css) {
   $node_types = array(
     'p2p_personal_campaign',
     'p2p_campaign_landing',
+    'p2p_campaign',
+    'p2p_category',
   );
 
   // Global node.
