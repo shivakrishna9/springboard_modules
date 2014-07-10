@@ -1328,6 +1328,7 @@ function fundraiser_validate_form_fields($form, $form_state, $submission_fields,
   // Grab field info, we'll use this all the way down.
   if ($field_info == NULL) {
     $field_info = _fundraiser_field_info();
+    drupal_alter('fundraiser_field_info_validate', $field_info, $form);
   }
   // Check for errors by field info array.
   $children = element_children($field_info);
@@ -1744,6 +1745,13 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
   }
   if (isset($donation->amount) && !empty($donation->amount)) {
     $donation_record['amount'] = $donation->amount;
+  } else if (!empty($donation->donation['amount'])) {
+    $donation_record['amount'] = $donation->donation['amount'];
+    // was a quantity (of > 1) specified?
+    if (isset($donation->donation['quantity']) && $donation->donation['quantity'] > 1) {
+      // multiply base donation amount by quantity to get the donation total
+      $donation_record['amount'] = number_format($donation->donation['amount'] * $donation->donation['quantity'], 2);
+    }
   }
   if (isset($donation->currency) && !empty($donation->currency)) {
     $donation_record['currency'] = $donation->currency;

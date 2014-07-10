@@ -2015,22 +2015,22 @@ function springboard_admin_config_donation_form_add($form, $form_state, $email_n
       '0' => array(
         'amount' => 10,
         'label' => '$10',
-        'remove' => 0,
+        'weight' => 0,
       ),
       '1' => array(
         'amount' => 20,
         'label' => '$20',
-        'remove' => 0,
+        'weight' => 1,
       ),
       '2' => array(
         'amount' => 50,
         'label' => '$50',
-        'remove' => 0,
+        'weight' => 2,
       ),
       '3' => array(
         'amount' => 100,
         'label' => '$100',
-        'remove' => 0,
+        'weight' => 3,
       ),
     ),
     'show_other_amount' => 1,

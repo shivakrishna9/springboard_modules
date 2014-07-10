@@ -210,18 +210,18 @@ function springboard_admin_init() {
   // to the proper admin interface.
   if (springboard_admin_user_gets_sbux($user)) {    
     // Set up requested path and goto path.
-    $path = request_uri();    
+    $path = str_replace("?".$_SERVER['QUERY_STRING'], '', request_uri());    
     $goto_path = FALSE;
     // Node add pages,
     if (preg_match('|^/node/add(/.*)?|', $path, $matches)) {
       $goto_path = 'springboard/add' . $matches[1];
     }
-    
+
     /*
      * Node edit pages.
      */ 
     elseif (preg_match('|^/node/([0-9]*)((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $matches)) {
-      if (preg_match('|^/node/([0-9]*)$|', $path) || preg_match('|^/node/([0-9]*)/view$|', $path)) {
+      if (preg_match('|^/node/([0-9]*)$|', $path) || preg_match('|^/node/([0-9]*)/view$|', $path) || preg_match('|^/node/([0-9]*)/done$|', $path)) {
         // If we're viewing the node, bypass any aliasing.
         return; 
       }
@@ -554,7 +554,12 @@ function springboard_admin_theme($existing, $type, $theme, $path) {
 function springboard_admin_url_inbound_alter(&$path, $original_path, $path_language) {
   // Node add pages for all types.
   if (preg_match('|^springboard/add(/.*)?|', $path, $matches)) {
-    $path = 'node/add' . $matches[1];
+    if(preg_match('|^springboard/add$|', $path)) {
+      $path = 'node/add';
+    }
+    else {
+      $path = 'node/add' . $matches[1];
+    }
   }
   /**
    * Node edit pages.

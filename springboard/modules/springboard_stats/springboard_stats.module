@@ -85,13 +85,17 @@ function springboard_stats_update_field($node, $field_name) {
       break;
     case 'count_conversions':
       $value = db_query(
-        "SELECT COUNT(*) FROM (SELECT sid FROM {fundraiser_donation} WHERE status='payment_received' AND nid=:nid) AS unique_sids;",
+        "SELECT COUNT(*) FROM (
+          SELECT sid FROM {fundraiser_donation} 
+           WHERE status IN ('payment_received', 'partially_refunded', 'refunded') AND nid=:nid
+         ) AS unique_sids;",
         array(':nid' => $node->nid)
       )->fetchField();
       break;
     case 'total_transactions':
       $value = db_query(
-        "SELECT SUM(ROUND(amount,2)) FROM {fundraiser_donation} WHERE nid=:nid AND status='payment_received';",
+        "SELECT SUM(ROUND(amount,2)) FROM {fundraiser_donation} 
+          WHERE nid=:nid AND status IN ('payment_received', 'partially_refunded', 'refunded');",
         array(':nid' => $node->nid)
       )->fetchField();
       break;
@@ -133,10 +137,24 @@ function springboard_stats_update_field($node, $field_name) {
       $value = db_query(
         "SELECT SUM(ROUND(fd.amount,2))
           FROM {fundraiser_donation} AS fd INNER JOIN {fundraiser_sustainers} AS fs ON fs.did=fd.did
-          WHERE nid=:nid AND status='payment_received';",
+          WHERE nid=:nid AND status IN ('payment_received', 'partially_refunded', 'refunded');",
         array(':nid' => $node->nid)
       )->fetchField();
       if (!is_numeric($value)) $value = 0;
+      break;
+    case 'count_refunds':
+      $value = db_query(
+        "SELECT COUNT(*) FROM {fundraiser_donation} d INNER JOIN {fundraiser_refund} r ON r.did=d.did 
+          WHERE d.nid=:nid;",
+        array(':nid' => $node->nid)
+      )->fetchField();
+      break;
+    case 'total_refunds':
+      $value = db_query(
+        "SELECT SUM(ROUND(r.amount,2)) FROM {fundraiser_donation} d INNER JOIN {fundraiser_refund} r ON r.did=d.did 
+          WHERE nid=:nid;",
+        array(':nid' => $node->nid)
+      )->fetchField();
       break;
   }
   
@@ -156,7 +174,10 @@ function springboard_stats_update_all_fields($node) {
   
   // Count conversions.
   $node->sbstats_count_conversions[LANGUAGE_NONE][0]['value'] = db_query(
-    "SELECT COUNT(*) FROM (SELECT sid FROM {fundraiser_donation} WHERE status='payment_received' AND nid=:nid) AS unique_sids;",
+    "SELECT COUNT(*) FROM (
+      SELECT sid FROM {fundraiser_donation} 
+        WHERE status IN ('payment_received', 'partially_refunded', 'refunded') AND nid=:nid
+    ) AS unique_sids;",
     array(':nid' => $node->nid)
   )->fetchField();
   
@@ -164,12 +185,14 @@ function springboard_stats_update_all_fields($node) {
   $q = db_query(
     "SELECT status, COUNT(*) AS count, SUM(ROUND(amount,2)) AS total
       FROM {fundraiser_donation}
-      WHERE nid=:nid AND status IN ('payment_received', 'pending_future_payment', 'failed')
+      WHERE nid=:nid AND status IN ('payment_received', 'pending_future_payment', 'failed', 'partially_refunded', 'refunded')
       GROUP BY status;",
     array(':nid' => $node->nid)
   );
   $status = array(
     'payment_received' => 'transactions',
+    'partially_refunded' => 'transactions',
+    'refunded' => 'transactions',
     'pending_future_payment' => 'pending',
     'failed' => 'failures',
   );
@@ -178,8 +201,8 @@ function springboard_stats_update_all_fields($node) {
     $node->{"sbstats_total_$stat_name"}[LANGUAGE_NONE][0]['value'] = 0;
   }
   while ($r = $q->fetchAssoc()) {
-    $node->{'sbstats_count_' . $status[$r['status']]}[LANGUAGE_NONE][0]['value'] = $r['count'];
-    $node->{'sbstats_total_' . $status[$r['status']]}[LANGUAGE_NONE][0]['value'] = $r['total'];
+    $node->{'sbstats_count_' . $status[$r['status']]}[LANGUAGE_NONE][0]['value'] += $r['count'];
+    $node->{'sbstats_total_' . $status[$r['status']]}[LANGUAGE_NONE][0]['value'] += $r['total'];
   }
   
   // Count and total up sustainers.
@@ -193,6 +216,16 @@ function springboard_stats_update_all_fields($node) {
     $node->sbstats_count_sustainers[LANGUAGE_NONE][0]['value'] = $r['count'];
     $node->sbstats_total_sustainers[LANGUAGE_NONE][0]['value'] = is_numeric($r['total']) ? $r['total'] : 0;
   }
+  
+  // Count and total up refunds.
+  $r = db_query(
+    "SELECT COUNT(*) AS count, SUM(ROUND(r.amount,2)) AS total 
+      FROM {fundraiser_donation} d INNER JOIN {fundraiser_refund} r ON r.did=d.did
+      WHERE nid=:nid;",
+    array(':nid' => $node->nid)
+  )->fetchAssoc();
+  $node->sbstats_count_refunds[LANGUAGE_NONE][0]['value'] = $r['count'];
+  $node->sbstats_total_refunds[LANGUAGE_NONE][0]['value'] = is_numeric($r['total']) ? $r['total'] : 0;
   
   // Save the updated fields data.
   field_attach_update('node', $node);
