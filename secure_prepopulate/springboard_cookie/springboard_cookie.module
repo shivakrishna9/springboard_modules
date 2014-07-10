@@ -59,6 +59,17 @@ function springboard_cookie_init() {
 }
 
 /**
+ * Implementation of hook_user_login().
+ */
+function springboard_cookie_user_login(&$edit, $account) {
+  // User login gives us an email and uid, so tag the client.
+  springboard_cookie_tag_client(array(
+    'email' => $account->mail,
+    'uid' => $account->uid,
+  ));
+}
+
+/**
  * Implmentation of hook_form_alter().
  */
 function springboard_cookie_form_alter(&$form, &$form_state, $form_id) {
