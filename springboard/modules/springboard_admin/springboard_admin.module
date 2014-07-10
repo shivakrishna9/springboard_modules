@@ -554,7 +554,12 @@ function springboard_admin_theme($existing, $type, $theme, $path) {
 function springboard_admin_url_inbound_alter(&$path, $original_path, $path_language) {
   // Node add pages for all types.
   if (preg_match('|^springboard/add(/.*)?|', $path, $matches)) {
-    $path = 'node/add' . $matches[1];
+    if(preg_match('|^springboard/add$|', $path)) {
+      $path = 'node/add';
+    }
+    else {
+      $path = 'node/add' . $matches[1];
+    }
   }
   /**
    * Node edit pages.
