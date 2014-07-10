@@ -9,6 +9,20 @@ define('SPRINGBOARD_COOKIE_NAME_DEFAULT', 'Springboard');
 define('SPRINGBOARD_COOKIE_EXPIRATION_DAYS_DEFAULT', 365);
 
 /**
+ * Implementation of hook_menu().
+ */
+function springboard_cookie_menu() {
+  $items['springboard_cookie/js/new'] = array(
+    'title' => '',
+    'page callback' => 'springboard_cookie_js_new_cookie',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  
+  return $items;
+}
+
+/**
  * Implementation of hook_init().
  */
 function springboard_cookie_init() {
@@ -26,7 +40,22 @@ function springboard_cookie_init() {
   }
   
   // Make sure this client has a cookie and a client_id.
-  springboard_cookie_tag_client();
+  if (variable_get('cache', FALSE) && drupal_page_is_cacheable()) {
+    // Page can be cached, so send Javascript to make the client check itself for the cookie.
+    drupal_add_js(
+      array(
+        'springboard_cookie' => array(
+          'name' => variable_get('springboard_cookie_name', SPRINGBOARD_COOKIE_NAME_DEFAULT),
+        ),
+      ),
+      'setting'
+    );
+    drupal_add_js(drupal_get_path('module', 'springboard_cookie') . '/js/springboard_cookie.cacheable.js');
+  }
+  else {
+    // Page caching is disabled, so we can set the cookie with any response we please.
+    springboard_cookie_tag_client();
+  }
 }
 
 /**
@@ -76,6 +105,24 @@ function springboard_cookie_settings_validate($form, &$form_state) {
   if (!is_numeric($form_state['values']['springboard_cookie_expiration_days']) || $expiration_days < 0 || (int)$expiration_days != $expiration_days) {
     form_set_error('springboard_cookie_expiration_days', t('Springboard cookie days to expiration must be an integer greater than zero.'));
   }
+}
+
+/**
+ * Javascript callback: Send a new cookie via AJAX.
+ */
+function springboard_cookie_js_new_cookie() {
+  // Generate, serialize, and encrypt a new cookie.
+  springboard_cookie_tag_client();
+  $cookie = springboard_cookie_get_cookie();
+  $serialized = serialize($cookie);
+  $encrypted = secure_prepopulate_encrypt($serialized);
+  
+  // Send it back as JSON.
+  drupal_json_output(array(
+    'cookie' => $encrypted,
+    'expires' => variable_get('springboard_cookie_expiration_days', SPRINGBOARD_COOKIE_EXPIRATION_DAYS_DEFAULT),
+  ));
+  exit;
 }
 
 /**
