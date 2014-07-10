@@ -465,6 +465,14 @@ function fundraiser_webform_form_alter(&$form, &$form_state, $form_id) {
  * Form, alters the display of webform submissions to prevent edits / display of confusing info.
  */
 function fundraiser_webform_submission_display(&$form, &$form_state) {
+
+  // Hidden fields can be edited.
+  foreach (element_children($form['submitted']) as $key) {
+    if ($form['submitted'][$key]['#type'] == 'hidden') {
+      $form['submitted'][$key]['#type'] = 'textfield';
+    }
+  }
+
   // Set up a view only display of the donation amount.
   $amount_field = _fundraiser_get_form_field($form, 'amount');
   if ('other' != $amount_field['#default_value']) {
@@ -1280,7 +1288,9 @@ function fundraiser_webform_submit_text_submit(&$form, &$form_state) {
   }
 }
 
+/**
+ * Implements hook_node_delete().
+ */
 function fundraiser_webform_node_delete($node) {
   db_delete('fundraiser_webform_messages')->condition('nid', $node->nid)->execute();
 }
-
