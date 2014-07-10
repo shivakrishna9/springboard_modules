@@ -66,6 +66,7 @@ function springboard_cookie_user_login(&$edit, $account) {
   springboard_cookie_tag_client(array(
     'email' => $account->mail,
     'uid' => $account->uid,
+    'last_login' => time(),
   ));
 }
 
