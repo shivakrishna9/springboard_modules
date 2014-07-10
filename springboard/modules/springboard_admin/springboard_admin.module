@@ -90,7 +90,6 @@ function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
       $form['actions']['delete']['#submit'][] = 'springboard_admin_node_delete';
     break;
   }
-
 }
 
 /**
@@ -130,6 +129,25 @@ function springboard_admin_form_views_exposed_form_alter(&$form, &$form_state, $
  */
 function springboard_admin_form_springboard_admin_settings_alter(&$form, &$form_state) {
   if (user_access('administer springboard theme')) {
+    $form['menu'] = array(
+      '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#title' => t('Springboard menu settings'),
+      '#description' => t('Configure settings for the Springboard Admin Menu.'),
+      '#weight' => -2,
+    );
+    $form['menu']['springboard_drupal_path'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Organization homepage'),
+      '#description' => t("Set the URL to the organization's main website."),
+      '#default_value' => variable_get('springboard_drupal_path', 'http://drupal.org'),
+    );
+    $form['menu']['springboard_menu_rebuild'] = array(
+      '#type' => 'item',
+      '#markup' => l(t('Rebuild Springboard Admin Menu'), 'admin/springboard/rebuild-sb-menu', array('attributes' => array('class' => array('button', 'btn')))),
+      '#description' => t('Restores the springboard admin menu to its default state.'),
+    );
     $form['admin'] = array(
       '#type' => 'fieldset',
       '#collapsible' => TRUE,
@@ -143,13 +161,6 @@ function springboard_admin_form_springboard_admin_settings_alter(&$form, &$form_
       '#title' => t('Enable the Springboard administrative theme.'),
       '#description' => t('Force the use of the springboard_backend theme on all Springboard-related administrative pages. The administrative theme set at admin/appearence will still be used for other Drupal administrative pages.'),
       '#default_value' => variable_get('springboard_theme_enable', 1),
-    );
-
-    $form['admin']['springboard_drupal_path'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Organization homepage'),
-      '#description' => t("Set the URL to the organization's main website."),
-      '#default_value' => variable_get('springboard_drupal_path', 'http://drupal.org'),
     );
     $roles = user_roles(TRUE, 'access springboard dashboard');
     $form['admin']['springboard_user_experience'] = array(
@@ -197,28 +208,20 @@ function springboard_admin_init() {
   global $user;
   // If user is to have the Springboard Admin UX, make sure they are redirecitng
   // to the proper admin interface.
-  if (springboard_admin_user_gets_sbux($user)) {
-    // If a redirect destination is included in the query string, clear it from
-    // $_GET and it will be added back to the path later.
-    if (isset($_GET['destination'])) {
-      unset($_GET['destination']);
-    }
-    // Set up any query string that might exist for use in drupal_goto().
-    parse_str($_SERVER['QUERY_STRING'], $query);
-    
+  if (springboard_admin_user_gets_sbux($user)) {    
     // Set up requested path and goto path.
-    $path = request_uri();    
+    $path = str_replace("?".$_SERVER['QUERY_STRING'], '', request_uri());    
     $goto_path = FALSE;
     // Node add pages,
     if (preg_match('|^/node/add(/.*)?|', $path, $matches)) {
       $goto_path = 'springboard/add' . $matches[1];
     }
-    
+
     /*
      * Node edit pages.
      */ 
     elseif (preg_match('|^/node/([0-9]*)((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $matches)) {
-      if (preg_match('|^/node/([0-9]*)$|', $path) || preg_match('|^/node/([0-9]*)/view$|', $path)) {
+      if (preg_match('|^/node/([0-9]*)$|', $path) || preg_match('|^/node/([0-9]*)/view$|', $path) || preg_match('|^/node/([0-9]*)/done$|', $path)) {
         // If we're viewing the node, bypass any aliasing.
         return; 
       }
@@ -344,6 +347,9 @@ function springboard_admin_init() {
     elseif (preg_match('|^/admin/commerce/orders((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
       $goto_path = 'springboard/donations' . $m1[1];
     }
+    elseif (preg_match('|^/admin/commerce/products((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)){
+      $goto_path = 'springboard/commerce/products' . $m1[1];
+    }
     /**
      * User paths.
      */
@@ -361,6 +367,13 @@ function springboard_admin_init() {
       }
     }
     if ($goto_path) {
+      // If a redirect destination is included in the query string, clear it from
+      // $_GET and it will be added back to the path later.
+      if (isset($_GET['destination'])) {
+        unset($_GET['destination']);
+      }
+      // Set up any query string that might exist for use in drupal_goto().
+      parse_str($_SERVER['QUERY_STRING'], $query);
       drupal_goto($goto_path, array('query' => $query, 'alias' => TRUE));
     } 
   }  
@@ -371,6 +384,13 @@ function springboard_admin_init() {
  */
 function springboard_admin_menu() {
   $items = array();
+  $items['admin/springboard/rebuild-sb-menu'] = array(
+    'title' => 'Rebuild the Springboard Admin Menu',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_admin_rebuild_menu_confirm'),
+    'access arguments' => array('access springboard dashboard'),
+    'type' => MENU_NORMAL_ITEM,
+  );
   $items['admin/springboard/asset-library'] = array(
     'title' => 'Templates',
     'type' => MENU_NORMAL_ITEM,
@@ -534,7 +554,12 @@ function springboard_admin_theme($existing, $type, $theme, $path) {
 function springboard_admin_url_inbound_alter(&$path, $original_path, $path_language) {
   // Node add pages for all types.
   if (preg_match('|^springboard/add(/.*)?|', $path, $matches)) {
-    $path = 'node/add' . $matches[1];
+    if(preg_match('|^springboard/add$|', $path)) {
+      $path = 'node/add';
+    }
+    else {
+      $path = 'node/add' . $matches[1];
+    }
   }
   /**
    * Node edit pages.
@@ -671,6 +696,9 @@ function springboard_admin_url_inbound_alter(&$path, $original_path, $path_langu
     }
     elseif (preg_match('|^springboard/donations((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
       $path = 'admin/commerce/orders' . $m1[1];
+    }
+    elseif (preg_match('|^springboard/commerce/products((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)){
+      $path = 'admin/commerce/products' . $m1[1];
     }
     /**
      * All other springboard paths.
@@ -957,6 +985,29 @@ function springboard_drupal_path_validate(&$form, &$form_state) {
   if (!valid_url($form_state['values']['springboard_drupal_path'], TRUE)) {
     form_error($form['admin']['springboard_drupal_path'], 'Please submit a valid URL, including "http://"');
   }
+}
+
+/**
+ * Helper function.
+ * 
+ * Allows a user to confirm the action of rebuilding the Springboard Admin Menu.
+ */
+function springboard_admin_rebuild_menu_confirm($form, &$form_state) {
+ // $form['submit'][] = 'springboard_admin_rebuild_menu_confirm_submit';
+
+  return confirm_form($form, t('Are you sure you want to rebuild the Springboard Admin Menu? This will remove any manual customizations to the menu.'), 'admin/springboard/settings/springboard', t('This action cannot be undone.'), t('Rebuild'), t('Cancel'));
+}
+
+/**
+ * Submit function. 
+ * 
+ * Initiates a rebuild of the Springboard Admin Menu.
+ */
+
+function springboard_admin_rebuild_menu_confirm_submit($form, &$form_state) {
+  springboard_admin_recreate_menu();
+  cache_clear_all();
+  $form_state['redirect'] = 'admin/springboard/settings/springboard';
 }
 
 /**

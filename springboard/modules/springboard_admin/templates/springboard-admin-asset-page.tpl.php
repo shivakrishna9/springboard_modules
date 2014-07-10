@@ -21,7 +21,8 @@
 
         <?php // @todo make the menu below dynamic or contextual? ?>
         <ul class="dropdown-menu views-widget-dropdown">
-          <li><a href="/admin/springboard/asset-library"><?php print t('Templates & Wrappers'); ?></a></li>
+          <li><a href="/admin/springboard/donation-forms/all"><?php print t('Donation Forms'); ?></a></li>
+          <li><a href="/admin/springboard/forms/all"><?php print t('Forms'); ?></a></li>
         </ul>
       </div><!--// btn-group -->
 

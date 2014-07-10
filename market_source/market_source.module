@@ -469,9 +469,18 @@ function _market_source_validate_cid($val) {
     if (preg_match('/^[a-zA-Z0-9_+-]+$/', $val)) {
       if (drupal_strlen($val) <= MARKET_SOURCE_VALUE_MAXLENGTH) {
         if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
-          $campaigns = array_keys( market_source_get_campaigns() );
-          if (is_array($campaigns) && in_array($val, $campaigns)) {
-            $retval = TRUE;
+          $campaigns = market_source_get_campaigns();
+          if (!empty($campaigns)) {
+            $campaigns = array_keys($campaigns);
+            if (strlen($val) == 18) {
+              $retval = in_array($val, $campaigns);
+            } else {
+              $campaigns_15char = array_map(
+                create_function('$cid', 'return substr($cid, 0, 15);'),
+                $campaigns
+              );
+              $retval = in_array($val, $campaigns_15char);
+            }
           }
         }
       }

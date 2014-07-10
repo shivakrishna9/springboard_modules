@@ -13,7 +13,6 @@
  *    True if fundraiser-specific stats fields should be added. False if fields generic to all webform types should be.
  */
 function _springboard_stats_add_default_fields($type, $fundraiser_specific = FALSE) {
-watchdog('trace', "_springboard_stats_add_default_fields($type, $fundraiser_specific)");
   module_load_include('inc', 'field', 'field.crud');
   module_load_include('inc', 'field', 'field.info');
   
@@ -451,6 +450,91 @@ function _springboard_stats_fundraiser_fields_settings($type) {
       'entity_type' => 'node',
       'field_name' => 'sbstats_total_pending',
       'label' => $t('Dollar Total of Transactions Pending'),
+      'required' => FALSE,
+      'settings' => array(
+        'text_processing' => FALSE,
+        'user_register_form' => FALSE,
+      ),
+    ),
+  );
+
+  // Total Number of Refunds
+  $fields['sbstats_count_refunds'] = array(
+    'field_config' => array(
+      'type' => 'number_integer',
+      'cardinality' => 1,
+      'locked' => TRUE,
+      'settings' => array(
+        'min' => '0',
+      ),
+      'entity_types' => array(),
+      'field_name' => 'sbstats_count_refunds',
+      'foreign keys' => array(),
+      'indexes' => array(),
+      'translatable' => FALSE,
+    ),
+    'field_instance' => array(
+      'bundle' => $type,
+      'default_value' => 0,
+      'description' => $t('The total number of refunds processed per form.'),
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+        ),
+        'teaser' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'sbstats_count_refunds',
+      'label' => $t('Total Number of Refunds'),
+      'required' => FALSE,
+      'settings' => array(
+        'text_processing' => FALSE,
+        'user_register_form' => FALSE,
+      ),
+    ),
+  );
+
+  // Dollar Total of Refunds
+  $fields['sbstats_total_refunds'] = array(
+    'field_config' => array(
+      'type' => 'number_decimal',
+      'cardinality' => 1,
+      'locked' => TRUE,
+      'settings' => array(
+        'precision' => 10,
+        'scale' => 2,
+      ),
+      'entity_types' => array(),
+      'field_name' => 'sbstats_total_refunds',
+      'foreign keys' => array(),
+      'indexes' => array(),
+      'translatable' => FALSE,
+    ),
+    'field_instance' => array(
+      'bundle' => $type,
+      'default_value' => 0,
+      'description' => $t('The dollar total of refunds processed per form.'),
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+        ),
+        'teaser' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'sbstats_total_refunds',
+      'label' => $t('Dollar Total of Refunds'),
       'required' => FALSE,
       'settings' => array(
         'text_processing' => FALSE,
