@@ -118,6 +118,16 @@ function springboard_cookie_form_alter(&$form, &$form_state, $form_id) {
     );
     $form['#validate'][] = 'springboard_cookie_settings_validate';
   }
+  
+  // Add submission handler to Webform User-enabled webform.
+  if (module_exists('webform_user')) {
+    if (strpos($form_id, 'webform_client') !== FALSE && arg(2) != 'submission' && arg(4) != 'edit') {
+      $node = node_load($form['#node']->nid);
+      if (_webform_user_is_webform_user_node($node)) {
+        $form['#after_build'][] = 'springboard_cookie_webform_user_webform_after_build';
+      }
+    }
+  }
 }
 
 /**
@@ -131,6 +141,34 @@ function springboard_cookie_settings_validate($form, &$form_state) {
   $expiration_days = (float)$form_state['values']['springboard_cookie_expiration_days'];
   if (!is_numeric($form_state['values']['springboard_cookie_expiration_days']) || $expiration_days < 0 || (int)$expiration_days != $expiration_days) {
     form_set_error('springboard_cookie_expiration_days', t('Springboard cookie days to expiration must be an integer greater than zero.'));
+  }
+}
+
+/**
+ * Webform User-enabled webform after-build.
+ */
+function springboard_cookie_webform_user_webform_after_build($form, $form_state) {
+  // Add our submit handler. This way it will go last.
+  $form['#submit'][] = 'springboard_cookie_webform_user_webform_submit';
+  return $form;
+}
+
+/**
+ * Webform User-enabled webform submission.
+ */
+function springboard_cookie_webform_user_webform_submit($form, &$form_state) {
+  $node = node_load($form_state['values']['details']['nid']);
+  $submit_op = empty($node->webform['submit_text']) ? t('Submit') : $node->webform['submit_text'];
+  // Is the form completed?
+  if ($form_state['values']['op'] == $submit_op) {
+    // Tag the client cookie with the submitted email address and with the uid if there's a user account.
+    $fields = _webform_user_flatten_tree($form_state['values']['submitted_tree'], $node->nid);
+    $email = trim($fields['mail']);
+    $new_data = array('email' => $email);
+    if ($account = user_load_by_mail($email)) {
+      $new_data['uid'] = $account->uid;
+    }
+    springboard_cookie_tag_client($new_data);
   }
 }
 
