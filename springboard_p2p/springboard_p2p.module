@@ -2104,6 +2104,17 @@ function springboard_p2p_page_alter(&$page, $form) {
       );
       drupal_render($uniform_css);
 
+      $p2p_jrespond = array(
+        '#attached' => array(
+          'js' => array(
+            $mod_path . '/js/mediaCheck.js' => array(
+              'group' => JS_LIBRARY,
+            ),
+          ),
+        ),
+      );
+      drupal_render($p2p_jrespond);
+
       // End global.
     }
 
@@ -2135,17 +2146,6 @@ function springboard_p2p_page_alter(&$page, $form) {
         ),
       );
       drupal_render($p2p_donation_css);
-
-      $p2p_jrespond = array(
-        '#attached' => array(
-          'js' => array(
-            $mod_path . '/js/mediaCheck.js' => array(
-              'group' => JS_LIBRARY,
-            ),
-          ),
-        ),
-      );
-      drupal_render($p2p_jrespond);
 
       $p2p_donation_js = array(
         '#attached' => array(
