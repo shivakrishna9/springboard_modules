@@ -70,6 +70,21 @@ function springboard_cookie_user_login(&$edit, $account) {
 }
 
 /**
+ * Implementation of hook_fundraiser_donation_post_submit().
+ */
+function springboard_cookie_fundraiser_donation_post_submit($form, $form_state, $donation) {
+  // Pull user data from the new donation and tag it to the client.
+  $new_data = array();
+  if ($donation->uid) {
+    $new_data['uid'] = $donation->uid;
+  }
+  if (!empty($donation->donation['mail'])) {
+    $new_data['email'] = $donation->donation['mail'];
+  }
+  springboard_cookie_tag_client($new_data);
+}
+
+/**
  * Implmentation of hook_form_alter().
  */
 function springboard_cookie_form_alter(&$form, &$form_state, $form_id) {
