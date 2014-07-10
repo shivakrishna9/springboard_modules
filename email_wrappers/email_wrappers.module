@@ -254,7 +254,7 @@ function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state,
     $form['email_wrappers_bcc'] = array(
       '#type' => 'textfield',
       '#title' => t('BCC addresses'),
-      '#description' => t('BCC the following email addresses when an email is sent. Addresses must be separated by a comma. Example: test1#example.com,test2@example.com.'),
+      '#description' => t('BCC the following email addresses when an email is sent. Addresses must be separated by a comma. Example: test1@example.com,test2@example.com.'),
       '#weight' => 7,
       '#default_value' => isset($defaults['bcc_email']) ? $defaults['bcc_email'] : '',
       '#states' => array(
