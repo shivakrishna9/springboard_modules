@@ -707,10 +707,6 @@ function springboard_admin_url_inbound_alter(&$path, $original_path, $path_langu
       $path = 'admin/springboard' . $matches[1];
     }    
   }
-  // add back query strings
-  if(!empty($_SERVER['QUERY_STRING'])) {
-    $path .= '?' . $_SERVER['QUERY_STRING'];
-  }
 }
 
 /**
