@@ -111,7 +111,24 @@ tools:
     php_sim: false
     php_changetracking: true
     php_analyzer:
-        enabled: false
+        enabled: true
+        config:
+            metrics_coupling:
+                enabled: false
+            metrics_lack_of_cohesion_methods:
+                enabled: true
+            basic_semantic_checks:
+                enabled: true
+                property_on_interface: true
+                missing_abstract_methods: true
+        extensions:
+            - php
+            - module
+            - install
+            - inc
+            - profile
+            - test
+
     sensiolabs_security_checker: false
 
     # Runs the PHP CS Fixer (http://cs.sensiolabs.org/).
