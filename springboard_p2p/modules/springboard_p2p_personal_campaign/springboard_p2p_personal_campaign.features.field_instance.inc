@@ -98,14 +98,14 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
   $field_instances['node-p2p_personal_campaign-field_p2p_campaign_images'] = array(
     'bundle' => 'p2p_personal_campaign',
     'deleted' => 0,
-    'description' => 'Upload a campaign thumbnail image. Ideal size is 380 x 240 pixels.',
+    'description' => 'Upload a campaign thumbnail image. Ideal size is 400 x 240 pixels.',
     'display' => array(
       'default' => array(
         'label' => 'hidden',
         'module' => 'image',
         'settings' => array(
           'image_link' => '',
-          'image_style' => '',
+          'image_style' => 'p2p_pers_campaign_image_thumb',
         ),
         'type' => 'image',
         'weight' => 4,
@@ -128,7 +128,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
       'file_extensions' => 'png gif jpg jpeg',
       'max_filesize' => '1500 KB',
       'max_resolution' => '',
-      'min_resolution' => '380x240',
+      'min_resolution' => '400x240',
       'title_field' => 1,
       'user_register_form' => FALSE,
     ),
@@ -463,7 +463,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
   t('This is a Youtube or Vimeo video URL. Example: https://www.youtube.com/watch?v=kJ4CYbCGhLA');
   t('Upload a Campaign Image');
   t('Upload a Campaign Video');
-  t('Upload a campaign thumbnail image. Ideal size is 380 x 240 pixels.');
+  t('Upload a campaign thumbnail image. Ideal size is 400 x 240 pixels.');
 
   return $field_instances;
 }

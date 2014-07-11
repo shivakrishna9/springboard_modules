@@ -93,7 +93,7 @@ function springboard_p2p_create_starter_campaign_landing(&$context) {
   $node->type = 'p2p_campaign_landing';
   node_object_prepare($node);
 
-  $node->title = '';
+  $node->title = 'Starter Landing Page';
   $node->language = LANGUAGE_NONE;
 
   $node->field_p2p_side_block = array();
@@ -243,6 +243,7 @@ function springboard_p2p_create_starter_campaigns(&$context) {
   $campaign_ids = array();
 
   $campaign_thumbnail = springboard_p2p_create_starter_file('/images/starter/campaign_thumbnail.png');
+  $personal_campaign_thumbnail = springboard_p2p_create_starter_file('/images/starter/personal_campaign_image.png');
   $campaign_landing_page_slider = springboard_p2p_create_starter_file('/images/starter/campaign_landing_page_slider.png');
   $campaign_banner = springboard_p2p_create_starter_file('/images/starter/personal_campaign_banner.png');
 
@@ -262,6 +263,7 @@ function springboard_p2p_create_starter_campaigns(&$context) {
 
       $node->field_p2p_campaigns_approval[$node->language][0]['value'] = 0;
       $node->field_p2p_org_intro[$node->language][0]['value'] = springboard_p2p_create_starter_greeking(100);
+      $node->field_p2p_expiration_message[$node->language][0]['value'] = springboard_p2p_create_starter_greeking(50);
       $node->field_p2p_personal_intro[$node->language][0]['value'] = springboard_p2p_create_starter_greeking(50);
 
       // @todo Figure out how to deal with the video embed field.
@@ -274,6 +276,8 @@ function springboard_p2p_create_starter_campaigns(&$context) {
       );
 
       // Image fields.
+
+      $node->field_p2p_images[$node->language][0] = (array) $personal_campaign_thumbnail;
       $node->field_p2p_campaign_thumbnail[$node->language][0] = (array) $campaign_thumbnail;
       $node->field_p2p_campaign_slider[$node->language][0] = (array) $campaign_landing_page_slider;
       $node->field_p2p_campaign_banner[$node->language][0] = (array) $campaign_banner;
@@ -283,9 +287,9 @@ function springboard_p2p_create_starter_campaigns(&$context) {
       $goal_set_id = ++$next_id;
       $goal = array(
         'goal_set_id' => $goal_set_id,
-        'type' => 'donation_form',
+        'type' => 'p2p_donation_form',
         'enabled' => 1,
-        'nid' => 2,
+        'nid' => 3,
         'campaign_id' => '',
         'goal_type' => 'amount',
         'goal_value' => rand(500, 1000),
@@ -322,6 +326,9 @@ function springboard_p2p_create_starter_campaigns(&$context) {
 function springboard_p2p_create_starter_categories(&$context) {
   $context['message'] = t('Creating categories');
 
+  $category_thumbnail = springboard_p2p_create_starter_file('/images/starter/category-image.png');
+  $personal_campaign_thumbnail = springboard_p2p_create_starter_file('/images/starter/personal_campaign_image.png');
+
   $categories = springboard_p2p_starter_categories();
   $category_ids = array();
   foreach ($categories as $category) {
@@ -331,6 +338,8 @@ function springboard_p2p_create_starter_categories(&$context) {
     $node->title = $category;
     $node->language = LANGUAGE_NONE;
     $node->body[$node->language][0]['value'] = springboard_p2p_create_starter_greeking(200);
+    $node->field_p2p_category_image[$node->language][0] = (array) $category_thumbnail;
+    $node->field_p2p_images[$node->language][0] = (array) $personal_campaign_thumbnail;
     $node->body[$node->language][0]['format'] = 'filtered_html';
     node_save($node);
 

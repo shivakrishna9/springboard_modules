@@ -179,7 +179,7 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['fields']['nid']['element_class'] = 'slide-link';
   $handler->display->display_options['fields']['nid']['element_label_type'] = '0';
   $handler->display->display_options['fields']['nid']['element_wrapper_type'] = '0';
-  /* Field: Content: Landing page slider teaser NEW */
+  /* Field: Content: Landing page slider teaser */
   $handler->display->display_options['fields']['field_p2p_landing_slider_text']['id'] = 'field_p2p_landing_slider_text';
   $handler->display->display_options['fields']['field_p2p_landing_slider_text']['table'] = 'field_data_field_p2p_landing_slider_text';
   $handler->display->display_options['fields']['field_p2p_landing_slider_text']['field'] = 'field_p2p_landing_slider_text';
@@ -190,7 +190,7 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['fields']['field_p2p_landing_slider_text']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['field_p2p_landing_slider_text']['element_wrapper_type'] = '0';
   $handler->display->display_options['fields']['field_p2p_landing_slider_text']['element_default_classes'] = FALSE;
-  /* Field: Content: External Link? NEW */
+  /* Field: Content: External Link? */
   $handler->display->display_options['fields']['field_p2p_external_link']['id'] = 'field_p2p_external_link';
   $handler->display->display_options['fields']['field_p2p_external_link']['table'] = 'field_data_field_p2p_external_link';
   $handler->display->display_options['fields']['field_p2p_external_link']['field'] = 'field_p2p_external_link';
@@ -201,7 +201,7 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['fields']['field_p2p_external_link']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['field_p2p_external_link']['element_wrapper_type'] = '0';
   $handler->display->display_options['fields']['field_p2p_external_link']['element_default_classes'] = FALSE;
-  /* Field: Content: Landing page slider optional external link NEW */
+  /* Field: Content: Landing page slider optional external link */
   $handler->display->display_options['fields']['field_p2p_landing_slider_link']['id'] = 'field_p2p_landing_slider_link';
   $handler->display->display_options['fields']['field_p2p_landing_slider_link']['table'] = 'field_data_field_p2p_landing_slider_link';
   $handler->display->display_options['fields']['field_p2p_landing_slider_link']['field'] = 'field_p2p_landing_slider_link';

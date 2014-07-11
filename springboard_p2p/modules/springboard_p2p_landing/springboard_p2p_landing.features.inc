@@ -30,7 +30,7 @@ function springboard_p2p_landing_image_default_styles() {
     'name' => 'p2p_campaign_image_landing',
     'label' => 'P2P Campaign Image Thumb',
     'effects' => array(
-      5 => array(
+      1 => array(
         'label' => 'Scale',
         'help' => 'Scaling will maintain the aspect-ratio of the original image. If only a single dimension is specified, the other dimension will be calculated.',
         'effect callback' => 'image_scale_effect',
@@ -40,13 +40,13 @@ function springboard_p2p_landing_image_default_styles() {
         'module' => 'image',
         'name' => 'image_scale',
         'data' => array(
-          'width' => 370,
+          'width' => 400,
           'height' => '',
           'upscale' => 1,
         ),
         'weight' => -10,
       ),
-      6 => array(
+      2 => array(
         'label' => 'Crop',
         'help' => 'Cropping will remove portions of an image to make it the specified dimensions.',
         'effect callback' => 'image_crop_effect',
@@ -56,8 +56,8 @@ function springboard_p2p_landing_image_default_styles() {
         'module' => 'image',
         'name' => 'image_crop',
         'data' => array(
-          'width' => 370,
-          'height' => 190,
+          'width' => 400,
+          'height' => 240,
           'anchor' => 'center-top',
         ),
         'weight' => -9,

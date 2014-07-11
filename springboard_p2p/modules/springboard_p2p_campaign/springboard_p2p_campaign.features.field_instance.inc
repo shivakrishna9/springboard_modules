@@ -279,7 +279,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
   $field_instances['node-p2p_campaign-field_p2p_campaign_thumbnail'] = array(
     'bundle' => 'p2p_campaign',
     'deleted' => 0,
-    'description' => 'Upload a campaign Thumbnail. The minimum size should be 370 x 190 pixels.',
+    'description' => 'Upload a campaign Thumbnail. The minimum size should be 400 x 240 pixels.',
     'display' => array(
       'default' => array(
         'label' => 'above',
@@ -309,7 +309,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
       'file_extensions' => 'png gif jpg jpeg',
       'max_filesize' => '2 MB',
       'max_resolution' => '',
-      'min_resolution' => '370x190',
+      'min_resolution' => '400x240',
       'title_field' => 1,
       'user_register_form' => FALSE,
     ),
@@ -534,7 +534,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
   $field_instances['node-p2p_campaign-field_p2p_images'] = array(
     'bundle' => 'p2p_campaign',
     'deleted' => 0,
-    'description' => 'Upload a personal campaign thumbnail image. Ideal size is 380 x 240 pixels.',
+    'description' => 'Upload a personal campaign thumbnail image. Ideal size is 400 x 240 pixels.',
     'display' => array(
       'default' => array(
         'label' => 'above',
@@ -560,7 +560,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
       'file_extensions' => 'png gif jpg jpeg',
       'max_filesize' => '2 MB',
       'max_resolution' => '',
-      'min_resolution' => '380x226',
+      'min_resolution' => '400x240',
       'title_field' => 1,
       'user_register_form' => FALSE,
     ),
@@ -1103,9 +1103,9 @@ function springboard_p2p_campaign_field_default_field_instances() {
   t('Suggested donation amount');
   t('This content can be overridden by campaigner');
   t('This is a Youtube or Vimeo video URL. Example: https://www.youtube.com/watch?v=kJ4CYbCGhLA');
-  t('Upload a campaign Thumbnail. The minimum size should be 370 x 190 pixels.');
+  t('Upload a campaign Thumbnail. The minimum size should be 400 x 240 pixels.');
   t('Upload a campaign banner. Suggested size is 1170 x 240 pixels.');
-  t('Upload a personal campaign thumbnail image. Ideal size is 380 x 240 pixels.');
+  t('Upload a personal campaign thumbnail image. Ideal size is 400 x 240 pixels.');
   t('Upload a slideshow image. The minimum size should be 1170 x 360 pixels.');
   t('Video embed');
   t('When enabled donors will be able to leave an additional comment that can be displayed on the personal campaign page.');
