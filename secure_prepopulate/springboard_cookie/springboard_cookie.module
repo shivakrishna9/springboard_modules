@@ -39,6 +39,18 @@ function springboard_cookie_init() {
     }
   }
   
+  // Check the query string for an encrypted email address.
+  global $user;
+  if (isset($_GET['sbck']) && empty($user->uid)) {
+    $email = secure_prepopulate_decrypt($_GET['sbck']);
+    if (!empty($email)) {
+      // Tag the email address to the client cookie.
+      springboard_cookie_tag_client(array('email' => $email));
+      // Don't cache the response.
+      drupal_page_is_cacheable(FALSE);
+    }
+  }
+  
   // Make sure this client has a cookie and a client_id.
   if (variable_get('cache', FALSE) && drupal_page_is_cacheable()) {
     // Page can be cached, so send Javascript to make the client check itself for the cookie.
