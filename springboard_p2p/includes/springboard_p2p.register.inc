@@ -292,7 +292,7 @@ function springboard_p2p_user_register_validate(&$form, &$form_state) {
           );
         }
 
-        $password_reset_request_url = url('springboard_p2p/password/' . $uid, $url_options);
+        $password_reset_request_url = url('p2p/password/' . $uid, $url_options);
 
         form_set_error('mail', t('The e-mail address %email is already registered. <a href="@password">Send me a password reset email.</a>', array('%email' => $mail, '@password' => $password_reset_request_url)));
       }
@@ -396,7 +396,7 @@ function springboard_p2p_existing_user_login_form($form, &$form_state) {
     '#required' => TRUE,
   );
 
-  $path = 'springboard_p2p/password';
+  $path = 'p2p/password';
   $options = array();
   if (isset($_GET['p2p_cid']) && is_numeric($_GET['p2p_cid'])) {
     $options['query'] = array(

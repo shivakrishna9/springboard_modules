@@ -86,7 +86,7 @@ function springboard_p2p_menu() {
   );
 
   if (module_exists('fboauth')) {
-    $items['springboard_p2p/fb'] = array(
+    $items['p2p/fb'] = array(
       'title' => 'Facebook',
       'type' => MENU_CALLBACK,
       'access arguments' => array('register for springboard p2p'),
@@ -107,7 +107,7 @@ function springboard_p2p_menu() {
     'file' => 'springboard_p2p.profile.inc',
   );
 
-  $items['springboard_p2p/set_password/%/%/%'] = array(
+  $items['p2p/set_password/%/%/%'] = array(
     'title' => 'Set password',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('springboard_p2p_set_password_form', 2, 3, 4),
@@ -1456,7 +1456,7 @@ function springboard_p2p_register_user_for_p2p($uid) {
  */
 function springboard_p2p_set_password_url($account, $cid = NULL) {
   $url = user_pass_reset_url($account);
-  $url = str_replace('user/reset/', 'springboard_p2p/set_password/', $url);
+  $url = str_replace('user/reset/', 'p2p/set_password/', $url);
   if (!is_null(($cid)) && is_numeric($cid)) {
     $url .= '?p2p_cid=' . $cid;
   }

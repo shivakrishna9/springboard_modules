@@ -42,7 +42,7 @@ function springboard_p2p_get_started_render($subtype, $conf, $args, $contexts) {
   $title = t('Start Your Own Campaign');
 
   // Define the reg link.
-  $getstarted_link = "/springboard_p2p/register";
+  $getstarted_link = "/p2p/register";
 
   // Define the site name.
   $site_name = variable_get('site_name');

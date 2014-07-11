@@ -75,7 +75,7 @@ function springboard_p2p_campaign_views_default_views() {
   $handler->display->display_options['fields']['nid']['field'] = 'nid';
   $handler->display->display_options['fields']['nid']['label'] = '';
   $handler->display->display_options['fields']['nid']['alter']['alter_text'] = TRUE;
-  $handler->display->display_options['fields']['nid']['alter']['text'] = '<a href="/springboard_p2p/register?p2p_cid=[nid]">Get Started</a>';
+  $handler->display->display_options['fields']['nid']['alter']['text'] = '<a href="/p2p/register?p2p_cid=[nid]">Get Started</a>';
   $handler->display->display_options['fields']['nid']['element_type'] = 'span';
   $handler->display->display_options['fields']['nid']['element_class'] = 'p2p-link';
   $handler->display->display_options['fields']['nid']['element_label_type'] = '0';

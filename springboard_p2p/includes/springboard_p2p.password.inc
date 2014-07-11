@@ -40,7 +40,7 @@ function springboard_p2p_request_password_reset_form($form, &$form_state) {
       );
     }
 
-    drupal_goto('springboard_p2p/register', $options);
+    drupal_goto('p2p/register', $options);
 
   }
   else {
@@ -121,7 +121,7 @@ function springboard_p2p_request_password_reset_form_submit($form, &$form_state)
   $event->userRequestsPasswordReset($account, $campaign);
   drupal_set_message(t('Further instructions have been sent to your e-mail address.'));
 
-  $form_state['redirect'] = array('springboard_p2p/register', $url_options);
+  $form_state['redirect'] = array('p2p/register', $url_options);
 }
 
 /**
@@ -178,7 +178,7 @@ function springboard_p2p_set_password_form($form, &$form_state, $uid, $timestamp
       // No time out for first time login.
       if ($account->login && $current - $timestamp > $timeout) {
         $form['expired_link'] = array(
-          '#markup' => t('You have tried to use a one-time login link that has expired. <a href="@password">Send a new password reset email.</a>', array('@password' => url('springboard_p2p/password/' . $uid))),
+          '#markup' => t('You have tried to use a one-time login link that has expired. <a href="@password">Send a new password reset email.</a>', array('@password' => url('p2p/password/' . $uid))),
         );
 
       }
@@ -198,7 +198,7 @@ function springboard_p2p_set_password_form($form, &$form_state, $uid, $timestamp
       else {
 
         $form['invalid_link'] = array(
-          '#markup' => t('You have tried to use a one-time login link that has either been used or is no longer valid. <a href="@password">Send a new password reset email.</a>', array('@password' => url('springboard_p2p/password/' . $uid))),
+          '#markup' => t('You have tried to use a one-time login link that has either been used or is no longer valid. <a href="@password">Send a new password reset email.</a>', array('@password' => url('p2p/password/' . $uid))),
         );
 
       }

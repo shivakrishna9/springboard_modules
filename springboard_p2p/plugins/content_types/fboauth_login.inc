@@ -32,7 +32,7 @@ function springboard_p2p_fboauth_login_render($subtype, $conf, $panel_args, $con
 
     // Wrap the button using an output array.
     $output[] = '<div class="fb-oauth-wrapper">';
-    $output[] = fboauth_action_display('connect', 'springboard_p2p/fb?p2p_cid=' . $campaign_id);
+    $output[] = fboauth_action_display('connect', 'p2p/fb?p2p_cid=' . $campaign_id);
     $output[] = '</div>';
 
     // Build the content type block.

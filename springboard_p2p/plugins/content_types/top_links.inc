@@ -42,7 +42,7 @@ function springboard_p2p_top_links_render($subtype, $conf, $args, $contexts) {
   $node = menu_get_object();
 
   // Define the reg link passing the string id.
-  $loginlink = '/springboard_p2p/login';
+  $loginlink = '/p2p/login';
 
   // Define the user.
   global $user;

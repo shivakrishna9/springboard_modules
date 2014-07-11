@@ -915,7 +915,7 @@ function springboard_p2p_default_page_manager_handlers() {
     $pane->configuration = array(
       'admin_title' => 'signup',
       'title' => '',
-      'body' => '<p><a href="/springboard_p2p/register">Sign up here to start your own campaign.</a></p>',
+      'body' => '<p><a href="/p2p/register">Sign up here to start your own campaign.</a></p>',
       'format' => 'full_html',
       'substitute' => 1,
     );
@@ -978,7 +978,7 @@ function springboard_p2p_default_page_manager_pages() {
   $page->task = 'page';
   $page->admin_title = 'Springboard P2P registration page';
   $page->admin_description = '';
-  $page->path = 'springboard_p2p/register';
+  $page->path = 'p2p/register';
   $page->access = array(
     'plugins' => array(
       0 => array(
@@ -1172,7 +1172,7 @@ function springboard_p2p_default_page_manager_pages() {
   $page->task = 'page';
   $page->admin_title = 'Springboard P2P Login page';
   $page->admin_description = '';
-  $page->path = 'springboard_p2p/login';
+  $page->path = 'p2p/login';
   $page->access = array(
     'type' => 'none',
     'settings' => NULL,
@@ -1402,7 +1402,7 @@ function springboard_p2p_default_page_manager_pages() {
   $page->task = 'page';
   $page->admin_title = 'Springboard P2P password page';
   $page->admin_description = '';
-  $page->path = 'springboard_p2p/password';
+  $page->path = 'p2p/password';
   $page->access = array(
     'type' => 'none',
     'settings' => NULL,

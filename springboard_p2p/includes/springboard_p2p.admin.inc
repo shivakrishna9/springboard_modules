@@ -161,7 +161,7 @@ function springboard_p2p_admin_settings() {
     '#rows' => 5,
     '#format' => $textformat['format'],
     '#default_value' => $textformat['value'],
-    '#description' => t('Use this area to set a P2P Login message that will appear on the registration page for your users located at /springboard_p2p/register.'),
+    '#description' => t('Use this area to set a P2P Login message that will appear on the registration page for your users located at /p2p/register.'),
   );
 
   // Help message text area.
