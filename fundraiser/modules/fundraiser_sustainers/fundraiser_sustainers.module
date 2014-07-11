@@ -752,7 +752,7 @@ function fundraiser_sustainers_fundraiser_field_info() {
     '#extra' => array(
       'description' => t('Selecting "Yes" will cause your credit card to be charged once per month until its expiration date.'),
       'items' => 'recurs|Yes',
-      'multiple' => 'Y',
+      'multiple' => '1',
     ),
     '#allow_update' => 1,
     '#allow_respawn' => 1,
