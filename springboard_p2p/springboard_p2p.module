@@ -2042,7 +2042,7 @@ function springboard_p2p_page_alter(&$page, $form) {
     }
 
     // Define register / login / password page paths.
-    if ((arg(0) == "springboard_p2p" && arg(1) == "register") || (arg(0) == "springboard_p2p" && arg(1) == "login") || (arg(0) == "springboard_p2p" && arg(1) == "password")) {
+    if ((arg(0) == "p2p" && arg(1) == "register") || (arg(0) == "p2p" && arg(1) == "login") || (arg(0) == "p2p" && arg(1) == "password")) {
       $p2p_path = '';
     }
 
