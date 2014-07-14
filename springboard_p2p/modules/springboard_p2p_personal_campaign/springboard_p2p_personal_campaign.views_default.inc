@@ -26,6 +26,7 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['hide_admin_links'] = TRUE;
   $handler->display->display_options['use_more_always'] = FALSE;
   $handler->display->display_options['access']['type'] = 'perm';
+  $handler->display->display_options['access']['perm'] = 'administer springboard p2p';
   $handler->display->display_options['cache']['type'] = 'none';
   $handler->display->display_options['query']['type'] = 'views_query';
   $handler->display->display_options['exposed_form']['type'] = 'basic';
@@ -277,7 +278,7 @@ function springboard_p2p_personal_campaign_views_default_views() {
 
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');
-  $handler->display->display_options['path'] = 'springboard_p2p/campaigns/campaign';
+  $handler->display->display_options['path'] = 'p2p/campaigns/campaign';
   $export['p2p_personal_campaigns_by_campaign'] = $view;
 
   $view = new view();
@@ -474,7 +475,7 @@ function springboard_p2p_personal_campaign_views_default_views() {
 
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');
-  $handler->display->display_options['path'] = 'springboard_p2p/campaigns/user';
+  $handler->display->display_options['path'] = 'p2p/campaigns/user';
   $export['p2p_personal_campaigns_by_campaigner'] = $view;
 
   $view = new view();
@@ -551,7 +552,7 @@ function springboard_p2p_personal_campaign_views_default_views() {
 
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');
-  $handler->display->display_options['path'] = 'springboard_p2p/campaigns/category';
+  $handler->display->display_options['path'] = 'p2p/campaigns/category';
   $export['p2p_personal_campaigns_by_category'] = $view;
 
   $view = new view();
@@ -676,7 +677,7 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['fields']['field_p2p_campaign_progress']['field'] = 'field_p2p_campaign_progress';
   $handler->display->display_options['fields']['field_p2p_campaign_progress']['click_sort_column'] = 'amount';
   $handler->display->display_options['fields']['field_p2p_campaign_progress']['type'] = 'springboard_p2p_fields_personal_campaign_progress_amount';
-  $handler->display->display_options['path'] = 'springboard_p2p/campaigns/top';
+  $handler->display->display_options['path'] = 'p2p/campaigns/top';
 
   /* Display: Content pane */
   $handler = $view->new_display('panel_pane', 'Content pane', 'panel_pane_1');
@@ -892,7 +893,7 @@ function springboard_p2p_personal_campaign_views_default_views() {
 
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page_1');
-  $handler->display->display_options['path'] = 'springboard_p2p_personal_campaign_donor_dashboard';
+  $handler->display->display_options['path'] = 'p2p_personal_campaign_donor_dashboard';
   $export['personal_campaign_donor_dashboard'] = $view;
 
   return $export;
