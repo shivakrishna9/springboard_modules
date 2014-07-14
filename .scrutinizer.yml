@@ -53,7 +53,7 @@ tools:
                 short_variable:
                     minimum:              3
                 long_variable:
-                    maximum:              30
+                    maximum:              40
                 short_method:
                     minimum:              3
                 constructor_conflict:  true
@@ -111,14 +111,14 @@ tools:
     php_sim: false
     php_changetracking: true
     php_analyzer:
-        enabled: true
+        enabled: false
         config:
             metrics_coupling:
                 enabled: false
             metrics_lack_of_cohesion_methods:
-                enabled: true
+                enabled: false
             basic_semantic_checks:
-                enabled: true
+                enabled: false
                 property_on_interface: true
                 missing_abstract_methods: true
         extensions:
