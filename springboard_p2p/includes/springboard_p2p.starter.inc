@@ -185,6 +185,8 @@ function springboard_p2p_create_starter_personal_campaigns(&$context) {
   $personal_campaigns = springboard_p2p_starter_personal_campaigns();
   $personal_campaign_ids = array();
 
+  $personal_campaign_thumbnail = springboard_p2p_create_starter_file('/images/starter/personal_campaign_image.png');
+
   $deadline = date('Y-m-d', strtotime('+1 month'));
 
   foreach ($personal_campaigns as $campaign => $personal_campaign) {
@@ -219,6 +221,9 @@ function springboard_p2p_create_starter_personal_campaigns(&$context) {
           ),
         ),
       );
+
+      // Image field.
+      $node->field_p2p_campaign_images[$node->language][0] = (array) $personal_campaign_thumbnail;
 
       node_save($node);
 
