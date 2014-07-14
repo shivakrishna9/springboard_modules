@@ -202,15 +202,6 @@ function fundraiser_tickets_form_alter(&$form, &$form_state, $form_id) {
   $node = isset($form['#node']) ? $form['#node']: FALSE;
   if($node) {
     if (fundraiser_tickets_is_ticket_type($node->type) && arg(2) == 'tickets') {
-      // $form['fr_tickets_donation_addon_form']['#states'] = array(
-      //   'visible' => array(
-      //     ':input[name="fr_tickets_donation_donation[und]"]' => array('checked' => TRUE),
-      //   ),
-      //   'required' => array(
-      //     ':input[name="fr_tickets_donation_donation[und]"]' => array('checked' => TRUE),
-      //   ),
-      // );
-      //unset($form['fr_tickets_donation_addon_form'][LANGUAGE_NONE]['#options']['_none']);
       $options = $form['fr_tickets_donation_addon_form'][LANGUAGE_NONE]['#options'];
       unset($options['_none']);
       $unmatched = array();
@@ -230,8 +221,9 @@ function fundraiser_tickets_form_alter(&$form, &$form_state, $form_id) {
       $warning = '';
       if(!empty($unmatched)) {
         $unmatched = implode(', ', $unmatched);
-        $warning =  t('Donation form(s) "') . $unmatched . 
-          t('" have mismatched required fields and have been omitted.');
+        // $warning =  t('Donation form(s) "') . $unmatched . 
+        //   t('" have mismatched required fields and have been omitted.');
+          $warning =  t('Some donation form(s) currently have unmatched required fields and have been omitted.');  
       }
 
       $form['fr_tickets_donation_addon_form'][LANGUAGE_NONE]['#description'] = 
@@ -1016,6 +1008,10 @@ function _fundraiser_tickets_weight_sort($a, $b) {
   return 0;
 }
 
+/**
+ *  Implements hook_fundraiser_donation process
+ *  Grab the donation and payment info and pass it to the add on doantion form
+ */
 function fundraiser_tickets_fundraiser_donation_process($donation) {
   if (fundraiser_tickets_is_ticket_type($donation->node->type) && $donation->result['success']) {
 
@@ -1036,12 +1032,15 @@ function fundraiser_tickets_fundraiser_donation_process($donation) {
   }
 }
 
+/**
+ *  Make sure the required fields in the addon donation form are matched
+ */
 function fundraiser_tickets_check_addon_required_fields($nid, $donation = NULL, $node = NULL) {
   $addon_details = springboard_api_get_form_details($nid);
   if($donation) {
     //validate the submission
     foreach ($addon_details['fields'] as $name => $field) {
-      if($field['required'] == 1) {
+      if(isset($field['required']) && $field['required'] == 1) {
         if ($name == 'quantity') {
           $donation->donation[$name] = 1;
         }
@@ -1052,7 +1051,7 @@ function fundraiser_tickets_check_addon_required_fields($nid, $donation = NULL, 
       }
     }
   }
-  else {
+  elseif($node) {
     //validate the settings form entity reference field
     $components = array();
     foreach($node->webform['components'] as $id => $component) {
@@ -1072,7 +1071,10 @@ function fundraiser_tickets_check_addon_required_fields($nid, $donation = NULL, 
   return TRUE;
 }
 
-
+/**
+ *  springboard_api_form_action_submit() with services dependency removed.
+ *  Errors are sent to screen and watchdog instead of causing a services exception.
+ */
 function fundraiser_tickets_form_action_submit($nid, $app_id = NULL, $submission) {
   include_once(drupal_get_path('module', 'springboard_api') . '/resources/springboard_api.form_resources.inc');
 
@@ -1126,7 +1128,7 @@ function fundraiser_tickets_form_action_submit($nid, $app_id = NULL, $submission
     drupal_form_submit($form_id, $form_state, $node, $webform_submission);
 
     if ($errors = form_get_errors()) {
-      watchdog('fundsraiser_tickets', print_r($errors, TRUE), $variables = array(), WATCHDOG_ERROR);
+      watchdog('fundraiser_tickets', print_r($errors, TRUE), $variables = array(), WATCHDOG_ERROR);
       drupal_set_message('Add on donation could not be processed.', 'error');
     }
     else {
