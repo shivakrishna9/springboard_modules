@@ -1520,7 +1520,8 @@ function springboard_p2p_validate_email_as_username($mail) {
  */
 function springboard_p2p_fundraiser_donation_post_create($donation) {
   // Check to see if donation is being made to a personal campaign.
-  if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid'])) {
+  // An empty sid (value of zero) indicates this is a recurring donation.
+  if (!empty($donation->sid) && isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid'])) {
     // Add the peer to peer personal campaign id to the donation
     // object so that it can be utilized downstream.
     $donation->p2p_pcid = $_GET['p2p_pcid'];
