@@ -65,6 +65,7 @@ features[node][] = p2p_personal_campaign
 features[panelizer_defaults][] = node:p2p_personal_campaign:default
 features[user_permission][] = create p2p_personal_campaign content
 features[user_permission][] = edit own p2p_personal_campaign content
+features[user_permission][] = register for springboard p2p
 features[variable][] = additional_settings__active_tab_p2p_personal_campaign
 features[variable][] = field_bundle_settings_node__p2p_personal_campaign
 features[variable][] = fundraiser_p2p_personal_campaign
