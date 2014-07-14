@@ -32,7 +32,6 @@ function springboard_p2p_personal_campaign_user_default_permissions() {
       'anonymous user' => 'anonymous user',
       'authenticated user' => 'authenticated user',
     ),
-    'module' => 'springboard_p2p',
   );
 
   return $permissions;
