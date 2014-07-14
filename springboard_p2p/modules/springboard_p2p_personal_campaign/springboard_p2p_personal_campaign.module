@@ -442,10 +442,29 @@ function springboard_p2p_personal_campaign_market_source_external_field_keys() {
  * Personal campaign node add form alterations.
  */
 function springboard_p2p_personal_campaign_form_p2p_personal_campaign_node_form_alter(&$form, &$form_state, $form_id) {
-
   // Create a function to unset the filter choice and tips area.
   //@Todo - this may need a role tweak so this does not happen for everyone.
   $form['body']['#after_build'][] = '_filter_tips_p2p_personal_body_form';
+
+  // Add support for Market Source values to the node add/edit form.
+  $form['#after_build'][] = 'market_source_webform_after_build';
+  $qs_keys = _market_source_build_qs_keys();
+  foreach (array_keys($qs_keys) as $key) {
+    $lookup_key = 'field_ms_' . $key;
+
+    // Lookup the element ID of $key in $form.
+    $element = &_market_source_form_find_element($form, $lookup_key);
+
+    // Check if this is an entity field with a #language value
+    if (is_array($element) && isset($element['#language'])) {
+      // This currently only supports fields with the 'value' key
+      if (!empty($element[ $element['#language'] ][0]['value'])) {
+        // Set the default value and make the field a hidden input
+        $element[ $element['#language'] ][0]['value']['#default_value'] = $qs_keys[$key]['value'];
+        $element[ $element['#language'] ][0]['value']['#type'] = 'hidden';
+      }
+    }
+  }
 
   // Define the personal campaign.
 //  if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid'])) {
@@ -460,6 +479,45 @@ function springboard_p2p_personal_campaign_form_p2p_personal_campaign_node_form_
 //  drupal_set_title($owner_name . t(', Create Your Campaign'));
 
 }
+
+/**
+ * Implements hook_market_source_build_form_keys_alter().
+ *
+ * We are using hidden element fields on the personal campaign node type
+ * to capture Market Source values. This hook handles translating
+ * from standard ms fields rendered as webform components to 
+ * entity fields like those found on the personal campaign node form.
+ */
+function springboard_p2p_personal_campaign_market_source_build_form_keys_alter(&$form_keys, $context) {
+  // This change should only impact personal campaign nodes. 
+  if (isset($context['form']['#node']->type) && $context['form']['#node']->type == 'p2p_personal_campaign') {
+    $qs_keys = _market_source_build_qs_keys();
+    $form = $context['form'];
+ 
+    foreach (array_keys($qs_keys) as $key) {
+      $lookup_key = 'field_ms_' . $key;
+ 
+      // Lookup the element ID of $key in $form.
+      $element = &_market_source_form_find_element($form, $lookup_key);
+ 
+      // Check if this is an entity field with a #language value
+      if (is_array($element) && isset($element['#language'])) {
+        // This currently only supports fields with the value key
+        if (!empty($element[ $element['#language'] ][0]['value']['#parents'])) {
+          $parents = $element[ $element['#language'] ][0]['value']['#parents'];
+          if (count($parents) == 1) {
+            $form_keys[$key] = $parents[0];
+          }
+          else {
+            $name = array_shift($parents) . '[' . implode($parents, '][') . ']';
+            $form_keys[$key] = $name;
+          }
+        }
+      }
+    }
+  }
+}
+
 
 /**
  * Our custom filter tips function from above.
