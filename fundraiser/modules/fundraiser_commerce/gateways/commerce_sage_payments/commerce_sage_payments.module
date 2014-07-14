@@ -236,7 +236,7 @@ function commerce_sage_payments_cc_submit_form_submit($payment_method, $pane_for
   }
 
   // If we didn't get an approval response code...
-  if ($transaction_response->APPROVAL_INDICATOR != 'A') {
+  if ($transaction_response['APPROVAL_INDICATOR'] != 'A') {
     // Create a failed transaction with the error message.
     $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
   }
@@ -261,22 +261,15 @@ function commerce_sage_payments_cc_submit_form_submit($payment_method, $pane_for
   $transaction->remote_status = COMMERCE_CREDIT_AUTH_CAPTURE;
 
   // Store the remote id.
-  $transaction->remote_id = $transaction_response->REFERENCE;
+  $transaction->remote_id = $transaction_response['REFERENCE'];
 
-  // Build a meaningful response message.
-  $message = array(
-    '<b>' . ($transaction_response->APPROVAL_INDICATOR != 'A' ? t('REJECTED') : t('ACCEPTED')) . ':</b> '
-  );
-  foreach ((array) $transaction_response as $key => $value){
-      $message[] = check_plain($key . ' => ' . $value);
-  }
-  $transaction->message = implode('<br />', $message);
+  _commerce_sage_payments_build_transaction_message($transaction, $transaction_response);
 
   // Save the transaction information.
   commerce_payment_transaction_save($transaction);
 
   // If the payment failed, display an error and rebuild the form.
-  if ($transaction_response->APPROVAL_INDICATOR != 'A') {
+  if ($transaction_response['APPROVAL_INDICATOR'] != 'A') {
     drupal_set_message(t('We received an error processing your card. Please enter your information again or try a different card.'), 'error');
 
     if ($payment_method['settings']['verbose_gateway']) {
@@ -297,14 +290,11 @@ function commerce_sage_payments_cc_submit_form_submit($payment_method, $pane_for
       'EXPIRATION_DATE' => str_pad($pane_values['credit_card']['exp_month'], 2, 0, STR_PAD_LEFT) . substr($pane_values['credit_card']['exp_year'], 2, 2),
     );
 
-    // First look to see if we already have cards on file for the user.
-    $stored_cards = commerce_cardonfile_load_multiple_by_uid($order->uid, $payment_method['instance_id']);
-
     // Save the credit card in the Vault.
     $vault_response = commerce_sage_payments_vault_request_insert($payment_method, $payment_details);
 
-    if (trim($vault_response->SUCCESS) == 'true') {
-      $guid = trim($vault_response->GUID);
+    if (trim($vault_response['SUCCESS']) == 'true') {
+      $guid = trim($vault_response['GUID']);
 
       // Store the token with cardonfile.
       $card_data = commerce_cardonfile_new();
@@ -365,7 +355,6 @@ function commerce_sage_payments_cc_vault_cardonfile_charge($payment_method, $car
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
   $txn_type = COMMERCE_CREDIT_AUTH_CAPTURE;
 
-
   // Format order total for transaction.
   if (!isset($charge)) {
     $charge = commerce_line_items_total($order_wrapper->commerce_line_items);
@@ -423,7 +412,7 @@ function commerce_sage_payments_cc_vault_cardonfile_charge($payment_method, $car
   }
 
   // If we didn't get an approval response code...
-  if ($transaction_response->APPROVAL_INDICATOR != 'A') {
+  if ($transaction_response['APPROVAL_INDICATOR'] != 'A') {
     // Create a failed transaction with the error message.
     $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
   }
@@ -448,22 +437,15 @@ function commerce_sage_payments_cc_vault_cardonfile_charge($payment_method, $car
   $transaction->remote_status = COMMERCE_CREDIT_AUTH_CAPTURE;
 
   // Store the remote id.
-  $transaction->remote_id = $transaction_response->REFERENCE;
+  $transaction->remote_id = !empty($transaction_response['REFERENCE']) ? $transaction_response['REFERENCE'] : '';
 
-  // Build a meaningful response message.
-  $message = array(
-    '<b>' . ($transaction_response->APPROVAL_INDICATOR != 'A' ? t('REJECTED') : t('ACCEPTED')) . ':</b> '
-  );
-  foreach ((array) $transaction_response as $key => $value){
-      $message[] = check_plain($key . ' => ' . $value);
-  }
-  $transaction->message = implode('<br />', $message);
+  _commerce_sage_payments_build_transaction_message($transaction, $transaction_response);
 
   // Save the transaction information.
   commerce_payment_transaction_save($transaction);
 
   // If the payment failed, display an error and rebuild the form.
-  if ($transaction_response->APPROVAL_INDICATOR != 'A') {
+  if ($transaction_response['APPROVAL_INDICATOR'] != 'A') {
     drupal_set_message(t('We received an error processing your card on file. Please enter your information again or try a different card.'), 'error');
 
     if ($payment_method['settings']['verbose_gateway']) {
@@ -678,7 +660,7 @@ function commerce_sage_payments_eft_submit_form_submit($payment_method, $pane_fo
   }
 
   // If we didn't get an approval response code...
-  if ($transaction_response->APPROVAL_INDICATOR != 'A') {
+  if ($transaction_response['APPROVAL_INDICATOR'] != 'A') {
     // Create a failed transaction with the error message.
     $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
   }
@@ -690,24 +672,15 @@ function commerce_sage_payments_eft_submit_form_submit($payment_method, $pane_fo
   $transaction->remote_status = COMMERCE_CREDIT_AUTH_CAPTURE;
 
   // Store the remote id.
-  $transaction->remote_id = $transaction_response->REFERENCE;
+  $transaction->remote_id = $transaction_response['REFERENCE'];
 
-  // Build a meaningful response message.
-  $transaction->message = "<b>Status:</b> @status\n";
-  $transaction->message_variables['@status'] = $transaction_response->APPROVAL_INDICATOR != 'A' ? t('REJECTED') : t('ACCEPTED');
-
-  foreach ((array) $transaction_response as $key => $value) {
-    if (is_string($value)) {
-      $transaction->message .= $key . ": @" . check_plain($key) . "\n";
-      $transaction->message_variables['@' . check_plain($key)] = $value;
-    }
-  }
+  _commerce_sage_payments_build_transaction_message($transaction, $transaction_response);
 
   // Save the transaction information.
   commerce_payment_transaction_save($transaction);
 
   // If the payment failed, display an error and rebuild the form.
-  if ($transaction_response->APPROVAL_INDICATOR != 'A') {
+  if ($transaction_response['APPROVAL_INDICATOR'] != 'A') {
     drupal_set_message(t('We received an error processing your account. Please enter your information again.'), 'error');
 
     if ($payment_method['settings']['verbose_gateway']) {
@@ -729,14 +702,11 @@ function commerce_sage_payments_eft_submit_form_submit($payment_method, $pane_fo
       'C_ACCT_TYPE' => $pane_values['bank_account']['account_type'],
     );
 
-    // First look to see if we already have cards on file for the user.
-    $stored_cards = commerce_cardonfile_load_multiple_by_uid($order->uid, $payment_method['instance_id']);
-
     // Save the credit card in the Vault.
     $vault_response = commerce_sage_payments_vault_request_insert($payment_method, $payment_details);
 
-    if (trim($vault_response->SUCCESS) == 'true') {
-      $guid = trim($vault_response->GUID);
+    if (trim($vault_response['SUCCESS']) == 'true') {
+      $guid = trim($vault_response['GUID']);
 
       // Store the token with cardonfile.
       $card_data = commerce_cardonfile_new();
@@ -744,7 +714,7 @@ function commerce_sage_payments_eft_submit_form_submit($payment_method, $pane_fo
       $card_data->payment_method = $payment_method['method_id'];
       $card_data->instance_id = $payment_method['instance_id'];
       $card_data->remote_id = $guid;
-      $card_data->card_type = !empty($card_type) ? $card_type : 'card';
+      $card_data->card_type = $pane_values['bank_account']['account_type'];
       $card_data->card_name = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
       $card_data->card_number = substr($pane_values['bank_account']['account_number'], -3);
       $card_data->status = 1;
@@ -802,7 +772,7 @@ function commerce_sage_payments_eft_vault_cardonfile_charge($payment_method, $ca
   $request_parameters = array (
     'GUID'              => $card_data->remote_id,
     'T_CUSTOMER_NUMBER' => $order->uid,
-    'T_ORDERNUM'        => $order->order_number,
+    'T_ORDERNUM'        => $order->order_id,
     'T_AMT'             => commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']),
   );
 
@@ -826,7 +796,27 @@ function commerce_sage_payments_eft_vault_cardonfile_charge($payment_method, $ca
     $request_parameters['C_COUNTRY']    = $billing_address['country'];
   }
 
-  // Config stored in a var because it's used again later.
+  // Per support@Sage all fields must be present in vault virtual check request
+  $request_parameters['C_ORIGINATOR_ID'] = '0000000000';
+  $request_parameters['C_MIDDLE_INITIAL'] = '';
+  $request_parameters['C_SUFFIX'] = '';
+  $request_parameters['C_EMAIL'] = $order->mail;
+  $request_parameters['T_SHIPPING'] = '';
+  $request_parameters['T_TAX'] = '';
+  $request_parameters['C_TELEPHONE'] = '';
+  $request_parameters['C_FAX'] = '';
+  $request_parameters['C_SHIP_NAME'] = '';
+  $request_parameters['C_SHIP_ADDRESS'] = '';
+  $request_parameters['C_SHIP_CITY'] = '';
+  $request_parameters['C_SHIP_STATE'] = '';
+  $request_parameters['C_SHIP_ZIP'] = '';
+  $request_parameters['C_SHIP_COUNTRY'] = '';
+  $request_parameters['C_SSN'] = '';
+  $request_parameters['C_DL_STATE_CODE'] = '';
+  $request_parameters['C_DL_NUMBER'] = '';
+  $request_parameters['C_DOB'] = '';
+
+  // add the config settings
   $sage_payments_config = _commerce_sage_payments_get_sage_payments_config($payment_method);
   $request_parameters += $sage_payments_config;
 
@@ -864,10 +854,6 @@ function commerce_sage_payments_eft_vault_cardonfile_charge($payment_method, $ca
 
   $transaction->remote_id = !empty($transaction_response['REFERENCE']) ? $transaction_response['REFERENCE'] : '';
 
-  // Build a meaningful response message.
-  $transaction->message = "<b>Status:</b> @status\n";
-  $transaction->message_variables['@status'] = $transaction_response['APPROVAL_INDICATOR'] != 'A' ? t('REJECTED') : t('ACCEPTED');
-
   _commerce_sage_payments_build_transaction_message($transaction, $transaction_response);
 
   // Save the transaction information.
@@ -883,7 +869,6 @@ function commerce_sage_payments_eft_vault_cardonfile_charge($payment_method, $ca
 
     return FALSE;
   }
-
 }
 
 /**
@@ -902,8 +887,8 @@ function commerce_sage_payments_eft_vault_cardonfile_update($form, &$form_state,
     );
 
     $response = commerce_sage_payments_vault_request_insert($payment_method, $payment_details);
-    if (trim($response->SUCCESS) == 'true') {
-      $token = trim($response->GUID);
+    if (trim($response['SUCCESS']) == 'true') {
+      $token = trim($response['GUID']);
     }
   }
 
@@ -928,12 +913,236 @@ function commerce_sage_payments_eft_vault_cardonfile_delete($form, &$form_state,
  */
 
 /**
- * Load the SOAP client and WSDL definitions.
+ * Sends a sale request to Sage Payments.
+ *
+ * @param array $gateway
+ *   The payment method.
+ *
+ * @param array $request_parameters
+ *   Data to pass to the API call.
+ *
+ * @return object $transaction_response
+ *   The parsed transaction info.
+ */
+function _commerce_sage_payments_request_sale($gateway, $request_parameters) {
+  // Bankcard and CC requests use the same client
+  $sage_client = _commerce_sage_payments_get_sage_payments_client();
+
+  $request_parameters = array_merge($request_parameters, _commerce_sage_payments_get_sage_payments_config($gateway));
+
+  // Determine the correct request type to use 
+  switch($gateway['method_id']) {
+    case 'commerce_sage_payments_cc' :
+      $type = 'BANKCARD_SALE';
+      break;
+    case 'commerce_sage_payments_eft' :
+      $type = 'VIRTUAL_CHECK_WEB_SALE';
+      break;
+  }
+
+  $context = array(
+    'payment_method' => $gateway,
+    'type' => $type,
+  );
+
+  drupal_alter('sage_payment_request_sale', $request_parameters, $context);
+
+  $response = $sage_client->{$type}($request_parameters);
+
+  if (is_object($response)) {
+    $response_array = _commerce_sage_payments_response_to_array($response->{$type . 'Result'}->any);
+    $transaction_response = $response_array['NewDataSet']['Table1'];
+  }
+
+  return $transaction_response;
+}
+
+/**
+ * Sage Payment Credit request function wrapper.
+ *
+ * @param array $gateway
+ *   The payment method.
+ *
+ * @param array $request_parameters
+ *   Data to pass to the API call.
+ *
+ * @return object $transaction_response
+ *   The parsed transaction info.
+ */
+function _commerce_sage_payments_request_credit($gateway, $request_parameters) {
+  $sage_client = _commerce_sage_payments_get_sage_payments_client();
+  $request_parameters = array_merge($request_parameters, _commerce_sage_payments_get_sage_payments_config($gateway));
+
+  // Determine the correct request type to use 
+  switch($gateway['method_id']) {
+    case 'commerce_sage_payments_cc' :
+      $type = 'BANKCARD_CREDIT';
+      break;
+    case 'commerce_sage_payments_eft' :
+      $type = 'VIRTUAL_CHECK_CREDIT_BY_REFERENCE';
+      break;
+  }
+
+  $response = $sage_client->{$type}($request_parameters);
+
+  if (is_object($response)) {
+    $response_array = _commerce_sage_payments_response_to_array($response->{$type . 'Result'}->any);
+    $transaction_response = $response_array['NewDataSet']['Table1'];
+  }
+
+  return $transaction_response;
+}
+
+/**
+ * Sends a request to Sage Payments to save a credit card in the Vault.
+ *
+ * @param array $gateway
+ *   The payment method.
+ *
+ * @param array $data
+ *   Data to pass to the API call.
+ *
+ * @return
+ *   The response object with 'SUCCESS' (boolean), 'GUID' (string), and 'MESSAGE' (string) attributes
+ */
+function commerce_sage_payments_vault_request_insert($gateway, $request_parameters) {
+  $vault_client = _commerce_sage_payments_get_sage_payments_vault_management_client();
+  $request_parameters += _commerce_sage_payments_get_sage_payments_config($gateway);
+
+  // Determine the correct request type to use 
+  switch($gateway['method_id']) {
+    case 'commerce_sage_payments_cc' :
+      $type = 'INSERT_CREDIT_CARD_DATA';
+      break;
+    case 'commerce_sage_payments_eft' :
+      $type = 'INSERT_VIRTUAL_CHECK_DATA';
+      break;
+  }
+
+  $response = $vault_client->{$type}($request_parameters);
+  if (is_object($response)) {
+    $response_array = _commerce_sage_payments_response_to_array($response->{$type . 'Result'}->any);
+    $transaction_response = $response_array['NewDataSet']['Table1'];
+  }
+
+  watchdog('commerce_sage_payments', 'Sage Payments Vault response: !param', array('!param' => '<pre>' . check_plain(print_r($transaction_response), TRUE) . '</pre>', WATCHDOG_DEBUG));
+
+  return $transaction_response;
+}
+
+/**
+ * Sends a request to Sage Payments to update the credit card expiration in the Vault.
+ *
+ * @param array $gateway
+ *   The payment method.
+ *
+ * @param array $data
+ *   Data to pass to the API call.
+ *
+ * @return
+ *   (boolean) for whether the update was successful or not.
+ */
+function commerce_sage_payments_vault_request_update_expiration($gateway, $request_parameters) {
+  $vault_client = _commerce_sage_payments_get_sage_payments_vault_management_client();
+  $request_parameters += _commerce_sage_payments_get_sage_payments_config($gateway);
+  $response = $vault_client->UPDATE_CREDIT_CARD_EXPIRATION_DATE($request_parameters);
+   if (is_object($response) && is_object($response->UPDATE_CREDIT_CARD_EXPIRATION_DATEResult)){
+    $response_parsed  = new SimpleXMLElement($response->UPDATE_CREDIT_CARD_EXPIRATION_DATEResult->any);
+    $transaction_response = (object)(array) $response_parsed->NewDataSet->Table1;
+    watchdog('commerce_sage_payments', 'Sage Payments Vault response: !param', array('!param' => '<pre>' . check_plain(print_r($transaction_response), TRUE) . '</pre>', WATCHDOG_DEBUG));
+    return $transaction_response->SUCCESS == 'true';
+  }
+}
+
+/**
+ * Sends a request to Sage Payments to delete a credit card in the Vault.
+ *
+ * @param array $gateway
+ *   The payment method.
+ *
+ * @param array $data
+ *   Data to pass to the API call.
+ *
+ * @return
+ *   The response (boolean).
+ */
+function commerce_sage_payments_vault_request_delete($gateway, $request_parameters) {
+  $vault_client = _commerce_sage_payments_get_sage_payments_vault_management_client();
+  $request_parameters += _commerce_sage_payments_get_sage_payments_config($gateway);
+  $response = $vault_client->DELETE_DATA($request_parameters);
+  if (is_object($response) && isset($response->DELETE_DATAResult)){
+    $transaction_response = $response->DELETE_DATAResult;
+  }
+
+  watchdog('commerce_sage_payments', 'Sage Payments Vault response: !param', array('!param' => '<pre>' . check_plain(print_r($transaction_response), TRUE) . '</pre>', WATCHDOG_DEBUG));
+  return $transaction_response;
+}
+
+/**
+ * Sends a sale request to Sage Payments using a credit card stored in the Vault.
+ *
+ * @param array $gateway
+ *   The payment method.
+ *
+ * @param array $request_parameters
+ *   Data to pass to the API call.
+ *
+ * @return object $transaction_response
+ *   The parsed transaction info.
+ */
+function _commerce_sage_payments_vault_request_sale($gateway, $request_parameters) {
+  $request_parameters = array_merge($request_parameters, _commerce_sage_payments_get_sage_payments_config($gateway));
+
+  // Determine the correct client and request type to use 
+  switch($gateway['method_id']) {
+    case 'commerce_sage_payments_cc' :
+      $sage_client = _commerce_sage_payments_get_sage_payments_vault_bankcard_client();
+      $type = 'VAULT_BANKCARD_SALE';
+      break;
+    case 'commerce_sage_payments_eft' :
+      $sage_client = _commerce_sage_payments_get_sage_payments_vault_virtual_check_client();
+      $type = 'VIRTUAL_CHECK_WEB_SALE';
+      break;
+  }
+
+  $context = array(
+    'payment_method' => $gateway,
+    'type' => $type,
+  );
+
+  drupal_alter('sage_payment_request_sale', $request_parameters, $context);
+
+  $response = $sage_client->{$type}($request_parameters);
+
+  if (is_object($response)) {
+    $response_array = _commerce_sage_payments_response_to_array($response->{$type . 'Result'}->any);
+    $transaction_response = $response_array['NewDataSet']['Table1'];
+  }
+
+  return $transaction_response;
+}
+
+/**
+ * Convert XML of a response to a simple array
+ */
+function _commerce_sage_payments_response_to_array($xml) {
+  $xml = new SimpleXMLElement($xml);
+  return json_decode(json_encode((array) $xml), 1);
+}
+
+/**
+ * Build the transaction message
  */
 function _commerce_sage_payments_build_transaction_message($transaction, $transaction_response) {
+  $transaction->message = "<b>Status:</b> @status<br />\n";
+  $transaction->message_variables['@status'] = $transaction_response['APPROVAL_INDICATOR'] != 'A' ? t('REJECTED') : t('ACCEPTED');
+
   foreach ($transaction_response as $key => $value) {
-    $transaction->message .= '<b>' . $key . "</b>: @" . check_plain($key) . "/n";
-    $transaction->message_variables['@' . check_plain($key)] = $value;
+    // Add the message
+    $transaction->message .= '<b>' . $key . "</b>: @" . check_plain($key) . "<br />\n";
+
+    // Add the variable, in some cases these values may be arrays
+    $transaction->message_variables['@' . check_plain($key)] = !is_string($value) ? implode(', ', $value) : trim($value);
   }
 }
 
@@ -971,7 +1180,7 @@ function _commerce_sage_payments_get_sage_payments_vault_bankcard_client() {
   $client = new SoapClient(drupal_get_path('module', 'commerce_sage_payments') . '/libraries/wsVaultBankcard.wsdl.xml',
                            array('location' => 'https://gateway.sagepayments.net/web_services/wsVault/wsVaultBankcard.asmx',
                                  'uri'      => 'https://gateway.sagepayments.net/web_services/wsVault/',
-                                 'trace' => 1
+                                 // 'trace' => 1
                                 )
                           );
   return $client;
@@ -985,7 +1194,7 @@ function _commerce_sage_payments_get_sage_payments_vault_virtual_check_client() 
   $client = new SoapClient(drupal_get_path('module', 'commerce_sage_payments') . '/libraries/wsVaultVirtualCheck.xml',
                            array('location' => 'https://gateway.sagepayments.net/web_services/wsVault/wsVaultVirtualCheck.asmx',
                                  'uri'      => 'https://gateway.sagepayments.net/web_services/wsVault/',
-                                 'trace' => 1,
+                                 // 'trace' => 1,
                                 )
                           );
   return $client;
@@ -1003,199 +1212,4 @@ function _commerce_sage_payments_get_sage_payments_config($gateway) {
   );
 
   return $auth_info;
-}
-
-/**
- * Sends a sale request to Sage Payments.
- *
- * @param array $gateway
- *   The payment method.
- *
- * @param array $request_parameters
- *   Data to pass to the API call.
- *
- * @return object $transaction_response
- *   The parsed transaction info.
- */
-function _commerce_sage_payments_request_sale($gateway, $request_parameters) {
-  $sage_client = _commerce_sage_payments_get_sage_payments_client();
-
-  $request_parameters = array_merge($request_parameters, _commerce_sage_payments_get_sage_payments_config($gateway));
-
-  // Determine the correct request type to use 
-  switch($gateway['method_id']) {
-    case 'commerce_sage_payments_cc' :
-      $type = 'BANKCARD_SALE';
-      break;
-    case 'commerce_sage_payments_eft' :
-      $type = 'VIRTUAL_CHECK_WEB_SALE';
-      break;
-  }
-
-  $response = $sage_client->{$type}($request_parameters);
-
-  watchdog('commerce_sage_payments', 'Sage Payments Sale response: !param', array('!param' => '<pre>' . check_plain(print_r($response, TRUE)) . '</pre>', WATCHDOG_DEBUG));
-  if (is_object($response)) {
-    $response_parsed  = new SimpleXMLElement($response->{$type . 'Result'}->any);
-    $transaction_response = (object)(array) $response_parsed->NewDataSet->Table1;
-  }
-
-  return $transaction_response;
-}
-
-
-/**
- * Sage Payment Credit request function wrapper.
- *
- * @param array $gateway
- *   The payment method.
- *
- * @param array $request_parameters
- *   Data to pass to the API call.
- *
- * @return object $transaction_response
- *   The parsed transaction info.
- */
-function _commerce_sage_payments_request_credit($gateway, $request_parameters) {
-  $sage_client = _commerce_sage_payments_get_sage_payments_client();
-  $request_parameters = array_merge($request_parameters, _commerce_sage_payments_get_sage_payments_config($gateway));
-  $response = $sage_client->BANKCARD_CREDIT($request_parameters);
-  if (is_object($response) && is_object($response->BANKCARD_CREDITResult)){
-      $response_parsed  = new SimpleXMLElement($response->BANKCARD_CREDITResult->any);
-      $transaction_response = (object)(array) $response_parsed->NewDataSet->Table1;
-  }
-  return $transaction_response;
-}
-
-
-/**
- * Sends a request to Sage Payments to save a credit card in the Vault.
- *
- * @param array $gateway
- *   The payment method.
- *
- * @param array $data
- *   Data to pass to the API call.
- *
- * @return
- *   The response object with 'SUCCESS' (boolean), 'GUID' (string), and 'MESSAGE' (string) attributes
- */
-function commerce_sage_payments_vault_request_insert($gateway, $request_parameters) {
-  $vault_client = _commerce_sage_payments_get_sage_payments_vault_management_client();
-  $request_parameters += _commerce_sage_payments_get_sage_payments_config($gateway);
-
-  // Determine the correct request type to use 
-  switch($gateway['method_id']) {
-    case 'commerce_sage_payments_cc' :
-      $type = 'INSERT_CREDIT_CARD_DATA';
-      break;
-    case 'commerce_sage_payments_eft' :
-      $type = 'INSERT_VIRTUAL_CHECK_DATA';
-      break;
-  }
-
-  $response = $vault_client->{$type}($request_parameters);
-  if (is_object($response)) {
-      $response_parsed  = new SimpleXMLElement($response->{$type . 'Result'}->any);
-      $transaction_response = (object)(array) $response_parsed->NewDataSet->Table1;
-  }
-  return $transaction_response;
-
-  watchdog('commerce_sage_payments', 'Sage Payments Vault response: !param', array('!param' => '<pre>' . check_plain(print_r($transaction_response), TRUE) . '</pre>', WATCHDOG_DEBUG));
-  return $token_response;
-}
-
-
-/**
- * Sends a request to Sage Payments to update the credit card expiration in the Vault.
- *
- * @param array $gateway
- *   The payment method.
- *
- * @param array $data
- *   Data to pass to the API call.
- *
- * @return
- *   (boolean) for whether the update was successful or not.
- */
-function commerce_sage_payments_vault_request_update_expiration($gateway, $request_parameters) {
-  $vault_client = _commerce_sage_payments_get_sage_payments_vault_management_client();
-  $request_parameters += _commerce_sage_payments_get_sage_payments_config($gateway);
-  $response = $vault_client->UPDATE_CREDIT_CARD_EXPIRATION_DATE($request_parameters);
-   if (is_object($response) && is_object($response->UPDATE_CREDIT_CARD_EXPIRATION_DATEResult)){
-    $response_parsed  = new SimpleXMLElement($response->UPDATE_CREDIT_CARD_EXPIRATION_DATEResult->any);
-    $transaction_response = (object)(array) $response_parsed->NewDataSet->Table1;
-    watchdog('commerce_sage_payments', 'Sage Payments Vault response: !param', array('!param' => '<pre>' . check_plain(print_r($transaction_response), TRUE) . '</pre>', WATCHDOG_DEBUG));
-    return $transaction_response->SUCCESS == 'true';
-  }
-}
-
-
-/**
- * Sends a request to Sage Payments to delete a credit card in the Vault.
- *
- * @param array $gateway
- *   The payment method.
- *
- * @param array $data
- *   Data to pass to the API call.
- *
- * @return
- *   The response (boolean).
- */
-function commerce_sage_payments_vault_request_delete($gateway, $request_parameters) {
-  $vault_client = _commerce_sage_payments_get_sage_payments_vault_management_client();
-  $request_parameters += _commerce_sage_payments_get_sage_payments_config($gateway);
-  $response = $vault_client->DELETE_DATA($request_parameters);
-  if (is_object($response) && isset($response->DELETE_DATAResult)){
-    $transaction_response = $response->DELETE_DATAResult;
-  }
-
-  watchdog('commerce_sage_payments', 'Sage Payments Vault response: !param', array('!param' => '<pre>' . check_plain(print_r($transaction_response), TRUE) . '</pre>', WATCHDOG_DEBUG));
-  return $transaction_response;
-}
-
-
-
-/**
- * Sends a sale request to Sage Payments using a credit card stored in the Vault.
- *
- * @param array $gateway
- *   The payment method.
- *
- * @param array $request_parameters
- *   Data to pass to the API call.
- *
- * @return object $transaction_response
- *   The parsed transaction info.
- */
-function _commerce_sage_payments_vault_request_sale($gateway, $request_parameters) {
-  $request_parameters = array_merge($request_parameters, _commerce_sage_payments_get_sage_payments_config($gateway));
-
-  // Determine the correct client and request type to use 
-  switch($gateway['method_id']) {
-    case 'commerce_sage_payments_cc' :
-      $sage_client = _commerce_sage_payments_get_sage_payments_vault_bankcard_client();
-      $type = 'VAULT_BANKCARD_SALE';
-      break;
-    case 'commerce_sage_payments_eft' :
-      $sage_client = _commerce_sage_payments_get_sage_payments_vault_virtual_check_client();
-      $type = 'VIRTUAL_CHECK_WEB_SALE';
-      break;
-  }
-
-  $response = $sage_client->{$type}($request_parameters);
-
-  drupal_set_message('last request: ' . print_r($sage_client->__getLastRequest(), 1));
-
-  watchdog('commerce_sage_payments', 'Sage Payments Sale response: !param', array('!param' => '<pre>' . check_plain(print_r($response, TRUE)) . '</pre>', WATCHDOG_DEBUG));
-  if (is_object($response)) {
-    $xml = new SimpleXMLElement($response->{$type . 'Result'}->any);
-
-    // Convert to a simple array for easier coding
-    $response_parsed = json_decode(json_encode((array) $xml), 1);
-    $transaction_response = $response_parsed['NewDataSet']['Table1'];
-  }
-
-  return $transaction_response;
 }
