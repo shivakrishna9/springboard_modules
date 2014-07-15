@@ -230,7 +230,12 @@ function springboard_admin_init() {
     $goto_path = FALSE;
     // Node add pages,
     if (preg_match('|^/node/add(/.*)?|', $path, $matches)) {
-      $goto_path = 'springboard/add' . $matches[1];
+      if (preg_match('|^/node/add$|', $path)) {
+        $goto_path = 'springboard/add';
+      } 
+      else {
+        $goto_path = 'springboard/add' . $matches[1];
+      }
     }
 
     /*
