@@ -812,10 +812,9 @@ function springboard_admin_asset_page() {
   $set_types = variable_get('springboard_asset_library', array('page_wrapper', 'email_wrapper'));
   $used_types = array();
   $tables = array();
-
   // Render the views tables for the appropriate set of content types.
   foreach ($set_types as $key => $type) {
-    if ($type !== 0) {
+    if ($type !== 0 && in_array($type, array_keys($node_types))) {
       $used_types[$type] = $node_types[$type];
       $view = views_get_view('sbv_assets');
       $view -> set_display('block_1');
