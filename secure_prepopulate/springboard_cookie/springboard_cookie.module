@@ -31,8 +31,20 @@ function springboard_cookie_init() {
   if (isset($_GET['sbck']) && empty($user->uid)) {
     $email = secure_prepopulate_decrypt($_GET['sbck']);
     if (!empty($email)) {
+      // Quietly create a user account for this email, if there isn't one already.
+      $account = user_load_by_mail($email);
+      if (!$account) {
+        $user_fields = array(
+          'name' => $email,
+          'mail' => $email,
+          'init' => $email,
+          'pass' => user_password(8),
+          'status' => 1,
+        );
+        $account = user_save('', $user_fields);
+      }
       // Tag the email address to the client cookie.
-      springboard_cookie_tag_client(array('email' => $email));
+      springboard_cookie_tag_client(array('email' => $email, 'uid' => $account->uid));
       // Don't cache the response.
       drupal_page_is_cacheable(FALSE);
     }
