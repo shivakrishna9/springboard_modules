@@ -91,7 +91,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
         'size' => 60,
       ),
       'type' => 'text_textfield',
-      'weight' => 13,
+      'weight' => 14,
     ),
   );
 
@@ -131,7 +131,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
         'size' => 60,
       ),
       'type' => 'text_textfield',
-      'weight' => 12,
+      'weight' => 13,
     ),
   );
 
@@ -175,6 +175,45 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
     ),
   );
 
+  // Exported field_instance: 'node-p2p_personal_campaign-field_ms_referrer'
+  $field_instances['node-p2p_personal_campaign-field_ms_referrer'] = array(
+    'bundle' => 'p2p_personal_campaign',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'text',
+        'settings' => array(),
+        'type' => 'text_default',
+        'weight' => 15,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_ms_referrer',
+    'label' => 'Referrer',
+    'required' => FALSE,
+    'settings' => array(
+      'text_processing' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'module' => 'text',
+      'settings' => array(
+        'size' => 60,
+      ),
+      'type' => 'text_textfield',
+      'weight' => 12,
+    ),
+  );
+
   // Exported field_instance: 'node-p2p_personal_campaign-field_ms_search_engine'
   $field_instances['node-p2p_personal_campaign-field_ms_search_engine'] = array(
     'bundle' => 'p2p_personal_campaign',
@@ -211,7 +250,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
         'size' => 60,
       ),
       'type' => 'text_textfield',
-      'weight' => 14,
+      'weight' => 15,
     ),
   );
 
@@ -251,7 +290,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
         'size' => 60,
       ),
       'type' => 'text_textfield',
-      'weight' => 15,
+      'weight' => 16,
     ),
   );
 
@@ -661,6 +700,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
   t('Initial Referrer');
   t('Market Source');
   t('Progress');
+  t('Referrer');
   t('Search Engine');
   t('Submission Goal');
   t('Suggested Donation Amount');
