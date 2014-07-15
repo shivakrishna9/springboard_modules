@@ -261,6 +261,7 @@ function market_source_admin_add_more_ahah($form, $form_state) {
  */
 function market_source_admin_settings_form_validate($form, &$form_state) {
   $values = &$form_state['values'];
+  $global_default_field_keys = array_keys(market_source_list_default_fields());
   $external_fields = module_invoke_all('market_source_external_field_keys');
   $external_field_keys = array();
   if (is_array($external_fields)) {
@@ -287,10 +288,17 @@ function market_source_admin_settings_form_validate($form, &$form_state) {
       form_set_error('market_source_global_fields][custom_fields_wrapper][' . $i . '][default',
         t('The default value may only contain alphanumeric characters, whitespace, underscores, slashes, square brackets, colon and the percent sign.'));
     }
+    // Custom field keys shouldn't collide with field keys of programmatically defined fields.
     if (!empty($field['key']) && in_array($field['key'], $external_field_keys)) {
       form_set_error('market_source_global_fields][custom_fields_wrapper][' . $i . '][key',
         t('This field is already in use by a module.'));
     }
+    // Custom field keys shouldn't duplicate global default fields either (example: market_source)
+    if (!empty($field['key']) && in_array($field['key'], $global_default_field_keys)) {
+      form_set_error('market_source_global_fields][custom_fields_wrapper][' . $i . '][key',
+        t('This key is already in use by a global default field.'));
+    }
+
   }
   if (!(count(explode('.', $values['market_source_cookie_domain'])) > 1 && !is_numeric(str_replace('.', '', $values['market_source_cookie_domain'])))) {
     form_set_error('market_source_cookie_domain', t('Your cookie settings will not work. Either you do not have enough of a domain path to be used ' .
