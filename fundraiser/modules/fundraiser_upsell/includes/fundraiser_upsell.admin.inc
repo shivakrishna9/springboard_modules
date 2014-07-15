@@ -142,7 +142,7 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
     '#default_value' => variable_get('fundraiser_upsell_acceptance_enabled', 0),
   );
   $form['fundraiser_upsell_acceptance']['fundraiser_upsell_acceptance_lifetime'] = array(
-    '#title' => t('Cookie lifetype in days'),
+    '#title' => t('Cookie lifetime in days'),
     '#type' => 'textfield',
     '#default_value' => variable_get('fundraiser_upsell_acceptance_lifetime', '180'),
   );
@@ -156,7 +156,7 @@ function fundraiser_upsell_admin_settings_form($form, &$form_state) {
     '#default_value' => variable_get('fundraiser_upsell_rejection_enabled', 0),
   );
   $form['fundraiser_upsell_rejection']['fundraiser_upsell_rejection_lifetime'] = array(
-    '#title' => t('Cookie lifetype in days'),
+    '#title' => t('Cookie lifetime in days'),
     '#type' => 'textfield',
     '#default_value' => variable_get('fundraiser_upsell_rejection_lifetime', '180'),
   );
