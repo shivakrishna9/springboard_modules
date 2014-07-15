@@ -1533,8 +1533,7 @@ function springboard_p2p_fundraiser_donation_post_create($donation) {
     $record['personal_campaign_nid'] = $_GET['p2p_pcid'];
     $record['action_type'] = 'fundraiser';
     $record['comment'] = '';
-   dsm($donation, 'donation');
-   dsm($record, 'insertion record');
+
     springboard_p2p_save_personal_campaign_action($record);
   }
 }
@@ -1801,7 +1800,7 @@ function springboard_p2p_sb_social_init_settings_load_alter(&$settings) {
   if (arg(0) == 'node' && is_numeric(arg(1)) && !arg(2)) {
     if (!$p2p_pcid && $personal_campaign) {
       $_SESSION['sb_social_url_context']['personal_campaign_id'] = FALSE;
-      // Purge Market Source value
+      // Purge Market Source value.
       if (isset($_COOKIE['market_source__p2p_pcid'])) {
         setcookie('market_source__p2p_pcid');
       }
