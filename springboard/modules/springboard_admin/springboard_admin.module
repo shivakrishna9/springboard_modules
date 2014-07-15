@@ -220,6 +220,11 @@ function springboard_admin_init() {
   // If user is to have the Springboard Admin UX, make sure they are redirecitng
   // to the proper admin interface.
   if (springboard_admin_user_gets_sbux($user)) {    
+    // If a form is being submitted, there's no need to redirect.
+    if(isset($_REQUEST['form_build_id'])) {
+      return;
+    }  
+        
     // Set up requested path and goto path.
     $path = str_replace("?".$_SERVER['QUERY_STRING'], '', request_uri());    
     $goto_path = FALSE;
