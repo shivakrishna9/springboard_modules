@@ -1,0 +1,8 @@
+name = Fundraiser Commerce Encryption Swap
+description = Swap encrypted donation data from one key to another.
+core = 7.x
+version = 7.x-4.x-dev
+package = Jackson River Springboard - development
+dependencies[] = commerce_order
+dependencies[] = encrypt
+dependencies[] = fundraiser_commerce
