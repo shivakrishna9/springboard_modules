@@ -261,6 +261,13 @@ function market_source_admin_add_more_ahah($form, $form_state) {
  */
 function market_source_admin_settings_form_validate($form, &$form_state) {
   $values = &$form_state['values'];
+  $external_fields = module_invoke_all('market_source_external_field_keys');
+  $external_field_keys = array();
+  if (is_array($external_fields)) {
+    foreach ($external_fields as $external_field) {
+      $external_field_keys[] = $external_field['key'];
+    }
+  }
   // we don't want any bogus field keys or names.
   foreach ($values['market_source_global_fields']['custom_fields_wrapper'] as $i => $field) {
     if (empty($field['name']) XOR empty($field['key'])) {
@@ -279,6 +286,10 @@ function market_source_admin_settings_form_validate($form, &$form_state) {
     if (!empty($field['default']) && !preg_match('|^[a-zA-Z0-9_+-:\\\/\s%\[\]]+$|', $field['default'])) {
       form_set_error('market_source_global_fields][custom_fields_wrapper][' . $i . '][default',
         t('The default value may only contain alphanumeric characters, whitespace, underscores, slashes, square brackets, colon and the percent sign.'));
+    }
+    if (!empty($field['key']) && in_array($field['key'], $external_field_keys)) {
+      form_set_error('market_source_global_fields][custom_fields_wrapper][' . $i . '][key',
+        t('This field is already in use by a module.'));
     }
   }
   if (!(count(explode('.', $values['market_source_cookie_domain'])) > 1 && !is_numeric(str_replace('.', '', $values['market_source_cookie_domain'])))) {
