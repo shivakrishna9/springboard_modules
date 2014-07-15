@@ -1533,8 +1533,6 @@ function springboard_p2p_fundraiser_donation_post_create($donation) {
     $record['personal_campaign_nid'] = $_GET['p2p_pcid'];
     $record['action_type'] = 'fundraiser';
     $record['comment'] = '';
-   dsm($donation, 'donation');
-   dsm($record, 'insertion record');
     springboard_p2p_save_personal_campaign_action($record);
   }
 }
