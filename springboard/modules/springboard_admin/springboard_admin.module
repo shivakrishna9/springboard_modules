@@ -82,6 +82,15 @@ function springboard_admin_custom_theme() {
  * confirmation form.
  */
 function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
+  if (strpos($form_id, 'views_form_') === 0 && $vbo = _views_bulk_operations_get_field($form_state['build_info']['args'][0])) {
+    // If we're on VBO-enabled views form on an aliased Springboard page, we 
+    // need to override VBO's handling of the form's action URL. VBO uses the 
+    // path set in the views configuration, which will wrongly bypass the 
+    // aliased URL.
+    if('/' . $_GET['q'] != request_uri()  && preg_match('|^/springboard/(.*)?|', request_uri())) {
+      $form['#action'] = request_uri();
+    }
+  }
   switch ($form_id) {  
     case 'clone_node_confirm' :
       $form['#submit'][] = 'springboard_node_clone_form_submit';
@@ -209,6 +218,11 @@ function springboard_admin_init() {
   // If user is to have the Springboard Admin UX, make sure they are redirecitng
   // to the proper admin interface.
   if (springboard_admin_user_gets_sbux($user)) {    
+    // If a form is being submitted, there's no need to redirect.
+    if(isset($_POST['form_build_id'])) {
+      return;
+    }  
+        
     // Set up requested path and goto path.
     $path = str_replace("?".$_SERVER['QUERY_STRING'], '', request_uri());    
     $goto_path = FALSE;
