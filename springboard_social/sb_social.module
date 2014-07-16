@@ -655,6 +655,33 @@ function sb_social_webform_confirmations_token_replace_alter(&$tokens, $sid) {
 }
 
 /**
+ * Implements hook_springboard_cookie_uid().
+ * 
+ * When a Springboard cookie gets a uid for the first time, check for any social shares
+ * that couldn't be exported to Salesforce before, but can now.
+ */
+function sb_social_springboard_cookie_uid($cookie) {
+  // Are any share_ids stashed in the Springboard cookie?
+  if (!empty($cookie['share_ids']) && is_array($cookie['share_ids'])) {
+    // Were any of these shares saved with uid 0?
+    $update_share_ids = db_query(
+      "SELECT share_id FROM {sb_social_shares} WHERE share_id IN (:share_ids) AND uid=0;",
+      array(':share_ids' => $cookie['share_ids'])
+    )->fetchCol();
+    // If so, then update them to the uid in the cookie and (re-)sync to Salesforce.
+    if (!empty($update_share_ids)) {
+      db_query(
+        "UPDATE {sb_social_shares} SET uid=:uid WHERE share_id IN (:update_share_ids);",
+        array(':uid' => $cookie['uid'], ':update_share_ids' => $update_share_ids)
+      );
+      foreach ($update_share_ids as $update_share_id) {
+        sb_social_add_share_to_queue($update_share_id);
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_theme().
  */
 function sb_social_theme($existing, $type, $theme, $path) {
@@ -826,7 +853,8 @@ function sb_social_salesforce_queue_create_item_alter(&$item) {
 
 
 /**
- * When an opportunity syncs  assign it's salesforce id to related shares.
+ * Implements hook_salesforce_sync_pass_item().
+ * When an opportunity syncs assign its salesforce id to related shares.
  *
  * @param mixed $item
  *   Salesforce queue item
