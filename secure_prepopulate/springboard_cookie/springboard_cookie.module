@@ -234,9 +234,14 @@ function springboard_cookie_tag_client($new_data = array()) {
   if (!isset($new_cookie['client_id'])) {
     $new_cookie['client_id'] = uniqid();
   }
-  // Send the cookie to the client if it's different from what they already have.
+  // Is the new cookie data different from what the client already has?
   if ($extant_cookie != $new_cookie) {
+    // Send the new cookie to the client.
     springboard_cookie_set_cookie($new_cookie);
+    // If we're getting a uid on this cookie the first time, then release the hounds.
+    if (!empty($new_cookie['uid']) && empty($extant_cookie['uid'])) {
+      module_invoke_all('springboard_cookie_uid', $new_cookie);
+    }
   }
 }
 
