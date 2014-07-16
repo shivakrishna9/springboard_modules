@@ -22,20 +22,18 @@
  */
 ?>
 <div id="donation-form-column-wrapper" class="container-fluid">
+  <div class="row-fluid"><?php print $donation_fieldset; ?></div>
   <div class="row-fluid">
     <div id="left" class="span6">
       <?php print $donor_information_fieldset; ?>
       <?php print $billing_address_fieldset; ?>
-      <?php print $tribute_fieldset; ?>
     </div>
     <div id="right" class="span6">
-      <?php print $donation_fieldset; ?>
+      <?php print $tribute_fieldset; ?>
       <?php print $credit_card_fieldset; ?>
-    </div>
-  </div>
-  <div class="row-fluid">
-    <div id="donation-form-footer">
-      <?php print drupal_render($form); ?>
+      <div id="donation-form-footer">
+        <?php print drupal_render($form); ?>
+      </div>
     </div>
   </div>
 </div>

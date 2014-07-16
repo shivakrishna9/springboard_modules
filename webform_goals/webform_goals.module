@@ -22,14 +22,7 @@ function webform_goals_init() {
   static $loader_url = '';
 
   if (empty($loader_url)) {
-    $loader_url = (!empty($_SERVER['HTTPS'])) ? "https://" : "http://";
-    $loader_url .= $_SERVER['SERVER_NAME'];
-    if (variable_get('clean_url', TRUE)) {
-      $loader_url .= '/webform_goals_jsonp';
-    }
-    else {
-      $loader_url .= '/?q=webform_goals_jsonp';
-    }
+    $loader_url = url('webform_goals_jsonp', array('absolute' => TRUE));
   }
   // @todo Examine theme post-processing as a potential replacement for
   // js processing on the local site.
@@ -106,7 +99,7 @@ function webform_goals_save_loader_file() {
     $module_path = drupal_get_path('module', 'webform_goals');
     $loader = file_get_contents($module_path . '/webform_goals.loader.js');
 
-    $loader = str_replace('http://DOMAIN', 'http://' . $_SERVER['SERVER_NAME'], $loader);
+    $loader = str_replace('http://DOMAIN', $GLOBALS['base_url'], $loader);
     $result = file_unmanaged_save_data($loader, 'public://webform_goals/webform_goals.loader.js', FILE_EXISTS_REPLACE);
     if ($result == FALSE) {
       return FALSE;
