@@ -112,7 +112,7 @@ function sb_social_facebook_token_replace($tokens, &$replacements, $settings, $n
 function sb_social_facebook_defaults() {
   $settings = array(
     'title' => variable_get('springboard_social_facebook_title', '%title'),
-    'description' => variable_get('springboard_social_facebook_description', ''),
+    'description' => variable_get('springboard_social_facebook_description', '%title'),
     'image' => variable_get('springboard_social_facebook_image', ''),
   );
   return $settings;
@@ -158,7 +158,7 @@ function sb_social_facebook_admin_settings(&$form) {
   $form['services']['facebook']['springboard_social_facebook_description'] = array(
     '#type' => 'textfield',
     '#title' => t('Default Facebook share description'),
-    '#default_value' => variable_get('springboard_social_facebook_description', ''),
+    '#default_value' => variable_get('springboard_social_facebook_description', '%title'),
   );
   $form['services']['facebook']['springboard_social_facebook_image'] = array(
     '#type' => 'managed_file',
