@@ -151,6 +151,18 @@ label,
   margin: 0 0 10px 0;
 }
 
+.control-group {
+  float: none;
+}
+
+body .form-actions {
+  clear: both;
+}
+
+div.password-suggestions.description {
+  padding: 24px 20px;
+}
+
 .field {
   margin: 0;
   padding: 12px 0 12px 10px;

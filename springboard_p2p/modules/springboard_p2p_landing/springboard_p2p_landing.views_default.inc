@@ -562,11 +562,11 @@ function springboard_p2p_landing_views_default_views() {
   $export['p2p_referenced_campaigns'] = $view;
 
   $view = new view();
-  $view->name = 'search_for_a_campaign';
+  $view->name = 'p2p_search_for_a_campaign';
   $view->description = '';
   $view->tag = 'default';
   $view->base_table = 'node';
-  $view->human_name = 'Search for a Campaign';
+  $view->human_name = 'P2P Search for a Campaign';
   $view->core = 7;
   $view->api_version = '3.0';
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
@@ -932,7 +932,7 @@ function springboard_p2p_landing_views_default_views() {
     'sbp_last_name' => 'sbp_last_name',
   );
   $handler->display->display_options['path'] = 'peer-to-peer-campaign-search';
-  $export['search_for_a_campaign'] = $view;
+  $export['p2p_search_for_a_campaign'] = $view;
 
   return $export;
 }
