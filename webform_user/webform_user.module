@@ -943,6 +943,8 @@ function _webform_user_create_webform_components(&$node) {
       // TODO handle:
       // 'taxonomy_term_reference'
       switch ($item['type']) {
+        case 'email':
+          break;
         case 'checkbox':
         // From list_field_info().
         case 'list_boolean':
@@ -1006,6 +1008,10 @@ function _webform_user_create_webform_components(&$node) {
             array('%name' => $field['title'])));
           $item = array();
           break;
+        default:
+          // We've exausted the list of available types with no match, field type must be unsupported.
+          drupal_set_message(t('Webform does not support %type fields, the %type field %name has not been added to this webform.', array('%type' => $item['type'], '%name' => $field['title'])));
+          $item = array();
       }
       if (!empty($item)) {
         // Add the component to the Webform.
@@ -1195,6 +1201,7 @@ function _webform_user_get_profile_fields() {
    * category_name - human readable profile field value
    */
   $fields = array();
+  $excluded = array('entityreference', 'commerce_customer_profile_reference', 'commerce_line_item_reference', 'commerce_product_reference');
   // Add the e-mail field first.
   $mail_field = array(
     'name' => 'mail',
@@ -1219,25 +1226,27 @@ function _webform_user_get_profile_fields() {
     array(':types' => $entity_types)
   );
   foreach ($results as $result) {
-    $field = array();
-    $result->data = unserialize($result->data);
-    $result->extra = unserialize($result->extra);
-    $field['name'] = $result->field_name;
-    $field['title'] = $result->data['label'];
-    // TODO Map types to types webform understands.
-    $field['type'] = $result->type;
-    // UNLESS the display is hidden. Then we need to override this to HIDE the field.
-    if (!empty($result->data['display']['default']['type']) && $result->data['display']['default']['type'] == 'hidden') {
-      $field['type'] = 'hidden';
+    if(!in_array($result->type, $excluded)) {
+      $field = array();
+      $result->data = unserialize($result->data);
+      $result->extra = unserialize($result->extra);
+      $field['name'] = $result->field_name;
+      $field['title'] = $result->data['label'];
+      // TODO Map types to types webform understands.
+      $field['type'] = $result->type;
+      // UNLESS the display is hidden. Then we need to override this to HIDE the field.
+      if (!empty($result->data['display']['default']['type']) && $result->data['display']['default']['type'] == 'hidden') {
+        $field['type'] = 'hidden';
+      }
+      $field['mandatory'] = $result->data['required'] ? $result->data['required'] : 0;
+      $field['weight'] = $result->data['widget']['weight'];
+      $field['explanantion'] = $result->data['description'];
+      $field['options'] = isset($result->extra['settings']['allowed_values']) ? $result->extra['settings']['allowed_values'] : NULL;
+      // FOR NOW: field groups are only coming in from a field group module for these values. Leave it alone.
+      $field['category_key'] = NULL;
+      $field['category_name'] = NULL;
+      $fields[] = $field;
     }
-    $field['mandatory'] = $result->data['required'] ? $result->data['required'] : 0;
-    $field['weight'] = $result->data['widget']['weight'];
-    $field['explanantion'] = $result->data['description'];
-    $field['options'] = isset($result->extra['settings']['allowed_values']) ? $result->extra['settings']['allowed_values'] : NULL;
-    // FOR NOW: field groups are only coming in from a field group module for these values. Leave it alone.
-    $field['category_key'] = NULL;
-    $field['category_name'] = NULL;
-    $fields[] = $field;
   }
 
   //  And or grab settings from D7 profile module.
@@ -1246,18 +1255,20 @@ function _webform_user_get_profile_fields() {
     foreach ($categories as $category) {
       $profile_fields = _profile_get_fields($category['name'], FALSE);
       foreach ($profile_fields as $profile_field) {
-        $field = array();
-        $field['name'] = $profile_field->name;
-        $field['title'] = $profile_field->title;
-        // TODO Map types to types webform understands.
-        $field['type'] = $profile_field->type;
-        $field['mandatory'] = $profile_field->required ? $profile_field->required : 0;
-        $field['weight'] = $profile_field->weight;
-        $field['explanantion'] = isset($profile_field->explanantion) ? $profile_field->explanantion : '';
-        $field['options'] = isset($profile_field->options) ? $profile_field->options : NULL;
-        $field['category_key'] = isset($category['name']) ? $category['name'] : NULL;
-        $field['category_name'] = isset($category['title']) ? $category['title'] : NULL;
-        $fields[] = $field;
+        if(!in_array($profile_field->type, $excluded)) {
+          $field = array();
+          $field['name'] = $profile_field->name;
+          $field['title'] = $profile_field->title;
+          // TODO Map types to types webform understands.
+          $field['type'] = $profile_field->type;
+          $field['mandatory'] = $profile_field->required ? $profile_field->required : 0;
+          $field['weight'] = $profile_field->weight;
+          $field['explanantion'] = isset($profile_field->explanantion) ? $profile_field->explanantion : '';
+          $field['options'] = isset($profile_field->options) ? $profile_field->options : NULL;
+          $field['category_key'] = isset($category['name']) ? $category['name'] : NULL;
+          $field['category_name'] = isset($category['title']) ? $category['title'] : NULL;
+          $fields[] = $field;
+        }
       }
     }
   }
