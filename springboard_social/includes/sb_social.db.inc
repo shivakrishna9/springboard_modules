@@ -108,6 +108,15 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
   $settings = sb_social_settings_load($settings_id);
 
   $uid = !empty($submission->uid) ? $submission->uid : $user->uid;
+  
+  // If there's no uid (non-confirmation share by anonymous user) then check the Springboard cookie
+  // (if available) as a fallback.
+  if (!$uid && module_exists('springboard_cookie')) {
+    $cookie = springboard_cookie_get_cookie();
+    if ($cookie['uid']) {
+      $uid = $cookie['uid'];
+    }
+  }
 
   // Update is not included as these records should only be created when a share
   // event has taken place and should not be editable after the fact.
