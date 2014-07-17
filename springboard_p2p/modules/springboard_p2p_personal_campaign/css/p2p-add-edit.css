@@ -345,6 +345,18 @@ input[type="checkbox"] {
   width: 69.1%;
 }
 
+html.js input#edit-name.form-autocomplete {
+  background-image: url("../../../images/sprite_p2p.png");
+  background-position: right -24px;
+  opacity: .9;
+}
+
+html.js input#edit-name.form-autocomplete.throbbing {
+  background-image: url("../../../images/spinner.gif");
+  background-position: 98% 11px;
+  opacity: .9;
+}
+
 /* Uniform global */
 
 div.selector,

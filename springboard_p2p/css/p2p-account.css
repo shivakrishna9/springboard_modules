@@ -34,8 +34,8 @@ body a {
   padding: 5px 14px;
   border: 1px solid #ddd;
   -webkit-border-radius: 0;
-  border-radius: 0;
   -moz-border-radius: 0;
+  border-radius: 0;
   background-color: #fff;
 }
 
@@ -63,10 +63,10 @@ body p {
 /* login page */
 
 .p2p-login-page .pane-login {
-  padding: 6px 2% 8px 2%;
-  border: 1px solid #a6a6a6;
-  width: 310px;
   margin: 0 auto;
+  padding: 6px 2% 8px 2%;
+  width: 310px;
+  border: 1px solid #a6a6a6;
 }
 
 .p2p-login-page .pane-login #edit-actions {
@@ -74,25 +74,25 @@ body p {
 }
 
 .p2p-login-page .pane-login #edit-actions:after {
-  content: "\f007";
   position: absolute;
   top: 36px;
   right: 11px;
   color: #fffe00;
+  content: "\f007";
   font-size: 13px;
   font-family: FontAwesome;
   pointer-events: none;
 }
 
 .p2p-login-page .pane-title-wrapper {
+  margin: 0 auto;
   padding: 6px 0 8px 0;
   width: 310px;
-  margin: 0 auto;
 }
 
 .p2p-login-page .pane-title-wrapper h1 {
-  font-size: 31px;
   text-align: center;
+  font-size: 31px;
 }
 
 .p2p-login-page .panel-pane-wrapper.pane-login input {
@@ -104,32 +104,32 @@ body p {
 }
 
 .p2p-login-page .fb-oauth-wrapper {
-  text-align: center;
   margin: 10px 0;
+  text-align: center;
 }
 
 .p2p-login-page .pane-or p {
-  font-size: 1.5rem;
-  text-align: center;
   margin: 18px 0;
-  border-bottom: 1px dotted #333;
   padding-bottom: 16px;
+  border-bottom: 1px dotted #333;
+  text-align: center;
+  font-size: 1.5rem;
 }
 
 /* Registration page */
 
 .reg-pane .form-wrapper {
-  width: 49%;
   display: inline-block;
+  width: 49%;
   vertical-align: top;
 }
 
 .reg-pane .control-group,
 .reg-pane .form-item {
-  width: 49%;
-  clear: none;
-  float: none;
   display: inline-block;
+  float: none;
+  clear: none;
+  width: 49%;
 }
 
 .reg-pane #edit-account {
@@ -147,15 +147,15 @@ body p {
 
 .reg-pane #edit-account .control-group .control-group,
 .reg-pane #edit-account .form-item .form-item{
-  width: 49%;
   display: inline-block;
+  width: 49%;
   vertical-align: top;
 }
 
 .reg-pane .password-strength {
-  width: 70%;
   float: none;
   margin: 1.4em 0;
+  width: 70%;
 }
 
 .reg-pane .control-group.confirm-parent,
@@ -164,18 +164,18 @@ body p {
 }
 
 .reg-pane div.password-confirm {
-  float: none;
-  margin-top: 0;
-  visibility: hidden;
-  width: 100%;
   position: relative;
   top: -18px;
+  visibility: hidden;
+  float: none;
+  margin-top: 0;
+  width: 100%;
 }
 
 .reg-pane .control-group.email-wrapper .description,
 .reg-pane .form-item.email-wrapper .description {
-  font-size: 13px;
   width: 84%;
+  font-size: 13px;
   line-height: 1.4em;
 }
 
@@ -184,16 +184,17 @@ body p {
   width: 90%;
 }
 
-.reg-pane input[type="submit"].btn {
+.reg-pane input[type="submit"].btn,
+.reg-pane input[type="submit"] {
   width: 100%;
 }
 
 .reg-pane .form-actions.form-wrapper:after {
-  content: "\f007";
   position: absolute;
   top: 36px;
   right: 11px;
   color: #fffe00;
+  content: "\f007";
   font-size: 13px;
   font-family: FontAwesome;
   pointer-events: none;
@@ -204,10 +205,10 @@ body p {
 }
 
 .form-actions {
-  padding: 20px 0;
   margin: 4px 0;
-  background-color: #fff;
+  padding: 20px 0;
   border-top: none;
+  background-color: #fff;
 }
 
 .pane-social-login img.fb-image {
@@ -217,10 +218,10 @@ body p {
 /* password page */
 
 .pane-password {
-  padding: 6px 2% 8px 2%;
-  border: 1px solid #a6a6a6;
-  width: 310px;
   margin: 0 auto;
+  padding: 6px 2% 8px 2%;
+  width: 310px;
+  border: 1px solid #a6a6a6;
 }
 
 .pane-password p {
@@ -229,9 +230,9 @@ body p {
 }
 
 .p2p-password-page .pane-title-wrapper {
+  margin: 0 auto;
   padding: 6px 0 8px 0;
   width: 310px;
-  margin: 0 auto;
 }
 
 .p2p-password-page input#edit-submit {
@@ -239,8 +240,8 @@ body p {
 }
 
 .p2p-password-page .form-actions {
-  padding: 0px 0 0 0;
   margin: 0px 0 0 0;
+  padding: 0px 0 0 0;
 }
 
 .pane-password .form-actions.form-wrapper {
@@ -254,11 +255,11 @@ body p {
 }
 
 .pane-password .form-actions.form-wrapper:after {
-  content: "\f007";
   position: absolute;
   top: 16px;
   right: 11px;
   color: #fffe00;
+  content: "\f007";
   font-size: 13px;
   font-family: FontAwesome;
   pointer-events: none;
