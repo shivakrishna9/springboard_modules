@@ -74,7 +74,6 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
     $submission = webform_get_submission($id, $sid);
     $nid = isset($submission->nid) ? $submission->nid : 0;
     $node = node_load($nid);
-    $uid = !empty($submission->uid) ? $submission->uid : $user->uid;
     $settings_id = sb_social_get_sid_by_id($id, 'node');
     $type = 'node';
     $page_name = !empty($node->title) ? $node->title : '';
@@ -86,7 +85,6 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
   elseif (is_numeric($id) && $type == 'nid') {
     $sid = 0;
     $nid = $id;
-    $uid = $user->uid;
     $node = node_load($id);
     $page_name = !empty($node->title) ? $node->title : '';
     $type = $node->type;
@@ -103,7 +101,6 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
     $internal_name = '';
     $type = 'page';
     $url_path = sb_social_get_path($id);
-    $uid = $uid ? $uid : $user->uid;
     $settings_id = sb_social_get_sid_by_id($id, 'path');
     $node = FALSE;
   }
