@@ -64,9 +64,11 @@ function springboard_admin_custom_theme() {
   }
   
   // If the page is using a page wrapper, do nothing.
-  $wrapper = page_wrappers_check();
-  if(!empty($wrapper['wrapper'])) {
-    return;
+  if(module_exists('page_wrappers')) {
+    $wrapper = page_wrappers_check();
+    if(!empty($wrapper['wrapper'])) {
+      return;
+    }
   }
   
   // If the path begins with /springboard, we know the theme applies
@@ -82,6 +84,15 @@ function springboard_admin_custom_theme() {
  * confirmation form.
  */
 function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
+  if (strpos($form_id, 'views_form_') === 0 && $vbo = _views_bulk_operations_get_field($form_state['build_info']['args'][0])) {
+    // If we're on VBO-enabled views form on an aliased Springboard page, we 
+    // need to override VBO's handling of the form's action URL. VBO uses the 
+    // path set in the views configuration, which will wrongly bypass the 
+    // aliased URL.
+    if('/' . $_GET['q'] != request_uri()  && preg_match('|^/springboard/(.*)?|', request_uri())) {
+      $form['#action'] = request_uri();
+    }
+  }
   switch ($form_id) {  
     case 'clone_node_confirm' :
       $form['#submit'][] = 'springboard_node_clone_form_submit';
@@ -209,12 +220,22 @@ function springboard_admin_init() {
   // If user is to have the Springboard Admin UX, make sure they are redirecitng
   // to the proper admin interface.
   if (springboard_admin_user_gets_sbux($user)) {    
+    // If a form is being submitted, there's no need to redirect.
+    if(isset($_POST['form_build_id'])) {
+      return;
+    }  
+        
     // Set up requested path and goto path.
     $path = str_replace("?".$_SERVER['QUERY_STRING'], '', request_uri());    
     $goto_path = FALSE;
     // Node add pages,
     if (preg_match('|^/node/add(/.*)?|', $path, $matches)) {
-      $goto_path = 'springboard/add' . $matches[1];
+      if (preg_match('|^/node/add$|', $path)) {
+        $goto_path = 'springboard/add';
+      } 
+      else {
+        $goto_path = 'springboard/add' . $matches[1];
+      }
     }
 
     /*
@@ -488,6 +509,38 @@ function springboard_admin_menu_alter(&$items) {
   }
 }
 
+define('SPRINGBOARD_MENU_MODULES', serialize(array('email_wrappers','fundraiser', 'fundraiser_upsell', 'market_source', 'page_wrappers', 'salesforce_mapping', 'springboard_ga', 'springboard_social', 'springboard_views', 'webform_ab', 'webform_user')));
+
+/**
+ * Implements hook_modules_enabled().
+ * 
+ * Rebuilds the Springboard Admin Menu if a Springboard module is enabled.
+ */
+
+function springboard_admin_modules_enabled($modules) {
+  foreach($modules as $module) {
+    if(in_array($module, unserialize(SPRINGBOARD_MENU_MODULES))) {
+      springboard_admin_recreate_menu();
+      return;
+    }
+  }
+}
+ 
+/**
+ * Implements hook_modules_disabled().
+ * 
+ * Rebuilds the Springboard Admin Menu if a Springboard module is enabled.
+ */
+
+function springboard_admin_modules_disabled($modules) {
+  foreach($modules as $module) {
+    if(in_array($module, unserialize(SPRINGBOARD_MENU_MODULES))) {
+      springboard_admin_recreate_menu();
+      return;
+    }
+  }
+}
+ 
 /**
  * Implements hook_node_type_delete().
  *
@@ -759,10 +812,9 @@ function springboard_admin_asset_page() {
   $set_types = variable_get('springboard_asset_library', array('page_wrapper', 'email_wrapper'));
   $used_types = array();
   $tables = array();
-
   // Render the views tables for the appropriate set of content types.
   foreach ($set_types as $key => $type) {
-    if ($type !== 0) {
+    if ($type !== 0 && in_array($type, array_keys($node_types))) {
       $used_types[$type] = $node_types[$type];
       $view = views_get_view('sbv_assets');
       $view -> set_display('block_1');
@@ -1107,26 +1159,37 @@ function springboard_admin_menu_node_add_link($type) {
   $mlid = FALSE;
   // If node type is either useing Webform User or Fundraiser, and is not already
   // in the Springboard Admin Menu, create a menu item for it.
-  if ((_webform_user_is_webform_user_node_type($type->type) || fundraiser_is_donation_type($type->type)) && !springboard_admin_menu_find_link('node/add/' . preg_replace('/_/', '-', $type->type))) {
-    $menu_link = array(
-      'link_path' => 'node/add/' . preg_replace('/_/', '-', $type->type),
-      'link_title' => 'Create a ' . $type->name,
-      'menu_name' => 'springboard_admin_menu',
-      'weight' => '1',
-      // If the node type is using Fundraiser, put it under the "Donations" item.
-      // Otherwise, the parent item is "Forms".
-      'plid' => fundraiser_is_donation_type($type->type) ? $donations_menu_item['mlid'] : $forms_menu_item['mlid'],
-    );
-    // Save that menu link.
-    $mlid = menu_link_save($menu_link);
-    // If saving the link fails, return a helpful error message.
-    if (!$mlid) {
-      watchdog('springboard_admin', "A Springboard Admin Menu item for node types %t could not be created.", array('%t' => $type->name));
-      drupal_set_message(t('Please rebuild the Springboard Admin Menu by uninstalling and reinstalling the Springboard Admin module.'), 'warning');
+
+  if (!springboard_admin_menu_find_link('node/add/' . preg_replace('/_/', '-', $type->type))) {
+    $parent_link = FALSE;
+    if(module_exists('fundraiser') && fundraiser_is_donation_type($type->type)) {
+      $parent_link =  $donations_menu_item['mlid'];
     }
-    // Otherwise, log the creation of the menu item.
-    else {
-      watchdog('springboard_admin', "Springboard Admin Menu items for node types %t were created.", array('%t' => $type->name));
+    elseif (module_exists('webform_user') && _webform_user_is_webform_user_node_type($type->type)) {
+      $parent_link = $forms_menu_item['mlid'];
+    }
+    if($parent_link) {
+      $menu_link = array(
+        'link_path' => 'node/add/' . preg_replace('/_/', '-', $type->type),
+        'link_title' => 'Create a ' . $type->name,
+        'menu_name' => 'springboard_admin_menu',
+        'weight' => '1',
+        // If the node type is using Fundraiser, put it under the "Donations" item.
+        // Otherwise, the parent item is "Forms".
+        'plid' => $parent_link,
+      );
+      
+      // Save that menu link.
+      $mlid = menu_link_save($menu_link);
+      // If saving the link fails, return a helpful error message.
+      if (!$mlid) {
+        watchdog('springboard_admin', "A Springboard Admin Menu item for node types %t could not be created.", array('%t' => $type->name));
+        drupal_set_message(t('Please rebuild the Springboard Admin Menu by uninstalling and reinstalling the Springboard Admin module.'), 'warning');
+      }
+      // Otherwise, log the creation of the menu item.
+      else {
+        watchdog('springboard_admin', "Springboard Admin Menu items for node types %t were created.", array('%t' => $type->name));
+      }
     }
   }
   return $mlid;
