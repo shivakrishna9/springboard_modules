@@ -1361,9 +1361,8 @@ function springboard_p2p_set_redirect($form, &$form_state) {
     if (is_object($campaign) && $campaign->type == 'p2p_campaign') {
       $private = springboard_p2p_campaign_is_private($campaign);
 
-      $approval = new SpringboardP2pPrivateCampaignApproval($uid, $campaign_id);
-
       if ($private) {
+        $approval = new SpringboardP2pPrivateCampaignApproval($uid, $campaign_id);
         $approval->request();
         drupal_set_message('You have been added to the approval queue for ' . $campaign->title);
         $form_state['redirect'] = 'user/' . $uid . '/personal-campaigns';
@@ -1379,7 +1378,6 @@ function springboard_p2p_set_redirect($form, &$form_state) {
 
       }
       else {
-        $approval->approve();
         drupal_set_message('You can now create a personal campaign in ' . $campaign->title);
 
         $form_state['redirect'] = array(
