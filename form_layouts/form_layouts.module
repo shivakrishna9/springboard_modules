@@ -106,6 +106,14 @@ function form_layouts_node_update($node) {
 }
 
 /**
+ * Implements hook_node_delete().
+ */
+function form_layouts_node_delete($node) {
+  $layout = new FormLayout($node->nid);
+  $layout->delete();
+}
+
+/**
  * Implements hook_node_view().
  *
  * If we have a general webform layout, change the node theme.
@@ -247,9 +255,7 @@ function form_layouts_fundraiser_preprocess(&$vars) {
  *   TRUE if the content type is form layouts enabled.
  */
 function form_layouts_type_is_layouts_enabled($type) {
-  $form_layouts_types = variable_get('form_layouts_node_types', array(''));
-
-  return in_array($type, $form_layouts_types);
+  return (bool) variable_get('form_layouts_' . $type, 0);
 }
 
 /**
@@ -308,15 +314,12 @@ function form_layouts_form_node_type_form_alter(&$form, &$form_state) {
 /**
  * Submit handler for the node type form.
  *
- * If form layouts are enabled, ensure wbform is also enabled.
+ * If form layouts are enabled, ensure webform is also enabled.
  */
 function form_layouts_form_node_type_form_submit($form, $form_state) {
   $type = $form_state['values']['type'];
-  $types = variable_get('form_layouts_node_types', array(''));
-  $key = array_search($type, $types);
 
   if ($form_state['values']['form_layouts']) {
-
     // Enable webform for this type if it's not enabled..
     $webform_types = webform_variable_get('webform_node_types');
     $webform_key = array_search($type, $webform_types);
@@ -324,22 +327,6 @@ function form_layouts_form_node_type_form_submit($form, $form_state) {
       $webform_types[] = $type;
       variable_set('webform_node_types', $webform_types);
       drupal_set_message('Webform has been enabled for this content type.');
-    }
-
-    if ($key === FALSE) {
-      // Enable form layouts.
-      $types[] = $type;
-      variable_set('form_layouts_node_types', $types);
-      drupal_set_message('Form layouts have been enabled for this content type.');
-    }
-
-  }
-  else {
-    // Remove this type from form layouts.
-    if ($key !== FALSE) {
-      unset($types[$key]);
-      variable_set('form_layouts_node_types', $types);
-      drupal_set_message('Form layouts have been disabled for this content type.');
     }
   }
 }
@@ -350,10 +337,5 @@ function form_layouts_form_node_type_form_submit($form, $form_state) {
  * Remove this node type from being form layouts enabled.
  */
 function form_layouts_node_type_delete($info) {
-  $types = variable_get('form_layouts_node_types', array(''));
-  $key = array_search($info->type, $types);
-  if ($key !== FALSE) {
-    unset($types[$key]);
-    variable_set('form_layouts_node_types', $types);
-  }
+  variable_del('form_layouts_' . $info->type);
 }
