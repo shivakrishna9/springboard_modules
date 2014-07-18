@@ -385,7 +385,7 @@ span.campaign-node-link {
   pointer-events: none;
 }
 
-/******************  Media queries, these should go last */
+/******************  Media queries */
 @media (min-width: 769px) {
 
   ul.campaign-landing-grid li {
@@ -459,6 +459,16 @@ span.campaign-node-link {
 
   .flex-direction-nav a:before {
     font-size: 30px;
+  }
+
+  .pane-p2p-content .p2p-body {
+    width: 99%;
+  }
+
+  .pane-p2p-content .p2p-thumbnail {
+    width: 99%;
+    margin: 0 0 10px 0;
+    text-align: center;
   }
 
 }
