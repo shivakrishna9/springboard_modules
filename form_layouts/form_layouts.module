@@ -145,12 +145,21 @@ function form_layouts_form_layouts_info() {
     'path' => drupal_get_path('module', 'form_layouts') . '/templates/',
   );
 
-  $templates['two_column_webform'] = array(
-    'name' => t('Two column: webform'),
+  $templates['two_column_webform_form_left'] = array(
+    'name' => t('Two column: webform with the form on the left'),
     'type' => 'webform',
-    'theme' => 'two_column_webform',
-    'pattern' => 'two_column_webform_\'0-9\'+',
-    'template' => 'two-column-webform',
+    'theme' => 'two_column_webform_form_left',
+    'pattern' => 'two_column_webform_form_left_\'0-9\'+',
+    'template' => 'two-column-webform-form-left',
+    'path' => drupal_get_path('module', 'form_layouts') . '/templates/',
+  );
+
+  $templates['two_column_webform_form_right'] = array(
+    'name' => t('Two column: webform with the form on the right'),
+    'type' => 'webform',
+    'theme' => 'two_column_webform_form_right',
+    'pattern' => 'two_column_webform_form_right_\'0-9\'+',
+    'template' => 'two-column-webform-form-right',
     'path' => drupal_get_path('module', 'form_layouts') . '/templates/',
   );
 
@@ -236,9 +245,10 @@ function form_layouts_fundraiser_preprocess(&$vars) {
  *   TRUE if the content type is form layouts enabled.
  */
 function form_layouts_type_is_layouts_enabled($type) {
-  $webform_types = array_filter(webform_variable_get('webform_node_types'));
+  $form_layouts_types = array_filter(webform_variable_get('webform_node_types'));
+//  $form_layouts_types = variable_get('form_layouts_node_types', array(''));
 
-  return in_array($type, $webform_types);
+  return in_array($type, $form_layouts_types);
 }
 
 /**

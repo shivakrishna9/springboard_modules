@@ -10,6 +10,7 @@
 function form_layouts_uninstall() {
   variable_del('fundraiser_form_layouts_default');
   variable_del('form_layouts_default');
+  variable_del('form_layouts_node_types');
 }
 
 /**
