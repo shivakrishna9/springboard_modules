@@ -55,6 +55,7 @@ function sb_social_create_share_event_object($share) {
     'Social_Share_ID__c' => $share['share_id'],
     'Social_Share_Type__c' => $share['type'],
     'Submission_ID__c' => $share['sid'],
+    'Client_ID__c' => empty($share['client_id']) ? '' : $share['client_id'],  //@TODO: What if the SF instance isn't configured with this field?
   );
 
   // conditionally add the opportunity id if this share is related to a donation.

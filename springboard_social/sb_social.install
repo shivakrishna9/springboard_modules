@@ -126,6 +126,13 @@ function sb_social_schema() {
         'type' => 'varchar',
         'length' => 60,
       ),
+      'client_id' => array(
+        'description' => 'Client ID from the Springboard cookie (if available).',
+        'type' => 'varchar',
+        'length' => 31,
+        'not null' => TRUE,
+        'default' => '',
+      ),
     ),
     'primary key' => array('share_id'),
     'indexes' => array(
@@ -315,4 +322,18 @@ function sb_social_update_7006() {
   );
   db_add_field('sb_social_shares', 'did', $field);
 
+}
+
+/**
+ * Add client_id column to shares table
+ */
+function sb_social_update_7007() {
+  $field = array(
+    'description' => 'Client ID from the Springboard cookie (if available).',
+    'type' => 'varchar',
+    'length' => 31,
+    'not null' => TRUE,
+    'default' => '',
+  );
+  db_add_field('sb_social_shares', 'client_id', $field);
 }

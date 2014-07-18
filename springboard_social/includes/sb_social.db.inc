@@ -31,7 +31,8 @@ function sb_social_share_event_load($share_id) {
       status,
       url,
       sf_share_id,
-      opportunity_id
+      opportunity_id,
+      client_id
 
     FROM {sb_social_shares} s
     WHERE
@@ -109,11 +110,14 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
 
   $uid = !empty($submission->uid) ? $submission->uid : $user->uid;
   
-  // If there's no uid (non-confirmation share by anonymous user) then check the Springboard cookie
-  // (if available) as a fallback.
-  if (!$uid && module_exists('springboard_cookie')) {
+  // If Springboard Cookie is enabled, fetch the cookie data and its client_id.
+  $client_id = '';
+  if (module_exists('springboard_cookie')) {
     $cookie = springboard_cookie_get_cookie();
-    if ($cookie['uid']) {
+    $client_id = $cookie['client_id'];
+    // If there's no uid (non-confirmation share by anonymous user) then check the Springboard cookie
+    // (if available) as a fallback.
+    if (!$uid && $cookie['uid']) {
       $uid = $cookie['uid'];
     }
   }
@@ -134,6 +138,7 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
     'created' => (int) time(),
     'status' => 'pending',
     'url' => '',
+    'client_id' => $client_id,
   );
 
   // Go after the sfid of the parent opportunity if sid is present. This handles
