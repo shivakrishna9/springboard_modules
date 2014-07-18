@@ -321,3 +321,21 @@ body p {
   }
 
 }
+
+@media (max-width: 480px) {
+
+  .reg-pane .password-strength {
+    margin: 10px 0;
+  }
+
+  .reg-pane #edit-account .control-group .control-group {
+    display: inline-block;
+    width: 100%;
+    vertical-align: top;
+  }
+
+  .reg-pane .control-group.confirm-parent {
+    margin-top: 0;
+  }
+
+}

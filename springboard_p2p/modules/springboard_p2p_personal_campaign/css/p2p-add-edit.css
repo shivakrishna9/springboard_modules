@@ -18,6 +18,12 @@ body {
   padding: 20px 1% 0 2%;
 }
 
+div.alert.error,
+div.messages.error {
+  width: 90%;
+  margin: 10px auto 0 auto;
+}
+
 h1 {
   margin: 0 0 12px 0;
   color: #5b5b5b;
