@@ -863,7 +863,7 @@ $fields['fr_tickets_soldout_redirect'] = array(
     )
   );
 
-$fields['fr_tickets_donation_addon_form'] = array(
+  $fields['fr_tickets_donation_addon_form'] = array(
     'field_config' => array(
       'active' => 1,
       'cardinality' => 1,
@@ -941,7 +941,7 @@ $fields['fr_tickets_donation_addon_form'] = array(
     )
   );
 
- $fields['fr_tickets_ticket_types'] = array(
+  $fields['fr_tickets_ticket_types'] = array(
     'field_config' => array(
       'active' => 1,
       'cardinality' => FIELD_CARDINALITY_UNLIMITED,
@@ -1008,7 +1008,7 @@ $fields['fr_tickets_donation_addon_form'] = array(
 
   // The aggregated ticket inventory info
 
-   $fields['fr_tickets_inventory_initial'] = array(
+  $fields['fr_tickets_inventory_initial'] = array(
     'field_config' => array(
       'active' => 1,
       'cardinality' => 1,
@@ -1055,7 +1055,7 @@ $fields['fr_tickets_donation_addon_form'] = array(
     )
   );
 
-   $fields['fr_tickets_inventory_available'] = array(
+  $fields['fr_tickets_inventory_available'] = array(
     'field_config' => array(
       'active' => 1,
       'cardinality' => 1,
@@ -1102,7 +1102,7 @@ $fields['fr_tickets_donation_addon_form'] = array(
     )
   );
 
-   $fields['fr_tickets_inventory_purchased'] = array(
+  $fields['fr_tickets_inventory_purchased'] = array(
     'field_config' => array(
       'active' => 1,
       'cardinality' => 1,
@@ -1150,7 +1150,7 @@ $fields['fr_tickets_donation_addon_form'] = array(
   );
 
 
- // Translatables
+  // Translatables
   // Included for use with string extractors like potx.
   t('Allow waitlist for closed out events');
   t('Allow waitlist for sold out events');
@@ -1169,7 +1169,9 @@ $fields['fr_tickets_donation_addon_form'] = array(
   t('Initial ticket inventory');
   t('Available ticket inventory');
   t('Purchased ticket inventory');
-
+  
+  dsm($fields);
+  
   return $fields;
 }
 
