@@ -399,7 +399,8 @@ div.donation-processing-wrapper {
   text-align: center;
 }
 
-.pane-signup a {
+.pane-signup a,
+.webform-conf-pane .links a {
   position: relative;
   display: block;
   margin: 0 auto;
@@ -414,6 +415,11 @@ div.donation-processing-wrapper {
   cursor: pointer;
 }
 
+.webform-conf-pane .links a {
+  padding: 5px 10px;
+  width: 200px;
+}
+
 .pane-signup a:after {
   position: relative;
   top: 1px;
@@ -426,10 +432,17 @@ div.donation-processing-wrapper {
   font-family: FontAwesome;
 }
 
-.pane-signup a:hover {
+.pane-signup a:hover,
+.webform-conf-pane .links a:hover {
   outline: none;
   background: #2980b9;
   text-decoration: none;
+}
+
+.pane-content .webform-confirmation {
+  padding: 10px;
+  border: 1px solid #ccc;
+  font-weight: bold;
 }
 
 /* media queries */
