@@ -278,7 +278,9 @@ function fundraiser_tickets_form_node_form_alter(&$form, &$form_state) {
           $form[$child]['#access'] = FALSE;
         }
       }
+      dsm($form);
       $form['#after_build'][] = '_fundraiser_tickets_ticket_settings_form_organize';
+      dsm($form);
       $form['#validate'] = array('_fundraiser_tickets_ticket_settings_form_validate');
       $form['#submit'] = array();
       unset($form['actions']['preview']);
@@ -472,10 +474,7 @@ function _fundraiser_tickets_update_quantity_sold($product) {
 /**
 * Afterbuild function to add fieldsets to the tickets tab
 */
-function _fundraiser_tickets_ticket_settings_form_organize($form, $form_state){
-    
-    dsm($form);
-    
+function _fundraiser_tickets_ticket_settings_form_organize($form, $form_state){    
     // Create fieldset
     $form['waitlist']  = array(
       '#type' => 'fieldset',
