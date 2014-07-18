@@ -796,38 +796,118 @@ $fields['fr_tickets_soldout_redirect'] = array(
 
   // Donation settings
 
-  $fields['fr_tickets_donation_donation'] = array(
+  // $fields['fr_tickets_donation_donation'] = array(
+  //   'field_config' => array(
+  //     'active' => 1,
+  //     'cardinality' => 1,
+  //     'deleted' => 0,
+  //     'entity_types' => array(),
+  //     'field_name' => 'fr_tickets_donation_donation',
+  //     'foreign keys' => array(),
+  //     'indexes' => array(
+  //       'value' => array(
+  //         0 => 'value',
+  //       ),
+  //     ),
+  //     'locked' => 0,
+  //     'module' => 'list',
+  //     'settings' => array(
+  //       'allowed_values' => array(
+  //         0 => '',
+  //         1 => '',
+  //       ),
+  //       'allowed_values_function' => '',
+  //     ),
+  //     'translatable' => 0,
+  //     'type' => 'list_boolean',
+  //   ),
+  //   'field_instance' => array(
+  //     'bundle' => $type,
+  //     'default_value' => array(
+  //       0 => array(
+  //         'value' => 0,
+  //       ),
+  //     ),
+  //     'deleted' => 0,
+  //     'description' => '',
+  //     'display' => array(
+  //       'default' => array(
+  //         'label' => 'above',
+  //         'settings' => array(),
+  //         'type' => 'hidden',
+  //         'weight' => 10,
+  //       ),
+  //       'teaser' => array(
+  //         'label' => 'above',
+  //         'settings' => array(),
+  //         'type' => 'hidden',
+  //         'weight' => 0,
+  //       ),
+  //     ),
+  //     'entity_type' => 'node',
+  //     'field_name' => 'fr_tickets_donation_donation',
+  //     'label' => 'Enable add-on donation',
+  //     'required' => 0,
+  //     'settings' => array(
+  //       'user_register_form' => FALSE,
+  //     ),
+  //     'widget' => array(
+  //       'active' => 1,
+  //       'module' => 'options',
+  //       'settings' => array(
+  //         'display_label' => 1,
+  //       ),
+  //       'type' => 'options_onoff',
+  //       'weight' => 13,
+  //     ),
+  //   )
+  // );
+
+$fields['fr_tickets_donation_addon_form'] = array(
     'field_config' => array(
       'active' => 1,
       'cardinality' => 1,
       'deleted' => 0,
       'entity_types' => array(),
-      'field_name' => 'fr_tickets_donation_donation',
-      'foreign keys' => array(),
+      'field_name' => 'fr_tickets_donation_addon_form',
+      'foreign keys' => array(
+        'node' => array(
+          'columns' => array(
+            'target_id' => 'nid',
+          ),
+          'table' => 'node',
+        ),
+      ),
       'indexes' => array(
-        'value' => array(
-          0 => 'value',
+        'target_id' => array(
+          0 => 'target_id',
         ),
       ),
       'locked' => 0,
-      'module' => 'list',
+      'module' => 'entityreference',
       'settings' => array(
-        'allowed_values' => array(
-          0 => '',
-          1 => '',
+        'handler' => 'base',
+        'handler_settings' => array(
+          'behaviors' => array(
+            'views-select-list' => array(
+              'status' => 0,
+            ),
+          ),
+          'sort' => array(
+            'type' => 'none',
+          ),
+          'target_bundles' => array(
+            'webform' => 'donation_form',
+          ),
         ),
-        'allowed_values_function' => '',
+        'target_type' => 'node',
       ),
       'translatable' => 0,
-      'type' => 'list_boolean',
+      'type' => 'entityreference',
     ),
     'field_instance' => array(
       'bundle' => $type,
-      'default_value' => array(
-        0 => array(
-          'value' => 0,
-        ),
-      ),
+      'default_value' => NULL,
       'deleted' => 0,
       'description' => '',
       'display' => array(
@@ -835,7 +915,7 @@ $fields['fr_tickets_soldout_redirect'] = array(
           'label' => 'above',
           'settings' => array(),
           'type' => 'hidden',
-          'weight' => 10,
+          'weight' => 14,
         ),
         'teaser' => array(
           'label' => 'above',
@@ -845,8 +925,8 @@ $fields['fr_tickets_soldout_redirect'] = array(
         ),
       ),
       'entity_type' => 'node',
-      'field_name' => 'fr_tickets_donation_donation',
-      'label' => 'Enable add-on donation',
+      'field_name' => 'fr_tickets_donation_addon_form',
+      'label' => 'Donation form to Use for Add-ons',
       'required' => 0,
       'settings' => array(
         'user_register_form' => FALSE,
@@ -854,11 +934,9 @@ $fields['fr_tickets_soldout_redirect'] = array(
       'widget' => array(
         'active' => 1,
         'module' => 'options',
-        'settings' => array(
-          'display_label' => 1,
-        ),
-        'type' => 'options_onoff',
-        'weight' => 13,
+        'settings' => array(),
+        'type' => 'options_select',
+        'weight' => 14,
       ),
     )
   );
@@ -923,7 +1001,7 @@ $fields['fr_tickets_soldout_redirect'] = array(
         'module' => 'commerce_product_reference',
         'settings' => array(),
         'type' => 'commerce_product_reference_hidden',
-        'weight' => 14,
+        'weight' => 15,
       ),
     )
   );
@@ -1079,6 +1157,7 @@ $fields['fr_tickets_soldout_redirect'] = array(
   t('Body');
   t('Close event on');
   t('Enable add-on donation');
+  t('Donation Form to Use for Addons');
   t('Event is closed');
   t('Closed message');
   t('Sold out message');
