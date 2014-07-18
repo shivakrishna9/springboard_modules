@@ -1,0 +1,126 @@
+<?php
+/**
+ * @file
+ * Sets up the petition module and content type.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function springboard_petition_install() {
+  variable_set('petition_springboard_petition', TRUE);
+  $webform_node_types = variable_get('webform_node_types', array());
+  $webform_node_types[] = 'springboard_petition';
+  variable_set('webform_node_types', $webform_node_types);
+  $webform_node_types_primary = variable_get('webform_node_types_primary', array());
+  $webform_node_types_primary[] = 'springboard_petition';
+  variable_set('webform_node_types_primary', $webform_node_types_primary);
+  // Create default SF map insert into table.
+  if (module_exists('salesforce_genmap')) {
+    $map = array();
+    $map = entity_create('salesforce_genmap_map', $map);
+    $map->nid = -1;
+    $map->map_handler = 'webform';
+    $map->salesforce_object_type = 'Actions__c';
+    $object_type = '';
+    module_load_include('inc', 'salesforce_genmap', 'includes/salesforce_genmap.map');
+    if (function_exists('salesforce_get_api')) {
+      $sfapi = salesforce_get_api();
+      if ($sfapi->isAuthorized()) {
+        if (function_exists('_sfw_salesforce_record_type_list')) {
+          $sf_records = _sfw_salesforce_record_type_list($sfapi, 'Actions__c');
+          $sf_records = array_flip($sf_records);
+          $object_type = $sf_records['Petition Submission'];
+        }
+      }
+    }
+    $map->salesforce_record_type = $object_type;
+    $map->field_map = array(
+      'webform_map' => array(
+        'cid' => 'Campaign__c',
+        'ms' => 'Market_Source__c',
+        'referrer' => 'Referrer__c',
+        'initial_referrer' => 'Initial_Referrer__c',
+        'search_engine' => 'Search_Engine__c',
+        'search_string' => 'Search_String__c',
+        'user_agent' => 'User_Agent__c',
+      ),
+      'salesforce_node_map' => array(
+        'nid' => 'Drupal_Node_ID__c',
+        'title' => 'Action_Name__c',
+      ),
+      'salesforce_submission_map' => array(
+        'sid' => 'Submission_ID__c',
+        'date' => 'Action_Date__c',
+      ),
+    );
+
+    $map->sync_options = array(
+      'insert' => 'insert',
+      'update' => 'update',
+      'delete' => 'delete',
+    );
+    $map->status = 1;
+    $map->module = 'springboard_advocacy';
+    salesforce_genmap_save_map($map, 'webform');
+
+    springboard_petition_add_content_type();
+  }
+}
+
+/**
+ * Creates the springboard_petition content type.
+ */
+function springboard_petition_add_content_type() {
+  $type = node_type_set_defaults();
+  $type->name = t('Petition');
+  $type->type = 'springboard_petition';
+  $type->description = '';
+  $type->title_label = t('Title');
+  $type->has_title = TRUE;
+  $type->base = 'node_content';
+  $type->custom = TRUE;
+  $type->modified = TRUE;
+  $type->module = 'springboard_petition';
+  // Save or reset persistent variable values.
+  $variables = array(
+    'additional_settings__active_tab' => 'edit-webform-user',
+    'field_bundle_settings_node_' => array(),
+    'menu_parent' => 'main-menu:0',
+    'menu_options' => array(
+      0 => 'main-menu',
+    ),
+    'node_submitted' => 0,
+    'node_preview' => 1,
+    'node_options' => array(
+      0 => 'status',
+    ),
+    'fundraiser' => 0,
+    'webform_user' => 1,
+    'webform_user_default_fields' => array(
+      'mail' => 'mail',
+      'sbp_first_name' => 'sbp_first_name',
+      'sbp_last_name' => 'sbp_last_name',
+    ),
+  );
+  foreach ($variables as $key => $value) {
+    $variable_new = $key . '_' . $type->type;
+    if (is_array($value)) {
+      $value = array_keys(array_filter($value));
+    }
+    variable_set($variable_new, $value);
+  }
+  node_type_save($type);
+  node_types_rebuild();
+  node_add_body_field($type);
+  // Add as a webform.
+  $webform_node_types = variable_get('webform_node_types', array('webform'));
+  $webform_node_types_primary = variable_get('webform_node_types_primary', array('webform'));
+  $webform_node_types = array_merge($webform_node_types, array('springboard_petition'));
+  $webform_node_types_primary = array_merge($webform_node_types_primary, array('springboard_petition'));
+  variable_set('webform_node_types', array_unique($webform_node_types));
+  variable_set('webform_node_types_primary', array_unique($webform_node_types_primary));
+  // Done.
+  drupal_set_message(t('The content type Petition has been added.'));
+  watchdog('springboard_petition', 'Added content type Petition.');
+}
