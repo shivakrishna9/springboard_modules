@@ -40,7 +40,6 @@ function _fundraiser_tickets_default_fields_settings($type) {
   $fields = array();
 
   // Waitlist settings
-
   $fields['fr_tickets_waitlist_form'] = array(
     'field_config' => array(
       'active' => 1,
@@ -119,7 +118,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
     )
   );
 
- $fields['fr_tickets_waitlist_soldout'] = array(
+  $fields['fr_tickets_waitlist_soldout'] = array(
     'field_config' => array(
       'active' => 1,
       'cardinality' => 1,
@@ -186,7 +185,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
     )
   );
 
- $fields['fr_tickets_waitlist_closed'] = array(
+  $fields['fr_tickets_waitlist_closed'] = array(
     'field_config' => array(
       'active' => 1,
       'cardinality' => 1,
@@ -255,8 +254,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
 
 
   // Closed settings
-
-   $fields['fr_tickets_closed_is_closed'] = array(
+  $fields['fr_tickets_closed_is_closed'] = array(
     'field_config' => array(
       'active' => 1,
       'cardinality' => 1,
@@ -395,7 +393,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
     )
   );
 
- $fields['fr_tickets_closed_options'] = array(
+  $fields['fr_tickets_closed_options'] = array(
     'field_config' => array(
       'active' => 1,
       'cardinality' => 1,
@@ -528,7 +526,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
     )
   );
 
- $fields['fr_tickets_closed_message'] = array(
+  $fields['fr_tickets_closed_message'] = array(
     'field_config' => array(
       'active' => 1,
       'cardinality' => 1,
@@ -594,7 +592,6 @@ function _fundraiser_tickets_default_fields_settings($type) {
   );
 
   // Sold out settings
-  //
   $fields['fr_tickets_soldout_options'] = array(
     'field_config' => array(
       'active' => 1,
@@ -661,7 +658,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
     )
   );
 
-$fields['fr_tickets_soldout_redirect'] = array(
+  $fields['fr_tickets_soldout_redirect'] = array(
     'field_config' => array(
       'active' => 1,
       'cardinality' => 1,
@@ -795,7 +792,6 @@ $fields['fr_tickets_soldout_redirect'] = array(
   );
 
   // Donation settings
-
   $fields['fr_tickets_donation_donation'] = array(
     'field_config' => array(
       'active' => 1,
@@ -1007,7 +1003,6 @@ $fields['fr_tickets_soldout_redirect'] = array(
   );
 
   // The aggregated ticket inventory info
-
   $fields['fr_tickets_inventory_initial'] = array(
     'field_config' => array(
       'active' => 1,
@@ -1169,9 +1164,7 @@ $fields['fr_tickets_soldout_redirect'] = array(
   t('Initial ticket inventory');
   t('Available ticket inventory');
   t('Purchased ticket inventory');
-  
-  dsm($fields);
-  
+    
   return $fields;
 }
 

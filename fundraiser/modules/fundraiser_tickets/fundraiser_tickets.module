@@ -278,9 +278,7 @@ function fundraiser_tickets_form_node_form_alter(&$form, &$form_state) {
           $form[$child]['#access'] = FALSE;
         }
       }
-      dsm($form);
       $form['#after_build'][] = '_fundraiser_tickets_ticket_settings_form_organize';
-      dsm($form);
       $form['#validate'] = array('_fundraiser_tickets_ticket_settings_form_validate');
       $form['#submit'] = array();
       unset($form['actions']['preview']);
@@ -475,96 +473,96 @@ function _fundraiser_tickets_update_quantity_sold($product) {
 * Afterbuild function to add fieldsets to the tickets tab
 */
 function _fundraiser_tickets_ticket_settings_form_organize($form, $form_state){    
-    // Create fieldset
-    $form['waitlist']  = array(
-      '#type' => 'fieldset',
-      '#title' => t('Wait List options'),
-      '#weight' => '-5'
-    );
-    $form['waitlist']['fr_tickets_waitlist_form'] = $form['fr_tickets_waitlist_form'];
-    $form['waitlist']['fr_tickets_waitlist_soldout'] = $form['fr_tickets_waitlist_soldout'];
-    $form['waitlist']['fr_tickets_waitlist_closed'] = $form['fr_tickets_waitlist_closed'];
-    unset($form['fr_tickets_waitlist_form']);
-    unset($form['fr_tickets_waitlist_soldout']);
-    unset($form['fr_tickets_waitlist_closed']);
-    // These two fields seem to be redundant, so for now I am hiding them.
-    // TODO: Check where we want them.  If not, drop them completely.
-    $form['waitlist']['fr_tickets_waitlist_soldout']['#access'] = FALSE;
-    $form['waitlist']['fr_tickets_waitlist_closed']['#access']  = FALSE;
-
-
-    $form['closed']  = array(
-      '#type' => 'fieldset',
-      '#title' => t('Close settings'),
-      '#weight' => '-3'
-    );
-    $form['closed']['fr_tickets_closed_is_closed'] = $form['fr_tickets_closed_is_closed'];
-    $form['closed']['fr_tickets_closed_close_date'] = $form['fr_tickets_closed_close_date'];
-    $form['closed']['fr_tickets_closed_options'] = $form['fr_tickets_closed_options'];
-    $form['fr_tickets_closed_redirect']['#states'] = array(
-      'visible' => array(
-        ':input[name="fr_tickets_closed_options[und]"]' => array('value' => 'redirect'),
-      ),
-    );
-    // Move the closed redirect right after the closed redirect radio button.
-    $form['closed']['fr_tickets_closed_options'][LANGUAGE_NONE]['redirect']['#suffix'] = drupal_render($form['fr_tickets_closed_redirect']);
-    $form['closed']['fr_tickets_closed_message'] = $form['fr_tickets_closed_message'];
-    $form['closed']['fr_tickets_closed_message']['#states'] = array(
-      'visible' => array(
-        ':input[name="fr_tickets_closed_options[und]"]' => array('value' => 'message'),
-      ),
-    );
-
-    unset($form['fr_tickets_closed_is_closed']);
-    unset($form['fr_tickets_closed_close_date']);
-    unset($form['fr_tickets_closed_options']);
-    unset($form['fr_tickets_closed_redirect']);
-    unset($form['fr_tickets_closed_message']);
-
-    $form['soldout']  = array(
-      '#type' => 'fieldset',
-      '#title' => t('Sell out settings'),
-      '#weight' => '-1'
-    );
-    $form['soldout']['fr_tickets_soldout_options'] = $form['fr_tickets_soldout_options'];
-    $form['fr_tickets_soldout_redirect']['#states'] = array(
-      'visible' => array(
-        ':input[name="fr_tickets_soldout_options[und]"]' => array('value' => 'redirect'),
-      ),
-    );
-    // Move the sold out redirect right after the sold out redirect radio button.
-    $form['soldout']['fr_tickets_soldout_options'][LANGUAGE_NONE]['redirect']['#suffix'] = drupal_render($form['fr_tickets_soldout_redirect']);
-
-    $form['soldout']['fr_tickets_soldout_message'] = $form['fr_tickets_soldout_message'];
-    $form['soldout']['fr_tickets_soldout_message']['#states'] = array(
-      'visible' => array(
-        ':input[name="fr_tickets_soldout_options[und]"]' => array('value' => 'message'),
-      ),
-    );
-
-    unset($form['fr_tickets_soldout_options']);
-    unset($form['fr_tickets_soldout_redirect']);
-    unset($form['fr_tickets_soldout_message']);
-
-    $form['donation']  = array(
-      '#type' => 'fieldset',
-      '#title' => t('Donation add-on'),
-      '#weight' => '1'
-    );
-    $form['donation']['fr_tickets_donation_addon_form'] = $form['fr_tickets_donation_addon_form'];
-    unset($form['fr_tickets_donation_addon_form']);
-    
-    $form['donation']['fr_tickets_donation_donation'] = $form['fr_tickets_donation_donation'];
-    unset($form['fr_tickets_donation_donation']);
-    
-    // These fields are managed programmatically.
-    unset($form['fr_tickets_inventory_initial']);
-    unset($form['fr_tickets_inventory_available']);
-    unset($form['fr_tickets_inventory_purchased']);
-    
-    dsm($form);
-    
-    return $form;
+  // Create fieldset
+  $form['waitlist']  = array(
+    '#type' => 'fieldset',
+    '#title' => t('Wait List options'),
+    '#weight' => '-5'
+  );
+  $form['waitlist']['fr_tickets_waitlist_form'] = $form['fr_tickets_waitlist_form'];
+  $form['waitlist']['fr_tickets_waitlist_soldout'] = $form['fr_tickets_waitlist_soldout'];
+  $form['waitlist']['fr_tickets_waitlist_closed'] = $form['fr_tickets_waitlist_closed'];
+  unset($form['fr_tickets_waitlist_form']);
+  unset($form['fr_tickets_waitlist_soldout']);
+  unset($form['fr_tickets_waitlist_closed']);
+  // These two fields seem to be redundant, so for now I am hiding them.
+  // TODO: Check where we want them.  If not, drop them completely.
+  $form['waitlist']['fr_tickets_waitlist_soldout']['#access'] = FALSE;
+  $form['waitlist']['fr_tickets_waitlist_closed']['#access']  = FALSE;
+  
+  
+  $form['closed']  = array(
+    '#type' => 'fieldset',
+    '#title' => t('Close settings'),
+    '#weight' => '-3'
+  );
+  $form['closed']['fr_tickets_closed_is_closed'] = $form['fr_tickets_closed_is_closed'];
+  $form['closed']['fr_tickets_closed_close_date'] = $form['fr_tickets_closed_close_date'];
+  $form['closed']['fr_tickets_closed_options'] = $form['fr_tickets_closed_options'];
+  $form['fr_tickets_closed_redirect']['#states'] = array(
+    'visible' => array(
+      ':input[name="fr_tickets_closed_options[und]"]' => array('value' => 'redirect'),
+    ),
+  );
+  // Move the closed redirect right after the closed redirect radio button.
+  $form['closed']['fr_tickets_closed_options'][LANGUAGE_NONE]['redirect']['#suffix'] = drupal_render($form['fr_tickets_closed_redirect']);
+  $form['closed']['fr_tickets_closed_message'] = $form['fr_tickets_closed_message'];
+  $form['closed']['fr_tickets_closed_message']['#states'] = array(
+    'visible' => array(
+      ':input[name="fr_tickets_closed_options[und]"]' => array('value' => 'message'),
+    ),
+  );
+  
+  unset($form['fr_tickets_closed_is_closed']);
+  unset($form['fr_tickets_closed_close_date']);
+  unset($form['fr_tickets_closed_options']);
+  unset($form['fr_tickets_closed_redirect']);
+  unset($form['fr_tickets_closed_message']);
+  
+  $form['soldout']  = array(
+    '#type' => 'fieldset',
+    '#title' => t('Sell out settings'),
+    '#weight' => '-1'
+  );
+  $form['soldout']['fr_tickets_soldout_options'] = $form['fr_tickets_soldout_options'];
+  $form['fr_tickets_soldout_redirect']['#states'] = array(
+    'visible' => array(
+      ':input[name="fr_tickets_soldout_options[und]"]' => array('value' => 'redirect'),
+    ),
+  );
+  // Move the sold out redirect right after the sold out redirect radio button.
+  $form['soldout']['fr_tickets_soldout_options'][LANGUAGE_NONE]['redirect']['#suffix'] = drupal_render($form['fr_tickets_soldout_redirect']);
+  
+  $form['soldout']['fr_tickets_soldout_message'] = $form['fr_tickets_soldout_message'];
+  $form['soldout']['fr_tickets_soldout_message']['#states'] = array(
+    'visible' => array(
+      ':input[name="fr_tickets_soldout_options[und]"]' => array('value' => 'message'),
+    ),
+  );
+  
+  unset($form['fr_tickets_soldout_options']);
+  unset($form['fr_tickets_soldout_redirect']);
+  unset($form['fr_tickets_soldout_message']);
+  
+  $form['donation']  = array(
+    '#type' => 'fieldset',
+    '#title' => t('Donation add-on'),
+    '#weight' => '1'
+  );
+  $form['donation']['fr_tickets_donation_addon_form'] = $form['fr_tickets_donation_addon_form'];
+  unset($form['fr_tickets_donation_addon_form']);
+  
+  $form['donation']['fr_tickets_donation_donation'] = $form['fr_tickets_donation_donation'];
+  unset($form['fr_tickets_donation_donation']);
+  
+  // These fields are managed programmatically.
+  unset($form['fr_tickets_inventory_initial']);
+  unset($form['fr_tickets_inventory_available']);
+  unset($form['fr_tickets_inventory_purchased']);
+  
+  dsm($form);
+  
+  return $form;
 }
 
 
@@ -637,8 +635,8 @@ function fundraiser_tickets_node_type_insert($type) {
  * Implements hook_node_type_update
  */
 function fundraiser_tickets_node_type_update($type) {
-  if (fundraiser_tickets_is_ticket_type($type->type)){
-    if (! fundraiser_is_donation_type($type->type)){
+  if (fundraiser_tickets_is_ticket_type($type->type)) {
+    if (! fundraiser_is_donation_type($type->type)) {
       drupal_set_message(t('Fundraiser must also be enabled for ticketed event sales.'), 'error');
     } else {
       module_load_include('inc', 'fundraiser_tickets', 'includes/fundraiser_tickets.fields');
