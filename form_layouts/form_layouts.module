@@ -51,7 +51,7 @@ function form_layouts_form_node_form_alter(&$form, &$form_state, $form_id) {
     $form['form_layouts'] = array(
       '#type' => 'fieldset',
       '#title' => t('Form layout settings'),
-      '#description' => t('Select the form layout for this form. Defaults to one-column layout.'),
+      '#description' => t('Select the form layout for this content. Defaults to one-column layout.'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
       '#group' => 'additional_settings',
@@ -127,6 +127,7 @@ function form_layouts_node_view($node, $view_mode, $langcode) {
  * Implements hook_form_layouts_info().
  */
 function form_layouts_form_layouts_info() {
+  $templates = array();
 
   $templates['one_column'] = array(
     'name' => t('One column'),
@@ -136,6 +137,7 @@ function form_layouts_form_layouts_info() {
     'template' => 'one-column',
     'path' => drupal_get_path('module', 'form_layouts') . '/templates/',
   );
+
   $templates['two_column_donation'] = array(
     'name' => t('Two column: donation form'),
     'type' => 'fundraiser',
@@ -171,6 +173,7 @@ function form_layouts_form_layouts_info() {
     'template' => 'two-column-left-right',
     'path' => drupal_get_path('module', 'form_layouts') . '/templates/',
   );
+
   return $templates;
 }
 
@@ -221,7 +224,6 @@ function form_layouts_preprocess_two_column_donation(&$vars) {
  * Preprocess function that breaks a fundraiser form into its fieldsets.
  */
 function form_layouts_fundraiser_preprocess(&$vars) {
-
   if (isset($vars['element']['#form']['submitted']['donation'])) {
     $vars['donation_fieldset'] = drupal_render($vars['element']['#form']['submitted']['donation']);
     $vars['donor_information_fieldset'] = drupal_render($vars['element']['#form']['submitted']['donor_information']);
@@ -245,8 +247,7 @@ function form_layouts_fundraiser_preprocess(&$vars) {
  *   TRUE if the content type is form layouts enabled.
  */
 function form_layouts_type_is_layouts_enabled($type) {
-  $form_layouts_types = array_filter(webform_variable_get('webform_node_types'));
-//  $form_layouts_types = variable_get('form_layouts_node_types', array(''));
+  $form_layouts_types = variable_get('form_layouts_node_types', array(''));
 
   return in_array($type, $form_layouts_types);
 }
@@ -268,4 +269,91 @@ function form_layouts_template_is_fundraiser_only($template) {
 
   // Fallback before type existed.
   return isset($template['name']) && strpos($template['name'], 'donation') !== FALSE;
+}
+
+/**
+ * Implements hook_form_alter() for node_type_form().
+ *
+ * Alter content type settings to add "Enable form layouts?" checkbox.
+ */
+function form_layouts_form_node_type_form_alter(&$form, &$form_state) {
+
+  if (isset($form['type'])) {
+    $form['form_layouts'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Form layout settings'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#group' => 'additional_settings',
+    );
+
+    if (!empty($form['#node_type']->type)) {
+      $default_value = form_layouts_type_is_layouts_enabled($form['#node_type']->type);
+    }
+    else {
+      $default_value = FALSE;
+    }
+
+    $form['form_layouts']['form_layouts'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enable form layouts'),
+      '#default_value' => $default_value,
+      '#description' => t('Allow selection of predefined webform templates for this content type. If checked this content type will be webform enabled if it is not already.'),
+    );
+
+    $form['#submit'][] = 'form_layouts_form_node_type_form_submit';
+  }
+}
+
+/**
+ * Submit handler for the node type form.
+ *
+ * If form layouts are enabled, ensure wbform is also enabled.
+ */
+function form_layouts_form_node_type_form_submit($form, $form_state) {
+  $type = $form_state['values']['type'];
+  $types = variable_get('form_layouts_node_types', array(''));
+  $key = array_search($type, $types);
+
+  if ($form_state['values']['form_layouts']) {
+
+    // Enable webform for this type if it's not enabled..
+    $webform_types = webform_variable_get('webform_node_types');
+    $webform_key = array_search($type, $webform_types);
+    if ($webform_key === FALSE) {
+      $webform_types[] = $type;
+      variable_set('webform_node_types', $webform_types);
+      drupal_set_message('Webform has been enabled for this content type.');
+    }
+
+    if ($key === FALSE) {
+      // Enable form layouts.
+      $types[] = $type;
+      variable_set('form_layouts_node_types', $types);
+      drupal_set_message('Form layouts have been enabled for this content type.');
+    }
+
+  }
+  else {
+    // Remove this type from form layouts.
+    if ($key !== FALSE) {
+      unset($types[$key]);
+      variable_set('form_layouts_node_types', $types);
+      drupal_set_message('Form layouts have been disabled for this content type.');
+    }
+  }
+}
+
+/**
+ * Implements hook_node_type_delete().
+ *
+ * Remove this node type from being form layouts enabled.
+ */
+function form_layouts_node_type_delete($info) {
+  $types = variable_get('form_layouts_node_types', array(''));
+  $key = array_search($info->type, $types);
+  if ($key !== FALSE) {
+    unset($types[$key]);
+    variable_set('form_layouts_node_types', $types);
+  }
 }
