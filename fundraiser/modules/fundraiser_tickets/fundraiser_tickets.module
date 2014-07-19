@@ -1027,8 +1027,18 @@ function fundraiser_tickets_fundraiser_donation_process($donation) {
 
       $compatible = fundraiser_tickets_check_addon_required_fields($nid, $donation);
       if(isset($nid) && $donation->node->nid != $nid && $compatible == TRUE) {
-        $donation->donation['other_amount'] = intval($donation->donation['amount']);
-        $donation->donation['amount'] = 'other';        
+        // Find to see whether there is an 'other' donation within the ticket box fields.
+        // Loop through all of them to find whether one is an 'extra donation'.
+        foreach ($donation->donation['ticket_box'] as $key => $ticket_amounts) {
+          if (strpos($ticket_amounts, 'fundraiser-tickets-extra-donation')) {
+            // If we're here, we have found an 'extra donation', so unserialize and 
+            // set the 'other_amount' to the value of the extra donation.
+            $extra_donation = unserialize($ticket_amounts);
+            $donation->donation['other_amount'] = number_format($extra_donation['fundraiser-tickets-extra-donation'], 2);
+            $donation->donation['amount'] = 'other';
+            break;
+          }
+        }        
         fundraiser_tickets_form_action_submit($nid,  NULL, $donation->donation);
       }
     }
