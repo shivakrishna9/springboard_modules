@@ -2076,7 +2076,7 @@ function springboard_admin_config_donation_form_add($form, $form_state, $email_n
   }
   // One last save.
   node_save($node);
-  email_wrappers_save_settings($node->nid, $eid, $settings);
+  email_wrappers_save_settings($node->nid, 1, $settings);
   // Make sure the donation maps are moved over to be ready when/if SF is authenticated.
   if ($form_state['values']['sf_donation']) {
     // Add default map for donation.
