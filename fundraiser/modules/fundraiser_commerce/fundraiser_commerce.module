@@ -360,8 +360,9 @@ function fundraiser_commerce_fundraiser_gateway_info() {
         continue;
       }
 
-      // Some gateways support multiple payment methods and multiple payment processors
-      // Check if it specifies support for each in the payment method array
+      // Some gateways support multiple payment methods and multiple
+      // payment processors.
+      // Check if it specifies support for each in the payment method array.
       foreach ($gateway_options['payment_method'] as $key => $type) {
         if (!is_numeric($key) && $key == $method_id) {
           $gateway_options['payment_method'] = array($type);
@@ -396,31 +397,106 @@ function fundraiser_commerce_fundraiser_gateway_info() {
 }
 
 /**
+ * Provide a forms api options array of countries.
+ *
+ * @param array $countries
+ *   An array of country objects with ios and country_name properties.
+ * @param array $default_available
+ *   The ISO codes of countries to include.
+ *   Set to an empty array to include all countries.
+ *
+ * @return array
+ *   An array of options suitable for #options.
+ */
+function fundraiser_commerce_get_country_options(array $countries, array $default_available = array()) {
+  $options = array();
+
+  // Include all countries.
+  if (count($default_available) == 0) {
+    foreach ($countries as $country) {
+      if (!empty($country->iso) && !in_array($country->iso, array_keys($options))) {
+        $options[$country->iso] = $country->country_name;
+      }
+    }
+  }
+  // Only include some countries.
+  else {
+    foreach ($countries as $country) {
+      if (in_array($country->iso, $default_available)) {
+        $options[$country->iso] = $country->country_name;
+      }
+    }
+  }
+
+  return $options;
+}
+
+/**
+ * Create a forms api array for zones.
+ *
+ * @param array $zones
+ *   The zones to display.
+ *
+ * @return array
+ *   A forms api array suitable for #options.
+ */
+function fundraiser_commerce_get_zones_options(array $zones) {
+  $options = array();
+  foreach ($zones as $zone) {
+    if (!empty($zone->iso) && !in_array($zone->iso, array_keys($options))) {
+      $options[$zone->iso] = $zone->zone_name;
+    }
+  }
+
+  return $options;
+}
+
+/**
+ * Convert an options array from forms api to webform options.
+ *
+ * From:
+ *   array('US' => 'United States', 'CA' => 'Canada')
+ * To:
+ *   "US|United States\nCA|Canada"
+ *
+ * @param array $options
+ *   The forms api options array.
+ *
+ * @return string
+ *   A pipe delimited string in the form of key|value per line.
+ */
+function fundraiser_commerce_convert_form_options_to_webform_options(array $options) {
+  $options_string = '';
+  foreach ($options as $key => $value) {
+    $options_string .= $key . '|' . $value . "\n";
+  }
+
+  return $options_string;
+}
+
+/**
  * Implements hook_fundraiser_field_info_alter().
+ *
+ * Adds state and country fields to the billing info fieldset, plus a
+ * validation callback..
  */
 function fundraiser_commerce_fundraiser_field_info_alter(&$fields) {
-  // TODO review this code, perhaps we can push it further up into fundraiser proper.
-  // That would also avoid the wierd ajaxy stuff we have to do to get reference back working.
+  // @todo Review this code, perhaps we can push it further up into
+  //   fundraiser proper.
+  // That would also avoid the weird ajaxy stuff we have to do to get
+  // reference back working.
   $countries = fundraiser_commerce_get_countries();
   $include_all_countries = variable_get('fundraiser_all_countries', 0);
-  $default_available = array('US', 'CA');
-  $options = '';
-  $included_countries = array();
+
   if ($include_all_countries) {
-    foreach ($countries->countries as $country_id => $country) {
-      if (!in_array($country->iso, $included_countries) && !empty($country->iso)) {
-        $options .= $country->iso . '|' . $country->country_name . "\n";
-        $included_countries[] = $country->iso;
-      }
-    }
+    $default_available = array();
   }
   else {
-    foreach ($countries->countries as $country_id => $country) {
-      if (in_array($country->iso, $default_available)) {
-        $options .= $country->iso . '|' . $country->country_name . "\n";
-      }
-    }
+    $default_available = array('US', 'CA');
   }
+
+  $options = fundraiser_commerce_get_country_options($countries->countries, $default_available);
+  $options = fundraiser_commerce_convert_form_options_to_webform_options($options);
 
   // Set the default to a global default if set.
   $fields['billing_information']['country'] = array(
@@ -435,18 +511,15 @@ function fundraiser_commerce_fundraiser_field_info_alter(&$fields) {
     ),
     '#display_callback' => '_fundraiser_commerce_country_field_display',
   );
+
   $default_country = variable_get('fundraiser_default_country', 'US');
   if (!empty($default_country)) {
     $fields['billing_information']['country']['#value'] = $default_country;
   }
-  $options = '';
-  $included_zones = array();
-  foreach ($countries->zones as $zone_id => $zone) {
-    if (!in_array($zone->iso, $included_zones) && !empty($zone->iso)) {
-      $options .= $zone->iso . '|' . $zone->zone_name . "\n";
-      $included_zones[] = $zone->iso;
-    }
-  }
+
+  $options = fundraiser_commerce_get_zones_options($countries->zones);
+  $options = fundraiser_commerce_convert_form_options_to_webform_options($options);
+
   $fields['billing_information']['state'] = array(
     '#title' => t('State/Province'),
     '#type' => 'select',
@@ -459,6 +532,7 @@ function fundraiser_commerce_fundraiser_field_info_alter(&$fields) {
     ),
     '#display_callback' => '_fundraiser_commerce_zone_field_display',
   );
+
   // Add our own validation routines to the billing fields for credit cards.
   $fields['payment_information']['payment_fields']['#validate_callback'] = '_fundraiser_commerce_payment_fields_validate';
   return $fields;
@@ -475,7 +549,7 @@ function _fundraiser_commerce_payment_fields_validate($form, $form_state, $submi
   $payment_method_component = _fundraiser_webform_get_component_by_nid_key($form['#node']->nid, array('payment_method'));
   $payment_method_field = $form['#node']->webform['components'][$payment_method_component->cid];
   $gateway_info = _fundraiser_gateway_info($payment_method_field['extra']['payment_methods'][$payment_method]['id']);
-  // If the payment method has its own validate function don't validate here
+  // If the payment method has its own validate function don't validate here.
   if (isset($gateway_info['validate callback'])) {
     return;
   }
@@ -600,7 +674,7 @@ function _fundraiser_commerce_country_field_display($form, $form_state, $field) 
     }
     elseif(isset($country_field['#webform_component']['value'])) {
       $field['#default_value'] = $country_field['#webform_component']['value'];
-    }  
+    }
   }
 
   // Add interface elements to the field display.
@@ -681,7 +755,7 @@ function _fundraiser_commerce_zone_field_display($form, $form_state, $field) {
     }
     elseif(isset($country_field['#webform_component']['value'])) {
       $default = $country_field['#webform_component']['value'];
-    }  
+    }
     if (isset($default) && isset($countries->countries[$default])) {
       $available_zones = $countries->countries[$default]->zones;
     }
@@ -2332,7 +2406,7 @@ function fundraiser_commerce_commerce_authnet_cim_request_alter($api_request_ele
       if (isset($config['commerce_authnet_webform_field_' . $i]) && isset($donation->submission_data[$config['commerce_authnet_webform_field_' . $i]])) {
         $name = $fields[$config['commerce_authnet_authorize_field_' . $i]];
         $value =  $donation->submission_data[$config['commerce_authnet_webform_field_' . $i]];
-        $value = str_replace(array("&","'",'"',"|"), array("%26","%27","%22","%7C"), $value); 
+        $value = str_replace(array("&","'",'"',"|"), array("%26","%27","%22","%7C"), $value);
         $extra .= '&' . trim($name) . '=' . trim($value);
       }
       $i++;

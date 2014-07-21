@@ -1499,6 +1499,9 @@ function springboard_admin_config_profile($form, $form_state) {
     $instance = array_merge($profile_field, $instance);
     field_create_instance($instance);
   }
+
+  springboard_add_admin_field_group_to_user_entity();
+
   drupal_set_message(t('Profiles have been configured'));
 
   // Set the default fundraiser to webform user profile handling settings.
@@ -2119,4 +2122,57 @@ function springboard_admin_ignore($form, $form_state) {
  */
 function springboard_dashboard_config_cancel($form, &$form_state) {
   $form_state['redirect'] = 'admin/springboard';
+}
+
+/**
+ * Creates an admin field_group for the user entity.
+ *
+ * Adds some standard springboard fields under the group so they won't be shown
+ * to users who don't have the 'administer users' permission.
+ *
+ * @return bool|int
+ *   FALSE, SAVED_NEW, or SAVED_UPDATED.
+ */
+function springboard_add_admin_field_group_to_user_entity() {
+  if (!module_exists('field_group')) {
+    return FALSE;
+  }
+
+  module_load_include('module', 'ctools');
+  ctools_include('export');
+
+  $table = 'field_group';
+  $field_group = new stdClass();
+  $field_group->identifier = 'group_profile_admin|user|user|form';
+  $field_group->group_name = 'group_profile_admin';
+  $field_group->entity_type = 'user';
+  $field_group->bundle = 'user';
+  $field_group->mode = 'form';
+  $field_group->parent_name = '';
+
+  $field_group->disabled = FALSE;
+  $field_group->label = 'Admin';
+  $field_group->weight = '40';
+  $field_group->children = array(
+    'sbp_cid',
+    'sbp_ms',
+    'sbp_referrer',
+    'sbp_initial_referrer',
+    'sbp_search_engine',
+    'sbp_search_string',
+    'sbp_user_agent',
+    'sbp_salesforce_account_id',
+    'sbp_salesforce_contact_id',
+  );
+  $field_group->formate_type = 'fieldset';
+  $field_group->format_settings = array(
+    'formatter' => 'collapsible',
+    'instance_settings' => array(
+      'description' => '',
+      'classes' => 'group-profile-admin field-group-fieldset',
+      'required_fields' => 1,
+    ),
+  );
+
+  return ctools_export_crud_save($table, $field_group);
 }
