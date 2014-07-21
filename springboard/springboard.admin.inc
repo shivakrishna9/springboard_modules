@@ -2071,7 +2071,7 @@ function springboard_admin_config_donation_form_add($form, $form_state, $email_n
       'The email address we have for you is: [donation:mail]' . "\n" .
       "\n" .
       'Your card ending in [donation:card_number], expires [donation:card_expiration_month] / [donation:card_expiration_year]',
-      'extra' => seriliaze(array('send_on_donation_success' => 1, 'send_on_donation_decline' => 0, 'send_on_submission' => 0),
+      'extra' => serialize(array('send_on_donation_success' => 1, 'send_on_donation_decline' => 0, 'send_on_submission' => 0)),
     );
   }
   // One last save.
