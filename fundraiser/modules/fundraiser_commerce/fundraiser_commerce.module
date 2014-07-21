@@ -488,6 +488,51 @@ function _fundraiser_commerce_payment_fields_validate($form, $form_state, $submi
 }
 
 /**
+ * Implements hook_salesforce_genmap_map_field_info_alter().
+ */
+function fundraiser_commerce_salesforce_genmap_map_field_info_alter(&$fields, $node, $module) {
+  // We're only concerned with credit card methods.
+  if (empty($node->gateways['credit'])) return;
+  $gateway_info = _fundraiser_gateway_info($node->gateways['credit']['id']);
+
+  // If the credit card method has mappable response fields, add them to the mapping form.
+  if (!empty($gateway_info['response fields callback'])) {
+    $response_fields = $gateway_info['response fields callback']($gateway_info);
+    if (!empty($response_fields)) {
+      $fields['gateway_response_fields_map'] = array(
+        '#type' => 'fundraiser_commerce',
+        '#label' => t('Credit Card Gateway Response Field'),
+        '#dedupe' => FALSE,
+        '#fields' => array(),
+      );
+      foreach ($response_fields as $machine_name => $field_info) {
+        $fields['gateway_response_fields_map']['#fields'][$machine_name] = t($field_info['name']) . '<br />'
+          . '<small class="fundraiser-admin-description">' . t($field_info['description']) . '</small>';
+      }
+    }
+  } 
+}
+
+/**
+ * Implements hook_salesforce_genmap_map_fields_alter().
+ */
+function fundraiser_commerce_salesforce_genmap_map_fields_alter(&$fields, $context) {
+  // Are any gateway response fields mapped to Salesforce?
+  if (!empty($context['map']->field_map['gateway_response_fields_map'])) {
+    $donation = $context['object'];
+    $field_map = $context['map']->field_map['gateway_response_fields_map'];
+    $field_values = db_query(
+      "SELECT field_name, value FROM {fundraiser_commerce_gateway_response}
+        WHERE did=:did AND gateway_id=:gateway_id AND field_name IN (:field_names);",
+      array(':did' => $donation->did, ':gateway_id' => $donation->gateway['id'], ':field_names' => array_keys($field_map))
+    );
+    while ($field_value = $field_values->fetchAssoc()) {
+      $fields[ $field_map[$field_value['field_name']] ] = $field_value['value'];
+    }
+  }
+}
+
+/**
  * Does some basic credit card validation.
  *
  * @param array $value
@@ -534,13 +579,19 @@ function fundraiser_commerce_generic_credit_card_validate($value) {
  */
 function _fundraiser_commerce_country_field_display($form, $form_state, $field) {
   // Set the default to a user default if set.
-  // Flatten form state array so we can get the user selection easier.
-  $fields = _fundraiser_commerce_submission_flatten($form_state);
-  // Set the default country if form_state has it.
-  if (array_key_exists('country', $fields)) {
-    $field['#default_value'] = $fields['country'];
+
+  // Look for the value passed from the form_state first
+  if (!empty($form_state['values']['submitted'])) {
+    // Flatten form state array
+    $fields = _fundraiser_commerce_submission_flatten($form_state['values']['submitted']);
+    // Set the default country if form_state has it.
+    if (array_key_exists('country', $fields)) {
+      $field['#default_value'] = $fields['country'];
+    }
   }
-  else {
+
+  // If no default value yet, get it from the field
+  if (empty($field['#default_value'])) {
     // Provide a default based on the form values.
     $country_field = fundraiser_get_form_field($form['#calling_module'], $form, 'country');
     // Filter options down to just the zones available for this country.
@@ -603,19 +654,25 @@ function _fundraiser_commerce_client_state_ajax_submit($form, $form_state, &$mes
 function _fundraiser_commerce_zone_field_display($form, $form_state, $field) {
   // Get countries.
   $countries = fundraiser_commerce_get_countries();
-  // Flatten form state array so we can get the user selection easier.
-  $fields = _fundraiser_commerce_submission_flatten($form_state);
-  // Country/state dependant drop down code
-  $available_zones = isset($countries->zones) ? $countries->zones : array();
-  // Filter the available zones by the set country.
-  if (array_key_exists('country', $fields)) {
-    $country_id = $fields['country'];
-    // Filter options down to just the zones available for this country.
-    if (isset($countries->countries[$country_id])) {
-      $available_zones = $countries->countries[$country_id]->zones;
+
+  // Look for the value passed from the form_state first
+  if (!empty($form_state['values']['submitted'])) {
+    // Flatten form state array
+    $fields = _fundraiser_commerce_submission_flatten($form_state['values']['submitted']);
+    // Country/state dependant drop down code
+    $available_zones = isset($countries->zones) ? $countries->zones : array();
+    // Filter the available zones by the set country.
+    if (array_key_exists('country', $fields)) {
+      $country_id = $fields['country'];
+      // Filter options down to just the zones available for this country.
+      if (isset($countries->countries[$country_id])) {
+        $available_zones = $countries->countries[$country_id]->zones;
+      }
     }
   }
-  else {
+
+  // If no zones yet, load from the field settings
+  if (empty($available_zones)) {
     // Provide a default based on the form values.
     $country_field = fundraiser_get_form_field($form['#calling_module'], $form, 'country');
     // Filter options down to just the zones available for this country.
@@ -681,7 +738,7 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
       // Reset the donation amount and quantity from this line item
       $donation->donation['quantity'] = $line_item_wrapper->quantity->value();
       $donation->donation['amount'] = commerce_currency_amount_to_decimal(
-        $line_item_wrapper->commerce_unit_price->amount->value(),
+        $line_item_wrapper->commerce_unit_price->amount->value() * $line_item_wrapper->quantity->value(),
         $line_item_wrapper->commerce_unit_price->currency_code->value()
       );
     }
@@ -781,9 +838,20 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   // Determine quantity and data from donation values.
   $quantity = isset($donation->donation['quantity']) && !empty($donation->donation['quantity']) ? $donation->donation['quantity'] : 1;
 
-  // Create new order.
-  $order = commerce_order_new($user->uid, 'pending', 'commerce_order');
-  commerce_order_save($order);
+  // Give other modules an opportunity to generate the order entity.
+  foreach (module_implements('fundraiser_commerce_generate_order') as $module) {
+    $function = $module . '_fundraiser_commerce_generate_order';
+    $order = $function($donation);
+    if (!empty($order)) {
+      break;
+    }
+  }
+
+  // No order was generated by another module, create a new order.
+  if (empty($order)) {
+    $order = commerce_order_new($user->uid, 'pending', 'commerce_order');
+    commerce_order_save($order);
+  }
 
   // Give other modules an opportunity to create the line items.
   $line_items_created = FALSE;
@@ -1507,6 +1575,11 @@ function fundraiser_commerce_fundraiser_donation_success($donation) {
   $donation->status = 'payment_received';
   $donation->status_label = _fundraiser_commerce_get_label_by_status('payment_received');
   $donation->status_charged = _fundraiser_commerce_get_charged_by_status('payment_received');
+  
+  // If the payment gateway has a response save callback, invoke it now.
+  if (!empty($donation->gateway['response save callback'])) {
+    $donation->gateway['response save callback']($donation);
+  }
 }
 
 /**
@@ -2273,4 +2346,14 @@ function fundraiser_commerce_commerce_authnet_cim_request_alter($api_request_ele
   if (!empty($api_request_element->profile->description)) {
     $api_request_element->profile->description = substr(t('CIM request taking place at @date', array('@date' => format_date(time()))), 0, 255);
   }
+}
+
+/**
+ * Element validator to make a nice, flat array of selected mappable response fields.
+ */
+function fundraiser_commerce_response_fields_validate($element, &$form_state, $form) {
+  //@TODO: I bet there's a more robust way of doing this.
+  $form_state['values']['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['mappable'] = 
+    array_keys($form_state['input']['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['all'])
+  ;
 }
