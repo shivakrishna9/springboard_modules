@@ -193,17 +193,35 @@ function springboard_petition_add_example_petition() {
   $confirmation['confirmation_page_title'] = 'Thank you for signing our petition!';
   _webform_confirmations_update($confirmation);
   // Save email wrapper details.
-  $eid = -1;
   foreach ($node->webform['components'] as $component) {
     if ($component['form_key'] == 'mail') {
-      $eid = $component['cid'];
+      $cid = $component['cid'];
+      $node->webform['emails'][1]['email'] = $cid;
     }
   }
-  if ($eid != -1) {
-    $node->webform['emails'][1]['email'] = $eid;
+  if ($email_nid != NULL) {
+    $settings = array(
+      'nid' => $node->nid,
+      'eid' => 1,
+      'tid' => $email_nid,
+      'bcc_email' => '',
+      'html_message' => 'Thank you [donation:first_name] [donation:last_name] for your donation of [donation:amount] USD.' . "\n" .
+      "\n" .
+      'The email address we have for you is: [donation:mail]' . "\n" .
+      "\n" .
+      'Your card ending in [donation:card_number], expires [donation:card_expiration_month] / [donation:card_expiration_year]',
+      'html_message_format' => 'filtered_html',
+      'text_message' => 'Thank you [donation:first_name] [donation:last_name] for your donation of [donation:amount] USD.' . "\n" .
+      "\n" .
+      'The email address we have for you is: [donation:mail]' . "\n" .
+      "\n" .
+      'Your card ending in [donation:card_number], expires [donation:card_expiration_month] / [donation:card_expiration_year]',
+      'extra' => serialize(array('send_on_donation_success' => 1, 'send_on_donation_decline' => 0, 'send_on_submission' => 0)),
+    );
   }
   // One last save.
   node_save($node);
+  email_wrappers_save_settings($node->nid, 1, $settings);
   drupal_set_message(t('An example petition form has been created.'));
 }
 
