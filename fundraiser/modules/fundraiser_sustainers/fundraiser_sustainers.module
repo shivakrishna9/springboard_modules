@@ -280,6 +280,13 @@ function fundraiser_sustainers_skip_submit($form, &$form_state) {
   $donation->status_label = _fundraiser_commerce_get_label_by_status('skipped');
   $donation->status_charged = _fundraiser_commerce_get_charged_by_status('skipped');
   fundraiser_donation_update($donation);
+
+  db_query('UPDATE {fundraiser_sustainers} SET ' .
+    'gateway_resp = \'skipped\',' .
+    'lock_id = 0 ' .
+    'WHERE did = :did', array(':did' => $donation->did)
+  );
+  
   if (module_exists('salesforce_genmap')) {
     salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
   }
