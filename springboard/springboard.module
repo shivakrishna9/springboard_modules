@@ -396,7 +396,7 @@ function springboard_welcome() {
 /**
  * Validation handler for salesforce configuration form.
  */
-function springboard_welcome_salesforce_validate(&$form, $form_state) {
+function springboard_welcome_salesforce_validate(&$form, &$form_state) {
   // encrypt credentials
   $form_state['values']['salesforce_username'] = encrypt($form_state['values']['salesforce_username']);
   $form_state['values']['salesforce_password'] = encrypt($form_state['values']['salesforce_password']);
