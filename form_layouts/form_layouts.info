@@ -1,5 +1,5 @@
-name = Donation form layouts
-description = Provides layouts for donation forms (1 column, 2 column, etc.)
+name = Form Layouts
+description = Provides layouts for webform enabled forms (1 column, 2 column, etc.)
 core = 7.x
 package = Jackson River Springboard - extras
 dependencies[] = webform
