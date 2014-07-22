@@ -51,6 +51,10 @@
   margin-right: 3em;
 }
 
+#fundraiser-upsell-admin-settings-form .upsell_value {
+  float: left;
+}
+
 #fundraiser-upsell-admin-settings-form .upsell_low {
   clear: left;
 }
