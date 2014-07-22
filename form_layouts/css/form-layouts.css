@@ -2,17 +2,14 @@
 * CSS file for form layouts. This is for cases where bootstrap is not in place.
 */
 
+/* add the box sizing model for betting container padding */
 *, *:before, *:after {
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
 }
 
-.form-container {
-
-}
-
-.form-row .form-col {
+.form-layout-container .form-col {
   display: inline-block;
   margin: 0;
   padding: 0;
@@ -20,10 +17,35 @@
   vertical-align: top;
 }
 
-div#left.form-col {
+.form-layout-container #left.form-col {
   padding: 0 1% 0 0;
 }
 
-.form-row {
+.form-layout-container form {
+  margin: 0;
+  padding: 3%;
+  border: 1px solid #e7e7e7;
+}
+
+.form-layout-container .control-group {
+  float: none;
+}
+
+.form-layout-container .form-actions {
+  margin: 0;
+  padding: 0;
+  border-top: none;
+  background-color: inherit;
+}
+
+@media (max-width: 940px) {
+
+  .form-layout-container .form-col {
+    width: 100%;
+  }
+
+  .form-layout-container #right {
+    margin: 20px 0 0 0;
+  }
 
 }
