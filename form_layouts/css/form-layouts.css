@@ -1,0 +1,29 @@
+/**
+* CSS file for form layouts. This is for cases where bootstrap is not in place.
+*/
+
+*, *:before, *:after {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+.form-container {
+
+}
+
+.form-row .form-col {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+  width: 49.6%;
+  vertical-align: top;
+}
+
+div#left.form-col {
+  padding: 0 1% 0 0;
+}
+
+.form-row {
+
+}

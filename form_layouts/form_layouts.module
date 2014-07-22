@@ -355,3 +355,33 @@ function form_layouts_form_node_type_form_submit($form, $form_state) {
 function form_layouts_node_type_delete($info) {
   variable_del('form_layouts_' . $info->type);
 }
+
+/**
+ * Implements hook_page_alter().
+ */
+function form_layouts_page_alter(&$page) {
+
+  // Define the module path for use below.
+  $mod_path = drupal_get_path('module', 'form_layouts');
+
+  // Global node.
+  $node = menu_get_object();
+
+  // Only if form layouts is enabled.
+  if (form_layouts_type_is_layouts_enabled($node->type)) {
+
+  // Custom form layout css.
+  $form_layouts_css = array(
+    '#attached' => array(
+      'css' => array(
+        $mod_path . '/css/form-layouts.css' => array(
+          'group' => CSS_THEME,
+          'weight' => 9999,
+        ),
+      ),
+    ),
+  );
+  drupal_render($form_layouts_css);
+  }
+
+}
