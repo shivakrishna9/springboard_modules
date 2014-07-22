@@ -5,6 +5,7 @@
       // sets the contents of the [note] email template variable in the AddThis email template.
 
       if (typeof window.addthis_config !== "undefined") {
+        console.log(Drupal.settings.sb_social);
         settings = {
           ui_email_note: Drupal.settings.sb_social.email_message
         };

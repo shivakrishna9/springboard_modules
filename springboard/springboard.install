@@ -30,3 +30,13 @@ function springboard_update_7000() {
   }
   return array();
 }
+
+/**
+ * Implements hook_update_N().
+ *
+ * Add the Admin field_group to the user entity move standard fields under it.
+ */
+function springboard_update_7001() {
+  module_load_include('inc', 'springboard', 'springboard.admin');
+  springboard_add_admin_field_group_to_user_entity();
+}
