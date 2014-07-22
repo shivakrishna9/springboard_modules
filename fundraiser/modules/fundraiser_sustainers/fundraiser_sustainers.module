@@ -1054,12 +1054,17 @@ function fundraiser_sustainers_edit_form($did) {
   if ($remaining_donation_count > 0 && empty($cancelled)) {
     $donation_amount_form_array = drupal_get_form('fundraiser_sustainers_donation_amount_form', $donation, $next_donation);
     $donation_amount_form = drupal_render($donation_amount_form_array);
-
-    $donation_date_form_array = drupal_get_form('fundraiser_sustainers_donation_date_form', $donation);
-    $donation_date_form = drupal_render($donation_date_form_array);
+    if(user_access('administrate recurring donations')) {
+      $donation_date_form_array = drupal_get_form('fundraiser_sustainers_donation_date_form', $donation);
+      $donation_date_form = drupal_render($donation_date_form_array);
+    }
+    else {
+      $donation_date_form = '';
+    }
   }
   elseif ($remaining_donation_count == 0) {
     $donation_amount_form = t('There are no further charges for this recurring donation.');
+    $donation_date_form = '';
   }
   else {
     $donation_amount_form = t('This recurring donation has been cancelled.');
