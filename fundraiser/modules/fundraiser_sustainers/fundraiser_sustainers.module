@@ -641,6 +641,12 @@ function fundraiser_sustainers_process_single_recurring_donation(&$log, $recurri
 
       return FALSE;
     }
+    
+    // Check database integrity, in case the DB we're on is out of sync with the DB last used for
+    // sustainers processing.
+    if (!_fundraiser_sustainers_db_integrity_check()) {
+      return FALSE;
+    }
 
     // Update the sustainer record to "processing"
     db_query("UPDATE {fundraiser_sustainers} SET gateway_resp='processing' WHERE did=:did;", array(':did' => $recurring->did));
@@ -679,6 +685,80 @@ function fundraiser_sustainers_process_single_recurring_donation(&$log, $recurri
       'Key file value (!key_file) did not match record value (!record_value).',
       array('!did' => $recurring->did, '!key_file' => $sustainer_key, '!record_value' => $recurring->sustainer_key), WATCHDOG_CRITICAL);
   }
+}
+
+/**
+ * Database integrity check.
+ */
+function _fundraiser_sustainers_db_integrity_check() {
+  static $result;
+  if (!isset($result)) {
+    // Filename for the sustainers processing timestamp. Use the same path as encryption key.
+    $dir = module_invoke_all('fundraiser_get_credit_encryption_path');
+    $dir = $dir[0];
+    if (empty($dir) || $dir == t('Not configured, see below.')) {
+      // Alert admins that encryption path isn't configured.
+      $error_message = t("The encryption path isn't configured correctly.");
+      if (module_exists("rules")) {
+        rules_invoke_event('fundraiser_sustainer_db_integrity_check_failed', $error_message);
+      }
+      watchdog('fundraiser_sustainers', $error_message, NULL, WATCHDOG_CRITICAL);
+      return $result = FALSE;
+    }
+    $filename = rtrim($dir, '/\\') . '/sustainer.timestamp';
+    
+    // If the file doesn't exist at all, then we can't check against it.
+    if (file_exists($filename)) {
+      // Read the file-system timestamp and compare to the timestamp in the database.
+      $fh = fopen($filename, 'r');
+      if (!$fh) {
+        // Alert admins that the file can't be read.
+        $error_message = t("Could not read from @filename", array('@filename' => $filename));
+        if (module_exists("rules")) {
+          rules_invoke_event('fundraiser_sustainer_db_integrity_check_failed', $error_message);
+        }
+        watchdog('fundraiser_sustainers', $error_message, NULL, WATCHDOG_CRITICAL);
+        return $result = FALSE;
+      }
+      $file_timestamp = fread($fh, filesize($filename));
+      fclose($fh);
+      $db_timestamp = variable_get('fundraiser_sustainers_processing_timestamp', -1);
+      
+      // Do they match?
+      if ($file_timestamp != $db_timestamp) {
+        // Alert admins that database integrity can't be confirmed.
+        $error_message = t(
+          "File-system timestamp @filetime doesn't match DB variable @dbtime.", 
+          array('@filetime' => $file_timestamp, '@dbtime' => $db_timestamp)
+        );
+        if (module_exists("rules")) {
+          rules_invoke_event('fundraiser_sustainer_db_integrity_check_failed', $error_message);
+        }
+        watchdog('fundraiser_sustainers', $error_message, NULL, WATCHDOG_CRITICAL);
+        return $result = FALSE;
+      }
+    }
+    
+    // Attempt to save a new timestamp.
+    $fh = fopen($filename, 'w');
+    if (!$fh) {
+      // Alert admins that the file can't be written.
+      $error_message = t("Could not write to @filename", array('@filename' => $filename));
+      if (module_exists("rules")) {
+        rules_invoke_event('fundraiser_sustainer_db_integrity_check_failed', $error_message);
+      }
+      watchdog('fundraiser_sustainers', $error_message, NULL, WATCHDOG_CRITICAL);
+      return $result = FALSE;
+    }
+    $timestamp = time();
+    fwrite($fh, $timestamp);
+    fclose($fh);
+    variable_set('fundraiser_sustainers_processing_timestamp', $timestamp);
+    
+    // All good. Allow processing to continue.
+    $result = TRUE;
+  }
+  return $result;
 }
 
 /**
