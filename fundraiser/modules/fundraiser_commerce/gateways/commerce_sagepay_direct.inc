@@ -74,7 +74,7 @@ function commerce_sagepay_direct_fundraiser_commerce_charge($payment_method, $do
 
   // Customer data for charge pulls from the customer profile given on the order, so we can ignore that.
   // If the charge fails, returns false, else nothing.
-  $result = commerce_sagepay_direct_submit_form_submit($payment_method, $pane_form, $pane_values, &$order, $charge);
+  $result = commerce_sagepay_direct_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge);
   // No false result returned, we need to use the order status to check for success.
   // ALERT: The submission process here includes a drupal_goto. (whhhhhy!)
   // So we need to copy and paste some work over from the regular module, to avoid that.
