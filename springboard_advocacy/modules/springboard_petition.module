@@ -97,6 +97,26 @@ function springboard_petition_form_webform_component_delete_form_alter(&$form, &
 }
 
 /**
+ * Implements hook_form_FORM_ID_alter(). 
+ */
+function springboard_petition_form_node_type_form_alter(&$form, $form_state) {
+  if (isset($form['type']) && $form_type == 'springboard_petition') {
+    $form['#submit'][] = 'springboard_petition_node_type_submit';
+  }
+}
+
+function springboard_petition_node_type_submit($form, $form_state) {
+  if (isset($form_state['values']['webform_user']) && $form_state['values']['webform_user'] == 1) {
+    // Prevent webform user from overwriting the signature opt-in field when field configuration is changed.
+    if (isset($form_state['values']['webform_user_default_fields'])) {
+      $default_fields = variable_get('webform_user_default_fields_springboard_petition', '');
+      $default_fields[] = 'sbp_rps_optin';
+      variable_set('webform_user_default_fields_springboard_petition', $default_fields);
+    }
+  }
+}
+
+/**
  * Implements hook_form_alter().
  *
  * Add opt-in tracking submit handler to Petition webforms.
