@@ -1099,7 +1099,7 @@ function fundraiser_sustainers_edit_form($did) {
             array('query' => drupal_get_destination()));
         }
         else {
-          $donations_row['skip'] = t('cannot skip');
+          $donations_row['skip'] = $this_donation->status == 'skipped' ? t('already skipped') : t('cannot skip');
         }
       }
       $donations_rows[] = $donations_row;
