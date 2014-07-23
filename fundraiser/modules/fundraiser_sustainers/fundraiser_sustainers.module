@@ -287,7 +287,8 @@ function fundraiser_sustainers_skip_submit($form, &$form_state) {
 
   db_query('UPDATE {fundraiser_sustainers} SET ' .
     'gateway_resp = \'skipped\',' .
-    'lock_id = 0 ' .
+    'lock_id = 0, ' .
+    'cancellation_reason = \'skipped by admin\' ' .
     'WHERE did = :did', array(':did' => $donation->did)
   );
   
