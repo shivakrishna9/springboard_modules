@@ -15,4 +15,4 @@ features[page_manager_existing_pages][] = p2p_webform_confirmation
 features[page_manager_handlers][] = pm_existing_pages_p2p_webform_confirmation_panel_context
 features[variable][] = pm_existing_pages_disabled_p2p_webform_confirmation
 features_exclude[dependencies][strongarm] = strongarm
-project path = sites/all/modules/springboard
+project path = sites/all/modules/springboard/springboard_p2p/modules
