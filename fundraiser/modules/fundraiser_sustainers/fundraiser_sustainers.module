@@ -1057,6 +1057,7 @@ function fundraiser_sustainers_edit_form($did) {
     if(user_access('fastforward recurring donations')) {
       $donation_date_form_array = drupal_get_form('fundraiser_sustainers_donation_date_form', $donation);
       $donation_date_form = drupal_render($donation_date_form_array);
+      $donation_date_form = '<div id="donation-date-form"><h2>Change Donation Date</h2>' . $donation_date_form . '</div>';
     }
     else {
       $donation_date_form = '';
@@ -1204,6 +1205,8 @@ function fundraiser_sustainers_donation_amount_form_submit($form, &$form_state) 
  * Creates a form for donation date change.
  */
 function fundraiser_sustainers_donation_date_form($form, &$form_state, $donation) {
+  
+  $recurring = _fundraiser_sustainers_get_donations_recurr_remaining($donation->did);
 
   $form['master_did'] = array(
     '#type' => 'hidden',
@@ -1216,7 +1219,7 @@ function fundraiser_sustainers_donation_date_form($form, &$form_state, $donation
     '#description' => t('Select the day of each month to process remaining sustainers.'),
     '#options' => $dates,
     '#multiple' => FALSE,
-    '#default_value' => variable_get('fundraiser_date_mode_set_dates', '15'),
+    '#default_value' => isset($recurring[0]->next_charge) ? date('j', $recurring[0]->next_charge) : 1,
   );
   $form['submit'] = array(
     '#type' => 'submit',
@@ -1240,7 +1243,7 @@ function fundraiser_sustainers_donation_date_form_submit($form, &$form_state) {
       $donation = fundraiser_donation_get_donation($donation->did);
       $new_day = $form_state['values']['fundraiser_sustainers_change_dates'];
       $original_charge_date = date('j', $old_charge_date);
-      
+
       $delta = ($original_charge_date - $new_day) * 86400;
       $time_delta = $delta * -1;
 
