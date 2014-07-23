@@ -1236,13 +1236,11 @@ function fundraiser_sustainers_donation_date_form_submit($form, &$form_state) {
     $old_charge_date = $donation->next_charge;
     $today = (int)date('Ymd');
     if((int)date('Ymd', $old_charge_date) > $today) {
+
       $donation = fundraiser_donation_get_donation($donation->did);
       $new_day = $form_state['values']['fundraiser_sustainers_change_dates'];
-
-      $date_string = date('Y/n/j/G/i/s', $old_charge_date);
-      $date = explode('/', $date_string);
-      $original_charge_date = $date[2];
-
+      $original_charge_date = date('j', $old_charge_date);
+      
       $delta = ($original_charge_date - $new_day) * 86400;
       $time_delta = $delta * -1;
 
