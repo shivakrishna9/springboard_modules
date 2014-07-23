@@ -40,6 +40,10 @@ function fundraiser_sustainers_permission() {
       'title' => t('Fastforward recurring donations'),
       'description' => t('Fastforward recurring donations.'),
     ),
+    'skip recurring donations' => array(
+      'title' => t('Skip recurring donation'),
+      'description' => t('Cancel a single recurring donation.'),
+    ),
   );
 }
 
@@ -83,7 +87,7 @@ function fundraiser_sustainers_menu() {
     'title' => 'Skip recurring donation',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fundraiser_sustainers_skip', 1, 3),
-    'access arguments' => array('administrate recurring donations'),
+    'access arguments' => array('skip recurring donations'),
     'type' => MENU_CALLBACK,
   );
   // Admin interface.
@@ -1064,7 +1068,7 @@ function fundraiser_sustainers_edit_form($did) {
     // Add a button to fastforward this particular donation
     $donations_header[] = t('Advance Charge to Today');
   }
-  if (user_access('administrate recurring donations')) {
+  if (user_access('skip recurring donations')) {
     $donations_header[] = t('Skip Charge');
   }
   $donations_rows = array();
@@ -1077,7 +1081,7 @@ function fundraiser_sustainers_edit_form($did) {
         $this_donation->status = t('Pending');
       }
       $donations_row['status'] = !empty($this_donation->status_label) ? $this_donation->status_label : $this_donation->status;
-      if (user_access('fastforward recurring donations')) {
+      if (user_access('fastforward recurring donation')) {
         if (isset($this_donation->status_charged) && !$this_donation->status_charged) {
           // Add a button to fastforward this particular donation
           $donations_row['ffwd'] = l(t('advance charge'), 'fundraiser_sustainers/ffwd/' . $this_donation->did,
@@ -1087,7 +1091,7 @@ function fundraiser_sustainers_edit_form($did) {
           $donations_row['ffwd'] = t('cannot update');
         }
       }
-      if (user_access('administrate recurring donations')) {
+      if (user_access('skip recurring donationss')) {
         if (isset($this_donation->status_charged) && !$this_donation->status_charged) {
           // Add a button to fastforward this particular donation
           $donations_row['skip'] = l(t('skip charge'), 'fundraiser_sustainers/' . $did . '/skip/' . $this_donation->did,
