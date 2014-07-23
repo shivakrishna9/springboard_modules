@@ -709,7 +709,17 @@ function salesforce_management_api_fieldmap_export_create($fieldmap, $source = N
     else {
       $sf = salesforce_management_api_connect();
       if ($sf) {
-        $salesforce_object = $sf->retrieve(array($sfid), $fieldmap);
+        try {
+          $salesforce_object = $sf->retrieve(array($sfid), $fieldmap);
+        }
+        catch (SoapFault $e) {
+          // Log the SOAP error.
+          watchdog(
+            'salesforce', 
+            t("SOAP Fault attempting to retrieve SFID %sfid. Error: %error", array('%sfid' => $sfid, '%error' => $e->faultstring)), 
+            NULL, WATCHDOG_CRITICAL
+          );
+        }
       }
     }
 
