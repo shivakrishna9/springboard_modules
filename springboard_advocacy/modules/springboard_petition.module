@@ -160,6 +160,37 @@ function springboard_petition_webform_user_profile_fields_alter(&$fields, $node)
 }
 
 /**
+ * Implements hook_token_info().
+ */
+function springboard_petition_token_info() {
+  $info['types']['springboard_petition'] = array(
+    'name' => t('Springboard Petition'),
+    'description' => ('Springboard Petition tokens.'),
+  );
+  $info['tokens']['springboard_petition']['recent_signers'] = array(
+    'name' => t('Recent Petition Signers'),
+    'description' => t('Embed the recent petition signers view using a token.'),
+    'dynamic' => FALSE,
+  );
+  return $info;
+}
+
+/**
+ * Implements hook_tokens().
+ */
+function springboard_petition_tokens($type, $tokens, array $data = array(), array $options = array()) {
+  if ($type == 'springboard_petition') {
+    $replacements = array();
+    foreach ($tokens as $key => $token) {
+      if ($key == 'recent_signers') {
+        $replacements[$token] = views_embed_view('recent_petiton_signers');
+      }
+    }
+    return $replacements;
+  }
+}
+
+/**
  * Log opt in.
  *
  * @param int $nid
