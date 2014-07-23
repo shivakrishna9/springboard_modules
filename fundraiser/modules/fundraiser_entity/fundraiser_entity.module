@@ -9,10 +9,10 @@ function fundraiser_entity_entity_info() {
       'label' => t('Fundraiser Donation'),
       'controller class' => 'FundraiserDonationEntityController',
       'base table' => 'fundraiser_donation',
-      'load hook' => 'fundraiser_entity_donation_entity_load',
+      'load hook' => 'fundraiser_entity_donation_load',
       'module' => 'fundraiser_entity',
-      'label callback' => 'fundraiser_entity_donation_entity_label',
-      'uri callback' => 'fundraiser_entity_donation_entity_uri',
+      'label callback' => 'fundraiser_entity_donation_label',
+      'uri callback' => 'fundraiser_entity_donation_uri',
       'entity keys' => array(
         'id' => 'did',
       ),
@@ -35,14 +35,14 @@ function fundraiser_entity_entity_info() {
 /**
  * Entity uri callback
  */
-function fundraiser_entity_donation_entity_uri($donation) {
+function fundraiser_entity_donation_uri($donation) {
   return 'springboard/donations/' . $donation->did;
 }
 
 /**
  * Entity label callback
  */
-function fundraiser_entity_donation_entity_label($donation) {
+function fundraiser_entity_donation_label($donation) {
   return t('@name Donation', array('@name' => $donation->donation['first_name'] . '-' . $donation->donation['last_name']));
 }
 
@@ -81,6 +81,18 @@ function fundraiser_entity_menu() {
     'weight' => -10,
   );
 
+  if (module_exists('fundraiser_webform')) {
+    $items['node/%node/webform/donation_mapping'] = array(
+      'title' => 'Donation map',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('fundraiser_entity_webform_mapping_form', 1),
+      'access callback' => '_fundraiser_entity_mapping_access',
+      'access arguments' => array(1),
+      'file' => 'includes/fundraiser_entity.webform.inc',
+      'type' => MENU_LOCAL_TASK,
+    );
+  }
+
   return $items;
 }
 
@@ -115,6 +127,23 @@ function fundraiser_entity_admin_donation_view_access($donation) {
 }
 
 /**
+ * Menu item access callback: prevent access to the node mapping form
+ *
+ * @param $node
+ *   The node object as loaded via the menu item wildcard.
+ *
+ * @return
+ *   Boolean indicating the user's access to view the page.
+ */
+function _fundraiser_entity_mapping_access($node) {
+  if (!fundraiser_is_donation_type($node->type)) {
+    return FALSE;
+  }
+
+  return user_access('administer site configuration');
+}
+
+/**
  * Create donation entity type when the donation is created
  */
 function fundraiser_entity_fundraiser_donation_create($donation) {
@@ -126,9 +155,9 @@ function fundraiser_entity_fundraiser_donation_create($donation) {
 }
 
 /**
- * Loads an order by ID.
+ * Loads a donation by ID.
  */
-function fundraiser_entity_donation_entity_load($donation_id) {
+function fundraiser_entity_donation_load($donation_id) {
   $donations = undraiser_entity_donation_entity_load_multiple(array($donation_id), array());
   return $donations ? reset($donations) : FALSE;
 }
@@ -168,4 +197,82 @@ function fundraiser_entity_donation_entity_load_multiple($donation_ids = array()
  */
 function fundraiser_entity_donation_view($donation, $view_mode = 'administrator') {
   return entity_view('fundriaser_donation', array($donation->did => $donation), $view_mode, NULL, TRUE);
+}
+
+/**
+ * Implements hook_field_extra_fields().
+ */
+function fundraiser_entity_field_extra_fields() {
+  $extra['fundraiser_donation']['fundraiser_donation'] = array(
+    'form' => array(
+      'amount' => array(
+        'label' => t('Amount'),
+        'description' => t('Donation amount.'),
+        'weight' => -10,
+      ),
+      'currency' => array(
+        'label' => t('Currency'),
+        'description' => t('Donation currency.'),
+        'weight' => -9,
+      ),
+      'uid' => array(
+        'label' => t('User'),
+        'description' => t('Account associated with this donation.'),
+        'weight' => -8,
+      ),
+      'nid' => array(
+        'label' => t('Node'),
+        'description' => t('Node associated with this donation.'),
+        'weight' => -7,
+      ),
+      'sid' => array(
+        'label' => t('Submission'),
+        'description' => t('Submission associated with this donation.'),
+        'weight' => -6,
+      ),
+      'status' => array(
+        'label' => t('Status'),
+        'description' => t('Payment status of the donation.'),
+        'weight' => -5,
+      ),
+      'gateway' => array(
+        'label' => t('Gateway'),
+        'description' => t('Payment gateway used to process this donation.'),
+        'weight' => -5,
+      ),
+      'txn_id' => array(
+        'label' => t('Transaction ID'),
+        'description' => t('Remote transaction id from the gateway.'),
+        'weight' => -5,
+      ),
+      'form_url' => array(
+        'label' => t('Form URL'),
+        'description' => t('URL of the form which created this donation.'),
+        'weight' => -5,
+      ),
+    ),
+  );
+
+  return $extra;
+}
+
+/**
+ * Return a simple array of donation entity field names and labels
+ */
+function _fundraiser_entity_get_donation_fields($type = 'fundraiser_donation') {
+  $info = entity_get_property_info('fundraiser_donation');
+  $properties = $info['properties'];
+  if (isset($info['bundles'][$type])) {
+    $properties += $info['bundles']['fundraiser_donation']['properties'];
+  }
+debug($properties);
+
+  $entity_fields = field_info_instances('fundraiser_donation', $type);
+  $fields = array();
+debug($entity_fields, '$entity_fields');
+  foreach ($entity_fields as $field) {
+    $fields[ $field['field_name'] ] = $field['label'];
+  }
+
+  return $fields;
 }
