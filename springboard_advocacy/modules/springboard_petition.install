@@ -124,6 +124,50 @@ function springboard_petition_add_content_type() {
   // Done.
   drupal_set_message(t('The content type Petition has been added.'));
   watchdog('springboard_petition', 'Added content type Petition.');
+
+  // Add opt-in field to list of default fields enabled for this content type.
+  // This keeps Webform User happy and ensures our opt-in component gets created.
+  $default_fields = variable_get('webform_user_default_fields_springboard_petition', '');
+  $default_fields[] = 'sbp_rps_optin';
+  variable_set('webform_user_default_fields_springboard_petition', $default_fields);
+
+  // Weighting the module to ensure submission handlers run after Webform User.
+  // This ensures that the user id in webform_submissions has been updated by
+  // Webform User before we get to it.
+  db_query('UPDATE {system} SET weight = :weight WHERE name = :name', array(':weight' => 1000, ':name' => 'springboard_petition'));
+}
+
+/**
+ * Implements hook_schema().
+ */
+function springboard_petition_schema() {
+  // Opt in tracking table.
+  $schema['springboard_petition_opt_in'] = array(
+    'description' => 'Store primary donation information.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'Petition node id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'description' => 'Signer user id.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'opt_in' => array(
+        'description' => 'Track user opt-in to show their signature per petition.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('nid', 'uid'),
+  );
+  return $schema;
 }
 
 function springboard_petition_add_example_petition() {

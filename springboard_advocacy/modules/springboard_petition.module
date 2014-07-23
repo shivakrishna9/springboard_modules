@@ -95,3 +95,106 @@ function springboard_petition_form_webform_component_delete_form_alter(&$form, &
     }
   }
 }
+
+/**
+ * Implements hook_form_alter().
+ *
+ * Add opt-in tracking submit handler to Petition webforms.
+ */
+function springboard_petition_form_alter(&$form, $form_state, $form_id) {
+  if (strstr($form_id, 'webform_client_form') && isset($form['#node']->type)) {
+    if (springboard_petition_is_petition_type($form['#node']->type)) {
+      $form['#submit'][] = 'springboard_petition_petition_submit';
+    }
+  }
+}
+
+/**
+ * Submit callback for petition webforms, tracks user opt-in.
+ */
+function springboard_petition_petition_submit($form, $form_state) {
+  $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted_tree']);
+  $opt_in = count($submission_fields['sbp_rps_optin']) ? TRUE : FALSE;
+  $uid = _springboard_petition_get_uid_from_sid($form_state['values']['details']['sid']);
+  springboard_petition_log_opt_in($form['#node']->nid, $uid, $opt_in);
+}
+
+/**
+ * Implements hook_views_api(). From Views module.
+ */
+function springboard_petition_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'springboard_petition'),
+  );
+}
+
+/**
+ * Implemenents hook_webform_user_profile_fields_alter().
+ *
+ * Add field definition for opt in component.
+ */
+function springboard_petition_webform_user_profile_fields_alter(&$fields, $node) {
+  if (springboard_petition_is_petition_type($node->type)) {
+    // For Springboard Petition nodes, include a checkbox
+    // so users can opt to have their signature shown on
+    // recent signatures list.
+    //
+    // Note: additional fiddling with webform's
+    // per content type field settings is required
+    // to convince it to add this field.
+    // See springboard_rps_install() for additional
+    // implementation details.
+    $fields[] = array(
+      'name' => 'sbp_rps_optin',
+      'title' => t('Show my signature'),
+      'type' => 'list_boolean',
+      'mandatory' => 0,
+      'weight' => 0,
+      'explanation' => t(''),
+      'options' => array(0, 1),
+      'category_key' => NULL,
+      'category_name' => NULL,
+    );
+  }
+}
+
+/**
+ * Log opt in.
+ *
+ * @param int $nid
+ *   Node ID.
+ *
+ * @param int $uid
+ *   User ID.
+ *
+ * @param boolean $opt_in
+ *   User opt in TRUE/FALSE
+ */
+function springboard_petition_log_opt_in($nid, $uid, $opt_in) {
+  $query = db_delete('springboard_petition_opt_in')
+    ->condition('nid', $nid, '=')
+    ->condition('uid', $uid, '=')
+    ->execute();
+
+  $record = array(
+    'nid' => $nid,
+    'uid' => $uid,
+    'opt_in' => $opt_in ? 1 : 0,
+  );
+  drupal_write_record('springboard_petition_opt_in', $record);
+}
+
+/**
+ * Look up the user ID associated with a webform submission.
+ *
+ * @param int $sid
+ *   Webform submission id.
+ *
+ * @return mixed
+ *   Numeric user id or FALSE if no record is found.
+ */
+function _springboard_petition_get_uid_from_sid($sid) {
+  $result = db_query('SELECT uid FROM {webform_submissions} WHERE sid = :sid', array(':sid' => $sid));
+  return $result->fetchField();
+}
