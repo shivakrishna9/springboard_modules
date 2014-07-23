@@ -19,6 +19,8 @@ function sb_social_uninstall() {
   variable_del('springboard_social_facebook_description');
   variable_del('springboard_social_debug_mode');
   variable_del('springboard_social_enabled_content_types');
+  variable_del('springboard_social_default_block_title');
+  variable_del('springboard_social_default_block_description');
 
   db_query('DELETE FROM {variable} WHERE name LIKE :name', array(':name' => 'springboard_social_facebook%'));
   db_query('DELETE FROM {variable} WHERE name LIKE :name', array(':name' => 'springboard_social_twittere%'));
