@@ -173,12 +173,12 @@ function form_layouts_form_layouts_info() {
     'path' => drupal_get_path('module', 'form_layouts') . '/templates',
   );
 
-  $templates['two_column_webform_form_top'] = array(
-    'name' => t('Two column: webform with the form on the top'),
+  $templates['one_column_webform_form_top'] = array(
+    'name' => t('One column: webform with the form on the top'),
     'type' => 'webform',
-    'theme' => 'two_column_webform_form_top',
-    'pattern' => 'two_column_webform_form_top_\'0-9\'+',
-    'template' => 'two-column-webform-form-top',
+    'theme' => 'one_column_webform_form_top',
+    'pattern' => 'one_column_webform_form_top_\'0-9\'+',
+    'template' => 'one-column-webform-form-top',
     'path' => drupal_get_path('module', 'form_layouts') . '/templates',
   );
 
@@ -428,9 +428,9 @@ function form_layouts_preprocess_two_column_webform_form_right(&$vars) {
 }
 
 /**
- * Implements hook_preprocess_two_column_webform_form_top().
+ * Implements hook_preprocess_one_column_webform_form_top().
  */
-function form_layouts_preprocess_two_column_webform_form_top(&$vars) {
+function form_layouts_preprocess_one_column_webform_form_top(&$vars) {
   // Dig the title out and create a var to render it in the template.
   $vars['element']['title']= $vars['element']['#node']->title;
 }
