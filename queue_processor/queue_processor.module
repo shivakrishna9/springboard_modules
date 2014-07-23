@@ -1055,8 +1055,14 @@ function queue_processor_get_objects_in_batch($sfids, $fieldmap) {
       try {
         $objects = _normalize_salesforce_response($sf->retrieve($sfids, $fieldmap));
       }
-      catch (Exception $e) {
-        // TODO: LOG ERROR
+      catch (SoapFault $e) {
+        // Log the SOAP error.
+        watchdog(
+          'salesforce queue processor', 
+          t("SOAP Fault attempting to retrieve these SFIDs: %sfids. Error: %error", array('%sfids' => implode(', ', $sfids), '%error' => $e->faultstring)), 
+          NULL, WATCHDOG_CRITICAL
+        );
+        $objects = array();
       }
     }
     else {
