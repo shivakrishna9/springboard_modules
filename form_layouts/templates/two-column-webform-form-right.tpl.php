@@ -6,12 +6,12 @@
 
 ?>
 
-<div id="donation-form-column-wrapper" class="container-fluid">
-  <div class="row-fluid">
-    <div id="left" class="span6">
+<div id="donation-form-column-wrapper" class="form-layout-container">
+  <div class="form-row">
+    <div id="left" class="form-col">
       <?php print render($element['body']); ?>
     </div>
-    <div id="right" class="span6">
+    <div id="right" class="form-col">
       <?php print render($element['webform']); ?>
     </div>
   </div>
