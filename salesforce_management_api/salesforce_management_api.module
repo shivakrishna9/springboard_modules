@@ -719,6 +719,9 @@ function salesforce_management_api_fieldmap_export_create($fieldmap, $source = N
             t("SOAP Fault attempting to retrieve SFID %sfid. Error: %error", array('%sfid' => $sfid, '%error' => $e->faultstring)), 
             NULL, WATCHDOG_CRITICAL
           );
+          if (module_exists('rules')) {
+            rules_invoke_event('salesforce_management_api_soapfault', $map['drupal'], $map['salesforce'], $sfid, $e->faultstring);
+          }
         }
       }
     }
