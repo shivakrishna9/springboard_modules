@@ -74,6 +74,7 @@ function _page_wrappers_insert_after_first_element(&$a, $element) {
  * Replace standard site theme with pagewrapper template for nodes that have page wrappers assigned.
  */
 function page_wrappers_preprocess_page(&$vars) {
+  dsm("Hello world");
   $wrapper_data = page_wrappers_check();
   $wrapper = $wrapper_data['wrapper'];
   $node = $wrapper_data['node'];
@@ -98,7 +99,8 @@ function page_wrappers_preprocess_page(&$vars) {
       if ($theme_css = _page_wrappers_get_theme_css($wrapper_node)) {
         foreach ($theme_css as $stylesheet) {
           dsm($stylesheet);
-          drupal_add_css($stylesheet['path'], $stylesheet['options']);
+          $added_stylesheet = drupal_add_css($stylesheet['path'], $stylesheet['options']);
+          dsm($added_stylesheet);
         }
       }
 
@@ -109,7 +111,8 @@ function page_wrappers_preprocess_page(&$vars) {
 
         foreach ($css_files as $css_file) {
           dsm($css_file);
-          drupal_add_css($css_file['uri'], array('weight' => 10));
+          $added_stylesheet = drupal_add_css($css_file['uri'], array('weight' => 10));
+          dsm($added_stylesheet);
         }
       }
 
