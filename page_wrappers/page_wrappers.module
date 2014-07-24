@@ -74,7 +74,6 @@ function _page_wrappers_insert_after_first_element(&$a, $element) {
  * Replace standard site theme with pagewrapper template for nodes that have page wrappers assigned.
  */
 function page_wrappers_preprocess_page(&$vars) {
-  dsm("Hello world");
   $wrapper_data = page_wrappers_check();
   $wrapper = $wrapper_data['wrapper'];
   $node = $wrapper_data['node'];
@@ -98,9 +97,8 @@ function page_wrappers_preprocess_page(&$vars) {
       // if there is theme CSS allowed, add those files.
       if ($theme_css = _page_wrappers_get_theme_css($wrapper_node)) {
         foreach ($theme_css as $stylesheet) {
-          dsm($stylesheet);
-          $added_stylesheet = drupal_add_css($stylesheet['path'], $stylesheet['options']);
-          dsm($added_stylesheet);
+          $stylesheet['options']['weight'] = 10;
+          drupal_add_css($stylesheet['path'], $stylesheet['options']);
         }
       }
 
@@ -110,9 +108,8 @@ function page_wrappers_preprocess_page(&$vars) {
         $css_files = field_get_items('node', $wrapper_node, 'page_wrappers_css');
 
         foreach ($css_files as $css_file) {
-          dsm($css_file);
-          $added_stylesheet = drupal_add_css($css_file['uri'], array('weight' => 10));
-          dsm($added_stylesheet);
+          $css_file['options']['weight'] = 20;
+          drupal_add_css($css_file['uri'], $css_file['options']);
         }
       }
 
@@ -122,7 +119,8 @@ function page_wrappers_preprocess_page(&$vars) {
         $js_files = field_get_items('node', $wrapper_node, 'page_wrappers_js');
 
         foreach ($js_files as $js_file) {
-          drupal_add_js($js_file['uri']);
+          $js_file['options']['weight'] = 10;
+          drupal_add_js($js_file['uri'], $js_file['options']);
         }
       }
     }
