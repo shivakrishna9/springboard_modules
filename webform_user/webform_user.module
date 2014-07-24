@@ -379,6 +379,21 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
             if (is_array($user_data->$profile_field)) {
               $current_field = $user_data->$profile_field;
               $profile_value = isset($current_field['und'][0]['value']) ? $current_field['und'][0]['value'] : NULL;
+
+              //If there is a valid *new* market source value on this form, replace the old values.
+              if (module_exists('market_source')) {
+                $map = variable_get('market_source_to_user_map');
+                $webform_field = isset($map[$profile_field])  && !empty($map[$profile_field]) ? $map[$profile_field] : FALSE;
+                if ($webform_field) {
+                  $value = (isset($form['submitted'][$webform_field]['#default_value']) && 
+                    !empty($form['submitted'][$webform_field]['#default_value'])) ? 
+                    $form['submitted'][$webform_field]['#default_value'] : 
+                    FALSE;
+                  if ($value) {
+                    $profile_value = $value;
+                  }
+                }
+              }
             }
             else {
               $profile_value = $user_data->$profile_field;
