@@ -137,7 +137,7 @@ function springboard_p2p_personal_campaign_page_alter(&$cache, $vars) {
   if (path_is_admin(current_path())) {
 
     // Only if p2p_personal_campaign node edit or add.
-    if ((!empty($node) && $node->type == 'p2p_personal_campaign') || (arg(0) === 'node' && arg(1) === 'add' && arg(2) === 'p2p-personal-campaign')) {
+    if ((!empty($node) && $node->type == 'p2p_personal_campaign' && arg(2) === 'edit') || (arg(0) === 'node' && arg(1) === 'add' && arg(2) === 'p2p-personal-campaign')) {
 
       // p2p node edit add for
       $p2p_add_edit = array(
@@ -186,9 +186,7 @@ function springboard_p2p_personal_campaign_page_alter(&$cache, $vars) {
       );
       drupal_render($uniform_css);
       // End global.
-
     }
-
   }
 
 }
