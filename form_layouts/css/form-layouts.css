@@ -55,13 +55,10 @@
 h1,
 h2,
 h3 {
+  margin: 4px 0 12px 0;
   color: #5e5e5e;
   font-size: 24px;
   line-height: 26px;
-}
-
-h1.form-layout-title {
-  margin: 0 0 10px 0;
 }
 
 .addthis_toolbox {
@@ -163,4 +160,3 @@ input[type=submit].btn:hover {
   }
 
 }
-
