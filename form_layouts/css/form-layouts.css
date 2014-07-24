@@ -13,7 +13,7 @@
   display: inline-block;
   margin: 0;
   padding: 0;
-  width: 49.6%;
+  width: 48.6%;
   vertical-align: top;
 }
 
@@ -23,12 +23,6 @@
 
 .form-layout-container form {
   margin: 0;
-  padding: 3%;
-  border: 1px solid #e7e7e7;
-}
-
-.form-layout-container .control-group {
-  float: none;
 }
 
 .form-layout-container .form-actions {
@@ -38,14 +32,133 @@
   background-color: inherit;
 }
 
+.form-layout-container #right.form-col,
+.form-layout-container #left.form-col,
+.form-layout-container .form-col-row {
+  padding: 10px 2% 20px 2%;
+  border: 1px solid #e7e7e7;
+}
+
+.form-layout-container #right.form-col {
+  margin: 0 0 0 2%;
+}
+
+.form-layout-container .form-col-row {
+  margin: 0 0 20px 0;
+}
+
+.form-layout-container p {
+  margin: 10px 0 0 0;
+  line-height: 1.7em;
+}
+
+h1,
+h2,
+h3 {
+  color: #5e5e5e;
+}
+
+h1.form-layout-title {
+  margin: 0 0 10px 0;
+  font-size: 28px;
+}
+
+h2 {
+  font-size: 22px;
+}
+
+.addthis_toolbox {
+  display: inline-block;
+  vertical-align: top;
+}
+
+.at16nc {
+  margin-bottom: 10px;
+  height: 40px;
+}
+
+.at16nc.at16t_facebook {
+  width: 141px;
+  background-image: url("../images/sprite.png");
+  background-position: 0 0px;
+  background-repeat: no-repeat;
+}
+
+.at16nc.at16t_twitter {
+  width: 120px;
+  background-image: url("../images/sprite.png");
+  background-position: 0 -49px;
+  background-repeat: no-repeat;
+}
+
+.at16nc.at16t_email {
+  width: 114px;
+  background-image: url("../images/sprite.png");
+  background-position: 0 -98px;
+  background-repeat: no-repeat;
+}
+
+/* Some basic default form styling */
+
+label {
+  color: #5e5e5e;
+  font-weight: bold;
+}
+
+input[type=radio],
+input[type=checkbox] {
+  margin: 3px 7px 0 0;
+}
+
+input[type=email],
+input[type=text] {
+  width: 96%;
+  height: 40px;
+  -webkit-border-radius: 0;
+  -moz-border-radius: 0;
+  border-radius: 0;
+}
+
+textarea {
+  width: 96%;
+  -webkit-border-radius: 0;
+  -moz-border-radius: 0;
+  border-radius: 0;
+}
+
+input[type=submit] {
+  position: relative;
+  display: block;
+  margin-top: 10px;
+  padding: 10px 20px;
+  width: 40%;
+  border: none;
+  background-color: #859596;
+  box-shadow: none;
+  color: #fff;
+  vertical-align: top;
+  text-align: center;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+input[type=submit]:hover {
+  background-color: #0285b0;
+}
+
 @media (max-width: 940px) {
 
   .form-layout-container .form-col {
     width: 100%;
   }
 
-  .form-layout-container #right {
-    margin: 20px 0 0 0;
+  .form-layout-container #left.form-col {
+    margin: 0 0 20px 0;
+  }
+
+  .form-layout-container #right.form-col {
+    margin: 0;
   }
 
 }
+

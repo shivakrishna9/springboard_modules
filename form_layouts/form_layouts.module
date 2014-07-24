@@ -143,7 +143,7 @@ function form_layouts_form_layouts_info() {
     'theme' => 'one_column',
     'pattern' => 'one_column_\'0-9\'+',
     'template' => 'one-column',
-    'path' => drupal_get_path('module', 'form_layouts') . '/templates/',
+    'path' => drupal_get_path('module', 'form_layouts') . '/templates',
   );
 
   $templates['two_column_donation'] = array(
@@ -152,7 +152,7 @@ function form_layouts_form_layouts_info() {
     'theme' => 'two_column_donation',
     'pattern' => 'two_column_donation_\'0-9\'+',
     'template' => 'two-column-donation',
-    'path' => drupal_get_path('module', 'form_layouts') . '/templates/',
+    'path' => drupal_get_path('module', 'form_layouts') . '/templates',
   );
 
   $templates['two_column_webform_form_left'] = array(
@@ -161,7 +161,7 @@ function form_layouts_form_layouts_info() {
     'theme' => 'two_column_webform_form_left',
     'pattern' => 'two_column_webform_form_left_\'0-9\'+',
     'template' => 'two-column-webform-form-left',
-    'path' => drupal_get_path('module', 'form_layouts') . '/templates/',
+    'path' => drupal_get_path('module', 'form_layouts') . '/templates',
   );
 
   $templates['two_column_webform_form_right'] = array(
@@ -170,7 +170,16 @@ function form_layouts_form_layouts_info() {
     'theme' => 'two_column_webform_form_right',
     'pattern' => 'two_column_webform_form_right_\'0-9\'+',
     'template' => 'two-column-webform-form-right',
-    'path' => drupal_get_path('module', 'form_layouts') . '/templates/',
+    'path' => drupal_get_path('module', 'form_layouts') . '/templates',
+  );
+
+  $templates['one_column_webform_form_top'] = array(
+    'name' => t('One column: webform with the form on the top'),
+    'type' => 'webform',
+    'theme' => 'one_column_webform_form_top',
+    'pattern' => 'one_column_webform_form_top_\'0-9\'+',
+    'template' => 'one-column-webform-form-top',
+    'path' => drupal_get_path('module', 'form_layouts') . '/templates',
   );
 
   $templates['two_column_hybrid_donation'] = array(
@@ -370,18 +379,59 @@ function form_layouts_page_alter(&$page) {
   // Only if form layouts is enabled.
   if (form_layouts_type_is_layouts_enabled($node->type)) {
 
-  // Custom form layout css.
-  $form_layouts_css = array(
-    '#attached' => array(
-      'css' => array(
-        $mod_path . '/css/form-layouts.css' => array(
-          'group' => CSS_THEME,
-          'weight' => 9999,
+    // Custom form layout css.
+    $form_layouts_css = array(
+      '#attached' => array(
+        'css' => array(
+          $mod_path . '/css/form-layouts.css' => array(
+            'group' => CSS_THEME,
+            'weight' => 9999,
+          ),
         ),
       ),
-    ),
-  );
-  drupal_render($form_layouts_css);
+    );
+    drupal_render($form_layouts_css);
   }
 
 }
+
+/**
+ * Implements hook_preprocess_page().
+ */
+function form_layouts_preprocess_page(&$vars) {
+
+  // Global node.
+  $node = menu_get_object();
+
+  // Only if form layouts is enabled.
+  if (form_layouts_type_is_layouts_enabled($node->type)) {
+    // Unset the page title, we set it in the form layout template
+    $vars['title'] = '';
+  }
+
+}
+
+/**
+ * Implements hook_preprocess_two_column_webform_form_left().
+ */
+function form_layouts_preprocess_two_column_webform_form_left(&$vars) {
+  // Dig the title out and create a var to render it in the template.
+  $vars['element']['title']= $vars['element']['#node']->title;
+}
+
+/**
+ * Implements hook_preprocess_two_column_webform_form_right().
+ */
+function form_layouts_preprocess_two_column_webform_form_right(&$vars) {
+  // Dig the title out and create a var to render it in the template.
+  $vars['element']['title']= $vars['element']['#node']->title;
+}
+
+/**
+ * Implements hook_preprocess_one_column_webform_form_top().
+ */
+function form_layouts_preprocess_one_column_webform_form_top(&$vars) {
+  // Dig the title out and create a var to render it in the template.
+  $vars['element']['title']= $vars['element']['#node']->title;
+}
+
