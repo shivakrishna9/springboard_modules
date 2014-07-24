@@ -405,11 +405,12 @@ function form_layouts_preprocess_page(&$vars) {
 
   // Global node.
   $node = menu_get_object();
-
-  // Only if form layouts is enabled.
-  if (form_layouts_type_is_layouts_enabled($node->type)) {
-    // Unset the page title, we set it in the form layout template
-    $vars['title'] = '';
+  if (!path_is_admin(current_path())) {
+    // Only if form layouts is enabled.
+    if (form_layouts_type_is_layouts_enabled($node->type)) {
+      // Unset the page title, we set it in the form layout template
+      $vars['title'] = '';
+    }
   }
 
 }
