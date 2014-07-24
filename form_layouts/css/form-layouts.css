@@ -52,11 +52,50 @@
   line-height: 1.7em;
 }
 
+h1,
+h2,
+h3 {
+  color: #414141;
+}
+
 h1.form-layout-title {
   margin: 0 0 10px 0;
-  color: #414141;
-  font-size: 24px;
+  font-size: 28px;
 }
+
+h2 {
+  font-size: 22px;
+}
+
+.addthis_toolbox {
+  display: inline-block;
+  vertical-align: top;
+}
+
+.at16nc.at16t_facebook {
+  background-image: url("../images/sprite.png");
+  background-repeat: no-repeat;
+  background-position: 0 0px;
+  width: 141px;
+  height: 33px;
+}
+
+.at16nc.at16t_twitter {
+  background-image: url("../images/sprite.png");
+  background-repeat: no-repeat;
+  background-position: 0 -46px;
+  width: 126px;
+  height: 33px;
+}
+
+.at16nc.at16t_email {
+  background-image: url("../images/sprite.png");
+  background-repeat: no-repeat;
+  background-position: 0 -88px;
+  width: 114px;
+  height: 33px;
+}
+
 
 @media (max-width: 940px) {
 
@@ -72,5 +111,5 @@ h1.form-layout-title {
     margin: 0;
   }
 
-
 }
+
