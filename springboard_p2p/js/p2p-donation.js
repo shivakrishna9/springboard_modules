@@ -63,6 +63,12 @@
         });
       });
 
+      // Test for which radio checked onload.
+      var $radioButtonsLoad = $('.webform-client-form input[type="radio"]');
+      $radioButtonsLoad.each(function() {
+        $(this).next("label").toggleClass('radio-checked', this.checked);
+      });
+
       // Remove the padlock icon, we replace with font-awesome.
       $('.fundraiser_submit_message img ').remove();
 

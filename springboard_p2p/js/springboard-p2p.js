@@ -15,8 +15,10 @@
     // Get rid of inline styles.
       $('.panel-display p').removeAttr("style");
 
-      // Add uniform to selects
-      $("select").uniform();
+      // Add uniform to selects. Use once because of ajax interfering.
+      $('select').once('p2puniform', function () {
+        $(this).uniform();
+      });
 
       // Add uniform to file upload.
       $('input[type=file]').uniform();
