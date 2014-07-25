@@ -1849,6 +1849,14 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['filters']['status']['table'] = 'commerce_order';
   $handler->display->display_options['filters']['status']['field'] = 'status';
   $handler->display->display_options['filters']['status']['relationship'] = 'did';
+  $handler->display->display_options['filters']['status']['value'] = array(
+    'failed' => 'failed',
+    'failed_refund' => 'failed_refund',
+    'canceled' => 'canceled',
+    'pending_future_payment' => 'pending_future_payment',
+    'payment_received' => 'payment_received',
+    'partially_refunded' => 'partially_refunded',
+  );
   $handler->display->display_options['filters']['status']['group'] = 1;
   $handler->display->display_options['filters']['status']['exposed'] = TRUE;
   $handler->display->display_options['filters']['status']['expose']['operator_id'] = 'status_op';
@@ -1862,6 +1870,7 @@ function springboard_views_views_default_views() {
     4 => 0,
     5 => 0,
   );
+  $handler->display->display_options['filters']['status']['expose']['reduce'] = TRUE;
   /* Filter criterion: Date: Date (node) */
   $handler->display->display_options['filters']['date_filter']['id'] = 'date_filter';
   $handler->display->display_options['filters']['date_filter']['table'] = 'node';
