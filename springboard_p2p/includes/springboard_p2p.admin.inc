@@ -332,6 +332,16 @@ function springboard_p2p_admin_settings_submit($form, &$form_state) {
     $value = isset($form_state['values'][$key]) ? $form_state['values'][$key] : array();
     variable_set('springboard_p2p_' . $key, $value);
   }
+  
+  // If the current base path is different from the new base path, save it to the
+  // pathauto variable for this node type. This changes the Pathauto settings,
+  // which means that for each campaign that gets saved, Pathauto can handle the
+  // path updates; this module doesn't have to do it.
+  if (module_exists('pathauto')) {
+    if ($form_state['values']['current_base_path'] != $form_state['values']['base_path']) {
+      variable_set('pathauto_node_p2p_personal_campaign_pattern', $form_state['values']['base_path'] . '/[node:field-p2p-personal-campaign-url]');
+    }
+  }
 
   springboard_p2p_modify_base_path(
     $form_state['values']['current_base_path'],
