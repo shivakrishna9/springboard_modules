@@ -277,7 +277,7 @@ function fundraiser_sustainers_skip_submit($form, &$form_state) {
   // Given a did, update the charge date to now.
   $donation = fundraiser_donation_get_donation($form_state['values']['did']);
   fundraiser_donation_cancel($donation);
-  $donation->donation_cancelled = TRUE;
+  $donation->donation_skipped = TRUE;
 
   _fundraiser_commerce_update_order_status('skipped', $donation->did);
   $donation->status = 'skipped';
@@ -475,7 +475,6 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
           $fields['CC_Last_4__c'] = substr($fields['CC_Last_4__c'],-4,4);
         }
       }
-
       // Corrects the StageName to whatever value is appropriate based on mapped stages.
       if (isset($donation->donation_cancelled) && $donation->donation_cancelled) {
         if (isset($fields['StageName'])) {
@@ -487,6 +486,18 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
             }
           }
 
+          $fields['StageName'] = $stagename;
+        }
+      }
+      if (isset($donation->donation_skipped) && $donation->donation_skipped) {
+        if (isset($fields['StageName'])) {
+          $stagename = 'Skipped';
+          if (module_exists('salesforce_donation')) {
+            $mapped_stages = array_flip(variable_get('salesforce_donation_mapped_stages', salesforce_donation_default_stage_map()));
+            if (isset($mapped_stages['skipped'])) {
+              $stagename = $mapped_stages['skipped'];
+            }
+          }
           $fields['StageName'] = $stagename;
         }
       }
