@@ -30,8 +30,8 @@ function fundraiser_upsell_admin_thank_you_settings() {
   );
   $form['fundraiser_upsell_thank_you_content_tokens']['help'] = array(
     '#theme' => 'token_tree',
-    '#token_types' => array('donation'),
-    '#global_types' => FALSE,
+    '#token_types' => array('all'),
+    '#global_types' => TRUE,
     '#click_insert' => TRUE,
   );
   $form['email_title'] = array(
@@ -97,8 +97,8 @@ function fundraiser_upsell_admin_thank_you_settings() {
   );
   $form['email']['message']['tokens']['help'] = array(
     '#theme' => 'token_tree',
-    '#token_types' => array('donation'),
-    '#global_types' => FALSE,
+    '#token_types' => array('all'),
+    '#global_types' => TRUE,
     '#click_insert' => TRUE,
   );
   // Move the button and validation.
@@ -138,17 +138,17 @@ function fundraiser_upsell_send_test($form, $form_state) {
   $mail = email_wrappers_mail_load($params);
   // Modify the messages to replace tokens.
   $mail->subject = token_replace($mail->subject, array(
-      'global' => NULL,
+      'global' => TRUE,
       'donation' => $donation,
       'domain' => NULL,
     ));
   $mail->html_message = token_replace($mail->html_message, array(
-      'global' => NULL,
+      'global' => TRUE,
       'donation' => $donation,
       'domain' => NULL,
     ));
   $mail->text_message = token_replace($mail->text_message, array(
-      'global' => NULL,
+      'global' => TRUE,
       'donation' => $donation,
       'domain' => NULL,
     ));
