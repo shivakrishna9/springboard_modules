@@ -347,7 +347,7 @@ function springboard_p2p_personal_campaign_tokens($type, $tokens, $data = array(
     if ($user_tokens = token_find_with_prefix($tokens, 'user')) {
       $replacements += token_generate('user', $user_tokens, array('user' => $account), $options);
     }
-    // 
+    //
      $_SESSION['sb_social_url_context']['personal_campaign_id'] = FALSE;
 
     return $replacements;
@@ -361,6 +361,7 @@ function springboard_p2p_personal_campaign_tokens($type, $tokens, $data = array(
 function springboard_p2p_personal_campaign_webform_confirmations_token_replace_alter(&$token_set, $sid) {
   $personal_campaign = FALSE;
   $nid = $token_set['node']->nid;
+  module_load_include('inc', 'webform', 'includes/webform.submissions');
   $submission = webform_get_submission($nid, $sid);
   $components = _fundraiser_webform_get_components_by_nid($nid);
   $personal_campaign = _springboard_p2p_personal_campaign_lookup_personal_campaign($submission, $components);
@@ -483,21 +484,21 @@ function springboard_p2p_personal_campaign_form_p2p_personal_campaign_node_form_
  *
  * We are using hidden element fields on the personal campaign node type
  * to capture Market Source values. This hook handles translating
- * from standard ms fields rendered as webform components to 
+ * from standard ms fields rendered as webform components to
  * entity fields like those found on the personal campaign node form.
  */
 function springboard_p2p_personal_campaign_market_source_build_form_keys_alter(&$form_keys, $context) {
-  // This change should only impact personal campaign nodes. 
+  // This change should only impact personal campaign nodes.
   if (isset($context['form']['#node']->type) && $context['form']['#node']->type == 'p2p_personal_campaign') {
     $qs_keys = _market_source_build_qs_keys();
     $form = $context['form'];
- 
+
     foreach (array_keys($qs_keys) as $key) {
       $lookup_key = 'field_ms_' . $key;
- 
+
       // Lookup the element ID of $key in $form.
       $element = &_market_source_form_find_element($form, $lookup_key);
- 
+
       // Check if this is an entity field with a #language value
       if (is_array($element) && isset($element['#language'])) {
         // This currently only supports fields with the value key
