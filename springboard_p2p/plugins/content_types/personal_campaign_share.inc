@@ -25,11 +25,22 @@ $plugin = array(
  * Render a single content pane.
  */
 function springboard_p2p_personal_campaign_share_render($subtype, $conf, $panel_args, $context) {
-
+  
+  // Only render this if the sb_social module is enabled.
   if (!module_exists('sb_social')) {
     return;
   }
-
+  
+  // Find out which node types are enabled for sb_share. If the current
+  // node, from $context, isn't among those enabled types, return empty.
+  $enabled_sb_share_types = variable_get('springboard_social_enabled_content_types', NULL);
+  if (isset($context->data) && isset($context->data->type)) {
+    $node_type = $context->data->type;
+    if (!in_array($node_type, $enabled_sb_share_types, TRUE)) {
+      return;
+    }
+  }
+  
   $personal_campaign = NULL;
   if (empty($context) || empty($context->data)) {
     if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid'])) {
