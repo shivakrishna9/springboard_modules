@@ -78,24 +78,49 @@ function form_layouts_update_7001() {
 
   db_create_table('form_layouts_node', $table);
 
-  form_layouts_move_drupal_variables_to_table();
+  // As of this update, form layouts only apply to fundraiser types.
+  $types = fundraiser_get_donation_types();
+  $types = array_keys(array_filter($types));
 
+  // Migrate the current fundraiser types to the new settings
+  // and data storage.
+  if (count($types)) {
+    form_layouts_enable_fundraiser_types($types);
+    form_layouts_move_drupal_variables_to_table($types);
+  }
+
+  // Rename an existing variable to match the module name.
   $default = variable_get('fundraiser_form_layouts_default', 'one_column');
   variable_set('form_layouts_default', $default);
   variable_del('fundraiser_form_layouts_default');
 }
 
+
+/**
+ * Enable form layouts functionality for all donation types.
+ *
+ * @param array $types
+ *   Machine names of content types to enable.
+ */
+function form_layouts_enable_fundraiser_types($types) {
+  foreach ($types as $type) {
+    variable_set('form_layouts_' . $type, 1);
+  }
+}
+
 /**
  * Changes the storage of form layouts from drupal variables to a table.
+ *
+ * @param array $types
+ *   Machine names of content types.
  */
-function form_layouts_move_drupal_variables_to_table() {
-  // This only applies to fundraiser types at this point.
-  $types = fundraiser_get_donation_types();
+function form_layouts_move_drupal_variables_to_table($types) {
   $result = db_query('SELECT nid FROM {node} WHERE type IN (:types)', array(':types' => $types));
 
   foreach ($result as $data) {
     $var_name = 'donation_form_' . $data->nid . '_theme';
-    if (variable_get($var_name)) {
+    $layout_name = variable_get($var_name);
+    if ($layout_name) {
       $record = array(
         'nid' => $data->nid,
         'layout_name' => $layout_name,
