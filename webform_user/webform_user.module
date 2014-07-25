@@ -369,6 +369,14 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
     if (user_is_logged_in() && _webform_user_is_webform_user_node($node)) {
       $component_hierarchy = __webform_user_parse_components($node->nid, $components);
       $map = webform_user_user_map($node->nid);
+
+      // Further below we need to prevent webform user from inserting blank values
+      // into market source fields when certain conditions are met.
+      if ($ms = module_exists('market_source')) {
+        $ms_map = variable_get('market_source_to_user_map', FALSE);
+        $qs = _market_source_build_qs_keys();
+      }  
+
       // Map each profile field if there's a matching component field.
       foreach ($map as $webform_field => $profile_field) {
         if (array_key_exists($webform_field, $component_hierarchy)) {
@@ -380,16 +388,22 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
               $current_field = $user_data->$profile_field;
               $profile_value = isset($current_field['und'][0]['value']) ? $current_field['und'][0]['value'] : NULL;
 
-              //If there is a valid *new* market source value on this form, replace the old values.
-              if (module_exists('market_source')) {
-                $map = variable_get('market_source_to_user_map');
-                $webform_field = isset($map[$profile_field])  && !empty($map[$profile_field]) ? $map[$profile_field] : FALSE;
-                if ($webform_field) {
+              // If there is a valid *new* market source value on this form, 
+              // and persistence is set to "direct" or "off"
+              // (direct and off are equivalent when there are no ms querystrings in the URL)
+              // replace the *old* values pulled from profile.
+              if ($ms) {
+                $webform_field = isset($ms_map[$profile_field])  && !empty($ms_map[$profile_field]) ? $ms_map[$profile_field] : FALSE;
+                $persistence = isset($qs[$webform_field]['persistence']) ? $qs[$webform_field]['persistence'] : FALSE;
+
+                if ($webform_field && ($persistence == 'off' || $persistence == 'direct')) {
+
                   $value = (isset($form['submitted'][$webform_field]['#default_value']) && 
                     !empty($form['submitted'][$webform_field]['#default_value'])) ? 
                     $form['submitted'][$webform_field]['#default_value'] : 
                     FALSE;
-                  if ($value) {
+
+                  if ($value && ($profile_value == NULL || $value != $profile_value)) {
                     $profile_value = $value;
                   }
                 }
@@ -464,6 +478,7 @@ function webform_user_webform_validate($form, &$form_state) {
  * Submit the results of a webform with webform user.
  */
 function webform_user_webform_submit($form, &$form_state) {
+
   global $user;
   $node = node_load($form_state['values']['details']['nid']);
   // Only process if the form is completed and it's a webform_user form.
