@@ -23,10 +23,10 @@ function fundraiser_webform_menu_alter(&$items) {
 }
 
 /**
- * Implements hook_implements_alter
+ * Implements hook_implements_alter().
  */
 function fundraiser_webform_module_implements_alter(&$implementations, $hook) {
-  // These hooks should run before others
+  // These hooks should run before others.
   $hooks = array('tokens_alter');
   if (in_array($hook, $hooks) && isset($implementations['fundraiser_webform'])) {
     $group['fundraiser_webform'] = $implementations['fundraiser_webform'];
@@ -61,7 +61,7 @@ function fundraiser_webform_admin_content() {
 }
 
 /**
- * Implements hook_webform_component_info
+ * Implements hook_webform_component_info().
  */
 function fundraiser_webform_webform_component_info() {
   $components = array();
@@ -90,7 +90,7 @@ function fundraiser_webform_webform_component_info() {
 }
 
 /**
- * Implements hook_theme
+ * Implements hook_theme().
  */
 function fundraiser_webform_theme($existing, $type, $theme, $path) {
   return array(
@@ -105,7 +105,8 @@ function fundraiser_webform_theme($existing, $type, $theme, $path) {
  * Implements hook_webform_confirmations_token_info_alter().
  */
 function fundraiser_webform_webform_confirmations_token_info_alter(&$tokens, $node) {
-  if (fundraiser_is_donation_type($node->type)) { // From fundraiser.module.
+  // From fundraiser.module.
+  if (fundraiser_is_donation_type($node->type)) {
     // $tokens is a keyed array, at minimum comes in as array('node');
     $tokens[] = 'donation';
   }
@@ -147,20 +148,22 @@ function fundraiser_webform_confirmation_page_tokens($node_type) {
 }
 
 /**
- * Implements hook_tokens_alter
+ * Implements hook_tokens_alter().
  *
  * Adds global donation tokens on webform confirmation pages
  *
- * @see fundraiser_webform_module_implements_alter, where this hook is set to run before others
+ * @see fundraiser_webform_module_implements_alter
+ * Where this hook is set to run before others.
  */
 function fundraiser_webform_tokens_alter(&$replacements, &$context) {
-  // Load the donation from the sid
+  // Load the donation from the sid.
   if ($context['type'] == 'donation' && empty($context['data']['donation']) && arg(0) == 'node' && arg(2) == 'done' && !empty($_GET['sid'])) {
-    // Add the donation to the context data array as well so other modules can use it
+    // Add the donation to the context data array as well so other modules
+    // can use it.
     $context['data']['donation'] = $donation = _fundraiser_webform_get_donation_by_sid($_GET['sid']);
   }
 
-  // If we have a donation object generate replacements for the donation tokens
+  // If we have a donation object generate replacements for the donation tokens.
   if (!empty($donation)) {
     $replacements += token_generate('donation', $context['tokens'], array('donation' => $donation), $context['options']);
   }
@@ -188,9 +191,11 @@ function fundraiser_webform_fundraiser_donation_information_table_alter(&$variab
  * Implements hook_node_type_insert().
  */
 function fundraiser_webform_node_type_insert($info) {
-  if (fundraiser_is_donation_type($info->type)) { // From fundraiser.module.
+  // From fundraiser.module.
+  if (fundraiser_is_donation_type($info->type)) {
     _fundraiser_webform_toggle_webform($info->type, TRUE);
-    webform_node_type('update', $info); // From webform.module.
+    // From webform.module.
+    webform_node_type('update', $info);
   }
 }
 
@@ -205,8 +210,10 @@ function fundraiser_webform_node_type_update($info) {
  * Implements hook_node_type_delete().
  */
 function fundraiser_webform_node_type_delete($info) {
-  if (fundraiser_is_donation_type($info->type)) { // From fundraiser.module.
-    webform_node_type('delete', $info); // From webform.module.
+  // From fundraiser.module.
+  if (fundraiser_is_donation_type($info->type)) {
+    // From webform.module.
+    webform_node_type('delete', $info);
     _fundraiser_webform_toggle_webform($info->type, FALSE);
   }
 }
@@ -229,20 +236,23 @@ function fundraiser_webform_webform_submission_presave($node, &$submission) {
 
 /**
  * Implements hook_form_FORM_ID_alter().
+ *
+ * Alter the webform component delete form to prevent the deletion of required fundraiser fields
+ * Why not handle this by removing delete options from the interface? Because edit/delete operations are added at theme layer.
+ * Unfortunately the theme layer adds the values and immediately renders, negating any chance for us to make changes.
+ * In order to remove delete properly, we will need a patch in webform addressing this issue.
+ *
+ * @todo look into using preprocess to intercept?
  */
-// Alter the webform component delete form to prevent the deletion of required fundraiser fields
-// Why not handle this by removing delete options from the interface? Because edit/delete operations are added at theme layer.
-// Unfortunately the theme layer adds the values and immediately renders, negating any chance for us to make changes.
-// In order to remove delete properly, we will need a patch in webform addressing this issue.
-// TODO look into using preprocess to intercept?
 function fundraiser_webform_form_webform_component_delete_form_alter(&$form, &$form_state, $form_id) {
   // Make sure we are dealing with a donation form.
-  if (fundraiser_is_donation_type($form['node']['#value']->type)) { // From fundraiser.module.
+  // From fundraiser.module.
+  if (fundraiser_is_donation_type($form['node']['#value']->type)) {
     // Check vs. required fields to make sure we can't delete them.
     $required_fields = array_keys(_fundraiser_webform_get_nonfieldset_keys());
     $cid = $form['component']['#value']['cid'];
     $component = $form['node']['#value']->webform['components'][$cid];
-    // Check to see if the form_key is in our required fields array
+    // Check to see if the form_key is in our required fields array.
     if (in_array($component['form_key'], $required_fields)) {
       $message = t('<strong>!name</strong> is a required fundraiser field and cannot be deleted from this form.',
         array('!name' => $component['name']));
@@ -254,6 +264,7 @@ function fundraiser_webform_form_webform_component_delete_form_alter(&$form, &$f
 
 /**
  * Implements hook_form_alter().
+ *
  * Alter content type settings to add "Enable fundraiser?" checkbox.
  */
 function fundraiser_webform_form_node_type_form_alter(&$form, &$form_state) {
@@ -264,7 +275,8 @@ function fundraiser_webform_form_node_type_form_alter(&$form, &$form_state) {
  * Submit callback for fundraiser_webform_form_node_type_form_alter()
  */
 function fundraiser_webform_form_node_type_form_alter_submit($form, &$form_state) {
-  // NOTE: we need to make sure if there are other things toggling this value not to untoggle it.
+  // NOTE: we need to make sure if there are other things toggling this
+  // value not to untoggle it.
   _fundraiser_webform_toggle_webform($form_state['values']['type'], $form_state['values']['fundraiser']);
 }
 
@@ -275,7 +287,8 @@ function _fundraiser_webform_toggle_webform($type, $is_enabled = TRUE) {
   $webform_node_types = variable_get('webform_node_types', array('webform'));
   $webform_node_types_primary = variable_get('webform_node_types_primary', array('webform'));
   // Make sure this content type is enabled for webform if not already.
-  // Add the selected node types to the webform_node_types_primary so a webform is added by default.
+  // Add the selected node types to the webform_node_types_primary so a
+  // webform is added by default.
   if ($is_enabled) {
     $webform_node_types = array_merge($webform_node_types, array($type));
     $webform_node_types_primary = array_merge($webform_node_types_primary, array($type));
@@ -288,6 +301,7 @@ function _fundraiser_webform_toggle_webform($type, $is_enabled = TRUE) {
 
 /**
  * Implements hook_form_FORM_ID_alter().
+ *
  * Adds the admin form for webform to the fundraiser settings form.
  */
 function fundraiser_webform_form_fundraiser_admin_settings_alter(&$form, &$form_state) {
@@ -312,7 +326,7 @@ function fundraiser_webform_form_fundraiser_admin_settings_alter(&$form, &$form_
       'handles. For each profile field listed here set which (if any) Fundraiser field will handle creating a component for it instead. ' .
       'Fields left unmapped will be created by Webform User.') . '</div>',
     );
-    // If the module exists, we can use it's functions.
+    // If the module exists, we can use its functions.
     $profile_fields = _webform_user_get_profile_fields();
     $fundraiser_fields = _fundraiser_webform_get_nonfieldset_keys();
     $current_map = variable_get('fundraiser_webform_to_user_map', array('mail' => 'mail'));
@@ -328,11 +342,13 @@ function fundraiser_webform_form_fundraiser_admin_settings_alter(&$form, &$form_
     foreach ($fundraiser_fields as $field_key => $fundraiser_field) {
       $options[$field_key] = $fundraiser_field['#title'];
     }
-    // Now we just need to note which of these fields map to which fundraiser fields.
+    // Now we just need to note which of these fields map to which
+    // fundraiser fields.
     foreach ($profile_fields as $profile_field) {
       $name = $profile_field['name'];
       // Mail is a special case, and should be doubled up on always.
-      // It is required by both modules, and field name has been coordinated to match.
+      // It is required by both modules, and field name has been
+      // coordinated to match.
       $form['fundraiser_webform']['webform_users']['mapping'][$name] = array(
         '#id' => 'field-' . $name,
         '#type' => 'select',
@@ -345,9 +361,10 @@ function fundraiser_webform_form_fundraiser_admin_settings_alter(&$form, &$form_
         $form['fundraiser_webform']['webform_users']['mapping'][$name]['#description'] =
           t('Mail field is required by both modules and the field names match by default.');
       }
+      // Pointer is important.
       $form['fundraiser_webform']['webform_users']['mapping']['#rows'][] = array(
         array('data' => $profile_field['title']),
-        array('data' => &$form['fundraiser_webform']['webform_users']['mapping'][$name]), // Pointer is important.
+        array('data' => &$form['fundraiser_webform']['webform_users']['mapping'][$name]),
       );
     }
     $form['#submit'][] = 'fundraiser_webform_to_webform_user_map_submit';
@@ -365,14 +382,17 @@ function fundraiser_webform_to_webform_user_map_submit($form, &$form_state) {
  * Implements hook_webform_user_profile_fields_alter().
  */
 function fundraiser_webform_webform_user_profile_fields_alter(&$fields, $node) {
-  // ONLY do this for fundraiser nodes. Other nodes that are also webform are to be left alone.
+  // ONLY do this for fundraiser nodes. Other nodes that are also
+  // webform are to be left alone.
   if (fundraiser_is_donation_type($node->type)) {
-    // For every field that fundraiser will be handling the creation, remove it from webform user creation.
+    // For every field that fundraiser will be handling the creation,
+    // remove it from webform user creation.
     $mapping = variable_get('fundraiser_webform_to_user_map', array('mail' => 'mail'));
     foreach ($fields as $index => $profile_field) {
       $name = $profile_field['name'];
       if (isset($mapping[$name]) &&   $mapping[$name]) {
-        // This field will be created by fundraiser, so we don't need to set it up in webform user.
+        // This field will be created by fundraiser, so we don't need to
+        // set it up in webform user.
         unset($fields[$index]);
       }
     }
@@ -390,8 +410,10 @@ function fundraiser_webform_webform_user_profile_fields_alter(&$fields, $node) {
  * Implements hook_form_BASE_FORM_ID_alter() for node forms.
  */
 function fundraiser_webform_form_node_form_alter(&$form, &$form_state, $form_id) {
-  // On node creation forms, tweak the display iff webform user is an active module.
-  // Why here? Because order matters. The form we're merging here is added on an earlier hook.
+  // On node creation forms, tweak the display iff webform user is an
+  // active module.
+  // Why here? Because order matters. The form we're merging here is added on
+  // an earlier hook.
   if (module_exists('webform_user')) {
     if (fundraiser_is_donation_type($form['#node']->type) && strstr($form_id, '_node_form') !== FALSE) {
       // Merge the webform user form into fundraiser iff webform user exists and is set for this node type.
@@ -411,21 +433,27 @@ function fundraiser_webform_form_node_form_alter(&$form, &$form_state, $form_id)
  */
 function fundraiser_webform_form_alter(&$form, &$form_state, $form_id) {
   // Alter the webform client form.
-  // Why hook_form_alter and not hook_form_FORM_ID_alter? Because webform's form id varies: webform_client_form_NID.
+  // Why hook_form_alter and not hook_form_FORM_ID_alter?
+  // Because webform's form id varies: webform_client_form_NID.
   if (strstr($form_id, 'webform_client_form') !== FALSE) {
     // Handle donation form edit submission pg.
-    if (fundraiser_is_donation_type($form['#node']->type) && arg(2) == 'submission') { // From fundraiser.module.
+    // From fundraiser.module.
+    if (fundraiser_is_donation_type($form['#node']->type) && arg(2) == 'submission') {
       fundraiser_webform_submission_display($form, $form_state);
     }
     // Handle the donation form display.
-    if (fundraiser_is_donation_type($form['#node']->type)   && arg(2) != 'submission') { // From fundraiser.module.
-      // From fundraiser.module, calls hooks to create form and submission paths.
-      fundraiser_donation_form($form, $form_state); // From fundraiser.module.
+    // From fundraiser.module.
+    if (fundraiser_is_donation_type($form['#node']->type)   && arg(2) != 'submission') {
+      // From fundraiser.module,
+      // calls hooks to create form and submission paths.
+      fundraiser_donation_form($form, $form_state);
     }
   }
 
-  // Do not allow users to muck with defined form keys in component editting form.
-  // They're named what they're named for a reason and we need those keys to remain unharmed.
+  // Do not allow users to muck with defined form keys in
+  // component editting form.
+  // They're named what they're named for a reason and we need those keys
+  // to remain unharmed.
   if ($form_id == 'webform_component_edit_form') {
     $node = node_load($form['nid']['#value']);
     // For new components ONLY prevent key conflicts by name.
@@ -465,6 +493,14 @@ function fundraiser_webform_form_alter(&$form, &$form_state, $form_id) {
  * Form, alters the display of webform submissions to prevent edits / display of confusing info.
  */
 function fundraiser_webform_submission_display(&$form, &$form_state) {
+
+  // Hidden fields can be edited.
+  foreach (element_children($form['submitted']) as $key) {
+    if ($form['submitted'][$key]['#type'] == 'hidden') {
+      $form['submitted'][$key]['#type'] = 'textfield';
+    }
+  }
+
   // Set up a view only display of the donation amount.
   $amount_field = _fundraiser_get_form_field($form, 'amount');
   if ('other' != $amount_field['#default_value']) {
@@ -496,7 +532,8 @@ function fundraiser_webform_submission_display(&$form, &$form_state) {
         '</label>' . $recurs . '</div>',
     );
   }
-  // Clean up the donor info section - replace the form fields with read only info
+  // Clean up the donor info section.
+  // Replace the form fields with read only info.
   $first_name_field = _fundraiser_get_form_field($form, 'first_name');
   $form['submitted']['donation_info']['first_name_readonly'] = array(
     '#markup' => '<div class="form-item"><label>' . t('First Name') . ':</label>' .
@@ -559,7 +596,8 @@ function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
   // Grab the node.
   $node = node_load($form['#node']->nid);
 
-  // Create a data structure that will tell us exactly where each webform component lives in the FAPI array.
+  // Create a data structure that will tell us exactly where each webform
+  // component lives in the FAPI array.
   $components = $node->webform['components'];
   $component_hierarchy = _fundraiser_webform_parse_components($node->nid, $components);
 
@@ -597,44 +635,48 @@ function fundraiser_webform_fundraiser_donation_form_after_build($form, $form_st
  * Implements hook_fundraiser_donation_validate().
  */
 function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
-  // Submission fields are keyed according to the fields in _fundraiser_field_info().
+  // Submission fields are keyed according to the fields
+  // in _fundraiser_field_info().
   $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted']);
   // Get the gateway that goes with this payment method.
   $payment_method_component = _fundraiser_webform_get_component_by_nid_key($form['#node']->nid, array('payment_method'));
   $payment_method_field = $form['#node']->webform['components'][$payment_method_component->cid];
-  // Use the enabled payment methods to create the payment fields
+  // Use the enabled payment methods to create the payment fields.
   if (!empty($payment_method_field['extra']['payment_methods'])) {
     $payment_methods = array_filter($payment_method_field['extra']['payment_methods'], '_fundraiser_webform_payment_method_array_filter_enabled');
   }
 
-  // Loop through the payment methods to allow the gateway to validate the submission
+  // Loop through the payment methods to allow the gateway to
+  // validate the submission.
   foreach ($payment_methods as $payment_method => $config) {
-    // Load the gateway for this payment method
+    // Load the gateway for this payment method.
     $gateway_info = _fundraiser_gateway_info($config['id']);
-    // For the selected payment method run the submission through the gateway's validate callback
+    // For the selected payment method run the submission through the
+    // gateway's validate callback.
     if (isset($submission_fields['payment_method']) && $submission_fields['payment_method'] == $payment_method) {
-      // Allow the gateway to cleanup the submission before validation
+      // Allow the gateway to cleanup the submission before validation.
       if (isset($gateway_info['cleanup callback']) && function_exists($gateway_info['cleanup callback'])) {
         $submission_fields = $gateway_info['cleanup callback']($submission_fields, $payment_method);
       }
-      // Call the gateways validation function
+      // Call the gateways validation function.
       if (isset($gateway_info['validate callback']) && function_exists($gateway_info['validate callback'])) {
         $payment_fields = fundraiser_webform_fundraiser_get_form_field($form, 'payment_fields');
         $submission_fields = $gateway_info['validate callback']($submission_fields, $payment_fields, $payment_method);
       }
-      // Store the scrub callback for later if this form has errors
+      // Store the scrub callback for later if this form has errors.
       if (isset($gateway_info['scrub callback']) && function_exists($gateway_info['scrub callback'])) {
         $scrub_callback = $gateway_info['scrub callback'];
       }
     }
-    // Remove unselected payment fields from the values
+    // Remove unselected payment fields from the values.
     else {
       unset($submission_fields['payment_fields'][$payment_method]);
     }
   }
 
   // Check error validation.
-  $errors = fundraiser_validate_form_fields($form, $form_state, $submission_fields); // From fundraiser.module.
+  // From fundraiser.module.
+  $errors = fundraiser_validate_form_fields($form, $form_state, $submission_fields);
 
   // Create watchdog entry on validation errors.
   if (form_get_errors() || $errors) {
@@ -647,7 +689,8 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
     }
 
     if (!empty($scrub_callback)) {
-      // SCRUB DATA. We do not want to save sensitive payment data in the error watchdog message.
+      // SCRUB DATA. We do not want to save sensitive payment data in the
+      // error watchdog message.
       $submission_fields['payment_fields'] = $scrub_callback($submission_fields['payment_fields'], $submission_fields['payment_method']);
     }
 
@@ -665,7 +708,9 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
     // Provide data to fundraiser about the node that failed to validate.
     $errors = array();
     $errors['nid'] = $form_state['values']['details']['nid'];
-    return $errors; // So fundraiser can pick up on the failure.
+
+    // So fundraiser can pick up on the failure.
+    return $errors;
   }
 }
 
@@ -673,30 +718,35 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
  * Implements hook_fundraiser_donation_submit().
  */
 function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $donation) {
-  // Given the set of fields defined in fundraiser, grab results here that match those fields.
-  // Since we used the _fundraiser_field_info keys to generate our webform components with the same form keys
-  // And we prevent those values from being overwritten, we can pass the results as an automatic map between the two.
+  // Given the set of fields defined in fundraiser, grab results here that
+  // match those fields.
+  // Since we used the _fundraiser_field_info keys to generate our webform
+  // components with the same form keys
+  // And we prevent those values from being overwritten, we can pass the
+  // results as an automatic map between the two.
   // Other modules will have to be more particular.
   $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted_tree']);
   // Get the gateway that goes with this payment method.
   $payment_method_component = _fundraiser_webform_get_component_by_nid_key($form['#node']->nid, array('payment_method'));
   $payment_method_field = $form['#node']->webform['components'][$payment_method_component->cid];
-  // Use the enabled payment methods to create the payment fields
+  // Use the enabled payment methods to create the payment fields.
   if (!empty($payment_method_field['extra']['payment_methods'])) {
     $payment_methods = array_filter($payment_method_field['extra']['payment_methods'], '_fundraiser_webform_payment_method_array_filter_enabled');
   }
 
-  // Loop through the payment methods to allow the gateway to cleanup the submission
+  // Loop through the payment methods to allow the gateway to cleanup
+  // the submission.
   foreach ($payment_methods as $payment_method => $config) {
     // Load the gateway for this payment method
     $gateway_info = _fundraiser_gateway_info($config['id']);
-    // For the selected payment method run the submission through the gateway's cleanup callback
+    // For the selected payment method run the submission through the
+    // gateway's cleanup callback.
     if (isset($submission_fields['payment_method']) && $submission_fields['payment_method'] == $payment_method) {
       if (isset($gateway_info['cleanup callback']) && function_exists($gateway_info['cleanup callback'])) {
         $submission_fields = $gateway_info['cleanup callback']($submission_fields, $payment_method);
       }
     }
-    // Remove unselected payment fields from the values
+    // Remove unselected payment fields from the values.
     else {
       unset($submission_fields['payment_fields'][$payment_method]);
     }
@@ -707,7 +757,8 @@ function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $dona
   $donation->donation = $submission_fields;
   $donation->sid = $form_state['values']['details']['sid'];
 
-  // Set the gateway for this donation, this value is found in the payment method's component settings for the payment type
+  // Set the gateway for this donation, this value is found in the payment
+  // method's component settings for the payment type.
   $field = &_fundraiser_webform_find_field($form, _fundraiser_webform_parse_component($form['#node']->nid, 'payment_method'));
   $gateway_id = $field['#webform_component']['extra']['payment_methods'][ $submission_fields['payment_method'] ]['id'];
   $donation->gateway = _fundraiser_gateway_info($gateway_id);
@@ -734,7 +785,8 @@ function fundraiser_webform_fundraiser_donation_post_submit($form, $form_state, 
  * Implements hook_fundraiser_get_fundraiser_alter().
  */
 function fundraiser_webform_fundraiser_get_fundraiser_alter($fundraiser) {
-  // Get the webform data for this node. This overrides the saved amount values in fundraiser itself.
+  // Get the webform data for this node. This overrides the saved amount
+  // values in fundraiser itself.
   // Add the amount_values for the fundraiser information on load.
   if (is_numeric($fundraiser->nid)) {
     // Grab amounts to pass up to fundraiser to keep values in sync.
@@ -829,7 +881,8 @@ function fundraiser_webform_fundraiser_field_info_alter(&$fields) {
     $fields[$key] = _fundraiser_webform_fundraiser_field_info_alter($key, $fields[$key], $email_map);
   }
 
-  // Ensure amount and payment method extra configurations can be updated by the node form
+  // Ensure amount and payment method extra configurations can be
+  // updated by the node form
   if (!empty($fields['donation']['amount'])) {
     $fields['donation']['amount']['#node_extra_settings'] = array('items' => TRUE);
   }
@@ -857,9 +910,11 @@ function _fundraiser_webform_fundraiser_field_info_alter($field_key, $field, $ma
  * Implements hook_fundraiser_donation_get_donation().
  */
 function fundraiser_webform_fundraiser_donation_get_donation($donation) {
-  // Add submission values to the donation object under $donation->submission_data
+  // Add submission values to the donation object under
+  // $donation->submission_data.
   // Keyed by value.
-  if ($donation->sid > 0) { // Then this donation was created via user submission.
+  if ($donation->sid > 0) {
+    // Then this donation was created via user submission.
     $data = fundraiser_webform_get_submission($donation->sid);
     foreach ($data as $form_key => $value) {
       // If only one value, use the value.
@@ -877,8 +932,10 @@ function fundraiser_webform_fundraiser_donation_get_donation($donation) {
  */
 
 /**
- * Helper function, flatten webforms submitted tree into an array mapping fields to values.
- * Technically this isn't fully flat, so much as it puts values for all defiend fields at the top level.
+ * Flatten webforms submitted tree into an array mapping fields to values.
+ *
+ * Technically this isn't fully flat, so much as it puts values for all
+ * defiend fields at the top level.
  * There is still nesting for field sets going on.
  */
 function _fundraiser_webform_submission_flatten($nid, $submit_tree, $submission_keys = NULL, $fieldset_keys = NULL) {
@@ -903,10 +960,11 @@ function _fundraiser_webform_submission_flatten($nid, $submit_tree, $submission_
 }
 
 /**
- * Helper function.
  * Creates a nested array of where components exist in the FAPI array for all components in a webform.
- * This is needed because the webform module allows the user to move components around. Therefore
- * we must be able to find them if they are not in their usual spot.
+ *
+ * This is needed because the webform module allows the user to move
+ * components around. Therefore we must be able to find them if they are not
+ * in their usual spot.
  */
 function _fundraiser_webform_parse_components($nid, $components, $reset = FALSE) {
   $component_hierarchy = array();
@@ -919,7 +977,7 @@ function _fundraiser_webform_parse_components($nid, $components, $reset = FALSE)
 }
 
 /**
- * Helper function. Creates a nested array of where a component exists in the FAPI array.
+ * Creates a nested array of where a component exists in the FAPI array.
  */
 function _fundraiser_webform_parse_component($nid, $form_key, $reset = FALSE) {
   $results = _fundraiser_webform_get_components_by_keys($nid, array($form_key));
@@ -933,12 +991,13 @@ function _fundraiser_webform_parse_component($nid, $form_key, $reset = FALSE) {
 }
 
 /**
- * Helper function.
  * Builds a path from the webform component to it's topmost parent.
+ *
  * Recursion is here. Be careful.
  */
 function _fundraiser_webform_walk_component_hierarchy($nid, $cid, $reset = FALSE, &$path = array()) {
-  // Store all the components for this node in a static cache to reduce the number of duplicated database hits.
+  // Store all the components for this node in a static cache to reduce the
+  // number of duplicated database hits.
   static $component_hierarchy = array();
   if (empty($component_hierarchy[$nid]) || $reset == TRUE) {
     $component_hierarchy[$nid] = array();
@@ -961,8 +1020,10 @@ function _fundraiser_webform_walk_component_hierarchy($nid, $cid, $reset = FALSE
 }
 
 /**
- * Helper function, returns a reference to an element of a FAPI array based on a known path.
- * This returns a reference to the form variable, allowing for manipulation into the form array.
+ * Returns a reference to an element of a FAPI array based on a known path.
+ *
+ * This returns a reference to the form variable,
+ * allowing for manipulation into the form array.
  */
 function &_fundraiser_webform_find_field(&$form, $path) {
   foreach (array_keys($path) as $v) {
@@ -980,7 +1041,8 @@ function &_fundraiser_webform_find_field(&$form, $path) {
  * Helper function, creates all donation specific webform components
  */
 function _fundraiser_webform_update_components($fundraiser) {
-  // Poll other modules for the information they would normally provide to the donation form.
+  // Poll other modules for the information they would normally provide to
+  // the donation form.
   $fields = _fundraiser_field_info();
   // Start creating fields based on the component.
   $components = array();
@@ -992,7 +1054,7 @@ function _fundraiser_webform_update_components($fundraiser) {
 }
 
 /**
- * Helper function, handles recursion for _fundraiser_webform_update_components().
+ * Handles recursion for _fundraiser_webform_update_components().
  */
 function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $pid = 0, $weight = 0) {
   // Include the webform module that allows components to be created.
@@ -1002,11 +1064,13 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
     $field = call_user_func($field['#create_callback'], $fundraiser, $field);
   }
   if (empty($field) || $field === FALSE) {
-    // The submit callback has the option of returning nothing to cancel creating the field, or to delete it.
+    // The submit callback has the option of returning nothing to
+    // cancel creating the field, or to delete it.
     if ($field === FALSE) {
       // Delete the field.
       _fundraiser_webform_delete_component($fundraiser->nid, $field_key);
-      // We do NOT use a standard webform_component_delete here. That's a recursive and submission destructive act.
+      // We do NOT use a standard webform_component_delete here.
+      // That's a recursive and submission destructive act.
       // webform_component_delete($fundraiser, $component);
     }
     // If so, return to skip.
@@ -1039,31 +1103,37 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
     $allow_respawn = isset($field['#allow_respawn']) ? $field['#allow_respawn'] : 0;
     $reset_value = isset($field['#reset_value']) ? $field['#reset_value'] : 0;
 
-    $cid = 0; // Default zero.
-    // Now that the array has been created, with all the right create callbacks. Figure out if we're updating or inserting.
+    // Default zero.
+    $cid = 0;
+    // Now that the array has been created, with all the right create callbacks.
+    // Figure out if we're updating or inserting.
     $orig_field = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, $component['form_key']);
     if (isset($orig_field->cid) && !empty($orig_field->cid)) {
       $cid = $orig_field->cid;
 
-      // For existing fields the weight remains the same
+      // For existing fields the weight remains the same.
       $component['weight'] = $orig_field->weight;
 
-      // If the field allows updating proceed
+      // If the field allows updating proceed.
       if ($allow_update) {
-        $component['pid'] = $orig_field->pid; // Keep the original parentage, could be set by user.
-        $component['name'] = $orig_field->name; // Keep the original name, could be set by user.
+        // Keep the original parentage, could be set by user.
+        $component['pid'] = $orig_field->pid;
+        // Keep the original name, could be set by user.
+        $component['name'] = $orig_field->name;
 
-        // Pass through customizations of the extra configurations
+        // Pass through customizations of the extra configurations.
         $orig_field->extra = unserialize($orig_field->extra);
         foreach ($orig_field->extra as $extra_field => $config) {
-          // If the extra config change cannot be updated by the node settings use the original component values
+          // If the extra config change cannot be updated by the node settings
+          // use the original component values.
           if (empty($field['#node_extra_settings'][$extra_field])) {
             $component['extra'][$extra_field] = $orig_field->extra[$extra_field];
           }
         }
 
         if (!$reset_value) {
-          $component['value'] = $orig_field->value; // Keep the original value, could be set by user.
+          // Keep the original value, could be set by user.
+          $component['value'] = $orig_field->value;
         }
         $component = array_merge((array) $orig_field, (array) $component);
 
@@ -1072,10 +1142,13 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
     }
     else {
       // We need to observe allow_update for fieldset creation as well.
-      // BUT ONLY IF THE COMPONENT WASN'T DELETED BY THE USER. WHICH WE DON'T TRACK.
+      // BUT ONLY IF THE COMPONENT WASN'T DELETED BY THE USER.
+      // WHICH WE DON'T TRACK.
       // So instead, we'll go by only adding new things on new nodes.
-      // If the node already exists *and* the field is deleted, we leave it deleted.
-      // Otherwise we may be adding something back that was deleted on purpose by user (see empty fieldsets).
+      // If the node already exists *and* the field is deleted,
+      // we leave it deleted.
+      // Otherwise we may be adding something back that was deleted on purpose
+      // by user (see empty fieldsets).
       if ($allow_update || $allow_respawn || (isset($fundraiser->is_new) && $fundraiser->is_new == TRUE)) {
         $cid = webform_component_insert($component);
         if (module_exists('webform_user') && _webform_user_is_webform_user_node($fundraiser)) {
@@ -1107,7 +1180,8 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
 }
 
 /**
- * Helper function, given the array from field_info - get the listed fields for NON fieldset fields, flattened.
+ * Given the array from field_info - get the listed fields for NON fieldset fields, flattened.
+ *
  * WARNING: Recursion is here to walk the field info array to gather form keys.
  */
 function _fundraiser_webform_get_nonfieldset_keys($field_info = NULL, $fields = array()) {
@@ -1147,7 +1221,15 @@ function _fundraiser_webform_get_donation_by_sid($sid) {
  */
 
 /**
- * DB function, given a nid and field key, get and *unserialize* the extra field from webform component.
+ * Get and *unserialize* the 'extra' field from a webform component on a node.
+ *
+ * @param int $nid
+ *   Node ID.
+ * @param string $form_key
+ *   The field key.
+ *
+ * @return bool|array
+ *   The 'extra' array for the field.
  */
 function _fundraiser_webform_get_extra_by_key($nid, $form_key) {
   $result = _fundraiser_webform_get_component_by_nid_key($nid, $form_key);
@@ -1243,21 +1325,22 @@ function _fundraiser_webform_payment_method_array_filter_enabled($method_setting
 
 /**
  * Implements hook_form_BASE_FORM_ID_alter().
+ *
  * Add custom submit button description text.
  */
 function fundraiser_webform_form_webform_configure_form_alter(&$form, &$form_state) {
-  //custom help text for submit button
-  if(fundraiser_is_donation_type($form['#node']->type)) {
+  // Custom help text for submit button.
+  if (fundraiser_is_donation_type($form['#node']->type)) {
     if (isset($form['#node']->nid)) {
       $text = db_query('SELECT nid, message FROM {fundraiser_webform_messages} f WHERE f.nid = :nid', array(':nid' => $form['#node']->nid))->fetchAssoc();
       if ($text['nid']) {
-        $message =  $text['message'];
+        $message = $text['message'];
       }
     }
     $form['advanced']['submit_description'] = array(
       '#type' => 'textarea',
       '#title' => t('Custom help text for the submit button.'),
-      '#description' => t('Enter help text that appears above the submit button. The token "%submit_text" may be used get the submit button\'s text value.' ),
+      '#description' => t('Enter help text that appears above the submit button. The token "%submit_text" may be used get the submit button\'s text value.'),
       '#default_value' => isset($message) ? $message : t('By clicking %submit_text your credit card will be securely processed.'),
     );
     $form['#submit'][] = 'fundraiser_webform_submit_text_submit';
@@ -1274,13 +1357,17 @@ function fundraiser_webform_submit_text_submit(&$form, &$form_state) {
     else {
       db_update('fundraiser_webform_messages')
       ->fields($fields)
-      ->condition('nid',$form['#node']->nid, '=')
+      ->condition('nid', $form['#node']->nid, '=')
       ->execute();
     }
   }
 }
 
+/**
+ * Implements hook_node_delete().
+ */
 function fundraiser_webform_node_delete($node) {
-  db_delete('fundraiser_webform_messages')->condition('nid', $node->nid)->execute();
+  db_delete('fundraiser_webform_messages')
+    ->condition('nid', $node->nid)
+    ->execute();
 }
-

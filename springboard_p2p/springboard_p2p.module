@@ -663,38 +663,38 @@ function springboard_p2p_node_update($node) {
       $update_settings['field_p2p_video_embed'] = isset($node->field_p2p_video_embed[$language][0]) ? $node->field_p2p_video_embed[$language][0] : $empty_video_field;
     }
     if (count($update_settings)) {
-      $associated_private_campaigns = springboard_p2p_get_personal_campaigns($node->nid);
-      foreach ($associated_private_campaigns as $nid => $private_campaign) {
-        $private_campaign = (array) $private_campaign;
+      $associated_personal_campaigns = springboard_p2p_get_personal_campaigns($node->nid);
+      foreach ($associated_personal_campaigns as $nid => $personal_campaign) {
+        $personal_campaign = (array) $personal_campaign;
         $node_changed = FALSE;
         foreach ($update_settings as $field_key => $field_settings) {
           switch ($field_key) {
             case 'body':
-              if (!isset($private_campaign[$field_key][$language][0]['value']) || $private_campaign[$field_key][$language][0]['value'] != $field_settings) {
-                $private_campaign[$field_key][$language][0]['value'] = $field_settings;
+              if (!isset($personal_campaign[$field_key][$language][0]['value']) || $personal_campaign[$field_key][$language][0]['value'] != $field_settings) {
+                $personal_campaign[$field_key][$language][0]['value'] = $field_settings;
                 $node_changed = TRUE;
               }
               break;
 
             case 'field_p2p_video_embed':
-              if (!isset($private_campaign[$field_key][$language][0]) || $private_campaign[$field_key][$language][0] != $field_settings) {
-                $private_campaign[$field_key][$language][0] = $field_settings;
+              if (!isset($personal_campaign[$field_key][$language][0]) || $personal_campaign[$field_key][$language][0] != $field_settings) {
+                $personal_campaign[$field_key][$language][0] = $field_settings;
                 $node_changed = TRUE;
               }
               break;
 
             case 'field_p2p_campaign_images':
-              if (!isset($private_campaign['field_p2p_campaign_images'][$language]) || $private_campaign['field_p2p_campaign_images'][$language] != $field_settings) {
-                $private_campaign['field_p2p_campaign_images'][$language] = $field_settings;
+              if (!isset($personal_campaign['field_p2p_campaign_images'][$language]) || $personal_campaign['field_p2p_campaign_images'][$language] != $field_settings) {
+                $personal_campaign['field_p2p_campaign_images'][$language] = $field_settings;
                 $node_changed = TRUE;
               }
               break;
           }
         }
         if ($node_changed) {
-          node_save((object) $private_campaign);
-          $link = l($private_campaign['title'], 'node/' . $private_campaign['nid']);
-          drupal_set_message(t('Updated private campaign: !link', array('!link' => $link)));
+          node_save((object) $personal_campaign);
+          $link = l($personal_campaign['title'], 'node/' . $personal_campaign['nid']);
+          drupal_set_message(t('Updated personal campaign: !link', array('!link' => $link)));
         }
       }
     }
@@ -905,7 +905,13 @@ function springboard_p2p_get_personal_campaigns($nid) {
 
   if (isset($result['node'])) {
     $campaign_items_nids = array_keys($result['node']);
-    $campaign_items = entity_load('node', $campaign_items_nids);
+
+    // This doesn't work because of some weird panelizer bug.
+    // So instead load the nodes individually.
+    // $campaign_items = node_load_multiple($campaign_items_nids);
+    foreach ($campaign_items_nids as $nid) {
+      $campaign_items[$nid] = node_load($nid);
+    }
   }
 
   return $campaign_items;
