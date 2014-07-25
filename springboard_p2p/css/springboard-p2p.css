@@ -49,11 +49,11 @@ body a {
 .p2p-page-type h3,
 .panel-pane-wrapper h2{
   margin: 0 0 12px 0;
+  padding: 0;
   color: #5b5b5b;
   text-transform: capitalize;
   font-size: 21px;
   line-height: 1.1em;
-  padding: 0;
 }
 
 .alert ul {
@@ -92,9 +92,9 @@ body input[type="submit"].btn {
   vertical-align: top;
   text-align: center;
   text-shadow: none;
+  text-shadow: none !important;
   font-size: 18px;
   cursor: pointer;
-  text-shadow: none !important;
 }
 
 input[type="submit"]:hover,
@@ -316,7 +316,7 @@ a.view-all-search:after {
 a.get-started-link {
   position: relative;
   display: block;
-  margin-top: 10px;
+  margin: 10px 0 10px 0;
   padding: 5px 10px 5px 10px;
   background: #859596;
   color: #fff;
@@ -331,7 +331,7 @@ a.get-started-link.account-link {
   float: right;
   margin: 0 0 10px 0;
   padding: 2px 0;
-  width: 332px;
+  width: 344px;
   font-size: 15px;
 }
 
@@ -450,6 +450,44 @@ a.get-started-link:hover {
   font-weight: bold;
 }
 
+/* Uniform global */
+
+div.selector,
+div.selector span {
+  height: 40px;
+  background-image: url('../images/select-sprite.png');
+  background-repeat: no-repeat;
+  line-height: 40px;
+  -webkit-font-smoothing: antialiased;
+}
+
+div.selector select {
+  border: none;
+  font-family: inherit;
+}
+
+/* left */
+
+div.selector {
+  margin: 0 0 0 -4px;
+  background-position: 0 -100px;
+  font-size: 12px;
+}
+
+div.selector.hover.active,
+div.selector.focus.active,
+div.selector.hover,
+div.selector.focus {
+  background-position: 0 -144px;
+}
+
+/* right */
+
+div.selector.hover span,
+div.selector.focus span {
+  background-position: right -45px;
+}
+
 /******************  Media queries, these should go last */
 
 @media (max-width: 980px) {
@@ -493,5 +531,3 @@ a.get-started-link:hover {
   }
 
 }
-
-
