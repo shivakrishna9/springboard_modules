@@ -316,3 +316,22 @@ function sb_social_update_7006() {
   db_add_field('sb_social_shares', 'did', $field);
 
 }
+
+/*
+ * Add share counts to settings
+ */
+function sb_social_update_7007() {
+  $result = db_query('SELECT sid FROM {sb_social_settings}')->fetchCol();
+  foreach ($result as $sid) {
+    $settings = sb_social_settings_load($sid);
+    foreach($settings['data'] as $name => $values) {
+      $count = db_query('SELECT count(nid) FROM {sb_social_shares} WHERE nid = :nid AND service = :service', array(':nid' => $settings['id'], ':service' => $name))->fetchfield();
+      if($count) {
+        $settings['data'][$name]['count'] = $count;
+      }
+    }
+    sb_social_settings_save($settings);
+  }
+}
+    
+
