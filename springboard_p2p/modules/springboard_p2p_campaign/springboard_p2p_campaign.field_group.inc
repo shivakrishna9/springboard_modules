@@ -118,6 +118,7 @@ function springboard_p2p_campaign_field_group_info() {
     'children' => array(
       0 => 'body',
       1 => 'field_p2p_campaign_goals',
+      2 => 'field_p2p_webform_fieldset_label',
     ),
     'format_type' => 'htab',
     'format_settings' => array(
@@ -266,13 +267,10 @@ function springboard_p2p_campaign_field_group_info() {
     'label' => 'Landing page slideshow',
     'weight' => '13',
     'children' => array(
-      0 => 'field_external_link',
-      1 => 'field_landing_page_slider_link',
-      2 => 'field_landing_page_slider_text',
-      3 => 'field_p2p_campaign_slider',
-      4 => 'field_p2p_external_link',
-      5 => 'field_p2p_landing_slider_link',
-      6 => 'field_p2p_landing_slider_text',
+      0 => 'field_p2p_campaign_slider',
+      1 => 'field_p2p_external_link',
+      2 => 'field_p2p_landing_slider_link',
+      3 => 'field_p2p_landing_slider_text',
     ),
     'format_type' => 'fieldset',
     'format_settings' => array(

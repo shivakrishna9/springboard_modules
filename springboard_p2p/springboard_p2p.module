@@ -1530,7 +1530,6 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
         );
         $form['springboard_p2p_personal_campaign_action'] = array(
           '#type' => 'fieldset',
-          '#title' => 'P2P',
           '#tree' => TRUE,
           'action_type' => array(
             '#type' => 'value',
@@ -1572,6 +1571,11 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
 
         $campaign = node_load($campaign_id);
         if (!empty($campaign) && $campaign->type == 'p2p_campaign') {
+
+          if (isset($campaign->field_p2p_webform_fieldset_label[$campaign->language][0]['safe_value'])) {
+            $fieldset_label = $campaign->field_p2p_webform_fieldset_label[$campaign->language][0]['safe_value'];
+            $form['springboard_p2p_personal_campaign_action']['#title'] = $fieldset_label;
+          }
 
           $form['springboard_p2p_personal_campaign_action']['comment'] = array(
             '#type' => 'textarea',

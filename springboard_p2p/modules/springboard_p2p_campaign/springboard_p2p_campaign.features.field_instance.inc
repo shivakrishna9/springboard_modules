@@ -1076,6 +1076,46 @@ function springboard_p2p_campaign_field_default_field_instances() {
     ),
   );
 
+  // Exported field_instance: 'node-p2p_campaign-field_p2p_webform_fieldset_label'
+  $field_instances['node-p2p_campaign-field_p2p_webform_fieldset_label'] = array(
+    'bundle' => 'p2p_campaign',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => 'This will display at the bottom of the donation form, above the option for users to display their name on the campaign and leave a comment.',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'text',
+        'settings' => array(),
+        'type' => 'text_default',
+        'weight' => 31,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_p2p_webform_fieldset_label',
+    'label' => 'Peer to peer campaign label for donation form',
+    'required' => 0,
+    'settings' => array(
+      'text_processing' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'text',
+      'settings' => array(
+        'size' => 60,
+      ),
+      'type' => 'text_textfield',
+      'weight' => 4,
+    ),
+  );
+
   // Translatables
   // Included for use with string extractors like potx.
   t('A brief message to display if a user attempts to create a personal campaign without prior authorization.');
@@ -1094,6 +1134,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
   t('Landing page slider teaser');
   t('Organization introduction');
   t('P2P Expiration Message');
+  t('Peer to peer campaign label for donation form');
   t('Personal campaign images');
   t('Personal campaign introduction');
   t('Personal campaigns require approval');
@@ -1103,6 +1144,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
   t('Suggested donation amount');
   t('This content can be overridden by campaigner');
   t('This is a Youtube or Vimeo video URL. Example: https://www.youtube.com/watch?v=kJ4CYbCGhLA');
+  t('This will display at the bottom of the donation form, above the option for users to display their name on the campaign and leave a comment.');
   t('Upload a campaign Thumbnail. The minimum size should be 400 x 240 pixels.');
   t('Upload a campaign banner. Suggested size is 1170 x 240 pixels.');
   t('Upload a personal campaign thumbnail image. Ideal size is 400 x 240 pixels.');
