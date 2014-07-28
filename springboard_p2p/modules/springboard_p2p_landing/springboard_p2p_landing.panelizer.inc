@@ -259,7 +259,7 @@ function springboard_p2p_landing_panelizer_defaults() {
     $pane->configuration = array(
       'admin_title' => '',
       'title' => '',
-      'body' => '<h3>Search for a fundraising campaign</h3>',
+      'body' => '<h3>Search for a personal campaign</h3>',
       'format' => 'full_html',
       'substitute' => 1,
       'name' => 'fundraising_title_pane',

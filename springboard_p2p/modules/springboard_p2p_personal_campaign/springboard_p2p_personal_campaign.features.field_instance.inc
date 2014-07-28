@@ -447,7 +447,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
     ),
     'entity_type' => 'node',
     'field_name' => 'field_p2p_fundraising_deadline',
-    'label' => 'Fundraising Deadline',
+    'label' => 'Campaign Deadline',
     'required' => 1,
     'settings' => array(
       'default_value' => 'blank',
@@ -695,7 +695,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
   t('Campaign ID');
   t('Campaign Introduction');
   t('Campaign URL');
-  t('Fundraising Deadline');
+  t('Campaign Deadline');
   t('Fundraising Goal');
   t('Initial Referrer');
   t('Market Source');

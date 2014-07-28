@@ -20,7 +20,7 @@ function springboard_p2p_personal_campaign_default_ctools_custom_content() {
   $content->settings = array(
     'admin_title' => '',
     'title' => '',
-    'body' => '<h3>Search for a fundraising campaign</h3>',
+    'body' => '<h3>Search for a personal campaign</h3>',
     'format' => 'full_html',
     'substitute' => 1,
   );
