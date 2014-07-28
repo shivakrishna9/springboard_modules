@@ -150,6 +150,20 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
   db_query('UPDATE {sb_social_shares} set url = :url WHERE share_id = :share_id', array(':url' => $url, ':share_id' => $share_id));
   watchdog('sb_social', 'share id:' . $share_id);
 
+  //Update settings with the new share count
+  foreach($settings['data'] as $name => $values) {
+    if($nid) {
+    $count = db_query('SELECT count(nid) FROM {sb_social_shares} WHERE nid = :nid AND service = :service', array(':nid' => $nid, ':service' => $name))->fetchfield();
+    }
+    else {
+      $count = db_query('SELECT count(type) FROM {sb_social_shares} WHERE url = :url AND service = :service', array(':url' => $url, ':service' => $name))->fetchfield();
+    }
+    if($count) {
+      $settings['data'][$name]['count'] = $count;
+    }
+  }
+  sb_social_settings_save($settings);
+
   if ($share_id && module_exists('salesforce_queue')) {
     watchdog('sb_social', 'attempted to add share event to queue');
     sb_social_add_share_to_queue($share_id);
