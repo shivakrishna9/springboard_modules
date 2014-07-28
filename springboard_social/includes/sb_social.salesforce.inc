@@ -30,6 +30,41 @@ function sb_social_salesforce_queue_create_item_alter(&$item) {
 }
 
 /**
+ * Implements hook_salesforce_mapping_map_fields_alter().
+ * 
+ * Replace Drupal object IDs with tokens for associated Contact and Opportunity objects
+ * in exported social share items.
+ */
+function sb_social_salesforce_mapping_map_fields_alter(&$fields, $context) {
+  if ($context['entity_type'] == 'sb_social_share') {
+    foreach ($context['map']->field_mappings as $field_mapping) {
+      $drupal_name = $field_mapping['drupal_field']['fieldmap_value'];
+      $sf_name = $field_mapping['salesforce_field']['name'];
+      switch ($drupal_name) {
+        case 'uid':
+          // Replace non-zero uid with Contact token.
+          if (!empty($fields[$sf_name]) && 'reference' == $field_mapping['salesforce_field']['type']) {
+            $fields[$sf_name] = sprintf('[Contact:user:%d]', (int)$fields[$sf_name]);
+          }
+          break;
+        case 'did':
+          if ('reference' == $field_mapping['salesforce_field']['type']) {
+            // If zero then set to null.
+            if ($fields[$sf_name] == 0) {
+              $fields[$sf_name] = NULL;
+            }
+            // Otherwise, replace did with Opportunity token.
+            else {
+              $fields[$sf_name] = sprintf('[Opportunity:donation:%d]', (int)$fields[$sf_name]);
+            }
+          }
+          break;
+      }
+    }
+  }
+}
+
+/**
  * Add a social share event to the Salesforce queue.
  *
  * @param $share_id
