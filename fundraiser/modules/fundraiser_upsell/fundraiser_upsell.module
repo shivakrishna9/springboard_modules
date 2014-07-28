@@ -150,7 +150,7 @@ function fundraiser_upsell_add_node_settings(&$form) {
   );
   $form['fundraiser_upsell']['content_tokens']['help'] = array(
     '#theme' => 'token_tree',
-    '#token_types' => array('all'),
+    '#token_types' => array('all', 'donation'),
     '#global_types' => TRUE,
     '#click_insert' => TRUE,
   );
@@ -179,7 +179,7 @@ function fundraiser_upsell_add_node_settings(&$form) {
 
   $form['fundraiser_upsell']['thankyou_tokens']['help'] = array(
     '#theme' => 'token_tree',
-    '#token_types' => array('all'),
+    '#token_types' => array('all', 'donation'),
     '#global_types' => TRUE,
     '#click_insert' => TRUE,
   );
@@ -254,7 +254,7 @@ function fundraiser_upsell_add_node_settings(&$form) {
 
     $form['fundraiser_upsell']['email_wrappers']['message']['tokens']['help'] = array(
       '#theme' => 'token_tree',
-      '#token_types' => array('all'),
+      '#token_types' => array('all', 'donation'),
       '#global_types' => TRUE,
       '#click_insert' => TRUE,
     );

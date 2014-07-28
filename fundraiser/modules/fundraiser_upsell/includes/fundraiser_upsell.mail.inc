@@ -30,7 +30,7 @@ function fundraiser_upsell_admin_thank_you_settings() {
   );
   $form['fundraiser_upsell_thank_you_content_tokens']['help'] = array(
     '#theme' => 'token_tree',
-    '#token_types' => array('all'),
+    '#token_types' => array('all', 'donation'),
     '#global_types' => TRUE,
     '#click_insert' => TRUE,
   );
@@ -97,7 +97,7 @@ function fundraiser_upsell_admin_thank_you_settings() {
   );
   $form['email']['message']['tokens']['help'] = array(
     '#theme' => 'token_tree',
-    '#token_types' => array('all'),
+    '#token_types' => array('all', 'donation'),
     '#global_types' => TRUE,
     '#click_insert' => TRUE,
   );
