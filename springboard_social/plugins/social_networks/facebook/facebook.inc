@@ -69,7 +69,10 @@ function sb_social_facebook_token_info() {
     'name' => t('Facebook share image'),
     'description' => t('Image content for Facebook sharing'),
   );
-
+  $facebook_tokens['facebook_count'] = array(
+    'name' => t('Facebook count'),
+    'description' => t('The number of times this item has been shared via facebook.'),
+  );
   return $facebook_tokens;
 }
 
@@ -92,6 +95,9 @@ function sb_social_facebook_token_replace($tokens, &$replacements, $settings, $n
         break;
       case 'facebook_description':
         $replacements[$token] =  !empty($settings['data']['facebook']['description']) ? _sb_social_replace_tokens($settings['data']['facebook']['description'], $node, $submission_id) : '';
+        break;
+      case 'facebook_count':
+        $replacements[$token] =  !empty($settings['data']['facebook']['count']) ? _sb_social_replace_tokens($settings['data']['facebook']['count'], $node, $submission_id) : '';
         break;
       case 'facebook_image':
         $fid = $settings['data']['facebook']['image'];

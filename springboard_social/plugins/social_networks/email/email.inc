@@ -36,7 +36,10 @@ function sb_social_email_token_info() {
     'name' => t('Email message'),
     'description' => t('Share email message'),
   );
-
+  $email_tokens['email_count'] = array(
+    'name' => t('Email count'),
+    'description' => t('The number of times this item has been shared via email.'),
+  );
 
   return $email_tokens;
 }
@@ -56,6 +59,8 @@ function sb_social_email_token_replace($tokens, &$replacements, $settings, $node
         break;
       case 'email_message':
         $replacements[$token] = !empty($settings['data']['email']['message']) ? _sb_social_replace_tokens($settings['data']['email']['message'], $node, $submission_id) : '';
+      case 'email_count':
+        $replacements[$token] = !empty($settings['data']['email']['count']) ? _sb_social_replace_tokens($settings['data']['email']['count'], $node, $submission_id) : '';
         break;
     }
   }

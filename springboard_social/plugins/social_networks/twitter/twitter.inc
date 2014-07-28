@@ -31,6 +31,10 @@ function sb_social_twitter_token_info() {
     'name' => t('Twitter tweet message'),
     'description' => t('Message content for Twitter tweet'),
   );
+  $twitter_tokens['twitter_count'] = array(
+    'name' => t('Twitter count'),
+    'description' => t('The number of times this item has been shared via Twitter.'),
+  );
   return $twitter_tokens;
 }
 
@@ -50,6 +54,8 @@ function sb_social_twitter_token_replace($tokens, &$replacements, $settings, $no
         break;
       case 'twitter_message':
         $replacements[$token] =  !empty($settings['data']['twitter']['message']) ? _sb_social_replace_tokens($settings['data']['twitter']['message'], $node, $submission_id) : '';
+      case 'twitter_count':
+        $replacements[$token] =  !empty($settings['data']['twitter']['count']) ? _sb_social_replace_tokens($settings['data']['twitter']['count'], $node, $submission_id) : '';
         break;
     }
   }
