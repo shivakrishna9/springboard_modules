@@ -12,6 +12,44 @@ require_once 'includes/sb_social.salesforce.inc';
 require_once 'includes/sb_social.ctools.inc';
 
 /**
+ * Implements hook_entity_info().
+ */
+function sb_social_entity_info() {
+  return array(
+    'sb_social_share' => array(
+      'label' => t('Social share'),
+      'base table' => 'sb_social_shares',
+      'controller class' => 'EntityAPIController',
+      'entity keys' => array(
+        'id' => 'share_id',
+      ),
+      'fieldable' => FALSE,
+      'load hook' => 'sb_social_share_load',
+    ),
+  );
+}
+
+/**
+ * Implements hook_entity_property_info().
+ */
+/*
+function sb_social_entity_property_info() {
+  return array(
+    'sb_social_share' => array(
+      'properties' => array(
+        'sid' => array(
+          'label' => t('Submission ID'),
+          'type' => 'integer',
+          'description' => t("The webform submission ID (if any)."),
+        ),
+        //@TODO: finish fleshing this out??
+      ),
+    ),
+  );
+}
+*/
+
+/**
  * Implements hook_metatag_metatags_view_alter().
  */
 function sb_social_metatag_metatags_view_alter(&$output, $instance) {
@@ -801,7 +839,6 @@ function _sb_social_replace_tokens($string, $node, $sid = NULL) {
   return $string;
 }
 
-
 /**
  * Implements hook_salesforce_queue_create_item_alter().
  *
@@ -828,9 +865,8 @@ function sb_social_salesforce_queue_create_item_alter(&$item) {
   }
 }
 
-
 /**
- * When an opportunity syncs  assign it's salesforce id to related shares.
+ * When an opportunity syncs assign its salesforce id to related shares.
  *
  * @param mixed $item
  *   Salesforce queue item
