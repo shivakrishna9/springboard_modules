@@ -619,13 +619,13 @@ function fundraiser_sustainers_process_single_recurring_donation(&$log, $recurri
     // Set the reference charge flag to TRUE
     $donation->reference_charge = TRUE;
 
-    // We can't handle the "processing" status from inside a transaction, so if any are open 
+    // We can't handle the "processing" status from inside a transaction, so if any are open
     // then pop them off, forcing them to commit.
     $connection = Database::getConnection();
     if ($connection->inTransaction()) {
       $connection->popTransaction('drupal_transaction');
     }
-    
+
     // Make sure this charge wasn't partially processed already (e.g., cron
     // crashed awaiting response from the gateway).
     if ('processing' == db_query("SELECT gateway_resp FROM {fundraiser_sustainers} WHERE did=:did;", array(':did' => $recurring->did))->fetchField()) {
@@ -1055,11 +1055,15 @@ function fundraiser_sustainers_edit_form($did) {
     $donation_amount_form_array = drupal_get_form('fundraiser_sustainers_donation_amount_form', $donation, $next_donation);
     $donation_amount_form = drupal_render($donation_amount_form_array);
     if(user_access('fastforward recurring donations')) {
-      if(module_exists('fundraiser_date_mode') && variable_get('fundraiser_date_mode_set_date_mode', 0) == 0) {
+      // If date mode is enabled and on, do not support changing the payment date.
+      if(module_exists('fundraiser_date_mode') && variable_get('fundraiser_date_mode_set_date_mode', 0) == 1) {
+        $donation_date_form = '';
+      }
+      else {
         $donation_date_form_array = drupal_get_form('fundraiser_sustainers_donation_date_form', $donation);
         $donation_date_form = drupal_render($donation_date_form_array);
         $donation_date_form = '<div id="donation-date-form"><h2>Change Charge Date</h2>' . $donation_date_form . '</div>';
-      } 
+      }
     }
     else {
       $donation_date_form = '';
@@ -1206,7 +1210,7 @@ function fundraiser_sustainers_donation_amount_form_submit($form, &$form_state) 
  * Creates a form for donation date change.
  */
 function fundraiser_sustainers_donation_date_form($form, &$form_state, $donation) {
-  
+
   $recurring = _fundraiser_sustainers_get_donations_recurr_remaining($donation->did);
 
   $form['master_did'] = array(
@@ -1216,7 +1220,7 @@ function fundraiser_sustainers_donation_date_form($form, &$form_state, $donation
   $dates = array_combine(range(1, 28), range(1, 28));
   $form['fundraiser_sustainers_change_dates'] = array(
     '#type' => 'select',
-    '#title' => t('Change Charge date'),
+    '#title' => t('Charge date'),
     '#description' => t('Select the day of the month to process remaining sustainer payments.'),
     '#options' => $dates,
     '#multiple' => FALSE,
@@ -1278,11 +1282,11 @@ function fundraiser_sustainers_donation_date_form_submit($form, &$form_state) {
       $username = isset($user->name) ? $user->name : 'Anonymous';
       $message =  t('The date of this gift was changed from @old_day to @new_day on @date by @username.',
         array(
-        '@old_day' => date('Y/m/d', $old_charge_date),
-        '@new_day' => date('Y/m/' . str_pad($new_day, 2, '0', STR_PAD_LEFT), $old_charge_date),
+        '@old_day' => date('m/d/Y', $old_charge_date),
+        '@new_day' => date('m/', $old_charge_date) . str_pad($new_day, 2, '0', STR_PAD_LEFT) . date('/Y', $old_charge_date),
         '@date' => format_date(strtotime('now')),
         '@username' => $username,
-      )); 
+      ));
       $order = commerce_order_load($donation->did);
       $order->revision = TRUE;
       $order->log = $message;
