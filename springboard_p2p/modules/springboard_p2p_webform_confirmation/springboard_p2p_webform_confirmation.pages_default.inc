@@ -54,7 +54,7 @@ function springboard_p2p_webform_confirmation_default_page_manager_handlers() {
     ),
   );
   $display->cache = array();
-  $display->title = 'Thank you for donating to my campaign';
+  $display->title = 'Thank you for supporting my campaign';
   $display->uuid = '78059b1d-cc5a-49a3-9d54-57685c7f82f5';
   $display->content = array();
   $display->panels = array();
@@ -85,7 +85,7 @@ function springboard_p2p_webform_confirmation_default_page_manager_handlers() {
     $pane->shown = TRUE;
     $pane->access = array();
     $pane->configuration = array(
-      'text' => 'Thank you for donating to my campaign',
+      'text' => 'Thank you for supporting my campaign',
       'markup_tag' => 'h1',
       'override_title' => FALSE,
       'override_title_text' => '<no title>',
