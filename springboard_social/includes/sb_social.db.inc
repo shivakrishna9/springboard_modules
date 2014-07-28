@@ -146,17 +146,17 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
   // and then check for their data when the URL alter hook is executed.
   $url_context = isset($_SESSION['sb_social_url_context']) ? $_SESSION['sb_social_url_context'] : FALSE;
   drupal_alter('sb_social_share_url', $url, $node, $url_context);
+  $record['url'] = $url;
 
   db_query('UPDATE {sb_social_shares} set url = :url WHERE share_id = :share_id', array(':url' => $url, ':share_id' => $share_id));
-  watchdog('sb_social', 'share id:' . $share_id);
+  watchdog('sb_social', 'share id:' . $share_id);  //@TODO: Is this test code that should be removed?
 
-  if ($share_id && module_exists('salesforce_queue')) {
-    watchdog('sb_social', 'attempted to add share event to queue');
-    sb_social_add_share_to_queue($share_id);
+  if ($share_id) {
+    $record['share_id'] = $share_id;
+    module_invoke_all('entity_insert', (object)$record, 'sb_social_share');
   }
 
-  // Let modules react to the share event
-  module_invoke_all('sb_social_share_event_save', array('share_id' => $share_id, 'url' => $url) + $record);
+  // Return the url.
   return $url;
 }
 
