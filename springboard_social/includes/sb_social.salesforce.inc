@@ -65,33 +65,6 @@ function sb_social_salesforce_mapping_map_fields_alter(&$fields, $context) {
 }
 
 /**
- * Add a social share event to the Salesforce queue.
- *
- * @param $share_id
- * Share id of the share event to add to the queue.
- *
- */
-function sb_social_add_share_to_queue($share_id, $op = 'CREATE', $id = NULL) {
-  module_load_include('module', 'salesforce_queue');
-  $share = sb_social_share_event_load($share_id);
-  $sobject = sb_social_create_share_event_object($share);
-
-  $item = array(
-    'drupal_id' => $share_id,
-    'module' => 'sb_social',
-    'delta' => 'share_event',
-    'object_type' => 'Social_Share__c',
-    'operation' => $op,
-    'sobject' => $sobject,
-  );
-  if ($op == 'UPDATE' && !empty($id)) {
-    $item['Id'] = $id;
-  }
-  $queue = salesforce_queue_load();
-  $result = $queue->createItem($item);
-}
-
-/**
  * Generate a Salesforce object to sync a social share event
  *
  * @param $share
