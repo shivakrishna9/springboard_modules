@@ -64,7 +64,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
       ),
     ),
     'deleted' => 0,
-    'description' => 'When enabled donors will be able to leave an additional comment that can be displayed on the personal campaign page.',
+    'description' => 'When enabled, constituents will be able to leave an additional comment that can be displayed on the personal campaign page.',
     'display' => array(
       'default' => array(
         'label' => 'above',
@@ -81,7 +81,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
     ),
     'entity_type' => 'node',
     'field_name' => 'field_p2p_allow_donor_comments',
-    'label' => 'Allow donor comments',
+    'label' => 'Allow constituent comments',
     'required' => 0,
     'settings' => array(
       'user_register_form' => FALSE,
@@ -898,7 +898,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
     ),
     'entity_type' => 'node',
     'field_name' => 'field_p2p_show_donor_comments',
-    'label' => 'Show donor comments on personal campaign pages',
+    'label' => 'Show constituent comments on personal campaign pages',
     'required' => 0,
     'settings' => array(
       'user_register_form' => FALSE,
@@ -940,7 +940,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
     ),
     'entity_type' => 'node',
     'field_name' => 'field_p2p_show_donor_scroll',
-    'label' => 'Show donor scroll on personal campaign pages',
+    'label' => 'Show constituent scroll on personal campaign pages',
     'required' => 0,
     'settings' => array(
       'user_register_form' => FALSE,
@@ -1079,7 +1079,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
   // Translatables
   // Included for use with string extractors like potx.
   t('A brief message to display if a user attempts to create a personal campaign without prior authorization.');
-  t('Allow donor comments');
+  t('Allow constituent comments');
   t('Authorization required message');
   t('Campaign banner');
   t('Campaign thumbnail');
@@ -1098,8 +1098,8 @@ function springboard_p2p_campaign_field_default_field_instances() {
   t('Personal campaign introduction');
   t('Personal campaigns require approval');
   t('Set a message to show when the campaign expires.');
-  t('Show donor comments on personal campaign pages');
-  t('Show donor scroll on personal campaign pages');
+  t('Show constituent comments on personal campaign pages');
+  t('Show constituent scroll on personal campaign pages');
   t('Suggested donation amount');
   t('This content can be overridden by campaigner');
   t('This is a Youtube or Vimeo video URL. Example: https://www.youtube.com/watch?v=kJ4CYbCGhLA');
@@ -1108,7 +1108,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
   t('Upload a personal campaign thumbnail image. Ideal size is 400 x 240 pixels.');
   t('Upload a slideshow image. The minimum size should be 1170 x 360 pixels.');
   t('Video embed');
-  t('When enabled donors will be able to leave an additional comment that can be displayed on the personal campaign page.');
+  t('When enabled, constituents will be able to leave an additional comment that can be displayed on the personal campaign page.');
 
   return $field_instances;
 }

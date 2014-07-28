@@ -50,7 +50,7 @@ function springboard_p2p_get_started_render($subtype, $conf, $args, $contexts) {
   $output = array();
 
   // Create the output to be rendered.
-  $output[] = '<p>' . t('Want to start your own fundraising campaign for @site_name?', array('@site_name' => $site_name)) . '</p>';
+  $output[] = '<p>' . t('Want to start your own personal campaign for @site_name?', array('@site_name' => $site_name)) . '</p>';
   $output[] = '<a class="get-started-link" href=" ' .  $getstarted_link  . ' ">' . t('Get Started') . '<i class="fa fa-cog fa-spin get-started-spinner"></i></a>';
 
   // Initial content is blank.
