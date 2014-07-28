@@ -40,6 +40,10 @@ function fundraiser_sustainers_permission() {
       'title' => t('Fastforward recurring donations'),
       'description' => t('Fastforward recurring donations.'),
     ),
+    'skip recurring donations' => array(
+      'title' => t('Skip recurring donation'),
+      'description' => t('Cancel a single recurring donation.'),
+    ),
   );
 }
 
@@ -77,6 +81,13 @@ function fundraiser_sustainers_menu() {
     'page callback' => 'fundraiser_sustainers_charge_now',
     'page arguments' => array(2),
     'access arguments' => array('fastforward recurring donations'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['fundraiser_sustainers/%/skip/%'] = array(
+    'title' => 'Skip recurring donation',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_sustainers_skip', 1, 3),
+    'access arguments' => array('skip recurring donations'),
     'type' => MENU_CALLBACK,
   );
   // Admin interface.
@@ -246,6 +257,45 @@ function fundraiser_sustainers_charge_now($did) {
   _fundraiser_sustainers_update_recurring($donation);
   drupal_set_message(t('The charge date for donation #@did has been advanced to @date. It will be charged on the next Fundraiser cron.',
     array('@did' => $did, '@date' => format_date(strtotime('now')))));
+  // Afterwards return where we came from.
+  drupal_goto( drupal_get_destination() );
+}
+
+/**
+ * Menu callback to skip a charge .
+ */
+
+function fundraiser_sustainers_skip($form, &$form_state, $master_did, $did) {
+  $form['did'] = array(
+    '#type' => 'value',
+    '#value' => $did,
+  );
+  return confirm_form($form, t('Are you sure you want to skip this recurring donation'), 'admin/commerce/orders/' . $master_did . '/recurring/edit', t('This action cannot be undone.'), t('YES'), t('NO'));
+}
+
+function fundraiser_sustainers_skip_submit($form, &$form_state) {
+  // Given a did, update the charge date to now.
+  $donation = fundraiser_donation_get_donation($form_state['values']['did']);
+  fundraiser_donation_cancel($donation);
+  $donation->donation_skipped = TRUE;
+
+  _fundraiser_commerce_update_order_status('skipped', $donation->did);
+  $donation->status = 'skipped';
+  $donation->status_label = _fundraiser_commerce_get_label_by_status('skipped');
+  $donation->status_charged = _fundraiser_commerce_get_charged_by_status('skipped');
+  fundraiser_donation_update($donation);
+
+  db_query('UPDATE {fundraiser_sustainers} SET ' .
+    'gateway_resp = \'skipped\',' .
+    'lock_id = 0, ' .
+    'cancellation_reason = \'skipped by admin\' ' .
+    'WHERE did = :did', array(':did' => $donation->did)
+  );
+  
+  if (module_exists('salesforce_genmap')) {
+    salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
+  }
+  drupal_set_message(t('The recurring donation has been cancelled.'));
   // Afterwards return where we came from.
   drupal_goto( drupal_get_destination() );
 }
@@ -425,7 +475,6 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
           $fields['CC_Last_4__c'] = substr($fields['CC_Last_4__c'],-4,4);
         }
       }
-
       // Corrects the StageName to whatever value is appropriate based on mapped stages.
       if (isset($donation->donation_cancelled) && $donation->donation_cancelled) {
         if (isset($fields['StageName'])) {
@@ -437,6 +486,18 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
             }
           }
 
+          $fields['StageName'] = $stagename;
+        }
+      }
+      if (isset($donation->donation_skipped) && $donation->donation_skipped) {
+        if (isset($fields['StageName'])) {
+          $stagename = 'Skipped';
+          if (module_exists('salesforce_donation')) {
+            $mapped_stages = array_flip(variable_get('salesforce_donation_mapped_stages', salesforce_donation_default_stage_map()));
+            if (isset($mapped_stages['skipped'])) {
+              $stagename = $mapped_stages['skipped'];
+            }
+          }
           $fields['StageName'] = $stagename;
         }
       }
@@ -1013,10 +1074,14 @@ function fundraiser_sustainers_edit_form($did) {
   // Format payment schedule into a data table
   $donation_set = _fundraiser_sustainers_get_donations_recurr_by_member($did);
   $donations_header = array('Amount', 'Charge Date', 'Processed Status');
+  
 
   if (user_access('fastforward recurring donations')) {
     // Add a button to fastforward this particular donation
     $donations_header[] = t('Advance Charge to Today');
+  }
+  if (user_access('skip recurring donations')) {
+    $donations_header[] = t('Skip Charge');
   }
   $donations_rows = array();
   if ($donation_set) {
@@ -1036,6 +1101,16 @@ function fundraiser_sustainers_edit_form($did) {
         }
         else {
           $donations_row['ffwd'] = t('cannot update');
+        }
+      }
+      if (user_access('skip recurring donations')) {
+        if (isset($this_donation->status_charged) && !$this_donation->status_charged) {
+          // Add a button to fastforward this particular donation
+          $donations_row['skip'] = l(t('skip charge'), 'fundraiser_sustainers/' . $did . '/skip/' . $this_donation->did,
+            array('query' => drupal_get_destination()));
+        }
+        else {
+          $donations_row['skip'] = $this_donation->status == 'skipped' ? t('already skipped') : t('cannot skip');
         }
       }
       $donations_rows[] = $donations_row;
