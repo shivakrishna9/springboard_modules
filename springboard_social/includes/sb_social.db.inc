@@ -64,7 +64,6 @@ function sb_social_share_event_load($share_id) {
  *   share event.
  */
 function sb_social_share_event_save($service, $id, $type, $market_source) {
-
   global $user;
   // Deal with submission-based shares (confirmation pages).
   if (isset($_GET['sid']) && is_numeric($_GET['sid']) && $type == 'nid') {
@@ -91,7 +90,7 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
     $page_name = !empty($node->title) ? $node->title : '';
     $type = $node->type;
     $url_path = 'node/' . $node->nid;
-    $settings_id = $node->nid;
+    $settings_id = sb_social_get_sid_by_id($id, 'node');
     $internal_name_field = field_get_items('node', $node, 'field_fundraiser_internal_name');
     $internal_name = !empty($internal_name_field[0]['value']) ? $internal_name_field[0]['value'] : '';
   }
@@ -109,7 +108,6 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
   }
 
   $settings = sb_social_settings_load($settings_id);
-
   $uid = !empty($submission->uid) ? $submission->uid : $user->uid;
 
   // Update is not included as these records should only be created when a share
@@ -149,7 +147,6 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
 
   db_query('UPDATE {sb_social_shares} set url = :url WHERE share_id = :share_id', array(':url' => $url, ':share_id' => $share_id));
   watchdog('sb_social', 'share id:' . $share_id);
-
   //Update settings with the new share count
   foreach($settings['data'] as $name => $values) {
     if($nid) {
