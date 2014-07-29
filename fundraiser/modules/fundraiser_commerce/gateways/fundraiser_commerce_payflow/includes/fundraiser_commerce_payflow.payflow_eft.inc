@@ -6,11 +6,11 @@
 /**
  * Payment method callback: settings form
  */
-function commerce_payflow_cc_settings_form($settings = array(), $payment_method = NULL) {
+function commerce_payflow_eft_settings_form($settings = array(), $payment_method = NULL) {
   $form = array();
 
   // Grab the default Payflow Link settings.
-  $settings += commerce_payflow_cc_default_settings();
+  $settings += commerce_payflow_eft_default_settings();
 
   // Load the form from the default settings
 
@@ -60,24 +60,6 @@ function commerce_payflow_cc_settings_form($settings = array(), $payment_method 
     '#default_value' => $settings['mode'],
   );
 
-  // Add the checkout and transaction option form elements.
-  $form['trxtype'] = array(
-    '#type' => 'radios',
-    '#title' => t('Default transaction type'),
-    '#options' => array(
-      'S' => t('Sale - authorize and capture the funds at the time the payment is processed'),
-      'A' => t('Authorization - reserve funds on the card to be captured later through your PayPal account'),
-    ),
-    '#default_value' => $settings['trxtype'],
-  );
-  $form['currency_code'] = array(
-    '#type' => 'select',
-    '#title' => t('Default currency'),
-    '#description' => t('Transactions in other currencies will be converted to this currency, so multi-currency sites must be configured to use appropriate conversion rates.') . '<br />' . t('Note: valid currencies will differ depending on your country and processor. Check before selecting a different currency.'),
-    '#options' => commerce_paypal_currencies('payflow_link'),
-    '#default_value' => $settings['currency_code'],
-  );
-
   // Add the recurring billing options select.
   $form['recurring-billing'] = array(
     '#type' => 'checkbox',
@@ -104,7 +86,7 @@ function commerce_payflow_cc_settings_form($settings = array(), $payment_method 
 /**
  * Returns the default settings for the PayPal WPS payment method.
  */
-function commerce_payflow_cc_default_settings() {
+function commerce_payflow_eft_default_settings() {
   $default_currency = commerce_default_currency();
 
   return array(
@@ -113,10 +95,8 @@ function commerce_payflow_cc_default_settings() {
     'user' => '',
     'password' => '',
     'mode' => 'test',
-    'trxtype' => 'S',
-    'currency_code' => in_array($default_currency, array_keys(commerce_paypal_currencies('payflow_link'))) ? $default_currency : 'USD',
     'allow_supported_currencies' => FALSE,
-    'recurring-billing' => 'pnref-token',
+    'recurring-billing' => array(),
     'log' => array('request' => 0, 'response' => 0),
   );
 }
@@ -124,34 +104,69 @@ function commerce_payflow_cc_default_settings() {
 /**
  * Payment method callback: checkout form.
  */
-function commerce_payflow_cc_submit_form($payment_method, $pane_values, $checkout_pane, $order) {
-  module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
-  return commerce_payment_credit_card_form(array('code' => ''));
+function commerce_payflow_eft_submit_form($payment_method = NULL, $pane_values = array(), $checkout_pane = NULL, $order = NULL) {
+  $form = array();
+  $form['bank_account']['bank_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Bank Name'),
+    '#required' => TRUE,
+  );
+  $form['bank_account']['routing_number'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Routing Number'),
+    '#required' => TRUE,
+  );
+  $form['bank_account']['account_number'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Account Number'),
+    '#required' => TRUE,
+  );
+  $form['bank_account']['confirm_account_number'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Confirm Account Number'),
+    '#required' => TRUE,
+  );
+  $form['bank_account']['account_type'] = array(
+    '#type' => 'select',
+    '#title' => t('Account Type'),
+    '#options' => array(
+      'C' => 'Checking',
+      'S' => 'Savings',
+    ),
+    '#required' => TRUE,
+  );
+
+  return $form;
 }
 
 /**
  * Payment method callback: checkout form validation.
  */
-function commerce_payflow_cc_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
-  module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+function commerce_payflow_eft_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
+  $prefix = implode('][', $form_parents) . '][';
+  // Validate the account number fields
+  if (!ctype_digit($pane_values['bank_account']['routing_number']) || strlen($pane_values['bank_account']['routing_number']) > 9) {
+    form_set_error($prefix . 'routing_number', t('The routing number should be a 9 digit numeric value.'));
+  }
 
-  // Validate the credit card fields.
-  $settings = array(
-    'form_parents' => array_merge($form_parents, array('credit_card')),
-  );
+  if (!ctype_digit($pane_values['bank_account']['account_number'])) {
+    form_set_error($prefix . 'account_number', t('The account number should only contain numeric values.'));
+  }
 
-  if (!commerce_payment_credit_card_validate($pane_values['credit_card'], $settings)) {
-    return FALSE;
+  if ($pane_values['bank_account']['account_number'] != $pane_values['bank_account']['confirm_account_number']) {
+    form_set_error($prefix . 'account_number', t('The account numbers do not match.'));
+    form_set_error($prefix . 'confirm_account_number');
   }
 }
 
 /**
  * Payment method callback: checkout form submission.
  */
-function commerce_payflow_cc_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
+function commerce_payflow_eft_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
   $billing_address = $order_wrapper->commerce_customer_billing->commerce_customer_address->value();
 
+  // Build a name-value pair array for this transaction.
   // First check if this method has been set to use Payflow's recurring bill service
   if (!empty($pane_values['recurring']) && $payment_method['settings']['recurring-billing'] === 'recurring-billing-profile') {
     // Build a name-value pair array for this transaction.
@@ -165,43 +180,41 @@ function commerce_payflow_cc_submit_form_submit($payment_method, $pane_form, $pa
       'START' => date('mdY', strtotime('+1 month')),
       // Must be R to initiate recurring profile
       'TRXTYPE' => 'R',
-      // C - Credit card
-      'TENDER' => 'C',
+      // A - ACH
+      'TENDER' => 'A',
       // The total price
       'AMT' => commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']),
       // Optional amount to charge initially
-      'OPTIONALTRX' => $payment_method['settings']['trxtype'],
+      'OPTIONALTRX' => 'S',
       'OPTIONALTRXAMT' => commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']),
       // The currency code
       'CURRENCY' => $charge['currency_code'],
+      // bank account type
+      'ACCTTYPE' => $pane_values['bank_account']['account_type'],
+      // routing number
+      'ABA' => $pane_values['bank_account']['routing_number'],
       // The credit card number
-      'ACCT' => $pane_values['credit_card']['number'],
-      // The expiration date, in format 'mmyy'
-      'EXPDATE' => sprintf("%02d", $pane_values['credit_card']['exp_month']) . substr($pane_values['credit_card']['exp_year'], 2),
+      'ACCT' => $pane_values['bank_account']['account_number'],
+      // Add the name info here, the one-time ACH charge API does not use the last name value
+      'FIRSTNAME' => substr($billing_address['first_name'], 0, 30),
+      'LASTNAME' => substr($billing_address['last_name'], 0, 30),
     );
   }
   else {
-    // Build a name-value pair array for this transaction.
     $nvp = array(
-      // A - Authorize, S - Auth and Capture
-      'TRXTYPE' => $payment_method['settings']['trxtype'],
-      // C - Credit card
-      'TENDER' => 'C',
-      // The total price
+      // eft only supports sale
+      'TRXTYPE' => 'S',
+      'TENDER' => 'A',
+      'AUTHTYPE' => 'WEB',
       'AMT' => commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']),
-      // The currency code
-      'CURRENCY' => $charge['currency_code'],
-      // The credit card number
-      'ACCT' => $pane_values['credit_card']['number'],
-      // The expiration date, in format 'mmyy'
-      'EXPDATE' => sprintf("%02d", $pane_values['credit_card']['exp_month']) . substr($pane_values['credit_card']['exp_year'], 2),
-      // The order number
-      'INVNUM' => $order->order_number,
+      // routing number
+      'ABA' => $pane_values['bank_account']['routing_number'],
+      'ACCT' => $pane_values['bank_account']['account_number'],
+      'ACCTTYPE' => $pane_values['bank_account']['account_type'],
+      'CUSTREF' => $order->order_number,
+      // The EFT API only uses the FIRSTNAME parameter
+      'FIRSTNAME' => substr($billing_address['first_name'], 0, 10) .  ' ' . substr($billing_address['last_name'], 0, 20),
     );
-  }
-
-  if (isset($pane_values['credit_card']['code'])) {
-    $nvp['CVV2'] = $pane_values['credit_card']['code'];
   }
 
   // Build a description for the order.
@@ -222,7 +235,6 @@ function commerce_payflow_cc_submit_form_submit($payment_method, $pane_form, $pa
     $nvp['COMMENT2'] = substr($descr, 128, 255);
   }
 
-  // Prepare the billing address for use in the request.
   if (empty($billing_address['first_name'])) {
     $name_parts = explode(' ', $billing_address['name_line']);
     $billing_address['first_name'] = array_shift($name_parts);
@@ -231,8 +243,6 @@ function commerce_payflow_cc_submit_form_submit($payment_method, $pane_form, $pa
 
   // Add customer information
   $nvp += array(
-    'FIRSTNAME'     => substr($billing_address['first_name'], 0, 30),
-    'LASTNAME'      => substr($billing_address['last_name'], 0, 30),
     'COMPANYNAME'   => substr($billing_address['organisation_name'], 0, 30),
     'STREET'        => substr($billing_address['thoroughfare'], 0, 30),
     'CITY'          => substr($billing_address['locality'], 0, 30),
@@ -246,15 +256,15 @@ function commerce_payflow_cc_submit_form_submit($payment_method, $pane_form, $pa
 
   // Submit the request
   $response = commerce_payflow_api_request($payment_method, 'pro', $nvp, $order);
-  
+
+  // Get the PNREF value
+  $pnref = isset($response['TRXPNREF']) ? $response['TRXPNREF'] : $response['PNREF'];
+
   // Something went wrong with the request. Abort.
   if (!$response) {
     drupal_set_message(t('We are unable to process your request at this time. Please try again.'), 'error');
     return FALSE;  
   }
-
-  // Get the PNREF value
-  $pnref = isset($response['TRXPNREF']) ? $response['TRXPNREF'] : $response['PNREF'];
 
   // Prepare a transaction object to log the API response.
   $transaction = commerce_payment_transaction_new($payment_method['method_id'], $order->order_id);
@@ -264,7 +274,7 @@ function commerce_payflow_cc_submit_form_submit($payment_method, $pane_form, $pa
   $transaction->currency_code = $charge['currency_code'];
   $transaction->payload[REQUEST_TIME] = $response;
 
-  $trxtype = $payment_method['settings']['trxtype'];
+  $trxtype = 'S';
   // Store the type of transaction in the remote status.
   $transaction->remote_status = $trxtype;
 
@@ -281,18 +291,7 @@ function commerce_payflow_cc_submit_form_submit($payment_method, $pane_form, $pa
   );
 
   if (intval($response['RESULT']) == 0) {
-    // Set the transaction status based on the type of transaction this was.
-    switch ($trxtype) {
-      case 'S':
-        $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
-        break;
-
-      case 'A':
-      default:
-        $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
-        break;
-    }
-
+    $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
     $message[] = '@action - Success';
   }
   elseif (intval($response['RESULT']) == 126) {
@@ -311,7 +310,7 @@ function commerce_payflow_cc_submit_form_submit($payment_method, $pane_form, $pa
 
   $transaction->message = implode('<br />', $message);
 
-  // Store the PNREF in the data array
+  // Store additional data in the data array
   $transaction->data['commerce_payflow']['pnref'] = $pnref;
 
   // Save the transaction information.
@@ -319,7 +318,7 @@ function commerce_payflow_cc_submit_form_submit($payment_method, $pane_form, $pa
 
   // If the payment failed, display an error and rebuild the form.
   if ($response['RESULT'] != '0') {
-    drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
+    drupal_set_message(t('We received the following error processing your account. Please enter you information again or try a different account.'), 'error');
     drupal_set_message(check_plain($response['RESPMSG']), 'error');
     return FALSE;
   }

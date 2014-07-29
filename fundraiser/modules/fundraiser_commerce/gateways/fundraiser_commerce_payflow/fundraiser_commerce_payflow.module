@@ -1,10 +1,9 @@
 <?php
 
-// Include the commerce payment method functions file
-module_load_include('inc', 'fundraiser_commerce_payflow', 'includes/fundraiser_commerce_payflow.payflow_cc');
-
 /**
  * Implements hook_fundraiser_gateway_info().
+ *
+ * This module exposes the payment gateways provided by this module and the commerce_payflow module
  */
 function fundraiser_commerce_payflow_fundraiser_gateway_info() {
   // Load all the methods available.
@@ -19,32 +18,26 @@ function fundraiser_commerce_payflow_fundraiser_gateway_info() {
     $method_instance = commerce_payment_method_instance_load($id);
     list($method_id, $rule_name) = explode('|', $method_instance['instance_id']);
 
-    $payflow_link_types = array('payflow_link', 'paypal_ppa');
+    $payflow_types = array(
+      'payflow_link',
+      'paypal_ppa',
+      'payflow_cc',
+      'payflow_eft',
+    );
+
     // Add gateway information for a commerce payflow rule
-    if (!empty($method_id) && !empty($rule_name) && in_array($method_instance['method_id'], $payflow_link_types)) {
+    if (!empty($method_id) && !empty($rule_name) && in_array($method_instance['method_id'], $payflow_types)) {
+      // Include the commerce payment method functions file
+      module_load_include('inc', 'fundraiser_commerce_payflow', 'includes/fundraiser_gateways/' . $method_instance['method_id']);
+
       // Add the standard info for a payflow gateway
       $this_gateway = _fundraiser_commerce_payflow_standard_gateway_settings($rule_name, $method_instance);
 
-      // Add the specific callbacks to support the payflow link processing
-      $this_gateway['form callback'] = '_fundraiser_commerce_payflow_submit_form';
-      $this_gateway['charge callback'] = '_fundraiser_commerce_payflow_charge';
-      $this_gateway['redirect callback'] = '_fundraiser_commerce_payflow_redirect';
-      $this_gateway['validate callback'] = '_fundraiser_commerce_payflow_validate';
-
-      // Add this to the main gateway
-      $fundraiser_gateways[$this_gateway['id']] = $this_gateway;
-    }
-    // Add gateway information for a fundriaser commerce payflow rule
-    elseif (!empty($method_id) && !empty($rule_name) && $method_instance['method_id'] == 'fundraiser_commerce_payflow_cc') {
-      // Add the standard info for a payflow gateway
-      $this_gateway = _fundraiser_commerce_payflow_standard_gateway_settings($rule_name, $method_instance);
-
-      // Add the specific callbacks to support the direct cc processing
-      $this_gateway['form callback'] = '_fundraiser_commerce_payflow_cc_submit_form';
-      $this_gateway['charge callback'] = '_fundraiser_commerce_payflow_cc_charge';
-      $this_gateway['validate callback'] = '_fundraiser_commerce_payflow_cc_validate';
-      $this_gateway['cleanup callback'] = '_fundraiser_commerce_payflow_cc_cleanup';
-      $this_gateway['scrub callback'] = '_fundraiser_commerce_payflow_cc_scrub';
+      // Add the specific gateway config for fundraiser
+      $function = 'fundraiser_commerce_' . $method_instance['method_id'] . '_gateway_info';
+      if (function_exists($function)) {
+        $this_gateway += $function($method_instance);
+      }
 
       // Add this to the main gateway
       $fundraiser_gateways[$this_gateway['id']] = $this_gateway;
@@ -65,15 +58,6 @@ function _fundraiser_commerce_payflow_standard_gateway_settings($rule_name, $met
     'module_name' => t('Fundraiser Commerce Payflow'),
     'title' => $rule_config->label,
     'description' => $method_instance['description'],
-    'payment_method' => array('credit'),
-    'allow_recurring' => array('credit'),
-    // Important note: While payflow_link is an offsite processor, reference charges are handled onsite
-    // We handle that switch in the charge callback
-    'offsite_processing' => array(),
-    'offsite_recurring' => array(),
-    'expire callback' => '_fundraiser_commerce_payflow_expire',
-    'refund callback' => '_fundraiser_commerce_payflow_refund',
-    'allow_refund' => array('credit'),
     'gateway_details' => $method_instance,
   );
 }
@@ -84,20 +68,29 @@ function _fundraiser_commerce_payflow_standard_gateway_settings($rule_name, $met
 function fundraiser_commerce_payflow_commerce_payment_method_info() {
   $payment_methods = array();
 
-  $payment_methods['fundraiser_commerce_payflow_cc'] = array(
-    'base' => 'fundraiser_commerce_payflow_cc',
+  $payment_methods['payflow_cc'] = array(
+    'base' => 'commerce_payflow_cc',
     'title' => t('Fundraiser Payflow Credit Card'),
-    'short_title' => t('Fundraiser Payflow'),
+    'short_title' => t('Payflow Onsite CC'),
     'display_title' => t('Credit card'),
-    'description' => t('Integrates Litle for credit card transactions.'),
+    'description' => t('Integrates Payflow for onsite credit card transactions.'),
     'file' => 'includes/fundraiser_commerce_payflow.payflow_cc.inc'
+  );
+
+  $payment_methods['payflow_eft'] = array(
+    'base' => 'commerce_payflow_eft',
+    'title' => t('Fundraiser Payflow EFT'),
+    'short_title' => t('Payflow Onsite EFT'),
+    'display_title' => t('EFT'),
+    'description' => t('Integrates Payflow for onsite EFT transactions.'),
+    'file' => 'includes/fundraiser_commerce_payflow.payflow_eft.inc'
   );
 
   return $payment_methods;
 }
 
 /**
- * Implements hook_preprocess_webform_confirmation
+ * Implements hook_preprocess_webform_confirmation().
  */
 function fundraiser_commerce_payflow_preprocess_webform_confirmation(&$vars) {
   $donation = _fundraiser_webform_get_donation_by_sid($vars['sid']);
@@ -111,189 +104,7 @@ function fundraiser_commerce_payflow_preprocess_webform_confirmation(&$vars) {
 }
 
 /**
- * Callback
- */
-function _fundraiser_commerce_payflow_submit_form($payment_method, $config = NULL) {
-  $form = array();
-  if (!empty($config)) {
-    $method_instance = commerce_payment_method_instance_load($config['id']);
-  }
-
-  // Show instructions if thats configured
-  if (!empty($method_instance['settings']['show_payment_instructions'])) {
-    $form['payflow_information'] = array(
-      '#markup' => '<span class="commerce-paypal-wps-info">' . t('After submitting this form you will be taken to another form to enter your payment details.') . '</span>',
-    );
-  }
-
-  // On the recurring update form let users know payflow doesn't support updating card data
-  if (arg(2) == 'recurring_overview') {
-    $form['payflow_no_update'] = array(
-      '#markup' => '<span class="commerce-payflow-info">' . t('Please contact customer support to make changes to your card data.') . '</span>',
-    );
-  }
-
-  // To avoid errors on form validation return a value
-  $form['payflow_flag'] = array(
-    '#type' => 'hidden',
-    '#value' => 1,
-  );
-
-  return $form;
-}
-
-/**
- * Donation form validate callback
- *
- * Nothing to validate since payflow data isn't submitted on the form
- */
-function _fundraiser_commerce_payflow_validate() {
-  return;
-}
-
-/**
- * Callback charge function for the payflow link processer
- */
-function _fundraiser_commerce_payflow_charge($payment_method, $donation) {
-  // If this is not a refernce charge use fundraiser's redirect functionality
-  if (empty($donation->reference_charge)) {
-    _fundraiser_commerce_fundraiser_donation_process_external($donation, $donation->gateway);
-  }
-  // For reference charges use our custom function
-  elseif ($donation->reference_charge == TRUE) {
-    return _fundraiser_commerce_payflow_reference_charge($donation);
-  }
-}
-
-/**
- * Redirect form callback
- *
- * Returns a form for sending the user to payflow or an iframed cc form
- */
-function _fundraiser_commerce_payflow_redirect($method_instance, $donation, $order, $settings) {
-  $form = array();
-  $form_state = array();
-  $pane_form = array();
-  $pane_values = array();
-  $charge = NULL;
-
-  commerce_payflow_link_submit_form_submit($method_instance, $pane_form, $pane_values, $order, $charge);
-  // Save the order to store the redirect key
-  commerce_order_save($order);
-
-  // Build the form
-  return commerce_payflow_link_redirect_form($form, $form_state, $order, $method_instance);
-}
-
-/**
- * Redirect submit callback
- */
-function _fundraiser_commerce_payflow_redirect_submit($method_instance, $donation, $order) {
-  // Let the module complete the transaction
-  commerce_payflow_link_redirect_form_submit($order, $method_instance);
-
-  // Returns true for a successful order
-  if (commerce_checkout_complete_access($order)) {
-    // Sustainers will not know if this is a recurring donation at this point so we need to reset that
-    $submission =  fundraiser_webform_get_submission($donation->sid);
-
-    if (empty($donation->donation['recurs_monthly'])
-     && !empty($submission['recurs_monthly']['value'][0])
-     && $submission['recurs_monthly']['value'][0] == 'recurs') {
-      $donation->donation['recurs_monthly'] = TRUE;
-    }
-
-    // Since the processing happens off site we set the payment fields here
-    $dates = str_split($_POST['EXPDATE'], 2);
-    $year = date_create_from_format('y', $dates[1]);
-    $donation->donation['payment_fields']['credit']['card_expiration_month'] = $dates[0];
-    $donation->donation['payment_fields']['credit']['card_expiration_year'] = $year->format('Y');
-    $donation->donation['payment_fields']['credit']['card_number'] = $_POST['ACCT'];
-
-    // Set the pnref value to support reference transactions
-    $donation->data['payflow_pnref'] = _fundraiser_commerce_payflow_transaction_pnref($donation->did);
-
-    return TRUE;
-  }
-}
-
-/**
- * Return the fields for the donation form
- */
-function _fundraiser_commerce_payflow_cc_submit_form($payment_method, $config = NULL) {
-  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
-  return _fundraiser_commerce_credit_card_form();
-}
-
-/**
- * Charge the donation
- */
-function _fundraiser_commerce_payflow_cc_charge($method_instance, $donation) {
-  // For reference charges use our custom function
-  if ($donation->reference_charge == TRUE) {
-    return _fundraiser_commerce_payflow_reference_charge($donation);
-  }
-
-  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
-
-  $order = commerce_order_load($donation->did);
-  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
-  $charge = $order_wrapper->commerce_order_total->value();
-
-  $pane_form = array(); // Not actually used anywhere in this system, so ignore it.
-
-  $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
-
-  // Add fundraiser commerce data to the pane values array
-  _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
-
-  // Execute the payflow cc submit handler
-  $result = fundraiser_commerce_payflow_cc_submit_form_submit($method_instance, $pane_form, $pane_values, $order, $charge);
-  $success = FALSE;
-  if ($result !== FALSE) {
-    $success = TRUE;
-  }
-
-  // Payflow doesn't currently integrate with card on file so unset this
-  unset($pane_values['credit_card']['cardonfile_store']);
-
-  // Set the pnref value to support reference transactions
-  $donation->data['payflow_pnref'] = _fundraiser_commerce_payflow_transaction_pnref($donation->did);
-
-  // Perform post processing functions
-  _fundraiser_commerce_charge_submit_form_process($success, $method_instance, $pane_values, $donation);
-
-  return $success;
-}
-
-/**
- * Clean up the submission results after submission before they are returned to fundraiser.
- */
-function _fundraiser_commerce_payflow_cc_cleanup($submission_fields) {
-  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
-  return _fundraiser_commerce_credit_card_cleanup($submission_fields);
-}
-
-/**
- * Scrub the data before saving.
- */
-function _fundraiser_commerce_payflow_cc_scrub($submission_fields) {
-  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
-  return _fundraiser_commerce_credit_card_scrub($submission_fields);
-}
-
-/**
- * Validate the submitted values with the fundriaser commerce validate function
- */
-function _fundraiser_commerce_payflow_cc_validate($submission_fields, $payment_fields) {
-  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
-  $form_parents = array_merge($payment_fields['#parents'], array('credit'));
-  _fundraiser_commerce_credit_card_validate($submission_fields, $form_parents);
-  return $submission_fields;
-}
-
-/**
- * Implements hook_commerce_payflow_api_request_alter
+ * Implements hook_commerce_payflow_api_request_alter().
  */
 function fundraiser_commerce_payflow_commerce_payflow_api_request_alter(&$nvp, $order, $payment_method) {
   // If this request is for a form and is a fundraiser donation then change some of the values
@@ -316,9 +127,9 @@ function _fundraiser_commerce_payflow_expire($submission_fields) {
 }
 
 /**
- * Process a reference transaction via Payflow Pro.
+ * Process a reference transaction via Payflow Pro with a PNREF token.
  */
-function _fundraiser_commerce_payflow_reference_charge($donation) {
+function _fundraiser_commerce_payflow_pnref_reference_charge($donation) {
   $master = fundraiser_donation_get_donation($donation->recurring->master_did);
   $method_instance = $donation->gateway['gateway_details'];
   $order = commerce_order_load($donation->did);
@@ -449,13 +260,13 @@ function _fundraiser_commerce_payflow_refund($method_instance, $refund) {
 }
 
 /**
- * Retrieve the pnref value from the order's transaction
+ * Retrieve the pnref value from the order's transaction.
  *
  * @param $order_id Numeric
- *    The commerce order id to load the transaction
+ *    The commerce order id to load the transaction.
  */
 function _fundraiser_commerce_payflow_transaction_pnref($order_id) {
-  // Query the db the latest transaction for the order id
+  // Query the db the latest transaction for the order id.
   $data = db_select('commerce_payment_transaction', 't')
     ->fields('t', array('data'))
     ->condition('t.order_id', $order_id, '=')
