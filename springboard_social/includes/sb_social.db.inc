@@ -42,122 +42,50 @@ function sb_social_share_event_load($share_id) {
 }
 
 /**
- * Save a social share event to the database.
+ * Save a social share record to the database. Generate and return the share's url.
  *
- * Add the new share event to the Salesforce queue, and return a share url for
- * the event.
+ * @param array $record
+ *   Social share record to be saved.
  *
- * @param string $service
- *   Social service (email, facebook, twitter)
+ * @param array $settings
+ *   Social share settings for this record. (Optional, for url generation.)
  *
- * @param mixed $id
- *   Unique settings id (nid, webform submission id, or path)
- *
- * @param string $type
- *   ID type (sid, nid, path)
- *
- * @param string $market_source
- *   Market source (ms) field value associated with this share event.
+ * @param array $url_path
+ *   Path to use for url generation. (Optional.)
  *
  * @return string
  *   Counterintuitively, this function returns a shortened share url for the
  *   share event.
  */
-function sb_social_share_event_save($service, $id, $type, $market_source) {
-
-  global $user;
-  // Deal with submission-based shares (confirmation pages).
-  if (isset($_GET['sid']) && is_numeric($_GET['sid']) && $type == 'nid') {
-    module_load_include('inc', 'webform', 'includes/webform.submissions');
-    $sid = $_GET['sid'];
-    $did = $sid ? _sb_social_get_did_by_sid($sid) : 0;
-    $submission = webform_get_submission($id, $sid);
-    $nid = isset($submission->nid) ? $submission->nid : 0;
-    $node = node_load($nid);
-    $uid = !empty($submission->uid) ? $submission->uid : $user->uid;
-    $settings_id = sb_social_get_sid_by_id($id, 'node');
-    $type = 'node';
-    $page_name = !empty($node->title) ? $node->title : '';
-    $internal_name_field = field_get_items('node', $node, 'field_fundraiser_internal_name');
-    $internal_name = !empty($internal_name_field[0]['value']) ? $internal_name_field[0]['value'] : '';
-    $url_path = 'node/' . $node->nid;
-  }
-  // Shares from node pages.
-  elseif (is_numeric($id) && $type == 'nid') {
-    $sid = 0;
-    $nid = $id;
-    $uid = $user->uid;
-    $node = node_load($id);
-    $page_name = !empty($node->title) ? $node->title : '';
-    $type = $node->type;
-    $url_path = 'node/' . $node->nid;
-    $settings_id = sb_social_get_sid_by_id($node->nid, 'node');
-    $internal_name_field = field_get_items('node', $node, 'field_fundraiser_internal_name');
-    $internal_name = !empty($internal_name_field[0]['value']) ? $internal_name_field[0]['value'] : '';
-  }
-  // Shares from non-node pages (path based).
-  if ($type == 'path') {
-    $nid = 0;
-    $sid = 0;
-    $page_name = '';
-    $internal_name = '';
-    $type = 'page';
-    $url_path = sb_social_get_path($id);
-    $uid = $uid ? $uid : $user->uid;
-    $settings_id = sb_social_get_sid_by_id($id, 'path');
-    $node = FALSE;
-  }
-
-  $settings = sb_social_settings_load($settings_id);
-
-  $uid = !empty($submission->uid) ? $submission->uid : $user->uid;
-
+function sb_social_share_save($record, $settings = FALSE, $url_path = FALSE) {
   // Update is not included as these records should only be created when a share
   // event has taken place and should not be editable after the fact.
   $query = db_insert('sb_social_shares');
-  $record = array(
-    'uid' => $uid,
-    'sid' => !empty($sid) ? $sid : 0,
-    'did' => !empty($did) ? $did : 0,
-    'nid' => !empty($nid) ? $nid : 0,
-    'market_source' => $market_source,
-    'page_name' => $page_name,
-    'internal_name' => $internal_name,
-    'type' => $type,
-    'service' => $service,
-    'created' => (int) time(),
-    'status' => 'pending',
-    'url' => '',
-  );
-
-  // Go after the sfid of the parent opportunity if sid is present. This handles
-  // cases where a user shares from a confirmation page after the submission has
-  // synced to Salesforce.
-  if ($record['sid']) {
-    $record['opportunity_id'] = _sb_social_get_opportunity_id_from_submission_id($record['sid']);
-  }
-
   $share_id = $query->fields($record)->execute();
+  
   // Generate url and update share record.
-  $url = sb_social_share_tracker_url($share_id, $settings, $url_path);
-  // URL context is set in $_SESSION so any data set during a form submission
-  // is still available after Webform redirects to a confirmation page.
-  // This lets 3rd party modules set url context info during the form submission
-  // and then check for their data when the URL alter hook is executed.
-  $url_context = isset($_SESSION['sb_social_url_context']) ? $_SESSION['sb_social_url_context'] : FALSE;
-  drupal_alter('sb_social_share_url', $url, $node, $url_context);
-  $record['url'] = $url;
-
-  db_query('UPDATE {sb_social_shares} set url = :url WHERE share_id = :share_id', array(':url' => $url, ':share_id' => $share_id));
+  if (empty($record['url']) && $settings && $url_path) {
+    $url = sb_social_share_tracker_url($share_id, $settings, $url_path);
+    // URL context is set in $_SESSION so any data set during a form submission
+    // is still available after Webform redirects to a confirmation page.
+    // This lets 3rd party modules set url context info during the form submission
+    // and then check for their data when the URL alter hook is executed.
+    $url_context = isset($_SESSION['sb_social_url_context']) ? $_SESSION['sb_social_url_context'] : FALSE;
+    $node = node_load($record['nid']);
+    drupal_alter('sb_social_share_url', $url, $node, $url_context);
+    $record['url'] = $url;
+    db_query('UPDATE {sb_social_shares} set url = :url WHERE share_id = :share_id', array(':url' => $url, ':share_id' => $share_id));
+  }
+  
   watchdog('sb_social', 'share id:' . $share_id);  //@TODO: Is this test code that should be removed?
 
+  // Behold, a new entity!
   if ($share_id) {
     $record['share_id'] = $share_id;
     module_invoke_all('entity_insert', (object)$record, 'sb_social_share');
   }
-
-  // Return the url.
-  return $url;
+  
+  return $record['url'];
 }
 
 /**
