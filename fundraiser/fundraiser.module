@@ -3129,3 +3129,18 @@ function _fundraiser_gateway_switch_action_submit($form, $form_state) {
     'gateways' => $form_state['values']['gateways'],
   );
 }
+
+/**
+ * Utility function: return the base path to use for cookies.
+ */
+function _fundraiser_cookie_base_path() {
+  static $base_path;
+  if (!isset($base_path)) {
+    $base_path = base_path();
+    if (strlen($base_path) > 1) {
+      // A trailing slash on the path could exclude the cookie from the home page.
+      $base_path = rtrim($base_path, '/');
+    }
+  }
+  return $base_path;
+}

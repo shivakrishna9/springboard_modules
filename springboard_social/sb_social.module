@@ -743,12 +743,7 @@ function theme_sb_social_share_image_preview($variables) {
  */
 function _sb_social_set_tracking_cookie($uid, $mail, $sid) {
   $payload = $uid . '::' . $mail . '::' . $sid;
-  $base_path = base_path();
-  if (strlen($base_path) > 1) {
-    // A trailing slash on the path could exclude the cookie from the home page.
-    $base_path = rtrim(base_path(), '/');
-  }
-  $set = setcookie("sb_social.event_submission", $payload, strtotime('+1 year'), $base_path);
+  $set = setcookie("sb_social.event_submission", $payload, strtotime('+1 year'), _fundraiser_cookie_base_path());
 }
 
 /**
