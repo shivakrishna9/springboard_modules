@@ -1832,13 +1832,15 @@ function springboard_p2p_fundraiser_donation_post_submit($form, $form_state, $do
  *   The full name of the user.
  */
 function springboard_p2p_format_user_full_name($account) {
-  $language = !empty($account->language) ? $account->language : 'und';
-  $full_name = '';
-  if (!empty($account->sbp_first_name[$language][0]['safe_value']) && !empty($account->sbp_last_name[$language][0]['safe_value'])) {
-    $full_name = $account->sbp_first_name[$language][0]['safe_value'] . ' ' . $account->sbp_last_name[$language][0]['safe_value'];
+  $wrapper = new SpringboardUserWrapper($account);
+
+  $first_name = $wrapper->getFirstName();
+  $last_name = $wrapper->getLastName();
+  if (!empty($first_name) && !empty($last_name)) {
+    return $first_name . ' ' . $last_name;
   }
 
-  return $full_name;
+  return '';
 }
 
 /**
