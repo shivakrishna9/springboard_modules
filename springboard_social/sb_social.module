@@ -255,8 +255,12 @@ function sb_social_block_view($delta = '') {
     else {
       $id = $node->nid;
     }
-    $sid = _sb_social_sid_by_id($id);
-
+    if (is_numeric($id)) {
+      $sid = _sb_social_sid_by_id($id);
+    }
+    else {
+      $sid = sb_social_get_path_id($id);
+    }
     if ($sid) {
       $settings = sb_social_settings_load($sid);
       if (empty($settings)) {
