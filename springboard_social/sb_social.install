@@ -317,12 +317,13 @@ function sb_social_update_7006() {
 
 }
 
-/*
+
  * Add share counts to settings
  */
 function sb_social_update_7007() {
   $result = db_query('SELECT sid FROM {sb_social_settings}')->fetchCol();
   foreach ($result as $sid) {
+    $count = 0;
     $settings = sb_social_settings_load($sid);
     if($settings['type'] == 'node') {
       foreach($settings['data'] as $name => $values) {
@@ -333,12 +334,18 @@ function sb_social_update_7007() {
       }
     }
     else {
-      $path = sb_social_get_path($settings['id']);
+      $url_path = sb_social_get_path($settings['id']);
       $pages = db_query("SELECT share_id, url FROM {sb_social_shares} WHERE type = 'page'");
       foreach ($pages as $page) {
-         $url = sb_social_share_tracker_url($page->share_id, $settings, $path);
-         foreach($settings['data'] as $name => $values) {
-           $count = db_query('SELECT count(type) FROM {sb_social_shares} WHERE url = :url AND service = :service', array(':url' => $url, ':service' => $name))->fetchfield();
+        foreach($settings['data'] as $name => $values) {
+          $count = 0;
+          $result = db_query('SELECT url FROM {sb_social_shares} WHERE url LIKE :url AND service = :service', array(':url' => '%' . $url_path . '%', ':service' => $name));
+          foreach($result as $full_url) {
+            $path = parse_url($full_url->url);
+            if($path['path'] == '/' . $url_path) {
+              $count++;
+            }
+          }
           if($count) {
             $settings['data'][$name]['count'] = $count;
           }
