@@ -1043,6 +1043,16 @@ function fundraiser_sustainers_edit_form($did) {
     $next_donation = fundraiser_donation_get_donation($remaining[0]->did);
   }
 
+  $number = FALSE;
+  if (isset($donation->data['payment_fields']['credit']['card_number'])) {
+    $number = '**** **** **** '  . $donation->data['payment_fields']['credit']['card_number'];
+    $type = t('Card ');
+  }
+  elseif(isset($donation->data['payment_fields']['bank account']['accNum'])) {
+    $number = '********* ' . $donation->data['payment_fields']['bank account']['accNum'];
+    $type = t('Checking Account');
+  }
+   
   // Gather further donation data.
   $remaining_donation_count = _fundraiser_sustainers_count_donations_recurr_remaining($did);
   $payment_info = '<div id="payment-info">' .
@@ -1053,8 +1063,12 @@ function fundraiser_sustainers_edit_form($did) {
   '<dt>Recurring Charges Processed</dt>' .
   '<dd>' . _fundraiser_sustainers_count_donations_recurr_processed($did) . '</dd>' .
   '<dt>Recurring Charges Remaining</dt>' .
-  '<dd>' . $remaining_donation_count . '</dd>' .
-  '</dl>' .
+  '<dd>' . $remaining_donation_count . '</dd>';
+  if($number) {
+    $payment_info .= '<dt>'. $type . ' Number</dt>' .
+    '<dd>' . $number . '</dd>';
+  }  
+  $payment_info .= '</dl>' .
   '</div>';
 
   $billing_info = '<div id="billing-info">' .
