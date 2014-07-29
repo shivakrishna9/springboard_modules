@@ -259,14 +259,14 @@ function sb_social_block_view($delta = '') {
       $sid = _sb_social_sid_by_id($id);
     }
     else {
-      $sid = sb_social_get_path_id($id);
+      $id = sb_social_get_path_id($id);
+      $sid = sb_social_get_sid_by_id($id, 'path');
     }
     if ($sid) {
       $settings = sb_social_settings_load($sid);
       if (empty($settings)) {
         return;
       }
-
       $plugins = sb_social_get_enabled_plugins();
       // Render button for each enabled service.
       foreach ($plugins as $service => $plugin) {
