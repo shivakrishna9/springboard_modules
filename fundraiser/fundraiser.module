@@ -627,10 +627,6 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
       $form_state['input']['amount_wrapper']['donation_amounts'][] = $donation_amount;
     }
   }
-  $form['fundraiser_settings']['amount_wrapper']['help'] = array(
-    '#value' => '<p>' . t('If you want the user to choose from a predetermined list donation amounts, enter them here. ' .
-      'If no amounts are entered, a textbox will be displayed for the user to enter a custom amount.') . '</p>',
-  );
 
   $form['fundraiser_settings']['amount_wrapper']['amount_more'] = array(
     '#type' => 'button',
