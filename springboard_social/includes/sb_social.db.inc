@@ -85,6 +85,9 @@ function sb_social_share_save($record, $settings = FALSE, $url_path = FALSE) {
     module_invoke_all('entity_insert', (object)$record, 'sb_social_share');
   }
   
+  // Let modules react to the share event. This is a legacy hook for the benefit of old implementations.
+  module_invoke_all('sb_social_share_event_save', $record);
+
   return $record['url'];
 }
 
