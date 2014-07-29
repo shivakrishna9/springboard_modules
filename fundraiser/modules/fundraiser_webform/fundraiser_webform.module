@@ -1205,44 +1205,6 @@ function _fundraiser_webform_get_donation_by_sid($sid) {
 }
 
 /**
- * Helper function, find out if a node has recurring payments as an option.
- * It also gets the field's settings.
- */
-function _fundraiser_webform_has_exposed_recurring_field($nid) {
-  $webform_node = node_load($nid);
-  
-  // If the 'recurring_setting' is something other than 'user_choice',
-  // that means the 'recurring' value on the webform are not exposed
-  // to the visitor and thus we can go ahead and return FALSE values.
-  if ($webform_node->recurring_setting != 'user_choice') {
-    return array(
-      'visible' => FALSE
-    );
-  } else {
-    
-    // Loop through webform components. When we find the one we want, get its settings.
-    foreach ($webform_node->webform['components'] as $key => $component_contents) {
-      if ($component_contents['form_key'] == 'recurs_monthly' && $component_contents['type'] == 'select') {
-        // What type of selection component is it?
-        if ($component_contents['extra']['aslist'] == 1) {
-          $type = 'select';
-        } else {
-          $type = $component_contents['extra']['multiple'] == 0 ? 'radios' : 'checkbox';
-        }
-        
-        return array(
-          'visible' => TRUE,
-          'settings' => array(
-            'type' => $type,
-            'multiple' => $component_contents['extra']['multiple']
-          ),
-        );
-      }
-    }
-  }
-}
-
-/**
  * DB functions.
  */
 
