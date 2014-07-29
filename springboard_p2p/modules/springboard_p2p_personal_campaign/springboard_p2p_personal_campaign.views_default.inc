@@ -403,7 +403,7 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['fields']['field_p2p_campaign_progress']['click_sort_column'] = 'amount';
   $handler->display->display_options['fields']['field_p2p_campaign_progress']['type'] = 'springboard_p2p_fields_personal_campaign_progress_auto';
   $handler->display->display_options['fields']['field_p2p_campaign_progress']['group_column'] = 'amount';
-  /* Field: Content: Fundraising Deadline */
+  /* Field: Content: Campaign Deadline */
   $handler->display->display_options['fields']['field_p2p_fundraising_deadline']['id'] = 'field_p2p_fundraising_deadline';
   $handler->display->display_options['fields']['field_p2p_fundraising_deadline']['table'] = 'field_data_field_p2p_fundraising_deadline';
   $handler->display->display_options['fields']['field_p2p_fundraising_deadline']['field'] = 'field_p2p_fundraising_deadline';
@@ -452,11 +452,6 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['arguments']['uid']['summary_options']['items_per_page'] = '25';
   $handler->display->display_options['arguments']['uid']['specify_validation'] = TRUE;
   $handler->display->display_options['arguments']['uid']['validate']['type'] = 'user';
-  $handler->display->display_options['arguments']['uid']['validate_options']['restrict_roles'] = TRUE;
-  $handler->display->display_options['arguments']['uid']['validate_options']['roles'] = array(
-    3 => '3',
-    6 => '6',
-  );
   $handler->display->display_options['arguments']['uid']['validate']['fail'] = 'empty';
   /* Filter criterion: Content: Published */
   $handler->display->display_options['filters']['status']['id'] = 'status';

@@ -692,10 +692,10 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
   // Translatables
   // Included for use with string extractors like potx.
   t('Campaign');
+  t('Campaign Deadline');
   t('Campaign ID');
   t('Campaign Introduction');
   t('Campaign URL');
-  t('Campaign Deadline');
   t('Fundraising Goal');
   t('Initial Referrer');
   t('Market Source');
