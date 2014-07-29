@@ -363,8 +363,10 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
         );
         return;
       }
-      // Campaign name, default from parent campaign.
-      $form['title']['#default_value'] = $campaign_node->title;
+
+      // Prefill the title with a suggestion.
+      $form['title']['#default_value'] = springboard_p2p_get_personal_campaign_title_suggestion($campaign_node->title);
+
       // Campaign intro, default from parent campaign, display disabled content
       // preview if edit is disabled.
       $form['body'][$language][0]['#required'] = FALSE;
@@ -2431,4 +2433,40 @@ function springboard_p2p_get_campaign_from_personal_campaign($personal_campaign)
   }
 
   return FALSE;
+}
+
+/**
+ * Get a suggestion for a personal campaign title.
+ *
+ * The returned title is based on the title passed in and the current user's
+ * first name.
+ *
+ * @param string $title
+ *   The campaign title.
+ *
+ * @return string
+ *   The default personal campaign title suggestion.
+ */
+function springboard_p2p_get_personal_campaign_title_suggestion($title) {
+  global $user;
+
+  $user_wrapper = new SpringboardUserWrapper($user);
+  $first_name = $user_wrapper->getFirstName();
+
+  $default_title = '';
+  if ($first_name) {
+    $default_title .= $first_name;
+
+    // If the name ends in an 's' then don't include one after the apostrophe.
+    $last_char = $first_name[drupal_strlen($first_name) - 1];
+    if (drupal_strtolower($last_char) == 's') {
+      $default_title .= '\' ';
+    }
+    else {
+      $default_title .= '\'s ';
+    }
+
+  }
+
+  return $default_title . $title;
 }
