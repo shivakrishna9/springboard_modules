@@ -1618,7 +1618,7 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
     // This avoids calling the APIs for each donation
     elseif (!empty($donation->sustainer_update) && !empty($donation->sustainer_update_did)) {
       $master = fundraiser_donation_get_donation($donation->sustainer_update_did);
-      $donation->data['cardonfile'] = $master->data['cardonfile'];
+      $donation->data['cardonfile'] = isset($master->data['cardonfile']) ? $master->data['cardonfile'] : FALSE;
     }
 
     // Allow the gateways to scrub the data before saving
