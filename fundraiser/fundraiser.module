@@ -233,7 +233,7 @@ function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) 
     // Get node gateways and loop through them.
     foreach ($donation->node->gateways as $gateway) {
       // If donation's payment method matches gateway, use label for gateway token.
-      if ($data['payment_method'] == $gateway['method']) {
+      if (array_key_exists('method', $gateway) && array_key_exists('label', $gateway) && $data['payment_method'] == $gateway['method'] && $gateway['label']) {
         $replacements['[donation:payment_method]'] = $gateway['label'];
       }
     }
