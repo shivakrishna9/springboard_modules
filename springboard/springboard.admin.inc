@@ -1949,7 +1949,7 @@ function springboard_admin_config_donation_form_add($form, $form_state, $email_n
   $node->field_fundraiser_internal_name = array($node->language => array(0 => array('value' => 'Test Donation Form')));
   $node->status = 1;
   $node->promote = 1;
-  $node->body['LANGUAGE_NONE'][0]['value'] = 'Donec placerat. Nullam nibh dolor, blandit sed, fermentum id, ' .
+  $node->body[LANGUAGE_NONE][0]['value'] = 'Donec placerat. Nullam nibh dolor, blandit sed, fermentum id, ' .
     'imperdiet sit amet, neque. Nam mollis ultrices justo. Sed tempor. Sed vitae tellus. Etiam sem arcu, eleifend ' .
     'sit amet, gravida eget, porta at, wisi. Nam non lacus vitae ipsum viverra pretium. Phasellus massa. Fusce ' .
     'magna sem, gravida in, feugiat ac, molestie eget, wisi. Fusce consectetuer luctus ipsum. Vestibulum nunc. ' .
@@ -1957,11 +1957,11 @@ function springboard_admin_config_donation_form_add($form, $form_state, $email_n
     'eget, pulvinar sed, posuere vitae, nulla. Sed varius nibh ut lacus. Curabitur fringilla. Nunc est ipsum, ' .
     'pretium quis, dapibus sed, varius non, lectus. Proin a quam. Praesent lacinia, eros quis aliquam porttitor, ' .
     'urna lacus volutpat urna, ut fermentum neque mi egestas dolor.';
-  $node->body['LANGUAGE_NONE'][0]['summary'] = 'Donec placerat. Nullam nibh dolor, blandit sed, fermentum id, imperdiet ' .
+  $node->body[LANGUAGE_NONE][0]['summary'] = 'Donec placerat. Nullam nibh dolor, blandit sed, fermentum id, imperdiet ' .
     'sit amet, neque. Nam mollis ultrices justo. Sed tempor. Sed vitae tellus. Etiam sem arcu, eleifend sit amet, ' .
     'gravida eget, porta at, wisi. Nam non lacus vitae ipsum viverra pretium. Phasellus massa. Fusce magna sem, gravida ' .
     'in, feugiat ac, molestie eget, wisi.';
-  $node->body['LANGUAGE_NONE'][0]['format'] = 'filtered_html';
+  $node->body[LANGUAGE_NONE][0]['format'] = 'filtered_html';
   $node->webform = array(
       'confirmation' => 'Thank you [donation:first_name] [donation:last_name] for your donation of [donation:amount] USD.' . "\n" .
       "\n" .
@@ -2053,13 +2053,14 @@ function springboard_admin_config_donation_form_add($form, $form_state, $email_n
   $eid = -1;
   foreach ($node->webform['components'] as $component) {
     if ($component['form_key'] == 'mail') {
-      $eid = $component['cid'];
+      $cid = $component['cid'];
+      $node->webform['emails'][1]['email'] = $cid;
     }
   }
   if ($email_nid != NULL) {
     $settings = array(
       'nid' => $node->nid,
-      'eid' => $eid,
+      'eid' => 1,
       'tid' => $email_nid,
       'bcc_email' => '',
       'html_message' => 'Thank you [donation:first_name] [donation:last_name] for your donation of [donation:amount] USD.' . "\n" .
@@ -2073,11 +2074,12 @@ function springboard_admin_config_donation_form_add($form, $form_state, $email_n
       'The email address we have for you is: [donation:mail]' . "\n" .
       "\n" .
       'Your card ending in [donation:card_number], expires [donation:card_expiration_month] / [donation:card_expiration_year]',
-      'extra' => array(),
+      'extra' => serialize(array('send_on_donation_success' => 1, 'send_on_donation_decline' => 0, 'send_on_submission' => 0)),
     );
   }
   // One last save.
   node_save($node);
+  email_wrappers_save_settings($node->nid, 1, $settings);
   // Make sure the donation maps are moved over to be ready when/if SF is authenticated.
   if ($form_state['values']['sf_donation']) {
     // Add default map for donation.
