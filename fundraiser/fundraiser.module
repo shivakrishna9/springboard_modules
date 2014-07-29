@@ -2486,24 +2486,6 @@ function _fundraiser_gateway_info($id = NULL) {
 }
 
 /**
- * Helper function, collects gateway information by calling hook_fundraiser_gateway_info.
- */
-function fundraiser_gateway_info_by_methodname($payment_method = NULL) {
-  static $gateways;
-  $gateways = _fundraiser_gateway_info();
-  // Look up the gateway needed.
-  if ($payment_method != NULL) {
-    foreach ($gateways as $delta => $gateway) {
-      if ($gateway['payment_method'][0] == $payment_method) {
-        return $gateway;
-      }
-    }
-    return array();
-  }
-  return (array) $gateways;
-}
-
-/**
  * Helper function, determine if this node type supports donation forms.
  */
 function fundraiser_is_donation_type($type) {

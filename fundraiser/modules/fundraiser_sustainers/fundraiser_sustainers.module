@@ -846,7 +846,6 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
   }
   
   
-  dsm($form);
   return $form;
 }
 

@@ -512,18 +512,6 @@ function fundraiser_webform_recurring_conflict_validate(&$form, &$form_state) {
 }
 
 /**
- * Get gateway details and find out if it supports recurring payments.
- */
-function _fundraiser_webform_get_gateway_details($payment_method_name) {
-  $payment_method = array();
-  $payment_method['details'] = fundraiser_gateway_info_by_methodname($payment_method_name);
-  if (isset($payment_method['details']['allow_recurring']) && _fundraiser_sustainers_supports_recurring($payment_method['details']['allow_recurring'], $payment_method_name)) {
-    $payment_method['allows_recurring'] = TRUE;
-  }
-  return $payment_method;
-}
-
-/**
  * Form, alters the display of webform submissions to prevent edits / display of confusing info.
  */
 function fundraiser_webform_submission_display(&$form, &$form_state) {
