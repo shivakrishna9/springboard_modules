@@ -15,7 +15,7 @@
               $.cookie(
                 Drupal.settings.springboard_cookie.name,
                 data.cookie,
-                { expires: parseInt(data.expires), path: '/' }
+                { expires: parseInt(data.expires), path: data.path }
               );
             }
           });

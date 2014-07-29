@@ -203,6 +203,7 @@ function springboard_cookie_js_new_cookie() {
   drupal_json_output(array(
     'cookie' => $encrypted,
     'expires' => variable_get('springboard_cookie_expiration_days', SPRINGBOARD_COOKIE_EXPIRATION_DAYS_DEFAULT),
+    'path' => _springboard_cookie_base_path(),
   ));
   exit;
 }
@@ -288,5 +289,17 @@ function springboard_cookie_set_cookie($cookie_data) {
   $encrypted = secure_prepopulate_encrypt($serialized);
   $cookie_name = variable_get('springboard_cookie_name', SPRINGBOARD_COOKIE_NAME_DEFAULT);
   $expiration_days = variable_get('springboard_cookie_expiration_days', SPRINGBOARD_COOKIE_EXPIRATION_DAYS_DEFAULT);
-  setcookie($cookie_name, $encrypted, time() + 60 * 60 * 24 * $expiration_days, '/');
+  setcookie($cookie_name, $encrypted, time() + 60 * 60 * 24 * $expiration_days, _springboard_cookie_base_path());
+}
+
+/**
+ * Utility function: return the base path to use for setting the cookie.
+ */
+function _springboard_cookie_base_path() {
+  $base_path = base_path();
+  if (strlen($base_path) > 1) {
+    // A trailing slash on the path could exclude the cookie from the home page.
+    $base_path = rtrim($base_path, '/');
+  }
+  return $base_path;
 }
