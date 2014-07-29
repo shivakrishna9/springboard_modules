@@ -255,7 +255,7 @@ function sb_social_block_view($delta = '') {
     else {
       $id = $node->nid;
     }
-    if (is_numeric($id)) {
+    if ($node) {
       $sid = _sb_social_sid_by_id($id);
     }
     else {
