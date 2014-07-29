@@ -1249,7 +1249,12 @@ function fundraiser_upsell_is_available($node) {
  */
 function fundraiser_upsell_set_acceptance_cookie() {
   $cookie_lifetime = variable_get('fundraiser_upsell_acceptance_lifetime', 0);
-  setcookie('fundraiser_upsell_acceptance', 1, REQUEST_TIME + 3600 * 24 * $cookie_lifetime, "/");
+  $base_path = base_path();
+  if (strlen($base_path) > 1) {
+    // A trailing slash on the path could exclude the cookie from the home page. 
+    $base_path = rtrim(base_path(), '/');
+  }
+  setcookie('fundraiser_upsell_acceptance', 1, REQUEST_TIME + 3600 * 24 * $cookie_lifetime, $base_path);
 }
 
 /**
