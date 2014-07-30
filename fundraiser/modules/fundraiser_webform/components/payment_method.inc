@@ -214,10 +214,6 @@ function theme_fundraiser_webform_component_payment_methods($variables) {
 
 /**
  * Implements _webform_render_component().
- *
- * Render the enabled Payment Method fields for this form.
- * When rendering, use States API JS to show/hide them based
- * on recurring-payment ability.
  */
 function _webform_render_payment_method($component, $value = NULL, $filter = TRUE) {
   // Use the default select list function to build the element
@@ -243,7 +239,7 @@ function _webform_render_payment_method($component, $value = NULL, $filter = TRU
       $element['#theme_wrappers'] = array();
       $element['#title'] = '';
     }
-    else {  
+    else {
       foreach ($payment_methods as $payment_method) {
         // Set the option label as the custom label or the hard-coded label
         $options[$payment_method['method']] = !empty($payment_method['label']) ? $payment_method['label'] : $payment_method['method'];
