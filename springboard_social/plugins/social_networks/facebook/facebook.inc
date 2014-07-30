@@ -77,11 +77,9 @@ function sb_social_facebook_token_info() {
 }
 
 function sb_social_facebook_token_replace($tokens, &$replacements, $settings, $node = FALSE, $submission_id = FALSE, $extra = FALSE) {
-    //reset $settings static cache
-  $id = sb_social_get_path_id($settings['id']);
-  $sid = sb_social_get_sid_by_id($id, 'path');
-  drupal_static_reset('sb_social_settings_load');
-  $settings = sb_social_settings_load($sid); 
+
+  $settings = sb_social_reset_settings_cache($settings);
+
   foreach ($tokens as $key => $token) {
     switch ($key) {
       case 'facebook_share_link':
