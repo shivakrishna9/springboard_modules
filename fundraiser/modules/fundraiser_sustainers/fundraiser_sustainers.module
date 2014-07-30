@@ -773,37 +773,6 @@ function _fundraiser_sustainers_recurs_monthly_field_create($fundraiser, $field)
  * Field display callback, show/hide recurring feature.
  */
 function _fundraiser_sustainers_recurs_monthly_field_display($form, $form_state, $field) {
-  if (!isset($form['#node'])) {
-    return $field;
-  }
-  // Supporting gateway types from the gateway on the node.
-  $supporting_gateways = array();
-  foreach ($form['#node']->gateways as $type => $gateway) {
-    if (!empty($gateway['id'])) {
-      $this_gateway = _fundraiser_gateway_info($gateway['id']);
-      if (isset($this_gateway['allow_recurring']) && _fundraiser_sustainers_supports_recurring($this_gateway['allow_recurring'], $type)) {
-        $supporting_gateways[] = $type;
-      }
-    }
-  }
-  // Generate the right selector for the field type.
-  $selector = '.fundraiser-payment-methods input[type="radio"]';
-  if (count($form['#node']->gateways) == 1) { // If only one is set, then the hidden field should be used.
-    $selector = '.fundraiser-payment-methods';
-  }
-  // Set the states.
-  $field['#states'] = array(
-    'visible' => array(),
-  );
-  if (!empty($supporting_gateways)) {
-    foreach ($supporting_gateways as $supporting_gateway) {
-      $field['#states']['visible'][$selector][] = array('value' => $supporting_gateway);
-      // See: http://drupal.org/node/735528
-    }
-  }
-  else {
-    $field = array(); // Else, remove the field from display entirely.
-  }
   return $field;
 }
 
@@ -812,7 +781,7 @@ function _fundraiser_sustainers_recurs_monthly_field_display($form, $form_state,
  *
  * This hook is here for the purpose of adding a States array to the payment method options, 
  * so that a non-recurring-enabled payment method will show/hide depending on the status of the
- * "recurring donation" field, if one exists.
+ * "recurring donation" field, if one exists. This hook also shows/hides the 'recurring' field.
  */
 function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
   // Find out whether the form has a checkbox/radio field called 'recurs_monthly'.
@@ -827,6 +796,8 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
     else {
       $required_values = array('checked' => FALSE);
     }
+    
+    $supporting_gateways = array();
     
     // Check if each gateway allows recurring payments, and use the States API if it doesn't.
     // Else, if it does, add its name to the 'supporting_gateways' array for showing/hiding the 'recurring' field.
@@ -843,8 +814,29 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
             ),
           );
         }
+        else {
+          $supporting_gateways[] = $type;
+        }
       }
     }
+  
+    // Now modify the 'recurs_monthly' field.
+    $recurs_monthly_component = &_fundraiser_webform_find_field($form, _fundraiser_webform_parse_component($form['#node']->nid, 'recurs_monthly'));
+    // Generate the right selector for the field type.
+    // If only one is set, then the hidden field should be used.
+    $selector = count($form['#node']->gateways) == 1 ? '.fundraiser-payment-methods' : '.fundraiser-payment-methods input[type="radio"]';
+    // Set the states if there is a recurring-enabled gateway.
+    $recurs_monthly_component['#states'] = array(
+      'visible' => array(),
+    );
+    if (!empty($supporting_gateways)) {
+      foreach ($supporting_gateways as $supporting_gateway) {
+        $recurs_monthly_component['#states']['visible'][$selector][] = array('value' => $supporting_gateway);
+      }
+    }
+    else {
+      $recurs_monthly_component = array(); // Else, remove the field from display entirely.
+    }  
   }
   
   // Add second validation handler that prevents sending a recurring donation 
