@@ -124,6 +124,7 @@ function salesforce_donation_default_stage_map() {
     'Pledged' => 'pending_future_payment',
     'Partially Refunded' => 'partially_refunded',
     'Refunded' => 'refunded',
+    'Skipped' => 'skipped',
   );
 }
 
@@ -418,6 +419,7 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
       }
       $fields[$sf_field] = $stage;
     }
+
     if (isset($map->field_map['salesforce_donation_map']['user_salesforce_account_id'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['user_salesforce_account_id'];
       $fields[$sf_field] = '[Account:user:' . $donation->uid . ']';

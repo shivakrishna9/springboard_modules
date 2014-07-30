@@ -71,8 +71,8 @@ function springboard_admin_custom_theme() {
     }
   }
   
-  // If the path begins with /springboard, we know the theme applies
-  if (preg_match("|^\/springboard.*?|", request_uri())) {
+  // If the path begins with /springboard/, we know the theme applies
+  if (preg_match("|^\/springboard/.*?|", request_uri()) || preg_match("|^\/springboard$|", request_uri())) {
     return 'springboard_backend';
   }
 }
@@ -370,6 +370,9 @@ function springboard_admin_init() {
     }
     elseif (preg_match('|^/admin/commerce/products((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)){
       $goto_path = 'springboard/commerce/products' . $m1[1];
+    }
+    elseif (preg_match('|^/fundraiser_sustainers/([0-9]*)/skip/([0-9]*)?|', $path, $m1)){
+      $goto_path = 'springboard/donations/' . $m1[1] . '/skip/' . $m1[2];
     }
     /**
      * User paths.
@@ -748,7 +751,12 @@ function springboard_admin_url_inbound_alter(&$path, $original_path, $path_langu
       $path = 'admin/structure/salesforce/mappings/import';
     }
     elseif (preg_match('|^springboard/donations((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
-      $path = 'admin/commerce/orders' . $m1[1];
+      if (preg_match('|^springboard/donations/([0-9]*)/skip/([0-9]*)?|', $path, $m2)){
+        $path = 'fundraiser_sustainers/' . $m2[1] . '/skip/' . $m2[2];
+      }
+      else {
+        $path = 'admin/commerce/orders' . $m1[1];
+      }
     }
     elseif (preg_match('|^springboard/commerce/products((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)){
       $path = 'admin/commerce/products' . $m1[1];
@@ -756,7 +764,7 @@ function springboard_admin_url_inbound_alter(&$path, $original_path, $path_langu
     /**
      * All other springboard paths.
      */
-    else {
+    elseif (preg_match("|^springboard/.*?|", $path) && preg_match('|^springboard((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $matches)) {
       $path = 'admin/springboard' . $matches[1];
     }    
   }

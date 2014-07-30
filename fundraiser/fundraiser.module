@@ -623,6 +623,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     }
     ++$index;
   }
+
   // AJAX fix: reorder donation amounts in $form_state['input'] by weight.
   // Corrects the display order of donation amounts when an ajax event is
   // triggered.
@@ -637,10 +638,6 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
       $form_state['input']['amount_wrapper']['donation_amounts'][] = $donation_amount;
     }
   }
-  $form['fundraiser_settings']['amount_wrapper']['help'] = array(
-    '#value' => '<p>' . t('If you want the user to choose from a predetermined list donation amounts, enter them here. ' .
-      'If no amounts are entered, a textbox will be displayed for the user to enter a custom amount.') . '</p>',
-  );
 
   $form['fundraiser_settings']['amount_wrapper']['amount_more'] = array(
     '#type' => 'button',
@@ -653,6 +650,15 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
       'method' => 'replace',
       'effect' => 'fade',
     ),
+  );
+
+  $form['fundraiser_settings']['amount_wrapper']['no_default_amount'] = array(
+    '#type' => 'radio',
+    '#default_value' => isset($node->default_amount) ? $node->default_amount : '',
+    '#return_value' => '',
+    '#parents' => array('default_amount'),
+    '#title' => t('No default ask amount'),
+    '#description' => t('Do not use a preselected ask amount.'),
   );
 
   // Additional fundraiser settings.
@@ -1163,11 +1169,21 @@ function _fundraiser_amount_field_create($fundraiser, $field) {
       'multiple' => 0,
     );
     $default = $keys[0];
-    if (isset($fundraiser->default_amount) && in_array($fundraiser->default_amount, $keys)) {
-      $default = $fundraiser->default_amount;
+    if (isset($fundraiser->default_amount)) {
+      if (in_array($fundraiser->default_amount, $keys)) {
+        // Default is one of the defined ask amounts.
+        $default = $fundraiser->default_amount;
+      }
+      elseif ($fundraiser->default_amount == '') {
+        // Don't pick a default value.
+        $default = '';
+      }
     }
+
     $field['#value'] = $default;
+
   }
+
   return $field;
 }
 

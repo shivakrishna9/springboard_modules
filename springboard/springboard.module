@@ -139,7 +139,7 @@ function springboard_admin_dashboard() {
   $column_bottom = '';
   foreach ($panes as $pane_key => $pane) {
     if (!empty($pane['content']) && !empty($enabled_panes[$pane_key])) {
-      
+
       if ($pane['position'] == 'column_left') {
         $column_left .= '<div class="springboard-pane ' . drupal_clean_css_identifier($pane_key) . '">' . $pane['content'] . '</div>';
       }
@@ -346,4 +346,25 @@ function _springboard_update_form_field($form, $field_key, $new_field) {
     }
   }
   return $form;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Hides default and custom market source fields from users on the user edit
+ * page.
+ */
+function springboard_form_user_profile_form_alter(&$form, $form_state) {
+
+  // User with permission can view the hidden groups
+  if (user_access('administer users')) {
+    return;
+  }
+  $group = 'group_profile_admin';
+  if (!empty($form['#groups'][$group]->children)) {
+    foreach ($form['#groups'][$group]->children as $field_name) {
+      $form[$field_name]['#access'] = FALSE;
+    }
+  }
+
 }
