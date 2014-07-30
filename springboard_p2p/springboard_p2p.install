@@ -26,6 +26,26 @@ function springboard_p2p_install() {
   variable_set('springboard_p2p_fundraiser_items', $default_items);
   variable_set('springboard_p2p_base_path', 'p2p');
 
+  $default_reg_fields = array(
+    'mail' => array(
+      'enabled' => 1,
+      'required' => 1,
+      'weight' => -18,
+    ),
+    'sbp_first_name' => array(
+      'enabled' => 1,
+      'required' => 1,
+      'weight' => -20,
+    ),
+    'sbp_last_name' => array(
+      'enabled' => 1,
+      'required' => 1,
+      'weight' => -19,
+    ),
+  );
+
+  variable_set('springboard_p2p_registration_fields', $default_reg_fields);
+
   variable_set('user_register', 1);
   variable_set('user_email_verification', 0);
   drupal_set_message('Users can now register for this site without administrator approval. New users are not required to verify their email. These changes streamline the P2P registration process.');

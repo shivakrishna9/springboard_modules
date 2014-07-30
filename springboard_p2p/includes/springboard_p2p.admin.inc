@@ -95,6 +95,26 @@ function springboard_p2p_dashboard() {
     '#markup' => views_embed_view('p2p_personal_campaigns_admin', 'page'),
   );
 
+  $output['landing_pages'] = array();
+
+  $output['landing_pages']['heading'] = array(
+    '#markup' => '<h2>Landing pages</h2>',
+  );
+
+  $output['landing_pages']['landing_pages'] = array(
+    '#markup' => views_embed_view('p2p_landing_pages', 'block'),
+  );
+
+  $output['landing_pages']['links'] = array(
+    '#theme' => 'links',
+    '#links' => array(
+      'landing_pages' => array(
+        'title' => t('View all landing pages.'),
+        'href' => 'admin/springboard/p2p/landing-pages',
+      ),
+    ),
+  );
+
   return $output;
 }
 
