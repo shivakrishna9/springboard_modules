@@ -317,7 +317,7 @@ function sb_social_update_7006() {
 
 }
 
-
+/**
  * Add share counts to settings
  */
 function sb_social_update_7007() {
