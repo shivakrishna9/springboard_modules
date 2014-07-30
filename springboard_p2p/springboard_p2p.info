@@ -5,6 +5,7 @@ package = Springboard P2P
 version = 7.x-4.0-dev
 project = springboard_p2p
 dependencies[] = conditional_fields
+dependencies[] = pathauto
 dependencies[] = ctools
 dependencies[] = features
 dependencies[] = fundraiser

@@ -780,6 +780,54 @@ function springboard_p2p_full_alias_exists($base_path, $alias, $counter = -1) {
 }
 
 /**
+ * Set default pathauto aliases for each of the P2P node types.
+ *
+ * @param $p2p_node_types: an array of node types to set aliases for.
+ * If no types are provided, use the array below.
+ */
+function springboard_p2p_set_pathauto_default_aliases($p2p_node_types = NULL) {
+  if (!isset($p2p_node_types)) {
+    $p2p_node_types = array(
+      'p2p_campaign_landing' => array(
+        'type' => 'pathauto_node_p2p_campaign_landing_pattern',
+        'pattern' => 'p2p/[node:title]',
+        'force_change' => FALSE
+      ),
+      'p2p_campaign' => array(
+        'type' => 'pathauto_node_p2p_campaign_pattern',
+        'pattern' => 'p2p/campaign/[node:title]',
+        'force_change' => FALSE
+      ),
+      'p2p_category' => array(
+        'type' => 'pathauto_node_p2p_category_pattern',
+        'pattern' => 'p2p/category/[node:title]',
+        'force_change' => FALSE
+      ),
+      'p2p_donation_form' => array(
+        'type' => 'pathauto_node_p2p_donation_form_pattern',
+        'pattern' => 'secure/p2p/[node:title]',
+        'force_change' => FALSE
+      ),
+      'p2p_personal_campaign' => array(
+        'type' => 'pathauto_node_p2p_personal_campaign_pattern',
+        'pattern' => 'p2p/[node:field-p2p-personal-campaign-url]',
+        'force_change' => TRUE
+      ),
+    );
+  }
+  
+  // For each P2P node type, set the default alias as defined per-node-type above. Only set the
+  // alias pattern if the node type doesn't already have a setting, or 'force_change' is TRUE.
+  foreach ($p2p_node_types as $node_type => $settings) {
+    $node_type = node_type_load($node_type);
+    if (is_object($node_type) && (!variable_get($settings['type'], FALSE) || $settings['force_change'] == TRUE)) {
+      variable_set($settings['type'], $settings['pattern']);
+      drupal_set_message('Set default URL aliases for <strong>' . $node_type->name . '</strong> content type.');
+    }
+  }
+}
+
+/**
  * Checks campaign for user authorization to create a personal campaign.
  *
  * @param int $nid

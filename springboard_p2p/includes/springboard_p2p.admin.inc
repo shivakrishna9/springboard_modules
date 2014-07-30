@@ -104,45 +104,6 @@ function springboard_p2p_dashboard() {
 function springboard_p2p_admin_settings() {
   $form = array();
 
-  $form['basic'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Basic settings'),
-    '#weight' => -50,
-  );
-
-  $current_base_path = variable_get('springboard_p2p_base_path', 'p2p');
-
-  $form['basic']['current_base_path'] = array(
-    '#type' => 'value',
-    '#value' => $current_base_path,
-  );
-
-  $form['basic']['base_path'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Base path for personal campaign pages'),
-    '#default_value' => $current_base_path,
-    '#size' => 40,
-    '#required' => TRUE,
-    '#field_prefix' => url(NULL, array('absolute' => TRUE)) . (variable_get('clean_url', 0) ? '' : '?q='),
-  );
-
-  $form['basic']['base_path_personal_campaigns'] = array(
-    '#type' => 'radios',
-    '#title' => t('What to do with existing personal campaigns'),
-    '#description' => t('If changing the base path, what should happen to existing personal campaign paths?'),
-    '#default_value' => 'none',
-    '#options' => array(
-      'none' => t('Leave existing paths unchanged.'),
-    ),
-  );
-
-  if (module_exists('redirect')) {
-    $form['basic']['base_path_personal_campaigns']['#options']['add_redirects'] = t('Update existing paths with the new base path and add an automatic redirect. This option will cause all requests to the old path to automatically redirect to the new path.');
-  }
-  else {
-    $form['basic']['base_path_personal_campaigns']['#options']['update_paths'] = t('Update existing paths with the new base path. <span class="error"><strong>Warning:</strong> by changing the base path, existing URLs will not redirect and will not be accessible (404 pages). If you would like to create redirects, you must first enable the redirect module on your site.</span>');
-  }
-
   $form['help_message'] = array(
     '#type' => 'fieldset',
     '#title' => t('Messages'),
@@ -320,7 +281,6 @@ function springboard_p2p_admin_settings_validate($form, &$form_state) {
  */
 function springboard_p2p_admin_settings_submit($form, &$form_state) {
   $keys = array(
-    'base_path',
     'fundraiser_items',
     'webform_user_items',
     'registration_fields',
@@ -332,22 +292,6 @@ function springboard_p2p_admin_settings_submit($form, &$form_state) {
     $value = isset($form_state['values'][$key]) ? $form_state['values'][$key] : array();
     variable_set('springboard_p2p_' . $key, $value);
   }
-  
-  // If the current base path is different from the new base path, save it to the
-  // pathauto variable for this node type. This changes the Pathauto settings,
-  // which means that for each campaign that gets saved, Pathauto can handle the
-  // path updates; this module doesn't have to do it.
-  if (module_exists('pathauto')) {
-    if ($form_state['values']['current_base_path'] != $form_state['values']['base_path']) {
-      variable_set('pathauto_node_p2p_personal_campaign_pattern', $form_state['values']['base_path'] . '/[node:field-p2p-personal-campaign-url]');
-    }
-  }
-
-  springboard_p2p_modify_base_path(
-    $form_state['values']['current_base_path'],
-    $form_state['values']['base_path'],
-    $form_state['values']['base_path_personal_campaigns']
-  );
 
   drupal_set_message('Settings saved.');
 }
@@ -493,95 +437,4 @@ function springboard_p2p_sort_keys_by_weight($items) {
   asort($sort);
 
   return array_keys($sort);
-}
-
-/**
- * If the base path has changed, update existing campaigns based on the setting.
- *
- * @param string $old
- *   The old/current base path.
- * @param string $new
- *   The new base path.
- * @param string $update_existing
- *   How to handle existing personal campaigns.
- *   Can be 'none', 'update_paths', or 'add_redirects'.
- */
-function springboard_p2p_modify_base_path($old, $new, $update_existing) {
-  if ($old != $new) {
-    switch ($update_existing) {
-      case 'none':
-        drupal_set_message('The base path was updated. No changes were made to existing personal campaigns.');
-        break;
-
-      case 'update_paths':
-        springboard_p2p_change_peronsal_campaign_paths($new, FALSE);
-        break;
-
-      case 'add_redirects':
-
-        springboard_p2p_change_peronsal_campaign_paths($new, TRUE);
-        break;
-    }
-  }
-}
-
-/**
- * Changes the personal campaign paths for all personal campaigns.
- *
- * @param string $new_base_path
- *   The new base path to use.
- * @param bool $add_redirects
- *   Whether to add redirects for the old paths to the new paths.
- *   Requires the Redirect module.
- */
-function springboard_p2p_change_peronsal_campaign_paths($new_base_path, $add_redirects = FALSE) {
-  // Sanity check.  This really shouldn't happen because the option won't
-  // exist if the module does not exist.
-  if ($add_redirects && !module_exists('redirect')) {
-    drupal_set_message('The Redirect module is not enabled.');
-    return;
-  }
-
-  drupal_set_message('The following personal campaigns have been updated.');
-
-  $nodes = springboard_p2p_get_all_personal_campaigns();
-
-  // Temporarily change this variable so that Redirect will automaitcallly
-  // add redirects when the path is changed.
-  if ($add_redirects) {
-    $current_auto_redirect = variable_get('redirect_auto_redirect', TRUE);
-    variable_set('redirect_auto_redirect', TRUE);
-  }
-
-  foreach ($nodes as $node) {
-    $internal_path = 'node/' . $node->nid;
-
-    // Load the current path, change the alias, and save it.
-    $path = path_load($internal_path);
-
-    // If there's no existing path leave it alone.
-    if ($path) {
-      $path['original'] = $path;
-
-      // Make sure we're only replacing the beginning of the path.
-      $path_parts = explode('/', $path['alias']);
-      $path_parts[0] = $new_base_path;
-      $path['alias'] = implode('/', $path_parts);
-
-      // Create a redirect using the redirect module.
-      // When the auto redirect variable is on, we can control whether
-      // Redirect makes a redirect by settings this value.
-      $path['redirect'] = $add_redirects;
-
-      path_save($path);
-
-      drupal_set_message(l($node->title, $internal_path));
-    }
-  }
-
-  // Set the auto redirect variable back to its previous value.
-  if ($add_redirects) {
-    variable_set('redirect_auto_redirect', $current_auto_redirect);
-  }
-
 }

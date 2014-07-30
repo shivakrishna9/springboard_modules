@@ -9,6 +9,8 @@
  *
  * Creates the p2p donation form content type, an example p2p donation form,
  * and sets the default form for the p2p settings.
+ *
+ * Also, set default Pathauto aliases for P2P node types.
  */
 function springboard_p2p_install() {
   springboard_p2p_add_donation_form_content_type();
@@ -27,7 +29,23 @@ function springboard_p2p_install() {
   variable_set('user_register', 1);
   variable_set('user_email_verification', 0);
   drupal_set_message('Users can now register for this site without administrator approval. New users are not required to verify their email. These changes streamline the P2P registration process.');
+  
+  // Set Pathauto aliases for all P2P node types.
+  if (module_exists('pathauto')) {
+    springboard_p2p_set_pathauto_default_aliases(NULL);
+  }
+}
 
+/**
+ * Implements hook_enable().
+ *
+ * Upon enabling this module, set default Pathauto aliases
+ * for all P2P node types that aren't already set.
+ */
+function springboard_p2p_enable() {
+  if (module_exists('pathauto')) {
+    springboard_p2p_set_pathauto_default_aliases(NULL);
+  }
 }
 
 /**
