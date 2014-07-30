@@ -749,3 +749,19 @@ function market_source_get_campaigns($reset = FALSE) {
 
   return $campaigns;
 }
+
+function market_source_webform_user_profile_field_value_alter(&$profile_value, $profile_field, $form) {
+  $ms_map = variable_get('market_source_to_user_map', FALSE);
+  $qs = _market_source_build_qs_keys();
+  $webform_field = isset($ms_map[$profile_field])  && !empty($ms_map[$profile_field]) ? $ms_map[$profile_field] : FALSE;
+  $persistence = isset($qs[$webform_field]['persistence']) ? $qs[$webform_field]['persistence'] : FALSE;
+  if ($webform_field && ($persistence == 'off' || $persistence == 'direct')) {
+    $value = (isset($form['submitted'][$webform_field]['#default_value']) && 
+      !empty($form['submitted'][$webform_field]['#default_value'])) ? 
+      $form['submitted'][$webform_field]['#default_value'] : 
+      FALSE;
+    if ($value && ($profile_value == NULL || $value != $profile_value)) {
+      $profile_value = $value;
+    }
+  }
+}

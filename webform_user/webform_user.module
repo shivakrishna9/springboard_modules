@@ -368,14 +368,7 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
     // If the user is logged in.
     if (user_is_logged_in() && _webform_user_is_webform_user_node($node)) {
       $component_hierarchy = __webform_user_parse_components($node->nid, $components);
-      $map = webform_user_user_map($node->nid);
-
-      // Further below we need to prevent webform user from inserting blank values
-      // into market source fields when certain conditions are met.
-      if ($ms = module_exists('market_source')) {
-        $ms_map = variable_get('market_source_to_user_map', FALSE);
-        $qs = _market_source_build_qs_keys();
-      }  
+      $map = webform_user_user_map($node->nid);  
 
       // Map each profile field if there's a matching component field.
       foreach ($map as $webform_field => $profile_field) {
@@ -387,31 +380,11 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
             if (is_array($user_data->$profile_field)) {
               $current_field = $user_data->$profile_field;
               $profile_value = isset($current_field['und'][0]['value']) ? $current_field['und'][0]['value'] : NULL;
-
-              // If there is a valid *new* market source value on this form, 
-              // and persistence is set to "direct" or "off"
-              // (direct and off are equivalent when there are no ms querystrings in the URL)
-              // replace the *old* values pulled from profile.
-              if ($ms) {
-                $webform_field = isset($ms_map[$profile_field])  && !empty($ms_map[$profile_field]) ? $ms_map[$profile_field] : FALSE;
-                $persistence = isset($qs[$webform_field]['persistence']) ? $qs[$webform_field]['persistence'] : FALSE;
-
-                if ($webform_field && ($persistence == 'off' || $persistence == 'direct')) {
-
-                  $value = (isset($form['submitted'][$webform_field]['#default_value']) && 
-                    !empty($form['submitted'][$webform_field]['#default_value'])) ? 
-                    $form['submitted'][$webform_field]['#default_value'] : 
-                    FALSE;
-
-                  if ($value && ($profile_value == NULL || $value != $profile_value)) {
-                    $profile_value = $value;
-                  }
-                }
-              }
             }
             else {
               $profile_value = $user_data->$profile_field;
-            }
+            } 
+            drupal_alter('webform_user_profile_field_value', $profile_value, $profile_field, $form);
             // Set the value.
             switch ($form_field['#type']) {
               case 'date':
