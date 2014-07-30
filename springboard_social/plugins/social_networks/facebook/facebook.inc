@@ -79,7 +79,6 @@ function sb_social_facebook_token_info() {
 function sb_social_facebook_token_replace($tokens, &$replacements, $settings, $node = FALSE, $submission_id = FALSE, $extra = FALSE) {
 
   $settings = sb_social_reset_settings_cache($settings);
-
   foreach ($tokens as $key => $token) {
     switch ($key) {
       case 'facebook_share_link':
