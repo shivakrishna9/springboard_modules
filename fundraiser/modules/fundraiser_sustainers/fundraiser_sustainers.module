@@ -808,17 +808,19 @@ function _fundraiser_sustainers_recurs_monthly_field_display($form, $form_state,
 }
 
 /**
- * Implements hook_donation_form_alter().
+ * Implements hook_fundraiser_donation_form().
+ *
+ * This hook is here for the purpose of adding a States array to the payment
+ * method options, so that a non-recurring-enabled payment method will show/hide
+ * depending on the status of the "recurring donation" field, if one exists.
  */
 function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
 
   // Find out whether the form has a checkbox/radio field called 'recurs_monthly'.
-  // Only add the States API code below if such a field exists.      
-  $recurring_field = _fundraiser_sustainers_has_exposed_recurring_field($form['#node']->nid);
+  $recurring_field = _fundraiser_sustainers_form_has_exposed_recurring_field($form['#node']->nid);
   
-  // Set up the values that we're going to require in the States array.
-  // If it's a select list or radio buttons (multple == 0), check for 'value'.
-  // Otherwise, it's a checkbox, so check for 'checked' == FALSE.
+  // Set up the values that we're going to require in the States array. If it's a select list or radio buttons
+  // (multiple == 0), check for 'value'. Otherwise, it's a checkbox, so check for 'checked' == FALSE.
   if ($recurring_field['visible'] == TRUE) {
     if ($recurring_field['settings']['type'] == 'select' || $recurring_field['settings']['type'] == 'radios') {
       $required_values = array('!value' => 'recurs');
@@ -826,34 +828,74 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
     else {
       $required_values = array('checked' => FALSE);
     }
-  }
     
-  foreach ($form['#node']->gateways as $payment_method) {
-    // Check if the gateway allows recurring payments, and also whether the "recurs_monthly" field is shown,
-    // and use the States API if it doesn't. This process performs the show/hide on payment method
-    // options when the "recurs_monthly" field is selected.
-    $this_gateway = _fundraiser_gateway_info($payment_method['id']);
-    if ((!isset($this_gateway['allow_recurring']) || !_fundraiser_sustainers_supports_recurring($this_gateway['allow_recurring'], $payment_method['method'])) && $recurring_field['visible'] == TRUE) {
-      $payment_method_name = $payment_method['method'];
-      $form['submitted']['payment_information']['payment_method'][$payment_method_name] = array(
-        '#states' => array(
-          'visible' => array(
-            ':input[name*=recurs_monthly]' => $required_values
+    // Check if each gateway allows recurring payments, and use the States API if it doesn't.
+    foreach ($form['#node']->gateways as $payment_method) {
+      $this_gateway = _fundraiser_gateway_info($payment_method['id']);
+      if ((!isset($this_gateway['allow_recurring']) || !_fundraiser_sustainers_supports_recurring($this_gateway['allow_recurring'], $payment_method['method'])) && $recurring_field['visible'] == TRUE) {
+        $payment_method_name = $payment_method['method'];
+        $form['submitted']['payment_information']['payment_method'][$payment_method_name] = array(
+          '#states' => array(
+            'visible' => array(
+              ':input[name*=recurs_monthly]' => $required_values
+            ),
           ),
-        ),
-      );
+        );
+      }
     }
   }
   
-  
+  // Add second validation handler that prevents sending a recurring donation 
+  // to a non-recurring-enabled payment gateway. 
+  $form['#validate'][] = 'fundraiser_sustainers_recurring_conflict_validate';
   return $form;
+}
+
+/**
+ * Validation callback for donation webforms.
+ *
+ * This function checks whether the visitor chose to make a monthly recurring donation and also 
+ * chose a payment method that does not support recurring payments. This should be caught by
+ * client-side validation but this catches any submission that makes it through.
+ */
+function fundraiser_sustainers_recurring_conflict_validate(&$form, &$form_state) {
+  
+  // Set the default value of $recurring_donation. Then check through the submitted data
+  // to see if a non-recurring gateway and the "recurring" option were both accidentally selected.
+  $recurring_donation = FALSE;
+  if (isset($form_state['values']['submitted']['recurs_monthly']) && $form_state['values']['submitted']['recurs_monthly']['recurs'] == 'recurs') {
+    $recurring_donation = TRUE;
+  }
+  // If we're here, we didn't find the 'recurs_monthly' field yet.
+  // Loop through fieldsets to see if we find it inside.
+  else {
+    foreach ($form_state['values']['submitted'] as $key => $submitted_data) {
+      if (is_array($submitted_data) && isset($submitted_data['recurs_monthly']) && $submitted_data['recurs_monthly']['recurs'] == 'recurs') {
+        $recurring_donation = TRUE;
+        break;
+      }
+    }
+  }
+  
+  // Find and load the payment method, first from the submitted data, and then
+  // from _fundraiser_gateway_info() to see if it supports recurring.
+  $payment_method = $form_state['values']['submitted']['payment_information']['payment_method'];
+  $payment_method = _fundraiser_gateway_info($form['#node']->gateways[$payment_method]['id']);
+  $payment_method_supports_recurring = isset($payment_method['allow_recurring']) && !empty($payment_method['allow_recurring']) ? TRUE : FALSE;
+  
+  // Check now and return error if necessary. We can't have a recurring donation 
+  // coupled with a payment method that doesn't support recurring.
+  if ($recurring_donation && !$payment_method_supports_recurring) {
+    $error_message = t('Thank you for choosing a monthly donation! However, @payment_method does not support recurring monthly payments. Please choose a different method and submit the donation form again.', array('@payment_method' => $payment_method['details']['gateway_details']['display_title']));
+    form_set_error('recurs_monthly', $error_message);
+  }
 }
 
 /**
  * Helper function, find out if a node has recurring payments as an option.
  * It also gets the field's settings.
  */
-function _fundraiser_sustainers_has_exposed_recurring_field($nid) {
+function _fundraiser_sustainers_form_has_exposed_recurring_field($nid) {
   $webform_node = node_load($nid);
     
   // If the 'recurring_setting' is something other than 'user_choice',
