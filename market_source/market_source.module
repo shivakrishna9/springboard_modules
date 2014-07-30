@@ -750,7 +750,9 @@ function market_source_get_campaigns($reset = FALSE) {
   return $campaigns;
 }
 
-function market_source_webform_user_profile_field_value_alter(&$profile_value, $profile_field, $form) {
+function market_source_webform_user_profile_field_value_alter(&$profile_value, $context) {
+  $form = $context['form'];
+  $profile_field = $context['profile_field'];
   $ms_map = variable_get('market_source_to_user_map', FALSE);
   $qs = _market_source_build_qs_keys();
   $webform_field = isset($ms_map[$profile_field])  && !empty($ms_map[$profile_field]) ? $ms_map[$profile_field] : FALSE;

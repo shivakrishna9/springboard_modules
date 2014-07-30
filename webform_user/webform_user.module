@@ -384,7 +384,11 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
             else {
               $profile_value = $user_data->$profile_field;
             } 
-            drupal_alter('webform_user_profile_field_value', $profile_value, $profile_field, $form);
+            $context = array(
+              'form' => $form,
+              'profile_field' => $profile_field,
+            );
+            drupal_alter('webform_user_profile_field_value', $profile_value, $context);
             // Set the value.
             switch ($form_field['#type']) {
               case 'date':
