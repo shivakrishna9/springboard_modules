@@ -913,6 +913,11 @@ function _sb_social_list_share_enabled_market_source_fields() {
   return $enabled_fields;
 }
 
+/**
+ * During token replacement, path shares may have the default settings
+ * values, rather than the values for that particular path.
+ * Have not observed this on node shares...
+ */
 function sb_social_reset_settings_cache($settings) {
   if ($settings['type'] == 'path') {
     $id = sb_social_get_path_id($settings['id']);
