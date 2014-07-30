@@ -95,6 +95,26 @@ function springboard_p2p_dashboard() {
     '#markup' => views_embed_view('p2p_personal_campaigns_admin', 'page'),
   );
 
+  $output['landing_pages'] = array();
+
+  $output['landing_pages']['heading'] = array(
+    '#markup' => '<h2>Landing pages</h2>',
+  );
+
+  $output['landing_pages']['landing_pages'] = array(
+    '#markup' => views_embed_view('p2p_landing_pages', 'block'),
+  );
+
+  $output['landing_pages']['links'] = array(
+    '#theme' => 'links',
+    '#links' => array(
+      'landing_pages' => array(
+        'title' => t('View all landing pages.'),
+        'href' => 'admin/springboard/p2p/landing-pages',
+      ),
+    ),
+  );
+
   return $output;
 }
 
@@ -332,7 +352,7 @@ function springboard_p2p_admin_settings_submit($form, &$form_state) {
     $value = isset($form_state['values'][$key]) ? $form_state['values'][$key] : array();
     variable_set('springboard_p2p_' . $key, $value);
   }
-  
+
   // If the current base path is different from the new base path, save it to the
   // pathauto variable for this node type. This changes the Pathauto settings,
   // which means that for each campaign that gets saved, Pathauto can handle the
