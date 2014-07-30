@@ -226,6 +226,10 @@ ul.campaign-landing-grid a {
   font-family: FontAwesome;
 }
 
+.campaign-node-link.learn-more a:after {
+  content: "\f128";
+}
+
 .p2p-panelizer-campaign-landing h4 {
   color: #5b5b5b;
 }
@@ -262,6 +266,7 @@ ul.campaign-landing-grid a {
   text-align: center;
   font-size: 19px;
 }
+
 .top-personal-campaigns-view h3.highest-campaign a {
   color: #fff;
 }
@@ -289,20 +294,26 @@ ul.campaign-landing-grid a {
 }
 
 span.campaign-node-link {
-  display: block;
+  display: inline-block;
   margin: 10px 0;
+  min-height: 40px;
+  width: 49%;
+}
+
+span.field-content.campaign-node-link.learn-more {
+  text-align: right;
 }
 
 /* p2p campiang page */
 
 .pane-p2p-content .view-content ul,
-.pane-p2p-content .view-content ul li  {
+.pane-p2p-content .view-content ul li {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.pane-p2p-content h1{
+.pane-p2p-content h1 {
   margin: 0 0 14px 0;
   padding: 0;
 }
@@ -367,7 +378,7 @@ span.campaign-node-link {
 }
 
 .panel-2col-bricks .panel-col-last .inside {
-   margin: 0 0 .5em 0;
+  margin: 0 0 .5em 0;
 }
 
 .pane-social-links h2:before {
@@ -466,9 +477,22 @@ span.campaign-node-link {
   }
 
   .pane-p2p-content .p2p-thumbnail {
-    width: 99%;
     margin: 0 0 10px 0;
+    width: 99%;
     text-align: center;
+  }
+
+}
+
+@media (max-width: 960px) {
+
+  span.campaign-node-link,
+  span.field-content.campaign-node-link.learn-more {
+    display: block;
+    margin: 8px 0;
+    min-height: 32px;
+    width: 100%;
+    text-align: left;
   }
 
 }
