@@ -80,10 +80,14 @@ function commerce_payflow_cc_settings_form($settings = array(), $payment_method 
 
   // Add the recurring billing options select.
   $form['recurring-billing'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Recurring Billing'),
-    '#description' => t('Create a Recurring Billing profile (requires add-on service in Payflow account)'),
-    '#return_value' => 'recurring-billing-profile',
+    '#type' => 'radios',
+    '#title' => 'Recurring Billing',
+    '#description' => t('Select the options for recurring billing. See Payflow documentation for further details on each option.'),
+    '#options' => array(
+      '' => 'None',
+      'pnref-token' => t('PNREF Token (Uses previous payment tokens to make reference charges)'),
+      'recurring-billing-profile' => t('Recurring Billing Profile (requires add-on service in Payflow account)'),
+    ),
     '#default_value' => $settings['recurring-billing'],
   );
 
@@ -116,7 +120,7 @@ function commerce_payflow_cc_default_settings() {
     'trxtype' => 'S',
     'currency_code' => in_array($default_currency, array_keys(commerce_paypal_currencies('payflow_link'))) ? $default_currency : 'USD',
     'allow_supported_currencies' => FALSE,
-    'recurring-billing' => 'pnref-token',
+    'recurring-billing' => '',
     'log' => array('request' => 0, 'response' => 0),
   );
 }
