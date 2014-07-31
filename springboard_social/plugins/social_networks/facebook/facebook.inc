@@ -122,6 +122,7 @@ function sb_social_facebook_defaults() {
     'title' => variable_get('springboard_social_facebook_title', '%title'),
     'description' => variable_get('springboard_social_facebook_description', '%teaser'),
     'image' => variable_get('springboard_social_facebook_image', ''),
+    'count' => 0,
   );
   return $settings;
 }

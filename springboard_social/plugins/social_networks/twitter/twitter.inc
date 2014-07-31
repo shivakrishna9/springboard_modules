@@ -67,6 +67,7 @@ function sb_social_twitter_token_replace($tokens, &$replacements, $settings, $no
 function sb_social_twitter_defaults() {
   $settings = array(
     'message' => variable_get('springboard_social_twitter_message', '%title'),
+    'count' => 0,
   );
   return $settings;
 }

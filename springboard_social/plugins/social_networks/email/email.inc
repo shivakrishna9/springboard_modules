@@ -74,6 +74,7 @@ function sb_social_email_defaults() {
   $settings = array(
     'subject' => variable_get('springboard_social_email_subject', '%title'),
     'message' => variable_get('springboard_social_email_message' . ''),
+    'count' => 0,
   );
   return $settings;
 }
