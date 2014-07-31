@@ -604,7 +604,7 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['relationships']['field_p2p_campaign_target_id']['id'] = 'field_p2p_campaign_target_id';
   $handler->display->display_options['relationships']['field_p2p_campaign_target_id']['table'] = 'field_data_field_p2p_campaign';
   $handler->display->display_options['relationships']['field_p2p_campaign_target_id']['field'] = 'field_p2p_campaign_target_id';
-  $handler->display->display_options['relationships']['field_p2p_campaign_target_id']['required'] = TRUE;
+  $handler->display->display_options['relationships']['field_p2p_campaign_target_id']['label'] = 'A bridge to the Content entity that is referenced via field_p2p_campaign';
   /* Field: Content: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
   $handler->display->display_options['fields']['title']['table'] = 'node';
@@ -625,22 +625,16 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['sorts']['field_p2p_campaign_progress_amount']['field'] = 'field_p2p_campaign_progress_amount';
   $handler->display->display_options['sorts']['field_p2p_campaign_progress_amount']['order'] = 'DESC';
   $handler->display->display_options['sorts']['field_p2p_campaign_progress_amount']['expose']['label'] = 'Progress (field_p2p_campaign_progress:amount)';
-  /* Contextual filter: Content: Category (field_p2p_category) */
-  $handler->display->display_options['arguments']['field_p2p_category_target_id']['id'] = 'field_p2p_category_target_id';
-  $handler->display->display_options['arguments']['field_p2p_category_target_id']['table'] = 'field_data_field_p2p_category';
-  $handler->display->display_options['arguments']['field_p2p_category_target_id']['field'] = 'field_p2p_category_target_id';
-  $handler->display->display_options['arguments']['field_p2p_category_target_id']['relationship'] = 'field_p2p_campaign_target_id';
-  $handler->display->display_options['arguments']['field_p2p_category_target_id']['default_argument_type'] = 'fixed';
-  $handler->display->display_options['arguments']['field_p2p_category_target_id']['summary']['number_of_records'] = '0';
-  $handler->display->display_options['arguments']['field_p2p_category_target_id']['summary']['format'] = 'default_summary';
-  $handler->display->display_options['arguments']['field_p2p_category_target_id']['summary_options']['items_per_page'] = '25';
-  $handler->display->display_options['arguments']['field_p2p_category_target_id']['specify_validation'] = TRUE;
-  $handler->display->display_options['arguments']['field_p2p_category_target_id']['validate']['type'] = 'node';
-  $handler->display->display_options['arguments']['field_p2p_category_target_id']['validate_options']['types'] = array(
-    'p2p_category' => 'p2p_category',
-  );
-  $handler->display->display_options['arguments']['field_p2p_category_target_id']['validate_options']['access'] = TRUE;
-  $handler->display->display_options['arguments']['field_p2p_category_target_id']['break_phrase'] = TRUE;
+  /* Contextual filter: Content: Nid */
+  $handler->display->display_options['arguments']['nid']['id'] = 'nid';
+  $handler->display->display_options['arguments']['nid']['table'] = 'node';
+  $handler->display->display_options['arguments']['nid']['field'] = 'nid';
+  $handler->display->display_options['arguments']['nid']['relationship'] = 'field_p2p_campaign_target_id';
+  $handler->display->display_options['arguments']['nid']['default_action'] = 'default';
+  $handler->display->display_options['arguments']['nid']['default_argument_type'] = 'node';
+  $handler->display->display_options['arguments']['nid']['summary']['number_of_records'] = '0';
+  $handler->display->display_options['arguments']['nid']['summary']['format'] = 'default_summary';
+  $handler->display->display_options['arguments']['nid']['summary_options']['items_per_page'] = '25';
   /* Filter criterion: Content: Published */
   $handler->display->display_options['filters']['status']['id'] = 'status';
   $handler->display->display_options['filters']['status']['table'] = 'node';
@@ -675,22 +669,22 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['fields']['field_p2p_campaign_progress']['type'] = 'springboard_p2p_fields_personal_campaign_progress_amount';
   $handler->display->display_options['path'] = 'p2p/campaigns/top';
 
-  /* Display: Content pane */
-  $handler = $view->new_display('panel_pane', 'Content pane', 'panel_pane_1');
+  /* Display: Campaign contextual pane */
+  $handler = $view->new_display('panel_pane', 'Campaign contextual pane', 'panel_pane_1');
   $handler->display->display_options['defaults']['css_class'] = FALSE;
   $handler->display->display_options['css_class'] = 'top-personal-campaigns-view';
   $handler->display->display_options['defaults']['use_ajax'] = FALSE;
   $handler->display->display_options['use_ajax'] = TRUE;
   $handler->display->display_options['defaults']['pager'] = FALSE;
   $handler->display->display_options['pager']['type'] = 'mini';
-  $handler->display->display_options['pager']['options']['items_per_page'] = '3';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '4';
   $handler->display->display_options['pager']['options']['offset'] = '0';
   $handler->display->display_options['pager']['options']['id'] = '0';
   $handler->display->display_options['pane_category']['name'] = 'Springboard P2P';
   $handler->display->display_options['pane_category']['weight'] = '0';
 
-  /* Display: Attachment */
-  $handler = $view->new_display('attachment', 'Attachment', 'attachment_1');
+  /* Display: Campaign contextual Attachment */
+  $handler = $view->new_display('attachment', 'Campaign contextual Attachment', 'attachment_1');
   $handler->display->display_options['pager']['type'] = 'some';
   $handler->display->display_options['pager']['options']['items_per_page'] = '1';
   $handler->display->display_options['pager']['options']['offset'] = '0';
@@ -746,6 +740,82 @@ function springboard_p2p_personal_campaign_views_default_views() {
     'panel_pane_1' => 'panel_pane_1',
     'default' => 0,
     'page' => 0,
+  );
+
+  /* Display: Landing pane */
+  $handler = $view->new_display('panel_pane', 'Landing pane', 'panel_pane_2');
+  $handler->display->display_options['defaults']['css_class'] = FALSE;
+  $handler->display->display_options['css_class'] = 'top-personal-campaigns-view';
+  $handler->display->display_options['defaults']['use_ajax'] = FALSE;
+  $handler->display->display_options['use_ajax'] = TRUE;
+  $handler->display->display_options['defaults']['pager'] = FALSE;
+  $handler->display->display_options['pager']['type'] = 'mini';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '4';
+  $handler->display->display_options['pager']['options']['offset'] = '0';
+  $handler->display->display_options['pager']['options']['id'] = '0';
+  $handler->display->display_options['defaults']['arguments'] = FALSE;
+  $handler->display->display_options['pane_category']['name'] = 'Springboard P2P';
+  $handler->display->display_options['pane_category']['weight'] = '0';
+
+  /* Display: Landing Attachment */
+  $handler = $view->new_display('attachment', 'Landing Attachment', 'attachment_2');
+  $handler->display->display_options['pager']['type'] = 'some';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '1';
+  $handler->display->display_options['pager']['options']['offset'] = '0';
+  $handler->display->display_options['defaults']['style_plugin'] = FALSE;
+  $handler->display->display_options['style_plugin'] = 'list';
+  $handler->display->display_options['defaults']['style_options'] = FALSE;
+  $handler->display->display_options['defaults']['row_plugin'] = FALSE;
+  $handler->display->display_options['row_plugin'] = 'fields';
+  $handler->display->display_options['defaults']['row_options'] = FALSE;
+  $handler->display->display_options['defaults']['fields'] = FALSE;
+  /* Field: Content: Title */
+  $handler->display->display_options['fields']['title']['id'] = 'title';
+  $handler->display->display_options['fields']['title']['table'] = 'node';
+  $handler->display->display_options['fields']['title']['field'] = 'title';
+  $handler->display->display_options['fields']['title']['label'] = '';
+  $handler->display->display_options['fields']['title']['alter']['word_boundary'] = FALSE;
+  $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
+  $handler->display->display_options['fields']['title']['element_type'] = 'h3';
+  $handler->display->display_options['fields']['title']['element_class'] = 'highest-campaign';
+  $handler->display->display_options['fields']['title']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['title']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['title']['element_default_classes'] = FALSE;
+  /* Field: Content: Upload a Campaign Image */
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['id'] = 'field_p2p_campaign_images';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['table'] = 'field_data_field_p2p_campaign_images';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['field'] = 'field_p2p_campaign_images';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['label'] = '';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['element_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['element_class'] = 'personal-campaign-image';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['click_sort_column'] = 'fid';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['settings'] = array(
+    'image_style' => 'p2p_campaign_image_landing',
+    'image_link' => '',
+  );
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['delta_limit'] = '1';
+  $handler->display->display_options['fields']['field_p2p_campaign_images']['delta_offset'] = '0';
+  /* Field: Content: Progress */
+  $handler->display->display_options['fields']['field_p2p_campaign_progress']['id'] = 'field_p2p_campaign_progress';
+  $handler->display->display_options['fields']['field_p2p_campaign_progress']['table'] = 'field_data_field_p2p_campaign_progress';
+  $handler->display->display_options['fields']['field_p2p_campaign_progress']['field'] = 'field_p2p_campaign_progress';
+  $handler->display->display_options['fields']['field_p2p_campaign_progress']['element_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_campaign_progress']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_campaign_progress']['element_wrapper_type'] = 'h4';
+  $handler->display->display_options['fields']['field_p2p_campaign_progress']['element_wrapper_class'] = 'highest-progress-title';
+  $handler->display->display_options['fields']['field_p2p_campaign_progress']['element_default_classes'] = FALSE;
+  $handler->display->display_options['fields']['field_p2p_campaign_progress']['click_sort_column'] = 'amount';
+  $handler->display->display_options['fields']['field_p2p_campaign_progress']['type'] = 'springboard_p2p_fields_personal_campaign_progress_amount';
+  $handler->display->display_options['defaults']['arguments'] = FALSE;
+  $handler->display->display_options['displays'] = array(
+    'panel_pane_2' => 'panel_pane_2',
+    'default' => 0,
+    'page' => 0,
+    'panel_pane_1' => 0,
   );
   $export['p2p_top_personal_campaigns_by_category'] = $view;
 
