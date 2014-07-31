@@ -12,6 +12,9 @@ class SpringboardP2pEvents {
    *
    * @param object $account
    *   User account of the registering user.
+   * @param object|null $campaign
+   *   A campaign node to determine if the user is registering for a private
+   *   or public campaign.
    */
   public function userRegistersForP2P($account, $campaign = NULL) {
     springboard_p2p_register_user_for_p2p($account->uid);
