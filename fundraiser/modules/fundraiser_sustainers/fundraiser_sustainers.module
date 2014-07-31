@@ -841,7 +841,7 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
         $recurs_monthly_field['#states']['visible'][$selector][] = array('value' => $supporting_gateway);
       }
     }
-    else {
+    elseif (empty($supporting_gateways)) {
       $recurs_monthly_field['#type'] = 'hidden';
       $recurs_monthly_field['#default_value'] = 'no_recurr';
       $recurs_monthly_field['#title_display'] = 'none';
