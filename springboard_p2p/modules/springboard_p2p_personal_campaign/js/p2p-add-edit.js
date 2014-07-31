@@ -26,6 +26,39 @@
       // Add uniform to file upload.
       $('input[type=file]').uniform();
 
+        // Runs on Fundraising goal field
+        $('#edit-field-p2p-personal-campaign-goal-und-0-value').blur(function(){
+            var value = this.value;
+
+            // If the value has length and includes at least one integer
+            if (value.length > 0 && this.value.match(/\d/g)) {
+                // if no period period
+                if (!value.match(/\./)) {
+                    // no decimals: strip all other chars, add decimal and 00
+                    value = value.replace(/[^\d]+/g,'') + '.00';
+                } else {
+                    // Remove all non-integer/period chars
+                    value = value.replace(/[^\d\.]+/g,'')
+                        // make first decimal unique
+                        .replace(/\./i,'-')
+                        // replace subsequent decimals
+                        .replace(/\./g,'')
+                        // set first back to normal
+                        .replace('-','.')
+                        // match the last two digits, removing others
+                        .match(/\d+\.\d{0,2}|\.\d{0,2}/);
+                    var newValue = value[0];
+                    if (newValue.match(/\.\d{2}/)) {
+                    } else if (newValue.match(/\.\d{1}/)) {
+                        value += '0';
+                    } else {
+                        value += '00';
+                    }
+                }
+                this.value = value;
+            }
+        });
+
       // end jquery.
     }};
 })
