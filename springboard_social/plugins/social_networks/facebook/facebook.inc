@@ -248,6 +248,10 @@ function sb_social_facebook_settings(&$form, $enabled_services = array(), $setti
     '#title' => t('Drupal tokens'),
     '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
   );
+  $form['facebook_settings']['facebook_count'] = array(
+    '#type' => 'hidden',
+    '#default_value' => isset($settings['count']) ? $settings['count'] : 0,
+  );
 }
 
 function sb_social_facebook_process_settings(&$data, $form_state) {
@@ -255,6 +259,7 @@ function sb_social_facebook_process_settings(&$data, $form_state) {
     'title' => !empty($form_state['values']['fb_title']) ? $form_state['values']['fb_title'] : '',
     'description' => !empty($form_state['values']['fb_description']) ? $form_state['values']['fb_description'] : '',
     'image' => '',
+    'count' => !empty($form_state['values']['facebook_count']) ? $form_state['values']['facebook_count'] : 0,
   );
 
   if (!empty($form_state['values']['fb_image'])) {

@@ -86,6 +86,10 @@ function sb_social_twitter_settings(&$form, $enabled_services = array(), $settin
     '#description' => t('Custom twitter message text.'),
     '#default_value' => isset($settings['message']) ? $settings['message'] : '',
   );
+  $form['twitter_settings']['twitter_count'] = array(
+    '#type' => 'hidden',
+    '#default_value' => isset($settings['count']) ? $settings['count'] : 0,
+  );
   $form['twitter_settings']['tokens'] = array(
     '#type' => 'fieldset',
     '#title' => t('Available Tokens'),
@@ -152,6 +156,7 @@ function sb_social_twitter_admin_settings_submit($form, $form_state) {
 function sb_social_twitter_process_settings(&$data, $form_state) {
   $data['twitter'] = array(
     'message' => !empty($form_state['values']['twitter_message']) ? $form_state['values']['twitter_message'] : '',
+    'count' => !empty($form_state['values']['twitter_count']) ? $form_state['values']['twitter_count'] : 0,
   );
 }
 

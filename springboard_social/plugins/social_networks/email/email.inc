@@ -107,6 +107,10 @@ function sb_social_email_settings(&$form, $enabled_services = array(), $settings
     '#title' => t('Drupal tokens'),
     '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
   );
+  $form['email_settings']['email_count'] = array(
+    '#type' => 'hidden',
+    '#default_value' => isset($settings['count']) ? $settings['count'] : 0,
+  );
 }
 
 function sb_social_email_admin_settings(&$form) {
@@ -169,6 +173,8 @@ function sb_social_email_process_settings(&$data, $form_state) {
   $data['email'] = array(
     'subject' => !empty($form_state['values']['email_subject']) ? $form_state['values']['email_subject'] : '',
     'message' => !empty($form_state['values']['email_message']) ? $form_state['values']['email_message'] : '',
+    'count' => !empty($form_state['values']['email_count']) ? $form_state['values']['email_count'] : '',
+
   );
 }
 
