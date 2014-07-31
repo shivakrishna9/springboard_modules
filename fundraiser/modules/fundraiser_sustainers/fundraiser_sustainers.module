@@ -856,7 +856,6 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
   
   // Add second validation handler that prevents sending a recurring donation 
   // to a non-recurring-enabled payment gateway.
-  dsm($form);
   $form['#validate'][] = 'fundraiser_sustainers_recurring_conflict_validate';
   return $form;
 }
