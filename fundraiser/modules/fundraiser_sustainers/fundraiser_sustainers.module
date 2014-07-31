@@ -1851,15 +1851,24 @@ function fundraiser_sustainers_fundraiser_donation_decline($donation) {
  */
 function fundraiser_sustainers_processor_key_match() {
   static $key;
-  if (!empty($key)) {
-    return ($key == $_SERVER['HTTP_HOST']);
+
+  $site = trim($_SERVER['HTTP_HOST']);
+
+  // If the base path is something other than a slash, add it to the site
+  if (base_path() != '/') {
+    $site .= rtrim(base_path(), '/');
   }
+
+  if (!empty($key)) {
+    return $key == $site;
+  }
+
   // This is to check that we have everything configured for safe charging.
   // If not, we should throw an issue about it and not try to process stuff.
   // This value is normally set in the glue module for payment.
   // Get the key and see if it matches the server's host.
   $key = fundraiser_sustainers_get_sustainer_key_value();
-  if (trim($key) == trim($_SERVER['HTTP_HOST'])) {
+  if ($key == $site) {
     return TRUE;
   }
 
