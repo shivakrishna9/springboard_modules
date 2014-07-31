@@ -509,7 +509,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
     'settings' => array(
       'max' => 99999999,
       'min' => 0,
-      'prefix' => '',
+      'prefix' => '$',
       'suffix' => '',
       'user_register_form' => FALSE,
     ),
