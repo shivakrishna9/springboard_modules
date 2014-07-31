@@ -423,8 +423,23 @@ function springboard_p2p_existing_user_login_form($form, &$form_state) {
 
   $form['#validate'] = user_login_default_validators();
   $form['#submit'][] = 'user_login_submit';
+  $form['#submit'][] = 'springboard_p2p_existing_user_login_form_register';
 
   springboard_p2p_campaign_id_form_element($form, $form_state);
 
   return $form;
+}
+
+/**
+ * Submit handler for logging in to confirm a user is registered for p2p.
+ *
+ * If not, registers the user for p2p.
+ */
+function springboard_p2p_existing_user_login_form_register() {
+  // At this point the user has already been logged in and $user is loaded.
+  global $user;
+
+  if (!springboard_p2p_user_is_registered_for_p2p($user->uid)) {
+    springboard_p2p_register_user_for_p2p($user->uid);
+  }
 }
