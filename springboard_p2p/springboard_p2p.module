@@ -436,6 +436,7 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
 
       case 'submissions':
         $form['field_p2p_personal_campaign_goal']['#access'] = FALSE;
+        $form['field_p2p_suggested_donation_amt']['#access'] = FALSE;
         break;
 
       default:
