@@ -151,14 +151,14 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
   //Update settings with the new share count
   foreach($settings['data'] as $name => $values) {
     if($nid) {
-    $count = db_query('SELECT count(nid) FROM {sb_social_shares} WHERE nid = :nid AND service = :service', array(':nid' => $nid, ':service' => $name))->fetchfield();
+      $count = db_query('SELECT count(nid) FROM {sb_social_shares} WHERE nid = :nid AND service = :service', array(':nid' => $nid, ':service' => $name))->fetchfield();
     }
     else {
       $count = 0;
-      $result = db_query('SELECT url FROM {sb_social_shares} WHERE url LIKE :url AND service = :service', array(':url' => '%' . $url_path . '%', ':service' => $name));
+      $result = db_query('SELECT url FROM {sb_social_shares} WHERE url LIKE :url_path AND service = :service', array(':url_path' => '%' . $url_path . '%', ':service' => $name));
       foreach($result as $full_url) {
-        $path = parse_url($full_url->url);
-        if($path['path'] == '/' . $url_path) {
+        $parts = parse_url($full_url->url);
+        if($parts['path'] == '/' . $url_path) {
           $count++;
         }
       }
