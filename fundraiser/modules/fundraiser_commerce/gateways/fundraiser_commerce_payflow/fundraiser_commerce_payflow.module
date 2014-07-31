@@ -133,6 +133,7 @@ function _fundraiser_commerce_payflow_pnref_reference_charge($donation) {
   $master = fundraiser_donation_get_donation($donation->recurring->master_did);
   $method_instance = $donation->gateway['gateway_details'];
   $order = commerce_order_load($donation->did);
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
   // Pull the pnref from the master donation
   if (!empty($master->data['payflow_pnref'])) {
@@ -143,12 +144,18 @@ function _fundraiser_commerce_payflow_pnref_reference_charge($donation) {
     $orig_id = $master->data['remote_id'];
   }
 
+  // Set the charge values
+  $charge = commerce_currency_amount_to_decimal(
+    $order_wrapper->commerce_order_total->amount->value(),
+    $order_wrapper->commerce_order_total->currency_code->value()
+  );
+
   // Prepare a name-value pair array to capture the requested amount.
   $nvp = array(
     'BUTTONSOURCE' => !empty($method_instance['buttonsource']) ? $method_instance['buttonsource'] : '',
     'TRXTYPE' => 'S',
     'ORIGID' => $orig_id,
-    'AMT' => $donation->amount,
+    'AMT' => $charge,
     'TENDER' => 'C',
   );
 
@@ -158,8 +165,8 @@ function _fundraiser_commerce_payflow_pnref_reference_charge($donation) {
   // Create a new transaction to represent the reference transaction.
   $transaction = commerce_payment_transaction_new($method_instance['method_id'], $order->order_id);
   $transaction->instance_id = $method_instance['instance_id'];
-  $transaction->amount = commerce_currency_decimal_to_amount($donation->amount, $donation->currency);
-  $transaction->currency_code = $donation->currency;
+  $transaction->amount = $order_wrapper->commerce_order_total->amount->value();
+  $transaction->currency_code = $order_wrapper->commerce_order_total->currency_code->value();
   $transaction->payload[REQUEST_TIME] = $response;
   $transaction->remote_id = $response['PNREF'];
   $transaction->data['commerce_payflow']['pnref'] = $response['PNREF'];
