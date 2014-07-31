@@ -22,16 +22,14 @@ function springboard_p2p_request_password_reset_form($form, &$form_state) {
   if ($uid) {
     $account = user_load($uid);
 
-    if (!isset($account->uid) || !springboard_p2p_user_is_registered_for_p2p($account->uid)) {
-      return MENU_NOT_FOUND;
+    if (!empty($account->uid)) {
+      $event = new SpringboardP2pEvents();
+      $campaign = node_load($cid);
+      // Convert any FALSE value to NULL.  For rules.
+      $campaign = $campaign ? $campaign : NULL;
+      $event->userRequestsPasswordReset($account, $campaign);
+      drupal_set_message(t('Further instructions have been sent to your e-mail address.'));
     }
-
-    $event = new SpringboardP2pEvents();
-    $campaign = node_load($cid);
-    // Convert any FALSE value to NULL.  For rules.
-    $campaign = $campaign ? $campaign : NULL;
-    $event->userRequestsPasswordReset($account, $campaign);
-    drupal_set_message(t('Further instructions have been sent to your e-mail address.'));
 
     $options = array();
     if (!is_null($cid)) {
@@ -189,6 +187,12 @@ function springboard_p2p_set_password_form($form, &$form_state, $uid, $timestamp
         // user_login_finalize() also updates the login timestamp of the
         // user, which invalidates further use of the one-time login link.
         user_login_finalize();
+
+        // Add the p2p role if the user doesn't already have it.
+        if (!springboard_p2p_user_is_registered_for_p2p($user->uid)) {
+          springboard_p2p_register_user_for_p2p($user->uid);
+        }
+
         watchdog('user', 'User %name used one-time login link at time %timestamp.', array('%name' => $account->name, '%timestamp' => $timestamp));
         drupal_set_message(t('You have just used your one-time login link. It is no longer necessary to use this link to log in. Please set your password.'));
 
