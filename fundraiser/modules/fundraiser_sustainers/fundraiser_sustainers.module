@@ -1210,7 +1210,7 @@ function fundraiser_sustainers_donation_amount_form($form, &$form_state, $donati
   if (!_fundraiser_sustainers_supports_recurring($info['allow_recurring'], $donation->donation['payment_method'])) {
     $form['fundraiser-sustainer-billing'] = array(
       '#markup' => '<div class="fundraiser-sustainer-no-recur-support">' .
-        t('This payment gteway does not support recurring donations and cannot be updated.') .
+        t('This payment gateway does not support recurring donations and cannot be updated.') .
         '</div>',
     );
     return $form;
@@ -1421,7 +1421,7 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
   if (!_fundraiser_sustainers_supports_recurring($info['allow_recurring'], $donation->donation['payment_method'])) {
     $form['fundraiser-sustainer-billing'] = array(
       '#markup' => '<div class="fundraiser-sustainer-no-recur-support">' .
-        t('This payment gteway does not support recurring donations and cannot be updated.') .
+        t('This payment gateway does not support recurring donations and cannot be updated.') .
         '</div>',
     );
     return $form;

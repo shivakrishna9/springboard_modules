@@ -1908,7 +1908,7 @@ function fundraiser_donation_exception($donation) {
 
 /**
  * Donation processing, a given donation needs to be cancelled.
- * Generally, only available for Authorize.net gteway donations. For example, during sustainer call.
+ * Generally, only available for Authorize.net gateway donations. For example, during sustainer call.
  */
 function fundraiser_donation_cancel($donation) {
   // Make a log entry
