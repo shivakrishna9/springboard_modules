@@ -368,3 +368,27 @@ function springboard_form_user_profile_form_alter(&$form, $form_state) {
   }
 
 }
+
+/**
+ * Helper function.
+ * 
+ * Useful for update scripts in any module that implements 
+ * hook_springboard_dashboard_panes().
+ * 
+ * Enables all dashboard panes that are not explicitly set to "off".
+ */
+function springboard_enable_new_panes() {
+  $panes = module_invoke_all('springboard_dashboard_panes');
+  drupal_alter('springboard_dashboard_panes', $panes);
+  foreach ($panes as $name => $info) {
+    $panes[$name] = $info['label'];
+  }
+  $enabled_panes = variable_get('springboard_enabled_panes', array());
+  foreach($panes as $key => $pane) {
+    if(!in_array($key, $enabled_panes)) {
+      $enabled_panes[$key] = $key;
+      watchdog('springboard', 'Springboard dashboard @key pane enabled.', array('@key' => $key));
+    }
+  }
+  variable_set('springboard_enabled_panes', $enabled_panes);
+}
