@@ -1847,17 +1847,16 @@ function fundraiser_sustainers_fundraiser_donation_decline($donation) {
 }
 
 /**
- * Helper function, loads the recurring donation processor key.
+ * Matches the current site against the value in the sustainer key file.
+ *
+ * @return
+ *    TRUE when run on a site matching the sustainer key value, otherwise FALSE.
  */
 function fundraiser_sustainers_processor_key_match() {
   static $key;
 
-  $site = trim($_SERVER['HTTP_HOST']);
-
-  // If the base path is something other than a slash, add it to the site
-  if (base_path() != '/') {
-    $site .= rtrim(base_path(), '/');
-  }
+  // Construct a site string to match the key against
+  $site = trim($_SERVER['HTTP_HOST']) . rtrim(base_path(), '/');
 
   if (!empty($key)) {
     return $key == $site;
