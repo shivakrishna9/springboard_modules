@@ -185,42 +185,6 @@ function _fundraiser_offline_set_submission_value($field_key, $value, &$form_sta
 }
 
 /**
- * Implements hook_form_BASE_FORM_ID_alter() for node forms.
- */
-function fundraiser_offline_form_node_form_alter(&$form, &$form_state, $form_id) {
-  // If this isn't a fundraiser type, ignore it.
-  if (fundraiser_is_donation_type($form['#node']->type)) {
-    $form['fundraiser_settings']['fundraiser_offline'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Available offline?'),
-      '#description' => t('Check this box to mark this fundraiser node as available offline.'),
-      '#default_value' => isset($form['#node']->fundraiser_offline) ? $form['#node']->fundraiser_offline : 0,
-    );
-  }
-}
-
-/**
- * Implements hook_node_delete().
- */
-function fundraiser_offline_node_delete($node) {
-  // If this isn't a fundraiser type, ignore it.
-  if (fundraiser_is_donation_type($node->type)) {
-    _fundraiser_offline_delete_offline($node->nid);
-    _fundraiser_offline_delete_offline_donation_by_nid($node->nid);
-  }
-}
-
-/**
- * Implements hook_node_insert().
- */
-function fundraiser_offline_node_insert($node) {
-  // If this isn't a fundraiser type, ignore it.
-  if (fundraiser_is_donation_type($node->type)) {
-    fundraiser_offline_node_update($node);
-  }
-}
-
-/**
  * Implements hook_node_load().
  */
 function fundraiser_offline_node_load($nodes, $types) {
@@ -232,18 +196,6 @@ function fundraiser_offline_node_load($nodes, $types) {
     if (fundraiser_is_donation_type($node->type)) { 
       $nodes[$node->nid]->fundraiser_offline = $offline && $can_offline;
     }
-  }
-}
-
-/**
- * Implements hook_node_update().
- */
-function fundraiser_offline_node_update($node) {
-  // If this isn't a fundraiser type, ignore it.
-  if (fundraiser_is_donation_type($node->type)) {
-    $fundraiser['nid'] = $node->nid;
-    $fundraiser['status'] = (isset($node->fundraiser_offline) && $node->fundraiser_offline == TRUE) ? 1 : 0;
-    _fundraiser_offline_update_offline($fundraiser);
   }
 }
 

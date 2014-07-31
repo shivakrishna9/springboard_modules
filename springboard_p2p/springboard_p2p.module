@@ -1369,7 +1369,7 @@ function springboard_p2p_set_redirect($form, &$form_state) {
       if ($private) {
         $approval = new SpringboardP2pPrivateCampaignApproval($uid, $campaign_id);
         $approval->request();
-        drupal_set_message('You have been added to the approval queue for ' . $campaign->title);
+        drupal_set_message(t('The campaign !campaign requires approval. You will be notified via email after your request has been reviewed', array('!campaign' => $campaign->title)));
         $form_state['redirect'] = 'user/' . $uid . '/personal-campaigns';
 
         $account = user_load($uid);
