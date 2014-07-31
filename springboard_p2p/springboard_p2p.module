@@ -408,10 +408,10 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
       if (isset($campaign_node->field_p2p_ask_amount_edit[$language][0]['value'])) {
         $amount_editable = $campaign_node->field_p2p_ask_amount_edit[$language][0]['value'] ? TRUE : FALSE;
         if (isset($campaign_node->field_p2p_suggested_donation[$language][0]['value'])) {
-          $form['field_p2p_personal_donation'][$language][0]['value']['#default_value'] = $campaign_node->field_p2p_suggested_donation[$language][0]['value'];
+          $form['field_p2p_suggested_donation_amt'][$language][0]['value']['#default_value'] = $campaign_node->field_p2p_suggested_donation[$language][0]['value'];
         }
       }
-      $form['field_p2p_personal_donation'][$language][0]['value']['#access'] = $amount_editable;
+      $form['field_p2p_suggested_donation_amt'][$language][0]['value']['#access'] = $amount_editable;
 
     }
 
@@ -810,7 +810,7 @@ function springboard_p2p_set_pathauto_default_aliases($p2p_node_types = NULL) {
       ),
     );
   }
-  
+
   // For each P2P node type, set the default alias as defined per-node-type above. Only set the
   // alias pattern if the node type doesn't already have a setting, or 'force_change' is TRUE.
   foreach ($p2p_node_types as $node_type => $settings) {
