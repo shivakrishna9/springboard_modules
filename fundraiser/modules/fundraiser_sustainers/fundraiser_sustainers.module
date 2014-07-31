@@ -785,30 +785,35 @@ function _fundraiser_sustainers_recurs_monthly_field_display($form, $form_state,
  */
 function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
   // Find out whether the form has a checkbox/radio field called 'recurs_monthly'.
-  $recurring_field = _fundraiser_sustainers_form_has_exposed_recurring_field($form['#node']->nid);
+  $has_recurring_field = _fundraiser_sustainers_form_has_exposed_recurring_field($form['#node']->nid);
   
-  // Only bother with this if the node has a visible 'recurring' field and more than one gateway.
-  if ($recurring_field['visible'] == TRUE && count($form['#node']->gateways) > 1) {
+  if ($has_recurring_field['visible'] == TRUE) {
     // Set up the values that we're going to require in the States array. If it's a select list or
     // radio buttons, check for 'value'. Otherwise, it's a checkbox, so check for 'checked' == FALSE.
-    if ($recurring_field['settings']['type'] == 'select' || $recurring_field['settings']['type'] == 'radios') {
+    if ($has_recurring_field['settings']['type'] == 'select' || $has_recurring_field['settings']['type'] == 'radios') {
       $required_values = array('!value' => 'recurs');
     } 
     else {
       $required_values = array('checked' => FALSE);
     }
     
+    $count_enabled_gateways = 0;
     $supporting_gateways = array();
     $selector = ':input[name*=recurs_monthly]';
     
     // Check if each gateway allows recurring payments, and use the States API if it doesn't.
     // Else, if it does, add its name to the 'supporting_gateways' array for showing/hiding the 'recurring' field.
+    $payment_method_field = fundraiser_get_form_field('fundraiser_sustainers', $form, 'payment_method');
     foreach ($form['#node']->gateways as $type => $payment_method) {
-      if (!empty($payment_method['id'])) {
+      if (!empty($payment_method['id']) && $payment_method['status'] == 1) {
+        // Count the number of gateways currently enabled.
+        $count_enabled_gateways++;
+        
+        // Get this gateway info and set its #states array.
         $this_gateway = _fundraiser_gateway_info($payment_method['id']);
-        if ((!isset($this_gateway['allow_recurring']) || !_fundraiser_sustainers_supports_recurring($this_gateway['allow_recurring'], $payment_method['method'])) && $recurring_field['visible'] == TRUE) {
+        if ((!isset($this_gateway['allow_recurring']) || !_fundraiser_sustainers_supports_recurring($this_gateway['allow_recurring'], $payment_method['method'])) && $has_recurring_field['visible'] == TRUE) {
           $payment_method_name = $payment_method['method'];
-          $form['submitted']['payment_information']['payment_method'][$payment_method_name] = array(
+          $payment_method_field[$payment_method_name] = array(
             '#states' => array(
               'visible' => array(
                 $selector => $required_values
@@ -821,27 +826,37 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
         }
       }
     }
-  
-    // Modify the 'recurs_monthly' field. First, generate the right DOM selector for the field type. 
-    // Set the #states array if there is a recurring-enabled gateway; else, remove the field from display entirely.
-    $recurs_monthly_component = fundraiser_get_form_field('fundraiser_sustainers', $form, 'recurs_monthly');;
-    $selector = '.fundraiser-payment-methods input[type="radio"]';
-    if (!empty($supporting_gateways)) {
-      $recurs_monthly_component['#states'] = array(
+    // Save the field.
+    $form = fundraiser_update_form_field('fundraiser_sustainers', $form, 'payment_method', $payment_method_field);  
+
+    // Modify the 'recurs_monthly' field. Set the #states array if there is a recurring-enabled
+    // gateway; else, set the field to 'hidden' and give it a value of 'no_recurr'.
+    $recurs_monthly_field = fundraiser_get_form_field('fundraiser_sustainers', $form, 'recurs_monthly');
+    if ($count_enabled_gateways > 1 && !empty($supporting_gateways)) {
+      $selector = '.fundraiser-payment-methods input[type="radio"]';
+      $recurs_monthly_field['#states'] = array(
         'visible' => array(),
       );
       foreach ($supporting_gateways as $supporting_gateway) {
-        $recurs_monthly_component['#states']['visible'][$selector][] = array('value' => $supporting_gateway);
+        $recurs_monthly_field['#states']['visible'][$selector][] = array('value' => $supporting_gateway);
       }
     }
     else {
-      $recurs_monthly_component = array();
+      $recurs_monthly_field['#type'] = 'hidden';
+      $recurs_monthly_field['#default_value'] = 'no_recurr';
+      $recurs_monthly_field['#title_display'] = 'none';
+      $recurs_monthly_field['#description'] = NULL;
+      $recurs_monthly_field['#webform_component']['value'] = 'no_recurr';
+      $recurs_monthly_field['#webform_component']['type'] = 'hidden';
+      unset($recurs_monthly_field['#options']);
     }
-    $form = fundraiser_update_form_field('fundraiser_sustainers', $form, 'recurs_monthly', $recurs_monthly_component);  
+    // Save the field.
+    $form = fundraiser_update_form_field('fundraiser_sustainers', $form, 'recurs_monthly', $recurs_monthly_field);
   }
   
   // Add second validation handler that prevents sending a recurring donation 
-  // to a non-recurring-enabled payment gateway. 
+  // to a non-recurring-enabled payment gateway.
+  dsm($form);
   $form['#validate'][] = 'fundraiser_sustainers_recurring_conflict_validate';
   return $form;
 }
