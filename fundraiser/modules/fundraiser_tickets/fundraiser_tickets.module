@@ -557,6 +557,7 @@ function _fundraiser_tickets_ticket_settings_form_organize($form, $form_state){
   // The field to choose which donation form to use. Has a #states array
   // to show/hide upon the checkbox above being checked/unchecked.
   
+  unset($form['fr_tickets_donation_addon_form']);
   
   // These fields are managed programmatically.
   unset($form['fr_tickets_inventory_initial']);
