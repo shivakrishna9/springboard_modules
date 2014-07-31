@@ -475,11 +475,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
   // Exported field_instance: 'node-p2p_personal_campaign-field_p2p_personal_campaign_goal'
   $field_instances['node-p2p_personal_campaign-field_p2p_personal_campaign_goal'] = array(
     'bundle' => 'p2p_personal_campaign',
-    'default_value' => array(
-      0 => array(
-        'value' => 0,
-      ),
-    ),
+    'default_value' => NULL,
     'deleted' => 0,
     'description' => '',
     'display' => array(
@@ -508,7 +504,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
     'required' => 1,
     'settings' => array(
       'max' => 99999999,
-      'min' => 0,
+      'min' => 1,
       'prefix' => '$',
       'suffix' => '',
       'user_register_form' => FALSE,
