@@ -59,7 +59,7 @@ class SpringboardUserWrapper {
    */
   private function getTextValue(array $keys = array()) {
     $key = $this->findKey($keys);
-    if ($key) {
+    if ($key && isset($this->account->{$key}[$this->getLanguage()][0]['safe_value'])) {
       return $this->account->{$key}[$this->getLanguage()][0]['safe_value'];
     }
 
