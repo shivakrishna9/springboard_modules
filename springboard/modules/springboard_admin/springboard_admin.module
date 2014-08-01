@@ -70,9 +70,8 @@ function springboard_admin_custom_theme() {
       return;
     }
   }
-  
   // If the path begins with /springboard/, we know the theme applies
-  if (preg_match("|^\/springboard/.*?|", request_uri()) || preg_match("|^\/springboard$|", request_uri())) {
+  if (preg_match("|^\/springboard/.*?|", request_uri()) || preg_match("|^\/springboard\?.*?|", request_uri()) || preg_match("|^\/springboard$|", request_uri()) ) {
     return 'springboard_backend';
   }
 }
