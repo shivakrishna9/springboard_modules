@@ -861,9 +861,9 @@ function _fundraiser_tickets_default_fields_settings($type) {
 
   $fields['fr_tickets_donation_addon_form'] = array(
     'field_config' => array(
-      'active' => 1,
-      'cardinality' => 1,
-      'deleted' => 0,
+      'active' => '1',
+      'cardinality' => '1',
+      'deleted' => '0',
       'entity_types' => array(),
       'field_name' => 'fr_tickets_donation_addon_form',
       'foreign keys' => array(
@@ -879,33 +879,32 @@ function _fundraiser_tickets_default_fields_settings($type) {
           0 => 'target_id',
         ),
       ),
-      'locked' => 0,
+      'locked' => '0',
       'module' => 'entityreference',
       'settings' => array(
-        'handler' => 'base',
+        'handler' => 'views',
         'handler_settings' => array(
           'behaviors' => array(
             'views-select-list' => array(
               'status' => 0,
             ),
           ),
-          'sort' => array(
-            'type' => 'none',
-          ),
-          'target_bundles' => array(
-            'donation_form' => 'donation_form',
+          'view' => array(
+            'args' => array(),
+            'display_name' => 'entityreference_1',
+            'view_name' => 'donation_forms',
           ),
         ),
         'target_type' => 'node',
       ),
-      'translatable' => 0,
+      'translatable' => '0',
       'type' => 'entityreference',
     ),
     'field_instance' => array(
-      'bundle' => $type,
+      'bundle' => 'donation_form_with_ticketing',
       'default_value' => NULL,
-      'deleted' => 0,
-      'description' => '',
+      'deleted' => '0',
+      'description' => 'Target donation forms *must* have an "other amount" field. Any required fields on target donation forms must also be required on this form.',
       'display' => array(
         'default' => array(
           'label' => 'above',
@@ -929,12 +928,16 @@ function _fundraiser_tickets_default_fields_settings($type) {
       ),
       'widget' => array(
         'active' => 1,
-        'module' => 'options',
-        'settings' => array(),
-        'type' => 'options_select',
+        'module' => 'entityreference',
+        'settings' => array(
+          'match_operator' => 'CONTAINS',
+          'path' => '',
+          'size' => '60',
+        ),
+        'type' => 'entityreference_autocomplete',
         'weight' => 14,
       ),
-    )
+    ),
   );
 
   $fields['fr_tickets_ticket_types'] = array(

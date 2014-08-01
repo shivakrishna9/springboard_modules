@@ -197,43 +197,6 @@ function fundraiser_tickets_edit_settings($node){
  * Implements hook_form_alter().
  */
 function fundraiser_tickets_form_alter(&$form, &$form_state, $form_id) {
-
-  //validate and set required on the addon donation forms
-  $node = isset($form['#node']) ? $form['#node']: FALSE;
-  if($node) {
-    if (fundraiser_tickets_is_ticket_type($node->type) && arg(2) == 'tickets') {
-      /*
-      $options = $form['fr_tickets_donation_addon_form'][LANGUAGE_NONE]['#options'];
-      $unmatched = array();
-      foreach ($options as $nid => $title) {
-        if(is_numeric($nid)) {
-          $addon_node = node_load($nid);
-          if (fundraiser_tickets_is_ticket_type($addon_node->type)) {
-            unset($form['fr_tickets_donation_addon_form'][LANGUAGE_NONE]['#options'][$nid]);
-          }  
-          $match_fields = fundraiser_tickets_check_addon_required_fields($nid, NULL, $node);
-          if(!$match_fields) {
-            unset($form['fr_tickets_donation_addon_form'][LANGUAGE_NONE]['#options'][$nid]);
-            $unmatched[] = $title;
-          }
-        }
-      }
-      $warning = '';
-      if(!empty($unmatched)) {
-        $unmatched = implode(', ', $unmatched);
-        // $warning =  t('Donation form(s) "') . $unmatched . 
-        //   t('" have mismatched required fields and have been omitted.');
-          $warning =  t('Some donation form(s) currently have unmatched required fields and have been omitted.');  
-      }
-      */
-      
-      $form['fr_tickets_donation_addon_form'][LANGUAGE_NONE]['#description'] = 
-        t('Target donation forms *must* have an "other amount" field. ') .
-        t('Any required fields on target donation forms must also be required on this form. ') .
-        $warning;
-
-    }
-  }
   // Do not allow users to muck with defined form keys in component editting form.
   // They're named what they're named for a reason and we need those keys to remain unharmed.
   if ($form_id == 'webform_component_edit_form') {
@@ -474,6 +437,9 @@ function _fundraiser_tickets_update_quantity_sold($product) {
 * Afterbuild function to add fieldsets to the tickets tab
 */
 function _fundraiser_tickets_ticket_settings_form_organize($form, $form_state){    
+  // Add donation-form admin CSS
+  drupal_add_css(drupal_get_path('module', 'fundraiser_tickets') . '/css/ticketing_form.css');
+  
   // Create fieldset
   $form['waitlist']  = array(
     '#type' => 'fieldset',
@@ -564,13 +530,15 @@ function _fundraiser_tickets_ticket_settings_form_organize($form, $form_state){
       ':input[name*=tickets_donation_donation]' => array('checked' => TRUE)
     ),
   );
+  // Add a class to the field
+  $form['donation']['fr_tickets_donation_addon_form']['#attributes']['class'][] = 'autocomplete_extra_wide';
   unset($form['fr_tickets_donation_addon_form']);
   
   // These fields are managed programmatically.
   unset($form['fr_tickets_inventory_initial']);
   unset($form['fr_tickets_inventory_available']);
   unset($form['fr_tickets_inventory_purchased']);
-
+  
   return $form;
 }
 
