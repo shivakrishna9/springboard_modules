@@ -385,6 +385,28 @@ div.uploader span.filename {
   font-weight: bold;
 }
 
+select,
+textarea,
+input[type="text"],
+input[type="password"],
+input[type="datetime"],
+input[type="datetime-local"],
+input[type="date"],
+input[type="month"],
+input[type="time"],
+input[type="week"],
+input[type="number"],
+input[type="email"],
+input[type="url"],
+input[type="search"],
+input[type="tel"],
+input[type="color"],
+.uneditable-input {
+  -webkit-border-radius: 0;
+  -moz-border-radius: 0;
+  border-radius: 0;
+}
+
 input[type="submit"] {
   position: relative;
   display: inline-block;
@@ -407,6 +429,12 @@ input[type="submit"] {
 input[type="submit"]:hover {
   outline: none;
   background: #2980b9;
+  color: #fff;
+}
+
+.btn:hover,
+.btn:focus {
+  color: #fff;
 }
 
 div.uploader span.action {
@@ -432,4 +460,24 @@ div.button span {
 display: inline-block;
 float: none;
 clear: none;
+}
+
+.pane-node-field-p2p-personal-campaign-goal {
+  position: relative;
+}
+
+.panel-pane {
+  float: none;
+  clear: both;
+}
+
+.pane-node-field-p2p-personal-campaign-goal .field-prefix {
+  position: absolute;
+  top: 46px;
+  left: 10px;
+  font-size: 18px;
+}
+
+.pane-node-field-p2p-personal-campaign-goal input {
+  text-indent: 26px;
 }
