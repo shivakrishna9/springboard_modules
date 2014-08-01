@@ -1549,6 +1549,15 @@ function springboard_p2p_fundraiser_donation_post_create($donation) {
  */
 function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
 
+  // Setup a form #after_build function for personal campaign add / edit.
+  switch ($form_id) {
+    // The form id.
+    case 'p2p_personal_campaign_node_form':
+      // Name the function for later use.
+      $form['#after_build'][] = '_springboard_p2p_personal_after_build';
+      break;
+  }
+
   if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid']) && strpos($form_id, 'webform_client_form_') !== FALSE && !empty($form['#node'])) {
     $type = $form['#node']->type;
     $personal_campaign_id = $_GET['p2p_pcid'];
@@ -1733,6 +1742,69 @@ function springboard_p2p_webform_client_form_validate($form, &$form_state) {
       $form_state['values']['submitted']['cid'] = $goal['campaign_id'];
     }
   }
+}
+
+/**
+ * Custom #after_build function.
+ *
+ * Adds weighted css and js to p2p personal node add edit.
+ */
+function _springboard_p2p_personal_after_build($form, &$form_state) {
+
+  // Define the module path.
+  $mod_path = drupal_get_path('module', 'springboard_p2p');
+
+  // Add css and js as needed.
+  // p2p node edit add for
+  $p2p_add_edit = array(
+    '#attached' => array(
+      'css' => array(
+        $mod_path . '/css/p2p-add-edit.css' => array(
+          'group' => CSS_THEME,
+          'weight' => 9999,
+        ),
+      ),
+    ),
+  );
+  drupal_render($p2p_add_edit);
+
+  $p2p_add_edit_js = array(
+    '#attached' => array(
+      'js' => array(
+        $mod_path . '/js/p2p-add-edit.js' => array(
+          'group' => JS_THEME,
+          'weight' => 9999,
+        ),
+      ),
+    ),
+  );
+
+  drupal_render($p2p_add_edit_js);
+  // Global p2p css file, global nodes and regpath.
+  $uniform_js = array(
+    '#attached' => array(
+      'js' => array(
+        $mod_path . '/js/jquery.uniform.js' => array(
+          'group' => JS_LIBRARY,
+        ),
+      ),
+    ),
+  );
+  drupal_render($uniform_js);
+
+  $uniform_css = array(
+    '#attached' => array(
+      'css' => array(
+        $mod_path . '/css/uniform_base.css' => array(
+          'group' => CSS_THEME,
+        ),
+      ),
+    ),
+  );
+  drupal_render($uniform_css);
+  // End global.
+
+  return $form;
 }
 
 /**

@@ -306,13 +306,13 @@ input[type="checkbox"] {
 }
 
 html.js input#edit-name.form-autocomplete {
-  background-image: url("../../../images/sprite_p2p.png");
+  background-image: url("../images/sprite_p2p.png");
   background-position: right -24px;
   opacity: .9;
 }
 
 html.js input#edit-name.form-autocomplete.throbbing {
-  background-image: url("../../../images/spinner.gif");
+  background-image: url("../images/spinner.gif");
   background-position: 98% 11px;
   opacity: .9;
 }
@@ -322,7 +322,7 @@ html.js input#edit-name.form-autocomplete.throbbing {
 div.selector,
 div.selector span {
   height: 40px;
-  background-image: url('../../../images/select-sprite.png');
+  background-image: url('../images/select-sprite.png');
   background-repeat: no-repeat;
   line-height: 40px;
   -webkit-font-smoothing: antialiased;
@@ -385,7 +385,7 @@ div.uploader span.filename {
   font-weight: bold;
 }
 
-.p2p-node-edit-add.page-node-edit .form-actions.form-wrapper input[type="submit"] {
+input[type="submit"] {
   position: relative;
   display: inline-block;
   margin: 10px 10px 0 0;
@@ -404,7 +404,7 @@ div.uploader span.filename {
   cursor: pointer;
 }
 
-.p2p-node-edit-add.page-node-edit .form-actions.form-wrapper input[type="submit"]:hover {
+input[type="submit"]:hover {
   outline: none;
   background: #2980b9;
 }
