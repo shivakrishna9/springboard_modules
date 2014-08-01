@@ -363,7 +363,7 @@ function salesforce_log_tokens($type, $tokens, $data, $options) {
   foreach ($tokens as $name => $original) {
     $replacements[$original] = isset($values[$name]) ? $values[$name] : '';
   }
-  //return $replacements;
+  return $replacements;
 }
 
 /**
