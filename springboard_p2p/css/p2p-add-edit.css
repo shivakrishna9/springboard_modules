@@ -156,7 +156,7 @@ tr.odd {
 
 label,
 .fieldset-description {
-  display: block;
+  display: inline-block;
   margin: 0 0 10px 0;
   color: #888;
   font-weight: bold;
