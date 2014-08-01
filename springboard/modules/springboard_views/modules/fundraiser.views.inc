@@ -20,16 +20,35 @@ function springboard_views_fundraiser_views_data() {
         'field' => 'nid',
       ),
     ),
-  );
-
-  // Join this table to the node table
-  $data['fundraiser']['table']['join'] = array(
-    'node' => array(
-      'left_field' => 'nid',
+    'base' => array(
       'field' => 'nid',
+      'title' => t('Fundraiser donation forms'), 
+      'help' => t('Contains Fundraiser-specific information for donation forms.'), 
+      'weight' => -10,
     ),
   );
-
+  
+  $data['fundraiser']['nid'] = array(
+    'title' => t('Fundraiser node'),
+    'help' => t('Fundraiser node related to a form.'),
+    'relationship' => array(
+      'base' => 'node',
+      'field' => 'nid',
+      'handler' => 'views_handler_relationship',
+      'label' => t('Fundraiser node'),
+    ), 
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_numeric',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
+  
   $data['fundraiser']['gateways'] = array(
     'title' => t('Gateway'),
     'help' => t('The payment gateway the donation form uses to process credit cards.'),
@@ -152,10 +171,10 @@ function springboard_views_fundraiser_views_data() {
     'help' => t('Fundraiser node related to a donation.'),
     'relationship' => array(
       'base' => 'node',
-      'base field' => 'nid',
+      'field' => 'nid',
       'handler' => 'views_handler_relationship',
       'label' => t('Fundraiser node'),
-    ),
+    ), 
   );
   $data['fundraiser_donation']['uid'] = array(
     'title' => t('Donating user'),
@@ -167,25 +186,7 @@ function springboard_views_fundraiser_views_data() {
       'label' => t('Donating user'),
     ),
   );
-  /*
-  $data['fundraiser_donation']['sfid'] = array(
-    'title' => t('Salesforce object'),
-    'help' => t('Salesforce object related to a donation.'),
-    'relationship' => array(
-      'base' => 'salesforce_management_object_map',
-      'base field' => 'sfid',
-      'field' => 'sfid',
-      'extra' => array(
-        array(
-          'field' => 'drupal_type',
-          'value' => 'donation',
-        ),
-      ),
-      'handler' => 'views_handler_relationship',
-      'label' => t('Salesforce object'),
-    ),
-  );
-  */
+
   $data['fundraiser_donation']['gateway'] = array(
     'title' => t('Gateway'),
     'help' => t('The payment gateway used on this donation.'),
@@ -361,6 +362,6 @@ function springboard_views_fundraiser_views_data() {
       'handler' => 'views_handler_sort',
     ),
   );
-
+  
   return $data;
 }

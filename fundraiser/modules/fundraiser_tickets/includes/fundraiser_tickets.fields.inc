@@ -904,7 +904,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
       'bundle' => 'donation_form_with_ticketing',
       'default_value' => NULL,
       'deleted' => '0',
-      'description' => 'Target donation forms *must* have an "other amount" field. Any required fields on target donation forms must also be required on this form.',
+      'description' => '<strong>You may type either the form\'s <em>Title</em> or <em>Internal Name</em> when searching.</strong><br />Target donation forms <strong><em>must</em></strong> have an "other amount" field. Any required fields on target donation forms must also be required on this form.',
       'display' => array(
         'default' => array(
           'label' => 'above',
@@ -1156,7 +1156,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
   t('Close event on');
   t('Enable add-on donation');
   t('Donation Form to Use for Addons');
-  t('Target donation forms *must* have an "other amount" field. Any required fields on target donation forms must also be required on this form.');
+  t('<strong>You may type either the form\'s <em>Title</em> or <em>Internal Name</em> when searching.</strong><br />Target donation forms <strong><em>must</em></strong> have an "other amount" field. Any required fields on target donation forms must also be required on this form.');
   t('Event is closed');
   t('Closed message');
   t('Sold out message');

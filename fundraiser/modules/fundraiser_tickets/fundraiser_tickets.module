@@ -51,7 +51,10 @@ function fundraiser_tickets_menu() {
  * Implements hook_views_api().
  */
 function fundraiser_tickets_views_api() {
-  return array("version" => "3.0");
+  return array(
+    "version" => "3.0",
+    "path" => drupal_get_path("module", "fundraiser_tickets") . "/views"
+  );
 }
 
 /**

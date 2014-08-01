@@ -19,7 +19,7 @@ function fundraiser_tickets_views_default_views() {
   $view->core = 7;
   $view->api_version = '3.0';
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
-
+  
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');
   $handler->display->display_options['use_more_always'] = FALSE;
@@ -30,6 +30,10 @@ function fundraiser_tickets_views_default_views() {
   $handler->display->display_options['pager']['type'] = 'full';
   $handler->display->display_options['style_plugin'] = 'default';
   $handler->display->display_options['row_plugin'] = 'fields';
+  /* Relationship: Fundraiser donation forms: Fundraiser node */
+  $handler->display->display_options['relationships']['nid']['id'] = 'nid';
+  $handler->display->display_options['relationships']['nid']['table'] = 'fundraiser';
+  $handler->display->display_options['relationships']['nid']['field'] = 'nid';
   /* Field: Content: Internal Name */
   $handler->display->display_options['fields']['field_fundraiser_internal_name']['id'] = 'field_fundraiser_internal_name';
   $handler->display->display_options['fields']['field_fundraiser_internal_name']['table'] = 'field_data_field_fundraiser_internal_name';
@@ -48,6 +52,10 @@ function fundraiser_tickets_views_default_views() {
   $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
   $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['title']['link_to_node'] = FALSE;
+  /* Sort criterion: Content: Internal Name (field_fundraiser_internal_name) */
+  $handler->display->display_options['sorts']['field_fundraiser_internal_name_value']['id'] = 'field_fundraiser_internal_name_value';
+  $handler->display->display_options['sorts']['field_fundraiser_internal_name_value']['table'] = 'field_data_field_fundraiser_internal_name';
+  $handler->display->display_options['sorts']['field_fundraiser_internal_name_value']['field'] = 'field_fundraiser_internal_name_value';
   /* Sort criterion: Content: Title */
   $handler->display->display_options['sorts']['title']['id'] = 'title';
   $handler->display->display_options['sorts']['title']['table'] = 'node';
@@ -66,12 +74,16 @@ function fundraiser_tickets_views_default_views() {
   $handler->display->display_options['filters']['type']['value'] = array(
     'donation_form' => 'donation_form',
   );
-
+  /* Filter criterion: Fundraiser donation forms: Show other amount */
+  $handler->display->display_options['filters']['show_other_amount']['id'] = 'show_other_amount';
+  $handler->display->display_options['filters']['show_other_amount']['table'] = 'fundraiser';
+  $handler->display->display_options['filters']['show_other_amount']['field'] = 'show_other_amount';
+  $handler->display->display_options['filters']['show_other_amount']['value'] = '1';
+  
   /* Display: Entity Reference */
   $handler = $view->new_display('entityreference', 'Entity Reference', 'entityreference_1');
   $handler->display->display_options['defaults']['title'] = FALSE;
-  $handler->display->display_options['pager']['type'] = 'some';
-  $handler->display->display_options['pager']['options']['items_per_page'] = '100';
+  $handler->display->display_options['pager']['type'] = 'none';
   $handler->display->display_options['pager']['options']['offset'] = '0';
   $handler->display->display_options['defaults']['style_plugin'] = FALSE;
   $handler->display->display_options['style_plugin'] = 'entityreference_style';
