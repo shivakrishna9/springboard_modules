@@ -7,7 +7,7 @@
 /**
  * Implements hook_views_default_views().
  */
-function fundraiser_tickets_views_views_default_views() {
+function fundraiser_tickets_views_default_views() {
   $export = array();
 
   $view = new view();
