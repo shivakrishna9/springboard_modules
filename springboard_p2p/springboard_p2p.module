@@ -1623,9 +1623,6 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
 
         drupal_set_title($personal_campaign->title);
 
-        $owner = user_load($personal_campaign->uid);
-        $owner_name = springboard_p2p_format_user_full_name($owner);
-
         $campaign = node_load($campaign_id);
         if (!empty($campaign) && $campaign->type == 'p2p_campaign') {
 
@@ -1648,19 +1645,6 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
 
           // @todo Confirm that this donation form nid is selected from the
           // campaign goals.
-          // $header = springboard_p2p_format_campaign_form_header($campaign);
-          // if (count($header)) {
-          // $form['submitted']['springboard_p2p']['header'] = $header;
-          // }
-
-          $form['submitted']['springboard_p2p'] = array(
-            '#type' => 'container',
-            '#tree' => TRUE,
-            '#weight' => -200,
-            'owner' => array(
-              '#markup' => '<h2>' . $owner_name . '</h2>',
-            ),
-          );
         }
       }
 
