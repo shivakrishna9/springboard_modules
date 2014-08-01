@@ -40,16 +40,6 @@ function springboard_p2p_default_page_manager_handlers() {
           'context' => 'argument_node_edit_1',
           'not' => FALSE,
         ),
-        1 => array(
-          'name' => 'role',
-          'settings' => array(
-            'rids' => array(
-              0 => 3,
-            ),
-          ),
-          'context' => 'logged-in-user',
-          'not' => TRUE,
-        ),
       ),
       'logic' => 'or',
     ),
@@ -194,31 +184,6 @@ function springboard_p2p_default_page_manager_handlers() {
     $display->content['new-83a38941-2305-4626-ae87-60916e5c3a9c'] = $pane;
     $display->panels['middle_left'][4] = 'new-83a38941-2305-4626-ae87-60916e5c3a9c';
     $pane = new stdClass();
-    $pane->pid = 'new-e011a880-964e-48b1-b307-51836f92031f';
-    $pane->panel = 'middle_left';
-    $pane->type = 'entity_form_field';
-    $pane->subtype = 'node:field_p2p_personal_donation';
-    $pane->shown = TRUE;
-    $pane->access = array();
-    $pane->configuration = array(
-      'label' => '',
-      'formatter' => '',
-      'context' => 'argument_node_edit_1',
-      'override_title' => 0,
-      'override_title_text' => '',
-    );
-    $pane->cache = array();
-    $pane->style = array(
-      'settings' => NULL,
-    );
-    $pane->css = array();
-    $pane->extras = array();
-    $pane->position = 5;
-    $pane->locks = array();
-    $pane->uuid = 'e011a880-964e-48b1-b307-51836f92031f';
-    $display->content['new-e011a880-964e-48b1-b307-51836f92031f'] = $pane;
-    $display->panels['middle_left'][5] = 'new-e011a880-964e-48b1-b307-51836f92031f';
-    $pane = new stdClass();
     $pane->pid = 'new-0b89f721-62cf-45cd-aac0-30134c94fb8f';
     $pane->panel = 'middle_left';
     $pane->type = 'entity_form_field';
@@ -238,11 +203,11 @@ function springboard_p2p_default_page_manager_handlers() {
     );
     $pane->css = array();
     $pane->extras = array();
-    $pane->position = 6;
+    $pane->position = 5;
     $pane->locks = array();
     $pane->uuid = '0b89f721-62cf-45cd-aac0-30134c94fb8f';
     $display->content['new-0b89f721-62cf-45cd-aac0-30134c94fb8f'] = $pane;
-    $display->panels['middle_left'][6] = 'new-0b89f721-62cf-45cd-aac0-30134c94fb8f';
+    $display->panels['middle_left'][5] = 'new-0b89f721-62cf-45cd-aac0-30134c94fb8f';
     $pane = new stdClass();
     $pane->pid = 'new-52627fa7-fd45-4b3a-b20d-9d351ff42fb1';
     $pane->panel = 'middle_left';
@@ -263,11 +228,36 @@ function springboard_p2p_default_page_manager_handlers() {
     );
     $pane->css = array();
     $pane->extras = array();
-    $pane->position = 7;
+    $pane->position = 6;
     $pane->locks = array();
     $pane->uuid = '52627fa7-fd45-4b3a-b20d-9d351ff42fb1';
     $display->content['new-52627fa7-fd45-4b3a-b20d-9d351ff42fb1'] = $pane;
-    $display->panels['middle_left'][7] = 'new-52627fa7-fd45-4b3a-b20d-9d351ff42fb1';
+    $display->panels['middle_left'][6] = 'new-52627fa7-fd45-4b3a-b20d-9d351ff42fb1';
+    $pane = new stdClass();
+    $pane->pid = 'new-73e1b270-94c6-4788-b791-5df8b14e77a8';
+    $pane->panel = 'middle_left';
+    $pane->type = 'entity_form_field';
+    $pane->subtype = 'node:field_p2p_suggested_donation_amt';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'label' => '',
+      'formatter' => '',
+      'context' => 'argument_node_edit_1',
+      'override_title' => 0,
+      'override_title_text' => '',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 7;
+    $pane->locks = array();
+    $pane->uuid = '73e1b270-94c6-4788-b791-5df8b14e77a8';
+    $display->content['new-73e1b270-94c6-4788-b791-5df8b14e77a8'] = $pane;
+    $display->panels['middle_left'][7] = 'new-73e1b270-94c6-4788-b791-5df8b14e77a8';
     $pane = new stdClass();
     $pane->pid = 'new-77b65726-5fdc-40ce-91d8-219aa4a0f175';
     $pane->panel = 'middle_left';

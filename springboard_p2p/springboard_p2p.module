@@ -408,10 +408,10 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
       if (isset($campaign_node->field_p2p_ask_amount_edit[$language][0]['value'])) {
         $amount_editable = $campaign_node->field_p2p_ask_amount_edit[$language][0]['value'] ? TRUE : FALSE;
         if (isset($campaign_node->field_p2p_suggested_donation[$language][0]['value'])) {
-          $form['field_p2p_personal_donation'][$language][0]['value']['#default_value'] = $campaign_node->field_p2p_suggested_donation[$language][0]['value'];
+          $form['field_p2p_suggested_donation_amt'][$language][0]['value']['#default_value'] = $campaign_node->field_p2p_suggested_donation[$language][0]['value'];
         }
       }
-      $form['field_p2p_personal_donation'][$language][0]['value']['#access'] = $amount_editable;
+      $form['field_p2p_suggested_donation_amt'][$language][0]['value']['#access'] = $amount_editable;
 
     }
 
@@ -436,6 +436,7 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
 
       case 'submissions':
         $form['field_p2p_personal_campaign_goal']['#access'] = FALSE;
+        $form['field_p2p_suggested_donation_amt']['#access'] = FALSE;
         break;
 
       default:
@@ -785,7 +786,7 @@ function springboard_p2p_full_alias_exists($base_path, $alias, $counter = -1) {
  * @param $p2p_node_types: an array of node types to set aliases for.
  * If no types are provided, use the array below.
  */
-function springboard_p2p_set_pathauto_default_aliases($p2p_node_types = NULL) {
+function springboard_p2p_set_pathauto_default_aliases($p2p_node_types = NULL, $global_force_change = FALSE) {
   if (!isset($p2p_node_types)) {
     $p2p_node_types = array(
       'p2p_campaign_landing' => array(
@@ -810,15 +811,16 @@ function springboard_p2p_set_pathauto_default_aliases($p2p_node_types = NULL) {
       ),
     );
   }
-  
+
   // For each P2P node type, set the default alias as defined per-node-type above. Only set the
   // alias pattern if the node type doesn't already have a setting, or 'force_change' is TRUE.
-  foreach ($p2p_node_types as $node_type => $settings) {
+  foreach ($p2p_node_types as $node_type => $per_type_settings) {
     $node_type = node_type_load($node_type);
     $variable = 'pathauto_node_' . $node_type->type . '_pattern';
-    if (is_object($node_type) && (!variable_get($variable, FALSE) || $settings['force_change'] == TRUE)) {
+    $should_change = !variable_get($variable, FALSE) || $per_type_settings['force_change'] || $global_force_change ? TRUE : FALSE;
+    if (is_object($node_type) && $should_change) {
       $message = t('Set default URL aliases for <strong>!node_type</strong> content type.', array('!node_type' => $node_type->name));
-      variable_set($variable, $settings['pattern']);
+      variable_set($variable, $per_type_settings['pattern']);
       drupal_set_message($message, 'status', FALSE);
     }
   }
@@ -1548,6 +1550,15 @@ function springboard_p2p_fundraiser_donation_post_create($donation) {
  */
 function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
 
+  // Setup a form #after_build function for personal campaign add / edit.
+  switch ($form_id) {
+    // The form id.
+    case 'p2p_personal_campaign_node_form':
+      // Name the function for later use.
+      $form['#after_build'][] = '_springboard_p2p_personal_after_build';
+      break;
+  }
+
   if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid']) && strpos($form_id, 'webform_client_form_') !== FALSE && !empty($form['#node'])) {
     $type = $form['#node']->type;
     $personal_campaign_id = $_GET['p2p_pcid'];
@@ -1613,9 +1624,6 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
 
         drupal_set_title($personal_campaign->title);
 
-        $owner = user_load($personal_campaign->uid);
-        $owner_name = springboard_p2p_format_user_full_name($owner);
-
         $campaign = node_load($campaign_id);
         if (!empty($campaign) && $campaign->type == 'p2p_campaign') {
 
@@ -1638,19 +1646,6 @@ function springboard_p2p_form_alter(&$form, &$form_state, $form_id) {
 
           // @todo Confirm that this donation form nid is selected from the
           // campaign goals.
-          // $header = springboard_p2p_format_campaign_form_header($campaign);
-          // if (count($header)) {
-          // $form['submitted']['springboard_p2p']['header'] = $header;
-          // }
-
-          $form['submitted']['springboard_p2p'] = array(
-            '#type' => 'container',
-            '#tree' => TRUE,
-            '#weight' => -200,
-            'owner' => array(
-              '#markup' => '<h2>' . $owner_name . '</h2>',
-            ),
-          );
         }
       }
 
@@ -1732,6 +1727,80 @@ function springboard_p2p_webform_client_form_validate($form, &$form_state) {
       $form_state['values']['submitted']['cid'] = $goal['campaign_id'];
     }
   }
+}
+
+/**
+ * Custom #after_build function.
+ *
+ * Adds weighted css and js to p2p personal node add edit.
+ */
+function _springboard_p2p_personal_after_build($form, &$form_state) {
+
+  // Define the module path.
+  $mod_path = drupal_get_path('module', 'springboard_p2p');
+
+  // Add css and js as needed.
+  // p2p node edit add for
+  $p2p_add_edit = array(
+    '#attached' => array(
+      'css' => array(
+        $mod_path . '/css/p2p-add-edit.css' => array(
+          'group' => CSS_THEME,
+          'weight' => 9997,
+        ),
+      ),
+    ),
+  );
+  drupal_render($p2p_add_edit);
+
+  $p2p_add_edit_js = array(
+    '#attached' => array(
+      'js' => array(
+        $mod_path . '/js/p2p-add-edit.js' => array(
+          'group' => JS_THEME,
+          'weight' => 9999,
+        ),
+      ),
+    ),
+  );
+
+  drupal_render($p2p_add_edit_js);
+  // Global p2p css file, global nodes and regpath.
+  $uniform_js = array(
+    '#attached' => array(
+      'js' => array(
+        $mod_path . '/js/jquery.uniform.js' => array(
+          'group' => JS_LIBRARY,
+        ),
+      ),
+    ),
+  );
+  drupal_render($uniform_js);
+
+  $uniform_css = array(
+    '#attached' => array(
+      'css' => array(
+        $mod_path . '/css/uniform_base.css' => array(
+          'group' => CSS_THEME,
+        ),
+      ),
+    ),
+  );
+  drupal_render($uniform_css);
+  // End global.
+
+  $p2p_jrespond = array(
+    '#attached' => array(
+      'js' => array(
+        $mod_path . '/js/mediaCheck.js' => array(
+          'group' => JS_LIBRARY,
+        ),
+      ),
+    ),
+  );
+  drupal_render($p2p_jrespond);
+
+  return $form;
 }
 
 /**

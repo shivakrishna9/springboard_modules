@@ -6,6 +6,7 @@ body {
 
 #main  {
   border: 1px solid #acacac;
+  margin: 0 auto 30px auto;
 }
 
 #main h1 {
@@ -306,13 +307,13 @@ input[type="checkbox"] {
 }
 
 html.js input#edit-name.form-autocomplete {
-  background-image: url("../../../images/sprite_p2p.png");
+  background-image: url("../images/sprite_p2p.png");
   background-position: right -24px;
   opacity: .9;
 }
 
 html.js input#edit-name.form-autocomplete.throbbing {
-  background-image: url("../../../images/spinner.gif");
+  background-image: url("../images/spinner.gif");
   background-position: 98% 11px;
   opacity: .9;
 }
@@ -322,7 +323,7 @@ html.js input#edit-name.form-autocomplete.throbbing {
 div.selector,
 div.selector span {
   height: 40px;
-  background-image: url('../../../images/select-sprite.png');
+  background-image: url('../images/select-sprite.png');
   background-repeat: no-repeat;
   line-height: 40px;
   -webkit-font-smoothing: antialiased;
@@ -385,7 +386,29 @@ div.uploader span.filename {
   font-weight: bold;
 }
 
-.p2p-node-edit-add.page-node-edit .form-actions.form-wrapper input[type="submit"] {
+select,
+textarea,
+input[type="text"],
+input[type="password"],
+input[type="datetime"],
+input[type="datetime-local"],
+input[type="date"],
+input[type="month"],
+input[type="time"],
+input[type="week"],
+input[type="number"],
+input[type="email"],
+input[type="url"],
+input[type="search"],
+input[type="tel"],
+input[type="color"],
+.uneditable-input {
+  -webkit-border-radius: 0;
+  -moz-border-radius: 0;
+  border-radius: 0;
+}
+
+input[type="submit"] {
   position: relative;
   display: inline-block;
   margin: 10px 10px 0 0;
@@ -404,9 +427,15 @@ div.uploader span.filename {
   cursor: pointer;
 }
 
-.p2p-node-edit-add.page-node-edit .form-actions.form-wrapper input[type="submit"]:hover {
+input[type="submit"]:hover {
   outline: none;
   background: #2980b9;
+  color: #fff;
+}
+
+.btn:hover,
+.btn:focus {
+  color: #fff;
 }
 
 div.uploader span.action {
@@ -432,4 +461,24 @@ div.button span {
 display: inline-block;
 float: none;
 clear: none;
+}
+
+.pane-node-field-p2p-personal-campaign-goal {
+  position: relative;
+}
+
+.panel-pane {
+  float: none;
+  clear: both;
+}
+
+.pane-node-field-p2p-personal-campaign-goal .field-prefix {
+  position: absolute;
+  top: 46px;
+  left: 10px;
+  font-size: 18px;
+}
+
+.pane-node-field-p2p-personal-campaign-goal input {
+  text-indent: 26px;
 }

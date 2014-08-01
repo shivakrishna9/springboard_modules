@@ -517,7 +517,7 @@ function salesforce_p2p_personal_campaign_fieldmap() {
       {
         "drupal_field" : {
           "fieldmap_type" : "property",
-          "fieldmap_value" : "field_p2p_personal_donation"
+          "fieldmap_value" : "field_p2p_suggested_donation_amt"
         },
         "salesforce_field" : {
           "autoNumber" : false,
@@ -572,7 +572,7 @@ function salesforce_p2p_personal_campaign_fieldmap() {
       {
         "drupal_field" : {
           "fieldmap_type" : "property",
-          "fieldmap_value" : "field_p2p_personal_donation"
+          "fieldmap_value" : "field_p2p_suggested_donation_amt"
         },
         "salesforce_field" : {
           "autoNumber" : false,
