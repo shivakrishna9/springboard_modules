@@ -200,16 +200,20 @@ input#edit-submitted-payment-information-payment-fields-credit-card-cvv {
   zoom: 1;
 }
 
+.radio-label:before {
+  background: url('../images/sprite_p2p.png') no-repeat -72px -3px;
+}
+
 .radio-label.radio-checked:before {
-  background: url('../images/sprite_p2p.png') no-repeat -35px -3px;
+  background: url('../images/sprite_p2p.png') no-repeat -109px -3px;
 }
 
 .checkbox-label:before {
-  background: url('../images/sprite_p2p.png') no-repeat -74px -4px;
+  background: url('../images/sprite_p2p.png') no-repeat -0 -4px;
 }
 
 .checkbox-label.checked:before {
-  background: url('../images/sprite_p2p.png') no-repeat -111px -4px;
+  background: url('../images/sprite_p2p.png') no-repeat -38px -4px;
 }
 
 .ie8 .checkbox-label:before,
