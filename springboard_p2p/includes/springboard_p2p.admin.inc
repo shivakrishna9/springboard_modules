@@ -135,7 +135,7 @@ function springboard_p2p_admin_settings() {
     '#type' => 'fieldset',
     '#title' => t('Reset Aliases to Defaults'),
     '#weight' => -50,
-    '#description' => '<p>' . t('Be very careful with this; it will reset Pathauto default patterns.') . '</p>',
+    '#description' => '<p>' . t('Be very careful with this; it will reset the URL patterns for all Peer-to-Peer content types.') . '</p>',
   );
   $form['url_aliases']['reset'] = array(
     '#type' => 'submit',
