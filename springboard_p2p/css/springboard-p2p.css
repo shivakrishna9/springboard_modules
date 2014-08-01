@@ -481,6 +481,10 @@ div.selector.focus {
   background-position: 0 -144px;
 }
 
+.page-node-done.p2p-page-type .pane-content .links {
+  display: none;
+}
+
 /* right */
 
 div.selector.hover span,

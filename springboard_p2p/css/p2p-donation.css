@@ -9,7 +9,7 @@
 
 .form-item label.error.valid {
   text-align: left;
-  text-indent: -999px;
+  text-indent: -9999px;
 }
 
 #edit-submitted-donation-amount .form-item {
