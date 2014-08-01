@@ -130,10 +130,6 @@ function springboard_p2p_admin_settings() {
     '#weight' => 225,
   );
   
-  $form['url_aliases'] = array(
-    
-  );
-  
   // Reset aliases
   $form['url_aliases'] = array(
     '#type' => 'fieldset',
@@ -141,14 +137,12 @@ function springboard_p2p_admin_settings() {
     '#weight' => -50,
     '#description' => '<p>' . t('Be very careful with this; it will reset Pathauto default patterns.') . '</p>',
   );
-    $form['url_aliases']['reset'] = array(
-      '#type' => 'submit',
-      '#value' => t('Reset'),
-      '#submit' => array('springboard_p2p_reset_url_aliases'),
-    );
-  
-  springboard_p2p_set_pathauto_default_aliases();
-  
+  $form['url_aliases']['reset'] = array(
+    '#type' => 'submit',
+    '#value' => t('Reset'),
+    '#submit' => array('springboard_p2p_reset_url_aliases'),
+  );
+    
   // Login message text area.
   // We set a var here, otherwise drupal complains about htmlspecialchars.
   // This is a known bug with text_format FAPI.
