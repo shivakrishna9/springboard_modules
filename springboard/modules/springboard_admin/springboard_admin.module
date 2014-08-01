@@ -70,9 +70,8 @@ function springboard_admin_custom_theme() {
       return;
     }
   }
-  
   // If the path begins with /springboard/, we know the theme applies
-  if (preg_match("|^\/springboard/.*?|", request_uri()) || preg_match("|^\/springboard$|", request_uri())) {
+  if (preg_match("|^\/springboard/.*?|", request_uri()) || preg_match("|^\/springboard\?.*?|", request_uri()) || preg_match("|^\/springboard$|", request_uri()) ) {
     return 'springboard_backend';
   }
 }
@@ -1025,13 +1024,13 @@ function springboard_admin_node_delete($form) {
  * this menu item but not have control over menus in general.
  */
 function springboard_drupal_path_submit(&$form, &$form_state) {
-  if ($form['admin']['springboard_drupal_path']['#default_value'] != $form_state['values']['springboard_drupal_path']) {
+  if ($form['menu']['springboard_drupal_path']['#default_value'] != $form_state['values']['springboard_drupal_path']) {
     $update_menu = db_update('menu_links')
       ->fields(array(
         'link_path' => $form_state['values']['springboard_drupal_path'],
       ))
       ->condition('menu_name', "springboard_admin_menu", '=')
-      ->condition('link_path', $form['admin']['springboard_drupal_path']['#default_value'], '=')
+      ->condition('link_path', $form['menu']['springboard_drupal_path']['#default_value'], '=')
       ->execute();
     menu_rebuild();
   }

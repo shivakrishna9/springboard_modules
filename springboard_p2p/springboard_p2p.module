@@ -1746,7 +1746,7 @@ function _springboard_p2p_personal_after_build($form, &$form_state) {
       'css' => array(
         $mod_path . '/css/p2p-add-edit.css' => array(
           'group' => CSS_THEME,
-          'weight' => 9999,
+          'weight' => 9997,
         ),
       ),
     ),
