@@ -286,30 +286,84 @@ function salesforce_log_token_info() {
     'description' => t('The UNIX timetamp of the date/time the event occurred.'),
   );
 
+  $log = array(
+    'name' => t('Salesforce Log tokens'),
+    'description' => t('Salesforce Log tokens'),
+    'needs-data' => 'watchdog',
+  );
+
+
+  $slog['batch_link'] = array(
+    'name' => t("Link to salesforce batch log."),
+    'description' => t('A link to the salesforce batch log'),
+  );
+
+  $slog['item_id'] = array(
+    'name' => t("Salesforce log item ID"),
+    'description' => t(''),
+  );
+
+  $slog['drupal_id'] = array(
+    'name' => t("Drupal ID"),
+    'description' => t('The ID of the Drupal object'),
+  );
+  $slog['object_type'] = array(
+    'name' => t("Salesforce Object Type"),
+    'description' => t('The item\'s salesforce object type'),
+  );
+
+  $slog['salesforce_message'] = array(
+    'name' => t("Salesforce item message"),
+    'description' => t('Message retuned from salesforce'),
+  );
+  $slog['salesforce_error_code'] = array(
+    'name' => t("Salesforce error code"),
+    'description' => t(''),
+  );
   return array(
-    'types' => array('watchdog' => $type),
-    'tokens' => array('watchdog' => $watchdog),
+    'types' => array('watchdog' => $type, 'salesforce_log' => $log),
+    'tokens' => array('watchdog' => $watchdog, 'salesforce_log' => $slog),
   );
 }
 
 /**
  * Implements hook_tokens().
  */
-function salesforce_log_tokens($type, $object = NULL, $options = array()) {
-  // Tokens taken from logging_alerts/watchdog_rules module.
-  $tokens = array();
-  if ($type == 'watchdog' || $type == 'all') {
-    $tokens = array(
-      'ip' => $object['ip'],
-      'link' => $object['link'],
-      'message' => $object['message'],
-      'request_uri' => $object['request_uri'],
-      'referer' => $object['referer'],
-      'severity' => $object['severity'],
-      'timestamp' => $object['timestamp'],
+function salesforce_log_tokens($type, $tokens, $data, $options) {
+
+  $values = array();
+  if ($type == 'watchdog' || $type == 'all' && isset($data['node'])) {
+
+    $values = array(
+      // 'ip' => isset($data['node']['ip']) ? $data['node']['ip'] : '',
+      // 'link' => isset($data['node']['link']) ? $data['node']['link'] : '',
+      // 'message' => isset($data['node']['variables']['message']) ? $data['node']['variables']['message'] : '',
+      // 'request_uri' => isset($data['node']['request_uri']) ? $data['node']['request_uri'] : '',
+      // 'referer' => isset($data['node']['referer']) ? $data['node']['referer'] : '',
+      // 'severity' => isset($data['node']['severity']) ? $data['node']['severity'] : '',
+      // 'timestamp' => isset($data['node']['timestamp']) ? $data['node']['timestamp'] : '',
     );
-    return $tokens;
   }
+  if ($type == 'salesforce_log' && isset($data['node'])) { 
+    if(isset($data['node']['variables']['@item_id'])) {
+      $item_id = str_values('#', '', $data['node']['variables']['@item_id']);
+      $result = db_query('SELECT * FROM {salesforce_log_item} WHERE item_id = :item_id', array(':item_id' => $item_id))->fetchAssoc();
+       $values += array(
+        // 'batch_link' => $GLOBALS['base_url'] . '/springboard/reports/integration-reports/item?bid=' . $result['bid'],
+        // 'item_id' => $item_id,
+        // 'drupal_id' => $result['drupal_id'],
+        // 'object_type' => $result['object_type'],
+        // 'salesforce_message' => $result['message'],
+        // 'salesforce_error_code' => $result['error_code'],
+      );
+    }
+  }
+
+  $replacements = array();
+  foreach ($tokens as $name => $original) {
+    $replacements[$original] = isset($values[$name]) ? $values[$name] : '';
+  }
+  //return $replacements;
 }
 
 /**
