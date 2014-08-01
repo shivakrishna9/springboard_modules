@@ -32,22 +32,35 @@ function sb_social_entity_info() {
 /**
  * Implements hook_entity_property_info().
  */
-/*
 function sb_social_entity_property_info() {
   return array(
     'sb_social_share' => array(
       'properties' => array(
-        'sid' => array(
-          'label' => t('Submission ID'),
-          'type' => 'integer',
-          'description' => t("The webform submission ID (if any)."),
+        'user' => array(
+          'label' => t('Drupal User or Contact'),
+          'type' => 'user',
+          'description' => t("The Drupal user. May sync to user ID or Contact SFID."),
+          'getter callback' => 'sb_social_share_entity_get_properties',
+          'setter callback' => 'sb_social_share_entity_set_properties',
         ),
-        //@TODO: finish fleshing this out??
+        'submission' => array(
+          'label' => t('Webform submission or Actions__c'),
+          'type' => 'integer',
+          'description' => t("The Webform submission. May sync to submission ID or Actions__c SFID."),
+          'getter callback' => 'sb_social_share_entity_get_properties',
+          'setter callback' => 'sb_social_share_entity_set_properties',
+        ),
+        'donation' => array(
+          'label' => t('Donation or Opportunity'),
+          'type' => 'salesforce_donation',
+          'description' => t("The Fundraiser donation. May sync to donation ID or Opportunity SFID."),
+          'getter callback' => 'sb_social_share_entity_get_properties',
+          'setter callback' => 'sb_social_share_entity_set_properties',
+        ),
       ),
     ),
   );
 }
-*/
 
 /**
  * Save a social share event.

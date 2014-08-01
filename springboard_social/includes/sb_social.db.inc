@@ -92,6 +92,33 @@ function sb_social_share_save($record, $settings = FALSE, $url_path = FALSE) {
 }
 
 /**
+ * Getter for social share event entity properties.
+ */
+function sb_social_share_entity_get_properties($data, array $options, $name, $type, $info) {
+  switch ($name) {
+    case 'user':
+      // Load and return the sharing user's account object.
+      return $data->uid ? user_load($data->uid) : NULL;
+    case 'submission':
+      // Load and return the originating Webform submission, if any.
+      return $data->sid ? webform_get_submission($data->nid, $data->sid) : NULL;
+    case 'donation':
+      // Load and return the originating Fundraiser donation object, if any.
+      return $data->did ? fundraiser_donation_get_donation($data->did) : NULL;
+  }
+  return NULL;
+}
+
+/**
+ * Setter for social share event entity properties.
+ */
+function sb_social_share_entity_set_properties($data, $name, $value) {
+  // @TODO: Logic along the lines of sb_social_share_entity_get_properties() would need to be written here
+  // if social shares were ever to be imported via Salesforce Pull.
+  return entity_property_verbatim_set($data, $name, $value);
+}
+
+/**
  * Load social settings by id.
  *
  * If no id is provided, attempt to identify applicable settings from
