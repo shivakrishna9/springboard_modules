@@ -259,11 +259,12 @@ function fundraiser_offline_fundraiser_donation_form_js_validation_alter(&$setti
 function fundraiser_offline_fundraiser_donation_form($form, $form_state) {
   if (isset($form['#node']->fundraiser_offline) && $form['#node']->fundraiser_offline) {
     drupal_set_message('This form is currently in offline mode.');
+
     // Before we display an offline mode we need to check if this form is being displayed
     // from a normal path. If it is then we need to back out of offline mode asap.
     // Since that indicates a user was on an offline form, did not submit it, and has
     // now moved to looking at a normal donation form someplace else.
-    $path = current_path(); // Current path, regardless of alias.
+/*    $path = current_path(); // Current path, regardless of alias.
     if ($path == 'node/' . $form['#node']->nid || !isset($form['#node']->fundraiser_offline_mode) || $form['#node']->fundraiser_offline_mode != TRUE) {
       _fundraiser_offline_is_offline(FALSE);
       return; // Bail out.
@@ -284,7 +285,7 @@ function fundraiser_offline_fundraiser_donation_form($form, $form_state) {
     $form['#action'] = url('admin/fundraiser_offline/' . $form['#node']->nid);
     // Handle our redirection after submit.
     $form['#submit'][] = '_fundraiser_offline_fundraiser_donation_form_submit';
-    return $form;
+    return $form;*/
   }
 }
 
@@ -342,20 +343,22 @@ function fundraiser_offline_fundraiser_webform_payment_method_component_methods_
  * Implements hook_fundraiser_donation_submit().
  */
 function fundraiser_offline_fundraiser_donation_submit($form, $form_state, $donation) {
-  // BUG: resetting the uid and user in this function does not work for
-  // getting a new user account created from a submission. Webform User
-  // is responsible for creating users in SB4 and it is hardcoded to use
-  // global $user. To get this feature working we will need to make some changes
-  // to Webform User.
-
   // Check our offline state.
   if (isset($form['#node']->fundraiser_offline) && $form['#node']->fundraiser_offline) {
     // Correct the uid, the logged in user is NOT the originating user.
-    $donation->uid = 0;
-    $donation->user = user_load(0);
     if (!isset($donation->donation['mail'])) {
+      $donation->uid = 0;
+      $donation->user = user_load(0);
+      //if (!isset($donation->donation['mail'])) {
       // If the email has not been set, then we need to set it here.
       $donation->donation['mail'] = _fundraiser_offline_generate_email();
+    }
+    else {
+      $account = user_load_by_mail($donation->donation['mail']);
+      if ($account) {
+        $donation->uid = 0; //$account->uid;
+        $donation->user = $account;
+      }
     }
     /*
     else {
@@ -383,6 +386,7 @@ function fundraiser_offline_fundraiser_donation_success($donation) {
   }
 }
 
+
 /**
  * Implements hook_fundraiser_donation_decline().
  */
@@ -396,6 +400,7 @@ function fundraiser_offline_fundraiser_donation_decline($donation) {
     _fundraiser_offline_create_offline_donation($record);
   }
 }
+
 
 /**
  * Helper functions.
