@@ -200,41 +200,7 @@ function fundraiser_tickets_form_alter(&$form, &$form_state, $form_id) {
 
   //validate and set required on the addon donation forms
   $node = isset($form['#node']) ? $form['#node']: FALSE;
-  if($node) {
-    if (fundraiser_tickets_is_ticket_type($node->type) && arg(2) == 'tickets') {
-      /*
-      $options = $form['fr_tickets_donation_addon_form'][LANGUAGE_NONE]['#options'];
-      unset($options['_none']);
-      $unmatched = array();
-      foreach ($options as $nid => $title) {
-        if(is_numeric($nid)) {
-          $addon_node = node_load($nid);
-          if (fundraiser_tickets_is_ticket_type($addon_node->type)) {
-            unset($form['fr_tickets_donation_addon_form'][LANGUAGE_NONE]['#options'][$nid]);
-          }  
-          $match_fields = fundraiser_tickets_check_addon_required_fields($nid, NULL, $node);
-          if(!$match_fields) {
-            unset($form['fr_tickets_donation_addon_form'][LANGUAGE_NONE]['#options'][$nid]);
-            $unmatched[] = $title;
-          }
-        }
-      }
-      $warning = '';
-      if(!empty($unmatched)) {
-        $unmatched = implode(', ', $unmatched);
-        // $warning =  t('Donation form(s) "') . $unmatched . 
-        //   t('" have mismatched required fields and have been omitted.');
-          $warning =  t('Some donation form(s) currently have unmatched required fields and have been omitted.');  
-      }
-      */
-      
-      $form['fr_tickets_donation_addon_form'][LANGUAGE_NONE]['#description'] = 
-        t('Target donation forms *must* have an "other amount" field. ') .
-        t('Any required fields on target donation forms must also be required on this form. ') .
-        $warning;
 
-    }
-  }
   // Do not allow users to muck with defined form keys in component editting form.
   // They're named what they're named for a reason and we need those keys to remain unharmed.
   if ($form_id == 'webform_component_edit_form') {
@@ -258,35 +224,7 @@ function fundraiser_tickets_form_alter(&$form, &$form_state, $form_id) {
  */
 function fundraiser_tickets_form_node_form_alter(&$form, &$form_state) {
 
-  if (fundraiser_tickets_is_ticket_type($form['type']['#value'])){
 
-    // Don't allow them to tinker with dollar handles or recurring gift settings
-    $form['fundraiser_settings']['fundraiser_sustainers']['#access'] = FALSE;
-    $form['fundraiser_settings']['amount_wrapper']['#access'] = FALSE;
-
-    if (arg(0) == 'node' && (arg(2) == 'edit' || arg(1) == 'add')){
-      // Hide all tickets fields on the standard node add/edit page.
-      foreach (element_children($form) as $child){
-        if (fundraiser_tickets_is_ticket_field($child)){
-          $form[$child]['#access'] = FALSE;
-        }
-      }
-      $form['#validate'][] = '_fundraiser_tickets_form_node_form_validate';
-    } elseif (arg(0) == 'node' && arg(2) == 'tickets'){
-      // Hide all fields that aren't required on the tickets tab
-      $required_fields = array('actions','nid','vid','uid','type','option','form_build_id','form_token','form_id','webform');
-      foreach (element_children($form) as $child){
-        if (! fundraiser_tickets_is_ticket_field($child) && ! in_array($child, $required_fields)){
-          $form[$child]['#access'] = FALSE;
-        }
-      }
-      $form['#after_build'][] = '_fundraiser_tickets_ticket_settings_form_organize';
-      $form['#validate'] = array('_fundraiser_tickets_ticket_settings_form_validate');
-      $form['#submit'] = array();
-      unset($form['actions']['preview']);
-      unset($form['actions']['delete']);
-    }
-  }
 }
 
 /**
