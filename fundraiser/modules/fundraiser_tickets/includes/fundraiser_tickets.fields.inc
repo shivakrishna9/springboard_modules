@@ -893,7 +893,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
             'type' => 'none',
           ),
           'target_bundles' => array(
-            'webform' => 'donation_form',
+            'donation_form' => 'donation_form',
           ),
         ),
         'target_type' => 'node',
