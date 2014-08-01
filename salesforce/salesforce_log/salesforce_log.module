@@ -335,13 +335,13 @@ function salesforce_log_tokens($type, $tokens, $data, $options) {
   if ($type == 'watchdog' || $type == 'all' && isset($data['node'])) {
 
     $values = array(
-      // 'ip' => isset($data['node']['ip']) ? $data['node']['ip'] : '',
-      // 'link' => isset($data['node']['link']) ? $data['node']['link'] : '',
-      // 'message' => isset($data['node']['variables']['message']) ? $data['node']['variables']['message'] : '',
-      // 'request_uri' => isset($data['node']['request_uri']) ? $data['node']['request_uri'] : '',
-      // 'referer' => isset($data['node']['referer']) ? $data['node']['referer'] : '',
-      // 'severity' => isset($data['node']['severity']) ? $data['node']['severity'] : '',
-      // 'timestamp' => isset($data['node']['timestamp']) ? $data['node']['timestamp'] : '',
+      'ip' => isset($data['node']['ip']) ? $data['node']['ip'] : '',
+      'link' => isset($data['node']['link']) ? $data['node']['link'] : '',
+      'message' => isset($data['node']['variables']['message']) ? $data['node']['variables']['message'] : '',
+      'request_uri' => isset($data['node']['request_uri']) ? $data['node']['request_uri'] : '',
+      'referer' => isset($data['node']['referer']) ? $data['node']['referer'] : '',
+      'severity' => isset($data['node']['severity']) ? $data['node']['severity'] : '',
+      'timestamp' => isset($data['node']['timestamp']) ? $data['node']['timestamp'] : '',
     );
   }
   if ($type == 'salesforce_log' && isset($data['node'])) { 
@@ -349,12 +349,12 @@ function salesforce_log_tokens($type, $tokens, $data, $options) {
       $item_id = str_values('#', '', $data['node']['variables']['@item_id']);
       $result = db_query('SELECT * FROM {salesforce_log_item} WHERE item_id = :item_id', array(':item_id' => $item_id))->fetchAssoc();
        $values += array(
-        // 'batch_link' => $GLOBALS['base_url'] . '/springboard/reports/integration-reports/item?bid=' . $result['bid'],
-        // 'item_id' => $item_id,
-        // 'drupal_id' => $result['drupal_id'],
-        // 'object_type' => $result['object_type'],
-        // 'salesforce_message' => $result['message'],
-        // 'salesforce_error_code' => $result['error_code'],
+        'batch_link' => $GLOBALS['base_url'] . '/springboard/reports/integration-reports/item?bid=' . $result['bid'],
+        'item_id' => $item_id,
+        'drupal_id' => $result['drupal_id'],
+        'object_type' => $result['object_type'],
+        'salesforce_message' => $result['message'],
+        'salesforce_error_code' => $result['error_code'],
       );
     }
   }
