@@ -48,6 +48,13 @@ function fundraiser_tickets_menu() {
 }
 
 /**
+ * Implements hook_views_api().
+ */
+function fundraiser_tickets_views_views_api() {
+  return array("version" => "3.0");
+}
+
+/**
  * Menu access callback. Ensure node has ticketing enabled and user has node
  * 'update' permission.
  */
