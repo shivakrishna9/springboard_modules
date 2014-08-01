@@ -6,6 +6,7 @@ body {
 
 #main  {
   border: 1px solid #acacac;
+  margin: 0 auto 30px auto;
 }
 
 #main h1 {

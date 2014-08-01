@@ -1788,6 +1788,17 @@ function _springboard_p2p_personal_after_build($form, &$form_state) {
   drupal_render($uniform_css);
   // End global.
 
+  $p2p_jrespond = array(
+    '#attached' => array(
+      'js' => array(
+        $mod_path . '/js/mediaCheck.js' => array(
+          'group' => JS_LIBRARY,
+        ),
+      ),
+    ),
+  );
+  drupal_render($p2p_jrespond);
+
   return $form;
 }
 
