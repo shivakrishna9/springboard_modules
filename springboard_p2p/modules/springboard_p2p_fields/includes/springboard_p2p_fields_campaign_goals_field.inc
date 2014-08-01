@@ -275,6 +275,7 @@ class SpringboardP2pCampaignGoalsField {
                   '#prefix' => '<div class="springboard_p2p_goal_value">',
                   '#suffix' => '</div>',
                   '#maxlength' => 9,
+                  '#size' => 8,
                 ),
               );
 
