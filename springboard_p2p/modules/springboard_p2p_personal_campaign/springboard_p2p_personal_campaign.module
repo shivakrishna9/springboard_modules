@@ -16,7 +16,7 @@ function springboard_p2p_personal_campaign_menu() {
     'page arguments' => array(1, 4, 5),
     'access callback' => 'springboard_p2p_personal_dashboard_donors_view_access',
     'access arguments' => array(1, 4),
-    'type' => MENU_CALLBACK,
+    'type' => MENU_LOCAL_TASK,
     'file' => 'springboard_p2p_personal_campaign.pages.inc',
     'file path' => drupal_get_path('module', 'springboard_p2p_personal_campaign') . '/includes',
   );
