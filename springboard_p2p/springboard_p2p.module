@@ -786,7 +786,7 @@ function springboard_p2p_full_alias_exists($base_path, $alias, $counter = -1) {
  * @param $p2p_node_types: an array of node types to set aliases for.
  * If no types are provided, use the array below.
  */
-function springboard_p2p_set_pathauto_default_aliases($p2p_node_types = NULL) {
+function springboard_p2p_set_pathauto_default_aliases($p2p_node_types = NULL, $global_force_change = FALSE) {
   if (!isset($p2p_node_types)) {
     $p2p_node_types = array(
       'p2p_campaign_landing' => array(
@@ -814,12 +814,13 @@ function springboard_p2p_set_pathauto_default_aliases($p2p_node_types = NULL) {
 
   // For each P2P node type, set the default alias as defined per-node-type above. Only set the
   // alias pattern if the node type doesn't already have a setting, or 'force_change' is TRUE.
-  foreach ($p2p_node_types as $node_type => $settings) {
+  foreach ($p2p_node_types as $node_type => $per_type_settings) {
     $node_type = node_type_load($node_type);
     $variable = 'pathauto_node_' . $node_type->type . '_pattern';
-    if (is_object($node_type) && (!variable_get($variable, FALSE) || $settings['force_change'] == TRUE)) {
+    $should_change = !variable_get($variable, FALSE) || $per_type_settings['force_change'] || $global_force_change ? TRUE : FALSE;
+    if (is_object($node_type) && $should_change) {
       $message = t('Set default URL aliases for <strong>!node_type</strong> content type.', array('!node_type' => $node_type->name));
-      variable_set($variable, $settings['pattern']);
+      variable_set($variable, $per_type_settings['pattern']);
       drupal_set_message($message, 'status', FALSE);
     }
   }

@@ -129,7 +129,26 @@ function springboard_p2p_admin_settings() {
     '#title' => t('Messages'),
     '#weight' => 225,
   );
-
+  
+  $form['url_aliases'] = array(
+    
+  );
+  
+  // Reset aliases
+  $form['url_aliases'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Reset Aliases to Defaults'),
+    '#weight' => -50,
+    '#description' => '<p>' . t('Be very careful with this; it will reset Pathauto default patterns.') . '</p>',
+  );
+    $form['url_aliases']['reset'] = array(
+      '#type' => 'submit',
+      '#value' => t('Reset'),
+      '#submit' => array('springboard_p2p_reset_url_aliases'),
+    );
+  
+  springboard_p2p_set_pathauto_default_aliases();
+  
   // Login message text area.
   // We set a var here, otherwise drupal complains about htmlspecialchars.
   // This is a known bug with text_format FAPI.
@@ -294,6 +313,14 @@ function springboard_p2p_admin_settings_validate($form, &$form_state) {
       }
     }
   }
+}
+
+/**
+ * Extra submit handler for p2p admin settings.
+ * This one handles the 'bulk generate' field.
+ */
+function springboard_p2p_reset_url_aliases($form, &$form_state) {
+  springboard_p2p_set_pathauto_default_aliases(NULL, TRUE);
 }
 
 /**

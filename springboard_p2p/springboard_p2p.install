@@ -52,7 +52,7 @@ function springboard_p2p_install() {
   
   // Set Pathauto aliases for all P2P node types.
   if (module_exists('pathauto')) {
-    springboard_p2p_set_pathauto_default_aliases(NULL);
+    springboard_p2p_set_pathauto_default_aliases(NULL, FALSE);
   }
 }
 
@@ -64,7 +64,7 @@ function springboard_p2p_install() {
  */
 function springboard_p2p_enable() {
   if (module_exists('pathauto')) {
-    springboard_p2p_set_pathauto_default_aliases(NULL);
+    springboard_p2p_set_pathauto_default_aliases(NULL, FALSE);
   }
 }
 
