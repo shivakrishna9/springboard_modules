@@ -32,31 +32,47 @@ function sb_social_salesforce_queue_create_item_alter(&$item) {
 /**
  * Implements hook_salesforce_mapping_map_fields_alter().
  * 
- * Replace Drupal object IDs with tokens for associated Contact and Opportunity objects
- * in exported social share items.
+ * Replace Drupal objects either with IDs or with tokens for associated objects in exported 
+ * social share items, depending on what should be mapped to the SF field.
  */
 function sb_social_salesforce_mapping_map_fields_alter(&$fields, $context) {
   if ($context['entity_type'] == 'sb_social_share') {
+    $wrapper = $context['entity_wrapper'];
     foreach ($context['map']->field_mappings as $field_mapping) {
       $drupal_name = $field_mapping['drupal_field']['fieldmap_value'];
       $sf_name = $field_mapping['salesforce_field']['name'];
       switch ($drupal_name) {
-        case 'uid':
-          // Replace non-zero uid with Contact token.
-          if (!empty($fields[$sf_name]) && 'reference' == $field_mapping['salesforce_field']['type']) {
-            $fields[$sf_name] = sprintf('[Contact:user:%d]', (int)$fields[$sf_name]);
+        case 'user':
+          // Give Contact SFID replacement token for a reference field, or Drupal account UID otherwise.
+          $account = $wrapper->user->value();
+          if ($account->uid && 'reference' == $field_mapping['salesforce_field']['type']) {
+            $fields[$sf_name] = sprintf('[Contact:user:%d]', $account->uid);
+          } else {
+            $fields[$sf_name] = $account->uid;
           }
           break;
-        case 'did':
+        case 'donation':
+          // Give Opportunity SFID replacement token for a reference field, or Fundraiser donation ID otherwise.
+          $donation = $wrapper->donation->value();
+          if ($donation && 'reference' == $field_mapping['salesforce_field']['type']) {
+            $fields[$sf_name] = sprintf('[Opportunity:donation:%d]', $donation->did);
+          } else {
+            $fields[$sf_name] = $donation ? $donation->did : NULL;
+          }
+          break;
+        case 'submission':
+          // Give Action__c SFID replacement token for a reference field, IF the Webform of the submission
+          // has a map to Action__c, or give the Webform submission ID otherwise.
+          $submission = $wrapper->submission->value();
           if ('reference' == $field_mapping['salesforce_field']['type']) {
-            // If zero then set to null.
-            if ($fields[$sf_name] == 0) {
+            if ($submission && _sb_social_webform_maps_to_action($submission->nid)) {
+              $fields[$sf_name] = sprintf('[Actions__c:%d:%d]', $submission->nid, $submission->sid);
+            } else {
+              // If we can't give a token, give nothing. A number won't sync to a reference field.
               $fields[$sf_name] = NULL;
             }
-            // Otherwise, replace did with Opportunity token.
-            else {
-              $fields[$sf_name] = sprintf('[Opportunity:donation:%d]', (int)$fields[$sf_name]);
-            }
+          } else {
+            $fields[$sf_name] = $submission ? $submission->sid : NULL;
           }
           break;
       }
@@ -123,4 +139,25 @@ function sb_social_create_sf_user_token($uid) {
  */
 function sb_social_format_sf_date($time) {
   return date('Y-m-d H:i:s', $time);
+}
+
+/**
+ * Utility function: Query genmap whether a Webform has a map to the Actions__c object.
+ */
+function _sb_social_webform_maps_to_action($nid) {
+  static $result = array();
+  // This is a moot point if genmap isn't enabled to create Webform mappings.
+  if (!module_exists('salesforce_genmap')) {
+    return FALSE;
+  }
+  // For performance, query the genmap mappings table directly, then cache.
+  if (!isset($results[$nid])) {
+    // We are specifically interested in whether this webform maps to Actions__c, irrespective of
+    // what module is the map's handler.
+    $results[$nid] = (bool) db_query(
+      "SELECT mid FROM {salesforce_genmap_map} WHERE salesforce_object_type='Actions__c' AND nid=:nid;",
+      array(':nid' => $nid)
+    )->fetchField();
+  }
+  return $results[$nid];
 }
