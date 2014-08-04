@@ -205,13 +205,13 @@ function sb_social_share_event_delete($sid) {
 /**
  * Load shared content settings.
  */
-function sb_social_settings_load($sid) {
+function sb_social_settings_load($sid, $cache = TRUE) {
 
   // This can get called by hook_block_view() in addition to hook_init() so we
   // should cache.
   $settings = &drupal_static(__FUNCTION__);
 
-  if (!isset($settings[$sid])) {
+  if (!isset($settings[$sid]) || !$cache) {
     $results = db_query('SELECT * FROM {sb_social_settings} WHERE sid = :sid', array(':sid' => $sid));
 
     $settings[$sid] = $results->fetchAssoc();

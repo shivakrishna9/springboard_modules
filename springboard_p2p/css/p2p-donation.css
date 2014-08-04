@@ -146,20 +146,6 @@ input#edit-submitted-payment-information-payment-fields-credit-card-cvv {
   display: inline-block;
 }
 
-.control-group.success:after,
-.form-item.success:after {
-  position: relative;
-  top: 6px;
-  left: -7px;
-  color: #7eae48;
-  content: "\f14a";
-  text-decoration: inherit;
-  font-weight: normal;
-  font-style: normal;
-  font-size: 18px;
-  font-family: FontAwesome;
-}
-
 #zone-select-wrapper .form-item.success:after,
 #zone-select-wrapper .control-group.success:after {
   left: 4px;
