@@ -20,9 +20,23 @@ class SpringboardP2pPrivateCampaignApproval {
     $this->record = array(
       'uid' => $uid,
       'nid' => $nid,
+      'status' => NULL,
     );
 
+    $this->loadStatus();
+
     return $this;
+  }
+
+  /**
+   * User is approved to create personal campaigns for a campaign.
+   *
+   * @return bool
+   *   TRUE if the user is approved to create personal campaigns in
+   *   the campaign.
+   */
+  public function isAuthorized() {
+    return $this->record['status'] == 'approved';
   }
 
   /**
@@ -56,6 +70,21 @@ class SpringboardP2pPrivateCampaignApproval {
     db_delete('springboard_p2p_private_campaign_approval')
       ->condition('uid', $uid)
       ->execute();
+  }
+
+  /**
+   * Loads the status from the DB if the row exists.
+   */
+  protected function loadStatus() {
+    $replacements = array(
+      ':uid' => $this->record['uid'],
+      ':nid' => $this->record['nid'],
+    );
+    $result = db_query('SELECT status FROM {springboard_p2p_private_campaign_approval} WHERE uid = :uid AND nid = :nid', $replacements);
+    $status = $result->fetchField();
+    if (is_string($status)) {
+      $this->record['status'] = $status;
+    }
   }
 
   /**

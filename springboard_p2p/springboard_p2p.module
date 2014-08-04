@@ -348,7 +348,7 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
       // If a user attempts to create a personal campaign from a private
       // campaign that they have not been granted access to,
       // replace form with message and action button.
-      if ($private_campaign && !springboard_p2p_private_campaign_user_is_authorized($campaign_node->nid, $user->uid)) {
+      if ($private_campaign && !springboard_p2p_private_campaign_user_is_authorized($user->uid, $campaign_node->nid)) {
         $node = $form['#node'];
         $parents = $form['#parents'];
         $tree = $form['#tree'];
@@ -812,20 +812,19 @@ function springboard_p2p_set_pathauto_default_aliases($p2p_node_types = NULL, $g
 /**
  * Checks campaign for user authorization to create a personal campaign.
  *
- * @param int $nid
- *   Node id of the campaign.
- *
  * @param int $uid
  *   User id.
+ *
+ * @param int $nid
+ *   Node id of the campaign.
  *
  * @return bool
  *   Returns TRUE if the user account is authorized for this campaign,
  *   FALSE otherwise.
  */
-function springboard_p2p_private_campaign_user_is_authorized($nid, $uid) {
-  $result = db_query('SELECT status FROM {springboard_p2p_private_campaign_approval} WHERE uid = :uid AND nid = :nid', array(':uid' => $uid, ':nid' => $nid));
-  $status = $result->fetchField();
-  return $status == 'approved' ? TRUE : FALSE;
+function springboard_p2p_private_campaign_user_is_authorized($uid, $nid) {
+  $approval = new SpringboardP2pPrivateCampaignApproval($uid, $nid);
+  return $approval->isAuthorized();
 }
 
 /**
@@ -1351,7 +1350,9 @@ function springboard_p2p_set_redirect($form, &$form_state) {
     if (is_object($campaign) && $campaign->type == 'p2p_campaign') {
       $private = springboard_p2p_campaign_is_private($campaign);
 
-      if ($private) {
+      // If the campaign is private and the user isn't already authorized
+      // to create personal campaigns.
+      if ($private && !springboard_p2p_private_campaign_user_is_authorized($uid, $campaign_id)) {
         $approval = new SpringboardP2pPrivateCampaignApproval($uid, $campaign_id);
         $approval->request();
         drupal_set_message(t('The campaign !campaign requires approval. You will be notified via email after your request has been reviewed', array('!campaign' => $campaign->title)));

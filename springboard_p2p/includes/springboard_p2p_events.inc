@@ -188,7 +188,7 @@ class SpringboardP2pEvents {
         'p2p_cid' => $campaign_nid,
       ),
     );
-    return url('node/add/p2p-personal-campaign', $options);
+    return url('p2p/login', $options);
   }
 
   /**

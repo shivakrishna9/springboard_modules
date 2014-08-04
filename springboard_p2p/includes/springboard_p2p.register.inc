@@ -13,23 +13,7 @@
  */
 function springboard_p2p_user_register_form($form, &$form_state) {
   if (user_is_logged_in()) {
-    // Faking the form submission so the approval status will get saved
-    // if needed and we can find out where to go next.
-    $form = array();
-    $form_state = array(
-      'values' => array(
-        'springboard_p2p_campaign_nid' => springboard_p2p_get_campaign_id_from_request(),
-      ),
-      'uid' => $GLOBALS['user']->uid,
-    );
-    springboard_p2p_set_redirect($form, $form_state);
-
-    if (is_array($form_state['redirect'])) {
-      drupal_goto($form_state['redirect'][0], $form_state['redirect'][1]);
-    }
-    else {
-      drupal_goto($form_state['redirect']);
-    }
+    springboard_p2p_redirect_logged_in_user();
   }
 
   $form = array();
@@ -127,6 +111,31 @@ function springboard_p2p_user_register_form($form, &$form_state) {
   }
 
   return $form;
+}
+
+/**
+ * If the user is logged in and a campaign id exists, go to the next page.
+ *
+ * Fakes the form submission so the approval status will get saved
+ * if needed and we can find out where to go next.
+ */
+function springboard_p2p_redirect_logged_in_user() {
+
+  $form = array();
+  $form_state = array(
+    'values' => array(
+      'springboard_p2p_campaign_nid' => springboard_p2p_get_campaign_id_from_request(),
+    ),
+    'uid' => $GLOBALS['user']->uid,
+  );
+  springboard_p2p_set_redirect($form, $form_state);
+
+  if (is_array($form_state['redirect'])) {
+    drupal_goto($form_state['redirect'][0], $form_state['redirect'][1]);
+  }
+  else {
+    drupal_goto($form_state['redirect']);
+  }
 }
 
 /**
@@ -376,6 +385,10 @@ function springboard_p2p_user_register_form_submit($form, &$form_state) {
  * Forms api array for the existing user login form.
  */
 function springboard_p2p_existing_user_login_form($form, &$form_state) {
+  if (user_is_logged_in()) {
+    springboard_p2p_redirect_logged_in_user();
+  }
+
   $form = array();
 
   // Display login form:
