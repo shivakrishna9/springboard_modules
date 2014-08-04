@@ -424,6 +424,43 @@ function springboard_p2p_personal_campaign_form_p2p_personal_campaign_node_form_
 }
 
 /**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Copy social settings to personal campaigns when settings are updated on a campaign node.
+ */
+function springboard_p2p_personal_campaign_form_sb_social_node_settings_alter(&$form, $form_state, $form_id) {
+  if (module_exists('sb_social') && $form['type']['#value'] == 'node' && is_numeric($form['id']['#value'])) {
+    $node = node_load($form['id']['#value']);
+    if ($node->type == 'p2p_campaign') {
+      //$form['#node'] = $node;
+      $form['#submit'][] = 'springboard_p2p_personal_campaign_social_settings_submit';
+    }
+  }
+}
+
+/**
+ *  Submit callback for the Social Settings form on campaign nodes.
+ *
+ *  When Social settings are changed for a campaign node, update settings
+ *  on all related personal campaign nodes to match.
+ */
+function springboard_p2p_personal_campaign_social_settings_submit($form, $form_state) {
+  $node = node_load($form['id']['#value']);
+  $personal_campaigns = springboard_p2p_get_personal_campaigns($node->nid);
+  $settings_id = sb_social_get_sid_by_id($node->nid, 'node');
+  $settings = sb_social_settings_load($settings_id, FALSE);
+  if (is_array($personal_campaigns) && count($personal_campaigns)) {
+    foreach ($personal_campaigns as $nid => $personal_campaign_node) {
+      $sid = sb_social_get_sid_by_id($nid, 'node');
+      $settings['sid'] = $sid ? $sid : '';
+      $settings['id'] = $nid;
+      sb_social_settings_save($settings);
+      drupal_set_message(t('Updated Social Share settings for !link', array('!link' => l($personal_campaign_node->title, 'node/' . $nid))));
+    }
+  }
+}
+
+/**
  * Implements hook_market_source_build_form_keys_alter().
  *
  * We are using hidden element fields on the personal campaign node type
@@ -468,4 +505,21 @@ function springboard_p2p_personal_campaign_market_source_build_form_keys_alter(&
 function _filter_tips_p2p_personal_body_form(&$form) {
   $form['und'][0]['format']['#access'] = FALSE;
   return $form;
+}
+
+/**
+ * Implements hook_node_insert().
+ *
+ * Inherit social settings from parent campaign when a new personal campaign is created.
+ */
+function springboard_p2p_personal_campaign_node_insert($node) {
+  if ($node->type == 'p2p_personal_campaign' && module_exists('sb_social')) {
+    $language = $node->language;
+    $campaign_nid = $node->field_p2p_campaign[$language ][0]['target_id'];
+    $settings_id = sb_social_get_sid_by_id($campaign_nid, 'node');
+    $settings = sb_social_settings_load($settings_id);
+    $settings['sid'] = '';
+    $settings['id'] = $node->nid;
+    sb_social_settings_save($settings);
+  }
 }
