@@ -367,6 +367,9 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
       // Prefill the title with a suggestion.
       $form['title']['#default_value'] = springboard_p2p_get_personal_campaign_title_suggestion($campaign_node->title);
 
+      // Prefill the url with a suggestion based on title.
+      $form['field_p2p_personal_campaign_url'][$language][0]['value']['#default_value'] = springboard_p2p_create_alias_from_title($campaign_node->title);
+
       // Campaign intro, default from parent campaign, display disabled content
       // preview if edit is disabled.
       $form['body'][$language][0]['#required'] = FALSE;
@@ -412,7 +415,6 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
         }
       }
       $form['field_p2p_suggested_donation_amt'][$language][0]['value']['#access'] = $amount_editable;
-
     }
 
   }
@@ -454,7 +456,7 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
         '#title' => $form['body'][$campaign_node->language][0]['#title'],
         '#type' => 'textarea',
         '#default_value' => $form['body'][$campaign_node->language][0]['#default_value'],
-        '#disabled' => TRUE,
+        '#access' => FALSE,
       );
     }
     $form['field_p2p_campaign_images']['#access'] = $images_editable;
@@ -484,21 +486,12 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
 function springboard_p2p_personal_campaign_validate(&$form, $form_state) {
   // Validate campaign url alias for uniqueness.
   $language = $form_state['values']['language'];
+  $nid = $form_state['values']['nid'];
   $alias = isset($form_state['values']['field_p2p_personal_campaign_url'][$language][0]['value']) ? $form_state['values']['field_p2p_personal_campaign_url'][$language][0]['value'] : FALSE;
-  if ($alias) {
-    $alias = variable_get('springboard_p2p_base_path', 'springboard_p2p') . '/' . $alias;
 
-    $path = drupal_lookup_path('source', $alias);
-    // We only want to throw a validation error if the campaign url is in use
-    // by some other path.
-    if ($path && isset($form_state['node']->nid) && $path != 'node/' . $form_state['node']->nid) {
-      form_set_error('field_p2p_personal_campaign_url', t('This url is already in use.'));
-    }
-    // On the node add form we also want to avoid trying to use an existing
-    // campaign url.
-    if ($path && !isset($form_state['node']->nid)) {
-      form_set_error('field_p2p_personal_campaign_url', t('This url is already in use.'));
-    }
+  // Check to see if the entered path is already in use.
+  if (springboard_p2p_personal_campaign_alias_exists($alias, $language, $nid)) {
+    form_set_error('field_p2p_personal_campaign_url', t('This url is already in use.'));
   }
 }
 
@@ -521,6 +514,48 @@ function springboard_p2p_personal_campaign_ajax(&$form, &$form_state) {
 }
 
 /**
+ * Determines if a path for personal campaign already exists in the system.
+ *
+ * @param $alias
+ *   The user-entered alias to check.
+ */
+function springboard_p2p_personal_campaign_alias_exists($alias, $language, $nid = NULL) {
+  $pattern = $alias;
+  // Get the pattern from pathauto.
+  if (module_exists('pathauto')) {
+    module_load_include('inc', 'pathauto', 'pathauto');
+    $pattern = pathauto_pattern_load_by_entity('node', 'p2p_personal_campaign', LANGUAGE_NONE);
+  }
+
+  // Create a fake node data structure that can be used in token_replace to
+  // generate the actual path that path_auto would generate during node save.
+  // The assumption here is that the pattern is configured to use the field_p2p_personal_campaign_url
+  // field. If another field, such as title, is used this will not work.
+  $node = new stdClass();
+  $node->type = 'p2p_personal_campaign';
+  $node->field_p2p_personal_campaign_url[$language][0] = array(
+    'value' => $alias,
+  );
+
+  // Get the actual alias by replacing the tokenized pattern.
+  $alias = token_replace($pattern, array('node' => $node), array());
+  $existing_alias = drupal_lookup_path('source', $alias);
+
+  // If no existing alias is returned, we're done here.
+  if (empty($existing_alias)) {
+    return FALSE;
+  }
+
+  // If nid is passed and it belongs to the found alias then consider it non-existent.
+  if (!empty($nid) && $existing_alias == 'node/' . $nid) {
+    return FALSE;
+  }
+
+  // Otherwise the alias belongs to another node.
+  return TRUE;
+}
+
+/**
  * Ajax callback validates campaign url field.
  */
 function springboard_p2p_personal_campaign_url_ajax(&$form, $form_state) {
@@ -532,24 +567,13 @@ function springboard_p2p_personal_campaign_url_ajax(&$form, $form_state) {
   // No value provided, so don't do anything.
   if (trim($campaign_path) == '') {
     $commands[] = ajax_command_remove('div#personal-campaign-url-wrapper div.alert');
-
     return array('#type' => 'ajax', '#commands' => $commands);
   }
 
-  $base_path = variable_get('springboard_p2p_base_path', 'springboard_p2p') . '/';
-  $path = $base_path . '/' . $campaign_path;
-
-  $alias_exists = drupal_lookup_path('source', $path);
-  $target = 'field_p2p_personal_campaign_url[' . $language . '][0][value]';
-  if ($alias_exists) {
-    // New node creation form, alias is in use by a pre-existing form.
-    if (!$nid) {
-      form_set_error($target, t('This URL is already in use.'));
-    }
-    // Editing existing node, alias in use by some other node.
-    if ($nid && $alias_exists != 'node/' . $nid) {
-      form_set_error($target, t('This URL is already in use.'));
-    }
+  // Check to see if the entered path is already in use.
+  if (springboard_p2p_personal_campaign_alias_exists($campaign_path, $language, $nid)) {
+    $target = 'field_p2p_personal_campaign_url[' . $language . '][0][value]';
+    form_set_error($target, t('This URL is already in use.'));
   }
   else {
     drupal_set_message(t('URL ok.'));
@@ -560,29 +584,6 @@ function springboard_p2p_personal_campaign_url_ajax(&$form, $form_state) {
   $commands[] = ajax_command_append('div#personal-campaign-url-wrapper', theme('status_messages'));
   unset($_SESSION['messages']);
   return array('#type' => 'ajax', '#commands' => $commands);
-}
-
-/**
- * Implements hook_node_presave().
- *
- * Populates the personal campaign url field if needed.  This is done here
- * instead of node_insert and node_update because the node can't be modified
- * in those hooks.
- */
-function springboard_p2p_node_presave($node) {
-  if ($node->type != 'p2p_personal_campaign') {
-    return;
-  }
-
-  $alias = isset($node->field_p2p_personal_campaign_url[$node->language][0]['value']) ? $node->field_p2p_personal_campaign_url[$node->language][0]['value'] : '';
-  $alias = trim($alias);
-
-  if ($alias == '') {
-    $base_path = variable_get('springboard_p2p_base_path', 'springboard_p2p');
-    $alias = springboard_p2p_create_alias_from_title($base_path, $node->title);
-  }
-
-  $node->field_p2p_personal_campaign_url[$node->language][0]['value'] = $alias;
 }
 
 /**
@@ -701,56 +702,19 @@ function springboard_p2p_node_update($node) {
  * @return mixed|string
  *   A URL safe path.
  */
-function springboard_p2p_create_alias_from_title($base_path, $title) {
+function springboard_p2p_create_alias_from_title($title) {
 
-  $replacements = array(
-    ' ' => '-',
-    '"' => '',
-    "'" => '',
-    '`' => '',
-    ',' => '',
-    '.' => '',
-    '_' => '-',
-    ':' => '',
-    ';' => '',
-    '|' => '',
-    '{' => '',
-    '}' => '',
-    '[' => '',
-    ']' => '',
-    '+' => '',
-    '=' => '',
-    '*' => '',
-    '&' => '',
-    '%' => '',
-    '^' => '',
-    '$' => '',
-    '#' => '',
-    '@' => '',
-    '!' => '',
-    '~' => '',
-    '(' => '',
-    ')' => '',
-    '?' => '',
-    '<' => '',
-    '>' => '',
-    '/' => '',
-    '\\' => '',
-  );
+  $title = springboard_p2p_get_personal_campaign_title_suggestion($title);
+  // Perform a simple replacement on non alphanumeric characters.
+  $path = strtolower(preg_replace('/[^a-zA-Z0-9-]+/', '-', $title));
 
-  $title = drupal_strtolower(trim($title));
-  $title = str_replace(array_keys($replacements), array_values($replacements), $title);
-
-  $counter = -1;
-  while (springboard_p2p_full_alias_exists($base_path, $title, $counter)) {
-    $counter++;
+  // If pathauto is installed do some additional clean up.
+  if (module_exists('pathauto')) {
+    module_load_include('inc', 'pathauto', 'pathauto');
+    $path = pathauto_clean_alias($path);
   }
 
-  if ($counter > -1) {
-    $title .= '_' . $counter;
-  }
-
-  return $title;
+  return $path;
 }
 
 /**
