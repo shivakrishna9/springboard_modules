@@ -42,7 +42,11 @@ function springboard_p2p_donation_date_deadline_ctools_access_check($conf, $cont
 
     // Pull in field_p2p_fundraising_deadline and check if it's a date that's expired already.
     $wrapper = entity_metadata_wrapper('node', $node);
-    $end_date = date('Y-m-d', $wrapper->field_p2p_fundraising_deadline->value());
+    $value = $wrapper->field_p2p_fundraising_deadline->value();
+    if (empty($value)) {
+      return TRUE;
+    }
+    $end_date = date('Y-m-d', $value);
     // Make end date just before midnight.
     if (strtotime($end_date . '11:59:59pm') < mktime(0, 0, 0)) {
 
