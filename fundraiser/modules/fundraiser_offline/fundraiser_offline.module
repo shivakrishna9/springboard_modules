@@ -227,20 +227,54 @@ function fundraiser_offline_fundraiser_field_info_validate_alter(&$field_info, $
 /**
  * Implements hook_fundraiser_gateway_info_alter().
  */
-/*
 function fundraiser_offline_fundraiser_gateway_info_alter(&$gateways) {
   if (arg(0) == 'node' && is_numeric(arg(1))) {
     $node = node_load(arg(1));
     // If the current form is in offline mode we want to replace any validation
     // callbacks associated with the payment gateways.
-    if (isset($node->fundraiser_offline) && $node->fundraiser_offline) {
+    if (isset($_GET['offline']) && $_GET['offline']) {
       $gateway_ids = array_keys($gateways);
       foreach ($gateway_ids as $id) {
-        $gateways[$id]['validate callback']  = '_fundraiser_offline_fundraiser_commerce_validate';
+        if ($gateways[$id]['payment_method'][0] == 'credit') {
+          $gateways[$id]['validate callback']  = 'fundraiser_offline_fundraiser_credit_card_validate';
+        }
       }
     }
   }
-}*/
+}
+
+/**
+ * Replaces fundraiser commerce CC validation callback, no CVV validation.
+ */
+function fundraiser_offline_credit_card_validate($submission_fields, $form_parents) {
+  $prefix = implode('][', $form_parents) . '][';
+  // Include the file with the validation info.
+  module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+  $number = $submission_fields['payment_fields']['credit']['card_number'];
+  if (empty($number)) {
+    form_set_error($prefix . 'card_number', t('The credit card number is required.'));
+  }
+  else {
+    $valid = commerce_payment_validate_credit_card_number($number);
+    if ($valid !== TRUE || !ctype_digit($number) || drupal_strlen($number) < 10) {
+      form_set_error($prefix . 'card_number', t('You have entered an invalid credit card number.'));
+    }
+  }
+  $cc_expiration_month = $submission_fields['payment_fields']['credit']['card_expiration_month'];
+  $cc_expiration_year = $submission_fields['payment_fields']['credit']['card_expiration_year'];
+  if (empty($cc_expiration_month) || empty($cc_expiration_year)) {
+    form_set_error($prefix . 'expiration_date][card_expiration_month', t('The credit card expiration date is required.'));
+    form_set_error($prefix . 'expiration_date][card_expiration_year');
+  }
+  else {
+    $valid = commerce_payment_validate_credit_card_exp_date($cc_expiration_month, $cc_expiration_year);
+    if ($valid !== TRUE && !empty($cc_expiration_month) && !empty($cc_expiration_year)) {
+      form_set_error($prefix . 'expiration_date][card_expiration_month', t('The credit card you entered has expired.'));
+      form_set_error($prefix . 'expiration_date][card_expiration_year');
+    }
+  }
+}
+
 
 /**
  * Implements hook_hook_fundraiser_donation_form_js_validation_alter().
@@ -259,52 +293,28 @@ function fundraiser_offline_fundraiser_donation_form_js_validation_alter(&$setti
 function fundraiser_offline_fundraiser_donation_form($form, $form_state) {
   if (isset($form['#node']->fundraiser_offline) && $form['#node']->fundraiser_offline) {
     drupal_set_message('This form is currently in offline mode.');
-    // Before we display an offline mode we need to check if this form is being displayed
-    // from a normal path. If it is then we need to back out of offline mode asap.
-    // Since that indicates a user was on an offline form, did not submit it, and has
-    // now moved to looking at a normal donation form someplace else.
-    $path = current_path(); // Current path, regardless of alias.
-    if ($path == 'node/' . $form['#node']->nid || !isset($form['#node']->fundraiser_offline_mode) || $form['#node']->fundraiser_offline_mode != TRUE) {
-      _fundraiser_offline_is_offline(FALSE);
-      return; // Bail out.
-    }
-    // Otherwise, we're in the clear and still in offline mode.
-    // Remove required flag for these fields.
-    //$fields = array('mail', 'card_cvv');
-    //_fundraiser_offline_form_not_required($form, $fields);
-    // Expose these fields.
-    $fields = array('cid', 'ms');
-    _fundraiser_offline_form_not_hidden($form, $fields);
-    // No confirmation submit for us.
-    $remove = array('fundraiser_donation_confirmation');
-    $form['#submit'] = array_diff($form['#submit'], $remove);
-
-    // Add our own action and submit.
-    // So if we fail, we return here with the node id pre-loaded.
-    $form['#action'] = url('admin/fundraiser_offline/' . $form['#node']->nid);
-    // Handle our redirection after submit.
-    $form['#submit'][] = '_fundraiser_offline_fundraiser_donation_form_submit';
-    return $form;
   }
 }
 
 /**
  * Implements hook_fundraiser_donation_post_submit().
  */
+/*
 function fundraiser_offline_fundraiser_donation_post_submit($form, $form_state, $donation) {
   // Check our offline state and turn it off if need be.
   if (_fundraiser_offline_is_offline()) {
     // Turn off the offline mode now that we've submitted the form.
     _fundraiser_offline_is_offline(FALSE);
   }
-}
+}*/
 
 /**
  * Additional submit form at the end of the donation form. Controls redirect in offline mode.
  */
+/*
 function _fundraiser_offline_fundraiser_donation_form_submit($form, &$form_state) {
   $form['redirect'] = url('admin/fundraiser_offline/' . $form['#node']->nid);
-}
+}*/
 
 
 /**
@@ -342,30 +352,23 @@ function fundraiser_offline_fundraiser_webform_payment_method_component_methods_
  * Implements hook_fundraiser_donation_submit().
  */
 function fundraiser_offline_fundraiser_donation_submit($form, $form_state, $donation) {
-  // BUG: resetting the uid and user in this function does not work for
-  // getting a new user account created from a submission. Webform User
-  // is responsible for creating users in SB4 and it is hardcoded to use
-  // global $user. To get this feature working we will need to make some changes
-  // to Webform User.
-
   // Check our offline state.
   if (isset($form['#node']->fundraiser_offline) && $form['#node']->fundraiser_offline) {
     // Correct the uid, the logged in user is NOT the originating user.
-    $donation->uid = 0;
-    $donation->user = user_load(0);
     if (!isset($donation->donation['mail'])) {
+      $donation->uid = 0;
+      $donation->user = user_load(0);
+      //if (!isset($donation->donation['mail'])) {
       // If the email has not been set, then we need to set it here.
       $donation->donation['mail'] = _fundraiser_offline_generate_email();
     }
-    /*
     else {
-      // If the email is set, see if we can locate the correct user to match the order.
-      $found_user = user_load_by_mail($mail);
-      if (isset($found_user->uid)) {
-        $donation->uid = $found_user->uid;
-        $donation->user = $found_user;
+      $account = user_load_by_mail($donation->donation['mail']);
+      if ($account) {
+        $donation->uid = 0; //$account->uid;
+        $donation->user = $account;
       }
-    }*/
+    }
   }
 }
 
@@ -374,28 +377,32 @@ function fundraiser_offline_fundraiser_donation_submit($form, $form_state, $dona
  */
 function fundraiser_offline_fundraiser_donation_success($donation) {
   // Check our offline state.
-  if (_fundraiser_offline_is_offline()) {
+  if (isset($_GET['offline']) && $_GET['offline']) {
     $record['nid'] = $donation->nid;
     $record['did'] = $donation->did;
     global $user;
-    $record['uid'] = $user->uid;
+    $record['created_by'] = $user->uid;
+    $record['uid'] = $donation->uid;
     _fundraiser_offline_create_offline_donation($record);
   }
 }
+
 
 /**
  * Implements hook_fundraiser_donation_decline().
  */
 function fundraiser_offline_fundraiser_donation_decline($donation) {
   // Check our offline state.
-  if (_fundraiser_offline_is_offline()) {
+  if (isset($_GET['offline']) && $_GET['offline']) {
     $record['nid'] = $donation->nid;
     $record['did'] = $donation->did;
     global $user;
-    $record['uid'] = $user->uid;
+    $record['created_by'] = $user->uid;
+    $record['uid'] = $donation->uid;
     _fundraiser_offline_create_offline_donation($record);
   }
 }
+
 
 /**
  * Helper functions.
