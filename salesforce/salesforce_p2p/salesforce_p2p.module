@@ -1,0 +1,71 @@
+<?php
+
+/**
+ * @file
+ * Provides peer to peer integration support for Salesforce.
+ */
+
+/**
+ * Implements hook_salesforce_queue_create_item_alter()
+ */
+function salesforce_p2p_salesforce_queue_create_item_alter(&$item) {
+
+  // Add a token for the peer to peer category to the peer to peer campaign
+  if ($item['module'] == 'node' && $item['delta'] == 'p2p_campaign') {
+    // Load up the campaign node. Use reset to ensure freshly saved values.
+    $node = node_load($item['drupal_id'], NULL, TRUE);
+    // Wrap the entity to make it easier to work with.
+    $wrapper = entity_metadata_wrapper('node', $node);
+    // Calling raw() will get us the id of the category instead of loading the enire entity.
+    $category_id = $wrapper->field_p2p_category->raw();
+
+    $item['sobject']->fields['P2P_Category__c'] = sprintf('[P2P_Category__c:p2p_category:%d]', $category_id);
+
+    // Allow the category to be updated during the sync.
+    $item['sync_rules']['P2P_Category__c'] = 'always';
+  }
+
+  // Add a token for peer to peer campaign to the personal campaign.
+  if ($item['module'] == 'node' && $item['delta'] == 'p2p_personal_campaign') {
+    // Load up personal campaign node. Use reset to ensure freshly saved values.
+    $node = node_load($item['drupal_id'], NULL, TRUE);
+    // Wrap the entity to make it easier to work with.
+    $wrapper = entity_metadata_wrapper('node', $node);
+    // Calling raw() will get us the id of the category instead of loading the entire entity.
+    $campaign_id = $wrapper->field_p2p_campaign->raw();
+
+    // Relate peer to peer campaign.
+    $item['sobject']->fields['P2P_Campaign__c'] = sprintf('[P2P_Campaign__c:p2p_campaign:%d]', $campaign_id);
+
+    // Relate peer to peer campaigner.
+    $item['sobject']->fields['P2P_Campaigner__c'] = sprintf('[Contact:user:%d]', $node->uid);
+
+    // Relate to the category.
+    // TODO: This node load might be a bit heavy here. Maybe look for a better solution.
+    $category_node = node_load($campaign_id);
+    $wrapper = entity_metadata_wrapper('node', $category_node);
+    $category_id = $wrapper->field_p2p_category->raw();
+
+    $item['sobject']->fields['P2P_Category__c'] = sprintf('[P2P_Category__c:p2p_category:%d]', $category_id);
+  }
+
+  // Donation.
+  if ($item['module'] == 'salesforce_donation' && $item['delta'] == 'donation') {
+
+    $action = db_query("
+      SELECT
+        sa.personal_campaign_nid,
+        sa.campaign_nid,
+        sa.category_nid
+      FROM {fundraiser_donation} fd
+      INNER JOIN {springboard_p2p_personal_campaign_action} sa
+      ON sa.sid = fd.sid
+      WHERE fd.did = :did AND sa.action_type = :action_type
+      ", array(':did' => $item['drupal_id'], ':action_type' => 'fundraiser'))->fetchObject();
+
+    if (!empty($action)) {
+      $item['sobject']->fields['P2P_Personal_Campaign__c'] = sprintf('[P2P_Personal_Campaign__c:p2p_personal_campaign:%d]', $action->personal_campaign_nid);
+    }
+
+  }
+}

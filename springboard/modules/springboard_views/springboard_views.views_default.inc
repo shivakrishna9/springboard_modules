@@ -1849,6 +1849,14 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['filters']['status']['table'] = 'commerce_order';
   $handler->display->display_options['filters']['status']['field'] = 'status';
   $handler->display->display_options['filters']['status']['relationship'] = 'did';
+  $handler->display->display_options['filters']['status']['value'] = array(
+    'failed' => 'failed',
+    'failed_refund' => 'failed_refund',
+    'canceled' => 'canceled',
+    'pending_future_payment' => 'pending_future_payment',
+    'payment_received' => 'payment_received',
+    'partially_refunded' => 'partially_refunded',
+  );
   $handler->display->display_options['filters']['status']['group'] = 1;
   $handler->display->display_options['filters']['status']['exposed'] = TRUE;
   $handler->display->display_options['filters']['status']['expose']['operator_id'] = 'status_op';
@@ -1862,6 +1870,7 @@ function springboard_views_views_default_views() {
     4 => 0,
     5 => 0,
   );
+  $handler->display->display_options['filters']['status']['expose']['reduce'] = TRUE;
   /* Filter criterion: Date: Date (node) */
   $handler->display->display_options['filters']['date_filter']['id'] = 'date_filter';
   $handler->display->display_options['filters']['date_filter']['table'] = 'node';
@@ -3392,22 +3401,26 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['arguments']['type']['summary']['format'] = 'default_summary';
   $handler->display->display_options['arguments']['type']['summary_options']['items_per_page'] = '25';
   $handler->display->display_options['arguments']['type']['limit'] = '0';
-  /* Filter criterion: Search: Search Terms */
-  $handler->display->display_options['filters']['keys']['id'] = 'keys';
-  $handler->display->display_options['filters']['keys']['table'] = 'search_index';
-  $handler->display->display_options['filters']['keys']['field'] = 'keys';
-  $handler->display->display_options['filters']['keys']['group'] = 1;
-  $handler->display->display_options['filters']['keys']['exposed'] = TRUE;
-  $handler->display->display_options['filters']['keys']['expose']['operator_id'] = 'keys_op';
-  $handler->display->display_options['filters']['keys']['expose']['label'] = 'Search';
-  $handler->display->display_options['filters']['keys']['expose']['operator'] = 'keys_op';
-  $handler->display->display_options['filters']['keys']['expose']['identifier'] = 'keys';
-  $handler->display->display_options['filters']['keys']['expose']['remember_roles'] = array(
+  /* Filter criterion: Global: Combine fields filter */
+  $handler->display->display_options['filters']['combine']['id'] = 'combine';
+  $handler->display->display_options['filters']['combine']['table'] = 'views';
+  $handler->display->display_options['filters']['combine']['field'] = 'combine';
+  $handler->display->display_options['filters']['combine']['operator'] = 'contains';
+  $handler->display->display_options['filters']['combine']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['combine']['expose']['operator_id'] = 'combine_op';
+  $handler->display->display_options['filters']['combine']['expose']['label'] = 'Search';
+  $handler->display->display_options['filters']['combine']['expose']['operator'] = 'combine_op';
+  $handler->display->display_options['filters']['combine']['expose']['identifier'] = 'combine';
+  $handler->display->display_options['filters']['combine']['expose']['remember_roles'] = array(
     2 => '2',
     1 => 0,
     3 => 0,
     4 => 0,
     5 => 0,
+  );
+  $handler->display->display_options['filters']['combine']['fields'] = array(
+    'title' => 'title',
+    'created' => 'created',
   );
 
   /* Display: Block */

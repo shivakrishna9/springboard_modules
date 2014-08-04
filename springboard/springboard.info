@@ -8,3 +8,4 @@ dependencies[] = ctools
 dependencies[] = views
 files[] = tests/springboard.test
 files[] = springboard.admin.inc
+files[] = SpringboardUserWrapper.class.php
