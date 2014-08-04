@@ -265,7 +265,7 @@ function salesforce_log_token_info() {
     'name' => t("Watchdog link"),
     'description' => t('An informational link provided by the module calling watchdog.'),
   );
-  $watchdog['message'] = array(
+  $watchdog['watchdog_message'] = array(
     'name' => t("Watchdog message"),
     'description' => t('The text of the message to be logged.'),
   );
@@ -316,7 +316,7 @@ function salesforce_log_token_info() {
     'name' => t("Salesforce item message"),
     'description' => t('Message retuned from salesforce'),
   );
-  $slog['salesforce_error_code'] = array(
+  $slog['error_code'] = array(
     'name' => t("Salesforce error code"),
     'description' => t(''),
   );
@@ -337,12 +337,13 @@ function salesforce_log_tokens($type, $tokens, $data, $options) {
     $values = array(
       'ip' => isset($data['node']['ip']) ? $data['node']['ip'] : '',
       'link' => isset($data['node']['link']) ? $data['node']['link'] : '',
-      'message' => isset($data['node']['variables']['message']) ? $data['node']['variables']['message'] : '',
+      'watchdog_message' => isset($data['node']['variables']['@message']) ? $data['node']['variables']['@message'] : '',
       'request_uri' => isset($data['node']['request_uri']) ? $data['node']['request_uri'] : '',
       'referer' => isset($data['node']['referer']) ? $data['node']['referer'] : '',
       'severity' => isset($data['node']['severity']) ? $data['node']['severity'] : '',
       'timestamp' => isset($data['node']['timestamp']) ? $data['node']['timestamp'] : '',
     );
+
   }
   if ($type == 'salesforce_log' && isset($data['node'])) { 
     if(isset($data['node']['variables']['@item_id'])) {
@@ -354,15 +355,16 @@ function salesforce_log_tokens($type, $tokens, $data, $options) {
         'drupal_id' => $result['drupal_id'],
         'object_type' => $result['object_type'],
         'salesforce_message' => $result['message'],
-        'salesforce_error_code' => $result['error_code'],
+        'error_code' => $result['error_code'],
       );
     }
   }
 
   $replacements = array();
   foreach ($tokens as $name => $original) {
-    $replacements[$original] = isset($values[$name]) ? $values[$name] : '';
+    $replacements[$original] = isset($values[$name]) ? $values[$name] : 'none';
   }
+
   return $replacements;
 }
 
