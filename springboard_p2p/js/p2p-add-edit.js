@@ -16,7 +16,7 @@
       $(".panel-separator").remove();
 
       // add the missing required date label.
-      $('.date-padding label').once(function() {
+      $('.admin-date-required .date-padding label').once(function() {
       $(this).append('<span class="form-required" title="This field is required.">*</span>');
       });
 
