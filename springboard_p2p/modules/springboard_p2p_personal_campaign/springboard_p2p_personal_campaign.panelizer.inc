@@ -623,17 +623,13 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $display->content['new-af37ece0-1376-4a72-a3f6-31c0f0829987'] = $pane;
     $display->panels['middle_right'][9] = 'new-af37ece0-1376-4a72-a3f6-31c0f0829987';
     $pane = new stdClass();
-    $pane->pid = 'new-bf2d7ebf-2189-4680-a416-29053702fe54';
+    $pane->pid = 'new-9042689c-b289-40fa-ab51-46c9f494f96f';
     $pane->panel = 'middle_right';
-    $pane->type = 'get_started';
-    $pane->subtype = 'get_started';
+    $pane->type = 'views_panes';
+    $pane->subtype = 'p2p_campaign-panel_pane_2';
     $pane->shown = TRUE;
     $pane->access = array();
-    $pane->configuration = array(
-      'text' => '',
-      'override_title' => 0,
-      'override_title_text' => 'Test 1',
-    );
+    $pane->configuration = array();
     $pane->cache = array();
     $pane->style = array(
       'settings' => NULL,
@@ -645,9 +641,9 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->extras = array();
     $pane->position = 10;
     $pane->locks = array();
-    $pane->uuid = 'bf2d7ebf-2189-4680-a416-29053702fe54';
-    $display->content['new-bf2d7ebf-2189-4680-a416-29053702fe54'] = $pane;
-    $display->panels['middle_right'][10] = 'new-bf2d7ebf-2189-4680-a416-29053702fe54';
+    $pane->uuid = '9042689c-b289-40fa-ab51-46c9f494f96f';
+    $display->content['new-9042689c-b289-40fa-ab51-46c9f494f96f'] = $pane;
+    $display->panels['middle_right'][10] = 'new-9042689c-b289-40fa-ab51-46c9f494f96f';
     $pane = new stdClass();
     $pane->pid = 'new-0cd4f51e-4ba7-474d-a3ad-e1a931ded90f';
     $pane->panel = 'middle_top_left';
