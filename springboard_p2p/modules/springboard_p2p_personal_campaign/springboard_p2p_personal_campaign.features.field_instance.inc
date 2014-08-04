@@ -448,7 +448,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
     'entity_type' => 'node',
     'field_name' => 'field_p2p_fundraising_deadline',
     'label' => 'Campaign Deadline',
-    'required' => 1,
+    'required' => 0,
     'settings' => array(
       'default_value' => 'blank',
       'default_value2' => 'same',
@@ -460,12 +460,12 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
       'active' => 1,
       'module' => 'date',
       'settings' => array(
-        'increment' => 15,
+        'increment' => 30,
         'input_format' => 'm/d/Y - H:i:s',
         'input_format_custom' => '',
         'label_position' => 'above',
         'text_parts' => array(),
-        'year_range' => '-3:+3',
+        'year_range' => '-0:+3',
       ),
       'type' => 'date_popup',
       'weight' => 6,

@@ -282,6 +282,7 @@ function springboard_p2p_form_p2p_campaign_node_form_alter(&$form, &$form_state,
       }
     }
   }
+
   // Attach show/hide states to the private campaign error message field.
   $form['field_p2p_private_access_message'][$language][0]['value']['#states'] = array(
     // Hide the settings when the cancel notify checkbox is disabled.
@@ -289,6 +290,7 @@ function springboard_p2p_form_p2p_campaign_node_form_alter(&$form, &$form_state,
       ':input[name="field_p2p_campaigns_approval[' . $language . ']"]' => array('checked' => FALSE),
     ),
   );
+
 }
 
 /**
@@ -428,6 +430,15 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
 
   // Hide uneditable fields.
   if ($campaign_node) {
+
+    // If the admin has set the date field as required in the campaign,
+    // then make it look required.
+    // We have to do this because of a bug with date fields.
+    if (!empty($campaign_node->field_p2p_expiration_required[$campaign_node->language][0]['value'])) {
+      $form['field_p2p_fundraising_deadline'][$form['language']['#value']][0]['#required'] = TRUE;
+      $form['field_p2p_fundraising_deadline']['#attributes']['class'][] = 'admin-date-required';
+    }
+
     // Manage personal campaign goal fields.
     $goal_type = springboard_p2p_get_goal_type_from_campaign($campaign_node);
 
@@ -484,8 +495,16 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
  * Validate handler for the personal campaign node form.
  */
 function springboard_p2p_personal_campaign_validate(&$form, $form_state) {
-  // Validate campaign url alias for uniqueness.
   $language = $form_state['values']['language'];
+
+  // If the admin sets the date as required, then check if it fills in.
+  // We have to do this on our own because of a bug with date fields.
+  $date_required = $form['field_p2p_fundraising_deadline'][$language][0]['#required'];
+  if ($date_required && empty($form_state['values']['field_p2p_fundraising_deadline'][$language][0]['value'])) {
+    form_set_error('field_p2p_fundraising_deadline', t('Campaign deadline is required.'));
+  }
+
+  // Validate campaign url alias for uniqueness.
   $nid = $form_state['values']['nid'];
   $alias = isset($form_state['values']['field_p2p_personal_campaign_url'][$language][0]['value']) ? $form_state['values']['field_p2p_personal_campaign_url'][$language][0]['value'] : FALSE;
 

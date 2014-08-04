@@ -27,6 +27,7 @@ function springboard_p2p_campaign_field_group_info() {
       1 => 'field_p2p_expiration_message',
       2 => 'field_p2p_org_intro',
       3 => 'field_p2p_private_access_message',
+      4 => 'field_p2p_expiration_required',
     ),
     'format_type' => 'htab',
     'format_settings' => array(
