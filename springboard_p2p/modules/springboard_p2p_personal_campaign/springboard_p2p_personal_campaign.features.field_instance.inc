@@ -523,7 +523,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
     'bundle' => 'p2p_personal_campaign',
     'default_value' => NULL,
     'deleted' => 0,
-    'description' => '',
+    'description' => 'This will be the web address of your personal campaign page, which you can change here (letters and numbers only, please).',
     'display' => array(
       'default' => array(
         'label' => 'above',
@@ -542,7 +542,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
     'entity_type' => 'node',
     'field_name' => 'field_p2p_personal_campaign_url',
     'label' => 'Campaign URL',
-    'required' => 0,
+    'required' => 1,
     'settings' => array(
       'text_processing' => 0,
       'user_register_form' => FALSE,
@@ -707,6 +707,7 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
   t('Submission Goal');
   t('Suggested Donation Amount');
   t('This is a Youtube or Vimeo video URL. Example: https://www.youtube.com/watch?v=kJ4CYbCGhLA');
+  t('This will be the web address of your personal campaign page, which you can change here (letters and numbers only, please).');
   t('Upload a Campaign Image');
   t('Upload a Campaign Video');
   t('Upload a campaign thumbnail image. Ideal size is 400 x 240 pixels.');
