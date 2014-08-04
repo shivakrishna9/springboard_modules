@@ -69,6 +69,12 @@
         $(this).next("label").toggleClass('radio-checked', this.checked);
       });
 
+      // Test if checkbox has a default checked value on load.
+      var $checkBoxLoad = $('.webform-client-form input[type="checkbox"]');
+      $checkBoxLoad.each(function() {
+        $(this).next("label").toggleClass('checked', this.checked);
+      });
+
       // Remove the padlock icon, we replace with font-awesome.
       $('.fundraiser_submit_message img ').remove();
 
