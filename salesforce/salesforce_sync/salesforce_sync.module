@@ -290,6 +290,8 @@ function salesforce_sync_salesforce_log_info() {
       'sync-10' => t('SalesforceAPI is unauthorized'),
       'sync-11' => t('SalesforceSoapPartner is unusable'),
       'sync-12' => t('Empty query condition provided'),
+      'sync-13' => t('Item moved to failure queue'),
+
     ),
   );
 }

@@ -878,6 +878,15 @@ class SalesforceSync {
 
     // Invokes hook_salesforce_sync_fail_item().
     module_invoke_all('salesforce_sync_fail_item', $item, $message, $result);
+    if ($item->queue == 'fail') {
+      watchdog('salesforce', '[@id] Sync failed: @item_id (@message) @result',
+        array(
+          '@id' => 'sync-13',
+          '@item_id' => (isset($item->item_id) ? '#' . $item->item_id : 'N/A'),
+          '@message' => t('Permanent failure: ') . $message,
+          '@result' => is_object($result) && method_exists($result, 'getMessage') ? $result->getMessage() : '',
+        ), $severity);
+    }
   }
 
   /**
