@@ -57,11 +57,11 @@ function springboard_p2p_login_intro_render($subtype, $conf, $args, $contexts) {
 
   // Create the output to be rendered.
   if (empty($_GET['p2p_cid'])) {
-    $output[] = '<a class="get-started-link" href=" ' . $loginlink . ' ">' . t('Login') . '<i class="fa fa-cog fa-spin get-started-spinner"></i></a>';
+    $output[] = '<a class="get-started-link" href=" ' . $loginlink . ' ">' . t('Login') . '<i class="fa fa-cog  get-started-spinner"></i></a>';
   }
 
   else {
-    $output[] = '<a class="get-started-link" href=" ' . $loginlink . $loginlinkid . ' ">' . t('Login') . '<i class="fa fa-cog fa-spin get-started-spinner"></i></a>';
+    $output[] = '<a class="get-started-link" href=" ' . $loginlink . $loginlinkid . ' ">' . t('Login') . '<i class="fa fa-cog  get-started-spinner"></i></a>';
   }
 
   // Render the login message text.
