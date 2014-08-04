@@ -429,7 +429,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
     ),
     'entity_type' => 'node',
     'field_name' => 'field_p2p_expiration_message',
-    'label' => 'P2P Expiration Message',
+    'label' => 'Personal Campaign Expiration Message',
     'required' => 1,
     'settings' => array(
       'text_processing' => 1,
@@ -442,6 +442,49 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'rows' => 5,
       ),
       'type' => 'text_textarea',
+      'weight' => 8,
+    ),
+  );
+
+  // Exported field_instance: 'node-p2p_campaign-field_p2p_expiration_required'
+  $field_instances['node-p2p_campaign-field_p2p_expiration_required'] = array(
+    'bundle' => 'p2p_campaign',
+    'default_value' => array(
+      0 => array(
+        'value' => 0,
+      ),
+    ),
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'list',
+        'settings' => array(),
+        'type' => 'list_default',
+        'weight' => 32,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_p2p_expiration_required',
+    'label' => 'Require personal campaign expiration date',
+    'required' => 0,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'options',
+      'settings' => array(
+        'display_label' => 1,
+      ),
+      'type' => 'options_onoff',
       'weight' => 7,
     ),
   );
@@ -1133,11 +1176,12 @@ function springboard_p2p_campaign_field_default_field_instances() {
   t('Landing page slider optional external link');
   t('Landing page slider teaser');
   t('Organization introduction');
-  t('P2P Expiration Message');
   t('Peer to peer campaign label for donation form');
+  t('Personal Campaign Expiration Message');
   t('Personal campaign images');
   t('Personal campaign introduction');
   t('Personal campaigns require approval');
+  t('Require personal campaign expiration date');
   t('Set a message to show when the campaign expires.');
   t('Show constituent comments on personal campaign pages');
   t('Show constituent scroll on personal campaign pages');
