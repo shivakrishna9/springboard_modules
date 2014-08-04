@@ -5,31 +5,6 @@
  */
 
 /**
- * Implements hook_salesforce_queue_create_item_alter().
- * 
- * If the donation was created by a user who came to the site from a share
- * URL (social_referrer_transaction market source field set) we want to
- * try to add the sfid of the original share event to the opportunity as it's
- * going into the queue.
- * 
- * If the original share event hasn't been synced yet (no sfid) we go ahead and
- * sync the opportunity anyway, when the share event syncs we'll requeue any
- * applicable donations.
- */
-function sb_social_salesforce_queue_create_item_alter(&$item) {
-  if ($item['object_type'] == 'Opportunity') {
-    if (!empty($item['sobject']->fields['Social_Referrer_Transaction__c'])) {
-      $sfid = _sb_social_get_share_salesforce_id_from_map($item['sobject']->fields['Social_Referrer_Transaction__c']);
-      // The original share event has synced at some point,
-      // requeue with the sfid for the share event.
-      if ($sfid) {
-        $item['sobject']->fields['Social_Share__c'] = $sfid;
-      }
-    }
-  }
-}
-
-/**
  * Implements hook_salesforce_mapping_map_fields_alter().
  * 
  * Replace Drupal objects either with IDs or with tokens for associated objects in exported 
@@ -73,6 +48,38 @@ function sb_social_salesforce_mapping_map_fields_alter(&$fields, $context) {
             }
           } else {
             $fields[$sf_name] = $submission ? $submission->sid : NULL;
+          }
+          break;
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_salesforce_genmap_map_fields_alter().
+ *
+ * If a donation or other Webform submission was created by a user who came to the site 
+ * from a share URL (e.g., social_referer_transaction market source field was set) we want
+ * to try to link the new donation/submission to the "referer transaction" -- that is, the
+ * social share that produced this new user action.
+ * 
+ * The "social_referer_transaction" value will be populated already by market_source,
+ * giving the numeric share_id. To sync the relationship to Salesforce, we replace the
+ * share_id value with a token so the sync engine can look up the Social_Share__c object's
+ * SFID. 
+ */
+function sb_social_salesforce_genmap_map_fields_alter(&$fields, $context) {
+  // Is this a webform-based mapping (donation, petition, etc.)?
+  if (isset($context['map']->field_map['salesforce_webform_map']) || isset($context['map']->field_map['webform_map'])) {
+    $webform_map = (isset($context['map']->field_map['webform_map']) ? $context['map']->field_map['webform_map'] : array())
+      + (isset($context['map']->field_map['salesforce_webform_map']) ? $context['map']->field_map['salesforce_webform_map'] : array())
+    ;
+    foreach ($webform_map as $drupal_name => $sf_name) {
+      switch ($drupal_name) {
+        case 'social_referer_transaction':
+          // Give Social_Share__c SFID replacement token if there's a share_id, null otherwise.
+          if ($fields[$sf_name] && (int)$fields[$sf_name] > 0) {
+            $fields[$sf_name] = sprintf('[Social_Share__c:sb_social_share:%d]', $fields[$sf_name]);
           }
           break;
       }
@@ -161,3 +168,4 @@ function _sb_social_webform_maps_to_action($nid) {
   }
   return $results[$nid];
 }
+

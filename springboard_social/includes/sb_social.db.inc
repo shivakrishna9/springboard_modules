@@ -569,20 +569,6 @@ function sb_social_update_sf_share_id($item, $record) {
 }
 
 /**
- * Lookup the sfid of a share event that is stored in {salesforce_sync_map}.
- *
- * @param int $share_id
- *   Share event id.
- *
- * @return string
- *   Returns Salesforce ID associated with a given share event.
- */
-function _sb_social_get_share_salesforce_id_from_map($share_id) {
-  $result = db_query('SELECT sfid FROM {salesforce_sync_map} WHERE drupal_id = :share_id AND module = :module AND delta = :delta', array(':share_id' => $share_id, ':module' => "sb_social", ':delta' => "share_event"));
-  return $result->fetchField();
-}
-
-/**
  * Look up the Opportunity Salesforce ID associated with a given Webform sid.
  *
  * @param int $sid
