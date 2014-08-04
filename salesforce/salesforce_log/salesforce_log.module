@@ -346,7 +346,7 @@ function salesforce_log_tokens($type, $tokens, $data, $options) {
   }
   if ($type == 'salesforce_log' && isset($data['node'])) { 
     if(isset($data['node']['variables']['@item_id'])) {
-      $item_id = str_values('#', '', $data['node']['variables']['@item_id']);
+      $item_id = str_replace('#', '', $data['node']['variables']['@item_id']);
       $result = db_query('SELECT * FROM {salesforce_log_item} WHERE item_id = :item_id', array(':item_id' => $item_id))->fetchAssoc();
        $values += array(
         'batch_link' => $GLOBALS['base_url'] . '/springboard/reports/integration-reports/item?bid=' . $result['bid'],
