@@ -333,17 +333,24 @@ function salesforce_log_tokens($type, $tokens, $data, $options) {
 
   $values = array();
   if ($type == 'watchdog' || $type == 'all' && isset($data['node'])) {
-
+    $items = array();
+    if(isset($data['node']['variables'])) {
+      foreach ($data['node']['variables'] as $name => $value) {
+        $items[$name] = $value;
+      }
+      if (isset($data['node']['message'])) {
+        $message = t($data['node']['message'], $items);
+      }
+    }
     $values = array(
       'ip' => isset($data['node']['ip']) ? $data['node']['ip'] : '',
       'link' => isset($data['node']['link']) ? $data['node']['link'] : '',
-      'watchdog_message' => isset($data['node']['variables']['@message']) ? $data['node']['variables']['@message'] : '',
+      'watchdog_message' => isset($message) ? $message  : '',
       'request_uri' => isset($data['node']['request_uri']) ? $data['node']['request_uri'] : '',
       'referer' => isset($data['node']['referer']) ? $data['node']['referer'] : '',
       'severity' => isset($data['node']['severity']) ? $data['node']['severity'] : '',
       'timestamp' => isset($data['node']['timestamp']) ? $data['node']['timestamp'] : '',
     );
-
   }
   if ($type == 'salesforce_log' && isset($data['node'])) { 
     if(isset($data['node']['variables']['@item_id'])) {
@@ -364,7 +371,6 @@ function salesforce_log_tokens($type, $tokens, $data, $options) {
   foreach ($tokens as $name => $original) {
     $replacements[$original] = isset($values[$name]) ? $values[$name] : 'none';
   }
-
   return $replacements;
 }
 
