@@ -504,6 +504,14 @@ function springboard_p2p_personal_campaign_validate(&$form, $form_state) {
     form_set_error('field_p2p_fundraising_deadline', t('Campaign deadline is required.'));
   }
 
+  if (!empty($form_state['values']['field_p2p_fundraising_deadline'][$language][0]['value'])) {
+    $time = strtotime($form_state['values']['field_p2p_fundraising_deadline'][$language][0]['value']);
+
+    if ($time !== FALSE && $time < time()) {
+      form_set_error('field_p2p_fundraising_deadline', t('Campaign deadline must happen in the future.'));
+    }
+  }
+
   // Validate campaign url alias for uniqueness.
   $nid = $form_state['values']['nid'];
   $alias = isset($form_state['values']['field_p2p_personal_campaign_url'][$language][0]['value']) ? $form_state['values']['field_p2p_personal_campaign_url'][$language][0]['value'] : FALSE;
