@@ -329,7 +329,7 @@ function fundraiser_offline_fundraiser_donation_form_js_validation_alter(&$setti
  */
 function fundraiser_offline_fundraiser_donation_form($form, $form_state) {
   if (isset($form['#node']->fundraiser_offline) && $form['#node']->fundraiser_offline) {
-    $link = l('Click here return to online mode', 'node/' . $form['#node']->nid);
+    $link = l('Click here to return to online mode', 'node/' . $form['#node']->nid);
     drupal_set_message(t('This form is currently in offline mode. ' .
       '!link.', array('!link' => $link)));
   }
