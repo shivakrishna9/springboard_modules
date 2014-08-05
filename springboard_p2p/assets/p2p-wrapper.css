@@ -218,6 +218,53 @@ body input[type="submit"].btn:hover {
   transition: all 0.2s ease-in-out;
 }
 
+body.page-user ul.pager {
+  margin: 20px 0 10px 0;
+}
+
+li.pager-current,
+.pager li > a,
+.pager li > span {
+  display: inline-block;
+  padding: 5px 14px;
+  border: 1px solid #ddd;
+  -webkit-border-radius: 0;
+  -moz-border-radius: 0;
+  border-radius: 0;
+  background-color: #fff;
+}
+
+li.pager-current {
+  background-color: #f5f5f5;
+  text-decoration: none;
+}
+
+table {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+table tbody tr {
+  border: 1px solid #ccc;
+}
+
+table th {
+  padding: 4px 0 3px 6px;
+  border-bottom: none;
+  text-align: left;
+}
+
+table tr.even {
+  background-color: #f5f5f5;
+}
+
+table tr.odd {
+  background-color: #fcfcfc;
+}
+
+table td {
+  padding: 3px 3px 3px 6px;
+}
 
 @media (max-width: 979px) {
 

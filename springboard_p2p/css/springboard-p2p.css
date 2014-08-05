@@ -25,24 +25,36 @@ body a {
   color: #0285b0;
 }
 
-.pager {
+.item-list ul.pager {
   margin: 10px 0;
 }
 
-.pager li {
+.item-list ul.pager li {
   display: inline;
   margin: 0 4px;
+  padding: inherit;
 }
 
-.pager li > a,
-.pager li > span {
+.item-list ul li.pager-current,
+.item-list ul.pager li > a,
+.item-list ul.pager li > span {
   display: inline-block;
   padding: 5px 14px;
   border: 1px solid #ddd;
   -webkit-border-radius: 0;
-  -moz-border-radius : 0;
+  -moz-border-radius: 0;
   border-radius: 0;
   background-color: #fff;
+}
+
+.item-list ul.pager li > a:hover {
+  background-color: #f5f5f5;
+}
+
+.item-list ul li.pager-current {
+  background-color: #f5f5f5;
+  text-decoration: none;
+  padding: 5px 4px;
 }
 
 .p2p-page-type h2,
@@ -171,6 +183,10 @@ body input[type="submit"].btn:hover {
 
 .p2p-page-type table td {
   padding: 3px 3px 3px 6px;
+}
+
+.view-p2p-search-for-a-campaign {
+  margin-bottom: 20px;
 }
 
 /* Search widget */

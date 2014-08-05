@@ -354,7 +354,8 @@ input#edit-submit {
   font-size: 19px;
 }
 
-div.donation-processing-wrapper {
+div.donation-processing-wrapper,
+.webform-user-wrapper {
   position: relative;
   float: none;
   clear: none;
@@ -374,9 +375,14 @@ div.donation-processing-wrapper {
   cursor: pointer;
 }
 
-.donation-processing-wrapper p {
+.donation-processing-wrapper p,
+.webform-user-wrapper p {
   margin: 18px 0 0 0;
   font-size: 26px;
+}
+
+.webform-user-wrapper {
+  padding: 5px 0 22px 20px;
 }
 
 /* confirmation page */

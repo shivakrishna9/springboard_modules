@@ -2112,7 +2112,13 @@ function springboard_p2p_page_alter(&$page, $form) {
     }
 
     // Define register / login / password page paths.
-    if ((arg(0) == "p2p" && arg(1) == "register") || (arg(0) == "p2p" && arg(1) == "login") || (arg(0) == "p2p" && arg(1) == "password")) {
+    $paths = array('register', 'login', 'password');
+    if (arg(0) == 'p2p' && in_array(arg(1), $paths)) {
+      $p2p_path = '';
+    }
+
+    // Misc pages.
+    if (arg(0) == 'peer-to-peer-campaign-search') {
       $p2p_path = '';
     }
 
@@ -2229,6 +2235,23 @@ function springboard_p2p_page_alter(&$page, $form) {
       );
       drupal_render($p2p_donation_js);
     }
+  }
+
+}
+
+/**
+ * Implements hook_preprocess_views().
+ *
+ */
+function springboard_p2p_preprocess_views_view(&$vars) {
+
+  // Preprocess views.
+  $view = $vars['view'];
+
+  // Add custom scripts for the the cards view.
+  if ($view->name == 'p2p_search_for_a_campaign') {
+    // Add the p2p-page-type body class to this view.
+    $vars['classes_array'][] = 'p2p-page-type';
   }
 
 }
