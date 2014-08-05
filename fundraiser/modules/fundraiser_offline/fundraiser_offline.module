@@ -7,6 +7,43 @@
  */
 
 /**
+ * Implements hook_menu().
+ */
+function fundraiser_offline_menu() {
+  $items['node/%node/offline'] = array(
+    'access callback' => 'fundraiser_offline_access_offline',
+    'access arguments' => array(1),
+    'page callback' => 'fundraiser_offline_redirect',
+    'page arguments' => array(1),
+    'title' => 'Create an offline donation',
+    'weight' => 5,
+    'type' => MENU_LOCAL_ACTION,
+    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+  );
+  return $items;
+}
+
+/**
+ * Access callback for checking to see if the form can
+ * be placed into offline mode.
+ */
+function fundraiser_offline_access_offline($node) {
+  $offline_mode = !empty($_GET['offline']) ? $_GET['offline'] : FALSE;
+  if (fundraiser_is_donation_type($node->type) && user_access('submit donations offline') && !$offline_mode) {
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+/**
+ * Callback for redirecting a form into offline mode.
+ */
+function fundraiser_offline_redirect($node) {
+  drupal_goto('node/' . $node->nid, array('query' => array('offline' => 'true')));
+}
+
+/**
  * Implements hook_permission().
  */
 function fundraiser_offline_permission() {
@@ -193,7 +230,7 @@ function fundraiser_offline_node_load($nodes, $types) {
   $can_offline = user_access('submit donations offline', $user);
   foreach ($nodes as $node) {
     // If this isn't a fundraiser type, ignore it.
-    if (fundraiser_is_donation_type($node->type)) { 
+    if (fundraiser_is_donation_type($node->type)) {
       $nodes[$node->nid]->fundraiser_offline = $offline && $can_offline;
     }
   }
@@ -292,7 +329,9 @@ function fundraiser_offline_fundraiser_donation_form_js_validation_alter(&$setti
  */
 function fundraiser_offline_fundraiser_donation_form($form, $form_state) {
   if (isset($form['#node']->fundraiser_offline) && $form['#node']->fundraiser_offline) {
-    drupal_set_message('This form is currently in offline mode.');
+    $link = l('Click here return to online mode', 'node/' . $form['#node']->nid);
+    drupal_set_message(t('This form is currently in offline mode. ' .
+      '!link.', array('!link' => $link)));
   }
 }
 
