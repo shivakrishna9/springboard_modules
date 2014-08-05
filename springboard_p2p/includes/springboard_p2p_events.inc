@@ -21,7 +21,7 @@ class SpringboardP2pEvents {
 
     $args = array(
       'account' => $account,
-      'dashboard_url' => $this->dashboardUrl($account->uid),
+      'dashboard_url' => $this->dashboardUrl(),
     );
 
     if (is_null($campaign)) {
@@ -57,7 +57,7 @@ class SpringboardP2pEvents {
     $event = 'springboard_p2p_user_requests_approval';
     $args = array(
       'account' => $account,
-      'dashboard_url' => $this->dashboardUrl($account->uid),
+      'dashboard_url' => $this->dashboardUrl(),
       'campaign' => $campaign,
     );
 
@@ -77,7 +77,7 @@ class SpringboardP2pEvents {
     $event = 'springboard_p2p_user_is_approved';
     $args = array(
       'account' => $account,
-      'dashboard_url' => $this->dashboardUrl($account->uid),
+      'dashboard_url' => $this->dashboardUrl(),
       'campaign' => $campaign,
       'create_personal_campaign_url' => $this->createUrl($campaign->nid),
     );
@@ -97,7 +97,7 @@ class SpringboardP2pEvents {
     $event = 'springboard_p2p_user_is_rejected';
     $args = array(
       'account' => $account,
-      'dashboard_url' => $this->dashboardUrl($account->uid),
+      'dashboard_url' => $this->dashboardUrl(),
       'campaign' => $campaign,
     );
 
@@ -151,7 +151,7 @@ class SpringboardP2pEvents {
     $event = 'springboard_p2p_user_creates_campaign';
     $args = array(
       'account' => $account,
-      'dashboard_url' => $this->dashboardUrl($account->uid),
+      'dashboard_url' => $this->dashboardUrl(),
       'personal_campaign' => $personal_campaign,
     );
 
@@ -161,15 +161,12 @@ class SpringboardP2pEvents {
   /**
    * Provides the user P2P dashboard URL.
    *
-   * @param int $uid
-   *   The user ID.
-   *
    * @return string
    *   The URL.
    */
-  protected function dashboardUrl($uid) {
+  protected function dashboardUrl() {
     $options = array('absolute' => TRUE);
-    return url('user/' . $uid . '/personal-campaigns', $options);
+    return url('p2p/login', $options);
   }
 
   /**
