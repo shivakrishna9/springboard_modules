@@ -135,7 +135,7 @@ function springboard_admin_admin_menu_items() {
       'customized' => 1,
       'weight' => 0,
     );
-  
+
     // Create a menu item for each type of webform.
     // In the future, we will use an intermediate page to choose the form type.
     $types = node_type_get_types();
@@ -177,7 +177,7 @@ function springboard_admin_admin_menu_items() {
       'weight' => 0,
     );
   }
-  
+
   if(module_exists('page_wrappers')) {
     // Asset Library > Page Wrappers.
     $items['admin/springboard/asset-library']['_children']['admin/springboard/asset-library/page_wrapper'] = array(
@@ -200,7 +200,7 @@ function springboard_admin_admin_menu_items() {
     'weight' => 4,
     '_children' => array(),
   );
-  
+
   if(module_exists('webform_goals')) {
   // Marketing & Analytics > Goals.
     $items['admin/springboard/marketing-analytics']['_children']['admin/config/content/webform_goals'] = array(
@@ -212,7 +212,7 @@ function springboard_admin_admin_menu_items() {
       'weight' => 0,
     );
   }
-  
+
   if(module_exists('webform_ab')) {
     // Marketing & Analytics > Multivariate Testing.
     $items['admin/springboard/marketing-analytics']['_children']['admin/content/webform_ab'] = array(
@@ -260,7 +260,7 @@ function springboard_admin_admin_menu_items() {
       'weight' => 4,
     );
   }
-  
+
   if(module_exists('springboard_views')) {
     // Top Level: Reports
     $items['admin/springboard/reports'] = array(
@@ -272,7 +272,7 @@ function springboard_admin_admin_menu_items() {
       'weight' => 5,
       '_children' => array(),
     );
-  
+
     // Reports > Donations.
     $items['admin/springboard/reports']['_children']['admin/reports/salesforce/donations'] = array(
       'link_path' => 'admin/reports/salesforce/donations',
@@ -321,7 +321,7 @@ function springboard_admin_admin_menu_items() {
       'customized' => 1,
       'weight' => 1,
     );
-    
+
     // Reports > Integration Reports > Queue.
     $items['admin/springboard/reports']['_children']['admin/springboard/reports/integration-reports']['_children']['admin/springboard/reports/integration-reports/queue'] = array(
       'link_path' => 'admin/springboard/reports/integration-reports/queue',
@@ -374,7 +374,7 @@ function springboard_admin_admin_menu_items() {
     'weight' => 2,
     '_children' => array(),
   );
-  
+
   if(module_exists('fundraiser_upsell')) {
     // Settings > Settings > Sustainer Upsell.
     $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/springboard/options/fundraiser/fundraiser_upsell'] = array(
@@ -385,7 +385,7 @@ function springboard_admin_admin_menu_items() {
       'customized' => 1,
       'weight' => 0,
     );
-    
+
     // Settings > Settings > Sustainer upsell confirmations.
     $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/springboard/options/fundraiser/fundraiser_upsell/thank-you'] = array(
       'link_path' => 'admin/springboard/options/fundraiser/fundraiser_upsell/thank-you',
@@ -396,8 +396,8 @@ function springboard_admin_admin_menu_items() {
       'weight' => 1,
     );
   }
-  
-  if(module_exists('salesforce_mapping')) { 
+
+  if(module_exists('salesforce_mapping')) {
     // Settings > Settings > Fieldmaps.
     $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/structure/salesforce/mappings'] = array(
       'link_path' => 'admin/structure/salesforce/mappings',
@@ -407,7 +407,7 @@ function springboard_admin_admin_menu_items() {
       'customized' => 1,
       'weight' => 2,
     );
-  
+
     // Settings > Settings > Add salesforce mapping.
     $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/structure/salesforce/mappings/add'] = array(
       'link_path' => 'admin/structure/salesforce/mappings/add',
@@ -417,7 +417,7 @@ function springboard_admin_admin_menu_items() {
       'customized' => 1,
       'weight' => 2,
     );
-    
+
     // Settings > Settings > Import salesforce mapping.
     $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/structure/salesforce/mappings/import'] = array(
       'link_path' => 'admin/structure/salesforce/mappings/import',
@@ -440,7 +440,7 @@ function springboard_admin_admin_menu_items() {
       'weight' => 4,
     );
   }
-  if(module_exists('webform_ab')) {  
+  if(module_exists('webform_ab')) {
     // Settings > Settings > Multivariate Testing Settings.
     $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/config/content/webform_ab'] = array(
       'link_path' => 'admin/config/content/webform_ab',
@@ -495,8 +495,8 @@ function springboard_admin_admin_menu_items() {
       'expanded' => 1,
       'customized' => 1,
       'weight' => 8,
-    ); 
-    
+    );
+
     // Marketing & Analytics > Analytics Integraiton.
     $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/springboard/options/ga'] = array(
       'link_path' => 'admin/springboard/options/ga',
@@ -505,6 +505,39 @@ function springboard_admin_admin_menu_items() {
       'expanded' => 1,
       'customized' => 1,
       'weight' => 8,
+    );
+  }
+
+  if (module_exists('springboard_p2p')) {
+    // Top Level: P2P.
+    $items['admin/springboard/p2p'] = array(
+      'link_path' => 'admin/springboard/p2p',
+      'link_title' => t('P2P'),
+      'menu_name' => 'springboard_admin_menu',
+      'expanded' => 1,
+      'customized' => 1,
+      'weight' => 6,
+      '_children' => array(),
+    );
+
+    // P2P > Dashboard.
+    $items['admin/springboard/p2p']['_children']['dashboard'] = array(
+      'link_path' => 'admin/springboard/p2p',
+      'link_title' => 'Dashboard',
+      'menu_name' => 'springboard_admin_menu',
+      'expanded' => 1,
+      'customized' => 1,
+      'weight' => 0,
+    );
+
+    // P2P > Settings.
+    $items['admin/springboard/p2p']['_children']['settings'] = array(
+      'link_path' => 'admin/springboard/p2p/settings',
+      'link_title' => 'Settings',
+      'menu_name' => 'springboard_admin_menu',
+      'expanded' => 1,
+      'customized' => 1,
+      'weight' => 0,
     );
   }
 
@@ -521,9 +554,9 @@ function springboard_admin_admin_menu_items() {
 }
 
 /**
- * Helper function, deletes springboard admin menu if it already exists and 
+ * Helper function, deletes springboard admin menu if it already exists and
  * recreates it.
- * 
+ *
  * @TODD add option to preserve custom links that may have been manually added
  * to the menu.
  */
@@ -572,14 +605,14 @@ function springboard_admin_create_menu_item($item, &$mlids, $plid = 0, $parent =
   $children = isset($item['_children']) ? $item['_children'] : array();
   // Set the item' parent ID if applicable
   if ($plid > 0) {
-    $item['plid'] = $plid;  
+    $item['plid'] = $plid;
   }
   // Save a the item.
   $mlid = menu_link_save($item, array(), array($plid => $parent));
   $mlids[] = $mlid;
   // If save was successful, loop through child items.
   if ($mlid) {
-    $mlids[] = $mlid;  
+    $mlids[] = $mlid;
     if (!empty($children)) {
       foreach ($children as $key => $child) {
         springboard_admin_create_menu_item($child, $mlids, $mlid, $item);
