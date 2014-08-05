@@ -343,28 +343,27 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
         // TODO: throw visible error? Watchdog?
         drupal_goto('node/add/p2p-personal-campaign');
       }
-      $language = $campaign_node->language;
-      $private_campaign = springboard_p2p_campaign_is_private($campaign_node);
       // If a user attempts to create a personal campaign from a private
       // campaign that they have not been granted access to,
-      // replace form with message and action button.
-      if ($private_campaign && !springboard_p2p_private_campaign_user_is_authorized($user->uid, $campaign_node->nid)) {
-        $node = $form['#node'];
-        $parents = $form['#parents'];
-        $tree = $form['#tree'];
-        $form = array(
-          '#parents' => $parents,
-          '#node' => $node,
-          '#tree' => $tree,
-          '#array_parents' => array(),
-        );
-        $form_state['process_input'] = FALSE;
-        // TODO: add link to request access.
-        $form['unauthorized'] = array(
-          '#markup' => isset($campaign_node->field_p2p_private_access_message[$language][0]['value']) ? $campaign_node->field_p2p_private_access_message[$language][0]['value'] : '',
-        );
-        return;
+      // go somewhere else.
+      elseif (springboard_p2p_campaign_is_private($campaign_node) && !springboard_p2p_private_campaign_user_is_authorized($user->uid, $campaign_node->nid)) {
+
+        $approval = new SpringboardP2pPrivateCampaignApproval($user->uid, $campaign_node->nid);
+        $approval->request();
+
+        if (isset($campaign_node->field_p2p_private_access_message[$language][0]['value'])) {
+          $message = $campaign_node->field_p2p_private_access_message[$language][0]['value'];
+          drupal_set_message(check_plain($message));
+          drupal_set_message(t('The campaign !campaign requires approval. You will be notified via email after your request has been reviewed', array('!campaign' => $campaign_node->title)));
+        }
+
+        $event = new SpringboardP2pEvents();
+        $event->userRequestsApprovalForPrivateCampaign($user, $campaign_node);
+
+        drupal_goto('user/' . $user->uid . '/personal-campaigns');
       }
+
+      $language = $campaign_node->language;
 
       // Prefill the title with a suggestion.
       $form['title']['#default_value'] = springboard_p2p_get_personal_campaign_title_suggestion($campaign_node->title);
