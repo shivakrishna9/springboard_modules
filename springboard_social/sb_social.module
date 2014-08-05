@@ -110,7 +110,7 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
     $page_name = !empty($node->title) ? $node->title : '';
     $type = $node->type;
     $url_path = 'node/' . $node->nid;
-    $settings_id = sb_social_get_sid_by_id($node->nid, 'node');
+    $settings_id = sb_social_get_sid_by_id($id, 'node');
     $internal_name_field = field_get_items('node', $node, 'field_fundraiser_internal_name');
     $internal_name = !empty($internal_name_field[0]['value']) ? $internal_name_field[0]['value'] : '';
   }
