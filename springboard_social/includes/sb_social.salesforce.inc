@@ -78,8 +78,20 @@ function sb_social_salesforce_genmap_map_fields_alter(&$fields, $context) {
       switch ($drupal_name) {
         case 'social_referer_transaction':
           // Give Social_Share__c SFID replacement token if there's a share_id, null otherwise.
-          if ($fields[$sf_name] && (int)$fields[$sf_name] > 0) {
-            $fields[$sf_name] = sprintf('[Social_Share__c:sb_social_share:%d]', $fields[$sf_name]);
+          if ($fields[$sf_name] && $share = sb_social_share_event_load($fields[$sf_name])) {
+            if ($context['object']->nid == $share['nid'] && $context['object']->sid == $share['sid']) {
+              // Extreme edge case: if the refering share is somehow itself a share of this submission,
+              // then remove the field and log an error.
+              unset($fields[$sf_name]);
+              watchdog(
+                'sb_social',
+                'Impossible self-reference! Submission ID %sid is both the referrer and the referral of share ID %share_id.',
+                array('%sid' => $share['sid'], '%share_id' => $share['share_id']),
+                WATCHDOG_ERROR
+              );
+            } else {
+              $fields[$sf_name] = sprintf('[Social_Share__c:sb_social_share:%d]', $share['share_id']);
+            }
           }
           break;
       }
