@@ -307,7 +307,7 @@ function springboard_p2p_form_p2p_campaign_node_form_alter(&$form, &$form_state,
 function springboard_p2p_form_p2p_category_node_form_alter(&$form, &$form_state, $form_id) {
 
   // Create a function to unset the filter choice and tips area.
- // $form['field_p2p_org_intro']['#after_build'][] = '_filter_tips_p2p_campaign_intro';
+  $form['field_p2p_org_intro']['#after_build'][] = '_filter_tips_p2p_campaign_intro';
 
 }
 
@@ -324,7 +324,7 @@ function springboard_p2p_ajax($form, $form_state) {
 function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$form_state, $form_id) {
 
   // Create a function to unset the filter choice and tips area.
-//  $form['body']['#after_build'][] = '_filter_tips_p2p_campaign_intro';
+  $form['body']['#after_build'][] = '_filter_tips_p2p_campaign_intro';
 
   if (springboard_p2p_form_is_node_create($form)) {
     $campaign = isset($_GET['p2p_cid']) ? $_GET['p2p_cid'] : FALSE;
