@@ -559,8 +559,9 @@ function springboard_p2p_personal_campaign_alias_exists($alias, $language, $nid 
 
   // Create a fake node data structure that can be used in token_replace to
   // generate the actual path that path_auto would generate during node save.
-  // The assumption here is that the pattern is configured to use the field_p2p_personal_campaign_url
-  // field. If another field, such as title, is used this will not work.
+  // The assumption here is that the pattern is configured to use the
+  // field_p2p_personal_campaign_url field. If another field,
+  // such as title, is used this will not work.
   $node = new stdClass();
   $node->type = 'p2p_personal_campaign';
   $node->field_p2p_personal_campaign_url[$language][0] = array(
@@ -576,7 +577,8 @@ function springboard_p2p_personal_campaign_alias_exists($alias, $language, $nid 
     return FALSE;
   }
 
-  // If nid is passed and it belongs to the found alias then consider it non-existent.
+  // If nid is passed and it belongs to the found alias then
+  // consider it non-existent.
   if (!empty($nid) && $existing_alias == 'node/' . $nid) {
     return FALSE;
   }
@@ -724,8 +726,6 @@ function springboard_p2p_node_update($node) {
 /**
  * Creates a URL safe path from the node title.
  *
- * @param string $base_path
- *   The p2p base path.
  * @param string $title
  *   The node title.
  *
@@ -777,37 +777,39 @@ function springboard_p2p_full_alias_exists($base_path, $alias, $counter = -1) {
 /**
  * Set default pathauto aliases for each of the P2P node types.
  *
- * @param $p2p_node_types: an array of node types to set aliases for.
- * If no types are provided, use the array below.
+ * @param array $p2p_node_types
+ *   An array of node types to set aliases for.
+ *   If no types are provided, use the array below.
  */
 function springboard_p2p_set_pathauto_default_aliases($p2p_node_types = NULL, $global_force_change = FALSE) {
   if (!isset($p2p_node_types)) {
     $p2p_node_types = array(
       'p2p_campaign_landing' => array(
         'pattern' => 'p2p/[node:title]',
-        'force_change' => FALSE
+        'force_change' => FALSE,
       ),
       'p2p_campaign' => array(
         'pattern' => 'p2p/campaign/[node:title]',
-        'force_change' => FALSE
+        'force_change' => FALSE,
       ),
       'p2p_category' => array(
         'pattern' => 'p2p/category/[node:title]',
-        'force_change' => FALSE
+        'force_change' => FALSE,
       ),
       'p2p_donation_form' => array(
         'pattern' => 'secure/p2p/[node:title]',
-        'force_change' => FALSE
+        'force_change' => FALSE,
       ),
       'p2p_personal_campaign' => array(
         'pattern' => 'p2p/[node:field-p2p-personal-campaign-url]',
-        'force_change' => TRUE
+        'force_change' => TRUE,
       ),
     );
   }
 
-  // For each P2P node type, set the default alias as defined per-node-type above. Only set the
-  // alias pattern if the node type doesn't already have a setting, or 'force_change' is TRUE.
+  // For each P2P node type, set the default alias as defined per-node-type
+  // above. Only set the alias pattern if the node type doesn't already
+  // have a setting, or 'force_change' is TRUE.
   foreach ($p2p_node_types as $node_type => $per_type_settings) {
     $node_type = node_type_load($node_type);
     $variable = 'pathauto_node_' . $node_type->type . '_pattern';
@@ -1735,7 +1737,7 @@ function _springboard_p2p_personal_after_build($form, &$form_state) {
   $mod_path = drupal_get_path('module', 'springboard_p2p');
 
   // Add css and js as needed.
-  // p2p node edit add for
+  // P2p node edit add form.
   $p2p_add_edit = array(
     '#attached' => array(
       'css' => array(
@@ -1902,7 +1904,8 @@ function springboard_p2p_sb_social_init_settings_load_alter(&$settings) {
  */
 function springboard_p2p_sb_social_tokens_data_alter(&$node) {
   $personal_campaign = isset($_SESSION['sb_social_url_context']['personal_campaign_id']) ? $_SESSION['sb_social_url_context']['personal_campaign_id'] : FALSE;
-  // If $_SESSION isn't getting set for whatever reason, check the query string just in case.
+  // If $_SESSION isn't getting set for whatever reason, check the
+  // query string just in case.
   if (!$personal_campaign && $_GET['p2p_pcid']) {
     $personal_campaign = $_GET['p2p_pcid'];
   }
@@ -2250,6 +2253,7 @@ function springboard_p2p_page_alter(&$page, $form) {
 /**
  * Implements hook_preprocess_views().
  *
+ * Adds a class to the p2p search for a campaign View.
  */
 function springboard_p2p_preprocess_views_view(&$vars) {
 
