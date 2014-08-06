@@ -13,7 +13,13 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
   // Exported field_instance: 'node-p2p_personal_campaign-body'
   $field_instances['node-p2p_personal_campaign-body'] = array(
     'bundle' => 'p2p_personal_campaign',
-    'default_value' => NULL,
+    'default_value' => array(
+      0 => array(
+        'summary' => '',
+        'value' => ' ',
+        'format' => 'filtered_html',
+      ),
+    ),
     'deleted' => 0,
     'description' => '',
     'display' => array(

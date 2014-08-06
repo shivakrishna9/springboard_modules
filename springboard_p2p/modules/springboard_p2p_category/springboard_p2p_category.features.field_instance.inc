@@ -289,7 +289,12 @@ function springboard_p2p_category_field_default_field_instances() {
   // Exported field_instance: 'node-p2p_category-field_p2p_personal_intro'
   $field_instances['node-p2p_category-field_p2p_personal_intro'] = array(
     'bundle' => 'p2p_category',
-    'default_value' => NULL,
+    'default_value' => array(
+      0 => array(
+        'value' => ' ',
+        'format' => 'filtered_html',
+      ),
+    ),
     'deleted' => 0,
     'description' => '',
     'display' => array(

@@ -385,10 +385,6 @@ function springboard_p2p_personal_campaign_market_source_external_field_keys() {
  * Personal campaign node add form alterations.
  */
 function springboard_p2p_personal_campaign_form_p2p_personal_campaign_node_form_alter(&$form, &$form_state, $form_id) {
-  // Create a function to unset the filter choice and tips area.
-  //@Todo - this may need a role tweak so this does not happen for everyone.
-  $form['body']['#after_build'][] = '_filter_tips_p2p_personal_body_form';
-
   // Add support for Market Source values to the node add/edit form.
   $form['#after_build'][] = 'market_source_webform_after_build';
   $qs_keys = _market_source_build_qs_keys();
@@ -408,18 +404,6 @@ function springboard_p2p_personal_campaign_form_p2p_personal_campaign_node_form_
       }
     }
   }
-
-  // Define the personal campaign.
-//  if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid'])) {
-//    $personal_campaign = node_load($_GET['p2p_pcid']);
-//  }
-
-  // Load the user.
-//  $owner = user_load($personal_campaign->uid);
-//  $owner_name = springboard_p2p_format_user_full_name($owner);
-
-  // Now set the node add title with the name.
-//  drupal_set_title($owner_name . t(', Create Your Campaign'));
 
 }
 
@@ -496,15 +480,6 @@ function springboard_p2p_personal_campaign_market_source_build_form_keys_alter(&
       }
     }
   }
-}
-
-
-/**
- * Our custom filter tips function from above.
- */
-function _filter_tips_p2p_personal_body_form(&$form) {
-  $form['und'][0]['format']['#access'] = FALSE;
-  return $form;
 }
 
 /**

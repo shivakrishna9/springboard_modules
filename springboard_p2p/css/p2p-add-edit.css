@@ -482,3 +482,7 @@ clear: none;
 .pane-node-field-p2p-personal-campaign-goal input {
   text-indent: 26px;
 }
+
+.panel-pane.pane-entity-form-field.pane-node-body {
+  margin: 0 0 20px;
+}

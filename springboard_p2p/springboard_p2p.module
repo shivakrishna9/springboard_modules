@@ -192,6 +192,10 @@ function springboard_p2p_form_views_form_p2p_user_approval_block_alter(&$form, &
  * Implements hook_form_FORM_ID_alter().
  */
 function springboard_p2p_form_p2p_campaign_node_form_alter(&$form, &$form_state, $form_id) {
+
+  // Create a function to unset the filter choice and tips area.
+  $form['field_p2p_org_intro']['#after_build'][] = '_filter_tips_p2p_campaign_intro';
+
   $language = $form['language']['#value'];
   if (springboard_p2p_form_is_node_create($form)) {
     $ajax_trigger = 'field_p2p_category';
@@ -298,6 +302,16 @@ function springboard_p2p_form_p2p_campaign_node_form_alter(&$form, &$form_state,
 }
 
 /**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function springboard_p2p_form_p2p_category_node_form_alter(&$form, &$form_state, $form_id) {
+
+  // Create a function to unset the filter choice and tips area.
+  $form['field_p2p_org_intro']['#after_build'][] = '_filter_tips_p2p_campaign_intro';
+
+}
+
+/**
  * AJAX callback for prefilling content when a category is selected.
  */
 function springboard_p2p_ajax($form, $form_state) {
@@ -308,6 +322,9 @@ function springboard_p2p_ajax($form, $form_state) {
  * Implements hook_form_FORM_ID_alter().
  */
 function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$form_state, $form_id) {
+
+  // Create a function to unset the filter choice and tips area.
+  $form['body']['#after_build'][] = '_filter_tips_p2p_campaign_intro';
 
   if (springboard_p2p_form_is_node_create($form)) {
     $campaign = isset($_GET['p2p_cid']) ? $_GET['p2p_cid'] : FALSE;
@@ -492,6 +509,25 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
   // Hide progress fields.
   $form['field_p2p_campaign_progress']['#access'] = FALSE;
   $form['#validate'][] = 'springboard_p2p_personal_campaign_validate';
+}
+
+/**
+ * Our custom filter tips function from above.
+ */
+function _filter_tips_p2p_campaign_intro(&$form) {
+
+  // Unset / remove the filter tips area for campaign intros.
+  $form[LANGUAGE_NONE][0]['format']['guidelines']['#access'] = FALSE;
+  $form[LANGUAGE_NONE][0]['format']['help']['#access'] = FALSE;
+  // We use js here as it can't be done with form alter for just the filters select list.
+  // We also get rid of the disable rich text for wysiwyg.
+  $filterjs = 'jQuery(document).ready(function($) {
+  $("fieldset.filter-wrapper, .wysiwyg-toggle-wrapper").remove();
+  });';
+  drupal_add_js($filterjs, 'inline');
+
+  return $form;
+
 }
 
 /**
