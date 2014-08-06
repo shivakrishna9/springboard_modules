@@ -8,6 +8,7 @@ configure = admin/config/services/springboard_social
 dependencies[] = shorten
 dependencies[] = fundraiser
 dependencies[] = fundraiser_webform
+dependencies[] = market_source
 dependencies[] = salesforce_queue
 dependencies[] = salesforce_genmap
 
