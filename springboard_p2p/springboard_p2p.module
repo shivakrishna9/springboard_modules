@@ -282,6 +282,10 @@ function springboard_p2p_form_p2p_campaign_node_form_alter(&$form, &$form_state,
       }
     }
   }
+  else {
+    // The privateness of a campaign cannot be changed after it is created.
+    $form['field_p2p_campaigns_approval'][$language]['#disabled'] = TRUE;
+  }
 
   // Attach show/hide states to the private campaign error message field.
   $form['field_p2p_private_access_message'][$language][0]['value']['#states'] = array(
