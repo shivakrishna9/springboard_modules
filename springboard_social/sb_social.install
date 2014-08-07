@@ -184,31 +184,6 @@ function sb_social_schema() {
       'path' => array('path'),
     ),
   );
-  $schema['sb_social_submissions'] = array(
-    'description' => 'lookup table, stores webform submission id and donation id for submissions related to a share',
-    'fields' => array(
-      'share_id' => array(
-        'description' => 'share id',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'sid' => array(
-        'description' => 'webform submission id',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'did' => array(
-        'description' => 'donation id',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-    ),
-  );
   return $schema;
 }
 
@@ -315,4 +290,11 @@ function sb_social_update_7006() {
   );
   db_add_field('sb_social_shares', 'did', $field);
 
+}
+
+/**
+ * Drop the deprecated {sb_social_submissions} table.
+ */
+function sb_social_update_7007() {
+  db_drop_table('sb_social_submissions');
 }
