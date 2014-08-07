@@ -608,42 +608,6 @@ function _sb_social_get_opportunity_id_from_share_id($share_id) {
 }
 
 /**
- * Save a record to the submissions tracking table.
- *
- * When a user comes to the site from a share url and makes a donation we want
- * to store that information.
- *
- * @param int $share_id
- *   Share event unique id.
- *
- * @param int $submission_id
- *   Webform submission ID.
- *
- * @param int $donation_id
- *   Fundraiser donations id.
- */
-function sb_social_submission_save($share_id, $submission_id, $donation_id = 0) {
-  $record = array(
-    'share_id' => $share_id,
-    'sid' => $submission_id,
-    'did' => $donation_id,
-  );
-  drupal_write_record('sb_social_submissions', $record);
-}
-
-/**
- * Return a list of donation ids that are related to this share event.
- *
- * @param int $share_id
- *   Social Share event ID.
- */
-function sb_social_load_related_donation_ids($share_id) {
-  $donation_ids = array();
-  $result = db_query('SELECT did FROM {sb_social_submissions} WHERE share_id = :share_id', array(':share_id' => $share_id));
-  return $result->fetchCol();
-}
-
-/**
  * Add did value to shares table.
  */
 function sb_social_update_did($sid, $did) {

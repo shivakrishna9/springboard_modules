@@ -962,31 +962,6 @@ function sb_social_salesforce_sync_pass_item($item, $result) {
     // This may let us sidestep future performance issues
     // as {salesforce_sync_map} has a ton of records.
     sb_social_update_sf_share_id($item, $result);
-
-    // Check for donations related to this share event and resync them with the
-    // correct sfid for the share event.
-    $donation_ids = sb_social_load_related_donation_ids($item->drupal_id);
-
-    // Requeue, alter hook should add the sfid of the share.
-    foreach ($donation_ids as $donation_id) {
-      $donation = fundraiser_donation_get_donation($donation_id, TRUE);
-      salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
-    }
-  }
-}
-
-
-/**
- * Implements hook_fundraiser_donation_success().
- *
- * On successful donation, if the donation came from a share url, we want to add
- * that event to the submissions table.
- */
-function sb_social_fundraiser_donation_success($donation) {
-  // Social MS field has a share transaction value, submission
-  // is associated with a share.
-  if (!empty($donation->donation['social_referer_transaction'])) {
-    sb_social_submission_save($donation->donation['social_referer_transaction'], $donation->sid, $donation->did);
   }
 }
 
