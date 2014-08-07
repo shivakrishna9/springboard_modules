@@ -334,7 +334,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
       ),
     ),
     'deleted' => 0,
-    'description' => '',
+    'description' => 'This setting cannot be changed after campaign creation.',
     'display' => array(
       'default' => array(
         'label' => 'hidden',
@@ -1193,6 +1193,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
   t('Suggested donation amount');
   t('This content can be overridden by campaigner');
   t('This is a Youtube or Vimeo video URL. Example: https://www.youtube.com/watch?v=kJ4CYbCGhLA');
+  t('This setting cannot be changed after campaign creation.');
   t('This will display at the bottom of the donation form, above the option for users to display their name on the campaign and leave a comment.');
   t('Upload a campaign Thumbnail. The minimum size should be 400 x 240 pixels.');
   t('Upload a campaign banner. Suggested size is 1170 x 240 pixels.');
