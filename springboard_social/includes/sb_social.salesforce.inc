@@ -100,6 +100,48 @@ function sb_social_salesforce_genmap_map_fields_alter(&$fields, $context) {
 }
 
 /**
+ * Implements hook_salesforce_queue_process_items_alter().
+ */
+function sb_social_salesforce_queue_process_items_alter(&$items, $queue) {
+  // Remove donation/submission item from the queue if it has an originating share that hasn't
+  // yet synced. Most likely, the share will sync later in this run, and this item will sync next
+  // time.
+  if (!empty($items)) {
+    foreach ($items as $delta => $item) {
+      // We're only concerned with donations or other Webform submissions.
+      if (in_array($item->module, array('webform', 'salesforce_donation'))) {
+        foreach ($item->sobject->fields as $name => $value) {
+          if (is_string($value) && substr($value, 0, 33) == '[Social_Share__c:sb_social_share:') {
+            // Has the referenced share been synced?
+            $share_id = (int)substr($value, 33, -1);
+            $sfid = db_select('salesforce_sync_map', 'm')
+              ->fields('m', array('sfid'))
+              ->condition('object_type', 'Social_Share__c')
+              ->condition('delta', 'sb_social_share')
+              ->condition('drupal_id', $share_id)
+              ->execute()
+              ->fetchField()
+            ;
+            if (!$sfid) {
+              // It can't sync yet, so remove this item from processing and leave it in the queue.
+              unset($items[$delta]);
+              // Log a warning message.
+              watchdog(
+                'sb_social',
+                "Skipped syncing %sf_type from Drupal ID %drupal_id because share ID %share_id hasn't synced yet.",
+                array('%sf_type' => $item->object_type, '%drupal_id' => $item->drupal_id, '%share_id' => $share_id),
+                WATCHDOG_WARNING
+              );
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+
+/**
  * Generate a Salesforce object to sync a social share event
  *
  * @param $share
