@@ -1886,6 +1886,7 @@ function springboard_p2p_webform_client_form_submit($form, &$form_state) {
       'personal_campaign_id' => $form_state['values']['personal_campaign_id'],
     );
     $_SESSION['sb_social_url_context'] = $url_context;
+    drupal_session_commit();
   }
 }
 
@@ -1936,6 +1937,7 @@ function springboard_p2p_sb_social_init_settings_load_alter(&$settings) {
   if (arg(0) == 'node' && is_numeric(arg(1)) && !arg(2)) {
     if (!$p2p_pcid && $personal_campaign) {
       $_SESSION['sb_social_url_context']['personal_campaign_id'] = FALSE;
+      drupal_session_commit();
       // Purge Market Source value.
       if (isset($_COOKIE['market_source__p2p_pcid'])) {
         setcookie('market_source__p2p_pcid');
@@ -1946,11 +1948,13 @@ function springboard_p2p_sb_social_init_settings_load_alter(&$settings) {
   if (!$personal_campaign && $p2p_pcid) {
     $personal_campaign = $p2p_pcid;
     $_SESSION['sb_social_url_context']['personal_campaign_id'] = $p2p_pcid;
+    drupal_session_commit();
   }
   elseif ($p2p_pcid && $personal_campaign != $p2p_pcid) {
     // If a value is set in the query string it should override any existing
     // value in the session.
     $_SESSION['sb_social_url_context']['personal_campaign_id'] = $p2p_pcid;
+    drupal_session_commit();
   }
   // Personal campaign id should only be set when a donation form is submitted
   // with a personal campaign association. Under these conditions we want to use
@@ -1969,7 +1973,7 @@ function springboard_p2p_sb_social_tokens_data_alter(&$node) {
   $personal_campaign = isset($_SESSION['sb_social_url_context']['personal_campaign_id']) ? $_SESSION['sb_social_url_context']['personal_campaign_id'] : FALSE;
   // If $_SESSION isn't getting set for whatever reason, check the
   // query string just in case.
-  if (!$personal_campaign && $_GET['p2p_pcid']) {
+  if (!$personal_campaign && !empty($_GET['p2p_pcid'])) {
     $personal_campaign = $_GET['p2p_pcid'];
   }
   if ($personal_campaign) {
