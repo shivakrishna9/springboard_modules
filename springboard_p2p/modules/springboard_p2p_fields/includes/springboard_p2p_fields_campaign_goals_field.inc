@@ -122,21 +122,26 @@ class SpringboardP2pCampaignGoalsField {
    */
   public function save($goal_set_id, $rows) {
     $table = 'springboard_p2p_fields_campaign_goals';
-    $create = FALSE;
+
     if (is_null($goal_set_id)) {
       $next_id = db_query("SELECT MAX(goal_set_id) FROM {springboard_p2p_fields_campaign_goals}")->fetchField();
       $goal_set_id = ++$next_id;
-      $create = TRUE;
     }
 
     foreach ($rows as $row) {
       $row['goal_set_id'] = $goal_set_id;
 
-      if ($create) {
-        drupal_write_record($table, $row);
+      $args = array(
+        ':goal_set_id' => $row['goal_set_id'],
+        ':type' => $row['type'],
+      );
+      $row_exists = db_query_range("SELECT COUNT(*) FROM {springboard_p2p_fields_campaign_goals} WHERE goal_set_id = :goal_set_id AND type = :type", 0, 1, $args)->fetchField();
+
+      if ($row_exists) {
+        drupal_write_record($table, $row, array('goal_set_id', 'type'));
       }
       else {
-        drupal_write_record($table, $row, array('goal_set_id', 'type'));
+        drupal_write_record($table, $row);
       }
     }
 
