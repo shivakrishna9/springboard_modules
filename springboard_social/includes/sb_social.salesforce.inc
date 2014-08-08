@@ -119,13 +119,12 @@ function sb_social_salesforce_genmap_map_fields_alter(&$fields, $context) {
  * Implements hook_salesforce_queue_process_items_alter().
  */
 function sb_social_salesforce_queue_process_items_alter(&$items, $queue) {
-  // Remove donation/submission item from the queue if it has an originating share that hasn't
-  // yet synced. Most likely, the share will sync later in this run, and this item will sync next
-  // time.
+  // Remove donation/submission or user item from the queue if it has an originating share that hasn't
+  // yet synced. Most likely, the share will sync later in this run, and this item will sync next time.
   if (!empty($items)) {
     foreach ($items as $delta => $item) {
-      // We're only concerned with donations or other Webform submissions.
-      if (in_array($item->module, array('webform', 'salesforce_donation'))) {
+      // We're only concerned with donations, other Webform submissions, or users.
+      if (in_array($item->module, array('webform', 'salesforce_donation', 'user'))) {
         foreach ($item->sobject->fields as $name => $value) {
           if (is_string($value) && substr($value, 0, 33) == '[Social_Share__c:sb_social_share:') {
             // Has the referenced share been synced?
