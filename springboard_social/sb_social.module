@@ -613,7 +613,7 @@ function sb_social_market_source_field_info() {
   $fields = array();
   // Transaction that generated the refered conversion (sid).
   $fields['social_referer_transaction'] = array(
-    '#title' => t('social referrer transaction'),
+    '#title' => t('Originating Social Share'),
     '#type' => 'hidden',
     '#value' => '',
     '#required' => 0,
@@ -800,6 +800,62 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
 function sb_social_webform_confirmations_token_replace_alter(&$tokens, $sid) {
   $settings = _sb_social_get_settings_by_sid($sid);
 
+}
+
+/**
+ * Implements hook_springboard_default_user_profile_alter().
+ */
+function sb_social_springboard_default_user_profile_alter(&$profile_fields, $mode) {
+  $field_config = _sb_social_originating_share_profile_field();
+  $profile_fields[] = $field_config['field_instance'];
+}
+
+function _sb_social_originating_share_profile_field() {
+  $t = get_t();
+  return array(
+    'field_config' => array(
+      'type' => 'number_integer',
+      'cardinality' => 1,
+      'locked' => TRUE,
+      'settings' => array(
+        'min' => '0',
+      ),
+      'entity_types' => array(),
+      'field_name' => 'sbp_social_originating_share',
+      'foreign keys' => array(),
+      'indexes' => array(),
+      'translatable' => FALSE,
+    ),
+    'field_instance' => array(
+      'field_name' => 'sbp_social_originating_share',
+      'label' => $t('Originating Social Share'),
+      'entity_type' => 'user',
+      'bundle' => 'user',
+      'type' => 'number_integer',
+      'default_value' => 0,
+      'description' => $t('If the user registered by submitting a form in response to a social share, the share_id of the originating share.'),
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+        ),
+        'teaser' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+        ),
+      ),
+      'widget' => array(
+        'type' => 'text_textfield',
+      ),
+      'required' => FALSE,
+      'settings' => array(
+        'text_processing' => FALSE,
+        'user_register_form' => FALSE,
+      ),
+    ),
+  );
 }
 
 /**
