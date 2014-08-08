@@ -474,7 +474,7 @@ function fundraiser_node_view($node, $view_mode, $langcode) {
       // Throw a warning if no confirmation email has been configured.
       if (module_exists('email_wrappers') && !email_wrappers_load_settings($node->nid, NULL)) {
         drupal_set_message(t('No confirmation emails have been configured for this donation form.' .
-          ' Users who submit a donation will not recieve an email confirming their donation.'), 'warning');
+          ' Users who submit a donation will not receive an email confirming their donation.'), 'warning');
       }
 
       // Allow other modules to throw up warnings on the donation form

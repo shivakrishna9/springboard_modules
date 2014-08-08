@@ -54,7 +54,7 @@ function sb_social_permission() {
   $permissions = array(
     'administer springboard social' => array(
       'title' => t('Administer Springboard Social'),
-      'description' => t('Configure Springboar Social module settings'),
+      'description' => t('Configure Springboard Social module settings'),
     ),
     'edit own share content' => array(
       'title' => t('Edit own share content'),

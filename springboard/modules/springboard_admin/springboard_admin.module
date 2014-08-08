@@ -205,7 +205,7 @@ function springboard_admin_form_springboard_admin_settings_alter(&$form, &$form_
 /**
  * Implements hook_init().
  * 
- * Checks to see if the current user recieves the Springboard UX. If so, make 
+ * Checks to see if the current user receives the Springboard UX. If so, make 
  * sure they are always redirected to the Springboard admin path rather than the 
  * Drupal admin path.
  * 
