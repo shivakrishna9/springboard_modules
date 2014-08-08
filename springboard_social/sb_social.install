@@ -10,6 +10,7 @@
 function sb_social_install() {
   $path = drupal_realpath(file_default_scheme() . '://') . '/social_images';
   file_prepare_directory($path, FILE_CREATE_DIRECTORY);
+  _sb_social_install_profile_originating_share_field();
 }
 
 
@@ -188,6 +189,29 @@ function sb_social_schema() {
 }
 
 /**
+ * Add Originating Social Share field (sbp_social_originating_share) to user profiles.
+ */
+function _sb_social_install_profile_originating_share_field() {
+  module_load_include('inc', 'field', 'field.crud');
+  module_load_include('inc', 'field', 'field.info');
+  $field = _sb_social_originating_share_profile_field();
+  // Make sure the field doesn't already exist before creating.
+  if (!field_info_field($field['field_config']['field_name'])) {
+    field_create_field($field['field_config']);
+    drupal_set_message(t('%field_label field created.', array('%field_label' => 'Originating Social Share')));
+  }
+  // Make sure the field instance doesn't already exist for users before creating.
+  if (!field_info_instance('user', $field['field_instance']['field_name'], 'user')) {
+    field_create_instance($field['field_instance']);
+    drupal_set_message(t('%field_label field added to user profiles.', array('%field_label' => 'Originating Social Share')));
+  }
+  // Add the originating share to the market_source/webform_user mapping.
+  $map = variable_get('market_source_to_user_map', array());
+  $map['sbp_social_originating_share'] = 'social_referer_transaction';
+  variable_set('market_source_to_user_map', $map);
+}
+
+/**
  * Add indexes to tables.
  */
 function sb_social_update_7001() {
@@ -297,4 +321,11 @@ function sb_social_update_7006() {
  */
 function sb_social_update_7007() {
   db_drop_table('sb_social_submissions');
+}
+
+/**
+ * Add Originating Social Share field (sbp_social_originating_share) to user profiles.
+ */
+function sb_social_update_7008() {
+  _sb_social_install_profile_originating_share_field();
 }
