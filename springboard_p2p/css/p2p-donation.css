@@ -13,7 +13,20 @@
 }
 
 #edit-submitted-donation-amount .form-item {
+  display: inline-block;
+  margin-right: 3%;
   width: inherit;
+}
+
+#webform-component-donation--other-amount {
+  position: relative;
+}
+
+#webform-component-donation--other-amount .field-prefix {
+  position: absolute;
+  top: 38px;
+  left: 10px;
+  font-size: 18px;
 }
 
 #other-wrapper {
@@ -61,7 +74,7 @@ input[type='email']:focus {
 .p2p-donation-form #uniform-edit-submitted-billing-information-country .ajax-progress .throbber {
   position: relative;
   top: -35px;
-  left: 229px;
+  left: 250px;
   z-index: 300;
   display: inline-block;
   float: none;
@@ -87,8 +100,8 @@ textarea {
 }
 
 input#edit-submitted-payment-information-payment-fields-credit-card-cvv {
-  width: 78px;
   margin-right: 10px;
+  width: 78px;
 }
 
 .control-group .checkbox-input,
@@ -250,6 +263,11 @@ legend {
 
 input#edit-submitted-donation-other-amount {
   width: 100%;
+  text-indent: 20px;
+}
+
+label[for="edit-submitted-donation-other-amount"] {
+  font-weight: bold;
 }
 
 input#edit-submit {

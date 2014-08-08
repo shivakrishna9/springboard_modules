@@ -8,6 +8,11 @@
     attach: function (context, settings) {
 // End drupal calls.
 
+      // Add uniform to selects.
+      $('select').once('p2p-select', function () {
+        $(this).uniform();
+      });
+
       // set a var for the p2p donation form page type.
       var p2pd = '.p2p-donation-form';
 

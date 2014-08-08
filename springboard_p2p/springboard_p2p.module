@@ -2171,21 +2171,25 @@ function springboard_p2p_page_alter(&$page, $form) {
     // Global node.
     $node = menu_get_object();
 
+    // Define the form types.
+    $is_fundraiser_type = fundraiser_is_donation_type($node->type);
+    $is_webform_user_type = _webform_user_is_webform_user_node_type($node->type);
+
     // Define the module path for use below.
     $mod_path = drupal_get_path('module', 'springboard_p2p');
 
-    // Query the url string to see if it's a p2p donation form
-    // but not the thank you page.
-    if (empty($_GET['sid'])) {
-      if (!empty($_GET['p2p_pcid']) && fundraiser_is_donation_type($node->type)) {
-        $p2p_donation_path = '';
+    // Query the url string to see if it's a p2p donation form or p2p webform_user form.
+    if ($is_fundraiser_type || $is_webform_user_type) {
+      // Query the url string to see if it belongs to P2P.
+      if (!empty($_GET['p2p_pcid'])) {
+        $p2p_form_path = '';
       }
     }
 
     // Check for a p2p donation thank you page.
     if (!empty($_GET['sid'])) {
       if (!empty($_GET['p2p_pcid'])) {
-        $p2p_thanks_path = '';
+        $p2p_form_path = '';
       }
     }
 
@@ -2208,7 +2212,7 @@ function springboard_p2p_page_alter(&$page, $form) {
     );
 
     // Global p2p css file - nodes, p2p reg, p2p donation.
-    if ((!empty($node) && in_array($node->type, $node_types)) || (isset($p2p_path)) || (isset($p2p_donation_path)) || (isset($p2p_thanks_path))) {
+    if ((!empty($node) && in_array($node->type, $node_types)) || (isset($p2p_path)) || (isset($p2p_form_path))) {
 
       $p2p_css = array(
         '#attached' => array(
@@ -2288,7 +2292,7 @@ function springboard_p2p_page_alter(&$page, $form) {
     }
 
     // Just the p2p donation path.
-    if ((isset($p2p_donation_path)) || (isset($p2p_thanks_path))) {
+    if (isset($p2p_form_path)) {
       $p2p_donation_css = array(
         '#attached' => array(
           'css' => array(

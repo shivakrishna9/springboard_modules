@@ -20,11 +20,15 @@
       $(this).append('<span class="form-required" title="This field is required.">*</span>');
       });
 
-      // Add uniform to selects
-      $("select").uniform();
+      // Add uniform to selects.
+      $('select').once('p2p-select', function () {
+        $(this).uniform();
+      });
 
       // Add uniform to file upload.
-      $('input[type=file]').uniform();
+      $('input[type=file]').once('p2-pfile', function () {
+        $(this).uniform();
+      });
 
         // Runs on Fundraising goal field
         $('#edit-field-p2p-personal-campaign-goal-und-0-value').blur(function(){

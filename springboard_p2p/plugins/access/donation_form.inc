@@ -41,8 +41,12 @@ function springboard_p2p_donation_form_ctools_access_check($conf, $context) {
   // Define the node object.
   $node = menu_get_object();
 
-  // First, check to see if we are on any kind of donation form.
-  if (fundraiser_is_donation_type($node->type)) {
+  // Define the form types.
+  $is_fundraiser_type = fundraiser_is_donation_type($node->type);
+  $is_webform_user_type = _webform_user_is_webform_user_node_type($node->type);
+
+  // Check to see if we are on a webform_user form or donation form.
+  if ($is_fundraiser_type || $is_webform_user_type) {
 
     // Query the url string to see if it belongs to P2P.
     if (empty($_GET['p2p_pcid'])) {
