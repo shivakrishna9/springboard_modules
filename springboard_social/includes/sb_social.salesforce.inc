@@ -11,6 +11,7 @@
  * social share items, depending on what should be mapped to the SF field.
  */
 function sb_social_salesforce_mapping_map_fields_alter(&$fields, $context) {
+  // Handle mappings of sb_social_share entities.
   if ($context['entity_type'] == 'sb_social_share') {
     $wrapper = $context['entity_wrapper'];
     foreach ($context['map']->field_mappings as $field_mapping) {
@@ -48,6 +49,21 @@ function sb_social_salesforce_mapping_map_fields_alter(&$fields, $context) {
             }
           } else {
             $fields[$sf_name] = $submission ? $submission->sid : NULL;
+          }
+          break;
+      }
+    }
+  }
+  // Handle mappings of users.
+  if ($context['entity_type'] == 'user') {
+    foreach ($context['map']->field_mappings as $field_mapping) {
+      $drupal_name = $field_mapping['drupal_field']['fieldmap_value'];
+      $sf_name = $field_mapping['salesforce_field']['name'];
+      switch ($drupal_name) {
+        case 'sbp_social_originating_share':
+          // Replace share_id with Social_Share__c SFID token if SF field is a reference field.
+          if ('reference' == $field_mapping['salesforce_field']['type']) {
+            $fields[$sf_name] = sprintf('[Social_Share__c:sb_social_share:%d]', $fields[$sf_name]);
           }
           break;
       }
