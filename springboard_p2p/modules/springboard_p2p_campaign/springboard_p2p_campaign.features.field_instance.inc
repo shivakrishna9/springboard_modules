@@ -1013,10 +1013,15 @@ function springboard_p2p_campaign_field_default_field_instances() {
     'display' => array(
       'default' => array(
         'label' => 'above',
-        'module' => 'text',
-        'settings' => array(),
-        'type' => 'text_default',
-        'weight' => 26,
+        'module' => 'number',
+        'settings' => array(
+          'decimal_separator' => '.',
+          'prefix_suffix' => TRUE,
+          'scale' => 2,
+          'thousand_separator' => ' ',
+        ),
+        'type' => 'number_decimal',
+        'weight' => 33,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -1027,19 +1032,20 @@ function springboard_p2p_campaign_field_default_field_instances() {
     ),
     'entity_type' => 'node',
     'field_name' => 'field_p2p_suggested_donation',
-    'label' => 'Suggested donation amount',
+    'label' => 'Suggested Donation Amount',
     'required' => 0,
     'settings' => array(
-      'text_processing' => 0,
+      'max' => '',
+      'min' => '',
+      'prefix' => '$',
+      'suffix' => '',
       'user_register_form' => FALSE,
     ),
     'widget' => array(
-      'active' => 1,
-      'module' => 'text',
-      'settings' => array(
-        'rows' => 5,
-      ),
-      'type' => 'text_textarea',
+      'active' => 0,
+      'module' => 'number',
+      'settings' => array(),
+      'type' => 'number',
       'weight' => 21,
     ),
   );
@@ -1190,7 +1196,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
   t('Set a message to show when the campaign expires.');
   t('Show constituent comments on personal campaign pages');
   t('Show constituent scroll on personal campaign pages');
-  t('Suggested donation amount');
+  t('Suggested Donation Amount');
   t('This content can be overridden by campaigner');
   t('This is a Youtube or Vimeo video URL. Example: https://www.youtube.com/watch?v=kJ4CYbCGhLA');
   t('This setting cannot be changed after campaign creation.');

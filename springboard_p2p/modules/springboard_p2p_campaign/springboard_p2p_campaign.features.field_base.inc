@@ -444,24 +444,17 @@ function springboard_p2p_campaign_field_default_field_bases() {
     'deleted' => 0,
     'entity_types' => array(),
     'field_name' => 'field_p2p_suggested_donation',
-    'foreign keys' => array(
-      'format' => array(
-        'columns' => array(
-          'format' => 'format',
-        ),
-        'table' => 'filter_format',
-      ),
-    ),
-    'indexes' => array(
-      'format' => array(
-        0 => 'format',
-      ),
-    ),
+    'foreign keys' => array(),
+    'indexes' => array(),
     'locked' => 0,
-    'module' => 'text',
-    'settings' => array(),
+    'module' => 'number',
+    'settings' => array(
+      'decimal_separator' => '.',
+      'precision' => 10,
+      'scale' => 2,
+    ),
     'translatable' => 0,
-    'type' => 'text_long',
+    'type' => 'number_decimal',
   );
 
   // Exported field_base: 'field_p2p_webform_fieldset_label'

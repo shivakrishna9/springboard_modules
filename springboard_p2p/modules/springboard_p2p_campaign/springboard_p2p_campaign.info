@@ -6,6 +6,7 @@ version = 7.x-4.0-dev
 project = springboard_p2p_campaign
 dependencies[] = field_group
 dependencies[] = link
+dependencies[] = number
 dependencies[] = springboard_p2p_category
 dependencies[] = springboard_p2p_fields
 dependencies[] = springboard_p2p_landing
