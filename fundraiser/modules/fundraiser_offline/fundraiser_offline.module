@@ -24,6 +24,18 @@ function fundraiser_offline_menu() {
 }
 
 /**
+ * Implements hook_url_outbound_alter().
+ */
+function fundraiser_offline_url_outbound_alter(&$path, &$options, $original_path) {
+  // Look for links to offline mode. When found pass along any
+  // existing query string parameters.
+  if (preg_match('|^node/([0-9]*)/offline?|', $path)) {
+    $parts = drupal_parse_url(request_uri());
+    $options['query'] = $parts['query'];
+  }
+}
+
+/**
  * Access callback for checking to see if the form can
  * be placed into offline mode.
  */
@@ -40,7 +52,10 @@ function fundraiser_offline_access_offline($node) {
  * Callback for redirecting a form into offline mode.
  */
 function fundraiser_offline_redirect($node) {
-  drupal_goto('node/' . $node->nid, array('query' => array('offline' => 'true')));
+  // Parse the url to get any existing query string params.
+  $parts = drupal_parse_url(request_uri());
+  $parts['query']['offline'] = 'true';
+  drupal_goto('node/' . $node->nid, array('query' => $parts['query']));
 }
 
 /**
@@ -329,7 +344,12 @@ function fundraiser_offline_fundraiser_donation_form_js_validation_alter(&$setti
  */
 function fundraiser_offline_fundraiser_donation_form($form, $form_state) {
   if (isset($form['#node']->fundraiser_offline) && $form['#node']->fundraiser_offline) {
-    $link = l('Click here to return to online mode', 'node/' . $form['#node']->nid);
+    // Parse out query string to preserve any extra values.
+    $parts = drupal_parse_url(request_uri());
+    // Remove the offline query string to prevent infinite loop.
+    unset($parts['query']['offline']);
+    unset($parts['query']['cid']);
+    $link = l('Click here to return to online mode', 'node/' . $form['#node']->nid, array('query' => $parts['query']));
     drupal_set_message(t('This form is currently in offline mode. ' .
       '!link.', array('!link' => $link)));
   }
