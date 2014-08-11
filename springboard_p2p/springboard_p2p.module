@@ -2174,9 +2174,14 @@ function springboard_p2p_page_alter(&$page, $form) {
     // Global node.
     $node = menu_get_object();
 
-    // Define the form types.
-    $is_fundraiser_type = fundraiser_is_donation_type($node->type);
-    $is_webform_user_type = _webform_user_is_webform_user_node_type($node->type);
+    $is_fundraiser_type = FALSE;
+    $is_webform_user_type = FALSE;
+
+    if (!empty($node)) {
+      // Define the form types.
+      $is_fundraiser_type = fundraiser_is_donation_type($node->type);
+      $is_webform_user_type = _webform_user_is_webform_user_node_type($node->type);
+    }
 
     // Define the module path for use below.
     $mod_path = drupal_get_path('module', 'springboard_p2p');
