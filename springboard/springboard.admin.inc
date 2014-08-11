@@ -2136,45 +2136,57 @@ function springboard_dashboard_config_cancel($form, &$form_state) {
  *   FALSE, SAVED_NEW, or SAVED_UPDATED.
  */
 function springboard_add_admin_field_group_to_user_entity() {
-  if (!module_exists('field_group')) {
-    return FALSE;
-  }
-
   module_load_include('module', 'ctools');
   ctools_include('export');
 
+  // Search for an existing group.
+  $existing = field_group_load_field_group('group_profile_admin', 'user', 'user', 'form');
   $table = 'field_group';
-  $field_group = new stdClass();
-  $field_group->identifier = 'group_profile_admin|user|user|form';
-  $field_group->group_name = 'group_profile_admin';
-  $field_group->entity_type = 'user';
-  $field_group->bundle = 'user';
-  $field_group->mode = 'form';
-  $field_group->parent_name = '';
 
-  $field_group->disabled = FALSE;
-  $field_group->label = 'Admin';
-  $field_group->weight = '40';
-  $field_group->children = array(
-    'sbp_cid',
-    'sbp_ms',
-    'sbp_referrer',
-    'sbp_initial_referrer',
-    'sbp_search_engine',
-    'sbp_search_string',
-    'sbp_user_agent',
-    'sbp_salesforce_account_id',
-    'sbp_salesforce_contact_id',
-  );
-  $field_group->formate_type = 'fieldset';
-  $field_group->format_settings = array(
-    'formatter' => 'collapsible',
-    'instance_settings' => array(
-      'description' => '',
-      'classes' => 'group-profile-admin field-group-fieldset',
-      'required_fields' => 1,
-    ),
-  );
+  // If the group exists make sure its not disabled
+  if ($existing) {
+    $field_group = $existing;
+    if ($field_group->disabled == TRUE) {
+      ctools_export_crud_enable($table, $field_group->identifier);
+      unset($field_group->disabled);
+    }
+  }
+  // Create a new group
+  else {
+    $field_group = new stdClass();
+    $field_group->identifier = 'group_profile_admin|user|user|form';
+    $field_group->group_name = 'group_profile_admin';
+    $field_group->entity_type = 'user';
+    $field_group->bundle = 'user';
+    $field_group->mode = 'form';
+    $field_group->parent_name = '';
 
-  return ctools_export_crud_save($table, $field_group);
+    $field_group->disabled = FALSE;
+    $field_group->label = 'Admin';
+    $field_group->weight = '40';
+    $field_group->children = array(
+      'sbp_cid',
+      'sbp_ms',
+      'sbp_referrer',
+      'sbp_initial_referrer',
+      'sbp_search_engine',
+      'sbp_search_string',
+      'sbp_user_agent',
+      'sbp_salesforce_account_id',
+      'sbp_salesforce_contact_id',
+    );
+    $field_group->formate_type = 'fieldset';
+    $field_group->format_settings = array(
+      'formatter' => 'collapsible',
+      'instance_settings' => array(
+        'description' => '',
+        'classes' => 'group-profile-admin field-group-fieldset',
+        'required_fields' => 1,
+      ),
+    );
+
+    $field_group = ctools_export_crud_save($table, $field_group);
+  }
+
+  return $field_group;
 }

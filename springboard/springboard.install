@@ -38,7 +38,15 @@ function springboard_update_7000() {
  */
 function springboard_update_7001() {
   module_load_include('inc', 'springboard', 'springboard.admin');
+  // Check for an existing or disabled field group to set update message.
+  $existing = field_group_load_field_group('group_profile_admin', 'user', 'user', 'form');
+  if (!empty($existing->disabled)) {
+    $existing = FALSE;
+  }
+
   springboard_add_admin_field_group_to_user_entity();
+
+  return !$existing ? t('The admin field group has been added to the user entity.') : t('The admin field group already exists on the user entity.') ;
 }
 
 /**
