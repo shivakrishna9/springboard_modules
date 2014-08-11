@@ -141,7 +141,7 @@ function springboard_p2p_default_rules_default_rules_configuration() {
         { "mail" : {
             "to" : [ "account:mail" ],
             "subject" : "Thanks for registering",
-            "message" : "Dear [account:sbp-first-name]:\r\n\r\nThanks for registering. This campaign requires approval. We will be in touch shortly with next steps.\r\n\r\nIn the meantime, you can check out our other campaigns here: \r\n",
+            "message" : "Dear [account:sbp-first-name]:\\r\\n\\r\\nThanks for registering. This campaign requires approval. We will be in touch shortly with next steps.\\r\\n\\r\\nIn the meantime, you can check out our other campaigns here: \\r\\n",
             "language" : [ "" ]
           }
         }
@@ -158,7 +158,7 @@ function springboard_p2p_default_rules_default_rules_configuration() {
         { "mail" : {
             "to" : [ "account:mail" ],
             "subject" : "Thanks for registering",
-            "message" : "Dear [account:sbp-first-name]:\r\n\r\nThanks for registering. You can create a campaign here.\r\n\r\n[create-personal-campaign-url:value]\r\n\r\n\r\n",
+            "message" : "Dear [account:sbp-first-name]:\\r\\n\\r\\nThanks for registering. You can create a campaign here.\\r\\n\\r\\n[create-personal-campaign-url:value]\\r\\n\\r\\n\\r\\n",
             "language" : [ "" ]
           }
         }

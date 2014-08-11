@@ -551,6 +551,180 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $export['p2p_personal_campaigns_by_category'] = $view;
 
   $view = new view();
+  $view->name = 'p2p_suggested_donation';
+  $view->description = 'The suggested donation for a user on a p2p personal campaign page';
+  $view->tag = 'default';
+  $view->base_table = 'node';
+  $view->human_name = 'P2P Suggested Donation';
+  $view->core = 7;
+  $view->api_version = '3.0';
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+
+  /* Display: Master */
+  $handler = $view->new_display('default', 'Master', 'default');
+  $handler->display->display_options['use_more_always'] = FALSE;
+  $handler->display->display_options['access']['type'] = 'perm';
+  $handler->display->display_options['cache']['type'] = 'none';
+  $handler->display->display_options['query']['type'] = 'views_query';
+  $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['pager']['type'] = 'some';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '1';
+  $handler->display->display_options['pager']['options']['offset'] = '0';
+  $handler->display->display_options['style_plugin'] = 'default';
+  $handler->display->display_options['style_options']['default_row_class'] = FALSE;
+  $handler->display->display_options['style_options']['row_class_special'] = FALSE;
+  $handler->display->display_options['row_plugin'] = 'fields';
+  /* Relationship: Content: Author */
+  $handler->display->display_options['relationships']['uid']['id'] = 'uid';
+  $handler->display->display_options['relationships']['uid']['table'] = 'node';
+  $handler->display->display_options['relationships']['uid']['field'] = 'uid';
+  /* Relationship: Entity Reference: Referenced Entity */
+  $handler->display->display_options['relationships']['field_p2p_campaign_target_id']['id'] = 'field_p2p_campaign_target_id';
+  $handler->display->display_options['relationships']['field_p2p_campaign_target_id']['table'] = 'field_data_field_p2p_campaign';
+  $handler->display->display_options['relationships']['field_p2p_campaign_target_id']['field'] = 'field_p2p_campaign_target_id';
+  /* Field: User: First name */
+  $handler->display->display_options['fields']['sbp_first_name']['id'] = 'sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['table'] = 'field_data_sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['field'] = 'sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_first_name']['label'] = '';
+  $handler->display->display_options['fields']['sbp_first_name']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['sbp_first_name']['element_label_colon'] = FALSE;
+  /* Field: Content: P2P Suggested Donation Amount */
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['id'] = 'field_p2p_suggested_donation';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['table'] = 'field_data_field_p2p_suggested_donation';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['field'] = 'field_p2p_suggested_donation';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['relationship'] = 'field_p2p_campaign_target_id';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['label'] = '';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['alter']['text'] = '[sbp_first_name] suggests a donation of [field_p2p_suggested_donation]';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['element_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['element_default_classes'] = FALSE;
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['settings'] = array(
+    'thousand_separator' => ' ',
+    'decimal_separator' => '.',
+    'scale' => '2',
+    'prefix_suffix' => 1,
+  );
+  /* Field: Content: Suggested Donation Amount */
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['id'] = 'field_p2p_suggested_donation_amt';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['table'] = 'field_data_field_p2p_suggested_donation_amt';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['field'] = 'field_p2p_suggested_donation_amt';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['label'] = '';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['alter']['text'] = '[sbp_first_name] suggests a donation of [field_p2p_suggested_donation_amt]';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['element_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['element_default_classes'] = FALSE;
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['settings'] = array(
+    'thousand_separator' => ' ',
+    'decimal_separator' => '.',
+    'scale' => '2',
+    'prefix_suffix' => 1,
+  );
+  /* Sort criterion: Content: Post date */
+  $handler->display->display_options['sorts']['created']['id'] = 'created';
+  $handler->display->display_options['sorts']['created']['table'] = 'node';
+  $handler->display->display_options['sorts']['created']['field'] = 'created';
+  $handler->display->display_options['sorts']['created']['order'] = 'DESC';
+  /* Contextual filter: Content: Nid */
+  $handler->display->display_options['arguments']['nid']['id'] = 'nid';
+  $handler->display->display_options['arguments']['nid']['table'] = 'node';
+  $handler->display->display_options['arguments']['nid']['field'] = 'nid';
+  $handler->display->display_options['arguments']['nid']['default_action'] = 'default';
+  $handler->display->display_options['arguments']['nid']['default_argument_type'] = 'node';
+  $handler->display->display_options['arguments']['nid']['summary']['number_of_records'] = '0';
+  $handler->display->display_options['arguments']['nid']['summary']['format'] = 'default_summary';
+  $handler->display->display_options['arguments']['nid']['summary_options']['items_per_page'] = '25';
+  /* Filter criterion: Content: Published */
+  $handler->display->display_options['filters']['status']['id'] = 'status';
+  $handler->display->display_options['filters']['status']['table'] = 'node';
+  $handler->display->display_options['filters']['status']['field'] = 'status';
+  $handler->display->display_options['filters']['status']['value'] = 1;
+  $handler->display->display_options['filters']['status']['group'] = 1;
+  $handler->display->display_options['filters']['status']['expose']['operator'] = FALSE;
+
+  /* Display: P2P Personal Suggested */
+  $handler = $view->new_display('panel_pane', 'P2P Personal Suggested', 'panel_pane_1');
+  $handler->display->display_options['defaults']['fields'] = FALSE;
+  /* Field: User: First name */
+  $handler->display->display_options['fields']['sbp_first_name']['id'] = 'sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['table'] = 'field_data_sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['field'] = 'sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_first_name']['label'] = '';
+  $handler->display->display_options['fields']['sbp_first_name']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['sbp_first_name']['element_label_colon'] = FALSE;
+  /* Field: Content: Suggested Donation Amount */
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['id'] = 'field_p2p_suggested_donation_amt';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['table'] = 'field_data_field_p2p_suggested_donation_amt';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['field'] = 'field_p2p_suggested_donation_amt';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['label'] = '';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['alter']['text'] = '[sbp_first_name] suggests a donation of [field_p2p_suggested_donation_amt]';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['element_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['element_default_classes'] = FALSE;
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['settings'] = array(
+    'thousand_separator' => ' ',
+    'decimal_separator' => '.',
+    'scale' => '2',
+    'prefix_suffix' => 1,
+  );
+  $handler->display->display_options['pane_category']['name'] = 'Springboard P2P';
+  $handler->display->display_options['pane_category']['weight'] = '0';
+
+  /* Display: P2P Campaign Suggested */
+  $handler = $view->new_display('panel_pane', 'P2P Campaign Suggested', 'panel_pane_2');
+  $handler->display->display_options['defaults']['fields'] = FALSE;
+  /* Field: User: First name */
+  $handler->display->display_options['fields']['sbp_first_name']['id'] = 'sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['table'] = 'field_data_sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['field'] = 'sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_first_name']['label'] = '';
+  $handler->display->display_options['fields']['sbp_first_name']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['sbp_first_name']['element_label_colon'] = FALSE;
+  /* Field: Content: P2P Suggested Donation Amount */
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['id'] = 'field_p2p_suggested_donation';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['table'] = 'field_data_field_p2p_suggested_donation';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['field'] = 'field_p2p_suggested_donation';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['relationship'] = 'field_p2p_campaign_target_id';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['label'] = '';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['alter']['text'] = '[sbp_first_name] suggests a donation of [field_p2p_suggested_donation]';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['element_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['element_default_classes'] = FALSE;
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['settings'] = array(
+    'thousand_separator' => ' ',
+    'decimal_separator' => '.',
+    'scale' => '2',
+    'prefix_suffix' => 1,
+  );
+  $handler->display->display_options['defaults']['filter_groups'] = FALSE;
+  $handler->display->display_options['defaults']['filters'] = FALSE;
+  /* Filter criterion: Content: Published */
+  $handler->display->display_options['filters']['status']['id'] = 'status';
+  $handler->display->display_options['filters']['status']['table'] = 'node';
+  $handler->display->display_options['filters']['status']['field'] = 'status';
+  $handler->display->display_options['filters']['status']['value'] = 1;
+  $handler->display->display_options['filters']['status']['group'] = 1;
+  $handler->display->display_options['filters']['status']['expose']['operator'] = FALSE;
+  $handler->display->display_options['pane_category']['name'] = 'Springboard P2P';
+  $handler->display->display_options['pane_category']['weight'] = '0';
+  $export['p2p_suggested_donation'] = $view;
+
+  $view = new view();
   $view->name = 'p2p_top_personal_campaigns_by_category';
   $view->description = '';
   $view->tag = 'default';
