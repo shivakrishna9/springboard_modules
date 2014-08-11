@@ -124,7 +124,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
     ),
     'entity_type' => 'node',
     'field_name' => 'field_p2p_ask_amount_edit',
-    'label' => 'This content can be overridden by campaigner',
+    'label' => 'This content can be overridden by a personal campaigner',
     'required' => 0,
     'settings' => array(
       'user_register_form' => FALSE,
@@ -645,7 +645,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
     ),
     'entity_type' => 'node',
     'field_name' => 'field_p2p_images_edit',
-    'label' => 'This content can be overridden by campaigner',
+    'label' => 'This content can be overridden by a personal campaigner',
     'required' => 0,
     'settings' => array(
       'user_register_form' => FALSE,
@@ -864,7 +864,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
     ),
     'entity_type' => 'node',
     'field_name' => 'field_p2p_personal_intro_edit',
-    'label' => 'This content can be overridden by campaigner',
+    'label' => 'This content can be overridden by a personal campaigner',
     'required' => 0,
     'settings' => array(
       'user_register_form' => FALSE,
@@ -1114,7 +1114,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
     ),
     'entity_type' => 'node',
     'field_name' => 'field_p2p_video_embed_edit',
-    'label' => 'This content can be overridden by campaigner',
+    'label' => 'This content can be overridden by a personal campaigner',
     'required' => 0,
     'settings' => array(
       'user_register_form' => FALSE,
@@ -1197,7 +1197,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
   t('Show constituent comments on personal campaign pages');
   t('Show constituent scroll on personal campaign pages');
   t('Suggested Donation Amount');
-  t('This content can be overridden by campaigner');
+  t('This content can be overridden by a personal campaigner');
   t('This is a Youtube or Vimeo video URL. Example: https://www.youtube.com/watch?v=kJ4CYbCGhLA');
   t('This setting cannot be changed after campaign creation.');
   t('This will display at the bottom of the donation form, above the option for users to display their name on the campaign and leave a comment.');

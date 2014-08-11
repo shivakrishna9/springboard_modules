@@ -231,7 +231,7 @@ function springboard_p2p_category_field_default_field_instances() {
     ),
     'entity_type' => 'node',
     'field_name' => 'field_p2p_images_edit',
-    'label' => 'This content can be overridden by campaigner',
+    'label' => 'This content can be overridden by a personal campaigner',
     'required' => 0,
     'settings' => array(
       'user_register_form' => FALSE,
@@ -356,7 +356,7 @@ function springboard_p2p_category_field_default_field_instances() {
     ),
     'entity_type' => 'node',
     'field_name' => 'field_p2p_personal_intro_edit',
-    'label' => 'This content can be overridden by campaigner',
+    'label' => 'This content can be overridden by a personal campaigner',
     'required' => 0,
     'settings' => array(
       'user_register_form' => FALSE,
@@ -436,7 +436,7 @@ function springboard_p2p_category_field_default_field_instances() {
     ),
     'entity_type' => 'node',
     'field_name' => 'field_p2p_video_embed_edit',
-    'label' => 'This content can be overridden by campaigner',
+    'label' => 'This content can be overridden by a personal campaigner',
     'required' => 0,
     'settings' => array(
       'user_register_form' => FALSE,
@@ -460,7 +460,7 @@ function springboard_p2p_category_field_default_field_instances() {
   t('Images');
   t('Organization introduction');
   t('Personal campaign introduction');
-  t('This content can be overridden by campaigner');
+  t('This content can be overridden by a personal campaigner');
   t('This is a Youtube or Vimeo video URL. Example: https://www.youtube.com/watch?v=kJ4CYbCGhLA');
   t('Upload a campaign category image. Ideal size is 400 x 240 pixels.');
   t('Upload a campaign thumbnail image. Ideal size is 400 x 240 pixels.');
