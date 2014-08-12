@@ -222,10 +222,13 @@ Drupal.behaviors.marketSourceFormPopulate = {
         if (value != null) {
           //var selector = 'form#' + form_id + ' #' + form_keys[key] + ':not(.marketsource-processed)';
           var selector = 'form#' + form_id + ' input[name="' + form_keys[key] + '"]:not(.marketsource-processed)';
+
           // Set the value.
-          $(selector, context)
-            .val(qs_keys[key]['value'])
-            .addClass('marketsource-processed');
+          if ($(selector, context).val() === '' || qs_keys[key]['persistence'] != 'on') {
+            $(selector, context)
+              .val(qs_keys[key]['value'])
+              .addClass('marketsource-processed');
+          }
         }
       }
     }

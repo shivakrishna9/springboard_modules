@@ -9,8 +9,46 @@
  * Implements hook_install().
  */
 function market_source_install() {
-  // Default to six hours
+  // Default to six hours.
   variable_set('market_source_validity_period', 6);
+
+  // Initialize the default fields and custom fields so these exist before
+  // the first save of the market source settings page.
+  variable_set('market_source_default_fields', market_source_initial_default_ms_fields());
+  variable_set('market_source_custom_fields', array());
+
+}
+
+/**
+ * Provides initial default field settings for market source.
+ *
+ * @return array
+ *   The array of settings for the default market source fields.
+ */
+function market_source_initial_default_ms_fields() {
+  return array(
+    'market_source' => array(
+      'persistence' => 'on',
+    ),
+    'campaign' => array(
+      'persistence' => 'on',
+    ),
+    'referrer' => array(
+      'persistence' => 'direct',
+    ),
+    'initial_referrer' => array(
+      'persistence' => 'direct',
+    ),
+    'search_engine' => array(
+      'persistence' => 'on',
+    ),
+    'search_string' => array(
+      'persistence' => 'on',
+    ),
+    'user_agent' => array(
+      'persistence' => 'on',
+    ),
+  );
 }
 
 /**
@@ -18,6 +56,13 @@ function market_source_install() {
  */
 function market_source_uninstall() {
   variable_del('market_source_validity_period');
+  variable_del('market_source_default_campaign');
+  variable_del('market_source_validate_sf_campaigns');
+  variable_del('market_source_additional_forms');
+  variable_del('market_source_default_fields');
+  variable_del('market_source_custom_fields');
+  variable_del('market_source_cookie_domain');
+  variable_del('market_source_to_user_map');
 }
 
 /**
