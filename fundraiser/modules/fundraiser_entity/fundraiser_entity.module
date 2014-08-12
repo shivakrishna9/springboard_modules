@@ -1,4 +1,10 @@
 <?php
+/**
+ * @file
+ * Code for the Fundraiser Entity feature.
+ */
+
+include_once 'fundraiser_entity.features.inc';
 
 /**
  * @file
