@@ -30,12 +30,13 @@ class FundraiserDonationEntityController extends EntityAPIController {
       'nid' => 0,
       'sid' => 0,
       'status' => 1,
-      'amount' => '',
+      'amount' => NULL,
       'currency' => '',
       'txn_id' => '',
       'form_url' => '',
-      'created' => '',
-      'changed' => '',
+      'created' => NULL,
+      'changed' => NULL,
+      'gateway' => '',
     );
 
     return parent::create($values);
