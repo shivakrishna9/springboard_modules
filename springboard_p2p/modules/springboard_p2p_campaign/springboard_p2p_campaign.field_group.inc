@@ -28,6 +28,7 @@ function springboard_p2p_campaign_field_group_info() {
       2 => 'field_p2p_org_intro',
       3 => 'field_p2p_private_access_message',
       4 => 'field_p2p_expiration_required',
+      5 => 'group_p2p_donation_amount',
     ),
     'format_type' => 'htab',
     'format_settings' => array(
@@ -82,24 +83,22 @@ function springboard_p2p_campaign_field_group_info() {
   $field_group->entity_type = 'node';
   $field_group->bundle = 'p2p_campaign';
   $field_group->mode = 'form';
-  $field_group->parent_name = 'group_tabs';
+  $field_group->parent_name = 'group_p2p_campaign_defaults';
   $field_group->data = array(
     'label' => 'Personal Campaign suggested donation amount',
-    'weight' => '11',
+    'weight' => '9',
     'children' => array(
       0 => 'field_p2p_ask_amount_edit',
       1 => 'field_p2p_suggested_donation',
     ),
-    'format_type' => 'htab',
+    'format_type' => 'fieldset',
     'format_settings' => array(
-      'label' => 'Personal Campaign suggested donation amount',
+      'formatter' => 'collapsible',
       'instance_settings' => array(
-        'required_fields' => 1,
-        'id' => '',
-        'classes' => 'group-p2p-donation-amount field-group-fieldset',
         'description' => '',
+        'classes' => '',
+        'required_fields' => 1,
       ),
-      'formatter' => 'open',
     ),
   );
   $export['group_p2p_donation_amount|node|p2p_campaign|form'] = $field_group;
@@ -300,10 +299,9 @@ function springboard_p2p_campaign_field_group_info() {
     'children' => array(
       0 => 'group_p2p_campaign_defaults',
       1 => 'group_p2p_comment_settings',
-      2 => 'group_p2p_donation_amount',
-      3 => 'group_p2p_donation_form',
-      4 => 'group_p2p_images',
-      5 => 'group_p2p_personal_intro',
+      2 => 'group_p2p_donation_form',
+      3 => 'group_p2p_images',
+      4 => 'group_p2p_personal_intro',
     ),
     'format_type' => 'htabs',
     'format_settings' => array(

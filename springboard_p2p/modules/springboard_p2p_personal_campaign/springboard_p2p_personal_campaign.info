@@ -88,6 +88,7 @@ features[views_view][] = p2p_personal_campaigns_admin
 features[views_view][] = p2p_personal_campaigns_by_campaign
 features[views_view][] = p2p_personal_campaigns_by_campaigner
 features[views_view][] = p2p_personal_campaigns_by_category
+features[views_view][] = p2p_suggested_donation
 features[views_view][] = p2p_top_personal_campaigns_by_category
 features[views_view][] = personal_campaign_donor_dashboard
 project path = sites/all/modules/springboard/springboard_p2p/modules
