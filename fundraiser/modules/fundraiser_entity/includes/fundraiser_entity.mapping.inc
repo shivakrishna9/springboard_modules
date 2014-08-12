@@ -52,6 +52,11 @@ function fundraiser_entity_default_mapping_form($form, &$form_state) {
     'status',
     'created',
     'changed',
+    'amount',
+    'currency',
+    'txn_id',
+    'gateway',
+    'form_url'
   );
 
   // Don't show these fields.
