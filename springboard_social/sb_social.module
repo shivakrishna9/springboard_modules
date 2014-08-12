@@ -54,7 +54,7 @@ function sb_social_permission() {
   $permissions = array(
     'administer springboard social' => array(
       'title' => t('Administer Springboard Social'),
-      'description' => t('Configure Springboar Social module settings'),
+      'description' => t('Configure Springboard Social module settings'),
     ),
     'edit own share content' => array(
       'title' => t('Edit own share content'),
@@ -256,13 +256,14 @@ function sb_social_block_view($delta = '') {
       $id = $node->nid;
     }
     $sid = _sb_social_sid_by_id($id);
-
     if ($sid) {
       $settings = sb_social_settings_load($sid);
+      // Permit 3rd party modules to alter settings & node context.
+      drupal_alter('sb_social_init_settings_load', $settings);
       if (empty($settings)) {
         return;
       }
-
+      drupal_alter('sb_social_tokens_data', $node);
       $plugins = sb_social_get_enabled_plugins();
       // Render button for each enabled service.
       foreach ($plugins as $service => $plugin) {
@@ -423,6 +424,9 @@ function sb_social_init() {
     $settings = sb_social_settings_load($sid);
     // Let 3rd party modules get into the act.
     drupal_alter('sb_social_init_settings_load', $settings);
+    if (isset($settings['use_node'])) {
+      $node = node_load($settings['use_node']);
+    }
     if (empty($settings)) {
       return;
     }
@@ -585,6 +589,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
   if ($type == 'sb_social') {
     $replacements = array();
     $node = !empty($data['node']) ? $data['node'] : FALSE;
+    drupal_alter('sb_social_tokens_data', $node);
     if (!$node && arg(0) == 'node' && is_numeric(arg(1))) {
       $node = node_load(arg(1));
     }
@@ -608,7 +613,6 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
       $nid = _sb_social_get_nid_by_sid($submission_id);
       $node = node_load($nid);
     }
-    drupal_alter('sb_social_tokens_data', $node);
     foreach ($enabled_plugins as $service => $plugin) {
       if (!empty($plugin['token_replace'])) {
         $func = $plugin['token_replace'];
