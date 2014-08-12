@@ -745,10 +745,13 @@ function _fundraiser_entity_map_values($donation_entity, $context, $map = array(
     }
 
     // Determine the value.
-    $value = '';
+    $value = NULL;
     // A source value of other allows for token replacement.
     if ($map[$field_name]['source'] == 'other') {
-      $value = token_replace($map[$field_name]['other'], $token_set, array('clear' => TRUE));
+      $token_replaced = token_replace($map[$field_name]['other'], $token_set, array('clear' => TRUE));
+      if (!empty($token_replaced)) {
+        $value = $token_replaced;
+      }
     }
     else {
       // The entity name and field name are in the source value.
