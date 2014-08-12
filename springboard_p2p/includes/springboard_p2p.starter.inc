@@ -287,30 +287,36 @@ function springboard_p2p_create_starter_campaigns(&$context) {
       $node->field_p2p_campaign_slider[$node->language][0] = (array) $campaign_landing_page_slider;
       $node->field_p2p_campaign_banner[$node->language][0] = (array) $campaign_banner;
 
-      // Create a goal.
-      $next_id = db_query("SELECT MAX(goal_set_id) FROM {springboard_p2p_fields_campaign_goals}")->fetchField();
-      $goal_set_id = ++$next_id;
-      $goal = array(
-        'goal_set_id' => $goal_set_id,
-        'type' => 'p2p_donation_form',
-        'enabled' => 1,
-        'nid' => 3,
-        'campaign_id' => '',
-        'goal_type' => 'amount',
-        'goal_value' => rand(500, 1000),
-      );
-      drupal_write_record('springboard_p2p_fields_campaign_goals', $goal);
+      // Need to get the nid of the first created p2p donation form.
+      $query = new EntityFieldQuery();
+      $query->entityCondition('entity_type', 'node')
+        ->entityCondition('bundle', 'p2p_donation_form')
+        ->propertyOrderBy('created', 'ASC')
+        ->range(0, 1);
 
+      $result = $query->execute();
+
+      if (isset($result['node'])) {
+        $nids = array_keys($result['node']);
+        $goal_nid = $nids[0];
+        $goal_node_type = 'p2p_donation_form';
+      }
+      else {
+        // Somewhat decent fallback.
+        $goal_nid = 2;
+        $goal_node_type = 'donation_form';
+      }
+
+      // Create a goal.
       $node->field_p2p_campaign_goals[$node->language][0]['campaign_goals'] = array(
-        'goal_set_id' => $goal_set_id,
         'form_types' => array(
           'fundraiser' => array(
-            'donation' => array(
-              'enabled' => $goal['enabled'],
-              'nid' => $goal['nid'],
+            $goal_node_type => array(
+              'enabled' => 1,
+              'nid' => $goal_nid,
               'campaign_id' => '',
-              'goal_type' => $goal['goal_type'],
-              'goal_value' => $goal['goal_value'],
+              'goal_type' => 'amount',
+              'goal_value' => rand(500, 1000),
             ),
           ),
         ),
