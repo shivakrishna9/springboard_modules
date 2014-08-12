@@ -15,26 +15,6 @@ function fundraiser_entity_strongarm() {
   $strongarm->api_version = 1;
   $strongarm->name = 'fundraiser_entity_default_map';
   $strongarm->value = array(
-    'amount' => array(
-      'source' => 'commerce_order--commerce_order_total:amount_decimal',
-      'other' => '',
-    ),
-    'currency' => array(
-      'source' => 'commerce_order--commerce_order_total:currency_code',
-      'other' => '',
-    ),
-    'gateway' => array(
-      'source' => 'commerce_payment_transaction--payment_method',
-      'other' => '',
-    ),
-    'txn_id' => array(
-      'source' => 'commerce_payment_transaction--remote_id',
-      'other' => '',
-    ),
-    'form_url' => array(
-      'source' => 'node--url',
-      'other' => '',
-    ),
     'field_fde_donor_address:country' => array(
       'source' => 'commerce_customer_profile--commerce_customer_address:country',
       'other' => '',
