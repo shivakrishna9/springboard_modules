@@ -420,6 +420,18 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
           $form['field_p2p_campaign_images'][$language][$index + 1] = $empty_image;
         }
       }
+      elseif (!empty($form_state['values']['field_p2p_campaign_images'][$language][0]['fid'])) {
+        // Preserve field settings through a form rebuild triggered by an ajax event.
+        $empty_image = $form['field_p2p_campaign_images'][$language][0];
+        foreach ($form_state['values']['field_p2p_campaign_images'][$language] as $index => $image) {
+          if (!isset($form['field_p2p_campaign_images'][$language][$index])) {
+            $form['field_p2p_campaign_images'][$language][$index] = $form['field_p2p_campaign_images'][$language][0];
+          }
+          $form['field_p2p_campaign_images'][$language][$index]['#default_value']['fid'] = $image['fid'];
+          $form['field_p2p_campaign_images'][$language][$index]['#default_value']['display'] = TRUE;
+        }
+        $form['field_p2p_campaign_images'][$language][$index + 1] = $empty_image;
+      }
       // Embedded video, default values from parent campaign, hide if edit
       // is disabled.
       $video_editable = $campaign_node->field_p2p_video_embed_edit[$language][0]['value'] ? TRUE : FALSE;
@@ -438,7 +450,6 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
       }
       $form['field_p2p_suggested_donation_amt'][$language][0]['value']['#access'] = $amount_editable;
     }
-
   }
   else {
     // Node edit of some variety. We'll need to load the original campaign
