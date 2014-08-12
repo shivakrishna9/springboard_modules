@@ -590,7 +590,7 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['fields']['sbp_first_name']['label'] = '';
   $handler->display->display_options['fields']['sbp_first_name']['exclude'] = TRUE;
   $handler->display->display_options['fields']['sbp_first_name']['element_label_colon'] = FALSE;
-  /* Field: Content: P2P Suggested Donation Amount */
+  /* Field: Content: Suggested Donation Amount */
   $handler->display->display_options['fields']['field_p2p_suggested_donation']['id'] = 'field_p2p_suggested_donation';
   $handler->display->display_options['fields']['field_p2p_suggested_donation']['table'] = 'field_data_field_p2p_suggested_donation';
   $handler->display->display_options['fields']['field_p2p_suggested_donation']['field'] = 'field_p2p_suggested_donation';
@@ -692,7 +692,7 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['fields']['sbp_first_name']['label'] = '';
   $handler->display->display_options['fields']['sbp_first_name']['exclude'] = TRUE;
   $handler->display->display_options['fields']['sbp_first_name']['element_label_colon'] = FALSE;
-  /* Field: Content: P2P Suggested Donation Amount */
+  /* Field: Content: Suggested Donation Amount */
   $handler->display->display_options['fields']['field_p2p_suggested_donation']['id'] = 'field_p2p_suggested_donation';
   $handler->display->display_options['fields']['field_p2p_suggested_donation']['table'] = 'field_data_field_p2p_suggested_donation';
   $handler->display->display_options['fields']['field_p2p_suggested_donation']['field'] = 'field_p2p_suggested_donation';
