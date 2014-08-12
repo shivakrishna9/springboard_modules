@@ -639,9 +639,9 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
     'label' => 'Suggested Donation Amount',
     'required' => 0,
     'settings' => array(
-      'max' => '',
+      'max' => 99999999,
       'min' => '1.00',
-      'prefix' => '',
+      'prefix' => '$',
       'suffix' => '',
       'user_register_form' => FALSE,
     ),
