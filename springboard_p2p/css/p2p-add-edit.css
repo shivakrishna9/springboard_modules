@@ -224,6 +224,7 @@ span.fieldset-legend:after {
 
 input[type="checkbox"] {
   margin: 4px 10px 0 0;
+  float: left;
 }
 
 #personal-campaign-url-wrapper .alert {
