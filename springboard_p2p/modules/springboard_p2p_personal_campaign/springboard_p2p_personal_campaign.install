@@ -1,0 +1,28 @@
+<?php
+
+/**
+ * Implements hook_update_N().
+ *
+ * Remove deprecated field for suggested donation amount.
+ */
+function springboard_p2p_personal_campaign_update_7002() {
+  // Delete the fields we don't want from the DB, we've created new ones andreplaced them in the slideshow view as well.
+  $fields_to_delete = array(
+    'field_p2p_personal_donation',
+  );
+
+  foreach ($fields_to_delete as $field_name) {
+    field_delete_field($field_name);
+    watchdog('springboard_p2p_personal_campaign', 'Deleted the :field_name field from all content type instances.', array(':field_name' => $field_name));
+  }
+
+  /**
+   * The fields aren't really deleted until the purge function runs, ordinarily
+   * during cron.  Count the number of fields we need to purge, and add five in
+   * case a few other miscellaneous fields are in there somehow.
+   */
+  field_purge_batch(count($fields_to_delete) + 5);
+
+  // In case of field type change, revert the feature
+  features_revert(array('springboard_p2p_personal_campaign' => array('field')));
+}

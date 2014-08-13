@@ -191,6 +191,7 @@ function springboard_views_gateway_response_options() {
     'success' => t('Success'),
     'canceled' => t('Canceled'),
     'failed' => t('Failed'),
+    'skipped' => t('Skipped'),
   );
 }
 
