@@ -38,7 +38,7 @@ function sb_social_entity_property_info() {
       'properties' => array(
         'user' => array(
           'label' => t('Drupal User or Contact'),
-          'type' => 'user',
+          'type' => 'integer',  // We'd use "user" but salesforce_mapping won't allow mapping of entity values. 
           'description' => t("The Drupal user. May sync to user ID or Contact SFID."),
           'getter callback' => 'sb_social_share_entity_get_properties',
           'setter callback' => 'sb_social_share_entity_set_properties',
@@ -52,7 +52,7 @@ function sb_social_entity_property_info() {
         ),
         'donation' => array(
           'label' => t('Donation or Opportunity'),
-          'type' => 'salesforce_donation',
+          'type' => 'integer',  // Alternately could be "salesforce_donation" but it does map to an integer if SF target isn't reference.
           'description' => t("The Fundraiser donation. May sync to donation ID or Opportunity SFID."),
           'getter callback' => 'sb_social_share_entity_get_properties',
           'setter callback' => 'sb_social_share_entity_set_properties',
