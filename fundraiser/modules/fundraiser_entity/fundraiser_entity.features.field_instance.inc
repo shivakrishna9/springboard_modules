@@ -46,7 +46,7 @@ function fundraiser_entity_field_default_field_instances() {
       'module' => 'number',
       'settings' => array(),
       'type' => 'number',
-      'weight' => 13,
+      'weight' => 15,
     ),
   );
 
@@ -86,7 +86,7 @@ function fundraiser_entity_field_default_field_instances() {
       'module' => 'number',
       'settings' => array(),
       'type' => 'number',
-      'weight' => 14,
+      'weight' => 16,
     ),
   );
 
@@ -120,7 +120,7 @@ function fundraiser_entity_field_default_field_instances() {
         'size' => 60,
       ),
       'type' => 'text_textfield',
-      'weight' => 12,
+      'weight' => 14,
     ),
   );
 
@@ -151,7 +151,7 @@ function fundraiser_entity_field_default_field_instances() {
       'module' => 'options',
       'settings' => array(),
       'type' => 'options_select',
-      'weight' => 16,
+      'weight' => 17,
     ),
   );
 
@@ -256,7 +256,7 @@ function fundraiser_entity_field_default_field_instances() {
         'size' => 60,
       ),
       'type' => 'text_textfield',
-      'weight' => 11,
+      'weight' => 13,
     ),
   );
 
@@ -290,7 +290,75 @@ function fundraiser_entity_field_default_field_instances() {
         'size' => 60,
       ),
       'type' => 'text_textfield',
-      'weight' => 10,
+      'weight' => 12,
+    ),
+  );
+
+  // Exported field_instance: 'fundraiser_donation-fundraiser_donation-field_fde_email'
+  $field_instances['fundraiser_donation-fundraiser_donation-field_fde_email'] = array(
+    'bundle' => 'fundraiser_donation',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'text',
+        'settings' => array(),
+        'type' => 'text_default',
+        'weight' => 15,
+      ),
+    ),
+    'entity_type' => 'fundraiser_donation',
+    'field_name' => 'field_fde_email',
+    'label' => 'Email',
+    'required' => 0,
+    'settings' => array(
+      'text_processing' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'text',
+      'settings' => array(
+        'size' => 60,
+      ),
+      'type' => 'text_textfield',
+      'weight' => 20,
+    ),
+  );
+
+  // Exported field_instance: 'fundraiser_donation-fundraiser_donation-field_fde_initial_referrer'
+  $field_instances['fundraiser_donation-fundraiser_donation-field_fde_initial_referrer'] = array(
+    'bundle' => 'fundraiser_donation',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'text',
+        'settings' => array(),
+        'type' => 'text_default',
+        'weight' => 19,
+      ),
+    ),
+    'entity_type' => 'fundraiser_donation',
+    'field_name' => 'field_fde_initial_referrer',
+    'label' => 'Initial referrer',
+    'required' => 0,
+    'settings' => array(
+      'text_processing' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'text',
+      'settings' => array(
+        'size' => 60,
+      ),
+      'type' => 'text_textfield',
+      'weight' => 23,
     ),
   );
 
@@ -324,7 +392,174 @@ function fundraiser_entity_field_default_field_instances() {
         'size' => 60,
       ),
       'type' => 'text_textfield',
-      'weight' => 17,
+      'weight' => 18,
+    ),
+  );
+
+  // Exported field_instance: 'fundraiser_donation-fundraiser_donation-field_fde_referrer'
+  $field_instances['fundraiser_donation-fundraiser_donation-field_fde_referrer'] = array(
+    'bundle' => 'fundraiser_donation',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'text',
+        'settings' => array(),
+        'type' => 'text_default',
+        'weight' => 18,
+      ),
+    ),
+    'entity_type' => 'fundraiser_donation',
+    'field_name' => 'field_fde_referrer',
+    'label' => 'Referrrer',
+    'required' => 0,
+    'settings' => array(
+      'text_processing' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'text',
+      'settings' => array(
+        'size' => 60,
+      ),
+      'type' => 'text_textfield',
+      'weight' => 22,
+    ),
+  );
+
+  // Exported field_instance: 'fundraiser_donation-fundraiser_donation-field_fde_search_engine'
+  $field_instances['fundraiser_donation-fundraiser_donation-field_fde_search_engine'] = array(
+    'bundle' => 'fundraiser_donation',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'text',
+        'settings' => array(),
+        'type' => 'text_default',
+        'weight' => 20,
+      ),
+    ),
+    'entity_type' => 'fundraiser_donation',
+    'field_name' => 'field_fde_search_engine',
+    'label' => 'Search engine',
+    'required' => 0,
+    'settings' => array(
+      'text_processing' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'text',
+      'settings' => array(
+        'size' => 60,
+      ),
+      'type' => 'text_textfield',
+      'weight' => 24,
+    ),
+  );
+
+  // Exported field_instance: 'fundraiser_donation-fundraiser_donation-field_fde_search_string'
+  $field_instances['fundraiser_donation-fundraiser_donation-field_fde_search_string'] = array(
+    'bundle' => 'fundraiser_donation',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'text',
+        'settings' => array(),
+        'type' => 'text_default',
+        'weight' => 21,
+      ),
+    ),
+    'entity_type' => 'fundraiser_donation',
+    'field_name' => 'field_fde_search_string',
+    'label' => 'Search string',
+    'required' => 0,
+    'settings' => array(
+      'text_processing' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'text',
+      'settings' => array(
+        'size' => 60,
+      ),
+      'type' => 'text_textfield',
+      'weight' => 25,
+    ),
+  );
+
+  // Exported field_instance: 'fundraiser_donation-fundraiser_donation-field_fde_sustainer'
+  $field_instances['fundraiser_donation-fundraiser_donation-field_fde_sustainer'] = array(
+    'bundle' => 'fundraiser_donation',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'list',
+        'settings' => array(),
+        'type' => 'list_default',
+        'weight' => 14,
+      ),
+    ),
+    'entity_type' => 'fundraiser_donation',
+    'field_name' => 'field_fde_sustainer',
+    'label' => 'Sustainer',
+    'required' => 0,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'options',
+      'settings' => array(),
+      'type' => 'options_buttons',
+      'weight' => 19,
+    ),
+  );
+
+  // Exported field_instance: 'fundraiser_donation-fundraiser_donation-field_fde_user_agent'
+  $field_instances['fundraiser_donation-fundraiser_donation-field_fde_user_agent'] = array(
+    'bundle' => 'fundraiser_donation',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'text',
+        'settings' => array(),
+        'type' => 'text_default',
+        'weight' => 11,
+      ),
+    ),
+    'entity_type' => 'fundraiser_donation',
+    'field_name' => 'field_fde_user_agent',
+    'label' => 'User Agent',
+    'required' => 0,
+    'settings' => array(
+      'text_processing' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'text',
+      'settings' => array(
+        'rows' => 5,
+      ),
+      'type' => 'text_textarea',
+      'weight' => 21,
     ),
   );
 
@@ -336,8 +571,15 @@ function fundraiser_entity_field_default_field_instances() {
   t('Credit Card Number');
   t('Credit Card Type');
   t('Donor Address');
+  t('Email');
+  t('Initial referrer');
   t('Payment Method');
+  t('Referrrer');
   t('Routing Number');
+  t('Search engine');
+  t('Search string');
+  t('Sustainer');
+  t('User Agent');
 
   return $field_instances;
 }

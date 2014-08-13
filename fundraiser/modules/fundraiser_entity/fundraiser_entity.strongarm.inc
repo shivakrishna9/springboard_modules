@@ -15,6 +15,22 @@ function fundraiser_entity_strongarm() {
   $strongarm->api_version = 1;
   $strongarm->name = 'fundraiser_entity_default_map';
   $strongarm->value = array(
+    'field_fde_cc_exp_month' => array(
+      'source' => 'other',
+      'other' => '[donation:card_expiration_month]',
+    ),
+    'field_fde_cc_exp_year' => array(
+      'source' => 'other',
+      'other' => '[donation:card_expiration_year]',
+    ),
+    'field_fde_cc_number' => array(
+      'source' => 'other',
+      'other' => '[donation:card_number]',
+    ),
+    'field_fde_cc_type' => array(
+      'source' => 'other',
+      'other' => '[donation:card_type]',
+    ),
     'field_fde_donor_address:country' => array(
       'source' => 'commerce_customer_profile--commerce_customer_address:country',
       'other' => '',
@@ -63,33 +79,45 @@ function fundraiser_entity_strongarm() {
       'source' => 'commerce_customer_profile--commerce_customer_address:premise',
       'other' => '',
     ),
-    'field_fde_eft_routing_number' => array(
-      'source' => 'other',
-      'other' => '[donation:bank_routing]',
-    ),
     'field_fde_eft_account_number' => array(
       'source' => 'other',
       'other' => '[donation:bank_account]',
     ),
-    'field_fde_cc_number' => array(
+    'field_fde_eft_routing_number' => array(
       'source' => 'other',
-      'other' => '[donation:card_number]',
-    ),
-    'field_fde_cc_type' => array(
-      'source' => 'other',
-      'other' => '[donation:card_type]',
-    ),
-    'field_fde_cc_exp_year' => array(
-      'source' => 'other',
-      'other' => '[donation:card_expiration_year]',
-    ),
-    'field_fde_cc_exp_month' => array(
-      'source' => 'other',
-      'other' => '[donation:card_expiration_month]',
+      'other' => '[donation:bank_routing]',
     ),
     'field_fde_payment_method' => array(
       'source' => 'other',
       'other' => '[donation:payment_method]',
+    ),
+    'field_fde_user_agent' => array(
+      'source' => 'other',
+      'other' => '[webform-tokens:val-user_agent]',
+    ),
+    'field_fde_sustainer' => array(
+      'source' => 'other',
+      'other' => '[donation:recurs_monthly]',
+    ),
+    'field_fde_email' => array(
+      'source' => 'user--mail',
+      'other' => '',
+    ),
+    'field_fde_referrer' => array(
+      'source' => 'other',
+      'other' => '[webform-tokens:val-referrer]',
+    ),
+    'field_fde_initial_referrer' => array(
+      'source' => 'other',
+      'other' => '[webform-tokens:val-initial_referrer]',
+    ),
+    'field_fde_search_engine' => array(
+      'source' => 'other',
+      'other' => '[webform-tokens:val-search_engine]',
+    ),
+    'field_fde_search_string' => array(
+      'source' => 'other',
+      'other' => '[webform-tokens:val-search_string]',
     ),
   );
   $export['fundraiser_entity_default_map'] = $strongarm;
