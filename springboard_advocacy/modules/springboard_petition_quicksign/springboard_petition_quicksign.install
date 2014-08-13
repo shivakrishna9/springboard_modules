@@ -15,7 +15,7 @@ function springboard_petition_quicksign_install() {
  * Implements hook_schema().
  */
 function springboard_petition_quicksign_schema() {
-  $schema['springboard_petition_quicksign'] = array(
+  $schema['springboard_quicksign'] = array(
     'description' => 'Track nodes that are enabled as webform user nodes.',
     'fields' => array(
       'nid' => array(
@@ -35,6 +35,33 @@ function springboard_petition_quicksign_schema() {
       ),
     ),
     'primary key' => array('nid'),
+  );
+  $schema['springboard_quicksign_submissions'] = array(
+    'description' => 'Log quicksign submissions.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'webform node id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'sid' => array(
+        'description' => 'webform submission id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'created' => array(
+        'description' => 'time submission was created',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('sid'),
   );
   return $schema;
 }
