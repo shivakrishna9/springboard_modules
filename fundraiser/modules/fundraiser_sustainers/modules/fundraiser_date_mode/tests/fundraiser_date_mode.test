@@ -103,7 +103,8 @@ class FundraiserDateModeTest extends DrupalWebTestCase {
          continue;
        }
        $next_charge_date = _fundraiser_date_mode_explode_date($current_sustainer['next_charge']);
-       if ($next_charge_date['month'] == $current_date['month']) {
+  
+       if ($next_charge_date['month'] == $current_date['month'] && $next_charge_date['year'] == $current_date['year']) {
          $this->assertTrue($next_charge_date['day'] != $date, t('Sustainer order in current month was passed over.'));
        }
        else {
@@ -127,18 +128,19 @@ class FundraiserDateModeTest extends DrupalWebTestCase {
      $this->assertTrue(TRUE, 'original<pre>' . print_r($original_series_data, TRUE) . '</pre>');
      fundraiser_date_mode_update_date_mode_operation('date_mode_disabled', $date, NULL, 1, 1, $original_series_data[1]);
      $new_series_data = fundraiser_date_mode_get_sustainer_series_data();
+
      // confirm new next_charge dates all fall on the correct day of the month.
-     foreach ($new_series_data[1]['series'] as $current_sustainer) {
-       $original_next_charge = $original_series_data[1]['series'][$current_sustainer['did']]['next_charge'];
+     foreach ($new_series_data[1]['series'] as $key => $current_sustainer) {
+       $original_next_charge = $original_series_data[1]['series'][$key]['next_charge'];
        $new_next_charge = $current_sustainer['next_charge'];
-       $next_charge_date = _fundraiser_date_mode_explode_date($current_sustainer['next_charge']);
+      // $next_charge_date = _fundraiser_date_mode_explode_date($current_sustainer['next_charge']);
        $message = array(
-         '!original_timestamp' => $original_series_data[1]['series'][$current_sustainer['did']]['next_charge'],
-         '!original_date' => date('m/d/Y G:i:s', $original_series_data[1]['series'][$current_sustainer['did']]['next_charge']),
+         '!original_timestamp' => $original_next_charge,
+         '!original_date' => date('m/d/Y G:i:s', $original_series_data[1]['series'][$key]['next_charge']),
          '!new_date' => date('m/d/Y G:i:s', $current_sustainer['next_charge']),
-         '!new_timestamp' => $current_sustainer['next_charge'],
+         '!new_timestamp' => $new_next_charge,
        );
-       $this->assertTrue($original_next_charge == $new_next_charge, t('Sustainer order for !original_date ( !original_timestamp ) correctly reverted !new_timestamp.', $message));
+       $this->assertTrue(date('d', $original_next_charge) == date('d', $new_next_charge), t('Sustainer order for !original_date ( !original_timestamp ) correctly reverted !new_timestamp.', $message));
      }
 
    }
