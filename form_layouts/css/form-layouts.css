@@ -52,6 +52,10 @@
   line-height: 1.7em;
 }
 
+.field.field-name-body {
+  margin: 0 0 20px 0;
+}
+
 h1,
 h2,
 h3 {
@@ -144,6 +148,35 @@ input[type=submit]:hover,
 input[type=submit].btn:hover {
   background: #0285b0;
 }
+
+/* global table style */
+
+table {
+  width: 100%;
+}
+
+table tbody tr {
+  border: 1px solid #ccc;
+}
+
+table th {
+  padding: 4px 0 3px 6px;
+  border-bottom: none;
+  text-align: left;
+}
+
+table tr.even {
+  background-color: #f5f5f5;
+}
+
+table tr.odd {
+  background-color: #fcfcfc;
+}
+
+table td {
+  padding: 4px 4px 4px 8px;
+}
+
 
 @media (max-width: 940px) {
 

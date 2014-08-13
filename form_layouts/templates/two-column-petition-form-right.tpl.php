@@ -11,7 +11,9 @@
     <div id="left" class="form-col">
       <h1 class="form-layout-title"><?php print render($element['title']); ?></h1>
       <?php print render($element['body']); ?>
-      <?php print views_embed_view('recent_petiton_signers'); ?>
+      <?php $view = views_get_view('recent_petiton_signers'); $view->set_display('signers_block'); ?>
+      <h2><?php print $view->get_title(); ?></h2>
+      <?php print $view->preview('signers_block'); ?>
     </div>
     <div id="right" class="form-col">
       <?php print render($element['webform']); ?>
