@@ -276,7 +276,7 @@ function springboard_petition_quicksign_delete($nid) {
  *   quicksign is enabled, otherwise FALSE.
  */
 function springboard_petition_quicksign_is_enabled($node) {
-  if (!springboard_petition_is_petition_type($node->type)) {
+  if (!isset($node->nid) || !springboard_petition_is_petition_type($node->type)) {
     return FALSE;
   }
   
