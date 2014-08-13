@@ -209,6 +209,18 @@ function fundraiser_multi_currency_fundraiser_donation_create($donation) {
 }
 
 /**
+ * Implements hook_fundraiser_donation_get_donation().
+ */
+function fundraiser_multi_currency_fundraiser_donation_get_donation($donation) {
+  // Add the currency information to the donation array
+  if (isset($donation->data['currency'])) {
+    $donation->donation['currency'] = $donation->data['currency'];
+  } else if (isset($donation->currency)) {
+    $donation->donation['currency'] = $donation->data['currency'] = $donation->currency;
+  }
+}
+
+/**
  * Database functions.
  */
 

@@ -230,7 +230,7 @@ class FundraiserDateModeTest extends DrupalWebTestCase {
    * Create an example Fundraiser node.
    */
   protected function createDonationForm($node_configs = '') {
-    $fields = fundraiser_field_info(TRUE);
+    $fields = _fundraiser_field_info(TRUE);
     // Create the node.
     $node = new stdClass();
     $node->is_new = 1;
@@ -296,21 +296,25 @@ class FundraiserDateModeTest extends DrupalWebTestCase {
     $node->amount_wrapper = array(
       'donation_amounts' => array(
         '0' => array(
+          'weight' => 0,
           'amount' => 10,
           'label' => '$10',
           'remove' => 0,
         ),
         '1' => array(
+          'weight' => 1,
           'amount' => 20,
           'label' => '$20',
           'remove' => 0,
         ),
         '2' => array(
+          'weight' => 2,
           'amount' => 50,
           'label' => '$50',
           'remove' => 0,
         ),
         '3' => array(
+          'weight' => 3,
           'amount' => 100,
           'label' => '$100',
           'remove' => 0,

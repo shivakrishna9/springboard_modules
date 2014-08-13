@@ -21,7 +21,6 @@ function commerce_offline_check_submit_form($payment_method, $pane_values) {
   $form['check_number'] = array(
     '#type' => 'textfield',
     '#title' => t('Check Number'),
-    '#description' => t('Check number'),
     '#default_value' => $pane_values['check_number'],
     '#required' => FALSE,
     '#maxlength'=> 14,
@@ -31,7 +30,6 @@ function commerce_offline_check_submit_form($payment_method, $pane_values) {
   $form['message'] = array(
     '#type' => 'textarea',
     '#title' => t('Message'),
-    '#description' => t('Comments'),
     '#default_value' => $pane_values['message'],
     '#required' => FALSE,
   );

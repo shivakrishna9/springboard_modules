@@ -95,7 +95,7 @@ class SalesforceSync {
    * @param mixed $consumer_fields
    *   The fields of the record that will consume the item and is therefore used
    *   to compare with in order to apply the sync rules.  This can be provided
-   *   as an array, or as an object, such as what is recieved from a Salesforce
+   *   as an array, or as an object, such as what is received from a Salesforce
    *   response.
    * @param array $sync_rules
    *   Associative array of Field-by-field sync rules for the fields that
