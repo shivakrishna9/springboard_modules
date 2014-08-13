@@ -42,7 +42,7 @@ function springboard_petition_quicksign_form_validate(&$form, &$form_state) {
   // Validate mail field
   $mail = isset($form_state['values']['mail']) ? $form_state['values']['mail'] : FALSE;
   if (!valid_email_address($mail)) {
-    form_set_error('mail', t('Invalid email address.'));
+    form_set_error('mail', t('The email addressed entered is not valid.'));
     return;
   }
 
@@ -52,7 +52,7 @@ function springboard_petition_quicksign_form_validate(&$form, &$form_state) {
   // No profile available
   if (!$account) {
     $_SESSION['springboard_petition_quicksign']['profile']['mail'] = $mail;
-    drupal_set_message(t('Your user profile is missing some information. Please fill out the full form to sign our petition.'));
+    drupal_set_message(t('No account with the email address !mail was found. Please fill out the full form to sign the petition.', array('!mail' => $mail)));
     drupal_redirect_form($form_state);
   }
 
@@ -82,7 +82,7 @@ function springboard_petition_quicksign_form_validate(&$form, &$form_state) {
 
   if ($missing_fields) {
     $_SESSION['springboard_petition_quicksign']['profile'] = $profile;
-    drupal_set_message(t('Your user profile is missing some information. Please fill out the full form to sign our petition.'));
+    drupal_set_message(t('Your account does not have enough information available to quick sign the petition. Please fill out the full form to record your signature.'));
     drupal_redirect_form($form_state);
   }
 
@@ -152,8 +152,6 @@ function springboard_petition_quicksign_form_alter(&$form, $form_state, $form_id
         if ($profile) {
           springboard_petition_quicksign_form_defaults($form, $node, $profile);
           unset($_SESSION['springboard_petition_quicksign']);
-          //TODO: display message explaining what's going on.
-          drupal_set_message('Your profile is missing some information. Please fill out the full form to sign our petition.');
         }
       }
     }
@@ -279,13 +277,13 @@ function springboard_petition_quicksign_is_enabled($node) {
   if (!isset($node->nid) || !springboard_petition_is_petition_type($node->type)) {
     return FALSE;
   }
-  
+
   $result = db_query('SELECT quicksign_enabled FROM {springboard_quicksign} WHERE nid = :nid', array(':nid' => $node->nid));
   return (bool) $result->fetchColumn();
 }
 
 /**
- * 
+ *
  */
 function springboard_petition_quicksign_get_required_fields($node) {
   $required_fields = array();
