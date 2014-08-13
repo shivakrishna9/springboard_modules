@@ -63,7 +63,12 @@ function sb_social_salesforce_mapping_map_fields_alter(&$fields, $context) {
         case 'sbp_social_originating_share':
           // Replace share_id with Social_Share__c SFID token if SF field is a reference field.
           if ('reference' == $field_mapping['salesforce_field']['type']) {
-            $fields[$sf_name] = sprintf('[Social_Share__c:sb_social_share:%d]', $fields[$sf_name]);
+            if ($fields[$sf_name] && $share = sb_social_share_event_load($fields[$sf_name])) {
+              $fields[$sf_name] = sprintf('[Social_Share__c:sb_social_share:%d]', $share['share_id']);
+            } else {
+              // Drop this field if there isn't a valid share ID.
+              unset($fields[$sf_name]);
+            }
           }
           break;
       }
