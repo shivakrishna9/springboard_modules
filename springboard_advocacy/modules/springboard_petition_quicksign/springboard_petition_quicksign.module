@@ -1,6 +1,15 @@
 <?php
 
 /**
+ * Implements hook_views_api(). From Views module.
+ */
+function springboard_petition_quicksign_views_api() {
+  return array(
+    'api' => 3,
+  );
+}
+
+/**
  * Quick sign form.
  */
 function springboard_petition_quicksign_form() {
