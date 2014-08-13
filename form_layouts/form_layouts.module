@@ -528,3 +528,22 @@ function form_layouts_preprocess_one_column_petition_form_top(&$vars) {
   // Dig the title out and create a var to render it in the template.
   $vars['element']['title'] = $vars['element']['#node']->title;
 }
+
+function form_layouts_css_alter(&$css) {
+  // Global node.
+  $node = menu_get_object();
+
+  // Not admin path.
+  if ($node && !path_is_admin(current_path())) {
+    // Only if form layouts is enabled.
+    if (form_layouts_type_is_layouts_enabled($node->type)) {
+
+      // Exclude system.theme.css
+      $exclude = array(
+        'modules/system/system.theme.css' => FALSE,
+      );
+      $css = array_diff_key($css, $exclude);
+    }
+  }
+
+}
