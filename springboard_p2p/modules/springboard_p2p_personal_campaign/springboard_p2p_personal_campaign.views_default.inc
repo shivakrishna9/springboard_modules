@@ -658,7 +658,7 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['field'] = 'field_p2p_suggested_donation_amt';
   $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['label'] = '';
   $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['alter']['alter_text'] = TRUE;
-  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['alter']['text'] = 'Suggested donation of [field_p2p_suggested_donation_amt]';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['alter']['text'] = 'Suggested Donation: [field_p2p_suggested_donation_amt]';
   $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['element_type'] = '0';
   $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['element_label_type'] = '0';
   $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['element_label_colon'] = FALSE;
@@ -683,7 +683,7 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['fields']['field_p2p_suggested_donation']['relationship'] = 'field_p2p_campaign_target_id';
   $handler->display->display_options['fields']['field_p2p_suggested_donation']['label'] = '';
   $handler->display->display_options['fields']['field_p2p_suggested_donation']['alter']['alter_text'] = TRUE;
-  $handler->display->display_options['fields']['field_p2p_suggested_donation']['alter']['text'] = 'Suggested donation of [field_p2p_suggested_donation]';
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['alter']['text'] = 'Suggested Donation: [field_p2p_suggested_donation]';
   $handler->display->display_options['fields']['field_p2p_suggested_donation']['element_type'] = '0';
   $handler->display->display_options['fields']['field_p2p_suggested_donation']['element_label_type'] = '0';
   $handler->display->display_options['fields']['field_p2p_suggested_donation']['element_label_colon'] = FALSE;

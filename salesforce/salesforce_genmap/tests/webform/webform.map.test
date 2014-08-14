@@ -27,6 +27,9 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
    * Implementation of setUp().
    */
   public function setUp($modules = array()) {
+    $modules = array_merge($modules, array(
+      'fundraiser'
+    ));
     parent::setUp($modules);
   }
 
