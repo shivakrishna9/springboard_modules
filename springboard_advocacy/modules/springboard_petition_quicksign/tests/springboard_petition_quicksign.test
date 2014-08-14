@@ -1,0 +1,90 @@
+<?php
+
+/**
+ * @file test coverage for petition quicksign.
+ */
+
+class SpringboardPetitionQuicksignTestCase extends WebformUserSetup {
+  /**
+   * Implementation of getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => t('Springboard Petition Quicksign'),
+      'description' => t('Test the submission functionality of springboard petition quicksign.'),
+      'group' => t('Springboard Advocacy'),
+    );
+  }
+
+  /**
+   * Implementation of setUp().
+   */
+  public function setUp($additional_modules = array()) {
+    $enable_modules = array(
+      'features',
+      'webform',
+      'webform_user',
+      'springboard_petition',
+      'springboard_petition_quicksign',
+    );
+
+    $permissions['admin'] = array(
+      'create springboard-petition content',
+      'edit own springboard-petition content', 
+    );
+    // Call the parent to set all of the base modules up.
+    parent::setUp($enable_modules);
+
+    $this->drupalLogin($this->users['admin']);
+  }
+
+  public function testSpringboardPetitionQuicksignCreatePetition() {
+    $this->drupalLogin($this->users['admin']);
+    $this->drupalGet('node/add/springboard-petition');
+    $this->assertTrue(is_array($this->users), 'users:' . print_r($this->users, TRUE));
+    
+    // create petition
+    // confirm quicksign ui is present
+
+    // enable quicksign on petition.
+  }
+
+  public function testSpringboardPetitionQuicksignNodeView() {
+    // view petition
+
+    // confirm quicksign form is present
+  }
+
+  public function testSubmitQuicksignWithNewEmail() {
+    // submit quicksign with new email
+
+    // confirm page redirects back to webform
+
+    // confirm mail field is populated with mail submitted
+
+    // confirm message
+  }
+
+
+  public function submit_quicksign_with_existing_email_partial_profile() {
+    // submit quicksign with existing email, account should have partial profile values.
+
+    // confirm page redirects back to webform.
+
+    // confirm webform component fields are populated from user profile
+
+    // confirm message
+  }
+
+  public function submit_quicksign_with_existin_mail_full_profile() {
+    // submit quicksign with existing email, account should have full profile values.
+
+    // confirm form submits
+
+    // confirm submission redirects to webform confirmation page
+
+    // compare webform submission values to user profile, confirm submission values are correct
+  }
+
+  
+}
