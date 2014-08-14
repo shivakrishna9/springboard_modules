@@ -200,6 +200,17 @@ table td {
   background-color: #fff;
 }
 
+#webform-form.form-wrapper {
+  margin-bottom: 20px;
+  border-bottom: 1px dashed #888;
+}
+
+.form-wrapper-inner {
+  margin: 0 0 20px 0;
+  padding: 20px;
+  background: #eaeaea;
+}
+
 
 @media (max-width: 940px) {
 
