@@ -22,6 +22,23 @@ function fundraiser_entity_default_mapping_form($form, &$form_state) {
     '#default_value' => variable_get('fundraiser_entity_map_point', array()),
   );
 
+  // Select when the values should be mapped to the entity
+  $form['webform_components'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Webform Component Options.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  // Select when the values should be mapped to the entity
+  $form['webform_components']['fundraiser_entity_webform_autocreate_ignore'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Select the webform fields that should not automatically create fields on the donation entity.'),
+    '#description' => t("If you've mapped a webform field to non-matching entity field name, you may need to prevent it from auto creating a new field"),
+    '#options' => _fundraiser_entity_load_all_webform_components(),
+    '#default_value' => variable_get('fundraiser_entity_webform_autocreate_ignore', array()),
+  );
+
   $header = array(
     t('Donation Field'),
     t('Data Source'),
@@ -203,6 +220,7 @@ function fundraiser_entity_default_mapping_form_validate($form, $form_state) {
  */
 function fundraiser_entity_default_mapping_form_submit($form, $form_state) {
   variable_set('fundraiser_entity_map_point', $form_state['values']['fundraiser_entity_map_point']);
+  variable_set('fundraiser_entity_webform_autocreate_ignore', array_keys(array_filter($form_state['values']['fundraiser_entity_webform_autocreate_ignore'])));
 
   // Save the map values to the setting
   $mapped = array();
@@ -247,11 +265,43 @@ function fundraiser_entity_default_mapping_reset_confirm_submit($form, &$form_st
   $form_state['redirect'] = 'admin/springboard/settings/donation-entity/webform-map';
 }
 
+function _fundraiser_entity_load_all_webform_components() {
+ // Load components for each node.
+ return db_select('webform_component')
+   ->distinct('')
+   ->fields('webform_component', array('form_key', 'name'))
+   ->condition('type', array('textfield', 'select', 'email', 'hidden'), 'IN')
+   ->orderBy('name')
+   ->execute()
+   ->fetchAllKeyed();
+}
+
+/**
+ * Returns the default autocreate ignore array
+ */
+function _fundraiser_entity_default_webform_ignore_array() {
+  return array(
+    'address',
+    'address_line_2',
+    'city',
+    'country',
+    'mail',
+    'first_name',
+    'last_name',
+    'other_amount',
+    'amount',
+    'quantity',
+    'recurs_monthly',
+    'state',
+    'zip',
+  );
+}
+
 /**
  * Returns the default map array
  */
 function _fundraiser_entity_default_webform_map_array() {
-  $variable = array(
+  return array(
     'field_fde_cc_exp_month' => array(
       'source' => 'other',
       'other' => '[donation:card_expiration_month]',
@@ -357,6 +407,4 @@ function _fundraiser_entity_default_webform_map_array() {
       'other' => '[webform-tokens:val-search_string]',
     ),
   );
-
-  return $variable;
 }

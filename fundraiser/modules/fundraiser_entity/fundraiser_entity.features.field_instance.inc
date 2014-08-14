@@ -155,6 +155,40 @@ function fundraiser_entity_field_default_field_instances() {
     ),
   );
 
+  // Exported field_instance: 'fundraiser_donation-fundraiser_donation-field_fde_cid'
+  $field_instances['fundraiser_donation-fundraiser_donation-field_fde_cid'] = array(
+    'bundle' => 'fundraiser_donation',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'text',
+        'settings' => array(),
+        'type' => 'text_default',
+        'weight' => 23,
+      ),
+    ),
+    'entity_type' => 'fundraiser_donation',
+    'field_name' => 'field_fde_cid',
+    'label' => 'Campaign ID',
+    'required' => 0,
+    'settings' => array(
+      'text_processing' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'text',
+      'settings' => array(
+        'rows' => 5,
+      ),
+      'type' => 'text_textarea',
+      'weight' => 12,
+    ),
+  );
+
   // Exported field_instance: 'fundraiser_donation-fundraiser_donation-field_fde_donor_address'
   $field_instances['fundraiser_donation-fundraiser_donation-field_fde_donor_address'] = array(
     'bundle' => 'fundraiser_donation',
@@ -362,6 +396,40 @@ function fundraiser_entity_field_default_field_instances() {
     ),
   );
 
+  // Exported field_instance: 'fundraiser_donation-fundraiser_donation-field_fde_ms'
+  $field_instances['fundraiser_donation-fundraiser_donation-field_fde_ms'] = array(
+    'bundle' => 'fundraiser_donation',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'text',
+        'settings' => array(),
+        'type' => 'text_default',
+        'weight' => 22,
+      ),
+    ),
+    'entity_type' => 'fundraiser_donation',
+    'field_name' => 'field_fde_ms',
+    'label' => 'Market Source',
+    'required' => 0,
+    'settings' => array(
+      'text_processing' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'text',
+      'settings' => array(
+        'rows' => 5,
+      ),
+      'type' => 'text_textarea',
+      'weight' => 12,
+    ),
+  );
+
   // Exported field_instance: 'fundraiser_donation-fundraiser_donation-field_fde_payment_method'
   $field_instances['fundraiser_donation-fundraiser_donation-field_fde_payment_method'] = array(
     'bundle' => 'fundraiser_donation',
@@ -566,6 +634,7 @@ function fundraiser_entity_field_default_field_instances() {
   // Translatables
   // Included for use with string extractors like potx.
   t('Account Number');
+  t('Campaign ID');
   t('Credit Card Exp Month');
   t('Credit Card Exp Year');
   t('Credit Card Number');
@@ -573,6 +642,7 @@ function fundraiser_entity_field_default_field_instances() {
   t('Donor Address');
   t('Email');
   t('Initial referrer');
+  t('Market Source');
   t('Payment Method');
   t('Referrrer');
   t('Routing Number');

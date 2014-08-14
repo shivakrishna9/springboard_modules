@@ -553,6 +553,11 @@ function fundraiser_entity_webform_component_insert($component) {
     return;
   }
 
+  // Don't autocreate fields that have been set to be ignored.
+  if (in_array($component['form_key'], variable_get('fundraiser_entity_webform_autocreate_ignore', array()))) {
+    return;
+  }
+
   $field_type = $field_types[ $component['type'] ];
 
   module_load_include('inc', 'field', 'field.crud');
@@ -609,7 +614,7 @@ function fundraiser_entity_webform_component_insert($component) {
   if (!field_info_instance('fundraiser_donation', $field_name, 'fundraiser_donation')) {
     field_create_instance($field_instance);
 
-    // Update the value on the webform map as well.
+    // Save the new field to the map and set a default token value.
     $map = variable_get('fundraiser_entity_default_map', array());
 
     // Construct the token.
