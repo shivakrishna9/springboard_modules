@@ -220,11 +220,31 @@ function fundraiser_entity_default_mapping_form_submit($form, $form_state) {
 }
 
 /**
+ * Submit handler to redirect to the reset confirmation form
+ */
+function fundraiser_entity_default_mapping_form_reset($form, &$form_state) {
+  $form_state['redirect'] = 'admin/springboard/settings/donation-entity/webform-map/reset';
+}
+
+/**
+ * Confirmation form to reset to the default form
+ */
+function fundraiser_entity_default_mapping_reset_confirm($form, $form_state) {
+  return confirm_form(
+    array(),
+    t('Are you sure you want to reset the default map?'),
+    'admin/springboard/settings/donation-entity/webform-map',
+    t('This action cannot be undone.')
+  );
+}
+
+/**
  * Submit handler to reset to the default form
  */
-function fundraiser_entity_default_mapping_form_reset($form, $form_state) {
+function fundraiser_entity_default_mapping_reset_confirm_submit($form, &$form_state) {
   variable_set('fundraiser_entity_default_map', _fundraiser_entity_default_webform_map_array());
   drupal_set_message('The map has been reset to the default values.');
+  $form_state['redirect'] = 'admin/springboard/settings/donation-entity/webform-map';
 }
 
 /**

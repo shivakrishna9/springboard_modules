@@ -59,6 +59,13 @@ function fundraiser_entity_menu() {
     'type' => MENU_LOCAL_TASK,
     'weight' => 10,
   );
+  $items['admin/springboard/settings/donation-entity/webform-map/reset'] = array(
+    'title' => 'Reset the Default Webform Map',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_entity_default_mapping_reset_confirm'),
+    'access callback' => '_fundraiser_entity_mapping_access',
+    'file' => 'includes/fundraiser_entity.mapping.inc',
+  );
 
   return $items;
 }
