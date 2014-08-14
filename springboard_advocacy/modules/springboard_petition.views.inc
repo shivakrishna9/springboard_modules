@@ -176,7 +176,7 @@ function springboard_petition_views_default_views() {
   $handler->display->display_options['filters']['opt_in']['value'] = '1';
 
   /* Display: Block */
-  $handler = $view->new_display('block', 'Block', 'signers_block');
+  $handler = $view->new_display('block', 'Block', 'block_1');
   $handler->display->display_options['defaults']['fields'] = FALSE;
   /* Field: User: First name */
   $handler->display->display_options['fields']['sbp_first_name']['id'] = 'sbp_first_name';
