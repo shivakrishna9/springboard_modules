@@ -179,7 +179,6 @@ table td {
 
 /* pagers */
 
-
 .pager {
   margin: 10px 0;
 }
@@ -211,6 +210,9 @@ table td {
   background: #eaeaea;
 }
 
+.quicksign-description {
+  margin-bottom: 12px;
+}
 
 @media (max-width: 940px) {
 
