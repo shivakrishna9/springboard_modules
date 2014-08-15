@@ -226,7 +226,8 @@ function springboard_admin_init() {
         
     // Set up requested path and goto path.
     $path = str_replace("?".$_SERVER['QUERY_STRING'], '', request_uri());    
-    $goto_path = FALSE;
+    
+    $goto_path = springboard_admin_build_admin_path($path, 'path');
 
     if ($goto_path) {
       // If a redirect destination is included in the query string, clear it from
@@ -446,7 +447,9 @@ function springboard_admin_theme($existing, $type, $theme, $path) {
  * Implements administrative url aliases for the Springboard UX.
  */
 function springboard_admin_url_inbound_alter(&$path, $original_path, $path_language) {
-  
+  if($final_path = springboard_admin_build_admin_path($path, 'alias')) {
+    $path = $final_path;
+  }
 }
 
 /**
@@ -724,6 +727,90 @@ function springboard_drupal_path_validate(&$form, &$form_state) {
   if (!valid_url($form_state['values']['springboard_drupal_path'], TRUE)) {
     form_error($form['admin']['springboard_drupal_path'], 'Please submit a valid URL, including "http://"');
   }
+}
+
+/**
+ * API Function
+ * Assembles an associative array of paths and their Springboard aliases. Allows
+ * other modules to add to or alter the array of paths.
+ * 
+ * @return $patterns
+ * An array of path + alias pattern pairs. Each item is an array containing:
+ *   - path: An associative array describing the original menu router path.
+ *     - regex: A regular expression that matches the path.
+ *     - replacement: The original path with arguments in the form of '%1'.
+ *   - alias: An associative array describing the springboard alias.
+ *     - regex: A regular expression that matches the path.
+ *     - replacement: The original path with arguments in the form of '%1'.
+ * 
+ */
+
+function springboard_admin_alias_patterns() {
+  $patterns = module_invoke_all('springboard_admin_alias_patterns');
+  drupal_alter('springboard_admin_alias_patterns', $patterns);
+  return($patterns);
+}
+
+/** 
+ * Implements hook_springboard_admin_alias_patterns().
+ */
+function springboard_admin_springboard_admin_alias_patterns() {
+    return array(
+    'node/add/%type' => array(
+      'path' => array(
+        'regex' => '|^/node/add(/.*)$|',
+        'replacement' => 'node/add/%1',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/add(/.*)$|',
+        'replacement' => 'springboard/add/%1',
+      ),
+    ),
+    'node/%nid/submission/%sid' => array(
+      'path' => array(
+        'regex' => '|^/node(/[0-9]*)/submission(/[0-9]*)$|',
+        'replacement' => 'node/%1/submission/%2',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/node(/[0-9]*)/submission(/[0-9]*)$|',
+        'replacement' => 'springboard/node/%1/submission/%2',
+      ),
+    ),  
+  );
+}
+
+/**
+ * Helper Function
+ * Given a path, parses through the availalbe Springboard alias patterns and 
+ * returns the appropriate altered path.
+ * 
+ * @param $path
+ *   The path to be checked for matching aliases.
+ * 
+ * @param $type
+ *   The type of path supplied in $path. 'path' if it is the original router path,
+ *   'alias' if it is the Springboard path alias.
+ * 
+ * @return $final_path
+ *   The altered path or FALSE if no alias pattern matched.
+ */
+function springboard_admin_build_admin_path($path, $type) {
+  $final_type = $type == 'path' ? 'alias' : 'path';
+  $final_path = FALSE;
+  $patterns = springboard_admin_alias_patterns();
+    foreach($patterns as $key => $pattern) {
+      if(preg_match($pattern[$type]['regex'], $path, $matches)) {
+        $final_path = $pattern[$final_type]['replacement'];
+        preg_match_all('|%[0-9]*|', $pattern['alias']['replacement'], $args);
+        if($args) {
+          foreach($args[0] as $key => $arg) {
+            $final_path = preg_replace('/\/' . $arg . '/', $matches[$key + 1], $final_path);
+          }
+        }
+        return $final_path;
+      }
+    }
+  return $final_path;
 }
 
 /**
