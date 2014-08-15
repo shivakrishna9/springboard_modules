@@ -242,11 +242,6 @@ function commerce_litle_cc_settings_form($settings = array()) {
     '#title' => t('Timeout'),
     '#default_value' => isset($settings['commerce_litle_settings_timeout']) ? $settings['commerce_litle_settings_timeout'] : 65,
   );
-  $form['commerce_litle_settings_version'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Version'),
-    '#default_value' => isset($settings['commerce_litle_settings_version']) ? $settings['commerce_litle_settings_version'] : 8.15,
-  );
 
   $form['commerce_litle_settings_reportGroup'] = array(
     '#type' => 'textfield',
@@ -333,11 +328,6 @@ function commerce_litle_echeck_settings_form($settings = array()) {
     '#type' => 'textfield',
     '#title' => t('Timeout'),
     '#default_value' => isset($settings['commerce_litle_settings_timeout']) ? $settings['commerce_litle_settings_timeout'] : 65,
-  );
-  $form['commerce_litle_settings_version'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Version'),
-    '#default_value' => isset($settings['commerce_litle_settings_version']) ? $settings['commerce_litle_settings_version'] : 8.15,
   );
   $form['commerce_litle_settings_reportGroup'] = array(
     '#type' => 'textfield',
@@ -1369,7 +1359,6 @@ function _commerce_litle_get_litle_config($gateway) {
     'url' => !empty($gateway['settings']['commerce_litle_settings_url']) ? $gateway['settings']['commerce_litle_settings_url'] : '',
     'proxy' => !empty($gateway['settings']['commerce_litle_settings_proxy']) ? $gateway['settings']['commerce_litle_settings_proxy'] : '',
     'timeout' => !empty($gateway['settings']['commerce_litle_settings_timeout']) ? $gateway['settings']['commerce_litle_settings_timeout'] : '',
-    'version' => !empty($gateway['settings']['commerce_litle_settings_version']) ? $gateway['settings']['commerce_litle_settings_version'] : '',
     'reportGroup' => !empty($gateway['settings']['commerce_litle_settings_reportGroup']) ? $gateway['settings']['commerce_litle_settings_reportGroup'] : '',
   );
 

@@ -67,3 +67,10 @@ function springboard_admin_update_7002() {
     variable_del('springboard_login_redirect_roles');
   }
 }
+
+/**
+ * Rebuilds the Springboard Admin Menu to add new items.
+ */
+function springboard_admin_update_7003() {
+  springboard_admin_recreate_menu();
+}

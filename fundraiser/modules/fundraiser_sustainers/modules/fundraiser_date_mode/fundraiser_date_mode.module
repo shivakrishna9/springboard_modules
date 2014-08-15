@@ -215,7 +215,7 @@ function _fundraiser_date_mode_orders_to_change($orders, $new_date = NULL) {
     // Skip future failed and canceled orders.
     // This also shouldn't happen, $data should only contain orders with
     // NULL gateway_resp.
-    if (in_array($order['gateway_resp'], array('failed', 'canceled'))) {
+    if (in_array($order['gateway_resp'], array('failed', 'canceled', 'skipped'))) {
       continue;
     }
     // No change, skip it.
