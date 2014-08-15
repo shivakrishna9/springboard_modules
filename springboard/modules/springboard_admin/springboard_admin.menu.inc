@@ -550,6 +550,7 @@ function springboard_admin_admin_menu_items() {
     'customized' => 1,
     'weight' => 3,
   );
+  drupal_alter('springboard_admin_admin_menu_items', $items);
   return $items;
 }
 
