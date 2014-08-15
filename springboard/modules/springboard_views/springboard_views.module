@@ -168,6 +168,36 @@ function springboard_views_action_info() {
   );
 }
 
+/** 
+ * Implements hook_springboard_admin_alias_patterns().
+ */
+function springboard_views_springboard_admin_alias_patterns() {
+    return array(
+    'admin/springboard/reports/contacts' => array(
+      'path' => array(
+        'regex' => '|^/admin/springboard/reports/contacts$|',
+        'replacement' => 'admin/springboard/reports/contacts',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/reports/contacts$|',
+        'replacement' => 'springboard/reports/contacts',
+      ),
+    ),  
+  );
+}
+
+function springboard_views_springboard_admin_admin_menu_items_alter(&$items) {
+  // Reports > Contacts.
+  $items['admin/springboard/reports']['_children']['admin/springboard/reports/contacts'] = array(
+    'link_path' => 'admin/springboard/reports/contacts',
+    'link_title' => 'Contacts',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 1,
+  );
+}
+
 /**
  * Helper function, returns a list of the available 'drupal_type' field values.
  */

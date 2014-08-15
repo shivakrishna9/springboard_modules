@@ -283,16 +283,6 @@ function springboard_admin_admin_menu_items() {
       'weight' => 0,
     );
 
-    // Reports > Contacts.
-    $items['admin/springboard/reports']['_children']['admin/springboard/reports/contacts'] = array(
-      'link_path' => 'admin/springboard/reports/contacts',
-      'link_title' => 'Contacts',
-      'menu_name' => 'springboard_admin_menu',
-      'expanded' => 1,
-      'customized' => 1,
-      'weight' => 1,
-    );
-
     // Reports > Integration Reports.
     $items['admin/springboard/reports']['_children']['admin/springboard/reports/integration-reports'] = array(
       'link_path' => 'admin/springboard/reports/integration-reports',
