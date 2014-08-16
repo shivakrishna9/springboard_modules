@@ -33,6 +33,8 @@ function page_wrappers_settings_form($form, $form_state) {
   $rulesets = _page_wrapper_available_rulesets();
     
   $enabled_node_types = variable_get('page_wrapper_enabled_node_types', array('donation_form'));
+  $form['#page_wrapper_config_parent'] = array();
+  $form['#add_more_button_text'] = t('Add Another');
   
   foreach ($enabled_node_types as $type => $value) {
     if ($type === $value) {
@@ -40,6 +42,8 @@ function page_wrappers_settings_form($form, $form_state) {
 
       // Set up field keys
       $fieldset_key = 'page_wrappers_' . $type->type . '_settings';
+      $form['#page_wrapper_config_parent'][] = $fieldset_key;
+      $field_page_wrappers_more_key = 'page_wrappers_more_' . $type->type;
       $field_key = 'page_wrapper_default_' . $type->type . '_config';
       $field_id = 'page-wrappers-' . $type->type . '-assignments';
       
@@ -94,7 +98,7 @@ function page_wrappers_settings_form($form, $form_state) {
       
       // If we have configured rulesets add the add more button
       if (!empty($rulesets)) {
-        $form[$fieldset_key]['page_wrappers_more'] = array(
+        $form[$fieldset_key][$field_page_wrappers_more_key] = array(
           '#type' => 'submit',
           '#value' => t('Add Another'),
           '#weight' => 1,
@@ -110,7 +114,7 @@ function page_wrappers_settings_form($form, $form_state) {
         $form[$fieldset_key][$field_key]['#has_rulesets'] = TRUE;
       }
     }
-  }  
+  }
 
   
 

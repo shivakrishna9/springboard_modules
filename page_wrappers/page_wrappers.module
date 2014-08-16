@@ -468,6 +468,8 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
  * Submit handler to add more page wrappers assignments to a form
  */
 function page_wrapper_add_assignment_submit($form, &$form_state) {
+  dsm($form);
+  dsm($form_state);
   // Remove any empty configurations
   foreach ($form_state['values'][$form['#page_wrapper_config_parent']] as $key => $config) {
     if (empty($config['wrapper_nid'])) {
@@ -476,7 +478,7 @@ function page_wrapper_add_assignment_submit($form, &$form_state) {
   }
 
   // Set the amount of configured wrappers
-  if ($form_state['values']['page_wrappers_more']) {
+  if ($form_state['values']['op'] == $form['#add_more_button_text']) {
     $form_state['wrappers_count'] = count($form_state['values'][$form['#page_wrapper_config_parent']]) + 1;
   }
 
@@ -485,6 +487,8 @@ function page_wrapper_add_assignment_submit($form, &$form_state) {
   $form_state['node']->page_wrappers = array_values($form_state['values'][$form['#page_wrapper_config_parent']]);
   unset($form_state['input'][$form['#page_wrapper_config_parent']]);
   $form_state['rebuild'] = TRUE;
+  dsm($form);
+  dsm($form_state);
 }
 
 function page_wrappers_og_ajax_callback($form, $form_state) {
