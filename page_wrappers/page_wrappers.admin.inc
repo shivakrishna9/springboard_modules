@@ -33,7 +33,7 @@ function page_wrappers_settings_form($form, $form_state) {
   $rulesets = _page_wrapper_available_rulesets();
     
   $enabled_node_types = variable_get('page_wrapper_enabled_node_types', array('donation_form'));
-  $form['#page_wrapper_config_parent'] = array();
+  $form['#page_wrapper_config_parent'] = 'page_wrappers_registration_form_settings';
   $form['#add_more_button_text'] = t('Add Another');
   
   foreach ($enabled_node_types as $type => $value) {
@@ -41,33 +41,32 @@ function page_wrappers_settings_form($form, $form_state) {
       $type = $types[$type];
 
       // Set up field keys
-      $fieldset_key = 'page_wrappers_' . $type->type . '_settings';
-      $form['#page_wrapper_config_parent'][] = $fieldset_key;
+      $fieldset_key = 'page_wrappers_settings_' . $type->type;
       $field_page_wrappers_more_key = 'page_wrappers_more_' . $type->type;
-      $field_key = 'page_wrapper_default_' . $type->type . '_config';
+      $field_key = 'page_wrapper_default_config_' . $type->type;
       $field_id = 'page-wrappers-' . $type->type . '-assignments';
       
       // To use the same ajax function as the node form we check for the node value
-      if (!empty($form_state['node']->page_wrappers)) {
-        $configurations = $form_state['node']->page_wrappers;
+      if (!empty($form_state['node']->page_wrappers[$field_key])) {
+        $configurations = $form_state['node']->page_wrappers[$field_key];
       }
       else {
-        $configurations = array_values(variable_get('page_wrapper_default_' . $type->type . '_config', array()));
+        $configurations = array_values(variable_get($field_key, array()));
       }
-          
+                      
       // Get a count of the wrappers, the wrappers_count value is passed from the ajax function
-      if (isset($form_state['wrappers_count'])) {
-        $wrappers_count = $form_state['wrappers_count'];
+      if (isset($form_state['wrappers_count'][$field_key])) {
+        $wrappers_count = $form_state['wrappers_count'][$field_key];
       }
       else {
         $wrappers_count = empty($configurations) ? 1 : count($configurations);
       }
-      
+            
       // Set up the fieldsets and fields now.
       $form[$fieldset_key] = array(
         '#type' => 'fieldset',
-        '#title' => t('Default ' . $type->name . ' Configuration'),
-        '#description' => t('Configure the Page Wrapper settings for a new node.'),
+        '#title' => t('Default !node_type Configuration', array('!node_type' => $type->name)),
+        '#description' => t('Configure the Page Wrapper settings for new <strong>!node_type</strong> nodes.', array('!node_type' => $type->name)),
         '#tree' => FALSE,
       );
       // Container for just the poll choices.
@@ -100,9 +99,9 @@ function page_wrappers_settings_form($form, $form_state) {
       if (!empty($rulesets)) {
         $form[$fieldset_key][$field_page_wrappers_more_key] = array(
           '#type' => 'submit',
-          '#value' => t('Add Another'),
+          '#value' => t('Add !node_type Option', array('!node_type' => $type->name)),
           '#weight' => 1,
-          '#limit_validation_errors' => array(array('page_wrapper_default_node_config')),
+          '#limit_validation_errors' => array(array($field_key)),
           '#submit' => array('page_wrapper_add_assignment_submit'),
           '#ajax' => array(
             'callback' => '_page_wrappers_add_js',
@@ -128,9 +127,7 @@ function page_wrappers_settings_form($form, $form_state) {
   }
 
   $form['#validate'][] = 'page_wrappers_settings_form_validate';
-  
-  dsm($form);
-  
+    
   return system_settings_form($form);
 }
 
@@ -138,9 +135,13 @@ function page_wrappers_settings_form($form, $form_state) {
  * Validate handler for the admin form to remove empty page wrapper default node configurations
  */
 function page_wrappers_settings_form_validate($form, &$form_state) {
-  foreach ($form_state['values']['page_wrapper_default_node_config'] as $key => $values) {
-    if (empty($values['wrapper_nid'])) {
-      unset($form_state['values']['page_wrapper_default_node_config'][$key]);
-    }
+  foreach ($form_state['values'] as $field_key => $field_values) {
+    if (is_array($field_values)) {
+      foreach ($field_values as $key => $values) {
+        if (is_array($values) && isset($values['wrapper_nid']) && (empty($values['wrapper_nid']) || $values['wrapper_nid'] == 0)) {
+          unset($form_state['values'][$field_key][$key]);
+        }
+      }
+    } 
   }
 }
