@@ -12,13 +12,15 @@
  */
 function page_wrappers_settings_form($form, $form_state) {
   $form['#attached']['js'][] = drupal_get_path('module', 'page_wrappers') . '/js/page_wrappers.admin.js';
+  
+  // Get node types for the checkbox field, but exclude page_wrapper, obviously.
   $types = node_type_get_types();
   unset($types['page_wrapper']);
   $options = array();
   foreach ($types as $db_name => $type) {
     $options[$db_name] = $type->name;
   }
-
+  
   $form['page_wrapper_enabled_node_types'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Page wrapper-enabled content types'),
@@ -34,18 +36,19 @@ function page_wrappers_settings_form($form, $form_state) {
   
   foreach ($enabled_node_types as $type => $value) {
     if ($type === $value) {
-      
+      $type = $types[$type];
+
       // Set up field keys
-      $fieldset_key = 'page_wrappers_' . $type . '_settings';
-      $field_key = 'page_wrapper_default_' . $type . '_config';
-      $field_id = 'page-wrappers-' . $type . '-assignments';
+      $fieldset_key = 'page_wrappers_' . $type->type . '_settings';
+      $field_key = 'page_wrapper_default_' . $type->type . '_config';
+      $field_id = 'page-wrappers-' . $type->type . '-assignments';
       
       // To use the same ajax function as the node form we check for the node value
       if (!empty($form_state['node']->page_wrappers)) {
         $configurations = $form_state['node']->page_wrappers;
       }
       else {
-        $configurations = array_values(variable_get('page_wrapper_default_' . $type . '_config', array()));
+        $configurations = array_values(variable_get('page_wrapper_default_' . $type->type . '_config', array()));
       }
           
       // Get a count of the wrappers, the wrappers_count value is passed from the ajax function
@@ -59,7 +62,7 @@ function page_wrappers_settings_form($form, $form_state) {
       // Set up the fieldsets and fields now.
       $form[$fieldset_key] = array(
         '#type' => 'fieldset',
-        '#title' => t('Default ' . $type . ' Configuration'),
+        '#title' => t('Default ' . $type->name . ' Configuration'),
         '#description' => t('Configure the Page Wrapper settings for a new node.'),
         '#tree' => FALSE,
       );
