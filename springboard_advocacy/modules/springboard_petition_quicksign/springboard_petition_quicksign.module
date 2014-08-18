@@ -27,7 +27,7 @@ function springboard_petition_quicksign_form() {
   );
   $form['mail'] = array(
     '#type' => 'textfield',
-    '#title' => t('Your email address'),
+    '#title' => '',
     '#default_value' => $user->uid ? $user->mail : '',
   );
   $form['nid'] = array(
@@ -36,7 +36,7 @@ function springboard_petition_quicksign_form() {
   );
   $form['submit'] = array(
     '#type' => 'submit',
-    '#value' => 'submit', //isset($settings['quicksign_button_text']) ? check_plain($settings['quicksign_button_text']) : t('Sign our petiton'),
+    '#value' => isset($settings['quicksign_button_text']) ? check_plain($settings['quicksign_button_text']) : t('Sign our petiton'),
   );
   $form['#validate'][] = 'springboard_petition_quicksign_form_validate';
   $form['#submit'][] = 'springboard_petition_quicksign_form_submit';
@@ -126,7 +126,7 @@ function springboard_petition_quicksign_form_node_form_alter(&$form, &$form_stat
   if (isset($node->type) && springboard_petition_is_petition_type($node->type)) {
     // TODO: refactor this out.
     $node->quicksign_enabled = springboard_petition_quicksign_is_enabled($node);
-    $settings = springboard_petition_quicksign_settings($node->nid);
+    $settings = isset($node->nid) ? springboard_petition_quicksign_settings($node->nid) : array();
     $form['springboard_petition_quicksign'] = array(
       '#type' => 'fieldset',
       '#title' => t('Quick Sign settings'),

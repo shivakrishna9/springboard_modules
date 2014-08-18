@@ -36,7 +36,7 @@ function springboard_petition_quicksign_schema() {
       'form_label' => array(
         'description' => 'quicksign form label',
         'type' => 'varchar',
-        'size' => 255,
+        'length' => 255,
       ),
       'form_description' => array(
         'description' => 'Additional description text.',
@@ -45,7 +45,7 @@ function springboard_petition_quicksign_schema() {
       'form_description_format' => array(
         'description' => 'Description text format.',
         'type' => 'varchar',
-        'size' => 255,
+        'length' => 255,
       ),
       'submit_button_text' => array(
         'description' => 'Submit button text.',
