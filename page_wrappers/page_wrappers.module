@@ -382,13 +382,18 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
       $field_key = 'page_wrappers';
       $field_id = 'page-wrappers-assignments';
 
-      // If this is a new node use the default configuration
-      if (!empty($form['#node']->nid)) {
+      // If this is an existing node, get its unique page wrapper settings; if it is a new node, 
+      // use the default configuration for its node type. And if there's no default configuration 
+      // for this node type, fallback to the global setting.
+      if (isset($form['#node']->nid)) {
         $configurations = !empty($form_state['node']->page_wrappers) ? $form_state['node']->page_wrappers : array();
       }
       else {
         $default_node_type_settings = 'page_wrapper_default_config_' . $form['#node']->type;
         $configurations = array_values(variable_get($default_node_type_settings, array()));
+        if (empty($configurations)) {
+          $configurations = array_values(variable_get('page_wrapper_default_node_config', array()));
+        }
       }
 
       // Get a count of the wrappers, wrappers_count value is passed from the ajax function

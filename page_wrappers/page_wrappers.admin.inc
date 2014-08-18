@@ -118,8 +118,6 @@ function page_wrappers_settings_form($form, $form_state) {
     }
   }
 
-  
-
   if (module_exists('og')) {
     $form['page_wrappers_filter_by_og'] = array(
       '#type' => 'checkbox',
@@ -135,7 +133,10 @@ function page_wrappers_settings_form($form, $form_state) {
 }
 
 /**
- * Validate handler for the admin form to remove empty page wrapper default node configurations
+ * Validate handler for the admin form to remove empty page wrapper default node configurations.
+ *
+ * Iterate through all submitted fields. If the field is an array, iterate through them
+ * and unset() any empty field value (with an empty 'wrapper_nid'.
  */
 function page_wrappers_settings_form_validate($form, &$form_state) {
   foreach ($form_state['values'] as $field_key => $field_values) {
