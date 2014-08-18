@@ -378,6 +378,9 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
       }
 
       $rulesets = _page_wrapper_available_rulesets();
+      $fieldset = 'page_wrappers_settings';
+      $field_key = 'page_wrappers';
+      $field_id = 'page-wrappers-assignments';
 
       // If this is a new node use the default configuration
       if (!empty($form['#node']->nid)) {
@@ -396,7 +399,7 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
         $wrappers_count = empty($configurations) ? 1 : count($configurations);
       }
 
-      $form['page_wrappers_settings'] = array(
+      $form[$fieldset] = array(
         '#type' => 'fieldset',
         '#title' => t('Page wrapper settings'),
         '#description' => t('Add, remove and configure page wrappers for this node.'),
@@ -407,14 +410,14 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
       );
 
       // Container for just the poll choices.
-      $form['page_wrappers_settings']['page_wrappers'] = array(
-        '#prefix' => '<div id="page-wrappers-assignments">',
+      $form[$fieldset][$field_key] = array(
+        '#prefix' => '<div id="' . $field_id . '">',
         '#suffix' => '</div>',
         '#theme' => 'page_wrappers_node_assignments',
       );
 
       // Let the ajax functions know which field group to update
-      $form['#page_wrapper_config_parent'] = 'page_wrappers';
+      $form['#page_wrapper_config_parent'] = $fieldset;
 
       // Add existing wrapper configurations
       $delta = 0;
@@ -423,7 +426,7 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
         $delta = count($configurations);
         foreach ($configurations as $pwid => $config) {
           $key = 'pwid:' . $pwid;
-          $form['page_wrappers_settings']['page_wrappers'][$key] = _page_wrappers_assignment_fields($key, $config, $wrappers, $rulesets, $config['weight'], $wrappers_count);
+          $form[$fieldset][$field_key][$key] = _page_wrappers_assignment_fields($key, $config, $wrappers, $rulesets, $config['weight'], $wrappers_count);
           $weight = max($config['weight'], $weight);
         }
       }
@@ -433,25 +436,28 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
       for ($delta; $delta < $wrappers_count; $delta++) {
         $key = 'new:' . ($delta - $existing_delta);
         $weight++;
-        $form['page_wrappers_settings']['page_wrappers'][$key] = _page_wrappers_assignment_fields($key, array(), $wrappers, $rulesets, $weight, $wrappers_count);
+        $form[$fieldset][$field_key][$key] = _page_wrappers_assignment_fields($key, array(), $wrappers, $rulesets, $weight, $wrappers_count);
       }
 
       // If we have configured rulesets add the add more button
       if (!empty($rulesets)) {
-        $form['page_wrappers_settings']['page_wrappers_more'] = array(
+        $form[$fieldset]['page_wrappers_more'] = array(
           '#type' => 'submit',
-          '#value' => t('Add Another'),
+          '#value' => t('Add Another Option'),
           '#weight' => 1,
-          '#limit_validation_errors' => array(array('page_wrappers')),
+          '#limit_validation_errors' => array(
+            'fieldset' => array($fieldset), 
+            'field_key' => array($field_key)
+          ),
           '#submit' => array('page_wrapper_add_assignment_submit'),
           '#ajax' => array(
             'callback' => '_page_wrappers_add_js',
-            'wrapper' => 'page-wrappers-assignments',
+            'wrapper' => $field_id,
             'effect' => 'fade',
           ),
         );
         // Add a flag to the page wrapper fieldset that we have rulesets
-        $form['page_wrappers_settings']['page_wrappers']['#has_rulesets'] = TRUE;
+        $form[$fieldset][$field_key]['#has_rulesets'] = TRUE;
       }
     }
   }
@@ -470,7 +476,8 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
  */
 function page_wrapper_add_assignment_submit($form, &$form_state) {
   // Set the field and the 'clicked button' we're going to use.
-  $field_key = $form_state['clicked_button']['#limit_validation_errors'][0][0];
+  $field_info = _page_wrappers_find_fieldset_and_field($form_state);
+  $field_key = $field_info['field_key'];
   $clicked_button_id = $form_state['clicked_button']['#id'];
   // Remove any empty configurations
   foreach ($form_state['values'][$field_key] as $key => $config) {
@@ -482,13 +489,11 @@ function page_wrapper_add_assignment_submit($form, &$form_state) {
   // Set the amount of configured wrappers if 'page-wrappers-more' was clicked.
   if (strpos($clicked_button_id, 'page-wrappers-more')) {
     $page_wrappers_count = count($form_state['values'][$field_key]) + 1;
+    $form_state['wrappers_count'] = $page_wrappers_count;
     if ($form['#form_id'] == 'page_wrappers_settings_form') {
       $form_state['wrappers_count'] = array(
         $field_key => $page_wrappers_count,
       );
-    }
-    else {
-      $form_state['wrappers_count'] = $page_wrappers_count;
     }
   }
 
@@ -506,9 +511,12 @@ function page_wrapper_add_assignment_submit($form, &$form_state) {
   $form_state['rebuild'] = TRUE;
 }
 
-function page_wrappers_og_ajax_callback($form, $form_state) {
-  $field_info = _page_wrappers_get_field_and_fieldset($form_state);
-  return $form[$field_info['parent_fieldset_key']][$field_info['field_key']]['wrapper_nid'];
+/**
+ * Ajax callback for OG groups.
+ */
+function page_wrappers_og_ajax_callback($form, $form_state) {  
+  $field_info = _page_wrappers_find_fieldset_and_field($form_state);
+  return $form[$field_info['fieldset']][$field_info['field_key']]['wrapper_nid'];
 }
 
 /**
@@ -520,18 +528,14 @@ function page_wrappers_og_ajax_callback($form, $form_state) {
  * @see page_wrapper_add_assignment_submit()
  */
 function _page_wrappers_add_js($form, $form_state) {
-  $field_info = _page_wrappers_get_field_and_fieldset($form_state);
-  return $form[$field_info['parent_fieldset_key']][$field_info['field_key']];
+  $field_info = _page_wrappers_find_fieldset_and_field($form_state);
+  return $form[$field_info['fieldset']][$field_info['field_key']];
 }
 
-/**
- * Get field and parent fieldset that is being affected by ajax action.
- */
-function _page_wrappers_get_field_and_fieldset($form_state) {
-  $field_key = $form_state['clicked_button']['#limit_validation_errors'][0][0];
+function _page_wrappers_find_fieldset_and_field($form_state) {
   return array(
-    'field_key' => $field_key,
-    'parent_fieldset_key' => str_replace('page_wrapper_default_config', 'page_wrappers_settings', $field_key),
+    'fieldset' => $form_state['clicked_button']['#limit_validation_errors']['fieldset'][0],
+    'field_key' => $form_state['clicked_button']['#limit_validation_errors']['field_key'][0]
   );
 }
 
@@ -651,13 +655,9 @@ function theme_page_wrappers_node_assignments($variables) {
   if (!empty($fieldset['#has_rulesets'])) {
     $header[] = '';
   }
-
-  if ($variables['form']['#id'] == 'edit-page-wrappers') {
-    $table_id = 'page-wrappers-assignments-table';
-  }
-  else {
-    $table_id = 'page-wrappers-assignments-table' . str_replace('edit-page-wrapper-default-config', '', $variables['form']['#id']);
-  }
+  
+  // Set the table ID based on the form element ID.
+  $table_id = 'table-' . $variables['form']['#id'];
   
   // If there are rulesets then add the draggable function
   if (!empty($fieldset['#has_rulesets'])) {

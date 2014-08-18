@@ -41,7 +41,7 @@ function page_wrappers_settings_form($form, $form_state) {
       $type = $types[$type];
 
       // Set up field keys
-      $fieldset_key = 'page_wrappers_settings_' . $type->type;
+      $fieldset = 'page_wrappers_settings_' . $type->type;
       $field_page_wrappers_more_key = 'page_wrappers_more_' . $type->type;
       $field_key = 'page_wrapper_default_config_' . $type->type;
       $field_id = 'page-wrappers-' . $type->type . '-assignments';
@@ -63,14 +63,14 @@ function page_wrappers_settings_form($form, $form_state) {
       }
             
       // Set up the fieldsets and fields now.
-      $form[$fieldset_key] = array(
+      $form[$fieldset] = array(
         '#type' => 'fieldset',
         '#title' => t('Default !node_type Configuration', array('!node_type' => $type->name)),
         '#description' => t('Configure the Page Wrapper settings for new <strong>!node_type</strong> nodes.', array('!node_type' => $type->name)),
         '#tree' => FALSE,
       );
       // Container for just the poll choices.
-      $form[$fieldset_key][$field_key] = array(
+      $form[$fieldset][$field_key] = array(
         '#prefix' => '<div id="' . $field_id . '">',
         '#suffix' => '</div>',
         '#theme' => 'page_wrappers_node_assignments',
@@ -82,7 +82,7 @@ function page_wrappers_settings_form($form, $form_state) {
         $delta = count($configurations);
         foreach ($configurations as $pwid => $config) {
           $key = 'pwid:' . $pwid;
-          $form[$fieldset_key][$field_key][$key] = _page_wrappers_assignment_fields($key, $config, $wrappers, $rulesets, $config['weight'], $wrappers_count, $field_key);
+          $form[$fieldset][$field_key][$key] = _page_wrappers_assignment_fields($key, $config, $wrappers, $rulesets, $config['weight'], $wrappers_count, $field_key);
           $weight = max($config['weight'], $weight);
         }
       }
@@ -92,16 +92,19 @@ function page_wrappers_settings_form($form, $form_state) {
       for ($delta; $delta < $wrappers_count; $delta++) {
         $key = 'new:' . ($delta - $existing_delta);
         $weight++;
-        $form[$fieldset_key][$field_key][$key] = _page_wrappers_assignment_fields($key, array(), $wrappers, $rulesets, $weight, $wrappers_count, $field_key);
+        $form[$fieldset][$field_key][$key] = _page_wrappers_assignment_fields($key, array(), $wrappers, $rulesets, $weight, $wrappers_count, $field_key);
       }
       
       // If we have configured rulesets add the add more button
       if (!empty($rulesets)) {
-        $form[$fieldset_key][$field_page_wrappers_more_key] = array(
+        $form[$fieldset][$field_page_wrappers_more_key] = array(
           '#type' => 'submit',
           '#value' => t('Add !node_type Option', array('!node_type' => $type->name)),
           '#weight' => 1,
-          '#limit_validation_errors' => array(array($field_key)),
+          '#limit_validation_errors' => array(
+            'fieldset' => array($fieldset), 
+            'field_key' => array($field_key)
+          ),
           '#submit' => array('page_wrapper_add_assignment_submit'),
           '#ajax' => array(
             'callback' => '_page_wrappers_add_js',
@@ -110,7 +113,7 @@ function page_wrappers_settings_form($form, $form_state) {
           ),
         );
         // Add a flag to the page wrapper fieldset that we have rulesets
-        $form[$fieldset_key][$field_key]['#has_rulesets'] = TRUE;
+        $form[$fieldset][$field_key]['#has_rulesets'] = TRUE;
       }
     }
   }
