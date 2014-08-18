@@ -80,6 +80,40 @@ function fundraiser_entity_menu_alter(&$items) {
 }
 
 /**
+ * Implements hook_cron_queue_info().
+ */
+function fundraiser_entity_cron_queue_info() {
+  $queues['fundraiser_entity_post_process'] = array(
+    'worker callback' => '_fundraiser_entity_post_process_queue_worker',
+    'time' => 180,
+  );
+
+  return $queues;
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function fundraiser_entity_views_api() {
+  return array('api' => 2);
+}
+
+/**
+ * Implements hook_action_info().
+ */
+function fundraiser_entity_action_info() {
+  return array(
+    'fundraiser_entity_fundraiser_donation_webform_map_action' => array(
+      'description' => t('Populate the entity fields using the webform map.'),
+      'label' => t('Map Field Values'),
+      'type' => 'fundraiser_donation',
+      'configurable' => FALSE,
+      'triggers' => array('any'),
+    ),
+  );
+}
+
+/**
  * Callback for the Donation Settings page.
  */
 function fundraiser_entity_donation_settings_overview() {
@@ -432,7 +466,7 @@ function fundraiser_entity_access($op, $task, $account = NULL, $entity_type = NU
 }
 
 /**
- * Menu item access callback: prevent access to the node mapping form
+ * Menu item access callback: prevent access to the node mapping form.
  *
  * @param $node
  *   The node object as loaded via the menu item wildcard.
@@ -460,22 +494,33 @@ function _fundraiser_entity_mapping_access($node = NULL) {
 function fundraiser_entity_fundraiser_donation_create($donation) {
   // First check if we should map the values during donation create.
   $map_points = variable_get('fundraiser_entity_map_point', array());
-  if (empty($map_points['create'])) {
-    return;
+
+  // Map on donation create
+  if (!empty($map_points['create'])) {
+    // Create a new entity object.
+    $values = (array) $donation;
+    $fundraiser_donation = entity_create('fundraiser_donation', $values);
+
+    // Load the context and map the values.
+    $context = _fundraiser_entity_context_from_donation_object($donation);
+    _fundraiser_entity_map_values($fundraiser_donation, $context);
+
+    // Let the entity save function know the record has been written, avoids DB errors.
+    $fundraiser_donation->record_written = TRUE;
+
+    entity_save('fundraiser_donation', $fundraiser_donation);
   }
 
-  // Create a new entity object.
-  $values = (array) $donation;
-  $fundraiser_donation = entity_create('fundraiser_donation', $values);
+  // If this is a sustainer series donation and the cron process is checked, add this to the queue.
+  if (!empty($map_points['sustainer_series_cron']) && !empty($donation->recurring->master_did)) {
+    $queue = DrupalQueue::get('fundraiser_entity_post_process');
 
-  // Load the context and map the values.
-  $context = _fundraiser_entity_context_from_donation_object($donation);
-  _fundraiser_entity_map_values($fundraiser_donation, $context);
+    $item = array(
+      'did' => $donation->did,
+    );
 
-  // Let the entity save function know the record has been written, avoids DB errors.
-  $fundraiser_donation->record_written = TRUE;
-
-  entity_save('fundraiser_donation', $fundraiser_donation);
+    $queue->createItem($item);
+  }
 }
 
 /**
@@ -484,7 +529,7 @@ function fundraiser_entity_fundraiser_donation_create($donation) {
  * Map the donation entity values when the donation is updated.
  */
 function fundraiser_entity_fundraiser_donation_update($donation) {
-  // First check if we should map the values during donation update.
+  // Check if we should map the values during donation update.
   $map_points = variable_get('fundraiser_entity_map_point', array());
   if (empty($map_points['update'])) {
     return;
@@ -508,7 +553,7 @@ function fundraiser_entity_fundraiser_donation_update($donation) {
  * Map the donation entity values when the donation is successful.
  */
 function fundraiser_entity_fundraiser_donation_success($donation) {
-  // First check if we should map the values during donation success.
+  // Check if we should map the values during donation success.
   $map_points = variable_get('fundraiser_entity_map_point', array());
   if (empty($map_points['success'])) {
     return;
@@ -527,10 +572,27 @@ function fundraiser_entity_fundraiser_donation_success($donation) {
 }
 
 /**
- * Implements hook_views_api().
+ * Implements hook_fundraiser_donation_decline().
+ *
+ * Map the donation entity values when the donation declines.
  */
-function fundraiser_entity_views_api() {
-  return array('api' => 2);
+function fundraiser_entity_fundraiser_donation_decline($donation) {
+ // First check if we should map the values during donation decline.
+  $map_points = variable_get('fundraiser_entity_map_point', array());
+  if (empty($map_points['decline'])) {
+    return;
+  }
+
+  $fundraiser_donation = fundraiser_entity_donation_load($donation->did);
+
+  // Load the context and map the values.
+  $context = _fundraiser_entity_context_from_donation_object($donation);
+  _fundraiser_entity_map_values($fundraiser_donation, $context);
+
+  // Let the entity save function know the record has been written, avoids DB errors.
+  $fundraiser_donation->record_written = TRUE;
+
+  entity_save('fundraiser_donation', $fundraiser_donation);
 }
 
 /**
@@ -661,7 +723,7 @@ function _fundraiser_entity_component_field_mapping() {
 }
 
 /**
- * Return a simple array of entity field names and labels
+ * Return a simple array of entity field names and labels.
  */
 function _fundraiser_entity_get_entity_fields($entity_type = 'fundraiser_donation', $bundle = 'fundraiser_donation') {
   $properties = _fundraiser_entity_get_entity_properties($entity_type, $bundle);
@@ -727,7 +789,7 @@ function _fundraiser_entity_get_entity_properties($entity_type = 'fundraiser_don
 }
 
 /**
- * Set the values on a donation entity type
+ * Set the values on a donation entity type,
  *
  * @param $donation_entity Object
  *    Fully loaded donation entity.
@@ -792,7 +854,7 @@ function _fundraiser_entity_map_values($donation_entity, $context, $map = array(
  *    Name of the field to pull the data from.
  */
 function _fundraiser_entity_get_field_value($entity_wrapper, $field_name) {
-  // If the fieldname contains a subfield break that apart
+  // If the fieldname contains a subfield break that apart.
   $sub_key = FALSE;
   if (strpos($field_name, ':') !== FALSE) {
     list($field_name, $sub_key) = explode(':', $field_name);
@@ -800,11 +862,11 @@ function _fundraiser_entity_get_field_value($entity_wrapper, $field_name) {
 
   $field = NULL;
 
-  // Get the target field, and sub_key if it exists
+  // Get the target field, and sub_key if it exists.
   if (!$sub_key && $entity_wrapper->__isset($field_name)) {
     $field = $entity_wrapper->$field_name;
   }
-  // If for some reason the subkey is not on the field do nothing
+  // If for some reason the subkey is not on the field do nothing.
   elseif ($sub_key && $entity_wrapper->$field_name->__isset($sub_key)) {
     $field = $entity_wrapper->$field_name->$sub_key;
   }
@@ -851,6 +913,12 @@ function _fundraiser_entity_set_field_value($entity_wrapper, $field_name, $value
 
 /**
  * Load an array of context for mapping a donation to an entity.
+ *
+ * @param $donation
+ *    Object loaded from fundraiser_donation_get_donation().
+ *
+ * @return Array
+ *    Array of objects derived from the donation object.
  */
 function _fundraiser_entity_context_from_donation_object($donation) {
   // Load the webform submission.
@@ -868,10 +936,50 @@ function _fundraiser_entity_context_from_donation_object($donation) {
   return array(
     'donation' => $donation,
     'webform_submission' => $submission,
-    'node' => $donation->node,
-    'user' => $donation->user,
+    'node' => !empty($donation->nid) ? node_load($donation->nid) : NULL,
+    'user' => !empty($donation->uid) ? user_load($donation->uid) : NULL,
     'commerce_order' => $order,
     'commerce_payment_transaction' => $transaction,
     'commerce_customer_profile' => $order_wrapper->commerce_customer_billing->value(),
   );
+}
+
+/**
+ * Worker callback for the cron queue job
+ *
+ * Loads a standard donation object and maps the values to the entity
+ */
+function _fundraiser_entity_post_process_queue_worker($item) {
+  // Load the standard donation object
+  $donation = fundraiser_donation_get_donation($item['did']);
+
+  if ($donation) {
+    // Load the context from the standard donation object
+    $context = _fundraiser_entity_context_from_donation_object($donation);
+
+    // Load the entity and map the values.
+    $fundraiser_donation = fundraiser_entity_donation_load($donation->did);
+    _fundraiser_entity_map_values($fundraiser_donation, $context);
+
+    entity_save('fundraiser_donation', $fundraiser_donation);
+  }
+}
+
+/**
+ * Action callback to map a donation values through the webform map
+ */
+function fundraiser_entity_fundraiser_donation_webform_map_action($item) {
+  // Load the standard donation object
+  $donation = fundraiser_donation_get_donation($item->did);
+
+  if ($donation) {
+    // Load the context from the standard donation object
+    $context = _fundraiser_entity_context_from_donation_object($donation);
+
+    // Load the entity and map the values.
+    $fundraiser_donation = fundraiser_entity_donation_load($donation->did);
+    _fundraiser_entity_map_values($fundraiser_donation, $context);
+
+    entity_save('fundraiser_donation', $fundraiser_donation);
+  }
 }
