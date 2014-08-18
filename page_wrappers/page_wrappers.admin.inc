@@ -14,7 +14,9 @@ function page_wrappers_settings_form($form, $form_state) {
   $form['#attached']['js'][] = drupal_get_path('module', 'page_wrappers') . '/js/page_wrappers.admin.js';
   
   // Get node types for the checkbox field, but exclude page_wrapper, obviously.
+  // Re-sort the array alphabetically.
   $types = node_type_get_types();
+  ksort(&$types);
   unset($types['page_wrapper']);
   $options = array();
   foreach ($types as $db_name => $type) {
@@ -31,8 +33,10 @@ function page_wrappers_settings_form($form, $form_state) {
 
   $wrappers = _page_wrappers_available_wrappers();
   $rulesets = _page_wrapper_available_rulesets();
-    
+  
+  // Get enabled node types, and sort alphabetically.
   $enabled_node_types = variable_get('page_wrapper_enabled_node_types', array('donation_form'));
+  ksort(&$enabled_node_types);
   $form['#page_wrapper_config_parent'] = 'page_wrappers_registration_form_settings';
   $form['#add_more_button_text'] = t('Add Another');
   
@@ -46,12 +50,17 @@ function page_wrappers_settings_form($form, $form_state) {
       $field_key = 'page_wrapper_default_config_' . $type->type;
       $field_id = 'page-wrappers-' . $type->type . '-assignments';
       
-      // To use the same ajax function as the node form we check for the node value
+      // To use the same ajax function as the node form we check for the node value.
+      // Get the default values for the node type. Add fallback page wrapper settings
+      // if nothing has yet been set for this node type.
       if (!empty($form_state['node']->page_wrappers[$field_key])) {
         $configurations = $form_state['node']->page_wrappers[$field_key];
       }
       else {
         $configurations = array_values(variable_get($field_key, array()));
+        if (empty($configurations)) {
+          $configurations = array_values(variable_get('page_wrapper_default_node_config', array()));
+        }
       }
                       
       // Get a count of the wrappers, the wrappers_count value is passed from the ajax function
