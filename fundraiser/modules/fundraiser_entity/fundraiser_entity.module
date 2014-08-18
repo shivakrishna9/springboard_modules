@@ -214,7 +214,7 @@ function fundraiser_entity_donation_load($donation_id) {
  * @param $donation_ids
  *   An array of donation IDs.
  * @param $conditions
- *   An array of conditions to filter loaded donations by on the {fundraiser_donation}
+ *   An array of conditions to filter loaded donations by on fundraiser_donation
  *   table in the form 'field' => $value.
  * @param $reset
  *   Whether to reset the internal donation loading cache.
@@ -232,7 +232,7 @@ function fundraiser_entity_donation_entity_load_multiple($donation_ids = array()
  * @param $donation
  *   A fully loaded donation object.
  * @param $view_mode
- *   The view mode for displaying the order: 'administrator'
+ *   The view mode for displaying the order: 'administrator'.
  *
  * @return
  *   An array as expected by drupal_render().
@@ -349,7 +349,7 @@ function fundraiser_entity_field_extra_fields() {
 /**
  * Implementation of hook_entity_property_info(). This depends on the EntityAPI.
  *
- * This defines the properties/attributes/"fields" of our Entity
+ * This defines the properties/attributes/"fields" of our Entity.
  */
 function fundraiser_entity_entity_property_info_alter(&$info) {
   $properties = &$info['fundraiser_donation']['properties'];
@@ -945,9 +945,9 @@ function _fundraiser_entity_context_from_donation_object($donation) {
 }
 
 /**
- * Worker callback for the cron queue job
+ * Worker callback for the cron queue job.
  *
- * Loads a standard donation object and maps the values to the entity
+ * Loads a standard donation object and maps the values to the entity.
  */
 function _fundraiser_entity_post_process_queue_worker($item) {
   // Load the standard donation object
@@ -966,7 +966,7 @@ function _fundraiser_entity_post_process_queue_worker($item) {
 }
 
 /**
- * Action callback to map a donation values through the webform map
+ * Action callback to map donation values through the webform map.
  */
 function fundraiser_entity_fundraiser_donation_webform_map_action($item) {
   // Load the standard donation object
