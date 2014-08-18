@@ -35,7 +35,7 @@
 .form-layout-container #right.form-col,
 .form-layout-container #left.form-col,
 .form-layout-container .form-col-row {
-  padding: 10px 2% 20px 2%;
+  padding: 20px 2%;
   border: 1px solid #e7e7e7;
 }
 
@@ -59,7 +59,7 @@
 h1,
 h2,
 h3 {
-  margin: 4px 0 12px 0;
+  margin: 0 0 12px 0;
   color: #5e5e5e;
   font-size: 24px;
   line-height: 26px;
@@ -179,7 +179,6 @@ table td {
 
 /* pagers */
 
-
 .pager {
   margin: 10px 0;
 }
@@ -200,6 +199,20 @@ table td {
   background-color: #fff;
 }
 
+#webform-form.form-wrapper {
+  margin-bottom: 20px;
+  border-bottom: 1px dashed #888;
+}
+
+.form-wrapper-inner {
+  margin: 0 0 20px 0;
+  padding: 10px 3% 20px 4%;
+  background: #eaeaea;
+}
+
+.quicksign-description {
+  margin-bottom: 12px;
+}
 
 @media (max-width: 940px) {
 

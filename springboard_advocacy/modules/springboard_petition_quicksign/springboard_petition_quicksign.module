@@ -164,6 +164,19 @@ function springboard_petition_quicksign_form_node_form_alter(&$form, &$form_stat
 }
 
 /**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Alters the quicksign node view.
+ */
+function springboard_petition_form_springboard_petition_quicksign_form_alter(&$form, &$form_state, $form_id) {
+  // Add wrapper elements to the quicksign fields.
+  $form['quicksign_label']['#prefix'] = '<h2 class="quicksign-label">';
+  $form['quicksign_label']['#suffix'] = '</h2>';
+  $form['quicksign_description']['#prefix'] = '<div class="quicksign-description">';
+  $form['quicksign_description']['#suffix'] = '</div>';
+}
+
+/**
  *  Implements hook_form_alter().
  */
 function springboard_petition_quicksign_form_alter(&$form, $form_state, $form_id) {
