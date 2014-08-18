@@ -3,12 +3,10 @@
 /**
  * Implements hook_install().
  *
- * Performs actions to set up the site for this profile.
- *
- * @see system_install()
+ * Performs actions to set up the site for this module.
  */
 function fundraiser_entity_install() {
-  // Set the default map variable on install
+  // Set the default map variable on install.
   module_load_include('inc', 'fundraiser_entity', 'includes/fundraiser_entity.mapping');
   variable_set('fundraiser_entity_default_map', _fundraiser_entity_default_webform_map_array());
   variable_set('fundraiser_entity_webform_autocreate_ignore', _fundraiser_entity_default_webform_ignore_array());
@@ -18,7 +16,7 @@ function fundraiser_entity_install() {
  * Implements hook_uninstall().
  */
 function fundraiser_entity_uninstall() {
-  // Remove variables and fields
+  // Remove variables and fields.
   variable_del('fundraiser_entity_default_map');
   variable_del('fundraiser_entity_webform_autocreate_ignore');
   field_attach_delete_bundle('fundraiser_donation', 'fundraiser_donation');

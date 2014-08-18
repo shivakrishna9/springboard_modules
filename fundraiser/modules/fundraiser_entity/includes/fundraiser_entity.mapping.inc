@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Menu callback form, provides a user interface to set up donation entity fields to data source mappings. 
+ * Menu callback form, provides a user interface to set up donation entity fields to data source mappings.
  */
 function fundraiser_entity_default_mapping_form($form, &$form_state) {
   $form['info'] = array(
@@ -18,6 +18,8 @@ function fundraiser_entity_default_mapping_form($form, &$form_state) {
       'create' => t('Create'),
       'update' => t('Update'),
       'success' => t('On successful donation'),
+      'sustainer_series_cron' => t('Sustainer Series on Cron'),
+      'decline' => t('Decline'),
     ),
     '#default_value' => variable_get('fundraiser_entity_map_point', array()),
   );
@@ -190,7 +192,7 @@ function fundraiser_entity_default_mapping_form($form, &$form_state) {
 
   $form['reset'] = array(
     '#type' => 'submit',
-    '#value' => 'Reset',
+    '#value' => 'Reset Map',
     '#submit' => array('fundraiser_entity_default_mapping_form_reset'),
   );
 

@@ -104,18 +104,22 @@ class FundraiserDonationEntityController extends EntityAPIController {
 
       $fundraiser_donation->changed = REQUEST_TIME;
 
-      $op = !empty($fundraiser_donation->is_new) ? 'insert' : 'update' ; 
+      $op = !empty($fundraiser_donation->is_new) ? 'insert' : 'update';
 
       // Save the donation record if it hasn't been written already
       if (empty($fundraiser_donation->record_written)) {
         // No record in the table, insert
         if ($op == 'insert' && empty($db_exist)) {
-          drupal_write_record('fundraiser_donation', $fundraiser_donation);
+          $return = drupal_write_record('fundraiser_donation', $fundraiser_donation);
         }
         // Existing record so update
         else {
-          drupal_write_record('fundraiser_donation', $fundraiser_donation, 'did');
+          $return = drupal_write_record('fundraiser_donation', $fundraiser_donation, 'did');
         }
+      }
+      else {
+        // If the records been written we return the updated flag
+        $return = SAVED_UPDATED;
       }
 
       // Save fields.
@@ -125,7 +129,7 @@ class FundraiserDonationEntityController extends EntityAPIController {
       module_invoke_all('entity_' . $op, $fundraiser_donation, 'fundraiser_donation');
 
       unset($fundraiser_donation->is_new);
-      return $fundraiser_donation;
+      return $return;
     }
     catch (Exception $e) {
       if (!empty($started_transaction)) {
@@ -141,8 +145,18 @@ class FundraiserDonationEntityController extends EntityAPIController {
    */
   public function attachLoad(&$queried_entities, $revision_id = false) {
     foreach ($queried_entities as $did => &$donation) {
+      // To be compatible with objects loaded with fundraiser_donation_get_donation set some additional values.
+      $donation->node = node_load($donation->nid);
+      $donation->user = user_load($donation->uid);
+
+      // Add refund data
+      $donation->refunds = FALSE;
+      $donation->refunds = fundraiser_refund_get_refunds_by_did($did, TRUE);
+
+      // Set the gateway to be the array of gateway info
       $donation->gateway = _fundraiser_gateway_info($donation->gateway);
 
+      // Allow other modules to add data.
       module_invoke_all('fundraiser_donation_get_donation', $donation);
     }
 
