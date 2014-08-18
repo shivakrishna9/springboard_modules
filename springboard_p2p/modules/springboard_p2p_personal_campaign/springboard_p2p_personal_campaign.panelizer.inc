@@ -427,6 +427,12 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
           'context' => 'panelizer',
           'not' => FALSE,
         ),
+        1 => array(
+          'name' => 'donation_date_deadline',
+          'settings' => NULL,
+          'context' => 'panelizer',
+          'not' => FALSE,
+        ),
       ),
     );
     $pane->configuration = array();
@@ -466,6 +472,12 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
           ),
           'context' => 'panelizer',
           'not' => TRUE,
+        ),
+        2 => array(
+          'name' => 'donation_date_deadline',
+          'settings' => NULL,
+          'context' => 'panelizer',
+          'not' => FALSE,
         ),
       ),
     );
@@ -648,14 +660,7 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
     $pane->subtype = 'pane_search_link';
     $pane->shown = TRUE;
     $pane->access = array(
-      'plugins' => array(
-        0 => array(
-          'name' => 'donation_date_deadline',
-          'settings' => NULL,
-          'context' => 'panelizer',
-          'not' => FALSE,
-        ),
-      ),
+      'plugins' => array(),
     );
     $pane->configuration = array(
       'admin_title' => '',
