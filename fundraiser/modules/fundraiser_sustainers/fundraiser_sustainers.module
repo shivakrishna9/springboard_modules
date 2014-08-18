@@ -454,6 +454,12 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
 function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_id) {
   // If this isn't a fundraiser type, ignore it.
   if (fundraiser_is_donation_type($form['#node']->type)) {
+    
+    // Set the field description if Upsell is enabled.
+    if (module_exists('fundraiser_upsell')) {
+      $recurring_setting_description .= t('The <strong>Fundraiser Sustainers Upsell</strong> feature is enabled on this website. If you wish to enable Upsell for this form, make sure this field is set to "Recurring is not an option on this form".');
+    }
+    
     $form['fundraiser_settings']['fundraiser_sustainers'] = array(
       '#type' => 'fieldset',
       '#title' => t('Fundraiser Recurring Display Settings'),
@@ -470,6 +476,7 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
         'never' => t('Recurring is not an option on this form.'),
       ),
       '#default_value' => isset($form['#node']->recurring_setting) ? $form['#node']->recurring_setting : 'user_choice',
+      '#description' => isset($recurring_setting_description) ? $recurring_setting_description : '',
     );
   }
 }
