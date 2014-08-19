@@ -101,6 +101,7 @@ function sb_social_share_entity_get_properties($data, array $options, $name, $ty
       return $data->uid ? user_load($data->uid) : NULL;
     case 'submission':
       // Load and return the originating Webform submission, if any.
+      module_load_include('inc', 'webform', 'includes/webform.submissions');
       return $data->sid ? webform_get_submission($data->nid, $data->sid) : NULL;
     case 'donation':
       // Load and return the originating Fundraiser donation object, if any.
