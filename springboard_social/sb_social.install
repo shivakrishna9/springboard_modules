@@ -389,6 +389,18 @@ function _sb_social_install_fieldmap_social_share() {
         'soapType' => 'tns:ID',
       ),
     ));
+    $params['field_mappings'][] = _sb_social_install_fieldmap_social_share_field_mapping(array(
+      'drupal_field' => array('fieldmap_value' => 'share_date'),
+      'salesforce_field' => array(
+        'label' => $t('Share Date'),
+        'name' => 'Share_Date__c',
+        'inlineHelpText' => $t("Date when this share occurred"),
+        'byteLength' => 0,
+        'length' => 0,
+        'type' => 'datetime',
+        'soapType' => 'xsd:dateTime',
+      ),
+    ));
     $mapping = entity_create('salesforce_mapping', $params);
     $mapping->save();
   }
