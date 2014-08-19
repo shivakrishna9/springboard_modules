@@ -129,11 +129,10 @@ function sb_social_salesforce_genmap_map_fields_alter(&$fields, $context) {
  * Implements hook_salesforce_queue_process_items_alter().
  */
 function sb_social_salesforce_queue_process_items_alter(&$items, $queue) {
-  // Remove donation/submission or user item from the queue if it has an originating share that hasn't
-  // yet synced. Most likely, the share will sync later in this run, and this item will sync next time.
   if (!empty($items)) {
     foreach ($items as $delta => $item) {
-      // We're only concerned with donations, other Webform submissions, or users.
+      // Remove donation/submission or user item from the queue if it has an originating share that hasn't
+      // yet synced. Most likely, the share will sync later in this run, and this item will sync next time.
       if (in_array($item->module, array('webform', 'salesforce_donation', 'user'))) {
         foreach ($item->sobject->fields as $name => $value) {
           if (is_string($value) && substr($value, 0, 33) == '[Social_Share__c:sb_social_share:') {
@@ -161,8 +160,44 @@ function sb_social_salesforce_queue_process_items_alter(&$items, $queue) {
           }
         }
       }
+      // Remove a social share item from the queue if it doesn't have a Contact_sharer__c value and this
+      // field is required in Salesforce.
+      else if ($item->delta == 'sb_social_share' && empty($item->sobject->fields['Contact_sharer__c'])) {
+        // Look up the social share Salesforce mapping.
+        $mapping = _sb_social_salesforce_get_share_mapping();
+        if ($mapping) {
+          foreach ($mapping->field_mappings as $field_mapping) {
+            // Is the Contact_sharer__c field required by Salesforce -- that is, non-nillable?
+            if ($field_mapping['salesforce_field']['name'] == 'Contact_sharer__c' && !$field_mapping['salesforce_field']['nillable']) {
+              // It can't sync w/o a required value, so remove this item from processing and from the SF queue.
+              unset($items[$delta]);
+              $queue->deleteItem($item);
+              // Log a warning message.
+              watchdog(
+                'sb_social',
+                "Skipped syncing social share ID %share_id and removed it from the queue. Anonymous shares can't be synced because Contact_sharer__c is required by SF.",
+                array('%share_id' => $item->drupal_id),
+                WATCHDOG_WARNING
+              );
+            }
+          }
+        }
+      }
     }
   }
+}
+
+/**
+ * Helper: lookup and return the social share Salesforce mapping, with caching.
+ */
+function _sb_social_salesforce_get_share_mapping() {
+  static $mappings;
+  if (!isset($mappings)) {
+    $mappings = salesforce_mapping_load_multiple(
+      array('drupal_bundle' => 'sb_social_share', 'salesforce_object_type' => 'Social_Share__c')
+    );
+  }
+  return reset($mappings);
 }
 
 
