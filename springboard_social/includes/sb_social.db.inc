@@ -113,7 +113,8 @@ function sb_social_share_entity_get_properties($data, array $options, $name, $ty
       // Load and return the originating Fundraiser donation object, if any.
       return $data->did ? fundraiser_donation_get_donation($data->did) : NULL;
     case 'share_date':
-      return $data->created;  //@TODO: Is a timestamp integer what all date-type handlers want?
+      // The "date" type is represented by a UNIX timestamp (per https://www.drupal.org/node/905580).
+      return $data->created;
   }
   return NULL;
 }
