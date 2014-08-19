@@ -21,10 +21,10 @@ function sb_social_salesforce_mapping_map_fields_alter(&$fields, $context) {
         case 'user':
           // Give Contact SFID replacement token for a reference field, or Drupal account UID otherwise.
           $account = $wrapper->user->value();
-          if ($account->uid && 'reference' == $field_mapping['salesforce_field']['type']) {
+          if ($account && $account->uid && 'reference' == $field_mapping['salesforce_field']['type']) {
             $fields[$sf_name] = sprintf('[Contact:user:%d]', $account->uid);
           } else {
-            $fields[$sf_name] = $account->uid;
+            $fields[$sf_name] = $account ? $account->uid : NULL;
           }
           break;
         case 'donation':
