@@ -72,6 +72,8 @@ class FundraiserDonationEntityController extends EntityAPIController {
 
       field_attach_presave('fundraiser_donation', $fundraiser_donation);
 
+      // Let modules modify the donation entity before it is saved to the database. 
+      module_invoke_all('fundraiser_entity_donation_presave', $fundraiser_donation);
       module_invoke_all('entity_presave', $fundraiser_donation, 'fundraiser_donation');
 
       // Ensure the donation value is the id string
@@ -126,16 +128,24 @@ class FundraiserDonationEntityController extends EntityAPIController {
       $function = "field_attach_$op";
       $function('fundraiser_donation', $fundraiser_donation);
 
+      // Let modules modify the donation entity after it is saved to the database.
+      module_invoke_all('fundraiser_entity_donation_' . $op, $fundraiser_donation);
       module_invoke_all('entity_' . $op, $fundraiser_donation, 'fundraiser_donation');
 
       unset($fundraiser_donation->is_new);
+      unset($fundraiser_donation->original);
+      // Clear the static loading cache.
+      entity_get_controller('fundraiser_donation')->resetCache(array(($fundraiser_donation->did)));
+
+      // Ignore slave server temporarily to give time for the
+      // saved data to be propagated to the slave.
+      db_ignore_slave();
+
       return $return;
     }
     catch (Exception $e) {
-      if (!empty($started_transaction)) {
-        $transaction->rollback();
-        watchdog_exception($this->entityType, $e);
-      }
+      $transaction->rollback();
+      watchdog_exception('fundraiser_entity', $e);
       throw $e;
     }
   }
