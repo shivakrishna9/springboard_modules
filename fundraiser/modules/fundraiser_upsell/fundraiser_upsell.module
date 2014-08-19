@@ -267,7 +267,9 @@ function fundraiser_upsell_add_node_settings(&$form) {
     if (is_array($field) && $field_key != 'enabled') {
       $form['fundraiser_upsell'][$field_key]['#states'] = array(
         'visible' => array(
-          'input#edit-fundraiser-upsell-enabled' => array('checked' => TRUE)
+          'input#edit-fundraiser-upsell-enabled' => array(
+            'checked' => TRUE
+          )
         ),
       );
     }
@@ -293,30 +295,39 @@ function fundraiser_upsell_node_form_validate($form, &$form_state) {
     form_set_error('fundraiser_upsell][modal_theming][upsell_modal_height',
       t('The fundraiser upsell modal height must be a number.'));
   }
-  
+
   // Validate Upsell fields vs. Recurring fields. If 'recurring_setting' field 
   // is something other than 'never' (i.e. "Recurring is disabled"), or an enabled gateway
   // does not support recurring, return an error.
   if ($form_state['values']['fundraiser_upsell']['enabled'] == 1) {
-    // Recurring field.
+    // Recurring field. If it's something other than "never", throw an error.
     if (isset($form_state['values']['recurring_setting']) && $form_state['values']['recurring_setting'] != 'never') {
       $recurring_error_message .= t('In order to use Upsell, you must set the <strong>Fundraiser Recurring Display Settings</strong> field to <strong><em>Recurring Is Not an Option On This Form</em></strong>.');
     }
     // Gateways field. Only check enabled gateways.
-    foreach ($form_state['values']['gateways'] as $gateway_name => $gateway) {
+    $gateway_error = array();
+    foreach ($form_state['values']['gateways'] as $name => $gateway) {
       if ($gateway['status'] == 1) {
         $gateway = _fundraiser_gateway_info($gateway['id']);
         if (!isset($gateway['allow_recurring']) || empty($gateway['allow_recurring'])) {
-          $gateway_error_message = t('The !gateway Gateway doesn\'t support recurring payments. For Upsell to work, disable this gateway or select another one.', array('!gateway' => $gateway['title']));
+          $gateway_error[$name]['name'] = $name;
+          $gateway_error[$name]['message'] = t('!gateway doesn\'t support recurring donations. For Upsell to work, disable this gateway or select another one.',
+            array(
+              '!gateway' => $gateway['title']
+            )
+          );
         }
       }
     }
-    // Set errors if necessary.
+    // Set errors if necessary. $recurring_error_message is a simple message string;
+    // $gateway_error is an array of any gateways that fail to support recurring.
     if (isset($recurring_error_message)) {
       form_set_error('recurring_setting', $recurring_error_message, NULL);
     }
-    if (isset($gateway_error_message)) {
-      form_set_error('gateways', $gateway_error_message, NULL);
+    if (!empty($gateway_error)) {
+      foreach ($gateway_error as $name => $details) {
+        form_set_error('gateways][' . $details['name'], $details['message'], NULL);
+      }
     }
   }
 
