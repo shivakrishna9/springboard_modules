@@ -346,6 +346,19 @@ function _sb_social_install_fieldmap_social_share() {
       ),
     ));
     $params['field_mappings'][] = _sb_social_install_fieldmap_social_share_field_mapping(array(
+      'drupal_field' => array('fieldmap_value' => 'share_name'),
+      'salesforce_field' => array(
+        'label' => $t('Social Share Name'),
+        'name' => 'Name',
+        'defaultedOnCreate' => true,
+        'nameField' => true,
+        'byteLength' => 240,
+        'length' => 80,
+        'type' => 'string',
+        'soapType' => 'xsd:string',
+      ),
+    ));
+    $params['field_mappings'][] = _sb_social_install_fieldmap_social_share_field_mapping(array(
       'drupal_field' => array('fieldmap_value' => 'user'),
       'salesforce_field' => array(
         'label' => $t('Sharing Contact'),
