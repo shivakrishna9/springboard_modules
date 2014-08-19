@@ -36,6 +36,13 @@ function sb_social_entity_property_info() {
   return array(
     'sb_social_share' => array(
       'properties' => array(
+        'share_name' => array(
+          'label' => t('Share name'),
+          'type' => 'text',
+          'description' => t("A unique name for this share."),
+          'getter callback' => 'sb_social_share_entity_get_properties',
+          'setter callback' => 'sb_social_share_entity_set_properties',
+        ),
         'user' => array(
           'label' => t('Drupal User or Contact'),
           'type' => 'integer',  // We'd use "user" but salesforce_mapping won't allow mapping of entity values. 

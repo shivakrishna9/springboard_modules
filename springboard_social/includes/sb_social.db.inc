@@ -96,6 +96,12 @@ function sb_social_share_save($record, $settings = FALSE, $url_path = FALSE) {
  */
 function sb_social_share_entity_get_properties($data, array $options, $name, $type, $info) {
   switch ($name) {
+    case 'share_name':
+      // Give a unique share name with the page name and date/time.
+      return t(
+        'Social Share - !page_name (!date)',
+        array('!page_name' => $data->page_name, '!date' => date('Y-m-d H:i:s', $data->created))
+      );
     case 'user':
       // Load and return the sharing user's account object.
       return $data->uid ? user_load($data->uid) : NULL;
