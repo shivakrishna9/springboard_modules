@@ -51,6 +51,11 @@ function sb_social_salesforce_mapping_map_fields_alter(&$fields, $context) {
             $fields[$sf_name] = $submission ? $submission->sid : NULL;
           }
           break;
+        case 'share_date':
+          // Format timestamp for Salesforce API.
+          $timestamp = $wrapper->share_date->value();
+          $fields[$sf_name] = $timestamp ? sb_social_format_sf_date($timestamp) : NULL;
+          break;
       }
     }
   }

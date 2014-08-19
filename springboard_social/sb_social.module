@@ -57,6 +57,13 @@ function sb_social_entity_property_info() {
           'getter callback' => 'sb_social_share_entity_get_properties',
           'setter callback' => 'sb_social_share_entity_set_properties',
         ),
+        'share_date' => array(
+          'label' => t('Date/time shared'),
+          'type' => 'date',
+          'description' => t("Date and time when the share was made."),
+          'getter callback' => 'sb_social_share_entity_get_properties',
+          'setter callback' => 'sb_social_share_entity_set_properties',
+        ),
       ),
     ),
   );
