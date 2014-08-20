@@ -78,6 +78,6 @@ function springboard_m2t_form_alter(&$form, &$form_state, $form_id) {
   if($node->type == 'springboard_m2t') {
     $form['#attributes']['class'][] = 'geocode-form';
     $form['#attached']['js'][]  = array('data' => 'http://maps.google.com/maps/api/js?v=3.exp', 'type' => 'external');
-    $form['#attached']['js'][] = drupal_get_path('module', 'springboard_m2t') . '/js/m2t.js'; f
+    $form['#attached']['js'][] = drupal_get_path('module', 'springboard_m2t') . '/js/m2t.js'; 
   }
 }
