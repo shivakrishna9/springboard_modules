@@ -1,0 +1,71 @@
+<?php
+
+
+function springboard_m2t_webform_user_profile_fields_alter(&$fields, $node) {
+  if($node->type == 'springboard_m2t') {
+    foreach ($fields as $index => $profile_field) {
+      if ($profile_field['name'] == 'sbp_state'){
+        unset($fields[$index]);
+      }
+    } 
+  }
+}
+
+function springboard_m2t_node_insert($node) {
+  module_load_include('inc', 'webform', 'includes/webform.components');
+  $fields[] = array(
+    'nid' => $node->nid,
+    'form_key' => 'springboard_m2t_phone',
+    'pid' => 0,
+    'name' => t('Phone Number'),
+    'type' => 'textfield',
+    'mandatory' => 1,
+    'weight' => 18,
+    'email' => 1,
+    'extra' => array(
+    'description' => t(''),
+    ),
+  );
+
+  $fields[] = array(
+      'nid' => $node->nid,
+      'form_key' => 'springboard_m2t_message',
+      'pid' => 0,
+      'name' => t('Message'),
+      'type' => 'textarea',
+      'mandatory' => 1,
+      'weight' => 18,
+      'email' => 1,
+      'extra' => array(
+      'description' => t('Customize your message'),
+    ),
+  );
+  $fields[] = array(
+      'nid' => $node->nid,
+      'form_key' => 'sbp_state',
+      'pid' => 0,
+      'name' => t('State'),
+      'type' => 'select',
+      'mandatory' => 1,
+      'weight' => 18,
+      'email' => 1,
+      'extra' => array(
+      'options_source' => 'united_states',
+      'aslist' => 'Y',
+      'multiple' => 0,
+    ),
+  );
+
+  // Add the component to the Webform.
+  foreach ($fields as $field) {
+    $cid = webform_component_insert($field);
+    if ($field['name'] == 'sbp_country') {
+          $map = array(
+          'nid' => $node->nid,
+          'cid' => $cid,
+          'map_id' => $field['name'],
+        );
+        drupal_write_record('webform_user_component_map', $map);
+    }
+  }
+}
