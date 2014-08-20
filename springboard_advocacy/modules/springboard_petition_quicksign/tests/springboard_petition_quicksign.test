@@ -4,7 +4,7 @@
  * @file test coverage for petition quicksign.
  */
 
-class SpringboardPetitionQuicksignTestCase extends DrupalWebTestCase {
+class SpringboardPetitionQuicksignTestCase extends WebformUserSetup {
   /**
    * Implementation of getInfo().
    */
@@ -39,68 +39,77 @@ class SpringboardPetitionQuicksignTestCase extends DrupalWebTestCase {
       'edit own webform content',
       'access all webform results',
       'create springboard_petition content',
+      'edit any springboard_petition content',
       'edit own springboard_petition content',
     );
 
     $this->privileged_user = $this->drupalCreateUser($permissions);
-    $this->drupalLogin($this->privileged_user);
 
   }
 
   public function testSpringboardPetitionQuicksignCreatePetition() {
+    $account = $this->drupalLogin($this->privileged_user);
     // confirm quicksign ui is present on node add form.
     $this->drupalGet('node/add/springboard-petition');
-    $this->assertFieldById('edit-quicksign-enabled', $value = '', $message = 'Enable Quicksign checkbox present on node add form.');
-    $this->assertFieldById('edit-quicksign-label', $value = '', $message = 'Quicksign form label field present on node add form.');
-    $this->assertFieldById('edit-quicksign-description-value', $value = '', $message = 'Form description field present on node add form.');
-    $this->assertFieldById('edit-quicksign-button-text', $value = '', $message = 'Button text field present on node add form.');
+    $this->assertFieldById('edit-quicksign-enabled', NULL, $message = 'Enable Quicksign checkbox present on node add form.');
+    $this->assertFieldById('edit-quicksign-label', NULL, 'Quicksign form label field present on node add form.');
+    $this->assertFieldById('edit-quicksign-description-value', NULL, 'Form description field present on node add form.');
+    $this->assertFieldById('edit-quicksign-button-text', NULL, 'Button text field present on node add form.');
 
     // create petition, enable quicksign on petition.
     $this->node = $this->create_petition();
-    
+    $this->assertTrue($this->node->type == 'springboard_petition', 'New springboard petition created, node id:' . $this->node->nid);
     // confirm quicksign ui is present on node edit form.
     $this->drupalGet('node/' . $this->node->nid . '/edit');
-    $this->assertFieldById('edit-quicksign-label', $value = '', $message = 'Quicksign form label field present on node edit form.');
-    $this->assertFieldById('edit-quicksign-description-value', $value = '', $message = 'Form description field present on node edit form.');
-    $this->assertFieldById('edit-quicksign-button-text', $value = '', $message = 'Button text field present on node edit form.'); 
-  }
-
-  public function testSpringboardPetitionQuicksignNodeView() {
-    // view petition
+    $this->assertFieldById('edit-quicksign-enabled', NULL, $message = 'Enable Quicksign checkbox present on node add form.');
+    $this->assertFieldById('edit-quicksign-label', NULL, 'Quicksign form label field present on node edit form.');
+    $this->assertFieldById('edit-quicksign-description-value', NULL, 'Form description field present on node edit form.');
+    $this->assertFieldById('edit-quicksign-button-text', 'Sign our petition!', 'Button text field present on node edit form.');
+    
+    // View petition with quicksign enabled. 
     $this->drupalGet('node/' . $this->node->nid);
+    $this->assertFieldById('edit-quicksign-mail', $this->privileged_user->mail, 'Mail field present and populated from user account.');
+    
+    // View petition with quicksign disabled.
+    db_query('UPDATE {springboard_quicksign} SET quicksign_enabled = 0 WHERE nid = :nid', array(':nid' => $this->node->nid));
+    $this->drupalGet('node/' . $this->node->nid);
+    $this->assertNoFieldById('edit-quicksign-mail', 'Quicksign form is not present when disabled.');
 
-    // confirm quicksign form is present
-  }
+    db_query('UPDATE {springboard_quicksign} SET quicksign_enabled = 1 WHERE nid = :nid', array(':nid' => $this->node->nid));
+    // Add a required fields for futher testing.
+    db_query('UPDATE {webform_component} SET mandatory = 1 WHERE form_key = :form_key', array(':form_key' => 'sbp_first_name'));
+    db_query('UPDATE {webform_component} SET mandatory = 1 WHERE form_key = :form_key', array(':form_key' => 'sbp_last_name'));
 
-  public function testSubmitQuicksignWithNewEmail() {
-    // submit quicksign with new email
+    // submit form with existing account (partial profile)
+    $edit = array(
+      'sbp_first_name[und][0][value]' => 'Test',
+    );
+    $this->drupalPost('user/' . $this->privileged_user->uid . '/edit', $edit, 'Save');
+    $edit = array(
+      'quicksign_mail' => $this->privileged_user->mail
+    );
+    $this->drupalPost('node/' . $this->node->nid, $edit, 'Sign our petition!');
+    $this->assertUniqueText('Your account does not have enough information available to quick sign the petition. Please fill out the full form to record your signature.', t('Submitting quicksign form with an email address associated with an account containing partial profile information produces the correc message & redirect.'));
 
-    // confirm page redirects back to webform
+    // submit form with existing account (full profile)
+    // set values for required fields.
+    $edit = array(
+      'sbp_first_name[und][0][value]' => 'Test',
+      'sbp_last_name[und][0][value]' => 'User',
+    );
+    $this->drupalPost('user/' . $this->privileged_user->uid . '/edit', $edit, 'Save');
 
-    // confirm mail field is populated with mail submitted
+    $edit = array(
+      'quicksign_mail' => $this->privileged_user->mail
+    );
+    $this->drupalPost('node/' . $this->node->nid , $edit, 'Sign our petition!');
+    $this->assertUniqueText('Thank you for saving the humans', t('Confirmation message displayed on successful quicksign submission.'));
 
-    // confirm message
-  }
-
-
-  public function submit_quicksign_with_existing_email_partial_profile() {
-    // submit quicksign with existing email, account should have partial profile values.
-
-    // confirm page redirects back to webform.
-
-    // confirm webform component fields are populated from user profile
-
-    // confirm message
-  }
-
-  public function submit_quicksign_with_existin_mail_full_profile() {
-    // submit quicksign with existing email, account should have full profile values.
-
-    // confirm form submits
-
-    // confirm submission redirects to webform confirmation page
-
-    // compare webform submission values to user profile, confirm submission values are correct
+    $edit = array(
+      'quicksign_mail' => 'quicksign_test@example.com',
+    );
+    $this->drupalPost('node/' . $this->node->nid, $edit, 'Sign our petition!');
+    $this->assertUniqueText('No account with the email address quicksign_test@example.com was found. Please fill out the full form to sign the petition.', t('Submitting Quicksign form with a new email account results in the expected message & redirect.'));
   }
 
  /**
@@ -146,14 +155,7 @@ class SpringboardPetitionQuicksignTestCase extends DrupalWebTestCase {
     $node->is_webform_user = 1;
     $node->send_new_user_email = 0;
     node_save($node);
-    /*
-nid                     | int(10) unsigned    | NO   | PRI | 0       |       |
-| quicksign_enabled       | tinyint(3) unsigned | NO   |     | 0       |       |
-| form_label              | varchar(255)        | NO   |     |         |       |
-| form_description        | text                | YES  |     | NULL    |       |
-| submit_button_text      | varchar(255)        | YES  |     |         |       |
-| form_description_format
-    */
+
     db_query('
       INSERT INTO {springboard_quicksign} (
         nid,
@@ -209,11 +211,10 @@ nid                     | int(10) unsigned    | NO   | PRI | 0       |       |
       variable_set($variable_new, $value);
     }
     $this->drupalCreateContentType($settings = (array) $type);
-    /*
     $status = node_type_save($type);
     node_types_rebuild();
     node_add_body_field($type);
-    */
+    
     // Add as a webform.
     $webform_node_types = variable_get('webform_node_types', array('webform'));
     $webform_node_types_primary = variable_get('webform_node_types_primary', array('webform'));

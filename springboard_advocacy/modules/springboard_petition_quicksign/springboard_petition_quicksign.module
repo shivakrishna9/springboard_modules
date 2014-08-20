@@ -15,7 +15,7 @@ function springboard_petition_quicksign_views_api() {
 function springboard_petition_quicksign_form() {
   global $user;
   $node = node_load(arg(1));
-  $settings = springboard_petition_quicksign_settings($node->nid);
+  $settings = isset($node->nid) ? springboard_petition_quicksign_settings($node->nid) : array();
   $description_format = isset($settings['quicksign_description_format']) ? $settings['quicksign_description_format'] : NULL;
   $form = array();
   // TODO: theme functions for label and description.
@@ -25,7 +25,7 @@ function springboard_petition_quicksign_form() {
   $form['quicksign_description'] = array(
     '#markup' => isset($settings['quicksign_description']) ? check_markup($settings['quicksign_description'], $description_format) : '',
   );
-  $form['mail'] = array(
+  $form['quicksign_mail'] = array(
     '#type' => 'textfield',
     '#title' => '',
     '#default_value' => $user->uid ? $user->mail : '',
@@ -48,9 +48,9 @@ function springboard_petition_quicksign_form() {
  */
 function springboard_petition_quicksign_form_validate(&$form, &$form_state) {
   // Validate mail field
-  $mail = isset($form_state['values']['mail']) ? $form_state['values']['mail'] : FALSE;
+  $mail = isset($form_state['values']['quicksign_mail']) ? $form_state['values']['quicksign_mail'] : FALSE;
   if (!valid_email_address($mail)) {
-    form_set_error('mail', t('The email addressed entered is not valid.'));
+    form_set_error('quicksign_mail', t('The email addressed entered is not valid.'));
     return;
   }
 
