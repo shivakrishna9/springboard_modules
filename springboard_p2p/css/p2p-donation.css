@@ -478,7 +478,13 @@ div.donation-processing-wrapper,
 .pane-content .webform-confirmation {
   padding: 10px;
   border: 1px solid #ccc;
+  text-align: center;
   font-weight: bold;
+}
+
+.addthis_toolbox.addthis_16x16_style {
+  display: inline-block;
+  padding-top: 10px;
 }
 
 /* media queries */
