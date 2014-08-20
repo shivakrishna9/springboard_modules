@@ -89,7 +89,7 @@ function fundraiser_tickets_views_default_views() {
   $handler->display->display_options['style_plugin'] = 'entityreference_style';
   $handler->display->display_options['style_options']['search_fields'] = array(
     'field_fundraiser_internal_name' => 'field_fundraiser_internal_name',
-    'title' => 0,
+    'title' => 'title',
   );
   $handler->display->display_options['defaults']['style_options'] = FALSE;
   $handler->display->display_options['defaults']['row_plugin'] = FALSE;
