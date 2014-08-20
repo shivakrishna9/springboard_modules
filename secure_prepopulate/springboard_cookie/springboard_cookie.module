@@ -210,7 +210,14 @@ function springboard_cookie_js_new_cookie() {
 
 /**
  * Tag the client with Springboard cookie data.
+ * 
  * If the client doesn't have a Springboard cookie, one will be created, including a client ID.
+ * 
+ * @param array $new_data
+ *   An array of name/value pairs. If a string or numeric value contradicts the existing value for a 
+ *   given name, then the existing cookie will be thrown out and this data will go into a new cookie 
+ *   with a new client_id. For an array value, its unique contents will be added to any existing array 
+ *   of the same name (and duplicate values will be ignored).
  */
 function springboard_cookie_tag_client($new_data = array()) {
   $extant_cookie = $new_cookie = springboard_cookie_get_cookie();
@@ -247,7 +254,11 @@ function springboard_cookie_tag_client($new_data = array()) {
 }
 
 /**
- * Fetch the Springboard cookie, decrypt, and return.
+ * Fetch the Springboard cookie, decrypt, and return data.
+ * 
+ * @return array $cookie_data
+ *   An array of name/value pairs from the client cookie. Includes data added during execution of the
+ *   current page request.
  */
 function springboard_cookie_get_cookie() {
   // Static-persist the cookie's data if/when it is set.
@@ -278,6 +289,10 @@ function springboard_cookie_get_cookie() {
 
 /**
  * Set the Springboard cookie, encrypting the given data array and adding it to the HTTP response.
+ * 
+ * Note: If you're trying to add data to the cookie, what you want is springboard_cookie_tag_client().
+ * 
+ * @see springboard_cookie_tag_client()
  */
 function springboard_cookie_set_cookie($cookie_data) {
   // Update the getter's static cache.
