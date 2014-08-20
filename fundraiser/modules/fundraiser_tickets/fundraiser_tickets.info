@@ -11,6 +11,7 @@ dependencies[] = entityreference
 dependencies[] = date
 dependencies[] = date_popup
 dependencies[] = springboard_api
+dependencies[] = springboard_views
 dependencies[] = views
 version = 7.x-4.x-dev
 
