@@ -902,7 +902,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
       'type' => 'entityreference',
     ),
     'field_instance' => array(
-      'bundle' => 'donation_form_with_ticketing',
+      'bundle' => $type,
       'default_value' => NULL,
       'deleted' => '0',
       'description' => '<strong>You may type either the form\'s <em>Title</em> or <em>Internal Name</em> when searching.</strong><br />Target donation forms <strong><em>must</em></strong> have an "other amount" field. Any required fields on target donation forms must also be required on this form.',
