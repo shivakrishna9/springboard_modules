@@ -775,13 +775,18 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['fields']['field_p2p_campaign_progress']['table'] = 'field_data_field_p2p_campaign_progress';
   $handler->display->display_options['fields']['field_p2p_campaign_progress']['field'] = 'field_p2p_campaign_progress';
   $handler->display->display_options['fields']['field_p2p_campaign_progress']['click_sort_column'] = 'amount';
-  $handler->display->display_options['fields']['field_p2p_campaign_progress']['type'] = 'springboard_p2p_fields_personal_campaign_progress_amount';
+  $handler->display->display_options['fields']['field_p2p_campaign_progress']['type'] = 'springboard_p2p_fields_personal_campaign_progress_auto';
   /* Sort criterion: Content: Progress (field_p2p_campaign_progress:amount) */
   $handler->display->display_options['sorts']['field_p2p_campaign_progress_amount']['id'] = 'field_p2p_campaign_progress_amount';
   $handler->display->display_options['sorts']['field_p2p_campaign_progress_amount']['table'] = 'field_data_field_p2p_campaign_progress';
   $handler->display->display_options['sorts']['field_p2p_campaign_progress_amount']['field'] = 'field_p2p_campaign_progress_amount';
   $handler->display->display_options['sorts']['field_p2p_campaign_progress_amount']['order'] = 'DESC';
   $handler->display->display_options['sorts']['field_p2p_campaign_progress_amount']['expose']['label'] = 'Progress (field_p2p_campaign_progress:amount)';
+  /* Sort criterion: Content: Progress (field_p2p_campaign_progress:submissions) */
+  $handler->display->display_options['sorts']['field_p2p_campaign_progress_submissions']['id'] = 'field_p2p_campaign_progress_submissions';
+  $handler->display->display_options['sorts']['field_p2p_campaign_progress_submissions']['table'] = 'field_data_field_p2p_campaign_progress';
+  $handler->display->display_options['sorts']['field_p2p_campaign_progress_submissions']['field'] = 'field_p2p_campaign_progress_submissions';
+  $handler->display->display_options['sorts']['field_p2p_campaign_progress_submissions']['order'] = 'DESC';
   /* Contextual filter: Content: Nid */
   $handler->display->display_options['arguments']['nid']['id'] = 'nid';
   $handler->display->display_options['arguments']['nid']['table'] = 'node';
@@ -823,7 +828,7 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['fields']['field_p2p_campaign_progress']['table'] = 'field_data_field_p2p_campaign_progress';
   $handler->display->display_options['fields']['field_p2p_campaign_progress']['field'] = 'field_p2p_campaign_progress';
   $handler->display->display_options['fields']['field_p2p_campaign_progress']['click_sort_column'] = 'amount';
-  $handler->display->display_options['fields']['field_p2p_campaign_progress']['type'] = 'springboard_p2p_fields_personal_campaign_progress_amount';
+  $handler->display->display_options['fields']['field_p2p_campaign_progress']['type'] = 'springboard_p2p_fields_personal_campaign_progress_auto';
   $handler->display->display_options['path'] = 'p2p/campaigns/top';
 
   /* Display: Campaign contextual pane */
@@ -892,7 +897,7 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['fields']['field_p2p_campaign_progress']['element_wrapper_class'] = 'highest-progress-title';
   $handler->display->display_options['fields']['field_p2p_campaign_progress']['element_default_classes'] = FALSE;
   $handler->display->display_options['fields']['field_p2p_campaign_progress']['click_sort_column'] = 'amount';
-  $handler->display->display_options['fields']['field_p2p_campaign_progress']['type'] = 'springboard_p2p_fields_personal_campaign_progress_amount';
+  $handler->display->display_options['fields']['field_p2p_campaign_progress']['type'] = 'springboard_p2p_fields_personal_campaign_progress_auto';
   $handler->display->display_options['displays'] = array(
     'panel_pane_1' => 'panel_pane_1',
     'default' => 0,
@@ -966,7 +971,7 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['fields']['field_p2p_campaign_progress']['element_wrapper_class'] = 'highest-progress-title';
   $handler->display->display_options['fields']['field_p2p_campaign_progress']['element_default_classes'] = FALSE;
   $handler->display->display_options['fields']['field_p2p_campaign_progress']['click_sort_column'] = 'amount';
-  $handler->display->display_options['fields']['field_p2p_campaign_progress']['type'] = 'springboard_p2p_fields_personal_campaign_progress_amount';
+  $handler->display->display_options['fields']['field_p2p_campaign_progress']['type'] = 'springboard_p2p_fields_personal_campaign_progress_auto';
   $handler->display->display_options['defaults']['arguments'] = FALSE;
   $handler->display->display_options['displays'] = array(
     'panel_pane_2' => 'panel_pane_2',
