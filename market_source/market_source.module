@@ -19,10 +19,22 @@ function market_source_menu() {
     'type' => MENU_NORMAL_ITEM,
     'page callback' => 'drupal_get_form',
     'page arguments' => array('market_source_admin_settings_form'),
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array('administer market source'),
     'file' => 'market_source.admin.inc',
   );
   return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function market_source_permission() {
+  return array (
+    'administer market source' => array(
+      'title' => t("Administer Market Source"),
+      'description' => t('Configure the Market Source module, create and edit source codes.'),
+    ),    
+  );
 }
 
 /**
@@ -45,6 +57,7 @@ function market_source_init() {
       'qs_keys' => _market_source_build_qs_keys(),
       'maxlength' => MARKET_SOURCE_VALUE_MAXLENGTH,
       'cookie_domain' => $market_source_cookie_domain,
+      'cookie_path' => ini_get('session.cookie_path'),
     )), 'setting');
 }
 
@@ -457,9 +470,18 @@ function _market_source_validate_cid($val) {
     if (preg_match('/^[a-zA-Z0-9_+-]+$/', $val)) {
       if (drupal_strlen($val) <= MARKET_SOURCE_VALUE_MAXLENGTH) {
         if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
-          $campaigns = array_keys( market_source_get_campaigns() );
-          if (is_array($campaigns) && in_array($val, $campaigns)) {
-            $retval = TRUE;
+          $campaigns = market_source_get_campaigns();
+          if (!empty($campaigns)) {
+            $campaigns = array_keys($campaigns);
+            if (strlen($val) == 18) {
+              $retval = in_array($val, $campaigns);
+            } else {
+              $campaigns_15char = array_map(
+                create_function('$cid', 'return substr($cid, 0, 15);'),
+                $campaigns
+              );
+              $retval = in_array($val, $campaigns_15char);
+            }
           }
         }
       }
@@ -683,6 +705,13 @@ function _market_source_update_component($nid, $field_key, $field, $pid = 0, $we
 
 /**
  * Helper function, retrieve a set of available campaigns.
+ *
+ * @param bool $reset
+ *   Whether to reset the static cache variable.
+ *
+ * @return array
+ *   An array with campaign id and name, keyed by campaign ID.
+ *   Example: $campaigns[id] => array('id' => id, 'name' => name)
  */
 function market_source_get_campaigns($reset = FALSE) {
   // If the reset option has been passed clear the static variable
@@ -727,4 +756,23 @@ function market_source_get_campaigns($reset = FALSE) {
   }
 
   return $campaigns;
+}
+
+/**
+ * Returns campaigns ready to be used in an #options form api array.
+ *
+ * @param bool $reset
+ *   Whether to reset the static cache.
+ *
+ * @return array
+ *   Campaign names keyed by campaign id.
+ */
+function market_source_get_campaign_options($reset = FALSE) {
+  $campaigns = market_source_get_campaigns($reset);
+  $options = array();
+  foreach ($campaigns as $campaign_id => $campaign) {
+    $options[$campaign_id] = $campaign['name'] . ' (' . $campaign_id . ')';
+  }
+
+  return $options;
 }

@@ -42,7 +42,7 @@ Drupal.behaviors.marketSourceInit = {
       if (typeof $.cookie !== 'undefined') {
         name = 'market_source__' + name;
         if (typeof Drupal.settings.market_source.cookie_domain !== 'undefined') {
-          $.cookie(name, value, { path: '/', domain: Drupal.settings.market_source.cookie_domain });
+          $.cookie(name, value, { path: Drupal.settings.market_source.cookie_path, domain: Drupal.settings.market_source.cookie_domain });
         }
         else {
           $.cookie(name, value, { path: '/'});
@@ -222,10 +222,13 @@ Drupal.behaviors.marketSourceFormPopulate = {
         if (value != null) {
           //var selector = 'form#' + form_id + ' #' + form_keys[key] + ':not(.marketsource-processed)';
           var selector = 'form#' + form_id + ' input[name="' + form_keys[key] + '"]:not(.marketsource-processed)';
+
           // Set the value.
-          $(selector, context)
-            .val(qs_keys[key]['value'])
-            .addClass('marketsource-processed');
+          if ($(selector, context).val() === '' || qs_keys[key]['persistence'] != 'on') {
+            $(selector, context)
+              .val(qs_keys[key]['value'])
+              .addClass('marketsource-processed');
+          }
         }
       }
     }

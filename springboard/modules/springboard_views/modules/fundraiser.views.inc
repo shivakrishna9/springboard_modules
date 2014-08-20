@@ -165,6 +165,30 @@ function springboard_views_fundraiser_views_data() {
       'title' => t('Donations'),
       'help' => t('Donations made.'),
     ),
+    'join' => array(
+      'node' => array(
+        'left_field' => 'nid',
+        'field' => 'nid',
+      ),
+      'user' => array(
+        'left_field' => 'uid',
+        'field' => 'uid',
+      ),
+      'commerce_order' => array(
+        'left_field' => 'did',
+        'field' => 'order_id',
+      ),
+    ),
+  );
+  $data['fundraiser_donation']['did'] = array(
+    'title' => t('Commerce order'),
+    'help' => t('Commerce order related to the donation.'),
+    'relationship' => array(
+      'base' => 'commerce_order',
+      'base field' => 'order_id',
+      'handler' => 'views_handler_relationship',
+      'label' => t('Commerce order'),
+    ),
   );
   $data['fundraiser_donation']['nid'] = array(
     'title' => t('Fundraiser node'),
@@ -184,6 +208,57 @@ function springboard_views_fundraiser_views_data() {
       'base field' => 'uid',
       'handler' => 'views_handler_relationship',
       'label' => t('Donating user'),
+    ),
+  );
+  $data['fundraiser_donation']['status'] = array(
+    'title' => t('Status'),
+    'help' => t('Donation status.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_string',
+    ),
+  );
+  $data['fundraiser_donation']['amount'] = array(
+    'title' => t('Donation amount'),
+    'help' => t('The amount donated.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_string',
+    ),
+  );
+  $data['fundraiser_donation']['currency'] = array(
+    'title' => t('Currency'),
+    'help' => t('Donation currency type.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_string',
     ),
   );
 
@@ -213,6 +288,48 @@ function springboard_views_fundraiser_views_data() {
     ),
     'sort' => array(
       'handler' => 'views_handler_sort',
+    ),
+  );
+  $data['fundraiser_donation']['form_url'] = array(
+    'title' => t('Form URL'),
+    'help' => t('The URL of the donation form.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
+  $data['fundraiser_donation']['created'] = array(
+    'title' => t('Created time'),
+    'help' => t('The time that the donation was submitted.'),
+    'field' => array(
+      'handler' => 'views_handler_field_date',
+      'click sortable' => TRUE,
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort_date',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_date',
+    ),
+  );
+  $data['fundraiser_donation']['changed'] = array(
+    'title' => t('Changed time'),
+    'help' => t('The time that the donation was last updated.'),
+    'field' => array(
+      'handler' => 'views_handler_field_date',
+      'click sortable' => TRUE,
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort_date',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_date',
     ),
   );
 
@@ -362,6 +479,5 @@ function springboard_views_fundraiser_views_data() {
       'handler' => 'views_handler_sort',
     ),
   );
-  
   return $data;
 }

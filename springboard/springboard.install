@@ -12,7 +12,7 @@ function springboard_install() {
   variable_set('springboard_needs_config', TRUE);
   // Add a message about configuring Springboard
   drupal_set_message(st('The Springboard module was successfully enabled. !link',
-    array('!link' => l(st('Please configure Springboard now.'), 'springboard/options/springboard'))));
+    array('!link' => l(st('Please configure Springboard now.'), 'admin/springboard/options/springboard'))));
 }
 
 /**
@@ -29,4 +29,32 @@ function springboard_update_7000() {
     db_drop_table('springboard_sf_status');
   }
   return array();
+}
+
+/**
+ * Implements hook_update_N().
+ *
+ * Add the Admin field_group to the user entity move standard fields under it.
+ */
+function springboard_update_7001() {
+  module_load_include('inc', 'springboard', 'springboard.admin');
+  // Check for an existing or disabled field group to set update message.
+  $existing = field_group_load_field_group('group_profile_admin', 'user', 'user', 'form');
+  if (!empty($existing->disabled)) {
+    $existing = FALSE;
+  }
+
+  springboard_add_admin_field_group_to_user_entity();
+
+  return !$existing ? t('The admin field group has been added to the user entity.') : t('The admin field group already exists on the user entity.') ;
+}
+
+/**
+ * Implements hook_update_N().
+ *
+ * Enable new Springboard Dashboard panes.
+ */
+function springboard_update_7002() {
+    module_load_include('module', 'springboard');
+    springboard_enable_new_panes();
 }

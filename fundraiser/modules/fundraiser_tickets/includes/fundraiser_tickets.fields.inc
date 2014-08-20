@@ -39,7 +39,8 @@ function _fundraiser_tickets_add_default_fields($type) {
 function _fundraiser_tickets_default_fields_settings($type) {
   $fields = array();
 
-  // Waitlist settings
+  // Wait list settings
+
   $fields['fr_tickets_waitlist_form'] = array(
     'field_config' => array(
       'active' => 1,
@@ -168,7 +169,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
       ),
       'entity_type' => 'node',
       'field_name' => 'fr_tickets_waitlist_soldout',
-      'label' => 'Allow waitlist for sold out events',
+      'label' => 'Allow wait list for sold out events',
       'required' => 0,
       'settings' => array(
         'user_register_form' => FALSE,
@@ -235,7 +236,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
       ),
       'entity_type' => 'node',
       'field_name' => 'fr_tickets_waitlist_closed',
-      'label' => 'Allow waitlist for closed out events',
+      'label' => 'Allow wait list for closed out events',
       'required' => 0,
       'settings' => array(
         'user_register_form' => FALSE,
@@ -410,7 +411,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
       'module' => 'list',
       'settings' => array(
         'allowed_values' => array(
-          'form' => 'Taken to the waitlist form',
+          'form' => 'Taken to the wait list form',
           'redirect' => 'Redirected to another page',
           'message' => 'Shown a message',
         ),
@@ -609,7 +610,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
       'module' => 'list',
       'settings' => array(
         'allowed_values' => array(
-          'form' => 'Taken to the waitlist form',
+          'form' => 'Taken to the wait list form',
           'redirect' => 'Redirected to another page',
           'message' => 'Shown a message',
         ),
@@ -1150,12 +1151,12 @@ function _fundraiser_tickets_default_fields_settings($type) {
 
   // Translatables
   // Included for use with string extractors like potx.
-  t('Allow waitlist for closed out events');
-  t('Allow waitlist for sold out events');
+  t('Allow wait list for closed out events');
+  t('Allow wait list for sold out events');
   t('Body');
   t('Close event on');
   t('Enable add-on donation');
-  t('Donation Form to Use for Addons');
+  t('Donation Form to Use for Add-ons');
   t('<strong>You may type either the form\'s <em>Title</em> or <em>Internal Name</em> when searching.</strong><br />Target donation forms <strong><em>must</em></strong> have an "other amount" field. Any required fields on target donation forms must also be required on this form.');
   t('Event is closed');
   t('Closed message');
