@@ -1,5 +1,26 @@
 <?php
 
+function springboard_m2t_menu() {
+  $items = array();
+
+  $items['admin/config/system/m2t'] = array(
+    'title' => 'Message to Target',
+    'description' => '',
+    'type' => MENU_CALLBACK,
+    'access arguments' => array('administer site configuration'),
+    'page arguments' => array('springboard_m2t_admin'),
+    'page callback' => 'drupal_get_form',
+  );
+
+  $items['sunlightlookup'] = array(
+    'title' => 'Get district info from sunlight',
+    'description' => '',
+    'type' => MENU_CALLBACK,
+    'page callback' => '_springboard_mt2_sunlight_lookup',
+    'access arguments' => array(1),
+  );
+  return $items;
+}
 
 function springboard_m2t_webform_user_profile_fields_alter(&$fields, $node) {
   if($node->type == 'springboard_m2t') {
@@ -81,8 +102,41 @@ function springboard_m2t_form_alter(&$form, &$form_state, $form_id) {
     $node = $form['#node'];
     if($node->type == 'springboard_m2t') {
       $form['#attributes']['class'][] = 'geocode-form';
-      $form['#attached']['js'][]  = array('data' => 'http://maps.google.com/maps/api/js?v=3.exp', 'type' => 'external');
-      $form['#attached']['js'][] = drupal_get_path('module', 'springboard_m2t') . '/js/m2t.js'; 
+      $form['#attached']['js'][]  = array('data' => 'https://maps.googleapis.com/maps/api/js?sensor=false', 'type' => 'external');
+      $form['#attached']['js'][] = array('data' => drupal_get_path('module', 'springboard_m2t') . '/js/m2t.js'); 
     }
   }
 }
+
+function _springboard_mt2_sunlight_lookup() {
+  //legislators/geo/?lat=latitude&long=longitude
+  //districts/locate?latitude=42.96&longitude=-108.09
+
+  $coords = $_POST['coords'];
+  $latitude = $coords[0];
+  $longitude = $coords[1]; 
+  $apikey = variable_get('springboard_m2t_apikey', '');
+
+  $query =  array(
+   'latitude' => $latitude,
+   'longitude' => $longitude,
+   'apikey' => '4b2253f313de4a019071b633b9df542f',
+  );
+
+  $url = url('https://congress.api.sunlightfoundation.com/districts/locate', array('query' => $query));
+  $response = drupal_http_request($url);
+  return drupal_json_output($response);
+}
+
+function springboard_m2t_admin() {
+  $form = array();
+  $form['springboard_m2t_apikey'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Sunlight API Key'),
+    '#description' => t(''),
+    '#default_value' => variable_get('springboard_m2t_apikey', ''),
+  );
+
+  return system_settings_form($form);
+}
+
