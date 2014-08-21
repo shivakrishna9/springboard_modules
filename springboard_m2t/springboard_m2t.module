@@ -127,9 +127,18 @@ function _springboard_mt2_sunlight_lookup() {
   );
 
   if ($is_lat && $is_long) {
+    setcookie('m2t_user_coords', $latitude . ',' . $longitude);
     $url = url('https://congress.api.sunlightfoundation.com/districts/locate', array('query' => $query));
     $response = drupal_http_request($url);
-    return drupal_json_output($response);
+
+    if(isset($response->status_message) && $response->status_message == 'OK') {
+
+      return drupal_json_output($response);
+
+    }
+    else {
+      return drupal_json_output(array('error' => 'Sunlight server returned invalid response'));
+    }
   }
   else {
     return drupal_json_output(array('error' => 'coordinates were not valid.'));
