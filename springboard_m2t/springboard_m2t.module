@@ -4,8 +4,14 @@
 function springboard_m2t_webform_user_profile_fields_alter(&$fields, $node) {
   if($node->type == 'springboard_m2t') {
     foreach ($fields as $index => $profile_field) {
+      if ($profile_field['name'] != 'sbp_address_line_2'){
+        $fields[$index]['mandatory'] = 1;
+      }
       if ($profile_field['name'] == 'sbp_state'){
         unset($fields[$index]);
+      }
+      if ($profile_field['name'] == 'mail'){
+        $fields[$index]['weight'] = 14;
       }
     } 
   }
@@ -20,7 +26,7 @@ function springboard_m2t_node_insert($node) {
     'name' => t('Phone Number'),
     'type' => 'textfield',
     'mandatory' => 1,
-    'weight' => 18,
+    'weight' => 13,
     'email' => 1,
     'extra' => array(
     'description' => t(''),
@@ -71,13 +77,12 @@ function springboard_m2t_node_insert($node) {
 }
 
 function springboard_m2t_form_alter(&$form, &$form_state, $form_id) {
-
   if(isset($form['#node'])) {
     $node = $form['#node'];
-  }
-  if($node->type == 'springboard_m2t') {
-    $form['#attributes']['class'][] = 'geocode-form';
-    $form['#attached']['js'][]  = array('data' => 'http://maps.google.com/maps/api/js?v=3.exp', 'type' => 'external');
-    $form['#attached']['js'][] = drupal_get_path('module', 'springboard_m2t') . '/js/m2t.js'; 
+    if($node->type == 'springboard_m2t') {
+      $form['#attributes']['class'][] = 'geocode-form';
+      $form['#attached']['js'][]  = array('data' => 'http://maps.google.com/maps/api/js?v=3.exp', 'type' => 'external');
+      $form['#attached']['js'][] = drupal_get_path('module', 'springboard_m2t') . '/js/m2t.js'; 
+    }
   }
 }
