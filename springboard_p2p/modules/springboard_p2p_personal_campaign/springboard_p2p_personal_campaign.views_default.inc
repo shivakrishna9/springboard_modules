@@ -664,6 +664,7 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['element_wrapper_type'] = 'div';
   $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['element_wrapper_class'] = 'field';
   $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['element_default_classes'] = FALSE;
+  $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['hide_empty'] = TRUE;
   $handler->display->display_options['fields']['field_p2p_suggested_donation_amt']['settings'] = array(
     'thousand_separator' => ',',
     'decimal_separator' => '.',
@@ -689,6 +690,7 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['fields']['field_p2p_suggested_donation']['element_wrapper_type'] = 'div';
   $handler->display->display_options['fields']['field_p2p_suggested_donation']['element_wrapper_class'] = 'field';
   $handler->display->display_options['fields']['field_p2p_suggested_donation']['element_default_classes'] = FALSE;
+  $handler->display->display_options['fields']['field_p2p_suggested_donation']['hide_empty'] = TRUE;
   $handler->display->display_options['fields']['field_p2p_suggested_donation']['settings'] = array(
     'thousand_separator' => ',',
     'decimal_separator' => '.',
