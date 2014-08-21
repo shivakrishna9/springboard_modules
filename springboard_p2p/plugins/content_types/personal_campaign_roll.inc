@@ -54,12 +54,23 @@ function springboard_p2p_personal_campaign_roll_render($subtype, $conf, $panel_a
     return;
   }
 
+  $goal_type = springboard_p2p_get_goal_type_from_campaign($campaign);
+
+  if ($goal_type == 'amount') {
+    $title = 'Recent donors';
+    $header = '<thead><tr><td>Name</td><td>Amount</td></tr></thead>';
+  }
+  else {
+    $title = 'Recent supporters';
+    $header = '<thead><tr><td>Name</td></tr></thead>';
+  }
+
   $output = array();
 
   $output[] = '<i class="fa fa-user donor-icon"></i>';
 
   $output[] = '<table class="personal-campaign-roll">';
-  $output[] = '<thead><tr><td>Name</td><td>Amount</td></tr></thead>';
+  $output[] = $header;
   // Start the count.
   $zebra = 0;
 
@@ -81,9 +92,13 @@ function springboard_p2p_personal_campaign_roll_render($subtype, $conf, $panel_a
       $output[] = '</td>';
     }
 
-    if ($comment['action_type'] == 'fundraiser' && !empty($comment['amount'])) {
+    if ($goal_type == 'amount') {
       $output[] = '<td>';
-      $output[] = springboard_p2p_format_progress($comment['amount'] / 100, 'amount');
+
+      if ($comment['action_type'] == 'fundraiser' && !empty($comment['amount'])) {
+        $output[] = springboard_p2p_format_progress($comment['amount'] / 100, 'amount');
+      }
+
       $output[] = '</td>';
     }
 
@@ -95,10 +110,10 @@ function springboard_p2p_personal_campaign_roll_render($subtype, $conf, $panel_a
 
   // Build the content type block.
   $block = new stdClass();
-  $block->title = 'Recent donors';
+  $block->title = $title;
   $block->content = implode('', $output);
-  return $block;
 
+  return $block;
 }
 
 /**
