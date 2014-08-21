@@ -319,6 +319,11 @@ html.js input#edit-name.form-autocomplete.throbbing {
   opacity: .9;
 }
 
+.image-widget-data .form-item.form-type-select.form-item-field-p2p-campaign-images-und-1--weight.control-group,
+.image-widget-data .form-item.form-type-select.form-item-field-p2p-campaign-images-und-1--weight {
+  display: none;
+}
+
 /* Uniform global */
 
 div.selector,
