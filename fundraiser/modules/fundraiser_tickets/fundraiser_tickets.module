@@ -1181,3 +1181,33 @@ function fundraiser_tickets_form_action_submit($nid, $app_id = NULL, $submission
     }
   }
 }
+
+/**
+ * Implements hook_salesforce_queue_process_items_alter().
+ */
+function fundraiser_tickets_salesforce_queue_process_items_alter(&$items, $queue) {
+  if (!empty($items)) {
+    // Loop through the items looking for the type we need to prevent from syncing.
+    foreach ($items as $delta => $item) {
+      dsm($delta);
+      dsm($item);
+      /*
+      if ($item->module == 'drupal_module') {
+        // Attempt to load the SF mapping for the item we need to be mapped before our's can sync.
+        // The values passed to salesforce_sync_load_map() will be unique to the item you need to load.
+        $mapped = salesforce_sync_load_map(array(
+          'module' => 'synced_item_drupal_module',
+          'delta' => 'bundle',
+          'drupal_id' => 1234, // This will probably be a value you'll be pulling from your source item
+          'object_type' => 'SF_object_type',
+        ));
+
+        // No synced item so remove this item
+        if (empty($mapped)) {
+          unset($items[$delta]);
+        }
+      }
+      */
+    }
+  }
+}
