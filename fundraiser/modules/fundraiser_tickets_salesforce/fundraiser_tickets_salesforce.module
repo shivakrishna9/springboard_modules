@@ -1,0 +1,40 @@
+<?php
+/**
+ * @file
+ * fundraiser_tickets.module
+ */
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Alter the node form to add Salesforce-relation field.
+ */
+function fundraiser_tickets_salesforce_form_node_form_alter(&$form, &$form_state) {
+  if (fundraiser_tickets_is_ticket_type($form['type']['#value'])) {
+    $sfapi = salesforce_get_api();
+    $options = array();
+    $options[''] = '-- Please Select --';
+    if ($sfapi->isAuthorized()) {
+      $object_info = $sfapi->objectDescribe($sobject_type);
+      foreach ($object_info['fields'] as $field) {
+        if ($field['type'] == 'reference' && $field['referenceTo'][0] == 'Contact') {
+          $options[$field['name']] = $field['label'];
+        }
+      } 
+    }
+    
+    $default = '';
+    $webform_user_reference_fields = variable_get('webform_user_reference_fields', array());
+    if (array_key_exists($form['#node']->nid, $webform_user_reference_fields)) {
+      $default = $webform_user_reference_fields[$form['#node']->nid];
+    }
+      
+    $form['donation']['fr_ticketing_salesforce_field'] = array(
+      '#type' => 'select',
+      '#title' => 'Salesforce Field to Relate Add-on',
+      '#options' => $options,
+      '#default_value' => $default,
+      '#required' => TRUE,
+    );
+  }
+}
