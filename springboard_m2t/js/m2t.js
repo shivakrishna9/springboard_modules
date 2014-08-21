@@ -52,14 +52,11 @@
             });
 
           } else {
-                        console.log(status);
-
-            //something
+            console.log(status);
           }
         });
         return false;
       }
-
     }
   };
 })(jQuery);

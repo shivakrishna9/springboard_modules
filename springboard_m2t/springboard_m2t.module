@@ -120,7 +120,7 @@ function _springboard_mt2_sunlight_lookup() {
   $query =  array(
    'latitude' => $latitude,
    'longitude' => $longitude,
-   'apikey' => '4b2253f313de4a019071b633b9df542f',
+   'apikey' => $apikey,
   );
 
   $url = url('https://congress.api.sunlightfoundation.com/districts/locate', array('query' => $query));
