@@ -3,7 +3,6 @@
     attach: function (context, settings) {
 
       var addressFields = 'input[name$="address]"], input[name*="city"], select[name*="state"], input[name*="zip"]';
-      var address = '';
 
       $('form.geocode-form').on('blur', addressFields, function(){
         parseAddresFields();
@@ -14,6 +13,7 @@
       });
 
       function parseAddresFields() {
+        var address = '';
         $(addressFields,'form.geocode-form').each(function(){
            if(this.value === '') {
             return false;
@@ -22,12 +22,13 @@
             address += this.value + ', ';
            }
            if(this.name == 'submitted[sbp_zip]' && this.value !== '') {
-             lookupGeo();
+             lookupGeo(address);
            }
         });
       }
 
-      function lookupGeo() {
+      function lookupGeo(address) {
+        console.log(address);
         var geocoder = new google.maps.Geocoder();
         geocoder.geocode({'address': address}, function (results, status) {
           if (status == google.maps.GeocoderStatus.OK) {
@@ -51,17 +52,11 @@
             });
 
           } else {
+                        console.log(status);
+
             //something
           }
         });
-        //rebind??????
-        $('form.geocode-form').on('blur', addressFields, function(){
-        parseAddresFields();
-      });
-
-      $('form.geocode-form').on('change', 'select[name*="state"]', function(){
-        parseAddresFields();
-      });
         return false;
       }
 
