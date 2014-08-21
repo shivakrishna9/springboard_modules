@@ -1153,7 +1153,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
     ),
     'entity_type' => 'node',
     'field_name' => 'field_p2p_webform_fieldset_label',
-    'label' => 'Peer to peer campaign label for form',
+    'label' => 'Public Support Call-Out',
     'required' => 0,
     'settings' => array(
       'text_processing' => 0,
@@ -1187,11 +1187,11 @@ function springboard_p2p_campaign_field_default_field_instances() {
   t('Landing page slider optional external link');
   t('Landing page slider teaser');
   t('Organization introduction');
-  t('Peer to peer campaign label for form');
   t('Personal Campaign Expiration Message');
   t('Personal campaign images');
   t('Personal campaign introduction');
   t('Personal campaigns require approval');
+  t('Public Support Call-Out');
   t('Require personal campaign expiration date');
   t('Set a message to show when the campaign expires.');
   t('Show constituent comments on personal campaign pages');
