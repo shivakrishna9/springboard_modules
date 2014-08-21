@@ -35,6 +35,9 @@ function fundraiser_entity_field_default_field_instances() {
     'label' => 'Credit Card Exp Month',
     'required' => 0,
     'settings' => array(
+      'fundraiser_entity' => array(
+        'webform_map' => 1,
+      ),
       'max' => '',
       'min' => '',
       'prefix' => '',
@@ -75,6 +78,9 @@ function fundraiser_entity_field_default_field_instances() {
     'label' => 'Credit Card Exp Year',
     'required' => 0,
     'settings' => array(
+      'fundraiser_entity' => array(
+        'webform_map' => 1,
+      ),
       'max' => '',
       'min' => '',
       'prefix' => '',
@@ -110,6 +116,9 @@ function fundraiser_entity_field_default_field_instances() {
     'label' => 'Credit Card Number',
     'required' => 0,
     'settings' => array(
+      'fundraiser_entity' => array(
+        'webform_map' => 1,
+      ),
       'text_processing' => 0,
       'user_register_form' => FALSE,
     ),
@@ -144,6 +153,9 @@ function fundraiser_entity_field_default_field_instances() {
     'label' => 'Credit Card Type',
     'required' => 0,
     'settings' => array(
+      'fundraiser_entity' => array(
+        'webform_map' => 1,
+      ),
       'user_register_form' => FALSE,
     ),
     'widget' => array(
@@ -175,6 +187,9 @@ function fundraiser_entity_field_default_field_instances() {
     'label' => 'Campaign ID',
     'required' => 0,
     'settings' => array(
+      'fundraiser_entity' => array(
+        'webform_map' => 1,
+      ),
       'text_processing' => 0,
       'user_register_form' => FALSE,
     ),
@@ -240,6 +255,9 @@ function fundraiser_entity_field_default_field_instances() {
     'label' => 'Donor Address',
     'required' => 0,
     'settings' => array(
+      'fundraiser_entity' => array(
+        'webform_map' => 1,
+      ),
       'user_register_form' => FALSE,
     ),
     'widget' => array(
@@ -280,6 +298,9 @@ function fundraiser_entity_field_default_field_instances() {
     'label' => 'Account Number',
     'required' => 0,
     'settings' => array(
+      'fundraiser_entity' => array(
+        'webform_map' => 1,
+      ),
       'text_processing' => 0,
       'user_register_form' => FALSE,
     ),
@@ -314,6 +335,9 @@ function fundraiser_entity_field_default_field_instances() {
     'label' => 'Routing Number',
     'required' => 0,
     'settings' => array(
+      'fundraiser_entity' => array(
+        'webform_map' => 1,
+      ),
       'text_processing' => 0,
       'user_register_form' => FALSE,
     ),
@@ -348,6 +372,9 @@ function fundraiser_entity_field_default_field_instances() {
     'label' => 'Email',
     'required' => 0,
     'settings' => array(
+      'fundraiser_entity' => array(
+        'webform_map' => 1,
+      ),
       'text_processing' => 0,
       'user_register_form' => FALSE,
     ),
@@ -382,6 +409,9 @@ function fundraiser_entity_field_default_field_instances() {
     'label' => 'Initial referrer',
     'required' => 0,
     'settings' => array(
+      'fundraiser_entity' => array(
+        'webform_map' => 1,
+      ),
       'text_processing' => 0,
       'user_register_form' => FALSE,
     ),
@@ -416,6 +446,9 @@ function fundraiser_entity_field_default_field_instances() {
     'label' => 'Market Source',
     'required' => 0,
     'settings' => array(
+      'fundraiser_entity' => array(
+        'webform_map' => 1,
+      ),
       'text_processing' => 0,
       'user_register_form' => FALSE,
     ),
@@ -450,6 +483,9 @@ function fundraiser_entity_field_default_field_instances() {
     'label' => 'Payment Method',
     'required' => 0,
     'settings' => array(
+      'fundraiser_entity' => array(
+        'webform_map' => 1,
+      ),
       'text_processing' => 0,
       'user_register_form' => FALSE,
     ),
@@ -481,12 +517,19 @@ function fundraiser_entity_field_default_field_instances() {
     ),
     'entity_type' => 'fundraiser_donation',
     'field_name' => 'field_fde_referrer',
+    'fundraiser_entity' => array(
+      'webform_map' => 1,
+    ),
     'label' => 'Referrrer',
     'required' => 0,
     'settings' => array(
+      'fundraiser_entity' => array(
+        'webform_map' => 1,
+      ),
       'text_processing' => 0,
       'user_register_form' => FALSE,
     ),
+    'webform_map' => 1,
     'widget' => array(
       'active' => 1,
       'module' => 'text',
@@ -518,6 +561,9 @@ function fundraiser_entity_field_default_field_instances() {
     'label' => 'Search engine',
     'required' => 0,
     'settings' => array(
+      'fundraiser_entity' => array(
+        'webform_map' => 1,
+      ),
       'text_processing' => 0,
       'user_register_form' => FALSE,
     ),
@@ -586,6 +632,9 @@ function fundraiser_entity_field_default_field_instances() {
     'label' => 'Sustainer',
     'required' => 0,
     'settings' => array(
+      'fundraiser_entity' => array(
+        'webform_map' => 1,
+      ),
       'user_register_form' => FALSE,
     ),
     'widget' => array(
@@ -626,6 +675,9 @@ function fundraiser_entity_field_default_field_instances() {
       'default_value2' => 'same',
       'default_value_code' => '',
       'default_value_code2' => '',
+      'fundraiser_entity' => array(
+        'webform_map' => 1,
+      ),
       'user_register_form' => FALSE,
     ),
     'widget' => array(
@@ -664,6 +716,9 @@ function fundraiser_entity_field_default_field_instances() {
     'label' => 'User Agent',
     'required' => 0,
     'settings' => array(
+      'fundraiser_entity' => array(
+        'webform_map' => 1,
+      ),
       'text_processing' => 0,
       'user_register_form' => FALSE,
     ),
