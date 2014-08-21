@@ -35,7 +35,6 @@
             var longitude = results[0].geometry.location.lng();
             console.log(latitude + ' ' + longitude);
 
-
             $.ajax({
               type: "POST",
               url: '/sunlightlookup',
@@ -43,6 +42,7 @@
               dataType: 'json',
               success: function(data) {
                 console.log(data);
+                $('form.geocode-form').prepend(data.data);
               },
 
               error: function(xhr, textStatus, error){
@@ -50,13 +50,18 @@
               }
             });
 
-
-
-
           } else {
             //something
           }
         });
+        //rebind??????
+        $('form.geocode-form').on('blur', addressFields, function(){
+        parseAddresFields();
+      });
+
+      $('form.geocode-form').on('change', 'select[name*="state"]', function(){
+        parseAddresFields();
+      });
         return false;
       }
 
