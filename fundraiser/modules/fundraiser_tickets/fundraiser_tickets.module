@@ -543,6 +543,17 @@ function _fundraiser_tickets_ticket_settings_form_organize($form, $form_state){
   );
   unset($form['fr_tickets_donation_addon_form']);
   
+  // If fundraiser_tickets_salesforce module exists, use its field.
+  if (isset($form['fr_tickets_donation_salesforce_field'])) {
+    $form['donation']['fr_tickets_donation_salesforce_field'] = $form['fr_tickets_donation_salesforce_field'];
+    $form['donation']['fr_tickets_donation_salesforce_field']['#states'] = array(
+      'visible' => array(
+        ':input[name*=tickets_donation_donation]' => array('checked' => TRUE)
+      ),
+    );
+    unset($form['fr_tickets_donation_salesforce_field']);
+  }
+  
   // These fields are managed programmatically.
   unset($form['fr_tickets_inventory_initial']);
   unset($form['fr_tickets_inventory_available']);

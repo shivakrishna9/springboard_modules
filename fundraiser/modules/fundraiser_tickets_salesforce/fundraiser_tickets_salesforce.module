@@ -10,31 +10,45 @@
  * Alter the node form to add Salesforce-relation field.
  */
 function fundraiser_tickets_salesforce_form_node_form_alter(&$form, &$form_state) {
-  if (fundraiser_tickets_is_ticket_type($form['type']['#value'])) {
+  if (fundraiser_tickets_is_ticket_type($form['type']['#value']) && arg(2) == 'tickets') {
+    // Get the list of field options.
     $sfapi = salesforce_get_api();
     $options = array();
     $options[''] = '-- Please Select --';
     if ($sfapi->isAuthorized()) {
-      $object_info = $sfapi->objectDescribe($sobject_type);
+      $object_info = $sfapi->objectDescribe('Opportunity');
       foreach ($object_info['fields'] as $field) {
-        if ($field['type'] == 'reference' && $field['referenceTo'][0] == 'Contact') {
+        if ($field['type'] == 'reference' && $field['referenceTo'][0] == 'Opportunity') {
           $options[$field['name']] = $field['label'];
         }
       } 
     }
     
-    $default = '';
-    $webform_user_reference_fields = variable_get('webform_user_reference_fields', array());
-    if (array_key_exists($form['#node']->nid, $webform_user_reference_fields)) {
-      $default = $webform_user_reference_fields[$form['#node']->nid];
-    }
-      
-    $form['donation']['fr_ticketing_salesforce_field'] = array(
+    // Set the default value.
+    $default = variable_get('tickets_form_' . $form['#node']->nid . '_salesforce_field', NULL);
+    
+    // Salesforce relation field
+    $form['fr_tickets_donation_salesforce_field'] = array(
       '#type' => 'select',
-      '#title' => 'Salesforce Field to Relate Add-on',
+      '#title' => 'Salesforce Field to Relate Add-ons to Parent',
       '#options' => $options,
       '#default_value' => $default,
-      '#required' => TRUE,
+      '#required' => FALSE,
+      '#weight' => 45,
+      '#description' => t('We will use this field to relate the add-on donation to its parent in Salesforce.'),
     );
+    
+    // Submit handler to set the value if it changes.
+    $form['#submit'][] = 'fundraiser_tickets_salesforce_tickets_form_submit';
+  }
+}
+
+/**
+ * Submit handler to set variable
+ */
+function fundraiser_tickets_salesforce_tickets_form_submit($form, $form_state) {
+  if ($form_state['values']['fr_tickets_donation_salesforce_field'] != '') {
+    $field_value = $form_state['values']['fr_tickets_donation_salesforce_field'];
+    variable_set('tickets_form_' . $form['#node']->nid . '_salesforce_field', $field_value);
   }
 }
