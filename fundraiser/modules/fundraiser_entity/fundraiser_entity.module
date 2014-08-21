@@ -668,7 +668,10 @@ function fundraiser_entity_webform_component_insert($component) {
         'rows' => 5,
       ),
       'type' => $field_type['widget_type'],
-      'weight' => 12,
+    ),
+    // Add some values so we know where this field came from.
+    'fundraiser_entity' => array(
+      'webform_key' => $component['form_key'],
     ),
   );
 
@@ -702,6 +705,10 @@ function fundraiser_entity_webform_component_insert($component) {
 function _fundraiser_entity_component_field_mapping() {
   $types = array(
     'textfield' => array(
+      'field_type' => 'text_long',
+      'widget_type' => 'text_textarea',
+    ),
+    'textarea' => array(
       'field_type' => 'text_long',
       'widget_type' => 'text_textarea',
     ),
