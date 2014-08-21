@@ -619,6 +619,17 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['fields']['view_node']['element_wrapper_type'] = '0';
   $handler->display->display_options['fields']['view_node']['element_default_classes'] = FALSE;
   $handler->display->display_options['fields']['view_node']['text'] = 'Donate now';
+  /* Field: Content: Link */
+  $handler->display->display_options['fields']['view_node_1']['id'] = 'view_node_1';
+  $handler->display->display_options['fields']['view_node_1']['table'] = 'views_entity_node';
+  $handler->display->display_options['fields']['view_node_1']['field'] = 'view_node';
+  $handler->display->display_options['fields']['view_node_1']['label'] = '';
+  $handler->display->display_options['fields']['view_node_1']['element_type'] = 'span';
+  $handler->display->display_options['fields']['view_node_1']['element_class'] = 'campaign-node-link learn-more';
+  $handler->display->display_options['fields']['view_node_1']['element_label_type'] = '0';
+  $handler->display->display_options['fields']['view_node_1']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['view_node_1']['element_wrapper_type'] = '0';
+  $handler->display->display_options['fields']['view_node_1']['text'] = 'Learn more';
   /* Field: Content: Edit link */
   $handler->display->display_options['fields']['edit_node']['id'] = 'edit_node';
   $handler->display->display_options['fields']['edit_node']['table'] = 'views_entity_node';
