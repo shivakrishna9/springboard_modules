@@ -129,11 +129,11 @@ class SpringboardP2pEvents {
     );
     rules_invoke_event_by_args($event, $args);
 
-    $language = !empty($account->language) ? $account->language : 'und';
+    $user_wrapper = new SpringboardUserWrapper($account);
 
     $replacements = array(
-      '%first' => $account->sbp_first_name[$language][0]['safe_value'],
-      '%last' => $account->sbp_last_name[$language][0]['safe_value'],
+      '%first' => $user_wrapper->getFirstName(),
+      '%last' => $user_wrapper->getLastName(),
       '%email' => $account->mail,
     );
     watchdog('Springboard P2P', 'Password reset request made by %first %last at %email.', $replacements);
