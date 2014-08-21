@@ -1,13 +1,6 @@
 <?php
 /**
  * @file
- * Code for the Fundraiser Entity feature.
- */
-
-include_once 'fundraiser_entity.features.inc';
-
-/**
- * @file
  * Provides entity support for donations.
  */
 
@@ -487,6 +480,41 @@ function _fundraiser_entity_mapping_access($node = NULL) {
 }
 
 /**
+ * Implements hook_field_ui_field_edit_form_alter_alter().
+ */
+function fundraiser_entity_form_field_ui_field_edit_form_alter(&$form, $form_state) {
+  dpm($form, 'form');
+  if (
+    !empty($form['instance']['entity_type'])
+    && $form['instance']['entity_type']['#value'] == 'fundraiser_donation'
+  ) {
+    // Add a fieldset for settings related to fundraiser entity behavior
+    $form['instance']['settings']['fundraiser_entity'] = array(
+      '#type' => 'fieldset',
+      '#title' => 'Fundraiser Entity',
+      '#description' => t('These options control how this field interacts with the donation entity.'),
+      '#tree' => TRUE,
+    );
+
+    // Option to allow this field to be mapped on the webform map
+    $form['instance']['settings']['fundraiser_entity']['webform_map'] = array(
+      '#type' => 'checkbox',
+      '#title' => "Allow this field's value to be mapped on the webform map.",
+      '#return_value' => 1,
+      '#default_value' => !empty($form['#instance']['settings']['fundraiser_entity']['webform_map']),
+    );
+
+    // If the webform_key value is set retain that value
+    if (!empty($form['#instance']['settings']['fundraiser_entity']['webform_key'])) {
+      $form['instance']['settings']['fundraiser_entity']['webform_key'] = array(
+        '#type' => 'hidden',
+        '#default_value' => $form['#instance']['settings']['fundraiser_entity']['webform_key'],
+      );
+    }
+  }
+}
+
+/**
  * Implements hook_fundraiser_donation_create().
  *
  * Create and map the donation entity values when the donation is created.
@@ -670,8 +698,11 @@ function fundraiser_entity_webform_component_insert($component) {
       'type' => $field_type['widget_type'],
     ),
     // Add some values so we know where this field came from.
-    'fundraiser_entity' => array(
-      'webform_key' => $component['form_key'],
+    'settings' => array(
+      'fundraiser_entity' => array(
+        'webform_key' => $component['form_key'],
+        'webform_map' => TRUE,
+      ),
     ),
   );
 

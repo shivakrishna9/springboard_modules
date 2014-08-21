@@ -78,10 +78,31 @@ function fundraiser_entity_default_mapping_form($form, &$form_state) {
     'form_url'
   );
 
-  // Don't show these fields.
+  // Create an array of fields not to show
   $remove = array(
     'url',
   );
+
+  // Check the field settings to see if it should be shown on the mapping form
+  foreach ($donation_fields as $name => $label) {
+    // Don't bother with the protected fields
+    if (in_array($name, $protect)) {
+      continue;
+    }
+
+    // Get the field name
+    $field_name = $name;
+    // Check for the subkey value
+    if (strpos($field_name, ':') !== FALSE) {
+      list($field_name, $sub_key) = explode(':', $field_name);
+    }
+
+    // Ensure this field instance can be mapped
+    $instance_info = field_info_instance('fundraiser_donation', $field_name, 'fundraiser_donation');
+    if (empty($instance_info['settings']['fundraiser_entity']['webform_map'])) {
+      $remove[] = $name;
+    }
+  }
 
   // Track all the fields in the form.
   $form['#donation_fields'] = $donation_fields;
@@ -107,7 +128,7 @@ function fundraiser_entity_default_mapping_form($form, &$form_state) {
     asort($options[$opt_name]);
   }
 
-  // Create an array of options from the webform fields.
+  // Create an array of options from the donation entity fields.
   foreach ($donation_fields as $name => $label) {
     if (in_array($name, $remove)) {
       continue;
