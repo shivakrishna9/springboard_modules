@@ -300,9 +300,11 @@ function fundraiser_upsell_node_form_validate($form, &$form_state) {
   // is something other than 'never' (i.e. "Recurring is disabled"), or an enabled gateway
   // does not support recurring, return an error.
   if ($form_state['values']['fundraiser_upsell']['enabled'] == 1) {
-    // Recurring field. If it's something other than "never", throw an error.
-    if (isset($form_state['values']['recurring_setting']) && $form_state['values']['recurring_setting'] != 'never') {
-      $recurring_error_message .= t('In order to use Upsell, you must set the <strong>Fundraiser Recurring Display Settings</strong> field to <strong><em>Recurring Is Not an Option On This Form</em></strong>.');
+    // Recurring field. If it's set to "always", throw an error. For this field,
+    // we do not want to allow upsell if the form is already recurring and the
+    // user can't opt out.
+    if (isset($form_state['values']['recurring_setting']) && $form_state['values']['recurring_setting'] == 'always') {
+      $recurring_error_message .= t('In order to use Upsell, the <strong>Fundraiser Recurring Display Settings</strong> field must disable recurring donations or allow donors to opt out.');
     }
     // Gateways field. Only check enabled gateways.
     $gateway_error = array();
@@ -311,7 +313,7 @@ function fundraiser_upsell_node_form_validate($form, &$form_state) {
         $gateway = _fundraiser_gateway_info($gateway['id']);
         if (!isset($gateway['allow_recurring']) || empty($gateway['allow_recurring'])) {
           $gateway_error[$name]['name'] = $name;
-          $gateway_error[$name]['message'] = t('!gateway doesn\'t support recurring donations. For Upsell to work, disable this gateway or select another one.',
+          $gateway_error[$name]['message'] = t('!gateway is incompatible with Upsell. To continue, disable this gateway on this donation form or select another one.',
             array(
               '!gateway' => $gateway['title']
             )
