@@ -2496,6 +2496,9 @@ function springboard_p2p_preprocess_page(&$vars) {
     $vars['title'] = '';
   }
 
+  // Provide the file path for page wrappers to use.
+  $vars['filespath'] =  '/' . variable_get('file_public_path', conf_path() . '/files');
+
 }
 
 /**
