@@ -112,20 +112,28 @@ function _springboard_mt2_sunlight_lookup() {
   //legislators/geo/?lat=latitude&long=longitude
   //districts/locate?latitude=42.96&longitude=-108.09
 
-  $coords = $_POST['coords'];
-  $latitude = $coords[0];
-  $longitude = $coords[1]; 
+  $latitude = $_POST['coords'][0];
+  $longitude = $_POST['coords'][1]; 
+  
+  $is_long = preg_match('/([0-9.-]+).+?([0-9.-]+)/', $longitude);
+  $is_lat = preg_match('/([0-9.-]+).+?([0-9.-]+)/', $latitude);
+
   $apikey = variable_get('springboard_m2t_apikey', '');
 
   $query =  array(
-   'latitude' => $latitude,
-   'longitude' => $longitude,
-   'apikey' => $apikey,
+    'latitude' => $latitude,
+    'longitude' => $longitude,
+    'apikey' => $apikey,
   );
 
-  $url = url('https://congress.api.sunlightfoundation.com/districts/locate', array('query' => $query));
-  $response = drupal_http_request($url);
-  return drupal_json_output($response);
+  if ($is_lat && $is_long) {
+    $url = url('https://congress.api.sunlightfoundation.com/districts/locate', array('query' => $query));
+    $response = drupal_http_request($url);
+    return drupal_json_output($response);
+  }
+  else {
+    return drupal_json_output(array('error' => 'coordinates were not valid.'));
+  }
 }
 
 function springboard_m2t_admin() {
