@@ -129,7 +129,7 @@ function springboard_p2p_admin_settings() {
     '#title' => t('Messages'),
     '#weight' => 225,
   );
-  
+
   // Reset aliases
   $form['url_aliases'] = array(
     '#type' => 'fieldset',
@@ -142,7 +142,22 @@ function springboard_p2p_admin_settings() {
     '#value' => t('Reset'),
     '#submit' => array('springboard_p2p_reset_url_aliases'),
   );
-    
+
+  $description = 'This message displays on the Peer to Peer registration page when someone tries to register with an email that matches an existing account. To edit the email that the user receives, please !rules.';
+  $replacements = array(
+    '!rules' => l('go here', 'springboard/p2p/rules'),
+  );
+
+  $form['help_message']['existing_user_message_area'] = array(
+    '#type' => 'textfield',
+    '#maxlength' => 255,
+    '#title' => t('Existing User Account Notification Message'),
+    '#required' => TRUE,
+    '#rows' => 2,
+    '#default_value' => variable_get('springboard_p2p_existing_user_message_area', ''),
+    '#description' => t($description, $replacements),
+  );
+
   // Login message text area.
   // We set a var here, otherwise drupal complains about htmlspecialchars.
   // This is a known bug with text_format FAPI.
@@ -327,6 +342,7 @@ function springboard_p2p_admin_settings_submit($form, &$form_state) {
     'registration_fields',
     'login_message_area',
     'help_message_area',
+    'existing_user_message_area',
   );
 
   foreach ($keys as $key) {
