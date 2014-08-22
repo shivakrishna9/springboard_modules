@@ -40,6 +40,10 @@ function fundraiser_sustainers_permission() {
       'title' => t('Fastforward recurring donations'),
       'description' => t('Fastforward recurring donations.'),
     ),
+    'set new charge date' => array(
+      'title' => t('Set new charge date'),
+      'description' => t('Specify a new charge date for future recurring donations.'),
+    ),
   );
 }
 
@@ -1054,7 +1058,7 @@ function fundraiser_sustainers_edit_form($did) {
   if ($remaining_donation_count > 0 && empty($cancelled)) {
     $donation_amount_form_array = drupal_get_form('fundraiser_sustainers_donation_amount_form', $donation, $next_donation);
     $donation_amount_form = drupal_render($donation_amount_form_array);
-    if(user_access('fastforward recurring donations')) {
+    if(user_access('set new charge date')) {
       // If date mode is enabled and on, do not support changing the payment date.
       if(module_exists('fundraiser_date_mode') && variable_get('fundraiser_date_mode_set_date_mode', 0) == 1) {
         $donation_date_form = '';
