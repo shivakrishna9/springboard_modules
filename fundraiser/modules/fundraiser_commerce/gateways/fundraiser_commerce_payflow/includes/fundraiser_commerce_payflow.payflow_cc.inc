@@ -91,6 +91,13 @@ function commerce_payflow_cc_settings_form($settings = array(), $payment_method 
     '#default_value' => $settings['recurring-billing'],
   );
 
+  $form['verbose_errors'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Verbose gateway errors.'),
+    '#description' => t('If checked, specific error messages from the gateway will be displayed to the user.'),
+    '#default_value' => isset($settings['verbose_errors']) ? $settings['verbose_errors'] : FALSE,
+  );
+
   // Add the logging configuration form elements.
   $form['log'] = array(
     '#type' => 'checkboxes',
@@ -121,6 +128,7 @@ function commerce_payflow_cc_default_settings() {
     'currency_code' => in_array($default_currency, array_keys(commerce_paypal_currencies('payflow_link'))) ? $default_currency : 'USD',
     'allow_supported_currencies' => FALSE,
     'recurring-billing' => '',
+    'verbose_errors' => FALSE,
     'log' => array('request' => 0, 'response' => 0),
   );
 }
@@ -258,7 +266,13 @@ function commerce_payflow_cc_submit_form_submit($payment_method, $pane_form, $pa
   }
 
   // Get the PNREF value
-  $pnref = isset($response['TRXPNREF']) ? $response['TRXPNREF'] : $response['PNREF'];
+  $pnref = NULL;
+  if (!empty($response['TRXPNREF'])) {
+    $pnref = $response['TRXPNREF'];
+  }
+  elseif (!empty($response['PNREF'])) {
+    $pnref = $response['TRXPNREF'];
+  }
 
   // Prepare a transaction object to log the API response.
   $transaction = commerce_payment_transaction_new($payment_method['method_id'], $order->order_id);
@@ -323,8 +337,8 @@ function commerce_payflow_cc_submit_form_submit($payment_method, $pane_form, $pa
 
   // If the payment failed, display an error and rebuild the form.
   if ($response['RESULT'] != '0') {
-    drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
-    drupal_set_message(check_plain($response['RESPMSG']), 'error');
+    $error_message = !empty($payment_method['settings']['verbose_errors']) ? check_plain($response['RESPMSG']) : 'Please enter you information again or try a different card.';
+    drupal_set_message(t('We received an error processing your card. @error', array('@error' => $error_message)), 'error');
     return FALSE;
   }
 

@@ -69,6 +69,13 @@ function commerce_payflow_eft_settings_form($settings = array(), $payment_method
     '#default_value' => $settings['recurring-billing'],
   );
 
+  $form['verbose_errors'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Verbose gateway errors.'),
+    '#description' => t('If checked, specific error messages from the gateway will be displayed to the user.'),
+    '#default_value' => isset($settings['verbose_errors']) ? $settings['verbose_errors'] : FALSE,
+  );
+
   // Add the logging configuration form elements.
   $form['log'] = array(
     '#type' => 'checkboxes',
@@ -97,6 +104,7 @@ function commerce_payflow_eft_default_settings() {
     'mode' => 'test',
     'allow_supported_currencies' => FALSE,
     'recurring-billing' => array(),
+    'verbose_errors' => FALSE,
     'log' => array('request' => 0, 'response' => 0),
   );
 }
@@ -258,7 +266,13 @@ function commerce_payflow_eft_submit_form_submit($payment_method, $pane_form, $p
   $response = commerce_payflow_api_request($payment_method, 'pro', $nvp, $order);
 
   // Get the PNREF value
-  $pnref = isset($response['TRXPNREF']) ? $response['TRXPNREF'] : $response['PNREF'];
+  $pnref = NULL;
+  if (!empty($response['TRXPNREF'])) {
+    $pnref = $response['TRXPNREF'];
+  }
+  elseif (!empty($response['PNREF'])) {
+    $pnref = $response['TRXPNREF'];
+  }
 
   // Something went wrong with the request. Abort.
   if (!$response) {
@@ -318,8 +332,8 @@ function commerce_payflow_eft_submit_form_submit($payment_method, $pane_form, $p
 
   // If the payment failed, display an error and rebuild the form.
   if ($response['RESULT'] != '0') {
-    drupal_set_message(t('We received the following error processing your account. Please enter you information again or try a different account.'), 'error');
-    drupal_set_message(check_plain($response['RESPMSG']), 'error');
+    $error_message = !empty($payment_method['settings']['verbose_errors']) ? check_plain($response['RESPMSG']) : 'Please enter you information again or try a different account.';
+    drupal_set_message(t('We received an error processing your account. @error', array('@error' => $error_message)), 'error');
     return FALSE;
   }
 
