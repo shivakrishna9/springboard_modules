@@ -91,8 +91,6 @@ function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
     $form['select']['#suffix'] = '</div>';
     $form['select']['submit']['#value'] = 'submit';
   }
-//  dsm($form_id);
-//  dsm($form);
 
   if (strpos($form_id, 'views_form_') === 0 && $vbo = _views_bulk_operations_get_field($form_state['build_info']['args'][0])) {
     // If we're on VBO-enabled views form on an aliased Springboard page, we 
