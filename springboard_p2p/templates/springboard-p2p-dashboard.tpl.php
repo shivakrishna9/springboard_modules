@@ -5,7 +5,7 @@
 <?php foreach ($views as $view): ?>
   <div class="types-wrapper">
     <?php if ($view['header']): ?>
-      <h2 class="type"><?php print $view['header'];?></h2>
+      <h2 class="types"><?php print $view['header'];?></h2>
     <?php endif; ?>
     <?php if ($view['create_link']): ?>
       <div class="buttons-wrapper"><?php print l($view['create_link']['title'], $view['create_link']['href'], array('attributes' => array('class' => array('button', 'add-button')))); ?></div>
