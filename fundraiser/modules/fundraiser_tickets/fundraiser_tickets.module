@@ -657,9 +657,17 @@ function fundraiser_tickets_node_view($node, $view_mode, $langcode) {
   // If this isn't a fundraiser ticket type, ignore it.
   if (fundraiser_tickets_is_ticket_type($node->type)) {
     if ($view_mode == 'full') {
-      // If we are closed or sold out, figure out what to do with them based
-      // on the form settings.
-      if(fundraiser_tickets_is_closed($node)){
+      // If there are no tickets yet, or if we are closed or sold out,
+      // figure out what to do with them based on the form settings.
+      if (fundraiser_tickets_no_tickets_added($node)) {
+        global $user;
+        if ($user->uid) {
+          $message = t('The form will not work properly until tickets have been created. <strong>!link_url</strong>.', array('!link_url' => l('To add tickets, click here', 'node/' . $node->nid . '/tickets/tickets')));
+          drupal_set_message($message, 'error');
+        }
+      }
+      
+      elseif(fundraiser_tickets_is_closed($node)) {
         $access = fundraiser_tickets_manage_access($node);
         $node_wrapper = entity_metadata_wrapper('node', $node);
         switch($node_wrapper->fr_tickets_closed_options->value()){
@@ -952,6 +960,15 @@ function fundraiser_tickets_is_ticket_field($field_name) {
 function fundraiser_tickets_get_ticket_field_keys(){
   module_load_include('inc', 'fundraiser_tickets', 'includes/fundraiser_tickets.fields');
   return array_keys(_fundraiser_tickets_default_fields_settings(NULL));
+}
+
+/**
+ * Helper function determine if the form has any tickets attached to it.
+ */
+function fundraiser_tickets_no_tickets_added($node) {
+  if (isset($node->fr_tickets_ticket_types) && empty($node->fr_tickets_ticket_types)) {
+    return TRUE;
+  }
 }
 
 /**
