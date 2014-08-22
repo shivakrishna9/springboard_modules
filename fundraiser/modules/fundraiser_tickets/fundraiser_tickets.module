@@ -1082,8 +1082,7 @@ function fundraiser_tickets_fundraiser_donation_process($donation) {
         }
         $result = fundraiser_tickets_form_action_submit($nid,  NULL, $donation->donation);
 
-        // TODO: The returns from fundraiser_tickets_form_action_submit could be better.
-        if (!empty($result) && $result['status'] == 'Submission successful') {
+        if (!empty($result) && !empty($result['submission_id'])) {
 
           $record = array(
             'original_nid' => $donation->node->nid,
@@ -1092,7 +1091,7 @@ function fundraiser_tickets_fundraiser_donation_process($donation) {
           );
 
           // Pull the add-on sid out of the result.
-          $add_on_sid = $result['submission id'];
+          $add_on_sid = $result['submission_id'];
 
           // Look up the did based on sid.
           $record['add_on_did'] = db_query("SELECT did FROM {fundraiser_donation} WHERE sid = :sid AND nid = :nid", array(':sid' => $add_on_sid, ':nid' => $record['add_on_nid']))->fetchField();
@@ -1202,10 +1201,11 @@ function fundraiser_tickets_form_action_submit($nid, $app_id = NULL, $submission
     if ($errors = form_get_errors()) {
       watchdog('fundraiser_tickets', print_r($errors, TRUE), $variables = array(), WATCHDOG_ERROR);
       drupal_set_message('Add on donation could not be processed.', 'error');
+      return FALSE;
     }
     else {
-      $sid = $form_state['values']['details']['sid'];
-      return array('status' => t('Submission successful'), 'submission id' => $sid);
+      $sid = isset($form_state['values']['details']['sid']) ? $form_state['values']['details']['sid'] : 0;
+      return array('submission_id' => $sid);
     }
   }
 }
