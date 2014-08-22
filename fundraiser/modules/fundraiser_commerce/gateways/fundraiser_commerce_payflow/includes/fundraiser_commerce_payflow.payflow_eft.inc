@@ -271,7 +271,7 @@ function commerce_payflow_eft_submit_form_submit($payment_method, $pane_form, $p
     $pnref = $response['TRXPNREF'];
   }
   elseif (!empty($response['PNREF'])) {
-    $pnref = $response['TRXPNREF'];
+    $pnref = $response['PNREF'];
   }
 
   // Something went wrong with the request. Abort.
