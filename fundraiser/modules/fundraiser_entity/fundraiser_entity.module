@@ -488,7 +488,6 @@ function _fundraiser_entity_mapping_access($node = NULL) {
  * Implements hook_field_ui_field_edit_form_alter_alter().
  */
 function fundraiser_entity_form_field_ui_field_edit_form_alter(&$form, $form_state) {
-  dpm($form, 'form');
   if (
     !empty($form['instance']['entity_type'])
     && $form['instance']['entity_type']['#value'] == 'fundraiser_donation'
