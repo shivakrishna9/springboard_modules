@@ -10,18 +10,18 @@
 function fundraiser_entity_menu() {
   $items = array();
 
-  // Note: admin/springboard/donations is defined by a default View.
+  // Note: admin/springboard/reports/donations is defined by a default View.
 
   // Donation Entity view/edit screens.
-  $items['admin/springboard/donations/%fundraiser_entity_donation'] = array(
+  $items['admin/springboard/reports/donation-entity/%fundraiser_entity_donation'] = array(
     'title callback' => 'fundraiser_entity_donation_label',
-    'title arguments' => array(3),
+    'title arguments' => array(4),
     'page callback' => 'fundraiser_entity_donation_view',
-    'page arguments' => array(3),
+    'page arguments' => array(4),
     'access callback' => 'entity_access',
-    'access arguments' => array('view', 'fundraiser_donation', 3),
+    'access arguments' => array('view', 'fundraiser_donation', 4),
   );
-  $items['admin/springboard/donations/%fundraiser_entity_donation/view'] = array(
+  $items['admin/springboard/reports/donation-entity/%fundraiser_entity_donation/view'] = array(
     'title' => 'View',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -10,
@@ -166,6 +166,7 @@ function fundraiser_entity_entity_info() {
       'module' => 'fundraiser_entity',
       'label callback' => 'fundraiser_entity_donation_label',
       'uri callback' => 'fundraiser_entity_donation_uri',
+      'access callback' => 'fundraiser_entity_donation_access',
       'entity keys' => array(
         'id' => 'did',
       ),
@@ -177,7 +178,7 @@ function fundraiser_entity_entity_info() {
             'path' => 'admin/springboard/settings/donation-entity',
             'real path' => 'admin/springboard/settings/donation-entity',
             'bundle argument' => 'fundraiser_donation',
-            'access arguments' => array('access administration pages'),
+            'access arguments' => array('administer fundraiser entity settings'),
           ),
         ),
       ),
@@ -242,11 +243,11 @@ function fundraiser_entity_donation_view($fundraiser_donation, $view_mode = 'adm
 /**
  * Entity uri callback.
  */
-function fundraiser_entity_donation_uri($donation) {
-  // Only return a value if the user has permission to view the order.
-  if (user_access('access administration pages')) {
+function fundraiser_entity_donation_uri($fundraiser_donation) {
+  // Only return a value if the user has permission to view the donation.
+  if (entity_access('view', 'fundraiser_donation', $fundraiser_donation)) {
     return array(
-      'path' => 'admin/springboard/donations/' . $donation->did,
+      'path' => 'admin/springboard/reports/donation-entity/' . $donation->did,
     );
   }
 
@@ -256,8 +257,8 @@ function fundraiser_entity_donation_uri($donation) {
 /**
  * Entity label callback.
  */
-function fundraiser_entity_donation_label($donation) {
-  return t('@name Donation', array('@name' => $donation->donation['first_name'] . '-' . $donation->donation['last_name']));
+function fundraiser_entity_donation_label($fundraiser_donation) {
+  return t('Donation @did', array('@did' => $fundraiser_donation->did));
 }
 
 /**
@@ -430,7 +431,7 @@ function fundraiser_entity_entity_property_info_alter(&$info) {
 function fundraiser_entity_donation_get_properties($fundraiser_donation, array $options, $name, $entity_type) {
   switch ($name) {
     case 'edit_url':
-      return url('admin/springboard/donations/' . $fundraiser_donation->did . '/edit', $options);
+      return url('admin/springboard/reports/donation-entity/' . $fundraiser_donation->did . '/edit', $options);
 
     case 'donor':
       return !empty($fundraiser_donation->uid) ? $fundraiser_donation->uid : drupal_anonymous_user();
@@ -443,7 +444,7 @@ function fundraiser_entity_donation_get_properties($fundraiser_donation, array $
 /**
  * Access callback for Task.
  */
-function fundraiser_entity_access($op, $task, $account = NULL, $entity_type = NULL) {
+function fundraiser_entity_donation_access($op, $task, $account = NULL) {
   global $user;
 
   if (!isset($account)) {

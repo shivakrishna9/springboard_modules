@@ -233,7 +233,7 @@ class FundraiserDonationEntityController extends EntityAPIController {
     );
 
     // Invoke hook_ENTITY_view() to allow modules to add their additions.
-    rules_invoke_all($this->entityType . '_view', $entity, $view_mode, $langcode);
+    module_invoke_all($this->entityType . '_entity_view', $entity, $view_mode, $langcode);
 
     // Invoke the more generic hook_entity_view() to allow the same.
     module_invoke_all('entity_view', $entity, $this->entityType, $view_mode, $langcode);
