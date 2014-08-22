@@ -156,9 +156,9 @@ function _springboard_mt2_sunlight_lookup() {
       $data = json_decode($responses['state']->data);
       if($data) {
         foreach ($data as $legislator) {
-          $districts['district'] = $legislator->district;
-          $districts['state'] = $legislator->state;
-          $districts['boundary_id'] = $legislator->boundary_id;
+          $districts[]['district'] = $legislator->district;
+          $districts[]['state'] = $legislator->state;
+          $districts[]['boundary_id'] = $legislator->boundary_id;
         }
       }
       $responses['state']->districts = $districts;
