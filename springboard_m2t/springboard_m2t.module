@@ -6,7 +6,6 @@ function springboard_m2t_menu() {
   $items['admin/config/system/m2t'] = array(
     'title' => 'Message to Target',
     'description' => '',
-    'type' => MENU_CALLBACK,
     'access arguments' => array('administer site configuration'),
     'page arguments' => array('springboard_m2t_admin'),
     'page callback' => 'drupal_get_form',
