@@ -425,7 +425,15 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
         }
       }
       elseif (!empty($form_state['values']['field_p2p_campaign_images'][$language][0]['fid'])) {
-        // Preserve field settings through a form rebuild triggered by an ajax event.
+        // @todo Do we even need to do anything in this case, when ajax is used?
+        // I had to remove the empty image line because it was adding the image
+        // a second time instead of adding an upload image row.
+        //
+        // When I comment out the foreach loop, my testing still works,
+        // so I wonder if that's needed here.
+        //
+        // Preserve field settings through a form rebuild triggered by
+        // an ajax event.
         $empty_image = $form['field_p2p_campaign_images'][$language][0];
         foreach ($form_state['values']['field_p2p_campaign_images'][$language] as $index => $image) {
           if (!isset($form['field_p2p_campaign_images'][$language][$index])) {
@@ -434,8 +442,12 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
           $form['field_p2p_campaign_images'][$language][$index]['#default_value']['fid'] = $image['fid'];
           $form['field_p2p_campaign_images'][$language][$index]['#default_value']['display'] = TRUE;
         }
-        $form['field_p2p_campaign_images'][$language][$index + 1] = $empty_image;
+
+        // @todo When I remove this line, it fixes a bug with uploading images
+        // on new personal campaign creation forms.
+        // $form['field_p2p_campaign_images'][$language][$index + 1] = $empty_image;
       }
+
       // Embedded video, default values from parent campaign, hide if edit
       // is disabled.
       $video_editable = $campaign_node->field_p2p_video_embed_edit[$language][0]['value'] ? TRUE : FALSE;

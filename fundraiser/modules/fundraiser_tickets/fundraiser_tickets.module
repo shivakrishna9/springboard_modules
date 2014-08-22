@@ -446,10 +446,10 @@ function _fundraiser_tickets_update_quantity_sold($product) {
 /**
 * Afterbuild function to add fieldsets to the tickets tab
 */
-function _fundraiser_tickets_ticket_settings_form_organize($form, $form_state){    
+function _fundraiser_tickets_ticket_settings_form_organize($form, $form_state){
   // Add donation-form admin CSS
   drupal_add_css(drupal_get_path('module', 'fundraiser_tickets') . '/css/ticketing_form.css');
-  
+
   // Create fieldset
   $form['waitlist']  = array(
     '#type' => 'fieldset',
@@ -466,8 +466,7 @@ function _fundraiser_tickets_ticket_settings_form_organize($form, $form_state){
   // TODO: Check where we want them.  If not, drop them completely.
   $form['waitlist']['fr_tickets_waitlist_soldout']['#access'] = FALSE;
   $form['waitlist']['fr_tickets_waitlist_closed']['#access']  = FALSE;
-  
-  
+
   $form['closed']  = array(
     '#type' => 'fieldset',
     '#title' => t('Close settings'),
@@ -489,13 +488,13 @@ function _fundraiser_tickets_ticket_settings_form_organize($form, $form_state){
       ':input[name="fr_tickets_closed_options[und]"]' => array('value' => 'message'),
     ),
   );
-  
+
   unset($form['fr_tickets_closed_is_closed']);
   unset($form['fr_tickets_closed_close_date']);
   unset($form['fr_tickets_closed_options']);
   unset($form['fr_tickets_closed_redirect']);
   unset($form['fr_tickets_closed_message']);
-  
+
   $form['soldout']  = array(
     '#type' => 'fieldset',
     '#title' => t('Sell out settings'),
@@ -509,28 +508,28 @@ function _fundraiser_tickets_ticket_settings_form_organize($form, $form_state){
   );
   // Move the sold out redirect right after the sold out redirect radio button.
   $form['soldout']['fr_tickets_soldout_options'][LANGUAGE_NONE]['redirect']['#suffix'] = drupal_render($form['fr_tickets_soldout_redirect']);
-  
+
   $form['soldout']['fr_tickets_soldout_message'] = $form['fr_tickets_soldout_message'];
   $form['soldout']['fr_tickets_soldout_message']['#states'] = array(
     'visible' => array(
       ':input[name="fr_tickets_soldout_options[und]"]' => array('value' => 'message'),
     ),
   );
-  
+
   unset($form['fr_tickets_soldout_options']);
   unset($form['fr_tickets_soldout_redirect']);
   unset($form['fr_tickets_soldout_message']);
-  
+
   $form['donation']  = array(
     '#type' => 'fieldset',
     '#title' => t('Donation add-on'),
     '#weight' => '1'
   );
-  
+
   // The 'Enable add-on donation' checkbox field
   $form['donation']['fr_tickets_donation_donation'] = $form['fr_tickets_donation_donation'];
   unset($form['fr_tickets_donation_donation']);
-  
+
   // The field to choose which donation form to use. Has a #states array
   // to show/hide upon the checkbox above being checked/unchecked.
   $form['donation']['fr_tickets_donation_addon_form'] = $form['fr_tickets_donation_addon_form'];
@@ -542,12 +541,23 @@ function _fundraiser_tickets_ticket_settings_form_organize($form, $form_state){
     ),
   );
   unset($form['fr_tickets_donation_addon_form']);
-  
+
+  // If fundraiser_tickets_salesforce module exists, use its field.
+  if (isset($form['fr_tickets_donation_salesforce_field'])) {
+    $form['donation']['fr_tickets_donation_salesforce_field'] = $form['fr_tickets_donation_salesforce_field'];
+    $form['donation']['fr_tickets_donation_salesforce_field']['#states'] = array(
+      'visible' => array(
+        ':input[name*=tickets_donation_donation]' => array('checked' => TRUE)
+      ),
+    );
+    unset($form['fr_tickets_donation_salesforce_field']);
+  }
+
   // These fields are managed programmatically.
   unset($form['fr_tickets_inventory_initial']);
   unset($form['fr_tickets_inventory_available']);
   unset($form['fr_tickets_inventory_purchased']);
-  
+
   return $form;
 }
 
@@ -647,9 +657,17 @@ function fundraiser_tickets_node_view($node, $view_mode, $langcode) {
   // If this isn't a fundraiser ticket type, ignore it.
   if (fundraiser_tickets_is_ticket_type($node->type)) {
     if ($view_mode == 'full') {
-      // If we are closed or sold out, figure out what to do with them based
-      // on the form settings.
-      if(fundraiser_tickets_is_closed($node)){
+      // If there are no tickets yet, or if we are closed or sold out,
+      // figure out what to do with them based on the form settings.
+      if (fundraiser_tickets_no_tickets_added($node)) {
+        global $user;
+        if ($user->uid) {
+          $message = t('The form will not work properly until tickets have been created. <strong>!link_url</strong>.', array('!link_url' => l('To add tickets, click here', 'node/' . $node->nid . '/tickets/tickets')));
+          drupal_set_message($message, 'error');
+        }
+      }
+      
+      elseif(fundraiser_tickets_is_closed($node)) {
         $access = fundraiser_tickets_manage_access($node);
         $node_wrapper = entity_metadata_wrapper('node', $node);
         switch($node_wrapper->fr_tickets_closed_options->value()){
@@ -665,14 +683,14 @@ function fundraiser_tickets_node_view($node, $view_mode, $langcode) {
             }
             break;
           case 'redirect':
-            $redirect = $node_wrapper->fr_tickets_closed_redirect->value(); 
+            $redirect = $node_wrapper->fr_tickets_closed_redirect->value();
             if (!$access) {
                drupal_goto($redirect);
             }
             else {
               drupal_set_message(t('This form is closed and users are being redirected to !redirect.',
                 array('!redirect' => l('this page', $redirect))), 'warning');
-              break;      
+              break;
             }
           case 'form':
             $waitlist = !empty($node_wrapper->value()->fr_tickets_waitlist_form);
@@ -945,6 +963,15 @@ function fundraiser_tickets_get_ticket_field_keys(){
 }
 
 /**
+ * Helper function determine if the form has any tickets attached to it.
+ */
+function fundraiser_tickets_no_tickets_added($node) {
+  if (isset($node->fr_tickets_ticket_types) && empty($node->fr_tickets_ticket_types)) {
+    return TRUE;
+  }
+}
+
+/**
  * Helper function, determine if a given ticket page is closed.
  */
 function fundraiser_tickets_is_closed($node) {
@@ -1044,7 +1071,7 @@ function _fundraiser_tickets_weight_sort($a, $b) {
 
 /**
  *  Implements hook_fundraiser_donation process
- *  Grab the donation and payment info and pass it to the add on doantion form
+ *  Grab the donation and payment info and pass it to the add on donation form
  */
 function fundraiser_tickets_fundraiser_donation_process($donation) {
   if (fundraiser_tickets_is_ticket_type($donation->node->type) && $donation->result['success']) {
@@ -1052,7 +1079,7 @@ function fundraiser_tickets_fundraiser_donation_process($donation) {
     $node_wrapper = entity_metadata_wrapper('node', $donation->node);
     if(isset($node_wrapper->fr_tickets_donation_addon_form)) {
       $addons = $node_wrapper->fr_tickets_donation_addon_form->value();
-    }  
+    }
     if(!empty($addons) && $addons != '_none') {
       $nid = $node_wrapper->fr_tickets_donation_addon_form->value()->nid;
 
@@ -1062,15 +1089,32 @@ function fundraiser_tickets_fundraiser_donation_process($donation) {
         // Loop through all of them to find whether one is an 'extra donation'.
         foreach ($donation->donation['ticket_box'] as $key => $ticket_amounts) {
           if (strpos($ticket_amounts, 'fundraiser-tickets-extra-donation')) {
-            // If we're here, we have found an 'extra donation', so unserialize and 
+            // If we're here, we have found an 'extra donation', so unserialize and
             // set the 'other_amount' to the value of the extra donation.
             $extra_donation = unserialize($ticket_amounts);
             $donation->donation['other_amount'] = number_format($extra_donation['fundraiser-tickets-extra-donation'], 2);
             $donation->donation['amount'] = 'other';
             break;
           }
-        }        
-        fundraiser_tickets_form_action_submit($nid,  NULL, $donation->donation);
+        }
+        $result = fundraiser_tickets_form_action_submit($nid,  NULL, $donation->donation);
+
+        if (!empty($result) && !empty($result['submission_id'])) {
+
+          $record = array(
+            'original_nid' => $donation->node->nid,
+            'add_on_nid' => $nid,
+            'original_did' => $donation->did,
+          );
+
+          // Pull the add-on sid out of the result.
+          $add_on_sid = $result['submission_id'];
+
+          // Look up the did based on sid.
+          $record['add_on_did'] = db_query("SELECT did FROM {fundraiser_donation} WHERE sid = :sid AND nid = :nid", array(':sid' => $add_on_sid, ':nid' => $record['add_on_nid']))->fetchField();
+
+          drupal_write_record('fundraiser_tickets_add_on_donations', $record);
+        }
       }
     }
   }
@@ -1091,7 +1135,7 @@ function fundraiser_tickets_check_addon_required_fields($nid, $donation = NULL, 
         if(!isset($donation->donation[$name]) || $donation->donation[$name] == '') {
           drupal_set_message(t('Add on donation could not be processed. There was a problem with required field %field', array('%field' => $name)), 'error');
           return FALSE;
-        }  
+        }
       }
     }
   }
@@ -1105,10 +1149,10 @@ function fundraiser_tickets_check_addon_required_fields($nid, $donation = NULL, 
       if($field['required'] == 1 && $name != 'quantity') {
         if(!isset($components[$name]) || $components[$name]['mandatory'] == '0' ) {
           return FALSE;
-        }  
+        }
       }
     }
-  }  
+  }
   if(!isset($addon_details['fields']['other_amount'])) {
     return FALSE;
   }
@@ -1174,10 +1218,11 @@ function fundraiser_tickets_form_action_submit($nid, $app_id = NULL, $submission
     if ($errors = form_get_errors()) {
       watchdog('fundraiser_tickets', print_r($errors, TRUE), $variables = array(), WATCHDOG_ERROR);
       drupal_set_message('Add on donation could not be processed.', 'error');
+      return FALSE;
     }
     else {
-      $sid = $form_state['values']['details']['sid'];
-      return array('status' => t('Submission successful'), 'submission id' => $sid);
+      $sid = isset($form_state['values']['details']['sid']) ? $form_state['values']['details']['sid'] : 0;
+      return array('submission_id' => $sid);
     }
   }
 }
