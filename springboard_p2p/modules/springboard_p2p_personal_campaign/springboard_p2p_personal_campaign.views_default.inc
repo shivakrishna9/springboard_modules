@@ -23,6 +23,7 @@ function springboard_p2p_personal_campaign_views_default_views() {
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');
   $handler->display->display_options['title'] = 'Personal campaigns';
+  $handler->display->display_options['use_ajax'] = TRUE;
   $handler->display->display_options['hide_admin_links'] = TRUE;
   $handler->display->display_options['use_more_always'] = FALSE;
   $handler->display->display_options['access']['type'] = 'perm';
@@ -34,7 +35,6 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['pager']['options']['items_per_page'] = '10';
   $handler->display->display_options['style_plugin'] = 'table';
   $handler->display->display_options['style_options']['columns'] = array(
-    'views_bulk_operations' => 'views_bulk_operations',
     'title' => 'title',
     'title_1' => 'title_1',
     'title_2' => 'title_2',
@@ -43,15 +43,12 @@ function springboard_p2p_personal_campaign_views_default_views() {
     'field_p2p_campaign_progress_1' => 'field_p2p_campaign_progress_1',
     'field_p2p_personal_submit_goal' => 'field_p2p_personal_submit_goal',
     'edit_node' => 'edit_node',
-    'delete_node' => 'delete_node',
+    'delete_node' => 'edit_node',
+    'clone_node' => 'edit_node',
+    'view_node' => 'edit_node',
   );
   $handler->display->display_options['style_options']['default'] = 'field_p2p_campaign_progress';
   $handler->display->display_options['style_options']['info'] = array(
-    'views_bulk_operations' => array(
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
     'title' => array(
       'sortable' => 1,
       'default_sort_order' => 'asc',
@@ -103,10 +100,20 @@ function springboard_p2p_personal_campaign_views_default_views() {
     ),
     'edit_node' => array(
       'align' => '',
-      'separator' => '',
+      'separator' => ' | ',
       'empty_column' => 0,
     ),
     'delete_node' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'clone_node' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'view_node' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -174,12 +181,15 @@ function springboard_p2p_personal_campaign_views_default_views() {
   $handler->display->display_options['fields']['edit_node']['id'] = 'edit_node';
   $handler->display->display_options['fields']['edit_node']['table'] = 'views_entity_node';
   $handler->display->display_options['fields']['edit_node']['field'] = 'edit_node';
-  $handler->display->display_options['fields']['edit_node']['label'] = 'Edit';
-  /* Field: Content: Delete link */
-  $handler->display->display_options['fields']['delete_node']['id'] = 'delete_node';
-  $handler->display->display_options['fields']['delete_node']['table'] = 'views_entity_node';
-  $handler->display->display_options['fields']['delete_node']['field'] = 'delete_node';
-  $handler->display->display_options['fields']['delete_node']['label'] = 'Delete';
+  $handler->display->display_options['fields']['edit_node']['label'] = 'Action';
+  /* Field: Content: Clone link */
+  $handler->display->display_options['fields']['clone_node']['id'] = 'clone_node';
+  $handler->display->display_options['fields']['clone_node']['table'] = 'node';
+  $handler->display->display_options['fields']['clone_node']['field'] = 'clone_node';
+  /* Field: Content: Link */
+  $handler->display->display_options['fields']['view_node']['id'] = 'view_node';
+  $handler->display->display_options['fields']['view_node']['table'] = 'views_entity_node';
+  $handler->display->display_options['fields']['view_node']['field'] = 'view_node';
   /* Sort criterion: Content: Progress (field_p2p_campaign_progress:amount) */
   $handler->display->display_options['sorts']['field_p2p_campaign_progress_amount']['id'] = 'field_p2p_campaign_progress_amount';
   $handler->display->display_options['sorts']['field_p2p_campaign_progress_amount']['table'] = 'field_data_field_p2p_campaign_progress';
@@ -208,6 +218,13 @@ function springboard_p2p_personal_campaign_views_default_views() {
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');
   $handler->display->display_options['path'] = 'admin/springboard/p2p/personal-campaigns';
+
+  /* Display: Block */
+  $handler = $view->new_display('block', 'Block', 'block_1');
+  $handler->display->display_options['defaults']['pager'] = FALSE;
+  $handler->display->display_options['pager']['type'] = 'some';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '10';
+  $handler->display->display_options['pager']['options']['offset'] = '0';
   $export['p2p_personal_campaigns_admin'] = $view;
 
   $view = new view();

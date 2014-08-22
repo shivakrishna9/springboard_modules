@@ -227,8 +227,10 @@ ul.campaign-landing-grid a {
 }
 
 .campaign-node-link.learn-more a:after {
-  content: "\f128";
-}
+  content: " ";
+  padding: 0;
+  width: 0;
+ }
 
 .p2p-panelizer-campaign-landing h4 {
   color: #5b5b5b;
