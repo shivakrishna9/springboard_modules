@@ -39,7 +39,9 @@ function springboard_m2t_webform_user_profile_fields_alter(&$fields, $node) {
 }
 
 function springboard_m2t_node_insert($node) {
+
   module_load_include('inc', 'webform', 'includes/webform.components');
+
   $fields[] = array(
     'nid' => $node->nid,
     'form_key' => 'springboard_m2t_phone',
@@ -67,6 +69,7 @@ function springboard_m2t_node_insert($node) {
       'description' => t('Customize your message'),
     ),
   );
+
   $fields[] = array(
       'nid' => $node->nid,
       'form_key' => 'sbp_state',
@@ -109,9 +112,8 @@ function springboard_m2t_form_alter(&$form, &$form_state, $form_id) {
 }
 
 function _springboard_mt2_sunlight_lookup() {
-  //legislators/geo/?lat=latitude&long=longitude
-  //districts/locate?latitude=42.96&longitude=-108.09
-
+  
+  $responses = array();
   $latitude = $_POST['coords'][0];
   $longitude = $_POST['coords'][1]; 
   
@@ -120,25 +122,48 @@ function _springboard_mt2_sunlight_lookup() {
 
   $apikey = variable_get('springboard_m2t_apikey', '');
 
-  $query =  array(
+  $fquery =  array(
     'latitude' => $latitude,
     'longitude' => $longitude,
     'apikey' => $apikey,
   );
+  $squery =  array(
+    'lat' => $latitude,
+    'long' => $longitude,
+    'apikey' => $apikey,
+  );
 
   if ($is_lat && $is_long) {
-    setcookie('m2t_user_coords', $latitude . ',' . $longitude);
-    $url = url('https://congress.api.sunlightfoundation.com/districts/locate', array('query' => $query));
-    $response = drupal_http_request($url);
 
-    if(isset($response->status_message) && $response->status_message == 'OK') {
+    setcookie('m2t_user_coords', $latitude . ' ' . $longitude);
+    
+    $fed = url('https://congress.api.sunlightfoundation.com/districts/locate', array('query' => $fquery));
+    $state = url('http://openstates.org/api/v1/legislators/geo', array('query' => $squery));
 
-      return drupal_json_output($response);
-
+    //there's no real way to rate limit this in the script if a form gets lots of traffic
+    $responses['fed'] = drupal_http_request($fed);
+    usleep(500000);
+    $responses['state'] = drupal_http_request($state);
+    
+    foreach (responses as $key => $response) {
+      if(!isset($response->status_message) || $response->status_message != 'OK') {
+        $response[$key] = array('error' => 'Sunlight server returned invalid response');
+      }
     }
-    else {
-      return drupal_json_output(array('error' => 'Sunlight server returned invalid response'));
+
+    if (isset($responses['state']->data)) {
+      $districts = array();
+      $data = json_decode($responses['state']->data);
+      if($data) {
+        foreach ($data as $legislator) {
+          $districts['district'] = $legislator->district;
+          $districts['state'] = $legislator->state;
+          $districts['boundary_id'] = $legislator->boundary_id;
+        }
+      }
+      $responses['state']->districts = $districts;
     }
+    return drupal_json_output($responses);
   }
   else {
     return drupal_json_output(array('error' => 'coordinates were not valid.'));
@@ -146,6 +171,7 @@ function _springboard_mt2_sunlight_lookup() {
 }
 
 function springboard_m2t_admin() {
+  
   $form = array();
   $form['springboard_m2t_apikey'] = array(
     '#type' => 'textfield',

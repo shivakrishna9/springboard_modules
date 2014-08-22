@@ -5,14 +5,14 @@
       var addressFields = 'input[name$="address]"], input[name*="city"], select[name*="state"], input[name*="zip"]';
 
       $('form.geocode-form').on('blur', addressFields, function(){
-        parseAddresFields();
+        parseAddressFields();
       });
 
       $('form.geocode-form').on('change', 'select[name*="state"]', function(){
-        parseAddresFields();
+        parseAddressFields();
       });
 
-      function parseAddresFields() {
+      function parseAddressFields() {
         var address = '';
         $(addressFields,'form.geocode-form').each(function(){
            if(this.value === '') {

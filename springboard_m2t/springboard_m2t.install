@@ -137,8 +137,8 @@ function springboard_m2t_add_content_type() {
   variable_set('webform_node_types_primary', array_unique($webform_node_types_primary));
 
 
-    require_once(drupal_get_path('module', 'webform_user') . '/includes/webform_user.fields.inc');
-   _webform_user_add_default_fields('springboard_m2t');
+  require_once(drupal_get_path('module', 'webform_user') . '/includes/webform_user.fields.inc');
+  _webform_user_add_default_fields('springboard_m2t');
   // Done.
   drupal_set_message(t('The content type Springboard Message to Target has been added.'));
   watchdog('springboard_m2t', 'Added content type Message to Target.');
