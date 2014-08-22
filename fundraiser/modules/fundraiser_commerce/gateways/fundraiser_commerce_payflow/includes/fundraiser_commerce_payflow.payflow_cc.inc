@@ -271,7 +271,7 @@ function commerce_payflow_cc_submit_form_submit($payment_method, $pane_form, $pa
     $pnref = $response['TRXPNREF'];
   }
   elseif (!empty($response['PNREF'])) {
-    $pnref = $response['TRXPNREF'];
+    $pnref = $response['PNREF'];
   }
 
   // Prepare a transaction object to log the API response.
