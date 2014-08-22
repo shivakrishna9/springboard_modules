@@ -13,109 +13,40 @@ function springboard_p2p_dashboard() {
   if (springboard_p2p_no_content_types_enabled()) {
     drupal_set_message('No content types have been enabled for peer to peer.  Please visit the settings and configure them.', 'error');
   }
-
-  $output = array();
-
-  $output['campaigns'] = array();
-
-  $output['campaigns']['heading'] = array(
-    '#markup' => '<h2>Active peer to peer campaigns</h2>',
-  );
-
-  $output['campaigns']['campaigns'] = array(
-    '#markup' => views_embed_view('p2p_campaigns', 'block'),
-  );
-
-  $output['campaigns']['links'] = array(
-    '#theme' => 'links',
-    '#links' => array(
-      'add-campaign' => array(
-        'title' => t('Create a new campaign'),
-        'href' => 'node/add/p2p-campaign',
-      ),
-      'view-campaigns' => array(
-        'title' => t('See all campaigns'),
-        'href' => 'admin/springboard/p2p/campaign',
-      ),
+  
+  $views = array(
+    'p2p_campaigns' => array (
+      'header' => t('Active peer to peer campaigns'),
+      'content' => views_embed_view('p2p_campaigns', 'block'),
+      'create_link' => array('title' => t('Create a new campaign'), 'href' => 'node/add/p2p-campaign'),
+      'viewmore_link' => array('title' => t('See all campaigns'), 'href' => 'admin/springboard/p2p/campaign')
+    ),
+    'p2p_categories' => array(
+      'header' => t('Campaign categories'),
+      'content' => views_embed_view('p2p_categories', 'block'),
+      'create_link' => array('title' => t('Create a new category'), 'href' => 'node/add/p2p-category'),
+      'viewmore_link' => array('title' => t('See all categories'), 'href' => 'admin/springboard/p2p/category'),
+    ),
+    'p2p_user_approval' => array(
+      'header' => t('Users awaiting approval'),
+      'content' => views_embed_view('p2p_user_approval', 'dashboard_page'),
+      'viewmore_link' => array('title' => t('Open approval queue'), 'href' => 'admin/springboard/p2p/approval/user'),
+    ),
+    'p2p_personal_campaigns_admin' => array(
+      'header' => t('Personal campaigns'),
+      'content' => views_embed_view('p2p_personal_campaigns_admin', 'block_1'),
+      'viewmore_link' => array('title' => t('View all personal campaigns'), 'href' => 'admin/springboard/p2p/personal-campaigns'),
+    ),
+    'p2p_landing_pages' => array(
+      'header' => t('Landing pages'),
+      'content' => views_embed_view('p2p_landing_pages', 'block'),
+      'create_link' => array('title' => t('Create a new category'), 'href' => 'node/add/p2p-category'),
+      'viewmore_link' => array('title' => t('View all landing pages'), 'href' => 'admin/springboard/p2p/landing-pages'),
     ),
   );
+  
+  return theme('springboard_p2p_dashboard', array('views' => $views));
 
-  $output['categories'] = array();
-
-  $output['categories']['heading'] = array(
-    '#markup' => '<h2>Campaign categories</h2>',
-  );
-
-  $output['categories']['categories'] = array(
-    '#markup' => views_embed_view('p2p_categories', 'block'),
-  );
-
-  $output['categories']['links'] = array(
-    '#theme' => 'links',
-    '#links' => array(
-      'add-category' => array(
-        'title' => t('Create a new category'),
-        'href' => 'node/add/p2p-category',
-      ),
-      'view-categories' => array(
-        'title' => t('See all categories'),
-        'href' => 'admin/springboard/p2p/category',
-      ),
-    ),
-  );
-
-  $output['user_approval'] = array();
-
-  $output['user_approval']['heading'] = array(
-    '#markup' => '<h2>Users awaiting approval</h2>',
-  );
-
-  // Need to use the page display because the views form won't submit otherwise.
-  $output['user_approval']['user_approval'] = array(
-    '#markup' => views_embed_view('p2p_user_approval', 'dashboard_page'),
-  );
-
-  $output['user_approval']['links'] = array(
-    '#theme' => 'links',
-    '#links' => array(
-      'user_approval' => array(
-        'title' => t('Open approval queue'),
-        'href' => 'admin/springboard/p2p/approval/user',
-      ),
-    ),
-  );
-
-  $output['personal_campaigns'] = array();
-
-  $output['personal_campaigns']['heading'] = array(
-    '#markup' => '<h2>Personal campaigns</h2>',
-  );
-
-  $output['personal_campaigns']['personal_campaigns'] = array(
-    '#markup' => views_embed_view('p2p_personal_campaigns_admin', 'page'),
-  );
-
-  $output['landing_pages'] = array();
-
-  $output['landing_pages']['heading'] = array(
-    '#markup' => '<h2>Landing pages</h2>',
-  );
-
-  $output['landing_pages']['landing_pages'] = array(
-    '#markup' => views_embed_view('p2p_landing_pages', 'block'),
-  );
-
-  $output['landing_pages']['links'] = array(
-    '#theme' => 'links',
-    '#links' => array(
-      'landing_pages' => array(
-        'title' => t('View all landing pages.'),
-        'href' => 'admin/springboard/p2p/landing-pages',
-      ),
-    ),
-  );
-
-  return $output;
 }
 
 /**

@@ -143,6 +143,10 @@ function springboard_p2p_theme($existing, $type, $theme) {
       'file' => 'springboard_p2p.admin.inc',
       'path' => $path . '/includes',
     ),
+    'springboard_p2p_dashboard' => array(
+      'variables' => array('views' => array()),
+      'template' => drupal_get_path('theme', $theme) . '/templates/springboard-p2p-dashboard',
+    ),
   );
 
   // Look for theme templates in springboard_p2p.
