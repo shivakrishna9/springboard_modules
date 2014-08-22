@@ -886,11 +886,6 @@ function springboard_p2p_campaign_views_default_views() {
   $handler->display->display_options['fields']['created']['field'] = 'created';
   $handler->display->display_options['fields']['created']['label'] = 'Date';
   $handler->display->display_options['fields']['created']['date_format'] = 'short';
-  /* Field: P2P: Operations links */
-  $handler->display->display_options['fields']['operations']['id'] = 'operations';
-  $handler->display->display_options['fields']['operations']['table'] = 'springboard_p2p_private_campaign_approval';
-  $handler->display->display_options['fields']['operations']['field'] = 'operations';
-  $handler->display->display_options['fields']['operations']['label'] = 'Operations ';
   /* Field: Content: Edit link */
   $handler->display->display_options['fields']['edit_node']['id'] = 'edit_node';
   $handler->display->display_options['fields']['edit_node']['table'] = 'views_entity_node';
@@ -907,6 +902,11 @@ function springboard_p2p_campaign_views_default_views() {
   $handler->display->display_options['fields']['view_node']['table'] = 'views_entity_node';
   $handler->display->display_options['fields']['view_node']['field'] = 'view_node';
   $handler->display->display_options['fields']['view_node']['relationship'] = 'nid';
+  /* Field: P2P: Operations links */
+  $handler->display->display_options['fields']['operations']['id'] = 'operations';
+  $handler->display->display_options['fields']['operations']['table'] = 'springboard_p2p_private_campaign_approval';
+  $handler->display->display_options['fields']['operations']['field'] = 'operations';
+  $handler->display->display_options['fields']['operations']['relationship'] = 'uid';
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
   $handler->display->display_options['defaults']['filters'] = FALSE;
   /* Filter criterion: Global: Combine fields filter */

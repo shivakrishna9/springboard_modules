@@ -83,15 +83,6 @@ function springboard_admin_custom_theme() {
  * confirmation form.
  */
 function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
-
-  // Views where we have vbo - create a wrapper for better theming.
-  if($form['#form_id'] =='views_form_p2p_categories_page' || 'p2p_campaigns'){
-   $form['select']['#type'] = '';
-    $form['select']['#prefix'] = '<div class="vbo-widget"><label>' . t('Edit Options') . '</label>';
-    $form['select']['#suffix'] = '</div>';
-    $form['select']['submit']['#value'] = 'submit';
-  }
-
   if (strpos($form_id, 'views_form_') === 0 && $vbo = _views_bulk_operations_get_field($form_state['build_info']['args'][0])) {
     // If we're on VBO-enabled views form on an aliased Springboard page, we 
     // need to override VBO's handling of the form's action URL. VBO uses the 
@@ -109,6 +100,16 @@ function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
       $form['actions']['delete']['#submit'][] = 'springboard_admin_node_delete';
     break;
   }
+
+  // Views where we have vbo - create a wrapper for better theming.
+  //@todo - this may not be the best way to do this, markup from prefix and suffix seem to bleed over into blocks on the main page that don't have a vbo widget.
+  if($form['#form_id'] == (('views_form_p2p_categories_page' || 'p2p_campaigns') && ('views_exposed_form'))) {
+      $form['select']['#type'] = '';
+      $form['select']['#prefix'] = '<div class="vbo-widget"><label>' . t('Edit Options') . '</label>';
+      $form['select']['#suffix'] = '</div>';
+      $form['select']['submit']['#value'] = 'submit';
+    }
+
 }
 
 /**
