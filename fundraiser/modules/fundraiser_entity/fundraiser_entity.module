@@ -33,7 +33,7 @@ function fundraiser_entity_menu() {
     'title' => 'Donation Entity settings',
     'description' => 'Configure general donation entity settings, fields, and displays.',
     'page callback' => 'fundraiser_entity_donation_settings_overview',
-    'access arguments' => array('administer fundraiser donations'),
+    'access arguments' => array('administer fundraiser entity settings'),
   );
   $items['admin/springboard/settings/donation-entity/settings'] = array(
     'title' => 'Settings',
@@ -118,6 +118,11 @@ function fundraiser_entity_donation_settings_overview() {
  */
 function fundraiser_entity_permission() {
   $permissions = array(
+    'administer fundraiser entity settings' => array(
+      'title' => t('Administer settings'),
+      'description' => t('Manage fields on the donation entity.'),
+      'restrict access' => TRUE,
+    ),
     'administer fundraiser entity donations' => array(
       'title' => t('Administer donations'),
       'description' => t('Allows users full access to manage fundraiser donation.'),
