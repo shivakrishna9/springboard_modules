@@ -145,13 +145,17 @@ function page_wrappers_settings_form($form, $form_state) {
  * Validate handler for the admin form to remove empty page wrapper default node configurations.
  *
  * Iterate through all submitted fields. If the field is an array, iterate through them
- * and unset() any empty field value (with an empty 'wrapper_nid'.
+ * and unset() any empty field value (with an empty 'wrapper_nid'). Note: *only* unset values
+ * that are *not* the first item, otherwise it'll unset the whole field value and replace it
+ * with a default, which we don't want unless it's never been set.
  */
 function page_wrappers_settings_form_validate($form, &$form_state) {
   foreach ($form_state['values'] as $field_key => $field_values) {
     if (is_array($field_values)) {
       foreach ($field_values as $key => $values) {
-        if (is_array($values) && isset($values['wrapper_nid']) && (empty($values['wrapper_nid']) || $values['wrapper_nid'] == 0)) {
+        // Check here for the value of each page wrapper setting. Only unset if the
+        // 'wrapper_nid' is empty and it's not the first item.
+        if (is_array($values) && isset($values['wrapper_nid']) && (empty($values['wrapper_nid']) || $values['wrapper_nid'] == 0 && $values['weight'] != 1)) {
           unset($form_state['values'][$field_key][$key]);
         }
       }
