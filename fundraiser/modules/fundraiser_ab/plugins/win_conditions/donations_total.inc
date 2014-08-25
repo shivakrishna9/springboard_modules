@@ -67,5 +67,6 @@ function fundraiser_ab_donations_total_config_summary($config) {
  *   Webform A/B Test node
  */
 function fundraiser_ab_donations_total_check_win($config, $webform_details, $test_node) {
+  if (!isset($webform_details['fundraiser']) || !isset($webform_details['fundraiser']['total_donations'])) return false;
   return ($webform_details['fundraiser']['total_donations'] >= $config['donation_sum']);
 }
