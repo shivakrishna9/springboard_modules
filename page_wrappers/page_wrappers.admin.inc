@@ -155,8 +155,10 @@ function page_wrappers_settings_form_validate($form, &$form_state) {
       foreach ($field_values as $key => $values) {
         // Check here for the value of each page wrapper setting. Only unset if the
         // 'wrapper_nid' is empty and it's not the first item.
-        if (is_array($values) && isset($values['wrapper_nid']) && (empty($values['wrapper_nid']) || $values['wrapper_nid'] == 0 && $values['weight'] != 1)) {
-          unset($form_state['values'][$field_key][$key]);
+        if (is_array($values) && $values['weight'] != 1) {
+          if (isset($values['wrapper_nid']) && (empty($values['wrapper_nid']) || $values['wrapper_nid'] == 0)) {
+            unset($form_state['values'][$field_key][$key]);
+          }
         }
       }
     } 
