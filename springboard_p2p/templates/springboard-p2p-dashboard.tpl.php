@@ -3,7 +3,7 @@
 ?>
 
 <?php foreach ($views as $view): ?>
-  <div class="types-wrapper">
+  <div class="types-wrapper p2p-views">
     <?php if (isset($view['header'])): ?>
       <h2 class="types"><?php print $view['header'];?></h2>
     <?php endif; ?>
