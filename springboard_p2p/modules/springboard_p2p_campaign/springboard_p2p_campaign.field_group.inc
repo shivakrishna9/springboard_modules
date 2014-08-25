@@ -28,7 +28,8 @@ function springboard_p2p_campaign_field_group_info() {
       2 => 'field_p2p_org_intro',
       3 => 'field_p2p_private_access_message',
       4 => 'field_p2p_expiration_required',
-      5 => 'group_p2p_donation_amount',
+      5 => 'field_p2p_campaign_action_button',
+      6 => 'group_p2p_donation_amount',
     ),
     'format_type' => 'htab',
     'format_settings' => array(
@@ -86,7 +87,7 @@ function springboard_p2p_campaign_field_group_info() {
   $field_group->parent_name = 'group_p2p_campaign_defaults';
   $field_group->data = array(
     'label' => 'Personal Campaign suggested donation amount',
-    'weight' => '9',
+    'weight' => '10',
     'children' => array(
       0 => 'field_p2p_ask_amount_edit',
       1 => 'field_p2p_suggested_donation',
@@ -145,7 +146,7 @@ function springboard_p2p_campaign_field_group_info() {
   $field_group->parent_name = 'group_tabs';
   $field_group->data = array(
     'label' => 'Media',
-    'weight' => '13',
+    'weight' => '11',
     'children' => array(
       0 => 'field_p2p_campaign_banner',
       1 => 'field_p2p_campaign_thumbnail',
@@ -178,7 +179,7 @@ function springboard_p2p_campaign_field_group_info() {
   $field_group->parent_name = 'group_tabs';
   $field_group->data = array(
     'label' => 'Personal campaign introduction',
-    'weight' => '10',
+    'weight' => '9',
     'children' => array(
       0 => 'field_p2p_feature_pers_campaigns',
       1 => 'field_p2p_personal_intro',

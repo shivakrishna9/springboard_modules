@@ -140,6 +140,50 @@ function springboard_p2p_campaign_field_default_field_instances() {
     ),
   );
 
+  // Exported field_instance: 'node-p2p_campaign-field_p2p_campaign_action_button'
+  $field_instances['node-p2p_campaign-field_p2p_campaign_action_button'] = array(
+    'bundle' => 'p2p_campaign',
+    'default_value' => array(
+      0 => array(
+        'value' => 'Donate now',
+      ),
+    ),
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'text',
+        'settings' => array(),
+        'type' => 'text_default',
+        'weight' => 34,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_p2p_campaign_action_button',
+    'label' => 'Personal campaign action button label',
+    'required' => 1,
+    'settings' => array(
+      'text_processing' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'text',
+      'settings' => array(
+        'size' => 60,
+      ),
+      'type' => 'text_textfield',
+      'weight' => 9,
+    ),
+  );
+
   // Exported field_instance: 'node-p2p_campaign-field_p2p_campaign_banner'
   $field_instances['node-p2p_campaign-field_p2p_campaign_banner'] = array(
     'bundle' => 'p2p_campaign',
@@ -1188,6 +1232,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
   t('Landing page slider teaser');
   t('Organization introduction');
   t('Personal Campaign Expiration Message');
+  t('Personal campaign action button label');
   t('Personal campaign images');
   t('Personal campaign introduction');
   t('Personal campaigns require approval');
