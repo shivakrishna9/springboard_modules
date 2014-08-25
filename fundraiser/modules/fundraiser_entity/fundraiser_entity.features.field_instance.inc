@@ -598,6 +598,9 @@ function fundraiser_entity_field_default_field_instances() {
     'label' => 'Search string',
     'required' => 0,
     'settings' => array(
+      'fundraiser_entity' => array(
+        'webform_map' => 1,
+      ),
       'text_processing' => 0,
       'user_register_form' => FALSE,
     ),
