@@ -170,6 +170,7 @@ class SpringboardP2pCampaignGoalsField {
       return db_query("SELECT * FROM {springboard_p2p_fields_campaign_goals} WHERE goal_set_id = :id", array(':id' => $goal_set_id))
         ->fetchAllAssoc('type', PDO::FETCH_ASSOC);
     }
+
     return FALSE;
   }
 
