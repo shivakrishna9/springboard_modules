@@ -272,17 +272,7 @@ function springboard_admin_admin_menu_items() {
       'weight' => 5,
       '_children' => array(),
     );
-  
-    // Reports > Donations.
-    $items['admin/springboard/reports']['_children']['admin/reports/salesforce/donations'] = array(
-      'link_path' => 'admin/reports/salesforce/donations',
-      'link_title' => 'Donations',
-      'menu_name' => 'springboard_admin_menu',
-      'expanded' => 1,
-      'customized' => 1,
-      'weight' => 0,
-    );
-
+ 
     // Reports > Contacts.
     $items['admin/springboard/reports']['_children']['admin/springboard/reports/contacts'] = array(
       'link_path' => 'admin/springboard/reports/contacts',
@@ -374,6 +364,17 @@ function springboard_admin_admin_menu_items() {
     'weight' => 2,
     '_children' => array(),
   );
+  
+  // Settings > Settings > Donation Entity Management.
+  // Added for NPR's custom Donation entity management.
+  $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/springboard/settings/donation-entity'] = array(
+      'link_path' => 'admin/springboard/settings/donation-entity',
+      'link_title' => 'Donation Entity Management',
+      'menu_name' => 'springboard_admin_menu',
+      'expanded' => 0,
+      'customized' => 1,
+      'weight' => 0,
+    );
   
   if(module_exists('fundraiser_upsell')) {
     // Settings > Settings > Sustainer Upsell.
