@@ -388,7 +388,8 @@ function springboard_p2p_personal_campaign_form_p2p_personal_campaign_node_form_
   $qs_keys = _market_source_build_qs_keys();
   foreach (array_keys($qs_keys) as $key) {
     $lookup_key = 'field_ms_' . $key;
-
+    // Market Source sets cookie values during hook_init() so we can grab them here.
+    $cookie_value = isset($_COOKIE['market_source__' . $key]) ? $_COOKIE['market_source__' . $key] : '';
     // Lookup the element ID of $key in $form.
     $element = &_market_source_form_find_element($form, $lookup_key);
 
@@ -397,7 +398,7 @@ function springboard_p2p_personal_campaign_form_p2p_personal_campaign_node_form_
       // This currently only supports fields with the 'value' key
       if (!empty($element[ $element['#language'] ][0]['value'])) {
         // Set the default value and make the field a hidden input
-        $element[ $element['#language'] ][0]['value']['#default_value'] = $qs_keys[$key]['value'];
+        $element[ $element['#language'] ][0]['value']['#default_value'] = $cookie_value;
         $element[ $element['#language'] ][0]['value']['#type'] = 'hidden';
       }
     }
