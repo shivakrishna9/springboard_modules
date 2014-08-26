@@ -272,29 +272,7 @@ function springboard_admin_admin_menu_items() {
       'weight' => 5,
       '_children' => array(),
     );
-  
-    // Reports > Donations.
-    // This is changed for NPR's custom donations report.
-    $items['admin/springboard/reports']['_children']['admin/springboard/reports/donation-entities'] = array(
-      'link_path' => 'admin/springboard/reports/donation-entities',
-      'link_title' => 'Donations',
-      'menu_name' => 'springboard_admin_menu',
-      'expanded' => 1,
-      'customized' => 1,
-      'weight' => 0,
-    );
-
-    // Reports > Premiums.
-    // This is added for NPR's custom Premiums report.
-    $items['admin/springboard/reports']['_children']['admin/springboard/reports/premium-report'] = array(
-      'link_path' => 'admin/springboard/reports/premium-report',
-      'link_title' => 'Premiums',
-      'menu_name' => 'springboard_admin_menu',
-      'expanded' => 1,
-      'customized' => 1,
-      'weight' => 1,
-    );
-    
+ 
     // Reports > Contacts.
     $items['admin/springboard/reports']['_children']['admin/springboard/reports/contacts'] = array(
       'link_path' => 'admin/springboard/reports/contacts',
