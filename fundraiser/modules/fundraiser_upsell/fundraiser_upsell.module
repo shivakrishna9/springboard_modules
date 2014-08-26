@@ -150,8 +150,8 @@ function fundraiser_upsell_add_node_settings(&$form) {
   );
   $form['fundraiser_upsell']['content_tokens']['help'] = array(
     '#theme' => 'token_tree',
-    '#token_types' => array('donation'),
-    '#global_types' => FALSE,
+    '#token_types' => array('all', 'donation'),
+    '#global_types' => TRUE,
     '#click_insert' => TRUE,
   );
 
@@ -179,8 +179,8 @@ function fundraiser_upsell_add_node_settings(&$form) {
 
   $form['fundraiser_upsell']['thankyou_tokens']['help'] = array(
     '#theme' => 'token_tree',
-    '#token_types' => array('donation'),
-    '#global_types' => FALSE,
+    '#token_types' => array('all', 'donation'),
+    '#global_types' => TRUE,
     '#click_insert' => TRUE,
   );
 
@@ -254,8 +254,8 @@ function fundraiser_upsell_add_node_settings(&$form) {
 
     $form['fundraiser_upsell']['email_wrappers']['message']['tokens']['help'] = array(
       '#theme' => 'token_tree',
-      '#token_types' => array('donation'),
-      '#global_types' => FALSE,
+      '#token_types' => array('all', 'donation'),
+      '#global_types' => TRUE,
       '#click_insert' => TRUE,
     );
 
@@ -1249,7 +1249,7 @@ function fundraiser_upsell_is_available($node) {
  */
 function fundraiser_upsell_set_acceptance_cookie() {
   $cookie_lifetime = variable_get('fundraiser_upsell_acceptance_lifetime', 0);
-  setcookie('fundraiser_upsell_acceptance', 1, REQUEST_TIME + 3600 * 24 * $cookie_lifetime, "/");
+  setcookie('fundraiser_upsell_acceptance', 1, REQUEST_TIME + 3600 * 24 * $cookie_lifetime, ini_get('session.cookie_path'));
 }
 
 /**

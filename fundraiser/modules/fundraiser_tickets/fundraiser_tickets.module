@@ -48,6 +48,16 @@ function fundraiser_tickets_menu() {
 }
 
 /**
+ * Implements hook_views_api().
+ */
+function fundraiser_tickets_views_api() {
+  return array(
+    "version" => "3.0",
+    "path" => drupal_get_path("module", "fundraiser_tickets") . "/views"
+  );
+}
+
+/**
  * Menu access callback. Ensure node has ticketing enabled and user has node
  * 'update' permission.
  */
@@ -197,7 +207,6 @@ function fundraiser_tickets_edit_settings($node){
  * Implements hook_form_alter().
  */
 function fundraiser_tickets_form_alter(&$form, &$form_state, $form_id) {
-
   // Do not allow users to muck with defined form keys in component editting form.
   // They're named what they're named for a reason and we need those keys to remain unharmed.
   if ($form_id == 'webform_component_edit_form') {
@@ -438,91 +447,118 @@ function _fundraiser_tickets_update_quantity_sold($product) {
 * Afterbuild function to add fieldsets to the tickets tab
 */
 function _fundraiser_tickets_ticket_settings_form_organize($form, $form_state){
-    // Create fieldset
-    $form['waitlist']  = array(
-      '#type' => 'fieldset',
-      '#title' => t('Wait List options'),
-      '#weight' => '-5'
-    );
-    $form['waitlist']['fr_tickets_waitlist_form'] = $form['fr_tickets_waitlist_form'];
-    $form['waitlist']['fr_tickets_waitlist_soldout'] = $form['fr_tickets_waitlist_soldout'];
-    $form['waitlist']['fr_tickets_waitlist_closed'] = $form['fr_tickets_waitlist_closed'];
-    unset($form['fr_tickets_waitlist_form']);
-    unset($form['fr_tickets_waitlist_soldout']);
-    unset($form['fr_tickets_waitlist_closed']);
-    // These two fields seem to be redundant, so for now I am hiding them.
-    // TODO: Check where we want them.  If not, drop them completely.
-    $form['waitlist']['fr_tickets_waitlist_soldout']['#access'] = FALSE;
-    $form['waitlist']['fr_tickets_waitlist_closed']['#access']  = FALSE;
+  // Add donation-form admin CSS
+  drupal_add_css(drupal_get_path('module', 'fundraiser_tickets') . '/css/ticketing_form.css');
 
+  // Create fieldset
+  $form['waitlist']  = array(
+    '#type' => 'fieldset',
+    '#title' => t('Wait List options'),
+    '#weight' => '-5'
+  );
+  $form['waitlist']['fr_tickets_waitlist_form'] = $form['fr_tickets_waitlist_form'];
+  $form['waitlist']['fr_tickets_waitlist_soldout'] = $form['fr_tickets_waitlist_soldout'];
+  $form['waitlist']['fr_tickets_waitlist_closed'] = $form['fr_tickets_waitlist_closed'];
+  unset($form['fr_tickets_waitlist_form']);
+  unset($form['fr_tickets_waitlist_soldout']);
+  unset($form['fr_tickets_waitlist_closed']);
+  // These two fields seem to be redundant, so for now I am hiding them.
+  // TODO: Check where we want them.  If not, drop them completely.
+  $form['waitlist']['fr_tickets_waitlist_soldout']['#access'] = FALSE;
+  $form['waitlist']['fr_tickets_waitlist_closed']['#access']  = FALSE;
 
-    $form['closed']  = array(
-      '#type' => 'fieldset',
-      '#title' => t('Close settings'),
-      '#weight' => '-3'
-    );
-    $form['closed']['fr_tickets_closed_is_closed'] = $form['fr_tickets_closed_is_closed'];
-    $form['closed']['fr_tickets_closed_close_date'] = $form['fr_tickets_closed_close_date'];
-    $form['closed']['fr_tickets_closed_options'] = $form['fr_tickets_closed_options'];
-    $form['fr_tickets_closed_redirect']['#states'] = array(
+  $form['closed']  = array(
+    '#type' => 'fieldset',
+    '#title' => t('Close settings'),
+    '#weight' => '-3'
+  );
+  $form['closed']['fr_tickets_closed_is_closed'] = $form['fr_tickets_closed_is_closed'];
+  $form['closed']['fr_tickets_closed_close_date'] = $form['fr_tickets_closed_close_date'];
+  $form['closed']['fr_tickets_closed_options'] = $form['fr_tickets_closed_options'];
+  $form['fr_tickets_closed_redirect']['#states'] = array(
+    'visible' => array(
+      ':input[name="fr_tickets_closed_options[und]"]' => array('value' => 'redirect'),
+    ),
+  );
+  // Move the closed redirect right after the closed redirect radio button.
+  $form['closed']['fr_tickets_closed_options'][LANGUAGE_NONE]['redirect']['#suffix'] = drupal_render($form['fr_tickets_closed_redirect']);
+  $form['closed']['fr_tickets_closed_message'] = $form['fr_tickets_closed_message'];
+  $form['closed']['fr_tickets_closed_message']['#states'] = array(
+    'visible' => array(
+      ':input[name="fr_tickets_closed_options[und]"]' => array('value' => 'message'),
+    ),
+  );
+
+  unset($form['fr_tickets_closed_is_closed']);
+  unset($form['fr_tickets_closed_close_date']);
+  unset($form['fr_tickets_closed_options']);
+  unset($form['fr_tickets_closed_redirect']);
+  unset($form['fr_tickets_closed_message']);
+
+  $form['soldout']  = array(
+    '#type' => 'fieldset',
+    '#title' => t('Sell out settings'),
+    '#weight' => '-1'
+  );
+  $form['soldout']['fr_tickets_soldout_options'] = $form['fr_tickets_soldout_options'];
+  $form['fr_tickets_soldout_redirect']['#states'] = array(
+    'visible' => array(
+      ':input[name="fr_tickets_soldout_options[und]"]' => array('value' => 'redirect'),
+    ),
+  );
+  // Move the sold out redirect right after the sold out redirect radio button.
+  $form['soldout']['fr_tickets_soldout_options'][LANGUAGE_NONE]['redirect']['#suffix'] = drupal_render($form['fr_tickets_soldout_redirect']);
+
+  $form['soldout']['fr_tickets_soldout_message'] = $form['fr_tickets_soldout_message'];
+  $form['soldout']['fr_tickets_soldout_message']['#states'] = array(
+    'visible' => array(
+      ':input[name="fr_tickets_soldout_options[und]"]' => array('value' => 'message'),
+    ),
+  );
+
+  unset($form['fr_tickets_soldout_options']);
+  unset($form['fr_tickets_soldout_redirect']);
+  unset($form['fr_tickets_soldout_message']);
+
+  $form['donation']  = array(
+    '#type' => 'fieldset',
+    '#title' => t('Donation add-on'),
+    '#weight' => '1'
+  );
+
+  // The 'Enable add-on donation' checkbox field
+  $form['donation']['fr_tickets_donation_donation'] = $form['fr_tickets_donation_donation'];
+  unset($form['fr_tickets_donation_donation']);
+
+  // The field to choose which donation form to use. Has a #states array
+  // to show/hide upon the checkbox above being checked/unchecked.
+  $form['donation']['fr_tickets_donation_addon_form'] = $form['fr_tickets_donation_addon_form'];
+  $form['donation']['fr_tickets_donation_addon_form']['#weight'] = 35;
+  $form['donation']['fr_tickets_donation_addon_form']['#attributes']['class'][] = 'autocomplete_extra_wide';
+  $form['donation']['fr_tickets_donation_addon_form']['#states'] = array(
+    'visible' => array(
+      ':input[name*=tickets_donation_donation]' => array('checked' => TRUE)
+    ),
+  );
+  unset($form['fr_tickets_donation_addon_form']);
+
+  // If fundraiser_tickets_salesforce module exists, use its field.
+  if (isset($form['fr_tickets_donation_salesforce_field'])) {
+    $form['donation']['fr_tickets_donation_salesforce_field'] = $form['fr_tickets_donation_salesforce_field'];
+    $form['donation']['fr_tickets_donation_salesforce_field']['#states'] = array(
       'visible' => array(
-        ':input[name="fr_tickets_closed_options[und]"]' => array('value' => 'redirect'),
+        ':input[name*=tickets_donation_donation]' => array('checked' => TRUE)
       ),
     );
-    // Move the closed redirect right after the closed redirect radio button.
-    $form['closed']['fr_tickets_closed_options'][LANGUAGE_NONE]['redirect']['#suffix'] = drupal_render($form['fr_tickets_closed_redirect']);
-    $form['closed']['fr_tickets_closed_message'] = $form['fr_tickets_closed_message'];
-    $form['closed']['fr_tickets_closed_message']['#states'] = array(
-      'visible' => array(
-        ':input[name="fr_tickets_closed_options[und]"]' => array('value' => 'message'),
-      ),
-    );
+    unset($form['fr_tickets_donation_salesforce_field']);
+  }
 
-    unset($form['fr_tickets_closed_is_closed']);
-    unset($form['fr_tickets_closed_close_date']);
-    unset($form['fr_tickets_closed_options']);
-    unset($form['fr_tickets_closed_redirect']);
-    unset($form['fr_tickets_closed_message']);
+  // These fields are managed programmatically.
+  unset($form['fr_tickets_inventory_initial']);
+  unset($form['fr_tickets_inventory_available']);
+  unset($form['fr_tickets_inventory_purchased']);
 
-    $form['soldout']  = array(
-      '#type' => 'fieldset',
-      '#title' => t('Sell out settings'),
-      '#weight' => '-1'
-    );
-    $form['soldout']['fr_tickets_soldout_options'] = $form['fr_tickets_soldout_options'];
-    $form['fr_tickets_soldout_redirect']['#states'] = array(
-      'visible' => array(
-        ':input[name="fr_tickets_soldout_options[und]"]' => array('value' => 'redirect'),
-      ),
-    );
-    // Move the sold out redirect right after the sold out redirect radio button.
-    $form['soldout']['fr_tickets_soldout_options'][LANGUAGE_NONE]['redirect']['#suffix'] = drupal_render($form['fr_tickets_soldout_redirect']);
-
-    $form['soldout']['fr_tickets_soldout_message'] = $form['fr_tickets_soldout_message'];
-    $form['soldout']['fr_tickets_soldout_message']['#states'] = array(
-      'visible' => array(
-        ':input[name="fr_tickets_soldout_options[und]"]' => array('value' => 'message'),
-      ),
-    );
-
-    unset($form['fr_tickets_soldout_options']);
-    unset($form['fr_tickets_soldout_redirect']);
-    unset($form['fr_tickets_soldout_message']);
-
-    $form['donation']  = array(
-      '#type' => 'fieldset',
-      '#title' => t('Donation add-on'),
-      '#weight' => '1'
-    );
-    $form['donation']['fr_tickets_donation_donation'] = $form['fr_tickets_donation_donation'];
-    unset($form['fr_tickets_donation_donation']);
-
-    // These fields are managed programmatically.
-    unset($form['fr_tickets_inventory_initial']);
-    unset($form['fr_tickets_inventory_available']);
-    unset($form['fr_tickets_inventory_purchased']);
-
-    return $form;
+  return $form;
 }
 
 
@@ -532,7 +568,6 @@ function _fundraiser_tickets_ticket_settings_form_organize($form, $form_state){
  * Verify that redirect URLS are valid. Cribbed from menu module.
  */
 function _fundraiser_tickets_ticket_settings_form_validate(&$form, &$form_state) {
-
   if ($form_state['values']['fr_tickets_closed_options'][LANGUAGE_NONE][0]['value'] == 'redirect'){
     $closed_redirect = $form_state['values']['fr_tickets_closed_redirect'][LANGUAGE_NONE][0]['value'];
     if (!trim($closed_redirect) || !drupal_valid_path($closed_redirect, TRUE)) {
@@ -546,6 +581,14 @@ function _fundraiser_tickets_ticket_settings_form_validate(&$form, &$form_state)
       form_set_error('fr_tickets_soldout_redirect', t("The path '@link_path' is either invalid or you do not have access to it.", array('@link_path' => $soldout_redirect)));
     }
   }
+
+  $closed = $form_state['values']['fr_tickets_closed_options'][LANGUAGE_NONE][0]['value'];
+  $soldout = $form_state['values']['fr_tickets_soldout_options'][LANGUAGE_NONE][0]['value'];
+  $waitlist = $form_state['values']['fr_tickets_waitlist_form'][LANGUAGE_NONE][0]['target_id'];
+  if (($closed == 'form' || $soldout == 'form') && $waitlist == NULL){
+    form_set_error('fr_tickets_waitlist_form', t('You must select a wait list or choose a different closed or soldout setting.'));
+  }
+  $_GET['destination'] =  current_path();
 }
 
 
@@ -595,8 +638,8 @@ function fundraiser_tickets_node_type_insert($type) {
  * Implements hook_node_type_update
  */
 function fundraiser_tickets_node_type_update($type) {
-  if (fundraiser_tickets_is_ticket_type($type->type)){
-    if (! fundraiser_is_donation_type($type->type)){
+  if (fundraiser_tickets_is_ticket_type($type->type)) {
+    if (! fundraiser_is_donation_type($type->type)) {
       drupal_set_message(t('Fundraiser must also be enabled for ticketed event sales.'), 'error');
     } else {
       module_load_include('inc', 'fundraiser_tickets', 'includes/fundraiser_tickets.fields');
@@ -614,12 +657,19 @@ function fundraiser_tickets_node_view($node, $view_mode, $langcode) {
   // If this isn't a fundraiser ticket type, ignore it.
   if (fundraiser_tickets_is_ticket_type($node->type)) {
     if ($view_mode == 'full') {
-
-      // If we are closed or sold out, figure out what to do with them based
-      // on the form settings.
-      if(fundraiser_tickets_is_closed($node)){
+      // If there are no tickets yet, or if we are closed or sold out,
+      // figure out what to do with them based on the form settings.
+      if (fundraiser_tickets_no_tickets_added($node)) {
+        global $user;
+        if ($user->uid) {
+          $message = t('The form will not work properly until tickets have been created. <strong>!link_url</strong>.', array('!link_url' => l('To add tickets, click here', 'node/' . $node->nid . '/tickets/tickets')));
+          drupal_set_message($message, 'error');
+        }
+      }
+      
+      elseif(fundraiser_tickets_is_closed($node)) {
+        $access = fundraiser_tickets_manage_access($node);
         $node_wrapper = entity_metadata_wrapper('node', $node);
-
         switch($node_wrapper->fr_tickets_closed_options->value()){
           case 'message':
             $node->content['body']['#access'] = FALSE;
@@ -632,21 +682,39 @@ function fundraiser_tickets_node_view($node, $view_mode, $langcode) {
               );
             }
             break;
-
           case 'redirect':
-            drupal_goto($node_wrapper->fr_tickets_closed_redirect->value());
-
-          case 'form':
-            if (!empty($node_wrapper->value()->fr_tickets_waitlist_form)) {
-              drupal_goto('node/' . $node_wrapper->fr_tickets_waitlist_form->value()->nid);
+            $redirect = $node_wrapper->fr_tickets_closed_redirect->value();
+            if (!$access) {
+               drupal_goto($redirect);
             }
-            break;
-
+            else {
+              drupal_set_message(t('This form is closed and users are being redirected to !redirect.',
+                array('!redirect' => l('this page', $redirect))), 'warning');
+              break;
+            }
+          case 'form':
+            $waitlist = !empty($node_wrapper->value()->fr_tickets_waitlist_form);
+            if ($waitlist) {
+              $nid = $node_wrapper->fr_tickets_waitlist_form->value()->nid;
+              if (!$access) {
+                drupal_goto('node/' . $nid);
+              }
+              else {
+                drupal_set_message(t('This form is closed and users are being redirected to !redirect.',
+                  array('!redirect' => l('the waitlist form', 'node/' . $nid))), 'warning');
+                break;
+              }
+            }
+            elseif($access) {
+              drupal_set_message(t('This form is closed and is configured to redirect users to a wait list, but no wait list has been selected.'), 'warning');
+              break;
+            }
           default:
             drupal_set_message(t('This form is closed.'));
         }
       }
       elseif(fundraiser_tickets_is_sold_out($node)){
+        $access = fundraiser_tickets_manage_access($node);
         $node_wrapper = entity_metadata_wrapper('node', $node);
 
         switch($node_wrapper->fr_tickets_soldout_options->value()){
@@ -664,13 +732,32 @@ function fundraiser_tickets_node_view($node, $view_mode, $langcode) {
             break;
 
           case 'redirect':
-            drupal_goto($node_wrapper->fr_tickets_soldout_redirect->value());
-
-          case 'form':
-            if (!empty($node_wrapper->value()->fr_tickets_waitlist_form)) {
-              drupal_goto('node/' . $node_wrapper->fr_tickets_waitlist_form->value()->nid);
+            $redirect = $node_wrapper->fr_tickets_soldout_redirect->value();
+            if (!$access) {
+              drupal_goto($redirect);
             }
-            break;
+            else {
+              drupal_set_message(t('This form is sold out and users are being redirected to !redirect.',
+                array('!redirect' => l('this page', $redirect))), 'warning');
+              break;
+            }
+          case 'form':
+            $waitlist = !empty($node_wrapper->value()->fr_tickets_waitlist_form);
+            if ($waitlist) {
+              $nid = $node_wrapper->fr_tickets_waitlist_form->value()->nid;
+              if (!$access) {
+                drupal_goto('node/' . $nid);
+              }
+              else {
+                drupal_set_message(t('This form is soldout and users are being redirected to !redirect.',
+                  array('!redirect' => l('the waitlist form', 'node/' . $nid))), 'warning');
+                break;
+              }
+            }
+            elseif($access) {
+              drupal_set_message(t('This form is closed and is configured to redirect users to a wait list, but no wait list has been selected.'), 'warning');
+              break;
+            }
 
           default:
             drupal_set_message(t('This form is sold out.'));
@@ -876,6 +963,15 @@ function fundraiser_tickets_get_ticket_field_keys(){
 }
 
 /**
+ * Helper function determine if the form has any tickets attached to it.
+ */
+function fundraiser_tickets_no_tickets_added($node) {
+  if (isset($node->fr_tickets_ticket_types) && empty($node->fr_tickets_ticket_types)) {
+    return TRUE;
+  }
+}
+
+/**
  * Helper function, determine if a given ticket page is closed.
  */
 function fundraiser_tickets_is_closed($node) {
@@ -973,3 +1069,160 @@ function _fundraiser_tickets_weight_sort($a, $b) {
   return 0;
 }
 
+/**
+ *  Implements hook_fundraiser_donation process
+ *  Grab the donation and payment info and pass it to the add on donation form
+ */
+function fundraiser_tickets_fundraiser_donation_process($donation) {
+  if (fundraiser_tickets_is_ticket_type($donation->node->type) && $donation->result['success']) {
+
+    $node_wrapper = entity_metadata_wrapper('node', $donation->node);
+    if(isset($node_wrapper->fr_tickets_donation_addon_form)) {
+      $addons = $node_wrapper->fr_tickets_donation_addon_form->value();
+    }
+    if(!empty($addons) && $addons != '_none') {
+      $nid = $node_wrapper->fr_tickets_donation_addon_form->value()->nid;
+
+      $compatible = fundraiser_tickets_check_addon_required_fields($nid, $donation);
+      if(isset($nid) && $donation->node->nid != $nid && $compatible == TRUE) {
+        // Find to see whether there is an 'other' donation within the ticket box fields.
+        // Loop through all of them to find whether one is an 'extra donation'.
+        foreach ($donation->donation['ticket_box'] as $key => $ticket_amounts) {
+          if (strpos($ticket_amounts, 'fundraiser-tickets-extra-donation')) {
+            // If we're here, we have found an 'extra donation', so unserialize and
+            // set the 'other_amount' to the value of the extra donation.
+            $extra_donation = unserialize($ticket_amounts);
+            $donation->donation['other_amount'] = number_format($extra_donation['fundraiser-tickets-extra-donation'], 2);
+            $donation->donation['amount'] = 'other';
+            break;
+          }
+        }
+        $result = fundraiser_tickets_form_action_submit($nid,  NULL, $donation->donation);
+
+        if (!empty($result) && !empty($result['submission_id'])) {
+
+          $record = array(
+            'original_nid' => $donation->node->nid,
+            'add_on_nid' => $nid,
+            'original_did' => $donation->did,
+          );
+
+          // Pull the add-on sid out of the result.
+          $add_on_sid = $result['submission_id'];
+
+          // Look up the did based on sid.
+          $record['add_on_did'] = db_query("SELECT did FROM {fundraiser_donation} WHERE sid = :sid AND nid = :nid", array(':sid' => $add_on_sid, ':nid' => $record['add_on_nid']))->fetchField();
+
+          drupal_write_record('fundraiser_tickets_add_on_donations', $record);
+        }
+      }
+    }
+  }
+}
+
+/**
+ *  Make sure the required fields in the addon donation form are matched
+ */
+function fundraiser_tickets_check_addon_required_fields($nid, $donation = NULL, $node = NULL) {
+  $addon_details = springboard_api_get_form_details($nid);
+  if($donation) {
+    //validate the submission
+    foreach ($addon_details['fields'] as $name => $field) {
+      if(isset($field['required']) && $field['required'] == 1) {
+        if ($name == 'quantity') {
+          $donation->donation[$name] = 1;
+        }
+        if(!isset($donation->donation[$name]) || $donation->donation[$name] == '') {
+          drupal_set_message(t('Add on donation could not be processed. There was a problem with required field %field', array('%field' => $name)), 'error');
+          return FALSE;
+        }
+      }
+    }
+  }
+  elseif($node) {
+    //validate the settings form entity reference field
+    $components = array();
+    foreach($node->webform['components'] as $id => $component) {
+      $components[$component['form_key']] = $node->webform['components'][$id];
+    }
+    foreach ($addon_details['fields'] as $name => $field) {
+      if($field['required'] == 1 && $name != 'quantity') {
+        if(!isset($components[$name]) || $components[$name]['mandatory'] == '0' ) {
+          return FALSE;
+        }
+      }
+    }
+  }
+  if(!isset($addon_details['fields']['other_amount'])) {
+    return FALSE;
+  }
+  return TRUE;
+}
+
+/**
+ *  springboard_api_form_action_submit() with services dependency removed.
+ *  Errors are sent to screen and watchdog instead of causing a services exception.
+ */
+function fundraiser_tickets_form_action_submit($nid, $app_id = NULL, $submission) {
+  include_once(drupal_get_path('module', 'springboard_api') . '/resources/springboard_api.form_resources.inc');
+
+  if (is_numeric($nid)) {
+    $node = node_load($nid);
+    $submission = (array) $submission;
+    $submission = _springboard_api_convert_submission($submission, $node);
+    $submit_text = db_query("SELECT submit_text FROM {webform} WHERE nid = :nid", array(':nid' => $nid))->fetchField();
+    if($submit_text == '') {
+      $submit_text = 'Submit';
+    }
+    $form_id = 'webform_client_form_' . $nid;
+    $form_state['webform_completed'] = 1;
+    $form_state['values'] = array(
+      'submit' => $submit_text,
+      'op' => $submit_text,
+      'details' => array(
+        'nid' => $nid,
+        'sid' => '',
+        'uid' => 0,
+        'page_num' => 1,
+        'page_count' => 1,
+        'finished' => 0,
+      ),
+      'values' => array(),
+    );
+    $form_state['clicked_button']['#parents'] = NULL;
+    $form_state['values']['submitted'] = springboard_api_submission_tree_build($submission, $node->webform['components'], $tree, 0);
+    $webform_submission = array(
+      'nid' => $nid,
+      'uid' => 0,
+      'submitted' => time(),
+      'remote_addr' => ip_address(),
+      'data' => array(),
+    );
+    foreach ($node->webform['components'] as $cid => $component) {
+      if ($component['type'] != 'fieldset') {
+        $fields[] = $component['form_key'];
+        if (isset($submission[$component['form_key']]) && !is_array($submission[$component['form_key']])) {
+          $webform_submission['data'][$cid]['value'][] = $submission[$component['form_key']];
+        }
+        elseif (isset($submission[$component['form_key']])) {
+          $webform_submission['data'][$cid]['value'] = $submission[$component['form_key']];
+        }
+        else {
+          // Backfill with null data to match what Webform does.
+          $webform_submission['data'][$cid]['value'][] = '';
+        }
+      }
+    }
+    drupal_form_submit($form_id, $form_state, $node, $webform_submission);
+
+    if ($errors = form_get_errors()) {
+      watchdog('fundraiser_tickets', print_r($errors, TRUE), $variables = array(), WATCHDOG_ERROR);
+      drupal_set_message('Add on donation could not be processed.', 'error');
+      return FALSE;
+    }
+    else {
+      $sid = isset($form_state['values']['details']['sid']) ? $form_state['values']['details']['sid'] : 0;
+      return array('submission_id' => $sid);
+    }
+  }
+}
