@@ -29,33 +29,52 @@
 
       function lookupGeo(address) {
         console.log(address);
-        var geocoder = new google.maps.Geocoder();
-        geocoder.geocode({'address': address}, function (results, status) {
-          if (status == google.maps.GeocoderStatus.OK) {
-            var latitude = results[0].geometry.location.lat();
-            var longitude = results[0].geometry.location.lng();
-            console.log(latitude + ' ' + longitude);
+        activeGeocoder = 'census' //Drupal.settings.springboard_m2t.geocoder;
+        if (activeGeocoder == 'google') {
+          var geocoder = new google.maps.Geocoder();
+          geocoder.geocode({'address': address}, function (results, status) {
+            if (status == google.maps.GeocoderStatus.OK) {
+              var latitude = results[0].geometry.location.lat();
+              var longitude = results[0].geometry.location.lng();
+              console.log(latitude + ' ' + longitude);
 
-            $.ajax({
-              type: "POST",
-              url: '/sunlightlookup',
-              data: {coords: [latitude, longitude]},
-              dataType: 'json',
-              success: function(data) {
-                console.log(data);
-                $('form.geocode-form').prepend(data.data);
-              },
+              $.ajax({
+                type: "POST",
+                url: '/sunlightlookup',
+                data: {coords: [latitude, longitude]},
+                dataType: 'json',
+                success: function(data) {
+                  console.log(data);
+                  $('form.geocode-form').prepend(data.data);
+                },
 
-              error: function(xhr, textStatus, error){
-                console.log(error);
-              }
-            });
+                error: function(xhr, textStatus, error){
+                  console.log(error);
+                }
+              });
 
-          } else {
-            console.log(status);
+            } else {
+              console.log(status);
+            }
+          });
+          return false;
+        }
+        else if (activeGeocoder == 'census') {
+       $.ajax({
+          type: "POST",
+          url: '/censuslookup',
+          data: {onelineaddress: address},
+          dataType: 'json',
+          success: function(data) {
+            console.log(data);
+            $('form.geocode-form').prepend(data.data);
+          },
+
+          error: function(xhr, textStatus, error){
+            console.log(error);
           }
         });
-        return false;
+        }
       }
     }
   };

@@ -18,6 +18,13 @@ function springboard_m2t_menu() {
     'page callback' => '_springboard_mt2_sunlight_lookup',
     'access arguments' => array(1),
   );
+  $items['censuslookup'] = array(
+    'title' => 'Get district info from sunlight',
+    'description' => '',
+    'type' => MENU_CALLBACK,
+    'page callback' => '_springboard_mt2_census_lookup',
+    'access arguments' => array(1),
+  );
   return $items;
 }
 
@@ -104,8 +111,18 @@ function springboard_m2t_form_alter(&$form, &$form_state, $form_id) {
     $node = $form['#node'];
     if($node->type == 'springboard_m2t') {
       $form['#attributes']['class'][] = 'geocode-form';
-      $form['#attached']['js'][]  = array('data' => 'https://maps.googleapis.com/maps/api/js?sensor=false', 'type' => 'external');
+      if (variable_get('springboard_m2t_geocoder', '') == 'googlej') {
+        $form['#attached']['js'][]  = array('data' => 'https://maps.googleapis.com/maps/api/js?sensor=false', 'type' => 'external');
+      }
       $form['#attached']['js'][] = array('data' => drupal_get_path('module', 'springboard_m2t') . '/js/m2t.js'); 
+      $form['#attached']['js'][] = array(
+        'data' => array(
+          'springboard_m2t' => array(
+              'geocoder' => variable_get('springboard_m2t_geocoder', ''),
+            ),
+          ),
+        'type' => 'setting',
+      );
     }
   }
 }
@@ -169,6 +186,53 @@ function _springboard_mt2_sunlight_lookup() {
   }
 }
 
+function _springboard_mt2_census_lookup() {
+  
+  $responses = array();
+  $address = $_POST['onelineaddress'];
+
+  $query =  array(
+    'address' => $address,
+    'benchmark' => 'Public_AR_Current',
+    'vintage' => 'Current_Current',
+    'layers' => '54,55,56,57,58,59',
+    'format' => 'json'
+  );
+ 
+  if (1) {
+
+    //setcookie('m2t_user_coords', $latitude . ' ' . $longitude);
+    
+    $url = url('http://geocoding.geo.census.gov/geocoder/geographies/onelineaddress', array('query' => $query));
+
+    $response = drupal_http_request($url);
+    
+    // foreach (responses as $key => $response) {
+    //   if(!isset($response->status_message) || $response->status_message != 'OK') {
+    //     $response[$key] = array('error' => 'Sunlight server returned invalid response');
+    //   }
+    // }
+
+    // if (isset($responses['state']->data)) {
+    //   $districts = array();
+    //   $data = json_decode($responses['state']->data);
+    //   if($data) {
+    //     foreach ($data as $legislator) {
+    //       $districts[]['district'] = $legislator->district;
+    //       $districts[]['state'] = $legislator->state;
+    //       $districts[]['boundary_id'] = $legislator->boundary_id;
+    //     }
+    //   }
+    //   $responses['state']->districts = $districts;
+    // }
+    return drupal_json_output($response);
+  }
+  else {
+    return drupal_json_output(array('error' => 'coordinates were not valid.'));
+  }
+}
+
+
 function springboard_m2t_admin() {
   
   $form = array();
@@ -179,8 +243,10 @@ function springboard_m2t_admin() {
   );
   $options = array(
     'googlej' => 'Google Javascript API (Free, no rate limit, no api key)',
-    'google' => 'Google Standard API (10,000 per day limit, requires api key)',
+    'census' => 'Census Geocoder API (Free, no rate limit, no api key)',
     'texas' => 'Texas A&M (Free, no rate limit, api key is required)',
+    'mapquest' => 'Mapquest (Free, 5,000 requests per day, api key is required)',
+
   );
   $form['geo']['springboard_m2t_geocoder'] = array(
     '#type' => 'radios',
@@ -190,17 +256,11 @@ function springboard_m2t_admin() {
     '#default_value' => variable_get('springboard_m2t_geocoder', ''),
   );
 
-  $form['geo']['springboard_m2t_google_apikey'] = array(
+  $form['geo']['springboard_m2t_mapquest_apikey'] = array(
     '#type' => 'textfield',
-    '#title' => t('Google API Key'),
+    '#title' => t('Mapquest API Key'),
     '#description' => t(''),
-    '#default_value' => variable_get('springboard_m2t_google_apikey', ''),
-  );
-  $form['geo']['springboard_m2t_texas_apikey'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Texas A&M API Key'),
-    '#description' => t(''),
-    '#default_value' => variable_get('springboard_m2t_texas_apikey', ''),
+    '#default_value' => variable_get('springboard_m2t_mapquest_apikey', ''),
   );
 
   $form['districts'] = array(
