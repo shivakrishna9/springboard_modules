@@ -1,0 +1,32 @@
+<?php
+
+/**
+ * Creates new Aggregator item for the Springboard Notes view.
+ */
+
+function springboard_views_install() {
+  springboard_views_create_aggregator_feed();
+}
+
+/**
+ * Enables new module dependencies. Creates new Aggregator item for the 
+ * Springboard Notes view.
+ */
+ function springboard_views_update_7000() {
+   module_enable(array('aggregator', 'views_data_export'));
+   springboard_views_create_aggregator_feed();   
+ }
+
+ /**
+  * Helper function. Creates Aggregator feed for the Springboard Notes view.
+  */
+function springboard_views_create_aggregator_feed() {
+  // Create the Aggregator feed needed for the sbv_springboard_notes view.
+   $feed = array(
+     'title' => 'Springboard Feed',
+     'url' => 'http://www.jacksonriver.com/sb-admin-feed.xml',
+     'refresh' => 3600,
+     'block' => 5,
+   );
+   aggregator_save_feed($feed);
+} 

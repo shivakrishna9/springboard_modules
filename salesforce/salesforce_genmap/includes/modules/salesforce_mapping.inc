@@ -597,6 +597,15 @@ function salesforce_mapping_map_entity($entity, $entity_type, $map) {
     $fields[$sf_field] = $value;
     $sync_rules[$sf_field] = isset($field_map['drupal_sf']) ? $field_map['drupal_sf'] : SALESFORCE_SYNC_RULE_ALWAYS;
   }
+  
+  // Give other modules a crack at the mapped values.
+  $context = array(
+    'object' => $entity,
+    'entity_type' => $entity_type,
+    'entity_wrapper' => $entity_wrapper,
+    'map' => $map,
+  );
+  drupal_alter('salesforce_mapping_map_fields', $fields, $context);
 
   // Create sObject.
   $object_type = $map->salesforce_object_type;

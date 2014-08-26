@@ -73,7 +73,7 @@ function webform_confirmation_alias_admin_settings() {
  */
 function webform_confirmation_alias_second_submitter($form, &$form_state) {
   if ($form_state['values']['webform_confirmation_alias_bulkupdate'] == 1) {
-    webform_confirmation_alias_bulk_generate_aliases($form_state['values']['webform_confirmation_alias_append']);
+    webform_confirmation_alias_bulk_generate_aliases($form, $form_state, $form_state['values']['webform_confirmation_alias_append']);
   }
 }
 
@@ -88,9 +88,9 @@ function webform_confirmation_alias_second_submitter($form, &$form_state) {
  * inserting/updating the confirmation aliases.
  * Then, we'll add or update each alias, as appropriate.
  */
-function webform_confirmation_alias_bulk_generate_aliases($confirmation_alias_append = NULL) {
+function webform_confirmation_alias_bulk_generate_aliases($form, $form_state, $confirmation_alias_append = NULL) {
   $count = 0;
-  
+    
   // If $confirmation_alias_append wasn't passed in, get its value here.
   if (!isset($confirmation_alias_append)) {
     $confirmation_alias_append = variable_get('webform_confirmation_alias_append', 'thank-you');

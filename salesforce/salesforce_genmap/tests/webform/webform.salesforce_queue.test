@@ -32,6 +32,7 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
       'salesforce_soap',
       'salesforce_queue',
       'salesforce_log',
+      'fundraiser',
     ));
     parent::setUp($modules);
 
