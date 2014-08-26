@@ -1224,15 +1224,15 @@ function fundraiser_sustainers_donation_date_form($form, &$form_state, $donation
   $dates = array_combine(range(1, 28), range(1, 28));
   $form['fundraiser_sustainers_change_dates'] = array(
     '#type' => 'select',
-    '#title' => t('Charge date'),
-    '#description' => t('Select the day of the month to process remaining sustainer payments.'),
+    '#title' => t('Select the day of the month for your recurring donation to charge'),
+    '#description' => t('This will change the date on which your recurring donation processes each month, beginning with next month\'s transaction.'),
     '#options' => $dates,
     '#multiple' => FALSE,
     '#default_value' => isset($recurring[0]->next_charge) ? date('j', $recurring[0]->next_charge) : 1,
   );
   $form['submit'] = array(
     '#type' => 'submit',
-    '#value' => t('Update donation recurring date'),
+    '#value' => t('Update donation charge date'),
   );
   $form['#donation'] = $donation;
   return $form;
