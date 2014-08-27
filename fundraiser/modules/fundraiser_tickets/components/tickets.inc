@@ -93,8 +93,11 @@ function _webform_render_tickets($component, $value = NULL, $filter = TRUE) {
     } else {
       $element['#allow_extra_donation'] = FALSE;
     }
-
-    if ($element['#allow_extra_donation'] == TRUE){
+    $target = !empty($node->fr_tickets_donation_addon_form[LANGUAGE_NONE][0]['target_id']) ? $node->fr_tickets_donation_addon_form[LANGUAGE_NONE][0]['target_id'] : FALSE;
+    if ($target) {
+      $addon_details = springboard_api_get_form_details($target);
+    }
+    if ($element['#allow_extra_donation'] == TRUE && isset($addon_details['fields']['other_amount'])){
       $item = array(
         '#type' => 'textfield',
         '#size' => 20,
@@ -102,6 +105,9 @@ function _webform_render_tickets($component, $value = NULL, $filter = TRUE) {
         '#id' => 'fundraiser-tickets-extra-donation'
       );
       $element['fundraiser-tickets-extra-donation'] = $item;
+    }
+    elseif($element['#allow_extra_donation'] == TRUE && !isset($addon_details['fields']['other_amount']) && user_access('create donation form')) {
+      drupal_set_message('The add-on donation form for this item does not have an "other amount" field configured. Addon Donations will not be processed.', 'warning');
     }
 
     // Hide the event_table title if #title_display is 'none'.
