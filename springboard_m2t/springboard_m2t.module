@@ -199,33 +199,32 @@ function _springboard_mt2_census_lookup() {
     'format' => 'json'
   );
  
-  if (1) {
+  if (!empty($address)) {
 
     //setcookie('m2t_user_coords', $latitude . ' ' . $longitude);
     
     $url = url('http://geocoding.geo.census.gov/geocoder/geographies/onelineaddress', array('query' => $query));
 
     $response = drupal_http_request($url);
-    
-    // foreach (responses as $key => $response) {
-    //   if(!isset($response->status_message) || $response->status_message != 'OK') {
-    //     $response[$key] = array('error' => 'Sunlight server returned invalid response');
-    //   }
-    // }
-
-    // if (isset($responses['state']->data)) {
-    //   $districts = array();
-    //   $data = json_decode($responses['state']->data);
-    //   if($data) {
-    //     foreach ($data as $legislator) {
-    //       $districts[]['district'] = $legislator->district;
-    //       $districts[]['state'] = $legislator->state;
-    //       $districts[]['boundary_id'] = $legislator->boundary_id;
-    //     }
-    //   }
-    //   $responses['state']->districts = $districts;
-    // }
-    return drupal_json_output($response);
+ 
+    $data = json_decode($response->data);
+    $matches = $data->result->addressMatches;
+    $num = count($matches);
+    foreach ($matches as $index => $match) {
+      $coords[$index] = $match->coordinates;
+      $all_districts[$index] = $match->geographies;
+    }
+    $districts = array();
+    foreach ($all_districts as $key => $all_district) {
+      foreach ($all_district as $district_type => $district_info) {
+        foreach ($district_info as $index => $district) {
+          $districts[$district_type][$district->NAME]['district'] = $district->NAME;
+          $districts[$district_type][$district->NAME]['state'] = $district->STATE;
+          $districts[$district_type][$district->NAME]['lsadc'] = $district->LSADC;
+       } 
+    }
+  }
+    return drupal_json_output($districts);
   }
   else {
     return drupal_json_output(array('error' => 'coordinates were not valid.'));
@@ -244,7 +243,6 @@ function springboard_m2t_admin() {
   $options = array(
     'googlej' => 'Google Javascript API (Free, no rate limit, no api key)',
     'census' => 'Census Geocoder API (Free, no rate limit, no api key)',
-    'texas' => 'Texas A&M (Free, no rate limit, api key is required)',
     'mapquest' => 'Mapquest (Free, 5,000 requests per day, api key is required)',
 
   );
