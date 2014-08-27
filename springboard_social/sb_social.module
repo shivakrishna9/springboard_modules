@@ -895,18 +895,19 @@ function sb_social_springboard_cookie_uid($cookie) {
   // Are any share_ids stashed in the Springboard cookie?
   if (!empty($cookie['share_ids']) && is_array($cookie['share_ids'])) {
     // Were any of these shares saved with uid 0?
-    $update_share_ids = db_query(
-      "SELECT share_id FROM {sb_social_shares} WHERE share_id IN (:share_ids) AND uid=0;",
+    $update_shares = db_query(
+      "SELECT * FROM {sb_social_shares} WHERE share_id IN (:share_ids) AND uid=0;",
       array(':share_ids' => $cookie['share_ids'])
-    )->fetchCol();
+    )->fetchAllAssoc('share_id');
     // If so, then update them to the uid in the cookie and (re-)sync to Salesforce.
-    if (!empty($update_share_ids)) {
+    if (!empty($update_shares)) {
       db_query(
         "UPDATE {sb_social_shares} SET uid=:uid WHERE share_id IN (:update_share_ids);",
-        array(':uid' => $cookie['uid'], ':update_share_ids' => $update_share_ids)
+        array(':uid' => $cookie['uid'], ':update_share_ids' => array_keys($update_shares))
       );
-      foreach ($update_share_ids as $update_share_id) {
-        sb_social_add_share_to_queue($update_share_id);
+      foreach ($update_shares as $updated_share) {
+        $updated_share->uid = $cookie['uid']; // Instead of re-querying the whole set, just pretend.
+        module_invoke_all('entity_update', $updated_share, 'sb_social_share');
       }
     }
   }
