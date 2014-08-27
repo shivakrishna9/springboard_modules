@@ -213,6 +213,18 @@ function _fundraiser_sustainers_user_has_recurring_donations($user) {
 }
 
 /**
+ * Implements hook_cron_queue_info().
+ */
+function fundraiser_sustainers_cron_queue_info() {
+  // Cron queue to create recurring series.
+  $queues['fundraiser_sustainers_create_series'] = array(
+    'worker callback' => '_fundraiser_sustainers_create_series_queue_worker',
+  );
+
+  return $queues;
+}
+
+/**
  * Menu callback for the standalone cron.
  */
 function fundraiser_sustainers_standalone_cron() {
@@ -899,11 +911,20 @@ function fundraiser_sustainers_form_fundraiser_admin_settings_alter(&$form, &$fo
   );
   $form['fundraiser_sustainers']['fundraiser_cron']['fundraiser_standalone_cron_enabled'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Enable standalone cron.'),
-    '#description' => t('If this option is enabled all fundraiser related cron tasks will be removed from the ' .
-      'standard cron run. These tasks will need to be cronned separately via sitename/fundraiser_cron'),
+    '#title' => t('Sustainer processing on standalone cron.'),
+    '#description' => t('If this option is enabled the payment processing for recurring donations will removed from the ' .
+      'standard cron run. This task will need to be cronned separately via sitename/fundraiser_cron'),
     '#default_value' => variable_get('fundraiser_standalone_cron_enabled', 0),
   );
+
+  // Create series on cron option.
+  $form['fundraiser_sustainers']['fundraiser_cron']['fundraiser_sustainers_create_series_cron'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Create the recurring series on cron.'),
+    '#description' => t("Enable this option to create the recurring series using Drupal's cron queue."),
+    '#default_value' => variable_get('fundraiser_sustainers_create_series_cron', 0),
+  );
+
   // CC expiration message to send when sustainer donation is almost out.
   $form['fundraiser_sustainers']['fundraiser_cc_expiration_message'] = array(
     '#type' => 'fieldset',
@@ -1735,7 +1756,8 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
     // If this is in fact a recurring donation, then we act.
     if ($donation->donation['recurs_monthly'] == TRUE) {
       $info = _fundraiser_get_donation_gateway($donation->did);
-      if (_fundraiser_sustainers_supports_recurring($info['allow_recurring'], $donation->donation['payment_method'])) { // Allows recurring
+       // Verify the gateway allows recurring.
+      if (_fundraiser_sustainers_supports_recurring($info['allow_recurring'], $donation->donation['payment_method'])) {
         // Then we do all the creating of offline values, table, SF object, and extra orders.
         $donation->recurring = new stdClass();
         $donation->recurring->master_did = $donation->did;
@@ -1763,9 +1785,26 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
           if (isset($info['expire callback'])) {
             $expiration_func = $info['expire callback'];
             if (function_exists($expiration_func)) {
-              $expires = $expiration_func($donation->donation, $info);
-              if (isset($expires['month']) && isset($expires['year'])) {
-                _fundraiser_sustainers_create_future_orders($donation, $expires['month'], $expires['year']);
+              // The future orders can be created now, which may slow down donation form submits, or later on cron.
+              if (variable_get('fundraiser_sustainers_create_series_cron', 0)) {
+                // Load the queue.
+                $queue = DrupalQueue::get('fundraiser_sustainers_create_series');
+
+                // The queue item is a simple array with the master donation did.
+                $item = array(
+                  'did' => $donation->did,
+                );
+
+                $queue->createItem($item);
+
+                watchdog('fundraiser_sustainers', 'Master recurring donation @did has been queued for later series creation.', array('@did' => $donation->did));
+              }
+              // Else, create the series now.
+              else {
+                $expires = $expiration_func($donation->donation, $info);
+                if (isset($expires['month']) && isset($expires['year'])) {
+                 _fundraiser_sustainers_create_future_orders($donation, $expires['month'], $expires['year']);
+                }
               }
             }
           }
@@ -1843,6 +1882,25 @@ function fundraiser_sustainers_fundraiser_donation_decline($donation) {
       watchdog('fundraiser_sustainers', 'Payment for recurring donation @id has failed @attempts times. It will be processed again in 1 day. Gateway message: @message',
         array('@id' => $donation->did, '@attempts' => $attempt_count, '@message' => $donation->result['message']), WATCHDOG_DEBUG);
     }
+  }
+}
+
+/**
+ * Cron queue worker callback.
+ *
+ * Creates the sustainer series during cron.
+ */
+function _fundraiser_sustainers_create_series_queue_worker($item) {
+  // Load the donation.
+  $donation = fundraiser_donation_get_donation($item['did']);
+
+  // Ensure we have the expiration dates and create the series.
+  $expiration_func = $donation->gateway['expire callback'];
+  $expires = $expiration_func($donation->donation, $donation->gateway);
+  if (isset($expires['month']) && isset($expires['year'])) {
+    _fundraiser_sustainers_create_future_orders($donation, $expires['month'], $expires['year']);
+
+    watchdog('fundraiser_sustainers', 'The recurring series for master donation @did has been created.', array('@did' => $donation->did));
   }
 }
 
