@@ -582,6 +582,13 @@ function _fundraiser_tickets_ticket_settings_form_validate(&$form, &$form_state)
     }
   }
 
+  if ($form_state['values']['fr_tickets_donation_donation'][LANGUAGE_NONE][0]['value'] == 1){
+    $addon = $form_state['values']['fr_tickets_donation_addon_form'][LANGUAGE_NONE][0]['target_id'];
+    if (empty($addon)) {
+      form_set_error('fr_tickets_donation_addon_form', t('When add-on donations are enabled, "Donation form to Use for Add-ons" is required.'));
+    }
+  }
+
   $closed = $form_state['values']['fr_tickets_closed_options'][LANGUAGE_NONE][0]['value'];
   $soldout = $form_state['values']['fr_tickets_soldout_options'][LANGUAGE_NONE][0]['value'];
   $waitlist = $form_state['values']['fr_tickets_waitlist_form'][LANGUAGE_NONE][0]['target_id'];

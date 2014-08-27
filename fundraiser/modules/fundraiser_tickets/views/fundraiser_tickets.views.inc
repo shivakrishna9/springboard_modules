@@ -2,7 +2,7 @@
 
 /**
  * Implements hook_views_query_alter
- * Prevent ticket forms from appearing in the autocomplete
+ * Prevent ticket forms from appearing in the entity reference autocomplete
  */
 
 function fundraiser_tickets_views_query_alter(&$view, &$query) {
