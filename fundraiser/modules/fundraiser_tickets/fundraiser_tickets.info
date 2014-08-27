@@ -19,3 +19,4 @@ files[] = tests/fundraiser_tickets.test
 
 ;Views
 files[] = views/fundraiser_tickets.views_default.inc
+files[] = views/fundraiser_tickets.views.inc
