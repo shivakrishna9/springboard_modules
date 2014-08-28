@@ -3,7 +3,8 @@
  * @file
  * Test the webform user form submissions.
  */
-class WebformUserFieldTruncateTest extends WebformUserSetup {
+
+class WebformUserFieldTruncateTestCase extends WebformUserTestSetup {
 
   /**
    * Implementation of getInfo().

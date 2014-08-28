@@ -3,7 +3,7 @@
  * @file
  * Test the configuation and form creation functionality of webform user.
  */
-class WebformUserConfigTest extends WebformUserSetup {
+class WebformUserConfigTestCase extends WebformUserTestSetup {
 
   /**
    * Implementation of getInfo().

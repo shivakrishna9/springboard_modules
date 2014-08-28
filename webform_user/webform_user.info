@@ -1,4 +1,3 @@
-; $Id: $
 name = Webform User
 description = Enables the creation of user accounts from data submitted by forms and questionnaires.
 core = 7.x
@@ -6,8 +5,10 @@ version = 7.x-4.x-dev
 package = Webform Extra
 configure = admin/config/content/webform_user
 dependencies[] = webform
-;Testing files
-files[] = tests/webform_user.setup.test
+
+files[] = tests/webform_user_test_setup.php
+
 files[] = tests/webform_user.config.test
-files[] = tests/webform_user.submission.test
 files[] = tests/webform_user.confirmation.test
+files[] = tests/webform_user.field_truncate.test
+files[] = tests/webform_user.submission.test

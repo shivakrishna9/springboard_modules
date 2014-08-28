@@ -1,13 +1,13 @@
 <?php
 /**
  * @file
- * Webform user module setup, designed to provide a standard environment for children tests.
+ * Webform user module setup class for children test cases,
  */
 
 /**
  * Setup and tear down web class. Does nothing else.
  */
-class WebformUserSetup extends DrupalWebTestCase {
+abstract class WebformUserTestSetup extends DrupalWebTestCase {
 
   /**
    * Implementation of setUp().
