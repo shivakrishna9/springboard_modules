@@ -25,6 +25,13 @@ function springboard_m2t_menu() {
     'page callback' => '_springboard_mt2_census_lookup',
     'access arguments' => array(1),
   );
+  $items['geocodiolookup'] = array(
+    'title' => 'Get district info from geocodio',
+    'description' => '',
+    'type' => MENU_CALLBACK,
+    'page callback' => '_springboard_mt2_geocodio_lookup',
+    'access arguments' => array(1),
+  );
   return $items;
 }
 
@@ -236,6 +243,41 @@ function _springboard_mt2_census_lookup() {
   }
 }
 
+
+function _springboard_mt2_geocodio_lookup() {
+  
+  $responses = array();
+  $address = $_POST['onelineaddress'];
+
+  $query =  array(
+    'q' => $address,
+    'api_key' => variable_get('springboard_m2t_geocodio_apikey',''),
+    'fields' => 'cd,stateleg',
+  );
+ 
+  if (empty($address)) {
+
+    //setcookie('m2t_user_coords', $latitude . ' ' . $longitude);
+    
+    $url = url('https://api.geocod.io/v1/geocode', array('query' => $query));
+
+    $response = drupal_http_request($url);
+
+    if (!isset($response->status_message) || $response->status_message != 'OK') {
+      return drupal_json_output(array('error' => 'Server returned invalid response'));
+    }
+    if (!empty($response->data)) {
+
+      $data = json_decode($response->data);
+      $districts = $data->results[0]->fields;
+
+      return drupal_json_output($districts);
+    }
+  }
+  else {
+    return drupal_json_output(array('error' => 'address not supplied'));
+  }
+}
 
 function springboard_m2t_admin() {
   
