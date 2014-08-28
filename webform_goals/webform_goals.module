@@ -334,6 +334,7 @@ function webform_goal_load_multiple($nid = FALSE) {
   return $nid ? $goals[$nid] : $goals;
 }
 
+
 /**
  * Save a goal.
  *
@@ -356,7 +357,7 @@ function webform_goals_save_goal($goal) {
   $nid = !empty($extra['selected_form_id']) ? $extra['selected_form_id'] : 0;
 
   // Save widget file.
-  webform_goals_save_widget($goal, $nid);
+  webform_goals_save_widget($goal, $nid, $update);
 
   // Save node ids associated with goal.
   webform_goals_save_goal_nids($goal);
@@ -370,8 +371,10 @@ function webform_goals_save_goal($goal) {
  *
  * @param int $nid
  *   Node id.
+ *
+ * @param mixed $update
  */
-function webform_goals_save_widget($goal, $nid) {
+function webform_goals_save_widget($goal, $nid, $update) {
   module_load_include('inc', 'webform_goals', 'includes/webform_goals.files');
   $theme_args = array(
     'webform_goal' => $goal,
@@ -1055,4 +1058,51 @@ function webform_goals_calculate_progress(&$data, $goal) {
   $data['percent'] = round(($data['count'] / $goal['target_value']) * 100, 1);
   $data['remaining'] = $goal['target_value'] - $data['count'];
   $data['percent_remaining'] = round(($data['remaining'] / $goal['target_value']) * 100, 1);
+}
+
+
+/**
+ * API functions.
+ */
+
+/**
+ * (C) Programmatically create a new goal.
+ *
+ * @param array $goal
+ */
+function webform_goals_goal_create($goal) {
+  drupal_alter('webform_goals_goal_insert_presave', $goal);
+  webform_goals_save_goal($goal);
+  module_invoke_all('webform_goals_goal_insert', $goal);
+}
+
+/**
+ * (R) Retrieve goal settings.
+ *
+ * @param int $gid
+ *   Numeric goal id.
+ */
+function webform_goals_goal_retrieve($gid) {
+  webform_goal_load($gid);
+}
+
+/**
+ * (U) Update an existing goal.
+ *
+ * @param array $goal
+ */
+function webform_goals_goal_update($goal) {
+  drupal_alter('webform_goals_goal_update_presave', $goal);
+  webform_goals_save_goal($goal);
+  module_invoke_all('webform_goals_goal_update', $goal);
+}
+
+/**
+ * (D) Delete a goal.
+ *
+ * @param int $gid
+ */
+function webform_goals_goal_delete($gid) {
+  webform_goals_delete_goal($gid);
+  module_invoke_all('webform_goals_goal_delete', $gid);
 }
