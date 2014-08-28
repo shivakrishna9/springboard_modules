@@ -29,7 +29,7 @@
 
       function lookupGeo(address) {
         console.log(address);
-        activeGeocoder = 'census' //Drupal.settings.springboard_m2t.geocoder;
+        activeGeocoder = Drupal.settings.springboard_m2t.geocoder;
         if (activeGeocoder == 'google') {
           var geocoder = new google.maps.Geocoder();
           geocoder.geocode({'address': address}, function (results, status) {
@@ -59,21 +59,27 @@
           });
           return false;
         }
-        else if (activeGeocoder == 'census') {
-       $.ajax({
-          type: "POST",
-          url: '/censuslookup',
-          data: {onelineaddress: address},
-          dataType: 'json',
-          success: function(data) {
-            console.log(data);
-            $('form.geocode-form').prepend(data.data);
-          },
-
-          error: function(xhr, textStatus, error){
-            console.log(error);
+        else {
+          if (activeGeocoder == 'census') {
+            url = '/censuslookup';
           }
-        });
+          else {
+            url = '/geocodiolookup';
+          }
+          $.ajax({
+            type: "POST",
+            url: url,
+            data: {onelineaddress: address},
+            dataType: 'json',
+            success: function(data) {
+              console.log(data);
+              $('form.geocode-form').prepend(data.data);
+            },
+
+            error: function(xhr, textStatus, error){
+              console.log(error);
+            }
+          });
         }
       }
     }
