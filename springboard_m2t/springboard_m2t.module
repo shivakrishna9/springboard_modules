@@ -127,14 +127,19 @@ function springboard_m2t_form_alter(&$form, &$form_state, $form_id) {
   }
 }
 
-function _springboard_mt2_sunlight_lookup() {
+function _springboard_mt2_sunlight_lookup($latitude = FALSE, $longitude = FALSE) {
   
   $responses = array();
-  $latitude = $_POST['coords'][0];
-  $longitude = $_POST['coords'][1]; 
-  
-  $is_long = preg_match('/([0-9.-]+).+?([0-9.-]+)/', $longitude);
-  $is_lat = preg_match('/([0-9.-]+).+?([0-9.-]+)/', $latitude);
+
+  if (!empty($_POST['coords'][0]) && !$latitude) {
+    $latitude = $_POST['coords'][0];
+    $longitude = $_POST['coords'][1]; 
+  }
+
+  if($latitude) {
+    $is_long = preg_match('/([0-9.-]+).+?([0-9.-]+)/', $longitude);
+    $is_lat = preg_match('/([0-9.-]+).+?([0-9.-]+)/', $latitude);
+  }
 
   $apikey = variable_get('springboard_m2t_apikey', '');
 
@@ -244,6 +249,8 @@ function springboard_m2t_admin() {
     'googlej' => 'Google Javascript API (Free, no rate limit, no api key)',
     'census' => 'Census Geocoder API (Free, no rate limit, no api key)',
     'mapquest' => 'Mapquest (Free, 5,000 requests per day, api key is required)',
+    'geocodio' => 'Geocod.io (Free, 2,000 requests per day, api key is required)',
+
 
   );
   $form['geo']['springboard_m2t_geocoder'] = array(
@@ -259,6 +266,13 @@ function springboard_m2t_admin() {
     '#title' => t('Mapquest API Key'),
     '#description' => t(''),
     '#default_value' => variable_get('springboard_m2t_mapquest_apikey', ''),
+  );
+
+  $form['geo']['springboard_m2t_geocodio_apikey'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Geocod.io API Key'),
+    '#description' => t(''),
+    '#default_value' => variable_get('springboard_m2t_geocodio_apikey', ''),
   );
 
   $form['districts'] = array(
