@@ -843,8 +843,13 @@ function springboard_admin_asset_page() {
       $view -> set_arguments(array($type));
       $view -> pre_execute();
       $view -> execute();
-      if ($view && $view -> access('block_1') && !empty($view -> result)) {
-        $tables[$type] = $view -> render();
+      if ($view && $view -> access('block_1')) {
+        if(!empty($view -> result)) {
+          $tables[$type] = $view -> render();
+        }
+        else {
+          $tables[$type] = "<p>" . t('No @type have been created yet.', array('@type' => $node_types[$type]->name . 's')) . "</p>";
+        }
       }
     }
   }
