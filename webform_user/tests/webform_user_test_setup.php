@@ -25,7 +25,7 @@ abstract class WebformUserTestSetup extends DrupalWebTestCase {
     // Setup the environment to a default standard.
     $this->_webform_user_setup_user_profile();
     $this->_webform_user_create_type();
-    //$this->_webform_user_create_node();
+    // $this->_webform_user_create_node();
 
     // Create a webform editor to test creating and editing own content.
     $permissions['editor'] = array(
@@ -55,7 +55,8 @@ abstract class WebformUserTestSetup extends DrupalWebTestCase {
       'configure webform emails',
     );
 
-    // Make sure the new permissions for the content type get added to the permission cache.
+    // Make sure the new permissions for the content type get added to the
+    // permission cache.
     $this->checkPermissions(array('create petition content'), TRUE);
 
     foreach ($permissions as $user_key => $role_permissions) {
@@ -181,6 +182,12 @@ abstract class WebformUserTestSetup extends DrupalWebTestCase {
 
   }
 
+  /**
+   * Create a user account and fills in some profile fields.
+   * 
+   * @return false|object
+   *   The user object.
+   */
   protected function webformUserCreateUser() {
     // Create a user to test with.
     $user = $this->drupalCreateUser(array('access content'));

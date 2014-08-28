@@ -3,6 +3,7 @@
  * @file
  * Test the configuation and form creation functionality of webform user.
  */
+
 class WebformUserConfigTestCase extends WebformUserTestSetup {
 
   /**
@@ -31,8 +32,9 @@ class WebformUserConfigTestCase extends WebformUserTestSetup {
   }
 
   /**
-   * Test that unsupported field types like image and file fields do not get created
-   * as webform components.
+   * Test that unsupported field types do not get created as webform components.
+   *
+   * Unsupported field types include image and file fields.
    */
   public function testWebformUserInvalidFieldTypes() {
     $this->webformUserAddField('resume', 'Resume', 'file');
@@ -79,8 +81,8 @@ class WebformUserConfigTestCase extends WebformUserTestSetup {
   }
 
   /**
-   * Test that new fields added to the user entity get created on
-   * new webform user forms.
+   * Test that new fields added to the user entity get created on new
+   * webform user forms.
    */
   public function testWebformUserCustomComponentCreation() {
     // Add a new field to the user entity.
@@ -108,8 +110,8 @@ class WebformUserConfigTestCase extends WebformUserTestSetup {
   }
 
   /**
-   * Tests that webform user correctly adds the default profile fields as the correct
-   * webform component types.
+   * Test that webform user correctly adds the default profile fields as
+   * the correct webform component types.
    */
   public function testWebformUserDefaultComponentCreation() {
 
@@ -214,11 +216,11 @@ class WebformUserConfigTestCase extends WebformUserTestSetup {
     $this->assertNotNull($component, t('Salesforce Contact Id component created.'));
     $this->assertEqual('hidden', $component->type, 'Salesforce Contact Id component type is hidden.');
 
-    // Create the form.
-    //$form = $this->_webform_user_create_node();
+    // @todo Create the form.
+    // $form = $this->_webform_user_create_node();
 
-    // Request it for viewing.
-    //$this->drupalGet('node/1');
+    // @todo Request it for viewing.
+    // $this->drupalGet('node/1');
   }
 
 }

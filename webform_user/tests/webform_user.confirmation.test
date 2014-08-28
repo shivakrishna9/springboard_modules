@@ -3,6 +3,7 @@
  * @file
  * Test the webform user confirmation page.
  */
+
 class WebformUserConfirmationTestCase extends WebformUserTestSetup {
 
   /**
@@ -38,8 +39,8 @@ class WebformUserConfirmationTestCase extends WebformUserTestSetup {
     // Create a form for testing.
     $this->_webform_user_create_node();
 
-    // Simulate someone configuring the confirmation page so that webform_confirmations
-    // module knows it should do it's thing.
+    // Simulate someone configuring the confirmation page so that webform_
+    // confirmations module knows it should do its thing.
     db_insert('webform_confirmations')
       ->fields(array(
         'nid' => 1,
@@ -64,11 +65,13 @@ class WebformUserConfirmationTestCase extends WebformUserTestSetup {
 
     $this->drupalPost('node/1', $edit, 'Submit');
 
-    // The name Ralph is rendered via token replacement [current-user:sbp-first-name].
-    // This should work for authenticated users but it doesn't and I don't know why.
-    // Anyway, not sure why user token values are available since most submissions
-    // are anonymous.
-    //$this->assertText('Thank you for saving the humans, Ralph', 'The text Thank you for saving the humans, Ralph appears on page.');
+    // The name Ralph is rendered via token replacement
+    // [current-user:sbp-first-name].
+    // @todo This should work for authenticated users but it doesn't
+    // and I don't know why.
+    // Anyway, not sure why user token values are available since most
+    // submissions are anonymous.
+    // $this->assertText('Thank you for saving the humans, Ralph', 'The text Thank you for saving the humans, Ralph appears on page.');
   }
 
 }
