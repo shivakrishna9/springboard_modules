@@ -158,35 +158,48 @@ function springboard_m2t_add_content_type() {
 /**
  * Implements hook_schema().
  */
-// function springboard_m2t_schema() {
-//   // Opt in tracking table.
-//   $schema['springboard_m2t_opt_in'] = array(
-//     'description' => 'Store messaging information.',
-//     'fields' => array(
-//       'nid' => array(
-//         'description' => 'm2t node id',
-//         'type' => 'int',
-//         'unsigned' => TRUE,
-//         'not null' => TRUE,
-//       ),
-//       'uid' => array(
-//         'description' => 'Messager user id.',
-//         'type' => 'int',
-//         'unsigned' => TRUE,
-//         'not null' => TRUE,
-//       ),
-//       'opt_in' => array(
-//         'description' => 'Track user opt-in to show their participation in message campaign.',
-//         'type' => 'int',
-//         'size' => 'tiny',
-//         'not null' => FALSE,
-//         'default' => 0,
-//       ),
-//     ),
-//     'primary key' => array('nid', 'uid'),
-//   );
-//   return $schema;
-// }
+function springboard_m2t_schema() {
+  // Opt in tracking table.
+  $schema['springboard_m2t_location'] = array(
+    'description' => 'Store messaging information.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'm2t node id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'description' => 'Messenger user id.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'sid' => array(
+        'description' => 'submission id.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'lat' => array(
+        'type' => 'numeric',
+        'precision' => 10,
+        'scale' => 6,
+        'not null' => TRUE, 
+        'default' => 0.0,
+      ),
+      'lon' => array(
+        'type' => 'numeric',
+        'precision' => 10,
+        'scale' => 6,
+        'not null' => TRUE, 
+        'default' => 0.0,
+      ),
+    ),
+    'primary key' => array('nid', 'uid'),
+  );
+  return $schema;
+}
 
 
 function springboard_m2t_add_example_m2t() {
