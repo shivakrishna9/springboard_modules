@@ -833,12 +833,12 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
     // gateway; else, set the field to 'hidden' and give it a value of 'no_recurr'.
     $recurs_monthly_field = fundraiser_get_form_field('fundraiser_sustainers', $form, 'recurs_monthly');
     if ($count_enabled_gateways > 1 && !empty($supporting_gateways)) {
-      $selector = '.fundraiser-payment-methods input[type="radio"]';
       $recurs_monthly_field['#states'] = array(
-        'visible' => array(),
+        'invisible' => array(),
       );
       foreach ($supporting_gateways as $supporting_gateway) {
-        $recurs_monthly_field['#states']['visible'][$selector][] = array('value' => $supporting_gateway);
+        $selector = ':input[name*=payment_method],value="' . $supporting_gateway . '"';
+        $recurs_monthly_field['#states']['invisible'][$selector] = array('!value' => $supporting_gateway);
       }
     }
     elseif (empty($supporting_gateways)) {
