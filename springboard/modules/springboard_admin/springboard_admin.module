@@ -119,31 +119,31 @@ function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
  */
 function springboard_admin_form_views_exposed_form_alter(&$form, &$form_state, $form_id) {
 
-  // Define views so we can call various views.
-  $view = views_get_page_view();
+  if(isset($form['date_filter']) && is_object($form_state['view'])) {
+    $view = $form_state['view'];
+    
+    // Alter the date format for all views date filters.
+    $form['date_filter']['min']['#date_format'] = 'n/j/Y';
+    $form['date_filter']['max']['#date_format'] = 'n/j/Y';
 
-  // Alter the date format for all views date filters.
-  $form['date_filter']['min']['#date_format'] = 'n/j/Y';
-  $form['date_filter']['max']['#date_format'] = 'n/j/Y';
-
-  // Define statements for various views date filters.
-  // This can't be done in the ui.
-  switch ($view->name) {
-    case "sbv_donations";
-      $form['date_filter']['min']['#title'] = 'Order between';
-      $form['date_filter']['max']['#title'] = 'and';
-      break;
-    case "p2p_user_approval";
-      $form['date_filter']['min']['#title'] = 'Requested between';
-      $form['date_filter']['max']['#title'] = 'and';
-      break;
-    // Default last.
-    default;
-      $form['date_filter']['min']['#title'] = 'Published between';
-      $form['date_filter']['max']['#title'] = 'and';
-      break;
+    // Define statements for various views date filters.
+    // This can't be done in the ui.
+    switch ($view->name) {
+      case "sbv_donations";
+        $form['date_filter']['min']['#title'] = 'Order between';
+        $form['date_filter']['max']['#title'] = 'and';
+        break;
+      case "p2p_user_approval";
+        $form['date_filter']['min']['#title'] = 'Requested between';
+        $form['date_filter']['max']['#title'] = 'and';
+        break;
+      // Default last.
+      default;
+        $form['date_filter']['min']['#title'] = 'Published between';
+        $form['date_filter']['max']['#title'] = 'and';
+        break;
+    }
   }
-
 }
 
 /**
