@@ -21,14 +21,13 @@
            else {
             address += this.value + ', ';
            }
-           if(this.name == 'submitted[sbp_zip]' && this.value !== '') {
+           if(this.name == 'submitted[sbp_zip]' && this.value !== '')  {
              lookupGeo(address);
            }
         });
       }
 
       function lookupGeo(address) {
-        console.log(address);
         activeGeocoder = Drupal.settings.springboard_m2t.geocoder;
         if (activeGeocoder == 'googlej') {
           var geocoder = new google.maps.Geocoder();
@@ -36,51 +35,34 @@
             if (status == google.maps.GeocoderStatus.OK) {
               var latitude = results[0].geometry.location.lat();
               var longitude = results[0].geometry.location.lng();
-              console.log(results[0]);
-
-              $.ajax({
-                type: "POST",
-                url: '/sunlightlookup',
-                data: {coords: [latitude, longitude]},
-                dataType: 'json',
-                success: function(data) {
-                  console.log(data);
-                  $('form.geocode-form').prepend(data.data);
-                },
-
-                error: function(xhr, textStatus, error){
-                  console.log(error);
-                }
-              });
-
-            } else {
-              console.log(status);
+              var url =  '/sunlightlookup';
+              data = {coords: [latitude, longitude]};
             }
           });
-          return false;
         }
         else {
+          data = {onelineaddress: address};
           if (activeGeocoder == 'census') {
             url = '/censuslookup';
           }
-          else {
+          else if (activeGeocoder == 'geocodio') {
             url = '/geocodiolookup';
+            console.log(address);
           }
-          $.ajax({
-            type: "POST",
-            url: url,
-            data: {onelineaddress: address},
-            dataType: 'json',
-            success: function(data) {
-              console.log(data);
-              $('form.geocode-form').prepend(data.data);
-            },
-
-            error: function(xhr, textStatus, error){
-              console.log(error);
-            }
-          });
         }
+        $.ajax({
+          type: "POST",
+          url: url,
+          data: data,
+          dataType: 'json',
+          success: function(data) {
+            console.log(data);
+          },
+
+          error: function(xhr, textStatus, error){
+            console.log(error);
+          }
+        });
       }
     }
   };
