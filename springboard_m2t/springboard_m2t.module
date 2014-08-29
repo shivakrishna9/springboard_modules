@@ -117,6 +117,7 @@ function springboard_m2t_form_alter(&$form, &$form_state, $form_id) {
   if(isset($form['#node'])) {
     $node = $form['#node'];
     if($node->type == 'springboard_m2t') {
+      $form['#submit'][] = 'springboard_m2t_submit';
       $form['#attributes']['class'][] = 'geocode-form';
       if (variable_get('springboard_m2t_geocoder', '') == 'googlej') {
         $form['#attached']['js'][]  = array('data' => 'https://maps.googleapis.com/maps/api/js?sensor=false', 'type' => 'external');
@@ -255,7 +256,7 @@ function _springboard_mt2_geocodio_lookup() {
     'fields' => 'cd,stateleg',
   );
  
-  if (empty($address)) {
+  if (!empty($address)) {
 
     //setcookie('m2t_user_coords', $latitude . ' ' . $longitude);
     
@@ -352,5 +353,10 @@ function springboard_m2t_admin() {
 
 
   return system_settings_form($form);
+}
+
+function springboard_m2t_submit($form, $form_state) {
+  print_r($_SESSION['will_it_float']);
+  exit();
 }
 
