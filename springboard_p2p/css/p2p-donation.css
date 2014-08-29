@@ -487,6 +487,12 @@ div.donation-processing-wrapper,
   padding-top: 10px;
 }
 
+div.donation-processing-spinner {
+  bottom: -33px;
+  position: relative;
+  width: 100%;
+}
+
 /* media queries */
 
 @media (max-width: 768px) {
