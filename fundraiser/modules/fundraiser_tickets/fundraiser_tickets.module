@@ -1090,7 +1090,7 @@ function fundraiser_tickets_fundraiser_donation_process($donation) {
     }
     if(!empty($addons) && !empty($enabled)) {
       $nid = $node_wrapper->fr_tickets_donation_addon_form->value()->nid;
-
+      $add_on_node = node_load($nid);
       $compatible = fundraiser_tickets_check_addon_required_fields($nid, $donation);
       if(isset($nid) && $donation->node->nid != $nid && $compatible == TRUE) {
         // Find to see whether there is an 'other' donation within the ticket box fields.
@@ -1100,12 +1100,17 @@ function fundraiser_tickets_fundraiser_donation_process($donation) {
             // If we're here, we have found an 'extra donation', so unserialize and
             // set the 'other_amount' to the value of the extra donation.
             $extra_donation = unserialize($ticket_amounts);
-            $donation->donation['other_amount'] = number_format($extra_donation['fundraiser-tickets-extra-donation'], 2);
-            $donation->donation['amount'] = 'other';
+            if(!empty($extra_donation['fundraiser-tickets-extra-donation'])) {
+              $donation->donation['other_amount'] = number_format($extra_donation['fundraiser-tickets-extra-donation'], 2);
+              $donation->donation['amount'] = 'other';
+            }
             break;
           }
         }
-        $result = fundraiser_tickets_form_action_submit($nid,  NULL, $donation->donation);
+        $min = intval($add_on_node->minimum_donation_amount);
+        if(!empty($extra_donation['fundraiser-tickets-extra-donation']) && intval($extra_donation['fundraiser-tickets-extra-donation']) > $min) {
+          $result = fundraiser_tickets_form_action_submit($nid,  NULL, $donation->donation);
+        }
 
         if (!empty($result) && !empty($result['submission_id'])) {
 
