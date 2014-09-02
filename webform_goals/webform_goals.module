@@ -346,7 +346,6 @@ function webform_goal_load_multiple($nid = FALSE) {
  */
 function webform_goals_save_goal($goal) {
 
-  $goal = module_invoke_all('webform_goals_save_goal', $goal);
   $update = $goal['gid'] ? 'gid' : array();
   $extra = $goal['extra'];
   $goal['extra'] = serialize($extra);

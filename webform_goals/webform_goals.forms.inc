@@ -287,7 +287,7 @@ function webform_goals_add_submit($form, &$form_state) {
     'template_format' => $form_state['values']['template']['format'],
     'progress_bar' => $form_state['values']['progress_bar'],
   );
-
+  $settings = module_invoke_all('webform_goals_save_goal', $settings, $form_state);
   webform_goals_save_goal($settings);
 
   $form_state['redirect'] = array('admin/config/content/webform_goals');
