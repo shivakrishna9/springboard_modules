@@ -32,6 +32,7 @@ function springboard_m2t_menu() {
   //   'page callback' => '_springboard_mt2_geocodio_lookup',
   //   'access arguments' => array(1),
   // );
+
   return $items;
 }
 
@@ -119,6 +120,10 @@ function springboard_m2t_form_alter(&$form, &$form_state, $form_id) {
     if($node->type == 'springboard_m2t') {
       $form['#submit'][] = 'springboard_m2t_submit';
       $form['#attributes']['class'][] = 'geocode-form';
+      $form['#attributes']['class'][] = 'geocode-form';
+      // if (variable_get('springboard_m2t_geocoder', '') == 'googlej') {
+      //   $form['#attached']['js'][]  = array('data' => 'https://maps.googleapis.com/maps/api/js?sensor=false', 'type' => 'external');
+      // }
       $form['#attached']['js'][] = array('data' => drupal_get_path('module', 'springboard_m2t') . '/js/m2t.js'); 
       $form['#attached']['js'][] = array(
         'data' => array(
@@ -244,6 +249,7 @@ function _springboard_mt2_smarty_lookup() {
     'zipcode' => $address['submitted[sbp_zip'],
     'auth-id' => variable_get('springboard_m2t_smarty_authid',''),
     'auth-token' => variable_get('springboard_m2t_smarty_authtoken',''),
+
   );
  
   if (!empty($address)) {
@@ -287,7 +293,6 @@ function springboard_m2t_admin() {
     'smartystreets' => 'SmartyStreets Javascript API (Pay, API key is required)',
     'smartystreets_rest' => 'SmartyStreets REST API (Pay, API key is required)',
   );
-
   $form['geo']['springboard_m2t_geocoder'] = array(
     '#type' => 'radios',
     '#title' => t('Active Geocoding service'),
@@ -295,7 +300,7 @@ function springboard_m2t_admin() {
     '#description' => t('Choose the geocoding service to use. All but Google Javascript API require an API Key'),
     '#default_value' => variable_get('springboard_m2t_geocoder', ''),
   );
-
+  
   $form['geo']['smarty'] = array(
     '#type' => 'fieldset',
     '#title' => t('Smarty Streets configuration'),
@@ -360,5 +365,6 @@ function springboard_m2t_webform_submission_insert($node, $submission) {
     );
     drupal_write_record('springboard_m2t_location', $data);
   };
+
 }
 
