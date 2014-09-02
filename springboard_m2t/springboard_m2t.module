@@ -23,7 +23,7 @@ function springboard_m2t_menu() {
     'description' => '',
     'type' => MENU_CALLBACK,
     'page callback' => '_springboard_mt2_smarty_lookup',
-    'access arguments' => array(1),
+    'access callback' => TRUE,
   );
   // $items['geocodiolookup'] = array(
   //   'title' => 'Get district info from geocodio',
@@ -243,10 +243,10 @@ function _springboard_mt2_smarty_lookup() {
   
   $query =  array(
     //'street' => '49 Hall Rd, Canaan, NH 03741', //$address,
-    'street' => $address['submitted[sbp_address'],
-    'city' => $address['submitted[sbp_city'],
-    'state' => $address['submitted[sbp_state'],
-    'zipcode' => $address['submitted[sbp_zip'],
+    'street' => urlencode($address['submitted[sbp_address']),
+    'city' => urlencode($address['submitted[sbp_city']),
+    'state' => urlencode($address['submitted[sbp_state']),
+    'zipcode' => urlencode($address['submitted[sbp_zip']),
     'auth-id' => variable_get('springboard_m2t_smarty_authid',''),
     'auth-token' => variable_get('springboard_m2t_smarty_authtoken',''),
 
@@ -259,18 +259,21 @@ function _springboard_mt2_smarty_lookup() {
     $url = url('https://api.smartystreets.com/street-address', array('query' => $query));
 
     $response = drupal_http_request($url);
+
     if (!isset($response->status_message) || $response->status_message != 'OK') {
       return drupal_json_output(array('error' => 'Server returned invalid response'));
     }
     if (!empty($response->data)) {
       $data = json_decode($response->data);
-      $geo = array();
-      $geo['zip'] = $data[0]->components->zipcode;
-      $geo['plus'] = $data[0]->components->plus4_code;
-      //$district = $data[0]->metadata->congressional_district;
-      $geo['latitude'] = $data[0]->metadata->latitude;
-      $geo['longitude'] = $data[0]->metadata->longitude;
-      $_SESSION['m2t_geo'] = $geo;
+      if(!empty($data)) {
+        $geo = array();
+        $geo['zip'] = isset($data[0]->components->zipcode) ? $data[0]->components->zipcode : '';
+        $geo['plus'] = isset($data[0]->components->plus4_code) ? $data[0]->components->plus4_code : '';
+        //$district = $data[0]->metadata->congressional_district;
+        $geo['latitude'] = isset($data[0]->metadata->latitude) ? $data[0]->metadata->latitude : '';
+        $geo['longitude'] = isset($data[0]->metadata->longitude) ? $data[0]->metadata->longitude : '';
+        $_SESSION['m2t_geo'] = $geo;
+      }
     }
   }
   else {
@@ -290,9 +293,10 @@ function springboard_m2t_admin() {
   $options = array(
     //'googlej' => 'Google Javascript API (Free, no rate limit, Requires Sunlight API key for district lookups)',
    // 'geocodio' => 'Geocod.io (Free, 2,000 requests per day, api key is required)',
-    'smartystreets' => 'SmartyStreets Javascript API (Pay, API key is required)',
+    //'smartystreets' => 'SmartyStreets Javascript API (Pay, API key is required)',
     'smartystreets_rest' => 'SmartyStreets REST API (Pay, API key is required)',
   );
+
   $form['geo']['springboard_m2t_geocoder'] = array(
     '#type' => 'radios',
     '#title' => t('Active Geocoding service'),
@@ -305,6 +309,7 @@ function springboard_m2t_admin() {
     '#type' => 'fieldset',
     '#title' => t('Smarty Streets configuration'),
   );
+
   $form['geo']['smarty']['springboard_m2t_smarty_authid'] = array(
     '#type' => 'textfield',
     '#title' => t('Smarty Streets Auth ID'),
