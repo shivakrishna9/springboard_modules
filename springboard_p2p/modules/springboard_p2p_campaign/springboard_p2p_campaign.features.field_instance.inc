@@ -149,7 +149,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
       ),
     ),
     'deleted' => 0,
-    'description' => '',
+    'description' => 'Text like \'Donate now\' which will appear on buttons on personal campaigns and landing pages.',
     'display' => array(
       'default' => array(
         'label' => 'above',
@@ -395,7 +395,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
     ),
     'entity_type' => 'node',
     'field_name' => 'field_p2p_campaigns_approval',
-    'label' => 'Personal campaigns require approval',
+    'label' => 'Users require approval before creating personal campaigns',
     'required' => 0,
     'settings' => array(
       'user_register_form' => FALSE,
@@ -1235,13 +1235,13 @@ function springboard_p2p_campaign_field_default_field_instances() {
   t('Personal campaign action button label');
   t('Personal campaign images');
   t('Personal campaign introduction');
-  t('Personal campaigns require approval');
   t('Public Support Call-Out');
   t('Require personal campaign expiration date');
   t('Set a message to show when the campaign expires.');
   t('Show constituent comments on personal campaign pages');
   t('Show constituent scroll on personal campaign pages');
   t('Suggested Donation Amount');
+  t('Text like \'Donate now\' which will appear on buttons on personal campaigns and landing pages.');
   t('This content can be overridden by a personal campaigner');
   t('This is a Youtube or Vimeo video URL. Example: https://www.youtube.com/watch?v=kJ4CYbCGhLA');
   t('This setting cannot be changed after campaign creation.');
@@ -1250,6 +1250,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
   t('Upload a campaign banner. Suggested size is 1170 x 240 pixels.');
   t('Upload a personal campaign thumbnail image. Ideal size is 400 x 240 pixels.');
   t('Upload a slideshow image. The minimum size should be 1170 x 360 pixels.');
+  t('Users require approval before creating personal campaigns');
   t('Video embed');
   t('When enabled, constituents will be able to leave an additional comment that can be displayed on the personal campaign page.');
 
