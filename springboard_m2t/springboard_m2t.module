@@ -359,7 +359,7 @@ function springboard_m2t_submit($form, $form_state) {
 }
 
 function springboard_m2t_webform_submission_insert($node, $submission) {
-  if(isset($_SESSION['m2t_geo'])) {
+  if(isset($_SESSION['m2t_geo']) && $node->type == 'springboard_m2t') {
     $data = array(
       'nid' => $submission->nid,
       'sid' => $submission->sid,
@@ -370,7 +370,7 @@ function springboard_m2t_webform_submission_insert($node, $submission) {
       'lon' => $_SESSION['m2t_geo']['longitude'],
     );
     drupal_write_record('springboard_m2t_location', $data);
+    unset($_SESSION['m2t_geo']);
   };
-
 }
 
