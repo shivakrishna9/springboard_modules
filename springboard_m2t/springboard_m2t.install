@@ -182,14 +182,14 @@ function springboard_m2t_schema() {
         'not null' => TRUE,
       ),
       'zip' => array(
-        'description' => 'submission id.',
-        'type' => 'int',
-        'unsigned' => TRUE,
+        'description' => 'zip code',
+        'type' => 'char(5)',
+        'length' => 5,
       ),
       'plus4' => array(
-        'description' => 'submission id.',
-        'type' => 'int',
-        'unsigned' => TRUE,
+        'description' => 'zip plus4',
+        'type' => 'char(4)',
+        'length' => 4,
       ),
       'lat' => array(
         'type' => 'numeric',
