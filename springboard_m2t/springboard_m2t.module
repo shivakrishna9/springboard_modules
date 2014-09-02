@@ -10,7 +10,7 @@ function springboard_m2t_menu() {
     'page arguments' => array('springboard_m2t_admin'),
     'page callback' => 'drupal_get_form',
   );
-
+  //ajax callback
   $items['smartylookup'] = array(
     'title' => 'Get district info from smarty streets',
     'description' => '',
@@ -22,15 +22,22 @@ function springboard_m2t_menu() {
   return $items;
 }
 
+/**
+ * Implements hook_webform_user_profile_fields_alter
+ *
+ */
 function springboard_m2t_webform_user_profile_fields_alter(&$fields, $node) {
   if($node->type == 'springboard_m2t') {
     foreach ($fields as $index => $profile_field) {
+      //make all fields except address2 mandatory
       if ($profile_field['name'] != 'sbp_address_line_2'){
         $fields[$index]['mandatory'] = 1;
       }
+      //setup removeal of non-US provinces
       if ($profile_field['name'] == 'sbp_state'){
         unset($fields[$index]);
       }
+      //move email field lower
       if ($profile_field['name'] == 'mail'){
         $fields[$index]['weight'] = 14;
       }
@@ -38,10 +45,14 @@ function springboard_m2t_webform_user_profile_fields_alter(&$fields, $node) {
   }
 }
 
+/**
+ * Implements hook_node_insert
+ */
 function springboard_m2t_node_insert($node) {
   if($node->type == 'springboard_m2t') {
     module_load_include('inc', 'webform', 'includes/webform.components');
-
+    
+    //add custom fields for the messages
     $fields[] = array(
       'nid' => $node->nid,
       'form_key' => 'springboard_m2t_phone',
@@ -69,7 +80,7 @@ function springboard_m2t_node_insert($node) {
         'description' => t('Customize your message'),
       ),
     );
-
+    //limit the sate field to US states
     $fields[] = array(
         'nid' => $node->nid,
         'form_key' => 'sbp_state',
@@ -89,6 +100,7 @@ function springboard_m2t_node_insert($node) {
     // Add the component to the Webform.
     foreach ($fields as $field) {
       $cid = webform_component_insert($field);
+      //user map the state field
       if ($field['name'] == 'State') {
             $map = array(
             'nid' => $node->nid,
@@ -101,10 +113,13 @@ function springboard_m2t_node_insert($node) {
   }
 }
 
+/**
+ * Implements hook_form_alter
+ */
 function springboard_m2t_form_alter(&$form, &$form_state, $form_id) {
-  if(isset($form['#node'])) {
-    $node = $form['#node'];
-    if($node->type == 'springboard_m2t') {
+  if(isset($form['#node']) && $form['#node']->type == 'springboard_m2t') {
+    $pos = strpos($form_id, 'client_form');
+    if($pos !== FALSE) {
       $form['#submit'][] = 'springboard_m2t_submit';
       $form['#attributes']['class'][] = 'geocode-form';
       $form['#attributes']['class'][] = 'geocode-form';
@@ -124,26 +139,26 @@ function springboard_m2t_form_alter(&$form, &$form_state, $form_id) {
   }
 }
 
+/**
+ * Ajax callback for smarty streets api
+ */
 function _springboard_mt2_smarty_lookup() {
   
   $responses = array();
-  $address = $_POST['address'];
+  $address = isset($_POST['address']) ? $_POST['address'] : NULL;
   
   $query =  array(
-    //'street' => '49 Hall Rd, Canaan, NH 03741', //$address,
+    //'street' => '49 Hall Rd, Canaan, NH 03741',
     'street' => urlencode($address['submitted[sbp_address']),
     'city' => urlencode($address['submitted[sbp_city']),
     'state' => urlencode($address['submitted[sbp_state']),
     'zipcode' => urlencode($address['submitted[sbp_zip']),
     'auth-id' => variable_get('springboard_m2t_smarty_authid',''),
     'auth-token' => variable_get('springboard_m2t_smarty_authtoken',''),
-
   );
  
   if (!empty($address)) {
 
-    //setcookie('m2t_user_coords', $latitude . ' ' . $longitude);
-    
     $url = url('https://api.smartystreets.com/street-address', array('query' => $query));
 
     $response = drupal_http_request($url);
@@ -151,6 +166,7 @@ function _springboard_mt2_smarty_lookup() {
     if (!isset($response->status_message) || $response->status_message != 'OK') {
       return drupal_json_output(array('error' => 'Server returned invalid response'));
     }
+
     if (!empty($response->data)) {
       $data = json_decode($response->data);
       if(!empty($data)) {
@@ -169,7 +185,9 @@ function _springboard_mt2_smarty_lookup() {
   }
 }
 
-
+/**
+ * System settings form
+ */
 function springboard_m2t_admin() {
   
   $form = array();
@@ -178,9 +196,8 @@ function springboard_m2t_admin() {
     '#type' => 'fieldset',
     '#title' => t('Geocoding configuration'),
   );
+
   $options = array(
-    //'googlej' => 'Google Javascript API (Free, no rate limit, Requires Sunlight API key for district lookups)',
-   // 'geocodio' => 'Geocod.io (Free, 2,000 requests per day, api key is required)',
     //'smartystreets' => 'SmartyStreets Javascript API (Pay, API key is required)',
     'smartystreets_rest' => 'SmartyStreets REST API (Pay, API key is required)',
   );
@@ -222,10 +239,16 @@ function springboard_m2t_admin() {
   return system_settings_form($form);
 }
 
+/**
+ * Submission hook will contain logic for knowwho lookups, perhaps.
+ */
 function springboard_m2t_submit($form, $form_state) {
 
 }
 
+/**
+ * Implements hook_webfrom_submission insert
+ */
 function springboard_m2t_webform_submission_insert($node, $submission) {
   if(isset($_SESSION['m2t_geo']) && $node->type == 'springboard_m2t') {
     $data = array(
