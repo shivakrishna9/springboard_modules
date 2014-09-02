@@ -61,6 +61,7 @@ class SpringboardSocialFunctionalTest extends FundraiserSetup {
       'configure webform emails',
       'administer springboard social',
       'edit any share content', // need to create separate unprivileged user and user with "edit own"
+      'administer market source',
     );
     $this->checkPermissions(array('create donation_form content', 'edit any donation_form content'), TRUE);
     $this->privileged_user = $this->drupalCreateUser($permissions);
@@ -75,6 +76,7 @@ class SpringboardSocialFunctionalTest extends FundraiserSetup {
     $created_node = $this->createDonationForm($node_stub);
     $node = node_load($created_node->nid);
     $this->assertTrue($node->type == 'donation_form', t('Donation form node type correct'));
+    variable_set('springboard_social_enabled_content_types', array('donation_form' => ''));
     $this->drupalGet('node/' . $node->nid);
 
     // add custom MS fields

@@ -473,6 +473,9 @@ function webform_user_webform_submit($form, &$form_state) {
       _webform_user_save_profile_map($account->uid, $map);
       $submission = webform_get_submission($node->nid, $form_state['values']['details']['sid']);
       $submission->uid = $account->uid;
+      if ($skip_user_check) {
+        $submission->webform_user_skip_user_check = TRUE;
+      }
       webform_submission_update($node, $submission);
     }
     // Anonymous user, new email to Drupal.

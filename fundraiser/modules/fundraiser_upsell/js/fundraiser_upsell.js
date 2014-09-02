@@ -26,12 +26,24 @@
     Drupal.behaviors.fundraiser_upsell = {
         attach: function (context, settings) {
             $('.ctools-close-modal.rejection', context).click(function() {
-                // Get the days for the rejection cookie
-                var rejectionDays = Drupal.settings['fundraiser-upsell'].rejectionDays;
-                var exdate=new Date();
-                exdate.setDate(exdate.getDate() + rejectionDays);
-                var c_value = "1;path=/" + ((rejectionDays==null) ? "" : ";expires="+exdate.toUTCString());
-                document.cookie='fundraiser_upsell_rejection' + "=" + c_value;
+
+                if (typeof $.cookie !== 'undefined') {
+                    // Get the days for the rejection cookie
+                    var rejectionDays = Drupal.settings['fundraiser-upsell'].rejectionDays;
+                    var exdate=new Date();
+                    exdate.setDate(exdate.getDate() + rejectionDays);
+
+                    var name = 'fundraiser_upsell_rejection';
+                    var value = 1;
+                    var path = '/';
+
+                    if (typeof Drupal.settings.springboard.cookie_path !== 'undefined') {
+                        path = Drupal.settings.springboard.cookie_path;
+                    }
+
+                    $.cookie(name, value, { path: path,  expires: exdate});
+                }
+
             });
 
             $('.ctools-modal-content form', context).on('submit', function() {
