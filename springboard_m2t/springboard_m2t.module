@@ -11,27 +11,27 @@ function springboard_m2t_menu() {
     'page callback' => 'drupal_get_form',
   );
 
-  $items['sunlightlookup'] = array(
-    'title' => 'Get district info from sunlight',
+  // $items['sunlightlookup'] = array(
+  //   'title' => 'Get district info from sunlight',
+  //   'description' => '',
+  //   'type' => MENU_CALLBACK,
+  //   'page callback' => '_springboard_mt2_sunlight_lookup',
+  //   'access arguments' => array(1),
+  // );
+  $items['smartylookup'] = array(
+    'title' => 'Get district info from smarty streets',
     'description' => '',
     'type' => MENU_CALLBACK,
-    'page callback' => '_springboard_mt2_sunlight_lookup',
+    'page callback' => '_springboard_mt2_smarty_lookup',
     'access arguments' => array(1),
   );
-  $items['censuslookup'] = array(
-    'title' => 'Get district info from sunlight',
-    'description' => '',
-    'type' => MENU_CALLBACK,
-    'page callback' => '_springboard_mt2_census_lookup',
-    'access arguments' => array(1),
-  );
-  $items['geocodiolookup'] = array(
-    'title' => 'Get district info from geocodio',
-    'description' => '',
-    'type' => MENU_CALLBACK,
-    'page callback' => '_springboard_mt2_geocodio_lookup',
-    'access arguments' => array(1),
-  );
+  // $items['geocodiolookup'] = array(
+  //   'title' => 'Get district info from geocodio',
+  //   'description' => '',
+  //   'type' => MENU_CALLBACK,
+  //   'page callback' => '_springboard_mt2_geocodio_lookup',
+  //   'access arguments' => array(1),
+  // );
   return $items;
 }
 
@@ -119,9 +119,6 @@ function springboard_m2t_form_alter(&$form, &$form_state, $form_id) {
     if($node->type == 'springboard_m2t') {
       $form['#submit'][] = 'springboard_m2t_submit';
       $form['#attributes']['class'][] = 'geocode-form';
-      if (variable_get('springboard_m2t_geocoder', '') == 'googlej') {
-        $form['#attached']['js'][]  = array('data' => 'https://maps.googleapis.com/maps/api/js?sensor=false', 'type' => 'external');
-      }
       $form['#attached']['js'][] = array('data' => drupal_get_path('module', 'springboard_m2t') . '/js/m2t.js'); 
       $form['#attached']['js'][] = array(
         'data' => array(
@@ -135,150 +132,146 @@ function springboard_m2t_form_alter(&$form, &$form_state, $form_id) {
   }
 }
 
-function _springboard_mt2_sunlight_lookup($latitude = FALSE, $longitude = FALSE) {
+// function _springboard_mt2_sunlight_lookup($latitude = FALSE, $longitude = FALSE) {
+  
+//   $responses = array();
+
+//   if (!empty($_POST['coords'][0]) && !$latitude) {
+//     $latitude = $_POST['coords'][0];
+//     $longitude = $_POST['coords'][1]; 
+//   }
+
+//   if($latitude) {
+//     $is_long = preg_match('/([0-9.-]+).+?([0-9.-]+)/', $longitude);
+//     $is_lat = preg_match('/([0-9.-]+).+?([0-9.-]+)/', $latitude);
+//   }
+
+//   $apikey = variable_get('springboard_m2t_apikey', '');
+
+//   $fquery =  array(
+//     'latitude' => $latitude,
+//     'longitude' => $longitude,
+//     'apikey' => $apikey,
+//   );
+//   $squery =  array(
+//     'lat' => $latitude,
+//     'long' => $longitude,
+//     'apikey' => $apikey,
+//   );
+
+//   if ($is_lat && $is_long) {
+
+//     setcookie('m2t_user_coords', $latitude . ' ' . $longitude);
+    
+//     $fed = url('https://congress.api.sunlightfoundation.com/districts/locate', array('query' => $fquery));
+//     $state = url('http://openstates.org/api/v1/legislators/geo', array('query' => $squery));
+
+//     //there's no real way to rate limit this in the script if a form gets lots of traffic
+//     $responses['fed'] = drupal_http_request($fed);
+//     usleep(500000);
+//     $responses['state'] = drupal_http_request($state);
+    
+//     foreach (responses as $key => $response) {
+//       if(!isset($response->status_message) || $response->status_message != 'OK') {
+//         $response[$key] = array('error' => 'Sunlight server returned invalid response');
+//       }
+//     }
+
+//     if (isset($responses['state']->data)) {
+//       $districts = array();
+//       $data = json_decode($responses['state']->data);
+//       if($data) {
+//         foreach ($data as $legislator) {
+//           $districts[]['district'] = $legislator->district;
+//           $districts[]['state'] = $legislator->state;
+//           $districts[]['boundary_id'] = $legislator->boundary_id;
+//         }
+//       }
+//       $responses['state']->districts = $districts;
+//     }
+//     return drupal_json_output($responses);
+//   }
+//   else {
+//     return drupal_json_output(array('error' => 'coordinates were not valid.'));
+//   }
+// }
+
+// function _springboard_mt2_geocodio_lookup() {
+  
+//   $responses = array();
+//   $address = $_POST['onelineaddress'];
+
+//   $query =  array(
+//     'q' => $address,
+//     'api_key' => variable_get('springboard_m2t_geocodio_apikey',''),
+//     'fields' => 'cd,stateleg',
+//   );
+ 
+//   if (!empty($address)) {
+
+//     //setcookie('m2t_user_coords', $latitude . ' ' . $longitude);
+    
+//     $url = url('https://api.geocod.io/v1/geocode', array('query' => $query));
+
+//     $response = drupal_http_request($url);
+
+//     if (!isset($response->status_message) || $response->status_message != 'OK') {
+//       return drupal_json_output(array('error' => 'Server returned invalid response'));
+//     }
+//     if (!empty($response->data)) {
+
+//       $data = json_decode($response->data);
+//       $districts = $data->results[0]->fields;
+
+//       return drupal_json_output($districts);
+//     }
+//   }
+//   else {
+//     return drupal_json_output(array('error' => 'address not supplied'));
+//   }
+// }
+
+function _springboard_mt2_smarty_lookup() {
   
   $responses = array();
-
-  if (!empty($_POST['coords'][0]) && !$latitude) {
-    $latitude = $_POST['coords'][0];
-    $longitude = $_POST['coords'][1]; 
-  }
-
-  if($latitude) {
-    $is_long = preg_match('/([0-9.-]+).+?([0-9.-]+)/', $longitude);
-    $is_lat = preg_match('/([0-9.-]+).+?([0-9.-]+)/', $latitude);
-  }
-
-  $apikey = variable_get('springboard_m2t_apikey', '');
-
-  $fquery =  array(
-    'latitude' => $latitude,
-    'longitude' => $longitude,
-    'apikey' => $apikey,
-  );
-  $squery =  array(
-    'lat' => $latitude,
-    'long' => $longitude,
-    'apikey' => $apikey,
-  );
-
-  if ($is_lat && $is_long) {
-
-    setcookie('m2t_user_coords', $latitude . ' ' . $longitude);
-    
-    $fed = url('https://congress.api.sunlightfoundation.com/districts/locate', array('query' => $fquery));
-    $state = url('http://openstates.org/api/v1/legislators/geo', array('query' => $squery));
-
-    //there's no real way to rate limit this in the script if a form gets lots of traffic
-    $responses['fed'] = drupal_http_request($fed);
-    usleep(500000);
-    $responses['state'] = drupal_http_request($state);
-    
-    foreach (responses as $key => $response) {
-      if(!isset($response->status_message) || $response->status_message != 'OK') {
-        $response[$key] = array('error' => 'Sunlight server returned invalid response');
-      }
-    }
-
-    if (isset($responses['state']->data)) {
-      $districts = array();
-      $data = json_decode($responses['state']->data);
-      if($data) {
-        foreach ($data as $legislator) {
-          $districts[]['district'] = $legislator->district;
-          $districts[]['state'] = $legislator->state;
-          $districts[]['boundary_id'] = $legislator->boundary_id;
-        }
-      }
-      $responses['state']->districts = $districts;
-    }
-    return drupal_json_output($responses);
-  }
-  else {
-    return drupal_json_output(array('error' => 'coordinates were not valid.'));
-  }
-}
-
-function _springboard_mt2_census_lookup() {
+  $address = $_POST['address'];
   
-  $responses = array();
-  $address = $_POST['onelineaddress'];
-
   $query =  array(
-    'address' => $address,
-    'benchmark' => 'Public_AR_Current',
-    'vintage' => 'Current_Current',
-    'layers' => '54,55,56,57,58,59',
-    'format' => 'json'
+    //'street' => '49 Hall Rd, Canaan, NH 03741', //$address,
+    'street' => $address['submitted[sbp_address'],
+    'city' => $address['submitted[sbp_city'],
+    'state' => $address['submitted[sbp_state'],
+    'zipcode' => $address['submitted[sbp_zip'],
+    'auth-id' => variable_get('springboard_m2t_smarty_authid',''),
+    'auth-token' => variable_get('springboard_m2t_smarty_authtoken',''),
   );
  
   if (!empty($address)) {
 
     //setcookie('m2t_user_coords', $latitude . ' ' . $longitude);
     
-    $url = url('http://geocoding.geo.census.gov/geocoder/geographies/onelineaddress', array('query' => $query));
+    $url = url('https://api.smartystreets.com/street-address', array('query' => $query));
 
     $response = drupal_http_request($url);
- 
-    $data = json_decode($response->data);
-    $matches = $data->result->addressMatches;
-    $num = count($matches);
-    foreach ($matches as $index => $match) {
-      $coords[$index] = $match->coordinates;
-      $all_districts[$index] = $match->geographies;
-    }
-    $districts = array();
-    foreach ($all_districts as $key => $all_district) {
-      foreach ($all_district as $district_type => $district_info) {
-        foreach ($district_info as $index => $district) {
-          $districts[$district_type][$district->NAME]['district'] = $district->NAME;
-          $districts[$district_type][$district->NAME]['state'] = $district->STATE;
-          $districts[$district_type][$district->NAME]['lsadc'] = $district->LSADC;
-       } 
-    }
-  }
-    return drupal_json_output($districts);
-  }
-  else {
-    return drupal_json_output(array('error' => 'coordinates were not valid.'));
-  }
-}
-
-
-function _springboard_mt2_geocodio_lookup() {
-  
-  $responses = array();
-  $address = $_POST['onelineaddress'];
-
-  $query =  array(
-    'q' => $address,
-    'api_key' => variable_get('springboard_m2t_geocodio_apikey',''),
-    'fields' => 'cd,stateleg',
-  );
- 
-  if (!empty($address)) {
-
-    //setcookie('m2t_user_coords', $latitude . ' ' . $longitude);
-    
-    $url = url('https://api.geocod.io/v1/geocode', array('query' => $query));
-
-    $response = drupal_http_request($url);
-
     if (!isset($response->status_message) || $response->status_message != 'OK') {
       return drupal_json_output(array('error' => 'Server returned invalid response'));
     }
     if (!empty($response->data)) {
-
       $data = json_decode($response->data);
-      $districts = $data->results[0]->fields;
-
-      return drupal_json_output($districts);
+      $geo = array();
+      $geo['zip'] = $data[0]->components->zipcode;
+      $geo['plus'] = $data[0]->components->plus4_code;
+      //$district = $data[0]->metadata->congressional_district;
+      $geo['latitude'] = $data[0]->metadata->latitude;
+      $geo['longitude'] = $data[0]->metadata->longitude;
+      $_SESSION['m2t_geo'] = $geo;
     }
   }
   else {
     return drupal_json_output(array('error' => 'address not supplied'));
   }
 }
+
 
 function springboard_m2t_admin() {
   
@@ -289,13 +282,12 @@ function springboard_m2t_admin() {
     '#title' => t('Geocoding configuration'),
   );
   $options = array(
-    'googlej' => 'Google Javascript API (Free, no rate limit, no api key)',
-    'geocodio' => 'Geocod.io (Free, 2,000 requests per day, api key is required)',
-    'smartystreets' => 'SmartyStreets (Pay, API key is required)',
-
-
-
+    //'googlej' => 'Google Javascript API (Free, no rate limit, Requires Sunlight API key for district lookups)',
+   // 'geocodio' => 'Geocod.io (Free, 2,000 requests per day, api key is required)',
+    'smartystreets' => 'SmartyStreets Javascript API (Pay, API key is required)',
+    'smartystreets_rest' => 'SmartyStreets REST API (Pay, API key is required)',
   );
+
   $form['geo']['springboard_m2t_geocoder'] = array(
     '#type' => 'radios',
     '#title' => t('Active Geocoding service'),
@@ -308,7 +300,6 @@ function springboard_m2t_admin() {
     '#type' => 'fieldset',
     '#title' => t('Smarty Streets configuration'),
   );
-
   $form['geo']['smarty']['springboard_m2t_smarty_authid'] = array(
     '#type' => 'textfield',
     '#title' => t('Smarty Streets Auth ID'),
@@ -330,33 +321,44 @@ function springboard_m2t_admin() {
     '#default_value' => variable_get('springboard_m2t_smarty_htmltoken', ''),
   );
 
+  // $form['geo']['springboard_m2t_geocodio_apikey'] = array(
+  //   '#type' => 'textfield',
+  //   '#title' => t('Geocod.io API Key'),
+  //   '#description' => t(''),
+  //   '#default_value' => variable_get('springboard_m2t_geocodio_apikey', ''),
+  // );
 
-  $form['geo']['springboard_m2t_geocodio_apikey'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Geocod.io API Key'),
-    '#description' => t(''),
-    '#default_value' => variable_get('springboard_m2t_geocodio_apikey', ''),
-  );
+  // $form['districts'] = array(
+  //   '#type' => 'fieldset',
+  //   '#title' => t('Districting configuration'),
+  // );
 
-  $form['districts'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Districting configuration'),
-  );
-
-  $form['districts']['springboard_m2t_apikey'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Sunlight API Key'),
-    '#description' => t(''),
-    '#default_value' => variable_get('springboard_m2t_apikey', ''),
-  );
-
-
+  // $form['districts']['springboard_m2t_apikey'] = array(
+  //   '#type' => 'textfield',
+  //   '#title' => t('Sunlight API Key'),
+  //   '#description' => t(''),
+  //   '#default_value' => variable_get('springboard_m2t_apikey', ''),
+  // );
 
   return system_settings_form($form);
 }
 
 function springboard_m2t_submit($form, $form_state) {
-  print_r($_SESSION['will_it_float']);
-  exit();
+
+}
+
+function springboard_m2t_webform_submission_insert($node, $submission) {
+  if(isset($_SESSION['m2t_geo'])) {
+    $data = array(
+      'nid' => $submission->nid,
+      'sid' => $submission->sid,
+      'uid' => $submission->uid,
+      'zip' => $_SESSION['m2t_geo']['zip'],
+      'plus4' => $_SESSION['m2t_geo']['plus'],
+      'lat' => $_SESSION['m2t_geo']['latitude'],
+      'lon' => $_SESSION['m2t_geo']['longitude'],
+    );
+    drupal_write_record('springboard_m2t_location', $data);
+  };
 }
 
