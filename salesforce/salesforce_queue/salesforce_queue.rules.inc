@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Provides rules integration for Salesforce watchdog events.
+ * Provides rules integration for Salesforce Queue-related events.
  */
 
 /**
