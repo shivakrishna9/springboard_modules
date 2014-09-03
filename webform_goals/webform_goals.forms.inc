@@ -270,8 +270,6 @@ function webform_goals_add_validate(&$form, &$form_state) {
  * Submission handler for goal add/edit form.
  */
 function webform_goals_add_submit($form, &$form_state) {
-  require_once 'includes/webform_goals.files.inc';
-
   $settings = array(
     'gid' => !empty($form_state['values']['gid']) ? $form_state['values']['gid'] : '',
     'name' => $form_state['values']['name'],
@@ -289,46 +287,8 @@ function webform_goals_add_submit($form, &$form_state) {
     'template_format' => $form_state['values']['template']['format'],
     'progress_bar' => $form_state['values']['progress_bar'],
   );
-
   $settings = module_invoke_all('webform_goals_save_goal', $settings, $form_state);
-  $update = $settings['gid'] ? 'gid' : array();
-  $extra = $settings['extra'];
-  $settings['extra'] = serialize($extra);
-  $save = drupal_write_record('webform_goals', $settings, $update);
-  $settings['extra'] = $extra;
-  $nid = !empty($extra['selected_form_id']) ? $extra['selected_form_id'] : 0;
-
-  $theme_args = array(
-    'webform_goal' => $settings,
-    'nid' => $nid,
-    'goal_progress' => webform_goals_track_metric($settings),
-  );
-  $widget = array(
-    'gid' => $settings['gid'],
-    'widget' => theme('webform_goals_widget', $theme_args),
-  );
-
-  drupal_write_record('webform_goals_widget', $widget, $update);
-  _webform_goals_file_insert($settings, $widget['widget']);
-
-  $settings['extra'] = $extra;
-  $nids = _webform_goals_calculate_nids_for_goal($settings);
-
-  // Remove the relevant rows from {webform_goals_node}
-  // and add new rows.
-  // We need to do this to update the nodes selected if they change
-  // during a goal edit.
-  db_delete('webform_goals_node')
-    ->condition('gid', $settings['gid'])
-    ->execute();
-  $query = db_insert('webform_goals_node')->fields(array('gid', 'nid'));
-  foreach ($nids as $nid) {
-    $query->values(array(
-      'gid' => $settings['gid'],
-      'nid' => $nid,
-    ));
-  }
-  $query->execute();
+  webform_goals_save_goal($settings);
 
   $form_state['redirect'] = array('admin/config/content/webform_goals');
 }
