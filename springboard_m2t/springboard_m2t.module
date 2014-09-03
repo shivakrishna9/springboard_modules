@@ -37,6 +37,10 @@ function springboard_m2t_webform_user_profile_fields_alter(&$fields, $node) {
       if ($profile_field['name'] == 'sbp_state'){
         unset($fields[$index]);
       }
+      //remove zip
+      if ($profile_field['name'] == 'sbp_zip'){
+        unset($fields[$index]);
+      }
       //move email field lower
       if ($profile_field['name'] == 'mail'){
         $fields[$index]['weight'] = 14;
@@ -85,7 +89,7 @@ function springboard_m2t_node_insert($node) {
         'nid' => $node->nid,
         'form_key' => 'sbp_state',
         'pid' => 0,
-        'name' => t('State/Province'),
+        'name' => t('State'),
         'type' => 'select',
         'mandatory' => 1,
         'weight' => 12,
@@ -96,16 +100,29 @@ function springboard_m2t_node_insert($node) {
         'multiple' => 0,
       ),
     );
-
+    $fields[] = array(
+        'nid' => $node->nid,
+        'form_key' => 'sbp_zip',
+        'pid' => 0,
+        'name' => t('Zip Code'),
+        'type' => 'textfield',
+        'mandatory' => 1,
+        'weight' => 13,
+        'email' => 1,
+        'extra' => array(
+        'maxlength' => 5,
+      ),
+    );
     // Add the component to the Webform.
     foreach ($fields as $field) {
+      dpm($field);
       $cid = webform_component_insert($field);
       //user map the state field
-      if ($field['name'] == 'State') {
+      if ($field['form_key'] == 'sbp_state' || $field['form_key'] == 'sbp_zip') {
             $map = array(
             'nid' => $node->nid,
             'cid' => $cid,
-            'map_id' => $field['name'],
+            'map_id' => $field['form_key'],
           );
           drupal_write_record('webform_user_component_map', $map);
       }
@@ -127,6 +144,7 @@ function springboard_m2t_form_alter(&$form, &$form_state, $form_id) {
       //   $form['#attached']['js'][]  = array('data' => 'https://maps.googleapis.com/maps/api/js?sensor=false', 'type' => 'external');
       // }
       $form['#attached']['js'][] = array('data' => drupal_get_path('module', 'springboard_m2t') . '/js/m2t.js'); 
+      $form['#attached']['js'][] = array('data' => drupal_get_path('module', 'fundraiser') . '/js/jquery.validate.min.js'); 
       $form['#attached']['js'][] = array(
         'data' => array(
           'springboard_m2t' => array(
