@@ -522,7 +522,7 @@ function fundraiser_entity_form_field_ui_field_edit_form_alter(&$form, $form_sta
 /**
  * Implements hook_springboard_admin_menu_items_alter().
  */
-function fundraiser_entity_springboard_admin_menu_items_alter(&$items) {
+function fundraiser_entity_springboard_admin_admin_menu_items_alter(&$items) {
   // Add the Donation entity management page.
   $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/springboard/settings/donation-entity'] = array(
     'link_path' => 'admin/springboard/settings/donation-entity',
