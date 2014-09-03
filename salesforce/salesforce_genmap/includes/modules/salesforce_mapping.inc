@@ -440,8 +440,26 @@ function salesforce_genmap_entity_update($entity, $entity_type) {
     foreach ($result as $item) {
       // Get the original entity and requeue it.
       $item_entity = entity_load($item->module, array($item->drupal_id));
-      $op = ($item->operation == 'UPSERT') ? 'UPDATE' : $item->operation;
-      salesforce_mapping_send_entity_to_queue($item_entity[$item->drupal_id], $item->module, $op);
+      if (isset($item_entity[$item->drupal_id])) {
+        $op = ($item->operation == 'UPSERT') ? 'UPDATE' : $item->operation;
+        salesforce_mapping_send_entity_to_queue($item_entity[$item->drupal_id], $item->module, $op);
+      } else {
+        // The source Drupal record is missing, so log a complaint and fire the rules event for this.
+        watchdog(
+          'salesforce_mapping',
+          "%op of %obj_type failed: Drupal %module %delta ID %drupal_id doesn't exist!",
+          array('%op' => $item->operation, '%obj_type' => $item->object_type, '%module' => $item->module, '%delta' => $item->delta, '%drupal_id' => $item->drupal_id),
+          WATCHDOG_CRITICAL
+        );
+        if (module_exists('rules')) {
+          rules_invoke_event(
+            'salesforce_queue_missing_source_record',
+            $item->item_id, $item->drupal_id, $item->module, $item->delta, $item->object_type,
+            $item->operation, $item->dedupe_field, $item->sobject, $item->sync_rules,
+            $item->queue, $item->retries, $item->created
+          );
+        }
+      }
     }
   }
   else {
