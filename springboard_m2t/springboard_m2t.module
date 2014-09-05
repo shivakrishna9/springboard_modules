@@ -176,6 +176,7 @@ function _springboard_mt2_smarty_lookup() {
   );
  
   if (!empty($address)) {
+        dd('asdad');
 
     $url = url('https://api.smartystreets.com/street-address', array('query' => $query));
 
@@ -186,15 +187,27 @@ function _springboard_mt2_smarty_lookup() {
     }
 
     if (!empty($response->data)) {
+
       $data = json_decode($response->data);
+
       if(!empty($data)) {
+
         $geo = array();
         $geo['zip'] = isset($data[0]->components->zipcode) ? $data[0]->components->zipcode : '';
-        $geo['plus'] = isset($data[0]->components->plus4_code) ? $data[0]->components->plus4_code : '';
+        $geo['plus4'] = isset($data[0]->components->plus4_code) ? $data[0]->components->plus4_code : '';
         //$district = $data[0]->metadata->congressional_district;
         $geo['latitude'] = isset($data[0]->metadata->latitude) ? $data[0]->metadata->latitude : '';
         $geo['longitude'] = isset($data[0]->metadata->longitude) ? $data[0]->metadata->longitude : '';
+
         $_SESSION['m2t_geo'] = $geo;
+
+        if(!empty($geo['zip']) && !empty($geo['plus4'])) {
+          $legislators = springboard_m2t_transaction_lookup($geo['zip'], $geo['plus4']);
+          if($legislators) {
+            return drupal_json_output(array('legislators' => $legislators));
+          }
+        }
+
       }
     }
   }
@@ -202,6 +215,21 @@ function _springboard_mt2_smarty_lookup() {
     return drupal_json_output(array('error' => 'address not supplied'));
   }
 }
+
+function springboard_m2t_transaction_lookup($zip, $plus4) {
+   $query =  array(
+    'apikey' => variable_get('springboard_m2t_trans_token', ''),
+  );
+  $url = url('http://transaction.dev/legislator/byzip' . $zip . '/' . $plus4, array('query' => $query));
+  $response = drupal_http_request($url);
+  if (!empty($response->data)) {
+    return $response->data;
+  }
+  else {
+    return FALSE;
+  }
+}
+
 
 /**
  * System settings form
@@ -254,6 +282,12 @@ function springboard_m2t_admin() {
     '#default_value' => variable_get('springboard_m2t_smarty_htmltoken', ''),
   );
 
+  $form['transaction']['springboard_m2t_trans_token'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Transaction server token.'),
+    '#description' => t(''),
+    '#default_value' => variable_get('springboard_m2t_trans_token', ''),
+  );
   return system_settings_form($form);
 }
 
