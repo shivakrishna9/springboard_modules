@@ -3,7 +3,7 @@
     attach: function (context, settings) {
 
       var addressFields = 'input[name$="address]"], input[name*="city"], select[name*="state"], input[name*="zip"]';
-
+      $('form.geocode-form #webform-component-springboard-m2t-message').after('<div class = "legislators"></div>');
       $('form.geocode-form').on('blur', addressFields, function(){
         parseAddressFields();
       });
@@ -46,7 +46,16 @@
           data: data,
           dataType: 'json',
           success: function(data) {
-            console.log(data);
+            console.log(data['response']);
+            response = $.parseJSON(data['response']);
+            text = '<P>';
+            $(response.legislators).each(function(){
+
+              text += '<P>' + this[0].LegalName + '<BR />';
+              text += this[0].DistrictDesc  + '<BR />';
+
+            });
+          $('form.geocode-form div.legislators').html(text);
           },
           error: function(xhr, textStatus, error){
             console.log(error);
