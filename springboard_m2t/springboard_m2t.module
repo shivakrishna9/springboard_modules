@@ -217,10 +217,11 @@ function _springboard_mt2_smarty_lookup() {
 }
 
 function springboard_m2t_transaction_lookup($zip, $plus4) {
-   $query =  array(
+  $query =  array(
     'apikey' => variable_get('springboard_m2t_trans_token', ''),
   );
-  $url = url('http://transaction.dev/legislator/byzip' . $zip . '/' . $plus4, array('query' => $query));
+  $domain = variable_get('springboard_m2t_trans_domain', '');
+  $url = url('http://' . $domain . '/legislator/byzip' . $zip . '/' . $plus4, array('query' => $query));
   $response = drupal_http_request($url);
   if (!empty($response->data)) {
     return $response->data;
@@ -281,12 +282,21 @@ function springboard_m2t_admin() {
     '#description' => t(''),
     '#default_value' => variable_get('springboard_m2t_smarty_htmltoken', ''),
   );
-
-  $form['transaction']['springboard_m2t_trans_token'] = array(
+  $form['transaction'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Transaction server configuration'),
+  );
+  $form['transaction']['springboard_m2t_trans_key'] = array(
     '#type' => 'textfield',
-    '#title' => t('Transaction server token.'),
+    '#title' => t('Transaction server API key.'),
     '#description' => t(''),
-    '#default_value' => variable_get('springboard_m2t_trans_token', ''),
+    '#default_value' => variable_get('springboard_m2t_trans_key', ''),
+  );
+  $form['transaction']['springboard_m2t_trans_domain'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Transaction server domain.'),
+    '#description' => t(''),
+    '#default_value' => variable_get('springboard_m2t_trans_domain', ''),
   );
   return system_settings_form($form);
 }
