@@ -4,6 +4,48 @@
  * Adds statistical tally fields to Springboard donation forms and webforms.
  */
 
+define('SPRINGBOARD_STATS_DEFAULT_HAM_MINIMUM', 1);
+define('SPRINGBOARD_STATS_DEFAULT_HAM_MAXIMUM', 99999);
+
+/**
+ * Implements hook_form_springboard_admin_settings_alter().
+ */
+function springboard_stats_form_springboard_admin_settings_alter(&$form, &$form_state, $form_id) {
+  $form['springboard_stats'] = array(
+    '#type' => 'fieldset',
+    '#title' => t("Statistics"),
+    '#description' => t("Configure the tabulation of usage statistics for donation and user interaction forms."),
+    '#collapsed' => FALSE,
+    '#collapsible' => TRUE,
+  );
+  $form['springboard_stats']['springboard_stats_ham_minimum'] = array(
+    '#type' => 'textfield',
+    '#title' => t("Donation Ham Minimum"),
+    '#description' => t("Donations of lesser amounts will be considered spam and not counted."),
+    '#default_value' => variable_get('springboard_stats_ham_minimum', SPRINGBOARD_STATS_DEFAULT_HAM_MINIMUM),
+    '#size' => 10,
+    '#maxlength' => 10,
+  );
+  $form['springboard_stats']['springboard_stats_ham_maximum'] = array(
+    '#type' => 'textfield',
+    '#title' => t("Donation Ham Maximum"),
+    '#description' => t("Donations of greater amounts will be considered spam and not counted."),
+    '#default_value' => variable_get('springboard_stats_ham_maximum', SPRINGBOARD_STATS_DEFAULT_HAM_MAXIMUM),
+    '#size' => 10,
+    '#maxlength' => 10,
+  );
+  $form['#validate'][] = 'springboard_stats_form_springboard_admin_settings_validate';
+}
+
+function springboard_stats_form_springboard_admin_settings_validate(&$form, &$form_state) {
+  if (!is_numeric($form_state['values']['springboard_stats_ham_minimum']) || $form_state['values']['springboard_stats_ham_minimum'] < 0) {
+    form_set_error('springboard_stats_ham_minimum', t("Donation Ham Minimum must be a number greater than or equal to 0."));
+  }
+  if (!is_numeric($form_state['values']['springboard_stats_ham_maximum']) || $form_state['values']['springboard_stats_ham_maximum'] <= 0) {
+    form_set_error('springboard_stats_ham_maximum', t("Donation Ham Maximum must be a number greater than 0."));
+  }
+}
+
 /**
  * Implements hook_node_type_insert
  */
@@ -87,40 +129,70 @@ function springboard_stats_update_field($node, $field_name) {
       $value = db_query(
         "SELECT COUNT(*) FROM (
           SELECT sid FROM {fundraiser_donation} 
-           WHERE status IN ('payment_received', 'partially_refunded', 'refunded') AND nid=:nid
+           WHERE nid=:nid AND status IN ('payment_received', 'partially_refunded', 'refunded')
+            AND amount >= :ham_minimum AND amount <= :ham_maximum
          ) AS unique_sids;",
-        array(':nid' => $node->nid)
+        array(
+          ':nid' => $node->nid, 
+          ':ham_minimum' => (float)variable_get('springboard_stats_ham_minimum', SPRINGBOARD_STATS_DEFAULT_HAM_MINIMUM),
+          ':ham_maximum' => (float)variable_get('springboard_stats_ham_maximum', SPRINGBOARD_STATS_DEFAULT_HAM_MAXIMUM),
+        )
       )->fetchField();
       break;
     case 'total_transactions':
       $value = db_query(
         "SELECT SUM(ROUND(amount,2)) FROM {fundraiser_donation} 
-          WHERE nid=:nid AND status IN ('payment_received', 'partially_refunded', 'refunded');",
-        array(':nid' => $node->nid)
+          WHERE nid=:nid AND status IN ('payment_received', 'partially_refunded', 'refunded')
+           AND amount >= :ham_minimum AND amount <= :ham_maximum;",
+        array(
+          ':nid' => $node->nid, 
+          ':ham_minimum' => (float)variable_get('springboard_stats_ham_minimum', SPRINGBOARD_STATS_DEFAULT_HAM_MINIMUM),
+          ':ham_maximum' => (float)variable_get('springboard_stats_ham_maximum', SPRINGBOARD_STATS_DEFAULT_HAM_MAXIMUM),
+        )
       )->fetchField();
       break;
     case 'count_failures':
       $value = db_query(
-        "SELECT COUNT(*) FROM {fundraiser_donation} WHERE nid=:nid AND status='failed';",
-        array(':nid' => $node->nid)
+        "SELECT COUNT(*) FROM {fundraiser_donation} WHERE nid=:nid AND status='failed'
+          AND amount >= :ham_minimum AND amount <= :ham_maximum;",
+        array(
+          ':nid' => $node->nid, 
+          ':ham_minimum' => (float)variable_get('springboard_stats_ham_minimum', SPRINGBOARD_STATS_DEFAULT_HAM_MINIMUM),
+          ':ham_maximum' => (float)variable_get('springboard_stats_ham_maximum', SPRINGBOARD_STATS_DEFAULT_HAM_MAXIMUM),
+        )
       )->fetchField();
       break;
     case 'total_failures':
       $value = db_query(
-        "SELECT SUM(ROUND(amount,2)) FROM {fundraiser_donation} WHERE nid=:nid AND status='failed';",
-        array(':nid' => $node->nid)
+        "SELECT SUM(ROUND(amount,2)) FROM {fundraiser_donation} WHERE nid=:nid AND status='failed'
+          AND amount >= :ham_minimum AND amount <= :ham_maximum;",
+        array(
+          ':nid' => $node->nid, 
+          ':ham_minimum' => (float)variable_get('springboard_stats_ham_minimum', SPRINGBOARD_STATS_DEFAULT_HAM_MINIMUM),
+          ':ham_maximum' => (float)variable_get('springboard_stats_ham_maximum', SPRINGBOARD_STATS_DEFAULT_HAM_MAXIMUM),
+        )
       )->fetchField();
       break;
     case 'count_pending':
       $value = db_query(
-        "SELECT COUNT(*) FROM {fundraiser_donation} WHERE nid=:nid AND status='pending_future_payment';",
-        array(':nid' => $node->nid)
+        "SELECT COUNT(*) FROM {fundraiser_donation} WHERE nid=:nid AND status='pending_future_payment'
+          AND amount >= :ham_minimum AND amount <= :ham_maximum;",
+        array(
+          ':nid' => $node->nid, 
+          ':ham_minimum' => (float)variable_get('springboard_stats_ham_minimum', SPRINGBOARD_STATS_DEFAULT_HAM_MINIMUM),
+          ':ham_maximum' => (float)variable_get('springboard_stats_ham_maximum', SPRINGBOARD_STATS_DEFAULT_HAM_MAXIMUM),
+        )
       )->fetchField();
       break;
     case 'total_pending':
       $value = db_query(
-        "SELECT SUM(ROUND(amount,2)) FROM {fundraiser_donation} WHERE nid=:nid AND status='pending_future_payment';",
-        array(':nid' => $node->nid)
+        "SELECT SUM(ROUND(amount,2)) FROM {fundraiser_donation} WHERE nid=:nid AND status='pending_future_payment'
+          AND amount >= :ham_minimum AND amount <= :ham_maximum;",
+        array(
+          ':nid' => $node->nid, 
+          ':ham_minimum' => (float)variable_get('springboard_stats_ham_minimum', SPRINGBOARD_STATS_DEFAULT_HAM_MINIMUM),
+          ':ham_maximum' => (float)variable_get('springboard_stats_ham_maximum', SPRINGBOARD_STATS_DEFAULT_HAM_MAXIMUM),
+        )
       )->fetchField();
       break;
     case 'count_sustainers':
@@ -128,8 +200,12 @@ function springboard_stats_update_field($node, $field_name) {
       $value = db_query(
         "SELECT COUNT(*)
           FROM {fundraiser_donation} AS fd INNER JOIN {fundraiser_sustainers} AS fs ON fs.did=fd.did
-          WHERE nid=:nid AND status='payment_received';",
-        array(':nid' => $node->nid)
+          WHERE nid=:nid AND status='payment_received' AND fd.amount >= :ham_minimum AND fd.amount <= :ham_maximum;",
+        array(
+          ':nid' => $node->nid, 
+          ':ham_minimum' => (float)variable_get('springboard_stats_ham_minimum', SPRINGBOARD_STATS_DEFAULT_HAM_MINIMUM),
+          ':ham_maximum' => (float)variable_get('springboard_stats_ham_maximum', SPRINGBOARD_STATS_DEFAULT_HAM_MAXIMUM),
+        )
       )->fetchField();
       break;
     case 'total_sustainers':
@@ -137,23 +213,36 @@ function springboard_stats_update_field($node, $field_name) {
       $value = db_query(
         "SELECT SUM(ROUND(fd.amount,2))
           FROM {fundraiser_donation} AS fd INNER JOIN {fundraiser_sustainers} AS fs ON fs.did=fd.did
-          WHERE nid=:nid AND status IN ('payment_received', 'partially_refunded', 'refunded');",
-        array(':nid' => $node->nid)
+          WHERE nid=:nid AND status IN ('payment_received', 'partially_refunded', 'refunded')
+           AND fd.amount >= :ham_minimum AND fd.amount <= :ham_maximum;",
+        array(
+          ':nid' => $node->nid, 
+          ':ham_minimum' => (float)variable_get('springboard_stats_ham_minimum', SPRINGBOARD_STATS_DEFAULT_HAM_MINIMUM),
+          ':ham_maximum' => (float)variable_get('springboard_stats_ham_maximum', SPRINGBOARD_STATS_DEFAULT_HAM_MAXIMUM),
+        )
       )->fetchField();
       if (!is_numeric($value)) $value = 0;
       break;
     case 'count_refunds':
       $value = db_query(
         "SELECT COUNT(*) FROM {fundraiser_donation} d INNER JOIN {fundraiser_refund} r ON r.did=d.did 
-          WHERE d.nid=:nid;",
-        array(':nid' => $node->nid)
+          WHERE nid=:nid AND status='payment_received' AND d.amount >= :ham_minimum AND d.amount <= :ham_maximum;",
+        array(
+          ':nid' => $node->nid, 
+          ':ham_minimum' => (float)variable_get('springboard_stats_ham_minimum', SPRINGBOARD_STATS_DEFAULT_HAM_MINIMUM),
+          ':ham_maximum' => (float)variable_get('springboard_stats_ham_maximum', SPRINGBOARD_STATS_DEFAULT_HAM_MAXIMUM),
+        )
       )->fetchField();
       break;
     case 'total_refunds':
       $value = db_query(
         "SELECT SUM(ROUND(r.amount,2)) FROM {fundraiser_donation} d INNER JOIN {fundraiser_refund} r ON r.did=d.did 
-          WHERE nid=:nid;",
-        array(':nid' => $node->nid)
+          WHERE nid=:nid AND status='payment_received' AND d.amount >= :ham_minimum AND d.amount <= :ham_maximum;",
+        array(
+          ':nid' => $node->nid, 
+          ':ham_minimum' => (float)variable_get('springboard_stats_ham_minimum', SPRINGBOARD_STATS_DEFAULT_HAM_MINIMUM),
+          ':ham_maximum' => (float)variable_get('springboard_stats_ham_maximum', SPRINGBOARD_STATS_DEFAULT_HAM_MAXIMUM),
+        )
       )->fetchField();
       break;
   }
@@ -176,18 +265,28 @@ function springboard_stats_update_all_fields($node) {
   $node->sbstats_count_conversions[LANGUAGE_NONE][0]['value'] = db_query(
     "SELECT COUNT(*) FROM (
       SELECT sid FROM {fundraiser_donation} 
-        WHERE status IN ('payment_received', 'partially_refunded', 'refunded') AND nid=:nid
+       WHERE status IN ('payment_received', 'partially_refunded', 'refunded') AND nid=:nid
+        AND status='payment_received' AND amount >= :ham_minimum AND amount <= :ham_maximum
     ) AS unique_sids;",
-    array(':nid' => $node->nid)
+    array(
+      ':nid' => $node->nid, 
+      ':ham_minimum' => (float)variable_get('springboard_stats_ham_minimum', SPRINGBOARD_STATS_DEFAULT_HAM_MINIMUM),
+      ':ham_maximum' => (float)variable_get('springboard_stats_ham_maximum', SPRINGBOARD_STATS_DEFAULT_HAM_MAXIMUM),
+    )
   )->fetchField();
   
   // Count and total up straight donation rows.
   $q = db_query(
     "SELECT status, COUNT(*) AS count, SUM(ROUND(amount,2)) AS total
       FROM {fundraiser_donation}
-      WHERE nid=:nid AND status IN ('payment_received', 'pending_future_payment', 'failed', 'partially_refunded', 'refunded')
+      WHERE status IN ('payment_received', 'pending_future_payment', 'failed', 'partially_refunded', 'refunded')
+       AND nid=:nid AND amount >= :ham_minimum AND amount <= :ham_maximum
       GROUP BY status;",
-    array(':nid' => $node->nid)
+    array(
+      ':nid' => $node->nid, 
+      ':ham_minimum' => (float)variable_get('springboard_stats_ham_minimum', SPRINGBOARD_STATS_DEFAULT_HAM_MINIMUM),
+      ':ham_maximum' => (float)variable_get('springboard_stats_ham_maximum', SPRINGBOARD_STATS_DEFAULT_HAM_MAXIMUM),
+    )
   );
   $status = array(
     'payment_received' => 'transactions',
@@ -210,8 +309,12 @@ function springboard_stats_update_all_fields($node) {
     $r = db_query(
       "SELECT COUNT(*) AS count, SUM(ROUND(fd.amount,2)) AS total
         FROM {fundraiser_donation} AS fd INNER JOIN {fundraiser_sustainers} AS fs ON fs.did=fd.did
-        WHERE nid=:nid AND status='payment_received';",
-      array(':nid' => $node->nid)
+        WHERE status='payment_received' AND nid=:nid AND fd.amount >= :ham_minimum AND fd.amount <= :ham_maximum;",
+      array(
+        ':nid' => $node->nid, 
+        ':ham_minimum' => (float)variable_get('springboard_stats_ham_minimum', SPRINGBOARD_STATS_DEFAULT_HAM_MINIMUM),
+        ':ham_maximum' => (float)variable_get('springboard_stats_ham_maximum', SPRINGBOARD_STATS_DEFAULT_HAM_MAXIMUM),
+      )
     )->fetchAssoc();
     $node->sbstats_count_sustainers[LANGUAGE_NONE][0]['value'] = $r['count'];
     $node->sbstats_total_sustainers[LANGUAGE_NONE][0]['value'] = is_numeric($r['total']) ? $r['total'] : 0;
@@ -221,8 +324,12 @@ function springboard_stats_update_all_fields($node) {
   $r = db_query(
     "SELECT COUNT(*) AS count, SUM(ROUND(r.amount,2)) AS total 
       FROM {fundraiser_donation} d INNER JOIN {fundraiser_refund} r ON r.did=d.did
-      WHERE nid=:nid;",
-    array(':nid' => $node->nid)
+      WHERE nid=:nid AND d.amount >= :ham_minimum AND d.amount <= :ham_maximum;",
+    array(
+      ':nid' => $node->nid, 
+      ':ham_minimum' => (float)variable_get('springboard_stats_ham_minimum', SPRINGBOARD_STATS_DEFAULT_HAM_MINIMUM),
+      ':ham_maximum' => (float)variable_get('springboard_stats_ham_maximum', SPRINGBOARD_STATS_DEFAULT_HAM_MAXIMUM),
+    )
   )->fetchAssoc();
   $node->sbstats_count_refunds[LANGUAGE_NONE][0]['value'] = $r['count'];
   $node->sbstats_total_refunds[LANGUAGE_NONE][0]['value'] = is_numeric($r['total']) ? $r['total'] : 0;
