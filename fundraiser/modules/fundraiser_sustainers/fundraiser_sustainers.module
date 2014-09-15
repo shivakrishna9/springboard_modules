@@ -1305,7 +1305,8 @@ function fundraiser_sustainers_donation_amount_form_submit($form, &$form_state) 
 function fundraiser_sustainers_donation_date_form($form, &$form_state, $donation) {
 
   $recurring = _fundraiser_sustainers_get_donations_recurr_remaining($donation->did);
-
+  $custom_day = db_query("SELECT day FROM {fundraiser_sustainers_charge_date} WHERE master_did = :did", array(':did' => $donation->recurring->master_did))->fetchField();
+  $next = isset($recurring[0]->next_charge) ? date('j', $recurring[0]->next_charge) : 1;
   $form['master_did'] = array(
     '#type' => 'hidden',
     '#value' => $donation->recurring->master_did,
@@ -1317,7 +1318,7 @@ function fundraiser_sustainers_donation_date_form($form, &$form_state, $donation
     '#description' => t('This will change the date on which your recurring donation processes each month, beginning with next month\'s transaction.'),
     '#options' => $dates,
     '#multiple' => FALSE,
-    '#default_value' => isset($recurring[0]->next_charge) ? date('j', $recurring[0]->next_charge) : 1,
+    '#default_value' => !empty($custom_day) ? $custom_day : $next,
   );
   $form['submit'] = array(
     '#type' => 'submit',
@@ -1332,12 +1333,34 @@ function fundraiser_sustainers_donation_date_form($form, &$form_state, $donation
  */
 function fundraiser_sustainers_donation_date_form_submit($form, &$form_state) {
   $master_did = $form_state['values']['master_did'];
+  $new_day = $form_state['values']['fundraiser_sustainers_change_dates'];
+
+  //update the sustainers charges with new date
+  fundraiser_sustainers_change_charge_date($master_did, $new_day);
+  
+  //record the change in db
+  $data = array(
+    'master_did' => $master_did,
+    'day' => $new_day,
+  );
+  $already_has_custom_date = db_query("SELECT day FROM {fundraiser_sustainers_charge_date} WHERE master_did = :did", array(':did' => $master_did))->fetchField();
+  if(empty($already_has_custom_date)) {
+    drupal_write_record('fundraiser_sustainers_charge_date', $data);
+  }
+  else {
+    drupal_write_record('fundraiser_sustainers_charge_date', $data, 'master_did');
+  }
+  drupal_set_message(t('The date of all future donations has been updated'));
+}
+
+/**
+ * Calculates new next charge dates
+ */
+function fundraiser_sustainers_change_charge_date($master_did, $new_day) {
   $donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
   $current_time = _fundraiser_sustainers_explode_date(time());
-
   foreach ($donations as $donation) {
     $old_charge_date = $donation->next_charge;
-
     // Ignore orders that are ready to process.
     if ($old_charge_date < time()) {
       continue;
@@ -1350,9 +1373,7 @@ function fundraiser_sustainers_donation_date_form_submit($form, &$form_state) {
     }
     else {
       $donation = fundraiser_donation_get_donation($donation->did);
-      $new_day = $form_state['values']['fundraiser_sustainers_change_dates'];
       $original_charge_date = date('j', $old_charge_date);
-
       $delta = ($original_charge_date - $new_day) * 86400;
       $time_delta = $delta * -1;
 
@@ -1393,7 +1414,6 @@ function fundraiser_sustainers_donation_date_form_submit($form, &$form_state) {
       }
     }
   }
-  drupal_set_message(t('The date of all future donations has been updated'));
 }
 
 function _fundraiser_sustainers_explode_date($timestamp) {
@@ -1658,6 +1678,12 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
         $master_donation->donation['amount'] = $donation->donation['amount'];
         // Create new orders.
         _fundraiser_sustainers_create_future_orders($master_donation, $expires['month'], $expires['year'], $source_donation, $master_donation->recurring->next_charge);
+      }
+      //if a custom charge date was set by an admin, update the charge dates.
+      $date_mode = (module_exists('fundraiser_date_mode') && variable_get('fundraiser_date_mode_set_date_mode', 0) == 1) ? TRUE : FALSE;
+      $custom_charge_date = db_query("SELECT day FROM {fundraiser_sustainers_charge_date} WHERE master_did = :did", array(':did' => $master_did))->fetchField();
+      if(!empty($custom_charge_date) && !$date_mode)  {
+        fundraiser_sustainers_change_charge_date($master_did, $custom_charge_date);
       }
     }
   }
