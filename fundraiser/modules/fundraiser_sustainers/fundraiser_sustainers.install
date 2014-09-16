@@ -476,7 +476,7 @@ function fundraiser_sustainers_update_7006(&$sandbox) {
  * Adds an additional table to store changed cahrge dates.
  */
 function fundraiser_sustainers_update_7007() {
-  if(!db_table_exists('fundraiser_sustainers_charge_date')) {
+  if (!db_table_exists('fundraiser_sustainers_charge_date')) {
     $schema = drupal_get_schema('fundraiser_sustainers_charge_date', TRUE);
     db_create_table('fundraiser_sustainers_charge_date', $schema);
   }

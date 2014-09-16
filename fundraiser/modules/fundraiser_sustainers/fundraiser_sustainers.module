@@ -1052,7 +1052,7 @@ function fundraiser_sustainers_edit_form($did) {
     $number = '**** **** **** '  . $donation->data['payment_fields']['credit']['card_number'];
     $type = t('Card ');
   }
-  elseif(isset($donation->data['payment_fields']['bank account']['accNum'])) {
+  elseif (isset($donation->data['payment_fields']['bank account']['accNum'])) {
     $number = '********* ' . $donation->data['payment_fields']['bank account']['accNum'];
     $type = t('Checking Account');
   }
@@ -1068,7 +1068,7 @@ function fundraiser_sustainers_edit_form($did) {
   '<dd>' . _fundraiser_sustainers_count_donations_recurr_processed($did) . '</dd>' .
   '<dt>Recurring Charges Remaining</dt>' .
   '<dd>' . $remaining_donation_count . '</dd>';
-  if($number) {
+  if ($number) {
     $payment_info .= '<dt>'. $type . ' Number</dt>' .
     '<dd>' . $number . '</dd>';
   }  
@@ -1147,9 +1147,9 @@ function fundraiser_sustainers_edit_form($did) {
   if ($remaining_donation_count > 0 && empty($cancelled)) {
     $donation_amount_form_array = drupal_get_form('fundraiser_sustainers_donation_amount_form', $donation, $next_donation);
     $donation_amount_form = drupal_render($donation_amount_form_array);
-    if(user_access('set new recurring charge date')) {
+    if (user_access('set new recurring charge date')) {
       // If date mode is enabled and on, do not support changing the payment date.
-      if(module_exists('fundraiser_date_mode') && variable_get('fundraiser_date_mode_set_date_mode', 0) == 1) {
+      if (module_exists('fundraiser_date_mode') && variable_get('fundraiser_date_mode_set_date_mode', 0) == 1) {
         $donation_date_form = '';
       }
       else {
@@ -1335,16 +1335,16 @@ function fundraiser_sustainers_donation_date_form_submit($form, &$form_state) {
   $master_did = $form_state['values']['master_did'];
   $new_day = $form_state['values']['fundraiser_sustainers_change_dates'];
 
-  //update the sustainers charges with new date
+  // update the sustainers charges with new date.
   fundraiser_sustainers_change_charge_date($master_did, $new_day);
   
-  //record the change in db
+  // record the change in db.
   $data = array(
     'master_did' => $master_did,
     'day' => $new_day,
   );
   $already_has_custom_date = db_query("SELECT day FROM {fundraiser_sustainers_charge_date} WHERE master_did = :did", array(':did' => $master_did))->fetchField();
-  if(empty($already_has_custom_date)) {
+  if (empty($already_has_custom_date)) {
     drupal_write_record('fundraiser_sustainers_charge_date', $data);
   }
   else {
@@ -1354,7 +1354,7 @@ function fundraiser_sustainers_donation_date_form_submit($form, &$form_state) {
 }
 
 /**
- * Calculates new next charge dates
+ * Calculates new next charge dates.
  */
 function fundraiser_sustainers_change_charge_date($master_did, $new_day) {
   $donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
@@ -1679,10 +1679,10 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
         // Create new orders.
         _fundraiser_sustainers_create_future_orders($master_donation, $expires['month'], $expires['year'], $source_donation, $master_donation->recurring->next_charge);
       }
-      //if a custom charge date was set by an admin, update the charge dates.
+      // if a custom charge date was set by an admin, update the charge dates.
       $date_mode = (module_exists('fundraiser_date_mode') && variable_get('fundraiser_date_mode_set_date_mode', 0) == 1) ? TRUE : FALSE;
       $custom_charge_date = db_query("SELECT day FROM {fundraiser_sustainers_charge_date} WHERE master_did = :did", array(':did' => $master_did))->fetchField();
-      if(!empty($custom_charge_date) && !$date_mode)  {
+      if (!empty($custom_charge_date) && !$date_mode)  {
         fundraiser_sustainers_change_charge_date($master_did, $custom_charge_date);
       }
     }
