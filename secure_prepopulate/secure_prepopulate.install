@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- *   Secure pre-populate install/schema hooks
+ * Secure pre-populate install/schema hooks.
  */
 
 /**
@@ -10,7 +10,7 @@
 function secure_prepopulate_requirements($phase) {
   $severity = REQUIREMENT_ERROR;
   $status = 'missing';
-  // check for mcrypt extension
+  // Check for mcrypt extension.
   if (extension_loaded("mcrypt")) {
     $severity = REQUIREMENT_OK;
     $status = 'installed';
@@ -72,8 +72,6 @@ function secure_prepopulate_schema() {
  * Add indexes to tables.
  */
 function secure_prepopulate_update_7001() {
-  $ret = array();
-  $ret[] = db_add_index('secure_prepopulate_expired', 'hash', array('hash'));
-  $ret[] = db_add_index('secure_prepopulate_expired', 'expired', array('expire_date'));
-  return $ret;
+  db_add_index('secure_prepopulate_expired', 'hash', array('hash'));
+  db_add_index('secure_prepopulate_expired', 'expired', array('expire_date'));
 }
