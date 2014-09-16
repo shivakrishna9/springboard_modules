@@ -295,7 +295,7 @@ function fundraiser_sustainers_skip_submit($form, &$form_state) {
     'cancellation_reason = \'skipped by admin\' ' .
     'WHERE did = :did', array(':did' => $donation->did)
   );
-  
+
   if (module_exists('salesforce_genmap')) {
     salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
   }
@@ -1056,7 +1056,7 @@ function fundraiser_sustainers_edit_form($did) {
     $number = '********* ' . $donation->data['payment_fields']['bank account']['accNum'];
     $type = t('Checking Account');
   }
-   
+
   // Gather further donation data.
   $remaining_donation_count = _fundraiser_sustainers_count_donations_recurr_remaining($did);
   $payment_info = '<div id="payment-info">' .
@@ -1071,7 +1071,7 @@ function fundraiser_sustainers_edit_form($did) {
   if ($number) {
     $payment_info .= '<dt>'. $type . ' Number</dt>' .
     '<dd>' . $number . '</dd>';
-  }  
+  }
   $payment_info .= '</dl>' .
   '</div>';
 
@@ -1092,7 +1092,7 @@ function fundraiser_sustainers_edit_form($did) {
   // Format payment schedule into a data table
   $donation_set = _fundraiser_sustainers_get_donations_recurr_by_member($did);
   $donations_header = array('Amount', 'Charge Date', 'Processed Status');
-  
+
 
   if (user_access('fastforward recurring donations')) {
     // Add a button to fastforward this particular donation
@@ -1335,10 +1335,10 @@ function fundraiser_sustainers_donation_date_form_submit($form, &$form_state) {
   $master_did = $form_state['values']['master_did'];
   $new_day = $form_state['values']['fundraiser_sustainers_change_dates'];
 
-  // update the sustainers charges with new date.
+  // Update the sustainers charges with new date.
   fundraiser_sustainers_change_charge_date($master_did, $new_day);
-  
-  // record the change in db.
+
+  // Record the change in db.
   $data = array(
     'master_did' => $master_did,
     'day' => $new_day,
@@ -1679,7 +1679,7 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
         // Create new orders.
         _fundraiser_sustainers_create_future_orders($master_donation, $expires['month'], $expires['year'], $source_donation, $master_donation->recurring->next_charge);
       }
-      // if a custom charge date was set by an admin, update the charge dates.
+      // If a custom charge date was set by an admin, update the charge dates.
       $date_mode = (module_exists('fundraiser_date_mode') && variable_get('fundraiser_date_mode_set_date_mode', 0) == 1) ? TRUE : FALSE;
       $custom_charge_date = db_query("SELECT day FROM {fundraiser_sustainers_charge_date} WHERE master_did = :did", array(':did' => $master_did))->fetchField();
       if (!empty($custom_charge_date) && !$date_mode)  {
