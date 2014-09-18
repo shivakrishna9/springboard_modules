@@ -5,7 +5,9 @@ DateMigrateExampleUnitTest
 CoderReviewStyleTest
 CoderUpgradeWebTestCase
 FundraiserCommerceGatewayAuthnetTest
+FundraiserCommerceGatewayTest
 FundraiserSustainerTest
+MarketSourceTestCase
 SalesforceGenmapEntitiesTestCase
 SalesforceGenmapTestCase
 SalesforceWebformMapTestCase
@@ -31,3 +33,6 @@ SalesforceSyncQueueTokenTestCase
 SalesforceSyncSyncTestCase
 SalesforceSyncTestCase
 SalesforceSyncTokenTestCase
+securePrepopulateUnitTestCase
+SpringboardAPITestCase
+SpringboardSocialFunctionalTest
