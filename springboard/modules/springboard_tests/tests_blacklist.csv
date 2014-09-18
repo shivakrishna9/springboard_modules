@@ -6,6 +6,7 @@ CoderReviewStyleTest
 CoderUpgradeWebTestCase
 FundraiserCommerceGatewayAuthnetTest
 FundraiserCommerceGatewayTest
+FundraiserDateModeTest
 FundraiserSustainerTest
 MarketSourceTestCase
 SalesforceGenmapEntitiesTestCase
