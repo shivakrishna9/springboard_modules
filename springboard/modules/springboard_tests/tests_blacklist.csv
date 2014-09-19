@@ -5,6 +5,7 @@ DateMigrateExampleUnitTest
 CoderReviewStyleTest
 CoderUpgradeWebTestCase
 EmailWrappersTestCase
+FundraiserCloneTest
 FundraiserCommerceEncryptTest
 FundraiserCommerceGatewayAuthnetTest
 FundraiserCommerceGatewayTest
@@ -40,7 +41,9 @@ SalesforceSyncTokenTestCase
 securePrepopulateUnitTestCase
 SpringboardAPITestCase
 SpringboardSocialFunctionalTest
+WebformGoalsIntegratedTestCase
 WebformGoalsUnitTestCase
+WebformTokenSelectorTestCase
 WebformUserConfigTest
 WebformUserConfirmationTest
 WebformUserSubmissionTest
