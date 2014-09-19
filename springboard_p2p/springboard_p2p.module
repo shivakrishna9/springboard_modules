@@ -389,7 +389,7 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
         if (isset($campaign_node->field_p2p_private_access_message[$language][0]['value'])) {
           $message = $campaign_node->field_p2p_private_access_message[$language][0]['value'];
           drupal_set_message(check_plain($message));
-          drupal_set_message(t('The campaign !campaign requires approval. You will be notified via email after your request has been reviewed', array('!campaign' => $campaign_node->title)));
+          drupal_set_message(t('The campaign @campaign requires approval. You will be notified via email after your request has been reviewed', array('@campaign' => $campaign_node->title)));
         }
 
         $event = new SpringboardP2pEvents();
@@ -1459,7 +1459,7 @@ function springboard_p2p_set_redirect($form, &$form_state) {
       if ($private && !springboard_p2p_private_campaign_user_is_authorized($uid, $campaign_id)) {
         $approval = new SpringboardP2pPrivateCampaignApproval($uid, $campaign_id);
         $approval->request();
-        drupal_set_message(t('The campaign !campaign requires approval. You will be notified via email after your request has been reviewed', array('!campaign' => $campaign->title)));
+        drupal_set_message(t('The campaign @campaign requires approval. You will be notified via email after your request has been reviewed', array('@campaign' => $campaign->title)));
         $form_state['redirect'] = 'user/' . $uid . '/personal-campaigns';
 
         $account = user_load($uid);
