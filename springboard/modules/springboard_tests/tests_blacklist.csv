@@ -4,6 +4,7 @@ MemCacheSavingCase
 DateMigrateExampleUnitTest
 CoderReviewStyleTest
 CoderUpgradeWebTestCase
+EmailWrappersTestCase
 FundraiserCommerceGatewayAuthnetTest
 FundraiserCommerceGatewayTest
 FundraiserDateModeTest
