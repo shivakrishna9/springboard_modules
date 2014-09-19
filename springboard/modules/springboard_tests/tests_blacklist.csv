@@ -4,6 +4,7 @@ MemCacheSavingCase
 DateMigrateExampleUnitTest
 CoderReviewStyleTest
 CoderUpgradeWebTestCase
+DsrTestCase
 EmailWrappersTestCase
 FundraiserCloneTest
 FundraiserCommerceEncryptTest
@@ -41,6 +42,8 @@ SalesforceSyncTokenTestCase
 securePrepopulateUnitTestCase
 SpringboardAPITestCase
 SpringboardSocialFunctionalTest
+ValidationLogTestCase
+WebformAddToAllTestCase
 WebformGoalsIntegratedTestCase
 WebformGoalsUnitTestCase
 WebformTokenSelectorTestCase
