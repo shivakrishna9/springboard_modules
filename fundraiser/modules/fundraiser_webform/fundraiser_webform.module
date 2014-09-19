@@ -697,10 +697,10 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
     $message .= "\n\nSubmitted Values:\n\n";
     foreach ($submission_fields as $key => $value) {
       if (is_array($value)) {
-        $message .= $key . ': ' . print_r($value, 1) . "\n";
+        $message .= $key . ': ' . check_plain(print_r($value, 1)) . "\n";
       }
       else {
-        $message .= $key . ': ' . $value . "\n";
+        $message .= $key . ': ' . check_plain($value) . "\n";
       }
     }
     watchdog('fundraiser_webform', $message, NULL, WATCHDOG_DEBUG, NULL);
