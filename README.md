@@ -1,17 +1,8 @@
-About
------
+# About
 
-This project contains **only** the Springboard-specific modules: it is not a
-ready-to use Springboard package.
+This project contains only the Springboard-specific modules. It is not a
+ready-to-use Springboard package. We provide packages [on this project's releases page](https://github.com/JacksonRiver/springboard_modules/releases).
 
-You should only download or checkout this project if you have an existing Drupal
-site where you'd like to install Springboard functionality.	If that is the case,
-see the documentation on GoSpringboard.com for instructions:
-[Installing In An Existing Drupal Site](http://www.gospringboard.com/documentation/installing-springboard/installing-existing-drupal-site)
+If you'd like to build Springboard manually, you should checkout the [Springboard-Build](https://github.com/JacksonRiver/Springboard-Build) project, and use [drush make](http://drupal.org/project/drush_make) to create the package.
 
-If you are creating a new site from scratch, you have two options:
-
-* The easy way: [follow the installation instructions on GoSpringboard.com](http://www.gospringboard.com/documentation/installing-springboard/installing-distribution)
-* The nerdy way: Checkout the [Springboard-Build](https://github.com/JacksonRiver/Springboard-Build)
-  project, and use [drush make](http://drupal.org/project/drush_make) to install
-  it.
+You should only need to checkout this repo directly if you want to contribute to the code. If you would like to regularly contribute to Springboard, consider [working for us](http://www.jacksonriver.com/about/jobs).
