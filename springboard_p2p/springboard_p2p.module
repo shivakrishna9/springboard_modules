@@ -537,7 +537,7 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
   $form['revision_information']['#access'] = FALSE;
 
   // Add styles and ajax lookup to campaign url field.
-  $form['field_p2p_personal_campaign_url'][$language][0]['value']['#field_prefix'] = url(variable_get('springboard_p2p_base_path', 'springboard_p2p'), array('absolute' => TRUE)) . '/';
+  $form['field_p2p_personal_campaign_url'][$language][0]['value']['#field_prefix'] = url(springboard_p2p_get_personal_campaign_base_path(), array('absolute' => TRUE)) . '/';
   $form['field_p2p_personal_campaign_url'][$language][0]['value']['#attributes'] = array('class' => array('container-inline'));
   $form['field_p2p_personal_campaign_url'][$language]['#prefix'] = '<div id="personal-campaign-url-wrapper">';
   $form['field_p2p_personal_campaign_url'][$language]['#suffix'] = '</div>';
@@ -848,6 +848,21 @@ function springboard_p2p_full_alias_exists($base_path, $alias, $counter = -1) {
   }
 
   return FALSE;
+}
+
+/**
+ * Gets the pathauto pattern for personal campaigns and returns the base path.
+ *
+ * @return string
+ *   The base path.
+ */
+function springboard_p2p_get_personal_campaign_base_path() {
+  $variable = 'pathauto_node_p2p_personal_campaign_pattern';
+
+  $pattern = variable_get($variable, '');
+  $base = str_replace('/[node:field-p2p-personal-campaign-url]', '', $pattern);
+
+  return $base;
 }
 
 /**
@@ -2523,7 +2538,7 @@ function springboard_p2p_preprocess_page(&$vars) {
   }
 
   // Provide the file path for page wrappers to use.
-  $vars['filespath'] =  '/' . variable_get('file_public_path', conf_path() . '/files');
+  $vars['filespath'] = '/' . variable_get('file_public_path', conf_path() . '/files');
 
 }
 
