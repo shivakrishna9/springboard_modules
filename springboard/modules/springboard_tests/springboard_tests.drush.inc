@@ -80,12 +80,6 @@ function drush_springboard_tests_run_the_tests($type = '') {
 
   drush_invoke_process('@self', 'test-clean');
 
-//  $xml = drush_get_option('xml', '');
-//  $options = array();
-//  if ($xml) {
-//    $options['xml'] = $xml;
-//  }
-
   foreach ($tests as $test) {
     drush_invoke('test-run', array($test));
   }

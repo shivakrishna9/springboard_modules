@@ -43,6 +43,3 @@ SpringboardAPITestCase
 SpringboardSocialFunctionalTest
 ValidationLogTestCase
 WebformAddToAllTestCase
-WebformGoalsIntegratedTestCase
-WebformGoalsUnitTestCase
-WebformTokenSelectorTestCase
