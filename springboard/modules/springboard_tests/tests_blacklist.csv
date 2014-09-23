@@ -46,5 +46,3 @@ WebformAddToAllTestCase
 WebformGoalsIntegratedTestCase
 WebformGoalsUnitTestCase
 WebformTokenSelectorTestCase
-WebformUserConfigTest
-WebformUserConfirmationTest
