@@ -48,4 +48,3 @@ WebformGoalsUnitTestCase
 WebformTokenSelectorTestCase
 WebformUserConfigTest
 WebformUserConfirmationTest
-WebformUserSubmissionTest
