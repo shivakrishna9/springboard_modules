@@ -86,5 +86,8 @@ function drush_springboard_tests_run_the_tests($type = '') {
 //    $options['xml'] = $xml;
 //  }
 
-  return drush_invoke('test-run', array(implode(',', $tests)));
+  foreach ($tests as $test) {
+    drush_invoke('test-run', array($test));
+  }
+
 }
