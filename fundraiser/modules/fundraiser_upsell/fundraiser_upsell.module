@@ -58,6 +58,37 @@ function fundraiser_upsell_menu() {
   return $items;
 }
 
+
+/** 
+ * Implements hook_springboard_admin_alias_patterns().
+ */
+function fundraiser_upsell_springboard_admin_alias_patterns() {
+    return array(
+    // Fundraiser upsell page.
+    'admin/springboard/options/fundraiser/fundraiser_upsell' => array(
+      'path' => array(
+        'regex' => '|^/admin/springboard/options/fundraiser/fundraiser_upsell$|',
+        'replacement' => 'admin/springboard/options/fundraiser/fundraiser_upsell',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/settings/config/upsell$|',
+        'replacement' => 'springboard/settings/config/upsell',
+      ),
+    ),
+    // Fundraiser upsell thank you page.
+    'admin/springboard/options/fundraiser/fundraiser_upsell/thank-you' => array(
+      'path' => array(
+        'regex' => '|^/admin/springboard/options/fundraiser/fundraiser_upsell/thank-you$|',
+        'replacement' => 'admin/springboard/options/fundraiser/fundraiser_upsell/thank-you',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/settings/config/upsell-thank-you$|',
+        'replacement' => 'springboard/settings/config/upsell-thank-you',
+      ),
+    ),
+  );
+}
+
 /**
  * Implements hook_permission().
  */

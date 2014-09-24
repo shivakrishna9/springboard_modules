@@ -153,6 +153,25 @@ function sb_social_admin_paths() {
   }
 }
 
+/** 
+ * Implements hook_springboard_admin_alias_patterns().
+ */
+function sb_social_springboard_admin_alias_patterns() {
+    return array(
+    // Springboard Social config page.
+    'admin/config/services/springboard_social' => array(
+      'path' => array(
+        'regex' => '|^/admin/config/services/springboard_social$|',
+        'replacement' => 'admin/config/services/springboard_social',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/sb-social$|',
+        'replacement' => 'springboard/sb-social',
+      ),
+    ),
+  );
+}
+
 /**
  * Implements hook_form_FORM_ID_alter().
  *

@@ -909,17 +909,6 @@ function springboard_admin_springboard_admin_alias_patterns() {
         'replacement' => 'springboard/reports/donations/%1',
       ),
     ),
-    // Webform Goals admin page.
-    'admin/config/content/webform_goals' => array(
-      'path' => array(
-        'regex' => '|^/admin/config/content/webform_goals$|',
-        'replacement' => 'admin/config/content/webform_goals',
-      ),
-      'alias' => array(
-        'regex' => '|^springboard/goals$|',
-        'replacement' => 'springboard/goals',
-      ),
-    ),
     // Webform AB content page.
     'admin/config/content/webform_ab' => array(
       'path' => array(
@@ -942,28 +931,6 @@ function springboard_admin_springboard_admin_alias_patterns() {
         'replacement' => 'springboard/multivariate-testing',
       ),
     ),    
-    // Springboard Social config page.
-    'admin/config/services/springboard_social' => array(
-      'path' => array(
-        'regex' => '|^/admin/config/services/springboard_social$|',
-        'replacement' => 'admin/config/services/springboard_social',
-      ),
-      'alias' => array(
-        'regex' => '|^springboard/sb-social$|',
-        'replacement' => 'springboard/sb-social',
-      ),
-    ),
-    // Market Source config page.
-    'admin/config/search/market-source' => array(
-      'path' => array(
-        'regex' => '|^/admin/config/search/market-source$|',
-        'replacement' => 'admin/config/search/market-source',
-      ),
-      'alias' => array(
-        'regex' => '|^springboard/market-source$|',
-        'replacement' => 'springboard/market-source',
-      ),
-    ),
     // Google Analytics.
     'admin/config/system/googleanalytics' => array(
       'path' => array(
@@ -973,50 +940,6 @@ function springboard_admin_springboard_admin_alias_patterns() {
       'alias' => array(
         'regex' => '|^springboard/ga$|',
         'replacement' => 'springboard/ga',
-      ),
-    ),
-    // Contacts report.
-    'admin/springboard/reports/contacts' => array(
-      'path' => array(
-        'regex' => '|^/admin/springboard/reports/contacts$|',
-        'replacement' => 'admin/springboard/reports/contacts',
-      ),
-      'alias' => array(
-        'regex' => '|^springboard/reports/contacts$|',
-        'replacement' => 'springboard/reports/contacts',
-      ),
-    ),
-    // Salesforce reports.
-    'admin/springboard/reports/integration-reports/%extra' => array(
-      'path' => array(
-        'regex' => '|^/admin/springboard/reports/integration-reports((.*)*)$|',
-        'replacement' => 'admin/springboard/reports/integration-reports/%1',
-      ),
-      'alias' => array(
-        'regex' => '|^springboard/reports/integration-reports((.*)*)$|',
-        'replacement' => 'springboard/reports/integration-reports/%1',
-      ),
-    ),
-    // Fundraiser upsell page.
-    'admin/springboard/options/fundraiser/fundraiser_upsell' => array(
-      'path' => array(
-        'regex' => '|^/admin/springboard/options/fundraiser/fundraiser_upsell$|',
-        'replacement' => 'admin/springboard/options/fundraiser/fundraiser_upsell',
-      ),
-      'alias' => array(
-        'regex' => '|^springboard/settings/config/upsell$|',
-        'replacement' => 'springboard/settings/config/upsell',
-      ),
-    ),
-    // Fundraiser upsell thank you page.
-    'admin/springboard/options/fundraiser/fundraiser_upsell/thank-you' => array(
-      'path' => array(
-        'regex' => '|^/admin/springboard/options/fundraiser/fundraiser_upsell/thank-you$|',
-        'replacement' => 'admin/springboard/options/fundraiser/fundraiser_upsell/thank-you',
-      ),
-      'alias' => array(
-        'regex' => '|^springboard/settings/config/upsell-thank-you$|',
-        'replacement' => 'springboard/settings/config/upsell-thank-you',
       ),
     ),
     // Salesforce mappings page.
@@ -1051,7 +974,7 @@ function springboard_admin_springboard_admin_alias_patterns() {
         'regex' => '|^springboard/commerce/products((.*)*)$|',
         'replacement' => 'springboard/commerce/products/%1',
       ),
-    ),
+    ),  
     // Springboard pages.
     'admin/springboard/%extra' => array(
       'path' => array(

@@ -258,6 +258,34 @@ function webform_goals_menu() {
   return $items;
 }
 
+/** 
+ * Implements hook_springboard_admin_alias_patterns().
+ */
+function webform_goals_springboard_admin_alias_patterns() {
+    return array(
+    'admin/config/content/webform_goals/%extra' => array(
+      'path' => array(
+        'regex' => '|^/admin/config/content/webform_goals(/.*)$|',
+        'replacement' => 'admin/config/content/webform_goals/%1',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/goals(/.*)$|',
+        'replacement' => 'springboard/goals/%1',
+      ),
+    ),
+    'admin/config/content/webform_goals' => array(
+      'path' => array(
+        'regex' => '|^/admin/config/content/webform_goals$|',
+        'replacement' => 'admin/config/content/webform_goals',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/goals$|',
+        'replacement' => 'springboard/goals',
+      ),
+    ),  
+  );
+}
+
 function webform_goals_jsonp_loader() {
   return '<h1>Hai</h1>';
 }

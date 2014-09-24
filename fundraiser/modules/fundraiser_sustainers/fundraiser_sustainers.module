@@ -189,6 +189,25 @@ function fundraiser_sustainers_menu() {
   return $items;
 }
 
+/** 
+ * Implements hook_springboard_admin_alias_patterns().
+ */
+function fundraiser_sustainers_springboard_admin_alias_patterns() {
+  return array(
+    // Fundraiser sustainers skip payment confirmation page.
+    'fundraiser_sustainers/%did/skip/%cid' => array(
+      'path' => array(
+        'regex' => '|^/fundraiser_sustainers(/[0-9]*)/skip(/[0-9]*)$|',
+        'replacement' => 'fundraiser_sustainers/%1/skip/%2',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/donations(/[0-9]*)/skip(/[0-9]*)$|',
+        'replacement' => 'springboard/donations/%1/skip/%2',
+      ),
+    ),
+  );
+}  
+
 /**
  * Access callback for running standalone cron.
  */
