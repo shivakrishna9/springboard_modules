@@ -26,9 +26,6 @@ $plugin = array(
  */
 function springboard_p2p_org_intro_render($subtype, $conf, $panel_args, $context) {
 
-  // Global node.
-  $node = menu_get_object();
-
   $campaign = NULL;
   $personal_campaign = NULL;
 
@@ -45,29 +42,33 @@ function springboard_p2p_org_intro_render($subtype, $conf, $panel_args, $context
   }
 
   if ($personal_campaign->type == 'p2p_personal_campaign' && isset($personal_campaign->field_p2p_campaign[$personal_campaign->language][0]['target_id'])) {
-    $campaign = node_load($node->field_p2p_campaign[$node->language][0]['target_id']);
+    $campaign = node_load($personal_campaign->field_p2p_campaign[$personal_campaign->language][0]['target_id']);
   }
 
-  if (!is_null($campaign) && isset($campaign->field_p2p_org_intro[$campaign->language][0]['safe_value'])) {
+  if (!is_null($campaign) && $campaign->type == 'p2p_campaign') {
+
+    $campaign_wrapper = entity_metadata_wrapper('node', $campaign);
     $output = array();
 
-    $output[] = $campaign->field_p2p_org_intro[$campaign->language][0]['safe_value'];
-
-    if (!is_null($personal_campaign)) {
-      $goal = springboard_p2p_get_goal_from_campaign($campaign);
-      $output[] = '<div class="personal-campaign-call-to-action">';
-
-      $campaign_wrapper = entity_metadata_wrapper('node', $campaign);
-      $label = $campaign_wrapper->field_p2p_campaign_action_button->value();
-
-      $output[] = l($label, 'node/' . $goal['nid'], array(
-          'query' => array(
-            'p2p_pcid' => $personal_campaign->nid,
-          ),
-        ));
-
-      $output[] = '</div>';
+    $intro = $campaign_wrapper->field_p2p_org_intro->value();
+    if (isset($intro['safe_value'])) {
+      $output[] = $intro['safe_value'];
     }
+    else {
+      $output[] = check_markup($intro['value'], $intro['format']);
+    }
+
+    $output[] = '<div class="personal-campaign-call-to-action">';
+    $goal = springboard_p2p_get_goal_from_campaign($campaign);
+    $label = $campaign_wrapper->field_p2p_campaign_action_button->value();
+
+    $output[] = l($label, 'node/' . $goal['nid'], array(
+        'query' => array(
+          'p2p_pcid' => $personal_campaign->nid,
+        ),
+      ));
+
+    $output[] = '</div>';
 
     // Build the content type block.
     $block = new stdClass();
