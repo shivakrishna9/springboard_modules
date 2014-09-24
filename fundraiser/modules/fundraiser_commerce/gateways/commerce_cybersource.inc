@@ -11,11 +11,16 @@
 function commerce_cybersource_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     'payment_method' => array('credit'),
+    'allow_recurring' => array('credit'),
+    'allow_refund' => array('credit'),
     'form callback' => 'commerce_cybersource_fundraiser_commerce_form',
     'cleanup callback' => 'commerce_cybersource_fundraiser_commerce_cleanup',
     'scrub callback' => 'commerce_cybersource_fundraiser_commerce_scrub',
     'expire callback' => 'commerce_cybersource_fundraiser_commerce_expire',
     'charge callback' => 'commerce_cybersource_fundraiser_commerce_charge',
+    'update callback' => 'commerce_cybersource_fundraiser_commerce_update',
+    'refund callback' => 'commerce_cybersource_fundraiser_commerce_refund',
+    'cardonfile callback' => 'commerce_cybersource_fundraiser_commerce_cardonfile',
   );
 }
 
@@ -71,6 +76,59 @@ function commerce_cybersource_fundraiser_commerce_charge($payment_method, $donat
   // Customer data for charge pulls from the customer profile given on the order, so we can ignore that.
   // If the charge fails, returns false, else nothing.
   $result = commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge);
+  $success = FALSE;
+  if ($result !== FALSE) {
+    $success = TRUE;
+  }
+  return $success;
+}
+
+
+/**
+ * Card on file callback
+ */
+function commerce_cybersource_fundraiser_commerce_cardonfile($donation) {
+
+}
+
+/**
+ * Callback function, update card data stored at the gateway and locally
+ *
+ * @param $donation Object
+ *    Fundraiser commerce donation object which should include the new/updated card data
+ * @param $card_data Object
+ *    Card on file entity, this should be the current entity for the donation,
+ *    new data should be passed in the donation object
+ *
+ * @return Object
+ *    Card on file entity for the new/updated card data
+ */
+function commerce_cybersource_fundraiser_commerce_update($donation, $card_data = NULL) {
+  
+}
+
+/**
+ * Refund callback for cybersource, wraps the admin form used for refund with our own system.
+ */
+function commerce_cybersource_fundraiser_commerce_refund($payment_method, $refund) {
+  // Retrieve data.
+  $refunding_order = commerce_order_load($refund->did);
+  $transactions = commerce_payment_transaction_load_multiple(array(), $conditions = array('order_id' => $refunding_order->order_id));
+  $transaction = array_shift($transactions); // The first one is the original donation.
+
+  $form = array();
+  $form_state = array();
+  // Set up the values needed for the transaction to go through.
+  $form_state['transaction'] = $transaction;
+  $form_state['values']['amount'] = $refund->amount;
+  $form_state['order'] = $refunding_order;
+  $form_state['payment_method'] = commerce_payment_method_instance_load($transaction->instance_id);
+  // Submit the donation form.
+
+  // module_load_include('inc', 'commerce_authnet', '/includes/commerce_authnet.admin');
+  // $result = commerce_authnet_aim_credit_form_submit($form, $form_state);
+
+  // At this point the card has been saved on the user profile.
   $success = FALSE;
   if ($result !== FALSE) {
     $success = TRUE;
