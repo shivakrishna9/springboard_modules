@@ -140,6 +140,50 @@ function springboard_p2p_campaign_field_default_field_instances() {
     ),
   );
 
+  // Exported field_instance: 'node-p2p_campaign-field_p2p_campaign_action_button'
+  $field_instances['node-p2p_campaign-field_p2p_campaign_action_button'] = array(
+    'bundle' => 'p2p_campaign',
+    'default_value' => array(
+      0 => array(
+        'value' => 'Donate now',
+      ),
+    ),
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'text',
+        'settings' => array(),
+        'type' => 'text_default',
+        'weight' => 34,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_p2p_campaign_action_button',
+    'label' => 'Personal campaign action button label',
+    'required' => 1,
+    'settings' => array(
+      'text_processing' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'text',
+      'settings' => array(
+        'size' => 60,
+      ),
+      'type' => 'text_textfield',
+      'weight' => 9,
+    ),
+  );
+
   // Exported field_instance: 'node-p2p_campaign-field_p2p_campaign_banner'
   $field_instances['node-p2p_campaign-field_p2p_campaign_banner'] = array(
     'bundle' => 'p2p_campaign',
@@ -1135,7 +1179,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
     'bundle' => 'p2p_campaign',
     'default_value' => NULL,
     'deleted' => 0,
-    'description' => 'This will display at the bottom of the donation form, above the option for users to display their name on the campaign and leave a comment.',
+    'description' => 'This will display at the bottom of the form, above the option for users to display their name on the campaign and leave a comment.',
     'display' => array(
       'default' => array(
         'label' => 'above',
@@ -1153,7 +1197,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
     ),
     'entity_type' => 'node',
     'field_name' => 'field_p2p_webform_fieldset_label',
-    'label' => 'Peer to peer campaign label for donation form',
+    'label' => 'Public Support Call-Out',
     'required' => 0,
     'settings' => array(
       'text_processing' => 0,
@@ -1187,11 +1231,12 @@ function springboard_p2p_campaign_field_default_field_instances() {
   t('Landing page slider optional external link');
   t('Landing page slider teaser');
   t('Organization introduction');
-  t('Peer to peer campaign label for donation form');
   t('Personal Campaign Expiration Message');
+  t('Personal campaign action button label');
   t('Personal campaign images');
   t('Personal campaign introduction');
   t('Personal campaigns require approval');
+  t('Public Support Call-Out');
   t('Require personal campaign expiration date');
   t('Set a message to show when the campaign expires.');
   t('Show constituent comments on personal campaign pages');
@@ -1200,7 +1245,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
   t('This content can be overridden by a personal campaigner');
   t('This is a Youtube or Vimeo video URL. Example: https://www.youtube.com/watch?v=kJ4CYbCGhLA');
   t('This setting cannot be changed after campaign creation.');
-  t('This will display at the bottom of the donation form, above the option for users to display their name on the campaign and leave a comment.');
+  t('This will display at the bottom of the form, above the option for users to display their name on the campaign and leave a comment.');
   t('Upload a campaign Thumbnail. The minimum size should be 400 x 240 pixels.');
   t('Upload a campaign banner. Suggested size is 1170 x 240 pixels.');
   t('Upload a personal campaign thumbnail image. Ideal size is 400 x 240 pixels.');

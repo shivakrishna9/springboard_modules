@@ -8,9 +8,13 @@
     attach: function (context, settings) {
 // End drupal calls.
 
+      // Add a class to the image widget wrapper.
       $('.image-widget.form-managed-file').each(function() {
       $(this).parent('.control-group').addClass('image-widget-wrapper');
       });
+
+      // Hide the tabledrag text.
+      $('.pane-node-field-p2p-campaign-images .tabledrag-toggle-weight-wrapper').hide();
 
       // Remove the panel seperator.
       $(".panel-separator").remove();

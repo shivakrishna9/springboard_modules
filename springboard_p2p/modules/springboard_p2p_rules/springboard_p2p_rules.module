@@ -95,6 +95,6 @@ function springboard_p2p_rules_form_springboard_p2p_rules_add_rule_form_alter(&$
 
   // Add a default tag.
   $form['settings']['tags']['#default_value'] = 'Springboard P2P';
-
-  $form['submit']['#suffix'] = l(t('Cancel'), 'admin/springboard/p2p/rules');
+  // Add a cancel link w/class that goes back to the main page.
+  $form['submit']['#suffix'] =  l(t('Cancel'), 'admin/springboard/p2p/rules', array('attributes' => array('id' => array('edit-actions-cancel'))));
 }

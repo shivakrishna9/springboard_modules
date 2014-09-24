@@ -57,10 +57,9 @@ function springboard_p2p_org_intro_render($subtype, $conf, $panel_args, $context
       $goal = springboard_p2p_get_goal_from_campaign($campaign);
       $output[] = '<div class="personal-campaign-call-to-action">';
 
-      $label = t('Submit');
-      if ($goal['goal_type'] == 'amount') {
-        $label = t('Donate Now');
-      }
+      $campaign_wrapper = entity_metadata_wrapper('node', $campaign);
+      $label = $campaign_wrapper->field_p2p_campaign_action_button->value();
+
       $output[] = l($label, 'node/' . $goal['nid'], array(
           'query' => array(
             'p2p_pcid' => $personal_campaign->nid,

@@ -124,6 +124,21 @@ function springboard_theme($existing, $type, $theme, $path) {
 }
 
 /**
+ * Implements hook_init().
+ *
+ * Sets some default settings in JS for other modules to use.
+ */
+function springboard_init() {
+  $settings = array(
+    'springboard' => array(
+      'cookie_path' => ini_get('session.cookie_path'),
+    ),
+  );
+
+  drupal_add_js($settings, 'setting');
+}
+
+/**
  * Menu callback. Springboard dashboard page.
  */
 function springboard_admin_dashboard() {
@@ -371,10 +386,10 @@ function springboard_form_user_profile_form_alter(&$form, $form_state) {
 
 /**
  * Helper function.
- * 
- * Useful for update scripts in any module that implements 
+ *
+ * Useful for update scripts in any module that implements
  * hook_springboard_dashboard_panes().
- * 
+ *
  * Enables all dashboard panes that are not explicitly set to "off".
  */
 function springboard_enable_new_panes() {

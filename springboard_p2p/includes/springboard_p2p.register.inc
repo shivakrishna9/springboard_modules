@@ -303,7 +303,8 @@ function springboard_p2p_user_register_validate(&$form, &$form_state) {
 
         $password_reset_request_url = url('p2p/password/' . $uid, $url_options);
 
-        form_set_error('mail', t('The e-mail address %email is already registered. <a href="@password">Send me a password reset email.</a>', array('%email' => $mail, '@password' => $password_reset_request_url)));
+        $message = variable_get('springboard_p2p_existing_user_message_area', '');
+        form_set_error('mail', t($message, array('%email' => $mail, '@password' => $password_reset_request_url)));
       }
     }
   }

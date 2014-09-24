@@ -45,7 +45,7 @@ Drupal.behaviors.marketSourceInit = {
           $.cookie(name, value, { path: Drupal.settings.market_source.cookie_path, domain: Drupal.settings.market_source.cookie_domain });
         }
         else {
-          $.cookie(name, value, { path: '/'});
+          $.cookie(name, value, { path: Drupal.settings.market_source.cookie_path });
         }
       }
     };

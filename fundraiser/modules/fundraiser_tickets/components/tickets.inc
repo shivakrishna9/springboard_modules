@@ -93,15 +93,23 @@ function _webform_render_tickets($component, $value = NULL, $filter = TRUE) {
     } else {
       $element['#allow_extra_donation'] = FALSE;
     }
-
-    if ($element['#allow_extra_donation'] == TRUE){
+    $target = !empty($node->fr_tickets_donation_addon_form[LANGUAGE_NONE][0]['target_id']) ? $node->fr_tickets_donation_addon_form[LANGUAGE_NONE][0]['target_id'] : FALSE;
+    if ($target) {
+      $addon_details = springboard_api_get_form_details($target);
+    }
+    if ($element['#allow_extra_donation'] == TRUE && isset($addon_details['fields']['other_amount'])){
+      //$desc = strtolower($addon_details['fields']['other_amount']['description']);
       $item = array(
         '#type' => 'textfield',
         '#size' => 20,
         '#default_value' =>  NULL,
-        '#id' => 'fundraiser-tickets-extra-donation'
+        '#id' => 'fundraiser-tickets-extra-donation',
+        //'#description' => t('Optional. If giving, @min', array('@min' => $desc)),
       );
       $element['fundraiser-tickets-extra-donation'] = $item;
+    }
+    elseif($element['#allow_extra_donation'] == TRUE && !isset($addon_details['fields']['other_amount']) && user_access('create donation form')) {
+      drupal_set_message('The add-on donation form for this item does not have an "other amount" field configured. Addon Donations will not be processed.', 'warning');
     }
 
     // Hide the event_table title if #title_display is 'none'.
@@ -134,9 +142,16 @@ function _fundraiser_tickets_validate_webform_field($element, &$form_state) {
     if (!preg_match('/^\d*(\.\d*)?$/', $additional_amount)) {
       form_set_error('fundraiser-tickets-extra-donation', t('Donation amount must be in a valid number format. No commas and only one decimal point.'));
     }
+    if (!empty($form_state['complete form']['#node']->fr_tickets_donation_addon_form[LANGUAGE_NONE][0]['target_id'])) {
+      $add_on = node_load($form_state['complete form']['#node']->fr_tickets_donation_addon_form[LANGUAGE_NONE][0]['target_id']);
+      $min = intval($add_on->minimum_donation_amount);
+      if(intval($ticket_values['fundraiser-tickets-extra-donation']) < $min) {
+        form_set_error('fundraiser-tickets-extra-donation', t('Additional donation is a minimum of $@amount', array('@amount' => $min)));
+      }
+    }
     unset($ticket_values['fundraiser-tickets-extra-donation']);
   }
-
+  
   // Grab the selected values and verify we have at least one
   $selected = array_filter($ticket_values);
   if (empty($selected)) {

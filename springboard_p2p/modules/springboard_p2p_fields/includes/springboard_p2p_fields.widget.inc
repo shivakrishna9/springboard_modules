@@ -28,6 +28,9 @@ function theme_springboard_p2p_fields_campaign_goals($variables) {
       $widget['form_types'][$type]['#markup'] = theme('table', array(
           'header' => $header,
           'rows' => $rows,
+          'attributes' => array(
+            'class' => array('springboard_p2p_campaign_goal_table_' . $type),
+          ),
         ));
     }
   }

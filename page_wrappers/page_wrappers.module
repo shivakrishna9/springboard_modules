@@ -127,7 +127,7 @@ function page_wrappers_preprocess_page(&$vars) {
       // Remove the css and js in ajaxPageState to keep it from mucking up the
       // theme when ajax forms are used.
       // @TODO: see if there is a better way to do this
-      drupal_add_js('delete(Drupal.settings.ajaxPageState.css);delete(Drupal.settings.ajaxPageState.js);',
+      drupal_add_js('delete(Drupal.settings.ajaxPageState.css);',
         array('type' => 'inline', 'scope' => 'footer', 'weight' => 10) );
     }
   }
