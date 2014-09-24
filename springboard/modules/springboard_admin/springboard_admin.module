@@ -232,10 +232,8 @@ function springboard_admin_init() {
     if($lookup_path = drupal_lookup_path('source', preg_replace('/^\//', '', $path))) {
       $path = '/' . $lookup_path;
     }
-    dpm('init path ' . $path);
     // Find the Springboard alias of the Drupal system path, if it exists.
     $goto_path = springboard_admin_build_admin_path($path, 'path');
-    dpm('goto path ' . $goto_path);
     if ($goto_path) {
       // If a redirect destination is included in the query string, clear it from
       // $_GET and it will be added back to the path later.
@@ -454,12 +452,9 @@ function springboard_admin_theme($existing, $type, $theme, $path) {
  * Implements administrative url aliases for the Springboard UX.
  */
 function springboard_admin_url_inbound_alter(&$path, $original_path, $path_language) {
-  dpm('inbound path ' . $path);
-  dpm('original path ' . $original_path);
   if($final_path = springboard_admin_build_admin_path($path, 'alias')) {
     $path = $final_path;
   }
-  dpm('outbound path ' . $path);
 }
 
 /**
@@ -1005,29 +1000,21 @@ function springboard_admin_springboard_admin_alias_patterns() {
  *   The altered path or FALSE if no alias pattern matched.
  */
 function springboard_admin_build_admin_path($path, $type) {
-  dpm('build input path ' . $path);
   $final_type = $type == 'path' ? 'alias' : 'path';
   $final_path = FALSE;
   $patterns = springboard_admin_alias_patterns();
     foreach($patterns as $key => $pattern) {
       if(preg_match($pattern[$type]['regex'], $path, $matches)) {
-        dpm('build pattern key ' . $key);
         if(!$pattern[$final_type]['replacement']) {
-          dpm('bypass replacement');
           return $final_path;
         }
         $final_path = $pattern[$final_type]['replacement'];
         preg_match_all('|%[0-9]*|', $pattern['alias']['replacement'], $args);
-        dpm('build matches ');
-        dpm($matches);
-        dpm('build args ');
-        dpm($args);
         if($args) {
           foreach($args[0] as $key => $arg) {
             $final_path = preg_replace('/\/' . $arg . '/', $matches[$key + 1], $final_path);
           }
         }
-        dpm('build final path ' . $final_path);
         return $final_path;
       }
     }
