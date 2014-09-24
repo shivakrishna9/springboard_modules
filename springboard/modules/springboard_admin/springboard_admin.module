@@ -876,15 +876,26 @@ function springboard_admin_springboard_admin_alias_patterns() {
         'replacement' => 'springboard/node/%1/%2',
       ),
     ),
-    // User pages.
-    'user/%uid' => array(
+    // Current user's page.
+    'user' => array(
       'path' => array(
-        'regex' => '|^/user(/[0-9]*)$|',
-        'replacement' => 'user/%1',
+        'regex' => '|^/user$|',
+        'replacement' => 'user',
       ),
       'alias' => array(
-        'regex' => '|^springboard/user(/[0-9]*)$|',
-        'replacement' => 'springboard/user/%1',
+        'regex' => '|^springboard/user$|',
+        'replacement' => 'springboard/user',
+      ),
+    ),
+    // All user pages.
+    'user/%uid/%extra' => array(
+      'path' => array(
+        'regex' => '|^/user(/[0-9]*)((.*)*)$|',
+        'replacement' => 'user/%1/%2',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/user(/[0-9]*)((.*)*)$|',
+        'replacement' => 'springboard/user/%1/%2',
       ),
     ),
     // Donation reports.
