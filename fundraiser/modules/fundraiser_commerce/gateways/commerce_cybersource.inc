@@ -125,8 +125,8 @@ function commerce_cybersource_fundraiser_commerce_refund($payment_method, $refun
   $form_state['payment_method'] = commerce_payment_method_instance_load($transaction->instance_id);
   // Submit the donation form.
 
-  // module_load_include('inc', 'commerce_authnet', '/includes/commerce_authnet.admin');
-  // $result = commerce_authnet_aim_credit_form_submit($form, $form_state);
+   module_load_include('inc', 'commerce_cybersource', '/includes/commerce_cybersource.admin');
+   $result = commerce_cybersource_soap_capture_form_submit($form, $form_state);
 
   // At this point the card has been saved on the user profile.
   $success = FALSE;
