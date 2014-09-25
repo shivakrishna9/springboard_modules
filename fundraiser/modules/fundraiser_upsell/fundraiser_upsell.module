@@ -90,6 +90,31 @@ function fundraiser_upsell_springboard_admin_alias_patterns() {
 }
 
 /**
+ * Implements hook_springboard_admin_admin_menu_items_alter().
+ */
+function fundraiser_upsell_springboard_admin_admin_menu_items_alter(&$items) {
+  // Settings > Settings > Sustainer Upsell.
+  $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/springboard/options/fundraiser/fundraiser_upsell'] = array(
+    'link_path' => 'admin/springboard/options/fundraiser/fundraiser_upsell',
+    'link_title' => 'Sustainer Upsell Settings',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 0,
+    'customized' => 1,
+    'weight' => 0,
+  );
+
+  // Settings > Settings > Sustainer upsell confirmations.
+  $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/springboard/options/fundraiser/fundraiser_upsell/thank-you'] = array(
+    'link_path' => 'admin/springboard/options/fundraiser/fundraiser_upsell/thank-you',
+    'link_title' => 'Sustainer Upsell Confirmations',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 0,
+    'customized' => 1,
+    'weight' => 1,
+  );
+}
+
+/**
  * Implements hook_permission().
  */
 function fundraiser_upsell_permission() {
