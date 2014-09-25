@@ -102,7 +102,6 @@ function commerce_cybersource_fundraiser_commerce_cardonfile($donation) {
       commerce_cybersource_fundraiser_commerce_update($donation, $card_data);
     }
   }
-
   return $cardonfile_fields;
 }
 
@@ -223,6 +222,7 @@ function commerce_cybersource_fundraiser_commerce_update($donation, $card_data =
       }
     }
   }
+
 }
 
 /**

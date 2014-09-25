@@ -495,6 +495,7 @@ function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_
       return FALSE;
     }
     $request->recurringSubscriptionInfo->subscriptionID = $card_data->remote_id;
+
   }
   else {
     // Add the billing information.
@@ -616,12 +617,12 @@ function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_
     if (module_exists('commerce_cardonfile') && $payment_method['settings']['credit_card']['cardonfile'] && (empty($pane_values['cardonfile']) || $pane_values['cardonfile'] == 'new')) {
       // Submit a request to create the Customer Profile.
       if ($response = commerce_cybersource_create_customer_profile_request($request, $payment_method, $order)) {
+
         // If the Customer Profile creation was a success, store the new card on
         // file data locally.
         if ($response->paySubscriptionCreateReply->reasonCode == 100) {
           // Build a remote ID that includes the MerchantRefernceCode and ProfileSubscriptionID
           $remote_id = $response->paySubscriptionCreateReply->subscriptionID;
-
 
         // Store the token with cardonfile.
           $card_data = commerce_cardonfile_new();
@@ -1643,8 +1644,7 @@ function commerce_cybersource_create_customer_profile_request($orig_request, $pa
   
   $request->paySubscriptionCreateService->run = "true";
   //$request->paySubscriptionCreateService->paymentRequestID = $request_id;
- 
-  return commerce_cybersource_soap_api_request($payment_method, $request);
+   return commerce_cybersource_soap_api_request($payment_method, $request);
 }
 
 /**
@@ -1675,6 +1675,7 @@ function commerce_cybersource_update_customer_profile_request($payment_method, $
   $request->merchantReferenceCode = 'Update Profile ' . $card_data->remote_id;
   $request->paySubscriptionUpdateService->run = 'true';
   $request->recurringSubscriptionInfo->subscriptionID = $card_data->remote_id;
+
   
   // Add the credit card details.
   $request->card = (object) array(
