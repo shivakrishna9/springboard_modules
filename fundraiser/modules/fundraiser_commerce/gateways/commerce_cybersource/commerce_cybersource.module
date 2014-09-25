@@ -67,6 +67,10 @@ function commerce_cybersource_commerce_payment_method_info() {
     'short_title' => t('CyberSource CC'),
     'display_title' => t('Credit card'),
     'description' => t('Integrates the CyberSource SOAP API Toolkit for card not present CC transactions.'),
+    'cardonfile' => array(//https://www.drupal.org/files/1740346-cardonfile.patch
+      'update callback' => 'commerce_cybersource_cardonfile_update',
+      'delete callback' => 'commerce_cybersource_cardonfile_delete',            
+    ),
   );
 
   return $payment_methods;
@@ -83,6 +87,7 @@ function commerce_cybersource_soap_cc_default_settings() {
     'credit_card' => array(
       'transaction_type' => COMMERCE_CREDIT_AUTH_CAPTURE,
       'submit_itemized_order' => FALSE,
+      'cardonfile' => FALSE,
       'card_types' => array(),
     ),
     'tax' => array(
@@ -188,6 +193,15 @@ function commerce_cybersource_soap_cc_settings_form($settings = NULL) {
     '#title' => t('Submit itemized orders to CyberSource instead of just sending the grand total to authorize / capture.'),
     '#default_value' => $settings['credit_card']['submit_itemized_order'],
   );
+
+  //https://www.drupal.org/files/1740346-cardonfile.patch
+  if (module_exists('commerce_cardonfile')) {
+    $form['credit_card']['cardonfile'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enable card on file to store credit card information.'),
+      '#default_value' => $settings['credit_card']['cardonfile'],
+    );
+  }
   $form['credit_card']['card_types'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Limit accepted credit cards to the following types'),
@@ -417,6 +431,11 @@ function commerce_cybersource_soap_cc_submit_form($payment_method, $pane_values,
     $fields['type'] = $card_types;
   }
 
+  //https://www.drupal.org/files/1740346-cardonfile.patch
+  else {
+    module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+    $fields['type'] = array_keys(commerce_payment_credit_card_types());
+  }
   return commerce_payment_credit_card_form($fields);
 }
 
@@ -431,6 +450,13 @@ function commerce_cybersource_soap_cc_submit_form_validate($payment_method, $pan
     'form_parents' => array_merge($form_parents, array('credit_card')),
   );
 
+  //https://www.drupal.org/files/1740346-cardonfile.patch
+  // If using cardonfile, skip the validation of credit card info as it doesn't exist.
+  if (module_exists('commerce_cardonfile') && $payment_method['settings']['credit_card']['cardonfile'] &&
+    !empty($pane_values['cardonfile']) && $pane_values['cardonfile'] !== 'new') {
+    return TRUE;
+  }
+  
   if (!commerce_payment_credit_card_validate($pane_values['credit_card'], $settings)) {
     return FALSE;
   }
@@ -454,19 +480,67 @@ function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_
     'run' => 'true',
   );
 
-  // Add the billing information.
-  $request->billTo = commerce_cybersource_address('billing', $order, 'commerce_customer_billing');
+  // // Add the billing information.
+  // $request->billTo = commerce_cybersource_address('billing', $order, 'commerce_customer_billing');
 
-  // Add the credit card details.
-  $request->card = (object) array(
-    'accountNumber' => $pane_values['credit_card']['number'],
-    'expirationMonth' => $pane_values['credit_card']['exp_month'],
-    'expirationYear' => $pane_values['credit_card']['exp_year'],
-  );
+  // // Add the credit card details.
+  // $request->card = (object) array(
+  //   'accountNumber' => $pane_values['credit_card']['number'],
+  //   'expirationMonth' => $pane_values['credit_card']['exp_month'],
+  //   'expirationYear' => $pane_values['credit_card']['exp_year'],
+  // );
+
+
+  //https://www.drupal.org/files/1740346-cardonfile.patch
+  // If the customer specified payment using a card on file, use the subscriptionID
+  // instead of credit card info.
+  if (module_exists('commerce_cardonfile') && $payment_method['settings']['credit_card']['cardonfile'] 
+    && !empty($pane_values['cardonfile']) && $pane_values['cardonfile'] !== 'new') {
+    // First attempt to load the card on file.
+    $card_data = commerce_cardonfile_data_load($pane_values['cardonfile']);
 
   // Add the CVV data if included.
-  if (isset($pane_values['credit_card']['code'])) {
-    $request->card->cvNumber = $pane_values['credit_card']['code'];
+  // if (isset($pane_values['credit_card']['code'])) {
+  //   $request->card->cvNumber = $pane_values['credit_card']['code'];
+
+  //https://www.drupal.org/files/1740346-cardonfile.patch
+  // Fail now if it is no longer available or the card is inactive.
+    if (empty($card_data) || $card_data['status'] == 0) {
+      drupal_set_message(t('The requested card on file is no longer valid.'), 'error');
+      return FALSE;
+    }
+    $request->recurringSubscriptionInfo->subscriptionID = $card_data['remote_id'];
+  }
+  else {
+    // Add the billing information.
+    $request->billTo = commerce_cybersource_address('billing', $order, 'commerce_customer_billing');
+    $billing_name = $request->billTo->firstName . ' ' . $request->billTo->lastName;
+    // Add the shipping address if it exists
+    $ship_to = commerce_cybersource_address('shipping', $order, 'commerce_customer_shipping');
+    if(!empty($ship_to->state)){
+      $request->shipTo = $ship_to;
+    }
+    else {
+      $request->shipTo = clone $request->billTo;
+    }
+    // Add the credit card details.
+    $request->card = (object) array(
+      'accountNumber' => $pane_values['credit_card']['number'],
+      'expirationMonth' => $pane_values['credit_card']['exp_month'],
+      'expirationYear' => $pane_values['credit_card']['exp_year'],
+    );
+    // Determine the credit card type if possible for use in later code.
+    if (!empty($pane_values['credit_card']['number']) && empty($pane_values['credit_card']['type'])) {
+      module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+      $request->card->cardType = commerce_cybersource_cc_type_code(commerce_payment_validate_credit_card_type($pane_values['credit_card']['number'], array_keys(commerce_payment_credit_card_types())));
+    }
+    else {
+      $request->card->cardType = commerce_cybersource_cc_type_code($pane_values['credit_card']['type']);
+    }
+    // Add the CVV data if included.
+    if (isset($pane_values['credit_card']['code'])) {
+      $request->card->cvNumber = $pane_values['credit_card']['code'];
+    }
   }
 
   // Add purchase total information.
@@ -551,6 +625,65 @@ function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_
       drupal_set_message(t('We received the following error processing your card: @reason', array('@reason' => commerce_cybersource_reason_message($response->ccAuthReply->reasonCode))), 'error');
       drupal_set_message('Please enter you information again or try a different card.', 'error');
       return FALSE;
+    }
+
+    // If Card on File storage is enabled and this is a new card.
+    if (module_exists('commerce_cardonfile') && $payment_method['settings']['credit_card']['cardonfile'] && (empty($pane_values['cardonfile']) || $pane_values['cardonfile'] == 'new')) {
+      // Submit a request to create the Customer Profile.
+      if ($response = commerce_cybersource_create_customer_profile_request($request, $payment_method, $order, $transaction->remote_id)) {
+        // If the Customer Profile creation was a success, store the new card on
+        // file data locally.
+        if ($response->paySubscriptionCreateReply->reasonCode == 100) {
+          // Build a remote ID that includes the MerchantRefernceCode and ProfileSubscriptionID
+          $remote_id = $response->paySubscriptionCreateReply->subscriptionID;
+
+
+//DEPRECATED CARDONFILE STYLE?  
+          // $card_data = array(
+          //   'uid' => $order->uid,
+          //   'payment_method' => $payment_method['method_id'],
+          //   'instance_id' => $payment_method['instance_id'],
+          //   'remote_id' => $remote_id,
+          //   'card_type' => 'card',
+          //   'card_name' => $billing_name,
+          //   'card_number' => substr($pane_values['credit_card']['number'], -4),
+          //   'card_exp_month' => $pane_values['credit_card']['exp_month'],
+          //   'card_exp_year' => $pane_values['credit_card']['exp_year'],
+          //   'status' => 1,
+          // );
+  
+          // // Save and log the creation of the new card on file.
+          // commerce_cardonfile_data_save($card_data);
+
+
+//SAGE PAYMENTS STYLE
+        // Store the token with cardonfile.
+          $card_data = commerce_cardonfile_new();
+          $card_data->uid = $order->uid;
+          $card_data->payment_method = $payment_method['method_id'];
+          $card_data->instance_id = $payment_method['instance_id'];
+          $card_data->remote_id = $temote_id;
+          $card_data->card_type = !empty($card_type) ? $card_type : 'card';
+          $card_data->card_name = $billing_name;
+          $card_data->card_number = substr($pane_values['credit_card']['number'], -4);
+          $card_data->card_exp_month = $pane_values['credit_card']['exp_month'];
+          $card_data->card_exp_year = $pane_values['credit_card']['exp_year'];
+          $card_data->status = 1;
+
+          // Save and log the creation of the new card on file.
+          commerce_cardonfile_save($card_data);
+
+
+
+          watchdog('commerce_cybersource', 'Customer Profile @profile_id created and saved to user @uid.', array('@profile_id' => (string) $response->paySubscriptionCreateReply->subscriptionID, '@uid' => $order->uid));
+        }
+        else {
+          watchdog('commerce_cybersource', 'Customer Profile response code was error @code', array('@code' => $response->paySubscriptionCreateReply->reasonCode));
+        }
+      }
+      else {
+        watchdog('commerce_cybersource', 'Error connecting to server or getting response for transaction @transaction_id', array('@transaction_id' => $transaction->instance_id));
+      }
     }
   }
   else {
@@ -717,14 +850,22 @@ function commerce_cybersource_itemize_order($order, $currency_code, $payment_met
  *   The response from CyberSource or FALSE upon failure.
  */
 function commerce_cybersource_soap_capture($order, $transaction, $amount) {
+
   // Load the payment method instance used to create the authorization.
   $payment_method = commerce_payment_method_instance_load($transaction->instance_id);
 
+  dpm($transaction);
+
   // Extract the timestamp used to retrieve the order request token from the
   // remote status value.
-  list($status, $timestamp) = explode(':', $transaction->remote_status);
+  if(strpos($transaction->remote_status, ':') !== FALSE ) {
+    list($status, $timestamp) = explode(':', $transaction->remote_status);
+  }
+  else {
+    $timestamp = $transaction->revision_timestamp;
+  }
 
-  // Fail now if now timestamp was found or the payload is missing.
+  // Fail now if now timestamp was not found or the payload is missing.
   if (empty($timestamp) || empty($transaction->payload[$timestamp])) {
     return FALSE;
   }
@@ -732,7 +873,7 @@ function commerce_cybersource_soap_capture($order, $transaction, $amount) {
   // Create and populate the request object.
   $request = (object) array(
     'merchantReferenceCode' => t('Order @number', array('@number' => $order->order_number)),
-    'orderRequestToken' => $transaction->payload[$timestamp]->requestToken,
+    'orderRequestToken' => $transaction->payload[$transaction->revision_timestamp]->requestToken,
   );
 
   // Add purchase total information.
@@ -918,6 +1059,9 @@ function commerce_cybersource_soap_api_request($payment_method, $request) {
 
     watchdog('commerce_cybersource', 'CyberSource SOAP request to @url: !request', array('@url' => $url, '!request' => '<pre>' . check_plain(print_r($log_request, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
   }
+
+  // Allow other modules to modify the request before it is sent (in case there is additional logic they want to add)
+  drupal_alter('commerce_cybersource_request', $payment_method, $request);
 
   // Attempt the SOAP request and log the exception on failure.
   try {
@@ -1129,6 +1273,63 @@ function commerce_cybersource_cvn_response($code) {
 
   return '-';
 }
+
+ /**
+ * Returns three digit code for a credit card type per cybersource documentation:
+ * http://apps.cybersource.com/library/documentation/dev_guides/Decision_Ma... 
+ */
+function commerce_cybersource_cc_type_code($text) {
+  $text = strtolower($text);
+  switch ($text) {
+    case 'visa': 
+      return '001';
+     case 'mastercard':
+     case 'eurocard':
+      return '002';
+    case 'american express': 
+      return '003';
+    case 'discover': 
+      return '004';
+    case 'diners club':
+    case 'diner\'s club': 
+      return '005';
+    case 'carte blanche': 
+      return '006';
+    case 'jcb': 
+      return '007';
+    case 'enroute': 
+      return '014';
+    case 'jal': 
+      return '021';
+    case 'maestro (uk domestic)': 
+      return '024';
+    case 'delta': 
+      return '031';
+    case 'visa electron': 
+      return '033';
+    case 'dankfort': 
+      return '034';
+    case 'laser': 
+      return '035';
+    case 'carte bleue': 
+      return '036';
+    case 'carta si': 
+      return '037';
+    case 'encoded account number': 
+      return '039';
+    case 'uatp': 
+      return '040';
+    case 'maestro (international)': 
+      return '042';
+    case 'ge money uk card': 
+      return '043';
+    case 'style': 
+      return '045';
+    default:
+      return false;
+  }
+}
+
 
 /**
  * Caches calculated tax data for an order.
@@ -1391,3 +1592,191 @@ function commerce_cybersource_commerce_price_component_type_info() {
 
   return $components;
 }
+
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function commerce_cybersource_form_commerce_cardonfile_update_form_alter(&$form, &$form_state) {
+  // Extract the card data from the form and load the payment method instance.
+  $card_data = $form['card_data']['#value'];
+  $payment_method = commerce_payment_method_instance_load($card_data['instance_id']);
+
+  // Load the full payment profile from cybersource.
+  $response = commerce_cybersource_retrieve_customer_profile_request($payment_method, $card_data['remote_id']);
+
+  if ($response->reasonCode == 100) {
+    $billto = $response->paySubscriptionRetrieveReply;
+
+    $address = array(
+      '<strong>' . t('Billing address:') . '</strong>',
+      (string) $billto->company,
+      (string) $billto->street1,
+      (string) $billto->city . ', ' . (string) $billto->state . ' ' . (string) $billto->postalCode,
+      (string) $billto->country,
+    );
+
+    // Add the address info to the form.
+    $form['billto'] = array(
+      '#type' => 'markup',
+      '#markup' => '<div class="commerce-authnet-cim-billto">' . implode('<br />', array_diff($address, array(''))) . '</div>',
+      '#weight' => -50,
+    );
+  }
+}
+
+/**
+ * Card on file callback: updates the associated customer payment profile.
+ */
+function commerce_cybersource_cardonfile_update($form, &$form_state, $payment_method, $card_data) {
+  $result = commerce_cybersource_update_customer_profile_request($payment_method, $form_state, $card_data);
+  
+  return $result->paySubscriptionUpdateReply->reasonCode == 100;
+}
+
+/**
+ * Card on file callback: deletes the associated customer payment profile.
+ */
+function commerce_cybersource_cardonfile_delete($form, &$form_state, $payment_method, $card_data) {
+  $result = commerce_cybersource_delete_customer_profile_request($payment_method, $card_data);
+  
+  return $result->paySubscriptionDeleteReply->reasonCode == 100;
+}
+
+/**
+ * Submits a paySubscriptionCreateService XML request to Cybersource.
+ *
+ * This function will attempt to create a Customer Profile using an existing credit card authorization.
+ *
+ * @param $payment_method
+ *   The payment method instance array containing the API credentials for a CIM
+ *   enabled Authorize.Net account.
+ * @param $order
+ *   The order object containing the billing address and e-mail to use for the
+ *   customer profile.
+ * @param $payment_details
+ *   An array of payment details to use in the default payment profile. See the
+ *   respective helper array functions for possible keys.
+ *
+ * @return
+ *   A SimpleXMLElement containing the API response.
+ */
+function commerce_cybersource_create_customer_profile_request($orig_request, $payment_method, $order, $request_id) {
+
+  $request = new stdClass();
+  $request->billTo = $orig_request->billTo;
+  $request->card = $orig_request->card;
+
+  $request->merchantReferenceCode = 'Order ' . $order->order_number;
+  $request->purchaseTotals->currency = 'USD';
+  $request->subscription->title = "On-Demand Profile";
+  $request->subscription->paymentMethod = "credit card";
+
+  //$request->recurringSubscriptionInfo->amount = 0.00;
+  $request->recurringSubscriptionInfo->frequency = "on-demand";
+  
+  $request->paySubscriptionCreateService->run = "true";
+  $request->paySubscriptionCreateService->paymentRequestID = $request_id;
+
+
+// <requestMessage xmlns="urn:schemas-cybersource-com:transaction-data-1.92">
+//   <merchantID>infodev</merchantID>
+//   <merchantReferenceCode>14344</merchantReferenceCode>
+//   <billTo>
+//     <firstName>John</firstName>
+//     <lastName>Doe</lastName>
+//     <street1>1295 Charleston Road</street1>
+//     <city>Mountain View</city>
+//     <state>CA</state>
+//     <postalCode>94043</postalCode>
+//     <country>US</country>
+//     <email>john.doe@example.com</email>
+//     <phoneNumber>650-965-6000</phoneNumber>
+//   </billTo>
+//   <purchaseTotals>
+//     <currency>USD</currency>
+//   </purchaseTotals>
+//   <card>
+//     <cardType>001</cardType>
+//     <accountNumber>4111111111111111</accountNumber>
+//     <expirationMonth>12</expirationMonth>
+//     <expirationYear>2015</expirationYear>
+//   </card>
+//   <subscription>
+//     <title>On-Demand Profile</title>
+//     <paymentMethod>credit card</paymentMethod>
+//   </subscription>
+//   <recurringSubscriptionInfo>
+//     <frequency>on-demand</frequency>
+//   </recurringSubscriptionInfo>
+//   <paySubscriptionCreateService run="true"/>
+// </requestMessage>
+
+
+
+  return commerce_cybersource_soap_api_request($payment_method, $request);
+}
+
+/**
+ * Retrieve a customer profile from cybersource.
+ * 
+ * @param type $payment_method
+ * @param type $request_id
+ * @return type
+ */
+function commerce_cybersource_retrieve_customer_profile_request($payment_method, $request_id) {
+  $request = new stdClass();
+  $request->merchantReferenceCode = 'Read ' . $request_id;
+
+  $request->paySubscriptionRetrieveService->run = "true";
+  $request->recurringSubscriptionInfo->subscriptionID = $request_id;
+
+  return commerce_cybersource_soap_api_request($payment_method, $request);
+}
+
+/**
+ * Delete a customer profile
+ * 
+ * @param type $card_data
+ */
+function commerce_cybersource_update_customer_profile_request($payment_method, $form_state, $card_data) {
+  $pane_values = $form_state['values'];
+  $request = new stdClass();
+  $request->merchantReferenceCode = 'Update Profile ' . $card_data['remote_id'];
+  $request->paySubscriptionUpdateService->run = 'true';
+  $request->recurringSubscriptionInfo->subscriptionID = $card_data['remote_id'];
+  
+  // Add the credit card details.
+  $request->card = (object) array(
+    'accountNumber' => $pane_values['credit_card']['number'],
+    'expirationMonth' => $pane_values['credit_card']['exp_month'],
+    'expirationYear' => $pane_values['credit_card']['exp_year'],
+  );
+
+  // Determine the credit card type if possible for use in later code.
+  if (!empty($pane_values['credit_card']['number']) && empty($pane_values['credit_card']['type'])) {
+    module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+    $request->card->cardType = commerce_cybersource_cc_type_code(commerce_payment_validate_credit_card_type($pane_values['credit_card']['number'], array_keys(commerce_payment_credit_card_types())));
+  }
+
+  // Add the CVV data if included.
+  if (isset($pane_values['credit_card']['code'])) {
+    $request->card->cvNumber = $pane_values['credit_card']['code'];
+  }
+  return commerce_cybersource_soap_api_request($payment_method, $request);  
+}
+
+/**
+ * Delete a customer profile
+ * 
+ * @param type $card_data
+ */
+function commerce_cybersource_delete_customer_profile_request($payment_method, $card_data) {
+  $request = new stdClass();
+  $request->merchantReferenceCode = 'Delete Profile ' . $card_data['remote_id'];
+  $request->paySubscriptionDeleteService->run = 'true';
+  $request->recurringSubscriptionInfo->subscriptionID = $card_data['remote_id'];
+  
+  return commerce_cybersource_soap_api_request($payment_method, $request);  
+}
+
