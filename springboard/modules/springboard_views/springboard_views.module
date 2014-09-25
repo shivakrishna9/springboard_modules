@@ -8,71 +8,6 @@ function springboard_views_views_api() {
 }
 
 /**
- * Implements hook_springboard_admin_admin_menu_items_alter().
- */
-function springboard_views_springboard_admin_admin_menu_items_alter(&$items) {
-  // Top Level: Reports
-  $items['admin/springboard/reports'] = array(
-    'link_path' => 'admin/springboard/reports',
-    'link_title' => t('Reports'),
-    'menu_name' => 'springboard_admin_menu',
-    'expanded' => 1,
-    'customized' => 1,
-    'weight' => 5,
-    '_children' => array(),
-  );
-
-  // Reports > Donations.
-  $items['admin/springboard/reports']['_children']['admin/reports/salesforce/donations'] = array(
-    'link_path' => 'admin/reports/salesforce/donations',
-    'link_title' => 'Donations',
-    'menu_name' => 'springboard_admin_menu',
-    'expanded' => 1,
-    'customized' => 1,
-    'weight' => 0,
-  );
-
-  // Reports > Integration Reports.
-  $items['admin/springboard/reports']['_children']['admin/springboard/reports/integration-reports'] = array(
-    'link_path' => 'admin/springboard/reports/integration-reports',
-    'link_title' => 'Integration Reports',
-    'menu_name' => 'springboard_admin_menu',
-    'expanded' => 0,
-    'customized' => 1,
-    'weight' => 2,
-    '_children' => array(),
-  );
-  // Reports > Integration Reports > Batch Log.
-  $items['admin/springboard/reports']['_children']['admin/springboard/reports/integration-reports']['_children']['admin/springboard/reports/integration-reports/batch'] = array(
-    'link_path' => 'admin/springboard/reports/integration-reports/batch',
-    'link_title' => 'Batch Log',
-    'menu_name' => 'springboard_admin_menu',
-    'expanded' => 0,
-    'customized' => 1,
-    'weight' => 0,
-  );
-  // Reports > Integration Reports > Batch Item Log.
-  $items['admin/springboard/reports']['_children']['admin/springboard/reports/integration-reports']['_children']['admin/springboard/reports/integration-reports/item'] = array(
-    'link_path' => 'admin/springboard/reports/integration-reports/item',
-    'link_title' => 'Item Log',
-    'menu_name' => 'springboard_admin_menu',
-    'expanded' => 0,
-    'customized' => 1,
-    'weight' => 1,
-  );
-
-  // Reports > Integration Reports > Queue.
-  $items['admin/springboard/reports']['_children']['admin/springboard/reports/integration-reports']['_children']['admin/springboard/reports/integration-reports/queue'] = array(
-    'link_path' => 'admin/springboard/reports/integration-reports/queue',
-    'link_title' => 'Queue',
-    'menu_name' => 'springboard_admin_menu',
-    'expanded' => 0,
-    'customized' => 1,
-    'weight' => 2,
-  );
-}
-
-/**
  * Implements hook_views_pre_render().
  * When rendering one of our own views, insert a count into the header.
  */
@@ -263,14 +198,64 @@ function springboard_views_springboard_admin_alias_patterns() {
 }
 
 function springboard_views_springboard_admin_admin_menu_items_alter(&$items) {
-  // Reports > Contacts.
-  $items['admin/springboard/reports']['_children']['admin/springboard/reports/contacts'] = array(
-    'link_path' => 'admin/springboard/reports/contacts',
-    'link_title' => 'Contacts',
+  // Top Level: Reports
+  $items['admin/springboard/reports'] = array(
+    'link_path' => 'admin/springboard/reports',
+    'link_title' => t('Reports'),
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
     'customized' => 1,
+    'weight' => 5,
+    '_children' => array(),
+  );
+
+  // Reports > Donations.
+  $items['admin/springboard/reports']['_children']['admin/reports/salesforce/donations'] = array(
+    'link_path' => 'admin/reports/salesforce/donations',
+    'link_title' => 'Donations',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 0,
+  );
+
+  // Reports > Integration Reports.
+  $items['admin/springboard/reports']['_children']['admin/springboard/reports/integration-reports'] = array(
+    'link_path' => 'admin/springboard/reports/integration-reports',
+    'link_title' => 'Integration Reports',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 0,
+    'customized' => 1,
+    'weight' => 2,
+    '_children' => array(),
+  );
+  // Reports > Integration Reports > Batch Log.
+  $items['admin/springboard/reports']['_children']['admin/springboard/reports/integration-reports']['_children']['admin/springboard/reports/integration-reports/batch'] = array(
+    'link_path' => 'admin/springboard/reports/integration-reports/batch',
+    'link_title' => 'Batch Log',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 0,
+    'customized' => 1,
+    'weight' => 0,
+  );
+  // Reports > Integration Reports > Batch Item Log.
+  $items['admin/springboard/reports']['_children']['admin/springboard/reports/integration-reports']['_children']['admin/springboard/reports/integration-reports/item'] = array(
+    'link_path' => 'admin/springboard/reports/integration-reports/item',
+    'link_title' => 'Item Log',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 0,
+    'customized' => 1,
     'weight' => 1,
+  );
+
+  // Reports > Integration Reports > Queue.
+  $items['admin/springboard/reports']['_children']['admin/springboard/reports/integration-reports']['_children']['admin/springboard/reports/integration-reports/queue'] = array(
+    'link_path' => 'admin/springboard/reports/integration-reports/queue',
+    'link_title' => 'Queue',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 0,
+    'customized' => 1,
+    'weight' => 2,
   );
 }
 
