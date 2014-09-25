@@ -61,17 +61,15 @@ function commerce_cybersource_fundraiser_commerce_expire($submission_fields) {
  */
 function commerce_cybersource_fundraiser_commerce_charge($payment_method, $donation) {
   // Translate from donation settings to the correct values for the plugin.
-  $order = commerce_order_load($donation->did);
-  $charge = $order->commerce_order_total[LANGUAGE_NONE][0];
-  $pane_form = array(); // Spare, no values here used during submission. Ignore.
-  $pane_values = array(
-    'credit_card' => array(
-      'number' => $donation->donation['payment_fields']['credit']['card_number'],
-      'exp_month' => $donation->donation['payment_fields']['credit']['card_expiration_month'],
-      'exp_year' => $donation->donation['payment_fields']['credit']['card_expiration_year'],
-      'code' => $donation->donation['payment_fields']['credit']['card_cvv'],
-    ),
-  );
+  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+   $order = commerce_order_load($donation->did);
+  $wrapper = entity_metadata_wrapper('commerce_order', $order);
+  $charge = $wrapper->commerce_order_total->value();
+
+  $pane_form = array(); // Not actually used anywhere in this system, so ignore it.
+
+  $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
+    _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
 
   // Customer data for charge pulls from the customer profile given on the order, so we can ignore that.
   // If the charge fails, returns false, else nothing.
@@ -88,7 +86,24 @@ function commerce_cybersource_fundraiser_commerce_charge($payment_method, $donat
  * Card on file callback
  */
 function commerce_cybersource_fundraiser_commerce_cardonfile($donation) {
+  // Use standard function to setup the card on file fields
+  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+  $cardonfile_fields = _fundraiser_commerce_credit_card_cardonfile_fields($donation);
 
+  // We need to search locally to see if we have an existing profile for a card number
+  // Only perform this when we're in an active non-reference charge
+  if (isset($donation->reference_charge) && $donation->reference_charge === FALSE) {
+    // Query the db for an existing record
+    $card_data = _fundraiser_commerce_cardonfile_exp_date_mismatch($cardonfile_fields);
+
+    // If we have a profile for this user update it in the Vault
+    if ($card_data) {
+      // Make the update request to Sage Payments
+      commerce_cybersource_fundraiser_commerce_update($donation, $card_data);
+    }
+  }
+
+  return $cardonfile_fields;
 }
 
 /**
@@ -104,7 +119,110 @@ function commerce_cybersource_fundraiser_commerce_cardonfile($donation) {
  *    Card on file entity for the new/updated card data
  */
 function commerce_cybersource_fundraiser_commerce_update($donation, $card_data = NULL) {
-  
+
+  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+  $payment_method = $donation->gateway['gateway_details'];
+
+  // If no card data was passed load the profile from the donation if its set
+  if (empty($card_data) && !empty($donation->data['cardonfile'])) {
+    $card_data = commerce_cardonfile_load($donation->data['cardonfile']);
+  }
+
+  if (empty($card_data)) {
+    // Log the missing card data
+    watchdog(
+      'fundraiser',
+      'A card update was attempted on donation @id but no stored card data was found.',
+      array('@id' => $donation->did),
+      WATCHDOG_CRITICAL
+    );
+    return;
+  }
+
+  // Pull the new credit card values from the donation
+  $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
+
+  // Load the card on file values for this donation
+  $cardonfile_fields = _fundraiser_commerce_credit_card_cardonfile_fields($donation);
+
+  // Check the card number to see if it matches the current card data number
+  // If it does then we use the update function
+  // if its a new card check if we should create a new vault profile
+  $action = 'update';
+  if ($cardonfile_fields['card_number'] != $card_data->card_number) {
+    // This is a new card for this donation, make sure we don't have an existing profile
+    // First check with the card number and date
+    if ($existing = _fundraiser_commerce_cardonfile_match($cardonfile_fields)) {
+      // Set the existing card on the donation and return it
+      $donation->data['cardonfile'] = $existing->card_id;
+      $card_data = $existing;
+    }
+    // Check if we have a mismatched exp date record
+    elseif ($mismatch =  _fundraiser_commerce_cardonfile_exp_date_mismatch($cardonfile_fields)) {
+      $donation->data['cardonfile'] = $mismatch->card_id;
+      $card_data = $mismatch;
+    }
+    // Nothing stored locally so create a new profile
+    else {
+      $action = 'new';
+    }
+  }
+  if ($action == 'update') {
+    $card_data->card_number = $cardonfile_fields['card_number'];
+    $card_data->card_exp_month = $cardonfile_fields['card_exp_month'];
+    $card_data->card_exp_year = $cardonfile_fields['card_exp_year'];
+    $pane_form = array();
+
+    $response = commerce_cybersource_cardonfile_update($pane_form, $pane_values, $payment_method, $card_data);
+    if ($response) {
+      commerce_cardonfile_save($card_data);
+      return $card_data;
+    }
+  }
+  elseif ($action == 'new') {
+    $order = commerce_order_load($donation->did);
+    $request = new stdClass();
+    $request->billTo = commerce_cybersource_address('billing', $order, 'commerce_customer_billing');
+    $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
+    $request->card = (object) array(
+      'accountNumber' => $pane_values['credit_card']['number'],
+      'expirationMonth' => $pane_values['credit_card']['exp_month'],
+      'expirationYear' => $pane_values['credit_card']['exp_year'],
+    );
+    $request->merchantReferenceCode = 'Order ' . $order->order_number;
+    $request->purchaseTotals->currency = 'USD';
+    $request->subscription->title = "On-Demand Profile";
+    $request->subscription->paymentMethod = "credit card";
+    $request->recurringSubscriptionInfo->frequency = "on-demand";
+    $request->paySubscriptionCreateService->run = "true";
+
+    if ($response = commerce_cybersource_create_customer_profile_request($request, $payment_method, $order)) {
+      // If the Customer Profile creation was a success, store the new card on
+      // file data locally.
+      if ($response->paySubscriptionCreateReply->reasonCode == 100) {
+        // Build a remote ID that includes the MerchantRefernceCode and ProfileSubscriptionID
+        $remote_id = $response->paySubscriptionCreateReply->subscriptionID;
+      // Store the token with cardonfile.
+        $card_data = commerce_cardonfile_new();
+        $card_data->uid = $order->uid;
+        $card_data->payment_method = $payment_method['method_id'];
+        $card_data->instance_id = $payment_method['instance_id'];
+        $card_data->remote_id = $remote_id;
+        $card_data->card_type = !empty($card_type) ? $card_type : 'card';
+        $card_data->card_name = $billing_name;
+        $card_data->card_number = substr($pane_values['credit_card']['number'], -4);
+        $card_data->card_exp_month = $pane_values['credit_card']['exp_month'];
+        $card_data->card_exp_year = $pane_values['credit_card']['exp_year'];
+        $card_data->status = 1;
+
+        // Save and log the creation of the new card on file.
+        commerce_cardonfile_save($card_data);
+
+        $donation->data['cardonfile'] = $new_data->card_id;
+        return $new_data;
+      }
+    }
+  }
 }
 
 /**

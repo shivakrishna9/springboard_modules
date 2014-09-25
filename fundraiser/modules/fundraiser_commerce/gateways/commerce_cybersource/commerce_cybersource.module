@@ -480,36 +480,21 @@ function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_
     'run' => 'true',
   );
 
-  // // Add the billing information.
-  // $request->billTo = commerce_cybersource_address('billing', $order, 'commerce_customer_billing');
-
-  // // Add the credit card details.
-  // $request->card = (object) array(
-  //   'accountNumber' => $pane_values['credit_card']['number'],
-  //   'expirationMonth' => $pane_values['credit_card']['exp_month'],
-  //   'expirationYear' => $pane_values['credit_card']['exp_year'],
-  // );
-
-
   //https://www.drupal.org/files/1740346-cardonfile.patch
   // If the customer specified payment using a card on file, use the subscriptionID
   // instead of credit card info.
   if (module_exists('commerce_cardonfile') && $payment_method['settings']['credit_card']['cardonfile'] 
     && !empty($pane_values['cardonfile']) && $pane_values['cardonfile'] !== 'new') {
     // First attempt to load the card on file.
-    $card_data = commerce_cardonfile_data_load($pane_values['cardonfile']);
-
-  // Add the CVV data if included.
-  // if (isset($pane_values['credit_card']['code'])) {
-  //   $request->card->cvNumber = $pane_values['credit_card']['code'];
+    $card_data = commerce_cardonfile_load($pane_values['cardonfile']);
 
   //https://www.drupal.org/files/1740346-cardonfile.patch
   // Fail now if it is no longer available or the card is inactive.
-    if (empty($card_data) || $card_data['status'] == 0) {
+    if (empty($card_data) || $card_data->status == 0) {
       drupal_set_message(t('The requested card on file is no longer valid.'), 'error');
       return FALSE;
     }
-    $request->recurringSubscriptionInfo->subscriptionID = $card_data['remote_id'];
+    $request->recurringSubscriptionInfo->subscriptionID = $card_data->remote_id;
   }
   else {
     // Add the billing information.
@@ -630,7 +615,7 @@ function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_
     // If Card on File storage is enabled and this is a new card.
     if (module_exists('commerce_cardonfile') && $payment_method['settings']['credit_card']['cardonfile'] && (empty($pane_values['cardonfile']) || $pane_values['cardonfile'] == 'new')) {
       // Submit a request to create the Customer Profile.
-      if ($response = commerce_cybersource_create_customer_profile_request($request, $payment_method, $order, $transaction->remote_id)) {
+      if ($response = commerce_cybersource_create_customer_profile_request($request, $payment_method, $order)) {
         // If the Customer Profile creation was a success, store the new card on
         // file data locally.
         if ($response->paySubscriptionCreateReply->reasonCode == 100) {
@@ -638,31 +623,12 @@ function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_
           $remote_id = $response->paySubscriptionCreateReply->subscriptionID;
 
 
-//DEPRECATED CARDONFILE STYLE?  
-          // $card_data = array(
-          //   'uid' => $order->uid,
-          //   'payment_method' => $payment_method['method_id'],
-          //   'instance_id' => $payment_method['instance_id'],
-          //   'remote_id' => $remote_id,
-          //   'card_type' => 'card',
-          //   'card_name' => $billing_name,
-          //   'card_number' => substr($pane_values['credit_card']['number'], -4),
-          //   'card_exp_month' => $pane_values['credit_card']['exp_month'],
-          //   'card_exp_year' => $pane_values['credit_card']['exp_year'],
-          //   'status' => 1,
-          // );
-  
-          // // Save and log the creation of the new card on file.
-          // commerce_cardonfile_data_save($card_data);
-
-
-//SAGE PAYMENTS STYLE
         // Store the token with cardonfile.
           $card_data = commerce_cardonfile_new();
           $card_data->uid = $order->uid;
           $card_data->payment_method = $payment_method['method_id'];
           $card_data->instance_id = $payment_method['instance_id'];
-          $card_data->remote_id = $temote_id;
+          $card_data->remote_id = $remote_id;
           $card_data->card_type = !empty($card_type) ? $card_type : 'card';
           $card_data->card_name = $billing_name;
           $card_data->card_number = substr($pane_values['credit_card']['number'], -4);
@@ -1661,7 +1627,7 @@ function commerce_cybersource_cardonfile_delete($form, &$form_state, $payment_me
  * @return
  *   A SimpleXMLElement containing the API response.
  */
-function commerce_cybersource_create_customer_profile_request($orig_request, $payment_method, $order, $request_id) {
+function commerce_cybersource_create_customer_profile_request($orig_request, $payment_method, $order) {
 
   $request = new stdClass();
   $request->billTo = $orig_request->billTo;
@@ -1676,44 +1642,8 @@ function commerce_cybersource_create_customer_profile_request($orig_request, $pa
   $request->recurringSubscriptionInfo->frequency = "on-demand";
   
   $request->paySubscriptionCreateService->run = "true";
-  $request->paySubscriptionCreateService->paymentRequestID = $request_id;
-
-
-// <requestMessage xmlns="urn:schemas-cybersource-com:transaction-data-1.92">
-//   <merchantID>infodev</merchantID>
-//   <merchantReferenceCode>14344</merchantReferenceCode>
-//   <billTo>
-//     <firstName>John</firstName>
-//     <lastName>Doe</lastName>
-//     <street1>1295 Charleston Road</street1>
-//     <city>Mountain View</city>
-//     <state>CA</state>
-//     <postalCode>94043</postalCode>
-//     <country>US</country>
-//     <email>john.doe@example.com</email>
-//     <phoneNumber>650-965-6000</phoneNumber>
-//   </billTo>
-//   <purchaseTotals>
-//     <currency>USD</currency>
-//   </purchaseTotals>
-//   <card>
-//     <cardType>001</cardType>
-//     <accountNumber>4111111111111111</accountNumber>
-//     <expirationMonth>12</expirationMonth>
-//     <expirationYear>2015</expirationYear>
-//   </card>
-//   <subscription>
-//     <title>On-Demand Profile</title>
-//     <paymentMethod>credit card</paymentMethod>
-//   </subscription>
-//   <recurringSubscriptionInfo>
-//     <frequency>on-demand</frequency>
-//   </recurringSubscriptionInfo>
-//   <paySubscriptionCreateService run="true"/>
-// </requestMessage>
-
-
-
+  //$request->paySubscriptionCreateService->paymentRequestID = $request_id;
+ 
   return commerce_cybersource_soap_api_request($payment_method, $request);
 }
 
@@ -1742,9 +1672,9 @@ function commerce_cybersource_retrieve_customer_profile_request($payment_method,
 function commerce_cybersource_update_customer_profile_request($payment_method, $form_state, $card_data) {
   $pane_values = $form_state['values'];
   $request = new stdClass();
-  $request->merchantReferenceCode = 'Update Profile ' . $card_data['remote_id'];
+  $request->merchantReferenceCode = 'Update Profile ' . $card_data->remote_id;
   $request->paySubscriptionUpdateService->run = 'true';
-  $request->recurringSubscriptionInfo->subscriptionID = $card_data['remote_id'];
+  $request->recurringSubscriptionInfo->subscriptionID = $card_data->remote_id;
   
   // Add the credit card details.
   $request->card = (object) array(
@@ -1773,9 +1703,9 @@ function commerce_cybersource_update_customer_profile_request($payment_method, $
  */
 function commerce_cybersource_delete_customer_profile_request($payment_method, $card_data) {
   $request = new stdClass();
-  $request->merchantReferenceCode = 'Delete Profile ' . $card_data['remote_id'];
+  $request->merchantReferenceCode = 'Delete Profile ' . $card_data->remote_id;
   $request->paySubscriptionDeleteService->run = 'true';
-  $request->recurringSubscriptionInfo->subscriptionID = $card_data['remote_id'];
+  $request->recurringSubscriptionInfo->subscriptionID = $card_data->remote_id;
   
   return commerce_cybersource_soap_api_request($payment_method, $request);  
 }
