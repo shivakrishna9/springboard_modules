@@ -167,15 +167,12 @@ function commerce_cybersource_fundraiser_commerce_update($donation, $card_data =
     }
   }
 
-  dpm($action);
   if ($action == 'update') {
     $card_data->card_number = $cardonfile_fields['card_number'];
     $card_data->card_exp_month = $cardonfile_fields['card_exp_month'];
     $card_data->card_exp_year = $cardonfile_fields['card_exp_year'];
     $pane_form = array();
-dpm($pane_values);
     $response = commerce_cybersource_cardonfile_update($pane_form, $pane_values, $payment_method, $card_data);
-    dpm($response);
     if ($response) {
       commerce_cardonfile_save($card_data);
       return $card_data;
