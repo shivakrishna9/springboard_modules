@@ -5,9 +5,11 @@ DateMigrateExampleUnitTest
 CoderReviewStyleTest
 CoderUpgradeWebTestCase
 DsrTestCase
+EmailWrappersTestCase
 FundraiserCommerceGatewayAuthnetTest
 FundraiserDateModeTest
 FundraiserSustainerTest
+MarketSourceTestCase
 SalesforceGenmapEntitiesTestCase
 SalesforceGenmapTestCase
 SalesforceWebformMapTestCase
