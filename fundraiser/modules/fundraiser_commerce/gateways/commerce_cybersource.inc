@@ -69,7 +69,8 @@ function commerce_cybersource_fundraiser_commerce_charge($payment_method, $donat
   $pane_form = array(); // Not actually used anywhere in this system, so ignore it.
 
   $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
-    _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
+  _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
+  $pane_values['the_real_cardonfile_value'] = $donation->data['cardonfile'];
 
   // Customer data for charge pulls from the customer profile given on the order, so we can ignore that.
   // If the charge fails, returns false, else nothing.
@@ -118,7 +119,6 @@ function commerce_cybersource_fundraiser_commerce_cardonfile($donation) {
  *    Card on file entity for the new/updated card data
  */
 function commerce_cybersource_fundraiser_commerce_update($donation, $card_data = NULL) {
-
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
   $payment_method = $donation->gateway['gateway_details'];
 
@@ -139,7 +139,7 @@ function commerce_cybersource_fundraiser_commerce_update($donation, $card_data =
   }
 
   // Pull the new credit card values from the donation
-  $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
+  $pane_values['values'] = _fundraiser_commerce_credit_card_pane_values($donation);
 
   // Load the card on file values for this donation
   $cardonfile_fields = _fundraiser_commerce_credit_card_cardonfile_fields($donation);
@@ -166,13 +166,16 @@ function commerce_cybersource_fundraiser_commerce_update($donation, $card_data =
       $action = 'new';
     }
   }
+
+  dpm($action);
   if ($action == 'update') {
     $card_data->card_number = $cardonfile_fields['card_number'];
     $card_data->card_exp_month = $cardonfile_fields['card_exp_month'];
     $card_data->card_exp_year = $cardonfile_fields['card_exp_year'];
     $pane_form = array();
-
+dpm($pane_values);
     $response = commerce_cybersource_cardonfile_update($pane_form, $pane_values, $payment_method, $card_data);
+    dpm($response);
     if ($response) {
       commerce_cardonfile_save($card_data);
       return $card_data;
@@ -201,21 +204,25 @@ function commerce_cybersource_fundraiser_commerce_update($donation, $card_data =
       if ($response->paySubscriptionCreateReply->reasonCode == 100) {
         // Build a remote ID that includes the MerchantRefernceCode and ProfileSubscriptionID
         $remote_id = $response->paySubscriptionCreateReply->subscriptionID;
+            // Get the card type
+        $card_type = commerce_payment_validate_credit_card_type($pane_values['credit_card']['number'], array_keys(commerce_payment_credit_card_types()));
+        $all_types = commerce_payment_credit_card_types();
+        $card_type = !empty($all_types[$card_type]) ? $all_types[$card_type] : 'card';
       // Store the token with cardonfile.
-        $card_data = commerce_cardonfile_new();
-        $card_data->uid = $order->uid;
-        $card_data->payment_method = $payment_method['method_id'];
-        $card_data->instance_id = $payment_method['instance_id'];
-        $card_data->remote_id = $remote_id;
-        $card_data->card_type = !empty($card_type) ? $card_type : 'card';
-        $card_data->card_name = $billing_name;
-        $card_data->card_number = substr($pane_values['credit_card']['number'], -4);
-        $card_data->card_exp_month = $pane_values['credit_card']['exp_month'];
-        $card_data->card_exp_year = $pane_values['credit_card']['exp_year'];
-        $card_data->status = 1;
+        $new_data = commerce_cardonfile_new();
+        $new_data->uid = $order->uid;
+        $new_data->payment_method = $payment_method['method_id'];
+        $new_data->instance_id = $payment_method['instance_id'];
+        $new_data->remote_id = $remote_id;
+        $new_data->card_type = !empty($card_type) ? $card_type : 'card';
+        $new_data->card_name = !empty($card_data->card_name) ? $card_data->card_name : '';
+        $new_data->card_number = substr($pane_values['credit_card']['number'], -4);
+        $new_data->card_exp_month = $pane_values['credit_card']['exp_month'];
+        $new_data->card_exp_year = $pane_values['credit_card']['exp_year'];
+        $new_data->status = 1;
 
         // Save and log the creation of the new card on file.
-        commerce_cardonfile_save($card_data);
+        commerce_cardonfile_save($new_data);
 
         $donation->data['cardonfile'] = $new_data->card_id;
         return $new_data;

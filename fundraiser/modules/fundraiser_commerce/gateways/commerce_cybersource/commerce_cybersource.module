@@ -453,7 +453,7 @@ function commerce_cybersource_soap_cc_submit_form_validate($payment_method, $pan
   //https://www.drupal.org/files/1740346-cardonfile.patch
   // If using cardonfile, skip the validation of credit card info as it doesn't exist.
   if (module_exists('commerce_cardonfile') && $payment_method['settings']['credit_card']['cardonfile'] &&
-    !empty($pane_values['cardonfile']) && $pane_values['cardonfile'] !== 'new') {
+    !empty($pane_values['cardonfile']) && $pane_values['credit_card']['cardonfile_store'] !== TRUE) {
     return TRUE;
   }
   
@@ -467,7 +467,6 @@ function commerce_cybersource_soap_cc_submit_form_validate($payment_method, $pan
  */
 function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
   $payment_method['settings'] += commerce_cybersource_soap_cc_default_settings();
-
   // Create and populate the request object.
   $request = (object) array(
     'merchantReferenceCode' => t('Order @number', array('@number' => $order->order_number)),
@@ -483,10 +482,14 @@ function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_
   //https://www.drupal.org/files/1740346-cardonfile.patch
   // If the customer specified payment using a card on file, use the subscriptionID
   // instead of credit card info.
+
+  $sustainer =  (isset($pane_values['credit_card']['cardonfile_store']) && $pane_values['credit_card']['cardonfile_store'] !== TRUE) ? TRUE : FALSE;
+  $cardonfile = isset($pane_values['cardonfile']) && $pane_values['cardonfile'] !='new' ? TRUE : FALSE;
+
   if (module_exists('commerce_cardonfile') && $payment_method['settings']['credit_card']['cardonfile'] 
-    && !empty($pane_values['cardonfile']) && $pane_values['cardonfile'] !== 'new') {
+    && !empty($pane_values['cardonfile']) && ($sustainer || $cardonfile)) {
     // First attempt to load the card on file.
-    $card_data = commerce_cardonfile_load($pane_values['cardonfile']);
+    $card_data = commerce_cardonfile_load( $pane_values['the_real_cardonfile_value']);
 
   //https://www.drupal.org/files/1740346-cardonfile.patch
   // Fail now if it is no longer available or the card is inactive.
@@ -518,10 +521,12 @@ function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_
     // Determine the credit card type if possible for use in later code.
     if (!empty($pane_values['credit_card']['number']) && empty($pane_values['credit_card']['type'])) {
       module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
-      $request->card->cardType = commerce_cybersource_cc_type_code(commerce_payment_validate_credit_card_type($pane_values['credit_card']['number'], array_keys(commerce_payment_credit_card_types())));
+      $card_type = commerce_payment_validate_credit_card_type($pane_values['credit_card']['number'], array_keys(commerce_payment_credit_card_types()));
+      $request->card->cardType = commerce_cybersource_cc_type_code($card_type);
     }
     else {
-      $request->card->cardType = commerce_cybersource_cc_type_code($pane_values['credit_card']['type']);
+      $card_type = $pane_values['credit_card']['type'];
+      $request->card->cardType = commerce_cybersource_cc_type_code($card_type);
     }
     // Add the CVV data if included.
     if (isset($pane_values['credit_card']['code'])) {
@@ -612,9 +617,9 @@ function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_
       drupal_set_message('Please enter you information again or try a different card.', 'error');
       return FALSE;
     }
-
     // If Card on File storage is enabled and this is a new card.
-    if (module_exists('commerce_cardonfile') && $payment_method['settings']['credit_card']['cardonfile'] && (empty($pane_values['cardonfile']) || $pane_values['cardonfile'] == 'new')) {
+    if (module_exists('commerce_cardonfile') && $payment_method['settings']['credit_card']['cardonfile'] 
+      && (empty($pane_values['cardonfile']) || $pane_values['credit_card']['cardonfile_store'] == TRUE)) {
       // Submit a request to create the Customer Profile.
       if ($response = commerce_cybersource_create_customer_profile_request($request, $payment_method, $order)) {
 
@@ -820,8 +825,6 @@ function commerce_cybersource_soap_capture($order, $transaction, $amount) {
 
   // Load the payment method instance used to create the authorization.
   $payment_method = commerce_payment_method_instance_load($transaction->instance_id);
-
-  dpm($transaction);
 
   // Extract the timestamp used to retrieve the order request token from the
   // remote status value.
@@ -1253,14 +1256,13 @@ function commerce_cybersource_cc_type_code($text) {
      case 'mastercard':
      case 'eurocard':
       return '002';
-    case 'american express': 
+    case 'amex': 
       return '003';
     case 'discover': 
       return '004';
-    case 'diners club':
-    case 'diner\'s club': 
+    case 'dc':
       return '005';
-    case 'carte blanche': 
+    case 'cb': 
       return '006';
     case 'jcb': 
       return '007';
@@ -1272,7 +1274,7 @@ function commerce_cybersource_cc_type_code($text) {
       return '024';
     case 'delta': 
       return '031';
-    case 'visa electron': 
+    case 'visaelectron': 
       return '033';
     case 'dankfort': 
       return '034';
@@ -1286,7 +1288,7 @@ function commerce_cybersource_cc_type_code($text) {
       return '039';
     case 'uatp': 
       return '040';
-    case 'maestro (international)': 
+    case 'maestro': 
       return '042';
     case 'ge money uk card': 
       return '043';
@@ -1567,17 +1569,15 @@ function commerce_cybersource_commerce_price_component_type_info() {
 function commerce_cybersource_form_commerce_cardonfile_update_form_alter(&$form, &$form_state) {
   // Extract the card data from the form and load the payment method instance.
   $card_data = $form['card_data']['#value'];
-  $payment_method = commerce_payment_method_instance_load($card_data['instance_id']);
-
+  $payment_method = commerce_payment_method_instance_load($card_data->instance_id);
   // Load the full payment profile from cybersource.
-  $response = commerce_cybersource_retrieve_customer_profile_request($payment_method, $card_data['remote_id']);
-
+  $response = commerce_cybersource_retrieve_customer_profile_request($payment_method, $card_data->remote_id);
   if ($response->reasonCode == 100) {
     $billto = $response->paySubscriptionRetrieveReply;
 
     $address = array(
       '<strong>' . t('Billing address:') . '</strong>',
-      (string) $billto->company,
+      (string) isset($billto->company) ? $billto->company : '' ,
       (string) $billto->street1,
       (string) $billto->city . ', ' . (string) $billto->state . ' ' . (string) $billto->postalCode,
       (string) $billto->country,
@@ -1657,10 +1657,8 @@ function commerce_cybersource_create_customer_profile_request($orig_request, $pa
 function commerce_cybersource_retrieve_customer_profile_request($payment_method, $request_id) {
   $request = new stdClass();
   $request->merchantReferenceCode = 'Read ' . $request_id;
-
   $request->paySubscriptionRetrieveService->run = "true";
   $request->recurringSubscriptionInfo->subscriptionID = $request_id;
-
   return commerce_cybersource_soap_api_request($payment_method, $request);
 }
 
@@ -1675,21 +1673,33 @@ function commerce_cybersource_update_customer_profile_request($payment_method, $
   $request->merchantReferenceCode = 'Update Profile ' . $card_data->remote_id;
   $request->paySubscriptionUpdateService->run = 'true';
   $request->recurringSubscriptionInfo->subscriptionID = $card_data->remote_id;
-
-  
+  if (isset($pane_values['credit_card']['number'])) {
+    $number = $pane_values['credit_card']['number'];
+  }
+  else {
+    $number = $card_data->card_number;
+  }  
   // Add the credit card details.
   $request->card = (object) array(
-    'accountNumber' => $pane_values['credit_card']['number'],
+    'accountNumber' => $number,
     'expirationMonth' => $pane_values['credit_card']['exp_month'],
     'expirationYear' => $pane_values['credit_card']['exp_year'],
   );
 
   // Determine the credit card type if possible for use in later code.
-  if (!empty($pane_values['credit_card']['number']) && empty($pane_values['credit_card']['type'])) {
-    module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
-    $request->card->cardType = commerce_cybersource_cc_type_code(commerce_payment_validate_credit_card_type($pane_values['credit_card']['number'], array_keys(commerce_payment_credit_card_types())));
-  }
-
+    if (!empty($pane_values['credit_card']['number']) && empty($pane_values['credit_card']['type'])) {
+      module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+      $card_type = commerce_payment_validate_credit_card_type($pane_values['credit_card']['number'], array_keys(commerce_payment_credit_card_types()));
+      $request->card->cardType = commerce_cybersource_cc_type_code($card_type);
+    }
+    elseif(!empty($pane_values['credit_card']['type'])) {
+      $card_type = $pane_values['credit_card']['type'];
+      $request->card->cardType = commerce_cybersource_cc_type_code($card_type);
+    }
+    else {
+      $card_type = $pane_values['card_data']->card_type;
+      $request->card->cardType = commerce_cybersource_cc_type_code($card_type);
+    }
   // Add the CVV data if included.
   if (isset($pane_values['credit_card']['code'])) {
     $request->card->cvNumber = $pane_values['credit_card']['code'];
