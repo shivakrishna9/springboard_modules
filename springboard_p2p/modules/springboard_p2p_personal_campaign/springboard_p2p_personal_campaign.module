@@ -514,3 +514,24 @@ function springboard_p2p_personal_campaign_node_insert($node) {
   }
 }
 
+/**
+ * Implements hook_node_update().
+ *
+ * Keep personal campaign thumbnail and facebook share image in sync.
+ */
+function springboard_p2p_personal_campaign_node_update($node) {
+  if ($node->type == 'p2p_personal_campaign' && module_exists('sb_social')) {
+    $language = $node->language;
+    $settings_id = sb_social_get_sid_by_id($node->nid, 'node');
+    $settings = sb_social_settings_load($settings_id);
+    // If Facebook is enabled, set Facebook image to the personal campaign thumbnail for the
+    // parent campaign.
+    if (isset($settings['data']['facebook'])) {
+      $personal_campaign_thumbnail_fid = isset($node->field_p2p_campaign_images[$language][0]['fid']) ? $node->field_p2p_campaign_images[$language][0]['fid'] : '';
+      $settings['data']['facebook']['image'] = $personal_campaign_thumbnail_fid;
+    }
+    $settings['type'] = 'node';
+    sb_social_settings_save($settings);
+
+  }
+}
