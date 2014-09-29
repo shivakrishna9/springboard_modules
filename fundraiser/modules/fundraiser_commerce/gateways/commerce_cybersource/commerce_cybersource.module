@@ -489,7 +489,12 @@ function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_
   if (module_exists('commerce_cardonfile') && $payment_method['settings']['credit_card']['cardonfile'] 
     && !empty($pane_values['cardonfile']) && ($sustainer || $cardonfile)) {
     // First attempt to load the card on file.
-    $card_data = commerce_cardonfile_load( $pane_values['the_real_cardonfile_value']);
+    if(isset($pane_values['the_real_cardonfile_value'])) {
+      $card_data = commerce_cardonfile_load($pane_values['the_real_cardonfile_value']);
+    }
+    else {
+      $card_data = commerce_cardonfile_load($pane_values['cardonfile']);
+    }
 
   //https://www.drupal.org/files/1740346-cardonfile.patch
   // Fail now if it is no longer available or the card is inactive.
@@ -881,6 +886,78 @@ function commerce_cybersource_soap_capture($order, $transaction, $amount) {
 }
 
 /**
+ * Submits a prior authorization capture request.
+ *
+ * @param $order
+ *   The order object the payment is for.
+ * @param $transaction
+ *   The payment transaction representing the authorization the capture is for.
+ * @param $amount
+ *   An integer price amount.
+ *
+ * @return
+ *   The response from CyberSource or FALSE upon failure.
+ */
+function commerce_cybersource_soap_refund($order, $transaction, $amount) {
+
+  // Load the payment method instance used to create the authorization.
+  $payment_method = commerce_payment_method_instance_load($transaction->instance_id);
+
+  // Extract the timestamp used to retrieve the order request token from the
+  // remote status value.
+  if(strpos($transaction->remote_status, ':') !== FALSE ) {
+    list($status, $timestamp) = explode(':', $transaction->remote_status);
+  }
+  else {
+    $timestamp = $transaction->revision_timestamp;
+  }
+
+  // Fail now if now timestamp was not found or the payload is missing.
+  if (empty($timestamp) || empty($transaction->payload[$timestamp])) {
+    return FALSE;
+  }
+
+  // Create and populate the request object.
+  $request = (object) array(
+    'merchantReferenceCode' => t('Order @number', array('@number' => $order->order_number)),
+    'orderRequestToken' => $transaction->payload[$transaction->revision_timestamp]->requestToken,
+  );
+
+  // Add purchase total information.
+  $request->purchaseTotals = (object) array(
+    'currency' => $transaction->currency_code,
+    'grandTotalAmount' => commerce_currency_amount_to_decimal($amount, $transaction->currency_code),
+  );
+
+  // Add the capture service information.
+  $request->ccCreditService = (object) array(
+    'run' => 'true',
+    'captureRequestID' => $transaction->remote_id,
+  );
+
+  if ($response = commerce_cybersource_soap_api_request($payment_method, $request)) {
+    // Add the response to the payload.
+    $transaction->payload[REQUEST_TIME] = $response;
+
+    if ($response->ccCreditReply->reasonCode == 100) {
+      // Update the amount in case it changed between authorization and capture.
+      $transaction->amount = commerce_currency_decimal_to_amount($response->ccCreditReply->amount, $transaction->currency_code);
+
+      // Update the transaction status and remote status.
+      $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+      $transaction->remote_status = COMMERCE_CREDIT_CREDIT . ':' . REQUEST_TIME;
+    }
+
+    commerce_payment_transaction_save($transaction);
+
+    return $response;
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
  * Submits a tax calculation request.
  *
  * @param $payment_method
@@ -1063,9 +1140,9 @@ function commerce_cybersource_soap_api_request($payment_method, $request) {
 function commerce_cybersource_soap_wsdl_url($transaction_mode) {
   switch ($transaction_mode) {
     case CYBERSOURCE_TXN_MODE_PRODUCTION:
-      return 'https://ics2ws.ic3.com/commerce/1.x/transactionProcessor/CyberSourceTransaction_1.55.wsdl';
+      return 'https://ics2ws.ic3.com/commerce/1.x/transactionProcessor/CyberSourceTransaction_1.107.wsdl';
     case CYBERSOURCE_TXN_MODE_TEST:
-      return 'https://ics2wstest.ic3.com/commerce/1.x/transactionProcessor/CyberSourceTransaction_1.55.wsdl';
+      return 'https://ics2wstest.ic3.com/commerce/1.x/transactionProcessor/CyberSourceTransaction_1.107.wsdl';
   }
 }
 

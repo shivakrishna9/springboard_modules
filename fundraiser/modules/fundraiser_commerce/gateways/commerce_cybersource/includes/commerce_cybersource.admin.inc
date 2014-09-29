@@ -77,3 +77,24 @@ function commerce_cybersource_soap_capture_form_submit($form, &$form_state) {
     drupal_set_message(t('An error occurred communicate with CyberSource, and the payment was not captured.'), 'error');
   }
 }
+
+
+function commerce_cybersource_soap_refund_form_submit($form, &$form_state) {
+  $order = $form_state['order'];
+  $transaction = $form_state['transaction'];
+  $amount = commerce_currency_decimal_to_amount($form_state['values']['amount'], $transaction->currency_code);
+
+  if ($response = commerce_cybersource_soap_refund($order, $transaction, $amount)) {
+    // If the payment failed, display an error and rebuild the form.
+    if ($response->ccCreditReply->reasonCode != 100) {
+      drupal_set_message(t('The Credit failed with the following error: @reason', array('@reason' => commerce_cybersource_reason_message($response->ccCreditReply->reasonCode))), 'error');
+    }
+    else {
+      drupal_set_message(t('The payment was credited successfully.'));
+      $form_state['redirect'] = 'admin/commerce/orders/' . $order->order_id . '/payment';
+    }
+  }
+  else {
+    drupal_set_message(t('An error occurred communicate with CyberSource, and the payment was not credited.'), 'error');
+  }
+}
