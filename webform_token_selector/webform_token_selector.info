@@ -8,4 +8,3 @@ dependencies[] = webform_user
 dependencies[] = wysiwyg
 
 files[] = tests/webform_token_selector.test
-files[] = webform_token_selector.module
