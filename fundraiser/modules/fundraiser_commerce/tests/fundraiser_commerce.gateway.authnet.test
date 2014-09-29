@@ -1,14 +1,10 @@
 <?php
-
 /**
  * @file
- * Test suite for Market Source module.
+ * Test suite for Authnet payment gateway.
  */
 
-// Include the setup test class.
-module_load_include('test', 'fundraiser', 'tests/fundraiser_commerce.gateway');
-
-class FundraiserCommerceGatewayAuthnetTest extends FundraiserCommerceGatewayTest {
+class FundraiserCommerceGatewayAuthnetTest extends FundraiserCommerceGatewayTestSetup {
   protected $privileged_user;
 
   public static function getInfo() {

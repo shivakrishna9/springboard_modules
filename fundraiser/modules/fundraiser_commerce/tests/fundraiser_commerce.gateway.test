@@ -1,23 +1,11 @@
 <?php
-
 /**
  * @file
- * Test suite for Market Source module.
+ * Parent helper class for Gateway tests.
  */
 
-// Include the setup test class.
-module_load_include('test', 'fundraiser', 'tests/fundraiser.setup');
-
-class FundraiserCommerceGatewayTest extends FundraiserSetup {
+abstract class FundraiserCommerceGatewayTestSetup extends FundraiserSetup {
   protected $privileged_user;
-
-  public static function getInfo() {
-    return array(
-      'name' => 'Fundraiser Commerce Gateway',
-      'description' => 'Parent class for testing the Fundraiser Commerce Gateways',
-      'group' => 'Fundraiser',
-    );
-  }
 
   public function setUp($modules = array(), $permissions = array()) {
     parent::setUp($modules);
