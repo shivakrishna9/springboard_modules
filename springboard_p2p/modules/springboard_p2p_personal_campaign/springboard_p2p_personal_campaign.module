@@ -358,7 +358,6 @@ function springboard_p2p_personal_campaign_market_source_field_info() {
       'hidden_type' => 'hidden',
     ),
   );
-
   return $fields;
 }
 
@@ -433,10 +432,19 @@ function springboard_p2p_personal_campaign_social_settings_submit($form, $form_s
   $settings_id = sb_social_get_sid_by_id($node->nid, 'node');
   $settings = sb_social_settings_load($settings_id, FALSE);
   if (is_array($personal_campaigns) && count($personal_campaigns)) {
+    // Get the default personal campaign thumbnail from the parent campaign.
     foreach ($personal_campaigns as $nid => $personal_campaign_node) {
+      // Personal campaign nodes should use the personal campaign thumbnail to set opengraph image tags.
+      // If Facebook is enabled we want to ensure that the Facebook share image uses the personal campaign thumbnail.
+      // All other setting should inherit from the parent campaign. 
+      if (isset($settings['data']['facebook'])) {
+        $personal_campaign_thumbnail_fid = $personal_campaign_node->field_p2p_campaign_images[$personal_campaign_node->language][0]['fid'];
+        $settings['data']['facebook']['image'] = is_numeric($personal_campaign_thumbnail_fid) ? $personal_campaign_thumbnail_fid : '';
+      }
       $sid = sb_social_get_sid_by_id($nid, 'node');
       $settings['sid'] = $sid ? $sid : '';
       $settings['id'] = $nid;
+      $settings['type'] = 'node';
       sb_social_settings_save($settings);
       drupal_set_message(t('Updated Social Share settings for !link', array('!link' => l($personal_campaign_node->title, 'node/' . $nid))));
     }
@@ -489,11 +497,20 @@ function springboard_p2p_personal_campaign_market_source_build_form_keys_alter(&
 function springboard_p2p_personal_campaign_node_insert($node) {
   if ($node->type == 'p2p_personal_campaign' && module_exists('sb_social')) {
     $language = $node->language;
-    $campaign_nid = $node->field_p2p_campaign[$language ][0]['target_id'];
-    $settings_id = sb_social_get_sid_by_id($campaign_nid, 'node');
+    $campaign_node = node_load($node->field_p2p_campaign[$language][0]['target_id']);
+    $settings_id = sb_social_get_sid_by_id($campaign_node->nid, 'node');
     $settings = sb_social_settings_load($settings_id);
+    // If Facebook is enabled, set Facebook image to the personal campaign thumbnail for the
+    // parent campaign.
+    if (isset($settings['data']['facebook'])) {
+      $campaign_language = $campaign_node->language;
+      $personal_campaign_thumbnail_fid = isset($campaign_node->field_p2p_images[$campaign_language][0]['fid']) ? $campaign_node->field_p2p_images[$campaign_language][0]['fid'] : '';
+      $settings['data']['facebook']['image'] = $personal_campaign_thumbnail_fid;
+    }
     $settings['sid'] = '';
     $settings['id'] = $node->nid;
+    $settings['type'] = 'node';
     sb_social_settings_save($settings);
   }
 }
+
