@@ -11,6 +11,7 @@ FundraiserCommerceGatewayAuthnetTest
 FundraiserDateModeTest
 FundraiserSustainerTest
 MarketSourceTestCase
+SalesforceDonationTestCase
 SalesforceGenmapEntitiesTestCase
 SalesforceGenmapTestCase
 SalesforceWebformMapTestCase
