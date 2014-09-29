@@ -39,5 +39,9 @@ SalesforceSyncTestCase
 SalesforceSyncTokenTestCase
 securePrepopulateUnitTestCase
 SpringboardAPITestCase
+SpringboardGaTestCase
 SpringboardSocialFunctionalTest
+SpringboardVersionTestCase
+SpringboardViewsTestCase
 ValidationLogTestCase
+WebformTokenSelectorTestCase
