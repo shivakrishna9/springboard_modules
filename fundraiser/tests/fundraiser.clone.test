@@ -4,9 +4,6 @@
  * Fundraiser clone tests. Ensures cloning donation forms works as expected.
  */
 
-// Include the setup test class.
-module_load_include('test', 'fundraiser', 'tests/fundraiser.setup');
-
 /**
  * Fundraiser cloning test class.
  */
