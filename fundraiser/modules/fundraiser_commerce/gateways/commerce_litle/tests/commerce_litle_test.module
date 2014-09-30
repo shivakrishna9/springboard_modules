@@ -392,21 +392,21 @@ function commerce_litle_test_get_response_time() {
 /**
  * Return the xml element for accountUpdater.
  *
- * @param bool $showCardData
+ * @param bool $show_card_data
  *   Whether to include the old and new card data.
- * @param null|int $extendedCardResponse
+ * @param null|int $extended_card_response
  *   Whether to include the extendedCardResponse element.
  *   Can be NULL to exclude, or 501 or 504 for the message code.
  *
  * @return string
  *   The xml for accountUpdater.
  */
-function commerce_litle_test_account_updater_response($showCardData = TRUE, $extendedCardResponse = NULL) {
+function commerce_litle_test_account_updater_response($show_card_data = TRUE, $extended_card_response = NULL) {
   $xml = '';
 
   $xml .= '<accountUpdater>';
 
-  if ($showCardData) {
+  if ($show_card_data) {
     $xml .= '<originalCardTokenInfo>';
     $xml .= '<litleToken>Old Token</litleToken>';
     $xml .= '<type>Card Type</type>';
@@ -422,7 +422,7 @@ function commerce_litle_test_account_updater_response($showCardData = TRUE, $ext
     $xml .= '</newCardTokenInfo>';
   }
 
-  $xml .= commerce_litle_test_extended_card_response($extendedCardResponse);
+  $xml .= commerce_litle_test_extended_card_response($extended_card_response);
 
   $xml .= '</accountUpdater>';
 
@@ -436,31 +436,45 @@ function commerce_litle_test_account_updater_response($showCardData = TRUE, $ext
  * "501 - The Account Was Closed.”
  * “504 - Contact the cardholder for updated information."
  *
- * @param null|int $extendedCardResponse
+ * @param null|int $extended_card_response
  *   Currently 501 or 504.
  */
-function commerce_litle_test_extended_card_response($extendedCardResponse) {
+function commerce_litle_test_extended_card_response($extended_card_response) {
   $xml = '';
 
-  $extendedCardResponseValues = array(
+  $extended_card_response_values = array(
     501 => 'The Account Was Closed.',
     504 => 'Contact the cardholder for updated information.',
   );
 
-  if (isset($extendedCardResponseValues[$extendedCardResponse])) {
+  if (isset($extended_card_response_values[$extended_card_response])) {
     $xml .= '<extendedCardResponse>';
-    $xml .= '<message>' . $extendedCardResponseValues[$extendedCardResponse] . '</message>';
-    $xml .= '<code>' . $extendedCardResponse . '</code>';
+    $xml .= '<message>' . $extended_card_response_values[$extended_card_response] . '</message>';
+    $xml .= '<code>' . $extended_card_response . '</code>';
     $xml .= '</extendedCardResponse>';
   }
 
   return $xml;
 }
 
+/**
+ * Change the account updater enabled status.
+ *
+ * @param bool $set
+ *   TRUE to enable account updater responses.
+ */
 function commerce_litle_test_account_updater_set($set) {
   variable_set('commerce_litle_test_account_updater_enabled', $set);
 }
 
+/**
+ * Checks if account updater is enabled.
+ *
+ * This is so responses know whether to include that data.
+ *
+ * @return bool
+ *   TRUE if account updater is enabled.
+ */
 function commerce_litle_test_account_updater_enabled() {
   return variable_get('commerce_litle_test_account_updater_enabled', TRUE);
 }
