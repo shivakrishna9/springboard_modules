@@ -244,6 +244,11 @@ function commerce_litle_test_sale(DOMNode $node) {
   $xml .= "<responseTime>" . commerce_litle_test_get_response_time() . "</responseTime>";
   $xml .= "<message>Approved</message>";
   $xml .= "<authCode>96558</authCode>";
+
+  if (commerce_litle_test_account_updater_enabled()) {
+    $xml .= commerce_litle_test_account_updater_response();
+  }
+
   $xml .= "</saleResponse>";
   $xml .= "</litleOnlineResponse>";
 
@@ -299,10 +304,15 @@ function commerce_litle_test_authorization(DOMNode $node) {
     <response>000</response>";
 
   $xml .= "<responseTime>" . commerce_litle_test_get_response_time() . "</responseTime>";
-  $xml .= "<message>Approved</message>
-    <authCode>74833</authCode>
-  </authorizationResponse>
-</litleOnlineResponse>";
+  $xml .= '<message>Approved</message>';
+  $xml .= '<authCode>74833</authCode>';
+
+  if (commerce_litle_test_account_updater_enabled()) {
+    $xml .= commerce_litle_test_account_updater_response();
+  }
+
+  $xml .= '</authorizationResponse>';
+  $xml .= '</litleOnlineResponse>';
 
   return $xml;
 }
@@ -377,4 +387,80 @@ function commerce_litle_test_no_request_found() {
 function commerce_litle_test_get_response_time() {
   $response_time = new DateTime('now');
   return $response_time->format('Y-m-d\TH:i:s');
+}
+
+/**
+ * Return the xml element for accountUpdater.
+ *
+ * @param bool $showCardData
+ *   Whether to include the old and new card data.
+ * @param null|int $extendedCardResponse
+ *   Whether to include the extendedCardResponse element.
+ *   Can be NULL to exclude, or 501 or 504 for the message code.
+ *
+ * @return string
+ *   The xml for accountUpdater.
+ */
+function commerce_litle_test_account_updater_response($showCardData = TRUE, $extendedCardResponse = NULL) {
+  $xml = '';
+
+  $xml .= '<accountUpdater>';
+
+  if ($showCardData) {
+    $xml .= '<originalCardTokenInfo>';
+    $xml .= '<litleToken>Old Token</litleToken>';
+    $xml .= '<type>Card Type</type>';
+    $xml .= '<expDate>Old Expiration Date</expDate>';
+    $xml .= '<bin>Old Card Bin</bin>';
+    $xml .= '</originalCardTokenInfo>';
+
+    $xml .= '<newCardTokenInfo>';
+    $xml .= '<litleToken>New Token</litleToken>';
+    $xml .= '<type>Card Type</type>';
+    $xml .= '<expDate>New Expiration Date</expDate>';
+    $xml .= '<bin>New Card Bin</bin>';
+    $xml .= '</newCardTokenInfo>';
+  }
+
+  $xml .= commerce_litle_test_extended_card_response($extendedCardResponse);
+
+  $xml .= '</accountUpdater>';
+
+  return $xml;
+}
+
+/**
+ * Returns the xml for extendedCardResponse.
+ *
+ * Possible responses:
+ * "501 - The Account Was Closed.”
+ * “504 - Contact the cardholder for updated information."
+ *
+ * @param null|int $extendedCardResponse
+ *   Currently 501 or 504.
+ */
+function commerce_litle_test_extended_card_response($extendedCardResponse) {
+  $xml = '';
+
+  $extendedCardResponseValues = array(
+    501 => 'The Account Was Closed.',
+    504 => 'Contact the cardholder for updated information.',
+  );
+
+  if (isset($extendedCardResponseValues[$extendedCardResponse])) {
+    $xml .= '<extendedCardResponse>';
+    $xml .= '<message>' . $extendedCardResponseValues[$extendedCardResponse] . '</message>';
+    $xml .= '<code>' . $extendedCardResponse . '</code>';
+    $xml .= '</extendedCardResponse>';
+  }
+
+  return $xml;
+}
+
+function commerce_litle_test_account_updater_set($set) {
+  variable_set('commerce_litle_test_account_updater_enabled', $set);
+}
+
+function commerce_litle_test_account_updater_enabled() {
+  return variable_get('commerce_litle_test_account_updater_enabled', TRUE);
 }
