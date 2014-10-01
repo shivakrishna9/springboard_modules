@@ -45,6 +45,35 @@ function fundraiser_commerce_schema() {
       'did_gateway_field' => array('did', 'gateway_id', 'field_name'),
     ),
   );
+
+  $schema['fundraiser_commerce_gateway_settings_log'] = array(
+    'description' => 'Log changes to the gateway setting',
+    'fields' => array(
+      'gateway_id' => array(
+        'description' => 'The payment gateway type and instance.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'description' => 'The user who made the change',
+        'type' => 'int',
+        'length' => '10',
+        'not null' => TRUE,
+      ),
+      'value' => array(
+        'description' => 'The array of values',
+        'type' => 'text',
+        'size' => 'normal',
+      ),
+      'time' => array(
+        'description' => 'The timestamp',
+        'type' => 'int',
+        'length' => '11',
+        'not null' => TRUE,
+      ),
+    ),  
+  );
   return $schema;
 }
 
@@ -137,3 +166,14 @@ function fundraiser_commerce_update_7003() {
   $schema = fundraiser_commerce_schema();
   db_create_table('fundraiser_commerce_gateway_response', $schema['fundraiser_commerce_gateway_response']);
 }
+
+/**
+ * Add the new {fundraiser_commerce_gateway_settings_log} table.
+ */
+function fundraiser_commerce_update_7004() {
+  $schema = fundraiser_commerce_schema();
+  if (!db_table_exists('fundraiser_commerce_gateway_settings_log')) {
+    db_create_table('fundraiser_commerce_gateway_settings_log', $schema['fundraiser_commerce_gateway_settings_log']);
+  }
+}
+
