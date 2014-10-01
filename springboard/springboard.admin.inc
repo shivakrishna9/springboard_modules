@@ -1825,7 +1825,6 @@ function springboard_admin_config_donation_form_type($form, $form_state) {
   // Save or reset persistent variable values.
   $variables = array(
     'node_submitted' => 0,
-    'comment' => COMMENT_NODE_HIDDEN,
     'fundraiser' => 1,
     'webform_user' => 1,
     'webform_user_default_fields' => array(

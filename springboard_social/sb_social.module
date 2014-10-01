@@ -747,7 +747,7 @@ function theme_sb_social_share_image_preview($variables) {
  */
 function _sb_social_set_tracking_cookie($uid, $mail, $sid) {
   $payload = $uid . '::' . $mail . '::' . $sid;
-  $set = setcookie("sb_social.event_submission", $payload, strtotime('+1 year'));
+  $set = setcookie("sb_social.event_submission", $payload, strtotime('+1 year'), ini_get('session.cookie_path'));
 }
 
 /**

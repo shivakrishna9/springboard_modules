@@ -367,14 +367,14 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
     'label' => 'Upload a Campaign Image',
     'required' => 0,
     'settings' => array(
-      'alt_field' => 1,
+      'alt_field' => 0,
       'default_image' => 0,
       'file_directory' => 'p2p-campaign-images/user-[current-user:uid]',
       'file_extensions' => 'png gif jpg jpeg',
       'max_filesize' => '1500 KB',
       'max_resolution' => '',
       'min_resolution' => '400x240',
-      'title_field' => 1,
+      'title_field' => 0,
       'user_register_form' => FALSE,
     ),
     'widget' => array(
@@ -639,9 +639,9 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
     'label' => 'Suggested Donation Amount',
     'required' => 0,
     'settings' => array(
-      'max' => '',
+      'max' => 99999999,
       'min' => '1.00',
-      'prefix' => '',
+      'prefix' => '$',
       'suffix' => '',
       'user_register_form' => FALSE,
     ),

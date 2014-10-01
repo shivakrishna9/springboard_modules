@@ -46,10 +46,12 @@ function springboard_p2p_install() {
 
   variable_set('springboard_p2p_registration_fields', $default_reg_fields);
 
+  springboard_p2p_set_existing_user_message_default();
+
   variable_set('user_register', 1);
   variable_set('user_email_verification', 0);
   drupal_set_message('Users can now register for this site without administrator approval. New users are not required to verify their email. These changes streamline the P2P registration process.');
-  
+
   // Set Pathauto aliases for all P2P node types.
   if (module_exists('pathauto')) {
     springboard_p2p_set_pathauto_default_aliases(NULL, FALSE);
@@ -76,6 +78,15 @@ function springboard_p2p_uninstall() {
   variable_del('springboard_p2p_fundraiser_items');
   variable_del('springboard_p2p_registration_fields');
   variable_del('springboard_p2p_webform_user_items');
+  variable_del('springboard_p2p_existing_user_message_area');
+}
+
+/**
+ * Sets a default message for the existing user trying to log in.
+ */
+function springboard_p2p_set_existing_user_message_default() {
+  $existing_user_message = 'The e-mail address %email is already registered. <a href="@password">Send me a password reset email.</a>';
+  variable_set('springboard_p2p_existing_user_message_area', $existing_user_message);
 }
 
 /**
@@ -597,4 +608,11 @@ function springboard_p2p_update_7004() {
 function springboard_p2p_update_7005() {
   db_drop_primary_key('springboard_p2p_personal_campaign_action');
   db_add_primary_key('springboard_p2p_personal_campaign_action', array('sid'));
+}
+
+/**
+ * Adds the default existing user message when registering.
+ */
+function springboard_p2p_update_7006() {
+  springboard_p2p_set_existing_user_message_default();
 }

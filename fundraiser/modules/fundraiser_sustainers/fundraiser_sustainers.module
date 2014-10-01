@@ -40,6 +40,10 @@ function fundraiser_sustainers_permission() {
       'title' => t('Fastforward recurring donations'),
       'description' => t('Fastforward recurring donations.'),
     ),
+    'set new recurring charge date' => array(
+      'title' => t('Set new recurring charge date'),
+      'description' => t('Specify a new charge date for future recurring donations.'),
+    ),
     'skip recurring donations' => array(
       'title' => t('Skip recurring donation'),
       'description' => t('Cancel a single recurring donation.'),
@@ -291,7 +295,7 @@ function fundraiser_sustainers_skip_submit($form, &$form_state) {
     'cancellation_reason = \'skipped by admin\' ' .
     'WHERE did = :did', array(':did' => $donation->did)
   );
-  
+
   if (module_exists('salesforce_genmap')) {
     salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
   }
@@ -1048,11 +1052,11 @@ function fundraiser_sustainers_edit_form($did) {
     $number = '**** **** **** '  . $donation->data['payment_fields']['credit']['card_number'];
     $type = t('Card ');
   }
-  elseif(isset($donation->data['payment_fields']['bank account']['accNum'])) {
+  elseif (isset($donation->data['payment_fields']['bank account']['accNum'])) {
     $number = '********* ' . $donation->data['payment_fields']['bank account']['accNum'];
     $type = t('Checking Account');
   }
-   
+
   // Gather further donation data.
   $remaining_donation_count = _fundraiser_sustainers_count_donations_recurr_remaining($did);
   $payment_info = '<div id="payment-info">' .
@@ -1064,10 +1068,10 @@ function fundraiser_sustainers_edit_form($did) {
   '<dd>' . _fundraiser_sustainers_count_donations_recurr_processed($did) . '</dd>' .
   '<dt>Recurring Charges Remaining</dt>' .
   '<dd>' . $remaining_donation_count . '</dd>';
-  if($number) {
+  if ($number) {
     $payment_info .= '<dt>'. $type . ' Number</dt>' .
     '<dd>' . $number . '</dd>';
-  }  
+  }
   $payment_info .= '</dl>' .
   '</div>';
 
@@ -1088,7 +1092,7 @@ function fundraiser_sustainers_edit_form($did) {
   // Format payment schedule into a data table
   $donation_set = _fundraiser_sustainers_get_donations_recurr_by_member($did);
   $donations_header = array('Amount', 'Charge Date', 'Processed Status');
-  
+
 
   if (user_access('fastforward recurring donations')) {
     // Add a button to fastforward this particular donation
@@ -1143,9 +1147,9 @@ function fundraiser_sustainers_edit_form($did) {
   if ($remaining_donation_count > 0 && empty($cancelled)) {
     $donation_amount_form_array = drupal_get_form('fundraiser_sustainers_donation_amount_form', $donation, $next_donation);
     $donation_amount_form = drupal_render($donation_amount_form_array);
-    if(user_access('fastforward recurring donations')) {
+    if (user_access('set new recurring charge date')) {
       // If date mode is enabled and on, do not support changing the payment date.
-      if(module_exists('fundraiser_date_mode') && variable_get('fundraiser_date_mode_set_date_mode', 0) == 1) {
+      if (module_exists('fundraiser_date_mode') && variable_get('fundraiser_date_mode_set_date_mode', 0) == 1) {
         $donation_date_form = '';
       }
       else {
@@ -1301,7 +1305,8 @@ function fundraiser_sustainers_donation_amount_form_submit($form, &$form_state) 
 function fundraiser_sustainers_donation_date_form($form, &$form_state, $donation) {
 
   $recurring = _fundraiser_sustainers_get_donations_recurr_remaining($donation->did);
-
+  $custom_day = db_query("SELECT day FROM {fundraiser_sustainers_charge_date} WHERE master_did = :did", array(':did' => $donation->recurring->master_did))->fetchField();
+  $next = isset($recurring[0]->next_charge) ? date('j', $recurring[0]->next_charge) : 1;
   $form['master_did'] = array(
     '#type' => 'hidden',
     '#value' => $donation->recurring->master_did,
@@ -1309,15 +1314,15 @@ function fundraiser_sustainers_donation_date_form($form, &$form_state, $donation
   $dates = array_combine(range(1, 28), range(1, 28));
   $form['fundraiser_sustainers_change_dates'] = array(
     '#type' => 'select',
-    '#title' => t('Charge date'),
-    '#description' => t('Select the day of the month to process remaining sustainer payments.'),
+    '#title' => t('Select the day of the month for your recurring donation to charge'),
+    '#description' => t('This will change the date on which your recurring donation processes each month, beginning with next month\'s transaction.'),
     '#options' => $dates,
     '#multiple' => FALSE,
-    '#default_value' => isset($recurring[0]->next_charge) ? date('j', $recurring[0]->next_charge) : 1,
+    '#default_value' => !empty($custom_day) ? $custom_day : $next,
   );
   $form['submit'] = array(
     '#type' => 'submit',
-    '#value' => t('Update donation recurring date'),
+    '#value' => t('Update donation charge date'),
   );
   $form['#donation'] = $donation;
   return $form;
@@ -1328,12 +1333,34 @@ function fundraiser_sustainers_donation_date_form($form, &$form_state, $donation
  */
 function fundraiser_sustainers_donation_date_form_submit($form, &$form_state) {
   $master_did = $form_state['values']['master_did'];
+  $new_day = $form_state['values']['fundraiser_sustainers_change_dates'];
+
+  // Update the sustainers charges with new date.
+  fundraiser_sustainers_change_charge_date($master_did, $new_day);
+
+  // Record the change in db.
+  $data = array(
+    'master_did' => $master_did,
+    'day' => $new_day,
+  );
+  $already_has_custom_date = db_query("SELECT day FROM {fundraiser_sustainers_charge_date} WHERE master_did = :did", array(':did' => $master_did))->fetchField();
+  if (empty($already_has_custom_date)) {
+    drupal_write_record('fundraiser_sustainers_charge_date', $data);
+  }
+  else {
+    drupal_write_record('fundraiser_sustainers_charge_date', $data, 'master_did');
+  }
+  drupal_set_message(t('The date of all future donations has been updated'));
+}
+
+/**
+ * Calculates new next charge dates.
+ */
+function fundraiser_sustainers_change_charge_date($master_did, $new_day) {
   $donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
   $current_time = _fundraiser_sustainers_explode_date(time());
-
   foreach ($donations as $donation) {
     $old_charge_date = $donation->next_charge;
-
     // Ignore orders that are ready to process.
     if ($old_charge_date < time()) {
       continue;
@@ -1346,9 +1373,7 @@ function fundraiser_sustainers_donation_date_form_submit($form, &$form_state) {
     }
     else {
       $donation = fundraiser_donation_get_donation($donation->did);
-      $new_day = $form_state['values']['fundraiser_sustainers_change_dates'];
       $original_charge_date = date('j', $old_charge_date);
-
       $delta = ($original_charge_date - $new_day) * 86400;
       $time_delta = $delta * -1;
 
@@ -1389,7 +1414,6 @@ function fundraiser_sustainers_donation_date_form_submit($form, &$form_state) {
       }
     }
   }
-  drupal_set_message(t('The date of all future donations has been updated'));
 }
 
 function _fundraiser_sustainers_explode_date($timestamp) {
@@ -1654,6 +1678,12 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
         $master_donation->donation['amount'] = $donation->donation['amount'];
         // Create new orders.
         _fundraiser_sustainers_create_future_orders($master_donation, $expires['month'], $expires['year'], $source_donation, $master_donation->recurring->next_charge);
+      }
+      // If a custom charge date was set by an admin, update the charge dates.
+      $date_mode = (module_exists('fundraiser_date_mode') && variable_get('fundraiser_date_mode_set_date_mode', 0) == 1) ? TRUE : FALSE;
+      $custom_charge_date = db_query("SELECT day FROM {fundraiser_sustainers_charge_date} WHERE master_did = :did", array(':did' => $master_did))->fetchField();
+      if (!empty($custom_charge_date) && !$date_mode)  {
+        fundraiser_sustainers_change_charge_date($master_did, $custom_charge_date);
       }
     }
   }
@@ -2062,19 +2092,27 @@ function fundraiser_sustainers_fundraiser_donation_decline($donation) {
 }
 
 /**
- * Helper function, loads the recurring donation processor key.
+ * Matches the current site against the value in the sustainer key file.
+ *
+ * @return
+ *    TRUE when run on a site matching the sustainer key value, otherwise FALSE.
  */
 function fundraiser_sustainers_processor_key_match() {
   static $key;
+
+  // Construct a site string to match the key against
+  $site = trim($_SERVER['HTTP_HOST']) . rtrim(base_path(), '/');
+
   if (!empty($key)) {
-    return ($key == $_SERVER['HTTP_HOST']);
+    return $key == $site;
   }
+
   // This is to check that we have everything configured for safe charging.
   // If not, we should throw an issue about it and not try to process stuff.
   // This value is normally set in the glue module for payment.
   // Get the key and see if it matches the server's host.
   $key = fundraiser_sustainers_get_sustainer_key_value();
-  if (trim($key) == trim($_SERVER['HTTP_HOST'])) {
+  if ($key == $site) {
     return TRUE;
   }
 

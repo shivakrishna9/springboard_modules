@@ -7,7 +7,7 @@
 /**
  * Setup and tear down web class. Does nothing else.
  */
-class FundraiserSetup extends DrupalWebTestCase {
+abstract class FundraiserSetup extends DrupalWebTestCase {
 
   /**
    * Implements setUp().

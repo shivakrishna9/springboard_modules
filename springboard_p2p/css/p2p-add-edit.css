@@ -5,8 +5,8 @@ body {
 }
 
 #main  {
-  border: 1px solid #acacac;
   margin: 0 auto 30px auto;
+  border: 1px solid #acacac;
 }
 
 #main h1 {
@@ -223,8 +223,8 @@ span.fieldset-legend:after {
 }
 
 input[type="checkbox"] {
-  margin: 4px 10px 0 0;
   float: left;
+  margin: 4px 10px 0 0;
 }
 
 #personal-campaign-url-wrapper .alert {
@@ -317,6 +317,11 @@ html.js input#edit-name.form-autocomplete.throbbing {
   background-image: url("../images/spinner.gif");
   background-position: 98% 11px;
   opacity: .9;
+}
+
+.image-widget-data .form-item.form-type-select.form-item-field-p2p-campaign-images-und-1--weight.control-group,
+.image-widget-data .form-item.form-type-select.form-item-field-p2p-campaign-images-und-1--weight {
+  display: none;
 }
 
 /* Uniform global */
@@ -464,7 +469,8 @@ float: none;
 clear: none;
 }
 
-.pane-node-field-p2p-personal-campaign-goal {
+.pane-node-field-p2p-personal-campaign-goal,
+.pane-node-field-p2p-suggested-donation-amt {
   position: relative;
 }
 
@@ -473,15 +479,17 @@ clear: none;
   clear: both;
 }
 
-.pane-node-field-p2p-personal-campaign-goal .field-prefix {
+.pane-node-field-p2p-personal-campaign-goal .field-prefix,
+.pane-node-field-p2p-suggested-donation-amt .field-prefix {
   position: absolute;
   top: 46px;
   left: 10px;
   font-size: 18px;
 }
 
-.pane-node-field-p2p-personal-campaign-goal input {
-  text-indent: 26px;
+.pane-node-field-p2p-personal-campaign-goal input,
+.pane-node-field-p2p-suggested-donation-amt input {
+  text-indent: 20px;
 }
 
 .panel-pane.pane-entity-form-field.pane-node-body {

@@ -80,6 +80,13 @@ class SpringboardP2pCampaignGoalsField {
     $rows = array();
     foreach ($items as $delta => $item) {
       $goal_set_id = isset($item['campaign_goals']['goal_set_id']) ? $item['campaign_goals']['goal_set_id'] : NULL;
+
+      // This won't be set if we're saving somewhere other than a node add/edit
+      // page, so skip attempting to save this goal set item.
+      if (!isset($item['campaign_goals']['form_types'])) {
+        continue;
+      }
+
       foreach ($item['campaign_goals']['form_types'] as $form_type => $content_types) {
         foreach ($content_types as $content_type => $settings) {
           // Format the data as a record for the DB.
@@ -163,6 +170,7 @@ class SpringboardP2pCampaignGoalsField {
       return db_query("SELECT * FROM {springboard_p2p_fields_campaign_goals} WHERE goal_set_id = :id", array(':id' => $goal_set_id))
         ->fetchAllAssoc('type', PDO::FETCH_ASSOC);
     }
+
     return FALSE;
   }
 

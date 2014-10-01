@@ -42,10 +42,10 @@ Drupal.behaviors.marketSourceInit = {
       if (typeof $.cookie !== 'undefined') {
         name = 'market_source__' + name;
         if (typeof Drupal.settings.market_source.cookie_domain !== 'undefined') {
-          $.cookie(name, value, { path: '/', domain: Drupal.settings.market_source.cookie_domain });
+          $.cookie(name, value, { path: Drupal.settings.market_source.cookie_path, domain: Drupal.settings.market_source.cookie_domain });
         }
         else {
-          $.cookie(name, value, { path: '/'});
+          $.cookie(name, value, { path: Drupal.settings.market_source.cookie_path });
         }
       }
     };

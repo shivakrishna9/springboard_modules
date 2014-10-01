@@ -64,9 +64,13 @@ function springboard_p2p_fields_property_field_campaign_goals_info() {
       'type' => 'text',
       'label' => t('Goal type'),
     ),
-    'goal_value' => array(
+    'fundraising_goal' => array(
       'type' => 'text',
-      'label' => t('Goal value'),
+      'label' => t('Fundraising goal'),
+    ),
+    'submission_goal' => array(
+      'type' => 'text',
+      'label' => t('Submission goal'),
     ),
   );
 }
@@ -75,7 +79,22 @@ function springboard_p2p_fields_property_field_campaign_goals_info() {
  * Callback for getting field property values.
  */
 function springboard_p2p_fields_property_field_campaign_goals_get($entity, array $options, $name, $entity_type, $info) {
-  return springboard_p2p_fields_get_goal_from_entity($entity);
+  $goal = springboard_p2p_fields_get_goal_from_entity($entity);
+
+  $properties = array(
+    'goal_type' => $goal['goal_type'],
+    'fundraising_goal' => '',
+    'submission_goal' => '',
+  );
+
+  if ($goal['goal_type'] == 'amount') {
+    $properties['fundraising_goal'] = $goal['goal_value'];
+  }
+  else {
+    $properties['submission_goal'] = $goal['goal_value'];
+  }
+
+  return $properties;
 }
 
 /**
