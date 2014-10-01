@@ -2359,15 +2359,37 @@ function _fundraiser_sustainers_get_donations_next_charge($master_did) {
 
 /**
  * Get last charge date for a donation set.
+ *
+ * @param int $master_did
+ *   The id of the master donation in the series.
+ * @param bool $future_only
+ *   Should we exclude sustainers with a next_charge in the past?
+ *
+ * @return NULL|object
+ *   An object with columns from fundraiser_sustainers if one is found.
  */
-function _fundraiser_sustainers_get_donations_last_charge($master_did) {
-  $now = strtotime('now');
-  return db_query('SELECT * FROM {fundraiser_sustainers} ' .
-    'WHERE master_did = :master_did ' .
-    'AND next_charge > :now ' .
-    'ORDER BY next_charge DESC ' .
-    'LIMIT 0, 1',
-    array(':master_did' => $master_did, ':now' => $now))->fetchObject();
+function _fundraiser_sustainers_get_donations_last_charge($master_did, $future_only = TRUE) {
+
+  $query = db_select('fundraiser_sustainers', 'f');
+  $query->fields('f', array());
+  $query->condition('master_did', $master_did);
+
+  if ($future_only) {
+    $now = strtotime('now');
+    $query->condition('next_charge', $now, '>');
+  }
+
+  $query->orderBy('next_charge', 'DESC');
+  $query->range(0, 1);
+
+  return $query->execute()->fetchObject();
+
+//  return db_query('SELECT * FROM {fundraiser_sustainers} ' .
+//    'WHERE master_did = :master_did ' .
+//    'AND next_charge > :now ' .
+//    'ORDER BY next_charge DESC ' .
+//    'LIMIT 0, 1',
+//    array(':master_did' => $master_did, ':now' => $now))->fetchObject();
 }
 
 /**
