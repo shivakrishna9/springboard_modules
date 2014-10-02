@@ -2480,13 +2480,13 @@ function fundraiser_commerce_gateway_log_gateway_settings_changes($form, $form_s
     : FALSE;
 
   if ($new_settings_assoc) {
-    $new_settings = fundraiser_flatten_gateway_settings($new_settings_assoc);
+    $new_settings = fundraiser_commerce_flatten_gateway_settings($new_settings_assoc);
   }
   
   $old_settings_assoc =$form_state['storage']['old_settings_assoc'];
 
   if($old_settings_assoc) {
-    $old_settings = fundraiser_flatten_gateway_settings($old_settings_assoc);
+    $old_settings = fundraiser_commerce_flatten_gateway_settings($old_settings_assoc);
   }
 
   $changed = array();
@@ -2509,7 +2509,7 @@ function fundraiser_commerce_gateway_log_gateway_settings_changes($form, $form_s
   }
 }
 
-function fundraiser_flatten_gateway_settings($settings) {
+function fundraiser_commerce_flatten_gateway_settings($settings) {
   $flat = array(); 
   array_walk_recursive(
     $settings, 
