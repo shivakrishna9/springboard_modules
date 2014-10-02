@@ -1,10 +1,10 @@
 <?php
-
 /**
- * @file test coverage for petition quicksign.
+ * @file
+ * Test coverage for petition quicksign.
  */
 
-class SpringboardPetitionQuicksignTestCase extends WebformUserSetup {
+class SpringboardPetitionQuicksignTestCase extends WebformUserTestSetup {
   /**
    * Implementation of getInfo().
    */
@@ -27,8 +27,8 @@ class SpringboardPetitionQuicksignTestCase extends WebformUserSetup {
 
     // Call the parent to set all of the base modules up.
     parent::setUp($enable_modules);
-  
-    $this->create_petition_content_type(); 
+
+    $this->create_petition_content_type();
     variable_set('petition_springboard_petition', 1);
 
     // log a user in
@@ -65,11 +65,11 @@ class SpringboardPetitionQuicksignTestCase extends WebformUserSetup {
     $this->assertFieldById('edit-quicksign-label', NULL, 'Quicksign form label field present on node edit form.');
     $this->assertFieldById('edit-quicksign-description-value', NULL, 'Form description field present on node edit form.');
     $this->assertFieldById('edit-quicksign-button-text', 'Sign our petition!', 'Button text field present on node edit form.');
-    
-    // View petition with quicksign enabled. 
+
+    // View petition with quicksign enabled.
     $this->drupalGet('node/' . $this->node->nid);
     $this->assertFieldById('edit-quicksign-mail', $this->privileged_user->mail, 'Mail field present and populated from user account.');
-    
+
     // View petition with quicksign disabled.
     db_query('UPDATE {springboard_quicksign} SET quicksign_enabled = 0 WHERE nid = :nid', array(':nid' => $this->node->nid));
     $this->drupalGet('node/' . $this->node->nid);
@@ -214,7 +214,7 @@ class SpringboardPetitionQuicksignTestCase extends WebformUserSetup {
     $status = node_type_save($type);
     node_types_rebuild();
     node_add_body_field($type);
-    
+
     // Add as a webform.
     $webform_node_types = variable_get('webform_node_types', array('webform'));
     $webform_node_types_primary = variable_get('webform_node_types_primary', array('webform'));
