@@ -62,7 +62,7 @@ function commerce_cybersource_fundraiser_commerce_expire($submission_fields) {
 function commerce_cybersource_fundraiser_commerce_charge($payment_method, $donation) {
   // Translate from donation settings to the correct values for the plugin.
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
-   $order = commerce_order_load($donation->did);
+  $order = commerce_order_load($donation->did);
   $wrapper = entity_metadata_wrapper('commerce_order', $order);
   $charge = $wrapper->commerce_order_total->value();
 
@@ -70,7 +70,12 @@ function commerce_cybersource_fundraiser_commerce_charge($payment_method, $donat
 
   $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
   _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
-  $pane_values['the_real_cardonfile_value'] = $donation->data['cardonfile'];
+
+  // there's a hack in fundraiser_commerce which always sets $pane_values['cardonfile'] to "new"
+  // so we need to test whether it's a new card by some other means:
+  if (isset($donation->data['cardonfile'])) {
+    $pane_values['the_real_cardonfile_value'] = $donation->data['cardonfile'];
+  }
 
   // Customer data for charge pulls from the customer profile given on the order, so we can ignore that.
   // If the charge fails, returns false, else nothing.

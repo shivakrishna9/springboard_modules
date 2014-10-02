@@ -80,6 +80,7 @@ function commerce_cybersource_commerce_payment_method_info() {
  * Returns the default settings for the CyberSource SOAP CC payment method.
  */
 function commerce_cybersource_soap_cc_default_settings() {
+  $cardonfile = module_exists('commerce_cardonfile');
   return array(
     'merchant_id' => '',
     'transaction_key' => '',
@@ -87,7 +88,7 @@ function commerce_cybersource_soap_cc_default_settings() {
     'credit_card' => array(
       'transaction_type' => COMMERCE_CREDIT_AUTH_CAPTURE,
       'submit_itemized_order' => FALSE,
-      'cardonfile' => FALSE,
+      'cardonfile' => $cardonfile,
       'card_types' => array(),
     ),
     'tax' => array(
@@ -483,9 +484,10 @@ function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_
   // If the customer specified payment using a card on file, use the subscriptionID
   // instead of credit card info.
 
+  // there's a hack in fundraiser_commerce which always sets $pane_values['cardonfile'] to "new"
+  // so we need to test whether it's a new card by some other means:
   $sustainer =  (isset($pane_values['credit_card']['cardonfile_store']) && $pane_values['credit_card']['cardonfile_store'] !== TRUE) ? TRUE : FALSE;
   $cardonfile = isset($pane_values['cardonfile']) && $pane_values['cardonfile'] !='new' ? TRUE : FALSE;
-
   if (module_exists('commerce_cardonfile') && $payment_method['settings']['credit_card']['cardonfile'] 
     && !empty($pane_values['cardonfile']) && ($sustainer || $cardonfile)) {
     // First attempt to load the card on file.
@@ -649,8 +651,6 @@ function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_
 
           // Save and log the creation of the new card on file.
           commerce_cardonfile_save($card_data);
-
-
 
           watchdog('commerce_cybersource', 'Customer Profile @profile_id created and saved to user @uid.', array('@profile_id' => (string) $response->paySubscriptionCreateReply->subscriptionID, '@uid' => $order->uid));
         }
