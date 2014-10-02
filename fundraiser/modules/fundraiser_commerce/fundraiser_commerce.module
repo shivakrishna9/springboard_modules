@@ -2455,10 +2455,9 @@ function fundraiser_commerce_response_fields_validate($element, &$form_state, $f
 function fundraiser_commerce_form_rules_ui_edit_element_alter(&$form, &$form_state) {
   
   if(isset($form['parameter']['payment_method']['settings'])) {
-    
     //get the stored payment method settings
-    $method_id = isset($form_state['element_settings']['payment_method']['method_id'])
-      ? $form_state['element_settings']['payment_method']['method_id']
+    $method_id = isset($form['parameter']['payment_method']['settings']['payment_method']['method_id']['#value'])
+      ? $form['parameter']['payment_method']['settings']['payment_method']['method_id']['#value']
       : '';
     $method = commerce_payment_method_instance_load($method_id . '|commerce_payment_' . $method_id);
     $form_state['storage']['old_settings_assoc'] = isset($method['settings']) ? $method['settings'] : FALSE;
