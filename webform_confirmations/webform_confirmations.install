@@ -23,6 +23,25 @@ function webform_confirmations_schema() {
     ),
     'primary key' => array('nid'),
   );
+  $schema['webform_confirmations_submissions'] = array(
+    'description' => 'Map webform submission ids to session ids.',
+    'fields' => array(
+      'sid' => array(
+        'description' => 'The node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'sessid' => array(
+        'description' => 'The webform component',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('sid'),
+  );
+
   $schema['cache_webform_confirm'] = drupal_get_schema_unprocessed('system', 'cache');
   $schema['cache_webform_confirm']['description'] = 'Cache table for webform confirmations.';
   return $schema;
@@ -73,3 +92,30 @@ function webform_confirmations_update_7001() {
   $schema['cache_webform_confirm']['description'] = 'Cache table for webform confirmations.';
   db_create_table($schema_name, $schema[$schema_name]);
 }
+
+/**
+ * Add webform submission id to session id tracking table.
+ */
+function webform_confirmations_update_7003() {
+  $schema = array(
+    'description' => 'Map webform submission ids to session ids.',
+    'fields' => array(
+      'sid' => array(
+        'description' => 'The node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'sessid' => array(
+        'description' => 'The webform component',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('sid'),
+  );
+  db_create_table('webform_confirmations_submissions', $schema);
+
+}
+
