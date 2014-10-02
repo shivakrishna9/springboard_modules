@@ -49,6 +49,12 @@ function fundraiser_commerce_schema() {
   $schema['fundraiser_commerce_gateway_settings_log'] = array(
     'description' => 'Log changes to the gateway setting',
     'fields' => array(
+      'lid' => array(
+        'description' => 'log id',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
       'gateway_id' => array(
         'description' => 'The payment gateway type and instance.',
         'type' => 'varchar',
@@ -72,6 +78,9 @@ function fundraiser_commerce_schema() {
         'length' => '11',
         'not null' => TRUE,
       ),
+    ),
+   'indexes' => array(
+      'lid' => array('lid'),
     ),  
   );
   return $schema;

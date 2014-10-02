@@ -5,6 +5,16 @@
  * Commerce based hook implementations for the fundraiser module donations.
  */
 
+/**
+ * Implements hook_views_api().
+ */
+function fundraiser_commerce_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'fundraiser_commerce') . '/views',
+  );
+}
+
 // Commerce mail rules can / should be turned off on installation, so no need to implement hook_mail_alter().
 
 /**
@@ -2439,36 +2449,22 @@ function fundraiser_commerce_response_fields_validate($element, &$form_state, $f
 
 /**
  * Implements hook_form_FORMID_alter
- * Add a confirm form to paymethod settings
+ * Add a confirm form to payment_method settings
  * Add original settings to form_state for logging and comparision to new settings
  */
 function fundraiser_commerce_form_rules_ui_edit_element_alter(&$form, &$form_state) {
+  
   if(isset($form['parameter']['payment_method']['settings'])) {
-    if(!isset( $form_state['storage']['confirm'] ) ) {
-      $form['#submit'] = array('fundraiser_commerce_gateway_settings_confirm');
-      $form_state['old_settings'] = $form['parameter']['payment_method']['settings']['payment_method']['settings'];
-    } else {
-      $form['#submit'][] = 'fundraiser_commerce_gateway_log_gateway_settings_changes';
-      $form['submit']['#access'] = FALSE;
-      $form['parameter']['#access'] = FALSE;
-      $form = confirm_form(
-        $form, 
-        $question = t('Confirm changes'), 
-        current_path(), 
-        $description = t('A misconfiguration can cause transactions to fail. Are you sure you want to proceed?'), 
-        $yes = t('Confirm')
-      );
-   }  
- }
-}
+    
+    //get the stored payment method settings
+    $method_id = isset($form_state['element_settings']['payment_method']['method_id'])
+      ? $form_state['element_settings']['payment_method']['method_id']
+      : FALSE;
+    $method = commerce_payment_method_instance_load($method_id . '|commerce_payment_' . $method_id);
+    $form_state['storage']['old_settings_assoc'] = isset($method['settings']) ? $method['settings'] : FALSE;
 
-/**
- * Intercept the original form submission and redirect to confirm 
- */
-function fundraiser_commerce_gateway_settings_confirm($form, &$form_state) {
-  if(!isset($form_state['storage']['confirm'] )) {
-    $form_state['rebuild'] = TRUE;
-    $form_state['storage']['confirm'] = TRUE;
+    $form['#submit'][] = 'fundraiser_commerce_gateway_log_gateway_settings_changes';
+    $form['#attached']['js'][]= drupal_get_path('module', 'fundraiser_commerce') . '/js//gateway.js';
   }
 }
 
@@ -2476,26 +2472,51 @@ function fundraiser_commerce_gateway_settings_confirm($form, &$form_state) {
  * Log the payment method form settings 
  */
 function fundraiser_commerce_gateway_log_gateway_settings_changes($form, $form_state) {
-
   global $user;
-  $new_settings = $form_state['values']['parameter']['payment_method']['settings']['payment_method']['settings'];
   $gateway_id = $form_state['values']['parameter']['payment_method']['settings']['payment_method']['method_id'];
-  $old_settings = $form_state['old_settings'];
-  $changed = [];
-  foreach($new_settings as $name => $value) {
-    if ($old_settings[$name]['#default_value'] != $new_settings[$name]) {
-      $changed[$name] = array('old_value' => $old_settings[$name]['#default_value'], 'new_value' => $new_settings[$name]); 
+
+  $new_settings_assoc = isset($form_state['values']['parameter']['payment_method']['settings']['payment_method']['settings'])
+    ? $form_state['values']['parameter']['payment_method']['settings']['payment_method']['settings']
+    : FALSE;
+
+  if ($new_settings_assoc) {
+    $new_settings = fundraiser_flatten_gateway_settings($new_settings_assoc);
+  }
+  
+  $old_settings_assoc =$form_state['storage']['old_settings_assoc'];
+
+  if($old_settings_assoc) {
+    $old_settings = fundraiser_flatten_gateway_settings($old_settings_assoc);
+  }
+
+  $changed = array();
+  if (!empty($new_settings) && !empty($old_settings)) {
+    foreach($new_settings as $name => $value) {
+      if (!is_int($name) && isset($old_settings[$name]) && $old_settings[$name] !== $value) {
+        $changed[$name] = $name . ': old_value: ' . $old_settings[$name] . ', new_value: ' . $new_settings[$name]; 
+      }        
     }
   }
+
   if(!empty($changed)) {
     $record = array (
       'gateway_id' => $gateway_id,
       'uid' => $user->uid,
-      'value' => print_r($changed, TRUE),
+      'value' => implode("\n\r", $changed),
       'time' => time(),
     );
     drupal_write_record ('fundraiser_commerce_gateway_settings_log', $record);
   }
 }
 
+function fundraiser_flatten_gateway_settings($settings) {
+  $flat = array(); 
+  array_walk_recursive(
+    $settings, 
+    function($value, $key) use (&$flat) {
+      $flat[$key] = $value;
+    }
+  ); 
+  return $flat; 
+}
 
