@@ -37,13 +37,13 @@ class securePrepopulateUnitTestCase extends DrupalWebTestCase {
       $query[] = "$key=$value";
     }
     $query_string = implode('&', $query);
-    $vector =  'cae023134cfcbf45';
-    $key = '7576586e4a5cb0611e3a1f080a30615a';
-    $crypt = _secure_prepopulate_encrypt($query_string, $key, $vector);
-    $expected = '7vGjVvf%2FxlO%2FnVEq8FtS%2B%2FVAjjZGbAYBHddPjrpNCN5twzqjTrOf4W%2FRV5MEdvbpGAZ1c5wjBeIjljD8a9A5O2iQuxjk%2FlVnUWBO8Vg%2BWRCqH0basvWtivCxQg060w4vaDEZvoBcgzkkODZ9om4pR5psjwL1Q2wtcZQxmBoOsED8UTtjo73ufEOmXR411N93bIEMiJMJnS3Wb97F2FKCRA%3D%3D';
+    variable_set('secure_prepopulate_iv', 'cae023134cfcbf45');
+    variable_set('secure_prepopulate_key', '7576586e4a5cb0611e3a1f080a30615a');
+    $crypt = secure_prepopulate_encrypt($query_string);
+    $expected = '7vGjVvf/xlO/nVEq8FtS+/VAjjZGbAYBHddPjrpNCN5twzqjTrOf4W/RV5MEdvbpGAZ1c5wjBeIjljD8a9A5O2iQuxjk/lVnUWBO8Vg+WRCqH0basvWtivCxQg060w4vaDEZvoBcgzkkODZ9om4pR5psjwL1Q2wtcZQxmBoOsED8UTtjo73ufEOmXR411N93bIEMiJMJnS3Wb97F2FKCRA==';
 
     $result = !strcmp($expected, $crypt);
-    $message = '_secure_prepopulate_encrypt() returns expected values.';
+    $message = 'secure_prepopulate_encrypt() returns expected values.';
     $this->assertTrue($result, $message);
   }
 

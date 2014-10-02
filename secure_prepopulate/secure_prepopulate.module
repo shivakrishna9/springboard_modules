@@ -114,7 +114,7 @@ function secure_prepopulate_init() {
     // First, check to see if the query string has already been used.
     if (!secure_prepopulate_is_expired($qs)) {
       // Run af param through decryption routine.
-      if ($fields = secure_prepopulate_decrypt($af)) {
+      if ($fields = secure_prepopulate_decrypt_qs($af)) {
         // check for synonyms and set extra fields if found.
         $synonyms = secure_prepopulate_load_synonyms();
         if (count($synonyms)) {
@@ -335,7 +335,7 @@ function secure_prepopulate_submit(&$form, &$form_state) {
 }
 
 /**
- * Helper function, Decrypts query string paramater using a shared key.
+ * Decrypts query string paramaters.
  *
  * This function will attempt to decrypt a string with an
  * AES Key and IV that have been preconfigued.
@@ -343,14 +343,8 @@ function secure_prepopulate_submit(&$form, &$form_state) {
  * @param $cipher
  *   The cipher text to decrypt.
  */
-function secure_prepopulate_decrypt($cipher) {
-  $key = variable_get('secure_prepopulate_key', NULL);
-  $iv = variable_get('secure_prepopulate_iv', NULL);
-  if (!$key || !$iv) {
-    watchdog('Secure Prepopulate', 'Cannot perform decryption because AES Key and IV have not been configured correct.', NULL, WATCHDOG_CRITICAL);
-    return;
-  }
-  $raw_qs = _secure_prepopulate_decrypt($cipher, $key, $iv);
+function secure_prepopulate_decrypt_qs($cipher) {
+  $raw_qs = secure_prepopulate_decrypt($cipher);
   return secure_prepopulate_parse_qs($raw_qs);
 }
 
@@ -507,16 +501,18 @@ function &_secure_prepopulate_find_field(&$form, $path) {
 }
 
 /**
- * Helper function, Encrypt an input string (128 bit AES) using the specified key and initialization vector.
+ * Encrypt an input string (128 bit AES) using the configured key and initialization vector.
  *
  * @param $input
  *   The string to encrypt.
- * @param $key
- *   The 128 bit key to use to encrypt the string.
- * @iv
- *   The initialization vector to use to encrypt the string.
  */
-function _secure_prepopulate_encrypt($input, $key, $iv) {
+function secure_prepopulate_encrypt($input) {
+  $key = variable_get('secure_prepopulate_key', NULL);  // The 128 bit key to use to decrypt the string.
+  $iv = variable_get('secure_prepopulate_iv', NULL);  // The initialization vector to use to decrypt the string.
+  if (!$key || !$iv) {
+    watchdog('Secure Prepopulate', 'Cannot perform encryption because AES Key and IV have not been configured correctly.', NULL, WATCHDOG_CRITICAL);
+    return;
+  }
   $size = mcrypt_get_block_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
   $input = pkcs5_pad($input, $size);
   $descriptor = mcrypt_module_open(MCRYPT_RIJNDAEL_128, '', MCRYPT_MODE_CBC, '');
@@ -525,21 +521,22 @@ function _secure_prepopulate_encrypt($input, $key, $iv) {
   mcrypt_generic_deinit($descriptor);
   mcrypt_module_close($descriptor);
   $cipher = base64_encode($cipher);
-  $cipher = urlencode($cipher);
   return $cipher;
 }
 
 /**
- * Helper function, Decrypts AES encrypted data.
+ * Decrypt AES encrypted data using the configured key and initialization vector.
  *
  * @param $cipher
  *   The encrypted data to decrypt.
- * @param $key
- *   The 128 bit key to use to decrypt the string.
- * @iv
- *   The initialization vector to use to decrypt the string.
  */
-function _secure_prepopulate_decrypt($cipher, $key, $iv) {
+function secure_prepopulate_decrypt($cipher) {
+  $key = variable_get('secure_prepopulate_key', NULL);  // The 128 bit key to use to decrypt the string.
+  $iv = variable_get('secure_prepopulate_iv', NULL);  // The initialization vector to use to decrypt the string.
+  if (!$key || !$iv) {
+    watchdog('Secure Prepopulate', 'Cannot perform decryption because AES Key and IV have not been configured correctly.', NULL, WATCHDOG_CRITICAL);
+    return;
+  }
   $cipher = base64_decode($cipher);
   $descriptor = mcrypt_module_open(MCRYPT_RIJNDAEL_128, '', MCRYPT_MODE_CBC, '');
   mcrypt_generic_init($descriptor, $key, $iv);
