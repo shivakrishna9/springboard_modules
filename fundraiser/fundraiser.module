@@ -3215,5 +3215,7 @@ function fundraiser_gateway_status_check() {
 }
 
 function fundraiser_gateway_status_alert($node, $method_name, $gateway_id) {
-
+  if (module_exists("rules")) {
+    rules_invoke_event("fundraiser_gateway_test_mode_detected", $node['nid'], $method_name, $gateway_id);
+  }
 }
