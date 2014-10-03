@@ -36,7 +36,7 @@ function facebook_metatag_view_alter($settings, &$output) {
     $meta = array(
       'og:title' => !empty($settings['title']) ? $settings['title'] : '',
       'og:description' => !empty($settings['description']) ? $settings['description'] : '',
-      'og:image' => !empty($facebook['image']) ? $settings['image'] : '',
+      'og:image' => !empty($settings['image']) ? $settings['image'] : '',
     );
     // If we have values remove Metatag Opengraph's corresponding tag.
     // This prevents duplicate tags.
