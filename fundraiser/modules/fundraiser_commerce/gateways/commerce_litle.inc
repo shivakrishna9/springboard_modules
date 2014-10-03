@@ -100,14 +100,33 @@ function commerce_litle_fundraiser_commerce_expire($submission_fields, $info = N
       // pretend expiration date for sustainers
       $exp_timestamp = strtotime('+24 months');
     }
+
     return array(
       'month' => date('m', $exp_timestamp),
       'year' => date('Y', $exp_timestamp),
     );
   }
+  else {
+    // It's a credit card.
+    module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+    $exp_date = _fundraiser_commerce_credit_card_expire($submission_fields);
 
-  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
-  return _fundraiser_commerce_credit_card_expire($submission_fields);
+    // If the Litle extend sustainers setting is on, then add a month
+    // to the expiration so we can attempt a charge to get new payment
+    // info after the card expires.
+    if (commerce_litle_method_should_extend_sustainers($info['gateway_details'])) {
+      $exp_datetime = new DateTime($exp_date['year'] . '-' . $exp_date['month']);
+      $exp_datetime->add(new DateInterval('P1M'));
+
+      $exp_date = array(
+        'month' => $exp_datetime->format('n'),
+        'year' => $exp_datetime->format('Y'),
+      );
+    }
+
+    return $exp_date;
+  }
+
 }
 
 /**
@@ -174,7 +193,7 @@ function commerce_litle_fundraiser_commerce_charge($method_instance, $donation) 
     _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
     if (variable_get('commerce_litle_fraud', 0) && isset($donation->donation['payment_fields']['credit']['session_id'])) {
       $pane_values['session_id'] = $donation->donation['payment_fields']['credit']['session_id'];
-    }  
+    }
     $method_instance['settings']['cardonfile'] = FALSE;
 
     if (module_exists('commerce_cardonfile')) {
