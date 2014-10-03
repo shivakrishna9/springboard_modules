@@ -3156,3 +3156,64 @@ function _fundraiser_gateway_switch_action_submit($form, $form_state) {
     'gateways' => $form_state['values']['gateways'],
   );
 }
+/**
+ * Implements hook_cron
+ */
+function fundraiser_cron() {
+  fundraiser_gateway_status_check();
+}
+
+
+function fundraiser_gateway_status_check() {
+  $nodes = array();
+
+  //grab all fundraiser nodes along with publication status
+  $fundraisers = db_query('SELECT f.nid, f.gateways, n.status FROM {fundraiser} f INNER JOIN {node} n on n.nid = f.nid');
+
+  foreach ($fundraisers as $fundraiser) {
+    $node = array();
+    $node['nid'] = $fundraiser->nid;
+    $node['node_status'] = $fundraiser->status;
+    $node['gateways'] = unserialize($fundraiser->gateways);
+
+    foreach($node['gateways'] as $name => $gateway) {
+
+      if (!empty($gateway['id'])) { 
+          //grab the rules_config settings
+        $node['gateways'][$name]['gateway_details'] = commerce_payment_method_instance_load($gateway['id']);
+       
+        //detect disabled or unconfigured gateways
+        if (empty($node['gateways'][$name]['gateway_details']['settings'])) {
+          $node['gateways'][$name]['unconfigured'] = TRUE;
+          $off = TRUE;
+        }
+        if ($node['gateways'][$name]['gateway_details'] === FALSE) {
+          $node['gateways'][$name]['not_found'] = TRUE;
+          $off = TRUE;
+        }
+        if (!empty($off)) {
+          switch($node['gateways'][$name]['gateway_details']['method_id']) {
+            case 'paypal_wpp':
+            case 'paypal_wps':
+              $status = $node['gateways'][$name]['gateway_details']['settings']['server'];
+            break;
+            case 'commerce_litle_cc':
+            case 'commerce_litle_echeck':
+              $status = isset($node['gateways'][$name]['gateway_details']['settings']['commerce_litle_settings_sandbox']) ? 'test' : 'live';
+            default:
+              $status = $node['gateways'][$name]['gateway_details']['settings']['txn_mode'];
+          }
+
+          if ($node['node_status'] == 1 && $status != 'live') {
+            fundraiser_gateway_status_alert($node, $name, $gateway['id']);
+          }
+        }
+      }
+    }
+    $nodes[$node['nid']] = $node;
+  }
+}
+
+function fundraiser_gateway_status_alert($node, $method_name, $gateway_id) {
+
+}
