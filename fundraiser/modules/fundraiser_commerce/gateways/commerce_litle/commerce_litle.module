@@ -1405,7 +1405,7 @@ function commerce_litle_register_token_request($litle, $litle_config, $data) {
  * @param string $type
  *   Card type name.
  *
- * @return string
+ * @return string|NULL
  *   Litle CC card type.
  */
 function _commerce_litle_cc_card_type_to_litle($type) {
@@ -1426,7 +1426,32 @@ function _commerce_litle_cc_card_type_to_litle($type) {
 }
 
 /**
+ * Converts the Litle card type name to the standard CC version.
+ *
+ * @param string $type
+ *   Card type as Litle calls it.
+ *
+ * @return string
+ *   The card type that we call it.
+ */
+function _commerce_litle_litle_card_type_to_cc($type) {
+  $type = strtolower($type);
+  switch ($type) {
+    case "VI":
+      return "visa";
 
+    case "MC":
+      return "mastercard";
+
+    case "AX":
+      return "amex";
+
+    case "DI":
+      return "discover";
+  }
+}
+
+/**
  * Translates commerce transaction type constants to the Litle equivalent.
  *
  * Returns the transaction type string for Litle that corresponds to the
@@ -1778,36 +1803,6 @@ function commerce_litle_fundraiser_sustainers_recurring_success($donation) {
       }
     }
   }
-  elseif ($donation->gateway['gateway_details']['base'] == 'commerce_litle_cc') {
-    $method_instance = $donation->gateway['gateway_details'];
-    if (commerce_litle_method_should_extend_sustainers($method_instance)) {
-      if (isset($donation->recurring->master_did)) {
-        // We want to see if this donation is the last donation in the series.
-        // So we look up the last charge, which will be in the past at
-        // this point.
-        $last_charge = _fundraiser_sustainers_get_donations_last_charge($donation->recurring->master_did, FALSE);
-        if (is_object($last_charge) && isset($last_charge->did) && $last_charge->did == $donation->did) {
-          // The donation that was just successful is the last in the series.
-          // So add one more for Account Updater.
-          $next_charge = strtotime('+1 months', $last_charge->next_charge);
-          fundraiser_sustainers_add_order_to_series($donation, $next_charge);
-        }
-      }
-    }
-  }
-}
-
-/**
- * Checks the payment method instance settings to see if we should extend it.
- *
- * @param array $method_instance
- *   The payment method instance.
- *
- * @return bool
- *   TRUE if the sustainer series should be extended by one.
- */
-function commerce_litle_method_should_extend_sustainers($method_instance) {
-  return isset($method_instance['settings']['accountupdater_extend_sustainers']) && $method_instance['settings']['accountupdater_extend_sustainers'];
 }
 
 /* *
