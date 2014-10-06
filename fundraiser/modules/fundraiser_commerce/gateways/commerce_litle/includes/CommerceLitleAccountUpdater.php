@@ -114,7 +114,7 @@ class CommerceLitleAccountUpdater {
     // If the Litle Account Updater returns a new expiration date,
     // we create recurring donations through that new expiration date (+1 month,
     // see #703 for reference).
-    if ($data['originalCardTokenInfo']['expDate'] != $data['newCardTokenInfo']['expData']) {
+    if ($data['originalCardTokenInfo']['expDate'] != $data['newCardTokenInfo']['expDate']) {
       // Call create future orders with new exp date.
       // Edit card_exp_month and card_exp_year.
       $new_exp_date = $this->convertExpDateString($data['newCardTokenInfo']['expDate']);
@@ -122,8 +122,8 @@ class CommerceLitleAccountUpdater {
       $card->card_exp_year = $new_exp_date['year'];
 
       $donation = fundraiser_donation_get_donation($order->order_id);
-      if (isset($donation->recurring['master_did'])) {
-        $master_donation = fundraiser_donation_get_donation($order->recurring['master_did']);
+      if (isset($donation->recurring->master_did)) {
+        $master_donation = fundraiser_donation_get_donation($donation->recurring->master_did);
         $this->createFutureOrders($master_donation, $new_exp_date['month'], $new_exp_date['year'], $donation);
       }
 
@@ -150,12 +150,12 @@ class CommerceLitleAccountUpdater {
   public function convertExpDateString($date_string) {
     $two_digit_year = (int) substr($date_string, -2);
     // Split the expDate into month and week.
-    $exp_data = array(
+    $exp_date = array(
       'month' => substr($date_string, 0, 2),
       'year' => 2000 + $two_digit_year,
     );
 
-    return $exp_data;
+    return $exp_date;
   }
 
   /**
@@ -215,7 +215,7 @@ class CommerceLitleAccountUpdater {
     return $card;
   }
 
-  protected function createFutureOrders() {
-    _fundraiser_sustainers_create_future_orders($donation, $month, $year, $source_donation = NULL, $start = NULL);
+  protected function createFutureOrders($donation, $month, $year, $source_donation) {
+    _fundraiser_sustainers_create_future_orders($donation, $month, $year, $source_donation, NULL);
   }
 }

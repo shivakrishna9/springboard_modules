@@ -404,17 +404,17 @@ function commerce_litle_test_account_updater_response($show_card_data = TRUE, $e
 
   if ($show_card_data) {
     $xml .= '<originalCardTokenInfo>';
-    $xml .= '<litleToken>Old Token</litleToken>';
-    $xml .= '<type>Card Type</type>';
-    $xml .= '<expDate>Old Expiration Date</expDate>';
-    $xml .= '<bin>Old Card Bin</bin>';
+    $xml .= '<litleToken>1</litleToken>';
+    $xml .= '<type>VI</type>';
+    $xml .= '<bin>411111</bin>';
+    $xml .= '<expDate>1114</expDate>';
     $xml .= '</originalCardTokenInfo>';
 
     $xml .= '<newCardTokenInfo>';
-    $xml .= '<litleToken>New Token</litleToken>';
-    $xml .= '<type>Card Type</type>';
-    $xml .= '<expDate>New Expiration Date</expDate>';
-    $xml .= '<bin>New Card Bin</bin>';
+    $xml .= '<litleToken>1112000157360003</litleToken>';
+    $xml .= '<type>MC</type>';
+    $xml .= '<bin>511200</bin>';
+    $xml .= '<expDate>0115</expDate>';
     $xml .= '</newCardTokenInfo>';
   }
 
