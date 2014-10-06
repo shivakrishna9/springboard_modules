@@ -11,3 +11,4 @@ core = 7.x
 files[] = includes/CommerceLitleAccountUpdater.php
 
 files[] = tests/commerce_litle_expire.test
+files[] = tests/commerce_litle_account_updater.test

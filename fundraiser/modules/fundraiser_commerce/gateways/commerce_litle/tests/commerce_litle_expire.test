@@ -19,7 +19,6 @@ class CommerceLitleExpirationUnitTest extends DrupalUnitTestCase {
   public function setUp() {
     parent::setUp();
 
-    module_load_include('php', 'commerce_litle', 'includes/CommerceLitleAccountUpdater');
     module_load_include('inc', 'fundraiser_commerce', 'gateways/commerce_litle');
   }
 
@@ -64,9 +63,9 @@ class CommerceLitleExpirationUnitTest extends DrupalUnitTestCase {
   }
 
   /**
-   * Tests credit card expiration when the extend option is disabled.
+   * Tests credit card expiration.
    */
-  function testExpireCreditCardNoExtend() {
+  function testExpireCreditCard() {
     $month = 12;
     $year = 2014;
     $submission_fields = $this->setupSubmissionFields('credit card', $month, $year);
@@ -76,21 +75,6 @@ class CommerceLitleExpirationUnitTest extends DrupalUnitTestCase {
 
     $this->assertEqual($month, $exp_date['month'], 'Months match.');
     $this->assertEqual($year, $exp_date['year'], 'Years match.');
-  }
-
-  /**
-   * Tests credit card expiration when the extend option is enabled.
-   */
-  function testExpireCreditCardExtend() {
-
-    $submission_fields = $this->setupSubmissionFields('credit card', 12, 2014);
-    $info = $this->setupInfo(TRUE);
-
-    $exp_date = $this->callExpireCallback($submission_fields, $info);
-
-    $this->assertEqual(1, $exp_date['month'], 'Months match.');
-    $this->assertEqual(2015, $exp_date['year'], 'Years match.');
-
   }
 
   protected function setupSubmissionFields($type = 'credit card', $month = NULL, $year = NULL) {
