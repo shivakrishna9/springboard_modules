@@ -836,6 +836,10 @@ function commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, 
     commerce_litle_log_response($sale_response);
   }
 
+  // Account Updater processing.
+  $au = new CommerceLitleAccountUpdater($payment_method);
+  $au->processResponseXML($sale_response, $order);
+
   // @todo If the response is that the cardonfile isn't valid, deactivate it.
   // @todo Also need to remove the transaction.
   // If we didn't get an approval response code...
@@ -1905,17 +1909,10 @@ function commerce_litle_fraud_settings_form_validate($form, &$form_state) {
  */
 function commerce_litle_fundraiser_sustainers_series_end_date_alter(&$end_date, &$context) {
   $source_donation = $context['source_donation'];
-  if ($source_donation->gateway['gateway_details']['base'] == 'commerce_litle_cc') {
-    $au = new CommerceLitleAccountUpdater($source_donation->gateway['gateway_details']);
-    if ($au->shouldExtendSustainers()) {
-      $exp_datetime = new DateTime($end_date['year'] . '-' . $end_date['month']);
-      $exp_datetime->add(new DateInterval('P1M'));
+  $au = new CommerceLitleAccountUpdater($source_donation->gateway['gateway_details']);
 
-      $end_date = array(
-        'month' => $exp_datetime->format('n'),
-        'year' => $exp_datetime->format('Y'),
-      );
-    }
+  if ($au->shouldExtendSustainers()) {
+    $end_date = $au->getNewEndDate($end_date['year'], $end_date['month']);
   }
 
 }

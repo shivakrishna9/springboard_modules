@@ -28,8 +28,31 @@ class CommerceLitleAccountUpdater {
    */
   public function shouldExtendSustainers() {
     return
-      isset($this->methodInstance['settings']['accountupdater_extend_sustainers'])
+      isset($this->methodInstance['base'])
+      && $this->methodInstance['base'] == 'commerce_litle_cc'
+      && isset($this->methodInstance['settings']['accountupdater_extend_sustainers'])
       && $this->methodInstance['settings']['accountupdater_extend_sustainers'];
+  }
+
+  /**
+   * Add a month to the given end date.
+   *
+   * @param int $year
+   *  The year.
+   * @param int $month
+   *  The month.
+   *
+   * @return array
+   *   An array with year and month keys.
+   */
+  public function getNewEndDate($year, $month) {
+    $exp_datetime = new DateTime($year . '-' . $month);
+    $exp_datetime->add(new DateInterval('P1M'));
+
+    return array(
+      'month' => $exp_datetime->format('n'),
+      'year' => $exp_datetime->format('Y'),
+    );
   }
 
   /**
@@ -37,8 +60,13 @@ class CommerceLitleAccountUpdater {
    *
    * @param DOMDocument $response
    *   The XML response document.
+   *
+   * @param object $order
+   *   The order object that has just been charged.
+   *   This will be used as the template to create additional donations
+   *   if needed.
    */
-  public function processResponseXML(DOMDocument $response) {
+  public function processResponseXML(DOMDocument $response, $order) {
     $list = $response->getElementsByTagName('accountUpdater');
 
     if ($list->length == 0) {
@@ -67,20 +95,17 @@ class CommerceLitleAccountUpdater {
 
     // If the Litle Account Updater returns a new token,
     // we save that new token with the series/scheduled payments.
-    // If the Litle Account Updater returns an updated last-4 digits of the
-    // credit card, update those stored in our system for each of the future
-    // recurring donations.
+    // A new token implies a new last 4 digits of the card number.
     if ($data['originalCardTokenInfo']['litleToken'] != $data['newCardTokenInfo']['litleToken']) {
 
       $new_token = $data['newCardTokenInfo']['litleToken'];
       $new_number = substr($new_token, -4);
       $new_type = _commerce_litle_litle_card_type_to_cc($data['newCardTokenInfo']['type']);
-      // Edit:
-      // remote_id,
+
       $card->remote_id = $new_token;
-      // card_type (long form),
+      // The long form of the card_type.
       $card->type = $new_type;
-      // card_number (last 4 of the token),
+      // The card_number, which is the last 4 of the token for credit cards.
       $card->card_number = $new_number;
 
       $changed = TRUE;
@@ -95,6 +120,12 @@ class CommerceLitleAccountUpdater {
       $new_exp_date = $this->convertExpDateString($data['newCardTokenInfo']['expDate']);
       $card->card_exp_month = $new_exp_date['month'];
       $card->card_exp_year = $new_exp_date['year'];
+
+      $donation = fundraiser_donation_get_donation($order->order_id);
+      if (isset($donation->recurring['master_did'])) {
+        $master_donation = fundraiser_donation_get_donation($order->recurring['master_did']);
+        $this->createFutureOrders($master_donation, $new_exp_date['month'], $new_exp_date['year'], $donation);
+      }
 
       $changed = TRUE;
     }
@@ -184,4 +215,7 @@ class CommerceLitleAccountUpdater {
     return $card;
   }
 
+  protected function createFutureOrders() {
+    _fundraiser_sustainers_create_future_orders($donation, $month, $year, $source_donation = NULL, $start = NULL);
+  }
 }

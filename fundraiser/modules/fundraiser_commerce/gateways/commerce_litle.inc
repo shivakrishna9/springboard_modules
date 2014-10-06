@@ -106,28 +106,11 @@ function commerce_litle_fundraiser_commerce_expire($submission_fields, $info = N
       'year' => date('Y', $exp_timestamp),
     );
   }
-  else {
-    // It's a credit card.
-    module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
-    $exp_date = _fundraiser_commerce_credit_card_expire($submission_fields);
 
-    // If the Litle extend sustainers setting is on, then add a month
-    // to the expiration so we can attempt a charge to get new payment
-    // info after the card expires.
-    $au = new CommerceLitleAccountUpdater($info['gateway_details']);
-    if ($au->shouldExtendSustainers()) {
-      $exp_datetime = new DateTime($exp_date['year'] . '-' . $exp_date['month']);
-      $exp_datetime->add(new DateInterval('P1M'));
+  // It's a credit card.
+  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
 
-      $exp_date = array(
-        'month' => $exp_datetime->format('n'),
-        'year' => $exp_datetime->format('Y'),
-      );
-    }
-
-    return $exp_date;
-  }
-
+  return _fundraiser_commerce_credit_card_expire($submission_fields);
 }
 
 /**
