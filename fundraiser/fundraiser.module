@@ -3178,21 +3178,19 @@ function fundraiser_gateway_status_check() {
     $node['gateways'] = unserialize($fundraiser->gateways);
 
     foreach($node['gateways'] as $type => $gateway) {
-
+      $global_status = '';
       if (!empty($gateway['id']) && $gateway['status'] == 1) { 
         //grab the rules_config settings
         $node['gateways'][$type]['gateway_details'] = isset($gateways[$gateway['id']]['gateway_details']) ? $gateways[$gateway['id']]['gateway_details'] : FALSE;
         //detect disabled or unconfigured gateways
         if ($node['gateways'][$type]['gateway_details'] === FALSE) {
-          $off = TRUE;
           $global_status = 'disabled';
         }
         else if (empty($node['gateways'][$type]['gateway_details']['settings'])) {
-          $off = TRUE;
           $global_status = 'unconfigured';
         }
 
-        if (empty($off)) {
+        if ($global_status == '') {
           //record the status of enabled and configured gateways
           switch($node['gateways'][$type]['gateway_details']['method_id']) {
             case 'paypal_wpp':
@@ -3202,6 +3200,7 @@ function fundraiser_gateway_status_check() {
             case 'commerce_litle_cc':
             case 'commerce_litle_echeck':
               $global_status = isset($node['gateways'][$type]['gateway_details']['settings']['commerce_litle_settings_sandbox']) ? 'test' : 'live';
+              break;
             default:
               $global_status = $node['gateways'][$type]['gateway_details']['settings']['txn_mode'];
           }
