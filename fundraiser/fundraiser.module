@@ -3165,7 +3165,7 @@ function fundraiser_cron() {
 
 
 function fundraiser_gateway_status_check() {
-  $nodes = array();
+  $bad_gateways = array();
   $gateways = _fundraiser_gateway_info();
 
   //grab all fundraiser nodes along with publication status
@@ -3177,45 +3177,51 @@ function fundraiser_gateway_status_check() {
     $node['node_status'] = $fundraiser->status;
     $node['gateways'] = unserialize($fundraiser->gateways);
 
-    foreach($node['gateways'] as $name => $gateway) {
+    foreach($node['gateways'] as $type => $gateway) {
 
-      if (!empty($gateway['id'])) { 
+      if (!empty($gateway['id']) && $gateway['status'] == 1) { 
         //grab the rules_config settings
-        $node['gateways'][$name]['gateway_details'] = $gateways[$gateway['id']]['gateway_details'];
-
+        $node['gateways'][$type]['gateway_details'] = isset($gateways[$gateway['id']]['gateway_details']) ? $gateways[$gateway['id']]['gateway_details'] : FALSE;
         //detect disabled or unconfigured gateways
-        if (empty($node['gateways'][$name]['gateway_details']['settings'])) {
-          $node['gateways'][$name]['unconfigured'] = TRUE;
+        if ($node['gateways'][$type]['gateway_details'] === FALSE) {
           $off = TRUE;
+          $global_status = 'disabled';
         }
-        if ($node['gateways'][$name]['gateway_details'] === FALSE) {
-          $node['gateways'][$name]['not_found'] = TRUE;
+        else if (empty($node['gateways'][$type]['gateway_details']['settings'])) {
           $off = TRUE;
+          $global_status = 'unconfigured';
         }
-        if (!empty($off)) {
-          switch($node['gateways'][$name]['gateway_details']['method_id']) {
+
+        if (empty($off)) {
+          //record the status of enabled and configured gateways
+          switch($node['gateways'][$type]['gateway_details']['method_id']) {
             case 'paypal_wpp':
             case 'paypal_wps':
-              $status = $node['gateways'][$name]['gateway_details']['settings']['server'];
+              $global_status = $node['gateways'][$type]['gateway_details']['settings']['server'];
             break;
             case 'commerce_litle_cc':
             case 'commerce_litle_echeck':
-              $status = isset($node['gateways'][$name]['gateway_details']['settings']['commerce_litle_settings_sandbox']) ? 'test' : 'live';
+              $global_status = isset($node['gateways'][$type]['gateway_details']['settings']['commerce_litle_settings_sandbox']) ? 'test' : 'live';
             default:
-              $status = $node['gateways'][$name]['gateway_details']['settings']['txn_mode'];
+              $global_status = $node['gateways'][$type]['gateway_details']['settings']['txn_mode'];
           }
-          if ($node['node_status'] == 1 && $status != 'live') {
-            fundraiser_gateway_status_alert($node, $name, $gateway['id']);
-          }
+        }
+        if ($node['node_status'] == 1 &&   $global_status != 'live') {
+          $bad_gateways[$gateway['id']]['status'] = $global_status;
+          $bad_gateways[$gateway['id']]['nids'][] = $node['nid'];
+          $bad_gateways[$gateway['id']]['type'] = $type;
         }
       }
     }
-    $nodes[$node['nid']] = $node;
+  }
+  foreach ($bad_gateways as $id => $gateway) {
+    $nodes = implode(', ', $gateway['nids']);
+    _fundraiser_gateway_status_alert($nodes, $gateway['type'], $id);
   }
 }
 
-function fundraiser_gateway_status_alert($node, $method_name, $gateway_id) {
+function _fundraiser_gateway_status_alert($nodes, $method_type, $gateway_id) {
   if (module_exists("rules")) {
-    rules_invoke_event("fundraiser_gateway_test_mode_detected", $node['nid'], $method_name, $gateway_id);
+    rules_invoke_event("fundraiser_gateway_test_mode_detected", $nodes, $method_type, $gateway_id);
   }
 }
