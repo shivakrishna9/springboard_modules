@@ -1895,3 +1895,27 @@ function commerce_litle_fraud_settings_form_validate($form, &$form_state) {
     }
   }
 }
+
+/**
+ * Implements hook_fundraiser_sustainers_series_end_date_alter().
+ *
+ * If the Litle extend sustainers setting is on, then add a month
+ * to the expiration so we can attempt a charge to get new payment
+ * info after the card expires.
+ */
+function commerce_litle_fundraiser_sustainers_series_end_date_alter(&$end_date, &$context) {
+  $source_donation = $context['source_donation'];
+  if ($source_donation->gateway['gateway_details']['base'] == 'commerce_litle_cc') {
+    $au = new CommerceLitleAccountUpdater($source_donation->gateway['gateway_details']);
+    if ($au->shouldExtendSustainers()) {
+      $exp_datetime = new DateTime($end_date['year'] . '-' . $end_date['month']);
+      $exp_datetime->add(new DateInterval('P1M'));
+
+      $end_date = array(
+        'month' => $exp_datetime->format('n'),
+        'year' => $exp_datetime->format('Y'),
+      );
+    }
+  }
+
+}

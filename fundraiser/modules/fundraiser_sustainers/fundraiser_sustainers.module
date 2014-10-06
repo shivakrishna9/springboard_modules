@@ -1717,6 +1717,19 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
 
   $previous_charge = $start;
 
+  // Allow other modules to modify the stop date.
+  $end_date = array(
+    'month' => $month,
+    'year' => $year,
+  );
+  $context = array(
+    'master_donation' => $donation,
+    'source_donation' => $source_donation,
+  );
+  drupal_alter('fundraiser_sustainers_series_end_date', $end_date, $context);
+  $month = $end_date['month'];
+  $year = $end_date['year'];
+
   $stop = mktime(0, 0, 0, $month, 1, $year);
   $months = ((idate('Y', $stop) * 12) + idate('m', $stop)) - ((idate('Y', $start) * 12) + idate('m', $start));
   $processed_months = 0;
