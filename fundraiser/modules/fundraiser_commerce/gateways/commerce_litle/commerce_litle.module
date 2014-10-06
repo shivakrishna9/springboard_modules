@@ -1908,8 +1908,8 @@ function commerce_litle_fraud_settings_form_validate($form, &$form_state) {
  * info after the card expires.
  */
 function commerce_litle_fundraiser_sustainers_series_end_date_alter(&$end_date, &$context) {
-  $source_donation = $context['source_donation'];
-  $au = new CommerceLitleAccountUpdater($source_donation->gateway['gateway_details']);
+  $master_donation = $context['master_donation'];
+  $au = new CommerceLitleAccountUpdater($master_donation->gateway['gateway_details']);
 
   if ($au->shouldExtendSustainers()) {
     $end_date = $au->getNewEndDate($end_date['year'], $end_date['month']);
