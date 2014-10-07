@@ -84,6 +84,8 @@ function commerce_cybersource_fundraiser_commerce_charge($payment_method, $donat
   if ($result !== FALSE) {
     $success = TRUE;
   }
+  // Perform post processing functions
+  _fundraiser_commerce_charge_submit_form_process($success, $payment_method, $pane_values, $donation);
   return $success;
 }
 
@@ -104,7 +106,7 @@ function commerce_cybersource_fundraiser_commerce_cardonfile($donation) {
 
     // If we have a profile for this user update it in the Vault
     if ($card_data) {
-      // Make the update request to Sage Payments
+      // Make the update request
       commerce_cybersource_fundraiser_commerce_update($donation, $card_data);
     }
   }
