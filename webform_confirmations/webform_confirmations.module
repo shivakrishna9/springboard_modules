@@ -13,9 +13,13 @@
  * Implements hook_cron().
  */
 function webform_confirmations_cron() {
+  watchdog('confirmations_debug', 'cron hook invoked');
   if (variable_get('webform_confirmations_submissions_purge_enabled', FALSE)) {
-    $days = variable_get('webform_confirmations_submissions', 90);
+    watchdog('confirmations_debug', 'purge enabled');
+    $days = variable_get('webform_confirmations_submissions_clear_date', 90);
+    watchdog('confirmations_debug', 'older than days:' . $days);
     $older_than = strtotime('-' . $days . ' days', time());
+    watchdog('confirmations_debug', 'deleting records older than:' . date('m/d/y', $older_than));
     $query = db_delete('webform_confirmations_submissions');
     $query->condition('timestamp', $older_than, '<');
     $query->execute();
@@ -40,6 +44,7 @@ function webform_confirmations_permission() {
 function webform_confirmations_menu() {
   $items['admin/config/content/webform_confirmations'] = array(
     'title' => 'Webform Confirmations',
+    'description' => 'Administer webform confirmation settings.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('webform_confirmations_admin_settings'),
     'access arguments' => array('administer webform confirmations'),
