@@ -10,6 +10,19 @@
 
 
 /**
+ * Implements hook_cron().
+ */
+function webform_confirmations_cron() {
+  if (variable_get('webform_confirmations_submissions_purge_enabled', FALSE)) {
+    $days = variable_get('webform_confirmations_submissions', 90);
+    $older_than = strtotime('-' . $days . ' days', time());
+    $query = db_delete('webform_confirmations_submissions');
+    $query->condition('timestamp', $older_than, '<');
+    $query->execute();
+  }
+}
+
+/**
  * Implements hook_permission().
  */
 function webform_confirmations_permission() {
