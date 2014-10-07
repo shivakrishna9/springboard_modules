@@ -430,8 +430,8 @@ function _fundraiser_entity_default_webform_map_array() {
       'other' => '[webform-tokens:val-search_string]',
     ),
     'field_fde_transaction_date' => array(
-      'source' => 'other',
-      'other' => 'commerce_payment_transaction--created',
+      'source' => 'commerce_payment_transaction--created',
+      'other' => '',
     ),
   );
 }
