@@ -20,7 +20,7 @@ class CommerceCyberSourceSoapClient extends SoapClient {
   }
 
   // This section inserts the UsernameToken information in the SOAP message.
-  function __doRequest($request, $location, $action, $version) {
+  function __doRequest($request, $location, $action, $version, $oneWay = 0) {
     $soapHeader = '<SOAP-ENV:Header xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"><wsse:Security SOAP-ENV:mustUnderstand="1"><wsse:UsernameToken><wsse:Username>' . strtolower($this->user) . '</wsse:Username><wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">' . $this->password . '</wsse:Password></wsse:UsernameToken></wsse:Security></SOAP-ENV:Header>';
 
     $requestDOM = new DOMDocument('1.0');
