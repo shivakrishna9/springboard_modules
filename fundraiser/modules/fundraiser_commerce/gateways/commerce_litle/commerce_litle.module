@@ -620,12 +620,6 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
 
   $sale_response = $init->saleRequest($nvp);
 
-  if (module_exists('commerce_cardonfile')) {
-    // Account Updater processing.
-    $au = new CommerceLitleAccountUpdater($payment_method);
-    $au->processResponseXML($sale_response, $order);
-  }
-
   if (variable_get('commerce_litle_fraud', 0)) {
 
     $order_id = XmlParser::getNode($sale_response, 'orderId');
