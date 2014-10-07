@@ -8,6 +8,33 @@
  * webform.
  */
 
+
+/**
+ * Implements hook_permission().
+ */
+function webform_confirmations_permission() {
+  return array(
+    'administer webform confirmations' => array(
+      'title' => t('Administer webform confirmations'),
+      'description' => t('Perform administration tasks for webform confirmations.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function webform_confirmations_menu() {
+  $items['admin/config/content/webform_confirmations'] = array(
+    'title' => 'Webform Confirmations',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('webform_confirmations_admin_settings'),
+    'access arguments' => array('administer webform confirmations'),
+    'file' => 'webform_confirmations.admin.inc',
+  );
+  return $items;
+}
+
 /**
  * Implements hook_preprocess_webform_confirmation().
  * Overrides the template during preprocess to insert correct token values on display.
