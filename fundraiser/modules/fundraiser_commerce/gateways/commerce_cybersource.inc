@@ -196,11 +196,13 @@ function commerce_cybersource_fundraiser_commerce_update($donation, $card_data =
       'expirationYear' => $pane_values['credit_card']['exp_year'],
     );
     $request->merchantReferenceCode = 'Order ' . $order->order_number;
-    $request->purchaseTotals->currency = 'USD';
-    $request->subscription->title = "On-Demand Profile";
-    $request->subscription->paymentMethod = "credit card";
-    $request->recurringSubscriptionInfo->frequency = "on-demand";
-    $request->paySubscriptionCreateService->run = "true";
+    $request->purchaseTotals = (object) array('currency' => 'USD');
+    $request->subscription = (object) array(
+        'title' => 'On-Demand Profile',
+        'paymentMethod' => 'credit card'
+      );
+    $request->recurringSubscriptionInfo = (object) array('frequency' => 'on-demand');
+    $request->paySubscriptionCreateService = (object) array('run' => 'true');
 
     if ($response = commerce_cybersource_create_customer_profile_request($request, $payment_method, $order)) {
       // If the Customer Profile creation was a success, store the new card on
