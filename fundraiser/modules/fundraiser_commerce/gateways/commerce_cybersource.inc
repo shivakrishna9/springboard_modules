@@ -203,7 +203,9 @@ function commerce_cybersource_fundraiser_commerce_update($donation, $card_data =
       );
     $request->recurringSubscriptionInfo = (object) array('frequency' => 'on-demand');
     $request->paySubscriptionCreateService = (object) array('run' => 'true');
-
+    $card_type = commerce_payment_validate_credit_card_type($pane_values['credit_card']['number'], array_keys(commerce_payment_credit_card_types()));
+    $request->card->cardType = commerce_cybersource_cc_type_code($card_type);
+ 
     if ($response = commerce_cybersource_create_customer_profile_request($request, $payment_method, $order)) {
       // If the Customer Profile creation was a success, store the new card on
       // file data locally.
@@ -211,7 +213,6 @@ function commerce_cybersource_fundraiser_commerce_update($donation, $card_data =
         // Build a remote ID that includes the MerchantRefernceCode and ProfileSubscriptionID
         $remote_id = $response->paySubscriptionCreateReply->subscriptionID;
             // Get the card type
-        $card_type = commerce_payment_validate_credit_card_type($pane_values['credit_card']['number'], array_keys(commerce_payment_credit_card_types()));
         $all_types = commerce_payment_credit_card_types();
         $card_type = !empty($all_types[$card_type]) ? $all_types[$card_type] : 'card';
       // Store the token with cardonfile.
