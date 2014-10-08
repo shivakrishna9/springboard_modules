@@ -89,7 +89,7 @@ class SpringboardPetitionQuicksignTestCase extends WebformUserTestSetup {
       'quicksign_mail' => $this->privileged_user->mail
     );
     $this->drupalPost('node/' . $this->node->nid, $edit, 'Sign our petition!');
-    $this->assertUniqueText('Your account does not have enough information available to quick sign the petition. Please fill out the full form to record your signature.', t('Submitting quicksign form with an email address associated with an account containing partial profile information produces the correc message & redirect.'));
+    $this->assertUniqueText("Unfortunately, we don't have enough information complete your signature via the short form. Please fill out the full form to sign this petition.", t('Submitting quicksign form with an email address associated with an account containing partial profile information produces the correct message & redirect.'));
 
     // submit form with existing account (full profile)
     // set values for required fields.

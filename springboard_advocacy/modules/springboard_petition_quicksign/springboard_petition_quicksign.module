@@ -90,7 +90,7 @@ function springboard_petition_quicksign_form_validate(&$form, &$form_state) {
 
   if ($missing_fields) {
     $_SESSION['springboard_petition_quicksign']['profile'] = $profile;
-    drupal_set_message(t('Your account does not have enough information available to quick sign the petition. Please fill out the full form to record your signature.'));
+    drupal_set_message(t("Unfortunately, we don't have enough information complete your signature via the short form. Please fill out the full form to sign this petition."));
     drupal_redirect_form($form_state);
   }
 
