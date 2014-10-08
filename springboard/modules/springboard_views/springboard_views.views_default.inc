@@ -839,19 +839,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['created']['label'] = 'Date Created';
   $handler->display->display_options['fields']['created']['date_format'] = 'custom';
   $handler->display->display_options['fields']['created']['custom_date_format'] = 'n/j/o';
-  /* Field: Content: Dollar Total of Transactions */
-  $handler->display->display_options['fields']['sbstats_total_transactions']['id'] = 'sbstats_total_transactions';
-  $handler->display->display_options['fields']['sbstats_total_transactions']['table'] = 'field_data_sbstats_total_transactions';
-  $handler->display->display_options['fields']['sbstats_total_transactions']['field'] = 'sbstats_total_transactions';
-  $handler->display->display_options['fields']['sbstats_total_transactions']['label'] = '$ Raised';
-  $handler->display->display_options['fields']['sbstats_total_transactions']['alter']['alter_text'] = TRUE;
-  $handler->display->display_options['fields']['sbstats_total_transactions']['alter']['text'] = '$ [sbstats_total_transactions]';
-  $handler->display->display_options['fields']['sbstats_total_transactions']['settings'] = array(
-    'thousand_separator' => ',',
-    'decimal_separator' => '.',
-    'scale' => '2',
-    'prefix_suffix' => 1,
-  );
   /* Field: Content: Path */
   $handler->display->display_options['fields']['path']['id'] = 'path';
   $handler->display->display_options['fields']['path']['table'] = 'node';
@@ -1036,17 +1023,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['created']['label'] = 'Date Created';
   $handler->display->display_options['fields']['created']['date_format'] = 'custom';
   $handler->display->display_options['fields']['created']['custom_date_format'] = 'n/j/o';
-  /* Field: Content: Dollar Total of Transactions */
-  $handler->display->display_options['fields']['sbstats_total_transactions']['id'] = 'sbstats_total_transactions';
-  $handler->display->display_options['fields']['sbstats_total_transactions']['table'] = 'field_data_sbstats_total_transactions';
-  $handler->display->display_options['fields']['sbstats_total_transactions']['field'] = 'sbstats_total_transactions';
-  $handler->display->display_options['fields']['sbstats_total_transactions']['label'] = '$ Raised';
-  $handler->display->display_options['fields']['sbstats_total_transactions']['settings'] = array(
-    'thousand_separator' => ',',
-    'decimal_separator' => '.',
-    'scale' => '2',
-    'prefix_suffix' => 1,
-  );
   /* Field: Content: Path */
   $handler->display->display_options['fields']['path']['id'] = 'path';
   $handler->display->display_options['fields']['path']['table'] = 'node';
@@ -1493,19 +1469,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['type']['id'] = 'type';
   $handler->display->display_options['fields']['type']['table'] = 'node';
   $handler->display->display_options['fields']['type']['field'] = 'type';
-  /* Field: Content: Dollar Total of Transactions */
-  $handler->display->display_options['fields']['sbstats_total_transactions']['id'] = 'sbstats_total_transactions';
-  $handler->display->display_options['fields']['sbstats_total_transactions']['table'] = 'field_data_sbstats_total_transactions';
-  $handler->display->display_options['fields']['sbstats_total_transactions']['field'] = 'sbstats_total_transactions';
-  $handler->display->display_options['fields']['sbstats_total_transactions']['label'] = '$ Raised';
-  $handler->display->display_options['fields']['sbstats_total_transactions']['alter']['alter_text'] = TRUE;
-  $handler->display->display_options['fields']['sbstats_total_transactions']['alter']['text'] = '<a href="/springboard/reports/donations/[nid]">$[sbstats_total_transactions]</a>';
-  $handler->display->display_options['fields']['sbstats_total_transactions']['settings'] = array(
-    'thousand_separator' => ',',
-    'decimal_separator' => '.',
-    'scale' => '2',
-    'prefix_suffix' => 1,
-  );
   /* Field: Content: Published */
   $handler->display->display_options['fields']['status']['id'] = 'status';
   $handler->display->display_options['fields']['status']['table'] = 'node';
@@ -2203,7 +2166,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['arguments']['nid']['summary_options']['items_per_page'] = '25';
   $handler->display->display_options['path'] = 'admin/reports/salesforce/donations/%';
   $views[$view->name] = $view;
-  
+
   // End sbv_donations.
 
   /**
@@ -3426,7 +3389,7 @@ function springboard_views_views_default_views() {
   $handler = $view->new_display('page', 'Page', 'page_1');
   $handler->display->display_options['path'] = 'admin/springboard/asset-library/%';
   $views[$view->name] = $view;
-  
+
   /**
    * sbv_sf_batch_items
    */
@@ -3755,9 +3718,9 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['menu']['weight'] = '1';
   $handler->display->display_options['menu']['name'] = 'management';
   $handler->display->display_options['menu']['context'] = 0;
-  $handler->display->display_options['menu']['context_only_inline'] = 0;  
+  $handler->display->display_options['menu']['context_only_inline'] = 0;
   $views[$view->name] = $view;
-  
+
   /**
    * sbv_sf_batches
    */
@@ -4027,7 +3990,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['menu']['context'] = 0;
   $handler->display->display_options['menu']['context_only_inline'] = 0;
   $views[$view->name] = $view;
-  
+
   /**
    * sbv_sf_queue
    */
@@ -4363,7 +4326,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['menu']['weight'] = '2';
   $handler->display->display_options['menu']['name'] = 'management';
   $handler->display->display_options['menu']['context'] = 0;
-  $handler->display->display_options['menu']['context_only_inline'] = 0;  
+  $handler->display->display_options['menu']['context_only_inline'] = 0;
   $views[$view->name] = $view;
 
 /**
