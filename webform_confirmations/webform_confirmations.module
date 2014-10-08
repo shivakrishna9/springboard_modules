@@ -130,7 +130,7 @@ function webform_confirmations_webform_submission_insert($node, $submission) {
  */
 function webform_confirmations_save_submission_session($sid) {
   $sessid = session_id();
-  $record = array('sid' => $sid, 'sessid' => $sessid);
+  $record = array('sid' => $sid, 'sessid' => $sessid, 'timestamp' => time());
   drupal_write_record('webform_confirmations_submissions', $record);
 }
 
