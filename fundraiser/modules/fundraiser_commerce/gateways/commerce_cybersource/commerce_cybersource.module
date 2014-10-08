@@ -486,10 +486,10 @@ function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_
 
   // there's a hack in fundraiser_commerce which always sets $pane_values['cardonfile'] to "new"
   // so we need to test whether it's a new card by some other means:
-  $sustainer =  (isset($pane_values['credit_card']['cardonfile_store']) && $pane_values['credit_card']['cardonfile_store'] !== TRUE) ? TRUE : FALSE;
-  $cardonfile = isset($pane_values['cardonfile']) && $pane_values['cardonfile'] !='new' ? TRUE : FALSE;
+  $do_not_store =  (isset($pane_values['credit_card']['cardonfile_store']) && $pane_values['credit_card']['cardonfile_store'] !== TRUE) ? TRUE : FALSE;
+  $cardonfile_has_id = isset($pane_values['cardonfile']) && $pane_values['cardonfile'] !='new' ? TRUE : FALSE;
   if (module_exists('commerce_cardonfile') && $payment_method['settings']['credit_card']['cardonfile'] 
-    && !empty($pane_values['cardonfile']) && ($sustainer || $cardonfile)) {
+    && !empty($pane_values['cardonfile']) && ($do_not_store || $cardonfile_has_id)) {
     // First attempt to load the card on file.
     if(isset($pane_values['the_real_cardonfile_value'])) {
       $card_data = commerce_cardonfile_load($pane_values['the_real_cardonfile_value']);
@@ -623,8 +623,12 @@ function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_
       drupal_set_message('Please enter you information again or try a different card.', 'error');
       return FALSE;
     }
-    // If Card on File storage is enabled and this is a new card.
-    if (module_exists('commerce_cardonfile') && $payment_method['settings']['credit_card']['cardonfile'] 
+    
+    // don't create profiles from "add payment" transactions
+    $add_payment_form = (isset($pane_form['#id']) && $pane_form['#id'] == 'edit-payment-details') ? TRUE : FALSE;
+
+    // If Card on File storage is enabled and this appears to be a new card
+    if (empty($add_payment_form) && module_exists('commerce_cardonfile') && $payment_method['settings']['credit_card']['cardonfile'] 
       && (empty($pane_values['cardonfile']) || !empty($pane_values['credit_card']['cardonfile_store']))) {
       // Submit a request to create the Customer Profile.
       if ($response = commerce_cybersource_create_customer_profile_request($request, $payment_method, $order)) {
@@ -659,7 +663,7 @@ function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_
       }
       else {
         watchdog('commerce_cybersource', 'Error connecting to server or getting response for transaction @transaction_id', array('@transaction_id' => $transaction->instance_id));
-      }
+      } 
     }
   }
   else {
