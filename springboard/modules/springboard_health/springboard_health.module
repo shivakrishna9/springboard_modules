@@ -1,0 +1,130 @@
+<?php
+/**
+ * @file
+ * Adds ability to track db health.
+ */
+
+/**
+ * Implements hook_permission().
+ */
+function springboard_health_permission() {
+  return array(
+    'adminsiter site health reports' => array(
+      'title' => t('Administer site health reports'),
+      'description' => t('Springboard self-tracking'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function springboard_health_menu() {
+  $items = array();
+  $items['admin/config/development/springboard-health'] = array(
+    'title' => 'Database administration',
+    'description' => 'Configure the database administration module.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_health_admin_settings'),
+    'access arguments' => array('adminsiter site health reports'),
+  );
+
+  $items['admin/reports/springboard-health'] = array(
+    'type' => MENU_NORMAL_ITEM,
+    'title' => t('View springboard health report'),
+    'description' => t('View reports about your database.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_health_report_form'),
+    'access arguments' => array('adminsiter site health reports'),
+  );
+  return $items;
+}
+
+function springboard_health_admin_settings() {
+  $form = array();
+  $default = array(
+    'salesforce_log_batch' => 'salesforce_log_batch',
+    'salesforce_log_item' => 'salesforce_log_item',
+    'webform_submissions' => 'webform_submissions',
+    'secure_prepopulate_expired' => 'secure_prepopulate_expired',
+    'fundraiser_sustainers_log' => 'fundraiser_sustainers_log',
+  );
+
+  $tables = Database::getConnection('default', 'default')->schema()->findTables('%');
+  $form['springboard_health_tables'] = array(
+    '#type' => 'select',
+    '#title' => t('Select the tables that should be visible in the reports interface.'),
+    '#options' => $tables,
+    '#multiple' => TRUE,
+    '#required' => TRUE,
+    '#size' => 50,
+    '#default_value' => variable_get('springboard_health_tables', $default),
+  );
+  return system_settings_form($form);
+}
+
+/**
+ * Implements hook_theme().
+ */
+function springboard_health_theme($existing, $type, $theme, $path) {
+  return array(
+    'springboard_health_table' => array(
+      'render element' => 'element'
+    ),
+  );
+}
+
+
+function theme_springboard_health_table($vars) {
+  $element = $vars['element'];
+  $rows = array();
+  foreach (element_children($element) as $key) {
+    $rows[] = array(
+      array('data' => $element[$key]['send']),
+      array('data' => $element[$key]['name']),
+      array('data' => $element[$key]['limit']),
+      array('data' => $element[$key]['current']),
+    );
+  }
+  $header = array(t('Send Report'), t('Table name'), t('Limit'), t('Current Size'));
+  return theme('table', array('header' => $header, 'rows' => $rows));
+}
+
+function springboard_health_report_form() {
+  $tables = variable_get('springboard_health_tables', 0);
+
+  $form['health'] = array(
+    '#tree' => TRUE,
+    '#theme' => 'springboard_health_table'
+  );
+
+  foreach ($tables as $table) {
+    print_r($table);
+    $form['health'][$table]['send'] = array (
+     '#type' => 'textfield',
+      '#default_value' => '',
+      '#size' => 10
+    );
+    $form['health'][$table]['name'] = array(
+      '#type' => 'textfield',
+      '#default_value' => '',
+      '#size' => 10
+    );
+    $form['health'][$table]['limit'] = array(
+      '#type' => 'textfield',
+      '#default_value' => 'dfd',
+      '#size' => 10
+    );
+    $form['health'][$table]['current'] = array(
+      '#type' => 'markup',
+      '#markup' => '1000',
+      '#size' => 10
+    );
+  }
+    $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+  );
+
+  return $form;
+}

@@ -1,0 +1,30 @@
+<?php
+/**
+ * @file
+ * Install, uninstall, and update hooks for the springboard_health module.
+ */
+
+
+/**
+ * Implements hook_install().
+ *
+ */
+function springboard_health_install() {
+    $default = array(
+    'salesforce_log_batch' => 'salesforce_log_batch',
+    'salesforce_log_item' => 'salesforce_log_item',
+    'webform_submissions' => 'webform_submissions',
+    'secure_prepopulate_expired' => 'secure_prepopulate_expired',
+    'fundraiser_sustainers_log' => 'fundraiser_sustainers_log',
+  );
+  variable_set('springboard_health_tables', $default);
+
+}
+
+/**
+ * Implements hook_uninstall().
+ *
+ */
+function springboard_health_uninstall() {
+
+}
