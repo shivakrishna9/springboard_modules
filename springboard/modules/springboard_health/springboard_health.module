@@ -195,7 +195,10 @@ function springboard_health_report_form() {
   $db = variable_get('springboard_health_active_database', 'default');
   db_set_active($db);
   $form['header'] = array(
-    '#markup' => t('Check "send" to emails when table count exceeds notification row limit'),
+    '#markup' => t('Check "send report to send emails when table count exceeds notification row limit'),
+    '#prefix' => '<p>',
+    '#suffixfix' => '</p>',
+
   );
   $form['health'] = array(
     '#tree' => TRUE,
