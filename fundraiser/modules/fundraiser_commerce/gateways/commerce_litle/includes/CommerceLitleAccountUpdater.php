@@ -166,7 +166,7 @@ class CommerceLitleAccountUpdater {
    * @return array
    *   The original and new card token info.
    */
-  public function getDataFromXML(DOMNode $updater_node) {
+  protected function getDataFromXML(DOMNode $updater_node) {
     $card_info_keys = array('originalCardTokenInfo', 'newCardTokenInfo');
     $card_keys = array('litleToken', 'expDate', 'type');
     $data = array();
@@ -197,7 +197,7 @@ class CommerceLitleAccountUpdater {
    * @return bool|object
    *   The card entity, or FALSE if nothing's found.
    */
-  public function findMatchingCardonfile($remote_id, array $exp_date, $uid) {
+  protected function findMatchingCardonfile($remote_id, array $exp_date, $uid) {
     $query = new EntityFieldQuery();
     $query->entityCondition('entity_type', 'commerce_cardonfile')
       ->propertyCondition('remote_id', $remote_id)
