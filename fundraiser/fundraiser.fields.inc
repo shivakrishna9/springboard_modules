@@ -536,11 +536,10 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
     if (!strcmp($field->type, 'select')) {
       $old_value = $node->webform['components'][$field->cid]['value'];
       $current_extra = unserialize($field->extra);
-      $extra = array(
-        'description' => isset($current_extra['description']) ? $current_extra['description'] : '',
-        'items' => $formatted_amounts,
-        'multiple' => isset($current_extra['multiple']) ? $current_extra['multiple'] : 0,
-      );
+      $extra = $current_extra;
+      $extra['description'] = isset($current_extra['description']) ? $current_extra['description'] : '';
+      $extra['items'] = $formatted_amounts;
+      $extra['multiple'] = isset($current_extra['multiple']) ? $current_extra['multiple'] : 0;
       // hoop jumping required because webform only includes the title_display array key/value if has been customized at some point.
       if (isset($current_extra['title_display'])) {
         $extra['title_display'] = $current_extra['title_display'];
