@@ -10,7 +10,7 @@
  *
  */
 function springboard_health_install() {
-    $default = array(
+  $default = array(
     'salesforce_log_batch' => 'salesforce_log_batch',
     'salesforce_log_item' => 'salesforce_log_item',
     'webform_submissions' => 'webform_submissions',
@@ -18,7 +18,45 @@ function springboard_health_install() {
     'fundraiser_sustainers_log' => 'fundraiser_sustainers_log',
   );
   variable_set('springboard_health_tables', $default);
+  variable_set('springboard_health_active_database', 'default');
+}
 
+/**
+ * Implements hook_schema().
+ */
+function springboard_health_schema() {
+  $schema['springboard_health'] = array(
+    'description' => '',
+    'fields' => array(
+      'tablename' => array(
+        'description' => 'The table to monitor.',
+        'type' => 'varchar',
+        'length' => '100',
+        'not null' => FALSE,
+      ),
+      'db_conn' => array(
+        'description' => 'the database connection',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'mail' => array(
+        'description' => 'Flag to toggle email notification.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+      'row_limit' => array(
+        'description' => 'the row count to set the email to send',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('tablename', 'db_conn'),
+  );
+ return $schema;
 }
 
 /**
