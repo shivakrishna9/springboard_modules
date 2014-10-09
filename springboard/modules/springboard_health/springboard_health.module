@@ -65,7 +65,6 @@ function springboard_health_menu() {
 function springboard_health_menu_local_tasks_alter(&$data, $router_item, $root_path) {
 
   if(strpos($router_item['href'], 'admin/config/workflow/rules/reaction/manage/springboard_health_row_count_alert') !== FALSE ){
-  dpm('d');
     $data['tabs'][0]['output'][] = array(
       '#theme' => 'menu_local_task',
       '#link' => array(
