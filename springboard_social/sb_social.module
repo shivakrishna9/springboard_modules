@@ -54,7 +54,7 @@ function sb_social_permission() {
   $permissions = array(
     'administer springboard social' => array(
       'title' => t('Administer Springboard Social'),
-      'description' => t('Configure Springboar Social module settings'),
+      'description' => t('Configure Springboard Social module settings'),
     ),
     'edit own share content' => array(
       'title' => t('Edit own share content'),
@@ -230,6 +230,7 @@ function sb_social_market_source_admin_settings_submit($form, $form_state) {
 function sb_social_block_info() {
   $blocks['social_sharing'] = array(
     'info' => t('Social Sharing'),
+    'cache' => DRUPAL_CACHE_PER_PAGE,
   );
   return $blocks;
 }
@@ -255,13 +256,14 @@ function sb_social_block_view($delta = '') {
       $id = $node->nid;
     }
     $sid = _sb_social_sid_by_id($id);
-
     if ($sid) {
       $settings = sb_social_settings_load($sid);
+      // Permit 3rd party modules to alter settings & node context.
+      drupal_alter('sb_social_init_settings_load', $settings);
       if (empty($settings)) {
         return;
       }
-
+      drupal_alter('sb_social_tokens_data', $node);
       $plugins = sb_social_get_enabled_plugins();
       // Render button for each enabled service.
       foreach ($plugins as $service => $plugin) {
@@ -278,8 +280,9 @@ function sb_social_block_view($delta = '') {
         $buttons[] = theme('sb_social_share_button', $vars);
       }
       $buttons = implode("\n", $buttons);
-      $block['subject'] = NULL;
-      $block['content'] = theme('sb_social_share', array('buttons' => $buttons));
+      $block['subject'] = array_key_exists('block_title', $settings['data']) ? $settings['data']['block_title'] : variable_get('springboard_social_default_block_title', '');
+      $description = array_key_exists('block_description', $settings['data']) ? $settings['data']['block_description'] : variable_get('springboard_social_default_block_description', '');
+      $block['content'] = theme('sb_social_share', array('buttons' => $buttons, 'description' => $description));
     }
     return $block;
   }
@@ -419,6 +422,11 @@ function sb_social_init() {
 
   if ($id) {
     $settings = sb_social_settings_load($sid);
+    // Let 3rd party modules get into the act.
+    drupal_alter('sb_social_init_settings_load', $settings);
+    if (isset($settings['use_node'])) {
+      $node = node_load($settings['use_node']);
+    }
     if (empty($settings)) {
       return;
     }
@@ -581,6 +589,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
   if ($type == 'sb_social') {
     $replacements = array();
     $node = !empty($data['node']) ? $data['node'] : FALSE;
+    drupal_alter('sb_social_tokens_data', $node);
     if (!$node && arg(0) == 'node' && is_numeric(arg(1))) {
       $node = node_load(arg(1));
     }
@@ -738,7 +747,7 @@ function theme_sb_social_share_image_preview($variables) {
  */
 function _sb_social_set_tracking_cookie($uid, $mail, $sid) {
   $payload = $uid . '::' . $mail . '::' . $sid;
-  $set = setcookie("sb_social.event_submission", $payload, strtotime('+1 year'));
+  $set = setcookie("sb_social.event_submission", $payload, strtotime('+1 year'), ini_get('session.cookie_path'));
 }
 
 /**

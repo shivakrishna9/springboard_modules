@@ -4,9 +4,6 @@
  * Fundraiser module web tests, test creating and submitting a form.
  */
 
-// Include the setup test class.
-module_load_include('test', 'fundraiser', 'tests/fundraiser.setup');
-
 /**
  * Setup and tear down web class. Does nothing else.
  */

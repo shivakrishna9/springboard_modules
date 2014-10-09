@@ -69,45 +69,8 @@ function springboard_admin_update_7002() {
 }
 
 /**
- * Helper function, creates the Springboard Admin Menu.
+ * Rebuilds the Springboard Admin Menu to add new items.
  */
-function springboard_admin_create_menu() {
-  // Define and save the Springboard Administration menu.
-  $sb_menu = springboard_admin_admin_menu();
-  menu_save($sb_menu);
-  // Define and add default menu items to the Springboard Administration menu.
-  $sb_menu_items = springboard_admin_admin_menu_items();
-
-  /*
-   * Iterate through each item. Save the parent and then the children using the
-   * parent's newly assign mlid as the child's plid. If the menu ever advances
-   * to more than two levels, we will need to rewrite this to be recursive.
-   */
-  foreach ($sb_menu_items as $key => $item) {
-    $children = isset($item['_children']) ? $item['_children'] : array();
-    $mlids = array();
-    // Save a top-level item.
-    $plid = menu_link_save($item);
-
-    // If save was successful, loop through child items.
-    if ($plid) {
-      $mlids[] = $plid;
-      foreach ($children as $key => $child) {
-        $children[$key]['plid'] = $plid;
-        $mlid = menu_link_save($children[$key], array(), array($plid => $item));
-        $mlids[] = $mlid;
-      }
-    }
-    else {
-      drupal_set_message(t('springboard admin menu item @item and its children were not created due to an error', array('@item' => check_plain($item['title']))), 'warning');
-    }
-  }
-  // Set menu links as customized so they don't get wiped out in the
-  // router check.
-  $result = db_update('menu_links')
-  ->fields(array(
-    'customized' => 1,
-  ))
-  ->condition('mlid', $mlids, 'IN')
-  ->execute();
+function springboard_admin_update_7003() {
+  springboard_admin_recreate_menu();
 }

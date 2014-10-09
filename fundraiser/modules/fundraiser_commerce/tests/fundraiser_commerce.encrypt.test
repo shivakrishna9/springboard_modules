@@ -5,9 +5,6 @@
  * Fundraiser commerce credit card encryption and serialization tests.
  */
 
-// Include the setup test class.
-module_load_include('test', 'fundraiser', 'tests/fundraiser.setup');
-
 class FundraiserCommerceEncryptTest extends FundraiserSetup {
 
   public static function getInfo() {

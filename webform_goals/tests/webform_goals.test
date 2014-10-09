@@ -1,9 +1,10 @@
 <?php
 /**
  * @file
- * Test interaction between user accounts and webform fields.
+ * Test Webform Goals.
  */
-class WebformGoalsIntegratedTestSetup extends DrupalWebTestCase {
+
+abstract class WebformGoalsIntegratedTestSetup extends DrupalWebTestCase {
 
   protected $users;
 
@@ -41,7 +42,7 @@ class WebformGoalsIntegratedTestSetup extends DrupalWebTestCase {
 }
 
 /**
- * Webform user testing class.
+ * Webform goals testing class.
  */
 class WebformGoalsIntegratedTestCase extends WebformGoalsIntegratedTestSetup {
 
@@ -56,7 +57,9 @@ class WebformGoalsIntegratedTestCase extends WebformGoalsIntegratedTestSetup {
     );
   }
 
-  // Confirm UI elements on webform node create form.
+  /**
+   * Confirm UI elements on webform node create form.
+   */
   public function testWebformGoalsUI() {
     // Log in our editor.
     $this->drupalLogin($this->users['editor']);
@@ -66,9 +69,8 @@ class WebformGoalsIntegratedTestCase extends WebformGoalsIntegratedTestSetup {
     );
     $this->drupalPost('node/add/webform', $edit, t('Save'));
 
-    // TODO: add component.
-
-    // TODO: webform created, make goals.
+    // @todo Add component.
+    // @todo Webform created, make goals.
 
   }
 
@@ -84,9 +86,9 @@ class WebformGoalsUnitTestCase extends WebformGoalsIntegratedTestSetup {
    */
   public static function getInfo() {
     return array(
-      'name' => t('Webform Goals Unit Cases'),
+      'name' => t('Webform Goals Unit tests'),
       'description' => t('Individually tests specific functions.'),
-      'group' => t('Webform User'),
+      'group' => t('Webform Goals'),
     );
   }
 
@@ -94,8 +96,8 @@ class WebformGoalsUnitTestCase extends WebformGoalsIntegratedTestSetup {
    * Unit test helper functions.
    */
   public function testWebformGoalsHelperFunctions() {
-    // TODO: test goal progress calculations
-    // TODO: test token replacement
+    // @todo Test goal progress calculations.
+    // @todo Test token replacement.
   }
 
 }

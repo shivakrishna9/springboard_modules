@@ -5,3 +5,55 @@
  * Install, update and uninstall functions for the fundraiser_tickets module.
  */
 
+/**
+ * Implements hook_schema().
+ */
+function fundraiser_tickets_schema() {
+  $schema['fundraiser_tickets_add_on_donations'] = array(
+    'description' => 'Tracking table for add-on donations created by ticket purchases.',
+    'fields' => array(
+      'id' => array(
+        'description' => 'Id of the add-on donation.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'original_nid' => array(
+        'description' => 'Node id from where the original donation was made.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'add_on_nid' => array(
+        'description' => 'Node id that was used to process the add-on donation.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'original_did' => array(
+        'description' => 'Id of the original donation.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'add_on_did' => array(
+        'description' => 'Id of the add-on donation.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('id'),
+    'indexes' => array(
+      'original_nid' => array('original_nid'),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Add the new table {fundraiser_tickets_add_on_donations}
+ */
+function fundraiser_tickets_update_7001() {
+  $schema = fundraiser_tickets_schema();
+  db_create_table('fundraiser_tickets_add_on_donations', $schema['fundraiser_tickets_add_on_donations']);
+
+  return 'Added table fundraiser_tickets_add_on_donations.';
+}

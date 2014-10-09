@@ -1,20 +1,16 @@
 <?php
-
 /**
  * @file
- * Test suite for Market Source module.
+ * Test suite for Authnet payment gateway.
  */
 
-// Include the setup test class.
-module_load_include('test', 'fundraiser', 'tests/fundraiser_commerce.gateway');
-
-class FundraiserCommerceGatewayAuthnetTest extends FundraiserCommerceGatewayTest {
+class FundraiserCommerceGatewayAuthnetTest extends FundraiserCommerceGatewayTestSetup {
   protected $privileged_user;
 
   public static function getInfo() {
     return array(
       'name' => 'Fundraiser Commerce Authorize.net Gateway',
-      'description' => 'Confirm the Authorize.net gateway can process a donation.',
+      'description' => 'Confirm the Authorize.net gateway can process a donation. Requires manual çconfiguration of fundraiser_commerce/tests/authnet.rule',
       'group' => 'Fundraiser',
     );
   }

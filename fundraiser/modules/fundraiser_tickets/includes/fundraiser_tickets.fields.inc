@@ -39,7 +39,7 @@ function _fundraiser_tickets_add_default_fields($type) {
 function _fundraiser_tickets_default_fields_settings($type) {
   $fields = array();
 
-  // Waitlist settings
+  // Wait list settings
 
   $fields['fr_tickets_waitlist_form'] = array(
     'field_config' => array(
@@ -119,7 +119,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
     )
   );
 
- $fields['fr_tickets_waitlist_soldout'] = array(
+  $fields['fr_tickets_waitlist_soldout'] = array(
     'field_config' => array(
       'active' => 1,
       'cardinality' => 1,
@@ -169,7 +169,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
       ),
       'entity_type' => 'node',
       'field_name' => 'fr_tickets_waitlist_soldout',
-      'label' => 'Allow waitlist for sold out events',
+      'label' => 'Allow wait list for sold out events',
       'required' => 0,
       'settings' => array(
         'user_register_form' => FALSE,
@@ -186,7 +186,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
     )
   );
 
- $fields['fr_tickets_waitlist_closed'] = array(
+  $fields['fr_tickets_waitlist_closed'] = array(
     'field_config' => array(
       'active' => 1,
       'cardinality' => 1,
@@ -236,7 +236,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
       ),
       'entity_type' => 'node',
       'field_name' => 'fr_tickets_waitlist_closed',
-      'label' => 'Allow waitlist for closed out events',
+      'label' => 'Allow wait list for closed out events',
       'required' => 0,
       'settings' => array(
         'user_register_form' => FALSE,
@@ -255,8 +255,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
 
 
   // Closed settings
-
-   $fields['fr_tickets_closed_is_closed'] = array(
+  $fields['fr_tickets_closed_is_closed'] = array(
     'field_config' => array(
       'active' => 1,
       'cardinality' => 1,
@@ -395,7 +394,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
     )
   );
 
- $fields['fr_tickets_closed_options'] = array(
+  $fields['fr_tickets_closed_options'] = array(
     'field_config' => array(
       'active' => 1,
       'cardinality' => 1,
@@ -412,7 +411,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
       'module' => 'list',
       'settings' => array(
         'allowed_values' => array(
-          'form' => 'Taken to the waitlist form',
+          'form' => 'Taken to the wait list form',
           'redirect' => 'Redirected to another page',
           'message' => 'Shown a message',
         ),
@@ -528,7 +527,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
     )
   );
 
- $fields['fr_tickets_closed_message'] = array(
+  $fields['fr_tickets_closed_message'] = array(
     'field_config' => array(
       'active' => 1,
       'cardinality' => 1,
@@ -594,7 +593,6 @@ function _fundraiser_tickets_default_fields_settings($type) {
   );
 
   // Sold out settings
-  //
   $fields['fr_tickets_soldout_options'] = array(
     'field_config' => array(
       'active' => 1,
@@ -612,7 +610,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
       'module' => 'list',
       'settings' => array(
         'allowed_values' => array(
-          'form' => 'Taken to the waitlist form',
+          'form' => 'Taken to the wait list form',
           'redirect' => 'Redirected to another page',
           'message' => 'Shown a message',
         ),
@@ -661,7 +659,7 @@ function _fundraiser_tickets_default_fields_settings($type) {
     )
   );
 
-$fields['fr_tickets_soldout_redirect'] = array(
+  $fields['fr_tickets_soldout_redirect'] = array(
     'field_config' => array(
       'active' => 1,
       'cardinality' => 1,
@@ -795,7 +793,6 @@ $fields['fr_tickets_soldout_redirect'] = array(
   );
 
   // Donation settings
-
   $fields['fr_tickets_donation_donation'] = array(
     'field_config' => array(
       'active' => 1,
@@ -863,7 +860,88 @@ $fields['fr_tickets_soldout_redirect'] = array(
     )
   );
 
- $fields['fr_tickets_ticket_types'] = array(
+  $fields['fr_tickets_donation_addon_form'] = array(
+    'field_config' => array(
+      'active' => '1',
+      'cardinality' => '1',
+      'deleted' => '0',
+      'entity_types' => array(),
+      'field_name' => 'fr_tickets_donation_addon_form',
+      'foreign keys' => array(
+        'node' => array(
+          'columns' => array(
+            'target_id' => 'nid',
+          ),
+          'table' => 'node',
+        ),
+      ),
+      'indexes' => array(
+        'target_id' => array(
+          0 => 'target_id',
+        ),
+      ),
+      'locked' => '0',
+      'module' => 'entityreference',
+      'settings' => array(
+        'handler' => 'views',
+        'handler_settings' => array(
+          'behaviors' => array(
+            'views-select-list' => array(
+              'status' => 0,
+            ),
+          ),
+          'view' => array(
+            'args' => array(),
+            'display_name' => 'entityreference_1',
+            'view_name' => 'donation_forms',
+          ),
+        ),
+        'target_type' => 'node',
+      ),
+      'translatable' => '0',
+      'type' => 'entityreference',
+    ),
+    'field_instance' => array(
+      'bundle' => $type,
+      'default_value' => NULL,
+      'deleted' => '0',
+      'description' => '<strong>You may type either the form\'s <em>Title</em> or <em>Internal Name</em> when searching.</strong><br />Target donation forms <strong><em>must</em></strong> have an "other amount" field. Any required fields on target donation forms must also be required on this form.',
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 14,
+        ),
+        'teaser' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 0,
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'fr_tickets_donation_addon_form',
+      'label' => 'Donation form to Use for Add-ons',
+      'required' => 0,
+      'settings' => array(
+        'user_register_form' => FALSE,
+      ),
+      'widget' => array(
+        'active' => 1,
+        'module' => 'entityreference',
+        'settings' => array(
+          'match_operator' => 'CONTAINS',
+          'path' => '',
+          'size' => '60',
+        ),
+        'type' => 'entityreference_autocomplete',
+        'weight' => 14,
+      ),
+    ),
+  );
+
+  $fields['fr_tickets_ticket_types'] = array(
     'field_config' => array(
       'active' => 1,
       'cardinality' => FIELD_CARDINALITY_UNLIMITED,
@@ -923,14 +1001,13 @@ $fields['fr_tickets_soldout_redirect'] = array(
         'module' => 'commerce_product_reference',
         'settings' => array(),
         'type' => 'commerce_product_reference_hidden',
-        'weight' => 14,
+        'weight' => 15,
       ),
     )
   );
 
   // The aggregated ticket inventory info
-
-   $fields['fr_tickets_inventory_initial'] = array(
+  $fields['fr_tickets_inventory_initial'] = array(
     'field_config' => array(
       'active' => 1,
       'cardinality' => 1,
@@ -977,7 +1054,7 @@ $fields['fr_tickets_soldout_redirect'] = array(
     )
   );
 
-   $fields['fr_tickets_inventory_available'] = array(
+  $fields['fr_tickets_inventory_available'] = array(
     'field_config' => array(
       'active' => 1,
       'cardinality' => 1,
@@ -1024,7 +1101,7 @@ $fields['fr_tickets_soldout_redirect'] = array(
     )
   );
 
-   $fields['fr_tickets_inventory_purchased'] = array(
+  $fields['fr_tickets_inventory_purchased'] = array(
     'field_config' => array(
       'active' => 1,
       'cardinality' => 1,
@@ -1072,13 +1149,15 @@ $fields['fr_tickets_soldout_redirect'] = array(
   );
 
 
- // Translatables
+  // Translatables
   // Included for use with string extractors like potx.
-  t('Allow waitlist for closed out events');
-  t('Allow waitlist for sold out events');
+  t('Allow wait list for closed out events');
+  t('Allow wait list for sold out events');
   t('Body');
   t('Close event on');
   t('Enable add-on donation');
+  t('Donation Form to Use for Add-ons');
+  t('<strong>You may type either the form\'s <em>Title</em> or <em>Internal Name</em> when searching.</strong><br />Target donation forms <strong><em>must</em></strong> have an "other amount" field. Any required fields on target donation forms must also be required on this form.');
   t('Event is closed');
   t('Closed message');
   t('Sold out message');

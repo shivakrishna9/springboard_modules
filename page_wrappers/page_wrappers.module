@@ -74,28 +74,9 @@ function _page_wrappers_insert_after_first_element(&$a, $element) {
  * Replace standard site theme with pagewrapper template for nodes that have page wrappers assigned.
  */
 function page_wrappers_preprocess_page(&$vars) {
-  $wrapper = NULL;
-  if ($node = _page_wrappers_page_node()) {
-    $wrapper = _page_wrappers_node_assigned_wrapper($node);
-  }
-
-  // Allow context to optionally override this
-  if (module_exists('context')) {
-    $contexts = context_active_contexts();
-    foreach ($contexts as $context) {
-      // Check if page_wrapper is a reaction for this context
-      if (isset($context->reactions['page_wrappers'])) {
-        $wrapper = array(
-          'wrapper_nid' => $context->reactions['page_wrappers']['page_wrapper'],
-          'ruleset' => 1,
-          'weight' => -20,
-        );
-        if ($node) {
-          $wrapper['nid'] = $node->nid;
-        }
-      }
-    }
-  }
+  $wrapper_data = page_wrappers_check();
+  $wrapper = $wrapper_data['wrapper'];
+  $node = $wrapper_data['node'];
 
   if (!empty($wrapper)) {
     // Some pages may not have a node set even though one is being viewed; we'll need it for the wrapper template
@@ -116,6 +97,7 @@ function page_wrappers_preprocess_page(&$vars) {
       // if there is theme CSS allowed, add those files.
       if ($theme_css = _page_wrappers_get_theme_css($wrapper_node)) {
         foreach ($theme_css as $stylesheet) {
+          $stylesheet['options']['weight'] = 10;
           drupal_add_css($stylesheet['path'], $stylesheet['options']);
         }
       }
@@ -126,7 +108,8 @@ function page_wrappers_preprocess_page(&$vars) {
         $css_files = field_get_items('node', $wrapper_node, 'page_wrappers_css');
 
         foreach ($css_files as $css_file) {
-          drupal_add_css($css_file['uri']);
+          $css_file['options']['weight'] = 20;
+          drupal_add_css($css_file['uri'], $css_file['options']);
         }
       }
 
@@ -136,9 +119,16 @@ function page_wrappers_preprocess_page(&$vars) {
         $js_files = field_get_items('node', $wrapper_node, 'page_wrappers_js');
 
         foreach ($js_files as $js_file) {
-          drupal_add_js($js_file['uri']);
+          $js_file['options']['weight'] = 10;
+          drupal_add_js($js_file['uri'], $js_file['options']);
         }
       }
+
+      // Remove the css and js in ajaxPageState to keep it from mucking up the
+      // theme when ajax forms are used.
+      // @TODO: see if there is a better way to do this
+      drupal_add_js('delete(Drupal.settings.ajaxPageState.css);',
+        array('type' => 'inline', 'scope' => 'footer', 'weight' => 10) );
     }
   }
 }
@@ -163,13 +153,15 @@ function page_wrappers_block_list_alter(&$blocks) {
  * Implements of hook_css_alter().
  */
 function page_wrappers_css_alter(&$css) {
-  if ($node = _page_wrappers_page_node()) {
-    $assigned_wrapper = _page_wrappers_node_assigned_wrapper($node);
-  }
+  $wrapper_data = page_wrappers_check();
+  $wrapper = $wrapper_data['wrapper'];
 
   // If this is a node that has a wrapper assigned remove all the theme stylesheets
-  if (!empty($assigned_wrapper)) {
-    $wrapper_node = node_load($assigned_wrapper['wrapper_nid']);
+  if (!empty($wrapper)) {
+    // @todo This node_load() might not be needed because page_wrappers_check()
+    // provides a node.  Test if the two nodes are the same and if so replace
+    // this with the one from $wrapper_data['node'].
+    $wrapper_node = node_load($wrapper['wrapper_nid']);
     $css_files = field_get_items('node', $wrapper_node, 'page_wrappers_css');
     $keep = array();
     // If a stylesheet is from an allowed theme, don't remove it.
@@ -476,8 +468,10 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
   if ($form_id == 'page_wrapper_node_form') {
     // add some help the body (Template HTML) field
     // TODO: fix language lookup.
-    $form['body']['und'][0]['#prefix'] = t('The template should only include the content of the HTML &lt;body&gt; tag. <strong>Do not</strong> include the &lt;html&gt;, &lt;head&gt, or &lt;body&gt  tags in the template.');
+    $form['body']['und'][0]['#prefix'] = '<p class="wrapper-text">';
+    $form['body']['und'][0]['#prefix'] .= t('The template should only include the content of the HTML &lt;body&gt; tag. <strong>Do not</strong> include the &lt;html&gt;, &lt;head&gt, or &lt;body&gt  tags in the template.');
     $form['body']['und'][0]['#prefix'] .= t('Use the placeholder <strong>[content]</strong> to denote where the body content should be output, and <strong>[title]</strong> where the page title should appear, and <strong>[messages]</strong> where the error messages should appear.');
+    $form['body']['und'][0]['#prefix'] .= '</p>';
   }
 }
 
@@ -936,12 +930,12 @@ function _page_wrappers_create_template($node) {
       cdn_load_include('fallback');
       cdn_html_alter_image_urls($html_template[0]['value']);
     }
-    // Apply filters before doing token replacement, this prevents php generated for 
+    // Apply filters before doing token replacement, this prevents php generated for
     // region tokens from getting stripped if filtered or full html is selected.
     if ($html_template[0]['format'] != 'php_code') {
       // Full HTML input filter does not strip php start and end tags by default.
       $html_template[0]['value'] = str_replace('<?php', '&lt;php?', $html_template[0]['value']);
-      $html_template[0]['value'] = str_replace('?>', '?&gt;', $html_template[0]['value']);  
+      $html_template[0]['value'] = str_replace('?>', '?&gt;', $html_template[0]['value']);
       $html_template[0]['value'] = check_markup($html_template[0]['value'], $html_template[0]['format'], $langcode = '', FALSE);
     }
     $body = _page_wrappers_tokens($html_template[0]['value']);
@@ -1238,4 +1232,36 @@ function _page_wrappers_get_theme_css($wrapper_node) {
       }
     }
   return $css;
+}
+
+/**
+ * Check if there is a page wrapper being set for the current page
+ * @return array|mixed|null
+ */
+function page_wrappers_check() {
+  $wrapper = NULL;
+  $node = NULL;
+  if ($node = _page_wrappers_page_node()) {
+    $wrapper = _page_wrappers_node_assigned_wrapper($node);
+  }
+
+  // Allow context to optionally override this
+  if (module_exists('context')) {
+    $contexts = context_active_contexts();
+    foreach ($contexts as $context) {
+      // Check if page_wrapper is a reaction for this context
+      if (isset($context->reactions['page_wrappers'])) {
+        $wrapper = array(
+          'wrapper_nid' => $context->reactions['page_wrappers']['page_wrapper'],
+          'ruleset' => 1,
+          'weight' => -20,
+        );
+        if ($node) {
+          $wrapper['nid'] = $node->nid;
+        }
+      }
+    }
+  }
+
+  return array('node' => $node, 'wrapper' => $wrapper);
 }

@@ -10,22 +10,41 @@
 function fundraiser_sustainers_requirements($phase) {
   $requirements = array();
   if ($phase == 'runtime') {
+    // Check for the key existing.
+    $key_exists = fundraiser_sustainers_sustainer_key_file_exists();
+
+    // Array of text vars for the message.
+    $exists_vars = array(
+      '@exists' => $key_exists ? 'exists' : 'does not exist',
+    );
+
     $requirements['fundraiser_sustainers_key_exists'] = array(
       'title' => t('Fundraiser sustainer key'),
-      'description' => t('The key file exists in the correct place in the file system.'),
-      'value' => t('Exists'),
-      'severity' => fundraiser_sustainers_sustainer_key_file_exists() ? REQUIREMENT_OK : REQUIREMENT_WARNING,
+      'description' => t('The key file @exists in the correct place in the file system.', $exists_vars),
+      'value' => $key_exists ? t('File exists') : t('File does not exist'),
+      'severity' => $key_exists ? REQUIREMENT_OK : REQUIREMENT_WARNING,
       'weight' => '-1000',
     );
+
+    // Check for the site and key values matching
     $key_value = fundraiser_sustainers_get_sustainer_key_value();
     if (!$key_value) {
       $key_value = t('NO VALUE SET');
     }
+
     $key_match_for_environment = fundraiser_sustainers_processor_key_match();
+
+    // Array of text vars for the message
+    $configured_vars = array(
+      '@match' => $key_match_for_environment ? 'matches' : 'does not match',
+      '@key_value' => $key_value,
+      '@site' => $_SERVER['HTTP_HOST'] . rtrim(base_path(), '/'),
+    );
+
     $requirements['fundraiser_sustainers_key_configured'] = array(
-      'title' => t('Fundraiser sustainer key value'),
-      'description' => t('The key file\'s value (' . $key_value . ') matches the current server\'s host name ' . $_SERVER['HTTP_HOST'] . '.'),
-      'value' => t('Yes'),
+      'title' => t('Fundraiser sustainer key match'),
+      'description' => t("The key file's value (@key_value) @match the current site's hostname and path (@site)", $configured_vars),
+      'value' => $key_match_for_environment ? t('Yes') : ('No'),
       'severity' => $key_match_for_environment ? REQUIREMENT_OK : REQUIREMENT_WARNING,
       'weight' => '-999',
     );
@@ -190,6 +209,26 @@ function fundraiser_sustainers_schema() {
     ),
     'primary key' => array('lid'),
   );
+
+  $schema['fundraiser_sustainers_charge_date'] = array(
+    'description' => 'Stores information about admin-changed donation dates.',
+    'fields' => array(
+      'master_did' => array(
+        'description' => 'Master donation id.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'day' => array(
+        'description' => 'The numeric day of month.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('master_did'),
+  );
+
   return $schema;
 }
 
@@ -431,4 +470,14 @@ function fundraiser_sustainers_update_7006(&$sandbox) {
     'primary key' => array('lid'),
   );
   db_create_table('fundraiser_sustainers_log', $schema['fundraiser_sustainers_log']);
+}
+
+/**
+ * Adds an additional table to store changed cahrge dates.
+ */
+function fundraiser_sustainers_update_7007() {
+  if (!db_table_exists('fundraiser_sustainers_charge_date')) {
+    $schema = drupal_get_schema('fundraiser_sustainers_charge_date', TRUE);
+    db_create_table('fundraiser_sustainers_charge_date', $schema);
+  }
 }

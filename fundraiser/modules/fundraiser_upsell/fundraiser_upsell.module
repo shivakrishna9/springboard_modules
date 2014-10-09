@@ -9,7 +9,7 @@
  */
 function fundraiser_upsell_menu() {
   $items = array();
-  $items['springboard/options/fundraiser/fundraiser_upsell'] = array(
+  $items['admin/springboard/options/fundraiser/fundraiser_upsell'] = array(
     'title' => 'Sustainer upsell settings',
     'description' => 'Administer fundraiser upsell settings.',
     'access arguments' => array('administer fundraiser upsells'),
@@ -18,7 +18,7 @@ function fundraiser_upsell_menu() {
     'type' => MENU_NORMAL_ITEM,
     'file' => 'includes/fundraiser_upsell.admin.inc',
   );
-  $items['springboard/options/fundraiser/fundraiser_upsell/general'] = array(
+  $items['admin/springboard/options/fundraiser/fundraiser_upsell/general'] = array(
     'title' => 'General settings',
     'description' => 'Administer fundraiser upsell settings.',
     'access arguments' => array('administer fundraiser upsells'),
@@ -27,7 +27,7 @@ function fundraiser_upsell_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'file' => 'includes/fundraiser_upsell.admin.inc',
   );
-  $items['springboard/options/fundraiser/fundraiser_upsell/thank-you'] = array(
+  $items['admin/springboard/options/fundraiser/fundraiser_upsell/thank-you'] = array(
     'title' => 'Thank you settings',
     'description' => 'Administer fundraiser upsell "thank you" settings.',
     'access arguments' => array('administer fundraiser upsells'),
@@ -56,17 +56,6 @@ function fundraiser_upsell_menu() {
   );
 
   return $items;
-}
-
-/**
- * Implements hook_admin_paths().
- */
-function fundraiser_upsell_admin_paths() {
-  return array(
-    'springboard/options/fundraiser/fundraiser_upsell' => TRUE,
-    'springboard/options/fundraiser/fundraiser_upsell/general' => TRUE,
-    'springboard/options/fundraiser/fundraiser_upsell/thank-you' => TRUE,
-  );
 }
 
 /**
@@ -161,8 +150,8 @@ function fundraiser_upsell_add_node_settings(&$form) {
   );
   $form['fundraiser_upsell']['content_tokens']['help'] = array(
     '#theme' => 'token_tree',
-    '#token_types' => array('donation'),
-    '#global_types' => FALSE,
+    '#token_types' => array('all', 'donation'),
+    '#global_types' => TRUE,
     '#click_insert' => TRUE,
   );
 
@@ -190,8 +179,8 @@ function fundraiser_upsell_add_node_settings(&$form) {
 
   $form['fundraiser_upsell']['thankyou_tokens']['help'] = array(
     '#theme' => 'token_tree',
-    '#token_types' => array('donation'),
-    '#global_types' => FALSE,
+    '#token_types' => array('all', 'donation'),
+    '#global_types' => TRUE,
     '#click_insert' => TRUE,
   );
 
@@ -265,8 +254,8 @@ function fundraiser_upsell_add_node_settings(&$form) {
 
     $form['fundraiser_upsell']['email_wrappers']['message']['tokens']['help'] = array(
       '#theme' => 'token_tree',
-      '#token_types' => array('donation'),
-      '#global_types' => FALSE,
+      '#token_types' => array('all', 'donation'),
+      '#global_types' => TRUE,
       '#click_insert' => TRUE,
     );
 
@@ -782,9 +771,11 @@ function fundraiser_upsell_node_insert($node) {
         'delta' => 'nid_' . $node->clone_from_original_nid,
       );
       $settings = email_wrappers_mail_load($params);
-      unset($settings->mid);
-      $settings->delta = 'nid_' . $node->nid;
-      email_wrappers_save($settings);
+      if ($settings != FALSE) {
+        unset($settings->mid);
+        $settings->delta = 'nid_' . $node->nid;
+        email_wrappers_save($settings);
+      }
     }
   }
 }
@@ -1258,7 +1249,7 @@ function fundraiser_upsell_is_available($node) {
  */
 function fundraiser_upsell_set_acceptance_cookie() {
   $cookie_lifetime = variable_get('fundraiser_upsell_acceptance_lifetime', 0);
-  setcookie('fundraiser_upsell_acceptance', 1, REQUEST_TIME + 3600 * 24 * $cookie_lifetime, "/");
+  setcookie('fundraiser_upsell_acceptance', 1, REQUEST_TIME + 3600 * 24 * $cookie_lifetime, ini_get('session.cookie_path'));
 }
 
 /**

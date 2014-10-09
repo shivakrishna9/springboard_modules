@@ -173,7 +173,7 @@ function springboard_admin_config(&$form, $form_state) {
     set_time_limit(300);
     variable_del('springboard_needs_config');
     drupal_set_message(t('Please see the !help page for additional help configuring Springboard.',
-      array('!help' => l(t('Help'), 'springboard/help'))));
+      array('!help' => l(t('Help'), 'admin/springboard/help'))));
     // This is where what used to be profile configuration in D6 went.
     // We dropped the profile support since it was, honestly, more hinderence than harm.
     // We would rather the Springboard suite be useful for all default profiles.
@@ -1499,6 +1499,9 @@ function springboard_admin_config_profile($form, $form_state) {
     $instance = array_merge($profile_field, $instance);
     field_create_instance($instance);
   }
+
+  springboard_add_admin_field_group_to_user_entity();
+
   drupal_set_message(t('Profiles have been configured'));
 
   // Set the default fundraiser to webform user profile handling settings.
@@ -1822,7 +1825,6 @@ function springboard_admin_config_donation_form_type($form, $form_state) {
   // Save or reset persistent variable values.
   $variables = array(
     'node_submitted' => 0,
-    'comment' => COMMENT_NODE_HIDDEN,
     'fundraiser' => 1,
     'webform_user' => 1,
     'webform_user_default_fields' => array(
@@ -1946,7 +1948,7 @@ function springboard_admin_config_donation_form_add($form, $form_state, $email_n
   $node->field_fundraiser_internal_name = array($node->language => array(0 => array('value' => 'Test Donation Form')));
   $node->status = 1;
   $node->promote = 1;
-  $node->body['LANGUAGE_NONE'][0]['value'] = 'Donec placerat. Nullam nibh dolor, blandit sed, fermentum id, ' .
+  $node->body[LANGUAGE_NONE][0]['value'] = 'Donec placerat. Nullam nibh dolor, blandit sed, fermentum id, ' .
     'imperdiet sit amet, neque. Nam mollis ultrices justo. Sed tempor. Sed vitae tellus. Etiam sem arcu, eleifend ' .
     'sit amet, gravida eget, porta at, wisi. Nam non lacus vitae ipsum viverra pretium. Phasellus massa. Fusce ' .
     'magna sem, gravida in, feugiat ac, molestie eget, wisi. Fusce consectetuer luctus ipsum. Vestibulum nunc. ' .
@@ -1954,11 +1956,11 @@ function springboard_admin_config_donation_form_add($form, $form_state, $email_n
     'eget, pulvinar sed, posuere vitae, nulla. Sed varius nibh ut lacus. Curabitur fringilla. Nunc est ipsum, ' .
     'pretium quis, dapibus sed, varius non, lectus. Proin a quam. Praesent lacinia, eros quis aliquam porttitor, ' .
     'urna lacus volutpat urna, ut fermentum neque mi egestas dolor.';
-  $node->body['LANGUAGE_NONE'][0]['summary'] = 'Donec placerat. Nullam nibh dolor, blandit sed, fermentum id, imperdiet ' .
+  $node->body[LANGUAGE_NONE][0]['summary'] = 'Donec placerat. Nullam nibh dolor, blandit sed, fermentum id, imperdiet ' .
     'sit amet, neque. Nam mollis ultrices justo. Sed tempor. Sed vitae tellus. Etiam sem arcu, eleifend sit amet, ' .
     'gravida eget, porta at, wisi. Nam non lacus vitae ipsum viverra pretium. Phasellus massa. Fusce magna sem, gravida ' .
     'in, feugiat ac, molestie eget, wisi.';
-  $node->body['LANGUAGE_NONE'][0]['format'] = 'filtered_html';
+  $node->body[LANGUAGE_NONE][0]['format'] = 'filtered_html';
   $node->webform = array(
       'confirmation' => 'Thank you [donation:first_name] [donation:last_name] for your donation of [donation:amount] USD.' . "\n" .
       "\n" .
@@ -2015,22 +2017,22 @@ function springboard_admin_config_donation_form_add($form, $form_state, $email_n
       '0' => array(
         'amount' => 10,
         'label' => '$10',
-        'remove' => 0,
+        'weight' => 0,
       ),
       '1' => array(
         'amount' => 20,
         'label' => '$20',
-        'remove' => 0,
+        'weight' => 1,
       ),
       '2' => array(
         'amount' => 50,
         'label' => '$50',
-        'remove' => 0,
+        'weight' => 2,
       ),
       '3' => array(
         'amount' => 100,
         'label' => '$100',
-        'remove' => 0,
+        'weight' => 3,
       ),
     ),
     'show_other_amount' => 1,
@@ -2050,13 +2052,14 @@ function springboard_admin_config_donation_form_add($form, $form_state, $email_n
   $eid = -1;
   foreach ($node->webform['components'] as $component) {
     if ($component['form_key'] == 'mail') {
-      $eid = $component['cid'];
+      $cid = $component['cid'];
+      $node->webform['emails'][1]['email'] = $cid;
     }
   }
   if ($email_nid != NULL) {
     $settings = array(
       'nid' => $node->nid,
-      'eid' => $eid,
+      'eid' => 1,
       'tid' => $email_nid,
       'bcc_email' => '',
       'html_message' => 'Thank you [donation:first_name] [donation:last_name] for your donation of [donation:amount] USD.' . "\n" .
@@ -2070,11 +2073,12 @@ function springboard_admin_config_donation_form_add($form, $form_state, $email_n
       'The email address we have for you is: [donation:mail]' . "\n" .
       "\n" .
       'Your card ending in [donation:card_number], expires [donation:card_expiration_month] / [donation:card_expiration_year]',
-      'extra' => array(),
+      'extra' => serialize(array('send_on_donation_success' => 1, 'send_on_donation_decline' => 0, 'send_on_submission' => 0)),
     );
   }
   // One last save.
   node_save($node);
+  email_wrappers_save_settings($node->nid, 1, $settings);
   // Make sure the donation maps are moved over to be ready when/if SF is authenticated.
   if ($form_state['values']['sf_donation']) {
     // Add default map for donation.
@@ -2103,7 +2107,7 @@ function springboard_admin_config_donation_form_add($form, $form_state, $email_n
 function springboard_admin_ignore($form, $form_state) {
   variable_del('springboard_needs_config');
   drupal_set_message(t('Please see the !help page for additional help configuring Springboard.',
-    array('!help' => l(t('Help'), 'springboard/help'))));
+    array('!help' => l(t('Help'), 'admin/springboard/help'))));
 }
 
 /**
@@ -2111,12 +2115,77 @@ function springboard_admin_ignore($form, $form_state) {
  */
 
  function springboard_dashboard_config_save($form, &$form_state) {
-   $form_state['redirect'] = 'springboard';
+   $form_state['redirect'] = 'admin/springboard';
  }
 
 /**
  * Submit handler for the Springboard Dashbord config cancel button
  */
 function springboard_dashboard_config_cancel($form, &$form_state) {
-  $form_state['redirect'] = 'springboard';
+  $form_state['redirect'] = 'admin/springboard';
+}
+
+/**
+ * Creates an admin field_group for the user entity.
+ *
+ * Adds some standard springboard fields under the group so they won't be shown
+ * to users who don't have the 'administer users' permission.
+ *
+ * @return bool|int
+ *   FALSE, SAVED_NEW, or SAVED_UPDATED.
+ */
+function springboard_add_admin_field_group_to_user_entity() {
+  module_load_include('module', 'ctools');
+  ctools_include('export');
+
+  // Search for an existing group.
+  $existing = field_group_load_field_group('group_profile_admin', 'user', 'user', 'form');
+  $table = 'field_group';
+
+  // If the group exists make sure its not disabled
+  if ($existing) {
+    $field_group = $existing;
+    if ($field_group->disabled == TRUE) {
+      ctools_export_crud_enable($table, $field_group->identifier);
+      unset($field_group->disabled);
+    }
+  }
+  // Create a new group
+  else {
+    $field_group = new stdClass();
+    $field_group->identifier = 'group_profile_admin|user|user|form';
+    $field_group->group_name = 'group_profile_admin';
+    $field_group->entity_type = 'user';
+    $field_group->bundle = 'user';
+    $field_group->mode = 'form';
+    $field_group->parent_name = '';
+
+    $field_group->disabled = FALSE;
+    $field_group->label = 'Admin';
+    $field_group->weight = '40';
+    $field_group->children = array(
+      'sbp_cid',
+      'sbp_ms',
+      'sbp_referrer',
+      'sbp_initial_referrer',
+      'sbp_search_engine',
+      'sbp_search_string',
+      'sbp_user_agent',
+      'sbp_salesforce_account_id',
+      'sbp_salesforce_contact_id',
+    );
+    $field_group->formate_type = 'fieldset';
+    $field_group->format_settings = array(
+      'formatter' => 'collapsible',
+      'instance_settings' => array(
+        'description' => '',
+        'classes' => 'group-profile-admin field-group-fieldset',
+        'required_fields' => 1,
+      ),
+    );
+
+    $field_group = ctools_export_crud_save($table, $field_group);
+  }
+
+  return $field_group;
 }

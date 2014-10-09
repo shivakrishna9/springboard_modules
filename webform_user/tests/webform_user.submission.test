@@ -3,7 +3,8 @@
  * @file
  * Test the webform user form submissions.
  */
-class WebformUserSubmissionTest extends WebformUserSetup {
+
+class WebformUserSubmissionTestCase extends WebformUserTestSetup {
 
   /**
    * Implementation of getInfo().
@@ -31,8 +32,8 @@ class WebformUserSubmissionTest extends WebformUserSetup {
   }
 
   /**
-   * Tests that a new user account is created when an anonymous user with a non-matching
-   * email address submits a webform user form.
+   * Tests that a new user account is created when an anonymous user with a
+   * non-matching email address submits a webform user form.
    */
   public function testWebformUserAnonymousSubmission() {
     // Create a form for testing.
@@ -83,7 +84,8 @@ class WebformUserSubmissionTest extends WebformUserSetup {
 
     $this->drupalPost('node/1', $edit, 'Submit');
 
-    // Get the language off the node before checking the user entity field values.
+    // Get the language off the node before checking the user entity field
+    // values.
     $node = node_load(1);
     $lang = $node->language;
 
@@ -109,8 +111,8 @@ class WebformUserSubmissionTest extends WebformUserSetup {
   }
 
   /**
-   * This test verifies that an existing user is updated when a form is submitted by an anonymous
-   * user with a matching email address.
+   * Verify that an existing user is updated when a form is submitted by an
+   * anonymous user with a matching email address.
    */
   public function testWebformUserAnonymousWithExistingEmail() {
     // Create a form for testing.
@@ -153,7 +155,8 @@ class WebformUserSubmissionTest extends WebformUserSetup {
 
     $this->drupalPost('node/1', $edit, 'Submit');
 
-    // Get the language off the node before checking the user entity field values.
+    // Get the language off the node before checking the user entity field
+    // values.
     $node = node_load(1);
     $lang = $node->language;
 
@@ -179,7 +182,8 @@ class WebformUserSubmissionTest extends WebformUserSetup {
   }
 
   /**
-   * Test that a form is prepopulated correctly when an authenticated user visits a form.
+   * Test that a form is prepopulated correctly when an authenticated user
+   * visits a form.
    */
   public function testWebformUserAuthenticatedFormRender() {
     // Create a form for testing.

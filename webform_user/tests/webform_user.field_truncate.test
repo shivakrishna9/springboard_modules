@@ -3,7 +3,8 @@
  * @file
  * Test the webform user form submissions.
  */
-class WebformUserFieldTruncateTest extends WebformUserSetup {
+
+class WebformUserFieldTruncateTestCase extends WebformUserTestSetup {
 
   /**
    * Implementation of getInfo().
@@ -31,8 +32,8 @@ class WebformUserFieldTruncateTest extends WebformUserSetup {
   }
 
   /**
-   * Tests that a new user account is created when an anonymous user with a non-matching
-   * email address submits a webform user form.
+   * Tests that a new user account is created when an anonymous user with a
+   * non-matching email address submits a webform user form.
    */
   public function testWebformUserAnonymousSubmission() {
     // Create a form for testing.
@@ -54,6 +55,7 @@ class WebformUserFieldTruncateTest extends WebformUserSetup {
      '1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890';
 
     // Fill the form out and submit it.
+    // sbp_initial_referrer should truncate at 255.
     $edit = array(
       'submitted[mail]' => 'john.doe@example.com',
       'submitted[sbp_first_name]' => 'John',
@@ -67,7 +69,7 @@ class WebformUserFieldTruncateTest extends WebformUserSetup {
       'submitted[sbp_ms]' => 'ms',
       'submitted[sbp_cid]' => 'cid',
       'submitted[sbp_referrer]' => 'http://local',
-      'submitted[sbp_initial_referrer]' => $sbp_initial_referrer, // Should truncate at 255.
+      'submitted[sbp_initial_referrer]' => $sbp_initial_referrer,
       'submitted[sbp_search_engine]' => 'google',
       'submitted[sbp_search_string]' => 'search_string',
       'submitted[sbp_user_agent]' => 'user_agent',
@@ -75,7 +77,8 @@ class WebformUserFieldTruncateTest extends WebformUserSetup {
 
     $this->drupalPost('node/1', $edit, 'Submit');
 
-    // Get the language off the node before checking the user entity field values.
+    // Get the language off the node before checking the user entity field
+    // values.
     $node = node_load(1);
     $lang = $node->language;
 
