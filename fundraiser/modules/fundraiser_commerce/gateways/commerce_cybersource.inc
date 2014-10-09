@@ -25,6 +25,27 @@ function commerce_cybersource_fundraiser_commerce_fundraiser_gateway_info() {
 }
 
 /**
+ * Implements hook_fundraiser_donation_form_config_check().
+ */
+function commerce_cybersource_fundraiser_donation_form_config_check($node) {
+  $messages = array();
+
+  foreach ($node->gateways as $method => $gateway) {
+    if (!empty($gateway['id'])  && !empty($gateway['status'])) {
+      $gateway_config = _fundraiser_gateway_info($gateway['id']);
+      // Check the credit payment method.
+      if ($gateway_config['gateway_details']['method_id'] == 'cybersource_soap_cc' &&
+        $gateway_config['gateway_details']['settings']['transaction_mode'] != 'production') {
+        $messages[] = t('The Cybersource payment method is currently in test mode and will not process live transactions.');
+      }
+    }
+  }
+
+  return $messages;
+}
+
+
+/**
  * Callback function, use this form for the given gateway.
  */
 function commerce_cybersource_fundraiser_commerce_form($payment_method) {
@@ -179,6 +200,9 @@ function commerce_cybersource_fundraiser_commerce_update($donation, $card_data =
     $card_data->card_exp_month = $cardonfile_fields['card_exp_month'];
     $card_data->card_exp_year = $cardonfile_fields['card_exp_year'];
     $pane_form = array();
+    $order = commerce_order_load($donation->did);
+
+    $pane_values['values']['billto'] = commerce_cybersource_address('billing', $order, 'commerce_customer_billing');
     $response = commerce_cybersource_cardonfile_update($pane_form, $pane_values, $payment_method, $card_data);
     if ($response) {
       commerce_cardonfile_save($card_data);
