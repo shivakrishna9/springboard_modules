@@ -160,7 +160,12 @@ function form_layouts_node_delete($node) {
 function form_layouts_node_view($node, $view_mode, $langcode) {
   if (form_layouts_type_is_layouts_enabled($node->type) && isset($node->form_layouts)) {
     $template = form_layouts_get_node_template($node->nid);
-    if (form_layouts_template_themes_webform($template)) {
+
+    if (!isset($template['template']) || $template['template'] == 'one-column') {
+      // Don't do anything on donation forms for one column.
+      return;
+    }
+    elseif (form_layouts_template_themes_webform($template)) {
       $node->content['webform']['#theme'] = array($template['theme'] . '_' . $node->nid, $template['theme']);
     }
     else {
@@ -178,6 +183,8 @@ function form_layouts_node_view($node, $view_mode, $langcode) {
 function form_layouts_form_layouts_info() {
   $templates = array();
 
+  // One column is a special case and doesn't change anything,
+  // except for the hide title setting.
   $templates['one_column'] = array(
     'name' => t('One column'),
     'types' => array('fundraiser'),
@@ -185,6 +192,7 @@ function form_layouts_form_layouts_info() {
     'pattern' => 'one_column_\'0-9\'+',
     'template' => 'one-column',
     'path' => drupal_get_path('module', 'form_layouts') . '/templates',
+    'hide title' => FALSE,
   );
 
   $templates['two_column_donation'] = array(
@@ -194,6 +202,7 @@ function form_layouts_form_layouts_info() {
     'pattern' => 'two_column_donation_\'0-9\'+',
     'template' => 'two-column-donation',
     'path' => drupal_get_path('module', 'form_layouts') . '/templates',
+    'hide title' => FALSE,
   );
 
   $templates['two_column_webform_form_left'] = array(
@@ -203,6 +212,7 @@ function form_layouts_form_layouts_info() {
     'pattern' => 'two_column_webform_form_left_\'0-9\'+',
     'template' => 'two-column-webform-form-left',
     'path' => drupal_get_path('module', 'form_layouts') . '/templates',
+    'hide title' => TRUE,
   );
 
   $templates['two_column_webform_form_right'] = array(
@@ -212,6 +222,7 @@ function form_layouts_form_layouts_info() {
     'pattern' => 'two_column_webform_form_right_\'0-9\'+',
     'template' => 'two-column-webform-form-right',
     'path' => drupal_get_path('module', 'form_layouts') . '/templates',
+    'hide title' => TRUE,
   );
 
   $templates['one_column_webform_form_top'] = array(
@@ -221,6 +232,7 @@ function form_layouts_form_layouts_info() {
     'pattern' => 'one_column_webform_form_top_\'0-9\'+',
     'template' => 'one-column-webform-form-top',
     'path' => drupal_get_path('module', 'form_layouts') . '/templates',
+    'hide title' => TRUE,
   );
 
   $templates['two_column_petition_form_left'] = array(
@@ -230,6 +242,7 @@ function form_layouts_form_layouts_info() {
     'pattern' => 'two_column_petition_form_left_\'0-9\'+',
     'template' => 'two-column-petition-form-left',
     'path' => drupal_get_path('module', 'form_layouts') . '/templates',
+    'hide title' => TRUE,
   );
 
   $templates['two_column_petition_form_right'] = array(
@@ -239,6 +252,7 @@ function form_layouts_form_layouts_info() {
     'pattern' => 'two_column_petition_form_right_\'0-9\'+',
     'template' => 'two-column-petition-form-right',
     'path' => drupal_get_path('module', 'form_layouts') . '/templates',
+    'hide title' => TRUE,
   );
 
   $templates['one_column_petition_form_top'] = array(
@@ -248,6 +262,7 @@ function form_layouts_form_layouts_info() {
     'pattern' => 'one_column_petition_form_top_\'0-9\'+',
     'template' => 'one-column-petition-form-top',
     'path' => drupal_get_path('module', 'form_layouts') . '/templates',
+    'hide title' => TRUE,
   );
 
   $templates['two_column_hybrid_donation'] = array(
@@ -257,6 +272,7 @@ function form_layouts_form_layouts_info() {
     'pattern' => 'two_column_hybrid_donation_\'0-9\'+',
     'template' => 'two-column-hybrid-donation',
     'path' => drupal_get_path('module', 'form_layouts') . '/templates/',
+    'hide title' => FALSE,
   );
 
   $templates['two_column_left_right'] = array(
@@ -266,6 +282,7 @@ function form_layouts_form_layouts_info() {
     'pattern' => 'two_column_left_right_\'0-9\'+',
     'template' => 'two-column-left-right',
     'path' => drupal_get_path('module', 'form_layouts') . '/templates/',
+    'hide title' => FALSE,
   );
 
   return $templates;
@@ -276,13 +293,30 @@ function form_layouts_form_layouts_info() {
  *
  * @param int $nid
  *   The node id for the template to look up.
+ *
+ * @return bool|array
+ *   The form layout template array, or FALSE.
  */
 function form_layouts_get_node_template($nid) {
   $layout = new FormLayout($nid);
   $theme = $layout->getName();
+
+  return form_layouts_get_node_template_by_name($theme);
+}
+
+/**
+ * Returns the template array given a template name.
+ *
+ * @param string $name
+ *   The name of the template, as returned by FormLayout::getName().
+ *
+ * @return bool|array
+ *   The form layout template array, or FALSE;
+ */
+function form_layouts_get_node_template_by_name($name) {
   $templates = form_layouts_info();
 
-  return $templates[$theme];
+  return isset($templates[$name]) ? $templates[$name] : FALSE;
 }
 
 /**
@@ -472,13 +506,35 @@ function form_layouts_preprocess_page(&$vars) {
   // Global node.
   $node = menu_get_object();
   if ($node && !path_is_admin(current_path())) {
-    // Only if form layouts is enabled.
-    if (form_layouts_type_is_layouts_enabled($node->type)) {
+    // Only if form layouts is enabled and the template wants the title hidden.
+    if (form_layouts_type_is_layouts_enabled($node->type) && form_layouts_should_hide_title($node)) {
       // Unset the page title, we set it in the form layout template.
       $vars['title'] = '';
     }
   }
 
+}
+
+/**
+ * Indicates whether the node should have its title hidden.
+ *
+ * This is so a form layout can decide if it wants to handle the title on its
+ * own. This is set in the hook_form_layouts_info() implementation that
+ * describes the template.
+ *
+ * @param object $node
+ *   The node we want to know about.
+ *
+ * @return bool
+ *   TRUE if we should hide the title for this node.
+ */
+function form_layouts_should_hide_title($node) {
+  $template = array();
+  if (isset($node->form_layouts)) {
+    $template = form_layouts_get_node_template_by_name($node->form_layouts);
+  }
+
+  return isset($template['hide title']) ? $template['hide title'] : FALSE;
 }
 
 /**
@@ -529,6 +585,11 @@ function form_layouts_preprocess_one_column_petition_form_top(&$vars) {
   $vars['element']['title'] = $vars['element']['#node']->title;
 }
 
+/**
+ * Implements hook_css_alter().
+ *
+ * Removes the system.theme.css file.
+ */
 function form_layouts_css_alter(&$css) {
   // Global node.
   $node = menu_get_object();
