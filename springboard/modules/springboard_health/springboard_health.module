@@ -263,7 +263,7 @@ function springboard_health_report_form_submit(&$form, &$form_state) {
   }
 }
 
-function springboard_health_init() {
+function springboard_health_cron() {
   springboard_health_status_check();
 }
 
