@@ -71,9 +71,6 @@ function springboard_health_menu_local_tasks_alter(&$data, $router_item, $root_p
         'title' => t('Springboard Health'),
         'href' => 'admin/reports/springboard-health/report',
         'localized_options' => array(
-          'attributes' => array(
-            'title' => t(' d'),
-          ),
         ),
       ),
     );
@@ -84,9 +81,6 @@ function springboard_health_menu_local_tasks_alter(&$data, $router_item, $root_p
         'title' => t('Table Settings'),
         'href' => 'admin/reports/springboard-health/settings',
         'localized_options' => array(
-          'attributes' => array(
-            'title' => t(''),
-          ),
         ),
       ),
     );
@@ -98,9 +92,6 @@ function springboard_health_menu_local_tasks_alter(&$data, $router_item, $root_p
         'title' => t('Email Settings'),
         'href' => current_path(),
         'localized_options' => array(
-          'attributes' => array(
-            'title' => t('Add new content'),
-          ),
         ),
       ),
     );
