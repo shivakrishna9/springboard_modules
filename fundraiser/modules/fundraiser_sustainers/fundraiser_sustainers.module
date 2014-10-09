@@ -921,13 +921,13 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
     }
   }
 
-  // If no supporting gateways are on this form then do no save changes to the payment field.
+  // If no supporting gateways are on this form then do not save changes to the payment field.
   if (empty($supporting_gateways)) {
     // There are no gateways enabled that support recurring, hide the field.
     $recurs_monthly_field['#access'] = FALSE;
   }
   else {
-    // Save the payment mehtod field.
+    // Save the payment method field.
     $form = fundraiser_update_form_field('fundraiser_sustainers', $form, 'payment_method', $payment_method_field);
 
     // Modify the 'recurs_monthly' field. Set the #states array if there is a recurring-enabled
@@ -966,7 +966,7 @@ function fundraiser_sustainers_recurring_conflict_validate(&$form, &$form_state)
   }
   $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted']);
 
-  // Ensure this form submit is recurring.
+  // Only run through this validation if the form submit is recurring.
   $recurring_donation = FALSE;
   if (
     empty($submission_fields['recurs_monthly'])
@@ -979,8 +979,7 @@ function fundraiser_sustainers_recurring_conflict_validate(&$form, &$form_state)
     return;
   }
 
-  // Find and load the payment method, first from the submitted data, and then
-  // from _fundraiser_gateway_info() to see if it supports recurring.
+  // Load the gateway to see if the payment method supports recurring.
   $payment_method = $submission_fields['payment_method'];
   $gateway = _fundraiser_gateway_info($form['#node']->gateways[$payment_method]['id']);
   $supports_recurring = _fundraiser_sustainers_supports_recurring($gateway['allow_recurring'], $payment_method);
