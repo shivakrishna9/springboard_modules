@@ -17,7 +17,7 @@ function springboard_health_install() {
     'secure_prepopulate_expired' => 'secure_prepopulate_expired',
     'fundraiser_sustainers_log' => 'fundraiser_sustainers_log',
   );
-  variable_set('springboard_health_tables', $default);
+  variable_set('springboard_health_tables_default', $default);
   variable_set('springboard_health_active_database', 'default');
 }
 
@@ -65,4 +65,11 @@ function springboard_health_schema() {
  */
 function springboard_health_uninstall() {
 
+  variable_del('springboard_health_active_database');
+
+  $result = db_query('SELECT name FROM {variable} WHERE name LIKE :name', array(':name' => db_like('springboard_health_tables_') . "%"));
+
+  foreach ($result as $name) {
+    variable_del($name->name);
+  }
 }

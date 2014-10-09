@@ -146,15 +146,15 @@ function springboard_health_admin_settings() {
   );
 
   $tables = Database::getConnection('default', variable_get('springboard_health_active_database', 'default'))->schema()->findTables('%');
-
-  $form['springboard_health_tables'] = array(
+  $db =  variable_get('springboard_health_active_database', 'default');
+  $form['springboard_health_tables_' . $db] = array(
     '#type' => 'select',
     '#title' => t('Select the tables that should be visible in the reports interface.'),
     '#options' => $tables,
     '#multiple' => TRUE,
     '#required' => TRUE,
     '#size' => 50,
-    '#default_value' => variable_get('springboard_health_tables', $default),
+    '#default_value' => variable_get('springboard_health_tables_' . $db, $default),
   );
 
   return system_settings_form($form);
@@ -199,9 +199,9 @@ function theme_springboard_health_table($vars) {
 }
 
 function springboard_health_report_form() {
-  $tables = variable_get('springboard_health_tables', 0);
   $db = variable_get('springboard_health_active_database', 'default');
   db_set_active($db);
+  $tables = variable_get('springboard_health_tables_' . $db , 0);
 
   $form['header'] = array(
     '#markup' => t('Check "send report" to send emails when table count exceeds notification row limit'),
@@ -221,7 +221,7 @@ function springboard_health_report_form() {
     
     $form['health'][$table]['send'] = array (
      '#type' => 'checkbox',
-      '#default_value' => $values[0]->mail,
+      '#default_value' => isset($values[0]->mail) ? $values[0]->mail : 0,
       '#size' => 10
     );
     $form['health'][$table]['name'] = array(
@@ -230,7 +230,7 @@ function springboard_health_report_form() {
     );
       $form['health'][$table]['row_limit'] = array(
         '#type' => 'textfield',
-        '#default_value' => $values[0]->row_limit,
+        '#default_value' => isset($values[0]->mail) ? $values[0]->mail : '',
         '#size' => 30
       );
     $form['health'][$table]['current'] = array(
