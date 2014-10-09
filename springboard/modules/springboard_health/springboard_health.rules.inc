@@ -1,7 +1,7 @@
 <?php
 /**
 * @file
-* Provides rules integration for fundraiser events.
+* Provides rules integration for healthy events.
 */
 /**
 * Implements hook_rules_event_info().

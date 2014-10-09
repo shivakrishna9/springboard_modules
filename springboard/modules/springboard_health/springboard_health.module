@@ -9,7 +9,7 @@
  */
 function springboard_health_permission() {
   return array(
-    'adminsiter site health reports' => array(
+    'administer site health reports' => array(
       'title' => t('Administer site health reports'),
       'description' => t('Springboard self-tracking'),
     ),
@@ -28,7 +28,7 @@ function springboard_health_menu() {
     'description' => t('View reports about your database.'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('springboard_health_report_form'),
-    'access arguments' => array('adminsiter site health reports'),
+    'access arguments' => array('administer site health reports'),
   );
   $items['admin/reports/springboard-health/report'] = array(
     'title' => 'Springboard Health',
@@ -40,7 +40,7 @@ function springboard_health_menu() {
     'description' => 'Configure the springboard health module.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('springboard_health_admin_settings'),
-    'access arguments' => array('adminsiter site health reports'),
+    'access arguments' => array('administer site health reports'),
     'type' => MENU_LOCAL_TASK,
     'weight' => 1,
 
@@ -50,7 +50,7 @@ function springboard_health_menu() {
     'description' => 'Configure the springboard health module.',
     'page callback' => 'drupal_goto',
     'page arguments' => array('admin/config/workflow/rules/reaction/manage/springboard_health_row_count_alert'),
-    'access arguments' => array('adminsiter site health reports'),
+    'access arguments' => array('administer site health reports'),
     'type' => MENU_LOCAL_TASK,
     'context' => MENU_CONTEXT_PAGE,
     'weight' => 2,
@@ -65,7 +65,7 @@ function springboard_health_menu() {
 function springboard_health_menu_local_tasks_alter(&$data, $router_item, $root_path) {
 
   if(strpos($router_item['href'], 'admin/config/workflow/rules/reaction/manage/springboard_health_row_count_alert') !== FALSE ){
-  
+  dpm('d');
     $data['tabs'][0]['output'][] = array(
       '#theme' => 'menu_local_task',
       '#link' => array(
@@ -105,14 +105,14 @@ function springboard_health_menu_local_tasks_alter(&$data, $router_item, $root_p
         ),
       ),
     );
-  }
 
-  // Won't display without count > 1
-  if (!isset($data['tabs']['0']['count'])) {
-    $data['tabs']['0']['count'] =  3;
-  }
-  else {
-    $data['tabs']['0']['count'] = $data['tabs']['0']['count'] + 3;
+    // Won't display without count > 1
+    if (!isset($data['tabs']['0']['count'])) {
+      $data['tabs']['0']['count'] =  3;
+    }
+    else {
+      $data['tabs']['0']['count'] = $data['tabs']['0']['count'] + 3;
+    }
   }
 }
 
@@ -200,7 +200,6 @@ function theme_springboard_health_table($vars) {
 
 function springboard_health_report_form() {
   $db = variable_get('springboard_health_active_database', 'default');
-  db_set_active($db);
   $tables = variable_get('springboard_health_tables_' . $db , 0);
 
   $form['header'] = array(
@@ -215,8 +214,11 @@ function springboard_health_report_form() {
   );
 
   foreach ($tables as $table) {
+    db_set_active($db);
     $select = db_select($table);
     $size = $select->countQuery()->execute()->fetchField();
+    db_set_active();
+
     $values = db_query('SELECT * FROM {springboard_health} where tablename = :name AND db_conn = :db', array(':name' => $table, ':db' => $db))->fetchAll();
     
     $form['health'][$table]['send'] = array (
@@ -287,10 +289,11 @@ function springboard_health_cron() {
 function springboard_health_status_check() {
   $db = variable_get('springboard_health_active_database', 'default');
   $result = db_query('SELECT * FROM {springboard_health} where mail = 1 AND db_conn = :db', array(':db' => $db));
-  db_set_active($db);
   foreach ($result as $table) {
+    db_set_active($db);
     $select = db_select($table->tablename);
     $size = $select->countQuery()->execute()->fetchField();
+    db_set_active();
     if (($size > $table->row_limit) && module_exists("rules")) {
       rules_invoke_event("springboard_health_row_count_exceeded", $table->tablename);
     }
