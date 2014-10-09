@@ -210,7 +210,6 @@ function springboard_health_report_form() {
     db_set_active();
 
     $values = db_query('SELECT * FROM {springboard_health} where tablename = :name AND db_conn = :db', array(':name' => $table, ':db' => $db))->fetchAll();
-    
     $form['health'][$table]['send'] = array (
      '#type' => 'checkbox',
       '#default_value' => isset($values[0]->mail) ? $values[0]->mail : 0,
@@ -222,7 +221,7 @@ function springboard_health_report_form() {
     );
       $form['health'][$table]['row_limit'] = array(
         '#type' => 'textfield',
-        '#default_value' => isset($values[0]->mail) ? $values[0]->mail : '',
+        '#default_value' => isset($values[0]->row_limit) ? $values[0]->row_limit : '',
         '#size' => 30
       );
     $form['health'][$table]['current'] = array(
