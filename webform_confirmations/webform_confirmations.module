@@ -13,16 +13,14 @@
  * Implements hook_cron().
  */
 function webform_confirmations_cron() {
-  watchdog('confirmations_debug', 'cron hook invoked');
   if (variable_get('webform_confirmations_submissions_purge_enabled', FALSE)) {
-    watchdog('confirmations_debug', 'purge enabled');
     $days = variable_get('webform_confirmations_submissions_clear_date', 90);
-    watchdog('confirmations_debug', 'older than days:' . $days);
     $older_than = strtotime('-' . $days . ' days', time());
-    watchdog('confirmations_debug', 'deleting records older than:' . date('m/d/y', $older_than));
     $query = db_delete('webform_confirmations_submissions');
     $query->condition('timestamp', $older_than, '<');
-    $query->execute();
+    $count = $query->execute();
+
+    watchdog('webform_confirmations', '@count webform confirmation permission records that were older than @days have been deleted.', array('@count' => $count, '@days' => $days));
   }
 }
 
@@ -170,7 +168,7 @@ function webform_confirmations_form_webform_email_edit_form_alter(&$form, $form_
       '#weight' => -49,
     );
     $form['#validate'][] = '_webform_confirmations_email_edit_validate';
-  } 
+  }
   if (module_exists('email_wrappers'))  {
     $form['template']['tokens'] = array(
       '#type' => 'fieldset',
@@ -489,7 +487,7 @@ function _webform_confirmation_send_confirmation_mail($settings, $donation) {
        $params = $mail_cache->data['params'];
       _webform_confirmation_send_confirmation_mail_helper($settings, $donation, $node, $eid, $account, $params);
       _webform_confirmation_confirmation_mail_delete_cache($node, $eid, $sid, $success);
-    }      
+    }
   }
 }
 
