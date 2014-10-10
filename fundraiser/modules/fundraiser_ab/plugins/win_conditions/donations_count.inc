@@ -66,5 +66,5 @@ function fundraiser_ab_donations_count_config_summary($config) {
  *   Webform A/B Test node
  */
 function fundraiser_ab_donations_count_check_win($config, $webform_details, $test_node) {
-  return ($webform_details['fundraiser']['donation_count'] >= $config['donations']);
+  return isset($webform_details['fundraiser']) && is_array($webform_details['fundraiser']) && ($webform_details['fundraiser']['donation_count'] >= $config['donations']);
 }

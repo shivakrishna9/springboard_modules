@@ -1473,8 +1473,8 @@ function fundraiser_donation_form(&$form, &$form_state) {
   if ((!_fundraiser_is_secure() && !variable_get('fundraiser_development_mode', 0))) {
     // Return a 404 if the page isn't secure and should be.
     $node = $form['#node'];
-    watchdog('fundraiser', 'The donation form <em>!title</em> is not protected with SSL.',
-      array('!title' => $node->title), WATCHDOG_CRITICAL, l('View the donation form', 'node/' . $node->nid));
+    watchdog('fundraiser', 'The donation form <em>@title</em> is not protected with SSL.',
+      array('@title' => $node->title), WATCHDOG_CRITICAL, l('View the donation form', 'node/' . $node->nid));
     $message = variable_get('fundraiser_http_error_message', t('We\'re sorry, but this ' .
         'donation form is experiencing a temporary problem. Please try again later.'));
     // Remove all other form elements.

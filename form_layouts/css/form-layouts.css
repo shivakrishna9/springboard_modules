@@ -1,0 +1,231 @@
+/**
+* CSS file for form layouts. This is for cases where bootstrap is not in place.
+*/
+
+/* add the box sizing model for betting container padding */
+*, *:before, *:after {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+.form-layout-container .form-col {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+  width: 48.6%;
+  vertical-align: top;
+}
+
+.form-layout-container #left.form-col {
+  padding: 0 1% 0 0;
+}
+
+.form-layout-container form {
+  margin: 0;
+}
+
+.form-layout-container .form-actions {
+  margin: 0;
+  padding: 0;
+  border-top: none;
+  background-color: inherit;
+}
+
+.form-layout-container #right.form-col,
+.form-layout-container #left.form-col,
+.form-layout-container .form-col-row {
+  padding: 20px 2%;
+  border: 1px solid #e7e7e7;
+}
+
+.form-layout-container #right.form-col {
+  margin: 0 0 0 2%;
+}
+
+.form-layout-container .form-col-row {
+  margin: 0 0 20px 0;
+}
+
+.form-layout-container p {
+  margin: 10px 0 0 0;
+  line-height: 1.7em;
+}
+
+.field.field-name-body {
+  margin: 0 0 20px 0;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 12px 0;
+  color: #5e5e5e;
+  font-size: 24px;
+  line-height: 26px;
+}
+
+.addthis_toolbox {
+  display: inline-block;
+  vertical-align: top;
+}
+
+.at16nc {
+  margin-bottom: 10px;
+  height: 40px;
+}
+
+.at16nc.at16t_facebook {
+  width: 141px;
+  background-image: url("../images/sprite.png");
+  background-position: 0 0px;
+  background-repeat: no-repeat;
+}
+
+.at16nc.at16t_twitter {
+  width: 120px;
+  background-image: url("../images/sprite.png");
+  background-position: 0 -49px;
+  background-repeat: no-repeat;
+}
+
+.at16nc.at16t_email {
+  width: 114px;
+  background-image: url("../images/sprite.png");
+  background-position: 0 -98px;
+  background-repeat: no-repeat;
+}
+
+/* Some basic default form styling */
+
+label {
+  color: #5e5e5e;
+  font-weight: bold;
+}
+
+input[type=radio],
+input[type=checkbox] {
+  margin: 3px 7px 0 0;
+}
+
+input[type=email],
+input[type=text] {
+  width: 96%;
+  height: 40px;
+  -webkit-border-radius: 0;
+  -moz-border-radius: 0;
+  border-radius: 0;
+}
+
+textarea {
+  width: 96%;
+  -webkit-border-radius: 0;
+  -moz-border-radius: 0;
+  border-radius: 0;
+}
+
+input[type=submit],
+input[type=submit].btn {
+  position: relative;
+  display: block;
+  margin-top: 10px;
+  padding: 10px 40px;
+  border: none;
+  -webkit-border-radius: 0;
+  -moz-border-radius: 0;
+  border-radius: 0;
+  background: #859596;
+  box-shadow: none;
+  color: #fff;
+  vertical-align: top;
+  text-align: center;
+  text-shadow: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+input[type=submit]:hover,
+input[type=submit].btn:hover {
+  background: #0285b0;
+}
+
+/* global table style */
+
+table {
+  width: 100%;
+}
+
+table tbody tr {
+  border: 1px solid #ccc;
+}
+
+table th {
+  padding: 4px 0 3px 6px;
+  border-bottom: none;
+  text-align: left;
+}
+
+table tr.even {
+  background-color: #f5f5f5;
+}
+
+table tr.odd {
+  background-color: #fcfcfc;
+}
+
+table td {
+  padding: 4px 4px 4px 8px;
+}
+
+/* pagers */
+
+.pager {
+  margin: 10px 0;
+}
+
+.pager li {
+  display: inline;
+  margin: 0 4px;
+}
+
+.pager li > a,
+.pager li > span {
+  display: inline-block;
+  padding: 5px 14px;
+  border: 1px solid #ddd;
+  -webkit-border-radius: 0;
+  -moz-border-radius: 0;
+  border-radius: 0;
+  background-color: #fff;
+}
+
+#webform-form.form-wrapper {
+  margin-bottom: 20px;
+  border-bottom: 1px dashed #888;
+}
+
+.form-wrapper-inner {
+  margin: 0 0 20px 0;
+  padding: 10px 3% 20px 4%;
+  background: #eaeaea;
+}
+
+.quicksign-description {
+  margin-bottom: 12px;
+}
+
+@media (max-width: 940px) {
+
+  .form-layout-container .form-col {
+    width: 100%;
+  }
+
+  .form-layout-container #left.form-col {
+    margin: 0 0 20px 0;
+  }
+
+  .form-layout-container #right.form-col {
+    margin: 0;
+  }
+
+}
