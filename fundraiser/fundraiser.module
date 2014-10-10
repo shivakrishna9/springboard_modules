@@ -3157,13 +3157,17 @@ function _fundraiser_gateway_switch_action_submit($form, $form_state) {
   );
 }
 /**
- * Implements hook_cron
+ * Implements hook_cron.
+ * Needed for gateway test mode status check.
  */
-function fundraiser_cron() {
+function fundraiser_init() {
   fundraiser_gateway_status_check();
 }
 
-
+/**
+ * Test to see if a published donation form's gateway is non-live
+ * Send alert ot admin if so.
+ */
 function fundraiser_gateway_status_check() {
   $bad_gateways = array();
   $gateways = _fundraiser_gateway_info();
@@ -3172,42 +3176,32 @@ function fundraiser_gateway_status_check() {
   $fundraisers = db_query('SELECT f.nid, f.gateways, n.status FROM {fundraiser} f INNER JOIN {node} n on n.nid = f.nid');
 
   foreach ($fundraisers as $fundraiser) {
-    $node = array();
-    $node['nid'] = $fundraiser->nid;
-    $node['node_status'] = $fundraiser->status;
-    $node['gateways'] = unserialize($fundraiser->gateways);
-
-    foreach($node['gateways'] as $type => $gateway) {
+    $fundraiser->gateways = unserialize($fundraiser->gateways);
+    foreach($fundraiser->gateways as $type => $gateway) {
       $global_status = '';
       if (!empty($gateway['id']) && $gateway['status'] == 1) { 
         //grab the rules_config settings
-        $node['gateways'][$type]['gateway_details'] = isset($gateways[$gateway['id']]['gateway_details']) ? $gateways[$gateway['id']]['gateway_details'] : FALSE;
+        $fundraiser->gateways[$type]['gateway_details'] = isset($gateways[$gateway['id']]['gateway_details']) ? $gateways[$gateway['id']]['gateway_details'] : FALSE;
         //detect disabled or unconfigured gateways
-        if ($node['gateways'][$type]['gateway_details'] === FALSE) {
+        if ($fundraiser->gateways[$type]['gateway_details'] === FALSE) {
           $global_status = 'disabled';
         }
-        else if (empty($node['gateways'][$type]['gateway_details']['settings'])) {
+        else if (empty($fundraiser->gateways[$type]['gateway_details']['settings'])) {
           $global_status = 'unconfigured';
         }
-
+        
         if ($global_status == '') {
-          //record the status of enabled and configured gateways
-          switch($node['gateways'][$type]['gateway_details']['method_id']) {
-            case 'paypal_wpp':
-            case 'paypal_wps':
-              $global_status = $node['gateways'][$type]['gateway_details']['settings']['server'];
-            break;
-            case 'commerce_litle_cc':
-            case 'commerce_litle_echeck':
-              $global_status = isset($node['gateways'][$type]['gateway_details']['settings']['commerce_litle_settings_sandbox']) ? 'test' : 'live';
-              break;
-            default:
-              $global_status = $node['gateways'][$type]['gateway_details']['settings']['txn_mode'];
+          $messages = module_invoke_all("fundraiser_donation_form_config_check", $fundraiser);
+          if (empty($messages)) {
+            $global_status = 'live';
+          }
+          else {
+            $global_status = 'other';
           }
         }
-        if ($node['node_status'] == 1 &&   $global_status != 'live') {
+        if ($fundraiser->status == 1 &&   $global_status != 'live') {
           $bad_gateways[$gateway['id']]['status'] = $global_status;
-          $bad_gateways[$gateway['id']]['nids'][] = $node['nid'];
+          $bad_gateways[$gateway['id']]['nids'][] = $fundraiser->nid;
           $bad_gateways[$gateway['id']]['type'] = $type;
         }
       }
