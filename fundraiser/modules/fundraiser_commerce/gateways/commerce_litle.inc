@@ -54,6 +54,28 @@ function commerce_litle_fundraiser_donation_form_config_check($node) {
   return $messages;
 }
 
+
+function commerce_litle_fundraiser_gateway_status_cron_check($details) {
+  // Check the credit payment method.
+  if ($details['method_id'] == 'commerce_litle_cc') {
+    if ($details['settings']['commerce_litle_settings_sandbox']) {
+      return 'sandbox';
+    }
+    else {
+      return 'live';
+    }
+  }
+  // Check the echeck payment method.
+  if ($details['method_id'] == 'commerce_litle_echeck') {
+    if ($details['settings']['commerce_litle_settings_sandbox']) {
+      return 'sandbox';
+    }
+    else {
+      return 'live';
+    }
+  }
+}
+
 /**
  * Returns the form fields for this method.
  */
