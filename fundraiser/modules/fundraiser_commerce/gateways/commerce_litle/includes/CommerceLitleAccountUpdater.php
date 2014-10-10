@@ -92,7 +92,7 @@ class CommerceLitleAccountUpdater {
       $old_exp_date = $this->convertExpDateString($data['originalCardTokenInfo']['expDate']);
       $card = $this->findMatchingCardonfile($data['originalCardTokenInfo']['litleToken'], $old_exp_date, $order->uid);
 
-      if (is_null($card)) {
+      if (!$card) {
         // No card with a matching remote id or exp date or uid.
         // Do nothing even though we have new data.
         return FALSE;
