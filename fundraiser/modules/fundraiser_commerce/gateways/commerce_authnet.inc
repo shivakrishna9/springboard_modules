@@ -42,6 +42,18 @@ function commerce_authnet_fundraiser_donation_form_config_check($node) {
   }
 }
 
+function commerce_authnet_fundraiser_gateway_status_cron_check($details) {
+  if ($details['method_id'] == 'authnet_aim') { 
+    if ($details['settings']['txn_mode'] != AUTHNET_TXN_MODE_LIVE) {
+      return $details['settings']['txn_mode'];
+    }
+    else {
+      return 'live';
+    }
+  } 
+}
+
+
 /**
  * Callback function, use this form for the given gateway.
  */
