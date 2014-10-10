@@ -18,7 +18,6 @@ function springboard_health_install() {
     'fundraiser_sustainers_log' => 'fundraiser_sustainers_log',
   );
   variable_set('springboard_health_tables_default', $default);
-  variable_set('springboard_health_active_database', 'default');
 }
 
 /**
@@ -32,12 +31,6 @@ function springboard_health_schema() {
         'description' => 'The table to monitor.',
         'type' => 'varchar',
         'length' => '100',
-        'not null' => FALSE,
-      ),
-      'db_conn' => array(
-        'description' => 'the database connection',
-        'type' => 'varchar',
-        'length' => '255',
         'not null' => FALSE,
       ),
       'mail' => array(

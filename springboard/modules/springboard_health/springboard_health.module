@@ -122,44 +122,18 @@ function springboard_health_admin_settings() {
     'fundraiser_sustainers_log' => 'fundraiser_sustainers_log',
   );
 
-  $keys = springboard_health_database_keys();
-  $form['active'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Select database'),
-  );
-
-  $form['active']['springboard_health_active_database'] = array(
-    '#type' => 'select',
-    '#options' => $keys,
-    '#default_value' => variable_get('springboard_health_active_database', 'default'),
-    '#description' => t('Select which database you would like to monitor. Changing this value will reset the table list below.'),
-  );
-
-  $tables = Database::getConnection('default', variable_get('springboard_health_active_database', 'default'))->schema()->findTables('%');
-  $db =  variable_get('springboard_health_active_database', 'default');
-  $form['springboard_health_tables_' . $db] = array(
+  $tables = Database::getConnection()->schema()->findTables('%');
+  $form['springboard_health_tables'] = array(
     '#type' => 'select',
     '#title' => t('Select the tables that should be visible in the reports interface.'),
     '#options' => $tables,
     '#multiple' => TRUE,
     '#required' => TRUE,
     '#size' => 50,
-    '#default_value' => variable_get('springboard_health_tables_' . $db, $default),
+    '#default_value' => variable_get('springboard_health_tables', $default),
   );
 
   return system_settings_form($form);
-}
-
-/**
- * List all defined database keys.
- */
-function springboard_health_database_keys() {
-  global $databases;
-  $keys = array();
-  foreach ($databases as $key => $database) {
-    $keys[$key] = $key;
-  }
-  return $keys;
 }
 
 /**
@@ -189,8 +163,7 @@ function theme_springboard_health_table($vars) {
 }
 
 function springboard_health_report_form() {
-  $db = variable_get('springboard_health_active_database', 'default');
-  $tables = variable_get('springboard_health_tables_' . $db , 0);
+  $tables = variable_get('springboard_health_tables', 0);
 
   $form['header'] = array(
     '#markup' => t('Check "send report" to send emails when table count exceeds notification row limit'),
@@ -204,12 +177,10 @@ function springboard_health_report_form() {
   );
 
   foreach ($tables as $table) {
-    db_set_active($db);
     $select = db_select($table);
     $size = $select->countQuery()->execute()->fetchField();
-    db_set_active();
 
-    $values = db_query('SELECT * FROM {springboard_health} where tablename = :name AND db_conn = :db', array(':name' => $table, ':db' => $db))->fetchAll();
+    $values = db_query('SELECT * FROM {springboard_health} where tablename = :name', array(':name' => $table))->fetchAll();
     $form['health'][$table]['send'] = array (
      '#type' => 'checkbox',
       '#default_value' => isset($values[0]->mail) ? $values[0]->mail : 0,
@@ -230,10 +201,7 @@ function springboard_health_report_form() {
       '#size' => 10
     );
   }
-  $form['db'] = array(
-    '#type' => 'hidden',
-    '#value' => $db,
-  );
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Submit'),
@@ -242,26 +210,15 @@ function springboard_health_report_form() {
 }
 
 function springboard_health_report_form_submit(&$form, &$form_state) {
-
-  $db = $form_state['values']['db'];
+  db_delete('springboard_health')->execute();
   $tables = $form_state['values']['health'];
   foreach ($tables as $name => $values) {
     $data = array(
       'tablename' => $name,
-      'db_conn' => $db,
       'mail' => $values['send'],
       'row_limit' => $values['row_limit'],
     );
-
-    $exists = db_query('SELECT * FROM {springboard_health} where tablename = :name AND db_conn = :db', array(':name' => $name, ':db' => $db))->fetchField();
-  
-    if($exists) {
-      drupal_write_record('springboard_health', $data, array('tablename', 'db_conn'));
-    }
-    else {
-      drupal_write_record('springboard_health', $data);
-    }
-
+    drupal_write_record('springboard_health', $data);
   }
 }
 
@@ -276,13 +233,10 @@ function springboard_health_cron() {
  * Checks status and invokes rules event if db limit is exceeded.
  */
 function springboard_health_status_check() {
-  $db = variable_get('springboard_health_active_database', 'default');
-  $result = db_query('SELECT * FROM {springboard_health} where mail = 1 AND db_conn = :db', array(':db' => $db));
+  $result = db_query('SELECT * FROM {springboard_health} where mail = 1');
   foreach ($result as $table) {
-    db_set_active($db);
     $select = db_select($table->tablename);
     $size = $select->countQuery()->execute()->fetchField();
-    db_set_active();
     if (($size > $table->row_limit) && module_exists("rules")) {
       rules_invoke_event("springboard_health_row_count_exceeded", $table->tablename);
     }
