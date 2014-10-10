@@ -15,11 +15,13 @@
           <?php print render($element['webform']); ?>
         </div>
       </div>
+      <?php if (isset($element['springboard_petition_quicksign'])): ?>
       <div id="petition-quick-sign" class="form-wrapper">
         <div class="form-wrapper-inner">
           <?php print render($element['springboard_petition_quicksign']); ?>
         </div>
       </div>
+      <?php endif; ?>
     </div>
 
     <div id="right" class="form-col">
