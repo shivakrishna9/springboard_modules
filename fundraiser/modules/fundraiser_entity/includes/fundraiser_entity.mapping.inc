@@ -4,27 +4,31 @@
  * Menu callback form, provides a user interface to set up donation entity fields to data source mappings.
  */
 function fundraiser_entity_default_mapping_form($form, &$form_state) {
+  // Warn an admin if the webform tokens module is not enabled.
+  if (!module_exists('webform_tokens')) {
+    drupal_set_message('The Webform Tokens module is not enabled. Tokens for webform values will not be replaced.', 'warning');
+  }
+
   $form['info'] = array(
-    '#value' => t('This form allows you to map the submitted form values to Donation entity fields. ' .
-      'When the webform form is submitted, a donation entity will be created with the values from the form.'),
-    '#weight' => 0,
+    '#markup' => t('This form allows you to map values to the Donation Entity fields.'),
+    '#weight' => -100,
   );
 
-  // Select when the values should be mapped to the entity
+  // Select when the values should be mapped to the entity.
   $form['fundraiser_entity_map_point'] = array(
     '#type' => 'checkboxes',
-    '#title' => t('Select when the donation values should be mapped to the entity.'),
+    '#title' => t('Select when the donation entity should be created and the values mapped to the entity.'),
     '#options' => array(
-      'create' => t('Create'),
-      'update' => t('Update'),
-      'success' => t('On successful donation'),
+      'create' => t('Donation create'),
+      'update' => t('Donation update'),
+      'success' => t('On a successful donation'),
       'sustainer_series_cron' => t('Sustainer Series on Cron'),
-      'decline' => t('Decline'),
+      'decline' => t('Donation decline'),
     ),
     '#default_value' => variable_get('fundraiser_entity_map_point', array()),
   );
 
-  // Select when the values should be mapped to the entity
+  // Container for component options.
   $form['webform_components'] = array(
     '#type' => 'fieldset',
     '#title' => t('Webform Component Options.'),
@@ -32,11 +36,11 @@ function fundraiser_entity_default_mapping_form($form, &$form_state) {
     '#collapsed' => TRUE,
   );
 
-  // Select when the values should be mapped to the entity
+  // Select which fields should NOT automatically create fields.
   $form['webform_components']['fundraiser_entity_webform_autocreate_ignore'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Select the webform fields that should not automatically create fields on the donation entity.'),
-    '#description' => t("If you've mapped a webform field to non-matching entity field name, you may need to prevent it from auto creating a new field"),
+    '#description' => t("Select fields to prevent the system from creating a field on the donation entity when this component is added to a webform."),
     '#options' => _fundraiser_entity_load_all_webform_components(),
     '#default_value' => variable_get('fundraiser_entity_webform_autocreate_ignore', array()),
   );
@@ -412,6 +416,14 @@ function _fundraiser_entity_default_webform_map_array() {
     'field_fde_email' => array(
       'source' => 'user--mail',
       'other' => '',
+    ),
+    'field_fde_ms' => array(
+      'source' => 'other',
+      'other' => '[webform-tokens:val-ms]',
+    ),
+    'field_fde_cid' => array(
+      'source' => 'other',
+      'other' => '[webform-tokens:val-cid]',
     ),
     'field_fde_referrer' => array(
       'source' => 'other',

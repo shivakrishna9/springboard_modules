@@ -918,15 +918,16 @@ function _fundraiser_entity_get_field_value($entity_wrapper, $field_name) {
     list($field_name, $sub_key) = explode(':', $field_name);
   }
 
-  $field = NULL;
-
-  // Get the target field, and sub_key if it exists.
+  // Get the target field, or sub_key if it exists.
   if (!$sub_key && $entity_wrapper->__isset($field_name)) {
     $field = $entity_wrapper->$field_name;
   }
-  // If for some reason the subkey is not on the field do nothing.
   elseif ($sub_key && $entity_wrapper->$field_name->__isset($sub_key)) {
     $field = $entity_wrapper->$field_name->$sub_key;
+  }
+  // Field was not found on the entity return NULL.
+  else {
+    return NULL;
   }
 
   return $field->raw();
@@ -951,21 +952,36 @@ function _fundraiser_entity_set_field_value($entity_wrapper, $field_name, $value
 
   $field = NULL;
 
-  // Get the target field, and sub_key if it exists.
+  // Get the target field, or sub_key if it exists.
   if (!$sub_key && $entity_wrapper->__isset($field_name)) {
     $field = $entity_wrapper->$field_name;
   }
-  // If for some reason the subkey is not on the field do nothing.
   elseif ($sub_key && $entity_wrapper->$field_name->__isset($sub_key)) {
     $field = $entity_wrapper->$field_name->$sub_key;
   }
-
-  // Need to check if the field has multi values before adding to array.
-  if (strpos($field->type(), 'list') === 0) {
-    $field[0]->set($value);
-  }
+  // Field not found on the entity do nothing.
   else {
-    $field->set($value);
+    return;
+  }
+
+  // Exception handling for added protection during a donation submit,
+  try {
+    // Need to check if the field has multiple values before adding to array.
+    if (strpos($field->type(), 'list') === 0) {
+      $field[0]->set($value);
+    }
+    else {
+      $field->set($value);
+    }
+  }
+  catch(Exception $e) {
+    // Let the admin know a value is not saving correctly.
+    watchdog(
+      'fundraiser_entity',
+      'The value for @field_name could not be saved, error was %error.',
+      array('@field_name' => $field_name, '%error' => $e->getMessage()),
+      WATCHDOG_ERROR
+    );
   }
 }
 
