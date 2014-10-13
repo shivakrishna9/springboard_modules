@@ -47,7 +47,7 @@ function springboard_health_schema() {
         'not null' => FALSE,
       ),
     ),
-    'primary key' => array('tablename', 'db_conn'),
+    'primary key' => array('tablename'),
   );
  return $schema;
 }
