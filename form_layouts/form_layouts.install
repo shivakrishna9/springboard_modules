@@ -93,6 +93,9 @@ function form_layouts_update_7001() {
   $default = variable_get('fundraiser_form_layouts_default', 'one_column');
   variable_set('form_layouts_default', $default);
   variable_del('fundraiser_form_layouts_default');
+
+  // Rebuild the registry to account for the new FormLayout class.
+  registry_rebuild();
 }
 
 

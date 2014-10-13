@@ -1767,7 +1767,9 @@ function commerce_cybersource_update_customer_profile_request($payment_method, $
     'expirationMonth' => $pane_values['credit_card']['exp_month'],
     'expirationYear' => $pane_values['credit_card']['exp_year'],
   );
-
+    if (isset($pane_values['billto'])) {
+      $request->billTo = $pane_values['billto'];
+    }
   // Determine the credit card type if possible for use in later code.
     if (!empty($pane_values['credit_card']['number']) && empty($pane_values['credit_card']['type'])) {
       module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
