@@ -17,7 +17,7 @@ function springboard_health_install() {
     'secure_prepopulate_expired' => 'secure_prepopulate_expired',
     'fundraiser_sustainers_log' => 'fundraiser_sustainers_log',
   );
-  variable_set('springboard_health_tables_default', $default);
+  variable_set('springboard_health_tables', $default);
 }
 
 /**
