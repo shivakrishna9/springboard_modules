@@ -304,6 +304,7 @@ function springboard_petition_webform_user_profile_fields_alter(&$fields, $node)
       'options' => array(0, 1),
       'category_key' => NULL,
       'category_name' => NULL,
+      'extra' => array('title_display' => 'none'),
     );
   }
 }
