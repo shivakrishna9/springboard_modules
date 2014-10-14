@@ -263,11 +263,14 @@ class CommerceLitleAccountUpdater {
    *   The fields to merge into $donation->donation so they will get saved.
    */
   protected function updateBillingInfo($master_donation, array $submission_fields) {
-    $name = 'Litle Account Updater';
     $donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_donation->did);
 
+    if (empty($donations)) {
+      return;
+    }
+
     // Update billing info in the currently existing donations.
-    fundraiser_sustainers_update_billing_info_in_series($donations, $submission_fields, $name);
+    $this->updatePaymentFieldsOnExistingDonations($donations, $submission_fields);
 
     // Use the first future donation for a template of new future donations.
     // By this point it has the new billing info.
@@ -277,6 +280,41 @@ class CommerceLitleAccountUpdater {
     // Create new donations if needed.
     fundraiser_sustainers_update_billing_info_create_new_donations($master_donation, $source_donation, $submission_fields);
 
+  }
+
+  /**
+   * Changes the payment_fields data on the set of donations.
+   *
+   * @param array $donations
+   *   The donations to update.
+   * @param array $submission_fields
+   *   The submission fields with the new payment_fields data.
+   */
+  protected function updatePaymentFieldsOnExistingDonations(array $donations, array $submission_fields) {
+    $name = 'Litle Account Updater';
+    foreach ($donations as $donation) {
+      $donation = fundraiser_donation_get_donation($donation->did);
+      $donation->donation = array_merge($donation->donation, $submission_fields);
+      // Save each donation.
+      fundraiser_donation_update($donation);
+
+      // Add a comment.
+      $comment = 'The card to be charged was changed on @date by @name.';
+      $replacements = array(
+        '@date' => format_date(strtotime('now')),
+        '@name' => $name,
+      );
+
+      fundraiser_donation_comment($donation, $comment, $replacements);
+      watchdog('fundraiser_sustainers', 'Billing information updated for #@did.',
+        array('@did' => $donation->did));
+
+      // Update salesforce.
+      if (module_exists('salesforce_genmap')) {
+        salesforce_genmap_send_object_to_queue('salesforce_donation', 'update',
+          $donation->node, $donation->did, $donation, 'donation');
+      }
+    }
   }
 
   /**
