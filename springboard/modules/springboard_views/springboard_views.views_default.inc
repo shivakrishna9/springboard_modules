@@ -1563,7 +1563,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['style_options']['columns'] = array(
     'order_id' => 'order_id',
     'created' => 'created',
-    'amount' => 'amount',
+    'commerce_order_total' => 'commerce_order_total',
     'sbp_first_name' => 'sbp_first_name',
     'sbp_last_name' => 'sbp_first_name',
     'mail' => 'mail',
@@ -1573,6 +1573,7 @@ function springboard_views_views_default_views() {
     'view_order' => 'view_order',
     'transaction_id' => 'transaction_id',
     'nothing' => 'view_order',
+    'nid' => 'nid',
   );
   $handler->display->display_options['style_options']['default'] = '-1';
   $handler->display->display_options['style_options']['info'] = array(
@@ -1590,7 +1591,7 @@ function springboard_views_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
-    'amount' => array(
+    'commerce_order_total' => array(
       'sortable' => 1,
       'default_sort_order' => 'asc',
       'align' => '',
@@ -1656,6 +1657,13 @@ function springboard_views_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
+    'nid' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
   );
   /* Relationship: Fundraiser donations: Donating user */
   $handler->display->display_options['relationships']['uid']['id'] = 'uid';
@@ -1679,7 +1687,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['relationships']['payment_transaction']['table'] = 'commerce_order';
   $handler->display->display_options['relationships']['payment_transaction']['field'] = 'payment_transaction';
   $handler->display->display_options['relationships']['payment_transaction']['relationship'] = 'did';
-  /* Relationship: Fundraiser donations: Donation submission */
+  /* Relationship: Fundraiser donations: Webform Submission */
   $handler->display->display_options['relationships']['sid_2']['id'] = 'sid_2';
   $handler->display->display_options['relationships']['sid_2']['table'] = 'fundraiser_donation';
   $handler->display->display_options['relationships']['sid_2']['field'] = 'sid';
@@ -1744,7 +1752,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['view_order']['relationship'] = 'did';
   $handler->display->display_options['fields']['view_order']['label'] = 'Actions';
   $handler->display->display_options['fields']['view_order']['text'] = 'View order';
-  /* Field: Array: View link */
+  /* Field: Webform submissions: View link */
   $handler->display->display_options['fields']['view_submission']['id'] = 'view_submission';
   $handler->display->display_options['fields']['view_submission']['table'] = 'webform_submissions';
   $handler->display->display_options['fields']['view_submission']['field'] = 'view_submission';
@@ -1802,6 +1810,7 @@ function springboard_views_views_default_views() {
     ),
   );
   $handler->display->display_options['filters']['combine']['fields'] = array(
+    'order_id' => 'order_id',
     'sbp_first_name' => 'sbp_first_name',
     'sbp_last_name' => 'sbp_last_name',
     'mail' => 'mail',
@@ -1813,12 +1822,13 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['filters']['status']['field'] = 'status';
   $handler->display->display_options['filters']['status']['relationship'] = 'did';
   $handler->display->display_options['filters']['status']['value'] = array(
-    'failed' => 'failed',
     'failed_refund' => 'failed_refund',
+    'failed' => 'failed',
     'canceled' => 'canceled',
     'pending_future_payment' => 'pending_future_payment',
-    'payment_received' => 'payment_received',
+    'refunded' => 'refunded',
     'partially_refunded' => 'partially_refunded',
+    'payment_received' => 'payment_received',
   );
   $handler->display->display_options['filters']['status']['group'] = 1;
   $handler->display->display_options['filters']['status']['exposed'] = TRUE;
@@ -1878,11 +1888,16 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['created']['label'] = 'Date';
   $handler->display->display_options['fields']['created']['date_format'] = 'custom';
   $handler->display->display_options['fields']['created']['custom_date_format'] = 'n/j/Y';
-  /* Field: Commerce Payment Transaction: Amount */
-  $handler->display->display_options['fields']['amount']['id'] = 'amount';
-  $handler->display->display_options['fields']['amount']['table'] = 'commerce_payment_transaction';
-  $handler->display->display_options['fields']['amount']['field'] = 'amount';
-  $handler->display->display_options['fields']['amount']['relationship'] = 'payment_transaction';
+  /* Field: Commerce Order: Order total */
+  $handler->display->display_options['fields']['commerce_order_total']['id'] = 'commerce_order_total';
+  $handler->display->display_options['fields']['commerce_order_total']['table'] = 'field_data_commerce_order_total';
+  $handler->display->display_options['fields']['commerce_order_total']['field'] = 'commerce_order_total';
+  $handler->display->display_options['fields']['commerce_order_total']['relationship'] = 'did';
+  $handler->display->display_options['fields']['commerce_order_total']['label'] = 'Amount';
+  $handler->display->display_options['fields']['commerce_order_total']['click_sort_column'] = 'amount';
+  $handler->display->display_options['fields']['commerce_order_total']['settings'] = array(
+    'calculation' => FALSE,
+  );
   /* Field: User: First name */
   $handler->display->display_options['fields']['sbp_first_name']['id'] = 'sbp_first_name';
   $handler->display->display_options['fields']['sbp_first_name']['table'] = 'field_data_sbp_first_name';
@@ -1983,11 +1998,16 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['created']['label'] = 'Date';
   $handler->display->display_options['fields']['created']['date_format'] = 'custom';
   $handler->display->display_options['fields']['created']['custom_date_format'] = 'n/j/Y';
-  /* Field: Commerce Payment Transaction: Amount */
-  $handler->display->display_options['fields']['amount']['id'] = 'amount';
-  $handler->display->display_options['fields']['amount']['table'] = 'commerce_payment_transaction';
-  $handler->display->display_options['fields']['amount']['field'] = 'amount';
-  $handler->display->display_options['fields']['amount']['relationship'] = 'payment_transaction';
+  /* Field: Commerce Order: Order total */
+  $handler->display->display_options['fields']['commerce_order_total']['id'] = 'commerce_order_total';
+  $handler->display->display_options['fields']['commerce_order_total']['table'] = 'field_data_commerce_order_total';
+  $handler->display->display_options['fields']['commerce_order_total']['field'] = 'commerce_order_total';
+  $handler->display->display_options['fields']['commerce_order_total']['relationship'] = 'did';
+  $handler->display->display_options['fields']['commerce_order_total']['label'] = 'Amount';
+  $handler->display->display_options['fields']['commerce_order_total']['click_sort_column'] = 'amount';
+  $handler->display->display_options['fields']['commerce_order_total']['settings'] = array(
+    'calculation' => FALSE,
+  );
   /* Field: User: First name */
   $handler->display->display_options['fields']['sbp_first_name']['id'] = 'sbp_first_name';
   $handler->display->display_options['fields']['sbp_first_name']['table'] = 'field_data_sbp_first_name';
@@ -2097,6 +2117,17 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['amount']['table'] = 'commerce_payment_transaction';
   $handler->display->display_options['fields']['amount']['field'] = 'amount';
   $handler->display->display_options['fields']['amount']['relationship'] = 'payment_transaction';
+  $handler->display->display_options['fields']['amount']['exclude'] = TRUE;
+  /* Field: Commerce Order: Order total */
+  $handler->display->display_options['fields']['commerce_order_total']['id'] = 'commerce_order_total';
+  $handler->display->display_options['fields']['commerce_order_total']['table'] = 'field_data_commerce_order_total';
+  $handler->display->display_options['fields']['commerce_order_total']['field'] = 'commerce_order_total';
+  $handler->display->display_options['fields']['commerce_order_total']['relationship'] = 'did';
+  $handler->display->display_options['fields']['commerce_order_total']['label'] = 'Amount';
+  $handler->display->display_options['fields']['commerce_order_total']['click_sort_column'] = 'amount';
+  $handler->display->display_options['fields']['commerce_order_total']['settings'] = array(
+    'calculation' => FALSE,
+  );
   /* Field: User: First name */
   $handler->display->display_options['fields']['sbp_first_name']['id'] = 'sbp_first_name';
   $handler->display->display_options['fields']['sbp_first_name']['table'] = 'field_data_sbp_first_name';
