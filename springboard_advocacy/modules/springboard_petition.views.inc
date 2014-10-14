@@ -125,11 +125,6 @@ function springboard_petition_views_default_views() {
   $handler->display->display_options['relationships']['uid']['id'] = 'uid';
   $handler->display->display_options['relationships']['uid']['table'] = 'webform_submissions';
   $handler->display->display_options['relationships']['uid']['field'] = 'uid';
-  /* Relationship: Springboard Petitions: Signature opt-in user */
-  $handler->display->display_options['relationships']['uid_1']['id'] = 'uid_1';
-  $handler->display->display_options['relationships']['uid_1']['table'] = 'springboard_petition_opt_in';
-  $handler->display->display_options['relationships']['uid_1']['field'] = 'uid';
-  $handler->display->display_options['relationships']['uid_1']['relationship'] = 'nid';
   /* Field: User: First name */
   $handler->display->display_options['fields']['sbp_first_name']['id'] = 'sbp_first_name';
   $handler->display->display_options['fields']['sbp_first_name']['table'] = 'field_data_sbp_first_name';
@@ -199,9 +194,4 @@ function springboard_petition_views_default_views() {
   $handler->display->display_options['fields']['submitted']['label'] = '';
   $handler->display->display_options['fields']['submitted']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['submitted']['date_format'] = 'time ago';
-
-  $views[$view->name] = $view;
- 
-  // return views
-  return $views;
 }
