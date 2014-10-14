@@ -64,18 +64,18 @@ function springboard_petition_views_data() {
 function springboard_petition_views_default_views() {
 
   $view = new view();
-  $view->name = 'recent_petiton_signers';
+  $view->name = 'recent_petition_signers';
   $view->description = '';
   $view->tag = 'default';
   $view->base_table = 'webform_submissions';
-  $view->human_name = 'Recent petiton signers';
+  $view->human_name = 'Recent petition signatures';
   $view->core = 7;
   $view->api_version = '3.0';
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
 
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');
-  $handler->display->display_options['title'] = 'Recent petiton signers';
+  $handler->display->display_options['title'] = 'Recent petition signatures';
   $handler->display->display_options['css_class'] = 'view-petition-signers';
   $handler->display->display_options['use_ajax'] = TRUE;
   $handler->display->display_options['use_more_always'] = FALSE;
