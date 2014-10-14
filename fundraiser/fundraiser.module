@@ -3161,7 +3161,12 @@ function _fundraiser_gateway_switch_action_submit($form, $form_state) {
  * Needed for gateway test mode status check.
  */
 function fundraiser_cron() {
-  fundraiser_gateway_status_check();
+  if (module_exists("rules")) {
+    $rule = rules_config_load('rules_gateway_test_mode_alert');
+    if (!empty($rule->active) && in_array('fundraiser_gateway_test_mode_detected', $rule->events())) {
+      fundraiser_gateway_status_check();
+    }
+  }
 }
 
 /**
