@@ -376,7 +376,7 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
   $form['body']['#after_build'][] = '_filter_tips_p2p_campaign_intro';
 
   if (springboard_p2p_form_is_node_create($form)) {
-    $campaign = isset($_GET['p2p_cid']) ? $_GET['p2p_cid'] : FALSE;
+    $campaign = (isset($_GET['p2p_cid']) && is_numeric($_GET['p2p_cid'])) ? $_GET['p2p_cid'] : FALSE;
     $ajax = FALSE;
     if (isset($form_state['parent_campaign'])) {
       $campaign = $form_state['parent_campaign'];
@@ -2022,7 +2022,7 @@ function springboard_p2p_sb_social_share_url_alter(&$url, $node, $url_context) {
  */
 function springboard_p2p_sb_social_init_settings_load_alter(&$settings) {
   $personal_campaign = isset($_SESSION['sb_social_url_context']['personal_campaign_id']) ? $_SESSION['sb_social_url_context']['personal_campaign_id'] : FALSE;
-  $p2p_pcid = isset($_GET['p2p_pcid']) ? $_GET['p2p_pcid'] : FALSE;
+  $p2p_pcid = (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid'])) ? $_GET['p2p_pcid'] : FALSE;
   if (arg(0) == 'node' && is_numeric(arg(1)) && !arg(2)) {
     if (!$p2p_pcid && $personal_campaign) {
       $_SESSION['sb_social_url_context']['personal_campaign_id'] = FALSE;
@@ -2059,7 +2059,7 @@ function springboard_p2p_sb_social_tokens_data_alter(&$node) {
   $personal_campaign = isset($_SESSION['sb_social_url_context']['personal_campaign_id']) ? $_SESSION['sb_social_url_context']['personal_campaign_id'] : FALSE;
   // If $_SESSION isn't getting set for whatever reason, check the
   // query string just in case.
-  if (!$personal_campaign && !empty($_GET['p2p_pcid'])) {
+  if (!$personal_campaign && !empty($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid'])) {
     $personal_campaign = $_GET['p2p_pcid'];
   }
   if ($personal_campaign) {
