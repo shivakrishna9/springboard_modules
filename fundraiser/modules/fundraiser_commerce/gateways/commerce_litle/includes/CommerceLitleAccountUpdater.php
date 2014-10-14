@@ -294,6 +294,7 @@ class CommerceLitleAccountUpdater {
     $name = 'Litle Account Updater';
     foreach ($donations as $donation) {
       $donation = fundraiser_donation_get_donation($donation->did);
+      watchdog('litle', 'donation did ' . $donation->did . 'updated with<br>' . '<pre>' . var_export($submission_fields, TRUE) . '</pre>');
       $donation->donation = array_merge($donation->donation, $submission_fields);
       // Save each donation.
       fundraiser_donation_update($donation);
@@ -306,7 +307,7 @@ class CommerceLitleAccountUpdater {
       );
 
       fundraiser_donation_comment($donation, $comment, $replacements);
-      watchdog('fundraiser_sustainers', 'Billing information updated for #@did.',
+      watchdog('commerce_litle', 'Billing information updated for donation @did.',
         array('@did' => $donation->did));
 
       // Update salesforce.
