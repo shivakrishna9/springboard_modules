@@ -237,7 +237,7 @@ function springboard_health_status_check() {
   foreach ($result as $table) {
     $select = db_select($table->tablename);
     $size = $select->countQuery()->execute()->fetchField();
-    if (($size > $table->row_limit) && module_exists("rules")) {
+    if ((!empty($table->row_limit) && $size > $table->row_limit) && module_exists("rules")) {
       rules_invoke_event("springboard_health_row_count_exceeded", $table->tablename, $size, $table->row_limit);
     }
   }
