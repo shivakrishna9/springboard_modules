@@ -43,7 +43,7 @@ function fundraiser_ab_donations_highest_gross_check_win($config, $webform_detai
 
   // Loop over all the forms in this A/B test
   foreach ($test_node->included_webforms as $nid => $details) {
-    if (is_array($details['fundraiser'])) {
+    if (isset($details['fundraiser']) && is_array($details['fundraiser'])) {
       // If this form has earned more than the last highest, save it
       if ($details['fundraiser']['total_donations'] > $highest_gross) {
         $highest_gross = $details['fundraiser']['total_donations'];

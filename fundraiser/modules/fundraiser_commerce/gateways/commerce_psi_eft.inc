@@ -36,6 +36,17 @@ function commerce_psi_eft_fundraiser_donation_form_config_check($node) {
   }
 }
 
+function commerce_psi_eft_fundraiser_gateway_status_cron_check($details) {
+  if ($details['method_id'] == 'commerce_psi_eft') { 
+    if ($details['settings']['txn_mode'] != COMMERCE_PSI_MODE_LIVE) {
+      return $details['settings']['txn_mode'];
+    }
+    else {
+      return 'live';
+    }
+  } 
+}
+
 /**
  * Returns the form fields for this method.
  *

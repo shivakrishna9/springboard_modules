@@ -132,6 +132,41 @@ function springboard_p2p_menu() {
 }
 
 /**
+ * Implements hook_springboard_admin_admin_menu_items_alter().
+ */
+function springboard_p2p_springboard_admin_admin_menu_items_alter(&$items) {
+  // Top Level: P2P.
+  $items['admin/springboard/p2p'] = array(
+    'link_path' => 'admin/springboard/p2p',
+    'link_title' => t('P2P'),
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 6,
+    '_children' => array(),
+  );
+  // P2P > Dashboard.
+  $items['admin/springboard/p2p']['_children']['dashboard'] = array(
+    'link_path' => 'admin/springboard/p2p',
+    'link_title' => 'Dashboard',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 0,
+  );
+
+  // P2P > Settings.
+  $items['admin/springboard/p2p']['_children']['settings'] = array(
+    'link_path' => 'admin/springboard/p2p/settings',
+    'link_title' => 'Settings',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 0,
+  );
+}
+ 
+/**
  * Implements hook_theme().
  */
 function springboard_p2p_theme($existing, $type, $theme) {
@@ -341,7 +376,7 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
   $form['body']['#after_build'][] = '_filter_tips_p2p_campaign_intro';
 
   if (springboard_p2p_form_is_node_create($form)) {
-    $campaign = isset($_GET['p2p_cid']) ? $_GET['p2p_cid'] : FALSE;
+    $campaign = (isset($_GET['p2p_cid']) && is_numeric($_GET['p2p_cid'])) ? $_GET['p2p_cid'] : FALSE;
     $ajax = FALSE;
     if (isset($form_state['parent_campaign'])) {
       $campaign = $form_state['parent_campaign'];
@@ -389,7 +424,7 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
         if (isset($campaign_node->field_p2p_private_access_message[$language][0]['value'])) {
           $message = $campaign_node->field_p2p_private_access_message[$language][0]['value'];
           drupal_set_message(check_plain($message));
-          drupal_set_message(t('The campaign !campaign requires approval. You will be notified via email after your request has been reviewed', array('!campaign' => $campaign_node->title)));
+          drupal_set_message(t('The campaign @campaign requires approval. You will be notified via email after your request has been reviewed', array('@campaign' => $campaign_node->title)));
         }
 
         $event = new SpringboardP2pEvents();
@@ -537,7 +572,7 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
   $form['revision_information']['#access'] = FALSE;
 
   // Add styles and ajax lookup to campaign url field.
-  $form['field_p2p_personal_campaign_url'][$language][0]['value']['#field_prefix'] = url(variable_get('springboard_p2p_base_path', 'springboard_p2p'), array('absolute' => TRUE)) . '/';
+  $form['field_p2p_personal_campaign_url'][$language][0]['value']['#field_prefix'] = url(springboard_p2p_get_personal_campaign_base_path(), array('absolute' => TRUE)) . '/';
   $form['field_p2p_personal_campaign_url'][$language][0]['value']['#attributes'] = array('class' => array('container-inline'));
   $form['field_p2p_personal_campaign_url'][$language]['#prefix'] = '<div id="personal-campaign-url-wrapper">';
   $form['field_p2p_personal_campaign_url'][$language]['#suffix'] = '</div>';
@@ -848,6 +883,21 @@ function springboard_p2p_full_alias_exists($base_path, $alias, $counter = -1) {
   }
 
   return FALSE;
+}
+
+/**
+ * Gets the pathauto pattern for personal campaigns and returns the base path.
+ *
+ * @return string
+ *   The base path.
+ */
+function springboard_p2p_get_personal_campaign_base_path() {
+  $variable = 'pathauto_node_p2p_personal_campaign_pattern';
+
+  $pattern = variable_get($variable, '');
+  $base = str_replace('/[node:field-p2p-personal-campaign-url]', '', $pattern);
+
+  return $base;
 }
 
 /**
@@ -1444,7 +1494,7 @@ function springboard_p2p_set_redirect($form, &$form_state) {
       if ($private && !springboard_p2p_private_campaign_user_is_authorized($uid, $campaign_id)) {
         $approval = new SpringboardP2pPrivateCampaignApproval($uid, $campaign_id);
         $approval->request();
-        drupal_set_message(t('The campaign !campaign requires approval. You will be notified via email after your request has been reviewed', array('!campaign' => $campaign->title)));
+        drupal_set_message(t('The campaign @campaign requires approval. You will be notified via email after your request has been reviewed', array('@campaign' => $campaign->title)));
         $form_state['redirect'] = 'user/' . $uid . '/personal-campaigns';
 
         $account = user_load($uid);
@@ -1972,7 +2022,7 @@ function springboard_p2p_sb_social_share_url_alter(&$url, $node, $url_context) {
  */
 function springboard_p2p_sb_social_init_settings_load_alter(&$settings) {
   $personal_campaign = isset($_SESSION['sb_social_url_context']['personal_campaign_id']) ? $_SESSION['sb_social_url_context']['personal_campaign_id'] : FALSE;
-  $p2p_pcid = isset($_GET['p2p_pcid']) ? $_GET['p2p_pcid'] : FALSE;
+  $p2p_pcid = (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid'])) ? $_GET['p2p_pcid'] : FALSE;
   if (arg(0) == 'node' && is_numeric(arg(1)) && !arg(2)) {
     if (!$p2p_pcid && $personal_campaign) {
       $_SESSION['sb_social_url_context']['personal_campaign_id'] = FALSE;
@@ -2009,7 +2059,7 @@ function springboard_p2p_sb_social_tokens_data_alter(&$node) {
   $personal_campaign = isset($_SESSION['sb_social_url_context']['personal_campaign_id']) ? $_SESSION['sb_social_url_context']['personal_campaign_id'] : FALSE;
   // If $_SESSION isn't getting set for whatever reason, check the
   // query string just in case.
-  if (!$personal_campaign && !empty($_GET['p2p_pcid'])) {
+  if (!$personal_campaign && !empty($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid'])) {
     $personal_campaign = $_GET['p2p_pcid'];
   }
   if ($personal_campaign) {
@@ -2523,7 +2573,7 @@ function springboard_p2p_preprocess_page(&$vars) {
   }
 
   // Provide the file path for page wrappers to use.
-  $vars['filespath'] =  '/' . variable_get('file_public_path', conf_path() . '/files');
+  $vars['filespath'] = '/' . variable_get('file_public_path', conf_path() . '/files');
 
 }
 

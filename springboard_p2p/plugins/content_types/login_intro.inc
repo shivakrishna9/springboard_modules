@@ -47,8 +47,9 @@ function springboard_p2p_login_intro_render($subtype, $conf, $args, $contexts) {
   // Define the reg link passing the string id.
   $loginlink = '/p2p/login';
 
-  // Query the url string campaign id if it's not empty.
-  if (!empty($_GET['p2p_cid'])) {
+  // Query the url string campaign id if it's not empty. Confirm
+  // input is numeric to prevent XSS.
+  if (!empty($_GET['p2p_cid']) && is_numeric($_GET['p2p_cid'])) {
     $urlstring = $_GET['p2p_cid'];
     $loginlinkid = '?p2p_cid=' . $urlstring;
   }
@@ -56,7 +57,7 @@ function springboard_p2p_login_intro_render($subtype, $conf, $args, $contexts) {
   $output = array();
 
   // Create the output to be rendered.
-  if (empty($_GET['p2p_cid'])) {
+  if (empty($_GET['p2p_cid']) || !is_numeric($_GET['p2p_cid'])) {
     $output[] = '<a class="get-started-link" href=" ' . $loginlink . ' ">' . t('Login') . '<i class="fa fa-cog  get-started-spinner"></i></a>';
   }
 

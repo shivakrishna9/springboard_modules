@@ -258,6 +258,59 @@ function webform_goals_menu() {
   return $items;
 }
 
+/** 
+ * Implements hook_springboard_admin_alias_patterns().
+ */
+function webform_goals_springboard_admin_alias_patterns() {
+    return array(
+    'admin/config/content/webform_goals/%extra' => array(
+      'path' => array(
+        'regex' => '|^/admin/config/content/webform_goals(/.*)$|',
+        'replacement' => 'admin/config/content/webform_goals/%1',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/goals(/.*)$|',
+        'replacement' => 'springboard/goals/%1',
+      ),
+    ),
+    'admin/config/content/webform_goals' => array(
+      'path' => array(
+        'regex' => '|^/admin/config/content/webform_goals$|',
+        'replacement' => 'admin/config/content/webform_goals',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/goals$|',
+        'replacement' => 'springboard/goals',
+      ),
+    ),  
+  );
+}
+
+/**
+ * Implements hook_springboard_admin_admin_menu_items_alter().
+ */
+function webform_goals_springboard_admin_admin_menu_items_alter(&$items) {
+  // Marketing & Analytics > Goals.
+  $items['admin/springboard/marketing-analytics']['_children']['admin/config/content/webform_goals'] = array(
+    'link_path' => 'admin/config/content/webform_goals',
+    'link_title' => 'Goals',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 0,
+  );
+  
+  // Settings > Settings > Goals.
+  $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/config/content/webform_goals'] = array(
+    'link_path' => 'admin/config/content/webform_goals',
+    'link_title' => 'Goals',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 4,
+  );
+}
+
 function webform_goals_jsonp_loader() {
   return '<h1>Hai</h1>';
 }
@@ -334,10 +387,92 @@ function webform_goal_load_multiple($nid = FALSE) {
   return $nid ? $goals[$nid] : $goals;
 }
 
+
 /**
+ * Save a goal.
  *
- * @param type $gid
- * @return type
+ * Saves goal settings, updates the goal widget file, goal progress tracking,
+ * and updates the record of nodes associated with this goal, as applicable.
+ *
+ * @param array $goal
+ *   Goal settings array.
+ */
+function webform_goals_save_goal($goal) {
+
+  $update = $goal['gid'] ? 'gid' : array();
+  $extra = $goal['extra'];
+  $goal['extra'] = serialize($extra);
+  // Save goal settings.
+  drupal_write_record('webform_goals', $goal, $update);
+
+  $goal['extra'] = $extra;
+  $nid = !empty($extra['selected_form_id']) ? $extra['selected_form_id'] : 0;
+
+  // Save widget file.
+  webform_goals_save_widget($goal, $nid, $update);
+
+  // Save node ids associated with goal.
+  webform_goals_save_goal_nids($goal);
+  return $goal;
+}
+
+/**
+ * Save Goal widget to file and db.
+ *
+ * @param array $goal
+ *   Goal settings array.
+ *
+ * @param int $nid
+ *   Node id.
+ *
+ * @param mixed $update
+ */
+function webform_goals_save_widget($goal, $nid, $update) {
+  module_load_include('inc', 'webform_goals', 'includes/webform_goals.files');
+  $theme_args = array(
+    'webform_goal' => $goal,
+    'nid' => $nid,
+    'goal_progress' => webform_goals_track_metric($goal),
+  );
+  $widget = array(
+    'gid' => $goal['gid'],
+    'widget' => theme('webform_goals_widget', $theme_args),
+  );
+  drupal_write_record('webform_goals_widget', $widget, $update);
+  _webform_goals_file_insert($goal, $widget['widget']);
+}
+
+/**
+ * Save node ids associated with a goal.
+ *
+ * @param array $goal
+ *   Goal settings array.
+ */
+function webform_goals_save_goal_nids($goal) {
+  $nids = _webform_goals_calculate_nids_for_goal($goal);
+
+  // Remove the relevant rows from {webform_goals_node}
+  // and add new rows.
+  // We need to do this to update the nodes selected if they change
+  // during a goal edit.
+  db_delete('webform_goals_node')
+    ->condition('gid', $goal['gid'])
+    ->execute();
+  $query = db_insert('webform_goals_node')->fields(array('gid', 'nid'));
+  foreach ($nids as $nid) {
+    $query->values(array(
+      'gid' => $goal['gid'],
+      'nid' => $nid,
+    ));
+  }
+  $query->execute();
+}
+
+/**
+ * Delete goal records and associated widget files.
+ *
+ * @param int $gid
+ *   Goal ID.
  */
 function webform_goals_delete_goal($gid) {
   require_once 'includes/webform_goals.files.inc';
@@ -976,4 +1111,52 @@ function webform_goals_calculate_progress(&$data, $goal) {
   $data['percent'] = round(($data['count'] / $goal['target_value']) * 100, 1);
   $data['remaining'] = $goal['target_value'] - $data['count'];
   $data['percent_remaining'] = round(($data['remaining'] / $goal['target_value']) * 100, 1);
+}
+
+
+/**
+ * API functions.
+ */
+
+/**
+ * (C) Programmatically create a new goal.
+ *
+ * @param array $goal
+ */
+function webform_goals_goal_create($goal) {
+  $saved = webform_goals_save_goal($goal);
+  module_invoke_all('webform_goals_goal_insert', $saved);
+  return $saved;
+}
+
+/**
+ * (R) Retrieve goal settings.
+ *
+ * @param int $gid
+ *   Numeric goal id.
+ */
+function webform_goals_goal_retrieve($gid) {
+  $goal = webform_goal_load($gid);
+  return $goal;
+}
+
+/**
+ * (U) Update an existing goal.
+ *
+ * @param array $goal
+ */
+function webform_goals_goal_update($goal) {
+  $saved = webform_goals_save_goal($goal);
+  module_invoke_all('webform_goals_goal_update', $goal);
+  return $saved;
+}
+
+/**
+ * (D) Delete a goal.
+ *
+ * @param int $gid
+ */
+function webform_goals_goal_delete($gid) {
+  webform_goals_delete_goal($gid);
+  module_invoke_all('webform_goals_goal_delete', $gid);
 }
