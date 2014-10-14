@@ -3197,14 +3197,14 @@ function fundraiser_gateway_status_check() {
         }
         if ($fundraiser->status == 1 &&  !empty($global_status[0]) && $global_status[0] != 'live') {
           $bad_gateways[$gateway['id']]['status'] = $global_status[0];
-          $bad_gateways[$gateway['id']]['nids'][] = $fundraiser->nid;
+          $bad_gateways[$gateway['id']]['urls'][] = url('node/' . $fundraiser->nid, array('absolute' => TRUE));
           $bad_gateways[$gateway['id']]['type'] = $type;
         }
       }
     }
   }
   foreach ($bad_gateways as $id => $gateway) {
-    $nodes = implode(', ', $gateway['nids']);
+    $nodes = implode("\n\r", $gateway['urls']);
     _fundraiser_gateway_status_alert($nodes, $gateway['type'], $id, $gateway['status']);
   }
 }
