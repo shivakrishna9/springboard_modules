@@ -34,7 +34,7 @@ class EmailWrappersTestCase extends DrupalWebTestCase {
     $this->drupalLogin($this->privileged_user);
   }
 
-  public function testEmaplWrappersSettings() {
+  public function testEmailWrappersSettings() {
     //create test webform
     $this->WebformCreate();
 
@@ -115,8 +115,7 @@ class EmailWrappersTestCase extends DrupalWebTestCase {
       // debug($mail['subject']);
       // debug($mail['body']);
       if ($mail['id'] == 'webform_submission') {
-        $subject_legit = ($mail['subject'] == 'Test webform submission mail');
-        $this->assertTrue($subject_legit, t('Email subject set'));
+        $this->assertEqual($mail['subject'], 'Test webform custom subject', 'Email subject matches.');
 
         $multipart_legit = strpos($mail['body'], 'multi-part message in MIME format');
         $this->assertTrue($multipart_legit, t('Email is in multipart MIME format'));

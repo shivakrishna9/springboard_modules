@@ -8,13 +8,56 @@
  * webform.
  */
 
+
+/**
+ * Implements hook_cron().
+ */
+function webform_confirmations_cron() {
+  if (variable_get('webform_confirmations_submissions_purge_enabled', FALSE)) {
+    $days = variable_get('webform_confirmations_submissions_clear_date', 90);
+    $older_than = strtotime('-' . $days . ' days', time());
+    $query = db_delete('webform_confirmations_submissions');
+    $query->condition('timestamp', $older_than, '<');
+    $count = $query->execute();
+
+    watchdog('webform_confirmations', '@count webform confirmation permission records that were older than @days have been deleted.', array('@count' => $count, '@days' => $days));
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function webform_confirmations_permission() {
+  return array(
+    'administer webform confirmations' => array(
+      'title' => t('Administer webform confirmations'),
+      'description' => t('Perform administration tasks for webform confirmations.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function webform_confirmations_menu() {
+  $items['admin/config/content/webform_confirmations'] = array(
+    'title' => 'Webform Confirmations',
+    'description' => 'Administer webform confirmation settings.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('webform_confirmations_admin_settings'),
+    'access arguments' => array('administer webform confirmations'),
+    'file' => 'webform_confirmations.admin.inc',
+  );
+  return $items;
+}
+
 /**
  * Implements hook_preprocess_webform_confirmation().
  * Overrides the template during preprocess to insert correct token values on display.
  * Replace any webform component tokens before displaying confirmation page.
  */
 function webform_confirmations_preprocess_webform_confirmation(&$vars) {
-  if (isset($vars['node']->nid) && _webform_confirmations_is_configured($vars['node'])) {
+  if (isset($vars['node']->nid)) {
     // Check for access, if the user doesn't have access - change the message to match.
     $access = FALSE;
     if (isset($vars['sid'])) {
@@ -28,9 +71,18 @@ function webform_confirmations_preprocess_webform_confirmation(&$vars) {
           $access = TRUE;
         }
       }
-      // If anon, then check the IP address. (Anon submissions should be all on the same IP.)
-      if ($user->hostname == $submission->remote_addr) {
-        $access = TRUE;
+      // If anon, then check the session id associated with the submission.
+      // This prevents access problems when Webform User assigns a new UID to a webform
+      // submission.
+      if ($user->uid == 0 && $user->hostname == $submission->remote_addr) {
+        $sessid = webform_confirmations_get_submission_session($vars['sid']);
+
+        if ($sessid && $sessid != session_id()) {
+          $access = FALSE;
+        }
+        else {
+          $access = TRUE;
+        }
       }
       // If has permissions as an admin user.
       if (user_access('access all webform results')) {
@@ -64,6 +116,30 @@ function webform_confirmations_preprocess_webform_confirmation(&$vars) {
   }
 }
 
+/**
+ * Implements hook_webform_submission_insert().
+ */
+function webform_confirmations_webform_submission_insert($node, $submission) {
+  webform_confirmations_save_submission_session($submission->sid);
+}
+
+/**
+ * Log submission ID and current session id.
+ */
+function webform_confirmations_save_submission_session($sid) {
+  $sessid = session_id();
+  $record = array('sid' => $sid, 'sessid' => $sessid, 'timestamp' => time());
+  drupal_write_record('webform_confirmations_submissions', $record);
+}
+
+/**
+ * Get session id logged during anonymous submission.
+ */
+function webform_confirmations_get_submission_session($sid) {
+  $result = db_query('SELECT sessid FROM {webform_confirmations_submissions} WHERE sid = :sid', array(':sid' => $sid));
+  $sessid = $result->fetchField();
+  return $sessid ? $sessid : FALSE;
+}
 
 /**
  * Implements hook_form_FORM_ID_alter().
@@ -92,7 +168,7 @@ function webform_confirmations_form_webform_email_edit_form_alter(&$form, $form_
       '#weight' => -49,
     );
     $form['#validate'][] = '_webform_confirmations_email_edit_validate';
-  } 
+  }
   if (module_exists('email_wrappers'))  {
     $form['template']['tokens'] = array(
       '#type' => 'fieldset',
@@ -411,7 +487,7 @@ function _webform_confirmation_send_confirmation_mail($settings, $donation) {
        $params = $mail_cache->data['params'];
       _webform_confirmation_send_confirmation_mail_helper($settings, $donation, $node, $eid, $account, $params);
       _webform_confirmation_confirmation_mail_delete_cache($node, $eid, $sid, $success);
-    }      
+    }
   }
 }
 

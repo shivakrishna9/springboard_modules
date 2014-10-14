@@ -1473,8 +1473,8 @@ function fundraiser_donation_form(&$form, &$form_state) {
   if ((!_fundraiser_is_secure() && !variable_get('fundraiser_development_mode', 0))) {
     // Return a 404 if the page isn't secure and should be.
     $node = $form['#node'];
-    watchdog('fundraiser', 'The donation form <em>!title</em> is not protected with SSL.',
-      array('!title' => $node->title), WATCHDOG_CRITICAL, l('View the donation form', 'node/' . $node->nid));
+    watchdog('fundraiser', 'The donation form <em>@title</em> is not protected with SSL.',
+      array('@title' => $node->title), WATCHDOG_CRITICAL, l('View the donation form', 'node/' . $node->nid));
     $message = variable_get('fundraiser_http_error_message', t('We\'re sorry, but this ' .
         'donation form is experiencing a temporary problem. Please try again later.'));
     // Remove all other form elements.
@@ -3155,4 +3155,62 @@ function _fundraiser_gateway_switch_action_submit($form, $form_state) {
     'update_weights' => $form_state['values']['update_weights'],
     'gateways' => $form_state['values']['gateways'],
   );
+}
+/**
+ * Implements hook_cron.
+ * Needed for gateway test mode status check.
+ */
+function fundraiser_cron() {
+  fundraiser_gateway_status_check();
+}
+
+/**
+ * Test to see if a published donation form's gateway is non-live
+ * Send alert ot admin if so.
+ */
+function fundraiser_gateway_status_check() {
+  $bad_gateways = array();
+  $gateways = _fundraiser_gateway_info();
+  //grab all fundraiser nodes along with publication status
+  $fundraisers = db_query('SELECT f.nid, f.gateways, n.status FROM {fundraiser} f INNER JOIN {node} n on n.nid = f.nid');
+
+  foreach ($fundraisers as $fundraiser) {
+    $fundraiser->gateways = unserialize($fundraiser->gateways);
+    foreach($fundraiser->gateways as $type => $gateway) {
+      $global_status = FALSE;
+      if (!empty($gateway['id']) && $gateway['status'] == 1) { 
+        //grab the rules_config settings
+        $fundraiser->gateways[$type]['gateway_details'] = isset($gateways[$gateway['id']]['gateway_details']) ? $gateways[$gateway['id']]['gateway_details'] : FALSE;
+        //detect disabled or unconfigured gateways
+        if ($fundraiser->gateways[$type]['gateway_details'] === FALSE) {
+          $global_status = array('disabled');
+        }
+        else if (empty($fundraiser->gateways[$type]['gateway_details']['settings'])) {
+          $global_status = array('unconfigured');
+        }
+
+        if (empty($global_status)) {
+          $status = module_invoke_all("fundraiser_gateway_status_cron_check", $fundraiser->gateways[$type]['gateway_details']);
+          if (!empty($status)) {
+            $global_status = $status;
+          }
+        }
+        if ($fundraiser->status == 1 &&  !empty($global_status[0]) && $global_status[0] != 'live') {
+          $bad_gateways[$gateway['id']]['status'] = $global_status[0];
+          $bad_gateways[$gateway['id']]['nids'][] = $fundraiser->nid;
+          $bad_gateways[$gateway['id']]['type'] = $type;
+        }
+      }
+    }
+  }
+  foreach ($bad_gateways as $id => $gateway) {
+    $nodes = implode(', ', $gateway['nids']);
+    _fundraiser_gateway_status_alert($nodes, $gateway['type'], $id, $gateway['status']);
+  }
+}
+
+function _fundraiser_gateway_status_alert($nodes, $method_type, $gateway_id, $status) {
+  if (module_exists("rules")) {
+    rules_invoke_event("fundraiser_gateway_test_mode_detected", $nodes, $method_type, $gateway_id, $status);
+  }
 }

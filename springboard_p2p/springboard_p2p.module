@@ -424,7 +424,7 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
         if (isset($campaign_node->field_p2p_private_access_message[$language][0]['value'])) {
           $message = $campaign_node->field_p2p_private_access_message[$language][0]['value'];
           drupal_set_message(check_plain($message));
-          drupal_set_message(t('The campaign !campaign requires approval. You will be notified via email after your request has been reviewed', array('!campaign' => $campaign_node->title)));
+          drupal_set_message(t('The campaign @campaign requires approval. You will be notified via email after your request has been reviewed', array('@campaign' => $campaign_node->title)));
         }
 
         $event = new SpringboardP2pEvents();
@@ -572,7 +572,7 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
   $form['revision_information']['#access'] = FALSE;
 
   // Add styles and ajax lookup to campaign url field.
-  $form['field_p2p_personal_campaign_url'][$language][0]['value']['#field_prefix'] = url(variable_get('springboard_p2p_base_path', 'springboard_p2p'), array('absolute' => TRUE)) . '/';
+  $form['field_p2p_personal_campaign_url'][$language][0]['value']['#field_prefix'] = url(springboard_p2p_get_personal_campaign_base_path(), array('absolute' => TRUE)) . '/';
   $form['field_p2p_personal_campaign_url'][$language][0]['value']['#attributes'] = array('class' => array('container-inline'));
   $form['field_p2p_personal_campaign_url'][$language]['#prefix'] = '<div id="personal-campaign-url-wrapper">';
   $form['field_p2p_personal_campaign_url'][$language]['#suffix'] = '</div>';
@@ -883,6 +883,21 @@ function springboard_p2p_full_alias_exists($base_path, $alias, $counter = -1) {
   }
 
   return FALSE;
+}
+
+/**
+ * Gets the pathauto pattern for personal campaigns and returns the base path.
+ *
+ * @return string
+ *   The base path.
+ */
+function springboard_p2p_get_personal_campaign_base_path() {
+  $variable = 'pathauto_node_p2p_personal_campaign_pattern';
+
+  $pattern = variable_get($variable, '');
+  $base = str_replace('/[node:field-p2p-personal-campaign-url]', '', $pattern);
+
+  return $base;
 }
 
 /**
@@ -1479,7 +1494,7 @@ function springboard_p2p_set_redirect($form, &$form_state) {
       if ($private && !springboard_p2p_private_campaign_user_is_authorized($uid, $campaign_id)) {
         $approval = new SpringboardP2pPrivateCampaignApproval($uid, $campaign_id);
         $approval->request();
-        drupal_set_message(t('The campaign !campaign requires approval. You will be notified via email after your request has been reviewed', array('!campaign' => $campaign->title)));
+        drupal_set_message(t('The campaign @campaign requires approval. You will be notified via email after your request has been reviewed', array('@campaign' => $campaign->title)));
         $form_state['redirect'] = 'user/' . $uid . '/personal-campaigns';
 
         $account = user_load($uid);
@@ -2558,7 +2573,7 @@ function springboard_p2p_preprocess_page(&$vars) {
   }
 
   // Provide the file path for page wrappers to use.
-  $vars['filespath'] =  '/' . variable_get('file_public_path', conf_path() . '/files');
+  $vars['filespath'] = '/' . variable_get('file_public_path', conf_path() . '/files');
 
 }
 

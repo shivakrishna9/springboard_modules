@@ -19,6 +19,12 @@ function commerce_payment_example_fundraiser_donation_form_config_check($node) {
   }
 }
 
+function commerce_payment_example_fundraiser_gateway_status_cron_check($details) {
+  if ($details['method_id'] == 'commerce_payment_example') {
+    return 'example gateway';
+  }
+}
+
 /**
  * Implements hook_fundraiser_commerce_fundraiser_gateway_info().
  */

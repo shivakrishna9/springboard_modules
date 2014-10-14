@@ -99,7 +99,7 @@ function fundraiser_ab_sustainers_percentage_prep_save(&$config) {
  *   Webform A/B Test node
  */
 function fundraiser_ab_sustainers_percentage_check_win($config, $webform_details, $test_node) {
-  if ($webform_details['fundraiser']['sustainer_count'] > 0) {
+  if (isset($webform_details['fundraiser']) && is_array($webform_details['fundraiser']) && ($webform_details['fundraiser']['sustainer_count'] > 0)) {
     $percentage = $webform_details['fundraiser']['sustainer_count'] / $webform_details['fundraiser']['donation_count'];
     return $percentage >= $config['percentage'];
   }

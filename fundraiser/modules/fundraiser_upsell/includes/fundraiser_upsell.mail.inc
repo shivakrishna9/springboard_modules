@@ -64,6 +64,7 @@ function fundraiser_upsell_admin_thank_you_settings() {
   if (empty($form['email']['headers']['from_name']['#default_value'])) {
     $form['email']['headers']['from_name']['#default_value'] = $site_mail;
   }
+  $form['email']['headers']['recipients']['#title'] = t('Test Email Recipient');
   $form['email']['headers']['recipients']['#description'] = $recipient_description;
   $form['email']['headers']['recipients']['#weight'] = 1;
   if (empty($form['email']['headers']['recipients']['#default_value'])) {

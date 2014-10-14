@@ -40,7 +40,6 @@ function springboard_version_report() {
   $headers = array(
     t('Name'),
     t('Installed Version'),
-    t('Recommended Version'),
     t('Current Hash'),
     t('Installed Hash'),
   );
@@ -57,7 +56,6 @@ function springboard_version_report() {
         )
       ),
       $module_info['version'],
-      $module_info['springboard_version'],
       $module_info['hash'],
       $module_info['springboard_hash'],
     );

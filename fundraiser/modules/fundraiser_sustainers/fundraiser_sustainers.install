@@ -209,6 +209,26 @@ function fundraiser_sustainers_schema() {
     ),
     'primary key' => array('lid'),
   );
+
+  $schema['fundraiser_sustainers_charge_date'] = array(
+    'description' => 'Stores information about admin-changed donation dates.',
+    'fields' => array(
+      'master_did' => array(
+        'description' => 'Master donation id.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'day' => array(
+        'description' => 'The numeric day of month.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('master_did'),
+  );
+
   return $schema;
 }
 
@@ -450,4 +470,14 @@ function fundraiser_sustainers_update_7006(&$sandbox) {
     'primary key' => array('lid'),
   );
   db_create_table('fundraiser_sustainers_log', $schema['fundraiser_sustainers_log']);
+}
+
+/**
+ * Adds an additional table to store changed cahrge dates.
+ */
+function fundraiser_sustainers_update_7007() {
+  if (!db_table_exists('fundraiser_sustainers_charge_date')) {
+    $schema = drupal_get_schema('fundraiser_sustainers_charge_date', TRUE);
+    db_create_table('fundraiser_sustainers_charge_date', $schema);
+  }
 }

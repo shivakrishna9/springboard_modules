@@ -43,7 +43,7 @@ function fundraiser_ab_donations_highest_avg_check_win($config, $webform_details
 
   // Loop over all the forms in this A/B test
   foreach ($test_node->included_webforms as $nid => $details) {
-    if (is_array($details['fundraiser']) && $details['fundraiser']['donation_count'] > 0) {
+    if (isset($details['fundraiser']) && is_array($details['fundraiser']) && $details['fundraiser']['donation_count'] > 0) {
       // Determine the average donation amount for this donation form
       $avg = $details['fundraiser']['total_donations'] / $details['fundraiser']['donation_count'];
 
