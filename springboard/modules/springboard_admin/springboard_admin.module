@@ -780,115 +780,104 @@ function springboard_admin_alias_patterns() {
  * Implements hook_springboard_admin_alias_patterns().
  */
 function springboard_admin_springboard_admin_alias_patterns() {
-    return array(
+  return array(
     // Node add page.
     'node/add/%type' => array(
       'path' => array(
-        'regex' => '|^/node/add(/.*)$|',
-        'replacement' => 'node/add/%1',
+        'regex' => '|^/node/add(/.*)?$|',
+        'replacement' => 'node/add$1',
       ),
       'alias' => array(
-        'regex' => '|^springboard/add(/.*)$|',
-        'replacement' => 'springboard/add/%1',
+        'regex' => '|^springboard/add(/.*)?$|',
+        'replacement' => 'springboard/add$1',
       ),
     ),
     // Node view pages.
-    'node/%nid' => array(
+    'node/%' => array(
       'path' => array(
-        'regex' => '|^/node(/[0-9]*)$|',
-        'replacement' => 'node/%1',
+        'regex' => '|^/node(/[0-9]*)?$|',
+        'replacement' => 'node$1',
       ),
       'alias' => array(
-        'regex' => '|^springboard/node(/[0-9]*)$|',
-        'replacement' => FALSE,
+        'regex' => '|^springboard/node(/[0-9]+)?$|',
+        'replacement' => FALSE,  // don't redirect node/123 to anything, even for Admin UI users
       ),
     ),
     // Webform A/B Associated Webforms page.
-    'node/%nid/webforms/%extra' => array(
+    'node/%/webforms' => array(
       'path' => array(
-        'regex' => '|^/node(/[0-9]*)/webforms((.*)*)$|',
-        'replacement' => 'node/%1/webforms/%2',
+        'regex' => '|^/node/([0-9]+)/webforms(/.*)?$|',
+        'replacement' => 'node/$1/webforms$2',
       ),
       'alias' => array(
-        'regex' => '|^springboard/node(/[0-9]*)/included-forms((.*)*)$|',
-        'replacement' => 'springboard/node/%1/included-forms/%2',
+        'regex' => '|^springboard/node/([0-9]+)/included-forms(/.*)?$|',
+        'replacement' => 'springboard/node/$1/included-forms$2',
       ),
     ),
     // Webform submission confirmation pages.
-    'node/%nid' => array(
+    'node/%/done' => array(
       'path' => array(
-        'regex' => '|^/node(/[0-9]*)/done$|',
-        'replacement' => 'node/%1/done',
+        'regex' => '|^/node/([0-9]+)/done$|',
+        'replacement' => 'node/$1/done',
       ),
       'alias' => array(
-        'regex' => '|^springboard/node(/[0-9]*)/done$|',
-        'replacement' => FALSE,
+        'regex' => '|^springboard/node/([0-9]+)/done$|',
+        'replacement' => FALSE,  // don't redirect confirmation pages to springboard/...
       ),
     ),
     // Webform node, confirmation page settings.
-    'node/%nid/webform/emails/%extra' => array(
+    'node/%/webform/emails' => array(
       'path' => array(
-        'regex' => '|^/node(/[0-9]*)/webform/emails((.*)*)|',
-        'replacement' => 'node/%1/webform/emails/%2',
+        'regex' => '|^/node/([0-9]+)/webform/emails(/.*)?|',
+        'replacement' => 'node/$1/webform/emails$2',
       ),
       'alias' => array(
-        'regex' => '|^springboard/node(/[0-9]*)/form-components/confirmation-emails((.*)*)$|',
-        'replacement' => 'springboard/node/%1/form-components/confirmation-emails/%2',
+        'regex' => '|^springboard/node/([0-9]+)/form-components/confirmation-emails(/.*)?$|',
+        'replacement' => 'springboard/node/$1/form-components/confirmation-emails$2',
       ),
     ),
     // Webform node, confirmation page settings.
-    'node/%nid/webform/configure' => array(
+    'node/%/webform/configure' => array(
       'path' => array(
-        'regex' => '|^/node(/[0-9]*)/webform/configure$|',
-        'replacement' => 'node/%1/webform/configure',
+        'regex' => '|^/node/([0-9]+)/webform/configure$|',
+        'replacement' => 'node/$1/webform/configure',
       ),
       'alias' => array(
-        'regex' => '|^springboard/node(/[0-9]*)/form-components/confirmation-page-settings$|',
-        'replacement' => 'springboard/node/%1/form-components/confirmation-page-settings',
+        'regex' => '|^springboard/node/([0-9]+)/form-components/confirmation-page-settings$|',
+        'replacement' => 'springboard/node/$1/form-components/confirmation-page-settings',
       ),
     ),
     // Webform node, other settings pages.
-    'node/%nid/webform/%extra' => array(
+    'node/%/webform' => array(
       'path' => array(
-        'regex' => '|^/node(/[0-9]*)/webform((.*)*)$|',
-        'replacement' => 'node/%1/webform/%2',
+        'regex' => '|^/node/([0-9]+)/webform(/.*)?$|',
+        'replacement' => 'node/$1/webform$2',
       ),
       'alias' => array(
-        'regex' => '|^springboard/node(/[0-9]*)/form-components((.*)*)$|',
-        'replacement' => 'springboard/node/%1/form-components/%2',
+        'regex' => '|^springboard/node/([0-9]*)/form-components(/.*)?$|',
+        'replacement' => 'springboard/node/$1/form-components$2',
       ),
     ),
-    // Webform node results pages.
-    'node/%nid/webform-results/%extra' => array(
+    // Webform results pages.
+    'node/%/webform-results' => array(
       'path' => array(
-        'regex' => '|^/node(/[0-9]*)/webform-results((.*)*)$|',
-        'replacement' => 'node/%1/webform-results/%2',
+        'regex' => '|^/node/([0-9]+)/webform-results(/.*)?$|',
+        'replacement' => 'node/$1/webform-results$2',
       ),
       'alias' => array(
-        'regex' => '|^springboard/node(/[0-9]*)/results((.*)*)$|',
-        'replacement' => 'springboard/node/%1/results/%2',
+        'regex' => '|^springboard/node/([0-9]+)/results(/.*)?$|',
+        'replacement' => 'springboard/node/$1/results$2',
       ),
     ),
-    // Webform results page.
-    'node/%nid/webform-results' => array(
+    // Generic node admin pages.
+    'node/%/%' => array(
       'path' => array(
-        'regex' => '|^/node(/[0-9]*)/webform-results$|',
-        'replacement' => 'node/%1/webform-results',
+        'regex' => '|^/node/([0-9]+)/(.+)$|',
+        'replacement' => 'node/$1/$2',
       ),
       'alias' => array(
-        'regex' => '|^springboard/node(/[0-9]*)/results|',
-        'replacement' => 'springboard/node/%1/results',
-      ),
-    ),
-    // Node pages.
-    'node/%nid/%extra' => array(
-      'path' => array(
-        'regex' => '|^/node(/[0-9]*)((.*)*)$|',
-        'replacement' => 'node/%1/%2',
-      ),
-      'alias' => array(
-        'regex' => '|^springboard/node(/[0-9]*)((.*)*)$|',
-        'replacement' => 'springboard/node/%1/%2',
+        'regex' => '|^springboard/node/([0-9]+)/(.+)$|',
+        'replacement' => 'springboard/node/$1/$2',
       ),
     ),
     // Current user's page.
@@ -903,25 +892,25 @@ function springboard_admin_springboard_admin_alias_patterns() {
       ),
     ),
     // All user pages.
-    'user/%uid/%extra' => array(
+    'user/%' => array(
       'path' => array(
-        'regex' => '|^/user(/[0-9]*)((.*)*)$|',
-        'replacement' => 'user/%1/%2',
+        'regex' => '|^/user/([0-9]+)(/.*)?$|',
+        'replacement' => 'user/$1$2',
       ),
       'alias' => array(
-        'regex' => '|^springboard/user(/[0-9]*)((.*)*)$|',
-        'replacement' => 'springboard/user/%1/%2',
+        'regex' => '|^springboard/user/([0-9]+)(/.*)?$|',
+        'replacement' => 'springboard/user/$1$2',
       ),
     ),
     // Donation reports.
-    'admin/reports/salesforce/donations/%extra' => array(
+    'admin/reports/salesforce/donations' => array(
       'path' => array(
-        'regex' => '|^/admin/reports/salesforce/donations((.*)*)$|',
-        'replacement' => 'admin/reports/salesforce/donations/%1',
+        'regex' => '|^/admin/reports/salesforce/donations(/.*)?$|',
+        'replacement' => 'admin/reports/salesforce/donations$1',
       ),
       'alias' => array(
-        'regex' => '|^springboard/reports/donations((.*)*)$|',
-        'replacement' => 'springboard/reports/donations/%1',
+        'regex' => '|^springboard/reports/donations(/.*)?$|',
+        'replacement' => 'springboard/reports/donations$1',
       ),
     ),
     // Webform AB content page.
@@ -958,47 +947,47 @@ function springboard_admin_springboard_admin_alias_patterns() {
       ),
     ),
     // Salesforce mappings page.
-    'admin/structure/salesforce/mappings/%extra' => array(
+    'admin/structure/salesforce/mappings' => array(
       'path' => array(
-        'regex' => '|^/admin/structure/salesforce/mappings((.*)*)$|',
-        'replacement' => 'admin/structure/salesforce/mappings/%1',
+        'regex' => '|^/admin/structure/salesforce/mappings(/.*)?$|',
+        'replacement' => 'admin/structure/salesforce/mappings$1',
       ),
       'alias' => array(
-        'regex' => '|^springboard/settings/config/mappings((.*)*)$|',
-        'replacement' => 'springboard/settings/config/mappings/%1',
+        'regex' => '|^springboard/settings/config/mappings(/.*)?$|',
+        'replacement' => 'springboard/settings/config/mappings$1',
       ),
     ),
     // Commerce orders.
-    'admin/commerce/orders/%extra' => array(
+    'admin/commerce/orders' => array(
       'path' => array(
-        'regex' => '|^/admin/commerce/orders((.*)*)$|',
-        'replacement' => 'admin/commerce/orders/%1',
+        'regex' => '|^/admin/commerce/orders(/.*)?$|',
+        'replacement' => 'admin/commerce/orders$1',
       ),
       'alias' => array(
-        'regex' => '|^springboard/donations((.*)*)$|',
-        'replacement' => 'springboard/donations/%1',
+        'regex' => '|^springboard/donations(/.*)?$|',
+        'replacement' => 'springboard/donations$1',
       ),
     ),
     // Commerce products.
-    'admin/commerce/products/%extra' => array(
+    'admin/commerce/products' => array(
       'path' => array(
-        'regex' => '|^/admin/commerce/products((.*)*)$|',
-        'replacement' => 'admin/commerce/products/%1',
+        'regex' => '|^/admin/commerce/products(/.*)?$|',
+        'replacement' => 'admin/commerce/products$1',
       ),
       'alias' => array(
-        'regex' => '|^springboard/commerce/products((.*)*)$|',
-        'replacement' => 'springboard/commerce/products/%1',
+        'regex' => '|^springboard/commerce/products(/.*)?$|',
+        'replacement' => 'springboard/commerce/products$1',
       ),
     ),  
     // Springboard pages.
-    'admin/springboard/%extra' => array(
+    'admin/springboard' => array(
       'path' => array(
-        'regex' => '|^/admin/springboard((.*)*)$|',
-        'replacement' => 'admin/springboard/%1',
+        'regex' => '|^/admin/springboard(/.*)?$|',
+        'replacement' => 'admin/springboard$1',
       ),
       'alias' => array(
-        'regex' => '|^springboard((.*)*)$|',
-        'replacement' => 'springboard/%1',
+        'regex' => '|^springboard(/.*)?$|',
+        'replacement' => 'springboard/$1',
       ),
     ),
   );
@@ -1006,7 +995,7 @@ function springboard_admin_springboard_admin_alias_patterns() {
 
 /**
  * Helper Function
- * Given a path, parses through the availalbe Springboard alias patterns and 
+ * Given a path, parses through the available Springboard alias patterns and 
  * returns the appropriate altered path.
  * 
  * @param $path
@@ -1020,24 +1009,18 @@ function springboard_admin_springboard_admin_alias_patterns() {
  *   The altered path or FALSE if no alias pattern matched.
  */
 function springboard_admin_build_admin_path($path, $type) {
-  $final_type = $type == 'path' ? 'alias' : 'path';
+  $final_type = ($type == 'path' ? 'alias' : 'path');
   $final_path = FALSE;
   $patterns = springboard_admin_alias_patterns();
-    foreach($patterns as $key => $pattern) {
-      if(preg_match($pattern[$type]['regex'], $path, $matches)) {
-        if(!$pattern[$final_type]['replacement']) {
-          return $final_path;
-        }
-        $final_path = $pattern[$final_type]['replacement'];
-        preg_match_all('|%[0-9]*|', $pattern['alias']['replacement'], $args);
-        if($args) {
-          foreach($args[0] as $key => $arg) {
-            $final_path = preg_replace('/\/' . $arg . '/', $matches[$key + 1], $final_path);
-          }
-        }
-        return $final_path;
+  foreach ($patterns as $key => $pattern) {
+    if (!empty($pattern[$type]['regex']) && preg_match($pattern[$type]['regex'], $path, $matches)) {
+      $final_path = $pattern[$final_type]['replacement'];
+      if (!empty($final_path)) {
+        $final_path = preg_replace($pattern[$type]['regex'], $final_path, $path);
       }
+      break;
     }
+  }
   return $final_path;
 }
 
