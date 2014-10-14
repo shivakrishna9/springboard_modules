@@ -4,6 +4,60 @@
  * Adds statistical tally fields to Springboard donation forms and webforms.
  */
 
+define('SPRINGBOARD_STATS_DEFAULT_HAM_MINIMUM', 1);
+define('SPRINGBOARD_STATS_DEFAULT_HAM_MAXIMUM', 99999);
+
+/**
+ * Implements hook_cron_queue_info().
+ */
+function springboard_stats_cron_queue_info() {
+  $queues['springboard_stats'] = array(
+    'worker callback' => 'springboard_stats_process_queue_item',
+    'time' => 20,
+  );
+  return $queues;
+}
+
+/**
+ * Implements hook_form_springboard_admin_settings_alter().
+ */
+function springboard_stats_form_springboard_admin_settings_alter(&$form, &$form_state, $form_id) {
+  $form['springboard_stats'] = array(
+    '#type' => 'fieldset',
+    '#title' => t("Statistics"),
+    '#description' => t("Configure the tabulation of usage statistics for donation and user interaction forms."),
+    '#collapsed' => FALSE,
+    '#collapsible' => TRUE,
+  );
+  $form['springboard_stats']['springboard_stats_ham_minimum'] = array(
+    '#type' => 'textfield',
+    '#title' => t("Donation Ham Minimum"),
+    '#description' => t("Donations of lesser amounts will be considered spam and not counted."),
+    '#default_value' => variable_get('springboard_stats_ham_minimum', SPRINGBOARD_STATS_DEFAULT_HAM_MINIMUM),
+    '#size' => 10,
+    '#maxlength' => 10,
+  );
+  $form['springboard_stats']['springboard_stats_ham_maximum'] = array(
+    '#type' => 'textfield',
+    '#title' => t("Donation Ham Maximum"),
+    '#description' => t("Donations of greater amounts will be considered spam and not counted."),
+    '#default_value' => variable_get('springboard_stats_ham_maximum', SPRINGBOARD_STATS_DEFAULT_HAM_MAXIMUM),
+    '#size' => 10,
+    '#maxlength' => 10,
+  );
+  $form['#validate'][] = 'springboard_stats_form_springboard_admin_settings_validate';
+}
+
+function springboard_stats_form_springboard_admin_settings_validate(&$form, &$form_state) {
+  if (!is_numeric($form_state['values']['springboard_stats_ham_minimum']) || $form_state['values']['springboard_stats_ham_minimum'] < 0) {
+    form_set_error('springboard_stats_ham_minimum', t("Donation Ham Minimum must be a number greater than or equal to 0."));
+  }
+  if (!is_numeric($form_state['values']['springboard_stats_ham_maximum']) || $form_state['values']['springboard_stats_ham_maximum'] <= 0) {
+    form_set_error('springboard_stats_ham_maximum', t("Donation Ham Maximum must be a number greater than 0."));
+  }
+}
+
+>>>>>>> 1b5e5f0... Springboard Statistics refactor: Added cron queue mechanism to calculate and save tallies asynchronously, via springboard_stats_enqueue().
 /**
  * Implements hook_node_type_insert
  */
@@ -231,6 +285,35 @@ function springboard_stats_update_all_fields($node) {
   field_attach_update('node', $node);
 }
 
+function springboard_stats_enqueue($nid, $field = 'all') {
+  $queue = DrupalQueue::get('springboard_stats');
+  $item = array(
+    'nid' => $nid,
+    'field' => $field,
+  );
+  $queue->createItem($item);
+}
+
+function springboard_stats_process_queue_item($item) {
+  static $processed = array();
+  
+  // Skip item if this node was already fully processed.
+  if (isset($processed[$item['nid'] . '-all'])) return;
+  
+  // Skip item if this field of this node was already processed.
+  if (isset($processed[$item['nid'] . '-' . $item['field']])) return;
+  
+  // Load the node and process the field(s) requested.
+  $node = node_load($item['nid']);
+  if ($item['field'] == 'all') {
+    springboard_stats_update_all_fields($node);
+    $processed[$node->nid . '-all'] = TRUE;
+  } else {
+    springboard_stats_update_field($node, $item['field']);
+    $processed[$node->nid . '-' . $item['field']];
+  }
+}
+
 /****************************************
  * HOOKS TO RESPOND TO FORM SUBMISSIONS *
  ****************************************/
@@ -239,37 +322,34 @@ function springboard_stats_update_all_fields($node) {
  * Implements hook_webform_submission_insert().
  */
 function springboard_stats_webform_submission_insert($node, $submission) {
-  springboard_stats_update_field($node, 'count_submissions');
+  springboard_stats_enqueue($node->nid, 'count_submissions');
 }
 
 /**
  * Implements hook_webform_submission_delete().
  */
 function springboard_stats_webform_submission_delete($node, $submission) {
-  springboard_stats_update_field($node, 'count_submissions');
+  springboard_stats_enqueue($node->nid, 'count_submissions');
 }
 
 /**
  * Implements hook_fundraiser_donation_post_create().
  */
 function springboard_stats_fundraiser_donation_post_create($donation) {
-  $node = node_load($donation->nid);
-  springboard_stats_update_field($node, 'count_pending');
-  springboard_stats_update_field($node, 'total_pending');
+  springboard_stats_enqueue($donation->nid, 'count_pending');
+  springboard_stats_enqueue($donation->nid, 'total_pending');
 }
 
 /**
  * Implements hook_fundraiser_donation_post_update().
  */
 function springboard_stats_fundraiser_donation_post_update($donation) {
-  $node = node_load($donation->nid);
-  springboard_stats_update_all_fields($node);
+  springboard_stats_enqueue($donation->nid);
 }
 
 /**
  * Implements hook_fundraiser_donation_delete().
  */
 function springboard_stats_fundraiser_donation_delete($donation) {
-  $node = node_load($donation->nid);
-  springboard_stats_update_all_fields($node);
+  springboard_stats_enqueue($donation->nid);
 }
