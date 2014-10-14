@@ -8,6 +8,17 @@ define('SPRINGBOARD_STATS_DEFAULT_HAM_MINIMUM', 1);
 define('SPRINGBOARD_STATS_DEFAULT_HAM_MAXIMUM', 99999);
 
 /**
+ * Implements hook_cron_queue_info().
+ */
+function springboard_stats_cron_queue_info() {
+  $queues['springboard_stats'] = array(
+    'worker callback' => 'springboard_stats_process_queue_item',
+    'time' => 20,
+  );
+  return $queues;
+}
+
+/**
  * Implements hook_form_springboard_admin_settings_alter().
  */
 function springboard_stats_form_springboard_admin_settings_alter(&$form, &$form_state, $form_id) {
@@ -338,6 +349,35 @@ function springboard_stats_update_all_fields($node) {
   field_attach_update('node', $node);
 }
 
+function springboard_stats_enqueue($nid, $field = 'all') {
+  $queue = DrupalQueue::get('springboard_stats');
+  $item = array(
+    'nid' => $nid,
+    'field' => $field,
+  );
+  $queue->createItem($item);
+}
+
+function springboard_stats_process_queue_item($item) {
+  static $processed = array();
+  
+  // Skip item if this node was already fully processed.
+  if (isset($processed[$item['nid'] . '-all'])) return;
+  
+  // Skip item if this field of this node was already processed.
+  if (isset($processed[$item['nid'] . '-' . $item['field']])) return;
+  
+  // Load the node and process the field(s) requested.
+  $node = node_load($item['nid']);
+  if ($item['field'] == 'all') {
+    springboard_stats_update_all_fields($node);
+    $processed[$node->nid . '-all'] = TRUE;
+  } else {
+    springboard_stats_update_field($node, $item['field']);
+    $processed[$node->nid . '-' . $item['field']];
+  }
+}
+
 /****************************************
  * HOOKS TO RESPOND TO FORM SUBMISSIONS *
  ****************************************/
@@ -346,37 +386,34 @@ function springboard_stats_update_all_fields($node) {
  * Implements hook_webform_submission_insert().
  */
 function springboard_stats_webform_submission_insert($node, $submission) {
-  springboard_stats_update_field($node, 'count_submissions');
+  springboard_stats_enqueue($node->nid, 'count_submissions');
 }
 
 /**
  * Implements hook_webform_submission_delete().
  */
 function springboard_stats_webform_submission_delete($node, $submission) {
-  springboard_stats_update_field($node, 'count_submissions');
+  springboard_stats_enqueue($node->nid, 'count_submissions');
 }
 
 /**
  * Implements hook_fundraiser_donation_post_create().
  */
 function springboard_stats_fundraiser_donation_post_create($donation) {
-  $node = node_load($donation->nid);
-  springboard_stats_update_field($node, 'count_pending');
-  springboard_stats_update_field($node, 'total_pending');
+  springboard_stats_enqueue($donation->nid, 'count_pending');
+  springboard_stats_enqueue($donation->nid, 'total_pending');
 }
 
 /**
  * Implements hook_fundraiser_donation_post_update().
  */
 function springboard_stats_fundraiser_donation_post_update($donation) {
-  $node = node_load($donation->nid);
-  springboard_stats_update_all_fields($node);
+  springboard_stats_enqueue($donation->nid);
 }
 
 /**
  * Implements hook_fundraiser_donation_delete().
  */
 function springboard_stats_fundraiser_donation_delete($donation) {
-  $node = node_load($donation->nid);
-  springboard_stats_update_all_fields($node);
+  springboard_stats_enqueue($donation->nid);
 }
