@@ -294,8 +294,10 @@ class CommerceLitleAccountUpdater {
     $name = 'Litle Account Updater';
     foreach ($donations as $donation) {
       $donation = fundraiser_donation_get_donation($donation->did);
-      watchdog('litle', 'donation did ' . $donation->did . 'updated with<br>' . '<pre>' . var_export($submission_fields, TRUE) . '</pre>');
-      $donation->donation = array_merge($donation->donation, $submission_fields);
+      // Merge directly into donation data because the payment fields are
+      // already clean (last 4 and expiration date) and we don't
+      // want to request a new token. We already have it.
+      $donation->data = array_merge($donation->data, $submission_fields);
       // Save each donation.
       fundraiser_donation_update($donation);
 
