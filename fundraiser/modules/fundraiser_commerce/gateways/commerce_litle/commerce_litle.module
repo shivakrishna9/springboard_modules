@@ -1446,18 +1446,20 @@ function _commerce_litle_cc_card_type_to_litle($type) {
 function _commerce_litle_litle_card_type_to_cc($type) {
   $type = strtolower($type);
   switch ($type) {
-    case "VI":
-      return "visa";
+    case 'vi':
+      return 'visa';
 
-    case "MC":
-      return "mastercard";
+    case 'mc':
+      return 'mastercard';
 
-    case "AX":
-      return "amex";
+    case 'ax':
+      return 'amex';
 
-    case "DI":
-      return "discover";
+    case 'di':
+      return 'discover';
   }
+
+  return '';
 }
 
 /**
