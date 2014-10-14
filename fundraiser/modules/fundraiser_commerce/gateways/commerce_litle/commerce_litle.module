@@ -262,12 +262,14 @@ function commerce_litle_cc_settings_form($settings = array()) {
       '#default_value' => isset($settings['cardonfile']) ? $settings['cardonfile'] : 0,
     );
 
-    $form['accountupdater_extend_sustainers'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Extend future Credit Card sustainers by one month past expiration.'),
-      '#description' => t('If using the Account Updater feature, check this to extend sustainers past the expiration date so new payment details can be retrieved. This only affects sustainers started in the future.'),
-      '#default_value' => isset($settings['accountupdater_extend_sustainers']) ? $settings['accountupdater_extend_sustainers'] : 0,
-    );
+    if (commerce_litle_account_updater_supported()) {
+      $form['accountupdater_extend_sustainers'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Extend future Credit Card sustainers by one month past expiration.'),
+        '#description' => t('If using the Account Updater feature, check this to extend sustainers past the expiration date so new payment details can be retrieved. This only affects sustainers started in the future.'),
+        '#default_value' => isset($settings['accountupdater_extend_sustainers']) ? $settings['accountupdater_extend_sustainers'] : 0,
+      );
+    }
 
   }
   else {
@@ -837,9 +839,11 @@ function commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, 
     commerce_litle_log_response($sale_response);
   }
 
-  // Account Updater processing.
-  $au = new CommerceLitleAccountUpdater($payment_method);
-  $au->processResponseXML($sale_response, $order);
+  if (commerce_litle_account_updater_supported()) {
+    // Account Updater processing.
+    $au = new CommerceLitleAccountUpdater($payment_method);
+    $au->processResponseXML($sale_response, $order);
+  }
 
   // @todo If the response is that the cardonfile isn't valid, deactivate it.
   // @todo Also need to remove the transaction.
@@ -1909,11 +1913,22 @@ function commerce_litle_fraud_settings_form_validate($form, &$form_state) {
  * info after the card expires.
  */
 function commerce_litle_fundraiser_sustainers_series_end_date_alter(&$end_date, &$context) {
-  $master_donation = $context['master_donation'];
-  $au = new CommerceLitleAccountUpdater($master_donation->gateway['gateway_details']);
+  if (commerce_litle_account_updater_supported()) {
+    $master_donation = $context['master_donation'];
+    $au = new CommerceLitleAccountUpdater($master_donation->gateway['gateway_details']);
 
-  if ($au->shouldExtendSustainers()) {
-    $end_date = $au->getNewEndDate($end_date['year'], $end_date['month']);
+    if ($au->shouldExtendSustainers()) {
+      $end_date = $au->getNewEndDate($end_date['year'], $end_date['month']);
+    }
   }
+}
 
+/**
+ * Determine if the right modules are enabled to use Litle's Account Updater.
+ *
+ * @return bool
+ *   TRUE if we can use the CommerceLitleAccountUpdater object.
+ */
+function commerce_litle_account_updater_supported() {
+  return module_exists('fundraiser_sustainers') && module_exists('commerce_cardonfile');
 }
