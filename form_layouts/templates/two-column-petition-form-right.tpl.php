@@ -12,7 +12,7 @@
     <div id="left" class="form-col">
       <h1 class="form-layout-title"><?php print render($element['title']); ?></h1>
       <?php print render($element['body']); ?>
-      <?php $view = views_get_view('recent_petition_signers');
+      <?php $view = views_get_view('recent_petition_signatures');
       $view->set_display('block_1');
       $view->set_arguments(array(arg(1)));
       $view->pre_execute();
