@@ -186,11 +186,11 @@ function springboard_views_springboard_admin_alias_patterns() {
     // Salesforce reports.
     'admin/springboard/reports/integration-reports' => array(
       'path' => array(
-        'regex' => '|^/admin/springboard/reports/integration-reports(/.*)?)$|',
+        'regex' => '|^/admin/springboard/reports/integration-reports(/.*)?$|',
         'replacement' => 'admin/springboard/reports/integration-reports$1',
       ),
       'alias' => array(
-        'regex' => '|^springboard/reports/integration-reports(/.*)?)$|',
+        'regex' => '|^springboard/reports/integration-reports(/.*)?$|',
         'replacement' => 'springboard/reports/integration-reports$1',
       ),
     ),
