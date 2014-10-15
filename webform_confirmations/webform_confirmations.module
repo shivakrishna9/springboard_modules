@@ -75,6 +75,7 @@ function webform_confirmations_preprocess_webform_confirmation(&$vars) {
       // This prevents access problems when Webform User assigns a new UID to a webform
       // submission.
       if ($user->uid == 0 && $user->hostname == $submission->remote_addr) {
+        $_SESSION['webform_confirmations'] = TRUE;
         $sessid = webform_confirmations_get_submission_session($vars['sid']);
 
         if ($sessid && $sessid != session_id()) {
