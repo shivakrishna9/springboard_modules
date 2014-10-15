@@ -265,12 +265,12 @@ function webform_goals_springboard_admin_alias_patterns() {
     return array(
     'admin/config/content/webform_goals/%extra' => array(
       'path' => array(
-        'regex' => '|^/admin/config/content/webform_goals(/.*)$|',
-        'replacement' => 'admin/config/content/webform_goals/%1',
+        'regex' => '|^/admin/config/content/webform_goals(/.*)?$|',
+        'replacement' => 'admin/config/content/webform_goals$1',
       ),
       'alias' => array(
-        'regex' => '|^springboard/goals(/.*)$|',
-        'replacement' => 'springboard/goals/%1',
+        'regex' => '|^springboard/goals(/.*)?$|',
+        'replacement' => 'springboard/goals$1',
       ),
     ),
     'admin/config/content/webform_goals' => array(
