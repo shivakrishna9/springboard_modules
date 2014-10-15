@@ -45,7 +45,7 @@ function sb_social_entity_property_info() {
         ),
         'user' => array(
           'label' => t('Drupal User or Contact'),
-          'type' => 'integer',  // We'd use "user" but salesforce_mapping won't allow mapping of entity values. 
+          'type' => 'integer',  // We'd use "user" but salesforce_mapping won't allow mapping of entity values.
           'description' => t("The Drupal user. May sync to user ID or Contact SFID."),
           'getter callback' => 'sb_social_share_entity_get_properties',
           'setter callback' => 'sb_social_share_entity_set_properties',
@@ -100,7 +100,7 @@ function sb_social_entity_property_info() {
  */
 function sb_social_share_event_save($service, $id, $type, $market_source) {
   global $user;
-  
+
   // Submission-based shares (confirmation pages).
   if (isset($_GET['sid']) && is_numeric($_GET['sid']) && $type == 'nid') {
     module_load_include('inc', 'webform', 'includes/webform.submissions');
@@ -890,6 +890,7 @@ function _sb_social_originating_share_profile_field() {
       'locked' => TRUE,
       'settings' => array(
         'min' => '0',
+        'max_length' => 10,
       ),
       'entity_types' => array(),
       'field_name' => 'sbp_social_originating_share',
@@ -931,7 +932,7 @@ function _sb_social_originating_share_profile_field() {
 
 /**
  * Implements hook_springboard_cookie_uid().
- * 
+ *
  * When a Springboard cookie gets a uid for the first time, check for any social shares
  * that couldn't be exported to Salesforce before, but can now.
  */

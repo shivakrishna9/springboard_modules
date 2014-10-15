@@ -482,6 +482,28 @@ function _sb_social_install_fieldmap_social_share_field_mapping($overrides) {
 }
 
 /**
+ * Adds the max_length setting to the Originating Share field.
+ *
+ * In earlier updates this was missing and caused notices on user/register
+ * because the widget for textfields was looking for the max_length setting.
+ *
+ * @throws FieldException
+ */
+function sb_social_add_maxlength_to_originating_share() {
+  module_load_include('inc', 'field', 'field.crud');
+  $field_name = 'sbp_social_originating_share';
+
+  $field = array(
+    'field_name' => $field_name,
+    'settings' => array(
+      'max_length' => 10,
+    ),
+  );
+  field_update_field($field);
+  drupal_set_message(t('%field_label field updated with max_length setting.', array('%field_label' => 'Originating Social Share')));
+}
+
+/**
  * Add indexes to tables.
  */
 function sb_social_update_7001() {
@@ -619,4 +641,11 @@ function sb_social_update_7010() {
     'default' => '',
   );
   db_add_field('sb_social_shares', 'client_id', $field);
+}
+
+/**
+ * Add max_length setting to Originating Social Share field.
+ */
+function sb_social_update_7011() {
+  sb_social_add_maxlength_to_originating_share();
 }
