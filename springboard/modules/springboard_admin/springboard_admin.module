@@ -473,6 +473,22 @@ function springboard_admin_url_inbound_alter(&$path, $original_path, $path_langu
 }
 
 /**
+ * Implements hook_url_outbound_alter().
+ * 
+ * Outputs administrative url aliases for Springboard UX users.
+ */
+function springboard_admin_url_outbound_alter(&$path, &$options, $original_path) {
+  global $user;
+  // Only output admin path aliases for Springboard UX users.
+  if (springboard_admin_user_gets_sbux($user)) {
+    $admin_alias = springboard_admin_build_admin_path('/' . $original_path, 'path');
+    if (!empty($admin_alias)) {
+      $path = $admin_alias;
+    }
+  }
+}
+
+/**
  * Implements hook_user_login().
  *
  * Redirects users to the Springboard Dashboard based on user role.
@@ -1214,15 +1230,19 @@ function springboard_admin_menu_node_delete_link($type) {
  * True if the user does get the SBUX.
  */
 function springboard_admin_user_gets_sbux($account) {
-  $available_roles = user_roles(TRUE, 'access springboard dashboard');
-  $redirect_roles = variable_get('springboard_user_experience', array_keys($available_roles));
-  // Check if the user has ones of the roles that gets redirected to the
-  // Sprinboard dashboard
-  foreach ($account->roles as $rid => $assigned_role) {
-    // If any role matches, change the redirect and end the function.
-    if ($assigned_role && in_array($rid, $redirect_roles)) {
-      return TRUE;
+  static $result = array();
+  if (!isset($result[$account->uid])) {
+    $result[$account->uid] = FALSE;
+    $available_roles = user_roles(TRUE, 'access springboard dashboard');
+    $redirect_roles = variable_get('springboard_user_experience', array_keys($available_roles));
+    // Check if the user has ones of the roles that gets redirected to the
+    // Sprinboard dashboard
+    foreach ($account->roles as $rid => $assigned_role) {
+      // If any role matches, change the redirect and end the function.
+      if ($assigned_role && in_array($rid, $redirect_roles)) {
+        $result[$account->uid] = TRUE;
+      }
     }
   }
-  return FALSE;
+  return $result[$account->uid];
 }
