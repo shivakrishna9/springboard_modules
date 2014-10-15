@@ -157,6 +157,12 @@ function springboard_petition_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
+      'sid' => array(
+        'description' => 'Webform submission id.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
       'opt_in' => array(
         'description' => 'Track user opt-in to show their signature per petition.',
         'type' => 'int',
@@ -334,4 +340,21 @@ function springboard_petition_email_wrapper_add() {
   // Save extras.
   drupal_set_message(t('An example petition email wrapper has been created.'));
   return $node->nid;
+}
+
+/**
+ * Implements hook_update_N().
+ */
+
+/**
+ * Add sid column to opt in table, this lets us link opt ins to specific submissions.
+ */
+function springboard_petition_update_7001() {
+  $field = array(
+    'description' => 'Webform submission id.',
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+  );
+  db_add_field('springboard_petition_opt_in', 'sid', $field);
 }

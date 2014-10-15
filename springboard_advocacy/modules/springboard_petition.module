@@ -265,7 +265,10 @@ function springboard_petition_petition_submit($form, $form_state) {
   $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted_tree']);
   $opt_in = count($submission_fields['sbp_rps_optin']) ? TRUE : FALSE;
   $uid = _springboard_petition_get_uid_from_sid($form_state['values']['details']['sid']);
-  springboard_petition_log_opt_in($form['#node']->nid, $uid, $opt_in);
+  if ($opt_in) {
+    $sid = $form_state['values']['details']['sid'];
+    springboard_petition_log_opt_in($form['#node']->nid, $uid, $opt_in, $sid);
+  }
 }
 
 /**
@@ -352,15 +355,15 @@ function springboard_petition_tokens($type, $tokens, array $data = array(), arra
  * @param boolean $opt_in
  *   User opt in TRUE/FALSE
  */
-function springboard_petition_log_opt_in($nid, $uid, $opt_in) {
+function springboard_petition_log_opt_in($nid, $uid, $opt_in, $sid) {
   $query = db_delete('springboard_petition_opt_in')
-    ->condition('nid', $nid, '=')
-    ->condition('uid', $uid, '=')
+    ->condition('sid', $sid, '=')
     ->execute();
 
   $record = array(
     'nid' => $nid,
     'uid' => $uid,
+    'sid' => $sid,
     'opt_in' => $opt_in ? 1 : 0,
   );
   drupal_write_record('springboard_petition_opt_in', $record);
