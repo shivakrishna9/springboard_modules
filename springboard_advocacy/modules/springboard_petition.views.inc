@@ -158,7 +158,7 @@ function springboard_petition_views_default_views() {
   $handler->display->display_options['fields']['submitted']['relationship'] = 'sid';
   $handler->display->display_options['fields']['submitted']['label'] = '';
   $handler->display->display_options['fields']['submitted']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['submitted']['date_format'] = 'long';
+  $handler->display->display_options['fields']['submitted']['date_format'] = 'time ago';
   /* Sort criterion: Webform submissions: Submitted */
   $handler->display->display_options['sorts']['submitted']['id'] = 'submitted';
   $handler->display->display_options['sorts']['submitted']['table'] = 'webform_submissions';
