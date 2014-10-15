@@ -1003,7 +1003,7 @@ function springboard_admin_springboard_admin_alias_patterns() {
       ),
       'alias' => array(
         'regex' => '|^springboard(/.*)?$|',
-        'replacement' => 'springboard/$1',
+        'replacement' => 'springboard$1',
       ),
     ),
   );
