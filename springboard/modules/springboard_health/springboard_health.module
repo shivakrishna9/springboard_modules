@@ -244,6 +244,7 @@ function springboard_health_status_check() {
     $size = $select->countQuery()->execute()->fetchField();
     if ((!empty($table->row_limit) && $size > $table->row_limit) && module_exists("rules")) {
       rules_invoke_event("springboard_health_row_count_exceeded", $table->tablename, $size, $table->row_limit);
+      watchdog('springboard health', 'Row count limit has been exceeded on table %table. Current size: %tablesize, limit: %limit', array('%table' => $table->tablename, '%tablesize' => $size, '%limit' => $table->row_limit), WATCHDOG_WARNING);
     }
   }
 }

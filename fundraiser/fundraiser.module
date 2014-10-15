@@ -3217,5 +3217,7 @@ function fundraiser_gateway_status_check() {
 function _fundraiser_gateway_status_alert($nodes, $method_type, $gateway_id, $status) {
   if (module_exists("rules")) {
     rules_invoke_event("fundraiser_gateway_test_mode_detected", $nodes, $method_type, $gateway_id, $status);
+    watchdog('fundraiser', 'A test mode gateway configuration has been detected on a live donation form. Gateway: %gateway. Type: %type, Donation forms: %nodes', array('%gateway' => $gateway_id, '%type' => $method_type, '%nodes' => $nodes), WATCHDOG_EMERGENCY);
+
   }
 }
