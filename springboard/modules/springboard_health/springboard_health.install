@@ -57,12 +57,11 @@ function springboard_health_schema() {
  *
  */
 function springboard_health_uninstall() {
-
-  variable_del('springboard_health_active_database');
-
-  $result = db_query('SELECT name FROM {variable} WHERE name LIKE :name', array(':name' => db_like('springboard_health_tables_') . "%"));
-
-  foreach ($result as $name) {
-    variable_del($name->name);
+  variable_del('springboard_health_tables');
+  $rules = rules_config_load_multiple(FALSE);
+  foreach ($rules as $rule) {
+    if (strpos($rule->name, 'springboard_health') === 0) {
+      rules_config_delete(array($rule->id));
+    }
   }
 }
