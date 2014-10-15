@@ -350,32 +350,45 @@ function springboard_stats_update_all_fields($node) {
 }
 
 function springboard_stats_enqueue($nid, $field = 'all') {
+  static $queued = array();
+  
+  // If all fields were already queued for this node, don't queue any more.
+  if (in_array("$nid-all", $queued)) return;
+  
+  // If this field was already queued for this node, don't queue it again.
+  if (in_array("$nid-$field", $queued)) return;
+  
+  // Queue this field (or all fields) for tallying on the next cron.
   $queue = DrupalQueue::get('springboard_stats');
   $item = array(
     'nid' => $nid,
     'field' => $field,
   );
   $queue->createItem($item);
+  
+  // Remember that we've queued this field (or all fields) on this node.
+  $queued[] = "$nid-$field";
 }
 
 function springboard_stats_process_queue_item($item) {
   static $processed = array();
   
   // Skip item if this node was already fully processed.
-  if (isset($processed[$item['nid'] . '-all'])) return;
+  if (in_array($item['nid'] . '-all', $processed)) return;
   
   // Skip item if this field of this node was already processed.
-  if (isset($processed[$item['nid'] . '-' . $item['field']])) return;
+  if (in_array($item['nid'] . '-' . $item['field'], $processed)) return;
   
   // Load the node and process the field(s) requested.
   $node = node_load($item['nid']);
   if ($item['field'] == 'all') {
     springboard_stats_update_all_fields($node);
-    $processed[$node->nid . '-all'] = TRUE;
   } else {
     springboard_stats_update_field($node, $item['field']);
-    $processed[$node->nid . '-' . $item['field']];
   }
+  
+  // Remember that we've processed this field (or all fields) on this node.
+  $processed[] = $node->nid . '-' . $item['field'];
 }
 
 /****************************************
