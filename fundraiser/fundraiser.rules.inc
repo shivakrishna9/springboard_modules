@@ -18,6 +18,7 @@ function fundraiser_rules_event_info() {
         'gateway_method_name' => array('type' => 'text', 'label' => t('The payment type.')),
         'gateway_id'=> array('type' => 'text', 'label' => t('The gateway ID.')),
         'gateway_status'=> array('type' => 'text', 'label' => t('The gateway status.')),
+        'gateway_edit_link'=> array('type' => 'text', 'label' => t('The gateway edit link.')),
         ),
       ),
    );
