@@ -303,6 +303,8 @@ function market_source_webform_after_build($form, &$form_state) {
       $element = &_market_source_form_find_element($form, $key);
       if (!empty($element) && $element['#type'] == 'hidden') {
         $element['#type'] = 'textfield';
+        // Prevent the core textfield formatter's default 128 limit.
+        $element['#maxlength'] = NULL;
       }
     }
   }

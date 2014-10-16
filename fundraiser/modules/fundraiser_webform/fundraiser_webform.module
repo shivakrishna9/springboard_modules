@@ -498,6 +498,8 @@ function fundraiser_webform_submission_display(&$form, &$form_state) {
   foreach (element_children($form['submitted']) as $key) {
     if ($form['submitted'][$key]['#type'] == 'hidden') {
       $form['submitted'][$key]['#type'] = 'textfield';
+      // Prevent the core textfield formatter's default 128 limit.
+      $form['submitted'][$key]['#maxlength'] = NULL;
     }
   }
 
