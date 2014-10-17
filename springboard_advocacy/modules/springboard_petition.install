@@ -355,6 +355,7 @@ function springboard_petition_update_7001() {
     'type' => 'int',
     'unsigned' => TRUE,
     'not null' => TRUE,
+    'initial' => 0,
   );
   db_add_field('springboard_petition_opt_in', 'sid', $field);
 }
