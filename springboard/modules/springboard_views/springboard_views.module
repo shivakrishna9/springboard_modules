@@ -275,6 +275,7 @@ function springboard_views_springboard_dashboard_panes() {
       $webform_types[] = $type->type;
     }
   }
+  $webform_types_arg = implode('+', $webform_types);
   $panes['springboard_recent_donation_forms'] = array(
    'label' => t('Recent donation forms'),
    'description' => t('Configuration and submissions summary for recently created or updated springboard donation forms.'),
@@ -290,8 +291,9 @@ function springboard_views_springboard_dashboard_panes() {
     'description' => t('Configuration and submissions summary for recently created or updated springboard forms.'),
     'content' => '<h2>' . t('Recent forms ') .   '</h2>' .
       (module_exists('fundraiser') ? l(t('Create form'), $base_url . '/node/add/webform', array('attributes' => array('class' => array('button', 'add-button')))) : '')  .
-      (module_exists('views') ? views_embed_view('sbv_forms', 'block_3', implode('+', $webform_types)) : t('Please enable the Views module to improve your Springboard experience.')) . 
-      l(t('View All Forms'), 'admin/springboard/forms/all', array('attributes' => array('class' => array('more-link button more-button')))),
+      (module_exists('views') ? views_embed_view('sbv_forms', 'block_3', $webform_types_arg) : t('Please enable the Views module to improve your Springboard experience.')) . 
+      (empty($webform_types) ? '<div><em>' . t("There are no Springboard-enabled form types other than Donation forms.") . '</em></div>' : '') . 
+      (!empty($webform_types) ? l(t('View All Forms'), "admin/springboard/forms/$webform_types_arg", array('attributes' => array('class' => array('more-link button more-button')))) : ''),
     'position' => 'column_left',
     'weight' => 2,
   );
