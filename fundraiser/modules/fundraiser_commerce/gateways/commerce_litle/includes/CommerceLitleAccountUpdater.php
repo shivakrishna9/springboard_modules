@@ -314,6 +314,7 @@ class CommerceLitleAccountUpdater {
 
       // Update salesforce.
       if (module_exists('salesforce_genmap')) {
+        $donation = fundraiser_donation_get_donation($donation->did);
         salesforce_genmap_send_object_to_queue('salesforce_donation', 'update',
           $donation->node, $donation->did, $donation, 'donation');
       }
