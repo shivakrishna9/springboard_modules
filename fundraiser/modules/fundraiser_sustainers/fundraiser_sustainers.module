@@ -193,7 +193,7 @@ function fundraiser_sustainers_menu() {
   return $items;
 }
 
-/** 
+/**
  * Implements hook_springboard_admin_alias_patterns().
  */
 function fundraiser_sustainers_springboard_admin_alias_patterns() {
@@ -210,7 +210,7 @@ function fundraiser_sustainers_springboard_admin_alias_patterns() {
       ),
     ),
   );
-}  
+}
 
 /**
  * Access callback for running standalone cron.
@@ -880,7 +880,7 @@ function _fundraiser_sustainers_recurs_monthly_field_create($fundraiser, $field)
 /**
  * Implements hook_fundraiser_donation_form().
  *
- * This hook is here for the purpose of adding a States array to the payment method options, 
+ * This hook is here for the purpose of adding a States array to the payment method options,
  * so that a non-recurring-enabled payment method will show/hide depending on the status of the
  * "recurring donation" field, if one exists. This hook also shows/hides the 'recurring' field.
  */
@@ -974,7 +974,7 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
 /**
  * Validation callback for donation webforms.
  *
- * This function checks whether the visitor chose to make a monthly recurring donation and also 
+ * This function checks whether the visitor chose to make a monthly recurring donation and also
  * chose a payment method that does not support recurring payments. This should be caught by
  * client-side validation but this catches any submission that makes it through.
  */
@@ -1019,7 +1019,7 @@ function fundraiser_sustainers_recurring_conflict_validate(&$form, &$form_state)
  */
 function _fundraiser_sustainers_form_has_exposed_recurring_field($nid) {
   $webform_node = node_load($nid);
-    
+
   // If the 'recurring_setting' is something other than 'user_choice',
   // that means the 'recurring' value on the webform are not exposed
   // to the visitor and thus we can go ahead and return FALSE values.
@@ -1028,7 +1028,7 @@ function _fundraiser_sustainers_form_has_exposed_recurring_field($nid) {
       'visible' => FALSE
     );
   } else {
-    
+
     // Loop through webform components. When we find the one we want, get its settings.
     foreach ($webform_node->webform['components'] as $key => $component_contents) {
       if ($component_contents['form_key'] == 'recurs_monthly' && $component_contents['type'] == 'select') {
@@ -1038,7 +1038,7 @@ function _fundraiser_sustainers_form_has_exposed_recurring_field($nid) {
         } else {
           $type = $component_contents['extra']['multiple'] == 0 ? 'radios' : 'checkbox';
         }
-        
+
         return array(
           'visible' => TRUE,
           'settings' => array(
@@ -2218,19 +2218,23 @@ function fundraiser_sustainers_fundraiser_donation_decline($donation) {
 
     // update sf queue.
     if (module_exists('salesforce_genmap')) {
-      $stages = variable_get('salesforce_donation_mapped_stages','');
+      $stages = variable_get('salesforce_donation_mapped_stages', salesforce_donation_default_stage_map());
       foreach ($stages as $salesforce_name => $commerce_name) {
         if ($commerce_name == 'failed') {
-           $stage = $saleforce_name;
+           $stage = $salesforce_name;
         }
       }
       if (isset($stage)) {
         $donation->recurring->sf_stagename = $stage;
+        // If a failed stage is mapped, re-queue the failed transaction for export.
+        salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
       }
       else {
         $donation->recurring->sf_stagename = 'Donation failed, but stage could not be mapped.';
+        watchdog('fundraiser_sustainers', 'Sustainer payment failure for donation @id will not be exported
+          to Salesforce because the failed order status has not been mapped to an appropriate Opportunity stage. If you wish to export failed sustainer payments you need to add a failed stage in Salesforce and map it on the Salesforce donation settings page.', array('@id' => $donation->did), WATCHDOG_DEBUG, l('Salesforce donation settings', 'admin/config/salesforce/salesforce-donation'));
       }
-      salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
+
     }
       watchdog('fundraiser_sustainers', 'Payment for recurring donation @id has failed 3 times. ' .
         'The donation will not be submitted for payment again. Gateway message: @message',
