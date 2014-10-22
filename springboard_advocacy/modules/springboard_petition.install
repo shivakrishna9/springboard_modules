@@ -145,23 +145,26 @@ function springboard_petition_schema() {
   $schema['springboard_petition_opt_in'] = array(
     'description' => 'Store primary donation information.',
     'fields' => array(
+      'sid' => array( 
+        'description' => 'Webform submission id.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
       'nid' => array(
         'description' => 'Petition node id',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
+        'default' => 0,
       ),
       'uid' => array(
         'description' => 'Signer user id.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
-      ),
-      'sid' => array(
-        'description' => 'Webform submission id.',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
+        'default' => 0,
       ),
       'opt_in' => array(
         'description' => 'Track user opt-in to show their signature per petition.',
@@ -170,8 +173,15 @@ function springboard_petition_schema() {
         'not null' => FALSE,
         'default' => 0,
       ),
+      'created' => array(
+        'description' => 'Submission timestamp',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
     ),
-    'primary key' => array('nid', 'uid'),
+    'primary key' => array('sid'),
   );
   return $schema;
 }
@@ -358,4 +368,22 @@ function springboard_petition_update_7001() {
     'initial' => 0,
   );
   db_add_field('springboard_petition_opt_in', 'sid', $field);
+}
+
+/**
+ * Add "created" column to opt in table. Prevents joining on webform submissions 
+ * table when displaying recent petition signers.
+ */
+function springboard_petition_update_7002() {
+  $field = array(
+    'description' => 'Submission timestamp',
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+    'default' => 0,
+  );
+  db_add_field('springboard_petition_opt_in', 'created', $field);
+  db_drop_primary_key('springboard_petition_opt_in');
+  db_add_primary_key('springboard_petition_opt_in', array('sid'));
+  db_query('UPDATE {springboard_petition_opt_in} s SET created = (SELECT submitted FROM {webform_submissions} w WHERE w.sid = s.sid)');
 }

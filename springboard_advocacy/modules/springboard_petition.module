@@ -361,10 +361,11 @@ function springboard_petition_log_opt_in($nid, $uid, $opt_in, $sid) {
     ->execute();
 
   $record = array(
+    'sid' => $sid,
     'nid' => $nid,
     'uid' => $uid,
-    'sid' => $sid,
     'opt_in' => $opt_in ? 1 : 0,
+    'created' => time(),
   );
   drupal_write_record('springboard_petition_opt_in', $record);
 }
