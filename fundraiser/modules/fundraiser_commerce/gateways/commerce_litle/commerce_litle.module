@@ -876,7 +876,7 @@ function commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, 
       drupal_set_message(check_plain(XmlParser::getNode($sale_response, 'message')), 'error');
     }
 
-    return COMMERCE_PAYMENT_STATUS_FAILURE;
+    return FALSE;
   }
 
   return $transaction->status;
