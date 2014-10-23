@@ -6,6 +6,8 @@
 
 ?>
 
+<?php print drupal_render($form['submitted']); ?>
+
 <div id="donation-form-column-wrapper" class="container-fluid">
   <div class="row-fluid">
     <div id="left" class="span6">
@@ -19,7 +21,7 @@
   </div>
   <div class="row-fluid">
     <div id="donation-form-footer">
-      <?php print render($form['#form']); ?>
+      <?php print drupal_render_children($form); ?>
     </div>
   </div>
 </div>

@@ -161,16 +161,28 @@ function form_layouts_node_view($node, $view_mode, $langcode) {
   if (form_layouts_type_is_layouts_enabled($node->type) && isset($node->form_layouts)) {
     $template = form_layouts_get_node_template($node->nid);
 
-    if (!isset($template['template']) || $template['template'] == 'one-column') {
+    if (!isset($template['template']) || $template['template'] == 'one-column' || form_layouts_template_themes_webform($template)) {
       // Don't do anything on donation forms for one column.
+      // Or if we're theming the webform do that in the form alter
+      // instead of here.
       return;
     }
-    elseif (form_layouts_template_themes_webform($template)) {
-      $node->content['webform']['#theme'] = array($template['theme'] . '_' . $node->nid, $template['theme']);
-    }
     else {
+      // Otherwise we are theming the entire node.
       $node->content['#theme'] = $node->form_layouts;
     }
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for webform_client forms.
+ */
+function form_layouts_form_webform_client_form_alter(&$form, &$form_state, $form_id) {
+  $nid = $form['#node']->nid;
+  $template = form_layouts_get_node_template($nid);
+
+  if (form_layouts_template_themes_webform($template)) {
+    $form['#theme'] = array($template['theme'] . '_' . $nid, $template['theme']);
   }
 }
 
@@ -359,14 +371,12 @@ function form_layouts_preprocess_two_column_hybrid_donation(&$vars) {
  * Preprocess function that breaks a fundraiser form into its fieldsets.
  */
 function form_layouts_fundraiser_preprocess(&$vars) {
-  if (isset($vars['element']['#form']['submitted']['donation'])) {
-    $vars['donation_fieldset'] = drupal_render($vars['element']['#form']['submitted']['donation']);
-    $vars['donor_information_fieldset'] = drupal_render($vars['element']['#form']['submitted']['donor_information']);
-    $vars['billing_information_fieldset'] = drupal_render($vars['element']['#form']['submitted']['billing_information']);
-    $vars['payment_information_fieldset'] = drupal_render($vars['element']['#form']['submitted']['payment_information']);
-    // Do Not Loop This Process.
-    // We don't want to keep trying to render this theme.
-    unset($vars['element']['#theme']);
+  if (isset($vars['element']['submitted']['donation'])) {
+    $vars['donation_fieldset'] = drupal_render($vars['element']['submitted']['donation']);
+    $vars['donor_information_fieldset'] = drupal_render($vars['element']['submitted']['donor_information']);
+    $vars['billing_information_fieldset'] = drupal_render($vars['element']['submitted']['billing_information']);
+    $vars['payment_information_fieldset'] = drupal_render($vars['element']['submitted']['payment_information']);
+
     // Place in a location the end template can pick up.
     $vars['form'] = $vars['element'];
   }

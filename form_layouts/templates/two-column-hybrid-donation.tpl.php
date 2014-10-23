@@ -22,6 +22,8 @@
  */
 ?>
 
+<?php print drupal_render($form['submitted']); ?>
+
 <div id="donation-form-column-wrapper" class="container-fluid">
   <div class="row-fluid">
     <?php print $donation_fieldset; ?>
@@ -34,7 +36,7 @@
     <div id="right" class="span6">
       <?php print $payment_information_fieldset; ?>
       <div id="donation-form-footer">
-        <?php print drupal_render($form['#form']); ?>
+        <?php print drupal_render_children($form); ?>
       </div>
     </div>
   </div>
