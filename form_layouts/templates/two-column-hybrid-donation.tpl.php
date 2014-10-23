@@ -31,7 +31,7 @@
       <?php print $donor_information_fieldset; ?>
       <?php print $billing_information_fieldset; ?>
     </div>
-    <div id="right" class="span6">>
+    <div id="right" class="span6">
       <?php print $payment_information_fieldset; ?>
       <div id="donation-form-footer">
         <?php print drupal_render($form['#form']); ?>
