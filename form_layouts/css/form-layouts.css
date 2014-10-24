@@ -1,6 +1,9 @@
 /**
 * CSS file for form layouts. This is for cases where bootstrap is not in place.
 */
+#donation-form-column-wrapper {
+  padding: 0;
+}
 
 .form-layout-container .form-col {
   display: inline-block;
