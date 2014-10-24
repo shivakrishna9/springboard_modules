@@ -13,6 +13,7 @@
     <div id="left" class="span6">
       <?php print $donor_information_fieldset; ?>
       <?php print $billing_information_fieldset; ?>
+      <?php print $tribute_fieldset; ?>
     </div>
     <div id="right" class="span6">
       <?php print $donation_fieldset; ?>

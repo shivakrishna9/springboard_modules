@@ -376,7 +376,7 @@ function form_layouts_fundraiser_preprocess(&$vars) {
     $vars['donor_information_fieldset'] = drupal_render($vars['element']['submitted']['donor_information']);
     $vars['billing_information_fieldset'] = drupal_render($vars['element']['submitted']['billing_information']);
     $vars['payment_information_fieldset'] = drupal_render($vars['element']['submitted']['payment_information']);
-
+    $vars['tribute_fieldset'] = drupal_render($vars['element']['submitted']['tribute_information']);
     // Place in a location the end template can pick up.
     $vars['form'] = $vars['element'];
   }
