@@ -1036,14 +1036,14 @@ function _fundraiser_sustainers_form_has_exposed_recurring_field($nid) {
         if ($component_contents['extra']['aslist'] == 1) {
           $type = 'select';
         } else {
-          $type = $component_contents['extra']['multiple'] == 0 ? 'radios' : 'checkbox';
+          $type = !empty($component_contents['extra']['multiple']) ? 'checkbox' : 'radios';
         }
 
         return array(
           'visible' => TRUE,
           'settings' => array(
             'type' => $type,
-            'multiple' => $component_contents['extra']['multiple']
+            'multiple' => !empty($component_contents['extra']['multiple'])
           ),
         );
       }
