@@ -166,8 +166,10 @@ function dynamic_gift_strings_mail($key, &$message, $params) {
  *   An unformatted array of ask amounts.
  * @param $show_other
  *   Flag to indicate whether or not the 'other' amount should be added.
+ * @param $prefix
+ *   Currency prefix.
  */
-function _dynamic_gift_strings_parse_amounts($amounts, $show_other, $nid) {
+function _dynamic_gift_strings_parse_amounts($amounts, $show_other, $nid, $prefix = '$') {
   $amounts = explode('|', $amounts);
   $formatted_amounts = array();
   $all_valid = TRUE;
@@ -180,10 +182,10 @@ function _dynamic_gift_strings_parse_amounts($amounts, $show_other, $nid) {
     }
     // if the number has a decimal, retain it. otherwise format without decimals
     if (is_float($amount + 1)) { // implicit cast hack
-      $formatted_amounts[$amount] = '$' . number_format($amount, 2, '.', ',');
+      $formatted_amounts[$amount] = $prefix . number_format($amount, 2, '.', ',');
     }
     elseif (is_integer($amount + 1)) {
-      $formatted_amounts[$amount] = '$' . number_format($amount, 0, '', ',');
+      $formatted_amounts[$amount] = $prefix . number_format($amount, 0, '', ',');
     }
   }
 
