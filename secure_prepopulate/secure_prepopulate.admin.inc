@@ -209,10 +209,8 @@ function secure_prepopulate_generate_af_string($input) {
     return FALSE;
   }
   $query_str = implode('&', $query_str);
-  $key = variable_get('secure_prepopulate_key', '');
-  $vector = variable_get('secure_prepopulate_iv', '');
-  $crypt = _secure_prepopulate_encrypt($query_str, $key, $vector);
-  return 'af=' . $crypt;
+  $crypt = secure_prepopulate_encrypt($query_str);
+  return 'af=' . urlencode($crypt);
 }
 
 function secure_prepopulate_generate_gs_string($input) {
@@ -222,10 +220,8 @@ function secure_prepopulate_generate_gs_string($input) {
     if (isset($input['default_amount'])) {
       $query_str .= '&default=' . $input['default_amount'];
     }
-    $key = variable_get('secure_prepopulate_key', '');
-    $vector = variable_get('secure_prepopulate_iv', '');
-    $crypt = _secure_prepopulate_encrypt($query_str, $key, $vector);
-    return 'gs=' . $crypt;
+    $crypt = secure_prepopulate_encrypt($query_str);
+    return 'gs=' . urlencode($crypt);
   }
   return FALSE;
 }

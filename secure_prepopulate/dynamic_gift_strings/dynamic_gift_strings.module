@@ -15,7 +15,7 @@ function dynamic_gift_strings_init() {
     $nid = arg(1);
     // see if the gift string is expired
     if (!secure_prepopulate_is_expired($gs)) {
-      if ($fields = secure_prepopulate_decrypt($gs)) {
+      if ($fields = secure_prepopulate_decrypt_qs($gs)) {
         $_SESSION['dynamic_gift_string_values'][$nid] = $fields; // Coder: This is ok.
         // see if we need to expire the query string
         $never_expire = variable_get('dynamic_gift_strings_never_expire', 1);

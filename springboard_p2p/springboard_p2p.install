@@ -24,7 +24,6 @@ function springboard_p2p_install() {
   );
 
   variable_set('springboard_p2p_fundraiser_items', $default_items);
-  variable_set('springboard_p2p_base_path', 'p2p');
 
   $default_reg_fields = array(
     'mail' => array(
@@ -615,4 +614,11 @@ function springboard_p2p_update_7005() {
  */
 function springboard_p2p_update_7006() {
   springboard_p2p_set_existing_user_message_default();
+}
+
+/**
+ * Remove the springboard_p2p_base_path variable.
+ */
+function springboard_p2p_update_7007() {
+  variable_del('springboard_p2p_base_path');
 }

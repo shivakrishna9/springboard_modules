@@ -19,6 +19,12 @@ function commerce_payment_example_fundraiser_donation_form_config_check($node) {
   }
 }
 
+function commerce_payment_example_fundraiser_gateway_status_cron_check($details) {
+  if ($details['method_id'] == 'commerce_payment_example') {
+    return 'example gateway';
+  }
+}
+
 /**
  * Implements hook_fundraiser_commerce_fundraiser_gateway_info().
  */
@@ -77,10 +83,18 @@ function commerce_payment_example_fundraiser_commerce_charge($payment_method, $d
   $order = commerce_order_load($donation->did);
   $charge = $order->commerce_order_total[LANGUAGE_NONE][0];
   $name = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
-  // Use 0000000000000000 to test a failed payment, anything else for a good one.
-  if ($donation->donation['payment_fields']['credit']['card_number'] == '0000000000000000') {
+  // Use 0000000000000000 to test a failed payment, anything else for a good one. Use
+  // zipcode 55555 to simulate failed sustainer payments.
+  if ($donation->donation['payment_fields']['credit']['card_number'] == '0000000000000000' || ($donation->reference_charge && $donation->donation['zip'] == '55555')) {
     $success = FALSE;
-    // TODO Place a false transaction on the transaction set.
+    // Add a payment transaction record for failed payments.
+    $transaction = commerce_payment_transaction_new('commerce_payment_example', $order->order_id);
+    $transaction->instance_id = $payment_method['instance_id'];
+    $transaction->amount = $charge['amount'];
+    $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+    $transaction->remote_status = 'remote_failed';
+    $transaction->message = t('Failed due to sustainer failure simulation mode.');
+    commerce_payment_transaction_save($transaction);
   }
   else {
     $success = TRUE;
