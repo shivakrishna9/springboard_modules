@@ -322,10 +322,51 @@ function salesforce_queue_salesforce_sync_pass_item($item, $result) {
 /**
  * Implements hook_salesforce_sync_fail_item().
  */
-function salesforce_queue_salesforce_sync_fail_item($item, $result) {
+function salesforce_queue_salesforce_sync_fail_item($item, $message, $result) {
   if (isset($item->queue) && isset($item->item_id) && !empty($item->queue) && !empty($item->item_id)) {
-    // Mark items for retry if they have not exceeded the maximum.
     $max_retries = variable_get('salesforce_queue_max_retries', SALESFORCE_QUEUE_MAX_RETRIES_DEFAULT);
+    // Check for abnormal failure, which may require special attention.
+    $abnormality = FALSE;
+    if (is_object($result) && is_a($result, 'Exception')) {
+      // An exception was thrown. Was it a normal SF API error?
+      if (empty($result->faultcode) || substr($result->faultcode, 0, 3) != 'sf:') {
+        // The exception doesn't have an SF API faultcode, so this is not a normal failure.
+        $abnormality = t("An exception was thrown without a Salesforce faultcode. The Exception object is the result.");
+      }
+    } else if (is_object($result) && (empty($result->errors) || empty($result->errors[0]) || empty($result->errors[0]->statusCode))) {
+      // The SOAP client returned a result object without a success flag and without an error, so the
+      // nature of the failure is mysterious.
+      $abnormality = t("No error status code was given.");
+    } else if (!is_object($result) && $result !== null) {
+      // The batch didn't fail, and the item was sent to SF API, but there is no result object. This
+      // should never happen.
+      $abnormality = t("No result object was returned.");
+    }
+    // For an abnormal failure, log, invoke Rules event, and move item to the fail queue.
+    if ($abnormality) {
+      $item->queue = 'fail';
+      watchdog(
+        'salesforce_queue', 
+        "Queue item %item_id failed abnormally: @abnormality", 
+        array('%item_id' => $item->item_id, '@abnormality' => $abnormality), 
+        WATCHDOG_ALERT
+      );
+      if (module_exists("rules")) {
+        rules_invoke_event(
+          'salesforce_queue_abnormal_failure',
+          $abnormality,
+          $item->item_id,
+          $item->drupal_id,
+          $item->module,
+          $item->delta,
+          $item->object_type,
+          $message,
+          var_export($item, true),
+          var_export($result, true)
+        );
+      }
+    } else
+    // Mark items for retry if they have not exceeded the maximum.
     if ($max_retries > $item->retries) {
       $item->retries++;
       $item->queue = 'retry';
