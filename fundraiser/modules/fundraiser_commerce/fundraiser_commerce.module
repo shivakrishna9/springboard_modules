@@ -338,6 +338,11 @@ function fundraiser_commerce_commerce_order_status_info() {
       'title' => 'Partially Refunded',
       'state' => 'completed',
     ),
+    'canceled' => array(
+      'name' => 'canceled',
+      'title' => 'Cancelled',
+      'state' => 'canceled',
+    ),
   );
   return $fundraiser_statuses;
 }

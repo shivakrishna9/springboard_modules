@@ -499,19 +499,6 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
         }
       }
       // Corrects the StageName to whatever value is appropriate based on mapped stages.
-      if (isset($donation->donation_cancelled) && $donation->donation_cancelled) {
-        if (isset($fields['StageName'])) {
-          $stagename = 'Withdrawn';
-          if (module_exists('salesforce_donation')) {
-            $mapped_stages = array_flip(variable_get('salesforce_donation_mapped_stages', salesforce_donation_default_stage_map()));
-            if (isset($mapped_stages['cancelled'])) {
-              $stagename = $mapped_stages['cancelled'];
-            }
-          }
-
-          $fields['StageName'] = $stagename;
-        }
-      }
       if (isset($donation->donation_skipped) && $donation->donation_skipped) {
         if (isset($fields['StageName'])) {
           $stagename = 'Skipped';
@@ -1951,10 +1938,10 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
       array('@id' => $donation->did, '@user' => $user->name), WATCHDOG_DEBUG, NULL);
      // Requeue with cancelled flag, the fields alter hook should then update
      // the StageName to the appropriate value based on current stage mapping.
-    $this_donation->donation_cancelled = TRUE;
-    if (module_exists('salesforce_genmap')) {
-      salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $this_donation->node, $this_donation->did, $this_donation, 'donation');
-    }
+    //$this_donation->donation_cancelled = TRUE;
+    //if (module_exists('salesforce_genmap')) {
+    //  salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $this_donation->node, $this_donation->did, $this_donation, 'donation');
+    //}
     fundraiser_donation_delete($this_donation);
   }
 }
