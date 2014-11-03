@@ -2049,11 +2049,19 @@ function fundraiser_sustainers_cancel_form_submit($form, &$form_state) {
   $sustainer_donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
   foreach ($sustainer_donations as $sustainer_donation) {
     $donation = fundraiser_donation_get_donation($sustainer_donation->did);
+
+    // Add the cancel reason to the donation's recurring object.
+    $donation->recurring->cancellation_reason = $reason;
+
+    // Cancel the donation.
+    // @see fundraiser_sustainers_fundraiser_donation_cancel().
     fundraiser_donation_cancel($donation);
+
+    // Add a watchdog entry with the did and reason.
     watchdog('fundraiser_sustainers', 'Donation cancelled for #@did. Reason: @reason',
       array('@did' => $donation->did, '@reason' => $reason));
   }
-  _fundraiser_sustainers_cancel_recurring_by_master($master_did, $reason);
+
   drupal_set_message(t('All future payments cancelled.'));
 }
 
@@ -2229,6 +2237,23 @@ function fundraiser_sustainers_fundraiser_donation_decline($donation) {
         array('@id' => $donation->did, '@attempts' => $attempt_count, '@message' => $donation->result['message']), WATCHDOG_DEBUG);
     }
   }
+}
+
+/**
+ * Implements hook_fundraiser_donation_cancel().
+ */
+function fundraiser_sustainers_fundraiser_donation_cancel($donation) {
+  // Set the reason value if one has been set on the donation's recurring object.
+  $reason = '';
+  if (!empty($donation->recurring->cancellation_reason)) {
+    $reason = $donation->recurring->cancellation_reason;
+  }
+
+  // Set the gateway resp field to canceled.
+  db_update('fundraiser_sustainers')
+    ->fields(array('gateway_resp' => 'canceled', 'cancellation_reason' => $reason))
+    ->condition('did', $donation->did)
+    ->execute();
 }
 
 /**
@@ -2414,16 +2439,6 @@ function _fundraiser_sustainers_update_recurring($donation) {
  */
 function _fundraiser_sustainers_delete_recurring($did) {
   db_delete('fundraiser_sustainers')->condition('did', $did)->execute();
-}
-
-/**
- * DB function, cancel recurring given a master did. (Do not delete!)
- */
-function _fundraiser_sustainers_cancel_recurring_by_master($master_did, $reason) {
-  db_query('UPDATE {fundraiser_sustainers} ' .
-    'SET gateway_resp = \'canceled\', cancellation_reason = :reason ' .
-    'WHERE master_did = :master_did AND (gateway_resp IS NULL OR gateway_resp = \'failed\')',
-    array(':reason' => $reason, ':master_did' => $master_did));
 }
 
 /**
