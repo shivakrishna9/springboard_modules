@@ -76,7 +76,7 @@ function salesforce_sync_admin_form($form, &$form_state) {
   $form['salesforce_sync_truncate_long_strings'] = array(
     '#id' => 'salesforce-sync-truncate-long-strings',
     '#title' => t('Truncate Long Strings'),
-    '#description' => t('Use this setting to automatically truncate a fields value to it\'s max length property in Salesforce. This will prevent STRING_TOO_LONG errors on string based fields.'),
+    '#description' => t('Use this setting to automatically truncate a field\'s value to its max length property in Salesforce. This will prevent STRING_TOO_LONG errors on string based fields.'),
     '#type' => 'checkbox',
     '#default_value' => _sfs_get_value('salesforce_sync_truncate_long_strings', $form_state),
   );
