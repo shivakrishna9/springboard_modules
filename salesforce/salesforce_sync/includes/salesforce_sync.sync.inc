@@ -709,46 +709,36 @@ class SalesforceSync {
       return;
     }
 
-    // Find the data types of all the Salesforce fields and store it in a means
-    // so that we can attempt to reduce the number of times we have to search
-    // for this information.
-    $sfapi = $this->sfapi;
-    if (!is_object($sfapi)) {
-      // Skip if we do not have a valid Salesforce connection.  Do not mark the
-      // item has having been converted in case the connection gets repaired
-      // leter in the process.
-      return;
-    }
-    $sfobject = $sfapi->objectDescribe($item->object_type);
-
-    $field_lengths = &drupal_static(__FUNCTION__);
-    $field_missing = FALSE;
-    foreach ($item->sobject->fields as $field_name => $value) {
-      if (!isset($field_lengths) || !isset($field_lengths[$field_name])) {
-        $field_missing = TRUE;
+    // Get field length limits for any string-type fields on this SF object type.
+    $field_lengths = &drupal_static(__FUNCTION__, array());
+    if (!isset($field_lengths[$item->object_type])) {
+      // Find the data types of all the Salesforce fields and store it in a means
+      // so that we can attempt to reduce the number of times we have to search
+      // for this information.
+      $sfapi = $this->sfapi;
+      if (!is_object($sfapi)) {
+        // Skip if we do not have a valid Salesforce connection.  Do not mark the
+        // item has having been converted in case the connection gets repaired
+        // leter in the process.
+        return;
       }
-    }
-    $count = count($item->sobject->fields);
-    if (!isset($field_lengths) || $field_missing) {
+      $sfobject = $sfapi->objectDescribe($item->object_type);
+      $field_lengths[$item->object_type] = array();
       foreach ($sfobject['fields'] as $field) {
-        if (array_key_exists($field['name'], $item->sobject->fields) && $this->typeIsText($field['type'])) {
-          $field_lengths[$field['name']] = $field['length'];
-          $count--;
-          if ($count == 0) {
-            break;
-          }
+        // If this field is a type stored as a string, then note its maximum length.
+        if ($this->typeIsText($field['type'])) {
+          $field_lengths[$item->object_type][$field['name']] = $field['length'];
         }
       }
     }
-
-    foreach ($item->sobject->fields as $field_name => $value) {
-      if (!empty($field_lengths[$field_name])) {
-        // Truncate the value of the field to the maximum length
-        // allowed by Salesforce.
-        $item->sobject->fields[$field_name] = substr($value, 0, $field_lengths[$field_name]);
+    
+    // Check the lengths of all string-type fields on this sObject.
+    foreach ($field_lengths[$item->object_type] as $field_name => $field_length) {
+      if (!empty($item->sobject->fields[$field_name]) && strlen($item->sobject->fields[$field_name]) > $field_length) {
+        // Truncate the value of the field to the maximum length allowed by SF.
+        $item->sobject->fields[$field_name] = substr($item->sobject->fields[$field_name], 0, $field_length);
       }
     }
-
   }
 
   /**
