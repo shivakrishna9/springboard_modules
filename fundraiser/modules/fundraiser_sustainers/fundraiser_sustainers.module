@@ -1936,12 +1936,8 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
     // Cancel the donation with an informative message.
     watchdog('fundraiser', 'Donation @id was deleted by @user while updating the card expiration date.',
       array('@id' => $donation->did, '@user' => $user->name), WATCHDOG_DEBUG, NULL);
-     // Requeue with cancelled flag, the fields alter hook should then update
-     // the StageName to the appropriate value based on current stage mapping.
-    //$this_donation->donation_cancelled = TRUE;
-    //if (module_exists('salesforce_genmap')) {
-    //  salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $this_donation->node, $this_donation->did, $this_donation, 'donation');
-    //}
+
+    // Delete these donations so do won't appear in the list of recurring donations.
     fundraiser_donation_delete($this_donation);
   }
 }
