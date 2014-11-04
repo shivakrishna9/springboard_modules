@@ -959,13 +959,14 @@ function _page_wrappers_create_template($node) {
  */
 function _page_wrappers_tokens($content) {
   // First replace special Page Wrapper tokens.
-  $tokens = array('[title]', '[messages]', '[content]', '[styles]', '[scripts]');
+  $tokens = array('[title]', '[messages]', '[content]', '[styles]', '[scripts]', '[action-links]');
   $replaces = array(
     '<?php if ($title): print \'<h1>\'. $title .\'</h1>\'; endif; ?>',
     '<?php if ($show_messages && $messages): print $messages; endif; ?>',
     '<?php if ($tabs = render($tabs)): ?><div class="tabs"><?php print $tabs; ?></div><?php endif; ?><?php print render($page["content"]); ?>',
     '<?php print $styles; ?>',
     '<?php print $scripts; ?>',
+    '<?php if ($action_links): ?><ul class="action-links"><?php print render($action_links); ?></ul><?php endif; ?>',
   );
   $content = str_replace($tokens, $replaces, $content);
 
