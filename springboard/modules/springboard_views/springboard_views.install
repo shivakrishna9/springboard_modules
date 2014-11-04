@@ -17,6 +17,8 @@ function springboard_views_install() {
  * Checks Views for anonymous access.
  */
 function springboard_views_requirements($phase) {
+  $requirements = array();
+
   if ($phase == 'runtime') {
     ctools_include('export');
     $views = array(
@@ -57,7 +59,7 @@ function springboard_views_requirements($phase) {
       $value = t('Springboard Views are properly restricted from anonymous access.');
     }
 
-    return array(
+    $requirements = array(
       'springboard_views_access_control' => array(
         'title' => t('Springboard Views access control'),
         'value' => $value,
@@ -66,6 +68,8 @@ function springboard_views_requirements($phase) {
     );
 
   }
+
+  return $requirements;
 }
 
 /**
