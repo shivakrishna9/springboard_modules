@@ -1,33 +1,50 @@
 <?php
-
 /**
- * @file install/uninstall hooks and schema declaration.
+ * @file
+ * install/uninstall hooks and schema declaration for webform goals.
  */
 
 /**
  * Implements hook_requirements().
+ *
+ * Checks that the webform_goals directory is writeable and that the loader
+ * file ahs been created and copied.
  */
 function webform_goals_requirements($phase) {
   $requirements = array();
-  if ($phase === 'runtime' || $phase == 'update') {
+
+  if ($phase == 'runtime') {
+    $t = get_t();
     $path = drupal_realpath(file_default_scheme() . '://') . '/webform_goals';
     $directory_exists = file_prepare_directory($path, FILE_CREATE_DIRECTORY) ? TRUE : FALSE;
     $js_exists = file_exists($path . '/webform_goals.loader.js');
-    $requirements = array(
-      array(
-        'title' => 'Webform Goals',
-        'value' => 'The webform_goals subdirectory has been created and is writeable',
-        'description' => 'Webform Goals files subdirectory exists',
-        'severity' => $directory_exists ? REQUIREMENT_OK : REQUIREMENT_WARNING,
-      ),
-      array(
-        'title' => 'Webform Goals',
-        'value' => 'The external loader javascript has been copied to files/webform_goals',
-        'description' => 'widget loader copied',
-        'severity' => $js_exists ? REQUIREMENT_OK : REQUIREMENT_WARNING,
-      ),
+
+    $requirements['webform_goals_subdir'] = array(
+      'title' => $t('Webform Goals subdirectory'),
+      'value' => $t('The webform_goals subdirectory has been created and is writeable.'),
+      'description' => $t('Webform Goals subdirectory exists'),
+      'severity' => REQUIREMENT_OK,
     );
+
+    if (!$directory_exists) {
+      $requirements['webform_goals_subdir']['value'] = $t('The webform_goals subdirectory is misconfigured or does not exist.');
+      $requirements['webform_goals_subdir']['severity'] = REQUIREMENT_ERROR;
+    }
+
+    $requirements['webform_goals_loader_copied'] = array(
+      'title' => $t('Webform Goals loader'),
+      'value' => $t('The external loader javascript has been copied to files/webform_goals'),
+      'description' => $t('Widget loader copied.'),
+      'severity' => REQUIREMENT_OK,
+    );
+
+    if (!$js_exists) {
+      $requirements['webform_goals_loader_copied']['value'] = $t('The external loader javascript has not been copied to files/webform_goals.');
+      $requirements['webform_goals_loader_copied']['severity'] = REQUIREMENT_ERROR;
+    }
+
   }
+
   return $requirements;
 }
 
