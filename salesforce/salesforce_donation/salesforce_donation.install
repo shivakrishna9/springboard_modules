@@ -73,3 +73,47 @@ function salesforce_donation_install() {
   $map->module = 'salesforce_donation';
   salesforce_genmap_save_map($map, 'salesforce_donation');
 }
+
+/**
+ * Implements hook_requirements().
+ */
+function salesforce_donation_requirements($phase) {
+  if ($phase === 'runtime' ) {
+    // Verify default stages are mapped.
+    $mapped_stages = variable_get('salesforce_donation_mapped_stages', salesforce_donation_default_stage_map());
+
+    // Arrays for tracking mapped/unmapped stages.
+    $mapped = array();
+    $unmapped = array();
+
+    // Loop through the stages and group mapped and unmapped.
+    foreach ($mapped_stages as $sf_stage => $drupal_stage) {
+      if (!empty($drupal_stage)) {
+        $mapped[] = $sf_stage;
+      }
+      else {
+        $unmapped[] = $sf_stage;
+      }
+    }
+
+    // Default values for the status screen.
+    $requirements['salesforce_donation_stages'] = array(
+      'title' => t('Salesforce donation stages'),
+      'description' => t('To ensure proper syncing of donations the Salesforce stages should be mapped. '),
+    );
+
+    // Add additional items depending on mapped status.
+    if (!empty($unmapped)) {
+      $requirements['salesforce_donation_stages']['severity' ]= REQUIREMENT_WARNING;
+      $requirements['salesforce_donation_stages']['value'] = t('You have unmapped Salesforce donation stages.');
+      $admin_link = l('configure', 'admin/config/salesforce/salesforce-donation');
+      $requirements['salesforce_donation_stages']['description'] .= t('Please !configure these stages: @unmapped.', array('!configure' => $admin_link, '@unmapped' => implode(', ', $unmapped)));
+    }
+    elseif (!empty($mapped)) {
+      $requirements['salesforce_donation_stages']['value'] = t('All Salesforce donation stages are mapped.');
+      $requirements['salesforce_donation_stages']['description'] .= t('These stages are configured: @mapped.', array('@mapped' => implode(', ', $mapped)));
+    }
+  }
+
+  return $requirements;
+}
