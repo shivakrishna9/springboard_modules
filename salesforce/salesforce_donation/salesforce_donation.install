@@ -79,20 +79,34 @@ function salesforce_donation_install() {
  */
 function salesforce_donation_requirements($phase) {
   if ($phase === 'runtime' ) {
-    // Verify default stages are mapped.
-    $mapped_stages = variable_get('salesforce_donation_mapped_stages', salesforce_donation_default_stage_map());
+    // Get the default stage map that represents the system in a perfect configuration.
+    $default_stages = salesforce_donation_default_stage_map();
+
+    // Get the order statuses that are important (payment_received, pending_future_payment, canceled, etc.).
+    $order_statuses = array_values($default_stages);
+
+    // Verify the order statuses are mapped. Return an empty array by default because we're going
+    // to assume the mapping has never been set correctly, i.e. stage names can differ in Salesforce.
+    $mapped_stages = variable_get('salesforce_donation_mapped_stages', array());
 
     // Arrays for tracking mapped/unmapped stages.
     $mapped = array();
     $unmapped = array();
 
-    // Loop through the stages and group mapped and unmapped.
-    foreach ($mapped_stages as $sf_stage => $drupal_stage) {
-      if (!empty($drupal_stage)) {
-        $mapped[] = $sf_stage;
-      }
-      else {
-        $unmapped[] = $sf_stage;
+    // If the variable is still empty, assume the setting has not been addressed at all
+    // and no stages are mapped correctly.
+    if (empty($mapped_stages)) {
+      $unmapped = $order_statuses;
+    }
+    else {
+      foreach ($order_statuses as $status) {
+        // Check each status, if it's in $mapped_stages we should be good.
+        if (!in_array($status, $mapped_stages)) {
+          $unmapped[] = $status;
+        }
+        else {
+          $mapped[] = $status;
+        }
       }
     }
 
@@ -106,12 +120,12 @@ function salesforce_donation_requirements($phase) {
     if (!empty($unmapped)) {
       $requirements['salesforce_donation_stages']['severity' ]= REQUIREMENT_WARNING;
       $requirements['salesforce_donation_stages']['value'] = t('You have unmapped Salesforce donation stages.');
-      $admin_link = l('configure', 'admin/config/salesforce/salesforce-donation');
-      $requirements['salesforce_donation_stages']['description'] .= t('Please !configure these stages: @unmapped.', array('!configure' => $admin_link, '@unmapped' => implode(', ', $unmapped)));
+      $admin_link = l('map', 'admin/config/salesforce/salesforce-donation');
+      $requirements['salesforce_donation_stages']['description'] .= t('Please !map these donation stages: @unmapped.', array('!map' => $admin_link, '@unmapped' => implode(', ', $unmapped)));
     }
     elseif (!empty($mapped)) {
       $requirements['salesforce_donation_stages']['value'] = t('All Salesforce donation stages are mapped.');
-      $requirements['salesforce_donation_stages']['description'] .= t('These stages are configured: @mapped.', array('@mapped' => implode(', ', $mapped)));
+      $requirements['salesforce_donation_stages']['description'] .= t('These donation stages are configured: @mapped.', array('@mapped' => implode(', ', $mapped)));
     }
   }
 
