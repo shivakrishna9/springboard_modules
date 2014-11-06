@@ -499,19 +499,6 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
         }
       }
       // Corrects the StageName to whatever value is appropriate based on mapped stages.
-      if (isset($donation->donation_cancelled) && $donation->donation_cancelled) {
-        if (isset($fields['StageName'])) {
-          $stagename = 'Withdrawn';
-          if (module_exists('salesforce_donation')) {
-            $mapped_stages = array_flip(variable_get('salesforce_donation_mapped_stages', salesforce_donation_default_stage_map()));
-            if (isset($mapped_stages['cancelled'])) {
-              $stagename = $mapped_stages['cancelled'];
-            }
-          }
-
-          $fields['StageName'] = $stagename;
-        }
-      }
       if (isset($donation->donation_skipped) && $donation->donation_skipped) {
         if (isset($fields['StageName'])) {
           $stagename = 'Skipped';
@@ -1949,12 +1936,8 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
     // Cancel the donation with an informative message.
     watchdog('fundraiser', 'Donation @id was deleted by @user while updating the card expiration date.',
       array('@id' => $donation->did, '@user' => $user->name), WATCHDOG_DEBUG, NULL);
-     // Requeue with cancelled flag, the fields alter hook should then update
-     // the StageName to the appropriate value based on current stage mapping.
-    $this_donation->donation_cancelled = TRUE;
-    if (module_exists('salesforce_genmap')) {
-      salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $this_donation->node, $this_donation->did, $this_donation, 'donation');
-    }
+
+    // Delete these donations so do won't appear in the list of recurring donations.
     fundraiser_donation_delete($this_donation);
   }
 }
@@ -2066,11 +2049,19 @@ function fundraiser_sustainers_cancel_form_submit($form, &$form_state) {
   $sustainer_donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
   foreach ($sustainer_donations as $sustainer_donation) {
     $donation = fundraiser_donation_get_donation($sustainer_donation->did);
+
+    // Add the cancel reason to the donation's recurring object.
+    $donation->recurring->cancellation_reason = $reason;
+
+    // Cancel the donation.
+    // @see fundraiser_sustainers_fundraiser_donation_cancel().
     fundraiser_donation_cancel($donation);
+
+    // Add a watchdog entry with the did and reason.
     watchdog('fundraiser_sustainers', 'Donation cancelled for #@did. Reason: @reason',
       array('@did' => $donation->did, '@reason' => $reason));
   }
-  _fundraiser_sustainers_cancel_recurring_by_master($master_did, $reason);
+
   drupal_set_message(t('All future payments cancelled.'));
 }
 
@@ -2246,6 +2237,23 @@ function fundraiser_sustainers_fundraiser_donation_decline($donation) {
         array('@id' => $donation->did, '@attempts' => $attempt_count, '@message' => $donation->result['message']), WATCHDOG_DEBUG);
     }
   }
+}
+
+/**
+ * Implements hook_fundraiser_donation_cancel().
+ */
+function fundraiser_sustainers_fundraiser_donation_cancel($donation) {
+  // Set the reason value if one has been set on the donation's recurring object.
+  $reason = '';
+  if (!empty($donation->recurring->cancellation_reason)) {
+    $reason = $donation->recurring->cancellation_reason;
+  }
+
+  // Set the gateway resp field to canceled.
+  db_update('fundraiser_sustainers')
+    ->fields(array('gateway_resp' => 'canceled', 'cancellation_reason' => $reason))
+    ->condition('did', $donation->did)
+    ->execute();
 }
 
 /**
@@ -2434,16 +2442,6 @@ function _fundraiser_sustainers_delete_recurring($did) {
 }
 
 /**
- * DB function, cancel recurring given a master did. (Do not delete!)
- */
-function _fundraiser_sustainers_cancel_recurring_by_master($master_did, $reason) {
-  db_query('UPDATE {fundraiser_sustainers} ' .
-    'SET gateway_resp = \'canceled\', cancellation_reason = :reason ' .
-    'WHERE master_did = :master_did AND (gateway_resp IS NULL OR gateway_resp = \'failed\')',
-    array(':reason' => $reason, ':master_did' => $master_did));
-}
-
-/**
  * DB funct, get user donation set information that are recurring.
  */
 function _fundraiser_sustainers_get_donation_sets_recurr_by_uid($uid) {
@@ -2558,7 +2556,7 @@ function _fundraiser_sustainers_get_donations_recurr_remaining($master_did) {
   $donations = db_query('SELECT * FROM {fundraiser_sustainers} r ' .
     'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
     'WHERE r.master_did = :master_did ' .
-    'AND (r.gateway_resp IS NULL OR r.gateway_resp = \'failed\') ' .
+    'AND (r.gateway_resp IS NULL OR (r.gateway_resp = \'failed\' && r.attempts != 3)) ' .
     'ORDER BY r.next_charge ASC', array(':master_did' => $master_did))->fetchAll();
   return $donations;
 }
