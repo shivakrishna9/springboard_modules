@@ -78,6 +78,8 @@ function salesforce_donation_install() {
  * Implements hook_requirements().
  */
 function salesforce_donation_requirements($phase) {
+  $requirements = array();
+
   if ($phase === 'runtime' ) {
     // Get the default stage map that represents the system in a perfect configuration.
     $default_stages = salesforce_donation_default_stage_map();
