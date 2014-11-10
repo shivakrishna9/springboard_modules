@@ -14,6 +14,14 @@ require_once 'includes/fundraiser_sustainers.goals.inc';
  * Implements hook_cron().
  */
 function fundraiser_sustainers_cron() {
+
+  $checks = new FundraiserSustainersHealthChecks();
+  $results = $checks->runChecks();
+
+  foreach ($results as $item) {
+    watchdog($item['type'], $item['message'], $item['variables'], $item['severity'], $item['link']);
+  }
+
   if (variable_get('fundraiser_standalone_cron_enabled', 0)) {
     return 0;
   }
@@ -21,6 +29,7 @@ function fundraiser_sustainers_cron() {
     watchdog('fundraiser_cron', 'Standard cron run.', NULL, WATCHDOG_INFO);
     fundraiser_sustainers_standalone_cron();
   }
+
 }
 
 /**
