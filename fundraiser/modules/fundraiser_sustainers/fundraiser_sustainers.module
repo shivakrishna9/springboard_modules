@@ -2780,3 +2780,82 @@ function fundraiser_sustainers_component_value_is_recurring($value) {
 
   return FALSE;
 }
+
+/**
+ * Implements hook_entity_info().
+ */
+function fundraiser_sustainers_entity_info() {
+  $return = array(
+    'fundraiser_sustainer_record' => array(
+      'label' => t('Fundraiser sustainer record'),
+      'plural label' => t('Fundraiser sustainer records'),
+      'entity class' => 'Entity',
+      'controller class' => 'EntityAPIController',
+      'base table' => 'fundraiser_sustainers',
+      'entity keys' => array(
+        'id' => 'did',
+        'label' => 'did',
+      ),
+      'fieldable' => FALSE,
+      'exportable' => FALSE,
+      'module' => 'fundraiser_sustainers',
+      'views controller class' => 'EntityDefaultViewsController',
+    ),
+  );
+
+  return $return;
+}
+
+/**
+ * Implements hook_entity_property_info().
+ */
+function fundraiser_sustainers_entity_property_info() {
+  $return = array(
+    'fundraiser_sustainer_record' => array(
+      'properties' => array(
+        'master_did' => array(
+          'label' => t('Master donation ID'),
+          'type' => 'integer',
+          'schema field' => 'master_did',
+        ),
+        'did' => array(
+          'label' => t('Donation ID'),
+          'type' => 'integer',
+          'schema field' => 'did',
+        ),
+        'next_charge' => array(
+          'label' => t('Next charge'),
+          'type' => 'date',
+          'schema field' => 'next_charge',
+        ),
+        'gateway_resp' => array(
+          'label' => t('Gateway response'),
+          'type' => 'text',
+          'schema field' => 'gateway_resp',
+        ),
+        'attempts' => array(
+          'label' => t('Attempts'),
+          'type' => 'integer',
+          'schema field' => 'attempts',
+        ),
+        'cancellation_reason' => array(
+          'label' => t('Cancellation reason'),
+          'type' => 'text',
+          'schema field' => 'cancellation_reason',
+        ),
+        'sustainer_key' => array(
+          'label' => t('Sustainer key'),
+          'type' => 'text',
+          'schema field' => 'sustainer_key',
+        ),
+        'lock_id' => array(
+          'label' => t('Lock ID'),
+          'type' => 'text',
+          'schema field' => 'lock_id',
+        ),
+      ),
+    ),
+  );
+
+  return $return;
+}
