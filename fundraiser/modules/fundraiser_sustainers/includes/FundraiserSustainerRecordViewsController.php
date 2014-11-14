@@ -19,6 +19,13 @@ class FundraiserSustainerRecordViewsController extends EntityDefaultViewsControl
     $data = parent::views_data();
     $table = $this->info['base table'];
     $data[$table]['gateway_resp']['filter']['allow empty'] = TRUE;
+
+    $data[$table]['table']['join']['fundraiser_donation'] = array(
+      'left_field' => 'did',
+      'field' => 'did',
+    );
+
+    watchdog('debug', '<pre>' . var_export($data, TRUE) . '</pre>');
     return $data;
   }
 }
