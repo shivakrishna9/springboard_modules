@@ -7,6 +7,7 @@ dependencies[] = fundraiser
 dependencies[] = entity
 
 files[] = includes/FundraiserSustainersHealthChecks.php
+files[] = includes/FundraiserSustainerRecordViewsController.php
 
 ;Testing files
 files[] = tests/fundraiser_sustainers.test
