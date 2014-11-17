@@ -1,4 +1,0 @@
-name = Springboard Message to Target
-description = Send targeted messages to elected officials or other custom targets.
-core = 7.x
-dependencies[] = webform_user
