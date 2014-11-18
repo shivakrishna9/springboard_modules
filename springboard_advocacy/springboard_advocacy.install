@@ -1,0 +1,31 @@
+<?php
+
+/**
+ * @file
+ * Springboard Advocacy installation functions.
+ */
+
+/**
+ * Implements hook_requirements().
+ */
+function springboard_advocacy_requirements($phase) {
+  $t = get_t();
+
+  $requirements['springboard_advocacy'] = array(
+    'title' => $t('Springboard advocacy'),
+    'value' => 'Version 1',
+  );
+
+  drupal_load('module', 'libraries');
+  $lib = libraries_load('springboard_advocacy');
+
+  if ($phase == 'runtime' && !empty($lib['installed'])) {
+    $requirements['springboard_advocacy']['severity'] = REQUIREMENT_OK;
+  }
+  else {
+    $requirements['springboard_advocacy']['severity'] = REQUIREMENT_ERROR;
+    $requirements['springboard_advocacy']['description'] = 'OK';
+  }
+
+  return $requirements;
+}

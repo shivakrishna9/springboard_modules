@@ -2,4 +2,9 @@ name = Springboard Advocacy
 description = Main controller feature for Springboard Advocacy
 core = 7.x
 package = Springboard Advocacy
+dependencies[] = libraries
 features[features_api][] = api:2
+
+configure = 'admin/config/springboard/advocacy'
+
+files[] = includes/springboard_advocacy.admin.inc

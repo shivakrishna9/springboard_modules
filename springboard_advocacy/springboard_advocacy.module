@@ -3,3 +3,74 @@
  * @file
  * Drupal needs this blank file.
  */
+
+/**
+ * Implements hook_menu().
+ */
+function springboard_advocacy_menu() {
+  $items['admin/config/springboard/advocacy'] = array(
+    'title' => 'Springboard Advocacy Settings',
+    'description' => 'Configuration settings for Springboard advocacy features.',
+    'page callback' => 'springboard_advocacy_settings_page',
+    'access arguments' => array('administer springboard advocacy'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'includes/springboard_advocacy.admin.inc',
+  );
+
+  // TODO: Remove
+  $items['advocacy-test'] = array(
+    'page callback' => 'springboard_advocacy_test',
+    'access callback' => TRUE,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function springboard_advocacy_permission() {
+  return array(
+    'administer springboard advocacy' => array(
+      'title' => t('Administer Springboard advocacy'),
+      'description' => t('Perform administration tasks for Springboard advocacy.'),
+    ),
+  );
+}
+
+/**
+ * Test function. Remove.
+ */
+function springboard_advocacy_test() {
+  libraries_load('springboard_advocacy');
+  $client = new SpringboardAdvocacyAPIClient();
+
+  return 'Hello, World!';
+}
+
+/**
+ * Implements hook_libraries_info().
+ */
+function springboard_advocacy_libraries_info() {
+  $libraries['springboard_advocacy'] = array(
+    'name' => 'Springboard Advocacy',
+    'vendor url' => 'https://github.com/JacksonRiver/springboard-sdk-php',
+    'download url' => 'https://github.com/JacksonRiver/springboard-sdk-php',
+    'version callback' => 'springboard_advocacy_library_version',
+    'files' => array(
+      'php' => array(
+        'SpringboardAdvocacyAPIClient.php',
+      ),
+    ),
+  );
+
+  return $libraries;
+}
+
+/**
+ * Version callback for hook_libraries_info().
+ */
+function springboard_advocacy_library_version() {
+  // TODO: Load client and return static version.
+  return '1';
+}
