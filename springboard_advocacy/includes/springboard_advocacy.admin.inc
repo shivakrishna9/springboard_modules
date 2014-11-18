@@ -36,5 +36,19 @@ function springboard_advocacy_settings_form() {
     '#default_value' => variable_get('springboard_advocacy_server_url', ''),
   );
 
+  $form['transaction']['springboard_advocacy_client_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Transaction server Oauth Client ID.'),
+    '#description' => t('Client ID for legislator lookup'),
+    '#default_value' => variable_get('springboard_advocacy_client_id', ''),
+  );
+
+  $form['transaction']['springboard_advocacy_client_secret'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Transaction server Oauth Client Secret.'),
+    '#description' => t('Client Secret for legislator lookup'),
+    '#default_value' => variable_get('springboard_advocacy_client_secret', ''),
+  );
+
   return $form;
 }
