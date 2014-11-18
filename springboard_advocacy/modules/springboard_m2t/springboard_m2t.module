@@ -115,7 +115,7 @@ function springboard_m2t_node_insert($node) {
     );
     // Add the component to the Webform.
     foreach ($fields as $field) {
-      dpm($field);
+      //dpm($field);
       $cid = webform_component_insert($field);
       //user map the state field
       if ($field['form_key'] == 'sbp_state' || $field['form_key'] == 'sbp_zip') {
@@ -283,24 +283,7 @@ function springboard_m2t_admin() {
     '#description' => t('Required for the Javascript API only'),
     '#default_value' => variable_get('springboard_m2t_smarty_htmltoken', ''),
   );
-  $form['transaction'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Transaction server configuration'),
-  );
 
-  $form['transaction']['springboard_m2t_trans_key'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Transaction server API key.'),
-    '#description' => t('API key for legislator lookup'),
-    '#default_value' => variable_get('springboard_m2t_trans_key', ''),
-  );
-
-  $form['transaction']['springboard_m2t_trans_domain'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Transaction server domain.'),
-    '#description' => t('E.g., "example.com"'),
-    '#default_value' => variable_get('springboard_m2t_trans_domain', ''),
-  );
   return system_settings_form($form);
 }
 
