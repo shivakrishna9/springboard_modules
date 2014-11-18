@@ -741,6 +741,8 @@ class SalesforceSync {
       if (!empty($item->sobject->fields[$field_name]) && strlen($item->sobject->fields[$field_name]) > $field_length) {
         // Truncate the value of the field to the maximum length allowed by SF.
         $item->sobject->fields[$field_name] = substr($item->sobject->fields[$field_name], 0, $field_length);
+        // Make sure no XML entity was truncated.
+        $item->sobject->fields[$field_name] = preg_replace("|\\&[^;]*\$|", '', $item->sobject->fields[$field_name]);
       }
     }
   }
