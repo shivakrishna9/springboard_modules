@@ -47,7 +47,7 @@ class FundraiserSustainersHealthChecks {
         'message' => 'The following sustainer donations are locked but not processed: %dids',
         'variables' => array('%dids' => implode(', ', $stuck_sustainers)),
         'severity' => WATCHDOG_CRITICAL,
-        'link' => l('Report', 'admin/springboard/reports/reconciliation/locked-not-processed-sustainers'),
+        'link' => l(t('Report'), 'admin/springboard/reports/reconciliation/locked-not-processed-sustainers'),
       );
       $this->issues[] = $issue;
     }
