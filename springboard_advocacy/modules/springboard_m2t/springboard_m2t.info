@@ -3,3 +3,7 @@ description = Send targeted messages to elected officials or other custom target
 core = 7.x
 package = Springboard Advocacy
 dependencies[] = webform_user
+dependencies[] = springboard_advocacy
+files[] = includes/springboard_m2t.admin.inc
+files[] = includes/springboard_m2t.node.inc
+files[] = includes/springboard_m2t.webform.inc

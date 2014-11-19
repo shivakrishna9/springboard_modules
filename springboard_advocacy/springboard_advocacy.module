@@ -17,6 +17,11 @@ function springboard_advocacy_menu() {
     'file' => 'includes/springboard_advocacy.admin.inc',
   );
 
+  $items['admin/config/springboard/advocacy/index'] = array(
+    'title' => 'Springboard Advocacy',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+
   return $items;
 }
 

@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Sets up the petition module and content type.
+ * Sets up the message to target module and content type.
  */
 
 /**
