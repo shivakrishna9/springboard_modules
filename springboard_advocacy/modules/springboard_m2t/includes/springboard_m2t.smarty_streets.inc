@@ -13,8 +13,8 @@ function _springboard_mt2_smarty_lookup() {
   //uncomment to test lookups via menu callback
   // $geo['zip'] = '12866';
   // $geo['plus4'] = '3300';
-  // springboard_m2t_transaction_lookup($geo['zip'], $geo['plus4']);
-  // return;
+  // springboard_m2t_get_legislators($geo['zip'], $geo['plus4']);
+  // exit();
 
   $responses = array();
 
@@ -54,7 +54,7 @@ function _springboard_mt2_smarty_lookup() {
       $geo['longitude'] = isset($data[0]->metadata->longitude) ? $data[0]->metadata->longitude : '';
       $_SESSION['m2t_geo'] = $geo;
       if(!empty($geo['zip']) && !empty($geo['plus4'])) {
-        springboard_m2t_transaction_lookup($geo['zip'], $geo['plus4']);
+        springboard_m2t_get_legislators($geo['zip'], $geo['plus4']);
       }
     }
   }

@@ -28,8 +28,9 @@ function springboard_m2t_menu() {
   return $items;
 }
 
-function springboard_m2t_transaction_lookup($zip, $plus4) {
-  $client = springboard_m2t_load_client();
+function springboard_m2t_get_legislators($zip, $plus4) {
+  $loader = new AdvocacyApiClientLoader();
+  $client = $loader->getClient();
   $legislators = $client->getLegislators($zip  . '-' . $plus4);
   if (!empty($legislators)) {
     return drupal_json_output(array('response' => $legislators));
@@ -37,32 +38,6 @@ function springboard_m2t_transaction_lookup($zip, $plus4) {
   else {
     return FALSE;
   }
-}
-
-function springboard_m2t_load_client() {
-  $lib = libraries_load('springboard_advocacy');
-  $domain = variable_get('springboard_advocacy_server_url', '');
-  $client = new SpringboardAdvocacyAPIClient($domain);
-  $token = springboard_m2m_get_token($client);
-  if (!empty($token->access_token)) {
-    $client->setToken($token->access_token);
-  }
-  return $client;
-}
-
-function springboard_m2m_get_token($client) {
-  $token = variable_get('springboard_advocacy_access_token', array());
-  if (empty($token->access_token) || $token->created < (time() - ($token->expires_in - 100))) {
-    $client_id = variable_get('springboard_advocacy_client_id', '');
-    $client_secret = variable_get('springboard_advocacy_client_secret', '');
-    $token = $client->getToken($client_id, $client_secret);
-    if (!empty($token->access_token)) {
-      $token->created = time();
-      variable_set('springboard_advocacy_access_token', $token);
-      return $token;
-    }
-  }
-  return $token;
 }
 
 /**

@@ -8,3 +8,5 @@ features[features_api][] = api:2
 configure = 'admin/config/springboard/advocacy'
 
 files[] = includes/springboard_advocacy.admin.inc
+files[] = includes/springboard_advocacy.ApiClientLoader.inc
+
