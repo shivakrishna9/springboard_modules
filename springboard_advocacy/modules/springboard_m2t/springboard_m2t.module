@@ -14,72 +14,18 @@ function springboard_m2t_menu() {
     'type' => MENU_LOCAL_TASK,
 
   );
-  
+
   //ajax callback
   $items['smartylookup'] = array(
     'title' => 'Get district info from smarty streets',
     'description' => '',
     'type' => MENU_CALLBACK,
     'page callback' => '_springboard_mt2_smarty_lookup',
+    'file' => 'includes/springboard_m2t.smarty_streets.inc',
     'access callback' => TRUE,
   );
 
   return $items;
-}
-
-/**
- * Ajax callback for smarty streets api
- */
-function _springboard_mt2_smarty_lookup() {
-  
-  //uncomment to test lookups via menu callback
-  // $geo['zip'] = '12866';
-  // $geo['plus4'] = '3300';
-  // springboard_m2t_transaction_lookup($geo['zip'], $geo['plus4']);
-  // return;
-
-  $responses = array();
-
-  $address = isset($_POST['address']) ? $_POST['address'] : NULL;
-  if (empty($address)) {
-    return drupal_json_output(array('error' => 'address not supplied'));
-  }
-
-  $query =  array(
-    //'street' => '49 Hall Rd, Canaan, NH 03741',
-    'street' => urlencode($address['submitted[sbp_address']),
-    'city' => urlencode($address['submitted[sbp_city']),
-    'state' => urlencode($address['submitted[sbp_state']),
-    'zipcode' => urlencode($address['submitted[sbp_zip']),
-    'auth-id' => variable_get('springboard_m2t_smarty_authid',''),
-    'auth-token' => variable_get('springboard_m2t_smarty_authtoken',''),
-  );
-
-  $url = url('https://api.smartystreets.com/street-address', array('query' => $query));
-
-  $response = drupal_http_request($url);
-
-  if (!isset($response->status_message) || $response->status_message != 'OK') {
-    return drupal_json_output(array('error' => 'Server returned invalid response'));
-  }
-
-  if (empty($response->data)) {
-
-    $data = json_decode($response->data);
-
-    if(!empty($data)) {
-      $geo = array();
-      $geo['zip'] = isset($data[0]->components->zipcode) ? $data[0]->components->zipcode : '';
-      $geo['plus4'] = isset($data[0]->components->plus4_code) ? $data[0]->components->plus4_code : '';
-      //$district = $data[0]->metadata->congressional_district;
-      $geo['latitude'] = isset($data[0]->metadata->latitude) ? $data[0]->metadata->latitude : '';
-      $geo['longitude'] = isset($data[0]->metadata->longitude) ? $data[0]->metadata->longitude : '';
-      $_SESSION['m2t_geo'] = $geo;
-      if(!empty($geo['zip']) && !empty($geo['plus4'])) {
-        springboard_m2t_transaction_lookup($geo['zip'], $geo['plus4']);
-      }
-    }
-  }
 }
 
 function springboard_m2t_transaction_lookup($zip, $plus4) {
@@ -119,7 +65,167 @@ function springboard_m2m_get_token($client) {
   return $token;
 }
 
+/**
+ * Implements hook_node_insert
+ */
+function springboard_m2t_node_insert($node) {
+  if($node->type == 'springboard_m2t') {
+    module_load_include('inc', 'webform', 'includes/webform.components');
+
+    //add custom fields for the messages
+    $fields[] = array(
+      'nid' => $node->nid,
+      'form_key' => 'springboard_m2t_phone',
+      'pid' => 0,
+      'name' => t('Phone Number'),
+      'type' => 'textfield',
+      'mandatory' => 1,
+      'weight' => 13,
+      'email' => 1,
+      'extra' => array(
+      'description' => t(''),
+      ),
+    );
+
+    $fields[] = array(
+        'nid' => $node->nid,
+        'form_key' => 'springboard_m2t_message',
+        'pid' => 0,
+        'name' => t('Message'),
+        'type' => 'textarea',
+        'mandatory' => 1,
+        'weight' => 18,
+        'email' => 1,
+        'extra' => array(
+        'description' => t('Customize your message'),
+      ),
+    );
+    //limit the sate field to US states
+    $fields[] = array(
+        'nid' => $node->nid,
+        'form_key' => 'sbp_state',
+        'pid' => 0,
+        'name' => t('State'),
+        'type' => 'select',
+        'mandatory' => 1,
+        'weight' => 12,
+        'email' => 1,
+        'extra' => array(
+        'options_source' => 'united_states', //may have to remove some.
+        'aslist' => 'Y',
+        'multiple' => 0,
+      ),
+    );
+    $fields[] = array(
+        'nid' => $node->nid,
+        'form_key' => 'sbp_zip',
+        'pid' => 0,
+        'name' => t('Zip Code'),
+        'type' => 'textfield',
+        'mandatory' => 1,
+        'weight' => 13,
+        'email' => 1,
+        'extra' => array(
+        'maxlength' => 5,
+      ),
+    );
+    // Add the component to the Webform.
+    foreach ($fields as $field) {
+      //dpm($field);
+      $cid = webform_component_insert($field);
+      //user map the state field
+      if ($field['form_key'] == 'sbp_state' || $field['form_key'] == 'sbp_zip') {
+            $map = array(
+            'nid' => $node->nid,
+            'cid' => $cid,
+            'map_id' => $field['form_key'],
+          );
+          drupal_write_record('webform_user_component_map', $map);
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_form_alter
+ */
+function springboard_m2t_form_alter(&$form, &$form_state, $form_id) {
+  if(isset($form['#node']) && $form['#node']->type == 'springboard_m2t') {
+    $pos = strpos($form_id, 'client_form');
+    if($pos !== FALSE) {
+      $form['#submit'][] = 'springboard_m2t_submit';
+      $form['#attributes']['class'][] = 'geocode-form';
+      $form['#attributes']['class'][] = 'geocode-form';
+      // if (variable_get('springboard_m2t_geocoder', '') == 'googlej') {
+      //   $form['#attached']['js'][]  = array('data' => 'https://maps.googleapis.com/maps/api/js?sensor=false', 'type' => 'external');
+      // }
+      $form['#attached']['js'][] = array('data' => drupal_get_path('module', 'springboard_m2t') . '/js/m2t.js'); 
+      $form['#attached']['js'][] = array('data' => drupal_get_path('module', 'fundraiser') . '/js/jquery.validate.min.js'); 
+      $form['#attached']['js'][] = array(
+        'data' => array(
+          'springboard_m2t' => array(
+              'geocoder' => variable_get('springboard_m2t_geocoder', ''),
+            ),
+          ),
+        'type' => 'setting',
+      );
+    }
+  }
+}
+
+/**
+ * Submission hook will contain logic for knowwho lookups, perhaps.
+ */
+function springboard_m2t_submit($form, $form_state) {
+
+}
 
 
 
+
+/**
+ * Implements hook_webform_user_profile_fields_alter
+ *
+ */
+function springboard_m2t_webform_user_profile_fields_alter(&$fields, $node) {
+  if($node->type == 'springboard_m2t') {
+    foreach ($fields as $index => $profile_field) {
+      //make all fields except address2 mandatory
+      if ($profile_field['name'] != 'sbp_address_line_2'){
+        $fields[$index]['mandatory'] = 1;
+      }
+      //setup removeal of non-US provinces
+      if ($profile_field['name'] == 'sbp_state'){
+        unset($fields[$index]);
+      }
+      //remove zip
+      if ($profile_field['name'] == 'sbp_zip'){
+        unset($fields[$index]);
+      }
+      //move email field lower
+      if ($profile_field['name'] == 'mail'){
+        $fields[$index]['weight'] = 14;
+      }
+    } 
+  }
+}
+
+/**
+ * Implements hook_webfrom_submission insert
+ */
+function springboard_m2t_webform_submission_insert($node, $submission) {
+  if(isset($_SESSION['m2t_geo']) && $node->type == 'springboard_m2t') {
+    $data = array(
+      'nid' => $submission->nid,
+      'sid' => $submission->sid,
+      'uid' => $submission->uid,
+      'zip' => $_SESSION['m2t_geo']['zip'],
+      'plus4' => $_SESSION['m2t_geo']['plus'],
+      'lat' => $_SESSION['m2t_geo']['latitude'],
+      'lon' => $_SESSION['m2t_geo']['longitude'],
+    );
+    drupal_write_record('springboard_m2t_location', $data);
+    unset($_SESSION['m2t_geo']);
+  };
+}
 
