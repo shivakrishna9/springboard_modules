@@ -13,7 +13,7 @@ function fundraiser_sustainers_default_rules_configuration() {
       "rules_sustainers_check_failure" : {
       "LABEL" : "Sustainers failed health checks.",
       "PLUGIN" : "reaction rule",
-      "ACTIVE" : false,
+      "ACTIVE" : true,
       "TAGS" : [ "fundraiser", "sustainers" ],
       "REQUIRES" : [ "rules", "fundraiser", "fundraiser_sustainers" ],
       "ON" : [ "fundraiser_sustainer_health_check_failure" ],
@@ -21,7 +21,7 @@ function fundraiser_sustainers_default_rules_configuration() {
         { "mail" : {
             "to" : "[site:mail]",
             "subject" : "Fundraiser sustainers health check failure on [site:name]",
-            "message" : "A sustainer has failed a health check. Please review the below information.:\r\n\r\n[message:value]\r\n\r\nIf you have questions, please contact your account team or support@jacksonriver.com.\r\n\r\n",
+            "message" : "A sustainer has failed a health check. Please review the below information.\r\n\r\n[message:value]\r\n\r\nIf you have questions, please contact your account team or support@jacksonriver.com.\r\n\r\n",
             "language" : [ "" ]
           }
         }
