@@ -162,6 +162,12 @@ function springboard_m2t_form_alter(&$form, &$form_state, $form_id) {
  */
 function _springboard_mt2_smarty_lookup() {
   
+  //uncomment to test lookups via menu callback
+  // $geo['zip'] = '12866';
+  // $geo['plus4'] = '3300';
+  // springboard_m2t_transaction_lookup($geo['zip'], $geo['plus4']);
+  // return;
+
   $responses = array();
 
   $address = isset($_POST['address']) ? $_POST['address'] : NULL;
@@ -212,7 +218,6 @@ function _springboard_mt2_smarty_lookup() {
 function springboard_m2t_transaction_lookup($zip, $plus4) {
 
   $client = springboard_m2t_load_client();
-
   $legislators = $client->getLegislators($zip  . '-' . $plus4);
   if (!empty($legislators)) {
     return drupal_json_output(array('response' => $legislators));
@@ -226,18 +231,24 @@ function springboard_m2t_load_client() {
    $lib = libraries_load('springboard_advocacy');
    $domain = variable_get('springboard_advocacy_server_url', '');
    $client = new SpringboardAdvocacyAPIClient($domain);
-   springboard_m2m_get_token($client);
+   $token = springboard_m2m_get_token($client);
+   $client->setToken($token->access_token);
    return $client;
 }
 
 function springboard_m2m_get_token($client) {
   $token = variable_get('springboard_advocacy_access_token', array());
-  if (empty($token->access_token)) {
+  if (empty($token->access_token) || $token->created < (time() - ($token->expires_in - 100))) {
     $client_id = variable_get('springboard_advocacy_client_id', '');
     $client_secret = variable_get('springboard_advocacy_client_secret', '');
     $token = $client->getToken($client_id, $client_secret);
-    variable_set('springboard_advocacy_access_token', $token);
+    if (!empty($token->access_token)) {
+      $token->created = time();
+      variable_set('springboard_advocacy_access_token', $token);
+      return $token;
+    }
   }
+  return $token;
 }
 
 /**
