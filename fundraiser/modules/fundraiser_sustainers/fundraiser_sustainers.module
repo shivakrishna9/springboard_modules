@@ -18,8 +18,23 @@ function fundraiser_sustainers_cron() {
   $checks = new FundraiserSustainersHealthChecks();
   $results = $checks->runChecks();
 
+  $message = '';
   foreach ($results as $item) {
-    watchdog($item['type'], $item['message'], $item['variables'], $item['severity'], $item['link']);
+    $link = NULL;
+    $full_url = NULL;
+    if (isset($item['link_url'])) {
+      $link = l($item['link_text'], $item['link_url']);
+      $full_url = url($item['link_url'], array('absolute' => TRUE));
+    }
+    watchdog($item['type'], $item['message'], $item['variables'], $item['severity'], $link);
+    $message .= t($item['message'], $item['variables']) . "\r\n" . $item['link_text'] . "\r\n";
+    if (!empty($full_url)) {
+      $message .= $full_url . "\r\n";
+    }
+  }
+
+  if (!empty($message)) {
+    rules_invoke_event('fundraiser_sustainer_health_check_failure', $message);
   }
 
   if (variable_get('fundraiser_standalone_cron_enabled', 0)) {
