@@ -50,5 +50,5 @@ function springboard_advocacy_settings_form() {
     '#default_value' => variable_get('springboard_advocacy_client_secret', ''),
   );
 
-  return $form;
+  return system_settings_form($form);
 }

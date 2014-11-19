@@ -17,12 +17,6 @@ function springboard_advocacy_menu() {
     'file' => 'includes/springboard_advocacy.admin.inc',
   );
 
-  // TODO: Remove
-  $items['advocacy-test'] = array(
-    'page callback' => 'springboard_advocacy_test',
-    'access callback' => TRUE,
-  );
-
   return $items;
 }
 
@@ -39,16 +33,6 @@ function springboard_advocacy_permission() {
 }
 
 /**
- * Test function. Remove.
- */
-function springboard_advocacy_test() {
-  libraries_load('springboard_advocacy');
-  $client = new SpringboardAdvocacyAPIClient();
-
-  return 'Hello, World!';
-}
-
-/**
  * Implements hook_libraries_info().
  */
 function springboard_advocacy_libraries_info() {
@@ -57,6 +41,7 @@ function springboard_advocacy_libraries_info() {
     'vendor url' => 'https://github.com/JacksonRiver/springboard-sdk-php',
     'download url' => 'https://github.com/JacksonRiver/springboard-sdk-php',
     'version callback' => 'springboard_advocacy_library_version',
+    'path' => 'advocacy',
     'files' => array(
       'php' => array(
         'SpringboardAdvocacyAPIClient.php',
@@ -70,7 +55,6 @@ function springboard_advocacy_libraries_info() {
 /**
  * Version callback for hook_libraries_info().
  */
-function springboard_advocacy_library_version() {
-  // TODO: Load client and return static version.
+function springboard_advocacy_library_version($library) {
   return '1';
 }
