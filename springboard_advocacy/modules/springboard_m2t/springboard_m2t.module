@@ -15,20 +15,20 @@ function springboard_m2t_menu() {
 
   );
 
-  //ajax callback
-  $items['smartylookup'] = array(
-    'title' => 'Get district info from smarty streets',
+  $items['apitest'] = array(
+    'title' => 'Get test the legislator lookup',
     'description' => '',
     'type' => MENU_CALLBACK,
-    'page callback' => '_springboard_mt2_smarty_lookup',
-    'file' => 'includes/springboard_m2t.smarty_streets.inc',
-    'access callback' => TRUE,
+    'page callback' => '_springboard_mt2_api_test',
+    'file' => 'includes/springbaord_m2t.api_test.inc',
+    'access arguments' => array('administer site configuration'),
   );
 
   return $items;
 }
 
 function springboard_m2t_get_legislators($zip, $plus4) {
+
   $loader = new AdvocacyApiClientLoader();
   $client = $loader->getClient();
   $legislators = $client->getLegislators($zip  . '-' . $plus4);
@@ -129,34 +129,18 @@ function springboard_m2t_form_alter(&$form, &$form_state, $form_id) {
     $pos = strpos($form_id, 'client_form');
     if($pos !== FALSE) {
       $form['#submit'][] = 'springboard_m2t_submit';
-      $form['#attributes']['class'][] = 'geocode-form';
-      $form['#attributes']['class'][] = 'geocode-form';
-      // if (variable_get('springboard_m2t_geocoder', '') == 'googlej') {
-      //   $form['#attached']['js'][]  = array('data' => 'https://maps.googleapis.com/maps/api/js?sensor=false', 'type' => 'external');
-      // }
-      $form['#attached']['js'][] = array('data' => drupal_get_path('module', 'springboard_m2t') . '/js/m2t.js'); 
-      $form['#attached']['js'][] = array('data' => drupal_get_path('module', 'fundraiser') . '/js/jquery.validate.min.js'); 
-      $form['#attached']['js'][] = array(
-        'data' => array(
-          'springboard_m2t' => array(
-              'geocoder' => variable_get('springboard_m2t_geocoder', ''),
-            ),
-          ),
-        'type' => 'setting',
-      );
     }
   }
 }
 
 /**
- * Submission hook will contain logic for knowwho lookups, perhaps.
  */
 function springboard_m2t_submit($form, $form_state) {
+  $values = $form_state['values']['submitted_tree'];
+  module_load_include('inc', 'springboard_m2t', 'includes/springboard_m2t.smarty_streets');
+  $legislators = _springboard_mt2_smarty_lookup($values);
 
 }
-
-
-
 
 /**
  * Implements hook_webform_user_profile_fields_alter

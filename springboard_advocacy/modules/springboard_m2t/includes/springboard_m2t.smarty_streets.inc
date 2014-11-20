@@ -5,30 +5,14 @@
  * Smarty Streets functions for Springboard M2T.
  */
 
-/**
- * Ajax callback for smarty streets api
- */
-function _springboard_mt2_smarty_lookup() {
+function _springboard_mt2_smarty_lookup($values) {
   
-  //uncomment to test lookups via menu callback
-  // $geo['zip'] = '12866';
-  // $geo['plus4'] = '3300';
-  // springboard_m2t_get_legislators($geo['zip'], $geo['plus4']);
-  // exit();
-
   $responses = array();
-
-  $address = isset($_POST['address']) ? $_POST['address'] : NULL;
-  if (empty($address)) {
-    return drupal_json_output(array('error' => 'address not supplied'));
-  }
-
   $query =  array(
-    //'street' => '49 Hall Rd, Canaan, NH 03741',
-    'street' => urlencode($address['submitted[sbp_address']),
-    'city' => urlencode($address['submitted[sbp_city']),
-    'state' => urlencode($address['submitted[sbp_state']),
-    'zipcode' => urlencode($address['submitted[sbp_zip']),
+    'street' => $values['sbp_address'],
+    'city' => $values['sbp_city'],
+    'state' => $values['sbp_state'],
+    'zipcode' => $values['sbp_zip'],
     'auth-id' => variable_get('springboard_m2t_smarty_authid',''),
     'auth-token' => variable_get('springboard_m2t_smarty_authtoken',''),
   );
@@ -37,14 +21,10 @@ function _springboard_mt2_smarty_lookup() {
 
   $response = drupal_http_request($url);
 
-  if (!isset($response->status_message) || $response->status_message != 'OK') {
-    return drupal_json_output(array('error' => 'Server returned invalid response'));
-  }
-
-  if (empty($response->data)) {
+  if (!empty($response->data)) {
 
     $data = json_decode($response->data);
-
+ 
     if(!empty($data)) {
       $geo = array();
       $geo['zip'] = isset($data[0]->components->zipcode) ? $data[0]->components->zipcode : '';
