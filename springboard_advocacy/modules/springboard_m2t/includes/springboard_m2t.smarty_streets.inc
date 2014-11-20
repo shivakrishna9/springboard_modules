@@ -34,9 +34,7 @@ function _springboard_mt2_smarty_lookup($values) {
       $geo['longitude'] = isset($data[0]->metadata->longitude) ? $data[0]->metadata->longitude : '';
       $_SESSION['m2t_geo'] = $geo;
       if(!empty($geo['zip']) && !empty($geo['plus4'])) {
-        $legislators = springboard_m2t_get_legislators($geo['zip'], $geo['plus4']);
-        $_SESSION['legislators'] = $legislators;
-
+         return $geo['zip'] . '-' . $geo['plus4'];
       }
     }
   }
