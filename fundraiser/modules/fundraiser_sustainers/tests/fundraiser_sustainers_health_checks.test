@@ -28,16 +28,11 @@ class FundraiserSustainersHealthChecksTestCase extends DrupalWebTestCase {
   /**
    * Implements setUp().
    */
-  public function setUp($additional_modules = array()) {
-    // Call the parent to set all of the base modules up.
+  public function setUp() {
+    // Without fundraiser_commerce being enabled here, we get an undefined
+    // offset because fundraiser_sustainers needs a module to provide a
+    // sustainer key path.
     $additional_modules = array(
-//      'fundraiser_webform',
-//      'webform_user',
-//      'commerce_product',
-//      'commerce_product_reference',
-//      'commerce_payment_example',
-//      'commerce_cardonfile',
-      'encrypt',
       'fundraiser_commerce',
       'fundraiser_sustainers',
     );
@@ -45,7 +40,7 @@ class FundraiserSustainersHealthChecksTestCase extends DrupalWebTestCase {
   }
 
   /**
-   * Insert stuck sustaienrs and assert that the check finds them.
+   * Insert a stuck sustaienr and assert that the check finds it.
    */
   public function testStuckSustainerFound() {
     $checks = new FundraiserSustainersHealthChecks();
@@ -74,23 +69,32 @@ class FundraiserSustainersHealthChecksTestCase extends DrupalWebTestCase {
   /**
    * Insert unstuck sustainers and assert that the check doesn't report them.
    */
-//  public function testStuckSustainerNotFound() {
-//    $checks = new FundraiserSustainersHealthChecks();
-//    $results = $checks->runChecks();
-//
-//    $this->assertEqual(count($results), 0, 'No stuck sustainers found.');
-//
-//    // Add a few not-stuck sustainers.
-//    for ($i = 0; $i < 5; $i++) {
-//      $this->insertSustainerRecord(FALSE);
-//    }
-//
-//    $checks = new FundraiserSustainersHealthChecks();
-//    $results = $checks->runChecks();
-//
-//    $this->assertEqual(count($results), 0, 'No stuck sustainers found');
-//  }
+  public function testStuckSustainerNotFound() {
+    $checks = new FundraiserSustainersHealthChecks();
+    $results = $checks->runChecks();
 
+    $this->assertEqual(count($results), 0, 'No stuck sustainers found.');
+
+    // Add a few not-stuck sustainers.
+    for ($i = 0; $i < 5; $i++) {
+      $this->insertSustainerRecord(FALSE);
+    }
+
+    $checks = new FundraiserSustainersHealthChecks();
+    $results = $checks->runChecks();
+
+    $this->assertEqual(count($results), 0, 'No stuck sustainers found');
+  }
+
+  /**
+   * Inserts a sustainer record into the DB.
+   *
+   * @param bool $stuck
+   *   Whether this should be a normal or stuck sustainer.
+   *
+   * @return int
+   *   The donation ID that was just saved.
+   */
   protected function insertSustainerRecord($stuck = FALSE) {
     $record = array(
       'master_did' => $this->master_did,
@@ -99,7 +103,6 @@ class FundraiserSustainersHealthChecksTestCase extends DrupalWebTestCase {
       'gateway_resp' => 'success',
       'attempts' => 1,
       'sustainer_key' => 'example.com',
-      'lock_id' => '0',
     );
 
     if ($stuck) {
@@ -107,12 +110,8 @@ class FundraiserSustainersHealthChecksTestCase extends DrupalWebTestCase {
       $record['gateway_resp'] = 'processing';
     }
 
-//    $result = drupal_write_record('fundraiser_sustainers', $record);
-//    $this->assertEqual($result, SAVED_NEW, 'New sustainer record saved.');
-
-    db_insert('fundraiser_sustainers')
-      ->fields($record)
-      ->execute();
+    $result = drupal_write_record('fundraiser_sustainers', $record);
+    $this->assertEqual($result, SAVED_NEW, 'New sustainer record saved.');
 
     return $record['did'];
   }
