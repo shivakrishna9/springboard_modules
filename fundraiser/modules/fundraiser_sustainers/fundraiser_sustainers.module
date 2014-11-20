@@ -2327,9 +2327,8 @@ function fundraiser_sustainers_get_sustainer_key_value() {
  *   exist.
  */
 function fundraiser_sustainers_sustainer_key_file_exists() {
-  $dir = module_invoke_all('fundraiser_get_credit_encryption_path');
-  $dir = $dir[0];
-  if (!empty($dir) && $dir !== t('Not configured, see below.')) {
+  $dir = variable_get('encrypt_secure_key_path', '');
+  if (!empty($dir)) {
     $filename = rtrim($dir, '/\\') . '/sustainer.key';
     if (file_exists($filename) && $file = fopen($filename, 'r')) {
       return $filename;
