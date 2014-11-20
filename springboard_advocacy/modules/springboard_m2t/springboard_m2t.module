@@ -33,10 +33,16 @@ function springboard_m2t_get_legislators($zip, $plus4) {
   $client = $loader->getClient();
   $legislators = $client->getLegislators($zip  . '-' . $plus4);
   if (!empty($legislators)) {
-    return drupal_json_output(array('response' => $legislators));
+    return json_encode($legislators);
   }
   else {
     return FALSE;
+  }
+}
+
+function springboard_m2t_preprocess_webform_confirmation(&$vars) {
+  if ($vars['node']->type == 'springboard_m2t') {
+    $vars['confirmation_message'] = $_SESSION['legislators'];
   }
 }
 
@@ -179,7 +185,7 @@ function springboard_m2t_webform_submission_insert($node, $submission) {
       'sid' => $submission->sid,
       'uid' => $submission->uid,
       'zip' => $_SESSION['m2t_geo']['zip'],
-      'plus4' => $_SESSION['m2t_geo']['plus'],
+      'plus4' => $_SESSION['m2t_geo']['plus4'],
       'lat' => $_SESSION['m2t_geo']['latitude'],
       'lon' => $_SESSION['m2t_geo']['longitude'],
     );
