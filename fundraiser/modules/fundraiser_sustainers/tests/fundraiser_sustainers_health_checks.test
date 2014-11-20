@@ -31,19 +31,12 @@ class FundraiserSustainersHealthChecksTestCase extends DrupalWebTestCase {
   public function setUp($additional_modules = array()) {
     // Call the parent to set all of the base modules up.
     $additional_modules = array(
-      'salesforce_sync',
-      'salesforce_queue',
-      'salesforce_mapping',
-      'salesforce_log',
-      'salesforce_genmap',
-      'fundraiser',
-      'fundraiser_webform',
-      'fundraiser_commerce',
-      'webform_user',
-      'commerce_product',
-      'commerce_product_reference',
-      'commerce_payment_example',
-      'commerce_cardonfile',
+//      'fundraiser_webform',
+//      'webform_user',
+//      'commerce_product',
+//      'commerce_product_reference',
+//      'commerce_payment_example',
+//      'commerce_cardonfile',
       'encrypt',
       'fundraiser_commerce',
       'fundraiser_sustainers',
@@ -114,8 +107,12 @@ class FundraiserSustainersHealthChecksTestCase extends DrupalWebTestCase {
       $record['gateway_resp'] = 'processing';
     }
 
-    $result = drupal_write_record('fundraiser_sustainers', $record);
-    $this->assertEqual($result, SAVED_NEW, 'New sustainer record saved.');
+//    $result = drupal_write_record('fundraiser_sustainers', $record);
+//    $this->assertEqual($result, SAVED_NEW, 'New sustainer record saved.');
+
+    db_insert('fundraiser_sustainers')
+      ->fields($record)
+      ->execute();
 
     return $record['did'];
   }
