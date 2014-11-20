@@ -69,7 +69,7 @@ class FundraiserSustainersHealthChecks {
    *   An array of donation IDs.
    */
   protected function getStuckDids() {
-    $query = "SELECT did FROM {fundraiser_sustainers} WHERE lock_id != 0 AND attempts != 3 AND (gateway_resp NOT IN ('success', 'failed') OR gateway_resp IS NULL)";
+    $query = "SELECT did FROM {fundraiser_sustainers} WHERE lock_id != '0' AND attempts != 3 AND (gateway_resp NOT IN ('success', 'failed') OR gateway_resp IS NULL)";
 
     return db_query($query)->fetchCol();
   }
