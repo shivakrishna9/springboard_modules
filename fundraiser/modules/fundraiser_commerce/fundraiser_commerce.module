@@ -604,7 +604,7 @@ function fundraiser_commerce_salesforce_genmap_map_field_info_alter(&$fields, $n
           . '<small class="fundraiser-admin-description">' . t($field_info['description']) . '</small>';
       }
     }
-  } 
+  }
 }
 
 /**
@@ -804,6 +804,8 @@ function _fundraiser_commerce_zone_field_display($form, $form_state, $field) {
  * Implements hook_fundraiser_get_credit_encryption_path().
  * This is called by modules that need to check for processing availablity outside of normal.
  * Such as sustainer.
+ *
+ * @deprecated This hook has been removed because it's only used by one module.
  */
 function fundraiser_commerce_fundraiser_get_credit_encryption_path() {
   return variable_get('encrypt_secure_key_path', t('Not configured, see below.')); // From the encrypt module.
@@ -1669,7 +1671,7 @@ function fundraiser_commerce_fundraiser_donation_success($donation) {
   $donation->status = 'payment_received';
   $donation->status_label = _fundraiser_commerce_get_label_by_status('payment_received');
   $donation->status_charged = _fundraiser_commerce_get_charged_by_status('payment_received');
-  
+
   // If the payment gateway has a response save callback, invoke it now.
   if (!empty($donation->gateway['response save callback'])) {
     $donation->gateway['response save callback']($donation);
@@ -2447,7 +2449,7 @@ function fundraiser_commerce_commerce_authnet_cim_request_alter($api_request_ele
  */
 function fundraiser_commerce_response_fields_validate($element, &$form_state, $form) {
   //@TODO: I bet there's a more robust way of doing this.
-  $form_state['values']['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['mappable'] = 
+  $form_state['values']['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['mappable'] =
     empty($form_state['input']['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields'])
     ? array()
     : array_keys($form_state['input']['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['all'])
@@ -2460,7 +2462,7 @@ function fundraiser_commerce_response_fields_validate($element, &$form_state, $f
  * Add original settings to form_state for logging and comparision to new settings
  */
 function fundraiser_commerce_form_rules_ui_edit_element_alter(&$form, &$form_state) {
-  
+
   if(isset($form['parameter']['payment_method']['settings'])) {
     //get the stored payment method settings
     $method_id = isset($form['parameter']['payment_method']['settings']['payment_method']['method_id']['#value'])
@@ -2475,7 +2477,7 @@ function fundraiser_commerce_form_rules_ui_edit_element_alter(&$form, &$form_sta
 }
 
 /**
- * Log the payment method form settings 
+ * Log the payment method form settings
  */
 function fundraiser_commerce_gateway_log_gateway_settings_changes($form, $form_state) {
   global $user;
@@ -2488,7 +2490,7 @@ function fundraiser_commerce_gateway_log_gateway_settings_changes($form, $form_s
   if ($new_settings_assoc) {
     $new_settings = fundraiser_commerce_flatten_gateway_settings($new_settings_assoc);
   }
-  
+
   $old_settings_assoc =$form_state['storage']['old_settings_assoc'];
 
   if($old_settings_assoc) {
@@ -2499,8 +2501,8 @@ function fundraiser_commerce_gateway_log_gateway_settings_changes($form, $form_s
   if (!empty($new_settings) && !empty($old_settings)) {
     foreach($new_settings as $name => $value) {
       if (!is_int($name) && isset($old_settings[$name]) && $old_settings[$name] !== $value) {
-        $changed[$name] = $name . ': old_value: ' . $old_settings[$name] . ', new_value: ' . $new_settings[$name]; 
-      }        
+        $changed[$name] = $name . ': old_value: ' . $old_settings[$name] . ', new_value: ' . $new_settings[$name];
+      }
     }
   }
 
@@ -2516,13 +2518,13 @@ function fundraiser_commerce_gateway_log_gateway_settings_changes($form, $form_s
 }
 
 function fundraiser_commerce_flatten_gateway_settings($settings) {
-  $flat = array(); 
+  $flat = array();
   array_walk_recursive(
-    $settings, 
+    $settings,
     function($value, $key) use (&$flat) {
       $flat[$key] = $value;
     }
-  ); 
-  return $flat; 
+  );
+  return $flat;
 }
 
