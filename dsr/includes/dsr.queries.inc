@@ -55,6 +55,8 @@ function dsr_select($status, $start, $end) {
  * returns an array of orders matching the select criteria
  */
 function dsr_get_orders($status, $start_date, $end_date) {
+  $orders = array();
+
   $results = db_query('
     SELECT
       f.did,
@@ -68,6 +70,7 @@ function dsr_get_orders($status, $start_date, $end_date) {
   while ($data = $results->fetchAssoc()) {
     $orders[$data['did']] = $data['amount'];
   }
+
   return $orders;
 }
 
