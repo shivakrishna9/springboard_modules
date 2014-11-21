@@ -447,14 +447,15 @@ function _dsr_run_sql_order_select($sql) {
  *   The SOQL select statement to run.
  */
 function _dsr_run_soql_opportunity_select($soql) {
-
   $donations = array();
   $continue = TRUE;
   $salesforce = salesforce_get_api();
 
   // make sure we've got a good connection
   if ($salesforce->isAuthorized()) {
-    $query = $salesforce->query($soql);
+    // The query() method wants a SOQL object.
+    // Since we already have the string, call the API directly.
+    $query = $salesforce->apiCall('query?q=' . $soql);
 
     if ($query['records']) {
       foreach ($query['records'] as $record) {
