@@ -106,7 +106,7 @@ function dsr_theme() {
     'dsr_box' => array(
       'variables' => array(
         'content' => NULL,
-        'title' => NULL,
+        'label' => NULL,
       ),
       'file' => 'dsr.reports.inc',
     ),
