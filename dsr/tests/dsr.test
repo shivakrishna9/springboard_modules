@@ -10,6 +10,8 @@
  */
 class DsrTestCase extends DrupalWebTestCase {
 
+  protected $next_did = 1;
+
   /**
    * Implementation of getInfo().
    */
@@ -26,46 +28,93 @@ class DsrTestCase extends DrupalWebTestCase {
    */
   public function setUp($modules = array(), $permissions = array()) {
     $modules = array_merge($modules, array(
-      'entity',
-      'libraries',
-      'token',
-      'fundraiser',
-      'salesforce',
-      'salesforce_soap',
-      'salesforce_sync',
-      'salesforce_queue',
-      'salesforce_mapping',
-      'salesforce_genmap',
-      'salesforce_donation',
+//      'entity',
+//      'libraries',
+//      'token',
+//      'fundraiser',
+//      'salesforce',
+//      'salesforce_soap',
+//      'salesforce_sync',
+//      'salesforce_queue',
+//      'salesforce_mapping',
+//      'salesforce_genmap',
+//      'salesforce_donation',
       'dsr',
     ));
     parent::setUp($modules);
-
-    $permissions = array_merge($permissions, array(
-      'access content',
-      'administer site configuration',
-      'administer content types',
-      'administer nodes',
-      'administer users',
-      'view dsr reports',
-      'administer dsr',
-    ));
-    $this->admin_user = $this->drupalCreateUser($permissions);
-    $this->drupalLogin($this->admin_user);
   }
 
   /**
-   * Implementation of tearDown().
+   * Insert some donations and see that dsr_select returns the correct results.
    */
-  public function tearDown() {
-    user_cancel(array(), $this->admin_user->uid, 'user_cancel_delete');
-    parent::tearDown();
+  public function testDsrSelect() {
+    $status = 'fake status';
+    $amount = 20.00;
+    $total_count = 10;
+    $timestamp = REQUEST_TIME;
+    $one_hour = 60 * 60;
+    $one_day = $one_hour * 24;
+
+    $start_date = date('c', $timestamp);
+    $end_date = date('c', $timestamp + $one_day);
+
+    $total_amount = 0;
+
+    for ($i = 0; $i < $total_count; $i++) {
+      $amount = $amount + ($i * 2);
+      $total_amount += $amount;
+      $timestamp += $one_hour;
+      $this->insertDonation($status, $amount, $timestamp);
+    }
+
+    $result = dsr_select($status, $start_date, $end_date);
+
+    $this->assertEqual($result['total_count'], $total_count, 'Counts match.');
+    $this->assertEqual($result['total_amount'], $total_amount, 'Amounts match.');
+
+    // Different status.
+    $result = dsr_select('different status', $start_date, $end_date);
+    $this->assertEqual($result['total_count'], 0, 'Counts match.');
+    $this->assertEqual($result['total_amount'], 0, 'Amounts match.');
+
+    // Different timeframe.
+    $one_day_before = date('c', $timestamp - $one_day);
+    $result = dsr_select($status, $one_day_before, $start_date);
+    $this->assertEqual($result['total_count'], 0, 'Counts match.');
+    $this->assertEqual($result['total_amount'], 0, 'Amounts match.');
   }
 
-  /**
-   * Test installation of dependencies.
-   */
-  public function testInstall() {
-    $this->assertTrue(module_exists('dsr'), 'Module was not enabled correctly.');
+  public function testDsrGetOrders() {
+    $start = date('c', REQUEST_TIME);
+    $end = date('c', REQUEST_TIME + 3600);
+
+    // When no orders match the criteria, we should get an empty array
+    // and not a notice about an undefined variable.
+    $result = dsr_get_orders('fake status', $start, $end);
+
+    $this->assertEqual($result, array(), 'No matching orders found.');
+  }
+
+  protected function insertDonation($status = 'payment_received', $amount = 20.00, $timestamp = REQUEST_TIME) {
+    // Donation ID doesn't auto increment in this table.
+    // So we keep track of it ourselves.
+    $record = array(
+      'did' => $this->next_did++,
+      'nid' => 2,
+      'uid' => 1,
+      'sid' => 2,
+      'status' => $status,
+      'amount' => $amount,
+      'currency' => 'USD',
+      'gateway' => 'commerce_payment_example|commerce_payment_commerce_payment_example',
+      'txn_id' => '',
+      'form_url' => url('node/2', array('absolute' => TRUE)),
+      'created' => $timestamp,
+      'changed' => $timestamp,
+    );
+
+    $result = drupal_write_record('fundraiser_donation', $record);
+
+    $this->assertEqual($result, SAVED_NEW, 'New Donation row saved.');
   }
 }
