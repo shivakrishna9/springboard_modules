@@ -174,6 +174,7 @@ function springboard_m2t_submit($form, $form_state) {
 }
 
 function springboard_m2t_prep_for_display($legislators_by_district) {
+  $items = array();
   foreach ($legislators_by_district as $district => $legistors) {
     foreach($legistors as $legislator) {
       $items[]['data'] = $legislator->salutation . ' ' . $legislator->first_name . ' ' . $legislator->last_name . ': ' . $legislator->district_name;
@@ -183,12 +184,16 @@ function springboard_m2t_prep_for_display($legislators_by_district) {
   $attributes = array(
     'id' => 'legislator-list',
   );
+  if (empty($items)) {
+    $items[]['data'] = 'No Results';
+  }
   return theme_item_list(array('items' => $items, 'title' => $title, 'type' => 'ul', 'attributes' => $attributes));;
 }
 
 function springboard_m2t_preprocess_webform_confirmation(&$vars) {
   if ($vars['node']->type == 'springboard_m2t') {
     $vars['confirmation_message'] = $_SESSION['legislators'];
+    unset($_SESSION['legislators']);
   }
 }
 
