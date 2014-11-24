@@ -22,14 +22,15 @@ function dsr_settings() {
     '#maxlength' => 256,
   );
 
-  // Starting default values for SOQL queries are defined in dsr_install() and dsr_update_6001()
+  // Starting default values for SOQL queries are defined in dsr_install()
+  // and dsr_update_6001().
   $form['soql_settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('Report SOQL settings'),
     '#collapsible' => TRUE,
   );
 
-  // Selects
+  // Selects.
   $form['soql_settings']['selects'] = array(
     '#type' => 'fieldset',
     '#title' => t('SOQL selects'),
@@ -51,7 +52,7 @@ function dsr_settings() {
     '#default_value' => variable_get('dsr_partially_refunded_select_s', ''),
   );
 
-  // Aggregates
+  // Aggregates.
   $form['soql_settings']['aggregates'] = array(
     '#type' => 'fieldset',
     '#title' => t('SOQL aggregates'),
