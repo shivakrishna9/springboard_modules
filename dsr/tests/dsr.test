@@ -55,8 +55,8 @@ class DsrTestCase extends DrupalWebTestCase {
     $one_hour = 60 * 60;
     $one_day = $one_hour * 24;
 
-    $start_date = date('c', $timestamp);
-    $end_date = date('c', $timestamp + $one_day);
+    $start_date = date('Y-m-d H:i:s', $timestamp);
+    $end_date = date('Y-m-d H:i:s', $timestamp + $one_day);
 
     $total_amount = 0;
 
@@ -85,8 +85,8 @@ class DsrTestCase extends DrupalWebTestCase {
   }
 
   public function testDsrGetOrders() {
-    $start = date('c', REQUEST_TIME);
-    $end = date('c', REQUEST_TIME + 3600);
+    $start = date('Y-m-d H:i:s', REQUEST_TIME);
+    $end = date('Y-m-d H:i:s', REQUEST_TIME + 3600);
 
     // When no orders match the criteria, we should get an empty array
     // and not a notice about an undefined variable.
