@@ -443,8 +443,9 @@ function _dsr_run_sql_order_select($sql) {
 /**
  * Runs soql statements to retrieve donations.
  *
- * @param $soql
- *   The SOQL select statement to run.
+ * @param string $soql
+ *   The SOQL select statement to run. This is expected to be already
+ *   rawurlencoded.
  */
 function _dsr_run_soql_opportunity_select($soql) {
   $donations = array();
