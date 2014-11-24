@@ -26,22 +26,8 @@ class DsrTestCase extends DrupalWebTestCase {
   /**
    * Implementation of setUp().
    */
-  public function setUp($modules = array(), $permissions = array()) {
-    $modules = array_merge($modules, array(
-//      'entity',
-//      'libraries',
-//      'token',
-//      'fundraiser',
-//      'salesforce',
-//      'salesforce_soap',
-//      'salesforce_sync',
-//      'salesforce_queue',
-//      'salesforce_mapping',
-//      'salesforce_genmap',
-//      'salesforce_donation',
-      'dsr',
-    ));
-    parent::setUp($modules);
+  public function setUp() {
+    parent::setUp(array('dsr'));
   }
 
   /**
@@ -84,6 +70,9 @@ class DsrTestCase extends DrupalWebTestCase {
     $this->assertEqual($result['total_amount'], 0, 'Amounts match.');
   }
 
+  /**
+   * Confirm we get an empty array from dsr_get_orders when no orders match.
+   */
   public function testDsrGetOrders() {
     $start = date('Y-m-d H:i:s', REQUEST_TIME);
     $end = date('Y-m-d H:i:s', REQUEST_TIME + 3600);
@@ -95,6 +84,16 @@ class DsrTestCase extends DrupalWebTestCase {
     $this->assertEqual($result, array(), 'No matching orders found.');
   }
 
+  /**
+   * Adds a row to fundraiser_donation.
+   *
+   * @param string $status
+   *   The donation status.
+   * @param float $amount
+   *   The charge amount.
+   * @param int $timestamp
+   *   A timestamp to fake.
+   */
   protected function insertDonation($status = 'payment_received', $amount = 20.00, $timestamp = REQUEST_TIME) {
     // Donation ID doesn't auto increment in this table.
     // So we keep track of it ourselves.
