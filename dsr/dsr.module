@@ -1,10 +1,14 @@
 <?php
+/**
+ * @file
+ * DSR module.
+ */
 
 define('DSR_RECONCILIATION_PATH', 'admin/reports/dsr');
 require_once 'includes/dsr.queries.inc';
 
 /**
- * Implementation of hook_menu().
+ * Implements hook_menu().
  */
 function dsr_menu() {
   $items['admin/config/system/dsr'] = array(
@@ -40,12 +44,12 @@ function dsr_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'dsr.reports.inc',
   );
-  // Page to send dsr email
+  // Page to send dsr email.
   $items['dsr/reconciliation-summary'] = array(
     'page callback' => 'dsr_reconciliation_summary_page',
     'access callback' => TRUE,
   );
-  // Page to send dsr email
+  // Page to send dsr email.
   $items['dsr/reconciliation-summary/%dsr_start_date/%dsr_end_date'] = array(
     'title' => 'DSR reconciliation summary',
     'page callback' => 'dsr_reconciliation_summary',
@@ -66,7 +70,7 @@ function dsr_end_date_to_arg($arg) {
 }
 
 /**
- * Implementation of hook_perm().
+ * Implements hook_permission().
  */
 function dsr_permission() {
   return array(
@@ -82,7 +86,7 @@ function dsr_permission() {
 }
 
 /**
- * Implementation of hook_theme().
+ * Implements hook_theme().
  */
 function dsr_theme() {
   return array(
@@ -249,21 +253,21 @@ function _dsr_discrepancy_links($discrepancies, $start_date, $end_date) {
   $options = array(
     'absolute' => TRUE,
   );
-  // posted
+  // Posted.
   if ($discrepancies['Posted Transactions']['count'] || $discrepancies['Posted Transactions']['amount']) {
     $link_text = 'View discrepancy report for posted donations';
     $link_path = url(DSR_RECONCILIATION_PATH . '/report/posted/' . date('Y-m-d', strtotime($start_date)) . '/' . date('Y-m-d', strtotime($end_date)), $options);
     $links[] = l($link_text, $link_path);
   }
 
-  //refunded
+  // Refunded.
   if ($discrepancies['Refunded Transactions']['count'] || $discrepancies['Refunded Transactions']['amount']) {
     $link_text = 'View discrepancy report for refunded donations';
     $link_path = url(DSR_RECONCILIATION_PATH . '/report/refunded/' . date('Y-m-d', strtotime($start_date)) . '/' . date('Y-m-d', strtotime($end_date)), $options);
     $links[] = l($link_text, $link_path);
   }
 
-  // partially refunded
+  // Partially refunded.
   if ($discrepancies['Partially Refunded Transactions']['count'] || $discrepancies['Partially Refunded Transactions']['amount']) {
     $link_text = 'View discrepancy report for partially refunded donations';
     $link_path = url(DSR_RECONCILIATION_PATH . '/report/partially_refunded/' . date('Y-m-d', strtotime($start_date)) . '/' . date('Y-m-d', strtotime($end_date)), $options);
@@ -311,7 +315,6 @@ function dsr_get_posted_donations($start_date, $end_date) {
   $soql = rawurlencode(sprintf(variable_get('dsr_posted_select_s', ''), $start_date, $end_date));
   return _dsr_run_soql_opportunity_select($soql);
 }
-
 
 /**
  * Defines the various Salesforce date literals that DSR supports.
@@ -402,7 +405,7 @@ function dsr_filter_form_submit($form, &$form_state) {
 /**
  * Validates a date.
  *
- * @param $date
+ * @param string $date
  *   The date to validate.
  */
 function dsr_is_date($date) {
@@ -426,7 +429,7 @@ function dsr_is_date($date) {
 /**
  * Runs a sql statement to retrieve orders.
  *
- * @param $sql
+ * @param string $sql
  *   The SQL select statement to run.
  */
 function _dsr_run_sql_order_select($sql) {
@@ -467,7 +470,6 @@ function _dsr_run_soql_opportunity_select($soql) {
 
   return $donations;
 }
-
 
 /**
  * Parses out the actual response from a standard aggregate SOQL query.
@@ -551,10 +553,19 @@ function _dsr_create_date_range_from_literal($literal) {
       //return _dsr_format_date_range($date1, $date2);
   }
 
-  // the dates
+  // The dates.
   return _dsr_compile_dates($date1, $date2);
 }
 
+/**
+ * Formats the start and end dates as an array.
+ *
+ * @param string $date1
+ * @param string $date2
+ *
+ * @return array
+ *   Array with 'start' and 'end' keys.
+ */
 function _dsr_compile_dates($date1, $date2) {
   return array(
     'start' => $date1,
@@ -562,10 +573,26 @@ function _dsr_compile_dates($date1, $date2) {
   );
 }
 
+/**
+ * @param $start_date
+ * @param $end_date
+ *
+ * @return string
+ *
+ * @deprecated Only used for drupal side date literals that aren't implemented.
+ */
 function _dsr_format_date_range($start_date, $end_date) {
   return sprintf("'%s' and '%s'", $start_date, $end_date);
 }
 
+/**
+ * @param $value1
+ * @param $value2
+ *
+ * @return string
+ *
+ * @deprecated Not used anywhere.
+ */
 function _dsr_apply_row_class($value1, $value2) {
   return ($value1 == $value2) ? 'ok' : 'error';
 }
@@ -573,9 +600,9 @@ function _dsr_apply_row_class($value1, $value2) {
 /**
  * Checks for a discrepancy between 2 values.
  *
- * @param $value1
+ * @param mixed $value1
  *   The value.
- * @param $value2
+ * @param mixed $value2
  *   The value to compare it against.
  */
 function _dsr_is_discrepancy($value1, $value2) {
@@ -584,6 +611,14 @@ function _dsr_is_discrepancy($value1, $value2) {
 
 /**
  * Formats dates for Drupal.
+ *
+ * @param string $start_date
+ *   The start date.
+ * @param string $end_date
+ *   The end date.
+ *
+ * @return array
+ *   An array with 'start' and 'end' keys.
  */
 function _dsr_drupal_date_format($start_date, $end_date) {
   $start_date = date('Y-m-d H:i:s', strtotime($start_date . '00:00:00'));
@@ -593,6 +628,14 @@ function _dsr_drupal_date_format($start_date, $end_date) {
 
 /**
  * Formats dates for Salesforce.
+ *
+ * @param string $start_date
+ *   The start date.
+ * @param string $end_date
+ *   The end date.
+ *
+ * @return array
+ *   An array with 'start' and 'end' keys.
  */
 function _dsr_sf_date_format($start_date, $end_date) {
   $start_date = date('c', strtotime($start_date . '00:00:00'));
@@ -601,20 +644,22 @@ function _dsr_sf_date_format($start_date, $end_date) {
 }
 
 /**
- * Function for generating the various DSR stats (posted, refunded, partially refunded).
+ * Function for generating the various DSR stats.
  *
- * @param $start_date
+ * posted, refunded, partially refunded.
+ *
+ * @param string $start_date
  *   The start date of the range.
- * @param $end_date
+ * @param string $end_date
  *   The end date of the range.
  */
 function _dsr_collect_stats($start_date = NULL, $end_date = NULL) {
   if ($start_date == NULL && $end_date == NULL) {
-    // TODO: Return a message
+    // @todo Return a message.
     return;
   }
 
-  // format dates to their respective platform
+  // Format dates to their respective platform.
   $drupal_dates = _dsr_drupal_date_format($start_date, $end_date);
   $sf_dates = _dsr_sf_date_format($start_date, $end_date);
 
@@ -622,12 +667,12 @@ function _dsr_collect_stats($start_date = NULL, $end_date = NULL) {
   $refunded_discrepancy = FALSE;
   $partially_refunded_discrepancy = FALSE;
 
-  // Drupal
+  // Drupal.
   $orders_posted = dsr_select('payment_received', $drupal_dates['start'], $drupal_dates['end']);
   $orders_refunded = dsr_select('refunded', $drupal_dates['start'], $drupal_dates['end']);
   $orders_partially_refunded = dsr_select('partially_refunded', $drupal_dates['start'], $drupal_dates['end']);
 
-  // Salesforce
+  // Salesforce.
   $donations_posted = dsr_salesforce_aggregate('payment_received', $sf_dates['start'], $sf_dates['end']);
   $donations_refunded = dsr_salesforce_aggregate('refunded', $sf_dates['start'], $sf_dates['end']);
   $donations_partially_refunded = dsr_salesforce_aggregate('partially_refunded', $sf_dates['start'], $sf_dates['end']);
@@ -665,13 +710,13 @@ function _dsr_collect_stats($start_date = NULL, $end_date = NULL) {
 }
 
 /**
- * Sent a reconciliation summary email.
+ * Send a reconciliation summary email.
  *
- * @param $start_date
+ * @param string $start_date
  *   The start date of the stats.
- * @param $end_date
+ * @param string $end_date
  *   The end date of the stats.
- * @param $stats
+ * @param array $stats
  *   The DSR stats to email.
  */
 function dsr_mail_reconciliation_summary($start_date, $end_date, $stats) {
@@ -688,7 +733,7 @@ function dsr_mail_reconciliation_summary($start_date, $end_date, $stats) {
 }
 
 /**
- * Implementation of hook_mail().
+ * Implements hook_mail().
  */
 function dsr_mail($key, &$message, &$params) {
 
@@ -708,10 +753,10 @@ function dsr_mail($key, &$message, &$params) {
 /**
  * Build a string to be used as the subject line in the notification email.
  *
- * @param $start_date
+ * @param string $start_date
  *   The start date of the stats.
  *
- * @param $end_date
+ * @param string $end_date
  *   The end date of the stats.
  */
 function _dsr_format_date_for_email($start_date, $end_date) {
