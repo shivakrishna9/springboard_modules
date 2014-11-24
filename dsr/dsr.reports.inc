@@ -1,8 +1,6 @@
 <?php
-
 /**
  * @file
- *
  * Supplies various DSR reports.
  */
 
@@ -207,6 +205,11 @@ function dsr_get_order_submission_id($order_id) {
   return $result->fetchAssoc();
 }
 
+/**
+ * @param $order_id
+ *
+ * @return int
+ */
 function dsr_get_order_sfid($order_id) {
   return 0; //salesforce_management_api_id_load('donation', $order_id);
 }
@@ -233,6 +236,13 @@ function _dsr_create_export_status($batches) {
   return $status;
 }
 
+/**
+ * @param $batch_id
+ * @param $order_id
+ * @param $batch
+ *
+ * @return string
+ */
 function _dsr_create_batch_info($batch_id, $order_id, $batch) {
   $rows = array();
   $markup = '<div id="batch-' . $order_id . '-' . $batch_id . '">';
@@ -259,6 +269,12 @@ function _dsr_create_batch_info($batch_id, $order_id, $batch) {
   return $markup;
 }
 
+/**
+ * @param string $start_date
+ * @param string $end_date
+ *
+ * @return string
+ */
 function _dsr_format_date_heading($start_date, $end_date) {
   if ($start_date == $end_date) {
     return '<h3>' . date('l F j, Y', strtotime($start_date)) . '</h3>';
@@ -267,6 +283,12 @@ function _dsr_format_date_heading($start_date, $end_date) {
   return '<h3>' . date('F j, Y', strtotime($start_date)) . ' -- ' . date('F j, Y', strtotime($end_date)) . '</h3>';
 }
 
+/**
+ * @param array $variables
+ *
+ * @return string
+ * @throws Exception
+ */
 function theme_dsr_report_table($variables) {
   $drupal_data = $variables['drupal_data'];
   $sf_data = $variables['salesforce_data'];
@@ -286,7 +308,7 @@ function theme_dsr_report_table($variables) {
     $sf_data['total_count'],
     $sf_data['total_amount'],
   );
-  // TODO: check this
+  // @todo Check this.
   if (isset($sf_data['types'])) {
     foreach ($sf_data['types'] as $type => $data) {
       $rows[] = array(
@@ -311,6 +333,15 @@ function theme_dsr_report_table($variables) {
   return $output;
 }
 
+/**
+ * Theme function for the DSR box.
+ *
+ * @param array $variables
+ *   'label' and 'content' keys.
+ *
+ * @return string
+ *   The html for the DSR box.
+ */
 function theme_dsr_box($variables) {
   $output = '<h2>' . $variables['label'] . '</h2>';
   $output .= '<div class="dsr-box">' . $variables['content'] . '</div>';
