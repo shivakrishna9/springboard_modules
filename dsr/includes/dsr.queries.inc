@@ -75,11 +75,12 @@ function dsr_get_orders($status, $start_date, $end_date) {
 }
 
 /**
- * Perform aggregate query on Salesforce data by donation status and date range
+ * Perform aggregate query on Salesforce data by donation status and date range.
  *
  * @param string $status
  * @param string $start_date
  * @param string $end_date
+ *
  * @return array
  */
 function dsr_salesforce_aggregate($status, $start_date, $end_date) {
@@ -95,13 +96,12 @@ function dsr_salesforce_aggregate($status, $start_date, $end_date) {
     $and = '';
   }
 
-  $soql =  sprintf("SELECT SUM(AMOUNT) total_amount, COUNT(AMOUNT) total_count, RecordType.Name record_type FROM Opportunity WHERE StageName = '%s' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s"
+  $soql = sprintf("SELECT SUM(AMOUNT) total_amount, COUNT(AMOUNT) total_count, RecordType.Name record_type FROM Opportunity WHERE StageName = '%s' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s"
           . $and .
      " Group By RecordType.Name", $sf_status[$status], $start_date, $end_date);
 
   $salesforce = salesforce_get_api();
 
-  // make sure we've got a good connection
   if ($salesforce->isAuthorized()) {
     $soql = rawurlencode($soql);
     $response = $salesforce->apiCall('query?q=' . $soql);
@@ -130,12 +130,12 @@ function dsr_soql_select($soql, $key_field = NULL) {
   $continue = TRUE;
 
   $salesforce = salesforce_get_api();
-  // make sure we've got a good connection
+  // Make sure we've got a good connection.
   if ($salesforce->isAuthorized()) {
     $results = $salesforce->client->query(rawurlencode($soql));
     return $results->records;
   }
 
-  // return false if we couldn't connect
+  // Return false if we couldn't connect.
   return FALSE;
 }
