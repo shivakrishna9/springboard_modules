@@ -474,6 +474,8 @@ function _dsr_run_soql_opportunity_select($soql) {
  *
  * @param $response
  *   The SF response object from an aggregate SOQL query.
+ *
+ * @return array
  */
 function _dsr_parse_aggregate_result($response) {
   $results = array(
@@ -621,9 +623,9 @@ function _dsr_collect_stats($start_date = NULL, $end_date = NULL) {
   $partially_refunded_discrepancy = FALSE;
 
   // Drupal
-  $orders_posted = dsr_select('payment_received', $sf_dates['start'], $sf_dates['end']);
-  $orders_refunded = dsr_select('refunded', $sf_dates['start'], $sf_dates['end']);
-  $orders_partially_refunded = dsr_select('partially_refunded', $sf_dates['start'], $sf_dates['end']);
+  $orders_posted = dsr_select('payment_received', $drupal_dates['start'], $drupal_dates['end']);
+  $orders_refunded = dsr_select('refunded', $drupal_dates['start'], $drupal_dates['end']);
+  $orders_partially_refunded = dsr_select('partially_refunded', $drupal_dates['start'], $drupal_dates['end']);
 
   // Salesforce
   $donations_posted = dsr_salesforce_aggregate('payment_received', $sf_dates['start'], $sf_dates['end']);
