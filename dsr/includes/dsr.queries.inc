@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Report queries.
@@ -11,16 +10,17 @@
  * @param string $status
  *   Accepted values: 'payment_received', 'refunded', or 'partially_refunded'.
  *
- * @param int $start
- *   Unix timestamp representing the report start date.
+ * @param string $start
+ *   The report start date formatted for MySQL.
  *
- * @param int $end
- *   Unix timestamp representing the report end date.
+ * @param string $end
+ *   The report end date formatted for MySQL.
  *
- * @return object|array
- *   Query results object or FALSE if no results found.
+ * @return array
+ *   An array with 'total_count' and 'total_amount' keys.
  */
 function dsr_select($status, $start, $end) {
+
   $results = db_query('
     SELECT
       COALESCE(SUM(f.amount), 0) AS total_amount,
@@ -40,19 +40,19 @@ function dsr_select($status, $start, $end) {
 
 
 /**
- * Get a list of order data by status and date range
+ * Get a list of order data by status and date range.
  *
  * @param string $status
- * Order status (payment_received, refunded, partially_refunded)
+ *   Order status (payment_received, refunded, partially_refunded).
  *
- * @param int $start_date
- * Unix timestamp
+ * @param string $start_date
+ *   The start date formatted for MySQL.
  *
- * @param int $end_date
- * UNix timestamp
+ * @param string $end_date
+ *   The end date formatted for MySQL.
  *
- * @return array()
- * returns an array of orders matching the select criteria
+ * @return array
+ *   An array of orders matching the select criteria.
  */
 function dsr_get_orders($status, $start_date, $end_date) {
   $orders = array();
@@ -77,10 +77,10 @@ function dsr_get_orders($status, $start_date, $end_date) {
 /**
  * Perform aggregate query on Salesforce data by donation status and date range
  *
- * @param type $status
- * @param type $start_date
- * @param type $end_date
- * @return type
+ * @param string $status
+ * @param string $start_date
+ * @param string $end_date
+ * @return array
  */
 function dsr_salesforce_aggregate($status, $start_date, $end_date) {
   $sf_status = array(
@@ -121,6 +121,9 @@ function dsr_salesforce_aggregate($status, $start_date, $end_date) {
  *   The SOQL statement to run.
  * @param $key_field
  *   The field to use as the key if you want an associative array returned.
+ *
+ * @deprecated $salesforce->client is not an object. Also this doesn't appear
+ *             to be called anywhere.
  */
 function dsr_soql_select($soql, $key_field = NULL) {
   $records = array();
