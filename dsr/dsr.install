@@ -1,19 +1,19 @@
 <?php
-
 /**
  * @file
+ * Install and uninstall for DSR.
  */
 
 /**
  * Implements hook_install().
  */
 function dsr_install() {
-  // Selects
+  // Selects.
   $select_posted = "SELECT Id, Name, Amount, Order_Id__c FROM Opportunity WHERE StageName = 'Posted' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s AND Order_ID__c != NULL";
   $select_refunded = "SELECT Id, Name, Amount, Order_Id__c FROM Opportunity WHERE StageName = 'Refunded' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s AND Parent_Donation__r.StageName = 'Refunded'";
   $select_partially_refunded = "SELECT Id, Name, Amount, Order_Id__c FROM Opportunity WHERE StageName = 'Refunded' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s AND Parent_Donation__r.StageName = 'Partially Refunded'";
 
-  // Aggregates
+  // Aggregates.
   $aggregate_posted = "SELECT SUM(AMOUNT) total_amount, COUNT(AMOUNT) total_count, RecordType.Name record_type FROM Opportunity WHERE StageName = 'Posted' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s Group By RecordType.Name";
   $aggregate_refunded = "SELECT SUM(AMOUNT) total_amount, COUNT(AMOUNT) total_count, RecordType.Name record_type FROM Opportunity WHERE StageName = 'Refunded' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s AND Parent_Donation__r.StageName = 'Refunded' Group By RecordType.Name";
   $aggregate_partially_refunded = "SELECT SUM(AMOUNT) total_amount, COUNT(AMOUNT) total_count, RecordType.Name record_type FROM Opportunity WHERE StageName = 'Refunded' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s AND Parent_Donation__r.StageName = 'Partially Refunded' Group By RecordType.Name";
@@ -27,7 +27,7 @@ function dsr_install() {
 }
 
 /**
- *
+ * Implements hook_uninstall().
  */
 function dsr_uninstall() {
   variable_del('dsr_posted_select_s');
