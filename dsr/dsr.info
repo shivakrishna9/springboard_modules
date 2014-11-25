@@ -8,5 +8,6 @@ project = Jackson River Springboard - extras
 
 dependencies[] = fundraiser
 dependencies[] = salesforce_donation
+dependencies[] = commerce_payment
 
 files[] = tests/dsr.test
