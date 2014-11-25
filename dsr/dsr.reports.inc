@@ -121,15 +121,9 @@ function theme_dsr_discrepancy_report($variables) { //$orders, $status, $start_d
 function _dsr_discrepancy_report_links($order_id) {
   // get some information about the submission that generated the order
   $submission = dsr_get_order_submission_id($order_id);
-
-
-  if (module_exists('fundraiser_commerce')) {
-    $links[] = l('view order', 'admin/commerce/orders/' . $order_id);
-  }
-  elseif (module_exists('fundraiser_ubercart')) {
-    $links[] = l('view order', 'admin/store/orders/' . $order_id);
-  }
-  $links[] = l('view form submission', sprintf('node/%s/submission/%s', $submission['webform_nid'], $submission['sid']));
+  $links = array();
+  $links[] = l('View order', 'admin/commerce/orders/' . $order_id);
+  $links[] = l('View form submission', sprintf('node/%s/submission/%s', $submission['webform_nid'], $submission['sid']));
   // TODO: replace batch viewer
   //$links[] = l('view batches', '', array('fragment' => ' ', 'external' => TRUE, 'attributes' => array('class' => 'batch-viewer')));
 
@@ -139,7 +133,7 @@ function _dsr_discrepancy_report_links($order_id) {
     'attributes' => array(),
     'type' => 'ul',
   );
-  return theme_item_list($variables);
+  return theme('item_list', $variables);
 }
 
 /**
@@ -184,7 +178,7 @@ function dsr_get_order_batches($order_id, $type = 'donation') {
 }
 
 /**
- * Returns the submission id for a given order while taking into consideration the order might be part of a recurring series.
+ * Returns the webform submission id for a given order.
  *
  * @param $order_id
  *   The id of the order.
@@ -196,11 +190,6 @@ function dsr_get_order_submission_id($order_id) {
       nid AS webform_nid
     FROM {fundraiser_donation} WHERE did = :did
   ', array(':did' => $order_id));
-/*    UNION
-    SELECT f.sid, f.webform_nid FROM {fundraiser_donation} f
-    INNER JOIN fundraiser_recurring r on r.master_order_id = f.order_id
-    WHERE r.order_id = %d",
-  $order_id);*/
 
   return $result->fetchAssoc();
 }
