@@ -67,11 +67,11 @@ function theme_dsr_discrepancy_report($variables) { //$orders, $status, $start_d
     $batches = dsr_get_order_batches($order_id, 'donation');
     $links = _dsr_discrepancy_report_links($order_id);
 
-    // get any sf information. this will help us determine if an order was deleted from Salesforce
-    $sf = dsr_get_order_sfid($order_id);
+    // Get any sf information.
+    // This will help us determine if an order was deleted from Salesforce.
+    $sfid = dsr_get_order_sfid($order_id);
 
     //print "<pre>".print_r($batches, TRUE)."</pre>";
-
 
     $export_status = _dsr_create_export_status($batches);
 
@@ -79,8 +79,9 @@ function theme_dsr_discrepancy_report($variables) { //$orders, $status, $start_d
 
     $output .= '<div class="dsr-order">';
     $output .= '<h4>Order ' . $order_id . ' - $' . number_format($order_total, 2, '.', ',') . '</h4>';
-    if (!empty($sf['sfid'])) {
-      $output .= t('This order may have been deleted in Salesforce! We have it associated with ' . $sf['sfid']);
+    if (!empty($sfid)) {
+      $variables = array('@sfid' => $sfid);
+      $output .= t('This order may have been deleted in Salesforce! We have it associated with @sfid', $variables);
     }
 
     foreach ($export_status as $status => $value) {
@@ -195,12 +196,23 @@ function dsr_get_order_submission_id($order_id) {
 }
 
 /**
- * @param $order_id
+ * Get the Salesforce ID for the order.
  *
- * @return int
+ * @param int $order_id
+ *   The order ID.
+ *
+ * @return bool|string
+ *   The sfid string, or FALSE.
  */
 function dsr_get_order_sfid($order_id) {
-  return 0; //salesforce_management_api_id_load('donation', $order_id);
+  $mapped = salesforce_sync_load_map(array(
+      'module' => 'salesforce_donation',
+      'delta' => 'donation',
+      'drupal_id' => $order_id,
+      'object_type' => 'Opportunity',
+    ));
+
+  return is_object($mapped) ? $mapped->sfid : FALSE;
 }
 
 /**

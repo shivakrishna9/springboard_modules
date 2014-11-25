@@ -6,8 +6,9 @@ configure = admin/config/system/dsr
 version = 7.x-4.x-dev
 project = Jackson River Springboard - extras
 
+dependencies[] = commerce_payment
 dependencies[] = fundraiser
 dependencies[] = salesforce_donation
-dependencies[] = commerce_payment
+dependencies[] = salesforce_sync
 
 files[] = tests/dsr.test
