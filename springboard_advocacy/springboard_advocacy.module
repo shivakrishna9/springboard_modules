@@ -53,7 +53,6 @@ function springboard_advocacy_libraries_info() {
       ),
     ),
   );
-
   return $libraries;
 }
 
@@ -62,4 +61,13 @@ function springboard_advocacy_libraries_info() {
  */
 function springboard_advocacy_library_version($library) {
   return '1';
+}
+
+/**
+* Implements hook_views_api().
+*/
+function springboard_advocacy_views_api() {
+  return array(
+    'api' => 3.0,
+  );
 }
