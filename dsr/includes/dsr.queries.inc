@@ -21,23 +21,23 @@
  */
 function dsr_select($status, $start, $end) {
 
-  $results = db_query('
-    SELECT
-      COALESCE(SUM(f.amount), 0) AS total_amount,
-      COUNT(f.amount) AS total_count
-    FROM {fundraiser_donation} f
-    WHERE
-      FROM_UNIXTIME(f.changed)
-      BETWEEN :start AND :end
-      AND f.status = :status
-  ', array(':start' => $start, ':end' => $end, ':status' => $status))->fetchAssoc();
+  $query = "SELECT COUNT(t.amount) AS total_count, SUM(t.amount) / 100 AS total_amount FROM {commerce_order} o
+            JOIN {commerce_payment_transaction} t ON t.order_id = o.order_id
+            WHERE o.status = :status AND from_unixtime(t.changed) BETWEEN :start AND :end;";
+
+  $replacements = array(
+    ':status' => $status,
+    ':start' => $start,
+    ':end' => $end,
+  );
+
+  $results = db_query($query, $replacements)->fetchAssoc();
 
   return !empty($results) ? $results : array(
     'total_count' => 0,
-    'total_amount' => 0,
+    'total_amount' => 0.00,
   );
 }
-
 
 /**
  * Get a list of order data by status and date range.
@@ -57,18 +57,20 @@ function dsr_select($status, $start, $end) {
 function dsr_get_orders($status, $start_date, $end_date) {
   $orders = array();
 
-  $results = db_query('
-    SELECT
-      f.did,
-      f.amount
-    FROM {fundraiser_donation} f
-    WHERE
-      FROM_UNIXTIME(f.changed)
-      BETWEEN :start AND :end
-      AND f.status = :status
-  ', array(':start' => $start_date, ':end' => $end_date, ':status' => $status));
+  $query = "SELECT o.order_id, t.amount / 100 AS amount FROM {commerce_order} o
+            JOIN {commerce_payment_transaction} t ON t.order_id = o.order_id
+            WHERE o.status = :status AND from_unixtime(t.changed) BETWEEN :start AND :end;";
+
+  $replacements = array(
+    ':status' => $status,
+    ':start' => $start_date,
+    ':end' => $end_date,
+  );
+
+  $results = db_query($query, $replacements);
+
   while ($data = $results->fetchAssoc()) {
-    $orders[$data['did']] = $data['amount'];
+    $orders[$data['order_id']] = $data['amount'];
   }
 
   return $orders;
