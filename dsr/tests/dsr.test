@@ -83,7 +83,7 @@ class DsrTestCase extends DrupalWebTestCase {
   }
 
   /**
-   * Adds a row to fundraiser_donation.
+   * Adds a commerce order and commerce payment transaction.
    *
    * @param string $status
    *   The donation status.
