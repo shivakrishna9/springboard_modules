@@ -10,10 +10,8 @@
  */
 class DsrTestCase extends DrupalWebTestCase {
 
-  protected $next_did = 1;
-
   /**
-   * Implementation of getInfo().
+   * Implements getInfo().
    */
   public static function getInfo() {
     return array(
@@ -24,7 +22,7 @@ class DsrTestCase extends DrupalWebTestCase {
   }
 
   /**
-   * Implementation of setUp().
+   * Implements setUp().
    */
   public function setUp() {
     parent::setUp(array('dsr'));
@@ -95,25 +93,35 @@ class DsrTestCase extends DrupalWebTestCase {
    *   A timestamp to fake.
    */
   protected function insertDonation($status = 'payment_received', $amount = 20.00, $timestamp = REQUEST_TIME) {
-    // Donation ID doesn't auto increment in this table.
-    // So we keep track of it ourselves.
-    $record = array(
-      'did' => $this->next_did++,
-      'nid' => 2,
-      'uid' => 1,
-      'sid' => 2,
-      'status' => $status,
-      'amount' => $amount,
-      'currency' => 'USD',
-      'gateway' => 'commerce_payment_example|commerce_payment_commerce_payment_example',
-      'txn_id' => '',
-      'form_url' => url('node/2', array('absolute' => TRUE)),
-      'created' => $timestamp,
-      'changed' => $timestamp,
-    );
+    $amount = $amount * 100;
 
-    $result = drupal_write_record('fundraiser_donation', $record);
+    // Create a new order.
+    $new_order = commerce_order_new(1);
+    $new_order->order_number = $order_number = $this->randomName(10);
+    $new_order->mail = 'example@example.com';
+    $new_order->hostname = $this->randomName(10);
+    $new_order->status = $status;
+    $return = commerce_order_save($new_order);
+    $this->assertIdentical($return, SAVED_NEW, 'New order saved.');
 
-    $this->assertEqual($result, SAVED_NEW, 'New Donation row saved.');
+    $new_transaction = commerce_payment_transaction_new('commerce_payment_example', $new_order->order_id);
+
+    $new_transaction->instance_id = 'commerce_payment_example|commerce_payment_commerce_payment_example';
+    $new_transaction->amount = $amount;
+    $new_transaction->currency_code = 'USD';
+    $new_transaction->status = 'success';
+    $new_transaction->message = 'Name: @name';
+    $new_transaction->message_variables = array('@name' => 'First Last');
+
+    $return = commerce_payment_transaction_save($new_transaction);
+
+    $this->assertIdentical($return, SAVED_NEW, 'New transaction saved.');
+
+    // Mess with the changed timestamp for our tests.
+    $query = db_update('commerce_payment_transaction');
+    $query->fields(array('changed' => $timestamp))
+      ->condition('transaction_id', $new_transaction->transaction_id)
+      ->execute();
+
   }
 }
