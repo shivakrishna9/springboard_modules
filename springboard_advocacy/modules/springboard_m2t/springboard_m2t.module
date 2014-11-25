@@ -12,8 +12,17 @@ function springboard_m2t_menu() {
     'file' => 'includes/springboard_m2t.admin.inc',
     'weight' => 10,
     'type' => MENU_LOCAL_TASK,
-
   );
+
+  // $items['admin/config/springboard/advocacy/custom-targets'] = array(
+  //   'title' => 'Custom Targets',
+  //   'description' => '',
+  //   'access arguments' => array('administer site configuration'),
+  //   'page callback' => 'springboard_m2t_custom_targets',
+  //   'file' => 'includes/springboard_m2t.custom_targets.inc',
+  //   'weight' => 10,
+  //   'type' => MENU_LOCAL_TASK,
+  // );
 
   $items['apitest'] = array(
     'title' => 'Get test the legislator lookup',
@@ -151,7 +160,7 @@ function springboard_m2t_webform_user_profile_fields_alter(&$fields, $node) {
 /**
  * Implements hook_form_alter
  */
-function springboard_m2t_form_alter(&$form, &$form_state, $form_id) {
+function springboard_m2t_form_alter(&$form, &$form_state, $form_id) {;
   if(isset($form['#node']) && $form['#node']->type == 'springboard_m2t') {
     $pos = strpos($form_id, 'client_form');
     if($pos !== FALSE) {
@@ -224,3 +233,41 @@ function springboard_m2t_webform_submission_insert($node, $submission) {
   };
 }
 
+function springboard_m2t_form_springboard_m2t_node_form_alter(&$form, &$form_state) {
+  $form['options'] = array(
+    '#title' => t('Options'),
+    '#type' => 'fieldset',
+    '#group' => 'additional_settings',
+    '#weight' => -20,
+  ); 
+  $form['targets'] = array(
+    '#title' => t('Targets'),
+    '#type' => 'fieldset',
+    '#group' => 'additional_settings',
+    '#weight' => -19,
+  ); 
+  $form['messages'] = array(
+    '#title' => t('Messages'),
+    '#type' => 'fieldset',
+    '#group' => 'additional_settings',
+    '#weight' => -18,
+  );
+  $form['social'] = array(
+    '#title' => t('Social'),
+    '#type' => 'fieldset',
+    '#group' => 'additional_settings',
+    '#weight' => -17,
+  );
+  $form['goals'] = array(
+    '#title' => t('Goals'),
+    '#type' => 'fieldset',
+    '#group' => 'additional_settings',
+    '#weight' => -16,
+  );
+  $form['display'] = array(
+    '#title' => t('Display'),
+    '#type' => 'fieldset',
+    '#group' => 'additional_settings',
+    '#weight' => -15,
+  ); 
+}
