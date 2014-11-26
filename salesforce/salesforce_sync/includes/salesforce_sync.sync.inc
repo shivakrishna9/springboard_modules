@@ -343,9 +343,7 @@ class SalesforceSync {
     $this->batchRemoveBadTokens($batch);
     $this->batchApplySalesforceSyncRules($batch);
     $this->batchConvertToSalesforceFormat($batch);
-    if (variable_get('salesforce_sync_truncate_long_strings', SALESFORCE_SYNC_TRUNCATE_LONG_STRINGS_DEFAULT)) {
-      $this->batchTruncateLongStrings($batch);
-    }
+    $this->batchTruncateLongStrings($batch);
     $batch['batch_prepared'] = TRUE;
   }
 
@@ -725,18 +723,26 @@ class SalesforceSync {
       $sfobject = $sfapi->objectDescribe($item->object_type);
       $field_lengths[$item->object_type] = array();
       foreach ($sfobject['fields'] as $field) {
-        // If this field is a type stored as a string, then note its maximum length.
-        if ($this->typeIsText($field['type'])) {
-          $field_lengths[$item->object_type][$field['name']] = $field['length'];
+        // Always truncate sobject Name, FirstName, and LastName. Optionally also truncate other string fields.
+        if (
+          in_array($field['name'], array('Name', 'FirstName', 'LastName'))
+          || variable_get('salesforce_sync_truncate_long_strings', SALESFORCE_SYNC_TRUNCATE_LONG_STRINGS_DEFAULT)
+        ) {
+          // If this field is a type stored as a string, then note its maximum length for possible truncation.
+          if ($this->typeIsText($field['type'])) {
+            $field_lengths[$item->object_type][$field['name']] = $field['length'];
+          }
         }
       }
     }
     
-    // Check the lengths of all string-type fields on this sObject.
+    // Check the lengths of all truncatable fields on this sObject.
     foreach ($field_lengths[$item->object_type] as $field_name => $field_length) {
       if (!empty($item->sobject->fields[$field_name]) && strlen($item->sobject->fields[$field_name]) > $field_length) {
         // Truncate the value of the field to the maximum length allowed by SF.
         $item->sobject->fields[$field_name] = substr($item->sobject->fields[$field_name], 0, $field_length);
+        // Make sure no XML entity was truncated.
+        $item->sobject->fields[$field_name] = preg_replace("|\\&[^;]*\$|", '', $item->sobject->fields[$field_name]);
       }
     }
   }
