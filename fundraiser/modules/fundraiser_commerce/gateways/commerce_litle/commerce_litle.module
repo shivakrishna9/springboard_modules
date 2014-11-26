@@ -7,9 +7,47 @@
 define('COMMERCE_LITLE_CHECK_SALE', 'echeck_sale');
 
 /**
+ * Implements hook_libraries_info().
+ */
+function commerce_litle_libraries_info() {
+  $libraries = array();
+
+  $libraries['litle'] = array(
+    'name' => 'Litle SDK for PHP',
+    'vendor url' => 'https://github.com/LitleCo/litle-sdk-for-php',
+    'download url' => 'https://github.com/LitleCo/litle-sdk-for-php/archive/8.27.1.tar.gz',
+    'path' => 'litle/sdk',
+    'version arguments' => array(
+      'file' => 'litle/sdk/LitleOnline.php',
+      'pattern' => "@'CURRENT_SDK_VERSION', 'PHP;([0-9a-zA-Z\\.-]+)'@",
+      'lines' => 50,
+      'cols' => 50,
+    ),
+    'files' => array(
+      'php' => array(
+        'LitleOnline.php',
+        'LitleXmlMapper.php',
+        'XmlFields.php',
+        'Communication.php',
+        'XmlParser.php',
+        'Obj2xml.php',
+        'Checker.php',
+        'LitleOnlineRequest.php',
+        'UrlMapper.php',
+        'BatchRequest.php',
+        'LitleRequest.php',
+        'Transactions.php',
+        'LitleResponseProcessor.php',
+      ),
+    ),
+  );
+
+  return $libraries;
+}
+
+/**
  * Implements hook_views_api().
  */
-
 function commerce_litle_views_api() {
   return array(
     'api' => 3,
@@ -579,11 +617,11 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
   );
 
   $nvp['billToAddress'] = commerce_litle_format_bill_to_address($order_wrapper);
- 
+
   if (variable_get('commerce_litle_fraud', 0) && isset($pane_values['session_id'])) {
     $nvp = _commerce_litle_fraud_sale_request_item($nvp, $pane_values['session_id']);
   }
- 
+
   // Config stored in a var because it's used again later.
   $litle_config = _commerce_litle_get_litle_config($payment_method);
   $nvp += $litle_config;
@@ -1335,15 +1373,36 @@ function _commerce_litle_request_echeck_credit($gateway, $input) {
 }
 
 /**
- * Helper function, locate and include the Litle SDK object.
+ * Load the Litle SDK and return a LitleOnlineRequest.
+ *
+ * @return bool|\litle\sdk\LitleOnlineRequest
+ *   The litle request object, or FALSE.
  */
 function _commerce_litle_get_litle() {
-  // Note the placement of the Litle SDK.
-  $library_path = variable_get('commerce_litle_sdk_path', 'sites/all/libraries/litle/lib');
-  $library_mode = variable_get('commerce_litle_sdk_mode', 'LitleOnline');
-  include_once $library_path . '/' . $library_mode . '.php';
-  $litle = new LitleOnlineRequest();
-  return $litle;
+  $library = libraries_load('litle');
+
+  if (!empty($library['loaded'])) {
+    return new \litle\sdk\LitleOnlineRequest();
+  }
+
+  // Couldn't load the library. Try to get some info and watchdog it.
+  $replacements = array(
+    '@error' => '',
+    '@error_message' => '',
+  );
+
+  if (isset($library['error'])) {
+    $replacements['@error'] = $library['error'];
+  }
+  if (isset($library['error message'])) {
+    $replacements['@error_message'] = $library['error message'];
+  }
+
+  watchdog('Commerce Litle', 'Litle library not found! @error @error_message', $replacements, WATCHDOG_ALERT);
+
+  // @todo Should we throw an Exception and handle it somewhere in Commerce?
+  // We're pretty much dead in the water at this point.
+  return FALSE;
 }
 
 /**
@@ -1361,6 +1420,27 @@ function _commerce_litle_get_litle_config($gateway) {
     'timeout' => !empty($gateway['settings']['commerce_litle_settings_timeout']) ? $gateway['settings']['commerce_litle_settings_timeout'] : '',
     'reportGroup' => !empty($gateway['settings']['commerce_litle_settings_reportGroup']) ? $gateway['settings']['commerce_litle_settings_reportGroup'] : '',
   );
+
+  // The following config is set because it's required by the SDK,
+  // but these features aren't yet implemented in this module.
+  // So there's no point in exposing them in the UI.
+  //
+  // Batch processing.
+  $auth_info['litle_requests_path'] = '';
+  $auth_info['batch_requests_path'] = '';
+  $auth_info['batch_url'] = '';
+  // Stream batch delivery.
+  $auth_info['tcp_port'] = '';
+  $auth_info['tcp_timeout'] = '';
+  // SFTP.
+  $auth_info['sftp_username'] = '';
+  $auth_info['sftp_password'] = '';
+  // Stream batch delivery?
+  // These are hardcoded in the SDK's setup script.
+  $auth_info['tcp_ssl'] = '1';
+  // This is for debugging the request and response xml inside the SDK.
+  // This should probably never be changed.
+  $auth_info['print_xml'] = 0;
 
   if ($gateway['settings']['commerce_litle_settings_sandbox'] == 1) {
     $auth_info['url'] = 'https://www.testlitle.com/sandbox/communicator/online';
