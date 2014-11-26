@@ -1096,6 +1096,12 @@ function fundraiser_sustainers_form_fundraiser_admin_settings_alter(&$form, &$fo
     '#description' => t('How many charges max to make off a successful charge.'),
     '#default_value' => variable_get('fundraiser_sustainers_create_limit', 50),
   );
+  $form['fundraiser_sustainers']['fundraiser_sustainers_max_processing_attempts'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Maximum charge attempts'),
+    '#description' => t('The maximum number of charge attempts per donation. Once this number is reached the system will no longer attempt to process the donation. Please enter a value between 3 and 10.'),
+    '#default_value' => variable_get('fundraiser_sustainers_max_processing_attempts', 3),
+  );
   $form['fundraiser_sustainers']['fundraiser_cron'] = array(
     '#type' => 'fieldset',
     '#title' => t('Cron settings'),
@@ -1148,7 +1154,22 @@ function fundraiser_sustainers_form_fundraiser_admin_settings_alter(&$form, &$fo
     '#title' => t('Drupal tokens'),
     '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
   );
+  $form['#validate'][] = 'fundraiser_sustainers_settings_form_validate';
   $form['#submit'][] = 'fundraiser_update_cron_settings';
+}
+
+/**
+ * Validation handler for sustainer setting form alterations.
+ */
+function fundraiser_sustainers_settings_form_validate($form, &$form_state) {
+  $max_processing_attempts = $form_state['values']['fundraiser_sustainers_max_processing_attempts'];
+
+  // Ensure we get a number between 3 and 10.
+  if (!is_numeric($max_processing_attempts)
+    || $max_processing_attempts < 3
+    || $max_processing_attempts > 10) {
+    form_set_error('fundraiser_sustainers_max_processing_attempts', t('Maximum charge attempts should be a valid number between 3 and 10.'));
+  }
 }
 
 /**
@@ -2205,7 +2226,7 @@ function fundraiser_sustainers_fundraiser_donation_decline($donation) {
     $attempt_count = db_query('SELECT attempts FROM {fundraiser_sustainers} WHERE did = :did',
       array(':did' => $donation->did))->fetchColumn();
 
-    if ($attempt_count == 3) {
+    if ($attempt_count == variable_get('fundraiser_sustainers_max_processing_attempts', 3)) {
       // Final attempt, add debug alert.
 
     // update sf queue.
@@ -2228,9 +2249,9 @@ function fundraiser_sustainers_fundraiser_donation_decline($donation) {
       }
 
     }
-      watchdog('fundraiser_sustainers', 'Payment for recurring donation @id has failed 3 times. ' .
+      watchdog('fundraiser_sustainers', 'Payment for recurring donation @id has failed @count times. ' .
         'The donation will not be submitted for payment again. Gateway message: @message',
-        array('@id' => $donation->did, '@message' => $donation->result['message']), WATCHDOG_DEBUG);
+        array('@id' => $donation->did, '@count' => variable_get('fundraiser_sustainers_max_processing_attempts', 3), '@message' => $donation->result['message']), WATCHDOG_DEBUG);
     }
     else {
       // Log this failure
@@ -2554,11 +2575,12 @@ function _fundraiser_sustainers_count_donations_recurr_remaining($master_did) {
  * DB funct, get order donation sets that are remaining.
  */
 function _fundraiser_sustainers_get_donations_recurr_remaining($master_did) {
+  $max_processing_attempts = variable_get('fundraiser_sustainers_max_processing_attempts', 3);
   $donations = db_query('SELECT * FROM {fundraiser_sustainers} r ' .
     'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
     'WHERE r.master_did = :master_did ' .
-    'AND (r.gateway_resp IS NULL OR (r.gateway_resp = \'failed\' && r.attempts != 3)) ' .
-    'ORDER BY r.next_charge ASC', array(':master_did' => $master_did))->fetchAll();
+    'AND (r.gateway_resp IS NULL OR (r.gateway_resp = \'failed\' && r.attempts != :max_attempts)) ' .
+    'ORDER BY r.next_charge ASC', array(':master_did' => $master_did, ':max_attempts' => $max_processing_attempts))->fetchAll();
   return $donations;
 }
 
@@ -2606,15 +2628,16 @@ function fundraiser_sustainers_count_donations_in_series($master_did) {
 function _fundraiser_sustainers_cron_get_recurring($limit = 1000) {
   $now = strtotime('now');
   $uni_batch_id = uniqid();
+  $max_processing_attempts = variable_get('fundraiser_sustainers_max_processing_attempts', 3);
   // Lock them (faster to lock, then query, than the other way around).
   // Since large data set returns => delay.
   $donations = db_query('SELECT r.did FROM {fundraiser_sustainers} r ' .
     'WHERE (r.gateway_resp IS NULL OR r.gateway_resp = \'failed\') ' .
     'AND r.next_charge < :now ' .
-    'AND (r.attempts < 3 OR r.attempts IS NULL) ' . // If already been tried 3 times, Stop Trying.
+    'AND (r.attempts < :max_attempts OR r.attempts IS NULL) ' . // If already been tried 3 times, Stop Trying.
     'AND r.lock_id = 0 ' . // And not locked.
     'LIMIT 0, ' . $limit,
-    array(':now' => $now)
+    array(':now' => $now, ':max_attempts' => $max_processing_attempts)
   )->fetchAllKeyed(0, 0);
   if (!empty($donations)) {
     db_query('UPDATE {fundraiser_sustainers} r1 ' .
