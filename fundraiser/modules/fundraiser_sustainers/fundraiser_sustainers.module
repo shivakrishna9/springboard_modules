@@ -2215,48 +2215,66 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
  */
 function fundraiser_sustainers_fundraiser_donation_decline($donation) {
   if ($donation->donation['recurs_monthly'] == TRUE) {
-    // Update data internal to fundraiser. TODO move this db stuff.
-    db_query('UPDATE {fundraiser_sustainers} SET ' .
-      'gateway_resp = \'failed\', attempts = attempts + 1, ' .
-      'lock_id = 0, ' .
-      'next_charge = unix_timestamp(timestampadd(DAY, 1, from_unixtime(next_charge))) ' .
-      'WHERE did = :did', array(':did' => $donation->did)
-    );
-    // Get the number of times this order has been attempted
-    $attempt_count = db_query('SELECT attempts FROM {fundraiser_sustainers} WHERE did = :did',
+    // Use retry as the default decline status.
+    $status = 'retry';
+
+    // Get our processing attempt var to compare against current attempt count.
+    $max_processing_attempts = variable_get('fundraiser_sustainers_max_processing_attempts', 3);
+
+    // Get the current attempt count. That will allow us to determine what we need to set the
+    // status to.
+    $current_attempt_count = db_query('SELECT attempts FROM {fundraiser_sustainers} WHERE did = :did',
       array(':did' => $donation->did))->fetchColumn();
 
-    if ($attempt_count == variable_get('fundraiser_sustainers_max_processing_attempts', 3)) {
-      // Final attempt, add debug alert.
+    // If we've tried to process the charge the maximum number, consider failed for good. The - 1 is
+    // required because attempt count is updated AFTER each attempt. So when the attempt column reads
+    // 2 that actually means it's been processed 3 times (0,1,2).
+    if ($current_attempt_count == ($max_processing_attempts - 1)) {
+      // Mark the record as failed.
+      db_query('
+        UPDATE {fundraiser_sustainers}
+          SET
+            gateway_resp = :status,
+            attempts = :attempts
+        WHERE did = :did',
+        array(':status' => 'failed', ':attempts' => $max_processing_attempts, ':did' => $donation->did)
+      );
 
-    // update sf queue.
-    if (module_exists('salesforce_genmap')) {
-      $stages = variable_get('salesforce_donation_mapped_stages', salesforce_donation_default_stage_map());
-      foreach ($stages as $salesforce_name => $commerce_name) {
-        if ($commerce_name == 'failed') {
-           $stage = $salesforce_name;
+      // update sf queue.
+      if (module_exists('salesforce_genmap')) {
+        $stages = variable_get('salesforce_donation_mapped_stages', salesforce_donation_default_stage_map());
+        foreach ($stages as $salesforce_name => $commerce_name) {
+          if ($commerce_name == 'failed') {
+             $stage = $salesforce_name;
+          }
+        }
+        if (isset($stage)) {
+          $donation->recurring->sf_stagename = $stage;
+          // If a failed stage is mapped, re-queue the failed transaction for export.
+          salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
+        }
+        else {
+          $donation->recurring->sf_stagename = 'Donation failed, but stage could not be mapped.';
+          watchdog('fundraiser_sustainers', 'Sustainer payment failure for donation @id will not be exported
+            to Salesforce because the failed order status has not been mapped to an appropriate Opportunity stage. If you wish to export failed sustainer payments you need to add a failed stage in Salesforce and map it on the Salesforce donation settings page.', array('@id' => $donation->did), WATCHDOG_DEBUG, l('Salesforce donation settings', 'admin/config/salesforce/salesforce-donation'));
         }
       }
-      if (isset($stage)) {
-        $donation->recurring->sf_stagename = $stage;
-        // If a failed stage is mapped, re-queue the failed transaction for export.
-        salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
-      }
-      else {
-        $donation->recurring->sf_stagename = 'Donation failed, but stage could not be mapped.';
-        watchdog('fundraiser_sustainers', 'Sustainer payment failure for donation @id will not be exported
-          to Salesforce because the failed order status has not been mapped to an appropriate Opportunity stage. If you wish to export failed sustainer payments you need to add a failed stage in Salesforce and map it on the Salesforce donation settings page.', array('@id' => $donation->did), WATCHDOG_DEBUG, l('Salesforce donation settings', 'admin/config/salesforce/salesforce-donation'));
-      }
 
-    }
       watchdog('fundraiser_sustainers', 'Payment for recurring donation @id has failed @count times. ' .
         'The donation will not be submitted for payment again. Gateway message: @message',
         array('@id' => $donation->did, '@count' => variable_get('fundraiser_sustainers_max_processing_attempts', 3), '@message' => $donation->result['message']), WATCHDOG_DEBUG);
     }
     else {
       // Log this failure
+      db_query('UPDATE {fundraiser_sustainers} SET ' .
+        'gateway_resp = :status, attempts = attempts + 1, ' .
+        'lock_id = 0, ' .
+        'next_charge = unix_timestamp(timestampadd(DAY, 1, from_unixtime(next_charge))) ' .
+        'WHERE did = :did', array(':status' => 'retry', ':did' => $donation->did)
+      );
+
       watchdog('fundraiser_sustainers', 'Payment for recurring donation @id has failed @attempts times. It will be processed again in 1 day. Gateway message: @message',
-        array('@id' => $donation->did, '@attempts' => $attempt_count, '@message' => $donation->result['message']), WATCHDOG_DEBUG);
+        array('@id' => $donation->did, '@attempts' => $current_attempt_count, '@message' => $donation->result['message']), WATCHDOG_DEBUG);
     }
   }
 }
@@ -2632,7 +2650,7 @@ function _fundraiser_sustainers_cron_get_recurring($limit = 1000) {
   // Lock them (faster to lock, then query, than the other way around).
   // Since large data set returns => delay.
   $donations = db_query('SELECT r.did FROM {fundraiser_sustainers} r ' .
-    'WHERE (r.gateway_resp IS NULL OR r.gateway_resp = \'failed\') ' .
+    'WHERE (r.gateway_resp IS NULL OR r.gateway_resp = \'retry\') ' .
     'AND r.next_charge < :now ' .
     'AND (r.attempts < :max_attempts OR r.attempts IS NULL) ' . // If already been tried 3 times, Stop Trying.
     'AND r.lock_id = 0 ' . // And not locked.
