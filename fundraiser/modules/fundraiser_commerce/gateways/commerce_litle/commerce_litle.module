@@ -470,7 +470,7 @@ function _commerce_litle_fraud_session_id() {
     $prefix = variable_get('commerce_litle_fraud_id_prefix');
     $session_id = $prefix . '-' . hash('sha256', time() . drupal_random_key() . mt_rand());
   }
-  elseif(!$session_id) {
+  elseif (!$session_id) {
     drupal_set_message('Please note: commerce Litle Advanced Fraud Protection is running in development mode.', 'warning', TRUE);
     $prefix = variable_get('commerce_litle_fraud_id_prefix');
     $session_id = $prefix . '-' . variable_get('commerce_litle_fraud_dev_mode_id', '');
@@ -482,12 +482,12 @@ function _commerce_litle_fraud_session_id() {
  * Add the pseudo-session ID to the litle xml request.
  */
 function _commerce_litle_fraud_sale_request_item($nvp, $session_id) {
- $nvp['advancedFraudChecks']  = array(
-   'threatMetrixSessionId' => $session_id,
- );
- return $nvp;
-}
+  $nvp['advancedFraudChecks']  = array(
+    'threatMetrixSessionId' => $session_id,
+  );
 
+  return $nvp;
+}
 
 /**
  * Payment method callback: checkout form.
@@ -637,7 +637,7 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
   commerce_payment_transaction_save($transaction);
   $nvp['id'] = substr($transaction->transaction_id, 0, 20);
 
-  // Allow modules to alter the values sent to Litle
+  // Allow modules to alter the values sent to Litle.
   $context = array(
     'payment_method' => $payment_method,
     'type' => 'cc',
@@ -652,21 +652,21 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
   $sale_response = $init->saleRequest($nvp);
   if (variable_get('commerce_litle_fraud', 0)) {
 
-    $order_id = XmlParser::getNode($sale_response, 'orderId');
-    $litle_txn_id = XmlParser::getNode($sale_response, 'litleTxnId');
-    $response_time = strtotime(XmlParser::getNode($sale_response, 'responseTime'));
-    $message = XmlParser::getNode($sale_response, 'message');
-    $avs_result = XmlParser::getNode($sale_response, 'avsResult');
-    $device_review_status = XmlParser::getNode($sale_response, 'deviceReviewStatus');
-    $device_reputation_score = XmlParser::getNode($sale_response, 'deviceReputationScore');
+    $order_id = $init->getNode($sale_response, 'orderId');
+    $litle_txn_id = $init->getNode($sale_response, 'litleTxnId');
+    $response_time = strtotime($init->getNode($sale_response, 'responseTime'));
+    $message = $init->getNode($sale_response, 'message');
+    $avs_result = $init->getNode($sale_response, 'avsResult');
+    $device_review_status = $init->getNode($sale_response, 'deviceReviewStatus');
+    $device_reputation_score = $init->getNode($sale_response, 'deviceReputationScore');
 
     $data = array(
       'order_id' => !empty($order_id) ? $order_id : NULL,
       'litle_txn_id' => !empty($litle_txn_id) ? $litle_txn_id : NULL,
       'response_time' => $response_time,
-      'message' => XmlParser::getNode($sale_response, 'message'),
+      'message' => $message,
       'avs_result' => !empty($avs_result) ? $avs_result : NULL,
-      'device_review_status' => XmlParser::getNode($sale_response, 'deviceReviewStatus'),
+      'device_review_status' => $device_review_status,
       'device_reputation_score' => !empty($device_reputation_score) ? $device_reputation_score : NULL,
     );
     drupal_write_record('commerce_litle_fraud', $data);
@@ -677,7 +677,7 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
   }
 
   // If we didn't get an approval response code...
-  if (XmlParser::getNode($sale_response, 'response') != '000') {
+  if ($init->getNode($sale_response, 'response') != '000') {
     // Create a failed transaction with the error message.
     $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
   }
@@ -700,11 +700,11 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
 
   $transaction->remote_status = COMMERCE_CREDIT_AUTH_CAPTURE;
   // Store the remote id.
-  $transaction->remote_id = XmlParser::getNode($sale_response, 'litleTxnId');
+  $transaction->remote_id = $init->getNode($sale_response, 'litleTxnId');
 
   // Build a meaningful response message.
   $message = array(
-    '<b>' . (XmlParser::getNode($sale_response, 'response') != '000' ? t('REJECTED') : t('ACCEPTED')) . ':</b> ' . check_plain(XmlParser::getNode($sale_response, 'message')),
+    '<b>' . ($init->getNode($sale_response, 'response') != '000' ? t('REJECTED') : t('ACCEPTED')) . ':</b> ' . check_plain($init->getNode($sale_response, 'message')),
   );
 
   $transaction->message = implode('<br />', $message);
@@ -712,11 +712,11 @@ function commerce_litle_cc_submit_form_submit($payment_method, $pane_form, $pane
   commerce_payment_transaction_save($transaction);
 
   // If the payment failed, display an error and rebuild the form.
-  if (XmlParser::getNode($sale_response, 'response') != '000') {
+  if ($init->getNode($sale_response, 'response') != '000') {
     drupal_set_message(t('We received an error processing your card. Please enter your information again or try a different card.'), 'error');
 
     if ($payment_method['settings']['verbose_gateway']) {
-      drupal_set_message(check_plain(XmlParser::getNode($sale_response, 'message')), 'error');
+      drupal_set_message(check_plain($init->getNode($sale_response, 'message')), 'error');
     }
 
     return FALSE;
@@ -846,7 +846,7 @@ function commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, 
   commerce_payment_transaction_save($transaction);
   $request_data['id'] = substr($transaction->transaction_id, 0, 20);
 
-  // Allow modules to alter the values sent to Litle
+  // Allow modules to alter the values sent to Litle.
   $context = array(
     'payment_method' => $payment_method,
     'type' => 'cc_vault',
@@ -870,7 +870,7 @@ function commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, 
   // @todo If the response is that the cardonfile isn't valid, deactivate it.
   // @todo Also need to remove the transaction.
   // If we didn't get an approval response code...
-  if (XmlParser::getNode($sale_response, 'response') != '000') {
+  if ($init->getNode($sale_response, 'response') != '000') {
     // Create a failed transaction with the error message.
     $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
   }
@@ -895,11 +895,11 @@ function commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, 
   $transaction->remote_status = $txn_type;
 
   // Store the remote id.
-  $transaction->remote_id = XmlParser::getNode($sale_response, 'litleTxnId');
+  $transaction->remote_id = $init->getNode($sale_response, 'litleTxnId');
 
   // Build a meaningful response message.
   $message = array(
-    '<b>' . (XmlParser::getNode($sale_response, 'response') != '000' ? t('REJECTED') : t('ACCEPTED')) . ':</b> ' . check_plain(XmlParser::getNode($sale_response, 'message')),
+    '<b>' . ($init->getNode($sale_response, 'response') != '000' ? t('REJECTED') : t('ACCEPTED')) . ':</b> ' . check_plain($init->getNode($sale_response, 'message')),
   );
 
   $transaction->message = implode('<br />', $message);
@@ -907,11 +907,11 @@ function commerce_litle_cc_vault_cardonfile_charge($payment_method, $card_data, 
   commerce_payment_transaction_save($transaction);
 
   // If the payment failed, display an error and rebuild the form.
-  if (XmlParser::getNode($sale_response, 'response') != '000') {
+  if ($init->getNode($sale_response, 'response') != '000') {
     drupal_set_message(t('We received an error processing your card on file. Please enter your information again or try a different card.'), 'error');
 
     if ($payment_method['settings']['verbose_gateway']) {
-      drupal_set_message(check_plain(XmlParser::getNode($sale_response, 'message')), 'error');
+      drupal_set_message(check_plain($init->getNode($sale_response, 'message')), 'error');
     }
 
     return FALSE;
@@ -986,7 +986,7 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
   commerce_payment_transaction_save($transaction);
   $nvp['id'] = substr($transaction->transaction_id, 0, 20);
 
-  // Allow modules to alter the values sent to Litle
+  // Allow modules to alter the values sent to Litle.
   $context = array(
     'payment_method' => $payment_method,
     'type' => 'echeck',
@@ -1002,21 +1002,21 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
   $sale_response = $init->echeckSaleRequest($nvp);
   if (variable_get('commerce_litle_fraud', 0)) {
 
-    $order_id = XmlParser::getNode($sale_response, 'orderId');
-    $litle_txn_id = XmlParser::getNode($sale_response, 'litleTxnId');
-    $response_time = strtotime(XmlParser::getNode($sale_response, 'responseTime'));
-    $message = XmlParser::getNode($sale_response, 'message');
-    $avs_result = XmlParser::getNode($sale_response, 'avsResult');
-    $device_review_status = XmlParser::getNode($sale_response, 'deviceReviewStatus');
-    $device_reputation_score = XmlParser::getNode($sale_response, 'deviceReputationScore');
+    $order_id = $init->getNode($sale_response, 'orderId');
+    $litle_txn_id = $init->getNode($sale_response, 'litleTxnId');
+    $response_time = strtotime($init->getNode($sale_response, 'responseTime'));
+    $message = $init->getNode($sale_response, 'message');
+    $avs_result = $init->getNode($sale_response, 'avsResult');
+    $device_review_status = $init->getNode($sale_response, 'deviceReviewStatus');
+    $device_reputation_score = $init->getNode($sale_response, 'deviceReputationScore');
 
     $data = array(
       'order_id' => !empty($order_id) ? $order_id : NULL,
       'litle_txn_id' => !empty($litle_txn_id) ? $litle_txn_id : NULL,
       'response_time' => $response_time,
-      'message' => XmlParser::getNode($sale_response, 'message'),
+      'message' => $message,
       'avs_result' => !empty($avs_result) ? $avs_result : NULL,
-      'device_review_status' => XmlParser::getNode($sale_response, 'deviceReviewStatus'),
+      'device_review_status' => $device_review_status,
       'device_reputation_score' => !empty($device_reputation_score) ? $device_reputation_score : NULL,
     );
     drupal_write_record('commerce_litle_fraud', $data);
@@ -1027,29 +1027,29 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
 
     if (variable_get('commerce_litle_fraud', 0)) {
 
-       $order_id = XmlParser::getNode($sale_response, 'orderId');
-       $litle_txn_id = XmlParser::getNode($sale_response, 'litleTxnId');
-       $response_time = strtotime(XmlParser::getNode($sale_response, 'responseTime'));
-       $message = XmlParser::getNode($sale_response, 'message');
-       $avs_result = XmlParser::getNode($sale_response, 'avsResult');
-       $device_review_status = XmlParser::getNode($sale_response, 'deviceReviewStatus');
-       $device_reputation_score = XmlParser::getNode($sale_response, 'deviceReputationScore');
+      $order_id = $init->getNode($sale_response, 'orderId');
+      $litle_txn_id = $init->getNode($sale_response, 'litleTxnId');
+      $response_time = strtotime($init->getNode($sale_response, 'responseTime'));
+      $message = $init->getNode($sale_response, 'message');
+      $avs_result = $init->getNode($sale_response, 'avsResult');
+      $device_review_status = $init->getNode($sale_response, 'deviceReviewStatus');
+      $device_reputation_score = $init->getNode($sale_response, 'deviceReputationScore');
 
       $data = array(
-       'order_id' => !empty($order_id) ? $order_id : NULL,
-       'litle_txn_id' => !empty($litle_txn_id) ? $litle_txn_id : NULL,
-       'response_time' => $response_time,
-       'message' => XmlParser::getNode($sale_response, 'message'),
-       'avs_result' => !empty($avs_result) ? $avs_result : NULL,
-       'device_review_status' => XmlParser::getNode($sale_response, 'deviceReviewStatus'),
-       'device_reputation_score' => !empty($device_reputation_score) ? $device_reputation_score : NULL,
+        'order_id' => !empty($order_id) ? $order_id : NULL,
+        'litle_txn_id' => !empty($litle_txn_id) ? $litle_txn_id : NULL,
+        'response_time' => $response_time,
+        'message' => $message,
+        'avs_result' => !empty($avs_result) ? $avs_result : NULL,
+        'device_review_status' => $device_review_status,
+        'device_reputation_score' => !empty($device_reputation_score) ? $device_reputation_score : NULL,
       );
       drupal_write_record('commerce_litle_fraud', $data);
     }
   }
 
   // If we didn't get an approval response code...
-  if (XmlParser::getNode($sale_response, 'response') != '000') {
+  if ($init->getNode($sale_response, 'response') != '000') {
     // Create a failed transaction with the error message.
     $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
   }
@@ -1065,11 +1065,11 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
   // Store the type of transaction in the remote status.
   $transaction->remote_status = COMMERCE_CREDIT_AUTH_CAPTURE;
   // Store the remote id.
-  $transaction->remote_id = XmlParser::getNode($sale_response, 'litleTxnId');
+  $transaction->remote_id = $init->getNode($sale_response, 'litleTxnId');
 
   // Build a meaningful response message.
   $message = array(
-    '<b>' . (XmlParser::getNode($sale_response, 'response') != '000' ? t('REJECTED') : t('ACCEPTED')) . ':</b> ' . check_plain(XmlParser::getNode($sale_response, 'message')),
+    '<b>' . ($init->getNode($sale_response, 'response') != '000' ? t('REJECTED') : t('ACCEPTED')) . ':</b> ' . check_plain($init->getNode($sale_response, 'message')),
   );
 
   $transaction->message = implode('<br />', $message);
@@ -1077,11 +1077,11 @@ function commerce_litle_echeck_submit_form_submit($payment_method, $pane_form, $
   commerce_payment_transaction_save($transaction);
 
   // If the payment failed, display an error and rebuild the form.
-  if (XmlParser::getNode($sale_response, 'response') != '000') {
+  if ($init->getNode($sale_response, 'response') != '000') {
     drupal_set_message(t('We received an error processing your card. Please enter your information again or try a different card.'), 'error');
 
     if ($payment_method['settings']['verbose_gateway']) {
-      drupal_set_message(check_plain(XmlParser::getNode($sale_response, 'message')), 'error');
+      drupal_set_message(check_plain($init->getNode($sale_response, 'message')), 'error');
     }
 
     return FALSE;
@@ -1210,7 +1210,7 @@ function commerce_litle_echeck_vault_cardonfile_charge($payment_method, $card_da
   commerce_payment_transaction_save($transaction);
   $request_data['id'] = substr($transaction->transaction_id, 0, 20);
 
-  // Allow modules to alter the values sent to Litle
+  // Allow modules to alter the values sent to Litle.
   $context = array(
     'payment_method' => $payment_method,
     'type' => 'echeck_vault',
@@ -1232,7 +1232,7 @@ function commerce_litle_echeck_vault_cardonfile_charge($payment_method, $card_da
   }
 
   // If we didn't get an approval response code...
-  if (XmlParser::getNode($sale_response, 'response') != '000') {
+  if ($init->getNode($sale_response, 'response') != '000') {
     // Create a failed transaction with the error message.
     $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
   }
@@ -1248,11 +1248,11 @@ function commerce_litle_echeck_vault_cardonfile_charge($payment_method, $card_da
   // Store the type of transaction in the remote status.
   $transaction->remote_status = COMMERCE_CREDIT_AUTH_CAPTURE;
   // Store the remote id.
-  $transaction->remote_id = XmlParser::getNode($sale_response, 'litleTxnId');
+  $transaction->remote_id = $init->getNode($sale_response, 'litleTxnId');
 
   // Build a meaningful response message.
   $message = array(
-    '<b>' . (XmlParser::getNode($sale_response, 'response') != '000' ? t('REJECTED') : t('ACCEPTED')) . ':</b> ' . check_plain(XmlParser::getNode($sale_response, 'message')),
+    '<b>' . ($init->getNode($sale_response, 'response') != '000' ? t('REJECTED') : t('ACCEPTED')) . ':</b> ' . check_plain($init->getNode($sale_response, 'message')),
   );
 
   $transaction->message = implode('<br />', $message);
@@ -1260,11 +1260,11 @@ function commerce_litle_echeck_vault_cardonfile_charge($payment_method, $card_da
   commerce_payment_transaction_save($transaction);
 
   // If the payment failed, display an error and rebuild the form.
-  if (XmlParser::getNode($sale_response, 'response') != '000') {
+  if ($init->getNode($sale_response, 'response') != '000') {
     drupal_set_message(t('We received an error processing your card. Please enter your information again or try a different card.'), 'error');
 
     if ($payment_method['settings']['verbose_gateway']) {
-      drupal_set_message(check_plain(XmlParser::getNode($sale_response, 'message')), 'error');
+      drupal_set_message(check_plain($init->getNode($sale_response, 'message')), 'error');
     }
 
     return FALSE;
@@ -1375,34 +1375,14 @@ function _commerce_litle_request_echeck_credit($gateway, $input) {
 /**
  * Load the Litle SDK and return a LitleOnlineRequest.
  *
- * @return bool|\litle\sdk\LitleOnlineRequest
- *   The litle request object, or FALSE.
+ * @return LitleSDK
+ *   A LitleSDK object that has methods for the Litle REquest and XmlParser.
+ *
+ * @throws RuntimeException
+ *   If the Litle SDK can't be loaded.
  */
 function _commerce_litle_get_litle() {
-  $library = libraries_load('litle');
-
-  if (!empty($library['loaded'])) {
-    return new \litle\sdk\LitleOnlineRequest();
-  }
-
-  // Couldn't load the library. Try to get some info and watchdog it.
-  $replacements = array(
-    '@error' => '',
-    '@error_message' => '',
-  );
-
-  if (isset($library['error'])) {
-    $replacements['@error'] = $library['error'];
-  }
-  if (isset($library['error message'])) {
-    $replacements['@error_message'] = $library['error message'];
-  }
-
-  watchdog('Commerce Litle', 'Litle library not found! @error @error_message', $replacements, WATCHDOG_ALERT);
-
-  // @todo Should we throw an Exception and handle it somewhere in Commerce?
-  // We're pretty much dead in the water at this point.
-  return FALSE;
+  return new LitleSDK();
 }
 
 /**
@@ -1467,7 +1447,7 @@ function commerce_litle_register_token_request($litle, $litle_config, $data) {
   $data += $litle_config;
   $token_response = $litle->registerTokenRequest($data);
 
-  watchdog('commerce_litle', 'Litle Token response: !param', array('!param' => '<pre>' . check_plain(XmlParser::getDomDocumentAsString($token_response)) . '</pre>', WATCHDOG_DEBUG));
+  watchdog('commerce_litle', 'Litle Token response: !param', array('!param' => '<pre>' . check_plain($litle->getDomDocumentAsString($token_response)) . '</pre>', WATCHDOG_DEBUG));
 
   return $token_response;
 }
@@ -1499,7 +1479,6 @@ function _commerce_litle_cc_card_type_to_litle($type) {
 }
 
 /**
-
  * Translates commerce transaction type constants to the Litle equivalent.
  *
  * Returns the transaction type string for Litle that corresponds to the
@@ -1686,14 +1665,16 @@ function commerce_litle_vault_cardonfile_register_token($payment_method, $paymen
  *   A token string, or NULL if the response code indicated a failure.
  */
 function commerce_litle_get_token_from_response($response) {
+  $sdk = _commerce_litle_get_litle();
+
   $token = NULL;
-  $response_code = XmlParser::getNode($response, 'response');
+  $response_code = $sdk->getNode($response, 'response');
 
   // Keep in mind tokenResponseCode is different than response.
   // 801 Account number was successfully registered.
   // 802 Account number was previously registered.
   if (in_array($response_code, array(801, 802))) {
-    $token = XmlParser::getNode($response, 'litleToken');
+    $token = $sdk->getNode($response, 'litleToken');
   }
 
   return $token;
@@ -1759,7 +1740,8 @@ function commerce_litle_mask_string($number, $show_count = 4) {
  *   A response from Litle.
  */
 function commerce_litle_log_response($response) {
-  watchdog('commerce_litle', 'Litle response: !param', array('!param' => '<pre>' . check_plain(XmlParser::getDomDocumentAsString($response)) . '</pre>', WATCHDOG_DEBUG));
+  $sdk = _commerce_litle_get_litle();
+  watchdog('commerce_litle', 'Litle response: !param', array('!param' => '<pre>' . check_plain($sdk->getDomDocumentAsString($response)) . '</pre>', WATCHDOG_DEBUG));
 }
 
 /**
@@ -1853,10 +1835,10 @@ function commerce_litle_fundraiser_sustainers_recurring_success($donation) {
   }
 }
 
-/* *
- * Implements hook_settings_form
+/**
+ * Implements hook_settings_form().
  *
- * Configuration form for Litle/Threatmetrix Advanced Fraud Protection
+ * Configuration form for Litle/Threatmetrix Advanced Fraud Protection.
  */
 function commerce_litle_fraud_settings_form() {
 
@@ -1872,7 +1854,7 @@ function commerce_litle_fraud_settings_form() {
   $form['fraud']['commerce_litle_fraud'] = array(
     '#type' => 'checkbox',
     '#title' => 'Enable Advanced Fraud Protection',
-    '#default_value' => variable_get('commerce_litle_fraud',''),
+    '#default_value' => variable_get('commerce_litle_fraud', ''),
     '#prefix' => '<br />',
   );
 
@@ -1928,13 +1910,15 @@ function commerce_litle_fraud_settings_form() {
     ),
   );
 
-
   $form['#validate'][] = 'commerce_litle_fraud_settings_form_validate';
   return system_settings_form($form);
 }
 
+/**
+ * Validation handler for the fraud settings form.
+ */
 function commerce_litle_fraud_settings_form_validate($form, &$form_state) {
-  if($form_state['values']['commerce_litle_fraud'] == 1) {
+  if ($form_state['values']['commerce_litle_fraud'] == 1) {
     if ($form_state['values']['commerce_litle_fraud_id_prefix'] == '') {
       form_set_error('commerce_litle_fraud_id_prefix', t('Session ID prefix is a required field'));
     }
@@ -1943,4 +1927,3 @@ function commerce_litle_fraud_settings_form_validate($form, &$form_state) {
     }
   }
 }
-

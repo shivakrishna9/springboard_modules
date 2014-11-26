@@ -11,3 +11,5 @@ dependencies[] = libraries
 core = 7.x
 
 php = 5.3
+
+files[] = includes/LitleSDK.php

@@ -159,4 +159,6 @@ function commerce_litle_update_7002() {
 function commerce_litle_update_7003() {
   variable_del('commerce_litle_sdk_path');
   variable_del('commerce_litle_sdk_mode');
+
+  registry_rebuild();
 }
