@@ -19,6 +19,8 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
     $this->pager->query();
     $view->build_info['springboard_advocacy_request'] = $this->client;
     if (isset($view->query->search_terms)) {
+      dpm($view->query->search_terms);
+      $view->build_info['springboard_advocacy_search'] = $view->query->search_terms;  
       foreach ($view->query->search_terms as $key => $value) {
        // $view->build_info['springboard_advocacy_request']->setSearchTerms($key, $value);   
       } 
@@ -31,8 +33,7 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
 
     $start = microtime(true);
     
-    //@TODO: need to refactor api for search terms to work
-    $targets = $client->getCustomTargets();
+    $targets = $client->getCustomTargets($view->query->search_terms);
 
     if ($this->pager->use_pager()) {
       $this->pager->total_items = count($targets);

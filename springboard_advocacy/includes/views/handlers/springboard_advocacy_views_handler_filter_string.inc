@@ -30,7 +30,7 @@ class springboard_advocacy_views_handler_filter_string extends views_handler_fil
       $this->{$info[$this->operator]['method']}($field);
     }
   }
-
+  
   function op_contains($field) {
     $this->query->search_terms[$field] = $this->value;
   }

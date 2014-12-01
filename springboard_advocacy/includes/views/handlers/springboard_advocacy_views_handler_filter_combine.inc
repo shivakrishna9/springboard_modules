@@ -54,24 +54,24 @@ class springboard_advocacy_views_handler_filter_combine extends springboard_advo
     $fields = array();
     foreach ($this->options['fields'] as $id) {
       $field = $this->view->field[$id];
-      $fields[] = $field->real_field;
+      $fields[$field->real_field] = $this->value;
     }
     if ($fields) {
-      $separated_fields = array();
-      foreach ($fields as $key => $field) {
-        $separated_fields[] = $field;
-      }
+      // $separated_fields = array();
+      // foreach ($fields as $key => $field) {
+      //   $separated_fields[] = $field;
+      // }
 
-      $expression = implode(', ', $separated_fields);
+      // $expression = implode(', ', $separated_fields);
 
       $info = $this->operators();
       if (!empty($info[$this->operator]['method'])) {
-        $this->{$info[$this->operator]['method']}($expression);
+        $this->{$info[$this->operator]['method']}($fields);
       }
     }
   }
 
-  function op_contains($field) {
-    $this->query->search_terms[$field] = $this->value;
+  function op_contains($fields) {
+    $this->query->search_terms = $fields;
   }
 }
