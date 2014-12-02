@@ -1339,44 +1339,10 @@ function _commerce_litle_request_sale($gateway, $input) {
 }
 
 /**
- * Litle request function wrapper.
- *
- * Example input
- *   $input = array(
- *     'litleTxnId'=>'100000000000000002',
- *     'id'=> '456',
- *     'amount'=>'1010'
- *   );
- */
-function _commerce_litle_request_credit($gateway, $input) {
-  $litle = _commerce_litle_get_litle();
-  $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
-  $input['id'] = $input['litleTxnId'];
-  return $litle->creditRequest($input);
-}
-
-/**
- * Litle echeck credit request function wrapper.
- *
- * Example input
- *   $input = array(
- *     'litleTxnId'=>'100000000000000002',
- *     'id'=> '456',
- *     'amount'=>'1010'
- *   );
- */
-function _commerce_litle_request_echeck_credit($gateway, $input) {
-  $litle = _commerce_litle_get_litle();
-  $input = array_merge($input, _commerce_litle_get_litle_config($gateway));
-  $input['id'] = $input['litleTxnId'];
-  return $litle->echeckCreditRequest($input);
-}
-
-/**
  * Load the Litle SDK and return a LitleOnlineRequest.
  *
  * @return LitleSDK
- *   A LitleSDK object that has methods for the Litle REquest and XmlParser.
+ *   A LitleSDK object that has methods for the Litle Request and XmlParser.
  *
  * @throws RuntimeException
  *   If the Litle SDK can't be loaded.
