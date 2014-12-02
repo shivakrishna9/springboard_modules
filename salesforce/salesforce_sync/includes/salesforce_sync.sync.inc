@@ -343,6 +343,7 @@ class SalesforceSync {
     $this->batchRemoveBadTokens($batch);
     $this->batchApplySalesforceSyncRules($batch);
     $this->batchConvertToSalesforceFormat($batch);
+    $this->batchTruncateLongStrings($batch);
     $batch['batch_prepared'] = TRUE;
   }
 
@@ -551,6 +552,25 @@ class SalesforceSync {
   }
 
   /**
+   * Loops over items in a batch and passes each individual
+   * item to a string truncation routine.
+   *
+   * @param array $batch
+   *   A batch of sobjects being sent to Salesforce.
+   */
+  public function batchTruncateLongStrings(&$batch) {
+    if (isset($batch['long_strings_truncated']) && $batch['long_strings_truncated']) {
+      return;
+    }
+
+    foreach ($batch['items'] as $item) {
+      $this->truncateLongStrings($item);
+    }
+
+    $batch['long_strings_truncated'] = TRUE;
+  }
+
+  /**
    * Convert the mapped values into a format compatible to send to Salesforce.
    *
    * @param object $item
@@ -672,6 +692,80 @@ class SalesforceSync {
 
     // Mark the item as converted.
     $item->converted_to_salesforce_format = TRUE;
+  }
+
+  /**
+   * Examine the text fields in an sobject to see if the field's value exceeds
+   * the max length property set in Salesforce. If the string is too long it
+   * will get truncated.
+   *
+   * @param array $batch
+   *   A batch of sobjects being sent to Salesforce.
+   */
+  public function truncateLongStrings(&$item) {
+    if (isset($item->long_strings_truncated) && $item->long_strings_truncated) {
+      return;
+    }
+
+    // Get field length limits for any string-type fields on this SF object type.
+    $field_lengths = &drupal_static(__FUNCTION__, array());
+    if (!isset($field_lengths[$item->object_type])) {
+      // Find the data types of all the Salesforce fields and store it in a means
+      // so that we can attempt to reduce the number of times we have to search
+      // for this information.
+      $sfapi = $this->sfapi;
+      if (!is_object($sfapi)) {
+        // Skip if we do not have a valid Salesforce connection.  Do not mark the
+        // item has having been converted in case the connection gets repaired
+        // leter in the process.
+        return;
+      }
+      $sfobject = $sfapi->objectDescribe($item->object_type);
+      $field_lengths[$item->object_type] = array();
+      foreach ($sfobject['fields'] as $field) {
+        // Always truncate sobject Name, FirstName, and LastName. Optionally also truncate other string fields.
+        if (
+          in_array($field['name'], array('Name', 'FirstName', 'LastName'))
+          || variable_get('salesforce_sync_truncate_long_strings', SALESFORCE_SYNC_TRUNCATE_LONG_STRINGS_DEFAULT)
+        ) {
+          // If this field is a type stored as a string, then note its maximum length for possible truncation.
+          if ($this->typeIsText($field['type'])) {
+            $field_lengths[$item->object_type][$field['name']] = $field['length'];
+          }
+        }
+      }
+    }
+    
+    // Check the lengths of all truncatable fields on this sObject.
+    foreach ($field_lengths[$item->object_type] as $field_name => $field_length) {
+      if (!empty($item->sobject->fields[$field_name]) && strlen($item->sobject->fields[$field_name]) > $field_length) {
+        // Truncate the value of the field to the maximum length allowed by SF.
+        $item->sobject->fields[$field_name] = substr($item->sobject->fields[$field_name], 0, $field_length);
+        // Make sure no XML entity was truncated.
+        $item->sobject->fields[$field_name] = preg_replace("|\\&[^;]*\$|", '', $item->sobject->fields[$field_name]);
+      }
+    }
+  }
+
+  /**
+   * Determines if a given Salesforce field type is stored as a string.
+   *
+   * @param string $field_type
+   *   The field type as identified in an sobject describe call.
+   *   See http://www.salesforce.com/developer/docs/api/Content/
+   *   sforce_api_calls_describesobjects_describesobjectresult.htm#i1427375
+   */
+  public function typeIsText($field_type) {
+    switch ($field_type) {
+      case 'string':
+      case 'textarea':
+      case 'phone':
+      case 'picklist':
+      case 'url':
+      return TRUE;
+    }
+
+    return FALSE;
   }
 
   /**

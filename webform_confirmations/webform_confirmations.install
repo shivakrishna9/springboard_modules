@@ -23,6 +23,32 @@ function webform_confirmations_schema() {
     ),
     'primary key' => array('nid'),
   );
+  $schema['webform_confirmations_submissions'] = array(
+    'description' => 'Map webform submission ids to session ids.',
+    'fields' => array(
+      'sid' => array(
+        'description' => 'The node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'sessid' => array(
+        'description' => 'The webform component',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'timestamp' => array(
+        'description' => 'Record creation time, used for garbage collection',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('sid'),
+  );
+
   $schema['cache_webform_confirm'] = drupal_get_schema_unprocessed('system', 'cache');
   $schema['cache_webform_confirm']['description'] = 'Cache table for webform confirmations.';
   return $schema;
@@ -73,3 +99,47 @@ function webform_confirmations_update_7001() {
   $schema['cache_webform_confirm']['description'] = 'Cache table for webform confirmations.';
   db_create_table($schema_name, $schema[$schema_name]);
 }
+
+/**
+ * Add webform submission id to session id tracking table.
+ */
+function webform_confirmations_update_7003() {
+  $schema = array(
+    'description' => 'Map webform submission ids to session ids.',
+    'fields' => array(
+      'sid' => array(
+        'description' => 'The node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'sessid' => array(
+        'description' => 'The webform component',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('sid'),
+  );
+  db_create_table('webform_confirmations_submissions', $schema);
+
+}
+
+/**
+ * Add timestamp column to {webform_confirmations_submissions}
+ */
+function webform_confirmations_update_7004() {
+  $field = array(
+    'description' => 'Record creation time, used for garbage collection',
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+    'default' => 0, 
+  );
+  db_add_field('webform_confirmations_submissions', 'timestamp', $field);
+  // Initialize to current date, otherwise all preexisting records will get wiped out
+  // the first time cron runs with purge enabled.
+  db_query('UPDATE {webform_confirmations_submissions} SET timestamp = :timestamp', array(':timestamp' => time())); 
+}
+

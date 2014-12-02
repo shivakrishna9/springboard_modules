@@ -200,6 +200,19 @@ function springboard_views_fundraiser_views_data() {
       'label' => t('Fundraiser node'),
     ), 
   );
+
+  // Webform submission.
+  $data['fundraiser_donation']['sid'] = array(
+    'title' => t('Webform Submission'),
+    'help' => t('Webform submission related to a donation.'),
+    'relationship' => array(
+      'base' => 'webform_submissions',
+      'base field' => 'sid',
+      'handler' => 'views_handler_relationship',
+      'label' => t('Webform Submission'),
+    ),
+  );
+
   $data['fundraiser_donation']['uid'] = array(
     'title' => t('Donating user'),
     'help' => t('Donating user related to a donation.'),

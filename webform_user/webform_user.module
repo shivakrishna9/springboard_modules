@@ -953,6 +953,9 @@ function _webform_user_create_webform_components(&$node) {
           $item['extra']['items'] = $field['name'] . '|' . $field['title'];
           $item['extra']['aslist'] = 0;
           $item['extra']['multiple'] = 'Y';
+          if(isset($field['extra']['title_display'])) {
+            $item['extra']['title_display'] = $field['extra']['title_display'];
+          }
           break;
         case 'list':
           $item['type'] = 'textarea';

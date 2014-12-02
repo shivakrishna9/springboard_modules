@@ -186,7 +186,9 @@ function _fundraiser_donation_token_info($fields = NULL, $tokens = array()) {
  */
 function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) {
   $replacements = array();
-  if ($type = 'donation' && !empty($data['donation'])) {
+  $sanitize = !empty($options['sanitize']);
+
+  if ($type == 'donation' && !empty($data['donation'])) {
     $donation = $data['donation'];
     // All set fields.
     $data = is_array($donation->donation) ? $donation->donation : array();
@@ -208,35 +210,36 @@ function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) 
       $data['card_type'] = isset($donation->donation['payment_fields']['credit']['card_type']) ?
         $donation->donation['payment_fields']['credit']['card_type'] : '';
     }
-  }
 
-  // Replace the given tokens.
-  $replacements = array();
-  foreach ($tokens as $key => $token) {
-    if (isset($data[$key])) {
-      $replacements[$token] = $data[$key];
-    }
-  }
-
-  // If we have a donation object add the node and user tokens as well
-  if (!empty($donation)) {
-    if ($node_tokens = token_find_with_prefix($tokens, 'node')) {
-      $replacements += token_generate('node', $node_tokens, array('node' => $donation->node), $options);
-    }
-    if ($user_tokens = token_find_with_prefix($tokens, 'user')) {
-      $replacements += token_generate('user', $user_tokens, array('user' => $donation->user), $options);
-    }
-  }
-
-  // Make more user-friendly label for payment method token.
-  if (isset($data['payment_method']) && isset($donation->node)) {
-    // Get node gateways and loop through them.
-    foreach ($donation->node->gateways as $gateway) {
-      // If donation's payment method matches gateway, use label for gateway token.
-      if (array_key_exists('method', $gateway) && array_key_exists('label', $gateway) && $data['payment_method'] == $gateway['method'] && $gateway['label']) {
-        $replacements['[donation:payment_method]'] = $gateway['label'];
+    // Replace the given tokens.
+    foreach ($tokens as $key => $token) {
+      if (isset($data[$key])) {
+        $replacements[$token] = $sanitize ? check_plain($data[$key]) : $data[$key];
       }
     }
+
+    // If we have a donation object add the node and user tokens as well.
+    if (!empty($donation)) {
+      if ($node_tokens = token_find_with_prefix($tokens, 'node')) {
+        $replacements += token_generate('node', $node_tokens, array('node' => $donation->node), $options);
+      }
+      if ($user_tokens = token_find_with_prefix($tokens, 'user')) {
+        $replacements += token_generate('user', $user_tokens, array('user' => $donation->user), $options);
+      }
+    }
+
+    // Make more user-friendly label for payment method token.
+    if (isset($data['payment_method']) && isset($donation->node)) {
+      // Get node gateways and loop through them.
+      foreach ($donation->node->gateways as $gateway) {
+        // If donation's payment method matches gateway, use label for
+        // gateway token.
+        if (array_key_exists('method', $gateway) && array_key_exists('label', $gateway) && $data['payment_method'] == $gateway['method'] && $gateway['label']) {
+          $replacements['[donation:payment_method]'] = $gateway['label'];
+        }
+      }
+    }
+
   }
 
   return $replacements;
@@ -1473,8 +1476,8 @@ function fundraiser_donation_form(&$form, &$form_state) {
   if ((!_fundraiser_is_secure() && !variable_get('fundraiser_development_mode', 0))) {
     // Return a 404 if the page isn't secure and should be.
     $node = $form['#node'];
-    watchdog('fundraiser', 'The donation form <em>!title</em> is not protected with SSL.',
-      array('!title' => $node->title), WATCHDOG_CRITICAL, l('View the donation form', 'node/' . $node->nid));
+    watchdog('fundraiser', 'The donation form <em>@title</em> is not protected with SSL.',
+      array('@title' => $node->title), WATCHDOG_CRITICAL, l('View the donation form', 'node/' . $node->nid));
     $message = variable_get('fundraiser_http_error_message', t('We\'re sorry, but this ' .
         'donation form is experiencing a temporary problem. Please try again later.'));
     // Remove all other form elements.
@@ -3155,4 +3158,82 @@ function _fundraiser_gateway_switch_action_submit($form, $form_state) {
     'update_weights' => $form_state['values']['update_weights'],
     'gateways' => $form_state['values']['gateways'],
   );
+}
+/**
+ * Implements hook_cron.
+ * Needed for gateway test mode status check.
+ */
+function fundraiser_cron() {
+  if (module_exists("rules")) {
+    $rule = rules_config_load('rules_gateway_test_mode_alert');
+    if (!empty($rule->active) && in_array('fundraiser_gateway_test_mode_detected', $rule->events())) {
+      fundraiser_gateway_status_check();
+    }
+  }
+}
+
+/**
+ * Test to see if a published donation form's gateway is non-live
+ * Send alert ot admin if so.
+ */
+function fundraiser_gateway_status_check() {
+  $bad_gateways = array();
+  $gateways = _fundraiser_gateway_info();
+  //grab all fundraiser nodes along with publication status
+  $fundraisers = db_query('SELECT f.nid, f.gateways, n.status FROM {fundraiser} f INNER JOIN {node} n on n.nid = f.nid');
+
+  foreach ($fundraisers as $fundraiser) {
+    $fundraiser->gateways = unserialize($fundraiser->gateways);
+    foreach($fundraiser->gateways as $type => $gateway) {
+      $global_status = FALSE;
+      if (!empty($gateway['id']) && $gateway['status'] == 1) {
+        //grab the rules_config settings
+        $fundraiser->gateways[$type]['gateway_details'] = isset($gateways[$gateway['id']]['gateway_details']) ? $gateways[$gateway['id']]['gateway_details'] : FALSE;
+        //detect disabled or unconfigured gateways
+        if ($fundraiser->gateways[$type]['gateway_details'] === FALSE) {
+          $global_status = array('disabled');
+        }
+        else if (empty($fundraiser->gateways[$type]['gateway_details']['settings'])) {
+          $global_status = array('unconfigured');
+        }
+
+        if (empty($global_status)) {
+          $status = module_invoke_all("fundraiser_gateway_status_cron_check", $fundraiser->gateways[$type]['gateway_details']);
+          if (!empty($status)) {
+            $global_status = $status;
+          }
+        }
+        //set up the token values for the alert
+        if ($fundraiser->status == 1 &&  !empty($global_status[0]) && $global_status[0] != 'live') {
+          $bad_gateways[$gateway['id']]['status'] = $global_status[0];
+          $bad_gateways[$gateway['id']]['urls'][] = url('node/' . $fundraiser->nid, array('absolute' => TRUE));
+          $bad_gateways[$gateway['id']]['type'] = $type;
+        }
+      }
+    }
+  }
+  //build the info
+  foreach ($bad_gateways as $id => $gateway) {
+    //prepare the node urls for tokens
+    $nodes = implode("\n\r", $gateway['urls']);
+    //get the edit link for token
+    $pos = strpos($id, '|');
+    if ($pos !== FALSE) {
+      $name = substr($id, $pos + 1);
+      $edit_link = url('admin/commerce/config/payment-methods/manage/' . $name, array('absolute' => TRUE));
+    }
+    else {
+      //this may never happen. but  you never know.
+      $edit_link = t('(There was a problem determining the correct link. See below for additional info.)');
+    }
+    _fundraiser_gateway_status_alert($nodes, $gateway['type'], $id, $gateway['status'], $edit_link);
+  }
+}
+
+function _fundraiser_gateway_status_alert($nodes, $method_type, $gateway_id, $status, $edit_link) {
+  if (module_exists("rules")) {
+    rules_invoke_event("fundraiser_gateway_test_mode_detected", $nodes, $method_type, $gateway_id, $status, $edit_link);
+    watchdog('fundraiser', 'A test mode gateway configuration has been detected on a live donation form. Gateway: %gateway. Type: %type, Donation forms: %nodes', array('%gateway' => $gateway_id, '%type' => $method_type, '%nodes' => $nodes), WATCHDOG_EMERGENCY);
+
+  }
 }

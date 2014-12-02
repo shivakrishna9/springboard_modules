@@ -72,6 +72,15 @@ function salesforce_sync_admin_form($form, &$form_state) {
     '#default_value' => _sfs_get_value('max_query_length', $form_state),
   );
 
+  // Variable to turn on automatic truncation of long strings.
+  $form['salesforce_sync_truncate_long_strings'] = array(
+    '#id' => 'salesforce-sync-truncate-long-strings',
+    '#title' => t('Truncate Long Strings'),
+    '#description' => t('Use this setting to automatically truncate a field\'s value to its max length property in Salesforce. This will prevent STRING_TOO_LONG errors on string based fields.'),
+    '#type' => 'checkbox',
+    '#default_value' => _sfs_get_value('salesforce_sync_truncate_long_strings', $form_state),
+  );
+
   // Save.
   $form['submit'] = array(
     '#type' => 'submit',
@@ -130,6 +139,8 @@ function salesforce_sync_admin_form_submit($form, &$form_state) {
         break;
     }
   }
+
+  variable_set('salesforce_sync_truncate_long_strings', $form_state['input']['salesforce_sync_truncate_long_strings']);
   drupal_set_message(t('Your settings have been saved.'));
 }
 
@@ -159,6 +170,9 @@ function _sfs_get_value($field, $form_state) {
       case 'query_limit':
         $value = variable_get('salesforce_sync_query_limit', SALESFORCE_SYNC_QUERY_LIMIT_DEFAULT);
         break;
+
+      case 'salesforce_sync_truncate_long_strings':
+        $value = variable_get('salesforce_sync_truncate_long_strings', SALESFORCE_SYNC_TRUNCATE_LONG_STRINGS_DEFAULT);
     }
   }
   return $value;

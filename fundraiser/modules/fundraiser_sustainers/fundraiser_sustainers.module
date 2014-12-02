@@ -194,6 +194,25 @@ function fundraiser_sustainers_menu() {
 }
 
 /**
+ * Implements hook_springboard_admin_alias_patterns().
+ */
+function fundraiser_sustainers_springboard_admin_alias_patterns() {
+  return array(
+    // Fundraiser sustainers skip payment confirmation page.
+    'fundraiser_sustainers/%did/skip/%cid' => array(
+      'path' => array(
+        'regex' => '|^/fundraiser_sustainers/([0-9]+)/skip/([0-9]+)$|',
+        'replacement' => 'fundraiser_sustainers/$1/skip/$2',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/donations/([0-9]+)/skip/([0-9]+)$|',
+        'replacement' => 'springboard/donations/$1/skip/$2',
+      ),
+    ),
+  );
+}
+
+/**
  * Access callback for running standalone cron.
  */
 function fundraiser_sustainers_standalone_cron_access() {
@@ -462,7 +481,8 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
         // @TODO: Add a configuration screen for specifying which fields get sent back
         // to Salesforce when a recurring donation charge is processed.
         $fields_to_update_on_charge = variable_get('fundraiser_sustainers_recurring_donation_charge_fields',
-          array('StageName', 'Transaction_Date_Time__c', 'Probability'));
+          array('StageName', 'Amount', 'Gateway_Reference__c', 'Transaction_Date_Time__c', 'Probability'));
+
         $mapped_fields = array_keys($fields);
         // Remove fields that are not to be updated when a sustainer is charged.
         foreach ($mapped_fields as $field) {
@@ -480,19 +500,6 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
         }
       }
       // Corrects the StageName to whatever value is appropriate based on mapped stages.
-      if (isset($donation->donation_cancelled) && $donation->donation_cancelled) {
-        if (isset($fields['StageName'])) {
-          $stagename = 'Withdrawn';
-          if (module_exists('salesforce_donation')) {
-            $mapped_stages = array_flip(variable_get('salesforce_donation_mapped_stages', salesforce_donation_default_stage_map()));
-            if (isset($mapped_stages['cancelled'])) {
-              $stagename = $mapped_stages['cancelled'];
-            }
-          }
-
-          $fields['StageName'] = $stagename;
-        }
-      }
       if (isset($donation->donation_skipped) && $donation->donation_skipped) {
         if (isset($fields['StageName'])) {
           $stagename = 'Skipped';
@@ -823,10 +830,8 @@ function fundraiser_sustainers_fundraiser_field_info() {
     '#allow_respawn' => 1,
     '#reset_value' => 1,
     '#create_callback' => '_fundraiser_sustainers_recurs_monthly_field_create',
-    '#display_callback' => '_fundraiser_sustainers_recurs_monthly_field_display',
-    // Display callback, hide this field if the gateway Currently selected by the user is not supportive of recurring.
   );
-  // Add a display callback for the gateways, to make sure the selected one is flagged for gateway support or not.
+
   return $fields;
 }
 
@@ -861,41 +866,177 @@ function _fundraiser_sustainers_recurs_monthly_field_create($fundraiser, $field)
 }
 
 /**
- * Field display callback, show/hide recurring feature.
+ * Implements hook_fundraiser_donation_form().
+ *
+ * This hook is here for the purpose of adding a States array to the payment method options,
+ * so that a non-recurring-enabled payment method will show/hide depending on the status of the
+ * "recurring donation" field, if one exists. This hook also shows/hides the 'recurring' field.
  */
-function _fundraiser_sustainers_recurs_monthly_field_display($form, $form_state, $field) {
-  if (!isset($form['#node'])) {
-    return $field;
+function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
+  // Find out whether the form has a checkbox/radio field called 'recurs_monthly'.
+  $has_recurring_field = _fundraiser_sustainers_form_has_exposed_recurring_field($form['#node']->nid);
+
+  // Nothing to do if the recurring field is not shown.
+  if (empty($has_recurring_field['visible'])) {
+    return;
   }
-  // Supporting gateway types from the gateway on the node.
+
+  // Set up the values that we're going to require in the States array. If it's a select list or
+  // radio buttons, check for 'value'. Otherwise, it's a checkbox, so check for 'checked' == FALSE.
+  if ($has_recurring_field['settings']['type'] == 'select' || $has_recurring_field['settings']['type'] == 'radios') {
+    $required_values = array('!value' => 'recurs');
+  }
+  else {
+    $required_values = array('checked' => FALSE);
+  }
+
+  $count_enabled_gateways = 0;
   $supporting_gateways = array();
-  foreach ($form['#node']->gateways as $type => $gateway) {
-    if (!empty($gateway['id'])) {
-      $this_gateway = _fundraiser_gateway_info($gateway['id']);
-      if (isset($this_gateway['allow_recurring']) && _fundraiser_sustainers_supports_recurring($this_gateway['allow_recurring'], $type)) {
+  $selector = ':input[name*=recurs_monthly]';
+
+  // Get the fields we'll be needing to work with.
+  $payment_method_field = fundraiser_get_form_field('fundraiser_sustainers', $form, 'payment_method');
+  $recurs_monthly_field = fundraiser_get_form_field('fundraiser_sustainers', $form, 'recurs_monthly');
+
+  // Check if each gateway allows recurring payments, and use the States API if it doesn't.
+  // Else, if it does, add its name to the 'supporting_gateways' array for showing/hiding the 'recurring' field.
+  foreach ($form['#node']->gateways as $type => $payment_method) {
+    if (!empty($payment_method['id']) && $payment_method['status'] == 1) {
+      // Count the number of gateways currently enabled.
+      $count_enabled_gateways++;
+
+      // Get this gateway info and set its #states array.
+      $this_gateway = _fundraiser_gateway_info($payment_method['id']);
+      if (
+        (!isset($this_gateway['allow_recurring'])
+          || !_fundraiser_sustainers_supports_recurring($this_gateway['allow_recurring'], $payment_method['method'])
+        )
+        && $has_recurring_field['visible'] == TRUE
+      ) {
+        $payment_method_name = $payment_method['method'];
+        $payment_method_field[$payment_method_name] = array(
+          '#states' => array(
+            'visible' => array(
+              $selector => $required_values
+            ),
+          ),
+        );
+      }
+      else {
         $supporting_gateways[] = $type;
       }
     }
   }
-  // Generate the right selector for the field type.
-  $selector = '.fundraiser-payment-methods input[type="radio"]';
-  if (count($form['#node']->gateways) == 1) { // If only one is set, then the hidden field should be used.
-    $selector = '.fundraiser-payment-methods';
-  }
-  // Set the states.
-  $field['#states'] = array(
-    'visible' => array(),
-  );
-  if (!empty($supporting_gateways)) {
-    foreach ($supporting_gateways as $supporting_gateway) {
-      $field['#states']['visible'][$selector][] = array('value' => $supporting_gateway);
-      // See: http://drupal.org/node/735528
-    }
+
+  // If no supporting gateways are on this form then do not save changes to the payment field.
+  if (empty($supporting_gateways)) {
+    // There are no gateways enabled that support recurring, hide the field.
+    $recurs_monthly_field['#access'] = FALSE;
   }
   else {
-    $field = array(); // Else, remove the field from display entirely.
+    // Save the payment method field.
+    $form = fundraiser_update_form_field('fundraiser_sustainers', $form, 'payment_method', $payment_method_field);
+
+    // Modify the 'recurs_monthly' field. Set the #states array if there is a recurring-enabled
+    // gateway; else, set the field to 'hidden' and give it a value of 'no_recurr'.
+    if ($count_enabled_gateways > 1) {
+      $recurs_monthly_field['#states'] = array(
+        'invisible' => array(),
+      );
+      foreach ($supporting_gateways as $supporting_gateway) {
+        $selector = ':input[name*=payment_method],value="' . $supporting_gateway . '"';
+        $recurs_monthly_field['#states']['invisible'][$selector] = array('!value' => $supporting_gateway);
+      }
+    }
   }
-  return $field;
+
+  // Save the recurring field.
+  $form = fundraiser_update_form_field('fundraiser_sustainers', $form, 'recurs_monthly', $recurs_monthly_field);
+
+  // Add second validation handler that prevents sending a recurring donation
+  // to a non-recurring-enabled payment gateway.
+  $form['#validate'][] = 'fundraiser_sustainers_recurring_conflict_validate';
+  return $form;
+}
+
+/**
+ * Validation callback for donation webforms.
+ *
+ * This function checks whether the visitor chose to make a monthly recurring donation and also
+ * chose a payment method that does not support recurring payments. This should be caught by
+ * client-side validation but this catches any submission that makes it through.
+ */
+function fundraiser_sustainers_recurring_conflict_validate(&$form, &$form_state) {
+  // Ensure we have submitted values and then flatten the array.
+  if (empty($form_state['values']['submitted'])) {
+    return;
+  }
+  $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted']);
+
+  // Only run through this validation if the form submit is recurring.
+  $recurring_donation = FALSE;
+  if (
+    empty($submission_fields['recurs_monthly'])
+    || empty($submission_fields['recurs_monthly']['recurs'])
+    || (
+      !empty($submission_fields['recurs_monthly']['recurs'])
+      && ($submission_fields['recurs_monthly']['recurs'] != 'recurs')
+    )
+  ) {
+    return;
+  }
+
+  // Load the gateway to see if the payment method supports recurring.
+  $payment_method = $submission_fields['payment_method'];
+  $gateway = _fundraiser_gateway_info($form['#node']->gateways[$payment_method]['id']);
+  $supports_recurring = _fundraiser_sustainers_supports_recurring($gateway['allow_recurring'], $payment_method);
+
+  // Now, return an error if necessary.
+  if (!$supports_recurring) {
+    $label = !empty($form['#node']->gateways[$payment_method]['label']) ? $form['#node']->gateways[$payment_method]['label'] : $gateway['details']['gateway_details']['display_title'];
+    $error_message = t('Thank you for choosing a monthly donation!');
+    $error_message .= t(' However, @payment_method does not support recurring monthly payments.', array('@payment_method' => $label));
+    $error_message .= t(' Please choose a different method and submit the donation form again.');
+    form_set_error('recurs_monthly', $error_message);
+  }
+}
+
+/**
+ * Helper function, find out if a node has recurring payments as an option.
+ * It also gets the field's settings.
+ */
+function _fundraiser_sustainers_form_has_exposed_recurring_field($nid) {
+  $webform_node = node_load($nid);
+
+  // If the 'recurring_setting' is something other than 'user_choice',
+  // that means the 'recurring' value on the webform are not exposed
+  // to the visitor and thus we can go ahead and return FALSE values.
+  if ($webform_node->recurring_setting != 'user_choice') {
+    return array(
+      'visible' => FALSE
+    );
+  } else {
+
+    // Loop through webform components. When we find the one we want, get its settings.
+    foreach ($webform_node->webform['components'] as $key => $component_contents) {
+      if ($component_contents['form_key'] == 'recurs_monthly' && $component_contents['type'] == 'select') {
+        // What type of selection component is it?
+        if ($component_contents['extra']['aslist'] == 1) {
+          $type = 'select';
+        } else {
+          $type = !empty($component_contents['extra']['multiple']) ? 'checkbox' : 'radios';
+        }
+
+        return array(
+          'visible' => TRUE,
+          'settings' => array(
+            'type' => $type,
+            'multiple' => !empty($component_contents['extra']['multiple'])
+          ),
+        );
+      }
+    }
+  }
 }
 
 /**
@@ -1871,12 +2012,8 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
     // Cancel the donation with an informative message.
     watchdog('fundraiser', 'Donation @id was deleted by @user while updating the card expiration date.',
       array('@id' => $donation->did, '@user' => $user->name), WATCHDOG_DEBUG, NULL);
-     // Requeue with cancelled flag, the fields alter hook should then update
-     // the StageName to the appropriate value based on current stage mapping.
-    $this_donation->donation_cancelled = TRUE;
-    if (module_exists('salesforce_genmap')) {
-      salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $this_donation->node, $this_donation->did, $this_donation, 'donation');
-    }
+
+    // Delete these donations so do won't appear in the list of recurring donations.
     fundraiser_donation_delete($this_donation);
   }
 }
@@ -1988,11 +2125,19 @@ function fundraiser_sustainers_cancel_form_submit($form, &$form_state) {
   $sustainer_donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
   foreach ($sustainer_donations as $sustainer_donation) {
     $donation = fundraiser_donation_get_donation($sustainer_donation->did);
+
+    // Add the cancel reason to the donation's recurring object.
+    $donation->recurring->cancellation_reason = $reason;
+
+    // Cancel the donation.
+    // @see fundraiser_sustainers_fundraiser_donation_cancel().
     fundraiser_donation_cancel($donation);
+
+    // Add a watchdog entry with the did and reason.
     watchdog('fundraiser_sustainers', 'Donation cancelled for #@did. Reason: @reason',
       array('@did' => $donation->did, '@reason' => $reason));
   }
-  _fundraiser_sustainers_cancel_recurring_by_master($master_did, $reason);
+
   drupal_set_message(t('All future payments cancelled.'));
 }
 
@@ -2140,19 +2285,23 @@ function fundraiser_sustainers_fundraiser_donation_decline($donation) {
 
     // update sf queue.
     if (module_exists('salesforce_genmap')) {
-      $stages = variable_get('salesforce_donation_mapped_stages','');
+      $stages = variable_get('salesforce_donation_mapped_stages', salesforce_donation_default_stage_map());
       foreach ($stages as $salesforce_name => $commerce_name) {
         if ($commerce_name == 'failed') {
-           $stage = $saleforce_name;
+           $stage = $salesforce_name;
         }
       }
       if (isset($stage)) {
         $donation->recurring->sf_stagename = $stage;
+        // If a failed stage is mapped, re-queue the failed transaction for export.
+        salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
       }
       else {
         $donation->recurring->sf_stagename = 'Donation failed, but stage could not be mapped.';
+        watchdog('fundraiser_sustainers', 'Sustainer payment failure for donation @id will not be exported
+          to Salesforce because the failed order status has not been mapped to an appropriate Opportunity stage. If you wish to export failed sustainer payments you need to add a failed stage in Salesforce and map it on the Salesforce donation settings page.', array('@id' => $donation->did), WATCHDOG_DEBUG, l('Salesforce donation settings', 'admin/config/salesforce/salesforce-donation'));
       }
-      salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
+
     }
       watchdog('fundraiser_sustainers', 'Payment for recurring donation @id has failed 3 times. ' .
         'The donation will not be submitted for payment again. Gateway message: @message',
@@ -2164,6 +2313,23 @@ function fundraiser_sustainers_fundraiser_donation_decline($donation) {
         array('@id' => $donation->did, '@attempts' => $attempt_count, '@message' => $donation->result['message']), WATCHDOG_DEBUG);
     }
   }
+}
+
+/**
+ * Implements hook_fundraiser_donation_cancel().
+ */
+function fundraiser_sustainers_fundraiser_donation_cancel($donation) {
+  // Set the reason value if one has been set on the donation's recurring object.
+  $reason = '';
+  if (!empty($donation->recurring->cancellation_reason)) {
+    $reason = $donation->recurring->cancellation_reason;
+  }
+
+  // Set the gateway resp field to canceled.
+  db_update('fundraiser_sustainers')
+    ->fields(array('gateway_resp' => 'canceled', 'cancellation_reason' => $reason))
+    ->condition('did', $donation->did)
+    ->execute();
 }
 
 /**
@@ -2352,16 +2518,6 @@ function _fundraiser_sustainers_delete_recurring($did) {
 }
 
 /**
- * DB function, cancel recurring given a master did. (Do not delete!)
- */
-function _fundraiser_sustainers_cancel_recurring_by_master($master_did, $reason) {
-  db_query('UPDATE {fundraiser_sustainers} ' .
-    'SET gateway_resp = \'canceled\', cancellation_reason = :reason ' .
-    'WHERE master_did = :master_did AND (gateway_resp IS NULL OR gateway_resp = \'failed\')',
-    array(':reason' => $reason, ':master_did' => $master_did));
-}
-
-/**
  * DB funct, get user donation set information that are recurring.
  */
 function _fundraiser_sustainers_get_donation_sets_recurr_by_uid($uid) {
@@ -2487,7 +2643,7 @@ function _fundraiser_sustainers_get_donations_recurr_remaining($master_did) {
   $donations = db_query('SELECT * FROM {fundraiser_sustainers} r ' .
     'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
     'WHERE r.master_did = :master_did ' .
-    'AND (r.gateway_resp IS NULL OR r.gateway_resp = \'failed\') ' .
+    'AND (r.gateway_resp IS NULL OR (r.gateway_resp = \'failed\' && r.attempts != 3)) ' .
     'ORDER BY r.next_charge ASC', array(':master_did' => $master_did))->fetchAll();
   return $donations;
 }

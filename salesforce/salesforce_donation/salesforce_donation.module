@@ -283,6 +283,15 @@ function salesforce_donation_fundraiser_donation_cancel($donation) {
 }
 
 /**
+ * Implements hook_fundraiser_donation_delete().
+ *
+ * Donations that have been deleted should be added to the queue.
+ */
+function salesforce_donation_fundraiser_donation_delete($donation) {
+  salesforce_donation_fundraiser_donation_cancel($donation);
+}
+
+/**
  * Implements hook_salesforce_genmap_map_item_alter().
  */
 function salesforce_donation_salesforce_genmap_map_item_alter(&$item, $donation) {
