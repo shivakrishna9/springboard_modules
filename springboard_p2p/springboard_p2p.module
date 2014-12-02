@@ -594,7 +594,8 @@ function _filter_tips_p2p_campaign_intro(&$form) {
   // Unset / remove the filter tips area for campaign intros.
   $form[LANGUAGE_NONE][0]['format']['guidelines']['#access'] = FALSE;
   $form[LANGUAGE_NONE][0]['format']['help']['#access'] = FALSE;
-  // We use js here as it can't be done with form alter for just the filters select list.
+  // We use js here as it can't be done with form alter for just the filters
+  // select list.
   // We also get rid of the disable rich text for wysiwyg.
   $filterjs = 'jQuery(document).ready(function($) {
   $("fieldset.filter-wrapper, .wysiwyg-toggle-wrapper").remove();
@@ -657,7 +658,7 @@ function springboard_p2p_personal_campaign_ajax(&$form, &$form_state) {
 /**
  * Determines if a path for personal campaign already exists in the system.
  *
- * @param $alias
+ * @param string $alias
  *   The user-entered alias to check.
  */
 function springboard_p2p_personal_campaign_alias_exists($alias, $language, $nid = NULL) {
@@ -2251,7 +2252,8 @@ function springboard_p2p_page_alter(&$page, $form) {
     // Define the module path for use below.
     $mod_path = drupal_get_path('module', 'springboard_p2p');
 
-    // Query the url string to see if it's a p2p donation form or p2p webform_user form.
+    // Query the url string to see if it's a p2p donation form or p2p
+    // webform_user form.
     if ($is_fundraiser_type || $is_webform_user_type) {
       // Query the url string to see if it belongs to P2P.
       if (!empty($_GET['p2p_pcid'])) {
