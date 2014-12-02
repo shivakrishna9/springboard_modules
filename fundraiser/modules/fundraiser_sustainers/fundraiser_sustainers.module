@@ -1047,21 +1047,14 @@ function fundraiser_sustainers_edit_form($did) {
     $next_donation = fundraiser_donation_get_donation($remaining[0]->did);
   }
 
-  $number = FALSE;
+  $number = '';
+  $type = '';
 
   // Use next donation in case it has differnt info than the master donation.
   if (isset($next_donation->data['cardonfile']) && module_exists('commerce_cardonfile')) {
     $cardonfile = commerce_cardonfile_load($next_donation->data['cardonfile']);
     $number = '**** **** **** '  . $cardonfile->card_number;
     $type = t('Card');
-  }
-  elseif (isset($next_donation->data['payment_fields']['credit']['card_number'])) {
-    $number = '**** **** **** '  . $next_donation->data['payment_fields']['credit']['card_number'];
-    $type = t('Card');
-  }
-  elseif (isset($next_donation->data['payment_fields']['bank account']['accNum'])) {
-    $number = '********* ' . $next_donation->data['payment_fields']['bank account']['accNum'];
-    $type = t('Checking Account');
   }
 
   // Gather further donation data.
@@ -1075,10 +1068,12 @@ function fundraiser_sustainers_edit_form($did) {
   '<dd>' . _fundraiser_sustainers_count_donations_recurr_processed($did) . '</dd>' .
   '<dt>Recurring Charges Remaining</dt>' .
   '<dd>' . $remaining_donation_count . '</dd>';
-  if ($number) {
+
+  if (!empty($number) && !empty($type)) {
     $payment_info .= '<dt>'. $type . ' Number</dt>' .
     '<dd>' . $number . '</dd>';
   }
+
   $payment_info .= '</dl>' .
   '</div>';
 
