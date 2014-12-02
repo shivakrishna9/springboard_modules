@@ -482,7 +482,7 @@ function _commerce_litle_fraud_session_id() {
  * Add the pseudo-session ID to the litle xml request.
  */
 function _commerce_litle_fraud_sale_request_item($nvp, $session_id) {
-  $nvp['advancedFraudChecks']  = array(
+  $nvp['advancedFraudChecks'] = array(
     'threatMetrixSessionId' => $session_id,
   );
 
