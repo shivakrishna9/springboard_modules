@@ -1228,7 +1228,7 @@ function fundraiser_sustainers_edit_form($did) {
   if ($donation->user->uid != $user->uid) {
     $billing_info .= '<div id="additioanl-billing-info">';
     $billing_info .= t('Customer Account:') . ' ';
-    $billing_info .= l(t('@name', array('@name' => $next_donation->user->name)), 'user/' . $next_donation->uid);
+    $billing_info .= l($next_donation->user->name, 'user/' . $next_donation->uid);
     $billing_info .= '<br />' . t('Primary email:') . ' ' . $next_donation->user->mail;
     $billing_info .= '</div>';
   }
