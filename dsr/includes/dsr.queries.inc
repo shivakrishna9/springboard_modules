@@ -20,23 +20,25 @@
  *   An array with 'total_count' and 'total_amount' keys.
  */
 function dsr_select($status, $start, $end) {
-
-  $query = "SELECT COUNT(t.amount) AS total_count, SUM(t.amount) / 100 AS total_amount FROM {commerce_order} o
-            JOIN {commerce_payment_transaction} t ON t.order_id = o.order_id
-            WHERE o.status = :status AND from_unixtime(t.changed) BETWEEN :start AND :end;";
-
-  $replacements = array(
-    ':status' => $status,
-    ':start' => $start,
-    ':end' => $end,
-  );
-
-  $results = db_query($query, $replacements)->fetchAssoc();
-
-  return !empty($results) ? $results : array(
+  $results = array(
     'total_count' => 0,
-    'total_amount' => 0.00,
+    'total_amount' => 0,
   );
+
+  $transactions_query = "SELECT max(transaction_id), order_id, amount FROM {commerce_payment_transaction} WHERE status = 'success' AND from_unixtime(changed) BETWEEN :start AND :end GROUP BY order_id";
+  $transactions = db_query($transactions_query, array(':start' => $start, ':end' => $end));
+  foreach ($transactions as $transaction) {
+    $order = db_query("SELECT status FROM {commerce_order} WHERE order_id = :order_id", array(':order_id' => $transaction->order_id))
+      ->fetchObject();
+    if (is_object($order) && $order->status == $status) {
+      $results['total_count']++;
+      $results['total_amount'] += $transaction->amount;
+    }
+  }
+
+  $results['total_amount'] = $results['total_amount'] / 100;
+
+  return $results;
 }
 
 /**
@@ -54,23 +56,17 @@ function dsr_select($status, $start, $end) {
  * @return array
  *   An array of orders matching the select criteria.
  */
-function dsr_get_orders($status, $start_date, $end_date) {
+function dsr_get_orders($status, $start, $end) {
   $orders = array();
 
-  $query = "SELECT o.order_id, t.amount / 100 AS amount FROM {commerce_order} o
-            JOIN {commerce_payment_transaction} t ON t.order_id = o.order_id
-            WHERE o.status = :status AND from_unixtime(t.changed) BETWEEN :start AND :end;";
-
-  $replacements = array(
-    ':status' => $status,
-    ':start' => $start_date,
-    ':end' => $end_date,
-  );
-
-  $results = db_query($query, $replacements);
-
-  while ($data = $results->fetchAssoc()) {
-    $orders[$data['order_id']] = $data['amount'];
+  $transactions_query = "SELECT max(transaction_id), order_id, amount FROM {commerce_payment_transaction} WHERE status = 'success' AND from_unixtime(changed) BETWEEN :start AND :end GROUP BY order_id";
+  $transactions = db_query($transactions_query, array(':start' => $start, ':end' => $end));
+  foreach ($transactions as $transaction) {
+    $order = db_query("SELECT status FROM {commerce_order} WHERE order_id = :order_id", array(':order_id' => $transaction->order_id))
+      ->fetchObject();
+    if (is_object($order) && $order->status == $status) {
+      $orders[$order->order_id] = $transaction->amount / 100;
+    }
   }
 
   return $orders;
