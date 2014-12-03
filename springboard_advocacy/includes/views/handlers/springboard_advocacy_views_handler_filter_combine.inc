@@ -37,7 +37,7 @@ class springboard_advocacy_views_handler_filter_combine extends springboard_advo
         $form['fields'] = array(
           '#type' => 'select',
           '#title' => t('Choose fields to combine for filtering'),
-          '#description' => t("Modified to advacy fields"),
+          '#description' => t(""),
           '#multiple' => TRUE,
           '#options' => $options,
           '#default_value' => $this->options['fields'],
@@ -52,26 +52,23 @@ class springboard_advocacy_views_handler_filter_combine extends springboard_advo
   function query() {
     $this->view->_build('field');
     $fields = array();
+    $query_string = array();
     foreach ($this->options['fields'] as $id) {
       $field = $this->view->field[$id];
-      $fields[$field->real_field] = $this->value;
+      $fields[] = $field->real_field;
     }
-    if ($fields) {
-      // $separated_fields = array();
-      // foreach ($fields as $key => $field) {
-      //   $separated_fields[] = $field;
-      // }
-
-      // $expression = implode(', ', $separated_fields);
-
+    if (!empty($fields)) {
+      $query_string['fields'] = implode(' ', $fields);
+      $query_string['values'] = $this->value;
+      $query_string['search_type'] = 'custom';
       $info = $this->operators();
       if (!empty($info[$this->operator]['method'])) {
-        $this->{$info[$this->operator]['method']}($fields);
+        $this->{$info[$this->operator]['method']}($query_string);
       }
     }
   }
 
-  function op_contains($fields) {
-    $this->query->search_terms = $fields;
+  function op_contains($query_string) {
+    $this->query->search_terms = $query_string;
   }
 }
