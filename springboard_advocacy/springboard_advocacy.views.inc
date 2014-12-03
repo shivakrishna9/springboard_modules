@@ -29,7 +29,7 @@ function springboard_advocacy_views_data() {
     ),
   );
 
-  // First Name
+  // Salutation
   $data['advocacy']['salutation'] = array(
     'title' => t('Salutation'),
     'help' => t('Target Salutation'),
@@ -41,7 +41,7 @@ function springboard_advocacy_views_data() {
     ),
   );
 
-  // First Name
+  // Last Name
   $data['advocacy']['first_name'] = array(
     'title' => t('First Name'),
     'help' => t('Target First Name'),
@@ -77,13 +77,57 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+
+  // Party
+  $data['advocacy']['party'] = array(
+    'title' => t('Politcal Party'),
+    'help' => t('Target Party'),
+    'field' => array(
+      'handler' => 'springboard_advocacy_views_handler_field',
+    ),
+     'filter' => array(
+       'handler' => 'springboard_advocacy_views_handler_filter_string',
+    ),
+  );
+
+  $data['advocacy']['state'] = array(
+    'title' => t('State'),
+    'help' => t('Target State'),
+    'field' => array(
+      'handler' => 'springboard_advocacy_views_handler_field',
+    ),
+     'filter' => array(
+       'handler' => 'springboard_advocacy_views_handler_filter_string',
+    ),
+  );
+
+  $data['advocacy']['role'] = array(
+    'title' => t('Role'),
+    'help' => t('Target Role'),
+    'field' => array(
+      'handler' => 'springboard_advocacy_views_handler_field',
+    ),
+     'filter' => array(
+       'handler' => 'springboard_advocacy_views_handler_filter_string',
+    ),
+  );
+
   $data['advocacy']['combine'] = array(
-   'title' => t('Combine Advocacy Fields Filter'),
-    'help' => t('Combine multiple fields together and search by them.'),
+   'title' => t('Search Multiple Target Fields by Keywords'),
+    'help' => t('Combine multiple fields together and search targets by them.'),
     'filter' => array(
       'handler' => 'springboard_advocacy_views_handler_filter_combine',
     ),
   );
+
+  $data['advocacy']['search_types'] = array(
+   'title' => t('Search By Type'),
+    'help' => t('Adds a filter to limit searches by Custom Target, Legislator or Group'),
+    'filter' => array(
+      'handler' => 'springboard_advocacy_views_handler_filter_search_types',
+    ),
+  );
+
   return $data;
 }
 
