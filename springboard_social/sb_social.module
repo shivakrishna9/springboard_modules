@@ -1102,37 +1102,8 @@ function _sb_social_replace_tokens($string, $node, $sid = NULL) {
 }
 
 /**
-<<<<<<< HEAD
- * Implements hook_salesforce_queue_create_item_alter().
- *
- * If the donation was created by a user who came to the site from a share
- * URL (social_referrer_transaction market source field set) we want to
- * try to add the sfid of the original share event to the opportunity as it's
- * going into the queue.
- *
- * If the original share event hasn't been synced yet (no sfid) we go ahead and
- * sync the opportunity anyway, when the share event syncs we'll requeue any
- * applicable donations.
- */
-function sb_social_salesforce_queue_create_item_alter(&$item) {
-  if ($item['object_type'] == 'Opportunity') {
-    if (!empty($item['sobject']->fields['Social_Referrer_Transaction__c'])) {
-      $sfid = _sb_social_get_share_salesforce_id_from_map($item['sobject']->fields['Social_Referrer_Transaction__c']);
-      // The original share event has synced at some point,
-      // requeue with the sfid for the share event.
-      if ($sfid) {
-        $item['sobject']->fields['Social_Share__c'] = $sfid;
-      }
-
-    }
-  }
-}
-
-
-/**
  * Implements hook_salesforce_sync_pass_item().
-=======
->>>>>>> 7.x-4.x-social-actions-rebase
+ * 
  * When an opportunity syncs assign its salesforce id to related shares.
  *
  * @param mixed $item

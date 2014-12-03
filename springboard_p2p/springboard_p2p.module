@@ -330,12 +330,14 @@ function springboard_p2p_form_p2p_campaign_node_form_alter(&$form, &$form_state,
     $form['field_p2p_campaigns_approval'][$language]['#disabled'] = TRUE;
 
     // Disable switching goal types after campaign creation.
-    foreach ($form['field_p2p_campaign_goals'][$language][0]['campaign_goals']['form_types'] as $form_type => $elements) {
-      foreach (element_children($elements) as $key) {
-        $form['field_p2p_campaign_goals'][$language][0]['campaign_goals']['form_types'][$form_type][$key]['enabled']['#disabled'] = TRUE;
-        $form['field_p2p_campaign_goals'][$language][0]['campaign_goals']['form_types'][$form_type][$key]['goal_type']['#disabled'] = TRUE;
-      }
-    }
+    // @todo Temporarily disabling this.
+//    foreach ($form['field_p2p_campaign_goals'][$language][0]['campaign_goals']['form_types'] as $form_type => $elements) {
+//      foreach (element_children($elements) as $key) {
+//        $form['field_p2p_campaign_goals'][$language][0]['campaign_goals']['form_types'][$form_type][$key]['enabled']['#disabled'] = TRUE;
+//        $form['field_p2p_campaign_goals'][$language][0]['campaign_goals']['form_types'][$form_type][$key]['goal_type']['#disabled'] = TRUE;
+//      }
+//
+//    }
 
   }
 

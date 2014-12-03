@@ -481,14 +481,7 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
         // @TODO: Add a configuration screen for specifying which fields get sent back
         // to Salesforce when a recurring donation charge is processed.
         $fields_to_update_on_charge = variable_get('fundraiser_sustainers_recurring_donation_charge_fields',
-          array('StageName', 'Transaction_Date_Time__c', 'Probability'));
-
-        // Leave the amount field after a refund so it gets updated correctly.
-        if (!empty($donation->is_refund) && $donation->is_refund == TRUE) {
-          if (!in_array('Amount', $fields_to_update_on_charge)) {
-            $fields_to_update_on_charge[] = 'Amount';
-          }
-        }
+          array('StageName', 'Amount', 'Gateway_Reference__c', 'Transaction_Date_Time__c', 'Probability'));
 
         $mapped_fields = array_keys($fields);
         // Remove fields that are not to be updated when a sustainer is charged.
