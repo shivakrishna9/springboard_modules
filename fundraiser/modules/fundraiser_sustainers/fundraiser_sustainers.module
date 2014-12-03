@@ -1279,8 +1279,11 @@ function fundraiser_sustainers_edit_form($did) {
 
   // Format payment schedule into a data table
   $donation_set = _fundraiser_sustainers_get_donations_recurr_by_member($did);
-  $donations_header = array('Amount', 'Charge Date', 'Processed Status');
+  $donations_header = array('Donation ID', 'Amount', 'Charge Date', 'Processed Status');
 
+  if (user_access('administrate recurring donations')) {
+    $donations_header[] = t('Attempts');
+  }
 
   if (user_access('fastforward recurring donations')) {
     // Add a button to fastforward this particular donation
@@ -1292,13 +1295,25 @@ function fundraiser_sustainers_edit_form($did) {
   $donations_rows = array();
   if ($donation_set) {
     foreach ($donation_set as $this_donation) {
+      $attempts = $this_donation->attempts;
       $this_donation = fundraiser_donation_get_donation($this_donation->did);
+      if (user_access('view any commerce_order entity of bundle commerce_order')) {
+        $donations_row['did'] = l($this_donation->did, 'admin/commerce/orders/' . $this_donation->did);
+      }
+      else {
+        $donations_row['did'] = $this_donation->did;
+      }
       $donations_row['amount'] = '$' . money_format('%i', $this_donation->donation['amount']);
       $donations_row['charge_date'] = date('m/d/y', $this_donation->recurring->next_charge);
       if (empty($this_donation->status)) {
         $this_donation->status = t('Pending');
       }
       $donations_row['status'] = !empty($this_donation->status_label) ? $this_donation->status_label : $this_donation->status;
+      // Attempts.
+      if (user_access('administrate recurring donations')) {
+        $donations_row['attempts'] = $attempts;
+      }
+
       if (user_access('fastforward recurring donations')) {
         if (isset($this_donation->status_charged) && !$this_donation->status_charged) {
           // Add a button to fastforward this particular donation
