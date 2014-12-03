@@ -25,15 +25,16 @@ function dsr_select($status, $start, $end) {
     'total_amount' => 0,
   );
 
-  $transactions_query = "SELECT max(transaction_id), order_id, amount FROM {commerce_payment_transaction} WHERE status = 'success' AND from_unixtime(changed) BETWEEN :start AND :end GROUP BY order_id";
-  $transactions = db_query($transactions_query, array(':start' => $start, ':end' => $end));
+  $query = "SELECT MAX(t.transaction_id), t.order_id, t.amount FROM {commerce_payment_transaction} t JOIN {commerce_order} o ON o.order_id = t.order_id WHERE t.status = 'success' AND o.status = :status AND from_unixtime(t.changed) BETWEEN :start AND :end GROUP BY t.order_id";
+  $replacements = array(
+    ':status' => $status,
+    ':start' => $start,
+    ':end' => $end,
+  );
+  $transactions = db_query($query, $replacements);
   foreach ($transactions as $transaction) {
-    $order = db_query("SELECT status FROM {commerce_order} WHERE order_id = :order_id", array(':order_id' => $transaction->order_id))
-      ->fetchObject();
-    if (is_object($order) && $order->status == $status) {
-      $results['total_count']++;
-      $results['total_amount'] += $transaction->amount;
-    }
+    $results['total_count']++;
+    $results['total_amount'] += $transaction->amount;
   }
 
   $results['total_amount'] = $results['total_amount'] / 100;
@@ -47,10 +48,10 @@ function dsr_select($status, $start, $end) {
  * @param string $status
  *   Order status (payment_received, refunded, partially_refunded).
  *
- * @param string $start_date
+ * @param string $start
  *   The start date formatted for MySQL.
  *
- * @param string $end_date
+ * @param string $end
  *   The end date formatted for MySQL.
  *
  * @return array
@@ -59,14 +60,15 @@ function dsr_select($status, $start, $end) {
 function dsr_get_orders($status, $start, $end) {
   $orders = array();
 
-  $transactions_query = "SELECT max(transaction_id), order_id, amount FROM {commerce_payment_transaction} WHERE status = 'success' AND from_unixtime(changed) BETWEEN :start AND :end GROUP BY order_id";
-  $transactions = db_query($transactions_query, array(':start' => $start, ':end' => $end));
+  $query = "SELECT MAX(t.transaction_id), t.order_id, t.amount FROM {commerce_payment_transaction} t JOIN {commerce_order} o ON o.order_id = t.order_id WHERE t.status = 'success' AND o.status = :status AND from_unixtime(t.changed) BETWEEN :start AND :end GROUP BY t.order_id";
+  $replacements = array(
+    ':status' => $status,
+    ':start' => $start,
+    ':end' => $end,
+  );
+  $transactions = db_query($query, $replacements);
   foreach ($transactions as $transaction) {
-    $order = db_query("SELECT status FROM {commerce_order} WHERE order_id = :order_id", array(':order_id' => $transaction->order_id))
-      ->fetchObject();
-    if (is_object($order) && $order->status == $status) {
-      $orders[$order->order_id] = $transaction->amount / 100;
-    }
+    $orders[$transaction->order_id] = $transaction->amount / 100;
   }
 
   return $orders;
