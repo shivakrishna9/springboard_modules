@@ -96,6 +96,7 @@ class SalesforceSyncTruncateTestCase extends DrupalUnitTestCase {
       'FirstName' => 'first name',
       'LastName' => 'last name ',
       'junk' => 'long string with ',
+      'tricky' => 'This is a string with ',
     );
 
     $items = array();
@@ -108,6 +109,7 @@ class SalesforceSyncTruncateTestCase extends DrupalUnitTestCase {
       'FirstName' => 'first name is more than ten characters',
       'LastName' => 'last name is more than ten characters',
       'junk' => 'long string with &amp; that will get truncated',
+      'tricky' => 'This is a string with &amp; and a ;',
     );
 
     $items[] = $item;
@@ -181,6 +183,13 @@ class MockSalesforce extends Salesforce {
       'name' => 'junk',
       'type' => 'textarea',
       'length' => 20,
+    );
+    $fields[] = $field;
+
+    $field = array(
+      'name' => 'tricky',
+      'type' => 'textarea',
+      'length' => 25,
     );
     $fields[] = $field;
 
