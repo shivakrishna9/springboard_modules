@@ -735,7 +735,7 @@ class SalesforceSync {
         }
       }
     }
-    
+
     // Check the lengths of all truncatable fields on this sObject.
     foreach ($field_lengths[$item->object_type] as $field_name => $field_length) {
       if (!empty($item->sobject->fields[$field_name]) && strlen($item->sobject->fields[$field_name]) > $field_length) {
