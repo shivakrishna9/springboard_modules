@@ -122,8 +122,16 @@ function springboard_letter_form_alter(&$form, &$form_state, $form_id) {;
 
 function springboard_letter_submit($form, $form_state) {
   $values = $form_state['values']['submitted_tree'];
-  module_load_include('inc', 'springboard_target', 'includes/springboard_target.smarty_streets');
-  $zip = _springboard_target_smarty_lookup($values);
+
+  module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.smarty_streets');
+  $geo = springboard_advocacy_smarty_lookup($values);
+  if (!empty($geo)) {
+    $_SESSION['letter_geo'] = $geo;
+    if(!empty($geo['zip']) && !empty($geo['plus4'])) {
+       $zip = $geo['zip'] . '-' . $geo['plus4'];
+    }
+  }
+
   if(!empty($zip)) {
     $loader = new AdvocacyApiClientLoader();
     $client = $loader->getClient();
@@ -174,10 +182,10 @@ function springboard_letter_webform_submission_insert($node, $submission) {
       'nid' => $submission->nid,
       'sid' => $submission->sid,
       'uid' => $submission->uid,
-      'zip' => $_SESSION['letter_geo']['zip'],
-      'plus4' => $_SESSION['letter_geo']['plus4'],
-      'lat' => $_SESSION['letter_geo']['latitude'],
-      'lon' => $_SESSION['letter_geo']['longitude'],
+      'zip' => isset($_SESSION['letter_geo']['zip']) ? $_SESSION['letter_geo']['zip'] : '',
+      'plus4' => isset($_SESSION['letter_geo']['plus4']) ? $_SESSION['letter_geo']['plus4'] : '',
+      'lat' => isset($_SESSION['letter_geo']['latitude']) ? $_SESSION['letter_geo']['latitude'] : '',
+      'lon' => isset($_SESSION['letter_geo']['longitude']) ? $_SESSION['letter_geo']['longitude'] : '',
     );
     drupal_write_record('springboard_messages_location', $data);
     unset($_SESSION['letter_geo']);

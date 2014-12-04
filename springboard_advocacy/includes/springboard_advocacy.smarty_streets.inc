@@ -2,10 +2,10 @@
 
 /**
  * @file
- * Smarty Streets functions for Springboard advocacy.
+ * Lookup function for smarty streets api
  */
 
-function _springboard_target_smarty_lookup($values) {
+function springboard_advocacy_smarty_lookup($values) {
   
   $responses = array();
   $query =  array(
@@ -20,21 +20,20 @@ function _springboard_target_smarty_lookup($values) {
   $url = url('https://api.smartystreets.com/street-address', array('query' => $query));
 
   $response = drupal_http_request($url);
+
   if (!empty($response->data)) {
 
     $data = json_decode($response->data);
  
     if(!empty($data)) {
+
       $geo = array();
       $geo['zip'] = isset($data[0]->components->zipcode) ? $data[0]->components->zipcode : '';
       $geo['plus4'] = isset($data[0]->components->plus4_code) ? $data[0]->components->plus4_code : '';
       //$district = $data[0]->metadata->congressional_district;
       $geo['latitude'] = isset($data[0]->metadata->latitude) ? $data[0]->metadata->latitude : '';
       $geo['longitude'] = isset($data[0]->metadata->longitude) ? $data[0]->metadata->longitude : '';
-      $_SESSION['target_geo'] = $geo;
-      if(!empty($geo['zip']) && !empty($geo['plus4'])) {
-         return $geo['zip'] . '-' . $geo['plus4'];
-      }
     }
-  }
+    return $geo;
+  }  
 }
