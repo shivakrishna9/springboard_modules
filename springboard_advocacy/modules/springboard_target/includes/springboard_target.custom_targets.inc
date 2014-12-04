@@ -1,6 +1,6 @@
 <?php
 
-function springboard_m2t_target_form($target_id = NULL) {
+function springboard_target_form($target_id = NULL) {
   $form = array();
 
   if (isset($target_id) && is_numeric($target_id)) {
@@ -53,7 +53,7 @@ function springboard_m2t_target_form($target_id = NULL) {
     '#type' => 'select',
     '#title' => t('Target Type'),
     '#default_value' => isset($target->target_type) ? $target->target_type : '',
-    '#options' => springboard_m2t_target_types(),
+    '#options' => springboard_target_types(),
     //'#required' => TRUE,
     '#attributes' => array('class' => array('target-add', 'target-target-type')),
   );
@@ -62,7 +62,7 @@ function springboard_m2t_target_form($target_id = NULL) {
     '#type' => 'select',
     '#title' => t('Party (If applicable)'),
     '#default_value' => isset($target->party) ? array($target->party) : '',
-    '#options' => springboard_m2t_parties(), 
+    '#options' => springboard_target_parties(), 
     '#attributes' => array('class' => array('target-add', 'target-party')),
   );
 
@@ -158,7 +158,7 @@ function springboard_m2t_target_form($target_id = NULL) {
     '#type' => 'select',
     '#title' => t('State'),
     '#default_value' => isset($target->addresses[0]->state) ? array($target->addresses[0]->state) : '',
-    '#options' => springboard_m2t_states(),
+    '#options' => springboard_target_states(),
     //'#required' => TRUE,
     '#attributes' => array('class' => array('target-add', 'target-state')),
   );
@@ -221,17 +221,17 @@ function springboard_m2t_target_form($target_id = NULL) {
   return $form;
 }
 
-function springboard_m2t_target_types() {
+function springboard_target_types() {
   $types = array('Elected Offical', 'Appointed Official', 'Corporate', 'Media');
   return $types;
 }
 
-function springboard_m2t_parties() {
+function springboard_target_parties() {
   $parties = array('D' => 'Democrat', 'R' => 'Republican', 'I' => 'Independent', 'O' => 'Other');
   return $parties;
 }
 
-function springboard_m2t_states() {
+function springboard_target_states() {
   $states = array(
     'AL' => 'Alabama',
     'AK' => 'Alaska',
@@ -288,7 +288,7 @@ function springboard_m2t_states() {
   return $states;
 }
 
-// function springboard_m2t_custom_targets() {
+// function springboard_target_custom_targets() {
 //  $header = array('Name', 'Title', 'Organization', 'Email', 'Phone', 'Address', 'Actions');
 //   $rows = array();
 
@@ -314,7 +314,7 @@ function springboard_m2t_states() {
 //     );
 //   }
 
-//   $rows = springboard_m2t_pager_default_initialize($rows, 1);
+//   $rows = springboard_target_pager_default_initialize($rows, 1);
 
 //   $output = theme('table', array('header' => $header, 'rows' => $rows));
 //   $output .= theme('pager', array('quantity' => 1));
@@ -322,7 +322,7 @@ function springboard_m2t_states() {
 // }
 
 // //modified version of pager.inc function pager_default_initialize()
-// function springboard_m2t_pager_default_initialize($rows, $limit = 9, $element = 0) {
+// function springboard_target_pager_default_initialize($rows, $limit = 9, $element = 0) {
 //  global $pager_page_array, $pager_total, $pager_total_items, $pager_limits;
 
 //   $page = pager_find_page($element);

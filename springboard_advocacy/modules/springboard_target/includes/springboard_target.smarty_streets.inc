@@ -5,7 +5,7 @@
  * Smarty Streets functions for Springboard M2T.
  */
 
-function _springboard_mt2_smarty_lookup($values) {
+function _springboard_target_smarty_lookup($values) {
   
   $responses = array();
   $query =  array(

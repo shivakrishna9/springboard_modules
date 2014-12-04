@@ -2,13 +2,13 @@
 
 /**
  * @file
- * Admin functions for Springboard M2T.
+ * Admin functions for Springboard target.
  */
 
 /**
  * System settings form
  */
-function springboard_m2t_admin() {
+function springboard_target_admin() {
   
   $form = array();
 
@@ -22,12 +22,12 @@ function springboard_m2t_admin() {
     'smartystreets_rest' => 'SmartyStreets REST API (Pay, API key is required)',
   );
 
-  $form['geo']['springboard_m2t_geocoder'] = array(
+  $form['geo']['springboard_target_geocoder'] = array(
     '#type' => 'radios',
     '#title' => t('Active Geocoding service'),
     '#options' => $options,
     '#description' => t('Choose the geocoding service to use. All but Google Javascript API require an API Key'),
-    '#default_value' => variable_get('springboard_m2t_geocoder', ''),
+    '#default_value' => variable_get('springboard_target_geocoder', ''),
   );
   
   $form['geo']['smarty'] = array(
@@ -35,25 +35,25 @@ function springboard_m2t_admin() {
     '#title' => t('Smarty Streets configuration'),
   );
 
-  $form['geo']['smarty']['springboard_m2t_smarty_authid'] = array(
+  $form['geo']['smarty']['springboard_target_smarty_authid'] = array(
     '#type' => 'textfield',
     '#title' => t('Smarty Streets Auth ID'),
     '#description' => t('Required for the REST API'),
-    '#default_value' => variable_get('springboard_m2t_smarty_authid', ''),
+    '#default_value' => variable_get('springboard_target_smarty_authid', ''),
   );
 
-  $form['geo']['smarty']['springboard_m2t_smarty_authtoken'] = array(
+  $form['geo']['smarty']['springboard_target_smarty_authtoken'] = array(
     '#type' => 'textfield',
     '#title' => t('Smarty Streets Auth Token'),
     '#description' => t('Required for the REST AP'),
-    '#default_value' => variable_get('springboard_m2t_smarty_authtoken', ''),
+    '#default_value' => variable_get('springboard_target_smarty_authtoken', ''),
   );
 
-  $form['geo']['smarty']['springboard_m2t_smarty_htmltoken'] = array(
+  $form['geo']['smarty']['springboard_target_smarty_htmltoken'] = array(
     '#type' => 'textfield',
     '#title' => t('Smarty Streets HTML token'),
     '#description' => t('Required for the Javascript API only'),
-    '#default_value' => variable_get('springboard_m2t_smarty_htmltoken', ''),
+    '#default_value' => variable_get('springboard_target_smarty_htmltoken', ''),
   );
 
   return system_settings_form($form);
