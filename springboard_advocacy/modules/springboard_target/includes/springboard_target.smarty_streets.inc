@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Smarty Streets functions for Springboard target.
+ * Smarty Streets functions for Springboard advocacy.
  */
 
 function _springboard_target_smarty_lookup($values) {
@@ -13,8 +13,8 @@ function _springboard_target_smarty_lookup($values) {
     'city' => $values['sbp_city'],
     'state' => $values['sbp_state'],
     'zipcode' => $values['sbp_zip'],
-    'auth-id' => variable_get('springboard_target_smarty_authid',''),
-    'auth-token' => variable_get('springboard_target_smarty_authtoken',''),
+    'auth-id' => variable_get('springboard_advocacy_smarty_authid',''),
+    'auth-token' => variable_get('springboard_advocacy_smarty_authtoken',''),
   );
 
   $url = url('https://api.smartystreets.com/street-address', array('query' => $query));

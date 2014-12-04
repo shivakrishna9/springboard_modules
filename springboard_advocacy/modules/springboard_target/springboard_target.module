@@ -1,18 +1,23 @@
 <?php
 
+/**
+ * Implements hook_menu
+ */
+
 function springboard_target_menu() {
   $items = array();
 
-  $items['admin/config/springboard/advocacy/target'] = array(
-    'title' => 'Message to Target',
-    'description' => '',
-    'access arguments' => array('administer site configuration'),
-    'page arguments' => array('springboard_target_admin'),
-    'page callback' => 'drupal_get_form',
-    'file' => 'includes/springboard_target.admin.inc',
-    'weight' => 10,
-    'type' => MENU_LOCAL_TASK,
-  );
+ // Moved this config to advocacy module, but may use later/
+ // $items['admin/config/springboard/advocacy/target'] = array(
+ //   'title' => 'Target Config',
+ //   'description' => '',
+ //   'access arguments' => array('administer site configuration'),
+ //   'page arguments' => array('springboard_target_admin'),
+ //   'page callback' => 'drupal_get_form',
+ //   'file' => 'includes/springboard_target.admin.inc',
+ //   'weight' => 10,
+ //   'type' => MENU_LOCAL_TASK,
+ // );
 
   $items['admin/springboard/advocacy/custom-targets/add'] = array(
     'title' => 'Target Center: Create Targets',
