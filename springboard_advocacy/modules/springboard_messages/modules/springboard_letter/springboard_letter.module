@@ -122,13 +122,13 @@ function springboard_letter_form_alter(&$form, &$form_state, $form_id) {;
 
 function springboard_letter_submit($form, $form_state) {
   $values = $form_state['values']['submitted_tree'];
-  module_load_include('inc', 'springboard_letter', 'includes/springboard_letter.smarty_streets');
-  $zip = _springboard_mt2_smarty_lookup($values);
+  module_load_include('inc', 'springboard_target', 'includes/springboard_target.smarty_streets');
+  $zip = _springboard_target_smarty_lookup($values);
   if(!empty($zip)) {
     $loader = new AdvocacyApiClientLoader();
     $client = $loader->getClient();
     $response = $client->getLegislators($zip);
-    if (empty($response) && empty($response->error)) {
+    if (!empty($response) && empty($response->error)) {
       $persons = springboard_letter_prep_for_display($response);
       $_SESSION['legislators'] = $persons;
     }
@@ -179,7 +179,7 @@ function springboard_letter_webform_submission_insert($node, $submission) {
       'lat' => $_SESSION['letter_geo']['latitude'],
       'lon' => $_SESSION['letter_geo']['longitude'],
     );
-    drupal_write_record('springboard_letter_location', $data);
+    drupal_write_record('springboard_messages_location', $data);
     unset($_SESSION['letter_geo']);
   };
 }

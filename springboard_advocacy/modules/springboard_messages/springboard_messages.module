@@ -1,1 +1,5 @@
 <?php
+
+/*
+ *  Menu/config hooks and Common functions used by multiple message types will go here
+ */

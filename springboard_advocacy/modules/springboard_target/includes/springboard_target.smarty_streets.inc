@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Smarty Streets functions for Springboard M2T.
+ * Smarty Streets functions for Springboard target.
  */
 
 function _springboard_target_smarty_lookup($values) {
@@ -13,14 +13,13 @@ function _springboard_target_smarty_lookup($values) {
     'city' => $values['sbp_city'],
     'state' => $values['sbp_state'],
     'zipcode' => $values['sbp_zip'],
-    'auth-id' => variable_get('springboard_m2t_smarty_authid',''),
-    'auth-token' => variable_get('springboard_m2t_smarty_authtoken',''),
+    'auth-id' => variable_get('springboard_target_smarty_authid',''),
+    'auth-token' => variable_get('springboard_target_smarty_authtoken',''),
   );
 
   $url = url('https://api.smartystreets.com/street-address', array('query' => $query));
 
   $response = drupal_http_request($url);
-
   if (!empty($response->data)) {
 
     $data = json_decode($response->data);
@@ -32,7 +31,7 @@ function _springboard_target_smarty_lookup($values) {
       //$district = $data[0]->metadata->congressional_district;
       $geo['latitude'] = isset($data[0]->metadata->latitude) ? $data[0]->metadata->latitude : '';
       $geo['longitude'] = isset($data[0]->metadata->longitude) ? $data[0]->metadata->longitude : '';
-      $_SESSION['m2t_geo'] = $geo;
+      $_SESSION['target_geo'] = $geo;
       if(!empty($geo['zip']) && !empty($geo['plus4'])) {
          return $geo['zip'] . '-' . $geo['plus4'];
       }
