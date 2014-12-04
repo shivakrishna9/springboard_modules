@@ -22,21 +22,19 @@ function springboard_target_menu() {
   $items['admin/springboard/advocacy/custom-targets/add'] = array(
     'title' => 'Target Center: Create Targets',
     'description' => '',
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array('create targets'),
     'page arguments' => array('springboard_target_create_custom_targets_form'),
     'page callback' => 'drupal_get_form',
     'file' => 'includes/springboard_target.custom_targets_create.inc',
-    //'type' => MENU_CALLBACK,
   );
 
   $items['admin/springboard/advocacy/custom-targets/%/edit'] = array(
     'title' => 'Target Center: Edit Target',
     'description' => '',
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array('edit targets'),
     'page arguments' => array('springboard_target_edit_custom_targets_form', 4),
     'page callback' => 'drupal_get_form',
     'file' => 'includes/springboard_target.custom_targets_edit.inc',
-    //'type' => MENU_CALLBACK,
   );
 
   $items['apitest'] = array(
@@ -49,4 +47,25 @@ function springboard_target_menu() {
   );
 
   return $items;
+}
+
+function springboard_target_permission() {
+  return array(
+    'administer targets' => array(
+      'title' => t('Administer Targets'),
+      'description' => t('Perform administration tasks for my targets.'),
+    ),
+    'create targets' => array(
+      'title' => t('Create Targets'),
+      'description' => t('Create Custom targets.'),
+    ),
+    'edit targets' => array(
+      'title' => t('Edit Targets'),
+      'description' => t('Edit Custom my targets.'),
+    ),
+    'delete targets' => array(
+      'title' => t('Delete Targets'),
+      'description' => t(' Custom targets.'),
+    ),
+  );
 }
