@@ -63,10 +63,9 @@ function springboard_petition_install() {
     $map->status = 1;
     $map->module = 'springboard_advocacy';
     salesforce_genmap_save_map($map, 'webform');
-
+  }
     springboard_petition_add_content_type();
     springboard_petition_add_example_petition();
-  }
 }
 
 /**
