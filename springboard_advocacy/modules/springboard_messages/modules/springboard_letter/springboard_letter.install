@@ -62,10 +62,9 @@ function springboard_letter_install() {
     $map->status = 1;
     $map->module = 'springboard_letter';
     salesforce_genmap_save_map($map, 'webform');
-
-    springboard_letter_add_content_type();
-    springboard_letter_add_example_letter();
   }
+  springboard_letter_add_content_type();
+  springboard_letter_add_example_letter();
 }
 
 /**
@@ -73,7 +72,7 @@ function springboard_letter_install() {
  */
 function springboard_letter_add_content_type() {
   $type = node_type_set_defaults();
-  $type->name = t('Message to Target');
+  $type->name = t('Letter to Target');
   $type->type = 'springboard_letter';
   $type->description = '';
   $type->title_label = t('Title');
@@ -163,7 +162,7 @@ function springboard_letter_add_example_letter() {
   $node->type = 'springboard_letter';
   $node->language = LANGUAGE_NONE;
   $node->uid = 1;
-  $node->title = 'Example Message to Target Form';
+  $node->title = 'Example Letter to Target Form';
   $node->status = 1;
   $node->promote = 0;
   $node->body[LANGUAGE_NONE][0]['value'] = 'Donec placerat. Nullam nibh dolor, blandit sed, fermentum id, ' .
@@ -255,7 +254,7 @@ function springboard_letter_email_wrapper_add() {
   $node->type = 'email_wrapper';
   $node->language = LANGUAGE_NONE;
   $node->uid = 1;
-  $node->title = 'Example Message to Target Email Wrapper';
+  $node->title = 'Example Letter to Target Email Wrapper';
   $node->status = 0;
   $node->promote = 0;
   $node->email_wrapper_from_name[LANGUAGE_NONE][0] = array(
