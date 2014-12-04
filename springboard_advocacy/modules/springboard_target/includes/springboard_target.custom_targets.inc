@@ -1,5 +1,10 @@
 <?php
 
+/*
+ * Implements hook_form
+ *
+ * Serves a dual function as target add and edit form
+ */
 function springboard_target_form($target_id = NULL) {
   $form = array();
 
@@ -8,6 +13,8 @@ function springboard_target_form($target_id = NULL) {
     $client = $loader->getClient();
     $target = $client->getCustomTarget($target_id);
   }
+
+  //@TODO: uncomment "required" as development nears completion.
 
   $form['salutation'] = array(
     '#type' => 'textfield',
@@ -221,11 +228,18 @@ function springboard_target_form($target_id = NULL) {
   return $form;
 }
 
+/*
+ * Return an array of target types.
+ * This could become user-configurable
+ */
 function springboard_target_types() {
   $types = array('Elected Offical', 'Appointed Official', 'Corporate', 'Media');
   return $types;
 }
 
+/*
+ * Return an array of target parties.
+ */
 function springboard_target_parties() {
   $parties = array('D' => 'Democrat', 'R' => 'Republican', 'I' => 'Independent', 'O' => 'Other');
   return $parties;
@@ -287,6 +301,9 @@ function springboard_target_states() {
   );
   return $states;
 }
+
+// @TODO: remove this if there's no ulimate use for it. 
+// Loads targets and outputs a paginated table
 
 // function springboard_target_custom_targets() {
 //  $header = array('Name', 'Title', 'Organization', 'Email', 'Phone', 'Address', 'Actions');
