@@ -26,7 +26,6 @@ function springboard_advocacy_smarty_lookup($values) {
     $data = json_decode($response->data);
  
     if(!empty($data)) {
-
       $geo = array();
       $geo['zip'] = isset($data[0]->components->zipcode) ? $data[0]->components->zipcode : '';
       $geo['plus4'] = isset($data[0]->components->plus4_code) ? $data[0]->components->plus4_code : '';

@@ -8,6 +8,7 @@
 /**
  * Page callback for the admin form.
  */
+
 function springboard_advocacy_settings_page() {
   $build = array();
   $build['content'] = array(
@@ -18,7 +19,7 @@ function springboard_advocacy_settings_page() {
       '#prefix' => '<div class="springboard-advocacy-settings-page">',
       '#suffix' => '</div>',
     ),
-    'salesforce_sync_admin_form' => drupal_get_form('springboard_advocacy_settings_form'),
+    'springboard_advocacy_settings_form' => drupal_get_form('springboard_advocacy_settings_form'),
   );
   return $build;
 }
@@ -29,7 +30,12 @@ function springboard_advocacy_settings_page() {
 function springboard_advocacy_settings_form() {
   $form = array();
 
-  $form['springboard_advocacy_server_url'] = array(
+  $form['transaction'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Advocacy Server Configuration'),
+  );
+
+  $form['transaction']['springboard_advocacy_server_url'] = array(
     '#title' => t('Springboard advocacy server url'),
     '#description' => t('The url of the Springboard advocacy server.'),
     '#type' => 'textfield',
@@ -78,6 +84,8 @@ function springboard_advocacy_settings_form() {
   $form['geo']['smarty'] = array(
     '#type' => 'fieldset',
     '#title' => t('Smarty Streets configuration'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
   );
 
   $form['geo']['smarty']['springboard_advocacy_smarty_authid'] = array(
@@ -103,6 +111,4 @@ function springboard_advocacy_settings_form() {
 
   return system_settings_form($form);
 
-
-  return system_settings_form($form);
 }
