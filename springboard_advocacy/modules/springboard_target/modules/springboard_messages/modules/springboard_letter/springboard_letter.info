@@ -1,0 +1,6 @@
+name = Springboard Letter to Target
+description = Send targeted letters to elected officials or other custom targets.
+core = 7.x
+package = Springboard Advocacy
+dependencies[] = webform_user
+dependencies[] = springboard_messages

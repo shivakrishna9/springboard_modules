@@ -1,0 +1,60 @@
+<?php
+
+/**
+ * @file
+ * Springboard Advocacy installation functions.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function springboard_messages_schema() {
+  // Opt in tracking table.
+  $schema['springboard_messages_location'] = array(
+    'description' => 'Store messaging information.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'messages node id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'description' => 'Messenger user id.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'sid' => array(
+        'description' => 'submission id.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'zip' => array(
+        'description' => 'zip code',
+        'type' => 'char',
+        'length' => 5,
+      ),
+      'plus4' => array(
+        'description' => 'zip plus4',
+        'type' => 'char',
+        'length' => 4,
+      ),
+      'lat' => array(
+        'type' => 'numeric',
+        'precision' => 10,
+        'scale' => 6,
+        'default' => 0.0,
+      ),
+      'lon' => array(
+        'type' => 'numeric',
+        'precision' => 10,
+        'scale' => 6,
+        'default' => 0.0,
+      ),
+    ),
+    'primary key' => array('sid', 'uid'),
+  );
+  return $schema;
+}
