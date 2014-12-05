@@ -177,7 +177,8 @@ function dsr_collect_stats($start_date, $end_date, $show_form = TRUE) {
   $stats = _dsr_collect_stats($start_date, $end_date);
   // add the filter form to the page
   if ($show_form) {
-    $output = drupal_render(drupal_get_form('dsr_filter_form'));
+    $dsr_filter_form = drupal_get_form('dsr_filter_form');
+    $output = drupal_render($dsr_filter_form);
   }
   // variable to keep flag any discrepancies
   $discrepancies = array();
