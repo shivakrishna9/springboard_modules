@@ -64,7 +64,7 @@ function theme_dsr_discrepancy_report($variables) { //$orders, $status, $start_d
 
   foreach ($orders as $order_id => $order_total) {
     $statues = array();
-    $batches = dsr_get_order_batches($order_id, 'donation');
+    $batches = dsr_get_order_batches($order_id, 'Opportunity');
     $links = _dsr_discrepancy_report_links($order_id);
 
     // Get any sf information.
@@ -81,7 +81,7 @@ function theme_dsr_discrepancy_report($variables) { //$orders, $status, $start_d
     $output .= '<h4>Order ' . $order_id . ' - $' . number_format($order_total, 2, '.', ',') . '</h4>';
     if (!empty($sfid)) {
       $variables = array('@sfid' => $sfid);
-      $output .= t('This order may have been deleted in Salesforce! We have it associated with @sfid', $variables);
+      $output .= t('SFID: @sfid', $variables);
     }
 
     foreach ($export_status as $status => $value) {
@@ -153,7 +153,7 @@ function dsr_get_order_batches($order_id, $type = 'donation') {
   $result = db_query('
     SELECT
       i.bid AS batch_id,
-      FROM_UNIXTIME(b.end) AS date_processed,
+      b.end AS date_processed,
       i.retries,
       i.status,
       i.message
@@ -166,11 +166,11 @@ function dsr_get_order_batches($order_id, $type = 'donation') {
   while ($data = $result->fetchAssoc()) {
     $batches[$data['batch_id']] = array(
       //'object' => unserialize($data['data']),
-      //'success' => $data['success'],
+      'status' => $data['status'],
       'date_processed' => $data['date_processed'],
       'retry' => $data['retries'] ? 1 : 0, //$data['is_retry'],
       'error_code' => $data['status'],
-      'error_message' => $data['message'],
+      'error_message' => !empty($data['message']) ? '(' . $data['message'] . ')' : '',
       //'error_fields' => $data['fields'],
     );
   }
@@ -212,7 +212,7 @@ function dsr_get_order_sfid($order_id) {
       'object_type' => 'Opportunity',
     ));
 
-  return is_object($mapped) ? $mapped->sfid : FALSE;
+  return !empty($mapped) ? $mapped->sfid : FALSE;
 }
 
 /**
@@ -220,7 +220,7 @@ function dsr_get_order_sfid($order_id) {
  */
 function _dsr_create_export_status($batches) {
   $status = array();
-
+debug($batches, '$batches');
   $attempts = count($batches);
   if ($attempts == 0) {
     $status['export attempts'] = t('This order has not yet been exported.');
@@ -231,7 +231,7 @@ function _dsr_create_export_status($batches) {
 
     $status['export attempts'] = $attempts;
     $status['last export attempt'] = date('m/d/Y g:i:s a', $batches[$last_batch_id]['date_processed']);
-    $status['last export status'] = $batches[$last_batch_id]['success'] ? t('Success') : t('Failed') . ' (' . $batches[$last_batch_id]['error_message'] . ')';
+    $status['last export status'] = $batches[$last_batch_id]['status'] . $batches[$last_batch_id]['error_message'];
   }
 
   return $status;
