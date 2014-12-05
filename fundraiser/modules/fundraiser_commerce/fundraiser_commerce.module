@@ -338,13 +338,35 @@ function fundraiser_commerce_commerce_order_status_info() {
       'title' => 'Partially Refunded',
       'state' => 'completed',
     ),
-    'canceled' => array(
-      'name' => 'canceled',
-      'title' => 'Cancelled',
-      'state' => 'canceled',
-    ),
   );
   return $fundraiser_statuses;
+}
+
+/**
+ * Implements hook_commerce_order_status_info_alter().
+ */
+function fundraiser_commerce_commerce_order_status_info_alter(&$order_statuses) {
+  // Loop through the statuses used by fundraiser and flag them.
+  foreach (_fundraiser_commerce_commerce_order_statuses_used() as $status) {
+    if (isset($order_statuses[$status])) {
+      $order_statuses[$status]['fundraiser_status'] = TRUE;
+    }
+  }
+}
+
+/**
+ * Returns an array of the commerce statuses used by fundraiser.
+ */
+function _fundraiser_commerce_commerce_order_statuses_used() {
+  return array(
+    'failed_refund',
+    'failed',
+    'canceled',
+    'pending_future_payment',
+    'refunded',
+    'partially_refunded',
+    'payment_received',
+  );
 }
 
 /**
@@ -1801,10 +1823,12 @@ function fundraiser_commerce_fundraiser_refund_decline($refund) {
 function fundraiser_commerce_salesforce_donation_statuses() {
   // Get a list of available statuses, and return that list to salesforce donation.
   $available_statuses = array();
-  $order_statuses = fundraiser_commerce_commerce_order_status_info();
+  $order_statuses = commerce_order_statuses(array('fundraiser_status' => TRUE));
+
   foreach ($order_statuses as $name => $order_status) {
     $available_statuses[$name] = $order_status['title'] . ' (' . t('Commerce') . ')';
   }
+
   return $available_statuses;
 }
 
