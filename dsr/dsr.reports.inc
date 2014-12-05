@@ -220,7 +220,7 @@ function dsr_get_order_sfid($order_id) {
  */
 function _dsr_create_export_status($batches) {
   $status = array();
-debug($batches, '$batches');
+
   $attempts = count($batches);
   if ($attempts == 0) {
     $status['export attempts'] = t('This order has not yet been exported.');
