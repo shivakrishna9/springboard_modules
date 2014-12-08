@@ -194,7 +194,7 @@ function commerce_litle_test_register_token(DOMNode $node) {
     }
   }
 
-  $xml = "<litleOnlineResponse version='8.22' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
+  $xml = "<litleOnlineResponse version='8.27' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
   $xml .= "<registerTokenResponse id='ididid' reportGroup='rtpGrp' customerId='12345'>";
   $xml .= "<litleTxnId>501000000000000001</litleTxnId>";
 
@@ -236,7 +236,7 @@ function commerce_litle_test_sale(DOMNode $node) {
     }
   }
 
-  $xml = "<litleOnlineResponse version='8.22' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
+  $xml = "<litleOnlineResponse version='8.27' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
   $xml .= "<saleResponse id='ididid' reportGroup='rtpGrp' customerId='12345'>";
   $xml .= "<litleTxnId>774506068532487000</litleTxnId>";
   $xml .= "<orderId>" . $order_id . "</orderId>";
@@ -269,7 +269,7 @@ function commerce_litle_test_echeck_sale(DOMNode $node) {
     }
   }
 
-  $xml = "<litleOnlineResponse version='8.22' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
+  $xml = "<litleOnlineResponse version='8.27' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
   $xml .= "<echeckSalesResponse id='ididid' reportGroup='rtpGrp' customerId='12345'>";
   $xml .= "<litleTxnId>390936667563420000</litleTxnId>";
   $xml .= "<orderId>" . $order_id . "</orderId>";
@@ -292,7 +292,7 @@ function commerce_litle_test_echeck_sale(DOMNode $node) {
  *   The xml to print.
  */
 function commerce_litle_test_authorization(DOMNode $node) {
-  $xml = "<litleOnlineResponse version='8.22' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>
+  $xml = "<litleOnlineResponse version='8.27' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>
   <authorizationResponse id='ididid' reportGroup='rtpGrp' customerId='12345'>
     <litleTxnId>900261330165740000</litleTxnId>
     <orderId>1</orderId>
@@ -317,7 +317,7 @@ function commerce_litle_test_authorization(DOMNode $node) {
  *   The xml to print.
  */
 function commerce_litle_test_unimplemented_request(DOMNode $node) {
-  $xml = "<litleOnlineResponse version='8.22' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
+  $xml = "<litleOnlineResponse version='8.27' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
   $xml .= "<error>Tag is known but not implemented in this mock API:  $node->tagName</error>";
   $xml .= "</litleOnlineResponse>";
   return $xml;
@@ -333,7 +333,7 @@ function commerce_litle_test_unimplemented_request(DOMNode $node) {
  *   The xml to print.
  */
 function commerce_litle_test_unknown_request(DOMNode $node) {
-  $xml = "<litleOnlineResponse version='8.22' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
+  $xml = "<litleOnlineResponse version='8.27' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
   $xml .= "<error>Tag is unknown:  $node->tagName</error>";
   $xml .= "</litleOnlineResponse>";
   return $xml;
@@ -342,27 +342,14 @@ function commerce_litle_test_unknown_request(DOMNode $node) {
 /**
  * The response when we can't find a request in the usual places.
  *
+ * Keep in mind this is not a normal Litle response.
+ *
  * @return string
  *   The xml to print.
  */
 function commerce_litle_test_no_request_found() {
-  $xml = "<litleOnlineResponse version='8.22' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
-
+  $xml = "<litleOnlineResponse version='8.27' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
   $xml .= "<error>No request found.</error>";
-
-  $xml .= "<request><![CDATA[";
-  $xml .= var_export($_REQUEST, TRUE);
-  $xml .= "]]></request>";
-
-  $xml .= "<files><![CDATA[";
-  $xml .= var_export($_FILES, TRUE);
-  $xml .= "]]></files>";
-
-  global $HTTP_RAW_POST_DATA;
-  $xml .= "<rawPostData><![CDATA[";
-  $xml .= var_export($HTTP_RAW_POST_DATA, TRUE);
-  $xml .= "]]></rawPostData>";
-
   $xml .= "</litleOnlineResponse>";
 
   return $xml;
