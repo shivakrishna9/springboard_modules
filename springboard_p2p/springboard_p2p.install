@@ -238,6 +238,12 @@ function springboard_p2p_personal_campaign_action_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      'status' => array(
+        'description' => 'Boolean indicating whether the action is visible.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
     ),
     'indexes' => array(
       'personal_campaign_nid' => array('personal_campaign_nid'),
@@ -621,4 +627,19 @@ function springboard_p2p_update_7006() {
  */
 function springboard_p2p_update_7007() {
   variable_del('springboard_p2p_base_path');
+}
+
+/**
+ * Adds the status field to personal campaign actions.
+ */
+function springboard_p2p_update_7008() {
+  $status = array(
+    'description' => 'Boolean indicating whether the action is visible.',
+    'type' => 'int',
+    'not null' => TRUE,
+    'default' => 0,
+    'initial' => 1,
+  );
+
+  db_add_field('springboard_p2p_personal_campaign_action', 'status', $status);
 }

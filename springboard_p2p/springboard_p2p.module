@@ -1957,6 +1957,11 @@ function springboard_p2p_webform_client_form_submit($form, &$form_state) {
       springboard_p2p_update_personal_campaign_submissions_progress($action['personal_campaign_nid']);
     }
 
+    // If this is a webform user action, then it should be marked as visible.
+    // If it's a fundraiser action, it will be marked as visible when
+    // the donation is a success.
+    $action['status'] = ($action['action_type'] == 'fundraiser') ? 0 : 1;
+
     springboard_p2p_save_personal_campaign_action($action);
 
     $form_state['redirect'][1]['query']['p2p_pcid'] = $form_state['values']['springboard_p2p_personal_campaign_action']['personal_campaign_nid'];
@@ -2104,6 +2109,8 @@ function springboard_p2p_fundraiser_donation_success($donation) {
 
     $action['amount'] = $amount * 100;
 
+    // Now that the donation is successful, mark the action as visible.
+    $action['status'] = 1;
     springboard_p2p_save_personal_campaign_action($action, array('sid'));
   }
 }
@@ -2167,7 +2174,7 @@ function springboard_p2p_save_personal_campaign_action($record, $key = NULL) {
  *   An associative array, or FALSE.
  */
 function springboard_p2p_get_personal_campaign_action_by_sid($sid) {
-  $query = "SELECT category_nid, campaign_nid, personal_campaign_nid, personal_campaign_uid, form_nid, action_type, uid, show_name, comment, amount, created, sid FROM {springboard_p2p_personal_campaign_action} WHERE sid = :sid";
+  $query = "SELECT category_nid, campaign_nid, personal_campaign_nid, personal_campaign_uid, form_nid, action_type, uid, show_name, comment, amount, created, sid, status FROM {springboard_p2p_personal_campaign_action} WHERE sid = :sid";
 
   return db_query($query, array(':sid' => $sid))->fetchAssoc();
 }
@@ -2465,7 +2472,7 @@ function springboard_p2p_preprocess_html(&$vars) {
  *   An array of personal campaign actions, keyed by column name.
  */
 function springboard_p2p_get_personal_campaign_comments($nid, $exclude_empty_comments = FALSE) {
-  $query = "SELECT action_type, uid, show_name, amount, comment, created FROM {springboard_p2p_personal_campaign_action} WHERE personal_campaign_nid = :nid";
+  $query = "SELECT action_type, uid, show_name, amount, comment, created FROM {springboard_p2p_personal_campaign_action} WHERE personal_campaign_nid = :nid AND status = :status";
 
   if ($exclude_empty_comments) {
     $query .= " AND comment != ''";
@@ -2473,7 +2480,9 @@ function springboard_p2p_get_personal_campaign_comments($nid, $exclude_empty_com
 
   $query .= " ORDER BY created DESC";
 
-  return db_query($query, array(':nid' => $nid))->fetchAll(PDO::FETCH_ASSOC);
+  $replacements = array(':nid' => $nid, ':status' => 1);
+
+  return db_query($query, $replacements)->fetchAll(PDO::FETCH_ASSOC);
 }
 
 /**

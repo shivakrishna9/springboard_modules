@@ -281,6 +281,26 @@ function springboard_p2p_views_data() {
         'handler' => 'views_handler_filter_date',
       ),
     ),
+    'status' => array(
+      'title' => t('Status'),
+      'help' => t('Whether the personal campaign action is visible.'),
+      'field' => array(
+        'handler' => 'views_handler_field_boolean',
+        'click sortable' => TRUE,
+        'output formats' => array(
+          'visible-notvisible' => array(t('Visible'), t('Not Visible')),
+        ),
+      ),
+      'filter' => array(
+        'handler' => 'views_handler_filter_boolean_operator',
+        'label' => t('Visible'),
+        'type' => 'yes-no',
+        'use equal' => TRUE,
+      ),
+      'sort' => array(
+        'handler' => 'views_handler_sort',
+      ),
+    ),
   );
 
   return $data;
