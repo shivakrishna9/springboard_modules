@@ -347,22 +347,7 @@ function commerce_litle_test_unknown_request(DOMNode $node) {
  */
 function commerce_litle_test_no_request_found() {
   $xml = "<litleOnlineResponse version='8.22' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
-
   $xml .= "<error>No request found.</error>";
-
-  $xml .= "<request><![CDATA[";
-  $xml .= var_export($_REQUEST, TRUE);
-  $xml .= "]]></request>";
-
-  $xml .= "<files><![CDATA[";
-  $xml .= var_export($_FILES, TRUE);
-  $xml .= "]]></files>";
-
-  global $HTTP_RAW_POST_DATA;
-  $xml .= "<rawPostData><![CDATA[";
-  $xml .= var_export($HTTP_RAW_POST_DATA, TRUE);
-  $xml .= "]]></rawPostData>";
-
   $xml .= "</litleOnlineResponse>";
 
   return $xml;
