@@ -14,6 +14,29 @@ require_once 'includes/fundraiser_sustainers.goals.inc';
  * Implements hook_cron().
  */
 function fundraiser_sustainers_cron() {
+
+  $checks = new FundraiserSustainersHealthChecks();
+  $results = $checks->runChecks();
+
+  $message = '';
+  foreach ($results as $item) {
+    $link = NULL;
+    $full_url = NULL;
+    if (isset($item['link_url'])) {
+      $link = l($item['link_text'], $item['link_url']);
+      $full_url = url($item['link_url'], array('absolute' => TRUE));
+    }
+    watchdog($item['type'], $item['message'], $item['variables'], $item['severity'], $link);
+    $message .= t($item['message'], $item['variables']) . "\r\n" . $item['link_text'] . "\r\n";
+    if (!empty($full_url)) {
+      $message .= $full_url . "\r\n";
+    }
+  }
+
+  if (!empty($message)) {
+    rules_invoke_event('fundraiser_sustainer_health_check_failure', $message);
+  }
+
   if (variable_get('fundraiser_standalone_cron_enabled', 0)) {
     return 0;
   }
@@ -21,6 +44,7 @@ function fundraiser_sustainers_cron() {
     watchdog('fundraiser_cron', 'Standard cron run.', NULL, WATCHDOG_INFO);
     fundraiser_sustainers_standalone_cron();
   }
+
 }
 
 /**
@@ -2771,4 +2795,91 @@ function fundraiser_sustainers_component_value_is_recurring($value) {
   }
 
   return FALSE;
+}
+
+/**
+ * Implements hook_entity_info().
+ */
+function fundraiser_sustainers_entity_info() {
+  $return = array(
+    'fundraiser_sustainer_record' => array(
+      'label' => t('Fundraiser sustainer record'),
+      'plural label' => t('Fundraiser sustainer records'),
+      'entity class' => 'Entity',
+      'controller class' => 'EntityAPIController',
+      'base table' => 'fundraiser_sustainers',
+      'entity keys' => array(
+        'id' => 'did',
+        'label' => 'did',
+      ),
+      'fieldable' => FALSE,
+      'exportable' => FALSE,
+      'module' => 'fundraiser_sustainers',
+      'views controller class' => 'FundraiserSustainerRecordViewsController',
+    ),
+  );
+
+  return $return;
+}
+
+/**
+ * Implements hook_entity_property_info().
+ */
+function fundraiser_sustainers_entity_property_info() {
+  $return = array(
+    'fundraiser_sustainer_record' => array(
+      'properties' => array(
+        'master_did' => array(
+          'label' => t('Master donation ID'),
+          'description' => t('The donation ID of the master donation in the series.'),
+          'type' => 'integer',
+          'schema field' => 'master_did',
+        ),
+        'did' => array(
+          'label' => t('Donation ID'),
+          'description' => t('The ID of the donation.'),
+          'type' => 'integer',
+          'schema field' => 'did',
+        ),
+        'next_charge' => array(
+          'label' => t('Next charge'),
+          'description' => t('The date and time of when the donation should be charged.'),
+          'type' => 'date',
+          'schema field' => 'next_charge',
+        ),
+        'gateway_resp' => array(
+          'label' => t('Gateway response'),
+          'description' => t('The response from the payment gateway.'),
+          'type' => 'text',
+          'schema field' => 'gateway_resp',
+        ),
+        'attempts' => array(
+          'label' => t('Attempts'),
+          'description' => t('Number of charge attempts.'),
+          'type' => 'integer',
+          'schema field' => 'attempts',
+        ),
+        'cancellation_reason' => array(
+          'label' => t('Cancellation reason'),
+          'description' => t('The reason why the series was canceled.'),
+          'type' => 'text',
+          'schema field' => 'cancellation_reason',
+        ),
+        'sustainer_key' => array(
+          'label' => t('Sustainer key'),
+          'description' => t('The sustainer key.'),
+          'type' => 'text',
+          'schema field' => 'sustainer_key',
+        ),
+        'lock_id' => array(
+          'label' => t('Lock ID'),
+          'description' => t('The lock ID.'),
+          'type' => 'text',
+          'schema field' => 'lock_id',
+        ),
+      ),
+    ),
+  );
+
+  return $return;
 }
