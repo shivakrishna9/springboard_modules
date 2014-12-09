@@ -5,15 +5,13 @@
  * Secure prepopulate tests for anonymous users.
  */
 
-include_once dirname(__FILE__) . '/secure_prepopulate.test';
-
 class AnonymousUserTestCase extends SecurePrepopulateTestCase {
 
   public static function getInfo() {
     return array(
       'name' => 'Secure pre-populate anonymous user tests',
       'description' => 'Tests secure pre-populate with anonymous users.',
-      'group' => 'Springboard',
+      'group' => 'Secure Prepopulate',
     );
   }
 
@@ -23,6 +21,5 @@ class AnonymousUserTestCase extends SecurePrepopulateTestCase {
   public function testAnonymousPopulate() {
     $node = $this->webformNode();
     $this->drupalGet('node/' . $node->nid);
-    $this->pass(var_export($this->drupalGetContent(), TRUE));
   }
 }

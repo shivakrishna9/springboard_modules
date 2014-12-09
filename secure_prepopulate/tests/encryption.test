@@ -5,15 +5,13 @@
  * Secure prepopulate encryption tests.
  */
 
-include_once dirname(__FILE__) . '/secure_prepopulate.test';
-
 class EncryptionTestCase extends SecurePrepopulateTestCase {
 
   public static function getInfo() {
     return array(
       'name' => 'Secure pre-populate encryption tests',
       'description' => 'Tests secure pre-populate encryption functionality.',
-      'group' => 'Springboard',
+      'group' => 'Secure Prepopulate',
     );
   }
 
