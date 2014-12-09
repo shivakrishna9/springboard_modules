@@ -76,7 +76,7 @@ class FundraiserWebformFunctionalTest extends FundraiserSetup {
       'send_on_settings' => 1, // send on donation success.
       'mail_component' => $this->getMailComponentCid($node),
     );
-    // debug($settings);
+
     $this->createEmailWrapper($settings);
     $this->createWebformEmail($settings);
     $this->drupalGet('node/' . $node->nid . '/webform/emails/1');
