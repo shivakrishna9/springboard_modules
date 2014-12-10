@@ -523,3 +523,16 @@ function commerce_litle_fundraiser_commerce_refund($payment_method, $refund) {
   module_load_include('inc', 'commerce_litle', 'commerce_litle.admin');
   return commerce_litle_credit_request($payment_method, $transaction, $refunding_order, $refund->amount);
 }
+
+/**
+ * Implements hook_commerce_litle_request_alter().
+ *
+ * Change the orderSource to recurring if this is a recurring
+ * (but not original) sustainer charge via a credit card.
+ */
+function commerce_litle_commerce_litle_request_alter(&$request, $context) {
+  if ($context['type'] == 'cc_vault') {
+    $request['orderSource'] = 'recurring';
+  }
+}
+
