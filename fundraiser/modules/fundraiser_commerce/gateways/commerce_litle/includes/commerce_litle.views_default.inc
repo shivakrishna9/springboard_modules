@@ -1,4 +1,5 @@
 <?php
+
 function commerce_litle_views_default_views() {
 $view = new view();
 $view->name = 'litle_fraud_log';
