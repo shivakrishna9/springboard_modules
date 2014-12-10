@@ -54,7 +54,6 @@ function commerce_litle_fundraiser_donation_form_config_check($node) {
   return $messages;
 }
 
-
 function commerce_litle_fundraiser_gateway_status_cron_check($details) {
   // Check the credit payment method.
   if ($details['method_id'] == 'commerce_litle_cc') {
@@ -196,7 +195,7 @@ function commerce_litle_fundraiser_commerce_charge($method_instance, $donation) 
     _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
     if (variable_get('commerce_litle_fraud', 0) && isset($donation->donation['payment_fields']['credit']['session_id'])) {
       $pane_values['session_id'] = $donation->donation['payment_fields']['credit']['session_id'];
-    }  
+    }
     $method_instance['settings']['cardonfile'] = FALSE;
 
     if (module_exists('commerce_cardonfile')) {
