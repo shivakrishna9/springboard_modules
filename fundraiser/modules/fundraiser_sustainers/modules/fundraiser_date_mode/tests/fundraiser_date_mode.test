@@ -5,7 +5,6 @@
  * Simpletest test class.
  */
 
-
 /**
  * Setup and tear down web class. Does nothing else.
  */
@@ -62,9 +61,6 @@ class FundraiserDateModeTest extends DrupalWebTestCase {
    * Test admin form.
    */
 
-  
-
-
   /**
    * Test enabling date mode.
    */
@@ -103,7 +99,7 @@ class FundraiserDateModeTest extends DrupalWebTestCase {
          continue;
        }
        $next_charge_date = _fundraiser_date_mode_explode_date($current_sustainer['next_charge']);
-  
+
        if ($next_charge_date['month'] == $current_date['month'] && $next_charge_date['year'] == $current_date['year']) {
          $this->assertTrue($next_charge_date['day'] != $date, t('Sustainer order in current month was passed over.'));
        }
