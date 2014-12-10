@@ -14,7 +14,6 @@ function commerce_litle_views_data() {
     'help' => t('Table for fraud log data'),
   );
 
-
   $data['commerce_litle_fraud']['order_id'] = array(
     'title' => t('Order ID'),
     'help' => t('OrderId'),
