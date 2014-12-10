@@ -12,6 +12,7 @@ FundraiserCommerceUnitTestCase
 FundraiserDateModeTest
 FundraiserSustainerTest
 MarketSourceTestCase
+PageWrappersRulesetTestCase
 SalesforceDonationTestCase
 SalesforceGenmapEntitiesTestCase
 SalesforceGenmapTestCase
@@ -41,8 +42,12 @@ SalesforceSyncTokenTestCase
 securePrepopulateUnitTestCase
 SpringboardAPITestCase
 SpringboardGaTestCase
+SpringboardPetitionQuicksignTestCase
 SpringboardSocialFunctionalTest
 SpringboardVersionTestCase
 SpringboardViewsTestCase
 ValidationLogTestCase
+WebformUserConfirmationTestCase
+WebformUserFieldTruncateTestCase
+WebformUserSubmissionTestCase
 WebformTokenSelectorTestCase
