@@ -184,7 +184,7 @@ abstract class WebformUserTestSetup extends DrupalWebTestCase {
 
   /**
    * Create a user account and fills in some profile fields.
-   * 
+   *
    * @return false|object
    *   The user object.
    */
