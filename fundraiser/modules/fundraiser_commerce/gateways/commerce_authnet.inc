@@ -43,16 +43,15 @@ function commerce_authnet_fundraiser_donation_form_config_check($node) {
 }
 
 function commerce_authnet_fundraiser_gateway_status_cron_check($details) {
-  if ($details['method_id'] == 'authnet_aim') { 
+  if ($details['method_id'] == 'authnet_aim') {
     if ($details['settings']['txn_mode'] != AUTHNET_TXN_MODE_LIVE) {
       return $details['settings']['txn_mode'];
     }
     else {
       return 'live';
     }
-  } 
+  }
 }
-
 
 /**
  * Callback function, use this form for the given gateway.
@@ -404,7 +403,7 @@ function commerce_authnet_form_rules_ui_edit_element_alter(&$form, &$form_state)
           }
         }
         $config = isset($settings[0]['payment_method']['settings']) ? $settings[0]['payment_method']['settings'] : '';
-        
+
         // Add a fieldset of Authorize.net request fields available to have Webform field data mapped to them.
         $form['parameter']['payment_method']['settings']['payment_method']['settings']['value_map'] = array(
             '#type' => 'fieldset',
@@ -431,7 +430,7 @@ function commerce_authnet_form_rules_ui_edit_element_alter(&$form, &$form_state)
           );
           $i++;
         }
-        
+
         // Add a fieldset of Authorize.net response fields available to be mapped to donation fields.
         $form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields'] = array(
           '#type' => 'fieldset',
@@ -462,7 +461,7 @@ function commerce_authnet_form_rules_ui_edit_element_alter(&$form, &$form_state)
           );
           $form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['all']['#rows'][$machine_name] = array(
             'checkbox' => array(
-              // Tricky but it works: The table element's children (the checkboxes) will all have rendered as 
+              // Tricky but it works: The table element's children (the checkboxes) will all have rendered as
               // form components by the time the table theme function picks them up by reference here.
               'data' => &$form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['all'][$machine_name],
             ),
@@ -513,7 +512,7 @@ function _commerce_authnet_extra_fields() {
 
 /**
  * Callback for fundraiser_commerce to discover what gateway response fields are available for mapping.
- * 
+ *
  * @param array $gateway_info
  */
 function commerce_authnet_fundraiser_commerce_response_fields($gateway_info) {
@@ -529,7 +528,7 @@ function commerce_authnet_fundraiser_commerce_response_fields($gateway_info) {
 
 /**
  * Callback to save gateway response fields when a donation is successfully completed.
- * 
+ *
  * @param stdClass $donation
  */
 function commerce_authnet_fundraiser_commerce_response_save($donation) {
@@ -557,7 +556,7 @@ function commerce_authnet_fundraiser_commerce_response_save($donation) {
 
 /**
  * Definition of all Authorize.net response fields available for mapping.
- * 
+ *
  * Derived from http://www.authorize.net/support/merchant/wwhelp/wwhimpl/common/html/wwhelp.htm#context=Merchant_Integration_Guide&file=4_TransResponse.html
  * Note that the actual payloads we get from AIM contain more fields than documented by Authorize.net,
  * and the credit card fields' numeric indeces don't match the documentation.
