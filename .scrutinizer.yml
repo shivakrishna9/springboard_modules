@@ -67,13 +67,7 @@ build:
     project_setup:
         before:
             - 'cd ~/build'
-            - 'find . -name "*.php" -print0 | xargs -0 -n1 -P8 php -l'
-            - 'find . -name "*.module" -print0 | xargs -0 -n1 -P8 php -l'
-            - 'find . -name "*.install" -print0 | xargs -0 -n1 -P8 php -l'
-            - 'find . -name "*.inc" -print0 | xargs -0 -n1 -P8 php -l'
-            - 'find . -name "*.profile" -print0 | xargs -0 -n1 -P8 php -l'
-            - 'find . -name "*.test" -print0 | xargs -0 -n1 -P8 php -l'
-            - 'find . -name "*.theme" -print0 | xargs -0 -n1 -P8 php -l'
+            - 'find . -type f \( -name "*.php" -or -name "*.module" -or -name "*.install" -or -name "*.inc" -or -name "*.profile" -or -name "*.test" -or -name "*.theme" \) -print0 | xargs -0 -n1 -P8 php -l'
             # Negate the return value of ack, because not finding these
             # strings should be a pass.
             - '! ack-grep -i "<<<<<<<|^=======$|>>>>>>>|dpm\(|dsm\(|var_dump\(|var_export\(|debug\(|dpq|dvm|dpr|kpr|dvr|kprint_r|dprint_r|devel_render|ddebug_backtrace|debug_backtrace|debug_print_backtrace|debug_to_file" --ignore-file=ext:txt,html,yml,js'
