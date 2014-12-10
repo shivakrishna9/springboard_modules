@@ -55,6 +55,6 @@ class commerce_litle_handler_field_mark_reviewed extends views_handler_field {
     foreach ($reviewed as $index => $review) {
       $record = array('order_id' => $id[$index] , 'mark_reviewed' => $review);
       drupal_write_record('commerce_litle_fraud', $record, 'order_id');
-    } 
+    }
   }
 }
