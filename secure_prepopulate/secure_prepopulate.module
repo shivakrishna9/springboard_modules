@@ -47,7 +47,8 @@ function secure_prepopulate_clear($nid) {
     $user = drupal_anonymous_user();
   }
 
-  drupal_goto('node/' . $nid);
+  // Send the user on their way with a querystring attached.
+  drupal_goto('node/' . $nid, drupal_query_string_encode($_GET, array('af', 'q')));
 }
 
 /**
