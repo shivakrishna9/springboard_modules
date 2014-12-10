@@ -81,7 +81,7 @@ function fundraiser_commerce_schema() {
     ),
    'indexes' => array(
       'lid' => array('lid'),
-    ),  
+    ),
   );
   return $schema;
 }
@@ -185,4 +185,3 @@ function fundraiser_commerce_update_7004() {
     db_create_table('fundraiser_commerce_gateway_settings_log', $schema['fundraiser_commerce_gateway_settings_log']);
   }
 }
-
