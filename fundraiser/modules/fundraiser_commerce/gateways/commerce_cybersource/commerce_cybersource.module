@@ -9,7 +9,6 @@
 define('CYBERSOURCE_TXN_MODE_PRODUCTION', 'production');
 define('CYBERSOURCE_TXN_MODE_TEST', 'test');
 
-
 /**
  * Implements hook_menu().
  */
@@ -69,7 +68,7 @@ function commerce_cybersource_commerce_payment_method_info() {
     'description' => t('Integrates the CyberSource SOAP API Toolkit for card not present CC transactions.'),
     'cardonfile' => array(//https://www.drupal.org/files/1740346-cardonfile.patch
       'update callback' => 'commerce_cybersource_cardonfile_update',
-      'delete callback' => 'commerce_cybersource_cardonfile_delete',            
+      'delete callback' => 'commerce_cybersource_cardonfile_delete',
     ),
   );
 
@@ -457,7 +456,7 @@ function commerce_cybersource_soap_cc_submit_form_validate($payment_method, $pan
     !empty($pane_values['cardonfile']) && $pane_values['credit_card']['cardonfile_store'] !== TRUE) {
     return TRUE;
   }
-  
+
   if (!commerce_payment_credit_card_validate($pane_values['credit_card'], $settings)) {
     return FALSE;
   }
@@ -488,7 +487,7 @@ function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_
   // so we need to test whether it's a new card by some other means:
   $do_not_store =  (isset($pane_values['credit_card']['cardonfile_store']) && $pane_values['credit_card']['cardonfile_store'] !== TRUE) ? TRUE : FALSE;
   $cardonfile_has_id = isset($pane_values['cardonfile']) && $pane_values['cardonfile'] !='new' ? TRUE : FALSE;
-  if (module_exists('commerce_cardonfile') && $payment_method['settings']['credit_card']['cardonfile'] 
+  if (module_exists('commerce_cardonfile') && $payment_method['settings']['credit_card']['cardonfile']
     && !empty($pane_values['cardonfile']) && ($do_not_store || $cardonfile_has_id)) {
     // First attempt to load the card on file.
     if(isset($pane_values['the_real_cardonfile_value'])) {
@@ -623,12 +622,12 @@ function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_
       drupal_set_message('Please enter you information again or try a different card.', 'error');
       return FALSE;
     }
-    
+
     // don't create profiles from "add payment" transactions
     $add_payment_form = (isset($pane_form['#id']) && $pane_form['#id'] == 'edit-payment-details') ? TRUE : FALSE;
 
     // If Card on File storage is enabled and this appears to be a new card
-    if (empty($add_payment_form) && module_exists('commerce_cardonfile') && $payment_method['settings']['credit_card']['cardonfile'] 
+    if (empty($add_payment_form) && module_exists('commerce_cardonfile') && $payment_method['settings']['credit_card']['cardonfile']
       && (empty($pane_values['cardonfile']) || !empty($pane_values['credit_card']['cardonfile_store']))) {
       // Submit a request to create the Customer Profile.
       if ($response = commerce_cybersource_create_customer_profile_request($request, $payment_method, $order)) {
@@ -663,7 +662,7 @@ function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_
       }
       else {
         watchdog('commerce_cybersource', 'Error connecting to server or getting response for transaction @transaction_id', array('@transaction_id' => $transaction->instance_id));
-      } 
+      }
     }
   }
   else {
@@ -1326,53 +1325,53 @@ function commerce_cybersource_cvn_response($code) {
 
  /**
  * Returns three digit code for a credit card type per cybersource documentation:
- * http://apps.cybersource.com/library/documentation/dev_guides/Decision_Ma... 
+ * http://apps.cybersource.com/library/documentation/dev_guides/Decision_Ma...
  */
 function commerce_cybersource_cc_type_code($text) {
   $text = strtolower($text);
   switch ($text) {
-    case 'visa': 
+    case 'visa':
       return '001';
      case 'mastercard':
      case 'eurocard':
       return '002';
-    case 'amex': 
+    case 'amex':
       return '003';
-    case 'discover': 
+    case 'discover':
       return '004';
     case 'dc':
       return '005';
-    case 'cb': 
+    case 'cb':
       return '006';
-    case 'jcb': 
+    case 'jcb':
       return '007';
-    case 'enroute': 
+    case 'enroute':
       return '014';
-    case 'jal': 
+    case 'jal':
       return '021';
-    case 'maestro (uk domestic)': 
+    case 'maestro (uk domestic)':
       return '024';
-    case 'delta': 
+    case 'delta':
       return '031';
-    case 'visaelectron': 
+    case 'visaelectron':
       return '033';
-    case 'dankfort': 
+    case 'dankfort':
       return '034';
-    case 'laser': 
+    case 'laser':
       return '035';
-    case 'carte bleue': 
+    case 'carte bleue':
       return '036';
-    case 'carta si': 
+    case 'carta si':
       return '037';
-    case 'encoded account number': 
+    case 'encoded account number':
       return '039';
-    case 'uatp': 
+    case 'uatp':
       return '040';
-    case 'maestro': 
+    case 'maestro':
       return '042';
-    case 'ge money uk card': 
+    case 'ge money uk card':
       return '043';
-    case 'style': 
+    case 'style':
       return '045';
     default:
       return false;
@@ -1677,7 +1676,7 @@ function commerce_cybersource_form_commerce_cardonfile_update_form_alter(&$form,
  */
 function commerce_cybersource_cardonfile_update($form, &$form_state, $payment_method, $card_data) {
   $result = commerce_cybersource_update_customer_profile_request($payment_method, $form_state, $card_data);
-  
+
   return $result->paySubscriptionUpdateReply->reasonCode == 100;
 }
 
@@ -1686,7 +1685,7 @@ function commerce_cybersource_cardonfile_update($form, &$form_state, $payment_me
  */
 function commerce_cybersource_cardonfile_delete($form, &$form_state, $payment_method, $card_data) {
   $result = commerce_cybersource_delete_customer_profile_request($payment_method, $card_data);
-  
+
   return $result->paySubscriptionDeleteReply->reasonCode == 100;
 }
 
@@ -1723,7 +1722,7 @@ function commerce_cybersource_create_customer_profile_request($orig_request, $pa
 
   //$request->recurringSubscriptionInfo->amount = 0.00;
   $request->recurringSubscriptionInfo = (object) array('frequency' => 'on-demand');
-  
+
   $request->paySubscriptionCreateService = (object) array('run' => 'true');
   //$request->paySubscriptionCreateService->paymentRequestID = $request_id;
    return commerce_cybersource_soap_api_request($payment_method, $request);
@@ -1731,7 +1730,7 @@ function commerce_cybersource_create_customer_profile_request($orig_request, $pa
 
 /**
  * Retrieve a customer profile from cybersource.
- * 
+ *
  * @param type $payment_method
  * @param type $request_id
  * @return type
@@ -1746,7 +1745,7 @@ function commerce_cybersource_retrieve_customer_profile_request($payment_method,
 
 /**
  * Delete a customer profile
- * 
+ *
  * @param type $card_data
  */
 function commerce_cybersource_update_customer_profile_request($payment_method, $form_state, $card_data) {
@@ -1760,7 +1759,7 @@ function commerce_cybersource_update_customer_profile_request($payment_method, $
   }
   else {
     $number = $card_data->card_number;
-  }  
+  }
   // Add the credit card details.
   $request->card = (object) array(
     'accountNumber' => $number,
@@ -1788,12 +1787,12 @@ function commerce_cybersource_update_customer_profile_request($payment_method, $
   if (isset($pane_values['credit_card']['code'])) {
     $request->card->cvNumber = $pane_values['credit_card']['code'];
   }
-  return commerce_cybersource_soap_api_request($payment_method, $request);  
+  return commerce_cybersource_soap_api_request($payment_method, $request);
 }
 
 /**
  * Delete a customer profile
- * 
+ *
  * @param type $card_data
  */
 function commerce_cybersource_delete_customer_profile_request($payment_method, $card_data) {
@@ -1801,7 +1800,7 @@ function commerce_cybersource_delete_customer_profile_request($payment_method, $
   $request->merchantReferenceCode = 'Delete Profile ' . $card_data->remote_id;
   $request->paySubscriptionDeleteService = (object) array('run' => 'true');
   $request->recurringSubscriptionInfo = (object) array('subscriptionID' => $card_data->remote_id);
-  
-  return commerce_cybersource_soap_api_request($payment_method, $request);  
+
+  return commerce_cybersource_soap_api_request($payment_method, $request);
 }
 
