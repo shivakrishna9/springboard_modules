@@ -151,7 +151,7 @@ function _fundraiser_tickets_validate_webform_field($element, &$form_state) {
     }
     unset($ticket_values['fundraiser-tickets-extra-donation']);
   }
-  
+
   // Grab the selected values and verify we have at least one
   $selected = array_filter($ticket_values);
   if (empty($selected)) {
@@ -217,7 +217,7 @@ function theme_fundraiser_tickets_webform_table($variables) {
       $rows[] = $row;
     }
   }
-  
+
   $rows[] = $last_row;
 
   // Add a row to contain our totals
@@ -238,7 +238,7 @@ function theme_fundraiser_tickets_webform_table($variables) {
     array('data' => t('Amount'), 'class' => 'fundraiser-ticket-type-total', 'align' => 'right')
   );
   // $attributes = array('class' => $element['#attributes']['class'], 'id' => $id, 'width' => '100%');
-  
+
   // Add the JS for the settings too
   drupal_add_js(array('fundraiserTickets' => array('ticketPrices' => $ticket_prices)), 'setting');
 
@@ -277,7 +277,3 @@ function theme_fundraiser_tickets_closed_message($vars){
 function theme_fundraiser_tickets_soldout_message($vars){
   return $vars['message']['safe_value'];
 }
-
-
-
-

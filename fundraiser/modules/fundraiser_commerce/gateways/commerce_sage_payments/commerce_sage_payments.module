@@ -703,4 +703,3 @@ function _commerce_sage_payments_vault_request_sale($gateway, $request_parameter
 
   return $transaction_response;
 }
-
