@@ -58,4 +58,3 @@ function commerce_offline_check_fundraiser_donation_success($donation) {
     $donation->status_charged = _fundraiser_commerce_get_charged_by_status('offline_check');
   }
 }
-
