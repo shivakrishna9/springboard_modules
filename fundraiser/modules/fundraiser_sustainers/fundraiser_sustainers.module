@@ -44,7 +44,6 @@ function fundraiser_sustainers_cron() {
     watchdog('fundraiser_cron', 'Standard cron run.', NULL, WATCHDOG_INFO);
     fundraiser_sustainers_standalone_cron();
   }
-
 }
 
 /**
@@ -671,27 +670,64 @@ function fundraiser_sustainers_fundraiser_donation_delete($donation) {
 }
 
 /**
- * Helper function, kick off recurring donations for payment. Called on cron usually.
+ * Process recurring donations with a queue.
  */
 function fundraiser_sustainers_process_recurring_donations() {
   // Provide a hook to allow for modules to respond.
   module_invoke_all('fundraiser_donation_recurring');
+
+  // Keep a running tally of successes and failures.
   $log = array(
     'successes' => 0,
     'fails' => 0,
+    'errors' => 0,
   );
-  $donations = _fundraiser_sustainers_cron_get_recurring();
-  $sustainer_key = fundraiser_sustainers_get_sustainer_key_value();
 
-  // Loop over the found orders
+  //Get our queue object.
+  $queue = new SystemQueue('SustainerQueue');
+  $queue->createQueue();
+
+  // Populate our queue with donations.
+  $record_count = variable_get('fundraiser_sustainer_max_queue', 1000);
+  $donations = _fundraiser_sustainers_cron_get_recurring($record_count);
+
+  // Loop over the found orders and add to the queue.
   foreach ($donations as $recurring) {
-    fundraiser_sustainers_process_single_recurring_donation($log, $recurring, $sustainer_key);
+    $queue->createItem($recurring);
+  }
 
+  $end = time() + variable_get('fundraiser_sustainers_queue_time', 30);
+
+  while (time() < $end && ($item = $queue->claimItem())) {
+    // Delete the item before processing.
+    $queue->deleteItem($item);
+
+    // Attempt to process the item.
+    try {
+      $success = fundraiser_sustainers_process_single_recurring_donation($item->data);
+
+      // Update the log array.
+      if ($success) {
+        $log['successes']++;
+      }
+      else {
+        $log['fails']++;
+      }
+    }
+    catch (Exception $e) {
+      watchdog('fundraiser_sustainers', 'Recurring donation !did failed during processing, the error was: @error.',
+        array('!did' => $item->data->did, '@error' => $e->getMessage()));
+
+      // Update error
+      $log['errors']++;
+    }
   }
+
   if ($log['successes'] > 0 || $log['fails'] > 0) {
-    watchdog('fundraiser_sustainers', '!successes recurring donations processed successfully; !fails failed.',
-      array('!successes' => $log['successes'], '!fails' => $log['fails']));
+    watchdog('fundraiser_sustainers', '!successes recurring donations processed successfully; !fails failed; errors reported: !errors.',
+      array('!successes' => $log['successes'], '!fails' => $log['fails'], '!errors' => $log['errors']));
   }
+
   // And after all of that is done, provide a hook to allow for modules to respond.
   module_invoke_all('fundraiser_donation_post_recurring');
 }
@@ -699,7 +735,9 @@ function fundraiser_sustainers_process_recurring_donations() {
 /**
  * Process an individual sustainer record.
  */
-function fundraiser_sustainers_process_single_recurring_donation(&$log, $recurring, $sustainer_key) {
+function fundraiser_sustainers_process_single_recurring_donation($recurring) {
+  // Confirm sustainer key match.
+  $sustainer_key = fundraiser_sustainers_get_sustainer_key_value();
   if ($sustainer_key == $recurring->sustainer_key) {
     // Prepare a log record.
     $log_record = array(
@@ -745,6 +783,9 @@ function fundraiser_sustainers_process_single_recurring_donation(&$log, $recurri
     // Since we already created the donation (and saved any CC info at that time).
     // All we need to do is process it and respond afterwards as needed.
     fundraiser_donation_process($donation);
+    if ($donation->did == 58) {
+        throw new Exception('Error with processor.');
+    }
     if (!isset($donation->result['message'])) {
       $donation->result['message'] = '';
     }
@@ -752,21 +793,22 @@ function fundraiser_sustainers_process_single_recurring_donation(&$log, $recurri
     if (isset($donation->result['success']) && $donation->result['success']) {
       fundraiser_donation_success($donation);
       // Record the success.
-      $log['successes']++;
-      $log_record['success'] = TRUE;
+      $success = $log_record['success'] = TRUE;
       // Perform any post-processing required by the gateway.
       module_invoke_all('fundraiser_sustainers_recurring_success', $donation);
     }
     else {
       $donation->result['success'] = FALSE;
-      $log_record['success'] = FALSE;
+      $success = $log_record['success'] = FALSE;
       fundraiser_donation_decline($donation);
       // Record the fail.
-      $log['fails']++;
     }
 
     // Write the log record.
     drupal_write_record('fundraiser_sustainers_log', $log_record);
+
+    // Return the success flag.
+    return $success;
   }
   else {
     // TODO: Unlock the sustainer record. Currently the lock has not been ported from D6.
@@ -774,6 +816,8 @@ function fundraiser_sustainers_process_single_recurring_donation(&$log, $recurri
     watchdog('fundraiser_sustainers', 'Sustainer order id !did not processed because of sustainer key mismatch. ' .
       'Key file value (!key_file) did not match record value (!record_value).',
       array('!did' => $recurring->did, '!key_file' => $sustainer_key, '!record_value' => $recurring->sustainer_key), WATCHDOG_CRITICAL);
+
+    return FALSE;
   }
 }
 
