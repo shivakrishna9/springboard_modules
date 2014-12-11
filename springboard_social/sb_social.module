@@ -324,7 +324,7 @@ function sb_social_admin_paths() {
   }
 }
 
-/** 
+/**
  * Implements hook_springboard_admin_alias_patterns().
  */
 function sb_social_springboard_admin_alias_patterns() {
@@ -346,7 +346,7 @@ function sb_social_springboard_admin_alias_patterns() {
 /**
  * Implements hook_springboard_admin_admin_menu_items_alter().
  */
-function sb_social_springboard_admin_admin_menu_items_alter(&$items) {  
+function sb_social_springboard_admin_admin_menu_items_alter(&$items) {
   // Marketing & Analytics > Social.
   $items['admin/springboard/marketing-analytics']['_children']['admin/config/services/springboard_social'] = array(
     'link_path' => 'admin/config/services/springboard_social',
@@ -356,7 +356,7 @@ function sb_social_springboard_admin_admin_menu_items_alter(&$items) {
     'customized' => 1,
     'weight' => 2,
   );
-  
+
   // Settings > Settings > Social.
   $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/config/services/springboard_social'] = array(
     'link_path' => 'admin/config/services/springboard_social',
@@ -1103,7 +1103,7 @@ function _sb_social_replace_tokens($string, $node, $sid = NULL) {
 
 /**
  * Implements hook_salesforce_sync_pass_item().
- * 
+ *
  * When an opportunity syncs assign its salesforce id to related shares.
  *
  * @param mixed $item

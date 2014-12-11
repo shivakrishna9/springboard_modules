@@ -104,4 +104,3 @@ function springboard_petition_quicksign_update_7001() {
 function springboard_petition_quicksign_update_7002() {
   db_add_field('springboard_quicksign', 'form_description_format', array('type' => 'varchar', 'length' => 255, 'default' => '', 'not null' => TRUE, 'description' => 'Description text format.'));
 }
-

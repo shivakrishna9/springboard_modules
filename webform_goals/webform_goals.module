@@ -258,7 +258,7 @@ function webform_goals_menu() {
   return $items;
 }
 
-/** 
+/**
  * Implements hook_springboard_admin_alias_patterns().
  */
 function webform_goals_springboard_admin_alias_patterns() {
@@ -282,7 +282,7 @@ function webform_goals_springboard_admin_alias_patterns() {
         'regex' => '|^springboard/goals$|',
         'replacement' => 'springboard/goals',
       ),
-    ),  
+    ),
   );
 }
 
@@ -299,7 +299,7 @@ function webform_goals_springboard_admin_admin_menu_items_alter(&$items) {
     'customized' => 1,
     'weight' => 0,
   );
-  
+
   // Settings > Settings > Goals.
   $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/config/content/webform_goals'] = array(
     'link_path' => 'admin/config/content/webform_goals',

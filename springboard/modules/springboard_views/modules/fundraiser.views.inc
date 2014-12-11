@@ -22,12 +22,12 @@ function springboard_views_fundraiser_views_data() {
     ),
     'base' => array(
       'field' => 'nid',
-      'title' => t('Fundraiser donation forms'), 
-      'help' => t('Contains Fundraiser-specific information for donation forms.'), 
+      'title' => t('Fundraiser donation forms'),
+      'help' => t('Contains Fundraiser-specific information for donation forms.'),
       'weight' => -10,
     ),
   );
-  
+
   $data['fundraiser']['nid'] = array(
     'title' => t('Fundraiser node'),
     'help' => t('Fundraiser node related to a form.'),
@@ -36,7 +36,7 @@ function springboard_views_fundraiser_views_data() {
       'field' => 'nid',
       'handler' => 'views_handler_relationship',
       'label' => t('Fundraiser node'),
-    ), 
+    ),
     'field' => array(
       'handler' => 'views_handler_field',
       'click sortable' => TRUE,
@@ -48,7 +48,7 @@ function springboard_views_fundraiser_views_data() {
       'handler' => 'views_handler_sort',
     ),
   );
-  
+
   $data['fundraiser']['gateways'] = array(
     'title' => t('Gateway'),
     'help' => t('The payment gateway the donation form uses to process credit cards.'),
@@ -198,7 +198,7 @@ function springboard_views_fundraiser_views_data() {
       'field' => 'nid',
       'handler' => 'views_handler_relationship',
       'label' => t('Fundraiser node'),
-    ), 
+    ),
   );
 
   // Webform submission.

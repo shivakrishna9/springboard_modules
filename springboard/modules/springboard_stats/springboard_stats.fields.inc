@@ -15,7 +15,7 @@
 function _springboard_stats_add_default_fields($type, $fundraiser_specific = FALSE) {
   module_load_include('inc', 'field', 'field.crud');
   module_load_include('inc', 'field', 'field.info');
-  
+
   $fields = $fundraiser_specific ? _springboard_stats_fundraiser_fields_settings($type) : _springboard_stats_webform_fields_settings($type);
   foreach ($fields as $field_name => $field) {
     // If the field doesn't exist create it.
@@ -38,7 +38,7 @@ function _springboard_stats_add_default_fields($type, $fundraiser_specific = FAL
 function _springboard_stats_webform_fields_settings($type) {
   $fields = array();
   $t = get_t();
-  
+
   // Total Number of Submissions
   $fields['sbstats_count_submissions'] = array(
     'field_config' => array(
@@ -105,7 +105,7 @@ function _springboard_stats_webform_fields_settings($type) {
 function _springboard_stats_fundraiser_fields_settings($type) {
   $fields = array();
   $t = get_t();
-  
+
   // Dollar Total of Transactions
   $fields['sbstats_total_transactions'] = array(
     'field_config' => array(

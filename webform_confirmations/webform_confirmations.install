@@ -135,11 +135,10 @@ function webform_confirmations_update_7004() {
     'type' => 'int',
     'unsigned' => TRUE,
     'not null' => TRUE,
-    'default' => 0, 
+    'default' => 0,
   );
   db_add_field('webform_confirmations_submissions', 'timestamp', $field);
   // Initialize to current date, otherwise all preexisting records will get wiped out
   // the first time cron runs with purge enabled.
-  db_query('UPDATE {webform_confirmations_submissions} SET timestamp = :timestamp', array(':timestamp' => time())); 
+  db_query('UPDATE {webform_confirmations_submissions} SET timestamp = :timestamp', array(':timestamp' => time()));
 }
-

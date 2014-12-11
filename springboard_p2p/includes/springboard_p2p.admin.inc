@@ -13,7 +13,7 @@ function springboard_p2p_dashboard() {
   if (springboard_p2p_no_content_types_enabled()) {
     drupal_set_message('No content types have been enabled for peer to peer.  Please visit the settings and configure them.', 'error');
   }
-  
+
   $views = array(
     'p2p_campaigns' => array (
       'header' => t('Active peer to peer campaigns'),
@@ -44,7 +44,7 @@ function springboard_p2p_dashboard() {
       'viewmore_link' => array('title' => t('View all landing pages'), 'href' => 'admin/springboard/p2p/landing-pages'),
     ),
   );
-  
+
   return theme('springboard_p2p_dashboard', array('views' => $views));
 
 }

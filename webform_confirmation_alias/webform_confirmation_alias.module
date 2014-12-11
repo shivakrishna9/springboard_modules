@@ -19,7 +19,7 @@ function webform_confirmation_alias_menu() {
     'page arguments' => array('webform_confirmation_alias_admin_settings'),
     'access arguments' => array('access site configuration'),
     'type' => MENU_NORMAL_ITEM,
-    'file' => 'webform_confirmation_alias.admin.inc', 
+    'file' => 'webform_confirmation_alias.admin.inc',
   );
   return $items;
 }
@@ -53,8 +53,8 @@ function webform_confirmation_alias_node_update($node) {
   if (in_array($node->type, $webform_node_types) && $node->webform['redirect_url'] == '<confirmation>') {
     if ($webform_alias = drupal_lookup_path('alias', 'node/' . $node->nid)) {
       $confirmation_alias_append = variable_get('webform_confirmation_alias_append', 'thank-you');
-      
-      // Now that we know this is a webform with an alias, we have to check whether 
+
+      // Now that we know this is a webform with an alias, we have to check whether
       // to add or update the confirmation alias.
       if (webform_confirmation_alias_exists($node->nid) >= 1) {
 	      webform_confirmation_alias_update($node->nid, $webform_alias, $confirmation_alias_append, TRUE);
@@ -96,7 +96,7 @@ function webform_confirmation_alias_exists($webform_nid) {
 
 /**
  * Add a new confirmation alias.
- * Check whether to show the 'success' message. (We skip it on 
+ * Check whether to show the 'success' message. (We skip it on
  * bulk alias generation because it would be annoying.)
  */
 function webform_confirmation_alias_add($webform_nid, $webform_alias, $confirmation_alias_append, $show_message) {
@@ -107,7 +107,7 @@ function webform_confirmation_alias_add($webform_nid, $webform_alias, $confirmat
       'language' => 'en',
     ))
     ->execute();
-    
+
   if ($show_message) {
     drupal_set_message('Added a new confirmation alias.');
   }
@@ -115,7 +115,7 @@ function webform_confirmation_alias_add($webform_nid, $webform_alias, $confirmat
 
 /**
  * Update a confirmation alias.
- * Check whether to show the 'success' message. (We skip it on 
+ * Check whether to show the 'success' message. (We skip it on
  * bulk alias generation because it would be annoying.)
  */
 function webform_confirmation_alias_update($webform_nid, $webform_alias, $confirmation_alias_append, $show_message) {
@@ -127,7 +127,7 @@ function webform_confirmation_alias_update($webform_nid, $webform_alias, $confir
     ))
     ->condition('source', 'node/' . $webform_nid . '/done')
     ->execute();
-    
+
   if ($show_message) {
     drupal_set_message('Updated a confirmation alias.');
   }
@@ -142,4 +142,3 @@ function webform_confirmation_alias_remove($webform_nid) {
     ->execute();
   drupal_set_message('Deleted the confirmation alias.');
 }
-

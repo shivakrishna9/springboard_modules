@@ -65,7 +65,7 @@ function springboard_admin_admin_menu_items() {
     'weight' => 1,
     'options' => array('attributes' => array('target' => '_blank')),
   );
-  
+
   if(module_exists('fundraiser')) {
     // Top Level: Donation Form.
     $items['admin/springboard/donation-forms/all'] = array(
@@ -309,7 +309,7 @@ function springboard_admin_admin_menu_items() {
       'weight' => 5,
     );
   }
-  
+
   //Settings > Logout.
   $items['admin/springboard/settings']['_children']['logout'] = array(
     'link_path' => 'user/logout',

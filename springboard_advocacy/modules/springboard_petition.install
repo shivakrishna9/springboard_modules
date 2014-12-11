@@ -145,7 +145,7 @@ function springboard_petition_schema() {
   $schema['springboard_petition_opt_in'] = array(
     'description' => 'Store primary donation information.',
     'fields' => array(
-      'sid' => array( 
+      'sid' => array(
         'description' => 'Webform submission id.',
         'type' => 'int',
         'unsigned' => TRUE,
@@ -371,7 +371,7 @@ function springboard_petition_update_7001() {
 }
 
 /**
- * Add "created" column to opt in table. Prevents joining on webform submissions 
+ * Add "created" column to opt in table. Prevents joining on webform submissions
  * table when displaying recent petition signers.
  */
 function springboard_petition_update_7002() {

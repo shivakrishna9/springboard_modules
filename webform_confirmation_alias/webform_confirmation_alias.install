@@ -6,7 +6,7 @@
 /**
  * Implements hook_install().
  *
- * Weight set to ensure module runs after pathauto has generated aliases. 
+ * Weight set to ensure module runs after pathauto has generated aliases.
  * This should guarantee aliases get generated correctly during node hooks.
  */
 function webform_confirmation_alias_install() {

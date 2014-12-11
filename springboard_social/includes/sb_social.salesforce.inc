@@ -6,8 +6,8 @@
 
 /**
  * Implements hook_salesforce_mapping_map_fields_alter().
- * 
- * Replace Drupal objects either with IDs or with tokens for associated objects in exported 
+ *
+ * Replace Drupal objects either with IDs or with tokens for associated objects in exported
  * social share items, depending on what should be mapped to the SF field.
  */
 function sb_social_salesforce_mapping_map_fields_alter(&$fields, $context) {
@@ -84,15 +84,15 @@ function sb_social_salesforce_mapping_map_fields_alter(&$fields, $context) {
 /**
  * Implements hook_salesforce_genmap_map_fields_alter().
  *
- * If a donation or other Webform submission was created by a user who came to the site 
+ * If a donation or other Webform submission was created by a user who came to the site
  * from a share URL (e.g., social_referer_transaction market source field was set) we want
  * to try to link the new donation/submission to the "referer transaction" -- that is, the
  * social share that produced this new user action.
- * 
+ *
  * The "social_referer_transaction" value will be populated already by market_source,
  * giving the numeric share_id. To sync the relationship to Salesforce, we replace the
  * share_id value with a token so the sync engine can look up the Social_Share__c object's
- * SFID. 
+ * SFID.
  */
 function sb_social_salesforce_genmap_map_fields_alter(&$fields, $context) {
   // Is this a webform-based mapping (donation, petition, etc.)?
@@ -283,4 +283,3 @@ function _sb_social_webform_maps_to_action($nid) {
   }
   return $results[$nid];
 }
-

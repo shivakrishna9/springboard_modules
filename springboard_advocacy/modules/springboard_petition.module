@@ -112,7 +112,7 @@ function springboard_petition_form_webform_component_delete_form_alter(&$form, &
 }
 
 /**
- * Implements hook_form_FORM_ID_alter(). 
+ * Implements hook_form_FORM_ID_alter().
  */
 function springboard_petition_form_node_type_form_alter(&$form, $form_state) {
   $form_type = isset($form['type']['#default_value']) ? $form['type']['#default_value'] : FALSE;
@@ -174,7 +174,7 @@ function springboard_petition_goal_save_validate(&$form, $form_state) {
   // Goal minimum is NaN
   if (!empty($form_state['values']['springboard_petition_goal_minimum']) && !is_numeric($form_state['values']['springboard_petition_goal_minimum'])) {
     form_set_error('springboard_petition_goal_minimum', t('Minimum number of submissions must be a number.'));
-  } 
+  }
   // Missing goal target but other settings are present.
   if (empty($form_state['values']['springboard_petition_goal_target']) && (!empty($form_state['values']['springboard_petition_goal_minimum']) || !empty($form_state['values']['springboard_petition_starter_message']))) {
     form_set_error('springboard_petition_goal_target', t('Please include number of signatures required to meet this goal.'));
@@ -188,7 +188,7 @@ function springboard_petition_goal_save_validate(&$form, $form_state) {
 }
 
 /**
- * Save petition goal settings. 
+ * Save petition goal settings.
  */
 function springboard_petition_goal_save_submit($node) {
   if (!empty($node->springboard_petition_goal_target)) {

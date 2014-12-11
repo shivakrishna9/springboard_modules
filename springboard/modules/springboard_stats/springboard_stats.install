@@ -12,15 +12,15 @@ include_once 'springboard_stats.fields.inc';
  * Add stats fields to existing Fundraiser and Webform node types, and populate with initial values.
  */
 function springboard_stats_install() {
-  // Get all Webform types. The array returned by webform_variable_get() might contain a blank value. 
+  // Get all Webform types. The array returned by webform_variable_get() might contain a blank value.
   $webform_types_all = webform_variable_get('webform_node_types');
   $webform_types_all = array_filter($webform_types_all, create_function('$value', 'return !empty($value);'));
-  
+
   // Add stats fields to all Webform and Fundraiser node types.
   foreach ($webform_types_all as $type_name) {
     springboard_stats_add_fields($type_name);
   }
-  
+
   // Populate stats fields for all existing nodes of any Webform or Fundraiser type.
   $webform_types = array();
   $fundraiser_types = array();

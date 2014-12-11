@@ -63,7 +63,7 @@ function sb_social_share_save($record, $settings = FALSE, $url_path = FALSE) {
   // event has taken place and should not be editable after the fact.
   $query = db_insert('sb_social_shares');
   $share_id = $query->fields($record)->execute();
-  
+
   // Generate url and update share record.
   if (empty($record['url']) && $settings && $url_path) {
     $url = sb_social_share_tracker_url($share_id, $settings, $url_path);
@@ -77,7 +77,7 @@ function sb_social_share_save($record, $settings = FALSE, $url_path = FALSE) {
     $record['url'] = $url;
     db_query('UPDATE {sb_social_shares} set url = :url WHERE share_id = :share_id', array(':url' => $url, ':share_id' => $share_id));
   }
-  
+
   watchdog('sb_social', 'share id:' . $share_id);  //@TODO: Is this test code that should be removed?
 
   // Behold, a new entity!
@@ -85,7 +85,7 @@ function sb_social_share_save($record, $settings = FALSE, $url_path = FALSE) {
     $record['share_id'] = $share_id;
     module_invoke_all('entity_insert', (object)$record, 'sb_social_share');
   }
-  
+
   // Let modules react to the share event. This is a legacy hook for the benefit of old implementations.
   module_invoke_all('sb_social_share_event_save', $record);
 
