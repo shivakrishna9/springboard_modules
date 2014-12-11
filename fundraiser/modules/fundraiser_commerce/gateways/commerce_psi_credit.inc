@@ -38,14 +38,14 @@ function commerce_psi_credit_fundraiser_donation_form_config_check($node) {
 }
 
 function commerce_psi_credit_fundraiser_gateway_status_cron_check($details) {
-  if ($details['method_id'] == 'commerce_psi_credit') { 
+  if ($details['method_id'] == 'commerce_psi_credit') {
     if ($details['settings']['txn_mode'] != COMMERCE_PSI_MODE_LIVE) {
       return $details['settings']['txn_mode'];
     }
     else {
       return 'live';
     }
-  } 
+  }
 }
 
 /**
