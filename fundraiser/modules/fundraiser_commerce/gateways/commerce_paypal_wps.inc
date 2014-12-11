@@ -38,7 +38,7 @@ function commerce_paypal_wps_fundraiser_donation_form_config_check($node) {
 }
 
 function commerce_paypal_wps_fundraiser_gateway_status_cron_check($details) {
-  if ($details['method_id'] == 'paypal_wps') { 
+  if ($details['method_id'] == 'paypal_wps') {
     if($details['settings']['server'] == 'sandbox') {
       return 'sandbox';
     }
@@ -47,7 +47,6 @@ function commerce_paypal_wps_fundraiser_gateway_status_cron_check($details) {
     }
   }
 }
-
 
 /**
  * Callback function, use this form for the given gateway.
