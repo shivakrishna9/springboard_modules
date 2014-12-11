@@ -31,7 +31,7 @@ function webform_form_salesforce_genmap_map_form_alter(&$form, &$form_state) {
             if ($field['type'] == 'reference' && $field['referenceTo'][0] == 'Contact') {
               $options[$field['name']] = $field['label'];
             }
-          } 
+          }
         }
         if (!empty($options) && count($options) > 1) {
           $form['webform_user'] = array(
@@ -72,7 +72,7 @@ function salesforce_genmap_node_insert($node) {
     if (array_key_exists($nid, $webform_user_reference_fields)) {
       $webform_user_reference_fields[$node->nid] = $webform_user_reference_fields[$nid];
       variable_set('webform_user_reference_fields', $webform_user_reference_fields);
-    }  
+    }
     $map = salesforce_genmap_load_map($nid, 'webform');
     if (!empty($map)) {
       // Copy the map to the node.

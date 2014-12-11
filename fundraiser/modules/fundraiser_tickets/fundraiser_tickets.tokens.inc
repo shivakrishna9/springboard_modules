@@ -47,7 +47,7 @@ function fundraiser_tickets_tokens_alter(&$replacements, $context) {
 
     // Add additional tokens for specific ticket information
     $data['tickets-quantity-all'] = $total_count;
-    $data['tickets-quantity-types'] = $type_count;    
+    $data['tickets-quantity-types'] = $type_count;
 
     // Replace the given tokens.
     foreach ($context['tokens'] as $key => $token) {

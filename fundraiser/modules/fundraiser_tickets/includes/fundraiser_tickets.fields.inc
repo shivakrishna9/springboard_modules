@@ -1172,5 +1172,3 @@ function _fundraiser_tickets_default_fields_settings($type) {
 
   return $fields;
 }
-
-
