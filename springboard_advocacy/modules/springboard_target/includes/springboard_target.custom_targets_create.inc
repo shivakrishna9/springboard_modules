@@ -21,8 +21,17 @@ function springboard_target_create_custom_targets_form_submit($form, &$form_stat
   $loader = new AdvocacyApiClientLoader();
   $client = $loader->getClient();
   $target = $client->createCustomTarget($input);
-  if (isset($target->id)) {
-    $form_state['redirect'] = 'admin/springboard/advocacy/custom-targets/' . $target->id . '/edit';
+  // krumo($target);
+  // exit();
+  if (empty($target->error)) {
+    $message = implode(' ', (array)$target->data->status);
+    if (isset($target->data->id)) {
+      $form_state['redirect'] = 'admin/springboard/advocacy/custom-targets/' . $target->data->id . '/edit';
+     }
   }
+  else {
+    $message = $target->error->message;
+  }
+  drupal_set_message($message);
 }
 

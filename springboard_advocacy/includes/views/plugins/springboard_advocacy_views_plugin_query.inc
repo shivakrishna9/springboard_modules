@@ -30,23 +30,28 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
     $start = microtime(true);
     $terms = !empty($view->query->search_terms) ? $view->query->search_terms : NULL;
     $targets = $client->searchTargets($terms);
-    
-    if ($this->pager->use_pager()) {
-      $this->pager->total_items = count($targets);
-      if (!empty($this->pager->options['offset'])) {
-        $this->pager->total_items -= $this->pager->options['offset'];
-      }
-      $this->pager->update_page_info();
-    }
-   
-    if (!empty($this->limit) || !empty($this->offset)) {
-      $limit  = intval(!empty($this->limit) ? $this->limit : 999999);
-      $offset = intval(!empty($this->offset) ? $this->offset : 0);
-      $targets = array_slice($targets, $offset, $limit, TRUE);
-    }
  
+    if (!empty($targets->data))  {
+      if ($this->pager->use_pager()) {
+        $this->pager->total_items = count($targets->data);
+        if (!empty($this->pager->options['offset'])) {
+          $this->pager->total_items -= $this->pager->options['offset'];
+        }
+        $this->pager->update_page_info();
+      }
+     
+      if (!empty($this->limit) || !empty($this->offset)) {
+        $limit  = intval(!empty($this->limit) ? $this->limit : 999999);
+        $offset = intval(!empty($this->offset) ? $this->offset : 0);
+        $targets->data = array_slice($targets->data, $offset, $limit, TRUE);
+      }
+    }
+    else {
+      $targets->data = array();
+    }
+
     $view->result = array();
-    $view->result = $targets;
+    $view->result = $targets->data;
 
     $this->pager->post_execute($view->result);
     

@@ -12,6 +12,12 @@ function springboard_target_form($target_id = NULL) {
     $loader = new AdvocacyApiClientLoader();
     $client = $loader->getClient();
     $target = $client->getCustomTarget($target_id);
+    if (isset($target->error)) {
+      $form = array();
+      $form['not_found']['#markup'] = $target->error->message;
+      return $form;
+    }
+    $target = $target->data;
   }
 
   //@TODO: uncomment "required" as development nears completion.
