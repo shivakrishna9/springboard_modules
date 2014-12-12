@@ -37,12 +37,10 @@ function fundraiser_sustainers_cron() {
     rules_invoke_event('fundraiser_sustainer_health_check_failure', $message);
   }
 
-  if (variable_get('fundraiser_standalone_cron_enabled', 0)) {
-    return 0;
-  }
-  else {
+  // Run the processing on standard cron if enabled.
+  if (variable_get('fundraiser_sustainers_cron_type', NULL) === 'drupal_cron') {
     watchdog('fundraiser_cron', 'Standard cron run.', NULL, WATCHDOG_INFO);
-    fundraiser_sustainers_standalone_cron();
+    _fundraiser_sustainers_process_recurring();
   }
 }
 
@@ -90,7 +88,7 @@ function fundraiser_sustainers_views_api() {
 function fundraiser_sustainers_menu() {
   // Add the cron handler if it's enabled.
   $items['fundraiser_cron'] = array(
-    'page callback' => 'fundraiser_sustainers_standalone_cron',
+    'page callback' => '_fundraiser_sustainers_process_recurring',
     'access callback' => 'fundraiser_sustainers_standalone_cron_access',
     'type' => MENU_CALLBACK,
   );
@@ -239,7 +237,7 @@ function fundraiser_sustainers_springboard_admin_alias_patterns() {
  * Access callback for running standalone cron.
  */
 function fundraiser_sustainers_standalone_cron_access() {
-  if (variable_get('fundraiser_standalone_cron_enabled', 0)) {
+  if (variable_get('fundraiser_sustainers_cron_type', NULL) === 'standalone_http') {
     return TRUE;
   }
   return FALSE;
@@ -272,14 +270,18 @@ function _fundraiser_sustainers_user_has_recurring_donations($user) {
 /**
  * Menu callback for the standalone cron.
  */
-function fundraiser_sustainers_standalone_cron() {
+function _fundraiser_sustainers_process_recurring($max_queue = NULL) {
   // Process recurring donations.
   $process_recurring = TRUE;
   $processor_key_match = fundraiser_sustainers_processor_key_match();
-  drupal_alter('fundraiser_sustainers_process_recurring', $process_recurring);
+  drupal_alter('fundraiser_sustainers_process_recurring', $process_recurring, $max_queue);
 
   if ($process_recurring && $processor_key_match) {
-    fundraiser_sustainers_process_recurring_donations();
+    if (empty($max_queue)) {
+      $max_queue = variable_get('fundraiser_sustainers_max_queue', 1000);
+    }
+
+    _fundraiser_sustainers_process_with_queue($max_queue);
   }
   if (!$process_recurring) {
     $message = t('Standalone sustainer processing has been disabled by another module.');
@@ -671,13 +673,17 @@ function fundraiser_sustainers_fundraiser_donation_delete($donation) {
 
 /**
  * Process recurring donations with a queue.
+ *
+ * @param numeric $max_queue
+ *    Maximum amount of sustainers to queue up and attempt to run.
  */
-function fundraiser_sustainers_process_recurring_donations() {
+function _fundraiser_sustainers_process_with_queue($max_queue = 100) {
   // Provide a hook to allow for modules to respond.
   module_invoke_all('fundraiser_donation_recurring');
 
-  // Keep a running tally of successes and failures.
+  // Keep a running tally of the outcome of the processed donations.
   $log = array(
+    'total' => 0,
     'successes' => 0,
     'fails' => 0,
     'errors' => 0,
@@ -688,18 +694,21 @@ function fundraiser_sustainers_process_recurring_donations() {
   $queue->createQueue();
 
   // Populate our queue with donations.
-  $record_count = variable_get('fundraiser_sustainer_max_queue', 1000);
-  $donations = _fundraiser_sustainers_cron_get_recurring($record_count);
+  $donations = _fundraiser_sustainers_cron_get_recurring($max_queue);
 
   // Loop over the found orders and add to the queue.
   foreach ($donations as $recurring) {
     $queue->createItem($recurring);
   }
 
+  // Track the processing time.
   $end = time() + variable_get('fundraiser_sustainers_queue_time', 30);
 
-  while (time() < $end && ($item = $queue->claimItem())) {
-    // Delete the item before processing.
+  // Process the queue items while we are under the time and max queue settings.
+  while (time() < $end && ($item = $queue->claimItem()) && $log['total'] <= $max_queue) {
+    $log['total']++;
+
+    // Delete the item before processing to avoid a fatal error leaving the sustainer to re-process.
     $queue->deleteItem($item);
 
     // Attempt to process the item.
@@ -716,16 +725,23 @@ function fundraiser_sustainers_process_recurring_donations() {
     }
     catch (Exception $e) {
       watchdog('fundraiser_sustainers', 'Recurring donation !did failed during processing, the error was: @error.',
-        array('!did' => $item->data->did, '@error' => $e->getMessage()));
+        array('!did' => $item->data->did, '@error' => $e->getMessage()), WATCHDOG_ERROR);
 
-      // Update error
+      // Update error logging.
       $log['errors']++;
     }
   }
 
+  // Log the tally of processed donation outcomes.
   if ($log['successes'] > 0 || $log['fails'] > 0) {
-    watchdog('fundraiser_sustainers', '!successes recurring donations processed successfully; !fails failed; errors reported: !errors.',
-      array('!successes' => $log['successes'], '!fails' => $log['fails'], '!errors' => $log['errors']));
+    watchdog('fundraiser_sustainers', '!total recurring donations processed: !successes successful; !fails failed; !errors errors reported.',
+      array('!total' => $log['total'], '!successes' => $log['successes'], '!fails' => $log['fails'], '!errors' => $log['errors']));
+  }
+
+  // Warn about not processing as many donations as are queued.
+  $count = $queue->numberOfItems();
+  if ($count) {
+    watchdog('fundraiser_sustainers', 'The sustainer job did not process all the queued donations, !count remain enqueued.', array('!count' => $count), WATCHDOG_WARNING);
   }
 
   // And after all of that is done, provide a hook to allow for modules to respond.
@@ -1171,13 +1187,41 @@ function fundraiser_sustainers_form_fundraiser_admin_settings_alter(&$form, &$fo
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
   );
-  $form['fundraiser_sustainers']['fundraiser_cron']['fundraiser_standalone_cron_enabled'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Enable standalone cron.'),
-    '#description' => t('If this option is enabled all fundraiser related cron tasks will be removed from the ' .
-      'standard cron run. These tasks will need to be cronned separately via sitename/fundraiser_cron'),
-    '#default_value' => variable_get('fundraiser_standalone_cron_enabled', 0),
+
+  $cron_type_help = t('For the "On a standalone HTTP request" and "Drush" options fundraiser sustainer processing tasks will be removed from the standard cron run.');
+  $cron_type_help .= t(' The http request will need to be cronned separately via a request to site-uri/fundraiser_cron.');
+  $cron_type_help .= t(' For the drush command run "$ drush fundraiser-sustainers-process" from the command line.');
+
+  $form['fundraiser_sustainers']['fundraiser_cron']['fundraiser_sustainers_cron_type'] = array(
+    '#type' => 'select',
+    '#title' => t('Select the type of cron job to run the processor'),
+    '#description' => $cron_type_help,
+    '#default_value' => variable_get('fundraiser_sustainers_cron_type', NULL),
+    '#options' => array(
+      '' => '--Select One--',
+      'drupal_cron' => 'Standard Drupal cron',
+      'standalone_http' => 'On a standalone HTTP request',
+      'drush' => 'With Drush',
+    ),
+    '#required' => TRUE,
   );
+
+  $form['fundraiser_sustainers']['fundraiser_cron']['fundraiser_sustainers_max_queue'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Maximum Donations to Process'),
+    '#description' => t('Maximum amount of donations to attempt during single processing run.'),
+    '#default_value' => variable_get('fundraiser_sustainers_max_queue', 1000),
+    '#element_validate' => array('element_validate_number'),
+  );
+
+  $form['fundraiser_sustainers']['fundraiser_cron']['fundraiser_sustainers_queue_time'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Queue Time'),
+    '#description' => t('Amount of time, in seconds, to run the sustainer processing.'),
+    '#default_value' => variable_get('fundraiser_sustainers_queue_time', 30),
+    '#element_validate' => array('element_validate_number'),
+  );
+
   // CC expiration message to send when sustainer donation is almost out.
   $form['fundraiser_sustainers']['fundraiser_cc_expiration_message'] = array(
     '#type' => 'fieldset',
@@ -1223,9 +1267,11 @@ function fundraiser_sustainers_form_fundraiser_admin_settings_alter(&$form, &$fo
  * Submit handler updates cron menu handler.
  */
 function fundraiser_update_cron_settings($form, $form_state) {
-  $cron_enabled = variable_get('fundraiser_standalone_cron_enabled', 0);
-  if ($cron_enabled != $form_state['values']['fundraiser_standalone_cron_enabled']) {
-    variable_set('fundraiser_standalone_cron_enabled', $form_state['values']['fundraiser_standalone_cron_enabled']);
+  $cron_enabled = variable_get('fundraiser_sustainers_cron_type', NULL);
+  if (
+    $cron_enabled != $form_state['values']['fundraiser_sustainers_cron_type']
+    && $cron_enabled === 'standalone_http'
+  ) {
     // Refresh menu cache.
     menu_rebuild();
   }

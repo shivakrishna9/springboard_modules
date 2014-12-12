@@ -488,3 +488,17 @@ function fundraiser_sustainers_update_7007() {
 function fundraiser_sustainers_update_7008() {
   registry_rebuild();
 }
+
+/**
+ * Switch the sustainer cron settings to the new variable.
+ */
+function fundraiser_sustainers_update_7009() {
+  if (variable_get('fundraiser_standalone_cron_enabled', 0)) {
+    variable_set('fundraiser_sustainers_cron_type', 'standalone_http');
+  }
+  else {
+    variable_set('fundraiser_sustainers_cron_type', 'drupal_cron');  
+  }
+
+  variable_del('fundraiser_standalone_cron_enabled');
+}
