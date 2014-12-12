@@ -136,17 +136,17 @@ function springboard_letter_submit($form, $form_state) {
     $loader = new AdvocacyApiClientLoader();
     $client = $loader->getClient();
     $response = $client->getLegislators($zip);
-    if (!empty($response) && empty($response->error)) {
-      $persons = springboard_letter_prep_for_display($response);
+    if (!empty($response->data)) {
+      $persons = springboard_letter_prep_for_display($response->data);
       $_SESSION['legislators'] = $persons;
     }
   }
 }
 
-function springboard_letter_prep_for_display($response) {
+function springboard_letter_prep_for_display($data) {
   $items = array();
 
-  foreach ($response as $district => $legistors) {
+  foreach ($data as $district => $legistors) {
     foreach($legistors as $legislator) {
       $items[]['data'] = $legislator->salutation . 
       ' ' . $legislator->first_name . 
