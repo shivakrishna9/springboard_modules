@@ -675,7 +675,7 @@ function fundraiser_sustainers_fundraiser_donation_delete($donation) {
  * Process recurring donations with a queue.
  *
  * @param numeric $max_queue
- *    Maximum amount of sustainers to queue up and attempt to run.
+ *   Maximum amount of sustainers to queue up and attempt to run.
  */
 function _fundraiser_sustainers_process_with_queue($max_queue = 100) {
   // Provide a hook to allow for modules to respond.
@@ -689,7 +689,7 @@ function _fundraiser_sustainers_process_with_queue($max_queue = 100) {
     'errors' => 0,
   );
 
-  //Get our queue object.
+  // Get our queue object.
   $queue = new SystemQueue('SustainerQueue');
   $queue->createQueue();
 
@@ -725,7 +725,10 @@ function _fundraiser_sustainers_process_with_queue($max_queue = 100) {
     }
     catch (Exception $e) {
       watchdog('fundraiser_sustainers', 'Recurring donation !did failed during processing, the error was: @error.',
-        array('!did' => $item->data->did, '@error' => $e->getMessage()), WATCHDOG_ERROR);
+        array(
+          '!did' => $item->data->did,
+          '@error' => $e->getMessage()
+        ), WATCHDOG_ERROR);
 
       // Update error logging.
       $log['errors']++;
@@ -1188,14 +1191,14 @@ function fundraiser_sustainers_form_fundraiser_admin_settings_alter(&$form, &$fo
     '#collapsed' => FALSE,
   );
 
-  $cron_type_help = t('For the "On a standalone HTTP request" and "Drush" options fundraiser sustainer processing tasks will be removed from the standard cron run.');
-  $cron_type_help .= t(' The http request will need to be cronned separately via a request to site-uri/fundraiser_cron.');
-  $cron_type_help .= t(' For the drush command run "$ drush fundraiser-sustainers-process" from the command line.');
+  $cron_type_help[] = t('For the "On a standalone HTTP request" and "Drush" options fundraiser sustainer processing tasks will be removed from the standard cron run.');
+  $cron_type_help[] = t('The http request will need to be cronned separately via a request to site-uri/fundraiser_cron.');
+  $cron_type_help[] = t('For the drush command run "$ drush fundraiser-sustainers-process" from the command line.');
 
   $form['fundraiser_sustainers']['fundraiser_cron']['fundraiser_sustainers_cron_type'] = array(
     '#type' => 'select',
     '#title' => t('Select the type of cron job to run the processor'),
-    '#description' => $cron_type_help,
+    '#description' => implode($cron_type_help, ' '),
     '#default_value' => variable_get('fundraiser_sustainers_cron_type', NULL),
     '#options' => array(
       '' => '--Select One--',

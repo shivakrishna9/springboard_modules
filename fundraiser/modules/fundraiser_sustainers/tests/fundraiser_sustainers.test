@@ -455,6 +455,42 @@ class FundraiserSustainerTest extends FundraiserSetup {
   }
 
   /**
+   * Test to see if a sustainer failure will be handled correctly.
+   */
+  public function testFundraiserSustainerProcessFailures() {
+    variable_set('fundraiser_sustainers_cron_type', 'drupal_cron');
+    $this->fundraiserSustainerCreateGoodKey();
+
+    // Create a recurring donation to test with.
+    $master_did = $this->fundraiserSustainerCreateRecurringDonationForFailure();
+
+    // Advance one charge and check the state afterwards.
+    db_update('fundraiser_sustainers')
+      ->fields(array(
+        'next_charge' => time() - 3600,
+      ))
+      ->condition('did', 2, '=')
+      ->execute();
+
+    // Run cron.
+    $this->cronRun();
+
+    // Reload the page to render drupal messages.
+    $this->drupalGet('');
+
+    // Donation success message is displayed.
+    $this->assertText(t('Donation transaction failed.'), t('Donation failure message is displayed.'));
+
+    // Get the total number of sustainers processed.
+    $sustainers_processed = $this->fundraiserSustainerSeriesStatusCount($master_did, 'failed');
+
+    // Ensure only the one failed.
+    $this->assertEqual(1, $sustainers_processed, 'Number of sustainers failed is 1.');
+
+    $this->fundraiserSustainerKeyCleanup();
+  }
+
+  /**
    * Helper to create a fundraiser sustainer donation.
    */
   protected function createFundraiserSustainer() {
@@ -500,6 +536,37 @@ class FundraiserSustainerTest extends FundraiserSetup {
   }
 
   /**
+   * Helper function to create a series of recurring donations that will fail.
+   */
+  private function fundraiserSustainerCreateRecurringDonationForFailure() {
+    $file_path = variable_get('file_public_path', conf_path() . '/files');
+    // Set the encryption path to avoid errors during get node, etc.
+    variable_set('encrypt_secure_key_path', $file_path);
+    // Create a node.
+    $created_user = $this->createFundraiserUser();
+    $this->drupalLogin($created_user);
+    $node = $this->createDonationForm();
+    // Post to the node.
+    $month = date('n', strtotime('+1 year'));
+    $year = date('Y', strtotime('+1 year'));
+    $post['submitted[payment_information][recurs_monthly][recurs]'] = 'recurs';
+    $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_month]'] = $month;
+    $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_year]'] = $year;
+    $post['submitted[donor_information][mail]'] = $created_user->mail;
+    // The example gateway will fail a sustainer with the 55555 zip code.
+    $post['submitted[billing_information][zip]'] = '55555';
+    $this->submitDonation($node->nid, $post);
+    // Get the master did.
+    $donations = _fundraiser_get_donations();
+    $master_did = '';
+    foreach ($donations as $donation) {
+      $master_did = $donation->did;
+      break;
+    }
+    return $master_did;
+  }
+
+  /**
    * Helper function to check how many sustainers were processed after cron is run.
    */
   private function fundraiserSustainerChargeCount($master_did) {
@@ -509,6 +576,56 @@ class FundraiserSustainerTest extends FundraiserSetup {
       ->condition('gateway_resp', 'success', '=')
       ->condition('did', $master_did, '!='); // exclude first order in series
     return $query->countQuery()->execute()->fetchField();
+  }
+
+  /**
+   * Get a count for a status, or array of statuses for a series.
+   *
+   * @param numeric $master_did
+   *   The did of the master donatoin for this series.
+   *
+   * @param mixed $status
+   *   Single status or array of statuses to filter on.
+   *
+   * @return
+   *   The count for sustainer's matching that status.
+   */
+  private function fundraiserSustainerSeriesStatusCount($master_did, $status) {
+    $query = db_select('fundraiser_sustainers', 'f')
+      ->fields('f')
+      ->condition('master_did', $master_did, '=')
+      ->condition('gateway_resp', $status)
+      ->condition('did', $master_did, '!='); // exclude first order in series
+
+    return $query->countQuery()->execute()->fetchField();
+  }
+
+  /**
+   * Create a good sustainer key.
+   */
+  public function fundraiserSustainerCreateGoodKey() {
+    $file_path = variable_get('file_public_path', conf_path() . '/files');
+    if (is_writable($file_path)) {
+      $this->assertEqual(1, 1, $file_path . ' is writable.');
+      if (file_exists($file_path . '/sustainer.key')) {
+        unlink($file_path . '/sustainer.key');
+      }
+      // Set the encrypt key path setting.
+      variable_set('encrypt_secure_key_path', $file_path);
+
+      file_put_contents($file_path . '/sustainer.key', trim($_SERVER['HTTP_HOST']) . rtrim(base_path(), '/'));
+    }
+  }
+
+  /**
+   * To avoid issues with other tests clear the sustainer key.
+   */
+  public function fundraiserSustainerKeyCleanup() {
+    // Remove the key file.
+    $file_path = variable_get('file_public_path', conf_path() . '/files');
+    if (file_exists($file_path . '/sustainer.key')) {
+      unlink($file_path . '/sustainer.key');
+    }
   }
 
 }
