@@ -266,6 +266,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
    * during normal Drupal cron run.
    */
   public function testFundraiserSustainerNoProcessOnMissingKeyStandardCronRun() {
+    variable_set('fundraiser_sustainers_cron_type', 'drupal_cron');
     // Create a recurring donation to test with.
     $master_did = $this->fundraiserSustainerCreateRecurringDonation();
     // On initial start, there is no key.
@@ -289,7 +290,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
    */
   public function testFundraiserSustainerNoProcessOnMissingKeyStandaloneCronRun() {
     // Turn on standalone cron.
-    variable_set('fundraiser_standalone_cron_enabled', 1);
+    variable_set('fundraiser_sustainers_cron_type', 'standalone_http');
     // Create a recurring donation to test with.
     $master_did = $this->fundraiserSustainerCreateRecurringDonation();
     // On initial start, there is no key.
@@ -312,6 +313,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
    * with a bad key.
    */
   public function testFundraiserSustainerNoProcessOnKeyMismatch() {
+    variable_set('fundraiser_sustainers_cron_type', 'drupal_cron');
     $file_path = variable_get('file_public_path', conf_path() . '/files');
     if (is_writable($file_path)) {
       $this->assertEqual(1, 1, $file_path . ' is writable.');
@@ -348,6 +350,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
    * correctly, but the recurring record has a different value.
    */
   public function testFundraiserSustainerNoProcessOnEnvironmentMismatch() {
+    variable_set('fundraiser_sustainers_cron_type', 'drupal_cron');
     $file_path = variable_get('file_public_path', conf_path() . '/files');
     if (is_writable($file_path)) {
       $this->assertEqual(1, 1, $file_path . ' is writable.');
@@ -371,7 +374,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
       if (file_exists($file_path . '/sustainer.key')) {
         unlink($file_path . '/sustainer.key');
       }
-      file_put_contents($file_path . '/sustainer.key', trim($_SERVER['HTTP_HOST'])); // Set up key correctly for this environment.
+      file_put_contents($file_path . '/sustainer.key', trim($_SERVER['HTTP_HOST']) . rtrim(base_path(), '/')); // Set up key correctly for this environment.
       // With key setup, advance one charge and check the state afterwards.
       $yesterday = strtotime('-1 day'); // Use yesterday because the cron run happens right after setting this
       db_update('fundraiser_sustainers')
@@ -402,6 +405,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
    * correctly, with a matching key value in the key file and in the sustainer record.
    */
   public function testFundraiserSustainerProcessOnEnvironmentMatch() {
+    variable_set('fundraiser_sustainers_cron_type', 'drupal_cron');
     $file_path = variable_get('file_public_path', conf_path() . '/files');
     if (is_writable($file_path)) {
       $this->assertEqual(1, 1, $file_path . ' is writable.');
@@ -410,7 +414,8 @@ class FundraiserSustainerTest extends FundraiserSetup {
       }
       // Set up sustainer key file with a bad key on purpose.
       variable_set('encrypt_secure_key_path', $file_path);
-      file_put_contents($file_path . '/sustainer.key', trim($_SERVER['HTTP_HOST']));
+
+      file_put_contents($file_path . '/sustainer.key', trim($_SERVER['HTTP_HOST']) . rtrim(base_path(), '/'));
       // Create a recurring donation to test with. These donations should have example.production
       // as their sustainer key.
       $master_did = $this->fundraiserSustainerCreateRecurringDonation();
@@ -419,7 +424,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
       foreach ($donations as $donation) {
         // Skip the first order.
         if ($donation->did != $donation->master_did) {
-          $this->assertEqual(trim($_SERVER['HTTP_HOST']), $donation->sustainer_key, 'Sustainer record contains the correct sustainer key.');
+          $this->assertEqual(trim($_SERVER['HTTP_HOST']) . rtrim(base_path(), '/'), $donation->sustainer_key, 'Sustainer record contains the correct sustainer key.');
         }
       }
       // With key setup, advance one charge and check the state afterwards.
