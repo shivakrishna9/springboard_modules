@@ -29,6 +29,15 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
 
     $start = microtime(true);
     $terms = !empty($view->query->search_terms) ? $view->query->search_terms : NULL;
+    if (!empty($terms)) {
+      foreach ($terms as $key =>$term) {
+        //is it a checkbox?
+        if (is_array($term)) {
+          $terms[$key] = implode('|', $term);
+        }
+      }
+    }
+
     $targets = $client->searchTargets($terms);
  
     if (!empty($targets->data))  {

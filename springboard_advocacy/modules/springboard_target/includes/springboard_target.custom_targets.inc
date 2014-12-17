@@ -239,7 +239,7 @@ function springboard_target_form($target_id = NULL) {
  * This could become user-configurable
  */
 function springboard_target_types() {
-  $types = array('Elected Offical', 'Appointed Official', 'Corporate', 'Media');
+  $types = array('legislator' => 'Elected Offical', 'target' => 'Custom');
   return $types;
 }
 

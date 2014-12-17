@@ -36,9 +36,9 @@ function springboard_advocacy_views_data() {
     'field' => array(
       'handler' => 'springboard_advocacy_views_handler_field',
     ),
-     'filter' => array(
-       'handler' => 'springboard_advocacy_views_handler_filter_string',
-    ),
+    //  'filter' => array(
+    //    'handler' => 'springboard_advocacy_views_handler_filter_string',
+    // ),
   );
 
   // Last Name
@@ -72,9 +72,9 @@ function springboard_advocacy_views_data() {
     'field' => array(
       'handler' => 'springboard_advocacy_views_handler_field',
     ),
-     'filter' => array(
-       'handler' => 'springboard_advocacy_views_handler_filter_string',
-    ),
+    //  'filter' => array(
+    //    'handler' => 'springboard_advocacy_views_handler_filter_string',
+    // ),
   );
 
 
@@ -85,9 +85,9 @@ function springboard_advocacy_views_data() {
     'field' => array(
       'handler' => 'springboard_advocacy_views_handler_field',
     ),
-     'filter' => array(
-       'handler' => 'springboard_advocacy_views_handler_filter_string',
-    ),
+    //  'filter' => array(
+    //    'handler' => 'springboard_advocacy_views_handler_filter_string',
+    // ),
   );
 
   $data['advocacy']['state'] = array(
@@ -96,9 +96,9 @@ function springboard_advocacy_views_data() {
     'field' => array(
       'handler' => 'springboard_advocacy_views_handler_field',
     ),
-     'filter' => array(
-       'handler' => 'springboard_advocacy_views_handler_filter_string',
-    ),
+    //  'filter' => array(
+    //    'handler' => 'springboard_advocacy_views_handler_filter_string',
+    // ),
   );
 
   $data['advocacy']['role'] = array(
@@ -107,9 +107,9 @@ function springboard_advocacy_views_data() {
     'field' => array(
       'handler' => 'springboard_advocacy_views_handler_field',
     ),
-     'filter' => array(
-       'handler' => 'springboard_advocacy_views_handler_filter_string',
-    ),
+    //  'filter' => array(
+    //    'handler' => 'springboard_advocacy_views_handler_filter_string',
+    // ),
   );
 
   $data['advocacy']['combine'] = array(
@@ -120,11 +120,62 @@ function springboard_advocacy_views_data() {
     ),
   );
 
-  $data['advocacy']['search_types'] = array(
+  $data['advocacy']['search_class_name'] = array(
    'title' => t('Search By Type'),
-    'help' => t('Adds a filter to limit searches by Custom Target, Legislator or Group'),
+    'help' => t('Adds a filter to limit searches by type'),
     'filter' => array(
       'handler' => 'springboard_advocacy_views_handler_filter_search_types',
+      'options callback' => 'springboard_advocacy_target_type'
+    ),
+  );
+
+  $data['advocacy']['search_role'] = array(
+   'title' => t('Search By Level'),
+    'help' => t('Adds a filter to limit searches by Federal or State Level'),
+    'filter' => array(
+      'handler' => 'springboard_advocacy_views_handler_filter_search_types',
+      'options callback' => 'springboard_advocacy_target_level'
+    ),
+  );
+
+
+  $data['advocacy']['search_branch'] = array(
+   'title' => t('Search By Branch'),
+    'help' => t('Adds a filter to limit searches by Legislative Branch'),
+    'filter' => array(
+      'handler' => 'springboard_advocacy_views_handler_filter_search_types',
+      'options callback' => 'springboard_advocacy_target_branch'
+
+    ),
+  );
+
+  $data['advocacy']['search_party'] = array(
+   'title' => t('Search By Party'),
+    'help' => t('Adds a filter to limit searches by Political Party'),
+    'filter' => array(
+      'handler' => 'springboard_advocacy_views_handler_filter_search_types',
+      'options callback' => 'springboard_advocacy_target_party'
+
+    ),
+  );
+
+  $data['advocacy']['search_state'] = array(
+   'title' => t('Search By State'),
+    'help' => t('Adds a filter to limit searches by State'),
+    'filter' => array(
+      'handler' => 'springboard_advocacy_views_handler_filter_search_types',
+      'options callback' => 'springboard_advocacy_target_state'
+
+    ),
+  );
+
+  $data['advocacy']['search_gender'] = array(
+   'title' => t('Search By Gender'),
+    'help' => t('Adds a filter to limit searches by Gender'),
+    'filter' => array(
+      'handler' => 'springboard_advocacy_views_handler_filter_search_types',
+      'options callback' => 'springboard_advocacy_target_gender'
+
     ),
   );
 
