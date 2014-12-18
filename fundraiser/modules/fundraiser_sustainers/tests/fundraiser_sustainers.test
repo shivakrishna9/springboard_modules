@@ -420,7 +420,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
     $master_did = $this->fundraiserSustainerCreateRecurringDonation();
     // Make sure key is example.prod
     $donations = _fundraiser_sustainers_get_donations_recurr_by_member($master_did);
-    debug($donations);
+
     foreach ($donations as $donation) {
       // Skip the first order.
       if ($donation->did != $donation->master_did) {
