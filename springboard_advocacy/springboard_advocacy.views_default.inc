@@ -103,7 +103,7 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['filters']['last_name']['id'] = 'last_name';
   $handler->display->display_options['filters']['last_name']['table'] = 'advocacy';
   $handler->display->display_options['filters']['last_name']['field'] = 'last_name';
-  $handler->display->display_options['filters']['last_name']['operator'] = 'contains';
+  $handler->display->display_options['filters']['last_name']['operator'] = '=';
   $handler->display->display_options['filters']['last_name']['exposed'] = TRUE;
   $handler->display->display_options['filters']['last_name']['expose']['operator_id'] = 'last_name_op';
   $handler->display->display_options['filters']['last_name']['expose']['label'] = 'Last Name';
@@ -280,7 +280,7 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['filters']['last_name']['id'] = 'last_name';
   $handler->display->display_options['filters']['last_name']['table'] = 'advocacy';
   $handler->display->display_options['filters']['last_name']['field'] = 'last_name';
-  $handler->display->display_options['filters']['last_name']['operator'] = 'contains';
+  $handler->display->display_options['filters']['last_name']['operator'] = '=';
   $handler->display->display_options['filters']['last_name']['exposed'] = TRUE;
   $handler->display->display_options['filters']['last_name']['expose']['operator_id'] = 'last_name_op';
   $handler->display->display_options['filters']['last_name']['expose']['label'] = 'Last Name';
@@ -439,7 +439,7 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['filters']['last_name']['id'] = 'last_name';
   $handler->display->display_options['filters']['last_name']['table'] = 'advocacy';
   $handler->display->display_options['filters']['last_name']['field'] = 'last_name';
-  $handler->display->display_options['filters']['last_name']['operator'] = 'contains';
+  $handler->display->display_options['filters']['last_name']['operator'] = '=';
   $handler->display->display_options['filters']['last_name']['exposed'] = TRUE;
   $handler->display->display_options['filters']['last_name']['expose']['operator_id'] = 'last_name_op';
   $handler->display->display_options['filters']['last_name']['expose']['label'] = 'Last Name';
@@ -663,7 +663,7 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['filters']['last_name']['id'] = 'last_name';
   $handler->display->display_options['filters']['last_name']['table'] = 'advocacy';
   $handler->display->display_options['filters']['last_name']['field'] = 'last_name';
-  $handler->display->display_options['filters']['last_name']['operator'] = 'contains';
+  $handler->display->display_options['filters']['last_name']['operator'] = '=';
   $handler->display->display_options['filters']['last_name']['exposed'] = TRUE;
   $handler->display->display_options['filters']['last_name']['expose']['operator_id'] = 'last_name_op';
   $handler->display->display_options['filters']['last_name']['expose']['label'] = 'Last Name';

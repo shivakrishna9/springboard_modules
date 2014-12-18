@@ -2,16 +2,21 @@
 
 class springboard_advocacy_views_handler_filter_string extends views_handler_filter_string {
 
+  function option_definition() {
+    $options = parent::option_definition();
+
+    return $options;
+  }
+
  function operators() {
     $operators = array(
-      'contains' => array(
-        'title' => t('Contains'),
-        'short' => t('contains'),
-        'method' => 'op_contains',
+      '=' => array(
+        'title' => t('Equals'),
+        'short' => t('='),
+        'method' => 'op_equals',
         'values' => 1,
       ),
     );
-
     return $operators;
   }
 
@@ -31,7 +36,7 @@ class springboard_advocacy_views_handler_filter_string extends views_handler_fil
     }
   }
   
-  function op_contains($field) {
+  function op_equals($field) {
     $this->query->search_terms[$field] = $this->value;
   }
 }

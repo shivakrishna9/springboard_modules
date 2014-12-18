@@ -36,12 +36,9 @@ function springboard_advocacy_views_data() {
     'field' => array(
       'handler' => 'springboard_advocacy_views_handler_field',
     ),
-    //  'filter' => array(
-    //    'handler' => 'springboard_advocacy_views_handler_filter_string',
-    // ),
   );
 
-  // Last Name
+  // First Name
   $data['advocacy']['first_name'] = array(
     'title' => t('First Name'),
     'help' => t('Target First Name'),
@@ -85,9 +82,6 @@ function springboard_advocacy_views_data() {
     'field' => array(
       'handler' => 'springboard_advocacy_views_handler_field',
     ),
-    //  'filter' => array(
-    //    'handler' => 'springboard_advocacy_views_handler_filter_string',
-    // ),
   );
 
   $data['advocacy']['state'] = array(
@@ -96,9 +90,6 @@ function springboard_advocacy_views_data() {
     'field' => array(
       'handler' => 'springboard_advocacy_views_handler_field',
     ),
-    //  'filter' => array(
-    //    'handler' => 'springboard_advocacy_views_handler_filter_string',
-    // ),
   );
 
   $data['advocacy']['role'] = array(
@@ -107,18 +98,15 @@ function springboard_advocacy_views_data() {
     'field' => array(
       'handler' => 'springboard_advocacy_views_handler_field',
     ),
-    //  'filter' => array(
-    //    'handler' => 'springboard_advocacy_views_handler_filter_string',
-    // ),
   );
 
-  $data['advocacy']['combine'] = array(
-   'title' => t('Search Multiple Target Fields by Keywords'),
-    'help' => t('Combine multiple fields together and search targets by them.'),
-    'filter' => array(
-      'handler' => 'springboard_advocacy_views_handler_filter_combine',
-    ),
-  );
+  // $data['advocacy']['combine'] = array(
+  //  'title' => t('Search Multiple Target Fields by Keywords'),
+  //   'help' => t('Combine multiple fields together and search targets by them.'),
+  //   'filter' => array(
+  //     'handler' => 'springboard_advocacy_views_handler_filter_combine',
+  //   ),
+  // );
 
   $data['advocacy']['search_class_name'] = array(
    'title' => t('Search By Type'),
