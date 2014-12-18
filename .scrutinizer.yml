@@ -70,7 +70,7 @@ build:
             - 'find . -type f \( -name "*.php" -or -name "*.module" -or -name "*.install" -or -name "*.inc" -or -name "*.profile" -or -name "*.test" -or -name "*.theme" \) -print0 | xargs -0 -n1 -P8 php -l'
             # Negate the return value of ack, because not finding these
             # strings should be a pass.
-            - '! ack-grep -i "<<<<<<<|^=======$|>>>>>>>|dpm\(|dsm\(|var_dump\(|var_export\(|debug\(|dpq|dvm|dpr|kpr|dvr|kprint_r|dprint_r|devel_render|ddebug_backtrace|debug_backtrace|debug_print_backtrace|debug_to_file" --ignore-file=ext:txt,html,yml,js'
+            - '! ack-grep -i "<<<<<<<|^=======$|>>>>>>>|dpm\(|dsm\(|var_dump\(|var_export\(|debug\(|dpq|dvm|dpr\(|kpr|dvr|kprint_r|dprint_r|devel_render|ddebug_backtrace|debug_backtrace|debug_print_backtrace|debug_to_file" --ignore-file=ext:txt,html,yml,js'
             - 'cd'
             - 'mv build repo'
             - 'git clone --branch 7.x-4.x https://github.com/JacksonRiver/Springboard-Build.git build-tools'
