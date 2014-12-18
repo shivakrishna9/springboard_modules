@@ -2,11 +2,6 @@
 
 class springboard_advocacy_views_handler_filter_string extends views_handler_filter_string {
 
-  function option_definition() {
-    $options = parent::option_definition();
-
-    return $options;
-  }
 
  function operators() {
     $operators = array(

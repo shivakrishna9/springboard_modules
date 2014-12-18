@@ -73,13 +73,6 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['fields']['state']['id'] = 'state';
   $handler->display->display_options['fields']['state']['table'] = 'advocacy';
   $handler->display->display_options['fields']['state']['field'] = 'state';
-  /* Field: Advocacy: Target ID */
-  $handler->display->display_options['fields']['id']['id'] = 'id';
-  $handler->display->display_options['fields']['id']['table'] = 'advocacy';
-  $handler->display->display_options['fields']['id']['field'] = 'id';
-  $handler->display->display_options['fields']['id']['label'] = 'Actions';
-  $handler->display->display_options['fields']['id']['alter']['alter_text'] = TRUE;
-  $handler->display->display_options['fields']['id']['alter']['text'] = '<a href = \'/admin/springboard/advocacy/custom-targets/[id]/edit\'>Edit</a> | ';
   /* Filter criterion: Advocacy: Search By Type */
   $handler->display->display_options['filters']['search_class_name']['id'] = 'search_class_name';
   $handler->display->display_options['filters']['search_class_name']['table'] = 'advocacy';
@@ -103,7 +96,6 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['filters']['last_name']['id'] = 'last_name';
   $handler->display->display_options['filters']['last_name']['table'] = 'advocacy';
   $handler->display->display_options['filters']['last_name']['field'] = 'last_name';
-  $handler->display->display_options['filters']['last_name']['operator'] = '=';
   $handler->display->display_options['filters']['last_name']['exposed'] = TRUE;
   $handler->display->display_options['filters']['last_name']['expose']['operator_id'] = 'last_name_op';
   $handler->display->display_options['filters']['last_name']['expose']['label'] = 'Last Name';
@@ -255,6 +247,46 @@ function springboard_advocacy_views_default_views() {
 
   /* Display: Search Custom Targets */
   $handler = $view->new_display('page', 'Search Custom Targets', 'page');
+  $handler->display->display_options['defaults']['fields'] = FALSE;
+  /* Field: Advocacy: Salutation */
+  $handler->display->display_options['fields']['salutation']['id'] = 'salutation';
+  $handler->display->display_options['fields']['salutation']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['salutation']['field'] = 'salutation';
+  /* Field: Advocacy: First Name */
+  $handler->display->display_options['fields']['first_name']['id'] = 'first_name';
+  $handler->display->display_options['fields']['first_name']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['first_name']['field'] = 'first_name';
+  /* Field: Advocacy: Last Name */
+  $handler->display->display_options['fields']['last_name']['id'] = 'last_name';
+  $handler->display->display_options['fields']['last_name']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['last_name']['field'] = 'last_name';
+  /* Field: Advocacy: Email */
+  $handler->display->display_options['fields']['email']['id'] = 'email';
+  $handler->display->display_options['fields']['email']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['email']['field'] = 'email';
+  /* Field: Advocacy: Politcal Party */
+  $handler->display->display_options['fields']['party']['id'] = 'party';
+  $handler->display->display_options['fields']['party']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['party']['field'] = 'party';
+  /* Field: Advocacy: Role */
+  $handler->display->display_options['fields']['role']['id'] = 'role';
+  $handler->display->display_options['fields']['role']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['role']['field'] = 'role';
+  /* Field: Advocacy: State */
+  $handler->display->display_options['fields']['state']['id'] = 'state';
+  $handler->display->display_options['fields']['state']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['state']['field'] = 'state';
+  /* Field: Advocacy: Target ID */
+  $handler->display->display_options['fields']['id']['id'] = 'id';
+  $handler->display->display_options['fields']['id']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['id']['field'] = 'id';
+  $handler->display->display_options['fields']['id']['exclude'] = TRUE;
+  /* Field: Global: Custom text */
+  $handler->display->display_options['fields']['nothing']['id'] = 'nothing';
+  $handler->display->display_options['fields']['nothing']['table'] = 'views';
+  $handler->display->display_options['fields']['nothing']['field'] = 'nothing';
+  $handler->display->display_options['fields']['nothing']['label'] = 'Actions';
+  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href = \'/admin/springboard/advocacy/custom-targets/[id]/edit\'>Edit</a>';
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
   $handler->display->display_options['defaults']['filters'] = FALSE;
   /* Filter criterion: Advocacy: Search By Type */
@@ -280,7 +312,6 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['filters']['last_name']['id'] = 'last_name';
   $handler->display->display_options['filters']['last_name']['table'] = 'advocacy';
   $handler->display->display_options['filters']['last_name']['field'] = 'last_name';
-  $handler->display->display_options['filters']['last_name']['operator'] = '=';
   $handler->display->display_options['filters']['last_name']['exposed'] = TRUE;
   $handler->display->display_options['filters']['last_name']['expose']['operator_id'] = 'last_name_op';
   $handler->display->display_options['filters']['last_name']['expose']['label'] = 'Last Name';
@@ -439,7 +470,6 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['filters']['last_name']['id'] = 'last_name';
   $handler->display->display_options['filters']['last_name']['table'] = 'advocacy';
   $handler->display->display_options['filters']['last_name']['field'] = 'last_name';
-  $handler->display->display_options['filters']['last_name']['operator'] = '=';
   $handler->display->display_options['filters']['last_name']['exposed'] = TRUE;
   $handler->display->display_options['filters']['last_name']['expose']['operator_id'] = 'last_name_op';
   $handler->display->display_options['filters']['last_name']['expose']['label'] = 'Last Name';
@@ -582,6 +612,7 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['filters']['search_role']['is_grouped'] = TRUE;
   $handler->display->display_options['filters']['search_role']['group_info']['label'] = 'Search By Level';
   $handler->display->display_options['filters']['search_role']['group_info']['identifier'] = 'search_role';
+  $handler->display->display_options['filters']['search_role']['group_info']['widget'] = 'radios';
   $handler->display->display_options['filters']['search_role']['group_info']['multiple'] = TRUE;
   $handler->display->display_options['filters']['search_role']['group_info']['group_items'] = array(
     1 => array(
@@ -663,7 +694,6 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['filters']['last_name']['id'] = 'last_name';
   $handler->display->display_options['filters']['last_name']['table'] = 'advocacy';
   $handler->display->display_options['filters']['last_name']['field'] = 'last_name';
-  $handler->display->display_options['filters']['last_name']['operator'] = '=';
   $handler->display->display_options['filters']['last_name']['exposed'] = TRUE;
   $handler->display->display_options['filters']['last_name']['expose']['operator_id'] = 'last_name_op';
   $handler->display->display_options['filters']['last_name']['expose']['label'] = 'Last Name';
@@ -806,6 +836,7 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['filters']['search_role']['is_grouped'] = TRUE;
   $handler->display->display_options['filters']['search_role']['group_info']['label'] = 'Search By Level';
   $handler->display->display_options['filters']['search_role']['group_info']['identifier'] = 'search_role';
+  $handler->display->display_options['filters']['search_role']['group_info']['widget'] = 'radios';
   $handler->display->display_options['filters']['search_role']['group_info']['multiple'] = TRUE;
   $handler->display->display_options['filters']['search_role']['group_info']['group_items'] = array(
     1 => array(
@@ -828,6 +859,7 @@ function springboard_advocacy_views_default_views() {
     ),
   );
   $handler->display->display_options['path'] = 'admin/config/springboard/advocacy/targets';
+
 
   $views[$view->name] = $view;
 
