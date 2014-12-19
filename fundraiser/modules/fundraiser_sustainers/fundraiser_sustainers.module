@@ -2650,12 +2650,16 @@ function _fundraiser_sustainers_get_donations_recurr_by_masterdid($master_did) {
  * DB funct, count order donation sets that are remaining.
  */
 function _fundraiser_sustainers_count_donations_recurr_remaining($master_did) {
-  $donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
-  $count = 0;
-  foreach ($donations as $donation) {
-    $count++;
-  }
-  return $count;
+  $max_processing_attempts = variable_get('fundraiser_sustainers_max_processing_attempts', 3);
+  $replacements = array(
+    ':master_did' => $master_did,
+    ':status' => FUNDRAISER_SUSTAINERS_RETRY_STATUS,
+    ':max_attempts' => $max_processing_attempts,
+  );
+
+  $count = db_query('SELECT COUNT(*) FROM {fundraiser_sustainers} r WHERE r.master_did = :master_did AND (r.gateway_resp IS NULL OR (r.gateway_resp = :status && r.attempts != :max_attempts))', $replacements)->fetchField();
+
+  return is_numeric($count) ? $count : 0;
 }
 
 /**
