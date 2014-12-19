@@ -305,10 +305,10 @@ function fundraiser_sustainers_charge_now($did) {
   // Given a did, update the charge date to now.
   $donation = new stdClass();
   $donation->did = $did;
-  $donation->next_charge = strtotime('now');
+  $donation->next_charge = REQUEST_TIME;
   _fundraiser_sustainers_update_recurring($donation);
   drupal_set_message(t('The charge date for donation #@did has been advanced to @date. It will be charged on the next Fundraiser cron.',
-    array('@did' => $did, '@date' => format_date(strtotime('now')))));
+    array('@did' => $did, '@date' => format_date(REQUEST_TIME))));
   // Afterwards return where we came from.
   drupal_goto( drupal_get_destination() );
 }
