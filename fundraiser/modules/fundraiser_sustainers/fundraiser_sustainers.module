@@ -1302,7 +1302,7 @@ function fundraiser_sustainers_edit_form($did) {
   $billing_info .= '</div>';
 
   // Format payment schedule into a data table
-  $donation_set = _fundraiser_sustainers_get_donations_recurr_by_member($did);
+  $donation_set = _fundraiser_sustainers_get_donations_recurr_by_masterdid($did);
   $donations_header = array('Donation ID', 'Amount', 'Charge Date', 'Processed Status');
 
   if (user_access('administrate recurring donations')) {
@@ -2603,7 +2603,7 @@ function _fundraiser_sustainers_get_donation_sets() {
 function _fundraiser_sustainers_get_donations_recurr_by_member($did) {
   $donations = db_query('SELECT * FROM {fundraiser_sustainers} r ' .
     'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
-    'WHERE d.did = :did OR r.master_did = :master_did ' .
+    'WHERE r.did = :did OR r.master_did = :master_did ' .
     'ORDER BY r.next_charge ASC', array(':did' => $did, ':master_did' => $did))->fetchAll();
   return $donations;
 }
