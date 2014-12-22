@@ -735,8 +735,12 @@ function fundraiser_sustainers_process_single_recurring_donation(&$log, $recurri
     $log_record = array(
       'did' => $recurring->did,
       'gateway' => $recurring->gateway,
-      'date_processed' => time(),
+      'timestamp' => REQUEST_TIME,
       'lock_id' => $recurring->lock_id,
+      'next_charge' => $recurring->next_charge,
+      'old_state' => $recurring->gateway_resp,
+      'attempts' => $recurring->attempts,
+      'cancellation_reason' => $recurring->cancellation_reason,
     );
 
     // Get the donation information that we need.
@@ -779,6 +783,12 @@ function fundraiser_sustainers_process_single_recurring_donation(&$log, $recurri
       array(':status' => FUNDRAISER_SUSTAINERS_PROCESSING_STATUS, ':did' => $recurring->did)
     );
 
+    $log_record['new_state'] = FUNDRAISER_SUSTAINERS_PROCESSING_STATUS;
+    $log_record['attempts']++;
+    drupal_write_record('fundraiser_sustainers_log', $log_record);
+    // This is so the next log record will get saved as a new row.
+    unset($log_record['lid']);
+
     // Then go through each one of these to charge.
     // Since we already created the donation (and saved any CC info at that time).
     // All we need to do is process it and respond afterwards as needed.
@@ -791,13 +801,12 @@ function fundraiser_sustainers_process_single_recurring_donation(&$log, $recurri
       fundraiser_donation_success($donation);
       // Record the success.
       $log['successes']++;
-      $log_record['success'] = TRUE;
+      $log_record['new_state'] = FUNDRAISER_SUSTAINERS_SUCCESS_STATUS;
       // Perform any post-processing required by the gateway.
       module_invoke_all('fundraiser_sustainers_recurring_success', $donation);
     }
     else {
       $donation->result['success'] = FALSE;
-      $log_record['success'] = FALSE;
 
       // Determine how many times this donation has been processed and compare it against the
       // maximum allowed attempts.
@@ -807,9 +816,11 @@ function fundraiser_sustainers_process_single_recurring_donation(&$log, $recurri
       // When current attempts equals maximum attempts the donation will be set as a failure.
       if ($donation->attempts == $max_processing_attempts) {
         fundraiser_sustainers_donation_fail($donation);
+        $log_record['new_state'] = FUNDRAISER_SUSTAINERS_FAILED_STATUS;
       }
       else {
         fundraiser_sustainers_donation_retry($donation);
+        $log_record['new_state'] = FUNDRAISER_SUSTAINERS_RETRY_STATUS;
       }
 
       // Record the fail.
@@ -2297,6 +2308,18 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
         did = :did',
       array(':status' => FUNDRAISER_SUSTAINERS_SUCCESS_STATUS, ':did' => $donation->did)
     );
+
+    $log_record = array(
+      'did' => $donation->did,
+      'old_state' => $donation->recurring->gateway_resp,
+      'new_state' => FUNDRAISER_SUSTAINERS_SUCCESS_STATUS,
+      'next_charge' => $donation->recurring->next_charge,
+      'lock_id' => $donation->recurring->lock_id,
+      'attempts' => $donation->recurring->attempts,
+      'timestamp' => REQUEST_TIME,
+    );
+    drupal_write_record('fundraiser_sustainers_log', $log_record);
+
     // For all recurring when processed, check if we need to send a notice about the set almost done.
     if (_fundraiser_sustainers_count_donations_recurr_remaining($donation->recurring->master_did) == 1) {
       _fundraiser_sustainers_send_cc_notification($donation->recurring->master_did, $donation->uid);
@@ -2312,16 +2335,28 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
  */
 function fundraiser_sustainers_donation_retry($donation) {
   // Set the sustainer record up in a retry state.
+  $donation->recurring->next_charge = strtotime('+1 day', $donation->recurring->next_charge);
   db_query('
     UPDATE {fundraiser_sustainers}
     SET
       gateway_resp = :status,
       lock_id = 0,
-      next_charge = unix_timestamp(timestampadd(DAY, 1, from_unixtime(next_charge)))
+      next_charge = :next_charge)
     WHERE
       did = :did',
-    array(':status' => FUNDRAISER_SUSTAINERS_RETRY_STATUS, ':did' => $donation->did)
+    array(':status' => FUNDRAISER_SUSTAINERS_RETRY_STATUS, ':did' => $donation->did, ':next_charge' => $donation->recurring->next_charge)
   );
+
+  $log_record = array(
+    'did' => $donation->did,
+    'old_state' => $donation->recurring->gateway_resp,
+    'new_state' => FUNDRAISER_SUSTAINERS_RETRY_STATUS,
+    'next_charge' => $donation->recurring->next_charge,
+    'lock_id' => $donation->recurring->lock_id,
+    'attempts' => $donation->recurring->attempts,
+    'timestamp' => REQUEST_TIME,
+  );
+  drupal_write_record('fundraiser_sustainers_log', $log_record);
 
   // Create a log entry.
   watchdog('fundraiser_sustainers', 'Payment for recurring donation @id has failed @attempts times. It will be processed again in 1 day. Gateway message: @message',
@@ -2350,6 +2385,17 @@ function fundraiser_sustainers_donation_fail($donation) {
       did = :did',
     array(':status' => FUNDRAISER_SUSTAINERS_FAILED_STATUS, ':did' => $donation->did)
   );
+
+  $log_record = array(
+    'did' => $donation->did,
+    'old_state' => $donation->recurring->gateway_resp,
+    'new_state' => FUNDRAISER_SUSTAINERS_FAILED_STATUS,
+    'next_charge' => $donation->recurring->next_charge,
+    'lock_id' => $donation->recurring->lock_id,
+    'attempts' => $donation->recurring->attempts,
+    'timestamp' => REQUEST_TIME,
+  );
+  drupal_write_record('fundraiser_sustainers_log', $log_record);
 
   // Create a log entry.
   watchdog('fundraiser_sustainers', 'Payment for recurring donation @id has
@@ -2385,6 +2431,18 @@ function fundraiser_sustainers_fundraiser_donation_cancel($donation) {
   if (!empty($donation->recurring->cancellation_reason)) {
     $reason = $donation->recurring->cancellation_reason;
   }
+
+  $log_record = array(
+    'did' => $donation->did,
+    'old_state' => $donation->recurring->gateway_resp,
+    'new_state' => 'canceled',
+    'cancellation_reason' => $reason,
+    'next_charge' => $donation->recurring->next_charge,
+    'lock_id' => $donation->recurring->lock_id,
+    'attempts' => $donation->recurring->attempts,
+    'timestamp' => REQUEST_TIME,
+  );
+  drupal_write_record('fundraiser_sustainers_log', $log_record);
 
   // Set the gateway resp field to canceled.
   db_update('fundraiser_sustainers')
@@ -2536,6 +2594,17 @@ function _fundraiser_sustainers_create_recurring($donation) {
   if (!$donation_data) {
     $record = $donation;
     drupal_write_record('fundraiser_sustainers', $record);
+
+    $log_record = array(
+      'did' => $donation['did'],
+      'old_state' => NULL,
+      'new_state' => 'created',
+      'next_charge' => $donation['next_charge'],
+      'attempts' => 0,
+      'timestamp' => REQUEST_TIME,
+    );
+    drupal_write_record('fundraiser_sustainers_log', $log_record);
+
   }
   else {
     _fundraiser_sustainers_update_recurring($donation);
@@ -2568,6 +2637,17 @@ function _fundraiser_sustainers_update_recurring($donation) {
   else {
     $record = array_merge((array) $donation_data, $donation); // Merge data together so we get everything in the record.
     drupal_write_record('fundraiser_sustainers', $record, 'did');
+
+    $log_record = array(
+      'did' => $record['did'],
+      'old_state' => $donation_data->gateway_resp,
+      'new_state' => $record['gateway_resp'],
+      'next_charge' => $record['next_charge'],
+      'lock_id' => $record['lock_id'],
+      'attempts' => $record['attempts'],
+      'timestamp' => REQUEST_TIME,
+    );
+    drupal_write_record('fundraiser_sustainers_log', $log_record);
   }
 }
 
@@ -2575,7 +2655,19 @@ function _fundraiser_sustainers_update_recurring($donation) {
  * CRUD style DB function for fundraiser_sustainers.
  */
 function _fundraiser_sustainers_delete_recurring($did) {
+  $recurring = _fundraiser_sustainers_get_recurring_by_did($did);
   db_delete('fundraiser_sustainers')->condition('did', $did)->execute();
+
+  $log_record = array(
+    'did' => $did,
+    'old_state' => $recurring->gateway_resp,
+    'new_state' => 'deleted',
+    'next_charge' => $recurring->next_charge,
+    'lock_id' => $recurring->lock_id,
+    'attempts' => $recurring->attempts,
+    'timestamp' => REQUEST_TIME,
+  );
+  drupal_write_record('fundraiser_sustainers_log', $log_record);
 }
 
 /**

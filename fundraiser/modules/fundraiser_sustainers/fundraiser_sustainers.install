@@ -181,12 +181,6 @@ function fundraiser_sustainers_schema() {
         'type' => 'int',
         'not null' => TRUE,
       ),
-      'gateway' => array(
-        'description' => 'The gateway that was used to process the charge.',
-        'type' => 'varchar',
-        'length' => '255',
-        'not null' => TRUE,
-      ),
       'timestamp' => array(
         'description' => 'The date the charge was processed.',
         'type' => 'int',
@@ -564,5 +558,5 @@ function fundraiser_sustainers_update_7009() {
   }
 
   db_drop_field('fundraiser_sustainers_log', 'success');
-
+  db_drop_field('fundraiser_sustainers_log', 'gateway');
 }
