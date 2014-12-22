@@ -127,3 +127,10 @@ function commerce_litle_update_7002() {
     )
   );
 }
+
+/**
+ * Rebuild the registry to find the new account updater class.
+ */
+function commerce_litle_update_7003() {
+  registry_rebuild();
+}

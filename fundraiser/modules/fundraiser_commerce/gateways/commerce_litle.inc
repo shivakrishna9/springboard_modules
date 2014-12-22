@@ -122,13 +122,16 @@ function commerce_litle_fundraiser_commerce_expire($submission_fields, $info = N
       // pretend expiration date for sustainers
       $exp_timestamp = strtotime('+24 months');
     }
+
     return array(
       'month' => date('m', $exp_timestamp),
       'year' => date('Y', $exp_timestamp),
     );
   }
 
+  // It's a credit card.
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+
   return _fundraiser_commerce_credit_card_expire($submission_fields);
 }
 
@@ -196,7 +199,7 @@ function commerce_litle_fundraiser_commerce_charge($method_instance, $donation) 
     _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
     if (variable_get('commerce_litle_fraud', 0) && isset($donation->donation['payment_fields']['credit']['session_id'])) {
       $pane_values['session_id'] = $donation->donation['payment_fields']['credit']['session_id'];
-    }  
+    }
     $method_instance['settings']['cardonfile'] = FALSE;
 
     if (module_exists('commerce_cardonfile')) {
