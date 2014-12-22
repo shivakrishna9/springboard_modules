@@ -110,7 +110,7 @@ function springboard_advocacy_views_data() {
 
   $data['advocacy']['search_class_name'] = array(
    'title' => t('Search By Type'),
-    'help' => t('Adds a filter to limit searches by type'),
+    'help' => t('Limit results by Legislator or Custom Target. Please note: if this filter is not "exposed", it will return no results *unless* another filter is enabled and actively being searched.'),
     'filter' => array(
       'handler' => 'springboard_advocacy_views_handler_filter_search_types',
       'options callback' => 'springboard_advocacy_target_type'

@@ -10,6 +10,7 @@ class springboard_advocacy_views_plugin_pager extends views_plugin_pager_full {
     
     // bug fix for multiple select checkboxes
     // invalid values in query string
+    // https://www.drupal.org/node/2303939
     foreach ($input as $field_name => $field_value) {
       if(is_array($field_value)) {
         foreach ($field_value as $index => $value) {
