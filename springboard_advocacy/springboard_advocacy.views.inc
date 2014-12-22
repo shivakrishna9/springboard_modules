@@ -189,6 +189,7 @@ function springboard_advocacy_views_plugins() {
         'help' => t('For paging Targets'),
         'handler' => 'springboard_advocacy_views_plugin_pager',
         'path' => drupal_get_path('module', 'springboard_advocacy') . '/includes/views/plugins',
+        'uses options' => TRUE,
       ),
     ),
   );
