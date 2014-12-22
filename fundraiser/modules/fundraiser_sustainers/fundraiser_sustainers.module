@@ -220,7 +220,31 @@ function fundraiser_sustainers_menu() {
       'type' => MENU_LOCAL_TASK,
     );
   }
+
+  $items['admin/springboard/reports/sustainers/insights'] = array(
+    'title' => 'Sustainer Insights',
+    'page callback' => 'fundraiser_sustainers_insights_dashboard',
+    'access arguments' => array('administrate recurring donations'),
+    'file' => 'fundraiser_sustainers.insights.inc',
+    'type' => MENU_CALLBACK,
+  );
+
   return $items;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function fundraiser_sustainers_theme($existing, $type, $theme, $path) {
+  return array(
+    'fundraiser_sustainers_insights_dashboard' => array(
+      'variables' => array(
+        // @todo Add the vars for the templates.
+      ),
+      'path' => $path . '/templates',
+      'template' => 'fundraiser_sustainers_insights_dashboard',
+    ),
+  );
 }
 
 /**

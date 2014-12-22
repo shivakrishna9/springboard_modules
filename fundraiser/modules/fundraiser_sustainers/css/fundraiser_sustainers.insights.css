@@ -1,0 +1,22 @@
+.insights-today-box {
+  background-color: #ccc;
+  border-radius: 10px;
+}
+
+.insights-today-box .big-metric {
+  font-size: 50px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.insights-today-box h3 {
+  border-bottom: 2px solid #eee;
+  margin-bottom: 20px;
+  padding-left: 10px;
+}
+
+.insights-today-box .foot {
+  padding-left: 10px;
+  margin: 20px 0 10px 0;
+  border-top: 2px solid #eee;
+}
