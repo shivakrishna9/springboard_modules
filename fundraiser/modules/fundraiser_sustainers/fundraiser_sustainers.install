@@ -187,17 +187,10 @@ function fundraiser_sustainers_schema() {
         'length' => '255',
         'not null' => TRUE,
       ),
-      'date_processed' => array(
+      'timestamp' => array(
         'description' => 'The date the charge was processed.',
         'type' => 'int',
         'not null' => TRUE,
-      ),
-      'success' => array(
-        'description' => 'Flag to indicate whether the charge was successful or not.',
-        'type' => 'int',
-        'size' => 'tiny',
-        'not null' => TRUE,
-        'default' => 0,
       ),
       'lock_id' => array(
         'description' => 'The id of the lock that was put on the records during processing.',
@@ -557,5 +550,19 @@ function fundraiser_sustainers_update_7009() {
     'not null' => FALSE,
   );
   db_add_field('fundraiser_sustainers_log', 'cancellation_reason', $field);
+
+  $field = array(
+    'description' => 'The time the event took place.',
+    'type' => 'int',
+    'not null' => TRUE,
+  );
+  db_add_field('fundraiser_sustainers_log', 'timestamp', $field);
+
+  if (db_field_exists('fundraiser_sustainers_log', 'date_processed')) {
+    db_query('UPDATE {fundraiser_sustainers_log} SET timestamp = date_processed');
+    db_drop_field('fundraiser_sustainers_log', 'date_processed');
+  }
+
+  db_drop_field('fundraiser_sustainers_log', 'success');
 
 }
