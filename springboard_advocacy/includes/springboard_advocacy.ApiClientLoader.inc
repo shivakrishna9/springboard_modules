@@ -17,6 +17,12 @@ class AdvocacyApiClientLoader
     if (!empty($token->access_token)) {
       $client->setToken($token->access_token);
     }
+    else {
+      if (!empty($token->error)) {
+        drupal_set_message('Springboard Advocacy: ' . implode('. ', (array)$token));
+      }
+    }
+
     return $client;
   }
 
@@ -30,6 +36,7 @@ class AdvocacyApiClientLoader
       $client_id = variable_get('springboard_advocacy_client_id', '');
       $client_secret = variable_get('springboard_advocacy_client_secret', '');
       $token = $client->getToken($client_id, $client_secret);
+
       if (!empty($token->access_token)) {
         $token->created = time();
         variable_set('springboard_advocacy_access_token', $token);
