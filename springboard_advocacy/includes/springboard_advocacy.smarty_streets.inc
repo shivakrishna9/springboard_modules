@@ -32,7 +32,7 @@ function springboard_advocacy_smarty_lookup($values) {
       //$district = $data[0]->metadata->congressional_district;
       $geo['latitude'] = isset($data[0]->metadata->latitude) ? $data[0]->metadata->latitude : '';
       $geo['longitude'] = isset($data[0]->metadata->longitude) ? $data[0]->metadata->longitude : '';
+      return $geo;
     }
-    return $geo;
   }  
 }

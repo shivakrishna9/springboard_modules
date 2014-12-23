@@ -2,6 +2,8 @@
 
 /**
  * @file springboard_advocacy.views.inc
+ * 
+ * Define our advocacy views. May move some or all to Target module.
  */
 
 /**
@@ -175,6 +177,7 @@ function springboard_advocacy_views_data() {
  */
 function springboard_advocacy_views_plugins() {
   $plugins = array(
+    // The query plugin replaces DB queries with API queries
     'query' => array(
       'springboard_advocacy_views_plugin_query' => array(
         'title' => t('Springboard Advocacy APIRequest'),
@@ -183,6 +186,8 @@ function springboard_advocacy_views_plugins() {
         'path' => drupal_get_path('module', 'springboard_advocacy') . '/includes/views/plugins',
       ),
     ),
+    // The pager is needed to fix a long-term views bug which causes
+    // the form api to freak about illegal choices
     'pager' => array(
       'springboard_advocacy_views_plugin_pager' => array(
         'title' => t('Springboard Advocacy Pager Full'),

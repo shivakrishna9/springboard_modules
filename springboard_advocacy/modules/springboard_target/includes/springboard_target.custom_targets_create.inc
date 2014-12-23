@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * @file
+ * Functions for target creation.
+ */
 
 function springboard_target_create_custom_targets_form() {
 
@@ -21,8 +25,7 @@ function springboard_target_create_custom_targets_form_submit($form, &$form_stat
   $loader = new AdvocacyApiClientLoader();
   $client = $loader->getClient();
   $target = $client->createCustomTarget($input);
-  // krumo($target);
-  // exit();
+  
   if (empty($target->error)) {
     $message = implode(' ', (array)$target->data->status);
     if (isset($target->data->id)) {

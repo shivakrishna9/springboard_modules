@@ -1,7 +1,13 @@
 <?php
 
-class springboard_advocacy_views_handler_filter_string extends views_handler_filter_string {
+/**
+ * @file
+ * Definition of springboard_advocacy_views_handler_filter_string.
+ * 
+ * Simplify and replace the query options provided by (the DB-oriented) parent class
+ */
 
+class springboard_advocacy_views_handler_filter_string extends views_handler_filter_string {
 
  function operators() {
     $operators = array(

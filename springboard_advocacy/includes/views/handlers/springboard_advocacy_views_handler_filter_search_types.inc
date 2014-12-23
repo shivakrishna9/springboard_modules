@@ -1,11 +1,18 @@
 <?php
 
+/**
+ * @file
+ * Definition of springboard_advocacy_views_handler_filter_search_types.
+ */
+
 class springboard_advocacy_views_handler_filter_search_types extends views_handler_filter_in_operator {
 
-  // bug workaround: https://www.drupal.org/node/2096447
-  // can be removed after springboard upgrades to views 7.x-3.8
-  // which should be before this module is released
-  // not sure what unintended side effects this may have.
+/**
+ * bug workaround: https://www.drupal.org/node/2096447
+ * can be removed after springboard upgrades to views 7.x-3.8
+ * which should be before this module is released  
+ * not sure what unintended side effects this may have.
+ */
   function init(&$view, &$options) {
     if (!isset($options['group_info']['default_group_multiple'])) {
       if (isset($this->options['group_info']['default_group_multiple'])) {
@@ -18,8 +25,12 @@ class springboard_advocacy_views_handler_filter_search_types extends views_handl
     parent::init($view, $options);
   }
 
-
+  /**
+   * Format a search query
+   */
   function query() {
+
+   // process multiple selection fields 
    if (is_array($this->value)) {
     foreach($this->value as $key => $value) {
       if (empty($value)) {
@@ -27,11 +38,14 @@ class springboard_advocacy_views_handler_filter_search_types extends views_handl
       }
     }
     $values = array_values($this->value);
+    //The API expects pipe-separated multitple values
     $values = implode('|', $values);
    }
    else {
+      // not a multi-select
       $values = $this->value;
    }
+
    $field = str_replace('search_', '', $this->real_field);
    $this->query->search_terms[$field][] = $values;
   } 

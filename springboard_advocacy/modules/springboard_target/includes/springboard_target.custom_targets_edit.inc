@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * @file
+ * Functions for target updates.
+ */
 
 function springboard_target_edit_custom_targets_form($form, &$form_state, $target_id) {
 

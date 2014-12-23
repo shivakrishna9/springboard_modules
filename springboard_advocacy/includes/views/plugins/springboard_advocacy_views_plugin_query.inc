@@ -25,6 +25,7 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
     $view->init_pager($view);
     $this->pager->query();
     $view->build_info['springboard_advocacy_request'] = $this->client;
+    // not sure we need this
     // if (isset($view->query->search_terms)) {
     //   $view->build_info['springboard_advocacy_search'] = $view->query->search_terms;  
     // } 
@@ -34,6 +35,8 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
     $client = $view->build_info['springboard_advocacy_request'];
 
     $start = microtime(true);
+
+    // should we pull the terms from $view->query? Why use $view->build_info?
     $terms = !empty($view->query->search_terms) ? $view->query->search_terms : NULL;
 
     // If a non-exposed class_name search is present and it is the only search
@@ -43,9 +46,9 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
     }
 
     if (!empty($terms) && empty($suppress_results)) {
-      foreach ($terms as $key =>$term) {
-        // is it a multiple value checkbox?
-        // then format in a the the api expects
+      foreach ($terms as $key => $term) {
+        // is it a multiple value checkbox or select?
+        // then format in a way the api expects
         if (is_array($term)) {
           $terms[$key] = implode('|', $term);
         }
@@ -66,6 +69,7 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
           $this->pager->update_page_info();
         }
        
+        // we're gonna do this on the laravel side
         // if (!empty($this->limit) || !empty($this->offset)) {
         //   $limit  = intval(!empty($this->limit) ? $this->limit : 999999);
         //   $offset = intval(!empty($this->offset) ? $this->offset : 0);

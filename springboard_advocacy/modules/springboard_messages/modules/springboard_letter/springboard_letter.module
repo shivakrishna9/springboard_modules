@@ -1,7 +1,13 @@
 <?php
+/**
+ * @file
+ * Provides content type and config for letters to targets.
+ */
 
 /**
  * Implements hook_node_insert
+ * 
+ * Adds some custom fields to new webforms.
  */
 function springboard_letter_node_insert($node) {
   if($node->type == 'springboard_letter') {
@@ -35,7 +41,7 @@ function springboard_letter_node_insert($node) {
         'description' => t('Customize your message'),
       ),
     );
-    //limit the sate field to US states
+    //limit the state field to US states
     $fields[] = array(
         'nid' => $node->nid,
         'form_key' => 'sbp_state',
@@ -92,7 +98,7 @@ function springboard_letter_webform_user_profile_fields_alter(&$fields, $node) {
       if ($profile_field['name'] != 'sbp_address_line_2'){
         $fields[$index]['mandatory'] = 1;
       }
-      //setup removeal of non-US provinces
+      //setup removal of non-US provinces
       if ($profile_field['name'] == 'sbp_state'){
         unset($fields[$index]);
       }
@@ -110,6 +116,8 @@ function springboard_letter_webform_user_profile_fields_alter(&$fields, $node) {
 
 /**
  * Implements hook_form_alter
+ * 
+ * Add our submit handler.
  */
 function springboard_letter_form_alter(&$form, &$form_state, $form_id) {;
   if(isset($form['#node']) && $form['#node']->type == 'springboard_letter') {
@@ -120,6 +128,13 @@ function springboard_letter_form_alter(&$form, &$form_state, $form_id) {;
   }
 }
 
+/**
+ * Submit handler
+ * 
+ * Gets Zip+4 from Smarty streets.
+ * Asks the Advocacy API for a list of Legislators for the zip.
+ * Places list in session for use on confirmation page.
+ */
 function springboard_letter_submit($form, $form_state) {
   $values = $form_state['values']['submitted_tree'];
 
@@ -143,6 +158,10 @@ function springboard_letter_submit($form, $form_state) {
   }
 }
 
+/**
+ * Formats API response for presentaion by theme_item_list
+ * 
+ */
 function springboard_letter_prep_for_display($data) {
   $items = array();
 
@@ -164,6 +183,11 @@ function springboard_letter_prep_for_display($data) {
   return theme_item_list(array('items' => $items, 'title' => $title, 'type' => 'ul', 'attributes' => $attributes));;
 }
 
+/*
+ * Implements hook_preprocess_webform_confirmation
+ *
+ * Show the list of legislators on the confirmation page
+ */
 function springboard_letter_preprocess_webform_confirmation(&$vars) {
   if ($vars['node']->type == 'springboard_letter') {
     if (!empty($_SESSION['legislators'])) {
@@ -175,6 +199,8 @@ function springboard_letter_preprocess_webform_confirmation(&$vars) {
 
 /**
  * Implements hook_webfrom_submission insert
+ *
+ * Save our letter writer's zip and geolocation info
  */
 function springboard_letter_webform_submission_insert($node, $submission) {
   if(isset($_SESSION['letter_geo']) && $node->type == 'springboard_letter') {
@@ -192,6 +218,11 @@ function springboard_letter_webform_submission_insert($node, $submission) {
   };
 }
 
+/**
+ * Implements hook_FORMID_form_alter
+ *
+ * Vertical nav for letter add/edit pages
+ */
 function springboard_letter_form_springboard_letter_node_form_alter(&$form, &$form_state) {
   $form['options'] = array(
     '#title' => t('Options'),

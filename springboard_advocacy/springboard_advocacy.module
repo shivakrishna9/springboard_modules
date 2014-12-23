@@ -72,6 +72,12 @@ function springboard_advocacy_views_api() {
   );
 }
 
+
+/**
+ * Returns default options for views field configuration
+ * Here in the main module because might be used by multiple
+ * submodules.
+ */
 function springboard_advocacy_target_type() {
   $value_options = array(
     'Target' => t('Custom Target'), 
@@ -81,6 +87,9 @@ function springboard_advocacy_target_type() {
   return $value_options;
 }
 
+/**
+ * Returns default options for views field configuration
+ */
 function springboard_advocacy_target_level() {
   $value_options = array(
     'SR|SS' => t('State'), 
@@ -89,6 +98,9 @@ function springboard_advocacy_target_level() {
   return $value_options;
 }
 
+/**
+ * Returns default options for views field configuration
+ */
 function springboard_advocacy_target_branch() {
   $value_options = array(
     'executive' => t('Executive'), 
@@ -97,6 +109,9 @@ function springboard_advocacy_target_branch() {
   return $value_options;
 }
 
+/**
+ * Returns default options for views field configuration
+ */
 function springboard_advocacy_target_party() {
   $value_options = array(
     'D' => t('Democrat'), 
@@ -107,6 +122,9 @@ function springboard_advocacy_target_party() {
   return $value_options;
 }
 
+/**
+ * Returns default options for views field configuration
+ */
 function springboard_advocacy_target_state() {
   $value_options = array(
     'AL' => 'Alabama',
@@ -164,6 +182,9 @@ function springboard_advocacy_target_state() {
   return $value_options;
 }
 
+/**
+ * Returns default options for views field configuration
+ */
 function springboard_advocacy_target_gender() {
   $value_options = array(
     'M' => 'Male',

@@ -2,6 +2,9 @@
 
 /**
  * Implements hook_menu
+ *
+ * Don't know what the final menu structure will be.
+ * This is provisional.
  */
 
 function springboard_target_menu() {
@@ -49,6 +52,10 @@ function springboard_target_menu() {
   return $items;
 }
 
+/**
+ * Implements hook_permissions
+ *
+ */
 function springboard_target_permission() {
   return array(
     'administer targets' => array(

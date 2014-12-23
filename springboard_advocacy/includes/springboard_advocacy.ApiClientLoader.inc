@@ -8,6 +8,10 @@
 class AdvocacyApiClientLoader 
 
 {
+  /**
+   * maybe we should use __construct and save a line when calling
+   * -- depends if getToken ever needs to be static method
+   */
   public function getClient() 
   {
     $lib = libraries_load('springboard_advocacy');
@@ -26,6 +30,9 @@ class AdvocacyApiClientLoader
     return $client;
   }
 
+  /**
+   * Get or Refresh an Oauth access token.
+   */
   private function getToken($client) 
   {
     $token = variable_get('springboard_advocacy_access_token', array());

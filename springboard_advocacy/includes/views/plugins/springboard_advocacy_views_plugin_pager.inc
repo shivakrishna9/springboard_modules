@@ -2,6 +2,8 @@
 
 /**
  * @file springbord_advocacy_views_plugin_pager.inc
+ *
+ * Create a custom pager to fix a long-term views pager bug
  */
 
 class springboard_advocacy_views_plugin_pager extends views_plugin_pager_full {

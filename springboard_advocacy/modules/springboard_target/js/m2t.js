@@ -1,4 +1,7 @@
 (function ($) {
+
+  // Alas, not using this js anymore
+  // to be removed
   Drupal.behaviors.m2t = {
     attach: function (context, settings) {
 

@@ -2,13 +2,12 @@
 
 /**
  * @file
- * Definition of views_handler_filter_combine.
+ * Definition of springboard_advocacy_views_handler_filter_combine.
  */
 
 /**
  * Filter handler which allows to search on multiple fields.
  *
- * @ingroup views_field_handlers
  */
 class springboard_advocacy_views_handler_filter_combine extends springboard_advocacy_views_handler_filter_string {
   /**

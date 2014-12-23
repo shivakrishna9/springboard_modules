@@ -7,6 +7,8 @@
 
 /**
  * Implements hook_schema().
+ *
+ * Table to save user ip and geolocation info ofrthe various message type submissions/
  */
 function springboard_messages_schema() {
   // Opt in tracking table.
