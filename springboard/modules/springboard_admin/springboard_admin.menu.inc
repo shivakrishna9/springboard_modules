@@ -612,6 +612,12 @@ function springboard_admin_create_menu_item($item, &$mlids, $plid = 0, $parent =
   if ($plid > 0) {
     $item['plid'] = $plid;
   }
+
+  // Set a default module value.
+  if (!isset($item['module'])) {
+    $item['module'] = 'menu';
+  }
+
   // Save a the item.
   $mlid = menu_link_save($item, array(), array($plid => $parent));
   $mlids[] = $mlid;
