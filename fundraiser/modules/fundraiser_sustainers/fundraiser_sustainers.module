@@ -829,9 +829,10 @@ function fundraiser_sustainers_process_single_recurring_donation(&$log, $recurri
  */
 function fundraiser_sustainers_fundraiser_donation_process($donation) {
   // Update the sustainer record to processing status.
+  $original = _fundraiser_sustainers_get_recurring_by_did($donation->did);
   $recurring = array(
     'did' => $donation->did,
-    'attempts' => $donation->recurring->attempts + 1,
+    'attempts' => $original->attempts + 1,
     'gateway_resp' => FUNDRAISER_SUSTAINERS_PROCESSING_STATUS,
   );
   _fundraiser_sustainers_update_recurring($recurring);
