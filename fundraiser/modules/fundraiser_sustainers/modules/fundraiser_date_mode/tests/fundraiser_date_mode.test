@@ -1,15 +1,10 @@
 <?php
-
 /**
  * @file
- * Simpletest test class.
+ * Simpletest test class for Fundraiser Date Mode.
  */
 
-
-/**
- * Setup and tear down web class. Does nothing else.
- */
-class FundraiserDateModeTest extends DrupalWebTestCase {
+class FundraiserDateModeTestCase extends DrupalWebTestCase {
 
   /**
    * Implements getInfo(). Declares this test class to fundraiser testing.
