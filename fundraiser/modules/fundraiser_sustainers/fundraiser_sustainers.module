@@ -335,13 +335,6 @@ function fundraiser_sustainers_charge_now($did) {
   $donation->did = $did;
   $donation->next_charge = $new_charge;
 
-  $log_record = array(
-    'did' => $did,
-    'next_charge' => $new_charge,
-  );
-
-  fundraiser_sustainers_log_record($log_record);
-
   _fundraiser_sustainers_update_recurring($donation);
   drupal_set_message(t('The charge date for donation #@did has been advanced to @date. It will be charged on the next Fundraiser cron.',
     array('@did' => $did, '@date' => format_date($new_charge))));
@@ -2048,12 +2041,6 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
       // Update the recurring table.
       _fundraiser_sustainers_create_recurring($recurring_donation);
 
-      $log_record = array(
-        'did' => $recurring_donation['did'],
-        'new_state' => 'created',
-      );
-      fundraiser_sustainers_log_record($log_record);
-
       // Load the newly created individual donation into salesforce_donation.
       if (module_exists('salesforce_genmap')) {
         $sf_donation = fundraiser_donation_get_donation($new_donation->did, TRUE);
@@ -2147,14 +2134,8 @@ function fundraiser_sustainers_add_order_to_series($donation, $next_charge) {
     'next_charge' => $next_charge,
     'sustainer_key' => $sustainer_key,
   );
-  // Update the recurring table.
+  // Update the recurring table and log it.
   _fundraiser_sustainers_create_recurring($recurring_donation);
-
-  $log_record = array(
-    'did' => $new_donation->did,
-    'new_state' => 'created',
-  );
-  fundraiser_sustainers_log_record($log_record);
 
   // Load the newly created individual donation into salesforce_donation.
   if (module_exists('salesforce_genmap')) {
@@ -2296,14 +2277,8 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
           'gateway_resp' => 'success',
           'attempts' => 1,
         );
-        // Update the recurring table.
+        // Update the recurring table and saves to the log.
         _fundraiser_sustainers_create_recurring($recurring_donation);
-
-        $log_record = array(
-          'did' => $donation->did,
-          'new_state' => 'success',
-        );
-        fundraiser_sustainers_log_record($log_record);
 
         // Now handle the recurring object, and the rest of the orders.
         if (!_fundraiser_sustainers_offsite_recurring($info['offsite_recurring'], $donation->donation['payment_method'])) { // Is not an offline recurring
@@ -2613,22 +2588,18 @@ function _fundraiser_sustainers_create_recurring($donation) {
   // Cast donation just in case.
   $donation = (array) $donation;
   // Check for old data.
-  $donation_data = FALSE;
+  $original = FALSE;
   if (isset($donation['did'])) {
-    $donation_data = _fundraiser_sustainers_get_recurring_by_did($donation['did']);
+    $original = _fundraiser_sustainers_get_recurring_by_did($donation['did']);
   }
-  if (!$donation_data) {
+  if (!$original) {
     $record = $donation;
     drupal_write_record('fundraiser_sustainers', $record);
 
-    $log_record = array(
-      'did' => $donation['did'],
-      'old_state' => NULL,
-      'new_state' => 'created',
-      'next_charge' => $donation['next_charge'],
-      'attempts' => 0,
-    );
-    fundraiser_sustainers_log_record($log_record);
+    $record['old_state'] = NULL;
+    $record['new_state'] = isset($record['gateway_resp']) ? $record['gateway_resp'] : 'created';
+
+    fundraiser_sustainers_log_record($record);
 
   }
   else {
@@ -2652,26 +2623,20 @@ function _fundraiser_sustainers_update_recurring($donation) {
   // Cast donation just in case.
   $donation = (array) $donation;
   // Check old data.
-  $donation_data = FALSE;
+  $original = FALSE;
   if (isset($donation['did'])) {
-    $donation_data = _fundraiser_sustainers_get_recurring_by_did($donation['did']);
+    $original = _fundraiser_sustainers_get_recurring_by_did($donation['did']);
   }
-  if (!$donation_data) {
+
+  if (!$original) {
     _fundraiser_sustainers_create_recurring($donation);
   }
   else {
-    $record = array_merge((array) $donation_data, $donation); // Merge data together so we get everything in the record.
+    // Merge data together so we get everything in the record.
+    $record = array_merge((array) $original, $donation);
     drupal_write_record('fundraiser_sustainers', $record, 'did');
 
-    $log_record = array(
-      'did' => $record['did'],
-      'old_state' => $donation_data->gateway_resp,
-      'new_state' => $record['gateway_resp'],
-      'next_charge' => $record['next_charge'],
-      'lock_id' => $record['lock_id'],
-      'attempts' => $record['attempts'],
-    );
-    fundraiser_sustainers_log_record($log_record);
+    fundraiser_sustainers_log_record($donation, $original);
   }
 }
 
@@ -2679,18 +2644,14 @@ function _fundraiser_sustainers_update_recurring($donation) {
  * CRUD style DB function for fundraiser_sustainers.
  */
 function _fundraiser_sustainers_delete_recurring($did) {
-  $recurring = _fundraiser_sustainers_get_recurring_by_did($did);
+  $original = _fundraiser_sustainers_get_recurring_by_did($did);
   db_delete('fundraiser_sustainers')->condition('did', $did)->execute();
 
   $log_record = array(
     'did' => $did,
-    'old_state' => $recurring->gateway_resp,
     'new_state' => 'deleted',
-    'next_charge' => $recurring->next_charge,
-    'lock_id' => $recurring->lock_id,
-    'attempts' => $recurring->attempts,
   );
-  fundraiser_sustainers_log_record($log_record);
+  fundraiser_sustainers_log_record($log_record, $original);
 }
 
 /**
@@ -2737,7 +2698,6 @@ function _fundraiser_sustainers_get_donation_sets() {
   }
   return $donation_sets;
 }
-
 
 /**
  * DB funct, get order donations that are recurring.
@@ -2855,7 +2815,7 @@ function fundraiser_sustainers_count_donations_in_series($master_did) {
  * DB function, get unlocked donations ready to be processed.
  * Lock them.
  */
-function _fundraiser_sustainers_cron_get_recurring($limit = 1000) {
+function _fundraiser_sustainers_cron_get_recurring($limit = 200) {
   $now = strtotime('now');
   $uni_batch_id = uniqid();
   $max_processing_attempts = variable_get('fundraiser_sustainers_max_processing_attempts', 3);
@@ -2877,8 +2837,14 @@ function _fundraiser_sustainers_cron_get_recurring($limit = 1000) {
     );
 
     foreach ($donations as $did) {
-      fundraiser_sustainers_log_record(array('did' => $did));
+      $locked_log_record = array(
+        'did' => $did,
+        'new_state' => 'locked',
+        'lock_id' => $uni_batch_id,
+      );
+      fundraiser_sustainers_log_record($locked_log_record);
     }
+
   }
   // Grab the locked donations for this batch.
   $donations = db_query('SELECT * FROM {fundraiser_sustainers} r ' .
@@ -3171,6 +3137,9 @@ function fundraiser_sustainers_log_record(array $values, $old_record = NULL) {
   // New state of NULL means no transition happened.
   if (isset($values['new_state'])) {
     $new_record->new_state = $values['new_state'];
+  }
+  elseif (isset($values['gateway_resp'])) {
+    $new_record->new_state = $values['gateway_resp'];
   }
   else {
     $new_record->new_state = NULL;
