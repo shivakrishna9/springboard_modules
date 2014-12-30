@@ -140,18 +140,14 @@ class FundraiserDateModeTestCase extends DrupalWebTestCase {
   /**
    * Test changing date mode charge date.
    *
-  public function testFundraiserDateModeChangeDate() {
-
-  }
-  */
+   * public function testFundraiserDateModeChangeDate() { }
+   */
 
   /**
    * Test disabling date mode.
    *
-  public function testFundraiserDateModeDisable() {
-
-  }
-  */
+   * public function testFundraiserDateModeDisable() { }
+   */
 
   /**
    * Test delta calculation code.
@@ -202,10 +198,8 @@ class FundraiserDateModeTestCase extends DrupalWebTestCase {
   /**
    * Test order selection.
    *
-  public function testFundraiserDateModeOrderSelection() {
-
-  }
-  */
+   * public function testFundraiserDateModeOrderSelection() { }
+   */
 
   /**
    * Helper to create a fundraiser sustainer donation.
@@ -446,4 +440,3 @@ class FundraiserDateModeTestCase extends DrupalWebTestCase {
     return $data;
   }
 }
-
