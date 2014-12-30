@@ -366,20 +366,13 @@ function fundraiser_sustainers_skip_submit($form, &$form_state) {
   $donation->status_charged = _fundraiser_commerce_get_charged_by_status('skipped');
   fundraiser_donation_update($donation);
 
-  db_query('UPDATE {fundraiser_sustainers} SET ' .
-    'gateway_resp = \'skipped\',' .
-    'lock_id = 0, ' .
-    'cancellation_reason = \'skipped by admin\' ' .
-    'WHERE did = :did', array(':did' => $donation->did)
-  );
-
-  $log_record = array(
+  $recurring = array(
     'did' => $donation->did,
-    'new_state' => 'skipped',
+    'gateway_resp' => 'skipped',
     'lock_id' => 0,
     'cancellation_reason' => 'skipped by admin',
   );
-  fundraiser_sustainers_log_record($log_record);
+  _fundraiser_sustainers_update_recurring($recurring);
 
   if (module_exists('salesforce_genmap')) {
     salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
@@ -774,26 +767,6 @@ function fundraiser_sustainers_process_single_recurring_donation(&$log, $recurri
       return FALSE;
     }
 
-    // Update the sustainer record to processing status.
-    db_query('
-      UPDATE {fundraiser_sustainers}
-      SET
-        attempts = attempts + 1,
-        gateway_resp = :status
-      WHERE
-        did = :did;',
-      array(':status' => FUNDRAISER_SUSTAINERS_PROCESSING_STATUS, ':did' => $recurring->did)
-    );
-
-    // Prepare a log record.
-    $log_record = array(
-      'did' => $recurring->did,
-    );
-
-    $log_record['new_state'] = FUNDRAISER_SUSTAINERS_PROCESSING_STATUS;
-    $log_record['attempts']++;
-    fundraiser_sustainers_log_record($log_record);
-
     // Then go through each one of these to charge.
     // Since we already created the donation (and saved any CC info at that time).
     // All we need to do is process it and respond afterwards as needed.
@@ -801,13 +774,15 @@ function fundraiser_sustainers_process_single_recurring_donation(&$log, $recurri
     if (!isset($donation->result['message'])) {
       $donation->result['message'] = '';
     }
+
     // The results should be at $donation->result, ready to respond to the aftermath.
     if (isset($donation->result['success']) && $donation->result['success']) {
       fundraiser_donation_success($donation);
       // Record the success.
       $log['successes']++;
-      $log_record['new_state'] = FUNDRAISER_SUSTAINERS_SUCCESS_STATUS;
+
       // Perform any post-processing required by the gateway.
+      // For example, add another sustainer to a successful series.
       module_invoke_all('fundraiser_sustainers_recurring_success', $donation);
     }
     else {
@@ -821,18 +796,15 @@ function fundraiser_sustainers_process_single_recurring_donation(&$log, $recurri
       // When current attempts equals maximum attempts the donation will be set as a failure.
       if ($donation->attempts == $max_processing_attempts) {
         fundraiser_sustainers_donation_fail($donation);
-        $log_record['new_state'] = FUNDRAISER_SUSTAINERS_FAILED_STATUS;
       }
       else {
         fundraiser_sustainers_donation_retry($donation);
-        $log_record['new_state'] = FUNDRAISER_SUSTAINERS_RETRY_STATUS;
       }
 
       // Record the fail.
       $log['fails']++;
     }
 
-    fundraiser_sustainers_log_record($log_record);
   }
   else {
     // TODO: Unlock the sustainer record. Currently the lock has not been ported from D6.
@@ -841,6 +813,28 @@ function fundraiser_sustainers_process_single_recurring_donation(&$log, $recurri
       'Key file value (!key_file) did not match record value (!record_value).',
       array('!did' => $recurring->did, '!key_file' => $sustainer_key, '!record_value' => $recurring->sustainer_key), WATCHDOG_CRITICAL);
   }
+}
+
+/**
+ * Implements hook_fundraiser_donation_process().
+ *
+ * Increments attempts and sets gateway_resp to processing.
+ *
+ * This is done here to match the behavior of the other
+ * fundraiser donation functions.
+ *
+ * @see fundraiser_donation_success().
+ *      fundraiser_sustainers_donation_fail().
+ *      fundraiser_sustainers_donation_retry().
+ */
+function fundraiser_sustainers_fundraiser_donation_process($donation) {
+  // Update the sustainer record to processing status.
+  $recurring = array(
+    'did' => $donation->did,
+    'attempts' => $donation->recurring->attempts + 1,
+    'gateway_resp' => FUNDRAISER_SUSTAINERS_PROCESSING_STATUS,
+  );
+  _fundraiser_sustainers_update_recurring($recurring);
 }
 
 /**
@@ -2072,13 +2066,9 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
       array('@id' => $donation->did, '@user' => $user->name), WATCHDOG_DEBUG, NULL);
 
     // Delete these donations so do won't appear in the list of recurring donations.
+    // The sustainer record will get deleted and logged by
+    // fundraiser_sustainers_fundraiser_donation_delete().
     fundraiser_donation_delete($this_donation);
-
-    $log_record = array(
-      'did' => $recurring->did,
-      'new_state' => 'deleted',
-    );
-    fundraiser_sustainers_log_record($log_record);
   }
 }
 
@@ -2274,7 +2264,7 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
           'did' => $donation->did,
           'master_did' => $donation->did,
           'next_charge' => strtotime('now'),
-          'gateway_resp' => 'success',
+          'gateway_resp' => FUNDRAISER_SUSTAINERS_SUCCESS_STATUS,
           'attempts' => 1,
         );
         // Update the recurring table and saves to the log.
@@ -2319,20 +2309,11 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
   }
   else {
     // And update the sustainer table.
-    db_query('
-      UPDATE {fundraiser_sustainers}
-      SET
-        gateway_resp = :status
-      WHERE
-        did = :did',
-      array(':status' => FUNDRAISER_SUSTAINERS_SUCCESS_STATUS, ':did' => $donation->did)
-    );
-
-    $log_record = array(
+    $recurring = array(
       'did' => $donation->did,
-      'new_state' => FUNDRAISER_SUSTAINERS_SUCCESS_STATUS,
+      'gateway_resp' => FUNDRAISER_SUSTAINERS_SUCCESS_STATUS,
     );
-    fundraiser_sustainers_log_record($log_record);
+    _fundraiser_sustainers_update_recurring($recurring);
 
     // For all recurring when processed, check if we need to send a notice about the set almost done.
     if (_fundraiser_sustainers_count_donations_recurr_remaining($donation->recurring->master_did) == 1) {
@@ -2350,23 +2331,13 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
 function fundraiser_sustainers_donation_retry($donation) {
   // Set the sustainer record up in a retry state.
   $donation->recurring->next_charge = strtotime('+1 day', $donation->recurring->next_charge);
-  db_query('
-    UPDATE {fundraiser_sustainers}
-    SET
-      gateway_resp = :status,
-      lock_id = 0,
-      next_charge = :next_charge)
-    WHERE
-      did = :did',
-    array(':status' => FUNDRAISER_SUSTAINERS_RETRY_STATUS, ':did' => $donation->did, ':next_charge' => $donation->recurring->next_charge)
-  );
-
-  $log_record = array(
+  $recurring = array(
     'did' => $donation->did,
-    'old_state' => $donation->recurring->gateway_resp,
-    'new_state' => FUNDRAISER_SUSTAINERS_RETRY_STATUS,
+    'gateway_resp' => FUNDRAISER_SUSTAINERS_RETRY_STATUS,
+    'lock_id' => 0,
+    'next_charge' => $donation->recurring->next_charge,
   );
-  fundraiser_sustainers_log_record($log_record);
+  _fundraiser_sustainers_update_recurring($recurring);
 
   // Create a log entry.
   watchdog('fundraiser_sustainers', 'Payment for recurring donation @id has failed @attempts times. It will be processed again in 1 day. Gateway message: @message',
@@ -2387,21 +2358,11 @@ function fundraiser_sustainers_donation_retry($donation) {
  */
 function fundraiser_sustainers_donation_fail($donation) {
   // Set the sustainer record up in a failed state.
-  db_query('
-    UPDATE {fundraiser_sustainers}
-    SET
-      gateway_resp = :status
-    WHERE
-      did = :did',
-    array(':status' => FUNDRAISER_SUSTAINERS_FAILED_STATUS, ':did' => $donation->did)
-  );
-
-  $log_record = array(
+  $recurring = array(
     'did' => $donation->did,
-    'old_state' => $donation->recurring->gateway_resp,
-    'new_state' => FUNDRAISER_SUSTAINERS_FAILED_STATUS,
+    'gateway_resp' => FUNDRAISER_SUSTAINERS_FAILED_STATUS,
   );
-  fundraiser_sustainers_log_record($log_record);
+  _fundraiser_sustainers_update_recurring($recurring);
 
   // Create a log entry.
   watchdog('fundraiser_sustainers', 'Payment for recurring donation @id has
@@ -2438,18 +2399,13 @@ function fundraiser_sustainers_fundraiser_donation_cancel($donation) {
     $reason = $donation->recurring->cancellation_reason;
   }
 
-  $log_record = array(
+  $recurring = array(
     'did' => $donation->did,
-    'new_state' => 'canceled',
+    'gateway_resp' => 'canceled',
     'cancellation_reason' => $reason,
   );
-  fundraiser_sustainers_log_record($log_record);
+  _fundraiser_sustainers_update_recurring($recurring);
 
-  // Set the gateway resp field to canceled.
-  db_update('fundraiser_sustainers')
-    ->fields(array('gateway_resp' => 'canceled', 'cancellation_reason' => $reason))
-    ->condition('did', $donation->did)
-    ->execute();
 }
 
 /**
