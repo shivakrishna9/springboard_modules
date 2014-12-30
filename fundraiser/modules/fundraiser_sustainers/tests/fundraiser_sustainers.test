@@ -19,7 +19,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
     return array(
       'name' => 'Fundraiser sustainers',
       'description' => 'Tests fundraiser sustainers behavior.',
-      'group' => 'Fundraiser',
+      'group' => 'Fundraiser Sustainers',
     );
   }
 
@@ -67,26 +67,25 @@ class FundraiserSustainerTest extends FundraiserSetup {
     }
     $this->assertEqual(count($dates), $count, t('13 sustainer donations were created with a master did #@did.',
       array('@did' => $master_did)), t('Fundraiser Sustainers'));
+
     // Check dates.
-    $count = 0;
+    $expected_date = new DateTime();
+    $one_month = new DateInterval('P1M');
     foreach ($dates as $did => $date) {
-      $expected_month = date('n', strtotime('+' . $count . ' month'));
-      $expected_year = date('Y', strtotime('+' . $count . ' month'));
-      $this_month = date('n', $date);
-      $this_year = date('Y', $date);
+      $actual = date('Y-m-d', $date);
+      $expected = $expected_date->format('Y-m-d');
 
       $replacements = array(
         '@did' => $did,
-        '@observed_month' => $this_month,
-        '@observed_year' => $this_year,
-        '@exp_month' => $expected_month,
-        '@exp_year' => $expected_year,
+        '@actual' => $actual,
+        '@expected' => $expected,
       );
 
-      $this->assertEqual($expected_month . '/' . $expected_year, $this_month . '/' . $this_year,
-        t('The observed month (@observed_month/@observed_year) correctly matches expected month (@exp_month/@exp_year) for #@did.', $replacements),
+      $this->assertEqual($actual, $expected,
+        t('The actual charge date (@actual) correctly matches the expected date (@expected) for #@did.', $replacements),
         t('Fundraiser Sustainers'));
-      $count++;
+
+      $expected_date->add($one_month);
     }
   }
 
@@ -142,7 +141,6 @@ class FundraiserSustainerTest extends FundraiserSetup {
 
       // Load transactions
       $transactions = commerce_payment_transaction_load_multiple(array(), array('order_id' =>  $next_did));
-
       // Ensure the attempt count is correct.
       $this->assertEqual($attempts, $sustainer->attempts, t('Attempts is incremented to !attempts.', array('!attempts' => $attempts)));
 
@@ -210,13 +208,23 @@ class FundraiserSustainerTest extends FundraiserSetup {
       t('Fundraiser Sustainers UI'));
     // Check values at that location.
     $this->assertText('$10.00', t('The donation sequence is made for the correct default amount ($10.00).'), t('Fundraiser Sustainers UI'));
-    $date = date('m/d/y', strtotime('now'));
+    $date = date('m/d/y');
     $this->assertText($date, t('The donation sequence is made for the correct start date (@date).', array('@date' => $date)),
       t('Fundraiser Sustainers UI'));
     $date = date('m/d/y', strtotime('+1 month'));
     $this->assertText($date, t('The donation sequence is made for the correct next charge date (@date).', array('@date' => $date)),
       t('Fundraiser Sustainers UI'));
-    $date = date('m/d/y', strtotime('+1 year'));
+
+    // Needs to be calculated this way to match how Springboard does it.
+    // Dates that aren't in every month cause differences when doing this
+    // compared to simply adding a year.
+    $date = new DateTime();
+    $one_month = new DateInterval('P1M');
+    for ($i = 0; $i < 12; $i++) {
+      $date->add($one_month);
+    }
+    $date = $date->format('m/d/y');
+
     $this->assertText($date, t('The donation sequence is made for the correct expire date (@date).', array('@date' => $date)),
       t('Fundraiser Sustainers UI'));
     $this->assertText('Active', t('The donation sequence is active.'), t('Fundraiser Sustainers UI'));
@@ -325,7 +333,13 @@ class FundraiserSustainerTest extends FundraiserSetup {
     $this->drupalPost('user/' . $created_user->uid . '/recurring_overview/' . $master_did, $post, t('Save changes'));
     // Reload page.
     $this->drupalGet('user/' . $created_user->uid . '/recurring_overview/' . $master_did);
-    $date = date('m/d/y', strtotime('+3 month'));
+
+    $date = new DateTime();
+    $one_month = new DateInterval('P1M');
+    for ($i = 0; $i < 3; $i++) {
+      $date->add($one_month);
+    }
+    $date = $date->format('m/d/y');
     $this->assertText($date, t('The donation sequence is made for the correct next charge date (@date).', array('@date' => $date)),
       t('Fundraiser Update Expiration'));
     $date = date('m/d/y', strtotime('+4 month'));
