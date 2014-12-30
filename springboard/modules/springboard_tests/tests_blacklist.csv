@@ -10,7 +10,6 @@ FormLayoutsTestCase
 FundraiserCommerceGatewayAuthnetTest
 FundraiserCommerceUnitTestCase
 FundraiserDateModeTest
-FundraiserSustainerTest
 MarketSourceTestCase
 PageWrappersRulesetTestCase
 SalesforceDonationTestCase
