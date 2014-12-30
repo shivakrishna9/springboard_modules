@@ -74,9 +74,17 @@ class FundraiserSustainerTest extends FundraiserSetup {
       $expected_year = date('Y', strtotime('+' . $count . ' month'));
       $this_month = date('n', $date);
       $this_year = date('Y', $date);
+
+      $replacements = array(
+        '@did' => $did,
+        '@observed_month' => $this_month,
+        '@observed_year' => $this_year,
+        '@exp_month' => $expected_month,
+        '@exp_year' => $expected_year,
+      );
+
       $this->assertEqual($expected_month . '/' . $expected_year, $this_month . '/' . $this_year,
-        t('The correct expected month (@month/@year) was found for #@did.',
-        array('@did' => $did, '@month' => $expected_month, '@year' => $expected_year)),
+        t('The observed month (@observed_month/@observed_year) correctly matches expected month (@exp_month/@exp_year) for #@did.', $replacements),
         t('Fundraiser Sustainers'));
       $count++;
     }
