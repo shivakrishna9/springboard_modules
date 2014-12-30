@@ -33,7 +33,6 @@ function springboard_target_form($target_id = NULL) {
     '#default_value' => isset($target->salutation) ? $target->salutation : '',
     '#size' => 10,
     '#maxlength' => 128,
-    //'#required' => TRUE,
     '#attributes' => array('class' => array('target-add', 'target-salutation')),
   );
 
@@ -43,7 +42,7 @@ function springboard_target_form($target_id = NULL) {
     '#default_value' => isset($target->first_name) ? $target->first_name : '',
     '#size' => 30,
     '#maxlength' => 128,
-    //'#required' => TRUE,
+    '#required' => TRUE,
     '#attributes' => array('class' => array('target-add', 'target-first-name')),
   );
 
@@ -53,7 +52,7 @@ function springboard_target_form($target_id = NULL) {
     '#default_value' => isset($target->last_name) ? $target->last_name : '',
     '#size' => 30,
     '#maxlength' => 128,
-    //'#required' => TRUE,
+    '#required' => TRUE,
     '#attributes' => array('class' => array('target-add', 'target-last-name')),
   );
 
@@ -63,7 +62,6 @@ function springboard_target_form($target_id = NULL) {
     '#default_value' => isset($target->organization) ? $target->organization : '',
     '#size' => 60,
     '#maxlength' => 128,
-    //'#required' => TRUE,
     '#attributes' => array('class' => array('target-add', 'target-organization')),
   );
 
@@ -72,7 +70,7 @@ function springboard_target_form($target_id = NULL) {
     '#title' => t('Target Type'),
     '#default_value' => isset($target->target_type) ? $target->target_type : '',
     '#options' => springboard_target_types(),
-    //'#required' => TRUE,
+    '#required' => TRUE,
     '#attributes' => array('class' => array('target-add', 'target-target-type')),
   );
 
@@ -98,7 +96,6 @@ function springboard_target_form($target_id = NULL) {
     '#default_value' => isset($target->addresses[0]->area_code) ? $target->addresses[0]->area_code : '',
     '#size' => 10,
     '#maxlength' => 3,
-    //'#required' => TRUE,
     '#attributes' => array('class' => array('target-add', 'target-phone-area-code')),
   );
 
@@ -108,7 +105,6 @@ function springboard_target_form($target_id = NULL) {
     '#default_value' => isset($target->addresses[0]->phone) ? $target->addresses[0]->phone : '',
     '#size' => 20,
     '#maxlength' => 8,
-    //'#required' => TRUE,
     '#attributes' => array('class' => array('target-add', 'target-phone')),
   );
 
@@ -118,7 +114,6 @@ function springboard_target_form($target_id = NULL) {
     '#default_value' => isset($target->addresses[0]->ext) ? $target->addresses[0]->ext : '',
     '#size' => 10,
     '#maxlength' => 6,
-    //'#required' => TRUE,
     '#attributes' => array('class' => array('target-add', 'target-phone-extension')),
   );
 
@@ -128,7 +123,6 @@ function springboard_target_form($target_id = NULL) {
     '#default_value' => isset($target->addresses[0]->fax_area_code) ? $target->addresses[0]->fax_area_code : '',
     '#size' => 10,
     '#maxlength' => 3,
-    //'#required' => TRUE,
     '#attributes' => array('class' => array('target-add', 'target-fax-area-code')),
   );
 
@@ -138,7 +132,6 @@ function springboard_target_form($target_id = NULL) {
     '#default_value' => isset($target->addresses[0]->fax) ? $target->addresses[0]->fax : '',
     '#size' => 20,
     '#maxlength' => 8,
-    //'#required' => TRUE,
     '#attributes' => array('class' => array('target-add', 'target-fax')),
   );
 
@@ -148,7 +141,7 @@ function springboard_target_form($target_id = NULL) {
     '#default_value' => isset($target->addresses[0]->street) ? $target->addresses[0]->street : '',
     '#size' => 60,
     '#maxlength' => 128,
-    //'#required' => TRUE,
+    '#required' => TRUE,
     '#attributes' => array('class' => array('target-add', 'target-address')),
   );
 
@@ -158,7 +151,6 @@ function springboard_target_form($target_id = NULL) {
     '#default_value' => isset($target->addresses[0]->street_2) ? $target->addresses[0]->street_2 : '',
     '#size' => 60,
     '#maxlength' => 128,
-    //'#required' => TRUE,
     '#attributes' => array('class' => array('target-add', 'target-address-2')),
   );
 
@@ -168,7 +160,7 @@ function springboard_target_form($target_id = NULL) {
     '#default_value' => isset($target->addresses[0]->city) ? $target->addresses[0]->city : '',
     '#size' => 60,
     '#maxlength' => 128,
-    //'#required' => TRUE,
+    '#required' => TRUE,
     '#attributes' => array('class' => array('target-add', 'target-city')),
   );
 
@@ -177,7 +169,7 @@ function springboard_target_form($target_id = NULL) {
     '#title' => t('State'),
     '#default_value' => isset($target->addresses[0]->state) ? array($target->addresses[0]->state) : '',
     '#options' => springboard_target_states(),
-    //'#required' => TRUE,
+    '#required' => TRUE,
     '#attributes' => array('class' => array('target-add', 'target-state')),
   );
 
@@ -187,7 +179,7 @@ function springboard_target_form($target_id = NULL) {
     '#default_value' => isset($target->addresses[0]->zip_code) ? $target->addresses[0]->zip_code : '',
     '#size' => 10,
     '#maxlength' => 10,
-    //'#required' => TRUE,
+    '#required' => TRUE,
     '#attributes' => array('class' => array('target-add', 'target-zip')),
   );
 
@@ -197,7 +189,6 @@ function springboard_target_form($target_id = NULL) {
     '#default_value' => isset($target->email) ? $target->email : '',
     '#size' => 60,
     '#maxlength' => 128,
-    //'#required' => TRUE,
     '#attributes' => array('class' => array('target-add', 'target-email')),
   );
 
@@ -207,7 +198,6 @@ function springboard_target_form($target_id = NULL) {
     '#default_value' => isset($target->facebook) ? $target->facebook : '',
     '#size' => 60,
     '#maxlength' => 128,
-    //'#required' => TRUE,
     '#attributes' => array('class' => array('target-add', 'target-facebook')),
   );
 
@@ -217,7 +207,6 @@ function springboard_target_form($target_id = NULL) {
     '#default_value' => isset($target->twitter) ? $target->twitter : '',
     '#size' => 60,
     '#maxlength' => 128,
-    //'#required' => TRUE,
     '#attributes' => array('class' => array('target-add', 'target-twitter')),
   );
 
@@ -227,7 +216,6 @@ function springboard_target_form($target_id = NULL) {
     '#default_value' => isset($target->website) ? $target->website : '',
     '#size' => 60,
     '#maxlength' => 128,
-    //'#required' => TRUE,
     '#attributes' => array('class' => array('target-add', 'target-website')),
   );
 
@@ -313,53 +301,40 @@ function springboard_target_states() {
   return $states;
 }
 
-// @TODO: remove this if there's no ulimate use for it. 
-// Loads targets and outputs a paginated table
+function springboard_target_form_validate($form, &$form_state) {
 
-// function springboard_target_custom_targets() {
-//  $header = array('Name', 'Title', 'Organization', 'Email', 'Phone', 'Address', 'Actions');
-//   $rows = array();
+  if (!empty($form_state['values']['email'])) {
+    $valid = valid_email_address($form_state['values']['email']);
+    if (!$valid) {
+      form_set_error('email', t('Invalid email address.'));
+    }
+  }
 
-//   $loader = new AdvocacyApiClientLoader();
-//   $client = $loader->getClient();
-//   $targets = $client->getCustomTargets();
+  if (!empty($form_state['values']['facebook'])) {
+    $valid = valid_url($form_state['values']['facebook']);
+    if (!$valid) {
+      form_set_error('facebook', t('Invalid facebook url.'));
+    }
+  }
 
-//   foreach ($targets as $target) {
-//     $links = array();
-//     $links[] = l('edit', 'target/' . $target->id . '/edit');
-//     $links[] = l('view', 'view/' . $target->id);
-//     $links = implode(' | ', $links);
-//     $rows[] = array(
-//       'data' => array(
-//         array('data' => $target->first_name . ' ' . $target->last_name),
-//         array('data' => $target->salutation),
-//         array('data' => ''),
-//         array('data' => $target->email),
-//         array('data' => ''),
-//         array('data' => ''),
-//         array('data' => $links),
-//       ),
-//     );
-//   }
+  if (!empty($form_state['values']['website'])) {
+    $valid = valid_url($form_state['values']['website']);
+    if (!$valid) {
+      form_set_error('website', t('Invalid web site url.'));
+    }
+  }
 
-//   $rows = springboard_target_pager_default_initialize($rows, 1);
+  if (!empty($form_state['values']['twitter'])) {
+    $valid = valid_url($form_state['values']['twitter']);
+    if (!$valid) {
+      form_set_error('twitter', t('Invalid Twitter url.'));
+    }
+  }
 
-//   $output = theme('table', array('header' => $header, 'rows' => $rows));
-//   $output .= theme('pager', array('quantity' => 1));
-//   return $output;
-// }
+  if (!empty($form_state['values']['zip_code'])) {
+     if (!preg_match("/^\d{5}([\-]?\d{4})?$/i", $form_state['values']['zip_code'])){
+      form_set_error('zip_code', t('Invalid zip code.'));
+    }
+  }
 
-// //modified version of pager.inc function pager_default_initialize()
-// function springboard_target_pager_default_initialize($rows, $limit = 9, $element = 0) {
-//  global $pager_page_array, $pager_total, $pager_total_items, $pager_limits;
-
-//   $page = pager_find_page($element);
-
-//   // We calculate the total of pages as ceil(items / limit).
-//   $pager_total_items[$element] = count($rows);
-//   $pager_total[$element] = ceil($pager_total_items[$element] / $limit);
-//   $pager_page_array[$element] = max(0, min($page, ((int) $pager_total[$element]) - 1));
-//   $pager_limits[$element] = $limit;
-
-//   return array_slice($rows, $pager_page_array[$element] * $limit, $limit, TRUE);
-// }
+}

@@ -13,11 +13,9 @@ function springboard_target_edit_custom_targets_form($form, &$form_state, $targe
   if (!isset($form['not_found'])) {
     $form['submit'] = array('#type' => 'submit', '#value' => t('Update'));
   }
+  $form['#validate'][] = 'springboard_target_form_validate';
+
   return $form;
-
-}
-
-function springboard_target_edit_custom_targets_form_validate($form, &$form_state) {
 
 }
 
