@@ -369,11 +369,11 @@ class FundraiserSustainersDailySnapshot {
     if ($this->shouldUseLiveData()) {
       // When using live data, we're counting both unprocessed and processed.
       // Later on we remove processed where the next charge is before begin.
-      $query = "SELECT DISTINCT did, new_state, next_charge FROM {fundraiser_sustainers_log} WHERE next_charge < :end AND new_state NOT IN ('canceled', 'skipped')";
+      $query = "SELECT DISTINCT did, new_state, next_charge FROM {fundraiser_sustainers_log} WHERE next_charge < :end AND (new_state IS NULL OR new_state NOT IN ('canceled', 'skipped', 'locked', 'processing'))";
     }
     else {
       // When doing past or future date lookups, we tie it to the date range.
-      $query = "SELECT DISTINCT did, new_state, next_charge FROM {fundraiser_sustainers_log} WHERE next_charge >= :begin AND next_charge < :end AND new_state NOT IN ('canceled', 'skipped')";
+      $query = "SELECT DISTINCT did, new_state, next_charge FROM {fundraiser_sustainers_log} WHERE next_charge >= :begin AND next_charge < :end AND (new_state IS NULL OR new_state = 'created')";
       $replacements[':begin'] = $this->beginTimestamp;
     }
 
