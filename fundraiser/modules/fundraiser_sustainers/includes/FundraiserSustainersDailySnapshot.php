@@ -402,7 +402,6 @@ class FundraiserSustainersDailySnapshot {
   protected function calculateOtherProperties() {
     $successes = 0;
     $failures = 0;
-    $processedDids = array();
     $successValue = 0;
     $failureValue = 0;
     $retriedCharges = 0;
@@ -452,7 +451,7 @@ class FundraiserSustainersDailySnapshot {
           }
         }
       }
-      elseif ($row->old_state == 'retry' && $row->new_state = 'processing') {
+      elseif ($row->old_state == 'retry' && $row->new_state == 'processing') {
         $retriedCharges++;
         $retriedValue += $value;
       }
