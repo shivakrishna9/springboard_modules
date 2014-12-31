@@ -266,7 +266,6 @@ class FundraiserSustainersDailySnapshot {
    */
   protected function load() {
     $this->initializeValues();
-    $save = FALSE;
     // Look for a record in the DB and load it.
     // If there's no existing record, calculate new values.
     $row = $this->findRow();
@@ -278,14 +277,10 @@ class FundraiserSustainersDailySnapshot {
 
     if (!$this->isComplete || $this->shouldUseLiveData()) {
       $this->calculateValues();
-      $save = TRUE;
 
       if ($this->endTimestamp <= $this->today->getTimestamp()) {
         $this->isComplete = TRUE;
       }
-    }
-
-    if ($save) {
       $this->save();
     }
   }
@@ -343,7 +338,8 @@ class FundraiserSustainersDailySnapshot {
    */
   protected function findRow() {
     // Query for rows by the Y-m-d date string.
-    return db_query("SELECT * FROM {fundraiser_sustainers_insights_snapshot} WHERE date = :date", array(':date' => $this->getDate()->format('Y-m-d')))->fetchObject();
+    // return db_query("SELECT * FROM {fundraiser_sustainers_insights_snapshot} WHERE date = :date", array(':date' => $this->getDate()->format('Y-m-d')))->fetchObject();
+    return FALSE;
   }
 
   /**
@@ -373,11 +369,11 @@ class FundraiserSustainersDailySnapshot {
     if ($this->shouldUseLiveData()) {
       // When using live data, we're counting both unprocessed and processed.
       // Later on we remove processed where the next charge is before begin.
-      $query = "SELECT DISTINCT * FROM {fundraiser_sustainers} WHERE next_charge < :end AND gateway_resp NOT IN ('canceled', 'skipped')";
+      $query = "SELECT DISTINCT did, new_state, next_charge FROM {fundraiser_sustainers_log} WHERE next_charge < :end AND new_state NOT IN ('canceled', 'skipped')";
     }
     else {
       // When doing past or future date lookups, we tie it to the date range.
-      $query = "SELECT DISTINCT did FROM {fundraiser_sustainers_revision} WHERE next_charge >= :begin AND next_charge < :end AND gateway_resp NOT IN ('canceled', 'skipped')";
+      $query = "SELECT DISTINCT did, new_state, next_charge FROM {fundraiser_sustainers_log} WHERE next_charge >= :begin AND next_charge < :end AND new_state NOT IN ('canceled', 'skipped')";
       $replacements[':begin'] = $this->beginTimestamp;
     }
 
@@ -389,7 +385,7 @@ class FundraiserSustainersDailySnapshot {
 
       if ($this->shouldUseLiveData()) {
 
-        if (in_array($row->gateway_resp, array('success', 'failed')) && $row->next_charge < $this->beginTimestamp) {
+        if (in_array($row->new_state, array('success', 'failed')) && $row->next_charge < $this->beginTimestamp) {
           continue;
         }
 
@@ -420,65 +416,52 @@ class FundraiserSustainersDailySnapshot {
       ':begin' => $this->beginTimestamp,
       ':end' => $this->endTimestamp,
     );
-    // Get all revisions that were created on this day.
+    // Get all log events that happened on this day.
     // Ordering these so the new transitions get checked first, and earlier
     // ones get ignored if there are multiple transitions per day.
     // @todo Is that a good idea?
-    $results = db_query("SELECT revision_id, master_did, did, revision_timestamp, attempts, gateway_resp FROM {fundraiser_sustainers_revision} WHERE revision_timestamp >= :begin AND revision_timestamp < :end ORDER BY revision_timestamp DESC", $replacements);
+    $results = db_query("SELECT did, old_state, new_state FROM {fundraiser_sustainers_log} WHERE timestamp >= :begin AND timestamp < :end ORDER BY lid DESC", $replacements);
 
-    foreach ($results as $new) {
-      // Skip it if we've seen this donation id before.
-      if (in_array($new->did, $processedDids)) {
+    foreach ($results as $row) {
+
+      // Sustainer was born and at best is going into locking and processing.
+      // Otherwise the charge might be getting advanced or changed.
+      if (is_null($row->old_state)) {
         continue;
       }
 
-      $replacements = array(
-        ':did' => $new->did,
-        ':revision_id' => $new->revision_id,
-        ':attempts' => $new->attempts,
-      );
+      // Get the amount value from the related commerce order.
+      $value = $this->getValueFromOrder($row->did);
+      if ($row->old_state == 'processing') {
 
-      // Get the preceding revision that would indicate processing happened.
-      $old = db_query("SELECT revision_id, master_did, did, revision_timestamp, attempts, gateway_resp FROM {fundraiser_sustainers_revision} WHERE did = :did AND revision_id < :revision_id AND attempts < :attempts ORDER BY revision_id DESC LIMIT 0,1", $replacements)->fetchObject();
-
-      if (is_object($old)) {
-
-        // Normalize the gateway response.
-        if (is_null($old->gateway_resp)) {
-          $old->gateway_resp = '';
-        }
-        if (is_null($new->gateway_resp)) {
-          $new->gateway_resp = '';
-        }
-
-        // Get the amount value from the related commerce order.
-        $value = $this->getValueFromOrder($old->did);
-
-        if ($old->gateway_resp != 'success' && $new->gateway_resp == 'success') {
+        if ($row->new_state == 'success') {
           $successes++;
           $successValue += $value;
         }
-        elseif (in_array($new->gateway_resp, array('retry', 'failed'))) {
+        else {
           $failures++;
           $failureValue += $value;
-        }
 
-        if ($old->gateway_resp == 'retry') {
-          $retriedCharges++;
-          $retriedValue += $value;
+          if ($row->new_state == 'retry') {
+            $rescheduledCharges++;
+            $rescheduledValue += $value;
+          }
+          elseif ($row->new_state == 'failed') {
+            $abandonedCharges++;
+            $abandonedValue += $value;
+          }
         }
-
-        if ($new->gateway_resp == 'retry') {
-          $rescheduledCharges++;
-          $rescheduledValue += $value;
-        }
-        elseif ($new->gateway_resp == 'failed') {
-          $abandonedCharges++;
-          $abandonedValue += $value;
-        }
-
-        $processedDids[] = $old->did;
       }
+      elseif ($row->old_state == 'retry' && $row->new_state = 'processing') {
+        $retriedCharges++;
+        $retriedValue += $value;
+      }
+      elseif ($row->old_state == 'success' && $row->new_state == 'success') {
+        // Master donations immediately succeed.
+        $successes++;
+        $successValue += $value;
+      }
+
     }
 
     $this->successes = $successes;
