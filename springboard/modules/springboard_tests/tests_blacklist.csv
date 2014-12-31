@@ -9,7 +9,7 @@ EmailWrappersTestCase
 FormLayoutsTestCase
 FundraiserCommerceGatewayAuthnetTest
 FundraiserCommerceUnitTestCase
-FundraiserDateModeTest
+FundraiserDateModeTestCase
 MarketSourceTestCase
 PageWrappersRulesetTestCase
 SalesforceDonationTestCase
