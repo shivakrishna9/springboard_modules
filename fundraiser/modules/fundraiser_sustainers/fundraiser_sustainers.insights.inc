@@ -8,6 +8,7 @@ function fundraiser_sustainers_insights_dashboard() {
   $insights = new FundraiserSustainersInsights();
   $today = $insights->getTodaysSnapshot();
   $range = '7 days';
+  $date_format = 'n/j/Y';
 
   $historical_report = $insights->getHistoricalReportPreset($range);
   $report_snapshots = $historical_report->getSnapshots();
@@ -43,13 +44,14 @@ function fundraiser_sustainers_insights_dashboard() {
 
   $rows[] = $first_row;
 
-  $processing_stats_rows = array();
   $label_data = array();
   $successes_data = array();
   $failures_data = array();
   foreach ($report_snapshots as $date => $snapshot) {
+    $friendly_date = $snapshot->getDate()->format($date_format);
+
     $row = array(
-      $date,
+      $friendly_date,
       $snapshot->getScheduledCharges(),
       $snapshot->getScheduledValue() / 100,
       $snapshot->getRetriedCharges(),
@@ -62,17 +64,9 @@ function fundraiser_sustainers_insights_dashboard() {
       $snapshot->getAbandonedValue() / 100,
     );
 
-    $processing_stats_row = array(
-      $date,
-      $snapshot->getSuccesses(),
-      $snapshot->getFailures(),
-    );
-
-    $label_data[] = $date;
+    $label_data[] = $friendly_date;
     $successes_data[] = $snapshot->getSuccesses();
     $failures_data[] = $snapshot->getFailures();
-
-    $processing_stats_rows[] = $processing_stats_row;
 
     $rows[] = $row;
   }
@@ -82,37 +76,14 @@ function fundraiser_sustainers_insights_dashboard() {
     'rows' => $rows,
   );
 
-  $processing_stats_table_variables = array(
-    'header' => array('Date', 'Successes', 'Failures'),
-    'rows' => $processing_stats_rows,
-  );
-
-  $forecast_headers = array(
-    'Date',
-    'Scheduled #',
-    'Scheduled $',
-  );
-
-  $forecast_rows = array();
-
+  $forecast_labels = array();
+  $forecast_data = array();
   $forecast_report = $insights->getForecastPreset($range);
-
   $future_snapshots = $forecast_report->getSnapshots();
-
   foreach ($future_snapshots as $date => $snapshot) {
-    $row = array(
-      $date,
-      $snapshot->getScheduledCharges(),
-      $snapshot->getScheduledValue() / 100,
-    );
-
-    $forecast_rows[] = $row;
+    $forecast_labels[] = $snapshot->getDate()->format($date_format);
+    $forecast_data[] = $snapshot->getScheduledCharges();
   }
-
-  $forecast_table_variables = array(
-    'header' => $forecast_headers,
-    'rows' => $forecast_rows,
-  );
 
   $chart_labels = json_encode(array_reverse($label_data));
   $chart_successes_data = json_encode(array_reverse($successes_data));
@@ -126,11 +97,11 @@ function fundraiser_sustainers_insights_dashboard() {
     'successes' => $today->getSuccesses(),
     'failures' => $today->getFailures(),
     'historical_report_table' => theme('table', $table_variables),
-    'forecast_report_table' => theme('table', $forecast_table_variables),
-    'processing_stats_table' => theme('table', $processing_stats_table_variables),
     'chart_labels' => $chart_labels,
     'successes_data' => $chart_successes_data,
     'failure_data' => $chart_failure_data,
+    'forecast_labels' => json_encode($forecast_labels),
+    'forecast_data' => json_encode($forecast_data),
   );
 
   $path = drupal_get_path('module', 'fundraiser_sustainers');

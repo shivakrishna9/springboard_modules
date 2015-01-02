@@ -32,45 +32,17 @@
   <?php print $historical_report_table ?>
 </div>
 
-<div class="insights-forecast-report">
+<div class="insights-forecast-chart">
   <h3>Next <?php print $range ?></h3>
-  <?php print $forecast_report_table ?>
-</div>
-
-<div class="insights-processing-stats-report">
-  <h3>Processing Stats</h3>
-  <?php print $processing_stats_table ?>
+  <canvas id="forecastChart" height="200"></canvas>
 </div>
 
 <div class="insights-processing-stats-chart">
+  <h3>Processing Stats</h3>
   <canvas id="processingStats" height="200"></canvas>
 </div>
 
 <script>
-
-  var data = {
-    labels: <?php print $chart_labels ?>,
-    datasets: [
-      {
-        label: "Successes",
-        strokeColor: "rgba(220,220,220,1)",
-        pointColor: "rgba(220,220,220,1)",
-        pointStrokeColor: "#fff",
-        pointHighlightFill: "#fff",
-        pointHighlightStroke: "rgba(220,220,220,1)",
-        data: <?php print $successes_data ?>
-      },
-      {
-        label: "Failures",
-        strokeColor: "rgba(151,187,205,1)",
-        pointColor: "rgba(151,187,205,1)",
-        pointStrokeColor: "#fff",
-        pointHighlightFill: "#fff",
-        pointHighlightStroke: "rgba(151,187,205,1)",
-        data: <?php print $failure_data ?>
-      }
-    ]
-  };
   Chart.defaults.global = {
     // Boolean - Whether to animate the chart
     animation: true,
@@ -191,7 +163,32 @@
     // Function - Will fire on animation completion.
     onAnimationComplete: function(){}
   };
-  var options = {
+
+  var processing_data = {
+    labels: <?php print $chart_labels ?>,
+    datasets: [
+      {
+        label: "Successes",
+        strokeColor: "rgba(220,220,220,1)",
+        pointColor: "rgba(220,220,220,1)",
+        pointStrokeColor: "#fff",
+        pointHighlightFill: "#fff",
+        pointHighlightStroke: "rgba(220,220,220,1)",
+        data: <?php print $successes_data ?>
+      },
+      {
+        label: "Failures",
+        strokeColor: "rgba(151,187,205,1)",
+        pointColor: "rgba(151,187,205,1)",
+        pointStrokeColor: "#fff",
+        pointHighlightFill: "#fff",
+        pointHighlightStroke: "rgba(151,187,205,1)",
+        data: <?php print $failure_data ?>
+      }
+    ]
+  };
+
+  var processing_options = {
 
     ///Boolean - Whether grid lines are shown across the chart
     scaleShowGridLines : true,
@@ -232,7 +229,56 @@
     //String - A legend template
     legendTemplate : "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<datasets.length; i++){%><li><span style=\"background-color:<%=datasets[i].lineColor%>\"></span><%if(datasets[i].label){%><%=datasets[i].label%><%}%></li><%}%></ul>"
   };
+
   var ctx = document.getElementById("processingStats").getContext("2d");
-  var myNewChart = new Chart(ctx).Line(data, options);
+  var myNewChart = new Chart(ctx).Line(processing_data, processing_options);
+
+
+  var forecast_data = {
+    labels: <?php print $forecast_labels ?>,
+    datasets: [
+      {
+        label: "Scheduled Count",
+        fillColor: "rgba(220,220,220,0.5)",
+        strokeColor: "rgba(220,220,220,0.8)",
+        highlightFill: "rgba(220,220,220,0.75)",
+        highlightStroke: "rgba(220,220,220,1)",
+        data: <?php print $forecast_data ?>
+      }
+    ]
+  };
+
+  var forecast_options = {
+    //Boolean - Whether the scale should start at zero, or an order of magnitude down from the lowest value
+    scaleBeginAtZero : true,
+
+    //Boolean - Whether grid lines are shown across the chart
+    scaleShowGridLines : true,
+
+    //String - Colour of the grid lines
+    scaleGridLineColor : "rgba(0,0,0,.05)",
+
+    //Number - Width of the grid lines
+    scaleGridLineWidth : 1,
+
+    //Boolean - If there is a stroke on each bar
+    barShowStroke : true,
+
+    //Number - Pixel width of the bar stroke
+    barStrokeWidth : 2,
+
+    //Number - Spacing between each of the X value sets
+    barValueSpacing : 5,
+
+    //Number - Spacing between data sets within X values
+    barDatasetSpacing : 1,
+
+    //String - A legend template
+    legendTemplate : "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<datasets.length; i++){%><li><span style=\"background-color:<%=datasets[i].lineColor%>\"></span><%if(datasets[i].label){%><%=datasets[i].label%><%}%></li><%}%></ul>"
+
+  };
+
+  var forecastCtx = document.getElementById("forecastChart").getContext("2d");
+  var forecastChart = new Chart(forecastCtx).Bar(forecast_data, forecast_options);
 
 </script>
