@@ -505,6 +505,9 @@ function fundraiser_sustainers_update_7008() {
   registry_rebuild();
 }
 
+/**
+ * Adds and removes fields to the sustainer log table.
+ */
 function fundraiser_sustainers_update_7009() {
   $field = array(
     'description' => 'Unix timestamp of when to make the next charge.',
