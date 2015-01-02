@@ -62,6 +62,10 @@ function springboard_target_permission() {
       'title' => t('Administer Targets'),
       'description' => t('Perform administration tasks for my targets.'),
     ),
+    'view targets' => array(
+      'title' => t('View Targets'),
+      'description' => t('View Custom targets.'),
+    ),
     'create targets' => array(
       'title' => t('Create Targets'),
       'description' => t('Create Custom targets.'),

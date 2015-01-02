@@ -102,6 +102,22 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+  $data['advocacy']['target_actions'] = array(
+    'title' => t('Target Actions'),
+    'help' => t('Action links for target displays'),
+    'field' => array(
+      'handler' => 'springboard_advocacy_views_handler_field_target_actions',
+    ),
+  );
+
+  $data['advocacy']['group_actions'] = array(
+    'title' => t('Group Actions'),
+    'help' => t('Action links for group displays'),
+    'field' => array(
+      'handler' => 'springboard_advocacy_views_handler_field',
+    ),
+  );
+
   // $data['advocacy']['combine'] = array(
   //  'title' => t('Search Multiple Target Fields by Keywords'),
   //   'help' => t('Combine multiple fields together and search targets by them.'),
