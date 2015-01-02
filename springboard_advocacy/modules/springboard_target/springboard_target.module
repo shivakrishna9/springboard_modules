@@ -44,7 +44,7 @@ function springboard_target_menu() {
     'title' => 'Get test the legislator lookup',
     'description' => '',
     'type' => MENU_CALLBACK,
-    'page callback' => '_springboard_mt2_api_test',
+    'page callback' => '_springboard_target_api_test',
     'file' => 'includes/springboard_target.api_test.inc',
     'access arguments' => array('administer site configuration'),
   );

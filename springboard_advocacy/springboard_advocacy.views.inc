@@ -114,7 +114,7 @@ function springboard_advocacy_views_data() {
     'title' => t('Group Actions'),
     'help' => t('Action links for group displays'),
     'field' => array(
-      'handler' => 'springboard_advocacy_views_handler_field',
+      'handler' => 'springboard_advocacy_views_handler_field_group_actions',
     ),
   );
 
