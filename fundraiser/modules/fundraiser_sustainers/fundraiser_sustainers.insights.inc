@@ -44,6 +44,9 @@ function fundraiser_sustainers_insights_dashboard() {
   $rows[] = $first_row;
 
   $processing_stats_rows = array();
+  $label_data = array();
+  $successes_data = array();
+  $failures_data = array();
   foreach ($report_snapshots as $date => $snapshot) {
     $row = array(
       $date,
@@ -64,6 +67,10 @@ function fundraiser_sustainers_insights_dashboard() {
       $snapshot->getSuccesses(),
       $snapshot->getFailures(),
     );
+
+    $label_data[] = $date;
+    $successes_data[] = $snapshot->getSuccesses();
+    $failures_data[] = $snapshot->getFailures();
 
     $processing_stats_rows[] = $processing_stats_row;
 
@@ -107,6 +114,10 @@ function fundraiser_sustainers_insights_dashboard() {
     'rows' => $forecast_rows,
   );
 
+  $chart_labels = json_encode(array_reverse($label_data));
+  $chart_successes_data = json_encode(array_reverse($successes_data));
+  $chart_failure_data = json_encode(array_reverse($failures_data));
+
   $variables = array(
     'today' => $today->getDate()->format('d M Y'),
     'range' => $range,
@@ -117,10 +128,14 @@ function fundraiser_sustainers_insights_dashboard() {
     'historical_report_table' => theme('table', $table_variables),
     'forecast_report_table' => theme('table', $forecast_table_variables),
     'processing_stats_table' => theme('table', $processing_stats_table_variables),
+    'chart_labels' => $chart_labels,
+    'successes_data' => $chart_successes_data,
+    'failure_data' => $chart_failure_data,
   );
 
   $path = drupal_get_path('module', 'fundraiser_sustainers');
   drupal_add_css($path . '/css/fundraiser_sustainers.insights.css');
+  drupal_add_js($path . '/js/Chart.js');
 
   return theme('fundraiser_sustainers_insights_dashboard', $variables);
 }
