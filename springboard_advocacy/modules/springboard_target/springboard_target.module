@@ -78,5 +78,9 @@ function springboard_target_permission() {
       'title' => t('Delete Targets'),
       'description' => t(' Custom targets.'),
     ),
+    'add target to campaign' => array(
+      'title' => t('Add target to campaign.'),
+      'description' => t('Add target to campaign.'),
+    ),
   );
 }
