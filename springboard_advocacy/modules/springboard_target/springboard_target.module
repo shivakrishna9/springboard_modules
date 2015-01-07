@@ -22,7 +22,16 @@ function springboard_target_menu() {
  //   'type' => MENU_LOCAL_TASK,
  // );
 
-  $items['admin/springboard/advocacy/custom-targets/add'] = array(
+  // $items['admin/springboard/advocacy/targets/view'] = array(
+  //   'title' => 'Target Center: Edit Target',
+  //   'description' => '',
+  //   'access arguments' => array('edit targets'),
+  //   'page arguments' => array('springboard_target_edit_custom_targets_form', 4),
+  //   'page callback' => 'drupal_get_form',
+  //   'file' => 'includes/springboard_target.custom_targets_edit.inc',
+  // );
+
+  $items['admin/springboard/advocacy/targets/custom-targets/add'] = array(
     'title' => 'Target Center: Create Targets',
     'description' => '',
     'access arguments' => array('create targets'),
@@ -31,7 +40,7 @@ function springboard_target_menu() {
     'file' => 'includes/springboard_target.custom_targets_create.inc',
   );
 
-  $items['admin/springboard/advocacy/custom-targets/%/edit'] = array(
+  $items['admin/springboard/advocacy/targets/custom-targets/%/edit'] = array(
     'title' => 'Target Center: Edit Target',
     'description' => '',
     'access arguments' => array('edit targets'),
