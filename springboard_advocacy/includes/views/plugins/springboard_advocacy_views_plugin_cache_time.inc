@@ -55,29 +55,38 @@ class springboard_advocacy_views_plugin_cache_time extends views_plugin_cache_ti
       case 'results':
      
         if ($cache = cache_get($this->get_results_key(), $this->table)) {
-          $hashed_query = md5(serialize($this->view->query->search_terms));
-          
+
+          $cached_query = isset($cache->data['current_query']) ? $cache->data['current_query'] : '';
+          $terms = isset($this->view->query->search_terms) ? $this->view->query->search_terms : array();
+          $hashed_query = md5(serialize($terms));
           // Expire the cache if the search terms changed.
-          if ($hashed_query != $cache->data['current_query']) {
+          if ($hashed_query != $cached_query) {
             return FALSE;
           }
+
           if (!$cutoff || $cache->created > $cutoff) {
-            $this->view->result = $cache->data['result'];
-            $this->view->total_rows = $cache->data['total_rows'];
-            $this->view->set_current_page($cache->data['current_page']);
+            $this->view->result = isset($cache->data['result']) ? $cache->data['result'] : NULL;
+            $this->view->total_rows = isset($cache->data['total_rows']) ? $cache->data['total_rows'] : 0;
+            if (isset($cache->data['current_page'])) {
+              $this->view->set_current_page($cache->data['current_page']);
+            }
             $this->view->execute_time = 0;
             return TRUE;
           }
         }
         return FALSE;
       case 'output':
+
         if ($cache = cache_get($this->get_output_key(), $this->table)) {
-           $hashed_query = md5(serialize($this->view->query->search_terms));
-          
+
+          $cached_query = isset($cache->data['current_query']) ? $cache->data['current_query'] : '';
+          $terms = isset($this->view->query->search_terms) ? $this->view->query->search_terms : array();
+          $hashed_query = md5(serialize($terms));
           // Expire the cache if the search terms changed.
-          if ($hashed_query != $cache->data['current_query']) {
+          if ($hashed_query != $cached_query) {
             return FALSE;
           }
+      
           if (!$cutoff || $cache->created > $cutoff) {
             $this->storage = $cache->data;
             $this->view->display_handler->output = $cache->data['output'];
