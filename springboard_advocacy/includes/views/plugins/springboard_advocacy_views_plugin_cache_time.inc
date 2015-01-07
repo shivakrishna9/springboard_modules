@@ -56,9 +56,6 @@ class springboard_advocacy_views_plugin_cache_time extends views_plugin_cache_ti
      
         if ($cache = cache_get($this->get_results_key(), $this->table)) {
           $hashed_query = md5(serialize($this->view->query->search_terms));
-           dpm($hashed_query);
-          // dpm($cache->data['current_query']);
-          // dpm($this->get_results_key());
           
           if ($hashed_query != $cache->data['current_query']) {
             return FALSE;
