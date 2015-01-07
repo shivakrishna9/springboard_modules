@@ -13,7 +13,7 @@
 class springboard_advocacy_views_handler_field_target_actions extends views_handler_field {
 
   /**
-   * Prevent the default database query
+   * Prevent the default database query.
    */
   function query() {
   }
@@ -30,7 +30,7 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
   }
 
   /**
-   * Form definition for link visibility options
+   * Form definition for link visibility options.
    */
   function options_form(&$form, &$form_state) {
     $form['which_links'] = array(
@@ -44,7 +44,7 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
   }
 
   /**
-   * Render links
+   * Render links.
    */
   function render($values) {
     return $this->render_links($values);
@@ -52,7 +52,8 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
 
   /**
    * Render Helper.
-   * Display links based on option choices, result classs type and user permission.
+   *
+   * Display links based on option choices, result class type and user permission.
    */
   function render_links($values) {
     global $user; 
@@ -71,7 +72,7 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
     if (user_access('view targets') && !empty($this->options['which_links']['view'])) {
       $links[] = l(t('view'), $path . '/' . $values->id . '/view');
     }
-    
+
     if (!$legislator) {
       if (user_access('edit targets') && !empty($this->options['which_links']['edit'])) {
         $links[] = l(t('edit'), $path . '/' . $values->id . '/edit');
@@ -84,6 +85,5 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
     return implode(' | ', $links);
   }
 }
-
 
 

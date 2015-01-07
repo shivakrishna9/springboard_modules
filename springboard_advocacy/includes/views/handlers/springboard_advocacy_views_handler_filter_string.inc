@@ -4,11 +4,16 @@
  * @file
  * Definition of springboard_advocacy_views_handler_filter_string.
  * 
- * Simplify and replace the query options provided by (the DB-oriented) parent class
  */
 
+/*
+ * Simplify and replace the query options provided by (the DB-oriented) parent class.
+ */
 class springboard_advocacy_views_handler_filter_string extends views_handler_filter_string {
 
+  /**
+   * Limit operators to equals.
+   */
  function operators() {
     $operators = array(
       '=' => array(
@@ -21,6 +26,9 @@ class springboard_advocacy_views_handler_filter_string extends views_handler_fil
     return $operators;
   }
 
+  /**
+   * Remove default options.
+   */
   function operator_options($which = 'title') {
     $options = array();
     foreach ($this->operators() as $id => $info) {
@@ -29,6 +37,9 @@ class springboard_advocacy_views_handler_filter_string extends views_handler_fil
     return $options;
   }
 
+  /**
+   * Pare down the default query definition.
+   */
   function query() {
     $field = $this->real_field;
     $info = $this->operators();
@@ -37,6 +48,9 @@ class springboard_advocacy_views_handler_filter_string extends views_handler_fil
     }
   }
   
+  /**
+   * This equals that.
+   */
   function op_equals($field) {
     $this->query->search_terms[$field] = $this->value;
   }
