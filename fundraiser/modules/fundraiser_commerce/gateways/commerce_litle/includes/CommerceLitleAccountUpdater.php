@@ -127,7 +127,7 @@ class CommerceLitleAccountUpdater {
         // Only save the card on file if we are able to update the billing info
         // as well.
         commerce_cardonfile_save($card);
-        $this->updateBillingInfo($master_donation, $submission_fields);
+        $this->updateBillingInfo($master_donation, $submission_fields, $donation);
 
         return TRUE;
       }
@@ -261,24 +261,21 @@ class CommerceLitleAccountUpdater {
    *   The master donation for the sustainer series.
    * @param array $submission_fields
    *   The fields to merge into $donation->donation so they will get saved.
+   * @param object $processed_donation
+   *   The donation that was just processed before calling Account updater.
    */
-  protected function updateBillingInfo($master_donation, array $submission_fields) {
+  protected function updateBillingInfo($master_donation, array $submission_fields, $processed_donation) {
+    // Use the just-processed donation to create new donations if needed.
+    fundraiser_sustainers_update_billing_info_create_new_donations($master_donation, $processed_donation, $submission_fields);
+
+    // Now grab the remaining unprocessed donations and update their
+    // billing info.
+    // This will update both newly created donations from and above and
+    // existing unprocessed donations.
     $donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_donation->did);
-
-    if (empty($donations)) {
-      return;
+    if (!empty($donations)) {
+      $this->updatePaymentFieldsOnExistingDonations($donations, $submission_fields);
     }
-
-    // Update billing info in the currently existing donations.
-    $this->updatePaymentFieldsOnExistingDonations($donations, $submission_fields);
-
-    // Use the first future donation for a template of new future donations.
-    // By this point it has the new billing info.
-    $source_donation = reset($donations);
-    $source_donation = fundraiser_donation_get_donation($source_donation->did);
-
-    // Create new donations if needed.
-    fundraiser_sustainers_update_billing_info_create_new_donations($master_donation, $source_donation, $submission_fields);
 
   }
 
