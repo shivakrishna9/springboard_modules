@@ -6,9 +6,7 @@
  */
 
 /**
- * We add an md5 hash of the serialized search term array to the cache data
- * in order to compare it to the current query and invalidate the cache if the query has
- * changed.
+ * Extend views time cache with additional parameters.
  */
 class springboard_advocacy_views_plugin_cache_time extends views_plugin_cache_time {
 
@@ -23,6 +21,7 @@ class springboard_advocacy_views_plugin_cache_time extends views_plugin_cache_ti
       case 'query':
         // Not supported currently, but this is certainly where we'd put it.
         break;
+
       case 'results':
         $data = array(
           'result' => $this->view->result,
@@ -32,10 +31,10 @@ class springboard_advocacy_views_plugin_cache_time extends views_plugin_cache_ti
         );
         cache_set($this->get_results_key(), $data, $this->table, $this->cache_set_expire($type));
         break;
+
       case 'output':
         $this->gather_headers();
         $this->storage['output'] = $this->view->display_handler->output;
-        //$this->storage['output'] = $this->view->display_handler->output;
         cache_set($this->get_output_key(), $this->storage, $this->table, $this->cache_set_expire($type));
         break;
     }
@@ -48,19 +47,18 @@ class springboard_advocacy_views_plugin_cache_time extends views_plugin_cache_ti
    */
   function cache_get($type) {
     $cutoff = $this->cache_expire($type);
+
     switch ($type) {
       case 'query':
         // Not supported currently, but this is certainly where we'd put it.
         return FALSE;
+
       case 'results':
      
         if ($cache = cache_get($this->get_results_key(), $this->table)) {
 
-          $cached_query = isset($cache->data['current_query']) ? $cache->data['current_query'] : '';
-          $terms = isset($this->view->query->search_terms) ? $this->view->query->search_terms : array();
-          $hashed_query = md5(serialize($terms));
           // Expire the cache if the search terms changed.
-          if ($hashed_query != $cached_query) {
+          if(!$this->hash_compare($cache)) {
             return FALSE;
           }
 
@@ -75,15 +73,13 @@ class springboard_advocacy_views_plugin_cache_time extends views_plugin_cache_ti
           }
         }
         return FALSE;
+
       case 'output':
 
         if ($cache = cache_get($this->get_output_key(), $this->table)) {
-
-          $cached_query = isset($cache->data['current_query']) ? $cache->data['current_query'] : '';
-          $terms = isset($this->view->query->search_terms) ? $this->view->query->search_terms : array();
-          $hashed_query = md5(serialize($terms));
+          
           // Expire the cache if the search terms changed.
-          if ($hashed_query != $cached_query) {
+          if(!$this->hash_compare($cache)) {
             return FALSE;
           }
       
@@ -96,5 +92,15 @@ class springboard_advocacy_views_plugin_cache_time extends views_plugin_cache_ti
         }
         return FALSE;
     }
+  }
+
+  function hash_compare($cache) {
+    $cached_query = isset($cache->data['current_query']) ? $cache->data['current_query'] : '';
+    $terms = isset($this->view->query->search_terms) ? $this->view->query->search_terms : array();
+    $hashed_query = md5(serialize($terms));
+    if ($hashed_query != $cached_query) {
+      return FALSE;
+    }
+    return TRUE;
   }
 }
