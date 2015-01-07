@@ -15,7 +15,8 @@ class springboard_advocacy_views_plugin_cache_time extends views_plugin_cache_ti
   /**
    * Save data to the cache.
    *
-   * A plugin should override this to provide specialized caching behavior.
+   * We save a hash of the search terms in order to detect
+   * if they change and the cache must expire
    */
   function cache_set($type) {
     switch ($type) {
@@ -44,7 +45,6 @@ class springboard_advocacy_views_plugin_cache_time extends views_plugin_cache_ti
   /**
    * Retrieve data from the cache.
    *
-   * A plugin should override this to provide specialized caching behavior.
    */
   function cache_get($type) {
     $cutoff = $this->cache_expire($type);
@@ -57,6 +57,7 @@ class springboard_advocacy_views_plugin_cache_time extends views_plugin_cache_ti
         if ($cache = cache_get($this->get_results_key(), $this->table)) {
           $hashed_query = md5(serialize($this->view->query->search_terms));
           
+          // Expire the cache if the search terms changed.
           if ($hashed_query != $cache->data['current_query']) {
             return FALSE;
           }
@@ -73,6 +74,7 @@ class springboard_advocacy_views_plugin_cache_time extends views_plugin_cache_ti
         if ($cache = cache_get($this->get_output_key(), $this->table)) {
            $hashed_query = md5(serialize($this->view->query->search_terms));
           
+          // Expire the cache if the search terms changed.
           if ($hashed_query != $cache->data['current_query']) {
             return FALSE;
           }
