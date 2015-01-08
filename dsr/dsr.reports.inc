@@ -64,14 +64,14 @@ function theme_dsr_discrepancy_report($variables) { //$orders, $status, $start_d
 
   foreach ($orders as $order_id => $order_total) {
     $statues = array();
-    $batches = dsr_get_order_batches($order_id, 'donation');
+    $batches = dsr_get_order_batches($order_id, 'Opportunity');
     $links = _dsr_discrepancy_report_links($order_id);
 
-    // get any sf information. this will help us determine if an order was deleted from Salesforce
-    $sf = dsr_get_order_sfid($order_id);
+    // Get any sf information.
+    // This will help us determine if an order was deleted from Salesforce.
+    $sfid = dsr_get_order_sfid($order_id);
 
     //print "<pre>".print_r($batches, TRUE)."</pre>";
-
 
     $export_status = _dsr_create_export_status($batches);
 
@@ -79,8 +79,9 @@ function theme_dsr_discrepancy_report($variables) { //$orders, $status, $start_d
 
     $output .= '<div class="dsr-order">';
     $output .= '<h4>Order ' . $order_id . ' - $' . number_format($order_total, 2, '.', ',') . '</h4>';
-    if (!empty($sf['sfid'])) {
-      $output .= t('This order may have been deleted in Salesforce! We have it associated with ' . $sf['sfid']);
+    if (!empty($sfid)) {
+      $variables = array('@sfid' => $sfid);
+      $output .= t('SFID: @sfid', $variables);
     }
 
     foreach ($export_status as $status => $value) {
@@ -121,15 +122,9 @@ function theme_dsr_discrepancy_report($variables) { //$orders, $status, $start_d
 function _dsr_discrepancy_report_links($order_id) {
   // get some information about the submission that generated the order
   $submission = dsr_get_order_submission_id($order_id);
-
-
-  if (module_exists('fundraiser_commerce')) {
-    $links[] = l('view order', 'admin/commerce/orders/' . $order_id);
-  }
-  elseif (module_exists('fundraiser_ubercart')) {
-    $links[] = l('view order', 'admin/store/orders/' . $order_id);
-  }
-  $links[] = l('view form submission', sprintf('node/%s/submission/%s', $submission['webform_nid'], $submission['sid']));
+  $links = array();
+  $links[] = l('View order', 'admin/commerce/orders/' . $order_id);
+  $links[] = l('View form submission', sprintf('node/%s/submission/%s', $submission['webform_nid'], $submission['sid']));
   // TODO: replace batch viewer
   //$links[] = l('view batches', '', array('fragment' => ' ', 'external' => TRUE, 'attributes' => array('class' => 'batch-viewer')));
 
@@ -139,7 +134,7 @@ function _dsr_discrepancy_report_links($order_id) {
     'attributes' => array(),
     'type' => 'ul',
   );
-  return theme_item_list($variables);
+  return theme('item_list', $variables);
 }
 
 /**
@@ -158,7 +153,7 @@ function dsr_get_order_batches($order_id, $type = 'donation') {
   $result = db_query('
     SELECT
       i.bid AS batch_id,
-      FROM_UNIXTIME(b.end) AS date_processed,
+      b.end AS date_processed,
       i.retries,
       i.status,
       i.message
@@ -171,11 +166,11 @@ function dsr_get_order_batches($order_id, $type = 'donation') {
   while ($data = $result->fetchAssoc()) {
     $batches[$data['batch_id']] = array(
       //'object' => unserialize($data['data']),
-      //'success' => $data['success'],
+      'status' => $data['status'],
       'date_processed' => $data['date_processed'],
       'retry' => $data['retries'] ? 1 : 0, //$data['is_retry'],
       'error_code' => $data['status'],
-      'error_message' => $data['message'],
+      'error_message' => !empty($data['message']) ? '(' . $data['message'] . ')' : '',
       //'error_fields' => $data['fields'],
     );
   }
@@ -184,7 +179,7 @@ function dsr_get_order_batches($order_id, $type = 'donation') {
 }
 
 /**
- * Returns the submission id for a given order while taking into consideration the order might be part of a recurring series.
+ * Returns the webform submission id for a given order.
  *
  * @param $order_id
  *   The id of the order.
@@ -196,22 +191,28 @@ function dsr_get_order_submission_id($order_id) {
       nid AS webform_nid
     FROM {fundraiser_donation} WHERE did = :did
   ', array(':did' => $order_id));
-/*    UNION
-    SELECT f.sid, f.webform_nid FROM {fundraiser_donation} f
-    INNER JOIN fundraiser_recurring r on r.master_order_id = f.order_id
-    WHERE r.order_id = %d",
-  $order_id);*/
 
   return $result->fetchAssoc();
 }
 
 /**
- * @param $order_id
+ * Get the Salesforce ID for the order.
  *
- * @return int
+ * @param int $order_id
+ *   The order ID.
+ *
+ * @return bool|string
+ *   The sfid string, or FALSE.
  */
 function dsr_get_order_sfid($order_id) {
-  return 0; //salesforce_management_api_id_load('donation', $order_id);
+  $mapped = salesforce_sync_load_map(array(
+      'module' => 'salesforce_donation',
+      'delta' => 'donation',
+      'drupal_id' => $order_id,
+      'object_type' => 'Opportunity',
+    ));
+
+  return !empty($mapped) ? $mapped->sfid : FALSE;
 }
 
 /**
@@ -230,7 +231,7 @@ function _dsr_create_export_status($batches) {
 
     $status['export attempts'] = $attempts;
     $status['last export attempt'] = date('m/d/Y g:i:s a', $batches[$last_batch_id]['date_processed']);
-    $status['last export status'] = $batches[$last_batch_id]['success'] ? t('Success') : t('Failed') . ' (' . $batches[$last_batch_id]['error_message'] . ')';
+    $status['last export status'] = $batches[$last_batch_id]['status'] . $batches[$last_batch_id]['error_message'];
   }
 
   return $status;
