@@ -119,7 +119,7 @@ function springboard_letter_webform_user_profile_fields_alter(&$fields, $node) {
  * 
  * Add our submit handler.
  */
-function springboard_letter_form_alter(&$form, &$form_state, $form_id) {;
+function springboard_letter_form_alter(&$form, &$form_state, $form_id) {
   if(isset($form['#node']) && $form['#node']->type == 'springboard_letter') {
     $pos = strpos($form_id, 'client_form');
     if($pos !== FALSE) {

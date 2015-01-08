@@ -13,7 +13,7 @@
 class springboard_advocacy_views_handler_field_group_actions extends views_handler_field {
 
   function query() {
-   //override
+   // override
   }
 
   function option_definition() {

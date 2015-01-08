@@ -94,6 +94,10 @@ class springboard_advocacy_views_plugin_cache_time extends views_plugin_cache_ti
     }
   }
 
+  /**
+   * Compare a hash of the current search terms with hash of cached search terms.
+   *
+   */
   function hash_compare($cache) {
     $cached_query = isset($cache->data['current_query']) ? $cache->data['current_query'] : '';
     $terms = isset($this->view->query->search_terms) ? $this->view->query->search_terms : array();
