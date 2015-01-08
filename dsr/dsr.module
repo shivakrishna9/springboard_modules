@@ -310,7 +310,7 @@ function dsr_get_refunded_donations($start_date, $end_date) {
   $replace = array(
     ':stage' => 'Refunded',
     ':start' => $start_date,
-    ':end' => $end_date
+    ':end' => $end_date,
   );
   $soql = strtr(variable_get('dsr_refunded_select_s', DSR_DEFAULT_SELECT_SOQL), $replace);
 
@@ -330,7 +330,7 @@ function dsr_get_partially_refunded_donations($start_date, $end_date) {
   $replace = array(
     ':stage' => 'Partially Refunded',
     ':start' => $start_date,
-    ':end' => $end_date
+    ':end' => $end_date,
   );
   $soql = strtr(variable_get('dsr_partially_refunded_select_s', DSR_DEFAULT_SELECT_SOQL), $replace);
 
@@ -350,7 +350,7 @@ function dsr_get_posted_donations($start_date, $end_date) {
   $replace = array(
     ':stage' => 'Posted',
     ':start' => $start_date,
-    ':end' => $end_date
+    ':end' => $end_date,
   );
   $soql = strtr(variable_get('dsr_posted_select_s', DSR_DEFAULT_SELECT_SOQL), $replace);
 

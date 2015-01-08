@@ -123,7 +123,7 @@ function dsr_get_orders($status, $start, $end) {
  *
  * @return array
  */
-function dsr_salesforce_aggregate($status = 'payment_received', $start_date, $end_date) {
+function dsr_salesforce_aggregate($status, $start_date, $end_date) {
   // Map from commerce status to SF stage.
   $sf_status = array(
     'payment_received' => 'Posted',
@@ -142,7 +142,7 @@ function dsr_salesforce_aggregate($status = 'payment_received', $start_date, $en
   $replace = array(
     ':stage' => $sf_status[$status],
     ':start' => $start_date,
-    ':end' => $end_date
+    ':end' => $end_date,
   );
   $soql = strtr($sf_soql[$status], $replace);
 
