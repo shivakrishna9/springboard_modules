@@ -17,9 +17,9 @@ class springboard_advocacy_views_handler_filter_string extends views_handler_fil
  function operators() {
     $operators = array(
       '=' => array(
-        'title' => t('Equals'),
-        'short' => t('='),
-        'method' => 'op_equals',
+        'title' => t('Contains'),
+        'short' => t('contains'),
+        'method' => 'op_contains',
         'values' => 1,
       ),
     );
@@ -51,7 +51,7 @@ class springboard_advocacy_views_handler_filter_string extends views_handler_fil
   /**
    * This equals that.
    */
-  function op_equals($field) {
+  function op_contains($field) {
     $this->query->search_terms[$field] = $this->value;
   }
 }
