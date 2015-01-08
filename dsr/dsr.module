@@ -213,7 +213,12 @@ function dsr_collect_stats($start_date, $end_date, $show_form = TRUE) {
     'salesforce_data' => $stats['salesforce_refunded'],
     'drupal_data' => $stats['drupal_refunded'],
   );
+
+  // Remove amount from the salesforce refunded stats since it currently always equals 0.
+  $variables['salesforce_data']['total_amount'] = 'N/A*';
+
   $output .= theme('dsr_report_table', $variables);
+  $output .= '* Due to refund amount handling the Salesforce refunded amount will always compute to 0.';
 
   // Partially Refunded report
   $variables = array(

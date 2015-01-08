@@ -42,13 +42,16 @@ function dsr_select($status, $start, $end) {
 
   $transactions = db_query($query, $replacements);
 
+  // Some statuses need the order total, others will need the balance taken into account.
+  $amount_stat = in_array($status, array('payment_received', 'refunded')) ? 'total' : 'balance';
+
   foreach ($transactions as $transaction) {
-    // For payment recieved status we can use the total amount.
     $results['total_count']++;
-    if ($status == 'payment_received') {
+
+    // Compute the amount.
+    if ($amount_stat == 'total') {
       $results['total_amount'] += $transaction->commerce_order_total_amount;
     }
-    // Other statuses will need the balance taken into account.
     else {
       $order = commerce_order_load($transaction->order_id);
       $balance = commerce_payment_order_balance($order);
