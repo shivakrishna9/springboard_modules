@@ -11,6 +11,27 @@
  * Table to save user ip and geolocation info ofrthe various message type submissions/
  */
 function springboard_messages_schema() {
+
+  // Store a unique ID for use with advocacy server
+  $schema['springboard_messages_form_id'] = array(
+    'description' => 'Store messaging information.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'messages node id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'advocacy_id' => array(
+        'description' => 'form unique ID',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('nid'),
+  );
+
   // Opt in tracking table.
   $schema['springboard_messages_location'] = array(
     'description' => 'Store messaging information.',
@@ -59,4 +80,13 @@ function springboard_messages_schema() {
     'primary key' => array('sid', 'uid'),
   );
   return $schema;
+}
+ /*
+ * Add springboard_messages form id table
+ */
+function springboard_messages_update_7001() {
+  $schema = module_invoke('springboard_messages', 'schema');
+  if(db_table_exists('springboard_messages_form_id') == FALSE) {
+    db_create_table('springboard_messages_form_id', $schema['springboard_messages_form_id']);
+  }
 }
