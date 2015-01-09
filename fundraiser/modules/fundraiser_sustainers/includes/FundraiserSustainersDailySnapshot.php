@@ -363,39 +363,17 @@ class FundraiserSustainersDailySnapshot {
   protected function calculateScheduledProperties() {
     // success, canceled, skipped, failed, retry, processing, NULL
     $replacements = array(
+      ':begin' => $this->beginTimestamp,
       ':end' => $this->endTimestamp,
     );
 
-    if ($this->shouldUseLiveData()) {
-      // When using live data, we're counting both unprocessed and processed.
-      // Later on we remove processed where the next charge is before begin.
-      $query = "SELECT DISTINCT did, old_state, new_state, next_charge FROM {fundraiser_sustainers_log} WHERE next_charge < :end AND lock_id = 0 AND (new_state IS NULL OR new_state NOT IN ('canceled', 'skipped', 'locked', 'processing'))";
-    }
-    else {
-      // When doing past or future date lookups, we tie it to the date range.
-      $query = "SELECT DISTINCT did, old_state, new_state, next_charge FROM {fundraiser_sustainers_log} WHERE next_charge >= :begin AND next_charge < :end AND (new_state IS NULL OR new_state = 'created')";
-      $replacements[':begin'] = $this->beginTimestamp;
-    }
+    $query = "SELECT DISTINCT did FROM {fundraiser_sustainers_log} WHERE (new_state = 'scheduled' OR (new_state = 'retry' AND old_state = 'processing')) AND next_charge >= :begin AND next_charge < :end";
 
     $result = db_query($query, $replacements);
 
     $count = 0;
     $total = 0;
     foreach ($result as $row) {
-
-      if ($this->shouldUseLiveData()) {
-
-        // Special case, the master donation.
-        if ($row->new_state == 'success' && $row->old_state == 'success') {
-          continue;
-        }
-
-        if (in_array($row->new_state, array('success', 'failed')) && $row->next_charge < $this->beginTimestamp) {
-          continue;
-        }
-
-      }
-
       $count++;
       $total += $this->getValueFromOrder($row->did);
     }
