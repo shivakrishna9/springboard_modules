@@ -23,7 +23,7 @@ function springboard_messages_node_load($nodes, $types) {
       'SELECT advocacy_id, nid FROM {springboard_messages_form_id} WHERE nid IN (:nids)', 
        array(':nids' => array_keys($nodes)));
     foreach ($result as $record) {
-      $nodes[$record->nid]->advocacy_id = $record->uuid;
+      $nodes[$record->nid]->advocacy_id = $record->advocacy_id;
     }
   }
 }
