@@ -330,12 +330,14 @@ function fundraiser_sustainers_standalone_cron() {
  * redirects the user to the referring page.
  */
 function fundraiser_sustainers_charge_now($did) {
-  $new_charge = strtotime('now');
-  $donation = new stdClass();
-  $donation->did = $did;
-  $donation->next_charge = $new_charge;
+  $new_charge = REQUEST_TIME;
+  $recurring = array(
+    'did' => $did,
+    'new_state' => 'scheduled',
+    'next_charge' => $new_charge,
+  );
 
-  _fundraiser_sustainers_update_recurring($donation);
+  _fundraiser_sustainers_update_recurring($recurring);
   drupal_set_message(t('The charge date for donation #@did has been advanced to @date. It will be charged on the next Fundraiser cron.',
     array('@did' => $did, '@date' => format_date($new_charge))));
 
@@ -1658,6 +1660,7 @@ function fundraiser_sustainers_change_charge_date($master_did, $new_day) {
       // This should pick up the new next_charge from the previous query.
       $log_record = array(
         'did' => $donation->did,
+        'new_state' => 'scheduled',
       );
       fundraiser_sustainers_log_record($log_record);
 
@@ -2556,7 +2559,7 @@ function _fundraiser_sustainers_create_recurring($donation) {
     drupal_write_record('fundraiser_sustainers', $record);
 
     $record['old_state'] = NULL;
-    $record['new_state'] = isset($record['gateway_resp']) ? $record['gateway_resp'] : 'created';
+    $record['new_state'] = isset($record['gateway_resp']) ? $record['gateway_resp'] : 'scheduled';
 
     fundraiser_sustainers_log_record($record);
 
@@ -2594,7 +2597,6 @@ function _fundraiser_sustainers_update_recurring($donation) {
     // Merge data together so we get everything in the record.
     $record = array_merge((array) $original, $donation);
     drupal_write_record('fundraiser_sustainers', $record, 'did');
-
     fundraiser_sustainers_log_record($donation, $original);
   }
 }

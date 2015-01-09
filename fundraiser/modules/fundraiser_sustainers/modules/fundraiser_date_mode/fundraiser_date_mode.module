@@ -427,9 +427,14 @@ function fundraiser_date_mode_update_sustainer_date($time_delta, $master_did, $d
   $query->execute();
 
   // Log the change.
+  // This should pick up the new next_charge from the previous query.
   $dids_to_log = is_array($dids) ? $dids : array($dids);
   foreach ($dids_to_log as $did_to_log) {
-    fundraiser_sustainers_log_record(array('did' => $did_to_log));
+    $log_record = array(
+      'did' => $did_to_log,
+      'new_state' => 'scheduled',
+    );
+    fundraiser_sustainers_log_record($log_record);
   }
 
   // If Salesforce integration is available, requeue affected orders for
