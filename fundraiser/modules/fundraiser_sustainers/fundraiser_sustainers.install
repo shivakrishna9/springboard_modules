@@ -182,7 +182,7 @@ function fundraiser_sustainers_schema() {
         'not null' => TRUE,
       ),
       'timestamp' => array(
-        'description' => 'The date the charge was processed.',
+        'description' => 'The time that the activity occurred.',
         'type' => 'int',
         'not null' => TRUE,
       ),
@@ -549,7 +549,7 @@ function fundraiser_sustainers_update_7009() {
   db_add_field('fundraiser_sustainers_log', 'cancellation_reason', $field);
 
   $field = array(
-    'description' => 'The time the event took place.',
+    'description' => 'The time that the activity occurred.',
     'type' => 'int',
     'not null' => TRUE,
   );
