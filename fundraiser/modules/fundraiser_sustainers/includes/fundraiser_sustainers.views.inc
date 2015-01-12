@@ -81,7 +81,10 @@ function fundraiser_sustainers_views_data() {
       'handler' => 'views_handler_sort_date',
     ),
     'filter' => array(
-      'handler' => 'views_handler_filter_date',
+      'handler' => 'date_views_filter_handler_simple',
+    ),
+    'argument' => array(
+      'handler' => 'date_views_argument_handler_simple',
     ),
   );
 
@@ -111,7 +114,10 @@ function fundraiser_sustainers_views_data() {
       'handler' => 'views_handler_sort_date',
     ),
     'filter' => array(
-      'handler' => 'views_handler_filter_date',
+      'handler' => 'date_views_filter_handler_simple',
+    ),
+    'argument' => array(
+      'handler' => 'date_views_argument_handler_simple',
     ),
   );
 
