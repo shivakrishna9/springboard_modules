@@ -367,7 +367,7 @@ class FundraiserSustainersDailySnapshot {
       ':end' => $this->endTimestamp,
     );
 
-    $query = "SELECT DISTINCT did FROM {fundraiser_sustainers_log} WHERE (new_state = 'scheduled' OR (new_state = 'retry' AND old_state = 'processing')) AND next_charge >= :begin AND next_charge < :end";
+    $query = "SELECT did FROM {fundraiser_sustainers_log} WHERE (new_state = 'scheduled' OR (new_state = 'retry' AND old_state = 'processing')) AND next_charge >= :begin AND next_charge < :end";
 
     $result = db_query($query, $replacements);
 
