@@ -4,7 +4,7 @@
   <div class="insights-today-box span3">
     <h3>Scheduled Charges</h3>
     <div class="big-metric"><?php print $scheduled_charges ?></div>
-    <div class="foot">View donations</div>
+    <div class="foot"><?php print l('View scheduled', $today_scheduled_path); ?></div>
   </div>
 
   <div class="insights-today-box span3">
@@ -16,13 +16,13 @@
   <div class="insights-today-box span3">
     <h3>Successes</h3>
     <div class="big-metric"><?php print $successes ?></div>
-    <div class="foot">View log</div>
+    <div class="foot"><?php print l('View successes', $today_success_path); ?></div>
   </div>
 
   <div class="insights-today-box span3">
     <h3>Failures</h3>
     <div class="big-metric"><?php print $failures ?></div>
-    <div class="foot">View failures</div>
+    <div class="foot"><?php print l('View failures', $today_failure_path); ?></div>
   </div>
 </div>
 <hr>

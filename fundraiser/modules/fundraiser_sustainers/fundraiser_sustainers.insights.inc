@@ -47,11 +47,12 @@ function fundraiser_sustainers_insights_dashboard() {
   $label_data = array();
   $successes_data = array();
   $failures_data = array();
+  $date_report_path = 'springboard/reports/sustainers/activity/';
   foreach ($report_snapshots as $date => $snapshot) {
     $friendly_date = $snapshot->getDate()->format($date_format);
 
     $row = array(
-      $friendly_date,
+      l($friendly_date, $date_report_path . $date),
       $snapshot->getScheduledCharges(),
       $snapshot->getScheduledValue() / 100,
       $snapshot->getRetriedCharges(),
@@ -89,6 +90,8 @@ function fundraiser_sustainers_insights_dashboard() {
   $chart_successes_data = json_encode(array_reverse($successes_data));
   $chart_failure_data = json_encode(array_reverse($failures_data));
 
+  $url_date = $today->getDate()->format('Y-m-d');
+
   $variables = array(
     'today' => $today->getDate()->format('d M Y'),
     'range' => $range,
@@ -102,6 +105,9 @@ function fundraiser_sustainers_insights_dashboard() {
     'failure_data' => $chart_failure_data,
     'forecast_labels' => json_encode($forecast_labels),
     'forecast_data' => json_encode($forecast_data),
+    'today_scheduled_path' => 'springboard/reports/sustainers/scheduled/' . $url_date,
+    'today_success_path' => 'springboard/reports/sustainers/success/' . $url_date,
+    'today_failure_path' => 'springboard/reports/sustainers/failure/' . $url_date,
   );
 
   $path = drupal_get_path('module', 'fundraiser_sustainers');
