@@ -434,7 +434,9 @@ function fundraiser_date_mode_update_sustainer_date($time_delta, $master_did, $d
       'did' => $did_to_log,
       'new_state' => 'scheduled',
     );
-    fundraiser_sustainers_log_record($log_record);
+
+    $log = fundraiser_sustainers_log();
+    $log->log($log_record);
   }
 
   // If Salesforce integration is available, requeue affected orders for

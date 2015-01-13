@@ -12,6 +12,7 @@ dependencies[] = views
 files[] = includes/FundraiserSustainersHealthChecks.php
 files[] = includes/FundraiserSustainerRecordViewsController.php
 
+files[] = includes/FundraiserSustainersLog.php
 files[] = includes/FundraiserSustainersDailySnapshot.php
 files[] = includes/FundraiserSustainersSnapshotReport.php
 files[] = includes/FundraiserSustainersForecast.php

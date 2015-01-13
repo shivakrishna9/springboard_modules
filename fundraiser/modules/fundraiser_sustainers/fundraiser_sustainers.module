@@ -330,8 +330,11 @@ function fundraiser_sustainers_standalone_cron() {
  * redirects the user to the referring page.
  */
 function fundraiser_sustainers_charge_now($did) {
+
   // Modify the sustainer log to ignore previously scheduled dates.
-  fundraiser_sustainers_log_advance_charge($did);
+  $log = fundraiser_sustainers_log();
+  $log->advanceCharge($did);
+
   $new_charge = REQUEST_TIME;
   $recurring = array(
     'did' => $did,
@@ -1664,7 +1667,8 @@ function fundraiser_sustainers_change_charge_date($master_did, $new_day) {
         'did' => $donation->did,
         'new_state' => 'scheduled',
       );
-      fundraiser_sustainers_log_record($log_record);
+      $log = fundraiser_sustainers_log();
+      $log->log($log_record);
 
       // Add a comment.
       global $user;
@@ -2562,8 +2566,8 @@ function _fundraiser_sustainers_create_recurring($donation) {
 
     $record['old_state'] = NULL;
     $record['new_state'] = isset($record['gateway_resp']) ? $record['gateway_resp'] : 'scheduled';
-
-    fundraiser_sustainers_log_record($record);
+    $log = fundraiser_sustainers_log();
+    $log->log($record);
 
   }
   else {
@@ -2599,7 +2603,9 @@ function _fundraiser_sustainers_update_recurring($donation) {
     // Merge data together so we get everything in the record.
     $record = array_merge((array) $original, $donation);
     drupal_write_record('fundraiser_sustainers', $record, 'did');
-    fundraiser_sustainers_log_record($donation, $original);
+
+    $log = fundraiser_sustainers_log();
+    $log->log($donation, $original);
   }
 }
 
@@ -2614,7 +2620,8 @@ function _fundraiser_sustainers_delete_recurring($did) {
     'did' => $did,
     'new_state' => 'deleted',
   );
-  fundraiser_sustainers_log_record($log_record, $original);
+  $log = fundraiser_sustainers_log();
+  $log->log($log_record, $original);
 }
 
 /**
@@ -2799,14 +2806,8 @@ function _fundraiser_sustainers_cron_get_recurring($limit = 200) {
       array(':uni_batch_id' => $uni_batch_id, ':donations' => $donations)
     );
 
-    foreach ($donations as $did) {
-      $locked_log_record = array(
-        'did' => $did,
-        'new_state' => 'locked',
-        'lock_id' => $uni_batch_id,
-      );
-      fundraiser_sustainers_log_record($locked_log_record);
-    }
+    $log = fundraiser_sustainers_log();
+    $log->logLockedDonations($donations, $uni_batch_id);
 
   }
   // Grab the locked donations for this batch.
@@ -3047,102 +3048,10 @@ function fundraiser_sustainers_entity_property_info() {
 }
 
 /**
- * Save an entry to the sustainers log.
+ * Get an instance of the Fundraiser Sustainers Log.
  *
- * @param array $values
- *   Values to save that are different from the old values, plus did. Donation
- *   ID (did) is a required key.
- * @param null|stdClass  $old_record
- *   The original record. If one is not provides it gets queried. This is used
- *   for default values and the old_state.
- * @return bool|int
- *   FALSE or SAVED_NEW because a new record is always saved.
+ * @return FundraiserSustainersLog
  */
-function fundraiser_sustainers_log_record(array $values, $old_record = NULL) {
-  if (is_null($old_record)) {
-    $old_record = _fundraiser_sustainers_get_recurring_by_did($values['did']);
-  }
-
-  $new_record = new stdClass();
-  $new_record->timestamp = REQUEST_TIME;
-  $new_record->did = $values['did'];
-
-  if (isset($values['lock_id'])) {
-    $new_record->lock_id = $values['lock_id'];
-  }
-  elseif (isset($old_record->lock_id)) {
-    $new_record->lock_id = $old_record->lock_id;
-  }
-  else {
-    $new_record->lock_id = '0';
-  }
-
-  if (isset($values['next_charge'])) {
-    $new_record->next_charge = $values['next_charge'];
-  }
-  elseif (isset($old_record->next_charge)) {
-    $new_record->next_charge = $old_record->next_charge;
-  }
-  else {
-    $new_record->next_charge = 0;
-  }
-
-  if (isset($values['old_state'])) {
-    $new_record->old_state = $values['old_state'];
-  }
-  elseif (isset($old_record->gateway_resp)) {
-    $new_record->old_state = $old_record->gateway_resp;
-  }
-  else {
-    $new_record->old_state = NULL;
-  }
-
-  // New state of NULL means no transition happened.
-  if (isset($values['new_state'])) {
-    $new_record->new_state = $values['new_state'];
-  }
-  elseif (isset($values['gateway_resp'])) {
-    $new_record->new_state = $values['gateway_resp'];
-  }
-  else {
-    $new_record->new_state = NULL;
-  }
-
-  if (isset($values['attempts'])) {
-    $new_record->attempts = $values['attempts'];
-  }
-  elseif (isset($old_record->attempts)) {
-    $new_record->attempts = $old_record->attempts;
-  }
-  else {
-    $new_record->attempts = 0;
-  }
-
-  if (isset($values['cancellation_reason'])) {
-    $new_record->cancellation_reason = $values['cancellation_reason'];
-  }
-  elseif (isset($old_record->cancellation_reason)) {
-    $new_record->cancellation_reason = $old_record->cancellation_reason;
-  }
-  else {
-    $new_record->cancellation_reason = '';
-  }
-
-  return drupal_write_record('fundraiser_sustainers_log', $new_record);
-}
-
-/**
- * Marks all scheduled log entries for a donation sustainer as 'advance_charge'.
- *
- * This way it won't get counted in metrics for scheduled donations.
- *
- * @param int $did
- *   Donation ID.
- */
-function fundraiser_sustainers_log_advance_charge($did) {
-  db_update('fundraiser_sustainers_log')
-    ->fields(array('new_state' => 'advance_charge'))
-    ->condition('did', $did)
-    ->condition('new_state', 'scheduled')
-    ->execute();
+function fundraiser_sustainers_log() {
+  return new FundraiserSustainersLog();
 }
